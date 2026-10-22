@@ -1,25 +1,36 @@
 # Operational Contract
 
-- Status: Draft
+- Status: Initial delivery expectations; no released runtime or service
+- Delivery owner: Zerodi / Rodisoft
 
-## Contract
+## Critical journeys
 
-Connect operating priorities, acceptable failure, and recovery responsibility to the user outcomes this project must support.
+Protect source checking, bounded execution, and honest publication of result data.
+The first supported delivery target is Windows 11 x64; support is not yet verified.
+Restricted execution and trusted embedding remain unavailable until their respective
+OS and DLL milestones pass.
 
-Project-wide decisions: docs/product/02-spec.md
+## Failure tolerance
 
-## Required Decisions
+Reject denied authority, resource exhaustion, invalid input, or unavailable isolation
+explicitly. Never fall back to an unrestricted worker. Discard unpublished output
+on guest failure. Poison an Engine after an internal runtime invariant failure.
+A native process crash is a failed operation, not a successful guest result.
 
-- Critical journeys: UNDECIDED. Name the user-visible outcomes, supported environments, workloads, and dependencies that operating decisions must protect.
-- Operating ownership: UNDECIDED. Assign primary and backup owners, escalation paths, decision authority, and handoffs for relevant failure scenarios.
-- Failure tolerance: UNDECIDED. Define acceptable degraded behavior, unavailable dependencies, resource exhaustion, and conditions requiring work to stop.
-- Recovery budgets: UNDECIDED. Set justified recovery-time and data-loss limits and distinguish desired targets from observed recovery evidence.
-- Change and release conditions: UNDECIDED. Identify evidence needed to promote a change, stop a rollout, recover, or escalate an unresolved outcome.
-- Evidence and review: UNDECIDED. Select operational signals, exercises, and review triggers that demonstrate the critical journeys still work.
+## Recovery ownership
 
-## Verification
+The host owns external effects, credential management, and reconciliation of unknown
+outcomes. No automatic replay or rollback is promised. Bound worker termination and
+retain I/O leases until actual completion. Recovery-time and data-loss SLAs are not
+set for this unreleased local runtime.
 
-- Owner: UNASSIGNED
-- Source of truth and related ADR: UNDECIDED
-- Required evidence and remaining gaps: UNDECIDED
-- Validation route: VALIDATION.md
+## Release evidence
+
+Tie validation to the delivered artifact and supported profile. Core delivery needs
+native source execution; restricted delivery additionally needs real Windows isolation;
+embed delivery needs actual DLL export/call. Clean-machine packaging must separate
+build-tool requirements from end-user runtime needs.
+
+Do not create service monitoring, backup jobs, or CI deployment infrastructure before
+there is an implemented surface to operate. Other ops documents remain Draft prompts.
+See [Validation](../../VALIDATION.md) and the [roadmap](../product/01-roadmap.md).

@@ -1,25 +1,33 @@
 # Quality Attributes
 
-- Status: Draft
+- Status: Designed scenarios; no measured results
 
-## Contract
+| Attribute | Required scenario and observation |
+| --- | --- |
+| Correctness | Real source yields the specified value or diagnostic through the native pipeline |
+| Failure containment | Arithmetic/quota/cancellation becomes an Instance outcome, not a native trap |
+| Bounded work | Parsing, verification, runtime work, cleanup, and IPC obey explicit limits |
+| Isolation | Actual restricted Windows worker denies unauthorized access and fails closed |
+| Latency | Measure reused setup and compile/verify separately from process startup |
+| Memory | Report VM ledgers, allocation peaks, and process memory independently |
+| Build footprint | Bound retained project outputs and separate compiler/debug/cache costs |
+| Operability | Report terminal cause, publication status, and unknown external effects accurately |
 
-Turn quality goals into measurable scenarios and explicit tradeoffs tied to the product's intended outcomes.
+## Measurement
 
-Project-wide decisions: docs/product/02-spec.md
+The [performance budget](../engineering/03-performance-budget.md) owns numeric targets.
+Record workload, hardware, OS, artifact/toolchain identity, optimization profile,
+sample count, and warm/cold conditions. Targets are not current guarantees.
 
-## Required Decisions
+Correctness and resource failures must remain observable during optimization.
+Do not count work delegated to a native host as VM throughput. Do not compare
+accounted VM bytes directly to another runtime's process RAM.
 
-- Quality scenarios: UNDECIDED. Describe the user journey, operating conditions, workload, and response expected for each relevant quality attribute.
-- Measurement contract: UNDECIDED. Define the metric, population, denominator, observation point, window, and owner needed to evaluate a scenario.
-- Thresholds and tradeoffs: UNDECIDED. Set justified targets or limits, state the cost of meeting them, and identify competing goals.
-- Failure envelopes: UNDECIDED. Record behavior under exhausted resources, unavailable dependencies, abnormal input, and degraded operation.
-- Evidence and gaps: UNDECIDED. Select representative measurements or checks, distinguish measured results from assumptions, and disclose untested conditions.
-- Review triggers: UNDECIDED. Assign review authority and revisit targets when workloads, costs, supported environments, or product expectations change.
+## Tradeoffs and review
 
-## Verification
+Favor a small source profile and end-to-end delivery before JIT, broad APIs, or
+complex caching. Checked arithmetic, quotas, ownership, and output staging remain
+required even when they cost time or memory.
 
-- Owner: UNASSIGNED
-- Source of truth and related ADR: UNDECIDED
-- Required evidence and remaining gaps: UNDECIDED
-- Validation route: VALIDATION.md
+Review targets after M0 feasibility, representative workloads, and each material
+profile or delivery-boundary change. Zerodi / Rodisoft owns scope decisions.

@@ -1,15 +1,39 @@
 # Documentation
 
-- Status: Draft
+- Status: Accepted design documentation; implementation absent
 
-## Source of Truth
+## Owning documents
 
-- Product scope source: docs/product/02-spec.md
-- Architecture decisions source: docs/adr/*.md
-- Operational standard source: docs/ops/00-operational-contract.md
-- Validation source: VALIDATION.md
-- Agent routing source: .agents/context-map.md
-- Repository hygiene source: .editorconfig, .gitattributes, .gitignore
-- CLI command contract source: docs/cli/command-contract.md
-- CLI config source: docs/cli/configuration.md
-- CLI output and exit-code source: docs/cli/output-and-exit-codes.md
+| Topic | Document |
+| --- | --- |
+| Product intent and demand assumptions | [Product brief](product/00-product-brief.md) |
+| Language profile and observable behavior | [Specification](product/02-spec.md) |
+| Delivery and open risks | [Roadmap](product/01-roadmap.md), [risk register](product/03-risk-register.md) |
+| System overview and trust boundaries | [Architecture](../ARCHITECTURE.md), [system boundary](architecture/00-system-boundary.md) |
+| Concepts, lifecycle, and quality scenarios | [Domain model](architecture/01-domain-model.md), [runtime flow](architecture/02-runtime-flow.md), [quality attributes](architecture/03-quality-attributes.md) |
+| Decision rationale and contract ownership | [ADR index](adr/README.md) |
+| External provenance and review corrections | [Design baseline](design-baseline.md) |
+| Development and contributions | [Development](../DEVELOPMENT.md), [Contributing](../CONTRIBUTING.md) |
+| CLI interface | [Overview](cli/README.md), [commands](cli/command-contract.md), [configuration](cli/configuration.md), [output and exits](cli/output-and-exit-codes.md) |
+| Runtime invariants | [Project invariants](engineering/00-project-invariants.md) |
+| Resource targets and trust controls | [Performance](engineering/03-performance-budget.md), [security](engineering/04-security-baseline.md) |
+| Evidence and testing | [Validation](../VALIDATION.md), [testing standard](engineering/05-testing-standard.md) |
+| Dependencies and compatibility | [Change policy](engineering/06-dependency-and-change-policy.md) |
+| Failure and operating responsibility | [Failure standard](engineering/07-operability-and-failure-standard.md), [operational contract](ops/00-operational-contract.md) |
+
+## Remaining templates
+
+Other generated documents remain Draft prompts. This includes the ADR template,
+engineering review guides, detailed ops runbooks, checklist routers, and agent skill
+scaffolds. They do not add accepted requirements or configured commands.
+
+## Status and authority
+
+Accepted records design intent, not implemented behavior. Designed interfaces have
+no executable runner. Verified means an executed check has recorded evidence;
+unmeasured targets are not results. See [ADR 0002](adr/0002-contract-source-of-truth.md)
+for authoritative facts and update direction.
+
+Keep documents concise and in English, use relative links, and update affected
+consumers with the owning contract. Do not import source-package instructions or
+local absolute paths. No native execution or security result is established here.

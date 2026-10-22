@@ -1,24 +1,32 @@
 # Testing Standard
 
-- Status: Draft
+- Status: Accepted evidence approach; no configured test runner
 
-## Contract
+## Proportionate checks
 
-Choose checks that establish important behavior and recovery properties while keeping evidence reproducible, interpretable, and proportionate to the risk.
+Use the narrowest check that can establish the changed behavior. Do not create a
+large CI matrix for documentation work or repeat valid checks for unchanged inputs.
+Run broader checks when source semantics, security boundaries, or release scope
+require them. Never report a missing command or skipped check as a pass.
 
-Project-wide decisions: docs/engineering/00-project-invariants.md
+## Milestone coverage
 
-## Required Decisions
+- M0: native codec extremes, checked arithmetic status, fallible storage, quota
+  rollback/peak accounting, and stale-generation rejection.
+- M1: real scalar source through parser, type/Flow, codegen, verifier, and native VM.
+- M2: aggregate initialization/copying, whole-root borrows, Buffer growth, and bytes.
+- M3: fake in-memory typed host replies, cancellation, malformed/duplicate replies.
+- M4: actual Windows isolation, broker phase/cancellation, exit/EOF, and I/O leases.
+- M5: real DLL export/call, clean-machine delivery, and named performance workloads.
 
-- Risk coverage: UNDECIDED. Map required contracts, invariants, and user outcomes to the narrowest useful unit, integration, consumer, runtime, or recovery checks.
-- Independent oracle: UNDECIDED. Define expected results from the behavior contract rather than copying implementation details into assertions.
-- Failure fixtures: UNDECIDED. Select meaningful invalid inputs, partial effects, concurrency ordering, interruption, and recovery scenarios using controlled fixtures where needed.
-- Environment and evidence: UNDECIDED. Identify required support rows, artifact and toolchain identity, skipped conditions, and limits of automated or simulated checks.
-- Evidence cost: UNDECIDED. Avoid redundant broad suites, bound execution cost, and retire checks whose original risk or contract no longer exists while preserving needed coverage.
+Expected results come from the contract and independently chosen vectors. Include
+the broker ordering, layout-depth separation, and minimum-capacity Buffer fallback
+cases in the [review findings](../design-baseline.md).
 
-## Verification
+## Evidence limits
 
-- Owner: UNASSIGNED
-- Source of truth and related ADR: UNDECIDED
-- Required evidence and remaining gaps: UNDECIDED
-- Validation route: VALIDATION.md
+A model is useful as an oracle but cannot replace native or OS integration evidence.
+Record commands, artifact identity, environment, actual result, skips, and gaps.
+Long fuzzing and benchmarks may run manually when their risk justifies the cost.
+Retire tests for removed behavior while preserving coverage of surviving contracts.
+The [validation policy](../../VALIDATION.md) owns evidence levels and reporting.

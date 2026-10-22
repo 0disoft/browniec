@@ -1,24 +1,33 @@
 # Dependency and Change Policy
 
-- Status: Draft
+- Status: Accepted initial policy; no dependency manifest yet
 
-## Contract
+## Necessity
 
-Choose and maintain dependencies deliberately from the required capability, compatibility evidence, maintenance burden, and replacement cost.
+Prefer existing Fairy C or platform capabilities. Before adding a dependency, record
+its purpose, build/runtime role, alternatives, license, maintained owner, and removal
+cost. Keep native shims narrow; do not replace the core VM with a foreign runtime.
 
-Project-wide decisions: docs/engineering/00-project-invariants.md
+## Versions and identity
 
-## Required Decisions
+Use supported major-version ranges where the ecosystem supports them, with a lock
+or recorded build identity for reproducibility. Adopt compatible stable updates;
+promote a new major after targeted compatibility checks. Do not freeze an old compiler
+snapshot forever. Pre-stable Fairy C changes require explicit corpus/native review.
 
-- Necessity and alternatives: UNDECIDED. State the required capability, built-in or existing alternatives, and the cost or risk that justifies a new dependency.
-- Dependency inventory: UNDECIDED. Record runtime or development role, consumer impact, maintenance owner, licensing requirements, and relevant exposure.
-- Compatibility updates: UNDECIDED. Define supported major ranges, reproducible build and lock behavior, compatible-update adoption, and evidence before deliberately promoting a new major.
-- Change validation: UNDECIDED. Check affected runtime, package, consumer, and behavioral contracts and disclose unsupported environments or remaining gaps.
-- Replacement and exit: UNDECIDED. Identify rollback limits, data or API migration, removal work, and triggers for replacing an unmaintained or unsuitable dependency.
+Record actual Fairy C, Go bootstrap, native compiler, and SDK identities at build
+time. Separate development prerequisites from end-user runtime dependencies.
+A dated design-package hash is provenance, not an adopted or latest toolchain.
 
-## Verification
+## Change scope
 
-- Owner: UNASSIGNED
-- Source of truth and related ADR: UNDECIDED
-- Required evidence and remaining gaps: UNDECIDED
-- Validation route: VALIDATION.md
+Update affected contracts and consumers together. Layout changes touch compiler,
+verifier, VM, codec, and independent vectors. CLI changes touch help, examples,
+configuration, results, and exit codes. Isolation or ABI changes need real integration
+evidence. Use a new ADR for material accepted-architecture changes.
+
+Keep commits small and verified. Group authorized pushes to avoid redundant CI runs.
+No automatic version bump, release, dependency installation, or external repository
+edit is implied by a documentation task.
+
+See [Development](../../DEVELOPMENT.md) and [ADR 0002](../adr/0002-contract-source-of-truth.md).

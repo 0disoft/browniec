@@ -1,25 +1,37 @@
 # System Boundary
 
-- Status: Draft
+- Status: Accepted design boundary; not implemented
+- Owner: Zerodi / Rodisoft
 
-## Contract
+## Owned responsibilities
 
-Define what this repository is accountable for and what it consumes before choosing components or technologies.
+Brownie C owns source validation, type/Flow analysis, private bytecode generation,
+verification, VM state, quotas, typed host suspension, and staged output. The CLI,
+restricted broker/worker, and trusted embed ABI are distinct delivery surfaces.
 
-Project-wide decisions: docs/product/00-product-brief.md
+Parser, analysis, verifier, and dispatch remain Fairy C. Narrow allocator, codec,
+and OS shims must expose explicit preconditions and fallible results.
 
-## Required Decisions
+## External authority
 
-- Owned responsibilities: UNDECIDED. Map product outcomes to responsibilities owned here, exclusions, and accountable maintainers.
-- External authority: UNDECIDED. Identify consumed services, contracts, datasets, identities, and decisions owned by other repositories or teams.
-- Trust crossings: UNDECIDED. Describe inputs, outputs, credentials, and data moving across boundaries, with validation and access-control ownership where applicable.
-- State authority: UNDECIDED. Name authoritative records, local or derived copies, permitted mutations, and who resolves conflicting state.
-- Failure containment: UNDECIDED. Explain how an unavailable dependency, partial operation, or compromised component affects other responsibilities.
-- Boundary changes: UNDECIDED. Define handoff, migration, compatibility, and evidence required before moving a responsibility into or out of this repository.
+Fairy C and the native SDK own build-time capabilities. Their separate repository
+is not modified here. Go bootstrap tooling does not imply a Go runtime dependency.
+Windows owns AppContainer/Job enforcement; actual integration evidence is required.
+Host adapters own credentials, destination authorization, and external effect state.
 
-## Verification
+## Trust crossings
 
-- Owner: UNASSIGNED
-- Source of truth and related ADR: UNDECIDED
-- Required evidence and remaining gaps: UNDECIDED
-- Validation route: VALIDATION.md
+Treat source, project members, input, IPC, and host replies as untrusted. Validate
+bounded snapshots before consumption. Reachable requirements must fit declarations,
+run grants, and the trusted policy ceiling; source metadata grants no authority.
+Private bytecode cannot be supplied externally. No disk runtime code cache exists.
+
+## Failure containment
+
+Guest failure ends one Instance. Internal runtime invariant failure poisons the
+Engine. Native corruption is not assumed recoverable in process. Untrusted source
+requires the tested restricted worker; failed isolation setup never falls back.
+Output staging cannot undo host effects. The host owns reconciliation of unknown
+outcomes and the VM never silently retries them.
+
+See [Architecture](../../ARCHITECTURE.md) and [ADR 0001](../adr/0001-initial-architecture-boundaries.md).

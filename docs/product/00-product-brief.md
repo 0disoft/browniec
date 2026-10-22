@@ -1,25 +1,37 @@
 # Product Brief
 
-- Status: Draft
+- Status: Accepted initial direction, 2026-10-23
+- Product owner: Zerodi / Rodisoft
+- Implementation: absent
 
-## Contract
+## Intended outcome
 
-Identify the user problem and intended outcome before selecting features, implementation details, or delivery dates.
+Application developers should run small validation, byte-transformation, and rule
+programs with explicit resource limits and host permissions. Brownie C combines
+Fairy-like syntax with a small native interpreter whose end users need no compiler.
 
-Project-wide decisions: README.md
+These workloads are hypotheses. There is no demonstrated customer demand, measured
+advantage over existing languages, or commitment to replace Python.
 
-## Required Decisions
+## First delivery
 
-- User outcome: UNDECIDED. State what a user should accomplish and what observable result would make the product useful.
-- Target users: UNDECIDED. Describe eligible users, their context, current alternatives, and whose needs are outside this product.
-- Scope and exclusions: UNDECIDED. Name owned problems, explicit non-goals, and external services or teams the product relies on.
-- Problem evidence: UNDECIDED. Record the observations supporting this need, uncertain assumptions, and how those assumptions can be checked.
-- Success and constraints: UNDECIDED. Define outcome evidence, time and resource limits, accessibility expectations, and unacceptable side effects.
-- Decision owner: UNDECIDED. Name who can change the product boundary and when the brief must be reviewed against user evidence.
+Windows 11 x64 is the first target. Build a scalar source-to-VM CLI, then aggregates
+and bytes, typed host suspension, restricted workers, and trusted DLL embedding.
+The [specification](02-spec.md) owns the source profile; the [roadmap](01-roadmap.md)
+owns M0-M5. Do not delay the core CLI until every later delivery level exists.
 
-## Verification
+## Success and constraints
 
-- Owner: UNASSIGNED
-- Source of truth and related ADR: UNDECIDED
-- Required evidence and remaining gaps: UNDECIDED
-- Validation route: VALIDATION.md
+Success starts with real native programs that produce expected results and explicit
+failure outcomes. Record startup, compilation, execution, memory, and retained build
+outputs separately. Performance numbers are targets until measured.
+
+Keep the core implementation in Fairy C, with narrow native shims. Do not trade away
+checked arithmetic, ownership, quota enforcement, or output staging for speed.
+Do not accept untrusted source without the tested restricted worker.
+
+## Review triggers
+
+Revisit scope after M0 feasibility and the first representative workload experiments.
+Use observed developer tasks and measured costs before broadening the language.
+Zerodi / Rodisoft approves material scope changes; record rationale in an ADR.

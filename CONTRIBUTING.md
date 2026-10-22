@@ -1,24 +1,33 @@
 # Contributing
 
-- Status: Draft
+- Status: Initial contribution policy; documentation-only repository
 
-## Contract
+## Scope
 
-Explain how a contributor proposes and delivers a change against the project's actual ownership, behavior, and review expectations.
+Zerodi / Rodisoft owns product scope and delivery decisions. Start from the
+[specification](docs/product/02-spec.md) and [roadmap](docs/product/01-roadmap.md).
+The next implementation work is M0 native feasibility, followed by M1 scalar execution.
 
-Project-wide decisions: docs/engineering/00-project-invariants.md
+Do not expand the language profile, replace core Fairy C logic with a host-language
+model, or expose the restricted/embed levels without the corresponding design decision
+and milestone evidence. The external design package is reference material only.
 
-## Required Decisions
+## Changes and review
 
-- Contribution boundary: UNDECIDED. Identify supported contributions, owned surfaces, exclusions, and the owner who resolves scope questions.
-- Proposal and coordination: UNDECIDED. Define how contributors describe the problem, affected consumers, alternatives, and decisions needed before implementation.
-- Review and evidence: UNDECIDED. Record review ownership, observable acceptance criteria, relevant validation from VALIDATION.md, and how missing evidence is disclosed.
-- Change presentation: UNDECIDED. Define useful commit or review units, behavior descriptions, documentation updates, and preservation of unrelated project changes.
-- Delivery ownership: UNDECIDED. Identify who merges, publishes, migrates, or releases a change and the evidence required for those distinct actions.
+- Describe the observable problem, intended behavior, and affected contract.
+- Keep one useful delivery slice per commit and preserve unrelated changes.
+- Update the owning document and affected consumers together; use a new ADR for a
+  material architecture change.
+- Prefer the existing branch. Do not modify the separate fairyc repository here.
+- Use gitmoji-style commit messages until the repository adopts another convention.
 
-## Verification
+## Evidence and delivery
 
-- Owner: UNASSIGNED
-- Source of truth and related ADR: UNDECIDED
-- Required evidence and remaining gaps: UNDECIDED
-- Validation route: VALIDATION.md
+Follow [Validation](VALIDATION.md). There is currently no configured build or test
+runner. Report only checks actually run, with failures, skips, and relevant artifact
+identity. Choose narrow checks for the changed behavior; document checks do not prove
+native execution or security.
+
+The change summary should explain behavior, validation, and remaining limitations.
+Local commits, remote pushes, releases, and deployments are separate actions. Remote
+delivery requires the owner's authorization; a local commit is not a published release.

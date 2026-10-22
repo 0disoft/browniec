@@ -1,25 +1,37 @@
 # Runtime Flow
 
-- Status: Draft
+- Status: Designed; no executable path
 
-## Contract
+## Source to result
 
-Trace an operation from entry to observable completion and explain the state left behind at each failure or interruption point.
+1. Select explicit source/project, policy, catalog, entry, input, grants, and limits.
+2. Read bounded source snapshots and reject invalid metadata or paths.
+3. Parse, resolve, type check, and compute ownership/Flow facts.
+4. Emit private typed bytecode; independently verify it into an immutable Program.
+5. Create a one-shot Instance with reserved state and an owned input snapshot.
+6. Step within Fuel and other limits. Guest calls use VM frames.
+7. On a host operation, suspend with a typed request. Validate authority and the
+   bounded reply before committing it to the Instance.
+8. On normal completion, finish publication checks and publish staged output.
+9. On failure, discard unpublished output and perform bounded runtime-ledger cleanup.
 
-Project-wide decisions: docs/architecture/00-system-boundary.md
+## Restricted path
 
-## Required Decisions
+The trusted parent prepares actual AppContainer/Job isolation and bounded private
+IPC before collecting untrusted work in the worker. Compile untrusted source in
+that worker. Preparation failure stops the operation.
 
-- Entry and completion: UNDECIDED. Name the initiating actor, input boundary, validation, completion predicate, and user-visible result.
-- Execution ownership: UNDECIDED. Map components, asynchronous work, state owners, and the handoff that makes each step accountable.
-- Effect ordering: UNDECIDED. List reads, mutations, external effects, durable receipts, and result publication in the order they can occur.
-- Interruption and retry: UNDECIDED. Define cancellation ownership, timeout meaning, duplicate prevention, and what may safely resume or repeat.
-- Partial state and recovery: UNDECIDED. Identify possible state after each failure, compensation or reconciliation, and unresolved outcomes needing an operator.
-- Completion evidence: UNDECIDED. Connect the reported result to durable or observable effects and select representative failure and recovery scenarios.
+The broker rejects illegal phase transitions before cancellation. After cancellation,
+it may drain bounded lawful late frames without adapter dispatch or publication.
+A staged RESULT alone is insufficient: normal exit, expected EOF, valid deadline,
+and no failure/cancellation must satisfy the publication barrier. I/O lease storage
+remains reserved until completion, even after cancellation is requested.
 
-## Verification
+## Interruption and effects
 
-- Owner: UNASSIGNED
-- Source of truth and related ADR: UNDECIDED
-- Required evidence and remaining gaps: UNDECIDED
-- Validation route: VALIDATION.md
+The first terminal cause remains available through cleanup. An output sink can fail
+after computation and may have partial writes. Host effects can complete despite a
+lost reply or cancellation; report unknown state and leave reconciliation to the host.
+Do not automatically rerun a failed Instance or replay host effects.
+
+See [output semantics](../cli/output-and-exit-codes.md) and [Validation](../../VALIDATION.md).
