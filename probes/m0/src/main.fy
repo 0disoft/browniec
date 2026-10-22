@@ -2,9 +2,11 @@ module main;
 
 import std::io as io;
 import std::bytes as bytes;
+import arithmetic_checks as arithmetic_checks;
 
 @effects(console)
 fn i32 main() {
+    arithmetic_checks::run();
     var bytes::Buffer buffer = switch (bytes::with_capacity(64)) {
         case .ok(value): { value }
         case .err(_): { return 1; }
