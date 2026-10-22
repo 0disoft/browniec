@@ -14,7 +14,7 @@ New-Item -ItemType Directory -Force $output | Out-Null
 $emptyPath = Join-Path $output 'no-runtime-tools'
 New-Item -ItemType Directory -Force $emptyPath | Out-Null
 
-function Invoke-Captured([string]$File, [string[]]$Arguments, [string]$Directory, [bool]$RuntimeOnly = $false) {
+function Invoke-Captured([string]$File, [string[]]$Arguments, [string]$Directory, [bool]$RuntimeOnly = $false, [bool]$ForceOom = $false) {
   $start = [Diagnostics.ProcessStartInfo]::new()
   $start.FileName = $File
   $start.WorkingDirectory = $Directory
@@ -30,6 +30,7 @@ function Invoke-Captured([string]$File, [string[]]$Arguments, [string]$Directory
     $start.Environment['PATH'] = $emptyPath
     $start.Environment['TEMP'] = $emptyPath
     $start.Environment['TMP'] = $emptyPath
+    if ($ForceOom) { $start.Environment['BROWNIE_M0_OOM'] = '1' }
   }
   $process = [Diagnostics.Process]::Start($start)
   try {
@@ -70,6 +71,31 @@ foreach ($profile in @('development', 'release')) {
   }
   Write-Host "PASS: $profile native probe"
 }
+$originalCL = $env:CL
+try {
+  $header = Join-Path $project 'native/allocator_probe.h'
+  $env:CL = '/FI"' + $header + '"'
+  foreach ($profile in @('development', 'release')) {
+    $arguments = @('build', '--locked')
+    if ($profile -eq 'release') { $arguments += '--release' }
+    $built = Invoke-Captured $Compiler $arguments $project
+    $exe = Join-Path $output "brownie-m0-allocator-$profile.exe"
+    Copy-Item -LiteralPath (Join-Path $project 'build/brownie-native-m0.exe') -Destination $exe -Force
+    foreach ($mode in @('normal', 'oom')) {
+      $runtimeArguments = if ($mode -eq 'oom') { @('oom') } else { @() }
+      $ran = Invoke-Captured $exe $runtimeArguments $emptyPath $true ($mode -eq 'oom')
+      if ($ran.stdout -cne "brownie-m0: baseline passed`n") { throw "Unexpected $mode native output: $($ran.stdout)" }
+      $results += [ordered]@{
+        profile = $profile; mode = $mode; allocator = 'instrumented target malloc/free'; build = $built; runtime = $ran
+        artifact = [IO.Path]::GetRelativePath($repo, $exe)
+        sha256 = (Get-FileHash -LiteralPath $exe -Algorithm SHA256).Hash.ToLowerInvariant()
+        bytes = (Get-Item -LiteralPath $exe).Length
+        runtimePathHasToolchain = $false
+      }
+      Write-Host "PASS: $profile allocator $mode probe (including exit leak check)"
+    }
+  }
+} finally { $env:CL = $originalCL }
 $receipt = [ordered]@{
   schema = 'browniec.native-m0/v1'; recordedAt = [DateTime]::UtcNow.ToString('o')
   fairyRevision = $revision
