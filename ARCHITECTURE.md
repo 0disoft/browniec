@@ -1,25 +1,76 @@
 # Architecture
 
-- Status: Draft
+- Status: accepted design baseline
+- Decision date: 2026-10-23
+- Implementation: absent
 
-## Contract
+## Intent
 
-Orient a new contributor to the architecture decisions and their authoritative documents without duplicating every detailed contract.
+Brownie C separates source semantics, private typed bytecode, execution state, and
+host capabilities. The architecture should make the valid execution path small and
+make trust crossings explicit.
 
-Project-wide decisions: docs/architecture/00-system-boundary.md
+The system is not a C interpreter and does not expose C memory layout to source.
+Its explicit Fairy-like syntax is its own safe profile.
 
-## Required Decisions
+## Main path
 
-- Architecture map: UNDECIDED. Summarize major responsibilities and point readers to the boundary, domain, runtime, and quality documents that own the details.
-- Decision status: UNDECIDED. Distinguish accepted decisions, alternatives under consideration, unresolved assumptions, and related decision records.
-- Technology rationale: UNDECIDED. Explain chosen or proposed technologies, relevant constraints, alternatives, and replacement or exit assumptions.
-- Contract handoffs: UNDECIDED. Identify external owners, shared interfaces, and coordination needed when responsibilities or compatibility change.
-- Change impact: UNDECIDED. Define which documents, consumers, checks, and recovery plans must be reviewed for a structural change.
-- Map maintenance: UNDECIDED. Name the owner and update triggers that keep this overview aligned with accepted decisions and current implementation.
+The intended pipeline is:
 
-## Verification
+1. Read a bounded UTF-8 source snapshot.
+2. Parse and resolve the explicit module graph.
+3. Type check and compute ownership, loan, and return-origin facts.
+4. Emit private typed register bytecode and transfer templates.
+5. Verify structure, control flow, layout, registers, ownership, and metering.
+6. Create an immutable Program.
+7. Create a one-shot Instance with explicit input, grants, and limits.
+8. Step the VM with bounded work until completion, host suspension, or termination.
 
-- Owner: UNASSIGNED
-- Source of truth and related ADR: UNDECIDED
-- Required evidence and remaining gaps: UNDECIDED
-- Validation route: VALIDATION.md
+Source, compiler, verifier, VM, and simple platform shims are primarily Fairy C.
+Allocator, scalar codec, and OS access may use narrow shims with recorded preconditions.
+
+## Ownership model
+
+- Program owns immutable code, constants, layouts, source maps, and catalog bindings.
+- Engine owns compile state and coordinates instances on one owner thread.
+- Instance owns frames, input, owners, loans, pending work, grants, and staged output.
+- Buffer owns fallible dynamic bytes and moves as one value.
+- Guest references use opaque typed tokens and descriptor ledgers, never native pointers.
+
+Program reuse is explicit. There is no runtime Program cache. Bytecode is private
+and cannot be loaded from disk or supplied by a caller. Guest recursion uses VM
+frames and never the Fairy native call stack.
+
+## Host boundary
+
+The VM does not call host callbacks directly. Guest host operations suspend through
+typed request and reply records. Reachable requirements must fit declared
+requirements, run grants, and the Engine policy ceiling.
+
+The core embed path is for trusted native hosts in the same process. Arbitrary
+external source belongs in a restricted process with AppContainer access limits,
+Job resource limits, a bounded parent broker, and independently verified Windows
+IPC. Preparation failure must not fall back to an unrestricted child.
+
+The ABI is planned, not present. Current Fairy C documentation states that its
+pub/callback adapter does not export public C symbols. An actual DLL export and call
+belong to the embed milestone.
+
+## Failure and publication
+
+Guest arithmetic, quota, cancellation, and deadline failures are explicit Instance
+outcomes. A guest i32 return is data, not the Brownie CLI process exit code.
+Output remains staged until successful completion and publication checks.
+
+Internal ownership or ledger invariant failures poison the Engine. Detected native
+memory corruption is not proven recoverable in process; restricted execution contains
+it at the worker boundary.
+
+## Change impact
+
+Changing source semantics requires corpus review. Changing value layout requires
+updates to compiler, verifier, VM, and independent expected vectors. Changing the
+host boundary requires caller, capability, cancellation, and packaging review.
+
+Detailed decisions live in docs/adr/. Product behavior lives in
+docs/product/02-spec.md. Validation evidence rules live in VALIDATION.md.

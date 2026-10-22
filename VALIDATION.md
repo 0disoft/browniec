@@ -1,51 +1,78 @@
 # Validation
 
-- Status: Draft
+- Status: accepted evidence policy; no configured runner
+- Current implementation: absent
 
-## Validation Source of Truth
+## Validation source of truth
 
-This document owns stable validation names for this scaffold.
+This file defines evidence expectations for Brownie C. Stable framework command names
+are not configured because this repository has no executable build or test system.
 
-## Standard Validation Names
+Do not report a proposed command as executed. Do not treat a design package, static
+link check, Python model, or source fixture as proof of the Brownie VM.
 
-- format
-- lint
-- typecheck
-- test
-- contract
-- migration-check
-- smoke
-- docs
-- check
+## Evidence levels
 
-## Required Final Report
+| Level | What it can establish |
+| --- | --- |
+| Document check | Links, required sections, terminology, and status consistency |
+| Independent model | Small expected examples for layout, quota, ordering, or codec rules |
+| Native unit probe | A shim or VM primitive behaves under recorded inputs |
+| Source end-to-end | .brc source compiles, verifies, runs, and publishes as specified |
+| OS integration | Actual Windows isolation, cancellation, IPC, and cleanup behavior |
+| Performance measurement | A named workload meets or misses a measured budget |
 
-Final responses must list executed validations, passed validations, skipped validations, skip reasons, and remaining risk.
+Higher-level behavior requires its own evidence. A passing lower level is useful
+context, never automatic acceptance of the next level.
 
-## Runner Policy
+## Current documentation checks
 
-Task runner files are optional. Runner `none` means no executable task runner is generated.
-If a runner is generated, runner command names must match this document.
-Unconfigured runner commands must fail, not pass with a fake success.
+No link checker or Markdown linter is configured. A reviewer may run
+git diff --check for whitespace and patch integrity. Markdown links and status
+language should be checked without claiming a product test.
 
-## Hygiene Validation
+The external design package reported 746 passing design checks on Windows with
+Python 3.14.6. C/C++ header syntax and layout checks were skipped because cc and c++
+were unavailable. That result is design-package evidence only.
 
-Repository hygiene file changes must check line-ending churn, binary diff pollution,
-tracked secret files, ignored build/cache artifacts, and generated-output drift.
+The package contains 29 .brc examples and 32 acceptance cases recorded as not
+executed. None proves parser, compiler, verifier, VM, allocator, ABI, or sandbox behavior.
 
-## Scope
+## Required milestone evidence
 
-general validation routes must stay stack-neutral unless a runner file explicitly defines a command.
+M0 must prove the actual native signatures and record them:
 
-## Repository Shape
+- fallible storage and rollback;
+- signed little-endian codec including i64 MIN and MAX;
+- checked arithmetic including i64 MIN/MAX edge cases;
+- generation reuse rejection without pointer dereference;
+- runtime status return instead of a Fairy native trap.
 
-cli-tool validation must stay repository-shape focused and must not imply generated application source code.
+M1 must run a scalar .brc source through parse, type, code, verify, and native VM.
+M2 must cover arrays, structs, borrows, Buffer, input, output, and UTF-8.
+M3 must use a fake in-memory typed host adapter without live keys or network services.
+M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker
+publication barrier. Compile untrusted source only inside the restricted worker.
+M5 requires actual DLL export/call, clean-machine packaging, and full metrics.
 
-## Task Validation Guides
+## Review obligations
 
-Select the relevant guide for affected contracts and failure paths. This list reflects the guides generated for the selected scope, repository type, addons, and density. Stable names and runner routing remain governed by this document. Update the list when the project retires or replaces a guide.
+Three reviewed counterexamples must remain explicit acceptance tests:
 
-- [Default Validation](.agents/validations/default.md)
-- [Ops Change Validation](.agents/validations/ops-change.md)
-- [Dependency Upgrade Validation](.agents/validations/dependency-upgrade.md)
-- [CLI Tool Validation](.agents/validations/cli-tool.md)
+1. Before cancellation, broker messages must obey the protocol phase. Reject the
+   illegal sequence RESULT, HOST_REQUEST, exit 0, EOF. After cancellation, only
+   bounded legitimate late messages may be drained, without adapter dispatch or
+   output publication.
+2. Structural depth, tagged wrapper depth, and total traversal budget are tested
+   independently. A 16-level struct accepted alone must not become invalid only
+   because it is wrapped twice in Option.
+3. Buffer growth computes a rounded preferred candidate, then retries the minimum
+   rounded requirement when that candidate exceeds any applicable reservation
+   ceiling, while still reserving old plus new peak and owner metadata.
+
+## Reporting and release
+
+Every final report must list executed checks, actual results, skipped checks and
+reasons, artifact/toolchain identity, and remaining risk. Acceptance of a design does
+not mean implementation. Release evidence must be tied to the shipped binary and its
+supported profile.
