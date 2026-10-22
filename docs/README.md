@@ -1,6 +1,6 @@
 # Documentation
 
-- Status: Accepted design documentation; implementation absent
+- Status: Accepted design documentation; M0 native probes verified; Brownie VM absent
 
 ## Owning documents
 
@@ -13,6 +13,7 @@
 | Concepts, lifecycle, and quality scenarios | [Domain model](architecture/01-domain-model.md), [runtime flow](architecture/02-runtime-flow.md), [quality attributes](architecture/03-quality-attributes.md) |
 | Decision rationale and contract ownership | [ADR index](adr/README.md) |
 | External provenance and review corrections | [Design baseline](design-baseline.md) |
+| M0 native feasibility and build | [M0 probes](../probes/m0/README.md), [validation evidence](evidence/m0-windows-20261023.json) |
 | Development and contributions | [Development](../DEVELOPMENT.md), [Contributing](../CONTRIBUTING.md) |
 | CLI interface | [Overview](cli/README.md), [commands](cli/command-contract.md), [configuration](cli/configuration.md), [output and exits](cli/output-and-exit-codes.md) |
 | Runtime invariants | [Project invariants](engineering/00-project-invariants.md) |
@@ -29,11 +30,13 @@ scaffolds. They do not add accepted requirements or configured commands.
 
 ## Status and authority
 
-Accepted records design intent, not implemented behavior. Designed interfaces have
-no executable runner. Verified means an executed check has recorded evidence;
-unmeasured targets are not results. See [ADR 0002](adr/0002-contract-source-of-truth.md)
-for authoritative facts and update direction.
+Accepted records design intent, not implemented behavior. The M0 harness is runnable;
+the designed browniec interfaces do not yet have a public runner. Verified means an
+executed check has recorded evidence; unmeasured targets are not results. See
+[ADR 0002](adr/0002-contract-source-of-truth.md) for authoritative facts and update
+direction.
 
 Keep documents concise and in English, use relative links, and update affected
 consumers with the owning contract. Do not import source-package instructions or
-local absolute paths. No native execution or security result is established here.
+local absolute paths. M0 establishes native primitive results only; VM execution,
+Windows isolation, ABI, and packaging remain unimplemented.

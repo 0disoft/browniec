@@ -1,7 +1,7 @@
 # Project Invariants
 
 - Status: Accepted design invariants
-- Implementation: absent
+- Implementation: M0 native primitives verified; VM invariants not implemented
 
 ## Runtime authority
 
@@ -12,6 +12,10 @@ runtime Program cache, external bytecode input, or disk bytecode cache.
 Parser, type checking, Flow analysis, verifier, and dispatch remain in Fairy C.
 Allocator, scalar codec, and OS access may live in explicit bounded shims whose
 signatures and failure modes are recorded by native probes.
+
+M0 records signatures and failure modes for the first arithmetic, codec, storage,
+allocator, owner, and frame probes. Those primitives do not implement the VM or its
+verification pipeline described below.
 
 ## Execution invariants
 

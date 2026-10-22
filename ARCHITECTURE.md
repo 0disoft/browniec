@@ -2,7 +2,7 @@
 
 - Status: accepted design baseline
 - Decision date: 2026-10-23
-- Implementation: absent
+- Implementation: M0 native probes verified; Brownie VM absent
 
 ## Intent
 
@@ -12,6 +12,11 @@ make trust crossings explicit.
 
 The system is not a C interpreter and does not expose C memory layout to source.
 Its explicit Fairy-like syntax is its own safe profile.
+
+The current implementation stops below this architecture. `probes/m0` exercises
+native arithmetic, codec, storage, allocator, owner, and frame primitives. The lexer,
+parser, type checker, verifier, Program, Instance, Engine, worker, and DLL described
+below remain designs; no Brownie source passes through this pipeline yet.
 
 ## Main path
 
@@ -28,6 +33,8 @@ The intended pipeline is:
 
 Source, compiler, verifier, VM, and simple platform shims are primarily Fairy C.
 Allocator, scalar codec, and OS access may use narrow shims with recorded preconditions.
+M0 implements the first allocator and scalar checks in Fairy C and a test-only C
+allocator header; it does not make the pipeline below executable.
 
 ## Ownership model
 

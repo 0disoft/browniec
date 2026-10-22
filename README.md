@@ -1,6 +1,6 @@
 # Brownie C
 
-- Status: accepted design baseline; not implemented
+- Status: accepted design baseline; M0 native primitives verified; Brownie VM not implemented
 - Design date: 2026-10-23
 - First delivery target: Windows 11 x64
 
@@ -8,8 +8,10 @@ Brownie C is a small, statically typed source language and JIT-free bytecode VM.
 The implementation direction is primarily Fairy C. A native Brownie VM executable
 accepts .brc source and runs it without starting Go, MSVC, or a C compiler.
 
-This repository currently contains documentation only. There is no parser,
-verifier, VM, native allocator, worker, DLL, test runner, or build system here.
+This repository contains the design documents, the `probes/m0` Fairy C feasibility
+sources, a test allocator header, and `tools/verify-m0.ps1`. It does not contain a
+Brownie lexer, parser, type checker, verifier, VM, worker, DLL, or public `browniec`
+command.
 
 ## Product intent
 
@@ -34,9 +36,9 @@ Those limits describe the profile, not the language forever.
 
 | Level | Intended capability | Current state |
 | --- | --- | --- |
-| core | Source compile, verify, and native VM CLI | Designed only |
-| restricted | Windows worker plus parent broker | Designed only |
-| embed | Trusted native host through a DLL ABI | Designed only; no public C export |
+| core | Source compile, verify, and native VM CLI | M0 native primitives verified; M1-M3 not implemented |
+| restricted | Windows worker plus parent broker | Not implemented; M4 |
+| embed | Trusted native host through a DLL ABI | Not implemented; M5; no public C export |
 
 The native VM is source-only. Bytecode is private compiler output; there is no
 external bytecode input or disk runtime code cache. Program values are immutable
@@ -51,10 +53,15 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [Architecture](ARCHITECTURE.md): system shape and trust boundaries
 - [Development](DEVELOPMENT.md): current build reality and future workflow
 - [Validation](VALIDATION.md): evidence rules and unimplemented checks
+- [M0 probes](probes/m0/README.md): native signatures, build and verification
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
 - [Design baseline](docs/design-baseline.md): source provenance, evidence, and findings
 
-All implementation, ABI, Windows isolation, source execution, performance, and
-security claims remain unverified until a concrete milestone records reproducible
-evidence.
+The expanded M0 run exercises arithmetic, codecs, storage, allocator, owner, and
+frame primitives on Windows x64. Exact commands and results belong to
+`build/m0/receipt.json` and `docs/evidence/m0-windows-20261023.json`. Running with an
+empty runtime `PATH` does not establish clean-machine packaging or a sandbox.
+
+ABI, Windows isolation, source execution, performance, and security claims remain
+unverified until their milestones record reproducible evidence.

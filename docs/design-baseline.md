@@ -1,7 +1,7 @@
 # Design Baseline
 
 - Status: Accepted for design, 2026-10-23
-- Implementation status: absent
+- Implementation status: M0 native primitives verified; Brownie VM absent
 - Provenance role: this file records the reviewed baseline; source material is not vendored
 
 ## Baseline decisions
@@ -24,6 +24,28 @@ Initial workloads are application data validation, byte transforms, and rule
 evaluation. They are design assumptions, not a proven market requirement or a claim
 that Brownie C replaces Python.
 
+## M0 native implementation evidence
+
+M0 is implemented in Fairy C under `probes/m0`. It provides checked signed i32/i64
+and unsigned u8/u32/usize arithmetic in wide registers, with failures returned as
+`Result`; exact 8-byte little-endian signed i64 and usize codecs; storage planning
+and rollback; typed owners; and copied scalar frames.
+
+Storage keeps the old and new capacities plus each owner's 64-byte logical charge during
+rebuild, requests exactly the planned capacity from `Buffer.with_capacity`, and
+retries the minimum 64-byte-rounded requirement when preferred 1.5-times growth
+exceeds an object, Instance, or Engine limit. The owner fixture has four slots as an
+M0 test bound, not a production capacity policy. Generation checks reject stale,
+free, reused, and retired-maximum tokens before payload access.
+
+The expanded Windows x64 run passed six native executions and four negative compiler
+checks: `E1101` use after move, `E2101` grow with a live shared view, `E2102` local
+view escape, and `E2101` exclusive alias. Exact evidence is in
+`build/m0/receipt.json` and `docs/evidence/m0-windows-20261023.json`.
+
+This does not implement `.brc` source parsing, a browniec CLI, the VM, a Windows
+worker, or a DLL. Empty runtime `PATH` coverage does not prove packaging or isolation.
+
 ## Source provenance
 
 The design review source is the external package brownie-c-design-v0.3.0 dated
@@ -41,11 +63,19 @@ A later review inspection saw fairyc HEAD 0885e20b on 2026-10-23. The checkout m
 during review; neither hash is declared latest, permanent, or an adopted Brownie
 toolchain baseline. Build adoption requires a dated artifact and compatibility record.
 
+M0 later selected Fairy source `4ce1264273be6051ee560173e94690e1b99c9eaf`, SDK
+`0.0.0-stage0.86`, and language `fairyc-language/20`, built on Windows x64 MSVC with
+a compiler recorded as SHA-256
+`572395f7f1e425d613c5a69f50b30ed177cda37ca2b1638bd0c11cf79fcbcc77`.
+That is dated M0 identity. It is not a permanent pin; the harness validates the
+requested checkout against the compiler build identity.
+
 Fairy C language document 0007 and ADR0481 state that the pub/callback adapter does
 not export public C symbols. Brownie therefore has no approved generic C export today.
-M0 must inspect actual callable signatures, and M5 must prove the final export and call.
+M0 inspected the Buffer and native primitive signatures used by its probes. It did
+not establish a public C export; M5 must prove the final export and call.
 
-## Review evidence
+## Historical design-package evidence
 
 The design package reported 746 checks passing locally on Windows with Python 3.14.6.
 The checks covered documents, schemas, policy relationships, reference models, source
@@ -61,7 +91,7 @@ identified the Buffer growth fallback requirement. These are review
 obligations and negative acceptance cases for the future implementation. They were
 not repaired in imported production code because no source package code is imported.
 
-## Required review findings
+## Historical design-review obligations
 
 1. Broker phase validation
 
@@ -88,11 +118,18 @@ Example: old capacity 256, required 257, minimum 320, preferred 384, spare 352. 
 minimum candidate fits and must be attempted. Allocator OOM remains a separate retry
 decision. External effects never receive a silent automatic retry.
 
+Current disposition: M0 storage checks now exercise the Buffer growth fallback and
+ownership accounting, and the negative corpus exercises move and view rules. The
+broker phase and separate layout budgets remain obligations for M4 and M1/M2. These
+historical findings are retained as review context, not current implementation claims.
+
 ## Claim boundaries
 
-All VM, native allocator, Windows isolation, ABI, performance, and security claims are
-unverified. The design package's models are not production parsers, race-free native
-code, pointer-safety proofs, or Windows scheduling evidence.
+M0 native arithmetic, codec, storage, allocator, owner, and frame primitives have
+recorded Windows evidence. VM execution, Windows isolation, ABI, clean-machine
+packaging, performance, and security claims remain unverified. The design package's
+models are not production parsers, race-free native code, pointer-safety proofs, or
+Windows scheduling evidence.
 
 The initial performance budgets are unmeasured. Benchmark small real workloads first,
 separate VM work from native-host offloading, and label build cache, binaries, process

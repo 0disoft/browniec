@@ -1,10 +1,11 @@
 # Roadmap
 
-- Status: Accepted delivery sequence for design, 2026-10-23
-- Current progress: no implementation milestone started
+- Status: Accepted delivery sequence; M0 implemented and verified, 2026-10-23
+- Current progress: M0 native probes passed; M1-M5 not started
 
-This roadmap orders learning and evidence. It is not a release promise or a claim
-that any command, binary, worker, or DLL already exists.
+This roadmap orders learning and evidence. It is not a release promise. M0 has a
+native harness and recorded evidence; the Brownie CLI, VM, worker, and DLL do not
+exist yet.
 
 ## Guiding rules
 
@@ -19,22 +20,29 @@ and a short record of unresolved risk. A model or fixture does not satisfy a nat
 Goal: prove that the smallest required Fairy native boundary is real and safe enough
 to continue.
 
-Evidence:
+M0 now has Fairy C sources for checked signed i32/i64 and unsigned u8/u32/usize
+arithmetic, exact 8-byte little-endian i64/usize codecs, storage planning and quota
+rollback, typed owner generations, and scalar frame copies. The test allocator forces
+the target allocator to return `NULL` and checks for leaked target allocations at exit.
 
-- actual compiler and SDK signatures used by a tiny native executable;
-- fallible storage with pre-allocation failure;
-- signed little-endian codec for i64 MIN/MAX and usize MAX;
-- checked arithmetic for overflow-to-status paths, including i64 MIN and -1;
-- quota reservation, old-plus-new peak, and rollback;
-- stale generation rejection without dereferencing a dead owner;
-- a short source path that does not invoke Go or a C compiler at run time.
+The harness builds development and release variants and executes them with an empty
+runtime `PATH` and cleared environment. The final expanded run passed six native
+executions and four negative compiler checks: `E1101` use after move, `E2101` grow
+with a live shared view, `E2102` local view escape, and `E2101` exclusive alias.
+Exact inputs, outputs, and artifact identity are in `build/m0/receipt.json` and
+`docs/evidence/m0-windows-20261023.json`.
 
-Exit condition: the required scalar boundary is demonstrated, or the specific Fairy
-capability gap is recorded with a minimal reproduction.
+M0 is native primitive evidence only. It does not implement `.brc` parsing, a VM, a
+public CLI, a Windows worker, a DLL, or clean-machine packaging. An empty runtime
+`PATH` is a harness condition, not proof of sandboxing.
+
+Exit condition is met for the named scalar and storage boundary. M1 starts from an
+unimplemented Brownie language pipeline.
 
 ## M1: scalar source to native VM
 
-Goal: run real .brc source through lexer, parser, type checking, Flow analysis,
+Status: not started. Goal: run real .brc source through lexer, parser, type checking,
+Flow analysis,
 private code generation, independent verification, and the native VM.
 
 The first usable slice includes functions, scalar Option/Result, question-mark
@@ -47,7 +55,8 @@ an explicit diagnostic and does not crash the host.
 
 ## M2: aggregates, borrows, and bytes
 
-Goal: connect arrays, plain structs, borrows, Buffer, input, output, and UTF-8.
+Status: not started. Goal: connect arrays, plain structs, borrows, Buffer, input,
+output, and UTF-8.
 
 Required evidence includes independent array copies, complete record construction,
 root conflict rejection, mutable views, returned borrows, Buffer growth and movement,
@@ -58,7 +67,8 @@ using a Python model as the product runtime.
 
 ## M3: typed host suspension
 
-Goal: run a fake in-memory host adapter with request and reply, grants, timeouts,
+Status: not started. Goal: run a fake in-memory host adapter with request and reply,
+grants, timeouts,
 pending state, and cancellation.
 
 No live service credential or network call is needed. Tests cover malformed replies,
@@ -67,7 +77,8 @@ and terminal snapshot stability.
 
 ## M4: restricted Windows worker
 
-Goal: compile and run untrusted source inside an independently tested worker.
+Status: not started. Goal: compile and run untrusted source inside an independently
+tested worker.
 
 Use actual Windows AppContainer and Job controls, private bounded IPC, a parent
 broker, I/O leases, a publication barrier, and bounded cleanup. Preparation failure
@@ -78,7 +89,8 @@ after cancellation, exit/EOF ordering, pending I/O completion, and output reject
 
 ## M5: embed and clean-machine delivery
 
-Goal: expose the planned DLL ABI to a trusted native host and verify packaging.
+Status: not started. Goal: expose the planned DLL ABI to a trusted native host and
+verify packaging.
 
 The milestone must prove actual symbol export and calls, public handle validation,
 clean-machine execution without developer compilers, and full startup, allocation,

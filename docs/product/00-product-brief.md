@@ -2,7 +2,7 @@
 
 - Status: Accepted initial direction, 2026-10-23
 - Product owner: Zerodi / Rodisoft
-- Implementation: absent
+- Implementation: M0 native primitives verified; product CLI and VM absent
 
 ## Intended outcome
 
@@ -15,8 +15,10 @@ advantage over existing languages, or commitment to replace Python.
 
 ## First delivery
 
-Windows 11 x64 is the first target. Build a scalar source-to-VM CLI, then aggregates
-and bytes, typed host suspension, restricted workers, and trusted DLL embedding.
+Windows 11 x64 is the first target. M0 native feasibility is complete; the scalar
+source-to-VM CLI is not. Build that CLI next, then aggregates and bytes, typed host
+suspension, restricted workers, and trusted DLL embedding.
+
 The [specification](02-spec.md) owns the source profile; the [roadmap](01-roadmap.md)
 owns M0-M5. Do not delay the core CLI until every later delivery level exists.
 

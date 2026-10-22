@@ -1,6 +1,9 @@
 # Runtime Flow
 
-- Status: Designed; no executable path
+- Status: Designed; M0 native probes exist, no Brownie execution path
+
+The flow below is the target architecture. M0 verifies selected native primitives,
+including storage and owner bookkeeping, but does not parse or execute `.brc` source.
 
 ## Source to result
 
