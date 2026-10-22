@@ -1,0 +1,13 @@
+%% Draft: illustrative placeholders; not accepted architecture.
+%% Source: docs/ops/rollback.md
+%% Question: Can the observed state be reversed safely, or does it require forward recovery?
+%% Replace UNDECIDED nodes and edge labels with project decisions; remove inapplicable branches.
+flowchart TD
+  Incident["Observed failed state: UNDECIDED"] -->|Identify artifact and data state: UNDECIDED| Target["Recovery target: UNDECIDED"]
+  Target -->|Check compatibility and side effects: UNDECIDED| Reversible{"Reversible: UNDECIDED"}
+  Reversible -->|Yes: UNDECIDED| Restore["Restore compatible state: UNDECIDED"]
+  Reversible -->|No or unknown: UNDECIDED| Forward["Reconcile or compensate: UNDECIDED"]
+  Restore -->|Verify state and behavior: UNDECIDED| Verified{"Recovery confirmed: UNDECIDED"}
+  Forward -->|Verify reconciled effects: UNDECIDED| Verified
+  Verified -->|Yes: UNDECIDED| Complete["Recovery completed: UNDECIDED"]
+  Verified -->|No or unresolved: UNDECIDED| Escalate["Recovery escalation: UNDECIDED"]

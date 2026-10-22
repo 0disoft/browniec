@@ -1,0 +1,14 @@
+%% Draft: illustrative placeholders; not accepted architecture.
+%% Source: docs/architecture/02-runtime-flow.md
+%% Question: How does an operation reach observable completion or recover from partial effects?
+%% Replace UNDECIDED nodes and edge labels with project decisions; remove inapplicable branches.
+flowchart TD
+  Input["Operation input: UNDECIDED"] -->|Validate: UNDECIDED| Valid{"Preconditions satisfied: UNDECIDED"}
+  Valid -->|No: UNDECIDED| Rejected["Rejected input: UNDECIDED"]
+  Valid -->|Yes: UNDECIDED| Effect["Owned effect: UNDECIDED"]
+  Effect -->|Observe durable state: UNDECIDED| Complete{"Completion predicate: UNDECIDED"}
+  Complete -->|Satisfied: UNDECIDED| Result["Reported result: UNDECIDED"]
+  Effect -->|Failure or interruption: UNDECIDED| Partial["Partial or unknown outcome: UNDECIDED"]
+  Complete -->|Unconfirmed: UNDECIDED| Partial
+  Partial -->|Reconcile within deadline: UNDECIDED| Recovery["Recovery owner: UNDECIDED"]
+  Recovery -->|Record resolved or unresolved state: UNDECIDED| Report["Recovery report: UNDECIDED"]

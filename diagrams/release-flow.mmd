@@ -1,0 +1,13 @@
+%% Draft: illustrative placeholders; not accepted architecture.
+%% Source: docs/ops/release.md
+%% Question: Which evidence permits promotion, and what happens if release health is unacceptable?
+%% Replace UNDECIDED nodes and edge labels with project decisions; remove inapplicable branches.
+flowchart TD
+  Candidate["Candidate artifact: UNDECIDED"] -->|Verify identity and compatibility: UNDECIDED| Ready{"Release criteria met: UNDECIDED"}
+  Ready -->|No: UNDECIDED| Hold["Held release: UNDECIDED"]
+  Ready -->|Yes: UNDECIDED| Promote["Promotion: UNDECIDED"]
+  Promote -->|Observe rollout: UNDECIDED| Health{"Health window passed: UNDECIDED"}
+  Health -->|Yes: UNDECIDED| Published["Release outcome: UNDECIDED"]
+  Health -->|No or unknown: UNDECIDED| Recover["Recovery decision: UNDECIDED"]
+  Promote -->|Partial failure: UNDECIDED| Recover
+  Recover -->|Execute selected recovery: UNDECIDED| Evidence["Recovery evidence: UNDECIDED"]

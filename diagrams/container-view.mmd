@@ -1,0 +1,14 @@
+%% Draft: illustrative placeholders; not accepted architecture.
+%% Source: ARCHITECTURE.md
+%% Question: Which components own entry, core behavior, state, and external integration?
+%% Replace UNDECIDED nodes and edge labels with project decisions; remove inapplicable branches.
+flowchart LR
+  Entry["Entry component: UNDECIDED"]
+  Core["Core component: UNDECIDED"]
+  State["State owner: UNDECIDED"]
+  Adapter["Integration component: UNDECIDED"]
+  Entry -->|Validated contract: UNDECIDED| Core
+  Core -->|Read or mutation authority: UNDECIDED| State
+  State -->|State result: UNDECIDED| Core
+  Core -->|External contract handoff: UNDECIDED| Adapter
+  Adapter -->|Outcome and failure: UNDECIDED| Core
