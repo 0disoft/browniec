@@ -1,46 +1,45 @@
 # Initial Architecture Boundaries
 
-- Status: Draft
-- Owner: UNASSIGNED
-- Decision date: UNDECIDED
-- Supersedes: UNDECIDED
-- Superseded by: UNDECIDED
-
-Draft the initial ownership and interaction boundaries from the product needs. This seeded record does not select an architecture for the project.
+- Status: Accepted for design
+- Decision owner: Zerodi / Rodisoft
+- Decision date: 2026-10-23
+- Implementation: not started
 
 ## Context
 
-- Product constraints: UNDECIDED; link the relevant outcomes and requirements in [Product Specification](../product/02-spec.md).
-- Owned responsibilities: UNDECIDED; identify capabilities, state, and invariants this repository must own.
-- External authority: UNDECIDED; identify other owners and contracts that this repository consumes.
+Brownie C needs a small native runtime for validation, byte transforms, and rules.
+Low allocation cost, bounded execution, and small retained build outputs matter.
+Fairy C is evolving; native failure handling and ABI support need direct probes.
+The reviewed source is recorded in the [design baseline](../design-baseline.md).
 
 ## Decision
 
-- Proposed boundaries: UNDECIDED; map responsibilities to components and name each owner.
-- Trust crossings: UNDECIDED; describe exchanged data, caller authority, validation, and effect ownership.
-- Boundary rationale: UNDECIDED; explain cohesion, dependency direction, and reasons for separating responsibilities.
+- Implement parsing, type/Flow analysis, private code generation, verification, and
+  VM dispatch in Fairy C. Allow only narrow allocator, codec, and OS shims.
+- Use a JIT-free typed register VM with ownership, whole-value moves, and no guest
+  tracing GC or reference counting.
+- Keep immutable reusable Programs separate from one-shot Instances and an
+  owner-thread-bound Engine. Source is the only public executable input.
+- Deny host access by default; suspend through typed host request/reply records.
+- Deliver the source CLI first. Require actual Windows worker isolation before
+  accepting untrusted source, and actual DLL export/call evidence before embed.
+- Run source in the delivered binary without launching a compiler subprocess.
 
-## Alternatives
+## Alternatives and consequences
 
-- Centralized ownership: UNDECIDED; compare a single owner with the proposed boundaries.
-- Different boundary placement: UNDECIDED; compare another split and its coordination and operating costs.
+A Go VM would simplify implementation but introduce runtime and GC costs to evaluate.
+A Rust VM would offer mature memory-safety tooling but add a separate toolchain and
+build-output management. C would reduce toolchain novelty but expand manual native
+safety work. Fairy C fits the chosen implementation direction, at the cost of
+unproven native capabilities; it is not presumed faster or safer by language choice.
 
-## Consequences
+M0 must expose feasibility gaps before the VM grows. M1 provides a usable scalar
+path without waiting for the worker or DLL. OS isolation and trusted embedding are
+separate delivery obligations, not properties inferred from bytecode verification.
 
-- Failure containment: UNDECIDED; record failure propagation, interruption, retry, and recovery responsibilities.
-- Handoffs and migration: UNDECIDED; describe compatibility, state transfer, and changes required of external owners.
-- Boundary review trigger: UNDECIDED; identify growth or failure evidence that would justify changing the split.
+## Verification and review
 
-## Verification
-
-- Boundary evidence: UNDECIDED; demonstrate a representative success and failure flow across the proposed boundaries.
-- Documentation alignment: UNDECIDED; keep [System Boundary](../architecture/00-system-boundary.md) and [Architecture](../../ARCHITECTURE.md) aligned with the recorded decision.
-- Implementation follow-up: UNDECIDED; name remaining contract changes, owners, and observable completion criteria.
-- Validation routing: [VALIDATION.md](../../VALIDATION.md); record the actual checks and results rather than assuming a draft is implemented.
-
-## Lifecycle
-
-- Keep this record Draft until the project owner records a dated decision and its rationale. Use Accepted or Rejected to record the outcome.
-- Acceptance does not prove implementation; keep implementation evidence and follow-up work separate from decision status.
-- For a material change to an accepted decision, create a new numbered ADR, mark the prior record Superseded, link both records, and preserve the previous rationale.
-- Record dated amendments and update the status and links in the [ADR index](README.md).
+No native implementation is verified. Follow [M0-M5](../product/01-roadmap.md) and
+[Validation](../../VALIDATION.md). Revisit the decision if native failures cannot be
+returned as status, quotas cannot be enforced, or the required isolation is unavailable.
+Material changes require a new ADR that links and supersedes this record.

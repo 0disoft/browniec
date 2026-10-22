@@ -1,26 +1,16 @@
 # Architecture Decisions
 
-- Status: Draft
-- Owner: UNASSIGNED
+Decision owner: Zerodi / Rodisoft. Acceptance records design intent; implementation
+and verification remain separate evidence in [Validation](../../VALIDATION.md).
 
-## Decision Records
+| Record | Status | Decision date |
+| --- | --- | --- |
+| [Initial architecture boundaries](0001-initial-architecture-boundaries.md) | Accepted for design | 2026-10-23 |
+| [Contract source of truth](0002-contract-source-of-truth.md) | Accepted for design | 2026-10-23 |
 
-The generated records are draft prompts, not accepted architecture decisions. Fill them with project evidence and explicit choices before recording an outcome.
+Use the [template](0000-template.md) for the next numbered decision. Keep proposals
+Draft until the owner chooses an outcome. Include context, alternatives, consequences,
+and required evidence; an accepted design does not imply a passing implementation.
 
-| Record | Status | Owner | Decision date | Superseded by |
-| --- | --- | --- | --- | --- |
-| [Initial Architecture Boundaries](0001-initial-architecture-boundaries.md) | Draft | UNASSIGNED | UNDECIDED | UNDECIDED |
-| [Contract Source of Truth](0002-contract-source-of-truth.md) | Draft | UNASSIGNED | UNDECIDED | UNDECIDED |
-
-## Recording a Decision
-
-- Copy the [ADR template](0000-template.md) to the next unused numbered filename; the template itself is not a project decision.
-- Give each record a clear decision scope, owner, context, chosen option, alternatives, consequences, and verification evidence.
-- Keep new records Draft while evaluating options. Record Accepted or Rejected with a date and rationale, then update this index from the individual records.
-- Acceptance does not prove implementation. Track implementation evidence and remaining work in the record and route checks through [VALIDATION.md](../../VALIDATION.md).
-
-## Changing a Decision
-
-- Amend drafts as evidence changes. Record dated clarifications to accepted decisions without hiding their original context.
-- For a material change, create a new ADR, mark the prior record Superseded, link both records, and preserve the previous rationale.
-- Keep the individual records authoritative for status, rationale, and supersession; update this index and the affected architecture or contract documents to match.
+For material changes, add a new record, mark the old one Superseded, and link both
+directions. Update this index and affected owning documents in the same change.

@@ -1,46 +1,47 @@
 # Contract Source of Truth
 
-- Status: Draft
-- Owner: UNASSIGNED
-- Decision date: UNDECIDED
-- Supersedes: UNDECIDED
-- Superseded by: UNDECIDED
-
-Draft where each contract fact is authoritative and how derived consumers stay aligned. This seeded record does not designate project-specific sources.
+- Status: Accepted for design
+- Decision owner: Zerodi / Rodisoft
+- Decision date: 2026-10-23
+- Implementation: documentation only
 
 ## Context
 
-- Contract inventory: UNDECIDED; list contract facts, existing representations, owners, and affected consumers.
-- Current disagreement: UNDECIDED; record duplication or conflicting behavior and the evidence showing its impact.
-- Compatibility constraints: UNDECIDED; identify consumers and versions that must continue working.
+The generated scaffold and external v0.3.0 package contain overlapping contracts.
+Copying every document, model, and acceptance fixture would obscure which decisions
+apply and could make model results look like implemented behavior.
 
 ## Decision
 
-- Canonical authority: UNDECIDED; designate one authoritative source and owner for each contract fact.
-- Derived consumers: UNDECIDED; identify generated or manually maintained copies and their update direction.
-- Conflict resolution: UNDECIDED; explain how conflicting representations are resolved without accepting a derived copy as authority.
+| Contract fact | Authoritative document |
+| --- | --- |
+| Observable language behavior and first-profile limits | [Product specification](../product/02-spec.md) |
+| System ownership and trust crossings | [Architecture](../../ARCHITECTURE.md) |
+| CLI commands and arguments | [Command contract](../cli/command-contract.md) |
+| Configuration authority and precedence | [Configuration](../cli/configuration.md) |
+| Output and process results | [Output and exit codes](../cli/output-and-exit-codes.md) |
+| Performance targets and measurement boundaries | [Performance budget](../engineering/03-performance-budget.md) |
+| Delivery sequence | [Roadmap](../product/01-roadmap.md) |
+| Evidence requirements | [Validation](../../VALIDATION.md) |
+| External provenance and review corrections | [Design baseline](../design-baseline.md) |
+| Decision rationale and supersession | Individual numbered ADRs |
 
-## Alternatives
+README and document indexes summarize and link these authorities. Untouched Draft
+templates are prompts, not extra requirements. The external package remains dated
+reference material; its instructions and model outputs do not override this repository.
 
-- Keep separate definitions: UNDECIDED; compare coordination costs and the likelihood of divergent changes.
-- Shared schema or generation: UNDECIDED; compare tooling cost, compatibility, and limits against explicit manual synchronization.
+## Alternatives and consequences
 
-## Consequences
+Vendoring the full package would preserve convenient local access but duplicate
+authority. A generated schema is useful later for machine-readable interfaces;
+there is no executable interface here to justify that infrastructure yet.
 
-- Update responsibilities: UNDECIDED; identify who changes authority and synchronizes each consumer.
-- Migration and compatibility: UNDECIDED; define the transition order, affected consumers, and recovery if adoption fails.
-- Authority review trigger: UNDECIDED; identify when a new consumer or contract change requires revisiting this decision.
+Change the owning contract and affected summaries together. A disagreement between
+code and the contract is a review finding; neither silently changes the other.
+Zerodi / Rodisoft owns material scope changes. Record such decisions in a new ADR.
 
 ## Verification
 
-- Drift detection: UNDECIDED; define a check that detects disagreement between the authoritative fact and its consumers.
-- Compatibility evidence: UNDECIDED; verify representative consumers and link the observed behavior.
-- Follow-up work: UNDECIDED; assign synchronization and migration tasks with completion criteria.
-- Validation routing: [VALIDATION.md](../../VALIDATION.md); record the actual checks and results rather than assuming a draft is implemented.
-
-## Lifecycle
-
-- Keep this record Draft until the project owner records a dated decision and its rationale. Use Accepted or Rejected to record the outcome.
-- Acceptance does not prove implementation; keep implementation evidence and follow-up work separate from decision status.
-- For a material change to an accepted decision, create a new numbered ADR, mark the prior record Superseded, link both records, and preserve the previous rationale.
-- Record dated amendments and update the status and links in the [ADR index](README.md).
+Check links, terminology, status, and changed consumers in each documentation slice.
+Future implementation checks must exercise these contracts through real artifacts;
+static document checks establish no native execution or security result.
