@@ -5,6 +5,8 @@ import std::bytes as bytes;
 import arithmetic_checks as arithmetic_checks;
 import codec_checks as codec_checks;
 import storage_checks as storage_checks;
+import owner_checks as owner_checks;
+import frame_checks as frame_checks;
 import std::process as process;
 
 @effects(console)
@@ -15,6 +17,8 @@ fn i32 main() {
         arithmetic_checks::run();
         codec_checks::run();
         storage_checks::run();
+        owner_checks::run();
+        frame_checks::run();
     }
     var bytes::Buffer buffer = switch (bytes::with_capacity(64)) {
         case .ok(value): { value }
