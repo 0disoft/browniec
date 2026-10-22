@@ -1,28 +1,35 @@
 # CLI Tool
 
-- Status: Draft
-- Repository Type: cli-tool
+- Status: Designed only; no browniec executable
+- Native runtime intent: direct .brc source execution
+- Contract owner: docs/cli/command-contract.md
 
-## Repository Type Contract
+## Boundary
 
-This repository type owns command behavior, arguments, flags, config loading, exit codes, terminal output, JSON output, runtime compatibility, and shell integration contracts.
+The CLI is the developer-facing route to the Brownie compiler, verifier, and native
+VM. It does not ship a Go runtime or compiler toolchain to end users. Compile and run
+must work without launching Go, MSVC, a C compiler, or an interpreter subprocess.
+Restricted mode may launch the designated native worker.
 
-## Source of Truth
+The proposed surface is --version, check, run, inspect, and worker, with explicit
+--project and --isolated options where applicable. Their presence here is a design decision; no command is currently runnable.
 
-- Product decision: UNDECIDED
-- Technical owner: UNASSIGNED
-- Related ADR: UNDECIDED
+## Authority and availability
 
-## Required Decisions
+Command syntax, paths, cancellation, and compatibility are owned by the command
+contract. Configuration precedence is owned by configuration.md. Output framing and
+exit status are owned by output-and-exit-codes.md.
 
-- Command list and flag ownership: UNDECIDED
-- Exit-code taxonomy: UNDECIDED
-- Machine-readable output contract: UNDECIDED
-- Config precedence and default behavior: UNDECIDED
-- Runtime compatibility floor: UNDECIDED
+Core CLI, restricted worker, and embed DLL are separate delivery levels. Missing
+restricted support rejects isolated commands. Missing ABI support does not block the
+core CLI. Capabilities never expand because a command option is present.
 
-## Review Blockers
+## Review blockers
 
-- A command changes without updating help, examples, output, and exit-code expectations.
-- JSON output exposes generated or existing file contents.
-- Runtime compatibility changes without smoke validation.
+- A command claims execution without a native artifact and recorded evidence.
+- check or run starts a compiler child process.
+- Policy or catalog files are discovered implicitly from the source folder.
+- Guest return data is reported as the CLI process exit code.
+- Output is published before normal completion and its publication barrier.
+- External effects are automatically replayed after an unknown outcome.
+- Help, JSON framing, diagnostics, and exit codes disagree with actual state.

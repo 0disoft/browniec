@@ -1,25 +1,41 @@
 # CLI Configuration
 
-- Status: Draft
-- Repository Type: cli-tool
+- Status: Designed only; no configuration parser or command
+- Default host capability: deny
 
-## Contract
+## Explicit inputs
 
-Define how a command obtains, validates, and explains its effective configuration.
+The proposed CLI obtains configuration only from command flags and explicitly named
+project, run, policy, catalog, source, and input files. It does not discover project
+files, policies, catalogs, or credentials by walking from the source directory.
 
-Project-wide decisions: docs/cli/README.md
+The trusted policy is a ceiling. A project or run may narrow its limits and grants
+but cannot raise the ceiling. Declared requirements do not grant capability. The
+accepted relation is reachable requirements within declared requirements within
+run grants within the policy ceiling.
 
-## Required Decisions
+## Precedence
 
-- Configuration sources: UNDECIDED. List supported files, environment variables, and command flags.
-- Configuration precedence: UNDECIDED. Define the order of defaults, files, environment, and flags.
-- Missing, empty, and invalid values: UNDECIDED. Specify defaults and failure behavior separately.
-- Validation and unknown keys: UNDECIDED. Identify accepted types and diagnostics.
-- Effective-config output: UNDECIDED. Explain selected sources without exposing secrets.
+Policy supplies hard ceilings and default-deny host behavior. The explicit project
+supplies source identity and entry selection. Run configuration and flags supply a
+bounded restriction for one invocation. A requested grant that is absent or exceeds
+the ceiling fails; it is never silently dropped or expanded.
 
-## Verification
+Missing required values fail. Empty values are invalid unless a documented field
+allows empty bytes. Unknown fields, duplicate keys, invalid UTF-8, excess depth,
+excess bytes, and values outside schema bounds are rejected during bounded input.
 
-- Owner: UNASSIGNED
-- Source of truth and related ADR: UNDECIDED
-- Required evidence and remaining gaps: UNDECIDED
-- Validation route: VALIDATION.md
+## Paths and secrets
+
+Policy, catalog, and source paths require explicit selection. Path traversal,
+absolute or UNC project members, alternate data streams, device names, and filesystem
+case collisions are rejected by design. Configuration must not contain credentials;
+host adapters own their external authorization.
+
+## Effective configuration
+
+Diagnostics may report selected source names, limits, and policy identities. They
+must not expose secret values or unrelated file contents. A future effective-config
+output is diagnostic only and does not authorize execution.
+
+No parser, precedence implementation, or validation command currently exists.

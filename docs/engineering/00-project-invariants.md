@@ -1,25 +1,50 @@
 # Project Invariants
 
-- Status: Draft
+- Status: Accepted design invariants
+- Implementation: absent
 
-## Contract
+## Runtime authority
 
-Name the properties that must remain true through ordinary changes, concurrent work, interruption, migration, and recovery.
+Program is immutable and explicitly reusable. Instance is one-shot. Engine is bound
+to one owner thread and may coordinate multiple instances sequentially. There is no
+runtime Program cache, external bytecode input, or disk bytecode cache.
 
-Project-wide decisions: docs/architecture/00-system-boundary.md
+Parser, type checking, Flow analysis, verifier, and dispatch remain in Fairy C.
+Allocator, scalar codec, and OS access may live in explicit bounded shims whose
+signatures and failure modes are recorded by native probes.
 
-## Required Decisions
+## Execution invariants
 
-- Invariant inventory: UNDECIDED. Record each required property, affected state or contract, reason it matters, and the owner who can clarify it.
-- Authority boundaries: UNDECIDED. Identify who may change each authoritative fact and distinguish source decisions from derived copies or cached state.
-- Effect completion: UNDECIDED. Define when an effect is accepted, committed, or observable and which evidence permits a success report.
-- Partial and conflicting state: UNDECIDED. Describe state allowed after interruption, retries, concurrent changes, and failed recovery without assuming effects were undone.
-- Invariant evidence: UNDECIDED. Connect important properties to independent checks and representative invalid scenarios, including remaining coverage gaps.
-- Change authority: UNDECIDED. Identify the rationale and consumer evidence required before intentionally revising an invariant.
+Source is UTF-8 and every accepted local is initialized. Expressions evaluate once
+from left to right unless a documented short-circuit applies. Numeric promotion is
+explicit and value-preserving. Checked arithmetic fails as a guest outcome rather
+than a native trap.
 
-## Verification
+Owned values move as a whole. No guest GC or owned-value reference counting exists.
+Borrow conflict applies to the whole root. Returned references have exactly one input
+origin or Static storage. Aggregates become readable only after complete construction.
 
-- Owner: UNASSIGNED
-- Source of truth and related ADR: UNDECIDED
-- Required evidence and remaining gaps: UNDECIDED
-- Validation route: VALIDATION.md
+Quotas are reserved before allocation and include old plus new peak. Preparation,
+commit, cleanup, and descriptor reclamation are bounded work. Guest recursion uses
+VM frames. Output remains staged until successful completion and publication checks.
+
+## Verification invariants
+
+The independent verifier validates bytecode structure, control flow, value layout,
+registers, initialization, ownership, roots, loans, selected stores, and metering.
+Compiler metadata is not trusted over recomputation where safety depends on it.
+
+Plain-struct depth, tagged-wrapper depth, and total traversal budget remain separate
+limits. Buffer growth must try the minimum rounded required capacity when its
+preferred candidate exceeds a reservation ceiling; old-plus-new peak and owner
+metadata stay reserved. Allocator OOM retry is a separate policy decision.
+
+## Failure and effects
+
+Guest trap terminates the Instance. A detected runtime invariant violation poisons
+the Engine. Successful checks do not prove native memory safety. External effects can
+complete with unknown state and are never automatically rolled back or retried.
+
+A capability is denied unless controls prove the relation from reachable requirement
+through declaration and grant to the Engine ceiling. Compliance requires recorded
+evidence in VALIDATION.md and the relevant milestone.

@@ -1,25 +1,39 @@
 # Output and Exit Codes
 
-- Status: Draft
-- Repository Type: cli-tool
+- Status: Designed only; proposed JSON shape is not implemented
+- Guest integer: data, never the process exit code
 
-## Contract
+## Process exits
 
-Keep terminal and machine-readable results consistent with the actual command outcome.
+| Code | Meaning |
+| --- | --- |
+| 0 | Normal compile or run completion, including a nonzero guest i32 |
+| 2 | Command or configuration shape error |
+| 3 | Source syntax, type, Flow, or compile-limit failure |
+| 4 | Policy, grant, entry, or host-binding rejection |
+| 5 | Guest trap, cancellation, deadline, or quota termination |
+| 6 | Internal compiler or VM invariant failure |
+| 7 | Worker, IPC, forced termination, or output-sink failure |
 
-Project-wide decisions: docs/cli/README.md
+These codes are design taxonomy. No executable mapping is validated.
 
-## Required Decisions
+## Proposed result content
 
-- Output schema: UNDECIDED. Define JSON fields, versioning, and single-result framing.
-- stdout and stderr: UNDECIDED. Separate machine-readable results, diagnostics, progress, and prompts.
-- Exit-code taxonomy: UNDECIDED. Distinguish success, validation failure, conflict, and interruption.
-- Completion boundary: UNDECIDED. Specify when writes, recovery, and cleanup permit a success report.
-- Partial failure details: UNDECIDED. Preserve original causes and accurately report remaining changes.
+A future JSON result may carry schema, build, profile, status, return_i32, output_b64,
+diagnostic or trap data, and metrics. The field names and versioning are not stable
+until an implementation records its schema. Binary worker IPC should carry bytes
+directly; human CLI JSON may use Base64 for output bytes.
 
-## Verification
+One invocation should produce one machine-readable result. Progress or prompts belong
+on stderr and must not corrupt JSON on stdout. Text mode may write output bytes to
+stdout and result metadata or diagnostics to stderr.
 
-- Owner: UNASSIGNED
-- Source of truth and related ADR: UNDECIDED
-- Required evidence and remaining gaps: UNDECIDED
-- Validation route: VALIDATION.md
+## Completion and failure
+
+A normal result requires the expected computation to complete, required output staging
+to succeed, and publication checks to pass. Guest nonzero remains a normal run result.
+Trap, cancellation, deadline, quota, or internal failure publishes no staged output.
+
+A host output sink may fail after computation with code 7. Its partial external effect
+is reported rather than hidden or replayed. Cancellation closes publication; unknown
+external effects remain unknown. No automatic retry or exactly-once claim is allowed.
