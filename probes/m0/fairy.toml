@@ -1,0 +1,8 @@
+schema = "fairyc.manifest/v1"
+
+[package]
+uid = "browniec.native-m0"
+name = "brownie-native-m0"
+version = "0.1.0"
+language = "fairyc-language/20"
+source = "src"
