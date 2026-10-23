@@ -18,7 +18,7 @@
 | CLI interface | [Overview](cli/README.md), [commands](cli/command-contract.md), [configuration](cli/configuration.md), [output and exits](cli/output-and-exit-codes.md) |
 | Runtime invariants | [Project invariants](engineering/00-project-invariants.md) |
 | Resource targets and trust controls | [Performance](engineering/03-performance-budget.md), [security](engineering/04-security-baseline.md) |
-| Implemented M1 grammar and limits | [Scalar slice](engineering/m1-scalar-slice.md) |
+| Implemented M1 grammar and limits | [Scalar slice](engineering/m1-scalar-slice.md), [direct functions](engineering/m1-functions.md) |
 | Evidence and testing | [Validation](../VALIDATION.md), [testing standard](engineering/05-testing-standard.md) |
 | Dependencies and compatibility | [Change policy](engineering/06-dependency-and-change-policy.md) |
 | Failure and operating responsibility | [Failure standard](engineering/07-operability-and-failure-standard.md), [operational contract](ops/00-operational-contract.md) |

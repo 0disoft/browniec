@@ -1,7 +1,7 @@
 # Product Specification
 
 - Status: Accepted for design, 2026-10-23
-- Implementation status: M1 i32 expressions and initialized locals/assignment; full profile not implemented
+- Implementation status: M1 i32 expressions, locals/assignment, and direct functions; full profile not implemented
 - Source profile name: brownie.safe/0.3
 
 ## Product boundary

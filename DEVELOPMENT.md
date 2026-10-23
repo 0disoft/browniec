@@ -31,7 +31,7 @@ pwsh -NoProfile -File tools/verify-m1.ps1
 ```
 
 M1 verification needs PowerShell 7 and Python 3 for the build/test driver, not for the
-produced runtime. It runs eight native groups and 109 CLI cases per profile, retaining
+produced runtime. It runs twelve native groups and 143 CLI cases per profile, retaining
 `build/m1/receipt.json` and per-profile records. The selected native binaries run
 with a cleared environment and tool-free PATH. No measured latency budget follows.
 

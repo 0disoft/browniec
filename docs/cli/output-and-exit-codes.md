@@ -17,7 +17,10 @@
 
 The M1 CLI implements these classes for its subset. There is no cancellation,
 deadline, worker IPC, or host-binding implementation yet. A source-file read failure
-uses code 7. Verification failure is an internal code 6, not a guest trap.
+uses code 7. Invalid or missing source main declarations are compile/type errors
+(code 3); external entry binding in code 4 remains a future interface. Verification
+failure is an internal code 6, not a guest trap. The direct-call slice adds
+frame_limit as a guest quota error (code 5).
 
 ## Implemented scalar JSON result
 
@@ -30,7 +33,7 @@ uses code 7. Verification failure is an internal code 6, not a guest trap.
 The command is `check` or `run`; status is `checked`, `completed`, or `error`.
 Only completed runs have a numeric return_i32. Failures carry an error object with
 `kind` and zero-based source `byte_offset`. Kinds are lexical, syntax, type,
-compile_limit, verification, overflow, zero_divisor, fuel, input_io, usage, and
+compile_limit, verification, overflow, zero_divisor, fuel, frame_limit, input_io, usage, and
 unavailable. Non-source failures use offset 0; internal verifier errors identify an
 instruction index. JSON mode is honored once its option has been parsed.
 

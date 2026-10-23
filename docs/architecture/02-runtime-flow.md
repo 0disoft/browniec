@@ -4,8 +4,8 @@
 
 The flow below is the target architecture. M0 verifies selected native primitives,
 including storage and owner bookkeeping. M1 separately parses, verifies, and runs
-i32 expressions and initialized locals/assignment in one main body; host suspension
-and the restricted path below remain future work.
+i32 expressions, initialized locals/assignment, and direct calls through bounded VM
+frames. Host suspension and the restricted path below remain future work.
 
 ## Source to result
 

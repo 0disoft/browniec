@@ -9,11 +9,12 @@ The implementation direction is primarily Fairy C. A native Brownie VM executabl
 accepts .brc source and runs it without starting Go, MSVC, or a C compiler.
 
 The native `browniec` now compiles and runs the experimental `brownie.m1-scalar/1`
-subset: one `i32 main()` with initialized let/var locals, plain assignment,
+subset: i32 functions with by-value arguments, initialized let/var locals, plain assignment,
 integer literals, parentheses, unary minus, and
 `+ - * / %`. Parsing, scalar type checks, private bytecode generation, independent
 verification, and VM dispatch are Fairy C. Fuel bounds executed instructions.
-Additional functions/calls, branches, other value types, workers, and DLLs remain future work.
+Direct calls and bounded VM recursion work; branches, tagged values, other scalar
+types, workers, and DLLs remain future work.
 
 ```powershell
 ./build/toolchain/fairyc.exe build
@@ -66,6 +67,7 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [Development](DEVELOPMENT.md): current build reality and future workflow
 - [Validation](VALIDATION.md): evidence rules and unimplemented checks
 - [M0 probes](probes/m0/README.md): native signatures, build and verification
+- [Direct functions](docs/engineering/m1-functions.md): calls, VM frames, and bounds
 - [M1 scalar slice](docs/engineering/m1-scalar-slice.md): implemented grammar, limits, and CLI
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
@@ -76,7 +78,7 @@ frame primitives on Windows x64. Exact commands and results belong to
 `build/m0/receipt.json` and `docs/evidence/m0-windows-20261023.json`. Running with an
 empty runtime `PATH` does not establish clean-machine packaging or a sandbox.
 
-The M1 Windows run passed eight native test groups and 109 black-box CLI cases in each
-of development and release. The [dated receipt](docs/evidence/m1-locals-windows-20261023.json)
+The M1 Windows run passed twelve native test groups and 143 black-box CLI cases in each
+of development and release. The [dated receipt](docs/evidence/m1-functions-windows-20261023.json)
 records toolchain, source, and artifact identities. No full-profile conformance,
 DLL ABI, Windows isolation, clean-machine packaging, or performance target is claimed.
