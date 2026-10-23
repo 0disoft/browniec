@@ -1,6 +1,6 @@
 # Brownie C
 
-- Status: experimental M1 scalar source CLI implemented; earlier slices and unsigned scalars have verified historical receipts; explicit integer widening historically verified; integer operators historically verified; switch-arm statements implemented and verified; M1 scalar checkpoint verified; full profile incomplete
+- Status: M1 scalar checkpoint verified; M2 scalar-array layout primitives verified; full profile incomplete
 - Design date: 2026-10-23
 - First delivery target: Windows 11 x64
 
@@ -107,6 +107,8 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M1 explicit widening](docs/engineering/m1-widening.md): seven integer pairs, precedence, lowering, and Fuel
 - [M1 integer operators](docs/engineering/m1-integer-operators.md): fixed-width bitwise operations, checked shifts, and precedence
 - [M1 arm statements](docs/engineering/m1-switch-arm-statements.md): branches, loops, transfers, typed joins, and inherited depth budgets
+- [M1 checkpoint audit](docs/engineering/m1-checkpoint-audit.md): scalar exit requirements and remaining profile limits
+- [M2 array layout](docs/engineering/m2-array-layout.md): compact scalar payloads, arena preflight, and checked offsets; source arrays are not implemented
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
 - [Design baseline](docs/design-baseline.md): source provenance, evidence, and findings

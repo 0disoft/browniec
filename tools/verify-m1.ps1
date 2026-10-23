@@ -16,6 +16,10 @@ try {
   $results = @()
   foreach ($profile in @('development', 'release')) {
     $testArguments = @('test', '--native', '--capture-output', '--json')
+    # M1 owns the root test files; M2 foundations have a separate focused harness.
+    foreach ($testFile in (Get-ChildItem (Join-Path $repo 'tests') -File -Filter '*.fy' | Sort-Object Name)) {
+      $testArguments += @('--file', ('tests/' + $testFile.Name))
+    }
     $buildArguments = @('build', '--locked')
     if ($profile -eq 'release') { $testArguments += @('--release', '--locked'); $buildArguments += '--release' }
     $nativeOutput = & $Compiler @testArguments
