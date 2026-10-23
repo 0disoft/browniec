@@ -8,6 +8,7 @@ import std::num as num;
 // 10 not, 11 eq, 12 ne, 13 lt, 14 le, 15 gt, 16 ge.
 // 17 load, 18 store, 19 jump, 20 jump-if-false, 21 jump-if-true.
 // 22 backedge: a strictly earlier instruction in the same function.
+// 23 construct scalar Option/Result: dst has wrapper type, b is the variant.
 pub struct Program {
     u8[2048] code;
     i64[128] constants;
@@ -93,6 +94,12 @@ pub fn Result<usize, errors::Error> call(ref mut Program p, usize target, ref us
 pub fn Result<usize, errors::Error> boolean(ref mut Program p, bool value, usize offset) {
     let usize result = literal(p, if (value) { 1 } else { 0 }, offset)?;
     p.types[result] = 2;
+    return .ok(result);
+}
+
+pub fn Result<usize, errors::Error> construct(ref mut Program p,u8 tag,u8 variant,usize payload,usize offset) {
+    let usize result=emit(p,23,payload,variant as usize,offset)?;
+    p.types[result]=tag;
     return .ok(result);
 }
 

@@ -55,7 +55,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref mut boo
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
-        if (op < 1 || op > 22 || p.code[at + 4] != 0 || p.code[at + 5] != 0 || p.code[at + 6] != 0 || p.code[at + 7] != 0) { return .err(errors::make(5, pc)); }
+        if (op < 1 || op > 23 || p.code[at + 4] != 0 || p.code[at + 5] != 0 || p.code[at + 6] != 0 || p.code[at + 7] != 0) { return .err(errors::make(5, pc)); }
         if (op == 8) {
             if (dst != 0 || b != 0 || !readable(p, ref defined, a, start, end)) { return .err(errors::make(5, pc)); }
             if (p.types[a] != p.return_types[f]) { return .err(errors::make(5, pc)); }
@@ -72,7 +72,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref mut boo
             }
             pc+=1; continue;
         }
-        if (op >= 19) {
+        if (op >= 19 && op <= 21) {
             let usize target = if (op == 19) { a } else { b };
             if (dst != 0 || target <= pc || target >= p.ends[f]) { return .err(errors::make(5, pc)); }
             if (op == 19) {
@@ -89,8 +89,14 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref mut boo
         } else {
             if (dst < start || dst >= end || p.slots[dst] || written[dst]) { return .err(errors::make(5, pc)); }
             if (op == 1) {
+                if (!types::scalar(p.types[dst])) { return .err(errors::make(5,pc)); }
                 if (a >= p.constant_count || b != 0 || p.constants[a] < -2147483648 || p.constants[a] > 2147483647) { return .err(errors::make(5, pc)); }
                 if (p.types[dst] == 2 && p.constants[a] != 0 && p.constants[a] != 1) { return .err(errors::make(5, pc)); }
+            } else if (op == 23) {
+                if (!types::tagged(p.types[dst]) || b>1) {return .err(errors::make(5,pc));}
+                let u8 tag=types::payload(p.types[dst],p.code[at + 3]);
+                if (tag==0) {if(a!=0) {return .err(errors::make(5,pc));}}
+                else if (!readable(p,ref defined,a,start,end) || p.types[a]!=tag) {return .err(errors::make(5,pc));}
             } else if (op == 9) {
                 if (a >= p.function_count || b >= p.call_count || used_calls[b]) { return .err(errors::make(5, pc)); }
                 let usize count = p.call_arities[b] as usize;
@@ -115,7 +121,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref mut boo
                     if (b != 0 || p.types[a] != expected || p.types[dst] != expected) { return .err(errors::make(5, pc)); }
                 } else {
                     if (!readable(p, ref defined, b, start, end)) { return .err(errors::make(5, pc)); }
-                    if (p.types[a] != p.types[b] || p.types[dst] != if (op >= 11) { 2 } else { 1 }) { return .err(errors::make(5, pc)); }
+                    if (!types::scalar(p.types[a]) || p.types[a] != p.types[b] || p.types[dst] != if (op >= 11) { 2 } else { 1 }) { return .err(errors::make(5, pc)); }
                     if (op != 11 && op != 12 && p.types[a] != 1) { return .err(errors::make(5, pc)); }
                 }
             }

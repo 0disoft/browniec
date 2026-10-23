@@ -21,7 +21,7 @@ try {
     $nativeOutput = & $Compiler @testArguments
     if ($LASTEXITCODE -ne 0) { throw "Native tests failed: $profile" }
     $native = $nativeOutput | ConvertFrom-Json
-    if ($native.status -ne 'ok' -or $native.failed -ne 0 -or $native.passed -ne 26) { throw 'Unexpected native test outcomes' }
+    if ($native.status -ne 'ok' -or $native.failed -ne 0 -or $native.passed -ne 29) { throw 'Unexpected native test outcomes' }
     $buildOutput = & $Compiler @buildArguments
     if ($LASTEXITCODE -ne 0) { throw "Build failed: $profile" }
     $exe = Join-Path $output "browniec-$profile.exe"
@@ -40,7 +40,7 @@ try {
     os = [Environment]::OSVersion.VersionString; results = $results;
     sourceSha256 = @($inputs | Sort-Object FullName | ForEach-Object {
       [ordered]@{ path = [IO.Path]::GetRelativePath($repo, $_.FullName).Replace('\', '/'); sha256 = (Get-FileHash -LiteralPath $_.FullName).Hash.ToLowerInvariant() }
-    }); limitations = @('M1 i32/bool expressions, locals, direct functions, branches and while/for loops; no tagged values.',
+    }); limitations = @('M1 scalar expressions, locals, functions, branches, loops and scalar wrapper construction; no tagged switching or propagation.',
       'For headers admit pure scalar clauses and reject all direct calls; loop termination is bounded by Fuel, not proven.',
       'Tool-free PATH is not clean-machine or OS isolation evidence.', 'No performance target measured.')
   } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $receiptPath -Encoding utf8NoBOM

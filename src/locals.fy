@@ -33,6 +33,7 @@ pub fn bool reserved(ref u8[] name) {
         lexer::equal(name, b"i32") || lexer::equal(name, b"i64") ||
         lexer::equal(name, b"u8") || lexer::equal(name, b"u32") ||
         lexer::equal(name, b"usize") || lexer::equal(name, b"bool") ||
+        lexer::equal(name, b"Option") || lexer::equal(name, b"Result") ||
         lexer::equal(name, b"_");
 }
 pub fn usize find(ref u8[] source, ref Table table, usize begin, usize end) {

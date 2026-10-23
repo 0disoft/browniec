@@ -3,6 +3,8 @@ module vm;
 import ir as ir;
 import errors as errors;
 import verifier as verifier;
+import types as types;
+import tagged as tagged;
 
 // Guest calls use bounded VM frames, never native recursion. Register reads are
 // verified per function, so reclaimed frame slots need no per-call zero-fill.
@@ -62,6 +64,10 @@ pub fn Result<i64, errors::Error> run(ref ir::Program p, usize fuel) {
         }
         var i64 value = 0;
         if (op == 1) { value = p.constants[a]; }
+        else if (op == 23) {
+            let i64 payload=if(types::payload(p.types[dst],p.code[at + 3])==0) {0} else {registers[base+a]};
+            value=tagged::pack(payload,p.code[at + 3]);
+        }
         else if (op == 17) { value = registers[base + a]; }
         else {
             let i64 left = registers[base + a];
@@ -84,7 +90,7 @@ pub fn Result<i64, errors::Error> run(ref ir::Program p, usize fuel) {
                 value = if (op == 5) { left / right } else { left % right };
             }
         }
-        if (value < -2147483648 || value > 2147483647) { return .err(errors::make(6, p.offsets[pc])); }
+        if (types::scalar(p.types[dst]) && (value < -2147483648 || value > 2147483647)) { return .err(errors::make(6, p.offsets[pc])); }
         registers[base + dst] = value;
         pc += 1;
     }
