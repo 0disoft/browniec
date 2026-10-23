@@ -21,7 +21,7 @@ try {
     $nativeOutput = & $Compiler @testArguments
     if ($LASTEXITCODE -ne 0) { throw "Native tests failed: $profile" }
     $native = $nativeOutput | ConvertFrom-Json
-    if ($native.status -ne 'ok' -or $native.failed -ne 0 -or $native.passed -ne 8) { throw 'Unexpected native test outcomes' }
+    if ($native.status -ne 'ok' -or $native.failed -ne 0 -or $native.passed -ne 12) { throw 'Unexpected native test outcomes' }
     $buildOutput = & $Compiler @buildArguments
     if ($LASTEXITCODE -ne 0) { throw "Build failed: $profile" }
     $exe = Join-Path $output "browniec-$profile.exe"
@@ -40,7 +40,7 @@ try {
     os = [Environment]::OSVersion.VersionString; results = $results;
     sourceSha256 = @($inputs | Sort-Object FullName | ForEach-Object {
       [ordered]@{ path = [IO.Path]::GetRelativePath($repo, $_.FullName).Replace('\', '/'); sha256 = (Get-FileHash -LiteralPath $_.FullName).Hash.ToLowerInvariant() }
-    }); limitations = @('M1 i32 expressions and initialized locals only; no calls/control flow.',
+    }); limitations = @('M1 i32 expressions, locals and direct functions; no branches or tagged values.',
       'Tool-free PATH is not clean-machine or OS isolation evidence.', 'No performance target measured.')
   } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $receiptPath -Encoding utf8NoBOM
   Write-Host 'PASS: build/m1/receipt.json'

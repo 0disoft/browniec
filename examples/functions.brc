@@ -1,0 +1,14 @@
+module main;
+
+fn i32 main() {
+    let i32 base = 6;
+    return add(base, twice(18));
+}
+
+fn i32 add(i32 left, i32 right) {
+    return left + right;
+}
+
+fn i32 twice(i32 value) {
+    return value * 2;
+}

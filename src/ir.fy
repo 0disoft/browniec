@@ -4,7 +4,7 @@ import errors as errors;
 import std::num as num;
 
 // Private eight-byte instructions: op,dst,a,b,0,0,0,0. All values are i32.
-// Opcodes: 1 constant, 2 add, 3 sub, 4 mul, 5 div, 6 rem, 7 neg, 8 return.
+// Opcodes: 1 constant, 2 add, 3 sub, 4 mul, 5 div, 6 rem, 7 neg, 8 return, 9 call.
 pub struct Program {
     u8[2048] code;
     i64[128] constants;
@@ -12,11 +12,24 @@ pub struct Program {
     usize count;
     usize registers;
     usize constant_count;
+    usize[16] starts;
+    usize[16] ends;
+    usize[16] register_starts;
+    usize[16] register_ends;
+    usize[16] arities;
+    u8[256] call_args;
+    u8[32] call_arities;
+    usize function_count;
+    usize entry;
+    usize call_count;
 }
 
 pub fn Program empty() {
     return Program { .code = [0; 2048], .constants = [0; 128],
-        .offsets = [0; 256], .count = 0, .registers = 0, .constant_count = 0 };
+        .offsets = [0; 256], .count = 0, .registers = 0, .constant_count = 0,
+        .starts = [0; 16], .ends = [0; 16], .register_starts = [0; 16],
+        .register_ends = [0; 16], .arities = [0; 16], .call_args = [0; 256],
+        .call_arities = [0; 32], .function_count = 0, .entry = 0, .call_count = 0 };
 }
 
 fn Result<u8, errors::Error> byte(usize value, usize offset) {
@@ -50,4 +63,17 @@ pub fn Result<usize, errors::Error> literal(ref mut Program p, i64 value, usize 
     p.constants[index] = value;
     p.constant_count += 1;
     return emit(p, 1, index, 0, offset);
+}
+
+pub fn Result<usize, errors::Error> call(ref mut Program p, usize target, ref usize[] arguments, usize offset) {
+    if (p.call_count >= 32 || arguments.len > 8) { return .err(errors::make(4, offset)); }
+    let usize site = p.call_count;
+    var usize i = 0;
+    while (i < arguments.len) {
+        p.call_args[site * 8 + i] = byte(arguments[i], offset)?;
+        i += 1;
+    }
+    p.call_arities[site] = byte(arguments.len, offset)?;
+    p.call_count += 1;
+    return emit(p, 9, target, site, offset);
 }

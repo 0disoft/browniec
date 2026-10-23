@@ -34,7 +34,7 @@ def invoke(argv, expected_exit):
 def case(name, source, expected=None, error=None, mode="run", fuel=None):
     fixture = output / (name + ".brc")
     fixture.write_bytes(source)
-    code = 0 if error is None else (5 if error in ("overflow", "zero_divisor", "fuel") else 3)
+    code = 0 if error is None else (5 if error in ("overflow", "zero_divisor", "fuel", "frame_limit") else 3)
     argv = [mode, fixture, "--json"]
     if fuel is not None:
         argv += ["--fuel", fuel]
@@ -137,6 +137,53 @@ case("local-limit-exact", body("let i32 v0=1;" + "".join(f"let i32 v{i}=v0;" for
 case("local-limit-over", body("let i32 v0=1;" + "".join(f"let i32 v{i}=v0;" for i in range(1,65)) + "return v64;"), error="compile_limit")
 case("tokens-exact", body("var i32 x=0;" + "x=x;" * 251 + "return x;"), 0)
 case("tokens-over", body("var i32 x=0;" + "x=x;" * 252 + "return x;"), error="compile_limit")
+
+# Real multi-function programs: calls are executed by the VM, not inlined by tests.
+for name, source, expected in [
+    ("calls-forward-nested", "module main; fn i32 main() { return add(6,twice(18)); } fn i32 add(i32 a,i32 b) { return a+b; } fn i32 twice(i32 x) { return x*2; }", 42),
+    ("calls-main-last", "module main; fn i32 id(i32 x) { return x; } fn i32 main() { return id(20)+id(22); }", 42),
+    ("calls-value-params", "module main; fn i32 change(i32 x) { var i32 y=x; y=y+1; return y; } fn i32 main() { let i32 x=41; return x+change(x); }", 83),
+    ("calls-frame-reuse", "module main; fn i32 f(i32 a,i32 b) { return a*10+b; } fn i32 main() { return f(1,2)+f(3,4); }", 46),
+    ("calls-unused-trap", "module main; fn i32 bad() { return 1/0; } fn i32 main() { return 42; }", 42),
+    ("calls-eight-params", "module main; fn i32 main() { return last(0,1,2,3,4,5,6,7); } fn i32 last(i32 a,i32 b,i32 c,i32 d,i32 e,i32 f,i32 g,i32 h) { return h; }", 7),
+]:
+    case(name, source.encode(), expected)
+for name, source, error in [
+    ("calls-undefined", "module main; fn i32 main() { return unknown(); }", "type"),
+    ("calls-too-few", "module main; fn i32 id(i32 x) { return x; } fn i32 main() { return id(); }", "type"),
+    ("calls-too-many", "module main; fn i32 id(i32 x) { return x; } fn i32 main() { return id(1,2); }", "type"),
+    ("calls-wrong-param-type", "module main; fn i32 id(i64 x) { return 1; } fn i32 main() { return id(1); }", "type"),
+    ("calls-wrong-return-type", "module main; fn i64 f() { return 1; } fn i32 main() { return f(); }", "type"),
+    ("calls-duplicate-function", "module main; fn i32 main() { return 0; } fn i32 main() { return 1; }", "type"),
+    ("calls-duplicate-param", "module main; fn i32 id(i32 x,i32 x) { return x; } fn i32 main() { return id(1,2); }", "type"),
+    ("calls-main-params", "module main; fn i32 main(i32 x) { return x; }", "type"),
+    ("calls-main-missing", "module main; fn i32 helper() { return 0; }", "type"),
+    ("calls-param-immutable", "module main; fn i32 id(i32 x) { x=1; return x; } fn i32 main() { return id(2); }", "type"),
+    ("calls-local-isolation", "module main; fn i32 helper() { return x; } fn i32 main() { let i32 x=1; return helper(); }", "type"),
+    ("calls-local-not-callable", "module main; fn i32 f() { return 1; } fn i32 main() { let i32 f=2; return f(); }", "type"),
+    ("calls-function-not-value", "module main; fn i32 id() { return 1; } fn i32 main() { return id; }", "type"),
+    ("calls-trailing-comma", "module main; fn i32 id(i32 x) { return x; } fn i32 main() { return id(1,); }", "syntax"),
+    ("calls-left-to-right", "module main; fn i32 add(i32 a,i32 b) { return a+b; } fn i32 main() { return add(1/0,2147483647+1); }", "zero_divisor"),
+    ("calls-callee-overflow", "module main; fn i32 inc(i32 x) { return x+1; } fn i32 main() { return inc(2147483647); }", "overflow"),
+]:
+    case(name, source.encode(), error=error)
+inc = b"module main; fn i32 inc(i32 x) { return x+1; } fn i32 main() { return inc(41); }"
+case("calls-fuel-exact", inc, 42, fuel=7)
+case("calls-fuel-short", inc, error="fuel", fuel=6)
+recursion = b"module main; fn i32 main() { return main(); }"
+case("calls-recursion-fuel", recursion, error="fuel", fuel=31)
+case("calls-recursion-frame", recursion, error="frame_limit", fuel=32)
+case("calls-mutual-recursion", b"module main; fn i32 main() { return f(); } fn i32 f() { return main(); }", error="frame_limit")
+case("calls-check-does-not-execute", recursion, mode="check")
+helpers = "".join(f"fn i32 f{i}() {{ return 1; }}" for i in range(15))
+case("functions-exact", ("module main;" + helpers + "fn i32 main() { return f0(); }").encode(), 1)
+case("functions-over", ("module main;" + helpers + "fn i32 extra() { return 1; } fn i32 main() { return 0; }").encode(), error="compile_limit")
+params = ",".join(f"i32 x{i}" for i in range(9))
+case("parameters-over", f"module main; fn i32 f({params}) {{ return x0; }} fn i32 main() {{ return 0; }}".encode(), error="compile_limit")
+call_sequence = "module main; fn i32 id(i32 x) { return x; } fn i32 main() { var i32 x=0;"
+case("call-sites-exact", (call_sequence + "x=id(x);" * 32 + "return x; }").encode(), 0, fuel=98)
+case("call-sites-fuel", (call_sequence + "x=id(x);" * 32 + "return x; }").encode(), error="fuel", fuel=97)
+case("call-sites-over", (call_sequence + "x=id(x);" * 33 + "return x; }").encode(), error="compile_limit")
 
 randomizer = random.Random(20261023)
 for index in range(32):
