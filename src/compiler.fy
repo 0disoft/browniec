@@ -129,7 +129,7 @@ fn bool word_is(ref u8[] source, ref lexer::State s, ref u8[] word) {
     return s.kind == 2 && lexer::equal(source[s.begin..s.end], word);
 }
 
-fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures) {
+fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 terminator) {
     if (word_is(source, s, b"let") || word_is(source, s, b"var")) {
         let bool mutable = word_is(source, s, b"var");
         let usize keyword = lexer::next(source, s)?;
@@ -146,7 +146,7 @@ fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State 
         // The new name is not visible until its initializer has been checked.
         let usize value = expression(source, s, p, table, signatures, 1, 0)?;
         if (p.types[value] != tag) { return .err(errors::make(3, begin)); }
-        let usize end_statement = lexer::punctuation(source, s, 59)?;
+        let usize end_statement = lexer::punctuation(source, s, terminator)?;
         var usize binding = value;
         if (mutable) {
             binding = ir::slot(p, tag, begin)?;
@@ -164,9 +164,27 @@ fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State 
     let usize equals = lexer::punctuation(source, s, 61)?;
     let usize value = expression(source, s, p, table, signatures, 1, 0)?;
     if (p.types[value] != p.types[table.registers[index]]) { return .err(errors::make(3, at)); }
-    let usize end_statement = lexer::punctuation(source, s, 59)?;
+    let usize end_statement = lexer::punctuation(source, s, terminator)?;
     let usize stored = ir::raw(p, 18, table.registers[index], value, 0, at)?;
     return .ok(index);
+}
+
+// Validate the post clause before the body (body locals are not visible), then
+// rewind only its appended IR. Re-emission after the body preserves source order.
+// A dead post is still type checked, but consumes no runtime registers or Fuel.
+fn Result<usize, errors::Error> checked_post(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures) {
+    let usize at=s.begin;
+    if (word_is(source,s,b"let") || word_is(source,s,b"var")) {return .err(errors::make(2,at));}
+    let usize code=p.count;
+    let usize registers=p.registers;
+    let usize constants=p.constant_count;
+    let usize calls=p.call_count;
+    let usize post=statement(source,s,p,table,signatures,41)?;
+    if (p.call_count!=calls) {return .err(errors::make(3,at));}
+    var usize r=registers;
+    while(r<p.registers) {p.slots[r]=false; p.types[r]=0; r+=1;}
+    p.count=code; p.registers=registers; p.constant_count=constants;
+    return .ok(post);
 }
 
 fn Result<bool, errors::Error> block(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 result_type, usize depth, ref mut loops::State loop_state) {
@@ -191,6 +209,42 @@ fn Result<bool, errors::Error> control(ref u8[] source, ref mut lexer::State s, 
         let usize end=lexer::punctuation(source,s,59)?;
         let usize jump=loops::transfer(loop_state,p,leave,at)?;
         return .ok(true);
+    }
+    if (word_is(source,s,b"for")) {
+        let usize outer=table.count;
+        let usize keyword=lexer::next(source,s)?;
+        let usize open=lexer::punctuation(source,s,40)?;
+        let usize calls=p.call_count;
+        if (s.kind==59) {let usize empty=lexer::next(source,s)?;}
+        else {let usize init=statement(source,s,p,table,signatures,59)?;}
+        let usize head=p.count;
+        let usize condition=if (s.kind==59) {ir::boolean(p,true,at)?}
+            else {expression(source,s,p,table,signatures,1,0)?};
+        if (p.types[condition]!=2 || p.call_count!=calls) {return .err(errors::make(3,at));}
+        let usize separator=lexer::punctuation(source,s,59)?;
+        let usize exit=ir::raw(p,20,0,condition,0,at)?;
+        let bool has_post=s.kind!=41;
+        let usize post_start=s.begin;
+        if (has_post) {let usize validated=checked_post(source,s,p,table,signatures)?;}
+        else {let usize empty=lexer::next(source,s)?;}
+        let usize level=loops::enter(loop_state,head,true,at)?;
+        let bool stopped=block(source,s,p,table,signatures,result_type,depth+1,loop_state)?;
+        let usize post_target=p.count;
+        let usize continues=loops::resolve(loop_state,p,false,post_target,at)?;
+        if (!stopped || continues!=0) {
+            if (has_post) {
+                var lexer::State post=lexer::empty();
+                post.cursor=post_start;
+                let usize first=lexer::next(source,ref mut post)?;
+                let usize emitted=statement(source,ref mut post,p,table,signatures,41)?;
+            }
+            let usize back=ir::raw(p,22,0,head,0,at)?;
+        }
+        let usize target=p.count;
+        let usize branch=ir::patch(p,exit,target,at)?;
+        let usize breaks=loops::resolve(loop_state,p,true,target,at)?;
+        loop_state.depth-=1; table.count=outer;
+        return .ok(false);
     }
     if (word_is(source,s,b"while")) {
         let usize keyword=lexer::next(source,s)?;
@@ -245,7 +299,7 @@ fn Result<bool, errors::Error> control(ref u8[] source, ref mut lexer::State s, 
         return .ok(false);
     }
     if (s.kind == 123) { return block(source, s, p, table, signatures, result_type, depth + 1, loop_state); }
-    let usize regular = statement(source, s, p, table, signatures)?;
+    let usize regular = statement(source, s, p, table, signatures, 59)?;
     return .ok(false);
 }
 

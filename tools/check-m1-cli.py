@@ -318,6 +318,64 @@ case("while-fuel-loop",body("while(true) {} return 0;"),error="fuel",fuel=1000)
 case("while-check-no-execution",body("while(true) {} return 0;"),mode="check")
 case("while-call-condition",b"module main; fn bool keep(i32 n) {return n<3;} fn i32 main() {var i32 n=0; while(keep(n)) {n=n+1;} return n;}",3)
 
+for name, statements, expected in [
+    ("for-sum","var i32 sum=0; for(var i32 i=0;i<10;i=i+1) {sum=sum+i;} return sum;",45),
+    ("for-continue-post","var i32 sum=0; for(var i32 i=0;i<10;i=i+1) {if(i%2==0) {continue;} sum=sum+i;} return sum;",25),
+    ("for-break-skips-post","var i32 n=2147483647; for(;;n=n+1) {break;} return n;",2147483647),
+    ("for-return-skips-post","var i32 n=2147483647; for(;;n=n+1) {return 42;} return 0;",42),
+    ("for-zero-skips-post","var i32 n=0; for(;false;n=1/0) {return 0;} return 42;",42),
+    ("for-assignment-init","var i32 n=9; for(n=0;n<4;n=n+1) {} return n;",4),
+    ("for-empty-post","var i32 n=0; for(;n<4;) {n=n+1; continue;} return n;",4),
+    ("for-empty-condition","var i32 n=0; for(;;n=n+1) {if(n==3) {break;}} return n;",3),
+    ("for-all-clauses-empty","var i32 n=0; for(;;) {n=n+1; if(n==3) {break;}} return n;",3),
+    ("for-header-let","var i32 n=0; for(let bool yes=true;yes;n=n+1) {if(n==2) {break;}} return n;",2),
+    ("for-short-post","var bool go=true; var i32 n=0; for(;go;go=false && 1/0==0) {n=n+1;} return n;",1),
+    ("for-nested-while","var i32 n=0; for(var i32 i=0;i<3;i=i+1) {var i32 j=0; while(j<3) {j=j+1; if(j==2) {continue;} n=n+1;}} return n;",6),
+    ("for-nested-for","var i32 n=0; for(var i32 i=0;i<3;i=i+1) {for(var i32 j=0;j<4;j=j+1) {if(j==2) {break;} n=n+1;}} return n;",6),
+    ("for-while-outer","var i32 n=0; var i32 sum=0; while(n<3) {n=n+1; for(var i32 j=0;j<3;j=j+1) {continue;} sum=sum+n;} return sum;",6),
+    ("for-sibling-scopes","for(var i32 i=0;i<1;i=i+1) {} for(var i32 i=0;i<1;i=i+1) {} return 42;",42),
+    ("for-body-local-reinit","var i32 sum=0; for(var i32 i=0;i<3;i=i+1) {var i32 x=10; x=x+i; sum=sum+x;} return sum;",33),
+    ("for-long-run","var i32 sum=0; for(var i32 i=0;i<10000;i=i+1) {sum=sum+i;} return sum;",49995000),
+]:
+    case(name,body(statements),expected,fuel=200000)
+for name, statements, error in [
+    ("for-header-scope-escape","for(var i32 i=0;i<1;i=i+1) {} return i;","type"),
+    ("for-post-body-local","var i32 n=0; for(;;n=x) {let i32 x=1; break;} return n;","type"),
+    ("for-post-type","var bool b=true; for(;;b=1) {break;} return 0;","type"),
+    ("for-post-declaration","for(;;let i32 x=1) {break;} return 0;","syntax"),
+    ("for-post-expression","for(;;1+1) {break;} return 0;","syntax"),
+    ("for-condition-type","for(;1;) {break;} return 0;","type"),
+    ("for-immutable-post","for(let i32 i=0;i<1;i=i+1) {} return 0;","type"),
+    ("for-continue-overflow","var i32 n=2147483647; for(;;n=n+1) {continue;} return 0;","overflow"),
+    ("for-init-first-trap","for(var i32 i=1/0;false;i=i+1) {} return 42;","zero_divisor"),
+    ("for-post-trap","var i32 n=0; for(;;n=1/0) {continue;} return 0;","zero_divisor"),
+    ("for-unreachable-transfer","for(;;) {continue; return 42;} return 0;","syntax"),
+    ("for-missing-return","for(;;) {}","syntax"),
+]:
+    case(name,body(statements),error=error)
+for name, source in [
+    ("for-init-call","module main; fn i32 f() {return 0;} fn i32 main() {for(var i32 i=f();i<1;i=i+1) {} return 0;}"),
+    ("for-condition-call","module main; fn bool f() {return true;} fn i32 main() {for(;f();) {break;} return 0;}"),
+    ("for-post-call","module main; fn i32 f() {return 0;} fn i32 main() {var i32 n=0; for(;;n=f()) {break;} return 0;}"),
+    ("for-skipped-header-call","module main; fn bool f() {return true;} fn i32 main() {for(;false && f();) {} return 0;}"),
+    ("for-cross-function-break","module main; fn i32 f() {break; return 1;} fn i32 main() {while(true) {return f();} return 0;}"),
+]:
+    case(name,source.encode(),error="syntax" if name=="for-cross-function-break" else "type")
+post_once=body("var i32 i=0; for(;i<1;i=i+1) {continue;} return i;")
+case("for-fuel-exact",post_once,1,fuel=18)
+case("loop-example",(root/"examples/loops.brc").read_bytes(),42,fuel=1000)
+case("loop-body-calls",b"module main; fn i32 inc(i32 n) {return n+1;} fn i32 main() {var i32 sum=0; for(var i32 i=0;i<10;i=i+1) {sum=sum+inc(i);} return sum;}",55,fuel=1000)
+case("loop-call-frame-reuse",b"module main; fn i32 f(i32 n) {var i32 i=n; var i32 sum=0; while(i>0) {sum=sum+i; i=i-1;} return sum;} fn i32 main() {return f(3)+f(2);}",9,fuel=1000)
+case("for-fuel-short",post_once,error="fuel",fuel=17)
+case("for-empty-fuel",body("for(;;) {continue;} return 0;"),error="fuel",fuel=1000)
+case("for-check-no-execution",body("for(;;) {} return 0;"),mode="check")
+case("loop-depth-exact",body("for(;;){"*32+"break;"+"}"*32+"return 0;"),mode="check")
+case("loop-depth-over",body("for(;;){"*33+"break;"+"}"*33+"return 0;"),error="compile_limit")
+for n in [0,1,2,5,10,31]:
+    for factor in [-3,1,7]:
+        statements=f"var i32 sum=0; for(var i32 i=0;i<{n};i=i+1) {{sum=sum+i*{factor};}} return sum;"
+        case(f"independent-loop-{n}-{factor}",body(statements),sum(i*factor for i in range(n)),fuel=10000)
+
 for index in range(32):
     a, b, c = [randomizer.randint(-1000, 1000) for _ in range(3)]
     case(f"independent-arithmetic-{index}", program(f"({a}*{b})+{c}"), a * b + c)
