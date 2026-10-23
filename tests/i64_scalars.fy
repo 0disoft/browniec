@@ -29,7 +29,7 @@ fn void full_width_lexer_and_snapshot() {
     assert(lexer::next(b"9223372036854775808 42",ref mut s).is_ok);
     assert(!s.min_magnitude && s.value==42);
     s=lexer::empty();
-    assert(!lexer::next(b"9223372036854775809",ref mut s).is_ok);
+    assert(!lexer::next(b"18446744073709551616",ref mut s).is_ok);
     value(b"module main; fn i32 main() {let i64 lo=-9223372036854775808; let i64 hi=9223372036854775807; if(lo+hi == -1) {return 42;} return 0;}");
 }
 @test

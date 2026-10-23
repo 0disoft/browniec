@@ -108,7 +108,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref mut boo
             if (op == 1) {
                 if (!types::scalar(p.types[dst])) { return .err(errors::make(5,pc)); }
                 if (a >= p.constant_count || b != 0) { return .err(errors::make(5, pc)); }
-                if (p.types[dst]==1 && (p.constants[a] < -2147483648 || p.constants[a] > 2147483647)) { return .err(errors::make(5, pc)); }
+                if (types::integer(p.types[dst]) && !types::fits(p.types[dst],p.constants[a])) { return .err(errors::make(5, pc)); }
                 if (p.types[dst] == 2 && p.constants[a] != 0 && p.constants[a] != 1) { return .err(errors::make(5, pc)); }
             } else if (op == 23) {
                 if (!types::tagged(p.types[dst]) || b>1) {return .err(errors::make(5,pc));}
@@ -136,7 +136,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref mut boo
                 if (!readable(p, ref defined, a, start, end)) { return .err(errors::make(5, pc)); }
                 if (op == 7 || op == 10) {
                     let u8 expected = if (op == 7) { p.types[a] } else { 2 };
-                    if(op==7 && !types::integer(expected)) {return .err(errors::make(5,pc));}
+                    if(op==7 && !types::signed(expected)) {return .err(errors::make(5,pc));}
                     if (b != 0 || p.types[a] != expected || p.types[dst] != expected) { return .err(errors::make(5, pc)); }
                 } else {
                     if (!readable(p, ref defined, b, start, end)) { return .err(errors::make(5, pc)); }

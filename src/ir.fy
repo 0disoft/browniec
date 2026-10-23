@@ -76,7 +76,7 @@ pub fn Result<usize, errors::Error> literal(ref mut Program p, i64 value, usize 
     return integer(p,value,1,offset);
 }
 pub fn Result<usize, errors::Error> integer(ref mut Program p, i64 value, u8 tag, usize offset) {
-    if (!types::integer(tag) || (tag==1 && (value < -2147483648 || value > 2147483647))) { return .err(errors::make(3, offset)); }
+    if (!types::fits(tag,value)) { return .err(errors::make(3, offset)); }
     if (p.constant_count >= 128) { return .err(errors::make(4, offset)); }
     let usize index = p.constant_count;
     p.constants[index] = value;

@@ -1,0 +1,18 @@
+module main;
+
+fn usize advance(usize base, usize delta) { return base + delta; }
+fn u32 increment(u32 value) { return value + 1; }
+
+fn i32 main() {
+    let usize largest = 18446744073709551615;
+    var usize value = advance(largest - 42, 42);
+    let u32 count = increment(4294967294);
+    let u8 byte = 255;
+    let Option<bool> ready = .some(count == 4294967295 && byte == 255);
+    value = switch (ready) {
+        case .some(ok): { let bool checked = ok; value - largest + 42 }
+        case .none: { 0 }
+    };
+    if (value == 42) { return 42; }
+    return 0;
+}

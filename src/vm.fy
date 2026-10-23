@@ -85,10 +85,14 @@ pub fn Result<i64, errors::Error> run(ref ir::Program p, usize fuel) {
             let i64 left = registers[base + a];
             // Unary negation has no right register; b=0 may belong to another function.
             let i64 right = if (op == 7 || op == 10) { 0 } else { registers[base + b] };
-            if (op >= 2 && op <= 7) { value = arithmetic::signed(op,left,right,p.types[dst],p.offsets[pc])?; }
+            if (op >= 2 && op <= 7) {
+                value=if(types::unsigned(p.types[dst])) {arithmetic::unsigned(op,left,right,p.types[dst],p.offsets[pc])?}
+                    else {arithmetic::signed(op,left,right,p.types[dst],p.offsets[pc])?};
+            }
             else if (op == 10) { value = if (left == 0) { 1 } else { 0 }; }
             else if (op == 11) { value = if (left == right) { 1 } else { 0 }; }
             else if (op == 12) { value = if (left != right) { 1 } else { 0 }; }
+            else if (types::unsigned(p.types[a])) {value=arithmetic::ordering(op,left,right,p.offsets[pc])?;}
             else if (op == 13) { value = if (left < right) { 1 } else { 0 }; }
             else if (op == 14) { value = if (left <= right) { 1 } else { 0 }; }
             else if (op == 15) { value = if (left > right) { 1 } else { 0 }; }

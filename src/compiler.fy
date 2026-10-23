@@ -60,6 +60,7 @@ fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s,
     }
     if (s.kind == 45 || s.kind == 33) {
         let bool negative = s.kind == 45;
+        if(negative && types::unsigned(expected)) {return .err(errors::make(3,at));}
         let usize advanced = lexer::next(source, s)?;
         // Admit a minimum signed literal without constructing its positive magnitude.
         if (negative && s.kind == 1 && s.min_magnitude) {
@@ -72,14 +73,15 @@ fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s,
             return ir::literal(p, -2147483648, at);
         }
         let usize operand = primary(source, s, p, table, signatures, depth + 1, expected,result_type)?;
-        if ((negative && !types::integer(p.types[operand])) || (!negative && p.types[operand]!=2)) { return .err(errors::make(3, at)); }
+        if ((negative && !types::signed(p.types[operand])) || (!negative && p.types[operand]!=2)) { return .err(errors::make(3, at)); }
         return ir::emit(p, if (negative) { 7 } else { 10 }, operand, 0, at);
     }
     if (s.kind == 1) {
-        if(s.min_magnitude) {return .err(errors::make(3,at));}
+        let u8 tag=if(types::integer(expected)) {expected} else {1};
+        if(!types::unsigned(tag) && s.value<0) {return .err(errors::make(3,at));}
         let i64 value = s.value;
         let usize advanced = lexer::next(source, s)?;
-        return ir::integer(p, value, if(expected==9) {9} else {1}, at);
+        return ir::integer(p, value, tag, at);
     }
     if (s.kind == 2) {
         if (word_is(source, s, b"true") || word_is(source, s, b"false")) {

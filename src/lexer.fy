@@ -1,6 +1,7 @@
 module lexer;
 
 import errors as errors;
+import cells as cells;
 
 // 0 EOF, 1 integer, 2 identifier; punctuation uses its ASCII byte.
 // 128 ==, 129 !=, 130 <=, 131 >=, 132 &&, 133 ||.
@@ -43,17 +44,18 @@ pub fn Result<usize, errors::Error> next(ref u8[] source, ref mut State s) {
     let u8 ch = source[s.cursor];
     if (digit(ch)) {
         s.kind = 1;
+        var usize magnitude=0;
         while (s.cursor < source.len && digit(source[s.cursor])) {
-            let i64 part = (source[s.cursor] - 48) as i64;
-            // Accumulate negatively so the minimum magnitude never overflows.
-            if (s.value < -922337203685477580 || (s.value == -922337203685477580 && part > 8)) {
+            let usize part = (source[s.cursor] - 48) as usize;
+            // Accept the full unsigned domain without wrapping the scanner.
+            if (magnitude > 1844674407370955161 || (magnitude == 1844674407370955161 && part > 5)) {
                 return .err(errors::make(3, s.begin));
             }
-            s.value = s.value * 10 - part;
+            magnitude = magnitude * 10 + part;
             s.cursor += 1;
         }
-        s.min_magnitude = s.value == -9223372036854775808;
-        if (!s.min_magnitude) { s.value = -s.value; }
+        s.min_magnitude = magnitude == 9223372036854775808;
+        s.value = cells::pack(magnitude,s.begin)?;
     } else if (letter(ch)) {
         s.kind = 2;
         while (s.cursor < source.len && (letter(source[s.cursor]) || digit(source[s.cursor]))) { s.cursor += 1; }
