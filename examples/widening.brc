@@ -1,0 +1,12 @@
+module main;
+
+fn i64 double(i64 value) { return value * 2; }
+
+fn i32 main() {
+    let u8 byte = 21;
+    let u32 small = byte as u32;
+    let usize count = small as usize;
+    let i64 answer = double(byte as i64);
+    if (answer == 42 && count == 21) { return (byte as i32) * 2; }
+    return 0;
+}

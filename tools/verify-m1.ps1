@@ -21,7 +21,7 @@ try {
     $nativeOutput = & $Compiler @testArguments
     if ($LASTEXITCODE -ne 0) { throw "Native tests failed: $profile" }
     $native = $nativeOutput | ConvertFrom-Json
-    if ($native.status -ne 'ok' -or $native.failed -ne 0 -or $native.passed -ne 59) { throw 'Unexpected native test outcomes' }
+    if ($native.status -ne 'ok' -or $native.failed -ne 0 -or $native.passed -ne 67) { throw 'Unexpected native test outcomes' }
     $buildOutput = & $Compiler @buildArguments
     if ($LASTEXITCODE -ne 0) { throw "Build failed: $profile" }
     $exe = Join-Path $output "browniec-$profile.exe"
@@ -33,14 +33,15 @@ try {
       artifact = "build/m1/browniec-$profile.exe"; sha256 = (Get-FileHash -LiteralPath $exe).Hash.ToLowerInvariant();
       bytes = (Get-Item -LiteralPath $exe).Length; cliCases = $cli.count }
   }
-  $inputs = @(Get-Item fairy.toml, fairy.lock, tools/verify-m1.ps1, tools/check-m1-cli.py, tools/m1_tagged_cases.py, tools/m1_propagation_cases.py, tools/m1_switch_expression_cases.py, tools/m1_i64_cases.py, tools/m1_unsigned_cases.py, examples/loops.brc, examples/tagged.brc, examples/propagation.brc, examples/switch-expression.brc, examples/i64.brc, examples/unsigned.brc;
+  $inputs = @(Get-Item fairy.toml, fairy.lock, tools/verify-m1.ps1, tools/check-m1-cli.py, tools/m1_tagged_cases.py, tools/m1_propagation_cases.py, tools/m1_switch_expression_cases.py, tools/m1_i64_cases.py, tools/m1_unsigned_cases.py, tools/m1_widening_cases.py, examples/loops.brc, examples/tagged.brc, examples/propagation.brc, examples/switch-expression.brc, examples/i64.brc, examples/unsigned.brc, examples/widening.brc;
     Get-ChildItem src, tests -File -Recurse)
   [ordered]@{ schema = 'browniec.m1-scalar/v1'; status = 'passed'; recordedAt = [DateTime]::UtcNow.ToString('o');
     compilerVersion = $version; compilerSha256 = (Get-FileHash -LiteralPath $Compiler).Hash.ToLowerInvariant();
     os = [Environment]::OSVersion.VersionString; results = $results;
     sourceSha256 = @($inputs | Sort-Object FullName | ForEach-Object {
       [ordered]@{ path = [IO.Path]::GetRelativePath($repo, $_.FullName).Replace('\', '/'); sha256 = (Get-FileHash -LiteralPath $_.FullName).Hash.ToLowerInvariant() }
-    }); limitations = @('M1 bool/u8/i32/i64/u32/64-bit-usize scalar expressions, locals, functions, branches, loops, shallow Option/Result and exhaustive tagged switch statements and expressions, and typed question-mark propagation.',
+    }); limitations = @('M1 bool/u8/i32/i64/u32/64-bit-usize scalar expressions, explicit domain-preserving integer widening, locals, functions, branches, loops, shallow Option/Result and exhaustive tagged switch statements and expressions, and typed question-mark propagation.',
+      'Explicit as permits seven strict integer widenings; no identity, narrowing, integer/bool conversion or implicit promotion.',
       'Wrapper payloads are i32/bool only; no nested wrappers, aggregate payloads or implicit error conversion; value arms allow local declarations, assignments, and a final expression or direct function return only.',
       'For headers admit pure scalar clauses and reject direct calls, question-mark propagation, and switch expressions; loop termination is bounded by Fuel, not proven.',
       'Tool-free PATH is not clean-machine or OS isolation evidence.', 'No performance target measured.')

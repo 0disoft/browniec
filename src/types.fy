@@ -10,6 +10,12 @@ pub fn bool signed(u8 tag) { return tag == 1 || tag == 9; }
 pub fn bool unsigned(u8 tag) { return tag >= 10 && tag <= 12; }
 pub fn bool integer(u8 tag) { return signed(tag) || unsigned(tag); }
 pub fn bool scalar(u8 tag) { return integer(tag) || tag == 2; }
+// Strict widening: the entire source domain fits the target, never just a value.
+pub fn bool widening(u8 source,u8 target) {
+    if(source==10) {return target==1 || target==9 || target==11 || target==12;}
+    if(source==11) {return target==9 || target==12;}
+    return source==1 && target==9;
+}
 pub fn bool valid(u8 tag) { return tag >= 1 && tag <= 12; }
 pub fn bool fits(u8 tag,i64 cell) {
     if(tag==1) {return cell>=-2147483648 && cell<=2147483647;}

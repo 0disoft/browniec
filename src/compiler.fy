@@ -9,6 +9,7 @@ import types as types;
 import loops as loops;
 import patterns as patterns;
 import propagation as propagation;
+import casts as casts;
 import std::text as text;
 
 fn u8 precedence(u8 kind) {
@@ -140,9 +141,22 @@ fn Result<usize, errors::Error> primary(ref u8[] source, ref mut lexer::State s,
     }
     return .ok(value);
 }
+// Casts bind after unary/postfix work and before every binary operator.
+fn Result<usize,errors::Error> converted(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,usize depth,u8 expected,u8 result_type) {
+    let bool explicit=casts::follows(source,s)?;
+    let u8 context=if(explicit) {0} else {expected};
+    var usize value=primary(source,s,p,table,signatures,depth,context,result_type)?;
+    while(word_is(source,s,b"as")) {
+        let usize at=s.begin;
+        let usize keyword=lexer::next(source,s)?;
+        let u8 target=types::parse(source,s)?;
+        value=ir::widen(p,value,target,at)?;
+    }
+    return .ok(value);
+}
 fn Result<usize, errors::Error> expression(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, u8 minimum, usize depth, u8 expected, u8 result_type) {
     if (depth > 32) { return .err(errors::make(4, s.begin)); }
-    var usize left = primary(source, s, p, table, signatures, depth, expected,result_type)?;
+    var usize left = converted(source, s, p, table, signatures, depth, expected,result_type)?;
     while (precedence(s.kind) >= minimum) {
         let u8 kind = s.kind;
         let u8 level = precedence(s.kind);

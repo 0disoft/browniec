@@ -4,7 +4,7 @@ import errors as errors;
 import types as types;
 import std::num as num;
 
-// Private eight-byte instructions: op,dst,a,b,0,0,0,0. Scalars: 1 i32, 2 bool, 9 i64.
+// Private eight-byte instructions: op,dst,a,b,0,0,0,0. Scalar tags are in types.fy.
 // Opcodes: 1 constant, 2 add, 3 sub, 4 mul, 5 div, 6 rem, 7 neg, 8 return, 9 call.
 // 10 not, 11 eq, 12 ne, 13 lt, 14 le, 15 gt, 16 ge.
 // 17 load, 18 store, 19 jump, 20 jump-if-false, 21 jump-if-true.
@@ -12,6 +12,7 @@ import std::num as num;
 // 23 construct scalar Option/Result: dst has wrapper type, b is the variant.
 // 24 guarded case: byte 4 is the forward mismatch PC; dst is defined only on match.
 // 25 internal match failure: terminal, no operands.
+// 26 widen: dst's type is a strict value-preserving widening of a; b is zero.
 pub struct Program {
     u8[2048] code;
     i64[128] constants;
@@ -83,6 +84,13 @@ pub fn Result<usize, errors::Error> integer(ref mut Program p, i64 value, u8 tag
     p.constant_count += 1;
     let usize result=emit(p, 1, index, 0, offset)?;
     p.types[result]=tag;
+    return .ok(result);
+}
+
+pub fn Result<usize,errors::Error> widen(ref mut Program p,usize source,u8 target,usize offset) {
+    if(!types::widening(p.types[source],target)) {return .err(errors::make(3,offset));}
+    let usize result=emit(p,26,source,0,offset)?;
+    p.types[result]=target;
     return .ok(result);
 }
 

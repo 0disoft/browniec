@@ -55,7 +55,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref mut boo
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
-        if (op < 1 || op > 25 || (op!=24 && p.code[at + 4] != 0) || p.code[at + 5] != 0 || p.code[at + 6] != 0 || p.code[at + 7] != 0) { return .err(errors::make(5, pc)); }
+        if (op < 1 || op > 26 || (op!=24 && p.code[at + 4] != 0) || p.code[at + 5] != 0 || p.code[at + 6] != 0 || p.code[at + 7] != 0) { return .err(errors::make(5, pc)); }
         if (op==25) {
             if(dst!=0 || a!=0 || b!=0) {return .err(errors::make(5,pc));}
             pc+=1; continue;
@@ -110,6 +110,8 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref mut boo
                 if (a >= p.constant_count || b != 0) { return .err(errors::make(5, pc)); }
                 if (types::integer(p.types[dst]) && !types::fits(p.types[dst],p.constants[a])) { return .err(errors::make(5, pc)); }
                 if (p.types[dst] == 2 && p.constants[a] != 0 && p.constants[a] != 1) { return .err(errors::make(5, pc)); }
+            } else if (op == 26) {
+                if(b!=0 || !readable(p,ref defined,a,start,end) || !types::widening(p.types[a],p.types[dst])) {return .err(errors::make(5,pc));}
             } else if (op == 23) {
                 if (!types::tagged(p.types[dst]) || b>1) {return .err(errors::make(5,pc));}
                 let u8 tag=types::payload(p.types[dst],p.code[at + 3]);

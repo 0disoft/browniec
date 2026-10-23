@@ -80,7 +80,7 @@ pub fn Result<i64, errors::Error> run(ref ir::Program p, usize fuel) {
             let i64 payload=if(types::payload(p.types[dst],p.code[at + 3])==0) {0} else {registers[base+a]};
             value=tagged::pack(payload,p.code[at + 3]);
         }
-        else if (op == 17) { value = registers[base + a]; }
+        else if (op == 17 || op == 26) { value = registers[base + a]; }
         else {
             let i64 left = registers[base + a];
             // Unary negation has no right register; b=0 may belong to another function.

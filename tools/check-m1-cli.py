@@ -11,6 +11,7 @@ from m1_propagation_cases import run_propagation
 from m1_switch_expression_cases import run_switch_expression
 from m1_i64_cases import run_i64
 from m1_unsigned_cases import run_unsigned
+from m1_widening_cases import run_widening
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--exe", required=True)
@@ -386,6 +387,7 @@ run_propagation(case, root)
 run_switch_expression(case, body, root)
 run_i64(case, body, root)
 run_unsigned(case, body, root)
+run_widening(case, body, root)
 
 for index in range(32):
     a, b, c = [randomizer.randint(-1000, 1000) for _ in range(3)]
