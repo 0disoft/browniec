@@ -15,13 +15,19 @@ import std::text as text;
 fn u8 precedence(u8 kind) {
     if (kind == 133) { return 1; }
     if (kind == 132) { return 2; }
-    if (kind == 128 || kind == 129) { return 3; }
-    if (kind == 60 || kind == 62 || kind == 130 || kind == 131) { return 4; }
-    if (kind == 43 || kind == 45) { return 5; }
-    if (kind == 42 || kind == 47 || kind == 37) { return 6; }
+    if (kind == 124) { return 3; }
+    if (kind == 94) { return 4; }
+    if (kind == 38) { return 5; }
+    if (kind == 128 || kind == 129) { return 6; }
+    if (kind == 60 || kind == 62 || kind == 130 || kind == 131) { return 7; }
+    if (kind == 43 || kind == 45) { return 9; }
+    if (kind == 42 || kind == 47 || kind == 37) { return 10; }
     return 0;
 }
 fn u8 opcode(u8 kind) {
+    if (kind == 38) { return 28; }
+    if (kind == 94) { return 29; }
+    if (kind == 124) { return 30; }
     if (kind == 128) { return 11; }
     if (kind == 129) { return 12; }
     if (kind == 60) { return 13; }
@@ -59,8 +65,9 @@ fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s,
         }
         return ir::construct(p,expected,variant,value,at);
     }
-    if (s.kind == 45 || s.kind == 33) {
+    if (s.kind == 45 || s.kind == 33 || s.kind == 126) {
         let bool negative = s.kind == 45;
+        let bool complement = s.kind == 126;
         if(negative && types::unsigned(expected)) {return .err(errors::make(3,at));}
         let usize advanced = lexer::next(source, s)?;
         // Admit a minimum signed literal without constructing its positive magnitude.
@@ -74,8 +81,9 @@ fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s,
             return ir::literal(p, -2147483648, at);
         }
         let usize operand = primary(source, s, p, table, signatures, depth + 1, expected,result_type)?;
-        if ((negative && !types::signed(p.types[operand])) || (!negative && p.types[operand]!=2)) { return .err(errors::make(3, at)); }
-        return ir::emit(p, if (negative) { 7 } else { 10 }, operand, 0, at);
+        if ((negative && !types::signed(p.types[operand])) || (complement && !types::integer(p.types[operand])) ||
+            (!negative && !complement && p.types[operand]!=2)) { return .err(errors::make(3, at)); }
+        return ir::emit(p, if (negative) { 7 } else if(complement) {27} else { 10 }, operand, 0, at);
     }
     if (s.kind == 1) {
         let u8 tag=if(types::integer(expected)) {expected} else {1};

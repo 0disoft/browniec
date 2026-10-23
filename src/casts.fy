@@ -18,7 +18,8 @@ pub fn Result<bool,errors::Error> follows(ref u8[] source,ref lexer::State state
             if(look.kind==59 || look.kind==44 || look.kind==41 || look.kind==125) {return .ok(false);}
             if(look.kind==2 && lexer::equal(source[look.begin..look.end],b"as")) {return .ok(true);}
             if(started && (look.kind==43 || look.kind==45 || look.kind==42 || look.kind==47 || look.kind==37 ||
-                look.kind==60 || look.kind==62 || (look.kind>=128 && look.kind<=133))) {return .ok(false);}
+                look.kind==60 || look.kind==62 || look.kind==38 || look.kind==94 || look.kind==124 ||
+                (look.kind>=128 && look.kind<=133))) {return .ok(false);}
         }
         if(look.kind==40) {parens+=1; started=true;}
         else if(look.kind==41) {if(parens==0) {return .ok(false);} parens-=1;}

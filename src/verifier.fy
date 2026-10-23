@@ -55,7 +55,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref mut boo
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
-        if (op < 1 || op > 26 || (op!=24 && p.code[at + 4] != 0) || p.code[at + 5] != 0 || p.code[at + 6] != 0 || p.code[at + 7] != 0) { return .err(errors::make(5, pc)); }
+        if (op < 1 || op > 30 || (op!=24 && p.code[at + 4] != 0) || p.code[at + 5] != 0 || p.code[at + 6] != 0 || p.code[at + 7] != 0) { return .err(errors::make(5, pc)); }
         if (op==25) {
             if(dst!=0 || a!=0 || b!=0) {return .err(errors::make(5,pc));}
             pc+=1; continue;
@@ -136,13 +136,14 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref mut boo
                 if (p.types[dst] != p.types[a]) { return .err(errors::make(5, pc)); }
             } else {
                 if (!readable(p, ref defined, a, start, end)) { return .err(errors::make(5, pc)); }
-                if (op == 7 || op == 10) {
-                    let u8 expected = if (op == 7) { p.types[a] } else { 2 };
+                if (op == 7 || op == 10 || op == 27) {
+                    let u8 expected = if (op == 7 || op == 27) { p.types[a] } else { 2 };
                     if(op==7 && !types::signed(expected)) {return .err(errors::make(5,pc));}
+                    if(op==27 && !types::integer(expected)) {return .err(errors::make(5,pc));}
                     if (b != 0 || p.types[a] != expected || p.types[dst] != expected) { return .err(errors::make(5, pc)); }
                 } else {
                     if (!readable(p, ref defined, b, start, end)) { return .err(errors::make(5, pc)); }
-                    if (!types::scalar(p.types[a]) || p.types[a] != p.types[b] || p.types[dst] != if (op >= 11) { 2 } else { p.types[a] }) { return .err(errors::make(5, pc)); }
+                    if (!types::scalar(p.types[a]) || p.types[a] != p.types[b] || p.types[dst] != if (op >= 11 && op <= 16) { 2 } else { p.types[a] }) { return .err(errors::make(5, pc)); }
                     if (op != 11 && op != 12 && !types::integer(p.types[a])) { return .err(errors::make(5, pc)); }
                 }
             }

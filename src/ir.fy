@@ -13,6 +13,7 @@ import std::num as num;
 // 24 guarded case: byte 4 is the forward mismatch PC; dst is defined only on match.
 // 25 internal match failure: terminal, no operands.
 // 26 widen: dst's type is a strict value-preserving widening of a; b is zero.
+// 27 complement (b=0), 28 bitwise and, 29 bitwise xor, 30 bitwise or.
 pub struct Program {
     u8[2048] code;
     i64[128] constants;
@@ -66,7 +67,7 @@ pub fn Result<usize, errors::Error> emit(ref mut Program p, u8 op, usize a, usiz
     p.count += 1;
     if (op != 8) {
         let u8 tag = if (op >= 10 && op <= 16) { 2 } else if (op == 9) { p.return_types[a] }
-            else if (op == 17 || (op >= 2 && op <= 7)) { p.types[a] } else { 1 };
+            else if (op == 17 || op>=27 || (op >= 2 && op <= 7)) { p.types[a] } else { 1 };
         p.types[dst] = tag;
         p.registers += 1;
     }

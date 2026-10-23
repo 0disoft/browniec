@@ -12,6 +12,7 @@ from m1_switch_expression_cases import run_switch_expression
 from m1_i64_cases import run_i64
 from m1_unsigned_cases import run_unsigned
 from m1_widening_cases import run_widening
+from m1_bitwise_cases import run_bitwise
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--exe", required=True)
@@ -251,8 +252,8 @@ for name, statements, error in [
     ("branch-no-braces", "if(true) return 1; return 0;", "syntax"),
     ("branch-else-without-if", "else {return 1;} return 0;", "syntax"),
     ("branch-skipped-invalid-body", "if(false) {return true;} return 0;", "type"),
-    ("single-and", "let bool b=true & false; return 0;", "lexical"),
-    ("single-or", "let bool b=true | false; return 0;", "lexical"),
+    ("single-and", "let bool b=true & false; return 0;", "type"),
+    ("single-or", "let bool b=true | false; return 0;", "type"),
 ]:
     case(name, body(statements), error=error)
 case("block-depth-exact", body("{" * 32 + "return 42;" + "}" * 32), 42)
@@ -388,6 +389,7 @@ run_switch_expression(case, body, root)
 run_i64(case, body, root)
 run_unsigned(case, body, root)
 run_widening(case, body, root)
+run_bitwise(case, body, root)
 
 for index in range(32):
     a, b, c = [randomizer.randint(-1000, 1000) for _ in range(3)]
