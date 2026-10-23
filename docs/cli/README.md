@@ -1,6 +1,6 @@
 # CLI Tool
 
-- Status: Experimental native M1 scalar CLI implemented
+- Status: Experimental native M1 scalar CLI implemented; bool/branch slice verified
 - Native runtime intent: direct .brc source execution
 - Contract owner: docs/cli/command-contract.md
 
@@ -15,6 +15,14 @@ The proposed surface is --version, check, run, inspect, and worker, with explici
 --project and --isolated options where applicable. check, run, --version and --help
 are implemented for the M1 scalar profile.
 The broader commands/options remain designed or unavailable.
+
+The current scalar increment adds i32/bool values and bounded acyclic branches. It
+keeps `main` as a zero-argument i32 function, so the CLI result field remains
+`return_i32`; guest bools are internal to the program. The slice is verified by the
+[branch receipt](../evidence/m1-branches-windows-20261023.json), and its language
+contract is in [M1 bool and branches](../engineering/m1-branches.md). Command
+availability, output framing, and exit behavior remain governed by the owning CLI
+documents.
 
 ## Authority and availability
 

@@ -1,7 +1,7 @@
 # Product Specification
 
 - Status: Accepted for design, 2026-10-23
-- Implementation status: M1 i32 expressions, locals/assignment, and direct functions; full profile not implemented
+- Implementation status: M1 i32/bool expressions, locals, calls, and structured branches implemented and verified; full profile not implemented
 - Source profile name: brownie.safe/0.3
 
 ## Product boundary
@@ -26,6 +26,16 @@ The initial storage and value types are:
 
 Source functions use explicit Fairy-like declarations such as fn Type name.
 Modules and imports are explicit. let and var introduce initialized locals.
+
+The experimental M1 increment keeps `fn i32 main()` as the zero-argument entry
+point. Other functions and their parameters may use i32 or bool. Bool is canonical
+0/1 and never converts implicitly to or from i32. The increment adds `!`, same-type
+`==`/`!=`, i32-only ordering, short-circuit `&&`/`||`, `if`/`else if`/`else`,
+standalone lexical blocks, and early returns. Every function path must return, and
+statements after a guaranteed return are rejected. Block-local names are limited to
+their block, and a visible local or parameter cannot be redeclared. Loops remain
+outside this increment. The exact grammar and implementation limits are in the
+[M1 bool and branch contract](../engineering/m1-branches.md).
 
 Classic for headers may contain only the profile's pure scalar declaration,
 assignment, condition, and post steps. Arrays and repeated initializers use positive
@@ -115,8 +125,10 @@ corpus updates, and appropriate verification.
 7. The restricted level is unavailable until actual Windows isolation tests pass.
 8. The embed level is unavailable until an actual DLL export/call test passes.
 
-The experimental M1 scalar slice establishes native source execution, guest result
-versus process-exit separation, and checked arithmetic/Fuel outcomes for its grammar.
-It does not satisfy full-profile ownership, allocation, host, isolation, or embed
-criteria. Claims require scoped [M1 evidence](../engineering/m1-scalar-slice.md),
-not acceptance of this specification alone.
+The experimental M1 scalar slice establishes a native source path for its narrower
+grammar. The [branch receipt](../evidence/m1-branches-windows-20261023.json) verifies
+the bool and acyclic-branch increment. Full M1, loops, and Windows isolation remain
+unverified. The slice does not satisfy full-profile ownership, allocation, host,
+isolation, or embed criteria. Claims require scoped
+[M1 details](../engineering/m1-scalar-slice.md) and the recorded branch receipt, not
+acceptance of this specification alone.

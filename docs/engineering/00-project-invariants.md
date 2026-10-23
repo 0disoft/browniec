@@ -1,7 +1,7 @@
 # Project Invariants
 
 - Status: Accepted design invariants
-- Implementation: M0 verified; straight-line i32 verifier/VM subset implemented; full invariants pending
+- Implementation: M0 verified; bounded i32/bool verifier/VM subset with structured branches implemented and verified; full invariants pending
 
 ## Runtime authority
 

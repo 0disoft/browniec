@@ -2,7 +2,7 @@
 
 - Status: accepted design baseline
 - Decision date: 2026-10-23
-- Implementation: M0 verified; experimental M1 scalar pipeline and VM implemented
+- Implementation: M0 verified; experimental M1 scalar pipeline and VM implemented; bool/branch slice verified
 
 ## Intent
 
@@ -14,12 +14,17 @@ The system is not a C interpreter and does not expose C memory layout to source.
 Its explicit Fairy-like syntax is its own safe profile.
 
 The implemented [M1 scalar slice](docs/engineering/m1-scalar-slice.md) runs real `.brc`
-expressions through lexing/parsing, i32 checks, private IR, verifier, and VM. It has
-only straight-line initialized registers, including checked let/var bindings and
-assignment lowered to new values. Direct calls use verified function ranges and
-bounded VM frames; branching analysis, ownership, lifecycle APIs,
-Engine, host calls, workers, and DLLs remain designs. M0 separately exercises native
-arithmetic, codec, storage, allocator, owner, and frame primitives.
+expressions through lexing/parsing, i32/bool type checks, private IR, verifier, and
+VM. Immutable parameters and `let` names use single-definition registers; `var`
+names use typed storage slots in the same bounded register file. Structured if/else
+and standalone blocks lower to forward-only jumps, and short-circuit operators skip
+their right operand. The verifier intersects definite initialization at joins and
+requires every function path to return. Direct calls use verified function ranges
+and bounded VM frames. The branch slice is verified by the
+[dated receipt](docs/evidence/m1-branches-windows-20261023.json). Loops, ownership,
+lifecycle APIs, Engine, host calls, workers, and DLLs remain designs; full M1
+remains unverified. M0 separately exercises native arithmetic, codec, storage,
+allocator, owner, and frame primitives.
 
 ## Main path
 

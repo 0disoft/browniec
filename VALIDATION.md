@@ -1,7 +1,7 @@
 # Validation
 
-- Status: accepted evidence policy; M0 and first M1 scalar slice verified
-- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM
+- Status: accepted evidence policy; M0 verified; M1 bool/branch slice verified
+- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with bool/branch support
 
 ## Validation source of truth
 
@@ -76,17 +76,29 @@ Exact transcript and artifact details belong to `build/m0/receipt.json` and
 Full M1 remains partial; M2 through M5 remain not started. M0's empty runtime-`PATH` execution does not
 establish clean-machine packaging or Windows isolation.
 
-M1 has scalar expressions, initialized let/var locals, and direct i32 functions.
-Twelve native test groups and 143 CLI
-cases passed in each of development and release using the M0 compiler artifact.
-The corpus verifies arithmetic traps, malformed source/code, Fuel, Program reuse,
-resource ceilings, local copy/assignment semantics, argument order, function/frame
-isolation, bounded recursion, private call metadata, JSON/exit behavior, and tool-free
-runtime PATH execution.
-See [implemented subset](docs/engineering/m1-scalar-slice.md) and
-[dated receipt](docs/evidence/m1-functions-windows-20261023.json). Branches/loops, Option/Result,
-and their control-flow/ownership analysis are still pending. M0 was not
-rerun for unchanged inputs. No new CI job or performance measurement was added.
+M1 has scalar expressions, initialized locals, direct functions, and a bool/branch
+slice implemented and verified. The slice adds canonical bool values without integer
+conversion, typed operator rules, short-circuit `&&` and `||`, if/else chains,
+standalone lexical blocks, early returns, forward-only jumps, and definite
+initialization across CFG joins. It also keeps `var` storage in the same bounded
+128-cell global register file and charges Fuel for executed `LOAD`, `STORE`, and
+branch instructions. Short-circuit result slots consume that same register budget.
+
+The [branch receipt](docs/evidence/m1-branches-windows-20261023.json) records 20
+native groups and 248 black-box CLI cases for both development and release, together
+with toolchain, source, artifact, and harness identities. Coverage includes bool
+typing and precedence, short-circuit work omission, if/else and nested-block scopes,
+structural parser and expression depth, active-binding limits, var snapshots and
+joins, early-return completeness, unreachable statements, forward jumps, initialized
+reads at joins, corrupted private IR, branch Fuel, and the existing arithmetic/call
+regressions.
+
+The [bool/branch contract](docs/engineering/m1-branches.md) owns the detailed rules.
+The [function receipt](docs/evidence/m1-functions-windows-20261023.json) and the
+earlier locals and expression receipts are historical evidence for their narrower
+slices; they do not establish branch behavior. Loops, Option/Result, and their
+control-flow/ownership analysis remain unverified. M0 was not rerun for unchanged
+inputs. No new CI job or performance measurement was added.
 M2 must cover arrays, structs, borrows, Buffer, input, output, and UTF-8.
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker

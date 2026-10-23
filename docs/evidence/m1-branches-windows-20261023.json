@@ -1,0 +1,461 @@
+{
+  "schema": "browniec.m1-scalar/v1",
+  "status": "passed",
+  "recordedAt": "2026-10-23T11:03:38.9969393Z",
+  "compilerVersion": [
+    "Fairy C Stage 0",
+    "compiler: v0.0.0-20261022210249-4ce1264273be",
+    "sdk: fairyc-sdk-stdlib/0 0.0.0-stage0.86",
+    "language: fairyc-language/20",
+    "runtime: fairyc-runtime/0",
+    "revision: 4ce1264273be6051ee560173e94690e1b99c9eaf",
+    "modified: false"
+  ],
+  "compilerSha256": "572395f7f1e425d613c5a69f50b30ed177cda37ca2b1638bd0c11cf79fcbcc77",
+  "os": "Microsoft Windows NT 10.0.26300.0",
+  "results": [
+    {
+      "profile": "development",
+      "nativeTests": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "development",
+        "tests": [
+          {
+            "identity": "tests::bools::boolean_metadata_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::bools::boolean_type_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::bools::typed_boolean_pipeline",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::branches::boolean_values_and_precedence",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::branches::branch_slots_and_scopes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::branches::cfg_and_slot_metadata_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::branches::short_circuit_and_untaken_traps",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::branches::terminating_recursion_and_branch_fuel",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::checked_arithmetic",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::fuel_and_program_reuse",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::local_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::local_traps_fuel_and_reuse",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::local_values_and_assignments",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::precedence_and_order",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::type_and_syntax_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::verifier_rejects_corrupt_private_code",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::functions::call_rejections_and_order",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::functions::call_verifier_boundaries",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::functions::calls_and_frames",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::functions::signature_pass",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 20,
+        "passed": 20,
+        "failed": 0,
+        "status": "ok",
+        "lock": "updated"
+      },
+      "build": "built: build/browniec.exe (x86_64-windows-msvc, development, lock verified)",
+      "artifact": "build/m1/browniec-development.exe",
+      "sha256": "97d67795ebfdf4d0853bc5d7304011d81e81a6ae78853ce9a3ee13cbd11e5765",
+      "bytes": 531968,
+      "cliCases": 248
+    },
+    {
+      "profile": "release",
+      "nativeTests": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "release",
+        "tests": [
+          {
+            "identity": "tests::bools::boolean_metadata_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::bools::boolean_type_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::bools::typed_boolean_pipeline",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::branches::boolean_values_and_precedence",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::branches::branch_slots_and_scopes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::branches::cfg_and_slot_metadata_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::branches::short_circuit_and_untaken_traps",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::branches::terminating_recursion_and_branch_fuel",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::checked_arithmetic",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::fuel_and_program_reuse",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::local_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::local_traps_fuel_and_reuse",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::local_values_and_assignments",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::precedence_and_order",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::type_and_syntax_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::verifier_rejects_corrupt_private_code",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::functions::call_rejections_and_order",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::functions::call_verifier_boundaries",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::functions::calls_and_frames",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::functions::signature_pass",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 20,
+        "passed": 20,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "build": "built: build/browniec.exe (x86_64-windows-msvc, release, lock verified)",
+      "artifact": "build/m1/browniec-release.exe",
+      "sha256": "c530bd6712d7f5f3a33ab5ea7a0cf105488f4c8951f8d3e4a1b3ef2740f4ee50",
+      "bytes": 222720,
+      "cliCases": 248
+    }
+  ],
+  "sourceSha256": [
+    {
+      "path": "fairy.lock",
+      "sha256": "eb08e976993270fa60e39c9254a76c9b5d7d954a7ffba791603a307ca1419e95"
+    },
+    {
+      "path": "fairy.toml",
+      "sha256": "f5254ba793d9012470c697e8657688a4ea5465c138fba6d748707d5bfa4b31fb"
+    },
+    {
+      "path": "src/cli_input.fy",
+      "sha256": "ec91de62e6b5147d117d6fe0366ebcf617b556c074bf1dd91cb10188f96507ba"
+    },
+    {
+      "path": "src/compiler.fy",
+      "sha256": "264f5ddefc9178be64d94440241814f268faadf0ff5b9e6e6453fa92465d4634"
+    },
+    {
+      "path": "src/errors.fy",
+      "sha256": "e8070ef5c6380460dacb579c33f2e180b9e683286c8cb0827e30d82a581a4646"
+    },
+    {
+      "path": "src/functions.fy",
+      "sha256": "59195b4a404b1addd10c913a7ad4d046343ba37c0d1e5be9eeea2bf1ee97363e"
+    },
+    {
+      "path": "src/ir.fy",
+      "sha256": "131466054dac10299933dd57e6ad564a60bc981662f60569139669efce837e2c"
+    },
+    {
+      "path": "src/lexer.fy",
+      "sha256": "32624ef685243524804cea6a34842f5d284f84e6a10f414c567b8044aec67e48"
+    },
+    {
+      "path": "src/locals.fy",
+      "sha256": "3bc4e56ea875b5b32aa166ba980cc55c9861319e1b922847d6adc85cca2c5222"
+    },
+    {
+      "path": "src/main.fy",
+      "sha256": "9ebf3e4005c3cd37fe930cce76cdba1c0781398da109883c6bd91ea4f134fd16"
+    },
+    {
+      "path": "src/render.fy",
+      "sha256": "49f21d0d17d741f8bf863be8ab1df3afc6e7996b92d5a5e0f6d0a482154e36f4"
+    },
+    {
+      "path": "src/types.fy",
+      "sha256": "cd3a59ec1661bf11424060ae94097d19e586d6409fffd1eee170cd2536f9575a"
+    },
+    {
+      "path": "src/verifier.fy",
+      "sha256": "21af242e90e784741e50b74f9ab4e4c9b0a86b612bc1f5d9607c896dc4d7b9c2"
+    },
+    {
+      "path": "src/vm.fy",
+      "sha256": "0e9868bdde8ff008a2f2efe59889a8018b69d1a1476f94c871c2d61e10d45b26"
+    },
+    {
+      "path": "tests/bools.fy",
+      "sha256": "281f9bca67b5d0dc3786fe2ed051c3fdc90a6cb06bc4a76b02c33ece340f01d5"
+    },
+    {
+      "path": "tests/branches.fy",
+      "sha256": "75dd35a997a5c050acaff68adae77bc6913a73e63475ecd2445ae40dc3bcf9f5"
+    },
+    {
+      "path": "tests/core.fy",
+      "sha256": "f8666d14fadaa91a07649e64b62a710276fc78315fc0c420262608872802b42c"
+    },
+    {
+      "path": "tests/functions.fy",
+      "sha256": "b4abd043cae4710bc39895ce72cc1f09b07eba7431bef5eaa0a4f4bea86ec11a"
+    },
+    {
+      "path": "tools/check-m1-cli.py",
+      "sha256": "5313a977fbdcc7ca1a1a3faf95570614101091c671360218632e88e463b9b4e6"
+    },
+    {
+      "path": "tools/verify-m1.ps1",
+      "sha256": "bff5e6c65f2dbab8a68e4ac7ca863df361001c91a2fd9e5c0f82221fe72bd340"
+    }
+  ],
+  "limitations": [
+    "M1 i32/bool expressions, locals, direct functions and forward branches; no loops or tagged values.",
+    "Tool-free PATH is not clean-machine or OS isolation evidence.",
+    "No performance target measured."
+  ],
+  "commands": [
+    "pwsh -NoProfile -File tools/verify-m1.ps1",
+    "./build/m1/browniec-development.exe run examples/branches.brc --json"
+  ],
+  "skipped": [
+    {
+      "check": "M0 native probes",
+      "reason": "M0 sources and the pinned compiler artifact are unchanged."
+    },
+    {
+      "check": "Windows worker isolation, DLL ABI and clean-machine packaging",
+      "reason": "These belong to later unimplemented milestones."
+    },
+    {
+      "check": "Performance targets",
+      "reason": "No named workload or performance measurement was part of this increment."
+    }
+  ],
+  "cliReports": [
+    {
+      "profile": "development",
+      "path": "build/m1/development/cli-receipt.json",
+      "sha256": "f7a28a642fab1c2c71bd5ff73f3a139a05d3d357dcb613d463ef1426dbe3a485",
+      "count": 248,
+      "status": "passed"
+    },
+    {
+      "profile": "release",
+      "path": "build/m1/release/cli-receipt.json",
+      "sha256": "0cd35a0b10ecebccd5b9f9d7032b24c66c857204dfafaa5afcab3f8e32001dc3",
+      "count": 248,
+      "status": "passed"
+    }
+  ]
+}

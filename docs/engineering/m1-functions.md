@@ -1,28 +1,30 @@
-# M1 Direct i32 Functions
+# M1 Direct Scalar Functions
 
-- Status: implemented; native validation recorded in the dated function receipt
-- Scope: direct functions and VM calls in the experimental scalar profile
+- Status: implemented; function/local evidence is historical; bool/branch slice verified
+- Scope: direct i32/bool functions and VM calls in the experimental scalar profile
 
 ## Source contract
 
 A source file starts with `module main;` and declares one or more functions:
 
 ```text
-fn i32 NAME(i32 PARAM, ...) { STMT* return EXPR; }
+fn (i32|bool) NAME((i32|bool) PARAM, ...) { BODY }
 ```
 
-Exactly one `main` must exist and take zero arguments. All parameters and results
-are i32. Declarations may precede or follow their callers. Direct and mutual
-recursion are admitted, but this slice has no branches or conditional base cases.
-Every function body is checked, including unreachable functions.
+Exactly one `main` must exist, take zero arguments, and return i32. Other functions
+may return i32 or bool and may take i32 or bool parameters. There are no implicit
+scalar conversions. Declarations may precede or follow their callers. Direct and
+mutual recursion are admitted; structured branches can now provide conditional base
+cases. Every function body is checked, including functions that are never called.
 
-Arguments evaluate once from left to right and pass independent scalar values.
+Arguments evaluate once from left to right and pass independent i32 or bool values.
 Parameter bindings are immutable; copy a parameter into a var to update a local.
 Locals belong to one function and cannot access a caller's bindings. Duplicate
 functions/parameters and invalid arity or annotations are rejected. A local may
 shadow a function name, but that scalar local cannot be called. Functions are not
 first-class values. Indirect calls, variadics, default arguments, trailing commas,
-branches, and tagged values are not admitted.
+loops, and tagged values are not admitted. See [bool and branches](m1-branches.md)
+for the acyclic control-flow contract.
 
 ## Compiler and private IR
 
@@ -38,25 +40,29 @@ still no externally supplied bytecode or persistent runtime code cache.
 
 The verifier validates the complete function directory before decoding instructions.
 It reconstructs definitions independently for each function, admitting only its
-parameters as initialized on entry. All reads and writes must remain in that
-function's register range. A CALL must bind a valid target and unique call-site,
-match the callee's arity, read initialized caller registers, and have canonical
-unused argument bytes. Every function ends in exactly one return. All functions
-are verified before any guest code executes.
+parameters as initialized on entry. Forward CFG joins intersect definite
+initialization, and unique values remain separate from typed `var` slot stores. All
+reads and writes must remain in that function's register range. A CALL must bind a
+valid target and unique call-site, match the callee's arity and scalar types, read
+initialized caller registers, and have canonical unused argument bytes. Every
+reachable path in every function must return the declared type. All functions are
+verified before any guest code executes.
 
 ## VM frames, limits, and Fuel
 
 Guest calls use a flat VM-owned register array, saved PCs, and return destinations;
-they never recurse through Fairy/native calls. Return copies one i32 result to the
-caller. Sibling calls may reuse frame storage because verified code cannot read an
-uninitialized register. The Program is read-only and reusable across fresh runs.
+they never recurse through Fairy/native calls. Return copies one canonical i32 or
+bool result to the caller. Sibling calls may reuse frame storage because verified
+code cannot read an uninitialized register. The Program is read-only and reusable
+across fresh runs.
 
 Limits: 16 functions, 8 arguments per function/call, 32 static call-sites, and 32
 live frames including the entry. The 128-register ceiling is global across the
-Program, not per function. The existing 64-binding limit includes parameters within
-each function. Source bytes, tokens, constants, instructions, and parser depth keep
-their existing limits. The VM reserves 4096 scalar slots for its bounded frames;
-this is not an accounted-memory or process-RAM measurement.
+Program, not per function, and includes typed `var` and short-circuit result slots.
+At most 64 bindings may be simultaneously visible in a function, including
+parameters. Source bytes, tokens, constants, instructions, structural parser depth,
+and expression depth keep their existing limits. The VM reserves 4096 scalar slots
+for its bounded frames; this is not an accounted-memory or process-RAM measurement.
 
 Every ordinary instruction/return costs one Fuel; CALL costs one plus its argument
 count. The same remaining Fuel spans the entire call tree. Fuel preflight happens
@@ -65,9 +71,14 @@ guest quota outcome with process exit 5. It does not publish a return value.
 
 ## Evidence and remaining work
 
-The [function receipt](../evidence/m1-functions-windows-20261023.json) records the
-compiler, source, native artifacts, test identities, and black-box corpus digests.
-Validation covers forward/nested calls, value and scope isolation, left-to-right
-failures, recursion/Fuel/frame boundaries, function/call-site ceilings, and corrupted
-private call metadata. M0 inputs are unchanged and were not rerun. No worker, DLL,
-full M1 conformance, clean-machine distribution, or performance target is claimed.
+The [function receipt](../evidence/m1-functions-windows-20261023.json) is historical
+evidence for forward/nested calls, value and scope isolation, left-to-right failures,
+recursion/Fuel/frame boundaries, function/call-site ceilings, and corrupted private
+call metadata. It does not cover bool returns, structured branches, slot joins, or
+the branch verifier.
+
+The [branch receipt](../evidence/m1-branches-windows-20261023.json) records 20 native
+groups and 248 black-box CLI cases for each development and release profile,
+including call regressions across bool parameters and results. Full M1, loops,
+workers, DLL ABI, clean-machine distribution, and performance targets remain
+unverified. M0 inputs are unchanged and were not rerun.

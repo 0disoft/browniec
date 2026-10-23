@@ -1,77 +1,92 @@
 # M1 Scalar Slice
 
-- Status: experimental native compiler/verifier/VM and source CLI implemented
-- Scope: M1 expressions, initialized i32 locals, and direct functions; not full M1 or profile conformance
+- Status: experimental compiler/verifier/VM and source CLI implemented; bool/branch slice verified
+- Scope: M1 expressions, i32/bool locals and functions, and acyclic structured branches; not full M1 or profile conformance
 
 The admitted source is `module main;` followed by one or more
-`fn i32 NAME(i32 PARAM, ...) { STMT* return EXPR; }` declarations, including
-exactly one zero-argument main. See [direct functions](m1-functions.md) for calls,
-parameter rules, private metadata, and VM frame behavior.
-EXPR supports decimal i32 literals, parentheses, unary minus, and left-associative
-`+ - * / %` with conventional precedence, previously declared local names, and
-direct function calls.
+`fn (i32|bool) NAME((i32|bool) PARAM, ...) { BODY }` declarations, including
+exactly one `fn i32 main()` with no parameters. See [direct functions](m1-functions.md)
+for calls, parameter rules, private metadata, and VM frame behavior, and
+[bool and branches](m1-branches.md) for the current control-flow contract.
+EXPR supports decimal i32 literals, `true` and `false`, parentheses, unary minus,
+`!`, arithmetic, ordering, equality, short-circuit `&&` and `||`, previously visible
+local names, and direct function calls.
 Whitespace and `//` comments are accepted.
 The negative minimum literal is admitted directly; positive 2147483648 is rejected.
-STMT is `let i32 NAME = EXPR;`, `var i32 NAME = EXPR;`, or `NAME = EXPR;`.
-Every local requires an initializer. Only var may be reassigned. Names are ASCII
-identifiers, case sensitive, in one function-body scope. Duplicate declarations,
-reserved names, and declaration-before-use violations are rejected. A declaration
-is not visible within its own initializer. Nested blocks and block-local shadowing, compound
-assignment, assignment expressions, branches, imports, other types, and host
-effects are not admitted yet. [locals.fy](../../src/locals.fy) owns the bounded name table
-and reserved-name list for this subset.
+STMT includes typed `let` and `var` declarations, `NAME = EXPR;`, `return EXPR;`,
+`if`/`else if`/`else`, and standalone `{ ... }` blocks. Every local requires an
+initializer. Only var may be reassigned. Names are ASCII identifiers and case
+sensitive. A declaration is not visible within its own initializer. Declaring a
+name already visible as a local or parameter is rejected; sibling blocks may reuse a
+name after the earlier block ends. Compound assignment, assignment expressions,
+loops, imports, other types, and host effects are not admitted yet. [locals.fy](../../src/locals.fy)
+owns the bounded active-name table and reserved-name list for this subset.
 
 ## Limits and representation
 
-The compiler accepts at most 4096 UTF-8 source bytes, 1024 tokens, parser depth 32,
-64 bindings per function including parameters, 128 global i32 registers, 128 constants,
-and 256 instructions, plus the bounded function/call/frame limits. Fixed arrays bound compiler
-and VM storage. These are temporary implementation ceilings, not performance results.
+The compiler accepts at most 4096 UTF-8 source bytes, 1024 tokens, structural parser
+depth 32 (nested blocks and control constructs, including else-if chains),
+expression depth 32, 64 simultaneously visible bindings per function including
+parameters, 128 global i32/bool register cells, 128 constants, and 256 instructions.
+The function, call-site, arity, and VM-frame limits remain 16, 32, 8, and 32.
+Structural parser depth and expression depth are separate counters. `var` slots and
+short-circuit bool result slots use the same 128-cell register file as value
+registers. Fixed arrays bound compiler and VM storage. These are temporary
+implementation ceilings, not performance results.
 
 Private instructions are eight bytes: opcode, destination, operand A, operand B,
 then four zero reserved bytes. Constants live in a separate bounded i64 array with
-i32 range checks. Source offsets are a separate diagnostic map.
-The independent verifier reconstructs initialized registers, validates operands,
-constant ranges, reserved bytes, counts, function/call metadata, and one final return
-per function. This is the runtime Flow obligation for the current straight-line scalar code. Source checking
-also proves declaration order, required initialization, and let immutability.
+i32 range checks. Source offsets are a separate diagnostic map. Opcodes 17 through
+21 are `LOAD`, `STORE`, `JUMP`, `JFALSE`, and `JTRUE`. Jumps are strictly forward
+within one function.
+The independent verifier processes instructions in forward order and reconstructs
+definite initialization at every join by intersecting incoming paths. Unique value
+definitions remain separate from typed slot stores. It validates operands, scalar
+types, forward jump bounds, constant ranges, reserved bytes, counts, function/call
+metadata, and return completeness. All functions are verified before execution.
+Source checking also proves lexical visibility, required initialization, and let
+immutability.
 
-Local declarations bind names to single-definition value registers. A var assignment
-rebinds the name after its RHS is checked; it never overwrites an old value register.
-Consequently a previous copy keeps its value after assignment. No new mutable-register
-opcode or guest heap storage is needed for locals. Direct calls separately add
-CALL and the private function directory. Pure name copies/rebindings need no extra
-instruction or Fuel; their
-compiler work is bounded by local/token/source limits. Arithmetic initializers and
-assignment RHS instructions are retained even if their final value is unused, so
-traps and left-to-right execution are preserved.
+Parameters and `let` names bind to single-definition value registers. A `var` has a
+stable typed storage slot. Reading it emits `LOAD` into a fresh value register;
+assignment emits `STORE` to the slot. A previous copy therefore keeps its value
+after assignment, and joins share the slot rather than a mutable value register.
+Slots consume the same 128-cell global budget as value registers. Arithmetic
+initializers and assignment RHS instructions are retained even if their final value
+is unused, so traps and left-to-right execution are preserved.
 
 The VM re-verifies before every run, reads the Program by shared borrow, and creates
-fresh frame state for each one-shot execution. Each ordinary instruction including
-return costs one Fuel; CALL costs one plus its argument count. Insufficient Fuel
-returns an error. This subset has no loops;
-future control-flow admission must retain metering on every executed path.
+fresh frame state for each one-shot execution. Every executed instruction, including
+`LOAD`, `STORE`, `JUMP`, `JFALSE`, `JTRUE`, and return, costs one Fuel; CALL costs one
+plus its argument count. Unevaluated short-circuit operands and unselected branches
+do not execute. Insufficient Fuel returns an error. This subset has no loops; future
+control-flow admission must retain metering on every executed path.
 
 Arithmetic widens i32 operands to i64, checks the result, and returns guest errors
 for overflow and division/remainder by zero. Evaluation executes left to right;
-negative division truncates toward zero. No guest heap allocation or external effect
-is needed. There is no public bytecode loader or runtime compiler subprocess.
+negative division truncates toward zero. Bool is canonical 0/1 with no conversion
+to or from i32. `!`, `&&`, and `||` accept bool; ordering accepts i32; equality
+requires two i32 values or two bool values. `&&` and `||` short-circuit. No guest
+heap allocation or external effect is needed. There is no public bytecode loader or
+runtime compiler subprocess.
 
 ## Validation
 
-`build/toolchain/fairyc.exe test --native --capture-output --json` runs twelve native
-groups covering arithmetic boundaries, precedence, source rejection, Fuel/reuse,
-corrupted private bytecode, local snapshots/rejections, and direct-call/frame behavior. The toolchain is the M0-recorded Fairy C build.
-`tools/verify-m1.ps1` runs these groups in development and release, builds both
-native binaries, and checks 143 black-box CLI cases per profile with a cleared
-environment and tool-free runtime PATH. The corpus includes fixed arithmetic and
-trap results, compile/depth/register/source ceilings, malformed UTF-8, independent
-seeded arithmetic vectors, local binding/assignment and token/local limits, option
-rejection, and stream separation.
-Receipts are in `build/m1/receipt.json` and per-profile `cli-receipt.json` files.
-The original expression-only receipt is retained as historical evidence; the
-[locals receipt](../evidence/m1-locals-windows-20261023.json) records that increment;
-the [function receipt](../evidence/m1-functions-windows-20261023.json) records current direct calls.
+`build/toolchain/fairyc.exe test --native --capture-output --json` and
+`tools/verify-m1.ps1` run the native and black-box profile checks. The
+[branch receipt](../evidence/m1-branches-windows-20261023.json) records 20 native
+groups and 248 CLI cases in each of development and release.
+
+The branch corpus verifies bool typing and precedence, short-circuit work omission,
+branch and standalone-block scopes, visible-name redeclaration, sibling name reuse,
+structural parser and expression depth, active-binding and register ceilings, var
+snapshots and joins, early returns, unreachable statements, forward jumps,
+definite-initialization joins, LOAD/STORE corruption, branch Fuel, and existing
+arithmetic/call regressions. Receipts are also retained in `build/m1/receipt.json`
+and per-profile `cli-receipt.json` files. The original expression-only receipt,
+[locals receipt](../evidence/m1-locals-windows-20261023.json), and
+[function receipt](../evidence/m1-functions-windows-20261023.json) are historical
+evidence for narrower slices; none covers the branch increment.
 
 ## Run the implemented subset
 
@@ -81,6 +96,7 @@ the [function receipt](../evidence/m1-functions-windows-20261023.json) records c
 ./build/browniec.exe check examples/answer.brc --json
 ./build/browniec.exe run examples/locals.brc --json
 ./build/browniec.exe run examples/functions.brc --json
+./build/browniec.exe run examples/branches.brc --json
 ./build/browniec.exe run examples/answer.brc --fuel 4 --json
 pwsh -NoProfile -File tools/verify-m1.ps1
 ```
@@ -96,4 +112,5 @@ snapshot limit and a 4096-byte UTF-8 argument buffer. This is a trusted-local-so
 engineering CLI. There is no project/config loader, guest I/O, worker, DLL, or sandbox.
 The native executable has no compiler/interpreter subprocess execution path.
 Builds use the M0 compiler artifact without modifying the separate Fairy checkout.
-This receipt does not establish clean-machine distribution or a performance budget.
+The branch receipt does not establish full M1, loop, clean-machine, OS isolation,
+DLL ABI, or performance results.
