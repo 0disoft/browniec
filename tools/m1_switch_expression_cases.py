@@ -70,11 +70,11 @@ def run_switch_expression(case, body, root):
         ("semicolon", "let Option<i32> x=.none; return switch(x) {case .some(v): {v;} case .none: {0}};", "syntax"),
         ("empty-arm", "let Option<i32> x=.none; return switch(x) {case .some(v): {} case .none: {0}};", "syntax"),
         ("missing-yield", "let Option<i32> x=.none; return switch(x) {case .some(v): {let i32 n=v;} case .none: {0}};", "syntax"),
-        ("if-in-arm", "let Option<i32> x=.none; return switch(x) {case .some(v): {if(true) {return v;} v} case .none: {0}};", "syntax"),
         ("extra-arm", "let Option<i32> x=.none; return switch(x) {case .some(v): {v} case .none: {0} case .none: {1}};", "syntax"),
     ]
     for name, statements, error in invalid:
         case(f"switch-value-reject-{name}", body(statements), error=error)
+    case("switch-value-if-in-arm", body("let Option<i32> x=.none; return switch(x) {case .some(v): {if(true) {return v;} v} case .none: {0}};"), 0)
     exact = body("let Option<i32> x=.some(42); return switch(x) {case .some(v): {v} case .none: {0}};")
     case("switch-value-fuel-exact", exact, 42, fuel=7)
     case("switch-value-fuel-short", exact, error="fuel", fuel=6)

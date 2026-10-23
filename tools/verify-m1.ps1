@@ -21,7 +21,7 @@ try {
     $nativeOutput = & $Compiler @testArguments
     if ($LASTEXITCODE -ne 0) { throw "Native tests failed: $profile" }
     $native = $nativeOutput | ConvertFrom-Json
-    if ($native.status -ne 'ok' -or $native.failed -ne 0 -or $native.passed -ne 75) { throw 'Unexpected native test outcomes' }
+    if ($native.status -ne 'ok' -or $native.failed -ne 0 -or $native.passed -ne 81) { throw 'Unexpected native test outcomes' }
     $buildOutput = & $Compiler @buildArguments
     if ($LASTEXITCODE -ne 0) { throw "Build failed: $profile" }
     $exe = Join-Path $output "browniec-$profile.exe"
@@ -33,7 +33,7 @@ try {
       artifact = "build/m1/browniec-$profile.exe"; sha256 = (Get-FileHash -LiteralPath $exe).Hash.ToLowerInvariant();
       bytes = (Get-Item -LiteralPath $exe).Length; cliCases = $cli.count }
   }
-  $inputs = @(Get-Item fairy.toml, fairy.lock, tools/verify-m1.ps1, tools/check-m1-cli.py, tools/m1_tagged_cases.py, tools/m1_propagation_cases.py, tools/m1_switch_expression_cases.py, tools/m1_i64_cases.py, tools/m1_unsigned_cases.py, tools/m1_widening_cases.py, tools/m1_bitwise_cases.py, tools/m1_shift_cases.py, examples/loops.brc, examples/tagged.brc, examples/propagation.brc, examples/switch-expression.brc, examples/i64.brc, examples/unsigned.brc, examples/widening.brc, examples/bitwise.brc;
+  $inputs = @(Get-Item fairy.toml, fairy.lock, tools/verify-m1.ps1, tools/check-m1-cli.py, tools/m1_tagged_cases.py, tools/m1_propagation_cases.py, tools/m1_switch_expression_cases.py, tools/m1_i64_cases.py, tools/m1_unsigned_cases.py, tools/m1_widening_cases.py, tools/m1_bitwise_cases.py, tools/m1_shift_cases.py, tools/m1_arm_statement_cases.py, examples/loops.brc, examples/tagged.brc, examples/propagation.brc, examples/switch-expression.brc, examples/i64.brc, examples/unsigned.brc, examples/widening.brc, examples/bitwise.brc, examples/switch-arm-statements.brc;
     Get-ChildItem src, tests -File -Recurse)
   [ordered]@{ schema = 'browniec.m1-scalar/v1'; status = 'passed'; recordedAt = [DateTime]::UtcNow.ToString('o');
     compilerVersion = $version; compilerSha256 = (Get-FileHash -LiteralPath $Compiler).Hash.ToLowerInvariant();
@@ -43,7 +43,8 @@ try {
     }); limitations = @('M1 bool/u8/i32/i64/u32/64-bit-usize scalar expressions, explicit domain-preserving integer widening, locals, functions, branches, loops, shallow Option/Result and exhaustive tagged switch statements and expressions, and typed question-mark propagation.',
       'Explicit as permits seven strict integer widenings; no identity, narrowing, integer/bool conversion or implicit promotion. Fixed-width integer complement, bitwise and/xor/or preserve exact types.',
       'Same-type shifts reject counts outside the operand width and left-shift overflow as guest overflow. Signed right shift is arithmetic; unsigned right shift is logical.',
-      'Wrapper payloads are i32/bool only; no nested wrappers, aggregate payloads or implicit error conversion; value arms allow local declarations, assignments, and a final expression or direct function return only.',
+      'Wrapper payloads are i32/bool only; no nested wrappers, aggregate payloads or implicit error conversion. Value arms admit blocks, if/else, while/for, and lexical loop transfers; every continuing path needs a final value and at least one arm must yield.',
+      'A leading switch in a value arm is a final expression; wrap a statement switch in a standalone block. Expression and structural depth budgets remain inherited across statement/expression boundaries.',
       'For headers admit pure scalar clauses and reject direct calls, question-mark propagation, and switch expressions; loop termination is bounded by Fuel, not proven.',
       'Tool-free PATH is not clean-machine or OS isolation evidence.', 'No performance target measured.')
   } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $receiptPath -Encoding utf8NoBOM

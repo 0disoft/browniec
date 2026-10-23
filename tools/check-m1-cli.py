@@ -14,6 +14,7 @@ from m1_unsigned_cases import run_unsigned
 from m1_widening_cases import run_widening
 from m1_bitwise_cases import run_bitwise
 from m1_shift_cases import run_shifts
+from m1_arm_statement_cases import run_arm_statements
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--exe", required=True)
@@ -392,6 +393,7 @@ run_unsigned(case, body, root)
 run_widening(case, body, root)
 run_bitwise(case, body, root)
 run_shifts(case, body, root)
+run_arm_statements(case, body, root)
 
 for index in range(32):
     a, b, c = [randomizer.randint(-1000, 1000) for _ in range(3)]

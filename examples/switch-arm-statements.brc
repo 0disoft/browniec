@@ -1,0 +1,16 @@
+module main;
+
+fn i32 main() {
+    let Option<i32> input = .some(7);
+    return switch (input) {
+        case .some(value): {
+            var i32 total = 0;
+            for (var i32 i = 0; i < 7; i = i + 1) {
+                if (i == 3) { continue; }
+                total = total + value;
+            }
+            total
+        }
+        case .none: { 0 }
+    };
+}
