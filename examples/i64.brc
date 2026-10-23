@@ -1,0 +1,17 @@
+module main;
+
+fn i64 advance(i64 base, i64 delta) {
+    return base + delta;
+}
+
+fn i32 main() {
+    let i64 largest = 9223372036854775807;
+    var i64 value = advance(largest - 42, 42);
+    let Option<bool> ready = .some(value == largest);
+    value = switch (ready) {
+        case .some(ok): { let bool checked = ok; value - largest + 42 }
+        case .none: { 0 }
+    };
+    if (value == 42) { return 42; }
+    return 0;
+}

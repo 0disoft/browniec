@@ -4,13 +4,13 @@ import errors as errors;
 
 // 0 EOF, 1 integer, 2 identifier; punctuation uses its ASCII byte.
 // 128 ==, 129 !=, 130 <=, 131 >=, 132 &&, 133 ||.
-pub struct State { usize cursor; usize begin; usize end; usize tokens; u8 kind; i64 value; }
+pub struct State { usize cursor; usize begin; usize end; usize tokens; u8 kind; i64 value; bool min_magnitude; }
 pub fn State empty() {
-    return State { .cursor = 0, .begin = 0, .end = 0, .tokens = 0, .kind = 0, .value = 0 };
+    return State { .cursor = 0, .begin = 0, .end = 0, .tokens = 0, .kind = 0, .value = 0, .min_magnitude = false };
 }
 pub fn State snapshot(ref State s) {
     return State {.cursor=s.cursor,.begin=s.begin,.end=s.end,
-        .tokens=s.tokens,.kind=s.kind,.value=s.value};
+        .tokens=s.tokens,.kind=s.kind,.value=s.value,.min_magnitude=s.min_magnitude};
 }
 pub fn bool equal(ref u8[] a, ref u8[] b) {
     if (a.len != b.len) { return false; }
@@ -38,18 +38,22 @@ pub fn Result<usize, errors::Error> next(ref u8[] source, ref mut State s) {
     s.tokens += 1;
     if (s.tokens > 1024) { return .err(errors::make(4, s.begin)); }
     s.value = 0;
+    s.min_magnitude = false;
     if (s.cursor == source.len) { s.kind = 0; s.end = s.cursor; return .ok(0); }
     let u8 ch = source[s.cursor];
     if (digit(ch)) {
         s.kind = 1;
         while (s.cursor < source.len && digit(source[s.cursor])) {
             let i64 part = (source[s.cursor] - 48) as i64;
-            if (s.value > 214748364 || (s.value == 214748364 && part > 8)) {
+            // Accumulate negatively so the minimum magnitude never overflows.
+            if (s.value < -922337203685477580 || (s.value == -922337203685477580 && part > 8)) {
                 return .err(errors::make(3, s.begin));
             }
-            s.value = s.value * 10 + part;
+            s.value = s.value * 10 - part;
             s.cursor += 1;
         }
+        s.min_magnitude = s.value == -9223372036854775808;
+        if (!s.min_magnitude) { s.value = -s.value; }
     } else if (letter(ch)) {
         s.kind = 2;
         while (s.cursor < source.len && (letter(source[s.cursor]) || digit(source[s.cursor]))) { s.cursor += 1; }

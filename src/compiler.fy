@@ -61,19 +61,25 @@ fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s,
     if (s.kind == 45 || s.kind == 33) {
         let bool negative = s.kind == 45;
         let usize advanced = lexer::next(source, s)?;
-        // The minimum signed literal is admitted without constructing positive i32 MIN.
-        if (negative && s.kind == 1 && s.value == 2147483648) {
+        // Admit a minimum signed literal without constructing its positive magnitude.
+        if (negative && s.kind == 1 && s.min_magnitude) {
+            if (expected!=9) {return .err(errors::make(3,at));}
+            let usize advanced_min=lexer::next(source,s)?;
+            return ir::integer(p,-9223372036854775808,9,at);
+        }
+        if (negative && s.kind == 1 && s.value == 2147483648 && expected!=9) {
             let usize advanced_min = lexer::next(source, s)?;
             return ir::literal(p, -2147483648, at);
         }
         let usize operand = primary(source, s, p, table, signatures, depth + 1, expected,result_type)?;
-        if (p.types[operand] != if (negative) { 1 } else { 2 }) { return .err(errors::make(3, at)); }
+        if ((negative && !types::integer(p.types[operand])) || (!negative && p.types[operand]!=2)) { return .err(errors::make(3, at)); }
         return ir::emit(p, if (negative) { 7 } else { 10 }, operand, 0, at);
     }
     if (s.kind == 1) {
+        if(s.min_magnitude) {return .err(errors::make(3,at));}
         let i64 value = s.value;
         let usize advanced = lexer::next(source, s)?;
-        return ir::literal(p, value, at);
+        return ir::integer(p, value, if(expected==9) {9} else {1}, at);
     }
     if (s.kind == 2) {
         if (word_is(source, s, b"true") || word_is(source, s, b"false")) {
@@ -154,8 +160,9 @@ fn Result<usize, errors::Error> expression(ref u8[] source, ref mut lexer::State
             left = ir::emit(p, 17, slot, 0, at)?;
             continue;
         }
-        let usize right = expression(source, s, p, table, signatures, level + 1, depth + 1, expected,result_type)?;
-        if (!types::scalar(p.types[left]) || p.types[left] != p.types[right] || ((operation < 11 || operation > 12) && p.types[left] != 1)) { return .err(errors::make(3, at)); }
+        let u8 context=p.types[left];
+        let usize right = expression(source, s, p, table, signatures, level + 1, depth + 1, context,result_type)?;
+        if (!types::scalar(p.types[left]) || p.types[left] != p.types[right] || ((operation < 11 || operation > 12) && !types::integer(p.types[left]))) { return .err(errors::make(3, at)); }
         left = ir::emit(p, operation, left, right, at)?;
     }
     return .ok(left);

@@ -9,6 +9,7 @@ import subprocess
 from m1_tagged_cases import run_tagged
 from m1_propagation_cases import run_propagation
 from m1_switch_expression_cases import run_switch_expression
+from m1_i64_cases import run_i64
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--exe", required=True)
@@ -155,7 +156,7 @@ for name, source, error in [
     ("calls-undefined", "module main; fn i32 main() { return unknown(); }", "type"),
     ("calls-too-few", "module main; fn i32 id(i32 x) { return x; } fn i32 main() { return id(); }", "type"),
     ("calls-too-many", "module main; fn i32 id(i32 x) { return x; } fn i32 main() { return id(1,2); }", "type"),
-    ("calls-wrong-param-type", "module main; fn i32 id(i64 x) { return 1; } fn i32 main() { return id(1); }", "type"),
+    ("calls-wrong-param-type", "module main; fn i32 id(i64 x) { return 1; } fn i32 main() { let i32 x=1; return id(x); }", "type"),
     ("calls-wrong-return-type", "module main; fn i64 f() { return 1; } fn i32 main() { return f(); }", "type"),
     ("calls-duplicate-function", "module main; fn i32 main() { return 0; } fn i32 main() { return 1; }", "type"),
     ("calls-duplicate-param", "module main; fn i32 id(i32 x,i32 x) { return x; } fn i32 main() { return id(1,2); }", "type"),
@@ -382,6 +383,7 @@ for n in [0,1,2,5,10,31]:
 run_tagged(case, body, root)
 run_propagation(case, root)
 run_switch_expression(case, body, root)
+run_i64(case, body, root)
 
 for index in range(32):
     a, b, c = [randomizer.randint(-1000, 1000) for _ in range(3)]

@@ -4,7 +4,7 @@ import errors as errors;
 import types as types;
 import std::num as num;
 
-// Private eight-byte instructions: op,dst,a,b,0,0,0,0. Scalar tags: 1 i32, 2 bool.
+// Private eight-byte instructions: op,dst,a,b,0,0,0,0. Scalars: 1 i32, 2 bool, 9 i64.
 // Opcodes: 1 constant, 2 add, 3 sub, 4 mul, 5 div, 6 rem, 7 neg, 8 return, 9 call.
 // 10 not, 11 eq, 12 ne, 13 lt, 14 le, 15 gt, 16 ge.
 // 17 load, 18 store, 19 jump, 20 jump-if-false, 21 jump-if-true.
@@ -65,7 +65,7 @@ pub fn Result<usize, errors::Error> emit(ref mut Program p, u8 op, usize a, usiz
     p.count += 1;
     if (op != 8) {
         let u8 tag = if (op >= 10 && op <= 16) { 2 } else if (op == 9) { p.return_types[a] }
-            else if (op == 17) { p.types[a] } else { 1 };
+            else if (op == 17 || (op >= 2 && op <= 7)) { p.types[a] } else { 1 };
         p.types[dst] = tag;
         p.registers += 1;
     }
@@ -73,12 +73,17 @@ pub fn Result<usize, errors::Error> emit(ref mut Program p, u8 op, usize a, usiz
 }
 
 pub fn Result<usize, errors::Error> literal(ref mut Program p, i64 value, usize offset) {
-    if (value < -2147483648 || value > 2147483647) { return .err(errors::make(3, offset)); }
+    return integer(p,value,1,offset);
+}
+pub fn Result<usize, errors::Error> integer(ref mut Program p, i64 value, u8 tag, usize offset) {
+    if (!types::integer(tag) || (tag==1 && (value < -2147483648 || value > 2147483647))) { return .err(errors::make(3, offset)); }
     if (p.constant_count >= 128) { return .err(errors::make(4, offset)); }
     let usize index = p.constant_count;
     p.constants[index] = value;
     p.constant_count += 1;
-    return emit(p, 1, index, 0, offset);
+    let usize result=emit(p, 1, index, 0, offset)?;
+    p.types[result]=tag;
+    return .ok(result);
 }
 
 pub fn Result<usize, errors::Error> call(ref mut Program p, usize target, ref usize[] arguments, usize offset) {
