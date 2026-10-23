@@ -1,30 +1,33 @@
 # M1 Direct Scalar Functions
 
-- Status: implemented; function/local and branch receipts are historical; loop slice verified
-- Scope: direct i32/bool functions and VM calls in the experimental scalar profile
+- Status: implemented; function/local, branch, and loop receipts are historical; tagged slice verified
+- Scope: direct scalar/wrapper functions and VM calls in the experimental scalar profile
 
 ## Source contract
 
 A source file starts with `module main;` and declares one or more functions:
 
 ```text
-fn (i32|bool) NAME((i32|bool) PARAM, ...) { BODY }
+fn TYPE NAME(TYPE PARAM, ...) { BODY }
 ```
 
 Exactly one `main` must exist, take zero arguments, and return i32. Other functions
-may return i32 or bool and may take i32 or bool parameters. There are no implicit
-scalar conversions. Declarations may precede or follow their callers. Direct and
-mutual recursion are admitted; structured branches can now provide conditional base
-cases. Every function body is checked, including functions that are never called.
+may return i32, bool, or an admitted shallow Option/Result type and may take those
+types as parameters. There are no implicit scalar conversions. Constructors receive
+their wrapper type from the parameter or result context. Declarations may precede or
+follow their callers. Direct and mutual recursion are admitted; structured branches
+can now provide conditional base cases. Every function body is checked, including
+functions that are never called.
 
-Arguments evaluate once from left to right and pass independent i32 or bool values.
+Arguments evaluate once from left to right and pass independent scalar or wrapper values.
 Parameter bindings are immutable; copy a parameter into a var to update a local.
 Locals belong to one function and cannot access a caller's bindings. Duplicate
 functions/parameters and invalid arity or annotations are rejected. A local may
 shadow a function name, but that scalar local cannot be called. Functions are not
-first-class values. Indirect calls, variadics, default arguments, trailing commas,
-and tagged values are not admitted. See [bool and branches](m1-branches.md) for
-branch control and [loops](m1-loops.md) for loop control and header call restrictions.
+first-class values. Indirect calls, variadics, default arguments, and trailing commas
+are not admitted. See [bool and branches](m1-branches.md) for branch control,
+[loops](m1-loops.md) for loop control and header call restrictions, and
+[tagged values](m1-tagged.md) for shallow Option/Result parameters and returns.
 
 ## Compiler and private IR
 
@@ -58,7 +61,7 @@ across fresh runs.
 
 Limits: 16 functions, 8 arguments per function/call, 32 static call-sites, and 32
 live frames including the entry. The 128-register ceiling is global across the
-Program, not per function, and includes typed `var` and short-circuit result slots.
+Program, not per function, and includes typed `var`, short-circuit, and wrapper slots.
 At most 64 bindings may be simultaneously visible in a function, including
 parameters. Source bytes, tokens, constants, instructions, structural parser depth,
 expression depth, and loop depth keep their existing limits. The VM reserves 4096
@@ -78,11 +81,11 @@ recursion/Fuel/frame boundaries, function/call-site ceilings, and corrupted priv
 call metadata. It does not cover bool returns, structured branches, slot joins, or
 the branch verifier.
 
-The [branch receipt](../evidence/m1-branches-windows-20261023.json) records the
-historical 20-group/248-case branch slice. The current
-[loop receipt](../evidence/m1-loops-windows-20261023.json) records 26 native groups
-and 332 black-box CLI cases for each development and release profile, including
-call regressions across bool parameters and results and the conservative `for`
-header call rejection. Full M1, Option/Result, workers, DLL ABI, clean-machine
-distribution, and performance targets remain unverified. M0 inputs are unchanged
-and were not rerun.
+The branch receipt records the historical 20-group/248-case branch slice, and the
+loop receipt records the historical 26-group/332-case loop slice. The current
+[tagged receipt](../evidence/m1-tagged-windows-20261023.json) records 33 native
+groups and 423 black-box CLI cases for each development and release
+profile, including wrapper parameters and returns, constructors under call context,
+and call regressions across scalar and tagged values. Full M1, `?` propagation,
+workers, DLL ABI, clean-machine distribution, and performance targets remain
+unverified. M0 inputs are unchanged and were not rerun.

@@ -1,6 +1,6 @@
 # Development
 
-- Status: M0 verified; experimental native M1 scalar CLI implemented; bool/branch and loop slices verified
+- Status: M0 verified; experimental native M1 scalar CLI implemented; bool/branch, loop, and tagged switch slices verified
 - Current repository content: Fairy C frontend, private IR/verifier/VM, CLI, tests, and M0 probes
 
 ## Current reality
@@ -29,13 +29,14 @@ checkout or claim it matches the historical receipts.
 ./build/browniec.exe check examples/answer.brc --json
 ./build/browniec.exe run examples/branches.brc --json
 ./build/browniec.exe run examples/loops.brc --fuel 1000 --json
+./build/browniec.exe run examples/tagged.brc --json
 pwsh -NoProfile -File tools/verify-m1.ps1
 ```
 
 M1 verification needs PowerShell 7 and Python 3 for the build/test driver, not for the
-produced runtime. The [loop receipt](docs/evidence/m1-loops-windows-20261023.json)
-records 26 native groups and 332 CLI cases per development and release
-profile. The branch, function, and local receipts remain historical. Verification retains
+produced runtime. The [tagged receipt](docs/evidence/m1-tagged-windows-20261023.json)
+records 33 native groups and 423 CLI cases per development and release
+profile. The loop, branch, function, and local receipts remain historical. Verification retains
 `build/m1/receipt.json` and per-profile records. The selected native binaries run
 with a cleared environment and tool-free PATH. No measured latency budget follows.
 
@@ -63,7 +64,7 @@ Brownie. Clean-machine validation and sandbox behavior belong to later milestone
 
 1. Keep the recorded M0 signatures and rerun the native probes when their inputs change.
 2. Record any M0 failure without promoting it to VM evidence.
-3. Build the bounded scalar source-to-VM path, including bool values, branches, and loops.
+3. Build the bounded scalar source-to-VM path, including bool values, branches, loops, shallow tagged values, and switch.
 4. Add arrays, structs, borrows, Buffer, and text through small end-to-end cases.
 5. Add typed host suspension only after the pure path is stable.
 6. Add Windows process isolation before exposing the restricted delivery level.
@@ -78,8 +79,9 @@ M0 and M1 are not blocked by the later Windows worker or DLL milestones.
 `inspect`, `worker`, `--project`, and guest input/policy configuration remain
 unimplemented. `--isolated` fails explicitly; there is no unrestricted fallback.
 See [M1 details](docs/engineering/m1-scalar-slice.md) and the
-[bool/branch contract](docs/engineering/m1-branches.md) and [loop contract](docs/engineering/m1-loops.md),
-with current results in the [loop receipt](docs/evidence/m1-loops-windows-20261023.json).
+[branch](docs/engineering/m1-branches.md), [loop](docs/engineering/m1-loops.md), and
+[tagged](docs/engineering/m1-tagged.md) contracts, with current results in the
+[tagged receipt](docs/evidence/m1-tagged-windows-20261023.json).
 
 Documentation review may use repository-neutral tools such as a Markdown link check
 or git diff --check when the parent task supplies them. These checks do not execute

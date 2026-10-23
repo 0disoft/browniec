@@ -1,6 +1,6 @@
 # CLI Tool
 
-- Status: Experimental native M1 scalar CLI implemented; bool/branch and loop slices verified
+- Status: Experimental native M1 scalar CLI implemented; bool/branch, loop, and tagged switch slices verified
 - Native runtime intent: direct .brc source execution
 - Contract owner: docs/cli/command-contract.md
 
@@ -16,14 +16,14 @@ The proposed surface is --version, check, run, inspect, and worker, with explici
 are implemented for the M1 scalar profile.
 The broader commands/options remain designed or unavailable.
 
-The current scalar increment adds i32/bool values, bounded branches, `while` and
-classic `for` loops, `break`/`continue`, and metered backedges. It keeps `main` as a
-zero-argument i32 function, so the CLI result field remains `return_i32`; guest bools
-are internal to the program. The loop slice is verified by the
-[loop receipt](../evidence/m1-loops-windows-20261023.json). Language contracts are in
-[M1 bool and branches](../engineering/m1-branches.md) and [M1 loops](../engineering/m1-loops.md).
-Command availability, output framing, and exit behavior remain governed by the
-owning CLI documents.
+The current scalar increment adds i32/bool values, bounded branches, loops, and
+shallow `Option`/`Result` values with exhaustive `switch` statements. It keeps
+`main` as a zero-argument i32 function, so the CLI result field remains
+`return_i32`; guest bools and wrappers are internal to the program. The tagged slice
+is verified by the [tagged receipt](../evidence/m1-tagged-windows-20261023.json).
+Language contracts are in the [branch](../engineering/m1-branches.md), [loop](../engineering/m1-loops.md),
+and [tagged](../engineering/m1-tagged.md) documents. Command availability, output
+framing, and exit behavior remain governed by the owning CLI documents.
 
 ## Authority and availability
 

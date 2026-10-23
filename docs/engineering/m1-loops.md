@@ -1,12 +1,13 @@
 # M1 while and Classic for Loops
 
-- Status: implemented and verified on Windows; 26 native groups and 332 CLI cases in each development and release profile
+- Status: implemented and verified for the loop slice; historical after the tagged increment
 - Scope: bounded `while` and classic `for`, `break`/`continue`, and metered backedges in `brownie.m1-scalar/1`
 
 This increment extends the M1 scalar slice with lexical loops. It keeps the
-existing i32/bool values, functions, locals, branches, and direct-call rules.
-It does not define the full `brownie.safe/0.3` profile, tagged values, Windows
-isolation, or the embed ABI.
+existing i32/bool values, functions, locals, branches, and direct-call rules. The
+separate [tagged increment](m1-tagged.md) adds shallow Option/Result and switch. This
+document does not define the full `brownie.safe/0.3` profile, Windows isolation, or
+the embed ABI.
 
 ## Source surface
 
@@ -132,7 +133,7 @@ remains a zero-argument i32 function and guest bools remain internal values.
 ./build/browniec.exe run examples/loops.brc --fuel 1000 --json
 ```
 
-The [loop receipt](../evidence/m1-loops-windows-20261023.json) records 26 native
+The historical [loop receipt](../evidence/m1-loops-windows-20261023.json) records 26 native
 groups and 332 black-box CLI cases for each development and release
 profile. Its coverage includes both loop forms, omitted clauses, pure-header call
 rejection, `break`/`continue` ownership and post behavior, zero-trip completeness,
@@ -141,7 +142,6 @@ dead-post handling, loop depth and instruction budgets, opcode-22 corruption, Fu
 and prior scalar/branch regressions. The earlier branch receipt remains historical
 evidence for the branch slice.
 
-Full M1 still has Option/Result, shallow switch, and question-mark propagation to
-implement. Workers, the DLL ABI, Windows isolation, clean-machine packaging, and
-performance targets remain unverified. No OS sandbox or performance claim follows
-from loop support.
+Full M1 still needs `?` propagation and possibly broader switch expressions. Workers,
+the DLL ABI, Windows isolation, clean-machine packaging, and performance targets
+remain unverified. No OS sandbox or performance claim follows from loop support.

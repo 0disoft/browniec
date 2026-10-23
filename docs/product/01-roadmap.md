@@ -1,7 +1,7 @@
 # Roadmap
 
-- Status: Accepted delivery sequence; M0 verified, M1 scalar, bool/branch, and loop slices implemented and verified, 2026-10-23
-- Current progress: M0, M1 bool/branch, and loop slices passed; full M1 partial; M2-M5 not started
+- Status: Accepted delivery sequence; M0 verified, M1 scalar, bool/branch, loop, and tagged switch slices implemented and verified, 2026-10-23
+- Current progress: M0 and M1 scalar/branch/loop/tagged slices passed; full M1 partial; M2-M5 not started
 
 This roadmap orders learning and evidence. It is not a release promise. M0 has a
 native harness and recorded evidence. The scalar CLI/VM now exist; the worker
@@ -51,15 +51,19 @@ native groups and 248 CLI cases in each of development and release and remains
 historical. The [loop slice](../engineering/m1-loops.md) adds `while`, classic `for`,
 `break`/`continue`, and metered backedges. Its
 [receipt](../evidence/m1-loops-windows-20261023.json) records 26 native groups and
-332 CLI cases in each profile. Remaining M1 work includes scalar Option/Result,
-shallow switch, question-mark propagation, and their Flow checks.
+332 CLI cases in each profile and remains historical. The
+[tagged slice](../engineering/m1-tagged.md) adds shallow `Option<i32|bool>`,
+`Result<i32|bool, i32|bool>`, and exhaustive `switch` statements. Its
+[receipt](../evidence/m1-tagged-windows-20261023.json) records 33 native groups and
+423 CLI cases in each profile. Remaining M1 work includes `?`
+propagation and possibly broader switch expressions.
 
 Goal: run real .brc source through lexer, parser, type checking, Flow analysis,
 private code generation, independent verification, and the native VM.
 
-The first usable slice includes functions, branches, loops, scalar Option/Result,
-question-mark propagation, shallow switch, checked arithmetic, and bounded Fuel. It
-produces a small CLI path for local engineering use.
+The first usable slice includes functions, branches, loops, shallow scalar
+Option/Result, switch statements, question-mark propagation, checked arithmetic,
+and bounded Fuel. It produces a small CLI path for local engineering use.
 
 Exit condition: the same source and input produce the expected guest value through
 the actual native binary. Guest nonzero is data. Compile or runtime failure returns

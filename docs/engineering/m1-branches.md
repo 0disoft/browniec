@@ -1,6 +1,6 @@
 # M1 Bool and Branch Slice
 
-- Status: implemented and verified for the branch slice; historical after the loop increment
+- Status: implemented and verified for the branch slice; historical after the loop and tagged increments
 - Scope: bool scalars, lexical blocks, structured branches, early returns, and CFG checks in `brownie.m1-scalar/1`
 
 This increment keeps the experimental `brownie.m1-scalar/1` profile bounded. It
@@ -176,6 +176,6 @@ digests, executed and skipped checks, and remaining limitations.
 
 The expression, locals, and direct-function receipts remain historical evidence for
 their narrower slices; none of them is evidence for branches or LOAD/STORE/CFG
-behavior. Full M1, Option/Result, Windows isolation, and performance remain
-unverified. No OS sandbox, performance target, clean-machine package, or DLL ABI
-claim follows from this increment.
+behavior. Full M1, `?` propagation, broader switch expressions, Windows isolation,
+and performance remain unverified. No OS sandbox, performance target, clean-machine
+package, or DLL ABI claim follows from this increment.

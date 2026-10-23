@@ -2,7 +2,7 @@
 
 - Status: accepted design baseline
 - Decision date: 2026-10-23
-- Implementation: M0 verified; experimental M1 scalar pipeline and VM implemented; bool/branch and loop slices verified
+- Implementation: M0 verified; experimental M1 scalar pipeline and VM implemented; bool/branch, loop, and tagged switch slices verified
 
 ## Intent
 
@@ -25,10 +25,16 @@ invariant; it does not solve a cyclic fixed point or prove termination. For retu
 completeness, the compiler conservatively treats every loop as possibly zero-trip,
 so a following function return remains required. Direct calls use verified function
 ranges and bounded VM frames. The loop slice is verified
-by the [dated receipt](docs/evidence/m1-loops-windows-20261023.json); the branch
-receipt remains historical. Ownership, lifecycle APIs, Engine, host calls, workers,
-and DLLs remain designs; full M1 remains unverified. M0 separately exercises native
-arithmetic, codec, storage, allocator, owner, and frame primitives.
+by the [loop receipt](docs/evidence/m1-loops-windows-20261023.json), which remains
+historical after the tagged increment. A shallow Option/Result occupies one i64
+cell with a packed scalar payload and variant; exhaustive `switch` lowers to `CASE`
+tests, normal arm joins, and an internal unreachable `MATCH_FAIL` fallback. The
+verifier tracks both paths and defines the payload only on a match. It checks
+wrapper type/variant agreement without a separate tag array. The tagged slice is verified by the
+[dated receipt](docs/evidence/m1-tagged-windows-20261023.json). Ownership, lifecycle
+APIs, Engine, host calls, workers, and DLLs remain designs; full M1, including `?`
+propagation, remains unverified. M0 separately exercises native arithmetic, codec,
+storage, allocator, owner, and frame primitives.
 
 ## Main path
 

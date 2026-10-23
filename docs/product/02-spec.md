@@ -1,7 +1,7 @@
 # Product Specification
 
 - Status: Accepted for design, 2026-10-23
-- Implementation status: M1 i32/bool expressions, locals, calls, branches, and loops implemented and verified; full profile not implemented
+- Implementation status: M1 scalar expressions, branches, loops, shallow Option/Result, and switch implemented and verified; full profile not implemented
 - Source profile name: brownie.safe/0.3
 
 ## Product boundary
@@ -40,6 +40,17 @@ target the nearest lexical loop. A `for` continue runs the post, while break and
 return skip it. For return completeness, every loop is conservatively treated as
 possibly zero-trip. Exact grammar and limits are in the [branch contract](../engineering/m1-branches.md)
 and [loop contract](../engineering/m1-loops.md).
+
+The tagged increment admits `Option<i32|bool>` and
+`Result<i32|bool, i32|bool>` at wrapper depth one. Constructors take their wrapper
+type from a typed initializer, assignment, function parameter, or return, including
+through parentheses. Nested and aggregate wrappers are rejected. Wrapper values copy
+by value through locals, calls, frames, and loops, but they do not support arithmetic,
+ordering, or equality. `for` headers remain pure scalar. Exhaustive `switch`
+statements use `.some`/`.none` or `.ok`/`.err` arms in either order, evaluate the
+subject once, and bind immutable payloads in block scope. There is no default arm,
+fallthrough, switch expression, or `?` propagation. Exact rules are in the
+[tagged contract](../engineering/m1-tagged.md).
 
 Classic for headers may contain only the profile's pure scalar declaration,
 assignment, condition, and post steps. Arrays and repeated initializers use positive
@@ -129,11 +140,11 @@ corpus updates, and appropriate verification.
 7. The restricted level is unavailable until actual Windows isolation tests pass.
 8. The embed level is unavailable until an actual DLL export/call test passes.
 
-The experimental M1 scalar slice establishes a native source path for its narrower
-grammar. The [loop receipt](../evidence/m1-loops-windows-20261023.json) verifies the
-bool/branch and loop slices; the branch receipt remains historical. Full M1,
-Option/Result, shallow switch, question-mark propagation, and Windows isolation
-remain unverified. The slice does not satisfy full-profile ownership, allocation,
-host, isolation, or embed criteria. Claims require scoped
-[M1 details](../engineering/m1-scalar-slice.md) and the recorded loop receipt, not
+The experimental M1 slice establishes a native source path for its narrower grammar.
+The [tagged receipt](../evidence/m1-tagged-windows-20261023.json) verifies the tagged
+switch slice and its prior scalar/branch/loop regressions; the loop and branch
+receipts remain historical. Full M1, `?` propagation, broader switch expressions,
+and Windows isolation remain unverified. The slice does not satisfy full-profile
+ownership, allocation, host, isolation, or embed criteria. Claims require scoped
+[M1 details](../engineering/m1-scalar-slice.md) and the recorded tagged receipt, not
 acceptance of this specification alone.

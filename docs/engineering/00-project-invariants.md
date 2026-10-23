@@ -1,7 +1,7 @@
 # Project Invariants
 
 - Status: Accepted design invariants
-- Implementation: M0 verified; bounded i32/bool verifier/VM subset with branches and loops implemented and verified; full invariants pending
+- Implementation: M0 verified; bounded i32/bool verifier/VM subset with branches, loops, and shallow tagged switch implemented and verified; full invariants pending
 
 ## Runtime authority
 
@@ -39,7 +39,9 @@ registers, initialization, ownership, roots, loans, selected stores, and meterin
 Compiler metadata is not trusted over recomputation where safety depends on it.
 
 Plain-struct depth, tagged-wrapper depth, and total traversal budget remain separate
-limits. Buffer growth must try the minimum rounded required capacity when its
+limits. The current M1 tagged slice admits wrapper depth one with scalar payloads;
+rejecting nested or aggregate wrappers does not settle later nested-depth or
+struct-depth budgets. Buffer growth must try the minimum rounded required capacity when its
 preferred candidate exceeds a reservation ceiling; old-plus-new peak and owner
 metadata stay reserved. Allocator OOM retry is a separate policy decision.
 

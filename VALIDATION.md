@@ -1,7 +1,7 @@
 # Validation
 
-- Status: accepted evidence policy; M0 verified; M1 bool/branch and loop slices verified
-- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with bool/branch and loop support
+- Status: accepted evidence policy; M0 verified; M1 bool/branch, loop, and shallow tagged slices verified
+- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with branches, loops, shallow Option/Result, and switch
 
 ## Validation source of truth
 
@@ -76,8 +76,8 @@ Exact transcript and artifact details belong to `build/m0/receipt.json` and
 Full M1 remains partial; M2 through M5 remain not started. M0's empty runtime-`PATH` execution does not
 establish clean-machine packaging or Windows isolation.
 
-M1 has scalar expressions, initialized locals, direct functions, and bool/branch and
-loop slices implemented and verified. The bool/branch slice adds canonical bool
+M1 has scalar expressions, initialized locals, direct functions, and bool/branch,
+loop, and shallow tagged slices implemented and verified. The bool/branch slice adds canonical bool
 values without integer conversion, typed operator rules, short-circuit `&&` and
 `||`, if/else chains, standalone lexical blocks, early returns, forward-only jumps,
 and definite initialization across CFG joins. It keeps `var` storage and
@@ -92,23 +92,28 @@ including a literal-true or omitted condition, so a following function return
 remains required. The verifier checks backedge initialization conservatively from
 the forward graph; it does not claim a termination proof.
 
-The [loop receipt](docs/evidence/m1-loops-windows-20261023.json) records 26 native
-groups and 332 black-box CLI cases for both development and release,
-together with toolchain, source, artifact, and harness identities. Coverage includes
-both loop forms and omitted clauses, direct-call rejection in `for` headers,
-nearest-loop transfer ownership, `continue` post behavior, break/return post skipping,
-zero-trip completeness, lexical reinitialization, loop depth and active bindings,
-opcode 22 bounds and backedge initialization, dead-post handling, Fuel, and prior
-scalar/branch regressions.
+The tagged slice adds one-level `Option<i32|bool>` and
+`Result<i32|bool, i32|bool>` values, context-required constructors, exhaustive
+`switch` statements with immutable scalar bindings, one i64 cell per wrapper, and
+`MAKE`/`CASE`/`MATCH_FAIL` verification. It excludes nested wrappers, switch
+expressions, and `?` propagation.
 
-The [loop contract](docs/engineering/m1-loops.md) owns the detailed loop rules. The
-[branch receipt](docs/evidence/m1-branches-windows-20261023.json) remains historical
-for the 20-group/248-case branch slice; the [function receipt](docs/evidence/m1-functions-windows-20261023.json)
+The [tagged receipt](docs/evidence/m1-tagged-windows-20261023.json) records 33
+native groups and 423 black-box CLI cases for both development and
+release, together with toolchain, source, artifact, and harness identities. Coverage
+includes constructor context, wrapper copy and call behavior, depth-one rejection,
+switch exhaustiveness and arm order, `_` bindings, subject-once evaluation, terminal
+joins, exact CASE initialization, wrapper type/variant corruption, internal
+`MATCH_FAIL`, tag packing edges, Fuel, and prior scalar/branch/loop regressions.
+
+The [tagged contract](docs/engineering/m1-tagged.md) owns the detailed wrapper and
+switch rules. The [loop receipt](docs/evidence/m1-loops-windows-20261023.json) is
+historical for its 26-group/332-case slice; the [branch receipt](docs/evidence/m1-branches-windows-20261023.json)
+is historical for 20/248, and the [function receipt](docs/evidence/m1-functions-windows-20261023.json)
 and earlier locals/expression receipts are likewise historical for their narrower
-slices. Full M1 still needs Option/Result, shallow switch, and question-mark
-propagation. Workers, DLL ABI, Windows isolation, and performance remain unverified.
-M0 was not rerun for unchanged inputs. No new CI job or performance measurement was
-added.
+slices. Full M1 still needs `?` propagation and possibly broader switch expressions.
+Workers, DLL ABI, Windows isolation, and performance remain unverified. M0 was not
+rerun for unchanged inputs. No new CI job or performance measurement was added.
 M2 must cover arrays, structs, borrows, Buffer, input, output, and UTF-8.
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker
