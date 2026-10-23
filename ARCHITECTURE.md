@@ -2,7 +2,7 @@
 
 - Status: accepted design baseline
 - Decision date: 2026-10-23
-- Implementation: M0 verified; experimental M1 scalar pipeline and VM implemented; bool/branch, loop, and tagged slices verified; scalar `?` propagation verified
+- Implementation: M0 verified; experimental M1 scalar pipeline and VM implemented; bool/branch, loop, and tagged slices historically verified; scalar `?` propagation historically verified; switch expressions verified
 
 ## Intent
 
@@ -36,10 +36,17 @@ Postfix `?` reuses `CASE` and `JUMP` on success; a mismatch enters a second
 `CASE`, builds the enclosing function's declared `Option`/`Result` with `MAKE`,
 and returns, with the negative CASE path targeting `MATCH_FAIL`. The compiler keeps
 that function return type separate from the expected type of the surrounding
-expression. Propagation is implemented for shallow scalar wrappers; its
-[receipt](docs/evidence/m1-propagation-windows-20261023.json) records
-37 native groups and 510 CLI cases in each development and release profile. Ownership, lifecycle APIs, Engine, host calls, workers, and DLLs remain
-designs; full M1, switch expressions, and other scalar types remain unverified. M0
+expression. Propagation is implemented for shallow scalar wrappers and its receipt
+is historical after the switch-expression increment. A switch expression reuses
+the same exhaustive `CASE` dispatch. Each value arm stores its final result into one
+lazy typed join slot and jumps forward to a shared `LOAD`; direct-return arms emit
+their function return and do not join. A final variant mismatch targets
+`MATCH_FAIL`, and the existing verifier proves the join slot is initialized before
+`LOAD`. No VM opcode or guest heap allocation is added. The current switch-expression
+[receipt](docs/evidence/m1-switch-expressions-windows-20261023.json) records 41
+native groups and 580 CLI cases in each profile. Ownership, lifecycle APIs, Engine, host calls, workers, and DLLs
+remain designs; full M1, richer value-arm statements, and other scalar types remain
+unverified or unimplemented. M0
 separately exercises native arithmetic, codec, storage, allocator, owner, and frame
 primitives.
 

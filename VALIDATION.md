@@ -1,7 +1,7 @@
 # Validation
 
-- Status: accepted evidence policy; M0 verified; M1 bool/branch, loop, and shallow tagged slices verified; propagation implemented and verified
-- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with branches, loops, shallow Option/Result, switch, and scalar `?` propagation
+- Status: accepted evidence policy; M0 verified; M1 bool/branch, loop, and shallow tagged slices have verified historical receipts; propagation historically verified; switch expressions implemented and verified
+- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation
 
 ## Validation source of truth
 
@@ -77,8 +77,9 @@ Full M1 remains partial; M2 through M5 remain not started. M0's empty runtime-`P
 establish clean-machine packaging or Windows isolation.
 
 M1 has scalar expressions, initialized locals, direct functions, and bool/branch,
-loop, and shallow tagged slices implemented and verified. The propagation slice is
-implemented and verified for the same one-level scalar wrappers. The bool/branch slice adds canonical bool
+loop, and shallow tagged slices implemented and historically verified. The
+propagation slice is historically verified for the same one-level scalar wrappers.
+The bool/branch slice adds canonical bool
 values without integer conversion, typed operator rules, short-circuit `&&` and
 `||`, if/else chains, standalone lexical blocks, early returns, forward-only jumps,
 and definite initialization across CFG joins. It keeps `var` storage and
@@ -96,8 +97,9 @@ the forward graph; it does not claim a termination proof.
 The tagged slice adds one-level `Option<i32|bool>` and
 `Result<i32|bool, i32|bool>` values, context-required constructors, exhaustive
 `switch` statements with immutable scalar bindings, one i64 cell per wrapper, and
-`MAKE`/`CASE`/`MATCH_FAIL` verification. It excludes nested wrappers and switch
-expressions.
+`MAKE`/`CASE`/`MATCH_FAIL` verification. It excludes nested wrappers. Its historical
+contract covers switch statements; the later switch-expression increment owns
+expression-position arms.
 
 The propagation slice adds postfix `?` to expressions in functions returning
 `Option<T>` or `Result<T, E>`. It evaluates the operand once, yields the
@@ -121,16 +123,31 @@ joins, exact CASE initialization, wrapper type/variant corruption, internal
 `MATCH_FAIL`, tag packing edges, Fuel, and prior scalar/branch/loop regressions.
 
 The [tagged contract](docs/engineering/m1-tagged.md) owns the detailed wrapper and
-switch rules. The [propagation contract](docs/engineering/m1-propagation.md) owns
-`?` typing, placement, lowering, and Fuel. The current propagation receipt
-is [m1-propagation-windows-20261023.json](docs/evidence/m1-propagation-windows-20261023.json);
-it records 37 native groups and 510 CLI cases for
-each profile. The recorded matrix passed.
+switch-statement rules. The [propagation contract](docs/engineering/m1-propagation.md)
+owns `?` typing, placement, lowering, and Fuel. The [switch-expression contract](docs/engineering/m1-switch-expressions.md)
+adds expression-position exhaustive arms, restricted local declarations and
+assignments, typed value joins, and direct-return arms. It admits one final
+expression without a semicolon or `return EXPR;` in an enclosing function, at least
+one yielding arm, and one exact result type across yielding arms. A single typed
+join slot is loaded only after a value arm's forward jump; direct-return arms do
+not join. The existing verifier proves that slot is initialized before its shared
+`LOAD`, and the final variant mismatch targets `MATCH_FAIL`. No VM opcode is added.
+Switch-expression arm nesting consumes two expression-depth levels per arm and one
+for its subject; 16 nested switches are admitted and 17 are rejected. Classic `for`
+headers reject switch expressions. Executed instructions use the existing Fuel
+schedule; the compact non-propagating switch example costs 7 Fuel and fails at 6.
+The switch expression creates no guest heap allocation and makes no performance claim.
+
+The propagation receipt is historical after the switch-expression increment. The
+current switch-expression receipt is
+[m1-switch-expressions-windows-20261023.json](docs/evidence/m1-switch-expressions-windows-20261023.json);
+it records 41 native groups and 580 CLI cases in each profile, adding 70 CLI cases.
+The propagation receipt remains historical at 37 native groups and 510 CLI cases.
 The [loop receipt](docs/evidence/m1-loops-windows-20261023.json) is
 historical for its 26-group/332-case slice; the [branch receipt](docs/evidence/m1-branches-windows-20261023.json)
 is historical for 20/248, and the [function receipt](docs/evidence/m1-functions-windows-20261023.json)
 and earlier locals/expression receipts are likewise historical for their narrower
-slices. Full M1 still needs broader switch expressions and other scalar types.
+slices. Full M1 still needs other scalar types and richer value-arm statements.
 Workers, DLL ABI, Windows isolation, and performance remain unverified. M0 was not
 rerun for unchanged inputs. No new CI job or performance measurement was added.
 M2 must cover arrays, structs, borrows, Buffer, input, output, and UTF-8.

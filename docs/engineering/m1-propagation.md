@@ -1,13 +1,14 @@
 # M1 Shallow Scalar `?` Propagation
 
-- Status: implemented and verified on Windows; 37 native groups and 510 CLI cases in each development and release profile
+- Status: implemented and verified on Windows; historical after the switch-expression increment; 37 native groups and 510 CLI cases in each development and release profile
 - Scope: postfix `?` on one-level Option/Result values in `brownie.m1-scalar/1`
 
 This increment adds `expr?` to the existing scalar, branch, loop, and shallow tagged
 slice. It admits `Option<i32>`, `Option<bool>`, and
 `Result<T, E>` where `T` and `E` are i32 or bool. Wrapper depth is still one:
-nested wrappers, aggregate payloads, switch expressions, other scalar types, and
-host effects remain outside this increment.
+nested wrappers, aggregate payloads, other scalar types, and host effects remain
+outside this increment. The successor [switch-expression contract](m1-switch-expressions.md)
+adds exhaustive shallow-wrapper switches as operands.
 
 ## Types and propagation
 
@@ -49,8 +50,9 @@ their type. `?` introduces no constructor inference and no new wrapper inference
 - call arguments; and
 - return expressions.
 
-All three classic `for` header clauses remain pure scalar and reject `?`. The compiler
-also retains the existing rule against standalone expression statements.
+All three classic `for` header clauses remain pure scalar and reject `?` and switch
+expressions. The compiler also retains the existing rule against standalone
+expression statements.
 
 An unevaluated `?` performs no work. A short-circuited right operand and an unselected
 conditional branch therefore skip their `?`. A failure that is evaluated returns
@@ -98,13 +100,15 @@ one i64 register cell.
 The example uses `Option<i32>` in the `Option<bool>` function `positive`, then
 combines two `Result<i32, bool>` values in `add`. Its successful path returns 42.
 
-The current receipt is
+The propagation receipt is
 [m1-propagation-windows-20261023.json](../evidence/m1-propagation-windows-20261023.json).
 It records 37 native groups and 510 black-box CLI
-cases for each development and release profile. The propagation slice is
-verified by that matrix. The tagged receipt's
-33 native groups and 423 CLI cases remain the historical record for the preceding
-tagged slice.
+cases for each development and release profile and is historical after the
+switch-expression increment. The tagged receipt's 33 native groups and 423 CLI
+cases remain the historical record for the preceding tagged slice. The current
+[switch-expression receipt](../evidence/m1-switch-expressions-windows-20261023.json)
+records 41 native groups and 580 CLI cases in each profile.
 
-This contract does not establish full M1, other scalar types, switch expressions,
-Windows isolation, the DLL ABI, clean-machine packaging, or performance results.
+This contract does not establish full M1, other scalar types, richer value-arm
+statements, Windows isolation, the DLL ABI, clean-machine packaging, or performance
+results.

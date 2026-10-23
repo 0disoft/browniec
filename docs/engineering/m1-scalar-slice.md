@@ -1,7 +1,7 @@
 # M1 Scalar Slice
 
-- Status: experimental compiler/verifier/VM and source CLI implemented; bool/branch, loop, and tagged slices verified; scalar `?` propagation verified
-- Scope: M1 expressions, scalar and shallow wrapper values, branches, loops, exhaustive switch, and scalar `?` propagation; not full M1 or profile conformance
+- Status: experimental compiler/verifier/VM and source CLI implemented; bool/branch, loop, tagged, and `?` slices historically verified; switch expressions verified
+- Scope: M1 expressions, scalar and shallow wrapper values, branches, loops, exhaustive switch statements and expressions, and scalar `?` propagation; not full M1 or profile conformance
 
 The admitted source is `module main;` followed by one or more
 `fn TYPE NAME(TYPE PARAM, ...) { BODY }` declarations, including
@@ -11,18 +11,20 @@ for calls, parameter rules, private metadata, and VM frame behavior, and
 See [loops](m1-loops.md) for `while`, classic `for`, `break`/`continue`, and backedge
 rules, [tagged values](m1-tagged.md) for shallow Option/Result and switch, and
 [`?` propagation](m1-propagation.md) for scalar payload extraction and wrapper
-failure.
+failure. [Switch expressions](m1-switch-expressions.md) add exhaustive arm values
+or direct returns in expression position.
 EXPR supports decimal i32 literals, `true` and `false`, parentheses, unary minus,
 `!`, arithmetic, ordering, equality, short-circuit `&&` and `||`, previously visible
 local names, direct function calls, and context-required `.some`/`.none`/`.ok`/`.err`
-constructors. Postfix `?` is admitted in functions returning an admitted Option or
-Result and binds tighter than unary and binary operators.
+constructors. An exhaustive shallow-wrapper switch expression is also an operand.
+Postfix `?` is admitted in functions returning an admitted Option or Result and
+binds tighter than unary and binary operators.
 Whitespace and `//` comments are accepted.
 The negative minimum literal is admitted directly; positive 2147483648 is rejected.
 STMT includes typed `let` and `var` declarations, `NAME = EXPR;`, `return EXPR;`,
 `if`/`else if`/`else`, standalone `{ ... }` blocks, `while (COND) { ... }`, classic
 `for (INIT; COND; POST) { ... }`, `break;`, `continue;`, and exhaustive
-`switch (SUBJECT) { case ... }`. Every local requires an
+`switch (SUBJECT) { case ... }` statements. Every local requires an
 initializer. Only var may be reassigned. Names are ASCII identifiers and case
 sensitive. A declaration is not visible within its own initializer. Declaring a
 name already visible as a local or parameter is rejected; sibling blocks may reuse a
@@ -69,6 +71,8 @@ to the slot. A previous copy therefore keeps its value after assignment, and joi
 share the slot rather than a mutable value register. Slots consume the same 128-cell
 global budget as value registers. A shallow Option/Result also occupies one i64
 register cell; it packs a scalar payload and variant without a separate tag array.
+Switch-expression values use one lazy typed join slot when at least one arm yields;
+the verifier requires that slot to be initialized before its shared `LOAD`.
 Arithmetic initializers and assignment RHS
 instructions are retained even if their final value is unused, so traps and
 left-to-right execution are preserved.
@@ -113,10 +117,11 @@ per-profile `cli-receipt.json` files. The original expression-only,
 [function](../evidence/m1-functions-windows-20261023.json) receipts are likewise
 historical for narrower slices.
 
-The current propagation receipt is
-[m1-propagation-windows-20261023.json](../evidence/m1-propagation-windows-20261023.json).
-It records 37 native groups and 510 CLI cases for each development and release
-profile. Both profiles passed.
+The propagation receipt is historical after the switch-expression increment. The
+current switch-expression receipt is
+[m1-switch-expressions-windows-20261023.json](../evidence/m1-switch-expressions-windows-20261023.json);
+it records 41 native groups and 580 CLI cases for each development and release
+profile. The propagation receipt remains historical at 37/510.
 
 ## Run the implemented subset
 
@@ -130,6 +135,7 @@ profile. Both profiles passed.
 ./build/browniec.exe run examples/loops.brc --fuel 1000 --json
 ./build/browniec.exe run examples/tagged.brc --json
 ./build/browniec.exe run examples/propagation.brc --json
+./build/browniec.exe run examples/switch-expression.brc --json
 ./build/browniec.exe run examples/answer.brc --fuel 4 --json
 pwsh -NoProfile -File tools/verify-m1.ps1
 ```
@@ -145,7 +151,7 @@ snapshot limit and a 4096-byte UTF-8 argument buffer. This is a trusted-local-so
 engineering CLI. There is no project/config loader, guest I/O, worker, DLL, or sandbox.
 The native executable has no compiler/interpreter subprocess execution path.
 Builds use the M0 compiler artifact without modifying the separate Fairy checkout.
-The tagged receipt does not establish full M1. The propagation slice remains a
-narrow scalar subset until its evidence matrix passes; switch expressions, other
-scalar types, clean-machine packaging, OS isolation, DLL ABI, and performance
-results remain outside it.
+The earlier receipts do not establish full M1. The switch-expression slice remains
+a narrow scalar subset; other scalar types, richer value-arm statements,
+clean-machine packaging, OS isolation, DLL ABI, and performance results remain
+outside it.

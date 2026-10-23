@@ -1,7 +1,7 @@
 # Project Invariants
 
 - Status: Accepted design invariants
-- Implementation: M0 verified; bounded i32/bool verifier/VM subset with branches, loops, shallow tagged switch, and scalar `?` propagation implemented; propagation verified; full invariants pending
+- Implementation: M0 verified; bounded i32/bool verifier/VM subset with branches, loops, shallow tagged switch, scalar `?` propagation, and switch expressions implemented; switch expressions verified; full invariants pending
 
 ## Runtime authority
 
@@ -23,6 +23,11 @@ Source is UTF-8 and every accepted local is initialized. Expressions evaluate on
 from left to right unless a documented short-circuit applies. Numeric promotion is
 explicit and value-preserving. Checked arithmetic fails as a guest outcome rather
 than a native trap.
+
+An exhaustive switch expression evaluates its subject once, snapshots a mutable
+subject, and selects exactly one variant arm. A yielding arm produces one exact
+typed value; direct-return arms leave the function. The subject, selected arm, and
+any executed local initializer use the normal bounded evaluation and Fuel rules.
 
 Owned values move as a whole. No guest GC or owned-value reference counting exists.
 Borrow conflict applies to the whole root. Returned references have exactly one input

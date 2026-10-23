@@ -1,7 +1,7 @@
 # Roadmap
 
-- Status: Accepted delivery sequence; M0 verified, M1 scalar, bool/branch, loop, and tagged slices verified; scalar `?` propagation implemented and verified, 2026-10-23
-- Current progress: M0 and M1 scalar/branch/loop/tagged slices passed; propagation runtime verified; full M1 partial; M2-M5 not started
+- Status: Accepted delivery sequence; M0 verified; M1 scalar, bool/branch, loop, tagged, propagation, and switch-expression slices verified, 2026-10-23
+- Current progress: M0 and the named M1 slices passed, including switch expressions at 41 native groups and 580 CLI cases per profile; full M1 partial; M2-M5 not started
 
 This roadmap orders learning and evidence. It is not a release promise. M0 has a
 native harness and recorded evidence. The scalar CLI/VM now exist; the worker
@@ -59,8 +59,12 @@ historical. The [loop slice](../engineering/m1-loops.md) adds `while`, classic `
 adds postfix `?` for those wrappers, with payload success and enclosing-wrapper
 failure. Its [receipt](../evidence/m1-propagation-windows-20261023.json)
 uses 37 native groups and 510 CLI cases per profile;
-verification passed. Remaining M1 work includes broader switch expressions
-and other scalar types.
+verification passed and the receipt is now historical. The
+[switch-expression slice](../engineering/m1-switch-expressions.md) adds exhaustive
+expression-position arms, restricted value-arm statements, typed joins, and direct
+returns. Its [receipt](../evidence/m1-switch-expressions-windows-20261023.json)
+records 41 native groups and 580 CLI cases per profile and passed both. Remaining M1
+work includes other scalar types and richer value-arm statements.
 
 Goal: run real .brc source through lexer, parser, type checking, Flow analysis,
 private code generation, independent verification, and the native VM.

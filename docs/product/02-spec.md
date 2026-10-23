@@ -1,7 +1,7 @@
 # Product Specification
 
 - Status: Accepted for design, 2026-10-23
-- Implementation status: M1 scalar expressions, branches, loops, shallow Option/Result, and switch implemented and verified; scalar `?` propagation implemented and verified; full profile not implemented
+- Implementation status: M1 scalar expressions, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation implemented and verified; full profile not implemented
 - Source profile name: brownie.safe/0.3
 
 ## Product boundary
@@ -49,7 +49,7 @@ by value through locals, calls, frames, and loops, but they do not support arith
 ordering, or equality. `for` headers remain pure scalar. Exhaustive `switch`
 statements use `.some`/`.none` or `.ok`/`.err` arms in either order, evaluate the
 subject once, and bind immutable payloads in block scope. There is no default arm,
-or fallthrough, and switch is a statement rather than an expression. Exact rules are in the
+or fallthrough in statement arms. Exact statement rules are in the
 [tagged contract](../engineering/m1-tagged.md).
 
 The propagation increment adds postfix `?` in functions returning an admitted
@@ -69,6 +69,19 @@ evaluated failure returns immediately, skipping later expression work, arguments
 the rest of the loop body, the `for` post step, and later iterations. Constructors
 still require an expected wrapper type; `?` adds no inference. Exact rules are in
 the [propagation contract](../engineering/m1-propagation.md).
+
+The switch-expression increment makes an exhaustive shallow-wrapper switch an
+operand. A value arm contains zero or more typed local declarations and plain
+assignments followed by one final expression without a semicolon, or `return EXPR;`
+for the enclosing function. At least one arm must yield, and all yielding arms use
+one exact type. The first yielding arm can infer the result and provide constructor
+context; otherwise an expected expression type provides it. Subject evaluation is
+once, mutable subjects are snapshotted, and a `_` binding discards the payload.
+Each arm has private visible bindings, while assignments to an outer `var` persist.
+Switch expressions compose with calls, returns, assignments, while conditions,
+short-circuit expressions, and `?`; classic `for` headers remain pure scalar.
+Exact rules are in the
+[switch-expression contract](../engineering/m1-switch-expressions.md).
 
 Classic for headers may contain only the profile's pure scalar declaration,
 assignment, condition, and post steps. Arrays and repeated initializers use positive
@@ -161,10 +174,12 @@ corpus updates, and appropriate verification.
 The experimental M1 slice establishes a native source path for its narrower grammar.
 The [tagged receipt](../evidence/m1-tagged-windows-20261023.json) remains historical
 verification for the tagged switch slice and its prior scalar/branch/loop
-regressions. The current [propagation receipt](../evidence/m1-propagation-windows-20261023.json)
-uses 37 native groups and 510 CLI cases per profile;
-propagation verification passed. Full M1, switch expressions, other scalar
-types, and Windows isolation remain unimplemented or unverified. The slice does not
+regressions. The propagation receipt is historical at 37 native groups and 510 CLI
+cases per profile. The current
+[switch-expression receipt](../evidence/m1-switch-expressions-windows-20261023.json)
+records 41 native groups and 580 CLI cases per profile and passed both. Full M1,
+other scalar types, richer value-arm statements, and Windows isolation remain
+unimplemented or unverified. The slice does not
 satisfy full-profile ownership, allocation, host, isolation, or embed criteria.
 Claims require scoped [M1 details](../engineering/m1-scalar-slice.md) and recorded
 evidence, not acceptance of this specification alone.

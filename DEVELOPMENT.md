@@ -1,6 +1,6 @@
 # Development
 
-- Status: M0 verified; experimental native M1 scalar CLI implemented; bool/branch, loop, and tagged slices verified; scalar `?` propagation verified
+- Status: M0 verified; experimental native M1 scalar CLI implemented; bool/branch, loop, and tagged slices have verified historical receipts; scalar `?` propagation historically verified; switch expressions verified
 - Current repository content: Fairy C frontend, private IR/verifier/VM, CLI, tests, and M0 probes
 
 ## Current reality
@@ -31,13 +31,15 @@ checkout or claim it matches the historical receipts.
 ./build/browniec.exe run examples/loops.brc --fuel 1000 --json
 ./build/browniec.exe run examples/tagged.brc --json
 ./build/browniec.exe run examples/propagation.brc --json
+./build/browniec.exe run examples/switch-expression.brc --json
 pwsh -NoProfile -File tools/verify-m1.ps1
 ```
 
 M1 verification needs PowerShell 7 and Python 3 for the build/test driver, not for the
-produced runtime. The current [propagation receipt](docs/evidence/m1-propagation-windows-20261023.json)
-uses 37 native groups and 510 CLI cases per
-development and release profile; propagation passed in both profiles. The tagged receipt and the loop, branch,
+produced runtime. The propagation and tagged receipts are historical after the
+switch-expression increment. The current switch-expression receipt path is
+[m1-switch-expressions-windows-20261023.json](docs/evidence/m1-switch-expressions-windows-20261023.json);
+it records 41 native groups and 580 CLI cases in each profile. The loop, branch,
 function, and local receipts remain historical. Verification retains
 `build/m1/receipt.json` and per-profile records. The selected native binaries run
 with a cleared environment and tool-free PATH. No measured latency budget follows.
@@ -66,7 +68,7 @@ Brownie. Clean-machine validation and sandbox behavior belong to later milestone
 
 1. Keep the recorded M0 signatures and rerun the native probes when their inputs change.
 2. Record any M0 failure without promoting it to VM evidence.
-3. Build the bounded scalar source-to-VM path, including bool values, branches, loops, shallow tagged values, switch, and scalar `?` propagation.
+3. Build the bounded scalar source-to-VM path, including bool values, branches, loops, shallow tagged values, switch statements and expressions, and scalar `?` propagation.
 4. Add arrays, structs, borrows, Buffer, and text through small end-to-end cases.
 5. Add typed host suspension only after the pure path is stable.
 6. Add Windows process isolation before exposing the restricted delivery level.
@@ -83,8 +85,10 @@ unimplemented. `--isolated` fails explicitly; there is no unrestricted fallback.
 See [M1 details](docs/engineering/m1-scalar-slice.md) and the
 [branch](docs/engineering/m1-branches.md), [loop](docs/engineering/m1-loops.md), and
 [tagged](docs/engineering/m1-tagged.md) contracts, plus the
-[propagation](docs/engineering/m1-propagation.md) contract. The propagation evidence
-target is [m1-propagation-windows-20261023.json](docs/evidence/m1-propagation-windows-20261023.json).
+[propagation](docs/engineering/m1-propagation.md) and
+[switch-expression](docs/engineering/m1-switch-expressions.md) contracts. The current
+switch-expression receipt is
+[m1-switch-expressions-windows-20261023.json](docs/evidence/m1-switch-expressions-windows-20261023.json).
 
 Documentation review may use repository-neutral tools such as a Markdown link check
 or git diff --check when the parent task supplies them. These checks do not execute

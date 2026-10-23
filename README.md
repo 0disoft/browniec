@@ -1,6 +1,6 @@
 # Brownie C
 
-- Status: experimental M1 scalar source CLI implemented; bool/branch, loop, shallow tagged, and scalar `?` propagation slices implemented; propagation verified; full M1 remains partial
+- Status: experimental M1 scalar source CLI implemented; bool/branch, loop, shallow tagged, and scalar `?` slices verified historically; switch expressions implemented and verified; full M1 remains partial
 - Design date: 2026-10-23
 - First delivery target: Windows 11 x64
 
@@ -20,9 +20,12 @@ backedges with a bounded inductive initialization check. The tagged increment ad
 shallow `Option<i32|bool>` and `Result<i32|bool, i32|bool>` values plus exhaustive
 `switch` statements. The propagation increment adds postfix `?` for those scalar
 wrappers, returning the payload on success and the enclosing wrapper on failure.
-The tagged receipt is historical for the preceding 33-group/423-case slice; the
-[propagation contract](docs/engineering/m1-propagation.md) owns the current rules.
-Other scalar types, switch expressions, workers, and DLLs remain future work.
+The switch-expression increment extends exhaustive `switch` to expression position,
+with value yields or direct returns in exhaustive shallow-wrapper arms. The tagged
+and propagation receipts are historical for their narrower slices; the
+[switch-expression contract](docs/engineering/m1-switch-expressions.md) owns the
+current rules. Other scalar types, richer value-arm statements, workers, and DLLs
+remain future work.
 
 ```powershell
 ./build/toolchain/fairyc.exe build
@@ -31,6 +34,7 @@ Other scalar types, switch expressions, workers, and DLLs remain future work.
 ./build/browniec.exe run examples/loops.brc --fuel 1000 --json
 ./build/browniec.exe run examples/tagged.brc --json
 ./build/browniec.exe run examples/propagation.brc --json
+./build/browniec.exe run examples/switch-expression.brc --json
 # return_i32 is 42; process exit is 0
 pwsh -NoProfile -File tools/verify-m1.ps1
 ```
@@ -61,7 +65,7 @@ Those limits describe the profile, not the language forever.
 
 | Level | Intended capability | Current state |
 | --- | --- | --- |
-| core | Source compile, verify, and native VM CLI | Experimental scalar expressions, branches, loops, shallow tagged values, switch, and `?` propagation; propagation verified; M1 partial |
+| core | Source compile, verify, and native VM CLI | Experimental scalar expressions, branches, loops, shallow tagged values, switch statements and expressions, and `?` propagation; switch expressions verified; M1 partial |
 | restricted | Windows worker plus parent broker | Not implemented; M4 |
 | embed | Trusted native host through a DLL ABI | Not implemented; M5; no public C export |
 
@@ -85,6 +89,7 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M1 loops](docs/engineering/m1-loops.md): while/for, transfer, backedges, and loop limits
 - [M1 shallow tagged values](docs/engineering/m1-tagged.md): Option/Result, switch, packing, and CASE verification
 - [M1 `?` propagation](docs/engineering/m1-propagation.md): payload extraction, wrapper failure, precedence, and Fuel
+- [M1 switch expressions](docs/engineering/m1-switch-expressions.md): expression-position arms, typed joins, and verifier boundaries
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
 - [Design baseline](docs/design-baseline.md): source provenance, evidence, and findings
@@ -94,9 +99,9 @@ frame primitives on Windows x64. Exact commands and results belong to
 `build/m0/receipt.json` and `docs/evidence/m0-windows-20261023.json`. Running with an
 empty runtime `PATH` does not establish clean-machine packaging or a sandbox.
 
-The function/local, branch, loop, and tagged receipts are historical for their
-narrower slices. The current receipt is
-[m1-propagation-windows-20261023.json](docs/evidence/m1-propagation-windows-20261023.json),
-which records 37 native groups and 510 CLI cases for
-each development and release profile. Propagation passed in both profiles. No full-profile conformance, DLL ABI, Windows
-isolation, clean-machine packaging, or performance target is claimed.
+The function/local, branch, loop, tagged, and propagation receipts are historical
+for their narrower slices. The current switch-expression receipt is
+[m1-switch-expressions-windows-20261023.json](docs/evidence/m1-switch-expressions-windows-20261023.json),
+which records 41 native groups and 580 CLI cases for each development and release
+profile. No full-profile conformance, DLL ABI, Windows isolation, clean-machine
+packaging, or performance target is claimed.

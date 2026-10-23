@@ -1,6 +1,6 @@
 # M1 Shallow Option, Result, and switch
 
-- Status: implemented and verified on Windows; historical after the propagation increment; 33 native groups and 423 CLI cases in each development and release profile
+- Status: implemented and verified on Windows; historical after the propagation and switch-expression increments; 33 native groups and 423 CLI cases in each development and release profile
 - Scope: one-level Option/Result values and exhaustive switch statements in `brownie.m1-scalar/1`
 
 This increment extends the scalar, branch, and loop slice with shallow tagged
@@ -9,10 +9,12 @@ values. It admits `Option<i32>`, `Option<bool>`, and `Result<T, E>` where each o
 aggregate wrappers are rejected. Later nested-depth and struct-depth budgets are
 separate obligations.
 
-`main` remains a zero-argument i32 function. This slice does not define switch
-expressions, arbitrary user enums, arrays, structs, or the full
-`brownie.safe/0.3` profile. The successor [propagation contract](m1-propagation.md)
-adds postfix `?` for these shallow wrappers.
+`main` remains a zero-argument i32 function. This historical slice defines switch
+statements, not expression-position arms, and does not define arbitrary user enums,
+arrays, structs, or the full `brownie.safe/0.3` profile. The successor
+[propagation contract](m1-propagation.md) adds postfix `?`; the later
+[switch-expression contract](m1-switch-expressions.md) adds exhaustive arms as
+operands.
 
 ## Values and constructors
 
@@ -67,7 +69,8 @@ switch (SUBJECT) {
 Both variants must appear exactly once in either order. A variable case binds its
 scalar payload in an immutable block scope. `_` discards the payload. A currently
 visible local or parameter cannot be redeclared by a case binding. There is no
-default arm, nested pattern, fallthrough, or switch expression in this slice.
+default arm, nested pattern, or fallthrough in these statement arms. Switch
+expressions are owned by the successor contract.
 `?` is owned by the successor [propagation contract](m1-propagation.md).
 
 The subject is evaluated once. A mutable local subject is loaded as a snapshot
@@ -139,7 +142,9 @@ switch exhaustiveness and arm order, `_` binding, subject-once and snapshot
 behavior, terminal joins, type/IR corruption, `CASE` initialization, and Fuel.
 The loop and branch receipts are historical after this increment.
 
-The successor [propagation contract](m1-propagation.md) owns postfix `?` for
-shallow scalar wrappers. Full M1 still needs broader switch expressions and other
-scalar types. The full profile, Windows isolation, DLL ABI, and performance targets
-remain unverified.
+The [propagation contract](m1-propagation.md) owns postfix `?` for shallow scalar
+wrappers, and the [switch-expression contract](m1-switch-expressions.md) owns
+expression-position exhaustive arms. Both later slices are verified; the current
+switch-expression receipt records 41 native groups and 580 CLI cases per profile.
+Full M1 still needs other scalar types and richer value-arm statements. The full
+profile, Windows isolation, DLL ABI, and performance targets remain unverified.
