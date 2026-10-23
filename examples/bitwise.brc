@@ -1,0 +1,7 @@
+module main;
+
+fn i32 main() {
+    let u8 flags = 21;
+    let u8 selected = (flags & 31) << 1;
+    return selected as i32;
+}

@@ -20,11 +20,14 @@ fn u8 precedence(u8 kind) {
     if (kind == 38) { return 5; }
     if (kind == 128 || kind == 129) { return 6; }
     if (kind == 60 || kind == 62 || kind == 130 || kind == 131) { return 7; }
+    if (kind == 134 || kind == 135) { return 8; }
     if (kind == 43 || kind == 45) { return 9; }
     if (kind == 42 || kind == 47 || kind == 37) { return 10; }
     return 0;
 }
 fn u8 opcode(u8 kind) {
+    if (kind == 134) { return 31; }
+    if (kind == 135) { return 32; }
     if (kind == 38) { return 28; }
     if (kind == 94) { return 29; }
     if (kind == 124) { return 30; }

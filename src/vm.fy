@@ -7,6 +7,7 @@ import types as types;
 import tagged as tagged;
 import arithmetic as arithmetic;
 import bits as bits;
+import shifts as shifts;
 
 // Guest calls use bounded VM frames, never native recursion. Register reads are
 // verified per function, so reclaimed frame slots need no per-call zero-fill.
@@ -90,6 +91,7 @@ pub fn Result<i64, errors::Error> run(ref ir::Program p, usize fuel) {
                 value=if(types::unsigned(p.types[dst])) {arithmetic::unsigned(op,left,right,p.types[dst],p.offsets[pc])?}
                     else {arithmetic::signed(op,left,right,p.types[dst],p.offsets[pc])?};
             }
+            else if (op >= 31) {value=shifts::apply(op,left,right,p.types[dst],p.offsets[pc])?;}
             else if (op >= 27) {value=bits::apply(op,left,right,p.types[dst],p.offsets[pc])?;}
             else if (op == 10) { value = if (left == 0) { 1 } else { 0 }; }
             else if (op == 11) { value = if (left == right) { 1 } else { 0 }; }

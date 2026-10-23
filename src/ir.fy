@@ -14,6 +14,7 @@ import std::num as num;
 // 25 internal match failure: terminal, no operands.
 // 26 widen: dst's type is a strict value-preserving widening of a; b is zero.
 // 27 complement (b=0), 28 bitwise and, 29 bitwise xor, 30 bitwise or.
+// 31 checked left shift, 32 arithmetic signed / logical unsigned right shift.
 pub struct Program {
     u8[2048] code;
     i64[128] constants;

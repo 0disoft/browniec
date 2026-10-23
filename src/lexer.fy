@@ -4,7 +4,7 @@ import errors as errors;
 import cells as cells;
 
 // 0 EOF, 1 integer, 2 identifier; punctuation uses its ASCII byte.
-// 128 ==, 129 !=, 130 <=, 131 >=, 132 &&, 133 ||.
+// 128 ==, 129 !=, 130 <=, 131 >=, 132 &&, 133 ||, 134 <<, 135 >>.
 pub struct State { usize cursor; usize begin; usize end; usize tokens; u8 kind; i64 value; bool min_magnitude; }
 pub fn State empty() {
     return State { .cursor = 0, .begin = 0, .end = 0, .tokens = 0, .kind = 0, .value = 0, .min_magnitude = false };
@@ -69,6 +69,8 @@ pub fn Result<usize, errors::Error> next(ref u8[] source, ref mut State s) {
             else if (ch == 62 && after == 61) { pair = 131; }
             else if (ch == 38 && after == 38) { pair = 132; }
             else if (ch == 124 && after == 124) { pair = 133; }
+            else if (ch == 60 && after == 60) { pair = 134; }
+            else if (ch == 62 && after == 62) { pair = 135; }
             if (pair != 0) { s.kind = pair; s.cursor += 2; s.end = s.cursor; return .ok(0); }
         }
         if (ch != 40 && ch != 41 && ch != 123 && ch != 125 && ch != 59 &&
