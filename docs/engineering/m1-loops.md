@@ -30,6 +30,8 @@ assignment. A `for` post is a plain assignment only. `for` init, condition, and 
 must be pure scalar code: all direct function calls are forbidden in those three
 clauses, including a call in an expression that would be skipped. A `while`
 condition and loop body may contain direct calls under the normal function rules.
+The later [propagation contract](m1-propagation.md) also rejects `?` in all three
+`for` header clauses while admitting it in while conditions and loop bodies.
 
 Header locals are visible in the condition, body, and post, and are removed after
 the loop. Body locals are not visible in the `for` post. The nearest lexical loop
@@ -142,6 +144,7 @@ dead-post handling, loop depth and instruction budgets, opcode-22 corruption, Fu
 and prior scalar/branch regressions. The earlier branch receipt remains historical
 evidence for the branch slice.
 
-Full M1 still needs `?` propagation and possibly broader switch expressions. Workers,
-the DLL ABI, Windows isolation, clean-machine packaging, and performance targets
-remain unverified. No OS sandbox or performance claim follows from loop support.
+The later [propagation contract](m1-propagation.md) owns postfix `?`. Full M1 still
+needs broader switch expressions and other scalar types. Workers, the DLL ABI,
+Windows isolation, clean-machine packaging, and performance targets remain
+unverified. No OS sandbox or performance claim follows from loop support.

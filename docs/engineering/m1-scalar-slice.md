@@ -1,7 +1,7 @@
 # M1 Scalar Slice
 
-- Status: experimental compiler/verifier/VM and source CLI implemented; bool/branch, loop, and tagged switch slices verified
-- Scope: M1 expressions, scalar and shallow wrapper values, branches, loops, and exhaustive switch; not full M1 or profile conformance
+- Status: experimental compiler/verifier/VM and source CLI implemented; bool/branch, loop, and tagged slices verified; scalar `?` propagation verified
+- Scope: M1 expressions, scalar and shallow wrapper values, branches, loops, exhaustive switch, and scalar `?` propagation; not full M1 or profile conformance
 
 The admitted source is `module main;` followed by one or more
 `fn TYPE NAME(TYPE PARAM, ...) { BODY }` declarations, including
@@ -9,11 +9,14 @@ exactly one `fn i32 main()` with no parameters. See [direct functions](m1-functi
 for calls, parameter rules, private metadata, and VM frame behavior, and
 [bool and branches](m1-branches.md) for the current control-flow contract.
 See [loops](m1-loops.md) for `while`, classic `for`, `break`/`continue`, and backedge
-rules, and [tagged values](m1-tagged.md) for shallow Option/Result and switch.
+rules, [tagged values](m1-tagged.md) for shallow Option/Result and switch, and
+[`?` propagation](m1-propagation.md) for scalar payload extraction and wrapper
+failure.
 EXPR supports decimal i32 literals, `true` and `false`, parentheses, unary minus,
 `!`, arithmetic, ordering, equality, short-circuit `&&` and `||`, previously visible
 local names, direct function calls, and context-required `.some`/`.none`/`.ok`/`.err`
-constructors.
+constructors. Postfix `?` is admitted in functions returning an admitted Option or
+Result and binds tighter than unary and binary operators.
 Whitespace and `//` comments are accepted.
 The negative minimum literal is admitted directly; positive 2147483648 is rejected.
 STMT includes typed `let` and `var` declarations, `NAME = EXPR;`, `return EXPR;`,
@@ -84,7 +87,9 @@ negative division truncates toward zero. Bool is canonical 0/1 with no conversio
 to or from i32. `!`, `&&`, and `||` accept bool; ordering accepts i32; equality
 requires two i32 values or two bool values. `&&` and `||` short-circuit.
 Wrapper values do not participate in arithmetic, ordering, or equality, and nested
-or aggregate wrappers are rejected. No guest
+or aggregate wrappers are rejected. Postfix `?` yields the i32/bool payload on
+success and an enclosing wrapper failure on a mismatch; it adds no opcode and keeps
+the two-Fuel success and four-Fuel failure schedules in its contract. No guest
 heap allocation or external effect is needed. There is no public bytecode loader or
 runtime compiler subprocess.
 
@@ -92,8 +97,8 @@ runtime compiler subprocess.
 
 `build/toolchain/fairyc.exe test --native --capture-output --json` and
 `tools/verify-m1.ps1` run the native and black-box profile checks. The
-[tagged receipt](../evidence/m1-tagged-windows-20261023.json) records 33 native groups
-and 423 CLI cases in each of development and release.
+[tagged receipt](../evidence/m1-tagged-windows-20261023.json) is historical and
+records 33 native groups and 423 CLI cases in each of development and release.
 
 The tagged corpus verifies constructors under typed context, all six wrapper type
 IDs, depth-one rejection, wrapper copies and calls, exhaustive switch arm order,
@@ -108,6 +113,11 @@ per-profile `cli-receipt.json` files. The original expression-only,
 [function](../evidence/m1-functions-windows-20261023.json) receipts are likewise
 historical for narrower slices.
 
+The current propagation receipt is
+[m1-propagation-windows-20261023.json](../evidence/m1-propagation-windows-20261023.json).
+It records 37 native groups and 510 CLI cases for each development and release
+profile. Both profiles passed.
+
 ## Run the implemented subset
 
 ```powershell
@@ -119,6 +129,7 @@ historical for narrower slices.
 ./build/browniec.exe run examples/branches.brc --json
 ./build/browniec.exe run examples/loops.brc --fuel 1000 --json
 ./build/browniec.exe run examples/tagged.brc --json
+./build/browniec.exe run examples/propagation.brc --json
 ./build/browniec.exe run examples/answer.brc --fuel 4 --json
 pwsh -NoProfile -File tools/verify-m1.ps1
 ```
@@ -134,5 +145,7 @@ snapshot limit and a 4096-byte UTF-8 argument buffer. This is a trusted-local-so
 engineering CLI. There is no project/config loader, guest I/O, worker, DLL, or sandbox.
 The native executable has no compiler/interpreter subprocess execution path.
 Builds use the M0 compiler artifact without modifying the separate Fairy checkout.
-The tagged receipt does not establish full M1, `?` propagation, clean-machine, OS
-isolation, DLL ABI, or performance results.
+The tagged receipt does not establish full M1. The propagation slice remains a
+narrow scalar subset until its evidence matrix passes; switch expressions, other
+scalar types, clean-machine packaging, OS isolation, DLL ABI, and performance
+results remain outside it.

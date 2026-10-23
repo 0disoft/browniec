@@ -1,0 +1,794 @@
+{
+  "schema": "browniec.m1-scalar/v1",
+  "status": "passed",
+  "recordedAt": "2026-10-23T12:00:24.1155760Z",
+  "compilerVersion": [
+    "Fairy C Stage 0",
+    "compiler: v0.0.0-20261022210249-4ce1264273be",
+    "sdk: fairyc-sdk-stdlib/0 0.0.0-stage0.86",
+    "language: fairyc-language/20",
+    "runtime: fairyc-runtime/0",
+    "revision: 4ce1264273be6051ee560173e94690e1b99c9eaf",
+    "modified: false"
+  ],
+  "compilerSha256": "572395f7f1e425d613c5a69f50b30ed177cda37ca2b1638bd0c11cf79fcbcc77",
+  "os": "Microsoft Windows NT 10.0.26300.0",
+  "results": [
+    {
+      "profile": "development",
+      "nativeTests": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "development",
+        "tests": [
+          {
+            "identity": "tests::bools::boolean_metadata_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::bools::boolean_type_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::bools::typed_boolean_pipeline",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::branches::boolean_values_and_precedence",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::branches::branch_slots_and_scopes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::branches::cfg_and_slot_metadata_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::branches::short_circuit_and_untaken_traps",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::branches::terminating_recursion_and_branch_fuel",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::checked_arithmetic",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::fuel_and_program_reuse",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::local_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::local_traps_fuel_and_reuse",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::local_values_and_assignments",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::precedence_and_order",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::type_and_syntax_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::verifier_rejects_corrupt_private_code",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::functions::call_rejections_and_order",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::functions::call_verifier_boundaries",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::functions::calls_and_frames",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::functions::signature_pass",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::loops::backedge_invariants_and_bounds",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::loops::classic_for_fuel_and_failures",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::loops::classic_for_order_and_scope",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::loops::classic_for_skipped_post_and_purity",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::loops::loop_fuel_and_reuse",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::loops::while_values_and_transfers",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::propagation::failure_order_short_circuit_and_loops",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::propagation::propagation_fuel_reuse_and_guarded_initialization",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::propagation::propagation_type_and_header_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::propagation::scalar_success_and_failure_type_changes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::tagged::guarded_case_initialization_fuel_and_failure",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::tagged::packed_scalar_edges",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::tagged::switch_scalar_payload_edges",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::tagged::switch_source_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::tagged::tagged_snapshots_calls_and_loop_transfers",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::tagged::wrapper_metadata_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::tagged::wrapper_types_copies_and_calls",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 37,
+        "passed": 37,
+        "failed": 0,
+        "status": "ok",
+        "lock": "unchanged"
+      },
+      "build": "built: build/browniec.exe (x86_64-windows-msvc, development, lock verified)",
+      "artifact": "build/m1/browniec-development.exe",
+      "sha256": "30f6655bfb22bf47d078d9fcb2c70116e167621520d032e196524e11f0d3a59a",
+      "bytes": 617472,
+      "cliCases": 510
+    },
+    {
+      "profile": "release",
+      "nativeTests": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "release",
+        "tests": [
+          {
+            "identity": "tests::bools::boolean_metadata_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::bools::boolean_type_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::bools::typed_boolean_pipeline",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::branches::boolean_values_and_precedence",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::branches::branch_slots_and_scopes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::branches::cfg_and_slot_metadata_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::branches::short_circuit_and_untaken_traps",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::branches::terminating_recursion_and_branch_fuel",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::checked_arithmetic",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::fuel_and_program_reuse",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::local_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::local_traps_fuel_and_reuse",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::local_values_and_assignments",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::precedence_and_order",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::type_and_syntax_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::verifier_rejects_corrupt_private_code",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::functions::call_rejections_and_order",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::functions::call_verifier_boundaries",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::functions::calls_and_frames",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::functions::signature_pass",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::loops::backedge_invariants_and_bounds",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::loops::classic_for_fuel_and_failures",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::loops::classic_for_order_and_scope",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::loops::classic_for_skipped_post_and_purity",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::loops::loop_fuel_and_reuse",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::loops::while_values_and_transfers",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::propagation::failure_order_short_circuit_and_loops",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::propagation::propagation_fuel_reuse_and_guarded_initialization",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::propagation::propagation_type_and_header_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::propagation::scalar_success_and_failure_type_changes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::tagged::guarded_case_initialization_fuel_and_failure",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::tagged::packed_scalar_edges",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::tagged::switch_scalar_payload_edges",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::tagged::switch_source_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::tagged::tagged_snapshots_calls_and_loop_transfers",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::tagged::wrapper_metadata_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::tagged::wrapper_types_copies_and_calls",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 37,
+        "passed": 37,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "build": "built: build/browniec.exe (x86_64-windows-msvc, release, lock verified)",
+      "artifact": "build/m1/browniec-release.exe",
+      "sha256": "01d29b0333aaf29d9a1dbc983526fd23a24f0265e7c3653a0ddbb7bfdabfdc80",
+      "bytes": 245760,
+      "cliCases": 510
+    }
+  ],
+  "sourceSha256": [
+    {
+      "path": "examples/loops.brc",
+      "sha256": "06c3e64a80e65d8088cb373c7fa1f0f2589980fb2b0f4d3dbc5aa124922789f6"
+    },
+    {
+      "path": "examples/propagation.brc",
+      "sha256": "ecb67b872f32f8616a35208819564b952fa3894d5e44f308f2781de559763c13"
+    },
+    {
+      "path": "examples/tagged.brc",
+      "sha256": "fd9fe2238a6e65eb4e0d2febf0eb6cdef92a0051802251676308258c05ff3bb4"
+    },
+    {
+      "path": "fairy.lock",
+      "sha256": "2fa2aaf352f08e8f8d4797b3b4882a02aba2083647b24b4200529e14005f8491"
+    },
+    {
+      "path": "fairy.toml",
+      "sha256": "f5254ba793d9012470c697e8657688a4ea5465c138fba6d748707d5bfa4b31fb"
+    },
+    {
+      "path": "src/cli_input.fy",
+      "sha256": "ec91de62e6b5147d117d6fe0366ebcf617b556c074bf1dd91cb10188f96507ba"
+    },
+    {
+      "path": "src/compiler.fy",
+      "sha256": "fc96fd6c99f5c785e86f677c493a29fc2c855925a4001b160b9b0a17d6f18dff"
+    },
+    {
+      "path": "src/errors.fy",
+      "sha256": "e8070ef5c6380460dacb579c33f2e180b9e683286c8cb0827e30d82a581a4646"
+    },
+    {
+      "path": "src/functions.fy",
+      "sha256": "59195b4a404b1addd10c913a7ad4d046343ba37c0d1e5be9eeea2bf1ee97363e"
+    },
+    {
+      "path": "src/ir.fy",
+      "sha256": "2a2cec87322074e4ba9bd27791f29d909c9450c4b31331c33b4ffdbfdbfd89d7"
+    },
+    {
+      "path": "src/lexer.fy",
+      "sha256": "6f0daad682dd483a522deb2d687dc2def87eced77f7d5916c74dbc2de9faa45a"
+    },
+    {
+      "path": "src/locals.fy",
+      "sha256": "fd9174af46d48ccd8ded638be780f74f49bae9c71bf7dc2852d01dd4810b2f2b"
+    },
+    {
+      "path": "src/loops.fy",
+      "sha256": "8034d028c94edae945be52a8f2788531f18dcfd64d394104678b1f6607f04425"
+    },
+    {
+      "path": "src/main.fy",
+      "sha256": "0df0f716302c419d160040ed10fbbec2433a36dbd5d5297f4467e1def1438659"
+    },
+    {
+      "path": "src/patterns.fy",
+      "sha256": "d9ba2ff9dba626968b7514c636a414932e50856c19b9d41d6825b4f91c9797aa"
+    },
+    {
+      "path": "src/propagation.fy",
+      "sha256": "7d0ebaee7b96545bc4f95e0ecd7a58fbda521301deb00c0deb136ada4159eb44"
+    },
+    {
+      "path": "src/render.fy",
+      "sha256": "49f21d0d17d741f8bf863be8ab1df3afc6e7996b92d5a5e0f6d0a482154e36f4"
+    },
+    {
+      "path": "src/tagged.fy",
+      "sha256": "67770f8ec8f3e35a2a6196cda87310844d37358f86f8b22eb81b49df1f65f1bf"
+    },
+    {
+      "path": "src/types.fy",
+      "sha256": "ff48e82656f3b830512311da75070f3652f7396e329ef83d843ba007b8134e90"
+    },
+    {
+      "path": "src/verifier.fy",
+      "sha256": "e665e0615b0f836b9b7e4b04e8fd1884fab33271ea624dda12f4808aed157ea7"
+    },
+    {
+      "path": "src/vm.fy",
+      "sha256": "7e27d1dca158bfcea586322778117efcee975e16a00bc488aec01400a2042aaa"
+    },
+    {
+      "path": "tests/bools.fy",
+      "sha256": "281f9bca67b5d0dc3786fe2ed051c3fdc90a6cb06bc4a76b02c33ece340f01d5"
+    },
+    {
+      "path": "tests/branches.fy",
+      "sha256": "75dd35a997a5c050acaff68adae77bc6913a73e63475ecd2445ae40dc3bcf9f5"
+    },
+    {
+      "path": "tests/core.fy",
+      "sha256": "f8666d14fadaa91a07649e64b62a710276fc78315fc0c420262608872802b42c"
+    },
+    {
+      "path": "tests/functions.fy",
+      "sha256": "b4abd043cae4710bc39895ce72cc1f09b07eba7431bef5eaa0a4f4bea86ec11a"
+    },
+    {
+      "path": "tests/loops.fy",
+      "sha256": "ba83dae2bb797ba367b1b8d994b1d74b63fb1b9386791a8e35c1e3cc951fc2f1"
+    },
+    {
+      "path": "tests/propagation.fy",
+      "sha256": "754fcab373afd31191c5c1c696ddceb14da24e5f54136fd16c57156b8e003327"
+    },
+    {
+      "path": "tests/tagged.fy",
+      "sha256": "f95e95079183d7fd3f2da7366148168b6965fb46f4cddb9929a269b75cdc0e45"
+    },
+    {
+      "path": "tools/check-m1-cli.py",
+      "sha256": "75c0d2e18a55bdcda8cadcb963fc87e7bec875b29ff1e64c46c09987c75dc70c"
+    },
+    {
+      "path": "tools/m1_propagation_cases.py",
+      "sha256": "f3728cffafc48866c44e16badb8a256f3e45c0299ab3c7a3d0c1c1ab69dbd986"
+    },
+    {
+      "path": "tools/m1_tagged_cases.py",
+      "sha256": "70de6cf5e68e1fe11ee3dd4e72b506b1a19677133a8b483b7a039efb651d963f"
+    },
+    {
+      "path": "tools/verify-m1.ps1",
+      "sha256": "dfa15b8821ce9b815cad7a163b01d5a3c78b8eeff869ab441a502684003051ca"
+    }
+  ],
+  "limitations": [
+    "M1 scalar expressions, locals, functions, branches, loops, shallow Option/Result and exhaustive tagged switch statements and typed question-mark propagation.",
+    "Wrapper payloads are i32/bool only; no nested wrappers, aggregate payloads, switch expressions or implicit error conversion.",
+    "For headers admit pure scalar clauses and reject direct calls and question-mark propagation; loop termination is bounded by Fuel, not proven.",
+    "Tool-free PATH is not clean-machine or OS isolation evidence.",
+    "No performance target measured."
+  ],
+  "sourceCommit": "317c74ea47894d81c94a6e4ac58361cb9913fe59",
+  "commands": [
+    "pwsh -NoProfile -File tools/verify-m1.ps1",
+    "python -B tools/check-m1-cli.py --exe build/m1/browniec-development.exe --profile development",
+    "python -B tools/check-m1-cli.py --exe build/m1/browniec-release.exe --profile release",
+    "./build/m1/browniec-release.exe run examples/propagation.brc --json"
+  ],
+  "cliReports": [
+    {
+      "profile": "development",
+      "path": "build/m1/development/cli-receipt.json",
+      "sha256": "62b791fb11a3023b313a2912aef5efc8f9da93d125bdce026c7d4f623c534805",
+      "count": 510,
+      "status": "passed"
+    },
+    {
+      "profile": "release",
+      "path": "build/m1/release/cli-receipt.json",
+      "sha256": "eadbcf7a0d32ff92d0213d4ae2d63d43c6ca1d24dbf3df31283432c7dbdc1e0f",
+      "count": 510,
+      "status": "passed"
+    }
+  ],
+  "example": {
+    "command": "./build/m1/browniec-release.exe run examples/propagation.brc --json",
+    "exit": 0,
+    "result": {
+      "schema": "browniec.result/v1",
+      "profile": "brownie.m1-scalar/1",
+      "command": "run",
+      "status": "completed",
+      "return_i32": 42,
+      "error": null
+    }
+  },
+  "skipped": [
+    {
+      "check": "M0 native probes",
+      "reason": "All recorded M0 source inputs, the M0 lock, and the compiler binary hashes are unchanged."
+    },
+    {
+      "check": "Windows worker isolation, DLL ABI and clean-machine packaging",
+      "reason": "Later unimplemented milestones; not established by scalar propagation tests."
+    },
+    {
+      "check": "Performance budgets",
+      "reason": "No named workload measurement was part of this increment."
+    }
+  ],
+  "canonicalReceipt": {
+    "path": "build/m1/canonical-propagation-receipt.json",
+    "sha256": "d2149ff03b3c179ea12c420b28e212c182259702ce2ec0f0cda76426121cf2a9"
+  },
+  "followUpValidation": {
+    "reason": "Restore the committed example after concurrent documentation edits, then rerun the full CLI matrix against both unchanged native binaries. Native build and test inputs are unchanged.",
+    "inputChanges": [
+      {
+        "path": "examples/propagation.brc",
+        "canonicalSha256": "771c4d698790acb5405889e75646e05bf759c8d4d6c27cea2f6a4a6bbe328074",
+        "verifiedSha256": "ecb67b872f32f8616a35208819564b952fa3894d5e44f308f2781de559763c13"
+      }
+    ],
+    "commands": [
+      "python -B tools/check-m1-cli.py --exe build/m1/browniec-development.exe --profile development",
+      "python -B tools/check-m1-cli.py --exe build/m1/browniec-release.exe --profile release"
+    ],
+    "status": "passed"
+  },
+  "documentationChecks": {
+    "relativeLinks": {
+      "files": 73,
+      "links": 268,
+      "status": "passed"
+    },
+    "diffCheck": {
+      "command": "git diff --check",
+      "status": "passed"
+    }
+  }
+}

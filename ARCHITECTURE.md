@@ -2,7 +2,7 @@
 
 - Status: accepted design baseline
 - Decision date: 2026-10-23
-- Implementation: M0 verified; experimental M1 scalar pipeline and VM implemented; bool/branch, loop, and tagged switch slices verified
+- Implementation: M0 verified; experimental M1 scalar pipeline and VM implemented; bool/branch, loop, and tagged slices verified; scalar `?` propagation verified
 
 ## Intent
 
@@ -30,11 +30,18 @@ historical after the tagged increment. A shallow Option/Result occupies one i64
 cell with a packed scalar payload and variant; exhaustive `switch` lowers to `CASE`
 tests, normal arm joins, and an internal unreachable `MATCH_FAIL` fallback. The
 verifier tracks both paths and defines the payload only on a match. It checks
-wrapper type/variant agreement without a separate tag array. The tagged slice is verified by the
-[dated receipt](docs/evidence/m1-tagged-windows-20261023.json). Ownership, lifecycle
-APIs, Engine, host calls, workers, and DLLs remain designs; full M1, including `?`
-propagation, remains unverified. M0 separately exercises native arithmetic, codec,
-storage, allocator, owner, and frame primitives.
+wrapper type/variant agreement without a separate tag array. The tagged slice remains
+verified by its [historical receipt](docs/evidence/m1-tagged-windows-20261023.json).
+Postfix `?` reuses `CASE` and `JUMP` on success; a mismatch enters a second
+`CASE`, builds the enclosing function's declared `Option`/`Result` with `MAKE`,
+and returns, with the negative CASE path targeting `MATCH_FAIL`. The compiler keeps
+that function return type separate from the expected type of the surrounding
+expression. Propagation is implemented for shallow scalar wrappers; its
+[receipt](docs/evidence/m1-propagation-windows-20261023.json) records
+37 native groups and 510 CLI cases in each development and release profile. Ownership, lifecycle APIs, Engine, host calls, workers, and DLLs remain
+designs; full M1, switch expressions, and other scalar types remain unverified. M0
+separately exercises native arithmetic, codec, storage, allocator, owner, and frame
+primitives.
 
 ## Main path
 

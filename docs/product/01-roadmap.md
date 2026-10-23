@@ -1,7 +1,7 @@
 # Roadmap
 
-- Status: Accepted delivery sequence; M0 verified, M1 scalar, bool/branch, loop, and tagged switch slices implemented and verified, 2026-10-23
-- Current progress: M0 and M1 scalar/branch/loop/tagged slices passed; full M1 partial; M2-M5 not started
+- Status: Accepted delivery sequence; M0 verified, M1 scalar, bool/branch, loop, and tagged slices verified; scalar `?` propagation implemented and verified, 2026-10-23
+- Current progress: M0 and M1 scalar/branch/loop/tagged slices passed; propagation runtime verified; full M1 partial; M2-M5 not started
 
 This roadmap orders learning and evidence. It is not a release promise. M0 has a
 native harness and recorded evidence. The scalar CLI/VM now exist; the worker
@@ -53,10 +53,14 @@ historical. The [loop slice](../engineering/m1-loops.md) adds `while`, classic `
 [receipt](../evidence/m1-loops-windows-20261023.json) records 26 native groups and
 332 CLI cases in each profile and remains historical. The
 [tagged slice](../engineering/m1-tagged.md) adds shallow `Option<i32|bool>`,
-`Result<i32|bool, i32|bool>`, and exhaustive `switch` statements. Its
+`Result<i32|bool, i32|bool>`, and exhaustive `switch` statements. Its historical
 [receipt](../evidence/m1-tagged-windows-20261023.json) records 33 native groups and
-423 CLI cases in each profile. Remaining M1 work includes `?`
-propagation and possibly broader switch expressions.
+423 CLI cases in each profile. The [propagation slice](../engineering/m1-propagation.md)
+adds postfix `?` for those wrappers, with payload success and enclosing-wrapper
+failure. Its [receipt](../evidence/m1-propagation-windows-20261023.json)
+uses 37 native groups and 510 CLI cases per profile;
+verification passed. Remaining M1 work includes broader switch expressions
+and other scalar types.
 
 Goal: run real .brc source through lexer, parser, type checking, Flow analysis,
 private code generation, independent verification, and the native VM.

@@ -1,6 +1,6 @@
 # CLI Tool
 
-- Status: Experimental native M1 scalar CLI implemented; bool/branch, loop, and tagged switch slices verified
+- Status: Experimental native M1 scalar CLI implemented; bool/branch, loop, and tagged slices verified; scalar `?` propagation verified
 - Native runtime intent: direct .brc source execution
 - Contract owner: docs/cli/command-contract.md
 
@@ -20,10 +20,14 @@ The current scalar increment adds i32/bool values, bounded branches, loops, and
 shallow `Option`/`Result` values with exhaustive `switch` statements. It keeps
 `main` as a zero-argument i32 function, so the CLI result field remains
 `return_i32`; guest bools and wrappers are internal to the program. The tagged slice
-is verified by the [tagged receipt](../evidence/m1-tagged-windows-20261023.json).
+remains verified by its [historical receipt](../evidence/m1-tagged-windows-20261023.json).
+Postfix `?` propagates shallow scalar Option and Result payloads; the current
+[propagation receipt](../evidence/m1-propagation-windows-20261023.json) records
+37 native groups and 510 CLI cases in each development and release profile.
 Language contracts are in the [branch](../engineering/m1-branches.md), [loop](../engineering/m1-loops.md),
-and [tagged](../engineering/m1-tagged.md) documents. Command availability, output
-framing, and exit behavior remain governed by the owning CLI documents.
+[tagged](../engineering/m1-tagged.md), and
+[propagation](../engineering/m1-propagation.md) documents. Command availability,
+output framing, and exit behavior remain governed by the owning CLI documents.
 
 ## Authority and availability
 

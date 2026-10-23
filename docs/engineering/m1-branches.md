@@ -176,6 +176,8 @@ digests, executed and skipped checks, and remaining limitations.
 
 The expression, locals, and direct-function receipts remain historical evidence for
 their narrower slices; none of them is evidence for branches or LOAD/STORE/CFG
-behavior. Full M1, `?` propagation, broader switch expressions, Windows isolation,
-and performance remain unverified. No OS sandbox, performance target, clean-machine
-package, or DLL ABI claim follows from this increment.
+behavior. Postfix `?` is owned by the later
+[propagation contract](m1-propagation.md). Full M1, broader switch expressions,
+other scalar types, Windows isolation, and performance remain unverified. No OS
+sandbox, performance target, clean-machine package, or DLL ABI claim follows from
+this increment.

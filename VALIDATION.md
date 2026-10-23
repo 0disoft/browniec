@@ -1,7 +1,7 @@
 # Validation
 
-- Status: accepted evidence policy; M0 verified; M1 bool/branch, loop, and shallow tagged slices verified
-- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with branches, loops, shallow Option/Result, and switch
+- Status: accepted evidence policy; M0 verified; M1 bool/branch, loop, and shallow tagged slices verified; propagation implemented and verified
+- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with branches, loops, shallow Option/Result, switch, and scalar `?` propagation
 
 ## Validation source of truth
 
@@ -77,7 +77,8 @@ Full M1 remains partial; M2 through M5 remain not started. M0's empty runtime-`P
 establish clean-machine packaging or Windows isolation.
 
 M1 has scalar expressions, initialized locals, direct functions, and bool/branch,
-loop, and shallow tagged slices implemented and verified. The bool/branch slice adds canonical bool
+loop, and shallow tagged slices implemented and verified. The propagation slice is
+implemented and verified for the same one-level scalar wrappers. The bool/branch slice adds canonical bool
 values without integer conversion, typed operator rules, short-circuit `&&` and
 `||`, if/else chains, standalone lexical blocks, early returns, forward-only jumps,
 and definite initialization across CFG joins. It keeps `var` storage and
@@ -95,10 +96,23 @@ the forward graph; it does not claim a termination proof.
 The tagged slice adds one-level `Option<i32|bool>` and
 `Result<i32|bool, i32|bool>` values, context-required constructors, exhaustive
 `switch` statements with immutable scalar bindings, one i64 cell per wrapper, and
-`MAKE`/`CASE`/`MATCH_FAIL` verification. It excludes nested wrappers, switch
-expressions, and `?` propagation.
+`MAKE`/`CASE`/`MATCH_FAIL` verification. It excludes nested wrappers and switch
+expressions.
 
-The [tagged receipt](docs/evidence/m1-tagged-windows-20261023.json) records 33
+The propagation slice adds postfix `?` to expressions in functions returning
+`Option<T>` or `Result<T, E>`. It evaluates the operand once, yields the
+some/ok scalar payload on success, and returns the enclosing `.none` or `.err`
+on failure. Option success types may differ; Result success types may differ while
+the error type must match exactly. Families cannot mix, scalar-returning functions
+including `main` reject `?`, and classic `for` headers remain pure scalar.
+Postfix binding is tighter than unary and binary operators. Untaken paths skip
+propagation, and an evaluated failure skips remaining expression, argument, loop,
+and post work. Lowering uses existing CASE, JUMP, MAKE, RETURN, and MATCH_FAIL
+instructions: a success costs two Fuel and a failure four, excluding operand and
+outer use.
+
+The [tagged receipt](docs/evidence/m1-tagged-windows-20261023.json) is historical
+and records 33
 native groups and 423 black-box CLI cases for both development and
 release, together with toolchain, source, artifact, and harness identities. Coverage
 includes constructor context, wrapper copy and call behavior, depth-one rejection,
@@ -107,11 +121,16 @@ joins, exact CASE initialization, wrapper type/variant corruption, internal
 `MATCH_FAIL`, tag packing edges, Fuel, and prior scalar/branch/loop regressions.
 
 The [tagged contract](docs/engineering/m1-tagged.md) owns the detailed wrapper and
-switch rules. The [loop receipt](docs/evidence/m1-loops-windows-20261023.json) is
+switch rules. The [propagation contract](docs/engineering/m1-propagation.md) owns
+`?` typing, placement, lowering, and Fuel. The current propagation receipt
+is [m1-propagation-windows-20261023.json](docs/evidence/m1-propagation-windows-20261023.json);
+it records 37 native groups and 510 CLI cases for
+each profile. The recorded matrix passed.
+The [loop receipt](docs/evidence/m1-loops-windows-20261023.json) is
 historical for its 26-group/332-case slice; the [branch receipt](docs/evidence/m1-branches-windows-20261023.json)
 is historical for 20/248, and the [function receipt](docs/evidence/m1-functions-windows-20261023.json)
 and earlier locals/expression receipts are likewise historical for their narrower
-slices. Full M1 still needs `?` propagation and possibly broader switch expressions.
+slices. Full M1 still needs broader switch expressions and other scalar types.
 Workers, DLL ABI, Windows isolation, and performance remain unverified. M0 was not
 rerun for unchanged inputs. No new CI job or performance measurement was added.
 M2 must cover arrays, structs, borrows, Buffer, input, output, and UTF-8.

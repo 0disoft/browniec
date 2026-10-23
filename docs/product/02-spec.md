@@ -1,7 +1,7 @@
 # Product Specification
 
 - Status: Accepted for design, 2026-10-23
-- Implementation status: M1 scalar expressions, branches, loops, shallow Option/Result, and switch implemented and verified; full profile not implemented
+- Implementation status: M1 scalar expressions, branches, loops, shallow Option/Result, and switch implemented and verified; scalar `?` propagation implemented and verified; full profile not implemented
 - Source profile name: brownie.safe/0.3
 
 ## Product boundary
@@ -49,8 +49,26 @@ by value through locals, calls, frames, and loops, but they do not support arith
 ordering, or equality. `for` headers remain pure scalar. Exhaustive `switch`
 statements use `.some`/`.none` or `.ok`/`.err` arms in either order, evaluate the
 subject once, and bind immutable payloads in block scope. There is no default arm,
-fallthrough, switch expression, or `?` propagation. Exact rules are in the
+or fallthrough, and switch is a statement rather than an expression. Exact rules are in the
 [tagged contract](../engineering/m1-tagged.md).
+
+The propagation increment adds postfix `?` in functions returning an admitted
+`Option<T>` or `Result<T, E>`. The operand is evaluated once. An
+`Option<S>` yields its `S` payload and returns `.none` on failure; a
+`Result<S, E>` yields its `S` payload and returns `.err(E)` on failure.
+Option success types may differ, while a Result error type must match exactly and
+its success type may differ. Option and Result propagation cannot mix. Functions
+returning i32 or bool, including `main`, reject `?`.
+
+Postfix `?` binds tighter than unary and binary operators. It is admitted in
+expressions such as while conditions, loop bodies, initializers, assignment right
+sides, constructor payloads, call arguments, and returns. Classic `for` headers
+remain pure scalar and reject it, and standalone expression statements remain
+unavailable. Unevaluated short-circuit and untaken branch paths skip `?`. An
+evaluated failure returns immediately, skipping later expression work, arguments,
+the rest of the loop body, the `for` post step, and later iterations. Constructors
+still require an expected wrapper type; `?` adds no inference. Exact rules are in
+the [propagation contract](../engineering/m1-propagation.md).
 
 Classic for headers may contain only the profile's pure scalar declaration,
 assignment, condition, and post steps. Arrays and repeated initializers use positive
@@ -141,10 +159,12 @@ corpus updates, and appropriate verification.
 8. The embed level is unavailable until an actual DLL export/call test passes.
 
 The experimental M1 slice establishes a native source path for its narrower grammar.
-The [tagged receipt](../evidence/m1-tagged-windows-20261023.json) verifies the tagged
-switch slice and its prior scalar/branch/loop regressions; the loop and branch
-receipts remain historical. Full M1, `?` propagation, broader switch expressions,
-and Windows isolation remain unverified. The slice does not satisfy full-profile
-ownership, allocation, host, isolation, or embed criteria. Claims require scoped
-[M1 details](../engineering/m1-scalar-slice.md) and the recorded tagged receipt, not
-acceptance of this specification alone.
+The [tagged receipt](../evidence/m1-tagged-windows-20261023.json) remains historical
+verification for the tagged switch slice and its prior scalar/branch/loop
+regressions. The current [propagation receipt](../evidence/m1-propagation-windows-20261023.json)
+uses 37 native groups and 510 CLI cases per profile;
+propagation verification passed. Full M1, switch expressions, other scalar
+types, and Windows isolation remain unimplemented or unverified. The slice does not
+satisfy full-profile ownership, allocation, host, isolation, or embed criteria.
+Claims require scoped [M1 details](../engineering/m1-scalar-slice.md) and recorded
+evidence, not acceptance of this specification alone.

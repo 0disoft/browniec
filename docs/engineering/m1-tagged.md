@@ -1,6 +1,6 @@
 # M1 Shallow Option, Result, and switch
 
-- Status: implemented and verified on Windows; 33 native groups and 423 CLI cases in each development and release profile
+- Status: implemented and verified on Windows; historical after the propagation increment; 33 native groups and 423 CLI cases in each development and release profile
 - Scope: one-level Option/Result values and exhaustive switch statements in `brownie.m1-scalar/1`
 
 This increment extends the scalar, branch, and loop slice with shallow tagged
@@ -9,9 +9,10 @@ values. It admits `Option<i32>`, `Option<bool>`, and `Result<T, E>` where each o
 aggregate wrappers are rejected. Later nested-depth and struct-depth budgets are
 separate obligations.
 
-`main` remains a zero-argument i32 function. This document does not define switch
-expressions, `?` propagation, arbitrary user enums, arrays, structs, or the full
-`brownie.safe/0.3` profile.
+`main` remains a zero-argument i32 function. This slice does not define switch
+expressions, arbitrary user enums, arrays, structs, or the full
+`brownie.safe/0.3` profile. The successor [propagation contract](m1-propagation.md)
+adds postfix `?` for these shallow wrappers.
 
 ## Values and constructors
 
@@ -66,7 +67,8 @@ switch (SUBJECT) {
 Both variants must appear exactly once in either order. A variable case binds its
 scalar payload in an immutable block scope. `_` discards the payload. A currently
 visible local or parameter cannot be redeclared by a case binding. There is no
-default arm, nested pattern, fallthrough, switch expression, or `?` propagation.
+default arm, nested pattern, fallthrough, or switch expression in this slice.
+`?` is owned by the successor [propagation contract](m1-propagation.md).
 
 The subject is evaluated once. A mutable local subject is loaded as a snapshot
 before matching, so later storage updates do not change the selected payload.
@@ -129,7 +131,7 @@ validation before execution. The result framing is unchanged. The example return
 ./build/browniec.exe run examples/tagged.brc --json
 ```
 
-The [tagged receipt](../evidence/m1-tagged-windows-20261023.json) records
+The historical [tagged receipt](../evidence/m1-tagged-windows-20261023.json) records
 33 native groups and 423 black-box CLI cases for each development
 and release profile, with compiler, source, artifact, and harness identities. It
 covers constructors and context, wrapper copying and calls, depth-one rejection,
@@ -137,6 +139,7 @@ switch exhaustiveness and arm order, `_` binding, subject-once and snapshot
 behavior, terminal joins, type/IR corruption, `CASE` initialization, and Fuel.
 The loop and branch receipts are historical after this increment.
 
-Full M1 still needs `?` propagation and possibly broader switch expressions.
-The full profile, Windows isolation, DLL ABI, and performance targets remain
-unverified.
+The successor [propagation contract](m1-propagation.md) owns postfix `?` for
+shallow scalar wrappers. Full M1 still needs broader switch expressions and other
+scalar types. The full profile, Windows isolation, DLL ABI, and performance targets
+remain unverified.

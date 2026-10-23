@@ -1,6 +1,6 @@
 # M1 Direct Scalar Functions
 
-- Status: implemented; function/local, branch, and loop receipts are historical; tagged slice verified
+- Status: implemented; function/local, branch, loop, and tagged receipts are historical; scalar `?` propagation verified
 - Scope: direct scalar/wrapper functions and VM calls in the experimental scalar profile
 
 ## Source contract
@@ -28,6 +28,8 @@ first-class values. Indirect calls, variadics, default arguments, and trailing c
 are not admitted. See [bool and branches](m1-branches.md) for branch control,
 [loops](m1-loops.md) for loop control and header call restrictions, and
 [tagged values](m1-tagged.md) for shallow Option/Result parameters and returns.
+Functions returning an admitted wrapper may use postfix `?`; its payload and
+propagation rules are owned by the [propagation contract](m1-propagation.md).
 
 ## Compiler and private IR
 
@@ -81,11 +83,10 @@ recursion/Fuel/frame boundaries, function/call-site ceilings, and corrupted priv
 call metadata. It does not cover bool returns, structured branches, slot joins, or
 the branch verifier.
 
-The branch receipt records the historical 20-group/248-case branch slice, and the
-loop receipt records the historical 26-group/332-case loop slice. The current
-[tagged receipt](../evidence/m1-tagged-windows-20261023.json) records 33 native
-groups and 423 black-box CLI cases for each development and release
-profile, including wrapper parameters and returns, constructors under call context,
-and call regressions across scalar and tagged values. Full M1, `?` propagation,
-workers, DLL ABI, clean-machine distribution, and performance targets remain
-unverified. M0 inputs are unchanged and were not rerun.
+The branch receipt records the historical 20-group/248-case branch slice, the loop
+receipt records the historical 26-group/332-case loop slice, and the tagged receipt
+records the historical 33-group/423-case wrapper slice. The current propagation
+[receipt](../evidence/m1-propagation-windows-20261023.json) records
+37 native groups and 510 CLI cases in each development and release profile. Full M1, switch expressions, other scalar types, workers,
+DLL ABI, clean-machine distribution, and performance targets remain unverified. M0
+inputs are unchanged and were not rerun.
