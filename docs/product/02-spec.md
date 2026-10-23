@@ -1,7 +1,7 @@
 # Product Specification
 
 - Status: Accepted for design, 2026-10-23
-- Implementation status: M1 i32/bool expressions, locals, calls, and structured branches implemented and verified; full profile not implemented
+- Implementation status: M1 i32/bool expressions, locals, calls, branches, and loops implemented and verified; full profile not implemented
 - Source profile name: brownie.safe/0.3
 
 ## Product boundary
@@ -33,9 +33,13 @@ point. Other functions and their parameters may use i32 or bool. Bool is canonic
 `==`/`!=`, i32-only ordering, short-circuit `&&`/`||`, `if`/`else if`/`else`,
 standalone lexical blocks, and early returns. Every function path must return, and
 statements after a guaranteed return are rejected. Block-local names are limited to
-their block, and a visible local or parameter cannot be redeclared. Loops remain
-outside this increment. The exact grammar and implementation limits are in the
-[M1 bool and branch contract](../engineering/m1-branches.md).
+their block, and a visible local or parameter cannot be redeclared. The loop
+increment adds `while`, classic `for`, `break`, and `continue`; `for` init and post
+are restricted scalar statements, and its header forbids direct calls. Transfers
+target the nearest lexical loop. A `for` continue runs the post, while break and
+return skip it. For return completeness, every loop is conservatively treated as
+possibly zero-trip. Exact grammar and limits are in the [branch contract](../engineering/m1-branches.md)
+and [loop contract](../engineering/m1-loops.md).
 
 Classic for headers may contain only the profile's pure scalar declaration,
 assignment, condition, and post steps. Arrays and repeated initializers use positive
@@ -126,9 +130,10 @@ corpus updates, and appropriate verification.
 8. The embed level is unavailable until an actual DLL export/call test passes.
 
 The experimental M1 scalar slice establishes a native source path for its narrower
-grammar. The [branch receipt](../evidence/m1-branches-windows-20261023.json) verifies
-the bool and acyclic-branch increment. Full M1, loops, and Windows isolation remain
-unverified. The slice does not satisfy full-profile ownership, allocation, host,
-isolation, or embed criteria. Claims require scoped
-[M1 details](../engineering/m1-scalar-slice.md) and the recorded branch receipt, not
+grammar. The [loop receipt](../evidence/m1-loops-windows-20261023.json) verifies the
+bool/branch and loop slices; the branch receipt remains historical. Full M1,
+Option/Result, shallow switch, question-mark propagation, and Windows isolation
+remain unverified. The slice does not satisfy full-profile ownership, allocation,
+host, isolation, or embed criteria. Claims require scoped
+[M1 details](../engineering/m1-scalar-slice.md) and the recorded loop receipt, not
 acceptance of this specification alone.

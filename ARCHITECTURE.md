@@ -2,7 +2,7 @@
 
 - Status: accepted design baseline
 - Decision date: 2026-10-23
-- Implementation: M0 verified; experimental M1 scalar pipeline and VM implemented; bool/branch slice verified
+- Implementation: M0 verified; experimental M1 scalar pipeline and VM implemented; bool/branch and loop slices verified
 
 ## Intent
 
@@ -18,13 +18,17 @@ expressions through lexing/parsing, i32/bool type checks, private IR, verifier, 
 VM. Immutable parameters and `let` names use single-definition registers; `var`
 names use typed storage slots in the same bounded register file. Structured if/else
 and standalone blocks lower to forward-only jumps, and short-circuit operators skip
-their right operand. The verifier intersects definite initialization at joins and
-requires every function path to return. Direct calls use verified function ranges
-and bounded VM frames. The branch slice is verified by the
-[dated receipt](docs/evidence/m1-branches-windows-20261023.json). Loops, ownership,
-lifecycle APIs, Engine, host calls, workers, and DLLs remain designs; full M1
-remains unverified. M0 separately exercises native arithmetic, codec, storage,
-allocator, owner, and frame primitives.
+their right operand. `while` and classic `for` add a control head, a forward exit
+branch, and metered backward edges. The verifier intersects definite initialization
+on the forward graph and checks each backedge against its target's first-entry
+invariant; it does not solve a cyclic fixed point or prove termination. For return
+completeness, the compiler conservatively treats every loop as possibly zero-trip,
+so a following function return remains required. Direct calls use verified function
+ranges and bounded VM frames. The loop slice is verified
+by the [dated receipt](docs/evidence/m1-loops-windows-20261023.json); the branch
+receipt remains historical. Ownership, lifecycle APIs, Engine, host calls, workers,
+and DLLs remain designs; full M1 remains unverified. M0 separately exercises native
+arithmetic, codec, storage, allocator, owner, and frame primitives.
 
 ## Main path
 

@@ -1,6 +1,6 @@
 # M1 Direct Scalar Functions
 
-- Status: implemented; function/local evidence is historical; bool/branch slice verified
+- Status: implemented; function/local and branch receipts are historical; loop slice verified
 - Scope: direct i32/bool functions and VM calls in the experimental scalar profile
 
 ## Source contract
@@ -23,8 +23,8 @@ Locals belong to one function and cannot access a caller's bindings. Duplicate
 functions/parameters and invalid arity or annotations are rejected. A local may
 shadow a function name, but that scalar local cannot be called. Functions are not
 first-class values. Indirect calls, variadics, default arguments, trailing commas,
-loops, and tagged values are not admitted. See [bool and branches](m1-branches.md)
-for the acyclic control-flow contract.
+and tagged values are not admitted. See [bool and branches](m1-branches.md) for
+branch control and [loops](m1-loops.md) for loop control and header call restrictions.
 
 ## Compiler and private IR
 
@@ -61,8 +61,9 @@ live frames including the entry. The 128-register ceiling is global across the
 Program, not per function, and includes typed `var` and short-circuit result slots.
 At most 64 bindings may be simultaneously visible in a function, including
 parameters. Source bytes, tokens, constants, instructions, structural parser depth,
-and expression depth keep their existing limits. The VM reserves 4096 scalar slots
-for its bounded frames; this is not an accounted-memory or process-RAM measurement.
+expression depth, and loop depth keep their existing limits. The VM reserves 4096
+scalar slots for its bounded frames; this is not an accounted-memory or process-RAM
+measurement.
 
 Every ordinary instruction/return costs one Fuel; CALL costs one plus its argument
 count. The same remaining Fuel spans the entire call tree. Fuel preflight happens
@@ -77,8 +78,11 @@ recursion/Fuel/frame boundaries, function/call-site ceilings, and corrupted priv
 call metadata. It does not cover bool returns, structured branches, slot joins, or
 the branch verifier.
 
-The [branch receipt](../evidence/m1-branches-windows-20261023.json) records 20 native
-groups and 248 black-box CLI cases for each development and release profile,
-including call regressions across bool parameters and results. Full M1, loops,
-workers, DLL ABI, clean-machine distribution, and performance targets remain
-unverified. M0 inputs are unchanged and were not rerun.
+The [branch receipt](../evidence/m1-branches-windows-20261023.json) records the
+historical 20-group/248-case branch slice. The current
+[loop receipt](../evidence/m1-loops-windows-20261023.json) records 26 native groups
+and 332 black-box CLI cases for each development and release profile, including
+call regressions across bool parameters and results and the conservative `for`
+header call rejection. Full M1, Option/Result, workers, DLL ABI, clean-machine
+distribution, and performance targets remain unverified. M0 inputs are unchanged
+and were not rerun.

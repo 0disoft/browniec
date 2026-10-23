@@ -1,12 +1,14 @@
 # M1 Bool and Branch Slice
 
-- Status: implemented and verified on Windows; 20 native groups and 248 CLI cases passed in each development and release profile
+- Status: implemented and verified for the branch slice; historical after the loop increment
 - Scope: bool scalars, lexical blocks, structured branches, early returns, and CFG checks in `brownie.m1-scalar/1`
 
 This increment keeps the experimental `brownie.m1-scalar/1` profile bounded. It
 extends the existing i32 expression, local, and direct-call pipeline with bool
-values and acyclic control flow. It does not define the full `brownie.safe/0.3`
-profile, loops, aggregates, host calls, Windows isolation, or the embed ABI.
+values and branch control flow. The separate [loop increment](m1-loops.md) extends
+the same grammar with `while`, classic `for`, `break`, `continue`, and backedges.
+Neither document defines the full `brownie.safe/0.3` profile, aggregates, host
+calls, Windows isolation, or the embed ABI.
 
 ## Source surface
 
@@ -40,13 +42,15 @@ Conditions must have type bool. The syntax is `if (CONDITION) { ... }`, optional
 followed by `else if (CONDITION) { ... }` and one final `else { ... }`. A
 standalone block creates a lexical scope. Structural parser depth is limited to 32
 for nested blocks and control constructs, including else-if chains. Expression
-depth has a separate 32-level limit. Loops are not admitted.
+depth has a separate 32-level limit. Branch admission does not include loops; loop
+syntax and limits are owned by the [loop contract](m1-loops.md).
 
 Every reachable path through every function must end in a return whose value has
 the declared result type. Early returns are allowed. A statement after a point
 where all paths have already returned is unreachable and is rejected, including
-statements after an exhaustive if/else chain. No admitted path loops or falls off
-the end of a function.
+statements after an exhaustive if/else chain. A branch-only path cannot fall off the
+end of a function; loop exits retain the compiler's conservative zero-trip return
+requirement.
 
 ## Bool and operators
 
@@ -108,8 +112,9 @@ opcodes keep their meanings. This increment adds:
 | 20 | `JFALSE` | Continue at a later instruction when a bool condition is false |
 | 21 | `JTRUE` | Continue at a later instruction when a bool condition is true |
 
-Every jump is strictly forward and stays inside its function. The resulting CFG is
-acyclic and supports early returns and if/else joins without admitting loops.
+Every branch jump is strictly forward and stays inside its function. The branch-only
+CFG is acyclic; the loop increment adds opcode 22 backedges under a separate
+contract.
 
 The independent verifier processes each function in forward instruction order. It
 keeps unique value definitions separate from slot stores, validates scalar types,
@@ -144,9 +149,8 @@ The branch increment uses the existing bounded program and frame resources:
 
 Structural parser depth and expression depth are separate counters. Nested blocks
 and control constructs, including each else-if level, consume structural parser
-depth; expression nesting consumes its own 32-level budget. The branch increment
-does not add a loop counter, heap-backed local stack, or separate slot register
-file.
+depth; expression nesting consumes its own 32-level budget. The loop increment owns
+the separate loop-depth limit.
 
 Every executed instruction, including `LOAD`, `STORE`, `JUMP`, `JFALSE`, `JTRUE`,
 and return, costs one Fuel. A taken or untaken branch instruction has the same
@@ -165,13 +169,13 @@ program and cannot be used as a CLI process exit code.
 ./build/browniec.exe run examples/branches.brc --json
 ```
 
-The [dated branch receipt](../evidence/m1-branches-windows-20261023.json) records
+The historical [dated branch receipt](../evidence/m1-branches-windows-20261023.json) records
 20 native groups and 248 black-box CLI cases for each development and release
 profile, along with the Windows compiler and artifact identities, source and harness
 digests, executed and skipped checks, and remaining limitations.
 
 The expression, locals, and direct-function receipts remain historical evidence for
 their narrower slices; none of them is evidence for branches or LOAD/STORE/CFG
-behavior. Full M1, loops, and Windows isolation remain unverified. No OS sandbox,
-performance target, clean-machine package, or DLL ABI claim follows from this
-increment.
+behavior. Full M1, Option/Result, Windows isolation, and performance remain
+unverified. No OS sandbox, performance target, clean-machine package, or DLL ABI
+claim follows from this increment.

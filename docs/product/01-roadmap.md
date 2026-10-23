@@ -1,7 +1,7 @@
 # Roadmap
 
-- Status: Accepted delivery sequence; M0 verified, M1 scalar and bool/branch slices implemented and verified, 2026-10-23
-- Current progress: M0 and M1 bool/branch slice passed; full M1 partial; M2-M5 not started
+- Status: Accepted delivery sequence; M0 verified, M1 scalar, bool/branch, and loop slices implemented and verified, 2026-10-23
+- Current progress: M0, M1 bool/branch, and loop slices passed; full M1 partial; M2-M5 not started
 
 This roadmap orders learning and evidence. It is not a release promise. M0 has a
 native harness and recorded evidence. The scalar CLI/VM now exist; the worker
@@ -47,13 +47,17 @@ source pipeline. The [bool/branch slice](../engineering/m1-branches.md) adds can
 bool values, short-circuit operators, if/else chains, standalone blocks, early
 returns, typed var slots, forward-only jumps, and definite initialization at CFG
 joins. Its [dated receipt](../evidence/m1-branches-windows-20261023.json) records 20
-native groups and 248 CLI cases in each of development and release. Remaining M1
-work includes loops, scalar Option/Result, and their Flow checks.
+native groups and 248 CLI cases in each of development and release and remains
+historical. The [loop slice](../engineering/m1-loops.md) adds `while`, classic `for`,
+`break`/`continue`, and metered backedges. Its
+[receipt](../evidence/m1-loops-windows-20261023.json) records 26 native groups and
+332 CLI cases in each profile. Remaining M1 work includes scalar Option/Result,
+shallow switch, question-mark propagation, and their Flow checks.
 
 Goal: run real .brc source through lexer, parser, type checking, Flow analysis,
 private code generation, independent verification, and the native VM.
 
-The first usable slice includes functions, acyclic branches, scalar Option/Result,
+The first usable slice includes functions, branches, loops, scalar Option/Result,
 question-mark propagation, shallow switch, checked arithmetic, and bounded Fuel. It
 produces a small CLI path for local engineering use.
 

@@ -1,6 +1,6 @@
 # Documentation
 
-- Status: Accepted design documentation; M0 verified; experimental M1 scalar CLI/VM and bool/branch slice verified
+- Status: Accepted design documentation; M0 verified; experimental M1 scalar CLI/VM, bool/branch slice, and loop slice verified
 
 ## Owning documents
 
@@ -18,7 +18,7 @@
 | CLI interface | [Overview](cli/README.md), [commands](cli/command-contract.md), [configuration](cli/configuration.md), [output and exits](cli/output-and-exit-codes.md) |
 | Runtime invariants | [Project invariants](engineering/00-project-invariants.md) |
 | Resource targets and trust controls | [Performance](engineering/03-performance-budget.md), [security](engineering/04-security-baseline.md) |
-| Current M1 grammar and limits | [Scalar slice](engineering/m1-scalar-slice.md), [direct functions](engineering/m1-functions.md), [bool and branches](engineering/m1-branches.md) |
+| Current M1 grammar and limits | [Scalar slice](engineering/m1-scalar-slice.md), [direct functions](engineering/m1-functions.md), [bool and branches](engineering/m1-branches.md), [loops](engineering/m1-loops.md) |
 | Evidence and testing | [Validation](../VALIDATION.md), [testing standard](engineering/05-testing-standard.md) |
 | Dependencies and compatibility | [Change policy](engineering/06-dependency-and-change-policy.md) |
 | Failure and operating responsibility | [Failure standard](engineering/07-operability-and-failure-standard.md), [operational contract](ops/00-operational-contract.md) |
@@ -40,6 +40,7 @@ direction.
 Keep documents concise and in English, use relative links, and update affected
 consumers with the owning contract. Do not import source-package instructions or
 local absolute paths. M0 establishes primitive results. M1 establishes a narrow
-i32/bool source path with acyclic branches, verified by the
-[branch receipt](evidence/m1-branches-windows-20261023.json). Full M1, loops, Windows
-isolation, ABI, and packaging remain unimplemented or unverified.
+i32/bool source path with branches and loops, verified by the
+[loop receipt](evidence/m1-loops-windows-20261023.json); the branch receipt remains
+historical. Full M1, Option/Result, Windows isolation, ABI, and packaging remain
+unimplemented or unverified.
