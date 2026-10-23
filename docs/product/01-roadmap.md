@@ -42,9 +42,10 @@ unimplemented Brownie language pipeline.
 ## M1: scalar source to native VM
 
 Status: partial. The first [scalar slice](../engineering/m1-scalar-slice.md) runs
-one i32 return expression through the native source pipeline. Development and release
-passed five native groups and 81 black-box CLI cases each. Remaining M1 work includes
-variables, functions/calls, control flow, scalar Option/Result, and their Flow checks.
+i32 expressions and initialized let/var locals with plain assignment through the
+native source pipeline. Development and release passed eight native groups and
+109 CLI cases each. Remaining M1 work includes functions/calls, control flow, scalar
+Option/Result, and their Flow checks.
 
 Goal: run real .brc source through lexer, parser, type checking, Flow analysis,
 private code generation, independent verification, and the native VM.

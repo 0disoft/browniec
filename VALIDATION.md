@@ -76,13 +76,14 @@ Exact transcript and artifact details belong to `build/m0/receipt.json` and
 Full M1 remains partial; M2 through M5 remain not started. M0's empty runtime-`PATH` execution does not
 establish clean-machine packaging or Windows isolation.
 
-M1 has a first scalar source-to-native-VM slice. Five native test groups and 81 CLI
+M1 has scalar expressions and initialized let/var locals with plain assignment.
+Eight native test groups and 109 CLI
 cases passed in each of development and release using the M0 compiler artifact.
 The corpus verifies arithmetic traps, malformed source/code, Fuel, Program reuse,
-resource ceilings, JSON/exit behavior, and tool-free runtime PATH execution.
+resource ceilings, local copy/assignment semantics and source rejections, JSON/exit behavior, and tool-free runtime PATH execution.
 See [implemented subset](docs/engineering/m1-scalar-slice.md) and
-[dated receipt](docs/evidence/m1-windows-20261023.json). General functions, variables,
-control flow, Option/Result, and full Flow analysis are still pending. M0 was not
+[dated receipt](docs/evidence/m1-locals-windows-20261023.json). Additional functions/calls,
+control flow, Option/Result, and control-flow/ownership analysis are still pending. M0 was not
 rerun for unchanged inputs. No new CI job or performance measurement was added.
 M2 must cover arrays, structs, borrows, Buffer, input, output, and UTF-8.
 M3 must use a fake in-memory typed host adapter without live keys or network services.

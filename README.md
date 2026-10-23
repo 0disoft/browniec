@@ -9,10 +9,11 @@ The implementation direction is primarily Fairy C. A native Brownie VM executabl
 accepts .brc source and runs it without starting Go, MSVC, or a C compiler.
 
 The native `browniec` now compiles and runs the experimental `brownie.m1-scalar/1`
-subset: one `i32 main()` with integer literals, parentheses, unary minus, and
+subset: one `i32 main()` with initialized let/var locals, plain assignment,
+integer literals, parentheses, unary minus, and
 `+ - * / %`. Parsing, scalar type checks, private bytecode generation, independent
 verification, and VM dispatch are Fairy C. Fuel bounds executed instructions.
-Functions, variables, branches, other value types, workers, and DLLs remain future work.
+Additional functions/calls, branches, other value types, workers, and DLLs remain future work.
 
 ```powershell
 ./build/toolchain/fairyc.exe build
@@ -47,7 +48,7 @@ Those limits describe the profile, not the language forever.
 
 | Level | Intended capability | Current state |
 | --- | --- | --- |
-| core | Source compile, verify, and native VM CLI | Experimental i32 expression check/run; M1 partial; M2-M3 not implemented |
+| core | Source compile, verify, and native VM CLI | Experimental i32 expressions/locals check/run; M1 partial; M2-M3 not implemented |
 | restricted | Windows worker plus parent broker | Not implemented; M4 |
 | embed | Trusted native host through a DLL ABI | Not implemented; M5; no public C export |
 
@@ -75,7 +76,7 @@ frame primitives on Windows x64. Exact commands and results belong to
 `build/m0/receipt.json` and `docs/evidence/m0-windows-20261023.json`. Running with an
 empty runtime `PATH` does not establish clean-machine packaging or a sandbox.
 
-The M1 Windows run passed five native test groups and 81 black-box CLI cases in each
-of development and release. The [dated receipt](docs/evidence/m1-windows-20261023.json)
+The M1 Windows run passed eight native test groups and 109 black-box CLI cases in each
+of development and release. The [dated receipt](docs/evidence/m1-locals-windows-20261023.json)
 records toolchain, source, and artifact identities. No full-profile conformance,
 DLL ABI, Windows isolation, clean-machine packaging, or performance target is claimed.

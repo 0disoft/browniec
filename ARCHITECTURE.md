@@ -15,7 +15,8 @@ Its explicit Fairy-like syntax is its own safe profile.
 
 The implemented [M1 scalar slice](docs/engineering/m1-scalar-slice.md) runs real `.brc`
 expressions through lexing/parsing, i32 checks, private IR, verifier, and VM. It has
-only straight-line initialized registers; general Flow, ownership, lifecycle APIs,
+only straight-line initialized registers, including checked let/var bindings and
+assignment lowered to new values; control-flow analysis, ownership, lifecycle APIs,
 Engine, host calls, workers, and DLLs remain designs. M0 separately exercises native
 arithmetic, codec, storage, allocator, owner, and frame primitives.
 

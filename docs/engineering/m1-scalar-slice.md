@@ -1,18 +1,26 @@
 # M1 Scalar Slice
 
 - Status: experimental native compiler/verifier/VM and source CLI implemented
-- Scope: first M1 increment, not full M1 or brownie.safe/0.3 conformance
+- Scope: M1 expressions and initialized i32 locals; not full M1 or profile conformance
 
-The admitted source is `module main; fn i32 main() { return EXPR; }`.
+The admitted source is `module main; fn i32 main() { STMT* return EXPR; }`.
 EXPR supports decimal i32 literals, parentheses, unary minus, and left-associative
-`+ - * / %` with conventional precedence. Whitespace and `//` comments are accepted.
+`+ - * / %` with conventional precedence, plus previously declared local names.
+Whitespace and `//` comments are accepted.
 The negative minimum literal is admitted directly; positive 2147483648 is rejected.
-No variables, calls, branches, imports, other types, or host effects are admitted yet.
+STMT is `let i32 NAME = EXPR;`, `var i32 NAME = EXPR;`, or `NAME = EXPR;`.
+Every local requires an initializer. Only var may be reassigned. Names are ASCII
+identifiers, case sensitive, in one function-body scope. Duplicate declarations,
+reserved names, and declaration-before-use violations are rejected. A declaration
+is not visible within its own initializer. Nested blocks/shadowing, compound
+assignment, assignment expressions, calls, branches, imports, other types, and host
+effects are not admitted yet. [locals.fy](../../src/locals.fy) owns the bounded name table
+and reserved-name list for this subset.
 
 ## Limits and representation
 
 The compiler accepts at most 4096 UTF-8 source bytes, 1024 tokens, parser depth 32,
-128 i32 registers, 128 constants, and 256 instructions. Fixed arrays bound compiler
+64 local bindings, 128 i32 registers, 128 constants, and 256 instructions. Fixed arrays bound compiler
 and VM storage. These are temporary implementation ceilings, not performance results.
 
 Private instructions are eight bytes: opcode, destination, operand A, operand B,
@@ -20,7 +28,17 @@ then four zero reserved bytes. Constants live in a separate bounded i64 array wi
 i32 range checks. Source offsets are a separate diagnostic map.
 The independent verifier reconstructs initialized registers, validates operands,
 constant ranges, reserved bytes, counts, and one final return. This is the entire
-Flow obligation for a straight-line expression without variables or ownership.
+runtime Flow obligation for the current straight-line scalar code. Source checking
+also proves declaration order, required initialization, and let immutability.
+
+Local declarations bind names to single-definition value registers. A var assignment
+rebinds the name after its RHS is checked; it never overwrites an old value register.
+Consequently a previous copy keeps its value after assignment. No new mutable-register
+opcode or guest heap storage is introduced, and verifier/VM instruction formats stay
+unchanged. Pure name copies/rebindings need no extra instruction or Fuel; their
+compiler work is bounded by local/token/source limits. Arithmetic initializers and
+assignment RHS instructions are retained even if their final value is unused, so
+traps and left-to-right execution are preserved.
 
 The VM re-verifies before every run, reads the Program by shared borrow, and creates
 fresh register state for each one-shot execution. Each instruction including return
@@ -34,15 +52,18 @@ is needed. There is no public bytecode loader or runtime compiler subprocess.
 
 ## Validation
 
-`build/toolchain/fairyc.exe test --native --capture-output --json` runs five native
+`build/toolchain/fairyc.exe test --native --capture-output --json` runs eight native
 groups covering arithmetic boundaries, precedence, source rejection, Fuel/reuse,
-and corrupted private bytecode. The toolchain is the M0-recorded Fairy C build.
+corrupted private bytecode, local snapshots, source binding rejections, and local traps. The toolchain is the M0-recorded Fairy C build.
 `tools/verify-m1.ps1` runs these groups in development and release, builds both
-native binaries, and checks 81 black-box CLI cases per profile with a cleared
+native binaries, and checks 109 black-box CLI cases per profile with a cleared
 environment and tool-free runtime PATH. The corpus includes fixed arithmetic and
 trap results, compile/depth/register/source ceilings, malformed UTF-8, independent
-seeded arithmetic vectors, option rejection, and stream separation.
+seeded arithmetic vectors, local binding/assignment and token/local limits, option
+rejection, and stream separation.
 Receipts are in `build/m1/receipt.json` and per-profile `cli-receipt.json` files.
+The original expression-only receipt is retained as historical evidence; the
+[locals receipt](../evidence/m1-locals-windows-20261023.json) records this increment.
 
 ## Run the implemented subset
 
@@ -50,6 +71,7 @@ Receipts are in `build/m1/receipt.json` and per-profile `cli-receipt.json` files
 ./build/toolchain/fairyc.exe build
 ./build/browniec.exe run examples/answer.brc --json
 ./build/browniec.exe check examples/answer.brc --json
+./build/browniec.exe run examples/locals.brc --json
 ./build/browniec.exe run examples/answer.brc --fuel 4 --json
 pwsh -NoProfile -File tools/verify-m1.ps1
 ```
