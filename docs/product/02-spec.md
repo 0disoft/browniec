@@ -241,8 +241,8 @@ The [integer-operator receipt](../evidence/m1-integer-operators-windows-20261023
 records 75 native groups and 1,898 CLI cases in each profile, including 626 new cases.
 The [arm-statement receipt](../evidence/m1-switch-arm-statements-windows-20261023.json)
 records 81 native groups and 1,969 CLI cases in each profile, including 71 new cases.
-Full M1, arrays,
-structs, borrows,
+The [M1 audit](../engineering/m1-checkpoint-audit.md) closes the bounded scalar
+checkpoint. Arrays, structs, borrows,
 and Windows isolation remain unimplemented or unverified. The slice does not
 satisfy full-profile ownership, allocation, host, isolation, or embed criteria.
 Claims require scoped [M1 details](../engineering/m1-scalar-slice.md) and recorded

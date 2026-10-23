@@ -73,8 +73,9 @@ identity is SHA-256
 Exact transcript and artifact details belong to `build/m0/receipt.json` and
 `docs/evidence/m0-windows-20261023.json`.
 
-Full M1 remains partial even though all initial scalar type names and explicit
-widening are now implemented; M2 through M5 remain not started. M0's empty runtime-`PATH` execution does not
+The [M1 requirements audit](docs/engineering/m1-checkpoint-audit.md) closes the
+bounded scalar checkpoint by checking the identities of existing executed evidence.
+Full-profile conformance remains incomplete; M2 through M5 remain not started. M0's empty runtime-`PATH` execution does not
 establish clean-machine packaging or Windows isolation.
 
 M1 has scalar expressions, initialized locals, direct functions, and bool/branch,

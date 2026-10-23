@@ -82,7 +82,8 @@ compilation so their transfers target that loop. No opcode or VM change is added
 The [arm-statement receipt](docs/evidence/m1-switch-arm-statements-windows-20261023.json)
 records 81 native groups and 1,969 CLI cases in each development and release profile.
 Ownership, lifecycle
-APIs, Engine, host calls, workers, and DLLs remain designs; full M1, arrays,
+APIs, Engine, host calls, workers, and DLLs remain designs. The bounded scalar
+M1 checkpoint is verified; arrays,
 structs, borrows, Windows isolation, DLL embedding,
 and performance remain
 unimplemented or unverified. M0

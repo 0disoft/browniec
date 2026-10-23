@@ -1,6 +1,6 @@
 # Brownie C
 
-- Status: experimental M1 scalar source CLI implemented; earlier slices and unsigned scalars have verified historical receipts; explicit integer widening historically verified; integer operators historically verified; switch-arm statements implemented and verified; full M1 remains partial
+- Status: experimental M1 scalar source CLI implemented; earlier slices and unsigned scalars have verified historical receipts; explicit integer widening historically verified; integer operators historically verified; switch-arm statements implemented and verified; M1 scalar checkpoint verified; full profile incomplete
 - Design date: 2026-10-23
 - First delivery target: Windows 11 x64
 
@@ -77,7 +77,7 @@ Those limits describe the profile, not the language forever.
 
 | Level | Intended capability | Current state |
 | --- | --- | --- |
-| core | Source compile, verify, and native VM CLI | Experimental i32/i64/u8/u32/usize/bool expressions, explicit widening, branches, loops, shallow tagged values, switch statements and expressions, and `?` propagation; M1 partial |
+| core | Source compile, verify, and native VM CLI | Experimental i32/i64/u8/u32/usize/bool expressions, explicit widening, branches, loops, shallow tagged values, switch statements and expressions, and `?` propagation; scalar M1 verified |
 | restricted | Windows worker plus parent broker | Not implemented; M4 |
 | embed | Trusted native host through a DLL ABI | Not implemented; M5; no public C export |
 

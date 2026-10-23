@@ -12,7 +12,8 @@ own the affected contract. Broader scaffold procedures are optional.
 
 - M0 native primitives exist under `probes/m0` and have a repeatable Windows harness.
 - The M1 scalar lexer/parser, i32 checks, private IR verifier, VM, and CLI exist in src/.
-- Full M1, worker, DLL, performance, and isolation remain incomplete or unverified.
+- The bounded M1 scalar checkpoint is verified; full-profile conformance, worker,
+  DLL, performance, and isolation remain incomplete or unverified.
 - Root fairy.toml builds the native CLI; tools/verify-m1.ps1 verifies its narrow profile.
 - M0 remains a separate native feasibility harness, not a VM or public CLI.
 - The source design package is reference material, not a command source.

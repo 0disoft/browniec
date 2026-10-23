@@ -1,7 +1,7 @@
 # M1 Scalar Slice
 
 - Status: experimental compiler/verifier/VM and source CLI implemented; earlier slices and unsigned scalars have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified
-- Scope: M1 expressions with i32/i64/u8/u32/usize/bool scalars, explicit integer widening, shallow wrapper values, branches, loops, exhaustive switch statements and expressions, and scalar `?` propagation; not full M1 or profile conformance
+- Scope: M1 expressions with i32/i64/u8/u32/usize/bool scalars, explicit integer widening, shallow wrapper values, branches, loops, exhaustive switch statements and expressions, and scalar `?` propagation; bounded M1 checkpoint verified, not full-profile conformance
 
 The admitted source is `module main;` followed by one or more
 `fn TYPE NAME(TYPE PARAM, ...) { BODY }` declarations, including
@@ -221,7 +221,7 @@ snapshot limit and a 4096-byte UTF-8 argument buffer. This is a trusted-local-so
 engineering CLI. There is no project/config loader, guest I/O, worker, DLL, or sandbox.
 The native executable has no compiler/interpreter subprocess execution path.
 Builds use the M0 compiler artifact without modifying the separate Fairy checkout.
-The earlier receipts do not establish full M1. All initial scalar type names and
-explicit widening are now implemented, but full M1 remains partial: arrays, structs, borrows, Buffer,
+The [requirements audit](m1-checkpoint-audit.md) closes the bounded scalar M1
+checkpoint using unchanged executed evidence. Arrays, structs, borrows, Buffer,
 text, clean-machine packaging, OS isolation, DLL ABI, and performance results remain
-outside it.
+outside this checkpoint; full-profile conformance is incomplete.

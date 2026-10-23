@@ -1,0 +1,46 @@
+{
+  "schema": "browniec.m1-checkpoint-audit/v1",
+  "status": "passed",
+  "recordedAt": "2026-10-23T14:24:57.766853+00:00",
+  "baselineCommit": "6bffa0a89d26c7a99a2f590afaaf4bcde8adca8a",
+  "decision": "Bounded brownie.m1-scalar/1 M1 exit condition met; full brownie.safe/0.3 remains incomplete.",
+  "evidence": {
+    "path": "docs/evidence/m1-switch-arm-statements-windows-20261023.json",
+    "sha256": "dfe3156ecac9c0fcf9ecf4f62838c90e731d043f62b97e798563e456bc12bdfa",
+    "nativeGroupsPerProfile": 81,
+    "cliCasesPerProfile": 1969,
+    "recordedInputs": 58,
+    "frozenInputs": 81,
+    "compilerSha256": "572395f7f1e425d613c5a69f50b30ed177cda37ca2b1638bd0c11cf79fcbcc77",
+    "compilerVersion": [
+      "Fairy C Stage 0",
+      "compiler: v0.0.0-20261022210249-4ce1264273be",
+      "sdk: fairyc-sdk-stdlib/0 0.0.0-stage0.86",
+      "language: fairyc-language/20",
+      "runtime: fairyc-runtime/0",
+      "revision: 4ce1264273be6051ee560173e94690e1b99c9eaf",
+      "modified: false"
+    ],
+    "inputIdentity": "unchanged",
+    "retainedArtifactIdentity": "unchanged",
+    "retainedCliReportIdentity": "unchanged"
+  },
+  "documentChecks": {
+    "files": 80,
+    "relativeLinks": 399,
+    "diffCheck": "passed"
+  },
+  "executed": [
+    "python -B build/m1/audit-checkpoint.py",
+    "git diff --check"
+  ],
+  "reused": "Previously executed development/release results after hash verification; no new runtime run.",
+  "skipped": [
+    "Native and CLI reruns: implementation, verification inputs and retained artifacts unchanged.",
+    "M0, isolation, DLL, packaging and performance: no changes to these boundaries."
+  ],
+  "limitations": [
+    "Deliberately restricted scalar profile only; see m1-checkpoint-audit.md.",
+    "M2 aggregate storage, full-profile ownership/allocation/output and M3-M5 remain open."
+  ]
+}

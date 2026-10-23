@@ -41,7 +41,9 @@ unimplemented Brownie language pipeline.
 
 ## M1: scalar source to native VM
 
-Status: partial. The first [scalar slice](../engineering/m1-scalar-slice.md) runs i32
+Status: bounded scalar checkpoint verified. The [requirements audit](../engineering/m1-checkpoint-audit.md)
+confirms the scalar exit condition using unchanged executed evidence; it does not
+claim full-profile conformance. The first [scalar slice](../engineering/m1-scalar-slice.md) runs i32
 expressions, initialized locals/assignment, and direct functions through the native
 source pipeline. The [bool/branch slice](../engineering/m1-branches.md) adds canonical
 bool values, short-circuit operators, if/else chains, standalone blocks, early
