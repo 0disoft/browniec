@@ -1,0 +1,92 @@
+module functions;
+
+import errors as errors;
+import lexer as lexer;
+import locals as locals;
+
+// Bounded signature pass enables forward calls without trusting unparsed bodies.
+pub struct Table {
+    usize[16] begins;
+    usize[16] ends;
+    usize[16] bodies;
+    usize[16] body_ends;
+    usize[16] arities;
+    usize[128] param_begins;
+    usize[128] param_ends;
+    usize count;
+    usize entry;
+}
+pub fn Table empty() {
+    return Table { .begins = [0; 16], .ends = [0; 16], .bodies = [0; 16],
+        .body_ends = [0; 16], .arities = [0; 16], .param_begins = [0; 128],
+        .param_ends = [0; 128], .count = 0, .entry = 16 };
+}
+pub fn usize find(ref u8[] source, ref Table t, usize begin, usize end) {
+    var usize i = 0;
+    while (i < t.count) {
+        if (lexer::equal(source[begin..end], source[t.begins[i]..t.ends[i]])) { return i; }
+        i += 1;
+    }
+    return 16;
+}
+fn Result<usize, errors::Error> signature(ref u8[] source, ref mut lexer::State s, ref mut Table t) {
+    if (t.count >= 16) { return .err(errors::make(4, s.begin)); }
+    let usize fn_word = lexer::word(source, s, b"fn")?;
+    if (s.kind == 2 && !lexer::equal(source[s.begin..s.end], b"i32")) { return .err(errors::make(3, s.begin)); }
+    let usize type_word = lexer::word(source, s, b"i32")?;
+    if (s.kind != 2 || locals::reserved(source[s.begin..s.end])) { return .err(errors::make(2, s.begin)); }
+    if (find(source, t, s.begin, s.end) != 16) { return .err(errors::make(3, s.begin)); }
+    let usize f = t.count;
+    t.begins[f] = s.begin;
+    t.ends[f] = s.end;
+    let bool main = lexer::equal(source[s.begin..s.end], b"main");
+    let usize name = lexer::next(source, s)?;
+    let usize open = lexer::punctuation(source, s, 40)?;
+    var usize arity = 0;
+    var locals::Table parameters = locals::empty();
+    while (s.kind != 41) {
+        if (arity >= 8) { return .err(errors::make(4, s.begin)); }
+        if (s.kind == 2 && !lexer::equal(source[s.begin..s.end], b"i32")) { return .err(errors::make(3, s.begin)); }
+        let usize parameter_type = lexer::word(source, s, b"i32")?;
+        if (s.kind != 2 || locals::reserved(source[s.begin..s.end])) { return .err(errors::make(2, s.begin)); }
+        let usize begin = s.begin;
+        let usize end = s.end;
+        if (locals::find(source, ref parameters, begin, end) != 64) { return .err(errors::make(3, begin)); }
+        let usize parameter = locals::declare(ref mut parameters, begin, end, arity, false)?;
+        let usize at = f * 8 + arity;
+        t.param_begins[at] = begin;
+        t.param_ends[at] = end;
+        arity += 1;
+        let usize next = lexer::next(source, s)?;
+        if (s.kind == 41) { break; }
+        let usize comma = lexer::punctuation(source, s, 44)?;
+        if (s.kind == 41) { return .err(errors::make(2, s.begin)); }
+    }
+    if (main && arity != 0) { return .err(errors::make(3, t.begins[f])); }
+    if (main) { t.entry = f; }
+    t.arities[f] = arity;
+    let usize close = lexer::punctuation(source, s, 41)?;
+    let usize body = lexer::punctuation(source, s, 123)?;
+    t.bodies[f] = s.begin;
+    while (s.kind != 125) {
+        if (s.kind == 0 || s.kind == 123) { return .err(errors::make(2, s.begin)); }
+        let usize token = lexer::next(source, s)?;
+    }
+    t.body_ends[f] = s.begin;
+    let usize end_body = lexer::next(source, s)?;
+    t.count += 1;
+    return .ok(f);
+}
+pub fn Result<Table, errors::Error> scan(ref u8[] source) {
+    var Table t = empty();
+    var lexer::State s = lexer::empty();
+    let usize first = lexer::next(source, ref mut s)?;
+    let usize module_word = lexer::word(source, ref mut s, b"module")?;
+    let usize module_name = lexer::word(source, ref mut s, b"main")?;
+    let usize module_end = lexer::punctuation(source, ref mut s, 59)?;
+    while (s.kind != 0) {
+        let usize declared = signature(source, ref mut s, ref mut t)?;
+    }
+    if (t.entry == 16) { return .err(errors::make(3, source.len)); }
+    return .ok(t);
+}

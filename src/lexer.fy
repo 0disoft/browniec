@@ -50,7 +50,7 @@ pub fn Result<usize, errors::Error> next(ref u8[] source, ref mut State s) {
         while (s.cursor < source.len && (letter(source[s.cursor]) || digit(source[s.cursor]))) { s.cursor += 1; }
     } else {
         if (ch != 40 && ch != 41 && ch != 123 && ch != 125 && ch != 59 &&
-            ch != 43 && ch != 45 && ch != 42 && ch != 47 && ch != 37 && ch != 61) {
+            ch != 43 && ch != 45 && ch != 42 && ch != 47 && ch != 37 && ch != 61 && ch != 44) {
             return .err(errors::make(1, s.begin));
         }
         s.kind = ch;
