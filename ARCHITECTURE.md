@@ -2,7 +2,7 @@
 
 - Status: accepted design baseline
 - Decision date: 2026-10-23
-- Implementation: M0 verified; experimental M1 scalar pipeline and VM implemented; earlier slices and unsigned scalars have verified historical receipts; explicit widening implemented and verified
+- Implementation: M0 verified; experimental M1 scalar pipeline and VM implemented; earlier slices and unsigned scalars have verified historical receipts; explicit widening historically verified; bitwise operators and checked shifts implemented and verified
 
 ## Intent
 
@@ -66,6 +66,14 @@ and consumes one instruction and one value register; casts are not elided. It
 adds no guest heap or frame growth and keeps existing caps. The
 [widening receipt](docs/evidence/m1-widening-windows-20261023.json) records
 67 native groups and 1,272 CLI cases in each development and release profile.
+The [integer-operator increment](docs/engineering/m1-integer-operators.md) adds
+opcodes 27 through 32 for complement, bitwise AND/XOR/OR, and checked left/right
+shift. Unsigned bit patterns, explicit i32 sign extension, count checks, and
+prechecked left-shift ranges avoid host signed shifts and overflow. Signed right
+shift uses explicit sign fill. Every operation costs one Fuel and keeps the
+existing register and frame bounds.
+The [integer-operator receipt](docs/evidence/m1-integer-operators-windows-20261023.json)
+records 75 native groups and 1,898 CLI cases in each development and release profile.
 Ownership, lifecycle
 APIs, Engine, host calls, workers, and DLLs remain designs; full M1, arrays,
 structs, borrows, richer value-arm statements, Windows isolation, DLL embedding,

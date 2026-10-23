@@ -99,6 +99,7 @@ Explicit widening is implemented and verified separately. Its
 [receipt](../evidence/m1-widening-windows-20261023.json) records 67 native groups
 and 1,272 CLI cases in each profile, including 113 widening cases.
 
-This slice does not complete M1. Shifts, bitwise operations, fallible narrowing, arrays and
-structs, richer value-arm statements, workers, DLL embedding, Windows isolation,
-and performance results remain outside it.
+Bitwise operations and checked shifts are implemented separately in the
+[integer-operator increment](m1-integer-operators.md). This slice does not complete
+M1. Fallible narrowing, arrays and structs, richer value-arm statements, workers,
+DLL embedding, Windows isolation, and performance results remain outside it.

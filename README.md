@@ -1,6 +1,6 @@
 # Brownie C
 
-- Status: experimental M1 scalar source CLI implemented; earlier slices and unsigned scalars have verified historical receipts; explicit integer widening implemented and verified; full M1 remains partial
+- Status: experimental M1 scalar source CLI implemented; earlier slices and unsigned scalars have verified historical receipts; explicit integer widening historically verified; bitwise operators and checked shifts implemented and verified; full M1 remains partial
 - Design date: 2026-10-23
 - First delivery target: Windows 11 x64
 
@@ -28,7 +28,9 @@ conversions. The unsigned increment adds `u8`, `u32`, and 64-bit guest `usize` a
 the same source positions, with checked arithmetic and unsigned ordering. Explicit
 widening adds `EXPR as TYPE` for seven domain-preserving integer pairs, with no
 implicit conversion or promotion. The [widening contract](docs/engineering/m1-widening.md)
-owns that addition. Full M1 remains partial: arrays, structs, richer value-arm
+owns that addition. [Integer operators](docs/engineering/m1-integer-operators.md)
+add fixed-width `~`, `&`, `^`, `|`, and checked `<<`/`>>` for every integer type.
+Full M1 remains partial: arrays, structs, richer value-arm
 statements, workers, and DLLs remain future work.
 
 ```powershell
@@ -42,6 +44,7 @@ statements, workers, and DLLs remain future work.
 ./build/browniec.exe run examples/i64.brc --json
 ./build/browniec.exe run examples/unsigned.brc --json
 ./build/browniec.exe run examples/widening.brc --json
+./build/browniec.exe run examples/bitwise.brc --json
 # return_i32 is 42; process exit is 0
 pwsh -NoProfile -File tools/verify-m1.ps1
 ```
@@ -100,6 +103,7 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M1 i64 scalars](docs/engineering/m1-i64.md): literal context, checked arithmetic, limits, and evidence
 - [M1 unsigned scalars](docs/engineering/m1-unsigned.md): `u8`, `u32`, `usize`, representation, and limits
 - [M1 explicit widening](docs/engineering/m1-widening.md): seven integer pairs, precedence, lowering, and Fuel
+- [M1 integer operators](docs/engineering/m1-integer-operators.md): fixed-width bitwise operations, checked shifts, and precedence
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
 - [Design baseline](docs/design-baseline.md): source provenance, evidence, and findings
@@ -118,6 +122,9 @@ historical at 59 native groups and 1,159 CLI cases in both development and relea
 including 399 unsigned cases. The
 [widening receipt](docs/evidence/m1-widening-windows-20261023.json) records
 67 native groups and 1,272 CLI cases in each profile, including 113 widening cases.
+That receipt is historical after the integer-operator increment. The
+[integer-operator receipt](docs/evidence/m1-integer-operators-windows-20261023.json)
+records 75 native groups and 1,898 CLI cases in each profile, including 626 new cases.
 No full-profile
 conformance, DLL ABI, Windows isolation, clean-machine packaging, or performance
 target is claimed.

@@ -1,6 +1,6 @@
 # M1 Explicit Integer Widening
 
-- Status: implemented and verified on Windows; 67 native groups and 1,272 CLI cases in each development and release profile
+- Status: implemented and verified on Windows; historical after integer operators; 67 native groups and 1,272 CLI cases in each development and release profile
 - Scope: `EXPR as TYPE` for seven domain-preserving integer pairs in `brownie.m1-scalar/1`
 - Evidence: [Windows 2026-10-23 receipt](../evidence/m1-widening-windows-20261023.json)
 
@@ -94,8 +94,10 @@ The receipt records the Fairy C `4ce12642` language `fairyc-language/20` compile
 identity and the native artifact hashes. M0 was not rerun: its 18 recorded inputs
 and the compiler binary are unchanged.
 
-This increment adds no shift, bitwise, fallible narrowing, or implicit conversion
-operator. Full M1 remains partial. Arrays are M2 work; workers, DLL embedding, and
-Windows isolation remain unimplemented or unverified. No performance claim is made.
+The widening increment added no shift or bitwise operator. Those operators are
+implemented separately in the [integer-operator increment](m1-integer-operators.md).
+Fallible narrowing and implicit conversion remain unavailable. Full M1 remains
+partial. Arrays are M2 work; workers, DLL embedding, and Windows isolation remain
+unimplemented or unverified. No performance claim is made.
 M0 sources and the selected Fairy C `4ce12642` language `20` toolchain remain
 unchanged.

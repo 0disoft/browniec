@@ -1,6 +1,6 @@
 # CLI Tool
 
-- Status: Experimental native M1 scalar CLI implemented; earlier slices and unsigned scalars have verified historical receipts; explicit widening implemented and verified
+- Status: Experimental native M1 scalar CLI implemented; earlier slices and unsigned scalars have verified historical receipts; explicit widening historically verified; bitwise operators and checked shifts implemented and verified
 - Native runtime intent: direct .brc source execution
 - Contract owner: docs/cli/command-contract.md
 
@@ -38,6 +38,12 @@ domain-preserving integer pairs and adds no implicit conversion or promotion. Th
 CLI profile and `return_i32` field are unchanged. The
 [widening receipt](../evidence/m1-widening-windows-20261023.json) records 67 native
 groups and 1,272 CLI cases in each profile, including 113 widening cases.
+The [integer-operator contract](../engineering/m1-integer-operators.md) adds
+fixed-width bitwise operations and checked shifts. Shift count and range failures
+use the existing runtime `overflow` outcome and exit code 5. There is no new CLI
+option, result field, profile identifier, or implicit integer/bool conversion.
+The [integer-operator receipt](../evidence/m1-integer-operators-windows-20261023.json)
+records 75 native groups and 1,898 CLI cases in each development and release profile.
 Language contracts are in the [branch](../engineering/m1-branches.md), [loop](../engineering/m1-loops.md),
 [tagged](../engineering/m1-tagged.md), and
 [propagation](../engineering/m1-propagation.md) documents, with switch-expression

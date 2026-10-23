@@ -1,6 +1,6 @@
 # M1 Scalar Slice
 
-- Status: experimental compiler/verifier/VM and source CLI implemented; earlier slices and unsigned scalars have verified historical receipts; explicit widening implemented and verified
+- Status: experimental compiler/verifier/VM and source CLI implemented; earlier slices and unsigned scalars have verified historical receipts; explicit widening historically verified; bitwise operators and checked shifts implemented and verified
 - Scope: M1 expressions with i32/i64/u8/u32/usize/bool scalars, explicit integer widening, shallow wrapper values, branches, loops, exhaustive switch statements and expressions, and scalar `?` propagation; not full M1 or profile conformance
 
 The admitted source is `module main;` followed by one or more
@@ -15,10 +15,13 @@ failure. [Switch expressions](m1-switch-expressions.md) add exhaustive arm value
 or direct returns in expression position. [i64 scalars](m1-i64.md) extend those
 positions with checked full-width signed integers. [Unsigned scalars](m1-unsigned.md)
 add `u8`, `u32`, and 64-bit guest `usize` in the same positions. [Explicit
-widening](m1-widening.md) adds seven domain-preserving `as` casts.
+widening](m1-widening.md) adds seven domain-preserving `as` casts. [Integer
+operators](m1-integer-operators.md) add fixed-width bitwise operations and checked
+shifts, with an explicit precedence table and same-type operands.
 EXPR supports decimal integer literals, `true` and `false`, parentheses, signed
 unary minus,
-`!`, arithmetic, ordering, equality, short-circuit `&&` and `||`, previously visible
+`!`, `~`, arithmetic, `&`, `^`, `|`, `<<`, `>>`, ordering, equality,
+short-circuit `&&` and `||`, previously visible
 local names, direct function calls, and context-required `.some`/`.none`/`.ok`/`.err`
 constructors. An exhaustive shallow-wrapper switch expression is also an operand.
 Postfix `?` is admitted in functions returning an admitted Option or Result and
@@ -69,7 +72,9 @@ negative bit patterns through checked conversions split at 2^63. Source offsets 
 backedge within one function. Opcodes 23 through 25 are `MAKE`, `CASE`, and
 `MATCH_FAIL`. Opcode 26 is `WIDEN`: the destination names a new value register
 with the target type, operand A names the source register, and operand B and
-reserved bytes are zero. Opcodes 19 through 21 remain forward jumps.
+reserved bytes are zero. Opcodes 27 through 32 are `BNOT`, `BAND`, `BXOR`, `BOR`,
+`SHL`, and `SHR`, preserving the exact integer type; `BNOT` has B zero. Opcodes 19
+through 21 remain forward jumps.
 The independent verifier processes instructions in forward order and reconstructs
 definite initialization at every forward join by intersecting incoming paths. For
 each backedge, the incoming state must contain the target's first-entry invariant;
@@ -99,7 +104,7 @@ left-to-right execution are preserved.
 
 The VM re-verifies before every run, reads the Program by shared borrow, and creates
 fresh frame state for each one-shot execution. Every executed instruction, including
-`LOAD`, `STORE`, `JUMP`, `JFALSE`, `JTRUE`, opcodes 22 through 26, and return, costs one Fuel;
+`LOAD`, `STORE`, `JUMP`, `JFALSE`, `JTRUE`, opcodes 22 through 32, and return, costs one Fuel;
 CALL costs one plus its argument count. Unevaluated short-circuit operands and
 unselected branches do not execute. Loops reuse their bounded frame and register
 cells without per-iteration VM allocation or native recursion. Insufficient Fuel
@@ -116,6 +121,11 @@ type from typed context or an already typed left integer operand. `&&` and `||`
 short-circuit. Same-type unsigned arithmetic uses the checked M0 guards from
 `src/arithmetic.fy`; underflow or overflow reports guest `overflow`, and a zero
 divisor reports `zero_divisor`.
+Bitwise operations preserve the type's fixed-width bit pattern. Shift operands
+must have the same integer type. Invalid amounts and unrepresentable left-shift
+results report guest `overflow`. Signed right shift is arithmetic; unsigned right
+shift is logical. The [integer-operator contract](m1-integer-operators.md) owns
+their precedence, native safety, Fuel, and verification boundaries.
 Explicit `as` casts admit only the seven domain-preserving integer pairs in the
 [widening contract](m1-widening.md). Postfix `?` binds before unary operators,
 unary binds before `as`, and `as` binds before binary operators; chains associate
@@ -165,6 +175,10 @@ eight unsigned scalar native groups.
 The [widening receipt](../evidence/m1-widening-windows-20261023.json) records
 67 native groups and 1,272 CLI cases in each development and release profile,
 including eight new native groups and 113 widening cases.
+That receipt is historical after integer operators. The
+[integer-operator receipt](../evidence/m1-integer-operators-windows-20261023.json)
+records 75 native groups and 1,898 CLI cases in each profile, including eight new
+native groups and 626 new bitwise/shift cases.
 
 ## Run the implemented subset
 
@@ -182,6 +196,7 @@ including eight new native groups and 113 widening cases.
 ./build/browniec.exe run examples/i64.brc --json
 ./build/browniec.exe run examples/unsigned.brc --json
 ./build/browniec.exe run examples/widening.brc --json
+./build/browniec.exe run examples/bitwise.brc --json
 ./build/browniec.exe run examples/answer.brc --fuel 4 --json
 pwsh -NoProfile -File tools/verify-m1.ps1
 ```

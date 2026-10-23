@@ -1,7 +1,7 @@
 # Product Specification
 
 - Status: Accepted for design, 2026-10-23
-- Implementation status: M1 branches, loops, shallow Option/Result, switch statements and expressions, scalar `?` propagation, i64, and unsigned scalars have verified historical receipts; explicit widening implemented and verified; full profile not implemented
+- Implementation status: M1 branches, loops, shallow Option/Result, switch statements and expressions, scalar `?` propagation, i64, and unsigned scalars have verified historical receipts; explicit widening historically verified; bitwise operators and checked shifts implemented and verified; full profile not implemented
 - Source profile name: brownie.safe/0.3
 
 ## Product boundary
@@ -127,6 +127,14 @@ integer literals.
 
 ## Evaluation and arithmetic
 
+The current scalar CLI implements fixed-width integer `~`, `&`, `^`, and `|`,
+and checked `<<` and `>>`. Binary operands, including shift amounts, must have the
+same integer type. Signed right shift is arithmetic; unsigned right shift is
+logical. Counts outside `0..width-1` and left-shift results outside the operand
+range report the existing guest `overflow` outcome. No amount masking or implicit
+promotion occurs. The [integer-operator contract](../engineering/m1-integer-operators.md)
+owns exact precedence and execution rules.
+
 Operands, arguments, and record initializers are evaluated once in source order.
 Logical operators short-circuit. Assignment remains a statement. A classic for
 executes its post step on continue and skips it on break.
@@ -222,6 +230,8 @@ historical and records 49 native groups and 760 CLI cases in each profile. The
 groups and 1,159 CLI cases in both development and release and remains historical.
 The [widening receipt](../evidence/m1-widening-windows-20261023.json) records
 67 native groups and 1,272 CLI cases in each profile, including 113 widening cases.
+The [integer-operator receipt](../evidence/m1-integer-operators-windows-20261023.json)
+records 75 native groups and 1,898 CLI cases in each profile, including 626 new cases.
 Full M1, arrays,
 structs, borrows, richer value-arm statements,
 and Windows isolation remain unimplemented or unverified. The slice does not

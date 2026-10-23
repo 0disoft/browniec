@@ -1,6 +1,6 @@
 # Development
 
-- Status: M0 verified; experimental native M1 scalar CLI implemented; earlier slices and unsigned scalars have verified historical receipts; explicit widening implemented and verified
+- Status: M0 verified; experimental native M1 scalar CLI implemented; earlier slices and unsigned scalars have verified historical receipts; explicit widening historically verified; bitwise operators and checked shifts implemented and verified
 - Current repository content: Fairy C frontend, private IR/verifier/VM, CLI, tests, and M0 probes
 
 ## Current reality
@@ -35,6 +35,7 @@ checkout or claim it matches the historical receipts.
 ./build/browniec.exe run examples/i64.brc --json
 ./build/browniec.exe run examples/unsigned.brc --json
 ./build/browniec.exe run examples/widening.brc --json
+./build/browniec.exe run examples/bitwise.brc --json
 pwsh -NoProfile -File tools/verify-m1.ps1
 ```
 
@@ -98,9 +99,12 @@ See [M1 details](docs/engineering/m1-scalar-slice.md) and the
 [switch-expression](docs/engineering/m1-switch-expressions.md) contracts and the
 [i64](docs/engineering/m1-i64.md) and
 [unsigned](docs/engineering/m1-unsigned.md) contracts and the
-[widening](docs/engineering/m1-widening.md) contract. The i64 and unsigned receipts
-remain historical for their slices; the widening receipt records the current
-verified subset.
+[widening](docs/engineering/m1-widening.md) and
+[integer-operator](docs/engineering/m1-integer-operators.md) contracts. The i64,
+unsigned, and widening receipts remain historical for their slices. The
+[integer-operator receipt](docs/evidence/m1-integer-operators-windows-20261023.json)
+records the current verified subset: 75 native groups and 1,898 CLI cases in each
+development and release profile, including 626 new bitwise/shift cases.
 
 Documentation review may use repository-neutral tools such as a Markdown link check
 or git diff --check when the parent task supplies them. These checks do not execute

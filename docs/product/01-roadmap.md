@@ -1,7 +1,7 @@
 # Roadmap
 
-- Status: Accepted delivery sequence; M0 verified; named M1 slices through unsigned have verified historical receipts; explicit widening implemented and verified, 2026-10-23
-- Current progress: M0 and named M1 slices passed; widening records 67 native groups and 1,272 CLI cases in both profiles; full M1 partial; M2-M5 not started
+- Status: Accepted delivery sequence; M0 verified; named M1 slices through unsigned have verified historical receipts; explicit widening historically verified; bitwise operators and checked shifts implemented and verified, 2026-10-23
+- Current progress: M0 and named M1 slices passed; integer operators record 75 native groups and 1,898 CLI cases in both profiles; full M1 partial; M2-M5 not started
 
 This roadmap orders learning and evidence. It is not a release promise. M0 has a
 native harness and recorded evidence. The scalar CLI/VM now exist; the worker
@@ -76,9 +76,13 @@ domain-preserving integer pairs with explicit precedence, verifier checks, and o
 Fuel per executed cast. Its
 [receipt](../evidence/m1-widening-windows-20261023.json) records 67 native groups
 and 1,272 CLI cases in each profile, including 113 widening cases.
-All initial scalar type names and explicit widening are now implemented, but full
-M1 still needs remaining integer operators and richer value-arm statements. Arrays,
+The [integer-operator increment](../engineering/m1-integer-operators.md) adds
+fixed-width complement, AND/XOR/OR, and checked shifts with arithmetic signed right
+shift. All initial scalar types, explicit widening, and these integer operators
+are implemented, but full M1 still needs richer value-arm statements. Arrays,
 structs, borrows, Buffer, and text remain M2 work.
+The [integer-operator receipt](../evidence/m1-integer-operators-windows-20261023.json)
+records 75 native groups and 1,898 CLI cases in each profile, including 626 new cases.
 
 Goal: run real .brc source through lexer, parser, type checking, Flow analysis,
 private code generation, independent verification, and the native VM.

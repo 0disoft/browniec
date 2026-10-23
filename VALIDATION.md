@@ -1,6 +1,6 @@
 # Validation
 
-- Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, switch-expression, i64, and unsigned receipts are verified historical evidence; explicit widening implemented and verified
+- Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, switch-expression, i64, and unsigned receipts are verified historical evidence; explicit widening historically verified; bitwise operators and checked shifts implemented and verified
 - Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/u8/u32/usize/bool values, explicit widening, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation
 
 ## Validation source of truth
@@ -204,7 +204,19 @@ Both profiles used identical fixtures; all 54 frozen verification inputs remaine
 unchanged. The receipt records source commit `8acc675`, artifact hashes, compiler
 identity, and the widening example's result of 42.
 
-The switch-expression and i64 receipts are historical after the unsigned increment.
+The [integer-operator contract](docs/engineering/m1-integer-operators.md) adds
+fixed-width integer bitwise operations and checked shifts. The
+[receipt](docs/evidence/m1-integer-operators-windows-20261023.json) records
+75 native groups and 1,898 CLI cases in each development and release profile,
+including eight new native groups, 292 bitwise cases, and 334 shift cases. Both
+profiles used identical fixtures; all 78 frozen verification inputs are unchanged.
+Source commits are `dcb6de2` and `80c7e18`. Coverage includes signed and unsigned
+pattern edges, invalid counts, checked left-shift overflow, arithmetic negative
+right shifts, exact types, precedence, eager evaluation, first error, IR corruption,
+and exact Fuel boundaries. These operations add no guest heap or frame growth.
+
+The widening receipt is historical after integer operators. The switch-expression
+and i64 receipts are historical after the unsigned increment.
 The switch-expression receipt records 41 native groups and 580 CLI cases in each
 verified profile. The [i64 receipt](docs/evidence/m1-i64-windows-20261023.json)
 records 49 native groups and 760 CLI cases in each profile. The propagation receipt
@@ -214,7 +226,7 @@ The [loop receipt](docs/evidence/m1-loops-windows-20261023.json) is
 historical for its 26-group/332-case slice; the [branch receipt](docs/evidence/m1-branches-windows-20261023.json)
 is historical for 20/248, and the [function receipt](docs/evidence/m1-functions-windows-20261023.json)
 and earlier locals/expression receipts are likewise historical for their narrower
-slices. Full M1 still needs remaining integer operators and
+slices. Full M1 still needs
 richer value-arm statements. Arrays, structs, and borrows remain M2 work.
 Workers, DLL ABI, Windows isolation, and performance remain unverified. M0 was not
 rerun for unchanged inputs. No new CI job or performance measurement was added.
