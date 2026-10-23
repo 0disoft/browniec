@@ -6,6 +6,10 @@
 - Harness: [`verify-m2-storage.ps1`](../../tools/verify-m2-storage.ps1).
 - Evidence: [Windows receipt](../evidence/m2-array-storage-windows-20261023.json).
 
+The successor [owner-lifetime slice](m2-array-owners.md) adds Instance-local typed
+descriptors, generation checks and explicit reclamation. This document retains
+the earlier storage-only scope and receipt.
+
 This slice connects the [layout foundation](m2-array-layout.md) to actual backing
 bytes. The caller supplies initialized memory as a Fairy byte view and an Arena
 cursor with `used` and `limit`. The helpers allocate no backing memory and add no

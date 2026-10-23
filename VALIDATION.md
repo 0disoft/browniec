@@ -256,6 +256,11 @@ scalar-codec and five caller-backed-storage native groups per profile, recorded
 in its own [receipt](docs/evidence/m2-array-storage-windows-20261023.json). This
 tests real byte initialization and access without source-array or VM integration.
 Allocator failure, owner generations, frame cleanup and aggregate Fuel remain open.
+The [owner-lifetime slice](docs/engineering/m2-array-owners.md) adds five native
+groups per profile with its own [receipt](docs/evidence/m2-array-owners-windows-20261023.json).
+That later evidence covers Instance-local token generation/reuse, retirement,
+typed descriptor lookup, bounded suffix reclamation and whole-table clear.
+Backing ownership, source borrows, frame cleanup and aggregate Fuel remain open.
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker
 publication barrier. Compile untrusted source only inside the restricted worker.

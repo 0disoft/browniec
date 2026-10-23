@@ -112,6 +112,9 @@ payload storage. The [storage increment](../engineering/m2-array-storage.md) add
 little-endian scalar codecs, repeated initialization and checked element reads
 and writes in caller-owned backing bytes, with nine native groups per profile.
 Source arrays, owned arenas, aggregate verification and metering remain open.
+The [owner-lifetime increment](../engineering/m2-array-owners.md) adds 16 bounded
+typed descriptors, generation-safe token reuse, explicit release, suffix
+reclamation and whole-table clear, with five native groups per profile.
 Goal: connect arrays, plain structs, borrows, Buffer, input,
 output, and UTF-8.
 
