@@ -1,0 +1,24 @@
+module main;
+
+fn Option<bool> positive(Option<i32> value) {
+    return .some(value? > 0);
+}
+
+fn Result<i32, bool> add(Result<i32, bool> left, Result<i32, bool> right) {
+    return .ok(left? + right?);
+}
+
+fn i32 main() {
+    switch (positive(.some(42))) {
+        case .some(ok): {
+            switch (add(.ok(20), .ok(22))) {
+                case .ok(value): {
+                    if (ok) { return value; }
+                    return 0;
+                }
+                case .err(_): { return 0; }
+            }
+        }
+        case .none: { return 0; }
+    }
+}

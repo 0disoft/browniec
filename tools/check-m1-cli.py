@@ -7,6 +7,7 @@ from pathlib import Path
 import random
 import subprocess
 from m1_tagged_cases import run_tagged
+from m1_propagation_cases import run_propagation
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--exe", required=True)
@@ -378,6 +379,7 @@ for n in [0,1,2,5,10,31]:
         case(f"independent-loop-{n}-{factor}",body(statements),sum(i*factor for i in range(n)),fuel=10000)
 
 run_tagged(case, body, root)
+run_propagation(case, root)
 
 for index in range(32):
     a, b, c = [randomizer.randint(-1000, 1000) for _ in range(3)]
