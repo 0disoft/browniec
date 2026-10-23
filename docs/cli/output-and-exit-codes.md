@@ -1,6 +1,6 @@
 # Output and Exit Codes
 
-- Status: Designed only; proposed JSON shape is not implemented
+- Status: Experimental M1 scalar results implemented; wider output remains designed
 - Guest integer: data, never the process exit code
 
 ## Process exits
@@ -15,18 +15,32 @@
 | 6 | Internal compiler or VM invariant failure |
 | 7 | Worker, IPC, forced termination, or output-sink failure |
 
-These codes are design taxonomy. No executable mapping is validated.
+The M1 CLI implements these classes for its subset. There is no cancellation,
+deadline, worker IPC, or host-binding implementation yet. A source-file read failure
+uses code 7. Verification failure is an internal code 6, not a guest trap.
 
-## Proposed result content
+## Implemented scalar JSON result
 
-A future JSON result may carry schema, build, profile, status, return_i32, output_b64,
-diagnostic or trap data, and metrics. The field names and versioning are not stable
-until an implementation records its schema. Binary worker IPC should carry bytes
-directly; human CLI JSON may use Base64 for output bytes.
+`--json` emits one object followed by a newline on stdout, with empty stderr:
 
-One invocation should produce one machine-readable result. Progress or prompts belong
-on stderr and must not corrupt JSON on stdout. Text mode may write output bytes to
-stdout and result metadata or diagnostics to stderr.
+```json
+{"schema":"browniec.result/v1","profile":"brownie.m1-scalar/1","command":"run","status":"completed","return_i32":42,"error":null}
+```
+
+The command is `check` or `run`; status is `checked`, `completed`, or `error`.
+Only completed runs have a numeric return_i32. Failures carry an error object with
+`kind` and zero-based source `byte_offset`. Kinds are lexical, syntax, type,
+compile_limit, verification, overflow, zero_divisor, fuel, input_io, usage, and
+unavailable. Non-source failures use offset 0; internal verifier errors identify an
+instruction index. JSON mode is honored once its option has been parsed.
+
+Text mode leaves stdout empty and writes checked status, return_i32, or diagnostics
+to stderr. Guest output bytes and output_b64 are not implemented. Version JSON uses
+`browniec.version/v1` and reports the experimental profile and delivery availability.
+
+Result JSON is staged in an owned Buffer before a single console write. If encoding
+or sink writing fails, exit 7 applies; the sink can already hold a partial write.
+No second success/error document is appended to partially written JSON.
 
 ## Completion and failure
 

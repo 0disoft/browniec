@@ -1,6 +1,6 @@
 # CLI Configuration
 
-- Status: Designed only; no configuration parser or command
+- Status: Scalar CLI flags implemented; project/policy configuration designed only
 - Default host capability: deny
 
 ## Explicit inputs
@@ -38,4 +38,6 @@ Diagnostics may report selected source names, limits, and policy identities. The
 must not expose secret values or unrelated file contents. A future effective-config
 output is diagnostic only and does not authorize execution.
 
-No parser, precedence implementation, or validation command currently exists.
+The current CLI implements only source selection, --json, and a run-only --fuel
+limit. No project, policy, catalog, environment configuration, effective-config, or
+run-grant loader exists. Unsupported options are rejected rather than ignored.

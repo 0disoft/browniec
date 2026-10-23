@@ -1,24 +1,28 @@
 # Command Contract
 
-- Status: Designed only; not executable
+- Status: Experimental scalar check/run/version implemented; other surfaces designed
 - Repository type: cli-tool
 
-## Proposed surface
+## Surface and availability
 
 | Command | Intended behavior | Current state |
 | --- | --- | --- |
-| browniec --version | Report build, profile, IR, ABI, IPC, and available delivery levels | Designed |
-| browniec check SOURCE | Compile and verify without running guest code or host calls | Designed |
-| browniec run SOURCE | Compile, verify, and run one source with explicit input | Designed |
-| browniec run --project FILE | Use an explicit source map, policy, entry, grants, and run limits | Designed |
+| browniec --version | Report build, profile, IR, ABI, IPC, and available delivery levels | Implemented for brownie.m1-scalar/1 |
+| browniec check SOURCE | Compile and verify without running guest code or host calls | Implemented for brownie.m1-scalar/1 |
+| browniec run SOURCE | Compile, verify, and run one source with explicit input | Implemented for brownie.m1-scalar/1 |
+| browniec run --project FILE | Use an explicit source map, policy, entry, grants, and run limits | Not implemented |
 | browniec check SOURCE --isolated | Use a restricted compile-only worker | Designed; unavailable |
 | browniec run SOURCE --isolated | Use the restricted worker and parent broker | Designed; unavailable |
-| browniec inspect SOURCE --ir | Emit bounded private diagnostics | Designed |
+| browniec inspect SOURCE --ir | Emit bounded private diagnostics | Not implemented |
 | browniec worker | Broker-only restricted IPC endpoint | Designed; unavailable |
 
-User-facing commands may request --json; its proposed shape is not yet a stable
-schema. run SOURCE may select bytes with --input FILE, and project runs explicitly
-select --policy FILE. These are proposed options, not implemented commands.
+The implemented grammar is `browniec check SOURCE [--json]` and
+`browniec run SOURCE [--fuel N] [--json]`, plus `--version [--json]` and `--help`.
+Fuel defaults to 256 and accepts 0..1000000; duplicate/unknown options are errors.
+Run grants no guest host capability. SOURCE selects one local disk file with a
+4096-byte UTF-8 source limit. Only the [M1 scalar subset](../engineering/m1-scalar-slice.md)
+is implemented. Project, input-byte, policy, catalog, inspect, and worker options
+remain unavailable. `--isolated` returns an availability denial, with no fallback.
 
 ## Execution rules
 

@@ -1,6 +1,6 @@
 # M1 Scalar Slice
 
-- Status: native compiler/verifier/VM modules implemented; CLI integration pending
+- Status: experimental native compiler/verifier/VM and source CLI implemented
 - Scope: first M1 increment, not full M1 or brownie.safe/0.3 conformance
 
 The admitted source is `module main; fn i32 main() { return EXPR; }`.
@@ -37,4 +37,32 @@ is needed. There is no public bytecode loader or runtime compiler subprocess.
 `build/toolchain/fairyc.exe test --native --capture-output --json` runs five native
 groups covering arithmetic boundaries, precedence, source rejection, Fuel/reuse,
 and corrupted private bytecode. The toolchain is the M0-recorded Fairy C build.
-The public CLI entry remains a placeholder until the next integration commit.
+`tools/verify-m1.ps1` runs these groups in development and release, builds both
+native binaries, and checks 81 black-box CLI cases per profile with a cleared
+environment and tool-free runtime PATH. The corpus includes fixed arithmetic and
+trap results, compile/depth/register/source ceilings, malformed UTF-8, independent
+seeded arithmetic vectors, option rejection, and stream separation.
+Receipts are in `build/m1/receipt.json` and per-profile `cli-receipt.json` files.
+
+## Run the implemented subset
+
+```powershell
+./build/toolchain/fairyc.exe build
+./build/browniec.exe run examples/answer.brc --json
+./build/browniec.exe check examples/answer.brc --json
+./build/browniec.exe run examples/answer.brc --fuel 4 --json
+pwsh -NoProfile -File tools/verify-m1.ps1
+```
+
+A guest return of 42 is JSON result data and the process exits 0. Text mode leaves
+stdout empty and writes `return_i32=42` to stderr. `check` verifies without executing;
+for example `1/0` passes check and traps on run. Fuel defaults to 256 and accepts
+0..1000000. `--fuel` is run-only. Duplicate/unknown options fail. `--isolated` is
+unavailable and never falls back to an unrestricted worker.
+
+Only explicitly selected local disk files are supported, with a 4096-byte source
+snapshot limit and a 4096-byte UTF-8 argument buffer. This is a trusted-local-source
+engineering CLI. There is no project/config loader, guest I/O, worker, DLL, or sandbox.
+The native executable has no compiler/interpreter subprocess execution path.
+Builds use the M0 compiler artifact without modifying the separate Fairy checkout.
+This receipt does not establish clean-machine distribution or a performance budget.
