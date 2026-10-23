@@ -1,6 +1,6 @@
 # Brownie C
 
-- Status: M1 scalar checkpoint verified; M2 array layout, storage, owner and independent-copy primitives verified; full profile incomplete
+- Status: M1 scalar checkpoint verified; private entry-array IR/VM implemented and verified; source arrays and full profile incomplete
 - Design date: 2026-10-23
 - First delivery target: Windows 11 x64
 
@@ -32,7 +32,7 @@ owns that addition. [Integer operators](docs/engineering/m1-integer-operators.md
 add fixed-width `~`, `&`, `^`, `|`, and checked `<<`/`>>` for every integer type.
 The [arm-statement increment](docs/engineering/m1-switch-arm-statements.md) adds
 branches, blocks, loops, and lexical transfers inside expression arms. Full-profile
-conformance remains unverified; arrays, structs, workers, and DLLs remain later work.
+conformance remains unverified; source arrays, structs, workers, and DLLs remain later work.
 
 ```powershell
 ./build/toolchain/fairyc.exe build
@@ -112,6 +112,7 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 array storage](docs/engineering/m2-array-storage.md): scalar codecs, repeated initialization, and element access in caller-owned backing bytes
 - [M2 array owners](docs/engineering/m2-array-owners.md): typed descriptors, generation checks, independent copies, explicit release and bounded reclamation
 - [M2 array IR](docs/engineering/m2-array-ir.md): private entry-array instructions and independent lifetime/CFG verification
+- [M2 array VM](docs/engineering/m2-array-vm.md): actual native array dispatch, owned payload storage, Fuel and runtime failures; source syntax remains unavailable
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
 - [Design baseline](docs/design-baseline.md): source provenance, evidence, and findings

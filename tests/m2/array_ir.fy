@@ -32,8 +32,7 @@ fn void private_array_builders_and_scalar_result_are_verified() {
     let ir::Program p = basic();
     assert(verifier::verify(ref p).is_ok);
     assert(p.types[2] == 1 && p.arrays.count == 1 && p.count == 6);
-    // Until dispatch is connected, valid array IR must fail honestly.
-    assert(switch (vm::run(ref p, 100000)) { case .ok(_): { false } case .err(e): { e.kind == 11 } });
+    assert(switch (vm::run(ref p, 100000)) { case .ok(n): { n == 42 } case .err(_): { false } });
     var ir::Program bad = ir::empty();
     assert(!ir::array(ref mut bad, 1, 0, true, 0).is_ok);
     assert(!ir::array_read(ref mut bad, 16, 0, 0).is_ok);

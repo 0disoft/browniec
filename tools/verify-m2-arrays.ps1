@@ -12,8 +12,8 @@ $receiptPath = Join-Path $output 'receipt.json'
 [ordered]@{ status = 'incomplete'; startedAt = [DateTime]::UtcNow.ToString('o') } |
   ConvertTo-Json | Set-Content -LiteralPath $receiptPath -Encoding utf8NoBOM
 if ($env:CL -or $env:_CL_) { throw 'Unexpected CL/_CL_ override' }
-$files = if ($Slice -eq 'ir') { @('tests/m2/array_ir.fy', 'tests/branches.fy', 'tests/loops.fy') } else { @('tests/m2/array_vm.fy') }
-$expected = if ($Slice -eq 'ir') { 16 } else { 6 }
+$files = if ($Slice -eq 'ir') { @('tests/m2/array_ir.fy', 'tests/branches.fy', 'tests/loops.fy') } else { @('tests/m2/array_ir.fy', 'tests/m2/array_vm.fy', 'tests/m2/array_allocation.fy') }
+$expected = if ($Slice -eq 'ir') { 16 } else { 12 }
 Push-Location $repo
 try {
   $version = & $Compiler --version
@@ -21,7 +21,8 @@ try {
   $check = & $Compiler check --locked
   if ($LASTEXITCODE -ne 0) { throw 'Locked check failed' }
   $inputs = @(Get-Item fairy.toml, fairy.lock, tools/verify-m2-arrays.ps1;
-    $files | ForEach-Object { Get-Item -LiteralPath $_ }; Get-ChildItem src -File -Recurse)
+    $files | ForEach-Object { Get-Item -LiteralPath $_ }; Get-ChildItem src -File -Recurse;
+    if ($Slice -eq 'vm') { Get-Item probes/m0/native/allocator_probe.h })
   $identities = @($inputs | Sort-Object FullName | ForEach-Object {
     [ordered]@{ path = [IO.Path]::GetRelativePath($repo, $_.FullName).Replace('\', '/');
       sha256 = (Get-FileHash -LiteralPath $_.FullName).Hash.ToLowerInvariant() }
@@ -38,6 +39,30 @@ try {
     if ($native.status -ne 'ok' -or $native.failed -ne 0 -or $native.passed -ne $expected) { throw 'Unexpected native outcomes' }
     $results += [ordered]@{ profile = $profile; nativeTests = $native }
   }
+  $allocatorResults = @()
+  if ($Slice -eq 'vm') {
+    $originalCL = $env:CL
+    $originalOom = $env:BROWNIE_M0_OOM
+    if ($originalOom) { throw 'Unexpected allocator probe environment override' }
+    try {
+      $header = Join-Path $repo 'probes/m0/native/allocator_probe.h'
+      $env:CL = '/FI"' + $header + '"'
+      foreach ($profile in @('development', 'release')) {
+        foreach ($mode in @('normal', 'oom')) {
+          $arguments = @('test', '--native', '--file', 'tests/m2/array_allocation.fy', '--capture-output', '--json', '--locked')
+          if ($profile -eq 'release') { $arguments += '--release' }
+          if ($mode -eq 'oom') { $env:BROWNIE_M0_OOM = '1'; $arguments += @('--', 'oom') }
+          else { $env:BROWNIE_M0_OOM = $null }
+          $nativeOutput = & $Compiler @arguments
+          if ($LASTEXITCODE -ne 0) { throw "Allocator $mode test failed: $profile" }
+          $native = $nativeOutput | ConvertFrom-Json
+          if ($native.status -ne 'ok' -or $native.failed -ne 0 -or $native.passed -ne 1) { throw 'Unexpected allocator outcome' }
+          $allocatorResults += [ordered]@{ profile = $profile; mode = $mode;
+            allocator = 'Instrumented target malloc/free; forced NULL and exit leak check'; nativeTests = $native }
+        }
+      }
+    } finally { $env:CL = $originalCL; $env:BROWNIE_M0_OOM = $originalOom }
+  }
   foreach ($item in $identities) {
     if ((Get-FileHash -LiteralPath (Join-Path $repo $item.path)).Hash.ToLowerInvariant() -ne $item.sha256) {
       throw "Verification input changed: $($item.path)"
@@ -46,7 +71,7 @@ try {
   if ((Get-FileHash -LiteralPath $Compiler).Hash.ToLowerInvariant() -ne $compilerHash) { throw 'Compiler changed' }
   [ordered]@{ schema = "browniec.m2-array-$Slice/v1"; status = 'passed'; recordedAt = [DateTime]::UtcNow.ToString('o');
     compilerVersion = $version; compilerSha256 = $compilerHash; os = [Environment]::OSVersion.VersionString;
-    lockedCheck = $check; results = $results; sourceSha256 = $identities;
+    lockedCheck = $check; results = $results; allocatorTests = $allocatorResults; sourceSha256 = $identities;
     artifacts = 'Tool-managed temporary native test images; no public array bytecode loader or source syntax.';
     limitations = @('Private entry-function array IR; scalar functions cannot receive or return arrays.',
       'Source-array parsing, borrow analysis and full profile remain incomplete.',

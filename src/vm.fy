@@ -8,18 +8,30 @@ import tagged as tagged;
 import arithmetic as arithmetic;
 import bits as bits;
 import shifts as shifts;
+import array_vm as array_vm;
+import std::bytes as bytes;
 
 // Guest calls use bounded VM frames, never native recursion. Register reads are
 // verified per function, so reclaimed frame slots need no per-call zero-fill.
 pub fn Result<i64, errors::Error> run(ref ir::Program p, usize fuel) {
+    return run_with_array_limit(p, fuel, 65536);
+}
+pub fn Result<i64, errors::Error> run_with_array_limit(ref ir::Program p, usize fuel, usize array_limit) {
     let usize verified = verifier::verify(p)?;
-    // Array IR is verified independently before dispatch is enabled in the next slice.
-    if (p.arrays.count != 0) { return .err(errors::make(11, 0)); }
+    var usize remaining = fuel;
+    var bytes::Buffer payload = bytes::empty();
+    var array_vm::State arrays = array_vm::empty(if (p.arrays.count == 0) { 0 } else { array_limit });
+    if (p.arrays.count != 0) {
+        if (array_limit > 65536) { return .err(errors::make(13, 0)); }
+        let usize preparation = 1 + array_limit;
+        if (remaining < preparation) { return .err(errors::make(8, 0)); }
+        remaining -= preparation;
+        payload = array_vm::prepare(array_limit)?;
+    }
     var i64[4096] registers = [0; 4096];
     var usize[32] return_pcs = [0; 32];
     var usize[32] return_dsts = [0; 32];
     var usize frame = 0;
-    var usize remaining = fuel;
     var usize pc = p.starts[p.entry];
     while (true) {
         let usize at = pc * 8;
@@ -27,10 +39,17 @@ pub fn Result<i64, errors::Error> run(ref ir::Program p, usize fuel) {
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
-        let usize cost = if (op == 9) { 1 + (p.call_arities[b] as usize) } else { 1 };
+        let usize cost = if (op >= 33) { array_vm::cost(ref p.arrays, op, if (op == 35) { a } else { dst }, p.offsets[pc])? }
+            else if (op == 9) { 1 + (p.call_arities[b] as usize) } else { 1 };
         if (remaining < cost) { return .err(errors::make(8, p.offsets[pc])); }
         remaining -= cost;
         let usize base = frame * 128;
+        if (op >= 33) {
+            if (frame != 0) { return .err(errors::make(5, p.offsets[pc])); }
+            let usize executed = array_vm::execute(op, dst, a, b, ref p.arrays, ref mut arrays,
+                ref mut payload, ref mut registers, p.offsets[pc])?;
+            pc += 1; continue;
+        }
         if (op==25) {return .err(errors::make(5,p.offsets[pc]));}
         if (op==24) {
             let i64 subject=registers[base+a];

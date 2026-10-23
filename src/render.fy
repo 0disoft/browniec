@@ -17,12 +17,15 @@ pub fn ref str kind(u8 code) {
     if (code == 9) { return "input_io"; }
     if (code == 10) { return "usage"; }
     if (code == 12) { return "frame_limit"; }
+    if (code == 13) { return "array_limit"; }
+    if (code == 14) { return "bounds"; }
+    if (code == 15) { return "allocation"; }
     return "unavailable";
 }
 pub fn i32 exit_code(u8 kind) {
     if (kind >= 1 && kind <= 4) { return 3; }
     if (kind == 5) { return 6; }
-    if ((kind >= 6 && kind <= 8) || kind == 12) { return 5; }
+    if ((kind >= 6 && kind <= 8) || (kind >= 12 && kind <= 15)) { return 5; }
     if (kind == 9) { return 7; }
     if (kind == 10) { return 2; }
     return 4;

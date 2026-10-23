@@ -1,7 +1,7 @@
 # Roadmap
 
-- Status: Accepted delivery sequence; M0 verified; named M1 slices through unsigned have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified, 2026-10-23
-- Current progress: M1 scalar checkpoint verified; M2 array storage, owner lifetimes and independent copies verified as primitives; full-profile conformance incomplete; M3-M5 not started
+- Status: Accepted delivery sequence; M0 verified; named M1 slices through unsigned have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified, 2026-10-23; private entry-array IR/VM verified by its native harness, 2026-10-24
+- Current progress: M1 scalar checkpoint verified; M2 array storage, owner lifetimes, independent copies, and private entry-array IR/VM verified; source arrays and full-profile conformance incomplete; M3-M5 not started
 
 This roadmap orders learning and evidence. It is not a release promise. M0 has a
 native harness and recorded evidence. The scalar CLI/VM now exist; the worker
@@ -83,8 +83,8 @@ fixed-width complement, AND/XOR/OR, and checked shifts with arithmetic signed ri
 shift. All initial scalar types, explicit widening, and these integer operators
 are implemented. The [arm-statement increment](../engineering/m1-switch-arm-statements.md)
 adds structured control flow inside expression arms. The scalar checkpoint remains
-distinct from full-profile conformance. Arrays, structs, borrows, Buffer, and text
-remain M2 work.
+distinct from full-profile conformance. Source arrays, structs, borrows, Buffer,
+and text remain M2 work.
 The [integer-operator receipt](../evidence/m1-integer-operators-windows-20261023.json)
 records 75 native groups and 1,898 CLI cases in each profile, including 626 new cases.
 That receipt is historical after arm statements. The
@@ -105,19 +105,28 @@ an explicit diagnostic and does not crash the host.
 
 ## M2: aggregates, borrows, and bytes
 
-Status: started with [scalar-array layout primitives](../engineering/m2-array-layout.md).
-This foundation validates compact widths, length 1..4096, aligned arena plans,
+Status: started; scalar-array layout/storage, owner/copy primitives, and private
+entry-array IR/VM are implemented and verified. Source arrays remain unavailable.
+The [layout foundation](../engineering/m2-array-layout.md) validates compact
+widths, length 1..4096, aligned arena plans,
 quota preflight, and checked offsets; it does not admit array source or allocate
 payload storage. The [storage increment](../engineering/m2-array-storage.md) adds
 little-endian scalar codecs, repeated initialization and checked element reads
 and writes in caller-owned backing bytes, with nine native groups per profile.
-Source arrays, owned arenas, aggregate verification and metering remain open.
+These primitive receipts do not establish source arrays or aggregate execution.
 The [owner-lifetime increment](../engineering/m2-array-owners.md) adds 16 bounded
 typed descriptors, generation-safe token reuse, explicit release, suffix
 reclamation and whole-table clear, with five native groups per profile.
 The copy increment adds independent by-value array storage with destination
 preflight and complete bool-source validation, verified in four additional native
-groups per profile. Source grammar and the scalar VM remain unchanged.
+groups per profile. That copy increment kept source grammar and the scalar VM unchanged.
+The [private array IR/VM](../engineering/m2-array-vm.md) now runs entry-function
+arrays through independent lifetime verification, owned payload storage and
+metered dispatch. Its native harness passed 12 groups per profile plus four
+instrumented allocator executions; the forced allocation request is exactly 320
+bytes. The fresh scalar regression passed 81 native groups and 1,969 CLI
+cases per profile after the shared VM change. Source-array parsing and aggregate
+function arguments/results remain unimplemented.
 Goal: connect arrays, plain structs, borrows, Buffer, input,
 output, and UTF-8.
 

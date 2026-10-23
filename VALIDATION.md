@@ -1,7 +1,7 @@
 # Validation
 
-- Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, switch-expression, i64, and unsigned receipts are verified historical evidence; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified
-- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/u8/u32/usize/bool values, explicit widening, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation
+- Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, switch-expression, i64, and unsigned receipts are verified historical evidence; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified; private entry-array IR/VM implemented and VM-harness verified
+- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/u8/u32/usize/bool values, explicit widening, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation; private entry-function array IR and native dispatch are implemented, while source arrays remain unavailable
 
 ## Validation source of truth
 
@@ -76,7 +76,9 @@ Exact transcript and artifact details belong to `build/m0/receipt.json` and
 The [M1 requirements audit](docs/engineering/m1-checkpoint-audit.md) closes the
 bounded scalar checkpoint by checking the identities of existing executed evidence.
 Full-profile conformance remains incomplete. M2 has private scalar-array layout,
-codec and caller-backed storage primitives; M3 through M5 remain not started.
+codec, caller-backed storage, owner/copy primitives, and entry-only array IR/VM.
+Source arrays, aggregate guest calls, and borrow integration remain open. M3
+through M5 remain not started.
 M0's empty runtime-`PATH` execution does not
 establish clean-machine packaging or Windows isolation.
 
@@ -241,7 +243,7 @@ historical for its 26-group/332-case slice; the [branch receipt](docs/evidence/m
 is historical for 20/248, and the [function receipt](docs/evidence/m1-functions-windows-20261023.json)
 and earlier locals/expression receipts are likewise historical for their narrower
 slices. The arm-statement increment expands the scalar checkpoint; full-profile
-conformance remains unverified. Arrays, structs, and borrows remain M2 work.
+conformance remains unverified. Source arrays, structs, and borrows remain M2 work.
 Workers, DLL ABI, Windows isolation, and performance remain unverified. M0 was not
 rerun for unchanged inputs. No new CI job or performance measurement was added.
 M2 must cover arrays, structs, borrows, Buffer, input, output, and UTF-8.
@@ -270,7 +272,14 @@ The [array-IR contract](docs/engineering/m2-array-ir.md) adds five native verifi
 groups and reruns 11 branch/loop groups in each profile. Its
 [receipt](docs/evidence/m2-array-ir-windows-20261024.json) covers exact lifetime sets
 at joins/backedges, scalar operand types, mutability and entry-only array access.
-Array dispatch and full scalar regression remain the following implementation unit.
+That receipt is historical after the [array-VM increment](docs/engineering/m2-array-vm.md).
+Its [VM receipt](docs/evidence/m2-array-vm-windows-20261024.json) records 12 native
+groups per profile (five IR, six VM, one allocation) and four instrumented allocator
+executions. The forced allocation request is exactly 320 bytes. The fresh
+scalar regression passed 81 native groups and 1,969 CLI cases per profile
+after the shared VM change. Array dispatch/Fuel and allocator-NULL containment
+are implemented; source arrays, aggregate guest calls, and borrow integration
+remain open.
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker
 publication barrier. Compile untrusted source only inside the restricted worker.

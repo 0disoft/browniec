@@ -13,8 +13,8 @@ own the affected contract. Broader scaffold procedures are optional.
 - M0 native primitives exist under `probes/m0` and have a repeatable Windows harness.
 - The M1 scalar lexer/parser, i32 checks, private IR verifier, VM, and CLI exist in src/.
 - M2 has private scalar-array layout, codec, caller-backed storage, owner-lifetime and copy helpers;
-  private entry-array IR has independent verification; source arrays and array VM
-  execution are not implemented.
+  private entry-array IR has independent verification and metered native VM dispatch.
+  Source arrays and aggregate guest calls are not implemented.
 - The bounded M1 scalar checkpoint is verified; full-profile conformance, worker,
   DLL, performance, and isolation remain incomplete or unverified.
 - Root fairy.toml builds the native CLI; tools/verify-m1.ps1 verifies its narrow profile.

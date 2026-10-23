@@ -5,9 +5,12 @@
 - Harness: `tools/verify-m2-arrays.ps1 -Slice ir`.
 - Evidence: [Windows IR receipt](../evidence/m2-array-ir-windows-20261024.json).
 
+The later [VM increment](m2-array-vm.md) implements dispatch and Fuel. The IR
+receipt below retains its earlier unavailable-dispatch fixture and is historical.
+
 This increment gives the [array owners](m2-array-owners.md) a private instruction
 contract. Source parsing still admits only the existing scalar grammar. The first
-IR increment rejects verified array programs as unavailable in the VM until the
+IR increment rejected verified array programs as unavailable in the VM until the
 subsequent dispatch increment; it never executes them as scalar instructions.
 
 ## Catalog and instructions
