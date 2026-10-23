@@ -39,8 +39,8 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref mut boo
     }
     merge(ref mut states, ref mut seen, ref defined, p.starts[f], start, end);
     var usize pc = p.starts[f];
-    // Strictly forward edges give a topological CFG order: every predecessor
-    // contributes its initialization state before the join is checked.
+    // Solve the forward graph, then check each backedge preserves its target's
+    // entry invariant. This bounded inductive proof needs no cyclic worklist.
     while (pc < p.ends[f]) {
         if (!seen[pc]) { return .err(errors::make(5, pc)); }
         i = start;
@@ -55,11 +55,22 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref mut boo
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
-        if (op < 1 || op > 21 || p.code[at + 4] != 0 || p.code[at + 5] != 0 || p.code[at + 6] != 0 || p.code[at + 7] != 0) { return .err(errors::make(5, pc)); }
+        if (op < 1 || op > 22 || p.code[at + 4] != 0 || p.code[at + 5] != 0 || p.code[at + 6] != 0 || p.code[at + 7] != 0) { return .err(errors::make(5, pc)); }
         if (op == 8) {
             if (dst != 0 || b != 0 || !readable(p, ref defined, a, start, end)) { return .err(errors::make(5, pc)); }
             if (p.types[a] != p.return_types[f]) { return .err(errors::make(5, pc)); }
             pc += 1; continue;
+        }
+        if (op == 22) {
+            if (dst != 0 || b != 0 || a < p.starts[f] || a >= pc || !seen[a]) { return .err(errors::make(5, pc)); }
+            i=start;
+            while (i<end) {
+                let usize one=1;
+                let usize mask=one << (i % 64);
+                if ((states[a*2+i/64] & mask)!=0 && !defined[i]) { return .err(errors::make(5,pc)); }
+                i+=1;
+            }
+            pc+=1; continue;
         }
         if (op >= 19) {
             let usize target = if (op == 19) { a } else { b };

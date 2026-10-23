@@ -6,6 +6,7 @@ import ir as ir;
 import locals as locals;
 import functions as functions;
 import types as types;
+import loops as loops;
 import std::text as text;
 
 fn u8 precedence(u8 kind) {
@@ -168,22 +169,46 @@ fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State 
     return .ok(index);
 }
 
-fn Result<bool, errors::Error> block(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 result_type, usize depth) {
+fn Result<bool, errors::Error> block(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 result_type, usize depth, ref mut loops::State loop_state) {
     if (depth > 32) { return .err(errors::make(4, s.begin)); }
     let usize open = lexer::punctuation(source, s, 123)?;
     let usize outer = table.count;
     var bool terminal = false;
     while (s.kind != 125) {
         if (s.kind == 0 || terminal) { return .err(errors::make(2, s.begin)); }
-        terminal = control(source, s, p, table, signatures, result_type, depth)?;
+        terminal = control(source, s, p, table, signatures, result_type, depth, loop_state)?;
     }
     table.count = outer;
     let usize close = lexer::next(source, s)?;
     return .ok(terminal);
 }
-fn Result<bool, errors::Error> control(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 result_type, usize depth) {
+fn Result<bool, errors::Error> control(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 result_type, usize depth, ref mut loops::State loop_state) {
     if (depth > 32) { return .err(errors::make(4, s.begin)); }
     let usize at = s.begin;
+    if (word_is(source,s,b"break") || word_is(source,s,b"continue")) {
+        let bool leave=word_is(source,s,b"break");
+        let usize keyword=lexer::next(source,s)?;
+        let usize end=lexer::punctuation(source,s,59)?;
+        let usize jump=loops::transfer(loop_state,p,leave,at)?;
+        return .ok(true);
+    }
+    if (word_is(source,s,b"while")) {
+        let usize keyword=lexer::next(source,s)?;
+        let usize open=lexer::punctuation(source,s,40)?;
+        let usize head=p.count;
+        let usize condition=expression(source,s,p,table,signatures,1,0)?;
+        if (p.types[condition]!=2) {return .err(errors::make(3,at));}
+        let usize close=lexer::punctuation(source,s,41)?;
+        let usize exit=ir::raw(p,20,0,condition,0,at)?;
+        let usize level=loops::enter(loop_state,head,false,at)?;
+        let bool stopped=block(source,s,p,table,signatures,result_type,depth+1,loop_state)?;
+        if (!stopped) {let usize back=ir::raw(p,22,0,head,0,at)?;}
+        let usize target=p.count;
+        let usize branch=ir::patch(p,exit,target,at)?;
+        let usize breaks=loops::resolve(loop_state,p,true,target,at)?;
+        loop_state.depth-=1;
+        return .ok(false);
+    }
     if (word_is(source, s, b"return")) {
         let usize keyword = lexer::next(source, s)?;
         let usize value = expression(source, s, p, table, signatures, 1, 0)?;
@@ -199,7 +224,7 @@ fn Result<bool, errors::Error> control(ref u8[] source, ref mut lexer::State s, 
         if (p.types[condition] != 2) { return .err(errors::make(3, at)); }
         let usize close = lexer::punctuation(source, s, 41)?;
         let usize branch = ir::raw(p, 20, 0, condition, 0, at)?;
-        let bool then_returns = block(source, s, p, table, signatures, result_type, depth + 1)?;
+        let bool then_returns = block(source, s, p, table, signatures, result_type, depth + 1, loop_state)?;
         if (word_is(source, s, b"else")) {
             var usize skip = 256;
             if (!then_returns) { skip = ir::raw(p, 19, 0, 0, 0, at)?; }
@@ -207,8 +232,8 @@ fn Result<bool, errors::Error> control(ref u8[] source, ref mut lexer::State s, 
             let usize patched = ir::patch(p, branch, else_start, at)?;
             let usize else_word = lexer::next(source, s)?;
             let bool else_returns = if (word_is(source, s, b"if")) {
-                control(source, s, p, table, signatures, result_type, depth + 1)?
-            } else { block(source, s, p, table, signatures, result_type, depth + 1)? };
+                control(source, s, p, table, signatures, result_type, depth + 1, loop_state)?
+            } else { block(source, s, p, table, signatures, result_type, depth + 1, loop_state)? };
             if (skip != 256) {
                 let usize continuation = p.count;
                 let usize skipped = ir::patch(p, skip, continuation, at)?;
@@ -219,7 +244,7 @@ fn Result<bool, errors::Error> control(ref u8[] source, ref mut lexer::State s, 
         let usize patched = ir::patch(p, branch, continuation, at)?;
         return .ok(false);
     }
-    if (s.kind == 123) { return block(source, s, p, table, signatures, result_type, depth + 1); }
+    if (s.kind == 123) { return block(source, s, p, table, signatures, result_type, depth + 1, loop_state); }
     let usize regular = statement(source, s, p, table, signatures)?;
     return .ok(false);
 }
@@ -245,10 +270,11 @@ fn Result<usize, errors::Error> body(ref u8[] source, ref functions::Table signa
     var lexer::State s = lexer::empty();
     s.cursor = signatures.bodies[f];
     let usize first = lexer::next(source, ref mut s)?;
+    var loops::State loop_state=loops::empty();
     var bool terminal = false;
     while (s.kind != 125) {
         if (terminal || s.kind == 0) { return .err(errors::make(2, s.begin)); }
-        terminal = control(source, ref mut s, p, ref mut table, signatures, signatures.return_types[f], 0)?;
+        terminal = control(source, ref mut s, p, ref mut table, signatures, signatures.return_types[f], 0, ref mut loop_state)?;
     }
     if (!terminal) { return .err(errors::make(2, s.begin)); }
     if (s.kind != 125 || s.begin != signatures.body_ends[f]) { return .err(errors::make(2, s.begin)); }

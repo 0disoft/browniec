@@ -7,6 +7,7 @@ import std::num as num;
 // Opcodes: 1 constant, 2 add, 3 sub, 4 mul, 5 div, 6 rem, 7 neg, 8 return, 9 call.
 // 10 not, 11 eq, 12 ne, 13 lt, 14 le, 15 gt, 16 ge.
 // 17 load, 18 store, 19 jump, 20 jump-if-false, 21 jump-if-true.
+// 22 backedge: a strictly earlier instruction in the same function.
 pub struct Program {
     u8[2048] code;
     i64[128] constants;
@@ -117,7 +118,8 @@ pub fn Result<usize, errors::Error> raw(ref mut Program p, u8 op, usize dst, usi
     return .ok(index);
 }
 pub fn Result<usize, errors::Error> patch(ref mut Program p, usize jump, usize target, usize offset) {
-    let usize field = if (p.code[jump * 8] == 19) { 2 } else { 3 };
+    let u8 op = p.code[jump * 8];
+    let usize field = if (op == 19 || op == 22) { 2 } else { 3 };
     p.code[jump * 8 + field] = byte(target, offset)?;
     return .ok(target);
 }

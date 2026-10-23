@@ -287,6 +287,37 @@ for name, statements in [
 case("bool-main", b"module main; fn bool main() { return true; }", error="type")
 case("bool-argument", b"module main; fn bool f(bool b) { return b; } fn i32 main() { let bool b=f(1); return 0; }", error="type")
 
+for name, statements, expected in [
+    ("while-sum", "var i32 n=0; var i32 sum=0; while(n<10) {sum=sum+n; n=n+1;} return sum;",45),
+    ("while-zero", "while(false) {return 1/0;} return 42;",42),
+    ("while-snapshot", "var i32 n=0; var i32 sum=0; while(n<3) {let i32 old=n; n=n+1; sum=sum+old;} return sum;",3),
+    ("while-continue-break", "var i32 n=0; var i32 sum=0; while(n<10) {n=n+1; if(n%2==0) {continue;} sum=sum+n; if(n==7) {break;}} return sum;",16),
+    ("while-nested-break", "var i32 n=0; var i32 sum=0; while(n<3) {n=n+1; var i32 j=0; while(j<5) {j=j+1; if(j==3) {break;} sum=sum+1;}} return sum;",6),
+    ("while-all-transfers", "var i32 n=0; while(true) {n=n+1; if(n<3) {continue;} else {break;}} return n;",3),
+    ("while-local-reinit", "var i32 n=0; var i32 sum=0; while(n<3) {var i32 x=10; x=x+n; sum=sum+x; n=n+1;} return sum;",33),
+    ("while-short-condition", "var i32 n=0; while(n<2 && true) {n=n+1;} return n;",2),
+    ("while-bool-toggle", "var bool go=true; while(go) {go=false;} return 42;",42),
+]:
+    case(name,body(statements),expected,fuel=10000)
+for name, statements, error in [
+    ("break-outside","break; return 0;","syntax"),
+    ("continue-outside","continue; return 0;","syntax"),
+    ("while-integer","while(1) {} return 0;","type"),
+    ("while-scope-escape","while(false) {let i32 x=1;} return x;","type"),
+    ("while-after-break","while(true) {break; return 1;} return 0;","syntax"),
+    ("while-after-continue","while(true) {continue; return 1;} return 0;","syntax"),
+    ("while-overflow","var i32 n=2147483647; while(true) {n=n+1;} return n;","overflow"),
+    ("while-trap","while(true) {return 1/0;} return 0;","zero_divisor"),
+    ("while-missing-return","while(true) {}","syntax"),
+]:
+    case(name,body(statements),error=error)
+once=body("var bool go=true; while(go) {go=false;} return 42;")
+case("while-fuel-exact",once,42,fuel=11)
+case("while-fuel-short",once,error="fuel",fuel=10)
+case("while-fuel-loop",body("while(true) {} return 0;"),error="fuel",fuel=1000)
+case("while-check-no-execution",body("while(true) {} return 0;"),mode="check")
+case("while-call-condition",b"module main; fn bool keep(i32 n) {return n<3;} fn i32 main() {var i32 n=0; while(keep(n)) {n=n+1;} return n;}",3)
+
 for index in range(32):
     a, b, c = [randomizer.randint(-1000, 1000) for _ in range(3)]
     case(f"independent-arithmetic-{index}", program(f"({a}*{b})+{c}"), a * b + c)

@@ -24,8 +24,8 @@ pub fn Result<i64, errors::Error> run(ref ir::Program p, usize fuel) {
         if (remaining < cost) { return .err(errors::make(8, p.offsets[pc])); }
         remaining -= cost;
         let usize base = frame * 128;
-        if (op == 19 || op == 20 || op == 21) {
-            if (op == 19) { pc = a; }
+        if (op == 19 || op == 20 || op == 21 || op == 22) {
+            if (op == 19 || op == 22) { pc = a; }
             else if ((registers[base + a] == 0) == (op == 20)) { pc = b; }
             else { pc += 1; }
             continue;
