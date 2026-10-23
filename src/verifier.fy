@@ -55,7 +55,24 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref mut boo
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
-        if (op < 1 || op > 23 || p.code[at + 4] != 0 || p.code[at + 5] != 0 || p.code[at + 6] != 0 || p.code[at + 7] != 0) { return .err(errors::make(5, pc)); }
+        if (op < 1 || op > 25 || (op!=24 && p.code[at + 4] != 0) || p.code[at + 5] != 0 || p.code[at + 6] != 0 || p.code[at + 7] != 0) { return .err(errors::make(5, pc)); }
+        if (op==25) {
+            if(dst!=0 || a!=0 || b!=0) {return .err(errors::make(5,pc));}
+            pc+=1; continue;
+        }
+        if (op==24) {
+            let usize target=p.code[at+4] as usize;
+            if(!readable(p,ref defined,a,start,end) || !types::tagged(p.types[a]) || b>1 || target<=pc || target>=p.ends[f]) {return .err(errors::make(5,pc));}
+            let u8 tag=types::payload(p.types[a],p.code[at+3]);
+            if(tag==0) {if(dst!=0) {return .err(errors::make(5,pc));}}
+            else if(dst<start || dst>=end || p.slots[dst] || written[dst] || p.types[dst]!=tag) {return .err(errors::make(5,pc));}
+            // The mismatch path receives no payload definition.
+            merge(ref mut states,ref mut seen,ref defined,target,start,end);
+            if(tag!=0) {defined[dst]=true;written[dst]=true;}
+            if(pc+1>=p.ends[f]) {return .err(errors::make(5,pc));}
+            merge(ref mut states,ref mut seen,ref defined,pc+1,start,end);
+            pc+=1; continue;
+        }
         if (op == 8) {
             if (dst != 0 || b != 0 || !readable(p, ref defined, a, start, end)) { return .err(errors::make(5, pc)); }
             if (p.types[a] != p.return_types[f]) { return .err(errors::make(5, pc)); }

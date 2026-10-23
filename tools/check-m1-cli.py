@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import random
 import subprocess
+from m1_tagged_cases import run_tagged
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--exe", required=True)
@@ -375,6 +376,8 @@ for n in [0,1,2,5,10,31]:
     for factor in [-3,1,7]:
         statements=f"var i32 sum=0; for(var i32 i=0;i<{n};i=i+1) {{sum=sum+i*{factor};}} return sum;"
         case(f"independent-loop-{n}-{factor}",body(statements),sum(i*factor for i in range(n)),fuel=10000)
+
+run_tagged(case, body, root)
 
 for index in range(32):
     a, b, c = [randomizer.randint(-1000, 1000) for _ in range(3)]

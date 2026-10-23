@@ -1,0 +1,20 @@
+module main;
+
+fn Option<i32> answer(bool ready) {
+    if (ready) { return .some(42); }
+    return .none;
+}
+
+fn Result<i32, bool> checked_answer(bool ready) {
+    switch (answer(ready)) {
+        case .some(value): { return .ok(value); }
+        case .none: { return .err(false); }
+    }
+}
+
+fn i32 main() {
+    switch (checked_answer(true)) {
+        case .ok(value): { return value; }
+        case .err(_): { return 0; }
+    }
+}

@@ -26,6 +26,17 @@ pub fn Result<i64, errors::Error> run(ref ir::Program p, usize fuel) {
         if (remaining < cost) { return .err(errors::make(8, p.offsets[pc])); }
         remaining -= cost;
         let usize base = frame * 128;
+        if (op==25) {return .err(errors::make(5,p.offsets[pc]));}
+        if (op==24) {
+            let i64 subject=registers[base+a];
+            let u8 variant=p.code[at+3];
+            if(tagged::variant(subject)!=variant) {pc=p.code[at+4] as usize;}
+            else {
+                if(types::payload(p.types[a],variant)!=0) {registers[base+dst]=tagged::unpack(subject,variant);}
+                pc+=1;
+            }
+            continue;
+        }
         if (op == 19 || op == 20 || op == 21 || op == 22) {
             if (op == 19 || op == 22) { pc = a; }
             else if ((registers[base + a] == 0) == (op == 20)) { pc = b; }

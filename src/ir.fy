@@ -1,6 +1,7 @@
 module ir;
 
 import errors as errors;
+import types as types;
 import std::num as num;
 
 // Private eight-byte instructions: op,dst,a,b,0,0,0,0. Scalar tags: 1 i32, 2 bool.
@@ -9,6 +10,8 @@ import std::num as num;
 // 17 load, 18 store, 19 jump, 20 jump-if-false, 21 jump-if-true.
 // 22 backedge: a strictly earlier instruction in the same function.
 // 23 construct scalar Option/Result: dst has wrapper type, b is the variant.
+// 24 guarded case: byte 4 is the forward mismatch PC; dst is defined only on match.
+// 25 internal match failure: terminal, no operands.
 pub struct Program {
     u8[2048] code;
     i64[128] constants;
@@ -103,6 +106,16 @@ pub fn Result<usize, errors::Error> construct(ref mut Program p,u8 tag,u8 varian
     return .ok(result);
 }
 
+pub struct Case {usize instruction; usize payload;}
+pub fn Result<Case,errors::Error> branch_case(ref mut Program p,usize subject,u8 variant,usize offset) {
+    let usize pc=p.count;
+    let u8 tag=types::payload(p.types[subject],variant);
+    var usize result=0;
+    if(tag==0) {let usize branch=raw(p,24,0,subject,variant as usize,offset)?;}
+    else {result=emit(p,24,subject,variant as usize,offset)?;p.types[result]=tag;}
+    return .ok(Case {.instruction=pc,.payload=result});
+}
+
 // Mutable slots share the bounded register cells, but are never value operands.
 pub fn Result<usize, errors::Error> slot(ref mut Program p, u8 tag, usize offset) {
     if (p.registers >= 128) { return .err(errors::make(4, offset)); }
@@ -126,7 +139,7 @@ pub fn Result<usize, errors::Error> raw(ref mut Program p, u8 op, usize dst, usi
 }
 pub fn Result<usize, errors::Error> patch(ref mut Program p, usize jump, usize target, usize offset) {
     let u8 op = p.code[jump * 8];
-    let usize field = if (op == 19 || op == 22) { 2 } else { 3 };
+    let usize field = if (op == 24) {4} else if (op == 19 || op == 22) { 2 } else { 3 };
     p.code[jump * 8 + field] = byte(target, offset)?;
     return .ok(target);
 }

@@ -7,6 +7,7 @@ import locals as locals;
 import functions as functions;
 import types as types;
 import loops as loops;
+import patterns as patterns;
 import std::text as text;
 
 fn u8 precedence(u8 kind) {
@@ -230,6 +231,53 @@ fn Result<bool, errors::Error> control(ref u8[] source, ref mut lexer::State s, 
         let usize end=lexer::punctuation(source,s,59)?;
         let usize jump=loops::transfer(loop_state,p,leave,at)?;
         return .ok(true);
+    }
+    if (word_is(source,s,b"switch")) {
+        let usize keyword=lexer::next(source,s)?;
+        let usize open=lexer::punctuation(source,s,40)?;
+        let usize subject=expression(source,s,p,table,signatures,1,0,0)?;
+        let u8 tag=p.types[subject];
+        if(!types::tagged(tag)) {return .err(errors::make(3,at));}
+        let usize close=lexer::punctuation(source,s,41)?;
+        let usize brace=lexer::punctuation(source,s,123)?;
+        var usize[2] skips=[256;2];
+        var usize previous=256;
+        var u8 first_variant=2;
+        var bool terminal=true;
+        var usize arm=0;
+        while(arm<2) {
+            if(s.kind==125) {return .err(errors::make(3,at));}
+            let patterns::Pattern pattern=patterns::parse(source,s,tag)?;
+            if(arm==1 && pattern.variant==first_variant) {return .err(errors::make(3,at));}
+            if(arm==0) {first_variant=pattern.variant;}
+            else {
+                let usize next=p.count;
+                let usize patched=ir::patch(p,previous,next,at)?;
+            }
+            let ir::Case branch=ir::branch_case(p,subject,pattern.variant,at)?;
+            let usize outer=table.count;
+            if(pattern.binding) {
+                if(locals::find(source,table,pattern.begin,pattern.end)!=64) {return .err(errors::make(3,pattern.begin));}
+                let usize binding=locals::declare(table,pattern.begin,pattern.end,branch.payload,false)?;
+            }
+            let bool stopped=block(source,s,p,table,signatures,result_type,depth+2,loop_state)?;
+            table.count=outer;
+            terminal=terminal && stopped;
+            if(!stopped) {skips[arm]=ir::raw(p,19,0,0,0,at)?;}
+            previous=branch.instruction;
+            arm+=1;
+        }
+        let usize end=lexer::punctuation(source,s,125)?;
+        let usize failure=p.count;
+        let usize trap=ir::raw(p,25,0,0,0,at)?;
+        let usize patched=ir::patch(p,previous,failure,at)?;
+        let usize target=p.count;
+        arm=0;
+        while(arm<2) {
+            if(skips[arm]!=256) {let usize skip=ir::patch(p,skips[arm],target,at)?;}
+            arm+=1;
+        }
+        return .ok(terminal);
     }
     if (word_is(source,s,b"for")) {
         let usize outer=table.count;
