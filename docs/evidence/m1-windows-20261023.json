@@ -1,0 +1,383 @@
+{
+  "schema": "browniec.m1-scalar/v1",
+  "status": "passed",
+  "recordedAt": "2026-10-23T09:46:28.9978919Z",
+  "compilerVersion": [
+    "Fairy C Stage 0",
+    "compiler: v0.0.0-20261022210249-4ce1264273be",
+    "sdk: fairyc-sdk-stdlib/0 0.0.0-stage0.86",
+    "language: fairyc-language/20",
+    "runtime: fairyc-runtime/0",
+    "revision: 4ce1264273be6051ee560173e94690e1b99c9eaf",
+    "modified: false"
+  ],
+  "compilerSha256": "572395f7f1e425d613c5a69f50b30ed177cda37ca2b1638bd0c11cf79fcbcc77",
+  "os": "Microsoft Windows NT 10.0.26300.0",
+  "results": [
+    {
+      "profile": "development",
+      "nativeTests": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "development",
+        "tests": [
+          {
+            "identity": "tests::core::checked_arithmetic",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::fuel_and_program_reuse",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::precedence_and_order",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::type_and_syntax_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::verifier_rejects_corrupt_private_code",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 5,
+        "passed": 5,
+        "failed": 0,
+        "status": "ok",
+        "lock": "unchanged"
+      },
+      "build": "built: build/browniec.exe (x86_64-windows-msvc, development, lock verified)",
+      "artifact": "build/m1/browniec-development.exe",
+      "sha256": "09f311a1d5ac5d3c1588a4c2d1c4659a35e5fa7d8cb2336b439c400290226b7b",
+      "bytes": 339968,
+      "cliCases": 81
+    },
+    {
+      "profile": "release",
+      "nativeTests": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "release",
+        "tests": [
+          {
+            "identity": "tests::core::checked_arithmetic",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::fuel_and_program_reuse",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::precedence_and_order",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::type_and_syntax_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::verifier_rejects_corrupt_private_code",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 5,
+        "passed": 5,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "build": "built: build/browniec.exe (x86_64-windows-msvc, release, lock verified)",
+      "artifact": "build/m1/browniec-release.exe",
+      "sha256": "f20e48c2e1d13044642899ae6cff55cb55180b61cba05c04b843251ce3fed579",
+      "bytes": 155136,
+      "cliCases": 81
+    }
+  ],
+  "sourceSha256": [
+    {
+      "path": "fairy.lock",
+      "sha256": "465110c1e18ca6727a6ffc4c8f6867771fff08a34088e45cf9cd8663cf4bdbcb"
+    },
+    {
+      "path": "fairy.toml",
+      "sha256": "f5254ba793d9012470c697e8657688a4ea5465c138fba6d748707d5bfa4b31fb"
+    },
+    {
+      "path": "src/cli_input.fy",
+      "sha256": "ec91de62e6b5147d117d6fe0366ebcf617b556c074bf1dd91cb10188f96507ba"
+    },
+    {
+      "path": "src/compiler.fy",
+      "sha256": "c0d48b302410f1ea430f7f2524e15940f40a4923d15c196be8c71f626f83f139"
+    },
+    {
+      "path": "src/errors.fy",
+      "sha256": "e8070ef5c6380460dacb579c33f2e180b9e683286c8cb0827e30d82a581a4646"
+    },
+    {
+      "path": "src/ir.fy",
+      "sha256": "134c843f878fbf8f8ec24fb5005f3998e76f4c4bf754bba087b76e97c46f7a26"
+    },
+    {
+      "path": "src/lexer.fy",
+      "sha256": "71902e2e7e8f24a3b71773f3dcc79850681c82bc603cd25a338e35944132a954"
+    },
+    {
+      "path": "src/main.fy",
+      "sha256": "a0ca5e7ade1881e603fcaa0ef6d01f075c623c66757dc58c9ca94b95105a4826"
+    },
+    {
+      "path": "src/render.fy",
+      "sha256": "a1bd5733775e4bd445ba1059be78290c80593d41389c4e76e1ec8aecc9f56beb"
+    },
+    {
+      "path": "src/verifier.fy",
+      "sha256": "136f6d224ea43d44640764f6c863d2d4f7191a804973205a94f5be22c3582b7e"
+    },
+    {
+      "path": "src/vm.fy",
+      "sha256": "2366f3c0c8b23873e6d7a404e8f81cb1a4b238608166d39cf964c4f748ca7fd3"
+    },
+    {
+      "path": "tests/core.fy",
+      "sha256": "008125844ae75938a09570fb21bbe1a5beb842d94568aebdb95bef03a56970cb"
+    },
+    {
+      "path": "tools/check-m1-cli.py",
+      "sha256": "a4648b465918d7352c88030fa4478e484d51d3a765420882efd7e8bddb92b453"
+    },
+    {
+      "path": "tools/verify-m1.ps1",
+      "sha256": "e05a93ea82efafa6a232352b622a7a1a6f21012d6874defccac18d79d4bb8fe8"
+    }
+  ],
+  "limitations": [
+    "First M1 i32 expression slice only; no calls/variables/control flow.",
+    "Tool-free PATH is not clean-machine or OS isolation evidence.",
+    "No performance target measured."
+  ],
+  "implementationCommits": [
+    "ae44bd3",
+    "2d87963"
+  ],
+  "cliReceipts": [
+    {
+      "schema": "browniec.m1-cli-checks/v1",
+      "status": "passed",
+      "profile": "development",
+      "exeSha256": "09f311a1d5ac5d3c1588a4c2d1c4659a35e5fa7d8cb2336b439c400290226b7b",
+      "runtimeEnvironment": "cleared; tool-free PATH",
+      "count": 81,
+      "caseNames": [
+        "answer",
+        "nonzero-is-data",
+        "minimum",
+        "maximum",
+        "precedence",
+        "parentheses",
+        "associativity",
+        "negative-division",
+        "negative-remainder",
+        "double-negative",
+        "overflow-add",
+        "overflow-sub",
+        "overflow-mul",
+        "overflow-neg",
+        "overflow-div",
+        "overflow-rem",
+        "zero-div",
+        "zero-rem",
+        "first-left-trap",
+        "first-right-trap",
+        "positive-outside",
+        "integer-outside",
+        "check-does-not-execute",
+        "fuel-exact",
+        "fuel-one-short",
+        "fuel-zero",
+        "depth-exact",
+        "depth-over",
+        "register-exact",
+        "register-over",
+        "bytes-exact",
+        "bytes-over",
+        "bad-utf8",
+        "nul-token",
+        "missing-semicolon",
+        "trailing-source",
+        "unsupported-type",
+        "unsupported-variable",
+        "comment-utf8",
+        "independent-arithmetic-0",
+        "independent-arithmetic-1",
+        "independent-arithmetic-2",
+        "independent-arithmetic-3",
+        "independent-arithmetic-4",
+        "independent-arithmetic-5",
+        "independent-arithmetic-6",
+        "independent-arithmetic-7",
+        "independent-arithmetic-8",
+        "independent-arithmetic-9",
+        "independent-arithmetic-10",
+        "independent-arithmetic-11",
+        "independent-arithmetic-12",
+        "independent-arithmetic-13",
+        "independent-arithmetic-14",
+        "independent-arithmetic-15",
+        "independent-arithmetic-16",
+        "independent-arithmetic-17",
+        "independent-arithmetic-18",
+        "independent-arithmetic-19",
+        "independent-arithmetic-20",
+        "independent-arithmetic-21",
+        "independent-arithmetic-22",
+        "independent-arithmetic-23",
+        "independent-arithmetic-24",
+        "independent-arithmetic-25",
+        "independent-arithmetic-26",
+        "independent-arithmetic-27",
+        "independent-arithmetic-28",
+        "independent-arithmetic-29",
+        "independent-arithmetic-30",
+        "independent-arithmetic-31",
+        "unknown-option",
+        "duplicate-json",
+        "duplicate-fuel",
+        "negative-fuel",
+        "large-fuel",
+        "check-fuel",
+        "isolated-unavailable",
+        "missing-file",
+        "text-stream-separation",
+        "version-availability"
+      ],
+      "casesSha256": "5d4db43bfa749359f95e2239d5d5de1079253d85c9018692dec7f9f2b73379c8"
+    },
+    {
+      "schema": "browniec.m1-cli-checks/v1",
+      "status": "passed",
+      "profile": "release",
+      "exeSha256": "f20e48c2e1d13044642899ae6cff55cb55180b61cba05c04b843251ce3fed579",
+      "runtimeEnvironment": "cleared; tool-free PATH",
+      "count": 81,
+      "caseNames": [
+        "answer",
+        "nonzero-is-data",
+        "minimum",
+        "maximum",
+        "precedence",
+        "parentheses",
+        "associativity",
+        "negative-division",
+        "negative-remainder",
+        "double-negative",
+        "overflow-add",
+        "overflow-sub",
+        "overflow-mul",
+        "overflow-neg",
+        "overflow-div",
+        "overflow-rem",
+        "zero-div",
+        "zero-rem",
+        "first-left-trap",
+        "first-right-trap",
+        "positive-outside",
+        "integer-outside",
+        "check-does-not-execute",
+        "fuel-exact",
+        "fuel-one-short",
+        "fuel-zero",
+        "depth-exact",
+        "depth-over",
+        "register-exact",
+        "register-over",
+        "bytes-exact",
+        "bytes-over",
+        "bad-utf8",
+        "nul-token",
+        "missing-semicolon",
+        "trailing-source",
+        "unsupported-type",
+        "unsupported-variable",
+        "comment-utf8",
+        "independent-arithmetic-0",
+        "independent-arithmetic-1",
+        "independent-arithmetic-2",
+        "independent-arithmetic-3",
+        "independent-arithmetic-4",
+        "independent-arithmetic-5",
+        "independent-arithmetic-6",
+        "independent-arithmetic-7",
+        "independent-arithmetic-8",
+        "independent-arithmetic-9",
+        "independent-arithmetic-10",
+        "independent-arithmetic-11",
+        "independent-arithmetic-12",
+        "independent-arithmetic-13",
+        "independent-arithmetic-14",
+        "independent-arithmetic-15",
+        "independent-arithmetic-16",
+        "independent-arithmetic-17",
+        "independent-arithmetic-18",
+        "independent-arithmetic-19",
+        "independent-arithmetic-20",
+        "independent-arithmetic-21",
+        "independent-arithmetic-22",
+        "independent-arithmetic-23",
+        "independent-arithmetic-24",
+        "independent-arithmetic-25",
+        "independent-arithmetic-26",
+        "independent-arithmetic-27",
+        "independent-arithmetic-28",
+        "independent-arithmetic-29",
+        "independent-arithmetic-30",
+        "independent-arithmetic-31",
+        "unknown-option",
+        "duplicate-json",
+        "duplicate-fuel",
+        "negative-fuel",
+        "large-fuel",
+        "check-fuel",
+        "isolated-unavailable",
+        "missing-file",
+        "text-stream-separation",
+        "version-availability"
+      ],
+      "casesSha256": "5d4db43bfa749359f95e2239d5d5de1079253d85c9018692dec7f9f2b73379c8"
+    }
+  ]
+}

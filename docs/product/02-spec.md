@@ -1,7 +1,7 @@
 # Product Specification
 
 - Status: Accepted for design, 2026-10-23
-- Implementation status: not implemented
+- Implementation status: first M1 i32 expression slice; full profile not implemented
 - Source profile name: brownie.safe/0.3
 
 ## Product boundary
@@ -115,5 +115,8 @@ corpus updates, and appropriate verification.
 7. The restricted level is unavailable until actual Windows isolation tests pass.
 8. The embed level is unavailable until an actual DLL export/call test passes.
 
-No acceptance criterion is currently satisfied. Claims about safety, performance, or
-compatibility require milestone evidence rather than this specification alone.
+The experimental M1 scalar slice establishes native source execution, guest result
+versus process-exit separation, and checked arithmetic/Fuel outcomes for its grammar.
+It does not satisfy full-profile ownership, allocation, host, isolation, or embed
+criteria. Claims require scoped [M1 evidence](../engineering/m1-scalar-slice.md),
+not acceptance of this specification alone.

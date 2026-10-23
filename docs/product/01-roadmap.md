@@ -1,11 +1,11 @@
 # Roadmap
 
-- Status: Accepted delivery sequence; M0 implemented and verified, 2026-10-23
-- Current progress: M0 native probes passed; M1-M5 not started
+- Status: Accepted delivery sequence; M0 verified and first M1 scalar slice implemented, 2026-10-23
+- Current progress: M0 passed; M1 partial; M2-M5 not started
 
 This roadmap orders learning and evidence. It is not a release promise. M0 has a
-native harness and recorded evidence; the Brownie CLI, VM, worker, and DLL do not
-exist yet.
+native harness and recorded evidence. The scalar CLI/VM now exist; the worker
+and DLL do not.
 
 ## Guiding rules
 
@@ -41,8 +41,12 @@ unimplemented Brownie language pipeline.
 
 ## M1: scalar source to native VM
 
-Status: not started. Goal: run real .brc source through lexer, parser, type checking,
-Flow analysis,
+Status: partial. The first [scalar slice](../engineering/m1-scalar-slice.md) runs
+one i32 return expression through the native source pipeline. Development and release
+passed five native groups and 81 black-box CLI cases each. Remaining M1 work includes
+variables, functions/calls, control flow, scalar Option/Result, and their Flow checks.
+
+Goal: run real .brc source through lexer, parser, type checking, Flow analysis,
 private code generation, independent verification, and the native VM.
 
 The first usable slice includes functions, scalar Option/Result, question-mark

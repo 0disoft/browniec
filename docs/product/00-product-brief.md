@@ -2,7 +2,7 @@
 
 - Status: Accepted initial direction, 2026-10-23
 - Product owner: Zerodi / Rodisoft
-- Implementation: M0 native primitives verified; product CLI and VM absent
+- Implementation: M0 verified; experimental scalar CLI/VM implemented; broader product pending
 
 ## Intended outcome
 

@@ -1,7 +1,7 @@
 # Design Baseline
 
 - Status: Accepted for design, 2026-10-23
-- Implementation status: M0 native primitives verified; Brownie VM absent
+- Implementation status: M0 verified; first experimental M1 scalar source/VM slice verified
 - Provenance role: this file records the reviewed baseline; source material is not vendored
 
 ## Baseline decisions
@@ -126,7 +126,8 @@ historical findings are retained as review context, not current implementation c
 ## Claim boundaries
 
 M0 native arithmetic, codec, storage, allocator, owner, and frame primitives have
-recorded Windows evidence. VM execution, Windows isolation, ABI, clean-machine
+recorded Windows evidence. The first M1 i32 expression pipeline also has native
+execution evidence; full-profile VM behavior, Windows isolation, ABI, clean-machine
 packaging, performance, and security claims remain unverified. The design package's
 models are not production parsers, race-free native code, pointer-safety proofs, or
 Windows scheduling evidence.

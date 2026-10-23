@@ -1,12 +1,12 @@
 # Contributing
 
-- Status: Initial contribution policy; documentation-only repository
+- Status: Initial contribution policy; experimental native M1 scalar implementation
 
 ## Scope
 
 Zerodi / Rodisoft owns product scope and delivery decisions. Start from the
 [specification](docs/product/02-spec.md) and [roadmap](docs/product/01-roadmap.md).
-The next implementation work is M0 native feasibility, followed by M1 scalar execution.
+M0 and the first M1 scalar slice exist. Continue M1 in small source-to-VM increments.
 
 Do not expand the language profile, replace core Fairy C logic with a host-language
 model, or expose the restricted/embed levels without the corresponding design decision
@@ -23,8 +23,9 @@ and milestone evidence. The external design package is reference material only.
 
 ## Evidence and delivery
 
-Follow [Validation](VALIDATION.md). There is currently no configured build or test
-runner. Report only checks actually run, with failures, skips, and relevant artifact
+Follow [Validation](VALIDATION.md). Use the root Fairy build and
+`tools/verify-m1.ps1` for scalar source/VM changes, and the separate M0 harness when
+its native primitive inputs change. Report only checks actually run, with failures, skips, and relevant artifact
 identity. Choose narrow checks for the changed behavior; document checks do not prove
 native execution or security.
 

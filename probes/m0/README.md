@@ -1,11 +1,11 @@
 # M0 Native Probes
 
-- Status: implemented and verified on Windows x64; Brownie VM absent
+- Status: implemented and verified on Windows x64; native primitive scope only
 - Scope: native primitive feasibility, not `.brc` source execution
 
 M0 checks the smallest Fairy C boundaries needed before Brownie language work. The
-Brownie lexer, parser, type checker, verifier, VM, worker, DLL, and public `browniec`
-command are still absent.
+separate [M1 slice](../../docs/engineering/m1-scalar-slice.md) now implements a scalar
+source CLI/VM. These probes do not establish that pipeline, worker, DLL, or full profile.
 
 ## Build and run
 

@@ -1,6 +1,6 @@
 # Testing Standard
 
-- Status: Accepted evidence approach; no configured test runner
+- Status: Accepted evidence approach; M0 and M1 native harnesses available
 
 ## Proportionate checks
 

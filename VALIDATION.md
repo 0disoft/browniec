@@ -1,13 +1,13 @@
 # Validation
 
-- Status: accepted evidence policy; M0 native harness verified
-- Current implementation: M0 primitives only; Brownie VM absent
+- Status: accepted evidence policy; M0 and first M1 scalar slice verified
+- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM
 
 ## Validation source of truth
 
 This file defines evidence expectations for Brownie C. `tools/verify-m0.ps1` verifies
-the native M0 primitives. There is no Brownie source compiler, VM, or public
-`browniec` command to verify.
+the native M0 primitives. `tools/verify-m1.ps1` builds and verifies the experimental
+scalar `browniec` CLI, native compiler/verifier/VM, and black-box source cases.
 
 Do not report a proposed command as executed. Do not treat a design package, static
 link check, Python model, or source fixture as proof of the Brownie VM.
@@ -73,11 +73,17 @@ identity is SHA-256
 Exact transcript and artifact details belong to `build/m0/receipt.json` and
 `docs/evidence/m0-windows-20261023.json`.
 
-M1 through M5 remain not started. M0's empty runtime-`PATH` execution does not
+Full M1 remains partial; M2 through M5 remain not started. M0's empty runtime-`PATH` execution does not
 establish clean-machine packaging or Windows isolation.
 
-M1 must run a scalar .brc source through parse, type, code, verify, and native VM; it
-is not implemented.
+M1 has a first scalar source-to-native-VM slice. Five native test groups and 81 CLI
+cases passed in each of development and release using the M0 compiler artifact.
+The corpus verifies arithmetic traps, malformed source/code, Fuel, Program reuse,
+resource ceilings, JSON/exit behavior, and tool-free runtime PATH execution.
+See [implemented subset](docs/engineering/m1-scalar-slice.md) and
+[dated receipt](docs/evidence/m1-windows-20261023.json). General functions, variables,
+control flow, Option/Result, and full Flow analysis are still pending. M0 was not
+rerun for unchanged inputs. No new CI job or performance measurement was added.
 M2 must cover arrays, structs, borrows, Buffer, input, output, and UTF-8.
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker

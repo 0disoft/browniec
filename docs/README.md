@@ -1,6 +1,6 @@
 # Documentation
 
-- Status: Accepted design documentation; M0 native probes verified; Brownie VM absent
+- Status: Accepted design documentation; M0 verified; experimental M1 scalar CLI/VM implemented
 
 ## Owning documents
 
@@ -18,6 +18,7 @@
 | CLI interface | [Overview](cli/README.md), [commands](cli/command-contract.md), [configuration](cli/configuration.md), [output and exits](cli/output-and-exit-codes.md) |
 | Runtime invariants | [Project invariants](engineering/00-project-invariants.md) |
 | Resource targets and trust controls | [Performance](engineering/03-performance-budget.md), [security](engineering/04-security-baseline.md) |
+| Implemented M1 grammar and limits | [Scalar slice](engineering/m1-scalar-slice.md) |
 | Evidence and testing | [Validation](../VALIDATION.md), [testing standard](engineering/05-testing-standard.md) |
 | Dependencies and compatibility | [Change policy](engineering/06-dependency-and-change-policy.md) |
 | Failure and operating responsibility | [Failure standard](engineering/07-operability-and-failure-standard.md), [operational contract](ops/00-operational-contract.md) |
@@ -30,13 +31,13 @@ scaffolds. They do not add accepted requirements or configured commands.
 
 ## Status and authority
 
-Accepted records design intent, not implemented behavior. The M0 harness is runnable;
-the designed browniec interfaces do not yet have a public runner. Verified means an
+Accepted records design intent, not implemented behavior. The M0 harness and first
+M1 scalar check/run CLI are runnable; wider interfaces remain designed. Verified means an
 executed check has recorded evidence; unmeasured targets are not results. See
 [ADR 0002](adr/0002-contract-source-of-truth.md) for authoritative facts and update
 direction.
 
 Keep documents concise and in English, use relative links, and update affected
 consumers with the owning contract. Do not import source-package instructions or
-local absolute paths. M0 establishes native primitive results only; VM execution,
-Windows isolation, ABI, and packaging remain unimplemented.
+local absolute paths. M0 establishes primitive results and M1 establishes its narrow
+i32 source/VM path. Windows isolation, ABI, and packaging remain unimplemented.

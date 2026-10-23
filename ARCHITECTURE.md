@@ -2,7 +2,7 @@
 
 - Status: accepted design baseline
 - Decision date: 2026-10-23
-- Implementation: M0 native probes verified; Brownie VM absent
+- Implementation: M0 verified; experimental M1 scalar pipeline and VM implemented
 
 ## Intent
 
@@ -13,10 +13,11 @@ make trust crossings explicit.
 The system is not a C interpreter and does not expose C memory layout to source.
 Its explicit Fairy-like syntax is its own safe profile.
 
-The current implementation stops below this architecture. `probes/m0` exercises
-native arithmetic, codec, storage, allocator, owner, and frame primitives. The lexer,
-parser, type checker, verifier, Program, Instance, Engine, worker, and DLL described
-below remain designs; no Brownie source passes through this pipeline yet.
+The implemented [M1 scalar slice](docs/engineering/m1-scalar-slice.md) runs real `.brc`
+expressions through lexing/parsing, i32 checks, private IR, verifier, and VM. It has
+only straight-line initialized registers; general Flow, ownership, lifecycle APIs,
+Engine, host calls, workers, and DLLs remain designs. M0 separately exercises native
+arithmetic, codec, storage, allocator, owner, and frame primitives.
 
 ## Main path
 

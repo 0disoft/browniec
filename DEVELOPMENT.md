@@ -1,38 +1,43 @@
 # Development
 
-- Status: M0 native probes verified; Brownie runtime not implemented
-- Current repository content: design documents, M0 Fairy C probes, and a verification harness
+- Status: M0 verified; experimental native M1 scalar CLI implemented
+- Current repository content: Fairy C frontend, private IR/verifier/VM, CLI, tests, and M0 probes
 
 ## Current reality
 
-`probes/m0` contains the native primitive sources, `fairy.toml`, `fairy.lock`, a
-test-only allocator probe header, and four negative borrow/move fixtures. The harness
-is `tools/verify-m0.ps1`. There is no Brownie lexer, parser, checker, verifier, VM,
-worker, DLL, or installed `browniec` command.
+The root fairy.toml builds `src/main.fy` into `build/browniec.exe` on Windows.
+Use an installed MSVC x64 toolchain and Windows SDK at build time. The retained
+M0 compiler artifact is `build/toolchain/fairyc.exe`: Fairy C `4ce12642`, SDK
+`0.0.0-stage0.86`, language `fairyc-language/20`. Its SHA-256 and build identity
+are recorded in the dated M0 and M1 evidence, not a permanent compatibility pin.
 
-The M0 record uses Fairy source `4ce1264273be6051ee560173e94690e1b99c9eaf`, SDK
-`0.0.0-stage0.86`, language `fairyc-language/20`, Windows x64 MSVC, MSVC tools
-`14.51.36231`, `cl` `19.51.36248.0`, Windows SDK `10.0.26100.0`, and Go `1.27.1`.
-The compiler was built from a clean checkout with SHA-256
-`572395f7f1e425d613c5a69f50b30ed177cda37ca2b1638bd0c11cf79fcbcc77`.
-This is a dated record, not a permanent compiler pin. The harness validates the
-requested checkout against the compiler build identity.
-
-From the Brownie C repository root, build the requested Fairy compiler and run the
-M0 harness:
+If no compiler artifact is available, build a selected clean Fairy checkout:
 
 ```powershell
 Push-Location ../fairyc
 go build -mod=readonly -trimpath -o ../browniec/build/toolchain/fairyc.exe ./cmd/fairyc
 Pop-Location
-pwsh -NoProfile -File tools/verify-m0.ps1
 ```
 
-The harness builds development and release variants, then runs them with an empty
-runtime `PATH` and a cleared environment. It runs the normal baseline and the
-instrumented normal and allocator failure paths, for six native executions total. It
-also checks four negative borrow/move fixtures. Exact results are in
-`build/m0/receipt.json` and `docs/evidence/m0-windows-20261023.json`.
+An updated compiler is an explicit adoption: run the relevant compatibility checks
+and record the resulting identity. Do not silently rebuild from a concurrently edited
+checkout or claim it matches the historical receipts.
+
+```powershell
+./build/toolchain/fairyc.exe build
+./build/browniec.exe run examples/answer.brc --json
+./build/browniec.exe check examples/answer.brc --json
+pwsh -NoProfile -File tools/verify-m1.ps1
+```
+
+M1 verification needs PowerShell 7 and Python 3 for the build/test driver, not for the
+produced runtime. It runs five native groups and 81 CLI cases per profile, retaining
+`build/m1/receipt.json` and per-profile records. The selected native binaries run
+with a cleared environment and tool-free PATH. No measured latency budget follows.
+
+The unchanged `probes/m0` and `tools/verify-m0.ps1` retain their separate native
+primitive/OOM/borrow evidence. Rerun those when their inputs change; the M1 source
+pipeline is not a reason to repeat the unchanged M0 suite.
 
 ## Bootstrap versus runtime
 
@@ -64,9 +69,11 @@ M0 and M1 are not blocked by the later Windows worker or DLL milestones.
 
 ## Command inventory
 
-`tools/verify-m0.ps1` is runnable for the M0 probes. The proposed `browniec check`,
-`run`, `inspect`, and `worker` commands, with `--project` and `--isolated` options
-where applicable, describe intended CLI behavior only.
+`browniec check SOURCE [--json]`, `run SOURCE [--fuel N] [--json]`,
+`--version [--json]`, and `--help` are implemented for the scalar subset.
+`inspect`, `worker`, `--project`, and guest input/policy configuration remain
+unimplemented. `--isolated` fails explicitly; there is no unrestricted fallback.
+See [M1 details](docs/engineering/m1-scalar-slice.md).
 
 Documentation review may use repository-neutral tools such as a Markdown link check
 or git diff --check when the parent task supplies them. These checks do not execute

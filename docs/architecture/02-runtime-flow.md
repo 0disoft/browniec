@@ -1,9 +1,10 @@
 # Runtime Flow
 
-- Status: Designed; M0 native probes exist, no Brownie execution path
+- Status: Designed full flow; M0 and first M1 scalar execution path implemented
 
 The flow below is the target architecture. M0 verifies selected native primitives,
-including storage and owner bookkeeping, but does not parse or execute `.brc` source.
+including storage and owner bookkeeping. M1 separately parses, verifies, and runs
+one i32 return expression; host suspension and the restricted path below remain future work.
 
 ## Source to result
 

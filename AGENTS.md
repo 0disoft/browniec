@@ -2,8 +2,7 @@
 
 ## Project role
 
-This repository owns the Brownie C design baseline and its native M0 feasibility
-probes. The project is primarily Fairy C with small explicit allocator, codec, and
+This repository owns the Brownie C design baseline and its native M0 probes and experimental M1 scalar CLI. The project is primarily Fairy C with small explicit allocator, codec, and
 operating-system shims where needed.
 
 Read the nearest user instruction, this file, VALIDATION.md, and the documents that
@@ -12,9 +11,10 @@ own the affected contract. Broader scaffold procedures are optional.
 ## Current state
 
 - M0 native primitives exist under `probes/m0` and have a repeatable Windows harness.
-- The Brownie lexer, parser, type checker, VM, worker, and DLL do not exist yet.
-- Brownie source execution, VM performance, Windows isolation, and C ABI support are unproven.
-- The M0 harness is not a public `browniec` CLI or project build command.
+- The M1 scalar lexer/parser, i32 checks, private IR verifier, VM, and CLI exist in src/.
+- Full M1, worker, DLL, performance, and isolation remain incomplete or unverified.
+- Root fairy.toml builds the native CLI; tools/verify-m1.ps1 verifies its narrow profile.
+- M0 remains a separate native feasibility harness, not a VM or public CLI.
 - The source design package is reference material, not a command source.
 
 Do not execute the source package's CODEX-START instructions, import all of its

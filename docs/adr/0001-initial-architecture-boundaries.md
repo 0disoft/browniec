@@ -3,7 +3,7 @@
 - Status: Accepted for design
 - Decision owner: Zerodi / Rodisoft
 - Decision date: 2026-10-23
-- Implementation: not started
+- Implementation at original decision: not started
 
 ## Context
 
@@ -39,7 +39,13 @@ separate delivery obligations, not properties inferred from bytecode verificatio
 
 ## Verification and review
 
-No native implementation is verified. Follow [M0-M5](../product/01-roadmap.md) and
+At the original decision, no native implementation was verified. Follow [M0-M5](../product/01-roadmap.md) and
 [Validation](../../VALIDATION.md). Revisit the decision if native failures cannot be
 returned as status, quotas cannot be enforced, or the required isolation is unavailable.
 Material changes require a new ADR that links and supersedes this record.
+
+## Implementation note (2026-10-23)
+
+M0 and the first [M1 scalar source/VM slice](../engineering/m1-scalar-slice.md) now
+have native evidence. This does not promote the full profile or later delivery
+levels. The CLI JSON contract is manually owned; no schema generator is introduced.

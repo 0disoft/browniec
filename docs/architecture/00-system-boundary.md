@@ -1,6 +1,6 @@
 # System Boundary
 
-- Status: Accepted design boundary; not implemented
+- Status: Accepted design boundary; scalar source/VM subset implemented
 - Owner: Zerodi / Rodisoft
 
 ## Owned responsibilities

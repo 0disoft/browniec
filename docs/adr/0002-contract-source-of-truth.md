@@ -3,7 +3,7 @@
 - Status: Accepted for design
 - Decision owner: Zerodi / Rodisoft
 - Decision date: 2026-10-23
-- Implementation: documentation only
+- Implementation at original decision: documentation only
 
 ## Context
 
@@ -34,7 +34,8 @@ reference material; its instructions and model outputs do not override this repo
 
 Vendoring the full package would preserve convenient local access but duplicate
 authority. A generated schema is useful later for machine-readable interfaces;
-there is no executable interface here to justify that infrastructure yet.
+at the original decision there was no executable interface to justify it. The first
+scalar CLI now owns a small manually maintained JSON contract.
 
 Change the owning contract and affected summaries together. A disagreement between
 code and the contract is a review finding; neither silently changes the other.
@@ -45,3 +46,9 @@ Zerodi / Rodisoft owns material scope changes. Record such decisions in a new AD
 Check links, terminology, status, and changed consumers in each documentation slice.
 Future implementation checks must exercise these contracts through real artifacts;
 static document checks establish no native execution or security result.
+
+## Implementation note (2026-10-23)
+
+M0 and the first [M1 scalar source/VM slice](../engineering/m1-scalar-slice.md) now
+have native evidence. This does not promote the full profile or later delivery
+levels. The CLI JSON contract is manually owned; no schema generator is introduced.

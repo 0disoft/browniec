@@ -1,6 +1,6 @@
 # Operability and Failure Standard
 
-- Status: Designed failure behavior; no implementation evidence
+- Status: Scalar compile/arithmetic/Fuel/CLI outcomes verified; wider failure behavior designed
 
 ## Outcomes
 

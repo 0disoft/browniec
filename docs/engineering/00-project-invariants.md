@@ -1,7 +1,7 @@
 # Project Invariants
 
 - Status: Accepted design invariants
-- Implementation: M0 native primitives verified; VM invariants not implemented
+- Implementation: M0 verified; straight-line i32 verifier/VM subset implemented; full invariants pending
 
 ## Runtime authority
 

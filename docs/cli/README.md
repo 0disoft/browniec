@@ -12,7 +12,8 @@ must work without launching Go, MSVC, a C compiler, or an interpreter subprocess
 Restricted mode may launch the designated native worker.
 
 The proposed surface is --version, check, run, inspect, and worker, with explicit
---project and --isolated options where applicable. check, run, --version and --help are implemented for the M1 scalar profile.
+--project and --isolated options where applicable. check, run, --version and --help
+are implemented for the M1 scalar profile.
 The broader commands/options remain designed or unavailable.
 
 ## Authority and availability

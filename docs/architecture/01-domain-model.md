@@ -1,6 +1,6 @@
 # Domain Model
 
-- Status: Designed concepts; no runtime objects implemented
+- Status: Designed full lifecycle; scalar Program and fresh run-state subset implemented
 
 | Concept | Meaning and lifecycle |
 | --- | --- |

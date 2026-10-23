@@ -7,9 +7,9 @@
 
 | Command | Intended behavior | Current state |
 | --- | --- | --- |
-| browniec --version | Report build, profile, IR, ABI, IPC, and available delivery levels | Implemented for brownie.m1-scalar/1 |
+| browniec --version | Report experimental profile and delivery availability; full metadata planned | Implemented for brownie.m1-scalar/1 |
 | browniec check SOURCE | Compile and verify without running guest code or host calls | Implemented for brownie.m1-scalar/1 |
-| browniec run SOURCE | Compile, verify, and run one source with explicit input | Implemented for brownie.m1-scalar/1 |
+| browniec run SOURCE | Compile, verify, and run one selected source | Implemented for brownie.m1-scalar/1 |
 | browniec run --project FILE | Use an explicit source map, policy, entry, grants, and run limits | Not implemented |
 | browniec check SOURCE --isolated | Use a restricted compile-only worker | Designed; unavailable |
 | browniec run SOURCE --isolated | Use the restricted worker and parent broker | Designed; unavailable |
