@@ -1,7 +1,7 @@
 # Roadmap
 
 - Status: Accepted delivery sequence; M0 verified; named M1 slices through unsigned have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified, 2026-10-23
-- Current progress: M1 scalar checkpoint verified; M2 array layout, codecs and caller-backed storage primitives verified; full-profile conformance incomplete; M3-M5 not started
+- Current progress: M1 scalar checkpoint verified; M2 array storage, owner lifetimes and independent copies verified as primitives; full-profile conformance incomplete; M3-M5 not started
 
 This roadmap orders learning and evidence. It is not a release promise. M0 has a
 native harness and recorded evidence. The scalar CLI/VM now exist; the worker
@@ -115,6 +115,9 @@ Source arrays, owned arenas, aggregate verification and metering remain open.
 The [owner-lifetime increment](../engineering/m2-array-owners.md) adds 16 bounded
 typed descriptors, generation-safe token reuse, explicit release, suffix
 reclamation and whole-table clear, with five native groups per profile.
+The copy increment adds independent by-value array storage with destination
+preflight and complete bool-source validation, verified in four additional native
+groups per profile. Source grammar and the scalar VM remain unchanged.
 Goal: connect arrays, plain structs, borrows, Buffer, input,
 output, and UTF-8.
 

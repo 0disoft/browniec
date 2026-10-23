@@ -1,6 +1,6 @@
 # Brownie C
 
-- Status: M1 scalar checkpoint verified; M2 array layout, codec, storage and owner primitives verified; full profile incomplete
+- Status: M1 scalar checkpoint verified; M2 array layout, storage, owner and independent-copy primitives verified; full profile incomplete
 - Design date: 2026-10-23
 - First delivery target: Windows 11 x64
 
@@ -110,7 +110,7 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M1 checkpoint audit](docs/engineering/m1-checkpoint-audit.md): scalar exit requirements and remaining profile limits
 - [M2 array layout](docs/engineering/m2-array-layout.md): compact scalar payloads, arena preflight, and checked offsets; source arrays are not implemented
 - [M2 array storage](docs/engineering/m2-array-storage.md): scalar codecs, repeated initialization, and element access in caller-owned backing bytes
-- [M2 array owners](docs/engineering/m2-array-owners.md): typed descriptors, generation checks, explicit release and bounded reclamation
+- [M2 array owners](docs/engineering/m2-array-owners.md): typed descriptors, generation checks, independent copies, explicit release and bounded reclamation
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
 - [Design baseline](docs/design-baseline.md): source provenance, evidence, and findings

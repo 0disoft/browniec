@@ -4,6 +4,8 @@
 - Implementation: [`array_owners.fy`](../../src/array_owners.fy).
 - Harness: [`verify-m2-owners.ps1`](../../tools/verify-m2-owners.ps1).
 - Evidence: [Windows owner receipt](../evidence/m2-array-owners-windows-20261023.json).
+- Copy increment: [Windows copy receipt](../evidence/m2-array-copy-windows-20261023.json),
+  verified separately by [`verify-m2-copy.ps1`](../../tools/verify-m2-copy.ps1).
 
 This slice adds typed allocation records and generation-checked tokens on top of
 the [array storage primitives](m2-array-storage.md). Array source syntax and
@@ -47,6 +49,27 @@ the order table and resets the used cursor to zero. It is whole-table cleanup,
 not guest function-frame unwinding. Bytes are not erased on release or clear;
 new initialization overwrites the complete payload and padding before publishing.
 
+## Independent copies
+
+`copy(source_token, backing_bytes, table)` derives the exact element type and
+length from the live source owner. It preflights a free descriptor and a fresh
+aligned extent after the existing used prefix. Source and destination bytes plus
+padding must fit simultaneously; this is an old-plus-new payload peak check,
+not complete Instance/Engine or metadata accounting.
+
+Before mutation, a bool source is scanned in full and every byte must be 0 or 1.
+Every fixed-width integer byte pattern is canonical, so integer arrays need no
+extra value scan. Invalid source tokens, quota/descriptor pressure, invalid table
+state and invalid bool bytes leave all bytes, generations and cursor/order state
+unchanged. No partial destination becomes visible.
+
+After successful preflight, copy zeroes new padding and copies the payload into
+the nonoverlapping destination, then advances the cursor and publishes one new
+owner token. It preserves the source owner/generation and creates no loan or
+reference to the source. Mutating either array leaves the other unchanged;
+releasing the source cannot invalidate its copy. Raw copied payload is bounded by
+32768 bytes and the extra bool scan by 4096 bytes. No allocator or retry is added.
+
 ## Boundary and evidence
 
 The caller must bind one table to one stable backing byte region for that table's
@@ -68,6 +91,15 @@ reclamation, descriptor/byte pressure, invalid fill rollback, and corrupt order,
 extent and cursor rejection. Earlier M0, M1, layout and storage evidence is reused
 after identity checks; those executions are not relabeled as new runs.
 
-Next: independent array copies that preflight destination capacity and source
-validity before publishing new ownership. Full source-array, borrow, allocator,
-worker, DLL, packaging and performance gates remain open.
+Independent array copies were implemented in the later copy increment, with
+destination capacity and source validity checked before publication. Four additional native
+groups in development and release cover all six scalar types, two-way mutation
+independence, survival after source release, quota rejection before padding writes,
+late noncanonical bool rejection, stale source/descriptor pressure, and a full
+4096-element usize copy with exact 65536-byte old-plus-new capacity and guards.
+The earlier five-group owner receipt remains historical; its source changes are
+limited to the new copy function and the root source lock.
+
+Next: connect arrays to independent aggregate IR verification and metering, then
+source construction/indexing and VM frame lifetime rules. Full source-array,
+borrow, allocator, worker, DLL, packaging and performance gates remain open.

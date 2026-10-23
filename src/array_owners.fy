@@ -109,6 +109,42 @@ pub fn Result<usize, Error> write(ref Table table, Token token, usize index, i64
         case .ok(value): { .ok(value) } case .err(e): { .err(storage_error(e)) }
     };
 }
+
+// Copy into a fresh, nonoverlapping extent. Validate the entire bool source and
+// all destination limits before changing either payload bytes or owner state.
+pub fn Result<Token, Error> copy(Token source, ref mut u8[] bytes, ref mut Table table) {
+    let Owner owner = resolve(table, source, bytes.len)?;
+    let usize slot = free_slot(table)?;
+    let layouts::Array layout = switch (layouts::scalar(owner.element, owner.length)) {
+        case .ok(value): { value } case .err(_): { return .err(.State); }
+    };
+    let usize mark = table.arena.used;
+    let layouts::Reservation plan = switch (layouts::reserve(ref layout, mark, table.arena.limit)) {
+        case .ok(value): { value }
+        case .err(e): { return .err(switch (e) {
+            case .Type: { .Type } case .Length: { .Length } case .Metadata: { .Metadata }
+            case .Overflow: { .Overflow } case .Quota: { .Quota } case .Bounds: { .Bounds }
+            case .Alignment: { .Alignment }
+        }); }
+    };
+    if (owner.element == 2) {
+        var usize at = owner.base;
+        while (at < owner.end) {
+            if (bytes[at] > 1) { return .err(.Value); }
+            at += 1;
+        }
+    }
+    var usize at = mark;
+    while (at < plan.offset) { bytes[at] = 0; at += 1; }
+    var usize i = 0;
+    while (i < layout.bytes) {
+        let u8 byte = bytes[owner.base + i];
+        bytes[plan.offset + i] = byte;
+        i += 1;
+    }
+    table.arena.used = plan.end;
+    return .ok(publish(table, slot, ref layout, mark, plan.offset));
+}
 fn usize next_generation(usize generation) {
     return if (generation == 18446744073709551615) { 0 } else { generation + 1 };
 }
