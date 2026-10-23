@@ -91,3 +91,41 @@ fn void verifier_rejects_corrupt_private_code() {
     p.count = 4; p.constants[0] = 2147483648;
     assert(!verifier::verify(ref p).is_ok);
 }
+
+@test
+fn void local_values_and_assignments() {
+    result(b"module main; fn i32 main() { let i32 x = 6; var i32 y = x; let i32 old = y; y = y * 7; return y + old; }", 48);
+    result(b"module main; fn i32 main() { var i32 x = 1; x = x + 2; x = x * 3; return x; }", 9);
+    result(b"module main; fn i32 main() { var i32 x = 10; var i32 y = x; x = 20; return y; }", 10);
+    result(b"module main; fn i32 main() { let i32 a = -2147483648; return a; }", -2147483648);
+    result(b"module main; fn i32 main() { let i32 alpha = 2; let i32 alphabet = 3; return alphabet * 10 + alpha; }", 32);
+}
+@test
+fn void local_rejections() {
+    rejected(b"module main; fn i32 main() { return missing; }", 3);
+    rejected(b"module main; fn i32 main() { var i32 x = x; return x; }", 3);
+    rejected(b"module main; fn i32 main() { x = 1; var i32 x = 2; return x; }", 3);
+    rejected(b"module main; fn i32 main() { let i32 x = 1; x = 2; return x; }", 3);
+    rejected(b"module main; fn i32 main() { var i32 x = 1; let i32 x = 2; return x; }", 3);
+    rejected(b"module main; fn i32 main() { var i32 x; return x; }", 2);
+    rejected(b"module main; fn i32 main() { let i64 x = 1; return x; }", 3);
+    rejected(b"module main; fn i32 main() { var i32 x = 1; x = missing; return x; }", 3);
+    rejected(b"module main; fn i32 main() { let i32 return = 1; return 0; }", 2);
+    rejected(b"module main; fn i32 main() { let i32 x = 1; return x = 2; }", 2);
+    rejected(b"module main; fn i32 main() { var i32 x = 1; x += 2; return x; }", 2);
+    rejected(b"module main; fn i32 main() { var i32 x = 1; }", 2);
+}
+@test
+fn void local_traps_fuel_and_reuse() {
+    trapped(b"module main; fn i32 main() { let i32 unused = 1 / 0; return 42; }", 7);
+    trapped(b"module main; fn i32 main() { var i32 x = 2147483647; x = x + 1; return 0; }", 6);
+    trapped(b"module main; fn i32 main() { var i32 x = 1; x = x / 0; return x; }", 7);
+    let ir::Program p = compiled(b"module main; fn i32 main() { var i32 x = 6; let i32 old = x; x = x * 7; return x + old; }");
+    assert(switch (vm::run(ref p, 4)) { case .ok(_): { false } case .err(e): { e.kind == 8 } });
+    assert(switch (vm::run(ref p, 5)) { case .ok(n): { n == 48 } case .err(_): { false } });
+    assert(switch (vm::run(ref p, 5)) { case .ok(n): { n == 48 } case .err(_): { false } });
+    // The verifier still rejects a read of a register never defined by the source path.
+    var ir::Program corrupt = p;
+    corrupt.code[26] = 127;
+    assert(!verifier::verify(ref corrupt).is_ok);
+}

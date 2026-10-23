@@ -1,0 +1,9 @@
+module main;
+
+fn i32 main() {
+    let i32 base = 6;
+    var i32 answer = base;
+    let i32 snapshot = answer;
+    answer = answer * 7;
+    return answer + snapshot;
+}

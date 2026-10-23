@@ -97,8 +97,47 @@ case("nul-token", program("1\x00+2"), error="lexical")
 case("missing-semicolon", b"module main; fn i32 main() { return 1 }", error="syntax")
 case("trailing-source", base + b" garbage", error="syntax")
 case("unsupported-type", base.replace(b"i32", b"i64"), error="type")
-case("unsupported-variable", program("value"), error="syntax")
+case("undefined-variable", program("value"), error="type")
 case("comment-utf8", b"// \xce\xbb\n" + base, 42)
+def body(statements):
+    return ("module main; fn i32 main() { " + statements + " }").encode()
+
+
+for name, statements, value in [
+    ("locals-copy-snapshot", "let i32 base=6; var i32 x=base; let i32 old=x; x=x*7; return x+old;", 48),
+    ("locals-reassign", "var i32 x=1; x=x+2; x=x*3; return x;", 9),
+    ("locals-var-copy", "var i32 x=10; var i32 y=x; x=20; return y;", 10),
+    ("locals-minimum", "let i32 min=-2147483648; return min;", -2147483648),
+    ("locals-names", "let i32 a=2; let i32 ab=3; let i32 A=5; return a+ab*10+A*100;", 532),
+]:
+    case(name, body(statements), value)
+for name, statements, error in [
+    ("locals-let-assign", "let i32 x=1; x=2; return x;", "type"),
+    ("locals-duplicate", "let i32 x=1; var i32 x=2; return x;", "type"),
+    ("locals-self-reference", "var i32 x=x; return x;", "type"),
+    ("locals-forward-reference", "let i32 x=y; let i32 y=1; return x;", "type"),
+    ("locals-assign-before-declare", "x=1; var i32 x=2; return x;", "type"),
+    ("locals-uninitialized", "var i32 x; return x;", "syntax"),
+    ("locals-annotation", "let i64 x=1; return x;", "type"),
+    ("locals-initializer-type", "let i32 x=true; return x;", "syntax"),
+    ("locals-reserved-name", "let i32 return=1; return 0;", "syntax"),
+    ("locals-assignment-expression", "var i32 x=1; return x=2;", "syntax"),
+    ("locals-compound-unsupported", "var i32 x=1; x+=2; return x;", "syntax"),
+    ("locals-missing-semicolon", "let i32 x=1 return x;", "syntax"),
+    ("locals-missing-return", "let i32 x=1;", "syntax"),
+    ("locals-extra-after-return", "return 1; let i32 x=2;", "syntax"),
+    ("locals-unused-trap", "let i32 unused=1/0; return 42;", "zero_divisor"),
+    ("locals-reassign-overflow", "var i32 x=2147483647; x=x+1; return 0;", "overflow"),
+]:
+    case(name, body(statements), error=error)
+case("locals-fuel-exact", body("var i32 x=6; let i32 old=x; x=x*7; return x+old;"), 48, fuel=5)
+case("locals-fuel-short", body("var i32 x=6; let i32 old=x; x=x*7; return x+old;"), error="fuel", fuel=4)
+case("locals-check-does-not-execute", body("let i32 unused=1/0; return 42;"), mode="check")
+case("local-limit-exact", body("let i32 v0=1;" + "".join(f"let i32 v{i}=v0;" for i in range(1,64)) + "return v63;"), 1)
+case("local-limit-over", body("let i32 v0=1;" + "".join(f"let i32 v{i}=v0;" for i in range(1,65)) + "return v64;"), error="compile_limit")
+case("tokens-exact", body("var i32 x=0;" + "x=x;" * 251 + "return x;"), 0)
+case("tokens-over", body("var i32 x=0;" + "x=x;" * 252 + "return x;"), error="compile_limit")
+
 randomizer = random.Random(20261023)
 for index in range(32):
     a, b, c = [randomizer.randint(-1000, 1000) for _ in range(3)]
