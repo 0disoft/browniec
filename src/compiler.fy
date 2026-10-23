@@ -9,6 +9,8 @@ import types as types;
 import std::text as text;
 
 fn u8 precedence(u8 kind) {
+    if (kind == 133) { return 1; }
+    if (kind == 132) { return 2; }
     if (kind == 128 || kind == 129) { return 3; }
     if (kind == 60 || kind == 62 || kind == 130 || kind == 131) { return 4; }
     if (kind == 43 || kind == 45) { return 5; }
@@ -81,7 +83,9 @@ fn Result<usize, errors::Error> primary(ref u8[] source, ref mut lexer::State s,
             return ir::call(p, target, view[..arity], at);
         }
         if (index == 64) { return .err(errors::make(3, at)); }
-        return .ok(table.registers[index]);
+        let usize register = table.registers[index];
+        if (p.slots[register]) { return ir::emit(p, 17, register, 0, at); }
+        return .ok(register);
     }
     if (s.kind == 40) {
         let usize advanced = lexer::next(source, s)?;
@@ -95,10 +99,24 @@ fn Result<usize, errors::Error> expression(ref u8[] source, ref mut lexer::State
     if (depth > 32) { return .err(errors::make(4, s.begin)); }
     var usize left = primary(source, s, p, table, signatures, depth)?;
     while (precedence(s.kind) >= minimum) {
+        let u8 kind = s.kind;
         let u8 level = precedence(s.kind);
         let u8 operation = opcode(s.kind);
         let usize at = s.begin;
         let usize advanced = lexer::next(source, s)?;
+        if (kind == 132 || kind == 133) {
+            if (p.types[left] != 2) { return .err(errors::make(3, at)); }
+            let usize slot = ir::slot(p, 2, at)?;
+            let usize initial = ir::raw(p, 18, slot, left, 0, at)?;
+            let usize jump = ir::raw(p, if (kind == 132) { 20 } else { 21 }, 0, left, 0, at)?;
+            let usize right = expression(source, s, p, table, signatures, level + 1, depth + 1)?;
+            if (p.types[right] != 2) { return .err(errors::make(3, at)); }
+            let usize stored = ir::raw(p, 18, slot, right, 0, at)?;
+            let usize target = p.count;
+            let usize patched = ir::patch(p, jump, target, at)?;
+            left = ir::emit(p, 17, slot, 0, at)?;
+            continue;
+        }
         let usize right = expression(source, s, p, table, signatures, level + 1, depth + 1)?;
         if (p.types[left] != p.types[right] || ((operation < 11 || operation > 12) && p.types[left] != 1)) { return .err(errors::make(3, at)); }
         left = ir::emit(p, operation, left, right, at)?;
@@ -128,7 +146,12 @@ fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State 
         let usize value = expression(source, s, p, table, signatures, 1, 0)?;
         if (p.types[value] != tag) { return .err(errors::make(3, begin)); }
         let usize end_statement = lexer::punctuation(source, s, 59)?;
-        return locals::declare(table, begin, end, value, mutable);
+        var usize binding = value;
+        if (mutable) {
+            binding = ir::slot(p, tag, begin)?;
+            let usize stored = ir::raw(p, 18, binding, value, 0, begin)?;
+        }
+        return locals::declare(table, begin, end, binding, mutable);
     }
     if (s.kind != 2 || locals::reserved(source[s.begin..s.end])) {
         return .err(errors::make(2, s.begin));
@@ -141,9 +164,64 @@ fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State 
     let usize value = expression(source, s, p, table, signatures, 1, 0)?;
     if (p.types[value] != p.types[table.registers[index]]) { return .err(errors::make(3, at)); }
     let usize end_statement = lexer::punctuation(source, s, 59)?;
-    // Registers never mutate: copies retain their earlier value after rebinding.
-    table.registers[index] = value;
+    let usize stored = ir::raw(p, 18, table.registers[index], value, 0, at)?;
     return .ok(index);
+}
+
+fn Result<bool, errors::Error> block(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 result_type, usize depth) {
+    if (depth > 32) { return .err(errors::make(4, s.begin)); }
+    let usize open = lexer::punctuation(source, s, 123)?;
+    let usize outer = table.count;
+    var bool terminal = false;
+    while (s.kind != 125) {
+        if (s.kind == 0 || terminal) { return .err(errors::make(2, s.begin)); }
+        terminal = control(source, s, p, table, signatures, result_type, depth)?;
+    }
+    table.count = outer;
+    let usize close = lexer::next(source, s)?;
+    return .ok(terminal);
+}
+fn Result<bool, errors::Error> control(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 result_type, usize depth) {
+    if (depth > 32) { return .err(errors::make(4, s.begin)); }
+    let usize at = s.begin;
+    if (word_is(source, s, b"return")) {
+        let usize keyword = lexer::next(source, s)?;
+        let usize value = expression(source, s, p, table, signatures, 1, 0)?;
+        if (p.types[value] != result_type) { return .err(errors::make(3, at)); }
+        let usize end = lexer::punctuation(source, s, 59)?;
+        let usize returned = ir::emit(p, 8, value, 0, at)?;
+        return .ok(true);
+    }
+    if (word_is(source, s, b"if")) {
+        let usize keyword = lexer::next(source, s)?;
+        let usize open = lexer::punctuation(source, s, 40)?;
+        let usize condition = expression(source, s, p, table, signatures, 1, 0)?;
+        if (p.types[condition] != 2) { return .err(errors::make(3, at)); }
+        let usize close = lexer::punctuation(source, s, 41)?;
+        let usize branch = ir::raw(p, 20, 0, condition, 0, at)?;
+        let bool then_returns = block(source, s, p, table, signatures, result_type, depth + 1)?;
+        if (word_is(source, s, b"else")) {
+            var usize skip = 256;
+            if (!then_returns) { skip = ir::raw(p, 19, 0, 0, 0, at)?; }
+            let usize else_start = p.count;
+            let usize patched = ir::patch(p, branch, else_start, at)?;
+            let usize else_word = lexer::next(source, s)?;
+            let bool else_returns = if (word_is(source, s, b"if")) {
+                control(source, s, p, table, signatures, result_type, depth + 1)?
+            } else { block(source, s, p, table, signatures, result_type, depth + 1)? };
+            if (skip != 256) {
+                let usize continuation = p.count;
+                let usize skipped = ir::patch(p, skip, continuation, at)?;
+            }
+            return .ok(then_returns && else_returns);
+        }
+        let usize continuation = p.count;
+        let usize patched = ir::patch(p, branch, continuation, at)?;
+        return .ok(false);
+    }
+    if (s.kind == 123) { return block(source, s, p, table, signatures, result_type, depth + 1); }
+    let usize regular = statement(source, s, p, table, signatures)?;
+    return .ok(false);
 }
 
 fn Result<usize, errors::Error> body(ref u8[] source, ref functions::Table signatures, usize f, ref mut ir::Program p) {
@@ -167,15 +245,13 @@ fn Result<usize, errors::Error> body(ref u8[] source, ref functions::Table signa
     var lexer::State s = lexer::empty();
     s.cursor = signatures.bodies[f];
     let usize first = lexer::next(source, ref mut s)?;
-    while (!word_is(source, ref s, b"return")) {
-        let usize compiled_statement = statement(source, ref mut s, p, ref mut table, signatures)?;
+    var bool terminal = false;
+    while (s.kind != 125) {
+        if (terminal || s.kind == 0) { return .err(errors::make(2, s.begin)); }
+        terminal = control(source, ref mut s, p, ref mut table, signatures, signatures.return_types[f], 0)?;
     }
-    let usize return_word = lexer::word(source, ref mut s, b"return")?;
-    let usize value = expression(source, ref mut s, p, ref table, signatures, 1, 0)?;
-    if (p.types[value] != signatures.return_types[f]) { return .err(errors::make(3, s.begin)); }
-    let usize return_end = lexer::punctuation(source, ref mut s, 59)?;
+    if (!terminal) { return .err(errors::make(2, s.begin)); }
     if (s.kind != 125 || s.begin != signatures.body_ends[f]) { return .err(errors::make(2, s.begin)); }
-    let usize returned = ir::emit(p, 8, value, 0, s.begin)?;
     let usize end = p.count;
     let usize registers_end = p.registers;
     p.ends[f] = end;

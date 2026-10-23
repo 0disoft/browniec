@@ -6,6 +6,7 @@ import std::num as num;
 // Private eight-byte instructions: op,dst,a,b,0,0,0,0. Scalar tags: 1 i32, 2 bool.
 // Opcodes: 1 constant, 2 add, 3 sub, 4 mul, 5 div, 6 rem, 7 neg, 8 return, 9 call.
 // 10 not, 11 eq, 12 ne, 13 lt, 14 le, 15 gt, 16 ge.
+// 17 load, 18 store, 19 jump, 20 jump-if-false, 21 jump-if-true.
 pub struct Program {
     u8[2048] code;
     i64[128] constants;
@@ -25,6 +26,7 @@ pub struct Program {
     usize call_count;
     u8[128] types;
     u8[16] return_types;
+    bool[128] slots;
 }
 
 pub fn Program empty() {
@@ -33,7 +35,7 @@ pub fn Program empty() {
         .starts = [0; 16], .ends = [0; 16], .register_starts = [0; 16],
         .register_ends = [0; 16], .arities = [0; 16], .call_args = [0; 256],
         .call_arities = [0; 32], .function_count = 0, .entry = 0, .call_count = 0,
-        .types = [0; 128], .return_types = [0; 16] };
+        .types = [0; 128], .return_types = [0; 16], .slots = [false; 128] };
 }
 
 fn Result<u8, errors::Error> byte(usize value, usize offset) {
@@ -57,7 +59,8 @@ pub fn Result<usize, errors::Error> emit(ref mut Program p, u8 op, usize a, usiz
     p.offsets[index] = offset;
     p.count += 1;
     if (op != 8) {
-        let u8 tag = if (op >= 10 && op <= 16) { 2 } else if (op == 9) { p.return_types[a] } else { 1 };
+        let u8 tag = if (op >= 10 && op <= 16) { 2 } else if (op == 9) { p.return_types[a] }
+            else if (op == 17) { p.types[a] } else { 1 };
         p.types[dst] = tag;
         p.registers += 1;
     }
@@ -90,4 +93,31 @@ pub fn Result<usize, errors::Error> boolean(ref mut Program p, bool value, usize
     let usize result = literal(p, if (value) { 1 } else { 0 }, offset)?;
     p.types[result] = 2;
     return .ok(result);
+}
+
+// Mutable slots share the bounded register cells, but are never value operands.
+pub fn Result<usize, errors::Error> slot(ref mut Program p, u8 tag, usize offset) {
+    if (p.registers >= 128) { return .err(errors::make(4, offset)); }
+    let usize index = p.registers;
+    p.types[index] = tag;
+    p.slots[index] = true;
+    p.registers += 1;
+    return .ok(index);
+}
+pub fn Result<usize, errors::Error> raw(ref mut Program p, u8 op, usize dst, usize a, usize b, usize offset) {
+    if (p.count >= 256) { return .err(errors::make(4, offset)); }
+    let usize index = p.count;
+    let usize at = index * 8;
+    p.code[at] = op;
+    p.code[at + 1] = byte(dst, offset)?;
+    p.code[at + 2] = byte(a, offset)?;
+    p.code[at + 3] = byte(b, offset)?;
+    p.offsets[index] = offset;
+    p.count += 1;
+    return .ok(index);
+}
+pub fn Result<usize, errors::Error> patch(ref mut Program p, usize jump, usize target, usize offset) {
+    let usize field = if (p.code[jump * 8] == 19) { 2 } else { 3 };
+    p.code[jump * 8 + field] = byte(target, offset)?;
+    return .ok(target);
 }

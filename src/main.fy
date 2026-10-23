@@ -37,7 +37,7 @@ fn i32 main() {
         return if (io::write("{\"schema\":\"browniec.version/v1\",\"profile\":\"brownie.m1-scalar/1\",\"core\":true,\"restricted\":false,\"embed\":false}\n").is_ok) { 0 } else { 7 };
     }
     if (lexer::equal(command_view[..command_length], b"--help") && argc == 2) {
-        return if (io::write("browniec check SOURCE [--json]\nbrowniec run SOURCE [--fuel N] [--json]\nTrusted local source only; experimental i32 expression subset.\n").is_ok) { 0 } else { 7 };
+        return if (io::write("browniec check SOURCE [--json]\nbrowniec run SOURCE [--fuel N] [--json]\nTrusted local source only; experimental i32/bool functions and branches.\n").is_ok) { 0 } else { 7 };
     }
     let bool run = lexer::equal(command_view[..command_length], b"run");
     if (!run && !lexer::equal(command_view[..command_length], b"check")) {

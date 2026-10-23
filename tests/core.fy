@@ -121,9 +121,9 @@ fn void local_traps_fuel_and_reuse() {
     trapped(b"module main; fn i32 main() { var i32 x = 2147483647; x = x + 1; return 0; }", 6);
     trapped(b"module main; fn i32 main() { var i32 x = 1; x = x / 0; return x; }", 7);
     let ir::Program p = compiled(b"module main; fn i32 main() { var i32 x = 6; let i32 old = x; x = x * 7; return x + old; }");
-    assert(switch (vm::run(ref p, 4)) { case .ok(_): { false } case .err(e): { e.kind == 8 } });
-    assert(switch (vm::run(ref p, 5)) { case .ok(n): { n == 48 } case .err(_): { false } });
-    assert(switch (vm::run(ref p, 5)) { case .ok(n): { n == 48 } case .err(_): { false } });
+    assert(switch (vm::run(ref p, 9)) { case .ok(_): { false } case .err(e): { e.kind == 8 } });
+    assert(switch (vm::run(ref p, 10)) { case .ok(n): { n == 48 } case .err(_): { false } });
+    assert(switch (vm::run(ref p, 10)) { case .ok(n): { n == 48 } case .err(_): { false } });
     // The verifier still rejects a read of a register never defined by the source path.
     var ir::Program corrupt = p;
     corrupt.code[26] = 127;

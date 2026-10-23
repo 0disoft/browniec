@@ -71,8 +71,11 @@ fn Result<usize, errors::Error> signature(ref u8[] source, ref mut lexer::State 
     let usize close = lexer::punctuation(source, s, 41)?;
     let usize body = lexer::punctuation(source, s, 123)?;
     t.bodies[f] = s.begin;
-    while (s.kind != 125) {
-        if (s.kind == 0 || s.kind == 123) { return .err(errors::make(2, s.begin)); }
+    var usize depth = 1;
+    while (depth != 0) {
+        if (s.kind == 0) { return .err(errors::make(2, s.begin)); }
+        if (s.kind == 123) { depth += 1; if (depth > 33) { return .err(errors::make(4, s.begin)); } }
+        if (s.kind == 125) { depth -= 1; if (depth == 0) { break; } }
         let usize token = lexer::next(source, s)?;
     }
     t.body_ends[f] = s.begin;

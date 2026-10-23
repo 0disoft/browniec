@@ -24,6 +24,16 @@ pub fn Result<i64, errors::Error> run(ref ir::Program p, usize fuel) {
         if (remaining < cost) { return .err(errors::make(8, p.offsets[pc])); }
         remaining -= cost;
         let usize base = frame * 128;
+        if (op == 19 || op == 20 || op == 21) {
+            if (op == 19) { pc = a; }
+            else if ((registers[base + a] == 0) == (op == 20)) { pc = b; }
+            else { pc += 1; }
+            continue;
+        }
+        if (op == 18) {
+            let i64 stored = registers[base + a];
+            registers[base + dst] = stored; pc += 1; continue;
+        }
         if (op == 8) {
             let i64 value = registers[base + a];
             if (frame == 0) { return .ok(value); }
@@ -52,6 +62,7 @@ pub fn Result<i64, errors::Error> run(ref ir::Program p, usize fuel) {
         }
         var i64 value = 0;
         if (op == 1) { value = p.constants[a]; }
+        else if (op == 17) { value = registers[base + a]; }
         else {
             let i64 left = registers[base + a];
             // Unary negation has no right register; b=0 may belong to another function.

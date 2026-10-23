@@ -130,13 +130,13 @@ for name, statements, error in [
     ("locals-reassign-overflow", "var i32 x=2147483647; x=x+1; return 0;", "overflow"),
 ]:
     case(name, body(statements), error=error)
-case("locals-fuel-exact", body("var i32 x=6; let i32 old=x; x=x*7; return x+old;"), 48, fuel=5)
-case("locals-fuel-short", body("var i32 x=6; let i32 old=x; x=x*7; return x+old;"), error="fuel", fuel=4)
+case("locals-fuel-exact", body("var i32 x=6; let i32 old=x; x=x*7; return x+old;"), 48, fuel=10)
+case("locals-fuel-short", body("var i32 x=6; let i32 old=x; x=x*7; return x+old;"), error="fuel", fuel=9)
 case("locals-check-does-not-execute", body("let i32 unused=1/0; return 42;"), mode="check")
 case("local-limit-exact", body("let i32 v0=1;" + "".join(f"let i32 v{i}=v0;" for i in range(1,64)) + "return v63;"), 1)
 case("local-limit-over", body("let i32 v0=1;" + "".join(f"let i32 v{i}=v0;" for i in range(1,65)) + "return v64;"), error="compile_limit")
-case("tokens-exact", body("var i32 x=0;" + "x=x;" * 251 + "return x;"), 0)
-case("tokens-over", body("var i32 x=0;" + "x=x;" * 252 + "return x;"), error="compile_limit")
+case("tokens-exact", body("let i32 a=0;" + "{let i32 x=a;}" * 125 + "return ((a));"), 0)
+case("tokens-over", body("let i32 a=0;" + "{let i32 x=a;}" * 125 + "return (((a)));"), error="compile_limit")
 
 # Real multi-function programs: calls are executed by the VM, not inlined by tests.
 for name, source, expected in [
@@ -181,11 +181,97 @@ case("functions-over", ("module main;" + helpers + "fn i32 extra() { return 1; }
 params = ",".join(f"i32 x{i}" for i in range(9))
 case("parameters-over", f"module main; fn i32 f({params}) {{ return x0; }} fn i32 main() {{ return 0; }}".encode(), error="compile_limit")
 call_sequence = "module main; fn i32 id(i32 x) { return x; } fn i32 main() { var i32 x=0;"
-case("call-sites-exact", (call_sequence + "x=id(x);" * 32 + "return x; }").encode(), 0, fuel=98)
-case("call-sites-fuel", (call_sequence + "x=id(x);" * 32 + "return x; }").encode(), error="fuel", fuel=97)
+case("call-sites-exact", (call_sequence + "x=id(x);" * 32 + "return x; }").encode(), 0, fuel=164)
+case("call-sites-fuel", (call_sequence + "x=id(x);" * 32 + "return x; }").encode(), error="fuel", fuel=163)
 case("call-sites-over", (call_sequence + "x=id(x);" * 33 + "return x; }").encode(), error="compile_limit")
 
 randomizer = random.Random(20261023)
+for index, (expr, expected) in enumerate([
+    ("true", True), ("false", False), ("!true", False), ("!!true", True),
+    ("!false", True), ("true==false", False), ("true!=false", True),
+    ("false==false", True), ("true!=true", False), ("true==!false", True),
+    ("1==1", True), ("1!=1", False), ("-1==1", False), ("-1!=1", True),
+    ("-1<1", True), ("1<1", False), ("2<1", False),
+    ("1<=1", True), ("2<=1", False), ("0<=1", True),
+    ("2>1", True), ("1>1", False), ("0>1", False),
+    ("1>=1", True), ("2>=1", True), ("0>=1", False),
+    ("-2147483648<2147483647", True), ("2147483647>-2147483648", True),
+    ("2+3*4==14", True), ("1<2==true", True),
+    ("false || true && false", False), ("(false || true) && true", True),
+    ("true && true", True), ("true && false", False),
+    ("false && true", False), ("false && false", False),
+    ("true || true", True), ("true || false", True),
+    ("false || true", True), ("false || false", False),
+    ("false && (1/0==0)", False), ("true || (1/0==0)", True),
+    ("false || true || (1/0==0)", True),
+    ("true && false && (1/0==0)", False),
+]):
+    case(f"boolean-value-{index}", body(f"if({expr}) {{return 1;}} else {{return 0;}}"), int(expected))
+for name, expr, error in [
+    ("and-evaluated", "true && 1/0==0", "zero_divisor"),
+    ("or-evaluated", "false || 1/0==0", "zero_divisor"),
+    ("logic-first-failure", "1/0==0 || 2147483647+1==0", "zero_divisor"),
+    ("logic-overflow-first", "2147483647+1==0 && 1/0==0", "overflow"),
+    ("and-integer", "1 && true", "type"),
+    ("or-integer", "true || 1", "type"),
+    ("skipped-invalid-type", "false && 1", "type"),
+    ("comparison-chain", "1<2<3", "type"),
+]:
+    case(name, body(f"if({expr}) {{return 1;}} return 0;"), error=error)
+for name, statements, expected in [
+    ("branch-true", "if(true) {return 42;} return 1/0;", 42),
+    ("branch-false", "if(false) {return 1/0;} return 42;", 42),
+    ("branch-var-then", "var i32 x=1; if(true) {x=42;} return x;", 42),
+    ("branch-var-skip", "var i32 x=1; if(false) {x=42;} return x;", 1),
+    ("branch-var-else", "var i32 x=1; if(false) {x=2;} else {x=42;} return x;", 42),
+    ("branch-copy", "var i32 x=1; let i32 old=x; if(true) {x=41;} else {x=0;} return x+old;", 42),
+    ("branch-nested", "var i32 x=0; if(true) {if(false) {x=1;} else {x=42;}} return x;", 42),
+    ("branch-empty", "if(true) {} else {} return 42;", 42),
+    ("branch-sibling-scope", "var i32 x=0; {let i32 a=20; x=a;} {let i32 a=22; x=x+a;} return x;", 42),
+    ("branch-bool-slot", "var bool b=true; let bool old=b; if(old) {b=false;} if(!b && old) {return 42;} return 0;", 42),
+    ("branch-else-if", "if(false) {return 0;} else if(true) {return 42;} else {return 1;}", 42),
+    ("branch-early-else", "var i32 x=0; if(true) {x=42;} else {return 1;} return x;", 42),
+    ("branch-early-then", "var i32 x=0; if(false) {return 1;} else {x=42;} return x;", 42),
+]:
+    case(name, body(statements), expected)
+for name, statements, error in [
+    ("branch-integer-condition", "if(1) {return 1;} return 0;", "type"),
+    ("branch-scope-escape", "if(true) {let i32 x=1;} return x;", "type"),
+    ("branch-else-scope", "if(true) {let i32 x=1;} else {return x;} return 0;", "type"),
+    ("branch-immutable", "let i32 x=1; if(true) {x=2;} return x;", "type"),
+    ("branch-shadow", "let i32 x=1; {let i32 x=2;} return x;", "type"),
+    ("branch-missing-return", "if(true) {return 1;}", "syntax"),
+    ("branch-unreachable", "if(true) {return 1;} else {return 0;} return 2;", "syntax"),
+    ("branch-no-braces", "if(true) return 1; return 0;", "syntax"),
+    ("branch-else-without-if", "else {return 1;} return 0;", "syntax"),
+    ("branch-skipped-invalid-body", "if(false) {return true;} return 0;", "type"),
+    ("single-and", "let bool b=true & false; return 0;", "lexical"),
+    ("single-or", "let bool b=true | false; return 0;", "lexical"),
+]:
+    case(name, body(statements), error=error)
+case("block-depth-exact", body("{" * 32 + "return 42;" + "}" * 32), 42)
+case("block-depth-over", body("{" * 33 + "return 42;" + "}" * 33), error="compile_limit")
+instruction_prefix = "let i32 c=0; var i32 x=c;" + "x=x;" * 125
+case("instruction-exact", body(instruction_prefix + "x=c;x=c;return x;"), 0)
+case("instruction-over", body(instruction_prefix + "x=c;x=c;x=c;return x;"), error="compile_limit")
+branch = body("if(true) {return 42;} return 1/0;")
+case("branch-fuel-exact", branch, 42, fuel=4)
+case("branch-fuel-short", branch, error="fuel", fuel=3)
+short = body("let bool b=false && 1/0==0; if(b) {return 1;} return 42;")
+case("short-circuit-fuel-exact", short, 42, fuel=7)
+case("short-circuit-fuel-short", short, error="fuel", fuel=6)
+factorial = b"module main; fn i32 factorial(i32 n) {if(n<=1) {return 1;} return n*factorial(n-1);} fn i32 main() {return factorial(5);}"
+case("factorial", factorial, 120)
+case("factorial-check", factorial, mode="check")
+case("factorial-overflow", factorial.replace(b"factorial(5)", b"factorial(13)"), error="overflow")
+deep = b"module main; fn i32 f(i32 n) {if(n==0) {return 0;} return f(n-1);} fn i32 main() {return f(30);}"
+case("branch-frames-exact", deep, 0, fuel=1000)
+case("branch-frames-over", deep.replace(b"f(30)",b"f(31)"), error="frame_limit", fuel=1000)
+case("branch-recursion-fuel", deep, error="fuel", fuel=10)
+case("branch-frame-reuse", b"module main; fn i32 f(bool b) {var i32 x=1; if(b) {x=7;} return x;} fn i32 main() {return f(true)*10+f(false);}", 71)
+case("short-call-skipped", b"module main; fn bool bad() {return bad();} fn i32 main() {if(true || bad()) {return 42;} return 0;}", 42)
+case("short-call-taken", b"module main; fn bool bad() {return bad();} fn i32 main() {if(false || bad()) {return 42;} return 0;}", error="frame_limit")
+
 case("bool-pipeline", b"module main; fn bool f(i32 x,bool b) { return !(x<=42)==b; } fn i32 sink(bool b) { return 42; } fn i32 main() { return sink(f(41,true)); }", 42)
 for name, statements in [
     ("bool-integer-init", "let bool b=1; return 0;"),

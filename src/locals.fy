@@ -3,8 +3,8 @@ module locals;
 import lexer as lexer;
 import errors as errors;
 
-// One function-body scope. Names are spans in the immutable source snapshot.
-// A binding refers to a single-definition value register; assignment rebinds var.
+// Active lexical bindings. Names are spans in the immutable source snapshot.
+// Immutable bindings refer to values; var bindings refer to stable typed slots.
 pub struct Table {
     usize[64] begins;
     usize[64] ends;
