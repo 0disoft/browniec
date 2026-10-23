@@ -1,6 +1,6 @@
 # M1 Shallow Switch Expressions
 
-- Status: implemented and verified on Windows; 41 native groups and 580 CLI cases in each development and release profile
+- Status: implemented and verified on Windows; historical after the i64 increment; 41 native groups and 580 CLI cases in each development and release profile
 - Scope: exhaustive shallow-wrapper switch expressions in `brownie.m1-scalar/1`
 
 This increment extends the tagged switch statement into expression position. It
@@ -84,6 +84,8 @@ The [dated receipt](../evidence/m1-switch-expressions-windows-20261023.json)
 records 41 native groups and 580 black-box CLI cases in each development and release
 profile. This increment adds 70 CLI cases and leaves all 39 frozen inputs unchanged.
 The prior propagation receipt remains historical at 37 native groups and 510 CLI
-cases; the tagged receipt remains historical at 33 and 423. Other scalar types,
-richer value-arm statements, arrays, structs, M2 and later milestones, workers, the
-DLL ABI, Windows isolation, and performance remain outside this slice.
+cases; the tagged receipt remains historical at 33 and 423. The successor
+[i64 contract](m1-i64.md) records 49 native groups and 760 CLI cases in each
+profile. Richer value-arm statements, remaining scalar types, arrays, structs, M2 and
+later milestones, workers, the DLL ABI, Windows isolation, and performance remain
+outside this slice.

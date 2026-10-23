@@ -1,14 +1,14 @@
 # M1 Bool and Branch Slice
 
-- Status: implemented and verified for the branch slice; historical after the loop, tagged, propagation, and switch-expression increments
+- Status: implemented and verified for the branch slice; historical after the loop, tagged, propagation, switch-expression, and i64 increments
 - Scope: bool scalars, lexical blocks, structured branches, early returns, and CFG checks in `brownie.m1-scalar/1`
 
 This increment keeps the experimental `brownie.m1-scalar/1` profile bounded. It
 extends the existing i32 expression, local, and direct-call pipeline with bool
 values and branch control flow. The separate [loop increment](m1-loops.md) extends
 the same grammar with `while`, classic `for`, `break`, `continue`, and backedges.
-The later tagged and switch-expression increments add wrapper values and
-expression-position exhaustive arms. Neither document defines the full
+The later tagged, switch-expression, and i64 increments add wrapper values,
+expression-position exhaustive arms, and full-width signed integers. None defines the full
 `brownie.safe/0.3` profile, aggregates, host calls, Windows isolation, or the embed ABI.
 
 ## Source surface
@@ -180,9 +180,9 @@ their narrower slices; none of them is evidence for branches or LOAD/STORE/CFG
 behavior. Postfix `?` is owned by the [propagation contract](m1-propagation.md) and
 expression-position exhaustive arms by the
 [switch-expression contract](m1-switch-expressions.md). The propagation and tagged
-receipts are historical after the switch-expression increment; the current
-[switch-expression receipt](../evidence/m1-switch-expressions-windows-20261023.json)
-records 41 native groups and 580 CLI cases in each profile. Full M1, other scalar
+receipts are historical; the switch-expression receipt records 41 native groups and
+580 CLI cases. The current [i64 receipt](../evidence/m1-i64-windows-20261023.json)
+records 49 native groups and 760 CLI cases in each profile. Full M1, remaining scalar
 types, richer value-arm statements, Windows isolation, and performance remain unverified. No OS sandbox,
 performance target, clean-machine package, or DLL ABI claim follows from this
 increment.

@@ -2,7 +2,7 @@
 
 - Status: accepted design baseline
 - Decision date: 2026-10-23
-- Implementation: M0 verified; experimental M1 scalar pipeline and VM implemented; bool/branch, loop, and tagged slices historically verified; scalar `?` propagation historically verified; switch expressions verified
+- Implementation: M0 verified; experimental M1 scalar pipeline and VM implemented; bool/branch, loop, tagged, `?`, and switch-expression slices historically verified; i64 implemented and verified
 
 ## Intent
 
@@ -14,8 +14,8 @@ The system is not a C interpreter and does not expose C memory layout to source.
 Its explicit Fairy-like syntax is its own safe profile.
 
 The implemented [M1 scalar slice](docs/engineering/m1-scalar-slice.md) runs real `.brc`
-expressions through lexing/parsing, i32/bool type checks, private IR, verifier, and
-VM. Immutable parameters and `let` names use single-definition registers; `var`
+expressions through lexing/parsing, i32/i64/bool type checks, private IR, verifier,
+and VM. Immutable parameters and `let` names use single-definition registers; `var`
 names use typed storage slots in the same bounded register file. Structured if/else
 and standalone blocks lower to forward-only jumps, and short-circuit operators skip
 their right operand. `while` and classic `for` add a control head, a forward exit
@@ -42,11 +42,14 @@ the same exhaustive `CASE` dispatch. Each value arm stores its final result into
 lazy typed join slot and jumps forward to a shared `LOAD`; direct-return arms emit
 their function return and do not join. A final variant mismatch targets
 `MATCH_FAIL`, and the existing verifier proves the join slot is initialized before
-`LOAD`. No VM opcode or guest heap allocation is added. The current switch-expression
-[receipt](docs/evidence/m1-switch-expressions-windows-20261023.json) records 41
-native groups and 580 CLI cases in each profile. Ownership, lifecycle APIs, Engine, host calls, workers, and DLLs
-remain designs; full M1, richer value-arm statements, and other scalar types remain
-unverified or unimplemented. M0
+`LOAD`. The switch-expression receipt remains historical at 41 native groups and
+580 CLI cases. The i64 increment uses scalar tag 9, checked arithmetic, and the
+existing i64 constants and register cells; it adds no opcode, guest heap allocation,
+or Fuel policy. Its [receipt](docs/evidence/m1-i64-windows-20261023.json) records
+49 native groups and 760 CLI cases in each development and release profile. Ownership,
+lifecycle APIs, Engine, host calls, workers, and DLLs remain designs; full M1,
+richer value-arm statements, and remaining scalar types remain unverified or
+unimplemented. M0
 separately exercises native arithmetic, codec, storage, allocator, owner, and frame
 primitives.
 

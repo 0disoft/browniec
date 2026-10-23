@@ -1,7 +1,7 @@
 # Validation
 
-- Status: accepted evidence policy; M0 verified; M1 bool/branch, loop, and shallow tagged slices have verified historical receipts; propagation historically verified; switch expressions implemented and verified
-- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation
+- Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, and switch-expression receipts are verified historical evidence; i64 implemented and verified
+- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/bool values, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation
 
 ## Validation source of truth
 
@@ -138,16 +138,28 @@ headers reject switch expressions. Executed instructions use the existing Fuel
 schedule; the compact non-propagating switch example costs 7 Fuel and fails at 6.
 The switch expression creates no guest heap allocation and makes no performance claim.
 
-The propagation receipt is historical after the switch-expression increment. The
-current switch-expression receipt is
-[m1-switch-expressions-windows-20261023.json](docs/evidence/m1-switch-expressions-windows-20261023.json);
-it records 41 native groups and 580 CLI cases in each profile, adding 70 CLI cases.
-The propagation receipt remains historical at 37 native groups and 510 CLI cases.
+The i64 slice adds scalar tag 9 at the existing local, function, argument, return,
+assignment, loop, and switch-join positions. Unsuffixed decimals default to i32;
+typed context or an already typed left integer operand admits i64, with no implicit
+conversion or suffix. This left-to-right rule admits `n64 + 1` and `n64 == 1` but
+rejects context-free `1 == n64`. The scanner preserves the minimum magnitude with
+negative accumulation and a sentinel, so i64 MIN and MAX are admitted without
+signed overflow. Arithmetic and comparisons use existing opcodes and i64 cells;
+overflow, zero divisor, and MIN divided or remaindered by -1 become guest outcomes.
+Wrappers remain one-level i32/bool payloads, and i64-returning functions reject
+`?`. `main` remains a zero-argument i32 function, so `return_i32` and the
+`brownie.m1-scalar/1` CLI profile are unchanged.
+
+The switch-expression receipt is historical after the i64 increment and records 41
+native groups and 580 CLI cases in each verified profile. The current
+[i64 receipt](docs/evidence/m1-i64-windows-20261023.json) records 49 native groups
+and 760 CLI cases in each profile. The propagation receipt remains historical at 37
+native groups and 510 CLI cases.
 The [loop receipt](docs/evidence/m1-loops-windows-20261023.json) is
 historical for its 26-group/332-case slice; the [branch receipt](docs/evidence/m1-branches-windows-20261023.json)
 is historical for 20/248, and the [function receipt](docs/evidence/m1-functions-windows-20261023.json)
 and earlier locals/expression receipts are likewise historical for their narrower
-slices. Full M1 still needs other scalar types and richer value-arm statements.
+slices. Full M1 still needs the remaining scalar types and richer value-arm statements.
 Workers, DLL ABI, Windows isolation, and performance remain unverified. M0 was not
 rerun for unchanged inputs. No new CI job or performance measurement was added.
 M2 must cover arrays, structs, borrows, Buffer, input, output, and UTF-8.

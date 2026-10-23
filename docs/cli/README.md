@@ -1,6 +1,6 @@
 # CLI Tool
 
-- Status: Experimental native M1 scalar CLI implemented; bool/branch, loop, tagged, and `?` slices historically verified; switch expressions verified
+- Status: Experimental native M1 scalar CLI implemented; bool/branch, loop, tagged, `?`, and switch-expression slices historically verified; i64 verified
 - Native runtime intent: direct .brc source execution
 - Contract owner: docs/cli/command-contract.md
 
@@ -16,22 +16,24 @@ The proposed surface is --version, check, run, inspect, and worker, with explici
 are implemented for the M1 scalar profile.
 The broader commands/options remain designed or unavailable.
 
-The current scalar increment adds i32/bool values, bounded branches, loops,
+The current scalar increment adds i32/i64/bool values, bounded branches, loops,
 shallow `Option`/`Result` values with exhaustive `switch` statements and
 expressions. It keeps
 `main` as a zero-argument i32 function, so the CLI result field remains
-`return_i32`; guest bools and wrappers are internal to the program. The tagged slice
+`return_i32`; guest i64, bool, and wrapper values are internal to the program. The tagged slice
 remains verified by its [historical receipt](../evidence/m1-tagged-windows-20261023.json).
 Postfix `?` propagates shallow scalar Option and Result payloads. Switch expressions
 add exhaustive shallow-wrapper arms in expression position with one exact yield
-type, restricted value-arm statements, and optional direct returns. The tagged and
-propagation receipts are historical after this increment. The current
-[switch-expression receipt](../evidence/m1-switch-expressions-windows-20261023.json)
-records 41 native groups and 580 CLI cases in each profile.
+type, restricted value-arm statements, and optional direct returns. The earlier
+receipts are historical; the switch-expression receipt records 41 native groups and
+580 CLI cases. The current [i64 receipt](../evidence/m1-i64-windows-20261023.json)
+records 49 native groups and 760 CLI cases in each profile. i64 wrappers remain
+unsupported, and i64-returning functions reject `?`.
 Language contracts are in the [branch](../engineering/m1-branches.md), [loop](../engineering/m1-loops.md),
 [tagged](../engineering/m1-tagged.md), and
 [propagation](../engineering/m1-propagation.md) documents, with switch-expression
-rules in the [switch-expression contract](../engineering/m1-switch-expressions.md). Command availability,
+rules in the [switch-expression contract](../engineering/m1-switch-expressions.md)
+and full-width integer rules in the [i64 contract](../engineering/m1-i64.md). Command availability,
 output framing, and exit behavior remain governed by the owning CLI documents.
 
 ## Authority and availability

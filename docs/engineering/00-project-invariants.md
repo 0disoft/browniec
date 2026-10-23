@@ -1,7 +1,7 @@
 # Project Invariants
 
 - Status: Accepted design invariants
-- Implementation: M0 verified; bounded i32/bool verifier/VM subset with branches, loops, shallow tagged switch, scalar `?` propagation, and switch expressions implemented; switch expressions verified; full invariants pending
+- Implementation: M0 verified; bounded i32/i64/bool verifier/VM subset with branches, loops, shallow tagged switch, scalar `?` propagation, and switch expressions implemented; switch expressions and i64 verified; full invariants pending
 
 ## Runtime authority
 

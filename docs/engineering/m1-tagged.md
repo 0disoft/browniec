@@ -1,6 +1,6 @@
 # M1 Shallow Option, Result, and switch
 
-- Status: implemented and verified on Windows; historical after the propagation and switch-expression increments; 33 native groups and 423 CLI cases in each development and release profile
+- Status: implemented and verified on Windows; historical after the propagation, switch-expression, and i64 increments; 33 native groups and 423 CLI cases in each development and release profile
 - Scope: one-level Option/Result values and exhaustive switch statements in `brownie.m1-scalar/1`
 
 This increment extends the scalar, branch, and loop slice with shallow tagged
@@ -145,6 +145,7 @@ The loop and branch receipts are historical after this increment.
 The [propagation contract](m1-propagation.md) owns postfix `?` for shallow scalar
 wrappers, and the [switch-expression contract](m1-switch-expressions.md) owns
 expression-position exhaustive arms. Both later slices are verified; the current
-switch-expression receipt records 41 native groups and 580 CLI cases per profile.
-Full M1 still needs other scalar types and richer value-arm statements. The full
+switch-expression receipt is historical at 41 native groups and 580 CLI cases. The
+current [i64 contract](m1-i64.md) records 49 native groups and 760 CLI cases per
+profile. Full M1 still needs remaining scalar types and richer value-arm statements. The full
 profile, Windows isolation, DLL ABI, and performance targets remain unverified.

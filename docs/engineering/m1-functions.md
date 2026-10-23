@@ -1,6 +1,6 @@
 # M1 Direct Scalar Functions
 
-- Status: implemented; function/local, branch, loop, tagged, and `?` receipts are historical; switch expressions verified
+- Status: implemented; function/local, branch, loop, tagged, `?`, and switch-expression receipts are historical; i64 verified
 - Scope: direct scalar/wrapper functions and VM calls in the experimental scalar profile
 
 ## Source contract
@@ -12,7 +12,7 @@ fn TYPE NAME(TYPE PARAM, ...) { BODY }
 ```
 
 Exactly one `main` must exist, take zero arguments, and return i32. Other functions
-may return i32, bool, or an admitted shallow Option/Result type and may take those
+may return i32, i64, bool, or an admitted shallow Option/Result type and may take those
 types as parameters. There are no implicit scalar conversions. Constructors receive
 their wrapper type from the parameter or result context. Declarations may precede or
 follow their callers. Direct and mutual recursion are admitted; structured branches
@@ -58,8 +58,8 @@ verified before any guest code executes.
 ## VM frames, limits, and Fuel
 
 Guest calls use a flat VM-owned register array, saved PCs, and return destinations;
-they never recurse through Fairy/native calls. Return copies one canonical i32 or
-bool result to the caller. Sibling calls may reuse frame storage because verified
+they never recurse through Fairy/native calls. Return copies one canonical scalar or
+wrapper result to the caller. Sibling calls may reuse frame storage because verified
 code cannot read an uninitialized register. The Program is read-only and reusable
 across fresh runs.
 
@@ -88,8 +88,9 @@ the branch verifier.
 The branch receipt records the historical 20-group/248-case branch slice, the loop
 receipt records the historical 26-group/332-case loop slice, the tagged receipt
 records the historical 33-group/423-case wrapper slice, and the propagation receipt
-records the historical 37-group/510-case slice. The current switch-expression
-[receipt](../evidence/m1-switch-expressions-windows-20261023.json) records 41 native
-groups and 580 CLI cases in each profile. Full M1, other scalar types, workers,
-DLL ABI, clean-machine distribution, and performance targets remain unverified. M0
+records the historical 37-group/510-case slice. The switch-expression receipt is
+historical at 41 native groups and 580 CLI cases. The current
+[i64 receipt](../evidence/m1-i64-windows-20261023.json) records 49 native groups and
+760 CLI cases in each profile. Full M1, remaining scalar types, workers, DLL ABI,
+clean-machine distribution, and performance targets remain unverified. M0
 inputs are unchanged and were not rerun.

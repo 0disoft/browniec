@@ -1,7 +1,7 @@
 # M1 Scalar Slice
 
-- Status: experimental compiler/verifier/VM and source CLI implemented; bool/branch, loop, tagged, and `?` slices historically verified; switch expressions verified
-- Scope: M1 expressions, scalar and shallow wrapper values, branches, loops, exhaustive switch statements and expressions, and scalar `?` propagation; not full M1 or profile conformance
+- Status: experimental compiler/verifier/VM and source CLI implemented; bool/branch, loop, tagged, `?`, and switch-expression slices historically verified; i64 verified
+- Scope: M1 expressions with i32/i64/bool scalars, shallow wrapper values, branches, loops, exhaustive switch statements and expressions, and scalar `?` propagation; not full M1 or profile conformance
 
 The admitted source is `module main;` followed by one or more
 `fn TYPE NAME(TYPE PARAM, ...) { BODY }` declarations, including
@@ -12,15 +12,18 @@ See [loops](m1-loops.md) for `while`, classic `for`, `break`/`continue`, and bac
 rules, [tagged values](m1-tagged.md) for shallow Option/Result and switch, and
 [`?` propagation](m1-propagation.md) for scalar payload extraction and wrapper
 failure. [Switch expressions](m1-switch-expressions.md) add exhaustive arm values
-or direct returns in expression position.
-EXPR supports decimal i32 literals, `true` and `false`, parentheses, unary minus,
+or direct returns in expression position. [i64 scalars](m1-i64.md) extend those
+positions with checked full-width signed integers.
+EXPR supports decimal i32/i64 literals, `true` and `false`, parentheses, unary minus,
 `!`, arithmetic, ordering, equality, short-circuit `&&` and `||`, previously visible
 local names, direct function calls, and context-required `.some`/`.none`/`.ok`/`.err`
 constructors. An exhaustive shallow-wrapper switch expression is also an operand.
 Postfix `?` is admitted in functions returning an admitted Option or Result and
 binds tighter than unary and binary operators.
 Whitespace and `//` comments are accepted.
-The negative minimum literal is admitted directly; positive 2147483648 is rejected.
+The negative i32/i64 minimum literals are admitted directly. A literal must fit its
+contextual type: positive 2147483648 needs i64 context, while positive
+9223372036854775808 is always rejected. Casts and suffixes are unavailable.
 STMT includes typed `let` and `var` declarations, `NAME = EXPR;`, `return EXPR;`,
 `if`/`else if`/`else`, standalone `{ ... }` blocks, `while (COND) { ... }`, classic
 `for (INIT; COND; POST) { ... }`, `break;`, `continue;`, and exhaustive
@@ -46,8 +49,9 @@ not performance results.
 
 Private instructions are eight bytes: opcode, destination, operand A, operand B,
 then four reserved bytes. `CASE` uses the first reserved byte for its forward
-mismatch target; all remaining reserved bytes must be zero. Constants live in a
-separate bounded i64 array with i32 range checks. Source offsets are a separate diagnostic map. Opcodes 17 through
+mismatch target; all remaining reserved bytes must be zero. Constants and scalar
+registers are i64 cells; the verifier applies the i32 range check only to i32
+constants. Source offsets are a separate diagnostic map. Opcodes 17 through
 21 are `LOAD`, `STORE`, `JUMP`, `JFALSE`, and `JTRUE`. Opcode 22 is a strictly backward
 backedge within one function. Opcodes 23 through 25 are `MAKE`, `CASE`, and
 `MATCH_FAIL`. Opcodes 19 through 21 remain forward jumps.
@@ -85,13 +89,16 @@ unselected branches do not execute. Loops reuse their bounded frame and register
 cells without per-iteration VM allocation or native recursion. Insufficient Fuel
 returns an error.
 
-Arithmetic widens i32 operands to i64, checks the result, and returns guest errors
-for overflow and division/remainder by zero. Evaluation executes left to right;
-negative division truncates toward zero. Bool is canonical 0/1 with no conversion
-to or from i32. `!`, `&&`, and `||` accept bool; ordering accepts i32; equality
-requires two i32 values or two bool values. `&&` and `||` short-circuit.
+Arithmetic uses the operand's scalar tag, checks the full-width result, and returns
+guest errors for overflow and division/remainder by zero. Evaluation executes left
+to right; signed division truncates toward zero. Bool is canonical 0/1 with no
+conversion to or from an integer. `!`, `&&`, and `||` accept bool; ordering accepts
+two i32 or two i64 values; equality requires two values of the same scalar type.
+Unsuffixed decimals default to i32 and take i64 from typed context or an already
+typed left integer operand. `&&` and `||` short-circuit.
 Wrapper values do not participate in arithmetic, ordering, or equality, and nested
-or aggregate wrappers are rejected. Postfix `?` yields the i32/bool payload on
+or aggregate wrappers are rejected. Their payloads remain i32/bool, so i64 wrappers
+are rejected and i64-returning functions reject `?`. Postfix `?` yields the i32/bool payload on
 success and an enclosing wrapper failure on a mismatch; it adds no opcode and keeps
 the two-Fuel success and four-Fuel failure schedules in its contract. No guest
 heap allocation or external effect is needed. There is no public bytecode loader or
@@ -117,11 +124,11 @@ per-profile `cli-receipt.json` files. The original expression-only,
 [function](../evidence/m1-functions-windows-20261023.json) receipts are likewise
 historical for narrower slices.
 
-The propagation receipt is historical after the switch-expression increment. The
-current switch-expression receipt is
-[m1-switch-expressions-windows-20261023.json](../evidence/m1-switch-expressions-windows-20261023.json);
-it records 41 native groups and 580 CLI cases for each development and release
-profile. The propagation receipt remains historical at 37/510.
+The switch-expression receipt is historical after the i64 increment and records 41
+native groups and 580 CLI cases. The current
+[i64 receipt](../evidence/m1-i64-windows-20261023.json) records 49 native groups and
+760 CLI cases in each development and release profile. The propagation receipt
+remains historical at 37/510.
 
 ## Run the implemented subset
 
@@ -136,6 +143,7 @@ profile. The propagation receipt remains historical at 37/510.
 ./build/browniec.exe run examples/tagged.brc --json
 ./build/browniec.exe run examples/propagation.brc --json
 ./build/browniec.exe run examples/switch-expression.brc --json
+./build/browniec.exe run examples/i64.brc --json
 ./build/browniec.exe run examples/answer.brc --fuel 4 --json
 pwsh -NoProfile -File tools/verify-m1.ps1
 ```
@@ -151,7 +159,7 @@ snapshot limit and a 4096-byte UTF-8 argument buffer. This is a trusted-local-so
 engineering CLI. There is no project/config loader, guest I/O, worker, DLL, or sandbox.
 The native executable has no compiler/interpreter subprocess execution path.
 Builds use the M0 compiler artifact without modifying the separate Fairy checkout.
-The earlier receipts do not establish full M1. The switch-expression slice remains
-a narrow scalar subset; other scalar types, richer value-arm statements,
+The earlier receipts do not establish full M1. The i64 slice remains a narrow
+scalar subset; remaining scalar types, richer value-arm statements,
 clean-machine packaging, OS isolation, DLL ABI, and performance results remain
 outside it.

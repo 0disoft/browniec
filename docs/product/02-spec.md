@@ -1,7 +1,7 @@
 # Product Specification
 
 - Status: Accepted for design, 2026-10-23
-- Implementation status: M1 scalar expressions, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation implemented and verified; full profile not implemented
+- Implementation status: M1 branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation verified historically; i64 implemented and verified; full profile not implemented
 - Source profile name: brownie.safe/0.3
 
 ## Product boundary
@@ -28,9 +28,9 @@ Source functions use explicit Fairy-like declarations such as fn Type name.
 Modules and imports are explicit. let and var introduce initialized locals.
 
 The experimental M1 increment keeps `fn i32 main()` as the zero-argument entry
-point. Other functions and their parameters may use i32 or bool. Bool is canonical
-0/1 and never converts implicitly to or from i32. The increment adds `!`, same-type
-`==`/`!=`, i32-only ordering, short-circuit `&&`/`||`, `if`/`else if`/`else`,
+point. Other functions and their parameters may use i32, i64, or bool. Bool is canonical
+0/1 and never converts implicitly to or from an integer type. The increment adds `!`, same-type
+`==`/`!=`, same-type signed-integer ordering, short-circuit `&&`/`||`, `if`/`else if`/`else`,
 standalone lexical blocks, and early returns. Every function path must return, and
 statements after a guaranteed return are rejected. Block-local names are limited to
 their block, and a visible local or parameter cannot be redeclared. The loop
@@ -83,6 +83,17 @@ short-circuit expressions, and `?`; classic `for` headers remain pure scalar.
 Exact rules are in the
 [switch-expression contract](../engineering/m1-switch-expressions.md).
 
+The i64 increment admits `i64` locals, function parameters and results, call
+arguments and returns, assignments, loop variables and expressions, and
+switch-expression result joins. Unsuffixed decimals default to i32 and become i64
+from typed context or an already typed left integer operand. There are no implicit
+conversions, casts, or suffixes. Arithmetic, i64 comparisons, zero-divisor handling,
+and overflow checks use the existing scalar instructions and i64 cells. Wrapper
+payloads remain i32/bool, so `Option<i64>` and i64-containing Result types are
+rejected; i64-returning functions reject `?`. Classic `for` headers still reject
+calls, `?`, and switch expressions. Exact rules are in the
+[i64 contract](../engineering/m1-i64.md).
+
 Classic for headers may contain only the profile's pure scalar declaration,
 assignment, condition, and post steps. Arrays and repeated initializers use positive
 integer literals.
@@ -93,9 +104,10 @@ Operands, arguments, and record initializers are evaluated once in source order.
 Logical operators short-circuit. Assignment remains a statement. A classic for
 executes its post step on continue and skips it on break.
 
-There is no implicit typed numeric promotion. Context-free integers are i32.
-Only value-preserving explicit widening is allowed. Narrowing, unsigned negation,
-and integer-to-handle coercion are rejected.
+There is no implicit numeric promotion. In the current M1 slice, context-free
+integers are i32 and no cast or suffix syntax exists. Future profile widening must
+be explicit and value-preserving. Narrowing, unsigned negation, and
+integer-to-handle coercion are rejected.
 
 add, sub, mul, signed negation, division, remainder, shifts, and lengths are checked
 before they can overflow. Signed division by zero is detected before division.
@@ -175,10 +187,10 @@ The experimental M1 slice establishes a native source path for its narrower gram
 The [tagged receipt](../evidence/m1-tagged-windows-20261023.json) remains historical
 verification for the tagged switch slice and its prior scalar/branch/loop
 regressions. The propagation receipt is historical at 37 native groups and 510 CLI
-cases per profile. The current
-[switch-expression receipt](../evidence/m1-switch-expressions-windows-20261023.json)
-records 41 native groups and 580 CLI cases per profile and passed both. Full M1,
-other scalar types, richer value-arm statements, and Windows isolation remain
+cases per profile. The switch-expression receipt is historical at 41 native groups
+and 580 CLI cases. The [i64 receipt](../evidence/m1-i64-windows-20261023.json)
+records 49 native groups and 760 CLI cases in each profile. Full M1,
+remaining scalar types, richer value-arm statements, and Windows isolation remain
 unimplemented or unverified. The slice does not
 satisfy full-profile ownership, allocation, host, isolation, or embed criteria.
 Claims require scoped [M1 details](../engineering/m1-scalar-slice.md) and recorded

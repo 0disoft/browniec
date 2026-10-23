@@ -1,6 +1,6 @@
 # M1 while and Classic for Loops
 
-- Status: implemented and verified for the loop slice; historical after the tagged, propagation, and switch-expression increments
+- Status: implemented and verified for the loop slice; historical after the tagged, propagation, switch-expression, and i64 increments
 - Scope: bounded `while` and classic `for`, `break`/`continue`, and metered backedges in `brownie.m1-scalar/1`
 
 This increment extends the M1 scalar slice with lexical loops. It keeps the
@@ -147,7 +147,8 @@ evidence for the branch slice.
 
 The later [propagation contract](m1-propagation.md) owns postfix `?`, and the
 [switch-expression contract](m1-switch-expressions.md) owns expression-position
-exhaustive arms. Its current receipt records 41 native groups and 580 CLI cases per
-profile. Full M1 still needs other scalar types and richer value-arm statements. Workers, the DLL ABI,
+exhaustive arms; that receipt is historical at 41 native groups and 580 CLI cases.
+The current [i64 contract](m1-i64.md) records 49 native groups and 760 CLI cases per
+profile. Full M1 still needs remaining scalar types and richer value-arm statements. Workers, the DLL ABI,
 Windows isolation, clean-machine packaging, and performance targets remain
 unverified. No OS sandbox or performance claim follows from loop support.

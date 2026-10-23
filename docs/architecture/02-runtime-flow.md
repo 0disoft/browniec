@@ -4,8 +4,10 @@
 
 The flow below is the target architecture. M0 verifies selected native primitives,
 including storage and owner bookkeeping. M1 separately parses, verifies, and runs
-i32 expressions, initialized locals/assignment, and direct calls through bounded VM
-frames. Host suspension and the restricted path below remain future work.
+i32/i64/bool expressions, initialized locals/assignment, branches, loops, shallow
+tags, and direct calls through bounded VM frames. The i64 slice is verified by its
+[receipt](../evidence/m1-i64-windows-20261023.json). Host suspension and the
+restricted path below remain future work.
 
 ## Source to result
 
