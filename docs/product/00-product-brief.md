@@ -2,7 +2,7 @@
 
 - Status: Accepted initial direction, 2026-10-23
 - Product owner: Zerodi / Rodisoft
-- Implementation: M0 verified; experimental i32/i64/bool scalar CLI/VM implemented and verified for the bounded M1 scalar subset; broader product pending
+- Implementation: M0 verified; experimental i32/i64/u8/u32/usize/bool scalar CLI/VM implemented and verified for the bounded M1 scalar subset; broader product pending
 
 ## Intended outcome
 

@@ -3,6 +3,9 @@
 - Status: implemented and verified for the loop slice; historical after the tagged, propagation, switch-expression, and i64 increments
 - Scope: bounded `while` and classic `for`, `break`/`continue`, and metered backedges in `brownie.m1-scalar/1`
 
+The later [unsigned scalar contract](m1-unsigned.md) extends scalar positions to
+`u8`, `u32`, and 64-bit guest `usize`; wrapper payloads remain i32/bool.
+
 This increment extends the M1 scalar slice with lexical loops. It keeps the
 existing i32/bool values, functions, locals, branches, and direct-call rules. The
 separate [tagged increment](m1-tagged.md) adds shallow Option/Result and switch. This
@@ -148,7 +151,7 @@ evidence for the branch slice.
 The later [propagation contract](m1-propagation.md) owns postfix `?`, and the
 [switch-expression contract](m1-switch-expressions.md) owns expression-position
 exhaustive arms; that receipt is historical at 41 native groups and 580 CLI cases.
-The current [i64 contract](m1-i64.md) records 49 native groups and 760 CLI cases per
-profile. Full M1 still needs remaining scalar types and richer value-arm statements. Workers, the DLL ABI,
+The historical [i64 contract](m1-i64.md) records 49 native groups and 760 CLI cases per
+profile. Full M1 still needs additional integer operators and conversions and richer value-arm statements. Workers, the DLL ABI,
 Windows isolation, clean-machine packaging, and performance targets remain
 unverified. No OS sandbox or performance claim follows from loop support.

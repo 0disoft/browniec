@@ -3,6 +3,9 @@
 - Status: implemented and verified on Windows; historical after the propagation, switch-expression, and i64 increments; 33 native groups and 423 CLI cases in each development and release profile
 - Scope: one-level Option/Result values and exhaustive switch statements in `brownie.m1-scalar/1`
 
+The later [unsigned scalar contract](m1-unsigned.md) extends scalar positions to
+`u8`, `u32`, and 64-bit guest `usize`; wrapper payloads remain i32/bool.
+
 This increment extends the scalar, branch, and loop slice with shallow tagged
 values. It admits `Option<i32>`, `Option<bool>`, and `Result<T, E>` where each of
 `T` and `E` is i32 or bool. Wrapper depth is exactly one: nested wrappers and
@@ -144,8 +147,8 @@ The loop and branch receipts are historical after this increment.
 
 The [propagation contract](m1-propagation.md) owns postfix `?` for shallow scalar
 wrappers, and the [switch-expression contract](m1-switch-expressions.md) owns
-expression-position exhaustive arms. Both later slices are verified; the current
+expression-position exhaustive arms. Both later slices are verified; the
 switch-expression receipt is historical at 41 native groups and 580 CLI cases. The
-current [i64 contract](m1-i64.md) records 49 native groups and 760 CLI cases per
-profile. Full M1 still needs remaining scalar types and richer value-arm statements. The full
+historical [i64 contract](m1-i64.md) records 49 native groups and 760 CLI cases per
+profile. Full M1 still needs additional integer operators and conversions and richer value-arm statements. The full
 profile, Windows isolation, DLL ABI, and performance targets remain unverified.

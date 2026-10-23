@@ -1,6 +1,6 @@
 # Brownie C
 
-- Status: experimental M1 scalar source CLI implemented; bool/branch, loop, shallow tagged, `?`, and switch-expression slices have verified historical receipts; i64 implemented and verified with 49 native groups and 760 CLI cases; full M1 remains partial
+- Status: experimental M1 scalar source CLI implemented; earlier slices have verified historical receipts; i64 has a verified historical receipt; unsigned scalars implemented and verified; full M1 remains partial
 - Design date: 2026-10-23
 - First delivery target: Windows 11 x64
 
@@ -24,10 +24,12 @@ The switch-expression increment extends exhaustive `switch` to expression positi
 with value yields or direct returns in exhaustive shallow-wrapper arms. The i64
 increment adds full-width signed scalars in typed locals, functions, calls,
 assignments, loops, and switch joins, with checked arithmetic and no implicit
-conversions. The earlier receipts are historical for their narrower slices; the
-[i64 contract](docs/engineering/m1-i64.md) owns the current scalar addition.
-Remaining scalar types, richer value-arm statements, workers, and DLLs remain
-future work.
+conversions. The unsigned increment adds `u8`, `u32`, and 64-bit guest `usize` at
+the same source positions, with checked arithmetic and unsigned ordering. The
+earlier receipts, including i64, are historical; the
+[unsigned contract](docs/engineering/m1-unsigned.md) owns the current scalar
+addition. Full M1 remains partial: arrays, structs, richer value-arm statements,
+workers, and DLLs remain future work.
 
 ```powershell
 ./build/toolchain/fairyc.exe build
@@ -38,6 +40,7 @@ future work.
 ./build/browniec.exe run examples/propagation.brc --json
 ./build/browniec.exe run examples/switch-expression.brc --json
 ./build/browniec.exe run examples/i64.brc --json
+./build/browniec.exe run examples/unsigned.brc --json
 # return_i32 is 42; process exit is 0
 pwsh -NoProfile -File tools/verify-m1.ps1
 ```
@@ -68,7 +71,7 @@ Those limits describe the profile, not the language forever.
 
 | Level | Intended capability | Current state |
 | --- | --- | --- |
-| core | Source compile, verify, and native VM CLI | Experimental i32/i64/bool expressions, branches, loops, shallow tagged values, switch statements and expressions, and `?` propagation; i64 verified; M1 partial |
+| core | Source compile, verify, and native VM CLI | Experimental i32/i64/u8/u32/usize/bool expressions, branches, loops, shallow tagged values, switch statements and expressions, and `?` propagation; unsigned scalars verified; M1 partial |
 | restricted | Windows worker plus parent broker | Not implemented; M4 |
 | embed | Trusted native host through a DLL ABI | Not implemented; M5; no public C export |
 
@@ -94,6 +97,7 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M1 `?` propagation](docs/engineering/m1-propagation.md): payload extraction, wrapper failure, precedence, and Fuel
 - [M1 switch expressions](docs/engineering/m1-switch-expressions.md): expression-position arms, typed joins, and verifier boundaries
 - [M1 i64 scalars](docs/engineering/m1-i64.md): literal context, checked arithmetic, limits, and evidence
+- [M1 unsigned scalars](docs/engineering/m1-unsigned.md): `u8`, `u32`, `usize`, representation, and limits
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
 - [Design baseline](docs/design-baseline.md): source provenance, evidence, and findings
@@ -103,10 +107,11 @@ frame primitives on Windows x64. Exact commands and results belong to
 `build/m0/receipt.json` and `docs/evidence/m0-windows-20261023.json`. Running with an
 empty runtime `PATH` does not establish clean-machine packaging or a sandbox.
 
-The function/local, branch, loop, tagged, propagation, and switch-expression
-receipts are historical for their narrower slices; the switch-expression receipt
-records 41 native groups and 580 CLI cases. The current
-[i64 receipt](docs/evidence/m1-i64-windows-20261023.json) records 49 native groups
-and 760 CLI cases in each development and release profile. No full-profile
+The function/local, branch, loop, tagged, propagation, switch-expression, and i64
+receipts are historical for their narrower slices. The switch-expression receipt
+records 41 native groups and 580 CLI cases; the i64 receipt records 49 native groups
+and 760 CLI cases in each development and release profile. The [unsigned receipt](docs/evidence/m1-unsigned-windows-20261023.json) records
+59 native groups and 1,159 CLI cases in both development and release, including 399
+new unsigned cases. No full-profile
 conformance, DLL ABI, Windows isolation, clean-machine packaging, or performance
 target is claimed.

@@ -3,6 +3,9 @@
 - Status: implemented; function/local, branch, loop, tagged, `?`, and switch-expression receipts are historical; i64 verified
 - Scope: direct scalar/wrapper functions and VM calls in the experimental scalar profile
 
+The later [unsigned scalar contract](m1-unsigned.md) extends scalar positions to
+`u8`, `u32`, and 64-bit guest `usize`; wrapper payloads remain i32/bool.
+
 ## Source contract
 
 A source file starts with `module main;` and declares one or more functions:
@@ -12,7 +15,8 @@ fn TYPE NAME(TYPE PARAM, ...) { BODY }
 ```
 
 Exactly one `main` must exist, take zero arguments, and return i32. Other functions
-may return i32, i64, bool, or an admitted shallow Option/Result type and may take those
+may return i32, i64, u8, u32, usize, bool, or an admitted shallow Option/Result
+type and may take those
 types as parameters. There are no implicit scalar conversions. Constructors receive
 their wrapper type from the parameter or result context. Declarations may precede or
 follow their callers. Direct and mutual recursion are admitted; structured branches
@@ -89,8 +93,8 @@ The branch receipt records the historical 20-group/248-case branch slice, the lo
 receipt records the historical 26-group/332-case loop slice, the tagged receipt
 records the historical 33-group/423-case wrapper slice, and the propagation receipt
 records the historical 37-group/510-case slice. The switch-expression receipt is
-historical at 41 native groups and 580 CLI cases. The current
+historical at 41 native groups and 580 CLI cases. The historical
 [i64 receipt](../evidence/m1-i64-windows-20261023.json) records 49 native groups and
-760 CLI cases in each profile. Full M1, remaining scalar types, workers, DLL ABI,
+760 CLI cases in each profile. Full M1, additional integer operators and conversions, workers, DLL ABI,
 clean-machine distribution, and performance targets remain unverified. M0
 inputs are unchanged and were not rerun.

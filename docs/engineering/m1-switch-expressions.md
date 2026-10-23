@@ -3,6 +3,9 @@
 - Status: implemented and verified on Windows; historical after the i64 increment; 41 native groups and 580 CLI cases in each development and release profile
 - Scope: exhaustive shallow-wrapper switch expressions in `brownie.m1-scalar/1`
 
+The later [unsigned scalar contract](m1-unsigned.md) extends scalar positions to
+`u8`, `u32`, and 64-bit guest `usize`; wrapper payloads remain i32/bool.
+
 This increment extends the tagged switch statement into expression position. It
 admits both variants of the existing one-level `Option` and `Result` families in
 either order. It does not add nested patterns, default arms, fallthrough, new
@@ -86,6 +89,6 @@ profile. This increment adds 70 CLI cases and leaves all 39 frozen inputs unchan
 The prior propagation receipt remains historical at 37 native groups and 510 CLI
 cases; the tagged receipt remains historical at 33 and 423. The successor
 [i64 contract](m1-i64.md) records 49 native groups and 760 CLI cases in each
-profile. Richer value-arm statements, remaining scalar types, arrays, structs, M2 and
+profile. Richer value-arm statements, additional integer operators and conversions, arrays, structs, M2 and
 later milestones, workers, the DLL ABI, Windows isolation, and performance remain
 outside this slice.

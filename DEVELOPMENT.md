@@ -1,6 +1,6 @@
 # Development
 
-- Status: M0 verified; experimental native M1 scalar CLI implemented; bool/branch, loop, tagged, `?`, and switch-expression slices have verified historical receipts; i64 implemented and verified with 49 native groups and 760 CLI cases
+- Status: M0 verified; experimental native M1 scalar CLI implemented; earlier slices have verified historical receipts; i64 has a verified historical receipt; unsigned scalars implemented and verified
 - Current repository content: Fairy C frontend, private IR/verifier/VM, CLI, tests, and M0 probes
 
 ## Current reality
@@ -33,15 +33,20 @@ checkout or claim it matches the historical receipts.
 ./build/browniec.exe run examples/propagation.brc --json
 ./build/browniec.exe run examples/switch-expression.brc --json
 ./build/browniec.exe run examples/i64.brc --json
+./build/browniec.exe run examples/unsigned.brc --json
 pwsh -NoProfile -File tools/verify-m1.ps1
 ```
 
 M1 verification needs PowerShell 7 and Python 3 for the build/test driver, not for the
 produced runtime. The switch-expression receipt is historical after the i64
-increment and records 41 native groups and 580 CLI cases. The current
-[i64 receipt](docs/evidence/m1-i64-windows-20261023.json) records 49 native groups
-and 760 CLI cases in each profile. The loop, branch, function, local, tagged, and
-propagation receipts remain historical. Verification retains
+increment and records 41 native groups and 580 CLI cases. The
+[i64 receipt](docs/evidence/m1-i64-windows-20261023.json) is historical after the
+unsigned increment and records 49 native groups and 760 CLI cases in each profile.
+The loop, branch, function, local, tagged, and propagation receipts also remain
+historical. The [unsigned receipt](docs/evidence/m1-unsigned-windows-20261023.json) records
+59 native groups and 1,159 CLI cases in both development and release, including 399
+new unsigned cases.
+Verification retains
 `build/m1/receipt.json` and per-profile records. The selected native binaries run
 with a cleared environment and tool-free PATH. No measured latency budget follows.
 
@@ -69,7 +74,7 @@ Brownie. Clean-machine validation and sandbox behavior belong to later milestone
 
 1. Keep the recorded M0 signatures and rerun the native probes when their inputs change.
 2. Record any M0 failure without promoting it to VM evidence.
-3. Build the bounded scalar source-to-VM path, including i64 values, bool values, branches, loops, shallow tagged values, switch statements and expressions, and scalar `?` propagation.
+3. Build the bounded scalar source-to-VM path, including i32, i64, u8, u32, usize, and bool values, branches, loops, shallow tagged values, switch statements and expressions, and scalar `?` propagation.
 4. Add arrays, structs, borrows, Buffer, and text through small end-to-end cases.
 5. Add typed host suspension only after the pure path is stable.
 6. Add Windows process isolation before exposing the restricted delivery level.
@@ -88,8 +93,9 @@ See [M1 details](docs/engineering/m1-scalar-slice.md) and the
 [tagged](docs/engineering/m1-tagged.md) contracts, plus the
 [propagation](docs/engineering/m1-propagation.md) and
 [switch-expression](docs/engineering/m1-switch-expressions.md) contracts and the
-[i64](docs/engineering/m1-i64.md) contract. The current i64 receipt is
-[m1-i64-windows-20261023.json](docs/evidence/m1-i64-windows-20261023.json).
+[i64](docs/engineering/m1-i64.md) and
+[unsigned](docs/engineering/m1-unsigned.md) contracts. The i64 receipt is
+historical; the unsigned receipt records the current verified subset.
 
 Documentation review may use repository-neutral tools such as a Markdown link check
 or git diff --check when the parent task supplies them. These checks do not execute

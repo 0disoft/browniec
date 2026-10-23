@@ -1,7 +1,7 @@
 # Roadmap
 
-- Status: Accepted delivery sequence; M0 verified; M1 bool/branch, loop, tagged, propagation, switch-expression, and i64 slices verified, 2026-10-23
-- Current progress: M0 and the named M1 slices passed; i64 records 49 native groups and 760 CLI cases in each profile; full M1 partial; M2-M5 not started
+- Status: Accepted delivery sequence; M0 verified; named M1 slices through i64 have verified historical receipts; unsigned scalars implemented and verified, 2026-10-23
+- Current progress: M0 and named M1 slices passed; unsigned scalars record 59 native groups and 1,159 CLI cases in both profiles; full M1 partial; M2-M5 not started
 
 This roadmap orders learning and evidence. It is not a release promise. M0 has a
 native harness and recorded evidence. The scalar CLI/VM now exist; the worker
@@ -66,13 +66,19 @@ returns. Its [receipt](../evidence/m1-switch-expressions-windows-20261023.json)
 records 41 native groups and 580 CLI cases per profile and remains historical. The
 [i64 slice](../engineering/m1-i64.md) adds checked full-width signed scalars in the
 existing source positions. Its [receipt](../evidence/m1-i64-windows-20261023.json)
-records 49 native groups and 760 CLI cases in each profile. Remaining M1 work
-includes the remaining scalar types and richer value-arm statements.
+is historical and records 49 native groups and 760 CLI cases in each profile. The
+[unsigned slice](../engineering/m1-unsigned.md) adds `u8`, `u32`, and 64-bit guest
+`usize` with checked arithmetic and reversible signed-cell representation. Its
+[receipt](../evidence/m1-unsigned-windows-20261023.json) records 59 native groups
+and 1,159 CLI cases in both development and release.
+All initial scalar type names are now implemented, but full M1 still needs explicit
+widening, remaining integer operators, and richer value-arm statements. Arrays,
+structs, borrows, Buffer, and text remain M2 work.
 
 Goal: run real .brc source through lexer, parser, type checking, Flow analysis,
 private code generation, independent verification, and the native VM.
 
-The first usable slice includes i32/i64/bool functions, branches, loops, shallow scalar
+The first usable slice includes i32/i64/u8/u32/usize/bool functions, branches, loops, shallow scalar
 Option/Result, switch statements, question-mark propagation, checked arithmetic,
 and bounded Fuel. It produces a small CLI path for local engineering use.
 

@@ -2,7 +2,7 @@
 
 - Status: accepted design baseline
 - Decision date: 2026-10-23
-- Implementation: M0 verified; experimental M1 scalar pipeline and VM implemented; bool/branch, loop, tagged, `?`, and switch-expression slices historically verified; i64 implemented and verified
+- Implementation: M0 verified; experimental M1 scalar pipeline and VM implemented; earlier slices and i64 have verified historical receipts; unsigned scalars implemented and verified
 
 ## Intent
 
@@ -14,7 +14,7 @@ The system is not a C interpreter and does not expose C memory layout to source.
 Its explicit Fairy-like syntax is its own safe profile.
 
 The implemented [M1 scalar slice](docs/engineering/m1-scalar-slice.md) runs real `.brc`
-expressions through lexing/parsing, i32/i64/bool type checks, private IR, verifier,
+expressions through lexing/parsing, i32/i64/u8/u32/usize/bool type checks, private IR, verifier,
 and VM. Immutable parameters and `let` names use single-definition registers; `var`
 names use typed storage slots in the same bounded register file. Structured if/else
 and standalone blocks lower to forward-only jumps, and short-circuit operators skip
@@ -45,11 +45,19 @@ their function return and do not join. A final variant mismatch targets
 `LOAD`. The switch-expression receipt remains historical at 41 native groups and
 580 CLI cases. The i64 increment uses scalar tag 9, checked arithmetic, and the
 existing i64 constants and register cells; it adds no opcode, guest heap allocation,
-or Fuel policy. Its [receipt](docs/evidence/m1-i64-windows-20261023.json) records
-49 native groups and 760 CLI cases in each development and release profile. Ownership,
-lifecycle APIs, Engine, host calls, workers, and DLLs remain designs; full M1,
-richer value-arm statements, and remaining scalar types remain unverified or
-unimplemented. M0
+or Fuel policy. Its [receipt](docs/evidence/m1-i64-windows-20261023.json) is
+historical and records 49 native groups and 760 CLI cases in each development and
+release profile. The unsigned increment adds `u8` tag 10, `u32` tag 11, and 64-bit
+guest `usize` tag 12. It retains the existing `i64[128]` constant and `i64[4096]`
+VM register arrays. `src/cells.fy` stores values below 2^63 unchanged and the upper
+half as negative bit patterns through checked conversions split at 2^63.
+`src/arithmetic.fy` applies the M0 unsigned guards before native operations. The
+slice adds no opcode, guest heap allocation, frame, cap, or Fuel change. Its
+development and release runs each passed 59 native groups and 1,159 CLI cases,
+recorded in the [unsigned receipt](docs/evidence/m1-unsigned-windows-20261023.json). Ownership, lifecycle APIs, Engine, host
+calls, workers, and DLLs remain designs; full M1, arrays, structs, borrows, richer
+value-arm statements, Windows isolation, DLL embedding, and performance remain
+unimplemented or unverified. M0
 separately exercises native arithmetic, codec, storage, allocator, owner, and frame
 primitives.
 

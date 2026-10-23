@@ -1,7 +1,7 @@
 # Validation
 
-- Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, and switch-expression receipts are verified historical evidence; i64 implemented and verified
-- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/bool values, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation
+- Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, switch-expression, and i64 receipts are verified historical evidence; unsigned scalars implemented and verified
+- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/u8/u32/usize/bool values, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation
 
 ## Validation source of truth
 
@@ -73,7 +73,8 @@ identity is SHA-256
 Exact transcript and artifact details belong to `build/m0/receipt.json` and
 `docs/evidence/m0-windows-20261023.json`.
 
-Full M1 remains partial; M2 through M5 remain not started. M0's empty runtime-`PATH` execution does not
+Full M1 remains partial even though all initial scalar type names are now
+implemented; M2 through M5 remain not started. M0's empty runtime-`PATH` execution does not
 establish clean-machine packaging or Windows isolation.
 
 M1 has scalar expressions, initialized locals, direct functions, and bool/branch,
@@ -142,24 +143,43 @@ The i64 slice adds scalar tag 9 at the existing local, function, argument, retur
 assignment, loop, and switch-join positions. Unsuffixed decimals default to i32;
 typed context or an already typed left integer operand admits i64, with no implicit
 conversion or suffix. This left-to-right rule admits `n64 + 1` and `n64 == 1` but
-rejects context-free `1 == n64`. The scanner preserves the minimum magnitude with
-negative accumulation and a sentinel, so i64 MIN and MAX are admitted without
-signed overflow. Arithmetic and comparisons use existing opcodes and i64 cells;
+rejects context-free `1 == n64`. That increment used negative accumulation and a sentinel to admit i64 MIN and
+MAX without signed overflow; the unsigned increment replaces this scanner with
+checked full-width unsigned accumulation. Arithmetic and comparisons use existing opcodes and i64 cells;
 overflow, zero divisor, and MIN divided or remaindered by -1 become guest outcomes.
 Wrappers remain one-level i32/bool payloads, and i64-returning functions reject
 `?`. `main` remains a zero-argument i32 function, so `return_i32` and the
 `brownie.m1-scalar/1` CLI profile are unchanged.
 
-The switch-expression receipt is historical after the i64 increment and records 41
-native groups and 580 CLI cases in each verified profile. The current
-[i64 receipt](docs/evidence/m1-i64-windows-20261023.json) records 49 native groups
-and 760 CLI cases in each profile. The propagation receipt remains historical at 37
-native groups and 510 CLI cases.
+The unsigned slice adds `u8` tag 10, `u32` tag 11, and 64-bit guest `usize` tag 12
+at the same source positions. The types remain distinct, even when a value fits
+both `u32` and `usize`. Unsuffixed decimals still default to i32; typed context
+admits unsigned literals without lookahead, promotion, casts, or suffixes. Unary
+minus is forbidden for unsigned values, including `-0`. Same-type arithmetic is
+checked to the operand type's full unsigned range. Underflow and overflow produce
+the guest `overflow` error, and a zero divisor produces `zero_divisor`. Unsigned
+ordering decodes the stored cell as unsigned. Existing i64 constants and register
+cells retain reversible packing that stores the upper half as negative bit
+patterns, using checked conversions split at 2^63. No opcode, guest heap
+allocation, frame, cap, or Fuel policy changes. Wrappers remain i32/bool payloads,
+and unsigned-returning functions reject `?`.
+
+The [unsigned receipt](docs/evidence/m1-unsigned-windows-20261023.json) records
+59 native groups and 1,159 CLI cases in both development and release: 760 prior
+cases plus 399 unsigned cases. The total includes two codec native groups and
+eight unsigned scalar native groups.
+
+The switch-expression and i64 receipts are historical after the unsigned increment.
+The switch-expression receipt records 41 native groups and 580 CLI cases in each
+verified profile. The [i64 receipt](docs/evidence/m1-i64-windows-20261023.json)
+records 49 native groups and 760 CLI cases in each profile. The propagation receipt
+remains historical at 37 native groups and 510 CLI cases. The unsigned receipt is the current record for this subset.
 The [loop receipt](docs/evidence/m1-loops-windows-20261023.json) is
 historical for its 26-group/332-case slice; the [branch receipt](docs/evidence/m1-branches-windows-20261023.json)
 is historical for 20/248, and the [function receipt](docs/evidence/m1-functions-windows-20261023.json)
 and earlier locals/expression receipts are likewise historical for their narrower
-slices. Full M1 still needs the remaining scalar types and richer value-arm statements.
+slices. Full M1 still needs explicit widening, remaining integer operators, and
+richer value-arm statements. Arrays, structs, and borrows remain M2 work.
 Workers, DLL ABI, Windows isolation, and performance remain unverified. M0 was not
 rerun for unchanged inputs. No new CI job or performance measurement was added.
 M2 must cover arrays, structs, borrows, Buffer, input, output, and UTF-8.

@@ -3,10 +3,13 @@
 - Status: implemented and verified on Windows; historical after the switch-expression and i64 increments; 37 native groups and 510 CLI cases in each development and release profile
 - Scope: postfix `?` on one-level Option/Result values in `brownie.m1-scalar/1`
 
+The later [unsigned scalar contract](m1-unsigned.md) extends scalar positions to
+`u8`, `u32`, and 64-bit guest `usize`; wrapper payloads remain i32/bool.
+
 This increment adds `expr?` to the existing scalar, branch, loop, and shallow tagged
 slice. It admits `Option<i32>`, `Option<bool>`, and
 `Result<T, E>` where `T` and `E` are i32 or bool. Wrapper depth is still one:
-nested wrappers, aggregate payloads, remaining scalar types, and host effects remain
+nested wrappers, aggregate payloads, additional integer operators and conversions, and host effects remain
 outside this increment. The successor [switch-expression contract](m1-switch-expressions.md)
 adds exhaustive shallow-wrapper switches as operands.
 
@@ -105,12 +108,12 @@ The propagation receipt is
 It records 37 native groups and 510 black-box CLI
 cases for each development and release profile and is historical after the
 switch-expression increment. The tagged receipt's 33 native groups and 423 CLI
-cases remain the historical record for the preceding tagged slice. The current
+cases remain the historical record for the preceding tagged slice. The historical
 [switch-expression receipt](../evidence/m1-switch-expressions-windows-20261023.json)
-is historical at 41 native groups and 580 CLI cases. The current
+is historical at 41 native groups and 580 CLI cases. The historical
 [i64 receipt](../evidence/m1-i64-windows-20261023.json) records 49 native groups and
 760 CLI cases in each profile; i64 wrappers remain outside propagation.
 
-This contract does not establish full M1, remaining scalar types, richer value-arm
+This contract does not establish full M1, additional integer operators and conversions, richer value-arm
 statements, Windows isolation, the DLL ABI, clean-machine packaging, or performance
 results.

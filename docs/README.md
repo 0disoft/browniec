@@ -1,6 +1,6 @@
 # Documentation
 
-- Status: Accepted design documentation; M0 verified; experimental M1 scalar CLI/VM; bool/branch, loop, tagged, `?`, and switch-expression slices historically verified; i64 verified
+- Status: Accepted design documentation; M0 verified; experimental M1 scalar CLI/VM; earlier slices and i64 have verified historical receipts; unsigned scalars implemented and verified
 
 ## Owning documents
 
@@ -18,7 +18,7 @@
 | CLI interface | [Overview](cli/README.md), [commands](cli/command-contract.md), [configuration](cli/configuration.md), [output and exits](cli/output-and-exit-codes.md) |
 | Runtime invariants | [Project invariants](engineering/00-project-invariants.md) |
 | Resource targets and trust controls | [Performance](engineering/03-performance-budget.md), [security](engineering/04-security-baseline.md) |
-| Current M1 grammar and limits | [Scalar slice](engineering/m1-scalar-slice.md), [i64 scalars](engineering/m1-i64.md), [direct functions](engineering/m1-functions.md), [bool and branches](engineering/m1-branches.md), [loops](engineering/m1-loops.md), [tagged values](engineering/m1-tagged.md), [`?` propagation](engineering/m1-propagation.md), [switch expressions](engineering/m1-switch-expressions.md) |
+| Current M1 grammar and limits | [Scalar slice](engineering/m1-scalar-slice.md), [i64 scalars](engineering/m1-i64.md), [unsigned scalars](engineering/m1-unsigned.md), [direct functions](engineering/m1-functions.md), [bool and branches](engineering/m1-branches.md), [loops](engineering/m1-loops.md), [tagged values](engineering/m1-tagged.md), [`?` propagation](engineering/m1-propagation.md), [switch expressions](engineering/m1-switch-expressions.md) |
 | Evidence and testing | [Validation](../VALIDATION.md), [testing standard](engineering/05-testing-standard.md) |
 | Dependencies and compatibility | [Change policy](engineering/06-dependency-and-change-policy.md) |
 | Failure and operating responsibility | [Failure standard](engineering/07-operability-and-failure-standard.md), [operational contract](ops/00-operational-contract.md) |
@@ -40,11 +40,13 @@ direction.
 Keep documents concise and in English, use relative links, and update affected
 consumers with the owning contract. Do not import source-package instructions or
 local absolute paths. M0 establishes primitive results. M1 establishes a narrow
-i32/i64/bool source path with branches, loops, shallow Option/Result, switch
-statements and expressions, and scalar `?` propagation. The earlier receipts remain
-historical for their verified slices; the switch-expression receipt records 41
-native groups and 580 CLI cases. The current
-[i64 receipt](evidence/m1-i64-windows-20261023.json) records 49 native groups and
-760 CLI cases in each development and release profile. Full M1, remaining scalar
-types, richer value-arm statements, Windows isolation, ABI, and packaging remain
-unimplemented or unverified.
+i32/i64/u8/u32/usize/bool source path with branches, loops, shallow Option/Result,
+switch statements and expressions, and scalar `?` propagation. The earlier receipts
+remain historical for their verified slices; the switch-expression receipt records
+41 native groups and 580 CLI cases. The [i64 receipt](evidence/m1-i64-windows-20261023.json)
+is historical after the unsigned increment and records 49 native groups and 760 CLI
+cases in each development and release profile. The
+[unsigned receipt](evidence/m1-unsigned-windows-20261023.json) records 59 native
+groups and 1,159 CLI cases in each development and release profile. Full M1,
+arrays, structs, borrows, richer value-arm statements, Windows isolation, ABI, and
+packaging remain unimplemented or unverified.

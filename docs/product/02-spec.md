@@ -1,7 +1,7 @@
 # Product Specification
 
 - Status: Accepted for design, 2026-10-23
-- Implementation status: M1 branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation verified historically; i64 implemented and verified; full profile not implemented
+- Implementation status: M1 branches, loops, shallow Option/Result, switch statements and expressions, scalar `?` propagation, and i64 have verified historical receipts; unsigned scalars implemented and verified; full profile not implemented
 - Source profile name: brownie.safe/0.3
 
 ## Product boundary
@@ -28,9 +28,9 @@ Source functions use explicit Fairy-like declarations such as fn Type name.
 Modules and imports are explicit. let and var introduce initialized locals.
 
 The experimental M1 increment keeps `fn i32 main()` as the zero-argument entry
-point. Other functions and their parameters may use i32, i64, or bool. Bool is canonical
+point. Other functions and their parameters may use i32, i64, u8, u32, usize, or bool. Bool is canonical
 0/1 and never converts implicitly to or from an integer type. The increment adds `!`, same-type
-`==`/`!=`, same-type signed-integer ordering, short-circuit `&&`/`||`, `if`/`else if`/`else`,
+`==`/`!=`, same-type integer ordering, short-circuit `&&`/`||`, `if`/`else if`/`else`,
 standalone lexical blocks, and early returns. Every function path must return, and
 statements after a guaranteed return are rejected. Block-local names are limited to
 their block, and a visible local or parameter cannot be redeclared. The loop
@@ -94,6 +94,20 @@ rejected; i64-returning functions reject `?`. Classic `for` headers still reject
 calls, `?`, and switch expressions. Exact rules are in the
 [i64 contract](../engineering/m1-i64.md).
 
+The unsigned increment adds `u8` (0..255), `u32` (0..4294967295), and 64-bit
+guest `usize` (0..18446744073709551615). These are distinct types, including
+`u32` and `usize` when a value fits both. They may appear in locals, parameters,
+results, calls, assignments, copies, recursion, loop clauses, and switch-expression
+joins. Unsuffixed decimals still default to i32. Typed initializer, assignment,
+argument, or return context, and an already typed left binary operand, admit an
+unsigned literal without lookahead inference. There are no implicit conversions,
+casts, or suffixes. Unary minus is forbidden for unsigned values, including `-0`.
+Same-type arithmetic is checked to the type's range; underflow or overflow reports
+guest `overflow`, and a zero divisor reports `zero_divisor`. Unsigned ordering
+decodes the stored cell as unsigned, while equality requires the same type.
+Wrappers remain i32/bool payloads, and unsigned-returning functions reject `?`.
+Exact rules are in the [unsigned contract](../engineering/m1-unsigned.md).
+
 Classic for headers may contain only the profile's pure scalar declaration,
 assignment, condition, and post steps. Arrays and repeated initializers use positive
 integer literals.
@@ -110,8 +124,9 @@ be explicit and value-preserving. Narrowing, unsigned negation, and
 integer-to-handle coercion are rejected.
 
 add, sub, mul, signed negation, division, remainder, shifts, and lengths are checked
-before they can overflow. Signed division by zero is detected before division.
-The quotient truncates toward zero and the remainder follows the dividend sign.
+before they can overflow. Unsigned underflow is an overflow failure. Division by
+zero is detected before division. Signed division truncates toward zero and its
+remainder follows the dividend sign; unsigned division uses unsigned values.
 
 The last executed guest instruction defines the first arithmetic failure. The VM
 converts that condition to a guest outcome and terminates the Instance. A guest
@@ -188,10 +203,12 @@ The [tagged receipt](../evidence/m1-tagged-windows-20261023.json) remains histor
 verification for the tagged switch slice and its prior scalar/branch/loop
 regressions. The propagation receipt is historical at 37 native groups and 510 CLI
 cases per profile. The switch-expression receipt is historical at 41 native groups
-and 580 CLI cases. The [i64 receipt](../evidence/m1-i64-windows-20261023.json)
-records 49 native groups and 760 CLI cases in each profile. Full M1,
-remaining scalar types, richer value-arm statements, and Windows isolation remain
-unimplemented or unverified. The slice does not
+and 580 CLI cases. The [i64 receipt](../evidence/m1-i64-windows-20261023.json) is
+historical and records 49 native groups and 760 CLI cases in each profile. The
+[unsigned receipt](../evidence/m1-unsigned-windows-20261023.json) records 59 native
+groups and 1,159 CLI cases in both development and release. Full M1, arrays,
+structs, borrows, richer value-arm statements,
+and Windows isolation remain unimplemented or unverified. The slice does not
 satisfy full-profile ownership, allocation, host, isolation, or embed criteria.
 Claims require scoped [M1 details](../engineering/m1-scalar-slice.md) and recorded
 evidence, not acceptance of this specification alone.
