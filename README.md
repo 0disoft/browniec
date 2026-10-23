@@ -111,6 +111,7 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 array layout](docs/engineering/m2-array-layout.md): compact scalar payloads, arena preflight, and checked offsets; source arrays are not implemented
 - [M2 array storage](docs/engineering/m2-array-storage.md): scalar codecs, repeated initialization, and element access in caller-owned backing bytes
 - [M2 array owners](docs/engineering/m2-array-owners.md): typed descriptors, generation checks, independent copies, explicit release and bounded reclamation
+- [M2 array IR](docs/engineering/m2-array-ir.md): private entry-array instructions and independent lifetime/CFG verification
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
 - [Design baseline](docs/design-baseline.md): source provenance, evidence, and findings

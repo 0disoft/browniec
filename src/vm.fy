@@ -13,6 +13,8 @@ import shifts as shifts;
 // verified per function, so reclaimed frame slots need no per-call zero-fill.
 pub fn Result<i64, errors::Error> run(ref ir::Program p, usize fuel) {
     let usize verified = verifier::verify(p)?;
+    // Array IR is verified independently before dispatch is enabled in the next slice.
+    if (p.arrays.count != 0) { return .err(errors::make(11, 0)); }
     var i64[4096] registers = [0; 4096];
     var usize[32] return_pcs = [0; 32];
     var usize[32] return_dsts = [0; 32];

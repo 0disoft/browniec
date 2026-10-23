@@ -3,11 +3,15 @@ module verifier;
 import errors as errors;
 import ir as ir;
 import types as types;
+import array_meta as arrays;
+import array_verifier as array_verifier;
 
 fn bool readable(ref ir::Program p, ref bool[] defined, usize r, usize start, usize end) {
     return r >= start && r < end && !p.slots[r] && defined[r];
 }
-fn void merge(ref mut usize[] states, ref mut bool[] seen, ref bool[] defined, usize target, usize start, usize end) {
+fn bool merge(ref mut usize[] states, ref mut bool[] seen, ref bool[] defined, usize target, usize start, usize end, ref mut usize[] array_states, usize live) {
+    if (seen[target] && array_states[target] != live) { return false; }
+    array_states[target] = live;
     var usize r = start;
     while (r < end) {
         let usize cell = target * 2 + r / 64;
@@ -19,6 +23,7 @@ fn void merge(ref mut usize[] states, ref mut bool[] seen, ref bool[] defined, u
         r += 1;
     }
     seen[target] = true;
+    return true;
 }
 fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref mut bool[] used_calls) {
     let usize start = p.register_starts[f];
@@ -26,6 +31,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref mut boo
     let usize arity = p.arities[f];
     var usize[512] states = [0; 512];
     var bool[256] seen = [false; 256];
+    var usize[256] array_states = [0; 256];
     var bool[128] written = [false; 128];
     var bool[128] defined = [false; 128];
     var usize i = start;
@@ -37,7 +43,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref mut boo
         }
         i += 1;
     }
-    merge(ref mut states, ref mut seen, ref defined, p.starts[f], start, end);
+    let bool entered = merge(ref mut states, ref mut seen, ref defined, p.starts[f], start, end, ref mut array_states, 0);
     var usize pc = p.starts[f];
     // Solve the forward graph, then check each backedge preserves its target's
     // entry invariant. This bounded inductive proof needs no cyclic worklist.
@@ -50,12 +56,13 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref mut boo
             defined[i] = (states[pc * 2 + i / 64] & mask) != 0;
             i += 1;
         }
+        var usize live = array_states[pc];
         let usize at = pc * 8;
         let u8 op = p.code[at];
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
-        if (op < 1 || op > 32 || (op!=24 && p.code[at + 4] != 0) || p.code[at + 5] != 0 || p.code[at + 6] != 0 || p.code[at + 7] != 0) { return .err(errors::make(5, pc)); }
+        if (op < 1 || op > 37 || (op!=24 && p.code[at + 4] != 0) || p.code[at + 5] != 0 || p.code[at + 6] != 0 || p.code[at + 7] != 0) { return .err(errors::make(5, pc)); }
         if (op==25) {
             if(dst!=0 || a!=0 || b!=0) {return .err(errors::make(5,pc));}
             pc+=1; continue;
@@ -67,19 +74,19 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref mut boo
             if(tag==0) {if(dst!=0) {return .err(errors::make(5,pc));}}
             else if(dst<start || dst>=end || p.slots[dst] || written[dst] || p.types[dst]!=tag) {return .err(errors::make(5,pc));}
             // The mismatch path receives no payload definition.
-            merge(ref mut states,ref mut seen,ref defined,target,start,end);
+            if (!merge(ref mut states,ref mut seen,ref defined,target,start,end,ref mut array_states,live)) {return .err(errors::make(5,pc));}
             if(tag!=0) {defined[dst]=true;written[dst]=true;}
             if(pc+1>=p.ends[f]) {return .err(errors::make(5,pc));}
-            merge(ref mut states,ref mut seen,ref defined,pc+1,start,end);
+            if (!merge(ref mut states,ref mut seen,ref defined,pc+1,start,end,ref mut array_states,live)) {return .err(errors::make(5,pc));}
             pc+=1; continue;
         }
         if (op == 8) {
-            if (dst != 0 || b != 0 || !readable(p, ref defined, a, start, end)) { return .err(errors::make(5, pc)); }
+            if (live != 0 || dst != 0 || b != 0 || !readable(p, ref defined, a, start, end)) { return .err(errors::make(5, pc)); }
             if (p.types[a] != p.return_types[f]) { return .err(errors::make(5, pc)); }
             pc += 1; continue;
         }
         if (op == 22) {
-            if (dst != 0 || b != 0 || a < p.starts[f] || a >= pc || !seen[a]) { return .err(errors::make(5, pc)); }
+            if (dst != 0 || b != 0 || a < p.starts[f] || a >= pc || !seen[a] || live != array_states[a]) { return .err(errors::make(5, pc)); }
             i=start;
             while (i<end) {
                 let usize one=1;
@@ -89,7 +96,9 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref mut boo
             }
             pc+=1; continue;
         }
-        if (op >= 19 && op <= 21) {
+        if (op >= 33) {
+            live = array_verifier::step(p, pc, f, ref mut defined, ref mut written, live)?;
+        } else if (op >= 19 && op <= 21) {
             let usize target = if (op == 19) { a } else { b };
             if (dst != 0 || target <= pc || target >= p.ends[f]) { return .err(errors::make(5, pc)); }
             if (op == 19) {
@@ -97,7 +106,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref mut boo
             } else {
                 if (!readable(p, ref defined, a, start, end) || p.types[a] != 2) { return .err(errors::make(5, pc)); }
             }
-            merge(ref mut states, ref mut seen, ref defined, target, start, end);
+            if (!merge(ref mut states, ref mut seen, ref defined, target, start, end, ref mut array_states, live)) {return .err(errors::make(5,pc));}
             if (op == 19) { pc += 1; continue; }
         } else if (op == 18) {
             if (dst < start || dst >= end || !p.slots[dst] || b != 0 || !readable(p, ref defined, a, start, end)) { return .err(errors::make(5, pc)); }
@@ -118,7 +127,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref mut boo
                 if (tag==0) {if(a!=0) {return .err(errors::make(5,pc));}}
                 else if (!readable(p,ref defined,a,start,end) || p.types[a]!=tag) {return .err(errors::make(5,pc));}
             } else if (op == 9) {
-                if (a >= p.function_count || b >= p.call_count || used_calls[b]) { return .err(errors::make(5, pc)); }
+                if (a >= p.function_count || b >= p.call_count || used_calls[b] || (p.arrays.count != 0 && a == p.entry)) { return .err(errors::make(5, pc)); }
                 let usize count = p.call_arities[b] as usize;
                 if (count != p.arities[a] || count > 8 || p.types[dst] != p.return_types[a]) { return .err(errors::make(5, pc)); }
                 var usize arg = 0;
@@ -150,7 +159,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref mut boo
             defined[dst] = true; written[dst] = true;
         }
         if (pc + 1 >= p.ends[f]) { return .err(errors::make(5, pc)); }
-        merge(ref mut states, ref mut seen, ref defined, pc + 1, start, end);
+        if (!merge(ref mut states, ref mut seen, ref defined, pc + 1, start, end, ref mut array_states, live)) {return .err(errors::make(5,pc));}
         pc += 1;
     }
     i = start;
@@ -161,6 +170,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref mut boo
 pub fn Result<usize, errors::Error> verify(ref ir::Program p) {
     if (p.count == 0 || p.count > 256 || p.registers == 0 || p.registers > 128 || p.constant_count > 128 ||
         p.function_count == 0 || p.function_count > 16 || p.entry >= p.function_count || p.call_count > 32) { return .err(errors::make(5, 0)); }
+    if (!arrays::valid(ref p.arrays)) { return .err(errors::make(5, 0)); }
     if (p.arities[p.entry] != 0 || p.return_types[p.entry] != 1) { return .err(errors::make(5, 0)); }
     var usize f = 0;
     var usize code_end = 0;

@@ -2,6 +2,7 @@ module ir;
 
 import errors as errors;
 import types as types;
+import array_meta as arrays;
 import std::num as num;
 
 // Private eight-byte instructions: op,dst,a,b,0,0,0,0. Scalar tags are in types.fy.
@@ -15,6 +16,7 @@ import std::num as num;
 // 26 widen: dst's type is a strict value-preserving widening of a; b is zero.
 // 27 complement (b=0), 28 bitwise and, 29 bitwise xor, 30 bitwise or.
 // 31 checked left shift, 32 arithmetic signed / logical unsigned right shift.
+// 33 array init, 34 independent copy, 35 element read, 36 write, 37 drop.
 pub struct Program {
     u8[2048] code;
     i64[128] constants;
@@ -35,6 +37,7 @@ pub struct Program {
     u8[128] types;
     u8[16] return_types;
     bool[128] slots;
+    arrays::Catalog arrays;
 }
 
 pub fn Program empty() {
@@ -43,7 +46,7 @@ pub fn Program empty() {
         .starts = [0; 16], .ends = [0; 16], .register_starts = [0; 16],
         .register_ends = [0; 16], .arities = [0; 16], .call_args = [0; 256],
         .call_arities = [0; 32], .function_count = 0, .entry = 0, .call_count = 0,
-        .types = [0; 128], .return_types = [0; 16], .slots = [false; 128] };
+        .types = [0; 128], .return_types = [0; 16], .slots = [false; 128], .arrays = arrays::empty() };
 }
 
 fn Result<u8, errors::Error> byte(usize value, usize offset) {
@@ -157,4 +160,27 @@ pub fn Result<usize, errors::Error> patch(ref mut Program p, usize jump, usize t
     let usize field = if (op == 24) {4} else if (op == 19 || op == 22) { 2 } else { 3 };
     p.code[jump * 8 + field] = byte(target, offset)?;
     return .ok(target);
+}
+
+pub fn Result<usize, errors::Error> array(ref mut Program p, u8 element, usize length, bool mutable, usize offset) {
+    return arrays::declare(ref mut p.arrays, element, length, mutable, offset);
+}
+pub fn Result<usize, errors::Error> array_init(ref mut Program p, usize id, usize fill, usize offset) {
+    return raw(p, 33, id, fill, 0, offset);
+}
+pub fn Result<usize, errors::Error> array_copy(ref mut Program p, usize dst, usize source, usize offset) {
+    return raw(p, 34, dst, source, 0, offset);
+}
+pub fn Result<usize, errors::Error> array_read(ref mut Program p, usize id, usize index, usize offset) {
+    if (id >= 16 || id >= p.arrays.count) { return .err(errors::make(3, offset)); }
+    let u8 element = p.arrays.elements[id];
+    let usize result = emit(p, 35, id, index, offset)?;
+    p.types[result] = element;
+    return .ok(result);
+}
+pub fn Result<usize, errors::Error> array_write(ref mut Program p, usize id, usize index, usize value, usize offset) {
+    return raw(p, 36, id, index, value, offset);
+}
+pub fn Result<usize, errors::Error> array_drop(ref mut Program p, usize id, usize offset) {
+    return raw(p, 37, id, 0, 0, offset);
 }

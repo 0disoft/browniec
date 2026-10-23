@@ -266,6 +266,11 @@ additional native groups per profile for independent scalar-array values,
 old-plus-new payload quota preflight, complete bool validation, rejected-copy
 state preservation and survival after source release. Owner tests remain the
 historical five-group receipt; only the new copy function changes that module.
+The [array-IR contract](docs/engineering/m2-array-ir.md) adds five native verifier
+groups and reruns 11 branch/loop groups in each profile. Its
+[receipt](docs/evidence/m2-array-ir-windows-20261024.json) covers exact lifetime sets
+at joins/backedges, scalar operand types, mutability and entry-only array access.
+Array dispatch and full scalar regression remain the following implementation unit.
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker
 publication barrier. Compile untrusted source only inside the restricted worker.
