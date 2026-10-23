@@ -1,0 +1,18 @@
+module main;
+
+fn Result<i32, bool> answer(Option<i32> value) {
+    return switch (value) {
+        case .some(number): {
+            let i32 next = number + 1;
+            .ok(next)
+        }
+        case .none: { .err(false) }
+    };
+}
+
+fn i32 main() {
+    return switch (answer(.some(41))) {
+        case .ok(value): { value }
+        case .err(_): { 0 }
+    };
+}

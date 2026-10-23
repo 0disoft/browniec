@@ -8,6 +8,10 @@ pub struct State { usize cursor; usize begin; usize end; usize tokens; u8 kind; 
 pub fn State empty() {
     return State { .cursor = 0, .begin = 0, .end = 0, .tokens = 0, .kind = 0, .value = 0 };
 }
+pub fn State snapshot(ref State s) {
+    return State {.cursor=s.cursor,.begin=s.begin,.end=s.end,
+        .tokens=s.tokens,.kind=s.kind,.value=s.value};
+}
 pub fn bool equal(ref u8[] a, ref u8[] b) {
     if (a.len != b.len) { return false; }
     var usize i = 0;
