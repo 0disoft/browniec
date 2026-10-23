@@ -2,7 +2,7 @@
 
 - Status: accepted design baseline
 - Decision date: 2026-10-23
-- Implementation: M0 verified; experimental M1 scalar pipeline and VM implemented; earlier slices and i64 have verified historical receipts; unsigned scalars implemented and verified
+- Implementation: M0 verified; experimental M1 scalar pipeline and VM implemented; earlier slices and unsigned scalars have verified historical receipts; explicit widening implemented and verified
 
 ## Intent
 
@@ -52,11 +52,24 @@ guest `usize` tag 12. It retains the existing `i64[128]` constant and `i64[4096]
 VM register arrays. `src/cells.fy` stores values below 2^63 unchanged and the upper
 half as negative bit patterns through checked conversions split at 2^63.
 `src/arithmetic.fy` applies the M0 unsigned guards before native operations. The
-slice adds no opcode, guest heap allocation, frame, cap, or Fuel change. Its
+unsigned slice added no opcode, guest heap allocation, frame, cap, or Fuel change. Its
 development and release runs each passed 59 native groups and 1,159 CLI cases,
-recorded in the [unsigned receipt](docs/evidence/m1-unsigned-windows-20261023.json). Ownership, lifecycle APIs, Engine, host
-calls, workers, and DLLs remain designs; full M1, arrays, structs, borrows, richer
-value-arm statements, Windows isolation, DLL embedding, and performance remain
+recorded in the [unsigned receipt](docs/evidence/m1-unsigned-windows-20261023.json).
+The explicit widening increment adds opcode 26, `WIDEN`. The destination is a new
+value register whose type metadata holds the target tag; operand A is the source
+register index, and operand B and every reserved byte are zero. Compiler and
+verifier enforce the same seven domain-preserving integer pairs.
+The verifier additionally requires a readable initialized non-slot source in the
+same function and a unique destination. The VM copies the encoded i64 cell, which
+already represents every admitted source domain. Each executed cast costs one Fuel
+and consumes one instruction and one value register; casts are not elided. It
+adds no guest heap or frame growth and keeps existing caps. The
+[widening receipt](docs/evidence/m1-widening-windows-20261023.json) records
+67 native groups and 1,272 CLI cases in each development and release profile.
+Ownership, lifecycle
+APIs, Engine, host calls, workers, and DLLs remain designs; full M1, arrays,
+structs, borrows, richer value-arm statements, Windows isolation, DLL embedding,
+and performance remain
 unimplemented or unverified. M0
 separately exercises native arithmetic, codec, storage, allocator, owner, and frame
 primitives.

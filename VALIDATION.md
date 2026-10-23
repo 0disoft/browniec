@@ -1,7 +1,7 @@
 # Validation
 
-- Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, switch-expression, and i64 receipts are verified historical evidence; unsigned scalars implemented and verified
-- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/u8/u32/usize/bool values, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation
+- Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, switch-expression, i64, and unsigned receipts are verified historical evidence; explicit widening implemented and verified
+- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/u8/u32/usize/bool values, explicit widening, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation
 
 ## Validation source of truth
 
@@ -73,8 +73,8 @@ identity is SHA-256
 Exact transcript and artifact details belong to `build/m0/receipt.json` and
 `docs/evidence/m0-windows-20261023.json`.
 
-Full M1 remains partial even though all initial scalar type names are now
-implemented; M2 through M5 remain not started. M0's empty runtime-`PATH` execution does not
+Full M1 remains partial even though all initial scalar type names and explicit
+widening are now implemented; M2 through M5 remain not started. M0's empty runtime-`PATH` execution does not
 establish clean-machine packaging or Windows isolation.
 
 M1 has scalar expressions, initialized locals, direct functions, and bool/branch,
@@ -154,31 +154,67 @@ Wrappers remain one-level i32/bool payloads, and i64-returning functions reject
 The unsigned slice adds `u8` tag 10, `u32` tag 11, and 64-bit guest `usize` tag 12
 at the same source positions. The types remain distinct, even when a value fits
 both `u32` and `usize`. Unsuffixed decimals still default to i32; typed context
-admits unsigned literals without lookahead, promotion, casts, or suffixes. Unary
-minus is forbidden for unsigned values, including `-0`. Same-type arithmetic is
+admits unsigned literals without lookahead inference or implicit promotion. There
+are no suffixes, and unary minus is forbidden for unsigned values, including `-0`.
+Same-type arithmetic is
 checked to the operand type's full unsigned range. Underflow and overflow produce
 the guest `overflow` error, and a zero divisor produces `zero_divisor`. Unsigned
 ordering decodes the stored cell as unsigned. Existing i64 constants and register
 cells retain reversible packing that stores the upper half as negative bit
-patterns, using checked conversions split at 2^63. No opcode, guest heap
-allocation, frame, cap, or Fuel policy changes. Wrappers remain i32/bool payloads,
+patterns, using checked conversions split at 2^63. The unsigned increment added no
+opcode or guest heap allocation and kept the existing frame, cap, and Fuel policy.
+Wrappers remain i32/bool payloads,
 and unsigned-returning functions reject `?`.
+
+The widening slice adds `EXPR as TYPE` with postfix `?`, then unary, then `as`,
+then binary precedence. Casts associate left to right. Only seven domain-preserving
+pairs are admitted: `u8` to `i32`, `i64`, `u32`, or `usize`; `u32` to `i64` or
+`usize`; and `i32` to `i64`. Identity casts, narrowing, signed-to-unsigned,
+`usize` to `i64`, bool/integer, and wrapper or aggregate casts are rejected
+regardless of the current value. There is no implicit conversion or promotion.
+The cast source receives no type from the target or surrounding context, so `1 as
+i64` starts from an i32 source and works, while `1 as u8` and `2147483648 as i64`
+are rejected.
+
+Opcode 26, `WIDEN`, names a new destination value register whose type metadata
+holds the target tag, the source register index in operand A, and zero in operand B
+and all reserved bytes. Compiler and verifier
+enforce the same seven-pair table. The verifier requires a readable initialized
+non-slot source in the same function, a unique destination, and the existing CFG
+rules. The VM copies the encoded i64 cell exactly; all seven source domains fit that
+cell. Each executed cast costs one Fuel, including every step of a chain. Each cast
+uses one instruction and one new value register, without guest heap allocation or
+frame growth. Existing caps are unchanged. `let u8 b = 42; return b as i32;` costs
+3 Fuel and fails at 2.
+
+Casts are admitted in the existing scalar positions, including constructor payloads
+whose final payload is i32/bool. `x? as i64` propagates first. Classic `for` headers
+may widen but still reject calls, `?`, and switch expressions. Wrappers remain
+i32/bool only, with no automatic payload mapping. The CLI profile and `return_i32`
+JSON field are unchanged.
 
 The [unsigned receipt](docs/evidence/m1-unsigned-windows-20261023.json) records
 59 native groups and 1,159 CLI cases in both development and release: 760 prior
 cases plus 399 unsigned cases. The total includes two codec native groups and
-eight unsigned scalar native groups.
+eight unsigned scalar native groups. It remains historical after explicit widening.
+The [widening receipt](docs/evidence/m1-widening-windows-20261023.json) records
+67 native groups and 1,272 CLI cases in each development and release profile:
+1,159 prior cases plus 113 widening cases and eight additional native groups.
+Both profiles used identical fixtures; all 54 frozen verification inputs remained
+unchanged. The receipt records source commit `8acc675`, artifact hashes, compiler
+identity, and the widening example's result of 42.
 
 The switch-expression and i64 receipts are historical after the unsigned increment.
 The switch-expression receipt records 41 native groups and 580 CLI cases in each
 verified profile. The [i64 receipt](docs/evidence/m1-i64-windows-20261023.json)
 records 49 native groups and 760 CLI cases in each profile. The propagation receipt
-remains historical at 37 native groups and 510 CLI cases. The unsigned receipt is the current record for this subset.
+remains historical at 37 native groups and 510 CLI cases. The unsigned receipt
+remains historical for its 59/1,159 subset.
 The [loop receipt](docs/evidence/m1-loops-windows-20261023.json) is
 historical for its 26-group/332-case slice; the [branch receipt](docs/evidence/m1-branches-windows-20261023.json)
 is historical for 20/248, and the [function receipt](docs/evidence/m1-functions-windows-20261023.json)
 and earlier locals/expression receipts are likewise historical for their narrower
-slices. Full M1 still needs explicit widening, remaining integer operators, and
+slices. Full M1 still needs remaining integer operators and
 richer value-arm statements. Arrays, structs, and borrows remain M2 work.
 Workers, DLL ABI, Windows isolation, and performance remain unverified. M0 was not
 rerun for unchanged inputs. No new CI job or performance measurement was added.

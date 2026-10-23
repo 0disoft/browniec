@@ -1,7 +1,7 @@
 # Product Specification
 
 - Status: Accepted for design, 2026-10-23
-- Implementation status: M1 branches, loops, shallow Option/Result, switch statements and expressions, scalar `?` propagation, and i64 have verified historical receipts; unsigned scalars implemented and verified; full profile not implemented
+- Implementation status: M1 branches, loops, shallow Option/Result, switch statements and expressions, scalar `?` propagation, i64, and unsigned scalars have verified historical receipts; explicit widening implemented and verified; full profile not implemented
 - Source profile name: brownie.safe/0.3
 
 ## Product boundary
@@ -86,8 +86,8 @@ Exact rules are in the
 The i64 increment admits `i64` locals, function parameters and results, call
 arguments and returns, assignments, loop variables and expressions, and
 switch-expression result joins. Unsuffixed decimals default to i32 and become i64
-from typed context or an already typed left integer operand. There are no implicit
-conversions, casts, or suffixes. Arithmetic, i64 comparisons, zero-divisor handling,
+from typed context or an already typed left integer operand. There is no implicit
+conversion or suffix. Arithmetic, i64 comparisons, zero-divisor handling,
 and overflow checks use the existing scalar instructions and i64 cells. Wrapper
 payloads remain i32/bool, so `Option<i64>` and i64-containing Result types are
 rejected; i64-returning functions reject `?`. Classic `for` headers still reject
@@ -100,13 +100,26 @@ guest `usize` (0..18446744073709551615). These are distinct types, including
 results, calls, assignments, copies, recursion, loop clauses, and switch-expression
 joins. Unsuffixed decimals still default to i32. Typed initializer, assignment,
 argument, or return context, and an already typed left binary operand, admit an
-unsigned literal without lookahead inference. There are no implicit conversions,
-casts, or suffixes. Unary minus is forbidden for unsigned values, including `-0`.
+unsigned literal without lookahead inference. There is no implicit conversion or
+suffix. Unary minus is forbidden for unsigned values, including `-0`.
 Same-type arithmetic is checked to the type's range; underflow or overflow reports
 guest `overflow`, and a zero divisor reports `zero_divisor`. Unsigned ordering
 decodes the stored cell as unsigned, while equality requires the same type.
 Wrappers remain i32/bool payloads, and unsigned-returning functions reject `?`.
 Exact rules are in the [unsigned contract](../engineering/m1-unsigned.md).
+
+The widening increment adds `EXPR as TYPE`. Postfix `?` binds first, then unary
+operators, then `as`, then all binary operators; casts associate left to right.
+Exactly seven domain-preserving pairs are admitted: `u8` to `i32`, `i64`, `u32`,
+or `usize`; `u32` to `i64` or `usize`; and `i32` to `i64`. Identity casts,
+narrowing, signed-to-unsigned, `usize` to `i64`, bool/integer, and wrapper or
+aggregate casts are rejected regardless of the current value. The cast source gets
+no expected type from its target or surrounding context: `1 as i64` starts from an
+i32 source and works, while `1 as u8` and `2147483648 as i64` are rejected. Existing
+contextual typing of uncast literals is unchanged, and there are no implicit
+conversions or promotions. Casts compose in the existing scalar positions, include
+constructor payloads whose final payload is i32/bool, and preserve i32/bool-only
+wrappers. Exact rules are in the [widening contract](../engineering/m1-widening.md).
 
 Classic for headers may contain only the profile's pure scalar declaration,
 assignment, condition, and post steps. Arrays and repeated initializers use positive
@@ -119,8 +132,8 @@ Logical operators short-circuit. Assignment remains a statement. A classic for
 executes its post step on continue and skips it on break.
 
 There is no implicit numeric promotion. In the current M1 slice, context-free
-integers are i32 and no cast or suffix syntax exists. Future profile widening must
-be explicit and value-preserving. Narrowing, unsigned negation, and
+integers are i32. Widening is explicit and value-preserving; no suffix syntax
+exists. Narrowing, unsigned negation, and
 integer-to-handle coercion are rejected.
 
 add, sub, mul, signed negation, division, remainder, shifts, and lengths are checked
@@ -206,7 +219,10 @@ cases per profile. The switch-expression receipt is historical at 41 native grou
 and 580 CLI cases. The [i64 receipt](../evidence/m1-i64-windows-20261023.json) is
 historical and records 49 native groups and 760 CLI cases in each profile. The
 [unsigned receipt](../evidence/m1-unsigned-windows-20261023.json) records 59 native
-groups and 1,159 CLI cases in both development and release. Full M1, arrays,
+groups and 1,159 CLI cases in both development and release and remains historical.
+The [widening receipt](../evidence/m1-widening-windows-20261023.json) records
+67 native groups and 1,272 CLI cases in each profile, including 113 widening cases.
+Full M1, arrays,
 structs, borrows, richer value-arm statements,
 and Windows isolation remain unimplemented or unverified. The slice does not
 satisfy full-profile ownership, allocation, host, isolation, or embed criteria.

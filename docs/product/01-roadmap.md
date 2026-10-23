@@ -1,7 +1,7 @@
 # Roadmap
 
-- Status: Accepted delivery sequence; M0 verified; named M1 slices through i64 have verified historical receipts; unsigned scalars implemented and verified, 2026-10-23
-- Current progress: M0 and named M1 slices passed; unsigned scalars record 59 native groups and 1,159 CLI cases in both profiles; full M1 partial; M2-M5 not started
+- Status: Accepted delivery sequence; M0 verified; named M1 slices through unsigned have verified historical receipts; explicit widening implemented and verified, 2026-10-23
+- Current progress: M0 and named M1 slices passed; widening records 67 native groups and 1,272 CLI cases in both profiles; full M1 partial; M2-M5 not started
 
 This roadmap orders learning and evidence. It is not a release promise. M0 has a
 native harness and recorded evidence. The scalar CLI/VM now exist; the worker
@@ -70,17 +70,23 @@ is historical and records 49 native groups and 760 CLI cases in each profile. Th
 [unsigned slice](../engineering/m1-unsigned.md) adds `u8`, `u32`, and 64-bit guest
 `usize` with checked arithmetic and reversible signed-cell representation. Its
 [receipt](../evidence/m1-unsigned-windows-20261023.json) records 59 native groups
-and 1,159 CLI cases in both development and release.
-All initial scalar type names are now implemented, but full M1 still needs explicit
-widening, remaining integer operators, and richer value-arm statements. Arrays,
+and 1,159 CLI cases in both development and release and remains historical. The
+[widening slice](../engineering/m1-widening.md) adds `EXPR as TYPE` for seven
+domain-preserving integer pairs with explicit precedence, verifier checks, and one
+Fuel per executed cast. Its
+[receipt](../evidence/m1-widening-windows-20261023.json) records 67 native groups
+and 1,272 CLI cases in each profile, including 113 widening cases.
+All initial scalar type names and explicit widening are now implemented, but full
+M1 still needs remaining integer operators and richer value-arm statements. Arrays,
 structs, borrows, Buffer, and text remain M2 work.
 
 Goal: run real .brc source through lexer, parser, type checking, Flow analysis,
 private code generation, independent verification, and the native VM.
 
-The first usable slice includes i32/i64/u8/u32/usize/bool functions, branches, loops, shallow scalar
-Option/Result, switch statements, question-mark propagation, checked arithmetic,
-and bounded Fuel. It produces a small CLI path for local engineering use.
+The first usable slice includes i32/i64/u8/u32/usize/bool functions, explicit
+widening, branches, loops, shallow scalar Option/Result, switch statements,
+question-mark propagation, checked arithmetic, and bounded Fuel. It produces a small
+CLI path for local engineering use.
 
 Exit condition: the same source and input produce the expected guest value through
 the actual native binary. Guest nonzero is data. Compile or runtime failure returns

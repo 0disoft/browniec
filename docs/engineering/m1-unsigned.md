@@ -1,6 +1,6 @@
 # M1 Unsigned Scalars
 
-- Status: implemented and verified on Windows; 59 native groups and 1,159 CLI cases in each development and release profile
+- Status: implemented and verified on Windows; historical after explicit widening; 59 native groups and 1,159 CLI cases in each development and release profile
 - Scope: `u8`, `u32`, and 64-bit guest `usize` scalars in `brownie.m1-scalar/1`
 
 This increment adds unsigned scalars to the existing i32, bool, i64, branch,
@@ -17,7 +17,8 @@ both. Bool remains separate and has no implicit integer conversion.
 
 Integer operators require two operands of the same type. Unary `-` is forbidden
 for every unsigned type, including `-0`. Arithmetic and equality do not convert
-between signed and unsigned types. Wrappers remain limited to i32/bool payloads:
+between signed and unsigned types. Explicit widening is limited to the separate
+[widening contract](m1-widening.md). Wrappers remain limited to i32/bool payloads:
 `Option<u8>`, `Option<u32>`, `Option<usize>`, `Option<i64>`, and every `Result`
 containing one of those types are rejected. Functions returning an unsigned scalar
 reject postfix `?`.
@@ -32,7 +33,9 @@ clause.
 An unsuffixed decimal literal defaults to i32. Unsigned context comes only from a
 typed initializer, assignment target, function argument, function return, or the
 already typed left operand of a binary expression. Typing is left to right with no
-lookahead inference. There are no implicit conversions, casts, or suffixes.
+lookahead inference for uncast literals. There are no implicit conversions or
+suffixes. An explicit widening cast does not supply a type to its source literal:
+use a typed unsigned local as the source.
 
 The ranges are:
 
@@ -55,8 +58,8 @@ divisor produces the guest `zero_divisor` error. Ordering decodes the stored cel
 as unsigned. Equality and inequality require the same type and compare the stored
 bit pattern.
 
-`src/arithmetic.fy` adapts the checked unsigned guards from M0. The implementation
-does not add an opcode or guest heap allocation and keeps existing Fuel costs. A simple program that
+`src/arithmetic.fy` adapts the checked unsigned guards from M0. The unsigned
+increment added no opcode or guest heap allocation and kept existing Fuel costs. A simple program that
 binds `6 * 7` to an unsigned value and returns i32 42 costs 5 Fuel.
 
 ## Representation and limits
@@ -83,7 +86,8 @@ negative bit patterns. Both halves use checked conversions after splitting at
 The CLI profile remains `brownie.m1-scalar/1`, and JSON output still reports
 `return_i32`; unsigned values remain internal to the guest program.
 
-The [dated receipt](../evidence/m1-unsigned-windows-20261023.json) records 59
+The [dated receipt](../evidence/m1-unsigned-windows-20261023.json) remains
+historical and records 59
 native groups and 1,159 CLI cases in both development and release: 760 prior cases
 plus 399 unsigned cases. The native total includes two codec groups and eight
 unsigned scalar groups. Both profiles used identical fixtures, and all frozen
@@ -91,6 +95,10 @@ verification inputs remained unchanged during documentation. Source commits are
 `818111a` (cell codec) and `733b403` (unsigned source/VM support). M0's 18 recorded
 inputs and the Fairy C `4ce12642` compiler identity remain unchanged.
 
-This slice does not complete M1. Shifts, bitwise operations, casts, arrays and
+Explicit widening is implemented and verified separately. Its
+[receipt](../evidence/m1-widening-windows-20261023.json) records 67 native groups
+and 1,272 CLI cases in each profile, including 113 widening cases.
+
+This slice does not complete M1. Shifts, bitwise operations, fallible narrowing, arrays and
 structs, richer value-arm statements, workers, DLL embedding, Windows isolation,
 and performance results remain outside it.

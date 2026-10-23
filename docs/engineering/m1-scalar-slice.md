@@ -1,7 +1,7 @@
 # M1 Scalar Slice
 
-- Status: experimental compiler/verifier/VM and source CLI implemented; earlier slices and i64 have verified historical receipts; unsigned scalars implemented and verified
-- Scope: M1 expressions with i32/i64/u8/u32/usize/bool scalars, shallow wrapper values, branches, loops, exhaustive switch statements and expressions, and scalar `?` propagation; not full M1 or profile conformance
+- Status: experimental compiler/verifier/VM and source CLI implemented; earlier slices and unsigned scalars have verified historical receipts; explicit widening implemented and verified
+- Scope: M1 expressions with i32/i64/u8/u32/usize/bool scalars, explicit integer widening, shallow wrapper values, branches, loops, exhaustive switch statements and expressions, and scalar `?` propagation; not full M1 or profile conformance
 
 The admitted source is `module main;` followed by one or more
 `fn TYPE NAME(TYPE PARAM, ...) { BODY }` declarations, including
@@ -14,7 +14,8 @@ rules, [tagged values](m1-tagged.md) for shallow Option/Result and switch, and
 failure. [Switch expressions](m1-switch-expressions.md) add exhaustive arm values
 or direct returns in expression position. [i64 scalars](m1-i64.md) extend those
 positions with checked full-width signed integers. [Unsigned scalars](m1-unsigned.md)
-add `u8`, `u32`, and 64-bit guest `usize` in the same positions.
+add `u8`, `u32`, and 64-bit guest `usize` in the same positions. [Explicit
+widening](m1-widening.md) adds seven domain-preserving `as` casts.
 EXPR supports decimal integer literals, `true` and `false`, parentheses, signed
 unary minus,
 `!`, arithmetic, ordering, equality, short-circuit `&&` and `||`, previously visible
@@ -28,8 +29,8 @@ is forbidden, including `-0`. A literal must fit its contextual type: positive
 2147483648 needs i64, u32, or usize context, while positive 9223372036854775808 needs
 `usize` context. An unsuffixed decimal defaults to i32 and takes another integer
 type from a typed initializer, assignment, argument, return, or already typed left
-binary operand. There is no lookahead inference. Casts, suffixes, implicit
-promotion, and implicit conversion are unavailable. The current scanner
+binary operand. There is no lookahead inference for uncast literals. Explicit widening
+uses `EXPR as TYPE` and has no implicit promotion or conversion. The current scanner
 accumulates the full unsigned magnitude with prechecked multiply and add, then
 stores the encoded i64 cell. The negative-accumulation rule in the
 [historical i64 contract](m1-i64.md) describes that earlier signed slice.
@@ -66,12 +67,15 @@ wrappers 3 through 8, and i64 9; unsigned types use `u8` 10, `u32` 11, and `usiz
 negative bit patterns through checked conversions split at 2^63. Source offsets are a separate diagnostic map. Opcodes 17 through
 21 are `LOAD`, `STORE`, `JUMP`, `JFALSE`, and `JTRUE`. Opcode 22 is a strictly backward
 backedge within one function. Opcodes 23 through 25 are `MAKE`, `CASE`, and
-`MATCH_FAIL`. Opcodes 19 through 21 remain forward jumps.
+`MATCH_FAIL`. Opcode 26 is `WIDEN`: the destination names a new value register
+with the target type, operand A names the source register, and operand B and
+reserved bytes are zero. Opcodes 19 through 21 remain forward jumps.
 The independent verifier processes instructions in forward order and reconstructs
 definite initialization at every forward join by intersecting incoming paths. For
 each backedge, the incoming state must contain the target's first-entry invariant;
 this is a conservative inductive check, not a cyclic worklist or fixed-point
-solver. It validates operands, scalar/wrapper types and variants, forward and
+solver. It validates operands, scalar/wrapper types and variants, widening pairs,
+readable initialized non-slot cast sources, destination uniqueness, forward and
 backward target bounds, constant ranges, reserved bytes, counts, function/call
 metadata, and return
 completeness. A CASE mismatch leaves its payload undefined; a match defines only the
@@ -95,7 +99,7 @@ left-to-right execution are preserved.
 
 The VM re-verifies before every run, reads the Program by shared borrow, and creates
 fresh frame state for each one-shot execution. Every executed instruction, including
-`LOAD`, `STORE`, `JUMP`, `JFALSE`, `JTRUE`, opcodes 22 through 25, and return, costs one Fuel;
+`LOAD`, `STORE`, `JUMP`, `JFALSE`, `JTRUE`, opcodes 22 through 26, and return, costs one Fuel;
 CALL costs one plus its argument count. Unevaluated short-circuit operands and
 unselected branches do not execute. Loops reuse their bounded frame and register
 cells without per-iteration VM allocation or native recursion. Insufficient Fuel
@@ -112,6 +116,11 @@ type from typed context or an already typed left integer operand. `&&` and `||`
 short-circuit. Same-type unsigned arithmetic uses the checked M0 guards from
 `src/arithmetic.fy`; underflow or overflow reports guest `overflow`, and a zero
 divisor reports `zero_divisor`.
+Explicit `as` casts admit only the seven domain-preserving integer pairs in the
+[widening contract](m1-widening.md). Postfix `?` binds before unary operators,
+unary binds before `as`, and `as` binds before binary operators; chains associate
+left to right. The VM copies the encoded cell for each executed cast and charges
+one Fuel. Casts are not elided and can fail earlier at their Fuel boundary.
 Wrapper values do not participate in arithmetic, ordering, or equality, and nested
 or aggregate wrappers are rejected. Their payloads remain i32/bool, so i64 and
 unsigned wrappers are rejected and functions returning those types reject `?`.
@@ -147,10 +156,15 @@ The switch-expression receipt records 41 native groups and 580 CLI cases. The
 760 CLI cases in each development and release profile. The propagation receipt
 remains historical at 37/510.
 
-The [unsigned receipt](../evidence/m1-unsigned-windows-20261023.json) records
+The [unsigned receipt](../evidence/m1-unsigned-windows-20261023.json) remains
+historical and records
 59 native groups and 1,159 CLI cases in both development and release: 760 prior
 cases plus 399 unsigned cases. The total includes two codec native groups and
 eight unsigned scalar native groups.
+
+The [widening receipt](../evidence/m1-widening-windows-20261023.json) records
+67 native groups and 1,272 CLI cases in each development and release profile,
+including eight new native groups and 113 widening cases.
 
 ## Run the implemented subset
 
@@ -167,6 +181,7 @@ eight unsigned scalar native groups.
 ./build/browniec.exe run examples/switch-expression.brc --json
 ./build/browniec.exe run examples/i64.brc --json
 ./build/browniec.exe run examples/unsigned.brc --json
+./build/browniec.exe run examples/widening.brc --json
 ./build/browniec.exe run examples/answer.brc --fuel 4 --json
 pwsh -NoProfile -File tools/verify-m1.ps1
 ```
@@ -182,8 +197,8 @@ snapshot limit and a 4096-byte UTF-8 argument buffer. This is a trusted-local-so
 engineering CLI. There is no project/config loader, guest I/O, worker, DLL, or sandbox.
 The native executable has no compiler/interpreter subprocess execution path.
 Builds use the M0 compiler artifact without modifying the separate Fairy checkout.
-The earlier receipts do not establish full M1. All initial scalar type names are
-now implemented, but full M1 remains partial: arrays, structs, borrows, Buffer,
+The earlier receipts do not establish full M1. All initial scalar type names and
+explicit widening are now implemented, but full M1 remains partial: arrays, structs, borrows, Buffer,
 text, richer value-arm statements,
 clean-machine packaging, OS isolation, DLL ABI, and performance results remain
 outside it.

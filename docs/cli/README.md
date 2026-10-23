@@ -1,6 +1,6 @@
 # CLI Tool
 
-- Status: Experimental native M1 scalar CLI implemented; earlier slices and i64 have verified historical receipts; unsigned scalars implemented and verified
+- Status: Experimental native M1 scalar CLI implemented; earlier slices and unsigned scalars have verified historical receipts; explicit widening implemented and verified
 - Native runtime intent: direct .brc source execution
 - Contract owner: docs/cli/command-contract.md
 
@@ -16,9 +16,9 @@ The proposed surface is --version, check, run, inspect, and worker, with explici
 are implemented for the M1 scalar profile.
 The broader commands/options remain designed or unavailable.
 
-The current scalar increment adds i32/i64/u8/u32/usize/bool values, bounded branches, loops,
-shallow `Option`/`Result` values with exhaustive `switch` statements and
-expressions. It keeps
+The current scalar increment adds i32/i64/u8/u32/usize/bool values, explicit
+widening, bounded branches, loops, shallow `Option`/`Result` values with exhaustive
+`switch` statements and expressions. It keeps
 `main` as a zero-argument i32 function, so the CLI result field remains
 `return_i32`; guest integer, bool, and wrapper values are internal to the program. The tagged slice
 remains verified by its [historical receipt](../evidence/m1-tagged-windows-20261023.json).
@@ -32,13 +32,19 @@ result contract unchanged while adding internal unsigned values. Wrappers remain
 i32/bool payloads; i64 and unsigned wrapper payloads are unsupported, and functions
 returning i64 or an unsigned type reject `?`. The
 [unsigned receipt](../evidence/m1-unsigned-windows-20261023.json) records 59 native
-groups and 1,159 CLI cases in both development and release, including 399 new cases.
+groups and 1,159 CLI cases in both development and release, including 399 cases; it
+remains historical after explicit widening. `EXPR as TYPE` admits seven
+domain-preserving integer pairs and adds no implicit conversion or promotion. The
+CLI profile and `return_i32` field are unchanged. The
+[widening receipt](../evidence/m1-widening-windows-20261023.json) records 67 native
+groups and 1,272 CLI cases in each profile, including 113 widening cases.
 Language contracts are in the [branch](../engineering/m1-branches.md), [loop](../engineering/m1-loops.md),
 [tagged](../engineering/m1-tagged.md), and
 [propagation](../engineering/m1-propagation.md) documents, with switch-expression
-rules in the [switch-expression contract](../engineering/m1-switch-expressions.md)
-full-width signed integer rules in the [i64 contract](../engineering/m1-i64.md), and
-unsigned rules in the [unsigned contract](../engineering/m1-unsigned.md). Command availability,
+rules in the [switch-expression contract](../engineering/m1-switch-expressions.md),
+full-width signed integer rules in the [i64 contract](../engineering/m1-i64.md),
+unsigned rules in the [unsigned contract](../engineering/m1-unsigned.md), and cast
+rules in the [widening contract](../engineering/m1-widening.md). Command availability,
 output framing, and exit behavior remain governed by the owning CLI documents.
 
 ## Authority and availability
