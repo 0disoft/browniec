@@ -1,0 +1,364 @@
+{
+  "schema": "browniec.m2-array-storage/v1",
+  "status": "passed",
+  "recordedAt": "2026-10-23T14:41:07.2950444Z",
+  "compilerVersion": [
+    "Fairy C Stage 0",
+    "compiler: v0.0.0-20261022210249-4ce1264273be",
+    "sdk: fairyc-sdk-stdlib/0 0.0.0-stage0.86",
+    "language: fairyc-language/20",
+    "runtime: fairyc-runtime/0",
+    "revision: 4ce1264273be6051ee560173e94690e1b99c9eaf",
+    "modified: false"
+  ],
+  "compilerSha256": "572395f7f1e425d613c5a69f50b30ed177cda37ca2b1638bd0c11cf79fcbcc77",
+  "os": "Microsoft Windows NT 10.0.26300.0",
+  "lockedCheck": "check ok: 2 instance(s), 31 source file(s), 259 MIR function(s), lock verified",
+  "results": [
+    {
+      "profile": "development",
+      "nativeTests": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "development",
+        "tests": [
+          {
+            "identity": "tests::m2::array_storage::alignment_is_zeroed_and_failed_initialization_rolls_back",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_storage::corrupt_layout_and_cursor_fail_before_access_or_mutation",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_storage::full_4096_element_payload_uses_backing_bytes_and_keeps_guards",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_storage::initialize_and_mutate_each_scalar_without_touching_neighbors",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_storage::unpublished_bounds_and_invalid_writes_preserve_state",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::scalar_codec::every_repeated_byte_pattern_roundtrips_full_cells",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::scalar_codec::exact_little_endian_signed_unsigned_and_bool_vectors",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::scalar_codec::out_of_range_writes_and_noncanonical_bool_are_rejected",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::scalar_codec::width_and_unknown_type_errors_preserve_all_output",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 9,
+        "passed": 9,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      }
+    },
+    {
+      "profile": "release",
+      "nativeTests": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "release",
+        "tests": [
+          {
+            "identity": "tests::m2::array_storage::alignment_is_zeroed_and_failed_initialization_rolls_back",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_storage::corrupt_layout_and_cursor_fail_before_access_or_mutation",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_storage::full_4096_element_payload_uses_backing_bytes_and_keeps_guards",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_storage::initialize_and_mutate_each_scalar_without_touching_neighbors",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_storage::unpublished_bounds_and_invalid_writes_preserve_state",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::scalar_codec::every_repeated_byte_pattern_roundtrips_full_cells",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::scalar_codec::exact_little_endian_signed_unsigned_and_bool_vectors",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::scalar_codec::out_of_range_writes_and_noncanonical_bool_are_rejected",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::scalar_codec::width_and_unknown_type_errors_preserve_all_output",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 9,
+        "passed": 9,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      }
+    }
+  ],
+  "sourceSha256": [
+    {
+      "path": "fairy.lock",
+      "sha256": "cb65206068da498d781dfd319d229ba066f56effb5afd9298301680d23fdd978"
+    },
+    {
+      "path": "fairy.toml",
+      "sha256": "f5254ba793d9012470c697e8657688a4ea5465c138fba6d748707d5bfa4b31fb"
+    },
+    {
+      "path": "src/arithmetic.fy",
+      "sha256": "8192e6ba97498d059b0505307bc2bf84ac58d9722dc5f597587f8ae81a1081d3"
+    },
+    {
+      "path": "src/array_layout.fy",
+      "sha256": "d3497dfb6bb7e9ac8ceece4ae88a2274b6b40b49e3c5fecfc509179c03c91cdd"
+    },
+    {
+      "path": "src/array_storage.fy",
+      "sha256": "00808c116e0fb86ce063d7fd4cc9d1f8fd29f19b277449e59e3569491a3ee534"
+    },
+    {
+      "path": "src/bits.fy",
+      "sha256": "0b030757624a8dbaea9475f90d757aeff78b9154a121af7a4d9ebd80042db1a0"
+    },
+    {
+      "path": "src/casts.fy",
+      "sha256": "9d09ab396caae00cf541c415e336dfd5d348dbc666d1b0492f86b1cbdd02f61d"
+    },
+    {
+      "path": "src/cells.fy",
+      "sha256": "71b82add3e95b86a1b7bcb88c3f97f6ae38bae0ac3ec8b1a2de925b10a64e433"
+    },
+    {
+      "path": "src/cli_input.fy",
+      "sha256": "ec91de62e6b5147d117d6fe0366ebcf617b556c074bf1dd91cb10188f96507ba"
+    },
+    {
+      "path": "src/compiler.fy",
+      "sha256": "5da942bc29cf4a3abe517dadd2767bfc2d62fc9524b9889ca0aed6c4da75ce19"
+    },
+    {
+      "path": "src/errors.fy",
+      "sha256": "e8070ef5c6380460dacb579c33f2e180b9e683286c8cb0827e30d82a581a4646"
+    },
+    {
+      "path": "src/functions.fy",
+      "sha256": "59195b4a404b1addd10c913a7ad4d046343ba37c0d1e5be9eeea2bf1ee97363e"
+    },
+    {
+      "path": "src/ir.fy",
+      "sha256": "179c4673dd07f2a6c105ec833aed015c2f7ed3623da5a8b79763e19e85418ecf"
+    },
+    {
+      "path": "src/lexer.fy",
+      "sha256": "6bd41898f146b9f2bba0dd1ba584e4db41cbf806f9742e857b05a6873fdb5924"
+    },
+    {
+      "path": "src/locals.fy",
+      "sha256": "c472fb8be15c3414f88f2dc326b55d90309051b3c1751a0427cc05fc2f4c4c8a"
+    },
+    {
+      "path": "src/loops.fy",
+      "sha256": "8034d028c94edae945be52a8f2788531f18dcfd64d394104678b1f6607f04425"
+    },
+    {
+      "path": "src/main.fy",
+      "sha256": "9f6968d6df1e2818cce5822cd0ab9a9a8b1f72f77e96f4e268fea087fa34c356"
+    },
+    {
+      "path": "src/patterns.fy",
+      "sha256": "d9ba2ff9dba626968b7514c636a414932e50856c19b9d41d6825b4f91c9797aa"
+    },
+    {
+      "path": "src/propagation.fy",
+      "sha256": "7d0ebaee7b96545bc4f95e0ecd7a58fbda521301deb00c0deb136ada4159eb44"
+    },
+    {
+      "path": "src/render.fy",
+      "sha256": "49f21d0d17d741f8bf863be8ab1df3afc6e7996b92d5a5e0f6d0a482154e36f4"
+    },
+    {
+      "path": "src/scalar_codec.fy",
+      "sha256": "c28ca5e5cdc38dee01d79489d8c5a709022a49001854af638258ec4536ad66f0"
+    },
+    {
+      "path": "src/shifts.fy",
+      "sha256": "510dc6a90591de165de424a377eb267917ea9973972b9b95656cc9c435675eeb"
+    },
+    {
+      "path": "src/tagged.fy",
+      "sha256": "67770f8ec8f3e35a2a6196cda87310844d37358f86f8b22eb81b49df1f65f1bf"
+    },
+    {
+      "path": "src/types.fy",
+      "sha256": "906f5ba160de53f60d23e344e141181f902f36de60a4060375bef97a2162be23"
+    },
+    {
+      "path": "src/verifier.fy",
+      "sha256": "f6d149ef81b6cf17d546c6d8ad4207b7e3b3daa61efb3a25263751d8603752f3"
+    },
+    {
+      "path": "src/vm.fy",
+      "sha256": "f5e08c3ef96462899c698abf49857ea647f5ceed3bd9ac3faec01ee18adea68d"
+    },
+    {
+      "path": "tests/m2/array_storage.fy",
+      "sha256": "05e47d2d69f0524eea4099e2b58e3438c8e8f14b335d8577cf0a5fb65c822963"
+    },
+    {
+      "path": "tests/m2/scalar_codec.fy",
+      "sha256": "63e5709b6b46addea1510db1cce5f27ea6e52ab8e2f5fd5da98aaa7bb216d323"
+    },
+    {
+      "path": "tools/verify-m2-storage.ps1",
+      "sha256": "af7c8ac6983c9862ab777479c82d4a7e7afb57f4662ab9ae0f2d41a4728b79e2"
+    }
+  ],
+  "artifacts": "Tool-managed temporary native test images; no shipped CLI array artifact.",
+  "limitations": [
+    "Caller-owned backing bytes with a private bounded cursor; repeated scalar initialization and checked element reads/writes.",
+    "Little-endian scalar codecs preserve full signed and packed unsigned cells and reject noncanonical bool.",
+    "No source arrays, aggregate IR, runtime allocation, ownership tokens, frame cleanup or aggregate Fuel yet.",
+    "No isolation, DLL, packaging or performance claim."
+  ],
+  "baselineCommit": "253a3f172601b70cc048595f7914acc6754d2fce",
+  "sourceIdentity": "Exact working-tree hashes frozen before both profiles and rechecked after testing and documentation; baselineCommit precedes this slice.",
+  "commands": [
+    "pwsh -NoProfile -File tools/verify-m2-storage.ps1",
+    "build/toolchain/fairyc.exe test --list --json --locked with --file for each root-level tests/*.fy",
+    "python -B build/m2-storage/record-evidence.py",
+    "git diff --check"
+  ],
+  "priorEvidenceReuse": [
+    {
+      "path": "docs/evidence/m0-windows-20261023.json",
+      "sha256": "edb93b346d8e0908913eae3cb9ba5dcafecf5e5bb010acc1e6b22990636edf59",
+      "changedRecordedInputs": [],
+      "execution": "not rerun; existing implementation/tests unchanged"
+    },
+    {
+      "path": "docs/evidence/m1-switch-arm-statements-windows-20261023.json",
+      "sha256": "dfe3156ecac9c0fcf9ecf4f62838c90e731d043f62b97e798563e456bc12bdfa",
+      "changedRecordedInputs": [
+        "fairy.lock",
+        "tools/verify-m1.ps1"
+      ],
+      "execution": "not rerun; existing implementation/tests unchanged"
+    },
+    {
+      "path": "docs/evidence/m2-array-layout-windows-20261023.json",
+      "sha256": "fe159a3155fc880d3df0a5daf7735fcc8dea8ba29bf41c41505c5a938cd4bd9e",
+      "changedRecordedInputs": [
+        "fairy.lock"
+      ],
+      "execution": "not rerun; existing implementation/tests unchanged"
+    }
+  ],
+  "m1Selection": {
+    "count": 81,
+    "identity": "same as prior scalar receipt; no M2 groups",
+    "retainedArtifactsAndCliReports": "unchanged"
+  },
+  "documentationChecks": {
+    "files": 82,
+    "relativeLinks": 417,
+    "noLocalAbsolutePaths": "passed",
+    "diffCheck": "passed"
+  },
+  "skipped": [
+    {
+      "check": "M0, M1 native/CLI and M2 layout reruns",
+      "reason": "Existing execution sources and tests unchanged; receipt input identity exceptions and retained scalar artifacts are recorded separately."
+    },
+    {
+      "check": "Source-array end-to-end, owner generations and aggregate metering",
+      "reason": "Private caller-backed storage only; no array IR or source syntax introduced."
+    },
+    {
+      "check": "Allocator-failure injection",
+      "reason": "Helpers allocate nothing. The maximum-size test supplies a caller-owned Buffer; its allocation failure path is not claimed as tested."
+    },
+    {
+      "check": "Windows isolation, DLL ABI, packaging and performance",
+      "reason": "Separate unimplemented or unmeasured boundaries."
+    }
+  ]
+}

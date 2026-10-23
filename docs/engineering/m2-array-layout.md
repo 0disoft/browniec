@@ -5,6 +5,10 @@
 - Harness: [`tools/verify-m2-layout.ps1`](../../tools/verify-m2-layout.ps1).
 - Evidence: [Windows receipt](../evidence/m2-array-layout-windows-20261023.json).
 
+The successor [storage slice](m2-array-storage.md) connects this unchanged layout
+to scalar codecs and caller-owned backing bytes. This document retains the
+original layout-only scope and receipt.
+
 This first M2 slice prepares compact array storage independently of the scalar
 VM's 128 value registers. It does not admit array source syntax or execute array
 instructions. The M1 CLI grammar, profile name, opcodes, frames, and Fuel schedule

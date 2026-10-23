@@ -75,8 +75,9 @@ Exact transcript and artifact details belong to `build/m0/receipt.json` and
 
 The [M1 requirements audit](docs/engineering/m1-checkpoint-audit.md) closes the
 bounded scalar checkpoint by checking the identities of existing executed evidence.
-Full-profile conformance remains incomplete. M2 has private scalar-array layout
-primitives; M3 through M5 remain not started. M0's empty runtime-`PATH` execution does not
+Full-profile conformance remains incomplete. M2 has private scalar-array layout,
+codec and caller-backed storage primitives; M3 through M5 remain not started.
+M0's empty runtime-`PATH` execution does not
 establish clean-machine packaging or Windows isolation.
 
 M1 has scalar expressions, initialized locals, direct functions, and bool/branch,
@@ -250,6 +251,11 @@ Its six groups per profile test compact scalar layouts, corrupt metadata,
 overflow-safe alignment/size planning, arena quota ceilings, and checked offsets.
 These are primitive tests only, not source-array or allocator evidence. Scalar M1
 execution code is unchanged; its prior receipt remains the recorded runtime evidence.
+The successor [M2 storage slice](docs/engineering/m2-array-storage.md) adds four
+scalar-codec and five caller-backed-storage native groups per profile, recorded
+in its own [receipt](docs/evidence/m2-array-storage-windows-20261023.json). This
+tests real byte initialization and access without source-array or VM integration.
+Allocator failure, owner generations, frame cleanup and aggregate Fuel remain open.
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker
 publication barrier. Compile untrusted source only inside the restricted worker.

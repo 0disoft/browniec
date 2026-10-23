@@ -1,7 +1,7 @@
 # Roadmap
 
 - Status: Accepted delivery sequence; M0 verified; named M1 slices through unsigned have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified, 2026-10-23
-- Current progress: M1 scalar checkpoint verified; M2 array-layout primitives started and verified; full-profile conformance incomplete; M3-M5 not started
+- Current progress: M1 scalar checkpoint verified; M2 array layout, codecs and caller-backed storage primitives verified; full-profile conformance incomplete; M3-M5 not started
 
 This roadmap orders learning and evidence. It is not a release promise. M0 has a
 native harness and recorded evidence. The scalar CLI/VM now exist; the worker
@@ -108,7 +108,11 @@ an explicit diagnostic and does not crash the host.
 Status: started with [scalar-array layout primitives](../engineering/m2-array-layout.md).
 This foundation validates compact widths, length 1..4096, aligned arena plans,
 quota preflight, and checked offsets; it does not admit array source or allocate
-payload storage. Goal: connect arrays, plain structs, borrows, Buffer, input,
+payload storage. The [storage increment](../engineering/m2-array-storage.md) adds
+little-endian scalar codecs, repeated initialization and checked element reads
+and writes in caller-owned backing bytes, with nine native groups per profile.
+Source arrays, owned arenas, aggregate verification and metering remain open.
+Goal: connect arrays, plain structs, borrows, Buffer, input,
 output, and UTF-8.
 
 Required evidence includes independent array copies, complete record construction,
