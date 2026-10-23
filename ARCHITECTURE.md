@@ -2,7 +2,7 @@
 
 - Status: accepted design baseline
 - Decision date: 2026-10-23
-- Implementation: M0 verified; experimental M1 scalar pipeline and VM implemented; earlier slices and unsigned scalars have verified historical receipts; explicit widening historically verified; bitwise operators and checked shifts implemented and verified
+- Implementation: M0 verified; experimental M1 scalar pipeline and VM implemented; earlier slices and unsigned scalars have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified
 
 ## Intent
 
@@ -74,9 +74,16 @@ shift uses explicit sign fill. Every operation costs one Fuel and keeps the
 existing register and frame bounds.
 The [integer-operator receipt](docs/evidence/m1-integer-operators-windows-20261023.json)
 records 75 native groups and 1,898 CLI cases in each development and release profile.
+The [arm-statement increment](docs/engineering/m1-switch-arm-statements.md) reuses
+the statement compiler in value arms, threading structural/expression depth and
+the active loop state through all expression calls. Terminal return/break/continue
+paths bypass the typed value join. While conditions enter their own loop before
+compilation so their transfers target that loop. No opcode or VM change is added.
+The [arm-statement receipt](docs/evidence/m1-switch-arm-statements-windows-20261023.json)
+records 81 native groups and 1,969 CLI cases in each development and release profile.
 Ownership, lifecycle
 APIs, Engine, host calls, workers, and DLLs remain designs; full M1, arrays,
-structs, borrows, richer value-arm statements, Windows isolation, DLL embedding,
+structs, borrows, Windows isolation, DLL embedding,
 and performance remain
 unimplemented or unverified. M0
 separately exercises native arithmetic, codec, storage, allocator, owner, and frame

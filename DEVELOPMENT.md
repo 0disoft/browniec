@@ -1,6 +1,6 @@
 # Development
 
-- Status: M0 verified; experimental native M1 scalar CLI implemented; earlier slices and unsigned scalars have verified historical receipts; explicit widening historically verified; bitwise operators and checked shifts implemented and verified
+- Status: M0 verified; experimental native M1 scalar CLI implemented; earlier slices and unsigned scalars have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified
 - Current repository content: Fairy C frontend, private IR/verifier/VM, CLI, tests, and M0 probes
 
 ## Current reality
@@ -36,6 +36,7 @@ checkout or claim it matches the historical receipts.
 ./build/browniec.exe run examples/unsigned.brc --json
 ./build/browniec.exe run examples/widening.brc --json
 ./build/browniec.exe run examples/bitwise.brc --json
+./build/browniec.exe run examples/switch-arm-statements.brc --json
 pwsh -NoProfile -File tools/verify-m1.ps1
 ```
 
@@ -103,8 +104,13 @@ See [M1 details](docs/engineering/m1-scalar-slice.md) and the
 [integer-operator](docs/engineering/m1-integer-operators.md) contracts. The i64,
 unsigned, and widening receipts remain historical for their slices. The
 [integer-operator receipt](docs/evidence/m1-integer-operators-windows-20261023.json)
-records the current verified subset: 75 native groups and 1,898 CLI cases in each
+is historical and records 75 native groups and 1,898 CLI cases in each
 development and release profile, including 626 new bitwise/shift cases.
+The [arm-statement contract](docs/engineering/m1-switch-arm-statements.md) adds
+structured statements inside switch-expression arms. Its
+[receipt](docs/evidence/m1-switch-arm-statements-windows-20261023.json) records the
+current verified subset: 81 native groups and 1,969 CLI cases in each development
+and release profile, including 71 new arm-statement cases.
 
 Documentation review may use repository-neutral tools such as a Markdown link check
 or git diff --check when the parent task supplies them. These checks do not execute

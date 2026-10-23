@@ -1,6 +1,6 @@
 # CLI Tool
 
-- Status: Experimental native M1 scalar CLI implemented; earlier slices and unsigned scalars have verified historical receipts; explicit widening historically verified; bitwise operators and checked shifts implemented and verified
+- Status: Experimental native M1 scalar CLI implemented; earlier slices and unsigned scalars have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified
 - Native runtime intent: direct .brc source execution
 - Contract owner: docs/cli/command-contract.md
 
@@ -24,7 +24,7 @@ widening, bounded branches, loops, shallow `Option`/`Result` values with exhaust
 remains verified by its [historical receipt](../evidence/m1-tagged-windows-20261023.json).
 Postfix `?` propagates shallow scalar Option and Result payloads. Switch expressions
 add exhaustive shallow-wrapper arms in expression position with one exact yield
-type, restricted value-arm statements, and optional direct returns. The earlier
+type, statement-bearing arms, and optional function/loop transfers. The earlier
 receipts, including i64, are historical; the switch-expression receipt records 41
 native groups and 580 CLI cases, and the i64 receipt records 49 native groups and
 760 CLI cases in each profile. The unsigned increment keeps `main` and the JSON
@@ -44,6 +44,12 @@ use the existing runtime `overflow` outcome and exit code 5. There is no new CLI
 option, result field, profile identifier, or implicit integer/bool conversion.
 The [integer-operator receipt](../evidence/m1-integer-operators-windows-20261023.json)
 records 75 native groups and 1,898 CLI cases in each development and release profile.
+The [arm-statement contract](../engineering/m1-switch-arm-statements.md) adds
+structured statements and lexical loop transfers inside switch-expression arms.
+It keeps the CLI result/profile contract unchanged; missing values and illegal
+transfers remain compile errors rather than runtime fallbacks.
+The [arm-statement receipt](../evidence/m1-switch-arm-statements-windows-20261023.json)
+records 81 native groups and 1,969 CLI cases in each development and release profile.
 Language contracts are in the [branch](../engineering/m1-branches.md), [loop](../engineering/m1-loops.md),
 [tagged](../engineering/m1-tagged.md), and
 [propagation](../engineering/m1-propagation.md) documents, with switch-expression

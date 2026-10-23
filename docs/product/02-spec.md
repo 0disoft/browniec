@@ -1,7 +1,7 @@
 # Product Specification
 
 - Status: Accepted for design, 2026-10-23
-- Implementation status: M1 branches, loops, shallow Option/Result, switch statements and expressions, scalar `?` propagation, i64, and unsigned scalars have verified historical receipts; explicit widening historically verified; bitwise operators and checked shifts implemented and verified; full profile not implemented
+- Implementation status: M1 branches, loops, shallow Option/Result, switch statements and expressions, scalar `?` propagation, i64, and unsigned scalars have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified; full profile not implemented
 - Source profile name: brownie.safe/0.3
 
 ## Product boundary
@@ -81,7 +81,14 @@ Each arm has private visible bindings, while assignments to an outer `var` persi
 Switch expressions compose with calls, returns, assignments, while conditions,
 short-circuit expressions, and `?`; classic `for` headers remain pure scalar.
 Exact rules are in the
-[switch-expression contract](../engineering/m1-switch-expressions.md).
+[switch-expression contract](../engineering/m1-switch-expressions.md). The later
+[arm-statement contract](../engineering/m1-switch-arm-statements.md) adds blocks,
+if/else, while/for, and lexical loop transfers before the final arm value. Every
+continuing path needs a final expression; wholly terminal arms close immediately.
+At least one arm must still yield. A leading switch is the final expression;
+wrap a statement switch in a standalone block. Expression and structural depth
+budgets are inherited through arm statements. While conditions own their loop
+transfers, and classic-for headers remain pure scalar.
 
 The i64 increment admits `i64` locals, function parameters and results, call
 arguments and returns, assignments, loop variables and expressions, and
@@ -232,8 +239,10 @@ The [widening receipt](../evidence/m1-widening-windows-20261023.json) records
 67 native groups and 1,272 CLI cases in each profile, including 113 widening cases.
 The [integer-operator receipt](../evidence/m1-integer-operators-windows-20261023.json)
 records 75 native groups and 1,898 CLI cases in each profile, including 626 new cases.
+The [arm-statement receipt](../evidence/m1-switch-arm-statements-windows-20261023.json)
+records 81 native groups and 1,969 CLI cases in each profile, including 71 new cases.
 Full M1, arrays,
-structs, borrows, richer value-arm statements,
+structs, borrows,
 and Windows isolation remain unimplemented or unverified. The slice does not
 satisfy full-profile ownership, allocation, host, isolation, or embed criteria.
 Claims require scoped [M1 details](../engineering/m1-scalar-slice.md) and recorded

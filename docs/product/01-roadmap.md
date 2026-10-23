@@ -1,7 +1,7 @@
 # Roadmap
 
-- Status: Accepted delivery sequence; M0 verified; named M1 slices through unsigned have verified historical receipts; explicit widening historically verified; bitwise operators and checked shifts implemented and verified, 2026-10-23
-- Current progress: M0 and named M1 slices passed; integer operators record 75 native groups and 1,898 CLI cases in both profiles; full M1 partial; M2-M5 not started
+- Status: Accepted delivery sequence; M0 verified; named M1 slices through unsigned have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified, 2026-10-23
+- Current progress: M0 and named M1 slices passed; arm statements record 81 native groups and 1,969 CLI cases in both profiles; full-profile conformance unverified; M2-M5 not started
 
 This roadmap orders learning and evidence. It is not a release promise. M0 has a
 native harness and recorded evidence. The scalar CLI/VM now exist; the worker
@@ -79,10 +79,15 @@ and 1,272 CLI cases in each profile, including 113 widening cases.
 The [integer-operator increment](../engineering/m1-integer-operators.md) adds
 fixed-width complement, AND/XOR/OR, and checked shifts with arithmetic signed right
 shift. All initial scalar types, explicit widening, and these integer operators
-are implemented, but full M1 still needs richer value-arm statements. Arrays,
-structs, borrows, Buffer, and text remain M2 work.
+are implemented. The [arm-statement increment](../engineering/m1-switch-arm-statements.md)
+adds structured control flow inside expression arms. The scalar checkpoint remains
+distinct from full-profile conformance. Arrays, structs, borrows, Buffer, and text
+remain M2 work.
 The [integer-operator receipt](../evidence/m1-integer-operators-windows-20261023.json)
 records 75 native groups and 1,898 CLI cases in each profile, including 626 new cases.
+That receipt is historical after arm statements. The
+[arm-statement receipt](../evidence/m1-switch-arm-statements-windows-20261023.json)
+records 81 native groups and 1,969 CLI cases in each profile, including 71 new cases.
 
 Goal: run real .brc source through lexer, parser, type checking, Flow analysis,
 private code generation, independent verification, and the native VM.

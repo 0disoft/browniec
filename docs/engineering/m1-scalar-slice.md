@@ -1,6 +1,6 @@
 # M1 Scalar Slice
 
-- Status: experimental compiler/verifier/VM and source CLI implemented; earlier slices and unsigned scalars have verified historical receipts; explicit widening historically verified; bitwise operators and checked shifts implemented and verified
+- Status: experimental compiler/verifier/VM and source CLI implemented; earlier slices and unsigned scalars have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified
 - Scope: M1 expressions with i32/i64/u8/u32/usize/bool scalars, explicit integer widening, shallow wrapper values, branches, loops, exhaustive switch statements and expressions, and scalar `?` propagation; not full M1 or profile conformance
 
 The admitted source is `module main;` followed by one or more
@@ -18,6 +18,8 @@ add `u8`, `u32`, and 64-bit guest `usize` in the same positions. [Explicit
 widening](m1-widening.md) adds seven domain-preserving `as` casts. [Integer
 operators](m1-integer-operators.md) add fixed-width bitwise operations and checked
 shifts, with an explicit precedence table and same-type operands.
+[Arm statements](m1-switch-arm-statements.md) add structured control flow inside
+switch-expression arms while preserving final values and lexical loop ownership.
 EXPR supports decimal integer literals, `true` and `false`, parentheses, signed
 unary minus,
 `!`, `~`, arithmetic, `&`, `^`, `|`, `<<`, `>>`, ordering, equality,
@@ -55,8 +57,10 @@ depth 32 (nested blocks, control constructs, and switch, including else-if chain
 expression depth 32, loop depth 32, 64 simultaneously visible bindings per function including
 parameters, 128 global scalar/wrapper register cells, 128 constants, and 256 instructions.
 The function, call-site, arity, and VM-frame limits remain 16, 32, 8, and 32.
-Structural parser depth and expression depth are separate counters. `var`, short-circuit,
-and wrapper slots use the same 128-cell register file as value registers. Fixed
+Structural parser depth and expression depth are separate budgets. Both are
+inherited across expression-arm statements and their nested expressions; no
+statement resets the enclosing arm's expression depth. `var`, short-circuit, and
+wrapper slots use the same 128-cell register file as value registers. Fixed
 arrays bound compiler and VM storage. These are temporary implementation ceilings,
 not performance results.
 
@@ -179,6 +183,10 @@ That receipt is historical after integer operators. The
 [integer-operator receipt](../evidence/m1-integer-operators-windows-20261023.json)
 records 75 native groups and 1,898 CLI cases in each profile, including eight new
 native groups and 626 new bitwise/shift cases.
+The integer-operator receipt is historical after arm statements. The
+[arm-statement receipt](../evidence/m1-switch-arm-statements-windows-20261023.json)
+records 81 native groups and 1,969 CLI cases in each profile, including six new
+native groups and 71 new arm-statement cases.
 
 ## Run the implemented subset
 
@@ -197,6 +205,7 @@ native groups and 626 new bitwise/shift cases.
 ./build/browniec.exe run examples/unsigned.brc --json
 ./build/browniec.exe run examples/widening.brc --json
 ./build/browniec.exe run examples/bitwise.brc --json
+./build/browniec.exe run examples/switch-arm-statements.brc --json
 ./build/browniec.exe run examples/answer.brc --fuel 4 --json
 pwsh -NoProfile -File tools/verify-m1.ps1
 ```
@@ -214,6 +223,5 @@ The native executable has no compiler/interpreter subprocess execution path.
 Builds use the M0 compiler artifact without modifying the separate Fairy checkout.
 The earlier receipts do not establish full M1. All initial scalar type names and
 explicit widening are now implemented, but full M1 remains partial: arrays, structs, borrows, Buffer,
-text, richer value-arm statements,
-clean-machine packaging, OS isolation, DLL ABI, and performance results remain
+text, clean-machine packaging, OS isolation, DLL ABI, and performance results remain
 outside it.

@@ -1,6 +1,6 @@
 # M1 Integer Bitwise Operators and Checked Shifts
 
-- Status: implemented and verified on Windows; 75 native groups and 1,898 CLI cases in each development and release profile
+- Status: implemented and verified on Windows; historical after arm statements; 75 native groups and 1,898 CLI cases in each development and release profile
 - Scope: `~`, `&`, `^`, `|`, `<<`, and `>>` in `brownie.m1-scalar/1`
 
 These operators preserve the exact `i32`, `i64`, `u8`, `u32`, or 64-bit guest
@@ -94,3 +94,5 @@ the compiler binary are unchanged. No performance measurement was added.
 and `80c7e18` (shifts). This increment does not complete M1 or add compound
 assignments, richer switch-expression arm statements, arrays, workers, or DLLs.
 Windows isolation, clean-machine packaging, and performance remain unverified.
+Structured arm statements are implemented separately under the
+[arm-statement contract](m1-switch-arm-statements.md).

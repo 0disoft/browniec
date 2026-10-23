@@ -1,6 +1,6 @@
 # Documentation
 
-- Status: Accepted design documentation; M0 verified; experimental M1 scalar CLI/VM; earlier slices and unsigned scalars have verified historical receipts; explicit widening historically verified; bitwise operators and checked shifts implemented and verified
+- Status: Accepted design documentation; M0 verified; experimental M1 scalar CLI/VM; earlier slices and unsigned scalars have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified
 
 ## Owning documents
 
@@ -18,7 +18,7 @@
 | CLI interface | [Overview](cli/README.md), [commands](cli/command-contract.md), [configuration](cli/configuration.md), [output and exits](cli/output-and-exit-codes.md) |
 | Runtime invariants | [Project invariants](engineering/00-project-invariants.md) |
 | Resource targets and trust controls | [Performance](engineering/03-performance-budget.md), [security](engineering/04-security-baseline.md) |
-| Current M1 grammar and limits | [Scalar slice](engineering/m1-scalar-slice.md), [i64 scalars](engineering/m1-i64.md), [unsigned scalars](engineering/m1-unsigned.md), [explicit widening](engineering/m1-widening.md), [integer operators](engineering/m1-integer-operators.md), [direct functions](engineering/m1-functions.md), [bool and branches](engineering/m1-branches.md), [loops](engineering/m1-loops.md), [tagged values](engineering/m1-tagged.md), [`?` propagation](engineering/m1-propagation.md), [switch expressions](engineering/m1-switch-expressions.md) |
+| Current M1 grammar and limits | [Scalar slice](engineering/m1-scalar-slice.md), [i64 scalars](engineering/m1-i64.md), [unsigned scalars](engineering/m1-unsigned.md), [explicit widening](engineering/m1-widening.md), [integer operators](engineering/m1-integer-operators.md), [direct functions](engineering/m1-functions.md), [bool and branches](engineering/m1-branches.md), [loops](engineering/m1-loops.md), [tagged values](engineering/m1-tagged.md), [`?` propagation](engineering/m1-propagation.md), [switch expressions](engineering/m1-switch-expressions.md), [arm statements](engineering/m1-switch-arm-statements.md) |
 | Evidence and testing | [Validation](../VALIDATION.md), [testing standard](engineering/05-testing-standard.md) |
 | Dependencies and compatibility | [Change policy](engineering/06-dependency-and-change-policy.md) |
 | Failure and operating responsibility | [Failure standard](engineering/07-operability-and-failure-standard.md), [operational contract](ops/00-operational-contract.md) |
@@ -54,6 +54,9 @@ and verified. Its [receipt](evidence/m1-widening-windows-20261023.json) records
 That receipt is historical after integer operators. The
 [integer-operator receipt](evidence/m1-integer-operators-windows-20261023.json)
 records 75 native groups and 1,898 CLI cases in each profile, including 626 new cases.
+That receipt is historical after arm statements. The
+[arm-statement receipt](evidence/m1-switch-arm-statements-windows-20261023.json)
+records 81 native groups and 1,969 CLI cases in each profile, including 71 new cases.
 Full M1,
-arrays, structs, borrows, richer value-arm statements, Windows isolation, ABI, and
+arrays, structs, borrows, Windows isolation, ABI, and
 packaging remain unimplemented or unverified.

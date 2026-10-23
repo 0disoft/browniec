@@ -5,6 +5,11 @@
 
 The later [unsigned scalar contract](m1-unsigned.md) extends scalar positions to
 `u8`, `u32`, and 64-bit guest `usize`; wrapper payloads remain i32/bool.
+The later [arm-statement contract](m1-switch-arm-statements.md) extends the
+restricted statement grammar described below to blocks, if/else, loops, and
+lexical loop transfers. It also preserves structural depth across expression
+boundaries and expression depth across nested statements. This document retains
+the original increment's grammar and historical receipt.
 
 This increment extends the tagged switch statement into expression position. It
 admits both variants of the existing one-level `Option` and `Result` families in

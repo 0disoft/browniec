@@ -36,6 +36,10 @@ condition and loop body may contain direct calls under the normal function rules
 The later [propagation contract](m1-propagation.md) also rejects `?` in all three
 `for` header clauses while admitting it in while conditions and loop bodies.
 Switch expressions are likewise rejected in all three `for` header clauses.
+The later [arm-statement contract](m1-switch-arm-statements.md) permits lexical
+transfers from a switch-expression arm to its enclosing loop. A while owns such
+transfers in its condition as well as its body; a condition continue reevaluates
+that condition, and a condition break exits that while.
 
 Header locals are visible in the condition, body, and post, and are removed after
 the loop. Body locals are not visible in the `for` post. The nearest lexical loop
