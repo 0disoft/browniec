@@ -55,11 +55,18 @@ pub fn Result<i64, errors::Error> run(ref ir::Program p, usize fuel) {
         else {
             let i64 left = registers[base + a];
             // Unary negation has no right register; b=0 may belong to another function.
-            let i64 right = if (op == 7) { 0 } else { registers[base + b] };
+            let i64 right = if (op == 7 || op == 10) { 0 } else { registers[base + b] };
             if (op == 2) { value = left + right; }
             else if (op == 3) { value = left - right; }
             else if (op == 4) { value = left * right; }
             else if (op == 7) { value = -left; }
+            else if (op == 10) { value = if (left == 0) { 1 } else { 0 }; }
+            else if (op == 11) { value = if (left == right) { 1 } else { 0 }; }
+            else if (op == 12) { value = if (left != right) { 1 } else { 0 }; }
+            else if (op == 13) { value = if (left < right) { 1 } else { 0 }; }
+            else if (op == 14) { value = if (left <= right) { 1 } else { 0 }; }
+            else if (op == 15) { value = if (left > right) { 1 } else { 0 }; }
+            else if (op == 16) { value = if (left >= right) { 1 } else { 0 }; }
             else {
                 if (right == 0) { return .err(errors::make(7, p.offsets[pc])); }
                 if (left == -2147483648 && right == -1) { return .err(errors::make(6, p.offsets[pc])); }

@@ -119,7 +119,7 @@ for name, statements, error in [
     ("locals-assign-before-declare", "x=1; var i32 x=2; return x;", "type"),
     ("locals-uninitialized", "var i32 x; return x;", "syntax"),
     ("locals-annotation", "let i64 x=1; return x;", "type"),
-    ("locals-initializer-type", "let i32 x=true; return x;", "syntax"),
+    ("locals-initializer-type", "let i32 x=true; return x;", "type"),
     ("locals-reserved-name", "let i32 return=1; return 0;", "syntax"),
     ("locals-assignment-expression", "var i32 x=1; return x=2;", "syntax"),
     ("locals-compound-unsupported", "var i32 x=1; x+=2; return x;", "syntax"),
@@ -186,6 +186,21 @@ case("call-sites-fuel", (call_sequence + "x=id(x);" * 32 + "return x; }").encode
 case("call-sites-over", (call_sequence + "x=id(x);" * 33 + "return x; }").encode(), error="compile_limit")
 
 randomizer = random.Random(20261023)
+case("bool-pipeline", b"module main; fn bool f(i32 x,bool b) { return !(x<=42)==b; } fn i32 sink(bool b) { return 42; } fn i32 main() { return sink(f(41,true)); }", 42)
+for name, statements in [
+    ("bool-integer-init", "let bool b=1; return 0;"),
+    ("bool-integer-assign", "var bool b=true; b=1; return 0;"),
+    ("bool-add", "let bool b=true+1; return 0;"),
+    ("bool-mixed-equality", "let bool b=true==1; return 0;"),
+    ("bool-order", "let bool b=true<false; return 0;"),
+    ("bool-not-integer", "let bool b=!1; return 0;"),
+    ("bool-negate", "let bool b=-true; return 0;"),
+    ("bool-return", "return true;"),
+]:
+    case(name, body(statements), error="type")
+case("bool-main", b"module main; fn bool main() { return true; }", error="type")
+case("bool-argument", b"module main; fn bool f(bool b) { return b; } fn i32 main() { let bool b=f(1); return 0; }", error="type")
+
 for index in range(32):
     a, b, c = [randomizer.randint(-1000, 1000) for _ in range(3)]
     case(f"independent-arithmetic-{index}", program(f"({a}*{b})+{c}"), a * b + c)

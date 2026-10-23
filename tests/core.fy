@@ -40,7 +40,7 @@ fn void precedence_and_order() {
 fn void type_and_syntax_rejections() {
     rejected(b"module main; fn i32 main() { return 2147483648; }", 3);
     rejected(b"module main; fn i64 main() { return 1; }", 3);
-    rejected(b"module main; fn i32 main() { return true; }", 2);
+    rejected(b"module main; fn i32 main() { return true; }", 3);
     rejected(b"module main; fn i32 main() { return 1 }", 2);
     rejected(b"module main; fn i32 main() { return 1; } garbage", 2);
     rejected(b"module main; fn i32 main() { return 1 @ 2; }", 1);

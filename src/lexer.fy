@@ -3,6 +3,7 @@ module lexer;
 import errors as errors;
 
 // 0 EOF, 1 integer, 2 identifier; punctuation uses its ASCII byte.
+// 128 ==, 129 !=, 130 <=, 131 >=, 132 &&, 133 ||.
 pub struct State { usize cursor; usize begin; usize end; usize tokens; u8 kind; i64 value; }
 pub fn State empty() {
     return State { .cursor = 0, .begin = 0, .end = 0, .tokens = 0, .kind = 0, .value = 0 };
@@ -49,8 +50,20 @@ pub fn Result<usize, errors::Error> next(ref u8[] source, ref mut State s) {
         s.kind = 2;
         while (s.cursor < source.len && (letter(source[s.cursor]) || digit(source[s.cursor]))) { s.cursor += 1; }
     } else {
+        if (s.cursor + 1 < source.len) {
+            let u8 after = source[s.cursor + 1];
+            var u8 pair = 0;
+            if (ch == 61 && after == 61) { pair = 128; }
+            else if (ch == 33 && after == 61) { pair = 129; }
+            else if (ch == 60 && after == 61) { pair = 130; }
+            else if (ch == 62 && after == 61) { pair = 131; }
+            else if (ch == 38 && after == 38) { pair = 132; }
+            else if (ch == 124 && after == 124) { pair = 133; }
+            if (pair != 0) { s.kind = pair; s.cursor += 2; s.end = s.cursor; return .ok(0); }
+        }
         if (ch != 40 && ch != 41 && ch != 123 && ch != 125 && ch != 59 &&
-            ch != 43 && ch != 45 && ch != 42 && ch != 47 && ch != 37 && ch != 61 && ch != 44) {
+            ch != 43 && ch != 45 && ch != 42 && ch != 47 && ch != 37 && ch != 61 && ch != 44 &&
+            ch != 33 && ch != 60 && ch != 62) {
             return .err(errors::make(1, s.begin));
         }
         s.kind = ch;
