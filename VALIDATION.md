@@ -50,9 +50,10 @@ byte-identical reproduction, and unavailable-source rejection preserving the
 existing compiler. Setup checks hashes before candidate execution and removes its
 temporary checkout on both success and failure.
 
-The locked source check passed. The 35 inputs and compiler recorded by the latest
-array-VM receipt are unchanged, so full VM development/release regression was not
-repeated for this build-tooling change. Authenticated HTTPS acquisition, empty
+For the preceding build-tooling increment, the locked source check passed.
+The 35 inputs and compiler recorded by the array-VM receipt were unchanged then,
+so full VM development/release regression was not repeated for that tooling change.
+Authenticated HTTPS acquisition, empty
 module-cache downloads, clean-machine installation and automatic update discovery
 remain unverified or outside this scope.
 
@@ -302,9 +303,13 @@ scalar arrays and exact `usize` indexed reads in outermost `main`. The
 18 native groups and 67 CLI cases per profile in development and release.
 Coverage includes six scalar element types, scope/type rejection, early-return
 cleanup, nested reads and loops, bounds, quota, and exact Fuel boundaries.
-The complete scalar regression is in progress; its results are not yet recorded
-for this slice. Dedicated instrumented allocator runs were not repeated here.
-M0 inputs and compiler will be checked for reuse when recording final evidence.
+The subsequent full scalar regression passed 81 native groups and 1,969 CLI
+cases in each development and release profile, recorded in the same source
+receipt. All recorded source inputs, native artifacts, CLI receipts, and the
+pinned compiler identity were rechecked. Dedicated instrumented allocator runs
+were not repeated here; their earlier array-VM receipt remains historical.
+M0 was reused after verifying all 18 recorded inputs and the compiler unchanged.
+Linux execution, isolation, DLL delivery, and performance remain unverified.
 Array writes/copies, aggregate guest calls, and borrow integration remain open.
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker

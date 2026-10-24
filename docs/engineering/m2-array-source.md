@@ -164,8 +164,16 @@ It also passed 67 black-box CLI source cases in each profile with a cleared
 environment and tool-free runtime `PATH`. The receipt records the frozen source
 hashes, compiler identity, and native CLI artifact hashes.
 
-The full M1 scalar regression is scheduled after the focused source slice; its
-81 native groups and 1,969 CLI cases per profile are not claimed by this page.
+The subsequent full M1 scalar regression passed 81 native groups and 1,969 CLI
+cases in each development and release profile. That fresh regression is included
+in the same source receipt. After the focused source command above, run the scalar
+regression and then record the checked evidence with:
+
+```powershell
+pwsh -NoProfile -File tools/verify-m1.ps1
+python -B tools/record-m2-array-evidence.py
+```
+
 The existing IR and VM receipts are historical after the source compiler changes.
 No performance, Linux, sandbox, worker, DLL, packaging, or clean-machine result
 is added.

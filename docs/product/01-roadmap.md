@@ -141,8 +141,9 @@ outside this slice.
 
 The [source receipt](../evidence/m2-array-source-windows-20261024.json) records
 18 native groups and 67 CLI source cases in each development and release profile,
-including six new source groups. The subsequent full M1 regression is in progress;
-its 81 native groups and 1,969 CLI cases per profile are not claimed for this slice yet.
+including six new source groups. The subsequent full M1 regression passed
+81 native groups and 1,969 CLI cases per profile in development and release;
+that fresh evidence is included in the same source receipt.
 Goal: connect arrays, plain structs, borrows, Buffer, input,
 output, and UTF-8.
 

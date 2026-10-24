@@ -54,6 +54,7 @@ later work. Focused source-array verification passed in development and release.
 # array source requires explicit fuel for arena preparation
 ./build/browniec.exe run examples/array-read.brc --fuel 100000 --json
 # return_i32 is 42; process exit is 0
+pwsh -NoProfile -File tools/verify-m2-arrays.ps1 -Slice source
 pwsh -NoProfile -File tools/verify-m1.ps1
 ```
 
@@ -148,5 +149,6 @@ records 81 native groups and 1,969 CLI cases in each profile, including 71 new c
 The M2 IR and VM receipts are historical after the source compiler changes. The
 [source-array receipt](docs/evidence/m2-array-source-windows-20261024.json) records
 18 native groups and 67 CLI cases per profile. The subsequent full scalar regression
-is in progress. No full-profile conformance, DLL ABI, Windows isolation,
+also passed 81 native groups and 1,969 CLI cases per profile in development and
+release. No full-profile conformance, DLL ABI, Windows isolation,
 clean-machine packaging, or performance target is claimed.
