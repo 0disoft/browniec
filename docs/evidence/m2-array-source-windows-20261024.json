@@ -1,0 +1,469 @@
+{
+  "schema": "browniec.m2-array-source/v1",
+  "status": "passed",
+  "recordedAt": "2026-10-24T09:42:42.8333168Z",
+  "compilerVersion": [
+    "Fairy C Stage 0",
+    "compiler: v0.0.0-20261022210249-4ce1264273be",
+    "sdk: fairyc-sdk-stdlib/0 0.0.0-stage0.86",
+    "language: fairyc-language/20",
+    "runtime: fairyc-runtime/0",
+    "revision: 4ce1264273be6051ee560173e94690e1b99c9eaf",
+    "modified: false"
+  ],
+  "compilerSha256": "572395f7f1e425d613c5a69f50b30ed177cda37ca2b1638bd0c11cf79fcbcc77",
+  "os": "Microsoft Windows NT 10.0.26300.0",
+  "lockedCheck": "check ok: 2 instance(s), 36 source file(s), 295 MIR function(s), lock verified",
+  "results": [
+    {
+      "profile": "development",
+      "nativeTests": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "development",
+        "tests": [
+          {
+            "identity": "tests::m2::array_allocation::allocation_failure_is_a_guest_error_and_a_new_run_can_succeed",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_ir::backedges_and_returns_cannot_leak_or_revive_arrays",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_ir::catalog_reserved_bytes_and_typed_scalar_operands_are_checked",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_ir::live_sets_must_match_exactly_at_forward_joins",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_ir::only_entry_arrays_are_admitted_and_entry_cannot_be_called",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_ir::private_array_builders_and_scalar_result_are_verified",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::array_reads_preserve_loop_lifetimes_and_cast_binding",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::bounds_quota_and_exact_fuel_are_guest_outcomes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::every_return_drops_visible_arrays_in_reverse_order",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::repeated_fill_and_index_evaluate_once_with_scalar_calls",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::six_scalar_types_and_literal_limits",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::source_array_types_scope_and_unimplemented_forms_are_rejected",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::all_scalar_array_reads_and_writes_run_in_the_native_vm",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::copied_arrays_keep_original_values_after_source_mutation_and_drop",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::exact_fuel_bounds_quota_and_fresh_program_reuse",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::maximum_usize_array_copy_checks_old_plus_new_peak",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::metered_loop_recreation_reuses_owners_until_fuel_exhaustion",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::scalar_callees_and_frame_failure_do_not_access_parent_arrays",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 18,
+        "passed": 18,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "build": "built: build/browniec.exe (x86_64-windows-msvc, development, lock verified)",
+      "artifact": "build/m2-array-source/browniec-development.exe",
+      "sha256": "292b10295060c5b74c8f3732c07710a73ea94858ff99567595facfab01cbfec1",
+      "cliCases": 67
+    },
+    {
+      "profile": "release",
+      "nativeTests": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "release",
+        "tests": [
+          {
+            "identity": "tests::m2::array_allocation::allocation_failure_is_a_guest_error_and_a_new_run_can_succeed",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_ir::backedges_and_returns_cannot_leak_or_revive_arrays",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_ir::catalog_reserved_bytes_and_typed_scalar_operands_are_checked",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_ir::live_sets_must_match_exactly_at_forward_joins",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_ir::only_entry_arrays_are_admitted_and_entry_cannot_be_called",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_ir::private_array_builders_and_scalar_result_are_verified",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::array_reads_preserve_loop_lifetimes_and_cast_binding",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::bounds_quota_and_exact_fuel_are_guest_outcomes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::every_return_drops_visible_arrays_in_reverse_order",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::repeated_fill_and_index_evaluate_once_with_scalar_calls",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::six_scalar_types_and_literal_limits",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::source_array_types_scope_and_unimplemented_forms_are_rejected",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::all_scalar_array_reads_and_writes_run_in_the_native_vm",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::copied_arrays_keep_original_values_after_source_mutation_and_drop",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::exact_fuel_bounds_quota_and_fresh_program_reuse",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::maximum_usize_array_copy_checks_old_plus_new_peak",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::metered_loop_recreation_reuses_owners_until_fuel_exhaustion",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::scalar_callees_and_frame_failure_do_not_access_parent_arrays",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 18,
+        "passed": 18,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "build": "built: build/browniec.exe (x86_64-windows-msvc, release, lock verified)",
+      "artifact": "build/m2-array-source/browniec-release.exe",
+      "sha256": "d6cb2af9e371b8617fcc5220031c2f0d7e25ed5102279356cba9f107777c1d75",
+      "cliCases": 67
+    }
+  ],
+  "allocatorTests": [],
+  "sourceSha256": [
+    {
+      "path": "fairy.lock",
+      "sha256": "a0eefc84f673a3fe3d5ebd5282fcf4a8c6b72a242346f6fc4347145ce3de0ab8"
+    },
+    {
+      "path": "fairy.toml",
+      "sha256": "f5254ba793d9012470c697e8657688a4ea5465c138fba6d748707d5bfa4b31fb"
+    },
+    {
+      "path": "src/arithmetic.fy",
+      "sha256": "8192e6ba97498d059b0505307bc2bf84ac58d9722dc5f597587f8ae81a1081d3"
+    },
+    {
+      "path": "src/array_layout.fy",
+      "sha256": "d3497dfb6bb7e9ac8ceece4ae88a2274b6b40b49e3c5fecfc509179c03c91cdd"
+    },
+    {
+      "path": "src/array_meta.fy",
+      "sha256": "d1a07319dc2bb7eb95298e3920eaec63c1a4c1390a00c5469528a77e97612894"
+    },
+    {
+      "path": "src/array_owners.fy",
+      "sha256": "f5ff6f408d97ea01f8162630028acb2c053a47a27ed138d24977029db5d6a021"
+    },
+    {
+      "path": "src/array_source.fy",
+      "sha256": "eda8a802574ff882b96d5d934ace22025ee11b6562c426208d64509db788e555"
+    },
+    {
+      "path": "src/array_storage.fy",
+      "sha256": "00808c116e0fb86ce063d7fd4cc9d1f8fd29f19b277449e59e3569491a3ee534"
+    },
+    {
+      "path": "src/array_verifier.fy",
+      "sha256": "0e8f9f4e6dfec70c993f765cd0a4bfb7d4cbc2b5850cf937efc8be18ecebe6c7"
+    },
+    {
+      "path": "src/array_vm.fy",
+      "sha256": "1eecdd79484c8c0a45fa0801357bc332bf8de5f0d7c0b96c22ca4a755957c622"
+    },
+    {
+      "path": "src/bits.fy",
+      "sha256": "0b030757624a8dbaea9475f90d757aeff78b9154a121af7a4d9ebd80042db1a0"
+    },
+    {
+      "path": "src/casts.fy",
+      "sha256": "59da4a4ecef63833cc383495390e150b964bf41b353c4b150dcacb6be66caba6"
+    },
+    {
+      "path": "src/cells.fy",
+      "sha256": "71b82add3e95b86a1b7bcb88c3f97f6ae38bae0ac3ec8b1a2de925b10a64e433"
+    },
+    {
+      "path": "src/cli_input.fy",
+      "sha256": "ec91de62e6b5147d117d6fe0366ebcf617b556c074bf1dd91cb10188f96507ba"
+    },
+    {
+      "path": "src/compiler.fy",
+      "sha256": "26d600cb6fa762648f2db0a9ba722ec159a66cc48eda7402a8233e9303459eb9"
+    },
+    {
+      "path": "src/errors.fy",
+      "sha256": "e8070ef5c6380460dacb579c33f2e180b9e683286c8cb0827e30d82a581a4646"
+    },
+    {
+      "path": "src/functions.fy",
+      "sha256": "59195b4a404b1addd10c913a7ad4d046343ba37c0d1e5be9eeea2bf1ee97363e"
+    },
+    {
+      "path": "src/ir.fy",
+      "sha256": "ad218769c931945b4aefee7953b19503dd60c585f570e13e1f75f967cf4e829f"
+    },
+    {
+      "path": "src/lexer.fy",
+      "sha256": "0a64c45b3a3512ada4610c244ce874d306e417cde0fce4cd99a419048002861e"
+    },
+    {
+      "path": "src/locals.fy",
+      "sha256": "cb0cf9ec5b3d63f85b115f54b3ceb669c2f88567026bdf656059148aec333e88"
+    },
+    {
+      "path": "src/loops.fy",
+      "sha256": "8034d028c94edae945be52a8f2788531f18dcfd64d394104678b1f6607f04425"
+    },
+    {
+      "path": "src/main.fy",
+      "sha256": "f73d42e25b02a437e20105c522c12decaaf114ecbe5a20b3dd303bd0bbda8fdf"
+    },
+    {
+      "path": "src/patterns.fy",
+      "sha256": "d9ba2ff9dba626968b7514c636a414932e50856c19b9d41d6825b4f91c9797aa"
+    },
+    {
+      "path": "src/propagation.fy",
+      "sha256": "7d0ebaee7b96545bc4f95e0ecd7a58fbda521301deb00c0deb136ada4159eb44"
+    },
+    {
+      "path": "src/render.fy",
+      "sha256": "c7837a22235da83afd339face451839b9d68605cd0268a262b32375295539e54"
+    },
+    {
+      "path": "src/scalar_codec.fy",
+      "sha256": "c28ca5e5cdc38dee01d79489d8c5a709022a49001854af638258ec4536ad66f0"
+    },
+    {
+      "path": "src/shifts.fy",
+      "sha256": "510dc6a90591de165de424a377eb267917ea9973972b9b95656cc9c435675eeb"
+    },
+    {
+      "path": "src/tagged.fy",
+      "sha256": "67770f8ec8f3e35a2a6196cda87310844d37358f86f8b22eb81b49df1f65f1bf"
+    },
+    {
+      "path": "src/types.fy",
+      "sha256": "906f5ba160de53f60d23e344e141181f902f36de60a4060375bef97a2162be23"
+    },
+    {
+      "path": "src/verifier.fy",
+      "sha256": "b6875f72a18e7c20ff32eae621d78f0419ee36ca1e9e7077a498315cac4a3501"
+    },
+    {
+      "path": "src/vm.fy",
+      "sha256": "4ccba8bc2070a316413a27ea62cd3df019d412bf8bfdf7537be66cc618f161cd"
+    },
+    {
+      "path": "tests/m2/array_allocation.fy",
+      "sha256": "b84e56c8607064c76d433bcde1559c3d7aeed380b6c8acc9fa3a31d8662526e5"
+    },
+    {
+      "path": "tests/m2/array_ir.fy",
+      "sha256": "c0fab91dc6cfe868a63cb1bab12f1618f7d3307efbe7f5da650b9b2cecc9f1b8"
+    },
+    {
+      "path": "tests/m2/array_source.fy",
+      "sha256": "ed04ed8af97c654904a799d7799d20844981e6391cece8e0a0dafd9114558a4d"
+    },
+    {
+      "path": "tests/m2/array_vm.fy",
+      "sha256": "c92b7784d8d3091c91d93fa1a648700f3d4884f82aa220e211a5ca8500786d61"
+    },
+    {
+      "path": "tools/check-m2-array-source.py",
+      "sha256": "424f02132e50cdc934405ff2625ac76d66b871494bfd1b72d9b45ea05f515b9d"
+    },
+    {
+      "path": "tools/verify-m2-arrays.ps1",
+      "sha256": "3d7fd47ee963202ec69d3a98ef1782362aad8e5c72d11dc380f2cf36a509d2c1"
+    }
+  ],
+  "artifacts": "Tool-managed temporary native test images; source mode also retains hashed native CLI binaries.",
+  "limitations": [
+    "Entry-function arrays only; scalar functions cannot receive or return arrays.",
+    "Source mode admits outer-main immutable repeated arrays and scalar indexing; writes, copies, borrows and full profile remain incomplete.",
+    "Each receipt establishes only the selected slice, not later VM or delivery gates.",
+    "No isolation, DLL, clean-machine or performance claim."
+  ]
+}

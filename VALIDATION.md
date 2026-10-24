@@ -1,7 +1,7 @@
 # Validation
 
-- Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, switch-expression, i64, and unsigned receipts are verified historical evidence; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified; private entry-array IR/VM implemented and VM-harness verified
-- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/u8/u32/usize/bool values, explicit widening, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation; private entry-function array IR and native dispatch are implemented, while source arrays remain unavailable
+- Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, switch-expression, i64, and unsigned receipts are verified historical evidence; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified; private entry-array IR/VM and immutable source-array reads implemented and focused-harness verified
+- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/u8/u32/usize/bool values, explicit widening, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation; private entry-function array IR/native dispatch and immutable outer-main scalar-array declarations and reads are implemented
 
 ## Validation source of truth
 
@@ -93,7 +93,7 @@ The [M1 requirements audit](docs/engineering/m1-checkpoint-audit.md) closes the
 bounded scalar checkpoint by checking the identities of existing executed evidence.
 Full-profile conformance remains incomplete. M2 has private scalar-array layout,
 codec, caller-backed storage, owner/copy primitives, and entry-only array IR/VM.
-Source arrays, aggregate guest calls, and borrow integration remain open. M3
+Array writes/copies, aggregate guest calls, and borrow integration remain open. M3
 through M5 remain not started.
 M0's empty runtime-`PATH` execution does not
 establish clean-machine packaging or Windows isolation.
@@ -259,7 +259,7 @@ historical for its 26-group/332-case slice; the [branch receipt](docs/evidence/m
 is historical for 20/248, and the [function receipt](docs/evidence/m1-functions-windows-20261023.json)
 and earlier locals/expression receipts are likewise historical for their narrower
 slices. The arm-statement increment expands the scalar checkpoint; full-profile
-conformance remains unverified. Source arrays, structs, and borrows remain M2 work.
+conformance remains unverified. Full array integration, structs, and borrows remain M2 work.
 Workers, DLL ABI, Windows isolation, and performance remain unverified. M0 was not
 rerun for unchanged inputs. No new CI job or performance measurement was added.
 M2 must cover arrays, structs, borrows, Buffer, input, output, and UTF-8.
@@ -294,8 +294,18 @@ groups per profile (five IR, six VM, one allocation) and four instrumented alloc
 executions. The forced allocation request is exactly 320 bytes. The fresh
 scalar regression passed 81 native groups and 1,969 CLI cases per profile
 after the shared VM change. Array dispatch/Fuel and allocator-NULL containment
-are implemented; source arrays, aggregate guest calls, and borrow integration
-remain open.
+are implemented. This VM receipt is historical after the source compiler change.
+
+The [source-array contract](docs/engineering/m2-array-source.md) adds immutable
+scalar arrays and exact `usize` indexed reads in outermost `main`. The
+[source receipt](docs/evidence/m2-array-source-windows-20261024.json) records
+18 native groups and 67 CLI cases per profile in development and release.
+Coverage includes six scalar element types, scope/type rejection, early-return
+cleanup, nested reads and loops, bounds, quota, and exact Fuel boundaries.
+The complete scalar regression is in progress; its results are not yet recorded
+for this slice. Dedicated instrumented allocator runs were not repeated here.
+M0 inputs and compiler will be checked for reuse when recording final evidence.
+Array writes/copies, aggregate guest calls, and borrow integration remain open.
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker
 publication barrier. Compile untrusted source only inside the restricted worker.

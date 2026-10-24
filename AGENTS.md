@@ -13,8 +13,10 @@ own the affected contract. Broader scaffold procedures are optional.
 - M0 native primitives exist under `probes/m0` and have a repeatable Windows harness.
 - The M1 scalar lexer/parser, i32 checks, private IR verifier, VM, and CLI exist in src/.
 - M2 has private scalar-array layout, codec, caller-backed storage, owner-lifetime and copy helpers;
-  private entry-array IR has independent verification and metered native VM dispatch.
-  Source arrays and aggregate guest calls are not implemented.
+  private entry-array IR has independent verification and metered native VM dispatch. The current
+  source slice adds immutable scalar-array declarations and indexed reads in the outermost `main`
+  body. Array writes, copies, parameters, results, borrows, `len`, slices, aggregate guest calls,
+  and array locals elsewhere remain unimplemented. Focused source-array verification passed in development and release.
 - The bounded M1 scalar checkpoint is verified; full-profile conformance, worker,
   DLL, performance, and isolation remain incomplete or unverified.
 - Root fairy.toml builds the native CLI; tools/verify-m1.ps1 verifies its narrow profile.
@@ -65,8 +67,9 @@ Performance targets remain targets until measured on named workloads.
 ## Review focus
 
 For runtime changes, require direct evidence for checked arithmetic, signed codec
-edges, quota rollback, stale generation rejection, move and borrow rules, bounded
-work, staged output, and Engine failure containment.
+edges, quota rollback, stale generation rejection, array fill/index evaluation
+counts, reverse-order array drops, move and borrow rules, bounded work, staged
+output, and Engine failure containment.
 
 For worker changes, require actual Windows isolation evidence and negative broker
 ordering tests. Design review findings remain acceptance obligations until the

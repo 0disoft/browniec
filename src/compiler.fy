@@ -10,6 +10,7 @@ import loops as loops;
 import patterns as patterns;
 import propagation as propagation;
 import casts as casts;
+import array_source as arrays;
 import std::text as text;
 
 fn u8 precedence(u8 kind) {
@@ -130,6 +131,15 @@ fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s,
         }
         if (index == 64) { return .err(errors::make(3, at)); }
         let usize register = table.registers[index];
+        if (arrays::binding(table, index)) {
+            if (s.kind != 91) { return .err(errors::make(3, at)); }
+            let usize open = lexer::punctuation(source, s, 91)?;
+            let usize subscript = expression(source,s,p,table,signatures,1,depth+1,12,result_type,structure,loop_state)?;
+            if (p.types[subscript] != 12) { return .err(errors::make(3, at)); }
+            let usize close = lexer::punctuation(source, s, 93)?;
+            return ir::array_read(p, register - 128, subscript, at);
+        }
+        if (s.kind == 91) { return .err(errors::make(3, at)); }
         if (p.slots[register]) { return ir::emit(p, 17, register, 0, at); }
         return .ok(register);
     }
@@ -204,6 +214,9 @@ fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State 
         let bool mutable = word_is(source, s, b"var");
         let usize keyword = lexer::next(source, s)?;
         let u8 tag = types::parse(source, s)?;
+        let usize length = if (s.kind == 91) { arrays::length(source, s)? } else { 0 };
+        if (length != 0 && (!table.entry || structure != 0 || expr_depth != 0 || result_type != 1 ||
+            terminator != 59 || mutable || !types::scalar(tag))) { return .err(errors::make(3, s.begin)); }
         if (s.kind != 2 || locals::reserved(source[s.begin..s.end])) {
             return .err(errors::make(2, s.begin));
         }
@@ -213,9 +226,20 @@ fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State 
         if (table.count >= 64) { return .err(errors::make(4, begin)); }
         let usize name = lexer::next(source, s)?;
         let usize equals = lexer::punctuation(source, s, 61)?;
+        if (length != 0) { let usize open = lexer::punctuation(source, s, 91)?; }
         // The new name is not visible until its initializer has been checked.
         let usize value = expression(source,s,p,table,signatures,1,expr_depth,tag,result_type,structure,loop_state)?;
         if (p.types[value] != tag) { return .err(errors::make(3, begin)); }
+        if (length != 0) {
+            let usize separator = lexer::punctuation(source, s, 59)?;
+            let usize repeated = arrays::count(source, s)?;
+            if (repeated != length) { return .err(errors::make(3, begin)); }
+            let usize close = lexer::punctuation(source, s, 93)?;
+            let usize finished = lexer::punctuation(source, s, terminator)?;
+            let usize id = ir::array(p, tag, length, false, begin)?;
+            let usize init = ir::array_init(p, id, value, begin)?;
+            return locals::declare(table, begin, end, 128 + id, false);
+        }
         let usize end_statement = lexer::punctuation(source, s, terminator)?;
         var usize binding = value;
         if (mutable) {
@@ -477,6 +501,7 @@ fn Result<bool, errors::Error> control(ref u8[] source, ref mut lexer::State s, 
         let usize value = expression(source,s,p,table,signatures,1,expr_depth,result_type,result_type,depth,loop_state)?;
         if (p.types[value] != result_type) { return .err(errors::make(3, at)); }
         let usize end = lexer::punctuation(source, s, 59)?;
+        let usize dropped = arrays::release_visible(table, p, at)?;
         let usize returned = ir::emit(p, 8, value, 0, at)?;
         return .ok(true);
     }
@@ -514,6 +539,7 @@ fn Result<bool, errors::Error> control(ref u8[] source, ref mut lexer::State s, 
 
 fn Result<usize, errors::Error> body(ref u8[] source, ref functions::Table signatures, usize f, ref mut ir::Program p) {
     var locals::Table table = locals::empty();
+    table.entry = f == signatures.entry;
     let usize arity = signatures.arities[f];
     if (p.registers + arity > 128) { return .err(errors::make(4, signatures.begins[f])); }
     let usize start = p.count;
@@ -562,6 +588,16 @@ pub fn Result<ir::Program, errors::Error> compile(ref u8[] source) {
     while (f < signatures.count) {
         let usize emitted = body(source, ref signatures, f, ref mut p)?;
         f += 1;
+    }
+    // Source-level recursion into main cannot reuse entry-only array bindings.
+    if (p.arrays.count != 0) {
+        var usize pc = 0;
+        while (pc < p.count) {
+            if (p.code[pc * 8] == 9 && p.code[pc * 8 + 2] as usize == p.entry) {
+                return .err(errors::make(3, p.offsets[pc]));
+            }
+            pc += 1;
+        }
     }
     return .ok(p);
 }

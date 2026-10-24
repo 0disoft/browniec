@@ -11,14 +11,15 @@ pub struct Table {
     usize[64] registers;
     bool[64] mutable;
     usize count;
+    bool entry;
 }
 pub fn Table empty() {
     return Table { .begins = [0; 64], .ends = [0; 64], .registers = [0; 64],
-        .mutable = [false; 64], .count = 0 };
+        .mutable = [false; 64], .count = 0, .entry = false };
 }
 pub fn Table snapshot(ref Table table) {
     return Table {.begins=table.begins,.ends=table.ends,.registers=table.registers,
-        .mutable=table.mutable,.count=table.count};
+        .mutable=table.mutable,.count=table.count,.entry=table.entry};
 }
 pub fn bool reserved(ref u8[] name) {
     return lexer::equal(name, b"module") || lexer::equal(name, b"import") ||

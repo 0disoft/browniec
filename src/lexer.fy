@@ -76,7 +76,7 @@ pub fn Result<usize, errors::Error> next(ref u8[] source, ref mut State s) {
         if (ch != 40 && ch != 41 && ch != 123 && ch != 125 && ch != 59 &&
             ch != 43 && ch != 45 && ch != 42 && ch != 47 && ch != 37 && ch != 61 && ch != 44 &&
             ch != 33 && ch != 60 && ch != 62 && ch != 46 && ch != 58 && ch != 63 &&
-            ch != 38 && ch != 94 && ch != 124 && ch != 126) {
+            ch != 38 && ch != 94 && ch != 124 && ch != 126 && ch != 91 && ch != 93) {
             return .err(errors::make(1, s.begin));
         }
         s.kind = ch;

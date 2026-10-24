@@ -1,6 +1,6 @@
 # Brownie C
 
-- Status: M1 scalar checkpoint verified; private entry-array IR/VM implemented and verified; source arrays and full profile incomplete
+- Status: M1 scalar checkpoint verified; private entry-array IR/VM implemented and verified; immutable source-array reads implemented and focused-harness verified; full profile incomplete
 - Design date: 2026-10-23
 - First delivery target: Windows 11 x64
 
@@ -8,8 +8,8 @@ Brownie C is a small, statically typed source language and JIT-free bytecode VM.
 The implementation direction is primarily Fairy C. A native Brownie VM executable
 accepts .brc source and runs it without starting Go, MSVC, or a C compiler.
 
-The native `browniec` compiles and runs the experimental `brownie.m1-scalar/1`
-pipeline. The bool/branch increment extends its i32 functions with bool parameters,
+The native `browniec` compiles and runs the experimental scalar and source-array
+pipelines. The bool/branch increment extends its i32 functions with bool parameters,
 results, and locals, `! == != < <= > >= && ||`, short-circuit evaluation,
 `if`/`else if`/`else`, standalone lexical blocks, and early returns. `main` remains
 zero-argument and returns i32. Parsing, scalar type checks, private bytecode
@@ -32,7 +32,11 @@ owns that addition. [Integer operators](docs/engineering/m1-integer-operators.md
 add fixed-width `~`, `&`, `^`, `|`, and checked `<<`/`>>` for every integer type.
 The [arm-statement increment](docs/engineering/m1-switch-arm-statements.md) adds
 branches, blocks, loops, and lexical transfers inside expression arms. Full-profile
-conformance remains unverified; source arrays, structs, workers, and DLLs remain later work.
+conformance remains unverified. The [source-array read increment](docs/engineering/m2-array-source.md)
+adds immutable scalar-array declarations in the outermost `main` body and exact
+`usize` indexed reads through the entry-array VM. Array writes, copies, parameters,
+results, borrows, `len`, slices, aggregate calls, structs, workers, and DLLs remain
+later work. Focused source-array verification passed in development and release.
 
 ```powershell
 ./build/toolchain/fairyc.exe build
@@ -47,6 +51,8 @@ conformance remains unverified; source arrays, structs, workers, and DLLs remain
 ./build/browniec.exe run examples/widening.brc --json
 ./build/browniec.exe run examples/bitwise.brc --json
 ./build/browniec.exe run examples/switch-arm-statements.brc --json
+# array source requires explicit fuel for arena preparation
+./build/browniec.exe run examples/array-read.brc --fuel 100000 --json
 # return_i32 is 42; process exit is 0
 pwsh -NoProfile -File tools/verify-m1.ps1
 ```
@@ -78,7 +84,7 @@ Those limits describe the profile, not the language forever.
 
 | Level | Intended capability | Current state |
 | --- | --- | --- |
-| core | Source compile, verify, and native VM CLI | Experimental i32/i64/u8/u32/usize/bool expressions, explicit widening, branches, loops, shallow tagged values, switch statements and expressions, and `?` propagation; scalar M1 verified |
+| core | Source compile, verify, and native VM CLI | Experimental i32/i64/u8/u32/usize/bool expressions, explicit widening, branches, loops, shallow tagged values, switch statements and expressions, `?` propagation, and immutable source-array reads; scalar M1 verified and array source focused-harness verified |
 | restricted | Windows worker plus parent broker | Not implemented; M4 |
 | embed | Trusted native host through a DLL ABI | Not implemented; M5; no public C export |
 
@@ -109,11 +115,12 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M1 integer operators](docs/engineering/m1-integer-operators.md): fixed-width bitwise operations, checked shifts, and precedence
 - [M1 arm statements](docs/engineering/m1-switch-arm-statements.md): branches, loops, transfers, typed joins, and inherited depth budgets
 - [M1 checkpoint audit](docs/engineering/m1-checkpoint-audit.md): scalar exit requirements and remaining profile limits
-- [M2 array layout](docs/engineering/m2-array-layout.md): compact scalar payloads, arena preflight, and checked offsets; source arrays are not implemented
+- [M2 array layout](docs/engineering/m2-array-layout.md): historical layout foundation for compact scalar payloads, arena preflight, and checked offsets
 - [M2 array storage](docs/engineering/m2-array-storage.md): scalar codecs, repeated initialization, and element access in caller-owned backing bytes
 - [M2 array owners](docs/engineering/m2-array-owners.md): typed descriptors, generation checks, independent copies, explicit release and bounded reclamation
-- [M2 array IR](docs/engineering/m2-array-ir.md): private entry-array instructions and independent lifetime/CFG verification
-- [M2 array VM](docs/engineering/m2-array-vm.md): actual native array dispatch, owned payload storage, Fuel and runtime failures; source syntax remains unavailable
+- [M2 array IR](docs/engineering/m2-array-ir.md): historical private entry-array instructions and independent lifetime/CFG verification
+- [M2 array VM](docs/engineering/m2-array-vm.md): historical native array dispatch, owned payload storage, Fuel, and runtime failures
+- [M2 source array reads](docs/engineering/m2-array-source.md): current grammar, lifetimes, caps, profiles, and verification for `let T[N] name = [EXPR; N];` and `name[EXPR]`
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
 - [Design baseline](docs/design-baseline.md): source provenance, evidence, and findings
@@ -138,6 +145,8 @@ records 75 native groups and 1,898 CLI cases in each profile, including 626 new 
 That receipt is historical after arm statements. The
 [arm-statement receipt](docs/evidence/m1-switch-arm-statements-windows-20261023.json)
 records 81 native groups and 1,969 CLI cases in each profile, including 71 new cases.
-No full-profile
-conformance, DLL ABI, Windows isolation, clean-machine packaging, or performance
-target is claimed.
+The M2 IR and VM receipts are historical after the source compiler changes. The
+[source-array receipt](docs/evidence/m2-array-source-windows-20261024.json) records
+18 native groups and 67 CLI cases per profile. The subsequent full scalar regression
+is in progress. No full-profile conformance, DLL ABI, Windows isolation,
+clean-machine packaging, or performance target is claimed.

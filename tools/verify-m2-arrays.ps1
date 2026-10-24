@@ -1,5 +1,5 @@
 param(
-  [ValidateSet('ir', 'vm')][string]$Slice = 'ir',
+  [ValidateSet('ir', 'vm', 'source')][string]$Slice = 'ir',
   [string]$Compiler = (Join-Path $PSScriptRoot '../build/toolchain/fairyc.exe')
 )
 $ErrorActionPreference = 'Stop'
@@ -13,7 +13,8 @@ $receiptPath = Join-Path $output 'receipt.json'
   ConvertTo-Json | Set-Content -LiteralPath $receiptPath -Encoding utf8NoBOM
 if ($env:CL -or $env:_CL_) { throw 'Unexpected CL/_CL_ override' }
 $files = if ($Slice -eq 'ir') { @('tests/m2/array_ir.fy', 'tests/branches.fy', 'tests/loops.fy') } else { @('tests/m2/array_ir.fy', 'tests/m2/array_vm.fy', 'tests/m2/array_allocation.fy') }
-$expected = if ($Slice -eq 'ir') { 16 } else { 12 }
+if ($Slice -eq 'source') { $files += 'tests/m2/array_source.fy' }
+$expected = if ($Slice -eq 'ir') { 16 } elseif ($Slice -eq 'source') { 18 } else { 12 }
 Push-Location $repo
 try {
   $version = & $Compiler --version
@@ -22,7 +23,8 @@ try {
   if ($LASTEXITCODE -ne 0) { throw 'Locked check failed' }
   $inputs = @(Get-Item fairy.toml, fairy.lock, tools/verify-m2-arrays.ps1;
     $files | ForEach-Object { Get-Item -LiteralPath $_ }; Get-ChildItem src -File -Recurse;
-    if ($Slice -eq 'vm') { Get-Item probes/m0/native/allocator_probe.h })
+    if ($Slice -eq 'vm') { Get-Item probes/m0/native/allocator_probe.h }
+    if ($Slice -eq 'source') { Get-Item tools/check-m2-array-source.py })
   $identities = @($inputs | Sort-Object FullName | ForEach-Object {
     [ordered]@{ path = [IO.Path]::GetRelativePath($repo, $_.FullName).Replace('\', '/');
       sha256 = (Get-FileHash -LiteralPath $_.FullName).Hash.ToLowerInvariant() }
@@ -37,7 +39,23 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "Native array $Slice tests failed: $profile" }
     $native = $nativeOutput | ConvertFrom-Json
     if ($native.status -ne 'ok' -or $native.failed -ne 0 -or $native.passed -ne $expected) { throw 'Unexpected native outcomes' }
-    $results += [ordered]@{ profile = $profile; nativeTests = $native }
+    $result = [ordered]@{ profile = $profile; nativeTests = $native }
+    if ($Slice -eq 'source') {
+      $buildArguments = @('build', '--locked')
+      if ($profile -eq 'release') { $buildArguments += '--release' }
+      $buildOutput = & $Compiler @buildArguments
+      if ($LASTEXITCODE -ne 0) { throw "Array CLI build failed: $profile" }
+      $exe = Join-Path $output "browniec-$profile.exe"
+      Copy-Item -LiteralPath (Join-Path $repo 'build/browniec.exe') -Destination $exe -Force
+      & python -B (Join-Path $PSScriptRoot 'check-m2-array-source.py') --exe $exe --profile $profile
+      if ($LASTEXITCODE -ne 0) { throw "Array CLI checks failed: $profile" }
+      $cli = Get-Content -LiteralPath (Join-Path $output "$profile/cli-receipt.json") -Raw | ConvertFrom-Json
+      $result.build = $buildOutput
+      $result.artifact = "build/m2-array-source/browniec-$profile.exe"
+      $result.sha256 = (Get-FileHash -LiteralPath $exe).Hash.ToLowerInvariant()
+      $result.cliCases = $cli.count
+    }
+    $results += $result
   }
   $allocatorResults = @()
   if ($Slice -eq 'vm') {
@@ -72,9 +90,9 @@ try {
   [ordered]@{ schema = "browniec.m2-array-$Slice/v1"; status = 'passed'; recordedAt = [DateTime]::UtcNow.ToString('o');
     compilerVersion = $version; compilerSha256 = $compilerHash; os = [Environment]::OSVersion.VersionString;
     lockedCheck = $check; results = $results; allocatorTests = $allocatorResults; sourceSha256 = $identities;
-    artifacts = 'Tool-managed temporary native test images; no public array bytecode loader or source syntax.';
-    limitations = @('Private entry-function array IR; scalar functions cannot receive or return arrays.',
-      'Source-array parsing, borrow analysis and full profile remain incomplete.',
+    artifacts = 'Tool-managed temporary native test images; source mode also retains hashed native CLI binaries.';
+    limitations = @('Entry-function arrays only; scalar functions cannot receive or return arrays.',
+      'Source mode admits outer-main immutable repeated arrays and scalar indexing; writes, copies, borrows and full profile remain incomplete.',
       'Each receipt establishes only the selected slice, not later VM or delivery gates.',
       'No isolation, DLL, clean-machine or performance claim.')
   } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $receiptPath -Encoding utf8NoBOM

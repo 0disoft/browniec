@@ -1,0 +1,6 @@
+module main;
+
+fn i32 main() {
+    let i32[2] values = [21; 2];
+    return values[0] + values[1];
+}
