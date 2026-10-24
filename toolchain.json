@@ -1,10 +1,8 @@
 {
-  "schema": "browniec.toolchain/v1",
-  "platform": "windows/amd64",
+  "schema": "browniec.toolchain/v2",
   "compiler": {
     "version": "v0.0.0-20261022210249-4ce1264273be",
-    "revision": "4ce1264273be6051ee560173e94690e1b99c9eaf",
-    "sha256": "572395f7f1e425d613c5a69f50b30ed177cda37ca2b1638bd0c11cf79fcbcc77"
+    "revision": "4ce1264273be6051ee560173e94690e1b99c9eaf"
   },
   "sdk": {
     "identity": "fairyc-sdk-stdlib/0",
@@ -20,6 +18,22 @@
   "bootstrap": {
     "goVersion": "go1.27.1",
     "package": "./cmd/fairyc",
-    "buildFlags": ["-mod=readonly", "-trimpath", "-buildvcs=true"]
+    "buildFlags": [
+      "-mod=readonly",
+      "-trimpath",
+      "-buildvcs=true"
+    ]
+  },
+  "platforms": {
+    "windows/amd64": {
+      "executable": "fairyc.exe",
+      "sha256": "572395f7f1e425d613c5a69f50b30ed177cda37ca2b1638bd0c11cf79fcbcc77",
+      "verification": "native-verified"
+    },
+    "linux/amd64": {
+      "executable": "fairyc",
+      "sha256": "5c9e50e6b6ea45060a1b1511ab4b7c11fb9d6cc3939f65337970a6dfdc417b9b",
+      "verification": "cross-build-only"
+    }
   }
 }

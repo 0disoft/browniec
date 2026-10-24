@@ -1,0 +1,33 @@
+{
+  "schema": "browniec.toolchain-cross-build/v1",
+  "status": "cross-build-passed-native-unverified",
+  "recordedAt": "2026-10-24T19:54:49.089783+00:00",
+  "host": "windows/amd64",
+  "target": "linux/amd64",
+  "pythonVersion": "3.14.6",
+  "goVersion": "go1.27.1",
+  "compilerRevision": "4ce1264273be6051ee560173e94690e1b99c9eaf",
+  "compilerSha256": "5c9e50e6b6ea45060a1b1511ab4b7c11fb9d6cc3939f65337970a6dfdc417b9b",
+  "artifact": "build/toolchain-linux-bootstrap/fairyc",
+  "checks": [
+    "exact-revision isolated source build with CGO_ENABLED=0 and reviewed trimpath flags",
+    "ELF64 little-endian x86-64 header",
+    "go version -m: Linux AMD64, reviewed revision, vcs.modified=false"
+  ],
+  "sourceSha256": [
+    {
+      "path": "toolchain.json",
+      "sha256": "e744c8866ba200fd9213ee99ff61a11f60f9ed0f31e9106219f97d7da26971ef"
+    },
+    {
+      "path": "tools/setup-toolchain.py",
+      "sha256": "e626bef29a57ef1539eae2637ff2636f1d6ff8d7f33c51681cfc5fd6a350cf78"
+    }
+  ],
+  "limitations": [
+    "Built on Windows; no Linux compiler process was executed.",
+    "WSL availability probe did not complete and was cancelled; no Linux runtime installed.",
+    "Native Linux bootstrap hash reproduction, compiler --version and Brownie CLI remain unverified."
+  ],
+  "command": "go build -mod=readonly -trimpath -buildvcs=true -o ../fairyc ./cmd/fairyc (isolated exact-revision checkout; GOOS=linux GOARCH=amd64 GOAMD64=v1 CGO_ENABLED=0 GOTOOLCHAIN=local)"
+}

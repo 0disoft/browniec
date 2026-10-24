@@ -1,0 +1,55 @@
+{
+  "schema": "browniec.toolchain-verification/v2",
+  "status": "passed",
+  "recordedAt": "2026-10-24T19:53:33.856671+00:00",
+  "platform": "windows/amd64",
+  "pythonVersion": "3.14.6",
+  "compilerSha256": "572395f7f1e425d613c5a69f50b30ed177cda37ca2b1638bd0c11cf79fcbcc77",
+  "compilerRevision": "4ce1264273be6051ee560173e94690e1b99c9eaf",
+  "goVersion": "go1.27.1",
+  "cases": [
+    "verified executable import",
+    "existing compiler reuse",
+    "corrupt input rejected before execution; existing compiler preserved",
+    "version metadata mismatch rejected; existing compiler preserved",
+    "SDK lock mismatch rejected",
+    "tampered cached compiler rejected before execution",
+    "default exact-commit isolated source bootstrap reproduces native SHA-256",
+    "unavailable source commit rejected; existing compiler preserved",
+    "Windows and Linux AMD64 platform selection (logic only)",
+    "unsupported OS and architecture rejected",
+    "Git and Go overrides sanitized without mutating parent environment"
+  ],
+  "count": 11,
+  "sourceSha256": [
+    {
+      "path": "toolchain.json",
+      "sha256": "e744c8866ba200fd9213ee99ff61a11f60f9ed0f31e9106219f97d7da26971ef"
+    },
+    {
+      "path": "fairy.lock",
+      "sha256": "8a27a0666d98da945e537c16e0f6a1ec31149ec5baf6c2274c9c6bceebf44b5d"
+    },
+    {
+      "path": "tools/setup-toolchain.py",
+      "sha256": "e626bef29a57ef1539eae2637ff2636f1d6ff8d7f33c51681cfc5fd6a350cf78"
+    },
+    {
+      "path": "tools/setup-toolchain.ps1",
+      "sha256": "a1a7405698b15ac006c8c1f022949d44f44b10edb568ed537c16b292b7a1f464"
+    },
+    {
+      "path": "tools/verify-toolchain.py",
+      "sha256": "9a59d1c6daa43f17a85867ae05a77f78a0f2730b589b2c508a5096170eae0309"
+    },
+    {
+      "path": "tools/verify-toolchain.ps1",
+      "sha256": "21cc6deb3955297f2246799f05dcf0496b479f9bc12d2bcbaf000175e8a9e717"
+    }
+  ],
+  "limitations": [
+    "Native provisioning checks on the recorded host only; not a Brownie VM regression.",
+    "Platform-selection logic does not establish Linux native execution.",
+    "HTTPS acquisition, empty module caches and clean-machine setup were not exercised."
+  ]
+}
