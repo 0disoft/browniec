@@ -11,6 +11,14 @@ import errors as errors;
 pub fn bool binding(ref locals::Table table, usize index) {
     return index < table.count && table.registers[index] >= 128;
 }
+// Fixed shape is part of the binding's type, not mutable payload state.
+pub fn Result<usize, errors::Error> length_value(ref mut ir::Program p, usize id, usize offset) {
+    if (id >= 16 || id >= p.arrays.count || p.arrays.lengths[id] < 1 || p.arrays.lengths[id] > 4096) {
+        return .err(errors::make(3, offset));
+    }
+    let i64 length = cells::pack(p.arrays.lengths[id], offset)?;
+    return ir::integer(p, length, 12, offset);
+}
 // Called with the opening '[' after a possible statement target. Nested index
 // expressions may contain brackets, switches, and semicolons; only '=' after
 // the matching ']' distinguishes an assignment from a final value-arm read.

@@ -1,0 +1,9 @@
+module main;
+fn i32 main() {
+    var i32[3] values = [14; 3];
+    var i32 total = 0;
+    for (var usize i = 0; i < values.len; i = i + 1) {
+        total = total + values[i];
+    }
+    return total;
+}

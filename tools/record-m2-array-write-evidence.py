@@ -11,16 +11,16 @@ import sys
 from urllib.parse import unquote
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--slice', choices=['write','copy'], default='write')
+parser.add_argument('--slice', choices=['write','copy','length'], default='write')
 regression = parser.add_mutually_exclusive_group()
 regression.add_argument('--scalar-regression', action='store_true')
 regression.add_argument('--reuse-scalar-regression', action='store_true')
 args = parser.parse_args()
 root = Path(__file__).resolve().parent.parent
-kind = 'copy-source' if args.slice == 'copy' else 'write'
-native_count = 12 if args.slice == 'copy' else 9
-copy_count = 58 if args.slice == 'copy' else 0
-date = '20261025' if args.slice == 'copy' else '20261024'
+kind = 'copy-source' if args.slice == 'copy' else args.slice
+native_count = 15 if args.slice == 'length' else 12 if args.slice == 'copy' else 9
+copy_count = 58 if args.slice in ['copy', 'length'] else 0
+date = '20261024' if args.slice == 'write' else '20261025'
 evidence_path = f'docs/evidence/m2-array-{kind}-windows-{date}.json'
 has_regression = args.scalar_regression or args.reuse_scalar_regression
 
@@ -50,7 +50,8 @@ for result in receipt['results']:
     assert len(tests['tests']) == native_count and all(t['outcome'] == 'passed' for t in tests['tests'])
     assert digest(result['artifact']) == result['sha256']
     checks = [('source', 67, 'cliCases'), ('write', 61, 'writeCliCases')]
-    if args.slice == 'copy': checks.append(('copy-source', copy_count, 'copyCliCases'))
+    if args.slice in ['copy', 'length']: checks.append(('copy-source', copy_count, 'copyCliCases'))
+    if args.slice == 'length': checks.append(('length', 40, 'lengthCliCases'))
     for cli_kind, count, field in checks:
         path = f"build/m2-array-{cli_kind}/{result['profile']}/cli-receipt.json"
         cli = read(path)
@@ -68,6 +69,7 @@ m0 = read('docs/evidence/m0-windows-20261023.json')
 unchanged(m0['sourceSha256'])
 assert m0['compilerSha256'] == receipt['compilerSha256']
 prior_path = 'docs/evidence/m2-array-write-windows-20261024.json' if args.slice == 'copy' else 'docs/evidence/m2-array-source-windows-20261024.json'
+if args.slice == 'length': prior_path = 'docs/evidence/verifier-bitsets-windows-20261025.json'
 previous = read(prior_path)
 changed = {'src/compiler.fy', 'src/array_source.fy', 'src/render.fy', 'src/main.fy'}
 backend = [item for item in previous['sourceSha256']
@@ -150,15 +152,16 @@ receipt['documentationChecks'] = dict(files=len(paths), relativeLinks=links, dif
 receipt['baselineCommit'] = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip()
 receipt['evidenceRecorderSha256'] = digest(Path(__file__))
 receipt['commands'].append('python -B tools/record-m2-array-write-evidence.py' +
-                           (' --slice copy' if args.slice == 'copy' else '') +
+                           (f' --slice {args.slice}' if args.slice != 'write' else '') +
                            (' --scalar-regression' if args.scalar_regression else ' --reuse-scalar-regression' if args.reuse_scalar_regression else ''))
 receipt['commands'].append('git diff --check')
 receipt['skipped'] = [
     dict(check='M0 and private array IR/VM native reruns', reason='Named compiler, backend and fixture inputs unchanged.'),
-    dict(check='Full 81-group scalar native rerun', reason='Focused native parser/VM tests and scalar CLI regression used for this frontend increment.'
+    dict(check='Full 84-group scalar native rerun' if args.slice == 'length' else 'Full 81-group scalar native rerun', reason='Focused native parser/VM tests and scalar CLI regression used for this frontend increment.'
          if has_regression else 'Scalar CLI regression is pending; this receipt establishes focused verification only.'),
     dict(check='Instrumented allocator, Linux, isolation, DLL, performance', reason='Not executed in this frontend increment.'),
 ]
 destination.write_text(json.dumps(receipt, indent=2) + '\n', encoding='utf-8', newline='\n')
 print(json.dumps(dict(status='passed', evidence=destination.relative_to(root).as_posix(),
-    nativeGroups=native_count, readCliCases=67, writeCliCases=61, copyCliCases=copy_count, scalarCliCases=1969 if has_regression else 0)))
+    nativeGroups=native_count, readCliCases=67, writeCliCases=61, copyCliCases=copy_count,
+    lengthCliCases=40 if args.slice == 'length' else 0, scalarCliCases=1969 if has_regression else 0)))

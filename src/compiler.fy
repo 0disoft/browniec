@@ -132,6 +132,12 @@ fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s,
         if (index == 64) { return .err(errors::make(3, at)); }
         let usize register = table.registers[index];
         if (arrays::binding(table, index)) {
+            if (s.kind == 46) {
+                let usize dot = lexer::next(source, s)?;
+                if (!word_is(source, s, b"len")) { return .err(errors::make(3, s.begin)); }
+                let usize member = lexer::next(source, s)?;
+                return arrays::length_value(p, register - 128, at);
+            }
             if (s.kind != 91) { return .err(errors::make(3, at)); }
             let usize open = lexer::punctuation(source, s, 91)?;
             let usize subscript = expression(source,s,p,table,signatures,1,depth+1,12,result_type,structure,loop_state)?;
