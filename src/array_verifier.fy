@@ -2,12 +2,13 @@ module array_verifier;
 
 import ir as ir;
 import errors as errors;
+import register_set as registers;
 
-fn bool readable(ref ir::Program p, ref bool[] defined, usize r, usize f, u8 tag) {
-    return r >= p.register_starts[f] && r < p.register_ends[f] && !p.slots[r] && defined[r] && p.types[r] == tag;
+fn bool readable(ref ir::Program p, ref registers::Set defined, usize r, usize f, u8 tag) {
+    return r >= p.register_starts[f] && r < p.register_ends[f] && !p.slots[r] && registers::contains(defined, r) && p.types[r] == tag;
 }
 pub fn Result<usize, errors::Error> step(ref ir::Program p, usize pc, usize f,
-    ref mut bool[] defined, ref mut bool[] written, usize live) {
+    ref mut registers::Set defined, ref mut registers::Set written, usize live) {
     let usize at = pc * 8;
     let u8 op = p.code[at];
     let usize dst = p.code[at + 1] as usize;
@@ -37,8 +38,8 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, usize pc, usize f,
         if (!p.arrays.mutable[id] || !readable(p, defined, a, f, 12) || !readable(p, defined, b, f, element)) { return .err(errors::make(5, pc)); }
     } else if (op == 35) {
         if (!readable(p, defined, b, f, 12) || dst < p.register_starts[f] || dst >= p.register_ends[f] ||
-            p.slots[dst] || written[dst] || p.types[dst] != element) { return .err(errors::make(5, pc)); }
-        defined[dst] = true; written[dst] = true;
+            p.slots[dst] || registers::contains(written, dst) || p.types[dst] != element) { return .err(errors::make(5, pc)); }
+        registers::insert(defined, dst); registers::insert(written, dst);
     } else { return .err(errors::make(5, pc)); }
     return .ok(live);
 }

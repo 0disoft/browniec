@@ -25,7 +25,7 @@ try {
     $nativeOutput = & $Compiler @testArguments
     if ($LASTEXITCODE -ne 0) { throw "Native tests failed: $profile" }
     $native = $nativeOutput | ConvertFrom-Json
-    if ($native.status -ne 'ok' -or $native.failed -ne 0 -or $native.passed -ne 81) { throw 'Unexpected native test outcomes' }
+    if ($native.status -ne 'ok' -or $native.failed -ne 0 -or $native.passed -ne 84) { throw 'Unexpected native test outcomes' }
     $buildOutput = & $Compiler @buildArguments
     if ($LASTEXITCODE -ne 0) { throw "Build failed: $profile" }
     $exe = Join-Path $output "browniec-$profile.exe"
