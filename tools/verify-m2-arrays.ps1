@@ -1,5 +1,5 @@
 param(
-  [ValidateSet('ir', 'vm', 'source', 'write', 'copy', 'length')][string]$Slice = 'ir',
+  [ValidateSet('ir', 'vm', 'source', 'write', 'copy', 'length', 'scopes')][string]$Slice = 'ir',
   [string]$Compiler = (Join-Path $PSScriptRoot '../build/toolchain/fairyc.exe')
 )
 $ErrorActionPreference = 'Stop'
@@ -15,11 +15,12 @@ $receiptPath = Join-Path $output 'receipt.json'
 if ($env:CL -or $env:_CL_) { throw 'Unexpected CL/_CL_ override' }
 $files = if ($Slice -eq 'ir') { @('tests/m2/array_ir.fy', 'tests/branches.fy', 'tests/loops.fy') } else { @('tests/m2/array_ir.fy', 'tests/m2/array_vm.fy', 'tests/m2/array_allocation.fy') }
 if ($Slice -eq 'source') { $files += 'tests/m2/array_source.fy' }
-$expected = if ($Slice -eq 'ir') { 16 } elseif ($Slice -eq 'source') { 18 } elseif ($Slice -eq 'write') { 9 } elseif ($Slice -eq 'length') { 15 } else { 12 }
+$expected = if ($Slice -eq 'ir') { 16 } elseif ($Slice -eq 'source') { 18 } elseif ($Slice -eq 'write') { 9 } elseif ($Slice -eq 'length') { 15 } elseif ($Slice -eq 'scopes') { 19 } else { 12 }
 if ($Slice -eq 'write') { $files = @('tests/m2/array_source.fy', 'tests/m2/array_write.fy') }
-if ($Slice -in @('copy', 'length')) { $files = @('tests/m2/array_source.fy', 'tests/m2/array_write.fy', 'tests/m2/array_copy_source.fy') }
-if ($Slice -eq 'length') { $files += 'tests/m2/array_length.fy' }
-$sourceMode = $Slice -in @('source', 'write', 'copy', 'length')
+if ($Slice -in @('copy', 'length', 'scopes')) { $files = @('tests/m2/array_source.fy', 'tests/m2/array_write.fy', 'tests/m2/array_copy_source.fy') }
+if ($Slice -in @('length', 'scopes')) { $files += 'tests/m2/array_length.fy' }
+if ($Slice -eq 'scopes') { $files += 'tests/m2/array_scopes.fy' }
+$sourceMode = $Slice -in @('source', 'write', 'copy', 'length', 'scopes')
 Push-Location $repo
 try {
   $version = & $Compiler --version
@@ -30,9 +31,10 @@ try {
     $files | ForEach-Object { Get-Item -LiteralPath $_ }; Get-ChildItem src -File -Recurse;
     if ($Slice -eq 'vm') { Get-Item probes/m0/native/allocator_probe.h }
     if ($sourceMode) { Get-Item tools/check-m2-array-source.py }
-    if ($Slice -in @('write','copy','length')) { Get-Item tools/check-m2-array-write.py }
-    if ($Slice -in @('copy','length')) { Get-Item tools/check-m2-array-copy-source.py }
-    if ($Slice -eq 'length') { Get-Item tools/check-m2-array-length.py, examples/array-length.brc })
+    if ($Slice -in @('write','copy','length','scopes')) { Get-Item tools/check-m2-array-write.py }
+    if ($Slice -in @('copy','length','scopes')) { Get-Item tools/check-m2-array-copy-source.py }
+    if ($Slice -in @('length','scopes')) { Get-Item tools/check-m2-array-length.py, examples/array-length.brc }
+    if ($Slice -eq 'scopes') { Get-Item tools/check-m2-array-scopes.py, examples/array-scopes.brc })
   $identities = @($inputs | Sort-Object FullName | ForEach-Object {
     [ordered]@{ path = [IO.Path]::GetRelativePath($repo, $_.FullName).Replace('\', '/');
       sha256 = (Get-FileHash -LiteralPath $_.FullName).Hash.ToLowerInvariant() }
@@ -64,23 +66,29 @@ try {
       $result.artifact = "build/m2-array-$outputSlice/browniec-$profile.exe"
       $result.sha256 = (Get-FileHash -LiteralPath $exe).Hash.ToLowerInvariant()
       $result.cliCases = $cli.count
-      if ($Slice -in @('write','copy','length')) {
+      if ($Slice -in @('write','copy','length','scopes')) {
         & python -B (Join-Path $PSScriptRoot 'check-m2-array-write.py') --exe $exe --profile $profile
         if ($LASTEXITCODE -ne 0) { throw "Array write CLI checks failed: $profile" }
         $writeCli = Get-Content -LiteralPath (Join-Path $repo "build/m2-array-write/$profile/cli-receipt.json") -Raw | ConvertFrom-Json
         $result.writeCliCases = $writeCli.count
       }
-      if ($Slice -in @('copy','length')) {
+      if ($Slice -in @('copy','length','scopes')) {
         & python -B (Join-Path $PSScriptRoot 'check-m2-array-copy-source.py') --exe $exe --profile $profile
         if ($LASTEXITCODE -ne 0) { throw "Array copy CLI checks failed: $profile" }
         $copyCli = Get-Content -LiteralPath (Join-Path $repo "build/m2-array-copy-source/$profile/cli-receipt.json") -Raw | ConvertFrom-Json
         $result.copyCliCases = $copyCli.count
       }
-      if ($Slice -eq 'length') {
+      if ($Slice -in @('length','scopes')) {
         & python -B (Join-Path $PSScriptRoot 'check-m2-array-length.py') --exe $exe --profile $profile
         if ($LASTEXITCODE -ne 0) { throw "Array length CLI checks failed: $profile" }
-        $lengthCli = Get-Content -LiteralPath (Join-Path $output "$profile/cli-receipt.json") -Raw | ConvertFrom-Json
+        $lengthCli = Get-Content -LiteralPath (Join-Path $repo "build/m2-array-length/$profile/cli-receipt.json") -Raw | ConvertFrom-Json
         $result.lengthCliCases = $lengthCli.count
+      }
+      if ($Slice -eq 'scopes') {
+        & python -B (Join-Path $PSScriptRoot 'check-m2-array-scopes.py') --exe $exe --profile $profile
+        if ($LASTEXITCODE -ne 0) { throw "Array scope CLI checks failed: $profile" }
+        $scopeCli = Get-Content -LiteralPath (Join-Path $output "$profile/cli-receipt.json") -Raw | ConvertFrom-Json
+        $result.scopeCliCases = $scopeCli.count
       }
     }
     $results += $result
@@ -120,7 +128,7 @@ try {
     lockedCheck = $check; results = $results; allocatorTests = $allocatorResults; sourceSha256 = $identities;
     artifacts = 'Tool-managed temporary native test images; source mode also retains hashed native CLI binaries.';
     limitations = @('Entry-function arrays only; scalar functions cannot receive or return arrays.',
-      $(if ($Slice -eq 'length') { 'Length mode adds NAME.len as a usize constant in scalar expressions; reassignment, array parameters, borrows and slices remain unavailable.' } elseif ($Slice -eq 'copy') { 'Copy mode admits new outer-main array bindings from exact-type/length bare sources; reassignment and borrows remain unavailable.' } elseif ($Slice -eq 'write') { 'Write mode admits outer-main let/var scalar arrays and indexed assignment; for-header writes, copies and borrows remain unavailable.' } else { 'Source mode admits outer-main immutable repeated arrays and scalar indexing; copies, borrows and full profile remain incomplete.' }),
+      $(if ($Slice -eq 'scopes') { 'Scopes mode admits entry-function arrays in lexical blocks and loops; helper arrays, array parameters/results, for-header arrays, reassignment and borrows remain unavailable.' } elseif ($Slice -eq 'length') { 'Length mode adds NAME.len as a usize constant in scalar expressions; reassignment, array parameters, borrows and slices remain unavailable.' } elseif ($Slice -eq 'copy') { 'Copy mode admits new outer-main array bindings from exact-type/length bare sources; reassignment and borrows remain unavailable.' } elseif ($Slice -eq 'write') { 'Write mode admits outer-main let/var scalar arrays and indexed assignment; for-header writes, copies and borrows remain unavailable.' } else { 'Source mode admits outer-main immutable repeated arrays and scalar indexing; copies, borrows and full profile remain incomplete.' }),
       'Each receipt establishes only the selected slice, not later VM or delivery gates.',
       'No isolation, DLL, clean-machine or performance claim.')
   } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $receiptPath -Encoding utf8NoBOM

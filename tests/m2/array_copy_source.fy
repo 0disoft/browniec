@@ -36,7 +36,7 @@ fn void copies_enforce_shapes_scope_quota_and_exact_fuel() {
     rejected(b"module main; fn i32 main() {let i32[1] a=[42;1]; let i32[2] b=a; return 0;}");
     rejected(b"module main; fn i32 main() {let i32[1] a=[42;1]; let i64[1] b=a; return 0;}");
     rejected(b"module main; fn i32 main() {let i32 x=42; let i32[1] b=x; return 0;}");
-    rejected(b"module main; fn i32 main() {let i32[1] a=[42;1]; {let i32[1] b=a;} return 0;}");
+    rejected(b"module main; fn i32 main() {let i32[1] a=[42;1]; {let i32[1] b=a;} return b[0];}");
     rejected(b"module main; fn i32 main() {let i32[1] a=[42;1]; for(let i32[1] b=a;false;) {} return 0;}");
     rejected(b"module main; fn i32 main() {let i32[1] a=[42;1]; let i32[1] b=a; b[0]=0; return 0;}");
     let ir::Program p=compiled(b"module main; fn i32 main() {let i32[1] a=[42;1]; let i32[1] b=a; return b[0];}");

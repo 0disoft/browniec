@@ -1,0 +1,9 @@
+module main;
+fn i32 main() {
+    var i32 total = 0;
+    for (var usize i = 0; i < 3; i = i + 1) {
+        let i32[2] scratch = [7; 2];
+        total = total + scratch[0] + scratch[1];
+    }
+    return total;
+}

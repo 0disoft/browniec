@@ -8,11 +8,12 @@ pub struct State {
     usize depth;
     usize[32] heads;
     bool[32] classic;
+    usize[32] bindings;
     usize[256] breaks;
     usize[256] continues;
 }
 pub fn State empty() {
-    return State { .depth=0, .heads=[0;32], .classic=[false;32],
+    return State { .depth=0, .heads=[0;32], .classic=[false;32], .bindings=[0;32],
         .breaks=[0;256], .continues=[0;256] };
 }
 pub fn Result<usize, errors::Error> enter(ref mut State s, usize head, bool classic, usize offset) {

@@ -7,7 +7,7 @@ import cells as cells;
 import errors as errors;
 
 // Local binding values 128..143 denote private array catalog IDs, never scalar
-// registers. Arrays are currently confined to the entry function's outer scope.
+// registers. Arrays are confined to the entry function's lexical scopes.
 pub fn bool binding(ref locals::Table table, usize index) {
     return index < table.count && table.registers[index] >= 128;
 }
@@ -72,9 +72,13 @@ pub fn Result<usize, errors::Error> length(ref u8[] source, ref mut lexer::State
     return .ok(size);
 }
 pub fn Result<usize, errors::Error> release_visible(ref locals::Table table, ref mut ir::Program p, usize offset) {
+    return release_from(table, p, 0, offset);
+}
+// A transfer releases exactly the suffix whose lexical scopes it exits.
+pub fn Result<usize, errors::Error> release_from(ref locals::Table table, ref mut ir::Program p, usize first, usize offset) {
     var usize i = table.count;
     var usize dropped = 0;
-    while (i > 0) {
+    while (i > first) {
         i -= 1;
         if (binding(table, i)) {
             let usize drop = ir::array_drop(p, table.registers[i] - 128, offset)?;

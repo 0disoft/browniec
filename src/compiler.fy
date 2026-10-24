@@ -221,7 +221,7 @@ fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State 
         let usize keyword = lexer::next(source, s)?;
         let u8 tag = types::parse(source, s)?;
         let usize length = if (s.kind == 91) { arrays::length(source, s)? } else { 0 };
-        if (length != 0 && (!table.entry || structure != 0 || expr_depth != 0 || result_type != 1 ||
+        if (length != 0 && (!table.entry || result_type != 1 ||
             terminator != 59 || !types::scalar(tag))) { return .err(errors::make(3, s.begin)); }
         if (s.kind != 2 || locals::reserved(source[s.begin..s.end])) {
             return .err(errors::make(2, s.begin));
@@ -302,6 +302,7 @@ struct Yield {usize value; bool terminal;}
 fn Result<Yield,errors::Error> value_arm(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,ref mut locals::Table table,ref functions::Table signatures,usize depth,u8 expected,u8 result_type, usize structure, ref mut loops::State loop_state) {
     if(depth>32 || structure>32) {return .err(errors::make(4,s.begin));}
     let usize brace=lexer::punctuation(source,s,123)?;
+    let usize outer=table.count;
     while(true) {
         var bool regular=word_is(source,s,b"let") || word_is(source,s,b"var");
         if(!regular && s.kind==2 && !locals::reserved(source[s.begin..s.end])) {
@@ -322,6 +323,7 @@ fn Result<Yield,errors::Error> value_arm(ref u8[] source,ref mut lexer::State s,
         }
     }
     let usize value=expression(source,s,p,table,signatures,1,depth,expected,result_type,structure,loop_state)?;
+    let usize dropped=arrays::release_from(table,p,outer,s.begin)?;
     let usize close=lexer::punctuation(source,s,125)?;
     return .ok(Yield {.value=value,.terminal=false});
 }
@@ -411,6 +413,7 @@ fn Result<bool, errors::Error> block(ref u8[] source, ref mut lexer::State s, re
         if (s.kind == 0 || terminal) { return .err(errors::make(2, s.begin)); }
         terminal = control(source,s,p,table,signatures,result_type,depth,expr_depth,loop_state)?;
     }
+    if (!terminal) { let usize dropped = arrays::release_from(table, p, outer, s.begin)?; }
     table.count = outer;
     let usize close = lexer::next(source, s)?;
     return .ok(terminal);
@@ -422,6 +425,8 @@ fn Result<bool, errors::Error> control(ref u8[] source, ref mut lexer::State s, 
         let bool leave=word_is(source,s,b"break");
         let usize keyword=lexer::next(source,s)?;
         let usize end=lexer::punctuation(source,s,59)?;
+        if (loop_state.depth == 0) { return .err(errors::make(2,at)); }
+        let usize dropped=arrays::release_from(table,p,loop_state.bindings[loop_state.depth-1],at)?;
         let usize jump=loops::transfer(loop_state,p,leave,at)?;
         return .ok(true);
     }
@@ -493,6 +498,7 @@ fn Result<bool, errors::Error> control(ref u8[] source, ref mut lexer::State s, 
         if (has_post) {let usize validated=checked_post(source,s,p,table,signatures,expr_depth,depth,loop_state)?;}
         else {let usize empty=lexer::next(source,s)?;}
         let usize level=loops::enter(loop_state,head,true,at)?;
+        loop_state.bindings[level]=table.count;
         let bool stopped=block(source,s,p,table,signatures,result_type,depth+1,expr_depth,loop_state)?;
         let usize post_target=p.count;
         let usize continues=loops::resolve(loop_state,p,false,post_target,at)?;
@@ -516,6 +522,7 @@ fn Result<bool, errors::Error> control(ref u8[] source, ref mut lexer::State s, 
         let usize open=lexer::punctuation(source,s,40)?;
         let usize head=p.count;
         let usize level=loops::enter(loop_state,head,false,at)?;
+        loop_state.bindings[level]=table.count;
         let usize condition=expression(source,s,p,table,signatures,1,expr_depth,2,result_type,depth,loop_state)?;
         if (p.types[condition]!=2) {return .err(errors::make(3,at));}
         let usize close=lexer::punctuation(source,s,41)?;
