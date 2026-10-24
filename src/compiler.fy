@@ -216,7 +216,7 @@ fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State 
         let u8 tag = types::parse(source, s)?;
         let usize length = if (s.kind == 91) { arrays::length(source, s)? } else { 0 };
         if (length != 0 && (!table.entry || structure != 0 || expr_depth != 0 || result_type != 1 ||
-            terminator != 59 || mutable || !types::scalar(tag))) { return .err(errors::make(3, s.begin)); }
+            terminator != 59 || !types::scalar(tag))) { return .err(errors::make(3, s.begin)); }
         if (s.kind != 2 || locals::reserved(source[s.begin..s.end])) {
             return .err(errors::make(2, s.begin));
         }
@@ -236,9 +236,9 @@ fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State 
             if (repeated != length) { return .err(errors::make(3, begin)); }
             let usize close = lexer::punctuation(source, s, 93)?;
             let usize finished = lexer::punctuation(source, s, terminator)?;
-            let usize id = ir::array(p, tag, length, false, begin)?;
+            let usize id = ir::array(p, tag, length, mutable, begin)?;
             let usize init = ir::array_init(p, id, value, begin)?;
-            return locals::declare(table, begin, end, 128 + id, false);
+            return locals::declare(table, begin, end, 128 + id, mutable);
         }
         let usize end_statement = lexer::punctuation(source, s, terminator)?;
         var usize binding = value;
@@ -255,6 +255,23 @@ fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State 
     let usize index = locals::find(source, table, s.begin, s.end);
     if (index == 64 || !table.mutable[index]) { return .err(errors::make(3, at)); }
     let usize target = lexer::next(source, s)?;
+    if (arrays::binding(table, index)) {
+        // For headers remain scalar-only; never use an array binding as a
+        // scalar register in the header/post validation paths.
+        if (result_type == 0 || s.kind != 91) { return .err(errors::make(3, at)); }
+        let usize id = table.registers[index] - 128;
+        let usize open = lexer::punctuation(source, s, 91)?;
+        let usize subscript = expression(source,s,p,table,signatures,1,expr_depth+1,12,result_type,structure,loop_state)?;
+        if (p.types[subscript] != 12) { return .err(errors::make(3, at)); }
+        let usize close = lexer::punctuation(source, s, 93)?;
+        let usize equals = lexer::punctuation(source, s, 61)?;
+        let u8 element = p.arrays.elements[id];
+        let usize value = expression(source,s,p,table,signatures,1,expr_depth,element,result_type,structure,loop_state)?;
+        if (p.types[value] != element) { return .err(errors::make(3, at)); }
+        let usize end_statement = lexer::punctuation(source, s, terminator)?;
+        let usize written = ir::array_write(p, id, subscript, value, at)?;
+        return .ok(index);
+    }
     let usize equals = lexer::punctuation(source, s, 61)?;
     let u8 target_type=p.types[table.registers[index]];
     let usize value = expression(source,s,p,table,signatures,1,expr_depth,target_type,result_type,structure,loop_state)?;
@@ -275,7 +292,7 @@ fn Result<Yield,errors::Error> value_arm(ref u8[] source,ref mut lexer::State s,
         if(!regular && s.kind==2 && !locals::reserved(source[s.begin..s.end])) {
             var lexer::State look=lexer::snapshot(s);
             let usize next=lexer::next(source,ref mut look)?;
-            regular=look.kind==61;
+            regular=look.kind==61 || (look.kind==91 && arrays::indexed_assignment(source, ref look)?);
         }
         // A leading switch remains the final expression. Wrap a statement
         // switch in a standalone block to make that statement intent explicit.

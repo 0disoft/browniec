@@ -11,6 +11,34 @@ import errors as errors;
 pub fn bool binding(ref locals::Table table, usize index) {
     return index < table.count && table.registers[index] >= 128;
 }
+// Called with the opening '[' after a possible statement target. Nested index
+// expressions may contain brackets, switches, and semicolons; only '=' after
+// the matching ']' distinguishes an assignment from a final value-arm read.
+pub fn Result<bool, errors::Error> indexed_assignment(ref u8[] source, ref lexer::State state) {
+    var lexer::State look = lexer::snapshot(state);
+    var usize depth = 0;
+    while (look.kind != 0) {
+        if (look.kind == 91) { depth += 1; }
+        else if (look.kind == 93) {
+            if (depth == 0) { return .ok(false); }
+            depth -= 1;
+            if (depth == 0) {
+                let usize next = lexer::next(source, ref mut look)?;
+                return .ok(look.kind == 61);
+            }
+        }
+        let usize next = lexer::next(source, ref mut look)?;
+    }
+    return .ok(false);
+}
+pub fn u8 profile(ref ir::Program p) {
+    var usize i = 0;
+    while (i < p.arrays.count) {
+        if (p.arrays.mutable[i]) { return 2; }
+        i += 1;
+    }
+    return if (p.arrays.count != 0) { 1 } else { 0 };
+}
 pub fn Result<usize, errors::Error> count(ref u8[] source, ref mut lexer::State s) {
     if (s.kind != 1 || s.value < 1 || s.value > 4096) { return .err(errors::make(3, s.begin)); }
     let usize value = cells::unpack(s.value, s.begin)?;

@@ -94,7 +94,7 @@ for body in [
     'if (true) { let i32[1] a = [42; 1]; } return 0;',
     'while (false) { let i32[1] a = [42; 1]; } return 0;',
     'for (let i32[1] a = [42; 1]; false;) {} return 0;',
-    'var i32[1] a = [42; 1]; return 0;',
+    'var i32[1] a = [42; 1]; a = 1; return 0;',
     'let i32[1] a = [42; 1]; let i32 n = 0; return a[n];',
     'let i32[1] a = [42; 1]; return a[true];',
     'let i32[1] a = [42; 1]; return a;',

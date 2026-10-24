@@ -1,6 +1,6 @@
 # Output and Exit Codes
 
-- Status: Experimental M1 scalar and M2 source-array results implemented; source-array focused verification passed in development and release; wider output remains designed
+- Status: Experimental M1 scalar and M2 source-array results implemented; read verification recorded; write focused verification passed in development and release; wider output remains designed
 - Guest integer: data, never the process exit code
 
 ## Process exits
@@ -15,7 +15,7 @@
 | 6 | Internal compiler or VM invariant failure |
 | 7 | Worker, IPC, forced termination, or output-sink failure |
 
-The CLI implements these classes for its scalar and array-read subsets. There is no
+The CLI implements these classes for its scalar and array subsets. There is no
 cancellation, deadline, worker IPC, or host-binding implementation yet. A source-file read failure
 uses code 7. Invalid or missing source main declarations are compile/type errors
 (code 3); external entry binding in code 4 remains a future interface. Verification
@@ -38,10 +38,19 @@ reports the array-read profile after compilation succeeds:
 {"schema":"browniec.result/v1","profile":"brownie.m2-array-read/1","command":"run","status":"completed","return_i32":42,"error":null}
 ```
 
-Scalar programs, plus compile, input, and usage failures before successful
-compilation, retain `brownie.m1-scalar/1`. An array program that compiles and then
-fails verification or execution retains `brownie.m2-array-read/1`. The array
-result schema does not differ from the scalar result schema.
+A source program with any mutable array catalog entry uses the same schema and
+reports the array-write profile after compilation succeeds:
+
+```json
+{"schema":"browniec.result/v1","profile":"brownie.m2-array-write/1","command":"run","status":"completed","return_i32":42,"error":null}
+```
+
+Scalar programs plus programs with only immutable arrays retain
+`brownie.m1-scalar/1` and `brownie.m2-array-read/1`. Compile, input, and usage
+failures before successful compilation retain their existing profile behavior. A
+source-array program that compiles and then fails verification or execution keeps
+its array-read or array-write profile. The result schema and error kinds do not
+differ from the scalar result schema.
 
 The command is `check` or `run`; status is `checked`, `completed`, or `error`.
 Only completed runs have a numeric return_i32. Failures carry an error object with
@@ -54,10 +63,11 @@ its option has been parsed.
 Text mode leaves stdout empty and writes checked status, return_i32, or diagnostics
 to stderr. Guest output bytes and output_b64 are not implemented. Version JSON uses
 `browniec.version/v1`, preserves `profile` as `brownie.m1-scalar/1`, adds
-`array_profile` as `brownie.m2-array-read/1`, and reports delivery availability:
+`array_profile` as `brownie.m2-array-read/1` and `array_write_profile` as
+`brownie.m2-array-write/1`, and reports delivery availability:
 
 ```json
-{"schema":"browniec.version/v1","profile":"brownie.m1-scalar/1","array_profile":"brownie.m2-array-read/1","core":true,"restricted":false,"embed":false}
+{"schema":"browniec.version/v1","profile":"brownie.m1-scalar/1","array_profile":"brownie.m2-array-read/1","array_write_profile":"brownie.m2-array-write/1","core":true,"restricted":false,"embed":false}
 ```
 
 The CLI Fuel default remains 256 for scalar compatibility. A Program with an array

@@ -51,7 +51,7 @@ fn void source_array_types_scope_and_unimplemented_forms_are_rejected() {
     rejected(b"module main; fn i32 main() { let i32[1] a = [1; 1]; let i32 i = 0; return a[i]; }", 3);
     rejected(b"module main; fn i32 f() { let i32[1] a = [1; 1]; return a[0]; } fn i32 main() { return f(); }", 3);
     rejected(b"module main; fn i32 main() { { let i32[1] a = [1; 1]; } return 0; }", 3);
-    rejected(b"module main; fn i32 main() { var i32[1] a = [1; 1]; return 0; }", 3);
+    result(b"module main; fn i32 main() { var i32[1] a = [1; 1]; return a[0]; }", 1);
     rejected(b"module main; fn i32 main() { let i32[1] a = [1; 1]; return a; }", 3);
     rejected(b"module main; fn i32 main() { let i32[1] a = [1; 1]; return main(); }", 3);
 }

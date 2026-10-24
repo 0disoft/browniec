@@ -1,5 +1,9 @@
 # M2 Source Array Reads
 
+This page records the read-only increment. The later [write slice](m2-array-write.md)
+adds mutable declarations and indexed assignments; the original read receipt is
+historical after those compiler changes.
+
 - Status: implemented and focused-harness verified in development and release
 - Scope: immutable scalar-array declarations and indexed reads in the outermost `main` body
 - Implementation: [`compiler.fy`](../../src/compiler.fy), [`array_source.fy`](../../src/array_source.fy), and [`locals.fy`](../../src/locals.fy)

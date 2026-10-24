@@ -1,0 +1,7 @@
+module main;
+fn i32 main() {
+    var i32[2] values = [0; 2];
+    values[0] = 20;
+    values[1] = 22;
+    return values[0] + values[1];
+}

@@ -1,5 +1,5 @@
 param(
-  [ValidateSet('ir', 'vm', 'source')][string]$Slice = 'ir',
+  [ValidateSet('ir', 'vm', 'source', 'write')][string]$Slice = 'ir',
   [string]$Compiler = (Join-Path $PSScriptRoot '../build/toolchain/fairyc.exe')
 )
 $ErrorActionPreference = 'Stop'
@@ -14,7 +14,9 @@ $receiptPath = Join-Path $output 'receipt.json'
 if ($env:CL -or $env:_CL_) { throw 'Unexpected CL/_CL_ override' }
 $files = if ($Slice -eq 'ir') { @('tests/m2/array_ir.fy', 'tests/branches.fy', 'tests/loops.fy') } else { @('tests/m2/array_ir.fy', 'tests/m2/array_vm.fy', 'tests/m2/array_allocation.fy') }
 if ($Slice -eq 'source') { $files += 'tests/m2/array_source.fy' }
-$expected = if ($Slice -eq 'ir') { 16 } elseif ($Slice -eq 'source') { 18 } else { 12 }
+$expected = if ($Slice -eq 'ir') { 16 } elseif ($Slice -eq 'source') { 18 } elseif ($Slice -eq 'write') { 9 } else { 12 }
+if ($Slice -eq 'write') { $files = @('tests/m2/array_source.fy', 'tests/m2/array_write.fy') }
+$sourceMode = $Slice -in @('source', 'write')
 Push-Location $repo
 try {
   $version = & $Compiler --version
@@ -24,7 +26,8 @@ try {
   $inputs = @(Get-Item fairy.toml, fairy.lock, tools/verify-m2-arrays.ps1;
     $files | ForEach-Object { Get-Item -LiteralPath $_ }; Get-ChildItem src -File -Recurse;
     if ($Slice -eq 'vm') { Get-Item probes/m0/native/allocator_probe.h }
-    if ($Slice -eq 'source') { Get-Item tools/check-m2-array-source.py })
+    if ($sourceMode) { Get-Item tools/check-m2-array-source.py }
+    if ($Slice -eq 'write') { Get-Item tools/check-m2-array-write.py })
   $identities = @($inputs | Sort-Object FullName | ForEach-Object {
     [ordered]@{ path = [IO.Path]::GetRelativePath($repo, $_.FullName).Replace('\', '/');
       sha256 = (Get-FileHash -LiteralPath $_.FullName).Hash.ToLowerInvariant() }
@@ -40,7 +43,7 @@ try {
     $native = $nativeOutput | ConvertFrom-Json
     if ($native.status -ne 'ok' -or $native.failed -ne 0 -or $native.passed -ne $expected) { throw 'Unexpected native outcomes' }
     $result = [ordered]@{ profile = $profile; nativeTests = $native }
-    if ($Slice -eq 'source') {
+    if ($sourceMode) {
       $buildArguments = @('build', '--locked')
       if ($profile -eq 'release') { $buildArguments += '--release' }
       $buildOutput = & $Compiler @buildArguments
@@ -49,11 +52,17 @@ try {
       Copy-Item -LiteralPath (Join-Path $repo 'build/browniec.exe') -Destination $exe -Force
       & python -B (Join-Path $PSScriptRoot 'check-m2-array-source.py') --exe $exe --profile $profile
       if ($LASTEXITCODE -ne 0) { throw "Array CLI checks failed: $profile" }
-      $cli = Get-Content -LiteralPath (Join-Path $output "$profile/cli-receipt.json") -Raw | ConvertFrom-Json
+      $cli = Get-Content -LiteralPath (Join-Path $repo "build/m2-array-source/$profile/cli-receipt.json") -Raw | ConvertFrom-Json
       $result.build = $buildOutput
-      $result.artifact = "build/m2-array-source/browniec-$profile.exe"
+      $result.artifact = "build/m2-array-$Slice/browniec-$profile.exe"
       $result.sha256 = (Get-FileHash -LiteralPath $exe).Hash.ToLowerInvariant()
       $result.cliCases = $cli.count
+      if ($Slice -eq 'write') {
+        & python -B (Join-Path $PSScriptRoot 'check-m2-array-write.py') --exe $exe --profile $profile
+        if ($LASTEXITCODE -ne 0) { throw "Array write CLI checks failed: $profile" }
+        $writeCli = Get-Content -LiteralPath (Join-Path $output "$profile/cli-receipt.json") -Raw | ConvertFrom-Json
+        $result.writeCliCases = $writeCli.count
+      }
     }
     $results += $result
   }
@@ -92,7 +101,7 @@ try {
     lockedCheck = $check; results = $results; allocatorTests = $allocatorResults; sourceSha256 = $identities;
     artifacts = 'Tool-managed temporary native test images; source mode also retains hashed native CLI binaries.';
     limitations = @('Entry-function arrays only; scalar functions cannot receive or return arrays.',
-      'Source mode admits outer-main immutable repeated arrays and scalar indexing; writes, copies, borrows and full profile remain incomplete.',
+      $(if ($Slice -eq 'write') { 'Write mode admits outer-main let/var scalar arrays and indexed assignment; for-header writes, copies and borrows remain unavailable.' } else { 'Source mode admits outer-main immutable repeated arrays and scalar indexing; copies, borrows and full profile remain incomplete.' }),
       'Each receipt establishes only the selected slice, not later VM or delivery gates.',
       'No isolation, DLL, clean-machine or performance claim.')
   } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $receiptPath -Encoding utf8NoBOM

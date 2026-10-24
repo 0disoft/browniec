@@ -31,9 +31,11 @@ pub fn i32 exit_code(u8 kind) {
     return 4;
 }
 
-fn Result<bytes::Buffer, bytes::BufferError> encode(bool run, bool failed, i64 value, errors::Error error, bool arrays) {
+fn Result<bytes::Buffer, bytes::BufferError> encode(bool run, bool failed, i64 value, errors::Error error, u8 arrays) {
     var bytes::Buffer output = bytes::with_capacity(512)?;
-    let usize header = bytes::append(ref mut output, if (arrays) {
+    let usize header = bytes::append(ref mut output, if (arrays == 2) {
+        b"{\"schema\":\"browniec.result/v1\",\"profile\":\"brownie.m2-array-write/1\",\"command\":"
+    } else if (arrays == 1) {
         b"{\"schema\":\"browniec.result/v1\",\"profile\":\"brownie.m2-array-read/1\",\"command\":"
     } else { b"{\"schema\":\"browniec.result/v1\",\"profile\":\"brownie.m1-scalar/1\",\"command\":" })?;
     let usize command = bytes::append(ref mut output, if (run) { b"\"run\"" } else { b"\"check\"" })?;
@@ -55,10 +57,10 @@ fn Result<bytes::Buffer, bytes::BufferError> encode(bool run, bool failed, i64 v
 
 @effects(console)
 pub fn i32 outcome(bool json, bool run, bool failed, i64 value, errors::Error error) {
-    return selected_outcome(json, run, failed, value, error, false);
+    return selected_outcome(json, run, failed, value, error, 0);
 }
 @effects(console)
-pub fn i32 selected_outcome(bool json, bool run, bool failed, i64 value, errors::Error error, bool arrays) {
+pub fn i32 selected_outcome(bool json, bool run, bool failed, i64 value, errors::Error error, u8 arrays) {
     let i32 code = if (failed) { exit_code(error.kind) } else { 0 };
     if (json) {
         let bytes::Buffer output = switch (encode(run, failed, value, error, arrays)) {

@@ -1,7 +1,7 @@
 # Validation
 
-- Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, switch-expression, i64, and unsigned receipts are verified historical evidence; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified; private entry-array IR/VM and immutable source-array reads implemented and focused-harness verified
-- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/u8/u32/usize/bool values, explicit widening, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation; private entry-function array IR/native dispatch and immutable outer-main scalar-array declarations and reads are implemented
+- Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, switch-expression, i64, and unsigned receipts are verified historical evidence; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified; private entry-array IR/VM and source-array reads/writes implemented and focused-harness verified
+- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/u8/u32/usize/bool values, explicit widening, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation; private entry-function array IR/native dispatch, outer-main let/var scalar arrays, and indexed reads/writes are implemented
 
 ## Validation source of truth
 
@@ -94,7 +94,7 @@ The [M1 requirements audit](docs/engineering/m1-checkpoint-audit.md) closes the
 bounded scalar checkpoint by checking the identities of existing executed evidence.
 Full-profile conformance remains incomplete. M2 has private scalar-array layout,
 codec, caller-backed storage, owner/copy primitives, and entry-only array IR/VM.
-Array writes/copies, aggregate guest calls, and borrow integration remain open. M3
+Array copies, aggregate guest calls, and borrow integration remain open. M3
 through M5 remain not started.
 M0's empty runtime-`PATH` execution does not
 establish clean-machine packaging or Windows isolation.
@@ -310,7 +310,17 @@ pinned compiler identity were rechecked. Dedicated instrumented allocator runs
 were not repeated here; their earlier array-VM receipt remains historical.
 M0 was reused after verifying all 18 recorded inputs and the compiler unchanged.
 Linux execution, isolation, DLL delivery, and performance remain unverified.
-Array writes/copies, aggregate guest calls, and borrow integration remain open.
+Array copies, aggregate guest calls, and borrow integration remain open.
+The [source-write contract](docs/engineering/m2-array-write.md) adds mutable
+arrays and indexed assignment through the existing AWRITE instruction. Its
+[receipt](docs/evidence/m2-array-write-windows-20261024.json) records nine native
+groups, 67 read CLI cases, and 61 write CLI cases per profile in development and
+release. The read receipt above is now historical. Full scalar CLI regression is
+pending. The 81-group scalar native rerun and private IR/VM native reruns are
+skipped for this frontend slice; the recorded backend/verifier and fixture inputs
+are unchanged. M0 inputs and compiler are also unchanged. Dedicated allocator
+instrumentation, Linux, isolation, DLL, and performance checks were not repeated.
+
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker
 publication barrier. Compile untrusted source only inside the restricted worker.

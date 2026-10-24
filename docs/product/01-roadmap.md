@@ -1,7 +1,7 @@
 # Roadmap
 
-- Status: Accepted delivery sequence; M0 verified; named M1 slices through unsigned have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified, 2026-10-23; private entry-array IR/VM verified by its native harness, 2026-10-24; source-array reads implemented and focused-harness verified
-- Current progress: M1 scalar checkpoint verified; M2 array storage, owner lifetimes, independent copies, and private entry-array IR/VM verified; immutable source-array declarations and indexed reads implemented and focused-harness verified; full-profile conformance incomplete; M3-M5 not started
+- Status: Accepted delivery sequence; M0 verified; named M1 slices through unsigned have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified, 2026-10-23; private entry-array IR/VM verified by its native harness, 2026-10-24; source-array reads verified; source-array writes are focused-harness verified
+- Current progress: M1 scalar checkpoint verified; M2 array storage, owner lifetimes, independent copies, and private entry-array IR/VM verified; immutable source-array declarations and indexed reads verified; mutable declarations and element writes are focused-harness verified; full-profile conformance incomplete; M3-M5 not started
 
 This roadmap orders learning and evidence. It is not a release promise. M0 has a
 native harness and recorded evidence. The scalar CLI/VM now exist; the worker
@@ -83,8 +83,8 @@ fixed-width complement, AND/XOR/OR, and checked shifts with arithmetic signed ri
 shift. All initial scalar types, explicit widening, and these integer operators
 are implemented. The [arm-statement increment](../engineering/m1-switch-arm-statements.md)
 adds structured control flow inside expression arms. The scalar checkpoint remains
-distinct from full-profile conformance. The immutable source-array read slice now
-follows in M2; structs, borrows, Buffer, and text remain later work.
+distinct from full-profile conformance. The source-array read and write slices now
+follow in M2; structs, borrows, Buffer, and text remain later work.
 The [integer-operator receipt](../evidence/m1-integer-operators-windows-20261023.json)
 records 75 native groups and 1,898 CLI cases in each profile, including 626 new cases.
 That receipt is historical after arm statements. The
@@ -135,15 +135,29 @@ reads. Declarations are immutable and limited to the outermost `main` body;
 reads use exact `usize` and may appear in nested scopes and loops. The fill and
 index are each evaluated once. Every return drops visible arrays in reverse
 binding order after evaluating its result. The source profile is
-`brownie.m2-array-read/1`, while the result schema is unchanged. Array writes,
-copies, parameters, results, borrows, `len`, slices, and aggregate calls remain
-outside this slice.
+`brownie.m2-array-read/1`, while the result schema is unchanged.
+
+The [source-array write increment](../engineering/m2-array-write.md) adds
+`var T[N] NAME = [EXPR; N];` and `NAME[EXPR] = VALUE;` in nested blocks, loops,
+switch statements, and switch-expression arms. The index is exact `usize` and is
+evaluated once before the exact scalar RHS. Both operands complete before
+`AWRITE` checks bounds, so an RHS error or early return publishes no write. Any
+mutable catalog entry selects `brownie.m2-array-write/1`, including after a later
+verification or runtime failure. Bare array assignment, compound element
+assignment, arrays in helpers or nested declarations, and writes in `for` headers
+remain outside this slice. Array copies, parameters, results, borrows, `len`,
+slices, and aggregate calls also remain outside it.
 
 The [source receipt](../evidence/m2-array-source-windows-20261024.json) records
 18 native groups and 67 CLI source cases in each development and release profile,
 including six new source groups. The subsequent full M1 regression passed
 81 native groups and 1,969 CLI cases per profile in development and release;
-that fresh evidence is included in the same source receipt.
+that fresh evidence is included in the same source receipt. The read receipt is
+historical after the write compiler changes. The
+[write receipt](../evidence/m2-array-write-windows-20261024.json) records nine
+native groups, 67 read CLI cases, and 61 write CLI cases in each development and
+release profile. Full scalar CLI regression is pending; the 81-group scalar
+native rerun is skipped because the VM and verifier are unchanged.
 Goal: connect arrays, plain structs, borrows, Buffer, input,
 output, and UTF-8.
 

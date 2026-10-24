@@ -2,6 +2,7 @@ module main;
 
 import cli_input as input;
 import compiler as compiler;
+import array_source as arrays;
 import errors as errors;
 import lexer as lexer;
 import render as render;
@@ -26,7 +27,7 @@ fn i32 main() {
     let ref u8[] command_view = ref command;
     if (lexer::equal(command_view[..command_length], b"--version")) {
         if (argc == 2) {
-            return if (io::write("Brownie C experimental: brownie.m1-scalar/1, brownie.m2-array-read/1\n").is_ok) { 0 } else { 7 };
+            return if (io::write("Brownie C experimental: brownie.m1-scalar/1, brownie.m2-array-read/1, brownie.m2-array-write/1\n").is_ok) { 0 } else { 7 };
         }
         var u8[16] option = [0; 16];
         let usize size = switch (process::arg(2, ref mut option)) {
@@ -34,7 +35,7 @@ fn i32 main() {
         };
         let ref u8[] view = ref option;
         if (argc != 3 || !lexer::equal(view[..size], b"--json")) { return fail(false, false, 10, 0); }
-        return if (io::write("{\"schema\":\"browniec.version/v1\",\"profile\":\"brownie.m1-scalar/1\",\"array_profile\":\"brownie.m2-array-read/1\",\"core\":true,\"restricted\":false,\"embed\":false}\n").is_ok) { 0 } else { 7 };
+        return if (io::write("{\"schema\":\"browniec.version/v1\",\"profile\":\"brownie.m1-scalar/1\",\"array_profile\":\"brownie.m2-array-read/1\",\"array_write_profile\":\"brownie.m2-array-write/1\",\"core\":true,\"restricted\":false,\"embed\":false}\n").is_ok) { 0 } else { 7 };
     }
     if (lexer::equal(command_view[..command_length], b"--help") && argc == 2) {
         return if (io::write("browniec check SOURCE [--json]\nbrowniec run SOURCE [--fuel N] [--json]\nTrusted local source only; experimental bool/u8/i32/i64/u32/usize functions, branches and loops.\n").is_ok) { 0 } else { 7 };
@@ -82,11 +83,11 @@ fn i32 main() {
         case .ok(value): { value } case .err(e): { return fail(json, run, e.kind, e.offset); }
     };
     let usize verified = switch (verifier::verify(ref program)) {
-        case .ok(n): { n } case .err(e): { return render::selected_outcome(json, run, true, 0, e, program.arrays.count != 0); }
+        case .ok(n): { n } case .err(e): { return render::selected_outcome(json, run, true, 0, e, arrays::profile(ref program)); }
     };
-    if (!run) { return render::selected_outcome(json, false, false, 0, errors::make(0, 0), program.arrays.count != 0); }
+    if (!run) { return render::selected_outcome(json, false, false, 0, errors::make(0, 0), arrays::profile(ref program)); }
     return switch (vm::run(ref program, fuel)) {
-        case .ok(value): { render::selected_outcome(json, true, false, value, errors::make(0, 0), program.arrays.count != 0) }
-        case .err(e): { render::selected_outcome(json, true, true, 0, e, program.arrays.count != 0) }
+        case .ok(value): { render::selected_outcome(json, true, false, value, errors::make(0, 0), arrays::profile(ref program)) }
+        case .err(e): { render::selected_outcome(json, true, true, 0, e, arrays::profile(ref program)) }
     };
 }
