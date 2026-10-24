@@ -1,5 +1,9 @@
 # M2 Source Array Length
 
+This page records the length increment. The later [lexical-scope increment](m2-array-scopes.md)
+also admits array declarations inside `main` blocks, loops, and switch arms.
+Its newer receipt supersedes this page's historical frontend evidence.
+
 - Status: implemented; development/release verification is recorded in the linked receipt
 - Scope: fixed scalar-array bindings in outermost `main`
 - Evidence: [Windows length receipt](../evidence/m2-array-length-windows-20261025.json)

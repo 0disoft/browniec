@@ -1,7 +1,7 @@
 # Validation
 
 - Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, switch-expression, i64, and unsigned receipts are verified historical evidence; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified; private entry-array IR/VM and source-array reads/writes/copy initializers implemented and focused-harness verified
-- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/u8/u32/usize/bool values, explicit widening, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation; private entry-function array IR/native dispatch, outer-main let/var scalar arrays, indexed reads/writes, and copy initializers are implemented
+- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/u8/u32/usize/bool values, explicit widening, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation; private entry-function array IR/native dispatch, let/var scalar arrays in lexical scopes of main, indexed reads/writes, copy initializers, length access, and lexical cleanup are implemented
 
 ## Validation source of truth
 
@@ -356,6 +356,17 @@ groups, 226 array CLI cases (67 reads, 61 writes, 58 copies, 40 lengths), and
 backend inputs match the verifier-bitset receipt; earlier source receipts remain
 historical. The full 84-group scalar native suite, dedicated allocator
 instrumentation, Linux, isolation, DLL, and performance checks were skipped.
+
+The [lexical-array contract](docs/engineering/m2-array-scopes.md) admits declarations
+in nested `main` scopes with reverse cleanup on normal exits, arm yields, loop
+transfers, and returns. The [scope receipt](docs/evidence/m2-array-scopes-windows-20261025.json)
+records 19 native groups, 270 array CLI cases, and 1,969 scalar CLI cases per
+development/release profile, including four new native groups and 44 scope CLI
+cases. Native four-byte arena tests exercise 42 repeated array lifetimes;
+malformed IR without cleanup is rejected independently. The VM/backend inputs
+are unchanged from the length receipt, while compiler loop metadata changes.
+The full 84-group scalar native suite, dedicated allocator instrumentation,
+Linux, isolation, DLL, and performance checks are skipped.
 
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker

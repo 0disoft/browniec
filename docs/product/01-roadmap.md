@@ -185,6 +185,15 @@ remain open. The [length receipt](../evidence/m2-array-length-windows-20261025.j
 records 15 native groups, 226 array CLI cases, and 1,969 scalar CLI cases in each
 development and release profile. Earlier frontend receipts are historical.
 
+The [lexical-array increment](../engineering/m2-array-scopes.md) admits arrays in
+`main` blocks, branches, loops, and switch arms. Reverse cleanup at block exits,
+loop transfers, arm yields, and returns allows scratch storage to be reused.
+Its [receipt](../evidence/m2-array-scopes-windows-20261025.json) records 19 native
+groups, 270 array CLI cases, and 1,969 scalar CLI cases per development/release
+profile. The length receipt is historical after these frontend changes.
+Helper arrays, aggregate calls, parameters/results, borrows, slices, and
+whole-array reassignment remain open.
+
 Goal: connect arrays, plain structs, borrows, Buffer, input,
 output, and UTF-8.
 

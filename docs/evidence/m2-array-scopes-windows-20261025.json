@@ -1,0 +1,653 @@
+{
+  "schema": "browniec.m2-array-scopes/v1",
+  "status": "passed",
+  "recordedAt": "2026-10-24T21:29:34.1472715Z",
+  "compilerVersion": [
+    "Fairy C Stage 0",
+    "compiler: v0.0.0-20261022210249-4ce1264273be",
+    "sdk: fairyc-sdk-stdlib/0 0.0.0-stage0.86",
+    "language: fairyc-language/20",
+    "runtime: fairyc-runtime/0",
+    "revision: 4ce1264273be6051ee560173e94690e1b99c9eaf",
+    "modified: false"
+  ],
+  "compilerSha256": "572395f7f1e425d613c5a69f50b30ed177cda37ca2b1638bd0c11cf79fcbcc77",
+  "os": "Microsoft Windows NT 10.0.26300.0",
+  "lockedCheck": "check ok: 2 instance(s), 37 source file(s), 303 MIR function(s), lock verified",
+  "results": [
+    {
+      "profile": "development",
+      "nativeTests": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "development",
+        "tests": [
+          {
+            "identity": "tests::m2::array_copy_source::copies_enforce_shapes_scope_quota_and_exact_fuel",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_copy_source::copies_snapshot_current_bytes_and_keep_return_loop_lifetimes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_copy_source::six_scalar_domains_and_independent_copy_mutability",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_length::length_composes_with_loops_arguments_and_local_len_names",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_length::length_is_exact_usize_for_fixed_shapes_and_copies",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_length::length_rejects_non_arrays_members_and_implicit_conversion",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_scopes::arm_yields_and_initializer_transfers_release_temporaries",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_scopes::loop_transfers_drop_only_the_exited_scopes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_scopes::scope_and_verifier_reject_escapes_and_missing_cleanup",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_scopes::scope_exits_reclaim_storage_and_preserve_enclosing_arrays",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::array_reads_preserve_loop_lifetimes_and_cast_binding",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::bounds_quota_and_exact_fuel_are_guest_outcomes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::every_return_drops_visible_arrays_in_reverse_order",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::repeated_fill_and_index_evaluate_once_with_scalar_calls",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::six_scalar_types_and_literal_limits",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::source_array_types_scope_and_unimplemented_forms_are_rejected",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_write::index_then_rhs_once_and_early_returns_keep_lifetimes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_write::writes_preserve_scalar_domains_loops_and_value_arms",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_write::writes_reject_bad_targets_and_meter_failures",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 19,
+        "passed": 19,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "build": "Reused development CLI build from 52f7bf8; native inputs unchanged.",
+      "artifact": "build/m2-array-scopes/browniec-development.exe",
+      "sha256": "9b2707acbcd3a2e14cc34e57109d59bdd2ce53977bdf8aab633fcc9502e2284a",
+      "cliCases": 67,
+      "writeCliCases": 61,
+      "copyCliCases": 58,
+      "lengthCliCases": 40,
+      "scopeCliCases": 44,
+      "sourceCliReceiptSha256": "591b9e6bf957ffc9af9083d96a3ea9aceefceb86bcbdc76acb3c1e648dca0ecb",
+      "writeCliReceiptSha256": "7aa91ee52f299357db5d4c4dd61a1ad3f9070e6da89737edd0a96b8e2174973f",
+      "copy-sourceCliReceiptSha256": "899bb2c2e6ea57661c75f65d708dc19acb495ab3f376a14b306990f7f4facc9b",
+      "lengthCliReceiptSha256": "3d519662fc9b89497d40599b6f475eff99bb7d65c182d379702a33895367a723",
+      "scopesCliReceiptSha256": "7f3fd885a024c29ddc9fe0c24dd69aed2e034c3769f571bda36b67d2017342ac",
+      "nativeExecution": "Reused completed development report; native inputs unchanged from 52f7bf8."
+    },
+    {
+      "profile": "release",
+      "nativeTests": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "release",
+        "tests": [
+          {
+            "identity": "tests::m2::array_copy_source::copies_enforce_shapes_scope_quota_and_exact_fuel",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_copy_source::copies_snapshot_current_bytes_and_keep_return_loop_lifetimes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_copy_source::six_scalar_domains_and_independent_copy_mutability",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_length::length_composes_with_loops_arguments_and_local_len_names",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_length::length_is_exact_usize_for_fixed_shapes_and_copies",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_length::length_rejects_non_arrays_members_and_implicit_conversion",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_scopes::arm_yields_and_initializer_transfers_release_temporaries",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_scopes::loop_transfers_drop_only_the_exited_scopes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_scopes::scope_and_verifier_reject_escapes_and_missing_cleanup",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_scopes::scope_exits_reclaim_storage_and_preserve_enclosing_arrays",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::array_reads_preserve_loop_lifetimes_and_cast_binding",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::bounds_quota_and_exact_fuel_are_guest_outcomes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::every_return_drops_visible_arrays_in_reverse_order",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::repeated_fill_and_index_evaluate_once_with_scalar_calls",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::six_scalar_types_and_literal_limits",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::source_array_types_scope_and_unimplemented_forms_are_rejected",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_write::index_then_rhs_once_and_early_returns_keep_lifetimes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_write::writes_preserve_scalar_domains_loops_and_value_arms",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_write::writes_reject_bad_targets_and_meter_failures",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 19,
+        "passed": 19,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "build": "built: build/browniec.exe (x86_64-windows-msvc, release, lock verified)",
+      "artifact": "build/m2-array-scopes/browniec-release.exe",
+      "sha256": "ecf558d2d5fae40f7bccd57cd93a153eb944b06f9d7417e5c20adffbcf1f7f58",
+      "cliCases": 67,
+      "writeCliCases": 61,
+      "copyCliCases": 58,
+      "lengthCliCases": 40,
+      "scopeCliCases": 44,
+      "sourceCliReceiptSha256": "14e12b9b3390c5f92b91c7f27c3b2f65fdf2bc2f1a5f27305c8eef6cf693df87",
+      "writeCliReceiptSha256": "46dab52993e85a953b44abed8ab5775ff82a83da0c6b606327d87136d7a38a42",
+      "copy-sourceCliReceiptSha256": "66dc569c0dcbc29fb2bd8b49f3979f8fcf599a89f7f00ac682dbcde2e1f22468",
+      "lengthCliReceiptSha256": "3d21dc546a0045c7920a5b381bdcd6df7f766346e3228bfe816f49243fdbcb97",
+      "scopesCliReceiptSha256": "9c9b90f957556f1c3a1452f9bd5aa3e592f68724a3e9b1dbede4cd6edc8bd64b",
+      "nativeExecution": "Executed during recovery."
+    }
+  ],
+  "allocatorTests": [],
+  "sourceSha256": [
+    {
+      "path": "examples/array-length.brc",
+      "sha256": "490119c406bcd9b61ec8ce9444ee7bc5cac06e42bdb69c025d4e86592a57da81"
+    },
+    {
+      "path": "examples/array-scopes.brc",
+      "sha256": "d289003eb1523babd1afa91b9da623be25e48b5274dec4e12912ae1712a4c0b0"
+    },
+    {
+      "path": "fairy.lock",
+      "sha256": "d07a2d45ce3df5bfd937da113e88de36ef9a6209272bba9cc311f5a45b49ed98"
+    },
+    {
+      "path": "fairy.toml",
+      "sha256": "f5254ba793d9012470c697e8657688a4ea5465c138fba6d748707d5bfa4b31fb"
+    },
+    {
+      "path": "src/arithmetic.fy",
+      "sha256": "8192e6ba97498d059b0505307bc2bf84ac58d9722dc5f597587f8ae81a1081d3"
+    },
+    {
+      "path": "src/array_layout.fy",
+      "sha256": "d3497dfb6bb7e9ac8ceece4ae88a2274b6b40b49e3c5fecfc509179c03c91cdd"
+    },
+    {
+      "path": "src/array_meta.fy",
+      "sha256": "d1a07319dc2bb7eb95298e3920eaec63c1a4c1390a00c5469528a77e97612894"
+    },
+    {
+      "path": "src/array_owners.fy",
+      "sha256": "f5ff6f408d97ea01f8162630028acb2c053a47a27ed138d24977029db5d6a021"
+    },
+    {
+      "path": "src/array_source.fy",
+      "sha256": "f2d86d3dbabea0d3dbd3e5e2b2b41bd4da230607cb6c1c1b4d91b0738fec87c6"
+    },
+    {
+      "path": "src/array_storage.fy",
+      "sha256": "00808c116e0fb86ce063d7fd4cc9d1f8fd29f19b277449e59e3569491a3ee534"
+    },
+    {
+      "path": "src/array_verifier.fy",
+      "sha256": "f033e038e66c0278eadd2e9b662d5aad431df90a9686f17c9758a68759e88ace"
+    },
+    {
+      "path": "src/array_vm.fy",
+      "sha256": "1eecdd79484c8c0a45fa0801357bc332bf8de5f0d7c0b96c22ca4a755957c622"
+    },
+    {
+      "path": "src/bits.fy",
+      "sha256": "0b030757624a8dbaea9475f90d757aeff78b9154a121af7a4d9ebd80042db1a0"
+    },
+    {
+      "path": "src/casts.fy",
+      "sha256": "59da4a4ecef63833cc383495390e150b964bf41b353c4b150dcacb6be66caba6"
+    },
+    {
+      "path": "src/cells.fy",
+      "sha256": "71b82add3e95b86a1b7bcb88c3f97f6ae38bae0ac3ec8b1a2de925b10a64e433"
+    },
+    {
+      "path": "src/cli_input.fy",
+      "sha256": "ec91de62e6b5147d117d6fe0366ebcf617b556c074bf1dd91cb10188f96507ba"
+    },
+    {
+      "path": "src/compiler.fy",
+      "sha256": "4250a6421bcfb67d2485083a77ce411654a60feb0c1f1ee762c4c4a88c5e7237"
+    },
+    {
+      "path": "src/errors.fy",
+      "sha256": "e8070ef5c6380460dacb579c33f2e180b9e683286c8cb0827e30d82a581a4646"
+    },
+    {
+      "path": "src/functions.fy",
+      "sha256": "59195b4a404b1addd10c913a7ad4d046343ba37c0d1e5be9eeea2bf1ee97363e"
+    },
+    {
+      "path": "src/ir.fy",
+      "sha256": "ad218769c931945b4aefee7953b19503dd60c585f570e13e1f75f967cf4e829f"
+    },
+    {
+      "path": "src/lexer.fy",
+      "sha256": "0a64c45b3a3512ada4610c244ce874d306e417cde0fce4cd99a419048002861e"
+    },
+    {
+      "path": "src/locals.fy",
+      "sha256": "cb0cf9ec5b3d63f85b115f54b3ceb669c2f88567026bdf656059148aec333e88"
+    },
+    {
+      "path": "src/loops.fy",
+      "sha256": "d25dccfb4d3d50daa6e82a6a2f8df345ea72fd4a559e3a8882d6cda0230cbee2"
+    },
+    {
+      "path": "src/main.fy",
+      "sha256": "82a76b1a92376304556b4a2546ec98cb9d219bacb941d92bd4d67d2cbdfecec8"
+    },
+    {
+      "path": "src/patterns.fy",
+      "sha256": "d9ba2ff9dba626968b7514c636a414932e50856c19b9d41d6825b4f91c9797aa"
+    },
+    {
+      "path": "src/propagation.fy",
+      "sha256": "7d0ebaee7b96545bc4f95e0ecd7a58fbda521301deb00c0deb136ada4159eb44"
+    },
+    {
+      "path": "src/register_set.fy",
+      "sha256": "478e2690ee311bb3961c329becc6f9ef035276759619733cbfd0f6e441f36b73"
+    },
+    {
+      "path": "src/render.fy",
+      "sha256": "d6ae1e6212767aa3bed55c0383bc2065128c4db49c398c39396e437387e62bba"
+    },
+    {
+      "path": "src/scalar_codec.fy",
+      "sha256": "c28ca5e5cdc38dee01d79489d8c5a709022a49001854af638258ec4536ad66f0"
+    },
+    {
+      "path": "src/shifts.fy",
+      "sha256": "510dc6a90591de165de424a377eb267917ea9973972b9b95656cc9c435675eeb"
+    },
+    {
+      "path": "src/tagged.fy",
+      "sha256": "67770f8ec8f3e35a2a6196cda87310844d37358f86f8b22eb81b49df1f65f1bf"
+    },
+    {
+      "path": "src/types.fy",
+      "sha256": "906f5ba160de53f60d23e344e141181f902f36de60a4060375bef97a2162be23"
+    },
+    {
+      "path": "src/verifier.fy",
+      "sha256": "31a338b4a1276479a6a55f2c0e617427b81ef8d37c9ca215886e6f4ca9432748"
+    },
+    {
+      "path": "src/vm.fy",
+      "sha256": "4ccba8bc2070a316413a27ea62cd3df019d412bf8bfdf7537be66cc618f161cd"
+    },
+    {
+      "path": "tests/m2/array_copy_source.fy",
+      "sha256": "a81e5ff84fb51e745830689afa94281ed2522d3ba5c22c28a205c0010a7032f2"
+    },
+    {
+      "path": "tests/m2/array_length.fy",
+      "sha256": "231e8a891f8df49b7ae88d64435a79ab282926ae852ac6f29beeb3cd7734a979"
+    },
+    {
+      "path": "tests/m2/array_scopes.fy",
+      "sha256": "bbdde659b574a3b5caaa1ce6d111960f8b53c9821a962375be868e1313dde01f"
+    },
+    {
+      "path": "tests/m2/array_source.fy",
+      "sha256": "fca153d9310fb9182c116518a1f398630a61c7483dd7a1472d3567e42414d1d9"
+    },
+    {
+      "path": "tests/m2/array_write.fy",
+      "sha256": "e7674c983ceeb7060358b053efe80a28493d3bb7ea8d7055b6ae946a0c2d646d"
+    },
+    {
+      "path": "tools/check-m2-array-copy-source.py",
+      "sha256": "53c4ec9bee66a73ccaad49ba71b07be44149c005d8322ff5a62822dfcec15b2e"
+    },
+    {
+      "path": "tools/check-m2-array-length.py",
+      "sha256": "32dce33a7dd30f41c5898b3465c73000ddb0ad292e61ef5ab40ce616ad7246a7"
+    },
+    {
+      "path": "tools/check-m2-array-scopes.py",
+      "sha256": "454d869a0f1157e895c8e3e1adb7d293c01c3ef2fbe104b2b47d2cb2a1ea15dd"
+    },
+    {
+      "path": "tools/check-m2-array-source.py",
+      "sha256": "baa256f5b65634f3a4707ee73f22f4dd0dbfe27a819df63d673a8b7df99ed76f"
+    },
+    {
+      "path": "tools/check-m2-array-write.py",
+      "sha256": "df19a34c26961046bb985f4ccc49d932afab42dcfef850291dfae9328e1f67fd"
+    },
+    {
+      "path": "tools/verify-m2-arrays.ps1",
+      "sha256": "e15173fc377b421f7c19956321a2438ec50ca711cf8c7dfe7ae5d8adaa9c42c1"
+    }
+  ],
+  "artifacts": "Tool-managed temporary native test images; source mode also retains hashed native CLI binaries.",
+  "limitations": [
+    "Entry-function arrays only; scalar functions cannot receive or return arrays.",
+    "Scopes mode admits entry-function arrays in lexical blocks and loops; helper arrays, array parameters/results, for-header arrays, reassignment and borrows remain unavailable.",
+    "Each receipt establishes only the selected slice, not later VM or delivery gates.",
+    "No isolation, DLL, clean-machine or performance claim."
+  ],
+  "foundationReuse": {
+    "m0Inputs": 18,
+    "unchangedBackendInputs": 28,
+    "compilerIdentity": "unchanged",
+    "priorEvidence": "docs/evidence/m2-array-length-windows-20261025.json",
+    "fixtureEvidence": "docs/evidence/m2-array-source-windows-20261024.json"
+  },
+  "commands": [
+    "pwsh -NoProfile -File tools/verify-m2-arrays.ps1 -Slice scopes",
+    "pwsh -NoProfile -File build/m2-array-scopes/resume.ps1",
+    "python -B tools/record-m2-array-write-evidence.py --slice scopes --scalar-regression",
+    "git diff --check"
+  ],
+  "scalarRegression": {
+    "nativeRerun": false,
+    "results": [
+      {
+        "profile": "development",
+        "cliCases": 1969,
+        "artifact": "build/m2-array-scopes/browniec-development.exe",
+        "sha256": "9b2707acbcd3a2e14cc34e57109d59bdd2ce53977bdf8aab633fcc9502e2284a",
+        "cliReceiptSha256": "4be2a092dd45c8f069b98642af2ba45958340832bc724a8685ca998b8617dd8d"
+      },
+      {
+        "profile": "release",
+        "cliCases": 1969,
+        "artifact": "build/m2-array-scopes/browniec-release.exe",
+        "sha256": "ecf558d2d5fae40f7bccd57cd93a153eb944b06f9d7417e5c20adffbcf1f7f58",
+        "cliReceiptSha256": "183070305e6244d09fd5c62d24f080b418dcbed88ab2d4f9332b99b8e8de9263"
+      }
+    ],
+    "sourceSha256": [
+      {
+        "path": "tools/check-m1-cli.py",
+        "sha256": "9de0f8c340f3da1f769c23e148088bea2ec1381284232494409aabae1ea29302"
+      },
+      {
+        "path": "tools/m1_arm_statement_cases.py",
+        "sha256": "f1a19497ae47f04ebaec0fb0cd3c4f8eed8f964bbf8524b6307592b2f67d82ef"
+      },
+      {
+        "path": "tools/m1_bitwise_cases.py",
+        "sha256": "44b474577db55d5afd8f5a3a4cdd0b4d13bf44fb1b4a8b4e2eee170698359ca0"
+      },
+      {
+        "path": "tools/m1_i64_cases.py",
+        "sha256": "161a45f662295cad8742655bdd59aae4bdfe13e10a241894d3b82ad1bc1eefdc"
+      },
+      {
+        "path": "tools/m1_propagation_cases.py",
+        "sha256": "f3728cffafc48866c44e16badb8a256f3e45c0299ab3c7a3d0c1c1ab69dbd986"
+      },
+      {
+        "path": "tools/m1_shift_cases.py",
+        "sha256": "7b12d715d1ed86b142fbf75c25fdb678f253b0c40ac07229d8f9d9bb0afa4acf"
+      },
+      {
+        "path": "tools/m1_switch_expression_cases.py",
+        "sha256": "09759b7891ad407dadabfa18c0c51afa9cb7751912928da8b9fae0598c18b32b"
+      },
+      {
+        "path": "tools/m1_tagged_cases.py",
+        "sha256": "70de6cf5e68e1fe11ee3dd4e72b506b1a19677133a8b483b7a039efb651d963f"
+      },
+      {
+        "path": "tools/m1_unsigned_cases.py",
+        "sha256": "2c0232b88abab5e8d7821cb0d91ad8efa8b4ca6e5048a6e9d6fe9793245b5d9b"
+      },
+      {
+        "path": "tools/m1_widening_cases.py",
+        "sha256": "6a4d87dbd0d3570c50bab7b3760839fbee6670cd16152892bbf536f0662e50cc"
+      }
+    ],
+    "recordedAt": "2026-10-24T21:31:03.950162+00:00"
+  },
+  "documentationChecks": {
+    "files": 91,
+    "relativeLinks": 528,
+    "diffCheck": "passed"
+  },
+  "baselineCommit": "3b159e8524cef3f236779d0cc9332eb1d6f7fa89",
+  "evidenceRecorderSha256": "eb638552a482c96d8ee4e085d62eb512362b99626d8155750f32809a2e8bd2a2",
+  "skipped": [
+    {
+      "check": "M0 and private array IR/VM native reruns",
+      "reason": "Named compiler, backend and fixture inputs unchanged."
+    },
+    {
+      "check": "Full 84-group scalar native rerun",
+      "reason": "Focused native parser/VM tests and scalar CLI regression used for this frontend increment."
+    },
+    {
+      "check": "Instrumented allocator, Linux, isolation, DLL, performance",
+      "reason": "Not executed in this frontend increment."
+    }
+  ],
+  "recovery": {
+    "reason": "Interrupted after development native success: a legacy CLI fixture still rejected newly supported nested mutable arrays.",
+    "baselineCommit": "52f7bf858f1589e7f963597ebf7b80d07bdfc57f",
+    "nativeSourceProof": "git diff --exit-code 52f7bf8 -- src fairy.toml fairy.lock tests/m2",
+    "nativeReportSha256": "4b9c980b6e5e29f9226692eb0deb4b3d9a1f662d5ce982ed52016a101b80ad25",
+    "reusedArtifactSha256": "9b2707acbcd3a2e14cc34e57109d59bdd2ce53977bdf8aab633fcc9502e2284a",
+    "reused": [
+      "development native: 19 groups",
+      "development CLI build"
+    ],
+    "fresh": [
+      "all five array CLI matrices in both profiles",
+      "release native: 19 groups",
+      "release CLI build"
+    ],
+    "command": "pwsh -NoProfile -File build/m2-array-scopes/resume.ps1",
+    "scriptPath": "build/m2-array-scopes/resume.ps1",
+    "scriptSha256": "52c28818e6f6c71bdb94f2c9e97c0a1bffa3dc0177127e26faca7a628dde354d",
+    "script": "$ErrorActionPreference = 'Stop'\nSet-StrictMode -Version Latest\n$scopeTools = (Resolve-Path -LiteralPath 'tools').Path\n$baseline = '52f7bf8'\n# Only the CLI fixture and documentation changed after the successful native run.\n& git diff --exit-code $baseline -- src fairy.toml fairy.lock tests/m2\nif ($LASTEXITCODE -ne 0) { throw 'Native compiler/test inputs changed; cannot reuse development results' }\n$nativePath = 'build/m2-array-scopes/development-native-output.json'\n$native = Get-Content -LiteralPath $nativePath -Raw | ConvertFrom-Json\nif ($native.status -ne 'ok' -or $native.profile -ne 'development' -or $native.engine -ne 'native' -or\n    $native.count -ne 19 -or $native.passed -ne 19 -or $native.failed -ne 0 -or $native.lock -ne 'verified') {\n  throw 'Development native result is not a completed 19-group locked run'\n}\n$prior = Get-Content docs/evidence/m2-array-length-windows-20261025.json -Raw | ConvertFrom-Json\nif ((Get-FileHash build/toolchain/fairyc.exe).Hash.ToLowerInvariant() -ne $prior.compilerSha256) {\n  throw 'Compiler identity changed'\n}\n$recovery = [ordered]@{\n  reason = 'Interrupted after development native success: a legacy CLI fixture still rejected newly supported nested mutable arrays.'\n  baselineCommit = (& git rev-parse $baseline)\n  nativeSourceProof = 'git diff --exit-code 52f7bf8 -- src fairy.toml fairy.lock tests/m2'\n  nativeReportSha256 = (Get-FileHash $nativePath).Hash.ToLowerInvariant()\n  reusedArtifactSha256 = (Get-FileHash build/m2-array-scopes/browniec-development.exe).Hash.ToLowerInvariant()\n  reused = @('development native: 19 groups', 'development CLI build')\n  fresh = @('all five array CLI matrices in both profiles', 'release native: 19 groups', 'release CLI build')\n  command = 'pwsh -NoProfile -File build/m2-array-scopes/resume.ps1'\n}\n$script = Get-Content -LiteralPath (Join-Path $scopeTools 'verify-m2-arrays.ps1') -Raw\n$replacements = @{\n  '$PSScriptRoot' = '$scopeTools'\n  '$nativeOutput = & $Compiler @arguments' = '$nativeOutput = if ($profile -eq ''development'') { Get-Content -LiteralPath (Join-Path $output ''development-native-output.json'') } else { & $Compiler @arguments }'\n  '$buildOutput = & $Compiler @buildArguments' = '$buildOutput = if ($profile -eq ''development'') { ''Reused development CLI build from 52f7bf8; native inputs unchanged.'' } else { & $Compiler @buildArguments }'\n  'Copy-Item -LiteralPath (Join-Path $repo ''build/browniec.exe'') -Destination $exe -Force' = 'if ($profile -ne ''development'') { Copy-Item -LiteralPath (Join-Path $repo ''build/browniec.exe'') -Destination $exe -Force }'\n}\nforeach ($before in $replacements.Keys) {\n  if (!$script.Contains($before)) { throw 'Harness changed; recovery substitution is no longer applicable' }\n  $script = $script.Replace($before, $replacements[$before])\n}\n$recovery | ConvertTo-Json -Depth 5 | Set-Content build/m2-array-scopes/recovery.json -Encoding utf8NoBOM\n& ([scriptblock]::Create($script)) -Slice scopes\nif ((Get-FileHash build/m2-array-scopes/browniec-development.exe).Hash.ToLowerInvariant() -ne $recovery.reusedArtifactSha256) {\n  throw 'Reused development artifact changed'\n}\n",
+    "annotationScriptSha256": "7a841fff259fac7f44b6a5af72e6af121210521c5d57de757c0232d65f4f6373",
+    "initialCommandOutcome": "Development native passed; interrupted by an obsolete CLI expectation before release tests."
+  }
+}

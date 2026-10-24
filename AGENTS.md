@@ -14,11 +14,12 @@ own the affected contract. Broader scaffold procedures are optional.
 - The M1 scalar lexer/parser, i32 checks, private IR verifier, VM, and CLI exist in src/.
 - M2 has private scalar-array layout, codec, caller-backed storage, owner-lifetime and copy helpers;
   private entry-array IR has independent verification and metered native VM dispatch. The current
-  source slices add immutable/mutable scalar-array declarations in outermost `main`, indexed reads,
+  source slices add immutable/mutable scalar-array declarations in lexical scopes of `main`, indexed reads,
   element assignment in nested scopes, and copy initialization from exact-type/length array bindings.
   Array length access uses `NAME.len`, an exact `usize` constant in scalar expressions and pure for headers.
+  Lexical exits release local arrays in reverse order; loop transfers preserve enclosing arrays.
   Whole-array reassignment, array parameters, results, borrows, slices, aggregate guest calls,
-  and array locals elsewhere remain unimplemented. Focused read/write/copy/length verification passed in development and release; for-header writes/copies remain rejected.
+  and helper-function array locals remain unimplemented. Focused read/write/copy/length/scope verification passed in development and release; for-header arrays and element writes remain rejected.
 - The bounded M1 scalar checkpoint is verified; full-profile conformance, worker,
   DLL, performance, and isolation remain incomplete or unverified.
 - Root fairy.toml builds the native CLI; tools/verify-m1.ps1 verifies its narrow profile.

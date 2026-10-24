@@ -1,6 +1,6 @@
 # Brownie C
 
-- Status: M1 scalar checkpoint verified; private entry-array IR/VM implemented and verified; immutable source-array reads verified; mutable source-array writes are focused-harness verified; array copy initializers and length access implemented and focused-harness verified; full profile incomplete
+- Status: M1 scalar checkpoint verified; private entry-array IR/VM implemented and verified; immutable source-array reads verified; mutable source-array writes are focused-harness verified; array copy initializers, length access, and lexical lifetimes implemented and focused-harness verified; full profile incomplete
 - Design date: 2026-10-23
 - First delivery target: Windows 11 x64
 
@@ -42,7 +42,9 @@ adds `let|var T[N] dest = source;` for exact matching visible arrays and indepen
 snapshot semantics through the existing `ACOPY` IR/runtime; focused checks passed
 in development and release. The [array-length increment](docs/engineering/m2-array-length.md)
 adds `NAME.len` as an exact `usize` constant, including in pure scalar `for` headers.
-Array parameters, results, borrows, slices, aggregate
+The [lexical-scope increment](docs/engineering/m2-array-scopes.md) admits arrays in
+`main` blocks, branches, loops, and switch arms, with cleanup at scope exits and
+loop transfers. Array parameters, results, borrows, slices, aggregate
 calls, structs, workers, and DLLs remain later work.
 
 ```powershell
@@ -74,6 +76,9 @@ python -B tools/record-m2-array-write-evidence.py --slice copy --reuse-scalar-re
 ./build/browniec.exe run examples/array-length.brc --fuel 100000 --json
 pwsh -NoProfile -File tools/verify-m2-arrays.ps1 -Slice length
 python -B tools/record-m2-array-write-evidence.py --slice length --scalar-regression
+./build/browniec.exe run examples/array-scopes.brc --fuel 100000 --json
+pwsh -NoProfile -File tools/verify-m2-arrays.ps1 -Slice scopes
+python -B tools/record-m2-array-write-evidence.py --slice scopes --scalar-regression
 ```
 
 See [Development](DEVELOPMENT.md) to provision the pinned compiler and for build
@@ -144,6 +149,7 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 source array writes](docs/engineering/m2-array-write.md): mutable declarations, element assignment, evaluation order, profiles, and verification for `var T[N] name = [EXPR; N];` and `name[EXPR] = VALUE;`
 - [M2 source array copy initialization](docs/engineering/m2-array-copy-source.md): matching visible arrays, independent storage, resources, profiles, and verification for `let|var T[N] dest = source;`
 - [M2 source array length](docs/engineering/m2-array-length.md): exact `usize` length constants, pure scalar composition, resources, and focused verification for `NAME.len`
+- [M2 lexical array scopes](docs/engineering/m2-array-scopes.md): nested declarations, reverse cleanup, loop transfers, and bounded storage reuse
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
 - [Design baseline](docs/design-baseline.md): source provenance, evidence, and findings

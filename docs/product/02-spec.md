@@ -140,6 +140,13 @@ element count is lowered to a scalar constant, including in pure scalar `for`
 headers. There is no implicit conversion, property assignment, or method call.
 Array parameters, results, borrows, and slices remain outside this increment.
 
+The [lexical-array increment](../engineering/m2-array-scopes.md) also permits
+declarations in `main` blocks, branches, loop bodies, and switch arms. Scope exits
+and loop transfers release exited arrays in reverse order; return evaluates its
+result before releasing all visible arrays. Classic `for` headers and helper
+functions still cannot declare arrays. The 16-entry catalog limits declaration
+sites rather than cumulative loop executions.
+
 The current scalar CLI implements fixed-width integer `~`, `&`, `^`, and `|`,
 and checked `<<` and `>>`. Binary operands, including shift amounts, must have the
 same integer type. Signed right shift is arithmetic; unsigned right shift is
