@@ -88,7 +88,7 @@ for body in [
     'var u8[1] a=[0;1]; let i32 x=42; a[0]=x; return 0;',
     'var i32[1] a=[0;1]; for(a[0]=1;false;) {} return 0;',
     'var i32[1] a=[0;1]; for(;false;a[0]=1) {} return 0;',
-    '{var i32[1] a=[0;1];} return 0;',
+    '{var i32[1] a=[0;1];} return a[0];',
     'var i32[1] a=[0;1]; return main();',
 ]:
     case(body, error='type', code=3)
