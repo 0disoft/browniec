@@ -82,10 +82,13 @@ fn i32 main() {
     let program = switch (compiler::compile(source_view[..source.length])) {
         case .ok(value): { value } case .err(e): { return fail(json, run, e.kind, e.offset); }
     };
-    let usize verified = switch (verifier::verify(ref program)) {
-        case .ok(n): { n } case .err(e): { return render::selected_outcome(json, run, true, 0, e, arrays::profile(ref program)); }
-    };
-    if (!run) { return render::selected_outcome(json, false, false, 0, errors::make(0, 0), arrays::profile(ref program)); }
+    if (!run) {
+        let usize verified = switch (verifier::verify(ref program)) {
+            case .ok(n): { n } case .err(e): { return render::selected_outcome(json, false, true, 0, e, arrays::profile(ref program)); }
+        };
+        return render::selected_outcome(json, false, false, 0, errors::make(0, 0), arrays::profile(ref program));
+    }
+    // vm::run verifies before dispatch; check-only mode needs its own verifier.
     return switch (vm::run(ref program, fuel)) {
         case .ok(value): { render::selected_outcome(json, true, false, value, errors::make(0, 0), arrays::profile(ref program)) }
         case .err(e): { render::selected_outcome(json, true, true, 0, e, arrays::profile(ref program)) }

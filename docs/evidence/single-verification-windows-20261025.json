@@ -1,0 +1,442 @@
+{
+  "schema": "browniec.single-verification/v1",
+  "status": "passed",
+  "recordedAt": "2026-10-24T20:15:01.822634+00:00",
+  "os": "Windows-11-10.0.26300-SP0",
+  "pythonVersion": "3.14.6",
+  "compilerSha256": "572395f7f1e425d613c5a69f50b30ed177cda37ca2b1638bd0c11cf79fcbcc77",
+  "compilerVersion": [
+    "Fairy C Stage 0",
+    "compiler: v0.0.0-20261022210249-4ce1264273be",
+    "sdk: fairyc-sdk-stdlib/0 0.0.0-stage0.86",
+    "language: fairyc-language/20",
+    "runtime: fairyc-runtime/0",
+    "revision: 4ce1264273be6051ee560173e94690e1b99c9eaf",
+    "modified: false"
+  ],
+  "baselineMainSha256": "829e057993d692f925296ba4b853b510eac46138937bdb830e5bd94343e6a38a",
+  "change": "CLI check verifies directly; run delegates verification to the VM before dispatch. No VM or verifier source changes.",
+  "structuralMetrics": {
+    "method": "Source control-flow audit; not a latency benchmark.",
+    "validRunVerifierCallsBefore": 2,
+    "validRunVerifierCallsAfter": 1,
+    "checkVerifierCallsBefore": 1,
+    "checkVerifierCallsAfter": 1,
+    "vmDirectVerifierCallsBefore": 1,
+    "vmDirectVerifierCallsAfter": 1,
+    "worstCaseVerifierComplexity": "O(N * R), N instructions and R register cells; one repeated pass removed."
+  },
+  "commands": [
+    "build/toolchain/fairyc.exe check",
+    "build/toolchain/fairyc.exe build --locked",
+    "build/toolchain/fairyc.exe build --release --locked",
+    "build/toolchain/fairyc.exe test --native --file tests/core.fy --capture-output --json --locked",
+    "python -B tools/check-m1-cli.py --exe build/single-verification/browniec-development.exe --profile development",
+    "python -B tools/check-m2-array-source.py --exe build/single-verification/browniec-development.exe --profile development",
+    "python -B tools/check-m2-array-write.py --exe build/single-verification/browniec-development.exe --profile development",
+    "python -B tools/check-m2-array-copy-source.py --exe build/single-verification/browniec-development.exe --profile development",
+    "build/toolchain/fairyc.exe test --native --file tests/core.fy --capture-output --json --locked --release",
+    "python -B tools/check-m1-cli.py --exe build/single-verification/browniec-release.exe --profile release",
+    "python -B tools/check-m2-array-source.py --exe build/single-verification/browniec-release.exe --profile release",
+    "python -B tools/check-m2-array-write.py --exe build/single-verification/browniec-release.exe --profile release",
+    "python -B tools/check-m2-array-copy-source.py --exe build/single-verification/browniec-release.exe --profile release"
+  ],
+  "results": [
+    {
+      "profile": "development",
+      "artifact": "build/single-verification/browniec-development.exe",
+      "sha256": "31c4c3bd93a2d5250ed03f598fafe9d8e2ac269227e0a3348b5463d887ff11f9",
+      "bytes": 804864,
+      "nativeTests": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "development",
+        "tests": [
+          {
+            "identity": "tests::core::checked_arithmetic",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::fuel_and_program_reuse",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::local_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::local_traps_fuel_and_reuse",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::local_values_and_assignments",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::precedence_and_order",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::type_and_syntax_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::verifier_rejects_corrupt_private_code",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 8,
+        "passed": 8,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "cliSuites": [
+        {
+          "suite": "m1",
+          "count": 1969,
+          "receipt": "build/m1/development/cli-receipt.json",
+          "receiptSha256": "37085157ac1c7781f794ca4f8f8ebf44b05b5f1156df8a5114ca95d0a504274e"
+        },
+        {
+          "suite": "m2-array-source",
+          "count": 67,
+          "receipt": "build/m2-array-source/development/cli-receipt.json",
+          "receiptSha256": "d8b80ed6b2494ae43bb47592575f8a6c993d18d4e157eb0e252a5dbdf817ea36"
+        },
+        {
+          "suite": "m2-array-write",
+          "count": 61,
+          "receipt": "build/m2-array-write/development/cli-receipt.json",
+          "receiptSha256": "1ba3200bbdaa394216f87ef0e2295ad278c30c0172fbe2026f0d1705e686e378"
+        },
+        {
+          "suite": "m2-array-copy-source",
+          "count": 58,
+          "receipt": "build/m2-array-copy-source/development/cli-receipt.json",
+          "receiptSha256": "798c9bc59b610b08790197047033d85079c21771f4aa21cac7b3aa66100800a8"
+        }
+      ],
+      "cliCases": 2155
+    },
+    {
+      "profile": "release",
+      "artifact": "build/single-verification/browniec-release.exe",
+      "sha256": "b1a89167f3c9bb9f54a80b1fcd9c3ac6b085d1083f496e6360670ec2f8a4665b",
+      "bytes": 295424,
+      "nativeTests": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "release",
+        "tests": [
+          {
+            "identity": "tests::core::checked_arithmetic",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::fuel_and_program_reuse",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::local_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::local_traps_fuel_and_reuse",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::local_values_and_assignments",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::precedence_and_order",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::type_and_syntax_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::core::verifier_rejects_corrupt_private_code",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 8,
+        "passed": 8,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "cliSuites": [
+        {
+          "suite": "m1",
+          "count": 1969,
+          "receipt": "build/m1/release/cli-receipt.json",
+          "receiptSha256": "f5c1a421ce97e78452951865efa309deb3a7211f087dcfbe3c0ee42c65327ea1"
+        },
+        {
+          "suite": "m2-array-source",
+          "count": 67,
+          "receipt": "build/m2-array-source/release/cli-receipt.json",
+          "receiptSha256": "6b1214b8f9a67d04cf2a6037fa52d85c790451162d7b3aff097bb7cd87d253de"
+        },
+        {
+          "suite": "m2-array-write",
+          "count": 61,
+          "receipt": "build/m2-array-write/release/cli-receipt.json",
+          "receiptSha256": "5af322eee7334509b63f4b2be5194a1b19bea30261c21119e85cc78c126af2c5"
+        },
+        {
+          "suite": "m2-array-copy-source",
+          "count": 58,
+          "receipt": "build/m2-array-copy-source/release/cli-receipt.json",
+          "receiptSha256": "111745a94c1152f6684cbb081bf665c46382d62df54b36013f50f38de58ae5a4"
+        }
+      ],
+      "cliCases": 2155
+    }
+  ],
+  "sourceSha256": [
+    {
+      "path": "fairy.lock",
+      "sha256": "38fb00cc14dc2e40b6bbc4070d5d0874daba8c4402ca13fe0f68942176ae32ca"
+    },
+    {
+      "path": "fairy.toml",
+      "sha256": "f5254ba793d9012470c697e8657688a4ea5465c138fba6d748707d5bfa4b31fb"
+    },
+    {
+      "path": "src/arithmetic.fy",
+      "sha256": "8192e6ba97498d059b0505307bc2bf84ac58d9722dc5f597587f8ae81a1081d3"
+    },
+    {
+      "path": "src/array_layout.fy",
+      "sha256": "d3497dfb6bb7e9ac8ceece4ae88a2274b6b40b49e3c5fecfc509179c03c91cdd"
+    },
+    {
+      "path": "src/array_meta.fy",
+      "sha256": "d1a07319dc2bb7eb95298e3920eaec63c1a4c1390a00c5469528a77e97612894"
+    },
+    {
+      "path": "src/array_owners.fy",
+      "sha256": "f5ff6f408d97ea01f8162630028acb2c053a47a27ed138d24977029db5d6a021"
+    },
+    {
+      "path": "src/array_source.fy",
+      "sha256": "19b2d3587e3fe68502f70044bb4bf04ea1f23e1568e400acc14a5b33f38a8ebf"
+    },
+    {
+      "path": "src/array_storage.fy",
+      "sha256": "00808c116e0fb86ce063d7fd4cc9d1f8fd29f19b277449e59e3569491a3ee534"
+    },
+    {
+      "path": "src/array_verifier.fy",
+      "sha256": "0e8f9f4e6dfec70c993f765cd0a4bfb7d4cbc2b5850cf937efc8be18ecebe6c7"
+    },
+    {
+      "path": "src/array_vm.fy",
+      "sha256": "1eecdd79484c8c0a45fa0801357bc332bf8de5f0d7c0b96c22ca4a755957c622"
+    },
+    {
+      "path": "src/bits.fy",
+      "sha256": "0b030757624a8dbaea9475f90d757aeff78b9154a121af7a4d9ebd80042db1a0"
+    },
+    {
+      "path": "src/casts.fy",
+      "sha256": "59da4a4ecef63833cc383495390e150b964bf41b353c4b150dcacb6be66caba6"
+    },
+    {
+      "path": "src/cells.fy",
+      "sha256": "71b82add3e95b86a1b7bcb88c3f97f6ae38bae0ac3ec8b1a2de925b10a64e433"
+    },
+    {
+      "path": "src/cli_input.fy",
+      "sha256": "ec91de62e6b5147d117d6fe0366ebcf617b556c074bf1dd91cb10188f96507ba"
+    },
+    {
+      "path": "src/compiler.fy",
+      "sha256": "3698a3ebeeb561098d8973e73fb81d6b393902f0cacfcf46971fa92aa5032400"
+    },
+    {
+      "path": "src/errors.fy",
+      "sha256": "e8070ef5c6380460dacb579c33f2e180b9e683286c8cb0827e30d82a581a4646"
+    },
+    {
+      "path": "src/functions.fy",
+      "sha256": "59195b4a404b1addd10c913a7ad4d046343ba37c0d1e5be9eeea2bf1ee97363e"
+    },
+    {
+      "path": "src/ir.fy",
+      "sha256": "ad218769c931945b4aefee7953b19503dd60c585f570e13e1f75f967cf4e829f"
+    },
+    {
+      "path": "src/lexer.fy",
+      "sha256": "0a64c45b3a3512ada4610c244ce874d306e417cde0fce4cd99a419048002861e"
+    },
+    {
+      "path": "src/locals.fy",
+      "sha256": "cb0cf9ec5b3d63f85b115f54b3ceb669c2f88567026bdf656059148aec333e88"
+    },
+    {
+      "path": "src/loops.fy",
+      "sha256": "8034d028c94edae945be52a8f2788531f18dcfd64d394104678b1f6607f04425"
+    },
+    {
+      "path": "src/main.fy",
+      "sha256": "82a76b1a92376304556b4a2546ec98cb9d219bacb941d92bd4d67d2cbdfecec8"
+    },
+    {
+      "path": "src/patterns.fy",
+      "sha256": "d9ba2ff9dba626968b7514c636a414932e50856c19b9d41d6825b4f91c9797aa"
+    },
+    {
+      "path": "src/propagation.fy",
+      "sha256": "7d0ebaee7b96545bc4f95e0ecd7a58fbda521301deb00c0deb136ada4159eb44"
+    },
+    {
+      "path": "src/render.fy",
+      "sha256": "d6ae1e6212767aa3bed55c0383bc2065128c4db49c398c39396e437387e62bba"
+    },
+    {
+      "path": "src/scalar_codec.fy",
+      "sha256": "c28ca5e5cdc38dee01d79489d8c5a709022a49001854af638258ec4536ad66f0"
+    },
+    {
+      "path": "src/shifts.fy",
+      "sha256": "510dc6a90591de165de424a377eb267917ea9973972b9b95656cc9c435675eeb"
+    },
+    {
+      "path": "src/tagged.fy",
+      "sha256": "67770f8ec8f3e35a2a6196cda87310844d37358f86f8b22eb81b49df1f65f1bf"
+    },
+    {
+      "path": "src/types.fy",
+      "sha256": "906f5ba160de53f60d23e344e141181f902f36de60a4060375bef97a2162be23"
+    },
+    {
+      "path": "src/verifier.fy",
+      "sha256": "b6875f72a18e7c20ff32eae621d78f0419ee36ca1e9e7077a498315cac4a3501"
+    },
+    {
+      "path": "src/vm.fy",
+      "sha256": "4ccba8bc2070a316413a27ea62cd3df019d412bf8bfdf7537be66cc618f161cd"
+    },
+    {
+      "path": "tests/core.fy",
+      "sha256": "f8666d14fadaa91a07649e64b62a710276fc78315fc0c420262608872802b42c"
+    },
+    {
+      "path": "toolchain.json",
+      "sha256": "e744c8866ba200fd9213ee99ff61a11f60f9ed0f31e9106219f97d7da26971ef"
+    },
+    {
+      "path": "tools/check-m1-cli.py",
+      "sha256": "9de0f8c340f3da1f769c23e148088bea2ec1381284232494409aabae1ea29302"
+    },
+    {
+      "path": "tools/check-m2-array-copy-source.py",
+      "sha256": "0afc0a86cd1ebd2fd036052bac456d9c5f12582d7f6a77abbe3083a725c91f59"
+    },
+    {
+      "path": "tools/check-m2-array-source.py",
+      "sha256": "94b9028eeb684dc5efdf736424981dacebf368190674121ad4f94b90dc2d23bd"
+    },
+    {
+      "path": "tools/check-m2-array-write.py",
+      "sha256": "4372166b590f94fb5656e90aad38a3aad3fae2aa691bc98f212c946eb2c7cc62"
+    },
+    {
+      "path": "tools/m1_arm_statement_cases.py",
+      "sha256": "f1a19497ae47f04ebaec0fb0cd3c4f8eed8f964bbf8524b6307592b2f67d82ef"
+    },
+    {
+      "path": "tools/m1_bitwise_cases.py",
+      "sha256": "44b474577db55d5afd8f5a3a4cdd0b4d13bf44fb1b4a8b4e2eee170698359ca0"
+    },
+    {
+      "path": "tools/m1_i64_cases.py",
+      "sha256": "161a45f662295cad8742655bdd59aae4bdfe13e10a241894d3b82ad1bc1eefdc"
+    },
+    {
+      "path": "tools/m1_propagation_cases.py",
+      "sha256": "f3728cffafc48866c44e16badb8a256f3e45c0299ab3c7a3d0c1c1ab69dbd986"
+    },
+    {
+      "path": "tools/m1_shift_cases.py",
+      "sha256": "7b12d715d1ed86b142fbf75c25fdb678f253b0c40ac07229d8f9d9bb0afa4acf"
+    },
+    {
+      "path": "tools/m1_switch_expression_cases.py",
+      "sha256": "09759b7891ad407dadabfa18c0c51afa9cb7751912928da8b9fae0598c18b32b"
+    },
+    {
+      "path": "tools/m1_tagged_cases.py",
+      "sha256": "70de6cf5e68e1fe11ee3dd4e72b506b1a19677133a8b483b7a039efb651d963f"
+    },
+    {
+      "path": "tools/m1_unsigned_cases.py",
+      "sha256": "2c0232b88abab5e8d7821cb0d91ad8efa8b4ca6e5048a6e9d6fe9793245b5d9b"
+    },
+    {
+      "path": "tools/m1_widening_cases.py",
+      "sha256": "6a4d87dbd0d3570c50bab7b3760839fbee6670cd16152892bbf536f0662e50cc"
+    }
+  ],
+  "limitations": [
+    "Windows AMD64 native checks only; Linux was not executed.",
+    "Eight core native groups per profile, not all 81 scalar native groups or full M2 native suites.",
+    "Elapsed-time, allocation and peak-memory improvements were not measured.",
+    "No new restricted execution, isolation, DLL or production-readiness claim."
+  ]
+}
