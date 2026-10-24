@@ -5,23 +5,65 @@
 
 ## Current reality
 
-The root fairy.toml builds `src/main.fy` into `build/browniec.exe` on Windows.
-Use an installed MSVC x64 toolchain and Windows SDK at build time. The retained
-M0 compiler artifact is `build/toolchain/fairyc.exe`: Fairy C `4ce12642`, SDK
-`0.0.0-stage0.86`, language `fairyc-language/20`. Its SHA-256 and build identity
-are recorded in the dated M0 and M1 evidence, not a permanent compatibility pin.
+The root fairy.toml builds `src/main.fy` into `build/browniec.exe` on Windows. Use
+an installed MSVC x64 toolchain and Windows SDK for that Brownie build. The build
+toolchain uses Fairy C provisioned from the reviewed [toolchain.json](toolchain.json)
+manifest on Windows AMD64 with PowerShell 7. No globally installed Fairy C compiler
+is required.
 
-If no compiler artifact is available, build a selected clean Fairy checkout:
+From the repository root, provision or reuse the pinned compiler:
 
 ```powershell
-Push-Location ../fairyc
-go build -mod=readonly -trimpath -o ../browniec/build/toolchain/fairyc.exe ./cmd/fairyc
-Pop-Location
+pwsh -NoProfile -File tools/setup-toolchain.ps1
 ```
 
-An updated compiler is an explicit adoption: run the relevant compatibility checks
-and record the resulting identity. Do not silently rebuild from a concurrently edited
-checkout or claim it matches the historical receipts.
+The default mode verifies `build/toolchain/fairyc.exe` and reuses it when its
+SHA-256 and compiler identity match. An existing mismatch fails without replacement.
+If the file is absent, setup acquires the exact revision in the manifest.
+A local `../fairyc` checkout is used to fetch that revision into isolated
+scratch when present; the manifest HTTPS Git URL is the fallback. The Fairy checkout
+is not modified, and its current HEAD or dirty worktree is never used as the compiler.
+
+To import an exact executable that was verified elsewhere, supply its path:
+
+```powershell
+pwsh -NoProfile -File tools/setup-toolchain.ps1 -CompilerFile path\to\fairyc.exe
+```
+
+To build the pinned compiler from an explicit local source repository, use:
+
+```powershell
+pwsh -NoProfile -File tools/setup-toolchain.ps1 -SourceRepository ../fairyc
+```
+
+Source bootstrap requires `go1.27.1` to be installed separately, plus Git, access
+to the selected repository, and its Go module dependencies. Setup does not install
+Go. It keeps `GOENV`, `GOWORK`, and toolchain switching disabled, fetches the exact
+manifest revision into isolated scratch, and requires a clean checkout at that
+revision before building. `-CompilerFile` and `-SourceRepository` are mutually
+exclusive.
+
+Setup checks the candidate SHA-256 before executing it, then checks compiler version,
+revision, SDK, language, runtime ABI, and unmodified identity. It also requires the
+SDK and language adoption in `fairy.lock` to agree with the manifest. Any mismatch
+fails setup. Explicit acquisition validates before replacing an existing compiler;
+a failed download, build, or validation leaves the previous binary intact. A
+successful run writes `build/toolchain/setup-receipt.json`.
+
+This manifest adds reproducible project adoption. Existing verification tools keep
+their explicit `-Compiler` overrides and are not forced to use it. `fairy.lock`
+records SDK and source identity; it is not a compiler installer. Newer compiler
+discovery belongs to a separate adoption decision: there is no automatic update and
+no ZIP download endpoint configured here. Git tracks `toolchain.json` and
+`tools/setup-toolchain.ps1`; the generated compiler cache remains ignored.
+
+Run `pwsh -NoProfile -File tools/verify-toolchain.ps1` to check setup modes with
+isolated fixtures. It covers executable import/reuse, corrupt and mismatched inputs,
+default source bootstrap, exact binary reproduction and failure preservation.
+This is scoped provisioning coverage; it does not establish full runtime behavior,
+clean-machine packaging, network acquisition or a production compiler channel.
+The [dated provisioning evidence](docs/evidence/toolchain-windows-20261024.json)
+records the eight executed cases and the unchanged VM verification inputs.
 
 ```powershell
 ./build/toolchain/fairyc.exe build

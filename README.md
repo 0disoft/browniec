@@ -51,8 +51,9 @@ conformance remains unverified; source arrays, structs, workers, and DLLs remain
 pwsh -NoProfile -File tools/verify-m1.ps1
 ```
 
-See [Development](DEVELOPMENT.md) for build prerequisites. This CLI is for trusted
-local source only; Windows isolation is not implemented.
+See [Development](DEVELOPMENT.md) to provision the pinned compiler and for build
+prerequisites. This CLI is for trusted local source only; Windows isolation is not
+implemented.
 
 ## Product intent
 

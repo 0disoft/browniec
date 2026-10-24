@@ -40,6 +40,22 @@ were unavailable. That result is design-package evidence only.
 The package contains 29 .brc examples and 32 acceptance cases recorded as not
 executed. None proves parser, compiler, verifier, VM, allocator, ABI, or sandbox behavior.
 
+## Toolchain provisioning
+
+`tools/verify-toolchain.ps1` checks the adopted `toolchain.json` compiler using
+isolated Windows AMD64 fixtures. Its [receipt](docs/evidence/toolchain-windows-20261024.json)
+records eight passing cases: executable import and reuse, corrupt imported and
+cached files, version and SDK-lock mismatches, default exact-commit bootstrap with
+byte-identical reproduction, and unavailable-source rejection preserving the
+existing compiler. Setup checks hashes before candidate execution and removes its
+temporary checkout on both success and failure.
+
+The locked source check passed. The 35 inputs and compiler recorded by the latest
+array-VM receipt are unchanged, so full VM development/release regression was not
+repeated for this build-tooling change. Authenticated HTTPS acquisition, empty
+module-cache downloads, clean-machine installation and automatic update discovery
+remain unverified or outside this scope.
+
 ## Required milestone evidence
 
 M0 has recorded native primitive evidence for:

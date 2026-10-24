@@ -1,0 +1,80 @@
+{
+  "schema": "browniec.toolchain-verification/v1",
+  "status": "passed",
+  "recordedAt": "2026-10-24T09:26:56.7921622Z",
+  "compilerSha256": "572395f7f1e425d613c5a69f50b30ed177cda37ca2b1638bd0c11cf79fcbcc77",
+  "compilerRevision": "4ce1264273be6051ee560173e94690e1b99c9eaf",
+  "goVersion": "go1.27.1",
+  "cases": [
+    "verified executable import",
+    "existing compiler reuse",
+    "corrupt input rejected before execution; existing compiler preserved",
+    "version metadata mismatch rejected; existing compiler preserved",
+    "SDK lock mismatch rejected",
+    "tampered cached compiler rejected before execution",
+    "missing compiler defaults to exact-commit isolated source bootstrap and reproduces SHA-256",
+    "unavailable source commit rejected; existing compiler preserved"
+  ],
+  "count": 8,
+  "sourceSha256": [
+    {
+      "path": "toolchain.json",
+      "sha256": "0bdc6234eef9eba27f71adf77a47d7cb6cdaab2debbfe2f15032f00e5fd87ab5"
+    },
+    {
+      "path": "fairy.lock",
+      "sha256": "7274ee9bcb5ed37f072a950d1409f49c7f5a5cdb50d115cd759429257827aa6a"
+    },
+    {
+      "path": "tools/setup-toolchain.ps1",
+      "sha256": "4463d11a94bd6860ad1837a29bdf56ba4b4f13567ad6c94720104465144ca273"
+    },
+    {
+      "path": "tools/verify-toolchain.ps1",
+      "sha256": "c0286219f893ba6766b75f091ff5ca5c653e9748e478441cfdc92e97b05d2b0b"
+    }
+  ],
+  "limitations": [
+    "Local Windows AMD64 provisioning checks; not a clean-machine or VM regression run.",
+    "Authenticated HTTPS acquisition and module-cache-miss network downloads were not exercised.",
+    "No automatic latest-version discovery or adoption; other verification tools keep explicit compiler overrides."
+  ],
+  "baselineCommit": "78a8b930800b29f48fe707a119c44b1bc95e9e92",
+  "commands": [
+    "pwsh -NoProfile -File tools/verify-toolchain.ps1",
+    "pwsh -NoProfile -File tools/setup-toolchain.ps1",
+    "build/toolchain/fairyc.exe check --locked",
+    "git diff --check"
+  ],
+  "lockedCheck": "check ok: 2 instance(s), 35 source file(s), 290 MIR function(s), lock verified",
+  "vmEvidenceReuse": {
+    "receipt": "docs/evidence/m2-array-vm-windows-20261024.json",
+    "inputs": 35,
+    "sourceAndCompilerIdentity": "unchanged"
+  },
+  "os": "Windows AMD64; PowerShell 7; bootstrap Go 1.27.1",
+  "documentationSha256": [
+    {
+      "path": "DEVELOPMENT.md",
+      "sha256": "e9e4e462a9fd98ea0709aeb822bc62d9d5b1aa2deaecd5a89253f0ca5590b876"
+    },
+    {
+      "path": "README.md",
+      "sha256": "f4b87e79019ecc2a7cfb7d1689e228686b9fdb726dc7675299fbb32a74b8e63f"
+    },
+    {
+      "path": "VALIDATION.md",
+      "sha256": "8d21833cf332fa86219620b60cc948f79ff843232190be9909c1414304ff8964"
+    }
+  ],
+  "skipped": [
+    {
+      "check": "Full VM development/release regression",
+      "reason": "All 35 recorded inputs and compiler unchanged."
+    },
+    {
+      "check": "HTTPS authentication, cold module downloads, clean-machine install, automatic updates",
+      "reason": "Not exercised by local provisioning fixtures; no update discovery implemented."
+    }
+  ]
+}
