@@ -328,7 +328,8 @@ length, preserving the source with independent bytes. Its
 [receipt](docs/evidence/m2-array-copy-source-windows-20261025.json) records
 12 native groups, 67 read CLI cases, 61 write CLI cases, and 58 copy CLI cases per
 profile in development and release. The earlier write receipt is now historical.
-Full scalar CLI regression is pending. Backend/verifier and private IR/VM fixture
+Scalar CLI regression passed all 1,969 cases per profile against those same
+verified binaries. Backend/verifier and private IR/VM fixture
 inputs are unchanged, as are the M0 inputs and compiler. Their native reruns and
 the full 81-group scalar native rerun were skipped. No allocator instrumentation,
 Linux, isolation, DLL, clean-machine, or performance check was added.

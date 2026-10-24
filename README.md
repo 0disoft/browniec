@@ -172,7 +172,8 @@ in development and release. The scalar CLI regression also passed all 1,969 case
 The read and write receipts remain historical after the copy compiler change. Copy
 [evidence](docs/evidence/m2-array-copy-source-windows-20261025.json) records
 12 native groups, 67 read CLI cases, 61 write CLI cases, and 58 copy CLI cases in
-each development and release profile. Full scalar CLI regression is pending. The recorder can reuse matching
+each development and release profile. Scalar CLI regression also passed all
+1,969 cases per profile on the same binaries. The recorder can reuse matching
 completed scalar CLI receipts after documentation-only changes instead of rerunning
 the 1,969 tests. That integration also skips the 81-group scalar native rerun
 because the VM and verifier are unchanged. No full-profile conformance,

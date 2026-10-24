@@ -405,15 +405,78 @@
   },
   "commands": [
     "pwsh -NoProfile -File tools/verify-m2-arrays.ps1 -Slice copy",
-    "python -B tools/record-m2-array-write-evidence.py --slice copy",
+    "python -B tools/record-m2-array-write-evidence.py --slice copy --scalar-regression",
+    "python -B tools/record-m2-array-write-evidence.py --slice copy --reuse-scalar-regression",
     "git diff --check"
   ],
+  "scalarRegression": {
+    "nativeRerun": false,
+    "results": [
+      {
+        "profile": "development",
+        "cliCases": 1969,
+        "artifact": "build/m2-array-copy-source/browniec-development.exe",
+        "sha256": "37b3ea7fe358c554b3d94ce4404553101a8ec8acd1a1af35bfd76c5e2bc36a95",
+        "cliReceiptSha256": "59c64fd822ed6425604e10fad8ca3d2f85d152289e52de158c3d3a1e8c878a22"
+      },
+      {
+        "profile": "release",
+        "cliCases": 1969,
+        "artifact": "build/m2-array-copy-source/browniec-release.exe",
+        "sha256": "99c397496faa012d8b348d64380d0518e9a3a887fb82525b9ddd0dcef7562bbd",
+        "cliReceiptSha256": "4b31399c4134ccab9f01480e3568973c88a6a25877b3219b22a051be8c7dbe16"
+      }
+    ],
+    "sourceSha256": [
+      {
+        "path": "tools/check-m1-cli.py",
+        "sha256": "9de0f8c340f3da1f769c23e148088bea2ec1381284232494409aabae1ea29302"
+      },
+      {
+        "path": "tools/m1_arm_statement_cases.py",
+        "sha256": "f1a19497ae47f04ebaec0fb0cd3c4f8eed8f964bbf8524b6307592b2f67d82ef"
+      },
+      {
+        "path": "tools/m1_bitwise_cases.py",
+        "sha256": "44b474577db55d5afd8f5a3a4cdd0b4d13bf44fb1b4a8b4e2eee170698359ca0"
+      },
+      {
+        "path": "tools/m1_i64_cases.py",
+        "sha256": "161a45f662295cad8742655bdd59aae4bdfe13e10a241894d3b82ad1bc1eefdc"
+      },
+      {
+        "path": "tools/m1_propagation_cases.py",
+        "sha256": "f3728cffafc48866c44e16badb8a256f3e45c0299ab3c7a3d0c1c1ab69dbd986"
+      },
+      {
+        "path": "tools/m1_shift_cases.py",
+        "sha256": "7b12d715d1ed86b142fbf75c25fdb678f253b0c40ac07229d8f9d9bb0afa4acf"
+      },
+      {
+        "path": "tools/m1_switch_expression_cases.py",
+        "sha256": "09759b7891ad407dadabfa18c0c51afa9cb7751912928da8b9fae0598c18b32b"
+      },
+      {
+        "path": "tools/m1_tagged_cases.py",
+        "sha256": "70de6cf5e68e1fe11ee3dd4e72b506b1a19677133a8b483b7a039efb651d963f"
+      },
+      {
+        "path": "tools/m1_unsigned_cases.py",
+        "sha256": "2c0232b88abab5e8d7821cb0d91ad8efa8b4ca6e5048a6e9d6fe9793245b5d9b"
+      },
+      {
+        "path": "tools/m1_widening_cases.py",
+        "sha256": "6a4d87dbd0d3570c50bab7b3760839fbee6670cd16152892bbf536f0662e50cc"
+      }
+    ],
+    "recordedAt": "2026-10-24T19:36:54.439955+00:00"
+  },
   "documentationChecks": {
     "files": 88,
     "relativeLinks": 492,
     "diffCheck": "passed"
   },
-  "baselineCommit": "7a852ec2e6a9da69536ebf45e30255343362cf95",
+  "baselineCommit": "79a5e3c380c651e99d971ba99f77aa5a83ff4961",
   "evidenceRecorderSha256": "59632cc66e6f723425b02b92ea73e5d2a409ad9df7172f2ca7aa3efa04dad83b",
   "skipped": [
     {
@@ -422,7 +485,7 @@
     },
     {
       "check": "Full 81-group scalar native rerun",
-      "reason": "Scalar CLI regression is pending; this receipt establishes focused verification only."
+      "reason": "Focused native parser/VM tests and scalar CLI regression used for this frontend increment."
     },
     {
       "check": "Instrumented allocator, Linux, isolation, DLL, performance",

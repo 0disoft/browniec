@@ -108,7 +108,8 @@ shape/scope rejection, descriptor and payload limits, and exact Fuel boundaries.
 The one-element i32 copy/read fixture needs 65803 Fuel with the default arena;
 65802 reports guest `fuel`. A quota failure does not poison a fresh invocation.
 
-Full scalar CLI regression is pending. Run it against the same binaries with:
+Scalar CLI regression also passed all 1,969 cases per profile on the same
+verified binaries, using:
 
 ```powershell
 python -B tools/record-m2-array-write-evidence.py --slice copy --scalar-regression
