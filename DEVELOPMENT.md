@@ -8,62 +8,80 @@
 The root fairy.toml builds `src/main.fy` into `build/browniec.exe` on Windows. Use
 an installed MSVC x64 toolchain and Windows SDK for that Brownie build. The build
 toolchain uses Fairy C provisioned from the reviewed [toolchain.json](toolchain.json)
-manifest on Windows AMD64 with PowerShell 7. No globally installed Fairy C compiler
-is required.
+manifest with Python 3.10+. No globally installed Fairy C compiler is required.
+See the [toolchain setup contract](docs/engineering/toolchain-setup.md) for the full
+input, validation, and evidence boundary.
 
 From the repository root, provision or reuse the pinned compiler:
+
+```text
+python3 tools/setup-toolchain.py
+```
+
+Use the Python 3.10+ launcher available on the host; on Windows, `py -3` can invoke
+the same script. With no arguments, setup verifies and reuses
+`build/toolchain/fairyc.exe` when its SHA-256 and complete compiler identity match.
+An invalid cache fails without replacement. A missing cache builds the exact source
+revision in `toolchain.json` in isolated scratch. A local `../fairyc` checkout supplies
+that revision when present; the reviewed HTTPS Git URL is the fallback. The checkout's
+current HEAD, changes, and imports are not used as the compiler.
+
+To import an exact executable that was verified elsewhere, supply its path:
+
+```text
+python3 tools/setup-toolchain.py --compiler-file path/to/fairyc.exe
+```
+
+To force a source build from an explicit local checkout, use:
+
+```text
+python3 tools/setup-toolchain.py --source-repository ../fairyc
+```
+
+`--compiler-file` and `--source-repository` are mutually exclusive. The source option
+builds the pinned exact revision rather than reusing or importing an existing binary.
+Source bootstrap requires `go1.27.1` to be installed separately, plus Git, access
+to the selected repository, and its Go module dependencies. Setup performs no
+system-wide installation and does not install Go or Git; a successful run provisions
+only the selected host binary under `build/toolchain`. Source-bootstrap Go and Git
+child processes use a sanitized environment with Go toolchain switching disabled; the
+parent environment is unchanged.
+
+Setup checks the candidate SHA-256 before executing it, then checks the full
+`--version` identity: compiler version, revision, SDK, language, runtime ABI, and
+unmodified status. It also requires the SDK and language adoption in `fairy.lock` to
+agree with the manifest. Those static checks precede cache and receipt initialization.
+Afterward, only a validated candidate atomically replaces the cache. A failed fetch,
+build, hash, or compiler-identity check leaves a valid existing compiler intact,
+writes a failed setup receipt, and removes its own scratch directory.
+
+The Windows host writes `build/toolchain/fairyc.exe`. The Linux host writes
+`build/toolchain/fairyc`; the manifest pin for Linux was produced by a Windows
+Go 1.27.1 cross-build with CGO disabled at the exact revision. Its SHA-256 is
+`5c9e50e6b6ea45060a1b1511ab4b7c11fb9d6cc3939f65337970a6dfdc417b9b`; see the
+[cross-build receipt](docs/evidence/toolchain-linux-cross-build-20261025.json).
+Native Linux source bootstrap, binary import, execution, and Brownie CLI build/runtime remain
+`UNVERIFIED`; no usable local Linux runtime is currently available. On Linux, use
+`python3 tools/setup-toolchain.py`; no actual Linux setup execution is claimed here.
+
+The Windows compatibility wrapper remains available for existing automation:
 
 ```powershell
 pwsh -NoProfile -File tools/setup-toolchain.ps1
 ```
 
-The default mode verifies `build/toolchain/fairyc.exe` and reuses it when its
-SHA-256 and compiler identity match. An existing mismatch fails without replacement.
-If the file is absent, setup acquires the exact revision in the manifest.
-A local `../fairyc` checkout is used to fetch that revision into isolated
-scratch when present; the manifest HTTPS Git URL is the fallback. The Fairy checkout
-is not modified, and its current HEAD or dirty worktree is never used as the compiler.
+It forwards `-CompilerFile` and `-SourceRepository` to the Python implementation.
+The [portable Windows receipt](docs/evidence/toolchain-portable-windows-20261025.json)
+records 11 passing `python -B tools/verify-toolchain.py` cases, including cache reuse,
+failure rejection, source reproduction, host selection, unsupported-host rejection,
+and unchanged parent-environment behavior. `tools/verify-toolchain.ps1` is the Windows
+wrapper. The older [2026-10-24 Windows receipt](docs/evidence/toolchain-windows-20261024.json)
+is retained as historical evidence for the previous setup path.
 
-To import an exact executable that was verified elsewhere, supply its path:
-
-```powershell
-pwsh -NoProfile -File tools/setup-toolchain.ps1 -CompilerFile path\to\fairyc.exe
-```
-
-To build the pinned compiler from an explicit local source repository, use:
-
-```powershell
-pwsh -NoProfile -File tools/setup-toolchain.ps1 -SourceRepository ../fairyc
-```
-
-Source bootstrap requires `go1.27.1` to be installed separately, plus Git, access
-to the selected repository, and its Go module dependencies. Setup does not install
-Go. It keeps `GOENV`, `GOWORK`, and toolchain switching disabled, fetches the exact
-manifest revision into isolated scratch, and requires a clean checkout at that
-revision before building. `-CompilerFile` and `-SourceRepository` are mutually
-exclusive.
-
-Setup checks the candidate SHA-256 before executing it, then checks compiler version,
-revision, SDK, language, runtime ABI, and unmodified identity. It also requires the
-SDK and language adoption in `fairy.lock` to agree with the manifest. Any mismatch
-fails setup. Explicit acquisition validates before replacing an existing compiler;
-a failed download, build, or validation leaves the previous binary intact. A
-successful run writes `build/toolchain/setup-receipt.json`.
-
-This manifest adds reproducible project adoption. Existing verification tools keep
-their explicit `-Compiler` overrides and are not forced to use it. `fairy.lock`
-records SDK and source identity; it is not a compiler installer. Newer compiler
-discovery belongs to a separate adoption decision: there is no automatic update and
-no ZIP download endpoint configured here. Git tracks `toolchain.json` and
-`tools/setup-toolchain.ps1`; the generated compiler cache remains ignored.
-
-Run `pwsh -NoProfile -File tools/verify-toolchain.ps1` to check setup modes with
-isolated fixtures. It covers executable import/reuse, corrupt and mismatched inputs,
-default source bootstrap, exact binary reproduction and failure preservation.
-This is scoped provisioning coverage; it does not establish full runtime behavior,
-clean-machine packaging, network acquisition or a production compiler channel.
-The [dated provisioning evidence](docs/evidence/toolchain-windows-20261024.json)
-records the eight executed cases and the unchanged VM verification inputs.
+This manifest covers reproducible project adoption. `fairy.lock` records SDK and
+source identity; it is not a compiler installer. There is no automatic update
+discovery or ZIP download endpoint. Git tracks the manifest and Python setup tools;
+the generated compiler cache remains ignored.
 
 ```powershell
 ./build/toolchain/fairyc.exe build

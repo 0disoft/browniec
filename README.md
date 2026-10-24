@@ -72,8 +72,9 @@ python -B tools/record-m2-array-write-evidence.py --slice copy --reuse-scalar-re
 ```
 
 See [Development](DEVELOPMENT.md) to provision the pinned compiler and for build
-prerequisites. This CLI is for trusted local source only; Windows isolation is not
-implemented.
+prerequisites. The [toolchain setup contract](docs/engineering/toolchain-setup.md)
+records host outputs, validation, and verification evidence. This CLI is for trusted
+local source only; Windows isolation is not implemented.
 
 ## Product intent
 

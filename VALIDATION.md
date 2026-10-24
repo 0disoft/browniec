@@ -42,20 +42,34 @@ executed. None proves parser, compiler, verifier, VM, allocator, ABI, or sandbox
 
 ## Toolchain provisioning
 
-`tools/verify-toolchain.ps1` checks the adopted `toolchain.json` compiler using
-isolated Windows AMD64 fixtures. Its [receipt](docs/evidence/toolchain-windows-20261024.json)
-records eight passing cases: executable import and reuse, corrupt imported and
-cached files, version and SDK-lock mismatches, default exact-commit bootstrap with
-byte-identical reproduction, and unavailable-source rejection preserving the
-existing compiler. Setup checks hashes before candidate execution and removes its
-temporary checkout on both success and failure.
+`python -B tools/verify-toolchain.py` passed 11 Windows native provisioning cases on
+Python 3.14.6. The [receipt](docs/evidence/toolchain-portable-windows-20261025.json)
+covers executable import and reuse, corrupt input and cache rejection before execution,
+compiler/SDK-lock rejection, exact-revision source reproduction, unavailable-source
+preservation, Windows/Linux host-selection logic, unsupported-host rejection, and
+sanitized child environment without parent mutation. Direct Python setup and the
+PowerShell wrapper also passed existing-cache reuse.
 
-For the preceding build-tooling increment, the locked source check passed.
-The 35 inputs and compiler recorded by the array-VM receipt were unchanged then,
-so full VM development/release regression was not repeated for that tooling change.
-Authenticated HTTPS acquisition, empty
-module-cache downloads, clean-machine installation and automatic update discovery
-remain unverified or outside this scope.
+Static manifest and `fairy.lock` checks run before cache or receipt initialization;
+later fetch, build, SHA-256, or compiler-identity failures preserve an existing valid
+compiler and remove owned scratch. The Windows compiler retains SHA-256
+`572395f7f1e425d613c5a69f50b30ed177cda37ca2b1638bd0c11cf79fcbcc77`.
+The [Linux cross-build](docs/evidence/toolchain-linux-cross-build-20261025.json)
+passed a repeat build and owned-source cleanup with Go 1.27.1, `GOOS=linux`,
+`GOARCH=amd64`, `CGO_ENABLED=0`, the reviewed revision, and trimpath flags. Its
+SHA-256 is `5c9e50e6b6ea45060a1b1511ab4b7c11fb9d6cc3939f65337970a6dfdc417b9b`;
+ELF64/x86-64 and Go metadata were checked. No Linux compiler process was executed:
+the WSL availability probe did not complete and was cancelled. No usable Linux
+runtime was established for this session. Linux
+setup, import, Brownie CLI build/runtime, and full harness portability remain
+`UNVERIFIED`.
+
+Full VM development/release regression was not repeated because the VM source, SDK,
+and Windows compiler hash were unchanged. The previous
+[2026-10-24 Windows receipt](docs/evidence/toolchain-windows-20261024.json) remains
+historical evidence from the earlier PowerShell setup path. Authenticated HTTPS
+acquisition, empty module-cache downloads, clean-machine installation, and automatic
+update discovery remain unverified or outside this scope.
 
 ## Required milestone evidence
 
