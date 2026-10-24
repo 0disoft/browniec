@@ -158,7 +158,7 @@ also passed 81 native groups and 1,969 CLI cases per profile in development and
 release. That read receipt remains previous proof and is historical after the write
 compiler changes. The [write receipt](docs/evidence/m2-array-write-windows-20261024.json)
 records nine native groups, 67 read CLI cases, and 61 write CLI cases per profile
-in development and release. The full scalar CLI regression is pending. The
+in development and release. The scalar CLI regression also passed all 1,969 cases per profile on those same binaries. The
 81-group scalar native rerun is skipped for this frontend increment; the VM and
 verifier are unchanged. No full-profile conformance,
 DLL ABI, Windows isolation,

@@ -315,8 +315,9 @@ The [source-write contract](docs/engineering/m2-array-write.md) adds mutable
 arrays and indexed assignment through the existing AWRITE instruction. Its
 [receipt](docs/evidence/m2-array-write-windows-20261024.json) records nine native
 groups, 67 read CLI cases, and 61 write CLI cases per profile in development and
-release. The read receipt above is now historical. Full scalar CLI regression is
-pending. The 81-group scalar native rerun and private IR/VM native reruns are
+release. The read receipt above is now historical. Scalar CLI regression passed
+all 1,969 cases per profile against the same verified binaries. The 81-group
+scalar native rerun and private IR/VM native reruns are
 skipped for this frontend slice; the recorded backend/verifier and fixture inputs
 are unchanged. M0 inputs and compiler are also unchanged. Dedicated allocator
 instrumentation, Linux, isolation, DLL, and performance checks were not repeated.

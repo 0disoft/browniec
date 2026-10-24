@@ -328,7 +328,7 @@
     },
     {
       "path": "tools/check-m2-array-write.py",
-      "sha256": "89fb80e64d254360841534149961b9917f2b2c79da795484f685c2611b17bb8a"
+      "sha256": "4372166b590f94fb5656e90aad38a3aad3fae2aa691bc98f212c946eb2c7cc62"
     },
     {
       "path": "tools/verify-m2-arrays.ps1",
@@ -350,15 +350,79 @@
   },
   "commands": [
     "pwsh -NoProfile -File tools/verify-m2-arrays.ps1 -Slice write",
-    "python -B tools/record-m2-array-write-evidence.py",
+    "python -B tools/record-m2-array-write-evidence.py --scalar-regression",
     "git diff --check"
   ],
+  "scalarRegression": {
+    "nativeRerun": false,
+    "results": [
+      {
+        "profile": "development",
+        "cliCases": 1969,
+        "artifact": "build/m2-array-write/browniec-development.exe",
+        "sha256": "010bf9e9a9bdf182107a9b7e0e0b49fcd5e1ed7413ba4cf6135bd14f8ae9085e",
+        "cliReceiptSha256": "d776bed533b2c8a92c074f12236a98d991bb8f94a431d9218a5e21662bfecaa6"
+      },
+      {
+        "profile": "release",
+        "cliCases": 1969,
+        "artifact": "build/m2-array-write/browniec-release.exe",
+        "sha256": "054cafff6230699a9fb50015c4068265085468cb6fd11aa894d676c72d6cd68f",
+        "cliReceiptSha256": "dd91d66ae70860207b39d0e9c2a399357d89ed4bc2be5c974960b6ce6ffffeb1"
+      }
+    ],
+    "sourceSha256": [
+      {
+        "path": "tools/check-m1-cli.py",
+        "sha256": "9de0f8c340f3da1f769c23e148088bea2ec1381284232494409aabae1ea29302"
+      },
+      {
+        "path": "tools/m1_arm_statement_cases.py",
+        "sha256": "f1a19497ae47f04ebaec0fb0cd3c4f8eed8f964bbf8524b6307592b2f67d82ef"
+      },
+      {
+        "path": "tools/m1_bitwise_cases.py",
+        "sha256": "44b474577db55d5afd8f5a3a4cdd0b4d13bf44fb1b4a8b4e2eee170698359ca0"
+      },
+      {
+        "path": "tools/m1_i64_cases.py",
+        "sha256": "161a45f662295cad8742655bdd59aae4bdfe13e10a241894d3b82ad1bc1eefdc"
+      },
+      {
+        "path": "tools/m1_propagation_cases.py",
+        "sha256": "f3728cffafc48866c44e16badb8a256f3e45c0299ab3c7a3d0c1c1ab69dbd986"
+      },
+      {
+        "path": "tools/m1_shift_cases.py",
+        "sha256": "7b12d715d1ed86b142fbf75c25fdb678f253b0c40ac07229d8f9d9bb0afa4acf"
+      },
+      {
+        "path": "tools/m1_switch_expression_cases.py",
+        "sha256": "09759b7891ad407dadabfa18c0c51afa9cb7751912928da8b9fae0598c18b32b"
+      },
+      {
+        "path": "tools/m1_tagged_cases.py",
+        "sha256": "70de6cf5e68e1fe11ee3dd4e72b506b1a19677133a8b483b7a039efb651d963f"
+      },
+      {
+        "path": "tools/m1_unsigned_cases.py",
+        "sha256": "2c0232b88abab5e8d7821cb0d91ad8efa8b4ca6e5048a6e9d6fe9793245b5d9b"
+      },
+      {
+        "path": "tools/m1_widening_cases.py",
+        "sha256": "6a4d87dbd0d3570c50bab7b3760839fbee6670cd16152892bbf536f0662e50cc"
+      }
+    ],
+    "recordedAt": "2026-10-24T10:38:35.535340+00:00"
+  },
   "documentationChecks": {
     "files": 87,
     "relativeLinks": 474,
-    "diffCheck": "passed"
+    "diffCheck": "passed",
+    "noLocalAbsolutePaths": "passed",
+    "checkedAfterScalarRegression": true
   },
-  "baselineCommit": "1f8639742314600d159e578431a18f4a000e433a",
+  "baselineCommit": "29e94d83ec25996d7a9be3df2e1feefd6d69a30e",
   "evidenceRecorderSha256": "7bfb4cd77e057d7e9711715de653d1df5883e0a28491cef3b57add1b4c4d0e3a",
   "skipped": [
     {
@@ -367,11 +431,21 @@
     },
     {
       "check": "Full 81-group scalar native rerun",
-      "reason": "Scalar CLI regression is pending; this receipt establishes focused verification only."
+      "reason": "Focused native parser/VM tests and scalar CLI regression used for this frontend increment."
     },
     {
       "check": "Instrumented allocator, Linux, isolation, DLL, performance",
       "reason": "Not executed in this frontend increment."
     }
-  ]
+  ],
+  "verificationRefresh": {
+    "path": "tools/check-m2-array-write.py",
+    "previousSha256": "89fb80e64d254360841534149961b9917f2b2c79da795484f685c2611b17bb8a",
+    "sha256": "4372166b590f94fb5656e90aad38a3aad3fae2aa691bc98f212c946eb2c7cc62",
+    "reason": "Removed a trailing blank line; Python AST unchanged. Re-executed 61 write CLI cases per profile. Native and scalar-regression inputs unchanged.",
+    "commands": [
+      "python -B tools/check-m2-array-write.py --exe build/m2-array-write/browniec-development.exe --profile development",
+      "python -B tools/check-m2-array-write.py --exe build/m2-array-write/browniec-release.exe --profile release"
+    ]
+  }
 }

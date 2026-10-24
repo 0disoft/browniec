@@ -95,11 +95,18 @@ rejected targets/headers, guest bounds and first faults, and exact Fuel. The
 one-element i32 write/read example needs 65737 Fuel with the default arena;
 65736 reports guest `fuel`. A failed one-shot run does not poison a fresh run.
 
-The recorder checks source, compiler, artifact, and CLI receipt identities. Full
-scalar CLI regression is pending. Its `--scalar-regression` option runs all 1,969
-scalar CLI cases per profile against the same verified binaries. A full 81-group
-scalar native rerun is skipped for this frontend increment: the backend and
-verifier inputs are unchanged, and focused native tests exercise the new parser.
+The recorder checked source, compiler, artifact, and CLI receipt identities.
+Its scalar regression passed all 1,969 CLI cases per profile against the same
+verified binaries, using:
+
+```powershell
+python -B tools/record-m2-array-write-evidence.py --scalar-regression
+```
+
+A full 81-group scalar native rerun was skipped for this frontend increment:
+the backend and verifier inputs are unchanged, and focused native tests exercise
+the new parser. The receipt distinguishes current CLI coverage from earlier
+native evidence.
 
 The [read receipt](../evidence/m2-array-source-windows-20261024.json) remains
 historical after the compiler changes. No Linux, isolation, DLL, allocator

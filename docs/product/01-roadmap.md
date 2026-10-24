@@ -156,8 +156,9 @@ that fresh evidence is included in the same source receipt. The read receipt is
 historical after the write compiler changes. The
 [write receipt](../evidence/m2-array-write-windows-20261024.json) records nine
 native groups, 67 read CLI cases, and 61 write CLI cases in each development and
-release profile. Full scalar CLI regression is pending; the 81-group scalar
-native rerun is skipped because the VM and verifier are unchanged.
+release profile. Scalar CLI regression also passed 1,969 cases per profile on
+the same binaries. The 81-group scalar native rerun is skipped because the VM
+and verifier are unchanged.
 Goal: connect arrays, plain structs, borrows, Buffer, input,
 output, and UTF-8.
 

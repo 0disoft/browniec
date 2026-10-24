@@ -118,4 +118,3 @@ report.write_text(json.dumps({'schema':'browniec.m2-array-write-cli/v1','status'
     'profile':args.profile,'exeSha256':hashlib.sha256(exe.read_bytes()).hexdigest(),
     'runtimeEnvironment':'cleared; tool-free PATH','count':len(rows),'cases':rows},indent=2)+'\n',encoding='utf-8')
 print(f'PASS: {args.profile}: {len(rows)} source-array write CLI cases')
-
