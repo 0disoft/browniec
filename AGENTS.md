@@ -16,8 +16,9 @@ own the affected contract. Broader scaffold procedures are optional.
   private entry-array IR has independent verification and metered native VM dispatch. The current
   source slices add immutable/mutable scalar-array declarations in outermost `main`, indexed reads,
   element assignment in nested scopes, and copy initialization from exact-type/length array bindings.
-  Whole-array reassignment, array parameters, results, borrows, `len`, slices, aggregate guest calls,
-  and array locals elsewhere remain unimplemented. Focused read/write/copy verification passed in development and release; for-header writes/copies remain rejected.
+  Array length access uses `NAME.len`, an exact `usize` constant in scalar expressions and pure for headers.
+  Whole-array reassignment, array parameters, results, borrows, slices, aggregate guest calls,
+  and array locals elsewhere remain unimplemented. Focused read/write/copy/length verification passed in development and release; for-header writes/copies remain rejected.
 - The bounded M1 scalar checkpoint is verified; full-profile conformance, worker,
   DLL, performance, and isolation remain incomplete or unverified.
 - Root fairy.toml builds the native CLI; tools/verify-m1.ps1 verifies its narrow profile.

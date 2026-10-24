@@ -348,6 +348,15 @@ inputs are unchanged, as are the M0 inputs and compiler. Their native reruns and
 the full 81-group scalar native rerun were skipped. No allocator instrumentation,
 Linux, isolation, DLL, clean-machine, or performance check was added.
 
+The [length contract](docs/engineering/m2-array-length.md) adds `NAME.len` as an
+exact `usize` scalar constant without changing the VM or verifier. Its
+[receipt](docs/evidence/m2-array-length-windows-20261025.json) records 15 native
+groups, 226 array CLI cases (67 reads, 61 writes, 58 copies, 40 lengths), and
+1,969 scalar CLI cases per profile in development and release. The current
+backend inputs match the verifier-bitset receipt; earlier source receipts remain
+historical. The full 84-group scalar native suite, dedicated allocator
+instrumentation, Linux, isolation, DLL, and performance checks were skipped.
+
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker
 publication barrier. Compile untrusted source only inside the restricted worker.

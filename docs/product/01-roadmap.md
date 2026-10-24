@@ -1,7 +1,7 @@
 # Roadmap
 
 - Status: Accepted delivery sequence; M0 verified; named M1 slices through unsigned have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified, 2026-10-23; private entry-array IR/VM verified by its native harness, 2026-10-24; source-array reads verified; source-array writes are focused-harness verified; source-array copy initializers focused-harness verified
-- Current progress: M1 scalar checkpoint verified; M2 array storage, owner lifetimes, independent copies, and private entry-array IR/VM verified; immutable source-array declarations and indexed reads verified; mutable declarations and element writes are focused-harness verified; copy initialization is implemented and focused-harness verified; full-profile conformance incomplete; M3-M5 not started
+- Current progress: M1 scalar checkpoint verified; M2 array storage, owner lifetimes, independent copies, and private entry-array IR/VM verified; immutable source-array declarations and indexed reads verified; mutable declarations and element writes are focused-harness verified; copy initialization and length access are implemented and focused-harness verified; full-profile conformance incomplete; M3-M5 not started
 
 This roadmap orders learning and evidence. It is not a release promise. M0 has a
 native harness and recorded evidence. The scalar CLI/VM now exist; the worker
@@ -177,6 +177,14 @@ Scalar CLI regression also passed all 1,969 cases per profile on the same binari
 cases per profile; `--reuse-scalar-regression` can instead check matching completed
 receipts after documentation-only changes without repeating that matrix. The
 81-group scalar native rerun is skipped because the VM and verifier are unchanged.
+The [array-length increment](../engineering/m2-array-length.md) adds `NAME.len`
+as an exact `usize` constant for visible entry-array bindings, including in pure
+scalar `for` headers. This completes length access for the current fixed-array
+source slice; parameters/results, borrows, slices, and whole-array reassignment
+remain open. The [length receipt](../evidence/m2-array-length-windows-20261025.json)
+records 15 native groups, 226 array CLI cases, and 1,969 scalar CLI cases in each
+development and release profile. Earlier frontend receipts are historical.
+
 Goal: connect arrays, plain structs, borrows, Buffer, input,
 output, and UTF-8.
 

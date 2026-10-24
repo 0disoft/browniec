@@ -1,5 +1,8 @@
 # M2 Source Array Copy Initialization
 
+This page records the copy increment. The later [length slice](m2-array-length.md)
+adds `NAME.len`; this receipt remains historical after subsequent compiler changes.
+
 - Status: implemented and focused-harness verified in development and release
 - Scope: scalar-array copy declarations in the outermost `main` body
 - Evidence: [Windows source-copy receipt](../evidence/m2-array-copy-source-windows-20261025.json)

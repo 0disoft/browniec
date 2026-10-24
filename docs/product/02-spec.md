@@ -134,6 +134,12 @@ integer literals.
 
 ## Evaluation and arithmetic
 
+The [array-length increment](../engineering/m2-array-length.md) adds `NAME.len`
+for visible fixed scalar arrays declared in outermost `main`. The exact `usize`
+element count is lowered to a scalar constant, including in pure scalar `for`
+headers. There is no implicit conversion, property assignment, or method call.
+Array parameters, results, borrows, and slices remain outside this increment.
+
 The current scalar CLI implements fixed-width integer `~`, `&`, `^`, and `|`,
 and checked `<<` and `>>`. Binary operands, including shift amounts, must have the
 same integer type. Signed right shift is arithmetic; unsigned right shift is
