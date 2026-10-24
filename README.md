@@ -1,6 +1,6 @@
 # Brownie C
 
-- Status: M1 scalar checkpoint verified; private entry-array IR/VM implemented and verified; immutable source-array reads verified; mutable source-array writes are focused-harness verified; full profile incomplete
+- Status: M1 scalar checkpoint verified; private entry-array IR/VM implemented and verified; immutable source-array reads verified; mutable source-array writes are focused-harness verified; array copy initializers implemented and focused-harness verified; full profile incomplete
 - Design date: 2026-10-23
 - First delivery target: Windows 11 x64
 
@@ -36,9 +36,12 @@ conformance remains unverified. The [source-array read increment](docs/engineeri
 adds immutable scalar-array declarations in the outermost `main` body and exact
 `usize` indexed reads through the entry-array VM. The [source-array write
 increment](docs/engineering/m2-array-write.md) adds mutable outermost declarations
-and exact `usize` element assignment; focused verification passed in development and release. Array copies,
-parameters, results, borrows, `len`, slices, aggregate calls, structs, workers, and
-DLLs remain later work.
+and exact `usize` element assignment; focused verification passed in development and release. The
+[source-array copy-initializer increment](docs/engineering/m2-array-copy-source.md)
+adds `let|var T[N] dest = source;` for exact matching visible arrays and independent
+snapshot semantics through the existing `ACOPY` IR/runtime; focused checks passed
+in development and release. Array parameters, results, borrows, `len`, slices, aggregate
+calls, structs, workers, and DLLs remain later work.
 
 ```powershell
 ./build/toolchain/fairyc.exe build
@@ -60,6 +63,12 @@ DLLs remain later work.
 pwsh -NoProfile -File tools/verify-m2-arrays.ps1 -Slice write
 python -B tools/record-m2-array-write-evidence.py
 # The recorder can later add all 1,969 scalar CLI cases with --scalar-regression.
+# Copy checks are planned for parent integration.
+./build/browniec.exe run examples/array-copy.brc --fuel 100000 --json
+pwsh -NoProfile -File tools/verify-m2-arrays.ps1 -Slice copy
+python -B tools/record-m2-array-write-evidence.py --slice copy --scalar-regression
+# After a completed matching receipt, docs-only updates can reuse it:
+python -B tools/record-m2-array-write-evidence.py --slice copy --reuse-scalar-regression
 ```
 
 See [Development](DEVELOPMENT.md) to provision the pinned compiler and for build
@@ -89,7 +98,7 @@ Those limits describe the profile, not the language forever.
 
 | Level | Intended capability | Current state |
 | --- | --- | --- |
-| core | Source compile, verify, and native VM CLI | Experimental i32/i64/u8/u32/usize/bool expressions, explicit widening, branches, loops, shallow tagged values, switch statements and expressions, `?` propagation, immutable source-array reads, and mutable element writes; scalar M1 and array reads verified, array writes focused-harness verified |
+| core | Source compile, verify, and native VM CLI | Experimental i32/i64/u8/u32/usize/bool expressions, explicit widening, branches, loops, shallow tagged values, switch statements and expressions, `?` propagation, immutable source-array reads, mutable element writes, and array copy initialization; scalar M1 and array reads verified, array writes focused-harness verified, copy focused-harness verified |
 | restricted | Windows worker plus parent broker | Not implemented; M4 |
 | embed | Trusted native host through a DLL ABI | Not implemented; M5; no public C export |
 
@@ -127,6 +136,7 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 array VM](docs/engineering/m2-array-vm.md): historical native array dispatch, owned payload storage, Fuel, and runtime failures
 - [M2 source array reads](docs/engineering/m2-array-source.md): current grammar, lifetimes, caps, profiles, and verification for `let T[N] name = [EXPR; N];` and `name[EXPR]`
 - [M2 source array writes](docs/engineering/m2-array-write.md): mutable declarations, element assignment, evaluation order, profiles, and verification for `var T[N] name = [EXPR; N];` and `name[EXPR] = VALUE;`
+- [M2 source array copy initialization](docs/engineering/m2-array-copy-source.md): matching visible arrays, independent storage, resources, profiles, and verification for `let|var T[N] dest = source;`
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
 - [Design baseline](docs/design-baseline.md): source provenance, evidence, and findings
@@ -158,8 +168,13 @@ also passed 81 native groups and 1,969 CLI cases per profile in development and
 release. That read receipt remains previous proof and is historical after the write
 compiler changes. The [write receipt](docs/evidence/m2-array-write-windows-20261024.json)
 records nine native groups, 67 read CLI cases, and 61 write CLI cases per profile
-in development and release. The scalar CLI regression also passed all 1,969 cases per profile on those same binaries. The
-81-group scalar native rerun is skipped for this frontend increment; the VM and
-verifier are unchanged. No full-profile conformance,
+in development and release. The scalar CLI regression also passed all 1,969 cases per profile on those same binaries.
+The read and write receipts remain historical after the copy compiler change. Copy
+[evidence](docs/evidence/m2-array-copy-source-windows-20261025.json) records
+12 native groups, 67 read CLI cases, 61 write CLI cases, and 58 copy CLI cases in
+each development and release profile. Full scalar CLI regression is pending. The recorder can reuse matching
+completed scalar CLI receipts after documentation-only changes instead of rerunning
+the 1,969 tests. That integration also skips the 81-group scalar native rerun
+because the VM and verifier are unchanged. No full-profile conformance,
 DLL ABI, Windows isolation,
 clean-machine packaging, or performance target is claimed.

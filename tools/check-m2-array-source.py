@@ -102,7 +102,7 @@ for body in [
     'let i32[1] a = [42; 1]; return main();',
 ]:
     case(body, error='type', code=3)
-for body in ['let i32[1+1] a = [0; 2]; return 0;', 'let i32[1] a = [1, 2]; return 0;', 'let i32[1] a = [42; 1]; let i32[1] b = a; return 0;']:
+for body in ['let i32[1+1] a = [0; 2]; return 0;', 'let i32[1] a = [1, 2]; return 0;', 'let i32[1] a = [42; 1]; let i32[1] b = a[0]; return 0;']:
     case(body, error='syntax', code=3)
 case('return f();', functions='fn i32 f() { let i32[1] a = [42; 1]; return a[0]; }', error='type', code=3)
 case('let i32[1] a = [42; 1]; return a[0];', functions='fn i32 unused() { return main(); }', error='type', code=3)

@@ -1,0 +1,8 @@
+module main;
+fn i32 main() {
+    var i32[2] original = [21; 2];
+    var i32[2] snapshot = original;
+    original[0] = 0;
+    snapshot[1] = 22;
+    return snapshot[0] + original[1];
+}

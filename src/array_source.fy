@@ -32,12 +32,24 @@ pub fn Result<bool, errors::Error> indexed_assignment(ref u8[] source, ref lexer
     return .ok(false);
 }
 pub fn u8 profile(ref ir::Program p) {
+    var usize pc = 0;
+    while (pc < p.count && pc < 256) {
+        if (p.code[pc * 8] == 34) { return 3; }
+        pc += 1;
+    }
     var usize i = 0;
-    while (i < p.arrays.count) {
+    while (i < p.arrays.count && i < 16) {
         if (p.arrays.mutable[i]) { return 2; }
         i += 1;
     }
     return if (p.arrays.count != 0) { 1 } else { 0 };
+}
+pub fn Result<usize, errors::Error> copy(ref mut ir::Program p, usize source, u8 tag, usize length, bool mutable, usize offset) {
+    if (source >= 16 || source >= p.arrays.count || p.arrays.elements[source] != tag ||
+        p.arrays.lengths[source] != length) { return .err(errors::make(3, offset)); }
+    let usize id = ir::array(p, tag, length, mutable, offset)?;
+    let usize copied = ir::array_copy(p, id, source, offset)?;
+    return .ok(id);
 }
 pub fn Result<usize, errors::Error> count(ref u8[] source, ref mut lexer::State s) {
     if (s.kind != 1 || s.value < 1 || s.value > 4096) { return .err(errors::make(3, s.begin)); }

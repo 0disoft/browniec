@@ -3,18 +3,18 @@
   "packageInstanceAlgorithm": "fairyc.package-instance/v1",
   "sourceDigestAlgorithm": "fairyc.package-source/v1",
   "language": "fairyc-language/20",
-  "root": "fypi1-sha256-6b254fb3c9f8c34289bce6d93a802e49c80c72eaa6f64a002a17ee5ba59ac8b3",
+  "root": "fypi1-sha256-be390a113ca6693fd70c7d2a96f95d3e84262e367fb12234039c20a66d714469",
   "packages": [
     {
-      "id": "fypi1-sha256-6b254fb3c9f8c34289bce6d93a802e49c80c72eaa6f64a002a17ee5ba59ac8b3",
+      "id": "fypi1-sha256-be390a113ca6693fd70c7d2a96f95d3e84262e367fb12234039c20a66d714469",
       "role": "root",
       "packageUid": "browniec.cli",
       "sourceKind": "local",
       "localPath": ".",
       "sdkIdentity": "",
       "runtimeAbi": "",
-      "sourceIdentity": "fysrc1-sha256-179ee24d1e51fe13c85a8928f11b63a72a4e116cb65a11dc6b60024cf441444a",
-      "sourceDigest": "fysrc1-sha256-179ee24d1e51fe13c85a8928f11b63a72a4e116cb65a11dc6b60024cf441444a",
+      "sourceIdentity": "fysrc1-sha256-17a1d0233441492061f5d46caa0e3f02ddc5c7f85d678689da60113ec08b5078",
+      "sourceDigest": "fysrc1-sha256-17a1d0233441492061f5d46caa0e3f02ddc5c7f85d678689da60113ec08b5078",
       "version": "0.1.0",
       "features": []
     },
@@ -34,7 +34,7 @@
   ],
   "dependencies": [
     {
-      "owner": "fypi1-sha256-6b254fb3c9f8c34289bce6d93a802e49c80c72eaa6f64a002a17ee5ba59ac8b3",
+      "owner": "fypi1-sha256-be390a113ca6693fd70c7d2a96f95d3e84262e367fb12234039c20a66d714469",
       "binding": "stdlib",
       "target": "fypi1-sha256-c18350128fcbce1cee2c63f0e7acc467f9f77ff184c458af1d20eab69a58e89a"
     }

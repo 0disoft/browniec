@@ -226,6 +226,15 @@ fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State 
         if (table.count >= 64) { return .err(errors::make(4, begin)); }
         let usize name = lexer::next(source, s)?;
         let usize equals = lexer::punctuation(source, s, 61)?;
+        if (length != 0 && s.kind == 2) {
+            let usize source_index = locals::find(source, table, s.begin, s.end);
+            if (!arrays::binding(table, source_index)) { return .err(errors::make(3, s.begin)); }
+            let usize source_id = table.registers[source_index] - 128;
+            let usize next = lexer::next(source, s)?;
+            let usize finished = lexer::punctuation(source, s, terminator)?;
+            let usize id = arrays::copy(p, source_id, tag, length, mutable, begin)?;
+            return locals::declare(table, begin, end, 128 + id, mutable);
+        }
         if (length != 0) { let usize open = lexer::punctuation(source, s, 91)?; }
         // The new name is not visible until its initializer has been checked.
         let usize value = expression(source,s,p,table,signatures,1,expr_depth,tag,result_type,structure,loop_state)?;

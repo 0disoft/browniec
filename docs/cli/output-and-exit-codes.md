@@ -1,6 +1,6 @@
 # Output and Exit Codes
 
-- Status: Experimental M1 scalar and M2 source-array results implemented; read verification recorded; write focused verification passed in development and release; wider output remains designed
+- Status: Experimental M1 scalar and M2 source-array results implemented; read verification recorded; write focused verification passed in development and release; array copy focused verification passed in development and release; wider output remains designed
 - Guest integer: data, never the process exit code
 
 ## Process exits
@@ -38,19 +38,28 @@ reports the array-read profile after compilation succeeds:
 {"schema":"browniec.result/v1","profile":"brownie.m2-array-read/1","command":"run","status":"completed","return_i32":42,"error":null}
 ```
 
-A source program with any mutable array catalog entry uses the same schema and
-reports the array-write profile after compilation succeeds:
+A source program with any mutable array catalog entry and no `ACOPY` uses the same
+schema and reports the array-write profile after compilation succeeds:
 
 ```json
 {"schema":"browniec.result/v1","profile":"brownie.m2-array-write/1","command":"run","status":"completed","return_i32":42,"error":null}
 ```
 
+A source program containing `ACOPY` uses the same schema and reports the copy
+profile after compilation succeeds:
+
+```json
+{"schema":"browniec.result/v1","profile":"brownie.m2-array-copy/1","command":"run","status":"completed","return_i32":42,"error":null}
+```
+
+The copy profile takes precedence when a program also has mutable array entries.
 Scalar programs plus programs with only immutable arrays retain
-`brownie.m1-scalar/1` and `brownie.m2-array-read/1`. Compile, input, and usage
-failures before successful compilation retain their existing profile behavior. A
-source-array program that compiles and then fails verification or execution keeps
-its array-read or array-write profile. The result schema and error kinds do not
-differ from the scalar result schema.
+`brownie.m1-scalar/1` and `brownie.m2-array-read/1`; programs with mutable writes
+but no `ACOPY` retain `brownie.m2-array-write/1`. Compile, input, and usage failures
+before successful compilation retain their existing profile behavior. A source-array
+program that compiles and then fails verification or execution keeps its selected
+array profile. The result schema and error kinds do not differ from the scalar
+result schema.
 
 The command is `check` or `run`; status is `checked`, `completed`, or `error`.
 Only completed runs have a numeric return_i32. Failures carry an error object with
@@ -62,19 +71,22 @@ its option has been parsed.
 
 Text mode leaves stdout empty and writes checked status, return_i32, or diagnostics
 to stderr. Guest output bytes and output_b64 are not implemented. Version JSON uses
-`browniec.version/v1`, preserves `profile` as `brownie.m1-scalar/1`, adds
-`array_profile` as `brownie.m2-array-read/1` and `array_write_profile` as
-`brownie.m2-array-write/1`, and reports delivery availability:
+`browniec.version/v1`, preserves `profile` as `brownie.m1-scalar/1`, adds the
+`array_profile`, `array_write_profile`, and `array_copy_profile` fields, and
+reports delivery availability:
 
 ```json
-{"schema":"browniec.version/v1","profile":"brownie.m1-scalar/1","array_profile":"brownie.m2-array-read/1","array_write_profile":"brownie.m2-array-write/1","core":true,"restricted":false,"embed":false}
+{"schema":"browniec.version/v1","profile":"brownie.m1-scalar/1","array_profile":"brownie.m2-array-read/1","array_write_profile":"brownie.m2-array-write/1","array_copy_profile":"brownie.m2-array-copy/1","core":true,"restricted":false,"embed":false}
 ```
 
 The CLI Fuel default remains 256 for scalar compatibility. A Program with an array
 catalog prepares the default 65536-byte arena before guest execution, which costs
 65537 Fuel. Array runs therefore need an explicit larger budget in the current
 CLI; use `--fuel 100000` or `--fuel 1000000`. The accepted maximum is 1000000, and
-remaining instruction and array-operation costs still apply.
+remaining instruction and array-operation costs still apply. `ACOPY` charges
+`49 + payload_bytes + 7 + (bool ? length : 0)`. Source and destination payloads
+share the existing 65536-byte arena, and a copy adds no separate heap backing
+allocation beyond that arena.
 
 Result JSON is staged in an owned Buffer before a single console write. If encoding
 or sink writing fails, exit 7 applies; the sink can already hold a partial write.

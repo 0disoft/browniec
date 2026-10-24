@@ -1,7 +1,7 @@
 # Roadmap
 
-- Status: Accepted delivery sequence; M0 verified; named M1 slices through unsigned have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified, 2026-10-23; private entry-array IR/VM verified by its native harness, 2026-10-24; source-array reads verified; source-array writes are focused-harness verified
-- Current progress: M1 scalar checkpoint verified; M2 array storage, owner lifetimes, independent copies, and private entry-array IR/VM verified; immutable source-array declarations and indexed reads verified; mutable declarations and element writes are focused-harness verified; full-profile conformance incomplete; M3-M5 not started
+- Status: Accepted delivery sequence; M0 verified; named M1 slices through unsigned have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified, 2026-10-23; private entry-array IR/VM verified by its native harness, 2026-10-24; source-array reads verified; source-array writes are focused-harness verified; source-array copy initializers focused-harness verified
+- Current progress: M1 scalar checkpoint verified; M2 array storage, owner lifetimes, independent copies, and private entry-array IR/VM verified; immutable source-array declarations and indexed reads verified; mutable declarations and element writes are focused-harness verified; copy initialization is implemented and focused-harness verified; full-profile conformance incomplete; M3-M5 not started
 
 This roadmap orders learning and evidence. It is not a release promise. M0 has a
 native harness and recorded evidence. The scalar CLI/VM now exist; the worker
@@ -145,8 +145,20 @@ evaluated once before the exact scalar RHS. Both operands complete before
 mutable catalog entry selects `brownie.m2-array-write/1`, including after a later
 verification or runtime failure. Bare array assignment, compound element
 assignment, arrays in helpers or nested declarations, and writes in `for` headers
-remain outside this slice. Array copies, parameters, results, borrows, `len`,
+remain outside this slice. Array parameters, results, borrows, `len`,
 slices, and aggregate calls also remain outside it.
+
+The [source-array copy-initializer increment](../engineering/m2-array-copy-source.md)
+adds `let|var T[N] DEST = SOURCE;` in the outermost `main` body. The source must
+be a bare visible array binding with the exact destination element type and
+length. `ACOPY` preserves the source and gives the destination independent bytes;
+`let` or `var` selects only the new destination's mutability. Source and
+destination descriptors share the 16-entry catalog, and their payloads share the
+fixed 65536-byte arena. A program containing `ACOPY` selects
+`brownie.m2-array-copy/1`, ahead of the mutable write profile. No new IR or VM
+instruction is introduced. Whole-array reassignment, source expressions beyond a
+bare binding, nested/helper declarations, for-header copies, parameters, results,
+borrows, `len`, and slices remain outside the slice.
 
 The [source receipt](../evidence/m2-array-source-windows-20261024.json) records
 18 native groups and 67 CLI source cases in each development and release profile,
@@ -157,12 +169,18 @@ historical after the write compiler changes. The
 [write receipt](../evidence/m2-array-write-windows-20261024.json) records nine
 native groups, 67 read CLI cases, and 61 write CLI cases in each development and
 release profile. Scalar CLI regression also passed 1,969 cases per profile on
-the same binaries. The 81-group scalar native rerun is skipped because the VM
-and verifier are unchanged.
+the same binaries. The read and write receipts are historical after the copy
+compiler change. The [copy receipt](../evidence/m2-array-copy-source-windows-20261025.json)
+records 12 native groups per profile (six read, three write, three copy), 67 read
+CLI cases, 61 write CLI cases, and 58 copy CLI cases in development and release.
+Full scalar CLI regression is pending. When requested, `--scalar-regression` runs the 1,969 scalar CLI
+cases per profile; `--reuse-scalar-regression` can instead check matching completed
+receipts after documentation-only changes without repeating that matrix. The
+81-group scalar native rerun is skipped because the VM and verifier are unchanged.
 Goal: connect arrays, plain structs, borrows, Buffer, input,
 output, and UTF-8.
 
-Required evidence includes independent array copies, complete record construction,
+Required evidence includes source copy-initializer checks, complete record construction,
 root conflict rejection, mutable views, returned borrows, Buffer growth and movement,
 staged output, and chunked UTF-8 validation.
 

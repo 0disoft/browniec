@@ -1,5 +1,8 @@
 # M2 Source Array Writes
 
+This page records the write increment. Its receipt is historical after the later
+[copy-initializer slice](m2-array-copy-source.md), which adds independent array copies.
+
 - Status: implemented and focused-harness verified in development and release
 - Scope: mutable scalar-array declarations and indexed element writes in the outermost `main` body
 - Evidence: [Windows write receipt](../evidence/m2-array-write-windows-20261024.json)

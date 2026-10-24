@@ -1,0 +1,432 @@
+{
+  "schema": "browniec.m2-array-copy-source/v1",
+  "status": "passed",
+  "recordedAt": "2026-10-24T19:34:00.0027378Z",
+  "compilerVersion": [
+    "Fairy C Stage 0",
+    "compiler: v0.0.0-20261022210249-4ce1264273be",
+    "sdk: fairyc-sdk-stdlib/0 0.0.0-stage0.86",
+    "language: fairyc-language/20",
+    "runtime: fairyc-runtime/0",
+    "revision: 4ce1264273be6051ee560173e94690e1b99c9eaf",
+    "modified: false"
+  ],
+  "compilerSha256": "572395f7f1e425d613c5a69f50b30ed177cda37ca2b1638bd0c11cf79fcbcc77",
+  "os": "Microsoft Windows NT 10.0.26300.0",
+  "lockedCheck": "check ok: 2 instance(s), 36 source file(s), 298 MIR function(s), lock verified",
+  "results": [
+    {
+      "profile": "development",
+      "nativeTests": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "development",
+        "tests": [
+          {
+            "identity": "tests::m2::array_copy_source::copies_enforce_shapes_scope_quota_and_exact_fuel",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_copy_source::copies_snapshot_current_bytes_and_keep_return_loop_lifetimes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_copy_source::six_scalar_domains_and_independent_copy_mutability",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::array_reads_preserve_loop_lifetimes_and_cast_binding",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::bounds_quota_and_exact_fuel_are_guest_outcomes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::every_return_drops_visible_arrays_in_reverse_order",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::repeated_fill_and_index_evaluate_once_with_scalar_calls",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::six_scalar_types_and_literal_limits",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::source_array_types_scope_and_unimplemented_forms_are_rejected",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_write::index_then_rhs_once_and_early_returns_keep_lifetimes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_write::writes_preserve_scalar_domains_loops_and_value_arms",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_write::writes_reject_bad_targets_and_meter_failures",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 12,
+        "passed": 12,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "build": "built: build/browniec.exe (x86_64-windows-msvc, development, lock verified)",
+      "artifact": "build/m2-array-copy-source/browniec-development.exe",
+      "sha256": "37b3ea7fe358c554b3d94ce4404553101a8ec8acd1a1af35bfd76c5e2bc36a95",
+      "cliCases": 67,
+      "writeCliCases": 61,
+      "copyCliCases": 58,
+      "sourceCliReceiptSha256": "e523040cdfef932260e6a3e730944d449f810f8e9727123c5da52b5ec84f0c7e",
+      "writeCliReceiptSha256": "90182ec8c566a779bed37c5b567b3f291c9edade597720cdafe63f3534bfe75e",
+      "copy-sourceCliReceiptSha256": "2d3f3fbf41ee2ccd1a3c17251372d20c5f0dea914cb6ebe0eed4e06d7c567d5e"
+    },
+    {
+      "profile": "release",
+      "nativeTests": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "release",
+        "tests": [
+          {
+            "identity": "tests::m2::array_copy_source::copies_enforce_shapes_scope_quota_and_exact_fuel",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_copy_source::copies_snapshot_current_bytes_and_keep_return_loop_lifetimes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_copy_source::six_scalar_domains_and_independent_copy_mutability",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::array_reads_preserve_loop_lifetimes_and_cast_binding",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::bounds_quota_and_exact_fuel_are_guest_outcomes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::every_return_drops_visible_arrays_in_reverse_order",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::repeated_fill_and_index_evaluate_once_with_scalar_calls",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::six_scalar_types_and_literal_limits",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::source_array_types_scope_and_unimplemented_forms_are_rejected",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_write::index_then_rhs_once_and_early_returns_keep_lifetimes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_write::writes_preserve_scalar_domains_loops_and_value_arms",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_write::writes_reject_bad_targets_and_meter_failures",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 12,
+        "passed": 12,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "build": "built: build/browniec.exe (x86_64-windows-msvc, release, lock verified)",
+      "artifact": "build/m2-array-copy-source/browniec-release.exe",
+      "sha256": "99c397496faa012d8b348d64380d0518e9a3a887fb82525b9ddd0dcef7562bbd",
+      "cliCases": 67,
+      "writeCliCases": 61,
+      "copyCliCases": 58,
+      "sourceCliReceiptSha256": "dd94400c845b4d9df07f810296e231fb9c9a2e3cf1590a3d476533392a6d2e09",
+      "writeCliReceiptSha256": "5d4298d62ae74f5ee28d7d65ee68910804b4cf6d9686c245b3b8948911a8cf46",
+      "copy-sourceCliReceiptSha256": "7999fbb2e9faab18de34b48f464c432c45f1ba6373ece96735438a482642d004"
+    }
+  ],
+  "allocatorTests": [],
+  "sourceSha256": [
+    {
+      "path": "fairy.lock",
+      "sha256": "8a27a0666d98da945e537c16e0f6a1ec31149ec5baf6c2274c9c6bceebf44b5d"
+    },
+    {
+      "path": "fairy.toml",
+      "sha256": "f5254ba793d9012470c697e8657688a4ea5465c138fba6d748707d5bfa4b31fb"
+    },
+    {
+      "path": "src/arithmetic.fy",
+      "sha256": "8192e6ba97498d059b0505307bc2bf84ac58d9722dc5f597587f8ae81a1081d3"
+    },
+    {
+      "path": "src/array_layout.fy",
+      "sha256": "d3497dfb6bb7e9ac8ceece4ae88a2274b6b40b49e3c5fecfc509179c03c91cdd"
+    },
+    {
+      "path": "src/array_meta.fy",
+      "sha256": "d1a07319dc2bb7eb95298e3920eaec63c1a4c1390a00c5469528a77e97612894"
+    },
+    {
+      "path": "src/array_owners.fy",
+      "sha256": "f5ff6f408d97ea01f8162630028acb2c053a47a27ed138d24977029db5d6a021"
+    },
+    {
+      "path": "src/array_source.fy",
+      "sha256": "19b2d3587e3fe68502f70044bb4bf04ea1f23e1568e400acc14a5b33f38a8ebf"
+    },
+    {
+      "path": "src/array_storage.fy",
+      "sha256": "00808c116e0fb86ce063d7fd4cc9d1f8fd29f19b277449e59e3569491a3ee534"
+    },
+    {
+      "path": "src/array_verifier.fy",
+      "sha256": "0e8f9f4e6dfec70c993f765cd0a4bfb7d4cbc2b5850cf937efc8be18ecebe6c7"
+    },
+    {
+      "path": "src/array_vm.fy",
+      "sha256": "1eecdd79484c8c0a45fa0801357bc332bf8de5f0d7c0b96c22ca4a755957c622"
+    },
+    {
+      "path": "src/bits.fy",
+      "sha256": "0b030757624a8dbaea9475f90d757aeff78b9154a121af7a4d9ebd80042db1a0"
+    },
+    {
+      "path": "src/casts.fy",
+      "sha256": "59da4a4ecef63833cc383495390e150b964bf41b353c4b150dcacb6be66caba6"
+    },
+    {
+      "path": "src/cells.fy",
+      "sha256": "71b82add3e95b86a1b7bcb88c3f97f6ae38bae0ac3ec8b1a2de925b10a64e433"
+    },
+    {
+      "path": "src/cli_input.fy",
+      "sha256": "ec91de62e6b5147d117d6fe0366ebcf617b556c074bf1dd91cb10188f96507ba"
+    },
+    {
+      "path": "src/compiler.fy",
+      "sha256": "3698a3ebeeb561098d8973e73fb81d6b393902f0cacfcf46971fa92aa5032400"
+    },
+    {
+      "path": "src/errors.fy",
+      "sha256": "e8070ef5c6380460dacb579c33f2e180b9e683286c8cb0827e30d82a581a4646"
+    },
+    {
+      "path": "src/functions.fy",
+      "sha256": "59195b4a404b1addd10c913a7ad4d046343ba37c0d1e5be9eeea2bf1ee97363e"
+    },
+    {
+      "path": "src/ir.fy",
+      "sha256": "ad218769c931945b4aefee7953b19503dd60c585f570e13e1f75f967cf4e829f"
+    },
+    {
+      "path": "src/lexer.fy",
+      "sha256": "0a64c45b3a3512ada4610c244ce874d306e417cde0fce4cd99a419048002861e"
+    },
+    {
+      "path": "src/locals.fy",
+      "sha256": "cb0cf9ec5b3d63f85b115f54b3ceb669c2f88567026bdf656059148aec333e88"
+    },
+    {
+      "path": "src/loops.fy",
+      "sha256": "8034d028c94edae945be52a8f2788531f18dcfd64d394104678b1f6607f04425"
+    },
+    {
+      "path": "src/main.fy",
+      "sha256": "829e057993d692f925296ba4b853b510eac46138937bdb830e5bd94343e6a38a"
+    },
+    {
+      "path": "src/patterns.fy",
+      "sha256": "d9ba2ff9dba626968b7514c636a414932e50856c19b9d41d6825b4f91c9797aa"
+    },
+    {
+      "path": "src/propagation.fy",
+      "sha256": "7d0ebaee7b96545bc4f95e0ecd7a58fbda521301deb00c0deb136ada4159eb44"
+    },
+    {
+      "path": "src/render.fy",
+      "sha256": "d6ae1e6212767aa3bed55c0383bc2065128c4db49c398c39396e437387e62bba"
+    },
+    {
+      "path": "src/scalar_codec.fy",
+      "sha256": "c28ca5e5cdc38dee01d79489d8c5a709022a49001854af638258ec4536ad66f0"
+    },
+    {
+      "path": "src/shifts.fy",
+      "sha256": "510dc6a90591de165de424a377eb267917ea9973972b9b95656cc9c435675eeb"
+    },
+    {
+      "path": "src/tagged.fy",
+      "sha256": "67770f8ec8f3e35a2a6196cda87310844d37358f86f8b22eb81b49df1f65f1bf"
+    },
+    {
+      "path": "src/types.fy",
+      "sha256": "906f5ba160de53f60d23e344e141181f902f36de60a4060375bef97a2162be23"
+    },
+    {
+      "path": "src/verifier.fy",
+      "sha256": "b6875f72a18e7c20ff32eae621d78f0419ee36ca1e9e7077a498315cac4a3501"
+    },
+    {
+      "path": "src/vm.fy",
+      "sha256": "4ccba8bc2070a316413a27ea62cd3df019d412bf8bfdf7537be66cc618f161cd"
+    },
+    {
+      "path": "tests/m2/array_copy_source.fy",
+      "sha256": "191b21f98cb8b5154d93f358363a9dc4dc8858800897f8cd7e5740a0b7d89014"
+    },
+    {
+      "path": "tests/m2/array_source.fy",
+      "sha256": "27e8b1841d6f8b2bb95623b95b4647fd72f237b66177a5d584b5cbb2451efe89"
+    },
+    {
+      "path": "tests/m2/array_write.fy",
+      "sha256": "e7674c983ceeb7060358b053efe80a28493d3bb7ea8d7055b6ae946a0c2d646d"
+    },
+    {
+      "path": "tools/check-m2-array-copy-source.py",
+      "sha256": "0afc0a86cd1ebd2fd036052bac456d9c5f12582d7f6a77abbe3083a725c91f59"
+    },
+    {
+      "path": "tools/check-m2-array-source.py",
+      "sha256": "94b9028eeb684dc5efdf736424981dacebf368190674121ad4f94b90dc2d23bd"
+    },
+    {
+      "path": "tools/check-m2-array-write.py",
+      "sha256": "4372166b590f94fb5656e90aad38a3aad3fae2aa691bc98f212c946eb2c7cc62"
+    },
+    {
+      "path": "tools/verify-m2-arrays.ps1",
+      "sha256": "49b3e251f211cc557149be2d3a477408a46e4411fa9857665163b482040311b6"
+    }
+  ],
+  "artifacts": "Tool-managed temporary native test images; source mode also retains hashed native CLI binaries.",
+  "limitations": [
+    "Entry-function arrays only; scalar functions cannot receive or return arrays.",
+    "Copy mode admits new outer-main array bindings from exact-type/length bare sources; reassignment and borrows remain unavailable.",
+    "Each receipt establishes only the selected slice, not later VM or delivery gates.",
+    "No isolation, DLL, clean-machine or performance claim."
+  ],
+  "foundationReuse": {
+    "m0Inputs": 18,
+    "unchangedBackendInputs": 28,
+    "compilerIdentity": "unchanged",
+    "priorEvidence": "docs/evidence/m2-array-write-windows-20261024.json",
+    "fixtureEvidence": "docs/evidence/m2-array-source-windows-20261024.json"
+  },
+  "commands": [
+    "pwsh -NoProfile -File tools/verify-m2-arrays.ps1 -Slice copy",
+    "python -B tools/record-m2-array-write-evidence.py --slice copy",
+    "git diff --check"
+  ],
+  "documentationChecks": {
+    "files": 88,
+    "relativeLinks": 492,
+    "diffCheck": "passed"
+  },
+  "baselineCommit": "7a852ec2e6a9da69536ebf45e30255343362cf95",
+  "evidenceRecorderSha256": "59632cc66e6f723425b02b92ea73e5d2a409ad9df7172f2ca7aa3efa04dad83b",
+  "skipped": [
+    {
+      "check": "M0 and private array IR/VM native reruns",
+      "reason": "Named compiler, backend and fixture inputs unchanged."
+    },
+    {
+      "check": "Full 81-group scalar native rerun",
+      "reason": "Scalar CLI regression is pending; this receipt establishes focused verification only."
+    },
+    {
+      "check": "Instrumented allocator, Linux, isolation, DLL, performance",
+      "reason": "Not executed in this frontend increment."
+    }
+  ]
+}
