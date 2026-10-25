@@ -12,6 +12,7 @@ import propagation as propagation;
 import casts as casts;
 import array_source as arrays;
 import array_call_source as array_calls;
+import array_result_source as array_results;
 import std::text as text;
 
 fn u8 precedence(u8 kind) {
@@ -112,31 +113,7 @@ fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s,
             if (index != 64) { return .err(errors::make(3, at)); }
             let usize target = functions::find(source, signatures, begin, end);
             if (target == 16) { return .err(errors::make(3, at)); }
-            let usize open = lexer::next(source, s)?;
-            var usize[8] arguments = [0; 8];
-            var locals::Table names = locals::snapshot(table);
-            var usize arity = 0;
-            while (s.kind != 41) {
-                if (arity >= 8) { return .err(errors::make(4, s.begin)); }
-                let u8 argument_type=if(arity<signatures.arities[target]) {signatures.param_types[target*8+arity]} else {0};
-                let usize length=if(arity<signatures.arities[target]){signatures.param_lengths[target*8+arity]}else{0};
-                if(length!=0) {
-                    arguments[arity]=array_calls::capture(source,s,p,ref mut names,argument_type,length)?;
-                } else {
-                    arguments[arity] = expression(source,s,p,ref names,signatures,1,depth + 1,argument_type,result_type,structure,loop_state)?;
-                    if (arity >= signatures.arities[target] || p.types[arguments[arity]] != signatures.param_types[target * 8 + arity]) { return .err(errors::make(3, at)); }
-                }
-                arity += 1;
-                if (s.kind == 41) { break; }
-                let usize comma = lexer::punctuation(source, s, 44)?;
-                if (s.kind == 41) { return .err(errors::make(2, s.begin)); }
-            }
-            if (arity != signatures.arities[target]) { return .err(errors::make(3, at)); }
-            let usize close = lexer::punctuation(source, s, 41)?;
-            let ref usize[] view = ref arguments;
-            let usize called=ir::call(p, target, view[..arity], at)?;
-            let usize dropped=arrays::release_from(ref names,p,table.count,at)?;
-            return .ok(called);
+            return call_value(source,s,p,table,signatures,target,16,at,depth,result_type,structure,loop_state);
         }
         if (index == 64) { return .err(errors::make(3, at)); }
         let usize register = table.registers[index];
@@ -165,6 +142,37 @@ fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s,
         return .ok(result);
     }
     return .err(errors::make(2, s.begin));
+}
+// Scalar and array-result calls share argument evaluation and capture cleanup.
+// A destination below 16 is a dead array site; 16 denotes a scalar result.
+fn Result<usize,errors::Error> call_value(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
+    ref locals::Table table,ref functions::Table signatures,usize target,usize destination,usize at,
+    usize depth,u8 result_type,usize structure,ref mut loops::State loop_state) {
+    if(depth>32) {return .err(errors::make(4,at));}
+    if(destination==16 && signatures.return_lengths[target]!=0) {return .err(errors::make(3,at));}
+    let usize open=lexer::punctuation(source,s,40)?;
+    var usize[8] arguments=[0;8];var locals::Table names=locals::snapshot(table);var usize arity=0;
+    while(s.kind!=41) {
+        if(arity>=8) {return .err(errors::make(4,s.begin));}
+        let u8 tag=if(arity<signatures.arities[target]){signatures.param_types[target*8+arity]}else{0};
+        let usize length=if(arity<signatures.arities[target]){signatures.param_lengths[target*8+arity]}else{0};
+        if(length!=0) {arguments[arity]=array_calls::capture(source,s,p,ref mut names,tag,length)?;}
+        else {
+            arguments[arity]=expression(source,s,p,ref names,signatures,1,depth+1,tag,result_type,structure,loop_state)?;
+            if(arity>=signatures.arities[target] || p.types[arguments[arity]]!=tag) {return .err(errors::make(3,at));}
+        }
+        arity+=1;
+        if(s.kind==41) {break;}
+        let usize comma=lexer::punctuation(source,s,44)?;
+        if(s.kind==41) {return .err(errors::make(2,s.begin));}
+    }
+    if(arity!=signatures.arities[target]) {return .err(errors::make(3,at));}
+    let usize close=lexer::punctuation(source,s,41)?;
+    let ref usize[] view=ref arguments;
+    let usize called=if(destination<16){ir::array_call(p,target,destination,view[..arity],at)?}
+        else{ir::call(p,target,view[..arity],at)?};
+    let usize dropped=arrays::release_from(ref names,p,table.count,at)?;
+    return .ok(if(destination<16){128+destination}else{called});
 }
 // Postfix propagation binds before unary and binary operators. The operand
 // parser recurses through primary for unary operators, preserving that order.
@@ -243,6 +251,18 @@ fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State 
         let usize equals = lexer::punctuation(source, s, 61)?;
         if (length != 0 && s.kind == 2) {
             let usize source_index = locals::find(source, table, s.begin, s.end);
+            var lexer::State look=lexer::snapshot(s);
+            let usize advance=lexer::next(source,ref mut look)?;
+            if(look.kind==40) {
+                if(source_index!=64) {return .err(errors::make(3,s.begin));}
+                let usize at=s.begin;
+                let usize target=functions::find(source,signatures,s.begin,s.end);
+                let usize id=array_results::destination(signatures,target,tag,length,mutable,p,table.function,at)?;
+                let usize name=lexer::next(source,s)?;
+                let usize value=call_value(source,s,p,table,signatures,target,id,at,expr_depth,result_type,structure,loop_state)?;
+                let usize finished=lexer::punctuation(source,s,terminator)?;
+                return locals::declare(table,begin,end,value,mutable);
+            }
             if (!arrays::binding(table, source_index)) { return .err(errors::make(3, s.begin)); }
             let usize source_id = table.registers[source_index] - 128;
             let usize next = lexer::next(source, s)?;
@@ -558,6 +578,10 @@ fn Result<bool, errors::Error> control(ref u8[] source, ref mut lexer::State s, 
     }
     if (word_is(source, s, b"return")) {
         let usize keyword = lexer::next(source, s)?;
+        if(p.array_results[table.function]!=0) {
+            let usize returned=array_results::returned(source,s,p,table,at)?;
+            return .ok(true);
+        }
         let usize value = expression(source,s,p,table,signatures,1,expr_depth,result_type,result_type,depth,loop_state)?;
         if (p.types[value] != result_type) { return .err(errors::make(3, at)); }
         let usize end = lexer::punctuation(source, s, 59)?;
@@ -637,20 +661,12 @@ pub fn Result<ir::Program, errors::Error> compile(ref u8[] source) {
         case .ok(value): { value } case .err(_): { return .err(errors::make(1, 0)); }
     };
     var functions::Table signatures = functions::scan(source)?;
-    // Result shape metadata must never be mistaken for an executable scalar.
-    // Reject every array result before lowering any body or parameter catalog.
-    var usize result = 0;
-    while (result < signatures.count) {
-        if (signatures.return_lengths[result] != 0) {
-            return .err(errors::make(3, signatures.begins[result]));
-        }
-        result += 1;
-    }
     var ir::Program p = ir::empty();
     p.function_count = signatures.count;
     p.entry = signatures.entry;
     p.return_types = signatures.return_types;
     let usize parameters=array_calls::prepare(ref mut signatures,ref mut p)?;
+    let usize results=array_results::prepare(ref signatures,ref mut p)?;
     var usize f = 0;
     while (f < signatures.count) {
         let usize emitted = body(source, ref signatures, f, ref mut p)?;

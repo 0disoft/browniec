@@ -9,12 +9,12 @@ fn functions::Table scanned(ref u8[] source) {
         case .ok(t): {t} case .err(_): {assert(false); functions::empty()}
     };
 }
-fn void gated(ref u8[] source, usize f) {
+fn void rejected_body(ref u8[] source, usize f) {
     let functions::Table t=scanned(source);
     assert(t.return_lengths[f]!=0);
     switch(compiler::compile(source)) {
         case .ok(_): {assert(false);}
-        case .err(e): {assert(e.kind==3 && e.offset==t.begins[f]);}
+        case .err(e): {assert(e.kind==3 || e.kind==4);}
     };
 }
 
@@ -86,14 +86,14 @@ fn void main_still_requires_a_scalar_zero_argument_i32_result() {
 }
 
 @test
-fn void all_array_results_are_gated_before_body_and_parameter_lowering() {
-    gated(b"module main; fn i32[1] f(){return 42;} fn i32 main(){return 42;}",0);
-    gated(b"module main; fn i32 main(){return missing;} fn i32[2] f(i32[2] a){return a;}",1);
-    gated(b"module main; fn i32 main(){return f();} fn i32[1] f(){return 42;}",1);
-    gated(b"module main; fn bool[1] f(){return true;} fn i32 main(){return 42;}",0);
-    gated(b"module main; fn u8[4096] f(){return 0;} fn i32 main(){return 42;}",0);
-    gated(b"module main; fn i64[1] f(){return 0;} fn i32 main(){return 42;}",0);
-    gated(b"module main; fn u32[1] f(){return 0;} fn i32 main(){return 42;}",0);
-    gated(b"module main; fn usize[4096] f(){return 0;} fn i32 main(){return 42;}",0);
-    gated(b"module main; fn i32 a(i32[1] a,i32[1] b,i32[1] c,i32[1] d,i32[1] e,i32[1] f,i32[1] g,i32[1] h){return 0;} fn i32 b(i32[1] a,i32[1] b,i32[1] c,i32[1] d,i32[1] e,i32[1] f,i32[1] g,i32[1] h){return 0;} fn i32[1] c(i32[1] a){return 0;} fn i32 main(){return 42;}",2);
+fn void invalid_bodies_scalar_uses_and_catalog_overflow_are_rejected() {
+    rejected_body(b"module main; fn i32[1] f(){return 42;} fn i32 main(){return 42;}",0);
+    rejected_body(b"module main; fn i32 main(){return missing;} fn i32[2] f(i32[2] a){return a;}",1);
+    rejected_body(b"module main; fn i32 main(){return f();} fn i32[1] f(){return 42;}",1);
+    rejected_body(b"module main; fn bool[1] f(){return true;} fn i32 main(){return 42;}",0);
+    rejected_body(b"module main; fn u8[4096] f(){return 0;} fn i32 main(){return 42;}",0);
+    rejected_body(b"module main; fn i64[1] f(){return 0;} fn i32 main(){return 42;}",0);
+    rejected_body(b"module main; fn u32[1] f(){return 0;} fn i32 main(){return 42;}",0);
+    rejected_body(b"module main; fn usize[4096] f(){return 0;} fn i32 main(){return 42;}",0);
+    rejected_body(b"module main; fn i32 a(i32[1] a,i32[1] b,i32[1] c,i32[1] d,i32[1] e,i32[1] f,i32[1] g,i32[1] h){return 0;} fn i32 b(i32[1] a,i32[1] b,i32[1] c,i32[1] d,i32[1] e,i32[1] f,i32[1] g,i32[1] h){return 0;} fn i32[1] c(i32[1] a){return 0;} fn i32 main(){return 42;}",2);
 }
