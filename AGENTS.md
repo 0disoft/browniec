@@ -31,8 +31,9 @@ own the affected contract. Broader scaffold procedures are optional.
   right; immutable inputs are stable snapshots and mutable inputs get anonymous
   captures with normal/return/propagation/loop-transfer cleanup.
   Source array results support bare-name returns and exact-shape let/var call
-  initializers, direct return calls and repeated return literals. Aggregate scalar expressions and assignment
-  RHS, for-header result calls, borrows, slices and wrapper elements remain unsupported.
+  initializers, direct return calls, repeated return literals and call-result
+  assignment into var arrays. General aggregate scalar expressions, literal
+  assignment RHS, for-header arrays, borrows, slices and wrapper elements remain unsupported.
   Result signatures now retain exact scalar-array lengths in 16 bounded slots;
   its original blanket result gate is removed by source lowering. Result anchors
   reuse an exact-shape parameter site or reserve one dead site before body lowering.
@@ -66,6 +67,12 @@ own the affected contract. Broader scaffold procedures are optional.
   passes 16 native groups and 628 CLI cases per development/release profile,
   including 119 new literal CLI cases. Earlier receipts are historical for changed
   compiler, helper, source fixture and aggregate harness inputs.
+  Call-result assignment keeps the old destination live, receives a result in
+  an anonymous site, copies it into existing storage and drops the temporary.
+  It preserves destination owner metadata and normal argument effects; result,
+  snapshots and parameter copies still contribute to peak quota use. Focused
+  verification passes 15 native groups and 609 CLI cases per profile, including
+  115 new CLI cases. A corrected Fuel fixture received a full native rerun.
   Previous private-result verification passed 43 native groups and 2,571 CLI cases
   per development/release profile, including parameter independence and deferred
   callee holes. Native development combined 41 plus two disjoint groups; release

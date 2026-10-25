@@ -543,6 +543,20 @@ quotas have direct evidence. Other array/scalar CLI matrices, full native suites
 M0, allocator instrumentation, Linux, isolation, DLL, clean-machine packaging and
 performance remain skipped. The aggregate harness was syntax-checked, not invoked.
 
+The [call-assignment increment](docs/engineering/m2-array-call-assignment.md) enables
+direct function-call RHS for existing mutable arrays. A temporary receives the
+result, then AASSIGN preserves destination storage and ADROP releases the temporary.
+The [focused receipt](docs/evidence/m2-array-call-assignment-windows-20261025.json)
+records 15 native groups (four new, three assignment, eight source-result) and
+609 CLI cases (115 new, 59 assignment, 119 source-result, 117 direct-return,
+119 literal-return, 80 parameter) per development/release profile. The initial
+Fuel fixture was corrected and all 15 native groups rerun. Exact Fuel, quota caps,
+capture order, self-input, early exits and missing-drop rejection have evidence.
+The expanded aggregate harness is syntax-checked, not invoked. Unchanged backend
+inputs are compared. Full native suites, other array/scalar CLI matrices, M0,
+allocator instrumentation, Linux, isolation, DLL, clean-machine packaging and
+performance remain skipped.
+
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker
 publication barrier. Compile untrusted source only inside the restricted worker.

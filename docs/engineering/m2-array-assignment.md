@@ -2,7 +2,9 @@
 
 The later [private frame foundation](m2-array-frames.md) extends function ownership
 and VM token storage. This page's receipt is historical for the changed IR,
-verifier, and VM inputs; the source assignment contract remains unchanged.
+verifier, and VM inputs; the bare-name copy contract remains unchanged. The later
+[call-result assignment increment](m2-array-call-assignment.md) extends the RHS
+grammar while preserving the existing destination's owner and extent.
 
 - Status: implemented and focused-harness verified in development and release
 - Evidence: [Windows assignment receipt](../evidence/m2-array-assignment-windows-20261025.json)

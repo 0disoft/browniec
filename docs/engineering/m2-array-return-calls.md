@@ -49,6 +49,6 @@ Linux, isolation, DLL, clean-machine packaging and performance are not rerun.
 
 [Repeated return literals](m2-array-return-literals.md) have subsequent focused evidence.
 Parenthesized/indexed results, aggregate scalar expressions,
-array-result call arguments, assignment RHS, for headers, slices, borrows and
+array-result call arguments, literal assignment RHS, for headers, slices, borrows and
 wrapper elements remain unsupported. General aggregate expressions and frame
 elision have no new contract in this increment.

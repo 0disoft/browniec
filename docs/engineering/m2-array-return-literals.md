@@ -52,5 +52,5 @@ The expanded `result-source` aggregate harness was syntax-checked, not invoked.
 Unchanged backend inputs are compared with the prior receipt. Full native suites,
 other array/scalar CLI matrices, M0, allocator instrumentation, Linux, isolation,
 DLL, clean-machine packaging and performance checks are not rerun. Parenthesized
-or indexed array returns, general aggregate expressions/arguments, assignment RHS,
+or indexed array returns, general aggregate expressions/arguments, literal assignment RHS,
 for-header arrays, slices, borrows and wrapper elements remain unsupported.

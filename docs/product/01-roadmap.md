@@ -249,8 +249,11 @@ Subsequent [source returns](../engineering/m2-array-result-source.md),
 [direct calls](../engineering/m2-array-return-calls.md) and
 [repeated return literals](../engineering/m2-array-return-literals.md) connect
 exact-shape arrays to typed call initializers and shared return cleanup. The
-latest focused Windows receipt records 16 native groups and 628 CLI cases per
-development/release profile. Plain structs, borrows, Buffer, I/O, isolation and
+literal-return Windows receipt records 16 native groups and 628 CLI cases per
+development/release profile. [Call-result assignment](../engineering/m2-array-call-assignment.md)
+subsequently adds copies into existing mutable storage, verified by 15 native
+groups and 609 CLI cases per profile in its focused selection.
+Plain structs, borrows, Buffer, I/O, isolation and
 the remaining milestone evidence below are still open.
 
 Goal: connect arrays, plain structs, borrows, Buffer, input,
