@@ -108,8 +108,12 @@ own the affected contract. Broader scaffold procedures are optional.
   scalar record, initializes it in caller-backed arena bytes, and reads or writes indexed
   fields. A [private copy/assignment slice](docs/engineering/m2-struct-copy.md) appends
   independent scalar records and overwrites existing records with normalized snapshots,
-  including self and partial overlap. Nested records are still planned but rejected for
-  storage. Source structs, ownership, IR/VM, Fuel, and allocator integration remain unimplemented.
+  including self and partial overlap. A [private nested-storage slice](docs/engineering/m2-struct-nested-storage.md)
+  initializes selected acyclic records from depth-first scalar leaf inputs and reads or
+  writes scalar field paths in the shared arena. Selected roots are capped at 128 bytes;
+  the full catalog is replanned at each boundary, and unselected valid records may be
+  larger. Nested copy/assignment, source structs, ownership, IR/VM, Fuel, and allocator
+  integration remain unimplemented. Its 18-group Windows receipt passed development and release.
   The copy slice's Windows 28-group receipt passed development and release after
   moving snapshot staging into caller-owned scratch. Earlier planner and storage
   receipts are historical for changed inputs.

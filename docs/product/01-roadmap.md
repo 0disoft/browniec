@@ -1,7 +1,7 @@
 # Roadmap
 
-- Status: Accepted delivery sequence; M0 verified; named M1 slices through unsigned have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified, 2026-10-23; private entry-array IR/VM verified by its native harness, 2026-10-24; source-array reads, writes, copy initializers, parameters, results, and assignment forms implemented; in-place repeated-literal assignment verified; private scalar struct layout and storage implemented and verified; private scalar struct copy/assignment implemented and verified
-- Current progress: M1 scalar checkpoint verified; M2 function-owned scalar arrays cover lexical storage, copy, length, helper locals, by-value parameters, source results, direct returns, repeated return literals, call-result assignment, and in-place repeated-literal assignment; private scalar struct layout, storage, and copy/assignment exist; source structs, source-level record copies, borrows, Buffer, and text remain open; full-profile conformance incomplete; M3-M5 not started
+- Status: Accepted delivery sequence; M0 verified; named M1 slices through unsigned have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified, 2026-10-23; private entry-array IR/VM verified by its native harness, 2026-10-24; source-array reads, writes, copy initializers, parameters, results, and assignment forms implemented; in-place repeated-literal assignment verified; private scalar struct layout and storage implemented and verified; private scalar struct copy/assignment implemented and verified; private nested struct storage implemented and verified
+- Current progress: M1 scalar checkpoint verified; M2 function-owned scalar arrays cover lexical storage, copy, length, helper locals, by-value parameters, source results, direct returns, repeated return literals, call-result assignment, and in-place repeated-literal assignment; private scalar struct layout, storage, and copy/assignment exist; private nested struct storage is verified; source structs, source-level record copies, borrows, Buffer, and text remain open; full-profile conformance incomplete; M3-M5 not started
 
 This roadmap orders learning and evidence. It is not a release promise. M0 has a
 native harness and recorded evidence. The scalar CLI/VM now exist; the worker
@@ -283,14 +283,18 @@ It adds no source syntax, storage, IR, VM, or allocation. Both development and
 release passed its 14-group Windows receipt. The [scalar struct-storage
 slice](../engineering/m2-struct-storage.md) then prepares a selected scalar
 record, initializes all fields in caller-backed arena bytes, and reads or writes
-one indexed field; nested records remain planned but cannot be stored. Both
+one indexed field; that slice rejects nested roots. Both
 profiles passed its 20-group Windows receipt. The [private copy/assignment
 slice](../engineering/m2-struct-copy.md) appends independent scalar records and
 overwrites existing storage, including self and partial overlap, with normalized
 padding and no extra extent for assignment. Development and release each passed
 its fresh 28-group Windows receipt after moving staging into caller-owned
-scratch. Full source structs,
-nested record storage, wrappers, borrows, and Buffer remain open.
+scratch. The [private nested-storage slice](../engineering/m2-struct-nested-storage.md)
+initializes selected acyclic records from depth-first scalar leaves and reads or
+writes scalar field paths; selected roots stay within 128 bytes while the full
+catalog is replanned at each boundary and unselected valid records may be larger.
+Its 18-group Windows receipt passed development and release. Full source structs, nested
+record copies, wrappers, borrows, and Buffer remain open.
 
 Goal: connect arrays, plain structs, borrows, Buffer, input,
 output, and UTF-8.

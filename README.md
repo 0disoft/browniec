@@ -68,10 +68,13 @@ acyclic record metadata, and a [scalar-only storage slice](docs/engineering/m2-s
 initializes and accesses selected scalar records in caller-backed arena bytes.
 A [private copy/assignment slice](docs/engineering/m2-struct-copy.md) appends
 independent scalar records and overwrites existing storage, including self and
-partial overlap. Source structs, nested record storage, and struct ownership, IR,
-and VM remain later work. The copy receipt passes 28 groups per profile in
-development and release. The planner's earlier 14-group and storage's
-20-group receipts remain historical for changed inputs.
+partial overlap. A [private nested-storage slice](docs/engineering/m2-struct-nested-storage.md)
+initializes selected acyclic records from depth-first scalar leaves and reads or
+writes scalar field paths; selected roots are capped at 128 bytes while
+unselected valid records may be larger. Source structs, nested record copies,
+and struct ownership, IR, and VM remain later work. Its 18-group Windows receipt passed development and release. The copy receipt passes 28 groups per profile in development and
+release. The planner's earlier 14-group and storage's 20-group receipts remain
+historical for changed inputs.
 The [array parameter signature foundation](docs/engineering/m2-array-signatures.md)
 records element types and exact lengths; the subsequent source increment removes
 its original compilation gate.
@@ -215,6 +218,7 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 private struct layout](docs/engineering/m2-struct-layout.md): verified planner-only record catalog, declaration-order offsets, dependency bounds, and Windows receipt
 - [M2 private struct storage](docs/engineering/m2-struct-storage.md): scalar-only record preparation, complete initialization, and indexed field access in shared caller-backed arena bytes
 - [M2 private struct copy and assignment](docs/engineering/m2-struct-copy.md): scalar-record snapshots, padding normalization, old-plus-new quota, and overlap-safe assignment
+- [M2 private nested struct storage](docs/engineering/m2-struct-nested-storage.md): iterative depth-first initialization, scalar field paths, selected-root quota, and shared arena staging
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
 - [Design baseline](docs/design-baseline.md): source provenance, evidence, and findings

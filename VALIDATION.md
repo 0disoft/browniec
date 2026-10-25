@@ -615,6 +615,18 @@ leaves every byte and the cursor unchanged. This covers private primitive
 behavior only: no source structs, nested record storage, ownership, IR, VM, Fuel,
 or allocator integration.
 
+The [private nested-storage contract](docs/engineering/m2-struct-nested-storage.md)
+adds initialization of selected acyclic records from depth-first scalar leaf
+inputs and scalar field-path reads/writes in the shared caller-backed arena. The
+`--nested` selection passed 18 native groups per profile: six
+nested-storage, eight struct-layout, and four scalar-codec groups. Development and release both passed. Every public boundary
+replans the full catalog and checks arena state; field access additionally checks
+root alignment and the complete published root extent.
+Selected roots are capped at 128 bytes, use at most 128 leaves and depth 16, and
+are traversed iteratively into initialization-owned zeroed 128-byte scratch before
+backing or cursor publication. Valid unselected records may be larger. Nested
+copy/assignment, ownership, IR, VM, Fuel, and source struct grammar remain open.
+
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker
 publication barrier. Compile untrusted source only inside the restricted worker.
