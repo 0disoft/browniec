@@ -10,6 +10,8 @@ pub struct Owner {
     u8 element; usize length;
 }
 pub struct Table { Owner[16] slots; usize[16] order; usize depth; storage::Arena arena; }
+// Dense array-argument results, in input order. Scalar arguments are not included.
+pub struct Copies { Token[8] tokens; usize count; }
 pub enum Error { Token; Owners; State; Type; Length; Metadata; Overflow; Quota; Bounds; Alignment; Value; }
 
 pub fn Table empty(usize limit) {
@@ -147,6 +149,67 @@ pub fn Result<Token, Error> copy(Token source, ref mut u8[] bytes, ref mut Table
 }
 fn usize next_generation(usize generation) {
     return if (generation == 18446744073709551615) { 0 } else { generation + 1 };
+}
+
+// Private call-storage foundation. All fallible work precedes payload mutation;
+// only a complete batch publishes owners. Resolve sources against the original
+// table, so no argument can refer to another argument's provisional destination.
+pub fn Result<Copies, Error> copy_arguments(ref Token[] sources, ref layouts::Array[] shapes,
+    ref mut u8[] bytes, ref mut Table table) {
+    if (sources.len > 8 || sources.len != shapes.len) { return .err(.Metadata); }
+    if (!valid(table, bytes.len)) { return .err(.State); }
+    var Table planned = Table { .slots = table.slots, .order = table.order,
+        .depth = table.depth, .arena = table.arena };
+    var Copies result = Copies { .tokens = [Token { .slot = 0, .generation = 0 }; 8], .count = sources.len };
+    var usize[8] origins = [0; 8];
+    var usize[8] targets = [0; 8];
+    var usize[8] marks = [0; 8];
+    var usize[8] sizes = [0; 8];
+    var usize i = 0;
+    while (i < sources.len) {
+        let Owner owner = resolve(table, sources[i], bytes.len)?;
+        let layouts::Array shape = shapes[i];
+        if (owner.element != shape.element) { return .err(.Type); }
+        if (owner.length != shape.length) { return .err(.Length); }
+        let usize slot = free_slot(ref planned)?;
+        let usize mark = planned.arena.used;
+        let layouts::Reservation plan = switch (layouts::reserve(ref shape, mark, planned.arena.limit)) {
+            case .ok(value): { value }
+            case .err(e): { return .err(switch (e) {
+                case .Type: { .Type } case .Length: { .Length } case .Metadata: { .Metadata }
+                case .Overflow: { .Overflow } case .Quota: { .Quota } case .Bounds: { .Bounds }
+                case .Alignment: { .Alignment }
+            }); }
+        };
+        if (owner.element == 2) {
+            var usize at = owner.base;
+            while (at < owner.end) {
+                if (bytes[at] > 1) { return .err(.Value); }
+                at += 1;
+            }
+        }
+        origins[i] = owner.base; targets[i] = plan.offset;
+        marks[i] = mark; sizes[i] = shape.bytes;
+        planned.arena.used = plan.end;
+        result.tokens[i] = publish(ref mut planned, slot, ref shape, mark, plan.offset);
+        i += 1;
+    }
+    // Reservations are disjoint and lie beyond every original source extent.
+    // No validation, allocation, callback, or recoverable failure follows here.
+    i = 0;
+    while (i < sources.len) {
+        var usize at = marks[i];
+        while (at < targets[i]) { bytes[at] = 0; at += 1; }
+        var usize byte = 0;
+        while (byte < sizes[i]) {
+            bytes[targets[i] + byte] = bytes[origins[i] + byte];
+            byte += 1;
+        }
+        i += 1;
+    }
+    table.slots = planned.slots; table.order = planned.order;
+    table.depth = planned.depth; table.arena = planned.arena;
+    return .ok(result);
 }
 
 // Replace an existing extent. Resolve both tokens and validate the full bool

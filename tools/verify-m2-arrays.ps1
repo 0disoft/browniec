@@ -1,5 +1,5 @@
 param(
-  [ValidateSet('ir', 'vm', 'source', 'write', 'copy', 'length', 'scopes', 'assignment', 'frames', 'helpers')][string]$Slice = 'ir',
+  [ValidateSet('ir', 'vm', 'source', 'write', 'copy', 'length', 'scopes', 'assignment', 'frames', 'helpers', 'arguments')][string]$Slice = 'ir',
   [string]$Compiler = (Join-Path $PSScriptRoot '../build/toolchain/fairyc.exe')
 )
 $ErrorActionPreference = 'Stop'
@@ -32,6 +32,12 @@ if ($Slice -eq 'helpers') {
   $files = @('tests/m2/array_source.fy', 'tests/propagation.fy', 'tests/m2/array_helpers.fy')
   $expected = 16
   $sourceMode = $true
+}
+if ($Slice -eq 'arguments') {
+  $files = @('tests/m2/array_owners.fy', 'tests/m2/array_copy.fy',
+    'tests/m2/array_assign_storage.fy', 'tests/m2/array_argument_copies.fy')
+  $expected = 18
+  $sourceMode = $false
 }
 # Later slices retain the full assignment CLI matrix.
 $assignmentMode = $Slice -in @('assignment', 'frames', 'helpers')
@@ -171,6 +177,13 @@ try {
       'Array parameters/results, wrapper element arrays, borrows, slices and for-header array operations remain unavailable.',
       'All functions share 16 static array sites, 16 live owners, 32 VM frames and one payload arena capped at 65536 bytes.',
       'No isolation, DLL, clean-machine or performance claim.')
+  }
+  if ($Slice -eq 'arguments') {
+    $receipt.limitations = @('Private atomic array-argument copy primitive only; no source, IR or VM CALL integration.',
+      'All argument shapes, source tokens, bool payloads, owner slots and combined extents are checked before mutation.',
+      'Argument evaluation/capture order, frame binding, immutable callee bindings and VM Fuel charges are not implemented.',
+      'Native owner/copy/assignment regressions executed; CLI, full scalar/private-array suites and M0 reruns skipped.',
+      'No allocator instrumentation, Linux, isolation, DLL, clean-machine or performance claim.')
   }
   $receipt | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $receiptPath -Encoding utf8NoBOM
   Write-Host "PASS: build/m2-array-$outputSlice/receipt.json"
