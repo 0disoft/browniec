@@ -1,7 +1,7 @@
 # Roadmap
 
 - Status: Accepted delivery sequence; M0 verified; named M1 slices through unsigned have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified, 2026-10-23; private entry-array IR/VM verified by its native harness, 2026-10-24; source-array reads, writes, copy initializers, parameters, results, and assignment forms implemented; in-place repeated-literal assignment verified
-- Current progress: M1 scalar checkpoint verified; M2 function-owned scalar arrays cover lexical storage, copy, length, helper locals, by-value parameters, source results, direct returns, repeated return literals, call-result assignment, and in-place repeated-literal assignment; structs, borrows, Buffer, and text remain open; full-profile conformance incomplete; M3-M5 not started
+- Current progress: M1 scalar checkpoint verified; M2 function-owned scalar arrays cover lexical storage, copy, length, helper locals, by-value parameters, source results, direct returns, repeated return literals, call-result assignment, and in-place repeated-literal assignment; source structs, record copies, borrows, Buffer, and text remain open; full-profile conformance incomplete; M3-M5 not started
 
 This roadmap orders learning and evidence. It is not a release promise. M0 has a
 native harness and recorded evidence. The scalar CLI/VM now exist; the worker
@@ -280,8 +280,12 @@ The private [struct-layout planner](../engineering/m2-struct-layout.md) covers
 0..32 acyclic records with 1..16 fields, declaration-order alignment, tail
 padding, shared and forward child resolution, and a 16-level structural limit.
 It adds no source syntax, storage, IR, VM, or allocation. Both development and
-release passed its 14-group Windows receipt. Full structs, wrappers, borrows,
-and Buffer remain open.
+release passed its 14-group Windows receipt. The [scalar struct-storage
+slice](../engineering/m2-struct-storage.md) then prepares a selected scalar
+record, initializes all fields in caller-backed arena bytes, and reads or writes
+one indexed field; nested records remain planned but cannot be stored. Both
+profiles passed its 20-group Windows receipt. Full structs, copies, wrappers,
+borrows, and Buffer remain open.
 
 Goal: connect arrays, plain structs, borrows, Buffer, input,
 output, and UTF-8.

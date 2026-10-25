@@ -6,9 +6,13 @@
 - Harness: [tools/verify-m2-struct-layout.py](../../tools/verify-m2-struct-layout.py).
 - Evidence: [Windows receipt](../evidence/m2-struct-layout-windows-20261026.json).
 
-This increment adds no source struct syntax, storage, codec, ownership, IR, VM,
-Fuel, CLI artifact, or allocator call. It plans record metadata for a future
-storage slice. M2 remains incomplete.
+The successor [scalar storage slice](m2-struct-storage.md) materializes one
+prepared scalar record in caller-backed arena bytes. Layout planning remains the
+only nested-record capability; selected nested storage returns `Type`.
+
+This increment adds no source struct syntax, codec, ownership, IR, VM, Fuel, CLI
+artifact, or allocator call. It plans record metadata for storage. M2 remains
+incomplete.
 
 ## Catalog contract
 
@@ -76,6 +80,6 @@ suites, native M1 suites, and M0 were not rerun. No new CLI artifact or source
 `.brc` example is added for unimplemented grammar. Isolation, DLL, clean-machine,
 performance, and allocation instrumentation remain skipped.
 
-Next: struct storage with complete initialization, copies, and field access; then
-IR, VM, and source integration. This planner does not establish wrapper budget
-coupling or complete M2 structs.
+Next: nested record storage, by-value copies, and owner, IR, VM, and source
+integration. This planner does not establish wrapper budget coupling or complete
+M2 structs.

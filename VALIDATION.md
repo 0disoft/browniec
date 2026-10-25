@@ -592,6 +592,14 @@ regression groups per profile (14 each), with development and release both passe
 This evidence covers private planning only: no source structs, storage, IR, VM,
 Fuel, allocation, CLI artifact, or wrapper budget coupling.
 
+The [private struct-storage contract](docs/engineering/m2-struct-storage.md) adds
+scalar-only record preparation, complete initialization, and indexed field access
+in the shared caller-backed arena. Its Windows receipt records 20 native groups per
+profile: eight storage groups, eight unchanged layout groups, and four unchanged
+scalar-codec groups. Development and release both passed. This covers private
+scalar storage only: no source structs, by-value copies, ownership, IR, VM, Fuel,
+or allocator integration.
+
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker
 publication barrier. Compile untrusted source only inside the restricted worker.
