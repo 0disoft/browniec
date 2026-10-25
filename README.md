@@ -52,8 +52,9 @@ separates function ownership and recursive VM array tokens. The
 arrays to scalar and shallow wrapper-returning helpers, including reverse cleanup
 on `?` failure returns. [Source array parameters](docs/engineering/m2-array-parameters.md)
 add immutable exact-shape arguments with left-to-right snapshots, forward/mutual
-calls, and cleanup of pending captures on normal and early exits. Array results,
-borrows, slices, structs, workers, and DLLs remain later work.
+calls, and cleanup of pending captures on normal and early exits. Named array results
+and typed call-result initializers are supported by the [source result increment](docs/engineering/m2-array-result-source.md).
+Borrows, slices, structs, workers, and DLLs remain later work.
 The [array parameter signature foundation](docs/engineering/m2-array-signatures.md)
 records element types and exact lengths; the subsequent source increment removes
 its original compilation gate.
@@ -63,12 +64,11 @@ preflights a complete batch of independent storage copies before mutation.
 the verifier and VM, with immutable exact-shape parameters and independent frame
 owners. The source parameter increment supplies argument capture and cleanup.
 The [array result signature foundation](docs/engineering/m2-array-result-signatures.md)
-records exact return shapes but rejects all array-result declarations with a
-type error before any body is lowered. Source array return execution remains unavailable.
+records exact return shapes; its original source gate is removed by the source result increment.
 The [private array-result increment](docs/engineering/m2-array-results.md)
 adds independent verification and owner transfer between VM frames. Returning
 the callee's sole live array copies no payload and needs no additional owner;
-source return lowering remains behind the gate.
+source return lowering now connects typed call initializers and bare-name returns to it.
 
 ```powershell
 ./build/toolchain/fairyc.exe build
@@ -188,7 +188,8 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 atomic array argument copies](docs/engineering/m2-array-arguments.md): exact-shape copy batches with no partial publication on failure
 - [M2 private array calls](docs/engineering/m2-array-calls.md): mixed parameter metadata, immutable caller snapshots, independent frame copies and metered CALLs
 - [M2 source array parameters](docs/engineering/m2-array-parameters.md): immutable exact-shape source parameters, left-to-right captures, forward/mutual calls and cleanup on early exits
-- [M2 array result signatures](docs/engineering/m2-array-result-signatures.md): exact return-shape metadata and an explicit compiler gate before execution support
+- [M2 array result signatures](docs/engineering/m2-array-result-signatures.md): exact return-shape metadata and the historical source gate
+- [M2 source array results](docs/engineering/m2-array-result-source.md): named returns, typed call initializers, capture cleanup and ownership transfer
 - [M2 private array results](docs/engineering/m2-array-results.md): verified result lifetimes, zero-copy owner transfer, recursive frames and prepaid return work
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
@@ -239,14 +240,18 @@ a comparison, not a rerun of their full native suites. The prior
 [result-signature receipt](docs/evidence/m2-array-result-signatures-windows-20261025.json)
 records 16 native groups and 2,242 CLI cases per profile (96 result-signature,
 80 parameter, 97 helper-local, 1,969 scalar) on both Windows builds. This covers
-metadata and honest rejection; source array return execution remains unavailable.
+metadata and honest rejection at that historical checkpoint.
 Thirty-one unchanged backend hashes match the parameter receipt, which remains
 historical for the changed frontend and fixture inputs. The current
 [private result receipt](docs/evidence/m2-array-results-windows-20261025.json)
 records 43 native groups and 2,571 CLI cases per development/release profile.
 It covers zero-copy owner transfer, recursive frame limits, caller argument
-independence, deferred-hole cleanup, and exact Fuel. Existing source results
-stay gated, and the prior signature receipt is historical for changed runtime
-inputs. No full-profile conformance,
+independence, deferred-hole cleanup, and exact Fuel. The subsequent
+[source result receipt](docs/evidence/m2-array-result-source-windows-20261025.json)
+records 26 native groups and 2,690 CLI cases per profile, including 119 new
+source-result cases. Development combines 18 unchanged groups from the first
+selection with eight passing source-result groups after a corrected mutual-call
+fixture; release selects all 26 together. Earlier receipts remain historical
+for changed inputs. No full-profile conformance,
 DLL ABI, Windows isolation,
 clean-machine packaging, or performance target is claimed.

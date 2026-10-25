@@ -2,11 +2,12 @@
 
 - Status: private result IR, independent verification, and VM transfer implemented and native-verified
 - Scope: exact-shape scalar arrays returned between verified VM frames
-- Source boundary: [result signature gate](m2-array-result-signatures.md) remains enabled
+- Source integration: [named returns and typed call initializers](m2-array-result-source.md)
 - Evidence: [Windows receipt](../evidence/m2-array-results-windows-20261025.json)
 
-This increment connects private array-return IR to the native VM. It does not
-enable source array-result programs or external bytecode loading. Caller and
+This increment connects private array-return IR to the native VM. The later
+source increment enables bounded array-result programs. External bytecode loading
+remains unavailable. Caller and
 callee values remain independent: returning a callee-owned value transfers its
 unique owner, while array parameter entry still makes the existing independent
 by-value copy.
@@ -70,7 +71,8 @@ argument copying, reads, writes, or drops.
 All functions still share 16 static array sites, 16 occupied owner descriptors,
 32 VM frames and an arena capped at 65,536 bytes. Existing eight-argument,
 128-register, 256-instruction, and 32-static-call-site limits remain in force.
-Source result lowering, borrows, slices, and wrapper-element arrays remain open.
+Named source returns and typed call initializers now have separate source evidence;
+borrows, slices, and wrapper-element arrays remain open.
 
 ## Verification
 

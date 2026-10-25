@@ -1,0 +1,13 @@
+module main;
+
+fn i32[2] make(i32 value) {
+    let i32[2] result = [value; 2];
+    return result;
+}
+
+fn i32 main() {
+    var i32[2] result = make(21);
+    result[0] = 20;
+    result[1] = 22;
+    return result[0] + result[1];
+}

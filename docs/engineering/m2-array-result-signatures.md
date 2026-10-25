@@ -1,6 +1,6 @@
 # M2 Array Result Signature Foundation
 
-- Status: signature metadata and compiler gate implemented; source array result execution unavailable
+- Status: signature metadata implemented; historical compiler gate superseded by [source lowering](m2-array-result-source.md)
 - Scope: exact scalar-array return shapes in the bounded function signature pass
 - Evidence: [Windows receipt](../evidence/m2-array-result-signatures-windows-20261025.json)
 
@@ -21,7 +21,13 @@ This is a layout count, not an allocation or performance measurement.
 is rejected. Function names, parameter positions, body spans, and the existing
 16-function/eight-parameter limits retain their contracts.
 
-## Honest compilation boundary
+## Historical compilation boundary
+
+The following gate describes this foundation checkpoint, not the current compiler.
+Source lowering now admits named returns and typed call initializers, retaining
+shape validation and rejecting scalar uses. The signature CLI's invalid bodies
+still fail, but diagnostics now point into bodies or earlier invalid source;
+parameter catalog overflow reports `compile_limit` rather than the old gate.
 
 After the complete signature scan, the compiler checks every result length
 before constructing IR or lowering parameter catalogs and bodies. The first

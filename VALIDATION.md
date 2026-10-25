@@ -466,10 +466,10 @@ The full scalar and other private-array/M0 native suites, allocator instrumentat
 Linux execution, isolation, DLL, clean-machine packaging, and performance checks
 remain skipped for this slice.
 
-The [array result signature foundation](docs/engineering/m2-array-result-signatures.md)
-records exact scalar-array return shapes in 16 bounded slots. Compilation rejects
-all array results with `type` at the function name before creating IR or lowering
-any parameter catalog/body; even unused helpers are gated. This is not result
+The historical [array result signature foundation](docs/engineering/m2-array-result-signatures.md)
+records exact scalar-array return shapes in 16 bounded slots. At that checkpoint,
+compilation rejected all array results with `type` at the function name before
+creating IR or lowering any parameter catalog/body; even unused helpers were gated. This is not result
 copy, ownership, verifier, VM, or source return execution evidence.
 The [result-signature receipt](docs/evidence/m2-array-result-signatures-windows-20261025.json)
 records 16 native groups and 2,242 CLI cases per development/release profile:
@@ -496,12 +496,28 @@ and 1,969 scalar. Native cases cover all element types, maximum lengths, 32 fram
 24-call reuse, exact Fuel, original-argument independence, deferred holes, and
 unchanged tokens/owners/bytes on malformed return preflight. The current input,
 binary, CLI receipt, and generated fixture hashes are rechecked after execution.
-Source results remain gated. Full scalar/other private-array and M0 native suites,
+Source results were gated at that checkpoint. Full scalar/other private-array and M0 native suites,
 allocator instrumentation, Linux, isolation, DLL, clean-machine packaging and
 performance checks are skipped. Twenty-nine earlier source hashes match the
 signature receipt, while changed runtime inputs receive fresh native evidence.
 The aggregate results slice was added and syntax-checked; executed commands were
 the individual native/build/CLI steps, without a redundant aggregate rerun.
+
+The [source result increment](docs/engineering/m2-array-result-source.md) connects
+named exact-shape returns and let/var call-result initializers to verified owner
+transfer. Other visible arrays/captures are dropped before ARET; pending result
+names stay invisible during argument evaluation and early exits. The
+[source receipt](docs/evidence/m2-array-result-source-windows-20261025.json) records
+26 native groups and 2,690 CLI cases per profile: 119 new result, 96 signature,
+80 parameter, 426 existing array and 1,969 scalar cases. Development combines
+18 passing unchanged groups from the first selection with eight passing updated
+source-result groups after correcting a mutual-call fixture; release selects all
+26 identities together. Exact Fuel, 16-site/16-owner/32-frame limits and the 64KiB
+arena have source-level evidence. Unchanged runtime hashes are compared with the
+private-result receipt. Aggregate tooling is syntax-checked, not invoked. Full
+scalar/private-array native suites, M0, allocator instrumentation, Linux, isolation,
+DLL, clean-machine packaging and performance remain skipped. Direct return calls,
+aggregate scalar expressions, result assignment RHS and for headers remain unsupported.
 
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker
