@@ -75,7 +75,7 @@ for body in [
     '{let i32[1] a=[42;1];} return main();',
 ]:
     case(body, error='type', code=3)
-case('return helper();', functions='fn i32 helper() {{let i32[1] a=[42;1]; return a[0];}}', error='type', code=3)
+case('return helper();', functions='fn i32 helper() {{let i32[1] a=[42;1];} return a[0];}', error='type', code=3)
 case(''.join('{let i32[1] a=[42;1];}' for _ in range(17))+' return 42;', error='compile_limit', code=3)
 basic = '{let i32[1] a=[0;1];} return 42;'
 case(basic, fuel=65657)

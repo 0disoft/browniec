@@ -95,7 +95,7 @@ for body in [
     case(body,error='type',code=3)
 for rhs in ['(a)','a[0]','a+0']:
     case('let i32[1] a=[42;1]; let i32[1] b='+rhs+'; return 0;',error='syntax',code=3)
-case('return 0;',functions='fn i32 helper() {let i32[1] a=[42;1]; let i32[1] b=a; return b[0];}',error='type',code=3)
+case('return 0;',functions='fn i32 helper() {let i32[1] a=[42;1]; let i32[2] b=a; return b[0];}',error='type',code=3)
 basic='let i32[1] a=[42;1]; let i32[1] b=a; return b[0];'
 case(basic,fuel=65803)
 case(basic,fuel=65802,error='fuel',code=5)

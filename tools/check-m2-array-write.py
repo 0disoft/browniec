@@ -92,7 +92,7 @@ for body in [
     'var i32[1] a=[0;1]; return main();',
 ]:
     case(body, error='type', code=3)
-case('return helper();', functions='fn i32 helper() {var i32[1] a=[0;1]; return a[0];}', error='type', code=3)
+case('return helper();', functions='fn i32 helper() {let i32[1] a=[0;1]; a[0]=42; return a[0];}', error='type', code=3)
 case('var i32[1] a=[0;1]; a[0]+=1; return 0;', error='syntax', code=3)
 for depth in [31, 32]:
     index = 'ix[' * depth + '0' + ']' * depth

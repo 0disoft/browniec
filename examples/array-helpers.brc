@@ -1,0 +1,14 @@
+module main;
+
+fn Option<i32> total(Option<i32> extra) {
+    let i32[2] values = [21; 2];
+    let i32 n = extra?;
+    return .some(values[0] + values[1] + n);
+}
+
+fn i32 main() {
+    switch (total(.some(0))) {
+        case .some(n): { return n; }
+        case .none: { return 0; }
+    }
+}

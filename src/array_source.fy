@@ -7,7 +7,7 @@ import cells as cells;
 import errors as errors;
 
 // Local binding values 128..143 denote private array catalog IDs, never scalar
-// registers. Arrays are confined to the entry function's lexical scopes.
+// registers. Each binding belongs to its function's lexical scopes.
 pub fn bool binding(ref locals::Table table, usize index) {
     return index < table.count && table.registers[index] >= 128;
 }
@@ -52,10 +52,10 @@ pub fn u8 profile(ref ir::Program p) {
     }
     return if (p.arrays.count != 0) { 1 } else { 0 };
 }
-pub fn Result<usize, errors::Error> copy(ref mut ir::Program p, usize source, u8 tag, usize length, bool mutable, usize offset) {
+pub fn Result<usize, errors::Error> copy(ref mut ir::Program p, usize function, usize source, u8 tag, usize length, bool mutable, usize offset) {
     if (source >= 16 || source >= p.arrays.count || p.arrays.elements[source] != tag ||
-        p.arrays.lengths[source] != length) { return .err(errors::make(3, offset)); }
-    let usize id = ir::array(p, tag, length, mutable, offset)?;
+        p.arrays.lengths[source] != length || p.array_functions[source] as usize != function) { return .err(errors::make(3, offset)); }
+    let usize id = ir::array_in(p, function, tag, length, mutable, offset)?;
     let usize copied = ir::array_copy(p, id, source, offset)?;
     return .ok(id);
 }
