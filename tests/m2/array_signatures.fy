@@ -64,7 +64,6 @@ fn void malformed_unsupported_and_out_of_range_shapes_are_rejected() {
     rejected(b"module main; fn i32 f(Option<i32>[2] a){return 0;} fn i32 main(){return 0;}");
     rejected(b"module main; fn i32 f(Result<bool,bool>[2] a){return 0;} fn i32 main(){return 0;}");
     rejected(b"module main; fn i32 f(ref i32[2] a){return 0;} fn i32 main(){return 0;}");
-    rejected(b"module main; fn i32[2] f(){return 0;} fn i32 main(){return 0;}");
 }
 
 @test

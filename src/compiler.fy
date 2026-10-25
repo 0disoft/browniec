@@ -637,6 +637,15 @@ pub fn Result<ir::Program, errors::Error> compile(ref u8[] source) {
         case .ok(value): { value } case .err(_): { return .err(errors::make(1, 0)); }
     };
     var functions::Table signatures = functions::scan(source)?;
+    // Result shape metadata must never be mistaken for an executable scalar.
+    // Reject every array result before lowering any body or parameter catalog.
+    var usize result = 0;
+    while (result < signatures.count) {
+        if (signatures.return_lengths[result] != 0) {
+            return .err(errors::make(3, signatures.begins[result]));
+        }
+        result += 1;
+    }
     var ir::Program p = ir::empty();
     p.function_count = signatures.count;
     p.entry = signatures.entry;
