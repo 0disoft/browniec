@@ -30,8 +30,14 @@ fn ir::Program build(u8 tag,i64 value,usize length,bool extra) {
     let usize index=built(ir::integer(ref mut p,0,12,0));
     let usize actual=built(ir::array_read(ref mut p,destination,index,0));
     let usize dropped=built(ir::array_drop(ref mut p,destination,0));
+    let usize expected=if(tag==2){built(ir::boolean(ref mut p,value==1,0))}else{built(ir::integer(ref mut p,value,tag,0))};
+    let usize equal=built(ir::emit(ref mut p,11,actual,expected,0));
     let usize answer=built(ir::integer(ref mut p,42,1,0));
+    let usize failure=built(ir::integer(ref mut p,0,1,0));
+    let usize target=p.count+2;
+    let usize branch=built(ir::raw(ref mut p,20,0,equal,target,0));
     let usize ret=built(ir::emit(ref mut p,8,answer,0,0));finish(ref mut p,1);
+    let usize no=built(ir::emit(ref mut p,8,failure,0,0));finish(ref mut p,1);
     return p;
 }
 fn ir::Program program(u8 tag,i64 value,usize length) {return build(tag,value,length,false);}

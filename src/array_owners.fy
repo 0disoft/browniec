@@ -102,6 +102,18 @@ pub fn Result<i64, Error> read(ref Table table, Token token, usize index, ref u8
         case .ok(value): { .ok(value) } case .err(e): { .err(storage_error(e)) }
     };
 }
+// Rehoming a unique owner needs no allocation or payload write. Validate its
+// exact shape and all bool bytes before a caller publishes the existing token.
+pub fn Result<usize,Error> validate_result(ref Table table,Token token,u8 element,usize length,ref u8[] bytes) {
+    let Owner owner=resolve(table,token,bytes.len)?;
+    if(owner.element!=element) {return .err(.Type);}
+    if(owner.length!=length) {return .err(.Length);}
+    if(element==2) {
+        var usize at=owner.base;
+        while(at<owner.end) {if(bytes[at]>1) {return .err(.Value);}at+=1;}
+    }
+    return .ok(owner.end-owner.base);
+}
 pub fn Result<usize, Error> write(ref Table table, Token token, usize index, i64 cell, ref mut u8[] bytes) {
     let Owner owner = resolve(table, token, bytes.len)?;
     let layouts::Array layout = switch (layouts::scalar(owner.element, owner.length)) {

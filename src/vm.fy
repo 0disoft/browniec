@@ -10,6 +10,7 @@ import bits as bits;
 import shifts as shifts;
 import array_vm as array_vm;
 import array_call_vm as array_calls;
+import array_result_vm as array_results;
 import std::bytes as bytes;
 
 // Guest calls use bounded VM frames, never native recursion. Register reads are
@@ -19,12 +20,6 @@ pub fn Result<i64, errors::Error> run(ref ir::Program p, usize fuel) {
 }
 pub fn Result<i64, errors::Error> run_with_array_limit(ref ir::Program p, usize fuel, usize array_limit) {
     let usize verified = verifier::verify(p)?;
-    // Result IR verification lands before runtime dispatch in this increment.
-    var usize f=0;
-    while(f<p.function_count) {
-        if(p.array_results[f]!=0) {return .err(errors::make(5,0));}
-        f+=1;
-    }
     var usize remaining = fuel;
     var bytes::Buffer payload = bytes::empty();
     var array_vm::State arrays = array_vm::empty(if (p.arrays.count == 0) { 0 } else { array_limit });
@@ -47,11 +42,18 @@ pub fn Result<i64, errors::Error> run_with_array_limit(ref ir::Program p, usize 
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
         let usize array_call_cost = if (op == 9) { array_calls::cost(p,a,p.offsets[pc])? } else { 0 };
-        let usize cost = if (op >= 33) { array_vm::cost(ref p.arrays, op, if (op == 35) { a } else { dst }, p.offsets[pc])? }
+        let usize cost = if(op==39) {array_results::cost(p,a,p.offsets[pc])?}
+            else if (op >= 33) { array_vm::cost(ref p.arrays, op, if (op == 35) { a } else { dst }, p.offsets[pc])? }
             else if (op == 9) { 1 + (p.call_arities[b] as usize) + array_call_cost } else { 1 };
         if (remaining < cost) { return .err(errors::make(8, p.offsets[pc])); }
         remaining -= cost;
         let usize base = frame * 128;
+        if(op==39) {
+            if(frame==0 || return_dsts[frame]<128) {return .err(errors::make(5,p.offsets[pc]));}
+            let usize call=(return_pcs[frame]-1)*8;
+            let usize transferred=array_results::leave(p,p.code[call+2] as usize,a,return_dsts[frame]-128,frame,ref mut arrays,ref payload,p.offsets[pc])?;
+            pc=return_pcs[frame];frame-=1;continue;
+        }
         if (op >= 33) {
             let usize executed = array_vm::execute(op, dst, a, b, frame, ref p.arrays, ref mut arrays,
                 ref mut payload, ref mut registers[base..base + 128], p.offsets[pc])?;
