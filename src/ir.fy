@@ -39,6 +39,7 @@ pub struct Program {
     u8[16] return_types;
     bool[128] slots;
     arrays::Catalog arrays;
+    u8[16] array_functions;
 }
 
 pub fn Program empty() {
@@ -47,7 +48,8 @@ pub fn Program empty() {
         .starts = [0; 16], .ends = [0; 16], .register_starts = [0; 16],
         .register_ends = [0; 16], .arities = [0; 16], .call_args = [0; 256],
         .call_arities = [0; 32], .function_count = 0, .entry = 0, .call_count = 0,
-        .types = [0; 128], .return_types = [0; 16], .slots = [false; 128], .arrays = arrays::empty() };
+        .types = [0; 128], .return_types = [0; 16], .slots = [false; 128], .arrays = arrays::empty(),
+        .array_functions = [0; 16] };
 }
 
 fn Result<u8, errors::Error> byte(usize value, usize offset) {
@@ -164,7 +166,17 @@ pub fn Result<usize, errors::Error> patch(ref mut Program p, usize jump, usize t
 }
 
 pub fn Result<usize, errors::Error> array(ref mut Program p, u8 element, usize length, bool mutable, usize offset) {
-    return arrays::declare(ref mut p.arrays, element, length, mutable, offset);
+    let usize function = p.entry;
+    return array_in(p, function, element, length, mutable, offset);
+}
+// Function ownership belongs to verified Program metadata, never a runtime token.
+pub fn Result<usize, errors::Error> array_in(ref mut Program p, usize function, u8 element, usize length, bool mutable, usize offset) {
+    if (function >= 16 || (p.function_count != 0 && function >= p.function_count)) {
+        return .err(errors::make(3, offset));
+    }
+    let usize id = arrays::declare(ref mut p.arrays, element, length, mutable, offset)?;
+    p.array_functions[id] = byte(function, offset)?;
+    return .ok(id);
 }
 pub fn Result<usize, errors::Error> array_init(ref mut Program p, usize id, usize fill, usize offset) {
     return raw(p, 33, id, fill, 0, offset);

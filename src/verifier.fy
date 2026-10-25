@@ -155,6 +155,12 @@ pub fn Result<usize, errors::Error> verify(ref ir::Program p) {
     if (p.count == 0 || p.count > 256 || p.registers == 0 || p.registers > 128 || p.constant_count > 128 ||
         p.function_count == 0 || p.function_count > 16 || p.entry >= p.function_count || p.call_count > 32) { return .err(errors::make(5, 0)); }
     if (!arrays::valid(ref p.arrays)) { return .err(errors::make(5, 0)); }
+    var usize id = 0;
+    while (id < 16) {
+        if ((id < p.arrays.count && p.array_functions[id] as usize >= p.function_count) ||
+            (id >= p.arrays.count && p.array_functions[id] != 0)) { return .err(errors::make(5, 0)); }
+        id += 1;
+    }
     if (p.arities[p.entry] != 0 || p.return_types[p.entry] != 1) { return .err(errors::make(5, 0)); }
     var usize f = 0;
     var usize code_end = 0;

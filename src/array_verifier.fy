@@ -15,7 +15,7 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, usize pc, usize f,
     let usize a = p.code[at + 2] as usize;
     let usize b = p.code[at + 3] as usize;
     let usize id = if (op == 35) { a } else { dst };
-    if (f != p.entry || id >= p.arrays.count) { return .err(errors::make(5, pc)); }
+    if (id >= p.arrays.count || p.array_functions[id] as usize != f) { return .err(errors::make(5, pc)); }
     let usize one = 1;
     let usize mask = one << id;
     let u8 element = p.arrays.elements[id];

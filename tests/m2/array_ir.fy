@@ -112,12 +112,14 @@ fn void backedges_and_returns_cannot_leak_or_revive_arrays() {
 }
 
 @test
-fn void only_entry_arrays_are_admitted_and_entry_cannot_be_called() {
+fn void function_owned_arrays_and_entry_call_restriction_are_checked() {
     var ir::Program p = basic();
     let usize value = built(ir::literal(ref mut p, 0, 0));
     let usize returned = built(ir::emit(ref mut p, 8, value, 0, 0));
     p.function_count = 2; p.entry = 1; p.starts[1] = 6; p.ends[1] = 8;
     p.register_starts[1] = 3; p.register_ends[1] = 4; p.return_types[1] = 1;
+    assert(verifier::verify(ref p).is_ok);
+    p.array_functions[0] = 1;
     assert(!verifier::verify(ref p).is_ok);
     var ir::Program q = ir::empty();
     let usize id = built(ir::array(ref mut q, 1, 1, false, 0));
