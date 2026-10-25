@@ -27,6 +27,8 @@ own the affected contract. Broader scaffold procedures are optional.
   Array parameters, results, borrows, slices, and aggregate guest calls remain unimplemented.
   A signature-only foundation records exact scalar-array parameter shapes; the
   compiler rejects all such declarations before lowering any function body.
+  Private `array_owners::copy_arguments` preflights up to eight exact-shape copies
+  before changing bytes or owner state; source/IR/VM call integration remains pending.
   For-header array declarations and writes remain rejected.
 - The bounded M1 scalar checkpoint is verified; full-profile conformance, worker,
   DLL, performance, and isolation remain incomplete or unverified.

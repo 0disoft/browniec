@@ -416,6 +416,20 @@ records 16 native groups and 2,133 CLI cases per development/release profile
 previous helper inputs. Other native suites, allocator instrumentation, Linux,
 isolation, DLL, and performance checks are skipped for this metadata slice.
 
+The [atomic argument-copy foundation](docs/engineering/m2-array-arguments.md)
+preflights the entire copy batch before changing bytes or owner state. Its focused
+command is `pwsh -NoProfile -File tools/verify-m2-arrays.ps1 -Slice arguments`.
+It does not establish source argument capture, immutable parameters, call-shape
+verification, VM Fuel accounting, or recursive parameter execution.
+The [argument-copy receipt](docs/evidence/m2-array-arguments-windows-20261025.json)
+records 18 native groups per development/release profile: seven batch-copy,
+five owner, four single-copy, and two assignment-storage groups. Failed late
+arguments preserve every byte and owner field. Cases cover exact combined peaks,
+alignment, retired slots, deferred holes, stale/provisional tokens, all scalar
+elements, and eight independent copies. CLI and other native suites, allocator
+instrumentation, Linux, isolation, DLL, and performance checks are skipped; all
+29 source inputs outside `array_owners.fy` match the prior signature receipt.
+
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker
 publication barrier. Compile untrusted source only inside the restricted worker.
