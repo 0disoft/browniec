@@ -53,6 +53,12 @@ pub fn Result<usize,errors::Error> returned(ref u8[] source,ref mut lexer::State
     let usize end=lexer::next(source,s)?;
     return finish(p,names,id,at);
 }
+// CALL has completed and its captures are released. Preserve the destination's
+// owner/extent, copy once, then release the anonymous result.
+pub fn Result<usize,errors::Error> assigned(ref mut ir::Program p,usize destination,usize temporary,usize at) {
+    let usize copied=arrays::assign(p,destination,temporary,at)?;
+    return ir::array_drop(p,temporary,at);
+}
 // The filler has already been evaluated once; no result exists on its early exits.
 pub fn Result<usize,errors::Error> repeated(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
     ref locals::Table names,usize value,usize at) {

@@ -308,6 +308,18 @@ fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State 
             let usize equals = lexer::next(source, s)?;
             if (s.kind != 2) { return .err(errors::make(3, s.begin)); }
             let usize origin = locals::find(source, table, s.begin, s.end);
+            var lexer::State look=lexer::snapshot(s);
+            let usize advance=lexer::next(source,ref mut look)?;
+            if(look.kind==40) {
+                if(origin!=64) {return .err(errors::make(3,s.begin));}
+                let usize target=functions::find(source,signatures,s.begin,s.end);
+                let usize temporary=array_results::destination(signatures,target,p.arrays.elements[id],p.arrays.lengths[id],false,p,table.function,s.begin)?;
+                let usize name=lexer::next(source,s)?;
+                let usize called=call_value(source,s,p,table,signatures,target,temporary,at,expr_depth,result_type,structure,loop_state)?;
+                let usize end=lexer::punctuation(source,s,terminator)?;
+                let usize assigned=array_results::assigned(p,id,temporary,at)?;
+                return .ok(index);
+            }
             if (!arrays::binding(table, origin)) { return .err(errors::make(3, s.begin)); }
             let usize source_id = table.registers[origin] - 128;
             let usize next = lexer::next(source, s)?;
