@@ -148,6 +148,26 @@ pub fn Result<Token, Error> copy(Token source, ref mut u8[] bytes, ref mut Table
 fn usize next_generation(usize generation) {
     return if (generation == 18446744073709551615) { 0 } else { generation + 1 };
 }
+
+// Replace an existing extent. Resolve both tokens and validate the full bool
+// source before the first write; valid owners are disjoint unless identical.
+pub fn Result<usize, Error> assign(Token destination, Token source, ref mut u8[] bytes, ref Table table) {
+    let Owner target = resolve(table, destination, bytes.len)?;
+    let Owner origin = resolve(table, source, bytes.len)?;
+    if (target.element != origin.element) { return .err(.Type); }
+    if (target.length != origin.length) { return .err(.Length); }
+    if (origin.element == 2) {
+        var usize at = origin.base;
+        while (at < origin.end) {
+            if (bytes[at] > 1) { return .err(.Value); }
+            at += 1;
+        }
+    }
+    let usize size = origin.end - origin.base;
+    var usize i = 0;
+    while (i < size) { bytes[target.base + i] = bytes[origin.base + i]; i += 1; }
+    return .ok(size);
+}
 fn void forget(ref mut Table table, usize slot) {
     table.slots[slot].occupied = false;
     table.slots[slot].live = false;
