@@ -644,6 +644,27 @@ The earlier 18-group nested-storage receipt is historical for changed inputs.
 Full CLI, scalar storage/copy native suites, M0, Linux, isolation, DLL,
 packaging, performance, and allocator instrumentation were not rerun.
 
+The [shared struct-owner contract](docs/engineering/m2-struct-owners.md) extends
+the 16-slot owner table to nested records. Record owners use element 0 and store
+record bytes, id, and alignment; arrays and records share slots, allocation order,
+the caller-owned arena, generations, release, and clear. Record creation preflights
+a free slot and catalog layout, then publishes the descriptor after staged
+initialization. Record field access rechecks the token and current immutable
+catalog layout; array-only APIs reject record tokens. Generation max retires to
+zero, and dead middle extents retain bytes and descriptors until suffix release.
+The `--owners` selection passed 34 native groups per profile: six struct
+owners, five array owners, four array copy, two assignment storage, seven argument
+copies, four fill, and six array VM groups. Development and release both passed
+the full selection with matching identities and stable input/compiler hashes.
+The trusted caller must bind one immutable catalog and backing region to the table
+lifetime; catalog identity hashes and cross-Instance capabilities are not provided,
+and same-id same-size schema substitution is outside the contract. No struct-owner
+copies/assignment, source structs, borrows, struct IR/VM, or Fuel are added.
+Earlier receipts are historical for changed owner, harness, and root-lock inputs.
+Existing nested-storage and source CLI files are unchanged. Full CLI, other native
+suites including call/result VM, M0, Linux, isolation, DLL, packaging, performance,
+and allocation instrumentation were not rerun.
+
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker
 publication barrier. Compile untrusted source only inside the restricted worker.

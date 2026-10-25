@@ -58,6 +58,8 @@ storage/copy native suites, M0, Linux, isolation, DLL, packaging, performance, a
 allocator instrumentation were not rerun. The earlier 18-group nested-storage
 receipt is historical for changed inputs.
 
-Next: private struct ownership and lifetime, then IR, VM, Fuel, and source
-structs. Existing source syntax is unaffected, and no source example is added for
-unimplemented grammar.
+Next: struct-owner copy/assignment, then IR, VM, Fuel, and source structs. The
+shared [struct-owner foundation](m2-struct-owners.md) already supplies record
+descriptors; this contract adds no owner tokens or lifetime integration. Existing
+source syntax is unaffected, and no source example is added for unimplemented
+grammar.
