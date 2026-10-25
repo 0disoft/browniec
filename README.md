@@ -52,6 +52,9 @@ separates function ownership and recursive VM array tokens. The
 arrays to scalar and shallow wrapper-returning helpers, including reverse cleanup
 on `?` failure returns. Array parameters, results, borrows, slices, aggregate
 calls, structs, workers, and DLLs remain later work.
+The [array parameter signature foundation](docs/engineering/m2-array-signatures.md)
+records element types and exact lengths; all array parameter declarations still
+fail compilation until call copying and independent verification are implemented.
 
 ```powershell
 ./build/toolchain/fairyc.exe build
@@ -167,6 +170,7 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 whole-array assignment](docs/engineering/m2-array-assignment.md): exact-shape copies into existing mutable storage, preflight, private IR, and Fuel
 - [M2 private array function frames](docs/engineering/m2-array-frames.md): function ownership, recursive frame tokens, shared quotas, and parameter work sequencing
 - [M2 helper-local arrays](docs/engineering/m2-array-helpers.md): function-local source declarations, recursion, and cleanup on wrapper propagation
+- [M2 array parameter signatures](docs/engineering/m2-array-signatures.md): bounded shape metadata and explicit rejection before call lowering is available
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
 - [Design baseline](docs/design-baseline.md): source provenance, evidence, and findings

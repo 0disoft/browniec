@@ -25,6 +25,8 @@ own the affected contract. Broader scaffold procedures are optional.
   Focused helper verification passed 16 native groups, 426 array CLI cases, and 1,969 scalar CLI cases
   per development/release profile; changed frontend and fixture inputs receive fresh evidence.
   Array parameters, results, borrows, slices, and aggregate guest calls remain unimplemented.
+  A signature-only foundation records exact scalar-array parameter shapes; the
+  compiler rejects all such declarations before lowering any function body.
   For-header array declarations and writes remain rejected.
 - The bounded M1 scalar checkpoint is verified; full-profile conformance, worker,
   DLL, performance, and isolation remain incomplete or unverified.

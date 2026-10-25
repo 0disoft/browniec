@@ -405,6 +405,17 @@ receive fresh source checks. The full 84-group scalar native suite, M0/private
 array unit reruns, allocator instrumentation, Linux, isolation, DLL, and
 performance checks are skipped.
 
+The [array signature foundation](docs/engineering/m2-array-signatures.md) records
+element and length metadata for parameter declarations while explicitly rejecting
+their compilation before any body lowering. Its focused command is
+`pwsh -NoProfile -File tools/verify-m2-array-signatures.ps1`; this is not array
+call, copy-transaction, verifier, or recursive parameter execution evidence. The
+[signature receipt](docs/evidence/m2-array-signatures-windows-20261025.json)
+records 16 native groups and 2,133 CLI cases per development/release profile
+(1,969 scalar, 67 array-read, 97 helper-local). IR/verifier/VM hashes match the
+previous helper inputs. Other native suites, allocator instrumentation, Linux,
+isolation, DLL, and performance checks are skipped for this metadata slice.
+
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker
 publication barrier. Compile untrusted source only inside the restricted worker.
