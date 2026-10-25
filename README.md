@@ -63,6 +63,9 @@ and typed call-result initializers are supported by the [source result increment
 [Repeated-literal assignment](docs/engineering/m2-array-literal-assignment.md)
 admits `array = [value; N];`, evaluating once and filling existing storage in place.
 Borrows, slices, structs, workers, and DLLs remain later work.
+A [private struct-layout planner](docs/engineering/m2-struct-layout.md) now plans
+acyclic record metadata; source structs, storage, IR, and VM remain later work.
+Both development and release passed its 14-group Windows receipt.
 The [array parameter signature foundation](docs/engineering/m2-array-signatures.md)
 records element types and exact lengths; the subsequent source increment removes
 its original compilation gate.
@@ -203,6 +206,7 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 array call-result assignment](docs/engineering/m2-array-call-assignment.md): ordered calls, temporary cleanup and copies into existing var storage
 - [M2 repeated-literal assignment](docs/engineering/m2-array-literal-assignment.md): preflighted in-place fills without additional owners or array storage
 - [M2 private array results](docs/engineering/m2-array-results.md): verified result lifetimes, zero-copy owner transfer, recursive frames and prepaid return work
+- [M2 private struct layout](docs/engineering/m2-struct-layout.md): verified planner-only record catalog, declaration-order offsets, dependency bounds, and Windows receipt
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
 - [Design baseline](docs/design-baseline.md): source provenance, evidence, and findings

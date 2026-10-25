@@ -102,6 +102,10 @@ own the affected contract. Broader scaffold procedures are optional.
   copies, and frame-specific owners. All parameter and capture sites share the
   existing catalog, lexical binding, owner and payload limits.
   For-header array declarations and writes remain rejected.
+- A private [struct-layout planner](docs/engineering/m2-struct-layout.md) plans 0..32 acyclic
+  records with 1..16 fields, declaration-order padding, and a per-record byte ceiling.
+  Source structs, storage, IR/VM support, and allocation remain unimplemented. Its
+  Windows 14-group receipt passed development and release.
 - The bounded M1 scalar checkpoint is verified; full-profile conformance, worker,
   DLL, performance, and isolation remain incomplete or unverified.
 - Root fairy.toml builds the native CLI; tools/verify-m1.ps1 verifies its narrow profile.

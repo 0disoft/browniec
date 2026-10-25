@@ -276,6 +276,13 @@ made.
 Plain structs, borrows, Buffer, I/O, isolation and
 the remaining milestone evidence below are still open.
 
+The private [struct-layout planner](../engineering/m2-struct-layout.md) covers
+0..32 acyclic records with 1..16 fields, declaration-order alignment, tail
+padding, shared and forward child resolution, and a 16-level structural limit.
+It adds no source syntax, storage, IR, VM, or allocation. Both development and
+release passed its 14-group Windows receipt. Full structs, wrappers, borrows,
+and Buffer remain open.
+
 Goal: connect arrays, plain structs, borrows, Buffer, input,
 output, and UTF-8.
 

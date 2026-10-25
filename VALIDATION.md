@@ -585,6 +585,13 @@ stack-byte measurements. Other native/array CLI suites, M0, allocator
 instrumentation, Linux, isolation, DLL, clean-machine packaging, and performance
 remain skipped; aggregate tooling was only syntax-checked.
 
+The [private struct-layout contract](docs/engineering/m2-struct-layout.md) adds
+planner-only ordering, padding, and dependency checks for 0..32 acyclic records.
+Its Windows receipt records eight new struct groups and six unchanged array-layout
+regression groups per profile (14 each), with development and release both passed.
+This evidence covers private planning only: no source structs, storage, IR, VM,
+Fuel, allocation, CLI artifact, or wrapper budget coupling.
+
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker
 publication barrier. Compile untrusted source only inside the restricted worker.
