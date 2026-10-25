@@ -71,6 +71,17 @@ pub fn Result<usize, errors::Error> assign(ref mut ir::Program p, usize destinat
         p.arrays.lengths[destination] != p.arrays.lengths[source]) { return .err(errors::make(3, offset)); }
     return ir::array_assign(p, destination, source, offset);
 }
+pub fn Result<usize,errors::Error> refill(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
+    usize function,usize id,usize value,usize at) {
+    if(id>=p.arrays.count || p.array_functions[id] as usize!=function || !p.arrays.mutable[id] ||
+        value>=p.registers || p.types[value]!=p.arrays.elements[id]) {return .err(errors::make(3,at));}
+    let usize separator=lexer::punctuation(source,s,59)?;
+    let usize repeated=count(source,s)?;
+    if(repeated!=p.arrays.lengths[id]) {return .err(errors::make(3,at));}
+    let usize close=lexer::punctuation(source,s,93)?;
+    let usize end=lexer::punctuation(source,s,59)?;
+    return ir::array_fill(p,id,value,at);
+}
 pub fn Result<usize, errors::Error> length(ref u8[] source, ref mut lexer::State s) {
     let usize open = lexer::punctuation(source, s, 91)?;
     let usize size = count(source, s)?;

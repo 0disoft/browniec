@@ -70,7 +70,7 @@ for body in [
     'let i32[1] a=[42;1]; var i64[1] b=[0;1]; b=a; return 0;',
     'var i32[1] b=[0;1]; {let i32[1] a=[42;1];} b=a; return 0;',
     prefix+'b=missing; return 0;', prefix+'b=42; return 0;',
-    prefix+'b=(a); return 0;', prefix+'b=[42;1]; return 0;',
+    prefix+'b=(a); return 0;', prefix+'b=[42;2]; return 0;',
     prefix+'for(b=a;false;) {} return 0;', prefix+'for(;false;b=a) {} return 0;',
 ]:
     case(body, error='type', code=3)

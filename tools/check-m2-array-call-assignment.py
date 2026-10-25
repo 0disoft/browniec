@@ -71,7 +71,7 @@ for functions,body in [
     ('fn i32[1] f(i32 n){return [n;1];}','var i32[1] a=[0;1];a=f();return 42;'),
     ('fn i32[1] f(i32[2] a){return [42;1];}','var i32[1] a=[0;1];a=f(a);return 42;'),
     (helper,'var i32[1] a=[0;1];a=(f());return 42;'),
-    (helper,'var i32[1] a=[0;1];a=[42;1];return 42;'),
+    (helper,'var i32[1] a=[0;1];a=[42;2];return 42;'),
     (helper,'var i32[1] a=[0;1];for(a=f();false;){}return 42;'),
 ]:
     source='module main;'+functions+'fn i32 main(){'+body+'}'

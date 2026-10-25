@@ -306,6 +306,13 @@ fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State 
         let usize id = table.registers[index] - 128;
         if (s.kind == 61) {
             let usize equals = lexer::next(source, s)?;
+            if(s.kind==91) {
+                let u8 element=p.arrays.elements[id];
+                let usize open=lexer::next(source,s)?;
+                let usize value=expression(source,s,p,table,signatures,1,expr_depth,element,result_type,structure,loop_state)?;
+                let usize filled=arrays::refill(source,s,p,table.function,id,value,at)?;
+                return .ok(index);
+            }
             if (s.kind != 2) { return .err(errors::make(3, s.begin)); }
             let usize origin = locals::find(source, table, s.begin, s.end);
             var lexer::State look=lexer::snapshot(s);
