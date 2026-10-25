@@ -5,7 +5,7 @@ import array_storage as arenas;
 import scalar_codec as codec;
 
 // Prepared scalar-only record metadata. Revalidated at every storage boundary.
-// Offsets are arena byte offsets, never host pointers or ownership proofs.
+// Offsets are record-relative field offsets, never host pointers or ownership proofs.
 pub struct Shape { usize count; u8[16] tags; usize[16] offsets; usize bytes; usize alignment; }
 pub enum Error { Layout; Type; Fields; Metadata; Overflow; Quota; Bounds; Alignment; Value; State; }
 
@@ -60,18 +60,35 @@ fn Error codec_error(codec::Error error) {
     };
 }
 
-pub fn Result<usize, Error> initialize(ref Shape shape, ref i64[] fields,
-    ref mut u8[] storage, ref mut arenas::Arena arena) {
-    let usize bytes = validate(shape)?;
-    if (!valid(arena, storage.len)) { return .err(.State); }
-    if (fields.len != shape.count) { return .err(.Fields); }
-    let usize remainder = arena.used % shape.alignment;
-    let usize padding = if (remainder == 0) { 0 } else { shape.alignment - remainder };
+struct Reservation { usize base; usize end; }
+// The caller has already validated the Shape and Arena.
+fn Result<Reservation, Error> reserve(usize bytes, usize alignment, ref arenas::Arena arena) {
+    let usize remainder = arena.used % alignment;
+    let usize padding = if (remainder == 0) { 0 } else { alignment - remainder };
     if (padding > 18446744073709551615 - arena.used) { return .err(.Overflow); }
     let usize base = arena.used + padding;
     if (bytes > 18446744073709551615 - base) { return .err(.Overflow); }
     let usize end = base + bytes;
     if (end > arena.limit) { return .err(.Quota); }
+    return .ok(Reservation { .base = base, .end = end });
+}
+// Fallible validation/encoding is complete. Only these infallible writes publish
+// a new extent; alignment padding is initialized before the cursor advances.
+fn usize publish(ref u8[] encoded, ref Reservation plan, ref mut u8[] storage, ref mut arenas::Arena arena) {
+    var usize at = arena.used;
+    while (at < plan.base) { storage[at] = 0; at += 1; }
+    var usize byte = 0;
+    while (byte < encoded.len) { storage[plan.base + byte] = encoded[byte]; byte += 1; }
+    arena.used = plan.end;
+    return plan.base;
+}
+
+pub fn Result<usize, Error> initialize(ref Shape shape, ref i64[] fields,
+    ref mut u8[] storage, ref mut arenas::Arena arena) {
+    let usize bytes = validate(shape)?;
+    if (!valid(arena, storage.len)) { return .err(.State); }
+    if (fields.len != shape.count) { return .err(.Fields); }
+    let Reservation plan = reserve(bytes, shape.alignment, arena)?;
     var u8[128] encoded = [0; 128];
     var usize field = 0;
     while (field < shape.count) {
@@ -82,14 +99,7 @@ pub fn Result<usize, Error> initialize(ref Shape shape, ref i64[] fields,
         };
         field += 1;
     }
-    // No fallible work follows: publish only a fully encoded value with zeroed
-    // inter-field, tail, and arena-alignment padding. Neighbor bytes stay intact.
-    var usize at = arena.used;
-    while (at < base) { storage[at] = 0; at += 1; }
-    var usize byte = 0;
-    while (byte < bytes) { storage[base + byte] = encoded[byte]; byte += 1; }
-    arena.used = end;
-    return .ok(base);
+    return .ok(publish(ref encoded[..bytes], ref plan, storage, arena));
 }
 
 fn Result<usize, Error> address(ref Shape shape, usize base, usize field,
@@ -116,4 +126,47 @@ pub fn Result<usize, Error> write(ref Shape shape, usize base, usize field, i64 
     return switch (codec::encode(shape.tags[field], value, storage[at..at + width])) {
         case .ok(size): { .ok(size) } case .err(e): { .err(codec_error(e)) }
     };
+}
+
+// Shape and the complete source extent have already been checked. The caller
+// owns a zeroed record-sized output view; stage only field bytes so padding stays
+// zero. All integer bit patterns are valid;
+// bool is the only scalar representation requiring a value check before copying.
+fn Result<usize, Error> snapshot(ref Shape shape, usize source, ref u8[] storage,
+    ref mut u8[] encoded) {
+    var usize field = 0;
+    while (field < shape.count) {
+        let usize offset = shape.offsets[field];
+        let usize width = codec::width(shape.tags[field]);
+        if (shape.tags[field] == 2 && storage[source + offset] > 1) { return .err(.Value); }
+        var usize byte = 0;
+        while (byte < width) {
+            encoded[offset + byte] = storage[source + offset + byte];
+            byte += 1;
+        }
+        field += 1;
+    }
+    return .ok(shape.bytes);
+}
+
+pub fn Result<usize, Error> copy(ref Shape shape, usize source,
+    ref mut u8[] storage, ref mut arenas::Arena arena) {
+    let usize checked = address(shape, source, 0, storage.len, arena)?;
+    let Reservation plan = reserve(shape.bytes, shape.alignment, arena)?;
+    var u8[128] encoded = [0; 128];
+    let usize staged = snapshot(shape, source, storage, ref mut encoded[..shape.bytes])?;
+    return .ok(publish(ref encoded[..staged], ref plan, storage, arena));
+}
+
+// Existing storage is overwritten only after snapshot validation. This also
+// handles self-assignment and partial overlap without an additional arena extent.
+pub fn Result<usize, Error> assign(ref Shape shape, usize destination, usize source,
+    ref mut u8[] storage, ref arenas::Arena arena) {
+    let usize target = address(shape, destination, 0, storage.len, arena)?;
+    let usize origin = address(shape, source, 0, storage.len, arena)?;
+    var u8[128] encoded = [0; 128];
+    let usize staged = snapshot(shape, source, storage, ref mut encoded[..shape.bytes])?;
+    var usize byte = 0;
+    while (byte < staged) { storage[destination + byte] = encoded[byte]; byte += 1; }
+    return .ok(staged);
 }

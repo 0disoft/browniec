@@ -1,4 +1,4 @@
-"""Run Fairy C native struct layout or scalar-record storage tests."""
+"""Run Fairy C native struct layout, scalar storage, or record-copy tests."""
 import argparse
 from datetime import datetime, timezone
 import hashlib
@@ -26,13 +26,24 @@ def write(path, value):
     path.write_text(json.dumps(value, indent=2) + '\n', encoding='utf-8')
 
 
-def verify(compiler, storage=False):
-    kind = 'storage' if storage else 'layout'
-    files = (['tests/m2/struct_storage.fy', 'tests/m2/struct_layout.fy', 'tests/m2/scalar_codec.fy']
-             if storage else FILES)
-    groups = ({'struct_storage': 8, 'struct_layout': 8, 'scalar_codec': 4} if storage
-              else {'struct_layout': 8, 'array_layout': 6})
-    expected = 20 if storage else 14
+def verify(compiler, storage=False, copy_records=False):
+    require(not (storage and copy_records), 'Choose only one verification selection')
+    if copy_records:
+        kind = 'copy'
+        files = ['tests/m2/struct_copy.fy', 'tests/m2/struct_storage.fy',
+                 'tests/m2/struct_layout.fy', 'tests/m2/scalar_codec.fy']
+        groups = {'struct_copy': 8, 'struct_storage': 8, 'struct_layout': 8, 'scalar_codec': 4}
+        expected = 28
+    elif storage:
+        kind = 'storage'
+        files = ['tests/m2/struct_storage.fy', 'tests/m2/struct_layout.fy', 'tests/m2/scalar_codec.fy']
+        groups = {'struct_storage': 8, 'struct_layout': 8, 'scalar_codec': 4}
+        expected = 20
+    else:
+        kind = 'layout'
+        files = FILES
+        groups = {'struct_layout': 8, 'array_layout': 6}
+        expected = 14
     output = ROOT / ('build/m2-struct-' + kind)
     output.mkdir(parents=True, exist_ok=True)
     receipt = output / 'receipt.json'
@@ -78,8 +89,12 @@ def verify(compiler, storage=False):
                     and not t['stdoutBase64'] and not t['stderrBase64'] for t in tests),
                 f'Native failure or unexpected process output: {profile}')
         result = dict(profile=profile, nativeGroups=expected, nativeTests=native)
-        result.update(dict(newStorageGroups=8, structLayoutRegressionGroups=8, codecRegressionGroups=4)
-                      if storage else dict(newStructGroups=8, arrayRegressionGroups=6))
+        if copy_records:
+            result.update(newCopyGroups=8, storageRegressionGroups=8,
+                          structLayoutRegressionGroups=8, codecRegressionGroups=4)
+        else:
+            result.update(dict(newStorageGroups=8, structLayoutRegressionGroups=8, codecRegressionGroups=4)
+                          if storage else dict(newStructGroups=8, arrayRegressionGroups=6))
         results.append(result)
         print(f'PASS: {profile}: {expected} native {kind} groups {groups}', flush=True)
     require({t['identity'] for t in results[0]['nativeTests']['tests']}
@@ -90,10 +105,20 @@ def verify(compiler, storage=False):
     lock = json.loads((ROOT / 'fairy.lock').read_text(encoding='utf-8'))
     baseline = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
     limits = (dict(fieldsPerRecord=16, recordBytes=128, encodedScratchBytes=128,
-                   initializationBackingWritesAtMost=135) if storage else
+                   initializationBackingWritesAtMost=135) if storage or copy_records else
               dict(records=32, fieldsPerRecord=16, structuralDepth=16,
                    dependencyFieldChecksAtMost=16384, payloadLimit='caller supplied per record'))
+    if copy_records:
+        limits.update(copyBackingWritesAtMost=135, assignmentBackingWritesAtMost=128,
+                      assignmentAdditionalExtents=0)
     limitations = ([
+        'Private scalar-record by-value copy initialization and assignment only; no source structs, nested record storage, owner tokens, IR/VM or Fuel integration.',
+        'Both operations revalidate metadata, state and complete published extents and preflight every bool before any backing mutation.',
+        'Field bytes are snapshotted into a zeroed 128-byte payload; padding is normalized and integer bits are preserved. Self-assignment and both overlap directions use the snapshot.',
+        'Copy appends one extent and charges the old plus new peak including padding. Assignment writes existing storage without advancing the cursor or reserving an extent.',
+        'Base offsets and matching Shapes do not prove record identity, lifetime, ownership or write authority. Overlap handling is a primitive property, not guest aliasing permission.',
+        'Staging and byte-write limits are algorithmic bounds, not native stack, allocation instrumentation or throughput measurements.'
+    ] if copy_records else [
         'Private scalar-only record preparation, complete initialization and indexed field reads/writes in the shared caller-backed array arena.',
         'Nested layouts remain supported; materializing a selected nested record is rejected. Whole-record copies, ownership, source grammar, IR/VM and Fuel remain unimplemented.',
         'Every operation recomputes bounded canonical Shape metadata; base offsets do not prove object identity, ownership or lifetime.',
@@ -125,6 +150,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--compiler', type=Path,
                         default=ROOT / 'build/toolchain' / ('fairyc.exe' if os.name == 'nt' else 'fairyc'))
-    parser.add_argument('--storage', action='store_true', help='Verify scalar record storage and its layout/codec dependencies.')
+    selection = parser.add_mutually_exclusive_group()
+    selection.add_argument('--storage', action='store_true', help='Verify scalar record storage and its layout/codec dependencies.')
+    selection.add_argument('--copy', dest='copy_records', action='store_true', help='Verify scalar record copies and assignments with storage/layout/codec regressions.')
     args = parser.parse_args()
-    verify(args.compiler, args.storage)
+    verify(args.compiler, args.storage, args.copy_records)
