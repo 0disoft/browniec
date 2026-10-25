@@ -19,6 +19,12 @@ pub fn Result<i64, errors::Error> run(ref ir::Program p, usize fuel) {
 }
 pub fn Result<i64, errors::Error> run_with_array_limit(ref ir::Program p, usize fuel, usize array_limit) {
     let usize verified = verifier::verify(p)?;
+    // Result IR verification lands before runtime dispatch in this increment.
+    var usize f=0;
+    while(f<p.function_count) {
+        if(p.array_results[f]!=0) {return .err(errors::make(5,0));}
+        f+=1;
+    }
     var usize remaining = fuel;
     var bytes::Buffer payload = bytes::empty();
     var array_vm::State arrays = array_vm::empty(if (p.arrays.count == 0) { 0 } else { array_limit });

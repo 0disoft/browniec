@@ -6,6 +6,7 @@ import types as types;
 import array_meta as arrays;
 import array_verifier as array_verifier;
 import array_parameters as array_parameters;
+import array_results as array_results;
 import register_set as registers;
 
 fn bool readable(ref ir::Program p, ref registers::Set defined, usize r, usize start, usize end) {
@@ -53,7 +54,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref mut boo
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
-        if (op < 1 || op > 38 || (op!=24 && p.code[at + 4] != 0) || p.code[at + 5] != 0 || p.code[at + 6] != 0 || p.code[at + 7] != 0) { return .err(errors::make(5, pc)); }
+        if (op < 1 || op > 39 || (op!=24 && p.code[at + 4] != 0) || p.code[at + 5] != 0 || p.code[at + 6] != 0 || p.code[at + 7] != 0) { return .err(errors::make(5, pc)); }
         if (op==25) {
             if(dst!=0 || a!=0 || b!=0) {return .err(errors::make(5,pc));}
             pc+=1; continue;
@@ -71,7 +72,13 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref mut boo
             if (!merge(ref mut states,ref mut seen,ref defined,pc+1,ref mut array_states,live)) {return .err(errors::make(5,pc));}
             pc+=1; continue;
         }
+        if(op==39) {
+            if(dst!=0 || b!=0) {return .err(errors::make(5,pc));}
+            let usize returned=array_results::returned(p,a,f,live,pc)?;
+            pc+=1;continue;
+        }
         if (op == 8) {
+            if(p.array_results[f]!=0) {return .err(errors::make(5,pc));}
             if (live != 0 || dst != 0 || b != 0 || !readable(p, ref defined, a, start, end)) { return .err(errors::make(5, pc)); }
             if (p.types[a] != p.return_types[f]) { return .err(errors::make(5, pc)); }
             pc += 1; continue;
@@ -82,7 +89,12 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref mut boo
                 (states[a * 2 + 1] & defined.high) != states[a * 2 + 1]) { return .err(errors::make(5, pc)); }
             pc+=1; continue;
         }
-        if (op >= 33) {
+        if(op==9 && a<p.function_count && p.array_results[a]!=0) {
+            if(b>=p.call_count || used_calls[b] || a==p.entry || p.call_arities[b] as usize!=p.arities[a]) {return .err(errors::make(5,pc));}
+            let usize checked=array_parameters::arguments(p,a,b,f,ref defined,live,pc)?;
+            live=array_results::call(p,a,dst,f,live,pc)?;
+            used_calls[b]=true;
+        } else if (op >= 33) {
             live = array_verifier::step(p, pc, f, ref mut defined, ref mut written, live)?;
         } else if (op >= 19 && op <= 21) {
             let usize target = if (op == 19) { a } else { b };
@@ -169,6 +181,7 @@ pub fn Result<usize, errors::Error> verify(ref ir::Program p) {
     }
     if (code_end != p.count || register_end != p.registers) { return .err(errors::make(5, 0)); }
     let usize parameters = array_parameters::metadata(p)?;
+    let usize results = array_results::metadata(p)?;
     var bool[32] used_calls = [false; 32];
     f = 0;
     while (f < p.function_count) { let usize checked = function(p, f, ref mut used_calls)?; f += 1; }

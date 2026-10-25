@@ -18,6 +18,7 @@ import std::num as num;
 // 31 checked left shift, 32 arithmetic signed / logical unsigned right shift.
 // 33 array init, 34 independent copy, 35 element read, 36 write, 37 drop.
 // 38 overwrite an existing mutable array from an exact-shape live source.
+// 39 return the sole remaining callee array owner: dst=0,a=catalog ID,b=0.
 pub struct Program {
     u8[2048] code;
     i64[128] constants;
@@ -43,6 +44,8 @@ pub struct Program {
     // Parameter register positions: zero scalar, otherwise array catalog ID + 1.
     // Array positions reserve a register index but never contain scalar values.
     u8[128] array_parameters;
+    // Zero scalar, otherwise a callee-owned result shape anchor (catalog ID + 1).
+    u8[16] array_results;
 }
 
 pub fn Program empty() {
@@ -52,7 +55,7 @@ pub fn Program empty() {
         .register_ends = [0; 16], .arities = [0; 16], .call_args = [0; 256],
         .call_arities = [0; 32], .function_count = 0, .entry = 0, .call_count = 0,
         .types = [0; 128], .return_types = [0; 16], .slots = [false; 128], .arrays = arrays::empty(),
-        .array_functions = [0; 16], .array_parameters = [0; 128] };
+        .array_functions = [0; 16], .array_parameters = [0; 128], .array_results = [0; 16] };
 }
 
 fn Result<u8, errors::Error> byte(usize value, usize offset) {
@@ -211,4 +214,15 @@ pub fn Result<usize, errors::Error> array_write(ref mut Program p, usize id, usi
 }
 pub fn Result<usize, errors::Error> array_drop(ref mut Program p, usize id, usize offset) {
     return raw(p, 37, id, 0, 0, offset);
+}
+pub fn Result<usize,errors::Error> array_call(ref mut Program p,usize target,usize destination,ref usize[] arguments,usize offset) {
+    if(p.call_count>=32 || arguments.len>8 || destination>=16) {return .err(errors::make(4,offset));}
+    let usize site=p.call_count;
+    var usize i=0;
+    while(i<arguments.len) {p.call_args[site*8+i]=byte(arguments[i],offset)?;i+=1;}
+    p.call_arities[site]=byte(arguments.len,offset)?;p.call_count+=1;
+    return raw(p,9,128+destination,target,site,offset);
+}
+pub fn Result<usize,errors::Error> array_return(ref mut Program p,usize source,usize offset) {
+    return raw(p,39,0,source,0,offset);
 }
