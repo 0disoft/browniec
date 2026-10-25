@@ -1,13 +1,14 @@
 # M2 Private By-Value Array Calls
 
-- Status: private IR, verifier, and VM implemented and focused-harness verified; source lowering pending
+- Status: private IR, verifier, and VM implemented and focused-harness verified; source lowering added by the parameter increment
 - Scope: mixed scalar and immutable scalar-array parameters in private CALLs
 - Evidence: [Windows receipt](../evidence/m2-array-calls-windows-20261025.json)
 
 This increment connects [atomic argument copies](m2-array-arguments.md) to private
-VM calls. Source declarations with array parameters remain rejected by the
-[signature gate](m2-array-signatures.md). No source execution claim follows from
-the private IR tests, and no new opcode or bytecode loading interface is added.
+VM calls. Its original checkpoint retained the source signature gate. The
+[source parameter increment](m2-array-parameters.md) now removes that gate.
+The private receipt does not verify the later source changes. No new opcode or
+bytecode loading interface is added.
 
 ## Metadata and independent verification
 
@@ -111,11 +112,10 @@ The full scalar native suite, other private-array/M0 native suites, allocator
 instrumentation, Linux execution, isolation, DLL, clean-machine packaging, and
 performance measurement remain outside this increment.
 
-## Next source increment
+## Subsequent source increment
 
-Predeclare callee array catalog entries before forward-call lowering, bind
-immutable parameter names, and capture source array arguments exactly once from
-left to right. Track temporary captures through nested argument evaluation and
-drop them on normal completion and every early return, including `?` failures.
-Keep for-header restrictions and exact-shape checks. Remove the signature gate
-only after source execution and negative checks cover those paths.
+The [source parameter increment](m2-array-parameters.md) predeclares catalogs for
+forward calls, binds immutable names, and captures mutable inputs once from left
+to right. Anonymous lexical bindings track temporary cleanup through nested
+evaluation, normal completion, and early exits. For-header restrictions and
+exact-shape checks remain in force; the original source gate is removed.

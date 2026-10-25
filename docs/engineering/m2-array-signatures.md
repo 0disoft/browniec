@@ -1,6 +1,6 @@
 # M2 Array Parameter Signature Foundation
 
-- Status: signature metadata implemented and focused-harness verified; array parameter execution not implemented
+- Status: historical signature-only checkpoint; source execution added by the parameter increment
 - Scope: bounded function signature scanning and an explicit compiler gate
 - Evidence: [Windows receipt](../evidence/m2-array-signatures-windows-20261025.json)
 
@@ -21,11 +21,13 @@ and reserved names, and requires a zero-parameter `i32 main`. It rejects wrapper
 arrays, multidimensional arrays, slices, `ref` parameters, expression lengths,
 and array results. This increment does not add modifiers for parameter mutation.
 
-Before lowering any function body, the compiler rejects every array parameter
+At this checkpoint, before lowering any body, the compiler rejected every array parameter
 with a `type` error at its name. This includes unused helpers and forward
 declarations. A scalar value cannot accidentally satisfy an array parameter by
-matching its element tag. No array parameter program produces executable IR.
-The gate costs O(P) time for at most 128 declared parameters.
+matching its element tag. At that stage no array parameter program produced executable IR.
+The gate cost O(P) time for at most 128 declared parameters. The
+[source parameter increment](m2-array-parameters.md) now replaces that gate with
+parameter binding, argument capture, and cleanup.
 
 ## Verification
 
@@ -36,8 +38,8 @@ pwsh -NoProfile -File tools/verify-m2-array-signatures.ps1
 The focused harness passed six signature groups, four existing function groups,
 and six helper-array groups per development/release profile. Each CLI passed
 1,969 scalar, 67 array-read, and 97 helper-local CLI cases on those same
-binaries. The helper CLI case for a valid array parameter declaration now
-expects `type` rather than `syntax`; the declaration remains unavailable.
+binaries. At that checkpoint the helper CLI case for a valid array parameter
+declaration expected `type` rather than `syntax`; execution was unavailable.
 Input and binary hashes are recorded by the harness. The source-only signature
 tests exercise the last metadata slot, mixed shapes, integer range edges,
 malformed forms, duplicate names, and compiler rejection before body lowering.
@@ -49,11 +51,10 @@ The complete scalar native suite, other private-array/M0 native suites,
 allocator instrumentation, Linux execution, isolation, DLL delivery, and
 performance checks are skipped. No runtime array-call evidence is claimed.
 
-## Next implementation slice
+## Subsequent source integration
 
 The [private call increment](m2-array-calls.md) adds independent call verification
-and transactional VM copies with frame-specific owners. Source lowering must
-still bind immutable array parameters and capture each argument once from left
-to right before later argument effects. Temporary captures need cleanup on every
-exit. Remove the compiler gate only after those source paths are implemented
-and checked; caller tokens must not become callee aliases.
+and transactional VM copies with frame-specific owners. The
+[source parameter increment](m2-array-parameters.md) supplies immutable name
+binding and left-to-right capture with cleanup on normal and early exits.
+The original receipt above remains historical for those later inputs.

@@ -434,8 +434,8 @@ The [private array-call contract](docs/engineering/m2-array-calls.md) connects
 exact-shape immutable argument snapshots to distinct callee owners through the
 atomic batch-copy helper. It adds independent parameter/call metadata checks,
 frame-specific bindings and prepaid Fuel. The focused command is
-`pwsh -NoProfile -File tools/verify-m2-arrays.ps1 -Slice calls`. Source array
-parameter declarations remain gated until capture and cleanup lowering exist.
+`pwsh -NoProfile -File tools/verify-m2-arrays.ps1 -Slice calls`. That checkpoint
+retained the source gate; the subsequent source-parameter increment removes it.
 The [call receipt](docs/evidence/m2-array-calls-windows-20261025.json) records
 29 native groups and 2,395 CLI cases (426 array, 1,969 scalar) per development/
 release profile. Fresh checks cover nine private call groups, four function,
@@ -446,6 +446,25 @@ Changed IR/verifier/VM inputs receive fresh execution; 25 other source hashes
 match the prior argument-copy receipt. The full scalar and other private-array/
 M0 native suites, allocator instrumentation, Linux, isolation, DLL,
 clean-machine packaging, and performance measurements are skipped.
+
+The [source array-parameter contract](docs/engineering/m2-array-parameters.md)
+removes the source gate and connects exact-shape names to immutable callee
+parameters. The focused command is
+`pwsh -NoProfile -File tools/verify-m2-arrays.ps1 -Slice parameters`. Mutable
+arguments are captured before later argument effects; anonymous lexical entries
+carry normal, nested-call, return, propagation, and loop-transfer cleanup.
+The [parameter receipt](docs/evidence/m2-array-parameters-windows-20261025.json)
+records 28 native groups and 2,475 CLI cases per development/release profile
+(426 existing array, 80 parameter, 1,969 scalar). The native selections passed;
+completed outputs were retained while a CLI fixture name collision was corrected.
+The affected CLI matrix and all remaining steps passed individually. The aggregate
+harness was not rerun after that correction and the final receipt-guard tightening.
+Both artifact hashes, all 18 CLI receipt hashes and generated fixture hashes were
+validated. Thirty unchanged backend source inputs match the private call receipt;
+this is historical-input comparison rather than a rerun of those native suites.
+The full scalar and other private-array/M0 native suites, allocator instrumentation,
+Linux execution, isolation, DLL, clean-machine packaging, and performance checks
+remain skipped for this slice.
 
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker

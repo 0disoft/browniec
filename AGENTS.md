@@ -22,15 +22,20 @@ own the affected contract. Broader scaffold procedures are optional.
   Private array bindings are function-owned; recursive VM frames retain separate tokens while sharing
   the 16-owner table and payload arena. Source declarations include scalar and shallow wrapper-returning helpers.
   Question-mark failure returns drop visible local arrays in reverse order; success keeps them live.
-  Focused helper verification passed 16 native groups, 426 array CLI cases, and 1,969 scalar CLI cases
-  per development/release profile; changed frontend and fixture inputs receive fresh evidence.
-  Source array parameters, array results, borrows, slices, and source aggregate calls remain unimplemented.
-  A signature-only foundation records exact scalar-array parameter shapes; the
-  compiler rejects all such declarations before lowering any function body.
+  Focused source-parameter verification passed 28 native groups and 2,475 CLI cases
+  (426 existing array, 80 parameter, 1,969 scalar) per development/release profile.
+  Completed native/CLI outputs were combined stepwise after a corrected CLI fixture;
+  the aggregate harness was not rerun. Changed frontend/fixture inputs have fresh evidence.
+  Source immutable exact-shape scalar-array parameters are supported. Parameter
+  catalogs are predeclared for forward/mutual calls. Arguments evaluate left to
+  right; immutable inputs are stable snapshots and mutable inputs get anonymous
+  captures with normal/return/propagation/loop-transfer cleanup.
+  Array results, borrows, slices and wrapper element arrays remain unimplemented.
   Private `array_owners::copy_arguments` preflights up to eight exact-shape copies
   before changing bytes or owner state. Private IR/verifier/VM calls now support
   immutable exact-shape array parameters, mixed scalar positions, metered atomic
-  copies, and frame-specific owners. Source capture and parameter lowering remain pending.
+  copies, and frame-specific owners. All parameter and capture sites share the
+  existing catalog, lexical binding, owner and payload limits.
   For-header array declarations and writes remain rejected.
 - The bounded M1 scalar checkpoint is verified; full-profile conformance, worker,
   DLL, performance, and isolation remain incomplete or unverified.

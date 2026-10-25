@@ -1,6 +1,6 @@
 # Brownie C
 
-- Status: M1 scalar checkpoint verified; M2 function-owned scalar arrays with helper declarations, copies, length access, lexical cleanup, and whole-array assignment implemented; full profile incomplete
+- Status: M1 scalar checkpoint verified; M2 function-owned scalar arrays with helper declarations, by-value parameters, argument capture, copies, length access, lexical cleanup, and whole-array assignment implemented; full profile incomplete
 - Design date: 2026-10-23
 - First delivery target: Windows 11 x64
 
@@ -50,16 +50,18 @@ without allocating another extent. The [private frame foundation](docs/engineeri
 separates function ownership and recursive VM array tokens. The
 [helper-local increment](docs/engineering/m2-array-helpers.md) extends source
 arrays to scalar and shallow wrapper-returning helpers, including reverse cleanup
-on `?` failure returns. Source array parameters, results, borrows, slices, aggregate
-calls, structs, workers, and DLLs remain later work.
+on `?` failure returns. [Source array parameters](docs/engineering/m2-array-parameters.md)
+add immutable exact-shape arguments with left-to-right snapshots, forward/mutual
+calls, and cleanup of pending captures on normal and early exits. Array results,
+borrows, slices, structs, workers, and DLLs remain later work.
 The [array parameter signature foundation](docs/engineering/m2-array-signatures.md)
-records element types and exact lengths; all array parameter declarations still
-fail compilation until source capture and parameter lowering are implemented.
+records element types and exact lengths; the subsequent source increment removes
+its original compilation gate.
 The [atomic argument-copy foundation](docs/engineering/m2-array-arguments.md)
 preflights a complete batch of independent storage copies before mutation.
 [Private array calls](docs/engineering/m2-array-calls.md) connect those copies to
 the verifier and VM, with immutable exact-shape parameters and independent frame
-owners. Source argument capture and parameter lowering remain pending.
+owners. The source parameter increment supplies argument capture and cleanup.
 
 ```powershell
 ./build/toolchain/fairyc.exe build
@@ -175,9 +177,10 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 whole-array assignment](docs/engineering/m2-array-assignment.md): exact-shape copies into existing mutable storage, preflight, private IR, and Fuel
 - [M2 private array function frames](docs/engineering/m2-array-frames.md): function ownership, recursive frame tokens, shared quotas, and parameter work sequencing
 - [M2 helper-local arrays](docs/engineering/m2-array-helpers.md): function-local source declarations, recursion, and cleanup on wrapper propagation
-- [M2 array parameter signatures](docs/engineering/m2-array-signatures.md): bounded shape metadata and explicit rejection before call lowering is available
+- [M2 array parameter signatures](docs/engineering/m2-array-signatures.md): bounded shape metadata and the historical gate replaced by source parameter lowering
 - [M2 atomic array argument copies](docs/engineering/m2-array-arguments.md): exact-shape copy batches with no partial publication on failure
-- [M2 private array calls](docs/engineering/m2-array-calls.md): mixed parameter metadata, immutable caller snapshots, independent frame copies and metered CALLs; source lowering pending
+- [M2 private array calls](docs/engineering/m2-array-calls.md): mixed parameter metadata, immutable caller snapshots, independent frame copies and metered CALLs
+- [M2 source array parameters](docs/engineering/m2-array-parameters.md): immutable exact-shape source parameters, left-to-right captures, forward/mutual calls and cleanup on early exits
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
 - [Design baseline](docs/design-baseline.md): source provenance, evidence, and findings
@@ -217,6 +220,12 @@ each development and release profile. Scalar CLI regression also passed all
 1,969 cases per profile on the same binaries. The recorder can reuse matching
 completed scalar CLI receipts after documentation-only changes instead of rerunning
 the 1,969 tests. That integration also skips the 81-group scalar native rerun
-because the VM and verifier are unchanged. No full-profile conformance,
+because the VM and verifier are unchanged. The current
+[source-parameter receipt](docs/evidence/m2-array-parameters-windows-20261025.json)
+records 28 focused native groups and 2,475 CLI cases per development/release
+profile (426 existing array, 80 parameter, 1,969 scalar). Completed outputs were
+combined stepwise; the aggregate harness was not rerun after the fixture correction.
+Thirty unchanged backend source hashes match the private call receipt; this is
+a comparison, not a rerun of their full native suites. No full-profile conformance,
 DLL ABI, Windows isolation,
 clean-machine packaging, or performance target is claimed.

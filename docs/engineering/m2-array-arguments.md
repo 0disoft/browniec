@@ -4,9 +4,10 @@
 - Scope: `array_owners::copy_arguments`, with at most eight array sources
 - Evidence: [Windows receipt](../evidence/m2-array-arguments-windows-20261025.json)
 
-This is the storage foundation for immutable by-value array parameters. It does
-not enable array parameter programs: the [signature gate](m2-array-signatures.md)
-still rejects them before lowering any body. No opcode or CALL behavior changes.
+This is the storage foundation for immutable by-value array parameters. This
+storage-only increment added no opcode or CALL behavior. The subsequent private
+call and [source parameter increments](m2-array-parameters.md) connect it to
+executable source programs; the receipt here covers only the storage stage.
 
 ## Copy contract
 
@@ -76,12 +77,12 @@ Fairy C; the receipt identifies the compiler and exact input hashes.
 All 29 other source inputs match the signature receipt. That comparison is not
 a fresh CLI or VM/verifier test result, and the earlier receipt remains historical.
 
-## Remaining call work
+## Subsequent call integration
 
-Source lowering must capture arguments exactly once, left to right, before later
-argument effects. This helper copies the state supplied when it is invoked; it
-does not implement capture timing or roll back earlier argument evaluation.
+The source increment captures arguments exactly once, left to right, before
+later argument effects. This helper itself copies the state supplied when it is
+invoked; it does not implement capture timing or roll back earlier evaluation.
 The [private call increment](m2-array-calls.md) now associates exact shapes and
 owners with callee parameters and invocation frames, meters copies before
-mutation, and retains recursive parameter owners independently. Source capture
-and temporary cleanup lowering must still be added before removing the gate.
+mutation, and retains recursive parameter owners independently. The source
+increment provides capture and temporary cleanup lowering and removes the gate.
