@@ -66,7 +66,7 @@ fn void unsupported_result_forms_and_shapes_fail_compilation() {
     assert(!compiler::compile(b"module main; fn i32[1] f(){let i32[2] a=[42;2];return a;}fn i32 main(){return 42;}").is_ok);
     assert(!compiler::compile(b"module main; fn i32[1] f(){let i32[1] a=[42;1];return a[0];}fn i32 main(){return 42;}").is_ok);
     assert(!compiler::compile(b"module main; fn i32[1] f(){let i32[1] a=[42;1];return (a);}fn i32 main(){return 42;}").is_ok);
-    assert(!compiler::compile(b"module main; fn i32[1] f(){return [42;1];}fn i32 main(){return 42;}").is_ok);
+    assert(!compiler::compile(b"module main; fn i32[1] f(){return [42;2];}fn i32 main(){return 42;}").is_ok);
     assert(!compiler::compile(b"module main; fn i32[1] f(){let i32[1] a=[42;1];return a;}fn i32[2] g(){return f();}fn i32 main(){return 42;}").is_ok);
     assert(!compiler::compile(b"module main; fn i32[1] f(){let i32[1] a=[42;1];return a;}fn i32 main(){return f();}").is_ok);
     assert(!compiler::compile(b"module main; fn i32[1] f(){let i32[1] a=[42;1];return a;}fn i32 main(){let i32[2] a=f();return 42;}").is_ok);

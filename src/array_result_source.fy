@@ -53,7 +53,24 @@ pub fn Result<usize,errors::Error> returned(ref u8[] source,ref mut lexer::State
     let usize end=lexer::next(source,s)?;
     return finish(p,names,id,at);
 }
-// Both named owners and anonymous call results leave through the same cleanup.
+// The filler has already been evaluated once; no result exists on its early exits.
+pub fn Result<usize,errors::Error> repeated(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
+    ref locals::Table names,usize value,usize at) {
+    let usize encoded=p.array_results[names.function] as usize;
+    if(encoded==0 || value>=p.registers) {return .err(errors::make(3,at));}
+    let usize shape=encoded-1;
+    if(p.types[value]!=p.arrays.elements[shape]) {return .err(errors::make(3,at));}
+    let usize separator=lexer::punctuation(source,s,59)?;
+    let usize length=arrays::count(source,s)?;
+    if(length!=p.arrays.lengths[shape]) {return .err(errors::make(3,at));}
+    let usize close=lexer::punctuation(source,s,93)?;
+    let usize end=lexer::punctuation(source,s,59)?;
+    let u8 element=p.arrays.elements[shape];
+    let usize id=ir::array_in(p,names.function,element,length,false,at)?;
+    let usize initialized=ir::array_init(p,id,value,at)?;
+    return finish(p,names,id,at);
+}
+// Named owners, literals and anonymous call results leave through the same cleanup.
 // Pending call destinations are absent from names until CALL has executed.
 pub fn Result<usize,errors::Error> finish(ref mut ir::Program p,ref locals::Table names,usize id,usize at) {
     let usize encoded=p.array_results[names.function] as usize;

@@ -579,6 +579,14 @@ fn Result<bool, errors::Error> control(ref u8[] source, ref mut lexer::State s, 
     if (word_is(source, s, b"return")) {
         let usize keyword = lexer::next(source, s)?;
         if(p.array_results[table.function]!=0) {
+            if(s.kind==91) {
+                let usize shape=(p.array_results[table.function] as usize)-1;
+                let u8 element=p.arrays.elements[shape];
+                let usize open=lexer::next(source,s)?;
+                let usize value=expression(source,s,p,table,signatures,1,expr_depth,element,result_type,depth,loop_state)?;
+                let usize returned=array_results::repeated(source,s,p,table,value,at)?;
+                return .ok(true);
+            }
             var lexer::State look=lexer::snapshot(s);
             let usize next=lexer::next(source,ref mut look)?;
             if(s.kind==2 && look.kind==40) {
