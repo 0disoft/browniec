@@ -31,7 +31,7 @@ own the affected contract. Broader scaffold procedures are optional.
   right; immutable inputs are stable snapshots and mutable inputs get anonymous
   captures with normal/return/propagation/loop-transfer cleanup.
   Source array results support bare-name returns and exact-shape let/var call
-  initializers. Direct return calls, aggregate scalar expressions and assignment
+  initializers and direct return calls. Aggregate scalar expressions and assignment
   RHS, for-header result calls, borrows, slices and wrapper elements remain unsupported.
   Result signatures now retain exact scalar-array lengths in 16 bounded slots;
   its original blanket result gate is removed by source lowering. Result anchors
@@ -47,11 +47,18 @@ own the affected contract. Broader scaffold procedures are optional.
   Source lowering emits reverse-order drops for all other visible arrays and
   captures before terminal ARET. Call-result names become visible only after
   argument evaluation and CALL, so early exits cannot drop pending destinations.
-  Source-result verification records 26 native groups and 2,690 CLI cases per
+  Previous source-result verification records 26 native groups and 2,690 CLI cases per
   development/release profile, including 119 new source-result cases. Development
   combines 18 unchanged groups from the first selection with eight fresh groups
   after correcting a mutual-call fixture; release selects all 26 together.
   These are individual commands, not an aggregate harness run.
+  Direct array-return calls reuse argument evaluation and the shared return
+  finisher. Each anonymous destination uses one fresh catalog site and remains
+  invisible during argument evaluation; normal completion releases all other
+  visible arrays/captures before ARET. Focused direct-return verification passes
+  12 native groups and 509 CLI cases per development/release profile. Other array
+  and scalar CLI matrices and full native suites were not rerun. The expanded
+  combined result-source harness is available but was only syntax-checked.
   Previous private-result verification passed 43 native groups and 2,571 CLI cases
   per development/release profile, including parameter independence and deferred
   callee holes. Native development combined 41 plus two disjoint groups; release

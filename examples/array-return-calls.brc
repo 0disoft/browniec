@@ -1,0 +1,15 @@
+module main;
+
+fn i32[2] forward(i32 value) {
+    return make(value);
+}
+
+fn i32[2] make(i32 value) {
+    let i32[2] result = [value; 2];
+    return result;
+}
+
+fn i32 main() {
+    let i32[2] result = forward(21);
+    return result[0] + result[1];
+}

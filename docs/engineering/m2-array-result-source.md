@@ -1,7 +1,7 @@
 # M2 Source Array Results
 
 - Status: implemented; Windows development/release verification is recorded in the receipt
-- Scope: named exact-shape scalar-array returns and typed call-result initializers
+- Scope: named exact-shape scalar-array returns and typed call-result initializers; [direct return calls](m2-array-return-calls.md) have a subsequent focused increment
 - Evidence: [Windows receipt](../evidence/m2-array-result-source-windows-20261025.json)
 - Example: [`array-results.brc`](../../examples/array-results.brc)
 
@@ -52,14 +52,15 @@ All 32 VM frames share 16 occupied owners and an arena capped at 65,536 bytes.
 
 ## Current boundary
 
-Return operands must be bare array names. Direct `return function(...);`,
-returned literals, parentheses, indexing, slices and borrows remain rejected.
-Array-result calls are admitted only in typed array declaration initializers;
+Return operands can be bare array names or direct `return function(...);` calls.
+The latter now has separate [lowering and verification](m2-array-return-calls.md).
+Returned literals, parentheses, indexing, slices and borrows remain rejected.
+Array-result calls are admitted in typed array declaration initializers and direct returns;
 scalar expressions, call arguments, assignment RHS and for headers do not gain
 aggregate expression support. Wrapper elements and implicit shape conversions
 remain unavailable. Unreachable source still has to satisfy static typing.
 
-## Verification
+## Original source increment verification
 
 ```powershell
 pwsh -NoProfile -File tools/verify-m2-arrays.ps1 -Slice result-source

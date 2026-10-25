@@ -516,8 +516,21 @@ source-result groups after correcting a mutual-call fixture; release selects all
 arena have source-level evidence. Unchanged runtime hashes are compared with the
 private-result receipt. Aggregate tooling is syntax-checked, not invoked. Full
 scalar/private-array native suites, M0, allocator instrumentation, Linux, isolation,
-DLL, clean-machine packaging and performance remain skipped. Direct return calls,
-aggregate scalar expressions, result assignment RHS and for headers remain unsupported.
+DLL, clean-machine packaging and performance remain skipped. Direct return calls
+were still unsupported at that checkpoint.
+
+The [direct-return increment](docs/engineering/m2-array-return-calls.md) enables
+exact-shape `return FUNCTION(arguments);` through the shared call parser and
+return cleanup. The [focused receipt](docs/evidence/m2-array-return-calls-windows-20261025.json)
+records 12 native groups and 509 CLI cases per development/release profile: four
+new plus eight existing source-result native groups, and 117 direct-return, 119
+source-result, 80 parameter, 96 result-signature and 97 helper-local CLI cases.
+Exact Fuel, nested argument returns/loop exits, shared quota ceilings, capture
+ordering and cleanup have direct evidence. Unchanged runtime inputs are compared,
+not rerun. Other array/scalar CLI matrices, full native suites, M0, allocator
+instrumentation, Linux, isolation, DLL, clean-machine packaging and performance
+remain skipped. The expanded aggregate harness is syntax-checked, not invoked.
+Aggregate scalar expressions, result assignment RHS and for headers remain unsupported.
 
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker

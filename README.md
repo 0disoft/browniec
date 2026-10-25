@@ -54,6 +54,8 @@ on `?` failure returns. [Source array parameters](docs/engineering/m2-array-para
 add immutable exact-shape arguments with left-to-right snapshots, forward/mutual
 calls, and cleanup of pending captures on normal and early exits. Named array results
 and typed call-result initializers are supported by the [source result increment](docs/engineering/m2-array-result-source.md).
+[Direct return calls](docs/engineering/m2-array-return-calls.md) additionally admit
+`return make(arguments);` with the same argument capture and ownership rules.
 Borrows, slices, structs, workers, and DLLs remain later work.
 The [array parameter signature foundation](docs/engineering/m2-array-signatures.md)
 records element types and exact lengths; the subsequent source increment removes
@@ -190,6 +192,7 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 source array parameters](docs/engineering/m2-array-parameters.md): immutable exact-shape source parameters, left-to-right captures, forward/mutual calls and cleanup on early exits
 - [M2 array result signatures](docs/engineering/m2-array-result-signatures.md): exact return-shape metadata and the historical source gate
 - [M2 source array results](docs/engineering/m2-array-result-source.md): named returns, typed call initializers, capture cleanup and ownership transfer
+- [M2 direct array-return calls](docs/engineering/m2-array-return-calls.md): exact-shape forwarding, nested early exits and shared return cleanup
 - [M2 private array results](docs/engineering/m2-array-results.md): verified result lifetimes, zero-copy owner transfer, recursive frames and prepaid return work
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
@@ -252,6 +255,9 @@ records 26 native groups and 2,690 CLI cases per profile, including 119 new
 source-result cases. Development combines 18 unchanged groups from the first
 selection with eight passing source-result groups after a corrected mutual-call
 fixture; release selects all 26 together. Earlier receipts remain historical
-for changed inputs. No full-profile conformance,
+for changed inputs. The focused [direct-return receipt](docs/evidence/m2-array-return-calls-windows-20261025.json)
+records 12 native groups and 509 CLI cases per profile, including 117 new direct-return
+cases. Other array/scalar CLI matrices and full native suites were not rerun for
+that increment. No full-profile conformance,
 DLL ABI, Windows isolation,
 clean-machine packaging, or performance target is claimed.
