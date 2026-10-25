@@ -147,6 +147,13 @@ result before releasing all visible arrays. Classic `for` headers and helper
 functions still cannot declare arrays. The 16-entry catalog limits declaration
 sites rather than cumulative loop executions.
 
+The [whole-array assignment increment](../engineering/m2-array-assignment.md)
+adds `DEST = SOURCE;` between visible arrays with exactly matching element types
+and lengths. The destination must be mutable. Assignment overwrites its existing
+extent and preserves the source, destination shape, and owner identity. A bool
+source is fully validated before writing; self-assignment is admitted. RHS array
+expressions and classic `for` header assignments remain excluded.
+
 The current scalar CLI implements fixed-width integer `~`, `&`, `^`, and `|`,
 and checked `<<` and `>>`. Binary operands, including shift amounts, must have the
 same integer type. Signed right shift is arithmetic; unsigned right shift is

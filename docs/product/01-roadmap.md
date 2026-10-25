@@ -194,6 +194,16 @@ profile. The length receipt is historical after these frontend changes.
 Helper arrays, aggregate calls, parameters/results, borrows, slices, and
 whole-array reassignment remain open.
 
+The [whole-array assignment increment](../engineering/m2-array-assignment.md)
+adds exact-shape `DEST = SOURCE;` into mutable existing storage without reserving
+another payload or owner. Private opcode 38 receives independent type/lifetime
+verification and metered dispatch. The
+[assignment receipt](../evidence/m2-array-assignment-windows-20261025.json) records
+16 native groups, 329 array CLI cases, and 1,969 scalar CLI cases per
+development/release profile. Earlier frontend and array-backend receipts remain
+historical after the changed owner/IR/verifier/dispatch inputs. Helper arrays,
+aggregate parameters/results, borrows, and slices remain open.
+
 Goal: connect arrays, plain structs, borrows, Buffer, input,
 output, and UTF-8.
 

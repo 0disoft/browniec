@@ -1,5 +1,9 @@
 # M2 Lexical Array Lifetimes
 
+This page records the scope increment. The later [assignment increment](m2-array-assignment.md)
+adds whole-array assignment; its fresh receipt supersedes this page's historical
+frontend and array-backend evidence where inputs changed.
+
 - Status: implemented and focused-harness verified in development and release
 - Evidence: [Windows scope receipt](../evidence/m2-array-scopes-windows-20261025.json)
 - Scope: fixed scalar arrays in the lexical scopes of zero-argument `fn i32 main()`

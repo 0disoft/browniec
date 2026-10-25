@@ -11,15 +11,15 @@ import sys
 from urllib.parse import unquote
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--slice', choices=['write','copy','length','scopes'], default='write')
+parser.add_argument('--slice', choices=['write','copy','length','scopes','assignment'], default='write')
 regression = parser.add_mutually_exclusive_group()
 regression.add_argument('--scalar-regression', action='store_true')
 regression.add_argument('--reuse-scalar-regression', action='store_true')
 args = parser.parse_args()
 root = Path(__file__).resolve().parent.parent
 kind = 'copy-source' if args.slice == 'copy' else args.slice
-native_count = 19 if args.slice == 'scopes' else 15 if args.slice == 'length' else 12 if args.slice == 'copy' else 9
-copy_count = 58 if args.slice in ['copy', 'length', 'scopes'] else 0
+native_count = 16 if args.slice == 'assignment' else 19 if args.slice == 'scopes' else 15 if args.slice == 'length' else 12 if args.slice == 'copy' else 9
+copy_count = 58 if args.slice in ['copy', 'length', 'scopes', 'assignment'] else 0
 date = '20261024' if args.slice == 'write' else '20261025'
 evidence_path = f'docs/evidence/m2-array-{kind}-windows-{date}.json'
 has_regression = args.scalar_regression or args.reuse_scalar_regression
@@ -50,9 +50,10 @@ for result in receipt['results']:
     assert len(tests['tests']) == native_count and all(t['outcome'] == 'passed' for t in tests['tests'])
     assert digest(result['artifact']) == result['sha256']
     checks = [('source', 67, 'cliCases'), ('write', 61, 'writeCliCases')]
-    if args.slice in ['copy', 'length', 'scopes']: checks.append(('copy-source', copy_count, 'copyCliCases'))
-    if args.slice in ['length', 'scopes']: checks.append(('length', 40, 'lengthCliCases'))
-    if args.slice == 'scopes': checks.append(('scopes', 44, 'scopeCliCases'))
+    if args.slice in ['copy', 'length', 'scopes', 'assignment']: checks.append(('copy-source', copy_count, 'copyCliCases'))
+    if args.slice in ['length', 'scopes', 'assignment']: checks.append(('length', 40, 'lengthCliCases'))
+    if args.slice in ['scopes', 'assignment']: checks.append(('scopes', 44, 'scopeCliCases'))
+    if args.slice == 'assignment': checks.append(('assignment', 59, 'assignmentCliCases'))
     for cli_kind, count, field in checks:
         path = f"build/m2-array-{cli_kind}/{result['profile']}/cli-receipt.json"
         cli = read(path)
@@ -72,9 +73,12 @@ assert m0['compilerSha256'] == receipt['compilerSha256']
 prior_path = 'docs/evidence/m2-array-write-windows-20261024.json' if args.slice == 'copy' else 'docs/evidence/m2-array-source-windows-20261024.json'
 if args.slice == 'length': prior_path = 'docs/evidence/verifier-bitsets-windows-20261025.json'
 if args.slice == 'scopes': prior_path = 'docs/evidence/m2-array-length-windows-20261025.json'
+if args.slice == 'assignment': prior_path = 'docs/evidence/m2-array-scopes-windows-20261025.json'
 previous = read(prior_path)
 changed = {'src/compiler.fy', 'src/array_source.fy', 'src/render.fy', 'src/main.fy'}
 if args.slice == 'scopes': changed.add('src/loops.fy')
+runtime_changed = {'src/ir.fy', 'src/verifier.fy', 'src/array_verifier.fy', 'src/array_vm.fy', 'src/array_owners.fy'}
+if args.slice == 'assignment': changed |= runtime_changed
 backend = [item for item in previous['sourceSha256']
            if (item['path'].startswith('src/') and item['path'] not in changed)
            or item['path'] in {'tests/m2/array_ir.fy', 'tests/m2/array_vm.fy', 'tests/m2/array_allocation.fy'}]
@@ -83,11 +87,15 @@ for item in read(fixture_evidence)['sourceSha256']:
     if item['path'] in {'tests/m2/array_ir.fy', 'tests/m2/array_vm.fy', 'tests/m2/array_allocation.fy'} and item['path'] not in {r['path'] for r in backend}:
         backend.append(item)
 unchanged(backend)
-assert {'src/vm.fy', 'src/verifier.fy', 'src/array_vm.fy', 'src/array_verifier.fy'} <= {item['path'] for item in backend}
+required = {'src/vm.fy', 'src/array_layout.fy', 'src/array_storage.fy', 'src/register_set.fy'} if args.slice == 'assignment' else {'src/vm.fy', 'src/verifier.fy', 'src/array_vm.fy', 'src/array_verifier.fy'}
+assert required <= {item['path'] for item in backend}
 assert previous['compilerSha256'] == receipt['compilerSha256']
 receipt['foundationReuse'] = dict(m0Inputs=len(m0['sourceSha256']),
     unchangedBackendInputs=len(backend), compilerIdentity='unchanged',
     priorEvidence=prior_path, fixtureEvidence=fixture_evidence)
+if args.slice == 'assignment':
+    receipt['foundationReuse']['changedRuntimeInputs'] = sorted(runtime_changed)
+    receipt['foundationReuse']['runtimeVerification'] = 'Fresh native array IR/VM, assignment storage/source tests and CLI matrices; no reuse claim for changed runtime inputs.'
 receipt['commands'] = [f'pwsh -NoProfile -File tools/verify-m2-arrays.ps1 -Slice {args.slice}']
 
 if args.scalar_regression:
@@ -159,13 +167,14 @@ receipt['commands'].append('python -B tools/record-m2-array-write-evidence.py' +
                            (' --scalar-regression' if args.scalar_regression else ' --reuse-scalar-regression' if args.reuse_scalar_regression else ''))
 receipt['commands'].append('git diff --check')
 receipt['skipped'] = [
-    dict(check='M0 and private array IR/VM native reruns', reason='Named compiler, backend and fixture inputs unchanged.'),
-    dict(check='Full 84-group scalar native rerun' if args.slice in ['length', 'scopes'] else 'Full 81-group scalar native rerun', reason='Focused native parser/VM tests and scalar CLI regression used for this frontend increment.'
+    dict(check='M0 native rerun' if args.slice == 'assignment' else 'M0 and private array IR/VM native reruns', reason='M0 inputs and compiler unchanged; private array IR/VM were rerun for assignment.' if args.slice == 'assignment' else 'Named compiler, backend and fixture inputs unchanged.'),
+    dict(check='Full 84-group scalar native rerun' if args.slice in ['length', 'scopes', 'assignment'] else 'Full 81-group scalar native rerun', reason='Focused native parser/VM tests and scalar CLI regression used; scalar instruction implementations are unchanged.'
          if has_regression else 'Scalar CLI regression is pending; this receipt establishes focused verification only.'),
-    dict(check='Instrumented allocator, Linux, isolation, DLL, performance', reason='Not executed in this frontend increment.'),
+    dict(check='Instrumented allocator, Linux, isolation, DLL, performance', reason='Not executed in this increment.'),
 ]
 destination.write_text(json.dumps(receipt, indent=2) + '\n', encoding='utf-8', newline='\n')
 print(json.dumps(dict(status='passed', evidence=destination.relative_to(root).as_posix(),
     nativeGroups=native_count, readCliCases=67, writeCliCases=61, copyCliCases=copy_count,
-    lengthCliCases=40 if args.slice in ['length', 'scopes'] else 0,
-    scopeCliCases=44 if args.slice == 'scopes' else 0, scalarCliCases=1969 if has_regression else 0)))
+    lengthCliCases=40 if args.slice in ['length', 'scopes', 'assignment'] else 0,
+    scopeCliCases=44 if args.slice in ['scopes', 'assignment'] else 0,
+    assignmentCliCases=59 if args.slice == 'assignment' else 0, scalarCliCases=1969 if has_regression else 0)))

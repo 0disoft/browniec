@@ -18,8 +18,9 @@ own the affected contract. Broader scaffold procedures are optional.
   element assignment in nested scopes, and copy initialization from exact-type/length array bindings.
   Array length access uses `NAME.len`, an exact `usize` constant in scalar expressions and pure for headers.
   Lexical exits release local arrays in reverse order; loop transfers preserve enclosing arrays.
-  Whole-array reassignment, array parameters, results, borrows, slices, aggregate guest calls,
-  and helper-function array locals remain unimplemented. Focused read/write/copy/length/scope verification passed in development and release; for-header arrays and element writes remain rejected.
+  Whole-array assignment copies an exact-shape visible source into existing `var` storage without an extra extent.
+  Array parameters, results, borrows, slices, aggregate guest calls,
+  and helper-function array locals remain unimplemented. Focused read/write/copy/length/scope/assignment verification passed in development and release; for-header arrays and array writes remain rejected.
 - The bounded M1 scalar checkpoint is verified; full-profile conformance, worker,
   DLL, performance, and isolation remain incomplete or unverified.
 - Root fairy.toml builds the native CLI; tools/verify-m1.ps1 verifies its narrow profile.
