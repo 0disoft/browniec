@@ -62,6 +62,9 @@ preflights a complete batch of independent storage copies before mutation.
 [Private array calls](docs/engineering/m2-array-calls.md) connect those copies to
 the verifier and VM, with immutable exact-shape parameters and independent frame
 owners. The source parameter increment supplies argument capture and cleanup.
+The [array result signature foundation](docs/engineering/m2-array-result-signatures.md)
+records exact return shapes but rejects all array-result declarations with a
+type error before any body is lowered. Array return execution remains unavailable.
 
 ```powershell
 ./build/toolchain/fairyc.exe build
@@ -181,6 +184,7 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 atomic array argument copies](docs/engineering/m2-array-arguments.md): exact-shape copy batches with no partial publication on failure
 - [M2 private array calls](docs/engineering/m2-array-calls.md): mixed parameter metadata, immutable caller snapshots, independent frame copies and metered CALLs
 - [M2 source array parameters](docs/engineering/m2-array-parameters.md): immutable exact-shape source parameters, left-to-right captures, forward/mutual calls and cleanup on early exits
+- [M2 array result signatures](docs/engineering/m2-array-result-signatures.md): exact return-shape metadata and an explicit compiler gate before execution support
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
 - [Design baseline](docs/design-baseline.md): source provenance, evidence, and findings
@@ -220,12 +224,18 @@ each development and release profile. Scalar CLI regression also passed all
 1,969 cases per profile on the same binaries. The recorder can reuse matching
 completed scalar CLI receipts after documentation-only changes instead of rerunning
 the 1,969 tests. That integration also skips the 81-group scalar native rerun
-because the VM and verifier are unchanged. The current
+because the VM and verifier are unchanged. The prior
 [source-parameter receipt](docs/evidence/m2-array-parameters-windows-20261025.json)
 records 28 focused native groups and 2,475 CLI cases per development/release
 profile (426 existing array, 80 parameter, 1,969 scalar). Completed outputs were
 combined stepwise; the aggregate harness was not rerun after the fixture correction.
 Thirty unchanged backend source hashes match the private call receipt; this is
-a comparison, not a rerun of their full native suites. No full-profile conformance,
+a comparison, not a rerun of their full native suites. The current
+[result-signature receipt](docs/evidence/m2-array-result-signatures-windows-20261025.json)
+records 16 native groups and 2,242 CLI cases per profile (96 result-signature,
+80 parameter, 97 helper-local, 1,969 scalar) on both Windows builds. This covers
+metadata and honest rejection; array return execution remains unavailable.
+Thirty-one unchanged backend hashes match the parameter receipt, which remains
+historical for the changed frontend and fixture inputs. No full-profile conformance,
 DLL ABI, Windows isolation,
 clean-machine packaging, or performance target is claimed.

@@ -137,3 +137,8 @@ and owners, match the private call checkpoint. Their complete native suites are
 not rerun. The full
 scalar native suite, M0, allocator instrumentation, Linux execution, isolation,
 DLL, clean-machine packaging, and performance measurement are skipped.
+
+The [result signature foundation](m2-array-result-signatures.md) subsequently
+changes the compiler/scanner, signature fixture, and two CLI error expectations.
+The receipt above remains historical for those inputs; result-signature checks
+record the fresh focused regression and do not claim array result execution.

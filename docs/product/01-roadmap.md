@@ -1,7 +1,7 @@
 # Roadmap
 
 - Status: Accepted delivery sequence; M0 verified; named M1 slices through unsigned have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified, 2026-10-23; private entry-array IR/VM verified by its native harness, 2026-10-24; source-array reads verified; source-array writes are focused-harness verified; source-array copy initializers focused-harness verified
-- Current progress: M1 scalar checkpoint verified; M2 function-owned scalar arrays, recursive frame lifetimes, copy/assignment, length access, and helper-local source declarations with wrapper cleanup implemented; array parameters/results, structs, borrows, Buffer, and text remain open; full-profile conformance incomplete; M3-M5 not started
+- Current progress: M1 scalar checkpoint verified; M2 function-owned scalar arrays, recursive frame lifetimes, copy/assignment, length access, helper-local declarations and immutable by-value parameters implemented; array result signature metadata exists behind a compiler gate; result execution, structs, borrows, Buffer, and text remain open; full-profile conformance incomplete; M3-M5 not started
 
 This roadmap orders learning and evidence. It is not a release promise. M0 has a
 native harness and recorded evidence. The scalar CLI/VM now exist; the worker
@@ -219,11 +219,22 @@ The [helper-local array increment](../engineering/m2-array-helpers.md) now admit
 the existing array grammar in scalar and shallow wrapper-returning functions.
 Function-owned declarations and copies reuse the frame backend; `?` failure
 lowering emits reverse local cleanup before returning the failure wrapper.
-Array parameters/results, borrows, and slices remain open.
+At that checkpoint array parameters/results, borrows, and slices remained open.
 The [helper receipt](../evidence/m2-array-helpers-windows-20261025.json) records
 16 native groups, 426 array CLI cases, and 1,969 scalar CLI cases per
 development/release profile. The frame backend is unchanged; earlier frontend
 receipts are historical where compiler and propagation inputs changed.
+
+The [source parameter increment](../engineering/m2-array-parameters.md) adds
+immutable exact-shape array parameters, ordered mutable captures, forward/mutual
+calls, and cleanup on early exits. Its prior receipt records 28 native groups
+and 2,475 CLI cases per development/release profile.
+The [array result signature foundation](../engineering/m2-array-result-signatures.md)
+now records exact result shapes and rejects their compilation before any body
+or parameter catalog is lowered. Array result execution remains unavailable.
+Its [receipt](../evidence/m2-array-result-signatures-windows-20261025.json)
+records 16 native groups and 2,242 CLI cases per development/release profile;
+full native backend suites and later delivery milestones were not rerun.
 
 Goal: connect arrays, plain structs, borrows, Buffer, input,
 output, and UTF-8.

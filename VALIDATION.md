@@ -466,6 +466,23 @@ The full scalar and other private-array/M0 native suites, allocator instrumentat
 Linux execution, isolation, DLL, clean-machine packaging, and performance checks
 remain skipped for this slice.
 
+The [array result signature foundation](docs/engineering/m2-array-result-signatures.md)
+records exact scalar-array return shapes in 16 bounded slots. Compilation rejects
+all array results with `type` at the function name before creating IR or lowering
+any parameter catalog/body; even unused helpers are gated. This is not result
+copy, ownership, verifier, VM, or source return execution evidence.
+The [result-signature receipt](docs/evidence/m2-array-result-signatures-windows-20261025.json)
+records 16 native groups and 2,242 CLI cases per development/release profile:
+six new result-signature, six parameter-signature and four scalar-function groups;
+96 result-signature, 80 parameter, 97 helper-local and 1,969 scalar CLI cases.
+All eight CLI receipt hashes, generated fixture hashes, binary identities and
+current inputs were checked after execution. Thirty-one unchanged backend hashes
+match the parameter receipt, and the standard-library lock entry is unchanged.
+The prior parameter receipt is historical for the changed frontend/signature/CLI
+inputs. Full scalar/private-array native suites, other array CLI matrices, M0,
+allocator instrumentation, Linux, isolation, DLL, clean-machine packaging and
+performance remain skipped. Checks were completed as individual recorded steps.
+
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker
 publication barrier. Compile untrusted source only inside the restricted worker.

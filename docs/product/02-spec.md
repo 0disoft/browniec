@@ -162,7 +162,17 @@ and payload arena as the entry frame. The later
 in ordinary functions, including those returning shallow wrappers. Explicit
 returns and `?` failure paths drop visible arrays after evaluating the return
 value; a successful `?` keeps arrays live. Initializer destinations become visible
-only after completion. Array parameters/results remain unimplemented.
+only after completion. The subsequent [source parameter increment](../engineering/m2-array-parameters.md)
+adds immutable exact-shape scalar-array parameters. Arguments are bare array
+names; mutable sources are captured before later arguments execute. Each callee
+owns an independent by-value copy, and pending captures are cleaned on early exits.
+
+The [array result signature foundation](../engineering/m2-array-result-signatures.md)
+recognizes `fn ELEMENT[LENGTH] NAME(...)` for the same six scalar elements and
+lengths 1..4096. Compilation rejects every such result declaration with `type`
+at its function name before lowering any body or parameter catalog, including
+unused and forward helpers. This signature metadata does not enable array
+result execution. `main` remains zero-argument scalar `i32`.
 
 The current scalar CLI implements fixed-width integer `~`, `&`, `^`, and `|`,
 and checked `<<` and `>>`. Binary operands, including shift amounts, must have the
