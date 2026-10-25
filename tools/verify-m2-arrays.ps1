@@ -1,5 +1,5 @@
 param(
-  [ValidateSet('ir', 'vm', 'source', 'write', 'copy', 'length', 'scopes', 'assignment', 'frames', 'helpers', 'arguments', 'calls')][string]$Slice = 'ir',
+  [ValidateSet('ir', 'vm', 'source', 'write', 'copy', 'length', 'scopes', 'assignment', 'frames', 'helpers', 'arguments', 'calls', 'parameters')][string]$Slice = 'ir',
   [string]$Compiler = (Join-Path $PSScriptRoot '../build/toolchain/fairyc.exe')
 )
 $ErrorActionPreference = 'Stop'
@@ -45,8 +45,14 @@ if ($Slice -eq 'calls') {
   $expected = 29
   $sourceMode = $true
 }
+if ($Slice -eq 'parameters') {
+  $files = @('tests/functions.fy', 'tests/propagation.fy', 'tests/m2/array_helpers.fy',
+    'tests/m2/array_signatures.fy', 'tests/m2/array_parameters_source.fy')
+  $expected = 28
+  $sourceMode = $true
+}
 # Later slices retain the full assignment CLI matrix.
-$assignmentMode = $Slice -in @('assignment', 'frames', 'helpers', 'calls')
+$assignmentMode = $Slice -in @('assignment', 'frames', 'helpers', 'calls', 'parameters')
 Push-Location $repo
 try {
   $version = & $Compiler --version
@@ -62,8 +68,9 @@ try {
     if ($assignmentMode -or $Slice -in @('length','scopes')) { Get-Item tools/check-m2-array-length.py, examples/array-length.brc }
     if ($assignmentMode -or $Slice -eq 'scopes') { Get-Item tools/check-m2-array-scopes.py, examples/array-scopes.brc }
     if ($assignmentMode) { Get-Item tools/check-m2-array-assignment.py, examples/array-assignment.brc }
-    if ($Slice -in @('helpers','calls')) { Get-Item tools/check-m2-array-helpers.py, examples/array-helpers.brc }
-    if ($Slice -eq 'calls') { Get-Item tools/check-m1-cli.py; Get-ChildItem tools -File -Filter '*cases.py'; Get-ChildItem examples -File -Filter '*.brc' })
+    if ($Slice -in @('helpers','calls','parameters')) { Get-Item tools/check-m2-array-helpers.py, examples/array-helpers.brc }
+    if ($Slice -eq 'parameters') { Get-Item tools/check-m2-array-parameters.py }
+    if ($Slice -in @('calls','parameters')) { Get-Item tools/check-m1-cli.py; Get-ChildItem tools -File -Filter '*cases.py'; Get-ChildItem examples -File -Filter '*.brc' })
   $identities = @($inputs | Sort-Object FullName | ForEach-Object {
     [ordered]@{ path = [IO.Path]::GetRelativePath($repo, $_.FullName).Replace('\', '/');
       sha256 = (Get-FileHash -LiteralPath $_.FullName).Hash.ToLowerInvariant() }
@@ -125,13 +132,22 @@ try {
         $assignmentCli = Get-Content -LiteralPath (Join-Path $repo "build/m2-array-assignment/$profile/cli-receipt.json") -Raw | ConvertFrom-Json
         $result.assignmentCliCases = $assignmentCli.count
       }
-      if ($Slice -in @('helpers','calls')) {
+      if ($Slice -in @('helpers','calls','parameters')) {
         & python -B (Join-Path $PSScriptRoot 'check-m2-array-helpers.py') --exe $exe --profile $profile
         if ($LASTEXITCODE -ne 0) { throw "Helper array CLI checks failed: $profile" }
         $helperCli = Get-Content -LiteralPath (Join-Path $repo "build/m2-array-helpers/$profile/cli-receipt.json") -Raw | ConvertFrom-Json
         $result.helperCliCases = $helperCli.count
       }
-      if ($Slice -eq 'calls') {
+      if ($Slice -eq 'parameters') {
+        & python -B (Join-Path $PSScriptRoot 'check-m2-array-parameters.py') --exe $exe --profile $profile
+        if ($LASTEXITCODE -ne 0) { throw "Source parameter CLI checks failed: $profile" }
+        $parameterCli = Get-Content -LiteralPath (Join-Path $output "$profile/cli-receipt.json") -Raw | ConvertFrom-Json
+        if ($parameterCli.count -ne 80 -or $parameterCli.exeSha256 -ne $result.sha256 -or $parameterCli.status -ne 'passed') {
+          throw 'Unexpected source parameter receipt'
+        }
+        $result.parameterCliCases = $parameterCli.count
+      }
+      if ($Slice -in @('calls','parameters')) {
         & python -B (Join-Path $PSScriptRoot 'check-m1-cli.py') --exe $exe --profile $profile
         if ($LASTEXITCODE -ne 0) { throw "Scalar CLI checks failed: $profile" }
         $scalarCli = Get-Content -LiteralPath (Join-Path $repo "build/m1/$profile/cli-receipt.json") -Raw | ConvertFrom-Json
@@ -200,10 +216,17 @@ try {
       'No allocator instrumentation, Linux, isolation, DLL, clean-machine or performance claim.')
   }
   if ($Slice -eq 'calls') {
-    $receipt.limitations = @('Private IR mixed scalar/immutable array parameters, independent frame copies and metered CALLs only; source parameter declarations remain gated.',
-      'Array arguments must be live immutable snapshots in the caller; array results, borrows, slices and source capture/cleanup lowering remain pending.',
+    $receipt.limitations = @('This slice verifies private IR mixed scalar/immutable array parameters, independent frame copies and metered CALLs; source-call checks belong to the parameters slice.',
+      'Array arguments must be live immutable snapshots in the caller; array results, borrows and slices remain unavailable.',
       'All functions share 16 catalog sites, 16 live owners, 32 frame slots and one arena capped at 65536 bytes.',
       'Full scalar native suite, other private-array native suites, M0, allocator instrumentation, Linux, isolation, DLL and performance checks skipped.')
+  }
+  if ($Slice -eq 'parameters') {
+    $receipt.limitations = @('Source immutable exact-shape scalar-array parameters with left-to-right argument capture and cleanup are supported.',
+      'Array arguments are bare names; immutable sources are already stable and mutable sources create anonymous immutable captures.',
+      'All parameters, locals and captures share 16 static catalog sites, 16 live owners and one 65536-byte arena; calls have at most eight arguments.',
+      'Array results, wrapper element arrays, borrows, slices and for-header calls remain unavailable.',
+      'Private IR/verifier/VM and batch-copy sources are unchanged; their complete native reruns, full scalar native suite, M0, allocator instrumentation, Linux, isolation, DLL and performance checks skipped.')
   }
   $receipt | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $receiptPath -Encoding utf8NoBOM
   Write-Host "PASS: build/m2-array-$outputSlice/receipt.json"

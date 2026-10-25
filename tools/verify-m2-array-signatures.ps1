@@ -61,8 +61,8 @@ try {
     recordedAt = [DateTime]::UtcNow.ToString('o'); compilerVersion = $version;
     compilerSha256 = (Get-FileHash -LiteralPath $Compiler).Hash.ToLowerInvariant();
     os = [Environment]::OSVersion.VersionString; sourceSha256 = $identities; results = $results;
-    limitations = @('Signature metadata only: all array parameter declarations still fail compilation with type error.',
-      'No array call lowering, snapshot, transaction, verifier or VM implementation is claimed.',
+    limitations = @('Signature-focused shape, name, range and source argument checks; the complete source-call matrix belongs to the parameters slice.',
+      'This narrow receipt does not independently establish full source capture, transaction, verifier or VM coverage.',
       'Full scalar/private array/M0 native suites, allocator instrumentation, Linux, isolation, DLL and performance checks skipped.')
   } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $receiptPath -Encoding utf8NoBOM
   Write-Host 'PASS: build/m2-array-signatures/receipt.json'
