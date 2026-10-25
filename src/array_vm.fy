@@ -40,7 +40,7 @@ pub fn Result<usize, errors::Error> cost(ref meta::Catalog catalog, u8 op, usize
     if (op == 38) { return .ok(81 + layout.bytes + if (layout.element == 2) { layout.length } else { 0 }); }
     return .err(errors::make(5, offset));
 }
-fn errors::Error failure(owners::Error error, usize offset) {
+pub fn errors::Error failure(owners::Error error, usize offset) {
     let u8 kind = switch (error) {
         case .Owners: { 13 } case .Quota: { 13 } case .Bounds: { 14 }
         case .Token: { 5 } case .State: { 5 } case .Type: { 5 } case .Length: { 5 }

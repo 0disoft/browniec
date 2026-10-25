@@ -1,5 +1,5 @@
 param(
-  [ValidateSet('ir', 'vm', 'source', 'write', 'copy', 'length', 'scopes', 'assignment', 'frames', 'helpers', 'arguments')][string]$Slice = 'ir',
+  [ValidateSet('ir', 'vm', 'source', 'write', 'copy', 'length', 'scopes', 'assignment', 'frames', 'helpers', 'arguments', 'calls')][string]$Slice = 'ir',
   [string]$Compiler = (Join-Path $PSScriptRoot '../build/toolchain/fairyc.exe')
 )
 $ErrorActionPreference = 'Stop'
@@ -39,8 +39,14 @@ if ($Slice -eq 'arguments') {
   $expected = 18
   $sourceMode = $false
 }
+if ($Slice -eq 'calls') {
+  $files = @('tests/functions.fy', 'tests/m2/array_ir.fy', 'tests/m2/array_vm.fy',
+    'tests/m2/array_frames.fy', 'tests/m2/array_calls.fy')
+  $expected = 29
+  $sourceMode = $true
+}
 # Later slices retain the full assignment CLI matrix.
-$assignmentMode = $Slice -in @('assignment', 'frames', 'helpers')
+$assignmentMode = $Slice -in @('assignment', 'frames', 'helpers', 'calls')
 Push-Location $repo
 try {
   $version = & $Compiler --version
@@ -56,7 +62,8 @@ try {
     if ($assignmentMode -or $Slice -in @('length','scopes')) { Get-Item tools/check-m2-array-length.py, examples/array-length.brc }
     if ($assignmentMode -or $Slice -eq 'scopes') { Get-Item tools/check-m2-array-scopes.py, examples/array-scopes.brc }
     if ($assignmentMode) { Get-Item tools/check-m2-array-assignment.py, examples/array-assignment.brc }
-    if ($Slice -eq 'helpers') { Get-Item tools/check-m2-array-helpers.py, examples/array-helpers.brc })
+    if ($Slice -in @('helpers','calls')) { Get-Item tools/check-m2-array-helpers.py, examples/array-helpers.brc }
+    if ($Slice -eq 'calls') { Get-Item tools/check-m1-cli.py; Get-ChildItem tools -File -Filter '*cases.py'; Get-ChildItem examples -File -Filter '*.brc' })
   $identities = @($inputs | Sort-Object FullName | ForEach-Object {
     [ordered]@{ path = [IO.Path]::GetRelativePath($repo, $_.FullName).Replace('\', '/');
       sha256 = (Get-FileHash -LiteralPath $_.FullName).Hash.ToLowerInvariant() }
@@ -118,11 +125,18 @@ try {
         $assignmentCli = Get-Content -LiteralPath (Join-Path $repo "build/m2-array-assignment/$profile/cli-receipt.json") -Raw | ConvertFrom-Json
         $result.assignmentCliCases = $assignmentCli.count
       }
-      if ($Slice -eq 'helpers') {
+      if ($Slice -in @('helpers','calls')) {
         & python -B (Join-Path $PSScriptRoot 'check-m2-array-helpers.py') --exe $exe --profile $profile
         if ($LASTEXITCODE -ne 0) { throw "Helper array CLI checks failed: $profile" }
-        $helperCli = Get-Content -LiteralPath (Join-Path $output "$profile/cli-receipt.json") -Raw | ConvertFrom-Json
+        $helperCli = Get-Content -LiteralPath (Join-Path $repo "build/m2-array-helpers/$profile/cli-receipt.json") -Raw | ConvertFrom-Json
         $result.helperCliCases = $helperCli.count
+      }
+      if ($Slice -eq 'calls') {
+        & python -B (Join-Path $PSScriptRoot 'check-m1-cli.py') --exe $exe --profile $profile
+        if ($LASTEXITCODE -ne 0) { throw "Scalar CLI checks failed: $profile" }
+        $scalarCli = Get-Content -LiteralPath (Join-Path $repo "build/m1/$profile/cli-receipt.json") -Raw | ConvertFrom-Json
+        if ($scalarCli.count -ne 1969 -or $scalarCli.exeSha256 -ne $result.sha256) { throw 'Unexpected scalar receipt' }
+        $result.scalarCliCases = $scalarCli.count
       }
     }
     $results += $result
@@ -184,6 +198,12 @@ try {
       'Argument evaluation/capture order, frame binding, immutable callee bindings and VM Fuel charges are not implemented.',
       'Native owner/copy/assignment regressions executed; CLI, full scalar/private-array suites and M0 reruns skipped.',
       'No allocator instrumentation, Linux, isolation, DLL, clean-machine or performance claim.')
+  }
+  if ($Slice -eq 'calls') {
+    $receipt.limitations = @('Private IR mixed scalar/immutable array parameters, independent frame copies and metered CALLs only; source parameter declarations remain gated.',
+      'Array arguments must be live immutable snapshots in the caller; array results, borrows, slices and source capture/cleanup lowering remain pending.',
+      'All functions share 16 catalog sites, 16 live owners, 32 frame slots and one arena capped at 65536 bytes.',
+      'Full scalar native suite, other private-array native suites, M0, allocator instrumentation, Linux, isolation, DLL and performance checks skipped.')
   }
   $receipt | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $receiptPath -Encoding utf8NoBOM
   Write-Host "PASS: build/m2-array-$outputSlice/receipt.json"
