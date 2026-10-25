@@ -1,7 +1,7 @@
 # Roadmap
 
-- Status: Accepted delivery sequence; M0 verified; named M1 slices through unsigned have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified, 2026-10-23; private entry-array IR/VM verified by its native harness, 2026-10-24; source-array reads verified; source-array writes are focused-harness verified; source-array copy initializers focused-harness verified
-- Current progress: M1 scalar checkpoint verified; M2 function-owned scalar arrays, recursive frames, copy/assignment, length access, helper-local declarations and by-value parameters implemented; private array results support verified owner transfer, while source results remain gated; structs, borrows, Buffer, and text remain open; full-profile conformance incomplete; M3-M5 not started
+- Status: Accepted delivery sequence; M0 verified; named M1 slices through unsigned have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified, 2026-10-23; private entry-array IR/VM verified by its native harness, 2026-10-24; source-array reads, writes, copy initializers, parameters, results, and assignment forms implemented; in-place repeated-literal assignment verified
+- Current progress: M1 scalar checkpoint verified; M2 function-owned scalar arrays cover lexical storage, copy, length, helper locals, by-value parameters, source results, direct returns, repeated return literals, call-result assignment, and in-place repeated-literal assignment; structs, borrows, Buffer, and text remain open; full-profile conformance incomplete; M3-M5 not started
 
 This roadmap orders learning and evidence. It is not a release promise. M0 has a
 native harness and recorded evidence. The scalar CLI/VM now exist; the worker
@@ -107,7 +107,11 @@ an explicit diagnostic and does not crash the host.
 
 Status: started; scalar-array layout/storage, owner/copy primitives, and private
 entry-array IR/VM are implemented and verified. Immutable scalar-array declarations
-and indexed reads in outermost `main` passed focused source verification.
+and indexed reads in outermost `main` passed focused source verification. Source
+arrays now extend through lexical scopes, helper locals, by-value parameters,
+named and direct returns, repeated return literals, call-result assignment, and
+in-place repeated-literal assignment. Focused verification for the last increment
+is recorded.
 The [layout foundation](../engineering/m2-array-layout.md) validates compact
 widths, length 1..4096, aligned arena plans,
 quota preflight, and checked offsets; it does not admit array source or allocate
@@ -252,7 +256,23 @@ exact-shape arrays to typed call initializers and shared return cleanup. The
 literal-return Windows receipt records 16 native groups and 628 CLI cases per
 development/release profile. [Call-result assignment](../engineering/m2-array-call-assignment.md)
 subsequently adds copies into existing mutable storage, verified by 15 native
-groups and 609 CLI cases per profile in its focused selection.
+groups and 609 CLI cases per profile in its focused selection. The
+[in-place repeated-literal assignment](../engineering/m2-array-literal-assignment.md)
+increment follows with typed AFILL (40), owner preflight before writes, and no
+temporary catalog site, owner, or payload extent. The
+[Windows receipt](../evidence/m2-array-literal-assignment-windows-20261025.json)
+records 36 unique native groups and 2,693 CLI cases per profile. The final 36
+combine 17 reused backend identities with 19 fresh frontend groups in each
+profile; the aggregate harness was not rerun. Development reuses backend from
+`b5e0c98`, and release reuses the same identities from its earlier 36-group
+selection. Reuse validation matched 28 unchanged source and test files to their
+`b5e0c98` Git blobs and confirmed matching SDK and compiler identities. The CLI
+total is 724 array cases, including 115 new fill cases, plus 1,969 scalar cases.
+The final lowering separates array statement, copy, and index handling into
+helpers. Scalar and composed fills return 42 at depth 10; depth 11 reports
+`compile_limit`. Two permanent CLI cases cover the composed boundary. The pre-fix
+binary reproduces `0xC00000FD` at depth 10. No stack-byte or performance claim is
+made.
 Plain structs, borrows, Buffer, I/O, isolation and
 the remaining milestone evidence below are still open.
 

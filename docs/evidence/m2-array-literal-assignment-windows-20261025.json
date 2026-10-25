@@ -1,0 +1,1309 @@
+{
+  "schema": "browniec.m2-array-literal-assignment/v1",
+  "status": "passed",
+  "recordedAt": "2026-10-25T13:56:47.436817+00:00",
+  "baselineCommit": "c801673",
+  "backendImplementationCommit": "b5e0c98",
+  "sourceImplementationCommit": "d7aa34e",
+  "parserFixCommit": "9522e0e4e51cb2114467cdccbc4db716f1fc8b9b",
+  "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261022210249-4ce1264273be\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.86\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: 4ce1264273be6051ee560173e94690e1b99c9eaf\nmodified: false",
+  "compilerSha256": "572395f7f1e425d613c5a69f50b30ed177cda37ca2b1638bd0c11cf79fcbcc77",
+  "toolchainRevision": "4ce1264273be6051ee560173e94690e1b99c9eaf",
+  "toolchainSpecSha256": "e744c8866ba200fd9213ee99ff61a11f60f9ed0f31e9106219f97d7da26971ef",
+  "standardLibraryLockIdentity": [
+    {
+      "id": "fypi1-sha256-c18350128fcbce1cee2c63f0e7acc467f9f77ff184c458af1d20eab69a58e89a",
+      "role": "standard-library",
+      "packageUid": "fairyc.std",
+      "sourceKind": "sdk",
+      "localPath": "",
+      "sdkIdentity": "fairyc-sdk-stdlib/0",
+      "runtimeAbi": "fairyc-runtime/0",
+      "sourceIdentity": "fairyc-sdk-stdlib/0;fairyc-runtime/0;fysrc1-sha256-782df5e2039ff3f7817c1055454caa24feb2ea755e62f78d8ee67418916a5b83",
+      "sourceDigest": "fysrc1-sha256-782df5e2039ff3f7817c1055454caa24feb2ea755e62f78d8ee67418916a5b83",
+      "version": "0.0.0-stage0.86",
+      "features": []
+    }
+  ],
+  "os": "Windows-11-10.0.26300-SP0",
+  "pythonVersion": "3.14.6",
+  "lockedCheck": "passed; lock verified",
+  "sourceSha256": [
+    {
+      "path": "examples/array-literal-assignment.brc",
+      "sha256": "108e1a0ea38e90ad76d347f5ec61c215ec4e061cb577dd0b4309816104e41bbd"
+    },
+    {
+      "path": "fairy.lock",
+      "sha256": "237d447a30c3af4136de35140d87ed934ea66522e6b8432f7ffac55dfe2641a0"
+    },
+    {
+      "path": "fairy.toml",
+      "sha256": "f5254ba793d9012470c697e8657688a4ea5465c138fba6d748707d5bfa4b31fb"
+    },
+    {
+      "path": "src/arithmetic.fy",
+      "sha256": "8192e6ba97498d059b0505307bc2bf84ac58d9722dc5f597587f8ae81a1081d3"
+    },
+    {
+      "path": "src/array_call_source.fy",
+      "sha256": "57af1c63a68bf060d6c555d1ec3f929d3c53715691074d68a5ae6f7ab58392a2"
+    },
+    {
+      "path": "src/array_call_vm.fy",
+      "sha256": "9da46f3a605e5a63ee7309d607c06473a3c175ae9e30f6e0b759e9da9a51e6da"
+    },
+    {
+      "path": "src/array_layout.fy",
+      "sha256": "d3497dfb6bb7e9ac8ceece4ae88a2274b6b40b49e3c5fecfc509179c03c91cdd"
+    },
+    {
+      "path": "src/array_meta.fy",
+      "sha256": "d1a07319dc2bb7eb95298e3920eaec63c1a4c1390a00c5469528a77e97612894"
+    },
+    {
+      "path": "src/array_owners.fy",
+      "sha256": "5e4f61a3922a84421442cc1bc75eddcb89a492bdd71c2fb2b1e193f54ced28a8"
+    },
+    {
+      "path": "src/array_parameters.fy",
+      "sha256": "ae760f4880d732c8630b08dfc948edb9d21ad3bdb80d2b8c84f5767a43016a29"
+    },
+    {
+      "path": "src/array_result_source.fy",
+      "sha256": "46b494134085b3efb7035daa31e2f55b66a6b1d975e9a5cc50bf39d15cb0f4f4"
+    },
+    {
+      "path": "src/array_result_vm.fy",
+      "sha256": "3cd5388806afa0f4c3a6a8518f154adaf6f9904b18bc7c30ed787d37c43eacfa"
+    },
+    {
+      "path": "src/array_results.fy",
+      "sha256": "1dccba6ebbc493654aea82e305b7c3f9b0c226c8c475d1c80f19fa1014e63e8e"
+    },
+    {
+      "path": "src/array_source.fy",
+      "sha256": "2b9f60f9cfa88a28ceb09f0d8fd2a06b09f49d4a51346b47080a369496fbabe9"
+    },
+    {
+      "path": "src/array_storage.fy",
+      "sha256": "00808c116e0fb86ce063d7fd4cc9d1f8fd29f19b277449e59e3569491a3ee534"
+    },
+    {
+      "path": "src/array_verifier.fy",
+      "sha256": "8cae6645601de78361509b67a4de77a573169f690e950acd9f65789d1c3b61d3"
+    },
+    {
+      "path": "src/array_vm.fy",
+      "sha256": "5c9d6290a9d20c54ae9d9068a2e63ad8b9206b4113bfa7db43f0c980d1e8bd15"
+    },
+    {
+      "path": "src/bits.fy",
+      "sha256": "0b030757624a8dbaea9475f90d757aeff78b9154a121af7a4d9ebd80042db1a0"
+    },
+    {
+      "path": "src/casts.fy",
+      "sha256": "59da4a4ecef63833cc383495390e150b964bf41b353c4b150dcacb6be66caba6"
+    },
+    {
+      "path": "src/cells.fy",
+      "sha256": "71b82add3e95b86a1b7bcb88c3f97f6ae38bae0ac3ec8b1a2de925b10a64e433"
+    },
+    {
+      "path": "src/cli_input.fy",
+      "sha256": "ec91de62e6b5147d117d6fe0366ebcf617b556c074bf1dd91cb10188f96507ba"
+    },
+    {
+      "path": "src/compiler.fy",
+      "sha256": "c6a200c5a7efdd3a05513811b7b9b9fe8244cec0b92fd1bcae053e1ea3ef6cda"
+    },
+    {
+      "path": "src/errors.fy",
+      "sha256": "e8070ef5c6380460dacb579c33f2e180b9e683286c8cb0827e30d82a581a4646"
+    },
+    {
+      "path": "src/functions.fy",
+      "sha256": "854bedc970dc1b7a3b08c1eecc9261a32e9c0d04e00aec9a625b65d4a19cd2b6"
+    },
+    {
+      "path": "src/ir.fy",
+      "sha256": "4d8836c052493d4b72879eb8a7cafdeed6b8c98c6e9a47c18dc0f9efe8f9d537"
+    },
+    {
+      "path": "src/lexer.fy",
+      "sha256": "0a64c45b3a3512ada4610c244ce874d306e417cde0fce4cd99a419048002861e"
+    },
+    {
+      "path": "src/locals.fy",
+      "sha256": "f89cab6159330ec0ac269ef02cedd59d15f6f3cfae2d60fc89d43b5ccdf32cda"
+    },
+    {
+      "path": "src/loops.fy",
+      "sha256": "d25dccfb4d3d50daa6e82a6a2f8df345ea72fd4a559e3a8882d6cda0230cbee2"
+    },
+    {
+      "path": "src/main.fy",
+      "sha256": "82a76b1a92376304556b4a2546ec98cb9d219bacb941d92bd4d67d2cbdfecec8"
+    },
+    {
+      "path": "src/patterns.fy",
+      "sha256": "d9ba2ff9dba626968b7514c636a414932e50856c19b9d41d6825b4f91c9797aa"
+    },
+    {
+      "path": "src/propagation.fy",
+      "sha256": "9b58f0e5ed3ef79c44cf819c651e0ec456e38441c3ce8579aca31e0d7eb80bdc"
+    },
+    {
+      "path": "src/register_set.fy",
+      "sha256": "478e2690ee311bb3961c329becc6f9ef035276759619733cbfd0f6e441f36b73"
+    },
+    {
+      "path": "src/render.fy",
+      "sha256": "d6ae1e6212767aa3bed55c0383bc2065128c4db49c398c39396e437387e62bba"
+    },
+    {
+      "path": "src/scalar_codec.fy",
+      "sha256": "c28ca5e5cdc38dee01d79489d8c5a709022a49001854af638258ec4536ad66f0"
+    },
+    {
+      "path": "src/shifts.fy",
+      "sha256": "510dc6a90591de165de424a377eb267917ea9973972b9b95656cc9c435675eeb"
+    },
+    {
+      "path": "src/tagged.fy",
+      "sha256": "67770f8ec8f3e35a2a6196cda87310844d37358f86f8b22eb81b49df1f65f1bf"
+    },
+    {
+      "path": "src/types.fy",
+      "sha256": "906f5ba160de53f60d23e344e141181f902f36de60a4060375bef97a2162be23"
+    },
+    {
+      "path": "src/verifier.fy",
+      "sha256": "8bfb8e41f7d2712501cabb6abdabd3fc8bbbfd3c3209b073919ebbd8884cf847"
+    },
+    {
+      "path": "src/vm.fy",
+      "sha256": "30ad1cad007824e47a35922b0cad4fb5f084cbecee3bebd7493fc9e256200594"
+    },
+    {
+      "path": "tests/m2/array_assign_storage.fy",
+      "sha256": "347d9529c9f6ac41e5c45b7ced2b7153c2ffe9d33d57a17618e85e6974d153eb"
+    },
+    {
+      "path": "tests/m2/array_assignment.fy",
+      "sha256": "1b5519470b81d2cb4b1fbd13dbd8c91f016aac84fdfafb120dce6e886a0181c0"
+    },
+    {
+      "path": "tests/m2/array_call_assignment.fy",
+      "sha256": "7b3bae35247b7c75c65c3e86602e0ecd945ce41854bcce58df1717f2349aadb8"
+    },
+    {
+      "path": "tests/m2/array_fill.fy",
+      "sha256": "064fe9f6fda55eb2712060c81d8edc5a2bd25dc8649740d544dc3e4a5789ca88"
+    },
+    {
+      "path": "tests/m2/array_ir.fy",
+      "sha256": "2a1cc69aa982a9445636c08a0c3b7c2579e457b0170460975f31089406173be4"
+    },
+    {
+      "path": "tests/m2/array_literal_assignment.fy",
+      "sha256": "eef75b58988317bbfe2b6b5cbf06579a2f649f638b1859e46f1dd9a5b06554bc"
+    },
+    {
+      "path": "tests/m2/array_result_source.fy",
+      "sha256": "3642870d74abc7269472fc666f244c1cb8a1575d2346d4f2a2386f5f23c2d573"
+    },
+    {
+      "path": "tests/m2/array_vm.fy",
+      "sha256": "c92b7784d8d3091c91d93fa1a648700f3d4884f82aa220e211a5ca8500786d61"
+    },
+    {
+      "path": "toolchain.json",
+      "sha256": "e744c8866ba200fd9213ee99ff61a11f60f9ed0f31e9106219f97d7da26971ef"
+    },
+    {
+      "path": "tools/check-m1-cli.py",
+      "sha256": "9de0f8c340f3da1f769c23e148088bea2ec1381284232494409aabae1ea29302"
+    },
+    {
+      "path": "tools/check-m2-array-assignment.py",
+      "sha256": "8ae9f6b6664d5a6566ebbeb45e37a2c836937e53ebeb86b195fc567865c3e611"
+    },
+    {
+      "path": "tools/check-m2-array-call-assignment.py",
+      "sha256": "18c809cc7037103bd25a2e0fa70378fbe9ea625634acd1a51930883cb8a67d11"
+    },
+    {
+      "path": "tools/check-m2-array-literal-assignment.py",
+      "sha256": "35af05339c0bab949211637a32ed5980aaf33e3e47267b7982f4d58e0e40b4f7"
+    },
+    {
+      "path": "tools/check-m2-array-parameters.py",
+      "sha256": "94d9f7dca33b12947241974f46a4755790b99ceb3e9b119993894ee9fdc610a5"
+    },
+    {
+      "path": "tools/check-m2-array-result-source.py",
+      "sha256": "c136caaeaff0a86dc8e4736c94c5c43ac2fdabde92210d62a05964edd50114ef"
+    },
+    {
+      "path": "tools/check-m2-array-return-calls.py",
+      "sha256": "ea631e1322adb55763f56ac592bf936c1b28ec8564feb7d904f4906ab3c0a863"
+    },
+    {
+      "path": "tools/check-m2-array-return-literals.py",
+      "sha256": "39009c54d6af5d4d6f2d8353089e729ba674d2675f673e35bb858286f41e8913"
+    },
+    {
+      "path": "tools/m1_arm_statement_cases.py",
+      "sha256": "f1a19497ae47f04ebaec0fb0cd3c4f8eed8f964bbf8524b6307592b2f67d82ef"
+    },
+    {
+      "path": "tools/m1_bitwise_cases.py",
+      "sha256": "44b474577db55d5afd8f5a3a4cdd0b4d13bf44fb1b4a8b4e2eee170698359ca0"
+    },
+    {
+      "path": "tools/m1_i64_cases.py",
+      "sha256": "161a45f662295cad8742655bdd59aae4bdfe13e10a241894d3b82ad1bc1eefdc"
+    },
+    {
+      "path": "tools/m1_propagation_cases.py",
+      "sha256": "f3728cffafc48866c44e16badb8a256f3e45c0299ab3c7a3d0c1c1ab69dbd986"
+    },
+    {
+      "path": "tools/m1_shift_cases.py",
+      "sha256": "7b12d715d1ed86b142fbf75c25fdb678f253b0c40ac07229d8f9d9bb0afa4acf"
+    },
+    {
+      "path": "tools/m1_switch_expression_cases.py",
+      "sha256": "09759b7891ad407dadabfa18c0c51afa9cb7751912928da8b9fae0598c18b32b"
+    },
+    {
+      "path": "tools/m1_tagged_cases.py",
+      "sha256": "70de6cf5e68e1fe11ee3dd4e72b506b1a19677133a8b483b7a039efb651d963f"
+    },
+    {
+      "path": "tools/m1_unsigned_cases.py",
+      "sha256": "2c0232b88abab5e8d7821cb0d91ad8efa8b4ca6e5048a6e9d6fe9793245b5d9b"
+    },
+    {
+      "path": "tools/m1_widening_cases.py",
+      "sha256": "6a4d87dbd0d3570c50bab7b3760839fbee6670cd16152892bbf536f0662e50cc"
+    },
+    {
+      "path": "tools/verify-m2-arrays.ps1",
+      "sha256": "92cfddde17413a5972d11ba1cdda2fe0b864fa883473064676946ea07b8ebd0a"
+    }
+  ],
+  "results": [
+    {
+      "profile": "development",
+      "path": "build/m2-array-literal-assignment/browniec-development.exe",
+      "sha256": "0973026a979e4974bfb3d75428e5014e9422a5f6bbdbc6b4d9d0cb4a9057928d",
+      "nativeGroups": 36,
+      "freshFrontend": {
+        "path": "build/m2-array-literal-assignment/development-final-source.json",
+        "sha256": "c93237b42225dcab61639c819a48e3f03a92e0705b20cd2855797b2a16cbf852",
+        "report": {
+          "schemaVersion": "fairyc.test-report/v4",
+          "engine": "native",
+          "target": "x86_64-windows-msvc",
+          "profile": "development",
+          "tests": [
+            {
+              "identity": "tests::m2::array_assignment::assignment_is_independent_in_scopes_loops_and_value_arms",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_assignment::exact_fuel_and_quota_do_not_require_a_third_array",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_assignment::verifier_requires_live_exact_shape_mutable_destinations",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_call_assignment::argument_early_exits_release_captures_and_keep_pending_results_dead",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_call_assignment::assignments_evaluate_captures_and_later_effects_before_copying",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_call_assignment::exact_fuel_quota_and_independent_verifier_cover_temporary_lifetimes",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_call_assignment::result_assignment_preserves_destination_storage_and_parameter_independence",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_literal_assignment::fill_evaluates_once_before_writes_and_preserves_argument_snapshots",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_literal_assignment::filler_early_exits_keep_old_values_and_release_visible_owners",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_literal_assignment::repeated_assignment_uses_only_existing_storage_at_capacity",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_literal_assignment::source_fill_is_metered_without_a_second_catalog_site",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_result_source::early_argument_exits_release_captures_without_dropping_pending_destinations",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_result_source::forward_recursive_and_mutual_results_keep_separate_frame_bindings",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_result_source::independent_verifier_requires_cleanup_of_nonreturned_owners",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_result_source::mutable_captures_precede_later_effects_and_normal_cleanup_reclaims_holes",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_result_source::named_results_cover_all_scalar_elements_without_a_second_payload",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_result_source::returned_parameter_is_independent_and_destination_controls_mutability",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_result_source::source_result_fuel_is_prepaid_at_the_exact_boundary",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_result_source::unsupported_result_forms_and_shapes_fail_compilation",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            }
+          ],
+          "count": 19,
+          "passed": 19,
+          "failed": 0,
+          "status": "ok",
+          "lock": "verified"
+        }
+      },
+      "reusedBackend": {
+        "path": "build/m2-array-literal-assignment/development-backend.json",
+        "sha256": "5c5f1bcab2928cfc74a62ec6df54ffcde38e68efad924eac9ae5bbee17d54b58",
+        "selectedTests": [
+          {
+            "identity": "tests::m2::array_assign_storage::assignment_reuses_full_storage_and_preserves_independent_owners",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_assign_storage::invalid_sources_leave_the_entire_destination_unchanged",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_fill::all_scalar_fills_preserve_metadata_and_neighbor_bytes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_fill::invalid_fill_preflight_preserves_every_byte",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_fill::verifier_requires_live_mutable_exact_type_and_defined_operands",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_fill::vm_prepays_fill_and_uses_only_the_existing_extent",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_ir::backedges_and_returns_cannot_leak_or_revive_arrays",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_ir::catalog_reserved_bytes_and_typed_scalar_operands_are_checked",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_ir::function_owned_arrays_and_entry_call_restriction_are_checked",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_ir::live_sets_must_match_exactly_at_forward_joins",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_ir::private_array_builders_and_scalar_result_are_verified",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::all_scalar_array_reads_and_writes_run_in_the_native_vm",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::copied_arrays_keep_original_values_after_source_mutation_and_drop",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::exact_fuel_bounds_quota_and_fresh_program_reuse",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::maximum_usize_array_copy_checks_old_plus_new_peak",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::metered_loop_recreation_reuses_owners_until_fuel_exhaustion",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::scalar_callees_and_frame_failure_do_not_access_parent_arrays",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ]
+      },
+      "cli": [
+        {
+          "path": "build/m2-array-literal-assignment/development/cli-receipt.json",
+          "sha256": "cd7262c822d3b85b8c3c8c72f64835869abd0bda4c3ca8583b51f975f0bcf884",
+          "cases": 115,
+          "checkedFixtureCount": 115,
+          "fixtureManifestSha256": "04b1cde4404ceb8c818fff9c90a37e2ec44b72971b2cc442207d01425760bdcd"
+        },
+        {
+          "path": "build/m2-array-assignment/development/cli-receipt.json",
+          "sha256": "712b1be93e0bbd44ff67435a92547e3abf2c5ee75356b2a3271f555473288f80",
+          "cases": 59,
+          "checkedFixtureCount": 59,
+          "fixtureManifestSha256": "26a34633ff2d2a12e74da6b0c3eaa5cd08f5c22d4370a54fc67a7434a84f61fd"
+        },
+        {
+          "path": "build/m2-array-call-assignment/development/cli-receipt.json",
+          "sha256": "f5394620ebe4082ca97a1daa28783d344c9d30de158dbfa2cc76df44d109fd5f",
+          "cases": 115,
+          "checkedFixtureCount": 115,
+          "fixtureManifestSha256": "e976b84ca6b21d660eef14cdfd2121bf8d5b95fb963c88c51e25c61967a9dddc"
+        },
+        {
+          "path": "build/m2-array-result-source/development/cli-receipt.json",
+          "sha256": "3f912242b2e773372b4f8d428be6ff312bf8fd245c1397c45baa10f64c2e3ea9",
+          "cases": 119,
+          "checkedFixtureCount": 119,
+          "fixtureManifestSha256": "4e1dd5b31843cbcffbe95c569a871ce7464dbaa440e49ba39cf5b35db631cd00"
+        },
+        {
+          "path": "build/m2-array-return-calls/development/cli-receipt.json",
+          "sha256": "76e1fad3bc67325b8276cc6132cac15a8801ddb255a73a8d9ce627efa09feb9e",
+          "cases": 117,
+          "checkedFixtureCount": 117,
+          "fixtureManifestSha256": "e0ae38abbc311822d9a8005d5d1b10178fb674b1dc56cc148169d3ae6d9246ff"
+        },
+        {
+          "path": "build/m2-array-return-literals/development/cli-receipt.json",
+          "sha256": "dc0cfc031b864856c7d966f0e86fb1566ff7f549fb29f842d9951a262fb50f38",
+          "cases": 119,
+          "checkedFixtureCount": 119,
+          "fixtureManifestSha256": "68ba79761606c48e2ba50bebe491666730655871a4d621b13b504bd6e7bf05a9"
+        },
+        {
+          "path": "build/m2-array-parameters/development/cli-receipt.json",
+          "sha256": "852e2681a48e5533b44409ff26a9bf25776096579b9530765f17f3cf11c05452",
+          "cases": 80,
+          "checkedFixtureCount": 80,
+          "fixtureManifestSha256": "c140856ba11548c27a77a2542d85101984ed7c9dedf03a0f063000a3a2717bff"
+        },
+        {
+          "path": "build/m1/development/cli-receipt.json",
+          "sha256": "c2d868968de0129a9d9ef082fd6ccba266871e0ac864944477d696e4efa0eae7",
+          "cases": 1969,
+          "checkedFixtureCount": 1959,
+          "fixtureManifestSha256": "a54789dd4b7d5e0161c514b643df3d593c13c2177d2fd19a377fd0f66812eff5"
+        }
+      ],
+      "totalCliCases": 2693,
+      "depthRegression": [
+        {
+          "case": "arm-depth-mixed-10",
+          "sourceSha256": "f95b882cdfa3ab9e84ed75627b3f90bf98ace5d7bd3a175fb9c4cc53d681a695",
+          "exit": 0,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m1-scalar/1",
+            "command": "run",
+            "status": "completed",
+            "return_i32": 42,
+            "error": null
+          }
+        },
+        {
+          "case": "arm-depth-mixed-11",
+          "sourceSha256": "325aed4461847b620c559e390fa7c803b2c64223c76f6f71d1313acab9bec652",
+          "exit": 3,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m1-scalar/1",
+            "command": "run",
+            "status": "error",
+            "return_i32": null,
+            "error": {
+              "kind": "compile_limit",
+              "byte_offset": 581
+            }
+          }
+        }
+      ],
+      "example": {
+        "source": {
+          "path": "examples/array-literal-assignment.brc",
+          "sha256": "108e1a0ea38e90ad76d347f5ec61c215ec4e061cb577dd0b4309816104e41bbd"
+        },
+        "exit": 0,
+        "result": {
+          "schema": "browniec.result/v1",
+          "profile": "brownie.m2-array-write/1",
+          "command": "run",
+          "status": "completed",
+          "return_i32": 42,
+          "error": null
+        }
+      }
+    },
+    {
+      "profile": "release",
+      "path": "build/m2-array-literal-assignment/browniec-release.exe",
+      "sha256": "e48eaff1fcfc151be5a1b0eaeb74b3de0120edecf976aae80fbb453560b5734d",
+      "nativeGroups": 36,
+      "freshFrontend": {
+        "path": "build/m2-array-literal-assignment/release-final-source.json",
+        "sha256": "b12859b674a1c074d72f49b799e9f859f1412ccc0ad3f608614747c026d6be1c",
+        "report": {
+          "schemaVersion": "fairyc.test-report/v4",
+          "engine": "native",
+          "target": "x86_64-windows-msvc",
+          "profile": "release",
+          "tests": [
+            {
+              "identity": "tests::m2::array_assignment::assignment_is_independent_in_scopes_loops_and_value_arms",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_assignment::exact_fuel_and_quota_do_not_require_a_third_array",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_assignment::verifier_requires_live_exact_shape_mutable_destinations",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_call_assignment::argument_early_exits_release_captures_and_keep_pending_results_dead",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_call_assignment::assignments_evaluate_captures_and_later_effects_before_copying",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_call_assignment::exact_fuel_quota_and_independent_verifier_cover_temporary_lifetimes",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_call_assignment::result_assignment_preserves_destination_storage_and_parameter_independence",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_literal_assignment::fill_evaluates_once_before_writes_and_preserves_argument_snapshots",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_literal_assignment::filler_early_exits_keep_old_values_and_release_visible_owners",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_literal_assignment::repeated_assignment_uses_only_existing_storage_at_capacity",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_literal_assignment::source_fill_is_metered_without_a_second_catalog_site",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_result_source::early_argument_exits_release_captures_without_dropping_pending_destinations",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_result_source::forward_recursive_and_mutual_results_keep_separate_frame_bindings",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_result_source::independent_verifier_requires_cleanup_of_nonreturned_owners",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_result_source::mutable_captures_precede_later_effects_and_normal_cleanup_reclaims_holes",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_result_source::named_results_cover_all_scalar_elements_without_a_second_payload",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_result_source::returned_parameter_is_independent_and_destination_controls_mutability",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_result_source::source_result_fuel_is_prepaid_at_the_exact_boundary",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::array_result_source::unsupported_result_forms_and_shapes_fail_compilation",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            }
+          ],
+          "count": 19,
+          "passed": 19,
+          "failed": 0,
+          "status": "ok",
+          "lock": "verified"
+        }
+      },
+      "reusedBackend": {
+        "path": "build/m2-array-literal-assignment/release-native.json",
+        "sha256": "86ba3007fe04e6070e9b3f7543202a664cb720b605da1019454aec3be261dae6",
+        "selectedTests": [
+          {
+            "identity": "tests::m2::array_assign_storage::assignment_reuses_full_storage_and_preserves_independent_owners",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_assign_storage::invalid_sources_leave_the_entire_destination_unchanged",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_fill::all_scalar_fills_preserve_metadata_and_neighbor_bytes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_fill::invalid_fill_preflight_preserves_every_byte",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_fill::verifier_requires_live_mutable_exact_type_and_defined_operands",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_fill::vm_prepays_fill_and_uses_only_the_existing_extent",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_ir::backedges_and_returns_cannot_leak_or_revive_arrays",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_ir::catalog_reserved_bytes_and_typed_scalar_operands_are_checked",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_ir::function_owned_arrays_and_entry_call_restriction_are_checked",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_ir::live_sets_must_match_exactly_at_forward_joins",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_ir::private_array_builders_and_scalar_result_are_verified",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::all_scalar_array_reads_and_writes_run_in_the_native_vm",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::copied_arrays_keep_original_values_after_source_mutation_and_drop",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::exact_fuel_bounds_quota_and_fresh_program_reuse",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::maximum_usize_array_copy_checks_old_plus_new_peak",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::metered_loop_recreation_reuses_owners_until_fuel_exhaustion",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::scalar_callees_and_frame_failure_do_not_access_parent_arrays",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ]
+      },
+      "cli": [
+        {
+          "path": "build/m2-array-literal-assignment/release/cli-receipt.json",
+          "sha256": "86f8adaa329bdd071e8586e126d8572783fe6608bf189402d36d8da2810009c4",
+          "cases": 115,
+          "checkedFixtureCount": 115,
+          "fixtureManifestSha256": "45401fd0cb77a079b5dd75d8f2b604b3155ff8a46d80a3e337b19add9e64b5e5"
+        },
+        {
+          "path": "build/m2-array-assignment/release/cli-receipt.json",
+          "sha256": "c8f9c2fd9117bbb24782b6ea3223c8af0a101f56f2b6742fd81cbf1175a6dd11",
+          "cases": 59,
+          "checkedFixtureCount": 59,
+          "fixtureManifestSha256": "ef29128b285fbb903138d0fcb90ffc2f7ae7cc3be371bf01d3bb878fee8b5b5a"
+        },
+        {
+          "path": "build/m2-array-call-assignment/release/cli-receipt.json",
+          "sha256": "894f909c574db0a24f09c1a5ec807da681f81b53be47e6211876b94dbe810ec1",
+          "cases": 115,
+          "checkedFixtureCount": 115,
+          "fixtureManifestSha256": "23aa2170b015be1ff4eb6948c1d195d5b6c967db8c3374933bfae493c6c1a6a1"
+        },
+        {
+          "path": "build/m2-array-result-source/release/cli-receipt.json",
+          "sha256": "70b805a44b1711d298d5285d73b28e2fccc4ab72b69414fc8d2764a679c00e58",
+          "cases": 119,
+          "checkedFixtureCount": 119,
+          "fixtureManifestSha256": "177f374ee2f156c8e8df421ca24cb24dd1d9f487c87b869077ab8d058aa02eb8"
+        },
+        {
+          "path": "build/m2-array-return-calls/release/cli-receipt.json",
+          "sha256": "4a6eba583e3ef30d5edb21365bbc7c7d9cc4426963ba603b2a71f1f7f83588b2",
+          "cases": 117,
+          "checkedFixtureCount": 117,
+          "fixtureManifestSha256": "b4174e0bea4735e2998c7f0b1f7637e9e4e1168e4d2469c2f5fec4670e040734"
+        },
+        {
+          "path": "build/m2-array-return-literals/release/cli-receipt.json",
+          "sha256": "514f8066295f08b64d184da5a7e9e1e595f824827795bfd3bb7a7ec9325294f2",
+          "cases": 119,
+          "checkedFixtureCount": 119,
+          "fixtureManifestSha256": "955c180c925a6ba8bb47247181c4dc40acf3b1df2f160ea58f3e23bb663c9f1d"
+        },
+        {
+          "path": "build/m2-array-parameters/release/cli-receipt.json",
+          "sha256": "b518428a27a90d976c13ddb5bc2149ad414a67b1a0a362c81d2f1a45bff0e232",
+          "cases": 80,
+          "checkedFixtureCount": 80,
+          "fixtureManifestSha256": "1346f6260857b75a1679e37204d474ad1d2527c6c3de775b1cfdc1e63efa89a7"
+        },
+        {
+          "path": "build/m1/release/cli-receipt.json",
+          "sha256": "20e1ff75b6e0d77d03d2779048a59c84186da00b465f371cb2afd0a6819b2fea",
+          "cases": 1969,
+          "checkedFixtureCount": 1959,
+          "fixtureManifestSha256": "a24d82a29b6823621caf8db73356817d55247ff865b332552ba450799effeab7"
+        }
+      ],
+      "totalCliCases": 2693,
+      "depthRegression": [
+        {
+          "case": "arm-depth-mixed-10",
+          "sourceSha256": "f95b882cdfa3ab9e84ed75627b3f90bf98ace5d7bd3a175fb9c4cc53d681a695",
+          "exit": 0,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m1-scalar/1",
+            "command": "run",
+            "status": "completed",
+            "return_i32": 42,
+            "error": null
+          }
+        },
+        {
+          "case": "arm-depth-mixed-11",
+          "sourceSha256": "325aed4461847b620c559e390fa7c803b2c64223c76f6f71d1313acab9bec652",
+          "exit": 3,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m1-scalar/1",
+            "command": "run",
+            "status": "error",
+            "return_i32": null,
+            "error": {
+              "kind": "compile_limit",
+              "byte_offset": 581
+            }
+          }
+        }
+      ],
+      "example": {
+        "source": {
+          "path": "examples/array-literal-assignment.brc",
+          "sha256": "108e1a0ea38e90ad76d347f5ec61c215ec4e061cb577dd0b4309816104e41bbd"
+        },
+        "exit": 0,
+        "result": {
+          "schema": "browniec.result/v1",
+          "profile": "brownie.m2-array-write/1",
+          "command": "run",
+          "status": "completed",
+          "return_i32": 42,
+          "error": null
+        }
+      }
+    }
+  ],
+  "commands": [
+    "./build/toolchain/fairyc.exe check",
+    "./build/toolchain/fairyc.exe check --locked",
+    "./build/toolchain/fairyc.exe test --native --capture-output --json --locked --file tests/m2/array_fill.fy --file tests/m2/array_assign_storage.fy --file tests/m2/array_ir.fy --file tests/m2/array_vm.fy",
+    "./build/toolchain/fairyc.exe test --native --capture-output --json --locked --release --file tests/m2/array_fill.fy --file tests/m2/array_assign_storage.fy --file tests/m2/array_ir.fy --file tests/m2/array_vm.fy --file tests/m2/array_literal_assignment.fy --file tests/m2/array_assignment.fy --file tests/m2/array_call_assignment.fy --file tests/m2/array_result_source.fy",
+    "./build/toolchain/fairyc.exe build --locked",
+    "./build/toolchain/fairyc.exe test --native --capture-output --json --locked --file tests/m2/array_literal_assignment.fy --file tests/m2/array_assignment.fy --file tests/m2/array_call_assignment.fy --file tests/m2/array_result_source.fy",
+    "python -B tools/check-m2-array-literal-assignment.py --exe build/m2-array-literal-assignment/browniec-development.exe --profile development",
+    "python -B tools/check-m2-array-assignment.py --exe build/m2-array-literal-assignment/browniec-development.exe --profile development",
+    "python -B tools/check-m2-array-call-assignment.py --exe build/m2-array-literal-assignment/browniec-development.exe --profile development",
+    "python -B tools/check-m2-array-result-source.py --exe build/m2-array-literal-assignment/browniec-development.exe --profile development",
+    "python -B tools/check-m2-array-return-calls.py --exe build/m2-array-literal-assignment/browniec-development.exe --profile development",
+    "python -B tools/check-m2-array-return-literals.py --exe build/m2-array-literal-assignment/browniec-development.exe --profile development",
+    "python -B tools/check-m2-array-parameters.py --exe build/m2-array-literal-assignment/browniec-development.exe --profile development",
+    "python -B tools/check-m1-cli.py --exe build/m2-array-literal-assignment/browniec-development.exe --profile development",
+    "./build/toolchain/fairyc.exe build --locked --release",
+    "./build/toolchain/fairyc.exe test --native --capture-output --json --locked --release --file tests/m2/array_literal_assignment.fy --file tests/m2/array_assignment.fy --file tests/m2/array_call_assignment.fy --file tests/m2/array_result_source.fy",
+    "python -B tools/check-m2-array-literal-assignment.py --exe build/m2-array-literal-assignment/browniec-release.exe --profile release",
+    "python -B tools/check-m2-array-assignment.py --exe build/m2-array-literal-assignment/browniec-release.exe --profile release",
+    "python -B tools/check-m2-array-call-assignment.py --exe build/m2-array-literal-assignment/browniec-release.exe --profile release",
+    "python -B tools/check-m2-array-result-source.py --exe build/m2-array-literal-assignment/browniec-release.exe --profile release",
+    "python -B tools/check-m2-array-return-calls.py --exe build/m2-array-literal-assignment/browniec-release.exe --profile release",
+    "python -B tools/check-m2-array-return-literals.py --exe build/m2-array-literal-assignment/browniec-release.exe --profile release",
+    "python -B tools/check-m2-array-parameters.py --exe build/m2-array-literal-assignment/browniec-release.exe --profile release",
+    "python -B tools/check-m1-cli.py --exe build/m2-array-literal-assignment/browniec-release.exe --profile release"
+  ],
+  "previousReceipt": {
+    "path": "docs/evidence/m2-array-call-assignment-windows-20261025.json",
+    "sha256": "cad531d120349b03487ce554bb709166075f9a51febcc83f45538a6654b67e19"
+  },
+  "backendReuse": {
+    "unchangedInputsCompared": [
+      {
+        "path": "src/arithmetic.fy",
+        "sha256": "8192e6ba97498d059b0505307bc2bf84ac58d9722dc5f597587f8ae81a1081d3",
+        "gitBlob": "ce53a04bc8674791f8b196a2649fa5828146ddc0"
+      },
+      {
+        "path": "src/array_call_vm.fy",
+        "sha256": "9da46f3a605e5a63ee7309d607c06473a3c175ae9e30f6e0b759e9da9a51e6da",
+        "gitBlob": "920fe641470dcbe10642bc7bc48b80f3b4ace8df"
+      },
+      {
+        "path": "src/array_layout.fy",
+        "sha256": "d3497dfb6bb7e9ac8ceece4ae88a2274b6b40b49e3c5fecfc509179c03c91cdd",
+        "gitBlob": "5c343bde3ceeefe999a2f2b11d5a0781f84e9ae5"
+      },
+      {
+        "path": "src/array_meta.fy",
+        "sha256": "d1a07319dc2bb7eb95298e3920eaec63c1a4c1390a00c5469528a77e97612894",
+        "gitBlob": "1f6f0f13ffa887333ac131226f0858075db43bf8"
+      },
+      {
+        "path": "src/array_owners.fy",
+        "sha256": "5e4f61a3922a84421442cc1bc75eddcb89a492bdd71c2fb2b1e193f54ced28a8",
+        "gitBlob": "aeff22e65e9170a04750c5abd958f65fba54c7e5"
+      },
+      {
+        "path": "src/array_parameters.fy",
+        "sha256": "ae760f4880d732c8630b08dfc948edb9d21ad3bdb80d2b8c84f5767a43016a29",
+        "gitBlob": "1d3ed4606ce3d4f11aed12583bafb6efce7b9cb8"
+      },
+      {
+        "path": "src/array_result_vm.fy",
+        "sha256": "3cd5388806afa0f4c3a6a8518f154adaf6f9904b18bc7c30ed787d37c43eacfa",
+        "gitBlob": "5bc2474f0c793e06f31035f8654c4e9b0ebea245"
+      },
+      {
+        "path": "src/array_results.fy",
+        "sha256": "1dccba6ebbc493654aea82e305b7c3f9b0c226c8c475d1c80f19fa1014e63e8e",
+        "gitBlob": "ed5770b687bbf3523f2465cca613e9c9da4889fc"
+      },
+      {
+        "path": "src/array_storage.fy",
+        "sha256": "00808c116e0fb86ce063d7fd4cc9d1f8fd29f19b277449e59e3569491a3ee534",
+        "gitBlob": "c4874c7ca93e4d472bd2e9a3d233eeeeadcc83a7"
+      },
+      {
+        "path": "src/array_verifier.fy",
+        "sha256": "8cae6645601de78361509b67a4de77a573169f690e950acd9f65789d1c3b61d3",
+        "gitBlob": "1829e9bfda321be34309c81314486bd917e3f895"
+      },
+      {
+        "path": "src/array_vm.fy",
+        "sha256": "5c9d6290a9d20c54ae9d9068a2e63ad8b9206b4113bfa7db43f0c980d1e8bd15",
+        "gitBlob": "3ae004a14cab9c6afc042f4ac192945f47a5c271"
+      },
+      {
+        "path": "src/bits.fy",
+        "sha256": "0b030757624a8dbaea9475f90d757aeff78b9154a121af7a4d9ebd80042db1a0",
+        "gitBlob": "e9c14c43bdaafe9eef4987ac8c82fdafc25b90a9"
+      },
+      {
+        "path": "src/cells.fy",
+        "sha256": "71b82add3e95b86a1b7bcb88c3f97f6ae38bae0ac3ec8b1a2de925b10a64e433",
+        "gitBlob": "6a34c74e21dbf598f6ef21255857037df3afef34"
+      },
+      {
+        "path": "src/errors.fy",
+        "sha256": "e8070ef5c6380460dacb579c33f2e180b9e683286c8cb0827e30d82a581a4646",
+        "gitBlob": "05ff4ffe398508386cfd718a84e025be1a335ab2"
+      },
+      {
+        "path": "src/ir.fy",
+        "sha256": "4d8836c052493d4b72879eb8a7cafdeed6b8c98c6e9a47c18dc0f9efe8f9d537",
+        "gitBlob": "66f666c4e4a6be912dd5e39647285cfd1289cb7b"
+      },
+      {
+        "path": "src/lexer.fy",
+        "sha256": "0a64c45b3a3512ada4610c244ce874d306e417cde0fce4cd99a419048002861e",
+        "gitBlob": "6c14f015637918f2a0c45e84b8ecf0f15d6b64c1"
+      },
+      {
+        "path": "src/register_set.fy",
+        "sha256": "478e2690ee311bb3961c329becc6f9ef035276759619733cbfd0f6e441f36b73",
+        "gitBlob": "f4bc47ca884ed0a8b906a53e36234e02d8bfee76"
+      },
+      {
+        "path": "src/render.fy",
+        "sha256": "d6ae1e6212767aa3bed55c0383bc2065128c4db49c398c39396e437387e62bba",
+        "gitBlob": "2b3ed64d364fc25f0700d7e93d75c8cd6bf2b70a"
+      },
+      {
+        "path": "src/scalar_codec.fy",
+        "sha256": "c28ca5e5cdc38dee01d79489d8c5a709022a49001854af638258ec4536ad66f0",
+        "gitBlob": "0a88271256a8b796bda959778774054e20c29ac1"
+      },
+      {
+        "path": "src/shifts.fy",
+        "sha256": "510dc6a90591de165de424a377eb267917ea9973972b9b95656cc9c435675eeb",
+        "gitBlob": "6d114a930addad87c9a6fabfacd56fe5fd39180b"
+      },
+      {
+        "path": "src/tagged.fy",
+        "sha256": "67770f8ec8f3e35a2a6196cda87310844d37358f86f8b22eb81b49df1f65f1bf",
+        "gitBlob": "28324fb0cbfacd053595b9740210c54c9ec6b2dd"
+      },
+      {
+        "path": "src/types.fy",
+        "sha256": "906f5ba160de53f60d23e344e141181f902f36de60a4060375bef97a2162be23",
+        "gitBlob": "0ffe04bc027bae466282cc1bf5888d6508eb5655"
+      },
+      {
+        "path": "src/verifier.fy",
+        "sha256": "8bfb8e41f7d2712501cabb6abdabd3fc8bbbfd3c3209b073919ebbd8884cf847",
+        "gitBlob": "efc8614d298ce1e4b930c711912a7fe4b34f844b"
+      },
+      {
+        "path": "src/vm.fy",
+        "sha256": "30ad1cad007824e47a35922b0cad4fb5f084cbecee3bebd7493fc9e256200594",
+        "gitBlob": "5ad1cfc62d1e6eceeb45d88cb2c43629297e2a04"
+      },
+      {
+        "path": "tests/m2/array_assign_storage.fy",
+        "sha256": "347d9529c9f6ac41e5c45b7ced2b7153c2ffe9d33d57a17618e85e6974d153eb",
+        "gitBlob": "607b87662a422de6692f60e9357293e77af01df0"
+      },
+      {
+        "path": "tests/m2/array_fill.fy",
+        "sha256": "064fe9f6fda55eb2712060c81d8edc5a2bd25dc8649740d544dc3e4a5789ca88",
+        "gitBlob": "de861f58c299ae91bb40c89c1007b0d3a0648725"
+      },
+      {
+        "path": "tests/m2/array_ir.fy",
+        "sha256": "2a1cc69aa982a9445636c08a0c3b7c2579e457b0170460975f31089406173be4",
+        "gitBlob": "526e4331bf7057fbaf6b8f4a31671795d3702847"
+      },
+      {
+        "path": "tests/m2/array_vm.fy",
+        "sha256": "c92b7784d8d3091c91d93fa1a648700f3d4884f82aa220e211a5ca8500786d61",
+        "gitBlob": "a265de6bf3b2b321259c73225f89a43bb9e5a1a9"
+      }
+    ],
+    "comparison": "Git blob equality against b5e0c98; current working-tree SHA-256 recorded separately. SDK and compiler identities also match.",
+    "preExtractionInputs": {
+      "path": "build/m2-array-literal-assignment/pre-extraction-inputs.json",
+      "sha256": "6200fbce27b79a6b7eae010e2e82b53333ba7217fda3aeb694845e3cd21c351f"
+    },
+    "execution": "Development retains 17 backend identities. Release retains the same 17 from its first combined 36-group run. After extracting array-only statement lowering, all 19 frontend identities and all CLI matrices were rerun per profile. Earlier frontend/CLI attempts are superseded, not added to final counts."
+  },
+  "scalarStackRegression": {
+    "baselineArtifact": {
+      "path": "build/m2-array-call-assignment/browniec-development.exe",
+      "sha256": "5b43e0a5ad51f8702d6c249ae667c1ccc75894e831a49a5f642f0e7be98ff834"
+    },
+    "baselineCommit": "2ad293d",
+    "fixture": {
+      "path": "build/m1/development/arm-depth-mixed-10.brc",
+      "sha256": "f95b882cdfa3ab9e84ed75627b3f90bf98ace5d7bd3a175fb9c4cc53d681a695"
+    },
+    "baselineExitWindowsHex": "0xC00000FD",
+    "baselineExitUnsigned": 3221225725,
+    "fix": "Separate copy/index assignment lowering from recursive scalar and literal-fill paths. Existing mixed-depth 10 succeeds and depth 11 reports compile_limit in both final profiles.",
+    "stackByteMeasurements": "not measured",
+    "composedFillDepthCases": "Two permanent cases in the 115-case fill matrix: depth 10 succeeds; depth 11 reports compile_limit."
+  },
+  "lowering": {
+    "opcode": 40,
+    "fillEvaluations": 1,
+    "additionalStaticSites": 0,
+    "additionalOwners": 0,
+    "additionalPayloadExtents": 0,
+    "encodedScratchBytes": 8,
+    "payloadWriteBytes": "B",
+    "work": "O(B)",
+    "destinationOwnerReplaced": false
+  },
+  "exactFuel": {
+    "normalArenaBytes": 65536,
+    "exact": 65756,
+    "oneShort": 65755,
+    "nativeArenaBytes": 4,
+    "nativeExact": 224,
+    "nativeOneShort": 223,
+    "fillCharge": "49 + 2 * stride + B"
+  },
+  "limits": {
+    "staticArraySites": 16,
+    "occupiedOwners": 16,
+    "vmFrames": 32,
+    "payloadBytes": 65536
+  },
+  "discardedInvocations": [
+    "The first final release-native invocation was rejected at CLI argument parsing because of PowerShell argument expansion. No native tests from that invocation are counted; the explicit release command was rerun.",
+    "Frontend reports and CLI receipts preceding the final copy/index extraction are superseded."
+  ],
+  "documentationChecks": [
+    "PowerShell aggregate harness parsed without errors",
+    "Edited Markdown links and receipt JSON checked",
+    "git diff --check"
+  ],
+  "limitations": [
+    "The final native count combines unchanged backend and freshly executed frontend identities; no final aggregate harness invocation is claimed.",
+    "Repeated scalar literals and bare-name/direct-call assignment are supported; general aggregate expressions, parenthesized/indexed array RHS, computed counts, for-header arrays, slices, borrows and wrapper elements remain unsupported.",
+    "Other evaluation effects are not rolled back by later fill or VM failure.",
+    "Existing scalar regressions were rerun; other native suites, other array CLI matrices, M0, allocator instrumentation, Linux, isolation, DLL, clean-machine packaging and performance checks were not rerun.",
+    "Byte/write counts describe algorithmic work; they are not measured throughput, memory instrumentation or process stack-byte claims."
+  ]
+}

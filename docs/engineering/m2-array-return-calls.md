@@ -47,8 +47,9 @@ Unchanged backend inputs are compared with the previous source receipt. Full
 native suites, other array/scalar CLI matrices, M0, allocator instrumentation,
 Linux, isolation, DLL, clean-machine packaging and performance are not rerun.
 
-[Repeated return literals](m2-array-return-literals.md) have subsequent focused evidence.
-Parenthesized/indexed results, aggregate scalar expressions,
-array-result call arguments, literal assignment RHS, for headers, slices, borrows and
-wrapper elements remain unsupported. General aggregate expressions and frame
+[Repeated return literals](m2-array-return-literals.md) have separate focused evidence.
+Parenthesized or indexed results, array-result calls in argument position,
+`for`-header arrays, slices, borrows, and wrapper elements remain unsupported.
+Assignment RHS is limited to the bare-name, direct-call, and repeated-literal
+forms owned by their contract pages. General aggregate expressions and frame
 elision have no new contract in this increment.

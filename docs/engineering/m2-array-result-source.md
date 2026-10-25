@@ -56,11 +56,13 @@ Return operands can be bare array names or direct `return function(...);` calls.
 The latter now has separate [lowering and verification](m2-array-return-calls.md).
 [Repeated return literals](m2-array-return-literals.md) have a subsequent focused
 increment. Parentheses, indexing, slices and borrows remain rejected.
-Array-result calls are admitted in typed array declaration initializers and direct returns;
-Direct calls are also admitted by [mutable assignment](m2-array-call-assignment.md);
-scalar expressions, call arguments, literal assignment RHS and for headers do not gain
-aggregate expression support. Wrapper elements and implicit shape conversions
-remain unavailable. Unreachable source still has to satisfy static typing.
+Array-result calls are admitted in typed array declaration initializers, direct
+returns, and mutable assignment. Repeated array literals are admitted in direct
+returns and, through a separate [in-place fill](m2-array-literal-assignment.md),
+mutable assignment. Scalar expressions, call arguments, and `for` headers do not
+gain aggregate expression support. Wrapper elements and implicit shape
+conversions remain unavailable. Unreachable source still has to satisfy static
+typing.
 
 ## Original source increment verification
 

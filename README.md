@@ -1,6 +1,6 @@
 # Brownie C
 
-- Status: M1 scalar checkpoint verified; M2 function-owned scalar arrays with helper declarations, by-value parameters, argument capture, copies, length access, lexical cleanup, and whole-array assignment implemented; full profile incomplete
+- Status: M1 scalar checkpoint verified; M2 function-owned scalar arrays with helper declarations, by-value parameters, argument capture, copies, length access, lexical cleanup, source results, and bare-name, call-result, and repeated-literal assignment implemented; full profile incomplete
 - Design date: 2026-10-23
 - First delivery target: Windows 11 x64
 
@@ -60,6 +60,8 @@ and typed call-result initializers are supported by the [source result increment
 `return [value; N];`, evaluating the fill once in the declared element context.
 [Call-result assignment](docs/engineering/m2-array-call-assignment.md) admits
 `array = make(arguments);`, copying the result into existing mutable storage.
+[Repeated-literal assignment](docs/engineering/m2-array-literal-assignment.md)
+admits `array = [value; N];`, evaluating once and filling existing storage in place.
 Borrows, slices, structs, workers, and DLLs remain later work.
 The [array parameter signature foundation](docs/engineering/m2-array-signatures.md)
 records element types and exact lengths; the subsequent source increment removes
@@ -199,6 +201,7 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 direct array-return calls](docs/engineering/m2-array-return-calls.md): exact-shape forwarding, nested early exits and shared return cleanup
 - [M2 repeated array-return literals](docs/engineering/m2-array-return-literals.md): typed single-evaluation fills, exact lengths and shared ownership transfer
 - [M2 array call-result assignment](docs/engineering/m2-array-call-assignment.md): ordered calls, temporary cleanup and copies into existing var storage
+- [M2 repeated-literal assignment](docs/engineering/m2-array-literal-assignment.md): preflighted in-place fills without additional owners or array storage
 - [M2 private array results](docs/engineering/m2-array-results.md): verified result lifetimes, zero-copy owner transfer, recursive frames and prepaid return work
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
@@ -271,6 +274,19 @@ rerun. The subsequent [call-assignment receipt](docs/evidence/m2-array-call-assi
 records 15 native groups and 609 CLI cases per profile, including 115 new cases.
 Its focused selection covers existing assignment and source-result behavior;
 other array/scalar CLI matrices and full native suites were not rerun.
-No full-profile conformance,
+The [in-place fill receipt](docs/evidence/m2-array-literal-assignment-windows-20261025.json)
+records 36 unique native groups and 2,693 CLI cases per profile, including 115
+new fill cases. The CLI total is 724 array cases plus 1,969 scalar cases. The
+final 36 combine 17 reused backend identities with 19 fresh frontend groups in
+each profile; development reuses backend from `b5e0c98`, release reuses the same
+identities from its earlier 36-group selection, and the aggregate harness was not
+rerun. Reuse validation matched 28 unchanged source and test files to their
+`b5e0c98` Git blobs and confirmed matching SDK and compiler identities.
+
+The final lowering separates array statement, copy, and index handling into
+helpers. Scalar and composed fills return 42 at depth 10; depth 11 is the
+`compile_limit` boundary. Two permanent CLI cases cover the composed boundary.
+The pre-fix binary reproduces `0xC00000FD` at depth 10. These checks make no
+stack-byte or performance claim. No full-profile conformance,
 DLL ABI, Windows isolation,
 clean-machine packaging, or performance target is claimed.

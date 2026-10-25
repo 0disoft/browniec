@@ -32,8 +32,8 @@ own the affected contract. Broader scaffold procedures are optional.
   captures with normal/return/propagation/loop-transfer cleanup.
   Source array results support bare-name returns and exact-shape let/var call
   initializers, direct return calls, repeated return literals and call-result
-  assignment into var arrays. General aggregate scalar expressions, literal
-  assignment RHS, for-header arrays, borrows, slices and wrapper elements remain unsupported.
+  assignment into var arrays, plus in-place repeated-literal assignment. General
+  aggregate expressions, for-header arrays, borrows, slices and wrapper elements remain unsupported.
   Result signatures now retain exact scalar-array lengths in 16 bounded slots;
   its original blanket result gate is removed by source lowering. Result anchors
   reuse an exact-shape parameter site or reserve one dead site before body lowering.
@@ -73,6 +73,24 @@ own the affected contract. Broader scaffold procedures are optional.
   snapshots and parameter copies still contribute to peak quota use. Focused
   verification passes 15 native groups and 609 CLI cases per profile, including
   115 new CLI cases. A corrected Fuel fixture received a full native rerun.
+  Repeated-literal assignment evaluates the fill once, then AFILL (40) overwrites
+  the live mutable extent. Owner preflight and scalar encoding precede writes;
+  no temporary catalog site, owner or payload extent is required, including at
+  full capacity. The verifier checks liveness, ownership, mutability, type and
+  reserved operands. The [focused receipt](docs/evidence/m2-array-literal-assignment-windows-20261025.json)
+  passes 36 unique native groups and 2,693 CLI cases per profile. The final 36
+  combine 17 reused backend identities with 19
+  fresh frontend groups in each profile; the aggregate harness was syntax-checked,
+  not invoked. Development reuses the backend from `b5e0c98`; release reuses the
+  same identities from its earlier 36-group selection. Reuse validation matched 28
+  unchanged source and test files to their `b5e0c98` Git blobs and confirmed
+  matching SDK and compiler identities. The 2,693 CLI cases comprise 724 array and
+  1,969 scalar cases, including 115 new fill cases.
+  The final lowering separates array statement, copy, and index handling into
+  helpers. Scalar and composed-fill cases return 42 at depth 10; depth 11 reports
+  `compile_limit`. Two permanent fill CLI cases cover the composed boundary. The
+  pre-fix binary reproduces `0xC00000FD` at depth 10. No stack-byte or performance
+  claim is made.
   Previous private-result verification passed 43 native groups and 2,571 CLI cases
   per development/release profile, including parameter independence and deferred
   callee holes. Native development combined 41 plus two disjoint groups; release

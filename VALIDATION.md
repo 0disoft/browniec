@@ -1,7 +1,7 @@
 # Validation
 
-- Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, switch-expression, i64, and unsigned receipts are verified historical evidence; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified; private entry-array IR/VM and source-array reads/writes/copy initializers implemented and focused-harness verified
-- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/u8/u32/usize/bool values, explicit widening, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation; private function-owned array IR/native dispatch with separate recursive frame tokens, let/var scalar arrays in lexical scopes of ordinary functions, indexed reads/writes, copy initializers, length access, lexical cleanup including `?` failure, and whole-array assignment are implemented
+- Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, switch-expression, i64, and unsigned receipts are verified historical evidence; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified; private entry-array IR/VM and source-array reads, writes, copy initializers, parameters, results, and assignment forms implemented; in-place repeated-literal assignment verified
+- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/u8/u32/usize/bool values, explicit widening, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation; private function-owned array IR/native dispatch with separate recursive frame tokens, let/var scalar arrays in lexical scopes of ordinary functions, indexed reads/writes, copy initializers, length access, lexical cleanup including `?` failure, by-value parameters, source results, and bare-name, call-result, and repeated-literal assignment are implemented
 
 ## Validation source of truth
 
@@ -530,7 +530,7 @@ ordering and cleanup have direct evidence. Unchanged runtime inputs are compared
 not rerun. Other array/scalar CLI matrices, full native suites, M0, allocator
 instrumentation, Linux, isolation, DLL, clean-machine packaging and performance
 remain skipped. The expanded aggregate harness is syntax-checked, not invoked.
-Aggregate scalar expressions, result assignment RHS and for headers remain unsupported.
+At that checkpoint, aggregate scalar expressions, result assignment RHS and for headers remained unsupported.
 
 The [literal-return increment](docs/engineering/m2-array-return-literals.md) enables
 `return [value; N];`, using the declared element context and evaluating the fill
@@ -556,6 +556,34 @@ The expanded aggregate harness is syntax-checked, not invoked. Unchanged backend
 inputs are compared. Full native suites, other array/scalar CLI matrices, M0,
 allocator instrumentation, Linux, isolation, DLL, clean-machine packaging and
 performance remain skipped.
+
+The [in-place literal assignment](docs/engineering/m2-array-literal-assignment.md)
+increment adds typed AFILL (40), preflighted owner fill, and the source form
+`a = [value; N];`. The [Windows receipt](docs/evidence/m2-array-literal-assignment-windows-20261025.json)
+records 36 unique native groups and 2,693 CLI cases per development/release
+profile. The final 36 combine 17 reused backend identities with 19 fresh frontend
+groups in each profile; the aggregate harness was syntax-checked but not invoked.
+Development reuses backend from `b5e0c98`, while release reuses the same identities
+from its earlier 36-group selection. Reuse validation matched 28 unchanged source
+and test files to their `b5e0c98` Git blobs and confirmed matching SDK and compiler
+identities.
+
+The 2,693 CLI cases comprise 724 array cases and 1,969 scalar cases. The array
+total includes 115 new, 59 assignment, 115 call-assignment, 119 source-result,
+117 direct-return, 119 literal-return, and 80 parameter cases. The example returns
+42 in both profiles. Full-capacity fills, exact Fuel, unchanged metadata, rejected
+preflight, and early exits have direct coverage.
+
+AFILL writes only after owner, metadata, type, and encoding checks; effects from
+evaluating the fill are not rolled back on later rejection. It writes B payload
+bytes with eight scratch bytes and allocates no temporary owner, extent, or catalog
+site. The final lowering separates array statement, copy, and index handling into
+helpers. Scalar and composed-fill cases return 42 at depth 10; depth 11 reports
+`compile_limit`. Two permanent CLI cases cover the composed boundary. The pre-fix
+binary reproduces `0xC00000FD` at depth 10. These are correctness checks, not
+stack-byte measurements. Other native/array CLI suites, M0, allocator
+instrumentation, Linux, isolation, DLL, clean-machine packaging, and performance
+remain skipped; aggregate tooling was only syntax-checked.
 
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker

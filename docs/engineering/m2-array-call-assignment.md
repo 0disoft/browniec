@@ -14,8 +14,10 @@ This extends [whole-array assignment](m2-array-assignment.md) with a direct
 array-result call RHS. The destination must be a visible `var` array; immutable
 locals and parameters cannot be assigned. The function must return the exact
 element type and length. All six scalar elements and lengths 1–4096 retain their
-contracts. Unknown/scalar targets, shadowed functions, wrong arities and shapes,
-parenthesized calls, literal RHS and classic for-header assignments are rejected.
+contracts. Unknown or scalar targets, shadowed functions, wrong arities and
+shapes, parenthesized call results, and classic `for`-header assignments are rejected.
+[Repeated literal RHS](m2-array-literal-assignment.md) has a subsequent in-place
+fill implementation that does not need this call-result temporary.
 
 The destination remains live throughout argument evaluation and CALL. Arguments
 retain left-to-right evaluation and mutable snapshot rules, so `a = identity(a);`

@@ -5,8 +5,10 @@ and VM token storage. This page's receipt is historical for the changed IR,
 verifier, and VM inputs; the bare-name copy contract remains unchanged. The later
 [call-result assignment increment](m2-array-call-assignment.md) extends the RHS
 grammar while preserving the existing destination's owner and extent.
+The subsequent [repeated-literal assignment](m2-array-literal-assignment.md) fills
+that extent in place without creating a temporary source array.
 
-- Status: implemented and focused-harness verified in development and release
+- Status: implemented and focused-harness verified at this checkpoint
 - Evidence: [Windows assignment receipt](../evidence/m2-array-assignment-windows-20261025.json)
 - Scope: exact-shape copies into existing mutable scalar arrays in `main`
 
@@ -27,11 +29,14 @@ branches, switch-statement arms, and switch-expression arms. The existing
 in an inner scope because its bytes are copied, not borrowed. Its `.len`, catalog
 entry, owner token, and generation are unchanged.
 
-The RHS is a bare array name. Parenthesized arrays, array literals, indexed or
-member expressions, calls, resizing, conversion, and chained assignment are not
-admitted. Array assignment remains excluded from classic `for` init/post statements.
-Array parameters/results, helper-function arrays, borrows, slices, and aggregate
-wrappers remain unavailable.
+This page owns the bare-name RHS. Later increments admit direct array-result calls
+in [call-result assignment](m2-array-call-assignment.md) and repeated literals in
+[in-place assignment](m2-array-literal-assignment.md). Parenthesized or indexed
+array expressions, element lists outside a fill, resizing, conversion, chained
+assignment, and other aggregate RHS forms remain rejected. Array assignment stays
+excluded from classic `for` init/post statements. Helper arrays, parameters,
+results, borrows, slices, and aggregate wrappers were unavailable at this
+checkpoint; later contract pages own those additions.
 
 [The example](../../examples/array-assignment.brc) assigns from a nested two-element
 array, leaves its scope, and returns 42 from the destination.
