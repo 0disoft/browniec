@@ -202,6 +202,9 @@ pub fn Result<usize, errors::Error> array_copy(ref mut Program p, usize dst, usi
 pub fn Result<usize, errors::Error> array_assign(ref mut Program p, usize dst, usize source, usize offset) {
     return raw(p, 38, dst, source, 0, offset);
 }
+pub fn Result<usize,errors::Error> array_fill(ref mut Program p,usize dst,usize value,usize offset) {
+    return raw(p,40,dst,value,0,offset);
+}
 pub fn Result<usize, errors::Error> array_read(ref mut Program p, usize id, usize index, usize offset) {
     if (id >= 16 || id >= p.arrays.count) { return .err(errors::make(3, offset)); }
     let u8 element = p.arrays.elements[id];

@@ -31,6 +31,10 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, usize pc, usize f,
         return .ok(live | mask);
     }
     if ((live & mask) == 0) { return .err(errors::make(5, pc)); }
+    if(op==40) {
+        if(b!=0 || !p.arrays.mutable[id] || !readable(p,defined,a,f,element)) {return .err(errors::make(5,pc));}
+        return .ok(live);
+    }
     if (op == 38) {
         if (b != 0 || !p.arrays.mutable[id] || a >= p.arrays.count || (live & (one << a)) == 0 ||
             p.arrays.elements[a] != element || p.arrays.lengths[a] != p.arrays.lengths[id]) { return .err(errors::make(5, pc)); }

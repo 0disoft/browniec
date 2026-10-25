@@ -2,6 +2,7 @@ module array_owners;
 
 import array_layout as layouts;
 import array_storage as storage;
+import scalar_codec as codec;
 
 // Instance-local metadata over caller-owned backing bytes. No guest/raw pointer.
 pub struct Token { usize slot; usize generation; }
@@ -113,6 +114,25 @@ pub fn Result<usize,Error> validate_result(ref Table table,Token token,u8 elemen
         while(at<owner.end) {if(bytes[at]>1) {return .err(.Value);}at+=1;}
     }
     return .ok(owner.end-owner.base);
+}
+// Validate the entire extent and encode once before the first write. Owner and
+// arena metadata remain immutable, including when every descriptor is occupied.
+pub fn Result<usize,Error> fill(ref Table table,Token token,i64 cell,ref mut u8[] bytes) {
+    let Owner owner=resolve(table,token,bytes.len)?;
+    let layouts::Array layout=switch(layouts::scalar(owner.element,owner.length)) {
+        case .ok(a):{a}case .err(_):{return .err(.State);}
+    };
+    var u8[8] encoded=[0;8];
+    let usize size=switch(codec::encode(owner.element,cell,ref mut encoded[..layout.stride])) {
+        case .ok(n):{n}case .err(e):{return .err(switch(e){case .Type:{.Type}case .Width:{.Metadata}case .Value:{.Value}});}
+    };
+    var usize at=owner.base;
+    while(at<owner.end) {
+        var usize byte=0;
+        while(byte<size){bytes[at+byte]=encoded[byte];byte+=1;}
+        at+=size;
+    }
+    return .ok(layout.bytes);
 }
 pub fn Result<usize, Error> write(ref Table table, Token token, usize index, i64 cell, ref mut u8[] bytes) {
     let Owner owner = resolve(table, token, bytes.len)?;
