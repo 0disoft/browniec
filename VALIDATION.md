@@ -665,6 +665,23 @@ Existing nested-storage and source CLI files are unchanged. Full CLI, other nati
 suites including call/result VM, M0, Linux, isolation, DLL, packaging, performance,
 and allocation instrumentation were not rerun.
 
+The [private struct-owner copy/assignment contract](docs/engineering/m2-struct-owner-copy.md)
+adds record-owner copy and assignment. The `--owner-copy` selection passed
+17 native groups per profile: six new struct-owner-copy, six struct-owner, and
+five array-owner groups. Development and release both passed the full selection. Copy
+derives metadata from a live descriptor, preflights one shared slot, and publishes
+the new record owner only after nested old-plus-new copy succeeds; the copy
+survives source release. Assignment requires the exact record id, delegates to
+nested snapshot assignment, and changes no descriptor, extent, cursor, or
+generation. Failures preserve bytes and table metadata. The shared 128-byte,
+128-leaf, depth-16, and 16-owner bounds remain. The trusted caller still binds one
+immutable catalog and backing region; no catalog identity, cross-Instance, borrow,
+or mutability capability is added. Existing other 38 source files and old test
+fixtures are unchanged. The previous 34-group owner receipt is historical for
+changed owner and harness inputs. Full CLI, other native suites including array VM
+and call/result VM, M0, Linux, isolation, DLL, packaging, performance, and
+allocation instrumentation were not rerun.
+
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker
 publication barrier. Compile untrusted source only inside the restricted worker.

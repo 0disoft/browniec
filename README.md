@@ -76,10 +76,12 @@ slice](docs/engineering/m2-struct-nested-copy.md) appends nested records by valu
 and overwrites existing extents without changing the cursor, including self and
 partial overlap. A shared [struct-owner foundation](docs/engineering/m2-struct-owners.md)
 now puts record descriptors in the existing 16-slot table, verifies catalog layout
-on access, and rejects record tokens in array APIs. Struct-owner copies and
-assignment remain next. The full 34-group Windows selection passed development
-and release. Source structs, borrow checking, struct IR, and VM remain later
-work. The earlier nested-storage 18-group receipt is historical for changed
+on access, and rejects record tokens in array APIs. A [private struct-owner
+copy/assignment slice](docs/engineering/m2-struct-owner-copy.md) appends independent
+record owners and requires exact record identity for assignment. Its 17-group
+Windows selection passed development and release; the previous 34-group owner receipt is historical for changed
+inputs. Source structs, borrow checking, struct IR, and VM remain later work.
+The earlier nested-storage 18-group receipt is historical for changed
 inputs; nested-copy 24-group checks passed development and release. The copy
 receipt passes 28 groups per profile in development and release. The planner's
 earlier 14-group and storage's 20-group receipts remain historical for changed
@@ -230,6 +232,7 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 private nested struct storage](docs/engineering/m2-struct-nested-storage.md): iterative depth-first initialization, scalar field paths, selected-root quota, and shared arena staging
 - [M2 private nested struct copy and assignment](docs/engineering/m2-struct-nested-copy.md): iterative snapshots, padding normalization, old-plus-new quota, and overlap-safe nested assignment
 - [M2 shared struct owners](docs/engineering/m2-struct-owners.md): shared record/array descriptors, catalog-bound field access, generation-safe release, and mixed-arena reuse
+- [M2 private struct-owner copy and assignment](docs/engineering/m2-struct-owner-copy.md): independent record owners, exact-ID assignment, shared descriptor pressure, and source-release survival
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
 - [Design baseline](docs/design-baseline.md): source provenance, evidence, and findings

@@ -116,11 +116,12 @@ own the affected contract. Broader scaffold procedures are optional.
   appends nested records by value and overwrites existing extents without a cursor
   change, including self and partial overlap. A shared [struct-owner foundation](docs/engineering/m2-struct-owners.md)
   puts record descriptors in the existing 16-slot table and rechecks catalog layout on
-  access; array-only APIs reject record tokens. Struct-owner copies and assignment
-  remain next. The full 34-group Windows selection passed development and release.
-  Source structs, borrows, struct IR/VM, Fuel, and allocator integration remain
-  unimplemented. The earlier nested-storage 18-group receipt is historical for changed
-  inputs; nested-copy 24-group checks passed development and release.
+  access; array-only APIs reject record tokens. A [private struct-owner copy/assignment slice](docs/engineering/m2-struct-owner-copy.md)
+  appends independent record owners and requires exact record identity for assignment.
+  Its 17-group Windows selection passed development and release. The previous 34-group owner receipt is historical
+  for changed inputs. Source structs, borrows, struct IR/VM, Fuel, and allocator
+  integration remain unimplemented. The earlier nested-storage 18-group receipt is
+  historical for changed inputs; nested-copy 24-group checks passed development and release.
   The copy slice's Windows 28-group receipt passed development and release after
   moving snapshot staging into caller-owned scratch. Earlier planner and storage
   receipts are historical for changed inputs.

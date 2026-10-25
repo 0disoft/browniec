@@ -1,6 +1,6 @@
 # M2 Shared Struct Owner Foundation
 
-- Status: verified private shared-owner foundation; development and release passed.
+- Status: verified private shared-owner foundation; historical for later owner-copy inputs.
 - Scope: private shared owner descriptors for nested records and existing arrays.
 - Implementation: [src/array_owners.fy](../../src/array_owners.fy).
 - Harness: [tools/verify-m2-struct-layout.py](../../tools/verify-m2-struct-layout.py) with `--owners`.
@@ -12,7 +12,9 @@ the selected record id and alignment in `record` and `alignment`. Array owners
 keep their scalar element and length with zero record/alignment fields. Arrays and
 records share the same slots, allocation-order chain, generation lifecycle, and
 caller-owned arena; record creation uses one existing slot and the shared arena,
-with no new descriptor pool or separate arena.
+with no new descriptor pool or separate arena. The [owner copy/assignment
+successor](m2-struct-owner-copy.md) now adds independent record copies and exact-id
+assignment.
 
 ## Descriptor and access checks
 
@@ -46,8 +48,9 @@ dead middle extent retains its bytes and descriptor until every later extent in
 the allocation-order suffix is released. Clear invalidates all live tokens,
 preserves retired slots, and empties the order table and arena.
 
-This foundation does not add struct-owner copies or assignment, source structs,
-borrows, struct IR or VM execution, or Fuel accounting. A selected record remains
+This foundation itself does not add struct-owner copies or assignment; the
+successor does. It adds no source structs, borrows, struct IR or VM execution, or
+Fuel accounting. A selected record remains
 bounded to 128 bytes, 128 scalar leaves, and depth 16 by the nested-storage profile.
 The receipt's 128-byte scratch and 135-write initialization limits describe records;
 arrays retain their separate 32,768-byte per-payload bound. These are algorithmic
@@ -64,11 +67,12 @@ array/record slots and arena, record creation/access, forged extents and catalog
 mismatch, typed API rejection, middle-hole reclamation, stale tokens,
 generation-zero retirement, clear, full 16-owner pressure, 128 leaves, and depth
 16. The [receipt](../evidence/m2-struct-owners-windows-20261026.json) records both profiles.
-Earlier receipts are historical for changed `array_owners`, harness, and root-lock
-inputs. Existing nested-storage and source CLI files are unchanged.
+This receipt and earlier ones are historical for changed `array_owners`, harness,
+and root-lock inputs. The [owner-copy receipt](../evidence/m2-struct-owner-copy-windows-20261026.json)
+freshly reruns six struct-owner and five array-owner groups per profile. Existing
+nested-storage and source CLI files are unchanged.
 
 Full CLI, other native suites including call/result VM, M0, Linux, isolation,
 DLL, packaging, performance, and allocation instrumentation were not rerun.
 
-Next: struct-owner value copies and assignment, then struct IR/VM/Fuel and source
-structs and borrows.
+Next: private struct IR and verifier.
