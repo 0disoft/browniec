@@ -1,0 +1,664 @@
+{
+  "schema": "browniec.m2-struct-nested-copy/v1",
+  "status": "passed",
+  "recordedAt": "2026-10-25T19:18:54.992846+00:00",
+  "baselineCommit": "481855157949cc52d212a81752091f96c806cac3",
+  "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261022210249-4ce1264273be\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.86\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: 4ce1264273be6051ee560173e94690e1b99c9eaf\nmodified: false",
+  "compilerSha256": "572395f7f1e425d613c5a69f50b30ed177cda37ca2b1638bd0c11cf79fcbcc77",
+  "standardLibraryLockIdentity": [
+    {
+      "id": "fypi1-sha256-c18350128fcbce1cee2c63f0e7acc467f9f77ff184c458af1d20eab69a58e89a",
+      "role": "standard-library",
+      "packageUid": "fairyc.std",
+      "sourceKind": "sdk",
+      "localPath": "",
+      "sdkIdentity": "fairyc-sdk-stdlib/0",
+      "runtimeAbi": "fairyc-runtime/0",
+      "sourceIdentity": "fairyc-sdk-stdlib/0;fairyc-runtime/0;fysrc1-sha256-782df5e2039ff3f7817c1055454caa24feb2ea755e62f78d8ee67418916a5b83",
+      "sourceDigest": "fysrc1-sha256-782df5e2039ff3f7817c1055454caa24feb2ea755e62f78d8ee67418916a5b83",
+      "version": "0.0.0-stage0.86",
+      "features": []
+    }
+  ],
+  "os": "Windows-11-10.0.26300-SP0",
+  "pythonVersion": "3.14.6",
+  "lockedCheck": "check ok: 2 instance(s), 46 source file(s), 374 MIR function(s), lock verified",
+  "commands": [
+    [
+      "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+      "--version"
+    ],
+    [
+      "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+      "check",
+      "--locked"
+    ],
+    [
+      "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+      "test",
+      "--native",
+      "--capture-output",
+      "--json",
+      "--locked",
+      "--file",
+      "tests/m2/struct_nested_copy.fy",
+      "--file",
+      "tests/m2/struct_nested_storage.fy",
+      "--file",
+      "tests/m2/struct_layout.fy",
+      "--file",
+      "tests/m2/scalar_codec.fy"
+    ],
+    [
+      "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+      "test",
+      "--native",
+      "--capture-output",
+      "--json",
+      "--locked",
+      "--release",
+      "--file",
+      "tests/m2/struct_nested_copy.fy",
+      "--file",
+      "tests/m2/struct_nested_storage.fy",
+      "--file",
+      "tests/m2/struct_layout.fy",
+      "--file",
+      "tests/m2/scalar_codec.fy"
+    ]
+  ],
+  "sourceSha256": [
+    {
+      "path": "fairy.lock",
+      "sha256": "6d56c333b9439cbafb4824842ed36fcff64c11ce1b52c619249ef91698b18734"
+    },
+    {
+      "path": "fairy.toml",
+      "sha256": "f5254ba793d9012470c697e8657688a4ea5465c138fba6d748707d5bfa4b31fb"
+    },
+    {
+      "path": "src/arithmetic.fy",
+      "sha256": "8192e6ba97498d059b0505307bc2bf84ac58d9722dc5f597587f8ae81a1081d3"
+    },
+    {
+      "path": "src/array_call_source.fy",
+      "sha256": "57af1c63a68bf060d6c555d1ec3f929d3c53715691074d68a5ae6f7ab58392a2"
+    },
+    {
+      "path": "src/array_call_vm.fy",
+      "sha256": "9da46f3a605e5a63ee7309d607c06473a3c175ae9e30f6e0b759e9da9a51e6da"
+    },
+    {
+      "path": "src/array_layout.fy",
+      "sha256": "d3497dfb6bb7e9ac8ceece4ae88a2274b6b40b49e3c5fecfc509179c03c91cdd"
+    },
+    {
+      "path": "src/array_meta.fy",
+      "sha256": "d1a07319dc2bb7eb95298e3920eaec63c1a4c1390a00c5469528a77e97612894"
+    },
+    {
+      "path": "src/array_owners.fy",
+      "sha256": "5e4f61a3922a84421442cc1bc75eddcb89a492bdd71c2fb2b1e193f54ced28a8"
+    },
+    {
+      "path": "src/array_parameters.fy",
+      "sha256": "ae760f4880d732c8630b08dfc948edb9d21ad3bdb80d2b8c84f5767a43016a29"
+    },
+    {
+      "path": "src/array_result_source.fy",
+      "sha256": "46b494134085b3efb7035daa31e2f55b66a6b1d975e9a5cc50bf39d15cb0f4f4"
+    },
+    {
+      "path": "src/array_result_vm.fy",
+      "sha256": "3cd5388806afa0f4c3a6a8518f154adaf6f9904b18bc7c30ed787d37c43eacfa"
+    },
+    {
+      "path": "src/array_results.fy",
+      "sha256": "1dccba6ebbc493654aea82e305b7c3f9b0c226c8c475d1c80f19fa1014e63e8e"
+    },
+    {
+      "path": "src/array_source.fy",
+      "sha256": "2b9f60f9cfa88a28ceb09f0d8fd2a06b09f49d4a51346b47080a369496fbabe9"
+    },
+    {
+      "path": "src/array_storage.fy",
+      "sha256": "00808c116e0fb86ce063d7fd4cc9d1f8fd29f19b277449e59e3569491a3ee534"
+    },
+    {
+      "path": "src/array_verifier.fy",
+      "sha256": "8cae6645601de78361509b67a4de77a573169f690e950acd9f65789d1c3b61d3"
+    },
+    {
+      "path": "src/array_vm.fy",
+      "sha256": "5c9d6290a9d20c54ae9d9068a2e63ad8b9206b4113bfa7db43f0c980d1e8bd15"
+    },
+    {
+      "path": "src/bits.fy",
+      "sha256": "0b030757624a8dbaea9475f90d757aeff78b9154a121af7a4d9ebd80042db1a0"
+    },
+    {
+      "path": "src/casts.fy",
+      "sha256": "59da4a4ecef63833cc383495390e150b964bf41b353c4b150dcacb6be66caba6"
+    },
+    {
+      "path": "src/cells.fy",
+      "sha256": "71b82add3e95b86a1b7bcb88c3f97f6ae38bae0ac3ec8b1a2de925b10a64e433"
+    },
+    {
+      "path": "src/cli_input.fy",
+      "sha256": "ec91de62e6b5147d117d6fe0366ebcf617b556c074bf1dd91cb10188f96507ba"
+    },
+    {
+      "path": "src/compiler.fy",
+      "sha256": "c6a200c5a7efdd3a05513811b7b9b9fe8244cec0b92fd1bcae053e1ea3ef6cda"
+    },
+    {
+      "path": "src/errors.fy",
+      "sha256": "e8070ef5c6380460dacb579c33f2e180b9e683286c8cb0827e30d82a581a4646"
+    },
+    {
+      "path": "src/functions.fy",
+      "sha256": "854bedc970dc1b7a3b08c1eecc9261a32e9c0d04e00aec9a625b65d4a19cd2b6"
+    },
+    {
+      "path": "src/ir.fy",
+      "sha256": "4d8836c052493d4b72879eb8a7cafdeed6b8c98c6e9a47c18dc0f9efe8f9d537"
+    },
+    {
+      "path": "src/lexer.fy",
+      "sha256": "0a64c45b3a3512ada4610c244ce874d306e417cde0fce4cd99a419048002861e"
+    },
+    {
+      "path": "src/locals.fy",
+      "sha256": "f89cab6159330ec0ac269ef02cedd59d15f6f3cfae2d60fc89d43b5ccdf32cda"
+    },
+    {
+      "path": "src/loops.fy",
+      "sha256": "d25dccfb4d3d50daa6e82a6a2f8df345ea72fd4a559e3a8882d6cda0230cbee2"
+    },
+    {
+      "path": "src/main.fy",
+      "sha256": "82a76b1a92376304556b4a2546ec98cb9d219bacb941d92bd4d67d2cbdfecec8"
+    },
+    {
+      "path": "src/patterns.fy",
+      "sha256": "d9ba2ff9dba626968b7514c636a414932e50856c19b9d41d6825b4f91c9797aa"
+    },
+    {
+      "path": "src/propagation.fy",
+      "sha256": "9b58f0e5ed3ef79c44cf819c651e0ec456e38441c3ce8579aca31e0d7eb80bdc"
+    },
+    {
+      "path": "src/register_set.fy",
+      "sha256": "478e2690ee311bb3961c329becc6f9ef035276759619733cbfd0f6e441f36b73"
+    },
+    {
+      "path": "src/render.fy",
+      "sha256": "d6ae1e6212767aa3bed55c0383bc2065128c4db49c398c39396e437387e62bba"
+    },
+    {
+      "path": "src/scalar_codec.fy",
+      "sha256": "c28ca5e5cdc38dee01d79489d8c5a709022a49001854af638258ec4536ad66f0"
+    },
+    {
+      "path": "src/shifts.fy",
+      "sha256": "510dc6a90591de165de424a377eb267917ea9973972b9b95656cc9c435675eeb"
+    },
+    {
+      "path": "src/struct_layout.fy",
+      "sha256": "5830ce15d3bfec60a172e9e157464e4738fd5ad4cdcfbc21500b21c934100dd3"
+    },
+    {
+      "path": "src/struct_nested_storage.fy",
+      "sha256": "65ce93e9e1bb4e63c43872348132c061f4c9bcc8d3e1362a2f14482935fbe023"
+    },
+    {
+      "path": "src/struct_storage.fy",
+      "sha256": "f371eedc083aea535fa6cc35f245fb6bd1c8ded52b8c4470c19fd0c4d9df0596"
+    },
+    {
+      "path": "src/tagged.fy",
+      "sha256": "67770f8ec8f3e35a2a6196cda87310844d37358f86f8b22eb81b49df1f65f1bf"
+    },
+    {
+      "path": "src/types.fy",
+      "sha256": "906f5ba160de53f60d23e344e141181f902f36de60a4060375bef97a2162be23"
+    },
+    {
+      "path": "src/verifier.fy",
+      "sha256": "8bfb8e41f7d2712501cabb6abdabd3fc8bbbfd3c3209b073919ebbd8884cf847"
+    },
+    {
+      "path": "src/vm.fy",
+      "sha256": "30ad1cad007824e47a35922b0cad4fb5f084cbecee3bebd7493fc9e256200594"
+    },
+    {
+      "path": "tests/m2/scalar_codec.fy",
+      "sha256": "63e5709b6b46addea1510db1cce5f27ea6e52ab8e2f5fd5da98aaa7bb216d323"
+    },
+    {
+      "path": "tests/m2/struct_layout.fy",
+      "sha256": "91298a39cc24b7843f917c054e7f37c295a2bc34da740fd36360590d17f8e073"
+    },
+    {
+      "path": "tests/m2/struct_nested_copy.fy",
+      "sha256": "f2f5dbb950fef90ffa342eee9b97c10f602ba004e46122d15a87b81962a5f1d3"
+    },
+    {
+      "path": "tests/m2/struct_nested_storage.fy",
+      "sha256": "60faf1883a1ae50d9d370864857d57995f5df79da1ed0400c5d98b43c75bc106"
+    },
+    {
+      "path": "toolchain.json",
+      "sha256": "e744c8866ba200fd9213ee99ff61a11f60f9ed0f31e9106219f97d7da26971ef"
+    },
+    {
+      "path": "tools/verify-m2-struct-layout.py",
+      "sha256": "9aaa30dc31e5c83519c62b6d40c9103acd370c2496c706295ceb64f4de7bfbbd"
+    }
+  ],
+  "results": [
+    {
+      "profile": "development",
+      "nativeGroups": 24,
+      "nativeTests": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "development",
+        "tests": [
+          {
+            "identity": "tests::m2::scalar_codec::every_repeated_byte_pattern_roundtrips_full_cells",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::scalar_codec::exact_little_endian_signed_unsigned_and_bool_vectors",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::scalar_codec::out_of_range_writes_and_noncanonical_bool_are_rejected",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::scalar_codec::width_and_unknown_type_errors_preserve_all_output",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_layout::all_scalar_fields_use_compact_widths_and_empty_catalog_is_canonical",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_layout::declaration_order_and_tail_padding_define_the_layout",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_layout::forward_dependencies_and_repeated_children_are_resolved_by_value",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_layout::malformed_counts_fields_and_inactive_metadata_are_rejected_first",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_layout::only_scalar_tags_and_in_catalog_record_references_are_admitted",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_layout::padding_quota_and_symbolic_size_overflow_fail_without_native_traps",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_layout::self_mutual_and_disconnected_cycles_do_not_publish_partial_plans",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_layout::structural_depth_is_independent_of_catalog_capacity_and_fanout",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_nested_copy::all_scalar_bits_copy_independently_and_nested_padding_is_zeroed",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_nested_copy::both_overlap_directions_and_self_assignment_use_prewrite_values",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_nested_copy::catalogs_states_alignment_and_both_complete_extents_are_rechecked",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_nested_copy::copy_charges_existing_bytes_and_alignment_before_publication",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_nested_copy::corrupt_last_nested_bool_rejects_copy_assign_and_self_atomically",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_nested_copy::maximum_leaves_and_depth_copy_and_assign_at_full_capacity",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_nested_storage::depth_sixteen_is_iterative_and_seventeen_is_rejected",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_nested_storage::initialization_errors_preserve_every_byte_and_cursor",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_nested_storage::one_hundred_twenty_eight_leaves_fit_and_larger_roots_are_rejected",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_nested_storage::paths_require_the_whole_root_and_scalar_endpoint_before_writes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_nested_storage::repeated_nested_records_preserve_scalar_bits_and_all_padding",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_nested_storage::the_entire_catalog_is_revalidated_without_capping_unselected_records",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 24,
+        "passed": 24,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "newNestedCopyGroups": 6,
+      "nestedStorageRegressionGroups": 6,
+      "structLayoutRegressionGroups": 8,
+      "codecRegressionGroups": 4
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 24,
+      "nativeTests": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "release",
+        "tests": [
+          {
+            "identity": "tests::m2::scalar_codec::every_repeated_byte_pattern_roundtrips_full_cells",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::scalar_codec::exact_little_endian_signed_unsigned_and_bool_vectors",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::scalar_codec::out_of_range_writes_and_noncanonical_bool_are_rejected",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::scalar_codec::width_and_unknown_type_errors_preserve_all_output",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_layout::all_scalar_fields_use_compact_widths_and_empty_catalog_is_canonical",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_layout::declaration_order_and_tail_padding_define_the_layout",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_layout::forward_dependencies_and_repeated_children_are_resolved_by_value",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_layout::malformed_counts_fields_and_inactive_metadata_are_rejected_first",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_layout::only_scalar_tags_and_in_catalog_record_references_are_admitted",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_layout::padding_quota_and_symbolic_size_overflow_fail_without_native_traps",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_layout::self_mutual_and_disconnected_cycles_do_not_publish_partial_plans",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_layout::structural_depth_is_independent_of_catalog_capacity_and_fanout",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_nested_copy::all_scalar_bits_copy_independently_and_nested_padding_is_zeroed",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_nested_copy::both_overlap_directions_and_self_assignment_use_prewrite_values",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_nested_copy::catalogs_states_alignment_and_both_complete_extents_are_rechecked",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_nested_copy::copy_charges_existing_bytes_and_alignment_before_publication",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_nested_copy::corrupt_last_nested_bool_rejects_copy_assign_and_self_atomically",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_nested_copy::maximum_leaves_and_depth_copy_and_assign_at_full_capacity",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_nested_storage::depth_sixteen_is_iterative_and_seventeen_is_rejected",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_nested_storage::initialization_errors_preserve_every_byte_and_cursor",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_nested_storage::one_hundred_twenty_eight_leaves_fit_and_larger_roots_are_rejected",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_nested_storage::paths_require_the_whole_root_and_scalar_endpoint_before_writes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_nested_storage::repeated_nested_records_preserve_scalar_bits_and_all_padding",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_nested_storage::the_entire_catalog_is_revalidated_without_capping_unselected_records",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 24,
+        "passed": 24,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "newNestedCopyGroups": 6,
+      "nestedStorageRegressionGroups": 6,
+      "structLayoutRegressionGroups": 8,
+      "codecRegressionGroups": 4
+    }
+  ],
+  "limits": {
+    "fieldsPerRecord": 16,
+    "recordBytes": 128,
+    "encodedScratchBytes": 128,
+    "initializationBackingWritesAtMost": 135,
+    "scalarLeaves": 128,
+    "structuralDepth": 16,
+    "fieldPathLength": 16,
+    "traversalFieldVisitsAtMost": 2048,
+    "copyBackingWritesAtMost": 135,
+    "assignmentBackingWritesAtMost": 128,
+    "assignmentAdditionalExtents": 0
+  },
+  "artifacts": "Tool-managed native test images; no new guest struct CLI artifact.",
+  "limitations": [
+    "Private nested-record value copies and assignment only; no owner tokens, source structs, IR/VM or Fuel integration.",
+    "The full catalog is replanned once per operation. Both complete root extents, metadata, arena state and alignment are validated before snapshotting.",
+    "A private iterative cursor copies only scalar bytes into caller-local zeroed 128-byte scratch. Padding is normalized, integer bits preserved, and all bools checked before any backing mutation.",
+    "Copy charges existing plus new bytes and alignment padding, publishing the cursor last. Assignment uses existing storage with zero additional extents and no cursor change, including self and bidirectional overlap.",
+    "A single record describes both byte ranges; offsets do not prove nominal type, ownership, lifetime, borrow or write authority. Work and staging bounds are algorithmic, not instrumentation or performance measurements.",
+    "Scalar-storage/copy sources and fixtures are unchanged and their native suites were not rerun.",
+    "CLI, full native suites, M0, Linux, isolation, DLL, clean-machine packaging, allocation instrumentation and performance not rerun.",
+    "The harness uses Python standard-library APIs without shell execution; this invocation verifies Windows only."
+  ]
+}

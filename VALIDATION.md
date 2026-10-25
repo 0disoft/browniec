@@ -624,8 +624,25 @@ replans the full catalog and checks arena state; field access additionally check
 root alignment and the complete published root extent.
 Selected roots are capped at 128 bytes, use at most 128 leaves and depth 16, and
 are traversed iteratively into initialization-owned zeroed 128-byte scratch before
-backing or cursor publication. Valid unselected records may be larger. Nested
-copy/assignment, ownership, IR, VM, Fuel, and source struct grammar remain open.
+backing or cursor publication; the backing bytes and arena remain caller-provided.
+Valid unselected records may be larger. Nested copy/assignment has the private
+successor below; ownership, IR, VM, Fuel, and source struct grammar remain open.
+
+The [private nested-copy contract](docs/engineering/m2-struct-nested-copy.md)
+adds by-value nested-record copy initialization and assignment. The
+`--nested-copy` selection passed 24 native groups per profile: six new
+nested-copy, six nested-storage, eight struct-layout, and four scalar-codec
+groups. Development and release both passed. Copy replans the full
+catalog once, validates the complete source extent, reserves the old-plus-new
+peak including padding, and publishes from caller-local zeroed scratch with the
+cursor advancing last. Assignment validates both complete extents, snapshots all
+scalar leaves, and overwrites existing storage without reserving an extent or
+changing the cursor. Both normalize padding, preserve integer bits, and check
+every bool before backing writes; self and both partial overlap directions use
+prewrite values. Selected roots stay within 128 bytes, 128 leaves, and depth 16.
+The earlier 18-group nested-storage receipt is historical for changed inputs.
+Full CLI, scalar storage/copy native suites, M0, Linux, isolation, DLL,
+packaging, performance, and allocator instrumentation were not rerun.
 
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker
