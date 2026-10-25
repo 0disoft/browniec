@@ -430,6 +430,23 @@ elements, and eight independent copies. CLI and other native suites, allocator
 instrumentation, Linux, isolation, DLL, and performance checks are skipped; all
 29 source inputs outside `array_owners.fy` match the prior signature receipt.
 
+The [private array-call contract](docs/engineering/m2-array-calls.md) connects
+exact-shape immutable argument snapshots to distinct callee owners through the
+atomic batch-copy helper. It adds independent parameter/call metadata checks,
+frame-specific bindings and prepaid Fuel. The focused command is
+`pwsh -NoProfile -File tools/verify-m2-arrays.ps1 -Slice calls`. Source array
+parameter declarations remain gated until capture and cleanup lowering exist.
+The [call receipt](docs/evidence/m2-array-calls-windows-20261025.json) records
+29 native groups and 2,395 CLI cases (426 array, 1,969 scalar) per development/
+release profile. Fresh checks cover nine private call groups, four function,
+five array IR, six array VM and five recursive-frame groups. It includes exact
+670/669 Fuel, eight array arguments, 24 sequential calls, recursive frame
+preservation, combined quota failures, and no partial token publication.
+Changed IR/verifier/VM inputs receive fresh execution; 25 other source hashes
+match the prior argument-copy receipt. The full scalar and other private-array/
+M0 native suites, allocator instrumentation, Linux, isolation, DLL,
+clean-machine packaging, and performance measurements are skipped.
+
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker
 publication barrier. Compile untrusted source only inside the restricted worker.

@@ -24,11 +24,13 @@ own the affected contract. Broader scaffold procedures are optional.
   Question-mark failure returns drop visible local arrays in reverse order; success keeps them live.
   Focused helper verification passed 16 native groups, 426 array CLI cases, and 1,969 scalar CLI cases
   per development/release profile; changed frontend and fixture inputs receive fresh evidence.
-  Array parameters, results, borrows, slices, and aggregate guest calls remain unimplemented.
+  Source array parameters, array results, borrows, slices, and source aggregate calls remain unimplemented.
   A signature-only foundation records exact scalar-array parameter shapes; the
   compiler rejects all such declarations before lowering any function body.
   Private `array_owners::copy_arguments` preflights up to eight exact-shape copies
-  before changing bytes or owner state; source/IR/VM call integration remains pending.
+  before changing bytes or owner state. Private IR/verifier/VM calls now support
+  immutable exact-shape array parameters, mixed scalar positions, metered atomic
+  copies, and frame-specific owners. Source capture and parameter lowering remain pending.
   For-header array declarations and writes remain rejected.
 - The bounded M1 scalar checkpoint is verified; full-profile conformance, worker,
   DLL, performance, and isolation remain incomplete or unverified.

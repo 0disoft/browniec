@@ -51,10 +51,9 @@ performance checks are skipped. No runtime array-call evidence is claimed.
 
 ## Next implementation slice
 
-Add immutable exact-shape by-value parameter lowering together with independent
-call verification and transactional VM copying. Capture each argument once in
-left-to-right order before later argument effects. Include existing and new
-payload extents in peak accounting, and roll back all partial copies and owner
-mutations on failure. Each recursive invocation must retain independent
-parameter and local owners. Remove the compiler gate only after these paths are
-implemented and checked; caller tokens must not become callee aliases.
+The [private call increment](m2-array-calls.md) adds independent call verification
+and transactional VM copies with frame-specific owners. Source lowering must
+still bind immutable array parameters and capture each argument once from left
+to right before later argument effects. Temporary captures need cleanup on every
+exit. Remove the compiler gate only after those source paths are implemented
+and checked; caller tokens must not become callee aliases.

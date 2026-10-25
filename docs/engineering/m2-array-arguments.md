@@ -1,6 +1,6 @@
 # M2 Atomic Array Argument Copies
 
-- Status: private storage primitive implemented and focused-harness verified; source and VM call integration pending
+- Status: private storage primitive implemented and focused-harness verified; private VM integration added by the call increment
 - Scope: `array_owners::copy_arguments`, with at most eight array sources
 - Evidence: [Windows receipt](../evidence/m2-array-arguments-windows-20261025.json)
 
@@ -81,7 +81,7 @@ a fresh CLI or VM/verifier test result, and the earlier receipt remains historic
 Source lowering must capture arguments exactly once, left to right, before later
 argument effects. This helper copies the state supplied when it is invoked; it
 does not implement capture timing or roll back earlier argument evaluation.
-Independent verification must associate each captured array shape and owner with
-the corresponding callee parameter and invocation. VM integration must meter
-work before mutation and retain each recursive frame's parameters and locals
-independently. Only then can the source signature gate be removed.
+The [private call increment](m2-array-calls.md) now associates exact shapes and
+owners with callee parameters and invocation frames, meters copies before
+mutation, and retains recursive parameter owners independently. Source capture
+and temporary cleanup lowering must still be added before removing the gate.

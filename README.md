@@ -50,14 +50,16 @@ without allocating another extent. The [private frame foundation](docs/engineeri
 separates function ownership and recursive VM array tokens. The
 [helper-local increment](docs/engineering/m2-array-helpers.md) extends source
 arrays to scalar and shallow wrapper-returning helpers, including reverse cleanup
-on `?` failure returns. Array parameters, results, borrows, slices, aggregate
+on `?` failure returns. Source array parameters, results, borrows, slices, aggregate
 calls, structs, workers, and DLLs remain later work.
 The [array parameter signature foundation](docs/engineering/m2-array-signatures.md)
 records element types and exact lengths; all array parameter declarations still
-fail compilation until call copying and independent verification are implemented.
+fail compilation until source capture and parameter lowering are implemented.
 The [atomic argument-copy foundation](docs/engineering/m2-array-arguments.md)
-preflights a complete batch of independent storage copies before mutation; it is
-not yet connected to source or VM calls.
+preflights a complete batch of independent storage copies before mutation.
+[Private array calls](docs/engineering/m2-array-calls.md) connect those copies to
+the verifier and VM, with immutable exact-shape parameters and independent frame
+owners. Source argument capture and parameter lowering remain pending.
 
 ```powershell
 ./build/toolchain/fairyc.exe build
@@ -174,7 +176,8 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 private array function frames](docs/engineering/m2-array-frames.md): function ownership, recursive frame tokens, shared quotas, and parameter work sequencing
 - [M2 helper-local arrays](docs/engineering/m2-array-helpers.md): function-local source declarations, recursion, and cleanup on wrapper propagation
 - [M2 array parameter signatures](docs/engineering/m2-array-signatures.md): bounded shape metadata and explicit rejection before call lowering is available
-- [M2 atomic array argument copies](docs/engineering/m2-array-arguments.md): exact-shape copy batches with no partial publication on failure; call integration pending
+- [M2 atomic array argument copies](docs/engineering/m2-array-arguments.md): exact-shape copy batches with no partial publication on failure
+- [M2 private array calls](docs/engineering/m2-array-calls.md): mixed parameter metadata, immutable caller snapshots, independent frame copies and metered CALLs; source lowering pending
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
 - [Design baseline](docs/design-baseline.md): source provenance, evidence, and findings
