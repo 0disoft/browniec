@@ -47,12 +47,20 @@ pub fn Result<usize,errors::Error> returned(ref u8[] source,ref mut lexer::State
     if(encoded==0 || s.kind!=2) {return .err(errors::make(3,s.begin));}
     let usize index=locals::find(source,names,s.begin,s.end);
     if(!arrays::binding(names,index)) {return .err(errors::make(3,s.begin));}
-    let usize id=names.registers[index]-128;let usize shape=encoded-1;
-    if(p.array_functions[id] as usize!=names.function || p.arrays.elements[id]!=p.arrays.elements[shape] ||
-        p.arrays.lengths[id]!=p.arrays.lengths[shape]) {return .err(errors::make(3,s.begin));}
+    let usize id=names.registers[index]-128;
     let usize next=lexer::next(source,s)?;
     if(s.kind!=59) {return .err(errors::make(3,s.begin));}
     let usize end=lexer::next(source,s)?;
+    return finish(p,names,id,at);
+}
+// Both named owners and anonymous call results leave through the same cleanup.
+// Pending call destinations are absent from names until CALL has executed.
+pub fn Result<usize,errors::Error> finish(ref mut ir::Program p,ref locals::Table names,usize id,usize at) {
+    let usize encoded=p.array_results[names.function] as usize;
+    if(encoded==0 || id>=p.arrays.count || id>=16) {return .err(errors::make(3,at));}
+    let usize shape=encoded-1;
+    if(p.array_functions[id] as usize!=names.function || p.arrays.elements[id]!=p.arrays.elements[shape] ||
+        p.arrays.lengths[id]!=p.arrays.lengths[shape]) {return .err(errors::make(3,at));}
     var usize i=names.count;
     while(i>0) {
         i-=1;

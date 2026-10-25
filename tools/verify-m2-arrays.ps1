@@ -60,8 +60,8 @@ if ($Slice -eq 'results') {
 }
 if ($Slice -eq 'result-source') {
   $files = @('tests/m2/array_result_source.fy', 'tests/m2/array_result_signatures.fy',
-    'tests/m2/array_parameters_source.fy', 'tests/functions.fy')
-  $expected = 26
+    'tests/m2/array_parameters_source.fy', 'tests/functions.fy', 'tests/m2/array_return_calls.fy')
+  $expected = 30
   $sourceMode = $true
 }
 # Later slices retain the full assignment CLI matrix.
@@ -84,7 +84,7 @@ try {
     if ($Slice -in @('helpers','calls','parameters','results','result-source')) { Get-Item tools/check-m2-array-helpers.py, examples/array-helpers.brc }
     if ($Slice -in @('parameters','results','result-source')) { Get-Item tools/check-m2-array-parameters.py }
     if ($Slice -in @('results','result-source')) { Get-Item tools/check-m2-array-result-signatures.py }
-    if ($Slice -eq 'result-source') { Get-Item tools/check-m2-array-result-source.py }
+    if ($Slice -eq 'result-source') { Get-Item tools/check-m2-array-result-source.py, tools/check-m2-array-return-calls.py }
     if ($Slice -in @('calls','parameters','results','result-source')) { Get-Item tools/check-m1-cli.py; Get-ChildItem tools -File -Filter '*cases.py'; Get-ChildItem examples -File -Filter '*.brc' })
   $identities = @($inputs | Sort-Object FullName | ForEach-Object {
     [ordered]@{ path = [IO.Path]::GetRelativePath($repo, $_.FullName).Replace('\', '/');
@@ -179,6 +179,13 @@ try {
           throw 'Unexpected source result receipt'
         }
         $result.sourceResultCliCases = $sourceResultCli.count
+        & python -B (Join-Path $PSScriptRoot 'check-m2-array-return-calls.py') --exe $exe --profile $profile
+        if ($LASTEXITCODE -ne 0) { throw "Direct return CLI checks failed: $profile" }
+        $returnCallCli = Get-Content -LiteralPath (Join-Path $repo "build/m2-array-return-calls/$profile/cli-receipt.json") -Raw | ConvertFrom-Json
+        if ($returnCallCli.status -ne 'passed' -or $returnCallCli.count -ne 117 -or $returnCallCli.exeSha256 -ne $result.sha256) {
+          throw 'Unexpected direct return receipt'
+        }
+        $result.returnCallCliCases = $returnCallCli.count
       }
       if ($Slice -in @('calls','parameters','results','result-source')) {
         & python -B (Join-Path $PSScriptRoot 'check-m1-cli.py') --exe $exe --profile $profile
@@ -268,8 +275,8 @@ try {
       'Full scalar/other private-array native suites, M0, allocator instrumentation, Linux, isolation, DLL, clean-machine packaging and performance checks skipped.')
   }
   if ($Slice -eq 'result-source') {
-    $receipt.limitations = @('Source return NAME and exact-shape let/var array-result call initializers are supported; other visible arrays and pending captures are released before ARET.',
-      'Direct return calls, returned literals/indexing/parentheses, result calls in scalar expressions, assignment RHS and for headers remain unsupported.',
+    $receipt.limitations = @('Source return NAME, return FUNCTION(arguments) and exact-shape let/var array-result call initializers are supported; other visible arrays and pending captures are released before ARET.',
+      'Returned literals/indexing/parentheses, result calls in scalar expressions, assignment RHS and for headers remain unsupported.',
       'Result shapes reuse an exact-shape parameter anchor or reserve one dead catalog site before body lowering; all sites share the 16-site ceiling.',
       'All frames share 16 occupied owners, 32 frame slots and one arena capped at 65536 bytes; owner transfer does not copy payload.',
       'Full scalar/private-array native suites, M0, allocator instrumentation, Linux, isolation, DLL, clean-machine packaging and performance checks skipped.')
