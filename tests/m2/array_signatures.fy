@@ -78,13 +78,10 @@ fn void parameter_limits_and_name_rules_still_apply() {
 }
 
 @test
-fn void compilation_blocks_array_signatures_before_any_body_lowering() {
+fn void compilation_checks_exact_arguments_and_accepts_unused_and_forward_parameters() {
     let ref u8[] source = b"module main; fn i32 main(){return f(42);} fn i32 f(i32[1] a){return 0;}";
-    let functions::Table t = scanned(source);
-    assert(switch (compiler::compile(source)) {
-        case .ok(_): { false } case .err(e): { e.kind == 3 && e.offset == t.param_begins[8] }
-    });
-    assert(!compiler::compile(b"module main; fn i32 f(i32[1] a){return 0;} fn i32 main(){return 42;}").is_ok);
-    assert(!compiler::compile(b"module main; fn i32 main(){let i32[1] a=[42;1]; return f(a);} fn i32 f(i32[1] a){return 0;}").is_ok);
+    assert(!compiler::compile(source).is_ok);
+    assert(compiler::compile(b"module main; fn i32 f(i32[1] a){return 0;} fn i32 main(){return 42;}").is_ok);
+    assert(compiler::compile(b"module main; fn i32 main(){let i32[1] a=[42;1]; return f(a);} fn i32 f(i32[1] a){return a[0];}").is_ok);
     assert(compiler::compile(b"module main; fn i32 f(i32 a){return a;} fn i32 main(){return f(42);}").is_ok);
 }

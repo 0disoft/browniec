@@ -11,6 +11,7 @@ import patterns as patterns;
 import propagation as propagation;
 import casts as casts;
 import array_source as arrays;
+import array_call_source as array_calls;
 import std::text as text;
 
 fn u8 precedence(u8 kind) {
@@ -113,12 +114,18 @@ fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s,
             if (target == 16) { return .err(errors::make(3, at)); }
             let usize open = lexer::next(source, s)?;
             var usize[8] arguments = [0; 8];
+            var locals::Table names = locals::snapshot(table);
             var usize arity = 0;
             while (s.kind != 41) {
                 if (arity >= 8) { return .err(errors::make(4, s.begin)); }
                 let u8 argument_type=if(arity<signatures.arities[target]) {signatures.param_types[target*8+arity]} else {0};
-                arguments[arity] = expression(source,s,p,table,signatures,1,depth + 1,argument_type,result_type,structure,loop_state)?;
-                if (arity >= signatures.arities[target] || p.types[arguments[arity]] != signatures.param_types[target * 8 + arity]) { return .err(errors::make(3, at)); }
+                let usize length=if(arity<signatures.arities[target]){signatures.param_lengths[target*8+arity]}else{0};
+                if(length!=0) {
+                    arguments[arity]=array_calls::capture(source,s,p,ref mut names,argument_type,length)?;
+                } else {
+                    arguments[arity] = expression(source,s,p,ref names,signatures,1,depth + 1,argument_type,result_type,structure,loop_state)?;
+                    if (arity >= signatures.arities[target] || p.types[arguments[arity]] != signatures.param_types[target * 8 + arity]) { return .err(errors::make(3, at)); }
+                }
                 arity += 1;
                 if (s.kind == 41) { break; }
                 let usize comma = lexer::punctuation(source, s, 44)?;
@@ -127,7 +134,9 @@ fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s,
             if (arity != signatures.arities[target]) { return .err(errors::make(3, at)); }
             let usize close = lexer::punctuation(source, s, 41)?;
             let ref usize[] view = ref arguments;
-            return ir::call(p, target, view[..arity], at);
+            let usize called=ir::call(p, target, view[..arity], at)?;
+            let usize dropped=arrays::release_from(ref names,p,table.count,at)?;
+            return .ok(called);
         }
         if (index == 64) { return .err(errors::make(3, at)); }
         let usize register = table.registers[index];
@@ -601,10 +610,7 @@ fn Result<usize, errors::Error> body(ref u8[] source, ref functions::Table signa
     var usize i = 0;
     while (i < arity) {
         let usize at = f * 8 + i;
-        let usize parameter = locals::declare(ref mut table, signatures.param_begins[at], signatures.param_ends[at], p.registers, false)?;
-        let usize register = p.registers;
-        p.types[register] = signatures.param_types[at];
-        p.registers += 1;
+        let usize parameter = array_calls::bind(signatures,at,p,ref mut table)?;
         i += 1;
     }
     var lexer::State s = lexer::empty();
@@ -630,25 +636,12 @@ pub fn Result<ir::Program, errors::Error> compile(ref u8[] source) {
     let ref str valid = switch (text::validate_utf8(source)) {
         case .ok(value): { value } case .err(_): { return .err(errors::make(1, 0)); }
     };
-    let functions::Table signatures = functions::scan(source)?;
-    // Signature metadata is ready before array call transactions. Reject every
-    // array parameter before lowering any body, including forward/unused helpers.
-    var usize signature = 0;
-    while (signature < signatures.count) {
-        var usize argument = 0;
-        while (argument < signatures.arities[signature]) {
-            let usize at = signature * 8 + argument;
-            if (signatures.param_lengths[at] != 0) {
-                return .err(errors::make(3, signatures.param_begins[at]));
-            }
-            argument += 1;
-        }
-        signature += 1;
-    }
+    var functions::Table signatures = functions::scan(source)?;
     var ir::Program p = ir::empty();
     p.function_count = signatures.count;
     p.entry = signatures.entry;
     p.return_types = signatures.return_types;
+    let usize parameters=array_calls::prepare(ref mut signatures,ref mut p)?;
     var usize f = 0;
     while (f < signatures.count) {
         let usize emitted = body(source, ref signatures, f, ref mut p)?;

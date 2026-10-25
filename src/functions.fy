@@ -19,6 +19,8 @@ pub struct Table {
     u8[128] param_types;
     // Zero denotes a scalar/wrapper; 1..4096 is an exact scalar-array shape.
     usize[128] param_lengths;
+    // Filled by source lowering before bodies: immutable catalog ID + 1.
+    u8[128] param_arrays;
     usize count;
     usize entry;
 }
@@ -26,7 +28,7 @@ pub fn Table empty() {
     return Table { .begins = [0; 16], .ends = [0; 16], .bodies = [0; 16],
         .body_ends = [0; 16], .arities = [0; 16], .param_begins = [0; 128],
         .param_ends = [0; 128], .return_types = [0; 16], .param_types = [0; 128],
-        .param_lengths = [0; 128], .count = 0, .entry = 16 };
+        .param_lengths = [0; 128], .param_arrays = [0; 128], .count = 0, .entry = 16 };
 }
 pub fn usize find(ref u8[] source, ref Table t, usize begin, usize end) {
     var usize i = 0;

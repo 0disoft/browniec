@@ -128,7 +128,7 @@ for functions, body, error in [
     ('fn i32 f(){for(let i32[1] a=[0;1];false;){} return 0;}', 'return f();', 'type'),
     ('fn i32 f(){var i32[1] a=[0;1]; for(;false;a[0]=1){} return 0;}', 'return f();', 'type'),
     ('fn i32 f(){let Option<i32>[1] a=[.none;1]; return 0;}', 'return f();', 'type'),
-    ('fn i32 f(i32[1] a){return a[0];}', 'return 0;', 'type'),
+    ('fn i32 f(i32[1] a){a[0]=0; return a[0];}', 'return 0;', 'type'),
     ('fn i32[1] f(){return 0;}', 'return 0;', 'syntax'),
     ('fn i32 f(i32 n){return n;}', 'let i32[1] a=[42;1]; return f(a);', 'type'),
     ('fn i32 f(){let i32[1] a=[42;1]; return main();}', 'return f();', 'type'),
