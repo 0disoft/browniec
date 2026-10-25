@@ -1,5 +1,5 @@
 param(
-  [ValidateSet('ir', 'vm', 'source', 'write', 'copy', 'length', 'scopes', 'assignment', 'frames')][string]$Slice = 'ir',
+  [ValidateSet('ir', 'vm', 'source', 'write', 'copy', 'length', 'scopes', 'assignment', 'frames', 'helpers')][string]$Slice = 'ir',
   [string]$Compiler = (Join-Path $PSScriptRoot '../build/toolchain/fairyc.exe')
 )
 $ErrorActionPreference = 'Stop'
@@ -28,8 +28,13 @@ if ($Slice -eq 'frames') {
   $expected = 24
   $sourceMode = $true
 }
-# Frames retains the assignment CLI matrix; source grammar is unchanged.
-$assignmentMode = $Slice -in @('assignment', 'frames')
+if ($Slice -eq 'helpers') {
+  $files = @('tests/m2/array_source.fy', 'tests/propagation.fy', 'tests/m2/array_helpers.fy')
+  $expected = 16
+  $sourceMode = $true
+}
+# Later slices retain the full assignment CLI matrix.
+$assignmentMode = $Slice -in @('assignment', 'frames', 'helpers')
 Push-Location $repo
 try {
   $version = & $Compiler --version
@@ -44,7 +49,8 @@ try {
     if ($assignmentMode -or $Slice -in @('copy','length','scopes')) { Get-Item tools/check-m2-array-copy-source.py }
     if ($assignmentMode -or $Slice -in @('length','scopes')) { Get-Item tools/check-m2-array-length.py, examples/array-length.brc }
     if ($assignmentMode -or $Slice -eq 'scopes') { Get-Item tools/check-m2-array-scopes.py, examples/array-scopes.brc }
-    if ($assignmentMode) { Get-Item tools/check-m2-array-assignment.py, examples/array-assignment.brc })
+    if ($assignmentMode) { Get-Item tools/check-m2-array-assignment.py, examples/array-assignment.brc }
+    if ($Slice -eq 'helpers') { Get-Item tools/check-m2-array-helpers.py, examples/array-helpers.brc })
   $identities = @($inputs | Sort-Object FullName | ForEach-Object {
     [ordered]@{ path = [IO.Path]::GetRelativePath($repo, $_.FullName).Replace('\', '/');
       sha256 = (Get-FileHash -LiteralPath $_.FullName).Hash.ToLowerInvariant() }
@@ -106,6 +112,12 @@ try {
         $assignmentCli = Get-Content -LiteralPath (Join-Path $repo "build/m2-array-assignment/$profile/cli-receipt.json") -Raw | ConvertFrom-Json
         $result.assignmentCliCases = $assignmentCli.count
       }
+      if ($Slice -eq 'helpers') {
+        & python -B (Join-Path $PSScriptRoot 'check-m2-array-helpers.py') --exe $exe --profile $profile
+        if ($LASTEXITCODE -ne 0) { throw "Helper array CLI checks failed: $profile" }
+        $helperCli = Get-Content -LiteralPath (Join-Path $output "$profile/cli-receipt.json") -Raw | ConvertFrom-Json
+        $result.helperCliCases = $helperCli.count
+      }
     }
     $results += $result
   }
@@ -152,6 +164,12 @@ try {
     $receipt.limitations = @('Private IR supports function-owned frame-local arrays; source arrays remain entry-only.',
       'Array parameters/results, helper source declarations, borrows, slices and for-header array operations remain unavailable.',
       'The 16 live owners and 65536-byte arena ceiling are shared across all 32 VM frames.',
+      'No isolation, DLL, clean-machine or performance claim.')
+  }
+  if ($Slice -eq 'helpers') {
+    $receipt.limitations = @('Source fixed scalar arrays are supported in scalar and shallow wrapper-returning helper functions, with cleanup on question-mark failure paths.',
+      'Array parameters/results, wrapper element arrays, borrows, slices and for-header array operations remain unavailable.',
+      'All functions share 16 static array sites, 16 live owners, 32 VM frames and one payload arena capped at 65536 bytes.',
       'No isolation, DLL, clean-machine or performance claim.')
   }
   $receipt | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $receiptPath -Encoding utf8NoBOM
