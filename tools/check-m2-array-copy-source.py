@@ -88,7 +88,7 @@ for body in [
     'let i32[1] a=[42;1]; {let i32[1] b=a;} return b[0];',
     'let i32[1] a=[42;1]; for(let i32[1] b=a;false;) {} return 0;',
     'let i32[1] a=[42;1]; let i32[1] b=a; b[0]=0; return 0;',
-    'let i32[1] a=[42;1]; var i32[1] b=a; b=a; return 0;',
+    'let i32[1] a=[42;1]; let i32[1] b=a; b=a; return 0;',
     'let i32[1] a=[42;1]; let i32[1] b=a; return b;',
     'let i32[1] a=[42;1]; let i32[1] b=a; return main();',
 ]:

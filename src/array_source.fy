@@ -42,7 +42,7 @@ pub fn Result<bool, errors::Error> indexed_assignment(ref u8[] source, ref lexer
 pub fn u8 profile(ref ir::Program p) {
     var usize pc = 0;
     while (pc < p.count && pc < 256) {
-        if (p.code[pc * 8] == 34) { return 3; }
+        if (p.code[pc * 8] == 34 || p.code[pc * 8] == 38) { return 3; }
         pc += 1;
     }
     var usize i = 0;
@@ -64,6 +64,12 @@ pub fn Result<usize, errors::Error> count(ref u8[] source, ref mut lexer::State 
     let usize value = cells::unpack(s.value, s.begin)?;
     let usize next = lexer::next(source, s)?;
     return .ok(value);
+}
+pub fn Result<usize, errors::Error> assign(ref mut ir::Program p, usize destination, usize source, usize offset) {
+    if (destination >= 16 || source >= 16 || destination >= p.arrays.count || source >= p.arrays.count ||
+        !p.arrays.mutable[destination] || p.arrays.elements[destination] != p.arrays.elements[source] ||
+        p.arrays.lengths[destination] != p.arrays.lengths[source]) { return .err(errors::make(3, offset)); }
+    return ir::array_assign(p, destination, source, offset);
 }
 pub fn Result<usize, errors::Error> length(ref u8[] source, ref mut lexer::State s) {
     let usize open = lexer::punctuation(source, s, 91)?;

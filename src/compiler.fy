@@ -273,8 +273,20 @@ fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State 
     if (arrays::binding(table, index)) {
         // For headers remain scalar-only; never use an array binding as a
         // scalar register in the header/post validation paths.
-        if (result_type == 0 || s.kind != 91) { return .err(errors::make(3, at)); }
+        if (result_type == 0) { return .err(errors::make(3, at)); }
         let usize id = table.registers[index] - 128;
+        if (s.kind == 61) {
+            let usize equals = lexer::next(source, s)?;
+            if (s.kind != 2) { return .err(errors::make(3, s.begin)); }
+            let usize origin = locals::find(source, table, s.begin, s.end);
+            if (!arrays::binding(table, origin)) { return .err(errors::make(3, s.begin)); }
+            let usize source_id = table.registers[origin] - 128;
+            let usize next = lexer::next(source, s)?;
+            let usize end_statement = lexer::punctuation(source, s, terminator)?;
+            let usize assigned = arrays::assign(p, id, source_id, at)?;
+            return .ok(index);
+        }
+        if (s.kind != 91) { return .err(errors::make(3, at)); }
         let usize open = lexer::punctuation(source, s, 91)?;
         let usize subscript = expression(source,s,p,table,signatures,1,expr_depth+1,12,result_type,structure,loop_state)?;
         if (p.types[subscript] != 12) { return .err(errors::make(3, at)); }

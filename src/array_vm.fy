@@ -33,6 +33,9 @@ pub fn Result<usize, errors::Error> cost(ref meta::Catalog catalog, u8 op, usize
     if (op == 35) { return .ok(33 + layout.stride); }
     if (op == 36) { return .ok(33 + 2 * layout.stride); }
     if (op == 37) { return .ok(49); }
+    // Both owner resolutions validate the bounded metadata chain. No reservation
+    // or descriptor publication occurs, but bool sources need a full scan.
+    if (op == 38) { return .ok(81 + layout.bytes + if (layout.element == 2) { layout.length } else { 0 }); }
     return .err(errors::make(5, offset));
 }
 fn errors::Error failure(owners::Error error, usize offset) {
@@ -72,6 +75,10 @@ pub fn Result<usize, errors::Error> execute(u8 op, usize dst, usize a, usize b, 
         let usize index = cells::unpack(registers[a], offset)?;
         let usize size = switch (owners::write(ref state.owners, token, index, registers[b], data)) {
             case .ok(value): { value } case .err(e): { return .err(failure(e, offset)); }
+        };
+    } else if (op == 38) {
+        let usize assigned = switch (owners::assign(state.tokens[dst], state.tokens[a], data, ref state.owners)) {
+            case .ok(size): { size } case .err(e): { return .err(failure(e, offset)); }
         };
     } else if (op == 37) {
         let owners::Token token = state.tokens[dst];

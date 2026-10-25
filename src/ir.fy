@@ -17,6 +17,7 @@ import std::num as num;
 // 27 complement (b=0), 28 bitwise and, 29 bitwise xor, 30 bitwise or.
 // 31 checked left shift, 32 arithmetic signed / logical unsigned right shift.
 // 33 array init, 34 independent copy, 35 element read, 36 write, 37 drop.
+// 38 overwrite an existing mutable array from an exact-shape live source.
 pub struct Program {
     u8[2048] code;
     i64[128] constants;
@@ -170,6 +171,9 @@ pub fn Result<usize, errors::Error> array_init(ref mut Program p, usize id, usiz
 }
 pub fn Result<usize, errors::Error> array_copy(ref mut Program p, usize dst, usize source, usize offset) {
     return raw(p, 34, dst, source, 0, offset);
+}
+pub fn Result<usize, errors::Error> array_assign(ref mut Program p, usize dst, usize source, usize offset) {
+    return raw(p, 38, dst, source, 0, offset);
 }
 pub fn Result<usize, errors::Error> array_read(ref mut Program p, usize id, usize index, usize offset) {
     if (id >= 16 || id >= p.arrays.count) { return .err(errors::make(3, offset)); }
