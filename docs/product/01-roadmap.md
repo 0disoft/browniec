@@ -1,7 +1,7 @@
 # Roadmap
 
-- Status: Accepted delivery sequence; M0 verified; named M1 slices through unsigned have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified, 2026-10-23; private entry-array IR/VM verified by its native harness, 2026-10-24; source-array reads, writes, copy initializers, parameters, results, and assignment forms implemented; in-place repeated-literal assignment verified
-- Current progress: M1 scalar checkpoint verified; M2 function-owned scalar arrays cover lexical storage, copy, length, helper locals, by-value parameters, source results, direct returns, repeated return literals, call-result assignment, and in-place repeated-literal assignment; source structs, record copies, borrows, Buffer, and text remain open; full-profile conformance incomplete; M3-M5 not started
+- Status: Accepted delivery sequence; M0 verified; named M1 slices through unsigned have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified, 2026-10-23; private entry-array IR/VM verified by its native harness, 2026-10-24; source-array reads, writes, copy initializers, parameters, results, and assignment forms implemented; in-place repeated-literal assignment verified; private scalar struct layout and storage implemented and verified; private scalar struct copy/assignment implemented and verified
+- Current progress: M1 scalar checkpoint verified; M2 function-owned scalar arrays cover lexical storage, copy, length, helper locals, by-value parameters, source results, direct returns, repeated return literals, call-result assignment, and in-place repeated-literal assignment; private scalar struct layout, storage, and copy/assignment exist; source structs, source-level record copies, borrows, Buffer, and text remain open; full-profile conformance incomplete; M3-M5 not started
 
 This roadmap orders learning and evidence. It is not a release promise. M0 has a
 native harness and recorded evidence. The scalar CLI/VM now exist; the worker
@@ -273,7 +273,7 @@ helpers. Scalar and composed fills return 42 at depth 10; depth 11 reports
 `compile_limit`. Two permanent CLI cases cover the composed boundary. The pre-fix
 binary reproduces `0xC00000FD` at depth 10. No stack-byte or performance claim is
 made.
-Plain structs, borrows, Buffer, I/O, isolation and
+Plain source structs, borrows, Buffer, I/O, isolation and
 the remaining milestone evidence below are still open.
 
 The private [struct-layout planner](../engineering/m2-struct-layout.md) covers
@@ -284,8 +284,13 @@ release passed its 14-group Windows receipt. The [scalar struct-storage
 slice](../engineering/m2-struct-storage.md) then prepares a selected scalar
 record, initializes all fields in caller-backed arena bytes, and reads or writes
 one indexed field; nested records remain planned but cannot be stored. Both
-profiles passed its 20-group Windows receipt. Full structs, copies, wrappers,
-borrows, and Buffer remain open.
+profiles passed its 20-group Windows receipt. The [private copy/assignment
+slice](../engineering/m2-struct-copy.md) appends independent scalar records and
+overwrites existing storage, including self and partial overlap, with normalized
+padding and no extra extent for assignment. Development and release each passed
+its fresh 28-group Windows receipt after moving staging into caller-owned
+scratch. Full source structs,
+nested record storage, wrappers, borrows, and Buffer remain open.
 
 Goal: connect arrays, plain structs, borrows, Buffer, input,
 output, and UTF-8.

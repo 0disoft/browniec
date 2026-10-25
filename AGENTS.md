@@ -106,9 +106,13 @@ own the affected contract. Broader scaffold procedures are optional.
   records with 1..16 fields, declaration-order padding, and a per-record byte ceiling.
   A [scalar-only storage slice](docs/engineering/m2-struct-storage.md) prepares a selected
   scalar record, initializes it in caller-backed arena bytes, and reads or writes indexed
-  fields. Nested records are still planned but rejected for storage. Source structs,
-  copies, ownership, IR/VM, Fuel, and allocation remain unimplemented. The storage
-  slice's Windows 20-group receipt passed development and release.
+  fields. A [private copy/assignment slice](docs/engineering/m2-struct-copy.md) appends
+  independent scalar records and overwrites existing records with normalized snapshots,
+  including self and partial overlap. Nested records are still planned but rejected for
+  storage. Source structs, ownership, IR/VM, Fuel, and allocator integration remain unimplemented.
+  The copy slice's Windows 28-group receipt passed development and release after
+  moving snapshot staging into caller-owned scratch. Earlier planner and storage
+  receipts are historical for changed inputs.
 - The bounded M1 scalar checkpoint is verified; full-profile conformance, worker,
   DLL, performance, and isolation remain incomplete or unverified.
 - Root fairy.toml builds the native CLI; tools/verify-m1.ps1 verifies its narrow profile.

@@ -600,6 +600,21 @@ scalar-codec groups. Development and release both passed. This covers private
 scalar storage only: no source structs, by-value copies, ownership, IR, VM, Fuel,
 or allocator integration.
 
+The [private struct-copy contract](docs/engineering/m2-struct-copy.md) adds
+by-value record copy initialization and assignment. Its focused selection covers
+28 native groups per profile: eight new copy groups, eight fresh storage groups,
+eight struct-layout groups, and four scalar-codec groups. Development and release
+both passed all 28 on a fresh full selection after moving snapshot staging into
+caller-owned scratch. The original return-based staging failed five release
+assertions; its results are superseded by the final receipt. Copy reserves
+the old-plus-new peak including alignment padding, then publishes a zero-padded
+snapshot of up to 128 record bytes from caller-owned scratch with the cursor
+advancing last. Assignment validates both complete extents, snapshots all fields,
+and overwrites existing storage without reserving an extent. A corrupt late bool
+leaves every byte and the cursor unchanged. This covers private primitive
+behavior only: no source structs, nested record storage, ownership, IR, VM, Fuel,
+or allocator integration.
+
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker
 publication barrier. Compile untrusted source only inside the restricted worker.

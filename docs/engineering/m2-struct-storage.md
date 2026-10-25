@@ -6,11 +6,13 @@
 - Harness: [tools/verify-m2-struct-layout.py](../../tools/verify-m2-struct-layout.py) with `--storage`.
 - Evidence: [Windows receipt](../evidence/m2-struct-storage-windows-20261026.json).
 
-This increment adds no source `.brc` struct syntax, whole-record copy, ownership
-token, IR, VM, Fuel schedule, or allocator call. It stores only records whose
-fields use the six existing scalar tags. The [layout planner](m2-struct-layout.md)
-still accepts nested records and validates the whole catalog; storing a selected
-nested record returns `Type`. M2 remains incomplete.
+This increment adds no source `.brc` struct syntax, ownership token, IR, VM, Fuel
+schedule, or allocator call, and it does not copy whole records. The [copy and
+assignment successor](m2-struct-copy.md) adds private snapshot-based record copies;
+nested record storage remains rejected. It stores only records whose fields use
+the six existing scalar tags. The [layout planner](m2-struct-layout.md) still
+accepts nested records and validates the whole catalog; storing a selected nested
+record returns `Type`. M2 remains incomplete.
 
 `prepare(Catalog, record)` calls the planner once with the maximum `usize` byte
 limit. Every catalog record must pass validation, including disconnected and
@@ -51,6 +53,8 @@ A base offset proves neither object identity nor ownership, lifetime, or borrow
 authority, and these helpers never read the owner ledger. No heap or payload
 allocator is invoked. The record staging buffer is 128 bytes, and the shared codec
 uses eight scratch bytes. These do not measure total native stack use.
+The successor's copy and assignment helpers keep these boundaries; its overlap
+handling is a primitive property and grants no guest aliasing authority.
 Initialization is O(F+B), with F at most 16 and B at most 128
 bytes. Indexed reads and writes are O(F+W), with W at most eight bytes, because
 every operation revalidates the shape. `prepare` pays the planner's existing
@@ -65,5 +69,11 @@ unchanged scalar-codec groups. Development and release passed. The default
 the CLI are unchanged, so CLI, full native suites, M0, Linux, isolation, DLL,
 clean-machine packaging, performance, and allocation instrumentation were not run.
 
-Next: nested record storage, by-value copies, and owner, IR, and source
-integration. No source example is added for unimplemented grammar.
+This 20-group receipt is historical for the changed struct-storage and harness
+inputs. The [copy/assignment receipt](../evidence/m2-struct-copy-windows-20261026.json)
+freshly reruns all eight storage groups in both native profiles.
+
+Next: nested record storage, then owner, IR, and source integration. The
+[private copy/assignment successor](m2-struct-copy.md) covers by-value copies and
+assignment for existing scalar records. No source example is added for
+unimplemented grammar.

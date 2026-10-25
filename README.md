@@ -62,13 +62,16 @@ and typed call-result initializers are supported by the [source result increment
 `array = make(arguments);`, copying the result into existing mutable storage.
 [Repeated-literal assignment](docs/engineering/m2-array-literal-assignment.md)
 admits `array = [value; N];`, evaluating once and filling existing storage in place.
-Borrows, slices, structs, workers, and DLLs remain later work.
+Borrows, slices, source structs, workers, and DLLs remain later work.
 A [private struct-layout planner](docs/engineering/m2-struct-layout.md) now plans
 acyclic record metadata, and a [scalar-only storage slice](docs/engineering/m2-struct-storage.md)
 initializes and accesses selected scalar records in caller-backed arena bytes.
-Source structs, record copies, and struct ownership, IR, and VM remain later work.
-The planner's earlier Windows receipt records 14 groups per profile; the storage
-receipt records 20 groups per profile. Both passed development and release.
+A [private copy/assignment slice](docs/engineering/m2-struct-copy.md) appends
+independent scalar records and overwrites existing storage, including self and
+partial overlap. Source structs, nested record storage, and struct ownership, IR,
+and VM remain later work. The copy receipt passes 28 groups per profile in
+development and release. The planner's earlier 14-group and storage's
+20-group receipts remain historical for changed inputs.
 The [array parameter signature foundation](docs/engineering/m2-array-signatures.md)
 records element types and exact lengths; the subsequent source increment removes
 its original compilation gate.
@@ -211,6 +214,7 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 private array results](docs/engineering/m2-array-results.md): verified result lifetimes, zero-copy owner transfer, recursive frames and prepaid return work
 - [M2 private struct layout](docs/engineering/m2-struct-layout.md): verified planner-only record catalog, declaration-order offsets, dependency bounds, and Windows receipt
 - [M2 private struct storage](docs/engineering/m2-struct-storage.md): scalar-only record preparation, complete initialization, and indexed field access in shared caller-backed arena bytes
+- [M2 private struct copy and assignment](docs/engineering/m2-struct-copy.md): scalar-record snapshots, padding normalization, old-plus-new quota, and overlap-safe assignment
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
 - [Design baseline](docs/design-baseline.md): source provenance, evidence, and findings
