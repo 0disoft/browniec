@@ -48,6 +48,36 @@ fn Leaf next(ref layouts::Catalog catalog, ref layouts::Plan plan, ref mut Curso
     return Leaf { .tag = 0, .offset = 0 };
 }
 
+struct Reservation { usize base; usize end; }
+// The selected size, alignment and arena state are validated by the caller.
+fn Result<Reservation, Error> reserve(usize size, usize alignment, ref arenas::Arena arena) {
+    let usize remainder = arena.used % alignment;
+    let usize padding = if (remainder == 0) { 0 } else { alignment - remainder };
+    if (padding > 18446744073709551615 - arena.used) { return .err(.Overflow); }
+    let usize base = arena.used + padding;
+    if (size > 18446744073709551615 - base) { return .err(.Overflow); }
+    let usize end = base + size;
+    if (end > arena.limit) { return .err(.Quota); }
+    return .ok(Reservation { .base = base, .end = end });
+}
+fn usize publish(ref u8[] encoded, ref Reservation reservation,
+    ref mut u8[] storage, ref mut arenas::Arena arena) {
+    var usize at = arena.used;
+    while (at < reservation.base) { storage[at] = 0; at += 1; }
+    at = 0;
+    while (at < encoded.len) { storage[reservation.base + at] = encoded[at]; at += 1; }
+    arena.used = reservation.end;
+    return reservation.base;
+}
+fn Result<usize, Error> extent(ref layouts::Plan plan, usize record, usize base,
+    usize capacity, ref arenas::Arena arena) {
+    let usize size = selected(plan, record)?;
+    if (!valid(arena, capacity)) { return .err(.State); }
+    if (base % plan.alignments[record] != 0) { return .err(.Alignment); }
+    if (base > arena.used || size > arena.used - base) { return .err(.Bounds); }
+    return .ok(size);
+}
+
 // Fields are depth-first scalar leaves in declaration order. The complete
 // record (including nested/tail padding) is staged before any backing mutation.
 pub fn Result<usize, Error> initialize(ref layouts::Catalog catalog, usize record,
@@ -58,14 +88,7 @@ pub fn Result<usize, Error> initialize(ref layouts::Catalog catalog, usize recor
     let usize size = selected(ref plan, record)?;
     if (!valid(arena, storage.len)) { return .err(.State); }
     if (fields.len == 0 || fields.len > 128) { return .err(.Fields); }
-    let usize alignment = plan.alignments[record];
-    let usize remainder = arena.used % alignment;
-    let usize padding = if (remainder == 0) { 0 } else { alignment - remainder };
-    if (padding > 18446744073709551615 - arena.used) { return .err(.Overflow); }
-    let usize base = arena.used + padding;
-    if (size > 18446744073709551615 - base) { return .err(.Overflow); }
-    let usize end = base + size;
-    if (end > arena.limit) { return .err(.Quota); }
+    let Reservation reservation = reserve(size, plan.alignments[record], arena)?;
     var u8[128] encoded = [0; 128];
     var Cursor cursor = Cursor { .depth = 1, .records = [0; 16], .fields = [0; 16], .bases = [0; 16] };
     cursor.records[0] = record;
@@ -84,12 +107,7 @@ pub fn Result<usize, Error> initialize(ref layouts::Catalog catalog, usize recor
         }
     }
     if (count != fields.len) { return .err(.Fields); }
-    var usize at = arena.used;
-    while (at < base) { storage[at] = 0; at += 1; }
-    at = 0;
-    while (at < size) { storage[base + at] = encoded[at]; at += 1; }
-    arena.used = end;
-    return .ok(base);
+    return .ok(publish(ref encoded[..size], ref reservation, storage, arena));
 }
 
 // Check the whole published root, then resolve a scalar-only field path.
@@ -99,10 +117,7 @@ fn Result<Leaf, Error> address(ref layouts::Catalog catalog, usize record, usize
     let layouts::Plan plan = switch (layouts::plan(catalog, 18446744073709551615)) {
         case .ok(value): { value } case .err(_): { return .err(.Layout); }
     };
-    let usize size = selected(ref plan, record)?;
-    if (!valid(arena, capacity)) { return .err(.State); }
-    if (base % plan.alignments[record] != 0) { return .err(.Alignment); }
-    if (base > arena.used || size > arena.used - base) { return .err(.Bounds); }
+    let usize size = extent(ref plan, record, base, capacity, arena)?;
     if (path.len == 0 || path.len > 16) { return .err(.Bounds); }
     var usize current = record;
     var usize offset = base;
@@ -136,4 +151,51 @@ pub fn Result<usize, Error> write(ref layouts::Catalog catalog, usize record, us
     return switch (codec::encode(leaf.tag, value, storage[leaf.offset..leaf.offset + width])) {
         case .ok(written): { .ok(written) } case .err(error): { .err(codec_error(error)) }
     };
+}
+
+// The validated root extent and plan bound all iterator offsets. The caller
+// owns zeroed scratch: only scalar bytes are read, never source padding.
+fn Result<usize, Error> snapshot(ref layouts::Catalog catalog, ref layouts::Plan plan,
+    usize record, usize source, ref u8[] storage, ref mut u8[] encoded) {
+    var Cursor cursor = Cursor { .depth = 1, .records = [0; 16], .fields = [0; 16], .bases = [0; 16] };
+    cursor.records[0] = record;
+    var bool done = false;
+    while (!done) {
+        let Leaf leaf = next(catalog, plan, ref mut cursor);
+        if (leaf.tag == 0) { done = true; }
+        else {
+            if (leaf.tag == 2 && storage[source + leaf.offset] > 1) { return .err(.Value); }
+            let usize width = codec::width(leaf.tag);
+            var usize byte = 0;
+            while (byte < width) {
+                encoded[leaf.offset + byte] = storage[source + leaf.offset + byte];
+                byte += 1;
+            }
+        }
+    }
+    return .ok(plan.bytes[record]);
+}
+pub fn Result<usize, Error> copy(ref layouts::Catalog catalog, usize record, usize source,
+    ref mut u8[] storage, ref mut arenas::Arena arena) {
+    let layouts::Plan plan = switch (layouts::plan(catalog, 18446744073709551615)) {
+        case .ok(value): { value } case .err(_): { return .err(.Layout); }
+    };
+    let usize size = extent(ref plan, record, source, storage.len, arena)?;
+    let Reservation reservation = reserve(size, plan.alignments[record], arena)?;
+    var u8[128] encoded = [0; 128];
+    let usize staged = snapshot(catalog, ref plan, record, source, storage, ref mut encoded[..size])?;
+    return .ok(publish(ref encoded[..staged], ref reservation, storage, arena));
+}
+pub fn Result<usize, Error> assign(ref layouts::Catalog catalog, usize record,
+    usize destination, usize source, ref mut u8[] storage, ref arenas::Arena arena) {
+    let layouts::Plan plan = switch (layouts::plan(catalog, 18446744073709551615)) {
+        case .ok(value): { value } case .err(_): { return .err(.Layout); }
+    };
+    let usize size = extent(ref plan, record, destination, storage.len, arena)?;
+    let usize origin = extent(ref plan, record, source, storage.len, arena)?;
+    var u8[128] encoded = [0; 128];
+    let usize staged = snapshot(catalog, ref plan, record, source, storage, ref mut encoded[..size])?;
+    var usize byte = 0;
+    while (byte < staged) { storage[destination + byte] = encoded[byte]; byte += 1; }
+    return .ok(staged);
 }
