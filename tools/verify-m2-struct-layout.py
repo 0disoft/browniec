@@ -26,9 +26,14 @@ def write(path, value):
     path.write_text(json.dumps(value, indent=2) + '\n', encoding='utf-8')
 
 
-def verify(compiler, storage=False, copy_records=False):
-    require(not (storage and copy_records), 'Choose only one verification selection')
-    if copy_records:
+def verify(compiler, storage=False, copy_records=False, nested=False):
+    require(sum([storage, copy_records, nested]) <= 1, 'Choose only one verification selection')
+    if nested:
+        kind = 'nested-storage'
+        files = ['tests/m2/struct_nested_storage.fy', 'tests/m2/struct_layout.fy', 'tests/m2/scalar_codec.fy']
+        groups = {'struct_nested_storage': 6, 'struct_layout': 8, 'scalar_codec': 4}
+        expected = 18
+    elif copy_records:
         kind = 'copy'
         files = ['tests/m2/struct_copy.fy', 'tests/m2/struct_storage.fy',
                  'tests/m2/struct_layout.fy', 'tests/m2/scalar_codec.fy']
@@ -89,7 +94,9 @@ def verify(compiler, storage=False, copy_records=False):
                     and not t['stdoutBase64'] and not t['stderrBase64'] for t in tests),
                 f'Native failure or unexpected process output: {profile}')
         result = dict(profile=profile, nativeGroups=expected, nativeTests=native)
-        if copy_records:
+        if nested:
+            result.update(newNestedStorageGroups=6, structLayoutRegressionGroups=8, codecRegressionGroups=4)
+        elif copy_records:
             result.update(newCopyGroups=8, storageRegressionGroups=8,
                           structLayoutRegressionGroups=8, codecRegressionGroups=4)
         else:
@@ -105,13 +112,23 @@ def verify(compiler, storage=False, copy_records=False):
     lock = json.loads((ROOT / 'fairy.lock').read_text(encoding='utf-8'))
     baseline = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
     limits = (dict(fieldsPerRecord=16, recordBytes=128, encodedScratchBytes=128,
-                   initializationBackingWritesAtMost=135) if storage or copy_records else
+                   initializationBackingWritesAtMost=135) if storage or copy_records or nested else
               dict(records=32, fieldsPerRecord=16, structuralDepth=16,
                    dependencyFieldChecksAtMost=16384, payloadLimit='caller supplied per record'))
+    if nested:
+        limits.update(scalarLeaves=128, structuralDepth=16, fieldPathLength=16,
+                      traversalFieldVisitsAtMost=2048)
     if copy_records:
         limits.update(copyBackingWritesAtMost=135, assignmentBackingWritesAtMost=128,
                       assignmentAdditionalExtents=0)
     limitations = ([
+        'Private nested-record initialization and scalar field-path reads/writes only; no nested record copies, ownership, source struct grammar, IR/VM or Fuel integration.',
+        'Full catalogs are replanned at every public boundary; selected roots are capped at 128 bytes, while valid unselected records may be larger.',
+        'Depth-first scalar initialization uses a private sixteen-frame iterative cursor and caller-owned zeroed 128-byte scratch; every fallible check precedes backing/cursor publication.',
+        'Field paths must end at scalars; arena state, alignment and the complete published root extent are rechecked before access.',
+        'Base offsets and field paths do not prove object identity, ownership, lifetime or write authority. Bounds are algorithmic, not native stack or throughput measurements.',
+        'Existing scalar-storage/copy source and fixtures are unchanged and their native suites were not rerun.'
+    ] if nested else [
         'Private scalar-record by-value copy initialization and assignment only; no source structs, nested record storage, owner tokens, IR/VM or Fuel integration.',
         'Both operations revalidate metadata, state and complete published extents and preflight every bool before any backing mutation.',
         'Field bytes are snapshotted into a zeroed 128-byte payload; padding is normalized and integer bits are preserved. Self-assignment and both overlap directions use the snapshot.',
@@ -153,5 +170,6 @@ if __name__ == '__main__':
     selection = parser.add_mutually_exclusive_group()
     selection.add_argument('--storage', action='store_true', help='Verify scalar record storage and its layout/codec dependencies.')
     selection.add_argument('--copy', dest='copy_records', action='store_true', help='Verify scalar record copies and assignments with storage/layout/codec regressions.')
+    selection.add_argument('--nested', action='store_true', help='Verify nested record storage and its layout/codec dependencies.')
     args = parser.parse_args()
-    verify(args.compiler, args.storage, args.copy_records)
+    verify(args.compiler, args.storage, args.copy_records, args.nested)
