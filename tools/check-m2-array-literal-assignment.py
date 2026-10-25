@@ -88,7 +88,15 @@ for extra in [False,True]:
     case(source,error='compile_limit' if extra else None,code=3 if extra else 0)
 for value,error in [('2147483647+1','overflow'),('42/0','zero_divisor')]:
     case('module main;fn i32 main(){var i32[1] a=[0;1];a=['+value+';1];return a[0];}',error=error,code=5)
-assert len(rows)==113,len(rows)
+# Compose fills with nested value arms at the shared depth boundary. Keep these
+# alongside the scalar suite's mixed-depth cases to catch native parser overflow.
+for depth in [10,11]:
+    expression='42'
+    for _ in range(depth):
+        expression='switch(x){case .some(_):{if(true){a=['+expression+';1];}42}case .none:{0}}'
+    case('module main;fn i32 main(){var i32[1] a=[0;1];let Option<i32> x=.some(1);return '+expression+';}',
+         error='compile_limit' if depth==11 else None,code=3 if depth==11 else 0)
+assert len(rows)==115,len(rows)
 receipt.write_text(json.dumps(dict(schema='browniec.m2-array-literal-assignment-cli/v1',status='passed',profile=args.profile,
     exeSha256=hashlib.sha256(exe.read_bytes()).hexdigest(),runtimeEnvironment='cleared; tool-free PATH',count=len(rows),cases=rows),indent=2)+'\n',encoding='utf-8')
 print(f'PASS: {args.profile}: {len(rows)} in-place literal-assignment CLI cases')

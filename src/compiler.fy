@@ -232,6 +232,44 @@ fn bool word_is(ref u8[] source, ref lexer::State s, ref u8[] word) {
     return s.kind == 2 && lexer::equal(source[s.begin..s.end], word);
 }
 
+fn Result<usize, errors::Error> array_copy_statement(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize index, usize at, usize id, u8 terminator, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {
+    if (s.kind != 2) { return .err(errors::make(3, s.begin)); }
+    let usize origin = locals::find(source, table, s.begin, s.end);
+    var lexer::State look=lexer::snapshot(s);
+    let usize advance=lexer::next(source,ref mut look)?;
+    if(look.kind==40) {
+        if(origin!=64) {return .err(errors::make(3,s.begin));}
+        let usize target=functions::find(source,signatures,s.begin,s.end);
+        let usize temporary=array_results::destination(signatures,target,p.arrays.elements[id],p.arrays.lengths[id],false,p,table.function,s.begin)?;
+        let usize name=lexer::next(source,s)?;
+        let usize called=call_value(source,s,p,table,signatures,target,temporary,at,expr_depth,result_type,structure,loop_state)?;
+        let usize end=lexer::punctuation(source,s,terminator)?;
+        let usize assigned=array_results::assigned(p,id,temporary,at)?;
+        return .ok(index);
+    }
+    if (!arrays::binding(table, origin)) { return .err(errors::make(3, s.begin)); }
+    let usize source_id = table.registers[origin] - 128;
+    let usize next = lexer::next(source, s)?;
+    let usize end_statement = lexer::punctuation(source, s, terminator)?;
+    let usize assigned = arrays::assign(p, id, source_id, at)?;
+    return .ok(index);
+}
+
+fn Result<usize, errors::Error> array_write_statement(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize index, usize at, usize id, u8 terminator, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {
+    if (s.kind != 91) { return .err(errors::make(3, at)); }
+    let usize open = lexer::punctuation(source, s, 91)?;
+    let usize subscript = expression(source,s,p,table,signatures,1,expr_depth+1,12,result_type,structure,loop_state)?;
+    if (p.types[subscript] != 12) { return .err(errors::make(3, at)); }
+    let usize close = lexer::punctuation(source, s, 93)?;
+    let usize equals = lexer::punctuation(source, s, 61)?;
+    let u8 element = p.arrays.elements[id];
+    let usize value = expression(source,s,p,table,signatures,1,expr_depth,element,result_type,structure,loop_state)?;
+    if (p.types[value] != element) { return .err(errors::make(3, at)); }
+    let usize end_statement = lexer::punctuation(source, s, terminator)?;
+    let usize written = ir::array_write(p, id, subscript, value, at)?;
+    return .ok(index);
+}
+
 // Keep array-only lowering out of recursive scalar statement frames.
 fn Result<usize, errors::Error> array_statement(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize index, usize at, u8 terminator, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {
     // For headers remain scalar-only; never use an array binding as a
@@ -247,39 +285,9 @@ fn Result<usize, errors::Error> array_statement(ref u8[] source, ref mut lexer::
             let usize filled=arrays::refill(source,s,p,table.function,id,value,at)?;
             return .ok(index);
         }
-        if (s.kind != 2) { return .err(errors::make(3, s.begin)); }
-        let usize origin = locals::find(source, table, s.begin, s.end);
-        var lexer::State look=lexer::snapshot(s);
-        let usize advance=lexer::next(source,ref mut look)?;
-        if(look.kind==40) {
-            if(origin!=64) {return .err(errors::make(3,s.begin));}
-            let usize target=functions::find(source,signatures,s.begin,s.end);
-            let usize temporary=array_results::destination(signatures,target,p.arrays.elements[id],p.arrays.lengths[id],false,p,table.function,s.begin)?;
-            let usize name=lexer::next(source,s)?;
-            let usize called=call_value(source,s,p,table,signatures,target,temporary,at,expr_depth,result_type,structure,loop_state)?;
-            let usize end=lexer::punctuation(source,s,terminator)?;
-            let usize assigned=array_results::assigned(p,id,temporary,at)?;
-            return .ok(index);
-        }
-        if (!arrays::binding(table, origin)) { return .err(errors::make(3, s.begin)); }
-        let usize source_id = table.registers[origin] - 128;
-        let usize next = lexer::next(source, s)?;
-        let usize end_statement = lexer::punctuation(source, s, terminator)?;
-        let usize assigned = arrays::assign(p, id, source_id, at)?;
-        return .ok(index);
+        return array_copy_statement(source,s,p,table,signatures,index,at,id,terminator,result_type,expr_depth,structure,loop_state);
     }
-    if (s.kind != 91) { return .err(errors::make(3, at)); }
-    let usize open = lexer::punctuation(source, s, 91)?;
-    let usize subscript = expression(source,s,p,table,signatures,1,expr_depth+1,12,result_type,structure,loop_state)?;
-    if (p.types[subscript] != 12) { return .err(errors::make(3, at)); }
-    let usize close = lexer::punctuation(source, s, 93)?;
-    let usize equals = lexer::punctuation(source, s, 61)?;
-    let u8 element = p.arrays.elements[id];
-    let usize value = expression(source,s,p,table,signatures,1,expr_depth,element,result_type,structure,loop_state)?;
-    if (p.types[value] != element) { return .err(errors::make(3, at)); }
-    let usize end_statement = lexer::punctuation(source, s, terminator)?;
-    let usize written = ir::array_write(p, id, subscript, value, at)?;
-    return .ok(index);
+    return array_write_statement(source,s,p,table,signatures,index,at,id,terminator,result_type,expr_depth,structure,loop_state);
 }
 
 fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 terminator, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {

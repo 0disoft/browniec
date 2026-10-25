@@ -204,7 +204,7 @@ try {
         & python -B (Join-Path $PSScriptRoot 'check-m2-array-literal-assignment.py') --exe $exe --profile $profile
         if ($LASTEXITCODE -ne 0) { throw "Literal-assignment CLI checks failed: $profile" }
         $literalAssignmentCli = Get-Content -LiteralPath (Join-Path $repo "build/m2-array-literal-assignment/$profile/cli-receipt.json") -Raw | ConvertFrom-Json
-        if ($literalAssignmentCli.status -ne 'passed' -or $literalAssignmentCli.count -ne 113 -or $literalAssignmentCli.exeSha256 -ne $result.sha256) {
+        if ($literalAssignmentCli.status -ne 'passed' -or $literalAssignmentCli.count -ne 115 -or $literalAssignmentCli.exeSha256 -ne $result.sha256) {
           throw 'Unexpected literal-assignment receipt'
         }
         $result.literalAssignmentCliCases = $literalAssignmentCli.count
