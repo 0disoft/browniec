@@ -1,6 +1,6 @@
 # M2 Array Result Signature Foundation
 
-- Status: signature metadata and compiler gate implemented; array result execution unavailable
+- Status: signature metadata and compiler gate implemented; source array result execution unavailable
 - Scope: exact scalar-array return shapes in the bounded function signature pass
 - Evidence: [Windows receipt](../evidence/m2-array-result-signatures-windows-20261025.json)
 
@@ -96,10 +96,11 @@ The full scalar and private-array native suites, other array CLI matrices, M0,
 allocator instrumentation, Linux execution, isolation, DLL, clean-machine
 packaging, and performance measurements are outside this slice.
 
-## Next implementation slice
+## Subsequent private VM increment
 
-Define independently verified private result metadata and callee-to-caller
-ownership/copy handling before admitting source array returns. Verify exact
-shapes, recursive frame independence, combined quota peaks, complete cleanup,
-and prepaid Fuel on both success and failure. Remove this gate only when the
-source return and destination initialization paths have their own evidence.
+The [private result increment](m2-array-results.md) adds independently verified
+result metadata, caller destinations and callee-to-caller owner transfer without
+payload copies. It covers result lifetimes, recursive frames, cleanup, quota
+peaks and prepaid Fuel. The signature receipt above is historical for the changed
+backend inputs. Source return and destination initialization lowering still need
+their own evidence before this compilation gate can be removed.

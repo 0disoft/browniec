@@ -171,8 +171,13 @@ The [array result signature foundation](../engineering/m2-array-result-signature
 recognizes `fn ELEMENT[LENGTH] NAME(...)` for the same six scalar elements and
 lengths 1..4096. Compilation rejects every such result declaration with `type`
 at its function name before lowering any body or parameter catalog, including
-unused and forward helpers. This signature metadata does not enable array
-result execution. `main` remains zero-argument scalar `i32`.
+unused and forward helpers. This signature metadata does not enable source
+array result execution. `main` remains zero-argument scalar `i32`.
+The later [private result increment](../engineering/m2-array-results.md) verifies
+result shapes and lifetimes independently and transfers the callee's sole live
+owner to an empty caller destination without payload copying. Returning a
+parameter preserves its original independent CALL copy. These private paths do
+not admit `.brc` array return programs; the source gate remains enabled.
 
 The current scalar CLI implements fixed-width integer `~`, `&`, `^`, and `|`,
 and checked `<<` and `>>`. Binary operands, including shift amounts, must have the

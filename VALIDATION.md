@@ -483,6 +483,26 @@ inputs. Full scalar/private-array native suites, other array CLI matrices, M0,
 allocator instrumentation, Linux, isolation, DLL, clean-machine packaging and
 performance remain skipped. Checks were completed as individual recorded steps.
 
+The [private array-result increment](docs/engineering/m2-array-results.md) adds
+independent result shape/lifetime verification and native owner transfer. Private
+ARET (39) requires the callee's sole live array; an array CALL defines an empty
+exact-shape caller destination. All checks and Fuel admission precede the two
+token assignments. Return performs no allocation, reservation or payload copy.
+The [result receipt](docs/evidence/m2-array-results-windows-20261025.json) records
+43 native groups and 2,571 CLI cases per development/release profile. Development
+combines 41 plus two disjoint edge groups; release checks the same 43 identities
+together. CLI cases are 426 existing array, 80 parameter, 96 result-signature,
+and 1,969 scalar. Native cases cover all element types, maximum lengths, 32 frames,
+24-call reuse, exact Fuel, original-argument independence, deferred holes, and
+unchanged tokens/owners/bytes on malformed return preflight. The current input,
+binary, CLI receipt, and generated fixture hashes are rechecked after execution.
+Source results remain gated. Full scalar/other private-array and M0 native suites,
+allocator instrumentation, Linux, isolation, DLL, clean-machine packaging and
+performance checks are skipped. Twenty-nine earlier source hashes match the
+signature receipt, while changed runtime inputs receive fresh native evidence.
+The aggregate results slice was added and syntax-checked; executed commands were
+the individual native/build/CLI steps, without a redundant aggregate rerun.
+
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker
 publication barrier. Compile untrusted source only inside the restricted worker.

@@ -30,13 +30,24 @@ own the affected contract. Broader scaffold procedures are optional.
   catalogs are predeclared for forward/mutual calls. Arguments evaluate left to
   right; immutable inputs are stable snapshots and mutable inputs get anonymous
   captures with normal/return/propagation/loop-transfer cleanup.
-  Array results, borrows, slices and wrapper element arrays remain unimplemented.
+  Source array results, borrows, slices and wrapper element arrays remain unimplemented.
   Result signatures now retain exact scalar-array lengths in 16 bounded slots;
   compilation rejects every array result with type error at its function name
   before IR, parameter catalogs or body lowering. This does not enable result execution.
-  Current result-signature verification passed 16 native groups and 2,242 CLI cases
+  Previous result-signature verification passed 16 native groups and 2,242 CLI cases
   per development/release profile: 96 result-signature, 80 parameter, 97 helper-local,
   and 1,969 scalar cases. Checks ran individually; backend native suites were not rerun.
+  Private array results now have independent shape/lifetime verification and VM
+  owner transfer. ARET (39) requires the callee's sole live array; array CALLs
+  initialize dead exact-shape caller destinations. Transfer clears the child token
+  and publishes it in the parent without copying or allocating payload/owners.
+  Bounds, canonical bool data, metadata and Fuel are checked before token mutation.
+  The source result gate remains enabled until separate source lowering lands.
+  Current private-result verification passed 43 native groups and 2,571 CLI cases
+  per development/release profile, including parameter independence and deferred
+  callee holes. Native development combined 41 plus two disjoint groups; release
+  selected the same 43 identities together. Aggregate tooling was syntax-checked;
+  evidence records individual commands rather than an aggregate invocation.
   Private `array_owners::copy_arguments` preflights up to eight exact-shape copies
   before changing bytes or owner state. Private IR/verifier/VM calls now support
   immutable exact-shape array parameters, mixed scalar positions, metered atomic
