@@ -26,9 +26,17 @@ def write(path, value):
     path.write_text(json.dumps(value, indent=2) + '\n', encoding='utf-8')
 
 
-def verify(compiler, storage=False, copy_records=False, nested=False, nested_copy=False, owners=False, owner_copy=False):
-    require(sum([storage, copy_records, nested, nested_copy, owners, owner_copy]) <= 1, 'Choose only one verification selection')
-    if owner_copy:
+def verify(compiler, storage=False, copy_records=False, nested=False, nested_copy=False, owners=False, owner_copy=False, struct_ir=False):
+    require(sum([storage, copy_records, nested, nested_copy, owners, owner_copy, struct_ir]) <= 1, 'Choose only one verification selection')
+    if struct_ir:
+        kind = 'ir'
+        groups = {'struct_ir': 9, 'array_ir': 5, 'array_calls': 9,
+                  'array_results': 6, 'array_result_vm': 6}
+        files = ['tests/m2/' + name + '.fy' for name in groups]
+        groups.update(branches=5, loops=6)
+        files.extend(['tests/branches.fy', 'tests/loops.fy'])
+        expected = 46
+    elif owner_copy:
         kind = 'owner-copy'
         groups = {'struct_owner_copy': 6, 'struct_owners': 6, 'array_owners': 5}
         files = ['tests/m2/' + name + '.fy' for name in groups]
@@ -105,14 +113,16 @@ def verify(compiler, storage=False, copy_records=False, nested=False, nested_cop
         tests = native['tests']
         require(len(tests) == len({t['identity'] for t in tests}) == expected,
                 f'Unexpected or duplicate native identities: {profile}')
-        require(all(sum(t['identity'].startswith('tests::m2::' + name + '::') for t in tests) == count
+        require(all(sum(t['identity'].startswith(('tests::' if name in ['branches', 'loops'] else 'tests::m2::') + name + '::') for t in tests) == count
                     for name, count in groups.items()),
                 f'Unexpected native selection: {profile}')
         require(all(t['outcome'] == 'passed' and t['trapCategory'] is None
                     and not t['stdoutBase64'] and not t['stderrBase64'] for t in tests),
                 f'Native failure or unexpected process output: {profile}')
         result = dict(profile=profile, nativeGroups=expected, nativeTests=native)
-        if owner_copy:
+        if struct_ir:
+            result.update(newStructIRGroups=9, regressionGroups=37)
+        elif owner_copy:
             result.update(newStructOwnerCopyGroups=6, structOwnerRegressionGroups=6,
                           arrayOwnerRegressionGroups=5)
         elif owners:
@@ -153,7 +163,19 @@ def verify(compiler, storage=False, copy_records=False, nested=False, nested_cop
     if copy_records or nested_copy or owner_copy:
         limits.update(copyBackingWritesAtMost=135, assignmentBackingWritesAtMost=128,
                       assignmentAdditionalExtents=0)
+    if struct_ir:
+        limits = dict(recordDefinitions=32, recordBindings=16, fieldsPerRecord=16,
+                      recordBytes=128, scalarLeaves=128, structuralDepth=16,
+                      scalarRegisters=128, instructions=256, preparedTagBytes=2048,
+                      lifetimeBits=32)
     limitations = ([
+        'Private entry-owned struct IR and independent verification only. Opcodes 41..46 cover complete initialization from consecutive scalar registers, nominal copies, scalar leaf reads/writes, drop and assignment.',
+        'Full immutable catalogs are replanned, selected roots are bounded to 128 bytes and flattened iteratively in declaration order. Scalar leaf indices are immediate private operands, not byte offsets or source paths.',
+        'Record liveness uses bits 16..31 beside array bits 0..15. Joins and backedges require exact combined live sets; normal returns require no live aggregates.',
+        'Only entry may use record bindings; all calls into entry are rejected when record bindings exist. Record parameters, results, source structs, borrows, allocator integration and struct VM/Fuel are unimplemented.',
+        'The VM verifies first, then rejects every nonempty record binding catalog as unavailable before payload preparation or guest execution, including unused bindings.',
+        'Regression selections exercise branches, loops, array IR, calls, results and result VM. Full scalar/source-array CLI matrices were not rerun. Bounds are algorithmic, not measured throughput or stack use.'
+    ] if struct_ir else [
         'Private token-based record copies and assignment. Record metadata is derived from live generation-checked descriptors; distinct record IDs are rejected even with identical physical layouts.',
         'Copies reserve one shared descriptor and a fresh aligned extent while retaining the source. Initialization and copies share an infallible descriptor publisher after full payload staging.',
         'Assignment reserves zero descriptors/extents and preserves owner generations, marks, order and arena state, including self-assignment at full capacity.',
@@ -229,5 +251,6 @@ if __name__ == '__main__':
     selection.add_argument('--nested-copy', action='store_true', help='Verify nested record copies with nested storage/layout/codec regressions.')
     selection.add_argument('--owners', action='store_true', help='Verify shared struct/array ownership and affected array owner/VM helpers.')
     selection.add_argument('--owner-copy', action='store_true', help='Verify record owner copies and assignment with existing struct/array owners.')
+    selection.add_argument('--ir', dest='struct_ir', action='store_true', help='Verify private struct IR and affected control-flow/array call/result regressions.')
     args = parser.parse_args()
-    verify(args.compiler, args.storage, args.copy_records, args.nested, args.nested_copy, args.owners, args.owner_copy)
+    verify(args.compiler, args.storage, args.copy_records, args.nested, args.nested_copy, args.owners, args.owner_copy, args.struct_ir)

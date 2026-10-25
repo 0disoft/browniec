@@ -3,6 +3,7 @@ module ir;
 import errors as errors;
 import types as types;
 import array_meta as arrays;
+import struct_meta as records;
 import std::num as num;
 
 // Private eight-byte instructions: op,dst,a,b,0,0,0,0. Scalar tags are in types.fy.
@@ -39,6 +40,7 @@ pub struct Program {
     u8[128] types;
     u8[16] return_types;
     bool[128] slots;
+    records::Catalog records;
     arrays::Catalog arrays;
     u8[16] array_functions;
     // Parameter register positions: zero scalar, otherwise array catalog ID + 1.
@@ -54,7 +56,7 @@ pub fn Program empty() {
         .starts = [0; 16], .ends = [0; 16], .register_starts = [0; 16],
         .register_ends = [0; 16], .arities = [0; 16], .call_args = [0; 256],
         .call_arities = [0; 32], .function_count = 0, .entry = 0, .call_count = 0,
-        .types = [0; 128], .return_types = [0; 16], .slots = [false; 128], .arrays = arrays::empty(),
+        .types = [0; 128], .return_types = [0; 16], .slots = [false; 128], .arrays = arrays::empty(), .records = records::empty(),
         .array_functions = [0; 16], .array_parameters = [0; 128], .array_results = [0; 16] };
 }
 
@@ -228,4 +230,34 @@ pub fn Result<usize,errors::Error> array_call(ref mut Program p,usize target,usi
 }
 pub fn Result<usize,errors::Error> array_return(ref mut Program p,usize source,usize offset) {
     return raw(p,39,0,source,0,offset);
+}
+
+// Private struct opcodes 41..46. Initializers consume consecutive scalar values.
+pub fn Result<usize, errors::Error> record(ref mut Program p, usize record, bool mutable, usize offset) {
+    if (p.records.count >= 16) { return .err(errors::make(4, offset)); }
+    if (record >= p.records.layouts.count || record >= 32) { return .err(errors::make(3, offset)); }
+    let usize id = p.records.count;
+    p.records.records[id] = byte(record, offset)?; p.records.mutable[id] = mutable;
+    p.records.count += 1; return .ok(id);
+}
+pub fn Result<usize, errors::Error> record_init(ref mut Program p, usize id, usize first, usize offset) {
+    return raw(p, 41, id, first, 0, offset);
+}
+pub fn Result<usize, errors::Error> record_copy(ref mut Program p, usize dst, usize source, usize offset) {
+    return raw(p, 42, dst, source, 0, offset);
+}
+pub fn Result<usize, errors::Error> record_read(ref mut Program p, usize id, usize leaf, usize offset) {
+    let records::Prepared shapes = records::prepare(ref p.records)?;
+    if (id >= p.records.count || leaf >= shapes.leaves[id]) { return .err(errors::make(3, offset)); }
+    let usize result = emit(p, 43, id, leaf, offset)?;
+    p.types[result] = shapes.tags[id * 128 + leaf]; return .ok(result);
+}
+pub fn Result<usize, errors::Error> record_write(ref mut Program p, usize id, usize leaf, usize value, usize offset) {
+    return raw(p, 44, id, leaf, value, offset);
+}
+pub fn Result<usize, errors::Error> record_drop(ref mut Program p, usize id, usize offset) {
+    return raw(p, 45, id, 0, 0, offset);
+}
+pub fn Result<usize, errors::Error> record_assign(ref mut Program p, usize dst, usize source, usize offset) {
+    return raw(p, 46, dst, source, 0, offset);
 }

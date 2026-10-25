@@ -4,6 +4,8 @@ import errors as errors;
 import ir as ir;
 import types as types;
 import array_meta as arrays;
+import struct_meta as records;
+import struct_verifier as struct_verifier;
 import array_verifier as array_verifier;
 import array_parameters as array_parameters;
 import array_results as array_results;
@@ -22,7 +24,7 @@ fn bool merge(ref mut usize[] states, ref mut bool[] seen, ref registers::Set de
     seen[target] = true;
     return true;
 }
-fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref mut bool[] used_calls) {
+fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records::Prepared shapes, ref mut bool[] used_calls) {
     let usize start = p.register_starts[f];
     let usize end = p.register_ends[f];
     let usize arity = p.arities[f];
@@ -54,7 +56,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref mut boo
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
-        if (op < 1 || op > 40 || (op!=24 && p.code[at + 4] != 0) || p.code[at + 5] != 0 || p.code[at + 6] != 0 || p.code[at + 7] != 0) { return .err(errors::make(5, pc)); }
+        if (op < 1 || op > 46 || (op!=24 && p.code[at + 4] != 0) || p.code[at + 5] != 0 || p.code[at + 6] != 0 || p.code[at + 7] != 0) { return .err(errors::make(5, pc)); }
         if (op==25) {
             if(dst!=0 || a!=0 || b!=0) {return .err(errors::make(5,pc));}
             pc+=1; continue;
@@ -94,6 +96,8 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref mut boo
             let usize checked=array_parameters::arguments(p,a,b,f,ref defined,live,pc)?;
             live=array_results::call(p,a,dst,f,live,pc)?;
             used_calls[b]=true;
+        } else if (op >= 41) {
+            live = struct_verifier::step(p, shapes, pc, f, ref mut defined, ref mut written, live)?;
         } else if (op >= 33) {
             live = array_verifier::step(p, pc, f, ref mut defined, ref mut written, live)?;
         } else if (op >= 19 && op <= 21) {
@@ -125,7 +129,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref mut boo
                 if (tag==0) {if(a!=0) {return .err(errors::make(5,pc));}}
                 else if (!readable(p,ref defined,a,start,end) || p.types[a]!=tag) {return .err(errors::make(5,pc));}
             } else if (op == 9) {
-                if (a >= p.function_count || b >= p.call_count || used_calls[b] || (p.arrays.count != 0 && a == p.entry)) { return .err(errors::make(5, pc)); }
+                if (a >= p.function_count || b >= p.call_count || used_calls[b] || ((p.arrays.count != 0 || p.records.count != 0) && a == p.entry)) { return .err(errors::make(5, pc)); }
                 let usize count = p.call_arities[b] as usize;
                 if (count != p.arities[a] || count > 8 || p.types[dst] != p.return_types[a]) { return .err(errors::make(5, pc)); }
                 let usize checked = array_parameters::arguments(p, a, b, f, ref defined, live, pc)?;
@@ -161,6 +165,7 @@ pub fn Result<usize, errors::Error> verify(ref ir::Program p) {
     if (p.count == 0 || p.count > 256 || p.registers == 0 || p.registers > 128 || p.constant_count > 128 ||
         p.function_count == 0 || p.function_count > 16 || p.entry >= p.function_count || p.call_count > 32) { return .err(errors::make(5, 0)); }
     if (!arrays::valid(ref p.arrays)) { return .err(errors::make(5, 0)); }
+    let records::Prepared shapes = records::prepare(ref p.records)?;
     var usize id = 0;
     while (id < 16) {
         if ((id < p.arrays.count && p.array_functions[id] as usize >= p.function_count) ||
@@ -184,7 +189,7 @@ pub fn Result<usize, errors::Error> verify(ref ir::Program p) {
     let usize results = array_results::metadata(p)?;
     var bool[32] used_calls = [false; 32];
     f = 0;
-    while (f < p.function_count) { let usize checked = function(p, f, ref mut used_calls)?; f += 1; }
+    while (f < p.function_count) { let usize checked = function(p, f, ref shapes, ref mut used_calls)?; f += 1; }
     var usize call = 0;
     while (call < p.call_count) { if (!used_calls[call]) { return .err(errors::make(5, 0)); } call += 1; }
     return .ok(p.count);
