@@ -154,6 +154,12 @@ extent and preserves the source, destination shape, and owner identity. A bool
 source is fully validated before writing; self-assignment is admitted. RHS array
 expressions and classic `for` header assignments remain excluded.
 
+The [private frame foundation](../engineering/m2-array-frames.md) associates each
+array catalog entry with one function and keeps array tokens separate across
+recursive VM frames. Private helper-local arrays share the same 16-owner table
+and payload arena as the entry frame. This is a runtime foundation: helper source
+declarations and array parameters/results remain unimplemented.
+
 The current scalar CLI implements fixed-width integer `~`, `&`, `^`, and `|`,
 and checked `<<` and `>>`. Binary operands, including shift amounts, must have the
 same integer type. Signed right shift is arithmetic; unsigned right shift is

@@ -1,7 +1,7 @@
 # Validation
 
 - Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, switch-expression, i64, and unsigned receipts are verified historical evidence; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified; private entry-array IR/VM and source-array reads/writes/copy initializers implemented and focused-harness verified
-- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/u8/u32/usize/bool values, explicit widening, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation; private entry-function array IR/native dispatch, let/var scalar arrays in lexical scopes of main, indexed reads/writes, copy initializers, length access, lexical cleanup, and whole-array assignment are implemented
+- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/u8/u32/usize/bool values, explicit widening, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation; private function-owned array IR/native dispatch with separate recursive frame tokens, let/var scalar arrays in lexical scopes of main, indexed reads/writes, copy initializers, length access, lexical cleanup, and whole-array assignment are implemented
 
 ## Validation source of truth
 
@@ -379,6 +379,17 @@ owner, IR, verifier, and array-dispatch inputs receive fresh checks; scalar VM,
 codec, layout, and M0 inputs are compared with the prior receipts. The full scalar
 native suite, M0 rerun, allocator instrumentation, Linux, isolation, DLL, and
 performance checks are skipped.
+
+The [private array-frame foundation](docs/engineering/m2-array-frames.md) adds
+function-owned catalog metadata and separate tokens for recursive VM frames.
+The [frame receipt](docs/evidence/m2-array-frames-windows-20261025.json) records
+24 native groups, 329 array CLI cases, and 1,969 scalar CLI cases per
+development/release profile. It covers recursive parent preservation, shared
+owner/payload quotas, frame 31 with catalog ID 15, exact Fuel, and helper cleanup
+rejection. Changed IR/verifier/VM and array IR fixture inputs receive fresh checks;
+prior receipts remain historical for those inputs. Source arrays remain entry-only.
+The full 84-group scalar native suite, M0 rerun, allocator instrumentation, Linux,
+isolation, DLL, and performance measurements are skipped.
 
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker

@@ -204,6 +204,17 @@ development/release profile. Earlier frontend and array-backend receipts remain
 historical after the changed owner/IR/verifier/dispatch inputs. Helper arrays,
 aggregate parameters/results, borrows, and slices remain open.
 
+The [private array-frame foundation](../engineering/m2-array-frames.md) gives
+array catalog entries explicit function ownership and recursive VM invocations
+separate token slots. All frames continue to share 16 owners and one payload
+arena. Source arrays remain confined to `main`; helper source declarations come
+next, followed by exact-shape by-value parameters. Neither source feature is
+implemented by this foundation.
+The [frame receipt](../evidence/m2-array-frames-windows-20261025.json) records
+24 native groups, 329 array CLI cases, and 1,969 scalar CLI cases per
+development/release profile; prior IR/verifier/VM evidence is historical where
+inputs changed.
+
 Goal: connect arrays, plain structs, borrows, Buffer, input,
 output, and UTF-8.
 
