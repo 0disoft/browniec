@@ -4,6 +4,7 @@ import errors as errors;
 import lexer as lexer;
 import locals as locals;
 import types as types;
+import array_source as array_source;
 
 // Bounded signature pass enables forward calls without trusting unparsed bodies.
 pub struct Table {
@@ -16,13 +17,16 @@ pub struct Table {
     usize[128] param_ends;
     u8[16] return_types;
     u8[128] param_types;
+    // Zero denotes a scalar/wrapper; 1..4096 is an exact scalar-array shape.
+    usize[128] param_lengths;
     usize count;
     usize entry;
 }
 pub fn Table empty() {
     return Table { .begins = [0; 16], .ends = [0; 16], .bodies = [0; 16],
         .body_ends = [0; 16], .arities = [0; 16], .param_begins = [0; 128],
-        .param_ends = [0; 128], .return_types = [0; 16], .param_types = [0; 128], .count = 0, .entry = 16 };
+        .param_ends = [0; 128], .return_types = [0; 16], .param_types = [0; 128],
+        .param_lengths = [0; 128], .count = 0, .entry = 16 };
 }
 pub fn usize find(ref u8[] source, ref Table t, usize begin, usize end) {
     var usize i = 0;
@@ -50,6 +54,11 @@ fn Result<usize, errors::Error> signature(ref u8[] source, ref mut lexer::State 
     while (s.kind != 41) {
         if (arity >= 8) { return .err(errors::make(4, s.begin)); }
         let u8 parameter_type = types::parse(source, s)?;
+        var usize parameter_length = 0;
+        if (s.kind == 91) {
+            if (!types::scalar(parameter_type)) { return .err(errors::make(3, s.begin)); }
+            parameter_length = array_source::length(source, s)?;
+        }
         if (s.kind != 2 || locals::reserved(source[s.begin..s.end])) { return .err(errors::make(2, s.begin)); }
         let usize begin = s.begin;
         let usize end = s.end;
@@ -59,6 +68,7 @@ fn Result<usize, errors::Error> signature(ref u8[] source, ref mut lexer::State 
         t.param_begins[at] = begin;
         t.param_ends[at] = end;
         t.param_types[at] = parameter_type;
+        t.param_lengths[at] = parameter_length;
         arity += 1;
         let usize next = lexer::next(source, s)?;
         if (s.kind == 41) { break; }

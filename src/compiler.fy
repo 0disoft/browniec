@@ -631,6 +631,20 @@ pub fn Result<ir::Program, errors::Error> compile(ref u8[] source) {
         case .ok(value): { value } case .err(_): { return .err(errors::make(1, 0)); }
     };
     let functions::Table signatures = functions::scan(source)?;
+    // Signature metadata is ready before array call transactions. Reject every
+    // array parameter before lowering any body, including forward/unused helpers.
+    var usize signature = 0;
+    while (signature < signatures.count) {
+        var usize argument = 0;
+        while (argument < signatures.arities[signature]) {
+            let usize at = signature * 8 + argument;
+            if (signatures.param_lengths[at] != 0) {
+                return .err(errors::make(3, signatures.param_begins[at]));
+            }
+            argument += 1;
+        }
+        signature += 1;
+    }
     var ir::Program p = ir::empty();
     p.function_count = signatures.count;
     p.entry = signatures.entry;
