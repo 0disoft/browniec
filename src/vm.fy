@@ -9,6 +9,7 @@ import arithmetic as arithmetic;
 import bits as bits;
 import shifts as shifts;
 import array_vm as array_vm;
+import array_parameters as array_parameters;
 import std::bytes as bytes;
 
 // Guest calls use bounded VM frames, never native recursion. Register reads are
@@ -18,6 +19,9 @@ pub fn Result<i64, errors::Error> run(ref ir::Program p, usize fuel) {
 }
 pub fn Result<i64, errors::Error> run_with_array_limit(ref ir::Program p, usize fuel, usize array_limit) {
     let usize verified = verifier::verify(p)?;
+    // The private signature/verifier stage precedes the array CALL runtime.
+    let usize array_arguments = array_parameters::metadata(p)?;
+    if (array_arguments != 0) { return .err(errors::make(5, 0)); }
     var usize remaining = fuel;
     var bytes::Buffer payload = bytes::empty();
     var array_vm::State arrays = array_vm::empty(if (p.arrays.count == 0) { 0 } else { array_limit });

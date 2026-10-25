@@ -5,10 +5,11 @@ import ir as ir;
 import types as types;
 import array_meta as arrays;
 import array_verifier as array_verifier;
+import array_parameters as array_parameters;
 import register_set as registers;
 
 fn bool readable(ref ir::Program p, ref registers::Set defined, usize r, usize start, usize end) {
-    return r >= start && r < end && !p.slots[r] && registers::contains(defined, r);
+    return r >= start && r < end && !p.slots[r] && p.array_parameters[r] == 0 && registers::contains(defined, r);
 }
 fn bool merge(ref mut usize[] states, ref mut bool[] seen, ref registers::Set defined, usize target, ref mut usize[] array_states, usize live) {
     if (seen[target] && array_states[target] != live) { return false; }
@@ -34,11 +35,12 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref mut boo
         if (!types::valid(p.types[i])) { return .err(errors::make(5, p.starts[f])); }
         if (i < start + arity) {
             if (p.slots[i]) { return .err(errors::make(5, p.starts[f])); }
-            registers::insert(ref mut written, i); registers::insert(ref mut defined, i);
+            registers::insert(ref mut written, i);
+            if (p.array_parameters[i] == 0) { registers::insert(ref mut defined, i); }
         }
         i += 1;
     }
-    let bool entered = merge(ref mut states, ref mut seen, ref defined, p.starts[f], ref mut array_states, 0);
+    let bool entered = merge(ref mut states, ref mut seen, ref defined, p.starts[f], ref mut array_states, array_parameters::initial(p, f));
     var usize pc = p.starts[f];
     // Solve the forward graph, then check each backedge preserves its target's
     // entry invariant. This bounded inductive proof needs no cyclic worklist.
@@ -114,15 +116,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref mut boo
                 if (a >= p.function_count || b >= p.call_count || used_calls[b] || (p.arrays.count != 0 && a == p.entry)) { return .err(errors::make(5, pc)); }
                 let usize count = p.call_arities[b] as usize;
                 if (count != p.arities[a] || count > 8 || p.types[dst] != p.return_types[a]) { return .err(errors::make(5, pc)); }
-                var usize arg = 0;
-                while (arg < 8) {
-                    let usize r = p.call_args[b * 8 + arg] as usize;
-                    if (arg < count) {
-                        if (!readable(p, ref defined, r, start, end)) { return .err(errors::make(5, pc)); }
-                        if (p.types[r] != p.types[p.register_starts[a] + arg]) { return .err(errors::make(5, pc)); }
-                    } else if (r != 0) { return .err(errors::make(5, pc)); }
-                    arg += 1;
-                }
+                let usize checked = array_parameters::arguments(p, a, b, f, ref defined, live, pc)?;
                 used_calls[b] = true;
             } else if (op == 17) {
                 if (a < start || a >= end || !p.slots[a] || !registers::contains(ref defined, a) || b != 0) { return .err(errors::make(5, pc)); }
@@ -174,6 +168,7 @@ pub fn Result<usize, errors::Error> verify(ref ir::Program p) {
         code_end = p.ends[f]; register_end = p.register_ends[f]; f += 1;
     }
     if (code_end != p.count || register_end != p.registers) { return .err(errors::make(5, 0)); }
+    let usize parameters = array_parameters::metadata(p)?;
     var bool[32] used_calls = [false; 32];
     f = 0;
     while (f < p.function_count) { let usize checked = function(p, f, ref mut used_calls)?; f += 1; }

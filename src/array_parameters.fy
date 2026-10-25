@@ -1,0 +1,62 @@
+module array_parameters;
+
+import ir as ir;
+import errors as errors;
+import register_set as registers;
+
+// Called after catalog and function/register partitions have been verified.
+pub fn Result<usize, errors::Error> metadata(ref ir::Program p) {
+    var usize seen = 0;
+    var usize r = 0;
+    while (r < 128) {
+        let usize encoded = p.array_parameters[r] as usize;
+        if (encoded != 0) {
+            if (r >= p.registers || encoded > p.arrays.count || p.slots[r]) { return .err(errors::make(5, 0)); }
+            let usize id = encoded - 1;
+            let usize one = 1;
+            if ((seen & (one << id)) != 0 || p.arrays.mutable[id] || p.types[r] != p.arrays.elements[id]) { return .err(errors::make(5, 0)); }
+            let usize f = p.array_functions[id] as usize;
+            if (r < p.register_starts[f] || r >= p.register_starts[f] + p.arities[f]) { return .err(errors::make(5, 0)); }
+            seen |= one << id;
+        }
+        r += 1;
+    }
+    return .ok(seen);
+}
+pub fn usize initial(ref ir::Program p, usize f) {
+    var usize live = 0;
+    var usize arg = 0;
+    while (arg < p.arities[f]) {
+        let usize encoded = p.array_parameters[p.register_starts[f] + arg] as usize;
+        if (encoded != 0) { let usize one = 1; live |= one << (encoded - 1); }
+        arg += 1;
+    }
+    return live;
+}
+pub fn Result<usize, errors::Error> arguments(ref ir::Program p, usize target, usize site, usize caller,
+    ref registers::Set defined, usize live, usize pc) {
+    let usize count = p.call_arities[site] as usize;
+    var usize arg = 0;
+    while (arg < 8) {
+        let usize source = p.call_args[site * 8 + arg] as usize;
+        if (arg < count) {
+            let usize parameter = p.register_starts[target] + arg;
+            let usize encoded = p.array_parameters[parameter] as usize;
+            if (encoded != 0) {
+                if (source < 128) { return .err(errors::make(5, pc)); }
+                let usize id = source - 128;
+                let usize destination = encoded - 1;
+                let usize one = 1;
+                if (id >= p.arrays.count || p.array_functions[id] as usize != caller || p.arrays.mutable[id] ||
+                    (live & (one << id)) == 0 || p.arrays.elements[id] != p.arrays.elements[destination] ||
+                    p.arrays.lengths[id] != p.arrays.lengths[destination]) { return .err(errors::make(5, pc)); }
+            } else {
+                if (source < p.register_starts[caller] || source >= p.register_ends[caller] ||
+                    p.slots[source] || p.array_parameters[source] != 0 || !registers::contains(defined, source) ||
+                    p.types[source] != p.types[parameter]) { return .err(errors::make(5, pc)); }
+            }
+        } else if (source != 0) { return .err(errors::make(5, pc)); }
+        arg += 1;
+    }
+    return .ok(count);
+}

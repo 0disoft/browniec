@@ -40,6 +40,9 @@ pub struct Program {
     bool[128] slots;
     arrays::Catalog arrays;
     u8[16] array_functions;
+    // Parameter register positions: zero scalar, otherwise array catalog ID + 1.
+    // Array positions reserve a register index but never contain scalar values.
+    u8[128] array_parameters;
 }
 
 pub fn Program empty() {
@@ -49,7 +52,7 @@ pub fn Program empty() {
         .register_ends = [0; 16], .arities = [0; 16], .call_args = [0; 256],
         .call_arities = [0; 32], .function_count = 0, .entry = 0, .call_count = 0,
         .types = [0; 128], .return_types = [0; 16], .slots = [false; 128], .arrays = arrays::empty(),
-        .array_functions = [0; 16] };
+        .array_functions = [0; 16], .array_parameters = [0; 128] };
 }
 
 fn Result<u8, errors::Error> byte(usize value, usize offset) {
@@ -180,6 +183,15 @@ pub fn Result<usize, errors::Error> array_in(ref mut Program p, usize function, 
 }
 pub fn Result<usize, errors::Error> array_init(ref mut Program p, usize id, usize fill, usize offset) {
     return raw(p, 33, id, fill, 0, offset);
+}
+pub fn Result<usize, errors::Error> array_parameter(ref mut Program p, usize function, u8 element, usize length, usize offset) {
+    if (p.registers >= 128) { return .err(errors::make(4, offset)); }
+    let usize id = array_in(p, function, element, length, false, offset)?;
+    let usize register = p.registers;
+    p.types[register] = element;
+    p.array_parameters[register] = byte(id + 1, offset)?;
+    p.registers += 1;
+    return .ok(id);
 }
 pub fn Result<usize, errors::Error> array_copy(ref mut Program p, usize dst, usize source, usize offset) {
     return raw(p, 34, dst, source, 0, offset);
