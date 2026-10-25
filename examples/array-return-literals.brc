@@ -1,0 +1,10 @@
+module main;
+
+fn i32[2] make(i32 value) {
+    return [value; 2];
+}
+
+fn i32 main() {
+    let i32[2] result = make(21);
+    return result[0] + result[1];
+}

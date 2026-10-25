@@ -31,7 +31,7 @@ own the affected contract. Broader scaffold procedures are optional.
   right; immutable inputs are stable snapshots and mutable inputs get anonymous
   captures with normal/return/propagation/loop-transfer cleanup.
   Source array results support bare-name returns and exact-shape let/var call
-  initializers and direct return calls. Aggregate scalar expressions and assignment
+  initializers, direct return calls and repeated return literals. Aggregate scalar expressions and assignment
   RHS, for-header result calls, borrows, slices and wrapper elements remain unsupported.
   Result signatures now retain exact scalar-array lengths in 16 bounded slots;
   its original blanket result gate is removed by source lowering. Result anchors
@@ -59,6 +59,13 @@ own the affected contract. Broader scaffold procedures are optional.
   12 native groups and 509 CLI cases per development/release profile. Other array
   and scalar CLI matrices and full native suites were not rerun. The expanded
   combined result-source harness is available but was only syntax-checked.
+  Repeated return literals evaluate their fill once in the declared element
+  context and require an exact literal count. Initialization follows fill evaluation;
+  early returns/loop exits never drop a pending literal. The shared finisher drops
+  all other visible arrays/captures before ARET. Focused literal-return verification
+  passes 16 native groups and 628 CLI cases per development/release profile,
+  including 119 new literal CLI cases. Earlier receipts are historical for changed
+  compiler, helper, source fixture and aggregate harness inputs.
   Previous private-result verification passed 43 native groups and 2,571 CLI cases
   per development/release profile, including parameter independence and deferred
   callee holes. Native development combined 41 plus two disjoint groups; release

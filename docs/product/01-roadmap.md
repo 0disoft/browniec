@@ -230,8 +230,8 @@ immutable exact-shape array parameters, ordered mutable captures, forward/mutual
 calls, and cleanup on early exits. Its prior receipt records 28 native groups
 and 2,475 CLI cases per development/release profile.
 The [array result signature foundation](../engineering/m2-array-result-signatures.md)
-now records exact result shapes and rejects their compilation before any body
-or parameter catalog is lowered. Source array result execution remains unavailable.
+recorded exact result shapes and rejected compilation before body or parameter
+lowering at that historical checkpoint. Later source increments remove that gate.
 Its [receipt](../evidence/m2-array-result-signatures-windows-20261025.json)
 records 16 native groups and 2,242 CLI cases per development/release profile;
 full native backend suites and later delivery milestones were not rerun.
@@ -239,12 +239,19 @@ full native backend suites and later delivery milestones were not rerun.
 The [private array-result increment](../engineering/m2-array-results.md) adds
 result shape anchors, independent CALL/ARET verification, and callee-to-caller
 owner transfer. It retains a single payload/owner through recursive returns,
-with no return-time allocation or byte copy. Source result lowering remains the
-next bounded implementation slice; the signature gate stays enabled.
+with no return-time allocation or byte copy. Source result lowering was still
+gated at that private checkpoint.
 Its [receipt](../evidence/m2-array-results-windows-20261025.json) records 43 native
 groups and 2,571 CLI cases per development/release profile. This is private
-result execution evidence; source return integration and later delivery gates
-remain open.
+result execution evidence; it does not establish later source or delivery gates.
+
+Subsequent [source returns](../engineering/m2-array-result-source.md),
+[direct calls](../engineering/m2-array-return-calls.md) and
+[repeated return literals](../engineering/m2-array-return-literals.md) connect
+exact-shape arrays to typed call initializers and shared return cleanup. The
+latest focused Windows receipt records 16 native groups and 628 CLI cases per
+development/release profile. Plain structs, borrows, Buffer, I/O, isolation and
+the remaining milestone evidence below are still open.
 
 Goal: connect arrays, plain structs, borrows, Buffer, input,
 output, and UTF-8.

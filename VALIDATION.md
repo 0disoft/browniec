@@ -532,6 +532,17 @@ instrumentation, Linux, isolation, DLL, clean-machine packaging and performance
 remain skipped. The expanded aggregate harness is syntax-checked, not invoked.
 Aggregate scalar expressions, result assignment RHS and for headers remain unsupported.
 
+The [literal-return increment](docs/engineering/m2-array-return-literals.md) enables
+`return [value; N];`, using the declared element context and evaluating the fill
+once before initialization. The [focused receipt](docs/evidence/m2-array-return-literals-windows-20261025.json)
+records 16 native groups and 628 CLI cases per development/release profile: four
+new, four direct-return and eight source-result groups; 119 literal, 117 direct,
+119 source-result, 80 parameter, 96 signature and 97 helper-local CLI cases.
+Nested fill exits, capture cleanup, exact Fuel, all six element types and shared
+quotas have direct evidence. Other array/scalar CLI matrices, full native suites,
+M0, allocator instrumentation, Linux, isolation, DLL, clean-machine packaging and
+performance remain skipped. The aggregate harness was syntax-checked, not invoked.
+
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker
 publication barrier. Compile untrusted source only inside the restricted worker.

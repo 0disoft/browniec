@@ -54,7 +54,8 @@ All 32 VM frames share 16 occupied owners and an arena capped at 65,536 bytes.
 
 Return operands can be bare array names or direct `return function(...);` calls.
 The latter now has separate [lowering and verification](m2-array-return-calls.md).
-Returned literals, parentheses, indexing, slices and borrows remain rejected.
+[Repeated return literals](m2-array-return-literals.md) have a subsequent focused
+increment. Parentheses, indexing, slices and borrows remain rejected.
 Array-result calls are admitted in typed array declaration initializers and direct returns;
 scalar expressions, call arguments, assignment RHS and for headers do not gain
 aggregate expression support. Wrapper elements and implicit shape conversions

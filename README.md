@@ -56,6 +56,8 @@ calls, and cleanup of pending captures on normal and early exits. Named array re
 and typed call-result initializers are supported by the [source result increment](docs/engineering/m2-array-result-source.md).
 [Direct return calls](docs/engineering/m2-array-return-calls.md) additionally admit
 `return make(arguments);` with the same argument capture and ownership rules.
+[Repeated return literals](docs/engineering/m2-array-return-literals.md) also admit
+`return [value; N];`, evaluating the fill once in the declared element context.
 Borrows, slices, structs, workers, and DLLs remain later work.
 The [array parameter signature foundation](docs/engineering/m2-array-signatures.md)
 records element types and exact lengths; the subsequent source increment removes
@@ -193,6 +195,7 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 array result signatures](docs/engineering/m2-array-result-signatures.md): exact return-shape metadata and the historical source gate
 - [M2 source array results](docs/engineering/m2-array-result-source.md): named returns, typed call initializers, capture cleanup and ownership transfer
 - [M2 direct array-return calls](docs/engineering/m2-array-return-calls.md): exact-shape forwarding, nested early exits and shared return cleanup
+- [M2 repeated array-return literals](docs/engineering/m2-array-return-literals.md): typed single-evaluation fills, exact lengths and shared ownership transfer
 - [M2 private array results](docs/engineering/m2-array-results.md): verified result lifetimes, zero-copy owner transfer, recursive frames and prepaid return work
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
@@ -258,6 +261,9 @@ fixture; release selects all 26 together. Earlier receipts remain historical
 for changed inputs. The focused [direct-return receipt](docs/evidence/m2-array-return-calls-windows-20261025.json)
 records 12 native groups and 509 CLI cases per profile, including 117 new direct-return
 cases. Other array/scalar CLI matrices and full native suites were not rerun for
-that increment. No full-profile conformance,
+that increment. The subsequent [literal-return receipt](docs/evidence/m2-array-return-literals-windows-20261025.json)
+records 16 native groups and 628 CLI cases per profile, including 119 new literal
+cases. It is focused evidence; the unchanged backend and omitted matrices are not
+rerun. No full-profile conformance,
 DLL ABI, Windows isolation,
 clean-machine packaging, or performance target is claimed.
