@@ -1,6 +1,6 @@
 # M2 Private Struct Owner Copy and Assignment
 
-- Status: verified private owner copy/assignment receipt; development and release passed.
+- Status: verified private owner copy/assignment primitives; historical for current IR, harness, and root-lock inputs.
 - Scope: record-owner copy and assignment over the shared 16-slot table.
 - Implementation: [src/array_owners.fy](../../src/array_owners.fy).
 - Harness: [tools/verify-m2-struct-layout.py](../../tools/verify-m2-struct-layout.py) with `--owner-copy`.
@@ -33,8 +33,10 @@ schema substitution remains outside this private contract. Tokens establish
 liveness inside that table lifetime only.
 
 Mixed array copies and argument batches continue to work while record owners are
-live because all kinds share slots, order, and arena. No source grammar, struct
-IR/VM/Fuel, or borrows are added.
+live because all kinds share slots, order, and arena. This slice adds no source
+grammar, struct IR/VM/Fuel, or borrows. The [private struct IR
+successor](m2-struct-ir.md) now defines bindings and verifier rules; struct VM
+dispatch and Fuel remain pending.
 
 ## Verification and next work
 
@@ -51,4 +53,8 @@ Existing other 38 source files and old test fixtures are unchanged. Full CLI,
 other native suites including array VM and call/result VM, M0, Linux, isolation,
 DLL, packaging, performance, and allocator instrumentation were not rerun.
 
-Next: private struct IR and verifier.
+The 17-group result remains evidence for the unchanged primitive owner-copy path.
+Its receipt is historical for the later IR, harness, and root-lock changes; those
+changes do not invalidate unrelated primitive source results.
+
+Next: struct VM dispatch and Fuel.

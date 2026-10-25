@@ -1,6 +1,6 @@
 # Brownie C
 
-- Status: M1 scalar checkpoint verified; M2 function-owned scalar arrays with helper declarations, by-value parameters, argument capture, copies, length access, lexical cleanup, source results, and bare-name, call-result, and repeated-literal assignment implemented; full profile incomplete
+- Status: M1 scalar checkpoint verified; M2 function-owned scalar arrays with helper declarations, by-value parameters, argument capture, copies, length access, lexical cleanup, source results, and bare-name, call-result, and repeated-literal assignment implemented; private entry-owned struct IR/verifier verified; struct execution unavailable; full profile incomplete
 - Design date: 2026-10-23
 - First delivery target: Windows 11 x64
 
@@ -80,7 +80,12 @@ on access, and rejects record tokens in array APIs. A [private struct-owner
 copy/assignment slice](docs/engineering/m2-struct-owner-copy.md) appends independent
 record owners and requires exact record identity for assignment. Its 17-group
 Windows selection passed development and release; the previous 34-group owner receipt is historical for changed
-inputs. Source structs, borrow checking, struct IR, and VM remain later work.
+inputs. A [private entry-owned struct IR and verifier](docs/engineering/m2-struct-ir.md)
+adds opcodes 41..46 for initialization, copy, scalar leaf access, drop, and exact-ID
+assignment. Record lifetimes use bits 16..31 beside array lifetimes, and the VM
+returns unavailable kind 11 for every nonempty struct binding catalog after
+verification. Source structs, borrow checking, struct parameters/results, struct
+VM dispatch, and struct Fuel remain later work.
 The earlier nested-storage 18-group receipt is historical for changed
 inputs; nested-copy 24-group checks passed development and release. The copy
 receipt passes 28 groups per profile in development and release. The planner's
@@ -233,6 +238,7 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 private nested struct copy and assignment](docs/engineering/m2-struct-nested-copy.md): iterative snapshots, padding normalization, old-plus-new quota, and overlap-safe nested assignment
 - [M2 shared struct owners](docs/engineering/m2-struct-owners.md): shared record/array descriptors, catalog-bound field access, generation-safe release, and mixed-arena reuse
 - [M2 private struct-owner copy and assignment](docs/engineering/m2-struct-owner-copy.md): independent record owners, exact-ID assignment, shared descriptor pressure, and source-release survival
+- [M2 private struct IR](docs/engineering/m2-struct-ir.md): entry-owned bindings, opcodes 41..46, flattened scalar leaves, combined lifetimes, and the VM-unavailable boundary
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
 - [Design baseline](docs/design-baseline.md): source provenance, evidence, and findings
@@ -320,3 +326,10 @@ The pre-fix binary reproduces `0xC00000FD` at depth 10. These checks make no
 stack-byte or performance claim. No full-profile conformance,
 DLL ABI, Windows isolation,
 clean-machine packaging, or performance target is claimed.
+
+The [private struct IR receipt](docs/evidence/m2-struct-ir-windows-20261026.json)
+passes 46 groups per development/release profile, including 9 new struct groups
+and 37 control-flow/array regressions. The focused
+repeated-literal assignment CLI suite passed 115 cases in each development and
+release profile, including the prior composed depth-10/11 boundary. Full CLI
+matrices were not rerun.

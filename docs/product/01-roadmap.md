@@ -1,7 +1,7 @@
 # Roadmap
 
-- Status: Accepted delivery sequence; M0 verified; named M1 slices through unsigned have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified, 2026-10-23; private entry-array IR/VM verified by its native harness, 2026-10-24; source-array reads, writes, copy initializers, parameters, results, and assignment forms implemented; in-place repeated-literal assignment verified; private scalar struct layout and storage implemented and verified; private scalar struct copy/assignment implemented and verified; private nested struct storage implemented and verified; private nested struct copy/assignment implemented and verified; shared struct-owner foundation implemented and verified; private struct-owner copy/assignment implemented and verified
-- Current progress: M1 scalar checkpoint verified; M2 function-owned scalar arrays cover lexical storage, copy, length, helper locals, by-value parameters, source results, direct returns, repeated return literals, call-result assignment, and in-place repeated-literal assignment; private scalar struct layout, storage, and copy/assignment exist; private nested struct storage is verified; private nested struct copy/assignment is verified; shared struct-owner foundation is verified; private struct-owner copy/assignment is verified; source structs, source-level record copies, borrows, Buffer, and text remain open; full-profile conformance incomplete; M3-M5 not started
+- Status: Accepted delivery sequence; M0 verified; named M1 slices through unsigned have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified, 2026-10-23; private entry-array IR/VM verified by its native harness, 2026-10-24; source-array reads, writes, copy initializers, parameters, results, and assignment forms implemented; in-place repeated-literal assignment verified; private scalar struct layout and storage implemented and verified; private scalar struct copy/assignment implemented and verified; private nested struct storage implemented and verified; private nested struct copy/assignment implemented and verified; shared struct-owner foundation implemented and verified; private struct-owner copy/assignment implemented and verified; private entry-owned struct IR/verifier implemented and verified
+- Current progress: M1 scalar checkpoint verified; M2 function-owned scalar arrays cover lexical storage, copy, length, helper locals, by-value parameters, source results, direct returns, repeated return literals, call-result assignment, and in-place repeated-literal assignment; private scalar struct layout, storage, and copy/assignment exist; private nested struct storage is verified; private nested struct copy/assignment is verified; shared struct-owner foundation is verified; private struct-owner copy/assignment is verified; private entry-owned struct IR and verifier are verified; struct VM dispatch and Fuel remain open; source structs, source-level record copies, borrows, Buffer, and text remain open; full-profile conformance incomplete; M3-M5 not started
 
 This roadmap orders learning and evidence. It is not a release promise. M0 has a
 native harness and recorded evidence. The scalar CLI/VM now exist; the worker
@@ -306,7 +306,12 @@ development and release. A [private struct-owner copy/assignment
 slice](../engineering/m2-struct-owner-copy.md) appends independent record owners
 and requires exact record identity for assignment. Its 17-group Windows selection
 passed development and release, and the previous 34-group owner receipt is historical for changed
-inputs. Full source structs, wrapper types, borrows, and Buffer remain open.
+inputs. A [private struct IR/verifier](../engineering/m2-struct-ir.md) now checks
+entry-owned initialization, copy, scalar leaves, mutation and drop. Its Windows
+selection passed 46 native groups per development/release profile, and the focused
+existing repeated-literal assignment CLI suite passed 115 cases per profile.
+Next: struct VM dispatch and Fuel. Full source structs, wrapper types, borrows,
+and Buffer remain open.
 
 Goal: connect arrays, plain structs, borrows, Buffer, input,
 output, and UTF-8.

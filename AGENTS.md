@@ -119,8 +119,20 @@ own the affected contract. Broader scaffold procedures are optional.
   access; array-only APIs reject record tokens. A [private struct-owner copy/assignment slice](docs/engineering/m2-struct-owner-copy.md)
   appends independent record owners and requires exact record identity for assignment.
   Its 17-group Windows selection passed development and release. The previous 34-group owner receipt is historical
-  for changed inputs. Source structs, borrows, struct IR/VM, Fuel, and allocator
-  integration remain unimplemented. The earlier nested-storage 18-group receipt is
+  for changed inputs. A [private struct IR and verifier](docs/engineering/m2-struct-ir.md)
+  now defines entry-owned bindings for opcodes 41..46: SINIT, SCOPY, SREAD,
+  SWRITE, SDROP, and SASSIGN. Initialization consumes all depth-first scalar leaves
+  in consecutive registers with exact types; reads and writes use flattened leaf
+  ordinals. Full catalogs are replanned, record lifetimes occupy bits 16..31 beside
+  array bits 0..15, and joins or backedges require exact live sets. Only entry may
+  use struct instructions; calls into entry are rejected when bindings exist. The
+  VM verifies first, then returns unavailable kind 11 for every nonempty record
+  catalog before preparation or guest execution. The `--ir` native selection passed
+  46 groups per development/release profile; the focused repeated-literal assignment CLI suite passed 115 cases per
+  development/release profile, including the prior depth-10/11 boundary. Full CLI
+  matrices were not rerun.
+  Source structs, borrows, struct parameters/results, struct VM
+  dispatch, Fuel, and allocator integration remain unimplemented. The earlier nested-storage 18-group receipt is
   historical for changed inputs; nested-copy 24-group checks passed development and release.
   The copy slice's Windows 28-group receipt passed development and release after
   moving snapshot staging into caller-owned scratch. Earlier planner and storage
