@@ -1,5 +1,5 @@
 param(
-  [ValidateSet('ir', 'vm', 'source', 'write', 'copy', 'length', 'scopes', 'assignment', 'frames', 'helpers', 'arguments', 'calls', 'parameters', 'results')][string]$Slice = 'ir',
+  [ValidateSet('ir', 'vm', 'source', 'write', 'copy', 'length', 'scopes', 'assignment', 'frames', 'helpers', 'arguments', 'calls', 'parameters', 'results', 'result-source')][string]$Slice = 'ir',
   [string]$Compiler = (Join-Path $PSScriptRoot '../build/toolchain/fairyc.exe')
 )
 $ErrorActionPreference = 'Stop'
@@ -58,8 +58,14 @@ if ($Slice -eq 'results') {
   $expected = 43
   $sourceMode = $true
 }
+if ($Slice -eq 'result-source') {
+  $files = @('tests/m2/array_result_source.fy', 'tests/m2/array_result_signatures.fy',
+    'tests/m2/array_parameters_source.fy', 'tests/functions.fy')
+  $expected = 26
+  $sourceMode = $true
+}
 # Later slices retain the full assignment CLI matrix.
-$assignmentMode = $Slice -in @('assignment', 'frames', 'helpers', 'calls', 'parameters', 'results')
+$assignmentMode = $Slice -in @('assignment', 'frames', 'helpers', 'calls', 'parameters', 'results', 'result-source')
 Push-Location $repo
 try {
   $version = & $Compiler --version
@@ -75,10 +81,11 @@ try {
     if ($assignmentMode -or $Slice -in @('length','scopes')) { Get-Item tools/check-m2-array-length.py, examples/array-length.brc }
     if ($assignmentMode -or $Slice -eq 'scopes') { Get-Item tools/check-m2-array-scopes.py, examples/array-scopes.brc }
     if ($assignmentMode) { Get-Item tools/check-m2-array-assignment.py, examples/array-assignment.brc }
-    if ($Slice -in @('helpers','calls','parameters','results')) { Get-Item tools/check-m2-array-helpers.py, examples/array-helpers.brc }
-    if ($Slice -in @('parameters','results')) { Get-Item tools/check-m2-array-parameters.py }
-    if ($Slice -eq 'results') { Get-Item tools/check-m2-array-result-signatures.py }
-    if ($Slice -in @('calls','parameters','results')) { Get-Item tools/check-m1-cli.py; Get-ChildItem tools -File -Filter '*cases.py'; Get-ChildItem examples -File -Filter '*.brc' })
+    if ($Slice -in @('helpers','calls','parameters','results','result-source')) { Get-Item tools/check-m2-array-helpers.py, examples/array-helpers.brc }
+    if ($Slice -in @('parameters','results','result-source')) { Get-Item tools/check-m2-array-parameters.py }
+    if ($Slice -in @('results','result-source')) { Get-Item tools/check-m2-array-result-signatures.py }
+    if ($Slice -eq 'result-source') { Get-Item tools/check-m2-array-result-source.py }
+    if ($Slice -in @('calls','parameters','results','result-source')) { Get-Item tools/check-m1-cli.py; Get-ChildItem tools -File -Filter '*cases.py'; Get-ChildItem examples -File -Filter '*.brc' })
   $identities = @($inputs | Sort-Object FullName | ForEach-Object {
     [ordered]@{ path = [IO.Path]::GetRelativePath($repo, $_.FullName).Replace('\', '/');
       sha256 = (Get-FileHash -LiteralPath $_.FullName).Hash.ToLowerInvariant() }
@@ -140,13 +147,13 @@ try {
         $assignmentCli = Get-Content -LiteralPath (Join-Path $repo "build/m2-array-assignment/$profile/cli-receipt.json") -Raw | ConvertFrom-Json
         $result.assignmentCliCases = $assignmentCli.count
       }
-      if ($Slice -in @('helpers','calls','parameters','results')) {
+      if ($Slice -in @('helpers','calls','parameters','results','result-source')) {
         & python -B (Join-Path $PSScriptRoot 'check-m2-array-helpers.py') --exe $exe --profile $profile
         if ($LASTEXITCODE -ne 0) { throw "Helper array CLI checks failed: $profile" }
         $helperCli = Get-Content -LiteralPath (Join-Path $repo "build/m2-array-helpers/$profile/cli-receipt.json") -Raw | ConvertFrom-Json
         $result.helperCliCases = $helperCli.count
       }
-      if ($Slice -in @('parameters','results')) {
+      if ($Slice -in @('parameters','results','result-source')) {
         & python -B (Join-Path $PSScriptRoot 'check-m2-array-parameters.py') --exe $exe --profile $profile
         if ($LASTEXITCODE -ne 0) { throw "Source parameter CLI checks failed: $profile" }
         $parameterCli = Get-Content -LiteralPath (Join-Path $repo "build/m2-array-parameters/$profile/cli-receipt.json") -Raw | ConvertFrom-Json
@@ -155,7 +162,7 @@ try {
         }
         $result.parameterCliCases = $parameterCli.count
       }
-      if ($Slice -eq 'results') {
+      if ($Slice -in @('results','result-source')) {
         & python -B (Join-Path $PSScriptRoot 'check-m2-array-result-signatures.py') --exe $exe --profile $profile
         if ($LASTEXITCODE -ne 0) { throw "Result signature CLI checks failed: $profile" }
         $signatureCli = Get-Content -LiteralPath (Join-Path $repo "build/m2-array-result-signatures/$profile/cli-receipt.json") -Raw | ConvertFrom-Json
@@ -164,7 +171,16 @@ try {
         }
         $result.resultSignatureCliCases = $signatureCli.count
       }
-      if ($Slice -in @('calls','parameters','results')) {
+      if ($Slice -eq 'result-source') {
+        & python -B (Join-Path $PSScriptRoot 'check-m2-array-result-source.py') --exe $exe --profile $profile
+        if ($LASTEXITCODE -ne 0) { throw "Source result CLI checks failed: $profile" }
+        $sourceResultCli = Get-Content -LiteralPath (Join-Path $repo "build/m2-array-result-source/$profile/cli-receipt.json") -Raw | ConvertFrom-Json
+        if ($sourceResultCli.status -ne 'passed' -or $sourceResultCli.count -ne 119 -or $sourceResultCli.exeSha256 -ne $result.sha256) {
+          throw 'Unexpected source result receipt'
+        }
+        $result.sourceResultCliCases = $sourceResultCli.count
+      }
+      if ($Slice -in @('calls','parameters','results','result-source')) {
         & python -B (Join-Path $PSScriptRoot 'check-m1-cli.py') --exe $exe --profile $profile
         if ($LASTEXITCODE -ne 0) { throw "Scalar CLI checks failed: $profile" }
         $scalarCli = Get-Content -LiteralPath (Join-Path $repo "build/m1/$profile/cli-receipt.json") -Raw | ConvertFrom-Json
@@ -250,6 +266,13 @@ try {
       'Source array-result declarations remain gated; wrapper-element arrays, borrows and slices are not implemented.',
       'All frames share 16 static array sites, 16 occupied descriptors and one arena capped at 65536 bytes; return Fuel prepays metadata and bool validation.',
       'Full scalar/other private-array native suites, M0, allocator instrumentation, Linux, isolation, DLL, clean-machine packaging and performance checks skipped.')
+  }
+  if ($Slice -eq 'result-source') {
+    $receipt.limitations = @('Source return NAME and exact-shape let/var array-result call initializers are supported; other visible arrays and pending captures are released before ARET.',
+      'Direct return calls, returned literals/indexing/parentheses, result calls in scalar expressions, assignment RHS and for headers remain unsupported.',
+      'Result shapes reuse an exact-shape parameter anchor or reserve one dead catalog site before body lowering; all sites share the 16-site ceiling.',
+      'All frames share 16 occupied owners, 32 frame slots and one arena capped at 65536 bytes; owner transfer does not copy payload.',
+      'Full scalar/private-array native suites, M0, allocator instrumentation, Linux, isolation, DLL, clean-machine packaging and performance checks skipped.')
   }
   $receipt | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $receiptPath -Encoding utf8NoBOM
   Write-Host "PASS: build/m2-array-$outputSlice/receipt.json"

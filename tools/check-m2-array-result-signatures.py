@@ -1,4 +1,4 @@
-"""Check the array-result signature gate through the actual native CLI."""
+"""Check array-result signatures and invalid bodies through the native CLI."""
 import argparse
 import hashlib
 import json
@@ -51,8 +51,8 @@ main = 'fn i32 main(){return 42;}'
 for tag in ['bool', 'u8', 'i32', 'i64', 'u32', 'usize']:
     for length in [1, 4096]:
         helper = f'fn {tag}[{length}] make(){{return 0;}}'
-        case('module main; ' + helper + main, anchor='make')
-        case('module main; ' + main + helper, anchor='make')
+        case('module main; ' + helper + main, anchor='0;')
+        case('module main; ' + main + helper, anchor='0;')
     case(f'module main; fn {tag}[1] main(){{return 0;}}', anchor='main(')
 for length in ['0', '4097', '-1', '9223372036854775808', '18446744073709551615',
                '18446744073709551616', '', '1+1']:
@@ -62,10 +62,10 @@ for tag in ['Option<i32>', 'Result<bool,bool>']:
     case(f'module main; fn {tag}[1] make(){{return 0;}}' + main)
 for shape in ['i32[1][1]', 'i32[1']:
     case(f'module main; fn {shape} make(){{return 0;}}' + main, error='syntax')
-case('module main; fn i32 main(){return missing;} fn i32[1] make(){return 42;}', anchor='make')
+case('module main; fn i32 main(){return missing;} fn i32[1] make(){return 42;}', anchor='missing')
 params = ','.join(f'i32[1] {name}' for name in 'abcdefgh')
 case(f'module main; fn i32 a({params}){{return 0;}} fn i32 b({params}){{return 0;}}'
-     + 'fn i32[1] make(i32[1] a){return 0;}' + main, anchor='make')
+     + 'fn i32[1] make(i32[1] a){return 0;}' + main, error='compile_limit')
 for helper, body, array in [
     ('fn i32 id(i32 x){return x;}', 'return id(42);', False),
     ('fn Option<i32> unused(){return .some(42);}', 'return 42;', False),
