@@ -26,9 +26,14 @@ def write(path, value):
     path.write_text(json.dumps(value, indent=2) + '\n', encoding='utf-8')
 
 
-def verify(compiler, storage=False, copy_records=False, nested=False, nested_copy=False, owners=False):
-    require(sum([storage, copy_records, nested, nested_copy, owners]) <= 1, 'Choose only one verification selection')
-    if owners:
+def verify(compiler, storage=False, copy_records=False, nested=False, nested_copy=False, owners=False, owner_copy=False):
+    require(sum([storage, copy_records, nested, nested_copy, owners, owner_copy]) <= 1, 'Choose only one verification selection')
+    if owner_copy:
+        kind = 'owner-copy'
+        groups = {'struct_owner_copy': 6, 'struct_owners': 6, 'array_owners': 5}
+        files = ['tests/m2/' + name + '.fy' for name in groups]
+        expected = 17
+    elif owners:
         kind = 'owners'
         groups = {'struct_owners': 6, 'array_owners': 5, 'array_copy': 4,
                   'array_assign_storage': 2, 'array_argument_copies': 7,
@@ -107,7 +112,10 @@ def verify(compiler, storage=False, copy_records=False, nested=False, nested_cop
                     and not t['stdoutBase64'] and not t['stderrBase64'] for t in tests),
                 f'Native failure or unexpected process output: {profile}')
         result = dict(profile=profile, nativeGroups=expected, nativeTests=native)
-        if owners:
+        if owner_copy:
+            result.update(newStructOwnerCopyGroups=6, structOwnerRegressionGroups=6,
+                          arrayOwnerRegressionGroups=5)
+        elif owners:
             result.update(newStructOwnerGroups=6, arrayOwnerRegressionGroups=5,
                           arrayCopyRegressionGroups=4, arrayAssignmentRegressionGroups=2,
                           arrayArgumentRegressionGroups=7, arrayFillRegressionGroups=4,
@@ -133,19 +141,27 @@ def verify(compiler, storage=False, copy_records=False, nested=False, nested_cop
     lock = json.loads((ROOT / 'fairy.lock').read_text(encoding='utf-8'))
     baseline = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
     limits = (dict(fieldsPerRecord=16, recordBytes=128, encodedScratchBytes=128,
-                   initializationBackingWritesAtMost=135) if storage or copy_records or nested or nested_copy or owners else
+                   initializationBackingWritesAtMost=135) if storage or copy_records or nested or nested_copy or owners or owner_copy else
               dict(records=32, fieldsPerRecord=16, structuralDepth=16,
                    dependencyFieldChecksAtMost=16384, payloadLimit='caller supplied per record'))
-    if nested or nested_copy or owners:
+    if nested or nested_copy or owners or owner_copy:
         limits.update(scalarLeaves=128, structuralDepth=16, fieldPathLength=16,
                       traversalFieldVisitsAtMost=2048)
-    if owners:
+    if owners or owner_copy:
         limits.update(sharedOwnerDescriptors=16, recordOwnerAdditionalDescriptors=0,
                       arrayPayloadBytesAtMost=32768)
-    if copy_records or nested_copy:
+    if copy_records or nested_copy or owner_copy:
         limits.update(copyBackingWritesAtMost=135, assignmentBackingWritesAtMost=128,
                       assignmentAdditionalExtents=0)
     limitations = ([
+        'Private token-based record copies and assignment. Record metadata is derived from live generation-checked descriptors; distinct record IDs are rejected even with identical physical layouts.',
+        'Copies reserve one shared descriptor and a fresh aligned extent while retaining the source. Initialization and copies share an infallible descriptor publisher after full payload staging.',
+        'Assignment reserves zero descriptors/extents and preserves owner generations, marks, order and arena state, including self-assignment at full capacity.',
+        'Existing nested snapshot code normalizes padding, preserves scalar bits and rejects every corrupt bool before backing writes. Failures preserve all bytes and owner state.',
+        'One immutable catalog and stable backing region must remain bound to the table lifetime. Catalog identity, cross-Instance capabilities, source structs/borrows, struct IR/VM and Fuel remain unimplemented.',
+        'Other source files and existing test fixtures are unchanged. The focused run includes eleven struct/array owner regression groups; other native suites, including full array VM/call/result selections, were not rerun.',
+        'Record scratch and copy/write bounds describe records only; array payload limits remain separate. Bounds are algorithmic, not stack, allocation, throughput or complete memory-accounting measurements.'
+    ] if owner_copy else [
         'Private mixed array/record owner creation, token-checked field access and shared release/clear only. Record owner copy/assignment, source structs, struct IR/VM/Fuel and borrows remain future work.',
         'Both kinds share sixteen descriptors, one allocation-order chain, one arena and the existing nonwrapping generation lifecycle. Dead middle extents remain charged until suffix reclamation.',
         'Record descriptors retain record ID, byte size and alignment. Array entry points reject record tokens; record entry points reject array tokens.',
@@ -212,5 +228,6 @@ if __name__ == '__main__':
     selection.add_argument('--nested', action='store_true', help='Verify nested record storage and its layout/codec dependencies.')
     selection.add_argument('--nested-copy', action='store_true', help='Verify nested record copies with nested storage/layout/codec regressions.')
     selection.add_argument('--owners', action='store_true', help='Verify shared struct/array ownership and affected array owner/VM helpers.')
+    selection.add_argument('--owner-copy', action='store_true', help='Verify record owner copies and assignment with existing struct/array owners.')
     args = parser.parse_args()
-    verify(args.compiler, args.storage, args.copy_records, args.nested, args.nested_copy, args.owners)
+    verify(args.compiler, args.storage, args.copy_records, args.nested, args.nested_copy, args.owners, args.owner_copy)

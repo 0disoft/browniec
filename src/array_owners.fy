@@ -352,17 +352,22 @@ pub fn Result<Token, Error> create_record(ref records::Catalog catalog, usize re
     let usize base = switch (record_storage::initialize(catalog, record, fields, bytes, ref mut table.arena)) {
         case .ok(value): { value } case .err(error): { return .err(record_error(error)); }
     };
-    // No fallible work follows full payload initialization.
+    return .ok(publish_record(table, slot, record, plan.bytes[record], plan.alignments[record], mark, base));
+}
+// Record initialization/copy have completed every fallible operation.
+fn Token publish_record(ref mut Table table, usize slot, usize record, usize bytes,
+    usize alignment, usize mark, usize base) {
     let usize generation = table.slots[slot].generation;
     let usize end = table.arena.used;
     let usize depth = table.depth;
     table.slots[slot] = Owner { .generation = generation, .occupied = true, .live = true,
         .mark = mark, .base = base, .end = end, .element = 0,
-        .length = plan.bytes[record], .record = record, .alignment = plan.alignments[record] };
+        .length = bytes, .record = record, .alignment = alignment };
     table.order[depth] = slot;
     table.depth += 1;
-    return .ok(Token { .slot = slot, .generation = generation });
+    return Token { .slot = slot, .generation = generation };
 }
+
 fn Result<Owner, Error> resolve_record(ref records::Catalog catalog, ref Table table,
     Token token, usize capacity) {
     let Owner owner = resolve_any(table, token, capacity)?;
@@ -387,6 +392,30 @@ pub fn Result<usize, Error> write_record(ref records::Catalog catalog, ref Table
     Token token, ref usize[] path, i64 value, ref mut u8[] bytes) {
     let Owner owner = resolve_record(catalog, table, token, bytes.len)?;
     return switch (record_storage::write(catalog, owner.record, owner.base, path, value, bytes, ref table.arena)) {
+        case .ok(value): { .ok(value) } case .err(error): { .err(record_error(error)) }
+    };
+}
+
+// Copy the exact descriptor-bound record into one new shared owner. The old
+// owner/bytes remain live and charged until explicitly released.
+pub fn Result<Token, Error> copy_record(ref records::Catalog catalog, Token source,
+    ref mut u8[] bytes, ref mut Table table) {
+    let Owner owner = resolve_record(catalog, table, source, bytes.len)?;
+    let usize slot = free_slot(table)?;
+    let usize mark = table.arena.used;
+    let usize base = switch (record_storage::copy(catalog, owner.record, owner.base, bytes, ref mut table.arena)) {
+        case .ok(value): { value } case .err(error): { return .err(record_error(error)); }
+    };
+    return .ok(publish_record(table, slot, owner.record, owner.length, owner.alignment, mark, base));
+}
+// Exact record identity is required even when two declared records have the same
+// physical layout. Assignment never reserves an owner/extent or changes tokens.
+pub fn Result<usize, Error> assign_record(ref records::Catalog catalog, Token destination,
+    Token source, ref mut u8[] bytes, ref Table table) {
+    let Owner target = resolve_record(catalog, table, destination, bytes.len)?;
+    let Owner origin = resolve_record(catalog, table, source, bytes.len)?;
+    if (target.record != origin.record) { return .err(.Type); }
+    return switch (record_storage::assign(catalog, origin.record, target.base, origin.base, bytes, ref table.arena)) {
         case .ok(value): { .ok(value) } case .err(error): { .err(record_error(error)) }
     };
 }
