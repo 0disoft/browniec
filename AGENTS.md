@@ -14,17 +14,18 @@ own the affected contract. Broader scaffold procedures are optional.
 - The M1 scalar lexer/parser, i32 checks, private IR verifier, VM, and CLI exist in src/.
 - M2 has private scalar-array layout, codec, caller-backed storage, owner-lifetime and copy helpers;
   private function-owned array IR has independent verification and metered native VM dispatch. The current
-  source slices add immutable/mutable scalar-array declarations in lexical scopes of `main`, indexed reads,
+  source slices add immutable/mutable scalar-array declarations in lexical scopes of ordinary functions, indexed reads,
   element assignment in nested scopes, and copy initialization from exact-type/length array bindings.
   Array length access uses `NAME.len`, an exact `usize` constant in scalar expressions and pure for headers.
   Lexical exits release local arrays in reverse order; loop transfers preserve enclosing arrays.
   Whole-array assignment copies an exact-shape visible source into existing `var` storage without an extra extent.
   Private array bindings are function-owned; recursive VM frames retain separate tokens while sharing
-  the 16-owner table and payload arena. Source-level array declarations still belong to `main` only.
-  Focused frame verification passed 24 native groups, 329 array CLI cases, and 1,969 scalar CLI cases
-  per development/release profile; the frame receipt supersedes changed runtime inputs in prior receipts.
-  Array parameters, results, borrows, slices, aggregate guest calls,
-  and helper-function array locals remain unimplemented. Focused read/write/copy/length/scope/assignment verification passed in development and release; for-header arrays and array writes remain rejected.
+  the 16-owner table and payload arena. Source declarations include scalar and shallow wrapper-returning helpers.
+  Question-mark failure returns drop visible local arrays in reverse order; success keeps them live.
+  Focused helper verification passed 16 native groups, 426 array CLI cases, and 1,969 scalar CLI cases
+  per development/release profile; changed frontend and fixture inputs receive fresh evidence.
+  Array parameters, results, borrows, slices, and aggregate guest calls remain unimplemented.
+  For-header array declarations and writes remain rejected.
 - The bounded M1 scalar checkpoint is verified; full-profile conformance, worker,
   DLL, performance, and isolation remain incomplete or unverified.
 - Root fairy.toml builds the native CLI; tools/verify-m1.ps1 verifies its narrow profile.

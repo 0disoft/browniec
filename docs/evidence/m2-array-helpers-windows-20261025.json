@@ -1,0 +1,618 @@
+{
+  "schema": "browniec.m2-array-helpers/v1",
+  "status": "passed",
+  "recordedAt": "2026-10-25T09:48:27.5966913Z",
+  "compilerVersion": [
+    "Fairy C Stage 0",
+    "compiler: v0.0.0-20261022210249-4ce1264273be",
+    "sdk: fairyc-sdk-stdlib/0 0.0.0-stage0.86",
+    "language: fairyc-language/20",
+    "runtime: fairyc-runtime/0",
+    "revision: 4ce1264273be6051ee560173e94690e1b99c9eaf",
+    "modified: false"
+  ],
+  "compilerSha256": "572395f7f1e425d613c5a69f50b30ed177cda37ca2b1638bd0c11cf79fcbcc77",
+  "os": "Microsoft Windows NT 10.0.26300.0",
+  "lockedCheck": "check ok: 2 instance(s), 37 source file(s), 307 MIR function(s), lock verified",
+  "results": [
+    {
+      "profile": "development",
+      "nativeTests": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "development",
+        "tests": [
+          {
+            "identity": "tests::m2::array_helpers::early_propagation_does_not_publish_initializers_or_pending_writes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_helpers::helper_fuel_boundary_and_existing_source_exclusions_are_preserved",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_helpers::helper_local_arrays_and_copies_use_their_declaring_function",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_helpers::helper_scope_loop_and_arm_exits_reclaim_temporary_arrays",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_helpers::propagation_failure_drops_all_visible_arrays_and_success_retains_them",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_helpers::recursive_forward_and_mutual_calls_preserve_each_parent",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::array_reads_preserve_loop_lifetimes_and_cast_binding",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::bounds_quota_and_exact_fuel_are_guest_outcomes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::every_return_drops_visible_arrays_in_reverse_order",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::repeated_fill_and_index_evaluate_once_with_scalar_calls",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::six_scalar_types_and_literal_limits",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::source_array_types_scope_and_unimplemented_forms_are_rejected",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::propagation::failure_order_short_circuit_and_loops",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::propagation::propagation_fuel_reuse_and_guarded_initialization",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::propagation::propagation_type_and_header_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::propagation::scalar_success_and_failure_type_changes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 16,
+        "passed": 16,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "build": "built: build/browniec.exe (x86_64-windows-msvc, development, lock verified)",
+      "artifact": "build/m2-array-helpers/browniec-development.exe",
+      "sha256": "aaed4d2be43d1158a7ad324d0b671cd717c51a3dea3d378664224ce7e4748096",
+      "cliCases": 67,
+      "writeCliCases": 61,
+      "copyCliCases": 58,
+      "lengthCliCases": 40,
+      "scopeCliCases": 44,
+      "assignmentCliCases": 59,
+      "helperCliCases": 97,
+      "sourceCliReceiptSha256": "9b26e418ff829234e3a9e682469ff5dc8a03fe5d533cc13809985d3e692ef7cc",
+      "writeCliReceiptSha256": "6afbf1669bce82376a2879d034e98cfed80f2ac22e4bc2cb4d4675c30cb7158e",
+      "copy-sourceCliReceiptSha256": "c15a9deebd9610c85f6e853279111950d566aee932180a5416d76b3ad30e3549",
+      "lengthCliReceiptSha256": "c4400e4a50c7fbc8e1eedf0706755b3b247c6f4464f2e5342a4212ba62bfd9b5",
+      "scopesCliReceiptSha256": "40f47c9f2c30467f91fa37becf9827ba3675ceca8e7b0008a85ede9bb30129b7",
+      "assignmentCliReceiptSha256": "772a2c0b4d04ab843fbf3be5d0b86bdbdd0f5e537c054bf1b03e949a9e16e442",
+      "helpersCliReceiptSha256": "a5403c8bd8c6d6e30075fe223a5bca1317983b2d6f56028b9626c9462910678b"
+    },
+    {
+      "profile": "release",
+      "nativeTests": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "release",
+        "tests": [
+          {
+            "identity": "tests::m2::array_helpers::early_propagation_does_not_publish_initializers_or_pending_writes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_helpers::helper_fuel_boundary_and_existing_source_exclusions_are_preserved",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_helpers::helper_local_arrays_and_copies_use_their_declaring_function",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_helpers::helper_scope_loop_and_arm_exits_reclaim_temporary_arrays",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_helpers::propagation_failure_drops_all_visible_arrays_and_success_retains_them",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_helpers::recursive_forward_and_mutual_calls_preserve_each_parent",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::array_reads_preserve_loop_lifetimes_and_cast_binding",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::bounds_quota_and_exact_fuel_are_guest_outcomes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::every_return_drops_visible_arrays_in_reverse_order",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::repeated_fill_and_index_evaluate_once_with_scalar_calls",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::six_scalar_types_and_literal_limits",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_source::source_array_types_scope_and_unimplemented_forms_are_rejected",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::propagation::failure_order_short_circuit_and_loops",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::propagation::propagation_fuel_reuse_and_guarded_initialization",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::propagation::propagation_type_and_header_rejections",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::propagation::scalar_success_and_failure_type_changes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 16,
+        "passed": 16,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "build": "built: build/browniec.exe (x86_64-windows-msvc, release, lock verified)",
+      "artifact": "build/m2-array-helpers/browniec-release.exe",
+      "sha256": "fa463a3eedc0ed3f0601fd10d49b1b171bf81b08ae3deede830c483c996b8f61",
+      "cliCases": 67,
+      "writeCliCases": 61,
+      "copyCliCases": 58,
+      "lengthCliCases": 40,
+      "scopeCliCases": 44,
+      "assignmentCliCases": 59,
+      "helperCliCases": 97,
+      "sourceCliReceiptSha256": "e9a4b039c325552c4da9c5897931287355525853347178b82262f8133350f87b",
+      "writeCliReceiptSha256": "e0f68733f741cabcb3c60b32d2b270a02e6def5cf4306d6858576208e4130eec",
+      "copy-sourceCliReceiptSha256": "8d3963ac9e7564488f05e2cad76439529db5bc7a8b3fc7dc821472349698b1a5",
+      "lengthCliReceiptSha256": "27953bccb8239ec8e98c007abf55d1a63b5f309681148bdbf6bebad8e352a117",
+      "scopesCliReceiptSha256": "500b4a888bc0ef4ba931bb170e491d78fa412adb08bc9b7d0605cca93d214916",
+      "assignmentCliReceiptSha256": "35c2cd25fc6253556f7af1af383b1b7b992c838288c3253462e85bf70746e9a9",
+      "helpersCliReceiptSha256": "32f2794aae737793adfbf9614cf55b0e3dac82549ddcda74635d8174439f797b"
+    }
+  ],
+  "allocatorTests": [],
+  "sourceSha256": [
+    {
+      "path": "examples/array-assignment.brc",
+      "sha256": "13fdfc3681adf166752b8929c250f8909df42e42fc2819c28ec9828a20256010"
+    },
+    {
+      "path": "examples/array-helpers.brc",
+      "sha256": "906e2ee664c3023775430d370baa27ae7e8285c68e68d2acf94f8f5732d54df3"
+    },
+    {
+      "path": "examples/array-length.brc",
+      "sha256": "490119c406bcd9b61ec8ce9444ee7bc5cac06e42bdb69c025d4e86592a57da81"
+    },
+    {
+      "path": "examples/array-scopes.brc",
+      "sha256": "d289003eb1523babd1afa91b9da623be25e48b5274dec4e12912ae1712a4c0b0"
+    },
+    {
+      "path": "fairy.lock",
+      "sha256": "24886dcc5a67bda365c11eb51a7406e531ae892d9da952599ac2e13d25ff2b79"
+    },
+    {
+      "path": "fairy.toml",
+      "sha256": "f5254ba793d9012470c697e8657688a4ea5465c138fba6d748707d5bfa4b31fb"
+    },
+    {
+      "path": "src/arithmetic.fy",
+      "sha256": "8192e6ba97498d059b0505307bc2bf84ac58d9722dc5f597587f8ae81a1081d3"
+    },
+    {
+      "path": "src/array_layout.fy",
+      "sha256": "d3497dfb6bb7e9ac8ceece4ae88a2274b6b40b49e3c5fecfc509179c03c91cdd"
+    },
+    {
+      "path": "src/array_meta.fy",
+      "sha256": "d1a07319dc2bb7eb95298e3920eaec63c1a4c1390a00c5469528a77e97612894"
+    },
+    {
+      "path": "src/array_owners.fy",
+      "sha256": "c5dd3496cf286217277307e5891b30866637ceed3ba0c83b2229112b3cad6203"
+    },
+    {
+      "path": "src/array_source.fy",
+      "sha256": "31a1a9972ff5b367db840da13c3dd9794fd046cde94e9f476f9f2f687ea5bcb5"
+    },
+    {
+      "path": "src/array_storage.fy",
+      "sha256": "00808c116e0fb86ce063d7fd4cc9d1f8fd29f19b277449e59e3569491a3ee534"
+    },
+    {
+      "path": "src/array_verifier.fy",
+      "sha256": "f2ccfa44a82a2844d1fbc3a94750ecfba1763331334bfa0597e1e267f432f50c"
+    },
+    {
+      "path": "src/array_vm.fy",
+      "sha256": "064da645bba462328f748b763a9d8c264f75d70178b17a263c7f707af4a31444"
+    },
+    {
+      "path": "src/bits.fy",
+      "sha256": "0b030757624a8dbaea9475f90d757aeff78b9154a121af7a4d9ebd80042db1a0"
+    },
+    {
+      "path": "src/casts.fy",
+      "sha256": "59da4a4ecef63833cc383495390e150b964bf41b353c4b150dcacb6be66caba6"
+    },
+    {
+      "path": "src/cells.fy",
+      "sha256": "71b82add3e95b86a1b7bcb88c3f97f6ae38bae0ac3ec8b1a2de925b10a64e433"
+    },
+    {
+      "path": "src/cli_input.fy",
+      "sha256": "ec91de62e6b5147d117d6fe0366ebcf617b556c074bf1dd91cb10188f96507ba"
+    },
+    {
+      "path": "src/compiler.fy",
+      "sha256": "4eb1461c6085563913341008513959e0c30477cf6cf6ce6b754699af328b901d"
+    },
+    {
+      "path": "src/errors.fy",
+      "sha256": "e8070ef5c6380460dacb579c33f2e180b9e683286c8cb0827e30d82a581a4646"
+    },
+    {
+      "path": "src/functions.fy",
+      "sha256": "59195b4a404b1addd10c913a7ad4d046343ba37c0d1e5be9eeea2bf1ee97363e"
+    },
+    {
+      "path": "src/ir.fy",
+      "sha256": "67e9ab17952ba0ca2d14b462007cc43332fb3a90aeddb147538761c90284c2f5"
+    },
+    {
+      "path": "src/lexer.fy",
+      "sha256": "0a64c45b3a3512ada4610c244ce874d306e417cde0fce4cd99a419048002861e"
+    },
+    {
+      "path": "src/locals.fy",
+      "sha256": "f89cab6159330ec0ac269ef02cedd59d15f6f3cfae2d60fc89d43b5ccdf32cda"
+    },
+    {
+      "path": "src/loops.fy",
+      "sha256": "d25dccfb4d3d50daa6e82a6a2f8df345ea72fd4a559e3a8882d6cda0230cbee2"
+    },
+    {
+      "path": "src/main.fy",
+      "sha256": "82a76b1a92376304556b4a2546ec98cb9d219bacb941d92bd4d67d2cbdfecec8"
+    },
+    {
+      "path": "src/patterns.fy",
+      "sha256": "d9ba2ff9dba626968b7514c636a414932e50856c19b9d41d6825b4f91c9797aa"
+    },
+    {
+      "path": "src/propagation.fy",
+      "sha256": "9b58f0e5ed3ef79c44cf819c651e0ec456e38441c3ce8579aca31e0d7eb80bdc"
+    },
+    {
+      "path": "src/register_set.fy",
+      "sha256": "478e2690ee311bb3961c329becc6f9ef035276759619733cbfd0f6e441f36b73"
+    },
+    {
+      "path": "src/render.fy",
+      "sha256": "d6ae1e6212767aa3bed55c0383bc2065128c4db49c398c39396e437387e62bba"
+    },
+    {
+      "path": "src/scalar_codec.fy",
+      "sha256": "c28ca5e5cdc38dee01d79489d8c5a709022a49001854af638258ec4536ad66f0"
+    },
+    {
+      "path": "src/shifts.fy",
+      "sha256": "510dc6a90591de165de424a377eb267917ea9973972b9b95656cc9c435675eeb"
+    },
+    {
+      "path": "src/tagged.fy",
+      "sha256": "67770f8ec8f3e35a2a6196cda87310844d37358f86f8b22eb81b49df1f65f1bf"
+    },
+    {
+      "path": "src/types.fy",
+      "sha256": "906f5ba160de53f60d23e344e141181f902f36de60a4060375bef97a2162be23"
+    },
+    {
+      "path": "src/verifier.fy",
+      "sha256": "fa2b72192f4e4e8b47554e3415f5a7f9fb2fe330d3424de75dfdf867a18e3856"
+    },
+    {
+      "path": "src/vm.fy",
+      "sha256": "442ec13a67ce503521fcf17e84a1075b30fdc94b2c377c99339fdfb87b811686"
+    },
+    {
+      "path": "tests/m2/array_helpers.fy",
+      "sha256": "30a75872a461c5b59b2e06fc55799710c0bfcdae8aff5e2bc643a2dd4b8accd9"
+    },
+    {
+      "path": "tests/m2/array_source.fy",
+      "sha256": "dd9848a82edf09b88db8c6152eec8f13b9266b8c5f180d8afc3d4f8bff8cf295"
+    },
+    {
+      "path": "tests/propagation.fy",
+      "sha256": "754fcab373afd31191c5c1c696ddceb14da24e5f54136fd16c57156b8e003327"
+    },
+    {
+      "path": "tools/check-m2-array-assignment.py",
+      "sha256": "8090b71034656b477eb1756a7c7f2e6b925e36920bcc15e77df64a85d3a1eeac"
+    },
+    {
+      "path": "tools/check-m2-array-copy-source.py",
+      "sha256": "7ec1c99b252f3ef4a9dec2594f86921a3aa2c3fae374f238cf1637105bad0096"
+    },
+    {
+      "path": "tools/check-m2-array-helpers.py",
+      "sha256": "b7d8252b5d34ac6707a205b4afb911a4351fd6593e34ba85eec68cf3434e272f"
+    },
+    {
+      "path": "tools/check-m2-array-length.py",
+      "sha256": "32dce33a7dd30f41c5898b3465c73000ddb0ad292e61ef5ab40ce616ad7246a7"
+    },
+    {
+      "path": "tools/check-m2-array-scopes.py",
+      "sha256": "7eaa68c9b1266f681557009c299203bb85edbb54ef85319de14acec1526cb4a0"
+    },
+    {
+      "path": "tools/check-m2-array-source.py",
+      "sha256": "2563032969eae20f06d98cf3f48d651100bf83db02d805358a31cc6d3d083150"
+    },
+    {
+      "path": "tools/check-m2-array-write.py",
+      "sha256": "2dac6d18d64f56294ebf48bde7ef712b7bc52b2d9404bd065a71d454fcbab63a"
+    },
+    {
+      "path": "tools/verify-m2-arrays.ps1",
+      "sha256": "92158654e42fb77ba7ba588da975b6bd43548fca017f811df28c080b83930cda"
+    }
+  ],
+  "artifacts": "Tool-managed temporary native test images; source mode also retains hashed native CLI binaries.",
+  "limitations": [
+    "Source fixed scalar arrays are supported in scalar and shallow wrapper-returning helper functions, with cleanup on question-mark failure paths.",
+    "Array parameters/results, wrapper element arrays, borrows, slices and for-header array operations remain unavailable.",
+    "All functions share 16 static array sites, 16 live owners, 32 VM frames and one payload arena capped at 65536 bytes.",
+    "No isolation, DLL, clean-machine or performance claim."
+  ],
+  "foundationReuse": {
+    "m0Inputs": 18,
+    "unchangedBackendInputs": 27,
+    "compilerIdentity": "unchanged",
+    "priorEvidence": "docs/evidence/m2-array-frames-windows-20261025.json",
+    "fixtureEvidence": "docs/evidence/m2-array-source-windows-20261024.json",
+    "changedRuntimeInputs": [],
+    "runtimeVerification": "Native helper/read/propagation tests and all CLI matrices rerun; IR/verifier/VM, codecs and storage match prior frame inputs. Changed frontend inputs are not reused as unchanged backend evidence.",
+    "changedFrontendInputs": [
+      "src/array_source.fy",
+      "src/compiler.fy",
+      "src/locals.fy",
+      "src/propagation.fy"
+    ],
+    "changedFixtureInputs": [
+      "tests/m2/array_source.fy",
+      "tools/check-m2-array-source.py",
+      "tools/check-m2-array-write.py",
+      "tools/check-m2-array-copy-source.py",
+      "tools/check-m2-array-scopes.py"
+    ]
+  },
+  "commands": [
+    "pwsh -NoProfile -File tools/verify-m2-arrays.ps1 -Slice helpers",
+    "python -B tools/record-m2-array-write-evidence.py --slice helpers --scalar-regression",
+    "python -B tools/record-m2-array-write-evidence.py --slice helpers --reuse-scalar-regression",
+    "git diff --check"
+  ],
+  "scalarRegression": {
+    "nativeRerun": false,
+    "results": [
+      {
+        "profile": "development",
+        "cliCases": 1969,
+        "artifact": "build/m2-array-helpers/browniec-development.exe",
+        "sha256": "aaed4d2be43d1158a7ad324d0b671cd717c51a3dea3d378664224ce7e4748096",
+        "cliReceiptSha256": "ce6c8a44b009b623ff92c740abbef5c9bfcd8a4113bc68a31a91184fd3e68163"
+      },
+      {
+        "profile": "release",
+        "cliCases": 1969,
+        "artifact": "build/m2-array-helpers/browniec-release.exe",
+        "sha256": "fa463a3eedc0ed3f0601fd10d49b1b171bf81b08ae3deede830c483c996b8f61",
+        "cliReceiptSha256": "bba0e679c6ca40c6775f952b897f27e5016388b23005e15df2034e6165aa3932"
+      }
+    ],
+    "sourceSha256": [
+      {
+        "path": "tools/check-m1-cli.py",
+        "sha256": "9de0f8c340f3da1f769c23e148088bea2ec1381284232494409aabae1ea29302"
+      },
+      {
+        "path": "tools/m1_arm_statement_cases.py",
+        "sha256": "f1a19497ae47f04ebaec0fb0cd3c4f8eed8f964bbf8524b6307592b2f67d82ef"
+      },
+      {
+        "path": "tools/m1_bitwise_cases.py",
+        "sha256": "44b474577db55d5afd8f5a3a4cdd0b4d13bf44fb1b4a8b4e2eee170698359ca0"
+      },
+      {
+        "path": "tools/m1_i64_cases.py",
+        "sha256": "161a45f662295cad8742655bdd59aae4bdfe13e10a241894d3b82ad1bc1eefdc"
+      },
+      {
+        "path": "tools/m1_propagation_cases.py",
+        "sha256": "f3728cffafc48866c44e16badb8a256f3e45c0299ab3c7a3d0c1c1ab69dbd986"
+      },
+      {
+        "path": "tools/m1_shift_cases.py",
+        "sha256": "7b12d715d1ed86b142fbf75c25fdb678f253b0c40ac07229d8f9d9bb0afa4acf"
+      },
+      {
+        "path": "tools/m1_switch_expression_cases.py",
+        "sha256": "09759b7891ad407dadabfa18c0c51afa9cb7751912928da8b9fae0598c18b32b"
+      },
+      {
+        "path": "tools/m1_tagged_cases.py",
+        "sha256": "70de6cf5e68e1fe11ee3dd4e72b506b1a19677133a8b483b7a039efb651d963f"
+      },
+      {
+        "path": "tools/m1_unsigned_cases.py",
+        "sha256": "2c0232b88abab5e8d7821cb0d91ad8efa8b4ca6e5048a6e9d6fe9793245b5d9b"
+      },
+      {
+        "path": "tools/m1_widening_cases.py",
+        "sha256": "6a4d87dbd0d3570c50bab7b3760839fbee6670cd16152892bbf536f0662e50cc"
+      }
+    ],
+    "recordedAt": "2026-10-25T09:51:29.946764+00:00"
+  },
+  "documentationChecks": {
+    "files": 94,
+    "relativeLinks": 569,
+    "diffCheck": "passed"
+  },
+  "baselineCommit": "45e7625c6795ecaa372027ae4695c9210f826e97",
+  "evidenceRecorderSha256": "1d117b9c284ce521569f6a6b87d82549703fe7f449719fbf9337224a08529245",
+  "skipped": [
+    {
+      "check": "M0 and private array IR/VM native reruns",
+      "reason": "Named compiler, backend and private IR/VM fixture inputs unchanged."
+    },
+    {
+      "check": "Full 84-group scalar native rerun",
+      "reason": "Focused native parser/VM tests and scalar CLI regression used; scalar instruction implementations are unchanged."
+    },
+    {
+      "check": "Instrumented allocator, Linux, isolation, DLL, performance",
+      "reason": "Not executed in this increment."
+    }
+  ]
+}

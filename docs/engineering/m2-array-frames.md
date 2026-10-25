@@ -1,5 +1,9 @@
 # M2 Array Function Frames
 
+This page records the frame foundation. The later [helper-local increment](m2-array-helpers.md)
+admits source declarations in ordinary functions. The frame receipt is historical
+for changed compiler/local-table/propagation inputs; IR and VM source are unchanged.
+
 - Status: implemented and focused-harness verified in development and release
 - Evidence: [Windows frame receipt](../evidence/m2-array-frames-windows-20261025.json)
 - Scope: private array ownership and lifetime across bounded guest frames

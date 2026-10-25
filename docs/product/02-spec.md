@@ -157,8 +157,12 @@ expressions and classic `for` header assignments remain excluded.
 The [private frame foundation](../engineering/m2-array-frames.md) associates each
 array catalog entry with one function and keeps array tokens separate across
 recursive VM frames. Private helper-local arrays share the same 16-owner table
-and payload arena as the entry frame. This is a runtime foundation: helper source
-declarations and array parameters/results remain unimplemented.
+and payload arena as the entry frame. The later
+[helper-local increment](../engineering/m2-array-helpers.md) admits source arrays
+in ordinary functions, including those returning shallow wrappers. Explicit
+returns and `?` failure paths drop visible arrays after evaluating the return
+value; a successful `?` keeps arrays live. Initializer destinations become visible
+only after completion. Array parameters/results remain unimplemented.
 
 The current scalar CLI implements fixed-width integer `~`, `&`, `^`, and `|`,
 and checked `<<` and `>>`. Binary operands, including shift amounts, must have the

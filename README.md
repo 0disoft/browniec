@@ -1,6 +1,6 @@
 # Brownie C
 
-- Status: M1 scalar checkpoint verified; private entry-array IR/VM implemented and verified; immutable source-array reads verified; mutable source-array writes are focused-harness verified; array copy initializers, length access, and lexical lifetimes implemented and focused-harness verified; full profile incomplete
+- Status: M1 scalar checkpoint verified; M2 function-owned scalar arrays with helper declarations, copies, length access, lexical cleanup, and whole-array assignment implemented; full profile incomplete
 - Design date: 2026-10-23
 - First delivery target: Windows 11 x64
 
@@ -47,8 +47,10 @@ The [lexical-scope increment](docs/engineering/m2-array-scopes.md) admits arrays
 loop transfers. [Whole-array assignment](docs/engineering/m2-array-assignment.md)
 adds `dest = source;` for exact matching arrays, overwriting existing mutable storage
 without allocating another extent. The [private frame foundation](docs/engineering/m2-array-frames.md)
-separates function ownership and recursive VM array tokens; source declarations
-remain limited to `main`. Array parameters, results, borrows, slices, aggregate
+separates function ownership and recursive VM array tokens. The
+[helper-local increment](docs/engineering/m2-array-helpers.md) extends source
+arrays to scalar and shallow wrapper-returning helpers, including reverse cleanup
+on `?` failure returns. Array parameters, results, borrows, slices, aggregate
 calls, structs, workers, and DLLs remain later work.
 
 ```powershell
@@ -88,6 +90,9 @@ pwsh -NoProfile -File tools/verify-m2-arrays.ps1 -Slice assignment
 python -B tools/record-m2-array-write-evidence.py --slice assignment --scalar-regression
 pwsh -NoProfile -File tools/verify-m2-arrays.ps1 -Slice frames
 python -B tools/record-m2-array-write-evidence.py --slice frames --scalar-regression
+./build/browniec.exe run examples/array-helpers.brc --fuel 100000 --json
+pwsh -NoProfile -File tools/verify-m2-arrays.ps1 -Slice helpers
+python -B tools/record-m2-array-write-evidence.py --slice helpers --scalar-regression
 ```
 
 See [Development](DEVELOPMENT.md) to provision the pinned compiler and for build
@@ -161,6 +166,7 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 lexical array scopes](docs/engineering/m2-array-scopes.md): nested declarations, reverse cleanup, loop transfers, and bounded storage reuse
 - [M2 whole-array assignment](docs/engineering/m2-array-assignment.md): exact-shape copies into existing mutable storage, preflight, private IR, and Fuel
 - [M2 private array function frames](docs/engineering/m2-array-frames.md): function ownership, recursive frame tokens, shared quotas, and parameter work sequencing
+- [M2 helper-local arrays](docs/engineering/m2-array-helpers.md): function-local source declarations, recursion, and cleanup on wrapper propagation
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
 - [Design baseline](docs/design-baseline.md): source provenance, evidence, and findings

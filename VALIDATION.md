@@ -1,7 +1,7 @@
 # Validation
 
 - Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, switch-expression, i64, and unsigned receipts are verified historical evidence; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified; private entry-array IR/VM and source-array reads/writes/copy initializers implemented and focused-harness verified
-- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/u8/u32/usize/bool values, explicit widening, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation; private function-owned array IR/native dispatch with separate recursive frame tokens, let/var scalar arrays in lexical scopes of main, indexed reads/writes, copy initializers, length access, lexical cleanup, and whole-array assignment are implemented
+- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/u8/u32/usize/bool values, explicit widening, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation; private function-owned array IR/native dispatch with separate recursive frame tokens, let/var scalar arrays in lexical scopes of ordinary functions, indexed reads/writes, copy initializers, length access, lexical cleanup including `?` failure, and whole-array assignment are implemented
 
 ## Validation source of truth
 
@@ -390,6 +390,20 @@ rejection. Changed IR/verifier/VM and array IR fixture inputs receive fresh chec
 prior receipts remain historical for those inputs. Source arrays remain entry-only.
 The full 84-group scalar native suite, M0 rerun, allocator instrumentation, Linux,
 isolation, DLL, and performance measurements are skipped.
+
+The [helper-local contract](docs/engineering/m2-array-helpers.md) extends source
+arrays to scalar and shallow wrapper-returning functions and cleans visible
+arrays on `?` failure returns. The
+[helper receipt](docs/evidence/m2-array-helpers-windows-20261025.json) records
+16 native groups (six helper, six read-source, four scalar propagation),
+426 array CLI cases, and 1,969 scalar CLI cases per development/release profile.
+It covers all element and shallow wrapper types, recursive/mutual calls, shared
+quotas, incomplete initializers, pending writes, and independent rejection of
+missing failure cleanup. IR/verifier/VM and primitive sources match the prior
+frame inputs; changed compiler/local-table/array-source/propagation inputs
+receive fresh source checks. The full 84-group scalar native suite, M0/private
+array unit reruns, allocator instrumentation, Linux, isolation, DLL, and
+performance checks are skipped.
 
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker

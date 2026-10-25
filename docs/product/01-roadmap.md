@@ -1,7 +1,7 @@
 # Roadmap
 
 - Status: Accepted delivery sequence; M0 verified; named M1 slices through unsigned have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified, 2026-10-23; private entry-array IR/VM verified by its native harness, 2026-10-24; source-array reads verified; source-array writes are focused-harness verified; source-array copy initializers focused-harness verified
-- Current progress: M1 scalar checkpoint verified; M2 array storage, owner lifetimes, independent copies, and private entry-array IR/VM verified; immutable source-array declarations and indexed reads verified; mutable declarations and element writes are focused-harness verified; copy initialization and length access are implemented and focused-harness verified; full-profile conformance incomplete; M3-M5 not started
+- Current progress: M1 scalar checkpoint verified; M2 function-owned scalar arrays, recursive frame lifetimes, copy/assignment, length access, and helper-local source declarations with wrapper cleanup implemented; array parameters/results, structs, borrows, Buffer, and text remain open; full-profile conformance incomplete; M3-M5 not started
 
 This roadmap orders learning and evidence. It is not a release promise. M0 has a
 native harness and recorded evidence. The scalar CLI/VM now exist; the worker
@@ -214,6 +214,16 @@ The [frame receipt](../evidence/m2-array-frames-windows-20261025.json) records
 24 native groups, 329 array CLI cases, and 1,969 scalar CLI cases per
 development/release profile; prior IR/verifier/VM evidence is historical where
 inputs changed.
+
+The [helper-local array increment](../engineering/m2-array-helpers.md) now admits
+the existing array grammar in scalar and shallow wrapper-returning functions.
+Function-owned declarations and copies reuse the frame backend; `?` failure
+lowering emits reverse local cleanup before returning the failure wrapper.
+Array parameters/results, borrows, and slices remain open.
+The [helper receipt](../evidence/m2-array-helpers-windows-20261025.json) records
+16 native groups, 426 array CLI cases, and 1,969 scalar CLI cases per
+development/release profile. The frame backend is unchanged; earlier frontend
+receipts are historical where compiler and propagation inputs changed.
 
 Goal: connect arrays, plain structs, borrows, Buffer, input,
 output, and UTF-8.
