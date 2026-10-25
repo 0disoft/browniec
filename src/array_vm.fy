@@ -7,9 +7,11 @@ import cells as cells;
 import errors as errors;
 import std::bytes as bytes;
 
-pub struct State { owners::Table owners; owners::Token[16] tokens; }
+// Static catalog IDs repeat under recursion; tokens belong to an invocation.
+// The payload and sixteen live owner descriptors remain shared by all frames.
+pub struct State { owners::Table owners; owners::Token[512] tokens; }
 pub fn State empty(usize limit) {
-    return State { .owners = owners::empty(limit), .tokens = [owners::Token { .slot = 0, .generation = 0 }; 16] };
+    return State { .owners = owners::empty(limit), .tokens = [owners::Token { .slot = 0, .generation = 0 }; 512] };
 }
 pub fn Result<bytes::Buffer, errors::Error> prepare(usize capacity) {
     if (capacity > 65536) { return .err(errors::make(13, 0)); }
@@ -46,8 +48,10 @@ fn errors::Error failure(owners::Error error, usize offset) {
     };
     return errors::make(kind, offset);
 }
-pub fn Result<usize, errors::Error> execute(u8 op, usize dst, usize a, usize b, ref meta::Catalog catalog,
+pub fn Result<usize, errors::Error> execute(u8 op, usize dst, usize a, usize b, usize frame, ref meta::Catalog catalog,
     ref mut State state, ref mut bytes::Buffer buffer, ref mut i64[] registers, usize offset) {
+    if (frame >= 32) { return .err(errors::make(5, offset)); }
+    let usize base = frame * 16;
     let ref mut u8[] data = bytes::view_mut(buffer);
     if (op == 33) {
         let layouts::Array layout = switch (layouts::scalar(catalog.elements[dst], catalog.lengths[dst])) {
@@ -56,36 +60,36 @@ pub fn Result<usize, errors::Error> execute(u8 op, usize dst, usize a, usize b, 
         let owners::Token token = switch (owners::create(ref layout, registers[a], data, ref mut state.owners)) {
             case .ok(value): { value } case .err(e): { return .err(failure(e, offset)); }
         };
-        state.tokens[dst] = token;
+        state.tokens[base + dst] = token;
     } else if (op == 34) {
-        let owners::Token source = state.tokens[a];
+        let owners::Token source = state.tokens[base + a];
         let owners::Token token = switch (owners::copy(source, data, ref mut state.owners)) {
             case .ok(value): { value } case .err(e): { return .err(failure(e, offset)); }
         };
-        state.tokens[dst] = token;
+        state.tokens[base + dst] = token;
     } else if (op == 35) {
-        let owners::Token token = state.tokens[a];
+        let owners::Token token = state.tokens[base + a];
         let usize index = cells::unpack(registers[b], offset)?;
         let i64 value = switch (owners::read(ref state.owners, token, index, data)) {
             case .ok(value): { value } case .err(e): { return .err(failure(e, offset)); }
         };
         registers[dst] = value;
     } else if (op == 36) {
-        let owners::Token token = state.tokens[dst];
+        let owners::Token token = state.tokens[base + dst];
         let usize index = cells::unpack(registers[a], offset)?;
         let usize size = switch (owners::write(ref state.owners, token, index, registers[b], data)) {
             case .ok(value): { value } case .err(e): { return .err(failure(e, offset)); }
         };
     } else if (op == 38) {
-        let usize assigned = switch (owners::assign(state.tokens[dst], state.tokens[a], data, ref state.owners)) {
+        let usize assigned = switch (owners::assign(state.tokens[base + dst], state.tokens[base + a], data, ref state.owners)) {
             case .ok(size): { size } case .err(e): { return .err(failure(e, offset)); }
         };
     } else if (op == 37) {
-        let owners::Token token = state.tokens[dst];
+        let owners::Token token = state.tokens[base + dst];
         let usize reclaimed = switch (owners::release(ref mut state.owners, token, data.len)) {
             case .ok(value): { value } case .err(e): { return .err(failure(e, offset)); }
         };
-        state.tokens[dst] = owners::Token { .slot = 0, .generation = 0 };
+        state.tokens[base + dst] = owners::Token { .slot = 0, .generation = 0 };
     } else { return .err(errors::make(5, offset)); }
     return .ok(0);
 }

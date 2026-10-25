@@ -45,9 +45,8 @@ pub fn Result<i64, errors::Error> run_with_array_limit(ref ir::Program p, usize 
         remaining -= cost;
         let usize base = frame * 128;
         if (op >= 33) {
-            if (frame != 0) { return .err(errors::make(5, p.offsets[pc])); }
-            let usize executed = array_vm::execute(op, dst, a, b, ref p.arrays, ref mut arrays,
-                ref mut payload, ref mut registers, p.offsets[pc])?;
+            let usize executed = array_vm::execute(op, dst, a, b, frame, ref p.arrays, ref mut arrays,
+                ref mut payload, ref mut registers[base..base + 128], p.offsets[pc])?;
             pc += 1; continue;
         }
         if (op==25) {return .err(errors::make(5,p.offsets[pc]));}
