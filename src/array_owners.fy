@@ -3,12 +3,16 @@ module array_owners;
 import array_layout as layouts;
 import array_storage as storage;
 import scalar_codec as codec;
+import struct_layout as records;
+import struct_nested_storage as record_storage;
 
 // Instance-local metadata over caller-owned backing bytes. No guest/raw pointer.
 pub struct Token { usize slot; usize generation; }
 pub struct Owner {
     usize generation; bool occupied; bool live; usize mark; usize base; usize end;
-    u8 element; usize length;
+    // element 0 denotes a record: length is bytes, record/alignment identify its layout.
+    // Arrays retain their scalar element/length and zero record/alignment fields.
+    u8 element; usize length; usize record; usize alignment;
 }
 pub struct Table { Owner[16] slots; usize[16] order; usize depth; storage::Arena arena; }
 // Dense array-argument results, in input order. Scalar arguments are not included.
@@ -17,7 +21,7 @@ pub enum Error { Token; Owners; State; Type; Length; Metadata; Overflow; Quota; 
 
 pub fn Table empty(usize limit) {
     return Table { .slots = [Owner { .generation = 1, .occupied = false, .live = false,
-        .mark = 0, .base = 0, .end = 0, .element = 0, .length = 0 }; 16],
+        .mark = 0, .base = 0, .end = 0, .element = 0, .length = 0, .record = 0, .alignment = 0 }; 16],
         .order = [0; 16], .depth = 0, .arena = storage::empty(limit) };
 }
 fn Error storage_error(storage::Error error) {
@@ -25,6 +29,23 @@ fn Error storage_error(storage::Error error) {
         case .Type: { .Type } case .Length: { .Length } case .Metadata: { .Metadata }
         case .Overflow: { .Overflow } case .Quota: { .Quota } case .Bounds: { .Bounds }
         case .Alignment: { .Alignment } case .Value: { .Value } case .State: { .State }
+    };
+}
+
+// Derive a reservation layout, never an array view of a record token.
+fn Result<layouts::Array, Error> allocation_layout(ref Owner owner) {
+    if (owner.element != 0) {
+        if (owner.record != 0 || owner.alignment != 0) { return .err(.State); }
+        return switch (layouts::scalar(owner.element, owner.length)) {
+            case .ok(value): { .ok(value) } case .err(_): { .err(.State) }
+        };
+    }
+    if (owner.record >= 32 || owner.length == 0 || owner.length > 128) { return .err(.State); }
+    if (owner.alignment != 1 && owner.alignment != 4 && owner.alignment != 8) { return .err(.State); }
+    if (owner.length % owner.alignment != 0) { return .err(.State); }
+    let u8 tag = if (owner.alignment == 1) { 10 } else if (owner.alignment == 4) { 11 } else { 12 };
+    return switch (layouts::scalar(tag, owner.length / owner.alignment)) {
+        case .ok(value): { .ok(value) } case .err(_): { .err(.State) }
     };
 }
 
@@ -41,7 +62,7 @@ fn bool valid(ref Table table, usize capacity) {
         seen[slot] = true;
         let Owner owner = table.slots[slot];
         if (!owner.occupied || owner.mark != cursor || (owner.live && owner.generation == 0)) { return false; }
-        let layouts::Array layout = switch (layouts::scalar(owner.element, owner.length)) {
+        let layouts::Array layout = switch (allocation_layout(ref owner)) {
             case .ok(value): { value } case .err(_): { return false; }
         };
         let layouts::Reservation plan = switch (layouts::reserve(ref layout, cursor, table.arena.limit)) {
@@ -59,11 +80,17 @@ fn bool valid(ref Table table, usize capacity) {
     }
     return true;
 }
-fn Result<Owner, Error> resolve(ref Table table, Token token, usize capacity) {
+fn Result<Owner, Error> resolve_any(ref Table table, Token token, usize capacity) {
     if (token.slot >= 16 || token.generation == 0) { return .err(.Token); }
     let Owner owner = table.slots[token.slot];
     if (!owner.occupied || !owner.live || owner.generation != token.generation) { return .err(.Token); }
     if (!valid(table, capacity)) { return .err(.State); }
+    return .ok(owner);
+}
+// Array entry points must reject record tokens even when their raw size matches.
+fn Result<Owner, Error> resolve(ref Table table, Token token, usize capacity) {
+    let Owner owner = resolve_any(table, token, capacity)?;
+    if (owner.element == 0) { return .err(.Type); }
     return .ok(owner);
 }
 fn Result<usize, Error> free_slot(ref Table table) {
@@ -79,7 +106,7 @@ fn Token publish(ref mut Table table, usize slot, ref layouts::Array layout, usi
     let usize end = table.arena.used;
     let usize depth = table.depth;
     table.slots[slot] = Owner { .generation = generation, .occupied = true, .live = true,
-        .mark = mark, .base = base, .end = end, .element = layout.element, .length = layout.length };
+        .mark = mark, .base = base, .end = end, .element = layout.element, .length = layout.length, .record = 0, .alignment = 0 };
     table.order[depth] = slot;
     table.depth += 1;
     return Token { .slot = slot, .generation = generation };
@@ -268,9 +295,10 @@ fn void forget(ref mut Table table, usize slot) {
     table.slots[slot].live = false;
     table.slots[slot].mark = 0; table.slots[slot].base = 0; table.slots[slot].end = 0;
     table.slots[slot].element = 0; table.slots[slot].length = 0;
+    table.slots[slot].record = 0; table.slots[slot].alignment = 0;
 }
 pub fn Result<usize, Error> release(ref mut Table table, Token token, usize capacity) {
-    let Owner owner = resolve(table, token, capacity)?;
+    let Owner owner = resolve_any(table, token, capacity)?;
     let usize before = table.arena.used;
     table.slots[token.slot].live = false;
     table.slots[token.slot].generation = next_generation(owner.generation);
@@ -300,4 +328,65 @@ pub fn Result<usize, Error> clear(ref mut Table table, usize capacity) {
     }
     table.depth = 0; table.arena.used = 0;
     return .ok(before);
+}
+
+// Record owners share the same slots, arena, generations and release order as
+// arrays. Bind one immutable catalog and backing region to the table lifetime.
+fn Error record_error(record_storage::Error error) {
+    return switch (error) {
+        case .Layout: { .Metadata } case .Bounds: { .Bounds } case .Fields: { .Length }
+        case .State: { .State } case .Alignment: { .Alignment } case .Quota: { .Quota }
+        case .Overflow: { .Overflow } case .Value: { .Value } case .Type: { .Type }
+    };
+}
+pub fn Result<Token, Error> create_record(ref records::Catalog catalog, usize record,
+    ref i64[] fields, ref mut u8[] bytes, ref mut Table table) {
+    if (!valid(table, bytes.len)) { return .err(.State); }
+    let usize slot = free_slot(table)?;
+    let records::Plan plan = switch (records::plan(catalog, 18446744073709551615)) {
+        case .ok(value): { value } case .err(_): { return .err(.Metadata); }
+    };
+    if (record >= plan.count) { return .err(.Bounds); }
+    if (plan.bytes[record] > 128) { return .err(.Quota); }
+    let usize mark = table.arena.used;
+    let usize base = switch (record_storage::initialize(catalog, record, fields, bytes, ref mut table.arena)) {
+        case .ok(value): { value } case .err(error): { return .err(record_error(error)); }
+    };
+    // No fallible work follows full payload initialization.
+    let usize generation = table.slots[slot].generation;
+    let usize end = table.arena.used;
+    let usize depth = table.depth;
+    table.slots[slot] = Owner { .generation = generation, .occupied = true, .live = true,
+        .mark = mark, .base = base, .end = end, .element = 0,
+        .length = plan.bytes[record], .record = record, .alignment = plan.alignments[record] };
+    table.order[depth] = slot;
+    table.depth += 1;
+    return .ok(Token { .slot = slot, .generation = generation });
+}
+fn Result<Owner, Error> resolve_record(ref records::Catalog catalog, ref Table table,
+    Token token, usize capacity) {
+    let Owner owner = resolve_any(table, token, capacity)?;
+    if (owner.element != 0) { return .err(.Type); }
+    let records::Plan plan = switch (records::plan(catalog, 18446744073709551615)) {
+        case .ok(value): { value } case .err(_): { return .err(.Metadata); }
+    };
+    if (owner.record >= plan.count) { return .err(.Metadata); }
+    if (plan.bytes[owner.record] != owner.length || plan.alignments[owner.record] != owner.alignment) {
+        return .err(.Metadata);
+    }
+    return .ok(owner);
+}
+pub fn Result<i64, Error> read_record(ref records::Catalog catalog, ref Table table,
+    Token token, ref usize[] path, ref u8[] bytes) {
+    let Owner owner = resolve_record(catalog, table, token, bytes.len)?;
+    return switch (record_storage::read(catalog, owner.record, owner.base, path, bytes, ref table.arena)) {
+        case .ok(value): { .ok(value) } case .err(error): { .err(record_error(error)) }
+    };
+}
+pub fn Result<usize, Error> write_record(ref records::Catalog catalog, ref Table table,
+    Token token, ref usize[] path, i64 value, ref mut u8[] bytes) {
+    let Owner owner = resolve_record(catalog, table, token, bytes.len)?;
+    return switch (record_storage::write(catalog, owner.record, owner.base, path, value, bytes, ref table.arena)) {
+        case .ok(value): { .ok(value) } case .err(error): { .err(record_error(error)) }
+    };
 }
