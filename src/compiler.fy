@@ -298,30 +298,24 @@ fn Result<usize, errors::Error> record_declaration(ref u8[] source, ref mut lexe
     usize expr_depth, usize structure, ref mut loops::State loop_state) {
     let usize record = record_values::named(source, s)?;
     let record_values::Header header = record_values::header(source,s,p,table,record,mutable,terminator,result_type)?;
+    let record_values::Shape form = record_values::shape(p,record,header.begin)?;
     if (!record_values::constructor(source,s,record)?) { return record_values::copy(source,s,p,table,header); }
     var usize[16] slots = [0; 16]; var usize i = 0;
-    while (i < header.fields) {
-        let u8 tag = p.records.layouts.types[record*16+i];
-        slots[i] = ir::slot(p,tag,header.begin)?; i += 1;
-    }
+    while (i < form.count) { slots[i] = ir::slot(p,form.tags[i],header.begin)?; i += 1; }
+    var record_values::Initializer state = record_values::initializer(record);
     i = 0;
-    while (i < header.fields) {
-        let usize dot = lexer::punctuation(source,s,46)?;
-        let usize field = record_values::field(source,p,record,s.begin,s.end)?;
-        if (s.kind != 2 || field != i) { return .err(errors::make(3,s.begin)); }
-        let usize label = lexer::next(source,s)?;
-        let usize equals = lexer::punctuation(source,s,61)?;
-        let u8 tag = p.records.layouts.types[record*16+i];
+    while (i < form.count) {
+        let u8 tag = record_values::next_leaf(source,s,p,ref mut state,header.begin)?;
         let usize value = expression(source,s,p,table,signatures,1,expr_depth+2,tag,result_type,structure+1,loop_state)?;
         if (p.types[value] != tag) { return .err(errors::make(3,header.begin)); }
         let usize store = ir::raw(p,18,slots[i],value,0,header.begin)?; i += 1;
-        if (i < header.fields) { let usize comma = lexer::punctuation(source,s,44)?; }
+        let usize member = record_values::advance(source,s,p,ref mut state)?;
     }
-    if (s.kind == 44) { let usize comma = lexer::next(source,s)?; }
-    let usize close = lexer::punctuation(source,s,125)?;
+    let u8 closed = record_values::next_leaf(source,s,p,ref mut state,header.begin)?;
+    if (closed != 0) { return .err(errors::make(3,header.begin)); }
     let usize end = lexer::punctuation(source,s,59)?;
     let usize first = p.registers; i = 0;
-    while (i < header.fields) { let usize loaded = ir::emit(p,17,slots[i],0,header.begin)?; i += 1; }
+    while (i < form.count) { let usize loaded = ir::emit(p,17,slots[i],0,header.begin)?; i += 1; }
     let usize id = ir::record(p,record,mutable,header.begin)?;
     let usize init = ir::record_init(p,id,first,header.begin)?;
     return locals::declare(table,header.begin,header.end,144+id,mutable);
@@ -402,12 +396,12 @@ fn Result<usize, errors::Error> record_write_statement(ref u8[] source, ref mut 
         let usize assigned = record_values::assign(source,s,p,table,id,at)?;
         return .ok(index);
     }
-    let usize leaf = record_values::writable(source,s,p,id,at)?;
-    let u8 tag = p.records.layouts.types[(p.records.records[id] as usize)*16+leaf];
+    let record_values::Leaf leaf = record_values::writable(source,s,p,id,at)?;
+    let u8 tag = leaf.tag;
     let usize value = expression(source,s,p,table,signatures,1,expr_depth,tag,result_type,structure,loop_state)?;
     if (p.types[value] != tag) { return .err(errors::make(3, at)); }
     let usize end = lexer::punctuation(source,s,59)?;
-    let usize written = ir::record_write(p,id,leaf,value,at)?;
+    let usize written = ir::record_write(p,id,leaf.ordinal,value,at)?;
     return .ok(index);
 }
 

@@ -15,7 +15,7 @@ pub fn Result<usize, errors::Error> named(ref u8[] source, ref lexer::State s) {
     return .ok(found.record);
 }
 // The immutable catalog has already passed struct_source::scan. Reparse only
-// bounded declaration names; scalar field ordinals coincide with leaf ordinals.
+// bounded declaration names; path resolution converts field indices to leaf ordinals.
 pub fn Result<usize, errors::Error> field(ref u8[] source, ref ir::Program p, usize record, usize begin, usize end) {
     let source_types::Location found = source_types::locate(source, begin, end, record)?;
     if (record >= p.records.layouts.count || found.record != record) { return .err(errors::make(3, begin)); }
@@ -30,7 +30,7 @@ pub fn Result<usize, errors::Error> field(ref u8[] source, ref ir::Program p, us
     }
     return .err(errors::make(3, begin));
 }
-pub struct Header { usize record; usize begin; usize end; usize fields; bool mutable; }
+pub struct Header { usize record; usize begin; usize end; bool mutable; }
 pub fn Result<Header, errors::Error> header(ref u8[] source, ref mut lexer::State s,
     ref ir::Program p, ref locals::Table names, usize record, bool mutable, u8 terminator, u8 result_type) {
     let usize at = s.begin;
@@ -39,10 +39,6 @@ pub fn Result<Header, errors::Error> header(ref u8[] source, ref mut lexer::Stat
         case .ok(value): { value } case .err(_): { return .err(errors::make(3, at)); }
     };
     if (plan.bytes[record] > 128) { return .err(errors::make(4, at)); }
-    var usize i = 0;
-    while (i < p.records.layouts.fields[record] as usize) {
-        if (p.records.layouts.kinds[record*16+i] != 0) { return .err(errors::make(3, at)); } i += 1;
-    }
     let usize type_name = lexer::next(source, s)?;
     if (s.kind != 2 || locals::reserved(source[s.begin..s.end])) { return .err(errors::make(2, s.begin)); }
     let usize begin = s.begin; let usize end = s.end;
@@ -51,35 +47,56 @@ pub fn Result<Header, errors::Error> header(ref u8[] source, ref mut lexer::Stat
     let usize name = lexer::next(source, s)?;
     let usize equals = lexer::punctuation(source, s, 61)?;
     return .ok(Header { .record = record, .begin = begin, .end = end,
-        .fields = p.records.layouts.fields[record] as usize, .mutable = mutable });
+        .mutable = mutable });
+}
+pub struct Leaf { usize ordinal; u8 tag; }
+// Scalar ordinals are depth-first leaf positions, never field or byte offsets.
+fn Result<Leaf, errors::Error> path(ref u8[] source, ref mut lexer::State s,
+    ref ir::Program p, usize root, usize at) {
+    var usize record = root; var usize ordinal = 0; var usize depth = 0;
+    while (s.kind == 46) {
+        if (depth >= 16) { return .err(errors::make(4, s.begin)); } depth += 1;
+        let usize dot = lexer::next(source, s)?;
+        if (s.kind != 2) { return .err(errors::make(2, s.begin)); }
+        let usize selected = field(source, p, record, s.begin, s.end)?;
+        var usize i = 0;
+        while (i < selected) {
+            let usize slot = record*16+i;
+            if (p.records.layouts.kinds[slot] == 0) { ordinal += 1; }
+            else { let Shape sibling = shape(p, p.records.layouts.types[slot] as usize, at)?; ordinal += sibling.count; }
+            i += 1;
+        }
+        let usize slot = record*16+selected;
+        let usize member = lexer::next(source, s)?;
+        if (p.records.layouts.kinds[slot] == 0) {
+            if (s.kind == 46) { return .err(errors::make(2, s.begin)); }
+            return .ok(Leaf { .ordinal = ordinal, .tag = p.records.layouts.types[slot] });
+        }
+        record = p.records.layouts.types[slot] as usize;
+    }
+    return .err(errors::make(3, at));
 }
 pub fn Result<usize, errors::Error> read(ref u8[] source, ref mut lexer::State s,
     ref mut ir::Program p, usize id, usize at) {
     if (id >= p.records.count || s.kind != 46) { return .err(errors::make(3, at)); }
-    let usize dot = lexer::next(source, s)?;
-    if (s.kind != 2) { return .err(errors::make(2, s.begin)); }
-    let usize leaf = field(source, p, p.records.records[id] as usize, s.begin, s.end)?;
-    let usize member = lexer::next(source, s)?;
-    return ir::record_read(p, id, leaf, at);
+    let Leaf leaf = path(source, s, p, p.records.records[id] as usize, at)?;
+    return ir::record_read(p, id, leaf.ordinal, at);
 }
-
-// A dotted final value in a switch arm must remain an expression. Only the
-// complete one-level NAME.FIELD = prefix selects a field-write statement.
+// Dotted final values remain expressions; only '=' after a bounded chain writes.
 pub fn Result<bool, errors::Error> assigned(ref u8[] source, ref lexer::State state) {
-    var lexer::State look = lexer::snapshot(state);
-    if (look.kind != 46) { return .ok(false); }
-    let usize dot = lexer::next(source, ref mut look)?;
-    if (look.kind != 2) { return .ok(false); }
-    let usize member = lexer::next(source, ref mut look)?;
-    return .ok(look.kind == 61);
+    var lexer::State look = lexer::snapshot(state); var usize depth = 0;
+    while (look.kind == 46) {
+        if (depth >= 16) { return .err(errors::make(4, look.begin)); } depth += 1;
+        let usize dot = lexer::next(source, ref mut look)?;
+        if (look.kind != 2) { return .ok(false); }
+        let usize member = lexer::next(source, ref mut look)?;
+    }
+    return .ok(depth != 0 && look.kind == 61);
 }
-pub fn Result<usize, errors::Error> writable(ref u8[] source, ref mut lexer::State s,
+pub fn Result<Leaf, errors::Error> writable(ref u8[] source, ref mut lexer::State s,
     ref ir::Program p, usize id, usize at) {
     if (id >= p.records.count || !p.records.mutable[id] || s.kind != 46) { return .err(errors::make(3, at)); }
-    let usize dot = lexer::next(source, s)?;
-    if (s.kind != 2) { return .err(errors::make(2, s.begin)); }
-    let usize leaf = field(source, p, p.records.records[id] as usize, s.begin, s.end)?;
-    let usize member = lexer::next(source, s)?;
+    let Leaf leaf = path(source, s, p, p.records.records[id] as usize, at)?;
     let usize equals = lexer::punctuation(source, s, 61)?;
     return .ok(leaf);
 }
@@ -122,4 +139,70 @@ pub fn Result<usize, errors::Error> assign(ref u8[] source, ref mut lexer::State
     let usize equals = lexer::punctuation(source, s, 61)?;
     let usize from = copy_source(source, s, p, names, p.records.records[id] as usize)?;
     return ir::record_assign(p, id, from, at);
+}
+
+// Keep source staging at sixteen scalar leaves; private VM roots allow 128.
+pub struct Shape { usize count; u8[16] tags; }
+pub fn Result<Shape, errors::Error> shape(ref ir::Program p, usize root, usize at) {
+    var Shape result = Shape { .count = 0, .tags = [0; 16] };
+    var usize[16] records = [0; 16]; var usize[16] fields = [0; 16];
+    records[0] = root; var usize depth = 1; var usize visits = 0;
+    while (depth > 0) {
+        if (visits >= 4096) { return .err(errors::make(4, at)); } visits += 1;
+        let usize level = depth-1; let usize record = records[level];
+        if (record >= p.records.layouts.count) { return .err(errors::make(3, at)); }
+        if (fields[level] >= p.records.layouts.fields[record] as usize) { depth -= 1; }
+        else {
+            let usize slot = record*16+fields[level]; fields[level] += 1;
+            if (p.records.layouts.kinds[slot] == 0) {
+                if (result.count >= 16) { return .err(errors::make(4, at)); }
+                let usize leaf = result.count; result.tags[leaf] = p.records.layouts.types[slot]; result.count += 1;
+            } else {
+                if (depth >= 16) { return .err(errors::make(4, at)); }
+                records[depth] = p.records.layouts.types[slot] as usize; fields[depth] = 0; depth += 1;
+            }
+        }
+    }
+    return .ok(result);
+}
+pub struct Initializer { usize[16] records; usize[16] fields; usize depth; }
+pub fn Initializer initializer(usize root) {
+    var Initializer result = Initializer { .records = [0; 16], .fields = [0; 16], .depth = 1 };
+    result.records[0] = root; return result;
+}
+// A completed scalar or child constructor advances exactly one enclosing field.
+pub fn Result<usize, errors::Error> advance(ref u8[] source, ref mut lexer::State s,
+    ref ir::Program p, ref mut Initializer state) {
+    let usize level = state.depth-1; state.fields[level] += 1;
+    if (state.fields[level] < p.records.layouts.fields[state.records[level]] as usize) {
+        let usize comma = lexer::punctuation(source, s, 44)?;
+    }
+    return .ok(0);
+}
+// Iteratively enter child constructors or close completed records. The caller
+// parses/records one scalar expression at a time in depth-first source order.
+pub fn Result<u8, errors::Error> next_leaf(ref u8[] source, ref mut lexer::State s,
+    ref ir::Program p, ref mut Initializer state, usize at) {
+    while (state.depth > 0) {
+        let usize level = state.depth-1; let usize record = state.records[level];
+        let usize selected = state.fields[level];
+        if (selected >= p.records.layouts.fields[record] as usize) {
+            if (s.kind == 44) { let usize comma = lexer::next(source, s)?; }
+            let usize close = lexer::punctuation(source, s, 125)?; state.depth -= 1;
+            if (state.depth > 0) { let usize finished = advance(source,s,p,state)?; }
+        } else {
+            let usize dot = lexer::punctuation(source,s,46)?;
+            let usize found = field(source,p,record,s.begin,s.end)?;
+            if (s.kind != 2 || found != selected) { return .err(errors::make(3,s.begin)); }
+            let usize name = lexer::next(source,s)?;
+            let usize equals = lexer::punctuation(source,s,61)?;
+            let usize slot = record*16+selected;
+            if (p.records.layouts.kinds[slot] == 0) { return .ok(p.records.layouts.types[slot]); }
+            let usize child = p.records.layouts.types[slot] as usize;
+            if (!constructor(source,s,child)?) { return .err(errors::make(3,s.begin)); }
+            if (state.depth >= 16) { return .err(errors::make(4,at)); }
+            let usize depth = state.depth; state.records[depth] = child; state.fields[depth] = 0; state.depth += 1;
+        }
+    }
+    return .ok(0);
 }

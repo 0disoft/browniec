@@ -96,7 +96,7 @@ for source,error in [
     ('struct P{i32 x;}fn i32 main(){for(let P p=P{.x=42};false;){}return 42;}','type'),
     ('struct P{i32 x;}fn i32 main(){let P p=P{.x=42};for(;false;p=p){}return 42;}','type'),
     ('struct P{i32 x;}fn i32 main(){let P p=P{.x=42};return main();}','type'),
-    ('struct P{i32 x;}struct Outer{P p;}fn i32 main(){let Outer o=Outer{.p=P{.x=42}};return 42;}','type'),
+    ('struct P{i32 x;}struct Outer{P p;}fn i32 main(){let Outer o=Outer{.p=Outer{.p=P{.x=42}}};return 42;}','type'),
     ('struct P{usize a;usize b;usize c;usize d;usize e;usize f;usize g;usize h;usize i;usize j;usize k;usize l;usize m;usize n;usize o;usize p;u8 q;}fn i32 main(){return 42;}','compile_limit'),
 ]: both('module main;'+source,error)
 for depth in [1,3,5,7,8]:

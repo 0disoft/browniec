@@ -41,6 +41,15 @@ pub fn Result<bool, errors::Error> indexed_assignment(ref u8[] source, ref lexer
 }
 pub fn u8 profile(ref ir::Program p) {
     if (p.records.count != 0) {
+        var usize id = 0;
+        while (id < p.records.count && id < 16) {
+            let usize record = p.records.records[id] as usize; var usize field = 0;
+            while (field < p.records.layouts.fields[record] as usize && field < 16) {
+                if (p.records.layouts.kinds[record*16+field] == 1) { return 7; }
+                field += 1;
+            }
+            id += 1;
+        }
         var usize at = 0; var bool written = false;
         while (at < p.count && at < 256) {
             let u8 op = p.code[at*8];
