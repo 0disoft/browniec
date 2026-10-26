@@ -63,7 +63,7 @@ fn Result<Leaf, errors::Error> path(ref u8[] source, ref mut lexer::State s,
         while (i < selected) {
             let usize slot = record*16+i;
             if (p.records.layouts.kinds[slot] == 0) { ordinal += 1; }
-            else { let Shape sibling = shape(p, p.records.layouts.types[slot] as usize, at)?; ordinal += sibling.count; }
+            else { ordinal += leaf_count(p, p.records.layouts.types[slot] as usize, at)?; }
             i += 1;
         }
         let usize slot = record*16+selected;
@@ -142,9 +142,8 @@ pub fn Result<usize, errors::Error> assign(ref u8[] source, ref mut lexer::State
 }
 
 // Keep source staging at sixteen scalar leaves; private VM roots allow 128.
-pub struct Shape { usize count; u8[16] tags; }
-pub fn Result<Shape, errors::Error> shape(ref ir::Program p, usize root, usize at) {
-    var Shape result = Shape { .count = 0, .tags = [0; 16] };
+pub fn Result<usize, errors::Error> leaf_count(ref ir::Program p, usize root, usize at) {
+    var usize count = 0;
     var usize[16] records = [0; 16]; var usize[16] fields = [0; 16];
     records[0] = root; var usize depth = 1; var usize visits = 0;
     while (depth > 0) {
@@ -155,15 +154,15 @@ pub fn Result<Shape, errors::Error> shape(ref ir::Program p, usize root, usize a
         else {
             let usize slot = record*16+fields[level]; fields[level] += 1;
             if (p.records.layouts.kinds[slot] == 0) {
-                if (result.count >= 16) { return .err(errors::make(4, at)); }
-                let usize leaf = result.count; result.tags[leaf] = p.records.layouts.types[slot]; result.count += 1;
+                if (count >= 16) { return .err(errors::make(4, at)); }
+                count += 1;
             } else {
                 if (depth >= 16) { return .err(errors::make(4, at)); }
                 records[depth] = p.records.layouts.types[slot] as usize; fields[depth] = 0; depth += 1;
             }
         }
     }
-    return .ok(result);
+    return .ok(count);
 }
 pub struct Initializer { usize[16] records; usize[16] fields; usize depth; }
 pub fn Initializer initializer(usize root) {

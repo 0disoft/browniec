@@ -298,14 +298,14 @@ fn Result<usize, errors::Error> record_declaration(ref u8[] source, ref mut lexe
     usize expr_depth, usize structure, ref mut loops::State loop_state) {
     let usize record = record_values::named(source, s)?;
     let record_values::Header header = record_values::header(source,s,p,table,record,mutable,terminator,result_type)?;
-    let record_values::Shape form = record_values::shape(p,record,header.begin)?;
+    let usize leaves = record_values::leaf_count(p,record,header.begin)?;
     if (!record_values::constructor(source,s,record)?) { return record_values::copy(source,s,p,table,header); }
     var usize[16] slots = [0; 16]; var usize i = 0;
-    while (i < form.count) { slots[i] = ir::slot(p,form.tags[i],header.begin)?; i += 1; }
     var record_values::Initializer state = record_values::initializer(record);
     i = 0;
-    while (i < form.count) {
+    while (i < leaves) {
         let u8 tag = record_values::next_leaf(source,s,p,ref mut state,header.begin)?;
+        slots[i] = ir::slot(p,tag,header.begin)?;
         let usize value = expression(source,s,p,table,signatures,1,expr_depth+2,tag,result_type,structure+1,loop_state)?;
         if (p.types[value] != tag) { return .err(errors::make(3,header.begin)); }
         let usize store = ir::raw(p,18,slots[i],value,0,header.begin)?; i += 1;
@@ -315,7 +315,7 @@ fn Result<usize, errors::Error> record_declaration(ref u8[] source, ref mut lexe
     if (closed != 0) { return .err(errors::make(3,header.begin)); }
     let usize end = lexer::punctuation(source,s,59)?;
     let usize first = p.registers; i = 0;
-    while (i < form.count) { let usize loaded = ir::emit(p,17,slots[i],0,header.begin)?; i += 1; }
+    while (i < leaves) { let usize loaded = ir::emit(p,17,slots[i],0,header.begin)?; i += 1; }
     let usize id = ir::record(p,record,mutable,header.begin)?;
     let usize init = ir::record_init(p,id,first,header.begin)?;
     return locals::declare(table,header.begin,header.end,144+id,mutable);
