@@ -5,6 +5,7 @@ import lexer as lexer;
 import ir as ir;
 import locals as locals;
 import functions as functions;
+import struct_source as structs;
 import types as types;
 import loops as loops;
 import patterns as patterns;
@@ -709,6 +710,22 @@ fn Result<usize, errors::Error> body(ref u8[] source, ref functions::Table signa
     return .ok(f);
 }
 
+// Release source-name/catalog scratch before recursive expression lowering.
+fn Result<usize, errors::Error> prepare_aggregates(ref u8[] source, ref mut functions::Table signatures, ref mut ir::Program p) {
+    let usize parameters = array_calls::prepare(signatures, p)?;
+    let usize results = array_results::prepare(signatures, p)?;
+    let structs::Table records = structs::scan(source)?;
+    var usize f = 0;
+    while (f < signatures.count) {
+        if (structs::find(source, ref records, signatures.begins[f], signatures.ends[f]) != 32) {
+            return .err(errors::make(3, signatures.begins[f]));
+        }
+        f += 1;
+    }
+    p.records.layouts = records.layouts;
+    return .ok(records.layouts.count);
+}
+
 pub fn Result<ir::Program, errors::Error> compile(ref u8[] source) {
     if (source.len > 4096) { return .err(errors::make(4, 4096)); }
     let ref str valid = switch (text::validate_utf8(source)) {
@@ -719,8 +736,7 @@ pub fn Result<ir::Program, errors::Error> compile(ref u8[] source) {
     p.function_count = signatures.count;
     p.entry = signatures.entry;
     p.return_types = signatures.return_types;
-    let usize parameters=array_calls::prepare(ref mut signatures,ref mut p)?;
-    let usize results=array_results::prepare(ref signatures,ref mut p)?;
+    let usize aggregates = prepare_aggregates(source, ref mut signatures, ref mut p)?;
     var usize f = 0;
     while (f < signatures.count) {
         let usize emitted = body(source, ref signatures, f, ref mut p)?;

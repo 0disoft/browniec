@@ -5,6 +5,7 @@ import lexer as lexer;
 import locals as locals;
 import types as types;
 import array_source as array_source;
+import struct_source as structs;
 
 // Bounded signature pass enables forward calls without trusting unparsed bodies.
 pub struct Table {
@@ -111,7 +112,9 @@ pub fn Result<Table, errors::Error> scan(ref u8[] source) {
     let usize module_name = lexer::word(source, ref mut s, b"main")?;
     let usize module_end = lexer::punctuation(source, ref mut s, 59)?;
     while (s.kind != 0) {
-        let usize declared = signature(source, ref mut s, ref mut t)?;
+        if (s.kind == 2 && lexer::equal(source[s.begin..s.end], b"struct")) {
+            let usize skipped = structs::skip(source, ref mut s)?;
+        } else { let usize declared = signature(source, ref mut s, ref mut t)?; }
     }
     if (t.entry == 16) { return .err(errors::make(3, source.len)); }
     return .ok(t);
