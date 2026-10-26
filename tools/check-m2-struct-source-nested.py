@@ -60,7 +60,7 @@ both(basic)
 case(basic,'fuel',fuel=0)
 for body,error in [
  ('let R p=R{.i=R{.i=I{.x=42}}};return 42;','type'),
- ('let I i=I{.x=42};let R p=R{.i=i};return 42;','type'),
+ ('let i32 n=42;let R p=R{.i=n};return 42;','type'),
  ('let R p=R{.i=I{.x=true}};return 42;','type'),
  ('let R p=R{.i=I{.x=42}};p.i.x=0;return 42;','type'),
  ('var R p=R{.i=I{.x=42}};p.i.x=true;return 42;','type'),

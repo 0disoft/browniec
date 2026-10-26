@@ -198,10 +198,40 @@ pub fn Result<u8, errors::Error> next_leaf(ref u8[] source, ref mut lexer::State
             let usize slot = record*16+selected;
             if (p.records.layouts.kinds[slot] == 0) { return .ok(p.records.layouts.types[slot]); }
             let usize child = p.records.layouts.types[slot] as usize;
-            if (!constructor(source,s,child)?) { return .err(errors::make(3,s.begin)); }
+            // 255 requests bare-name child staging, never a scalar tag.
+            if (!constructor(source,s,child)?) { return .ok(255); }
             if (state.depth >= 16) { return .err(errors::make(4,at)); }
             let usize depth = state.depth; state.records[depth] = child; state.fields[depth] = 0; state.depth += 1;
         }
     }
     return .ok(0);
+}
+
+// Read a whole visible child binding into the parent's scalar staging slots.
+// The RHS is a bare name, so no user expression can interleave these reads.
+pub fn Result<usize, errors::Error> stage_child(ref u8[] source, ref mut lexer::State s,
+    ref mut ir::Program p, ref locals::Table names, ref mut Initializer state,
+    ref mut usize[] slots, usize first, usize at) {
+    if (state.depth == 0 || s.kind != 2) { return .err(errors::make(3,s.begin)); }
+    let usize level = state.depth-1;
+    let usize child = p.records.layouts.types[state.records[level]*16+state.fields[level]] as usize;
+    let usize index = locals::find(source,names,s.begin,s.end);
+    if (!binding(names,index)) { return .err(errors::make(3,s.begin)); }
+    let usize id = names.registers[index]-144;
+    if (id >= p.records.count || p.records.records[id] as usize != child) { return .err(errors::make(3,s.begin)); }
+    let usize name = lexer::next(source,s)?;
+    if (s.kind != 44 && s.kind != 125) { return .err(errors::make(2,s.begin)); }
+    let usize count = leaf_count(p,child,at)?;
+    if (first > slots.len || count > slots.len-first) { return .err(errors::make(4,at)); }
+    var usize i = 0;
+    while (i < count) {
+        let usize value = ir::record_read(p,id,i,at)?;
+        let u8 tag = p.types[value];
+        let usize slot = ir::slot(p,tag,at)?;
+        slots[first+i] = slot;
+        let usize stored = ir::raw(p,18,slot,value,0,at)?;
+        i += 1;
+    }
+    let usize finished = advance(source,s,p,state)?;
+    return .ok(count);
 }

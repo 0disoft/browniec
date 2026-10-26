@@ -305,6 +305,10 @@ fn Result<usize, errors::Error> record_declaration(ref u8[] source, ref mut lexe
     i = 0;
     while (i < leaves) {
         let u8 tag = record_values::next_leaf(source,s,p,ref mut state,header.begin)?;
+        if (tag == 255) {
+            let usize copied = record_values::stage_child(source,s,p,table,ref mut state,ref mut slots,i,header.begin)?;
+            i += copied; continue;
+        }
         slots[i] = ir::slot(p,tag,header.begin)?;
         let usize value = expression(source,s,p,table,signatures,1,expr_depth+2,tag,result_type,structure+1,loop_state)?;
         if (p.types[value] != tag) { return .err(errors::make(3,header.begin)); }
