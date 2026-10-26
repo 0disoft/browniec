@@ -298,6 +298,7 @@ fn Result<usize, errors::Error> record_declaration(ref u8[] source, ref mut lexe
     usize expr_depth, usize structure, ref mut loops::State loop_state) {
     let usize record = record_values::named(source, s)?;
     let record_values::Header header = record_values::header(source,s,p,table,record,mutable,terminator,result_type)?;
+    if (!record_values::constructor(source,s,record)?) { return record_values::copy(source,s,p,table,header); }
     var usize[16] slots = [0; 16]; var usize i = 0;
     while (i < header.fields) {
         let u8 tag = p.records.layouts.types[record*16+i];
@@ -397,6 +398,10 @@ fn Result<usize, errors::Error> record_write_statement(ref u8[] source, ref mut 
     u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {
     if (result_type == 0 || terminator != 59) { return .err(errors::make(3, at)); }
     let usize id = table.registers[index] - 144;
+    if (s.kind == 61) {
+        let usize assigned = record_values::assign(source,s,p,table,id,at)?;
+        return .ok(index);
+    }
     let usize leaf = record_values::writable(source,s,p,id,at)?;
     let u8 tag = p.records.layouts.types[(p.records.records[id] as usize)*16+leaf];
     let usize value = expression(source,s,p,table,signatures,1,expr_depth,tag,result_type,structure,loop_state)?;

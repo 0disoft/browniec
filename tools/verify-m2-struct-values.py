@@ -27,7 +27,9 @@ def write(path, value):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--compiler', type=Path, default=ROOT / 'build/toolchain' / ('fairyc.exe' if os.name == 'nt' else 'fairyc'))
-    parser.add_argument('--write', action='store_true', help='Verify field writes plus constructor, VM and switch-arm regressions.')
+    selection = parser.add_mutually_exclusive_group()
+    selection.add_argument('--copy', action='store_true', help='Verify source record copies/assignment plus struct and scalar regressions.')
+    selection.add_argument('--write', action='store_true', help='Verify field writes plus constructor, VM and switch-arm regressions.')
     args = parser.parse_args()
     files = FILES
     groups = GROUPS
@@ -38,7 +40,15 @@ def main():
                  'tests/m2/struct_vm.fy', 'tests/switch_arm_statements.fy']
         groups = {'tests::m2::struct_write::': 5, 'tests::m2::struct_values::': 5,
                   'tests::m2::struct_vm::': 8, 'tests::switch_arm_statements::': 6}
-    expected = 24 if args.write else 28
+    if args.copy:
+        kind = 'struct-source-copy'
+        files = ['tests/m2/struct_source_copy.fy', 'tests/m2/struct_write.fy',
+                 'tests/m2/struct_values.fy', 'tests/m2/struct_vm.fy',
+                 'tests/m2/struct_ir.fy', 'tests/switch_arm_statements.fy']
+        groups = {'tests::m2::struct_source_copy::': 6, 'tests::m2::struct_write::': 5,
+                  'tests::m2::struct_values::': 5, 'tests::m2::struct_vm::': 8,
+                  'tests::m2::struct_ir::': 9, 'tests::switch_arm_statements::': 6}
+    expected = sum(groups.values())
     compiler = args.compiler.resolve(strict=True)
     output = ROOT / ('build/m2-' + kind)
     output.mkdir(parents=True, exist_ok=True)
@@ -80,8 +90,10 @@ def main():
                                  ('check-m2-struct-source.py', 'm2-struct-source'),
                                  ('check-m2-array-literal-assignment.py', 'm2-array-literal-assignment'),
                                  ('check-m1-cli.py', 'm1')]
-        if args.write:
+        if args.write or args.copy:
             selections.insert(0, ('check-m2-struct-write.py', 'm2-struct-write'))
+        if args.copy:
+            selections.insert(0, ('check-m2-struct-source-copy.py', 'm2-struct-source-copy'))
         for script, relative in selections:
             message = run([sys.executable, '-B', ROOT / 'tools' / script, '--exe', exe, '--profile', profile])
             cli = json.loads((ROOT / 'build' / relative / profile / 'cli-receipt.json').read_text())

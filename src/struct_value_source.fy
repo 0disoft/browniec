@@ -50,9 +50,6 @@ pub fn Result<Header, errors::Error> header(ref u8[] source, ref mut lexer::Stat
     if (names.count >= 64 || p.records.count >= 16) { return .err(errors::make(4, begin)); }
     let usize name = lexer::next(source, s)?;
     let usize equals = lexer::punctuation(source, s, 61)?;
-    if (s.kind != 2 || named(source, s)? != record) { return .err(errors::make(3, s.begin)); }
-    let usize constructor = lexer::next(source, s)?;
-    let usize open = lexer::punctuation(source, s, 123)?;
     return .ok(Header { .record = record, .begin = begin, .end = end,
         .fields = p.records.layouts.fields[record] as usize, .mutable = mutable });
 }
@@ -85,4 +82,44 @@ pub fn Result<usize, errors::Error> writable(ref u8[] source, ref mut lexer::Sta
     let usize member = lexer::next(source, s)?;
     let usize equals = lexer::punctuation(source, s, 61)?;
     return .ok(leaf);
+}
+
+// Constructor syntax and bare-name copies are separate initializer forms.
+// Inspect the following token so a local sharing a type name stays unambiguous.
+pub fn Result<bool, errors::Error> constructor(ref u8[] source, ref mut lexer::State s, usize record) {
+    if (s.kind != 2) { return .err(errors::make(3, s.begin)); }
+    var lexer::State look = lexer::snapshot(s);
+    let usize next = lexer::next(source, ref mut look)?;
+    if (look.kind != 123) { return .ok(false); }
+    if (named(source, s)? != record) { return .err(errors::make(3, s.begin)); }
+    let usize name = lexer::next(source, s)?;
+    let usize open = lexer::punctuation(source, s, 123)?;
+    return .ok(true);
+}
+fn Result<usize, errors::Error> copy_source(ref u8[] source, ref mut lexer::State s,
+    ref ir::Program p, ref locals::Table names, usize record) {
+    if (s.kind != 2) { return .err(errors::make(3, s.begin)); }
+    let usize at = s.begin;
+    let usize index = locals::find(source, names, s.begin, s.end);
+    if (!binding(names, index)) { return .err(errors::make(3, at)); }
+    let usize id = names.registers[index] - 144;
+    if (id >= p.records.count || p.records.records[id] as usize != record) { return .err(errors::make(3, at)); }
+    let usize name = lexer::next(source, s)?;
+    let usize end = lexer::punctuation(source, s, 59)?;
+    return .ok(id);
+}
+pub fn Result<usize, errors::Error> copy(ref u8[] source, ref mut lexer::State s,
+    ref mut ir::Program p, ref mut locals::Table names, Header header) {
+    let usize from = copy_source(source, s, p, names, header.record)?;
+    let usize id = ir::record(p, header.record, header.mutable, header.begin)?;
+    let usize copied = ir::record_copy(p, id, from, header.begin)?;
+    // The new binding becomes visible only after its complete initializer.
+    return locals::declare(names, header.begin, header.end, 144 + id, header.mutable);
+}
+pub fn Result<usize, errors::Error> assign(ref u8[] source, ref mut lexer::State s,
+    ref mut ir::Program p, ref locals::Table names, usize id, usize at) {
+    if (id >= p.records.count || !p.records.mutable[id]) { return .err(errors::make(3, at)); }
+    let usize equals = lexer::punctuation(source, s, 61)?;
+    let usize from = copy_source(source, s, p, names, p.records.records[id] as usize)?;
+    return ir::record_assign(p, id, from, at);
 }

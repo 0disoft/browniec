@@ -73,7 +73,7 @@ for body,error in [
     ('var P p=P{.x=0};return p.x=42;','syntax'),
     ('var P p=P{.x=0};for(p.x=1;false;){}return 42;','type'),
     ('var P p=P{.x=0};for(;false;p.x=1){}return 42;','type'),
-    ('var P p=P{.x=0};p=p;return 42;','type'),
+    ('let P p=P{.x=0};p=p;return 42;','type'),
     ('{var P p=P{.x=0};}p.x=42;return 42;','type'),
 ]: both('module main;struct P{i32 x;}fn i32 main(){'+body+'}',error)
 for expression,error in [('1/0','zero_divisor'),('2147483647+1','overflow')]:

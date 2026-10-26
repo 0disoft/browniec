@@ -107,7 +107,7 @@ for text, error in [
     ('module main;struct P{i32 x;}', 'type'),
     ('module main;struct P{i32 x;}fn P helper(){return 0;}'+main, 'type'),
     ('module main;struct P{i32 x;}fn i32 helper(P x){return 0;}'+main, 'type'),
-    ('module main;struct P{i32 x;}fn i32 main(){let P p=P{.x=42};let P q=p;return q.x;}', 'type'),
+    ('module main;struct P{i32 x;}fn i32 main(){let i32 n=42;let P q=n;return 42;}', 'type'),
 ]:
     both(text, error)
 for depth in [10, 11]:
