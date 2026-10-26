@@ -5,6 +5,7 @@ import array_storage as storage;
 import scalar_codec as codec;
 import struct_layout as records;
 import struct_nested_storage as record_storage;
+import struct_range as record_range;
 
 // Instance-local metadata over caller-owned backing bytes. No guest/raw pointer.
 pub struct Token { usize slot; usize generation; }
@@ -417,5 +418,25 @@ pub fn Result<usize, Error> assign_record(ref records::Catalog catalog, Token de
     if (target.record != origin.record) { return .err(.Type); }
     return switch (record_storage::assign(catalog, origin.record, target.base, origin.base, bytes, ref table.arena)) {
         case .ok(value): { .ok(value) } case .err(error): { .err(record_error(error)) }
+    };
+}
+
+// Both whole owners and exact nominal child ranges are checked before snapshot.
+// Storage assignment stages canonical scalar bytes before its first target write.
+pub fn Result<usize, Error> assign_subrecord(ref records::Catalog catalog,
+    Token destination, Token source, usize nominal, usize target_leaf, usize source_leaf,
+    ref mut u8[] bytes, ref Table table) {
+    let Owner target = resolve_record(catalog,table,destination,bytes.len)?;
+    let Owner origin = resolve_record(catalog,table,source,bytes.len)?;
+    let usize target_offset = switch(record_range::offset(catalog,target.record,nominal,target_leaf)) {
+        case .ok(n): { n } case .err(_): { return .err(.Type); }
+    };
+    let usize source_offset = switch(record_range::offset(catalog,origin.record,nominal,source_leaf)) {
+        case .ok(n): { n } case .err(_): { return .err(.Type); }
+    };
+    if (target_offset > target.length || source_offset > origin.length) { return .err(.Bounds); }
+    return switch(record_storage::assign(catalog,nominal,target.base+target_offset,
+        origin.base+source_offset,bytes,ref table.arena)) {
+        case .ok(n): { .ok(n) } case .err(e): { .err(record_error(e)) }
     };
 }
