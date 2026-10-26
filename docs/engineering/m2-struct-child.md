@@ -49,8 +49,8 @@ of its scalar leaves are captured at the child field's position.
 
 The source must be a whole visible binding. A subrecord path such as
 `R { .i = other.i }`, a call, a parenthesized expression, or another aggregate
-expression is not a child initializer. Subrecord extraction and assignment remain
-unsupported source operations.
+expression is not a child initializer. Declaration extraction is handled by the [successor](m2-struct-extract.md);
+subrecord assignment remains unsupported.
 
 ## Lowering and order
 
@@ -105,7 +105,8 @@ binding initializers are available for child fields:
 
 - Source subrecord paths, calls, parentheses, and aggregate expressions as child
   initializers.
-- Subrecord extraction or assignment through a path such as `p.i`.
+- Subrecord assignment through a path such as `p.i`; declaration extraction is
+  covered by the [successor](m2-struct-extract.md).
 - Constructor RHS assignment such as `p = R { .i = i };`.
 - Record statements in helpers or in `for` initializer/post clauses.
 - Struct parameters, results, borrows, arrays, or wrapper-typed fields.
@@ -142,3 +143,6 @@ nested receipt is historical for the changed compiler, fixture, and tool inputs.
 Full native suites, full array CLI matrices, M0, Linux, isolation, DLL, packaging,
 allocation instrumentation, and performance were not run. Full-profile conformance
 remains incomplete.
+
+The source and fixture changes for [subrecord declaration extraction](m2-struct-extract.md)
+make this receipt historical for the successor inputs.

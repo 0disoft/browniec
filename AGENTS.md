@@ -184,8 +184,7 @@ own the affected contract. Broader scaffold procedures are optional.
   owner and extent; `SASSIGN` reuses the destination extent. The type-name/local
   ambiguity is resolved by inspecting `{` after the initializer name. Record
   statements remain unavailable in helpers and `for` initializer/post clauses;
-  constructor RHS assignment, aggregate expressions, subrecord extraction and
-  assignment, struct parameters/results, and borrows remain unsupported. Nested
+  constructor RHS assignment, aggregate expressions, subrecord assignment, struct parameters/results, and borrows remain unsupported. Nested
   constructors, scalar paths, and child binding initializers are handled by the
   successors. Programs with
   nonempty record bindings and opcode 42 or 46 select
@@ -242,6 +241,21 @@ own the affected contract. Broader scaffold procedures are optional.
   The [receipt](docs/evidence/m2-struct-child-windows-20261027.json) records 90
   input hashes, compiler and CLI artifact hashes, commands, and outcomes.
   Implementation commit: `ed63d1550ffd820e2ad197fe1be9d6b2e0b197a0`.
+  A [subrecord declaration initializer](docs/engineering/m2-struct-extract.md)
+  also admits `let I i = p.i` and deeper exact-nominal record endpoints. It reads
+  the selected scalar leaf range directly into consecutive registers and emits
+  one `SINIT`, without `STORE`, `LOAD`, `SCOPY`, or a temporary owner. The source
+  stays live; the destination has an independent site, owner, and extent. Scalar
+  reads/writes still reject record endpoints. Assignment from/to subrecords,
+  helper records, parameters/results, and borrows remain unsupported. Version
+  JSON adds `struct_subrecord_initializers: true`; the nested profile is unchanged.
+  Development and release each passed 26 native groups and 2,915 CLI cases
+  stepwise. Development reuses its unchanged 26-group result after two CLI-only
+  diagnostic fixes; final CLI matrices and release native groups ran afterward.
+  The [receipt](docs/evidence/m2-struct-extract-windows-20261027.json) records 92
+  input hashes, compiler/artifact hashes, commands, and native reuse provenance.
+  Implementation commit: `f65a1d7`.
+  The child-binding receipt is historical for changed compiler and fixture inputs.
 - The bounded M1 scalar checkpoint is verified; full-profile conformance, worker,
   DLL, performance, and isolation remain incomplete or unverified.
 - Root fairy.toml builds the native CLI; tools/verify-m1.ps1 verifies its narrow profile.
