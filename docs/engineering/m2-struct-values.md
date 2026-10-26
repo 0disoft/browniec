@@ -1,0 +1,126 @@
+# M2 Bounded Source Struct Values
+
+- Status: bounded source lowering implemented and verified in development/release.
+- Scope: entry-only scalar-field record construction and one-level scalar field reads.
+- Implementation: `src/struct_value_source.fy`, `src/compiler.fy`, `src/array_source.fy`,
+  `src/struct_source.fy`, and the existing private struct IR and VM.
+- Evidence: [Windows native and CLI receipt](../evidence/m2-struct-values-windows-20261026.json).
+
+This slice admits initialized scalar-field records in the entry function. It is
+a bounded source adapter over the existing `SINIT` and `SREAD` path. It does not
+claim full source struct support or full-profile conformance.
+
+## Accepted source
+
+```brownie
+module main;
+struct Point { i32 x; i32 y; }
+fn i32 main() {
+    let Point p = Point { .x = 20, .y = 22 };
+    return p.x + p.y;
+}
+```
+
+`let` and `var` are accepted. The field list must contain every field of the
+selected scalar-only record exactly once, in declaration order. A comma may
+follow the final field.
+
+```text
+let|var TYPE NAME = TYPE { .FIELD = EXPR, ... [,] };
+```
+
+Each `EXPR` is a normal typed scalar expression for that field. Field
+expressions evaluate from left to right. Each result is stored in its typed
+staging slot before the next field expression is evaluated. All staging slots
+are then loaded into consecutive scalar registers for `SINIT`. The new name is
+published to the lexical scope only after the initializer completes.
+
+Construction is a declaration statement in the entry function's admitted
+lexical scopes. It is not a general expression and is unavailable in parameters,
+results, borrows, or `for` headers. `NAME.FIELD` reads one scalar leaf through
+`SREAD`; the record is not copied or materialized as a scalar binding.
+
+Run the example with `browniec run point.brc --fuel 1000000`. The CLI default
+Fuel of 256 does not cover aggregate arena preparation and struct operations.
+
+`var` is accepted and marks the binding mutable. Field writes remain unsupported,
+so `var` does not add mutable field access in this slice.
+
+## Lowering and metadata
+
+`struct_value_source` resolves a type or field name by lexing the bounded
+source to locate its declaration, then scanning its field names on demand. It does not add persistent source-name arrays to the
+recursive lowering stack. Scalar fields are flattened in declaration order, so
+their source field ordinals coincide with their scalar leaf ordinals.
+
+The compiler checks the complete field list and stages every typed value before
+allocating the record descriptor. It emits consecutive loads followed by one
+`SINIT`, then declares the binding at site `144 + binding_id`. The nominal
+record type ID and the binding site ID are independent. For F fields, staging
+adds exactly 2F scalar register cells and 2F store/load instructions beyond the
+field expressions, plus one `SINIT`; the existing 128-register and 256-instruction
+limits still apply. Constructor type/label validation performs F+2 bounded declaration lookups;
+this is compile-time work, not VM dispatch or a measured performance result.
+
+Record bindings use sites 144..159, separate from array sites 128..143 and scalar
+registers 0..127. The array binding predicate has an exclusive upper bound of
+144. Blocks, loop transfers, and returns release arrays and records in reverse
+lexical order. A loop transfer drops only the suffix whose scopes it exits;
+other visible arrays and records remain live.
+
+## Bounds and runtime
+
+Construction is limited to records whose planned byte size, including alignment
+padding, is at most 128 bytes. A selected record has 1..16 fields; entry record
+sites are limited to 16. The existing shared 16-entry owner table, 65,536-byte
+payload cap, and Fuel accounting govern allocation and execution.
+
+The accepted declaration catalog retains its existing limits. Struct declaration
+graphs may contain nested named types and unselected valid records may exceed
+128 bytes. Those declarations remain accepted, but this slice cannot construct
+or access a nested record value.
+
+A program with a record binding reports `brownie.m2-struct-read/1`. A program
+with struct declarations but no record binding keeps the scalar or array profile
+selected by its existing object operations.
+
+## Unsupported forms
+
+The following remain unsupported:
+
+- Nested object construction and nested field chains such as `p.inner.x`
+- Record copy initialization or record-to-record assignment
+- Field writes such as `p.x = 3;`
+- Struct parameters, results, and borrows
+- General constructors outside a record declaration initializer
+- Struct fields with wrapper, array, or borrowed types
+
+`p.x` in scalar expressions and arithmetic is supported.
+
+## Validation
+
+`python -B tools/verify-m2-struct-values.py` completed successfully. Each
+profile passed 28 native groups: values (5), declarations (5), struct VM (8),
+functions (4), and loops (6). Each also passed 2,352 CLI cases: 144 new struct
+values, 124 declarations, 115 array-literal assignments, and 1,969 scalar cases.
+Three additional cases per profile check early return/continue before object
+publication and a type declared after `main`; their artifact hashes match the
+aggregate invocation.
+
+The Pair example returns 42 with exactly 128,789 Fuel using the private 8-byte
+arena, or 194,317 Fuel with the CLI's 65,536-byte capacity. One fewer unit fails.
+Other cases cover all six scalar widths and extreme values, left-to-right
+snapshots, mixed cleanup, 16 shared owners, 16 record sites, complete ordered
+initializers, and nested expression depth 7 success/depth 8 compile-limit.
+These are native execution and algorithmic bounds, not performance measurements.
+
+The receipt records the pinned Fairy C compiler `4ce1264273be`, SDK, source
+hashes, both native CLI artifacts, commands, and outcomes. Full native suites,
+full array CLI matrices, M0, Linux, isolation, DLL, packaging, allocation
+instrumentation, and performance measurements were not run.
+
+The earlier declaration-only contract and its 23 native groups and 2,208 CLI
+cases remain historical evidence for declarations that create no record
+binding. That evidence does not cover `SINIT`, `SREAD`, record publication, or
+the new profile. Full source struct support, borrows, and full-profile
+conformance remain open.

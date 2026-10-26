@@ -138,13 +138,24 @@ own the affected contract. Broader scaffold procedures are optional.
   115-case CLI receipts are historical for changed runtime, test, harness, and
   root-lock inputs.
   A [declaration-only source struct slice](docs/engineering/m2-struct-source.md)
-  now parses bounded top-level declarations, resolves scalar and by-value named
-  fields, and attaches immutable declaration-order layouts. Construction,
-  bindings, field operations, source struct parameters/results, borrows, and
-  allocator integration remain unimplemented. Next is construction and
-  field-lowering work. Both profiles passed 23 native groups and 2,208 CLI cases
-  each, including 124 source cases. Checks completed stepwise after a harness
-  output-path correction; the corrected aggregate harness was not rerun. The earlier nested-storage 18-group receipt is
+  parses bounded top-level declarations, resolves scalar and by-value named
+  fields, and attaches immutable declaration-order layouts. Its 23 native groups
+  and 2,208 CLI cases per profile remain historical evidence for that
+  declaration-only slice. A [bounded source struct-value slice](docs/engineering/m2-struct-values.md)
+  adds entry-only `let|var TYPE NAME = TYPE { .FIELD = EXPR, ... };`
+  construction for scalar-field roots. Fields are exact, declaration-ordered,
+  typed, and staged before consecutive loads and `SINIT`; the name is published
+  only after initialization. One-level `NAME.FIELD` reads use `SREAD`. Mixed
+  lexical exits, loop transfers, and returns release arrays and records in
+  reverse order. Record bindings select `brownie.m2-struct-read/1`;
+  declaration-only programs keep their existing profile. Construction is capped
+  at 128 planned bytes and 16 fields, with 16 record sites, the shared owner
+  table, 65,536-byte payload cap, and existing Fuel. Nested construction, field
+  chains, record copies, field writes, struct parameters/results, and borrows
+  remain unsupported; nested type declarations remain accepted. Development and release each passed 28 native groups and 2,352 CLI cases
+  through the focused harness, plus three supplemental early-transfer/forward-name
+  cases. The [receipt](docs/evidence/m2-struct-values-windows-20261026.json) records
+  toolchain, inputs, artifacts, commands, and limitations. The earlier nested-storage 18-group receipt is
   historical for changed inputs; nested-copy 24-group checks passed development and release.
   The copy slice's Windows 28-group receipt passed development and release after
   moving snapshot staging into caller-owned scratch. Earlier planner and storage

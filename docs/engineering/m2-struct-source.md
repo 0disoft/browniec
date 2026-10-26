@@ -1,6 +1,6 @@
 # M2 Declaration-Only Source Structs
 
-- Status: implemented declaration parsing and immutable layout attachment; development and release checks passed stepwise.
+- Status: historical declaration-only baseline, verified stepwise; superseded for scalar values by [bounded source struct values](m2-struct-values.md).
 - Scope: top-level source struct declarations, field-type resolution, layout planning, and function/type name collision checks.
 - Implementation: [src/struct_source.fy](../../src/struct_source.fy), [src/struct_layout.fy](../../src/struct_layout.fy), [src/compiler.fy](../../src/compiler.fy), and [src/functions.fy](../../src/functions.fy).
 - Tests: [tests/m2/struct_source.fy](../../tests/m2/struct_source.fy).
@@ -83,8 +83,9 @@ runtime's aggregate-preparation gate uses the binding count, so this slice adds
 no payload allocation or Fuel charge. Layout validation remains compile and
 verification work over immutable metadata.
 
-The following source forms remain rejected because their lowering is not part of
-this slice:
+The declaration-only baseline did not lower the forms below. The
+[bounded value successor](m2-struct-values.md) now admits entry-owned scalar-field
+construction, bindings, and reads; other forms remain unsupported:
 
 ```brownie
 Point { .x = 1, .y = 2 }  // construction
@@ -97,8 +98,8 @@ ref Point p               // record borrow
 ```
 
 Record copies, assignment, drops, parameters, results, and borrows also remain
-unimplemented at source level. The next slice is struct construction and field
-lowering onto the existing private struct IR and VM.
+unimplemented at source level. Entry-owned scalar-field construction and reads
+now lower through the [bounded value successor](m2-struct-values.md).
 
 ## Verification
 

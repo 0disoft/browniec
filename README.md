@@ -1,6 +1,6 @@
 # Brownie C
 
-- Status: M1 scalar checkpoint verified; M2 function-owned scalar arrays with helper declarations, by-value parameters, argument capture, copies, length access, lexical cleanup, source results, and bare-name, call-result, and repeated-literal assignment implemented; private entry-owned struct IR/verifier and metered VM dispatch implemented; declaration-only source structs parse into immutable layouts verified in development and release; source struct construction and field operations unavailable; full profile incomplete
+- Status: M1 scalar checkpoint verified; M2 function-owned scalar arrays with helper declarations, by-value parameters, argument capture, copies, length access, lexical cleanup, source results, and bare-name, call-result, and repeated-literal assignment implemented; private entry-owned struct IR/verifier and metered VM dispatch implemented; declaration-only source struct layouts are historical verified evidence; bounded entry scalar-field struct construction and field reads implemented and verified in development/release; full profile incomplete
 - Design date: 2026-10-23
 - First delivery target: Windows 11 x64
 
@@ -62,7 +62,7 @@ and typed call-result initializers are supported by the [source result increment
 `array = make(arguments);`, copying the result into existing mutable storage.
 [Repeated-literal assignment](docs/engineering/m2-array-literal-assignment.md)
 admits `array = [value; N];`, evaluating once and filling existing storage in place.
-Source struct construction and field operations, borrows, slices, workers, and DLLs remain later work.
+Borrows, slices, workers, and DLLs remain later work.
 A [private struct-layout planner](docs/engineering/m2-struct-layout.md) now plans
 acyclic record metadata, and a [scalar-only storage slice](docs/engineering/m2-struct-storage.md)
 initializes and accesses selected scalar records in caller-backed arena bytes.
@@ -87,12 +87,22 @@ assignment; record lifetimes use bits 16..31 beside array lifetimes. The
 instructions with fixed prepaid Fuel charges, sixteen entry tokens, and the shared
 array owner table and payload arena. Development and release each passed all 38
 selected native groups and the existing 115-case CLI suite. A
-[declaration-only source struct slice](docs/engineering/m2-struct-source.md) now
+[declaration-only source struct slice](docs/engineering/m2-struct-source.md)
 parses forward-referencing scalar and nested named fields into immutable layouts.
-Construction, field lowering, borrow checking, struct parameters/results, and
-other source struct operations remain later work. Both profiles passed 23 native
-groups and 2,208 CLI cases each, recorded in the
+Both profiles passed 23 native groups and 2,208 CLI cases each for that
+declaration-only slice, recorded in the
 [stepwise receipt](docs/evidence/m2-struct-source-windows-20261026.json).
+A [bounded source struct-value slice](docs/engineering/m2-struct-values.md)
+adds entry-only scalar-field construction with exact declaration order and
+one-level scalar field reads. Typed field expressions are staged left to right,
+then consecutive loads feed `SINIT`; the binding is published only after
+initialization. Record bindings select `brownie.m2-struct-read/1`, while
+declaration-only programs keep their existing profile. Nested construction,
+field chains, record copies, field writes, struct parameters/results, and
+borrows remain unsupported. Development and release each passed 28 native groups and 2,352 CLI cases, plus
+three supplemental cases, recorded in the
+[receipt](docs/evidence/m2-struct-values-windows-20261026.json). The declaration-only contract and its receipt
+remain historical evidence for declarations without record bindings.
 The earlier nested-storage 18-group receipt is historical for changed
 inputs; nested-copy 24-group checks passed development and release. The copy
 receipt passes 28 groups per profile in development and release. The planner's
@@ -133,7 +143,6 @@ source return lowering now connects typed call initializers and bare-name return
 pwsh -NoProfile -File tools/verify-m2-arrays.ps1 -Slice write
 python -B tools/record-m2-array-write-evidence.py
 # The recorder can later add all 1,969 scalar CLI cases with --scalar-regression.
-# Copy checks are planned for parent integration.
 ./build/browniec.exe run examples/array-copy.brc --fuel 100000 --json
 pwsh -NoProfile -File tools/verify-m2-arrays.ps1 -Slice copy
 python -B tools/record-m2-array-write-evidence.py --slice copy --scalar-regression
@@ -183,7 +192,7 @@ Those limits describe the profile, not the language forever.
 
 | Level | Intended capability | Current state |
 | --- | --- | --- |
-| core | Source compile, verify, and native VM CLI | Experimental i32/i64/u8/u32/usize/bool expressions, explicit widening, branches, loops, shallow tagged values, switch statements and expressions, `?` propagation, source arrays, declaration-only source struct layouts, and private entry-only struct IR execution; scalar M1 and array reads verified, focused array and struct VM checks recorded, with source struct construction and field operations not implemented |
+| core | Source compile, verify, and native VM CLI | Experimental i32/i64/u8/u32/usize/bool expressions, explicit widening, branches, loops, shallow tagged values, switch statements and expressions, `?` propagation, source arrays, declaration-only source struct layouts, private entry-only struct IR execution, and bounded entry scalar-field construction/read lowering; scalar M1 and array reads verified, focused array and struct VM checks recorded, with bounded struct-value checks verified |
 | restricted | Windows worker plus parent broker | Not implemented; M4 |
 | embed | Trusted native host through a DLL ABI | Not implemented; M5; no public C export |
 
@@ -247,7 +256,8 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 private struct-owner copy and assignment](docs/engineering/m2-struct-owner-copy.md): independent record owners, exact-ID assignment, shared descriptor pressure, and source-release survival
 - [M2 private struct IR](docs/engineering/m2-struct-ir.md): entry-owned bindings, opcodes 41..46, flattened scalar leaves, combined lifetimes, and independent verification
 - [M2 private struct VM](docs/engineering/m2-struct-vm.md): shared owners and payload, private execution semantics, fixed Fuel charges, and current check status
-- [M2 declaration-only source structs](docs/engineering/m2-struct-source.md): bounded parser, forward named fields, immutable layouts, name rules, and stepwise verification
+- [M2 declaration-only source structs](docs/engineering/m2-struct-source.md): historical bounded parser, forward named fields, immutable layouts, name rules, and stepwise verification
+- [M2 bounded source struct values](docs/engineering/m2-struct-values.md): entry scalar construction, ordered typed staging, `SINIT`/scalar-leaf reads, mixed cleanup, bounds, profiles, and recorded verification
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
 - [Design baseline](docs/design-baseline.md): source provenance, evidence, and findings

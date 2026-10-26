@@ -1,7 +1,7 @@
 # Validation
 
-- Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, switch-expression, i64, and unsigned receipts are verified historical evidence; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified; private entry-array IR/VM and source-array reads, writes, copy initializers, parameters, results, and assignment forms implemented; in-place repeated-literal assignment verified; private entry-owned struct IR/verifier verified historically; private struct VM verified with native 38/38 and CLI 115 in both profiles; declaration-only source structs verified stepwise in development and release (23 native groups and 2,208 CLI cases per profile)
-- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/u8/u32/usize/bool values, explicit widening, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation; private function-owned array IR/native dispatch with separate recursive frame tokens, let/var scalar arrays in lexical scopes of ordinary functions, indexed reads/writes, copy initializers, length access, lexical cleanup including `?` failure, by-value parameters, source results, and bare-name, call-result, and repeated-literal assignment are implemented; private entry-owned struct IR/verifier and metered VM dispatch exist; source struct declarations attach immutable layouts, while construction, bindings, field operations, parameters/results, and borrows remain unavailable
+- Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, switch-expression, i64, and unsigned receipts are verified historical evidence; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified; private entry-array IR/VM and source-array reads, writes, copy initializers, parameters, results, and assignment forms implemented; in-place repeated-literal assignment verified; private entry-owned struct IR/verifier verified historically; private struct VM verified with native 38/38 and CLI 115 in both profiles; declaration-only source structs historically verified in development and release (23 native groups and 2,208 CLI cases per profile); bounded source struct construction and field reads implemented and verified in development/release
+- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/u8/u32/usize/bool values, explicit widening, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation; private function-owned array IR/native dispatch with separate recursive frame tokens, let/var scalar arrays in lexical scopes of ordinary functions, indexed reads/writes, copy initializers, length access, lexical cleanup including `?` failure, by-value parameters, source results, and bare-name, call-result, and repeated-literal assignment are implemented; private entry-owned struct IR/verifier and metered VM dispatch exist; source struct declarations attach immutable layouts; bounded entry construction, record bindings, and one-level scalar field reads lower to `SINIT` and `SREAD`, while nested construction/chains, record copies, field writes, struct parameters/results, and borrows remain unavailable
 
 ## Validation source of truth
 
@@ -701,10 +701,14 @@ array calls and results retain independent verifier support.
 
 The VM verifies first, then executes these entry-only instructions through the
 private [struct VM](docs/engineering/m2-struct-vm.md). The former unavailable
-kind-11 boundary no longer describes the runtime. Source struct declarations now
-attach immutable layout metadata without record bindings or struct opcodes.
-Construction, field lowering, struct parameters/results, borrows, catalog
-identity, and allocator integration remain unimplemented.
+kind-11 boundary no longer describes the runtime. The declaration-only source
+contract remains historical: declarations without record bindings attach
+immutable layout metadata and emit no struct opcodes. The bounded
+[source struct-value contract](docs/engineering/m2-struct-values.md) adds entry
+construction and one-level scalar field reads through `SINIT` and `SREAD`.
+Nested construction/chains, record copies, field writes, struct
+parameters/results, borrows, catalog identity, and allocator integration remain
+unimplemented. The new value slice passed the focused checks recorded below.
 
 The `python -B tools/verify-m2-struct-layout.py --ir` selection passed 46 native
 groups per development and release profile: 9 new struct-IR groups and 37
@@ -755,8 +759,8 @@ admits bounded top-level structs with forward references, scalar or by-value nam
 fields, source-span name resolution, declaration-order padding, and a shared
 function/type namespace. The compiler attaches immutable layouts while leaving
 the record binding catalog empty, so declarations emit no struct opcodes and add
-no payload allocation or Fuel charge. Construction, bindings, field operations,
-parameters/results, and borrows remain unimplemented.
+no payload allocation or Fuel charge. That contract remains the historical
+declaration-only slice.
 
 Development and release each passed 23 native groups and 2,208 CLI cases: 124
 source struct cases, 115 array-literal-assignment cases, and 1,969 scalar cases.
@@ -769,6 +773,31 @@ aggregate harness was syntax-checked, not rerun. The repeatable selection is:
 ```powershell
 python -B tools/verify-m2-struct-source.py
 ```
+
+The [bounded source struct-value contract](docs/engineering/m2-struct-values.md)
+adds entry-only scalar-field construction and one-level scalar field reads.
+Fields appear exactly once in declaration order with an optional final comma.
+Each typed field expression is evaluated left to right and staged before
+consecutive loads and `SINIT`; the binding becomes visible only after
+initialization. Record bindings select `brownie.m2-struct-read/1`, while
+declaration-only programs keep their existing profile. Construction is limited
+to selected roots of at most 128 bytes and 16 fields, with up to 16 record
+sites, the shared 16-entry owner table, 65,536-byte payload cap, and existing
+Fuel. Nested construction and field chains, record copies, field writes, struct
+parameters/results, and borrows remain unsupported.
+
+The full `python -B tools/verify-m2-struct-values.py` invocation passed 28 native
+groups and 2,352 CLI cases per development/release profile: 144 struct-value,
+124 declaration, 115 array-literal-assignment, and 1,969 scalar cases. Native
+groups cover new values (5), declarations (5), struct VM (8), functions (4), and
+loops (6). Three additional CLI cases per profile cover early return/continue
+during initialization and a type declared after `main`. The
+[receipt](docs/evidence/m2-struct-values-windows-20261026.json) binds matching
+artifacts and stable source/compiler hashes. Full native suites, full array CLI
+matrices, M0, Linux, isolation, DLL, packaging, allocation instrumentation, and
+performance were not run. The declaration-only
+receipt above remains historical evidence for declarations without record
+bindings; it does not cover `SINIT`, `SREAD`, or the new profile.
 
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker
