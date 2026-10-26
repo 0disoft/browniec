@@ -1,0 +1,893 @@
+{
+  "schema": "browniec.m2-struct-vm/v1",
+  "status": "passed",
+  "recordedAt": "2026-10-26T09:30:41.348912+00:00",
+  "baselineCommit": "f5d4894cc9f308c6c6c5015e65ba41d51d4d58e0",
+  "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261022210249-4ce1264273be\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.86\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: 4ce1264273be6051ee560173e94690e1b99c9eaf\nmodified: false",
+  "compilerSha256": "572395f7f1e425d613c5a69f50b30ed177cda37ca2b1638bd0c11cf79fcbcc77",
+  "standardLibraryLockIdentity": [
+    {
+      "id": "fypi1-sha256-c18350128fcbce1cee2c63f0e7acc467f9f77ff184c458af1d20eab69a58e89a",
+      "role": "standard-library",
+      "packageUid": "fairyc.std",
+      "sourceKind": "sdk",
+      "localPath": "",
+      "sdkIdentity": "fairyc-sdk-stdlib/0",
+      "runtimeAbi": "fairyc-runtime/0",
+      "sourceIdentity": "fairyc-sdk-stdlib/0;fairyc-runtime/0;fysrc1-sha256-782df5e2039ff3f7817c1055454caa24feb2ea755e62f78d8ee67418916a5b83",
+      "sourceDigest": "fysrc1-sha256-782df5e2039ff3f7817c1055454caa24feb2ea755e62f78d8ee67418916a5b83",
+      "version": "0.0.0-stage0.86",
+      "features": []
+    }
+  ],
+  "os": "Windows-11-10.0.26300-SP0",
+  "pythonVersion": "3.14.6",
+  "lockedCheck": "check ok: 2 instance(s), 49 source file(s), 401 MIR function(s), lock verified",
+  "commands": [
+    [
+      "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+      "--version"
+    ],
+    [
+      "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+      "check",
+      "--locked"
+    ],
+    [
+      "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+      "test",
+      "--native",
+      "--capture-output",
+      "--json",
+      "--locked",
+      "--file",
+      "tests/m2/struct_vm.fy",
+      "--file",
+      "tests/m2/struct_ir.fy",
+      "--file",
+      "tests/m2/array_vm.fy",
+      "--file",
+      "tests/m2/array_calls.fy",
+      "--file",
+      "tests/m2/array_result_vm.fy"
+    ],
+    [
+      "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+      "test",
+      "--native",
+      "--capture-output",
+      "--json",
+      "--locked",
+      "--release",
+      "--file",
+      "tests/m2/struct_vm.fy",
+      "--file",
+      "tests/m2/struct_ir.fy",
+      "--file",
+      "tests/m2/array_vm.fy",
+      "--file",
+      "tests/m2/array_calls.fy",
+      "--file",
+      "tests/m2/array_result_vm.fy"
+    ]
+  ],
+  "sourceSha256": [
+    {
+      "path": "fairy.lock",
+      "sha256": "954e274bf695e022cea327047d09ae2ca720486d9ef378d077441bfc731771be"
+    },
+    {
+      "path": "fairy.toml",
+      "sha256": "f5254ba793d9012470c697e8657688a4ea5465c138fba6d748707d5bfa4b31fb"
+    },
+    {
+      "path": "src/arithmetic.fy",
+      "sha256": "8192e6ba97498d059b0505307bc2bf84ac58d9722dc5f597587f8ae81a1081d3"
+    },
+    {
+      "path": "src/array_call_source.fy",
+      "sha256": "57af1c63a68bf060d6c555d1ec3f929d3c53715691074d68a5ae6f7ab58392a2"
+    },
+    {
+      "path": "src/array_call_vm.fy",
+      "sha256": "9da46f3a605e5a63ee7309d607c06473a3c175ae9e30f6e0b759e9da9a51e6da"
+    },
+    {
+      "path": "src/array_layout.fy",
+      "sha256": "d3497dfb6bb7e9ac8ceece4ae88a2274b6b40b49e3c5fecfc509179c03c91cdd"
+    },
+    {
+      "path": "src/array_meta.fy",
+      "sha256": "d1a07319dc2bb7eb95298e3920eaec63c1a4c1390a00c5469528a77e97612894"
+    },
+    {
+      "path": "src/array_owners.fy",
+      "sha256": "f7d5599712ef348bae4d9b4256b14ad7debc57b8073867947e61a18a69f28733"
+    },
+    {
+      "path": "src/array_parameters.fy",
+      "sha256": "ae760f4880d732c8630b08dfc948edb9d21ad3bdb80d2b8c84f5767a43016a29"
+    },
+    {
+      "path": "src/array_result_source.fy",
+      "sha256": "46b494134085b3efb7035daa31e2f55b66a6b1d975e9a5cc50bf39d15cb0f4f4"
+    },
+    {
+      "path": "src/array_result_vm.fy",
+      "sha256": "3cd5388806afa0f4c3a6a8518f154adaf6f9904b18bc7c30ed787d37c43eacfa"
+    },
+    {
+      "path": "src/array_results.fy",
+      "sha256": "1dccba6ebbc493654aea82e305b7c3f9b0c226c8c475d1c80f19fa1014e63e8e"
+    },
+    {
+      "path": "src/array_source.fy",
+      "sha256": "2b9f60f9cfa88a28ceb09f0d8fd2a06b09f49d4a51346b47080a369496fbabe9"
+    },
+    {
+      "path": "src/array_storage.fy",
+      "sha256": "00808c116e0fb86ce063d7fd4cc9d1f8fd29f19b277449e59e3569491a3ee534"
+    },
+    {
+      "path": "src/array_verifier.fy",
+      "sha256": "8cae6645601de78361509b67a4de77a573169f690e950acd9f65789d1c3b61d3"
+    },
+    {
+      "path": "src/array_vm.fy",
+      "sha256": "5c9d6290a9d20c54ae9d9068a2e63ad8b9206b4113bfa7db43f0c980d1e8bd15"
+    },
+    {
+      "path": "src/bits.fy",
+      "sha256": "0b030757624a8dbaea9475f90d757aeff78b9154a121af7a4d9ebd80042db1a0"
+    },
+    {
+      "path": "src/casts.fy",
+      "sha256": "59da4a4ecef63833cc383495390e150b964bf41b353c4b150dcacb6be66caba6"
+    },
+    {
+      "path": "src/cells.fy",
+      "sha256": "71b82add3e95b86a1b7bcb88c3f97f6ae38bae0ac3ec8b1a2de925b10a64e433"
+    },
+    {
+      "path": "src/cli_input.fy",
+      "sha256": "ec91de62e6b5147d117d6fe0366ebcf617b556c074bf1dd91cb10188f96507ba"
+    },
+    {
+      "path": "src/compiler.fy",
+      "sha256": "c6a200c5a7efdd3a05513811b7b9b9fe8244cec0b92fd1bcae053e1ea3ef6cda"
+    },
+    {
+      "path": "src/errors.fy",
+      "sha256": "e8070ef5c6380460dacb579c33f2e180b9e683286c8cb0827e30d82a581a4646"
+    },
+    {
+      "path": "src/functions.fy",
+      "sha256": "854bedc970dc1b7a3b08c1eecc9261a32e9c0d04e00aec9a625b65d4a19cd2b6"
+    },
+    {
+      "path": "src/ir.fy",
+      "sha256": "8a2fa50e11eb815c60e26e55e15d5193a3ea6d5f241667ecb4088b8a3f1e183a"
+    },
+    {
+      "path": "src/lexer.fy",
+      "sha256": "0a64c45b3a3512ada4610c244ce874d306e417cde0fce4cd99a419048002861e"
+    },
+    {
+      "path": "src/locals.fy",
+      "sha256": "f89cab6159330ec0ac269ef02cedd59d15f6f3cfae2d60fc89d43b5ccdf32cda"
+    },
+    {
+      "path": "src/loops.fy",
+      "sha256": "d25dccfb4d3d50daa6e82a6a2f8df345ea72fd4a559e3a8882d6cda0230cbee2"
+    },
+    {
+      "path": "src/main.fy",
+      "sha256": "82a76b1a92376304556b4a2546ec98cb9d219bacb941d92bd4d67d2cbdfecec8"
+    },
+    {
+      "path": "src/patterns.fy",
+      "sha256": "d9ba2ff9dba626968b7514c636a414932e50856c19b9d41d6825b4f91c9797aa"
+    },
+    {
+      "path": "src/propagation.fy",
+      "sha256": "9b58f0e5ed3ef79c44cf819c651e0ec456e38441c3ce8579aca31e0d7eb80bdc"
+    },
+    {
+      "path": "src/register_set.fy",
+      "sha256": "478e2690ee311bb3961c329becc6f9ef035276759619733cbfd0f6e441f36b73"
+    },
+    {
+      "path": "src/render.fy",
+      "sha256": "d6ae1e6212767aa3bed55c0383bc2065128c4db49c398c39396e437387e62bba"
+    },
+    {
+      "path": "src/scalar_codec.fy",
+      "sha256": "c28ca5e5cdc38dee01d79489d8c5a709022a49001854af638258ec4536ad66f0"
+    },
+    {
+      "path": "src/shifts.fy",
+      "sha256": "510dc6a90591de165de424a377eb267917ea9973972b9b95656cc9c435675eeb"
+    },
+    {
+      "path": "src/struct_layout.fy",
+      "sha256": "5830ce15d3bfec60a172e9e157464e4738fd5ad4cdcfbc21500b21c934100dd3"
+    },
+    {
+      "path": "src/struct_meta.fy",
+      "sha256": "078d12717b20ed04a04eefaa22409c03292b363995a2d951be617716fe8b52cd"
+    },
+    {
+      "path": "src/struct_nested_storage.fy",
+      "sha256": "65ce93e9e1bb4e63c43872348132c061f4c9bcc8d3e1362a2f14482935fbe023"
+    },
+    {
+      "path": "src/struct_storage.fy",
+      "sha256": "f371eedc083aea535fa6cc35f245fb6bd1c8ded52b8c4470c19fd0c4d9df0596"
+    },
+    {
+      "path": "src/struct_verifier.fy",
+      "sha256": "68ae43e62cea019f101056d93261cbbc9f7c1a3254f09acecbcb92eb5ce3746c"
+    },
+    {
+      "path": "src/struct_vm.fy",
+      "sha256": "6406024cbc13b67a82646d5916912d17f4ac44b947a441181abb75456104c54d"
+    },
+    {
+      "path": "src/tagged.fy",
+      "sha256": "67770f8ec8f3e35a2a6196cda87310844d37358f86f8b22eb81b49df1f65f1bf"
+    },
+    {
+      "path": "src/types.fy",
+      "sha256": "906f5ba160de53f60d23e344e141181f902f36de60a4060375bef97a2162be23"
+    },
+    {
+      "path": "src/verifier.fy",
+      "sha256": "1f6cf7916afe3d32b99c5609591d1f7a71e1baa0e3666fb66bcf80791c2524c3"
+    },
+    {
+      "path": "src/vm.fy",
+      "sha256": "338e6eb6e0b8eca595f30049d6d3bc3e728a852eb8985048f9f0e62e45d2682c"
+    },
+    {
+      "path": "tests/m2/array_calls.fy",
+      "sha256": "38ca740fb98467a54bcecd415869194230b30e85fe334f2c788c1a87f146c4e9"
+    },
+    {
+      "path": "tests/m2/array_result_vm.fy",
+      "sha256": "e55ce6cb07fbc32dc40576ec241311350a68598bd2ad48411bb6595cbbe8dcbc"
+    },
+    {
+      "path": "tests/m2/array_vm.fy",
+      "sha256": "c92b7784d8d3091c91d93fa1a648700f3d4884f82aa220e211a5ca8500786d61"
+    },
+    {
+      "path": "tests/m2/struct_ir.fy",
+      "sha256": "8809e15c62e46155593aa1a1fb794e3b407309fc329e25ae5600e0066383a4cb"
+    },
+    {
+      "path": "tests/m2/struct_vm.fy",
+      "sha256": "ef36bfc8f688516db901234f232d9d6a8c2543f9535f752707b538997185dda9"
+    },
+    {
+      "path": "toolchain.json",
+      "sha256": "e744c8866ba200fd9213ee99ff61a11f60f9ed0f31e9106219f97d7da26971ef"
+    },
+    {
+      "path": "tools/verify-m2-struct-layout.py",
+      "sha256": "4c3630f33f9f528770baae1a4f670619623ae073d403854ca5f093a1459a73d6"
+    }
+  ],
+  "results": [
+    {
+      "profile": "development",
+      "nativeGroups": 38,
+      "nativeTests": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "development",
+        "tests": [
+          {
+            "identity": "tests::m2::array_calls::call_arguments_require_live_immutable_exact_shape_owned_by_caller",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::calls_precharge_exact_fuel_and_scalar_call_prices_remain_unchanged",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::eight_array_parameters_copy_in_argument_order_and_need_the_combined_peak",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::late_copy_failure_preserves_owner_payload_and_all_frame_token_bindings",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::malformed_parameter_catalog_and_placeholder_metadata_are_rejected",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::mixed_scalar_array_shapes_verify_for_all_six_elements",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::parameters_cannot_be_scalar_operands_reinitialized_or_left_live_on_return",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::recursive_parameters_preserve_each_frame_and_share_owner_and_payload_caps",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::sequential_calls_reclaim_parameters_without_losing_parent_snapshots",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_result_vm::failed_return_preflight_preserves_all_owner_tokens_and_payload_bytes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_result_vm::recursive_returns_keep_one_owner_across_all_32_frames",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_result_vm::repeated_returns_reclaim_the_same_extent_and_owner_slot",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_result_vm::return_work_is_prepaid_and_scalar_call_prices_are_unchanged",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_result_vm::returns_rehome_all_six_elements_at_one_extent_peak",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_result_vm::successful_return_preserves_descriptor_generation_and_bytes_then_drops_cleanly",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::all_scalar_array_reads_and_writes_run_in_the_native_vm",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::copied_arrays_keep_original_values_after_source_mutation_and_drop",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::exact_fuel_bounds_quota_and_fresh_program_reuse",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::maximum_usize_array_copy_checks_old_plus_new_peak",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::metered_loop_recreation_reuses_owners_until_fuel_exhaustion",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::scalar_callees_and_frame_failure_do_not_access_parent_arrays",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_ir::backedges_require_the_first_entry_record_invariant",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_ir::builders_and_nested_scalar_order_are_verified_and_execution_is_metered",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_ir::copies_and_assignment_require_exact_live_record_identity",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_ir::deepest_widest_and_full_binding_catalogs_are_bounded",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_ir::forward_joins_require_exact_record_and_array_live_sets",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_ir::initialization_drop_and_return_preserve_record_lifetimes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_ir::metadata_is_replanned_even_for_unused_bindings_and_definitions",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_ir::only_entry_accesses_records_and_no_function_can_reenter_it",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_ir::scalar_operands_reserved_bytes_and_mutability_are_independent_checks",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_vm::actual_dispatch_uses_exact_fuel_and_quota_failures_do_not_poison_later_runs",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_vm::corrupt_bools_stale_tokens_and_nominal_substitution_are_rejected_atomically",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_vm::entry_records_survive_scalar_callees_that_use_the_same_array_arena",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_vm::every_opcode_prepays_before_tokens_bytes_registers_or_metadata_change",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_vm::full_payload_and_shared_array_owner_pressure_preserve_failed_creation",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_vm::full_record_table_assignment_and_deferred_holes_preserve_shared_limits",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_vm::iterative_leaf_paths_cover_depth_sixteen_and_all_128_leaves",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_vm::nested_all_six_scalars_copy_assign_and_survive_source_release",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 38,
+        "passed": 38,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "newStructVMGroups": 8,
+      "structIRRegressionGroups": 9,
+      "arrayVMRegressionGroups": 6,
+      "arrayCallsRegressionGroups": 9,
+      "arrayResultVMRegressionGroups": 6
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 38,
+      "nativeTests": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "release",
+        "tests": [
+          {
+            "identity": "tests::m2::array_calls::call_arguments_require_live_immutable_exact_shape_owned_by_caller",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::calls_precharge_exact_fuel_and_scalar_call_prices_remain_unchanged",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::eight_array_parameters_copy_in_argument_order_and_need_the_combined_peak",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::late_copy_failure_preserves_owner_payload_and_all_frame_token_bindings",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::malformed_parameter_catalog_and_placeholder_metadata_are_rejected",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::mixed_scalar_array_shapes_verify_for_all_six_elements",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::parameters_cannot_be_scalar_operands_reinitialized_or_left_live_on_return",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::recursive_parameters_preserve_each_frame_and_share_owner_and_payload_caps",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::sequential_calls_reclaim_parameters_without_losing_parent_snapshots",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_result_vm::failed_return_preflight_preserves_all_owner_tokens_and_payload_bytes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_result_vm::recursive_returns_keep_one_owner_across_all_32_frames",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_result_vm::repeated_returns_reclaim_the_same_extent_and_owner_slot",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_result_vm::return_work_is_prepaid_and_scalar_call_prices_are_unchanged",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_result_vm::returns_rehome_all_six_elements_at_one_extent_peak",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_result_vm::successful_return_preserves_descriptor_generation_and_bytes_then_drops_cleanly",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::all_scalar_array_reads_and_writes_run_in_the_native_vm",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::copied_arrays_keep_original_values_after_source_mutation_and_drop",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::exact_fuel_bounds_quota_and_fresh_program_reuse",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::maximum_usize_array_copy_checks_old_plus_new_peak",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::metered_loop_recreation_reuses_owners_until_fuel_exhaustion",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_vm::scalar_callees_and_frame_failure_do_not_access_parent_arrays",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_ir::backedges_require_the_first_entry_record_invariant",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_ir::builders_and_nested_scalar_order_are_verified_and_execution_is_metered",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_ir::copies_and_assignment_require_exact_live_record_identity",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_ir::deepest_widest_and_full_binding_catalogs_are_bounded",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_ir::forward_joins_require_exact_record_and_array_live_sets",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_ir::initialization_drop_and_return_preserve_record_lifetimes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_ir::metadata_is_replanned_even_for_unused_bindings_and_definitions",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_ir::only_entry_accesses_records_and_no_function_can_reenter_it",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_ir::scalar_operands_reserved_bytes_and_mutability_are_independent_checks",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_vm::actual_dispatch_uses_exact_fuel_and_quota_failures_do_not_poison_later_runs",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_vm::corrupt_bools_stale_tokens_and_nominal_substitution_are_rejected_atomically",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_vm::entry_records_survive_scalar_callees_that_use_the_same_array_arena",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_vm::every_opcode_prepays_before_tokens_bytes_registers_or_metadata_change",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_vm::full_payload_and_shared_array_owner_pressure_preserve_failed_creation",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_vm::full_record_table_assignment_and_deferred_holes_preserve_shared_limits",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_vm::iterative_leaf_paths_cover_depth_sixteen_and_all_128_leaves",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_vm::nested_all_six_scalars_copy_assign_and_survive_source_release",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 38,
+        "passed": 38,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "newStructVMGroups": 8,
+      "structIRRegressionGroups": 9,
+      "arrayVMRegressionGroups": 6,
+      "arrayCallsRegressionGroups": 9,
+      "arrayResultVMRegressionGroups": 6
+    }
+  ],
+  "limits": {
+    "recordDefinitions": 32,
+    "recordBindings": 16,
+    "fieldsPerRecord": 16,
+    "recordBytes": 128,
+    "scalarLeaves": 128,
+    "structuralDepth": 16,
+    "scalarRegisters": 128,
+    "instructions": 256,
+    "preparedTagBytes": 2048,
+    "lifetimeBits": 32,
+    "sharedOwners": 16,
+    "payloadCapacityAtMost": 65536,
+    "recordBindingTokens": 16,
+    "fieldTraversalIterationsAtMost": 4096,
+    "planFuel": 18432,
+    "initFuel": 46145,
+    "copyFuel": 42049,
+    "readFuel": 41281,
+    "writeFuel": 41281,
+    "dropFuel": 65,
+    "assignmentFuel": 60545
+  },
+  "artifacts": "Tool-managed native test images; no new guest struct CLI artifact.",
+  "limitations": [
+    "Private entry-owned struct VM dispatch for opcodes 41..46, with the existing shared array owner table and bounded caller-selected payload arena. Six scalar types, nested fields, nominal copies/assignment and token clearing on drop are executable.",
+    "All record work is prepaid before field traversal, owner checks, staging, register writes or token mutation. Fixed per-opcode planning/traversal/codec/owner allowances are algorithmic accounting units, not measured machine instructions or throughput.",
+    "Scalar leaf paths are resolved iteratively with depth16, 128-leaf and 4096-iteration ceilings. Initialization scans once for the input span and again inside storage encoding; both traversals are charged.",
+    "Records have sixteen entry binding tokens without another owner pool. Arrays and records share sixteen occupied descriptors and a single arena; retained dead middle extents remain charged until suffix release. Assignment consumes no additional extent or descriptor.",
+    "The VM prepares payload for any nonempty record or array catalog, charging 1+capacity before buffer allocation. Pure scalar programs retain the previous preparation and instruction prices.",
+    "Runtime tests cover per-opcode underfuel snapshots, exact total Fuel, source-release survival, corrupt bools, stale/nominal token substitution, depth16 and 128 leaves, full payload/owner limits, deferred holes and entry records across an array-using scalar callee.",
+    "Source struct grammar, struct parameters/results, borrows, catalog identity capabilities, allocator integration and struct-wide source conformance remain unimplemented. One verified immutable catalog and stable backing region are required for a private helper invocation.",
+    "CLI, full native suites, M0, Linux, isolation, DLL, clean-machine packaging, allocation instrumentation and performance not rerun.",
+    "The harness uses Python standard-library APIs without shell execution; this invocation verifies Windows only."
+  ]
+}

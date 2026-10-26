@@ -120,19 +120,26 @@ own the affected contract. Broader scaffold procedures are optional.
   appends independent record owners and requires exact record identity for assignment.
   Its 17-group Windows selection passed development and release. The previous 34-group owner receipt is historical
   for changed inputs. A [private struct IR and verifier](docs/engineering/m2-struct-ir.md)
-  now defines entry-owned bindings for opcodes 41..46: SINIT, SCOPY, SREAD,
+  defines entry-owned bindings for opcodes 41..46: SINIT, SCOPY, SREAD,
   SWRITE, SDROP, and SASSIGN. Initialization consumes all depth-first scalar leaves
   in consecutive registers with exact types; reads and writes use flattened leaf
   ordinals. Full catalogs are replanned, record lifetimes occupy bits 16..31 beside
   array bits 0..15, and joins or backedges require exact live sets. Only entry may
-  use struct instructions; calls into entry are rejected when bindings exist. The
-  VM verifies first, then returns unavailable kind 11 for every nonempty record
-  catalog before preparation or guest execution. The `--ir` native selection passed
-  46 groups per development/release profile; the focused repeated-literal assignment CLI suite passed 115 cases per
-  development/release profile, including the prior depth-10/11 boundary. Full CLI
-  matrices were not rerun.
-  Source structs, borrows, struct parameters/results, struct VM
-  dispatch, Fuel, and allocator integration remain unimplemented. The earlier nested-storage 18-group receipt is
+  use struct instructions; calls into entry are rejected when bindings exist. A
+  [private struct VM](docs/engineering/m2-struct-vm.md) now executes those
+  instructions. It adds sixteen entry binding tokens while sharing the existing
+  owner table and one payload arena. A nonempty array or record catalog prepares
+  1+capacity Fuel with a 65,536-byte cap; the scalar path is unchanged. Every struct
+  opcode prepays a fixed charge before traversal, owner checks, staging, or token
+  and register mutation. Success returns remaining Fuel; runtime failures abort the
+  invocation. The `--vm` selection passed all 38 groups in development and release,
+  and the existing 115-case CLI suite passed in both profiles. Results are recorded
+  in the struct VM native and CLI receipts. The old `--ir` 46-group and
+  115-case CLI receipts are historical for changed runtime, test, harness, and
+  root-lock inputs.
+  Source struct declarations, lowering, parameters/results, borrows, and allocator
+  integration remain unimplemented. Next is source declaration and type-catalog
+  work, then complete-initializer and field-access lowering. The earlier nested-storage 18-group receipt is
   historical for changed inputs; nested-copy 24-group checks passed development and release.
   The copy slice's Windows 28-group receipt passed development and release after
   moving snapshot staging into caller-owned scratch. Earlier planner and storage

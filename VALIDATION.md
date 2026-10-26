@@ -1,7 +1,7 @@
 # Validation
 
-- Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, switch-expression, i64, and unsigned receipts are verified historical evidence; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified; private entry-array IR/VM and source-array reads, writes, copy initializers, parameters, results, and assignment forms implemented; in-place repeated-literal assignment verified; private entry-owned struct IR/verifier verified with native and focused CLI checks
-- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/u8/u32/usize/bool values, explicit widening, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation; private function-owned array IR/native dispatch with separate recursive frame tokens, let/var scalar arrays in lexical scopes of ordinary functions, indexed reads/writes, copy initializers, length access, lexical cleanup including `?` failure, by-value parameters, source results, and bare-name, call-result, and repeated-literal assignment are implemented; private entry-owned struct IR and independent verification exist, while struct execution and Fuel remain unavailable
+- Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, switch-expression, i64, and unsigned receipts are verified historical evidence; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified; private entry-array IR/VM and source-array reads, writes, copy initializers, parameters, results, and assignment forms implemented; in-place repeated-literal assignment verified; private entry-owned struct IR/verifier verified historically; private struct VM verified with native 38/38 and CLI 115 in both profiles
+- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/u8/u32/usize/bool values, explicit widening, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation; private function-owned array IR/native dispatch with separate recursive frame tokens, let/var scalar arrays in lexical scopes of ordinary functions, indexed reads/writes, copy initializers, length access, lexical cleanup including `?` failure, by-value parameters, source results, and bare-name, call-result, and repeated-literal assignment are implemented; private entry-owned struct IR/verifier and metered VM dispatch exist, while source struct grammar, parameters/results, and borrows remain unavailable
 
 ## Validation source of truth
 
@@ -699,10 +699,11 @@ Copy and assignment require the exact nominal record ID; assignment also require
 mutable destination storage. Scalar registers never hold owner tokens. Existing
 array calls and results retain independent verifier support.
 
-The VM verifies first, then returns unavailable kind 11 for any nonempty struct
-binding catalog before payload preparation or guest execution. Source structs,
-struct parameters/results, borrows, struct VM dispatch, and struct Fuel remain
-unimplemented.
+The VM verifies first, then executes these entry-only instructions through the
+private [struct VM](docs/engineering/m2-struct-vm.md). The former unavailable
+kind-11 boundary no longer describes the runtime. Source struct declarations,
+lowering, struct parameters/results, borrows, catalog identity, and allocator
+integration remain unimplemented.
 
 The `python -B tools/verify-m2-struct-layout.py --ir` selection passed 46 native
 groups per development and release profile: 9 new struct-IR groups and 37
@@ -714,10 +715,39 @@ The focused repeated-literal assignment CLI suite passed 115 cases per profile,
 including the prior composed depth-10 success and depth-11 compile-limit boundary.
 The [CLI receipt](docs/evidence/m2-struct-ir-cli-windows-20261026.json) records
 both native CLI artifact hashes, commands, input hashes and all 230 outcomes.
-Full CLI matrices were not rerun. The previous struct-owner-copy receipt is
-historical for changed IR, harness, and root-lock inputs; unchanged primitive
-source evidence remains valid for its original scope. M0, Linux, OS isolation,
-DLL, packaging, allocation instrumentation, and performance were not rerun.
+Full CLI matrices were not rerun. These native 46 and CLI 115 results are
+historical for changed runtime, test, harness, and root-lock inputs. The previous
+struct-owner-copy receipt is likewise historical for changed inputs; unchanged
+primitive source evidence remains valid for its original scope.
+
+The [private struct VM contract](docs/engineering/m2-struct-vm.md) executes
+opcodes 41..46 only in entry. `struct_vm::State` adds sixteen binding tokens while
+sharing the existing array owner table and one payload buffer. Any nonempty array
+or record catalog prepares capacity 0..65,536 and charges `1 + capacity` before
+allocation; pure scalar preparation and instruction prices are unchanged. Copies
+are independent, assignment allocates no extent, and dead middle holes stay
+charged until suffix release. Field ordinals use the existing owner field-path
+APIs with 128 leaves, depth 16, and at most 4,096 traversal iterations.
+
+Every struct opcode prepays before path traversal, owner validation, staging, or
+token/register mutation. The fixed charges are `SINIT` 46,145, `SCOPY` 42,049,
+`SREAD`/`SWRITE` 41,281, `SDROP` 65, and `SASSIGN` 60,545. These are algorithmic
+accounting units, not measured CPU instructions, stack bytes, or throughput.
+Insufficient Fuel preserves the tested complete state snapshots; a successful
+step returns remaining Fuel; runtime failures abort the invocation. Corrupt bools,
+stale tokens, and nominal-ID substitutions are covered.
+
+The `python -B tools/verify-m2-struct-layout.py --vm` selection passed 38/38
+native groups in each development and release profile: struct VM (8), struct IR
+(9), array VM (6), array calls (9), and array-result VM (6). The
+[native receipt](docs/evidence/m2-struct-vm-windows-20261026.json) records commands,
+matching test identities, stable input hashes, and the pinned Fairy C compiler
+`4ce1264273be` and SDK. The existing focused CLI suite passed 115 cases per profile;
+its [receipt](docs/evidence/m2-struct-vm-cli-windows-20261026.json) records native
+CLI artifact hashes, commands, input hashes and all 230 outcomes. Full native
+suites and full scalar/array CLI matrices were not rerun. M0, Linux, OS isolation,
+DLL, packaging, allocation instrumentation, and performance remain outside this
+focused execution check.
 
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker

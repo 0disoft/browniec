@@ -1,17 +1,17 @@
 # M2 Private Struct IR and Verification
 
-- Status: private entry-owned struct IR and verifier verified; development and release passed.
-- Scope: struct bindings, lifetime verification, and the honest VM-unavailable boundary.
+- Status: private entry-owned struct IR and verifier implemented. Its 46-group native and 115-case CLI results are historical after changed runtime, test, harness, and root-lock inputs.
+- Scope: struct bindings and lifetime verification. Private metered execution continues in the [struct VM contract](m2-struct-vm.md).
 - Implementation: [src/ir.fy](../../src/ir.fy), [src/verifier.fy](../../src/verifier.fy), [src/struct_meta.fy](../../src/struct_meta.fy), and [src/struct_verifier.fy](../../src/struct_verifier.fy).
 - Harness: [tools/verify-m2-struct-layout.py](../../tools/verify-m2-struct-layout.py) with `--ir`.
-- Native evidence: [Windows receipt](../evidence/m2-struct-ir-windows-20261026.json).
-- Focused CLI evidence: [Windows receipt](../evidence/m2-struct-ir-cli-windows-20261026.json).
+- Historical native evidence: [Windows receipt](../evidence/m2-struct-ir-windows-20261026.json).
+- Historical focused CLI evidence: [Windows receipt](../evidence/m2-struct-ir-cli-windows-20261026.json).
 
 This increment adds private IR for named record bindings owned by the entry
 function. The catalog binds at most 16 selected record definitions. Struct
 bindings never occupy scalar registers; scalar registers carry only scalar
-values. Record parameters, record results, source struct syntax, borrows, and
-struct execution remain outside this slice.
+values. Record parameters, record results, source struct syntax, and borrows
+remain outside this and the private VM slice.
 
 ## Instruction encoding
 
@@ -66,24 +66,33 @@ entry function are rejected whenever any array or record binding exists,
 including calls in otherwise unused functions. Existing array calls, array
 results, and their verifier paths continue independently.
 
-`vm::run` verifies first. For any nonempty record binding catalog it then
-returns error kind 11 before payload preparation, owner setup, or guest
-execution, including when no struct instruction is reachable. Struct VM
-dispatch and Fuel accounting are the next slice.
+`vm::run` verifies first. The earlier unavailable kind-11 boundary no longer
+applies: private dispatch and Fuel accounting for opcodes 41..46 are defined in
+the [struct VM contract](m2-struct-vm.md). The source frontend still does not emit
+these instructions from struct declarations.
 
 ## Verification status
 
 `python -B tools/verify-m2-struct-layout.py --ir` passed 46 native groups per
-development and release profile: 9 new struct-IR groups and 37 regressions
+development and release profile: 9 struct-IR groups and 37 regressions
 comprising array IR (5), array calls (9), array results (6), array-result VM
 (6), branches (5), and loops (6). Both profiles selected the same identities
-with stable source hashes and the pinned Fairy C compiler `4ce1264273be`.
+with stable source hashes and the pinned Fairy C compiler `4ce1264273be`. The
+focused repeated-literal assignment CLI suite also passed 115 cases per profile.
 
-The focused repeated-literal assignment CLI suite passed 115 cases per profile,
-including the prior composed depth-10 success and depth-11 compile-limit boundary.
-Full CLI matrices were not rerun.
+Those results are historical for changed `src/vm.fy`, `tests/m2/struct_ir.fy`,
+the harness, and root-lock inputs. In particular, the IR smoke now expects kind 8
+at zero Fuel and successful metered execution at sufficient Fuel; the old
+kind-11 assertion no longer describes the runtime. The focused CLI suite was
+rerun for both profiles in the struct VM slice.
 
-The previous struct-owner-copy receipt is historical for changed IR, harness,
-and root-lock inputs; unchanged primitive source evidence remains valid for its
-original scope. M0, Linux, OS isolation, DLL, packaging, allocator instrumentation,
-and performance were not rerun. Next: struct VM dispatch and Fuel.
+The current [struct VM contract](m2-struct-vm.md) owns dispatch, shared storage,
+Fuel charges, and runtime failure behavior. Its [native receipt](../evidence/m2-struct-vm-windows-20261026.json)
+passes 38 groups per development/release profile, including all nine struct-IR
+groups. Its [focused CLI receipt](../evidence/m2-struct-vm-cli-windows-20261026.json)
+passes 115 cases per profile. Full native suites,
+full CLI matrices, M0, Linux, OS isolation, DLL, packaging, allocator
+instrumentation, and performance were not rerun.
+
+Next is source struct declaration and type-catalog work, followed by lowering for
+complete initializers and field access.

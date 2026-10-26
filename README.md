@@ -1,6 +1,6 @@
 # Brownie C
 
-- Status: M1 scalar checkpoint verified; M2 function-owned scalar arrays with helper declarations, by-value parameters, argument capture, copies, length access, lexical cleanup, source results, and bare-name, call-result, and repeated-literal assignment implemented; private entry-owned struct IR/verifier verified; struct execution unavailable; full profile incomplete
+- Status: M1 scalar checkpoint verified; M2 function-owned scalar arrays with helper declarations, by-value parameters, argument capture, copies, length access, lexical cleanup, source results, and bare-name, call-result, and repeated-literal assignment implemented; private entry-owned struct IR/verifier and metered VM dispatch implemented; source structs unavailable; full profile incomplete
 - Design date: 2026-10-23
 - First delivery target: Windows 11 x64
 
@@ -9,7 +9,7 @@ The implementation direction is primarily Fairy C. A native Brownie VM executabl
 accepts .brc source and runs it without starting Go, MSVC, or a C compiler.
 
 The native `browniec` compiles and runs the experimental scalar and source-array
-pipelines. The bool/branch increment extends its i32 functions with bool parameters,
+pipelines, and the private VM executes entry-only struct instructions. The bool/branch increment extends its i32 functions with bool parameters,
 results, and locals, `! == != < <= > >= && ||`, short-circuit evaluation,
 `if`/`else if`/`else`, standalone lexical blocks, and early returns. `main` remains
 zero-argument and returns i32. Parsing, scalar type checks, private bytecode
@@ -82,10 +82,12 @@ record owners and requires exact record identity for assignment. Its 17-group
 Windows selection passed development and release; the previous 34-group owner receipt is historical for changed
 inputs. A [private entry-owned struct IR and verifier](docs/engineering/m2-struct-ir.md)
 adds opcodes 41..46 for initialization, copy, scalar leaf access, drop, and exact-ID
-assignment. Record lifetimes use bits 16..31 beside array lifetimes, and the VM
-returns unavailable kind 11 for every nonempty struct binding catalog after
-verification. Source structs, borrow checking, struct parameters/results, struct
-VM dispatch, and struct Fuel remain later work.
+assignment; record lifetimes use bits 16..31 beside array lifetimes. The
+[private struct VM](docs/engineering/m2-struct-vm.md) executes those private
+instructions with fixed prepaid Fuel charges, sixteen entry tokens, and the shared
+array owner table and payload arena. Development and release each passed all 38
+selected native groups and the existing 115-case CLI suite. Source structs, borrow
+checking, struct parameters/results, and source lowering remain later work.
 The earlier nested-storage 18-group receipt is historical for changed
 inputs; nested-copy 24-group checks passed development and release. The copy
 receipt passes 28 groups per profile in development and release. The planner's
@@ -176,7 +178,7 @@ Those limits describe the profile, not the language forever.
 
 | Level | Intended capability | Current state |
 | --- | --- | --- |
-| core | Source compile, verify, and native VM CLI | Experimental i32/i64/u8/u32/usize/bool expressions, explicit widening, branches, loops, shallow tagged values, switch statements and expressions, `?` propagation, immutable source-array reads, mutable element writes, and array copy initialization; scalar M1 and array reads verified, array writes focused-harness verified, copy focused-harness verified |
+| core | Source compile, verify, and native VM CLI | Experimental i32/i64/u8/u32/usize/bool expressions, explicit widening, branches, loops, shallow tagged values, switch statements and expressions, `?` propagation, source arrays, and private entry-only struct IR execution; scalar M1 and array reads verified, focused array and struct VM checks recorded, with source structs not implemented |
 | restricted | Windows worker plus parent broker | Not implemented; M4 |
 | embed | Trusted native host through a DLL ABI | Not implemented; M5; no public C export |
 
@@ -238,7 +240,8 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 private nested struct copy and assignment](docs/engineering/m2-struct-nested-copy.md): iterative snapshots, padding normalization, old-plus-new quota, and overlap-safe nested assignment
 - [M2 shared struct owners](docs/engineering/m2-struct-owners.md): shared record/array descriptors, catalog-bound field access, generation-safe release, and mixed-arena reuse
 - [M2 private struct-owner copy and assignment](docs/engineering/m2-struct-owner-copy.md): independent record owners, exact-ID assignment, shared descriptor pressure, and source-release survival
-- [M2 private struct IR](docs/engineering/m2-struct-ir.md): entry-owned bindings, opcodes 41..46, flattened scalar leaves, combined lifetimes, and the VM-unavailable boundary
+- [M2 private struct IR](docs/engineering/m2-struct-ir.md): entry-owned bindings, opcodes 41..46, flattened scalar leaves, combined lifetimes, and independent verification
+- [M2 private struct VM](docs/engineering/m2-struct-vm.md): shared owners and payload, private execution semantics, fixed Fuel charges, and current check status
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
 - [Design baseline](docs/design-baseline.md): source provenance, evidence, and findings
@@ -333,3 +336,9 @@ and 37 control-flow/array regressions. The focused
 repeated-literal assignment CLI suite passed 115 cases in each development and
 release profile, including the prior composed depth-10/11 boundary. Full CLI
 matrices were not rerun.
+
+The [struct VM native receipt](docs/evidence/m2-struct-vm-windows-20261026.json)
+passes 38 groups in each development and release profile. The
+[focused CLI receipt](docs/evidence/m2-struct-vm-cli-windows-20261026.json) passes
+115 cases per profile. The earlier 46-group IR and 115-case CLI receipts remain
+historical for changed runtime, test, harness, and root-lock inputs.
