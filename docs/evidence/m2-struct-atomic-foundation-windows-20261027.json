@@ -1,0 +1,415 @@
+{
+  "schema": "browniec.m2-struct-atomic-foundation/v1",
+  "status": "passed",
+  "recordedAt": "2026-10-26T18:23:14.454829+00:00",
+  "implementationCommit": "2b5917c04556b6ac2979daf732e47faa71e9173b",
+  "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261022210249-4ce1264273be\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.86\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: 4ce1264273be6051ee560173e94690e1b99c9eaf\nmodified: false",
+  "compilerSha256": "572395f7f1e425d613c5a69f50b30ed177cda37ca2b1638bd0c11cf79fcbcc77",
+  "standardLibraryLockIdentity": [
+    {
+      "id": "fypi1-sha256-c18350128fcbce1cee2c63f0e7acc467f9f77ff184c458af1d20eab69a58e89a",
+      "role": "standard-library",
+      "packageUid": "fairyc.std",
+      "sourceKind": "sdk",
+      "localPath": "",
+      "sdkIdentity": "fairyc-sdk-stdlib/0",
+      "runtimeAbi": "fairyc-runtime/0",
+      "sourceIdentity": "fairyc-sdk-stdlib/0;fairyc-runtime/0;fysrc1-sha256-782df5e2039ff3f7817c1055454caa24feb2ea755e62f78d8ee67418916a5b83",
+      "sourceDigest": "fysrc1-sha256-782df5e2039ff3f7817c1055454caa24feb2ea755e62f78d8ee67418916a5b83",
+      "version": "0.0.0-stage0.86",
+      "features": []
+    }
+  ],
+  "commands": [
+    [
+      "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+      "test",
+      "--native",
+      "--capture-output",
+      "--json",
+      "--locked",
+      "--file",
+      "tests/m2/struct_subassign_owners.fy",
+      "--file",
+      "tests/m2/struct_owner_copy.fy"
+    ],
+    [
+      "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+      "test",
+      "--native",
+      "--capture-output",
+      "--json",
+      "--locked",
+      "--release",
+      "--file",
+      "tests/m2/struct_subassign_owners.fy",
+      "--file",
+      "tests/m2/struct_owner_copy.fy"
+    ]
+  ],
+  "sourceSha256": [
+    {
+      "path": "src/arithmetic.fy",
+      "sha256": "8192e6ba97498d059b0505307bc2bf84ac58d9722dc5f597587f8ae81a1081d3"
+    },
+    {
+      "path": "src/array_call_source.fy",
+      "sha256": "57af1c63a68bf060d6c555d1ec3f929d3c53715691074d68a5ae6f7ab58392a2"
+    },
+    {
+      "path": "src/array_call_vm.fy",
+      "sha256": "9da46f3a605e5a63ee7309d607c06473a3c175ae9e30f6e0b759e9da9a51e6da"
+    },
+    {
+      "path": "src/array_layout.fy",
+      "sha256": "d3497dfb6bb7e9ac8ceece4ae88a2274b6b40b49e3c5fecfc509179c03c91cdd"
+    },
+    {
+      "path": "src/array_meta.fy",
+      "sha256": "d1a07319dc2bb7eb95298e3920eaec63c1a4c1390a00c5469528a77e97612894"
+    },
+    {
+      "path": "src/array_owners.fy",
+      "sha256": "07608de6906d4d77bdaa9bdcc2b4bfeeb2a207f101e6e6c72265404a62452d6b"
+    },
+    {
+      "path": "src/array_parameters.fy",
+      "sha256": "ae760f4880d732c8630b08dfc948edb9d21ad3bdb80d2b8c84f5767a43016a29"
+    },
+    {
+      "path": "src/array_result_source.fy",
+      "sha256": "46b494134085b3efb7035daa31e2f55b66a6b1d975e9a5cc50bf39d15cb0f4f4"
+    },
+    {
+      "path": "src/array_result_vm.fy",
+      "sha256": "3cd5388806afa0f4c3a6a8518f154adaf6f9904b18bc7c30ed787d37c43eacfa"
+    },
+    {
+      "path": "src/array_results.fy",
+      "sha256": "1dccba6ebbc493654aea82e305b7c3f9b0c226c8c475d1c80f19fa1014e63e8e"
+    },
+    {
+      "path": "src/array_source.fy",
+      "sha256": "a61c14f0cad59fe69003cb7779722e43a87a89d2aaafa0ff488e6fe09193996a"
+    },
+    {
+      "path": "src/array_storage.fy",
+      "sha256": "00808c116e0fb86ce063d7fd4cc9d1f8fd29f19b277449e59e3569491a3ee534"
+    },
+    {
+      "path": "src/array_verifier.fy",
+      "sha256": "8cae6645601de78361509b67a4de77a573169f690e950acd9f65789d1c3b61d3"
+    },
+    {
+      "path": "src/array_vm.fy",
+      "sha256": "5c9d6290a9d20c54ae9d9068a2e63ad8b9206b4113bfa7db43f0c980d1e8bd15"
+    },
+    {
+      "path": "src/bits.fy",
+      "sha256": "0b030757624a8dbaea9475f90d757aeff78b9154a121af7a4d9ebd80042db1a0"
+    },
+    {
+      "path": "src/casts.fy",
+      "sha256": "59da4a4ecef63833cc383495390e150b964bf41b353c4b150dcacb6be66caba6"
+    },
+    {
+      "path": "src/cells.fy",
+      "sha256": "71b82add3e95b86a1b7bcb88c3f97f6ae38bae0ac3ec8b1a2de925b10a64e433"
+    },
+    {
+      "path": "src/cli_input.fy",
+      "sha256": "ec91de62e6b5147d117d6fe0366ebcf617b556c074bf1dd91cb10188f96507ba"
+    },
+    {
+      "path": "src/compiler.fy",
+      "sha256": "d52a69e360aa85f1b753133950ff3163d4c790a6c46a8f38bc856a906ace089d"
+    },
+    {
+      "path": "src/errors.fy",
+      "sha256": "e8070ef5c6380460dacb579c33f2e180b9e683286c8cb0827e30d82a581a4646"
+    },
+    {
+      "path": "src/functions.fy",
+      "sha256": "c5f7e0aa3a0113be1ac66d10f72c3103f4d1da2810dc1682ea32a6c03a7f7ff6"
+    },
+    {
+      "path": "src/ir.fy",
+      "sha256": "8a2fa50e11eb815c60e26e55e15d5193a3ea6d5f241667ecb4088b8a3f1e183a"
+    },
+    {
+      "path": "src/lexer.fy",
+      "sha256": "0a64c45b3a3512ada4610c244ce874d306e417cde0fce4cd99a419048002861e"
+    },
+    {
+      "path": "src/locals.fy",
+      "sha256": "f89cab6159330ec0ac269ef02cedd59d15f6f3cfae2d60fc89d43b5ccdf32cda"
+    },
+    {
+      "path": "src/loops.fy",
+      "sha256": "d25dccfb4d3d50daa6e82a6a2f8df345ea72fd4a559e3a8882d6cda0230cbee2"
+    },
+    {
+      "path": "src/main.fy",
+      "sha256": "4540ad67054b697fdc627ea3bfc9767fd92c7605848e44fdb77ae9285ad40211"
+    },
+    {
+      "path": "src/patterns.fy",
+      "sha256": "d9ba2ff9dba626968b7514c636a414932e50856c19b9d41d6825b4f91c9797aa"
+    },
+    {
+      "path": "src/propagation.fy",
+      "sha256": "9b58f0e5ed3ef79c44cf819c651e0ec456e38441c3ce8579aca31e0d7eb80bdc"
+    },
+    {
+      "path": "src/register_set.fy",
+      "sha256": "478e2690ee311bb3961c329becc6f9ef035276759619733cbfd0f6e441f36b73"
+    },
+    {
+      "path": "src/render.fy",
+      "sha256": "e86fb9d531c5c32321dd9df792478ca396523394ae469281a1036b57fbbd6e2d"
+    },
+    {
+      "path": "src/scalar_codec.fy",
+      "sha256": "c28ca5e5cdc38dee01d79489d8c5a709022a49001854af638258ec4536ad66f0"
+    },
+    {
+      "path": "src/shifts.fy",
+      "sha256": "510dc6a90591de165de424a377eb267917ea9973972b9b95656cc9c435675eeb"
+    },
+    {
+      "path": "src/struct_layout.fy",
+      "sha256": "5830ce15d3bfec60a172e9e157464e4738fd5ad4cdcfbc21500b21c934100dd3"
+    },
+    {
+      "path": "src/struct_meta.fy",
+      "sha256": "078d12717b20ed04a04eefaa22409c03292b363995a2d951be617716fe8b52cd"
+    },
+    {
+      "path": "src/struct_nested_storage.fy",
+      "sha256": "65ce93e9e1bb4e63c43872348132c061f4c9bcc8d3e1362a2f14482935fbe023"
+    },
+    {
+      "path": "src/struct_range.fy",
+      "sha256": "14ececa0aa8830ce9cbbb5ea41fca0ec1e8c6934ed761a5cbd0038b3d3ff8ca0"
+    },
+    {
+      "path": "src/struct_source.fy",
+      "sha256": "58eacd663dd6f0bbd9a231783ad90c0a06c154d1f20cc175f093831eb1614a05"
+    },
+    {
+      "path": "src/struct_storage.fy",
+      "sha256": "f371eedc083aea535fa6cc35f245fb6bd1c8ded52b8c4470c19fd0c4d9df0596"
+    },
+    {
+      "path": "src/struct_value_source.fy",
+      "sha256": "0edd5510eb194f374e8015536ae220c1effc71ae59ad8e1ad39a3ea3571ed46d"
+    },
+    {
+      "path": "src/struct_verifier.fy",
+      "sha256": "68ae43e62cea019f101056d93261cbbc9f7c1a3254f09acecbcb92eb5ce3746c"
+    },
+    {
+      "path": "src/struct_vm.fy",
+      "sha256": "6406024cbc13b67a82646d5916912d17f4ac44b947a441181abb75456104c54d"
+    },
+    {
+      "path": "src/tagged.fy",
+      "sha256": "67770f8ec8f3e35a2a6196cda87310844d37358f86f8b22eb81b49df1f65f1bf"
+    },
+    {
+      "path": "src/types.fy",
+      "sha256": "906f5ba160de53f60d23e344e141181f902f36de60a4060375bef97a2162be23"
+    },
+    {
+      "path": "src/verifier.fy",
+      "sha256": "1f6cf7916afe3d32b99c5609591d1f7a71e1baa0e3666fb66bcf80791c2524c3"
+    },
+    {
+      "path": "src/vm.fy",
+      "sha256": "338e6eb6e0b8eca595f30049d6d3bc3e728a852eb8985048f9f0e62e45d2682c"
+    },
+    {
+      "path": "tests/m2/struct_subassign_owners.fy",
+      "sha256": "3e6fd7bbed24bc5c4277d59eddd512459bd872d0b7e3d7d3b7f61a992d9093b9"
+    },
+    {
+      "path": "tests/m2/struct_owner_copy.fy",
+      "sha256": "b55ea8089fd1edf6096d4388ac4ef49aa0e79b928f9c20e106cd09d9be6000ac"
+    },
+    {
+      "path": "fairy.lock",
+      "sha256": "d5f15a6084d94f494d4524900a53fee5b48751cdd832f7a1e26c79e18dfd217a"
+    },
+    {
+      "path": "fairy.toml",
+      "sha256": "f5254ba793d9012470c697e8657688a4ea5465c138fba6d748707d5bfa4b31fb"
+    },
+    {
+      "path": "toolchain.json",
+      "sha256": "e744c8866ba200fd9213ee99ff61a11f60f9ed0f31e9106219f97d7da26971ef"
+    }
+  ],
+  "results": [
+    {
+      "profile": "development",
+      "native": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "development",
+        "tests": [
+          {
+            "identity": "tests::m2::struct_owner_copy::copies_are_independent_survive_source_release_and_preserve_mixed_arrays",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_owner_copy::corrupt_bool_stale_tokens_and_bad_metadata_never_publish_partial_copies",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_owner_copy::deepest_records_copy_and_assign_without_per_field_owners",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_owner_copy::full_capacity_assignment_and_self_assignment_keep_owner_metadata",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_owner_copy::matching_layouts_with_distinct_record_ids_and_array_tokens_are_rejected",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_owner_copy::quota_alignment_and_full_mixed_descriptor_pressure_are_atomic",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_subassign_owners::full_owner_table_and_padding_normalization_use_no_extra_extent",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_subassign_owners::invalid_bool_nominal_range_metadata_and_stale_tokens_do_not_write",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_subassign_owners::subrecord_ranges_copy_siblings_and_self_without_owners_or_neighbors",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 9,
+        "passed": 9,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      }
+    },
+    {
+      "profile": "release",
+      "native": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "release",
+        "tests": [
+          {
+            "identity": "tests::m2::struct_owner_copy::copies_are_independent_survive_source_release_and_preserve_mixed_arrays",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_owner_copy::corrupt_bool_stale_tokens_and_bad_metadata_never_publish_partial_copies",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_owner_copy::deepest_records_copy_and_assign_without_per_field_owners",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_owner_copy::full_capacity_assignment_and_self_assignment_keep_owner_metadata",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_owner_copy::matching_layouts_with_distinct_record_ids_and_array_tokens_are_rejected",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_owner_copy::quota_alignment_and_full_mixed_descriptor_pressure_are_atomic",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_subassign_owners::full_owner_table_and_padding_normalization_use_no_extra_extent",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_subassign_owners::invalid_bool_nominal_range_metadata_and_stale_tokens_do_not_write",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_subassign_owners::subrecord_ranges_copy_siblings_and_self_without_owners_or_neighbors",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 9,
+        "passed": 9,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      }
+    }
+  ],
+  "limitations": [
+    "Foundation results belong to 2b5917c before VM integration; they are distinct from the final 26-group aggregate. No CLI, Linux, performance or full native suites were run for this foundation selection."
+  ]
+}

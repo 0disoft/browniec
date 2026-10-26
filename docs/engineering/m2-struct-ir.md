@@ -15,8 +15,9 @@ remain outside this and the private VM slice.
 
 ## Instruction encoding
 
-Every instruction is eight bytes. Bytes 4 through 7 are zero. The first four
-bytes are `op, dst, a, b`.
+Every instruction is eight bytes. For struct opcodes 41..46, bytes 4 through 7
+are zero. Opcode 47 uses bytes 4/5 for target/source leaf ordinals and keeps
+bytes 6/7 zero. The first four bytes are `op, dst, a, b`.
 
 | Opcode | Name | Operands |
 | --- | --- | --- |
@@ -26,6 +27,7 @@ bytes are `op, dst, a, b`.
 | 44 | `SWRITE` | `dst` = binding, `a` = flattened leaf ordinal, `b` = scalar value register |
 | 45 | `SDROP` | `dst` = binding, `a` = 0, `b` = 0 |
 | 46 | `SASSIGN` | `dst` = live mutable destination, `a` = live source, `b` = 0 |
+| 47 | `SSUBASSIGN` | `dst` = live mutable target, `a` = live source, `b` = selected nominal record; bytes 4/5 = target/source leaf starts |
 
 `SINIT` consumes every depth-first scalar leaf in declaration order from
 consecutive registers beginning at `a`. Each register must have the leaf's exact
@@ -96,3 +98,8 @@ instrumentation, and performance were not rerun.
 
 Next is source struct declaration and type-catalog work, followed by lowering for
 complete initializers and field access.
+
+The [atomic subrecord successor](m2-struct-subassign-atomic.md) independently
+checks nominal record nodes at both leaf starts, liveness, mutability, and
+reserved bytes. It changes no scalar SSA definitions or owner live sets. Its
+combined selection includes all nine existing IR groups on the updated verifier.

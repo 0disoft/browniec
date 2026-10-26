@@ -1,6 +1,7 @@
 # M2 Subrecord Assignment
 
-- Status: implemented and verified in development and release.
+- Status: historical per-leaf implementation, verified on its recorded inputs.
+- Successor: [atomic subrecord assignment](m2-struct-subassign-atomic.md).
 - Implementation commit: `666da70`.
 - Evidence: [Windows receipt](../evidence/m2-struct-subassign-windows-20261027.json).
 - Predecessor: [subrecord declaration initializers](m2-struct-extract.md).
@@ -35,7 +36,10 @@ operands. Record statements in helpers and `for` initializer/post clauses,
 struct parameters/results, borrows, and subrecord paths as constructor child
 values remain unsupported.
 
-## Snapshot and lifetime
+The atomic successor replaces the per-leaf lowering and Fuel limit described
+below. This receipt is historical for changed verifier, VM, and compiler inputs.
+
+## Historical snapshot and lifetime
 
 The compiler resolves the mutable destination before parsing the RHS. It checks
 the complete source path and nominal type, then emits all source `SREAD`s before
@@ -56,7 +60,7 @@ that failed invocation are not transactionally rolled back. Invocation-local
 storage is not exposed by this CLI, and no automatic replay or external-effect
 rollback is introduced.
 
-## Limits and Fuel
+## Historical per-leaf limits and Fuel
 
 Each read and write pays the existing 41,281 Fuel charge. Copying k scalar leaves
 therefore requires 82,562*k Fuel for the assignment instructions, plus the other

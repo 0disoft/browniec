@@ -261,8 +261,8 @@ own the affected contract. Broader scaffold procedures are optional.
   admits exact-nominal `p.i = q.i`, `p.i = i`, and `i = p.i` with a mutable
   destination. All source leaves are read before writing the existing target.
   No new site, owner, extent, or temporary structure is created. Whole bare-name
-  assignment retains `SASSIGN`; partial assignment emits only `SREAD`/`SWRITE`.
-  Fatal errors abort the invocation without a transaction rollback guarantee.
+  assignment retains `SASSIGN`; its historical partial lowering emitted
+  `SREAD`/`SWRITE`. That baseline did not guarantee transaction rollback.
   Existing bounds and the nested profile remain; version JSON adds
   `struct_subrecord_assignment`. The complete `--subassign` invocation passed
   15 native groups and 3,044 CLI cases in each development/release profile.
@@ -270,6 +270,21 @@ own the affected contract. Broader scaffold procedures are optional.
   91 harness input hashes plus four CLI fixture hashes, compiler/artifact hashes,
   commands, and outcomes. Implementation commit: `666da70`.
   The extraction receipt is historical for changed compiler and fixture inputs.
+  The [atomic successor](docs/engineering/m2-struct-subassign-atomic.md) lowers
+  those same forms to `SSUBASSIGN` (47), with independently verified live mutable
+  destination, source, nominal node IDs, and leaf ordinals. Runtime prepays
+  131,072 Fuel, validates owners/ranges, stages at most 128 canonical bytes, then
+  commits once. Failure leaves the selected destination unchanged; external
+  effects and earlier statements are not rolled back. No new site, owner,
+  extent, or scalar register is used. Sixteen-leaf assignments now execute in
+  the CLI allowance. Version JSON adds `struct_subrecord_assignment_atomic`;
+  the nested profile remains. The complete `--atomic` invocation passed 26
+  native groups and 3,046 CLI cases per development/release profile. The
+  [receipt](docs/evidence/m2-struct-subassign-atomic-windows-20261027.json) records
+  99 input hashes, compiler/artifact identities, commands, and outcomes. The
+  separately [verified foundation](docs/evidence/m2-struct-atomic-foundation-windows-20261027.json)
+  passed nine groups per profile at `2b5917c`. Integration commit: `5589803`.
+  The per-leaf assignment receipt is historical for changed inputs.
 - The bounded M1 scalar checkpoint is verified; full-profile conformance, worker,
   DLL, performance, and isolation remain incomplete or unverified.
 - Root fairy.toml builds the native CLI; tools/verify-m1.ps1 verifies its narrow profile.

@@ -1,7 +1,9 @@
 # M2 Private Struct VM Dispatch
 
-- Status: verified private entry-only struct dispatch and Fuel; development and release passed.
-- Scope: metered execution of struct IR opcodes 41..46. This slice adds no source struct grammar, record parameters or results, or borrows.
+- Status: private entry-only dispatch implemented. The original 38-group and
+  115-case receipts are historical after atomic verifier/VM/test changes.
+- Scope: metered execution of struct IR opcodes 41..46, with opcode 47 supplied
+  by the [atomic successor](m2-struct-subassign-atomic.md). This slice adds no source struct grammar, record parameters or results, or borrows.
 - Implementation: [src/struct_vm.fy](../../src/struct_vm.fy), [src/vm.fy](../../src/vm.fy), [src/array_vm.fy](../../src/array_vm.fy), and [src/array_owners.fy](../../src/array_owners.fy).
 - Tests: [tests/m2/struct_vm.fy](../../tests/m2/struct_vm.fy).
 - Harness: [tools/verify-m2-struct-layout.py](../../tools/verify-m2-struct-layout.py) with `--vm`.
@@ -150,3 +152,9 @@ passed stepwise in both profiles:
 [receipt](../evidence/m2-struct-source-windows-20261026.json) records the executed
 checks and the harness-only path correction. The corrected aggregate harness
 was syntax-checked, not rerun.
+
+The [atomic subrecord successor](m2-struct-subassign-atomic.md) adds opcode 47
+through `struct_vm::subassign`, with one 131,072-Fuel prepayment and canonical
+byte staging before target mutation. `step` retains the original 41..46 dispatch
+interface. The successor selection includes all eight existing VM groups; the
+unknown-cost negative case now uses opcode 48.

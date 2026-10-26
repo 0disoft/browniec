@@ -1,7 +1,7 @@
 # Validation
 
-- Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, switch-expression, i64, and unsigned receipts are verified historical evidence; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified; private entry-array IR/VM and source-array reads, writes, copy initializers, parameters, results, and assignment forms implemented; in-place repeated-literal assignment verified; private entry-owned struct IR/verifier verified historically; private struct VM verified with native 38/38 and CLI 115 in both profiles; declaration-only source structs historically verified in development and release (23 native groups and 2,208 CLI cases per profile); bounded source struct construction and field reads form a verified historical read baseline; entry-only one-level scalar-field writes have historical focused development/release validation; entry-only scalar-record copy initialization and whole-record assignment are verified stepwise in development and release; bounded nested constructors, multi-segment scalar paths, and whole-root copies have results that are historical after child-binding compiler changes; whole-record child binding initializers have historical receipts; subrecord declaration initializer receipts are historical after assignment changes; subrecord assignment is verified in development and release
-- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/u8/u32/usize/bool values, explicit widening, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation; private function-owned array IR/native dispatch with separate recursive frame tokens, let/var scalar arrays in lexical scopes of ordinary functions, indexed reads/writes, copy initializers, length access, lexical cleanup including `?` failure, by-value parameters, source results, and bare-name, call-result, and repeated-literal assignment are implemented; private entry-owned struct IR/verifier and metered VM dispatch exist; source struct declarations attach immutable layouts; bounded entry construction, record bindings, one-level scalar field reads/writes, bare-name record copy initialization, and whole-record assignment lower to `SINIT`, `SREAD`, `SWRITE`, `SCOPY`, and `SASSIGN`; helper-local record statements and for-header writes/copies remain rejected; bounded nested constructors, multi-segment scalar paths, and whole-root copies are implemented, and child fields also accept whole visible bindings of the exact nominal type; the nested result is historical after that compiler change, subrecord declaration extraction is also implemented, while struct parameters/results, and borrows remain unavailable
+- Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, switch-expression, i64, and unsigned receipts are verified historical evidence; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified; private entry-array IR/VM and source-array reads, writes, copy initializers, parameters, results, and assignment forms implemented; in-place repeated-literal assignment verified; private entry-owned struct IR/verifier verified historically; private struct VM verified with native 38/38 and CLI 115 in both profiles; declaration-only source structs historically verified in development and release (23 native groups and 2,208 CLI cases per profile); bounded source struct construction and field reads form a verified historical read baseline; entry-only one-level scalar-field writes have historical focused development/release validation; entry-only scalar-record copy initialization and whole-record assignment are verified stepwise in development and release; bounded nested constructors, multi-segment scalar paths, and whole-root copies have results that are historical after child-binding compiler changes; whole-record child binding initializers have historical receipts; subrecord declaration initializer receipts are historical after assignment changes; atomic subrecord assignment is verified in development and release
+- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/u8/u32/usize/bool values, explicit widening, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation; private function-owned array IR/native dispatch with separate recursive frame tokens, let/var scalar arrays in lexical scopes of ordinary functions, indexed reads/writes, copy initializers, length access, lexical cleanup including `?` failure, by-value parameters, source results, and bare-name, call-result, and repeated-literal assignment are implemented; private entry-owned struct IR/verifier and metered VM dispatch exist; source struct declarations attach immutable layouts; bounded entry construction, record bindings, one-level scalar field reads/writes, bare-name record copy initialization, and whole-record assignment lower to `SINIT`, `SREAD`, `SWRITE`, `SCOPY`, `SASSIGN`, and atomic `SSUBASSIGN`; helper-local record statements and for-header writes/copies remain rejected; bounded nested constructors, multi-segment scalar paths, and whole-root copies are implemented, and child fields also accept whole visible bindings of the exact nominal type; the nested result is historical after that compiler change, subrecord declaration extraction is also implemented, while struct parameters/results, and borrows remain unavailable
 
 ## Validation source of truth
 
@@ -977,6 +977,30 @@ archival; the added fixtures match the implementation-commit Git blobs. The
 final release binary matches its CLI hash and both profiles select the same
 15 native identities. Implementation commit: `666da70`. The extraction receipt
 is historical for changed compiler, fixture, and tool inputs.
+
+The [atomic successor](docs/engineering/m2-struct-subassign-atomic.md) emits
+`SSUBASSIGN` (47) with independently checked live bindings, target mutability,
+nominal record endpoints, and leaf ordinals. It prepays 131,072 Fuel and stages
+at most 128 canonical bytes before publishing any target byte. Invalid source bools,
+metadata, ranges, tokens, or insufficient Fuel leave the destination unchanged.
+Existing owners/sites/storage are reused; no scalar register is allocated.
+Sixteen-leaf and 128-byte source records now execute in the CLI allowance.
+Version JSON adds `struct_subrecord_assignment_atomic` under the nested profile.
+`python -B tools/verify-m2-struct-values.py --atomic` is the combined selection;
+the complete invocation passed in development and release without reusing prior
+results. Each profile passed 26 native groups (4 atomic, 5 source assignment,
+8 existing VM, 9 existing IR) and 3,046 CLI cases: 131 assignment, 117 extraction,
+88 child, 128 nested, 110 copy, 120 write, 144 values, 124 declarations, 115
+array-literal assignment, and 1,969 scalar. The
+[receipt](docs/evidence/m2-struct-subassign-atomic-windows-20261027.json) records
+99 input hashes, compiler/artifact identities, commands, and outcomes. All input
+and compiler hashes were rechecked before archival, and the final release binary
+matches its CLI hash. Both profiles select the same 26 native identities.
+Integration commit: `5589803`. The
+[foundation receipt](docs/evidence/m2-struct-atomic-foundation-windows-20261027.json)
+records nine groups per profile at `2b5917c`, before integration; those results
+are separate from the final 26-group selection. The earlier per-leaf receipt is
+historical for changed verifier, VM, compiler, fixture, and tool inputs.
 
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker
