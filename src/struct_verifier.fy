@@ -4,6 +4,7 @@ import ir as ir;
 import errors as errors;
 import struct_meta as meta;
 import register_set as registers;
+import struct_range as ranges;
 
 fn bool readable(ref ir::Program p, ref registers::Set defined, usize r, usize f, u8 tag) {
     return r >= p.register_starts[f] && r < p.register_ends[f] && !p.slots[r] &&
@@ -35,6 +36,13 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, ref meta::Prepared s
         return .ok(live | mask);
     }
     if ((live & mask) == 0) { return .err(errors::make(5, pc)); }
+    if (op == 47) {
+        if (!p.records.mutable[id] || a >= p.records.count ||
+            (live & (one << (16+a))) == 0) { return .err(errors::make(5,pc)); }
+        let usize target = ranges::offset(ref p.records.layouts,p.records.records[id] as usize,b,p.code[at+4] as usize)?;
+        let usize origin = ranges::offset(ref p.records.layouts,p.records.records[a] as usize,b,p.code[at+5] as usize)?;
+        return .ok(live);
+    }
     if (op == 45) {
         if (a != 0 || b != 0) { return .err(errors::make(5, pc)); }
         return .ok(live ^ mask);

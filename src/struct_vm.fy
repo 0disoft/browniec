@@ -22,6 +22,8 @@ pub fn Result<usize, errors::Error> cost(u8 op, usize offset) {
     if (op == 43 || op == 44) { return .ok(2 * 18432 + 4096 + 256 + 65); }
     if (op == 45) { return .ok(65); }
     if (op == 46) { return .ok(3 * 18432 + 4096 + 1024 + 129); }
+    // Five complete plans, <= four 4096-visit traversals, staging and owner scans.
+    if (op == 47) { return .ok(131072); }
     return .err(errors::make(5, offset));
 }
 
@@ -129,4 +131,24 @@ pub fn Result<usize, errors::Error> step(u8 op, usize dst, usize a, usize b, usi
     let usize remaining = fuel - work;
     let usize executed = execute(op, dst, a, b, frame, catalog, state, shared, buffer, registers, offset)?;
     return .ok(remaining);
+}
+
+// Prepay the entire operation. All owner/range/value checks and canonical byte
+// staging finish before storage assignment publishes any destination byte.
+pub fn Result<usize, errors::Error> subassign(usize dst, usize source, usize nominal,
+    usize target_leaf, usize source_leaf, usize frame, ref meta::Catalog catalog,
+    ref mut State state, ref mut arrays::State shared, ref mut bytes::Buffer buffer,
+    usize fuel, usize offset) {
+    let usize work = cost(47,offset)?;
+    if (fuel < work) { return .err(errors::make(8,offset)); }
+    if (frame != 0 || catalog.count > 16 || dst >= catalog.count || !catalog.mutable[dst] ||
+        !bound(catalog,dst,state,ref shared.owners) || !bound(catalog,source,state,ref shared.owners)) {
+        return .err(errors::make(5,offset));
+    }
+    let ref mut u8[] data = bytes::view_mut(buffer);
+    let usize assigned = switch(owners::assign_subrecord(ref catalog.layouts,state.tokens[dst],state.tokens[source],
+        nominal,target_leaf,source_leaf,data,ref shared.owners)) {
+        case .ok(n): { n } case .err(e): { return .err(arrays::failure(e,offset)); }
+    };
+    return .ok(fuel-work);
 }

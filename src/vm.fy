@@ -44,6 +44,11 @@ pub fn Result<i64, errors::Error> run_with_array_limit(ref ir::Program p, usize 
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
+        if (op == 47) {
+            remaining = struct_vm::subassign(dst,a,b,p.code[at+4] as usize,p.code[at+5] as usize,frame,
+                ref p.records,ref mut records,ref mut arrays,ref mut payload,remaining,p.offsets[pc])?;
+            pc += 1; continue;
+        }
         if (op >= 41) {
             let usize base = frame * 128;
             remaining = struct_vm::step(op, dst, a, b, frame, ref p.records, ref mut records,

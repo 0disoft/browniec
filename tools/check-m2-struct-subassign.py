@@ -90,12 +90,14 @@ for depth in [2,8,16]:
  for n in range(1,depth):init=f'T{n}{{.c={init}}}';zero=f'T{n}{{.c={zero}}}'
  path='.c'*(depth-1)
  both('module main;'+defs+f'fn i32 main(){{let T{depth-1} q={init};var T{depth-1} p={zero};p{path}=q{path};return p{path}.x;}}')
-# Sixteen-leaf assignments are statically valid but exceed the CLI Fuel cap.
+# Sixteen-leaf assignments now run within the CLI Fuel cap.
 fields=''.join(f'u8 f{n};' for n in range(16)); vals=','.join(f'.f{n}=42' for n in range(16)); zeros=','.join(f'.f{n}=0' for n in range(16))
 large='module main;struct I{'+fields+'}struct R{I i;}fn i32 main(){let R q=R{.i=I{'+vals+'}};var R p=R{.i=I{'+zeros+'}};p.i=q.i;return 42;}'
-case(large,mode='check');case(large,'fuel')
+large=large.replace('return 42;}','if(p.i.f0==42 && p.i.f15==42){return 42;}return 0;}')
+both(large)
+both(large.replace('u8 f','usize f'))
 version=json.loads(subprocess.check_output([str(exe),'--version','--json'],cwd=empty,env=env))
-assert version['struct_subrecord_assignment'] is True and version['struct_nested_profile']=='brownie.m2-struct-nested/1',version
+assert version['struct_subrecord_assignment_atomic'] is True and version['struct_subrecord_assignment'] is True and version['struct_nested_profile']=='brownie.m2-struct-nested/1',version
 receipt.write_text(json.dumps(dict(schema='browniec.m2-struct-subassign-cli/v1',status='passed',profile=args.profile,
  exeSha256=hashlib.sha256(exe.read_bytes()).hexdigest(),runtimeEnvironment='cleared; tool-free PATH',count=len(rows),cases=rows,version=version),indent=2)+'\n',encoding='utf-8')
 print(f'PASS: {args.profile}: {len(rows)} subrecord-assignment CLI cases')

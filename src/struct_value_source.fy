@@ -271,8 +271,8 @@ fn Result<usize, errors::Error> extract(ref u8[] source, ref mut lexer::State s,
     return locals::declare(names,header.begin,header.end,144+id,header.mutable);
 }
 
-// Resolve an exact nominal RHS, snapshot every leaf, then overwrite the existing
-// destination. No expressions interleave the reads/writes; no new owner is needed.
+// Resolve exact nominal endpoints; the VM prepays and snapshots their bytes
+// before committing one atomic overwrite without any new owner or register.
 pub fn Result<usize, errors::Error> assign_part(ref u8[] source, ref mut lexer::State s,
     ref mut ir::Program p, ref locals::Table names, usize dst, Leaf target, usize at) {
     if (dst >= p.records.count || !p.records.mutable[dst] || target.tag != 0 || s.kind != 2) {
@@ -286,14 +286,5 @@ pub fn Result<usize, errors::Error> assign_part(ref u8[] source, ref mut lexer::
     let Leaf origin = path(source,s,p,p.records.records[from] as usize,at)?;
     if (origin.tag != 0 || origin.record != target.record) { return .err(errors::make(3,at)); }
     let usize end = lexer::punctuation(source,s,59)?;
-    let usize count = leaf_count(p,target.record,at)?;
-    let usize first = p.registers; var usize i = 0;
-    while (i < count) {
-        let usize read = ir::record_read(p,from,origin.ordinal+i,at)?; i += 1;
-    }
-    i = 0;
-    while (i < count) {
-        let usize written = ir::record_write(p,dst,target.ordinal+i,first+i,at)?; i += 1;
-    }
-    return .ok(count);
+    return ir::record_subassign(p,dst,from,target.record,target.ordinal,origin.ordinal,at);
 }

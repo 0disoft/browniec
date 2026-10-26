@@ -20,6 +20,8 @@ import std::num as num;
 // 33 array init, 34 independent copy, 35 element read, 36 write, 37 drop.
 // 38 overwrite an existing mutable array from an exact-shape live source.
 // 39 return the sole remaining callee array owner: dst=0,a=catalog ID,b=0.
+// 47 atomic subrecord assignment: dst=target,a=source,b=nominal record,
+// byte 4=target scalar-leaf start, byte 5=source scalar-leaf start; bytes 6..7=0.
 pub struct Program {
     u8[2048] code;
     i64[128] constants;
@@ -260,4 +262,10 @@ pub fn Result<usize, errors::Error> record_drop(ref mut Program p, usize id, usi
 }
 pub fn Result<usize, errors::Error> record_assign(ref mut Program p, usize dst, usize source, usize offset) {
     return raw(p, 46, dst, source, 0, offset);
+}
+pub fn Result<usize, errors::Error> record_subassign(ref mut Program p, usize dst,
+    usize source, usize nominal, usize target_leaf, usize source_leaf, usize offset) {
+    let u8 target = byte(target_leaf,offset)?; let u8 origin = byte(source_leaf,offset)?;
+    let usize pc = raw(p,47,dst,source,nominal,offset)?;
+    p.code[pc*8+4] = target; p.code[pc*8+5] = origin; return .ok(pc);
 }

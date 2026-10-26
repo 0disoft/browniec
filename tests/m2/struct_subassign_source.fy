@@ -25,9 +25,9 @@ fn void sibling_self_and_nested_assignments_use_independent_snapshots() {
 fn void writes_reuse_sites_owners_and_payload_without_copy_or_init() {
  let ir::Program p=compiled(b"module main;struct I{i32 x;}struct R{I i;}fn i32 main(){let R q=R{.i=I{.x=42}};var R p=R{.i=I{.x=0}};p.i=q.i;return p.i.x;}");
  assert(p.records.count==2 && p.arrays.count==0);
- var usize pc=0;var usize inits=0;var usize reads=0;var usize writes=0;
- while(pc<p.count){let u8 op=p.code[pc*8];assert(op!=42);if(op==41){inits+=1;}if(op==43){reads+=1;}if(op==44){writes+=1;}pc+=1;}
- assert(inits==2 && reads==2 && writes==1);
+ var usize pc=0;var usize inits=0;var usize reads=0;var usize writes=0;var usize copies=0;
+ while(pc<p.count){let u8 op=p.code[pc*8];assert(op!=42);if(op==41){inits+=1;}if(op==43){reads+=1;}if(op==44){writes+=1;}if(op==47){copies+=1;}pc+=1;}
+ assert(inits==2 && reads==1 && writes==0 && copies==1);
  assert(switch(vm::run_with_array_limit(ref p,1000000,8)){case .ok(n):{n==42}case .err(_):{false}});
  assert(switch(vm::run_with_array_limit(ref p,1000000,7)){case .err(e):{e.kind==13}case .ok(_):{false}});
  assert(switch(vm::run(ref p,0)){case .err(e):{e.kind==8}case .ok(_):{false}});

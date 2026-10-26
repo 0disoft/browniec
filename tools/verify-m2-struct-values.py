@@ -28,6 +28,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--compiler', type=Path, default=ROOT / 'build/toolchain' / ('fairyc.exe' if os.name == 'nt' else 'fairyc'))
     selection = parser.add_mutually_exclusive_group()
+    selection.add_argument('--atomic', action='store_true', help='Verify prepaid atomic subrecord assignment and backend regressions.')
     selection.add_argument('--subassign', action='store_true', help='Verify subrecord assignment with extraction/write/scalar regressions.')
     selection.add_argument('--extract', action='store_true', help='Verify independent subrecord extraction and child/nested/scalar regressions.')
     selection.add_argument('--child', action='store_true', help='Verify bare-name child snapshots plus nested/scalar source regressions.')
@@ -60,20 +61,24 @@ def main():
         groups = {'tests::m2::struct_source_nested::': 6, 'tests::m2::struct_source_copy::': 6,
                   'tests::m2::struct_write::': 5, 'tests::m2::struct_values::': 5,
                   'tests::m2::struct_vm::': 8, 'tests::switch_arm_statements::': 6}
-    if args.child or args.extract or args.subassign:
+    if args.child or args.extract or args.subassign or args.atomic:
         kind = 'struct-child'
         files = ['tests/m2/struct_child_source.fy', 'tests/m2/struct_source_nested.fy',
                  'tests/m2/struct_values.fy', 'tests/m2/struct_write.fy']
         groups = {'tests::m2::struct_child_source::': 5, 'tests::m2::struct_source_nested::': 6,
                   'tests::m2::struct_values::': 5, 'tests::m2::struct_write::': 5}
-    if args.extract or args.subassign:
+    if args.extract or args.subassign or args.atomic:
         kind = 'struct-extract'
         files = ['tests/m2/struct_extract_source.fy', *files]
         groups = {'tests::m2::struct_extract_source::': 5, **groups}
-    if args.subassign:
+    if args.subassign or args.atomic:
         kind = 'struct-subassign'
         files = ['tests/m2/struct_subassign_source.fy', 'tests/m2/struct_extract_source.fy', 'tests/m2/struct_write.fy']
         groups = {'tests::m2::struct_subassign_source::': 5, 'tests::m2::struct_extract_source::': 5, 'tests::m2::struct_write::': 5}
+    if args.atomic:
+        kind = 'struct-subassign-atomic'
+        files = ['tests/m2/struct_atomic_source.fy', 'tests/m2/struct_subassign_source.fy', 'tests/m2/struct_vm.fy', 'tests/m2/struct_ir.fy']
+        groups = {'tests::m2::struct_atomic_source::': 4, 'tests::m2::struct_subassign_source::': 5, 'tests::m2::struct_vm::': 8, 'tests::m2::struct_ir::': 9}
     expected = sum(groups.values())
     compiler = args.compiler.resolve(strict=True)
     output = ROOT / ('build/m2-' + kind)
@@ -94,6 +99,9 @@ def main():
     check = run([compiler, 'check', '--locked'])
     paths = set(ROOT.glob('src/*.fy')) | set(ROOT.glob('tools/*.py'))
     paths.update(ROOT / p for p in ['fairy.toml', 'fairy.lock', 'toolchain.json', 'tests/m2/array_literal_assignment.fy', 'examples/loops.brc', *files])
+    inputs = [dict(path=p.relative_to(ROOT).as_posix(), sha256=digest(p)) for p in sorted(paths)]
+    # CLI scripts also generate cases from these fixtures, independently of native selection.
+    paths.update(ROOT / ('tests/m2/' + name + '.fy') for name in ['struct_values', 'struct_write', 'struct_source_copy', 'struct_source_nested', 'struct_child_source', 'struct_extract_source', 'struct_subassign_source'])
     inputs = [dict(path=p.relative_to(ROOT).as_posix(), sha256=digest(p)) for p in sorted(paths)]
     compiler_hash = digest(compiler)
     results = []
@@ -116,17 +124,17 @@ def main():
                                  ('check-m2-struct-source.py', 'm2-struct-source'),
                                  ('check-m2-array-literal-assignment.py', 'm2-array-literal-assignment'),
                                  ('check-m1-cli.py', 'm1')]
-        if args.write or args.copy or args.nested or args.child or args.extract or args.subassign:
+        if args.write or args.copy or args.nested or args.child or args.extract or args.subassign or args.atomic:
             selections.insert(0, ('check-m2-struct-write.py', 'm2-struct-write'))
-        if args.copy or args.nested or args.child or args.extract or args.subassign:
+        if args.copy or args.nested or args.child or args.extract or args.subassign or args.atomic:
             selections.insert(0, ('check-m2-struct-source-copy.py', 'm2-struct-source-copy'))
-        if args.nested or args.child or args.extract or args.subassign:
+        if args.nested or args.child or args.extract or args.subassign or args.atomic:
             selections.insert(0, ('check-m2-struct-source-nested.py', 'm2-struct-source-nested'))
-        if args.child or args.extract or args.subassign:
+        if args.child or args.extract or args.subassign or args.atomic:
             selections.insert(0, ('check-m2-struct-child.py', 'm2-struct-child'))
-        if args.extract or args.subassign:
+        if args.extract or args.subassign or args.atomic:
             selections.insert(0, ('check-m2-struct-extract.py', 'm2-struct-extract'))
-        if args.subassign:
+        if args.subassign or args.atomic:
             selections.insert(0, ('check-m2-struct-subassign.py', 'm2-struct-subassign'))
         for script, relative in selections:
             message = run([sys.executable, '-B', ROOT / 'tools' / script, '--exe', exe, '--profile', profile])
