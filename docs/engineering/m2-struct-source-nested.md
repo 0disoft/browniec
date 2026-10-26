@@ -1,6 +1,8 @@
 # M2 Source Nested Struct Constructors, Paths, and Root Copies
 
-- Status: implemented and verified in development and release.
+- Status: implemented; its recorded development/release result is historical for
+  the current child-binding compiler inputs. The child-binding successor is
+  implemented and its combined run passed in development and release.
 - Scope: entry-owned nested record constructors, multi-segment scalar read/write
   paths, and whole-root copy initialization/assignment.
 - Predecessor: [source struct copy initialization and assignment](m2-struct-source-copy.md).
@@ -10,15 +12,19 @@
 - Tests: [tests/m2/struct_source_nested.fy](../../tests/m2/struct_source_nested.fy).
 - Native harness: `python -B tools/verify-m2-struct-values.py --nested`.
 - CLI harness: `tools/check-m2-struct-source-nested.py`.
-- Evidence: none yet. A future receipt must record which source inputs were run;
-  the planned path is
-  `docs/evidence/m2-struct-source-nested-windows-20261027.json`.
+- Historical evidence:
+  [m2-struct-source-nested-windows-20261027.json](../evidence/m2-struct-source-nested-windows-20261027.json).
+- Successor: [whole visible child bindings](m2-struct-child.md).
 
 This slice extends the entry-only record adapter through the existing private
 struct instructions. It adds no opcode, VM owner pool, arena, or source access to
 subrecord values. A nested root is one record binding: one static site, one owner
 token, and one payload extent. Its child constructors are syntax inside the root
 initializer and allocate none of their own.
+
+Whole visible bindings are also admitted as child values by the
+[child-binding successor](m2-struct-child.md). That form copies scalar leaves
+into the parent's staging and does not allocate a separate child owner or extent.
 
 ## Accepted source
 
@@ -43,13 +49,15 @@ The default Fuel of 256 does not cover arena preparation and struct operations.
 The admitted constructor form remains a declaration initializer:
 
 ```text
-let|var TYPE NAME = TYPE { .FIELD = SCALAR_EXPR | CHILD_TYPE { ... }, ... [,] };
+let|var TYPE NAME = TYPE { .FIELD = SCALAR_EXPR | CHILD_TYPE { ... } | CHILD_BINDING, ... [,] };
 ```
 
 Each field appears exactly once in declaration order. A comma separates members,
-and an optional comma may precede each closing `}`. A child field must be exactly
-a nominal inline constructor of the declared child type. The fields of every
-nested constructor are checked the same way. A root may mix scalar and nested
+and an optional comma may precede each closing `}`. A child field may be an
+inline constructor of the declared type or a whole visible binding of that exact
+nominal type. The inline-constructor rules are owned here; binding capture is
+owned by the [child-binding successor](m2-struct-child.md). The fields of every
+inline constructor are checked the same way. A root may mix scalar and nested
 fields in any declaration order.
 
 Scalar endpoints use the existing read and write forms, now with more segments:
@@ -71,10 +79,10 @@ The constructor cursor is an iterative depth-first walk. When it returns a scala
 leaf, the compiler takes that leaf's scalar tag directly from the cursor and
 allocates one staging slot immediately before parsing the expression. It does not
 preallocate the whole slot set or return a tag array. Each exact-typed expression
-is parsed into its allocated slot. For a child field, the compiler checks the
-nominal name and `{`, then descends without allocating a binding, site, owner, or
-extent. Closing a child resumes the enclosing record. The correction removes a
-returned tag array; verifier and VM rules are unchanged.
+is parsed into its allocated slot. For an inline child field, the compiler checks
+the nominal name and `{`, then descends without allocating a binding, site, owner,
+or extent. Closing a child resumes the enclosing record. Verifier and VM rules are
+unchanged.
 
 Leaves are still parsed and staged left to right in depth-first source order.
 After the complete root initializer and its terminator, the compiler emits
@@ -175,8 +183,9 @@ bounds remain those of the [private struct VM](m2-struct-vm.md).
 
 - Subrecord values or movement: `let I i=p.i`, `p.i=q.i`, or assignment to a
   non-scalar path endpoint.
-- A child initialized from a binding or expression, such as `R { .i = someI }`;
-  each child must be an exact nominal inline constructor.
+- Subrecord paths, calls, parentheses, and aggregate expressions as child
+  values. Whole visible bindings such as `R { .i = someI }` are covered by the
+  [child-binding successor](m2-struct-child.md).
 - Constructor RHS assignment such as `p = R { .i = I { .x = 42 } };`.
 - Record statements in helpers or in `for` initializer/post clauses.
 - Struct parameters, results, borrows, arrays, and wrapper-typed fields.
@@ -187,7 +196,7 @@ These are bounded-slice limits, not a claim of full source struct conformance.
 
 ## Verification status
 
-The complete harness passed on corrected final inputs in development and release:
+The nested slice's receipt records a complete run on its corrected inputs:
 
 ```powershell
 python -B tools/verify-m2-struct-values.py --nested
@@ -197,14 +206,17 @@ Each profile passed 36 native groups: 6 nested, 6 source-copy, 5 write, 5 values
 8 struct VM and 6 switch-arm groups. Each passed 2,710 CLI cases: 128 nested,
 110 copy, 120 write, 144 values, 124 declarations, 115 array-literal assignment
 and 1,969 scalar cases. The
-[receipt](../evidence/m2-struct-source-nested-windows-20261027.json) records
-91 source/tool hashes, compiler and artifact identities, commands and outcomes.
+[historical receipt](../evidence/m2-struct-source-nested-windows-20261027.json)
+records 91 source/tool hashes, compiler and artifact identities, commands and
+outcomes. The child-binding source change makes those input hashes historical;
+use the [child contract](m2-struct-child.md) for the current combined run and do
+not present the nested receipt as validation of the successor.
 
 The first release selection failed 18 of 36 groups at `576d062`: staging/load
 register types read as zero and the verifier rejected record programs. `716c14b`
 creates each staging slot from its directly resolved scalar tag instead of a
-returned tag array. The final aggregate reran both profiles without reusing old
-results. Verifier and VM rules remain unchanged.
+returned tag array. The corrected nested aggregate reran both profiles without
+reusing old results. Verifier and VM rules remain unchanged.
 
 Full native suites, full array CLI matrices, M0, Linux, isolation, DLL, packaging,
 allocation instrumentation and performance were not run. Full-profile

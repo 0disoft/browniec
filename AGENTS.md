@@ -184,9 +184,10 @@ own the affected contract. Broader scaffold procedures are optional.
   owner and extent; `SASSIGN` reuses the destination extent. The type-name/local
   ambiguity is resolved by inspecting `{` after the initializer name. Record
   statements remain unavailable in helpers and `for` initializer/post clauses;
-  constructor RHS assignment, aggregate expressions, subrecord values and copies,
-  struct parameters/results, and borrows remain unsupported. Nested constructors
-  and scalar paths are handled by the nested successor. Programs with
+  constructor RHS assignment, aggregate expressions, subrecord extraction and
+  assignment, struct parameters/results, and borrows remain unsupported. Nested
+  constructors, scalar paths, and child binding initializers are handled by the
+  successors. Programs with
   nonempty record bindings and opcode 42 or 46 select
   `brownie.m2-struct-copy/1`, before opcode 44 write selection and read fallback;
   `--version --json` adds `struct_copy_profile`.
@@ -223,8 +224,24 @@ own the affected contract. Broader scaffold procedures are optional.
   release each passed 36 native groups and 2,710 CLI cases, including 128 nested
   cases, through the complete `--nested` harness on the corrected source.
   The [receipt](docs/evidence/m2-struct-source-nested-windows-20261027.json)
-  records input hashes, artifacts, commands and the corrected release regression.
+  records input hashes, artifacts, commands and the corrected release regression;
+  it is historical for the current child-binding compiler inputs.
   Implementation commits: `576d062` and `716c14b`.
+  A [child binding initializer slice](docs/engineering/m2-struct-child.md) admits
+  inline child values such as `R { .i = i }` when the field type and a visible
+  whole binding have the same nominal identity. At the child field, it emits one
+  `SREAD` and `STORE` per source scalar leaf into the parent's staging before any
+  later sibling expression; the snapshot is independent and the source stays
+  live. No `SCOPY`, temporary owner, site, or extent is created. Only the new
+  parent root consumes an owner and extent, and its name becomes visible after
+  the complete `SINIT`. Existing leaf, depth, root, site, owner, arena, register,
+  and instruction limits are unchanged. The profile remains
+  `brownie.m2-struct-nested/1`; version JSON adds
+  `struct_child_binding_initializers: true`. The complete `--child` harness passed
+  21 native groups and 2,798 CLI cases in each development/release profile.
+  The [receipt](docs/evidence/m2-struct-child-windows-20261027.json) records 90
+  input hashes, compiler and CLI artifact hashes, commands, and outcomes.
+  Implementation commit: `ed63d1550ffd820e2ad197fe1be9d6b2e0b197a0`.
 - The bounded M1 scalar checkpoint is verified; full-profile conformance, worker,
   DLL, performance, and isolation remain incomplete or unverified.
 - Root fairy.toml builds the native CLI; tools/verify-m1.ps1 verifies its narrow profile.
