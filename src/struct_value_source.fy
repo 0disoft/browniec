@@ -98,7 +98,6 @@ pub fn Result<Leaf, errors::Error> writable(ref u8[] source, ref mut lexer::Stat
     ref ir::Program p, usize id, usize at) {
     if (id >= p.records.count || !p.records.mutable[id] || s.kind != 46) { return .err(errors::make(3, at)); }
     let Leaf leaf = path(source, s, p, p.records.records[id] as usize, at)?;
-    if (leaf.tag == 0) { return .err(errors::make(3, at)); }
     let usize equals = lexer::punctuation(source, s, 61)?;
     return .ok(leaf);
 }
@@ -142,6 +141,12 @@ pub fn Result<usize, errors::Error> assign(ref u8[] source, ref mut lexer::State
     ref mut ir::Program p, ref locals::Table names, usize id, usize at) {
     if (id >= p.records.count || !p.records.mutable[id]) { return .err(errors::make(3, at)); }
     let usize equals = lexer::punctuation(source, s, 61)?;
+    var lexer::State look = lexer::snapshot(s);
+    let usize next = lexer::next(source,ref mut look)?;
+    if (look.kind == 46) {
+        let Leaf target = Leaf { .ordinal = 0, .tag = 0, .record = p.records.records[id] as usize };
+        return assign_part(source,s,p,names,id,target,at);
+    }
     let usize from = copy_source(source, s, p, names, p.records.records[id] as usize)?;
     return ir::record_assign(p, id, from, at);
 }
@@ -264,4 +269,31 @@ fn Result<usize, errors::Error> extract(ref u8[] source, ref mut lexer::State s,
     let usize id = ir::record(p,header.record,header.mutable,header.begin)?;
     let usize init = ir::record_init(p,id,first,header.begin)?;
     return locals::declare(names,header.begin,header.end,144+id,header.mutable);
+}
+
+// Resolve an exact nominal RHS, snapshot every leaf, then overwrite the existing
+// destination. No expressions interleave the reads/writes; no new owner is needed.
+pub fn Result<usize, errors::Error> assign_part(ref u8[] source, ref mut lexer::State s,
+    ref mut ir::Program p, ref locals::Table names, usize dst, Leaf target, usize at) {
+    if (dst >= p.records.count || !p.records.mutable[dst] || target.tag != 0 || s.kind != 2) {
+        return .err(errors::make(3,at));
+    }
+    let usize index = locals::find(source,names,s.begin,s.end);
+    if (!binding(names,index)) { return .err(errors::make(3,s.begin)); }
+    let usize from = names.registers[index]-144;
+    if (from >= p.records.count) { return .err(errors::make(3,s.begin)); }
+    let usize name = lexer::next(source,s)?;
+    let Leaf origin = path(source,s,p,p.records.records[from] as usize,at)?;
+    if (origin.tag != 0 || origin.record != target.record) { return .err(errors::make(3,at)); }
+    let usize end = lexer::punctuation(source,s,59)?;
+    let usize count = leaf_count(p,target.record,at)?;
+    let usize first = p.registers; var usize i = 0;
+    while (i < count) {
+        let usize read = ir::record_read(p,from,origin.ordinal+i,at)?; i += 1;
+    }
+    i = 0;
+    while (i < count) {
+        let usize written = ir::record_write(p,dst,target.ordinal+i,first+i,at)?; i += 1;
+    }
+    return .ok(count);
 }

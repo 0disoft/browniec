@@ -46,6 +46,6 @@ fn void nested_types_mutability_and_scalar_path_endpoints_are_checked() {
     assert(!compiler::compile(b"module main;struct I{i32 x;}struct R{I i;}fn i32 main(){let R p=R{.i=I{.x=42}};p.i.x=0;return 42;}").is_ok);
     assert(!compiler::compile(b"module main;struct I{i32 x;}struct R{I i;}fn i32 main(){var R p=R{.i=I{.x=42}};p.i.x=true;return 42;}").is_ok);
     assert(!compiler::compile(b"module main;struct I{i32 x;}struct R{I i;}fn i32 main(){var R p=R{.i=I{.x=42}};let I i=p.i.x;return 42;}").is_ok);
-    assert(!compiler::compile(b"module main;struct I{i32 x;}struct R{I i;}fn i32 main(){var R p=R{.i=I{.x=42}};p.i=p.i;return 42;}").is_ok);
+    assert(!compiler::compile(b"module main;struct I{i32 x;}struct R{I i;}fn i32 main(){let R p=R{.i=I{.x=42}};p.i=p.i;return 42;}").is_ok);
     assert(!compiler::compile(b"module main;struct I{i32 x;}struct R{I i;}fn i32 main(){let R p=R{.i=I{.x=p.i.x}};return 42;}").is_ok);
 }

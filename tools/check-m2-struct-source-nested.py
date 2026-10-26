@@ -66,7 +66,7 @@ for body,error in [
  ('var R p=R{.i=I{.x=42}};p.i.x=true;return 42;','type'),
  ('let R p=R{.i=I{.x=42}};return p.i;','type'),
  ('let R p=R{.i=I{.x=42}};return p.i.missing;','type'),
- ('var R p=R{.i=I{.x=42}};p.i=p.i;return 42;','type'),
+ ('let R p=R{.i=I{.x=42}};p.i=p.i;return 42;','type'),
  ('let R p=R{.i=I{.x=42}};let I i=p.i.x;return 42;','type'),
  ('let R p=R{.i=I{.x=42}};return p.i.x.y;','syntax'),
  ('let R p=R{.i=I{.x=42}};return p.i..x;','syntax'),

@@ -401,6 +401,10 @@ fn Result<usize, errors::Error> record_write_statement(ref u8[] source, ref mut 
         return .ok(index);
     }
     let record_values::Leaf leaf = record_values::writable(source,s,p,id,at)?;
+    if (leaf.tag == 0) {
+        let usize assigned = record_values::assign_part(source,s,p,table,id,leaf,at)?;
+        return .ok(index);
+    }
     let u8 tag = leaf.tag;
     let usize value = expression(source,s,p,table,signatures,1,expr_depth,tag,result_type,structure,loop_state)?;
     if (p.types[value] != tag) { return .err(errors::make(3, at)); }

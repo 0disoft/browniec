@@ -42,5 +42,5 @@ fn void extraction_rejects_wrong_nominal_types_and_non_record_endpoints() {
  assert(!compiler::compile(b"module main;struct I{i32 x;}struct R{I i;}fn i32 main(){let R p=R{.i=I{.x=42}};let I i=p.i.x;return 42;}").is_ok);
  assert(!compiler::compile(b"module main;struct I{i32 x;}struct R{I i;}fn i32 main(){let I i=i.i;return 42;}").is_ok);
  assert(!compiler::compile(b"module main;struct I{i32 x;}struct R{I i;}fn i32 main(){let R p=R{.i=I{.x=42}};let I i=p.i;return p.i;}").is_ok);
- assert(!compiler::compile(b"module main;struct I{i32 x;}struct R{I i;}fn i32 main(){var R p=R{.i=I{.x=42}};p.i=p.i;return 42;}").is_ok);
+ assert(!compiler::compile(b"module main;struct I{i32 x;}struct R{I i;}fn i32 main(){let R p=R{.i=I{.x=42}};p.i=p.i;return 42;}").is_ok);
 }
