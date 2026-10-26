@@ -28,6 +28,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--compiler', type=Path, default=ROOT / 'build/toolchain' / ('fairyc.exe' if os.name == 'nt' else 'fairyc'))
     selection = parser.add_mutually_exclusive_group()
+    selection.add_argument('--child-path', action='store_true', help='Verify constructor child paths and related source regressions.')
     selection.add_argument('--atomic', action='store_true', help='Verify prepaid atomic subrecord assignment and backend regressions.')
     selection.add_argument('--subassign', action='store_true', help='Verify subrecord assignment with extraction/write/scalar regressions.')
     selection.add_argument('--extract', action='store_true', help='Verify independent subrecord extraction and child/nested/scalar regressions.')
@@ -79,6 +80,12 @@ def main():
         kind = 'struct-subassign-atomic'
         files = ['tests/m2/struct_atomic_source.fy', 'tests/m2/struct_subassign_source.fy', 'tests/m2/struct_vm.fy', 'tests/m2/struct_ir.fy']
         groups = {'tests::m2::struct_atomic_source::': 4, 'tests::m2::struct_subassign_source::': 5, 'tests::m2::struct_vm::': 8, 'tests::m2::struct_ir::': 9}
+    if args.child_path:
+        kind = 'struct-child-path'
+        files = ['tests/m2/struct_child_path_source.fy', 'tests/m2/struct_child_source.fy',
+                 'tests/m2/struct_extract_source.fy', 'tests/m2/struct_atomic_source.fy']
+        groups = {'tests::m2::struct_child_path_source::': 5, 'tests::m2::struct_child_source::': 5,
+                  'tests::m2::struct_extract_source::': 5, 'tests::m2::struct_atomic_source::': 4}
     expected = sum(groups.values())
     compiler = args.compiler.resolve(strict=True)
     output = ROOT / ('build/m2-' + kind)
@@ -136,6 +143,11 @@ def main():
             selections.insert(0, ('check-m2-struct-extract.py', 'm2-struct-extract'))
         if args.subassign or args.atomic:
             selections.insert(0, ('check-m2-struct-subassign.py', 'm2-struct-subassign'))
+        if args.child_path:
+            selections = [('check-m2-struct-child-path.py', 'm2-struct-child-path'),
+                          ('check-m2-struct-child.py', 'm2-struct-child'),
+                          ('check-m2-struct-extract.py', 'm2-struct-extract'),
+                          ('check-m2-struct-subassign.py', 'm2-struct-subassign')]
         for script, relative in selections:
             message = run([sys.executable, '-B', ROOT / 'tools' / script, '--exe', exe, '--profile', profile])
             cli = json.loads((ROOT / 'build' / relative / profile / 'cli-receipt.json').read_text())
@@ -154,7 +166,8 @@ def main():
         compilerVersion=version, compilerSha256=compiler_hash, os=platform.platform(),
         standardLibraryLockIdentity=[p for p in lock['packages'] if p['role'] != 'root'],
         lockedCheck=check, commands=commands, sourceSha256=inputs, results=results,
-        limitations=['Source records remain entry-only: inline/bare-name child initializers and scalar paths have sixteen-leaf staging, depth 16 and root cap 128 bytes. Subrecord declaration extraction and assignment are supported; constructor RHS assignment, struct parameters/results and borrows remain unavailable.',
+        limitations=['Source records remain entry-only: inline/binding/path child initializers and scalar paths have sixteen-leaf staging, depth 16 and root cap 128 bytes. Subrecord declaration extraction and assignment are supported; constructor RHS assignment, struct parameters/results and borrows remain unavailable.',
+                     *(['The child-path selection runs only child-path, whole-child, extraction and subrecord-assignment CLI matrices; scalar, array and other struct CLI matrices are not rerun.'] if args.child_path else []),
                      'Full native suites, full array CLI matrices, M0, Linux, isolation, DLL, packaging, allocation instrumentation and performance were not run.']))
     print('PASS: '+str(receipt.relative_to(ROOT)), flush=True)
 

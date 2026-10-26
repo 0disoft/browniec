@@ -65,7 +65,7 @@ for body,error in [
  ('let i32[1] i=[42;1];let R p=R{.i=i};return 42;','type'),
  ('let J j=J{.x=42};let R p=R{.i=j};return 42;','type'),
  ('{let I i=I{.x=42};}let R p=R{.i=i};return 42;','type'),
- ('let I i=I{.x=42};let R p=R{.i=i.x};return 42;','syntax'),
+ ('let I i=I{.x=42};let R p=R{.i=i.x};return 42;','type'),
  ('let I i=I{.x=42};let R p=R{.i=i()};return 42;','syntax'),
  ('let I i=I{.x=42};let R p=R{.i=(i)};return 42;','type'),
  ('let I i=I{.x=42};let R p=R{.i=i+1};return 42;','syntax'),

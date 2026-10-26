@@ -208,7 +208,7 @@ pub fn Result<u8, errors::Error> next_leaf(ref u8[] source, ref mut lexer::State
             let usize slot = record*16+selected;
             if (p.records.layouts.kinds[slot] == 0) { return .ok(p.records.layouts.types[slot]); }
             let usize child = p.records.layouts.types[slot] as usize;
-            // 255 requests bare-name child staging, never a scalar tag.
+            // 255 requests binding/path child staging, never a scalar tag.
             if (!constructor(source,s,child)?) { return .ok(255); }
             if (state.depth >= 16) { return .err(errors::make(4,at)); }
             let usize depth = state.depth; state.records[depth] = child; state.fields[depth] = 0; state.depth += 1;
@@ -217,8 +217,8 @@ pub fn Result<u8, errors::Error> next_leaf(ref u8[] source, ref mut lexer::State
     return .ok(0);
 }
 
-// Read a whole visible child binding into the parent's scalar staging slots.
-// The RHS is a bare name, so no user expression can interleave these reads.
+// Snapshot an exact nominal binding/path into the parent's scalar staging slots.
+// A field path has no user expressions that can interleave these reads.
 pub fn Result<usize, errors::Error> stage_child(ref u8[] source, ref mut lexer::State s,
     ref mut ir::Program p, ref locals::Table names, ref mut Initializer state,
     ref mut usize[] slots, usize first, usize at) {
@@ -228,14 +228,16 @@ pub fn Result<usize, errors::Error> stage_child(ref u8[] source, ref mut lexer::
     let usize index = locals::find(source,names,s.begin,s.end);
     if (!binding(names,index)) { return .err(errors::make(3,s.begin)); }
     let usize id = names.registers[index]-144;
-    if (id >= p.records.count || p.records.records[id] as usize != child) { return .err(errors::make(3,s.begin)); }
+    if (id >= p.records.count) { return .err(errors::make(3,s.begin)); }
     let usize name = lexer::next(source,s)?;
+    let Leaf part = path(source,s,p,p.records.records[id] as usize,at)?;
+    if (part.tag != 0 || part.record != child) { return .err(errors::make(3,at)); }
     if (s.kind != 44 && s.kind != 125) { return .err(errors::make(2,s.begin)); }
     let usize count = leaf_count(p,child,at)?;
     if (first > slots.len || count > slots.len-first) { return .err(errors::make(4,at)); }
     var usize i = 0;
     while (i < count) {
-        let usize value = ir::record_read(p,id,i,at)?;
+        let usize value = ir::record_read(p,id,part.ordinal+i,at)?;
         let u8 tag = p.types[value];
         let usize slot = ir::slot(p,tag,at)?;
         slots[first+i] = slot;
