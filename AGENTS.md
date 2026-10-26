@@ -184,7 +184,7 @@ own the affected contract. Broader scaffold procedures are optional.
   owner and extent; `SASSIGN` reuses the destination extent. The type-name/local
   ambiguity is resolved by inspecting `{` after the initializer name. Record
   statements remain unavailable in helpers and `for` initializer/post clauses;
-  constructor RHS assignment, aggregate expressions, subrecord assignment, struct parameters/results, and borrows remain unsupported. Nested
+  constructor RHS assignment, aggregate expressions, struct parameters/results, and borrows remain unsupported. Nested
   constructors, scalar paths, and child binding initializers are handled by the
   successors. Programs with
   nonempty record bindings and opcode 42 or 46 select
@@ -246,8 +246,9 @@ own the affected contract. Broader scaffold procedures are optional.
   the selected scalar leaf range directly into consecutive registers and emits
   one `SINIT`, without `STORE`, `LOAD`, `SCOPY`, or a temporary owner. The source
   stays live; the destination has an independent site, owner, and extent. Scalar
-  reads/writes still reject record endpoints. Assignment from/to subrecords,
-  helper records, parameters/results, and borrows remain unsupported. Version
+  expressions still reject record endpoints. The assignment successor below adds
+  writes to/from record endpoints.
+  Helper records, parameters/results, and borrows remain unsupported. Version
   JSON adds `struct_subrecord_initializers: true`; the nested profile is unchanged.
   Development and release each passed 26 native groups and 2,915 CLI cases
   stepwise. Development reuses its unchanged 26-group result after two CLI-only
@@ -256,6 +257,19 @@ own the affected contract. Broader scaffold procedures are optional.
   input hashes, compiler/artifact hashes, commands, and native reuse provenance.
   Implementation commit: `f65a1d7`.
   The child-binding receipt is historical for changed compiler and fixture inputs.
+  A [subrecord assignment successor](docs/engineering/m2-struct-subassign.md)
+  admits exact-nominal `p.i = q.i`, `p.i = i`, and `i = p.i` with a mutable
+  destination. All source leaves are read before writing the existing target.
+  No new site, owner, extent, or temporary structure is created. Whole bare-name
+  assignment retains `SASSIGN`; partial assignment emits only `SREAD`/`SWRITE`.
+  Fatal errors abort the invocation without a transaction rollback guarantee.
+  Existing bounds and the nested profile remain; version JSON adds
+  `struct_subrecord_assignment`. The complete `--subassign` invocation passed
+  15 native groups and 3,044 CLI cases in each development/release profile.
+  The [receipt](docs/evidence/m2-struct-subassign-windows-20261027.json) records
+  91 harness input hashes plus four CLI fixture hashes, compiler/artifact hashes,
+  commands, and outcomes. Implementation commit: `666da70`.
+  The extraction receipt is historical for changed compiler and fixture inputs.
 - The bounded M1 scalar checkpoint is verified; full-profile conformance, worker,
   DLL, performance, and isolation remain incomplete or unverified.
 - Root fairy.toml builds the native CLI; tools/verify-m1.ps1 verifies its narrow profile.

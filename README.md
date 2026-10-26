@@ -1,6 +1,6 @@
 # Brownie C
 
-- Status: M1 scalar checkpoint verified; M2 function-owned scalar arrays with helper declarations, by-value parameters, argument capture, copies, length access, lexical cleanup, source results, and bare-name, call-result, and repeated-literal assignment implemented; private entry-owned struct IR/verifier and metered VM dispatch implemented; declaration-only source struct layouts are historical verified evidence; bounded entry scalar-field construction and reads remain a verified historical read baseline; entry-only one-level scalar-field writes implemented with historical focused development/release validation; entry-only scalar-record copy initialization and whole-record assignment implemented and verified stepwise in development and release; bounded entry nested constructors, multi-segment scalar paths, and whole-root nested copies implemented, with their receipt historical after child-binding compiler changes; whole-record child binding initializers verified historically; subrecord declaration initializers verified stepwise in development and release; full profile incomplete
+- Status: M1 scalar checkpoint verified; M2 function-owned scalar arrays with helper declarations, by-value parameters, argument capture, copies, length access, lexical cleanup, source results, and bare-name, call-result, and repeated-literal assignment implemented; private entry-owned struct IR/verifier and metered VM dispatch implemented; declaration-only source struct layouts are historical verified evidence; bounded entry scalar-field construction and reads remain a verified historical read baseline; entry-only one-level scalar-field writes implemented with historical focused development/release validation; entry-only scalar-record copy initialization and whole-record assignment implemented and verified stepwise in development and release; bounded entry nested constructors, multi-segment scalar paths, and whole-root nested copies implemented, with their receipt historical after child-binding compiler changes; whole-record child binding initializers verified historically; subrecord declaration initializer receipts historical after assignment changes; subrecord assignment verified in development and release; full profile incomplete
 - Design date: 2026-10-23
 - First delivery target: Windows 11 x64
 
@@ -167,8 +167,8 @@ hashes, compiler and CLI artifact hashes, commands, and outcomes. Implementation
 also accept `let I i = p.i` with an exact nominal record endpoint. The new value
 owns an independent copy; changing either value does not affect the other.
 The compiler uses consecutive `SREAD` results and one `SINIT`, with no temporary
-owner or staging instructions. Assignment through or from a subrecord remains
-unsupported. Version JSON adds `struct_subrecord_initializers: true` under the
+owner or staging instructions. Subrecord assignment is handled by its
+[successor](docs/engineering/m2-struct-subassign.md). Version JSON adds `struct_subrecord_initializers: true` under the
 existing nested profile. Development and release each passed 26 native groups
 and 2,915 CLI cases stepwise. Development reuses its unchanged native result after
 two CLI-only diagnostic fixes; final CLI matrices and release native groups ran
@@ -176,6 +176,18 @@ afterward. The [receipt](docs/evidence/m2-struct-extract-windows-20261027.json)
 records 92 input hashes, compiler/artifact hashes, commands, and reuse provenance.
 Implementation commit: `f65a1d7`. Earlier child-binding and
 nested receipts are historical for changed compiler and fixture inputs.
+[Subrecord assignment](docs/engineering/m2-struct-subassign.md) now accepts
+`p.i = q.i`, `p.i = i`, and `i = p.i` for exact nominal types and mutable
+existing destinations. Source leaves are captured before writes; self/sibling
+copies preserve value semantics. Assignment uses the existing target storage
+without a temporary owner and retains the nested profile. Fatal errors abort the
+invocation without transactional rollback. Version JSON adds
+`struct_subrecord_assignment`. The complete `--subassign` invocation passed 15
+native groups and 3,044 CLI cases in each development/release profile. The
+[receipt](docs/evidence/m2-struct-subassign-windows-20261027.json) records 91
+harness input hashes plus four CLI fixture hashes, compiler/artifact hashes,
+commands, and outcomes. Implementation commit: `666da70`. The extraction receipt
+is historical for changed compiler and fixture inputs.
 The declaration-only contract and its receipt remain historical evidence for
 declarations without record bindings.
 The earlier nested-storage 18-group receipt is historical for changed
@@ -267,7 +279,7 @@ Those limits describe the profile, not the language forever.
 
 | Level | Intended capability | Current state |
 | --- | --- | --- |
-| core | Source compile, verify, and native VM CLI | Experimental i32/i64/u8/u32/usize/bool expressions, explicit widening, branches, loops, shallow tagged values, switch statements and expressions, `?` propagation, source arrays, declaration-only source struct layouts, private entry-only struct IR execution, bounded entry scalar-field construction/read/write lowering, bare-name record copy initialization/whole-record assignment, bounded nested constructors/scalar paths/whole-root copies, whole-record child binding initializers, and subrecord declaration initializers; nested results are historical after the child compiler change, the child feature passed the complete combined harness in development and release; scalar M1 and array reads verified, focused array and struct VM checks recorded, the struct construction/read and field-write baselines recorded historically, and source-copy checks verified stepwise in development and release |
+| core | Source compile, verify, and native VM CLI | Experimental i32/i64/u8/u32/usize/bool expressions, explicit widening, branches, loops, shallow tagged values, switch statements and expressions, `?` propagation, source arrays, declaration-only source struct layouts, private entry-only struct IR execution, bounded entry scalar-field construction/read/write lowering, bare-name record copy initialization/whole-record assignment, bounded nested constructors/scalar paths/whole-root copies, whole-record child binding initializers, subrecord declaration initializers, and subrecord assignment; nested results are historical after the child compiler change, the child feature passed the complete combined harness in development and release; scalar M1 and array reads verified, focused array and struct VM checks recorded, the struct construction/read and field-write baselines recorded historically, and source-copy checks verified stepwise in development and release |
 | restricted | Windows worker plus parent broker | Not implemented; M4 |
 | embed | Trusted native host through a DLL ABI | Not implemented; M5; no public C export |
 

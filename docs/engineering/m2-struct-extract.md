@@ -69,8 +69,8 @@ though copying uses no temporary owner.
 Programs using this syntax retain `brownie.m2-struct-nested/1`. Version JSON adds
 `"struct_subrecord_initializers": true`.
 
-Subrecord assignment (`p.i = q.i` or `i = p.i`), subrecord paths as constructor
-child values, constructor RHS assignment, helper-local records, for-header record
+Subrecord assignment is handled by the [successor](m2-struct-subassign.md).
+Subrecord paths as constructor child values, constructor RHS assignment, helper-local records, for-header record
 declarations, struct parameters/results, borrows, and general aggregate
 expressions remain unsupported. Bare whole-binding copies keep their existing
 `SCOPY` lowering.
@@ -103,3 +103,6 @@ archival. Both profiles select the same 26 native identities. The first
 focused extraction test also needed a fixture correction: 42 aggregate loop
 iterations exceeded its 1,000,000 Fuel allowance, so the cleanup test uses two
 iterations. The passing 26-group result includes that corrected native fixture.
+
+The assignment successor changes compiler and fixture inputs, making this receipt
+historical for that successor.

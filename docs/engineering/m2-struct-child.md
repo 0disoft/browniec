@@ -50,7 +50,7 @@ of its scalar leaves are captured at the child field's position.
 The source must be a whole visible binding. A subrecord path such as
 `R { .i = other.i }`, a call, a parenthesized expression, or another aggregate
 expression is not a child initializer. Declaration extraction is handled by the [successor](m2-struct-extract.md);
-subrecord assignment remains unsupported.
+subrecord assignment is handled by its [successor](m2-struct-subassign.md).
 
 ## Lowering and order
 
@@ -103,10 +103,11 @@ binding initializers are available for child fields:
 
 ## Unsupported forms
 
+Declaration extraction and subrecord assignment are covered by their
+[extraction](m2-struct-extract.md) and [assignment](m2-struct-subassign.md) successors.
+
 - Source subrecord paths, calls, parentheses, and aggregate expressions as child
   initializers.
-- Subrecord assignment through a path such as `p.i`; declaration extraction is
-  covered by the [successor](m2-struct-extract.md).
 - Constructor RHS assignment such as `p = R { .i = i };`.
 - Record statements in helpers or in `for` initializer/post clauses.
 - Struct parameters, results, borrows, arrays, or wrapper-typed fields.
