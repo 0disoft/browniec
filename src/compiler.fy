@@ -392,6 +392,20 @@ fn Result<usize, errors::Error> declaration(ref u8[] source, ref mut lexer::Stat
     return .err(errors::make(2, s.begin));
 }
 
+fn Result<usize, errors::Error> record_write_statement(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p,
+    ref locals::Table table, ref functions::Table signatures, usize index, usize at, u8 terminator,
+    u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {
+    if (result_type == 0 || terminator != 59) { return .err(errors::make(3, at)); }
+    let usize id = table.registers[index] - 144;
+    let usize leaf = record_values::writable(source,s,p,id,at)?;
+    let u8 tag = p.records.layouts.types[(p.records.records[id] as usize)*16+leaf];
+    let usize value = expression(source,s,p,table,signatures,1,expr_depth,tag,result_type,structure,loop_state)?;
+    if (p.types[value] != tag) { return .err(errors::make(3, at)); }
+    let usize end = lexer::punctuation(source,s,59)?;
+    let usize written = ir::record_write(p,id,leaf,value,at)?;
+    return .ok(index);
+}
+
 fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 terminator, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {
     if (word_is(source, s, b"let") || word_is(source, s, b"var")) {
         return declaration(source,s,p,table,signatures,terminator,result_type,expr_depth,structure,loop_state);
@@ -402,8 +416,10 @@ fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State 
     let usize at = s.begin;
     let usize index = locals::find(source, table, s.begin, s.end);
     if (index == 64 || !table.mutable[index]) { return .err(errors::make(3, at)); }
-    if (record_values::binding(table, index)) { return .err(errors::make(3, at)); }
     let usize target = lexer::next(source, s)?;
+    if (record_values::binding(table, index)) {
+        return record_write_statement(source,s,p,table,signatures,index,at,terminator,result_type,expr_depth,structure,loop_state);
+    }
     if (arrays::binding(table, index)) {
         return array_statement(source,s,p,table,signatures,index,at,terminator,result_type,expr_depth,structure,loop_state);
     }
@@ -428,7 +444,8 @@ fn Result<Yield,errors::Error> value_arm(ref u8[] source,ref mut lexer::State s,
         if(!regular && s.kind==2 && !locals::reserved(source[s.begin..s.end])) {
             var lexer::State look=lexer::snapshot(s);
             let usize next=lexer::next(source,ref mut look)?;
-            regular=look.kind==61 || (look.kind==91 && arrays::indexed_assignment(source, ref look)?);
+            regular=look.kind==61 || (look.kind==91 && arrays::indexed_assignment(source, ref look)?) ||
+                (look.kind==46 && record_values::assigned(source, ref look)?);
         }
         // A leading switch remains the final expression. Wrap a statement
         // switch in a standalone block to make that statement intent explicit.

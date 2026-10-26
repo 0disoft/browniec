@@ -40,7 +40,11 @@ pub fn Result<bool, errors::Error> indexed_assignment(ref u8[] source, ref lexer
     return .ok(false);
 }
 pub fn u8 profile(ref ir::Program p) {
-    if (p.records.count != 0) { return 4; }
+    if (p.records.count != 0) {
+        var usize at = 0;
+        while (at < p.count && at < 256) { if (p.code[at*8] == 44) { return 5; } at += 1; }
+        return 4;
+    }
     var usize pc = 0;
     while (pc < p.count && pc < 256) {
         if (p.code[pc * 8] == 34 || p.code[pc * 8] == 38) { return 3; }

@@ -65,3 +65,24 @@ pub fn Result<usize, errors::Error> read(ref u8[] source, ref mut lexer::State s
     let usize member = lexer::next(source, s)?;
     return ir::record_read(p, id, leaf, at);
 }
+
+// A dotted final value in a switch arm must remain an expression. Only the
+// complete one-level NAME.FIELD = prefix selects a field-write statement.
+pub fn Result<bool, errors::Error> assigned(ref u8[] source, ref lexer::State state) {
+    var lexer::State look = lexer::snapshot(state);
+    if (look.kind != 46) { return .ok(false); }
+    let usize dot = lexer::next(source, ref mut look)?;
+    if (look.kind != 2) { return .ok(false); }
+    let usize member = lexer::next(source, ref mut look)?;
+    return .ok(look.kind == 61);
+}
+pub fn Result<usize, errors::Error> writable(ref u8[] source, ref mut lexer::State s,
+    ref ir::Program p, usize id, usize at) {
+    if (id >= p.records.count || !p.records.mutable[id] || s.kind != 46) { return .err(errors::make(3, at)); }
+    let usize dot = lexer::next(source, s)?;
+    if (s.kind != 2) { return .err(errors::make(2, s.begin)); }
+    let usize leaf = field(source, p, p.records.records[id] as usize, s.begin, s.end)?;
+    let usize member = lexer::next(source, s)?;
+    let usize equals = lexer::punctuation(source, s, 61)?;
+    return .ok(leaf);
+}

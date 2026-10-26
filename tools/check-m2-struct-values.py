@@ -86,7 +86,7 @@ for source,error in [
     ('struct P{i32 x;}fn i32 main(){let P p=P{.x=p.x};return 42;}','type'),
     ('struct P{i32 x;}fn i32 main(){let P p=P{.x=42};let P p=P{.x=42};return 42;}','type'),
     ('struct P{i32 x;}fn i32 main(){let P p=P{.x=42};let P q=p;return 42;}','type'),
-    ('struct P{i32 x;}fn i32 main(){var P p=P{.x=42};p.x=0;return 42;}','type'),
+    ('struct P{i32 x;}fn i32 main(){let P p=P{.x=42};p.x=0;return 42;}','type'),
     ('struct P{i32 x;}fn i32 main(){var P p=P{.x=42};p=p;return 42;}','type'),
     ('struct P{i32 x;}fn i32 main(){let P p=P{.x=42};return p;}','type'),
     ('struct P{i32 x;}fn i32 main(){let P p=P{.x=42};return p.missing;}','type'),
