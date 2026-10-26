@@ -1,6 +1,6 @@
 # Brownie C
 
-- Status: M1 scalar checkpoint verified; M2 function-owned scalar arrays with helper declarations, by-value parameters, argument capture, copies, length access, lexical cleanup, source results, and bare-name, call-result, and repeated-literal assignment implemented; private entry-owned struct IR/verifier and metered VM dispatch implemented; declaration-only source struct layouts are historical verified evidence; bounded entry scalar-field construction and reads remain a verified historical read baseline; entry-only one-level scalar-field writes implemented with historical focused development/release validation; entry-only scalar-record copy initialization and whole-record assignment implemented and verified stepwise in development and release; full profile incomplete
+- Status: M1 scalar checkpoint verified; M2 function-owned scalar arrays with helper declarations, by-value parameters, argument capture, copies, length access, lexical cleanup, source results, and bare-name, call-result, and repeated-literal assignment implemented; private entry-owned struct IR/verifier and metered VM dispatch implemented; declaration-only source struct layouts are historical verified evidence; bounded entry scalar-field construction and reads remain a verified historical read baseline; entry-only one-level scalar-field writes implemented with historical focused development/release validation; entry-only scalar-record copy initialization and whole-record assignment implemented and verified stepwise in development and release; bounded entry nested constructors, multi-segment scalar paths, and whole-root nested copies implemented with verified development/release results; full profile incomplete
 - Design date: 2026-10-23
 - First delivery target: Windows 11 x64
 
@@ -95,8 +95,9 @@ declaration-only slice, recorded in the
 The [bounded source struct-value slice](docs/engineering/m2-struct-values.md)
 is the historical read baseline: entry-only scalar-field construction with exact
 declaration order and one-level scalar field reads. Typed field expressions are
-staged left to right, then consecutive loads feed `SINIT`; the binding is
-published only after initialization. Read-only record programs select
+staged left to right, then consecutive loads feed `SINIT`; the compiler declares
+the binding after emitting that initializer, and a runtime failure aborts.
+Read-only record programs select
 `brownie.m2-struct-read/1`, while declaration-only programs keep their existing
 profile. For that baseline, development and release each passed 28 native groups
 and 2,352 CLI cases, plus three supplemental cases, recorded in the
@@ -127,6 +128,25 @@ and 2,582 CLI cases, including 110 new copy cases. The
 [stepwise receipt](docs/evidence/m2-struct-source-copy-windows-20261026.json)
 records development native/build reuse after CLI fixture corrections. The complete
 aggregate harness was not rerun.
+The [source nested-struct slice](docs/engineering/m2-struct-source-nested.md)
+adds inline named child constructors, multi-segment scalar read/write paths, and
+whole-root copies for entry-owned nested records. The constructor cursor walks the
+record tree iteratively in source order. Each scalar leaf's tag comes directly
+from the cursor, and its staging slot is allocated immediately before that
+expression is parsed; no tag array is returned. Leaves stage left to right before
+consecutive loads and one `SINIT` for the root. Child constructors add no owner, site, or
+extent, so a root still occupies one site and one extent. Paths resolve to
+depth-first scalar-leaf ordinals, including leaves in preceding nested siblings.
+Source staging is limited to 16 scalar leaves total, record nesting and path
+length to 16, and a selected root to 128 planned bytes; the existing 16 sites, shared 16 owners,
+65,536-byte arena, and scalar limits remain. A bound record with a nested field
+selects `brownie.m2-struct-nested/1` ahead of the copy, write, and read profiles;
+unused nested declarations do not promote another program. Development and release
+each passed 36 native groups and 2,710 CLI cases, including 128 nested cases,
+through the complete `--nested` harness on the corrected source. The
+[receipt](docs/evidence/m2-struct-source-nested-windows-20261027.json) records
+inputs, artifacts, commands and the corrected release regression. Implementation
+commits: `576d062` and `716c14b`.
 The declaration-only contract and its receipt remain historical evidence for
 declarations without record bindings.
 The earlier nested-storage 18-group receipt is historical for changed
@@ -218,7 +238,7 @@ Those limits describe the profile, not the language forever.
 
 | Level | Intended capability | Current state |
 | --- | --- | --- |
-| core | Source compile, verify, and native VM CLI | Experimental i32/i64/u8/u32/usize/bool expressions, explicit widening, branches, loops, shallow tagged values, switch statements and expressions, `?` propagation, source arrays, declaration-only source struct layouts, private entry-only struct IR execution, bounded entry scalar-field construction/read/write lowering, and bare-name record copy initialization/whole-record assignment; scalar M1 and array reads verified, focused array and struct VM checks recorded, the struct construction/read and field-write baselines recorded historically, and source-copy checks verified stepwise in development and release |
+| core | Source compile, verify, and native VM CLI | Experimental i32/i64/u8/u32/usize/bool expressions, explicit widening, branches, loops, shallow tagged values, switch statements and expressions, `?` propagation, source arrays, declaration-only source struct layouts, private entry-only struct IR execution, bounded entry scalar-field construction/read/write lowering, bare-name record copy initialization/whole-record assignment, and bounded nested constructors/scalar paths/whole-root copies with verified development/release results; scalar M1 and array reads verified, focused array and struct VM checks recorded, the struct construction/read and field-write baselines recorded historically, and source-copy checks verified stepwise in development and release |
 | restricted | Windows worker plus parent broker | Not implemented; M4 |
 | embed | Trusted native host through a DLL ABI | Not implemented; M5; no public C export |
 
@@ -286,6 +306,7 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 bounded source struct values](docs/engineering/m2-struct-values.md): historical entry construction and one-level reads, ordered typed staging, `SINIT`/scalar-leaf access, mixed cleanup, bounds, and recorded verification
 - [M2 source struct field writes](docs/engineering/m2-struct-write.md): entry-only one-level `SWRITE`, target-before-RHS resolution, single typed evaluation, for-header rejection, profiles, and recorded verification
 - [M2 source struct copy initialization and assignment](docs/engineering/m2-struct-source-copy.md): exact-name `SCOPY`/`SASSIGN` lowering, independent copies, mutable destination reuse, lifetimes, profiles, and stepwise development/release verification
+- [M2 source nested structs](docs/engineering/m2-struct-source-nested.md): inline child constructors, depth-first scalar paths, whole-root copies, iterative traversal, limits, profiles, and recorded development/release verification
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
 - [Design baseline](docs/design-baseline.md): source provenance, evidence, and findings

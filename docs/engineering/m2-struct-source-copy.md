@@ -1,8 +1,12 @@
 # M2 Source Struct Copy Initialization and Assignment
 
-- Status: implemented and verified stepwise in development and release.
-- Scope: entry-only bare-name copy initialization and whole-record assignment for scalar-field record bindings.
+- Status: implemented and verified stepwise in development and release for its
+  recorded inputs; historical after nested-source compiler changes.
+- Scope: entry-only bare-name copy initialization and whole-record assignment for
+  record bindings; whole nested roots use the same instructions.
 - Predecessor: [bounded source struct field writes](m2-struct-write.md).
+- Successor: [source nested structs](m2-struct-source-nested.md), which adds
+  inline child constructors and multi-segment scalar paths.
 - Implementation: `src/struct_value_source.fy`, `src/compiler.fy`, `src/array_source.fy`,
   `src/render.fy`, `src/main.fy`, and the existing private struct IR and VM.
 - Implementation commit: `f9cf654`.
@@ -13,9 +17,10 @@
 
 This slice connects visible record bindings to the private struct VM's existing
 `SCOPY` (42) and `SASSIGN` (46) instructions. It keeps the current entry-only,
-scalar-field, caller-backed storage model. An initializer creates an independent
-record; assignment overwrites an existing mutable destination without creating
-another extent or owner.
+caller-backed storage model. An initializer creates an independent record;
+assignment overwrites an existing mutable destination without creating another
+extent or owner. The [nested successor](m2-struct-source-nested.md) extends the
+constructor and path surface while reusing these whole-root operations.
 
 ## Accepted source
 
@@ -47,6 +52,8 @@ type names are not compatible. A copy initializer accepts either an immutable
 Assignment requires a visible mutable `var` destination; its source may be either
 `let` or `var`. Self-assignment such as `p = p;` is accepted. A copy initializer
 cannot see the name it is declaring, so `let P p = p;` is rejected.
+The nested successor permits a nested root type here; the source remains a
+visible bare binding with the exact nominal root type.
 
 Initialization in a `for` initializer or post clause remains rejected because
 those headers are scalar-only. Record reads may still appear in a loop condition,
@@ -72,9 +79,9 @@ after `=` is the visible source binding.
 ## Lowering and lifetimes
 
 Copy initialization resolves the visible source binding and checks its exact
-nominal ID before reserving a new record site. It emits one `SCOPY`, then publishes
-the destination name after parsing/emitting its complete initializer. Runtime
-instruction failure aborts the invocation. The copy has an independent owner
+nominal ID before reserving a new record site. It emits one `SCOPY`, then declares
+the destination name after emitting its complete initializer. This is compile-time
+visibility; runtime instruction failure aborts the invocation. The copy has an independent owner
 token and payload extent. Later mutation or release of the source does not alias
 or invalidate the copy.
 
@@ -104,6 +111,9 @@ enough payload capacity for another extent. The source stays live, so the copy's
 peak quota includes both records. An assignment needs no new site, owner, or
 payload extent and remains available when the shared owner table is full. It
 still requires both records to be live at runtime.
+A nested root is one record for all these counts; its children add no site,
+owner, or extent. Nested source construction is capped at 16 scalar leaves in
+total by the [nested successor](m2-struct-source-nested.md).
 
 The existing VM charges are used: `SCOPY` costs 42,049 Fuel and `SASSIGN` costs
 60,545 Fuel. Their owner, generation, nominal-ID, catalog, codec, bounds, and
@@ -116,9 +126,10 @@ allowance such as `--fuel 1000000`.
 For a program with a nonempty record binding catalog (`p.records.count != 0`),
 profile selection checks emitted object operations in this order:
 
-1. Any `SCOPY` (42) or `SASSIGN` (46) selects `brownie.m2-struct-copy/1`.
-2. Otherwise, any `SWRITE` (44) selects `brownie.m2-struct-write/1`.
-3. Otherwise, record bindings select `brownie.m2-struct-read/1`.
+1. A bound record with a nested field selects `brownie.m2-struct-nested/1`.
+2. Otherwise, any `SCOPY` (42) or `SASSIGN` (46) selects `brownie.m2-struct-copy/1`.
+3. Otherwise, any `SWRITE` (44) selects `brownie.m2-struct-write/1`.
+4. Otherwise, record bindings select `brownie.m2-struct-read/1`.
 
 Type declarations alone do not select or upgrade to a record profile; programs
 without record bindings retain the profile selected by their existing objects.
@@ -136,14 +147,15 @@ The plain `--version` output also lists `brownie.m2-struct-copy/1`.
 - Copy initialization or assignment in a `for` initializer or post clause
 - Assignment from a constructor, such as `p = P { .x = 42 };`
 - General aggregate expressions, calls, parentheses, or field chains in either side
-- Records whose values require nested construction or nested field chains
+- Subrecord values such as `p.i`; whole nested roots are supported through the
+  [nested successor](m2-struct-source-nested.md)
 - Struct parameters, results, and borrows
 - Copying from an array, scalar, or a different nominal record type
 - Assigning to an immutable `let` record
 
 The declaration catalog still accepts named-field struct declarations within its
-existing limits; those declarations do not make nested record values copyable in
-this slice.
+existing limits. Whole nested roots are now copyable through the nested successor;
+subrecord values and movement remain unsupported.
 
 ## Testing
 
@@ -166,6 +178,13 @@ All development CLI suites then passed individually. Unchanged native inputs and
 the build were reused, with native input hashes and provenance recorded. Release
 ran the complete native selection, build and six CLI suites. The complete
 aggregate harness was not rerun.
+These results are historical for the nested-source compiler inputs.
+
+The [nested successor](m2-struct-source-nested.md) adds inline child
+constructors, multi-segment scalar paths, and whole-root copies for nested record
+types. Development and release each passed 36 native groups and 2,710 CLI cases
+through the complete nested harness on corrected inputs, recorded in the
+[nested receipt](../evidence/m2-struct-source-nested-windows-20261027.json).
 
 Cases cover scalar extrema, independence after mutation and source-scope exit,
 self-assignment, exact nominal identity, immutable rejection, lexical cleanup,

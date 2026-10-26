@@ -1,7 +1,7 @@
 # Roadmap
 
-- Status: Accepted delivery sequence; M0 verified; named M1 slices through unsigned have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified, 2026-10-23; private entry-array IR/VM verified by its native harness, 2026-10-24; source-array reads, writes, copy initializers, parameters, results, and assignment forms implemented; in-place repeated-literal assignment verified; private scalar struct layout and storage implemented and verified; private scalar struct copy/assignment implemented and verified; private nested struct storage implemented and verified; private nested struct copy/assignment implemented and verified; shared struct-owner foundation implemented and verified; private struct-owner copy/assignment implemented and verified; private entry-owned struct IR/verifier verified historically; private struct VM implemented and verified, native 38/38 and CLI 115 in both profiles; declaration-only source structs historically verified stepwise in development and release (23 native groups and 2,208 CLI cases per profile); bounded entry scalar-field construction and reads are a verified historical read baseline; entry-only one-level scalar-field writes have historical focused development/release validation; entry-only scalar-record copy initialization and whole-record assignment are verified stepwise in development and release
-- Current progress: M1 scalar checkpoint verified; M2 function-owned scalar arrays cover lexical storage, copy, length, helper locals, by-value parameters, source results, direct returns, repeated return literals, call-result assignment, and in-place repeated-literal assignment; private scalar struct layout, storage, and copy/assignment exist; private nested struct storage is verified; private nested struct copy/assignment is verified; shared struct-owner foundation is verified; private struct-owner copy/assignment is verified; private entry-owned struct IR and metered VM execution exist; declaration-only source struct layouts are historical verified evidence; bounded entry scalar-field construction and one-level reads are the historical verified read baseline; entry-only one-level field writes are supported with historical verification, and bare-name record copies plus whole-record assignment are verified stepwise in development and release; nested construction/chains, parameters/results, borrows, Buffer, and text remain open; full-profile conformance incomplete; M3-M5 not started
+- Status: Accepted delivery sequence; M0 verified; named M1 slices through unsigned have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified, 2026-10-23; private entry-array IR/VM verified by its native harness, 2026-10-24; source-array reads, writes, copy initializers, parameters, results, and assignment forms implemented; in-place repeated-literal assignment verified; private scalar struct layout and storage implemented and verified; private scalar struct copy/assignment implemented and verified; private nested struct storage implemented and verified; private nested struct copy/assignment implemented and verified; shared struct-owner foundation implemented and verified; private struct-owner copy/assignment implemented and verified; private entry-owned struct IR/verifier verified historically; private struct VM implemented and verified, native 38/38 and CLI 115 in both profiles; declaration-only source structs historically verified stepwise in development and release (23 native groups and 2,208 CLI cases per profile); bounded entry scalar-field construction and reads are a verified historical read baseline; entry-only one-level scalar-field writes have historical focused development/release validation; entry-only scalar-record copy initialization and whole-record assignment are verified stepwise in development and release; bounded nested constructors, multi-segment scalar paths, and whole-root nested copies are implemented with verified development/release results; the earlier development pass and release failure are historical for pre-correction inputs
+- Current progress: M1 scalar checkpoint verified; M2 function-owned scalar arrays cover lexical storage, copy, length, helper locals, by-value parameters, source results, direct returns, repeated return literals, call-result assignment, and in-place repeated-literal assignment; private scalar struct layout, storage, and copy/assignment exist; private nested struct storage is verified; private nested struct copy/assignment is verified; shared struct-owner foundation is verified; private struct-owner copy/assignment is verified; private entry-owned struct IR and metered VM execution exist; declaration-only source struct layouts are historical verified evidence; bounded entry scalar-field construction and one-level reads are the historical verified read baseline; entry-only one-level field writes are supported with historical verification, and bare-name record copies plus whole-record assignment are verified stepwise in development and release; bounded nested constructors, multi-segment scalar paths, and whole-root copies have verified development/release results; subrecord values, parameters/results, borrows, Buffer, and text remain open; full-profile conformance incomplete; M3-M5 not started
 
 This roadmap orders learning and evidence. It is not a release promise. M0 has a
 native harness and recorded evidence. The scalar CLI/VM now exist; the worker
@@ -326,13 +326,15 @@ the historical read baseline: entry-only scalar-field construction and one-level
 scalar field reads. Every
 field appears exactly once in declaration order, with an optional final comma;
 left-to-right typed field expressions are staged before consecutive loads and
-`SINIT`, and the binding is published afterward. Mixed lexical exits, loop
+`SINIT`; the compiler declares the binding after emitting that initializer, and
+a runtime failure aborts. Mixed lexical exits, loop
 transfers, and returns release arrays and records in reverse order. Read-only
 record programs select `brownie.m2-struct-read/1`; declaration-only programs
 keep their existing profile. The slice is capped at selected roots of 128 bytes and
 16 fields, with 16 record sites, the shared owner table, 65,536-byte payload cap,
-and existing Fuel. Nested construction and field chains, struct parameters/results,
-and borrows remain unsupported; nested type declarations remain accepted. For that
+and existing Fuel. Subrecord values, struct parameters/results, and borrows remain
+unsupported; nested type declarations remain accepted and are handled by the
+nested successor below. For that
 baseline, both
 profiles passed 28 native groups and 2,352 CLI cases through the focused harness,
 plus three supplementary cases per profile. The
@@ -356,18 +358,35 @@ inputs.
 
 The [source struct-copy slice](../engineering/m2-struct-source-copy.md) adds
 entry-only `let|var P q=p;` initialization and `p=q;` assignment for exact
-nominal scalar-record types. Copy initialization creates an independent owner and
+nominal record types, including whole nested roots. Copy initialization creates an independent owner and
 extent; assignment overwrites the mutable destination's existing extent and
 accepts self-assignment. Immutable sources are accepted. Helper-local records and
 record statements in `for` initializer/post clauses remain rejected, while
-constructor RHS assignment, aggregate expressions, nested construction/field
-chains, struct parameters/results, and borrows remain unsupported. Nonempty record
+constructor RHS assignment, aggregate expressions, subrecord values and copies,
+struct parameters/results, and borrows remain unsupported. Nested constructors and
+scalar paths are handled by the successor below. Nonempty record
 bindings plus opcode 42 or 46 select `brownie.m2-struct-copy/1` before the write
 and read profiles; version JSON adds `struct_copy_profile`. Development and release
 each passed 39 native groups and 2,582 CLI cases, including 110 new copy cases.
 The [stepwise receipt](../evidence/m2-struct-source-copy-windows-20261026.json)
 records development native/build reuse after CLI fixture corrections. The complete
 aggregate harness was not rerun.
+
+The [source nested-struct slice](../engineering/m2-struct-source-nested.md) adds
+inline named child constructors, multi-segment scalar read/write paths, and
+whole-root copies for entry-owned nested records. An iterative cursor walks the
+constructor tree in source order; scalar leaves are staged left to right before
+consecutive loads and one `SINIT` for the root. Child constructors add no site,
+owner, or extent. Path segments resolve to depth-first scalar-leaf ordinals,
+including leaves in preceding nested siblings. Source staging allows 16 scalar
+leaves in total, record nesting and path length 16, and selected roots 128 bytes;
+the private VM keeps its 128-leaf bound. A bound record with a nested field
+selects `brownie.m2-struct-nested/1` ahead of the copy, write, and read profiles;
+version JSON adds `struct_nested_profile`. Development and release each passed
+36 native groups and 2,710 CLI cases, including 128 nested cases, through the
+complete `--nested` harness on corrected inputs. The
+[receipt](../evidence/m2-struct-source-nested-windows-20261027.json) records
+source/tool hashes, artifacts, commands and the corrected release regression.
 
 Goal: connect arrays, plain structs, borrows, Buffer, input,
 output, and UTF-8.

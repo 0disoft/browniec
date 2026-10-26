@@ -8,14 +8,18 @@
 - Evidence: [native receipt](../evidence/m2-struct-vm-windows-20261026.json) and [focused CLI receipt](../evidence/m2-struct-vm-cli-windows-20261026.json) record both profiles.
 - Predecessor: [private struct IR and verification](m2-struct-ir.md).
 - Successor: [declaration-only source structs](m2-struct-source.md), followed by the
-  current [source struct copy initialization and assignment](m2-struct-source-copy.md).
+  [source struct copy initialization and assignment](m2-struct-source-copy.md) and
+  the [source nested structs](m2-struct-source-nested.md).
 
 The VM now executes the private, entry-owned record instructions introduced by
 the IR slice. Scalar registers still hold scalar values; record bindings hold
 owner tokens. A record token names a descriptor in the same owner table used by
 arrays. The [bounded source adapter](m2-struct-values.md) now attaches record layouts
-and lowers entry-owned scalar-field construction and reads. Broader struct
-source conformance remains incomplete.
+and lowers entry-owned scalar-field construction and reads. The
+[nested adapter](m2-struct-source-nested.md) folds inline child constructors into
+one root `SINIT` and resolves scalar paths to leaf ordinals. Its source staging
+cap is 16 leaves; this VM still accepts 128. Broader struct source conformance
+remains incomplete.
 
 ## Dispatch and storage
 
@@ -98,9 +102,12 @@ writes through `SWRITE` and passed 24 native groups plus 2,472 CLI cases per
 profile ([historical receipt](../evidence/m2-struct-write-windows-20261026.json)).
 The current [source-copy successor](m2-struct-source-copy.md) connects bare-name
 copy initializers to `SCOPY` and whole-record assignment to `SASSIGN`; its
-development and release verification is stepwise complete. Nested
-construction, nested values, struct
-parameters/results, borrows, and full source conformance remain unsupported.
+development and release verification is stepwise complete. The
+[nested successor](m2-struct-source-nested.md) folds an iterative depth-first
+constructor tree into one `SINIT`, uses leaf ordinals for scalar paths, and
+reuses `SCOPY`/`SASSIGN` for whole roots. Source staging allows 16 leaves while
+this VM keeps its 128-leaf bound; subrecord values, struct parameters/results,
+borrows, and full source conformance remain unsupported.
 
 ## Verification status
 
@@ -131,7 +138,12 @@ struct opcodes. Its [bounded value successor](m2-struct-values.md) is the
 historical read baseline for scalar-field construction and reads. The
 [field-write successor](m2-struct-write.md) adds verified one-level mutation;
 the [source-copy successor](m2-struct-source-copy.md) adds bare-name copy
-initialization and whole-record assignment with stepwise development/release verification. Nested values remain future work. Struct VM dispatch and its
+initialization and whole-record assignment with stepwise development/release verification. The [nested adapter](m2-struct-source-nested.md) adds inline
+child constructors, multi-segment scalar paths, and whole-root copies; its
+complete harness passed 36 native groups and 2,710 CLI cases per development
+and release profile on corrected inputs. The
+[nested receipt](../evidence/m2-struct-source-nested-windows-20261027.json)
+records both artifacts and the corrected release regression. Subrecord values remain unsupported. Struct VM dispatch and its
 Fuel schedule are implemented privately. The earlier source declaration checks
 passed stepwise in both profiles:
 23 native groups and 2,208 CLI cases each, including 124 source cases. The

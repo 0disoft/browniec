@@ -1,19 +1,21 @@
 # M2 Source Struct Field Writes
 
-- Status: historical field-write baseline; focused checks passed in development and release before source record copies were added.
+- Status: historical field-write baseline; focused checks passed in development and release before source record copies and nested source records were added.
 - Scope: entry-only one-level scalar-field assignment through the existing `SWRITE` (44) instruction.
 - Predecessor: [bounded source struct values](m2-struct-values.md), the historical read baseline.
-- Successor: [source struct copy initialization and assignment](m2-struct-source-copy.md), verified stepwise in development and release.
+- Successor: [source struct copy initialization and assignment](m2-struct-source-copy.md);
+  later, [source nested structs](m2-struct-source-nested.md).
 - Implementation: `src/struct_value_source.fy`, `src/compiler.fy`, `src/array_source.fy`,
   `src/render.fy`, `src/main.fy`, and the existing private struct IR and VM.
 - Evidence: [Windows native and CLI receipt](../evidence/m2-struct-write-windows-20261026.json).
 
 This slice makes a field of a mutable `var` record assignable. Construction,
 record ownership, and one-level reads retain the [read baseline](m2-struct-values.md).
-The slice remains entry-only and scalar-only. Nested paths, nested values, struct
-parameters/results, and borrows remain unsupported. The later [source-copy
+The slice remains entry-only and scalar-only. The later [source-copy
 successor](m2-struct-source-copy.md) lowers bare-name copies and whole-record
-assignment through the same private struct VM.
+assignment through the same private struct VM. The [nested
+successor](m2-struct-source-nested.md) extends the endpoint to multi-segment
+scalar paths and adds inline child constructors.
 
 ## Accepted source
 
@@ -30,13 +32,14 @@ fn i32 main() {
 Run the example with `browniec run point.brc --fuel 1000000`. The CLI default
 Fuel of 256 does not cover aggregate arena preparation and struct operations.
 
-The destination is `NAME.FIELD = EXPR;`, with exactly one field after `NAME`.
-`NAME` must be a visible mutable record binding created in `main`; the record
-catalog must be nonempty and contain the selected record. `FIELD` must be a
-scalar leaf of that record, and `EXPR` must produce the field's exact scalar
-type. Immutable `let` records, unknown fields or types, duplicate or partial
-construction, and helper-local construction retain the read baseline's rejection
-rules.
+The destination is `NAME.FIELD = EXPR;`, with exactly one field after `NAME` in
+this historical slice. `NAME` must be a visible mutable record binding created in
+`main`; the record catalog must be nonempty and contain the selected record.
+`FIELD` must be a scalar leaf of that record, and `EXPR` must produce the field's
+exact scalar type. Immutable `let` records, unknown fields or types, duplicate or
+partial construction, and helper-local construction retain the read baseline's
+rejection rules. The nested successor accepts `NAME.FIELD.FIELD = EXPR;` when
+every intermediate field is a record and the endpoint is a scalar leaf.
 
 ## Evaluation and lowering
 
@@ -59,17 +62,17 @@ layout, codec, and canonical bool checks remain the struct VM's existing checks.
 
 ## Statement classification
 
-A switch arm beginning with `NAME.FIELD` is a write statement only when the
-lookahead after the field sees `=`. A final `p.x` without `=` remains a scalar
-value expression. This keeps an arm's final `p.x` expression distinct from a
-preceding `p.x = ...;` statement.
+A switch arm beginning with a dotted chain is a write statement only when the
+lookahead after the complete chain sees `=`. A final `p.x` or `p.i.x` without
+`=` remains a scalar value expression. This keeps an arm's final value distinct
+from a preceding write statement.
 
 ## For headers
 
 Classic `for` headers retain the scalar-only restriction used by arrays. A field
-write in either the initializer or the post clause is rejected. Existing field
-reads may appear in the condition, and writes in the loop body follow the normal
-statement path.
+write, including a nested path, in either the initializer or the post clause is
+rejected. Existing scalar field reads may appear in the condition, and writes in
+the loop body follow the normal statement path.
 
 ## Runtime and profile
 
@@ -78,9 +81,10 @@ checks and codec; the shared 16-owner table and 65,536-byte payload cap are
 unchanged. The write does not reserve a second extent.
 
 Compilation selects `brownie.m2-struct-write/1` when the record binding catalog
-is nonempty and opcode 44 is present. Record-binding programs without a field write keep
-`brownie.m2-struct-read/1`; declaration-only programs keep the profile selected by
-their existing objects. `--version --json` adds
+is nonempty and opcode 44 is present. A bound record with a nested field selects
+`brownie.m2-struct-nested/1` before this check. Record-binding programs without a
+field write keep `brownie.m2-struct-read/1`; declaration-only programs keep the
+profile selected by their existing objects. `--version --json` adds
 ```json
 {"struct_write_profile":"brownie.m2-struct-write/1"}
 ```
@@ -90,7 +94,8 @@ The plain version output also lists the profile.
 
 - Field writes on `let` bindings
 - Writes in `for` initializer or post clauses
-- Nested field chains and writes below one field
+- Subrecord field writes whose endpoint is a record rather than a scalar leaf;
+  multi-segment scalar writes are handled by the [nested successor](m2-struct-source-nested.md)
 - Struct parameters, results, and borrows
 - Construction outside `main`, including helper-local construction
 - General constructor expressions outside record declaration initializers
@@ -110,9 +115,10 @@ cases: 120 write, 144 constructor/read, 124 declaration, 115 array-literal, and
 1,969 scalar cases.
 
 Those results belong to the earlier field-write inputs. The subsequent source-copy
-compiler change makes this receipt historical for modified inputs. The
-[successor contract](m2-struct-source-copy.md) records the stepwise development/release
-checks.
+and nested-source compiler changes make this receipt historical for modified
+inputs. The [source-copy contract](m2-struct-source-copy.md) records its stepwise
+development/release checks; the [nested contract](m2-struct-source-nested.md)
+records the complete development/release pass on corrected inputs.
 
 Nested field-write RHS depth 10 succeeds; depth 11 reports `compile_limit`.
 

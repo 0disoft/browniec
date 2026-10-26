@@ -145,7 +145,8 @@ own the affected contract. Broader scaffold procedures are optional.
   is the historical read baseline: entry-only
   `let|var TYPE NAME = TYPE { .FIELD = EXPR, ... };` construction for scalar-field
   roots; exact, declaration-ordered typed fields staged before consecutive loads
-  and `SINIT`. The name is published only after initialization. One-level
+  and `SINIT`. The compiler declares the name only after emitting the complete
+  initializer; runtime `SINIT` failure aborts. One-level
   `NAME.FIELD` reads use `SREAD`. Mixed lexical exits, loop transfers, and
   returns release arrays and records in reverse order. Read-only record programs
   select `brownie.m2-struct-read/1`; declaration-only programs keep their existing
@@ -156,9 +157,9 @@ own the affected contract. Broader scaffold procedures are optional.
   early-transfer/forward-name cases. The
   [receipt](docs/evidence/m2-struct-values-windows-20261026.json) records
   toolchain, inputs, artifacts, commands, and limitations. That read receipt is
-  historical for the current field-write and source-copy compiler inputs. Nested
-  construction, field chains, struct parameters/results, and borrows remain
-  unsupported; nested type declarations remain accepted.
+  historical for the current field-write, source-copy, and nested-source compiler
+  inputs. Struct parameters/results and borrows remain unsupported; nested type
+  declarations and construction are handled by the nested successor.
   A [source struct-field write slice](docs/engineering/m2-struct-write.md) adds
   entry-only `NAME.FIELD = EXPR;` for one mutable scalar leaf. The binding and
   field resolve before a single exact-typed RHS; `SWRITE` follows the expression
@@ -171,20 +172,21 @@ own the affected contract. Broader scaffold procedures are optional.
   groups and 2,472 CLI cases in each development/release profile. The
   [write receipt](docs/evidence/m2-struct-write-windows-20261026.json) records
   commands, source/tool identities, artifacts, outcomes, and limitations; its
-  results are historical for the current source-copy inputs. The earlier nested-storage 18-group receipt is
+  results are historical for the current source-copy and nested-source inputs. The earlier nested-storage 18-group receipt is
   historical for changed inputs; nested-copy 24-group checks passed development and release.
   The copy slice's Windows 28-group receipt passed development and release after
   moving snapshot staging into caller-owned scratch. Earlier planner and storage
   receipts are historical for changed inputs.
   A [source struct-copy slice](docs/engineering/m2-struct-source-copy.md) adds
   entry-only bare-name `let|var P q=p;` initialization and `p=q;` assignment for
-  exact nominal scalar-record types. Sources may be immutable, assignment targets
+  exact nominal record types, including whole nested roots. Sources may be immutable, assignment targets
   must be mutable, and self-assignment is accepted. `SCOPY` creates an independent
   owner and extent; `SASSIGN` reuses the destination extent. The type-name/local
   ambiguity is resolved by inspecting `{` after the initializer name. Record
   statements remain unavailable in helpers and `for` initializer/post clauses;
-  constructor RHS assignment, aggregate expressions, nested construction/field
-  chains, struct parameters/results, and borrows remain unsupported. Programs with
+  constructor RHS assignment, aggregate expressions, subrecord values and copies,
+  struct parameters/results, and borrows remain unsupported. Nested constructors
+  and scalar paths are handled by the nested successor. Programs with
   nonempty record bindings and opcode 42 or 46 select
   `brownie.m2-struct-copy/1`, before opcode 44 write selection and read fallback;
   `--version --json` adds `struct_copy_profile`.
@@ -193,8 +195,36 @@ own the affected contract. Broader scaffold procedures are optional.
   39 native groups and 2,582 CLI cases, including 110 source-copy cases.
   [Stepwise evidence](docs/evidence/m2-struct-source-copy-windows-20261026.json)
   records input hashes, artifacts and development native/build reuse after CLI
-  fixture corrections. The complete aggregate harness was not rerun.
+  fixture corrections. The complete aggregate harness was not rerun. That receipt
+  is historical for the current nested-source compiler inputs.
   Implementation commit: `f9cf654`.
+  A [bounded source nested-struct slice](docs/engineering/m2-struct-source-nested.md)
+  admits inline named child constructors, multi-segment scalar read/write paths,
+  and whole-root copies for entry-owned records. A nested constructor is traversed
+  iteratively in source order. Each scalar leaf's tag comes directly from the
+  cursor, and one staging slot is allocated immediately before that leaf's
+  expression is parsed; no tag array is returned. Leaves stage left to right,
+  then consecutive loads and one `SINIT` follow the complete initializer. Child
+  constructors reserve no owner, site, or extent. Verifier and VM rules are
+  unchanged. Path segments resolve to depth-first scalar-leaf
+  ordinals, including leaves in preceding nested siblings; `SREAD`/`SWRITE` use the
+  exact scalar tag at the endpoint. The compiler declares a binding only after
+  emitting its complete initializer and `SINIT`; runtime failure aborts. Control-
+  transfer cleanup drops only owners visible before the pending declaration.
+  Whole nested roots use the existing `SCOPY`/`SASSIGN`.
+  Source staging is capped at 16 scalar leaves total, record nesting and path
+  length at 16, selected roots at 128 bytes, and the existing 16 record sites, 16
+  shared owners, 65,536-byte arena, 128-register and 256-instruction limits remain.
+  The private VM still accepts 128 leaves. Traversals of the record tree are
+  iterative; scalar expression depth limits are unchanged. A bound record with a
+  nested field selects `brownie.m2-struct-nested/1` ahead of the copy, write, and
+  read profiles; unused nested declarations do not promote a flat or non-record
+  program. `--version --json` adds `struct_nested_profile`. Development and
+  release each passed 36 native groups and 2,710 CLI cases, including 128 nested
+  cases, through the complete `--nested` harness on the corrected source.
+  The [receipt](docs/evidence/m2-struct-source-nested-windows-20261027.json)
+  records input hashes, artifacts, commands and the corrected release regression.
+  Implementation commits: `576d062` and `716c14b`.
 - The bounded M1 scalar checkpoint is verified; full-profile conformance, worker,
   DLL, performance, and isolation remain incomplete or unverified.
 - Root fairy.toml builds the native CLI; tools/verify-m1.ps1 verifies its narrow profile.

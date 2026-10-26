@@ -1,12 +1,13 @@
 # M2 Bounded Source Struct Values
 
-- Status: historical read baseline; construction and one-level reads were verified in development/release before field writes and record copies were added.
+- Status: historical read baseline; construction and one-level reads were verified in development/release before field writes, record copies, and nested source records were added.
 - Scope: entry-only scalar-field record construction and one-level scalar field reads.
 - Implementation: `src/struct_value_source.fy`, `src/compiler.fy`, `src/array_source.fy`,
   `src/struct_source.fy`, and the existing private struct IR and VM.
 - Evidence: [Windows native and CLI receipt](../evidence/m2-struct-values-windows-20261026.json).
 - Successor: [bounded source struct field writes](m2-struct-write.md); later,
-  [source struct copy initialization and assignment](m2-struct-source-copy.md).
+  [source struct copy initialization and assignment](m2-struct-source-copy.md)
+  and [source nested structs](m2-struct-source-nested.md).
 
 This historical slice admits initialized scalar-field records in the entry
 function. It is a bounded source adapter over the existing `SINIT` and `SREAD`
@@ -14,7 +15,9 @@ path. It does not claim full source struct support or full-profile conformance.
 The [write successor](m2-struct-write.md) adds mutable one-level field
 assignment and passed focused native and CLI checks in development and release.
 The later [source-copy successor](m2-struct-source-copy.md) adds bare-name copies
-and whole-record assignment, verified stepwise in development and release.
+and whole-record assignment, verified stepwise in development and release. The
+[nested successor](m2-struct-source-nested.md) adds inline child constructors,
+multi-segment scalar paths, and whole-root copies for nested records.
 
 ## Accepted source
 
@@ -38,8 +41,9 @@ let|var TYPE NAME = TYPE { .FIELD = EXPR, ... [,] };
 Each `EXPR` is a normal typed scalar expression for that field. Field
 expressions evaluate from left to right. Each result is stored in its typed
 staging slot before the next field expression is evaluated. All staging slots
-are then loaded into consecutive scalar registers for `SINIT`. The new name is
-published to the lexical scope only after the initializer completes.
+are then loaded into consecutive scalar registers for `SINIT`. The compiler
+declares the new name only after emitting the complete initializer and `SINIT`;
+runtime initialization failure aborts the invocation.
 
 Construction is a declaration statement in the entry function's admitted
 lexical scopes. It is not a general expression and is unavailable in parameters,
@@ -56,8 +60,10 @@ field writes; the [write successor](m2-struct-write.md) now does.
 
 `struct_value_source` resolves a type or field name by lexing the bounded
 source to locate its declaration, then scanning its field names on demand. It does not add persistent source-name arrays to the
-recursive lowering stack. Scalar fields are flattened in declaration order, so
-their source field ordinals coincide with their scalar leaf ordinals.
+recursive lowering stack. For this flat baseline, scalar fields are flattened in
+declaration order, so their source field ordinals coincide with their scalar
+leaf ordinals. Nested roots use depth-first leaf ordinals through the
+[nested successor](m2-struct-source-nested.md).
 
 The compiler checks the complete field list and stages every typed value before
 allocating the record descriptor. It emits consecutive loads followed by one
@@ -83,20 +89,23 @@ payload cap, and Fuel accounting govern allocation and execution.
 
 The accepted declaration catalog retains its existing limits. Struct declaration
 graphs may contain nested named types and unselected valid records may exceed
-128 bytes. Those declarations remain accepted, but this slice cannot construct
-or access a nested record value.
+128 bytes. This historical baseline cannot construct or access a nested record
+value; the [nested successor](m2-struct-source-nested.md) does, within its
+16-leaf source staging bound.
 
 In this read baseline, a record-binding program without `SWRITE` reports
 `brownie.m2-struct-read/1`. The write successor selects
 `brownie.m2-struct-write/1` when a record binding catalog and opcode 44 are present. A
-program with struct declarations but no record binding keeps the scalar or array
-profile selected by its existing object operations.
+bound record with a nested field selects `brownie.m2-struct-nested/1` before
+those checks. A program with struct declarations but no record binding keeps the
+scalar or array profile selected by its existing object operations.
 
 ## Unsupported forms
 
 The following remain outside this historical read baseline:
 
-- Nested object construction and nested field chains such as `p.inner.x`
+- Subrecord values such as `p.inner`; nested construction and scalar paths are
+  handled by the [nested successor](m2-struct-source-nested.md)
 - Struct parameters, results, and borrows
 - General constructors outside a record declaration initializer
 - Struct fields with wrapper, array, or borrowed types
@@ -125,16 +134,18 @@ initializers, and nested expression depth 7 success/depth 8 compile-limit.
 These are native execution and algorithmic bounds, not performance measurements.
 
 The receipt records the pinned Fairy C compiler `4ce1264273be`, SDK, source
-hashes, both native CLI artifacts, commands, and outcomes. Full native suites,
+hashes, both native CLI artifacts, commands, and outcomes. These results are
+historical for the nested-source compiler inputs. Full native suites,
 full array CLI matrices, M0, Linux, isolation, DLL, packaging, allocation
 instrumentation, and performance measurements were not run.
 
 The earlier declaration-only contract and its 23 native groups and 2,208 CLI
 cases remain historical evidence for declarations that create no record
-binding. That evidence does not cover `SINIT`, `SREAD`, record publication, or
-the read profile. The source has since changed for field writes and source record
-copies; the [write successor](m2-struct-write.md) has its own historical
+binding. That evidence does not cover `SINIT`, `SREAD`, lexical binding declaration, or
+the read profile. The source has since changed for field writes, source record
+copies, and nested records; the [write successor](m2-struct-write.md) has its own historical
 [receipt](../evidence/m2-struct-write-windows-20261026.json), while the later
 [source-copy successor](m2-struct-source-copy.md) has stepwise development/release
-verification. Full source struct support, borrows, and
+verification. The [nested successor](m2-struct-source-nested.md) has a
+complete development/release pass on corrected inputs. Full source struct support, borrows, and
 full-profile conformance remain open.

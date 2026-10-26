@@ -1,7 +1,7 @@
 # Validation
 
-- Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, switch-expression, i64, and unsigned receipts are verified historical evidence; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified; private entry-array IR/VM and source-array reads, writes, copy initializers, parameters, results, and assignment forms implemented; in-place repeated-literal assignment verified; private entry-owned struct IR/verifier verified historically; private struct VM verified with native 38/38 and CLI 115 in both profiles; declaration-only source structs historically verified in development and release (23 native groups and 2,208 CLI cases per profile); bounded source struct construction and field reads form a verified historical read baseline; entry-only one-level scalar-field writes have historical focused development/release validation; entry-only scalar-record copy initialization and whole-record assignment are verified stepwise in development and release
-- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/u8/u32/usize/bool values, explicit widening, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation; private function-owned array IR/native dispatch with separate recursive frame tokens, let/var scalar arrays in lexical scopes of ordinary functions, indexed reads/writes, copy initializers, length access, lexical cleanup including `?` failure, by-value parameters, source results, and bare-name, call-result, and repeated-literal assignment are implemented; private entry-owned struct IR/verifier and metered VM dispatch exist; source struct declarations attach immutable layouts; bounded entry construction, record bindings, one-level scalar field reads/writes, bare-name record copy initialization, and whole-record assignment lower to `SINIT`, `SREAD`, `SWRITE`, `SCOPY`, and `SASSIGN`; helper-local record statements and for-header writes/copies remain rejected, while nested construction/chains, struct parameters/results, and borrows remain unavailable
+- Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, switch-expression, i64, and unsigned receipts are verified historical evidence; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified; private entry-array IR/VM and source-array reads, writes, copy initializers, parameters, results, and assignment forms implemented; in-place repeated-literal assignment verified; private entry-owned struct IR/verifier verified historically; private struct VM verified with native 38/38 and CLI 115 in both profiles; declaration-only source structs historically verified in development and release (23 native groups and 2,208 CLI cases per profile); bounded source struct construction and field reads form a verified historical read baseline; entry-only one-level scalar-field writes have historical focused development/release validation; entry-only scalar-record copy initialization and whole-record assignment are verified stepwise in development and release; bounded nested constructors, multi-segment scalar paths, and whole-root copies have verified development/release results
+- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/u8/u32/usize/bool values, explicit widening, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation; private function-owned array IR/native dispatch with separate recursive frame tokens, let/var scalar arrays in lexical scopes of ordinary functions, indexed reads/writes, copy initializers, length access, lexical cleanup including `?` failure, by-value parameters, source results, and bare-name, call-result, and repeated-literal assignment are implemented; private entry-owned struct IR/verifier and metered VM dispatch exist; source struct declarations attach immutable layouts; bounded entry construction, record bindings, one-level scalar field reads/writes, bare-name record copy initialization, and whole-record assignment lower to `SINIT`, `SREAD`, `SWRITE`, `SCOPY`, and `SASSIGN`; helper-local record statements and for-header writes/copies remain rejected; bounded nested constructors, multi-segment scalar paths, and whole-root copies are implemented with verified development/release results, while subrecord values, struct parameters/results, and borrows remain unavailable
 
 ## Validation source of truth
 
@@ -711,9 +711,10 @@ through `SINIT` and `SREAD`. The
 one-level `NAME.FIELD = EXPR;` through `SWRITE`. The binding and field
 resolve before a single exact-typed RHS, and the write reuses the existing record
 extent. Bare-name record copies and whole-record assignment are owned by the
-later source-copy contract described below. Nested construction/chains, struct
-parameters/results, borrows, catalog identity, and allocator integration remain
-unsupported. The read baseline's focused checks are recorded below as historical
+later source-copy contract described below. Inline nested constructors and scalar
+paths are owned by the [nested contract](docs/engineering/m2-struct-source-nested.md);
+subrecord values, struct parameters/results, borrows, catalog identity, and
+allocator integration remain unsupported. The read baseline's focused checks are recorded below as historical
 evidence; field-write validation passed in both profiles for the earlier inputs.
 
 The `python -B tools/verify-m2-struct-layout.py --ir` selection passed 46 native
@@ -790,8 +791,9 @@ initialization. Record bindings select `brownie.m2-struct-read/1`, while
 declaration-only programs keep their existing profile. Construction is limited
 to selected roots of at most 128 bytes and 16 fields, with up to 16 record
 sites, the shared 16-entry owner table, 65,536-byte payload cap, and existing
-Fuel. Nested construction and field chains, struct parameters/results, and
-borrows remain unsupported. The
+Fuel. Nested construction and scalar paths are handled by the
+[nested successor](docs/engineering/m2-struct-source-nested.md); subrecord
+values, struct parameters/results, and borrows remain unsupported. The
 [field-write successor](docs/engineering/m2-struct-write.md) adds mutable
 one-level scalar assignment, and the later [source-copy successor](docs/engineering/m2-struct-source-copy.md)
 adds bare-name copy initialization and whole-record assignment.
@@ -867,6 +869,40 @@ selection, build, and all six CLI suites. The complete aggregate harness was not
 rerun. Input hashes, reuse provenance, artifact identities and commands are
 recorded. Full native suites, full array CLI matrices, M0, Linux, isolation, DLL,
 packaging, allocation instrumentation and performance were not run.
+
+The [source nested-struct contract](docs/engineering/m2-struct-source-nested.md)
+adds inline named child constructors, multi-segment scalar read/write paths, and
+whole-root copies for entry-owned nested records. The constructor cursor walks
+the record tree iteratively; scalar leaves are staged left to right before one
+`SINIT` for the root. Children add no site, owner, or extent. Paths resolve to
+depth-first scalar-leaf ordinals, including leaves in preceding nested siblings.
+A bound record with a nested field selects `brownie.m2-struct-nested/1` ahead of
+the copy, write, and read profiles; unused nested declarations do not promote a
+flat, array, or scalar program. Version JSON adds `struct_nested_profile`.
+
+Source staging allows 16 scalar leaves in total, record nesting and path length
+16, and selected roots 128 planned bytes. The existing 16 record sites,
+shared 16 owners, 65,536-byte payload cap, 128 registers, 256 instructions, and
+private VM bounds remain; the private VM still accepts 128 leaves. Traversal is
+iterative; scalar expression depth limits are unchanged.
+
+The complete `python -B tools/verify-m2-struct-values.py --nested` invocation
+passed on corrected final inputs in development and release. Each profile passed
+36 native groups: 6 nested, 6 source-copy, 5 write, 5 values, 8 struct VM and 6
+switch-arm groups. Each passed 2,710 CLI cases: 128 nested, 110 copy, 120 write,
+144 values, 124 declarations, 115 array-literal assignment and 1,969 scalar.
+
+The [receipt](docs/evidence/m2-struct-source-nested-windows-20261027.json) records
+91 source/tool hashes, compiler and artifact identities, commands and outcomes.
+The initial release native selection failed 18 of 36 groups at `576d062` because
+staging/load registers had type zero. `716c14b` resolves each staging slot's type
+directly from its scalar leaf instead of a returned tag array. Verifier and VM
+rules are unchanged. The final aggregate reran both profiles from the corrected
+source without reusing previous results.
+
+Full native suites, full array CLI matrices, M0, Linux, isolation, DLL, packaging,
+allocation instrumentation and performance were not run. Full-profile
+conformance remains incomplete.
 
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker
