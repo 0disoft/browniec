@@ -134,3 +134,30 @@ pub fn Result<Table, errors::Error> scan(ref u8[] source) {
     };
     return .ok(table);
 }
+
+// Revisit validated declaration spans on demand instead of retaining another
+// source-name catalog in recursive lowering frames. Selected=32 searches names.
+pub struct Location { usize record; usize body; }
+pub fn Result<Location, errors::Error> locate(ref u8[] source, usize begin, usize end, usize selected) {
+    var lexer::State s = lexer::empty();
+    let usize first = lexer::next(source, ref mut s)?;
+    let usize module_word = lexer::word(source, ref mut s, b"module")?;
+    let usize module_name = lexer::word(source, ref mut s, b"main")?;
+    let usize module_end = lexer::punctuation(source, ref mut s, 59)?;
+    var usize id = 0;
+    while (s.kind != 0) {
+        if (word(source, ref s, b"struct")) {
+            var lexer::State look = lexer::snapshot(ref s);
+            let usize keyword = lexer::next(source, ref mut look)?;
+            let bool found = if (selected < 32) { id == selected }
+                else { lexer::equal(source[begin..end], source[look.begin..look.end]) };
+            if (found) {
+                let usize named = lexer::next(source, ref mut look)?;
+                let usize open = lexer::punctuation(source, ref mut look, 123)?;
+                return .ok(Location { .record = id, .body = look.begin });
+            }
+            let usize skipped = skip(source, ref mut s)?; id += 1;
+        } else { let usize skipped = function_body(source, ref mut s)?; }
+    }
+    return .ok(Location { .record = 32, .body = 0 });
+}

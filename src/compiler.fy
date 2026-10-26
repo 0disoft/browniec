@@ -6,6 +6,7 @@ import ir as ir;
 import locals as locals;
 import functions as functions;
 import struct_source as structs;
+import struct_value_source as record_values;
 import types as types;
 import loops as loops;
 import patterns as patterns;
@@ -118,6 +119,7 @@ fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s,
         }
         if (index == 64) { return .err(errors::make(3, at)); }
         let usize register = table.registers[index];
+        if (record_values::binding(table, index)) { return record_values::read(source, s, p, register - 144, at); }
         if (arrays::binding(table, index)) {
             if (s.kind == 46) {
                 let usize dot = lexer::next(source, s)?;
@@ -291,10 +293,46 @@ fn Result<usize, errors::Error> array_statement(ref u8[] source, ref mut lexer::
     return array_write_statement(source,s,p,table,signatures,index,at,id,terminator,result_type,expr_depth,structure,loop_state);
 }
 
-fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 terminator, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {
+fn Result<usize, errors::Error> record_declaration(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p,
+    ref mut locals::Table table, ref functions::Table signatures, bool mutable, u8 terminator, u8 result_type,
+    usize expr_depth, usize structure, ref mut loops::State loop_state) {
+    let usize record = record_values::named(source, s)?;
+    let record_values::Header header = record_values::header(source,s,p,table,record,mutable,terminator,result_type)?;
+    var usize[16] slots = [0; 16]; var usize i = 0;
+    while (i < header.fields) {
+        let u8 tag = p.records.layouts.types[record*16+i];
+        slots[i] = ir::slot(p,tag,header.begin)?; i += 1;
+    }
+    i = 0;
+    while (i < header.fields) {
+        let usize dot = lexer::punctuation(source,s,46)?;
+        let usize field = record_values::field(source,p,record,s.begin,s.end)?;
+        if (s.kind != 2 || field != i) { return .err(errors::make(3,s.begin)); }
+        let usize label = lexer::next(source,s)?;
+        let usize equals = lexer::punctuation(source,s,61)?;
+        let u8 tag = p.records.layouts.types[record*16+i];
+        let usize value = expression(source,s,p,table,signatures,1,expr_depth+2,tag,result_type,structure+1,loop_state)?;
+        if (p.types[value] != tag) { return .err(errors::make(3,header.begin)); }
+        let usize store = ir::raw(p,18,slots[i],value,0,header.begin)?; i += 1;
+        if (i < header.fields) { let usize comma = lexer::punctuation(source,s,44)?; }
+    }
+    if (s.kind == 44) { let usize comma = lexer::next(source,s)?; }
+    let usize close = lexer::punctuation(source,s,125)?;
+    let usize end = lexer::punctuation(source,s,59)?;
+    let usize first = p.registers; i = 0;
+    while (i < header.fields) { let usize loaded = ir::emit(p,17,slots[i],0,header.begin)?; i += 1; }
+    let usize id = ir::record(p,record,mutable,header.begin)?;
+    let usize init = ir::record_init(p,id,first,header.begin)?;
+    return locals::declare(table,header.begin,header.end,144+id,mutable);
+}
+
+fn Result<usize, errors::Error> declaration(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 terminator, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {
     if (word_is(source, s, b"let") || word_is(source, s, b"var")) {
         let bool mutable = word_is(source, s, b"var");
         let usize keyword = lexer::next(source, s)?;
+        if (s.kind == 2 && !locals::reserved(source[s.begin..s.end])) {
+            return record_declaration(source,s,p,table,signatures,mutable,terminator,result_type,expr_depth,structure,loop_state);
+        }
         let u8 tag = types::parse(source, s)?;
         let usize length = if (s.kind == 91) { arrays::length(source, s)? } else { 0 };
         if (length != 0 && (result_type == 0 ||
@@ -351,12 +389,20 @@ fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State 
         }
         return locals::declare(table, begin, end, binding, mutable);
     }
+    return .err(errors::make(2, s.begin));
+}
+
+fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 terminator, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {
+    if (word_is(source, s, b"let") || word_is(source, s, b"var")) {
+        return declaration(source,s,p,table,signatures,terminator,result_type,expr_depth,structure,loop_state);
+    }
     if (s.kind != 2 || locals::reserved(source[s.begin..s.end])) {
         return .err(errors::make(2, s.begin));
     }
     let usize at = s.begin;
     let usize index = locals::find(source, table, s.begin, s.end);
     if (index == 64 || !table.mutable[index]) { return .err(errors::make(3, at)); }
+    if (record_values::binding(table, index)) { return .err(errors::make(3, at)); }
     let usize target = lexer::next(source, s)?;
     if (arrays::binding(table, index)) {
         return array_statement(source,s,p,table,signatures,index,at,terminator,result_type,expr_depth,structure,loop_state);
@@ -743,7 +789,7 @@ pub fn Result<ir::Program, errors::Error> compile(ref u8[] source) {
         f += 1;
     }
     // Preserve the current source/IR restriction on entry calls in array programs.
-    if (p.arrays.count != 0) {
+    if (p.arrays.count != 0 || p.records.count != 0) {
         var usize pc = 0;
         while (pc < p.count) {
             if (p.code[pc * 8] == 9 && p.code[pc * 8 + 2] as usize == p.entry) {

@@ -9,7 +9,7 @@ import errors as errors;
 // Local binding values 128..143 denote private array catalog IDs, never scalar
 // registers. Each binding belongs to its function's lexical scopes.
 pub fn bool binding(ref locals::Table table, usize index) {
-    return index < table.count && table.registers[index] >= 128;
+    return index < table.count && table.registers[index] >= 128 && table.registers[index] < 144;
 }
 // Fixed shape is part of the binding's type, not mutable payload state.
 pub fn Result<usize, errors::Error> length_value(ref mut ir::Program p, usize id, usize offset) {
@@ -40,6 +40,7 @@ pub fn Result<bool, errors::Error> indexed_assignment(ref u8[] source, ref lexer
     return .ok(false);
 }
 pub fn u8 profile(ref ir::Program p) {
+    if (p.records.count != 0) { return 4; }
     var usize pc = 0;
     while (pc < p.count && pc < 256) {
         if (p.code[pc * 8] == 34 || p.code[pc * 8] == 38) { return 3; }
@@ -99,6 +100,9 @@ pub fn Result<usize, errors::Error> release_from(ref locals::Table table, ref mu
         i -= 1;
         if (binding(table, i)) {
             let usize drop = ir::array_drop(p, table.registers[i] - 128, offset)?;
+            dropped += 1;
+        } else if (table.registers[i] >= 144 && table.registers[i] < 160) {
+            let usize drop = ir::record_drop(p, table.registers[i] - 144, offset)?;
             dropped += 1;
         }
     }

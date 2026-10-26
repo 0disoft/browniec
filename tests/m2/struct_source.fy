@@ -68,7 +68,7 @@ fn void cycles_and_structural_limits_are_checked_without_native_recursion() {
 fn void global_collisions_and_object_syntax_remain_rejected() {
     assert(!compiler::compile(b"module main; struct main { i32 x; } fn i32 main() { return 42; }").is_ok);
     assert(!compiler::compile(b"module main; fn i32 Point() { return 0; } struct Point { i32 x; } fn i32 main() { return 42; }").is_ok);
-    assert(!compiler::compile(b"module main; struct Point { i32 x; } fn i32 main() { let Point p = Point { .x = 42 }; return p.x; }").is_ok);
+    assert(!compiler::compile(b"module main; struct Point { i32 x; } fn i32 main() { let Point p = Point { .x = 42 }; let Point q = p; return q.x; }").is_ok);
     assert(!compiler::compile(b"module main; struct Point { i32 x; } fn Point helper() { return 0; } fn i32 main() { return 42; }").is_ok);
     assert(!compiler::compile(b"module main; struct Point { i32 x; } fn i32 helper(Point p) { return 42; } fn i32 main() { return 42; }").is_ok);
 }
