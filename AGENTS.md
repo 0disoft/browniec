@@ -137,9 +137,14 @@ own the affected contract. Broader scaffold procedures are optional.
   in the struct VM native and CLI receipts. The old `--ir` 46-group and
   115-case CLI receipts are historical for changed runtime, test, harness, and
   root-lock inputs.
-  Source struct declarations, lowering, parameters/results, borrows, and allocator
-  integration remain unimplemented. Next is source declaration and type-catalog
-  work, then complete-initializer and field-access lowering. The earlier nested-storage 18-group receipt is
+  A [declaration-only source struct slice](docs/engineering/m2-struct-source.md)
+  now parses bounded top-level declarations, resolves scalar and by-value named
+  fields, and attaches immutable declaration-order layouts. Construction,
+  bindings, field operations, source struct parameters/results, borrows, and
+  allocator integration remain unimplemented. Next is construction and
+  field-lowering work. Both profiles passed 23 native groups and 2,208 CLI cases
+  each, including 124 source cases. Checks completed stepwise after a harness
+  output-path correction; the corrected aggregate harness was not rerun. The earlier nested-storage 18-group receipt is
   historical for changed inputs; nested-copy 24-group checks passed development and release.
   The copy slice's Windows 28-group receipt passed development and release after
   moving snapshot staging into caller-owned scratch. Earlier planner and storage

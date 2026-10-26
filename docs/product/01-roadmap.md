@@ -1,7 +1,7 @@
 # Roadmap
 
-- Status: Accepted delivery sequence; M0 verified; named M1 slices through unsigned have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified, 2026-10-23; private entry-array IR/VM verified by its native harness, 2026-10-24; source-array reads, writes, copy initializers, parameters, results, and assignment forms implemented; in-place repeated-literal assignment verified; private scalar struct layout and storage implemented and verified; private scalar struct copy/assignment implemented and verified; private nested struct storage implemented and verified; private nested struct copy/assignment implemented and verified; shared struct-owner foundation implemented and verified; private struct-owner copy/assignment implemented and verified; private entry-owned struct IR/verifier verified historically; private struct VM implemented and verified, native 38/38 and CLI 115 in both profiles
-- Current progress: M1 scalar checkpoint verified; M2 function-owned scalar arrays cover lexical storage, copy, length, helper locals, by-value parameters, source results, direct returns, repeated return literals, call-result assignment, and in-place repeated-literal assignment; private scalar struct layout, storage, and copy/assignment exist; private nested struct storage is verified; private nested struct copy/assignment is verified; shared struct-owner foundation is verified; private struct-owner copy/assignment is verified; private entry-owned struct IR and metered VM execution exist; source structs, lowering, source-level record copies, borrows, Buffer, and text remain open; full-profile conformance incomplete; M3-M5 not started
+- Status: Accepted delivery sequence; M0 verified; named M1 slices through unsigned have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified, 2026-10-23; private entry-array IR/VM verified by its native harness, 2026-10-24; source-array reads, writes, copy initializers, parameters, results, and assignment forms implemented; in-place repeated-literal assignment verified; private scalar struct layout and storage implemented and verified; private scalar struct copy/assignment implemented and verified; private nested struct storage implemented and verified; private nested struct copy/assignment implemented and verified; shared struct-owner foundation implemented and verified; private struct-owner copy/assignment implemented and verified; private entry-owned struct IR/verifier verified historically; private struct VM implemented and verified, native 38/38 and CLI 115 in both profiles; declaration-only source structs verified stepwise in development and release (23 native groups and 2,208 CLI cases per profile)
+- Current progress: M1 scalar checkpoint verified; M2 function-owned scalar arrays cover lexical storage, copy, length, helper locals, by-value parameters, source results, direct returns, repeated return literals, call-result assignment, and in-place repeated-literal assignment; private scalar struct layout, storage, and copy/assignment exist; private nested struct storage is verified; private nested struct copy/assignment is verified; shared struct-owner foundation is verified; private struct-owner copy/assignment is verified; private entry-owned struct IR and metered VM execution exist; declaration-only source struct layouts are implemented, while construction, field operations, source-level record copies, parameters/results, borrows, Buffer, and text remain open; source struct verification passed stepwise in both profiles; full-profile conformance incomplete; M3-M5 not started
 
 This roadmap orders learning and evidence. It is not a release promise. M0 has a
 native harness and recorded evidence. The scalar CLI/VM now exist; the worker
@@ -273,8 +273,8 @@ helpers. Scalar and composed fills return 42 at depth 10; depth 11 reports
 `compile_limit`. Two permanent CLI cases cover the composed boundary. The pre-fix
 binary reproduces `0xC00000FD` at depth 10. No stack-byte or performance claim is
 made.
-Plain source structs, borrows, Buffer, I/O, isolation and
-the remaining milestone evidence below are still open.
+Source struct construction and field operations, borrows, Buffer, I/O,
+isolation and the remaining milestone evidence below are still open.
 
 The private [struct-layout planner](../engineering/m2-struct-layout.md) covers
 0..32 acyclic records with 1..16 fields, declaration-order alignment, tail
@@ -314,10 +314,14 @@ those receipts are historical after changed runtime, test, harness, and root-loc
 inputs. The [private struct VM](../engineering/m2-struct-vm.md) now executes
 opcodes 41..46 with fixed prepaid Fuel, sixteen entry tokens, and the shared array
 owner table and payload arena. Development and release each passed all 38 native
-groups and the existing 115-case CLI suite. Next is source struct
-declaration and type-catalog work, followed by complete-initializer and field
-access lowering. Full source structs, wrapper types, borrows, and Buffer remain
-open.
+groups and the existing 115-case CLI suite for that private VM slice. A
+[declaration-only source struct slice](../engineering/m2-struct-source.md) now
+attaches immutable layouts for bounded forward-referencing declarations while
+emitting no struct operations. Both profiles passed 23 native groups and 2,208
+CLI cases each, recorded in the
+[stepwise receipt](../evidence/m2-struct-source-windows-20261026.json). Next is
+construction and field lowering. Full source structs, wrapper element types,
+borrows, and Buffer remain open.
 
 Goal: connect arrays, plain structs, borrows, Buffer, input,
 output, and UTF-8.

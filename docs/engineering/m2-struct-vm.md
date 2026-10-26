@@ -7,17 +7,19 @@
 - Harness: [tools/verify-m2-struct-layout.py](../../tools/verify-m2-struct-layout.py) with `--vm`.
 - Evidence: [native receipt](../evidence/m2-struct-vm-windows-20261026.json) and [focused CLI receipt](../evidence/m2-struct-vm-cli-windows-20261026.json) record both profiles.
 - Predecessor: [private struct IR and verification](m2-struct-ir.md).
+- Successor: [declaration-only source structs](m2-struct-source.md).
 
 The VM now executes the private, entry-owned record instructions introduced by
 the IR slice. Scalar registers still hold scalar values; record bindings hold
 owner tokens. A record token names a descriptor in the same owner table used by
-arrays. The source frontend does not yet parse or lower struct declarations, so
-this is library and bytecode behavior rather than source-language conformance.
+arrays. The source frontend now attaches declaration-only record layouts, but it
+does not yet lower construction or field operations. VM dispatch remains
+library and bytecode behavior until those source forms exist.
 
 ## Dispatch and storage
 
 `vm::run` verifies the complete program before creating runtime state. If either
-the array catalog or record catalog is nonempty, it prepares one payload buffer
+the array binding catalog or record binding catalog is nonempty, it prepares one payload buffer
 with capacity 0 through 65,536 bytes and charges `1 + capacity` Fuel before
 allocation. Pure scalar programs keep their previous preparation and instruction
 prices. An array limit above 65,536 is rejected before preparation.
@@ -88,9 +90,9 @@ protection from a caller changing the catalog or backing region.
 
 The private runtime covers six scalar types, nested records, independent copies,
 exact-ID assignment, stale-generation rejection, and complete initialization.
-Source declarations and type catalogs, lowering for initializers and field
-access, struct parameters and results, borrows, and full source conformance remain
-unimplemented.
+Source declarations and immutable layout catalogs now exist at compile time.
+Lowering for construction, field access, struct parameters/results, and borrows,
+along with full source conformance, remains unimplemented.
 
 ## Verification status
 
@@ -116,6 +118,10 @@ above are separate results. Full native suites, scalar and array CLI matrices,
 M0, Linux, isolation, DLL, packaging, allocation instrumentation, and performance
 were not rerun.
 
-Next is source struct declaration and type-catalog work, followed by lowering for
-complete initializers and field access. Struct VM dispatch and its Fuel schedule
-are now implemented privately.
+Declaration-only source structs now attach layouts without record bindings or
+struct opcodes. Next is construction and field lowering. Struct VM dispatch and
+its Fuel schedule are implemented privately. The source declaration checks passed stepwise in both profiles: 23 native groups
+and 2,208 CLI cases each, including 124 source cases. The
+[receipt](../evidence/m2-struct-source-windows-20261026.json) records the executed
+checks and the harness-only path correction. The corrected aggregate harness
+was syntax-checked, not rerun.
