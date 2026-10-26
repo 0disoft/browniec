@@ -141,21 +141,36 @@ own the affected contract. Broader scaffold procedures are optional.
   parses bounded top-level declarations, resolves scalar and by-value named
   fields, and attaches immutable declaration-order layouts. Its 23 native groups
   and 2,208 CLI cases per profile remain historical evidence for that
-  declaration-only slice. A [bounded source struct-value slice](docs/engineering/m2-struct-values.md)
-  adds entry-only `let|var TYPE NAME = TYPE { .FIELD = EXPR, ... };`
-  construction for scalar-field roots. Fields are exact, declaration-ordered,
-  typed, and staged before consecutive loads and `SINIT`; the name is published
-  only after initialization. One-level `NAME.FIELD` reads use `SREAD`. Mixed
-  lexical exits, loop transfers, and returns release arrays and records in
-  reverse order. Record bindings select `brownie.m2-struct-read/1`;
-  declaration-only programs keep their existing profile. Construction is capped
-  at 128 planned bytes and 16 fields, with 16 record sites, the shared owner
-  table, 65,536-byte payload cap, and existing Fuel. Nested construction, field
-  chains, record copies, field writes, struct parameters/results, and borrows
-  remain unsupported; nested type declarations remain accepted. Development and release each passed 28 native groups and 2,352 CLI cases
-  through the focused harness, plus three supplemental early-transfer/forward-name
-  cases. The [receipt](docs/evidence/m2-struct-values-windows-20261026.json) records
-  toolchain, inputs, artifacts, commands, and limitations. The earlier nested-storage 18-group receipt is
+  declaration-only slice. The [bounded source struct-value slice](docs/engineering/m2-struct-values.md)
+  is the historical read baseline: entry-only
+  `let|var TYPE NAME = TYPE { .FIELD = EXPR, ... };` construction for scalar-field
+  roots; exact, declaration-ordered typed fields staged before consecutive loads
+  and `SINIT`. The name is published only after initialization. One-level
+  `NAME.FIELD` reads use `SREAD`. Mixed lexical exits, loop transfers, and
+  returns release arrays and records in reverse order. Read-only record programs
+  select `brownie.m2-struct-read/1`; declaration-only programs keep their existing
+  profile. Construction is capped at 128 planned bytes and 16 fields, with 16
+  record sites, the shared owner table, 65,536-byte payload cap, and existing
+  Fuel. For that read baseline, development and release each passed 28 native
+  groups and 2,352 CLI cases through the focused harness, plus three supplemental
+  early-transfer/forward-name cases. The
+  [receipt](docs/evidence/m2-struct-values-windows-20261026.json) records
+  toolchain, inputs, artifacts, commands, and limitations. Nested construction,
+  field chains, record copies and whole-record assignment, struct
+  parameters/results, and borrows remain unsupported; nested type declarations
+  remain accepted.
+  A [source struct-field write slice](docs/engineering/m2-struct-write.md) adds
+  entry-only `NAME.FIELD = EXPR;` for one mutable scalar leaf. The binding and
+  field resolve before a single exact-typed RHS; `SWRITE` follows the expression
+  and terminator and reuses the existing record extent. For-header writes remain
+  rejected, condition reads and body writes follow normal statement handling, and
+  no copy, owner, or payload extent is added. Programs with records and opcode 44
+  select `brownie.m2-struct-write/1`; `--version --json` adds
+  `struct_write_profile`. VM checks, codec, 41,281 Fuel, 16 shared owners, and the
+  65,536-byte cap remain unchanged. The full `--write` selection passed 24 native
+  groups and 2,472 CLI cases in each development/release profile. The
+  [write receipt](docs/evidence/m2-struct-write-windows-20261026.json) records
+  commands, source/tool identities, artifacts, outcomes, and limitations. The earlier nested-storage 18-group receipt is
   historical for changed inputs; nested-copy 24-group checks passed development and release.
   The copy slice's Windows 28-group receipt passed development and release after
   moving snapshot staging into caller-owned scratch. Earlier planner and storage

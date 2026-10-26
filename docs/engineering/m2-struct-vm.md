@@ -91,9 +91,12 @@ protection from a caller changing the catalog or backing region.
 The private runtime covers six scalar types, nested records, independent copies,
 exact-ID assignment, stale-generation rejection, and complete initialization.
 Source declarations and immutable layout catalogs now exist at compile time.
-Entry-owned scalar-field construction and reads now have source lowering.
-Nested construction, field writes, struct parameters/results, borrows, and full
-source conformance remain unimplemented.
+Entry-owned scalar-field construction and reads now have source lowering. The
+[field-write successor](m2-struct-write.md) adds one-level mutable scalar-field
+writes through `SWRITE` and passed 24 native groups plus 2,472 CLI cases per
+profile ([receipt](../evidence/m2-struct-write-windows-20261026.json)). Nested
+construction, record copies and whole-record assignment, struct
+parameters/results, borrows, and full source conformance remain unimplemented.
 
 ## Verification status
 
@@ -120,10 +123,13 @@ M0, Linux, isolation, DLL, packaging, allocation instrumentation, and performanc
 were not rerun.
 
 Declaration-only source structs now attach layouts without record bindings or
-struct opcodes. Its [bounded value successor](m2-struct-values.md) adds scalar-field
-construction and reads; field writes and nested values remain future work. Struct VM dispatch and
-its Fuel schedule are implemented privately. The earlier source declaration checks passed stepwise in both profiles: 23 native groups
-and 2,208 CLI cases each, including 124 source cases. The
+struct opcodes. Its [bounded value successor](m2-struct-values.md) is the
+historical read baseline for scalar-field construction and reads. The
+[field-write successor](m2-struct-write.md) adds verified one-level mutation;
+nested values remain future work. Struct VM dispatch and its Fuel schedule are
+implemented privately. The earlier source declaration checks passed stepwise in
+both profiles: 23 native groups and 2,208 CLI cases each, including 124 source
+cases. The
 [receipt](../evidence/m2-struct-source-windows-20261026.json) records the executed
 checks and the harness-only path correction. The corrected aggregate harness
 was syntax-checked, not rerun.

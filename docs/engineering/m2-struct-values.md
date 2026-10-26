@@ -1,14 +1,17 @@
 # M2 Bounded Source Struct Values
 
-- Status: bounded source lowering implemented and verified in development/release.
+- Status: historical read baseline; construction and one-level reads were verified in development/release before field writes were added.
 - Scope: entry-only scalar-field record construction and one-level scalar field reads.
 - Implementation: `src/struct_value_source.fy`, `src/compiler.fy`, `src/array_source.fy`,
   `src/struct_source.fy`, and the existing private struct IR and VM.
 - Evidence: [Windows native and CLI receipt](../evidence/m2-struct-values-windows-20261026.json).
+- Successor: [bounded source struct field writes](m2-struct-write.md).
 
-This slice admits initialized scalar-field records in the entry function. It is
-a bounded source adapter over the existing `SINIT` and `SREAD` path. It does not
-claim full source struct support or full-profile conformance.
+This historical slice admits initialized scalar-field records in the entry
+function. It is a bounded source adapter over the existing `SINIT` and `SREAD`
+path. It does not claim full source struct support or full-profile conformance.
+The [write successor](m2-struct-write.md) adds mutable one-level field
+assignment and passed focused native and CLI checks in development and release.
 
 ## Accepted source
 
@@ -43,8 +46,8 @@ results, borrows, or `for` headers. `NAME.FIELD` reads one scalar leaf through
 Run the example with `browniec run point.brc --fuel 1000000`. The CLI default
 Fuel of 256 does not cover aggregate arena preparation and struct operations.
 
-`var` is accepted and marks the binding mutable. Field writes remain unsupported,
-so `var` does not add mutable field access in this slice.
+`var` is accepted and marks the binding mutable. This read baseline did not lower
+field writes; the [write successor](m2-struct-write.md) now does.
 
 ## Lowering and metadata
 
@@ -80,25 +83,28 @@ graphs may contain nested named types and unselected valid records may exceed
 128 bytes. Those declarations remain accepted, but this slice cannot construct
 or access a nested record value.
 
-A program with a record binding reports `brownie.m2-struct-read/1`. A program
-with struct declarations but no record binding keeps the scalar or array profile
-selected by its existing object operations.
+In this read baseline, a record program without `SWRITE` reports
+`brownie.m2-struct-read/1`. The write successor selects
+`brownie.m2-struct-write/1` when a record catalog and opcode 44 are present. A
+program with struct declarations but no record binding keeps the scalar or array
+profile selected by its existing object operations.
 
 ## Unsupported forms
 
-The following remain unsupported:
+The following remain outside this historical read baseline:
 
 - Nested object construction and nested field chains such as `p.inner.x`
 - Record copy initialization or record-to-record assignment
-- Field writes such as `p.x = 3;`
 - Struct parameters, results, and borrows
 - General constructors outside a record declaration initializer
 - Struct fields with wrapper, array, or borrowed types
 
 `p.x` in scalar expressions and arithmetic is supported.
+One-level field writes are handled by the [write successor](m2-struct-write.md).
 
 ## Validation
 
+These results belong to the historical read baseline.
 `python -B tools/verify-m2-struct-values.py` completed successfully. Each
 profile passed 28 native groups: values (5), declarations (5), struct VM (8),
 functions (4), and loops (6). Each also passed 2,352 CLI cases: 144 new struct
@@ -122,5 +128,7 @@ instrumentation, and performance measurements were not run.
 The earlier declaration-only contract and its 23 native groups and 2,208 CLI
 cases remain historical evidence for declarations that create no record
 binding. That evidence does not cover `SINIT`, `SREAD`, record publication, or
-the new profile. Full source struct support, borrows, and full-profile
-conformance remain open.
+the read profile. The source has since changed for field writes; the
+[successor](m2-struct-write.md) has its own
+[receipt](../evidence/m2-struct-write-windows-20261026.json). Full source struct
+support, borrows, and full-profile conformance remain open.

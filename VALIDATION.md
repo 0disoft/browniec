@@ -1,7 +1,7 @@
 # Validation
 
-- Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, switch-expression, i64, and unsigned receipts are verified historical evidence; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified; private entry-array IR/VM and source-array reads, writes, copy initializers, parameters, results, and assignment forms implemented; in-place repeated-literal assignment verified; private entry-owned struct IR/verifier verified historically; private struct VM verified with native 38/38 and CLI 115 in both profiles; declaration-only source structs historically verified in development and release (23 native groups and 2,208 CLI cases per profile); bounded source struct construction and field reads implemented and verified in development/release
-- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/u8/u32/usize/bool values, explicit widening, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation; private function-owned array IR/native dispatch with separate recursive frame tokens, let/var scalar arrays in lexical scopes of ordinary functions, indexed reads/writes, copy initializers, length access, lexical cleanup including `?` failure, by-value parameters, source results, and bare-name, call-result, and repeated-literal assignment are implemented; private entry-owned struct IR/verifier and metered VM dispatch exist; source struct declarations attach immutable layouts; bounded entry construction, record bindings, and one-level scalar field reads lower to `SINIT` and `SREAD`, while nested construction/chains, record copies, field writes, struct parameters/results, and borrows remain unavailable
+- Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, switch-expression, i64, and unsigned receipts are verified historical evidence; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified; private entry-array IR/VM and source-array reads, writes, copy initializers, parameters, results, and assignment forms implemented; in-place repeated-literal assignment verified; private entry-owned struct IR/verifier verified historically; private struct VM verified with native 38/38 and CLI 115 in both profiles; declaration-only source structs historically verified in development and release (23 native groups and 2,208 CLI cases per profile); bounded source struct construction and field reads form a verified historical read baseline; entry-only one-level scalar-field writes are implemented with focused development/release validation passed
+- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/u8/u32/usize/bool values, explicit widening, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation; private function-owned array IR/native dispatch with separate recursive frame tokens, let/var scalar arrays in lexical scopes of ordinary functions, indexed reads/writes, copy initializers, length access, lexical cleanup including `?` failure, by-value parameters, source results, and bare-name, call-result, and repeated-literal assignment are implemented; private entry-owned struct IR/verifier and metered VM dispatch exist; source struct declarations attach immutable layouts; bounded entry construction, record bindings, one-level scalar field reads, and mutable one-level scalar-field writes lower to `SINIT`, `SREAD`, and `SWRITE`; for-header writes remain rejected, while nested construction/chains, record copies and whole-record assignment, struct parameters/results, and borrows remain unavailable
 
 ## Validation source of truth
 
@@ -704,11 +704,16 @@ private [struct VM](docs/engineering/m2-struct-vm.md). The former unavailable
 kind-11 boundary no longer describes the runtime. The declaration-only source
 contract remains historical: declarations without record bindings attach
 immutable layout metadata and emit no struct opcodes. The bounded
-[source struct-value contract](docs/engineering/m2-struct-values.md) adds entry
-construction and one-level scalar field reads through `SINIT` and `SREAD`.
-Nested construction/chains, record copies, field writes, struct
-parameters/results, borrows, catalog identity, and allocator integration remain
-unimplemented. The new value slice passed the focused checks recorded below.
+[source struct-value contract](docs/engineering/m2-struct-values.md) is the
+historical read baseline: entry construction and one-level scalar field reads
+through `SINIT` and `SREAD`. The
+[source struct-field write contract](docs/engineering/m2-struct-write.md) adds
+one-level `NAME.FIELD = EXPR;` through `SWRITE`. The binding and field
+resolve before a single exact-typed RHS, and the write reuses the existing record
+extent. Nested construction/chains, record copies and whole-record assignment,
+struct parameters/results, borrows, catalog identity, and allocator integration
+remain unimplemented. The read baseline's focused checks are recorded below as
+historical evidence; field-write validation passed in both profiles.
 
 The `python -B tools/verify-m2-struct-layout.py --ir` selection passed 46 native
 groups per development and release profile: 9 new struct-IR groups and 37
@@ -775,16 +780,19 @@ python -B tools/verify-m2-struct-source.py
 ```
 
 The [bounded source struct-value contract](docs/engineering/m2-struct-values.md)
-adds entry-only scalar-field construction and one-level scalar field reads.
-Fields appear exactly once in declaration order with an optional final comma.
+is the historical read baseline and adds entry-only scalar-field construction and
+one-level scalar field reads. Fields appear exactly once in declaration order
+with an optional final comma.
 Each typed field expression is evaluated left to right and staged before
 consecutive loads and `SINIT`; the binding becomes visible only after
 initialization. Record bindings select `brownie.m2-struct-read/1`, while
 declaration-only programs keep their existing profile. Construction is limited
 to selected roots of at most 128 bytes and 16 fields, with up to 16 record
 sites, the shared 16-entry owner table, 65,536-byte payload cap, and existing
-Fuel. Nested construction and field chains, record copies, field writes, struct
-parameters/results, and borrows remain unsupported.
+Fuel. Nested construction and field chains, record copies and whole-record
+assignment, struct parameters/results, and borrows remain unsupported. The
+[field-write successor](docs/engineering/m2-struct-write.md) adds mutable
+one-level scalar assignment.
 
 The full `python -B tools/verify-m2-struct-values.py` invocation passed 28 native
 groups and 2,352 CLI cases per development/release profile: 144 struct-value,
@@ -797,7 +805,32 @@ artifacts and stable source/compiler hashes. Full native suites, full array CLI
 matrices, M0, Linux, isolation, DLL, packaging, allocation instrumentation, and
 performance were not run. The declaration-only
 receipt above remains historical evidence for declarations without record
-bindings; it does not cover `SINIT`, `SREAD`, or the new profile.
+bindings; it does not cover `SINIT`, `SREAD`, or the read profile.
+
+The [source struct-field write contract](docs/engineering/m2-struct-write.md)
+adds entry-only `NAME.FIELD = EXPR;` for a mutable scalar leaf. The existing
+value harness is extended with `--write`:
+
+```powershell
+python -B tools/verify-m2-struct-values.py --write
+```
+
+The selection is 24 native groups per profile: 5 struct-write, 5 struct-values,
+8 struct VM, and 6 switch-arm-statement groups. Each profile also covers 2,472 CLI
+cases: 120 write, 144 constructor/read, 124 declaration, 115 array-literal, and
+1,969 scalar cases.
+
+The complete `--write` invocation passed in development and release: 24 native
+groups and 2,472 CLI cases per profile. Cases include exact scalar types,
+immutable-field rejection, single RHS evaluation, nested writes and final
+member expressions, early return/continue/break cleanup, full owner pressure,
+and composed RHS depth 10 success/depth 11 `compile_limit`. The basic example
+returns 42 with 128,782 Fuel using a private 4-byte arena, or 194,314 Fuel with
+the CLI's 65,536-byte capacity; one Fuel unit less fails. The receipt records
+matching test selections, stable source/compiler hashes, both native artifacts,
+commands, and outcomes. Full native suites, full array CLI matrices, M0, Linux,
+isolation, DLL, packaging, allocation instrumentation, and performance were not
+run. These are focused native checks, not full source conformance.
 
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker

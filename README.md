@@ -1,6 +1,6 @@
 # Brownie C
 
-- Status: M1 scalar checkpoint verified; M2 function-owned scalar arrays with helper declarations, by-value parameters, argument capture, copies, length access, lexical cleanup, source results, and bare-name, call-result, and repeated-literal assignment implemented; private entry-owned struct IR/verifier and metered VM dispatch implemented; declaration-only source struct layouts are historical verified evidence; bounded entry scalar-field struct construction and field reads implemented and verified in development/release; full profile incomplete
+- Status: M1 scalar checkpoint verified; M2 function-owned scalar arrays with helper declarations, by-value parameters, argument capture, copies, length access, lexical cleanup, source results, and bare-name, call-result, and repeated-literal assignment implemented; private entry-owned struct IR/verifier and metered VM dispatch implemented; declaration-only source struct layouts are historical verified evidence; bounded entry scalar-field construction and reads remain a verified historical read baseline; entry-only one-level scalar-field writes implemented with focused development/release validation passed; full profile incomplete
 - Design date: 2026-10-23
 - First delivery target: Windows 11 x64
 
@@ -92,17 +92,30 @@ parses forward-referencing scalar and nested named fields into immutable layouts
 Both profiles passed 23 native groups and 2,208 CLI cases each for that
 declaration-only slice, recorded in the
 [stepwise receipt](docs/evidence/m2-struct-source-windows-20261026.json).
-A [bounded source struct-value slice](docs/engineering/m2-struct-values.md)
-adds entry-only scalar-field construction with exact declaration order and
-one-level scalar field reads. Typed field expressions are staged left to right,
-then consecutive loads feed `SINIT`; the binding is published only after
-initialization. Record bindings select `brownie.m2-struct-read/1`, while
-declaration-only programs keep their existing profile. Nested construction,
-field chains, record copies, field writes, struct parameters/results, and
-borrows remain unsupported. Development and release each passed 28 native groups and 2,352 CLI cases, plus
-three supplemental cases, recorded in the
-[receipt](docs/evidence/m2-struct-values-windows-20261026.json). The declaration-only contract and its receipt
-remain historical evidence for declarations without record bindings.
+The [bounded source struct-value slice](docs/engineering/m2-struct-values.md)
+is the historical read baseline: entry-only scalar-field construction with exact
+declaration order and one-level scalar field reads. Typed field expressions are
+staged left to right, then consecutive loads feed `SINIT`; the binding is
+published only after initialization. Read-only record programs select
+`brownie.m2-struct-read/1`, while declaration-only programs keep their existing
+profile. For that baseline, development and release each passed 28 native groups
+and 2,352 CLI cases, plus three supplemental cases, recorded in the
+[receipt](docs/evidence/m2-struct-values-windows-20261026.json). Nested
+construction, field chains, record copies and whole-record assignment, struct
+parameters/results, and borrows remain unsupported. A
+[source struct-field write slice](docs/engineering/m2-struct-write.md) adds
+entry-only `NAME.FIELD = EXPR;` for one mutable scalar leaf. It resolves the
+binding and field before a single exact-typed RHS, emits `SWRITE` after the
+expression and terminator, and mutates the existing record extent without a new
+copy, owner, or payload extent. For-header writes remain rejected; condition
+reads and body writes are accepted. Programs with records and opcode 44 select
+`brownie.m2-struct-write/1`; version JSON adds `struct_write_profile`.
+The full `--write` selection passed 24 native groups and 2,472 CLI cases per
+development/release profile; the
+[receipt](docs/evidence/m2-struct-write-windows-20261026.json) records both artifacts
+and the executed checks.
+The declaration-only contract and its receipt remain historical evidence for
+declarations without record bindings.
 The earlier nested-storage 18-group receipt is historical for changed
 inputs; nested-copy 24-group checks passed development and release. The copy
 receipt passes 28 groups per profile in development and release. The planner's
@@ -192,7 +205,7 @@ Those limits describe the profile, not the language forever.
 
 | Level | Intended capability | Current state |
 | --- | --- | --- |
-| core | Source compile, verify, and native VM CLI | Experimental i32/i64/u8/u32/usize/bool expressions, explicit widening, branches, loops, shallow tagged values, switch statements and expressions, `?` propagation, source arrays, declaration-only source struct layouts, private entry-only struct IR execution, and bounded entry scalar-field construction/read lowering; scalar M1 and array reads verified, focused array and struct VM checks recorded, with bounded struct-value checks verified |
+| core | Source compile, verify, and native VM CLI | Experimental i32/i64/u8/u32/usize/bool expressions, explicit widening, branches, loops, shallow tagged values, switch statements and expressions, `?` propagation, source arrays, declaration-only source struct layouts, private entry-only struct IR execution, and bounded entry scalar-field construction/read/write lowering; scalar M1 and array reads verified, focused array and struct VM checks recorded, the struct construction/read baseline verified, and struct-write checks verified |
 | restricted | Windows worker plus parent broker | Not implemented; M4 |
 | embed | Trusted native host through a DLL ABI | Not implemented; M5; no public C export |
 
@@ -257,7 +270,8 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 private struct IR](docs/engineering/m2-struct-ir.md): entry-owned bindings, opcodes 41..46, flattened scalar leaves, combined lifetimes, and independent verification
 - [M2 private struct VM](docs/engineering/m2-struct-vm.md): shared owners and payload, private execution semantics, fixed Fuel charges, and current check status
 - [M2 declaration-only source structs](docs/engineering/m2-struct-source.md): historical bounded parser, forward named fields, immutable layouts, name rules, and stepwise verification
-- [M2 bounded source struct values](docs/engineering/m2-struct-values.md): entry scalar construction, ordered typed staging, `SINIT`/scalar-leaf reads, mixed cleanup, bounds, profiles, and recorded verification
+- [M2 bounded source struct values](docs/engineering/m2-struct-values.md): historical entry construction and one-level reads, ordered typed staging, `SINIT`/scalar-leaf access, mixed cleanup, bounds, and recorded verification
+- [M2 source struct field writes](docs/engineering/m2-struct-write.md): entry-only one-level `SWRITE`, target-before-RHS resolution, single typed evaluation, for-header rejection, profiles, and recorded verification
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
 - [Design baseline](docs/design-baseline.md): source provenance, evidence, and findings

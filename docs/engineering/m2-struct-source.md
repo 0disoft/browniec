@@ -85,7 +85,9 @@ verification work over immutable metadata.
 
 The declaration-only baseline did not lower the forms below. The
 [bounded value successor](m2-struct-values.md) now admits entry-owned scalar-field
-construction, bindings, and reads; other forms remain unsupported:
+construction, bindings, and reads. The [write successor](m2-struct-write.md)
+also admits mutable scalar-field assignment. Other aggregate forms remain
+outside these bounded slices:
 
 ```brownie
 Point { .x = 1, .y = 2 }  // construction
@@ -97,8 +99,9 @@ fn Point make()           // record result
 ref Point p               // record borrow
 ```
 
-Record copies, assignment, drops, parameters, results, and borrows also remain
-unimplemented at source level. Entry-owned scalar-field construction and reads
+Record copies, whole-record assignment, parameters, results, and borrows remain
+unimplemented at source level. Automatic cleanup is provided by the value
+successor. Entry-owned scalar-field construction and reads
 now lower through the [bounded value successor](m2-struct-values.md).
 
 ## Verification
