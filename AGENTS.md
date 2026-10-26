@@ -285,6 +285,17 @@ own the affected contract. Broader scaffold procedures are optional.
   separately [verified foundation](docs/evidence/m2-struct-atomic-foundation-windows-20261027.json)
   passed nine groups per profile at `2b5917c`. Integration commit: `5589803`.
   The per-leaf assignment receipt is historical for changed inputs.
+  The [constructor child-path successor](docs/engineering/m2-struct-child-path.md)
+  admits `R { .i = p.i }` and deeper exact-nominal record endpoints. It snapshots
+  selected leaves before later sibling expressions and introduces no temporary
+  owner, site or extent. The VM, verifier, bounds and nested profile are unchanged;
+  version JSON adds `struct_child_path_initializers`. The complete `--child-path`
+  selection passed 19 native groups and 419 CLI cases in each development/release
+  profile. The [receipt](docs/evidence/m2-struct-child-path-windows-20261027.json) records 99 input hashes, compiler/artifact
+  identities, commands and outcomes. Implementation commit: `680f57a`. This focused
+  selection does not rerun scalar/array or other struct CLI matrices, full native
+  suites, Linux, packaging, isolation or performance. Earlier receipts are historical
+  for changed frontend, root-lock, fixture and harness inputs.
 - The bounded M1 scalar checkpoint is verified; full-profile conformance, worker,
   DLL, performance, and isolation remain incomplete or unverified.
 - Root fairy.toml builds the native CLI; tools/verify-m1.ps1 verifies its narrow profile.

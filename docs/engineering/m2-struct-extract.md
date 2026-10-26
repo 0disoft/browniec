@@ -70,7 +70,8 @@ Programs using this syntax retain `brownie.m2-struct-nested/1`. Version JSON add
 `"struct_subrecord_initializers": true`.
 
 Subrecord assignment is handled by the [successor](m2-struct-subassign.md).
-Subrecord paths as constructor child values, constructor RHS assignment, helper-local records, for-header record
+Subrecord paths as constructor child values are covered by the
+[child-path successor](m2-struct-child-path.md). Constructor RHS assignment, helper-local records, for-header record
 declarations, struct parameters/results, borrows, and general aggregate
 expressions remain unsupported. Bare whole-binding copies keep their existing
 `SCOPY` lowering.

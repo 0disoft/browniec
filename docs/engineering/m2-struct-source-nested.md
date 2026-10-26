@@ -184,9 +184,10 @@ bounds remain those of the [private struct VM](m2-struct-vm.md).
 Subrecord assignment and declaration extraction are covered by their
 [assignment](m2-struct-subassign.md) and [extraction](m2-struct-extract.md) successors.
 
-- Subrecord paths, calls, parentheses, and aggregate expressions as child
-  values. Whole visible bindings such as `R { .i = someI }` are covered by the
-  [child-binding successor](m2-struct-child.md).
+- Calls, parentheses, and aggregate expressions as child values. Whole visible
+  bindings such as `R { .i = someI }` are covered by the
+  [child-binding successor](m2-struct-child.md); exact nominal subrecord paths
+  such as `R { .i = p.i }` by the [path successor](m2-struct-child-path.md).
 - Constructor RHS assignment such as `p = R { .i = I { .x = 42 } };`.
 - Record statements in helpers or in `for` initializer/post clauses.
 - Struct parameters, results, borrows, arrays, and wrapper-typed fields.

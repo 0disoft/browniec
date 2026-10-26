@@ -1,6 +1,6 @@
 # Brownie C
 
-- Status: M1 scalar checkpoint verified; M2 function-owned scalar arrays with helper declarations, by-value parameters, argument capture, copies, length access, lexical cleanup, source results, and bare-name, call-result, and repeated-literal assignment implemented; private entry-owned struct IR/verifier and metered VM dispatch implemented; declaration-only source struct layouts are historical verified evidence; bounded entry scalar-field construction and reads remain a verified historical read baseline; entry-only one-level scalar-field writes implemented with historical focused development/release validation; entry-only scalar-record copy initialization and whole-record assignment implemented and verified stepwise in development and release; bounded entry nested constructors, multi-segment scalar paths, and whole-root nested copies implemented, with their receipt historical after child-binding compiler changes; whole-record child binding initializers verified historically; subrecord declaration initializer receipts historical after assignment changes; per-leaf assignment receipts historical after atomic changes; atomic subrecord assignment verified in development and release; full profile incomplete
+- Status: M1 scalar checkpoint verified; M2 function-owned scalar arrays with helper declarations, by-value parameters, argument capture, copies, length access, lexical cleanup, source results, and bare-name, call-result, and repeated-literal assignment implemented; private entry-owned struct IR/verifier and metered VM dispatch implemented; declaration-only source struct layouts are historical verified evidence; bounded entry scalar-field construction and reads remain a verified historical read baseline; entry-only one-level scalar-field writes implemented with historical focused development/release validation; entry-only scalar-record copy initialization and whole-record assignment implemented and verified stepwise in development and release; bounded entry nested constructors, multi-segment scalar paths, and whole-root nested copies implemented, with their receipt historical after child-binding compiler changes; whole-record child binding initializers verified historically; subrecord declaration initializer receipts historical after assignment changes; per-leaf assignment receipts historical after atomic changes; atomic subrecord assignment verified in development and release; full profile incomplete; constructor child subrecord paths verified in development and release
 - Design date: 2026-10-23
 - First delivery target: Windows 11 x64
 
@@ -202,6 +202,18 @@ groups and 3,046 CLI cases per development/release profile. The
 99 input hashes, compiler/artifact identities, commands, and outcomes. Integration
 commit: `5589803`; foundation: `2b5917c`. The per-leaf receipt is historical for
 changed verifier/VM/compiler inputs.
+The [constructor child-path successor](docs/engineering/m2-struct-child-path.md)
+admits `R { .i = p.i }` and deeper exact-nominal record endpoints. It snapshots
+selected leaves before later sibling expressions and introduces no temporary
+owner, site or extent. The VM, verifier, bounds and nested profile are unchanged;
+version JSON adds `struct_child_path_initializers`. The complete `--child-path`
+selection passed 19 native groups and 419 CLI cases in each development/release
+profile. The [receipt](docs/evidence/m2-struct-child-path-windows-20261027.json) records 99 input hashes, compiler/artifact
+identities, commands and outcomes. Implementation commit: `680f57a`. This focused
+selection does not rerun scalar/array or other struct CLI matrices, full native
+suites, Linux, packaging, isolation or performance. Earlier receipts are historical
+for changed frontend, root-lock, fixture and harness inputs.
+
 The declaration-only contract and its receipt remain historical evidence for
 declarations without record bindings.
 The earlier nested-storage 18-group receipt is historical for changed
@@ -363,6 +375,7 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 source struct copy initialization and assignment](docs/engineering/m2-struct-source-copy.md): exact-name `SCOPY`/`SASSIGN` lowering, independent copies, mutable destination reuse, lifetimes, profiles, and stepwise development/release verification
 - [M2 source nested structs](docs/engineering/m2-struct-source-nested.md): inline child constructors, depth-first scalar paths, whole-root copies, iterative traversal, limits, profiles, and historical development/release verification
 - [M2 child binding initializers](docs/engineering/m2-struct-child.md): whole visible record bindings as child values, ordered leaf capture, independent snapshots, unchanged ownership and Fuel, profiles, and verification status
+- [M2 constructor child paths](docs/engineering/m2-struct-child-path.md): exact nominal subrecord snapshots without intermediate owners
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
 - [Design baseline](docs/design-baseline.md): source provenance, evidence, and findings

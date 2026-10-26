@@ -33,8 +33,8 @@ Fields with identical shapes but different nominal types remain incompatible.
 Scalar endpoints retain their existing typed expression assignment. Constructors,
 calls, parentheses, and general aggregate expressions are not record assignment
 operands. Record statements in helpers and `for` initializer/post clauses,
-struct parameters/results, borrows, and subrecord paths as constructor child
-values remain unsupported.
+struct parameters/results and borrows remain unsupported. Subrecord paths as
+constructor child values are supported by the [successor](m2-struct-child-path.md).
 
 The atomic successor replaces the per-leaf lowering and Fuel limit described
 below. This receipt is historical for changed verifier, VM, and compiler inputs.

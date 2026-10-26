@@ -1,6 +1,7 @@
 # M2 Source Child Binding Initializers
 
 - Status: implemented and verified in development and release.
+- Successor: [constructor child subrecord paths](m2-struct-child-path.md).
 - Scope: whole visible record bindings used as child values in entry-owned
   record construction.
 - Predecessor: [source nested struct constructors](m2-struct-source-nested.md).
@@ -47,9 +48,10 @@ is accepted because construction takes a snapshot; the source binding is not
 consumed. The source value may itself contain nested records, in which case all
 of its scalar leaves are captured at the child field's position.
 
-The source must be a whole visible binding. A subrecord path such as
-`R { .i = other.i }`, a call, a parenthesized expression, or another aggregate
-expression is not a child initializer. Declaration extraction is handled by the [successor](m2-struct-extract.md);
+This baseline required a whole visible binding. A subrecord path such as
+`R { .i = other.i }` is now supported by the [path successor](m2-struct-child-path.md).
+Calls, parenthesized expressions and other aggregate expressions remain rejected.
+Declaration extraction is handled by the [successor](m2-struct-extract.md);
 subrecord assignment is handled by its [successor](m2-struct-subassign.md).
 
 ## Lowering and order
@@ -106,7 +108,7 @@ binding initializers are available for child fields:
 Declaration extraction and subrecord assignment are covered by their
 [extraction](m2-struct-extract.md) and [assignment](m2-struct-subassign.md) successors.
 
-- Source subrecord paths, calls, parentheses, and aggregate expressions as child
+- Calls, parentheses, and aggregate expressions as child
   initializers.
 - Constructor RHS assignment such as `p = R { .i = i };`.
 - Record statements in helpers or in `for` initializer/post clauses.
