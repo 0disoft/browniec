@@ -49,7 +49,7 @@ pub fn Result<Header, errors::Error> header(ref u8[] source, ref mut lexer::Stat
     return .ok(Header { .record = record, .begin = begin, .end = end,
         .mutable = mutable });
 }
-pub struct Leaf { usize ordinal; u8 tag; }
+pub struct Leaf { usize ordinal; u8 tag; usize record; }
 // Scalar ordinals are depth-first leaf positions, never field or byte offsets.
 fn Result<Leaf, errors::Error> path(ref u8[] source, ref mut lexer::State s,
     ref ir::Program p, usize root, usize at) {
@@ -70,16 +70,17 @@ fn Result<Leaf, errors::Error> path(ref u8[] source, ref mut lexer::State s,
         let usize member = lexer::next(source, s)?;
         if (p.records.layouts.kinds[slot] == 0) {
             if (s.kind == 46) { return .err(errors::make(2, s.begin)); }
-            return .ok(Leaf { .ordinal = ordinal, .tag = p.records.layouts.types[slot] });
+            return .ok(Leaf { .ordinal = ordinal, .tag = p.records.layouts.types[slot], .record = record });
         }
         record = p.records.layouts.types[slot] as usize;
     }
-    return .err(errors::make(3, at));
+    return .ok(Leaf { .ordinal = ordinal, .tag = 0, .record = record });
 }
 pub fn Result<usize, errors::Error> read(ref u8[] source, ref mut lexer::State s,
     ref mut ir::Program p, usize id, usize at) {
     if (id >= p.records.count || s.kind != 46) { return .err(errors::make(3, at)); }
     let Leaf leaf = path(source, s, p, p.records.records[id] as usize, at)?;
+    if (leaf.tag == 0) { return .err(errors::make(3, at)); }
     return ir::record_read(p, id, leaf.ordinal, at);
 }
 // Dotted final values remain expressions; only '=' after a bounded chain writes.
@@ -97,6 +98,7 @@ pub fn Result<Leaf, errors::Error> writable(ref u8[] source, ref mut lexer::Stat
     ref ir::Program p, usize id, usize at) {
     if (id >= p.records.count || !p.records.mutable[id] || s.kind != 46) { return .err(errors::make(3, at)); }
     let Leaf leaf = path(source, s, p, p.records.records[id] as usize, at)?;
+    if (leaf.tag == 0) { return .err(errors::make(3, at)); }
     let usize equals = lexer::punctuation(source, s, 61)?;
     return .ok(leaf);
 }
@@ -127,6 +129,9 @@ fn Result<usize, errors::Error> copy_source(ref u8[] source, ref mut lexer::Stat
 }
 pub fn Result<usize, errors::Error> copy(ref u8[] source, ref mut lexer::State s,
     ref mut ir::Program p, ref mut locals::Table names, Header header) {
+    var lexer::State look = lexer::snapshot(s);
+    let usize next = lexer::next(source, ref mut look)?;
+    if (look.kind == 46) { return extract(source,s,p,names,header); }
     let usize from = copy_source(source, s, p, names, header.record)?;
     let usize id = ir::record(p, header.record, header.mutable, header.begin)?;
     let usize copied = ir::record_copy(p, id, from, header.begin)?;
@@ -234,4 +239,29 @@ pub fn Result<usize, errors::Error> stage_child(ref u8[] source, ref mut lexer::
     }
     let usize finished = advance(source,s,p,state)?;
     return .ok(count);
+}
+
+// A bare subrecord path has no intervening user expressions: its SREAD results
+// are consecutive scalar inputs to SINIT, without staging slots or a temporary owner.
+fn Result<usize, errors::Error> extract(ref u8[] source, ref mut lexer::State s,
+    ref mut ir::Program p, ref mut locals::Table names, Header header) {
+    if (s.kind != 2) { return .err(errors::make(3,s.begin)); }
+    let usize at = s.begin;
+    let usize index = locals::find(source,names,s.begin,s.end);
+    if (!binding(names,index)) { return .err(errors::make(3,at)); }
+    let usize source_id = names.registers[index]-144;
+    if (source_id >= p.records.count) { return .err(errors::make(3,at)); }
+    let usize name = lexer::next(source,s)?;
+    let Leaf part = path(source,s,p,p.records.records[source_id] as usize,at)?;
+    if (part.tag != 0 || part.record != header.record) { return .err(errors::make(3,at)); }
+    let usize end = lexer::punctuation(source,s,59)?;
+    let usize count = leaf_count(p,part.record,at)?;
+    let usize first = p.registers;
+    var usize i = 0;
+    while (i < count) {
+        let usize read = ir::record_read(p,source_id,part.ordinal+i,at)?; i += 1;
+    }
+    let usize id = ir::record(p,header.record,header.mutable,header.begin)?;
+    let usize init = ir::record_init(p,id,first,header.begin)?;
+    return locals::declare(names,header.begin,header.end,144+id,header.mutable);
 }

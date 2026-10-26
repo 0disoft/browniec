@@ -71,7 +71,7 @@ for body,error in [
  ('let I i=I{.x=42};let R p=R{.i=i+1};return 42;','syntax'),
  ('let I i=I{.x=42};let R p=R{.i=i,.i=i};return 42;','syntax'),
  ('let I i=I{.x=42};let R p=R{.i=i};p.i=i;return 42;','type'),
- ('let I i=I{.x=42};let R p=R{.i=i};let I j=p.i;return 42;','type'),
+ ('let I i=I{.x=42};let R p=R{.i=i};let I j=p.i.x;return 42;','type'),
  ('let I i=I{.x=42};for(let R p=R{.i=i};false;){}return 42;','type'),
 ]:both('module main;struct I{i32 x;}struct J{i32 x;}struct R{I i;}fn i32 main(){'+body+'}',error)
 for count in [14,15]:

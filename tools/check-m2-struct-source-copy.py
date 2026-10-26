@@ -74,7 +74,7 @@ for body,error in [
     ('var P p=P{.x=42};let i32 n=42;p=n;return 42;','type'),
     ('var P p=P{.x=42};p=unknown;return 42;','type'),
     ('var P p=P{.x=42};p=P{.x=42};return 42;','type'),
-    ('let P p=P{.x=42};let P q=p.x;return 42;','syntax'),
+    ('let P p=P{.x=42};let P q=p.x;return 42;','type'),
     ('let P p=P{.x=42};let P q=(p);return 42;','type'),
     ('let P p=P{.x=42};let P q=p();return 42;','syntax'),
     ('let P p=P{.x=42};let P q=p return 42;','syntax'),
