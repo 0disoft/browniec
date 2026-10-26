@@ -1,6 +1,6 @@
 # Brownie C
 
-- Status: M1 scalar checkpoint verified; M2 function-owned scalar arrays with helper declarations, by-value parameters, argument capture, copies, length access, lexical cleanup, source results, and bare-name, call-result, and repeated-literal assignment implemented; private entry-owned struct IR/verifier and metered VM dispatch implemented; declaration-only source struct layouts are historical verified evidence; bounded entry scalar-field construction and reads remain a verified historical read baseline; entry-only one-level scalar-field writes implemented with focused development/release validation passed; full profile incomplete
+- Status: M1 scalar checkpoint verified; M2 function-owned scalar arrays with helper declarations, by-value parameters, argument capture, copies, length access, lexical cleanup, source results, and bare-name, call-result, and repeated-literal assignment implemented; private entry-owned struct IR/verifier and metered VM dispatch implemented; declaration-only source struct layouts are historical verified evidence; bounded entry scalar-field construction and reads remain a verified historical read baseline; entry-only one-level scalar-field writes implemented with historical focused development/release validation; entry-only scalar-record copy initialization and whole-record assignment implemented and verified stepwise in development and release; full profile incomplete
 - Design date: 2026-10-23
 - First delivery target: Windows 11 x64
 
@@ -100,20 +100,33 @@ published only after initialization. Read-only record programs select
 `brownie.m2-struct-read/1`, while declaration-only programs keep their existing
 profile. For that baseline, development and release each passed 28 native groups
 and 2,352 CLI cases, plus three supplemental cases, recorded in the
-[receipt](docs/evidence/m2-struct-values-windows-20261026.json). Nested
-construction, field chains, record copies and whole-record assignment, struct
-parameters/results, and borrows remain unsupported. A
+[historical receipt](docs/evidence/m2-struct-values-windows-20261026.json). Nested
+construction, field chains, struct parameters/results, and borrows remain
+unsupported. A
 [source struct-field write slice](docs/engineering/m2-struct-write.md) adds
 entry-only `NAME.FIELD = EXPR;` for one mutable scalar leaf. It resolves the
 binding and field before a single exact-typed RHS, emits `SWRITE` after the
 expression and terminator, and mutates the existing record extent without a new
 copy, owner, or payload extent. For-header writes remain rejected; condition
-reads and body writes are accepted. Programs with records and opcode 44 select
-`brownie.m2-struct-write/1`; version JSON adds `struct_write_profile`.
+reads and body writes are accepted. Programs with nonempty record bindings and
+opcode 44 select `brownie.m2-struct-write/1`; version JSON adds
+`struct_write_profile`.
 The full `--write` selection passed 24 native groups and 2,472 CLI cases per
 development/release profile; the
-[receipt](docs/evidence/m2-struct-write-windows-20261026.json) records both artifacts
-and the executed checks.
+[historical receipt](docs/evidence/m2-struct-write-windows-20261026.json) records
+both artifacts and the executed checks. The later source-copy compiler change
+makes both the read and write receipts historical for the current inputs. A
+[source struct-copy slice](docs/engineering/m2-struct-source-copy.md) adds
+entry-only `let|var P q=p;` initialization and `p=q;` assignment for exact nominal
+scalar-record types. `SCOPY` creates an independent owner and extent; `SASSIGN`
+reuses a mutable destination's existing extent, including for self-assignment.
+Programs with nonempty record bindings and opcode 42 or 46 select
+`brownie.m2-struct-copy/1` ahead of the write and read profiles, and version JSON
+adds `struct_copy_profile`. Development and release each passed 39 native groups
+and 2,582 CLI cases, including 110 new copy cases. The
+[stepwise receipt](docs/evidence/m2-struct-source-copy-windows-20261026.json)
+records development native/build reuse after CLI fixture corrections. The complete
+aggregate harness was not rerun.
 The declaration-only contract and its receipt remain historical evidence for
 declarations without record bindings.
 The earlier nested-storage 18-group receipt is historical for changed
@@ -205,7 +218,7 @@ Those limits describe the profile, not the language forever.
 
 | Level | Intended capability | Current state |
 | --- | --- | --- |
-| core | Source compile, verify, and native VM CLI | Experimental i32/i64/u8/u32/usize/bool expressions, explicit widening, branches, loops, shallow tagged values, switch statements and expressions, `?` propagation, source arrays, declaration-only source struct layouts, private entry-only struct IR execution, and bounded entry scalar-field construction/read/write lowering; scalar M1 and array reads verified, focused array and struct VM checks recorded, the struct construction/read baseline verified, and struct-write checks verified |
+| core | Source compile, verify, and native VM CLI | Experimental i32/i64/u8/u32/usize/bool expressions, explicit widening, branches, loops, shallow tagged values, switch statements and expressions, `?` propagation, source arrays, declaration-only source struct layouts, private entry-only struct IR execution, bounded entry scalar-field construction/read/write lowering, and bare-name record copy initialization/whole-record assignment; scalar M1 and array reads verified, focused array and struct VM checks recorded, the struct construction/read and field-write baselines recorded historically, and source-copy checks verified stepwise in development and release |
 | restricted | Windows worker plus parent broker | Not implemented; M4 |
 | embed | Trusted native host through a DLL ABI | Not implemented; M5; no public C export |
 
@@ -272,6 +285,7 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 declaration-only source structs](docs/engineering/m2-struct-source.md): historical bounded parser, forward named fields, immutable layouts, name rules, and stepwise verification
 - [M2 bounded source struct values](docs/engineering/m2-struct-values.md): historical entry construction and one-level reads, ordered typed staging, `SINIT`/scalar-leaf access, mixed cleanup, bounds, and recorded verification
 - [M2 source struct field writes](docs/engineering/m2-struct-write.md): entry-only one-level `SWRITE`, target-before-RHS resolution, single typed evaluation, for-header rejection, profiles, and recorded verification
+- [M2 source struct copy initialization and assignment](docs/engineering/m2-struct-source-copy.md): exact-name `SCOPY`/`SASSIGN` lowering, independent copies, mutable destination reuse, lifetimes, profiles, and stepwise development/release verification
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
 - [Design baseline](docs/design-baseline.md): source provenance, evidence, and findings

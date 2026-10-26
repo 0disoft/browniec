@@ -155,26 +155,46 @@ own the affected contract. Broader scaffold procedures are optional.
   groups and 2,352 CLI cases through the focused harness, plus three supplemental
   early-transfer/forward-name cases. The
   [receipt](docs/evidence/m2-struct-values-windows-20261026.json) records
-  toolchain, inputs, artifacts, commands, and limitations. Nested construction,
-  field chains, record copies and whole-record assignment, struct
-  parameters/results, and borrows remain unsupported; nested type declarations
-  remain accepted.
+  toolchain, inputs, artifacts, commands, and limitations. That read receipt is
+  historical for the current field-write and source-copy compiler inputs. Nested
+  construction, field chains, struct parameters/results, and borrows remain
+  unsupported; nested type declarations remain accepted.
   A [source struct-field write slice](docs/engineering/m2-struct-write.md) adds
   entry-only `NAME.FIELD = EXPR;` for one mutable scalar leaf. The binding and
   field resolve before a single exact-typed RHS; `SWRITE` follows the expression
   and terminator and reuses the existing record extent. For-header writes remain
   rejected, condition reads and body writes follow normal statement handling, and
-  no copy, owner, or payload extent is added. Programs with records and opcode 44
-  select `brownie.m2-struct-write/1`; `--version --json` adds
+  no copy, owner, or payload extent is added. Programs with nonempty record
+  bindings and opcode 44 select `brownie.m2-struct-write/1`; `--version --json` adds
   `struct_write_profile`. VM checks, codec, 41,281 Fuel, 16 shared owners, and the
   65,536-byte cap remain unchanged. The full `--write` selection passed 24 native
   groups and 2,472 CLI cases in each development/release profile. The
   [write receipt](docs/evidence/m2-struct-write-windows-20261026.json) records
-  commands, source/tool identities, artifacts, outcomes, and limitations. The earlier nested-storage 18-group receipt is
+  commands, source/tool identities, artifacts, outcomes, and limitations; its
+  results are historical for the current source-copy inputs. The earlier nested-storage 18-group receipt is
   historical for changed inputs; nested-copy 24-group checks passed development and release.
   The copy slice's Windows 28-group receipt passed development and release after
   moving snapshot staging into caller-owned scratch. Earlier planner and storage
   receipts are historical for changed inputs.
+  A [source struct-copy slice](docs/engineering/m2-struct-source-copy.md) adds
+  entry-only bare-name `let|var P q=p;` initialization and `p=q;` assignment for
+  exact nominal scalar-record types. Sources may be immutable, assignment targets
+  must be mutable, and self-assignment is accepted. `SCOPY` creates an independent
+  owner and extent; `SASSIGN` reuses the destination extent. The type-name/local
+  ambiguity is resolved by inspecting `{` after the initializer name. Record
+  statements remain unavailable in helpers and `for` initializer/post clauses;
+  constructor RHS assignment, aggregate expressions, nested construction/field
+  chains, struct parameters/results, and borrows remain unsupported. Programs with
+  nonempty record bindings and opcode 42 or 46 select
+  `brownie.m2-struct-copy/1`, before opcode 44 write selection and read fallback;
+  `--version --json` adds `struct_copy_profile`.
+  Existing 128-byte roots, 16 fields, 16 record sites, 16 shared owners, and the
+  65,536-byte payload cap remain. Development and release each passed
+  39 native groups and 2,582 CLI cases, including 110 source-copy cases.
+  [Stepwise evidence](docs/evidence/m2-struct-source-copy-windows-20261026.json)
+  records input hashes, artifacts and development native/build reuse after CLI
+  fixture corrections. The complete aggregate harness was not rerun.
+  Implementation commit: `f9cf654`.
 - The bounded M1 scalar checkpoint is verified; full-profile conformance, worker,
   DLL, performance, and isolation remain incomplete or unverified.
 - Root fairy.toml builds the native CLI; tools/verify-m1.ps1 verifies its narrow profile.

@@ -7,7 +7,8 @@
 - Harness: [tools/verify-m2-struct-layout.py](../../tools/verify-m2-struct-layout.py) with `--vm`.
 - Evidence: [native receipt](../evidence/m2-struct-vm-windows-20261026.json) and [focused CLI receipt](../evidence/m2-struct-vm-cli-windows-20261026.json) record both profiles.
 - Predecessor: [private struct IR and verification](m2-struct-ir.md).
-- Successor: [declaration-only source structs](m2-struct-source.md).
+- Successor: [declaration-only source structs](m2-struct-source.md), followed by the
+  current [source struct copy initialization and assignment](m2-struct-source-copy.md).
 
 The VM now executes the private, entry-owned record instructions introduced by
 the IR slice. Scalar registers still hold scalar values; record bindings hold
@@ -94,9 +95,12 @@ Source declarations and immutable layout catalogs now exist at compile time.
 Entry-owned scalar-field construction and reads now have source lowering. The
 [field-write successor](m2-struct-write.md) adds one-level mutable scalar-field
 writes through `SWRITE` and passed 24 native groups plus 2,472 CLI cases per
-profile ([receipt](../evidence/m2-struct-write-windows-20261026.json)). Nested
-construction, record copies and whole-record assignment, struct
-parameters/results, borrows, and full source conformance remain unimplemented.
+profile ([historical receipt](../evidence/m2-struct-write-windows-20261026.json)).
+The current [source-copy successor](m2-struct-source-copy.md) connects bare-name
+copy initializers to `SCOPY` and whole-record assignment to `SASSIGN`; its
+development and release verification is stepwise complete. Nested
+construction, nested values, struct
+parameters/results, borrows, and full source conformance remain unsupported.
 
 ## Verification status
 
@@ -126,10 +130,11 @@ Declaration-only source structs now attach layouts without record bindings or
 struct opcodes. Its [bounded value successor](m2-struct-values.md) is the
 historical read baseline for scalar-field construction and reads. The
 [field-write successor](m2-struct-write.md) adds verified one-level mutation;
-nested values remain future work. Struct VM dispatch and its Fuel schedule are
-implemented privately. The earlier source declaration checks passed stepwise in
-both profiles: 23 native groups and 2,208 CLI cases each, including 124 source
-cases. The
+the [source-copy successor](m2-struct-source-copy.md) adds bare-name copy
+initialization and whole-record assignment with stepwise development/release verification. Nested values remain future work. Struct VM dispatch and its
+Fuel schedule are implemented privately. The earlier source declaration checks
+passed stepwise in both profiles:
+23 native groups and 2,208 CLI cases each, including 124 source cases. The
 [receipt](../evidence/m2-struct-source-windows-20261026.json) records the executed
 checks and the harness-only path correction. The corrected aggregate harness
 was syntax-checked, not rerun.

@@ -1,17 +1,20 @@
 # M2 Bounded Source Struct Values
 
-- Status: historical read baseline; construction and one-level reads were verified in development/release before field writes were added.
+- Status: historical read baseline; construction and one-level reads were verified in development/release before field writes and record copies were added.
 - Scope: entry-only scalar-field record construction and one-level scalar field reads.
 - Implementation: `src/struct_value_source.fy`, `src/compiler.fy`, `src/array_source.fy`,
   `src/struct_source.fy`, and the existing private struct IR and VM.
 - Evidence: [Windows native and CLI receipt](../evidence/m2-struct-values-windows-20261026.json).
-- Successor: [bounded source struct field writes](m2-struct-write.md).
+- Successor: [bounded source struct field writes](m2-struct-write.md); later,
+  [source struct copy initialization and assignment](m2-struct-source-copy.md).
 
 This historical slice admits initialized scalar-field records in the entry
 function. It is a bounded source adapter over the existing `SINIT` and `SREAD`
 path. It does not claim full source struct support or full-profile conformance.
 The [write successor](m2-struct-write.md) adds mutable one-level field
 assignment and passed focused native and CLI checks in development and release.
+The later [source-copy successor](m2-struct-source-copy.md) adds bare-name copies
+and whole-record assignment, verified stepwise in development and release.
 
 ## Accepted source
 
@@ -83,9 +86,9 @@ graphs may contain nested named types and unselected valid records may exceed
 128 bytes. Those declarations remain accepted, but this slice cannot construct
 or access a nested record value.
 
-In this read baseline, a record program without `SWRITE` reports
+In this read baseline, a record-binding program without `SWRITE` reports
 `brownie.m2-struct-read/1`. The write successor selects
-`brownie.m2-struct-write/1` when a record catalog and opcode 44 are present. A
+`brownie.m2-struct-write/1` when a record binding catalog and opcode 44 are present. A
 program with struct declarations but no record binding keeps the scalar or array
 profile selected by its existing object operations.
 
@@ -94,13 +97,14 @@ profile selected by its existing object operations.
 The following remain outside this historical read baseline:
 
 - Nested object construction and nested field chains such as `p.inner.x`
-- Record copy initialization or record-to-record assignment
 - Struct parameters, results, and borrows
 - General constructors outside a record declaration initializer
 - Struct fields with wrapper, array, or borrowed types
 
 `p.x` in scalar expressions and arithmetic is supported.
 One-level field writes are handled by the [write successor](m2-struct-write.md).
+Record copy initialization and whole-record assignment are handled by the later
+[source-copy successor](m2-struct-source-copy.md).
 
 ## Validation
 
@@ -128,7 +132,9 @@ instrumentation, and performance measurements were not run.
 The earlier declaration-only contract and its 23 native groups and 2,208 CLI
 cases remain historical evidence for declarations that create no record
 binding. That evidence does not cover `SINIT`, `SREAD`, record publication, or
-the read profile. The source has since changed for field writes; the
-[successor](m2-struct-write.md) has its own
-[receipt](../evidence/m2-struct-write-windows-20261026.json). Full source struct
-support, borrows, and full-profile conformance remain open.
+the read profile. The source has since changed for field writes and source record
+copies; the [write successor](m2-struct-write.md) has its own historical
+[receipt](../evidence/m2-struct-write-windows-20261026.json), while the later
+[source-copy successor](m2-struct-source-copy.md) has stepwise development/release
+verification. Full source struct support, borrows, and
+full-profile conformance remain open.

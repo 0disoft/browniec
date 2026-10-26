@@ -1,7 +1,7 @@
 # Roadmap
 
-- Status: Accepted delivery sequence; M0 verified; named M1 slices through unsigned have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified, 2026-10-23; private entry-array IR/VM verified by its native harness, 2026-10-24; source-array reads, writes, copy initializers, parameters, results, and assignment forms implemented; in-place repeated-literal assignment verified; private scalar struct layout and storage implemented and verified; private scalar struct copy/assignment implemented and verified; private nested struct storage implemented and verified; private nested struct copy/assignment implemented and verified; shared struct-owner foundation implemented and verified; private struct-owner copy/assignment implemented and verified; private entry-owned struct IR/verifier verified historically; private struct VM implemented and verified, native 38/38 and CLI 115 in both profiles; declaration-only source structs historically verified stepwise in development and release (23 native groups and 2,208 CLI cases per profile); bounded entry scalar-field construction and reads are a verified historical read baseline; entry-only one-level scalar-field writes are implemented with focused development/release validation passed
-- Current progress: M1 scalar checkpoint verified; M2 function-owned scalar arrays cover lexical storage, copy, length, helper locals, by-value parameters, source results, direct returns, repeated return literals, call-result assignment, and in-place repeated-literal assignment; private scalar struct layout, storage, and copy/assignment exist; private nested struct storage is verified; private nested struct copy/assignment is verified; shared struct-owner foundation is verified; private struct-owner copy/assignment is verified; private entry-owned struct IR and metered VM execution exist; declaration-only source struct layouts are historical verified evidence; bounded entry scalar-field construction and one-level reads are the historical verified read baseline; entry-only one-level field writes are implemented and verified in development/release, while nested construction/chains, record copies and whole-record assignment, parameters/results, borrows, Buffer, and text remain open; full-profile conformance incomplete; M3-M5 not started
+- Status: Accepted delivery sequence; M0 verified; named M1 slices through unsigned have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified, 2026-10-23; private entry-array IR/VM verified by its native harness, 2026-10-24; source-array reads, writes, copy initializers, parameters, results, and assignment forms implemented; in-place repeated-literal assignment verified; private scalar struct layout and storage implemented and verified; private scalar struct copy/assignment implemented and verified; private nested struct storage implemented and verified; private nested struct copy/assignment implemented and verified; shared struct-owner foundation implemented and verified; private struct-owner copy/assignment implemented and verified; private entry-owned struct IR/verifier verified historically; private struct VM implemented and verified, native 38/38 and CLI 115 in both profiles; declaration-only source structs historically verified stepwise in development and release (23 native groups and 2,208 CLI cases per profile); bounded entry scalar-field construction and reads are a verified historical read baseline; entry-only one-level scalar-field writes have historical focused development/release validation; entry-only scalar-record copy initialization and whole-record assignment are verified stepwise in development and release
+- Current progress: M1 scalar checkpoint verified; M2 function-owned scalar arrays cover lexical storage, copy, length, helper locals, by-value parameters, source results, direct returns, repeated return literals, call-result assignment, and in-place repeated-literal assignment; private scalar struct layout, storage, and copy/assignment exist; private nested struct storage is verified; private nested struct copy/assignment is verified; shared struct-owner foundation is verified; private struct-owner copy/assignment is verified; private entry-owned struct IR and metered VM execution exist; declaration-only source struct layouts are historical verified evidence; bounded entry scalar-field construction and one-level reads are the historical verified read baseline; entry-only one-level field writes are supported with historical verification, and bare-name record copies plus whole-record assignment are verified stepwise in development and release; nested construction/chains, parameters/results, borrows, Buffer, and text remain open; full-profile conformance incomplete; M3-M5 not started
 
 This roadmap orders learning and evidence. It is not a release promise. M0 has a
 native harness and recorded evidence. The scalar CLI/VM now exist; the worker
@@ -331,9 +331,9 @@ transfers, and returns release arrays and records in reverse order. Read-only
 record programs select `brownie.m2-struct-read/1`; declaration-only programs
 keep their existing profile. The slice is capped at selected roots of 128 bytes and
 16 fields, with 16 record sites, the shared owner table, 65,536-byte payload cap,
-and existing Fuel. Nested construction and field chains, record copies and
-whole-record assignment, struct parameters/results, and borrows remain
-unsupported; nested type declarations remain accepted. For that baseline, both
+and existing Fuel. Nested construction and field chains, struct parameters/results,
+and borrows remain unsupported; nested type declarations remain accepted. For that
+baseline, both
 profiles passed 28 native groups and 2,352 CLI cases through the focused harness,
 plus three supplementary cases per profile. The
 [receipt](../evidence/m2-struct-values-windows-20261026.json) records the executed
@@ -344,13 +344,30 @@ entry-only one-level `NAME.FIELD = EXPR;` through `SWRITE`. The target
 binding and field resolve before one exact-typed RHS; the write follows the
 expression and terminator and reuses the existing extent without a copy, owner,
 or payload allocation. Both for-header clauses remain rejected; condition reads
-and body writes are accepted. Programs with records and opcode 44 select
-`brownie.m2-struct-write/1`; version JSON adds `struct_write_profile`.
+and body writes are accepted. Programs with nonempty record bindings and opcode
+44 select `brownie.m2-struct-write/1`; version JSON adds `struct_write_profile`.
 Development and release each passed 24 native groups and 2,472 CLI cases,
 including RHS depth 10 success and depth 11 `compile_limit`. The
 [receipt](../evidence/m2-struct-write-windows-20261026.json) records the complete
 `--write` invocation and artifact identities. Full source structs,
-wrapper element types, borrows, and Buffer remain open.
+wrapper element types, borrows, and Buffer remain open. The later source-copy
+compiler change makes the read and write receipts historical for the current
+inputs.
+
+The [source struct-copy slice](../engineering/m2-struct-source-copy.md) adds
+entry-only `let|var P q=p;` initialization and `p=q;` assignment for exact
+nominal scalar-record types. Copy initialization creates an independent owner and
+extent; assignment overwrites the mutable destination's existing extent and
+accepts self-assignment. Immutable sources are accepted. Helper-local records and
+record statements in `for` initializer/post clauses remain rejected, while
+constructor RHS assignment, aggregate expressions, nested construction/field
+chains, struct parameters/results, and borrows remain unsupported. Nonempty record
+bindings plus opcode 42 or 46 select `brownie.m2-struct-copy/1` before the write
+and read profiles; version JSON adds `struct_copy_profile`. Development and release
+each passed 39 native groups and 2,582 CLI cases, including 110 new copy cases.
+The [stepwise receipt](../evidence/m2-struct-source-copy-windows-20261026.json)
+records development native/build reuse after CLI fixture corrections. The complete
+aggregate harness was not rerun.
 
 Goal: connect arrays, plain structs, borrows, Buffer, input,
 output, and UTF-8.

@@ -1,17 +1,19 @@
 # M2 Source Struct Field Writes
 
-- Status: implemented and verified in development and release.
+- Status: historical field-write baseline; focused checks passed in development and release before source record copies were added.
 - Scope: entry-only one-level scalar-field assignment through the existing `SWRITE` (44) instruction.
 - Predecessor: [bounded source struct values](m2-struct-values.md), the historical read baseline.
+- Successor: [source struct copy initialization and assignment](m2-struct-source-copy.md), verified stepwise in development and release.
 - Implementation: `src/struct_value_source.fy`, `src/compiler.fy`, `src/array_source.fy`,
   `src/render.fy`, `src/main.fy`, and the existing private struct IR and VM.
 - Evidence: [Windows native and CLI receipt](../evidence/m2-struct-write-windows-20261026.json).
 
 This slice makes a field of a mutable `var` record assignable. Construction,
 record ownership, and one-level reads retain the [read baseline](m2-struct-values.md).
-The slice remains entry-only and scalar-only. Nested paths, record copies,
-whole-record assignment, struct parameters/results, and borrows remain
-unimplemented.
+The slice remains entry-only and scalar-only. Nested paths, nested values, struct
+parameters/results, and borrows remain unsupported. The later [source-copy
+successor](m2-struct-source-copy.md) lowers bare-name copies and whole-record
+assignment through the same private struct VM.
 
 ## Accepted source
 
@@ -75,8 +77,8 @@ The fixed `SWRITE` charge is 41,281 Fuel. The VM reuses the existing owner
 checks and codec; the shared 16-owner table and 65,536-byte payload cap are
 unchanged. The write does not reserve a second extent.
 
-Compilation selects `brownie.m2-struct-write/1` when the record catalog is
-nonempty and opcode 44 is present. Record programs without a field write keep
+Compilation selects `brownie.m2-struct-write/1` when the record binding catalog
+is nonempty and opcode 44 is present. Record-binding programs without a field write keep
 `brownie.m2-struct-read/1`; declaration-only programs keep the profile selected by
 their existing objects. `--version --json` adds
 ```json
@@ -89,7 +91,6 @@ The plain version output also lists the profile.
 - Field writes on `let` bindings
 - Writes in `for` initializer or post clauses
 - Nested field chains and writes below one field
-- Record copy initialization and whole-record assignment such as `p = q;`
 - Struct parameters, results, and borrows
 - Construction outside `main`, including helper-local construction
 - General constructor expressions outside record declaration initializers
@@ -107,6 +108,11 @@ Each profile passed 24 native groups: 5 struct-write, 5 struct-values,
 8 struct VM, and 6 switch-arm-statement groups. Each profile also passed 2,472 CLI
 cases: 120 write, 144 constructor/read, 124 declaration, 115 array-literal, and
 1,969 scalar cases.
+
+Those results belong to the earlier field-write inputs. The subsequent source-copy
+compiler change makes this receipt historical for modified inputs. The
+[successor contract](m2-struct-source-copy.md) records the stepwise development/release
+checks.
 
 Nested field-write RHS depth 10 succeeds; depth 11 reports `compile_limit`.
 
