@@ -26,9 +26,15 @@ def write(path, value):
     path.write_text(json.dumps(value, indent=2) + '\n', encoding='utf-8')
 
 
-def verify(compiler, storage=False, copy_records=False, nested=False, nested_copy=False, owners=False, owner_copy=False, struct_ir=False):
-    require(sum([storage, copy_records, nested, nested_copy, owners, owner_copy, struct_ir]) <= 1, 'Choose only one verification selection')
-    if struct_ir:
+def verify(compiler, storage=False, copy_records=False, nested=False, nested_copy=False, owners=False, owner_copy=False, struct_ir=False, struct_vm=False):
+    require(sum([storage, copy_records, nested, nested_copy, owners, owner_copy, struct_ir, struct_vm]) <= 1, 'Choose only one verification selection')
+    if struct_vm:
+        kind = 'vm'
+        groups = {'struct_vm': 8, 'struct_ir': 9, 'array_vm': 6,
+                  'array_calls': 9, 'array_result_vm': 6}
+        files = ['tests/m2/' + name + '.fy' for name in groups]
+        expected = 38
+    elif struct_ir:
         kind = 'ir'
         groups = {'struct_ir': 9, 'array_ir': 5, 'array_calls': 9,
                   'array_results': 6, 'array_result_vm': 6}
@@ -120,7 +126,11 @@ def verify(compiler, storage=False, copy_records=False, nested=False, nested_cop
                     and not t['stdoutBase64'] and not t['stderrBase64'] for t in tests),
                 f'Native failure or unexpected process output: {profile}')
         result = dict(profile=profile, nativeGroups=expected, nativeTests=native)
-        if struct_ir:
+        if struct_vm:
+            result.update(newStructVMGroups=8, structIRRegressionGroups=9,
+                          arrayVMRegressionGroups=6, arrayCallsRegressionGroups=9,
+                          arrayResultVMRegressionGroups=6)
+        elif struct_ir:
             result.update(newStructIRGroups=9, regressionGroups=37)
         elif owner_copy:
             result.update(newStructOwnerCopyGroups=6, structOwnerRegressionGroups=6,
@@ -163,17 +173,30 @@ def verify(compiler, storage=False, copy_records=False, nested=False, nested_cop
     if copy_records or nested_copy or owner_copy:
         limits.update(copyBackingWritesAtMost=135, assignmentBackingWritesAtMost=128,
                       assignmentAdditionalExtents=0)
-    if struct_ir:
+    if struct_ir or struct_vm:
         limits = dict(recordDefinitions=32, recordBindings=16, fieldsPerRecord=16,
                       recordBytes=128, scalarLeaves=128, structuralDepth=16,
                       scalarRegisters=128, instructions=256, preparedTagBytes=2048,
                       lifetimeBits=32)
+    if struct_vm:
+        limits.update(sharedOwners=16, payloadCapacityAtMost=65536,
+                      recordBindingTokens=16, fieldTraversalIterationsAtMost=4096,
+                      planFuel=18432, initFuel=46145, copyFuel=42049,
+                      readFuel=41281, writeFuel=41281, dropFuel=65, assignmentFuel=60545)
     limitations = ([
+        'Private entry-owned struct VM dispatch for opcodes 41..46, with the existing shared array owner table and bounded caller-selected payload arena. Six scalar types, nested fields, nominal copies/assignment and token clearing on drop are executable.',
+        'All record work is prepaid before field traversal, owner checks, staging, register writes or token mutation. Fixed per-opcode planning/traversal/codec/owner allowances are algorithmic accounting units, not measured machine instructions or throughput.',
+        'Scalar leaf paths are resolved iteratively with depth16, 128-leaf and 4096-iteration ceilings. Initialization scans once for the input span and again inside storage encoding; both traversals are charged.',
+        'Records have sixteen entry binding tokens without another owner pool. Arrays and records share sixteen occupied descriptors and a single arena; retained dead middle extents remain charged until suffix release. Assignment consumes no additional extent or descriptor.',
+        'The VM prepares payload for any nonempty record or array catalog, charging 1+capacity before buffer allocation. Pure scalar programs retain the previous preparation and instruction prices.',
+        'Runtime tests cover per-opcode underfuel snapshots, exact total Fuel, source-release survival, corrupt bools, stale/nominal token substitution, depth16 and 128 leaves, full payload/owner limits, deferred holes and entry records across an array-using scalar callee.',
+        'Source struct grammar, struct parameters/results, borrows, catalog identity capabilities, allocator integration and struct-wide source conformance remain unimplemented. One verified immutable catalog and stable backing region are required for a private helper invocation.'
+    ] if struct_vm else [
         'Private entry-owned struct IR and independent verification only. Opcodes 41..46 cover complete initialization from consecutive scalar registers, nominal copies, scalar leaf reads/writes, drop and assignment.',
         'Full immutable catalogs are replanned, selected roots are bounded to 128 bytes and flattened iteratively in declaration order. Scalar leaf indices are immediate private operands, not byte offsets or source paths.',
         'Record liveness uses bits 16..31 beside array bits 0..15. Joins and backedges require exact combined live sets; normal returns require no live aggregates.',
         'Only entry may use record bindings; all calls into entry are rejected when record bindings exist. Record parameters, results, source structs, borrows, allocator integration and struct VM/Fuel are unimplemented.',
-        'The VM verifies first, then rejects every nonempty record binding catalog as unavailable before payload preparation or guest execution, including unused bindings.',
+        'The earlier unavailable-dispatch boundary is superseded by struct VM dispatch; the IR suite now checks a metered VM smoke. Full struct VM/Fuel coverage belongs to the --vm selection.',
         'Regression selections exercise branches, loops, array IR, calls, results and result VM. Full scalar/source-array CLI matrices were not rerun. Bounds are algorithmic, not measured throughput or stack use.'
     ] if struct_ir else [
         'Private token-based record copies and assignment. Record metadata is derived from live generation-checked descriptors; distinct record IDs are rejected even with identical physical layouts.',
@@ -252,5 +275,6 @@ if __name__ == '__main__':
     selection.add_argument('--owners', action='store_true', help='Verify shared struct/array ownership and affected array owner/VM helpers.')
     selection.add_argument('--owner-copy', action='store_true', help='Verify record owner copies and assignment with existing struct/array owners.')
     selection.add_argument('--ir', dest='struct_ir', action='store_true', help='Verify private struct IR and affected control-flow/array call/result regressions.')
+    selection.add_argument('--vm', dest='struct_vm', action='store_true', help='Verify metered struct dispatch with IR and shared array VM/call/result regressions.')
     args = parser.parse_args()
-    verify(args.compiler, args.storage, args.copy_records, args.nested, args.nested_copy, args.owners, args.owner_copy, args.struct_ir)
+    verify(args.compiler, args.storage, args.copy_records, args.nested, args.nested_copy, args.owners, args.owner_copy, args.struct_ir, args.struct_vm)

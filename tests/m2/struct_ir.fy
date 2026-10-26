@@ -36,9 +36,10 @@ fn ir::Program basic() {
 }
 
 @test
-fn void builders_and_nested_scalar_order_are_verified_but_execution_is_unavailable() {
+fn void builders_and_nested_scalar_order_are_verified_and_execution_is_metered() {
     let ir::Program p = basic(); assert(verifier::verify(ref p).is_ok);
-    assert(switch (vm::run(ref p, 0)) { case .err(e): { e.kind == 11 } case .ok(_): { false } });
+    assert(switch (vm::run(ref p, 0)) { case .err(e): { e.kind == 8 } case .ok(_): { false } });
+    assert(switch (vm::run(ref p, 1000000)) { case .ok(n): { n == 42 } case .err(_): { false } });
     var ir::Program q = declared(); q.records.records[0] = 2;
     let usize flag = built(ir::boolean(ref mut q, true, 0));
     let usize value = built(ir::literal(ref mut q, 42, 0));
@@ -56,7 +57,7 @@ fn void builders_and_nested_scalar_order_are_verified_but_execution_is_unavailab
     let usize returned = built(ir::emit(ref mut q, 8, scalar, 0, 0));
     finish(ref mut q); assert(verifier::verify(ref q).is_ok);
     assert(switch (vm::run_with_array_limit(ref q, 0, 65537)) {
-        case .err(e): { e.kind == 11 } case .ok(_): { false }
+        case .err(e): { e.kind == 13 } case .ok(_): { false }
     });
 }
 

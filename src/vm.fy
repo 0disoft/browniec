@@ -9,6 +9,7 @@ import arithmetic as arithmetic;
 import bits as bits;
 import shifts as shifts;
 import array_vm as array_vm;
+import struct_vm as struct_vm;
 import array_call_vm as array_calls;
 import array_result_vm as array_results;
 import std::bytes as bytes;
@@ -20,12 +21,12 @@ pub fn Result<i64, errors::Error> run(ref ir::Program p, usize fuel) {
 }
 pub fn Result<i64, errors::Error> run_with_array_limit(ref ir::Program p, usize fuel, usize array_limit) {
     let usize verified = verifier::verify(p)?;
-    // Struct dispatch and Fuel are a separate increment. Fail before preparation.
-    if (p.records.count != 0) { return .err(errors::make(11, 0)); }
     var usize remaining = fuel;
     var bytes::Buffer payload = bytes::empty();
-    var array_vm::State arrays = array_vm::empty(if (p.arrays.count == 0) { 0 } else { array_limit });
-    if (p.arrays.count != 0) {
+    let bool aggregates = p.arrays.count != 0 || p.records.count != 0;
+    var array_vm::State arrays = array_vm::empty(if (aggregates) { array_limit } else { 0 });
+    var struct_vm::State records = struct_vm::empty();
+    if (aggregates) {
         if (array_limit > 65536) { return .err(errors::make(13, 0)); }
         let usize preparation = 1 + array_limit;
         if (remaining < preparation) { return .err(errors::make(8, 0)); }
@@ -43,6 +44,12 @@ pub fn Result<i64, errors::Error> run_with_array_limit(ref ir::Program p, usize 
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
+        if (op >= 41) {
+            let usize base = frame * 128;
+            remaining = struct_vm::step(op, dst, a, b, frame, ref p.records, ref mut records,
+                ref mut arrays, ref mut payload, ref mut registers[base..base + 128], remaining, p.offsets[pc])?;
+            pc += 1; continue;
+        }
         let usize array_call_cost = if (op == 9) { array_calls::cost(p,a,p.offsets[pc])? } else { 0 };
         let usize cost = if(op==39) {array_results::cost(p,a,p.offsets[pc])?}
             else if (op >= 33) { array_vm::cost(ref p.arrays, op, if (op == 35) { a } else { dst }, p.offsets[pc])? }
