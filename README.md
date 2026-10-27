@@ -7,6 +7,7 @@
 - Source helper-local records: implemented at `98a4525`; verified in development and release.
 - Source record parameters: implemented at `d0ca7e7`; development and release each passed 51 native groups and 2,318 CLI cases in separate core/regression phases.
 - Record-result signatures: implemented; development and release each passed 22 native groups and 2,317 CLI cases. Nominal results are recorded separately from scalar and array metadata and rejected before IR or body lowering. Source record returns remain unavailable.
+- Record-result IR/verifier: implemented at `dc1574b` and verified in development and release. Private metadata uses callee-owned shape anchors, `SRET` checks a single live exact-nominal record, and the VM reports unavailable after verification but before Fuel or payload work. Source record returns remain unavailable. See [the IR contract](docs/engineering/m2-struct-results-ir.md).
 - Design date: 2026-10-23
 - First delivery target: Windows 11 x64
 
@@ -426,7 +427,7 @@ Those limits describe the profile, not the language forever.
 
 | Level | Intended capability | Current state |
 | --- | --- | --- |
-| core | Source compile, verify, and native VM CLI | Experimental i32/i64/u8/u32/usize/bool expressions, explicit widening, branches, loops, shallow tagged values, switch statements and expressions, `?` propagation, source arrays, declaration-only source struct layouts, function-owned struct IR execution, helper-local record construction/read/write lowering, bare-name record copy initialization/whole-record assignment, bounded nested constructors/scalar paths/whole-root copies, whole-record child binding initializers, subrecord declaration initializers, atomic subrecord assignment, and immutable by-value record parameters with bare binding arguments; source record parameters passed 51 native groups and 2,318 CLI cases per development/release profile in two separate phase runs. Nested results are historical after the child compiler change, the child feature passed the complete combined harness in development and release; scalar M1 and array reads verified, focused array and struct VM checks recorded, the struct construction/read and field-write baselines recorded historically, and source-copy checks verified stepwise in development and release |
+| core | Source compile, verify, and native VM CLI | Experimental i32/i64/u8/u32/usize/bool expressions, explicit widening, branches, loops, shallow tagged values, switch statements and expressions, `?` propagation, source arrays, declaration-only source struct layouts, function-owned struct IR execution, helper-local record construction/read/write lowering, bare-name record copy initialization/whole-record assignment, bounded nested constructors/scalar paths/whole-root copies, whole-record child binding initializers, subrecord declaration initializers, atomic subrecord assignment, and immutable by-value record parameters with bare binding arguments; private record-result IR/verifier metadata is verified in development and release (39 native groups and 2,317 CLI cases per profile); source record parameters passed 51 native groups and 2,318 CLI cases per development/release profile in two separate phase runs. Nested results are historical after the child compiler change, the child feature passed the complete combined harness in development and release; scalar M1 and array reads verified, focused array and struct VM checks recorded, the struct construction/read and field-write baselines recorded historically, and source-copy checks verified stepwise in development and release |
 | restricted | Windows worker plus parent broker | Not implemented; M4 |
 | embed | Trusted native host through a DLL ABI | Not implemented; M5; no public C export |
 
@@ -497,6 +498,7 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 private record-call VM](docs/engineering/m2-struct-call-vm.md): prepaid mixed argument copying and frame publication; its source-gate claim is historical
 - [M2 source record parameters](docs/engineering/m2-struct-parameters-source.md): immutable by-value formals, bare binding arguments, predeclared sites, mutable-source captures, reused record cleanup, limits, and verified two-phase Windows evidence
 - [M2 record result signatures](docs/engineering/m2-struct-result-signatures.md): nominal ID metadata, zero scalar/array fields, the pre-IR compilation gate, bounds, and focused Windows evidence
+- [M2 record-result IR/verifier](docs/engineering/m2-struct-results-ir.md): callee-owned shape anchors, `SRET`, record CALL destinations, exact lifetimes, the VM availability gate, and focused Windows evidence
 - [M2 private struct VM](docs/engineering/m2-struct-vm.md): shared owners and payload, private execution semantics, fixed Fuel charges, and current check status
 - [M2 declaration-only source structs](docs/engineering/m2-struct-source.md): historical bounded parser, forward named fields, immutable layouts, name rules, and stepwise verification
 - [M2 bounded source struct values](docs/engineering/m2-struct-values.md): historical entry construction and one-level reads, ordered typed staging, `SINIT`/scalar-leaf access, mixed cleanup, bounds, and recorded verification
@@ -512,6 +514,14 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
 - [Design baseline](docs/design-baseline.md): source provenance, evidence, and findings
+
+The private [record-result IR/verifier](docs/engineering/m2-struct-results-ir.md)
+passed 39 unique native groups and 2,317 CLI cases per development/release profile.
+The [core receipt](docs/evidence/m2-struct-results-ir-core-windows-20261028.json)
+records 21 native groups and all CLI cases; the separate
+[regression receipt](docs/evidence/m2-struct-results-ir-regressions-windows-20261028.json)
+records 18 native-only groups. Source record returns and VM result transfer remain
+unavailable.
 
 The expanded M0 run exercises arithmetic, codecs, storage, allocator, owner, and
 frame primitives on Windows x64. Exact commands and results belong to

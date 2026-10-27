@@ -582,6 +582,15 @@ record result at its function name before IR or body lowering. `main` remains a
 zero-argument scalar `i32` entry point. This adds no runtime capability, opcode,
 Fuel, profile, or version field; source record returns remain open. Development and release each passed 22 native groups and 2,317 CLI cases. The [Windows receipt](../evidence/m2-struct-result-signatures-windows-20261028.json) records the original baseline, executed commands, compiler/SDK and CLI identities, input hashes, and outcomes. The native selection comprises 6 new record-result, 6 record-formal, 6 array-result and 4 scalar-function groups. CLI coverage comprises 72 new record-result, 66 record-formal, 114 source record-parameter, 96 array-result and 1,969 M1 cases per profile. All 209 input hashes, the compiler, SDK and final release CLI were checked before archival. Full native suites, other CLI matrices, M0, Linux, isolation, DLL, packaging, allocation instrumentation and performance were not run.
 
+The [private record-result IR/verifier foundation](../engineering/m2-struct-results-ir.md)
+adds a `u8[16]` callee-owned shape table, `SRET` (50), and record CALL
+destinations at `144 + site`. SRET requires one live exact-nominal record; joins
+and backedges keep exact record lifetimes in bits 16..31. The VM verifies first
+and then reports unavailable before Fuel or payload preparation. Source record
+returns remain gated, and Fuel, profiles, and version capabilities are unchanged.
+
+Development and release each passed 39 unique native groups and 2,317 CLI cases. The [core receipt](../evidence/m2-struct-results-ir-core-windows-20261028.json) records 21 native groups (8 new record-result, 6 array-result, 7 record-parameter), CLI builds and all 2,317 cases; the [regression receipt](../evidence/m2-struct-results-ir-regressions-windows-20261028.json) records 18 native-only groups (6 array-result VM, 8 record-call VM, 4 scalar-function), with no build or CLI rerun. CLI coverage is 72 record-result signature, 66 record-formal signature, 114 source record-parameter, 96 array-result signature and 1,969 M1 cases per profile. These were two separate phase invocations across implementation commit `dc1574b`, with disjoint native selections and matching 212 input hashes, compiler and SDK identities. All inputs and the final release CLI were rechecked before archival. Full native/CLI suites, M0, Linux, isolation, DLL, packaging, allocation instrumentation and performance were not run.
+
 Goal: connect arrays, plain structs, borrows, Buffer, input,
 output, and UTF-8.
 
