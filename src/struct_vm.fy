@@ -24,6 +24,8 @@ pub fn Result<usize, errors::Error> cost(u8 op, usize offset) {
     if (op == 46) { return .ok(3 * 18432 + 4096 + 1024 + 129); }
     // Five complete plans, <= four 4096-visit traversals, staging and owner scans.
     if (op == 47) { return .ok(131072); }
+    // Two plans, one leaf-count walk, one encoding walk, bytes and owner scans.
+    if (op == 48) { return .ok(2 * 18432 + 2 * 4096 + 1024 + 65); }
     return .err(errors::make(5, offset));
 }
 
@@ -91,7 +93,15 @@ fn Result<usize, errors::Error> execute(u8 op, usize dst, usize a, usize b, usiz
         state.tokens[id] = token;
     } else {
         if (!bound(catalog, id, state, ref shared.owners)) { return .err(errors::make(5, offset)); }
-        if (op == 45) {
+        if (op == 48) {
+            if (!catalog.mutable[id] || b != record) { return .err(errors::make(5,offset)); }
+            let Selection shape = select(ref catalog.layouts,record,128,offset)?;
+            if (a > registers.len || shape.leaves > registers.len-a) { return .err(errors::make(5,offset)); }
+            let usize replaced = switch (owners::replace_record(ref catalog.layouts,state.tokens[id],b,
+                registers[a..a+shape.leaves],data,ref shared.owners)) {
+                case .ok(n): { n } case .err(e): { return .err(arrays::failure(e,offset)); }
+            };
+        } else if (op == 45) {
             if (a != 0 || b != 0) { return .err(errors::make(5, offset)); }
             let usize reclaimed = switch (owners::release(ref mut shared.owners, state.tokens[id], data.len)) {
                 case .ok(n): { n } case .err(e): { return .err(arrays::failure(e, offset)); }

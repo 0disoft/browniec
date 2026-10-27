@@ -22,6 +22,7 @@ import std::num as num;
 // 39 return the sole remaining callee array owner: dst=0,a=catalog ID,b=0.
 // 47 atomic subrecord assignment: dst=target,a=source,b=nominal record,
 // byte 4=target scalar-leaf start, byte 5=source scalar-leaf start; bytes 6..7=0.
+// 48 atomic root replacement: dst=live target,a=first scalar,b=nominal record.
 pub struct Program {
     u8[2048] code;
     i64[128] constants;
@@ -268,4 +269,8 @@ pub fn Result<usize, errors::Error> record_subassign(ref mut Program p, usize ds
     let u8 target = byte(target_leaf,offset)?; let u8 origin = byte(source_leaf,offset)?;
     let usize pc = raw(p,47,dst,source,nominal,offset)?;
     p.code[pc*8+4] = target; p.code[pc*8+5] = origin; return .ok(pc);
+}
+pub fn Result<usize, errors::Error> record_replace(ref mut Program p, usize dst,
+    usize first, usize nominal, usize offset) {
+    return raw(p,48,dst,first,nominal,offset);
 }

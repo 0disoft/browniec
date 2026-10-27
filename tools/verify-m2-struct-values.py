@@ -28,6 +28,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--compiler', type=Path, default=ROOT / 'build/toolchain' / ('fairyc.exe' if os.name == 'nt' else 'fairyc'))
     selection = parser.add_mutually_exclusive_group()
+    selection.add_argument('--replace-vm', action='store_true', help='Verify metered root replacement and verifier/VM regressions.')
     selection.add_argument('--replace-values', action='store_true', help='Verify private scalar-value root replacement and storage/owner regressions.')
     selection.add_argument('--child-path', action='store_true', help='Verify constructor child paths and related source regressions.')
     selection.add_argument('--atomic', action='store_true', help='Verify prepaid atomic subrecord assignment and backend regressions.')
@@ -93,6 +94,12 @@ def main():
                  'tests/m2/struct_owner_copy.fy', 'tests/m2/struct_subassign_owners.fy']
         groups = {'tests::m2::struct_replace_values::': 6, 'tests::m2::struct_nested_storage::': 6,
                   'tests::m2::struct_owner_copy::': 6, 'tests::m2::struct_subassign_owners::': 3}
+    if args.replace_vm:
+        kind = 'struct-replace-vm'
+        files = ['tests/m2/struct_replace_vm.fy', 'tests/m2/struct_vm.fy',
+                 'tests/m2/struct_ir.fy', 'tests/m2/struct_atomic_source.fy']
+        groups = {'tests::m2::struct_replace_vm::': 6, 'tests::m2::struct_vm::': 8,
+                  'tests::m2::struct_ir::': 9, 'tests::m2::struct_atomic_source::': 4}
     expected = sum(groups.values())
     compiler = args.compiler.resolve(strict=True)
     output = ROOT / ('build/m2-' + kind)
@@ -155,7 +162,7 @@ def main():
                           ('check-m2-struct-child.py', 'm2-struct-child'),
                           ('check-m2-struct-extract.py', 'm2-struct-extract'),
                           ('check-m2-struct-subassign.py', 'm2-struct-subassign')]
-        if args.replace_values:
+        if args.replace_values or args.replace_vm:
             selections = [('check-m2-struct-child-path.py', 'm2-struct-child-path'),
                           ('check-m2-struct-subassign.py', 'm2-struct-subassign')]
         for script, relative in selections:
@@ -179,6 +186,7 @@ def main():
         limitations=['Source records remain entry-only: inline/binding/path child initializers and scalar paths have sixteen-leaf staging, depth 16 and root cap 128 bytes. Subrecord declaration extraction and assignment are supported; constructor RHS assignment, struct parameters/results and borrows remain unavailable.',
                      *(['The child-path selection runs only child-path, whole-child, extraction and subrecord-assignment CLI matrices; scalar, array and other struct CLI matrices are not rerun.'] if args.child_path else []),
                      *(['Private scalar-value root replacement only; no source syntax, opcode, verifier, VM dispatch or Fuel change. Only child-path and subrecord-assignment CLI matrices are rerun.'] if args.replace_values else []),
+                     *(['Private SREPLACE (48) integration only; no constructor-assignment source syntax or version capability is added. Only child-path and subrecord-assignment CLI matrices are rerun.'] if args.replace_vm else []),
                      'Full native suites, full array CLI matrices, M0, Linux, isolation, DLL, packaging, allocation instrumentation and performance were not run.']))
     print('PASS: '+str(receipt.relative_to(ROOT)), flush=True)
 

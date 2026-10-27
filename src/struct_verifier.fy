@@ -10,6 +10,17 @@ fn bool readable(ref ir::Program p, ref registers::Set defined, usize r, usize f
     return r >= p.register_starts[f] && r < p.register_ends[f] && !p.slots[r] &&
         p.array_parameters[r] == 0 && registers::contains(defined, r) && p.types[r] == tag;
 }
+fn Result<usize, errors::Error> inputs(ref ir::Program p, ref meta::Prepared shapes,
+    ref registers::Set defined, usize id, usize first, usize f, usize pc) {
+    let usize count = shapes.leaves[id];
+    if (first > p.register_ends[f] || count > p.register_ends[f]-first) { return .err(errors::make(5,pc)); }
+    var usize leaf = 0;
+    while (leaf < count) {
+        if (!readable(p,defined,first+leaf,f,shapes.tags[id*128+leaf])) { return .err(errors::make(5,pc)); }
+        leaf += 1;
+    }
+    return .ok(count);
+}
 pub fn Result<usize, errors::Error> step(ref ir::Program p, ref meta::Prepared shapes,
     usize pc, usize f, ref mut registers::Set defined, ref mut registers::Set written, usize live) {
     let usize at = pc * 8;
@@ -24,18 +35,17 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, ref meta::Prepared s
     if (op == 41 || op == 42) {
         if (b != 0 || (live & mask) != 0) { return .err(errors::make(5, pc)); }
         if (op == 41) {
-            let usize count = shapes.leaves[id];
-            if (a > p.register_ends[f] || count > p.register_ends[f] - a) { return .err(errors::make(5, pc)); }
-            var usize leaf = 0;
-            while (leaf < count) {
-                if (!readable(p, defined, a + leaf, f, shapes.tags[id * 128 + leaf])) { return .err(errors::make(5, pc)); }
-                leaf += 1;
-            }
+            let usize count = inputs(p,shapes,defined,id,a,f,pc)?;
         } else if (a >= p.records.count || (live & (one << (16 + a))) == 0 ||
             p.records.records[a] != p.records.records[id]) { return .err(errors::make(5, pc)); }
         return .ok(live | mask);
     }
     if ((live & mask) == 0) { return .err(errors::make(5, pc)); }
+    if (op == 48) {
+        if (!p.records.mutable[id] || b != p.records.records[id] as usize) { return .err(errors::make(5,pc)); }
+        let usize count = inputs(p,shapes,defined,id,a,f,pc)?;
+        return .ok(live);
+    }
     if (op == 47) {
         if (!p.records.mutable[id] || a >= p.records.count ||
             (live & (one << (16+a))) == 0) { return .err(errors::make(5,pc)); }
