@@ -1,8 +1,9 @@
 # Validation
 
-- Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, switch-expression, i64, and unsigned receipts are verified historical evidence; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified; private entry-array IR/VM and source-array reads, writes, copy initializers, parameters, results, and assignment forms implemented; in-place repeated-literal assignment verified; private entry-owned struct IR/verifier verified historically; private struct VM verified with native 38/38 and CLI 115 in both profiles; declaration-only source structs historically verified in development and release (23 native groups and 2,208 CLI cases per profile); bounded source struct construction and field reads form a verified historical read baseline; entry-only one-level scalar-field writes have historical focused development/release validation; entry-only scalar-record copy initialization and whole-record assignment are verified stepwise in development and release; bounded nested constructors, multi-segment scalar paths, and whole-root copies have results that are historical after child-binding compiler changes; whole-record child binding initializers have historical receipts; subrecord declaration initializer receipts are historical after assignment changes; atomic subrecord assignment is verified in development and release; constructor child subrecord paths verified in development and release; private scalar-value record replacement verified; metered atomic root replacement verified
+- Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, switch-expression, i64, and unsigned receipts are verified historical evidence; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified; private entry-array IR/VM and source-array reads, writes, copy initializers, parameters, results, and assignment forms implemented; in-place repeated-literal assignment verified; private entry-owned struct IR/verifier verified historically; private struct VM verified with native 38/38 and CLI 115 in both profiles; declaration-only source structs historically verified in development and release (23 native groups and 2,208 CLI cases per profile); bounded source struct construction and field reads form a verified historical read baseline; entry-only one-level scalar-field writes have historical focused development/release validation; entry-only scalar-record copy initialization and whole-record assignment are verified stepwise in development and release; bounded nested constructors, multi-segment scalar paths, and whole-root copies have results that are historical after child-binding compiler changes; whole-record child binding initializers have historical receipts; subrecord declaration initializer receipts are historical after assignment changes; atomic subrecord assignment is verified in development and release; constructor child subrecord paths verified in development and release; private scalar-value record replacement verified; metered atomic root replacement verified; private frame-local record VM verified in development and release (46 native groups and 2,383 CLI cases per profile)
 - Root constructor assignment: verified in development and release; child constructor assignment is verified in development and release.
-- Private function-owned record IR/verifier foundation: verified in development and release.
+- Private function-owned record IR/verifier and frame-local record VM execution
+  are verified in development and release.
 - Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/u8/u32/usize/bool values, explicit widening, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation; private function-owned array IR/native dispatch with separate recursive frame tokens, let/var scalar arrays in lexical scopes of ordinary functions, indexed reads/writes, copy initializers, length access, lexical cleanup including `?` failure, by-value parameters, source results, and bare-name, call-result, and repeated-literal assignment are implemented; private entry-owned struct IR/verifier and metered VM dispatch exist; source struct declarations attach immutable layouts; bounded entry construction, record bindings, one-level scalar field reads/writes, bare-name record copy initialization, and whole-record assignment lower to `SINIT`, `SREAD`, `SWRITE`, `SCOPY`, `SASSIGN`, and atomic `SSUBASSIGN`; helper-local record statements and for-header writes/copies remain rejected; bounded nested constructors, multi-segment scalar paths, and whole-root copies are implemented, and child fields also accept whole visible bindings of the exact nominal type; the nested result is historical after that compiler change, subrecord declaration extraction is also implemented, while struct parameters/results, and borrows remain unavailable
 
 ## Validation source of truth
@@ -741,22 +742,50 @@ declared functions and unused owner bytes must be zero. Every opcode 41..49 must
 target the active function, with copy, assign, and subassign sources owned by that
 same function. Each function starts with records dead while existing cleanup,
 joins, backedges, and entry reentry checks remain unchanged. No opcode, Fuel,
-dispatch, version capability, or source form changes. The VM remains
-entry-frame-only and rejects helper IR with kind 5 until the frame-local successor;
-source helper records, parameters, and results remain rejected. The complete `--function-ir` invocation passed 31 native groups and
+dispatch, version capability, or source form changes at this checkpoint. The
+entry-frame-only kind-5 boundary is historical; the
+[frame-local record VM](docs/engineering/m2-struct-function-vm.md) now executes
+verified helper IR. Source helper records, parameters, and results remain
+rejected. The complete `--function-ir` invocation passed 31 native groups and
 2,383 CLI cases per development/release profile without result reuse. The
 [receipt](docs/evidence/m2-struct-function-ir-windows-20261027.json) records 106 input hashes,
 compiler/artifact identities, commands and outcomes. Other CLI matrices, full
-native suites, Linux, packaging, isolation and performance were not rerun.
+native suites, Linux, packaging, isolation and performance were not rerun. That
+31-group result remains historical for its original runtime and test inputs.
 
-The [private struct VM contract](docs/engineering/m2-struct-vm.md) executes
-opcodes 41..46 only in entry. `struct_vm::State` adds sixteen binding tokens while
-sharing the existing array owner table and one payload buffer. Any nonempty array
-or record binding catalog prepares capacity 0..65,536 and charges `1 + capacity` before
+The [private frame-local record VM](docs/engineering/m2-struct-function-vm.md)
+gives each of 32 guest frames sixteen record token slots over the same 16 shared
+owners and payload arena, using array-style `frame * 16 + site` indexing. It adds
+no opcode, Fuel, frontend, or version change. Frame entry allocates no separate
+table or arena; `SINIT`/`SCOPY` reserve shared owners and payload and require dead
+destination tokens, while writes and assignments require live mutable
+destinations. Drops clear frame tokens; dead middle extents stay charged until
+suffix reclamation. The complete `--function-vm` invocation passed 46 native groups and
+2,383 CLI cases per development/release profile without result reuse. The
+[receipt](docs/evidence/m2-struct-function-vm-windows-20261027.json) records 109 input hashes,
+compiler/artifact identities, commands and outcomes. Implementation commit:
+`80ed712`. Other CLI matrices, full native suites, Linux, packaging,
+isolation and performance were not rerun. The 13 smoke groups ran as one native invocation and cover all opcodes
+at frames 0, 1, and 31; frame-32 and
+`usize`-maximum rejection; Fuel before mutation with all 512 token, owner,
+payload, and register snapshots; mixed array/record quotas; stale generations;
+depth-15 recursion at exactly 1,400,064 Fuel; repeated calls; frame-limit failure
+after records are dropped; and helper record cleanup before an array result
+transfer. Source helper records, record parameters/results, and borrows remain
+unsupported. The 512-slot token array carries no measured allocation, stack, or
+speed claim.
+
+The original [private struct VM contract](docs/engineering/m2-struct-vm.md)
+described opcodes 41..46 as entry-only. Its `struct_vm::State` held sixteen
+binding tokens while sharing the existing array owner table and one payload
+buffer. That contract prepared capacity 0..65,536 and charged `1 + capacity` before
 allocation; pure scalar preparation and instruction prices are unchanged. Copies
 are independent, assignment allocates no extent, and dead middle holes stay
 charged until suffix release. Field ordinals use the existing owner field-path
 APIs with 128 leaves, depth 16, and at most 4,096 traversal iterations.
+The [frame-local successor](docs/engineering/m2-struct-function-vm.md) replaces
+that entry-only token layout; the shared owner/payload rules and Fuel charges
+below remain current.
 
 Every struct opcode prepays before path traversal, owner validation, staging, or
 token/register mutation. The fixed charges are `SINIT` 46,145, `SCOPY` 42,049,

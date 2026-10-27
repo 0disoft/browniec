@@ -2,7 +2,8 @@
 
 - Status: M1 scalar checkpoint verified; M2 function-owned scalar arrays with helper declarations, by-value parameters, argument capture, copies, length access, lexical cleanup, source results, and bare-name, call-result, and repeated-literal assignment implemented; private entry-owned struct IR/verifier and metered VM dispatch implemented; declaration-only source struct layouts are historical verified evidence; bounded entry scalar-field construction and reads remain a verified historical read baseline; entry-only one-level scalar-field writes implemented with historical focused development/release validation; entry-only scalar-record copy initialization and whole-record assignment implemented and verified stepwise in development and release; bounded entry nested constructors, multi-segment scalar paths, and whole-root nested copies implemented, with their receipt historical after child-binding compiler changes; whole-record child binding initializers verified historically; subrecord declaration initializer receipts historical after assignment changes; per-leaf assignment receipts historical after atomic changes; atomic subrecord assignment verified in development and release; full profile incomplete; constructor child subrecord paths verified in development and release; private scalar-value record replacement verified; metered atomic root replacement verified
 - Root constructor assignment: verified in development and release; child constructor assignment is verified in development and release.
-- Private function-owned record IR/verifier foundation: verified in development and release.
+- Private function-owned record IR/verifier and frame-local record VM execution
+  are verified in development and release.
 - Design date: 2026-10-23
 - First delivery target: Windows 11 x64
 
@@ -84,21 +85,36 @@ record owners and requires exact record identity for assignment. Its 17-group
 Windows selection passed development and release; the previous 34-group owner receipt is historical for changed
 inputs. A [private entry-owned struct IR and verifier](docs/engineering/m2-struct-ir.md)
 adds opcodes 41..46 for initialization, copy, scalar leaf access, drop, and exact-ID
-assignment; record lifetimes use bits 16..31 beside array lifetimes. The
-[private struct VM](docs/engineering/m2-struct-vm.md) executes those private
-instructions with fixed prepaid Fuel charges, sixteen entry tokens, and the shared
-array owner table and payload arena. Development and release each passed all 38
-selected native groups and the existing 115-case CLI suite. A
+assignment; record lifetimes use bits 16..31 beside array lifetimes. The original
+[private struct VM](docs/engineering/m2-struct-vm.md) contract executed those
+private instructions with fixed prepaid Fuel charges, sixteen entry tokens, and
+the shared array owner table and payload arena. Development and release each
+passed all 38 selected native groups and the existing 115-case CLI suite for that
+slice. A
 [function-owned record IR foundation](docs/engineering/m2-struct-function-ir.md)
 assigns each static record site to one function and verifies all opcodes 41..49
-against that owner, including same-function copy/assign/subassign sources. The VM
-remains entry-frame-only, so helper IR verifies but rejects VM execution with kind
-5 until a frame-local successor; source helper records remain rejected. No new
-opcode, Fuel, dispatch, capability, or source form is added. The complete `--function-ir` invocation passed 31 native groups and
+against that owner, including same-function copy/assign/subassign sources. A
+[frame-local record VM](docs/engineering/m2-struct-function-vm.md) now executes
+verified helper IR in up to 32 guest frames. Each frame owns sixteen record token
+slots over the same 16 shared owners and payload arena, using the same indexing as
+arrays. Opcodes, Fuel, frontend lowering, and version are unchanged. The 13-group
+smoke suite passed in one native invocation. The complete `--function-vm` invocation passed 46 native groups and
 2,383 CLI cases per development/release profile without result reuse. The
-[receipt](docs/evidence/m2-struct-function-ir-windows-20261027.json) records 106 input hashes,
-compiler/artifact identities, commands and outcomes. Other CLI matrices, full
-native suites, Linux, packaging, isolation and performance were not rerun. A
+[receipt](docs/evidence/m2-struct-function-vm-windows-20261027.json) records 109 input hashes,
+compiler/artifact identities, commands and outcomes. Implementation commit:
+`80ed712`. Other CLI matrices, full native suites, Linux, packaging,
+isolation and performance were not rerun. Frame entry
+allocates no separate table or arena, while `SINIT`/`SCOPY` reserve shared owners
+and payload and require dead destination tokens. Writes and assignments require
+live mutable destinations. Drops clear frame tokens; dead middle extents stay
+charged until suffix reclamation. Source helper records, record parameters/results,
+and borrows remain unsupported. The 512-slot token array carries no measured
+allocation, stack, or speed claim. The earlier
+`--function-ir` 31-group and 2,383-CLI result remains historical for its original
+scope at `3380b10`; its
+[receipt](docs/evidence/m2-struct-function-ir-windows-20261027.json) records those
+inputs and outcomes. Its test file changed one of six function-IR groups to expect
+helper execution; the other five are unchanged. A
 [declaration-only source struct slice](docs/engineering/m2-struct-source.md)
 parses forward-referencing scalar and nested named fields into immutable layouts.
 Both profiles passed 23 native groups and 2,208 CLI cases each for that
@@ -434,6 +450,7 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 private struct-owner copy and assignment](docs/engineering/m2-struct-owner-copy.md): independent record owners, exact-ID assignment, shared descriptor pressure, and source-release survival
 - [M2 private struct IR](docs/engineering/m2-struct-ir.md): entry-owned bindings, opcodes 41..46, flattened scalar leaves, combined lifetimes, and independent verification
 - [M2 private function-owned record IR](docs/engineering/m2-struct-function-ir.md): static function ownership for record sites, opcodes 41..49, and development/release verification
+- [M2 private frame-local record VM](docs/engineering/m2-struct-function-vm.md): 32 guest-frame token slots over shared owners and payload, unchanged opcodes and Fuel, development aggregate passed with release pending
 - [M2 private struct VM](docs/engineering/m2-struct-vm.md): shared owners and payload, private execution semantics, fixed Fuel charges, and current check status
 - [M2 declaration-only source structs](docs/engineering/m2-struct-source.md): historical bounded parser, forward named fields, immutable layouts, name rules, and stepwise verification
 - [M2 bounded source struct values](docs/engineering/m2-struct-values.md): historical entry construction and one-level reads, ordered typed staging, `SINIT`/scalar-leaf access, mixed cleanup, bounds, and recorded verification

@@ -13,7 +13,8 @@ own the affected contract. Broader scaffold procedures are optional.
 - M0 native primitives exist under `probes/m0` and have a repeatable Windows harness.
 - The M1 scalar lexer/parser, i32 checks, private IR verifier, VM, and CLI exist in src/.
 - Entry-only mutable root constructor assignment is verified in development and release; child constructor assignment is verified in development and release.
-- Private function-owned record IR/verifier foundation is verified in development and release.
+- Private function-owned record IR/verifier and frame-local record VM execution
+  are verified in development and release.
 - M2 has private scalar-array layout, codec, caller-backed storage, owner-lifetime and copy helpers;
   private function-owned array IR has independent verification and metered native VM dispatch. The current
   source slices add immutable/mutable scalar-array declarations in lexical scopes of ordinary functions, indexed reads,
@@ -147,12 +148,31 @@ own the affected contract. Broader scaffold procedures are optional.
   the same function. Each function starts with all record bindings dead, while
   existing cleanup, joins, backedges, and entry reentry rules are unchanged. No
   opcode, Fuel charge, VM dispatch, version capability, or source form is added.
-  The VM remains entry-frame-only and rejects helper IR with kind 5 until its
-  frame-local successor. The complete `--function-ir` invocation passed 31 native groups and
+  The entry-frame-only kind 5 boundary was the foundation's historical checkpoint.
+  The complete `--function-ir` invocation passed 31 native groups and
   2,383 CLI cases per development/release profile without result reuse. The
   [receipt](docs/evidence/m2-struct-function-ir-windows-20261027.json) records 106 input hashes,
   compiler/artifact identities, commands and outcomes. Other CLI matrices, full
-  native suites, Linux, packaging, isolation and performance were not rerun.
+  native suites, Linux, packaging, isolation and performance were not rerun. That
+  31-group receipt remains historical for its original runtime and test inputs.
+  A [private frame-local record VM](docs/engineering/m2-struct-function-vm.md)
+  now executes verified helper IR in up to 32 guest frames. Each frame has sixteen
+  record token slots over the same shared 16 owners and payload arena, indexed like
+  arrays. Opcodes, Fuel, frontend lowering, and version capabilities are unchanged.
+  The 13-group smoke suite passed in one native invocation. The complete `--function-vm` invocation passed 46 native groups and
+  2,383 CLI cases per development/release profile without result reuse. The
+  [receipt](docs/evidence/m2-struct-function-vm-windows-20261027.json) records 109 input hashes,
+  compiler/artifact identities, commands and outcomes. Implementation commit:
+  `80ed712`. Other CLI matrices, full native suites, Linux, packaging,
+  isolation and performance were not rerun.
+  Frame entry allocates no separate table or arena, while `SINIT`/`SCOPY` reserve
+  shared owners and payload and require dead destination tokens. Writes and
+  assignments require live mutable destinations. Drops clear frame tokens; dead
+  middle extents stay charged until suffix reclamation. Only one of the six
+  function-owned IR test groups changed expectation, from kind 5 to return 42.
+  Source helper records, record parameters/results, and borrows remain
+  unsupported. The 512-slot token array carries no measured allocation, stack, or
+  speed claim.
   A [declaration-only source struct slice](docs/engineering/m2-struct-source.md)
   parses bounded top-level declarations, resolves scalar and by-value named
   fields, and attaches immutable declaration-order layouts. Its 23 native groups
