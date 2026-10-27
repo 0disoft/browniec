@@ -71,6 +71,10 @@ Source [helper-local records](docs/engineering/m2-struct-function-source.md) are
 
 Development and release each passed 48 native groups and 2,860 CLI cases, including 89 helper-local record cases. The native report was retained after correcting the aggregate expected count from 47 to 48; CLI matrices ran individually, including a fresh nested matrix after updating an obsolete root-replacement expectation. Release completed the `--function-source --profile release` aggregate. The [receipt](docs/evidence/m2-struct-function-source-windows-20261027.json) records 153 input hashes, compiler and artifact identities, and equal native identities across profiles. Record parameters/results and borrows remain unavailable. Full native suites, other struct/array matrices, Linux, packaging, DLL, isolation, and performance were not run.
 
+The [record-parameter signature foundation](docs/engineering/m2-struct-parameter-signatures.md) recognizes bare nominal parameter types and stores each record ID separately from scalar tags and array lengths. The bounded signature table adds 128 bytes. Compilation still rejects every record parameter before IR, array catalog preparation, or body lowering, including unused helpers. Record argument copying, executable calls, results, and borrows remain future work. This increment adds no opcode, Fuel charge, profile, or version capability.
+
+Development and release each passed 16 native groups and 2,226 CLI cases: 88 signature-gate, 89 helper-record, 80 array-parameter, and 1,969 M1 cases. Development ran individual commands; release completed `--parameter-signatures --profile release`. The [receipt](docs/evidence/m2-struct-parameter-signatures-windows-20261027.json) records compiler/artifact identities, 181 input hashes, and equal native identities across profiles. This is focused signature verification; full native/array suites, M0, Linux, isolation, DLL, packaging, allocation instrumentation, and performance were not run.
+
 A [private struct-layout planner](docs/engineering/m2-struct-layout.md) now plans
 acyclic record metadata, and a [scalar-only storage slice](docs/engineering/m2-struct-storage.md)
 initializes and accesses selected scalar records in caller-backed arena bytes.
@@ -458,6 +462,7 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 private function-owned record IR](docs/engineering/m2-struct-function-ir.md): static function ownership for record sites, opcodes 41..49, and development/release verification
 - [M2 private frame-local record VM](docs/engineering/m2-struct-function-vm.md): 32 guest-frame token slots over shared owners and payload, unchanged opcodes and Fuel, development/release verification
 - [M2 source helper-local records](docs/engineering/m2-struct-function-source.md): function-owned source declarations, recursive frame isolation, mixed cleanup, and `struct_helper_locals` capability
+- [M2 record parameter signatures](docs/engineering/m2-struct-parameter-signatures.md): nominal signature metadata and rejection before executable argument lowering
 - [M2 private struct VM](docs/engineering/m2-struct-vm.md): shared owners and payload, private execution semantics, fixed Fuel charges, and current check status
 - [M2 declaration-only source structs](docs/engineering/m2-struct-source.md): historical bounded parser, forward named fields, immutable layouts, name rules, and stepwise verification
 - [M2 bounded source struct values](docs/engineering/m2-struct-values.md): historical entry construction and one-level reads, ordered typed staging, `SINIT`/scalar-leaf access, mixed cleanup, bounds, and recorded verification

@@ -105,3 +105,8 @@ compiler remains `4ce1264273be`.
 Earlier receipts are historical for changed frontend, root lock, tests and tooling.
 Full native suites, other struct/array matrices, M0, Linux, packaging, DLL,
 isolation, allocation instrumentation and performance were not run.
+
+The later [parameter-signature foundation](m2-struct-parameter-signatures.md)
+changes frontend and root-lock inputs. The 48-group receipt above remains evidence
+for `98a4525`; the successor reruns the 89-case helper CLI matrix as a focused
+regression and still rejects executable record parameters.

@@ -16,6 +16,7 @@ own the affected contract. Broader scaffold procedures are optional.
 - Private function-owned record IR/verifier and frame-local record VM execution
   are verified in development and release.
 - Source helper-local records are verified at `98a4525`: 48 native groups and 2,860 CLI cases per development/release profile. Development completed stepwise after tooling fixture fixes; release completed the aggregate. See [the source contract](docs/engineering/m2-struct-function-source.md) and [receipt](docs/evidence/m2-struct-function-source-windows-20261027.json).
+- Nominal record parameter signature metadata is verified at `4a6792b` (16 native groups and 2,226 CLI cases per development/release profile); executable record arguments remain gated before IR and body lowering. See [the foundation](docs/engineering/m2-struct-parameter-signatures.md).
 - M2 has private scalar-array layout, codec, caller-backed storage, owner-lifetime and copy helpers;
   private function-owned array IR has independent verification and metered native VM dispatch. The current
   source slices add immutable/mutable scalar-array declarations in lexical scopes of ordinary functions, indexed reads,
