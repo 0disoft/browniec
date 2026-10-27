@@ -1,10 +1,11 @@
 # M2 Record Result IR and Verifier Foundation
 
-- Status: implemented at `dc1574b`; verified in development and release
+- Status: implemented at `dc1574b`; verified in development and release; its VM runtime gate is historical
 - Scope: nominal record-result metadata, `SRET` verification, and record-result CALL destinations
-- Runtime: verifies the new IR, then reports unavailable before Fuel or payload preparation
+- Runtime: historical kind 11 availability gate, superseded by [record-result VM transfer](m2-struct-result-vm.md)
 - Source: unchanged; record returns remain behind the compilation gate
 - Evidence: matching core and native-only regression receipts, linked below
+- Successor: [M2 private record-result VM ownership transfer](m2-struct-result-vm.md)
 - Implementation: [struct_results.fy](../../src/struct_results.fy), [ir.fy](../../src/ir.fy), [verifier.fy](../../src/verifier.fy), and [vm.fy](../../src/vm.fy)
 - Tests and harness: [struct_results_ir.fy](../../tests/m2/struct_results_ir.fy) and [verify-m2-struct-results-ir.py](../../tools/verify-m2-struct-results-ir.py)
 
@@ -41,11 +42,11 @@ Existing CFG joins and loop backedges compare the full live sets exactly, includ
 
 Function arity, register windows, record catalogs, record sites, and aggregate quotas remain under their existing limits. The new field adds 16 bytes to the private program layout. This is a layout count, not an allocation, stack, or performance measurement.
 
-## Runtime gate and unchanged surface
+## Historical runtime gate and unchanged surface
 
-`vm::run` and `vm::run_with_array_limit` verify first. If verification succeeds and any `record_results` entry is active, they return error kind 11 at offset 0 before Fuel accounting, payload reservation, or guest execution. Malformed IR reaches the verifier first and reports the normal kind 5 failure.
+At `dc1574b`, `vm::run` and `vm::run_with_array_limit` verified first and returned error kind 11 at offset 0 when any `record_results` entry was active, before Fuel accounting, payload reservation, or guest execution. That availability gate is historical and superseded by the [record-result VM successor](m2-struct-result-vm.md); current execution owns `SRET` transfer. Malformed IR still reaches the verifier first and reports the normal kind 5 failure.
 
-This slice adds no record-owner transfer, SRET dispatch, or source return lowering. The compiler's existing record-result gate remains in place, so source record returns are still unavailable. No Fuel charge, array or record price, source profile, or `--version --json` capability changes.
+This slice added no record-owner transfer, SRET dispatch, or source return lowering. The compiler's existing record-result gate remains in place, so source record returns are still unavailable. It added no Fuel charge, array or record price, source profile, or `--version --json` capability change.
 
 ## Verification
 
