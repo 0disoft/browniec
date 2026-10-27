@@ -161,14 +161,15 @@ fn void backedges_require_the_first_entry_record_invariant() {
 }
 
 @test
-fn void only_entry_accesses_records_and_no_function_can_reenter_it() {
+fn void record_access_follows_function_ownership_and_entry_cannot_be_reentered() {
     var ir::Program p = basic();
     let usize value = built(ir::literal(ref mut p, 0, 0));
     let usize ret = built(ir::emit(ref mut p, 8, value, 0, 0));
     p.function_count = 2; p.starts[1] = 6; p.ends[1] = 8;
     p.register_starts[1] = 2; p.register_ends[1] = 3; p.return_types[1] = 1;
     assert(verifier::verify(ref p).is_ok);
-    p.entry = 1; assert(!verifier::verify(ref p).is_ok);
+    p.entry = 1; assert(verifier::verify(ref p).is_ok);
+    p.record_functions[0] = 1; assert(!verifier::verify(ref p).is_ok);
     var ir::Program q = declared();
     let usize[1] args = [0];
     let usize called = built(ir::call(ref mut q, 0, ref args[..0], 0));

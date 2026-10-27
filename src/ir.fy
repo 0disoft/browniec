@@ -47,6 +47,8 @@ pub struct Program {
     records::Catalog records;
     arrays::Catalog arrays;
     u8[16] array_functions;
+    // Static record sites belong to functions; runtime frames remain a separate concern.
+    u8[16] record_functions;
     // Parameter register positions: zero scalar, otherwise array catalog ID + 1.
     // Array positions reserve a register index but never contain scalar values.
     u8[128] array_parameters;
@@ -61,7 +63,7 @@ pub fn Program empty() {
         .register_ends = [0; 16], .arities = [0; 16], .call_args = [0; 256],
         .call_arities = [0; 32], .function_count = 0, .entry = 0, .call_count = 0,
         .types = [0; 128], .return_types = [0; 16], .slots = [false; 128], .arrays = arrays::empty(), .records = records::empty(),
-        .array_functions = [0; 16], .array_parameters = [0; 128], .array_results = [0; 16] };
+        .array_functions = [0; 16], .record_functions = [0; 16], .array_parameters = [0; 128], .array_results = [0; 16] };
 }
 
 fn Result<u8, errors::Error> byte(usize value, usize offset) {
@@ -238,9 +240,18 @@ pub fn Result<usize,errors::Error> array_return(ref mut Program p,usize source,u
 
 // Private struct opcodes 41..46. Initializers consume consecutive scalar values.
 pub fn Result<usize, errors::Error> record(ref mut Program p, usize record, bool mutable, usize offset) {
+    let usize function = p.entry;
+    return record_in(p,function,record,mutable,offset);
+}
+pub fn Result<usize, errors::Error> record_in(ref mut Program p, usize function,
+    usize record, bool mutable, usize offset) {
+    if (function >= 16 || (p.function_count != 0 && function >= p.function_count)) {
+        return .err(errors::make(3,offset));
+    }
     if (p.records.count >= 16) { return .err(errors::make(4, offset)); }
     if (record >= p.records.layouts.count || record >= 32) { return .err(errors::make(3, offset)); }
     let usize id = p.records.count;
+    p.record_functions[id] = byte(function,offset)?;
     p.records.records[id] = byte(record, offset)?; p.records.mutable[id] = mutable;
     p.records.count += 1; return .ok(id);
 }

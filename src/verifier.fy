@@ -170,7 +170,9 @@ pub fn Result<usize, errors::Error> verify(ref ir::Program p) {
     var usize id = 0;
     while (id < 16) {
         if ((id < p.arrays.count && p.array_functions[id] as usize >= p.function_count) ||
-            (id >= p.arrays.count && p.array_functions[id] != 0)) { return .err(errors::make(5, 0)); }
+            (id >= p.arrays.count && p.array_functions[id] != 0) ||
+            (id < p.records.count && p.record_functions[id] as usize >= p.function_count) ||
+            (id >= p.records.count && p.record_functions[id] != 0)) { return .err(errors::make(5, 0)); }
         id += 1;
     }
     if (p.arities[p.entry] != 0 || p.return_types[p.entry] != 1) { return .err(errors::make(5, 0)); }

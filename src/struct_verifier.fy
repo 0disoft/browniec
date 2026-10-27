@@ -33,14 +33,15 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, ref meta::Prepared s
     let usize a = p.code[at + 2] as usize;
     let usize b = p.code[at + 3] as usize;
     let usize id = if (op == 43) { a } else { dst };
-    if (f != p.entry || id >= p.records.count) { return .err(errors::make(5, pc)); }
+    if (id >= p.records.count || p.record_functions[id] as usize != f) { return .err(errors::make(5, pc)); }
     let usize one = 1;
     let usize mask = one << (16 + id);
     if (op == 41 || op == 42) {
         if (b != 0 || (live & mask) != 0) { return .err(errors::make(5, pc)); }
         if (op == 41) {
             let usize count = inputs(p,shapes,defined,id,a,f,pc)?;
-        } else if (a >= p.records.count || (live & (one << (16 + a))) == 0 ||
+        } else if (a >= p.records.count || p.record_functions[a] as usize != f ||
+            (live & (one << (16 + a))) == 0 ||
             p.records.records[a] != p.records.records[id]) { return .err(errors::make(5, pc)); }
         return .ok(live | mask);
     }
@@ -59,7 +60,7 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, ref meta::Prepared s
         return .ok(live);
     }
     if (op == 47) {
-        if (!p.records.mutable[id] || a >= p.records.count ||
+        if (!p.records.mutable[id] || a >= p.records.count || p.record_functions[a] as usize != f ||
             (live & (one << (16+a))) == 0) { return .err(errors::make(5,pc)); }
         let usize target = ranges::offset(ref p.records.layouts,p.records.records[id] as usize,b,p.code[at+4] as usize)?;
         let usize origin = ranges::offset(ref p.records.layouts,p.records.records[a] as usize,b,p.code[at+5] as usize)?;
@@ -70,7 +71,7 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, ref meta::Prepared s
         return .ok(live ^ mask);
     }
     if (op == 46) {
-        if (b != 0 || !p.records.mutable[id] || a >= p.records.count ||
+        if (b != 0 || !p.records.mutable[id] || a >= p.records.count || p.record_functions[a] as usize != f ||
             (live & (one << (16 + a))) == 0 || p.records.records[a] != p.records.records[id]) { return .err(errors::make(5, pc)); }
         return .ok(live);
     }
