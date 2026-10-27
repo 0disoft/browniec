@@ -1,0 +1,56 @@
+module struct_result_vm;
+
+import ir as ir;
+import errors as errors;
+import array_vm as arrays;
+import struct_vm as records;
+import array_owners as owners;
+import std::bytes as bytes;
+
+pub fn usize cost() {
+    // Two complete layout plans, one bounded scalar snapshot, scratch/codec
+    // work, both child token sets and owner metadata. No payload copy/reserve.
+    return 2 * 18432 + 4096 + 1024 + 129;
+}
+
+// Only independently verified immutable programs enter this boundary. Prepay
+// before token scans, owner resolution or payload reads. Every fallible check
+// precedes both token writes; frame/PC publication remains with the VM caller.
+pub fn Result<usize,errors::Error> step(ref ir::Program p,usize target,usize source,
+    usize destination,usize frame,ref mut records::State record_state,
+    ref arrays::State state,ref bytes::Buffer buffer,usize fuel,usize offset) {
+    let usize work=cost();
+    if(fuel<work) {return .err(errors::make(8,offset));}
+    if(frame==0 || frame>=32 || p.function_count>16 || target>=p.function_count ||
+        target==p.entry || p.records.count>16 || source>=p.records.count || destination>=p.records.count) {
+        return .err(errors::make(5,offset));
+    }
+    let usize encoded=p.record_results[target] as usize;
+    if(encoded==0 || encoded>p.records.count || p.array_results[target]!=0 ||
+        p.return_types[target]!=0 || p.record_functions[source] as usize!=target ||
+        p.record_functions[encoded-1] as usize!=target) {return .err(errors::make(5,offset));}
+    let usize nominal=p.records.records[encoded-1] as usize;
+    if(p.records.records[source] as usize!=nominal || p.records.records[destination] as usize!=nominal) {
+        return .err(errors::make(5,offset));
+    }
+    let usize child=frame*16;let usize parent=(frame-1)*16+destination;
+    if(record_state.tokens[parent].generation!=0 || record_state.tokens[parent].slot!=0) {
+        return .err(errors::make(5,offset));
+    }
+    var usize i=0;
+    while(i<16) {
+        if(state.tokens[child+i].generation!=0 || state.tokens[child+i].slot!=0 ||
+            (i!=source && (record_state.tokens[child+i].generation!=0 || record_state.tokens[child+i].slot!=0))) {
+            return .err(errors::make(5,offset));
+        }
+        i+=1;
+    }
+    let owners::Token token=record_state.tokens[child+source];
+    let usize checked=switch(owners::validate_record_result(ref p.records.layouts,
+        ref state.owners,token,nominal,bytes::view(buffer))) {
+        case .ok(n):{n} case .err(e):{return .err(arrays::failure(e,offset));}
+    };
+    record_state.tokens[child+source]=owners::Token{.slot=0,.generation=0};
+    record_state.tokens[parent]=token;
+    return .ok(fuel-work);
+}

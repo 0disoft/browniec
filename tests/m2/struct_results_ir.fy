@@ -117,10 +117,11 @@ fn void final_site_uses_live_bit_31_and_builders_reject_capacity_overflow_before
  empty.count=0;empty.call_count=32;assert(!ir::record_call(ref mut empty,0,0,ref args[..0],0).is_ok && empty.count==0);
 }
 @test
-fn void verified_record_results_report_unavailable_before_fuel_and_payload_but_after_verification(){
+fn void record_result_execution_checks_verification_before_fuel_and_payload(){
  let ir::Program good=program(1,0);
- assert(switch(vm::run(ref good,1000000)){case .err(e):{e.kind==11 && e.offset==0}case .ok(_):{false}});
- assert(switch(vm::run_with_array_limit(ref good,0,18446744073709551615)){case .err(e):{e.kind==11 && e.offset==0}case .ok(_):{false}});
+ assert(switch(vm::run(ref good,1000000)){case .err(_):{false}case .ok(n):{n==42}});
+ assert(switch(vm::run_with_array_limit(ref good,0,18446744073709551615)){case .err(e):{e.kind==13 && e.offset==0}case .ok(_):{false}});
+ assert(switch(vm::run(ref good,0)){case .err(e):{e.kind==8 && e.offset==0}case .ok(_):{false}});
  var ir::Program p=good;p.record_results[0]=17;assert(switch(vm::run(ref p,0)){case .err(e):{e.kind==5}case .ok(_):{false}});
  p=good;p.code[2*8+4]=1;assert(switch(vm::run(ref p,0)){case .err(e):{e.kind==5}case .ok(_):{false}});
 }

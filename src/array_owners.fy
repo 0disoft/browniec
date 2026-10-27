@@ -465,6 +465,19 @@ pub fn Result<i64, Error> read_record(ref records::Catalog catalog, ref Table ta
         case .ok(value): { .ok(value) } case .err(error): { .err(record_error(error)) }
     };
 }
+// Validate a unique nominal result without reserving or writing payload. The
+// bounded snapshot checks every scalar leaf, including nested canonical bools;
+// its normalized padding is deliberately discarded when rehoming the owner.
+pub fn Result<usize, Error> validate_record_result(ref records::Catalog catalog,
+    ref Table table, Token token, usize nominal, ref u8[] bytes) {
+    let Owner owner = resolve_record(catalog, table, token, bytes.len)?;
+    if (owner.record != nominal) { return .err(.Type); }
+    var u8[128] scratch = [0; 128];
+    return switch (record_storage::snapshot_into(catalog, nominal, owner.base,
+        bytes, ref table.arena, ref mut scratch[..owner.length])) {
+        case .ok(n): { .ok(n) } case .err(e): { .err(record_error(e)) }
+    };
+}
 pub fn Result<usize, Error> write_record(ref records::Catalog catalog, ref Table table,
     Token token, ref usize[] path, i64 value, ref mut u8[] bytes) {
     let Owner owner = resolve_record(catalog, table, token, bytes.len)?;

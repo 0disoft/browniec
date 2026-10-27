@@ -12,6 +12,7 @@ import array_vm as array_vm;
 import struct_vm as struct_vm;
 import struct_call_vm as calls;
 import array_result_vm as array_results;
+import struct_result_vm as record_results;
 import std::bytes as bytes;
 
 // Guest calls use bounded VM frames, never native recursion. Register reads are
@@ -21,12 +22,6 @@ pub fn Result<i64, errors::Error> run(ref ir::Program p, usize fuel) {
 }
 pub fn Result<i64, errors::Error> run_with_array_limit(ref ir::Program p, usize fuel, usize array_limit) {
     let usize verified = verifier::verify(p)?;
-    // Record-result IR is verified independently but has no owner-transfer VM yet.
-    var usize f = 0;
-    while (f < p.function_count) {
-        if (p.record_results[f] != 0) { return .err(errors::make(11, 0)); }
-        f += 1;
-    }
     var usize remaining = fuel;
     var bytes::Buffer payload = bytes::empty();
     let bool aggregates = p.arrays.count != 0 || p.records.count != 0;
@@ -50,6 +45,16 @@ pub fn Result<i64, errors::Error> run_with_array_limit(ref ir::Program p, usize 
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
+        if (op == 50) {
+            if(frame==0 || return_dsts[frame]<144 || return_dsts[frame]>=160) {
+                return .err(errors::make(5,p.offsets[pc]));
+            }
+            let usize call=(return_pcs[frame]-1)*8;
+            remaining=record_results::step(p,p.code[call+2] as usize,a,
+                return_dsts[frame]-144,frame,ref mut records,ref arrays,ref payload,
+                remaining,p.offsets[pc])?;
+            pc=return_pcs[frame];frame-=1;continue;
+        }
         if (op == 47) {
             remaining = struct_vm::subassign(dst,a,b,p.code[at+4] as usize,p.code[at+5] as usize,frame,
                 ref p.records,ref mut records,ref mut arrays,ref mut payload,remaining,p.offsets[pc])?;
