@@ -1204,6 +1204,14 @@ dependency-field count drops from 4,352 to 512 by loop analysis; elapsed-time
 performance, full suites, Linux, M0, packaging and isolation were not measured or
 rerun. Earlier receipts remain evidence for their original inputs.
 
+The [copy-batch owner validation refactor](docs/engineering/call-owner-validation.md)
+validates the original table once before preflight, while private per-argument
+lookups retain token checks and record metadata validation. Public owner entry
+points still validate the complete table. Development and release each passed
+27 owner/copy native groups and 194 parameter CLI cases. The [Windows receipt](docs/evidence/call-owner-validation-windows-20261028.json)
+records commands and exact input/compiler/SDK/artifact identities. Full suites,
+Linux, M0, packaging, isolation and elapsed-time benchmarks were not run.
+
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker
 publication barrier. Compile untrusted source only inside the restricted worker.

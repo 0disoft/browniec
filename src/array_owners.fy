@@ -84,10 +84,17 @@ fn bool valid(ref Table table, usize capacity) {
     }
     return true;
 }
-fn Result<Owner, Error> resolve_any(ref Table table, Token token, usize capacity) {
+// Token identity only: this does not prove table/arena integrity. Public paths
+// use resolve_any below; batch preflight may reuse its initial full validation
+// while the original table remains unchanged and reservations stay in planned.
+fn Result<Owner, Error> lookup(ref Table table, Token token) {
     if (token.slot >= 16 || token.generation == 0) { return .err(.Token); }
     let Owner owner = table.slots[token.slot];
     if (!owner.occupied || !owner.live || owner.generation != token.generation) { return .err(.Token); }
+    return .ok(owner);
+}
+fn Result<Owner, Error> resolve_any(ref Table table, Token token, usize capacity) {
+    let Owner owner = lookup(table, token)?;
     if (!valid(table, capacity)) { return .err(.State); }
     return .ok(owner);
 }
@@ -230,7 +237,8 @@ pub fn Result<Copies, Error> copy_arguments(ref Token[] sources, ref layouts::Ar
     var usize[8] sizes = [0; 8];
     var usize i = 0;
     while (i < sources.len) {
-        let Owner owner = resolve(table, sources[i], bytes.len)?;
+        let Owner owner = lookup(table, sources[i])?;
+        if (owner.element == 0) { return .err(.Type); }
         let layouts::Array shape = shapes[i];
         if (owner.element != shape.element) { return .err(.Type); }
         if (owner.length != shape.length) { return .err(.Length); }
@@ -291,12 +299,12 @@ pub fn Result<Copies, Error> copy_call_arguments(ref records::Catalog catalog,
     var usize i = 0;
     while (i < arguments.len) {
         let CallArgument argument = arguments[i];
-        let Owner owner = resolve_any(table, argument.source, bytes.len)?;
+        let Owner owner = lookup(table, argument.source)?;
         if (owner.element != argument.element) { return .err(.Type); }
         if (argument.element == 0) {
             if (argument.length != 0) { return .err(.Metadata); }
             if (owner.record != argument.record) { return .err(.Type); }
-            let Owner checked = resolve_record(catalog, table, argument.source, bytes.len)?;
+            let usize checked = record_metadata(catalog, ref owner)?;
             let usize staged = switch (record_storage::snapshot_into(catalog, owner.record, owner.base,
                 bytes, ref table.arena, ref mut snapshots[i * 128..i * 128 + owner.length])) {
                 case .ok(n): { n } case .err(e): { return .err(record_error(e)); }
@@ -448,6 +456,12 @@ fn Token publish_record(ref mut Table table, usize slot, usize record, usize byt
 fn Result<Owner, Error> resolve_record(ref records::Catalog catalog, ref Table table,
     Token token, usize capacity) {
     let Owner owner = resolve_any(table, token, capacity)?;
+    let usize checked = record_metadata(catalog, ref owner)?;
+    return .ok(owner);
+}
+// Layout checks are independent of token/table validation. Batch callers have
+// already resolved this owner against the fully validated original table.
+fn Result<usize, Error> record_metadata(ref records::Catalog catalog, ref Owner owner) {
     if (owner.element != 0) { return .err(.Type); }
     let records::Plan plan = switch (records::plan(catalog, 18446744073709551615)) {
         case .ok(value): { value } case .err(_): { return .err(.Metadata); }
@@ -456,7 +470,7 @@ fn Result<Owner, Error> resolve_record(ref records::Catalog catalog, ref Table t
     if (plan.bytes[owner.record] != owner.length || plan.alignments[owner.record] != owner.alignment) {
         return .err(.Metadata);
     }
-    return .ok(owner);
+    return .ok(owner.length);
 }
 pub fn Result<i64, Error> read_record(ref records::Catalog catalog, ref Table table,
     Token token, ref usize[] path, ref u8[] bytes) {
