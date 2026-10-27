@@ -621,6 +621,14 @@ native, build, and other CLI selections were not rerun. The [Windows
 receipt](../evidence/m2-struct-result-source-windows-20261028.json) records 219
 rechecked inputs and the repair.
 
+Direct record return calls are implemented at `c23e6e4`: an exact-nominal
+`return make(...);` now shares argument evaluation and cleanup with other CALLs
+and exits through SRET without another payload extent. Development and release
+each passed 18 native groups and 505 CLI cases in separate core/regression phases;
+196 matching input hashes and both CLI artifact hashes were rechecked. Earlier
+receipts remain historical for their original inputs. See [the source
+contract](../engineering/m2-struct-return-calls.md) for bounds and evidence.
+
 Goal: connect arrays, plain structs, borrows, Buffer, input,
 output, and UTF-8.
 

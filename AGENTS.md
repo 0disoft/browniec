@@ -52,6 +52,14 @@ own the affected contract. Broader scaffold procedures are optional.
   contract](docs/engineering/m2-struct-result-source.md) and [Windows
   receipt](docs/evidence/m2-struct-result-source-windows-20261028.json), which
   rechecks 219 inputs.
+- Direct nominal record return calls are implemented at `c23e6e4`. An exact-type
+  `return make(...);` uses the existing CALL/SRET ownership transfer and shared
+  reverse mixed cleanup. Pending destinations remain absent from names during
+  argument evaluation. Development and release each passed 18 native groups and
+  505 CLI cases in separate core/regression phases; 196 input hashes match and
+  were rechecked. Earlier receipts remain historical for their original inputs.
+  See [the contract](docs/engineering/m2-struct-return-calls.md)
+  and [focused receipt](docs/evidence/m2-struct-return-calls-windows-20261028.json).
 - The record-result IR slice's evidence remains 39 unique native groups and 2,317 CLI cases in development and release. The [core receipt](docs/evidence/m2-struct-results-ir-core-windows-20261028.json) records 21 native groups (8 new record-result, 6 array-result, 7 record-parameter), CLI builds and all 2,317 cases; the [regression receipt](docs/evidence/m2-struct-results-ir-regressions-windows-20261028.json) records 18 native-only groups (6 array-result VM, 8 record-call VM, 4 scalar-function), with no build or CLI rerun. CLI coverage is 72 record-result signature, 66 record-formal signature, 114 source record-parameter, 96 array-result signature and 1,969 M1 cases per profile. These were two separate phase invocations across implementation commit `dc1574b`, with disjoint native selections and matching 212 input hashes, compiler and SDK identities. All inputs and the final release CLI were rechecked before archival. Full native/CLI suites, M0, Linux, isolation, DLL, packaging, allocation instrumentation and performance were not run.
 - M2 has private scalar-array layout, codec, caller-backed storage, owner-lifetime and copy helpers;
   private function-owned array IR has independent verification and metered native VM dispatch. The current

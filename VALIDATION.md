@@ -1212,6 +1212,36 @@ points still validate the complete table. Development and release each passed
 records commands and exact input/compiler/SDK/artifact identities. Full suites,
 Linux, M0, packaging, isolation and elapsed-time benchmarks were not run.
 
+### Direct nominal record return calls
+
+[Direct nominal record return calls](docs/engineering/m2-struct-return-calls.md)
+are implemented at `c23e6e4` for a bounded source form. A
+`return callee(...);` may return a nominal record when `callee` returns the exact
+nominal type declared by the enclosing function and its name does not collide
+with a visible local. The compiler reserves a dead function-owned destination
+before argument evaluation, keeps the destination out of the local binding
+table, and uses the shared CALL/SRET finisher to release other live arrays and
+records before owner transfer.
+
+Development and release each passed 18 native groups: six core groups and twelve
+regression groups. The [Windows receipt](docs/evidence/m2-struct-return-calls-windows-20261028.json)
+records the four separate phases, executed commands, compiler/SDK and artifact
+identities, 196 matching rechecked input hashes, outcomes, and skips. Both CLI
+artifact hashes were rechecked against retained binaries. The phase runs are not
+one aggregate invocation.
+
+Each profile also passed 505 CLI cases: 152 direct record-return, 166 named
+result, 70 result-signature, and 117 direct array-return cases. Development core
+was first run directly with `fairyc test --native --capture-output --json
+--locked --file tests/m2/struct_return_calls.fy` before the harness was written.
+The later harness run covers that phase in addition to the other three. The
+native exact-form fixture establishes that the named and direct forwarding forms
+produce identical IR and the same exact runtime boundary in a four-byte payload
+arena: 171,728 Fuel succeeds and 171,727 fails. The prior named-result receipt
+is historical for its changed compiler, fixture, and harness inputs. This focused
+selection does not cover full native or CLI suites, M0, Linux, isolation, DLL,
+packaging, allocation instrumentation, or performance.
+
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker
 publication barrier. Compile untrusted source only inside the restricted worker.

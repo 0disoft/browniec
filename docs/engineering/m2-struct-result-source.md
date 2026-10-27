@@ -20,7 +20,7 @@ all of M2 verified.
 
 ## Supported source subset
 
-A record-result function returns one bare, visible binding of the exact declared
+A named record-result return uses one bare, visible binding of the exact declared
 nominal type:
 
 ```brownie
@@ -38,9 +38,10 @@ fn i32 main() {
 }
 ```
 
-The `return` operand is exactly one identifier followed by `;`. A field path,
-parenthesized name, constructor, direct call, aggregate expression, array, or
-scalar value does not satisfy a record result.
+The named `return` operand is exactly one identifier followed by `;`. The
+[direct-call successor](m2-struct-return-calls.md) additionally supports
+`return make(...);`. A field path, parenthesized name, constructor, aggregate
+expression, array, or scalar value does not satisfy a record result.
 
 Record-result calls are accepted as typed declaration initializers:
 
@@ -102,8 +103,9 @@ it cannot drop an unborn result destination. The name becomes visible only after
 
 ## Return finisher and ownership
 
-The return finisher accepts one visible record binding owned by the active
-function with the exact anchor shape. It walks the visible lexical bindings in
+The return finisher accepts a record binding or completed anonymous direct-call
+result owned by the active function with the exact anchor shape. It walks the
+visible lexical bindings in
 reverse order, emits `ADROP` for arrays and `SDROP` for records other than the
 selected owner, then emits `SRET` (50). Formals and anonymous argument captures
 take part in that mixed cleanup.
@@ -133,7 +135,6 @@ profile strings remain unchanged. `--version --json` adds
 Record results still do not support:
 
 - `return Constructor { ... };`;
-- `return call(...);` direct return calls;
 - field, parenthesized, or aggregate return expressions;
 - assignment of a call result to an existing record;
 - record-result calls in scalar expressions or general aggregate arguments;
@@ -144,6 +145,10 @@ These forms fail during compilation instead of reaching an invalid IR type or a
 partially initialized caller destination.
 
 ## Verification status
+
+The counts below describe the original named-result baseline. Changed compiler
+and fixture inputs now have a focused [direct-return successor receipt](../evidence/m2-struct-return-calls-windows-20261028.json);
+the earlier full selection was not rerun for that successor.
 
 The core harness selects 14 native groups per development/release profile: 8 new
 `struct_result_source` groups and 6 updated `struct_result_signatures` groups.
