@@ -422,6 +422,17 @@ pub fn Result<usize, Error> assign_record(ref records::Catalog catalog, Token de
 }
 
 // Both whole owners and exact nominal child ranges are checked before snapshot.
+// Exact nominal scalar values replace an existing root without a second owner.
+// The table is read-only; callers establish mutability and prepay VM work.
+pub fn Result<usize, Error> replace_record(ref records::Catalog catalog, Token destination,
+    usize nominal, ref i64[] fields, ref mut u8[] bytes, ref Table table) {
+    let Owner target = resolve_record(catalog,table,destination,bytes.len)?;
+    if (target.record != nominal) { return .err(.Type); }
+    return switch (record_storage::replace_values(catalog,nominal,target.base,fields,bytes,ref table.arena)) {
+        case .ok(n): { .ok(n) } case .err(error): { .err(record_error(error)) }
+    };
+}
+
 // Storage assignment stages canonical scalar bytes before its first target write.
 pub fn Result<usize, Error> assign_subrecord(ref records::Catalog catalog,
     Token destination, Token source, usize nominal, usize target_leaf, usize source_leaf,

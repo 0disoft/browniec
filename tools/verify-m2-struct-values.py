@@ -28,6 +28,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--compiler', type=Path, default=ROOT / 'build/toolchain' / ('fairyc.exe' if os.name == 'nt' else 'fairyc'))
     selection = parser.add_mutually_exclusive_group()
+    selection.add_argument('--replace-values', action='store_true', help='Verify private scalar-value root replacement and storage/owner regressions.')
     selection.add_argument('--child-path', action='store_true', help='Verify constructor child paths and related source regressions.')
     selection.add_argument('--atomic', action='store_true', help='Verify prepaid atomic subrecord assignment and backend regressions.')
     selection.add_argument('--subassign', action='store_true', help='Verify subrecord assignment with extraction/write/scalar regressions.')
@@ -86,6 +87,12 @@ def main():
                  'tests/m2/struct_extract_source.fy', 'tests/m2/struct_atomic_source.fy']
         groups = {'tests::m2::struct_child_path_source::': 5, 'tests::m2::struct_child_source::': 5,
                   'tests::m2::struct_extract_source::': 5, 'tests::m2::struct_atomic_source::': 4}
+    if args.replace_values:
+        kind = 'struct-replace-values'
+        files = ['tests/m2/struct_replace_values.fy', 'tests/m2/struct_nested_storage.fy',
+                 'tests/m2/struct_owner_copy.fy', 'tests/m2/struct_subassign_owners.fy']
+        groups = {'tests::m2::struct_replace_values::': 6, 'tests::m2::struct_nested_storage::': 6,
+                  'tests::m2::struct_owner_copy::': 6, 'tests::m2::struct_subassign_owners::': 3}
     expected = sum(groups.values())
     compiler = args.compiler.resolve(strict=True)
     output = ROOT / ('build/m2-' + kind)
@@ -108,7 +115,7 @@ def main():
     paths.update(ROOT / p for p in ['fairy.toml', 'fairy.lock', 'toolchain.json', 'tests/m2/array_literal_assignment.fy', 'examples/loops.brc', *files])
     inputs = [dict(path=p.relative_to(ROOT).as_posix(), sha256=digest(p)) for p in sorted(paths)]
     # CLI scripts also generate cases from these fixtures, independently of native selection.
-    paths.update(ROOT / ('tests/m2/' + name + '.fy') for name in ['struct_values', 'struct_write', 'struct_source_copy', 'struct_source_nested', 'struct_child_source', 'struct_extract_source', 'struct_subassign_source'])
+    paths.update(ROOT / ('tests/m2/' + name + '.fy') for name in ['struct_values', 'struct_write', 'struct_source_copy', 'struct_source_nested', 'struct_child_source', 'struct_child_path_source', 'struct_extract_source', 'struct_subassign_source'])
     inputs = [dict(path=p.relative_to(ROOT).as_posix(), sha256=digest(p)) for p in sorted(paths)]
     compiler_hash = digest(compiler)
     results = []
@@ -148,6 +155,9 @@ def main():
                           ('check-m2-struct-child.py', 'm2-struct-child'),
                           ('check-m2-struct-extract.py', 'm2-struct-extract'),
                           ('check-m2-struct-subassign.py', 'm2-struct-subassign')]
+        if args.replace_values:
+            selections = [('check-m2-struct-child-path.py', 'm2-struct-child-path'),
+                          ('check-m2-struct-subassign.py', 'm2-struct-subassign')]
         for script, relative in selections:
             message = run([sys.executable, '-B', ROOT / 'tools' / script, '--exe', exe, '--profile', profile])
             cli = json.loads((ROOT / 'build' / relative / profile / 'cli-receipt.json').read_text())
@@ -168,6 +178,7 @@ def main():
         lockedCheck=check, commands=commands, sourceSha256=inputs, results=results,
         limitations=['Source records remain entry-only: inline/binding/path child initializers and scalar paths have sixteen-leaf staging, depth 16 and root cap 128 bytes. Subrecord declaration extraction and assignment are supported; constructor RHS assignment, struct parameters/results and borrows remain unavailable.',
                      *(['The child-path selection runs only child-path, whole-child, extraction and subrecord-assignment CLI matrices; scalar, array and other struct CLI matrices are not rerun.'] if args.child_path else []),
+                     *(['Private scalar-value root replacement only; no source syntax, opcode, verifier, VM dispatch or Fuel change. Only child-path and subrecord-assignment CLI matrices are rerun.'] if args.replace_values else []),
                      'Full native suites, full array CLI matrices, M0, Linux, isolation, DLL, packaging, allocation instrumentation and performance were not run.']))
     print('PASS: '+str(receipt.relative_to(ROOT)), flush=True)
 

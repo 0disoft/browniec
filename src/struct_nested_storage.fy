@@ -78,8 +78,32 @@ fn Result<usize, Error> extent(ref layouts::Plan plan, usize record, usize base,
     return .ok(size);
 }
 
-// Fields are depth-first scalar leaves in declaration order. The complete
-// record (including nested/tail padding) is staged before any backing mutation.
+// Callers supply zeroed, selected-size scratch after validating the full plan.
+// Fields are depth-first scalar leaves; every value is encoded before publishing.
+fn Result<usize, Error> encode_fields(ref layouts::Catalog catalog, ref layouts::Plan plan,
+    usize record, ref i64[] fields, ref mut u8[] encoded) {
+    if (fields.len == 0 || fields.len > 128) { return .err(.Fields); }
+    var Cursor cursor = Cursor { .depth = 1, .records = [0; 16], .fields = [0; 16], .bases = [0; 16] };
+    cursor.records[0] = record;
+    var usize count = 0;
+    var bool done = false;
+    while (!done) {
+        let Leaf leaf = next(catalog, plan, ref mut cursor);
+        if (leaf.tag == 0) { done = true; }
+        else {
+            if (count >= fields.len) { return .err(.Fields); }
+            let usize width = codec::width(leaf.tag);
+            let usize written = switch (codec::encode(leaf.tag, fields[count], encoded[leaf.offset..leaf.offset + width])) {
+                case .ok(value): { value } case .err(error): { return .err(codec_error(error)); }
+            };
+            count += 1;
+        }
+    }
+    if (count != fields.len) { return .err(.Fields); }
+    return .ok(plan.bytes[record]);
+}
+
+// The complete record, including padding, is staged before backing mutation.
 pub fn Result<usize, Error> initialize(ref layouts::Catalog catalog, usize record,
     ref i64[] fields, ref mut u8[] storage, ref mut arenas::Arena arena) {
     let layouts::Plan plan = switch (layouts::plan(catalog, 18446744073709551615)) {
@@ -90,24 +114,23 @@ pub fn Result<usize, Error> initialize(ref layouts::Catalog catalog, usize recor
     if (fields.len == 0 || fields.len > 128) { return .err(.Fields); }
     let Reservation reservation = reserve(size, plan.alignments[record], arena)?;
     var u8[128] encoded = [0; 128];
-    var Cursor cursor = Cursor { .depth = 1, .records = [0; 16], .fields = [0; 16], .bases = [0; 16] };
-    cursor.records[0] = record;
-    var usize count = 0;
-    var bool done = false;
-    while (!done) {
-        let Leaf leaf = next(catalog, ref plan, ref mut cursor);
-        if (leaf.tag == 0) { done = true; }
-        else {
-            if (count >= fields.len) { return .err(.Fields); }
-            let usize width = codec::width(leaf.tag);
-            let usize written = switch (codec::encode(leaf.tag, fields[count], ref mut encoded[leaf.offset..leaf.offset + width])) {
-                case .ok(value): { value } case .err(error): { return .err(codec_error(error)); }
-            };
-            count += 1;
-        }
-    }
-    if (count != fields.len) { return .err(.Fields); }
+    let usize staged = encode_fields(catalog,ref plan,record,fields,ref mut encoded[..size])?;
     return .ok(publish(ref encoded[..size], ref reservation, storage, arena));
+}
+
+// Replace an existing extent from scalar values. No reservation, allocation,
+// cursor change or target write occurs until all fields encode successfully.
+pub fn Result<usize, Error> replace_values(ref layouts::Catalog catalog, usize record,
+    usize destination, ref i64[] fields, ref mut u8[] storage, ref arenas::Arena arena) {
+    let layouts::Plan plan = switch (layouts::plan(catalog,18446744073709551615)) {
+        case .ok(value): { value } case .err(_): { return .err(.Layout); }
+    };
+    let usize size = extent(ref plan,record,destination,storage.len,arena)?;
+    var u8[128] encoded = [0; 128];
+    let usize staged = encode_fields(catalog,ref plan,record,fields,ref mut encoded[..size])?;
+    var usize byte = 0;
+    while (byte < staged) { storage[destination+byte] = encoded[byte]; byte += 1; }
+    return .ok(staged);
 }
 
 // Check the whole published root, then resolve a scalar-only field path.
