@@ -9,9 +9,11 @@ import vm as vm;
 fn functions::Table scanned(ref u8[] source) {
  return switch(functions::scan(source)){case .ok(t):{t}case .err(_):{assert(false);functions::empty()}};
 }
-fn void gated(ref u8[] source,usize slot) {
+fn void accepted(ref u8[] source,usize slot) {
  let functions::Table t=scanned(source);assert(t.param_records[slot]!=0);
- assert(switch(compiler::compile(source)){case .err(e):{e.kind==3 && e.offset==t.param_begins[slot]}case .ok(_):{false}});
+ let ir::Program p=switch(compiler::compile(source)){case .ok(p):{p}case .err(_):{assert(false);ir::empty()}};
+ assert(verifier::verify(ref p).is_ok);
+ assert(switch(vm::run(ref p,4000000)){case .ok(n):{n==42}case .err(_):{false}});
 }
 fn void rejected(ref u8[] source) {assert(!functions::scan(source).is_ok);}
 @test
@@ -34,7 +36,7 @@ fn void forward_declarations_and_mutual_signatures_keep_nominal_ids() {
  let functions::Table t=scanned(b"module main;fn i32 main(){return 42;}fn i32 f(Outer p){return g(p);}struct Outer{Inner child;}fn i32 g(Inner p){return f(p);}struct Inner{i32 x;}");
  assert(t.entry==0 && t.count==3 && t.param_records[8]==1 && t.param_records[16]==2);
  assert(t.param_types[8]==0 && t.param_types[16]==0 && t.return_types[1]==1);
- gated(b"module main;fn i32 main(){return 42;}fn i32 f(P record){return record.x;}struct P{i32 x;}",8);
+ accepted(b"module main;fn i32 main(){return 42;}fn i32 f(P record){return record.x;}struct P{i32 x;}",8);
 }
 @test
 fn void last_record_function_and_parameter_use_bounded_final_slots() {
@@ -58,11 +60,12 @@ fn void unsupported_record_shapes_names_and_signatures_are_rejected() {
  rejected(b"module main;struct P{i32 x;}fn P f(){return P{.x=42};}fn i32 main(){return 42;}");
 }
 @test
-fn void compilation_gate_precedes_bodies_array_catalogs_and_unused_helpers() {
- gated(b"module main;struct P{i32 x;}fn i32 f(P record){return record.x;}fn i32 main(){return missing;}",0);
- gated(b"module main;struct P{i32 x;}fn i32 main(){return missing;}fn i32 f(P record){return 42;}",8);
- gated(b"module main;struct P{i32 x;}fn i32[1] f(P record){return [42;1];}fn i32 main(){return 42;}",0);
- gated(b"module main;struct P{i32 x;}fn i32 f(P record){return 42;}fn i32 a0(i32[1] a,i32[1] b,i32[1] c,i32[1] d,i32[1] e,i32[1] f,i32[1] g,i32[1] h){return 42;}fn i32 a1(i32[1] a,i32[1] b,i32[1] c,i32[1] d,i32[1] e,i32[1] f,i32[1] g,i32[1] h){return 42;}fn i32 a2(i32[1] a,i32[1] b,i32[1] c,i32[1] d,i32[1] e,i32[1] f,i32[1] g,i32[1] h){return 42;}fn i32 main(){return 42;}",0);
+fn void source_record_formals_bind_and_invalid_bodies_and_catalog_limits_still_fail() {
+ accepted(b"module main;struct P{i32 x;}fn i32 f(P record){return record.x;}fn i32 main(){let P p=P{.x=42};return f(p);}",0);
+ accepted(b"module main;struct P{i32 x;}fn i32[1] f(P record){return [record.x;1];}fn i32 main(){let P p=P{.x=42};let i32[1] a=f(p);return a[0];}",0);
+ assert(!compiler::compile(b"module main;struct P{i32 x;}fn i32 f(P record){return record.x;}fn i32 main(){return missing;}").is_ok);
+ assert(!compiler::compile(b"module main;struct P{i32 x;}fn i32 main(){return missing;}fn i32 f(P record){return 42;}").is_ok);
+ assert(!compiler::compile(b"module main;struct P{i32 x;}fn i32 f(P record){return 42;}fn i32 a0(i32[1] a,i32[1] b,i32[1] c,i32[1] d,i32[1] e,i32[1] f,i32[1] g,i32[1] h){return 42;}fn i32 a1(i32[1] a,i32[1] b,i32[1] c,i32[1] d,i32[1] e,i32[1] f,i32[1] g,i32[1] h){return 42;}fn i32 a2(i32[1] a,i32[1] b,i32[1] c,i32[1] d,i32[1] e,i32[1] f,i32[1] g,i32[1] h){return 42;}fn i32 main(){return 42;}").is_ok);
 }
 @test
 fn void existing_array_parameters_wrappers_and_helper_records_still_execute() {

@@ -55,7 +55,7 @@ fn void exact_fuel_payload_and_shared_owner_limits_are_enforced() {
 }
 @test
 fn void signatures_borrows_scope_and_entry_reentry_remain_rejected() {
- assert(!compiler::compile(b"module main;struct P{i32 x;}fn i32 helper(P p){return p.x;}fn i32 main(){let P p=P{.x=42};return helper(p);}").is_ok);
+ assert(!compiler::compile(b"module main;struct P{i32 x;}fn i32 helper(P p){return p.x;}fn i32 main(){return helper(P{.x=42});}").is_ok);
  assert(!compiler::compile(b"module main;struct P{i32 x;}fn P helper(){let P p=P{.x=42};return p;}fn i32 main(){return 42;}").is_ok);
  assert(!compiler::compile(b"module main;struct P{i32 x;}fn i32 helper(ref P p){return p.x;}fn i32 main(){return 42;}").is_ok);
  assert(!compiler::compile(b"module main;struct P{i32 x;}fn i32 helper(){let P p=P{.x=42};p.x=0;return p.x;}fn i32 main(){return helper();}").is_ok);

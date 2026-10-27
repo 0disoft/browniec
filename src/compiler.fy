@@ -14,6 +14,7 @@ import propagation as propagation;
 import casts as casts;
 import array_source as arrays;
 import array_call_source as array_calls;
+import struct_call_source as record_calls;
 import array_result_source as array_results;
 import std::text as text;
 
@@ -159,7 +160,9 @@ fn Result<usize,errors::Error> call_value(ref u8[] source,ref mut lexer::State s
         if(arity>=8) {return .err(errors::make(4,s.begin));}
         let u8 tag=if(arity<signatures.arities[target]){signatures.param_types[target*8+arity]}else{0};
         let usize length=if(arity<signatures.arities[target]){signatures.param_lengths[target*8+arity]}else{0};
-        if(length!=0) {arguments[arity]=array_calls::capture(source,s,p,ref mut names,tag,length)?;}
+        let usize record=if(arity<signatures.arities[target]){signatures.param_records[target*8+arity] as usize}else{0};
+        if(record!=0) {arguments[arity]=record_calls::capture(source,s,p,ref mut names,record-1)?;}
+        else if(length!=0) {arguments[arity]=array_calls::capture(source,s,p,ref mut names,tag,length)?;}
         else {
             arguments[arity]=expression(source,s,p,ref names,signatures,1,depth+1,tag,result_type,structure,loop_state)?;
             if(arity>=signatures.arities[target] || p.types[arguments[arity]]!=tag) {return .err(errors::make(3,at));}
@@ -785,7 +788,8 @@ fn Result<usize, errors::Error> body(ref u8[] source, ref functions::Table signa
     var usize i = 0;
     while (i < arity) {
         let usize at = f * 8 + i;
-        let usize parameter = array_calls::bind(signatures,at,p,ref mut table)?;
+        let usize parameter = if(signatures.param_records[at]!=0){record_calls::bind(signatures,at,p,ref mut table)?}
+            else{array_calls::bind(signatures,at,p,ref mut table)?};
         i += 1;
     }
     var lexer::State s = lexer::empty();
@@ -819,6 +823,7 @@ fn Result<usize, errors::Error> prepare_aggregates(ref u8[] source, ref mut func
         f += 1;
     }
     p.records.layouts = records.layouts;
+    let usize record_parameters = record_calls::prepare(signatures,p)?;
     return .ok(records.layouts.count);
 }
 
@@ -828,16 +833,6 @@ pub fn Result<ir::Program, errors::Error> compile(ref u8[] source) {
         case .ok(value): { value } case .err(_): { return .err(errors::make(1, 0)); }
     };
     var functions::Table signatures = functions::scan(source)?;
-    // Signature recognition is not an executable record-argument ABI. Reject
-    // every declaration before array catalogs or bodies can treat its zero tag
-    // as a scalar, including unused and forward helpers.
-    var usize parameter = 0;
-    while (parameter < 128) {
-        if (signatures.param_records[parameter] != 0) {
-            return .err(errors::make(3, signatures.param_begins[parameter]));
-        }
-        parameter += 1;
-    }
     var ir::Program p = ir::empty();
     p.function_count = signatures.count;
     p.entry = signatures.entry;
