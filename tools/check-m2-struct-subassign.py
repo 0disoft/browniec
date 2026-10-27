@@ -73,7 +73,7 @@ for body,error in [
  ('var R p=R{.i=I{.x=42}};p.i=(p.i);return 42;','type'),
  ('var R p=R{.i=I{.x=42}};p.i=p.i();return 42;','syntax'),
  ('var R p=R{.i=I{.x=42}};p.i=p.i+1;return 42;','syntax'),
- ('var R p=R{.i=I{.x=42}};p.i=I{.x=42};return 42;','type'),
+ ('var R p=R{.i=I{.x=42}};p.i=I{.x=42};return 42;',None),
  ('var R p=R{.i=I{.x=42}};let I i=I{.x=0};i=p.i;return 42;','type'),
  ('var R p=R{.i=I{.x=42}};p.i.x=p.i;return 42;','type'),
  ('var R p=R{.i=I{.x=42}};for(p.i=p.i;false;){}return 42;','type'),

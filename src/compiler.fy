@@ -423,6 +423,11 @@ fn Result<usize, errors::Error> record_write_statement(ref u8[] source, ref mut 
     }
     let record_values::Leaf leaf = record_values::writable(source,s,p,id,at)?;
     if (leaf.tag == 0) {
+        if (record_values::constructor(source,s,leaf.record)?) {
+            let usize first = record_constructor(source,s,p,table,signatures,leaf.record,at,result_type,expr_depth,structure,loop_state)?;
+            let usize replaced = ir::record_subreplace(p,id,first,leaf.record,leaf.ordinal,at)?;
+            return .ok(index);
+        }
         let usize assigned = record_values::assign_part(source,s,p,table,id,leaf,at)?;
         return .ok(index);
     }
