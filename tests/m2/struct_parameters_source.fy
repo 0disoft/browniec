@@ -60,7 +60,7 @@ fn void mismatched_nominal_types_writes_and_general_aggregate_arguments_stay_rej
  rejected(b"module main;struct P{i32 x;}fn i32 take(P p){return p.x;}fn i32 main(){let i32[1] a=[42;1];return take(a);}");
  rejected(b"module main;struct P{i32 x;}fn i32 take(P p){return p.x;}fn i32 main(){return take(42);}");
  rejected(b"module main;struct P{i32 x;}fn i32 take(ref P p){return 42;}fn i32 main(){return 42;}");
- rejected(b"module main;struct P{i32 x;}fn P take(P p){return p;}fn i32 main(){return 42;}");
+ value(b"module main;struct P{i32 x;}fn P take(P p){return p;}fn i32 main(){return 42;}",4);
  rejected(b"module main;struct P{i32 x;}fn i32 take(P p){let P p=P{.x=42};return p.x;}fn i32 main(){return 42;}");
  rejected(b"module main;struct P{i32 x;}fn i32 take(P p){return p.x;}fn i32 main(){let P p=P{.x=42};for(var i32 n=take(p);n<1;n=n+1){}return 42;}");
 }

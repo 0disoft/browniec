@@ -16,6 +16,7 @@ import array_source as arrays;
 import array_call_source as array_calls;
 import struct_call_source as record_calls;
 import array_result_source as array_results;
+import struct_result_source as record_results;
 import std::text as text;
 
 fn u8 precedence(u8 kind) {
@@ -147,13 +148,13 @@ fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s,
     }
     return .err(errors::make(2, s.begin));
 }
-// Scalar and array-result calls share argument evaluation and capture cleanup.
-// A destination below 16 is a dead array site; 16 denotes a scalar result.
+// All result kinds share argument evaluation and capture cleanup. Destinations
+// 0..15 are dead array sites, 16 is scalar, and 144..159 are dead record sites.
 fn Result<usize,errors::Error> call_value(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
     ref locals::Table table,ref functions::Table signatures,usize target,usize destination,usize at,
     usize depth,u8 result_type,usize structure,ref mut loops::State loop_state) {
     if(depth>32) {return .err(errors::make(4,at));}
-    if(destination==16 && signatures.return_lengths[target]!=0) {return .err(errors::make(3,at));}
+    if(destination==16 && (signatures.return_lengths[target]!=0 || signatures.return_records[target]!=0)) {return .err(errors::make(3,at));}
     let usize open=lexer::punctuation(source,s,40)?;
     var usize[8] arguments=[0;8];var locals::Table names=locals::snapshot(table);var usize arity=0;
     while(s.kind!=41) {
@@ -176,9 +177,10 @@ fn Result<usize,errors::Error> call_value(ref u8[] source,ref mut lexer::State s
     let usize close=lexer::punctuation(source,s,41)?;
     let ref usize[] view=ref arguments;
     let usize called=if(destination<16){ir::array_call(p,target,destination,view[..arity],at)?}
+        else if(destination>=144 && destination<160){ir::record_call(p,target,destination-144,view[..arity],at)?}
         else{ir::call(p,target,view[..arity],at)?};
     let usize dropped=arrays::release_from(ref names,p,table.count,at)?;
-    return .ok(if(destination<16){128+destination}else{called});
+    return .ok(if(destination<16){128+destination}else if(destination>=144 && destination<160){destination}else{called});
 }
 // Postfix propagation binds before unary and binary operators. The operand
 // parser recurses through primary for unary operators, preserving that order.
@@ -331,6 +333,20 @@ fn Result<usize, errors::Error> record_declaration(ref u8[] source, ref mut lexe
     usize expr_depth, usize structure, ref mut loops::State loop_state) {
     let usize record = record_values::named(source, s)?;
     let record_values::Header header = record_values::header(source,s,p,table,record,mutable,terminator,result_type)?;
+    if(s.kind==2) {
+        var lexer::State look=lexer::snapshot(s);
+        let usize next=lexer::next(source,ref mut look)?;
+        if(look.kind==40) {
+            if(locals::find(source,table,s.begin,s.end)!=64) {return .err(errors::make(3,s.begin));}
+            let usize at=s.begin;let usize target=functions::find(source,signatures,s.begin,s.end);
+            let usize id=record_results::destination(signatures,target,record,mutable,p,table.function,at)?;
+            let usize name=lexer::next(source,s)?;
+            // Pending destinations remain invisible during all argument effects.
+            let usize value=call_value(source,s,p,table,signatures,target,144+id,at,expr_depth,result_type,structure,loop_state)?;
+            let usize end=lexer::punctuation(source,s,terminator)?;
+            return locals::declare(table,header.begin,header.end,value,mutable);
+        }
+    }
     if (!record_values::constructor(source,s,record)?) { return record_values::copy(source,s,p,table,header); }
     let usize first = record_constructor(source,s,p,table,signatures,record,header.begin,result_type,expr_depth,structure,loop_state)?;
     let usize id = ir::record_in(p,table.function,record,mutable,header.begin)?;
@@ -710,6 +726,10 @@ fn Result<bool, errors::Error> control(ref u8[] source, ref mut lexer::State s, 
     }
     if (word_is(source, s, b"return")) {
         let usize keyword = lexer::next(source, s)?;
+        if(p.record_results[table.function]!=0) {
+            let usize returned=record_results::returned(source,s,p,table,at)?;
+            return .ok(true);
+        }
         if(p.array_results[table.function]!=0) {
             if(s.kind==91) {
                 let usize shape=(p.array_results[table.function] as usize)-1;
@@ -796,10 +816,11 @@ fn Result<usize, errors::Error> body(ref u8[] source, ref functions::Table signa
     s.cursor = signatures.bodies[f];
     let usize first = lexer::next(source, ref mut s)?;
     var loops::State loop_state=loops::empty();
+    let u8 result_context=record_results::context(p,f);
     var bool terminal = false;
     while (s.kind != 125) {
         if (terminal || s.kind == 0) { return .err(errors::make(2, s.begin)); }
-        terminal = control(source,ref mut s,p,ref mut table,signatures,signatures.return_types[f],0,0,ref mut loop_state)?;
+        terminal = control(source,ref mut s,p,ref mut table,signatures,result_context,0,0,ref mut loop_state)?;
     }
     if (!terminal) { return .err(errors::make(2, s.begin)); }
     if (s.kind != 125 || s.begin != signatures.body_ends[f]) { return .err(errors::make(2, s.begin)); }
@@ -824,6 +845,7 @@ fn Result<usize, errors::Error> prepare_aggregates(ref u8[] source, ref mut func
     }
     p.records.layouts = records.layouts;
     let usize record_parameters = record_calls::prepare(signatures,p)?;
+    let usize record_returns = record_results::prepare(signatures,p)?;
     return .ok(records.layouts.count);
 }
 
@@ -833,15 +855,6 @@ pub fn Result<ir::Program, errors::Error> compile(ref u8[] source) {
         case .ok(value): { value } case .err(_): { return .err(errors::make(1, 0)); }
     };
     var functions::Table signatures = functions::scan(source)?;
-    // Nominal result metadata is not an executable return ABI. Reject before
-    // any zero scalar tag reaches IR, parameter catalogs, or body lowering.
-    var usize result = 0;
-    while (result < signatures.count) {
-        if (signatures.return_records[result] != 0) {
-            return .err(errors::make(3, signatures.begins[result]));
-        }
-        result += 1;
-    }
     var ir::Program p = ir::empty();
     p.function_count = signatures.count;
     p.entry = signatures.entry;

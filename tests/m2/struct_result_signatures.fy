@@ -8,10 +8,12 @@ import vm as vm;
 fn functions::Table scanned(ref u8[] source) {
  return switch(functions::scan(source)){case .ok(t):{t}case .err(_):{assert(false);functions::empty()}};
 }
-fn void gated(ref u8[] source,usize f) {
+fn void lowered(ref u8[] source,usize f) {
  let functions::Table t=scanned(source);assert(t.return_records[f]!=0);
- assert(switch(compiler::compile(source)){case .err(e):{e.kind==3 && e.offset==t.begins[f]}case .ok(_):{false}});
+ let ir::Program p=switch(compiler::compile(source)){case .ok(p):{p}case .err(_):{assert(false);ir::empty()}};
+ assert(p.record_results[f]!=0 && p.return_types[f]==0 && verifier::verify(ref p).is_ok);
 }
+fn void invalid(ref u8[] source,u8 kind){assert(switch(compiler::compile(source)){case .ok(_):{false}case .err(e):{e.kind==kind}});}
 fn void rejected(ref u8[] source){assert(!functions::scan(source).is_ok);}
 fn void value(ref u8[] source) {
  let ir::Program p=switch(compiler::compile(source)){case .ok(p):{p}case .err(_):{assert(false);ir::empty()}};
@@ -38,7 +40,7 @@ fn void forward_nested_and_mutual_names_preserve_function_and_parameter_spans() 
  assert(t.return_lengths[0]==0 && t.return_types[0]==0 && t.param_types[0]==0);
  assert(lexer::equal(source[t.begins[0]..t.ends[0]],b"f") && lexer::equal(source[t.param_begins[16]..t.param_ends[16]],b"p"));
  assert(source[t.bodies[0]]==114 && source[t.body_ends[0]]==125);
- gated(b"module main;fn i32 main(){return 42;}fn P make(P p){return p;}struct P{i32 x;}",1);
+ lowered(b"module main;fn i32 main(){return 42;}fn P make(P p){return p;}struct P{i32 x;}",1);
 }
 @test
 fn void final_result_slot_keeps_the_largest_nominal_id_and_function_limit() {
@@ -59,12 +61,11 @@ fn void unknown_borrowed_wrapped_array_and_entry_record_results_are_rejected() {
  rejected(b"module main;struct P{i32 x;}fn P main(){return 0;}");
 }
 @test
-fn void compilation_gate_precedes_bodies_calls_and_aggregate_catalogs() {
- gated(b"module main;struct P{i32 x;}fn P make(){return P{.x=42};}fn i32 main(){return missing;}",0);
- gated(b"module main;struct P{i32 x;}fn i32 main(){return missing;}fn P make(){return P{.x=42};}",1);
- gated(b"module main;struct P{i32 x;}fn P make(P p){return p;}fn i32 main(){let P p=P{.x=42};return make(p);}",0);
- gated(b"module main;struct P{i32 x;}fn P make(){return 0;}fn i32 a(i32[1] a,i32[1] b,i32[1] c,i32[1] d,i32[1] e,i32[1] f,i32[1] g,i32[1] h){return 0;}fn i32 b(i32[1] a,i32[1] b,i32[1] c,i32[1] d,i32[1] e,i32[1] f,i32[1] g,i32[1] h){return 0;}fn i32 c(i32[1] a){return 0;}fn i32 main(){return 42;}",0);
- gated(b"module main;struct P{i32 x;}fn P make(){return 0;}fn i32 a(P a,P b,P c,P d,P e,P f,P g,P h){return 0;}fn i32 b(P a,P b,P c,P d,P e,P f,P g,P h){return 0;}fn i32 c(P a){return 0;}fn i32 main(){return 42;}",0);
+fn void invalid_record_bodies_and_catalog_overflow_fail_during_source_lowering() {
+ invalid(b"module main;struct P{i32 x;}fn P make(){return P{.x=42};}fn i32 main(){return 42;}",3);
+ invalid(b"module main;struct P{i32 x;}fn P make(P p){return p;}fn i32 main(){let P p=P{.x=42};return make(p);}",3);
+ invalid(b"module main;struct P{i32 x;}fn P make(){return 0;}fn i32 main(){return 42;}",3);
+ invalid(b"module main;struct P{i32 x;}fn P make(P a,P b,P c,P d,P e,P f,P g,P h){return a;}fn i32 take(P a,P b,P c,P d,P e,P f,P g,P h){return 0;}fn i32 extra(P p){return 0;}fn i32 main(){return 42;}",4);
 }
 @test
 fn void existing_record_parameters_array_results_and_scalar_wrappers_still_execute() {
