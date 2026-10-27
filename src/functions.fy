@@ -6,6 +6,8 @@ import locals as locals;
 import types as types;
 import array_source as array_source;
 import struct_source as structs;
+import cells as cells;
+import std::num as num;
 
 // Bounded signature pass enables forward calls without trusting unparsed bodies.
 pub struct Table {
@@ -24,6 +26,8 @@ pub struct Table {
     usize[128] param_lengths;
     // Filled by source lowering before bodies: immutable catalog ID + 1.
     u8[128] param_arrays;
+    // Zero scalar/array; otherwise nominal source record ID + 1. No runtime site.
+    u8[128] param_records;
     usize count;
     usize entry;
 }
@@ -31,7 +35,7 @@ pub fn Table empty() {
     return Table { .begins = [0; 16], .ends = [0; 16], .bodies = [0; 16],
         .body_ends = [0; 16], .arities = [0; 16], .return_lengths = [0; 16], .param_begins = [0; 128],
         .param_ends = [0; 128], .return_types = [0; 16], .param_types = [0; 128],
-        .param_lengths = [0; 128], .param_arrays = [0; 128], .count = 0, .entry = 16 };
+        .param_lengths = [0; 128], .param_arrays = [0; 128], .param_records = [0; 128], .count = 0, .entry = 16 };
 }
 pub fn usize find(ref u8[] source, ref Table t, usize begin, usize end) {
     var usize i = 0;
@@ -40,6 +44,17 @@ pub fn usize find(ref u8[] source, ref Table t, usize begin, usize end) {
         i += 1;
     }
     return 16;
+}
+// Primitive/wrapper spellings keep the existing parser and do not rescan source.
+// Only nominal names need the bounded declaration lookup, including forward types.
+fn Result<u8, errors::Error> record_parameter(ref u8[] source, ref lexer::State s) {
+    if (s.kind != 2 || locals::reserved(source[s.begin..s.end])) { return .ok(0); }
+    let structs::Location found = structs::locate(source, s.begin, s.end, 32)?;
+    if (found.record >= 32) { return .err(errors::make(3, s.begin)); }
+    let i64 encoded = cells::pack(found.record + 1, s.begin)?;
+    return switch (num::u8_from_i64(encoded)) {
+        case .ok(value): { .ok(value) } case .err(_): { .err(errors::make(4, s.begin)) }
+    };
 }
 fn Result<usize, errors::Error> signature(ref u8[] source, ref mut lexer::State s, ref mut Table t) {
     if (t.count >= 16) { return .err(errors::make(4, s.begin)); }
@@ -64,7 +79,10 @@ fn Result<usize, errors::Error> signature(ref u8[] source, ref mut lexer::State 
     var locals::Table parameters = locals::empty();
     while (s.kind != 41) {
         if (arity >= 8) { return .err(errors::make(4, s.begin)); }
-        let u8 parameter_type = types::parse(source, s)?;
+        let u8 parameter_record = record_parameter(source, s)?;
+        let u8 parameter_type = if (parameter_record == 0) { types::parse(source, s)? }
+            else { let usize named = lexer::next(source, s)?; 0 };
+        if (parameter_record != 0 && s.kind == 60) { return .err(errors::make(3, s.begin)); }
         var usize parameter_length = 0;
         if (s.kind == 91) {
             if (!types::scalar(parameter_type)) { return .err(errors::make(3, s.begin)); }
@@ -80,6 +98,7 @@ fn Result<usize, errors::Error> signature(ref u8[] source, ref mut lexer::State 
         t.param_ends[at] = end;
         t.param_types[at] = parameter_type;
         t.param_lengths[at] = parameter_length;
+        t.param_records[at] = parameter_record;
         arity += 1;
         let usize next = lexer::next(source, s)?;
         if (s.kind == 41) { break; }

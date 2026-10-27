@@ -828,6 +828,16 @@ pub fn Result<ir::Program, errors::Error> compile(ref u8[] source) {
         case .ok(value): { value } case .err(_): { return .err(errors::make(1, 0)); }
     };
     var functions::Table signatures = functions::scan(source)?;
+    // Signature recognition is not an executable record-argument ABI. Reject
+    // every declaration before array catalogs or bodies can treat its zero tag
+    // as a scalar, including unused and forward helpers.
+    var usize parameter = 0;
+    while (parameter < 128) {
+        if (signatures.param_records[parameter] != 0) {
+            return .err(errors::make(3, signatures.param_begins[parameter]));
+        }
+        parameter += 1;
+    }
     var ir::Program p = ir::empty();
     p.function_count = signatures.count;
     p.entry = signatures.entry;
