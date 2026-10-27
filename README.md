@@ -1,7 +1,7 @@
 # Brownie C
 
 - Status: M1 scalar checkpoint verified; M2 function-owned scalar arrays with helper declarations, by-value parameters, argument capture, copies, length access, lexical cleanup, source results, and bare-name, call-result, and repeated-literal assignment implemented; private entry-owned struct IR/verifier and metered VM dispatch implemented; declaration-only source struct layouts are historical verified evidence; bounded entry scalar-field construction and reads remain a verified historical read baseline; entry-only one-level scalar-field writes implemented with historical focused development/release validation; entry-only scalar-record copy initialization and whole-record assignment implemented and verified stepwise in development and release; bounded entry nested constructors, multi-segment scalar paths, and whole-root nested copies implemented, with their receipt historical after child-binding compiler changes; whole-record child binding initializers verified historically; subrecord declaration initializer receipts historical after assignment changes; per-leaf assignment receipts historical after atomic changes; atomic subrecord assignment verified in development and release; full profile incomplete; constructor child subrecord paths verified in development and release; private scalar-value record replacement verified; metered atomic root replacement verified
-- Root constructor assignment: verified in development and release.
+- Root constructor assignment: verified in development and release; child constructor assignment is verified in development and release.
 - Design date: 2026-10-23
 - First delivery target: Windows 11 x64
 
@@ -254,6 +254,19 @@ CLI cases per development/release profile without result reuse. The [receipt](do
 records 101 input hashes, compiler/artifact identities, commands and outcomes.
 Other CLI matrices, full native suites, Linux, packaging, isolation and
 performance were not rerun.
+That 28-group and 2,390-CLI result remains historical for `1627ee4` after the
+later backend inputs; it remains recorded for that commit.
+
+[Entry-only child constructor assignment](docs/engineering/m2-struct-subreplace-source.md)
+is now implemented at frontend `a24c0b1` on backend `9fa0180`. It reuses
+constructor staging, then consecutive loads and one `SSUBREPLACE` (49) for an
+exact nominal child path, without another owner, site, or extent. Version JSON
+reports `struct_subrecord_constructor_assignment: true` under the unchanged
+nested profile. The complete `--subreplace-source` invocation passed 36 native groups and
+2,383 CLI cases per development/release profile without result reuse. The
+[receipt](docs/evidence/m2-struct-subreplace-source-windows-20261027.json) records 105 input hashes,
+compiler/artifact identities, commands and outcomes. Other CLI matrices, full
+native suites, Linux, packaging, isolation and performance were not rerun.
 
 The declaration-only contract and its receipt remain historical evidence for
 declarations without record bindings.
@@ -419,7 +432,8 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 constructor child paths](docs/engineering/m2-struct-child-path.md): exact nominal subrecord snapshots without intermediate owners
 - [M2 metered root replacement](docs/engineering/m2-struct-replace-vm.md): independent verification, prepaid atomic replacement and existing ownership
 - [M2 scalar-value record replacement](docs/engineering/m2-struct-replace-values.md): private staged overwrite without another owner or extent
-- [M2 entry-only root constructor assignment](docs/engineering/m2-struct-replace-source.md): source-order staging, consecutive loads, one `SREPLACE`, existing ownership, and aggregate verification in progress
+- [M2 entry-only root constructor assignment](docs/engineering/m2-struct-replace-source.md): source-order staging, consecutive loads, one `SREPLACE`, existing ownership, and verified results retained for its original commit
+- [M2 entry-only child constructor assignment](docs/engineering/m2-struct-subreplace-source.md): exact nominal child staging, one `SSUBREPLACE`, existing ownership, and aggregate verification in progress
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
 - [Design baseline](docs/design-baseline.md): source provenance, evidence, and findings

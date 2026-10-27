@@ -1,7 +1,7 @@
 # Validation
 
 - Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, switch-expression, i64, and unsigned receipts are verified historical evidence; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified; private entry-array IR/VM and source-array reads, writes, copy initializers, parameters, results, and assignment forms implemented; in-place repeated-literal assignment verified; private entry-owned struct IR/verifier verified historically; private struct VM verified with native 38/38 and CLI 115 in both profiles; declaration-only source structs historically verified in development and release (23 native groups and 2,208 CLI cases per profile); bounded source struct construction and field reads form a verified historical read baseline; entry-only one-level scalar-field writes have historical focused development/release validation; entry-only scalar-record copy initialization and whole-record assignment are verified stepwise in development and release; bounded nested constructors, multi-segment scalar paths, and whole-root copies have results that are historical after child-binding compiler changes; whole-record child binding initializers have historical receipts; subrecord declaration initializer receipts are historical after assignment changes; atomic subrecord assignment is verified in development and release; constructor child subrecord paths verified in development and release; private scalar-value record replacement verified; metered atomic root replacement verified
-- Root constructor assignment: verified in development and release.
+- Root constructor assignment: verified in development and release; child constructor assignment is verified in development and release.
 - Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/u8/u32/usize/bool values, explicit widening, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation; private function-owned array IR/native dispatch with separate recursive frame tokens, let/var scalar arrays in lexical scopes of ordinary functions, indexed reads/writes, copy initializers, length access, lexical cleanup including `?` failure, by-value parameters, source results, and bare-name, call-result, and repeated-literal assignment are implemented; private entry-owned struct IR/verifier and metered VM dispatch exist; source struct declarations attach immutable layouts; bounded entry construction, record bindings, one-level scalar field reads/writes, bare-name record copy initialization, and whole-record assignment lower to `SINIT`, `SREAD`, `SWRITE`, `SCOPY`, `SASSIGN`, and atomic `SSUBASSIGN`; helper-local record statements and for-header writes/copies remain rejected; bounded nested constructors, multi-segment scalar paths, and whole-root copies are implemented, and child fields also accept whole visible bindings of the exact nominal type; the nested result is historical after that compiler change, subrecord declaration extraction is also implemented, while struct parameters/results, and borrows remain unavailable
 
 ## Validation source of truth
@@ -1054,6 +1054,19 @@ CLI cases per development/release profile without result reuse. The [receipt](do
 records 101 input hashes, compiler/artifact identities, commands and outcomes.
 Other CLI matrices, full native suites, Linux, packaging, isolation and
 performance were not rerun.
+That 28-group and 2,390-CLI result remains historical for `1627ee4` after the
+later backend inputs; it remains recorded for that commit.
+
+[Entry-only child constructor assignment](docs/engineering/m2-struct-subreplace-source.md)
+is now implemented at frontend `a24c0b1` on backend `9fa0180`. It reuses
+constructor staging, then consecutive loads and one `SSUBREPLACE` (49) for an
+exact nominal child path, without another owner, site, or extent. Version JSON
+reports `struct_subrecord_constructor_assignment: true` under the unchanged
+nested profile. The complete `--subreplace-source` invocation passed 36 native groups and
+2,383 CLI cases per development/release profile without result reuse. The
+[receipt](docs/evidence/m2-struct-subreplace-source-windows-20261027.json) records 105 input hashes,
+compiler/artifact identities, commands and outcomes. Other CLI matrices, full
+native suites, Linux, packaging, isolation and performance were not rerun.
 
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker

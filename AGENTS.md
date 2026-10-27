@@ -12,7 +12,7 @@ own the affected contract. Broader scaffold procedures are optional.
 
 - M0 native primitives exist under `probes/m0` and have a repeatable Windows harness.
 - The M1 scalar lexer/parser, i32 checks, private IR verifier, VM, and CLI exist in src/.
-- Entry-only mutable root constructor assignment is verified in development and release.
+- Entry-only mutable root constructor assignment is verified in development and release; child constructor assignment is verified in development and release.
 - M2 has private scalar-array layout, codec, caller-backed storage, owner-lifetime and copy helpers;
   private function-owned array IR has independent verification and metered native VM dispatch. The current
   source slices add immutable/mutable scalar-array declarations in lexical scopes of ordinary functions, indexed reads,
@@ -334,6 +334,18 @@ own the affected contract. Broader scaffold procedures are optional.
   records 101 input hashes, compiler/artifact identities, commands and outcomes.
   Other CLI matrices, full native suites, Linux, packaging, isolation and
   performance were not rerun.
+  That 28-group and 2,390-CLI result remains historical for `1627ee4` after the
+  later backend inputs; it remains recorded for that commit.
+  [Entry-only child constructor assignment](docs/engineering/m2-struct-subreplace-source.md)
+  is now implemented at frontend `a24c0b1` on backend `9fa0180`. It reuses
+  constructor staging, then consecutive loads and one `SSUBREPLACE` (49) for an
+  exact nominal child path, without another owner, site, or extent. Version JSON
+  reports `struct_subrecord_constructor_assignment: true` under the unchanged
+  nested profile. The complete `--subreplace-source` invocation passed 36 native groups and
+  2,383 CLI cases per development/release profile without result reuse. The
+  [receipt](docs/evidence/m2-struct-subreplace-source-windows-20261027.json) records 105 input hashes,
+  compiler/artifact identities, commands and outcomes. Other CLI matrices, full
+  native suites, Linux, packaging, isolation and performance were not rerun.
 - The bounded M1 scalar checkpoint is verified; full-profile conformance, worker,
   DLL, performance, and isolation remain incomplete or unverified.
 - Root fairy.toml builds the native CLI; tools/verify-m1.ps1 verifies its narrow profile.

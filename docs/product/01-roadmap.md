@@ -1,7 +1,7 @@
 # Roadmap
 
 - Status: Accepted delivery sequence; M0 verified; named M1 slices through unsigned have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified, 2026-10-23; private entry-array IR/VM verified by its native harness, 2026-10-24; source-array reads, writes, copy initializers, parameters, results, and assignment forms implemented; in-place repeated-literal assignment verified; private scalar struct layout and storage implemented and verified; private scalar struct copy/assignment implemented and verified; private nested struct storage implemented and verified; private nested struct copy/assignment implemented and verified; shared struct-owner foundation implemented and verified; private struct-owner copy/assignment implemented and verified; private entry-owned struct IR/verifier verified historically; private struct VM implemented and verified, native 38/38 and CLI 115 in both profiles; declaration-only source structs historically verified stepwise in development and release (23 native groups and 2,208 CLI cases per profile); bounded entry scalar-field construction and reads are a verified historical read baseline; entry-only one-level scalar-field writes have historical focused development/release validation; entry-only scalar-record copy initialization and whole-record assignment are verified stepwise in development and release; bounded nested constructors, multi-segment scalar paths, and whole-root nested copies are implemented, with their result historical after child-binding compiler changes; whole-record child binding initializers have historical receipts; subrecord declaration initializer receipts are historical after assignment changes; atomic subrecord assignment is verified in development and release; constructor child subrecord paths verified in development and release; private scalar-value record replacement verified; metered atomic root replacement verified
-- Root constructor assignment: verified in development and release.
+- Root constructor assignment: verified in development and release; child constructor assignment is verified in development and release.
 - Current progress: M1 scalar checkpoint verified; M2 function-owned scalar arrays cover lexical storage, copy, length, helper locals, by-value parameters, source results, direct returns, repeated return literals, call-result assignment, and in-place repeated-literal assignment; private scalar struct layout, storage, and copy/assignment exist; private nested struct storage is verified; private nested struct copy/assignment is verified; shared struct-owner foundation is verified; private struct-owner copy/assignment is verified; private entry-owned struct IR and metered VM execution exist; declaration-only source struct layouts are historical verified evidence; bounded entry scalar-field construction and one-level reads are the historical verified read baseline; entry-only one-level field writes are supported with historical verification, and bare-name record copies plus whole-record assignment are verified stepwise in development and release; bounded nested constructors, multi-segment scalar paths, and whole-root copies are implemented, and child fields now accept exact-type whole visible bindings with development/release verification; their nested result is historical after the child compiler change; subrecord declaration extraction has historical receipts; atomic subrecord assignment is verified in development and release; parameters/results, borrows, Buffer, and text remain open; full-profile conformance incomplete; M3-M5 not started; constructor child subrecord paths verified in development and release
 
 This roadmap orders learning and evidence. It is not a release promise. M0 has a
@@ -496,6 +496,19 @@ CLI cases per development/release profile without result reuse. The [receipt](..
 records 101 input hashes, compiler/artifact identities, commands and outcomes.
 Other CLI matrices, full native suites, Linux, packaging, isolation and
 performance were not rerun.
+That 28-group and 2,390-CLI result remains historical for `1627ee4` after the
+later backend inputs; it remains recorded for that commit.
+
+[Entry-only child constructor assignment](../engineering/m2-struct-subreplace-source.md)
+is now implemented at frontend `a24c0b1` on backend `9fa0180`. It reuses
+constructor staging, then consecutive loads and one `SSUBREPLACE` (49) for an
+exact nominal child path, without another owner, site, or extent. Version JSON
+reports `struct_subrecord_constructor_assignment: true` under the unchanged
+nested profile. The complete `--subreplace-source` invocation passed 36 native groups and
+2,383 CLI cases per development/release profile without result reuse. The
+[receipt](../evidence/m2-struct-subreplace-source-windows-20261027.json) records 105 input hashes,
+compiler/artifact identities, commands and outcomes. Other CLI matrices, full
+native suites, Linux, packaging, isolation and performance were not rerun.
 
 Goal: connect arrays, plain structs, borrows, Buffer, input,
 output, and UTF-8.

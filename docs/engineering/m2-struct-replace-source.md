@@ -1,9 +1,11 @@
 # M2 Entry-Only Root Constructor Assignment
 
-- Status: implemented and verified in development and release.
+- Status: implemented and verified for `1627ee4`; historical after later backend inputs.
 - Implementation commit: `1627ee4`.
 - Predecessor: [metered atomic root replacement](m2-struct-replace-vm.md).
-- Evidence: [Windows receipt](../evidence/m2-struct-replace-source-windows-20261027.json).
+- Successor: [entry-only child constructor assignment](m2-struct-subreplace-source.md), now implemented.
+- Historical evidence: [Windows receipt](../evidence/m2-struct-replace-source-windows-20261027.json),
+  retained for `1627ee4` and historical for changed backend inputs.
 - Implementation: [source lowering](../../src/compiler.fy), [constructor walker and staging](../../src/struct_value_source.fy),
   [IR builder](../../src/ir.fy), [verifier](../../src/struct_verifier.fy), [VM dispatch](../../src/struct_vm.fy),
   and [version JSON](../../src/main.fy).
@@ -31,8 +33,9 @@ clauses continue to reject record constructor assignment.
 Scalar fields may use scalar expressions. Child fields may use inline nested
 constructors, an exact-type whole binding, or an exact-type record path. The
 accepted `p = P { ... }` form is an assignment to the root binding. Child-target
-constructor assignment such as `p.i = I { ... }`, general aggregate expressions,
-record parameters/results, and borrows remain unsupported.
+constructor assignment such as `p.i = I { ... }` was outside this slice; the
+[child successor](m2-struct-subreplace-source.md) now implements it. General
+aggregate expressions, record parameters/results, and borrows remain unsupported.
 
 ## Lowering and visibility
 
@@ -88,8 +91,9 @@ Each profile passed 28 unique native groups: six new source replacement, five
 struct-value, five child-path, six source-copy, and six replacement-VM groups.
 The 2,390 CLI cases per profile comprise 97 new replacement, 83 child-path,
 110 source-copy, 131 subrecord-assignment, and 1,969 M1 regression cases.
-An obsolete source-copy rejection fixture now accepts root constructors;
-child-target constructor assignment remains rejected.
+An obsolete source-copy rejection fixture now accepts root constructors.
+Child-target constructor assignment was outside this slice; the
+[child successor](m2-struct-subreplace-source.md) now implements it.
 
 The simple one-field CLI replacement succeeds at exactly 199,180 Fuel and
 fails at 199,179. Native execution with a four-byte payload succeeds at
@@ -111,3 +115,6 @@ identity is unchanged. Earlier receipts are historical for changed frontend,
 version JSON, root-lock, fixture and harness inputs. Full native suites, other
 CLI matrices, M0, Linux, packaging, isolation, DLL, allocation instrumentation
 and performance were not run.
+
+These 28-group and 2,390-CLI results remain historical for `1627ee4` after the
+later backend inputs; they remain recorded for that commit.
