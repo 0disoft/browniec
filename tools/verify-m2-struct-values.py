@@ -28,7 +28,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--compiler', type=Path, default=ROOT / 'build/toolchain' / ('fairyc.exe' if os.name == 'nt' else 'fairyc'))
     selection = parser.add_mutually_exclusive_group()
-    selection.add_argument('--function-ir', action='store_true', help='Verify function-owned record sites without exposing helper VM/source support.')
+    selection.add_argument('--function-vm', action='store_true', help='Verify frame-local record execution, recursive helpers and shared owner limits.')
+    selection.add_argument('--function-ir', action='store_true', help='Verify function-owned record sites and related regressions.')
     selection.add_argument('--subreplace-source', action='store_true', help='Verify atomic subrecord constructor assignment and backend/source regressions.')
     selection.add_argument('--replace-source', action='store_true', help='Verify atomic constructor assignment and shared declaration staging.')
     selection.add_argument('--replace-vm', action='store_true', help='Verify metered root replacement and verifier/VM regressions.')
@@ -127,6 +128,16 @@ def main():
         groups = {'tests::m2::struct_function_ir::': 6, 'tests::m2::struct_ir::': 9,
                   'tests::m2::struct_replace_source::': 6, 'tests::m2::struct_subreplace_vm::': 6,
                   'tests::m2::struct_atomic_source::': 4}
+    if args.function_vm:
+        kind = 'struct-function-vm'
+        files = ['tests/m2/struct_function_vm.fy', 'tests/m2/struct_function_ir.fy',
+                 'tests/m2/struct_ir.fy', 'tests/m2/struct_vm.fy',
+                 'tests/m2/struct_replace_vm.fy', 'tests/m2/struct_subreplace_vm.fy',
+                 'tests/m2/struct_atomic_source.fy']
+        groups = {'tests::m2::struct_function_vm::': 7, 'tests::m2::struct_function_ir::': 6,
+                  'tests::m2::struct_ir::': 9, 'tests::m2::struct_vm::': 8,
+                  'tests::m2::struct_replace_vm::': 6, 'tests::m2::struct_subreplace_vm::': 6,
+                  'tests::m2::struct_atomic_source::': 4}
     expected = sum(groups.values())
     compiler = args.compiler.resolve(strict=True)
     output = ROOT / ('build/m2-' + kind)
@@ -150,8 +161,9 @@ def main():
     inputs = [dict(path=p.relative_to(ROOT).as_posix(), sha256=digest(p)) for p in sorted(paths)]
     # CLI scripts also generate cases from these fixtures, independently of native selection.
     paths.update(ROOT / ('tests/m2/' + name + '.fy') for name in ['struct_values', 'struct_write', 'struct_source_copy', 'struct_source_nested', 'struct_child_source', 'struct_child_path_source', 'struct_extract_source', 'struct_subassign_source'])
-    if args.function_ir:
+    if args.function_ir or args.function_vm:
         paths.add(ROOT / 'tests/m2/struct_subreplace_source.fy')
+        paths.add(ROOT / 'tests/m2/struct_replace_source.fy')
     inputs = [dict(path=p.relative_to(ROOT).as_posix(), sha256=digest(p)) for p in sorted(paths)]
     compiler_hash = digest(compiler)
     results = []
@@ -200,7 +212,7 @@ def main():
                           ('check-m2-struct-source-copy.py', 'm2-struct-source-copy'),
                           ('check-m2-struct-subassign.py', 'm2-struct-subassign'),
                           ('check-m1-cli.py', 'm1')]
-        if args.subreplace_source or args.function_ir:
+        if args.subreplace_source or args.function_ir or args.function_vm:
             selections = [('check-m2-struct-subreplace-source.py', 'm2-struct-subreplace-source'),
                           ('check-m2-struct-replace-source.py', 'm2-struct-replace-source'),
                           ('check-m2-struct-child-path.py', 'm2-struct-child-path'),
@@ -224,9 +236,10 @@ def main():
         compilerVersion=version, compilerSha256=compiler_hash, os=platform.platform(),
         standardLibraryLockIdentity=[p for p in lock['packages'] if p['role'] != 'root'],
         lockedCheck=check, commands=commands, sourceSha256=inputs, results=results,
-        limitations=[*(['Private function-owned record IR/verifier foundation only. Helper record VM execution still fails with verifier kind 5; source helper records, record parameters/results and borrows remain unsupported. No opcode, VM dispatch, Fuel or version capability changes. Only child/root constructor assignment, child-path, subrecord-assignment and M1 CLI matrices are rerun.'] if args.function_ir else []),
+        limitations=[*(['Private frame-local record execution only: 32 frames share sixteen owners and the payload arena. Source helper records, record parameters/results and borrows remain unsupported. No opcode, Fuel or version capability changes. Only child/root constructor assignment, child-path, subrecord-assignment and M1 CLI matrices are rerun.'] if args.function_vm else []),
+                     *(['This selection focuses on private function-owned record IR/verifier metadata; frame-local helper record execution is now implemented. Source helper records, record parameters/results and borrows remain unsupported. No new opcode, Fuel or version capability. Only child/root constructor assignment, child-path, subrecord-assignment and M1 CLI matrices are rerun.'] if args.function_ir else []),
                      *(['Root and subrecord constructor assignment are implemented; source remains entry-only with sixteen-leaf staging, depth 16, 128-byte roots. Struct parameters/results, borrows and general aggregate expressions remain unavailable. Other struct/array CLI matrices are not rerun.'] if args.subreplace_source else []),
-                     *(['Root and subrecord constructor assignment are implemented; this selection covers the root source slice and related regressions. Struct parameters/results and borrows remain unavailable. Other struct/array CLI matrices are not rerun.'] if args.replace_source else [] if args.subreplace_source or args.function_ir else ['Source records remain entry-only: inline/binding/path child initializers and scalar paths have sixteen-leaf staging, depth 16 and root cap 128 bytes. Subrecord extraction, assignment and root/child constructor assignment are implemented; struct parameters/results and borrows remain unavailable.']),
+                     *(['Root and subrecord constructor assignment are implemented; this selection covers the root source slice and related regressions. Struct parameters/results and borrows remain unavailable. Other struct/array CLI matrices are not rerun.'] if args.replace_source else [] if args.subreplace_source or args.function_ir or args.function_vm else ['Source records remain entry-only: inline/binding/path child initializers and scalar paths have sixteen-leaf staging, depth 16 and root cap 128 bytes. Subrecord extraction, assignment and root/child constructor assignment are implemented; struct parameters/results and borrows remain unavailable.']),
                      *(['The child-path selection runs only child-path, whole-child, extraction and subrecord-assignment CLI matrices; scalar, array and other struct CLI matrices are not rerun.'] if args.child_path else []),
                      *(['Private scalar-value root replacement only; no source syntax, opcode, verifier, VM dispatch or Fuel change. Only child-path and subrecord-assignment CLI matrices are rerun.'] if args.replace_values else []),
                      *(['Private SREPLACE (48) integration only; no constructor-assignment source syntax or version capability is added. Only child-path and subrecord-assignment CLI matrices are rerun.'] if args.replace_vm else []),

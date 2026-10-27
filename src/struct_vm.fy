@@ -8,11 +8,12 @@ import array_vm as arrays;
 import errors as errors;
 import std::bytes as bytes;
 
-// Entry invocation only. These bindings share the array state's owner table.
-pub struct State { owners::Token[16] tokens; }
+// Static record sites repeat under recursion; each invocation has its own tokens.
+// All frames share the array state's sixteen owner slots and payload arena.
+pub struct State { owners::Token[512] tokens; }
 struct Selection { usize leaves; usize length; usize[16] path; }
 pub fn State empty() {
-    return State { .tokens = [owners::Token { .slot = 0, .generation = 0 }; 16] };
+    return State { .tokens = [owners::Token { .slot = 0, .generation = 0 }; 512] };
 }
 pub fn Result<usize, errors::Error> cost(u8 op, usize offset) {
     // Fixed ceilings, not machine-instruction counts. One canonical plan visits
@@ -64,9 +65,9 @@ fn Result<Selection, errors::Error> select(ref layouts::Catalog catalog, usize r
     if (ordinal != 128) { return .err(errors::make(5, offset)); }
     return .ok(result);
 }
-fn bool bound(ref meta::Catalog catalog, usize id, ref State state, ref owners::Table table) {
-    if (id >= catalog.count || id >= 16) { return false; }
-    let owners::Token token = state.tokens[id];
+fn bool bound(ref meta::Catalog catalog, usize id, usize frame, ref State state, ref owners::Table table) {
+    if (frame >= 32 || id >= catalog.count || id >= 16) { return false; }
+    let owners::Token token = state.tokens[frame * 16 + id];
     if (token.slot >= 16 || token.generation == 0) { return false; }
     let owners::Owner owner = table.slots[token.slot];
     return owner.occupied && owner.live && owner.generation == token.generation &&
@@ -76,11 +77,12 @@ fn Result<usize, errors::Error> execute(u8 op, usize dst, usize a, usize b, usiz
     ref meta::Catalog catalog, ref mut State state, ref mut arrays::State shared,
     ref mut bytes::Buffer buffer, ref mut i64[] registers, usize offset) {
     let usize id = if (op == 43) { a } else { dst };
-    if (frame != 0 || catalog.count > 16 || id >= catalog.count) { return .err(errors::make(5, offset)); }
+    if (frame >= 32 || catalog.count > 16 || id >= catalog.count) { return .err(errors::make(5, offset)); }
+    let usize base = frame * 16;
     let usize record = catalog.records[id] as usize;
     let ref mut u8[] data = bytes::view_mut(buffer);
     if (op == 41 || op == 42) {
-        if (b != 0 || state.tokens[id].generation != 0) { return .err(errors::make(5, offset)); }
+        if (b != 0 || state.tokens[base + id].generation != 0) { return .err(errors::make(5, offset)); }
         var owners::Token token = owners::Token { .slot = 0, .generation = 0 };
         if (op == 41) {
             let Selection shape = select(ref catalog.layouts, record, 128, offset)?;
@@ -89,31 +91,31 @@ fn Result<usize, errors::Error> execute(u8 op, usize dst, usize a, usize b, usiz
                 case .ok(value): { value } case .err(e): { return .err(arrays::failure(e, offset)); }
             };
         } else {
-            if (!bound(catalog, a, state, ref shared.owners) || catalog.records[a] != catalog.records[id]) { return .err(errors::make(5, offset)); }
-            token = switch (owners::copy_record(ref catalog.layouts, state.tokens[a], data, ref mut shared.owners)) {
+            if (!bound(catalog, a, frame, state, ref shared.owners) || catalog.records[a] != catalog.records[id]) { return .err(errors::make(5, offset)); }
+            token = switch (owners::copy_record(ref catalog.layouts, state.tokens[base + a], data, ref mut shared.owners)) {
                 case .ok(value): { value } case .err(e): { return .err(arrays::failure(e, offset)); }
             };
         }
-        state.tokens[id] = token;
+        state.tokens[base + id] = token;
     } else {
-        if (!bound(catalog, id, state, ref shared.owners)) { return .err(errors::make(5, offset)); }
+        if (!bound(catalog, id, frame, state, ref shared.owners)) { return .err(errors::make(5, offset)); }
         if (op == 48) {
             if (!catalog.mutable[id] || b != record) { return .err(errors::make(5,offset)); }
             let Selection shape = select(ref catalog.layouts,record,128,offset)?;
             if (a > registers.len || shape.leaves > registers.len-a) { return .err(errors::make(5,offset)); }
-            let usize replaced = switch (owners::replace_record(ref catalog.layouts,state.tokens[id],b,
+            let usize replaced = switch (owners::replace_record(ref catalog.layouts,state.tokens[base + id],b,
                 registers[a..a+shape.leaves],data,ref shared.owners)) {
                 case .ok(n): { n } case .err(e): { return .err(arrays::failure(e,offset)); }
             };
         } else if (op == 45) {
             if (a != 0 || b != 0) { return .err(errors::make(5, offset)); }
-            let usize reclaimed = switch (owners::release(ref mut shared.owners, state.tokens[id], data.len)) {
+            let usize reclaimed = switch (owners::release(ref mut shared.owners, state.tokens[base + id], data.len)) {
                 case .ok(n): { n } case .err(e): { return .err(arrays::failure(e, offset)); }
             };
-            state.tokens[id] = owners::Token { .slot = 0, .generation = 0 };
+            state.tokens[base + id] = owners::Token { .slot = 0, .generation = 0 };
         } else if (op == 46) {
-            if (b != 0 || !catalog.mutable[id] || !bound(catalog, a, state, ref shared.owners) || catalog.records[a] != catalog.records[id]) { return .err(errors::make(5, offset)); }
-            let usize assigned = switch (owners::assign_record(ref catalog.layouts, state.tokens[id], state.tokens[a], data, ref shared.owners)) {
+            if (b != 0 || !catalog.mutable[id] || !bound(catalog, a, frame, state, ref shared.owners) || catalog.records[a] != catalog.records[id]) { return .err(errors::make(5, offset)); }
+            let usize assigned = switch (owners::assign_record(ref catalog.layouts, state.tokens[base + id], state.tokens[base + a], data, ref shared.owners)) {
                 case .ok(n): { n } case .err(e): { return .err(arrays::failure(e, offset)); }
             };
         } else {
@@ -122,12 +124,12 @@ fn Result<usize, errors::Error> execute(u8 op, usize dst, usize a, usize b, usiz
             if (ordinal >= 128) { return .err(errors::make(5, offset)); }
             let Selection leaf = select(ref catalog.layouts, record, ordinal, offset)?;
             if (op == 43) {
-                let i64 value = switch (owners::read_record(ref catalog.layouts, ref shared.owners, state.tokens[id], ref leaf.path[..leaf.length], data)) {
+                let i64 value = switch (owners::read_record(ref catalog.layouts, ref shared.owners, state.tokens[base + id], ref leaf.path[..leaf.length], data)) {
                     case .ok(n): { n } case .err(e): { return .err(arrays::failure(e, offset)); }
                 };
                 registers[dst] = value;
             } else if (op == 44) {
-                let usize written = switch (owners::write_record(ref catalog.layouts, ref shared.owners, state.tokens[id], ref leaf.path[..leaf.length], registers[b], data)) {
+                let usize written = switch (owners::write_record(ref catalog.layouts, ref shared.owners, state.tokens[base + id], ref leaf.path[..leaf.length], registers[b], data)) {
                     case .ok(n): { n } case .err(e): { return .err(arrays::failure(e, offset)); }
                 };
             } else { return .err(errors::make(5, offset)); }
@@ -155,12 +157,13 @@ pub fn Result<usize, errors::Error> subassign(usize dst, usize source, usize nom
     usize fuel, usize offset) {
     let usize work = cost(47,offset)?;
     if (fuel < work) { return .err(errors::make(8,offset)); }
-    if (frame != 0 || catalog.count > 16 || dst >= catalog.count || !catalog.mutable[dst] ||
-        !bound(catalog,dst,state,ref shared.owners) || !bound(catalog,source,state,ref shared.owners)) {
+    if (frame >= 32 || catalog.count > 16 || dst >= catalog.count || !catalog.mutable[dst] ||
+        !bound(catalog,dst,frame,state,ref shared.owners) || !bound(catalog,source,frame,state,ref shared.owners)) {
         return .err(errors::make(5,offset));
     }
+    let usize base = frame * 16;
     let ref mut u8[] data = bytes::view_mut(buffer);
-    let usize assigned = switch(owners::assign_subrecord(ref catalog.layouts,state.tokens[dst],state.tokens[source],
+    let usize assigned = switch(owners::assign_subrecord(ref catalog.layouts,state.tokens[base + dst],state.tokens[base + source],
         nominal,target_leaf,source_leaf,data,ref shared.owners)) {
         case .ok(n): { n } case .err(e): { return .err(arrays::failure(e,offset)); }
     };
@@ -174,14 +177,15 @@ pub fn Result<usize, errors::Error> subreplace(usize dst, usize first, usize nom
     usize fuel, usize offset) {
     let usize work = cost(49,offset)?;
     if (fuel < work) { return .err(errors::make(8,offset)); }
-    if (frame != 0 || catalog.count > 16 || dst >= catalog.count || !catalog.mutable[dst] ||
-        !bound(catalog,dst,state,ref shared.owners)) { return .err(errors::make(5,offset)); }
+    if (frame >= 32 || catalog.count > 16 || dst >= catalog.count || !catalog.mutable[dst] ||
+        !bound(catalog,dst,frame,state,ref shared.owners)) { return .err(errors::make(5,offset)); }
+    let usize base = frame * 16;
     let usize count = switch(ranges::leaves(ref catalog.layouts,nominal)) {
         case .ok(n): { n } case .err(_): { return .err(errors::make(5,offset)); }
     };
     if (first > registers.len || count > registers.len-first) { return .err(errors::make(5,offset)); }
     let ref mut u8[] data = bytes::view_mut(buffer);
-    let usize replaced = switch(owners::replace_subrecord(ref catalog.layouts,state.tokens[dst],nominal,
+    let usize replaced = switch(owners::replace_subrecord(ref catalog.layouts,state.tokens[base + dst],nominal,
         target_leaf,registers[first..first+count],data,ref shared.owners)) {
         case .ok(n): { n } case .err(e): { return .err(arrays::failure(e,offset)); }
     };

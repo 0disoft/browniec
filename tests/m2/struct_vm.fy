@@ -88,7 +88,7 @@ fn void every_opcode_prepays_before_tokens_bytes_registers_or_metadata_change() 
         { let ref u8[] view = bytes::view(ref data); var usize j = 0; while (j < 64) { assert(view[j] == saved[j]); j += 1; } }
         step(op, dst, a, b, ref c, ref mut state, ref mut shared, ref mut data, ref mut cells); i += 1;
     }
-    assert(!records::cost(49, 0).is_ok);
+    assert(!records::cost(50, 0).is_ok);
 }
 
 @test

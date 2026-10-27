@@ -44,8 +44,8 @@ fn void builders_default_to_entry_and_reject_bad_function_ids_without_catalog_ch
 @test
 fn void every_record_opcode_is_verified_in_its_declared_function() {
  let ir::Program p=program();assert(verifier::verify(ref p).is_ok && p.record_functions[1]==1 && p.record_functions[3]==1);
- // Helper execution remains deliberately gated until the frame-local VM successor.
- assert(switch(vm::run(ref p,2000000)){case .err(e):{e.kind==5}case .ok(_):{false}});
+ // Frame-local record dispatch now executes the verified helper.
+ assert(switch(vm::run(ref p,2000000)){case .err(_):{false}case .ok(n):{n==42}});
 }
 @test
 fn void destination_and_source_ownership_are_independent_of_layout_and_liveness() {
