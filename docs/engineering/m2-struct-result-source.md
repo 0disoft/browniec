@@ -38,10 +38,12 @@ fn i32 main() {
 }
 ```
 
-The named `return` operand is exactly one identifier followed by `;`. The
-[direct-call successor](m2-struct-return-calls.md) additionally supports
-`return make(...);`. A field path, parenthesized name, constructor, aggregate
-expression, array, or scalar value does not satisfy a record result.
+At this slice's original checkpoint, the named `return` operand was exactly one
+identifier followed by `;`. The [direct-call successor](m2-struct-return-calls.md)
+added `return make(...);`, and the [constructor-return
+successor](m2-struct-return-constructors.md) now adds `return Record { ... };`.
+For this slice's original inputs, a field path, parenthesized name, constructor,
+aggregate expression, array, or scalar value did not satisfy a record result.
 
 Record-result calls are accepted as typed declaration initializers:
 
@@ -132,9 +134,10 @@ profile strings remain unchanged. `--version --json` adds
 
 ## Remaining unsupported forms
 
-Record results still do not support:
+This slice originally rejected `return Constructor { ... };`; the
+[constructor-return successor](m2-struct-return-constructors.md) now supports
+that direct form. The remaining unsupported forms are:
 
-- `return Constructor { ... };`;
 - field, parenthesized, or aggregate return expressions;
 - assignment of a call result to an existing record;
 - record-result calls in scalar expressions or general aggregate arguments;

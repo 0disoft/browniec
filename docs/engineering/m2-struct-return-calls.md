@@ -28,10 +28,12 @@ every other visible mixed array and record in reverse lexical order and emits
 
 Argument expressions may themselves return a record or leave an enclosing loop.
 Cleanup releases only live bindings/captures; the pending destination is never
-dropped. An inner loop preserves captures belonging to the surrounding call.
-No record-result `?` propagation, constructor return, parenthesized call return,
-field access on a returned call, aggregate expression, scalar/wrapper use or
-assignment to an existing record is added.
+dropped. An inner loop preserves captures belonging to the surrounding call. At
+this slice's original checkpoint, constructor return, record-result `?` propagation,
+parenthesized call return, field access on a returned call, aggregate expression,
+scalar/wrapper use, and assignment to an existing record were unsupported. The
+[constructor-return successor](m2-struct-return-constructors.md) now adds a
+direct nominal constructor return and does not add those other forms.
 
 ## Ownership, limits and Fuel
 

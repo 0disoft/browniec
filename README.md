@@ -1,6 +1,6 @@
 # Brownie C
 
-- Status: M1 scalar checkpoint verified; experimental M2 function-owned scalar arrays and source records implemented. Array parameters/results and record construction, field access, copies, extraction, and replacement are available. Immutable by-value record parameters are verified in development and release. Private record-result VM ownership transfer is verified for its original inputs. Bounded source record returns and typed call initializers are verified in development and release at `bb401a4` (14 native groups and 2,438 CLI cases per profile). Record borrows, workers, DLL embedding, and full-profile conformance remain incomplete.
+- Status: M1 scalar checkpoint verified; experimental M2 function-owned scalar arrays and source records implemented. Array parameters/results and record construction, field access, copies, extraction, and replacement are available. Immutable by-value record parameters are verified in development and release. Private record-result VM ownership transfer is verified for its original inputs. Bounded source record returns and typed call initializers are verified in development and release at `bb401a4` (14 native groups and 2,438 CLI cases per profile). Direct nominal record constructor returns are verified in development and release at `0a7b539`. Record borrows, workers, DLL embedding, and full-profile conformance remain incomplete.
 - Root constructor assignment: verified in development and release; child constructor assignment is verified in development and release.
 - Private function-owned record IR/verifier and frame-local record VM execution
   are verified in development and release.
@@ -14,6 +14,11 @@
   Development and release each passed 18 native groups and 505 CLI cases in
   separate core/regression phases, with 196 matching rechecked inputs. See
   [the source contract](docs/engineering/m2-struct-return-calls.md).
+- Direct record constructor returns: implemented at `0a7b539` and verified in
+  development and release. `return Pair { ... };` stages fields in declaration
+  order, creates one anonymous immutable result site only after evaluation, and
+  transfers it with the existing `SRET`. See [the constructor
+  contract](docs/engineering/m2-struct-return-constructors.md).
 - Design date: 2026-10-23
 - First delivery target: Windows 11 x64
 
@@ -119,6 +124,28 @@ aggregate, followed by a 70-case per-profile CLI rerun against retained binaries
 Native, build, and other CLI selections were not rerun. The [Windows
 receipt](docs/evidence/m2-struct-result-source-windows-20261028.json) records 219
 rechecked input hashes and the stepwise repair.
+
+The [direct constructor-return slice](docs/engineering/m2-struct-return-constructors.md)
+adds `return Pair { ... };` for an exact-nominal record result. The compiler peeks
+past the `return` and lets the shared constructor check consume the matching type
+name and `{`. Fields evaluate from left to right into depth-first staging slots;
+exact-nominal child bindings, child paths, and nested constructors use their
+existing staging. Only after all fields and the terminator are complete does the
+compiler allocate one immutable anonymous function-owned site and emit `SINIT`.
+No pending owner or name exists while a field expression can return or transfer
+out of a loop. The shared reverse mixed finisher then drops other visible arrays
+and records and emits `SRET`. Transfer adds no payload extent, though the result
+root has its normal constructor extent; a reconstructed parameter keeps its old
+formal copy and the new result live together until cleanup. General expressions,
+parenthesized constructor returns, returned subrecord paths, call-result
+assignment, and record calls in aggregate fields remain unsupported. There is no
+new opcode, VM charge, profile, or version flag. The [Windows
+receipt](docs/evidence/m2-struct-return-constructors-windows-20261028.json) records
+199 matching rechecked inputs and both retained CLI identities. Earlier receipts
+remain historical for their original inputs. Development and release each passed
+26 native groups (6 new plus 20 named-result, direct-call, and
+signature regressions) and 532 CLI cases (144 new, 152 direct return-call, 166
+named source-result, and 70 result-signature).
 
 A [private struct-layout planner](docs/engineering/m2-struct-layout.md) now plans
 acyclic record metadata, and a [scalar-only storage slice](docs/engineering/m2-struct-storage.md)
@@ -446,7 +473,7 @@ Those limits describe the profile, not the language forever.
 
 | Level | Intended capability | Current state |
 | --- | --- | --- |
-| core | Source compile, verify, and native VM CLI | Experimental i32/i64/u8/u32/usize/bool expressions, explicit widening, branches, loops, shallow tagged values, switch statements and expressions, `?` propagation, source arrays, declaration-only source struct layouts, function-owned struct IR execution, helper-local record construction/read/write lowering, bare-name record copy initialization/whole-record assignment, bounded nested constructors/scalar paths/whole-root copies, whole-record child binding initializers, subrecord declaration initializers, atomic subrecord assignment, immutable by-value record parameters with bare binding arguments, and bounded bare-name and direct-call record results with exact-nominal `let`/`var` call initializers; private record-result IR/verifier metadata is verified for its original inputs (39 native groups and 2,317 CLI cases per profile), and source record parameters passed 51 native groups and 2,318 CLI cases per development/release profile in two separate phase runs. Bounded source record results passed 14 native groups and 2,438 CLI cases per development/release profile at `bb401a4`, followed by a focused 70-case-per-profile checker metadata repair. Nested results are historical after the child compiler change, the child feature passed the complete combined harness in development and release; scalar M1 and array reads verified, focused array and struct VM checks recorded, the struct construction/read and field-write baselines recorded historically, and source-copy checks verified stepwise in development and release |
+| core | Source compile, verify, and native VM CLI | Experimental i32/i64/u8/u32/usize/bool expressions, explicit widening, branches, loops, shallow tagged values, switch statements and expressions, `?` propagation, source arrays, declaration-only source struct layouts, function-owned struct IR execution, helper-local record construction/read/write lowering, bare-name record copy initialization/whole-record assignment, bounded nested constructors/scalar paths/whole-root copies, whole-record child binding initializers, subrecord declaration initializers, atomic subrecord assignment, immutable by-value record parameters with bare binding arguments, and bounded bare-name, direct-call, and direct-constructor record results with exact-nominal `let`/`var` call initializers; private record-result IR/verifier metadata is verified for its original inputs (39 native groups and 2,317 CLI cases per profile), and source record parameters passed 51 native groups and 2,318 CLI cases per development/release profile in two separate phase runs. Bounded source record results passed 14 native groups and 2,438 CLI cases per development/release profile at `bb401a4`, followed by a focused 70-case-per-profile checker metadata repair. Direct constructor returns are verified in development and release at `0a7b539`. Nested results are historical after the child compiler change, the child feature passed the complete combined harness in development and release; scalar M1 and array reads verified, focused array and struct VM checks recorded, the struct construction/read and field-write baselines recorded historically, and source-copy checks verified stepwise in development and release |
 | restricted | Windows worker plus parent broker | Not implemented; M4 |
 | embed | Trusted native host through a DLL ABI | Not implemented; M5; no public C export |
 
@@ -520,6 +547,7 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 record-result IR/verifier](docs/engineering/m2-struct-results-ir.md): callee-owned shape anchors, `SRET`, record CALL destinations, exact lifetimes, the historical VM availability gate, and focused Windows evidence
 - [M2 private record-result VM](docs/engineering/m2-struct-result-vm.md): prepaid `SRET` transfer into caller-owned destinations, complete snapshot validation, zero extra owners or payload, unchanged limits, and focused Windows evidence
 - [M2 source record results](docs/engineering/m2-struct-result-source.md): bare exact-nominal returns, typed call initializers, result anchor reuse, pending-destination cleanup, mixed reverse drops, unchanged limits, and verified stepwise development/release evidence
+- [M2 direct record constructor returns](docs/engineering/m2-struct-return-constructors.md): exact-nominal constructor operands, declaration-order staging, deferred site allocation, `SINIT`/`SRET`, constructor-only payload extent, rejected forms, and focused development/release evidence
 - [M2 private struct VM](docs/engineering/m2-struct-vm.md): shared owners and payload, private execution semantics, fixed Fuel charges, and current check status
 - [M2 declaration-only source structs](docs/engineering/m2-struct-source.md): historical bounded parser, forward named fields, immutable layouts, name rules, and stepwise verification
 - [M2 bounded source struct values](docs/engineering/m2-struct-values.md): historical entry construction and one-level reads, ordered typed staging, `SINIT`/scalar-leaf access, mixed cleanup, bounds, and recorded verification
