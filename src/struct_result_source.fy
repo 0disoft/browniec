@@ -46,8 +46,8 @@ pub fn Result<usize,errors::Error> destination(ref functions::Table signatures,u
     }
     return ir::record_in(p,f,nominal,mutable,at);
 }
-// Only a bare visible binding is accepted in this source slice. General record
-// expressions, return constructors and direct return calls remain unavailable.
+// Bare visible bindings and anonymous direct-call results share the finisher.
+// General record expressions and return constructors remain unavailable.
 pub fn Result<usize,errors::Error> returned(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table names,usize at) {
     if(s.kind!=2) {return .err(errors::make(3,s.begin));}
@@ -57,8 +57,14 @@ pub fn Result<usize,errors::Error> returned(ref u8[] source,ref mut lexer::State
     let usize next=lexer::next(source,s)?;
     if(s.kind!=59) {return .err(errors::make(3,s.begin));}
     let usize end=lexer::next(source,s)?;
+    return finish(p,names,id,at);
+}
+// Pending call destinations stay absent from names until CALL and capture
+// cleanup complete. Keep the returned token and drop other mixed bindings.
+pub fn Result<usize,errors::Error> finish(ref mut ir::Program p,
+    ref locals::Table names,usize id,usize at) {
     let usize encoded=p.record_results[names.function] as usize;
-    if(encoded==0 || id>=p.records.count || p.record_functions[id] as usize!=names.function ||
+    if(encoded==0 || id>=p.records.count || id>=16 || p.record_functions[id] as usize!=names.function ||
         p.records.records[id]!=p.records.records[encoded-1]) {return .err(errors::make(3,at));}
     var usize i=names.count;
     while(i>0) {

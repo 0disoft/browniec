@@ -727,6 +727,22 @@ fn Result<bool, errors::Error> control(ref u8[] source, ref mut lexer::State s, 
     if (word_is(source, s, b"return")) {
         let usize keyword = lexer::next(source, s)?;
         if(p.record_results[table.function]!=0) {
+            if(s.kind==2) {
+                var lexer::State look=lexer::snapshot(s);
+                let usize next=lexer::next(source,ref mut look)?;
+                if(look.kind==40) {
+                    if(locals::find(source,table,s.begin,s.end)!=64) {return .err(errors::make(3,s.begin));}
+                    let usize target=functions::find(source,signatures,s.begin,s.end);
+                    let usize shape=(p.record_results[table.function] as usize)-1;
+                    let usize id=record_results::destination(signatures,target,p.records.records[shape] as usize,false,p,table.function,s.begin)?;
+                    let usize name=lexer::next(source,s)?;
+                    let usize called=call_value(source,s,p,table,signatures,target,144+id,at,expr_depth,result_type,depth,loop_state)?;
+                    if(s.kind!=59) {return .err(errors::make(3,s.begin));}
+                    let usize end=lexer::next(source,s)?;
+                    let usize returned=record_results::finish(p,table,id,at)?;
+                    return .ok(true);
+                }
+            }
             let usize returned=record_results::returned(source,s,p,table,at)?;
             return .ok(true);
         }
