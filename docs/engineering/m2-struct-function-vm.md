@@ -16,7 +16,7 @@
 
 This successor removes the entry-only runtime boundary from the function-owned
 record IR foundation. Verified helper IR now executes with frame-local record
-tokens. Source helper records, record parameters, record results, and borrows
+tokens. At this backend checkpoint, source helper records, record parameters, record results, and borrows
 remain unsupported; this slice adds no frontend or version capability.
 
 ## Frame slots
@@ -103,7 +103,8 @@ SDK lock identity is unchanged; the compiler remains `4ce1264273be`.
 Implementation commit: `80ed712`.
 
 Earlier receipts remain historical for changed runtime, root-lock, test and
-harness inputs. Source helper-local records, record parameters/results and
-borrows remain unsupported. Full native suites, other struct/array CLI matrices,
+harness inputs. Source helper-local records were unsupported at this checkpoint;
+the [source successor](m2-struct-function-source.md) enables them. Record parameters/results
+and borrows remain unsupported. Full native suites, other struct/array CLI matrices,
 M0, Linux, packaging, DLL, isolation, allocation instrumentation and performance
 were not run. No measured stack-size or speed claim is made.

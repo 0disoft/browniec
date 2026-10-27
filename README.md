@@ -1,9 +1,10 @@
 # Brownie C
 
-- Status: M1 scalar checkpoint verified; M2 function-owned scalar arrays with helper declarations, by-value parameters, argument capture, copies, length access, lexical cleanup, source results, and bare-name, call-result, and repeated-literal assignment implemented; private entry-owned struct IR/verifier and metered VM dispatch implemented; declaration-only source struct layouts are historical verified evidence; bounded entry scalar-field construction and reads remain a verified historical read baseline; entry-only one-level scalar-field writes implemented with historical focused development/release validation; entry-only scalar-record copy initialization and whole-record assignment implemented and verified stepwise in development and release; bounded entry nested constructors, multi-segment scalar paths, and whole-root nested copies implemented, with their receipt historical after child-binding compiler changes; whole-record child binding initializers verified historically; subrecord declaration initializer receipts historical after assignment changes; per-leaf assignment receipts historical after atomic changes; atomic subrecord assignment verified in development and release; full profile incomplete; constructor child subrecord paths verified in development and release; private scalar-value record replacement verified; metered atomic root replacement verified
+- Status: M1 scalar checkpoint verified; experimental M2 function-owned scalar arrays and source helper-local records implemented. Array parameters/results and record construction, field access, copies, extraction, and replacement are available. Record parameters/results, borrows, workers, DLL embedding, and full-profile conformance remain incomplete.
 - Root constructor assignment: verified in development and release; child constructor assignment is verified in development and release.
 - Private function-owned record IR/verifier and frame-local record VM execution
   are verified in development and release.
+- Source helper-local records: implemented at `98a4525`; verified in development and release.
 - Design date: 2026-10-23
 - First delivery target: Windows 11 x64
 
@@ -12,7 +13,7 @@ The implementation direction is primarily Fairy C. A native Brownie VM executabl
 accepts .brc source and runs it without starting Go, MSVC, or a C compiler.
 
 The native `browniec` compiles and runs the experimental scalar and source-array
-pipelines, and the private VM executes entry-only struct instructions. The bool/branch increment extends its i32 functions with bool parameters,
+pipelines, including records in ordinary helpers and recursive VM frames. The bool/branch increment extends its i32 functions with bool parameters,
 results, and locals, `! == != < <= > >= && ||`, short-circuit evaluation,
 `if`/`else if`/`else`, standalone lexical blocks, and early returns. `main` remains
 zero-argument and returns i32. Parsing, scalar type checks, private bytecode
@@ -66,6 +67,10 @@ and typed call-result initializers are supported by the [source result increment
 [Repeated-literal assignment](docs/engineering/m2-array-literal-assignment.md)
 admits `array = [value; N];`, evaluating once and filling existing storage in place.
 Borrows, slices, workers, and DLLs remain later work.
+Source [helper-local records](docs/engineering/m2-struct-function-source.md) are implemented at `98a4525` for ordinary scalar, wrapper-returning, and array-returning helpers. Constructor, copy, and subrecord-extraction paths use `ir::record_in` with the lowering function. Existing record forms run in callee frames under the shared sixteen sites and owners, 128-byte roots, sixteen-leaf staging, and 32 VM frames. Array-returning helpers drop local records in reverse mixed array-record order before `ARET`, preserving the returned array. Version JSON reports `struct_helper_locals: true`; opcodes, Fuel, and profile strings are unchanged.
+
+Development and release each passed 48 native groups and 2,860 CLI cases, including 89 helper-local record cases. The native report was retained after correcting the aggregate expected count from 47 to 48; CLI matrices ran individually, including a fresh nested matrix after updating an obsolete root-replacement expectation. Release completed the `--function-source --profile release` aggregate. The [receipt](docs/evidence/m2-struct-function-source-windows-20261027.json) records 153 input hashes, compiler and artifact identities, and equal native identities across profiles. Record parameters/results and borrows remain unavailable. Full native suites, other struct/array matrices, Linux, packaging, DLL, isolation, and performance were not run.
+
 A [private struct-layout planner](docs/engineering/m2-struct-layout.md) now plans
 acyclic record metadata, and a [scalar-only storage slice](docs/engineering/m2-struct-storage.md)
 initializes and accesses selected scalar records in caller-backed arena bytes.
@@ -107,8 +112,9 @@ isolation and performance were not rerun. Frame entry
 allocates no separate table or arena, while `SINIT`/`SCOPY` reserve shared owners
 and payload and require dead destination tokens. Writes and assignments require
 live mutable destinations. Drops clear frame tokens; dead middle extents stay
-charged until suffix reclamation. Source helper records, record parameters/results,
-and borrows remain unsupported. The 512-slot token array carries no measured
+charged until suffix reclamation. Source helper records were unsupported at
+`80ed712`; the [source helper successor](docs/engineering/m2-struct-function-source.md)
+enables those declarations. Record parameters/results and borrows remain unsupported. The 512-slot token array carries no measured
 allocation, stack, or speed claim. The earlier
 `--function-ir` 31-group and 2,383-CLI result remains historical for its original
 scope at `3380b10`; its
@@ -386,7 +392,7 @@ Those limits describe the profile, not the language forever.
 
 | Level | Intended capability | Current state |
 | --- | --- | --- |
-| core | Source compile, verify, and native VM CLI | Experimental i32/i64/u8/u32/usize/bool expressions, explicit widening, branches, loops, shallow tagged values, switch statements and expressions, `?` propagation, source arrays, declaration-only source struct layouts, private entry-only struct IR execution, bounded entry scalar-field construction/read/write lowering, bare-name record copy initialization/whole-record assignment, bounded nested constructors/scalar paths/whole-root copies, whole-record child binding initializers, subrecord declaration initializers, and atomic subrecord assignment; nested results are historical after the child compiler change, the child feature passed the complete combined harness in development and release; scalar M1 and array reads verified, focused array and struct VM checks recorded, the struct construction/read and field-write baselines recorded historically, and source-copy checks verified stepwise in development and release |
+| core | Source compile, verify, and native VM CLI | Experimental i32/i64/u8/u32/usize/bool expressions, explicit widening, branches, loops, shallow tagged values, switch statements and expressions, `?` propagation, source arrays, declaration-only source struct layouts, function-owned struct IR execution, helper-local record construction/read/write lowering, bare-name record copy initialization/whole-record assignment, bounded nested constructors/scalar paths/whole-root copies, whole-record child binding initializers, subrecord declaration initializers, and atomic subrecord assignment; nested results are historical after the child compiler change, the child feature passed the complete combined harness in development and release; scalar M1 and array reads verified, focused array and struct VM checks recorded, the struct construction/read and field-write baselines recorded historically, and source-copy checks verified stepwise in development and release |
 | restricted | Windows worker plus parent broker | Not implemented; M4 |
 | embed | Trusted native host through a DLL ABI | Not implemented; M5; no public C export |
 
@@ -450,7 +456,8 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 private struct-owner copy and assignment](docs/engineering/m2-struct-owner-copy.md): independent record owners, exact-ID assignment, shared descriptor pressure, and source-release survival
 - [M2 private struct IR](docs/engineering/m2-struct-ir.md): entry-owned bindings, opcodes 41..46, flattened scalar leaves, combined lifetimes, and independent verification
 - [M2 private function-owned record IR](docs/engineering/m2-struct-function-ir.md): static function ownership for record sites, opcodes 41..49, and development/release verification
-- [M2 private frame-local record VM](docs/engineering/m2-struct-function-vm.md): 32 guest-frame token slots over shared owners and payload, unchanged opcodes and Fuel, development aggregate passed with release pending
+- [M2 private frame-local record VM](docs/engineering/m2-struct-function-vm.md): 32 guest-frame token slots over shared owners and payload, unchanged opcodes and Fuel, development/release verification
+- [M2 source helper-local records](docs/engineering/m2-struct-function-source.md): function-owned source declarations, recursive frame isolation, mixed cleanup, and `struct_helper_locals` capability
 - [M2 private struct VM](docs/engineering/m2-struct-vm.md): shared owners and payload, private execution semantics, fixed Fuel charges, and current check status
 - [M2 declaration-only source structs](docs/engineering/m2-struct-source.md): historical bounded parser, forward named fields, immutable layouts, name rules, and stepwise verification
 - [M2 bounded source struct values](docs/engineering/m2-struct-values.md): historical entry construction and one-level reads, ordered typed staging, `SINIT`/scalar-leaf access, mixed cleanup, bounds, and recorded verification

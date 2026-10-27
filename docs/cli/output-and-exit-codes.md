@@ -101,3 +101,10 @@ Trap, cancellation, deadline, quota, or internal failure publishes no staged out
 A host output sink may fail after computation with code 7. Its partial external effect
 is reported rather than hidden or replayed. Cancellation closes publication; unknown
 external effects remain unknown. No automatic retry or exactly-once claim is allowed.
+
+Source [helper-local records](../engineering/m2-struct-function-source.md) add
+`struct_helper_locals: true` to version JSON. They use the existing struct result
+profiles: nested metadata or child replacement selects the nested profile, root
+copy/assignment selects copy, mutable roots select write, and other roots select
+read. Helper placement adds no profile or command syntax. Record parameters/results
+and borrows remain unavailable.

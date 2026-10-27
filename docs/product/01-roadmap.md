@@ -540,9 +540,14 @@ passed in one native invocation. The complete `--function-vm` invocation passed 
 compiler/artifact identities, commands and outcomes. Implementation commit:
 `80ed712`. Other CLI matrices, full native suites, Linux, packaging,
 isolation and performance were not rerun.
-Source helper records, record
-parameters/results, and borrows remain unsupported. The 512-slot token array
+Source helper records were unsupported at `80ed712`; the
+[source successor](../engineering/m2-struct-function-source.md) enables them. Record
+parameters/results and borrows remain unsupported. The 512-slot token array
 carries no measured allocation, stack, or speed claim.
+
+Source [helper-local records](../engineering/m2-struct-function-source.md) are implemented at `98a4525` for ordinary scalar, wrapper-returning, and array-returning helpers. Constructor, copy, and subrecord-extraction paths use `ir::record_in` with the lowering function. Existing record forms run in callee frames under the shared sixteen sites and owners, 128-byte roots, sixteen-leaf staging, and 32 VM frames. Array-returning helpers drop local records in reverse mixed array-record order before `ARET`, preserving the returned array. Version JSON reports `struct_helper_locals: true`; opcodes, Fuel, and profile strings are unchanged.
+
+Development and release each passed 48 native groups and 2,860 CLI cases, including 89 helper-local record cases. The native report was retained after correcting the aggregate expected count from 47 to 48; CLI matrices ran individually, including a fresh nested matrix after updating an obsolete root-replacement expectation. Release completed the `--function-source --profile release` aggregate. The [receipt](../evidence/m2-struct-function-source-windows-20261027.json) records 153 input hashes, compiler and artifact identities, and equal native identities across profiles. Record parameters/results and borrows remain unavailable. Full native suites, other struct/array matrices, Linux, packaging, DLL, isolation, and performance were not run.
 
 Goal: connect arrays, plain structs, borrows, Buffer, input,
 output, and UTF-8.

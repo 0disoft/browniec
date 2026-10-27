@@ -20,8 +20,9 @@ The implemented grammar is `browniec check SOURCE [--json]` and
 `browniec run SOURCE [--fuel N] [--json]`, plus `--version [--json]` and `--help`.
 Fuel defaults to 256 and accepts 0..1000000; duplicate/unknown options are errors.
 Run grants no guest host capability. SOURCE selects one local disk file with a
-4096-byte UTF-8 source limit. Only the [M1 scalar subset](../engineering/m1-scalar-slice.md)
-is implemented. Project, input-byte, policy, catalog, inspect, and worker options
+4096-byte UTF-8 source limit. The experimental [M1 scalar subset](../engineering/m1-scalar-slice.md),
+scalar arrays, and [helper-local records](../engineering/m2-struct-function-source.md)
+are implemented. Project, input-byte, policy, catalog, inspect, and worker options
 remain unavailable. `--isolated` returns an availability denial, with no fallback.
 
 ## Execution rules
