@@ -88,3 +88,7 @@ historical for changed frontend, root-lock, test, and tooling inputs.
 
 Full native suites, other CLI matrices, M0, Linux, isolation, DLL, packaging,
 allocation instrumentation and performance are outside this selection.
+
+The [private IR successor](m2-struct-parameters-ir.md) adds independent verification
+and changes IR, verifier, VM preflight, and root-lock inputs. This signature
+receipt remains evidence for `4a6792b`; executable source calls stay gated.
