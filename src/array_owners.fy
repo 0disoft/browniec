@@ -451,3 +451,18 @@ pub fn Result<usize, Error> assign_subrecord(ref records::Catalog catalog,
         case .ok(n): { .ok(n) } case .err(e): { .err(record_error(e)) }
     };
 }
+
+// Resolve authority over the whole root and exact nominal child range before
+// encoding all replacement values. Only selected bytes (including padding) publish.
+pub fn Result<usize, Error> replace_subrecord(ref records::Catalog catalog,
+    Token destination, usize nominal, usize target_leaf, ref i64[] fields,
+    ref mut u8[] bytes, ref Table table) {
+    let Owner target = resolve_record(catalog,table,destination,bytes.len)?;
+    let usize selected = switch(record_range::offset(catalog,target.record,nominal,target_leaf)) {
+        case .ok(n): { n } case .err(_): { return .err(.Type); }
+    };
+    if (selected > target.length) { return .err(.Bounds); }
+    return switch(record_storage::replace_values(catalog,nominal,target.base+selected,fields,bytes,ref table.arena)) {
+        case .ok(n): { .ok(n) } case .err(e): { .err(record_error(e)) }
+    };
+}

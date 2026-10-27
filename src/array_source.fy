@@ -53,7 +53,7 @@ pub fn u8 profile(ref ir::Program p) {
         var usize at = 0; var bool written = false;
         while (at < p.count && at < 256) {
             let u8 op = p.code[at*8];
-            if (op == 42 || op == 46 || op == 48) { return 6; }
+            if (op == 42 || op == 46 || op == 48 || op == 49) { return 6; }
             if (op == 44) { written = true; }
             at += 1;
         }

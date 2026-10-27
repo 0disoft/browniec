@@ -1,6 +1,7 @@
 module struct_vm;
 
 import struct_meta as meta;
+import struct_range as ranges;
 import struct_layout as layouts;
 import array_owners as owners;
 import array_vm as arrays;
@@ -26,6 +27,9 @@ pub fn Result<usize, errors::Error> cost(u8 op, usize offset) {
     if (op == 47) { return .ok(131072); }
     // Two plans, one leaf-count walk, one encoding walk, bytes and owner scans.
     if (op == 48) { return .ok(2 * 18432 + 2 * 4096 + 1024 + 65); }
+    // Four full plans: count, owner resolution, child range and encoding;
+    // three bounded traversals plus canonical bytes and owner scans.
+    if (op == 49) { return .ok(4 * 18432 + 3 * 4096 + 1024 + 65); }
     return .err(errors::make(5, offset));
 }
 
@@ -158,6 +162,27 @@ pub fn Result<usize, errors::Error> subassign(usize dst, usize source, usize nom
     let ref mut u8[] data = bytes::view_mut(buffer);
     let usize assigned = switch(owners::assign_subrecord(ref catalog.layouts,state.tokens[dst],state.tokens[source],
         nominal,target_leaf,source_leaf,data,ref shared.owners)) {
+        case .ok(n): { n } case .err(e): { return .err(arrays::failure(e,offset)); }
+    };
+    return .ok(fuel-work);
+}
+
+// All input checks and byte staging precede the single child-range commit.
+pub fn Result<usize, errors::Error> subreplace(usize dst, usize first, usize nominal,
+    usize target_leaf, usize frame, ref meta::Catalog catalog, ref mut State state,
+    ref mut arrays::State shared, ref mut bytes::Buffer buffer, ref i64[] registers,
+    usize fuel, usize offset) {
+    let usize work = cost(49,offset)?;
+    if (fuel < work) { return .err(errors::make(8,offset)); }
+    if (frame != 0 || catalog.count > 16 || dst >= catalog.count || !catalog.mutable[dst] ||
+        !bound(catalog,dst,state,ref shared.owners)) { return .err(errors::make(5,offset)); }
+    let usize count = switch(ranges::leaves(ref catalog.layouts,nominal)) {
+        case .ok(n): { n } case .err(_): { return .err(errors::make(5,offset)); }
+    };
+    if (first > registers.len || count > registers.len-first) { return .err(errors::make(5,offset)); }
+    let ref mut u8[] data = bytes::view_mut(buffer);
+    let usize replaced = switch(owners::replace_subrecord(ref catalog.layouts,state.tokens[dst],nominal,
+        target_leaf,registers[first..first+count],data,ref shared.owners)) {
         case .ok(n): { n } case .err(e): { return .err(arrays::failure(e,offset)); }
     };
     return .ok(fuel-work);

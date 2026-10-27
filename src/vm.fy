@@ -49,6 +49,13 @@ pub fn Result<i64, errors::Error> run_with_array_limit(ref ir::Program p, usize 
                 ref p.records,ref mut records,ref mut arrays,ref mut payload,remaining,p.offsets[pc])?;
             pc += 1; continue;
         }
+        if (op == 49) {
+            let usize base = frame * 128;
+            remaining = struct_vm::subreplace(dst,a,b,p.code[at+4] as usize,frame,
+                ref p.records,ref mut records,ref mut arrays,ref mut payload,
+                ref registers[base..base+128],remaining,p.offsets[pc])?;
+            pc += 1; continue;
+        }
         if (op >= 41) {
             let usize base = frame * 128;
             remaining = struct_vm::step(op, dst, a, b, frame, ref p.records, ref mut records,

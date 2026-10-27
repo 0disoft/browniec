@@ -118,7 +118,7 @@ fn void scalar_operands_reserved_bytes_and_mutability_are_independent_checks() {
         while (byte < 8) { p = basic(); p.code[pc * 8 + byte] = 1; assert(!verifier::verify(ref p).is_ok); byte += 1; }
         pc += 1;
     }
-    p = basic(); p.code[8] = 49; assert(!verifier::verify(ref p).is_ok);
+    p = basic(); p.code[8] = 50; assert(!verifier::verify(ref p).is_ok);
 }
 
 @test

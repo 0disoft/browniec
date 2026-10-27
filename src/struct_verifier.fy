@@ -10,16 +10,20 @@ fn bool readable(ref ir::Program p, ref registers::Set defined, usize r, usize f
     return r >= p.register_starts[f] && r < p.register_ends[f] && !p.slots[r] &&
         p.array_parameters[r] == 0 && registers::contains(defined, r) && p.types[r] == tag;
 }
-fn Result<usize, errors::Error> inputs(ref ir::Program p, ref meta::Prepared shapes,
-    ref registers::Set defined, usize id, usize first, usize f, usize pc) {
-    let usize count = shapes.leaves[id];
-    if (first > p.register_ends[f] || count > p.register_ends[f]-first) { return .err(errors::make(5,pc)); }
+fn Result<usize, errors::Error> span(ref ir::Program p, ref meta::Prepared shapes,
+    ref registers::Set defined, usize id, usize first, usize start, usize count, usize f, usize pc) {
+    if (start > shapes.leaves[id] || count > shapes.leaves[id]-start ||
+        first > p.register_ends[f] || count > p.register_ends[f]-first) { return .err(errors::make(5,pc)); }
     var usize leaf = 0;
     while (leaf < count) {
-        if (!readable(p,defined,first+leaf,f,shapes.tags[id*128+leaf])) { return .err(errors::make(5,pc)); }
+        if (!readable(p,defined,first+leaf,f,shapes.tags[id*128+start+leaf])) { return .err(errors::make(5,pc)); }
         leaf += 1;
     }
     return .ok(count);
+}
+fn Result<usize, errors::Error> inputs(ref ir::Program p, ref meta::Prepared shapes,
+    ref registers::Set defined, usize id, usize first, usize f, usize pc) {
+    return span(p,shapes,defined,id,first,0,shapes.leaves[id],f,pc);
 }
 pub fn Result<usize, errors::Error> step(ref ir::Program p, ref meta::Prepared shapes,
     usize pc, usize f, ref mut registers::Set defined, ref mut registers::Set written, usize live) {
@@ -44,6 +48,14 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, ref meta::Prepared s
     if (op == 48) {
         if (!p.records.mutable[id] || b != p.records.records[id] as usize) { return .err(errors::make(5,pc)); }
         let usize count = inputs(p,shapes,defined,id,a,f,pc)?;
+        return .ok(live);
+    }
+    if (op == 49) {
+        if (!p.records.mutable[id]) { return .err(errors::make(5,pc)); }
+        let usize start = p.code[at+4] as usize;
+        let usize target = ranges::offset(ref p.records.layouts,p.records.records[id] as usize,b,start)?;
+        let usize count = ranges::leaves(ref p.records.layouts,b)?;
+        let usize checked = span(p,shapes,defined,id,a,start,count,f,pc)?;
         return .ok(live);
     }
     if (op == 47) {

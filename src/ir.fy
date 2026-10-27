@@ -23,6 +23,7 @@ import std::num as num;
 // 47 atomic subrecord assignment: dst=target,a=source,b=nominal record,
 // byte 4=target scalar-leaf start, byte 5=source scalar-leaf start; bytes 6..7=0.
 // 48 atomic root replacement: dst=live target,a=first scalar,b=nominal record.
+// 49 atomic subtree replacement: same operands; byte 4=target leaf, 5..7=0.
 pub struct Program {
     u8[2048] code;
     i64[128] constants;
@@ -273,4 +274,11 @@ pub fn Result<usize, errors::Error> record_subassign(ref mut Program p, usize ds
 pub fn Result<usize, errors::Error> record_replace(ref mut Program p, usize dst,
     usize first, usize nominal, usize offset) {
     return raw(p,48,dst,first,nominal,offset);
+}
+
+pub fn Result<usize, errors::Error> record_subreplace(ref mut Program p, usize dst,
+    usize first, usize nominal, usize target_leaf, usize offset) {
+    let u8 target = byte(target_leaf,offset)?;
+    let usize pc = raw(p,49,dst,first,nominal,offset)?;
+    p.code[pc*8+4] = target; return .ok(pc);
 }
