@@ -1,4 +1,4 @@
-"""Check nominal record-result signatures and the pre-IR compiler gate."""
+"""Check nominal record-result signatures and source lowering boundaries."""
 import argparse
 import hashlib
 import json
@@ -49,22 +49,23 @@ def case(source,error=None,anchor=None):
 
 
 fixtures=(root/'tests/m2/struct_result_signatures.fy').read_text(encoding='utf-8')
-for source in re.findall(r'gated\(b"([^"\n]+)",\d+\);',fixtures):case(source,'type','make(')
+for source in re.findall(r'lowered\(b"([^"\n]+)",\d+\);',fixtures):case(source)
+for source,error_kind in re.findall(r'invalid\(b"([^"\n]+)",(\d+)\);',fixtures):case(source,'compile_limit' if error_kind=='4' else 'type')
 for source in re.findall(r'rejected\(b"([^"\n]+)"\);',fixtures):case(source,'compile_limit' if 'extra()' in source else 'type')
 for source in re.findall(r'value\(b"([^"\n]+)"\);',fixtures):case(source)
 for count in [1,16,32]:
     declarations=''.join(f'struct P{i}{{u8 x;}}' for i in range(count))
     for forward in [False,True]:
-        helper=f'fn P{count-1} make(){{return 0;}}'
+        helper=f'fn P{count-1} make(){{let P{count-1} p=P{count-1}{{.x=0}};return p;}}'
         main='fn i32 main(){return 42;}'
-        case('module main;'+(main+helper+declarations if forward else declarations+helper+main),'type','make(')
+        case('module main;'+(main+helper+declarations if forward else declarations+helper+main))
 for tag in ['bool','u8','i32','i64','u32','usize']:
     for forward in [False,True]:
         declarations=f'struct P{{{tag} x;}}'
         helper='fn P make(P p){return p;}'
         main='fn i32 main(){return 42;}'
-        case('module main;'+(main+helper+declarations if forward else declarations+helper+main),'type','make(')
-assert len(rows)==72,len(rows)
+        case('module main;'+(main+helper+declarations if forward else declarations+helper+main))
+assert len(rows)==70,len(rows)
 
 version=json.loads(subprocess.check_output([str(exe),'--version','--json'],cwd=empty,env=env))
 assert version['struct_parameters'] is True and version['struct_helper_locals'] is True,version

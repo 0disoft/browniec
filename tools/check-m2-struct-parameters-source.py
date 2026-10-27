@@ -55,7 +55,7 @@ if args.selection=='source':
     fixtures=(root/'tests/m2/struct_parameters_source.fy').read_text(encoding='utf-8')
     positives=re.findall(r'value\(b"([^"\n]+)",\d+\);',fixtures)
     negatives=re.findall(r'rejected\(b"([^"\n]+)"\);',fixtures)
-    assert len(positives)==18 and len(negatives)==12,(len(positives),len(negatives))
+    assert len(positives)==19 and len(negatives)==11,(len(positives),len(negatives))
     for source in positives:case(source)
     for source in negatives:case(source,'type')
     for tag,values in [('bool',['false','true']),('u8',['0','255']),('i32',['-2147483648','2147483647']),('i64',['-9223372036854775808','9223372036854775807']),('u32',['0','4294967295']),('usize',['0','18446744073709551615'])]:
