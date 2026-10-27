@@ -5,6 +5,7 @@
 - Implementation: [src/struct_nested_storage.fy](../../src/struct_nested_storage.fy).
 - Harness: [tools/verify-m2-struct-layout.py](../../tools/verify-m2-struct-layout.py) with `--nested`.
 - Evidence: [Windows receipt](../evidence/m2-struct-nested-storage-windows-20261026.json).
+- Scalar-value replacement: [private successor](m2-struct-replace-values.md).
 
 This private module materializes a selected acyclic record from depth-first
 scalar leaf inputs and reads or writes a scalar field selected by an index path.

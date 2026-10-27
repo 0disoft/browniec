@@ -296,6 +296,20 @@ own the affected contract. Broader scaffold procedures are optional.
   selection does not rerun scalar/array or other struct CLI matrices, full native
   suites, Linux, packaging, isolation or performance. Earlier receipts are historical
   for changed frontend, root-lock, fixture and harness inputs.
+  A [private scalar-value replacement foundation](docs/engineering/m2-struct-replace-values.md) now stages every scalar
+  field before overwriting an existing exact-nominal root. Owner tokens, order and
+  payload use remain unchanged, including at full capacity. Initialization and
+  replacement share one encoder. This adds no source syntax, opcode, verifier,
+  VM dispatch, Fuel charge or version capability; constructor RHS assignment
+  remains unavailable. The complete `--replace-values` invocation passed 21 native
+  groups and 214 CLI cases per development/release profile. The [receipt](docs/evidence/m2-struct-replace-values-windows-20261027.json)
+  records 102 input hashes, compiler/artifact identities, commands and outcomes.
+  Implementation commit: `6509e27`. The selection covers six new replacement groups,
+  six nested-storage, six owner-copy and three subrecord-owner groups, plus 83
+  existing child-path and 131 existing assignment CLI cases. Other CLI matrices,
+  full native suites, Linux, packaging, isolation and performance were not rerun.
+  Earlier receipts are historical for changed storage, owner, root-lock and harness
+  inputs. Source lowering and metered VM integration are the next separate slice.
 - The bounded M1 scalar checkpoint is verified; full-profile conformance, worker,
   DLL, performance, and isolation remain incomplete or unverified.
 - Root fairy.toml builds the native CLI; tools/verify-m1.ps1 verifies its narrow profile.

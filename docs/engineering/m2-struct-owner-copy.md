@@ -5,6 +5,8 @@
 - Implementation: [src/array_owners.fy](../../src/array_owners.fy).
 - Harness: [tools/verify-m2-struct-layout.py](../../tools/verify-m2-struct-layout.py) with `--owner-copy`.
 - Evidence: [Windows receipt](../evidence/m2-struct-owner-copy-windows-20261026.json).
+- Scalar-value replacement: [private successor](m2-struct-replace-values.md),
+  with no source grammar or VM instruction added.
 
 `copy_record(catalog, source, bytes, table)` resolves a live, generation-checked
 record token, preflights one free shared slot, and calls nested record copy.
