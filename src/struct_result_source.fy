@@ -46,8 +46,8 @@ pub fn Result<usize,errors::Error> destination(ref functions::Table signatures,u
     }
     return ir::record_in(p,f,nominal,mutable,at);
 }
-// Bare visible bindings and anonymous direct-call results share the finisher.
-// General record expressions and return constructors remain unavailable.
+// Bare visible bindings, direct-call results and return constructors share the
+// finisher. General record expressions remain unavailable.
 pub fn Result<usize,errors::Error> returned(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table names,usize at) {
     if(s.kind!=2) {return .err(errors::make(3,s.begin));}

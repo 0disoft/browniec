@@ -298,7 +298,7 @@ fn Result<usize, errors::Error> array_statement(ref u8[] source, ref mut lexer::
     return array_write_statement(source,s,p,table,signatures,index,at,id,terminator,result_type,expr_depth,structure,loop_state);
 }
 
-// Shared declaration/replacement staging: finish every RHS expression before
+// Shared declaration/replacement/return staging: finish every RHS expression before
 // consecutive scalar loads. No destination owner or bytes change here.
 fn Result<usize, errors::Error> record_constructor(ref u8[] source, ref mut lexer::State s,
     ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures,
@@ -730,6 +730,17 @@ fn Result<bool, errors::Error> control(ref u8[] source, ref mut lexer::State s, 
             if(s.kind==2) {
                 var lexer::State look=lexer::snapshot(s);
                 let usize next=lexer::next(source,ref mut look)?;
+                if(look.kind==123) {
+                    let usize shape=(p.record_results[table.function] as usize)-1;
+                    let usize record=p.records.records[shape] as usize;
+                    let bool constructor=record_values::constructor(source,s,record)?;
+                    let usize first=record_constructor(source,s,p,table,signatures,record,at,result_type,expr_depth,depth,loop_state)?;
+                    // Publish no name or owner while field expressions can leave.
+                    let usize id=ir::record_in(p,table.function,record,false,at)?;
+                    let usize init=ir::record_init(p,id,first,at)?;
+                    let usize returned=record_results::finish(p,table,id,at)?;
+                    return .ok(true);
+                }
                 if(look.kind==40) {
                     if(locals::find(source,table,s.begin,s.end)!=64) {return .err(errors::make(3,s.begin));}
                     let usize target=functions::find(source,signatures,s.begin,s.end);

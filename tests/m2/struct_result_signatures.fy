@@ -62,7 +62,7 @@ fn void unknown_borrowed_wrapped_array_and_entry_record_results_are_rejected() {
 }
 @test
 fn void invalid_record_bodies_and_catalog_overflow_fail_during_source_lowering() {
- invalid(b"module main;struct P{i32 x;}fn P make(){return P{.x=42};}fn i32 main(){return 42;}",3);
+ invalid(b"module main;struct P{i32 x;}fn P make(){return (P{.x=42});}fn i32 main(){return 42;}",3);
  invalid(b"module main;struct P{i32 x;}fn P make(P p){return p;}fn i32 main(){let P p=P{.x=42};return make(p);}",3);
  invalid(b"module main;struct P{i32 x;}fn P make(){return 0;}fn i32 main(){return 42;}",3);
  invalid(b"module main;struct P{i32 x;}fn P make(P a,P b,P c,P d,P e,P f,P g,P h){return a;}fn i32 take(P a,P b,P c,P d,P e,P f,P g,P h){return 0;}fn i32 extra(P p){return 0;}fn i32 main(){return 42;}",4);
