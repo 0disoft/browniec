@@ -16,10 +16,11 @@ own the affected contract. Broader scaffold procedures are optional.
 - Private function-owned record IR/verifier and frame-local record VM execution
   are verified in development and release.
 - Source helper-local records are verified at `98a4525`: 48 native groups and 2,860 CLI cases per development/release profile. Development completed stepwise after tooling fixture fixes; release completed the aggregate. See [the source contract](docs/engineering/m2-struct-function-source.md) and [receipt](docs/evidence/m2-struct-function-source-windows-20261027.json).
-- Nominal record parameter signature metadata is verified at `4a6792b` (16 native groups and 2,226 CLI cases per development/release profile); executable source record arguments remain gated before IR and body lowering. See [the foundation](docs/engineering/m2-struct-parameter-signatures.md).
-- Private record-parameter IR metadata and independent verification are verified at `9b43e0d` (28 native groups and 2,226 CLI cases per development/release profile); its initial VM availability gate is superseded by metered calls below; source calls remain gated. See [the IR foundation](docs/engineering/m2-struct-parameters-ir.md).
-- Private mixed array/record argument copies are verified in development and release (70 native groups per profile, 9 new and 61 affected) through `array_owners::copy_call_arguments`; full-batch source validation and owner/payload admission precede mutation. Source lowering remains unavailable; VM integration is documented below. See [the storage contract](docs/engineering/m2-call-argument-copies.md).
-- Private metered record CALL execution is implemented at `97bf1e2`; development and release each passed 47 unique native groups stepwise (21 core, then 26 regressions) with matching 58 input hashes across both receipts. Mixed aggregate copies precede scalar/return-frame publication; existing scalar/array prices remain unchanged. Source record parameters stay gated. See [the VM contract](docs/engineering/m2-struct-call-vm.md).
+- Nominal record parameter signature metadata is verified at `4a6792b` (16 native groups and 2,226 CLI cases per development/release profile). Its pre-lowering source gate is historical and superseded by source record parameter lowering. See [the foundation](docs/engineering/m2-struct-parameter-signatures.md).
+- Private record-parameter IR metadata and independent verification are verified at `9b43e0d` (28 native groups and 2,226 CLI cases per development/release profile); its initial VM availability gate and source gate are historical and superseded by metered calls and source lowering. See [the IR foundation](docs/engineering/m2-struct-parameters-ir.md).
+- Private mixed array/record argument copies are verified in development and release (70 native groups per profile, 9 new and 61 affected) through `array_owners::copy_call_arguments`; full-batch source validation and owner/payload admission precede mutation. Its statement that source lowering remained unavailable is historical. See [the storage contract](docs/engineering/m2-call-argument-copies.md).
+- Private metered record CALL execution is implemented at `97bf1e2`; development and release each passed 47 unique native groups stepwise (21 core, then 26 regressions) with matching 58 input hashes across both receipts. Mixed aggregate copies precede scalar/return-frame publication; existing scalar/array prices remain unchanged. Its source-gate claim is historical and superseded by the source parameter slice. See [the VM contract](docs/engineering/m2-struct-call-vm.md).
+- Immutable nominal by-value source record parameters are verified in development and release. Bare exact-type binding arguments are accepted; mutable inputs are captured with `SCOPY` before later arguments evaluate. Development and release each passed 51 native groups (14 core, 37 regressions) and 2,318 CLI cases. See [the source contract](docs/engineering/m2-struct-parameters-source.md).
 - M2 has private scalar-array layout, codec, caller-backed storage, owner-lifetime and copy helpers;
   private function-owned array IR has independent verification and metered native VM dispatch. The current
   source slices add immutable/mutable scalar-array declarations in lexical scopes of ordinary functions, indexed reads,
@@ -175,9 +176,26 @@ own the affected contract. Broader scaffold procedures are optional.
   assignments require live mutable destinations. Drops clear frame tokens; dead
   middle extents stay charged until suffix reclamation. Only one of the six
   function-owned IR test groups changed expectation, from kind 5 to return 42.
-  Source helper records, record parameters/results, and borrows remain
-  unsupported. The 512-slot token array carries no measured allocation, stack, or
-  speed claim.
+  At `80ed712`, source helper records and record parameters/results remained
+  unsupported. Source successors now implement helper records and record
+  parameters; record results and borrows remain unsupported. The 512-slot token
+  array carries no measured allocation, stack, or speed claim.
+  Source [record parameters](docs/engineering/m2-struct-parameters-source.md) are
+  implemented at `d0ca7e7` and verified in development and release. Each formal is an immutable nominal
+  record and each argument is one bare visible binding of that exact type.
+  Constructors, paths, casts, and aggregate expressions do not satisfy the formal.
+  A mutable source is copied by `SCOPY` into an anonymous lexical capture before
+  the next argument evaluates; the final CALL still creates an independent callee
+  owner. All formal sites are predeclared after the catalog scan and bound by
+  owning function plus record-formal ordinal within the unchanged 16 static sites.
+  No second 128-byte signature site map is added. Scalar and array returns, `?`
+  propagation, normal lexical exits, and loop transfers reuse the record-aware
+  `array_source::release_from`; array results reuse the existing finisher. Those
+  paths already supported records, so no new cleanup change is claimed. A scalar
+  return drops each visible formal, including a record formal, before `RET`; an
+  array return drops non-result records before `ARET`. Record results, borrows,
+  `ref`, and `var` parameters remain unsupported.
+  Development and release each passed 51 unique native groups and 2,318 CLI cases. The [core receipt](docs/evidence/m2-struct-parameters-source-core-windows-20261028.json) records 14 native groups and 180 CLI cases; the [regression receipt](docs/evidence/m2-struct-parameters-source-regressions-windows-20261028.json) records 37 native groups and 2,138 CLI cases. The CLI selections comprise 114 source parameter, 66 signature, 80 array parameter, 89 helper-local record and 1,969 M1 cases per profile. These are two separate phase runs with disjoint native selections, matching profiles, and identical 206 input hashes, compiler and SDK identities; all inputs were rechecked before archival. Native stress tests use 16,000,000 Fuel; the CLI retains its 1,000,000 ceiling, with four costly fixtures expected to pass `check` and report `fuel` on `run`. Other native/CLI matrices, M0, Linux, isolation, DLL, packaging, allocation instrumentation and performance were not run.
   A [declaration-only source struct slice](docs/engineering/m2-struct-source.md)
   parses bounded top-level declarations, resolves scalar and by-value named
   fields, and attaches immutable declaration-order layouts. Its 23 native groups
@@ -199,8 +217,10 @@ own the affected contract. Broader scaffold procedures are optional.
   [receipt](docs/evidence/m2-struct-values-windows-20261026.json) records
   toolchain, inputs, artifacts, commands, and limitations. That read receipt is
   historical for the current field-write, source-copy, and nested-source compiler
-  inputs. Struct parameters/results and borrows remain unsupported; nested type
-  declarations and construction are handled by the nested successor.
+  inputs. At that baseline, struct parameters/results and borrows were unsupported;
+  nested type declarations and construction are handled by the nested successor,
+  and source record parameters by their later successor. Record results and
+  borrows remain unsupported.
   A [source struct-field write slice](docs/engineering/m2-struct-write.md) adds
   entry-only `NAME.FIELD = EXPR;` for one mutable scalar leaf. The binding and
   field resolve before a single exact-typed RHS; `SWRITE` follows the expression
@@ -289,7 +309,8 @@ own the affected contract. Broader scaffold procedures are optional.
   stays live; the destination has an independent site, owner, and extent. Scalar
   expressions still reject record endpoints. The assignment successor below adds
   writes to/from record endpoints.
-  Helper records, parameters/results, and borrows remain unsupported. Version
+  At that checkpoint, helper records, parameters/results, and borrows were
+  unsupported; later source slices add helper records and record parameters. Version
   JSON adds `struct_subrecord_initializers: true`; the nested profile is unchanged.
   Development and release each passed 26 native groups and 2,915 CLI cases
   stepwise. Development reuses its unchanged 26-group result after two CLI-only
