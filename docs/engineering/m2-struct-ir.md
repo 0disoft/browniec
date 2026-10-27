@@ -2,6 +2,7 @@
 
 - Status: private entry-owned struct IR and verifier implemented. Its 46-group native and 115-case CLI results are historical after changed runtime, test, harness, and root-lock inputs.
 - Scope: struct bindings and lifetime verification. Private metered execution continues in the [struct VM contract](m2-struct-vm.md).
+- Successor: [function-owned record IR](m2-struct-function-ir.md), which adds static function ownership for record sites.
 - Implementation: [src/ir.fy](../../src/ir.fy), [src/verifier.fy](../../src/verifier.fy), [src/struct_meta.fy](../../src/struct_meta.fy), and [src/struct_verifier.fy](../../src/struct_verifier.fy).
 - Harness: [tools/verify-m2-struct-layout.py](../../tools/verify-m2-struct-layout.py) with `--ir`.
 - Historical native evidence: [Windows receipt](../evidence/m2-struct-ir-windows-20261026.json).
@@ -108,3 +109,9 @@ combined selection includes all nine existing IR groups on the updated verifier.
 The [root replacement successor](m2-struct-replace-vm.md) shares `SINIT`'s
 exact input-range checker, requires a live mutable exact-nominal destination
 and changes neither scalar definitions nor owner live sets.
+
+The [function-owned record IR successor](m2-struct-function-ir.md) adds static
+function ownership for record sites and verifies opcodes 41..49 against the active
+function. The entry-only rules above remain the historical contract for this
+slice; the successor prepares helper-owned IR, while the VM remains
+entry-frame-only and does not provide helper runtime or source support.

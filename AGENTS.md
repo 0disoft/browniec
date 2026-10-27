@@ -13,6 +13,7 @@ own the affected contract. Broader scaffold procedures are optional.
 - M0 native primitives exist under `probes/m0` and have a repeatable Windows harness.
 - The M1 scalar lexer/parser, i32 checks, private IR verifier, VM, and CLI exist in src/.
 - Entry-only mutable root constructor assignment is verified in development and release; child constructor assignment is verified in development and release.
+- Private function-owned record IR/verifier foundation is verified in development and release.
 - M2 has private scalar-array layout, codec, caller-backed storage, owner-lifetime and copy helpers;
   private function-owned array IR has independent verification and metered native VM dispatch. The current
   source slices add immutable/mutable scalar-array declarations in lexical scopes of ordinary functions, indexed reads,
@@ -121,12 +122,13 @@ own the affected contract. Broader scaffold procedures are optional.
   appends independent record owners and requires exact record identity for assignment.
   Its 17-group Windows selection passed development and release. The previous 34-group owner receipt is historical
   for changed inputs. A [private struct IR and verifier](docs/engineering/m2-struct-ir.md)
-  defines entry-owned bindings for opcodes 41..46: SINIT, SCOPY, SREAD,
+  introduced entry-owned bindings for opcodes 41..46: SINIT, SCOPY, SREAD,
   SWRITE, SDROP, and SASSIGN. Initialization consumes all depth-first scalar leaves
   in consecutive registers with exact types; reads and writes use flattened leaf
   ordinals. Full catalogs are replanned, record lifetimes occupy bits 16..31 beside
-  array bits 0..15, and joins or backedges require exact live sets. Only entry may
-  use struct instructions; calls into entry are rejected when bindings exist. A
+  array bits 0..15, and joins or backedges require exact live sets. The original
+  verifier limited struct instructions to entry; calls into entry remain rejected
+  when bindings exist. A
   [private struct VM](docs/engineering/m2-struct-vm.md) now executes those
   instructions. It adds sixteen entry binding tokens while sharing the existing
   owner table and one payload arena. A nonempty array or record catalog prepares
@@ -138,6 +140,19 @@ own the affected contract. Broader scaffold procedures are optional.
   in the struct VM native and CLI receipts. The old `--ir` 46-group and
   115-case CLI receipts are historical for changed runtime, test, harness, and
   root-lock inputs.
+  A [private function-owned record IR foundation](docs/engineering/m2-struct-function-ir.md)
+  assigns each of the 16 static record sites to a function. Active owners must be
+  declared functions, unused owner bytes must remain zero, and every opcode
+  41..49 must target the active function; copy/assign/subassign sources must use
+  the same function. Each function starts with all record bindings dead, while
+  existing cleanup, joins, backedges, and entry reentry rules are unchanged. No
+  opcode, Fuel charge, VM dispatch, version capability, or source form is added.
+  The VM remains entry-frame-only and rejects helper IR with kind 5 until its
+  frame-local successor. The complete `--function-ir` invocation passed 31 native groups and
+  2,383 CLI cases per development/release profile without result reuse. The
+  [receipt](docs/evidence/m2-struct-function-ir-windows-20261027.json) records 106 input hashes,
+  compiler/artifact identities, commands and outcomes. Other CLI matrices, full
+  native suites, Linux, packaging, isolation and performance were not rerun.
   A [declaration-only source struct slice](docs/engineering/m2-struct-source.md)
   parses bounded top-level declarations, resolves scalar and by-value named
   fields, and attaches immutable declaration-order layouts. Its 23 native groups
