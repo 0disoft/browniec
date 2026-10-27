@@ -15,7 +15,7 @@ remain outside this and the private VM slice.
 
 ## Instruction encoding
 
-Every instruction is eight bytes. For struct opcodes 41..46, bytes 4 through 7
+Every instruction is eight bytes. For struct opcodes 41..46 and 48, bytes 4 through 7
 are zero. Opcode 47 uses bytes 4/5 for target/source leaf ordinals and keeps
 bytes 6/7 zero. The first four bytes are `op, dst, a, b`.
 
@@ -28,6 +28,7 @@ bytes 6/7 zero. The first four bytes are `op, dst, a, b`.
 | 45 | `SDROP` | `dst` = binding, `a` = 0, `b` = 0 |
 | 46 | `SASSIGN` | `dst` = live mutable destination, `a` = live source, `b` = 0 |
 | 47 | `SSUBASSIGN` | `dst` = live mutable target, `a` = live source, `b` = selected nominal record; bytes 4/5 = target/source leaf starts |
+| 48 | `SREPLACE` | `dst` = live mutable target, `a` = first scalar input register, `b` = exact nominal root record; bytes 4..7 = zero |
 
 `SINIT` consumes every depth-first scalar leaf in declaration order from
 consecutive registers beginning at `a`. Each register must have the leaf's exact
@@ -103,3 +104,7 @@ The [atomic subrecord successor](m2-struct-subassign-atomic.md) independently
 checks nominal record nodes at both leaf starts, liveness, mutability, and
 reserved bytes. It changes no scalar SSA definitions or owner live sets. Its
 combined selection includes all nine existing IR groups on the updated verifier.
+
+The [root replacement successor](m2-struct-replace-vm.md) shares `SINIT`'s
+exact input-range checker, requires a live mutable exact-nominal destination
+and changes neither scalar definitions nor owner live sets.

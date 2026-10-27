@@ -2,6 +2,7 @@
 
 - Status: implemented and verified in development and release.
 - Implementation commit: `6509e27`.
+- VM successor: [metered atomic root replacement](m2-struct-replace-vm.md).
 - Evidence: [Windows receipt](../evidence/m2-struct-replace-values-windows-20261027.json).
 - Implementation: [nested storage](../../src/struct_nested_storage.fy),
   [shared owners](../../src/array_owners.fy).
@@ -22,7 +23,7 @@ descriptor against the current catalog and requires the exact nominal record
 identity. Matching physical layouts do not substitute for nominal identity.
 Array tokens, stale or released generations and forged descriptors fail.
 This private owner layer does not establish source-level write authority;
-mutability is an obligation of a future verifier and dispatch integration.
+the [VM successor](m2-struct-replace-vm.md) checks mutability before dispatch.
 
 The initializer and replacement share one private `encode_fields` traversal.
 It encodes every scalar into zero-initialized local scratch before publication,
@@ -42,16 +43,15 @@ plans, one extent preflight and one scalar encoding pass.
 
 ## Integration boundary
 
-No source syntax, opcode, verifier rule, VM dispatch or Fuel charge is added.
+This foundation added no source syntax, opcode, verifier rule, VM dispatch or Fuel charge.
 In particular, `p = P { ... }` is still rejected. Version JSON and existing
 source profiles are unchanged. The native tests exercise the new functions
 directly; CLI regressions exercise their shared initialization path and existing
 record operations.
 
-A subsequent VM instruction must require a live mutable target, exact nominal
-identity, exact consecutive scalar input types and valid reserved operands. It
-must prepay the whole bounded operation before calling replacement. Source
-lowering must evaluate and stage every RHS field before this final write.
+The [metered VM successor](m2-struct-replace-vm.md) now supplies those checks and
+prepayment through private `SREPLACE` (48). Source lowering must still evaluate
+and stage every RHS field before this final write.
 Failure atomicity applies to this storage operation; earlier statements and
 external effects are not rolled back.
 

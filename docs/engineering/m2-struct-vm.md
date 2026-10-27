@@ -3,7 +3,8 @@
 - Status: private entry-only dispatch implemented. The original 38-group and
   115-case receipts are historical after atomic verifier/VM/test changes.
 - Scope: metered execution of struct IR opcodes 41..46, with opcode 47 supplied
-  by the [atomic successor](m2-struct-subassign-atomic.md). This slice adds no source struct grammar, record parameters or results, or borrows.
+  by the [atomic successor](m2-struct-subassign-atomic.md) and opcode 48 by
+  [root replacement](m2-struct-replace-vm.md). This slice adds no source struct grammar, record parameters or results, or borrows.
 - Implementation: [src/struct_vm.fy](../../src/struct_vm.fy), [src/vm.fy](../../src/vm.fy), [src/array_vm.fy](../../src/array_vm.fy), and [src/array_owners.fy](../../src/array_owners.fy).
 - Tests: [tests/m2/struct_vm.fy](../../tests/m2/struct_vm.fy).
 - Harness: [tools/verify-m2-struct-layout.py](../../tools/verify-m2-struct-layout.py) with `--vm`.
@@ -157,4 +158,9 @@ The [atomic subrecord successor](m2-struct-subassign-atomic.md) adds opcode 47
 through `struct_vm::subassign`, with one 131,072-Fuel prepayment and canonical
 byte staging before target mutation. `step` retains the original 41..46 dispatch
 interface. The successor selection includes all eight existing VM groups; the
-unknown-cost negative case now uses opcode 48.
+unknown-cost negative case used opcode 48 at that checkpoint.
+
+The [root replacement successor](m2-struct-replace-vm.md) adds `SREPLACE` (48)
+to the existing dispatch path with 46,145 prepaid Fuel. It keeps the target's
+owner and extent, stages all scalar values before publication and requires a live
+mutable exact-nominal root. The unknown-cost negative case now uses opcode 49.

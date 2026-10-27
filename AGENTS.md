@@ -309,7 +309,20 @@ own the affected contract. Broader scaffold procedures are optional.
   existing child-path and 131 existing assignment CLI cases. Other CLI matrices,
   full native suites, Linux, packaging, isolation and performance were not rerun.
   Earlier receipts are historical for changed storage, owner, root-lock and harness
-  inputs. Source lowering and metered VM integration are the next separate slice.
+  inputs. Metered VM integration is covered by the successor below; source lowering remains open.
+  Private [metered root replacement](docs/engineering/m2-struct-replace-vm.md) now executes `SREPLACE` (48) after
+  independent live/mutable/nominal and consecutive scalar-input verification.
+  The VM prepays 46,145 Fuel, stages canonical bytes and overwrites existing storage
+  without a temporary owner, site or extent. Scalar definitions and owner live sets
+  are unchanged. No constructor-assignment source syntax or version capability is
+  added. The complete `--replace-vm` invocation passed 27 native groups (6 new,
+  8 existing VM, 9 IR, 4 atomic assignment) and 214 CLI cases (83 child path,
+  131 assignment) per development/release profile. The [receipt](docs/evidence/m2-struct-replace-vm-windows-20261027.json) records
+  102 input hashes, compiler/artifact identities, commands and outcomes.
+  Implementation commit: `6f1b38f`. Other CLI matrices, full native suites, Linux,
+  packaging, isolation and performance were not rerun. Earlier receipts are
+  historical for changed verifier, VM, profile-selection, root-lock, test and harness
+  inputs. Source lowering is the next separate slice.
 - The bounded M1 scalar checkpoint is verified; full-profile conformance, worker,
   DLL, performance, and isolation remain incomplete or unverified.
 - Root fairy.toml builds the native CLI; tools/verify-m1.ps1 verifies its narrow profile.
