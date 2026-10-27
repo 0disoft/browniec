@@ -57,7 +57,7 @@ fn void unsupported_record_shapes_names_and_signatures_are_rejected() {
  rejected(b"module main;struct P{i32 x;}fn i32 f(P p,){return 42;}fn i32 main(){return 42;}");
  rejected(b"module main;struct P{i32 x;}fn i32 f(Missing p){return 42;}fn i32 main(){return 42;}");
  rejected(b"module main;struct P{i32 x;}fn i32 main(P p){return 42;}");
- rejected(b"module main;struct P{i32 x;}fn P f(){return P{.x=42};}fn i32 main(){return 42;}");
+ assert(!compiler::compile(b"module main;struct P{i32 x;}fn P f(){return P{.x=42};}fn i32 main(){return 42;}").is_ok);
 }
 @test
 fn void source_record_formals_bind_and_invalid_bodies_and_catalog_limits_still_fail() {

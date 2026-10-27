@@ -21,6 +21,10 @@ own the affected contract. Broader scaffold procedures are optional.
 - Private mixed array/record argument copies are verified in development and release (70 native groups per profile, 9 new and 61 affected) through `array_owners::copy_call_arguments`; full-batch source validation and owner/payload admission precede mutation. Its statement that source lowering remained unavailable is historical. See [the storage contract](docs/engineering/m2-call-argument-copies.md).
 - Private metered record CALL execution is implemented at `97bf1e2`; development and release each passed 47 unique native groups stepwise (21 core, then 26 regressions) with matching 58 input hashes across both receipts. Mixed aggregate copies precede scalar/return-frame publication; existing scalar/array prices remain unchanged. Its source-gate claim is historical and superseded by the source parameter slice. See [the VM contract](docs/engineering/m2-struct-call-vm.md).
 - Immutable nominal by-value source record parameters are verified in development and release. Bare exact-type binding arguments are accepted; mutable inputs are captured with `SCOPY` before later arguments evaluate. Development and release each passed 51 native groups (14 core, 37 regressions) and 2,318 CLI cases. See [the source contract](docs/engineering/m2-struct-parameters-source.md).
+- A bounded nominal record-result signature foundation is implemented; development and release
+  each passed 22 native groups and 2,317 CLI cases. `return_records` retains ID + 1 in 1..32, the compiler
+  rejects every scanned record result before IR, catalog, or body lowering, and
+  source record returns remain unavailable. See [the signature contract](docs/engineering/m2-struct-result-signatures.md).
 - M2 has private scalar-array layout, codec, caller-backed storage, owner-lifetime and copy helpers;
   private function-owned array IR has independent verification and metered native VM dispatch. The current
   source slices add immutable/mutable scalar-array declarations in lexical scopes of ordinary functions, indexed reads,

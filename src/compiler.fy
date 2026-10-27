@@ -833,6 +833,15 @@ pub fn Result<ir::Program, errors::Error> compile(ref u8[] source) {
         case .ok(value): { value } case .err(_): { return .err(errors::make(1, 0)); }
     };
     var functions::Table signatures = functions::scan(source)?;
+    // Nominal result metadata is not an executable return ABI. Reject before
+    // any zero scalar tag reaches IR, parameter catalogs, or body lowering.
+    var usize result = 0;
+    while (result < signatures.count) {
+        if (signatures.return_records[result] != 0) {
+            return .err(errors::make(3, signatures.begins[result]));
+        }
+        result += 1;
+    }
     var ir::Program p = ir::empty();
     p.function_count = signatures.count;
     p.entry = signatures.entry;
