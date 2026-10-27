@@ -21,6 +21,12 @@ pub fn Result<i64, errors::Error> run(ref ir::Program p, usize fuel) {
 }
 pub fn Result<i64, errors::Error> run_with_array_limit(ref ir::Program p, usize fuel, usize array_limit) {
     let usize verified = verifier::verify(p)?;
+    // Record-result IR is verified independently but has no owner-transfer VM yet.
+    var usize f = 0;
+    while (f < p.function_count) {
+        if (p.record_results[f] != 0) { return .err(errors::make(11, 0)); }
+        f += 1;
+    }
     var usize remaining = fuel;
     var bytes::Buffer payload = bytes::empty();
     let bool aggregates = p.arrays.count != 0 || p.records.count != 0;

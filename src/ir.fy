@@ -24,6 +24,7 @@ import std::num as num;
 // byte 4=target scalar-leaf start, byte 5=source scalar-leaf start; bytes 6..7=0.
 // 48 atomic root replacement: dst=live target,a=first scalar,b=nominal record.
 // 49 atomic subtree replacement: same operands; byte 4=target leaf, 5..7=0.
+// 50 return the sole remaining callee record owner: dst=0,a=site,b=0.
 pub struct Program {
     u8[2048] code;
     i64[128] constants;
@@ -56,6 +57,8 @@ pub struct Program {
     u8[128] record_parameters;
     // Zero scalar, otherwise a callee-owned result shape anchor (catalog ID + 1).
     u8[16] array_results;
+    // Zero scalar/array, otherwise a callee-owned nominal record anchor (site + 1).
+    u8[16] record_results;
 }
 
 pub fn Program empty() {
@@ -65,7 +68,7 @@ pub fn Program empty() {
         .register_ends = [0; 16], .arities = [0; 16], .call_args = [0; 256],
         .call_arities = [0; 32], .function_count = 0, .entry = 0, .call_count = 0,
         .types = [0; 128], .return_types = [0; 16], .slots = [false; 128], .arrays = arrays::empty(), .records = records::empty(),
-        .array_functions = [0; 16], .record_functions = [0; 16], .array_parameters = [0; 128], .record_parameters = [0; 128], .array_results = [0; 16] };
+        .array_functions = [0; 16], .record_functions = [0; 16], .array_parameters = [0; 128], .record_parameters = [0; 128], .array_results = [0; 16], .record_results = [0; 16] };
 }
 
 fn Result<u8, errors::Error> byte(usize value, usize offset) {
@@ -303,4 +306,18 @@ pub fn Result<usize, errors::Error> record_subreplace(ref mut Program p, usize d
     let u8 target = byte(target_leaf,offset)?;
     let usize pc = raw(p,49,dst,first,nominal,offset)?;
     p.code[pc*8+4] = target; return .ok(pc);
+}
+
+// Record results use CALL's existing argument table and a non-scalar destination.
+pub fn Result<usize,errors::Error> record_call(ref mut Program p,usize target,usize destination,ref usize[] arguments,usize offset) {
+    if(p.count>=256 || p.call_count>=32 || arguments.len>8 || target>=16 || destination>=16) {return .err(errors::make(4,offset));}
+    var usize i=0;
+    while(i<arguments.len){if(arguments[i]>255){return .err(errors::make(4,offset));}i+=1;}
+    let usize site=p.call_count;i=0;
+    while(i<arguments.len){p.call_args[site*8+i]=byte(arguments[i],offset)?;i+=1;}
+    p.call_arities[site]=byte(arguments.len,offset)?;p.call_count+=1;
+    return raw(p,9,144+destination,target,site,offset);
+}
+pub fn Result<usize,errors::Error> record_return(ref mut Program p,usize source,usize offset) {
+    return raw(p,50,0,source,0,offset);
 }
