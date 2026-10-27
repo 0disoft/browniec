@@ -4,6 +4,7 @@
 - Implementation commit: `6f1b38f`.
 - Evidence: [Windows receipt](../evidence/m2-struct-replace-vm-windows-20261027.json).
 - Predecessor: [scalar-value storage replacement](m2-struct-replace-values.md).
+- Successor: [entry-only root constructor assignment](m2-struct-replace-source.md).
 - Implementation: [IR](../../src/ir.fy), [verifier](../../src/struct_verifier.fy),
   [dispatch](../../src/struct_vm.fy).
 - Tests: [native replacement cases](../../tests/m2/struct_replace_vm.fy).
@@ -57,13 +58,17 @@ replacement, earlier statements or external effects.
 
 ## Source boundary
 
-Source lowering for `p = P { ... }` is not implemented in this slice. No version
-capability or bytecode loader is added. Existing source profiles remain; private
-flat-record replacement selects the copy family and nested programs retain
+Source lowering for `p = P { ... }` was not implemented in this slice. No version
+capability or bytecode loader was added by this slice. Existing source profiles
+remain; private flat-record replacement selects the copy family and nested programs retain
 `brownie.m2-struct-nested/1`. CLI regression cases exercise existing source
 behavior; the new opcode is exercised by native IR and dispatch tests.
-The next source slice must evaluate all RHS fields in order and stage their
-values before emitting this instruction.
+The [constructor-assignment successor](m2-struct-replace-source.md) now evaluates
+all RHS fields in order, stages their values before one `SREPLACE`, and adds the
+`struct_constructor_assignment` version capability. The successor passed 28
+native groups and 2,390 CLI cases per profile.
+Its [receipt](../evidence/m2-struct-replace-source-windows-20261027.json)
+records the completed result.
 
 ## Verification
 

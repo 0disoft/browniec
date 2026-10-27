@@ -12,6 +12,7 @@ own the affected contract. Broader scaffold procedures are optional.
 
 - M0 native primitives exist under `probes/m0` and have a repeatable Windows harness.
 - The M1 scalar lexer/parser, i32 checks, private IR verifier, VM, and CLI exist in src/.
+- Entry-only mutable root constructor assignment is verified in development and release.
 - M2 has private scalar-array layout, codec, caller-backed storage, owner-lifetime and copy helpers;
   private function-owned array IR has independent verification and metered native VM dispatch. The current
   source slices add immutable/mutable scalar-array declarations in lexical scopes of ordinary functions, indexed reads,
@@ -184,9 +185,9 @@ own the affected contract. Broader scaffold procedures are optional.
   owner and extent; `SASSIGN` reuses the destination extent. The type-name/local
   ambiguity is resolved by inspecting `{` after the initializer name. Record
   statements remain unavailable in helpers and `for` initializer/post clauses;
-  constructor RHS assignment, aggregate expressions, struct parameters/results, and borrows remain unsupported. Nested
-  constructors, scalar paths, and child binding initializers are handled by the
-  successors. Programs with
+  that slice left constructor RHS assignment, aggregate expressions, struct
+  parameters/results, and borrows unsupported. Nested constructors, scalar paths,
+  and child binding initializers are handled by the successors. Programs with
   nonempty record bindings and opcode 42 or 46 select
   `brownie.m2-struct-copy/1`, before opcode 44 write selection and read fallback;
   `--version --json` adds `struct_copy_profile`.
@@ -301,7 +302,7 @@ own the affected contract. Broader scaffold procedures are optional.
   payload use remain unchanged, including at full capacity. Initialization and
   replacement share one encoder. This adds no source syntax, opcode, verifier,
   VM dispatch, Fuel charge or version capability; constructor RHS assignment
-  remains unavailable. The complete `--replace-values` invocation passed 21 native
+  remained unavailable in that slice. The complete `--replace-values` invocation passed 21 native
   groups and 214 CLI cases per development/release profile. The [receipt](docs/evidence/m2-struct-replace-values-windows-20261027.json)
   records 102 input hashes, compiler/artifact identities, commands and outcomes.
   Implementation commit: `6509e27`. The selection covers six new replacement groups,
@@ -309,20 +310,30 @@ own the affected contract. Broader scaffold procedures are optional.
   existing child-path and 131 existing assignment CLI cases. Other CLI matrices,
   full native suites, Linux, packaging, isolation and performance were not rerun.
   Earlier receipts are historical for changed storage, owner, root-lock and harness
-  inputs. Metered VM integration is covered by the successor below; source lowering remains open.
+  inputs. Metered VM integration is covered by the successor below; source lowering
+  is covered by the [constructor-assignment successor](docs/engineering/m2-struct-replace-source.md).
   Private [metered root replacement](docs/engineering/m2-struct-replace-vm.md) now executes `SREPLACE` (48) after
   independent live/mutable/nominal and consecutive scalar-input verification.
   The VM prepays 46,145 Fuel, stages canonical bytes and overwrites existing storage
   without a temporary owner, site or extent. Scalar definitions and owner live sets
-  are unchanged. No constructor-assignment source syntax or version capability is
-  added. The complete `--replace-vm` invocation passed 27 native groups (6 new,
+  are unchanged. No constructor-assignment source syntax or version capability
+  was added by that slice. The complete `--replace-vm` invocation passed 27 native groups (6 new,
   8 existing VM, 9 IR, 4 atomic assignment) and 214 CLI cases (83 child path,
   131 assignment) per development/release profile. The [receipt](docs/evidence/m2-struct-replace-vm-windows-20261027.json) records
   102 input hashes, compiler/artifact identities, commands and outcomes.
   Implementation commit: `6f1b38f`. Other CLI matrices, full native suites, Linux,
   packaging, isolation and performance were not rerun. Earlier receipts are
   historical for changed verifier, VM, profile-selection, root-lock, test and harness
-  inputs. Source lowering is the next separate slice.
+  inputs. Those results remain scoped to the metered VM slice.
+  [Entry-only mutable root constructor assignment](docs/engineering/m2-struct-replace-source.md)
+  is now implemented at `1627ee4`. Constructor RHS values stage in source order
+  before consecutive `LOAD`s and one `SREPLACE` (48), without another owner, site,
+  or extent. Version JSON reports `struct_constructor_assignment: true`.
+  The complete `--replace-source` invocation passed 28 native groups and 2,390
+  CLI cases per development/release profile without result reuse. The [receipt](docs/evidence/m2-struct-replace-source-windows-20261027.json)
+  records 101 input hashes, compiler/artifact identities, commands and outcomes.
+  Other CLI matrices, full native suites, Linux, packaging, isolation and
+  performance were not rerun.
 - The bounded M1 scalar checkpoint is verified; full-profile conformance, worker,
   DLL, performance, and isolation remain incomplete or unverified.
 - Root fairy.toml builds the native CLI; tools/verify-m1.ps1 verifies its narrow profile.

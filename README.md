@@ -1,6 +1,7 @@
 # Brownie C
 
 - Status: M1 scalar checkpoint verified; M2 function-owned scalar arrays with helper declarations, by-value parameters, argument capture, copies, length access, lexical cleanup, source results, and bare-name, call-result, and repeated-literal assignment implemented; private entry-owned struct IR/verifier and metered VM dispatch implemented; declaration-only source struct layouts are historical verified evidence; bounded entry scalar-field construction and reads remain a verified historical read baseline; entry-only one-level scalar-field writes implemented with historical focused development/release validation; entry-only scalar-record copy initialization and whole-record assignment implemented and verified stepwise in development and release; bounded entry nested constructors, multi-segment scalar paths, and whole-root nested copies implemented, with their receipt historical after child-binding compiler changes; whole-record child binding initializers verified historically; subrecord declaration initializer receipts historical after assignment changes; per-leaf assignment receipts historical after atomic changes; atomic subrecord assignment verified in development and release; full profile incomplete; constructor child subrecord paths verified in development and release; private scalar-value record replacement verified; metered atomic root replacement verified
+- Root constructor assignment: verified in development and release.
 - Design date: 2026-10-23
 - First delivery target: Windows 11 x64
 
@@ -219,7 +220,7 @@ field before overwriting an existing exact-nominal root. Owner tokens, order and
 payload use remain unchanged, including at full capacity. Initialization and
 replacement share one encoder. This adds no source syntax, opcode, verifier,
 VM dispatch, Fuel charge or version capability; constructor RHS assignment
-remains unavailable. The complete `--replace-values` invocation passed 21 native
+remained unavailable in that slice. The complete `--replace-values` invocation passed 21 native
 groups and 214 CLI cases per development/release profile. The [receipt](docs/evidence/m2-struct-replace-values-windows-20261027.json)
 records 102 input hashes, compiler/artifact identities, commands and outcomes.
 Implementation commit: `6509e27`. The selection covers six new replacement groups,
@@ -227,21 +228,32 @@ six nested-storage, six owner-copy and three subrecord-owner groups, plus 83
 existing child-path and 131 existing assignment CLI cases. Other CLI matrices,
 full native suites, Linux, packaging, isolation and performance were not rerun.
 Earlier receipts are historical for changed storage, owner, root-lock and harness
-inputs. Metered VM integration is covered by the successor below; source lowering remains open.
+inputs. Metered VM integration is covered by the successor below; source lowering
+is covered by the [constructor-assignment successor](docs/engineering/m2-struct-replace-source.md).
 
 Private [metered root replacement](docs/engineering/m2-struct-replace-vm.md) now executes `SREPLACE` (48) after
 independent live/mutable/nominal and consecutive scalar-input verification.
 The VM prepays 46,145 Fuel, stages canonical bytes and overwrites existing storage
 without a temporary owner, site or extent. Scalar definitions and owner live sets
-are unchanged. No constructor-assignment source syntax or version capability is
-added. The complete `--replace-vm` invocation passed 27 native groups (6 new,
+are unchanged. No constructor-assignment source syntax or version capability
+was added by that slice. The complete `--replace-vm` invocation passed 27 native groups (6 new,
 8 existing VM, 9 IR, 4 atomic assignment) and 214 CLI cases (83 child path,
 131 assignment) per development/release profile. The [receipt](docs/evidence/m2-struct-replace-vm-windows-20261027.json) records
 102 input hashes, compiler/artifact identities, commands and outcomes.
 Implementation commit: `6f1b38f`. Other CLI matrices, full native suites, Linux,
 packaging, isolation and performance were not rerun. Earlier receipts are
 historical for changed verifier, VM, profile-selection, root-lock, test and harness
-inputs. Source lowering is the next separate slice.
+inputs. Those results remain scoped to the metered VM slice.
+
+[Entry-only mutable root constructor assignment](docs/engineering/m2-struct-replace-source.md)
+is now implemented at `1627ee4`. Constructor RHS values stage in source order
+before consecutive `LOAD`s and one `SREPLACE` (48), without another owner, site,
+or extent. Version JSON reports `struct_constructor_assignment: true`.
+The complete `--replace-source` invocation passed 28 native groups and 2,390
+CLI cases per development/release profile without result reuse. The [receipt](docs/evidence/m2-struct-replace-source-windows-20261027.json)
+records 101 input hashes, compiler/artifact identities, commands and outcomes.
+Other CLI matrices, full native suites, Linux, packaging, isolation and
+performance were not rerun.
 
 The declaration-only contract and its receipt remain historical evidence for
 declarations without record bindings.
@@ -407,6 +419,7 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 constructor child paths](docs/engineering/m2-struct-child-path.md): exact nominal subrecord snapshots without intermediate owners
 - [M2 metered root replacement](docs/engineering/m2-struct-replace-vm.md): independent verification, prepaid atomic replacement and existing ownership
 - [M2 scalar-value record replacement](docs/engineering/m2-struct-replace-values.md): private staged overwrite without another owner or extent
+- [M2 entry-only root constructor assignment](docs/engineering/m2-struct-replace-source.md): source-order staging, consecutive loads, one `SREPLACE`, existing ownership, and aggregate verification in progress
 - [Product specification](docs/product/02-spec.md): observable first-profile behavior
 - [Roadmap](docs/product/01-roadmap.md): M0 through M5 delivery gates
 - [Design baseline](docs/design-baseline.md): source provenance, evidence, and findings

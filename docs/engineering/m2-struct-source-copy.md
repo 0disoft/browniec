@@ -7,6 +7,7 @@
 - Predecessor: [bounded source struct field writes](m2-struct-write.md).
 - Successor: [source nested structs](m2-struct-source-nested.md), which adds
   inline child constructors and multi-segment scalar paths.
+- Replacement successor: [entry-only root constructor assignment](m2-struct-replace-source.md).
 - Implementation: `src/struct_value_source.fy`, `src/compiler.fy`, `src/array_source.fy`,
   `src/render.fy`, `src/main.fy`, and the existing private struct IR and VM.
 - Implementation commit: `f9cf654`.
@@ -145,7 +146,8 @@ The plain `--version` output also lists `brownie.m2-struct-copy/1`.
 
 - Records or record copy/assignment statements in helper functions
 - Copy initialization or assignment in a `for` initializer or post clause
-- Assignment from a constructor, such as `p = P { .x = 42 };`
+- Assignment from a constructor, such as `p = P { .x = 42 };`, was unsupported
+  in this slice; its [replacement successor](m2-struct-replace-source.md) adds it
 - General aggregate expressions, calls, parentheses, or field chains in either side
 - Subrecord values such as `p.i`; whole nested roots are supported through the
   [nested successor](m2-struct-source-nested.md)
@@ -155,7 +157,7 @@ The plain `--version` output also lists `brownie.m2-struct-copy/1`.
 
 The declaration catalog still accepts named-field struct declarations within its
 existing limits. Whole nested roots are now copyable through the nested successor;
-subrecord values and movement remain unsupported.
+subrecord values are covered by later successors; movement remains unsupported.
 
 ## Testing
 
