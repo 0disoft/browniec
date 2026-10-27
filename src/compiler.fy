@@ -293,33 +293,43 @@ fn Result<usize, errors::Error> array_statement(ref u8[] source, ref mut lexer::
     return array_write_statement(source,s,p,table,signatures,index,at,id,terminator,result_type,expr_depth,structure,loop_state);
 }
 
+// Shared declaration/replacement staging: finish every RHS expression before
+// consecutive scalar loads. No destination owner or bytes change here.
+fn Result<usize, errors::Error> record_constructor(ref u8[] source, ref mut lexer::State s,
+    ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures,
+    usize record, usize at, u8 result_type, usize expr_depth, usize structure,
+    ref mut loops::State loop_state) {
+    let usize leaves = record_values::leaf_count(p,record,at)?;
+    var usize[16] slots = [0; 16]; var usize i = 0;
+    var record_values::Initializer state = record_values::initializer(record);
+    i = 0;
+    while (i < leaves) {
+        let u8 tag = record_values::next_leaf(source,s,p,ref mut state,at)?;
+        if (tag == 255) {
+            let usize copied = record_values::stage_child(source,s,p,table,ref mut state,ref mut slots,i,at)?;
+            i += copied; continue;
+        }
+        slots[i] = ir::slot(p,tag,at)?;
+        let usize value = expression(source,s,p,table,signatures,1,expr_depth+2,tag,result_type,structure+1,loop_state)?;
+        if (p.types[value] != tag) { return .err(errors::make(3,at)); }
+        let usize store = ir::raw(p,18,slots[i],value,0,at)?; i += 1;
+        let usize member = record_values::advance(source,s,p,ref mut state)?;
+    }
+    let u8 closed = record_values::next_leaf(source,s,p,ref mut state,at)?;
+    if (closed != 0) { return .err(errors::make(3,at)); }
+    let usize end = lexer::punctuation(source,s,59)?;
+    let usize first = p.registers; i = 0;
+    while (i < leaves) { let usize loaded = ir::emit(p,17,slots[i],0,at)?; i += 1; }
+    return .ok(first);
+}
+
 fn Result<usize, errors::Error> record_declaration(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p,
     ref mut locals::Table table, ref functions::Table signatures, bool mutable, u8 terminator, u8 result_type,
     usize expr_depth, usize structure, ref mut loops::State loop_state) {
     let usize record = record_values::named(source, s)?;
     let record_values::Header header = record_values::header(source,s,p,table,record,mutable,terminator,result_type)?;
-    let usize leaves = record_values::leaf_count(p,record,header.begin)?;
     if (!record_values::constructor(source,s,record)?) { return record_values::copy(source,s,p,table,header); }
-    var usize[16] slots = [0; 16]; var usize i = 0;
-    var record_values::Initializer state = record_values::initializer(record);
-    i = 0;
-    while (i < leaves) {
-        let u8 tag = record_values::next_leaf(source,s,p,ref mut state,header.begin)?;
-        if (tag == 255) {
-            let usize copied = record_values::stage_child(source,s,p,table,ref mut state,ref mut slots,i,header.begin)?;
-            i += copied; continue;
-        }
-        slots[i] = ir::slot(p,tag,header.begin)?;
-        let usize value = expression(source,s,p,table,signatures,1,expr_depth+2,tag,result_type,structure+1,loop_state)?;
-        if (p.types[value] != tag) { return .err(errors::make(3,header.begin)); }
-        let usize store = ir::raw(p,18,slots[i],value,0,header.begin)?; i += 1;
-        let usize member = record_values::advance(source,s,p,ref mut state)?;
-    }
-    let u8 closed = record_values::next_leaf(source,s,p,ref mut state,header.begin)?;
-    if (closed != 0) { return .err(errors::make(3,header.begin)); }
-    let usize end = lexer::punctuation(source,s,59)?;
-    let usize first = p.registers; i = 0;
-    while (i < leaves) { let usize loaded = ir::emit(p,17,slots[i],0,header.begin)?; i += 1; }
+    let usize first = record_constructor(source,s,p,table,signatures,record,header.begin,result_type,expr_depth,structure,loop_state)?;
     let usize id = ir::record(p,record,mutable,header.begin)?;
     let usize init = ir::record_init(p,id,first,header.begin)?;
     return locals::declare(table,header.begin,header.end,144+id,mutable);
@@ -396,7 +406,18 @@ fn Result<usize, errors::Error> record_write_statement(ref u8[] source, ref mut 
     u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {
     if (result_type == 0 || terminator != 59) { return .err(errors::make(3, at)); }
     let usize id = table.registers[index] - 144;
+    let usize record = p.records.records[id] as usize;
     if (s.kind == 61) {
+        var lexer::State look = lexer::snapshot(s);
+        let usize equals = lexer::next(source,ref mut look)?;
+        if (record_values::constructor(source,ref mut look,record)?) {
+            if (!p.records.mutable[id]) { return .err(errors::make(3,at)); }
+            let usize consumed = lexer::next(source,s)?;
+            let bool opened = record_values::constructor(source,s,record)?;
+            let usize first = record_constructor(source,s,p,table,signatures,record,at,result_type,expr_depth,structure,loop_state)?;
+            let usize replaced = ir::record_replace(p,id,first,record,at)?;
+            return .ok(index);
+        }
         let usize assigned = record_values::assign(source,s,p,table,id,at)?;
         return .ok(index);
     }
