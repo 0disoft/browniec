@@ -61,7 +61,7 @@ function's initial parameter mask. `SWRITE`, `SASSIGN`, `SSUBASSIGN`,
 After verification, `vm::run_with_array_limit` scans `record_parameters` before
 Fuel subtraction, payload preparation or call entry. Any nonzero entry returns
 `unavailable` (kind 11) at offset 0; malformed metadata fails verification first
-with kind 5. No record owner copy or VM call entry exists, so verified
+with kind 5. At this IR checkpoint no record owner copy or VM call entry exists, so verified
 record-parameter IR cannot execute; source record parameters stay gated before IR
 or body lowering. The slice adds no opcode, Fuel charge, source form, profile or
 version capability. The array is metadata; no payload, allocation, stack or speed
@@ -87,3 +87,8 @@ Record formals are immutable callee sites in register metadata, with exact-nomin
 live sources through `CALL`, live bits 16..31 and mandatory drops. The VM reports
 unavailable before Fuel and source parameters stay gated. Development and release
 each passed 28 native groups and 2,226 CLI cases.
+
+The [mixed argument-copy successor](m2-call-argument-copies.md) adds private
+transactional owner copies and changes owner/storage, root-lock and harness
+inputs. The receipt above remains evidence for `9b43e0d`; record-parameter VM
+entry and source calls remain unavailable.

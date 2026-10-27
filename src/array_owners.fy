@@ -18,6 +18,9 @@ pub struct Owner {
 pub struct Table { Owner[16] slots; usize[16] order; usize depth; storage::Arena arena; }
 // Dense array-argument results, in input order. Scalar arguments are not included.
 pub struct Copies { Token[8] tokens; usize count; }
+// Dense aggregate arguments in source order. element 0 selects a nominal record
+// (length must be zero); arrays use their scalar tag/length and record zero.
+pub struct CallArgument { Token source; u8 element; usize length; usize record; }
 pub enum Error { Token; Owners; State; Type; Length; Metadata; Overflow; Quota; Bounds; Alignment; Value; }
 
 pub fn Table empty(usize limit) {
@@ -263,6 +266,79 @@ pub fn Result<Copies, Error> copy_arguments(ref Token[] sources, ref layouts::Ar
         var usize byte = 0;
         while (byte < sizes[i]) {
             bytes[targets[i] + byte] = bytes[origins[i] + byte];
+            byte += 1;
+        }
+        i += 1;
+    }
+    table.slots = planned.slots; table.order = planned.order;
+    table.depth = planned.depth; table.arena = planned.arena;
+    return .ok(result);
+}
+
+// Preflight one mixed array/record transaction against the original table.
+// Record snapshots normalize padding and validate every nested bool before any
+// backing write. Only the complete batch publishes tokens and arena metadata.
+pub fn Result<Copies, Error> copy_call_arguments(ref records::Catalog catalog,
+    ref CallArgument[] arguments, ref mut u8[] bytes, ref mut Table table) {
+    if (arguments.len > 8) { return .err(.Metadata); }
+    if (!valid(table, bytes.len)) { return .err(.State); }
+    var Table planned = Table { .slots = table.slots, .order = table.order,
+        .depth = table.depth, .arena = table.arena };
+    var Copies result = Copies { .tokens = [Token { .slot = 0, .generation = 0 }; 8], .count = arguments.len };
+    var u8[1024] snapshots = [0; 1024];
+    var usize[8] origins = [0; 8]; var usize[8] targets = [0; 8];
+    var usize[8] marks = [0; 8]; var usize[8] sizes = [0; 8];
+    var usize i = 0;
+    while (i < arguments.len) {
+        let CallArgument argument = arguments[i];
+        let Owner owner = resolve_any(table, argument.source, bytes.len)?;
+        if (owner.element != argument.element) { return .err(.Type); }
+        if (argument.element == 0) {
+            if (argument.length != 0) { return .err(.Metadata); }
+            if (owner.record != argument.record) { return .err(.Type); }
+            let Owner checked = resolve_record(catalog, table, argument.source, bytes.len)?;
+            let usize staged = switch (record_storage::snapshot_into(catalog, owner.record, owner.base,
+                bytes, ref table.arena, ref mut snapshots[i * 128..i * 128 + owner.length])) {
+                case .ok(n): { n } case .err(e): { return .err(record_error(e)); }
+            };
+        } else {
+            if (argument.record != 0) { return .err(.Metadata); }
+            if (owner.length != argument.length) { return .err(.Length); }
+            if (owner.element == 2) {
+                var usize at = owner.base;
+                while (at < owner.end) { if (bytes[at] > 1) { return .err(.Value); } at += 1; }
+            }
+        }
+        let layouts::Array layout = allocation_layout(ref owner)?;
+        let usize slot = free_slot(ref planned)?;
+        let usize mark = planned.arena.used;
+        let layouts::Reservation reservation = switch (layouts::reserve(ref layout, mark, planned.arena.limit)) {
+            case .ok(p): { p } case .err(e): { return .err(switch (e) {
+                case .Type: { .Type } case .Length: { .Length } case .Metadata: { .Metadata }
+                case .Overflow: { .Overflow } case .Quota: { .Quota } case .Bounds: { .Bounds }
+                case .Alignment: { .Alignment }
+            }); }
+        };
+        origins[i] = owner.base; targets[i] = reservation.offset;
+        marks[i] = mark; sizes[i] = layout.bytes;
+        planned.arena.used = reservation.end;
+        if (argument.element == 0) {
+            result.tokens[i] = publish_record(ref mut planned, slot, owner.record,
+                owner.length, owner.alignment, mark, reservation.offset);
+        } else { result.tokens[i] = publish(ref mut planned, slot, ref layout, mark, reservation.offset); }
+        i += 1;
+    }
+    // Every destination follows the original published prefix. Sources cannot
+    // alias a destination, including repeated arguments and provisional slots.
+    i = 0;
+    while (i < arguments.len) {
+        var usize at = marks[i];
+        while (at < targets[i]) { bytes[at] = 0; at += 1; }
+        var usize byte = 0;
+        while (byte < sizes[i]) {
+            bytes[targets[i] + byte] = if (arguments[i].element == 0) {
+                snapshots[i * 128 + byte]
+            } else { bytes[origins[i] + byte] };
             byte += 1;
         }
         i += 1;

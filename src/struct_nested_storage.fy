@@ -198,6 +198,20 @@ fn Result<usize, Error> snapshot(ref layouts::Catalog catalog, ref layouts::Plan
     }
     return .ok(plan.bytes[record]);
 }
+// Copy canonical bytes into caller-owned scratch without changing backing or
+// arena state. Scratch may be partially changed on error; it is never published.
+// The caller must supply a disjoint, exact-size scratch region.
+pub fn Result<usize, Error> snapshot_into(ref layouts::Catalog catalog, usize record, usize source,
+    ref u8[] storage, ref arenas::Arena arena, ref mut u8[] encoded) {
+    let layouts::Plan plan = switch (layouts::plan(catalog, 18446744073709551615)) {
+        case .ok(p): { p } case .err(_): { return .err(.Layout); }
+    };
+    let usize size = extent(ref plan, record, source, storage.len, arena)?;
+    if (encoded.len != size) { return .err(.Bounds); }
+    var usize i = 0;
+    while (i < size) { encoded[i] = 0; i += 1; }
+    return snapshot(catalog, ref plan, record, source, storage, encoded);
+}
 pub fn Result<usize, Error> copy(ref layouts::Catalog catalog, usize record, usize source,
     ref mut u8[] storage, ref mut arenas::Arena arena) {
     let layouts::Plan plan = switch (layouts::plan(catalog, 18446744073709551615)) {

@@ -26,9 +26,17 @@ def write(path, value):
     path.write_text(json.dumps(value, indent=2) + '\n', encoding='utf-8')
 
 
-def verify(compiler, storage=False, copy_records=False, nested=False, nested_copy=False, owners=False, owner_copy=False, struct_ir=False, struct_vm=False):
-    require(sum([storage, copy_records, nested, nested_copy, owners, owner_copy, struct_ir, struct_vm]) <= 1, 'Choose only one verification selection')
-    if struct_vm:
+def verify(compiler, storage=False, copy_records=False, nested=False, nested_copy=False, owners=False, owner_copy=False, struct_ir=False, struct_vm=False, call_copies=False):
+    require(sum([storage, copy_records, nested, nested_copy, owners, owner_copy, struct_ir, struct_vm, call_copies]) <= 1, 'Choose only one verification selection')
+    if call_copies:
+        kind = 'call-copies'
+        groups = {'call_argument_copies': 9, 'array_argument_copies': 7,
+                  'struct_owner_copy': 6, 'struct_nested_copy': 6, 'struct_owners': 6,
+                  'array_owners': 5, 'array_copy': 4, 'array_assign_storage': 2,
+                  'array_fill': 4, 'array_vm': 6, 'array_calls': 9, 'array_result_vm': 6}
+        files = ['tests/m2/' + name + '.fy' for name in groups]
+        expected = sum(groups.values())
+    elif struct_vm:
         kind = 'vm'
         groups = {'struct_vm': 8, 'struct_ir': 9, 'array_vm': 6,
                   'array_calls': 9, 'array_result_vm': 6}
@@ -126,7 +134,9 @@ def verify(compiler, storage=False, copy_records=False, nested=False, nested_cop
                     and not t['stdoutBase64'] and not t['stderrBase64'] for t in tests),
                 f'Native failure or unexpected process output: {profile}')
         result = dict(profile=profile, nativeGroups=expected, nativeTests=native)
-        if struct_vm:
+        if call_copies:
+            result.update(newCallCopyGroups=9, regressionGroups=expected-9)
+        elif struct_vm:
             result.update(newStructVMGroups=8, structIRRegressionGroups=9,
                           arrayVMRegressionGroups=6, arrayCallsRegressionGroups=9,
                           arrayResultVMRegressionGroups=6)
@@ -183,7 +193,17 @@ def verify(compiler, storage=False, copy_records=False, nested=False, nested_cop
                       recordBindingTokens=16, fieldTraversalIterationsAtMost=4096,
                       planFuel=18432, initFuel=46145, copyFuel=42049,
                       readFuel=41281, writeFuel=41281, dropFuel=65, assignmentFuel=60545)
+    if call_copies:
+        limits = dict(aggregateArguments=8, sharedOwners=16, recordBytes=128,
+                      recordSnapshotBytes=1024, structuralDepth=16, scalarLeaves=128,
+                      arrayPayloadBytesAtMost=32768, payloadLimit='caller supplied')
     limitations = ([
+        'Private dense mixed array/record argument copies only. No VM call entry, source lowering, Fuel, opcode or capability change. Record-parameter IR remains unavailable at runtime.',
+        'All sources resolve against the original table. A private staged table admits the entire batch before payload or owner publication; quota includes existing extents, new copies and alignment padding.',
+        'Each record is replanned and snapshotted into disjoint caller-local scratch. Nested bools are validated and padding normalized; array bool validation also precedes every backing write.',
+        'The caller binds one immutable catalog and stable backing region to the table lifetime. Catalog identity, cross-table capabilities and mutability authority are outside this helper.',
+        'Nine new groups and affected ownership, copy, fill and array VM/call/result groups run together in each profile; native bounds are algorithmic rather than allocation or performance measurements.'
+    ] if call_copies else [
         'Private entry-owned struct VM dispatch for opcodes 41..46, with the existing shared array owner table and bounded caller-selected payload arena. Six scalar types, nested fields, nominal copies/assignment and token clearing on drop are executable.',
         'All record work is prepaid before field traversal, owner checks, staging, register writes or token mutation. Fixed per-opcode planning/traversal/codec/owner allowances are algorithmic accounting units, not measured machine instructions or throughput.',
         'Scalar leaf paths are resolved iteratively with depth16, 128-leaf and 4096-iteration ceilings. Initialization scans once for the input span and again inside storage encoding; both traversals are charged.',
@@ -276,5 +296,6 @@ if __name__ == '__main__':
     selection.add_argument('--owner-copy', action='store_true', help='Verify record owner copies and assignment with existing struct/array owners.')
     selection.add_argument('--ir', dest='struct_ir', action='store_true', help='Verify private struct IR and affected control-flow/array call/result regressions.')
     selection.add_argument('--vm', dest='struct_vm', action='store_true', help='Verify metered struct dispatch with IR and shared array VM/call/result regressions.')
+    selection.add_argument('--call-copies', action='store_true', help='Verify atomic mixed array/record argument copies and affected owner/storage/array VM regressions.')
     args = parser.parse_args()
-    verify(args.compiler, args.storage, args.copy_records, args.nested, args.nested_copy, args.owners, args.owner_copy, args.struct_ir, args.struct_vm)
+    verify(args.compiler, args.storage, args.copy_records, args.nested, args.nested_copy, args.owners, args.owner_copy, args.struct_ir, args.struct_vm, args.call_copies)
