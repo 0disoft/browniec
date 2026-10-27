@@ -12,7 +12,7 @@
 
 This foundation copies one dense batch of array and record arguments by value.
 It adds no record-parameter VM execution, source form, Fuel charge, profile, or
-version capability. Record-parameter IR remains unavailable in the VM, and source
+version capability. This storage checkpoint left record-parameter IR unavailable in the VM, and source
 record parameters remain gated before IR and body lowering.
 
 ## Inputs
@@ -126,3 +126,7 @@ record snapshots, array argument copies, assignment/fill, and array VM calls/res
 No CLI build or matrix, full native suite, M0, Linux, packaging, DLL, isolation,
 allocation instrumentation or performance measurement was run. Earlier receipts
 remain historical for changed owner/storage, root-lock and harness inputs.
+
+The [metered VM successor](m2-struct-call-vm.md) integrates this transaction into
+CALL dispatch and changes VM/root-lock/test/harness inputs. The 70-group receipt
+above remains evidence for `72adace`; source record parameters stay gated.

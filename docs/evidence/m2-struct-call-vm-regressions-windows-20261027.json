@@ -1,0 +1,722 @@
+{
+  "schema": "browniec.m2-struct-call-vm/v1",
+  "status": "passed",
+  "phase": "regressions",
+  "recordedAt": "2026-10-27T14:47:01.838679+00:00",
+  "baselineCommit": "97bf1e2d2a835f014f1f5a79d2de6b66aa137e83",
+  "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261022210249-4ce1264273be\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.86\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: 4ce1264273be6051ee560173e94690e1b99c9eaf\nmodified: false",
+  "compilerSha256": "572395f7f1e425d613c5a69f50b30ed177cda37ca2b1638bd0c11cf79fcbcc77",
+  "standardLibraryLockIdentity": [
+    {
+      "id": "fypi1-sha256-c18350128fcbce1cee2c63f0e7acc467f9f77ff184c458af1d20eab69a58e89a",
+      "role": "standard-library",
+      "packageUid": "fairyc.std",
+      "sourceKind": "sdk",
+      "localPath": "",
+      "sdkIdentity": "fairyc-sdk-stdlib/0",
+      "runtimeAbi": "fairyc-runtime/0",
+      "sourceIdentity": "fairyc-sdk-stdlib/0;fairyc-runtime/0;fysrc1-sha256-782df5e2039ff3f7817c1055454caa24feb2ea755e62f78d8ee67418916a5b83",
+      "sourceDigest": "fysrc1-sha256-782df5e2039ff3f7817c1055454caa24feb2ea755e62f78d8ee67418916a5b83",
+      "version": "0.0.0-stage0.86",
+      "features": []
+    }
+  ],
+  "os": "Windows-11-10.0.26300-SP0",
+  "lockedCheck": "check ok: 2 instance(s), 54 source file(s), 460 MIR function(s), lock verified",
+  "commands": [
+    [
+      "git",
+      "rev-parse",
+      "HEAD"
+    ],
+    [
+      "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+      "--version"
+    ],
+    [
+      "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+      "check",
+      "--locked"
+    ],
+    [
+      "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+      "test",
+      "--native",
+      "--capture-output",
+      "--json",
+      "--locked",
+      "--file",
+      "tests/m2/array_calls.fy",
+      "--file",
+      "tests/m2/array_result_vm.fy",
+      "--file",
+      "tests/m2/struct_function_vm.fy",
+      "--file",
+      "tests/functions.fy"
+    ],
+    [
+      "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+      "test",
+      "--native",
+      "--capture-output",
+      "--json",
+      "--locked",
+      "--release",
+      "--file",
+      "tests/m2/array_calls.fy",
+      "--file",
+      "tests/m2/array_result_vm.fy",
+      "--file",
+      "tests/m2/struct_function_vm.fy",
+      "--file",
+      "tests/functions.fy"
+    ]
+  ],
+  "sourceSha256": [
+    {
+      "path": "fairy.lock",
+      "sha256": "fdfe92443f54dab2277736bde04329590d94a1c79448223da34056d4a59fccbe"
+    },
+    {
+      "path": "fairy.toml",
+      "sha256": "f5254ba793d9012470c697e8657688a4ea5465c138fba6d748707d5bfa4b31fb"
+    },
+    {
+      "path": "src/arithmetic.fy",
+      "sha256": "8192e6ba97498d059b0505307bc2bf84ac58d9722dc5f597587f8ae81a1081d3"
+    },
+    {
+      "path": "src/array_call_source.fy",
+      "sha256": "57af1c63a68bf060d6c555d1ec3f929d3c53715691074d68a5ae6f7ab58392a2"
+    },
+    {
+      "path": "src/array_call_vm.fy",
+      "sha256": "9da46f3a605e5a63ee7309d607c06473a3c175ae9e30f6e0b759e9da9a51e6da"
+    },
+    {
+      "path": "src/array_layout.fy",
+      "sha256": "d3497dfb6bb7e9ac8ceece4ae88a2274b6b40b49e3c5fecfc509179c03c91cdd"
+    },
+    {
+      "path": "src/array_meta.fy",
+      "sha256": "d1a07319dc2bb7eb95298e3920eaec63c1a4c1390a00c5469528a77e97612894"
+    },
+    {
+      "path": "src/array_owners.fy",
+      "sha256": "6faa770ea16b50f8d06c9492c663ba774dd8a00a311ffc7bb9b69665b98fa852"
+    },
+    {
+      "path": "src/array_parameters.fy",
+      "sha256": "c1b8ce0141b3f08a3d9ded230839727d6a92d11b58fd0cdec2f3667189a8622c"
+    },
+    {
+      "path": "src/array_result_source.fy",
+      "sha256": "f795ccbe072095e3368ff335337999904a5524268d26e1a34781a721587ce242"
+    },
+    {
+      "path": "src/array_result_vm.fy",
+      "sha256": "3cd5388806afa0f4c3a6a8518f154adaf6f9904b18bc7c30ed787d37c43eacfa"
+    },
+    {
+      "path": "src/array_results.fy",
+      "sha256": "1dccba6ebbc493654aea82e305b7c3f9b0c226c8c475d1c80f19fa1014e63e8e"
+    },
+    {
+      "path": "src/array_source.fy",
+      "sha256": "d26cb0267b58650aff9a629b69f1e48d99a1caee698b60deee1290657acb4dfb"
+    },
+    {
+      "path": "src/array_storage.fy",
+      "sha256": "00808c116e0fb86ce063d7fd4cc9d1f8fd29f19b277449e59e3569491a3ee534"
+    },
+    {
+      "path": "src/array_verifier.fy",
+      "sha256": "dc1b5904a6ffeeb0556859976e1674f543f89cd1587e81f83c8cc885bd80b816"
+    },
+    {
+      "path": "src/array_vm.fy",
+      "sha256": "5c9d6290a9d20c54ae9d9068a2e63ad8b9206b4113bfa7db43f0c980d1e8bd15"
+    },
+    {
+      "path": "src/bits.fy",
+      "sha256": "0b030757624a8dbaea9475f90d757aeff78b9154a121af7a4d9ebd80042db1a0"
+    },
+    {
+      "path": "src/casts.fy",
+      "sha256": "59da4a4ecef63833cc383495390e150b964bf41b353c4b150dcacb6be66caba6"
+    },
+    {
+      "path": "src/cells.fy",
+      "sha256": "71b82add3e95b86a1b7bcb88c3f97f6ae38bae0ac3ec8b1a2de925b10a64e433"
+    },
+    {
+      "path": "src/cli_input.fy",
+      "sha256": "ec91de62e6b5147d117d6fe0366ebcf617b556c074bf1dd91cb10188f96507ba"
+    },
+    {
+      "path": "src/compiler.fy",
+      "sha256": "2dc829b74827c11c138a328b393738bafa8323dc1b20872ed6590f800c7e8313"
+    },
+    {
+      "path": "src/errors.fy",
+      "sha256": "e8070ef5c6380460dacb579c33f2e180b9e683286c8cb0827e30d82a581a4646"
+    },
+    {
+      "path": "src/functions.fy",
+      "sha256": "f3c1dc15e57d9b9ea22c656df1910db76c0b088a688d989d12a3c8ca3fb2677d"
+    },
+    {
+      "path": "src/ir.fy",
+      "sha256": "3dfce4262a3988dc4252bfae8a13e5628911573bfe13c6571c670e964bb51423"
+    },
+    {
+      "path": "src/lexer.fy",
+      "sha256": "0a64c45b3a3512ada4610c244ce874d306e417cde0fce4cd99a419048002861e"
+    },
+    {
+      "path": "src/locals.fy",
+      "sha256": "f89cab6159330ec0ac269ef02cedd59d15f6f3cfae2d60fc89d43b5ccdf32cda"
+    },
+    {
+      "path": "src/loops.fy",
+      "sha256": "d25dccfb4d3d50daa6e82a6a2f8df345ea72fd4a559e3a8882d6cda0230cbee2"
+    },
+    {
+      "path": "src/main.fy",
+      "sha256": "cae7dea19dee99086f00db972c8638daecac159dfe143e5b0b36fb1c61459a79"
+    },
+    {
+      "path": "src/patterns.fy",
+      "sha256": "d9ba2ff9dba626968b7514c636a414932e50856c19b9d41d6825b4f91c9797aa"
+    },
+    {
+      "path": "src/propagation.fy",
+      "sha256": "9b58f0e5ed3ef79c44cf819c651e0ec456e38441c3ce8579aca31e0d7eb80bdc"
+    },
+    {
+      "path": "src/register_set.fy",
+      "sha256": "478e2690ee311bb3961c329becc6f9ef035276759619733cbfd0f6e441f36b73"
+    },
+    {
+      "path": "src/render.fy",
+      "sha256": "e86fb9d531c5c32321dd9df792478ca396523394ae469281a1036b57fbbd6e2d"
+    },
+    {
+      "path": "src/scalar_codec.fy",
+      "sha256": "c28ca5e5cdc38dee01d79489d8c5a709022a49001854af638258ec4536ad66f0"
+    },
+    {
+      "path": "src/shifts.fy",
+      "sha256": "510dc6a90591de165de424a377eb267917ea9973972b9b95656cc9c435675eeb"
+    },
+    {
+      "path": "src/struct_call_vm.fy",
+      "sha256": "d46de926715d2d9e4fdfab5018a54e56c4017ff6f2800692fb9904056ce97219"
+    },
+    {
+      "path": "src/struct_layout.fy",
+      "sha256": "5830ce15d3bfec60a172e9e157464e4738fd5ad4cdcfbc21500b21c934100dd3"
+    },
+    {
+      "path": "src/struct_meta.fy",
+      "sha256": "078d12717b20ed04a04eefaa22409c03292b363995a2d951be617716fe8b52cd"
+    },
+    {
+      "path": "src/struct_nested_storage.fy",
+      "sha256": "e0ff5e2b75380330c99d52271af9e7fabe41f5f6ddd59090aebd1f0d1afc0651"
+    },
+    {
+      "path": "src/struct_parameters.fy",
+      "sha256": "e65267f4b68748895d6fa856fb729df03693e496616e1d596cfcf5c2cb636aea"
+    },
+    {
+      "path": "src/struct_range.fy",
+      "sha256": "4c214845f97fb4ae0ebc0e676475855526d804d033bc8f6d31c39283b6fa0b20"
+    },
+    {
+      "path": "src/struct_source.fy",
+      "sha256": "58eacd663dd6f0bbd9a231783ad90c0a06c154d1f20cc175f093831eb1614a05"
+    },
+    {
+      "path": "src/struct_storage.fy",
+      "sha256": "f371eedc083aea535fa6cc35f245fb6bd1c8ded52b8c4470c19fd0c4d9df0596"
+    },
+    {
+      "path": "src/struct_value_source.fy",
+      "sha256": "8a339a342e823516a6973118a7485dfb98e879f9272dfcb99e164d5615e06abf"
+    },
+    {
+      "path": "src/struct_verifier.fy",
+      "sha256": "ebfceb742c678f2bc79d53d4db9dd6e77f4b98b117f9a3e87ee68545283554a7"
+    },
+    {
+      "path": "src/struct_vm.fy",
+      "sha256": "370f32db5f75e6eca439fc338c414fdde084d97c9a519e2cb49aa07bfdb702d2"
+    },
+    {
+      "path": "src/tagged.fy",
+      "sha256": "67770f8ec8f3e35a2a6196cda87310844d37358f86f8b22eb81b49df1f65f1bf"
+    },
+    {
+      "path": "src/types.fy",
+      "sha256": "906f5ba160de53f60d23e344e141181f902f36de60a4060375bef97a2162be23"
+    },
+    {
+      "path": "src/verifier.fy",
+      "sha256": "541fd0b1f78ef6d721e633744ae1e4cb8ca402b128bd8ed7432bb034b6144110"
+    },
+    {
+      "path": "src/vm.fy",
+      "sha256": "eee8c0916f40a81e08bb12074f0b26b7bb40cd480f6552457b6718ac0c658a40"
+    },
+    {
+      "path": "tests/functions.fy",
+      "sha256": "b4abd043cae4710bc39895ce72cc1f09b07eba7431bef5eaa0a4f4bea86ec11a"
+    },
+    {
+      "path": "tests/m2/array_calls.fy",
+      "sha256": "38ca740fb98467a54bcecd415869194230b30e85fe334f2c788c1a87f146c4e9"
+    },
+    {
+      "path": "tests/m2/array_result_vm.fy",
+      "sha256": "e55ce6cb07fbc32dc40576ec241311350a68598bd2ad48411bb6595cbbe8dcbc"
+    },
+    {
+      "path": "tests/m2/struct_call_vm.fy",
+      "sha256": "2a4770a47b609940181cd74064c6b3021d9ef2c4772092f694b50e904e31f5fa"
+    },
+    {
+      "path": "tests/m2/struct_function_vm.fy",
+      "sha256": "5a955d67591bfb36077625e0bd8a4f9aa992d31ece2f596cb4ad5337e60a9898"
+    },
+    {
+      "path": "tests/m2/struct_parameter_signatures.fy",
+      "sha256": "e79f30b8854e89dbee93e752812d35357e13476507b603525cacbf37faf7958b"
+    },
+    {
+      "path": "tests/m2/struct_parameters_ir.fy",
+      "sha256": "b7160a1c45a0a9cc225f927cb25bc620e4ba1901a592a504ab439257d0045cd2"
+    },
+    {
+      "path": "toolchain.json",
+      "sha256": "e744c8866ba200fd9213ee99ff61a11f60f9ed0f31e9106219f97d7da26971ef"
+    },
+    {
+      "path": "tools/verify-m2-struct-call-vm.py",
+      "sha256": "7c14a1381ce922adcd58a4b24a7824afc553640c3725a26c854bfe833d460b63"
+    }
+  ],
+  "results": [
+    {
+      "profile": "development",
+      "native": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "development",
+        "tests": [
+          {
+            "identity": "tests::functions::call_rejections_and_order",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::functions::call_verifier_boundaries",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::functions::calls_and_frames",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::functions::signature_pass",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::call_arguments_require_live_immutable_exact_shape_owned_by_caller",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::calls_precharge_exact_fuel_and_scalar_call_prices_remain_unchanged",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::eight_array_parameters_copy_in_argument_order_and_need_the_combined_peak",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::late_copy_failure_preserves_owner_payload_and_all_frame_token_bindings",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::malformed_parameter_catalog_and_placeholder_metadata_are_rejected",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::mixed_scalar_array_shapes_verify_for_all_six_elements",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::parameters_cannot_be_scalar_operands_reinitialized_or_left_live_on_return",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::recursive_parameters_preserve_each_frame_and_share_owner_and_payload_caps",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::sequential_calls_reclaim_parameters_without_losing_parent_snapshots",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_result_vm::failed_return_preflight_preserves_all_owner_tokens_and_payload_bytes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_result_vm::recursive_returns_keep_one_owner_across_all_32_frames",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_result_vm::repeated_returns_reclaim_the_same_extent_and_owner_slot",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_result_vm::return_work_is_prepaid_and_scalar_call_prices_are_unchanged",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_result_vm::returns_rehome_all_six_elements_at_one_extent_peak",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_result_vm::successful_return_preserves_descriptor_generation_and_bytes_then_drops_cleanly",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_function_vm::every_opcode_addresses_frame_zero_one_and_thirty_one_independently",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_function_vm::helper_record_cleanup_allows_array_result_transfer_beside_a_live_parent_record",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_function_vm::mixed_array_record_owners_and_payload_limits_are_shared_across_frames",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_function_vm::prepayment_invalid_frames_and_foreign_dead_bindings_preserve_every_frame",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_function_vm::recursive_records_preserve_parent_values_and_exact_fuel_payload_and_owner_bounds",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_function_vm::released_records_allow_all_32_frames_then_fail_at_the_call_depth_limit",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_function_vm::stale_child_tokens_cannot_resolve_after_frame_slot_reuse",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 26,
+        "passed": 26,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      }
+    },
+    {
+      "profile": "release",
+      "native": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "release",
+        "tests": [
+          {
+            "identity": "tests::functions::call_rejections_and_order",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::functions::call_verifier_boundaries",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::functions::calls_and_frames",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::functions::signature_pass",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::call_arguments_require_live_immutable_exact_shape_owned_by_caller",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::calls_precharge_exact_fuel_and_scalar_call_prices_remain_unchanged",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::eight_array_parameters_copy_in_argument_order_and_need_the_combined_peak",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::late_copy_failure_preserves_owner_payload_and_all_frame_token_bindings",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::malformed_parameter_catalog_and_placeholder_metadata_are_rejected",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::mixed_scalar_array_shapes_verify_for_all_six_elements",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::parameters_cannot_be_scalar_operands_reinitialized_or_left_live_on_return",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::recursive_parameters_preserve_each_frame_and_share_owner_and_payload_caps",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_calls::sequential_calls_reclaim_parameters_without_losing_parent_snapshots",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_result_vm::failed_return_preflight_preserves_all_owner_tokens_and_payload_bytes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_result_vm::recursive_returns_keep_one_owner_across_all_32_frames",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_result_vm::repeated_returns_reclaim_the_same_extent_and_owner_slot",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_result_vm::return_work_is_prepaid_and_scalar_call_prices_are_unchanged",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_result_vm::returns_rehome_all_six_elements_at_one_extent_peak",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_result_vm::successful_return_preserves_descriptor_generation_and_bytes_then_drops_cleanly",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_function_vm::every_opcode_addresses_frame_zero_one_and_thirty_one_independently",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_function_vm::helper_record_cleanup_allows_array_result_transfer_beside_a_live_parent_record",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_function_vm::mixed_array_record_owners_and_payload_limits_are_shared_across_frames",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_function_vm::prepayment_invalid_frames_and_foreign_dead_bindings_preserve_every_frame",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_function_vm::recursive_records_preserve_parent_values_and_exact_fuel_payload_and_owner_bounds",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_function_vm::released_records_allow_all_32_frames_then_fail_at_the_call_depth_limit",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_function_vm::stale_child_tokens_cannot_resolve_after_frame_slot_reuse",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 26,
+        "passed": 26,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      }
+    }
+  ],
+  "limits": {
+    "frames": 32,
+    "sharedOwners": 16,
+    "payloadBytes": 65536,
+    "aggregateArguments": 8,
+    "recordBytes": 128,
+    "recordBatchFuel": 2048,
+    "recordArgumentFuel": 43008
+  },
+  "limitations": [
+    "Private verified IR CALL execution only; source record parameters remain gated.",
+    "Native images are tool-managed; no guest CLI artifact was built.",
+    "Core and regressions are separate runs, not a combined aggregate invocation.",
+    "Other CLI/native matrices, M0, Linux, isolation, DLL, packaging, allocation instrumentation and performance were not run."
+  ]
+}

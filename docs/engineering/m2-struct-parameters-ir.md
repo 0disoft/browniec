@@ -1,5 +1,8 @@
 # M2 Private Record Parameter IR and Verification
 
+The historical availability gate described here is superseded by the
+[metered record-call VM](m2-struct-call-vm.md). Source record parameters stay gated.
+
 - Status: implemented at `9b43e0d`; development and release aggregate verification passed.
 - Scope: `record_parameters` metadata, its builder, independent verification,
   the record slot of the existing eight-argument `CALL`, parameter lifetimes and
@@ -91,4 +94,4 @@ each passed 28 native groups and 2,226 CLI cases.
 The [mixed argument-copy successor](m2-call-argument-copies.md) adds private
 transactional owner copies and changes owner/storage, root-lock and harness
 inputs. The receipt above remains evidence for `9b43e0d`; record-parameter VM
-entry and source calls remain unavailable.
+entry is supplied by the metered successor; source calls remain unavailable.
