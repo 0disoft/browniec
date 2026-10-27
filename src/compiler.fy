@@ -330,7 +330,7 @@ fn Result<usize, errors::Error> record_declaration(ref u8[] source, ref mut lexe
     let record_values::Header header = record_values::header(source,s,p,table,record,mutable,terminator,result_type)?;
     if (!record_values::constructor(source,s,record)?) { return record_values::copy(source,s,p,table,header); }
     let usize first = record_constructor(source,s,p,table,signatures,record,header.begin,result_type,expr_depth,structure,loop_state)?;
-    let usize id = ir::record(p,record,mutable,header.begin)?;
+    let usize id = ir::record_in(p,table.function,record,mutable,header.begin)?;
     let usize init = ir::record_init(p,id,first,header.begin)?;
     return locals::declare(table,header.begin,header.end,144+id,mutable);
 }

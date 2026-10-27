@@ -55,5 +55,5 @@ fn void immutable_wrong_nominal_scalar_targets_and_headers_remain_rejected() {
  assert(!compiler::compile(b"module main;struct I{i32 x;}struct R{I i;}fn i32 main(){var R p=R{.i=I{.x=0}};p.i.x=I{.x=42};return 42;}").is_ok);
  assert(!compiler::compile(b"module main;struct I{i32 x;}struct R{I i;}fn i32 main(){var R p=R{.i=I{.x=0}};p.i=I{.x=true};return 42;}").is_ok);
  assert(!compiler::compile(b"module main;struct I{i32 x;}struct R{I i;}fn i32 main(){var R p=R{.i=I{.x=0}};for(;false;p.i=I{.x=42}){}return 42;}").is_ok);
- assert(!compiler::compile(b"module main;struct I{i32 x;}struct R{I i;}fn i32 helper(){var R p=R{.i=I{.x=0}};p.i=I{.x=42};return p.i.x;}fn i32 main(){return helper();}").is_ok);
+ value(b"module main;struct I{i32 x;}struct R{I i;}fn i32 helper(){var R p=R{.i=I{.x=0}};p.i=I{.x=42};return p.i.x;}fn i32 main(){return helper();}");
 }

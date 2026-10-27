@@ -92,7 +92,7 @@ for source,error in [
     ('struct P{i32 x;}fn i32 main(){let P p=P{.x=42};return p.missing;}','type'),
     ('struct P{i32 x;}fn i32 main(){let P p=P{.x=42};return p.x.y;}','syntax'),
     ('struct P{i32 x;}fn i32 main(){{let P p=P{.x=42};}return p.x;}','type'),
-    ('struct P{i32 x;}fn i32 helper(){let P p=P{.x=42};return p.x;}fn i32 main(){return 42;}','type'),
+    ('struct P{i32 x;}fn i32 helper(){let P p=P{.x=42};return p.x;}fn i32 main(){return 42;}',None),
     ('struct P{i32 x;}fn i32 main(){for(let P p=P{.x=42};false;){}return 42;}','type'),
     ('struct P{i32 x;}fn i32 main(){let P p=P{.x=42};for(;false;p=p){}return 42;}','type'),
     ('struct P{i32 x;}fn i32 main(){let P p=P{.x=42};return main();}','type'),

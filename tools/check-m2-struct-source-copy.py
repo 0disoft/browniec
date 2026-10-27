@@ -88,7 +88,7 @@ for body,error in [
     ('let P p=P{.x=42};return p;','type'),
     ('let P p=P{.x=42};let P q=p;return main();','type'),
 ]: both('module main;struct P{i32 x;}struct Q{i32 x;}fn i32 main(){'+body+'}',error)
-both('module main;struct P{i32 x;}fn i32 helper(){let P p=P{.x=42};let P q=p;return 42;}fn i32 main(){return 42;}','type')
+both('module main;struct P{i32 x;}fn i32 helper(){let P p=P{.x=42};let P q=p;return 42;}fn i32 main(){return 42;}',None)
 # Sixteen static record sites remain bounded even when runtime scopes are disjoint.
 for count in [15,16]:
     body='let P p=P{.x=42};'+''.join(f'let P q{i}=p;' for i in range(count))

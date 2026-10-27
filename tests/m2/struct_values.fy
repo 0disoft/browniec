@@ -37,7 +37,7 @@ fn void exact_fuel_and_payload_bounds_are_preserved() {
 fn void unsupported_aggregate_operations_and_partial_initializers_fail() {
     assert(!compiler::compile(b"module main;struct P{i32 x;i32 y;}fn i32 main(){let P p=P{.x=1};return p.x;}").is_ok);
     assert(!compiler::compile(b"module main;struct P{i32 x;i32 y;}fn i32 main(){let P p=P{.y=1,.x=2};return p.x;}").is_ok);
-    assert(!compiler::compile(b"module main;struct P{i32 x;}fn i32 helper(){let P p=P{.x=42};return p.x;}fn i32 main(){return helper();}").is_ok);
+    value(b"module main;struct P{i32 x;}fn i32 helper(){let P p=P{.x=42};return p.x;}fn i32 main(){return helper();}");
     assert(!compiler::compile(b"module main;struct P{i32 x;}fn i32 main(){let P p=P{.x=42};p.x=1;return p.x;}").is_ok);
     assert(!compiler::compile(b"module main;struct P{i32 x;}fn i32 main(){for(let P p=P{.x=42};false;){}return 42;}").is_ok);
     assert(!compiler::compile(b"module main;struct P{i32 x;}fn i32 main(){let P p=P{.x=42};return main();}").is_ok);

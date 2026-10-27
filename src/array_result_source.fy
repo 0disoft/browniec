@@ -89,6 +89,8 @@ pub fn Result<usize,errors::Error> finish(ref mut ir::Program p,ref locals::Tabl
         i-=1;
         if(arrays::binding(names,i) && names.registers[i]!=128+id) {
             let usize dropped=ir::array_drop(p,names.registers[i]-128,at)?;
+        } else if(names.registers[i]>=144 && names.registers[i]<160) {
+            let usize dropped=ir::record_drop(p,names.registers[i]-144,at)?;
         }
     }
     return ir::array_return(p,id,at);

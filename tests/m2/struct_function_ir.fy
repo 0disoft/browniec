@@ -78,12 +78,12 @@ fn void helper_leaks_double_drops_and_missing_cleanup_remain_invalid() {
  p=original;p.code[(start+2)*8]=45;p.code[(start+2)*8+2]=0;assert(!verifier::verify(ref p).is_ok); // Dead release.
 }
 @test
-fn void helper_source_syntax_remains_gated_and_entry_records_still_execute() {
+fn void helper_records_execute_but_record_signatures_remain_rejected() {
  let ir::Program p=switch(compiler::compile(b"module main;struct P{i32 x;}fn i32 helper(i32 n){return n;}fn i32 main(){let P p=P{.x=42};return helper(p.x);}")){
   case .ok(p):{p}case .err(_):{assert(false);ir::empty()}};
  assert(p.entry==1 && p.record_functions[0]==1 && verifier::verify(ref p).is_ok);
  assert(switch(vm::run(ref p,2000000)){case .ok(n):{n==42}case .err(_):{false}});
- assert(!compiler::compile(b"module main;struct P{i32 x;}fn i32 helper(){let P p=P{.x=42};return p.x;}fn i32 main(){return helper();}").is_ok);
+ assert(compiler::compile(b"module main;struct P{i32 x;}fn i32 helper(){let P p=P{.x=42};return p.x;}fn i32 main(){return helper();}").is_ok);
  assert(!compiler::compile(b"module main;struct P{i32 x;}fn i32 helper(P p){return p.x;}fn i32 main(){return 42;}").is_ok);
  assert(!compiler::compile(b"module main;struct P{i32 x;}fn P helper(){return P{.x=42};}fn i32 main(){return 42;}").is_ok);
 }

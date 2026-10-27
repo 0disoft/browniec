@@ -60,5 +60,5 @@ fn void immutable_nominal_field_and_header_errors_remain_rejected() {
  assert(!compiler::compile(b"module main;struct P{i32 x;i32 y;}fn i32 main(){var P p=P{.x=0,.y=0};p=P{.y=22,.x=20};return 42;}").is_ok);
  assert(!compiler::compile(b"module main;struct P{i32 x;}fn i32 main(){var P p=P{.x=0};p=P{.x=true};return 42;}").is_ok);
  assert(!compiler::compile(b"module main;struct P{i32 x;}fn i32 main(){var P p=P{.x=0};for(;false;p=P{.x=42}){}return 42;}").is_ok);
- assert(!compiler::compile(b"module main;struct P{i32 x;}fn i32 helper(){var P p=P{.x=0};p=P{.x=42};return p.x;}fn i32 main(){return helper();}").is_ok);
+ value(b"module main;struct P{i32 x;}fn i32 helper(){var P p=P{.x=0};p=P{.x=42};return p.x;}fn i32 main(){return helper();}");
 }

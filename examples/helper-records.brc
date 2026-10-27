@@ -1,0 +1,14 @@
+module main;
+
+struct Point { i32 x; i32 y; }
+
+fn i32 total(i32 n) {
+    let Point p = Point { .x = n, .y = n + 1 };
+    if (n == 0) { return p.y; }
+    return p.x + total(n - 1);
+}
+
+fn i32 main() {
+    let Point p = Point { .x = 20, .y = 0 };
+    return p.x + total(6);
+}

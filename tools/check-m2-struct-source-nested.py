@@ -77,11 +77,11 @@ for body,error in [
  ('var R p=R{.i=I{.x=0}};for(p.i.x=1;false;){}return 42;','type'),
  ('var R p=R{.i=I{.x=0}};for(;false;p.i.x=1){}return 42;','type'),
  ('for(let R p=R{.i=I{.x=42}};false;){}return 42;','type'),
- ('var R p=R{.i=I{.x=0}};p=R{.i=I{.x=42}};return 42;','type'),
+ ('var R p=R{.i=I{.x=0}};p=R{.i=I{.x=42}};return 42;',None),
 ]: both('module main;struct I{i32 x;}struct R{I i;}fn i32 main(){'+body+'}',error)
 for fields,error in [('.y=20,.x=22','type'),('.x=20,.x=22','type'),('.x=42','syntax'),('.x=20,.y=22,.y=0','syntax')]:
  both('module main;struct I{i32 x;i32 y;}struct R{I i;}fn i32 main(){let R p=R{.i=I{'+fields+'}};return 42;}',error)
-both('module main;struct I{i32 x;}struct R{I i;}fn i32 helper(){let R p=R{.i=I{.x=42}};return p.i.x;}fn i32 main(){return 42;}','type')
+both('module main;struct I{i32 x;}struct R{I i;}fn i32 helper(){let R p=R{.i=I{.x=42}};return p.i.x;}fn i32 main(){return 42;}',None)
 # Maximum source traversal depth and sixteen-leaf staging bounds.
 for depth in [2,8,16,17]:
  defs='struct T0{i32 x;}'+''.join(f'struct T{i}{{T{i-1} child;}}' for i in range(1,depth))

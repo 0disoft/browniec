@@ -6,7 +6,7 @@ import locals as locals;
 import ir as ir;
 import errors as errors;
 
-// 144..159 are entry-owned struct sites, disjoint from scalars and arrays.
+// 144..159 are function-owned struct sites, disjoint from scalars and arrays.
 pub fn bool binding(ref locals::Table names, usize index) {
     return index < names.count && names.registers[index] >= 144 && names.registers[index] < 160;
 }
@@ -34,7 +34,7 @@ pub struct Header { usize record; usize begin; usize end; bool mutable; }
 pub fn Result<Header, errors::Error> header(ref u8[] source, ref mut lexer::State s,
     ref ir::Program p, ref locals::Table names, usize record, bool mutable, u8 terminator, u8 result_type) {
     let usize at = s.begin;
-    if (names.function != p.entry || result_type == 0 || terminator != 59 || record >= p.records.layouts.count) { return .err(errors::make(3, at)); }
+    if (names.function >= p.function_count || result_type == 0 || terminator != 59 || record >= p.records.layouts.count) { return .err(errors::make(3, at)); }
     let layouts::Plan plan = switch (layouts::plan(ref p.records.layouts, 18446744073709551615)) {
         case .ok(value): { value } case .err(_): { return .err(errors::make(3, at)); }
     };
@@ -132,7 +132,7 @@ pub fn Result<usize, errors::Error> copy(ref u8[] source, ref mut lexer::State s
     let usize next = lexer::next(source, ref mut look)?;
     if (look.kind == 46) { return extract(source,s,p,names,header); }
     let usize from = copy_source(source, s, p, names, header.record)?;
-    let usize id = ir::record(p, header.record, header.mutable, header.begin)?;
+    let usize id = ir::record_in(p, names.function, header.record, header.mutable, header.begin)?;
     let usize copied = ir::record_copy(p, id, from, header.begin)?;
     // The new binding becomes visible only after its complete initializer.
     return locals::declare(names, header.begin, header.end, 144 + id, header.mutable);
@@ -268,7 +268,7 @@ fn Result<usize, errors::Error> extract(ref u8[] source, ref mut lexer::State s,
     while (i < count) {
         let usize read = ir::record_read(p,source_id,part.ordinal+i,at)?; i += 1;
     }
-    let usize id = ir::record(p,header.record,header.mutable,header.begin)?;
+    let usize id = ir::record_in(p,names.function,header.record,header.mutable,header.begin)?;
     let usize init = ir::record_init(p,id,first,header.begin)?;
     return locals::declare(names,header.begin,header.end,144+id,header.mutable);
 }
