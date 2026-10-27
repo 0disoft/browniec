@@ -6,7 +6,7 @@ import register_set as registers;
 import array_parameters as parameters;
 
 fn bool readable(ref ir::Program p, ref registers::Set defined, usize r, usize f, u8 tag) {
-    return r >= p.register_starts[f] && r < p.register_ends[f] && !p.slots[r] && p.array_parameters[r] == 0 && registers::contains(defined, r) && p.types[r] == tag;
+    return r >= p.register_starts[f] && r < p.register_ends[f] && !p.slots[r] && p.array_parameters[r] == 0 && p.record_parameters[r] == 0 && registers::contains(defined, r) && p.types[r] == tag;
 }
 pub fn Result<usize, errors::Error> step(ref ir::Program p, usize pc, usize f,
     ref mut registers::Set defined, ref mut registers::Set written, usize live) {

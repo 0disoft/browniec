@@ -21,6 +21,13 @@ pub fn Result<i64, errors::Error> run(ref ir::Program p, usize fuel) {
 }
 pub fn Result<i64, errors::Error> run_with_array_limit(ref ir::Program p, usize fuel, usize array_limit) {
     let usize verified = verifier::verify(p)?;
+    // The verifier understands record arguments; owner copying and CALL entry
+    // are a separate slice. Refuse this ABI before Fuel or payload preparation.
+    var usize parameter = 0;
+    while (parameter < 128) {
+        if (p.record_parameters[parameter] != 0) { return .err(errors::make(11, 0)); }
+        parameter += 1;
+    }
     var usize remaining = fuel;
     var bytes::Buffer payload = bytes::empty();
     let bool aggregates = p.arrays.count != 0 || p.records.count != 0;

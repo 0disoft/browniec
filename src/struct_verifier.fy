@@ -5,10 +5,11 @@ import errors as errors;
 import struct_meta as meta;
 import register_set as registers;
 import struct_range as ranges;
+import struct_parameters as parameters;
 
 fn bool readable(ref ir::Program p, ref registers::Set defined, usize r, usize f, u8 tag) {
     return r >= p.register_starts[f] && r < p.register_ends[f] && !p.slots[r] &&
-        p.array_parameters[r] == 0 && registers::contains(defined, r) && p.types[r] == tag;
+        p.array_parameters[r] == 0 && p.record_parameters[r] == 0 && registers::contains(defined, r) && p.types[r] == tag;
 }
 fn Result<usize, errors::Error> span(ref ir::Program p, ref meta::Prepared shapes,
     ref registers::Set defined, usize id, usize first, usize start, usize count, usize f, usize pc) {
@@ -37,7 +38,7 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, ref meta::Prepared s
     let usize one = 1;
     let usize mask = one << (16 + id);
     if (op == 41 || op == 42) {
-        if (b != 0 || (live & mask) != 0) { return .err(errors::make(5, pc)); }
+        if (b != 0 || (live & mask) != 0 || (parameters::initial(p, f) & mask) != 0) { return .err(errors::make(5, pc)); }
         if (op == 41) {
             let usize count = inputs(p,shapes,defined,id,a,f,pc)?;
         } else if (a >= p.records.count || p.record_functions[a] as usize != f ||
@@ -80,7 +81,7 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, ref meta::Prepared s
     let u8 tag = shapes.tags[id * 128 + leaf];
     if (op == 43) {
         if (dst < p.register_starts[f] || dst >= p.register_ends[f] || p.slots[dst] ||
-            p.array_parameters[dst] != 0 || registers::contains(written, dst) || p.types[dst] != tag) { return .err(errors::make(5, pc)); }
+            p.array_parameters[dst] != 0 || p.record_parameters[dst] != 0 || registers::contains(written, dst) || p.types[dst] != tag) { return .err(errors::make(5, pc)); }
         registers::insert(defined, dst); registers::insert(written, dst);
     } else if (op == 44) {
         if (!p.records.mutable[id] || !readable(p, defined, b, f, tag)) { return .err(errors::make(5, pc)); }

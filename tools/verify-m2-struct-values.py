@@ -30,6 +30,7 @@ def main():
     parser.add_argument('--profile', choices=['all', 'development', 'release'], default='all',
                         help='Select one build profile or verify both (default).')
     selection = parser.add_mutually_exclusive_group()
+    selection.add_argument('--parameter-ir', action='store_true', help='Verify record-parameter IR metadata, mixed calls, lifetime invariants and the VM availability gate.')
     selection.add_argument('--parameter-signatures', action='store_true', help='Verify nominal record parameter signatures and the pre-lowering compilation gate.')
     selection.add_argument('--function-source', action='store_true', help='Verify source helper-local records, recursive cleanup and shared quotas.')
     selection.add_argument('--function-vm', action='store_true', help='Verify frame-local record execution, recursive helpers and shared owner limits.')
@@ -156,6 +157,12 @@ def main():
         kind = 'struct-parameter-signatures'
         files = ['tests/m2/struct_parameter_signatures.fy', 'tests/m2/array_signatures.fy', 'tests/functions.fy']
         groups = {'tests::m2::struct_parameter_signatures::': 6, 'tests::m2::array_signatures::': 6, 'tests::functions::': 4}
+    if args.parameter_ir:
+        kind = 'struct-parameters-ir'
+        files = ['tests/m2/' + name + '.fy' for name in [
+            'struct_parameters_ir', 'array_calls', 'struct_function_ir', 'struct_parameter_signatures']]
+        groups = {'tests::m2::' + name + '::': count for name, count in [
+            ('struct_parameters_ir', 7), ('array_calls', 9), ('struct_function_ir', 6), ('struct_parameter_signatures', 6)]}
     expected = sum(groups.values())
     compiler = args.compiler.resolve(strict=True)
     output = ROOT / ('build/m2-' + kind)
@@ -185,6 +192,10 @@ def main():
     inputs = [dict(path=p.relative_to(ROOT).as_posix(), sha256=digest(p)) for p in sorted(paths)]
     if args.function_source:
         paths.add(ROOT / 'examples/helper-records.brc')
+        inputs = [dict(path=p.relative_to(ROOT).as_posix(), sha256=digest(p)) for p in sorted(paths)]
+    if args.parameter_ir or args.parameter_signatures:
+        paths.update(ROOT.glob('tests/m2/*.fy'))
+        paths.update(ROOT.glob('examples/*.brc'))
         inputs = [dict(path=p.relative_to(ROOT).as_posix(), sha256=digest(p)) for p in sorted(paths)]
     compiler_hash = digest(compiler)
     results = []
@@ -246,7 +257,7 @@ def main():
                      'struct-child-path', 'struct-subassign']
             selections = [('check-m2-' + name + '.py', 'm2-' + name) for name in names]
             selections.append(('check-m1-cli.py', 'm1'))
-        if args.parameter_signatures:
+        if args.parameter_signatures or args.parameter_ir:
             names = ['struct-parameter-signatures', 'struct-function-source', 'array-parameters']
             selections = [('check-m2-' + name + '.py', 'm2-' + name) for name in names]
             selections.append(('check-m1-cli.py', 'm1'))
@@ -269,13 +280,14 @@ def main():
         compilerVersion=version, compilerSha256=compiler_hash, os=platform.platform(),
         standardLibraryLockIdentity=[p for p in lock['packages'] if p['role'] != 'root'],
         lockedCheck=check, commands=commands, sourceSha256=inputs, results=results,
-        limitations=[*(['Signature metadata only: nominal record ID + 1 is separate from scalar tags and array lengths. Compilation rejects every record parameter before IR construction, array catalog preparation or body lowering. No record argument ABI, ownership copy, result, borrow, opcode, Fuel or version capability is added. Only signature, helper-record, array-parameter and M1 CLI matrices are rerun.'] if args.parameter_signatures else []),
+        limitations=[*(['Private record parameter IR/verifier only: 128 zero-tag placeholder entries, immutable callee-owned sites, exact nominal immutable live caller arguments encoded 144+site, and parameter liveness in bits 16..31. Valid record-parameter IR returns unavailable (kind 11) before Fuel or payload preparation; owner copying and VM entry remain unimplemented. Source record parameters remain gated. No opcode, Fuel, version capability or profile change. Only signature-gate, helper-record, array-parameter and M1 CLI matrices are rerun.'] if args.parameter_ir else []),
+                     *(['Signature metadata only: nominal record ID + 1 is separate from scalar tags and array lengths. Compilation rejects every record parameter before IR construction, array catalog preparation or body lowering. No record argument ABI, ownership copy, result, borrow, opcode, Fuel or version capability is added. Only signature, helper-record, array-parameter and M1 CLI matrices are rerun.'] if args.parameter_signatures else []),
                      *(['Only the selected '+args.profile+' profile was run by this invocation; cross-profile identity comparison is external.'] if args.profile != 'all' else []),
                      *(['Source helper-local records are supported. Record parameters/results, borrows and general aggregate expressions remain unavailable. Sixteen static record sites and sixteen runtime owners are shared across functions/frames; 128-byte roots and sixteen-leaf source staging remain. Other struct/array CLI matrices are not rerun.'] if args.function_source else []),
                      *(['Private frame-local record execution only: 32 frames share sixteen owners and the payload arena. Source helper records, record parameters/results and borrows remain unsupported. No opcode, Fuel or version capability changes. Only child/root constructor assignment, child-path, subrecord-assignment and M1 CLI matrices are rerun.'] if args.function_vm else []),
                      *(['This selection focuses on private function-owned record IR/verifier metadata; frame-local helper record execution is now implemented. Source helper records, record parameters/results and borrows remain unsupported. No new opcode, Fuel or version capability. Only child/root constructor assignment, child-path, subrecord-assignment and M1 CLI matrices are rerun.'] if args.function_ir else []),
                      *(['Root and subrecord constructor assignment are implemented; source remains entry-only with sixteen-leaf staging, depth 16, 128-byte roots. Struct parameters/results, borrows and general aggregate expressions remain unavailable. Other struct/array CLI matrices are not rerun.'] if args.subreplace_source else []),
-                     *(['Root and subrecord constructor assignment are implemented; this selection covers the root source slice and related regressions. Struct parameters/results and borrows remain unavailable. Other struct/array CLI matrices are not rerun.'] if args.replace_source else [] if args.subreplace_source or args.function_ir or args.function_vm or args.function_source or args.parameter_signatures else ['Source records remain entry-only: inline/binding/path child initializers and scalar paths have sixteen-leaf staging, depth 16 and root cap 128 bytes. Subrecord extraction, assignment and root/child constructor assignment are implemented; struct parameters/results and borrows remain unavailable.']),
+                     *(['Root and subrecord constructor assignment are implemented; this selection covers the root source slice and related regressions. Struct parameters/results and borrows remain unavailable. Other struct/array CLI matrices are not rerun.'] if args.replace_source else [] if args.subreplace_source or args.function_ir or args.function_vm or args.function_source or args.parameter_signatures or args.parameter_ir else ['Source records remain entry-only: inline/binding/path child initializers and scalar paths have sixteen-leaf staging, depth 16 and root cap 128 bytes. Subrecord extraction, assignment and root/child constructor assignment are implemented; struct parameters/results and borrows remain unavailable.']),
                      *(['The child-path selection runs only child-path, whole-child, extraction and subrecord-assignment CLI matrices; scalar, array and other struct CLI matrices are not rerun.'] if args.child_path else []),
                      *(['Private scalar-value root replacement only; no source syntax, opcode, verifier, VM dispatch or Fuel change. Only child-path and subrecord-assignment CLI matrices are rerun.'] if args.replace_values else []),
                      *(['Private SREPLACE (48) integration only; no constructor-assignment source syntax or version capability is added. Only child-path and subrecord-assignment CLI matrices are rerun.'] if args.replace_vm else []),

@@ -10,9 +10,10 @@ import array_verifier as array_verifier;
 import array_parameters as array_parameters;
 import array_results as array_results;
 import register_set as registers;
+import struct_parameters as struct_parameters;
 
 fn bool readable(ref ir::Program p, ref registers::Set defined, usize r, usize start, usize end) {
-    return r >= start && r < end && !p.slots[r] && p.array_parameters[r] == 0 && registers::contains(defined, r);
+    return r >= start && r < end && !p.slots[r] && p.array_parameters[r] == 0 && p.record_parameters[r] == 0 && registers::contains(defined, r);
 }
 fn bool merge(ref mut usize[] states, ref mut bool[] seen, ref registers::Set defined, usize target, ref mut usize[] array_states, usize live) {
     if (seen[target] && array_states[target] != live) { return false; }
@@ -35,15 +36,15 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
     var registers::Set defined = registers::empty();
     var usize i = start;
     while (i < end) {
-        if (!types::valid(p.types[i])) { return .err(errors::make(5, p.starts[f])); }
+        if (p.record_parameters[i] == 0 && !types::valid(p.types[i])) { return .err(errors::make(5, p.starts[f])); }
         if (i < start + arity) {
             if (p.slots[i]) { return .err(errors::make(5, p.starts[f])); }
             registers::insert(ref mut written, i);
-            if (p.array_parameters[i] == 0) { registers::insert(ref mut defined, i); }
+            if (p.array_parameters[i] == 0 && p.record_parameters[i] == 0) { registers::insert(ref mut defined, i); }
         }
         i += 1;
     }
-    let bool entered = merge(ref mut states, ref mut seen, ref defined, p.starts[f], ref mut array_states, array_parameters::initial(p, f));
+    let bool entered = merge(ref mut states, ref mut seen, ref defined, p.starts[f], ref mut array_states, array_parameters::initial(p, f) | struct_parameters::initial(p, f));
     var usize pc = p.starts[f];
     // Solve the forward graph, then check each backedge preserves its target's
     // entry invariant. This bounded inductive proof needs no cyclic worklist.
@@ -189,6 +190,7 @@ pub fn Result<usize, errors::Error> verify(ref ir::Program p) {
     }
     if (code_end != p.count || register_end != p.registers) { return .err(errors::make(5, 0)); }
     let usize parameters = array_parameters::metadata(p)?;
+    let usize record_parameters = struct_parameters::metadata(p)?;
     let usize results = array_results::metadata(p)?;
     var bool[32] used_calls = [false; 32];
     f = 0;
