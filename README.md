@@ -1,14 +1,14 @@
 # Brownie C
 
-- Status: M1 scalar checkpoint verified; experimental M2 function-owned scalar arrays and source helper-local records implemented. Array parameters/results and record construction, field access, copies, extraction, and replacement are available. Immutable by-value record parameters are verified in development and release. Private record-result VM ownership transfer is verified in development and release; source record returns, borrows, workers, DLL embedding, and full-profile conformance remain incomplete.
+- Status: M1 scalar checkpoint verified; experimental M2 function-owned scalar arrays and source records implemented. Array parameters/results and record construction, field access, copies, extraction, and replacement are available. Immutable by-value record parameters are verified in development and release. Private record-result VM ownership transfer is verified for its original inputs. Bounded source record returns and typed call initializers are verified in development and release at `bb401a4` (14 native groups and 2,438 CLI cases per profile). Record borrows, workers, DLL embedding, and full-profile conformance remain incomplete.
 - Root constructor assignment: verified in development and release; child constructor assignment is verified in development and release.
 - Private function-owned record IR/verifier and frame-local record VM execution
   are verified in development and release.
 - Source helper-local records: implemented at `98a4525`; verified in development and release.
 - Source record parameters: implemented at `d0ca7e7`; development and release each passed 51 native groups and 2,318 CLI cases in separate core/regression phases.
-- Record-result signatures: implemented; development and release each passed 22 native groups and 2,317 CLI cases. Nominal results are recorded separately from scalar and array metadata and rejected before IR or body lowering. Source record returns remain unavailable.
+- Record-result signatures: verified for their original baseline (22 native groups and 2,317 CLI cases per profile). Nominal results are recorded separately from scalar and array metadata. The former blanket pre-IR gate and "source record returns unavailable" status are historical, superseded by the [bounded source successor](docs/engineering/m2-struct-result-source.md).
 - Record-result IR/verifier: implemented at `dc1574b` and verified in development and release. Private metadata uses callee-owned shape anchors and `SRET` checks a single live exact-nominal record; its kind 11 runtime gate is historical and superseded by the VM transfer successor. See [the IR contract](docs/engineering/m2-struct-results-ir.md).
-- Record-result VM: ownership transfer is implemented at `68552f0` and verified in development and release. `SRET` prepays 42,113 Fuel, validates the complete result without payload writes, clears the child token, and publishes it into the caller-owned destination. Source record returns remain gated. See [the VM contract](docs/engineering/m2-struct-result-vm.md).
+- Record-result VM: ownership transfer is implemented at `68552f0` and verified for its source-gated inputs. `SRET` prepays 42,113 Fuel, validates the complete result without payload writes, clears the child token, and publishes it into the caller-owned destination. The [bounded source successor](docs/engineering/m2-struct-result-source.md) now emits a subset of these calls and returns and is verified in development and release. See [the VM contract](docs/engineering/m2-struct-result-vm.md).
 - Design date: 2026-10-23
 - First delivery target: Windows 11 x64
 
@@ -73,9 +73,9 @@ admits `array = [value; N];`, evaluating once and filling existing storage in pl
 Borrows, slices, workers, and DLLs remain later work.
 Source [helper-local records](docs/engineering/m2-struct-function-source.md) are implemented at `98a4525` for ordinary scalar, wrapper-returning, and array-returning helpers. Constructor, copy, and subrecord-extraction paths use `ir::record_in` with the lowering function. Existing record forms run in callee frames under the shared sixteen sites and owners, 128-byte roots, sixteen-leaf staging, and 32 VM frames. Array-returning helpers drop local records in reverse mixed array-record order before `ARET`, preserving the returned array. Version JSON reports `struct_helper_locals: true`; opcodes, Fuel, and profile strings are unchanged.
 
-Development and release each passed 48 native groups and 2,860 CLI cases, including 89 helper-local record cases. The native report was retained after correcting the aggregate expected count from 47 to 48; CLI matrices ran individually, including a fresh nested matrix after updating an obsolete root-replacement expectation. Release completed the `--function-source --profile release` aggregate. The [receipt](docs/evidence/m2-struct-function-source-windows-20261027.json) records 153 input hashes, compiler and artifact identities, and equal native identities across profiles. At `98a4525`, source record parameters/results and borrows were unavailable; the [record-parameter successor](docs/engineering/m2-struct-parameters-source.md) now implements immutably passed record parameters, while source record returns and borrows remain unavailable. Full native suites, other struct/array matrices, Linux, packaging, DLL, isolation, and performance were not run.
+Development and release each passed 48 native groups and 2,860 CLI cases, including 89 helper-local record cases. The native report was retained after correcting the aggregate expected count from 47 to 48; CLI matrices ran individually, including a fresh nested matrix after updating an obsolete root-replacement expectation. Release completed the `--function-source --profile release` aggregate. The [receipt](docs/evidence/m2-struct-function-source-windows-20261027.json) records 153 input hashes, compiler and artifact identities, and equal native identities across profiles. At `98a4525`, source record parameters/results and borrows were unavailable; [record parameters](docs/engineering/m2-struct-parameters-source.md) and a [bounded record-result subset](docs/engineering/m2-struct-result-source.md) now have successors, while record borrows remain unavailable. Full native suites, other struct/array matrices, Linux, packaging, DLL, isolation, and performance were not run.
 
-The [record-parameter signature foundation](docs/engineering/m2-struct-parameter-signatures.md) recognizes bare nominal parameter types and stores each record ID separately from scalar tags and array lengths. The bounded signature table adds 128 bytes. Its pre-lowering rejection was the source gate at that checkpoint; the [source parameter successor](docs/engineering/m2-struct-parameters-source.md) removes it. The signature receipt therefore remains historical for the gate implementation, while source record returns and borrows remain unavailable. That increment added no opcode, Fuel charge, profile, or version capability.
+The [record-parameter signature foundation](docs/engineering/m2-struct-parameter-signatures.md) recognizes bare nominal parameter types and stores each record ID separately from scalar tags and array lengths. The bounded signature table adds 128 bytes. Its pre-lowering rejection was the source gate at that checkpoint; the [source parameter successor](docs/engineering/m2-struct-parameters-source.md) removes it. The signature receipt therefore remains historical for the gate implementation. Record results now have a separate [bounded source successor](docs/engineering/m2-struct-result-source.md); record borrows remain unavailable. That increment added no opcode, Fuel charge, profile, or version capability.
 
 Development and release each passed 16 native groups and 2,226 CLI cases: 88 signature-gate, 89 helper-record, 80 array-parameter, and 1,969 M1 cases. Development ran individual commands; release completed `--parameter-signatures --profile release`. The [receipt](docs/evidence/m2-struct-parameter-signatures-windows-20261027.json) records compiler/artifact identities, 181 input hashes, and equal native identities across profiles. This is focused signature verification; full native/array suites, M0, Linux, isolation, DLL, packaging, allocation instrumentation, and performance were not run.
 
@@ -91,17 +91,29 @@ The [private record-call VM](docs/engineering/m2-struct-call-vm.md) now executes
 
 Implementation: `97bf1e2`. Development and release each passed 47 unique native groups in two separate invocations: [core, 21 groups](docs/evidence/m2-struct-call-vm-core-windows-20261027.json) followed by [regressions, 26 groups](docs/evidence/m2-struct-call-vm-regressions-windows-20261027.json). This is stepwise verification, not a single combined aggregate run. Both receipts have the same 58 input hashes, compiler and SDK identities, and disjoint test selections; all were rechecked before archival. No CLI build/matrix, full native suite, M0, Linux, isolation, DLL, packaging, allocation instrumentation or performance measurement was run. Earlier receipts remain historical for changed VM, root-lock, test and harness inputs.
 
-Source [record parameters](docs/engineering/m2-struct-parameters-source.md) are implemented at `d0ca7e7` and verified in development and release. A formal is an immutable nominal record; each argument is one bare visible record binding, and mutable sources are captured with `SCOPY` before later arguments evaluate. All formal sites are predeclared after the record catalog scan, then bound by owning function and record-formal ordinal within the unchanged 16 static sites. No extra 128-byte signature site map is introduced. The source path reuses the existing record-aware `release_from` cleanup and array-result finisher, including scalar-return drops before `RET` and non-result record drops before `ARET`; source record returns remain unsupported.
+Source [record parameters](docs/engineering/m2-struct-parameters-source.md) are implemented at `d0ca7e7` and verified in development and release. A formal is an immutable nominal record; each argument is one bare visible record binding, and mutable sources are captured with `SCOPY` before later arguments evaluate. All formal sites are predeclared after the record catalog scan, then bound by owning function and record-formal ordinal within the unchanged 16 static sites. No extra 128-byte signature site map is introduced. The source path reuses the existing record-aware `release_from` cleanup and array-result finisher, including scalar-return drops before `RET` and non-result record drops before `ARET`. Record returns were unavailable at that checkpoint; the [source result successor](docs/engineering/m2-struct-result-source.md) adds the bounded subset.
 
 Development and release each passed 51 unique native groups and 2,318 CLI cases. The [core receipt](docs/evidence/m2-struct-parameters-source-core-windows-20261028.json) records 14 native groups and 180 CLI cases; the [regression receipt](docs/evidence/m2-struct-parameters-source-regressions-windows-20261028.json) records 37 native groups and 2,138 CLI cases. The CLI selections comprise 114 source parameter, 66 signature, 80 array parameter, 89 helper-local record and 1,969 M1 cases per profile. These are two separate phase runs with disjoint native selections, matching profiles, and identical 206 input hashes, compiler and SDK identities; all inputs were rechecked before archival. Native stress tests use 16,000,000 Fuel; the CLI retains its 1,000,000 ceiling, with four costly fixtures expected to pass `check` and report `fuel` on `run`. Other native/CLI matrices, M0, Linux, isolation, DLL, packaging, allocation instrumentation and performance were not run.
 
 The [record-result signature foundation](docs/engineering/m2-struct-result-signatures.md)
 stores a bare nominal result as record ID + 1 in a new 16-byte signature array and
-keeps the scalar tag and array length at zero. The compiler rejects every scanned
-record result at the function name before IR, aggregate catalogs, or bodies are
-lowered. `main` remains a zero-argument scalar `i32` entry point. This adds no IR,
-VM, opcode, Fuel, profile, or version capability; source record returns remain
-unavailable. Development and release each passed 22 native groups and 2,317 CLI cases. The [Windows receipt](docs/evidence/m2-struct-result-signatures-windows-20261028.json) records the original baseline, executed commands, compiler/SDK and CLI identities, input hashes, and outcomes. The native selection comprises 6 new record-result, 6 record-formal, 6 array-result and 4 scalar-function groups. CLI coverage comprises 72 new record-result, 66 record-formal, 114 source record-parameter, 96 array-result and 1,969 M1 cases per profile. All 209 input hashes, the compiler, SDK and final release CLI were checked before archival. Full native suites, other CLI matrices, M0, Linux, isolation, DLL, packaging, allocation instrumentation and performance were not run.
+keeps the scalar tag and array length at zero. At its original baseline, the
+compiler rejected every scanned record result at the function name before IR,
+aggregate catalogs, or bodies were lowered. `main` remains a zero-argument scalar
+`i32` entry point. That increment added no IR, VM, opcode, Fuel, profile, or version
+capability. Development and release each passed 22 native groups and 2,317 CLI cases. The [Windows receipt](docs/evidence/m2-struct-result-signatures-windows-20261028.json) records the original baseline, executed commands, compiler/SDK and CLI identities, input hashes, and outcomes. The native selection comprises 6 new record-result, 6 record-formal, 6 array-result and 4 scalar-function groups. CLI coverage comprises 72 new record-result, 66 record-formal, 114 source record-parameter, 96 array-result and 1,969 M1 cases per profile. All 209 input hashes, the compiler, SDK and final release CLI were checked before archival. Full native suites, other CLI matrices, M0, Linux, isolation, DLL, packaging, allocation instrumentation and performance were not run.
+
+The blanket gate in that receipt is historical and superseded by the
+[bounded source result slice](docs/engineering/m2-struct-result-source.md). At
+`bb401a4`, a bare visible exact-nominal `return name;` and an exact-nominal
+`let`/`var` call initializer lower through the existing result IR and VM. Result
+anchors reuse a matching formal or reserve a dead function-owned site before body
+lowering. Development and release each passed 14 native groups and 2,438 CLI
+cases. The result-signature checker's loop-label metadata was repaired after the
+aggregate, followed by a 70-case per-profile CLI rerun against retained binaries.
+Native, build, and other CLI selections were not rerun. The [Windows
+receipt](docs/evidence/m2-struct-result-source-windows-20261028.json) records 219
+rechecked input hashes and the stepwise repair.
 
 A [private struct-layout planner](docs/engineering/m2-struct-layout.md) now plans
 acyclic record metadata, and a [scalar-only storage slice](docs/engineering/m2-struct-storage.md)
@@ -148,8 +160,9 @@ charged until suffix reclamation. Source helper records were unsupported at
 `80ed712`; the [source helper successor](docs/engineering/m2-struct-function-source.md)
 enables those declarations. At `80ed712`, record parameters/results and borrows
 were unsupported; the [record-parameter successor](docs/engineering/m2-struct-parameters-source.md)
-now implements by-value record parameters, while record results and borrows
-remain unsupported. The 512-slot token array carries no measured
+and [record-result successor](docs/engineering/m2-struct-result-source.md) now
+implement their bounded source subsets, while record borrows remain unsupported.
+The 512-slot token array carries no measured
 allocation, stack, or speed claim. The earlier
 `--function-ir` 31-group and 2,383-CLI result remains historical for its original
 scope at `3380b10`; its
@@ -172,8 +185,8 @@ profile. For that baseline, development and release each passed 28 native groups
 and 2,352 CLI cases, plus three supplemental cases, recorded in the
 [historical receipt](docs/evidence/m2-struct-values-windows-20261026.json). That
 baseline left nested construction, field chains, struct parameters/results, and
-borrows unsupported; successors implement the first three, while record results
-and borrows remain unavailable. A
+borrows unsupported; successors implement all three named capabilities, while
+record borrows remain unavailable. A
 [source struct-field write slice](docs/engineering/m2-struct-write.md) adds
 entry-only `NAME.FIELD = EXPR;` for one mutable scalar leaf. It resolves the
 binding and field before a single exact-typed RHS, emits `SWRITE` after the
@@ -428,7 +441,7 @@ Those limits describe the profile, not the language forever.
 
 | Level | Intended capability | Current state |
 | --- | --- | --- |
-| core | Source compile, verify, and native VM CLI | Experimental i32/i64/u8/u32/usize/bool expressions, explicit widening, branches, loops, shallow tagged values, switch statements and expressions, `?` propagation, source arrays, declaration-only source struct layouts, function-owned struct IR execution, helper-local record construction/read/write lowering, bare-name record copy initialization/whole-record assignment, bounded nested constructors/scalar paths/whole-root copies, whole-record child binding initializers, subrecord declaration initializers, atomic subrecord assignment, and immutable by-value record parameters with bare binding arguments; private record-result IR/verifier metadata is verified in development and release (39 native groups and 2,317 CLI cases per profile); source record parameters passed 51 native groups and 2,318 CLI cases per development/release profile in two separate phase runs. Nested results are historical after the child compiler change, the child feature passed the complete combined harness in development and release; scalar M1 and array reads verified, focused array and struct VM checks recorded, the struct construction/read and field-write baselines recorded historically, and source-copy checks verified stepwise in development and release |
+| core | Source compile, verify, and native VM CLI | Experimental i32/i64/u8/u32/usize/bool expressions, explicit widening, branches, loops, shallow tagged values, switch statements and expressions, `?` propagation, source arrays, declaration-only source struct layouts, function-owned struct IR execution, helper-local record construction/read/write lowering, bare-name record copy initialization/whole-record assignment, bounded nested constructors/scalar paths/whole-root copies, whole-record child binding initializers, subrecord declaration initializers, atomic subrecord assignment, immutable by-value record parameters with bare binding arguments, and bounded bare-name record results with exact-nominal `let`/`var` call initializers; private record-result IR/verifier metadata is verified for its original inputs (39 native groups and 2,317 CLI cases per profile), and source record parameters passed 51 native groups and 2,318 CLI cases per development/release profile in two separate phase runs. Bounded source record results passed 14 native groups and 2,438 CLI cases per development/release profile at `bb401a4`, followed by a focused 70-case-per-profile checker metadata repair. Nested results are historical after the child compiler change, the child feature passed the complete combined harness in development and release; scalar M1 and array reads verified, focused array and struct VM checks recorded, the struct construction/read and field-write baselines recorded historically, and source-copy checks verified stepwise in development and release |
 | restricted | Windows worker plus parent broker | Not implemented; M4 |
 | embed | Trusted native host through a DLL ABI | Not implemented; M5; no public C export |
 
@@ -498,9 +511,10 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 private record parameter IR](docs/engineering/m2-struct-parameters-ir.md): zero-tag formal placeholders, exact nominal mixed-call verification, lifetime invariants, and the historical VM availability gate
 - [M2 private record-call VM](docs/engineering/m2-struct-call-vm.md): prepaid mixed argument copying and frame publication; its source-gate claim is historical
 - [M2 source record parameters](docs/engineering/m2-struct-parameters-source.md): immutable by-value formals, bare binding arguments, predeclared sites, mutable-source captures, reused record cleanup, limits, and verified two-phase Windows evidence
-- [M2 record result signatures](docs/engineering/m2-struct-result-signatures.md): nominal ID metadata, zero scalar/array fields, the pre-IR compilation gate, bounds, and focused Windows evidence
+- [M2 record result signatures](docs/engineering/m2-struct-result-signatures.md): nominal ID metadata, zero scalar/array fields, the historical pre-IR compilation gate, bounds, and focused Windows evidence
 - [M2 record-result IR/verifier](docs/engineering/m2-struct-results-ir.md): callee-owned shape anchors, `SRET`, record CALL destinations, exact lifetimes, the historical VM availability gate, and focused Windows evidence
 - [M2 private record-result VM](docs/engineering/m2-struct-result-vm.md): prepaid `SRET` transfer into caller-owned destinations, complete snapshot validation, zero extra owners or payload, unchanged limits, and focused Windows evidence
+- [M2 source record results](docs/engineering/m2-struct-result-source.md): bare exact-nominal returns, typed call initializers, result anchor reuse, pending-destination cleanup, mixed reverse drops, unchanged limits, and verified stepwise development/release evidence
 - [M2 private struct VM](docs/engineering/m2-struct-vm.md): shared owners and payload, private execution semantics, fixed Fuel charges, and current check status
 - [M2 declaration-only source structs](docs/engineering/m2-struct-source.md): historical bounded parser, forward named fields, immutable layouts, name rules, and stepwise verification
 - [M2 bounded source struct values](docs/engineering/m2-struct-values.md): historical entry construction and one-level reads, ordered typed staging, `SINIT`/scalar-leaf access, mixed cleanup, bounds, and recorded verification
@@ -518,13 +532,18 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [Design baseline](docs/design-baseline.md): source provenance, evidence, and findings
 
 The private [record-result IR/verifier](docs/engineering/m2-struct-results-ir.md)
-passed 39 unique native groups and 2,317 CLI cases per development/release profile.
+passed 39 unique native groups and 2,317 CLI cases per development/release profile
+for its original inputs.
 The [core receipt](docs/evidence/m2-struct-results-ir-core-windows-20261028.json)
 records 21 native groups and all CLI cases; the separate
 [regression receipt](docs/evidence/m2-struct-results-ir-regressions-windows-20261028.json)
 records 18 native-only groups. That slice's kind 11 runtime gate is historical.
 The [record-result VM successor](docs/engineering/m2-struct-result-vm.md) implements
-verified token transfer in development and release; source record returns remain gated.
+verified token transfer for its source-gated inputs. The
+[source result successor](docs/engineering/m2-struct-result-source.md) now lowers a
+bounded subset; development and release each passed 14 native groups and 2,438
+CLI cases, followed by a focused checker metadata repair and 70-case-per-profile
+CLI rerun.
 
 The expanded M0 run exercises arithmetic, codecs, storage, allocator, owner, and
 frame primitives on Windows x64. Exact commands and results belong to

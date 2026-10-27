@@ -1,15 +1,22 @@
 # M2 Record Result IR and Verifier Foundation
 
-- Status: implemented at `dc1574b`; verified in development and release; its VM runtime gate is historical
+- Status: implemented at `dc1574b`; verified for its original baseline; its VM
+  runtime gate and blanket source gate are historical.
 - Scope: nominal record-result metadata, `SRET` verification, and record-result CALL destinations
 - Runtime: historical kind 11 availability gate, superseded by [record-result VM transfer](m2-struct-result-vm.md)
-- Source: unchanged; record returns remain behind the compilation gate
+- Source: historical blanket gate, superseded by [bounded source record results](m2-struct-result-source.md)
 - Evidence: matching core and native-only regression receipts, linked below
 - Successor: [M2 private record-result VM ownership transfer](m2-struct-result-vm.md)
+- Source successor: [M2 bounded source record results](m2-struct-result-source.md)
 - Implementation: [struct_results.fy](../../src/struct_results.fy), [ir.fy](../../src/ir.fy), [verifier.fy](../../src/verifier.fy), and [vm.fy](../../src/vm.fy)
 - Tests and harness: [struct_results_ir.fy](../../tests/m2/struct_results_ir.fy) and [verify-m2-struct-results-ir.py](../../tools/verify-m2-struct-results-ir.py)
 
-This slice adds private IR and independent verification for functions that return a nominal record. It does not lower a source record return or execute an owner transfer. The existing record-result signature metadata remains separate: `record_results` names a callee-owned IR site, while `return_records` names a declaration ID.
+This slice adds private IR and independent verification for functions that return
+a nominal record. At this checkpoint it did not lower a source record return or
+execute an owner transfer. The existing record-result signature metadata remains
+separate: `record_results` names a callee-owned IR site, while `return_records`
+names a declaration ID. The [source successor](m2-struct-result-source.md) now
+emits this IR for bare exact-nominal returns and typed call initializers.
 
 ## Metadata
 
@@ -42,11 +49,16 @@ Existing CFG joins and loop backedges compare the full live sets exactly, includ
 
 Function arity, register windows, record catalogs, record sites, and aggregate quotas remain under their existing limits. The new field adds 16 bytes to the private program layout. This is a layout count, not an allocation, stack, or performance measurement.
 
-## Historical runtime gate and unchanged surface
+## Historical gates and unchanged surface
 
 At `dc1574b`, `vm::run` and `vm::run_with_array_limit` verified first and returned error kind 11 at offset 0 when any `record_results` entry was active, before Fuel accounting, payload reservation, or guest execution. That availability gate is historical and superseded by the [record-result VM successor](m2-struct-result-vm.md); current execution owns `SRET` transfer. Malformed IR still reaches the verifier first and reports the normal kind 5 failure.
 
-This slice added no record-owner transfer, SRET dispatch, or source return lowering. The compiler's existing record-result gate remains in place, so source record returns are still unavailable. It added no Fuel charge, array or record price, source profile, or `--version --json` capability change.
+This slice added no record-owner transfer, `SRET` dispatch, or source return
+lowering. Its compiler gate rejected every scanned record result, so source record
+returns were unavailable at that checkpoint. The source successor now lowers a
+bounded subset while preserving `return_types[f] == 0` and using the result anchor
+described above. The IR increment added no Fuel charge, array or record price,
+source profile, or `--version --json` capability change.
 
 ## Verification
 
@@ -65,4 +77,8 @@ scalar/array/record arguments, malformed metadata, nominal mismatches, dead and
 foreign destinations, reserved operands, extra owners, joins and backedges,
 site 15/live bit 31, builder capacity/encoding rejection, and verifier-before-gate
 ordering. Earlier receipts are historical for changed IR, verifier, VM, root-lock,
-fixture and harness inputs. This evidence does not execute record-result transfer.
+fixture, and harness inputs. This evidence does not execute record-result transfer
+or the later source lowering. The [VM successor](m2-struct-result-vm.md) records
+transfer for its own original inputs. The [source successor](m2-struct-result-source.md)
+is verified in development and release at 14 native groups and 2,438 CLI cases per
+profile; its receipt records the aggregate and focused checker repair.

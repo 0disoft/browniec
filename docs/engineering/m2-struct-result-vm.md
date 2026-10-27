@@ -1,9 +1,11 @@
 # M2 Private Record Result VM Ownership Transfer
 
-- Status: implemented at `68552f0`; verified in development and release
+- Status: implemented at `68552f0`; verified for its source-gated baseline. The
+  source successor is also verified in development and release.
 - Scope: metered `SRET` (50) execution and caller-owned record-result destination transfer
-- Source: unchanged; record returns remain behind the compilation gate
+- Source: unchanged in this slice; bounded source lowering is now supplied by its successor
 - Predecessor: [record-result IR and verifier](m2-struct-results-ir.md)
+- Source successor: [bounded source record results](m2-struct-result-source.md)
 - Implementation: [struct_result_vm.fy](../../src/struct_result_vm.fy),
   [vm.fy](../../src/vm.fy), and [array_owners.fy](../../src/array_owners.fy)
 - Tests and harness: [struct_result_vm.fy](../../tests/m2/struct_result_vm.fy) and
@@ -13,7 +15,9 @@
 This slice connects the verified record-result IR to native frame transfer. A
 record-result call declares a caller-owned destination at `144 + site`; `SRET`
 selects one live exact-nominal callee record and moves its existing owner token
-to that destination. No source record-return form is enabled.
+to that destination. No source record-return form was enabled at this checkpoint.
+The [source successor](m2-struct-result-source.md) now emits that CALL/SRET pair
+for a bounded, development/release verified subset.
 
 ## Charge and dispatch
 
@@ -62,16 +66,21 @@ failure aborts the invocation as before; external effects are not rolled back.
 
 The verifier controls which caller record site receives the result. Whether that
 caller-owned destination is mutable follows its IR catalog flag, so returning a
-record does not decide how the caller later uses its storage.
+record does not decide how the caller later uses its storage. The source
+initializer's `let` or `var` declaration supplies that flag independently.
 
 Returning a record parameter transfers the existing independent callee copy made
 when the call entered. Changing the returned record therefore does not modify the
-original caller argument. Source record returns remain gated in this slice.
+original caller argument. Source record returns remained gated in this slice;
+the [source successor](m2-struct-result-source.md) now exercises the same transfer
+for a bare exact-nominal binding and typed `let`/`var` call initializers.
 
 The existing 16 record sites, 16 shared owner descriptors, 32 VM frames, 65,536-byte
 payload cap, and 256-instruction bound are unchanged. New record-result pricing
-leaves existing scalar or array charges unchanged. The source version/profile selection and
-`--version --json` capabilities are also unchanged.
+leaves existing scalar or array charges unchanged. This VM slice changed no source
+version/profile selection or `--version --json` capability. The current source
+successor adds `struct_results: true` while keeping the existing profile strings
+and Fuel charges unchanged.
 
 ## Verification
 
@@ -104,6 +113,12 @@ After correcting that fixture, the complete harness passed both profiles without
 reusing that failed attempt. The IR slice's gate and evidence remain historical
 for their original inputs.
 
-Full native/CLI suites, M0, Linux, worker isolation, DLL, packaging, allocation
-instrumentation and performance were not run. This evidence executes private IR;
-source record returns remain unavailable.
+The receipt verifies this VM slice for its exact original source-gated inputs. The
+source successor is implemented at `bb401a4` with tooling `78a1fb4`; development
+and release each passed 14 native groups and 2,438 CLI cases. Its [Windows
+receipt](../evidence/m2-struct-result-source-windows-20261028.json) records 219
+rechecked inputs and the focused 70-case-per-profile checker repair. Full
+native/CLI suites, M0, Linux, worker isolation, DLL, packaging, allocation
+instrumentation, and performance were not run by this VM slice. Earlier evidence
+remains historical for changed compiler and fixture inputs; no whole-M2
+verification is claimed.

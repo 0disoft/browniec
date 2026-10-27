@@ -1,17 +1,24 @@
 # M2 Record Result Signature Foundation
 
-- Status: signature metadata implemented and verified in development and release
+- Status: signature metadata implemented and verified for its original baseline;
+  its blanket source gate is historical.
 - Scope: bounded nominal record-result detection in function signatures
-- Runtime: none; source record returns remain unavailable
+- Runtime: none in this foundation; source lowering now has a bounded successor.
 - Evidence: [Windows receipt](../evidence/m2-struct-result-signatures-windows-20261028.json)
+- Successor: [bounded source record results](m2-struct-result-source.md)
 
 The signature scan recognizes a bare nominal result such as `fn Point make(...)`.
 It reuses the same bounded `record_type` lookup as record formals, including names
 declared after the function. Unknown names, borrowed or `var` results, record
 arrays, generic record forms, and wrapper payloads containing a record remain
-unsupported. A bare nominal name may denote a record with nested by-value fields;
-its execution is gated like every record result. Existing scalar, wrapper, and
-exact scalar-array result syntax is unchanged.
+unsupported. A bare nominal name may denote a record with nested by-value fields.
+At this foundation's baseline, execution was gated for every record result.
+Existing scalar, wrapper, and exact scalar-array result syntax was unchanged.
+
+The current [source successor](m2-struct-result-source.md) removes the blanket
+gate for one bounded subset: a bare visible exact-nominal `return name;` and an
+exact-nominal `let`/`var` call initializer. The signature table, nominal lookup,
+and separate `return_records` field remain the foundation for that lowering.
 
 `functions::Table.return_records` is a `u8[16]` field. Zero marks a scalar, array,
 or wrapper result. A nominal record stores its declaration ID plus one in the
@@ -29,7 +36,7 @@ All sixteen slots start at zero, and the table retains the existing 16-function
 limit. The field adds 16 bytes of signature metadata. This is a layout count, not
 an allocation or performance measurement.
 
-## Entry point and compilation gate
+## Entry point and historical compilation gate
 
 `main` remains a zero-argument scalar `i32` function. A record result on `main` is
 rejected during signature scanning because its arguments, type, length, and record
@@ -40,15 +47,18 @@ After `functions::scan` completes, `compiler::compile` checks every
 lowering any body. A nonzero entry returns the existing type error (`kind` 3) at
 the function-name span stored in `signatures.begins`.
 
-The gate therefore rejects record results on unused helpers, functions with
-invalid bodies, and programs whose aggregate catalogs would later overflow. This
-prevents the zero `return_types` placeholder from reaching IR as a scalar result.
-Malformed signatures still fail during the scan; the gate covers declarations
-that the signature table accepted.
+At the original baseline, the gate rejected record results on unused helpers,
+functions with invalid bodies, and programs whose aggregate catalogs would later
+overflow. That prevented the zero `return_types` placeholder from reaching IR as
+a scalar result. Malformed signatures still failed during the scan; the gate
+covered declarations that the signature table accepted.
 
-The increment adds no IR, VM, opcode, Fuel, profile, or version capability.
-Existing record parameters and scalar-array results retain their behavior. No
-source path returns a record.
+The gate is now historical and superseded by
+[source record-result lowering](m2-struct-result-source.md). The new path still
+keeps `return_types[f] == 0` and uses a separate result anchor. This signature
+increment added no IR, VM, opcode, Fuel, profile, or version capability. Existing
+record parameters and scalar-array results retained their behavior, and no source
+path returned a record at that checkpoint.
 
 ## Verification
 
@@ -69,7 +79,11 @@ declaration orders, record counts 1/16/32, six scalar field types, exact functio
 name diagnostics, rejected shapes, and executable controls. A cleared runtime
 environment and tool-free PATH do not establish packaging or OS isolation.
 
-Earlier receipts are historical for changed scanner, compiler, root-lock,
-signature fixture and harness inputs. No new record-result runtime capability
-is advertised. The next step is private result IR and independent verification,
-followed by VM owner transfer and source lowering.
+The receipt records its original baseline and exact original inputs. It does not
+verify the later source lowering. Earlier receipts are historical for changed
+scanner, compiler, root-lock, signature fixture, and harness inputs. The later
+[result IR](m2-struct-results-ir.md), [VM transfer](m2-struct-result-vm.md), and
+[source subset](m2-struct-result-source.md) now provide the executable path. The
+source subset is verified in development and release at 14 native groups and
+2,438 CLI cases per profile; its [Windows receipt](../evidence/m2-struct-result-source-windows-20261028.json)
+records the aggregate and focused checker repair.
