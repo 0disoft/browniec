@@ -144,10 +144,12 @@ fn void last_record_site_and_parameter_register_use_the_high_live_bit() {
  p.call_args[7]=159;assert(!verifier::verify(ref p).is_ok);
 }
 @test
-fn void all_scalar_leaf_tags_verify_but_the_vm_refuses_the_unimplemented_abi() {
+fn void all_scalar_leaf_tags_execute_and_verification_precedes_preparation() {
  let u8[6] tags=[1,2,9,10,11,12];var usize i=0;
  while(i<6){let ir::Program p=program(tags[i],0);assert(verifier::verify(ref p).is_ok);
-  assert(switch(vm::run_with_array_limit(ref p,0,18446744073709551615)){case .err(e):{e.kind==11 && e.offset==0}case .ok(_):{false}});
+  assert(switch(vm::run_with_array_limit(ref p,1000000,32)){case .ok(n):{n==42}case .err(_):{false}});
+  assert(switch(vm::run_with_array_limit(ref p,0,32)){case .err(e):{e.kind==8 && e.offset==0}case .ok(_):{false}});
+  assert(switch(vm::run_with_array_limit(ref p,0,18446744073709551615)){case .err(e):{e.kind==13 && e.offset==0}case .ok(_):{false}});
   i+=1;
  }
  var ir::Program bad=program(1,0);bad.record_parameters[0]=17;

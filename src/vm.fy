@@ -10,7 +10,7 @@ import bits as bits;
 import shifts as shifts;
 import array_vm as array_vm;
 import struct_vm as struct_vm;
-import array_call_vm as array_calls;
+import struct_call_vm as calls;
 import array_result_vm as array_results;
 import std::bytes as bytes;
 
@@ -21,13 +21,6 @@ pub fn Result<i64, errors::Error> run(ref ir::Program p, usize fuel) {
 }
 pub fn Result<i64, errors::Error> run_with_array_limit(ref ir::Program p, usize fuel, usize array_limit) {
     let usize verified = verifier::verify(p)?;
-    // The verifier understands record arguments; owner copying and CALL entry
-    // are a separate slice. Refuse this ABI before Fuel or payload preparation.
-    var usize parameter = 0;
-    while (parameter < 128) {
-        if (p.record_parameters[parameter] != 0) { return .err(errors::make(11, 0)); }
-        parameter += 1;
-    }
     var usize remaining = fuel;
     var bytes::Buffer payload = bytes::empty();
     let bool aggregates = p.arrays.count != 0 || p.records.count != 0;
@@ -69,10 +62,29 @@ pub fn Result<i64, errors::Error> run_with_array_limit(ref ir::Program p, usize 
                 ref mut arrays, ref mut payload, ref mut registers[base..base + 128], remaining, p.offsets[pc])?;
             pc += 1; continue;
         }
-        let usize array_call_cost = if (op == 9) { array_calls::cost(p,a,p.offsets[pc])? } else { 0 };
+        if (op == 9) {
+            remaining = calls::step(p,a,b,frame,ref mut records,ref mut arrays,
+                ref mut payload,remaining,p.offsets[pc])?;
+            let usize child = frame + 1;
+            let usize child_base = child * 128;
+            var usize i = 0;
+            while (i < p.arities[a]) {
+                let usize formal = p.register_starts[a] + i;
+                if (p.array_parameters[formal] == 0 && p.record_parameters[formal] == 0) {
+                    let usize source = p.call_args[b * 8 + i] as usize;
+                    registers[child_base + formal] = registers[frame * 128 + source];
+                }
+                i += 1;
+            }
+            return_pcs[child] = pc + 1;
+            return_dsts[child] = dst;
+            frame = child;
+            pc = p.starts[a];
+            continue;
+        }
         let usize cost = if(op==39) {array_results::cost(p,a,p.offsets[pc])?}
             else if (op >= 33) { array_vm::cost(ref p.arrays, op, if (op == 35) { a } else { dst }, p.offsets[pc])? }
-            else if (op == 9) { 1 + (p.call_arities[b] as usize) + array_call_cost } else { 1 };
+            else { 1 };
         if (remaining < cost) { return .err(errors::make(8, p.offsets[pc])); }
         remaining -= cost;
         let usize base = frame * 128;
@@ -116,27 +128,6 @@ pub fn Result<i64, errors::Error> run_with_array_limit(ref ir::Program p, usize 
             registers[parent_base + parent_dst] = value;
             pc = return_pcs[frame];
             frame -= 1;
-            continue;
-        }
-        if (op == 9) {
-            if (frame + 1 >= 32) { return .err(errors::make(12, p.offsets[pc])); }
-            let usize child = frame + 1;
-            let usize child_base = child * 128;
-            if (array_call_cost != 0) {
-                let usize copied = array_calls::enter(p,a,b,frame,ref mut arrays,ref mut payload,p.offsets[pc])?;
-            }
-            var usize i = 0;
-            while (i < p.arities[a]) {
-                let usize source = p.call_args[b * 8 + i] as usize;
-                if (p.array_parameters[p.register_starts[a]+i] == 0) {
-                    registers[child_base + p.register_starts[a] + i] = registers[base + source];
-                }
-                i += 1;
-            }
-            return_pcs[child] = pc + 1;
-            return_dsts[child] = dst;
-            frame = child;
-            pc = p.starts[a];
             continue;
         }
         var i64 value = 0;
