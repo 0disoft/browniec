@@ -1194,6 +1194,16 @@ hash-checked binaries; sources, exits, result JSON, and version output matched.
 Native groups, builds, and the other CLI selections were not rerun. The receipt
 records this as a focused stepwise repair, not one unchanged aggregate run.
 
+The [record layout dependency refactor](docs/engineering/struct-layout-traversal.md)
+replaces repeated readiness passes with iterative DFS and preserves complete
+metadata validation, checked layout arithmetic and conservative VM Fuel prices.
+Development and release each passed 24 focused native groups and 166 source
+record-result CLI cases. The [Windows receipt](docs/evidence/struct-layout-traversal-windows-20261028.json)
+records the current input and compiler/artifact hashes. The dense fixture's
+dependency-field count drops from 4,352 to 512 by loop analysis; elapsed-time
+performance, full suites, Linux, M0, packaging and isolation were not measured or
+rerun. Earlier receipts remain evidence for their original inputs.
+
 M3 must use a fake in-memory typed host adapter without live keys or network services.
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker
 publication barrier. Compile untrusted source only inside the restricted worker.

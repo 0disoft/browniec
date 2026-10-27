@@ -13,6 +13,7 @@ pub struct Plan {
     usize[32] depths;
     usize[512] offsets;
 }
+struct Cursor { usize[32] records; u8[32] fields; bool[32] active; }
 
 pub fn Catalog empty() {
     return Catalog { .count = 0, .fields = [0; 32], .kinds = [0; 512], .types = [0; 512] };
@@ -49,15 +50,6 @@ fn Result<usize, Error> validate(ref Catalog catalog) {
         record += 1;
     }
     return .ok(catalog.count);
-}
-fn bool ready(ref Catalog catalog, ref Plan plan, usize record) {
-    var usize field = 0;
-    while (field < catalog.fields[record] as usize) {
-        let usize slot = record * 16 + field;
-        if (catalog.kinds[slot] == 1 && plan.depths[catalog.types[slot] as usize] == 0) { return false; }
-        field += 1;
-    }
-    return true;
 }
 fn Result<usize, Error> aligned(usize value, usize alignment) {
     let usize remainder = value % alignment;
@@ -100,23 +92,50 @@ fn Result<usize, Error> record_layout(ref Catalog catalog, ref mut Plan plan, us
     return .ok(padded);
 }
 
-// Resolve the dependency graph without native recursion or expanding shared
-// subgraphs. A stalled pass is a cycle; no partial plan escapes on any error.
+// Resume each parent's field cursor after completing a child. Each field is
+// inspected once for dependencies, regardless of declaration order or sharing.
+// Active nodes detect cycles; completed nodes have a nonzero planned depth.
+fn Result<usize, Error> resolve(ref Catalog catalog, ref mut Plan result,
+    ref mut Cursor cursor, usize root, usize limit) {
+    cursor.records[0] = root; cursor.fields[0] = 0; cursor.active[root] = true;
+    var usize depth = 1;
+    while (depth > 0) {
+        let usize level = depth - 1;
+        let usize record = cursor.records[level];
+        let usize field = cursor.fields[level] as usize;
+        if (field == catalog.fields[record] as usize) {
+            let usize size = record_layout(catalog, result, record, limit)?;
+            cursor.active[record] = false;
+            depth -= 1;
+        } else {
+            cursor.fields[level] += 1;
+            let usize slot = record * 16 + field;
+            if (catalog.kinds[slot] == 1) {
+                let usize child = catalog.types[slot] as usize;
+                if (result.depths[child] == 0) {
+                    if (cursor.active[child] || depth >= 32) { return .err(.Cycle); }
+                    cursor.records[depth] = child; cursor.fields[depth] = 0; cursor.active[child] = true;
+                    depth += 1;
+                }
+            }
+        }
+    }
+    return .ok(result.bytes[root]);
+}
+
+// Validate the whole catalog before iterative dependency resolution. No native
+// recursion, shared-subgraph expansion or partial plan publication on failure.
 pub fn Result<Plan, Error> plan(ref Catalog catalog, usize limit) {
     let usize count = validate(catalog)?;
     var Plan result = blank(count);
-    var usize completed = 0;
-    while (completed < count) {
-        let usize before = completed;
-        var usize record = 0;
-        while (record < count) {
-            if (result.depths[record] == 0 && ready(catalog, ref result, record)) {
-                let usize size = record_layout(catalog, ref mut result, record, limit)?;
-                completed += 1;
-            }
-            record += 1;
+    // Allocate/zero scratch once per plan, including catalogs of flat records.
+    var Cursor cursor = Cursor { .records = [0; 32], .fields = [0; 32], .active = [false; 32] };
+    var usize record = 0;
+    while (record < count) {
+        if (result.depths[record] == 0) {
+            let usize size = resolve(catalog, ref mut result, ref mut cursor, record, limit)?;
         }
-        if (completed == before) { return .err(.Cycle); }
+        record += 1;
     }
     return .ok(result);
 }
