@@ -1575,6 +1575,18 @@ uses a parenthesized array call; the modified CLI matrix passed before native ch
 Full native/CLI suites, M0, Linux, isolation, DLL embedding, packaging, allocation
 instrumentation and elapsed-time performance are outside this focused selection.
 
+## M2 repeated array literals as arguments
+
+Implemented at `ea6854f1e97cb6c2c6f85cdeee44d1800e078497` and verified in development and release.
+The two combined invocations rechecked 226 identical input hashes and matching
+compiler/SDK identities. See the [Windows receipt](docs/evidence/m2-array-literal-arguments-windows-20261028.json). See the
+[source contract](docs/engineering/m2-array-literal-arguments.md) for single filler
+evaluation, delayed owner publication, mixed cleanup and exact shape rules.
+Each profile passed 20 native groups (6 new, 8 array-parameter, 6
+array-result-argument) and 344 CLI cases (110 new, 80 array-parameter, 154
+array-result-argument) per development/release profile. Full suites, M0, Linux,
+isolation, DLL, packaging, allocation instrumentation and performance are excluded.
+
 ## Review obligations
 
 Three reviewed counterexamples must remain explicit acceptance tests:

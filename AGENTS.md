@@ -10,6 +10,12 @@ own the affected contract. Broader scaffold procedures are optional.
 
 ## Current state
 
+- Repeated array literals as arguments: implemented at `ea6854f` and verified in
+  development and release, each with 20 native groups and 344 CLI cases. Both
+  combined invocations rechecked 226 identical inputs.
+  `take([EXPR; N])` evaluates the filler once before publishing an anonymous
+  immutable capture. Existing mixed cleanup handles calls and early exits.
+  See [the source contract](docs/engineering/m2-array-literal-arguments.md).
 - Array call results as arguments: implemented at `03795b9` and verified in
   development and release, each with 29 native groups and 507 CLI cases. Both
   combined invocations rechecked 223 identical inputs.

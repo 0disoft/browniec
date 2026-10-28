@@ -26,8 +26,8 @@ and `usize`, and lengths are integer literals from 1 through 4096. The original
 slice accepted a bare visible binding name with exactly matching
 element and length. A bare exact-shape result call is now also accepted through
 the [result-argument successor](m2-array-result-arguments.md). A scalar, indexed
-element, parenthesized array name, `.len`, array
-literal, or implicit conversion cannot satisfy an array parameter.
+element, parenthesized array name, `.len`, or implicit conversion cannot satisfy an array parameter.
+Bare `[EXPR; N]` arguments now have a [literal successor](m2-array-literal-arguments.md).
 
 Scalar, shallow wrapper, and array parameters may occupy any of the eight
 argument positions. Array parameter names are immutable. Element writes and

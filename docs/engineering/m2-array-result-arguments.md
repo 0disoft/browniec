@@ -131,7 +131,7 @@ In an exact-shape array formal position, compilation rejects:
 - an unknown callee, an arity mismatch, or a callee shadowed by a visible local;
 - a parenthesized call such as `take((make()))`;
 - indexing a result, as in `take(make()[0])`;
-- an array literal such as `take([42; 1])`; and
+- a parenthesized array literal such as `take(([42; 1]))`; and
 - mutation of the formal inside the consumer.
 
 These rules do not add general aggregate expressions. Bare names retain their
@@ -178,3 +178,8 @@ fixture, and harness inputs.
 
 This focused slice skips full native and CLI suites, M0, Linux, isolation, DLL
 embedding, packaging, allocation instrumentation, and performance measurement.
+
+The [literal-argument successor](m2-array-literal-arguments.md) accepts bare
+repeated literals and updates this fixture to reject a parenthesized literal.
+The counts above remain historical for their original inputs; the successor
+reruns this fixture and its 154 CLI cases.
