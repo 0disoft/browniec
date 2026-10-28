@@ -148,6 +148,28 @@ fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s,
     }
     return .err(errors::make(2, s.begin));
 }
+// A nested result becomes an anonymous argument capture only after its CALL
+// succeeds. Later arguments and early exits then use the existing mixed cleanup.
+fn Result<usize,errors::Error> record_argument(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
+    usize record,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state) {
+    if(s.kind==2) {
+        var lexer::State look=lexer::snapshot(s);
+        let usize next=lexer::next(source,ref mut look)?;
+        if(look.kind==40) {
+            let usize at=s.begin;
+            if(locals::find(source,names,s.begin,s.end)!=64) {return .err(errors::make(3,at));}
+            let usize target=functions::find(source,signatures,s.begin,s.end);
+            let usize temporary=record_results::destination(signatures,target,record,false,p,names.function,at)?;
+            let usize name=lexer::next(source,s)?;
+            let usize called=call_value(source,s,p,names,signatures,target,144+temporary,at,depth+1,result_type,structure,loop_state)?;
+            if(s.kind!=44 && s.kind!=41) {return .err(errors::make(3,s.begin));}
+            let usize captured=locals::declare(names,at,at,144+temporary,false)?;
+            return .ok(144+temporary);
+        }
+    }
+    return record_calls::capture(source,s,p,names,record);
+}
 // All result kinds share argument evaluation and capture cleanup. Destinations
 // 0..15 are dead array sites, 16 is scalar, and 144..159 are dead record sites.
 fn Result<usize,errors::Error> call_value(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
@@ -162,7 +184,7 @@ fn Result<usize,errors::Error> call_value(ref u8[] source,ref mut lexer::State s
         let u8 tag=if(arity<signatures.arities[target]){signatures.param_types[target*8+arity]}else{0};
         let usize length=if(arity<signatures.arities[target]){signatures.param_lengths[target*8+arity]}else{0};
         let usize record=if(arity<signatures.arities[target]){signatures.param_records[target*8+arity] as usize}else{0};
-        if(record!=0) {arguments[arity]=record_calls::capture(source,s,p,ref mut names,record-1)?;}
+        if(record!=0) {arguments[arity]=record_argument(source,s,p,ref mut names,signatures,record-1,depth,result_type,structure,loop_state)?;}
         else if(length!=0) {arguments[arity]=array_calls::capture(source,s,p,ref mut names,tag,length)?;}
         else {
             arguments[arity]=expression(source,s,p,ref names,signatures,1,depth+1,tag,result_type,structure,loop_state)?;
