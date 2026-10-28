@@ -1,5 +1,12 @@
 # Brownie C
 
+- Native Buffer storage: implemented and verified in development and release,
+  each with 15 native groups (7 storage, 8 admission) and 8 CLI sentinels.
+  Both invocations rechecked 253 identical inputs.
+  Private replacement allocation copies initialized bytes while preserving the
+  original root. Publication/commit and discard/cancel remain explicit caller steps.
+  Guest Buffer syntax, owner tokens and VM integration remain future work.
+  See [the storage contract](docs/engineering/m2-buffer-storage.md).
 - Buffer growth admission: implemented at `3f99138` and verified in
   development and release, each with 8 native groups and 8 CLI sentinels. Both
   invocations rechecked 250 identical inputs.

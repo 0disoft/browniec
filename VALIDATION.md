@@ -1741,3 +1741,24 @@ with `--profile release`. See [the foundation](docs/engineering/m2-buffer-growth
 Full suites, M0, Linux, isolation, DLL embedding, packaging, allocation
 instrumentation and elapsed-time performance are outside this focused selection.
 Previous receipts remain historical for their original inputs.
+
+## Private native Buffer storage
+
+Verified in development and release: each passed 15 native groups (7 storage
+plus 8 admission) and 8 CLI sentinels. Both invocations rechecked 253 identical
+inputs and compiler/SDK identities. See the
+[Windows receipt](docs/evidence/m2-buffer-storage-windows-20261028.json).
+`buffer_storage::prepare_growth` reserves old-plus-new payload/owner charges,
+allocates an exact-capacity owning native Buffer, and copies initialized bytes.
+The original root remains live until the caller replaces it and commits.
+Discarded replacements must be dropped before cancellation. Preparation failures
+cancel after helper cleanup; quota/overflow/state/no-growth failures precede allocation.
+
+The native groups exercise real allocation, copying, owning-root replacement,
+explicit commit, abandonment/cancellation and data preservation. CLI sentinels
+cover unchanged scalar/array/record behavior and continued Buffer syntax rejection.
+Run `python -B tools/verify-m2-buffer-storage.py --profile development` and repeat
+with `--profile release`. See [the storage contract](docs/engineering/m2-buffer-storage.md).
+Full suites, M0, Linux, isolation, DLL embedding, packaging, allocator-failure
+injection, allocation instrumentation and elapsed-time performance are not included.
+Earlier receipts remain historical evidence for their original inputs.

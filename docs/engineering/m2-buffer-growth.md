@@ -5,6 +5,10 @@ and release. This is private admission accounting for the M2 Buffer foundation.
 Guest Buffer syntax, allocation, copying, move/borrow rules and VM integration
 remain future work. See the [Windows receipt](../evidence/m2-buffer-growth-windows-20261028.json).
 
+The [native storage successor](m2-buffer-storage.md) now connects this admission
+API to actual replacement allocation/copy. The original evidence below remains
+specific to the accounting-only checkpoint.
+
 ## Capacity policy
 
 `src/buffer_growth.fy` plans capacity without allocating memory. Capacities are
