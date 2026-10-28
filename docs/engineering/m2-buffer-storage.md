@@ -12,6 +12,11 @@ The [descriptor successor](m2-buffer-owners.md) supplies table-local generation
 checks over caller-bound native roots. The storage API below still leaves root
 publication, descriptor binding and accounting completion to the caller.
 
+The [allocator-failure successor](m2-buffer-failure.md) now supplies one-shot
+320/384-byte Allocation-path injection and tracked exit-cleanup evidence for
+these unchanged production modules. Provider inconsistency injection remains
+deferred; the original checks and limitations below retain their historical scope.
+
 ## Transaction contract
 
 `prepare_growth(ref old, required, limits, ref mut ledger)` returns an owning

@@ -1,0 +1,134 @@
+"""Windows target-allocator failure and cleanup probe for production Buffer modules."""
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import platform
+import shutil
+import subprocess
+
+ROOT = Path(__file__).resolve().parent.parent
+MODULES = ['buffer_growth.fy', 'buffer_storage.fy', 'buffer_owners.fy', 'buffer_replacement.fy']
+MODES = [('normal-min', None), ('normal-preferred', None), ('abandon', None),
+         ('oom-min', 320), ('oom-preferred', 384)]
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def need(ok, message):
+    if not ok:
+        raise RuntimeError(message)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--profile', choices=['development', 'release', 'all'], default='all')
+    parser.add_argument('--compiler', type=Path, default=ROOT / 'build/toolchain/fairyc.exe')
+    args = parser.parse_args()
+    need(os.name == 'nt', 'This probe uses the Windows MSVC forced-include allocator seam')
+    need(not os.environ.get('CL') and not os.environ.get('_CL_'), 'Ambient CL/_CL_ override')
+    compiler = args.compiler.resolve(strict=True)
+    fixture = ROOT / 'probes/m2-buffer-failure'
+    output = ROOT / 'build/m2-buffer-failure'
+    output.mkdir(parents=True, exist_ok=True)
+    receipt = output / ('receipt.json' if args.profile == 'all' else args.profile + '-receipt.json')
+    receipt.write_text('{"status":"incomplete"}\n', encoding='utf-8')
+    commands = []
+
+    def run(command, cwd=ROOT, env=None, timeout=600):
+        command = list(map(str, command))
+        result = subprocess.run(command, cwd=cwd, env=env, capture_output=True,
+                                text=True, encoding='utf-8', timeout=timeout)
+        row = dict(command=command, cwd=str(cwd), exit=result.returncode,
+                   stdout=result.stdout, stderr=result.stderr)
+        commands.append(row)
+        need(result.returncode == 0 and not result.stderr, str(row))
+        return result.stdout.strip()
+
+    baseline = run(['git', 'rev-parse', 'HEAD'])
+    tc = json.loads((ROOT / 'toolchain.json').read_text(encoding='utf-8'))
+    compiler_hash = sha(compiler)
+    need(compiler_hash == tc['platforms']['windows/amd64']['sha256'], 'Compiler checksum')
+    version = run([compiler, '--version'])
+    need(tc['compiler']['revision'] in version and tc['sdk']['version'] in version, 'Compiler/SDK identity')
+    locked = run([compiler, 'check', '--locked'])
+    root_lock = json.loads((ROOT / 'fairy.lock').read_text(encoding='utf-8'))
+    sdk = [p for p in root_lock['packages'] if p['role'] != 'root']
+    paths = [ROOT / 'src' / name for name in MODULES]
+    paths += [fixture / 'src/main.fy', fixture / 'fairy.toml', fixture / 'allocator_probe.h',
+              ROOT / 'tools/verify-m2-buffer-failure.py', ROOT / 'fairy.toml',
+              ROOT / 'fairy.lock', ROOT / 'toolchain.json']
+    inputs = [dict(path=p.relative_to(ROOT).as_posix(), sha256=sha(p)) for p in sorted(paths)]
+    project = output / 'project'
+    source = project / 'src'
+    source.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(fixture / 'fairy.toml', project / 'fairy.toml')
+    shutil.copyfile(fixture / 'src/main.fy', source / 'main.fy')
+    for name in MODULES:
+        shutil.copyfile(ROOT / 'src' / name, source / name)
+    need(all(sha(source / name) == sha(ROOT / 'src' / name) for name in MODULES),
+         'Generated modules differ from production sources')
+    need(sha(source / 'main.fy') == sha(fixture / 'src/main.fy')
+         and sha(project / 'fairy.toml') == sha(fixture / 'fairy.toml'), 'Generated fixture differs')
+    need({p.name for p in source.rglob('*.fy')} == set(MODULES + ['main.fy'])
+         and len(list(source.rglob('*.fy'))) == 5, 'Unexpected generated source')
+    generated = [dict(path=p.relative_to(ROOT).as_posix(), sha256=sha(p))
+                 for p in sorted(source.glob('*.fy'))]
+    run([compiler, 'check'], cwd=project)
+    generated_lock = project / 'fairy.lock'
+    lock_hash = sha(generated_lock)
+    project_lock = json.loads(generated_lock.read_text(encoding='utf-8'))
+    need([p for p in project_lock['packages'] if p['role'] != 'root'] == sdk, 'Generated SDK differs')
+    header = fixture / 'allocator_probe.h'
+    build_env = {**os.environ, 'CL': '/FI"' + str(header) + '"', 'PYTHONUTF8': '1'}
+    empty = output / 'no-runtime-tools'
+    empty.mkdir(exist_ok=True)
+    runtime_env = {key: str(empty) for key in ['PATH', 'TEMP', 'TMP']}
+    runtime_env.update({key: os.environ[key] for key in ['SystemRoot', 'WINDIR'] if key in os.environ})
+    profiles = ['development', 'release'] if args.profile == 'all' else [args.profile]
+    outcomes = []
+    for profile in profiles:
+        build = run([compiler, 'build', '--locked'] + (['--release'] if profile == 'release' else []),
+                    cwd=project, env=build_env)
+        exe = output / ('buffer-failure-' + profile + '.exe')
+        shutil.copyfile(project / 'build/brownie-buffer-failure.exe', exe)
+        binary_hash = sha(exe)
+        cases = []
+        for mode, target in MODES:
+            env = dict(runtime_env)
+            if target:
+                env['BROWNIE_BUFFER_FAIL_BYTES'] = str(target)
+            lines = run([exe, mode], cwd=empty, env=env, timeout=30).splitlines()
+            need(len(lines) == 2 and lines[0] == 'buffer-failure: passed', 'Probe output')
+            counters = json.loads(lines[1])
+            expected = dict(schema='browniec.buffer-allocator/v1', live=0, target=target or 0,
+                            targetAttempts=2 if target else 0, failures=1 if target else 0)
+            need(counters == expected, 'Allocator counters: ' + str(counters))
+            cases.append(dict(mode=mode, allocator=counters))
+        need(sha(exe) == binary_hash, 'Executable changed')
+        outcomes.append(dict(profile=profile, build=build, executable=exe.relative_to(ROOT).as_posix(),
+                             exeSha256=binary_hash, cases=cases))
+        print(f'PASS: {profile}: 5 native allocator scenarios; exit live count zero', flush=True)
+    need(all(sha(ROOT / p['path']) == p['sha256'] for p in inputs + generated), 'Inputs changed')
+    need(sha(compiler) == compiler_hash and sha(generated_lock) == lock_hash, 'Toolchain/lock changed')
+    result = dict(schema='browniec.buffer-failure/v1', status='passed',
+                  recordedAt=datetime.now(timezone.utc).isoformat(), baselineCommit=baseline,
+                  os=platform.platform(), profiles=profiles, compilerVersion=version,
+                  compilerSha256=compiler_hash, lockedCheck=locked, standardLibraryLockIdentity=sdk,
+                  sourceSha256=inputs, generatedSourceSha256=generated,
+                  generatedLockSha256=lock_hash, forcedInclude=str(header), commands=commands,
+                  profileReceipts=outcomes,
+                  limitations=['Windows native probe with byte-identical copies of four production modules. '
+                               'Only FY system-heap allocations are counted, not all process memory. '
+                               'Provider inconsistency injection, full suites, M0, Linux, isolation, DLL, '
+                               'packaging and elapsed-time performance were not run. Guest Buffer is not implemented.'])
+    receipt.write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8', newline='\n')
+    print('PASS: ' + receipt.relative_to(ROOT).as_posix(), flush=True)
+
+
+if __name__ == '__main__':
+    main()

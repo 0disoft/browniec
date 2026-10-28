@@ -9,6 +9,11 @@ This private transaction adds snapshot validation around preparation and metadat
 completion. Guest Buffer syntax, borrow tracking, VM instructions, Fuel prices
 and capability flags remain unchanged.
 
+The [allocator-failure successor](m2-buffer-failure.md) now supplies one-shot
+320/384-byte Allocation-path injection and tracked exit-cleanup evidence for
+these unchanged production modules. Provider inconsistency injection remains
+deferred; the original checks and limitations below retain their historical scope.
+
 ## Preparation
 
 `prepare` takes a table-local source token, the trusted caller's native Buffer,

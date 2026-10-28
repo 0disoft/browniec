@@ -1801,3 +1801,26 @@ repeat with `--profile release`. See [the contract](docs/engineering/m2-buffer-r
 Full suites, M0, Linux, isolation, DLL embedding, packaging, allocator-failure
 injection, allocation instrumentation and elapsed-time performance are not included.
 Earlier receipts remain historical evidence for their original inputs.
+
+## Native Buffer allocator-failure probe
+
+Development and release each passed 5 native executable scenarios: normal minimum
+and preferred growth, abandoned replacement cancellation, minimum allocation OOM,
+and preferred allocation OOM. Both OOM cases require Allocation to reach the
+caller before an explicit retry, with old data/token retained, all pending fields
+cleared, usage restored, and observed peaks retained. Retry commits the expected
+capacity and next token generation. Every process reports zero live allocations
+at the instrumented FY system-heap seam after native scope cleanup.
+
+Run `python -B tools/verify-m2-buffer-failure.py` (Windows MSVC). The standalone
+project builds byte-identical copies of the four production Buffer modules with
+a test-only forced-include allocator header. Root sources and fairy.lock are
+unchanged. The archive rechecks 11 selected inputs, 5 generated source files,
+the generated SDK lock and both retained instrumented executables. See the
+[contract](docs/engineering/m2-buffer-failure.md) and
+[Windows receipt](docs/evidence/m2-buffer-failure-windows-20261029.json).
+
+This is focused native allocator evidence, not new guest Buffer/CLI support,
+whole-process leak proof, or a full M0/native/CLI regression result.
+Provider inconsistency injection, Linux, isolation, DLL embedding, packaging and
+elapsed-time performance were not run. Earlier receipts retain their original inputs.

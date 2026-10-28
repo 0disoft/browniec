@@ -1,5 +1,11 @@
 # Roadmap
 
+- Buffer allocator-failure probe: verified in development and release, each with
+  5 native scenarios. Forced 320/384-byte allocation failures preserve the original
+  data, token, inactive Plan and restored usage; explicit retries then commit.
+  Every scenario exits with zero outstanding allocations at the instrumented
+  FY system-heap seam. Runtime sources are unchanged by this verification slice.
+  See [the failure probe](../engineering/m2-buffer-failure.md).
 - Buffer replacement transactions: implemented and verified in development and
   release, each with 31 native groups (8 replacement, 23 regressions) and 8 CLI
   sentinels. Both invocations rechecked 259 identical inputs.
