@@ -10,6 +10,13 @@ own the affected contract. Broader scaffold procedures are optional.
 
 ## Current state
 
+- Buffer growth admission: implemented at `3f99138` and verified in
+  development and release, each with 8 native groups and 8 CLI sentinels. Both
+  invocations rechecked 250 identical inputs.
+  Private capacity planning and begin/commit/cancel accounting include old-plus-new
+  payload and owner charges, with minimum-capacity fallback at quota ceilings.
+  Guest Buffer syntax, allocation, move/borrow and VM integration remain future
+  work. See [the foundation](docs/engineering/m2-buffer-growth.md).
 - Returned subrecords in constructor fields: implemented at `c0d6217` and verified in
   development and release, each with 16 native groups and 442 CLI cases. Both
   combined invocations rechecked 247 identical inputs.

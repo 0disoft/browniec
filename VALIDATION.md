@@ -1720,3 +1720,24 @@ See [the source contract](docs/engineering/m2-struct-child-call-paths.md).
 Full suites, M0, Linux, isolation, DLL embedding, packaging, allocation
 instrumentation and elapsed-time performance are outside this focused selection.
 Earlier receipts remain historical for their original inputs.
+
+## Private Buffer growth admission
+
+Implemented at `3f99138e98f9fc4779f70efa47bab6956fae756a` and verified in development and release.
+Both invocations rechecked 250 identical input hashes and matching compiler/SDK
+identities. See the [Windows receipt](docs/evidence/m2-buffer-growth-windows-20261028.json).
+This foundation plans 64-byte-rounded capacities and reserves old-plus-new
+payload and both logical 64-byte owner records. Object, Instance and Engine
+ceilings each permit minimum-capacity fallback; allocator OOM is separate.
+Exact pending snapshots are revalidated before commit/cancel arithmetic.
+The trusted caller must publish/drop allocations in the documented order.
+No allocation, byte copying, owner-token checks, guest Buffer syntax or VM
+integration is supplied by this accounting-only increment.
+
+Each profile passed 8 native groups and 8 CLI sentinels. CLI sentinels exercise unchanged scalar/array/record behavior and
+continued rejection of Buffer syntax, not Buffer execution.
+Run `python -B tools/verify-m2-buffer-growth.py --profile development` and repeat
+with `--profile release`. See [the foundation](docs/engineering/m2-buffer-growth.md).
+Full suites, M0, Linux, isolation, DLL embedding, packaging, allocation
+instrumentation and elapsed-time performance are outside this focused selection.
+Previous receipts remain historical for their original inputs.
