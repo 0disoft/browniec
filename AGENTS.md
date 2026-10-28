@@ -470,6 +470,16 @@ M0 probe success is native primitive evidence, not evidence for an unimplemented
 
 ## Engineering boundaries
 
+Record call-result assignment is implemented at `0a6a759`. A mutable root stays
+live through argument evaluation, CALL and capture cleanup; `SASSIGN` preserves
+its existing owner and `SDROP` releases the anonymous result. The temporary stays
+absent from names until CALL completes. Argument effects are preserved, including
+effects on the destination. No opcode, Fuel price, profile or version flag changes.
+Development and release each passed 30 native groups and 725 CLI cases in separate
+core/regression phases, with 202 matching rechecked inputs and both CLI hashes.
+See [the contract](docs/engineering/m2-struct-call-assignment.md) and
+[focused evidence](docs/evidence/m2-struct-call-assignment-windows-20261028.json).
+
 - Keep parser, type checking, Flow analysis, verifier, and dispatch in Fairy C.
 - A small allocator, scalar codec, or OS shim must be explicit and separately tested.
 - A native Brownie executable must run source without launching Go, MSVC, or C.

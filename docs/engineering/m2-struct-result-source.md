@@ -55,7 +55,9 @@ var Pair mutable_pair = make();
 The declaration type must match the callee result exactly. A `var` destination
 may later be written. The caller's mutable flag is independent of the callee and
 does not make a returned parameter alias the original argument. Assignment of a
-record-result call into an existing record remains unavailable.
+record-result call into an existing record was unavailable at this checkpoint.
+The [call-assignment successor](m2-struct-call-assignment.md) supports an
+existing mutable root; child-path targets remain unavailable.
 
 Record-result calls cannot appear in scalar expressions, wrapper payloads, or
 general aggregate arguments. A record-result function also cannot use `?`
@@ -139,7 +141,7 @@ This slice originally rejected `return Constructor { ... };`; the
 that direct form. The remaining unsupported forms are:
 
 - field, parenthesized, or aggregate return expressions;
-- assignment of a call result to an existing record;
+- assignment of a call result into a child path;
 - record-result calls in scalar expressions or general aggregate arguments;
 - record wrappers, borrows, `ref` results, or `var` results;
 - record construction in a `for` header.

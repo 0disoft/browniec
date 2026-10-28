@@ -643,7 +643,7 @@ drops other visible arrays and records and emits `SRET`. Transfer adds no payloa
 extent, but construction requires the result extent; reconstructing a parameter
 keeps the old formal and new result live until cleanup. No opcode, VM charge,
 profile, or version field changes. General expressions, parenthesized constructor
-returns, returned subrecord paths, call-result assignment, and record calls in
+returns, returned subrecord paths, child-path call-result assignment, and record calls in
 aggregate fields remain unsupported. Development and release each passed 26
 native groups and 532 CLI cases through separate core/regression invocations.
 The [Windows receipt](../evidence/m2-struct-return-constructors-windows-20261028.json)
@@ -652,6 +652,16 @@ receipts remain historical for their original inputs.
 
 Goal: connect arrays, plain structs, borrows, Buffer, input,
 output, and UTF-8.
+
+Record call-result assignment is implemented at `0a6a759`. An exact-nominal
+`root = make(...);` keeps the mutable destination live, copies the returned value
+into its existing owner, and releases the temporary result. The additional
+result, captures and parameter copies still count toward peak quota use.
+Child-path call assignment and for-header aggregate writes remain unavailable.
+Development and release each passed 30 native groups and 725 CLI cases in separate
+core/regression phases; 202 matching input hashes and both CLI identities were rechecked.
+See [the contract](../engineering/m2-struct-call-assignment.md) and
+[focused receipt](../evidence/m2-struct-call-assignment-windows-20261028.json).
 
 Required evidence includes source copy-initializer checks, complete record construction,
 root conflict rejection, mutable views, returned borrows, Buffer growth and movement,

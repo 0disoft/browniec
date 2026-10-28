@@ -20,6 +20,11 @@
   transfers it with the existing `SRET`. See [the constructor
   contract](docs/engineering/m2-struct-return-constructors.md).
 - Design date: 2026-10-23
+- Record call-result assignment: implemented at `0a6a759`. `p = make(...);`
+  retains the live mutable root through argument evaluation and CALL, copies
+  the exact-nominal result with `SASSIGN`, then drops the anonymous result.
+  Development and release each passed 30 native groups and 725 CLI cases.
+  See [the contract](docs/engineering/m2-struct-call-assignment.md).
 - First delivery target: Windows 11 x64
 
 Brownie C is a small, statically typed source language and JIT-free bytecode VM.
@@ -137,7 +142,7 @@ out of a loop. The shared reverse mixed finisher then drops other visible arrays
 and records and emits `SRET`. Transfer adds no payload extent, though the result
 root has its normal constructor extent; a reconstructed parameter keeps its old
 formal copy and the new result live together until cleanup. General expressions,
-parenthesized constructor returns, returned subrecord paths, call-result
+parenthesized constructor returns, returned subrecord paths, child-path call-result
 assignment, and record calls in aggregate fields remain unsupported. There is no
 new opcode, VM charge, profile, or version flag. The [Windows
 receipt](docs/evidence/m2-struct-return-constructors-windows-20261028.json) records

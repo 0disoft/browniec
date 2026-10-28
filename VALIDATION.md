@@ -1278,7 +1278,7 @@ the old formal copy and the new result live together until cleanup: eight
 callee payload bytes, plus caller originals and any captures in the shared quota.
 
 General return expressions, parenthesized constructor returns, returned subrecord
-paths, call-result assignment, and record calls in aggregate fields remain
+paths, child-path call-result assignment, and record calls in aggregate fields remain
 unsupported. There is no new opcode, VM charge, profile, or version field.
 
 The fixture at `tests/m2/struct_return_constructors.fy` has six native groups,
@@ -1305,6 +1305,29 @@ M3 must use a fake in-memory typed host adapter without live keys or network ser
 M4 requires real Windows AppContainer, Job, bounded IPC, I/O leases, and the broker
 publication barrier. Compile untrusted source only inside the restricted worker.
 M5 requires actual DLL export/call, clean-machine packaging, and full metrics.
+
+### Record call-result assignment
+
+Implemented at `0a6a759`, `root = callee(...);` accepts an exact-nominal result
+for an existing mutable root in ordinary function statements and statement-bearing
+value arms. The destination stays live while arguments and CALL execute. Normal
+capture cleanup precedes `SASSIGN` and `SDROP` of the anonymous result. Early
+returns, propagation and loop transfers never drop a pending result. Parenthesized
+RHS calls, child-path call assignment and for-header aggregate writes remain rejected.
+
+The [contract](docs/engineering/m2-struct-call-assignment.md) and
+[receipt](docs/evidence/m2-struct-call-assignment-windows-20261028.json) track
+passed development/release verification: six new native groups plus 24 regressions, and 725 CLI
+cases per profile (148 assignment, 144 constructor-return, 166 named-result,
+152 direct-return and 115 array call-assignment). Core/regression and development/
+release selections are separate invocations. Earlier receipts remain historical
+for their original inputs. Full suites, M0, Linux, isolation, DLL, packaging,
+allocation instrumentation and performance are outside this selection.
+
+The four phases share 202 matching rechecked input hashes and the same compiler/
+SDK identities. Both CLI hashes match retained executables. Development core ran
+before implementation commit `0a6a759` with the same implementation files in the
+working tree; the other phases ran after that commit.
 
 ## Review obligations
 

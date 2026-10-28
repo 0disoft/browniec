@@ -35,6 +35,10 @@ scalar/wrapper use, and assignment to an existing record were unsupported. The
 [constructor-return successor](m2-struct-return-constructors.md) now adds a
 direct nominal constructor return and does not add those other forms.
 
+The later [call-assignment slice](m2-struct-call-assignment.md) also supports
+`root = make(...);` for exact-nominal mutable record roots. Earlier receipts
+remain historical for their original inputs.
+
 ## Ownership, limits and Fuel
 
 The existing CALL/SRET VM transfers the result owner without allocating another
