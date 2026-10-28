@@ -120,6 +120,9 @@ fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s,
             if(signatures.return_lengths[target]!=0) {
                 return array_call_read(source,s,p,table,signatures,target,at,depth,result_type,structure,loop_state);
             }
+            if(signatures.return_records[target]!=0) {
+                return record_call_read(source,s,p,table,signatures,target,at,depth,result_type,structure,loop_state);
+            }
             return call_value(source,s,p,table,signatures,target,16,at,depth,result_type,structure,loop_state);
         }
         if (index == 64) { return .err(errors::make(3, at)); }
@@ -150,6 +153,18 @@ fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s,
         return .ok(result);
     }
     return .err(errors::make(2, s.begin));
+}
+// Field paths contain no expressions: the returned owner is read and dropped
+// consecutively, with no lexical capture needed between the two operations.
+fn Result<usize,errors::Error> record_call_read(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    usize target,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state) {
+    let usize record=(signatures.return_records[target] as usize)-1;
+    let usize temporary=record_results::destination(signatures,target,record,false,p,table.function,at)?;
+    let usize called=call_value(source,s,p,table,signatures,target,144+temporary,at,depth+1,result_type,structure,loop_state)?;
+    let usize value=record_values::read(source,s,p,temporary,at)?;
+    let usize dropped=ir::record_drop(p,temporary,at)?;
+    return .ok(value);
 }
 // Keep the returned owner visible to index-expression exits, then release it
 // immediately after materializing the scalar read or length.
