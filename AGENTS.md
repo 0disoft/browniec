@@ -10,6 +10,12 @@ own the affected contract. Broader scaffold procedures are optional.
 
 ## Current state
 
+- Returned subrecords as direct returns: implemented at `c789300` and verified in
+  development and release, each with 16 native groups and 444 CLI cases. Both
+  combined invocations rechecked 244 identical inputs.
+  `return make().child;` and deeper exact-nominal paths release the returned
+  parent before creating the child, then use existing mixed return cleanup.
+  See [the source contract](docs/engineering/m2-struct-call-path-returns.md).
 - Returned subrecords as assignment values: implemented at `2971169` and verified in
   development and release, each with 16 native groups and 440 CLI cases. Both
   combined invocations rechecked 241 identical inputs.

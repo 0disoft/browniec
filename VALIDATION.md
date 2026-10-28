@@ -1682,3 +1682,21 @@ and repeat with `--profile release`. Full suites, M0, Linux, isolation, DLL
 embedding, packaging, allocation instrumentation, and elapsed-time performance are
 outside this focused selection. Earlier receipts remain historical for their
 original inputs.
+
+## Returned-subrecord direct returns
+
+Implemented at `c78930046a330cc940be20bfcfd4c5350047cbc5` and verified in development and release.
+Both invocations rechecked 244 identical input hashes and matching compiler/SDK
+identities. See the [Windows receipt](docs/evidence/m2-struct-call-path-returns-windows-20261028.json).
+`return make().child;` resolves the declared exact nominal result, snapshots
+its leaves, drops the unnamed returned root, then creates the child. Existing
+reverse mixed cleanup precedes SRET. Bare whole-call return transfer is unchanged.
+No opcode, VM, Fuel price, profile or version changes.
+
+Each profile passed 16 native groups (4 new, 6 named return paths,
+6 bare return calls) and 444 CLI cases (144 new, 148 named paths, 152 bare calls).
+Run `python -B tools/verify-m2-struct-call-path-returns.py --profile development`
+and repeat with `--profile release`. See [the source contract](docs/engineering/m2-struct-call-path-returns.md).
+Full suites, M0, Linux, isolation, DLL embedding, packaging, allocation
+instrumentation and elapsed-time performance are outside this focused selection.
+Earlier receipts remain historical for their original inputs.

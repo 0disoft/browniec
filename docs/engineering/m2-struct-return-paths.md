@@ -50,6 +50,14 @@ python -B tools/verify-m2-struct-return-paths.py --phase core --profile release
 python -B tools/verify-m2-struct-return-paths.py --phase regressions --profile release
 ```
 
+
+The [direct returned-subrecord successor](m2-struct-call-path-returns.md) now
+accepts `return make().child;` and deeper exact-nominal paths. Its focused
+verification is separate; counts in this document remain historical for their
+original inputs. Parenthesized/general aggregate returns remain unavailable.
+The named-return fixture now rejects `(make().p)` instead of the newly accepted
+bare call path, preserving its negative case count.
+
 ## Accepted form
 
 `record_results::returned` inspects the token after `return`. An identifier
@@ -67,7 +75,6 @@ unsupported and fail during compilation:
 
 - record borrows, `ref` results, and `var` results;
 - general return expressions and parenthesized paths, such as `return (a.p);`;
-- a field selected from a returned call, such as `return make().child;`;
 - scalar fields, arrays, wrappers, and unknown endpoints as the record result;
 - paths rooted at bindings that are not visible record bindings.
 

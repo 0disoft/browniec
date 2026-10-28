@@ -10,6 +10,14 @@ fn Point forward() { return make(); }
 fn i32 main() { let Point p = forward(); return p.x; }
 ```
 
+
+The [direct returned-subrecord successor](m2-struct-call-path-returns.md) now
+accepts `return make().child;` and deeper exact-nominal paths. Its focused
+verification is separate; counts in this document remain historical for their
+original inputs. Parenthesized/general aggregate returns remain unavailable.
+The named-return fixture now rejects `(make().p)` instead of the newly accepted
+bare call path, preserving its negative case count.
+
 ## Source contract and lowering
 
 The return operand may be a function identifier followed by its argument list
