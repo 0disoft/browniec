@@ -252,6 +252,13 @@ pub fn Result<usize, errors::Error> stage_child(ref u8[] source, ref mut lexer::
 // are consecutive scalar inputs to SINIT, without staging slots or a temporary owner.
 fn Result<usize, errors::Error> extract(ref u8[] source, ref mut lexer::State s,
     ref mut ir::Program p, ref mut locals::Table names, Header header) {
+    let usize id=extracted(source,s,p,names,header.record,header.mutable,header.begin)?;
+    return locals::declare(names,header.begin,header.end,144+id,header.mutable);
+}
+// Declarations and subrecord returns use the same independent leaf copy. No
+// binding is published here; return lowering passes the result to its finisher.
+pub fn Result<usize, errors::Error> extracted(ref u8[] source, ref mut lexer::State s,
+    ref mut ir::Program p, ref locals::Table names, usize record, bool mutable, usize offset) {
     if (s.kind != 2) { return .err(errors::make(3,s.begin)); }
     let usize at = s.begin;
     let usize index = locals::find(source,names,s.begin,s.end);
@@ -260,7 +267,7 @@ fn Result<usize, errors::Error> extract(ref u8[] source, ref mut lexer::State s,
     if (source_id >= p.records.count) { return .err(errors::make(3,at)); }
     let usize name = lexer::next(source,s)?;
     let Leaf part = path(source,s,p,p.records.records[source_id] as usize,at)?;
-    if (part.tag != 0 || part.record != header.record) { return .err(errors::make(3,at)); }
+    if (part.tag != 0 || part.record != record) { return .err(errors::make(3,at)); }
     let usize end = lexer::punctuation(source,s,59)?;
     let usize count = leaf_count(p,part.record,at)?;
     let usize first = p.registers;
@@ -268,9 +275,9 @@ fn Result<usize, errors::Error> extract(ref u8[] source, ref mut lexer::State s,
     while (i < count) {
         let usize read = ir::record_read(p,source_id,part.ordinal+i,at)?; i += 1;
     }
-    let usize id = ir::record_in(p,names.function,header.record,header.mutable,header.begin)?;
-    let usize init = ir::record_init(p,id,first,header.begin)?;
-    return locals::declare(names,header.begin,header.end,144+id,header.mutable);
+    let usize id = ir::record_in(p,names.function,record,mutable,offset)?;
+    let usize init = ir::record_init(p,id,first,offset)?;
+    return .ok(id);
 }
 
 // Resolve exact nominal endpoints; the VM prepays and snapshots their bytes

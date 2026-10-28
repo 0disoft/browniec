@@ -55,11 +55,20 @@ pub fn Result<usize,errors::Error> assigned(ref mut ir::Program p,usize destinat
     let usize copied=ir::record_assign(p,destination,temporary,at)?;
     return ir::record_drop(p,temporary,at);
 }
-// Bare visible bindings, direct-call results and return constructors share the
+// Bare bindings, subrecord copies, direct-call results and constructors share the
 // finisher. General record expressions remain unavailable.
 pub fn Result<usize,errors::Error> returned(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table names,usize at) {
     if(s.kind!=2) {return .err(errors::make(3,s.begin));}
+    var lexer::State look=lexer::snapshot(s);
+    let usize next_token=lexer::next(source,ref mut look)?;
+    if(look.kind==46) {
+        let usize encoded=p.record_results[names.function] as usize;
+        if(encoded==0) {return .err(errors::make(3,at));}
+        let usize record=p.records.records[encoded-1] as usize;
+        let usize extracted=values::extracted(source,s,p,names,record,false,at)?;
+        return finish(p,names,extracted,at);
+    }
     let usize index=locals::find(source,names,s.begin,s.end);
     if(!values::binding(names,index)) {return .err(errors::make(3,s.begin));}
     let usize id=names.registers[index]-144;

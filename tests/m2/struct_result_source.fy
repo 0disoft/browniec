@@ -54,7 +54,7 @@ fn void nominal_mismatches_scalar_contexts_and_unimplemented_return_forms_fail()
  rejected(b"module main;struct P{i32 x;}fn P f(){return (P{.x=42});}fn i32 main(){return 42;}");
  rejected(b"module main;struct P{i32 x;}fn P f(P p){return p;}fn P g(P p){return (f(p));}fn i32 main(){return 42;}");
  rejected(b"module main;struct P{i32 x;}fn P f(P p){return (p);}fn i32 main(){return 42;}");
- rejected(b"module main;struct P{i32 x;}struct R{P p;}fn P f(R r){return r.p;}fn i32 main(){return 42;}");
+ rejected(b"module main;struct P{i32 x;}struct R{P p;}fn P f(R r){return (r.p);}fn i32 main(){return 42;}");
  rejected(b"module main;struct P{i32 x;}fn P f(){return 42;}fn i32 main(){return 42;}");
  rejected(b"module main;struct P{i32 x;}fn P f(){let i32[1] a=[42;1];return a;}fn i32 main(){return 42;}");
  rejected(b"module main;struct P{i32 x;}fn P f(P p){return p;}fn i32 main(){let P p=P{.x=42};return f(p);}");
