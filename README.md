@@ -1,5 +1,11 @@
 # Brownie C
 
+- Buffer grow-and-append preparation: implemented and verified in development
+  and release, each with 20 native scenarios (7 new, 13 lifecycle/allocator
+  regressions). Growth-only preparation appends into an unpublished replacement
+  and commits its initialized length/capacity after caller publication. The old
+  root remains live for self-append and rollback; publication is still explicit.
+  See [the grow-and-append contract](docs/engineering/m2-buffer-grow-append.md).
 - Buffer close accounting: implemented and verified in development and release,
   each with 13 native scenarios (4 close, 9 append/allocator regressions).
   Begin retires the token while keeping its charge; after native root destruction,

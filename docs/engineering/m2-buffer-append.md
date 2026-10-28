@@ -83,3 +83,13 @@ uncommitted; hashes identify the tested implementation rather than that baseline
 The prior 31 native groups and CLI sentinels, full suites, M0, Linux, isolation,
 DLL embedding, packaging, Provider injection and elapsed-time performance were
 not run. This is targeted native append/allocator evidence, not guest execution.
+
+## Follow-up: prepared grow-and-append
+
+The [grow-and-append contract](m2-buffer-grow-append.md) adds growth-only
+`buffer_replacement::prepare_append` and `Plan.length`. Plain `prepare` preserves
+the original length; combined preparation records the successfully appended
+replacement length. `commit` checks the published root against that planned length
+and commits both length and capacity. In-capacity append continues through
+`buffer_append::within_capacity`. The focused Windows probe now runs 20 scenarios
+per profile; earlier counts above describe their original checkpoints.

@@ -7,12 +7,12 @@ import buffer_storage as storage;
 // Private snapshot, not an authenticated guest handle. Root publication is explicit.
 pub struct Plan {
     bool active; owners::Table before; owners::Token source;
-    usize capacity; growth::Ledger reserved;
+    usize capacity; usize length; growth::Ledger reserved;
 }
 pub enum Error { Token; Owners; State; Overflow; Quota; NoGrowth; Allocation; Provider; }
 pub fn Plan empty() {
     return Plan{.active=false,.before=owners::empty(),.source=owners::Token{.slot=16,.generation=0},
-        .capacity=0,.reserved=growth::empty()};
+        .capacity=0,.length=0,.reserved=growth::empty()};
 }
 fn Error owner_error(owners::Error e) {
     return switch(e){case .Token:{.Token}case .Owners:{.Owners}case .State:{.State}case .Bounds:{.State}};
@@ -52,9 +52,41 @@ pub fn Result<bytes::Buffer,Error> prepare(ref owners::Table table,owners::Token
         case .ok(value):{value}case .err(e):{return .err(storage_error(e));}
     };
     var usize i=0;while(i<16) {plan.before.slots[i]=table.slots[i];i+=1;}
-    plan.source=source;plan.capacity=bytes::capacity(ref replacement);
+    plan.source=source;plan.capacity=bytes::capacity(ref replacement);plan.length=owner.length;
     plan.reserved=snapshot(ledger);plan.active=true;
     return .ok(replacement);
+}
+// A failed helper drops the unpublished replacement before caller-side cancel.
+fn Result<bytes::Buffer,Error> extend(bytes::Buffer source,ref u8[] input,usize capacity,usize length) {
+    var bytes::Buffer replacement=source;
+    let usize actual=switch(bytes::append(ref mut replacement,input)) {
+        case .ok(value):{value}case .err(_):{return .err(.Provider);}
+    };
+    if(actual!=length || bytes::len(ref replacement)!=length || bytes::capacity(ref replacement)!=capacity) {return .err(.Provider);}
+    return .ok(replacement);
+}
+// Growth-only append preparation: use buffer_append for an in-capacity write.
+// The old root remains live even when input is a shared view of that same root.
+pub fn Result<bytes::Buffer,Error> prepare_append(ref owners::Table table,owners::Token source,
+    ref bytes::Buffer old,ref u8[] input,growth::Limits limits,ref mut growth::Ledger ledger,ref mut Plan plan) {
+    if(plan.active) {return .err(.State);}
+    let owners::Owner owner=switch(owners::describe(table,source)) {
+        case .ok(value):{value}case .err(e):{return .err(owner_error(e));}
+    };
+    if(bytes::len(old)!=owner.length || bytes::capacity(old)!=owner.capacity) {return .err(.State);}
+    if(input.len>18446744073709551615-owner.length) {return .err(.Overflow);}
+    let usize length=owner.length+input.len;
+    let bytes::Buffer replacement=prepare(table,source,old,length,limits,ledger,plan)?;
+    let bytes::Buffer ready=switch(extend(replacement,input,plan.capacity,length)) {
+        case .ok(value):{value}
+        case .err(e): {
+            // extend has already destroyed its unpublished replacement.
+            switch(cancel(table,ledger,plan)){case .ok(_):{}case .err(_):{return .err(.State);}};
+            return .err(e);
+        }
+    };
+    plan.length=length;
+    return .ok(ready);
 }
 // Verify both snapshots and the complete accounting transaction before mutation.
 fn Result<owners::Owner,Error> validate(ref owners::Table table,ref growth::Ledger ledger,ref Plan plan) {
@@ -63,7 +95,7 @@ fn Result<owners::Owner,Error> validate(ref owners::Table table,ref growth::Ledg
         case .ok(value):{value}case .err(_):{return .err(.State);}
     };
     if(owner.generation==18446744073709551615 || ledger.old_capacity!=owner.capacity ||
-        ledger.new_capacity!=plan.capacity) {return .err(.State);}
+        ledger.new_capacity!=plan.capacity || plan.length<owner.length || plan.length>plan.capacity) {return .err(.State);}
     var growth::Ledger checked=snapshot(ledger);
     switch(growth::commit(plan.capacity,ref mut checked)) {
         case .ok(_):{}case .err(_):{return .err(.State);}
@@ -74,14 +106,15 @@ fn Result<owners::Owner,Error> validate(ref owners::Table table,ref growth::Ledg
 pub fn Result<owners::Token,Error> commit(ref mut owners::Table table,ref bytes::Buffer published,
     ref mut growth::Ledger ledger,ref mut Plan plan) {
     let owners::Owner owner=validate(table,ledger,plan)?;
-    if(bytes::len(published)!=owner.length || bytes::capacity(published)!=plan.capacity) {return .err(.State);}
+    if(bytes::len(published)!=plan.length || bytes::capacity(published)!=plan.capacity) {return .err(.State);}
     var growth::Ledger finished=snapshot(ledger);
     switch(growth::commit(plan.capacity,ref mut finished)) {
         case .ok(_):{}case .err(_):{return .err(.State);}
     };
     let owners::Token next=owners::Token{.slot=plan.source.slot,.generation=owner.generation+1};
     // No allocation, callback or fallible operation follows descriptor publication.
-    table.slots[next.slot].capacity=plan.capacity;table.slots[next.slot].generation=next.generation;
+    table.slots[next.slot].capacity=plan.capacity;table.slots[next.slot].length=plan.length;
+    table.slots[next.slot].generation=next.generation;
     *ledger=finished;plan.active=false;
     return .ok(next);
 }

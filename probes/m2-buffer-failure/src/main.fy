@@ -197,6 +197,73 @@ fn void run_close(u8 mode) {
     assert(table.slots[source.slot].generation==if(mode==3){0}else{source.generation+1});
     if(mode==0) {close_empty();}
 }
+fn void tx_failed(Result<bytes::Buffer,tx::Error> r,u8 expected) {
+    assert(switch(r){case .ok(_):{false}case .err(e):{switch(e){
+        case .Token:{expected==1}case .Owners:{expected==2}case .State:{expected==3}
+        case .Overflow:{expected==4}case .Quota:{expected==5}case .NoGrowth:{expected==6}
+        case .Allocation:{expected==7}case .Provider:{expected==8}}}});
+}
+fn void run_grow_append(bool minimum,bool oom,bool abandon,bool self_append,bool preflight) {
+    var growth::Ledger l=growth::empty();var bytes::Buffer b=close_root(ref mut l);
+    l.engine_used+=32;l.engine_peak+=32;
+    if(self_append) {
+        let u8[196] padding=[88;196];
+        switch(bytes::append(ref mut b,ref padding[..])){case .ok(n):{assert(n==200);}case .err(_):{assert(false);}};
+    }
+    var owners::Table table=owners::empty();let owners::Token old=token(owners::create(ref mut table,ref b));
+    let u8[253] suffix=[88;253];var tx::Plan plan=tx::empty();
+    if(preflight) {
+        tx_failed(tx::prepare_append(ref table,old,ref b,b"",limits(false),ref mut l,ref mut plan),6);
+        tx_failed(tx::prepare_append(ref table,old,ref b,b"!",limits(false),ref mut l,ref mut plan),6);
+        let bytes::Buffer missing=bytes::empty();
+        tx_failed(tx::prepare_append(ref table,owners::Token{.slot=16,.generation=1},ref missing,b"!",limits(false),ref mut l,ref mut plan),1);
+        tx_failed(tx::prepare_append(ref table,old,ref b,ref suffix[..],growth::Limits{.object=4096,.instance=703,.engine=8192},ref mut l,ref mut plan),5);
+        assert(!plan.active && l.used==320 && l.engine_used==352 && l.pending==0 && l.peak==384);
+        kept(ref table,old,ref b);return;
+    }
+    let usize capacity=if(self_append){448}else{if(minimum){320}else{384}};
+    let usize length=if(self_append){400}else{257};
+    let usize peak=320+capacity+64;
+    if(oom) {
+        tx_failed(tx::prepare_append(ref table,old,ref b,ref suffix[..],limits(minimum),ref mut l,ref mut plan),7);
+        kept(ref table,old,ref b);
+        assert(l.used==320 && l.engine_used==352 && l.peak==peak && l.engine_peak==peak+32 &&
+            l.pending==0 && l.old_capacity==0 && l.new_capacity==0 && l.before_used==0 && l.before_engine_used==0 && !plan.active);
+    }
+    if(abandon) {
+        {let bytes::Buffer discarded=prepared(tx::prepare_append(ref table,old,ref b,ref suffix[..],limits(minimum),ref mut l,ref mut plan));
+            assert(bytes::len(ref discarded)==length && plan.length==length);kept(ref table,old,ref b);
+            assert(table.slots[old.slot].length==4 && l.used==peak);}
+        plan.length=plan.capacity+1;
+        assert(switch(tx::cancel(ref table,ref mut l,ref mut plan)){case .ok(_):{false}case .err(_):{true}});
+        assert(plan.active && l.used==peak);plan.length=length;
+        assert(switch(tx::cancel(ref table,ref mut l,ref mut plan)){case .ok(n):{n==320}case .err(_):{false}});
+        kept(ref table,old,ref b);assert(l.engine_used==352 && l.peak==peak && !plan.active);return;
+    }
+    let bytes::Buffer ready=if(self_append) {
+        prepared(tx::prepare_append(ref table,old,ref b,bytes::view(ref b),limits(false),ref mut l,ref mut plan))
+    } else {prepared(tx::prepare_append(ref table,old,ref b,ref suffix[..],limits(minimum),ref mut l,ref mut plan))};
+    assert(bytes::len(ref ready)==length && bytes::capacity(ref ready)==capacity && plan.length==length);
+    assert(table.slots[old.slot].length==if(self_append){200}else{4});
+    b=ready;
+    let owners::Token fresh=switch(tx::commit(ref mut table,ref b,ref mut l,ref mut plan)) {
+        case .ok(v):{v}case .err(_):{assert(false);old}
+    };
+    assert(fresh.slot==old.slot && fresh.generation==old.generation+1 && table.slots[fresh.slot].length==length);
+    assert(switch(owners::read(ref table,fresh,0,ref b)){case .ok(n):{n==107}case .err(_):{false}});
+    assert(switch(owners::read(ref table,fresh,length-1,ref b)){case .ok(n):{n==88}case .err(_):{false}});
+    if(self_append) {assert(switch(owners::read(ref table,fresh,200,ref b)){case .ok(n):{n==107}case .err(_):{false}});}
+    let bytes::Buffer missing=bytes::empty();
+    assert(switch(owners::read(ref table,old,0,ref missing)){case .ok(_):{false}case .err(_):{true}});
+    assert(l.used==capacity+64 && l.engine_used==capacity+96 && l.peak==peak && l.engine_peak==peak+32 && l.pending==0 && !plan.active);
+    if(!minimum && !oom && !self_append) {
+        var close::Plan closed=close::empty();
+        assert(switch(close::begin(ref mut table,fresh,ref b,ref l,ref mut closed)){case .ok(n):{n==capacity+64}case .err(_):{false}});
+        {let bytes::Buffer disposed=b;}
+        assert(switch(close::finish(ref table,ref mut l,ref mut closed)){case .ok(n):{n==0}case .err(_):{false}});
+        assert(l.engine_used==32 && l.peak==peak && !closed.active);
+    } else {let bytes::Buffer disposed=b;}
+}
 @effects(console)
 fn i32 main() {
     if(process::arg_count()!=2) {return 2;}
@@ -216,6 +283,13 @@ fn i32 main() {
     else if(bytes::equal(mode,b"close-preflight")) {run_close(1);}
     else if(bytes::equal(mode,b"close-snapshot")) {run_close(2);}
     else if(bytes::equal(mode,b"close-generation")) {run_close(3);}
+    else if(bytes::equal(mode,b"grow-append-preferred")) {run_grow_append(false,false,false,false,false);}
+    else if(bytes::equal(mode,b"grow-append-min")) {run_grow_append(true,false,false,false,false);}
+    else if(bytes::equal(mode,b"grow-append-oom-min")) {run_grow_append(true,true,false,false,false);}
+    else if(bytes::equal(mode,b"grow-append-oom-preferred")) {run_grow_append(false,true,false,false,false);}
+    else if(bytes::equal(mode,b"grow-append-abandon")) {run_grow_append(false,false,true,false,false);}
+    else if(bytes::equal(mode,b"grow-append-self")) {run_grow_append(false,false,false,true,false);}
+    else if(bytes::equal(mode,b"grow-append-preflight")) {run_grow_append(false,false,false,false,true);}
     else {return 2;}
     return switch(io::write("buffer-failure: passed\n")){case .ok(_):{0}case .err(_):{1}};
 }

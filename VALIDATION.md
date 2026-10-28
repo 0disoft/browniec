@@ -1872,3 +1872,21 @@ The API cannot prove native root destruction or enforce exclusive lifetime order
 Guest VM cleanup, physical table/Plan memory admission, Provider fault injection,
 full M0/native/CLI suites, Linux, isolation, DLL embedding, packaging and elapsed-time
 performance were not run. Earlier receipts retain their original inputs.
+
+## Private Buffer grow-and-append preparation
+
+Development and release each passed 20 focused native scenarios: seven new
+preparation cases plus thirteen lifecycle/allocator regressions. Run
+`python -B tools/verify-m2-buffer-failure.py`. Root `fairyc check --locked` passes.
+The successful preferred case also closes the published replacement and releases
+its usage after native destruction. Every process reports `live=0`; both new
+320/384-byte OOM cases fail once and succeed on explicit retry. The archive checks
+13 selected inputs, 7 generated sources, SDK lock and both retained executables.
+See [contract](docs/engineering/m2-buffer-grow-append.md) and
+[Windows receipt](docs/evidence/m2-buffer-grow-append-windows-20261029.json).
+
+This is private runtime preparation. Guest syntax, VM integration, borrow
+enforcement and whole-Instance cleanup remain unfinished. Native root publication
+still precedes metadata commit and is not atomic with it. Provider fault injection,
+full native/CLI suites, M0, Linux, isolation, DLL embedding, packaging and elapsed-time
+performance were not run. Earlier receipts retain their original inputs.

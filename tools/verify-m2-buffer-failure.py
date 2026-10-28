@@ -14,7 +14,10 @@ MODULES = ['buffer_growth.fy', 'buffer_storage.fy', 'buffer_owners.fy', 'buffer_
 MODES = [('normal-min', None), ('normal-preferred', None), ('abandon', None),
          ('oom-min', 320), ('oom-preferred', 384), ('append-success', None),
          ('append-capacity', None), ('append-identity', None), ('append-state', None),
-         ('close-success', None), ('close-preflight', None), ('close-snapshot', None), ('close-generation', None)]
+         ('close-success', None), ('close-preflight', None), ('close-snapshot', None), ('close-generation', None),
+         ('grow-append-preferred', None), ('grow-append-min', None),
+         ('grow-append-oom-min', 320), ('grow-append-oom-preferred', 384),
+         ('grow-append-abandon', None), ('grow-append-self', None), ('grow-append-preflight', None)]
 
 
 def sha(path):
@@ -109,8 +112,8 @@ def main():
             counters = json.loads(lines[1])
             expected = dict(schema='browniec.buffer-allocator/v2', live=0, target=target or 0,
                             targetAttempts=2 if target else 0, failures=1 if target else 0,
-                            attempts=3 if target else 1 if mode.startswith(('append-', 'close-')) else 2,
-                            frees=1 if mode.startswith(('append-', 'close-')) else 2)
+                            attempts=3 if target else 1 if (mode.startswith(('append-', 'close-')) or mode == 'grow-append-preflight') else 2,
+                            frees=1 if (mode.startswith(('append-', 'close-')) or mode == 'grow-append-preflight') else 2)
             need(counters == expected, 'Allocator counters: ' + str(counters))
             cases.append(dict(mode=mode, allocator=counters))
         need(sha(exe) == binary_hash, 'Executable changed')
