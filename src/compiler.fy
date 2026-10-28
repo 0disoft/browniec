@@ -156,6 +156,15 @@ fn Result<usize,errors::Error> record_argument(ref u8[] source,ref mut lexer::St
     if(s.kind==2) {
         var lexer::State look=lexer::snapshot(s);
         let usize next=lexer::next(source,ref mut look)?;
+        if(look.kind==123) {
+            let usize at=s.begin;
+            let bool prefix=record_values::constructor(source,s,record)?;
+            let usize first=record_constructor_value(source,s,p,names,signatures,record,at,result_type,depth,structure,loop_state,true)?;
+            let usize temporary=ir::record_in(p,names.function,record,false,at)?;
+            let usize init=ir::record_init(p,temporary,first,at)?;
+            let usize captured=locals::declare(names,at,at,144+temporary,false)?;
+            return .ok(144+temporary);
+        }
         if(look.kind==46) {
             let usize at=s.begin;
             let usize temporary=record_values::extracted_argument(source,s,p,names,record,at)?;
@@ -355,6 +364,14 @@ fn Result<usize, errors::Error> record_constructor(ref u8[] source, ref mut lexe
     ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures,
     usize record, usize at, u8 result_type, usize expr_depth, usize structure,
     ref mut loops::State loop_state) {
+    return record_constructor_value(source,s,p,table,signatures,record,at,result_type,expr_depth,structure,loop_state,false);
+}
+// Argument constructors leave ',' or ')' to the outer call; statement forms
+// retain their semicolon contract. Neither publishes an owner while staging.
+fn Result<usize, errors::Error> record_constructor_value(ref u8[] source, ref mut lexer::State s,
+    ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures,
+    usize record, usize at, u8 result_type, usize expr_depth, usize structure,
+    ref mut loops::State loop_state, bool argument) {
     let usize leaves = record_values::leaf_count(p,record,at)?;
     var usize[16] slots = [0; 16]; var usize i = 0;
     var record_values::Initializer state = record_values::initializer(record);
@@ -375,7 +392,9 @@ fn Result<usize, errors::Error> record_constructor(ref u8[] source, ref mut lexe
     }
     let u8 closed = record_values::next_leaf(source,s,p,ref mut state,at)?;
     if (closed != 0) { return .err(errors::make(3,at)); }
-    let usize end = lexer::punctuation(source,s,59)?;
+    if(argument) {
+        if(s.kind!=44 && s.kind!=41) {return .err(errors::make(3,s.begin));}
+    } else {let usize end=lexer::punctuation(source,s,59)?;}
     let usize first = p.registers; i = 0;
     while (i < leaves) { let usize loaded = ir::emit(p,17,slots[i],0,at)?; i += 1; }
     return .ok(first);

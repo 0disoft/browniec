@@ -70,7 +70,7 @@ fn void wrong_endpoints_and_general_argument_expressions_are_rejected() {
  rejected(b"module main;struct P{i32 x;}struct R{P p;}fn i32 take(P p){return p.x;}fn i32 main(){return take(missing.p);}");
  rejected(b"module main;struct P{i32 x;}struct R{P p;}fn i32 take(P p){return p.x;}fn i32 main(){let Option<i32> r=.none;return take(r.p);}");
  rejected(b"module main;struct P{i32 x;}struct R{P p;}fn i32 take(R r){return r.p.x;}fn i32 main(){let R r=R{.p=P{.x=42}};return take(r.p);}");
- rejected(b"module main;struct P{i32 x;}struct R{P p;}fn i32 take(P p){return p.x;}fn i32 main(){return take(P{.x=42});}");
+ rejected(b"module main;struct P{i32 x;}struct R{P p;}fn i32 take(P p){return p.x;}fn i32 main(){return take((P{.x=42}));}");
  rejected(b"module main;struct P{i32 x;}struct R{P p;}fn i32 take(P p){return p.x;}fn i32 main(){let R r=R{.p=P{.x=42}};return take(r.p as P);}");
  rejected(b"module main;struct P{i32 x;}struct R{P p;}fn i32 take(P p){return p.x;}fn i32 main(){let R r=R{.p=P{.x=42}};return take(r.p==r.p);}");
 }

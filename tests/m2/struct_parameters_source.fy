@@ -54,7 +54,7 @@ fn void mismatched_nominal_types_writes_and_general_aggregate_arguments_stay_rej
  rejected(b"module main;struct P{i32 x;}struct Q{i32 x;}fn i32 take(P p){return p.x;}fn i32 main(){let Q q=Q{.x=42};return take(q);}");
  rejected(b"module main;struct P{i32 x;}fn i32 take(P p){p.x=0;return 42;}fn i32 main(){let P p=P{.x=42};return take(p);}");
  rejected(b"module main;struct P{i32 x;}fn i32 take(P p){let P q=P{.x=0};p=q;return 42;}fn i32 main(){let P p=P{.x=42};return take(p);}");
- rejected(b"module main;struct P{i32 x;}fn i32 take(P p){return p.x;}fn i32 main(){return take(P{.x=42});}");
+ rejected(b"module main;struct P{i32 x;}fn i32 take(P p){return p.x;}fn i32 main(){return take((P{.x=42}));}");
  rejected(b"module main;struct P{i32 x;}fn i32 take(P p){return p.x;}fn i32 main(){let P p=P{.x=42};return take((p));}");
  rejected(b"module main;struct P{i32 x;}struct R{P p;}fn i32 take(P p){return p.x;}fn i32 main(){let R r=R{.p=P{.x=42}};return take(r.p.x);}");
  rejected(b"module main;struct P{i32 x;}fn i32 take(P p){return p.x;}fn i32 main(){let i32[1] a=[42;1];return take(a);}");
