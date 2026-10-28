@@ -62,7 +62,8 @@ error before execution.
 This document owns a call assigned into an existing child destination. The later
 [constructor child-call slice](m2-struct-child-calls.md) separately admits an
 exact-nominal record call as a value inside `R { .child = make() }`; it does not
-make parenthesized calls or call-result field selection valid.
+make parenthesized aggregate calls or aggregate call-result field selection valid.
+Scalar call-result field reads have a [successor](m2-struct-call-reads.md).
 
 ## Evaluation and publication
 

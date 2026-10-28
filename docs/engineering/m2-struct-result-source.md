@@ -229,3 +229,10 @@ and their statements that source record returns were unavailable are superseded
 by this subset. Full native/CLI suites, M0, Linux, isolation, DLL, packaging,
 allocation instrumentation, and performance are outside the focused harness. This
 slice verifies the bounded source subset; it does not verify all of M2.
+
+## Scalar reads from returned records
+
+The [scalar-read successor](m2-struct-call-reads.md) accepts `make().x` and deeper
+paths ending at scalar leaves, immediately releasing the returned root after
+SREAD. Record endpoints such as `return make().child;` remain outside that slice.
+The earlier counts above remain historical for their original inputs.

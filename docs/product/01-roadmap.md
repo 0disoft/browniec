@@ -1,5 +1,11 @@
 # Roadmap
 
+- Direct record call-result scalar reads: implemented at `aee9885` and verified in
+  development and release, each with 16 native groups and 374 CLI cases. Both
+  combined invocations rechecked 232 identical inputs.
+  `make().x` and deeper scalar field paths read the returned value, then
+  immediately release its anonymous root through existing SREAD/SDROP.
+  See [the source contract](../engineering/m2-struct-call-reads.md).
 - Direct array call-result reads: implemented at `b822089` and verified in
   development and release, each with 18 native groups and 335 CLI cases. Both
   combined invocations rechecked 229 identical inputs.

@@ -1599,6 +1599,18 @@ literal-argument) and 335 CLI cases (106 new, 119 source-array-result, 110
 literal-argument) per profile. Full suites, M0, Linux, isolation, DLL, packaging,
 allocation instrumentation and performance are excluded.
 
+## M2 direct record call-result scalar reads
+
+Implemented at `aee98856f2890f7fafe2c657712c1cadbff8250b` and verified in development and release.
+Both invocations rechecked 232 identical input hashes and matching compiler/SDK
+identities. See the [Windows receipt](docs/evidence/m2-struct-call-reads-windows-20261028.json). See the
+[source contract](docs/engineering/m2-struct-call-reads.md) for exact nominal
+results, existing scalar field-path resolution and immediate root release.
+Each profile passed 16 native groups (4 new, 8 source-record-result, 4
+array-read) and 374 CLI cases (102 new, 166 source-record-result, 106 array-read)
+per profile. Full suites, M0, Linux, isolation, DLL, packaging, allocation
+instrumentation and performance are excluded.
+
 ## Review obligations
 
 Three reviewed counterexamples must remain explicit acceptance tests:

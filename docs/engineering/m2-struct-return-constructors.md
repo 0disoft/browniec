@@ -113,7 +113,9 @@ The following forms remain unsupported:
 The later [constructor child-call successor](m2-struct-child-calls.md) admits a
 bare exact-nominal record call in a child field, such as
 `Outer { .inner = make() }`. General aggregate expressions and parenthesized
-child calls and call-result field selection remain unsupported.
+child calls remain unsupported. Scalar call-result field selection
+now has a [successor](m2-struct-call-reads.md); nominal record endpoints remain
+unsupported.
 
 Unsupported forms are rejected during compilation. They do not reach an uninitialized
 caller destination or rely on a partial record owner.
