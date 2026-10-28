@@ -944,11 +944,18 @@ fn Result<bool, errors::Error> control(ref u8[] source, ref mut lexer::State s, 
                     if(locals::find(source,table,s.begin,s.end)!=64) {return .err(errors::make(3,s.begin));}
                     let usize target=functions::find(source,signatures,s.begin,s.end);
                     let usize shape=(p.record_results[table.function] as usize)-1;
-                    let usize id=record_results::destination(signatures,target,p.records.records[shape] as usize,false,p,table.function,s.begin)?;
+                    if(target>=signatures.count || signatures.return_records[target]==0) {return .err(errors::make(3,s.begin));}
+                    let usize record=p.records.records[shape] as usize;
+                    let usize nominal=(signatures.return_records[target] as usize)-1;
+                    var usize id=record_results::destination(signatures,target,nominal,false,p,table.function,s.begin)?;
                     let usize name=lexer::next(source,s)?;
                     let usize called=call_value(source,s,p,table,signatures,target,144+id,at,expr_depth,result_type,depth,loop_state)?;
-                    if(s.kind!=59) {return .err(errors::make(3,s.begin));}
-                    let usize end=lexer::next(source,s)?;
+                    if(s.kind==46) {
+                        id=record_values::extracted_call(source,s,p,table.function,id,record,false,at,false)?;
+                    } else {
+                        if(nominal!=record || s.kind!=59) {return .err(errors::make(3,s.begin));}
+                        let usize end=lexer::next(source,s)?;
+                    }
                     let usize returned=record_results::finish(p,table,id,at)?;
                     return .ok(true);
                 }
