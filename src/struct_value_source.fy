@@ -231,6 +231,15 @@ pub fn Result<usize, errors::Error> stage_child(ref u8[] source, ref mut lexer::
     let Leaf part = path(source,s,p,p.records.records[id] as usize,at)?;
     return stage_part(source,s,p,state,slots,first,id,part,at);
 }
+// Resolve either a whole returned root or its dotted child without creating an
+// independent child owner. The caller drops the root after staging completes.
+pub fn Result<usize, errors::Error> stage_call_child(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref mut Initializer state,ref mut usize[] slots,
+    usize first,usize id,usize at) {
+    if(id>=p.records.count) {return .err(errors::make(3,at));}
+    let Leaf part=path(source,s,p,p.records.records[id] as usize,at)?;
+    return stage_part(source,s,p,state,slots,first,id,part,at);
+}
 // Snapshot a selected child into scalar staging slots before any later field
 // expression. Call results and visible child bindings share this leaf encoder.
 pub fn Result<usize, errors::Error> stage_part(ref u8[] source, ref mut lexer::State s,
