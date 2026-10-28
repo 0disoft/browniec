@@ -1,14 +1,17 @@
 # M2 Source Record Results
 
-- Status: implemented at `bb401a4` with tooling `78a1fb4`; verified in
-  development and release.
+- Status: implemented at `bb401a4` with tooling `78a1fb4` and verified for its
+  original inputs. The [exact-result call-argument successor](m2-struct-result-arguments.md)
+  is implemented at `7671f25`; it is verified in development and release with separate focused evidence.
 - Scope: bare visible exact-nominal record returns and `let`/`var` record-result
-  call initializers through the existing record-result IR and VM.
+  call initializers through the existing record-result IR and VM. This document
+  records that source subset; later successors extend selected call positions.
 - Implementation: [record-result source lowering](../../src/struct_result_source.fy),
   [compiler integration](../../src/compiler.fy), and [version output](../../src/main.fy).
 - Predecessors: [result signatures](m2-struct-result-signatures.md),
   [record-result IR and verification](m2-struct-results-ir.md), and
   [record-result VM transfer](m2-struct-result-vm.md).
+- Successor: [record call results as arguments](m2-struct-result-arguments.md).
 - Focused fixture: [source record-result cases](../../tests/m2/struct_result_source.fy).
 - Harness: `python -B tools/verify-m2-struct-result-source.py --phase core`.
 - Evidence: [Windows receipt](../evidence/m2-struct-result-source-windows-20261028.json).
@@ -61,15 +64,19 @@ existing mutable root, and the
 [child call-assignment successor](m2-struct-child-call-assignment.md) now adds
 exact-nominal child targets, including deep paths.
 
-Record-result calls cannot appear in scalar expressions, wrapper payloads, or
-general aggregate arguments. A record-result function also cannot use `?`
-propagation because its result context is a record rather than a scalar or shallow
-wrapper.
+Record-result calls cannot appear as general expressions, scalar expressions,
+wrapper payloads, or parenthesized calls. Constructor-valued arguments and
+field-path arguments remain unsupported. A bare
+exact-result call can now supply an exact-nominal record formal through the
+[call-argument successor](m2-struct-result-arguments.md). A record-result function
+also cannot use `?` propagation because its result context is a record rather
+than a scalar or shallow wrapper.
 
 An exact-nominal constructor child field is a separate source position. The
 [constructor child-call successor](m2-struct-child-calls.md) now accepts
 `R { .child = make() }` there while general aggregate arguments remain
-unsupported.
+unsupported. The call-argument successor adds only the bare result expression at
+a record formal; it does not make record results general aggregate expressions.
 
 ## Result anchors and compiler context
 
@@ -153,12 +160,17 @@ profile. The remaining unsupported forms are:
 
 - scalar field, parenthesized, or aggregate return expressions;
 - field selection from a returned call, such as `return make().child;`;
-- record-result calls in scalar expressions or general aggregate arguments;
+- record-result calls as free scalar expressions or general aggregate expressions
+  outside the bare exact-record-formal argument position;
+- constructor-valued or field-path arguments, parenthesized argument calls, and
+  wrong, unknown, or locally shadowed argument callees;
 - record wrappers, borrows, `ref` results, or `var` results;
 - record construction in a `for` header.
 
 The constructor child-call successor adds only the exact-nominal child-field
-position described above; it does not broaden these remaining contexts.
+position described above. The call-argument successor adds only the bare
+exact-result argument for a record formal. Neither broadens these remaining
+contexts.
 
 These forms fail during compilation instead of reaching an invalid IR type or a
 partially initialized caller destination.
@@ -167,7 +179,8 @@ partially initialized caller destination.
 
 The counts below describe the original named-result baseline. Changed compiler
 and fixture inputs now have a focused [direct-return successor receipt](../evidence/m2-struct-return-calls-windows-20261028.json);
-the earlier full selection was not rerun for that successor.
+the earlier full selection was not rerun for that successor. Exact-result call
+arguments have a separate focused harness and do not enter these totals.
 
 The core harness selects 14 native groups per development/release profile: 8 new
 `struct_result_source` groups and 6 updated `struct_result_signatures` groups.

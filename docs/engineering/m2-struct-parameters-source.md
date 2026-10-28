@@ -1,8 +1,11 @@
 # M2 Source Record Parameters
 
-- Status: implemented at `d0ca7e7`; verified in development and release.
-- Scope: immutable nominal record parameters with bare record-binding arguments
-  and existing VM calls.
+- Status: implemented at `d0ca7e7` and verified for its original bare-binding
+  inputs. The [exact-result call-argument successor](m2-struct-result-arguments.md)
+  is implemented at `7671f25`; it is verified in development and release with separate focused evidence.
+- Scope: immutable nominal record parameters and the argument surface that feeds
+  them. This document records the original bare-binding slice; its successor adds
+  bare exact-result calls.
 - Implementation: [record parameter lowering](../../src/struct_call_source.fy),
   [call and body integration](../../src/compiler.fy),
   and [array argument capture](../../src/array_call_source.fy).
@@ -11,15 +14,17 @@
   adds no cleanup implementation.
 - Related contracts: [record parameter signatures](m2-struct-parameter-signatures.md),
   [record parameter IR](m2-struct-parameters-ir.md), and
-  [record call execution](m2-struct-call-vm.md).
+  [record call execution](m2-struct-call-vm.md). Successor:
+  [record call results as arguments](m2-struct-result-arguments.md).
 - Focused tests: [source parameter cases](../../tests/m2/struct_parameters_source.fy)
   and updated [signature cases](../../tests/m2/struct_parameter_signatures.fy).
 - Verification: 51 native groups and 2,318 CLI cases per development/release
   profile, split into separate core and regression runs.
 
-The source compiler now admits an immutable record parameter declared with a
-bare nominal type. A call argument for that formal must be a bare visible
-record binding of the same nominal type. The parameter is passed by value and
+The original source slice admits an immutable record parameter declared with a
+bare nominal type. At that checkpoint an argument had to be a bare visible
+record binding of the same nominal type; the call-argument successor also accepts
+a bare exact-nominal result call. The parameter is passed by value and
 uses the existing private CALL transaction, record owner table, payload arena,
 verifier, and metered VM.
 
@@ -41,21 +46,27 @@ The example shows the accepted source shape.
 
 ## Argument surface
 
-An argument for a record formal is exactly one identifier such as `pair`. The
-capture checks that its lexical table entry names an immutable or mutable record
-owner of the callee-declared nominal type in the current function. The token
-after the identifier must be a comma or the closing parenthesis.
+The original slice accepts exactly one identifier such as `pair` for a record
+formal. Its capture checks that the lexical table entry names an immutable or
+mutable record owner of the callee-declared nominal type in the current function.
+The [call-argument successor](m2-struct-result-arguments.md) also admits a bare
+function call whose exact nominal result supplies the formal.
 
-Constructors, field paths, parenthesized names, casts, aggregate literals, and
-general expressions cannot satisfy a record parameter. Arrays and wrappers of
-records remain outside the source signature grammar. Scalar and array
-parameters may still share the same eight-position argument list.
+Constructor operands, field paths, parenthesized names or calls, casts, aggregate
+literals, `call().field`, and other general expressions cannot satisfy a record
+parameter. A bare call is accepted only through the exact-result successor.
+Unknown or locally shadowed callees and calls with a wrong result type are
+rejected; array-returning calls used as array arguments remain rejected. Arrays
+and wrappers of records remain outside the source signature grammar. Scalar and
+array parameters may still share the same eight-position argument list.
 
 Record formals and their callee bindings are immutable. A mutable source binding
 may be passed, but its value becomes an immutable callee parameter. Writes
 through the formal, whole-record assignment to it, and replacement of it remain
-rejected by the existing verifier. Record results, borrows, `ref` parameters,
-and `var` parameters are unsupported.
+rejected by the existing verifier. At this slice's original checkpoint record
+results were unsupported; bounded source record results now have a
+[successor](m2-struct-result-source.md). Borrows, `ref` parameters, and `var`
+parameters remain unsupported.
 
 ## Site predeclaration
 
@@ -119,8 +130,9 @@ The helper covers normal CALL completion, lexical block exits, scalar returns,
 question-mark propagation, and `break` or `continue` transfers. A scalar return
 drops every visible formal, including a record formal, before `RET`. An array
 return keeps the selected result owner and drops every other visible record,
-including record formals, before `ARET`. No path returns a record; record results
-remain unsupported.
+including record formals, before `ARET`. At this slice's original checkpoint no
+path returned a record; bounded source record results now have a
+[successor](m2-struct-result-source.md).
 
 For a call, cleanup runs over the private argument lexical snapshot after CALL.
 A mutable argument's `SCOPY` capture is dropped there, while bindings visible
@@ -156,9 +168,9 @@ its caller capture. At a call, the original or capture plus the callee copy can
 be live together, so peak owner and payload use is checked by the existing
 transaction rather than hidden or expanded.
 
-No opcode, Fuel charge, owner slot, payload cap, frame limit, or record result
-form is added. Record parameters remain by-value, immutable, nominal, and
-non-borrowed.
+This slice adds no opcode, Fuel charge, owner slot, payload cap, frame limit, or
+record result form. Its record result successor adds only its bounded source
+forms. Record parameters remain by-value, immutable, nominal, and non-borrowed.
 
 ## Verification
 
@@ -175,9 +187,11 @@ Core covers source records, nominal signatures, snapshots before argument side
 effects, recursion, nested calls, mixed scalar/array/record parameters, array
 results, early returns, propagation, and loop transfers. Regressions include five
 struct declaration groups and the existing array parameter, helper-local record,
-function IR, record-call VM, and scalar-function groups. Rejection cases include
-mismatched nominal types, parameter writes, constructors, paths, parenthesized
-arguments, borrows, record results, arity errors, and static site exhaustion.
+function IR, record-call VM, and scalar-function groups. At the original
+checkpoint, rejection cases included mismatched nominal types, parameter writes,
+constructors, paths, parenthesized arguments, borrows, record results, arity
+errors, and static site exhaustion. Exact-result call arguments are tested by the
+successor rather than counted here.
 
 The receipts retain their original baseline commit and exact executed commands;
 implementation is committed at `d0ca7e7`. The final release CLI hash was checked

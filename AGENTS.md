@@ -10,6 +10,13 @@ own the affected contract. Broader scaffold procedures are optional.
 
 ## Current state
 
+- Record call results as arguments: implemented at `7671f25`. A bare exact-type
+  `take(make())` or nested `id(id(make()))` uses an anonymous argument capture
+  after the inner CALL, then shared reverse mixed cleanup. Development and
+  release each passed 29 native groups and 588 CLI cases in separate
+  core/regression phases, with 214 matching rechecked inputs.
+  See [the source contract](docs/engineering/m2-struct-result-arguments.md) and the
+  [Windows receipt](docs/evidence/m2-struct-result-arguments-windows-20261028.json).
 - M0 native primitives exist under `probes/m0` and have a repeatable Windows harness.
 - The M1 scalar lexer/parser, i32 checks, private IR verifier, VM, and CLI exist in src/.
 - Entry-only mutable root constructor assignment is verified in development and release; child constructor assignment is verified in development and release.
@@ -106,7 +113,8 @@ own the affected contract. Broader scaffold procedures are optional.
   are not rolled back. Each profile passed 23 native groups (6 core,
   17 regressions) and 529 CLI cases in four separate phase invocations, with
   211 verified input identities. No opcode, VM, Fuel, profile, or version
-  change is involved. General aggregate arguments, parenthesized child calls,
+  change is involved. General aggregate arguments outside the exact-record-formal call position,
+  parenthesized child calls,
   and call-result field
   selection remain unsupported. See [the
   contract](docs/engineering/m2-struct-child-calls.md) and [Windows
@@ -273,7 +281,8 @@ own the affected contract. Broader scaffold procedures are optional.
   array carries no measured allocation, stack, or speed claim.
   Source [record parameters](docs/engineering/m2-struct-parameters-source.md) are
   implemented at `d0ca7e7` and verified in development and release. Each formal is an immutable nominal
-  record and each argument is one bare visible binding of that exact type.
+  record; at that checkpoint each argument was one bare visible binding of that
+  exact type. The result-argument successor also accepts a bare exact-result call.
   Constructors, paths, casts, and aggregate expressions do not satisfy the formal.
   A mutable source is copied by `SCOPY` into an anonymous lexical capture before
   the next argument evaluates; the final CALL still creates an independent callee

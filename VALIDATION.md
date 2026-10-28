@@ -1334,7 +1334,8 @@ three reports `array_limit`.
 The shared `record_constructor` reaches this path from declarations, root and
 child replacement, and direct constructor returns. Existing child binding and
 path staging delegates to `stage_part` without an owner. Scalar calls are
-unchanged. General aggregate arguments, parenthesized child calls, and
+unchanged. General aggregate arguments outside the exact-record-formal call position,
+parenthesized child calls, and
 call-result field selection remain unsupported. No opcode, VM rule, Fuel price,
 profile, or version field changes.
 
@@ -1471,6 +1472,31 @@ release executable hashes were confirmed. Development core ran before
 `63be9e5` with the implementation files uncommitted; the other three phases ran
 after it. The [Windows receipt](docs/evidence/m2-struct-child-call-assignment-windows-20261028.json)
 records the provenance, commands, identities, and outcomes.
+
+## M2 record call results as arguments
+
+Implemented at `7671f25`; development and release each passed 29 native groups
+(7 new and 22 regressions) and 588 CLI cases (154 new, 114 source parameters,
+166 source results, 154 constructor child calls).
+
+The [source contract](docs/engineering/m2-struct-result-arguments.md) covers
+bare exact-nominal result calls used as record arguments, nested calls,
+array/wrapper-returning consumers, evaluation before later argument effects,
+and mixed capture cleanup on normal and early exits. The native fixture checks
+byte-for-byte IR equivalence to a named temporary, missing-drop verifier
+rejection, and the eight-versus-seven payload boundary. No opcode, VM, Fuel,
+profile or version-field change is involved.
+
+The four focused phases share 214 tracked input identities. Development core
+ran from baseline `7f758e4` with the implementation uncommitted; the remaining
+phases used `7671f25`. The
+[Windows receipt](docs/evidence/m2-struct-result-arguments-windows-20261028.json)
+retains commands, input and compiler/SDK identities, outcomes and both CLI
+binary hashes, all rechecked before archival. Prior receipts remain historical for their original inputs.
+
+Full native/CLI suites, M0, Linux, isolation, DLL embedding, packaging,
+allocation instrumentation and elapsed-time performance are outside this
+focused verification.
 
 ## Review obligations
 

@@ -1,6 +1,8 @@
 # M2 Record Calls in Constructor Child Fields
 
-- Status: implemented at `c4cd6ab` and verified in development and release.
+- Status: implemented at `c4cd6ab` and verified for its original inputs. The
+  [exact-result call-argument successor](m2-struct-result-arguments.md) is
+  implemented at `7671f25`; it is verified in development and release with separate focused evidence.
 - Implementation commit: `c4cd6ab4a317aedfe46af9266b10eee9de30a9e3`.
 - Scope: an exact-nominal record call as a child field value, such as
   `Outer { .p = make(args) }`, including nested constructor positions.
@@ -11,6 +13,7 @@
 - Predecessors: [record constructor returns](m2-struct-return-constructors.md),
   [child call-result assignment](m2-struct-child-call-assignment.md), and
   [constructor child paths](m2-struct-child-path.md).
+- Successor: [record call results as arguments](m2-struct-result-arguments.md).
 - Evidence: [Windows receipt](../evidence/m2-struct-child-calls-windows-20261028.json).
 
 This slice lets a constructor child field receive the value returned by a
@@ -39,7 +42,9 @@ For an exact-nominal record child field, the value may be a bare function name
 followed by `(`. The callee must resolve through the existing function and
 result catalogs and must return the child field's exact nominal type. A visible
 local with the callee's spelling is rejected. Calls with scalar and existing
-supported aggregate arguments still use `call_value`'s normal argument rules.
+supported aggregate arguments still use `call_value`'s normal argument rules. A
+bare exact-nominal record call can now supply a record formal; that argument
+exception is owned by the [call-argument successor](m2-struct-result-arguments.md).
 
 The same lowering is reached from all declaration and replacement contexts that
 share `record_constructor`: `let`/`var` declarations, root replacement, child
@@ -47,9 +52,11 @@ replacement, and a direct constructor-return operand. Nested constructors may
 place the call at any supported child depth. The existing constructor path may
 also select a whole visible child binding or a dotted exact-nominal path.
 
-The form remains unsupported when the child call is parenthesized, when the
-returned record is followed by field selection, or when the call appears in a
-general aggregate argument. Those forms fail during compilation.
+The child call remains unsupported when it is parenthesized, when the returned
+record is followed by field selection, or when a constructor-valued argument, field-path argument,
+wrong result type, unknown or locally shadowed callee, or general aggregate
+expression is used for a record formal. A call result used as an array argument also remains rejected.
+Those forms fail during compilation.
 
 ## Evaluation and publication
 
@@ -147,3 +154,5 @@ hashes; product tests were not rerun.
 
 The focused selection does not cover full native or CLI suites, M0, Linux,
 isolation, DLL embedding, packaging, allocation instrumentation, or performance.
+The later call-argument successor has its own fixture, harness, and focused
+verification; it is not included in the 23-group and 529-case totals above.
