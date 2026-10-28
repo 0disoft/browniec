@@ -1,4 +1,4 @@
-"""Windows Buffer append, target-allocator failure and cleanup probe."""
+"""Windows Buffer lifecycle, append, target-allocator failure and cleanup probe."""
 import argparse
 from datetime import datetime, timezone
 import hashlib
@@ -10,10 +10,11 @@ import shutil
 import subprocess
 
 ROOT = Path(__file__).resolve().parent.parent
-MODULES = ['buffer_growth.fy', 'buffer_storage.fy', 'buffer_owners.fy', 'buffer_replacement.fy', 'buffer_append.fy']
+MODULES = ['buffer_growth.fy', 'buffer_storage.fy', 'buffer_owners.fy', 'buffer_replacement.fy', 'buffer_append.fy', 'buffer_close.fy']
 MODES = [('normal-min', None), ('normal-preferred', None), ('abandon', None),
          ('oom-min', 320), ('oom-preferred', 384), ('append-success', None),
-         ('append-capacity', None), ('append-identity', None), ('append-state', None)]
+         ('append-capacity', None), ('append-identity', None), ('append-state', None),
+         ('close-success', None), ('close-preflight', None), ('close-snapshot', None), ('close-generation', None)]
 
 
 def sha(path):
@@ -108,14 +109,14 @@ def main():
             counters = json.loads(lines[1])
             expected = dict(schema='browniec.buffer-allocator/v2', live=0, target=target or 0,
                             targetAttempts=2 if target else 0, failures=1 if target else 0,
-                            attempts=3 if target else 1 if mode.startswith('append-') else 2,
-                            frees=1 if mode.startswith('append-') else 2)
+                            attempts=3 if target else 1 if mode.startswith(('append-', 'close-')) else 2,
+                            frees=1 if mode.startswith(('append-', 'close-')) else 2)
             need(counters == expected, 'Allocator counters: ' + str(counters))
             cases.append(dict(mode=mode, allocator=counters))
         need(sha(exe) == binary_hash, 'Executable changed')
         outcomes.append(dict(profile=profile, build=build, executable=exe.relative_to(ROOT).as_posix(),
                              exeSha256=binary_hash, cases=cases))
-        print(f'PASS: {profile}: {len(MODES)} native append/allocator scenarios; exit live count zero', flush=True)
+        print(f'PASS: {profile}: {len(MODES)} native lifecycle/allocator scenarios; exit live count zero', flush=True)
     need(all(sha(ROOT / p['path']) == p['sha256'] for p in inputs + generated), 'Inputs changed')
     need(sha(compiler) == compiler_hash and sha(generated_lock) == lock_hash, 'Toolchain/lock changed')
     result = dict(schema='browniec.buffer-failure/v1', status='passed',
@@ -125,7 +126,7 @@ def main():
                   sourceSha256=inputs, generatedSourceSha256=generated,
                   generatedLockSha256=lock_hash, forcedInclude=str(header), commands=commands,
                   profileReceipts=outcomes,
-                  limitations=['Windows native probe with byte-identical copies of five production modules. '
+                  limitations=['Windows native probe with byte-identical copies of six production modules. '
                                'Only FY system-heap allocations are counted, not all process memory. '
                                'Provider inconsistency injection, full suites, M0, Linux, isolation, DLL, '
                                'packaging and elapsed-time performance were not run. Guest Buffer is not implemented.'])

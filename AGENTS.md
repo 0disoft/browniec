@@ -10,6 +10,12 @@ own the affected contract. Broader scaffold procedures are optional.
 
 ## Current state
 
+- Buffer close accounting: implemented and verified in development and release,
+  each with 13 native scenarios (4 close, 9 append/allocator regressions).
+  Begin retires the token while keeping its charge; after native root destruction,
+  finish validates snapshots and releases payload plus logical owner usage.
+  Native destruction order remains the trusted caller's responsibility.
+  See [the close contract](docs/engineering/m2-buffer-close.md).
 - Buffer append within admitted capacity: implemented and verified in development
   and release, each with 9 native scenarios (4 append, 5 allocator regressions).
   Nonempty append updates initialized length and token generation without changing

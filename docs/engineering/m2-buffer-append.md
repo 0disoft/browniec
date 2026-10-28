@@ -8,6 +8,11 @@ its already-admitted capacity. It returns a table-local token for the new length
 It performs no implicit growth or allocation retry. Guest Buffer syntax, VM
 instructions, borrow tracking, Fuel prices and capability flags are unchanged.
 
+The [close successor](m2-buffer-close.md) adds descriptor retirement followed by
+usage release after trusted native root destruction. The current shared harness
+selects 13 scenarios over six production modules; the nine-case receipt below
+retains its original inputs and verification scope.
+
 ## Preflight and publication
 
 The private API accepts an owner table, source token, mutable native root, shared

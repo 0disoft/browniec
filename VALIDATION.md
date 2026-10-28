@@ -1848,3 +1848,27 @@ This is private native API evidence. Guest Buffer syntax/VM ownership, grow-and-
 append as one transaction, Provider inconsistency injection, full M0/native/CLI
 suites, Linux, isolation, DLL embedding, packaging and elapsed-time performance
 remain outside this check. Earlier receipts retain their original inputs.
+
+## Native Buffer close accounting
+
+Development and release each passed 13 native executable scenarios: 4 close cases
+and 9 append/allocator regressions. Begin checks token/native metadata and clean
+accounting, invalidates the token and retains the entire charge. After leaving
+the owning root's scope, finish rechecks table and ledger snapshots, then returns
+payload capacity plus the logical 64-byte owner charge. Peaks remain unchanged.
+Duplicate completion, pending/corrupt accounting, bad backing, changed snapshots
+and malformed Plans are rejected without partial accounting updates. MAX generation
+retires its slot. Empty-root close returns its 64-byte charge without allocation.
+
+Run `python -B tools/verify-m2-buffer-failure.py`. The shared probe now copies
+6 production modules. Every close process reports 1 initial allocation attempt,
+1 final free and 0 outstanding FY heap allocations; closing adds no allocations.
+The empty-root subcase reuses the process and introduces no native allocation.
+The archive rechecks 13 inputs, 7 generated sources, SDK lock and both instrumented
+executables. See [the contract](docs/engineering/m2-buffer-close.md) and
+[Windows receipt](docs/evidence/m2-buffer-close-windows-20261029.json).
+
+The API cannot prove native root destruction or enforce exclusive lifetime ordering.
+Guest VM cleanup, physical table/Plan memory admission, Provider fault injection,
+full M0/native/CLI suites, Linux, isolation, DLL embedding, packaging and elapsed-time
+performance were not run. Earlier receipts retain their original inputs.

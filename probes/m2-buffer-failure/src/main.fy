@@ -7,6 +7,7 @@ import buffer_storage as storage;
 import buffer_owners as owners;
 import buffer_replacement as tx;
 import buffer_append as append;
+import buffer_close as close;
 
 fn growth::Limits limits(bool minimum) {
     return growth::Limits{.object=4096,.instance=if(minimum){704}else{8192},
@@ -132,6 +133,70 @@ fn void run_append(u8 mode) {
         l.pending==before.pending && l.old_capacity==before.old_capacity && l.new_capacity==before.new_capacity &&
         l.before_used==before.before_used && l.before_engine_used==before.before_engine_used);
 }
+fn bytes::Buffer close_root(ref mut growth::Ledger l) {
+    var bytes::Buffer b=bytes::empty();
+    b=switch(storage::prepare_growth(ref b,256,limits(false),l)) {
+        case .ok(v):{v}case .err(_):{assert(false);bytes::empty()}
+    };
+    switch(growth::commit(256,l)){case .ok(_):{}case .err(_):{assert(false);}};
+    switch(bytes::append(ref mut b,b"keep")){case .ok(_):{}case .err(_):{assert(false);}};
+    return b;
+}
+fn void close_failed(Result<usize,close::Error> r,bool identity) {
+    assert(switch(r){case .ok(_):{false}case .err(e):{switch(e){case .Token:{identity}case .State:{!identity}}}});
+}
+fn void close_empty() {
+    var growth::Ledger l=growth::empty();var owners::Table table=owners::empty();var close::Plan plan=close::empty();
+    {let bytes::Buffer b=bytes::empty();let owners::Token t=token(owners::create(ref mut table,ref b));
+        assert(switch(close::begin(ref mut table,t,ref b,ref l,ref mut plan)){case .ok(n):{n==64}case .err(_):{false}});
+        assert(l.used==64 && l.engine_used==64);}
+    assert(switch(close::finish(ref table,ref mut l,ref mut plan)){case .ok(n):{n==0}case .err(_):{false}});
+    assert(l.engine_used==0 && l.peak==64 && l.engine_peak==64 && !plan.active);
+}
+fn void run_close(u8 mode) {
+    var growth::Ledger l=growth::empty();var owners::Table table=owners::empty();var close::Plan plan=close::empty();
+    var owners::Token source=owners::Token{.slot=16,.generation=0};
+    {
+        var bytes::Buffer b=close_root(ref mut l);source=token(owners::create(ref mut table,ref b));
+        if(mode==0) {l.engine_used+=32;l.engine_peak+=32;}
+        if(mode==1) {
+            let bytes::Buffer missing=bytes::empty();
+            close_failed(close::begin(ref mut table,owners::Token{.slot=16,.generation=1},ref missing,ref l,ref mut plan),true);
+            close_failed(close::begin(ref mut table,source,ref missing,ref l,ref mut plan),false);
+            l.used=319;close_failed(close::begin(ref mut table,source,ref b,ref l,ref mut plan),false);l.used=320;
+            table.slots[1].capacity=64;close_failed(close::begin(ref mut table,source,ref b,ref l,ref mut plan),false);table.slots[1].capacity=0;
+            switch(growth::begin(256,257,limits(false),ref mut l)){case .ok(_):{}case .err(_):{assert(false);}};
+            close_failed(close::begin(ref mut table,source,ref b,ref l,ref mut plan),false);
+            assert(l.used==768 && l.pending==448 && !plan.active);kept(ref table,source,ref b);
+            switch(growth::cancel(ref mut l)){case .ok(_):{}case .err(_):{assert(false);}};
+        }
+        if(mode==3) {table.slots[source.slot].generation=18446744073709551615;source.generation=18446744073709551615;}
+        let growth::Ledger before=l;
+        assert(switch(close::begin(ref mut table,source,ref b,ref l,ref mut plan)){case .ok(n):{n==320}case .err(_):{false}});
+        assert(plan.active && !table.slots[source.slot].live && l.used==before.used && l.engine_used==before.engine_used);
+        assert(bytes::equal(bytes::view(ref b),b"keep"));
+        assert(switch(owners::read(ref table,source,0,ref b)){case .ok(_):{false}case .err(e):{switch(e){case .Token:{true}case .Owners:{false}case .State:{false}case .Bounds:{false}}}});
+        close_failed(close::begin(ref mut table,source,ref b,ref l,ref mut plan),false);
+        var close::Plan duplicate=close::empty();close_failed(close::begin(ref mut table,source,ref b,ref l,ref mut duplicate),true);
+    }
+    // Native root scope has ended; only now may accounting release its charge.
+    if(mode==2) {
+        l.engine_used+=1;close_failed(close::finish(ref table,ref mut l,ref mut plan),false);
+        assert(l.used==320 && l.engine_used==321 && plan.active);l.engine_used-=1;
+        table.slots[1].generation=2;close_failed(close::finish(ref table,ref mut l,ref mut plan),false);
+        assert(l.used==320 && table.slots[1].generation==2 && plan.active);table.slots[1].generation=1;
+        plan.capacity=18446744073709551615;close_failed(close::finish(ref table,ref mut l,ref mut plan),false);plan.capacity=256;
+        plan.charge=321;close_failed(close::finish(ref table,ref mut l,ref mut plan),false);plan.charge=320;
+    }
+    let usize peak=l.peak;let usize engine_peak=l.engine_peak;
+    assert(switch(close::finish(ref table,ref mut l,ref mut plan)){case .ok(n):{n==0}case .err(_):{false}});
+    assert(l.engine_used==if(mode==0){32}else{0});
+    assert(l.peak==peak && l.engine_peak==engine_peak && l.pending==0 && l.old_capacity==0 && l.new_capacity==0 &&
+        l.before_used==0 && l.before_engine_used==0 && !plan.active);
+    close_failed(close::finish(ref table,ref mut l,ref mut plan),false);
+    assert(table.slots[source.slot].generation==if(mode==3){0}else{source.generation+1});
+    if(mode==0) {close_empty();}
+}
 @effects(console)
 fn i32 main() {
     if(process::arg_count()!=2) {return 2;}
@@ -147,6 +212,10 @@ fn i32 main() {
     else if(bytes::equal(mode,b"append-capacity")) {run_append(1);}
     else if(bytes::equal(mode,b"append-identity")) {run_append(2);}
     else if(bytes::equal(mode,b"append-state")) {run_append(3);}
+    else if(bytes::equal(mode,b"close-success")) {run_close(0);}
+    else if(bytes::equal(mode,b"close-preflight")) {run_close(1);}
+    else if(bytes::equal(mode,b"close-snapshot")) {run_close(2);}
+    else if(bytes::equal(mode,b"close-generation")) {run_close(3);}
     else {return 2;}
     return switch(io::write("buffer-failure: passed\n")){case .ok(_):{0}case .err(_):{1}};
 }
