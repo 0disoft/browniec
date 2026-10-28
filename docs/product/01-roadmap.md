@@ -1,5 +1,13 @@
 # Roadmap
 
+- Subrecord paths as arguments: implemented at `9650f12` and verified in
+  development and release, each with 27 native groups and 570 CLI cases.
+  The two successful combined profile invocations rechecked 217 identical inputs.
+  An exact-type
+  `take(outer.child)` or deeper path stages scalar leaves into an independent
+  immutable snapshot before later arguments run. Existing mixed capture cleanup
+  handles calls and early exits. See [the source contract](../engineering/m2-struct-path-arguments.md)
+  and the [Windows receipt](../evidence/m2-struct-path-arguments-windows-20261028.json).
 - Record call results as arguments: implemented at `7671f25`. A bare exact-type
   `take(make())` or nested `id(id(make()))` uses an anonymous argument capture
   after the inner CALL, then shared reverse mixed cleanup. Development and

@@ -1498,6 +1498,30 @@ Full native/CLI suites, M0, Linux, isolation, DLL embedding, packaging,
 allocation instrumentation and elapsed-time performance are outside this
 focused verification.
 
+## M2 subrecord paths as arguments
+
+Implemented at `9650f12` and verified in development and release, each with
+27 native groups and 570 CLI cases. Both combined invocations rechecked the
+same 217 inputs, compiler and SDK identities, and retained CLI binary hashes. The
+[source contract](docs/engineering/m2-struct-path-arguments.md) covers bare
+exact-nominal subrecord paths used as record arguments. Consecutive SREAD values
+feed SINIT before the anonymous capture becomes visible to cleanup; later
+argument effects cannot change the captured value. Root, snapshot, and formal
+are live together: twelve payload bytes pass for three four-byte records,
+eleven reports array_limit. Source-site and shared-owner budgets are unchanged.
+
+The focused harness selects 27 native groups per profile: six new path-argument,
+seven result-argument, eight source-parameter, and six subrecord-return groups.
+The CLI selections total 570 cases: 154 new, 154 result-argument, 114 source
+parameter, and 148 subrecord-return cases. Development and release use separate
+combined invocations. Commands, matching input/compiler/SDK identities, native
+outcomes and both CLI hashes are retained in the
+[Windows receipt](docs/evidence/m2-struct-path-arguments-windows-20261028.json).
+Previous receipts remain historical for their original inputs.
+
+Full native/CLI suites, M0, Linux, isolation, DLL embedding, packaging, allocation
+instrumentation and elapsed-time performance are outside this focused selection.
+
 ## Review obligations
 
 Three reviewed counterexamples must remain explicit acceptance tests:

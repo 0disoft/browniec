@@ -118,12 +118,16 @@ snapshots can raise the peak through the existing transaction checks.
 
 ## Rejected forms
 
-In a record argument position, this slice rejects constructor operands, field
-paths, parenthesized calls, wrong
+In a record argument position, constructor operands, parenthesized calls, wrong
 nominal result types, unknown and locally shadowed callees, `call().field`, and
-array-returning calls used as array arguments. This does not add general aggregate expressions; other formal types retain
-their existing argument rules. These cases fail
-during compilation rather than reaching a partially published destination.
+array-returning calls used as array arguments remain rejected. The
+[subrecord-path successor](m2-struct-path-arguments.md) additionally accepts a
+bare exact-nominal `outer.child` argument. This does not add general aggregate
+expressions; other formal types retain their existing argument rules.
+
+The counts below remain historical for this slice's original inputs. Its former
+path-rejection fixture now rejects the scalar endpoint `r.p.x`; path acceptance
+and the modified result-argument fixture receive new successor evidence.
 
 ## Verification
 

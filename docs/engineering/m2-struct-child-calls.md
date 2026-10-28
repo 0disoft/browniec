@@ -53,10 +53,11 @@ place the call at any supported child depth. The existing constructor path may
 also select a whole visible child binding or a dotted exact-nominal path.
 
 The child call remains unsupported when it is parenthesized, when the returned
-record is followed by field selection, or when a constructor-valued argument, field-path argument,
+record is followed by field selection, or when a constructor-valued argument,
 wrong result type, unknown or locally shadowed callee, or general aggregate
 expression is used for a record formal. A call result used as an array argument also remains rejected.
-Those forms fail during compilation.
+Those forms fail during compilation. Bare exact-nominal child-path arguments
+now have a separate [successor](m2-struct-path-arguments.md).
 
 ## Evaluation and publication
 

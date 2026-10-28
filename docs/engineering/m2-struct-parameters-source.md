@@ -50,9 +50,11 @@ The original slice accepts exactly one identifier such as `pair` for a record
 formal. Its capture checks that the lexical table entry names an immutable or
 mutable record owner of the callee-declared nominal type in the current function.
 The [call-argument successor](m2-struct-result-arguments.md) also admits a bare
-function call whose exact nominal result supplies the formal.
+function call whose exact nominal result supplies the formal. The
+[subrecord-path successor](m2-struct-path-arguments.md) also admits a bare
+exact-nominal child path as an independent immutable snapshot.
 
-Constructor operands, field paths, parenthesized names or calls, casts, aggregate
+Constructor operands, parenthesized names or calls, casts, aggregate
 literals, `call().field`, and other general expressions cannot satisfy a record
 parameter. A bare call is accepted only through the exact-result successor.
 Unknown or locally shadowed callees and calls with a wrong result type are
