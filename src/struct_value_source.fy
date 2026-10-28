@@ -263,10 +263,19 @@ fn Result<usize, errors::Error> extract(ref u8[] source, ref mut lexer::State s,
     let usize id=extracted(source,s,p,names,header.record,header.mutable,header.begin)?;
     return locals::declare(names,header.begin,header.end,144+id,header.mutable);
 }
-// Declarations and subrecord returns use the same independent leaf copy. No
-// binding is published here; return lowering passes the result to its finisher.
+// Declarations, returns and arguments share the independent leaf copy. Delimiter
+// validation precedes emission; callers publish names only after complete creation.
 pub fn Result<usize, errors::Error> extracted(ref u8[] source, ref mut lexer::State s,
     ref mut ir::Program p, ref locals::Table names, usize record, bool mutable, usize offset) {
+    return extract_operand(source,s,p,names,record,mutable,offset,false);
+}
+pub fn Result<usize, errors::Error> extracted_argument(ref u8[] source, ref mut lexer::State s,
+    ref mut ir::Program p, ref locals::Table names, usize record, usize offset) {
+    return extract_operand(source,s,p,names,record,false,offset,true);
+}
+fn Result<usize, errors::Error> extract_operand(ref u8[] source, ref mut lexer::State s,
+    ref mut ir::Program p, ref locals::Table names, usize record, bool mutable, usize offset,
+    bool argument) {
     if (s.kind != 2) { return .err(errors::make(3,s.begin)); }
     let usize at = s.begin;
     let usize index = locals::find(source,names,s.begin,s.end);
@@ -276,7 +285,9 @@ pub fn Result<usize, errors::Error> extracted(ref u8[] source, ref mut lexer::St
     let usize name = lexer::next(source,s)?;
     let Leaf part = path(source,s,p,p.records.records[source_id] as usize,at)?;
     if (part.tag != 0 || part.record != record) { return .err(errors::make(3,at)); }
-    let usize end = lexer::punctuation(source,s,59)?;
+    if(argument) {
+        if(s.kind!=44 && s.kind!=41) {return .err(errors::make(3,s.begin));}
+    } else {let usize end=lexer::punctuation(source,s,59)?;}
     let usize count = leaf_count(p,part.record,at)?;
     let usize first = p.registers;
     var usize i = 0;

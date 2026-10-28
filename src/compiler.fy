@@ -156,6 +156,12 @@ fn Result<usize,errors::Error> record_argument(ref u8[] source,ref mut lexer::St
     if(s.kind==2) {
         var lexer::State look=lexer::snapshot(s);
         let usize next=lexer::next(source,ref mut look)?;
+        if(look.kind==46) {
+            let usize at=s.begin;
+            let usize temporary=record_values::extracted_argument(source,s,p,names,record,at)?;
+            let usize captured=locals::declare(names,at,at,144+temporary,false)?;
+            return .ok(144+temporary);
+        }
         if(look.kind==40) {
             let usize at=s.begin;
             if(locals::find(source,names,s.begin,s.end)!=64) {return .err(errors::make(3,at));}

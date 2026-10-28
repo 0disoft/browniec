@@ -76,7 +76,7 @@ fn void invalid_nested_results_and_unsupported_aggregate_forms_fail() {
  rejected(b"module main;struct P{i32 x;}fn P make(){return P{.x=42};}fn i32 take(P p){return p.x;}fn i32 main(){return take(make(1));}");
  rejected(b"module main;struct P{i32 x;}fn P make(){return P{.x=42};}fn i32 take(P p){return p.x;}fn i32 main(){return take((make()));}");
  rejected(b"module main;struct P{i32 x;}fn i32 take(P p){return p.x;}fn i32 main(){return take(P{.x=42});}");
- rejected(b"module main;struct P{i32 x;}struct R{P p;}fn i32 take(P p){return p.x;}fn i32 main(){let R r=R{.p=P{.x=42}};return take(r.p);}");
+ rejected(b"module main;struct P{i32 x;}struct R{P p;}fn i32 take(P p){return p.x;}fn i32 main(){let R r=R{.p=P{.x=42}};return take(r.p.x);}");
  rejected(b"module main;struct P{i32 x;}fn P make(){return P{.x=42};}fn i32 take(P p){return p.x;}fn i32 main(){return take(make().x);}");
  rejected(b"module main;struct P{i32 x;}fn i32[1] make(){return [42;1];}fn i32 take(i32[1] a){return a[0];}fn i32 main(){return take(make());}");
 }
