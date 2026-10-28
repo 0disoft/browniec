@@ -429,6 +429,21 @@ fn Result<usize, errors::Error> record_write_statement(ref u8[] source, ref mut 
     if (s.kind == 61) {
         var lexer::State look = lexer::snapshot(s);
         let usize equals = lexer::next(source,ref mut look)?;
+        if(look.kind==2) {
+            var lexer::State call=lexer::snapshot(ref look);
+            let usize next=lexer::next(source,ref mut call)?;
+            if(call.kind==40) {
+                if(!p.records.mutable[id] || locals::find(source,table,look.begin,look.end)!=64) {return .err(errors::make(3,look.begin));}
+                let usize target=functions::find(source,signatures,look.begin,look.end);
+                let usize temporary=record_results::destination(signatures,target,record,false,p,table.function,look.begin)?;
+                let usize consumed=lexer::next(source,s)?;
+                let usize name=lexer::next(source,s)?;
+                let usize called=call_value(source,s,p,table,signatures,target,144+temporary,at,expr_depth,result_type,structure,loop_state)?;
+                let usize end=lexer::punctuation(source,s,terminator)?;
+                let usize assigned=record_results::assigned(p,id,temporary,at)?;
+                return .ok(index);
+            }
+        }
         if (record_values::constructor(source,ref mut look,record)?) {
             if (!p.records.mutable[id]) { return .err(errors::make(3,at)); }
             let usize consumed = lexer::next(source,s)?;

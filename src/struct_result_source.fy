@@ -46,6 +46,15 @@ pub fn Result<usize,errors::Error> destination(ref functions::Table signatures,u
     }
     return ir::record_in(p,f,nominal,mutable,at);
 }
+// Keep the destination live through CALL and capture cleanup, overwrite its
+// existing owner once, then release the anonymous result.
+pub fn Result<usize,errors::Error> assigned(ref mut ir::Program p,usize destination,usize temporary,usize at) {
+    if(destination>=p.records.count || temporary>=p.records.count || destination==temporary ||
+        !p.records.mutable[destination] || p.record_functions[destination]!=p.record_functions[temporary] ||
+        p.records.records[destination]!=p.records.records[temporary]) {return .err(errors::make(3,at));}
+    let usize copied=ir::record_assign(p,destination,temporary,at)?;
+    return ir::record_drop(p,temporary,at);
+}
 // Bare visible bindings, direct-call results and return constructors share the
 // finisher. General record expressions remain unavailable.
 pub fn Result<usize,errors::Error> returned(ref u8[] source,ref mut lexer::State s,

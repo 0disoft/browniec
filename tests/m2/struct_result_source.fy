@@ -62,7 +62,7 @@ fn void nominal_mismatches_scalar_contexts_and_unimplemented_return_forms_fail()
  rejected(b"module main;struct P{i32 x;}fn P f(P p){let Option<i32> o=.some(0);let i32 n=o?;return p;}fn i32 main(){return 42;}");
  rejected(b"module main;struct P{i32 x;}fn P f(P p){for(let P q=p;false;){}return p;}fn i32 main(){return 42;}");
  rejected(b"module main;struct P{i32 x;}fn P f(P p){return p;}fn i32 main(){let P p=f(p);return p.x;}");
- rejected(b"module main;struct P{i32 x;}fn P f(P p){return p;}fn i32 main(){let P p=P{.x=42};var P q=p;q=f(p);return q.x;}");
+ rejected(b"module main;struct P{i32 x;}fn P f(P p){return p;}fn i32 main(){let P p=P{.x=42};var P q=p;q=(f(p));return q.x;}");
  rejected(b"module main;struct P{i32 x;}fn P f(P p){return p;}fn i32 main(){let P f=P{.x=42};let P q=f(f);return q.x;}");
  rejected(b"module main;struct P{i32 x;}fn P f(P p){return p;}fn i32 main(){let P p=P{.x=42};let P q=f(p);q.x=0;return 42;}");
 }
