@@ -8,6 +8,10 @@ to actual Fairy C `std::bytes::Buffer` allocation and copying. This is private
 native storage, not guest Buffer support. No owner-token table, borrow tracking,
 VM opcode, source syntax, Fuel price or capability changes are supplied here.
 
+The [descriptor successor](m2-buffer-owners.md) supplies table-local generation
+checks over caller-bound native roots. The storage API below still leaves root
+publication, descriptor binding and accounting completion to the caller.
+
 ## Transaction contract
 
 `prepare_growth(ref old, required, limits, ref mut ledger)` returns an owning

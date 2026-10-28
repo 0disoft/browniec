@@ -1,5 +1,13 @@
 # Roadmap
 
+- Buffer owner descriptors: implemented and verified in development and release,
+  each with 23 native groups (8 descriptors, 7 storage, 8 admission) and 8 CLI
+  sentinels. Both invocations rechecked 256 identical inputs.
+  Private table-local slot/generation tokens guard initialized byte access;
+  release invalidates tokens and exhausted generations retire their slots.
+  Native root association and lifetime remain trusted caller responsibilities.
+  Guest Buffer syntax, borrow tracking and VM integration remain future work.
+  See [the descriptor contract](../engineering/m2-buffer-owners.md).
 - Native Buffer storage: implemented and verified in development and release,
   each with 15 native groups (7 storage, 8 admission) and 8 CLI sentinels.
   Both invocations rechecked 253 identical inputs.

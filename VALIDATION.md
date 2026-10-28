@@ -1762,3 +1762,22 @@ with `--profile release`. See [the storage contract](docs/engineering/m2-buffer-
 Full suites, M0, Linux, isolation, DLL embedding, packaging, allocator-failure
 injection, allocation instrumentation and elapsed-time performance are not included.
 Earlier receipts remain historical evidence for their original inputs.
+
+## Private Buffer owner descriptors
+
+Verified in development and release: each passed 23 native groups and 8 CLI
+sentinels. Both invocations rechecked 256 identical inputs and compiler/SDK
+identities. See the [Windows receipt](docs/evidence/m2-buffer-owners-windows-20261028.json).
+A fixed table of 16 private descriptors validates slot/generation identity before
+native backing metadata or payload access. Read/write require exact initialized
+length and capacity plus index bounds. Release clears metadata and advances the
+generation; MAX retires the slot at zero. This does not own native roots or charge
+the descriptor table to an Instance. The caller supplies the correct table/root.
+
+The verified selection is 8 descriptor groups, 7 native storage groups and
+8 growth groups, plus 8 CLI compatibility/syntax-gate sentinels per profile.
+Run `python -B tools/verify-m2-buffer-owners.py --profile development` and repeat
+with `--profile release`. See [the contract](docs/engineering/m2-buffer-owners.md).
+Full suites, M0, Linux, isolation, DLL embedding, packaging, allocator-failure
+injection, allocation instrumentation and elapsed-time performance are not included.
+Earlier receipts remain historical evidence for their original inputs.
