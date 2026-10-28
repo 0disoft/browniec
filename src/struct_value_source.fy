@@ -320,6 +320,20 @@ fn Result<usize, errors::Error> extract_part(ref mut ir::Program p,usize functio
     return .ok(id);
 }
 
+// The returned root must stay live through the atomic overwrite. No independent
+// child owner or scalar staging registers are needed for an assignment.
+pub fn Result<usize, errors::Error> assign_call_part(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,usize dst,usize from,Leaf target,usize at) {
+    if(dst>=p.records.count || from>=p.records.count || dst==from || !p.records.mutable[dst] ||
+        target.tag!=0 || s.kind!=46 || p.record_functions[dst]!=p.record_functions[from]) {
+        return .err(errors::make(3,at));
+    }
+    let Leaf origin=path(source,s,p,p.records.records[from] as usize,at)?;
+    if(origin.tag!=0 || origin.record!=target.record) {return .err(errors::make(3,at));}
+    let usize end=lexer::punctuation(source,s,59)?;
+    let usize copied=ir::record_subassign(p,dst,from,target.record,target.ordinal,origin.ordinal,at)?;
+    return ir::record_drop(p,from,at);
+}
 // Resolve exact nominal endpoints; the VM prepays and snapshots their bytes
 // before committing one atomic overwrite without any new owner or register.
 pub fn Result<usize, errors::Error> assign_part(ref u8[] source, ref mut lexer::State s,

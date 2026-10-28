@@ -599,10 +599,17 @@ fn Result<bool, errors::Error> record_call_assignment(ref u8[] source, ref mut l
     if(call.kind!=40) {return .ok(false);}
     if(!p.records.mutable[id] || locals::find(source,table,look.begin,look.end)!=64) {return .err(errors::make(3,look.begin));}
     let usize target=functions::find(source,signatures,look.begin,look.end);
-    let usize temporary=record_results::destination(signatures,target,leaf.record,false,p,table.function,look.begin)?;
+    if(target>=signatures.count || signatures.return_records[target]==0) {return .err(errors::make(3,look.begin));}
+    let usize nominal=(signatures.return_records[target] as usize)-1;
+    let usize temporary=record_results::destination(signatures,target,nominal,false,p,table.function,look.begin)?;
     if(whole) {let usize equals=lexer::next(source,s)?;}
     let usize name=lexer::next(source,s)?;
     let usize called=call_value(source,s,p,table,signatures,target,144+temporary,at,expr_depth,result_type,structure,loop_state)?;
+    if(s.kind==46) {
+        let usize assigned=record_values::assign_call_part(source,s,p,id,temporary,leaf,at)?;
+        return .ok(true);
+    }
+    if(nominal!=leaf.record) {return .err(errors::make(3,at));}
     let usize end=lexer::punctuation(source,s,59)?;
     if(whole) {let usize assigned=record_results::assigned(p,id,temporary,at)?;}
     else {let usize assigned=record_results::subassigned(p,id,temporary,leaf,at)?;}
