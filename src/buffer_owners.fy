@@ -32,6 +32,10 @@ fn Result<Owner,Error> resolve(ref Table table,Token token) {
     if(!valid(table)) {return .err(.State);}
     return .ok(owner);
 }
+// Metadata-only preflight for storage transactions, before native buffer access.
+pub fn Result<Owner,Error> describe(ref Table table,Token token) {
+    return resolve(table,token);
+}
 pub fn Result<Token,Error> create(ref mut Table table,ref bytes::Buffer buffer) {
     if(!valid(table)) {return .err(.State);}
     let usize length=bytes::len(buffer);let usize capacity=bytes::capacity(buffer);

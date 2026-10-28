@@ -10,6 +10,13 @@ own the affected contract. Broader scaffold procedures are optional.
 
 ## Current state
 
+- Buffer replacement transactions: implemented and verified in development and
+  release, each with 31 native groups (8 replacement, 23 regressions) and 8 CLI
+  sentinels. Both invocations rechecked 259 identical inputs.
+  Private preparation keeps the original token live; completion rechecks full
+  descriptor/accounting snapshots before updating generation and final charges.
+  Owning-root publication remains an explicit trusted caller step.
+  See [the replacement contract](docs/engineering/m2-buffer-replacement.md).
 - Buffer owner descriptors: implemented and verified in development and release,
   each with 23 native groups (8 descriptors, 7 storage, 8 admission) and 8 CLI
   sentinels. Both invocations rechecked 256 identical inputs.

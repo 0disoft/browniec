@@ -8,6 +8,10 @@ Buffer storage from [the storage foundation](m2-buffer-storage.md). This slice
 adds token lifecycle and byte-access guards; it does not integrate guest Buffer
 syntax, owner roots, borrows, VM instructions, Fuel or capability flags.
 
+The [replacement successor](m2-buffer-replacement.md) now validates descriptor
+and ledger snapshots together during preparation/completion. Native root
+publication and root association remain explicit trusted caller responsibilities.
+
 ## Table and token contract
 
 A table contains 16 slots. Each stores generation, live state, initialized length

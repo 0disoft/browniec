@@ -1781,3 +1781,23 @@ with `--profile release`. See [the contract](docs/engineering/m2-buffer-owners.m
 Full suites, M0, Linux, isolation, DLL embedding, packaging, allocator-failure
 injection, allocation instrumentation and elapsed-time performance are not included.
 Earlier receipts remain historical evidence for their original inputs.
+
+## Private Buffer replacement transactions
+
+Verified in development and release: each passed 31 native groups and 8 CLI
+sentinels. Both invocations rechecked 259 identical inputs and compiler/SDK
+identities. See the [Windows receipt](docs/evidence/m2-buffer-replacement-windows-20261029.json).
+Preparation checks identity, native metadata and generation headroom before
+reserving and copying. It snapshots all 16 descriptors and every ledger field.
+Commit rechecks both snapshots and published capacity/length before advancing
+the same slot generation and finishing accounting. Cancel retains old tokens.
+Root publication/drop ordering and correct native root association remain caller
+obligations; this does not make native root publication atomic with completion.
+
+The verified selection is 8 replacement groups plus the existing 23 descriptor,
+storage and admission groups, and 8 CLI compatibility/syntax-gate sentinels.
+Run `python -B tools/verify-m2-buffer-replacement.py --profile development` and
+repeat with `--profile release`. See [the contract](docs/engineering/m2-buffer-replacement.md).
+Full suites, M0, Linux, isolation, DLL embedding, packaging, allocator-failure
+injection, allocation instrumentation and elapsed-time performance are not included.
+Earlier receipts remain historical evidence for their original inputs.
