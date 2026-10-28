@@ -1,5 +1,11 @@
 # Brownie C
 
+- Direct array call-result reads: implemented at `b822089` and verified in
+  development and release, each with 18 native groups and 335 CLI cases. Both
+  combined invocations rechecked 229 identical inputs.
+  `make()[INDEX]` and `make().len` release the anonymous result after producing
+  the scalar; index-expression exits use existing mixed cleanup.
+  See [the source contract](docs/engineering/m2-array-call-reads.md).
 - Repeated array literals as arguments: implemented at `ea6854f` and verified in
   development and release, each with 20 native groups and 344 CLI cases. Both
   combined invocations rechecked 226 identical inputs.

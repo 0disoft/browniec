@@ -48,8 +48,13 @@ native suites, other array/scalar CLI matrices, M0, allocator instrumentation,
 Linux, isolation, DLL, clean-machine packaging and performance are not rerun.
 
 [Repeated return literals](m2-array-return-literals.md) have separate focused evidence.
-Parenthesized or indexed results, array-result calls in argument position,
-`for`-header arrays, slices, borrows, and wrapper elements remain unsupported.
+Parenthesized aggregate results, `for`-header arrays, slices, borrows and wrapper
+elements remain unsupported. Exact-shape call results used as array arguments
+now have a [successor](m2-array-result-arguments.md).
 Assignment RHS is limited to the bare-name, direct-call, and repeated-literal
 forms owned by their contract pages. General aggregate expressions and frame
 elision have no new contract in this increment.
+
+The [scalar-read successor](m2-array-call-reads.md) permits indexed reads and
+`.len` after an array call in scalar positions. They still do not satisfy an
+array-result return type. Earlier results remain historical for their inputs.

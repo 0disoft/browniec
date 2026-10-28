@@ -55,7 +55,8 @@ All 32 VM frames share 16 occupied owners and an arena capped at 65,536 bytes.
 Return operands can be bare array names or direct `return function(...);` calls.
 The latter now has separate [lowering and verification](m2-array-return-calls.md).
 [Repeated return literals](m2-array-return-literals.md) have a subsequent focused
-increment. Parentheses, indexing, slices and borrows remain rejected.
+increment. Parenthesized aggregate results, slices and borrows remain rejected.
+Scalar-position result indexing now has a [successor](m2-array-call-reads.md).
 Array-result calls are admitted in typed array declaration initializers, direct
 returns, and mutable assignment. Repeated array literals are admitted in direct
 returns and, through a separate [in-place fill](m2-array-literal-assignment.md),
@@ -97,7 +98,8 @@ The [argument successor](m2-array-result-arguments.md) now accepts a bare result
 call as an exact-element, exact-length array argument, including nested calls.
 The destination becomes an anonymous immutable capture only after CALL and
 delimiter validation, then reuses mixed array/record cleanup. Parenthesized
-calls and call-result indexing remain unsupported. Bare repeated literal
+calls remain unsupported. Scalar-position call-result indexing and `.len` now
+have a [successor](m2-array-call-reads.md). Bare repeated literal
 arguments now have a [successor](m2-array-literal-arguments.md).
 Earlier counts above remain historical for their original inputs; the successor
 reruns the focused source result and parameter selections.

@@ -1587,6 +1587,18 @@ array-result-argument) and 344 CLI cases (110 new, 80 array-parameter, 154
 array-result-argument) per development/release profile. Full suites, M0, Linux,
 isolation, DLL, packaging, allocation instrumentation and performance are excluded.
 
+## M2 direct array call-result reads
+
+Implemented at `b8220890cb2c7a7aed6579c35c572e69ee43cc2a` and verified in development and release.
+Both invocations rechecked 229 identical input hashes and matching compiler/SDK
+identities. See the [Windows receipt](docs/evidence/m2-array-call-reads-windows-20261028.json). See the
+[source contract](docs/engineering/m2-array-call-reads.md) for evaluation order,
+result lifetime, index-expression cleanup and effectful length queries.
+Each profile passed 18 native groups (4 new, 8 source-array-result, 6
+literal-argument) and 335 CLI cases (106 new, 119 source-array-result, 110
+literal-argument) per profile. Full suites, M0, Linux, isolation, DLL, packaging,
+allocation instrumentation and performance are excluded.
+
 ## Review obligations
 
 Three reviewed counterexamples must remain explicit acceptance tests:
