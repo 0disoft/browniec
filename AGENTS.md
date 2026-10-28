@@ -95,6 +95,22 @@ own the affected contract. Broader scaffold procedures are optional.
   profile, or version changes. See [the
   contract](docs/engineering/m2-struct-child-call-assignment.md) and [Windows
   receipt](docs/evidence/m2-struct-child-call-assignment-windows-20261028.json).
+- Exact-nominal record calls in constructor child fields are implemented at
+  `c4cd6ab` and verified in development and release. `compiler::record_child_call` reserves the exact child result site,
+  evaluates arguments, stages every returned scalar leaf through the shared
+  `struct_value_source::stage_part`, then emits `SDROP` before later fields or
+  parent publication. Declaration, root replacement, child replacement, and
+  direct constructor return all use the same `record_constructor`. A pending
+  parent is not live during the child call; an old replacement parent remains
+  live and visible until replacement or early-exit cleanup; argument effects
+  are not rolled back. Each profile passed 23 native groups (6 core,
+  17 regressions) and 529 CLI cases in four separate phase invocations, with
+  211 verified input identities. No opcode, VM, Fuel, profile, or version
+  change is involved. General aggregate arguments, parenthesized child calls,
+  and call-result field
+  selection remain unsupported. See [the
+  contract](docs/engineering/m2-struct-child-calls.md) and [Windows
+  receipt](docs/evidence/m2-struct-child-calls-windows-20261028.json).
 - The record-result IR slice's evidence remains 39 unique native groups and 2,317 CLI cases in development and release. The [core receipt](docs/evidence/m2-struct-results-ir-core-windows-20261028.json) records 21 native groups (8 new record-result, 6 array-result, 7 record-parameter), CLI builds and all 2,317 cases; the [regression receipt](docs/evidence/m2-struct-results-ir-regressions-windows-20261028.json) records 18 native-only groups (6 array-result VM, 8 record-call VM, 4 scalar-function), with no build or CLI rerun. CLI coverage is 72 record-result signature, 66 record-formal signature, 114 source record-parameter, 96 array-result signature and 1,969 M1 cases per profile. These were two separate phase invocations across implementation commit `dc1574b`, with disjoint native selections and matching 212 input hashes, compiler and SDK identities. All inputs and the final release CLI were rechecked before archival. Full native/CLI suites, M0, Linux, isolation, DLL, packaging, allocation instrumentation and performance were not run.
 - M2 has private scalar-array layout, codec, caller-backed storage, owner-lifetime and copy helpers;
   private function-owned array IR has independent verification and metered native VM dispatch. The current

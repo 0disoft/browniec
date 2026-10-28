@@ -41,6 +41,11 @@ The later [call-assignment slice](m2-struct-call-assignment.md) also supports
 the destination to exact-nominal child paths. Earlier receipts remain historical
 for their original inputs.
 
+The later [constructor child-call slice](m2-struct-child-calls.md) permits this
+same record-call form as a child value inside an exact-nominal constructor. Its
+arguments, cleanup, and result transfer still use the path described here; only
+the constructor-child position is new.
+
 ## Ownership, limits and Fuel
 
 The existing CALL/SRET VM transfers the result owner without allocating another

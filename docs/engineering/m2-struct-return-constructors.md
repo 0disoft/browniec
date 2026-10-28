@@ -107,11 +107,15 @@ The following forms remain unsupported:
 
 - general return expressions around a constructor;
 - a parenthesized constructor, such as `return (Pair { ... });`;
-- record-result calls in aggregate fields, such as `Outer { .inner = make() }`;
 - scalar fields, scalars, arrays, or wrappers as the direct record-result operand;
 - record wrappers, borrows, `ref` results, and `var` results.
 
-These forms are rejected during compilation. They do not reach an uninitialized
+The later [constructor child-call successor](m2-struct-child-calls.md) admits a
+bare exact-nominal record call in a child field, such as
+`Outer { .inner = make() }`. General aggregate expressions and parenthesized
+child calls and call-result field selection remain unsupported.
+
+Unsupported forms are rejected during compilation. They do not reach an uninitialized
 caller destination or rely on a partial record owner.
 
 The later [child call-assignment slice](m2-struct-child-call-assignment.md)
@@ -126,6 +130,11 @@ It copies the selected leaves into one independent result site and leaves the
 source live. Record borrows, general or parenthesized expressions, and
 `call().child` returns remain unsupported. The constructor counts below remain
 historical for this slice's original inputs.
+
+The later [constructor child-call slice](m2-struct-child-calls.md) extends this
+shared constructor staging so an exact-nominal child field can receive a record
+call result. It is verified in development and release in a separate
+[Windows receipt](../evidence/m2-struct-child-calls-windows-20261028.json).
 
 ## Verification
 

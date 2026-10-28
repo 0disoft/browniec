@@ -28,7 +28,9 @@ inline named constructor, a whole visible record binding, or a dotted path from
 that binding to an exact nominal record endpoint. Deeper paths and preceding
 nested siblings use the same bounded path resolver as declaration extraction.
 Matching physical layouts do not establish nominal identity. Scalar endpoints,
-unknown fields, invisible bindings, calls, parentheses and computed paths fail.
+unknown fields, invisible bindings, parentheses and computed paths fail. Calls
+were rejected at this checkpoint; the [constructor child-call
+successor](m2-struct-child-calls.md) now accepts bare exact-nominal child calls.
 Locals sharing a type name remain unambiguous: only a following `{` introduces
 a named constructor. Sources may be immutable or mutable.
 
@@ -52,10 +54,21 @@ and fails with `array_limit` in a seven-byte arena. Its CLI Fuel boundary is
 
 The complete parent still has at most 16 scalar leaves; depth/path length 16,
 128-byte roots, 16 record sites, 16 shared owners, 65,536-byte arena, 128
-registers and 256 instructions remain. Source records remain entry-only.
-Constructor RHS assignment, struct parameters/results and borrows remain open.
+registers and 256 instructions remain. At this checkpoint, source records were
+entry-only and constructor RHS assignment and struct parameters/results were
+open. Later slices add [helper-local records](m2-struct-function-source.md),
+[root](m2-struct-replace-source.md) and
+[child](m2-struct-subreplace-source.md) constructor assignment,
+[source parameters](m2-struct-parameters-source.md), and
+[source results](m2-struct-result-source.md). Record borrows remain unsupported.
 Programs keep `brownie.m2-struct-nested/1`. Version JSON adds
 `"struct_child_path_initializers": true`.
+
+The later [constructor child-call slice](m2-struct-child-calls.md) shares the
+owner-free `stage_part` leaf encoder with this path staging. A call result stages
+the same scalar leaves and is then dropped before later fields; the path form
+continues to hold its existing source owner without a temporary. The historical
+source/evidence counts below remain specific to that earlier slice.
 
 ## Verification
 

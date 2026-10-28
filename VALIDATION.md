@@ -1,12 +1,16 @@
 # Validation
 
-- Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, switch-expression, i64, and unsigned receipts are verified historical evidence; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified; private entry-array IR/VM and source-array reads, writes, copy initializers, parameters, results, and assignment forms implemented; in-place repeated-literal assignment verified; private entry-owned struct IR/verifier verified historically; private struct VM verified with native 38/38 and CLI 115 in both profiles; declaration-only source structs historically verified in development and release (23 native groups and 2,208 CLI cases per profile); bounded source struct construction and field reads form a verified historical read baseline; entry-only one-level scalar-field writes have historical focused development/release validation; entry-only scalar-record copy initialization and whole-record assignment are verified stepwise in development and release; bounded nested constructors, multi-segment scalar paths, and whole-root copies have results that are historical after child-binding compiler changes; whole-record child binding initializers have historical receipts; subrecord declaration initializer receipts are historical after assignment changes; atomic subrecord assignment is verified in development and release; constructor child subrecord paths verified in development and release; private scalar-value record replacement verified; metered atomic root replacement verified; private frame-local record VM verified in development and release (46 native groups and 2,383 CLI cases per profile); immutable by-value source record parameters are verified in development and release (51 native groups and 2,318 CLI cases per profile); private record-result IR/verifier verified in development and release (39 native groups and 2,317 CLI cases per profile), with its kind 11 VM gate historical and superseded; private record-result VM ownership transfer is verified for its source-gated inputs; bounded source record results are verified in development and release at `bb401a4` (14 native groups and 2,438 CLI cases per profile), with 219 rechecked inputs and a focused 70-case-per-profile checker metadata repair; direct nominal record constructor returns are verified in development and release at `0a7b539`; exact-nominal subrecord return paths are implemented at `d4aa643`; development and release each passed 25 native groups and 579 CLI cases with 205 matching input hashes
+- Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, switch-expression, i64, and unsigned receipts are verified historical evidence; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified; private entry-array IR/VM and source-array reads, writes, copy initializers, parameters, results, and assignment forms implemented; in-place repeated-literal assignment verified; private entry-owned struct IR/verifier verified historically; private struct VM verified with native 38/38 and CLI 115 in both profiles; declaration-only source structs historically verified in development and release (23 native groups and 2,208 CLI cases per profile); bounded source struct construction and field reads form a verified historical read baseline; entry-only one-level scalar-field writes have historical focused development/release validation; entry-only scalar-record copy initialization and whole-record assignment are verified stepwise in development and release; bounded nested constructors, multi-segment scalar paths, and whole-root copies have results that are historical after child-binding compiler changes; whole-record child binding initializers have historical receipts; subrecord declaration initializer receipts are historical after assignment changes; atomic subrecord assignment is verified in development and release; constructor child subrecord paths verified in development and release; private scalar-value record replacement verified; metered atomic root replacement verified; private frame-local record VM verified in development and release (46 native groups and 2,383 CLI cases per profile); immutable by-value source record parameters are verified in development and release (51 native groups and 2,318 CLI cases per profile); private record-result IR/verifier verified in development and release (39 native groups and 2,317 CLI cases per profile), with its kind 11 VM gate historical and superseded; private record-result VM ownership transfer is verified for its source-gated inputs; bounded source record results are verified in development and release at `bb401a4` (14 native groups and 2,438 CLI cases per profile), with 219 rechecked inputs and a focused 70-case-per-profile checker metadata repair; direct nominal record constructor returns are verified in development and release at `0a7b539`; exact-nominal subrecord return paths are implemented at `d4aa643`; development and release each passed 25 native groups and 579 CLI cases with 205 matching input hashes; record calls in constructor child fields are implemented at `c4cd6ab`, verified in development and release
 - Root constructor assignment: verified in development and release; child constructor assignment is verified in development and release.
 - Child record call-result assignment: implemented at `63be9e5` and verified in
   development and release, with 26 native groups and 575 CLI cases per profile.
+- Constructor child record calls: implemented at `c4cd6ab` and verified in
+  development and release, each with 23 native groups and 529 CLI cases across
+  separate core/regression phases and 211 verified input identities. See the
+  [Windows receipt](docs/evidence/m2-struct-child-calls-windows-20261028.json).
 - Private function-owned record IR/verifier and frame-local record VM execution
   are verified in development and release.
-- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/u8/u32/usize/bool values, explicit widening, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation; private function-owned array IR/native dispatch with separate recursive frame tokens, let/var scalar arrays in lexical scopes of ordinary functions, indexed reads/writes, copy initializers, length access, lexical cleanup including `?` failure, by-value parameters, source results, and bare-name, call-result, and repeated-literal assignment are implemented; private entry-owned struct IR/verifier and metered VM dispatch exist; source struct declarations attach immutable layouts; bounded entry construction, record bindings, one-level scalar field reads/writes, bare-name record copy initialization, and whole-record assignment lower to `SINIT`, `SREAD`, `SWRITE`, `SCOPY`, `SASSIGN`, and atomic `SSUBASSIGN`; helper-local records are implemented; for-header record writes/copies remain rejected; bounded nested constructors, multi-segment scalar paths, and whole-root copies are implemented, and child fields also accept whole visible bindings of the exact nominal type; the nested result is historical after that compiler change, subrecord declaration extraction is also implemented; immutable nominal by-value record parameters with bare binding arguments are verified in development and release, while bounded bare-name record returns and exact-nominal `let`/`var` call initializers are now implemented through the existing record-result IR and VM at `bb401a4`; direct nominal record constructor returns are verified in development and release at `0a7b539`; exact-nominal subrecord return paths are implemented at `d4aa643`; development and release each passed 25 native groups and 579 CLI cases with 205 matching input hashes; record borrows remain unavailable; private record-result VM transfer is verified for its original source-gated inputs
+- Current implementation: M0 primitives and experimental M1 scalar source CLI/VM with i32/i64/u8/u32/usize/bool values, explicit widening, branches, loops, shallow Option/Result, switch statements and expressions, and scalar `?` propagation; private function-owned array IR/native dispatch with separate recursive frame tokens, let/var scalar arrays in lexical scopes of ordinary functions, indexed reads/writes, copy initializers, length access, lexical cleanup including `?` failure, by-value parameters, source results, and bare-name, call-result, and repeated-literal assignment are implemented; private entry-owned struct IR/verifier and metered VM dispatch exist; source struct declarations attach immutable layouts; bounded entry construction, record bindings, one-level scalar field reads/writes, bare-name record copy initialization, and whole-record assignment lower to `SINIT`, `SREAD`, `SWRITE`, `SCOPY`, `SASSIGN`, and atomic `SSUBASSIGN`; helper-local records are implemented; for-header record writes/copies remain rejected; bounded nested constructors, multi-segment scalar paths, and whole-root copies are implemented, and child fields also accept whole visible bindings of the exact nominal type; the nested result is historical after that compiler change, subrecord declaration extraction is also implemented; immutable nominal by-value record parameters with bare binding arguments are verified in development and release, while bounded bare-name record returns and exact-nominal `let`/`var` call initializers are now implemented through the existing record-result IR and VM at `bb401a4`; direct nominal record constructor returns are verified in development and release at `0a7b539`; exact-nominal subrecord return paths are implemented at `d4aa643`; development and release each passed 25 native groups and 579 CLI cases with 205 matching input hashes; exact-nominal record calls in constructor child fields are implemented at `c4cd6ab`, verified in development and release; record borrows remain unavailable; private record-result VM transfer is verified for its original source-gated inputs
 - Nominal record-result signature metadata is implemented and verified for its
   original baseline (22 native groups and 2,317 CLI cases per profile). A nominal
   result stores ID + 1 in `return_records`. Its former blanket pre-IR rejection is
@@ -1279,10 +1283,12 @@ fit a four-byte payload quota, while reconstructing a four-byte parameter keeps
 the old formal copy and the new result live together until cleanup: eight
 callee payload bytes, plus caller originals and any captures in the shared quota.
 
-General return expressions, parenthesized constructor returns, and record calls
-in aggregate fields remain unsupported. Exact-nominal subrecord paths and
-exact-nominal child call-result assignment now have successors below. There is
-no new opcode, VM charge, profile, or version field.
+General return expressions, parenthesized constructor returns, general aggregate
+arguments, parenthesized child calls, and call-result field selection remain
+unsupported. Exact-nominal record calls in constructor child fields now have a
+[successor contract](docs/engineering/m2-struct-child-calls.md); exact-nominal
+subrecord paths and child call-result assignment also have successors below.
+There is no new opcode, VM charge, profile, or version field.
 
 The fixture at `tests/m2/struct_return_constructors.fy` has six native groups,
 including eleven successful programs, eleven type rejections, and the
@@ -1303,6 +1309,64 @@ commit with the same source changes; the other three phases ran after it. Earlie
 and harness inputs. The focused harness does not cover full native or CLI suites,
 M0, Linux, isolation, DLL embedding, packaging, allocation instrumentation, or
 performance.
+
+### Record calls in constructor child fields
+
+[Record calls in constructor child fields](docs/engineering/m2-struct-child-calls.md)
+are implemented at `c4cd6ab` and verified in development and release. An
+exact-nominal child field may now use a bare call,
+such as `R { .p = make(args) }`. `compiler::record_child_call` reuses the exact
+record-result destination and normal `call_value` argument evaluation. It then
+emits `SREAD` and `STORE` for every returned scalar leaf through the shared
+`struct_value_source::stage_part`, followed by `SDROP`, before any later field
+or the parent's `SINIT`, `SREPLACE`, or `SSUBREPLACE`.
+
+A new parent binding and the anonymous child destination are absent from the
+local name table during argument evaluation. An existing replacement parent
+stays visible and live; early-exit cleanup may drop it. Existing cleanup handles
+early `return`, `?`, `break`, and `continue`; argument effects are not rolled
+back. A pending constructor parent occupies no payload during the child call.
+A live eight-byte replacement parent plus a four-byte child needs twelve bytes
+before captures, formals, or other locals are counted. A fresh four-byte parent
+and four-byte child have nonoverlapping lifetimes: four bytes succeeds and
+three reports `array_limit`.
+
+The shared `record_constructor` reaches this path from declarations, root and
+child replacement, and direct constructor returns. Existing child binding and
+path staging delegates to `stage_part` without an owner. Scalar calls are
+unchanged. General aggregate arguments, parenthesized child calls, and
+call-result field selection remain unsupported. No opcode, VM rule, Fuel price,
+profile, or version field changes.
+
+The fixture at `tests/m2/struct_child_calls.fy` has six native groups with
+fifteen successful and twelve type-rejection programs. It checks instruction
+order, rejects a missing `SDROP` mutation, and exercises the four/three-byte
+quota boundary. The new CLI matrix has 154
+cases: 27 fixture programs through `check` and `run`, 48 scalar-boundary programs
+through both commands, and two repeated-assignment boundaries through both.
+The native selection is 23 groups per profile: six new, five child-path, six
+constructor-return, and six child-call-assignment regressions. The regression
+CLI totals 529 cases: 154 new, 83 child path, 144 constructor return, and 148
+child call-assignment.
+
+Development and release each passed all 23 native groups (6 core,
+17 regressions) and 529 CLI cases (154 + 83 + 144 + 148) in four separate phase
+invocations. Development core ran before implementation commit
+`c4cd6ab4a317aedfe46af9266b10eee9de30a9e3` with the same implementation files
+uncommitted; development regressions, release core, and release regressions
+ran after it. All four phases rechecked the same 211 raw input hashes before
+final formatting, with identical compiler/SDK identities and confirmed hashes
+for both retained executables.
+
+After all four phases, removing sixteen spaces from otherwise empty checker
+line 63 was validated as an exact reversible byte change with an identical
+Python AST, recorded in `postVerificationFormatting` with verified/current
+hashes; product tests were not rerun.
+
+The [Windows receipt](docs/evidence/m2-struct-child-calls-windows-20261028.json)
+archives all four phases. This focused selection does not cover
+full native or CLI suites, M0, Linux, isolation, DLL embedding, packaging,
+allocation instrumentation, or performance.
 
 ### Exact-nominal subrecord return paths
 

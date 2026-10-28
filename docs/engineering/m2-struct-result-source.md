@@ -66,6 +66,11 @@ general aggregate arguments. A record-result function also cannot use `?`
 propagation because its result context is a record rather than a scalar or shallow
 wrapper.
 
+An exact-nominal constructor child field is a separate source position. The
+[constructor child-call successor](m2-struct-child-calls.md) now accepts
+`R { .child = make() }` there while general aggregate arguments remain
+unsupported.
+
 ## Result anchors and compiler context
 
 Result sites are prepared after record-parameter sites and before any function
@@ -151,6 +156,9 @@ profile. The remaining unsupported forms are:
 - record-result calls in scalar expressions or general aggregate arguments;
 - record wrappers, borrows, `ref` results, or `var` results;
 - record construction in a `for` header.
+
+The constructor child-call successor adds only the exact-nominal child-field
+position described above; it does not broaden these remaining contexts.
 
 These forms fail during compilation instead of reaching an invalid IR type or a
 partially initialized caller destination.
