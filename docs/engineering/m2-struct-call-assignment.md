@@ -1,10 +1,12 @@
 # M2 Root Record Assignment from Call Results
 
-- Status: implemented at `0a6a759`; verified in development and release on Windows.
+- Status: implemented at `0a6a759`; verified for its original inputs. Its receipt is
+  historical after later assignment changes.
 - Scope: `p = make(args);` for a mutable, exact-nominal root record `p`.
 - Implementation: [assignment branch](../../src/compiler.fy), [result helper](../../src/struct_result_source.fy), [fixture](../../tests/m2/struct_call_assignment.fy), [harness](../../tools/verify-m2-struct-call-assignment.py).
 - Predecessor: [direct nominal record constructor returns](m2-struct-return-constructors.md).
-- Successor: [exact-nominal child call-result assignment](m2-struct-child-call-assignment.md).
+- Successors: [exact-nominal child call-result assignment](m2-struct-child-call-assignment.md)
+  and [exact-nominal returned-subrecord assignment](m2-struct-call-path-assignment.md).
 - Evidence: [Windows receipt](../evidence/m2-struct-call-assignment-windows-20261028.json).
 
 This slice lets a record-result call replace an existing mutable root payload using CALL, SASSIGN, and SDROP.
@@ -31,6 +33,10 @@ The [child call-assignment successor](m2-struct-child-call-assignment.md) extend
 same destination rule to exact-nominal child paths, including deep paths. For-header
 clauses remain unavailable; a parenthesized call (`p = (make())`) and general
 aggregate expressions do not enter this branch.
+
+Bare whole-result assignment retains this `SASSIGN` lowering. An exact-nominal child
+selected from the returned result instead uses the [returned-subrecord assignment
+successor](m2-struct-call-path-assignment.md).
 
 ## Evaluation and publication
 

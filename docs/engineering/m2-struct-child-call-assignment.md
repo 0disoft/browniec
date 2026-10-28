@@ -1,6 +1,7 @@
 # M2 Child Record Assignment from Call Results
 
-- Status: implemented at `63be9e5`; verified in development and release.
+- Status: implemented at `63be9e5`; verified for its original inputs. Its receipt is
+  historical after later call-path changes.
 - Scope: `outer.child = make(args);` for a mutable, exact-nominal child
   record, including deep paths such as `outer.middle.child = make(args);`.
 - Implementation: [shared assignment helper](../../src/compiler.fy),
@@ -9,6 +10,7 @@
 - Harness: [verify-m2-struct-child-call-assignment.py](../../tools/verify-m2-struct-child-call-assignment.py).
 - Predecessors: [root record call-result assignment](m2-struct-call-assignment.md)
   and [atomic subrecord assignment](m2-struct-subassign-atomic.md).
+- Successor: [exact-nominal returned-subrecord assignment](m2-struct-call-path-assignment.md).
 - Evidence: [Windows receipt](../evidence/m2-struct-child-call-assignment-windows-20261028.json).
 
 This slice extends record-result assignment from an existing mutable root to an
@@ -51,13 +53,17 @@ continues through `record_results::assigned` and `SASSIGN`; a child continues
 through `struct_result_source::subassigned` and the existing `SSUBASSIGN`
 (47) instruction.
 
+A returned child path is now a separate source form. The [returned-subrecord
+assignment successor](m2-struct-call-path-assignment.md) accepts an exact-nominal
+`make().child` or deeper returned path. This document owns a bare whole returned
+root assigned into the existing root or child destination.
+
 The form is accepted as an ordinary function statement and in the same
 statement-bearing contexts as root call-result assignment. A parenthesized call,
 general aggregate expression, scalar endpoint, or for-header assignment remains
-unsupported and fails during compilation. A trailing field selection such as
-`outer.child = make().field;` enters the call helper, but the unexpected
-field selector fails the required terminator check. It is rejected as a syntax
-error before execution.
+unsupported and fails during compilation. A returned call-child path is accepted
+only by the successor when both endpoints have the same exact nominal identity;
+other trailing forms fail path or terminator validation before execution.
 
 This document owns a call assigned into an existing child destination. The later
 [constructor child-call slice](m2-struct-child-calls.md) separately admits an
@@ -120,8 +126,9 @@ frames, eight call arguments, and 32 call sites.
 
 The focused fixture has six native `@test` groups. Together they exercise
 twelve successful programs and twelve negative programs. The negatives comprise
-eleven type rejections and one syntax rejection for the trailing
-`make().field` form.
+eleven type rejections and one syntax rejection for a malformed `make()+0`
+delimiter. This preserves the original syntax-rejection count; valid
+`make().field` returned-child paths now belong to the successor.
 
 The groups cover deep child paths, scalar neighbors before and after the target,
 all six scalar kinds at their extrema, argument snapshots, mutations of the
@@ -175,14 +182,16 @@ artifact was retained, and 208 input hashes remained unchanged across the
 development phases. The new 148-case CLI selection had also passed on the
 diagnostic build before the full regression invocation.
 
-Development and release each passed 26 native groups and 575 CLI cases in four
+For the archived inputs, development and release each passed 26 native groups and 575 CLI cases in four
 separate phase invocations. All 208 input hashes matched across the phases;
 compiler and SDK identities matched, and the retained development and release
 executable hashes were confirmed. Development core ran before `63be9e5` with
 the implementation files uncommitted; the other three phases ran after it. The
 [archived Windows receipt](../evidence/m2-struct-child-call-assignment-windows-20261028.json)
 records the provenance, commands, identities, and outcomes. The initial failed
-fixture attempt remains diagnostic rather than part of the passing totals.
+fixture attempt remains diagnostic rather than part of the passing totals. That
+receipt remains historical after the returned-child-path feature and syntax-fixture
+change; the successor records 16 native groups and 440 CLI cases passed per profile.
 
 Earlier receipts remain historical for their original inputs. This focused
 selection does not cover full native or CLI suites, M0, Linux, isolation, DLL

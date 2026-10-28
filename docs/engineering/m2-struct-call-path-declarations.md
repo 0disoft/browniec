@@ -1,11 +1,13 @@
 # M2 Returned Subrecords in Declarations
 
-- Status: implemented at `e38f00ac92a7729efa8417982a8f096b0145838d`; verified in development and release.
+- Status: implemented at `e38f00ac92a7729efa8417982a8f096b0145838d`; verified for
+  its original inputs. Its receipt is historical after later assignment changes.
 - Scope: `let P p=make().child`, `var P p=make().child`, and deeper exact-nominal returned paths.
 - Implementation: [`compiler::record_declaration`](../../src/compiler.fy) and
   [`struct_value_source::extracted_call`](../../src/struct_value_source.fy).
 - Fixture: [native checks](../../tests/m2/struct_call_path_declarations.fy).
 - Harness: [focused verifier](../../tools/verify-m2-struct-call-path-declarations.py).
+- Successor: [returned subrecords as assignment values](m2-struct-call-path-assignment.md).
 - Evidence: [Windows receipt](../evidence/m2-struct-call-path-declarations-windows-20261028.json).
 
 ```brownie
@@ -58,8 +60,9 @@ The native fixture requires a 12-byte parent with an 8-byte child to run at a
 12-byte payload limit; 11 must fail through the quota error. It also requires the
 `SREAD`/root-`SDROP`/child-`SINIT` order and verifier rejection if the drop is removed.
 
-Parenthesized or general aggregate expressions, returned-call subrecord assignment,
-child constructor-field or return selection, and record borrows remain unsupported.
+Parenthesized or general aggregate expressions, child constructor-field or return
+selection, and record borrows remain unsupported. Returned-call child paths in
+assignments belong to the successor.
 
 ## Focused verification
 
@@ -85,8 +88,8 @@ and elapsed-time performance are outside this slice.
 
 ## Archived verification
 
-Development and release each passed 22 native groups and 537 CLI cases.
+For the archived inputs, development and release each passed 22 native groups and 537 CLI cases.
 Both invocations rechecked 238 identical input hashes and matching compiler/SDK
 identities; both retained executable hashes matched their CLI receipts. Development
 ran from `d492cae` with implementation files uncommitted; release ran after
-`e38f00a`. The selection above is now verified for these archived inputs.
+`e38f00a`. This receipt remains historical for its original inputs.

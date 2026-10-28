@@ -10,6 +10,10 @@ own the affected contract. Broader scaffold procedures are optional.
 
 ## Current state
 
+- Returned subrecords as assignment values: implemented at `2971169` and verified in
+  development and release, each with 16 native groups and 440 CLI cases. Both
+  combined invocations rechecked 241 identical inputs.
+  See [the source contract](docs/engineering/m2-struct-call-path-assignment.md).
 - Returned subrecords as declaration initializers: implemented at `e38f00a` and verified in
   development and release, each with 22 native groups and 537 CLI cases. Both
   combined invocations rechecked 238 identical inputs.

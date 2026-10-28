@@ -1665,3 +1665,20 @@ See [the source contract](docs/engineering/m2-struct-call-path-declarations.md).
 Full suites, M0, Linux, isolation, DLL embedding, packaging, allocation
 instrumentation and elapsed-time performance are outside this slice. Previous
 receipts remain historical for their original inputs.
+
+## Returned-subrecord assignment values
+
+Implemented at `297116966cfedd0ed2eed8c93c0ef522da0ed1fd` and verified in development and release.
+Both invocations rechecked 241 identical input hashes and matching compiler/SDK
+identities. See the [Windows receipt](docs/evidence/m2-struct-call-path-assignment-windows-20261028.json).
+Each profile passed 16 native groups and 440 CLI cases per development
+and release profile: four new returned-subrecord assignment groups, six root
+call-assignment regressions, and six child call-assignment regressions. The CLI
+selection is 144 new cases plus 148 root-assignment and 148 child-assignment cases.
+
+
+Run `python -B tools/verify-m2-struct-call-path-assignment.py --profile development`
+and repeat with `--profile release`. Full suites, M0, Linux, isolation, DLL
+embedding, packaging, allocation instrumentation, and elapsed-time performance are
+outside this focused selection. Earlier receipts remain historical for their
+original inputs.
