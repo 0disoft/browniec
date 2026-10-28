@@ -1,5 +1,11 @@
 # Roadmap
 
+- Returned subrecords as declaration initializers: implemented at `e38f00a` and verified in
+  development and release, each with 22 native groups and 537 CLI cases. Both
+  combined invocations rechecked 238 identical inputs.
+  `let Point p = make().child;` and `var` create an independent exact-nominal
+  child after releasing the returned root. Pending names remain invisible until
+  CALL, path and delimiter validation finish. See [the source contract](../engineering/m2-struct-call-path-declarations.md).
 - Returned subrecords as arguments: implemented at `7284da8` and verified in
   development and release, each with 17 native groups and 410 CLI cases. Both
   combined invocations rechecked 235 identical inputs.

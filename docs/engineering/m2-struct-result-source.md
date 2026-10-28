@@ -176,6 +176,13 @@ contexts.
 These forms fail during compilation instead of reaching an invalid IR type or a
 partially initialized caller destination.
 
+
+The [returned-subrecord declaration successor](m2-struct-call-path-declarations.md)
+adds exact-nominal `let`/`var` initializers from `make().child`, including deeper
+paths. Its focused evidence is separate; the counts below remain historical for
+this document's original inputs.
+
+
 ## Verification status
 
 The counts below describe the original named-result baseline. Changed compiler

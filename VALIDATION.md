@@ -1644,3 +1644,24 @@ Every final report must list executed checks, actual results, skipped checks and
 reasons, artifact/toolchain identity, and remaining risk. Acceptance of a design does
 not mean implementation. Release evidence must be tied to the shipped binary and its
 supported profile.
+
+## Returned-subrecord declaration initializers
+
+Implemented at `e38f00ac92a7729efa8417982a8f096b0145838d` and verified in development and release.
+Both invocations rechecked 238 identical input hashes and matching compiler/SDK
+identities. See the [Windows receipt](docs/evidence/m2-struct-call-path-declarations-windows-20261028.json).
+`let Point p = make().child;` and `var` resolve an exact-nominal child, snapshot
+its scalar leaves, drop the anonymous root, then create an independent child.
+The destination name is published only after CALL and path/delimiter validation.
+Bare whole-result declarations retain direct ownership transfer. No opcode, VM,
+Fuel price, profile or version capability changes.
+
+Each profile passed 22 native groups (5 new, 5 named
+extraction, 8 record-result source, 4 returned-subrecord arguments) and 537 CLI
+cases (152 new, 117 extraction, 166 result source, 102 returned-subrecord
+arguments). Run `python -B tools/verify-m2-struct-call-path-declarations.py
+--profile development` and repeat with `--profile release`.
+See [the source contract](docs/engineering/m2-struct-call-path-declarations.md).
+Full suites, M0, Linux, isolation, DLL embedding, packaging, allocation
+instrumentation and elapsed-time performance are outside this slice. Previous
+receipts remain historical for their original inputs.

@@ -66,6 +66,13 @@ assignments, child constructor fields and direct subrecord returns from calls
 are outside this slice. Record borrows and implicit nominal conversions remain
 unavailable. The callee's formal remains immutable.
 
+
+The [returned-subrecord declaration successor](m2-struct-call-path-declarations.md)
+adds exact-nominal `let`/`var` initializers from `make().child`, including deeper
+paths. Its focused evidence is separate; the counts below remain historical for
+this document's original inputs.
+
+
 ## Verification
 
 Development and release each passed seventeen native groups:

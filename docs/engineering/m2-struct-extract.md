@@ -76,6 +76,13 @@ declarations, struct parameters/results, borrows, and general aggregate
 expressions remain unsupported. Bare whole-binding copies keep their existing
 `SCOPY` lowering.
 
+
+The [returned-subrecord declaration successor](m2-struct-call-path-declarations.md)
+adds exact-nominal `let`/`var` initializers from `make().child`, including deeper
+paths. Its focused evidence is separate; the counts below remain historical for
+this document's original inputs.
+
+
 ## Verification
 
 Development and release each passed 26 native groups and 2,915 CLI cases.
