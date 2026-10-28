@@ -219,9 +219,14 @@ fn Result<usize,errors::Error> record_argument(ref u8[] source,ref mut lexer::St
             let usize at=s.begin;
             if(locals::find(source,names,s.begin,s.end)!=64) {return .err(errors::make(3,at));}
             let usize target=functions::find(source,signatures,s.begin,s.end);
-            let usize temporary=record_results::destination(signatures,target,record,false,p,names.function,at)?;
+            if(target>=signatures.count || signatures.return_records[target]==0) {return .err(errors::make(3,at));}
+            let usize nominal=(signatures.return_records[target] as usize)-1;
+            var usize temporary=record_results::destination(signatures,target,nominal,false,p,names.function,at)?;
             let usize name=lexer::next(source,s)?;
             let usize called=call_value(source,s,p,names,signatures,target,144+temporary,at,depth+1,result_type,structure,loop_state)?;
+            if(s.kind==46) {
+                temporary=record_values::extracted_call_argument(source,s,p,names.function,temporary,record,at)?;
+            } else if(nominal!=record) {return .err(errors::make(3,at));}
             if(s.kind!=44 && s.kind!=41) {return .err(errors::make(3,s.begin));}
             let usize captured=locals::declare(names,at,at,144+temporary,false)?;
             return .ok(144+temporary);

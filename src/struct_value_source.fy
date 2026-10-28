@@ -288,13 +288,28 @@ fn Result<usize, errors::Error> extract_operand(ref u8[] source, ref mut lexer::
     if(argument) {
         if(s.kind!=44 && s.kind!=41) {return .err(errors::make(3,s.begin));}
     } else {let usize end=lexer::punctuation(source,s,59)?;}
+    return extract_part(p,names.function,source_id,part,mutable,offset,at,false);
+}
+// A returned root has no guest name. Snapshot its child, release the root,
+// then create the immutable argument so its extent can reuse reclaimed bytes.
+pub fn Result<usize, errors::Error> extracted_call_argument(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,usize function,usize source_id,usize record,usize at) {
+    if(source_id>=p.records.count || s.kind!=46) {return .err(errors::make(3,at));}
+    let Leaf part=path(source,s,p,p.records.records[source_id] as usize,at)?;
+    if(part.tag!=0 || part.record!=record) {return .err(errors::make(3,at));}
+    if(s.kind!=44 && s.kind!=41) {return .err(errors::make(3,s.begin));}
+    return extract_part(p,function,source_id,part,false,at,at,true);
+}
+fn Result<usize, errors::Error> extract_part(ref mut ir::Program p,usize function,
+    usize source_id,Leaf part,bool mutable,usize offset,usize at,bool consume) {
     let usize count = leaf_count(p,part.record,at)?;
     let usize first = p.registers;
     var usize i = 0;
     while (i < count) {
         let usize read = ir::record_read(p,source_id,part.ordinal+i,at)?; i += 1;
     }
-    let usize id = ir::record_in(p,names.function,record,mutable,offset)?;
+    if(consume) {let usize dropped=ir::record_drop(p,source_id,at)?;}
+    let usize id = ir::record_in(p,function,part.record,mutable,offset)?;
     let usize init = ir::record_init(p,id,first,offset)?;
     return .ok(id);
 }
