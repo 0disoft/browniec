@@ -190,6 +190,21 @@ fn Result<usize,errors::Error> record_argument(ref u8[] source,ref mut lexer::St
 fn Result<usize,errors::Error> array_argument(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
     u8 element,usize length,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state) {
+    if(s.kind==91) {
+        let usize at=s.begin;
+        let usize open=lexer::next(source,s)?;
+        let usize value=expression(source,s,p,names,signatures,1,depth+1,element,result_type,structure,loop_state)?;
+        if(p.types[value]!=element) {return .err(errors::make(3,at));}
+        let usize separator=lexer::punctuation(source,s,59)?;
+        let usize repeated=arrays::count(source,s)?;
+        if(repeated!=length) {return .err(errors::make(3,at));}
+        let usize close=lexer::punctuation(source,s,93)?;
+        if(s.kind!=44 && s.kind!=41) {return .err(errors::make(3,s.begin));}
+        let usize temporary=ir::array_in(p,names.function,element,length,false,at)?;
+        let usize initialized=ir::array_init(p,temporary,value,at)?;
+        let usize captured=locals::declare(names,at,at,128+temporary,false)?;
+        return .ok(128+temporary);
+    }
     if(s.kind==2) {
         var lexer::State look=lexer::snapshot(s);
         let usize next=lexer::next(source,ref mut look)?;

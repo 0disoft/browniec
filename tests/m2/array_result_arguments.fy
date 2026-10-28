@@ -75,6 +75,6 @@ fn void invalid_shapes_and_general_array_argument_forms_fail() {
  rejected(b"module main;fn i32[1] make(){return [42;1];}fn i32 take(i32[1] a){return a[0];}fn i32 main(){return take(make(1));}");
  rejected(b"module main;fn i32[1] make(){return [42;1];}fn i32 take(i32[1] a){return a[0];}fn i32 main(){return take((make()));}");
  rejected(b"module main;fn i32[1] make(){return [42;1];}fn i32 take(i32[1] a){return a[0];}fn i32 main(){return take(make()[0]);}");
- rejected(b"module main;fn i32 take(i32[1] a){return a[0];}fn i32 main(){return take([42;1]);}");
+ rejected(b"module main;fn i32 take(i32[1] a){return a[0];}fn i32 main(){return take(([42;1]));}");
  rejected(b"module main;fn i32[1] make(){return [42;1];}fn i32 take(i32[1] a){a[0]=0;return a[0];}fn i32 main(){return take(make());}");
 }
