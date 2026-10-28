@@ -1,5 +1,11 @@
 # Roadmap
 
+- Returned subrecords in constructor fields: implemented at `c0d6217` and verified in
+  development and release, each with 16 native groups and 442 CLI cases. Both
+  combined invocations rechecked 247 identical inputs.
+  `Box { .child = make().child }` stages only the selected exact-nominal leaves
+  and releases the returned root before later fields. Declarations, replacement
+  and constructor returns share this path. See [the source contract](../engineering/m2-struct-child-call-paths.md).
 - Returned subrecords as direct returns: implemented at `c789300` and verified in
   development and release, each with 16 native groups and 444 CLI cases. Both
   combined invocations rechecked 244 identical inputs.

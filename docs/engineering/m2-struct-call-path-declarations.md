@@ -60,8 +60,7 @@ The native fixture requires a 12-byte parent with an 8-byte child to run at a
 12-byte payload limit; 11 must fail through the quota error. It also requires the
 `SREAD`/root-`SDROP`/child-`SINIT` order and verifier rejection if the drop is removed.
 
-Parenthesized or general aggregate expressions, child constructor-field selection,
-and record borrows remain unsupported. Returned-call child paths in
+Parenthesized or general aggregate expressions and record borrows remain unsupported. Returned-call child paths in
 assignments belong to the successor.
 
 
@@ -71,6 +70,13 @@ verification is separate; counts in this document remain historical for their
 original inputs. Parenthesized/general aggregate returns remain unavailable.
 The named-return fixture now rejects `(make().p)` instead of the newly accepted
 bare call path, preserving its negative case count.
+
+
+The [returned-subrecord constructor-field successor](m2-struct-child-call-paths.md)
+now accepts `Box { .child = make().child }` and deeper exact-nominal paths,
+including declaration, replacement and constructor-return contexts. Its focused
+receipt is separate; counts in this document remain historical for their
+original inputs. Parenthesized/general aggregate operands remain unavailable.
 
 ## Focused verification
 

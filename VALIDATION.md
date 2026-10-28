@@ -1700,3 +1700,23 @@ and repeat with `--profile release`. See [the source contract](docs/engineering/
 Full suites, M0, Linux, isolation, DLL embedding, packaging, allocation
 instrumentation and elapsed-time performance are outside this focused selection.
 Earlier receipts remain historical for their original inputs.
+
+## Returned-subrecord constructor fields
+
+Implemented at `c0d621745cd88b0de30e9c8a727e99e87dbc946e` and verified in development and release.
+Both invocations rechecked 247 identical input hashes and matching compiler/SDK
+identities. See the [Windows receipt](docs/evidence/m2-struct-child-call-paths-windows-20261028.json).
+`Box { .child = make().child }` resolves the exact-nominal endpoint and stores
+only its scalar leaves in existing parent staging slots. The returned root is
+released before later fields; no independent source child is created. Pending
+parents stay unnamed and dead; replacement destinations remain live until the
+existing atomic overwrite. No opcode, VM, Fuel, profile or version change.
+
+Each profile passed 16 native groups (4 new, 6 bare
+child calls, 6 constructor returns) and 442 CLI cases (144 new, 154 bare child
+calls, 144 constructor returns). Run `python -B tools/verify-m2-struct-child-call-paths.py
+--profile development` and repeat with `--profile release`.
+See [the source contract](docs/engineering/m2-struct-child-call-paths.md).
+Full suites, M0, Linux, isolation, DLL embedding, packaging, allocation
+instrumentation and elapsed-time performance are outside this focused selection.
+Earlier receipts remain historical for their original inputs.

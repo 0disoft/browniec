@@ -36,6 +36,13 @@ fn i32 main() {
 }
 ```
 
+
+The [returned-subrecord constructor-field successor](m2-struct-child-call-paths.md)
+now accepts `Box { .child = make().child }` and deeper exact-nominal paths,
+including declaration, replacement and constructor-return contexts. Its focused
+receipt is separate; counts in this document remain historical for their
+original inputs. Parenthesized/general aggregate operands remain unavailable.
+
 ## Accepted form
 
 For an exact-nominal record child field, the value may be a bare function name
@@ -52,10 +59,9 @@ replacement, and a direct constructor-return operand. Nested constructors may
 place the call at any supported child depth. The existing constructor path may
 also select a whole visible child binding or a dotted exact-nominal path.
 
-The child call remains unsupported when it is parenthesized, when the returned
-record is followed by field selection, or when a parenthesized constructor argument,
-wrong result type, unknown or locally shadowed callee, or general aggregate
-expression is used for a record formal. A bare exact-shape array-call argument now has its own
+Parenthesized child calls remain unsupported. A wrong result type, unknown or
+locally shadowed callee, or parenthesized/general aggregate operand for a record
+formal is rejected. A bare exact-shape array-call argument now has its own
 [successor](m2-array-result-arguments.md).
 Those forms fail during compilation. Bare exact-nominal child-path arguments
 now have a separate [successor](m2-struct-path-arguments.md).

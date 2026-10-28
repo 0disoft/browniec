@@ -30,6 +30,13 @@ such as `return source.child;` retains its independent copy from a live source.
 The new call-root path copies the selected child leaves out of the returned
 temporary root, then releases that root.
 
+
+The [returned-subrecord constructor-field successor](m2-struct-child-call-paths.md)
+now accepts `Box { .child = make().child }` and deeper exact-nominal paths,
+including declaration, replacement and constructor-return contexts. Its focused
+receipt is separate; counts in this document remain historical for their
+original inputs. Parenthesized/general aggregate operands remain unavailable.
+
 ## Lowering and ownership
 
 For each dotted return, the compiler uses two static record sites in the
@@ -67,7 +74,6 @@ These forms remain unsupported and fail during compilation:
 - parenthesized or general aggregate returns, including `return (make().child);`;
 - wrong nominal or scalar endpoints, unknown fields, and a local name used as a callee;
 - record borrows, `ref`/`var` record results, and wrapper results;
-- constructor child-call field selection, such as `R { .child = make().child }`;
 - scalar `?` in a record-result function.
 
 ## Focused verification
