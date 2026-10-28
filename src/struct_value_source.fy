@@ -291,14 +291,20 @@ fn Result<usize, errors::Error> extract_operand(ref u8[] source, ref mut lexer::
     return extract_part(p,names.function,source_id,part,mutable,offset,at,false);
 }
 // A returned root has no guest name. Snapshot its child, release the root,
-// then create the immutable argument so its extent can reuse reclaimed bytes.
+// then create an independent child so its extent can reuse reclaimed bytes.
 pub fn Result<usize, errors::Error> extracted_call_argument(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,usize function,usize source_id,usize record,usize at) {
+    return extracted_call(source,s,p,function,source_id,record,false,at,true);
+}
+pub fn Result<usize, errors::Error> extracted_call(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,usize function,usize source_id,usize record,bool mutable,usize at,bool argument) {
     if(source_id>=p.records.count || s.kind!=46) {return .err(errors::make(3,at));}
     let Leaf part=path(source,s,p,p.records.records[source_id] as usize,at)?;
     if(part.tag!=0 || part.record!=record) {return .err(errors::make(3,at));}
-    if(s.kind!=44 && s.kind!=41) {return .err(errors::make(3,s.begin));}
-    return extract_part(p,function,source_id,part,false,at,at,true);
+    if(argument) {
+        if(s.kind!=44 && s.kind!=41) {return .err(errors::make(3,s.begin));}
+    } else {let usize end=lexer::punctuation(source,s,59)?;}
+    return extract_part(p,function,source_id,part,mutable,at,at,true);
 }
 fn Result<usize, errors::Error> extract_part(ref mut ir::Program p,usize function,
     usize source_id,Leaf part,bool mutable,usize offset,usize at,bool consume) {

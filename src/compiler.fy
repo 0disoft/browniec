@@ -497,12 +497,19 @@ fn Result<usize, errors::Error> record_declaration(ref u8[] source, ref mut lexe
         if(look.kind==40) {
             if(locals::find(source,table,s.begin,s.end)!=64) {return .err(errors::make(3,s.begin));}
             let usize at=s.begin;let usize target=functions::find(source,signatures,s.begin,s.end);
-            let usize id=record_results::destination(signatures,target,record,mutable,p,table.function,at)?;
+            if(target>=signatures.count || signatures.return_records[target]==0) {return .err(errors::make(3,at));}
+            let usize nominal=(signatures.return_records[target] as usize)-1;
+            var usize id=record_results::destination(signatures,target,nominal,mutable,p,table.function,at)?;
             let usize name=lexer::next(source,s)?;
             // Pending destinations remain invisible during all argument effects.
             let usize value=call_value(source,s,p,table,signatures,target,144+id,at,expr_depth,result_type,structure,loop_state)?;
-            let usize end=lexer::punctuation(source,s,terminator)?;
-            return locals::declare(table,header.begin,header.end,value,mutable);
+            if(s.kind==46) {
+                id=record_values::extracted_call(source,s,p,table.function,id,record,mutable,at,false)?;
+            } else {
+                if(nominal!=record) {return .err(errors::make(3,at));}
+                let usize end=lexer::punctuation(source,s,terminator)?;
+            }
+            return locals::declare(table,header.begin,header.end,144+id,mutable);
         }
     }
     if (!record_values::constructor(source,s,record)?) { return record_values::copy(source,s,p,table,header); }
