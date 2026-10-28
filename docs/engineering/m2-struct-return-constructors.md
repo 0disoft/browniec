@@ -107,14 +107,21 @@ The following forms remain unsupported:
 
 - general return expressions around a constructor;
 - a parenthesized constructor, such as `return (Pair { ... });`;
-- a returned subrecord path, such as `return value.inner;`;
 - assignment of a record-result call into a child path;
 - record-result calls in aggregate fields, such as `Outer { .inner = make() }`;
-- field paths, scalars, arrays, or wrappers as the direct record-result operand;
+- scalar fields, scalars, arrays, or wrappers as the direct record-result operand;
 - record wrappers, borrows, `ref` results, and `var` results.
 
 These forms are rejected during compilation. They do not reach an uninitialized
 caller destination or rely on a partial record owner.
+
+The later [subrecord return-path slice](m2-struct-return-paths.md) supports a
+bare exact-nominal `return value.inner;`, including deep paths, and is verified
+in development and release with 25 native groups and 579 CLI cases per profile.
+It copies the selected leaves into one independent result site and leaves the
+source live. Record borrows, general or parenthesized expressions, and
+`call().child` returns remain unsupported. The constructor counts below remain
+historical for this slice's original inputs.
 
 ## Verification
 

@@ -136,11 +136,16 @@ profile strings remain unchanged. `--version --json` adds
 
 ## Remaining unsupported forms
 
-This slice originally rejected `return Constructor { ... };`; the
-[constructor-return successor](m2-struct-return-constructors.md) now supports
-that direct form. The remaining unsupported forms are:
+This slice originally rejected `return Constructor { ... };` and subrecord
+paths. The [constructor-return successor](m2-struct-return-constructors.md)
+supports the direct constructor form, and the
+[subrecord return-path successor](m2-struct-return-paths.md) supports a bare
+exact-nominal `return outer.child;`, including deep paths. That successor is
+verified in development and release, with 25 native groups and 579 CLI cases per
+profile. The remaining unsupported forms are:
 
-- field, parenthesized, or aggregate return expressions;
+- scalar field, parenthesized, or aggregate return expressions;
+- field selection from a returned call, such as `return make().child;`;
 - assignment of a call result into a child path;
 - record-result calls in scalar expressions or general aggregate arguments;
 - record wrappers, borrows, `ref` results, or `var` results;

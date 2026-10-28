@@ -71,6 +71,20 @@ own the affected contract. Broader scaffold procedures are optional.
   records 199 matching rechecked inputs and both retained CLI identities.
   Earlier receipts remain historical for their original inputs. See [the
   contract](docs/engineering/m2-struct-return-constructors.md).
+- Exact-nominal subrecord return paths are implemented at `d4aa643` and verified
+  in development and release. A bare `return outer.child;` accepts an
+  exact-nominal record endpoint, including deep paths. The shared
+  extractor emits consecutive `SREAD` operations into consecutive registers,
+  allocates one anonymous immutable site, and emits one `SINIT`; the source
+  stays live through creation. The shared finisher drops other mixed arrays and
+  records in reverse order before `SRET`. No opcode, Fuel charge, profile, or
+  version field changes. Development and release each passed 25 native groups
+  (6 core, 19 regressions) and 579 CLI cases. All four phase invocations
+  rechecked 205 identical inputs; development core ran before `d4aa643` and the
+  other phases ran after it. Record borrows, general/parenthesized expressions,
+  and `call().child` returns remain unsupported. Earlier receipts remain
+  historical for their original inputs. See [the
+  contract](docs/engineering/m2-struct-return-paths.md).
 - The record-result IR slice's evidence remains 39 unique native groups and 2,317 CLI cases in development and release. The [core receipt](docs/evidence/m2-struct-results-ir-core-windows-20261028.json) records 21 native groups (8 new record-result, 6 array-result, 7 record-parameter), CLI builds and all 2,317 cases; the [regression receipt](docs/evidence/m2-struct-results-ir-regressions-windows-20261028.json) records 18 native-only groups (6 array-result VM, 8 record-call VM, 4 scalar-function), with no build or CLI rerun. CLI coverage is 72 record-result signature, 66 record-formal signature, 114 source record-parameter, 96 array-result signature and 1,969 M1 cases per profile. These were two separate phase invocations across implementation commit `dc1574b`, with disjoint native selections and matching 212 input hashes, compiler and SDK identities. All inputs and the final release CLI were rechecked before archival. Full native/CLI suites, M0, Linux, isolation, DLL, packaging, allocation instrumentation and performance were not run.
 - M2 has private scalar-array layout, codec, caller-backed storage, owner-lifetime and copy helpers;
   private function-owned array IR has independent verification and metered native VM dispatch. The current
