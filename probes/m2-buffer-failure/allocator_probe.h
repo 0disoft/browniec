@@ -11,6 +11,8 @@
 static size_t brownie_buffer_live = 0;
 static size_t brownie_buffer_target = 0;
 static size_t brownie_buffer_attempts = 0;
+static size_t brownie_buffer_all_attempts = 0;
+static size_t brownie_buffer_frees = 0;
 static int brownie_buffer_failed = 0;
 static int brownie_buffer_started = 0;
 
@@ -20,12 +22,13 @@ static void brownie_buffer_finished(void) {
         fputs("Buffer allocator: outstanding allocation or injection did not execute\n", stderr);
         abort();
     }
-    printf("{\"schema\":\"browniec.buffer-allocator/v1\",\"live\":%zu,"
-           "\"target\":%zu,\"targetAttempts\":%zu,\"failures\":%d}\n",
+    printf("{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":%zu,"
+           "\"target\":%zu,\"targetAttempts\":%zu,\"failures\":%d,\"attempts\":%zu,\"frees\":%zu}\n",
            brownie_buffer_live, brownie_buffer_target,
-           brownie_buffer_attempts, brownie_buffer_failed);
+           brownie_buffer_attempts, brownie_buffer_failed, brownie_buffer_all_attempts, brownie_buffer_frees);
 }
 static void *brownie_buffer_malloc(size_t size) {
+    brownie_buffer_all_attempts++;
     if (!brownie_buffer_started) {
         const char *setting = getenv("BROWNIE_BUFFER_FAIL_BYTES");
         if (setting != NULL) {
@@ -51,6 +54,7 @@ static void brownie_buffer_free(void *value) {
     if (value != NULL) {
         if (brownie_buffer_live == 0) abort();
         brownie_buffer_live--;
+        brownie_buffer_frees++;
     }
     free(value);
 }

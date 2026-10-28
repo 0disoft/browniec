@@ -8,6 +8,10 @@ through a one-shot target allocator failure. It closes the Allocation-path fault
 injection gap of the preceding storage/replacement checkpoints; Provider
 inconsistency injection remains deferred.
 
+The [append successor](m2-buffer-append.md) expands the current harness to nine
+scenarios over five production modules, using allocator counters v2. The five-case
+v1 receipt and unchanged-source claims below describe the original checkpoint.
+
 ## Build and instrumentation
 
 Run `python -B tools/verify-m2-buffer-failure.py` on Windows with the configured

@@ -1824,3 +1824,27 @@ This is focused native allocator evidence, not new guest Buffer/CLI support,
 whole-process leak proof, or a full M0/native/CLI regression result.
 Provider inconsistency injection, Linux, isolation, DLL embedding, packaging and
 elapsed-time performance were not run. Earlier receipts retain their original inputs.
+
+## Native Buffer append within admitted capacity
+
+Development and release each passed 9 native executable scenarios: 4 append cases
+and the 5 allocator scenarios. Nonempty append advances initialized length and
+generation in the existing slot. Empty append preserves the token. Capacity,
+current usage, peaks and all pending ledger fields stay unchanged. Capacity,
+identity, native metadata, exhausted generation, pending/corrupt accounting and
+policy-limit rejections are checked before calling SDK append.
+
+Run `python -B tools/verify-m2-buffer-failure.py`. The expanded probe builds
+byte-identical copies of 5 production modules and reports allocator schema v2.
+Each append scenario reports exactly 1 allocation attempt for initial creation,
+1 final free and 0 live allocations; append causes no extra FY heap allocations.
+The five prior minimum/preferred/abandon/OOM cases remain selected, now with total
+attempt/free counts checked. The archive rechecks 12 inputs, 6 generated sources,
+the generated SDK lock and both instrumented executable hashes. See the
+[contract](docs/engineering/m2-buffer-append.md) and
+[Windows receipt](docs/evidence/m2-buffer-append-windows-20261029.json).
+
+This is private native API evidence. Guest Buffer syntax/VM ownership, grow-and-
+append as one transaction, Provider inconsistency injection, full M0/native/CLI
+suites, Linux, isolation, DLL embedding, packaging and elapsed-time performance
+remain outside this check. Earlier receipts retain their original inputs.

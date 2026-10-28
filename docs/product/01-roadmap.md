@@ -1,5 +1,11 @@
 # Roadmap
 
+- Buffer append within admitted capacity: implemented and verified in development
+  and release, each with 9 native scenarios (4 append, 5 allocator regressions).
+  Nonempty append updates initialized length and token generation without changing
+  capacity/accounting. Instrumented append cases allocate only the initial root.
+  Guest Buffer syntax and VM integration remain future work.
+  See [the append contract](../engineering/m2-buffer-append.md).
 - Buffer allocator-failure probe: verified in development and release, each with
   5 native scenarios. Forced 320/384-byte allocation failures preserve the original
   data, token, inactive Plan and restored usage; explicit retries then commit.

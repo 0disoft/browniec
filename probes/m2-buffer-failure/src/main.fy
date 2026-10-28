@@ -6,6 +6,7 @@ import buffer_growth as growth;
 import buffer_storage as storage;
 import buffer_owners as owners;
 import buffer_replacement as tx;
+import buffer_append as append;
 
 fn growth::Limits limits(bool minimum) {
     return growth::Limits{.object=4096,.instance=if(minimum){704}else{8192},
@@ -71,6 +72,66 @@ fn void run(bool minimum,bool oom,bool abandon) {
     }
     assert(l.peak==peak && l.engine_peak==peak+32);
 }
+fn u8 append_code(append::Error e) {
+    return switch(e){case .Token:{1}case .Owners:{2}case .State:{3}case .Overflow:{4}
+        case .Quota:{5}case .Capacity:{6}case .Provider:{7}};
+}
+fn void append_failed(Result<owners::Token,append::Error> r,u8 expected) {
+    assert(switch(r){case .ok(_):{false}case .err(e):{append_code(e)==expected}});
+}
+fn owners::Token appended(Result<owners::Token,append::Error> r) {
+    return switch(r){case .ok(v):{v}case .err(_):{assert(false);owners::Token{.slot=16,.generation=0}}};
+}
+fn void run_append(u8 mode) {
+    var growth::Ledger l=growth::empty();var bytes::Buffer b=bytes::empty();
+    b=switch(storage::prepare_growth(ref b,256,limits(false),ref mut l)) {
+        case .ok(v):{v}case .err(_):{assert(false);bytes::empty()}
+    };
+    switch(growth::commit(256,ref mut l)){case .ok(_):{}case .err(_):{assert(false);}};
+    switch(bytes::append(ref mut b,b"keep")){case .ok(_):{}case .err(_):{assert(false);}};
+    var owners::Table table=owners::empty();let owners::Token old=token(owners::create(ref mut table,ref b));
+    let growth::Ledger before=l;
+    if(mode==0) {
+        let owners::Token fresh=appended(append::within_capacity(ref mut table,old,ref mut b,b"!",limits(false),ref l));
+        assert(fresh.slot==old.slot && fresh.generation==old.generation+1);
+        assert(bytes::equal(bytes::view(ref b),b"keep!") && table.slots[fresh.slot].length==5);
+        assert(switch(owners::read(ref table,fresh,4,ref b)){case .ok(v):{v==33}case .err(_):{false}});
+        append_failed(append::within_capacity(ref mut table,old,ref mut b,b"x",limits(false),ref l),1);
+        let owners::Token same=appended(append::within_capacity(ref mut table,fresh,ref mut b,b"",limits(false),ref l));
+        assert(same.generation==fresh.generation && bytes::capacity(ref b)==256);
+    } else if(mode==1) {
+        let u8[253] too_many=[88;253];
+        append_failed(append::within_capacity(ref mut table,old,ref mut b,ref too_many[..],limits(false),ref l),6);
+        kept(ref table,old,ref b);
+        let u8[252] exact=[88;252];
+        let owners::Token fresh=appended(append::within_capacity(ref mut table,old,ref mut b,ref exact[..],limits(false),ref l));
+        assert(bytes::len(ref b)==256 && bytes::capacity(ref b)==256);
+        assert(switch(owners::read(ref table,fresh,255,ref b)){case .ok(v):{v==88}case .err(_):{false}});
+        append_failed(append::within_capacity(ref mut table,fresh,ref mut b,b"!",limits(false),ref l),6);
+    } else if(mode==2) {
+        let owners::Token invalid=owners::Token{.slot=16,.generation=1};
+        var bytes::Buffer missing=bytes::empty();
+        append_failed(append::within_capacity(ref mut table,invalid,ref mut missing,b"!",limits(false),ref l),1);
+        append_failed(append::within_capacity(ref mut table,old,ref mut missing,b"!",limits(false),ref l),3);
+        table.slots[old.slot].generation=18446744073709551615;
+        let owners::Token last=owners::Token{.slot=old.slot,.generation=18446744073709551615};
+        append_failed(append::within_capacity(ref mut table,last,ref mut b,b"!",limits(false),ref l),2);
+        let owners::Token same=appended(append::within_capacity(ref mut table,last,ref mut b,b"",limits(false),ref l));
+        assert(same.generation==last.generation);kept(ref table,last,ref b);
+    } else {
+        l.pending=1;
+        append_failed(append::within_capacity(ref mut table,old,ref mut b,b"!",limits(false),ref l),3);l.pending=0;
+        l.used=0;
+        append_failed(append::within_capacity(ref mut table,old,ref mut b,b"!",limits(false),ref l),3);l.used=320;
+        append_failed(append::within_capacity(ref mut table,old,ref mut b,b"!",growth::Limits{.object=4096,.instance=319,.engine=8192},ref l),5);
+        // An object ceiling below the current capacity rejects even a no-op.
+        append_failed(append::within_capacity(ref mut table,old,ref mut b,b"",growth::Limits{.object=255,.instance=8192,.engine=8192},ref l),5);
+        kept(ref table,old,ref b);
+    }
+    assert(l.used==before.used && l.engine_used==before.engine_used && l.peak==before.peak && l.engine_peak==before.engine_peak &&
+        l.pending==before.pending && l.old_capacity==before.old_capacity && l.new_capacity==before.new_capacity &&
+        l.before_used==before.before_used && l.before_engine_used==before.before_engine_used);
+}
 @effects(console)
 fn i32 main() {
     if(process::arg_count()!=2) {return 2;}
@@ -82,6 +143,10 @@ fn i32 main() {
     else if(bytes::equal(mode,b"abandon")) {run(false,false,true);}
     else if(bytes::equal(mode,b"oom-min")) {run(true,true,false);}
     else if(bytes::equal(mode,b"oom-preferred")) {run(false,true,false);}
+    else if(bytes::equal(mode,b"append-success")) {run_append(0);}
+    else if(bytes::equal(mode,b"append-capacity")) {run_append(1);}
+    else if(bytes::equal(mode,b"append-identity")) {run_append(2);}
+    else if(bytes::equal(mode,b"append-state")) {run_append(3);}
     else {return 2;}
     return switch(io::write("buffer-failure: passed\n")){case .ok(_):{0}case .err(_):{1}};
 }
