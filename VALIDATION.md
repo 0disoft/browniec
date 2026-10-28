@@ -1547,6 +1547,34 @@ retained executable hashes. Previous receipts remain historical for their inputs
 Full native/CLI suites, M0, Linux, isolation, DLL embedding, packaging, allocation
 instrumentation and elapsed-time performance are outside this focused selection.
 
+## M2 array call results as arguments
+
+Implemented at `03795b9602eaa160e633d750a91c98743b23dc97` and verified in development and release.
+Both combined invocations rechecked 223 identical input hashes and matching
+compiler/SDK identities. The
+[source contract](docs/engineering/m2-array-result-arguments.md) covers a bare
+exact-shape array-result call as an array argument. The destination remains
+unnamed until CALL completion and delimiter validation. Existing mixed capture
+cleanup handles normal calls, early scalar/array returns, question-mark exits,
+and loop transfers. No opcode, VM, Fuel price, profile, or version-field change.
+
+Each profile passed 29 native groups and 507 CLI cases:
+six new, eight array-parameter, eight array-result, and seven record-result
+argument groups; 154 new, 80 array-parameter, 119 array-result, and 154
+record-result argument CLI cases. The native fixture checks IR equality with a
+named temporary, missing-ADROP verifier rejection, an eight-versus-seven payload
+boundary, and zero payload when a nested argument returns before the result CALL.
+
+Development and release ran as separate combined profile invocations. The
+[Windows receipt](docs/evidence/m2-array-result-arguments-windows-20261028.json)
+retains commands, matching input/compiler/SDK identities, native outcomes,
+and retained executable hashes. Older receipts remain historical for their inputs.
+The formerly rejected bare array-call argument in the record-result fixture now
+uses a parenthesized array call; the modified CLI matrix passed before native checks.
+
+Full native/CLI suites, M0, Linux, isolation, DLL embedding, packaging, allocation
+instrumentation and elapsed-time performance are outside this focused selection.
+
 ## Review obligations
 
 Three reviewed counterexamples must remain explicit acceptance tests:

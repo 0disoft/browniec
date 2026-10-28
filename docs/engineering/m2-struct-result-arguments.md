@@ -120,7 +120,8 @@ snapshots can raise the peak through the existing transaction checks.
 
 In a record argument position, parenthesized constructors or calls, wrong
 nominal result types, unknown and locally shadowed callees, `call().field`, and
-array-returning calls used as array arguments remain rejected. The
+array literal arguments remain rejected. Bare exact-shape array-returning calls
+now have an [argument successor](m2-array-result-arguments.md). The
 [subrecord-path successor](m2-struct-path-arguments.md) additionally accepts a
 bare exact-nominal `outer.child` argument. This does not add general aggregate
 expressions; other formal types retain their existing argument rules.
@@ -171,3 +172,7 @@ one aggregate invocation.
 Earlier receipts remain historical for their original inputs. This focused slice
 does not cover full native or CLI suites, M0, Linux, isolation, DLL embedding,
 packaging, allocation instrumentation, or performance.
+
+The array-result successor updates this fixture's former bare-array-call
+rejection to a parenthesized array call. Its own evidence covers the modified
+fixture; the counts above remain historical for their original inputs.

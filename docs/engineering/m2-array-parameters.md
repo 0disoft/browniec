@@ -22,9 +22,11 @@ fn i32 main() {
 ## Parameters and arguments
 
 Parameter shapes are exact: element tags are `bool`, `u8`, `i32`, `i64`, `u32`,
-and `usize`, and lengths are integer literals from 1 through 4096. Each array
-argument must be a bare visible binding name with exactly matching element and
-length. A scalar, indexed element, parenthesized array name, `.len`, array
+and `usize`, and lengths are integer literals from 1 through 4096. The original
+slice accepted a bare visible binding name with exactly matching
+element and length. A bare exact-shape result call is now also accepted through
+the [result-argument successor](m2-array-result-arguments.md). A scalar, indexed
+element, parenthesized array name, `.len`, array
 literal, or implicit conversion cannot satisfy an array parameter.
 
 Scalar, shallow wrapper, and array parameters may occupy any of the eight
@@ -142,3 +144,7 @@ The [result signature foundation](m2-array-result-signatures.md) subsequently
 changes the compiler/scanner, signature fixture, and two CLI error expectations.
 The receipt above remains historical for those inputs; result-signature checks
 record the fresh focused regression and do not claim array result execution.
+
+The result-argument successor also covers nested array-result calls and shared
+array/record capture cleanup. The historical counts above describe this slice
+only; the successor provides fresh evidence for its focused current inputs.

@@ -1,5 +1,12 @@
 # Brownie C
 
+- Array call results as arguments: implemented at `03795b9` and verified in
+  development and release, each with 29 native groups and 507 CLI cases. Both
+  combined invocations rechecked 223 identical inputs.
+  `take(make_array())` and nested exact-shape calls join the existing mixed
+  argument capture cleanup after CALL. Element type and length must match;
+  visible local callee shadowing is rejected. See [the source contract](docs/engineering/m2-array-result-arguments.md)
+  and the [Windows receipt](docs/evidence/m2-array-result-arguments-windows-20261028.json).
 - Record constructors as arguments: implemented at `bd9db83` and verified in
   development and release, each with 26 native groups and 874 CLI cases. Both
   combined invocations rechecked 220 identical inputs.
@@ -613,6 +620,7 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 record call results as arguments](docs/engineering/m2-struct-result-arguments.md): nested exact-nominal result captures, left-to-right evaluation, shared cleanup, and focused Windows evidence.
 - [M2 subrecord paths as arguments](docs/engineering/m2-struct-path-arguments.md): exact-nominal snapshots, left-to-right evaluation, shared cleanup, and focused Windows evidence.
 - [M2 record constructors as arguments](docs/engineering/m2-struct-constructor-arguments.md): deferred owner publication, ordered field staging, mixed cleanup, and focused Windows evidence.
+- [M2 array call results as arguments](docs/engineering/m2-array-result-arguments.md): exact-shape captures, mixed cleanup, nested calls, quota boundaries, and focused Windows evidence.
 - [M2 private struct VM](docs/engineering/m2-struct-vm.md): shared owners and payload, private execution semantics, fixed Fuel charges, and current check status
 - [M2 declaration-only source structs](docs/engineering/m2-struct-source.md): historical bounded parser, forward named fields, immutable layouts, name rules, and stepwise verification
 - [M2 bounded source struct values](docs/engineering/m2-struct-values.md): historical entry construction and one-level reads, ordered typed staging, `SINIT`/scalar-leaf access, mixed cleanup, bounds, and recorded verification

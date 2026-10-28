@@ -1,5 +1,12 @@
 # Roadmap
 
+- Array call results as arguments: implemented at `03795b9` and verified in
+  development and release, each with 29 native groups and 507 CLI cases. Both
+  combined invocations rechecked 223 identical inputs.
+  `take(make_array())` and nested exact-shape calls join the existing mixed
+  argument capture cleanup after CALL. Element type and length must match;
+  visible local callee shadowing is rejected. See [the source contract](../engineering/m2-array-result-arguments.md)
+  and the [Windows receipt](../evidence/m2-array-result-arguments-windows-20261028.json).
 - Record constructors as arguments: implemented at `bd9db83` and verified in
   development and release, each with 26 native groups and 874 CLI cases. Both
   combined invocations rechecked 220 identical inputs.

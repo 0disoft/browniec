@@ -90,3 +90,13 @@ The unchanged runtime backend is compared with the prior private-result receipt.
 Full scalar/private-array native suites, M0, allocator instrumentation, Linux,
 Windows isolation, DLL, clean-machine packaging and performance are not rerun.
 The receipt, rather than the presence of fixtures, establishes executed evidence.
+
+## Array call results as arguments
+
+The [argument successor](m2-array-result-arguments.md) now accepts a bare result
+call as an exact-element, exact-length array argument, including nested calls.
+The destination becomes an anonymous immutable capture only after CALL and
+delimiter validation, then reuses mixed array/record cleanup. Parenthesized
+calls, call-result indexing, and array literal arguments remain unsupported.
+Earlier counts above remain historical for their original inputs; the successor
+reruns the focused source result and parameter selections.

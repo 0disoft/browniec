@@ -55,7 +55,8 @@ also select a whole visible child binding or a dotted exact-nominal path.
 The child call remains unsupported when it is parenthesized, when the returned
 record is followed by field selection, or when a parenthesized constructor argument,
 wrong result type, unknown or locally shadowed callee, or general aggregate
-expression is used for a record formal. A call result used as an array argument also remains rejected.
+expression is used for a record formal. A bare exact-shape array-call argument now has its own
+[successor](m2-array-result-arguments.md).
 Those forms fail during compilation. Bare exact-nominal child-path arguments
 now have a separate [successor](m2-struct-path-arguments.md).
 
