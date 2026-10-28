@@ -1522,6 +1522,31 @@ Previous receipts remain historical for their original inputs.
 Full native/CLI suites, M0, Linux, isolation, DLL embedding, packaging, allocation
 instrumentation and elapsed-time performance are outside this focused selection.
 
+## M2 record constructors as arguments
+
+Implemented at `bd9db83` and verified in development and release, each with
+26 native groups and 874 CLI cases. Both combined invocations rechecked the
+same 220 input hashes and matching compiler/SDK identities. The
+[source contract](docs/engineering/m2-struct-constructor-arguments.md) covers a
+bare exact-nominal constructor used as a record argument. Fields stage before
+LOAD/SINIT and anonymous capture publication. A four-byte argument and formal
+need eight payload bytes; seven reports array_limit. An early return during a
+pending scalar field needs zero payload bytes; a child call result can stage
+and drop within four bytes before an early return skips its pending parent.
+
+The combined harness selects 26 native groups per profile: six new, eight source
+parameter, six constructor-return, and six constructor child-call groups.
+The 874 CLI cases comprise 154 new, 114 source parameter, 154 result-argument,
+154 path-argument, 144 constructor-return, and 154 constructor child-call cases.
+Legacy direct-constructor rejections now reject parenthesized constructors;
+all affected CLI selections passed before the native harness began.
+The [Windows receipt](docs/evidence/m2-struct-constructor-arguments-windows-20261028.json)
+retains commands, input/compiler/SDK identities, both profile outcomes and
+retained executable hashes. Previous receipts remain historical for their inputs.
+
+Full native/CLI suites, M0, Linux, isolation, DLL embedding, packaging, allocation
+instrumentation and elapsed-time performance are outside this focused selection.
+
 ## Review obligations
 
 Three reviewed counterexamples must remain explicit acceptance tests:

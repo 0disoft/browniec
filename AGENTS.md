@@ -10,6 +10,13 @@ own the affected contract. Broader scaffold procedures are optional.
 
 ## Current state
 
+- Record constructors as arguments: implemented at `bd9db83` and verified in
+  development and release, each with 26 native groups and 874 CLI cases. Both
+  combined invocations rechecked 220 identical inputs.
+  `take(Point { .x = 42 })` stages fields in declaration order before creating
+  an anonymous immutable capture; existing mixed cleanup handles calls and early
+  exits. See [the source contract](docs/engineering/m2-struct-constructor-arguments.md) and the
+  [Windows receipt](docs/evidence/m2-struct-constructor-arguments-windows-20261028.json).
 - Subrecord paths as arguments: implemented at `9650f12` and verified in
   development and release, each with 27 native groups and 570 CLI cases.
   The two successful combined profile invocations rechecked 217 identical inputs.

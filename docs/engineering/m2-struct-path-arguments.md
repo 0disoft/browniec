@@ -153,11 +153,13 @@ cover:
 - roots that are scalars, arrays, or wrappers rather than record bindings;
 - parenthesized paths such as `take((outer.child))`;
 - a field selected from a call result, such as `take(make().child)`;
-- record constructors;
+- parenthesized record constructors;
 - casts of a path;
 - equality or other general argument expressions built from paths.
 
-These checks do not add general aggregate expressions, record borrows, `ref` or
+The [constructor-argument successor](m2-struct-constructor-arguments.md) now
+accepts a bare exact-nominal constructor at a record formal. These checks do not
+add general aggregate expressions, record borrows, `ref` or
 `var` record parameters, or implicit conversion of subrecord values to scalars. Direct
 exact-result arguments and bare exact-type bindings continue to use their
 existing paths.
@@ -216,3 +218,7 @@ This focused slice does not cover full native or CLI suites, M0, Linux, runtime
 isolation, DLL embedding, packaging, allocation instrumentation, or performance.
 The receipt records these skips, both profile outcomes, baseline and implementation
 commits, toolchain and artifact identities, commands, and input hashes.
+
+The constructor-argument successor updates the direct-constructor rejection in
+this fixture to a parenthesized constructor. Its focused evidence covers the
+updated fixture; the counts above remain historical for their original inputs.

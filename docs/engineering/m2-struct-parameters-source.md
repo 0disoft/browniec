@@ -54,7 +54,7 @@ function call whose exact nominal result supplies the formal. The
 [subrecord-path successor](m2-struct-path-arguments.md) also admits a bare
 exact-nominal child path as an independent immutable snapshot.
 
-Constructor operands, parenthesized names or calls, casts, aggregate
+Parenthesized constructor operands, names or calls, casts, aggregate
 literals, `call().field`, and other general expressions cannot satisfy a record
 parameter. A bare call is accepted only through the exact-result successor.
 Unknown or locally shadowed callees and calls with a wrong result type are
@@ -69,6 +69,11 @@ rejected by the existing verifier. At this slice's original checkpoint record
 results were unsupported; bounded source record results now have a
 [successor](m2-struct-result-source.md). Borrows, `ref` parameters, and `var`
 parameters remain unsupported.
+
+A bare exact-nominal constructor also has an
+[argument successor](m2-struct-constructor-arguments.md). This fixture now rejects
+a parenthesized constructor instead of the direct constructor that successor
+accepts. Earlier counts remain historical; the successor reruns the updated matrix.
 
 ## Site predeclaration
 

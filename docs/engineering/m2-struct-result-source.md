@@ -65,7 +65,8 @@ existing mutable root, and the
 exact-nominal child targets, including deep paths.
 
 Record-result calls cannot appear as general expressions, scalar expressions,
-wrapper payloads, or parenthesized calls. Constructor-valued arguments remain unsupported. Bare exact-nominal
+wrapper payloads, or parenthesized calls. Bare exact-nominal constructor arguments now have an
+[argument successor](m2-struct-constructor-arguments.md). Bare exact-nominal
 field-path arguments now have a [successor](m2-struct-path-arguments.md). A bare
 exact-result call can now supply an exact-nominal record formal through the
 [call-argument successor](m2-struct-result-arguments.md). A record-result function
@@ -162,7 +163,7 @@ profile. The remaining unsupported forms are:
 - field selection from a returned call, such as `return make().child;`;
 - record-result calls as free scalar expressions or general aggregate expressions
   outside the bare exact-record-formal argument position;
-- constructor-valued arguments, parenthesized argument calls, and
+- parenthesized constructor arguments or argument calls, and
   wrong, unknown, or locally shadowed argument callees;
 - record wrappers, borrows, `ref` results, or `var` results;
 - record construction in a `for` header.

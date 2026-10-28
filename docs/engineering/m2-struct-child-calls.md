@@ -53,7 +53,7 @@ place the call at any supported child depth. The existing constructor path may
 also select a whole visible child binding or a dotted exact-nominal path.
 
 The child call remains unsupported when it is parenthesized, when the returned
-record is followed by field selection, or when a constructor-valued argument,
+record is followed by field selection, or when a parenthesized constructor argument,
 wrong result type, unknown or locally shadowed callee, or general aggregate
 expression is used for a record formal. A call result used as an array argument also remains rejected.
 Those forms fail during compilation. Bare exact-nominal child-path arguments
@@ -157,3 +157,7 @@ The focused selection does not cover full native or CLI suites, M0, Linux,
 isolation, DLL embedding, packaging, allocation instrumentation, or performance.
 The later call-argument successor has its own fixture, harness, and focused
 verification; it is not included in the 23-group and 529-case totals above.
+
+Bare exact-nominal constructor arguments now have their own
+[successor](m2-struct-constructor-arguments.md), which also reruns the child-call
+fixture through the shared constructor staging path.
