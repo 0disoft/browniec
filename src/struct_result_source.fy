@@ -55,6 +55,17 @@ pub fn Result<usize,errors::Error> assigned(ref mut ir::Program p,usize destinat
     let usize copied=ir::record_assign(p,destination,temporary,at)?;
     return ir::record_drop(p,temporary,at);
 }
+// Copy the entire returned root into an exact nominal destination subrecord,
+// retaining the destination owner and releasing the anonymous result afterward.
+pub fn Result<usize,errors::Error> subassigned(ref mut ir::Program p,usize destination,
+    usize temporary,values::Leaf leaf,usize at) {
+    if(destination>=p.records.count || temporary>=p.records.count || destination==temporary ||
+        !p.records.mutable[destination] || leaf.tag!=0 ||
+        p.record_functions[destination]!=p.record_functions[temporary] ||
+        p.records.records[temporary] as usize!=leaf.record) {return .err(errors::make(3,at));}
+    let usize copied=ir::record_subassign(p,destination,temporary,leaf.record,leaf.ordinal,0,at)?;
+    return ir::record_drop(p,temporary,at);
+}
 // Bare bindings, subrecord copies, direct-call results and constructors share the
 // finisher. General record expressions remain unavailable.
 pub fn Result<usize,errors::Error> returned(ref u8[] source,ref mut lexer::State s,

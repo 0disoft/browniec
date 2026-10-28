@@ -420,6 +420,30 @@ fn Result<usize, errors::Error> declaration(ref u8[] source, ref mut lexer::Stat
     return .err(errors::make(2, s.begin));
 }
 
+// Root and child call assignments keep their destination live and share argument
+// evaluation. The anonymous result stays absent from locals until CALL completes.
+fn Result<bool, errors::Error> record_call_assignment(ref u8[] source, ref mut lexer::State s,
+    ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures,
+    usize id, record_values::Leaf leaf, bool whole, usize at, u8 result_type,
+    usize expr_depth, usize structure, ref mut loops::State loop_state) {
+    var lexer::State look=lexer::snapshot(s);
+    if(whole) {let usize equals=lexer::next(source,ref mut look)?;}
+    if(look.kind!=2) {return .ok(false);}
+    var lexer::State call=lexer::snapshot(ref look);
+    let usize next=lexer::next(source,ref mut call)?;
+    if(call.kind!=40) {return .ok(false);}
+    if(!p.records.mutable[id] || locals::find(source,table,look.begin,look.end)!=64) {return .err(errors::make(3,look.begin));}
+    let usize target=functions::find(source,signatures,look.begin,look.end);
+    let usize temporary=record_results::destination(signatures,target,leaf.record,false,p,table.function,look.begin)?;
+    if(whole) {let usize equals=lexer::next(source,s)?;}
+    let usize name=lexer::next(source,s)?;
+    let usize called=call_value(source,s,p,table,signatures,target,144+temporary,at,expr_depth,result_type,structure,loop_state)?;
+    let usize end=lexer::punctuation(source,s,59)?;
+    if(whole) {let usize assigned=record_results::assigned(p,id,temporary,at)?;}
+    else {let usize assigned=record_results::subassigned(p,id,temporary,leaf,at)?;}
+    return .ok(true);
+}
+
 fn Result<usize, errors::Error> record_write_statement(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p,
     ref locals::Table table, ref functions::Table signatures, usize index, usize at, u8 terminator,
     u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {
@@ -429,21 +453,8 @@ fn Result<usize, errors::Error> record_write_statement(ref u8[] source, ref mut 
     if (s.kind == 61) {
         var lexer::State look = lexer::snapshot(s);
         let usize equals = lexer::next(source,ref mut look)?;
-        if(look.kind==2) {
-            var lexer::State call=lexer::snapshot(ref look);
-            let usize next=lexer::next(source,ref mut call)?;
-            if(call.kind==40) {
-                if(!p.records.mutable[id] || locals::find(source,table,look.begin,look.end)!=64) {return .err(errors::make(3,look.begin));}
-                let usize target=functions::find(source,signatures,look.begin,look.end);
-                let usize temporary=record_results::destination(signatures,target,record,false,p,table.function,look.begin)?;
-                let usize consumed=lexer::next(source,s)?;
-                let usize name=lexer::next(source,s)?;
-                let usize called=call_value(source,s,p,table,signatures,target,144+temporary,at,expr_depth,result_type,structure,loop_state)?;
-                let usize end=lexer::punctuation(source,s,terminator)?;
-                let usize assigned=record_results::assigned(p,id,temporary,at)?;
-                return .ok(index);
-            }
-        }
+        let record_values::Leaf root=record_values::Leaf{.ordinal=0,.tag=0,.record=record};
+        if(record_call_assignment(source,s,p,table,signatures,id,root,true,at,result_type,expr_depth,structure,loop_state)?) {return .ok(index);}
         if (record_values::constructor(source,ref mut look,record)?) {
             if (!p.records.mutable[id]) { return .err(errors::make(3,at)); }
             let usize consumed = lexer::next(source,s)?;
@@ -457,6 +468,7 @@ fn Result<usize, errors::Error> record_write_statement(ref u8[] source, ref mut 
     }
     let record_values::Leaf leaf = record_values::writable(source,s,p,id,at)?;
     if (leaf.tag == 0) {
+        if(record_call_assignment(source,s,p,table,signatures,id,leaf,false,at,result_type,expr_depth,structure,loop_state)?) {return .ok(index);}
         if (record_values::constructor(source,s,leaf.record)?) {
             let usize first = record_constructor(source,s,p,table,signatures,leaf.record,at,result_type,expr_depth,structure,loop_state)?;
             let usize replaced = ir::record_subreplace(p,id,first,leaf.record,leaf.ordinal,at)?;

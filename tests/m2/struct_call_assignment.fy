@@ -71,7 +71,7 @@ fn void immutable_nominal_nonrecord_shadowed_and_unsupported_targets_are_rejecte
     rejected(b"module main;struct P{i32 x;}fn P make(){return P{.x=42};}fn i32 main(){var P p=P{.x=0};let i32 make=0;p=make();return 42;}");
     rejected(b"module main;struct P{i32 x;}fn P make(i32 n){return P{.x=n};}fn i32 main(){var P p=P{.x=0};p=make();return 42;}");
     rejected(b"module main;struct P{i32 x;}fn P make(){return P{.x=42};}fn i32 main(){var P p=P{.x=0};p=(make());return 42;}");
-    rejected(b"module main;struct P{i32 x;}struct R{P p;}fn P make(){return P{.x=42};}fn i32 main(){var R r=R{.p=P{.x=0}};r.p=make();return 42;}");
+    rejected(b"module main;struct P{i32 x;}struct R{P p;}fn P make(){return P{.x=42};}fn i32 main(){var R r=R{.p=P{.x=0}};r.p=(make());return 42;}");
     rejected(b"module main;struct P{i32 x;}fn P make(){return P{.x=42};}fn i32 main(){var P p=P{.x=0};for(;false;p=make()){}return 42;}");
     rejected(b"module main;struct P{i32 x;}fn P make(){return P{.x=42};}fn i32 main(){var i32 n=0;n=make();return 42;}");
 }
