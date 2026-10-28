@@ -107,13 +107,17 @@ The following forms remain unsupported:
 
 - general return expressions around a constructor;
 - a parenthesized constructor, such as `return (Pair { ... });`;
-- assignment of a record-result call into a child path;
 - record-result calls in aggregate fields, such as `Outer { .inner = make() }`;
 - scalar fields, scalars, arrays, or wrappers as the direct record-result operand;
 - record wrappers, borrows, `ref` results, and `var` results.
 
 These forms are rejected during compilation. They do not reach an uninitialized
 caller destination or rely on a partial record owner.
+
+The later [child call-assignment slice](m2-struct-child-call-assignment.md)
+implements an exact-nominal child destination, including deep paths. It reuses
+`SSUBASSIGN` and `SDROP` and records verification separately from this
+constructor-return slice.
 
 The later [subrecord return-path slice](m2-struct-return-paths.md) supports a
 bare exact-nominal `return value.inner;`, including deep paths, and is verified
@@ -125,9 +129,11 @@ historical for this slice's original inputs.
 
 ## Verification
 
-The later [call-assignment slice](m2-struct-call-assignment.md) supports an
-existing mutable root as a call-result destination. The counts below remain
-historical evidence for this constructor-return slice's original inputs.
+The later [root call-assignment slice](m2-struct-call-assignment.md) supports an
+existing mutable root as a call-result destination, and the
+[child call-assignment successor](m2-struct-child-call-assignment.md) extends
+that form to exact-nominal child paths. The counts below remain historical
+evidence for this constructor-return slice's original inputs.
 
 Development and release each passed 26 native groups and 532 CLI cases. The focused fixture contains six native test
 groups covering eleven successful programs and eleven type rejections, plus the

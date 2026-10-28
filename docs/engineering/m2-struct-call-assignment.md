@@ -4,6 +4,7 @@
 - Scope: `p = make(args);` for a mutable, exact-nominal root record `p`.
 - Implementation: [assignment branch](../../src/compiler.fy), [result helper](../../src/struct_result_source.fy), [fixture](../../tests/m2/struct_call_assignment.fy), [harness](../../tools/verify-m2-struct-call-assignment.py).
 - Predecessor: [direct nominal record constructor returns](m2-struct-return-constructors.md).
+- Successor: [exact-nominal child call-result assignment](m2-struct-child-call-assignment.md).
 - Evidence: [Windows receipt](../evidence/m2-struct-call-assignment-windows-20261028.json).
 
 This slice lets a record-result call replace an existing mutable root payload using CALL, SASSIGN, and SDROP.
@@ -26,8 +27,10 @@ its constructor and bare-binding branches. The name must resolve to a function w
 has the destination's exact nominal identity. A visible local with that spelling rejects the assignment.
 
 The form works in ordinary function statements and statement-bearing scalar `switch` value arms.
-For-header clauses and child paths (`r.child = make()`) remain unavailable; a parenthesized call
-(`p = (make())`) and general aggregate expressions do not enter this branch.
+The [child call-assignment successor](m2-struct-child-call-assignment.md) extends the
+same destination rule to exact-nominal child paths, including deep paths. For-header
+clauses remain unavailable; a parenthesized call (`p = (make())`) and general
+aggregate expressions do not enter this branch.
 
 ## Evaluation and publication
 

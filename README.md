@@ -25,6 +25,12 @@
   the exact-nominal result with `SASSIGN`, then drops the anonymous result.
   Development and release each passed 30 native groups and 725 CLI cases.
   See [the contract](docs/engineering/m2-struct-call-assignment.md).
+- Child record call-result assignment: implemented at `63be9e5`.
+  `outer.child = make(...);`, including deep paths, copies the anonymous result
+  into the existing child with `SSUBASSIGN` and releases the temporary with
+  `SDROP`. Development and release each passed 26 native groups and 575 CLI
+  cases. See [the contract](docs/engineering/m2-struct-child-call-assignment.md)
+  and [Windows receipt](docs/evidence/m2-struct-child-call-assignment-windows-20261028.json).
 - First delivery target: Windows 11 x64
 
 Brownie C is a small, statically typed source language and JIT-free bytecode VM.
@@ -142,9 +148,11 @@ out of a loop. The shared reverse mixed finisher then drops other visible arrays
 and records and emits `SRET`. Transfer adds no payload extent, though the result
 root has its normal constructor extent; a reconstructed parameter keeps its old
 formal copy and the new result live together until cleanup. General expressions,
-parenthesized constructor returns, child-path call-result assignment, and record
-calls in aggregate fields remain unsupported. There is no new opcode, VM charge,
-profile, or version flag. The [Windows
+parenthesized constructor returns, and record calls in aggregate fields remain
+unsupported. The [child call-assignment
+successor](docs/engineering/m2-struct-child-call-assignment.md) now supports an
+exact-nominal child path as a call-result destination. There is no new opcode,
+VM charge, profile, or version flag. The [Windows
 receipt](docs/evidence/m2-struct-return-constructors-windows-20261028.json) records
 199 matching rechecked inputs and both retained CLI identities. Earlier receipts
 remain historical for their original inputs. Development and release each passed
@@ -566,6 +574,7 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M2 source record results](docs/engineering/m2-struct-result-source.md): bare exact-nominal returns, typed call initializers, result anchor reuse, pending-destination cleanup, mixed reverse drops, unchanged limits, and verified stepwise development/release evidence
 - [M2 direct record constructor returns](docs/engineering/m2-struct-return-constructors.md): exact-nominal constructor operands, declaration-order staging, deferred site allocation, `SINIT`/`SRET`, constructor-only payload extent, rejected forms, and focused development/release evidence
 - [M2 exact-nominal subrecord return paths](docs/engineering/m2-struct-return-paths.md): consecutive leaf reads, one independent result site, reverse mixed cleanup, unchanged limits, and verified development/release evidence
+- [M2 child record call-result assignment](docs/engineering/m2-struct-child-call-assignment.md): shared root/child argument evaluation, `SSUBASSIGN` and `SDROP`, live destination ownership, deep paths, limits, and verified development/release evidence
 - [M2 private struct VM](docs/engineering/m2-struct-vm.md): shared owners and payload, private execution semantics, fixed Fuel charges, and current check status
 - [M2 declaration-only source structs](docs/engineering/m2-struct-source.md): historical bounded parser, forward named fields, immutable layouts, name rules, and stepwise verification
 - [M2 bounded source struct values](docs/engineering/m2-struct-values.md): historical entry construction and one-level reads, ordered typed staging, `SINIT`/scalar-leaf access, mixed cleanup, bounds, and recorded verification

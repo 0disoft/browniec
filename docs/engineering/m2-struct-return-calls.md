@@ -36,8 +36,10 @@ scalar/wrapper use, and assignment to an existing record were unsupported. The
 direct nominal constructor return and does not add those other forms.
 
 The later [call-assignment slice](m2-struct-call-assignment.md) also supports
-`root = make(...);` for exact-nominal mutable record roots. Earlier receipts
-remain historical for their original inputs.
+`root = make(...);` for exact-nominal mutable record roots. Its
+[child call-assignment successor](m2-struct-child-call-assignment.md) extends
+the destination to exact-nominal child paths. Earlier receipts remain historical
+for their original inputs.
 
 ## Ownership, limits and Fuel
 

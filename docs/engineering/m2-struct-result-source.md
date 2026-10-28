@@ -56,8 +56,10 @@ The declaration type must match the callee result exactly. A `var` destination
 may later be written. The caller's mutable flag is independent of the callee and
 does not make a returned parameter alias the original argument. Assignment of a
 record-result call into an existing record was unavailable at this checkpoint.
-The [call-assignment successor](m2-struct-call-assignment.md) supports an
-existing mutable root; child-path targets remain unavailable.
+The [root call-assignment successor](m2-struct-call-assignment.md) added an
+existing mutable root, and the
+[child call-assignment successor](m2-struct-child-call-assignment.md) now adds
+exact-nominal child targets, including deep paths.
 
 Record-result calls cannot appear in scalar expressions, wrapper payloads, or
 general aggregate arguments. A record-result function also cannot use `?`
@@ -146,7 +148,6 @@ profile. The remaining unsupported forms are:
 
 - scalar field, parenthesized, or aggregate return expressions;
 - field selection from a returned call, such as `return make().child;`;
-- assignment of a call result into a child path;
 - record-result calls in scalar expressions or general aggregate arguments;
 - record wrappers, borrows, `ref` results, or `var` results;
 - record construction in a `for` header.

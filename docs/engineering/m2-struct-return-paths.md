@@ -153,6 +153,10 @@ and used matching compiler and SDK identities. The retained development
 executable and the release `build/browniec.exe` hashes were rechecked. The
 development core phase ran before implementation commit `d4aa643` with its
 implementation files uncommitted; the other three phases ran after it.
+The later [child call-assignment successor](m2-struct-child-call-assignment.md)
+uses a direct record-result call as the source of an exact-nominal child
+assignment. Its harness selects six of these return-path groups as regressions;
+the counts above remain historical for this slice's original inputs.
 
 Earlier receipts remain historical for their original compiler, fixture,
 harness, and lock inputs. The focused selection does not cover full native or

@@ -85,6 +85,16 @@ own the affected contract. Broader scaffold procedures are optional.
   and `call().child` returns remain unsupported. Earlier receipts remain
   historical for their original inputs. See [the
   contract](docs/engineering/m2-struct-return-paths.md).
+- Exact-nominal child record call-result assignment is implemented at
+  `63be9e5`. A shared `compiler::record_call_assignment` handles root and child
+  destinations. The child branch validates a mutable exact path, emits
+  `SSUBASSIGN` (47) with source leaf zero, then `SDROP` releases the anonymous
+  result. Existing CALL and capture cleanup precede the normal assignment;
+  destination roots, owners, and neighboring bytes stay live. Development and
+  release each passed 26 native groups and 575 CLI cases. No opcode, VM, Fuel,
+  profile, or version changes. See [the
+  contract](docs/engineering/m2-struct-child-call-assignment.md) and [Windows
+  receipt](docs/evidence/m2-struct-child-call-assignment-windows-20261028.json).
 - The record-result IR slice's evidence remains 39 unique native groups and 2,317 CLI cases in development and release. The [core receipt](docs/evidence/m2-struct-results-ir-core-windows-20261028.json) records 21 native groups (8 new record-result, 6 array-result, 7 record-parameter), CLI builds and all 2,317 cases; the [regression receipt](docs/evidence/m2-struct-results-ir-regressions-windows-20261028.json) records 18 native-only groups (6 array-result VM, 8 record-call VM, 4 scalar-function), with no build or CLI rerun. CLI coverage is 72 record-result signature, 66 record-formal signature, 114 source record-parameter, 96 array-result signature and 1,969 M1 cases per profile. These were two separate phase invocations across implementation commit `dc1574b`, with disjoint native selections and matching 212 input hashes, compiler and SDK identities. All inputs and the final release CLI were rechecked before archival. Full native/CLI suites, M0, Linux, isolation, DLL, packaging, allocation instrumentation and performance were not run.
 - M2 has private scalar-array layout, codec, caller-backed storage, owner-lifetime and copy helpers;
   private function-owned array IR has independent verification and metered native VM dispatch. The current
@@ -493,6 +503,9 @@ Development and release each passed 30 native groups and 725 CLI cases in separa
 core/regression phases, with 202 matching rechecked inputs and both CLI hashes.
 See [the contract](docs/engineering/m2-struct-call-assignment.md) and
 [focused evidence](docs/evidence/m2-struct-call-assignment-windows-20261028.json).
+The [child call-assignment successor](docs/engineering/m2-struct-child-call-assignment.md)
+extends this destination rule to exact-nominal child paths, including deep paths.
+Development and release each passed 26 native groups and 575 CLI cases.
 
 - Keep parser, type checking, Flow analysis, verifier, and dispatch in Fairy C.
 - A small allocator, scalar codec, or OS shim must be explicit and separately tested.

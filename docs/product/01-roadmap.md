@@ -13,6 +13,10 @@
 - Exact-nominal subrecord return paths: implemented at `d4aa643` and verified in
   development and release. Each profile passed 25 native groups and 579 CLI
   cases. See [the source contract](../engineering/m2-struct-return-paths.md).
+- Exact-nominal child record call-result assignment: implemented at `63be9e5`.
+  Development and release each passed 26 native groups and 575 CLI cases. See
+  [the source contract](../engineering/m2-struct-child-call-assignment.md) and
+  [Windows receipt](../evidence/m2-struct-child-call-assignment-windows-20261028.json).
 - Private function-owned record IR/verifier and frame-local record VM execution
   are verified in development and release.
 - Current progress: M1 scalar checkpoint verified; M2 function-owned scalar arrays cover lexical storage, copy, length, helper locals, by-value parameters, source results, direct returns, repeated return literals, call-result assignment, and in-place repeated-literal assignment; private scalar struct layout, storage, and copy/assignment exist; private nested struct storage is verified; private nested struct copy/assignment is verified; shared struct-owner foundation is verified; private struct-owner copy/assignment is verified; private entry-owned struct IR and metered VM execution exist; declaration-only source struct layouts are historical verified evidence; bounded entry scalar-field construction and one-level reads are the historical verified read baseline; entry-only one-level field writes are supported with historical verification, and bare-name record copies plus whole-record assignment are verified stepwise in development and release; bounded nested constructors, multi-segment scalar paths, and whole-root copies are implemented, and child fields now accept exact-type whole visible bindings with development/release verification; their nested result is historical after the child compiler change; subrecord declaration extraction has historical receipts; atomic subrecord assignment is verified in development and release; immutable by-value record parameters are verified in development and release; private record-result VM ownership transfer is verified for its original inputs; bounded source record returns and typed call initializers are verified in development and release (14 native groups and 2,438 CLI cases per profile); direct nominal record constructor returns are verified in development and release at `0a7b539`; record borrows, Buffer, and text remain open; full-profile conformance incomplete; M3-M5 not started; constructor child subrecord paths verified in development and release; private frame-local record VM verified in development and release (46 native groups and 2,383 CLI cases per profile); exact-nominal subrecord return paths are implemented and verified in development and release at `d4aa643`, with 25 native groups and 579 CLI cases per profile
@@ -646,8 +650,10 @@ drops other visible arrays and records and emits `SRET`. Transfer adds no payloa
 extent, but construction requires the result extent; reconstructing a parameter
 keeps the old formal and new result live until cleanup. No opcode, VM charge,
 profile, or version field changes. General expressions, parenthesized constructor
-returns, child-path call-result assignment, and record calls in aggregate fields
-remain unsupported. Development and release each passed 26 native groups and 532
+returns, and record calls in aggregate fields remain unsupported. The [child
+call-assignment successor](../engineering/m2-struct-child-call-assignment.md)
+now adds an exact-nominal child destination. Development and release each passed
+26 native groups and 532
 CLI cases through separate core/regression invocations. The [Windows
 receipt](../evidence/m2-struct-return-constructors-windows-20261028.json) records
 199 matching rechecked inputs and both retained CLI identities. Earlier receipts
@@ -674,7 +680,10 @@ Record call-result assignment is implemented at `0a6a759`. An exact-nominal
 `root = make(...);` keeps the mutable destination live, copies the returned value
 into its existing owner, and releases the temporary result. The additional
 result, captures and parameter copies still count toward peak quota use.
-Child-path call assignment and for-header aggregate writes remain unavailable.
+For-header aggregate writes remain unavailable. The [child call-assignment
+successor](../engineering/m2-struct-child-call-assignment.md) now supports
+exact-nominal child paths; development and release each passed 26 native groups
+and 575 CLI cases.
 Development and release each passed 30 native groups and 725 CLI cases in separate
 core/regression phases; 202 matching input hashes and both CLI identities were rechecked.
 See [the contract](../engineering/m2-struct-call-assignment.md) and
