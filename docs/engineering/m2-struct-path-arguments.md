@@ -222,3 +222,11 @@ commits, toolchain and artifact identities, commands, and input hashes.
 The constructor-argument successor updates the direct-constructor rejection in
 this fixture to a parenthesized constructor. Its focused evidence covers the
 updated fixture; the counts above remain historical for their original inputs.
+
+## Paths from returned records
+
+The [call-path successor](m2-struct-call-path-arguments.md) now accepts a returned
+subrecord directly as an exact-nominal argument. It snapshots the leaves and
+releases the anonymous root before creating the child capture. This fixture's
+former bare-call-path rejection now uses a parenthesized call path; its counts
+remain unchanged. Earlier receipts remain historical for their original inputs.

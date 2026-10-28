@@ -48,8 +48,10 @@ call and payload bounds remain unchanged.
 
 This complements [record results](m2-struct-result-source.md), [record result
 arguments](m2-struct-result-arguments.md) and [array call-result
-reads](m2-array-call-reads.md). It does not add record borrows or aggregate
-call-result subrecord extraction.
+reads](m2-array-call-reads.md). Record borrows remain unavailable. Aggregate
+call-result subrecords in argument position now have a
+[successor](m2-struct-call-path-arguments.md); scalar reads still reject record
+endpoints.
 
 ## Verification
 

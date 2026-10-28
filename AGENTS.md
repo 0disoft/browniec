@@ -10,6 +10,12 @@ own the affected contract. Broader scaffold procedures are optional.
 
 ## Current state
 
+- Returned subrecords as arguments: implemented at `7284da8` and verified in
+  development and release, each with 17 native groups and 410 CLI cases. Both
+  combined invocations rechecked 235 identical inputs.
+  `take(make().child)` snapshots the exact-nominal child, releases the returned
+  root before child creation, and reuses existing mixed argument cleanup.
+  See [the source contract](docs/engineering/m2-struct-call-path-arguments.md).
 - Direct record call-result scalar reads: implemented at `aee9885` and verified in
   development and release, each with 16 native groups and 374 CLI cases. Both
   combined invocations rechecked 232 identical inputs.

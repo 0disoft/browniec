@@ -1611,6 +1611,18 @@ array-read) and 374 CLI cases (102 new, 166 source-record-result, 106 array-read
 per profile. Full suites, M0, Linux, isolation, DLL, packaging, allocation
 instrumentation and performance are excluded.
 
+## M2 returned subrecords as arguments
+
+Implemented at `7284da8c98f21500af44a2d97537497a8604cfb5` and verified in development and release.
+Both invocations rechecked 235 identical input hashes and matching compiler/SDK
+identities. See the [Windows receipt](docs/evidence/m2-struct-call-path-arguments-windows-20261028.json). See the
+[source contract](docs/engineering/m2-struct-call-path-arguments.md) for exact
+nominal extraction, root release before child creation and mixed cleanup.
+Each profile passed 17 native groups (4 new, 6 named-path-argument, 7
+record-result-argument) and 410 CLI cases (102 new, 154 named-path-argument, 154
+record-result-argument) per profile. Full suites, M0, Linux, isolation, DLL,
+packaging, allocation instrumentation and performance are excluded.
+
 ## Review obligations
 
 Three reviewed counterexamples must remain explicit acceptance tests:

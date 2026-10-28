@@ -176,3 +176,8 @@ packaging, allocation instrumentation, or performance.
 The array-result successor updates this fixture's former bare-array-call
 rejection to a parenthesized array call. Its own evidence covers the modified
 fixture; the counts above remain historical for their original inputs.
+
+The [returned-path successor](m2-struct-call-path-arguments.md) now permits an
+exact-nominal subrecord endpoint after a returned root in record argument
+positions. Scalar endpoints remain invalid record arguments. The earlier
+receipt remains historical for its original inputs.
