@@ -117,6 +117,9 @@ fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s,
             if (index != 64) { return .err(errors::make(3, at)); }
             let usize target = functions::find(source, signatures, begin, end);
             if (target == 16) { return .err(errors::make(3, at)); }
+            if(signatures.return_lengths[target]!=0) {
+                return array_call_read(source,s,p,table,signatures,target,at,depth,result_type,structure,loop_state);
+            }
             return call_value(source,s,p,table,signatures,target,16,at,depth,result_type,structure,loop_state);
         }
         if (index == 64) { return .err(errors::make(3, at)); }
@@ -147,6 +150,32 @@ fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s,
         return .ok(result);
     }
     return .err(errors::make(2, s.begin));
+}
+// Keep the returned owner visible to index-expression exits, then release it
+// immediately after materializing the scalar read or length.
+fn Result<usize,errors::Error> array_call_read(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    usize target,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state) {
+    let usize temporary=array_results::destination(signatures,target,signatures.return_types[target],
+        signatures.return_lengths[target],false,p,table.function,at)?;
+    let usize called=call_value(source,s,p,table,signatures,target,temporary,at,depth+1,result_type,structure,loop_state)?;
+    var locals::Table names=locals::snapshot(table);
+    let usize capture=locals::declare(ref mut names,at,at,128+temporary,false)?;
+    var usize value=0;
+    if(s.kind==91) {
+        let usize open=lexer::next(source,s)?;
+        let usize index=expression(source,s,p,ref names,signatures,1,depth+1,12,result_type,structure,loop_state)?;
+        if(p.types[index]!=12) {return .err(errors::make(3,at));}
+        let usize close=lexer::punctuation(source,s,93)?;
+        value=ir::array_read(p,temporary,index,at)?;
+    } else if(s.kind==46) {
+        let usize dot=lexer::next(source,s)?;
+        if(!word_is(source,s,b"len")) {return .err(errors::make(3,s.begin));}
+        let usize member=lexer::next(source,s)?;
+        value=arrays::length_value(p,temporary,at)?;
+    } else {return .err(errors::make(3,s.begin));}
+    let usize dropped=ir::array_drop(p,temporary,at)?;
+    return .ok(value);
 }
 // A nested result becomes an anonymous argument capture only after its CALL
 // succeeds. Later arguments and early exits then use the existing mixed cleanup.
