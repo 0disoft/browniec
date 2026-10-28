@@ -65,5 +65,5 @@ fn void nominal_mismatches_field_types_and_general_record_expressions_remain_rej
     rejected(b"module main;struct P{i32 x;}fn P make(){let Option<i32> o=.some(42);return P{.x=o?};}fn i32 main(){return 42;}");
     rejected(b"module main;struct P{i32 x;}fn P make(){return P{.x=missing};}fn i32 main(){return 42;}");
     rejected(b"module main;struct P{i32 x;}struct R{P p;}fn R make(){return R{.p=42};}fn i32 main(){return 42;}");
-    rejected(b"module main;struct P{i32 x;}struct R{P p;}fn P child(){return P{.x=42};}fn R make(){return R{.p=child()};}fn i32 main(){return 42;}");
+    rejected(b"module main;struct P{i32 x;}struct R{P p;}fn P child(){return P{.x=42};}fn R make(){return R{.p=(child())};}fn i32 main(){return 42;}");
 }

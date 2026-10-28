@@ -223,14 +223,22 @@ pub fn Result<usize, errors::Error> stage_child(ref u8[] source, ref mut lexer::
     ref mut ir::Program p, ref locals::Table names, ref mut Initializer state,
     ref mut usize[] slots, usize first, usize at) {
     if (state.depth == 0 || s.kind != 2) { return .err(errors::make(3,s.begin)); }
-    let usize level = state.depth-1;
-    let usize child = p.records.layouts.types[state.records[level]*16+state.fields[level]] as usize;
     let usize index = locals::find(source,names,s.begin,s.end);
     if (!binding(names,index)) { return .err(errors::make(3,s.begin)); }
     let usize id = names.registers[index]-144;
     if (id >= p.records.count) { return .err(errors::make(3,s.begin)); }
     let usize name = lexer::next(source,s)?;
     let Leaf part = path(source,s,p,p.records.records[id] as usize,at)?;
+    return stage_part(source,s,p,state,slots,first,id,part,at);
+}
+// Snapshot a selected child into scalar staging slots before any later field
+// expression. Call results and visible child bindings share this leaf encoder.
+pub fn Result<usize, errors::Error> stage_part(ref u8[] source, ref mut lexer::State s,
+    ref mut ir::Program p, ref mut Initializer state, ref mut usize[] slots,
+    usize first, usize id, Leaf part, usize at) {
+    if(state.depth==0 || id>=p.records.count) {return .err(errors::make(3,at));}
+    let usize level=state.depth-1;
+    let usize child=p.records.layouts.types[state.records[level]*16+state.fields[level]] as usize;
     if (part.tag != 0 || part.record != child) { return .err(errors::make(3,at)); }
     if (s.kind != 44 && s.kind != 125) { return .err(errors::make(2,s.begin)); }
     let usize count = leaf_count(p,child,at)?;

@@ -298,6 +298,29 @@ fn Result<usize, errors::Error> array_statement(ref u8[] source, ref mut lexer::
     return array_write_statement(source,s,p,table,signatures,index,at,id,terminator,result_type,expr_depth,structure,loop_state);
 }
 
+// Field calls publish only an anonymous child result. Snapshot it and release
+// its owner before evaluating siblings; the parent destination is still pending.
+fn Result<usize, errors::Error> record_child_call(ref u8[] source, ref mut lexer::State s,
+    ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures,
+    ref mut record_values::Initializer state, ref mut usize[] slots, usize first,
+    usize at, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {
+    if(s.kind!=2) {return .ok(0);}
+    var lexer::State look=lexer::snapshot(s);
+    let usize next=lexer::next(source,ref mut look)?;
+    if(look.kind!=40) {return .ok(0);}
+    if(locals::find(source,table,s.begin,s.end)!=64) {return .err(errors::make(3,s.begin));}
+    let usize level=state.depth-1;
+    let usize child=p.records.layouts.types[state.records[level]*16+state.fields[level]] as usize;
+    let usize target=functions::find(source,signatures,s.begin,s.end);
+    let usize temporary=record_results::destination(signatures,target,child,false,p,table.function,s.begin)?;
+    let usize name=lexer::next(source,s)?;
+    let usize called=call_value(source,s,p,table,signatures,target,144+temporary,at,expr_depth+2,result_type,structure+1,loop_state)?;
+    let record_values::Leaf part=record_values::Leaf{.ordinal=0,.tag=0,.record=child};
+    let usize copied=record_values::stage_part(source,s,p,state,slots,first,temporary,part,at)?;
+    let usize dropped=ir::record_drop(p,temporary,at)?;
+    return .ok(copied);
+}
+
 // Shared declaration/replacement/return staging: finish every RHS expression before
 // consecutive scalar loads. No destination owner or bytes change here.
 fn Result<usize, errors::Error> record_constructor(ref u8[] source, ref mut lexer::State s,
@@ -311,6 +334,8 @@ fn Result<usize, errors::Error> record_constructor(ref u8[] source, ref mut lexe
     while (i < leaves) {
         let u8 tag = record_values::next_leaf(source,s,p,ref mut state,at)?;
         if (tag == 255) {
+            let usize called=record_child_call(source,s,p,table,signatures,ref mut state,ref mut slots,i,at,result_type,expr_depth,structure,loop_state)?;
+            if(called!=0) {i+=called;continue;}
             let usize copied = record_values::stage_child(source,s,p,table,ref mut state,ref mut slots,i,at)?;
             i += copied; continue;
         }
