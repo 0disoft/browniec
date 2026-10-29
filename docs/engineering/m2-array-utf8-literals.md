@@ -2,6 +2,10 @@
 
 Implementation: `3d569fa`.
 
+A later [temporary-range successor](m2-array-utf8-temporary-ranges.md) accepts a
+literal range suffix on these literals; this page records the whole-array
+checkpoint.
+
 `text::valid_utf8([value; N])` accepts a repeated-byte array directly. The filler
 has exact `u8` context and N is an integer literal in 1..4,096, matching existing
 fixed-array declarations. Integer literals infer u8; a typed wider integer or

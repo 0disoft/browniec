@@ -1,7 +1,9 @@
 # UTF-8 validation of direct array call results
 
 The [literal successor](m2-array-utf8-literals.md) also accepts repeated-byte
-array literals. This document records the original call-result checkpoint.
+array literals. This document records the original call-result checkpoint; the
+[temporary-range successor](m2-array-utf8-temporary-ranges.md) now accepts a
+literal range suffix on these results.
 
 `text::valid_utf8(make(...))` now accepts a direct function call returning
 `u8[N]`. Forward declarations and ordinary call arguments work, including

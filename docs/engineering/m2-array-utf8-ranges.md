@@ -3,7 +3,10 @@
 `text::valid_utf8(a[START..END])` now passes a byte range of a named `u8` array
 to the existing private opcode 52. The frontend admits only statically known
 slices; the scan and Fuel rules are those of [opcode 52](m2-array-range-utf8.md).
-This slice adds no new IR opcode and no new runtime path.
+This slice adds no new IR opcode and no new runtime path. A later
+[temporary-range successor](m2-array-utf8-temporary-ranges.md) applies the same
+suffix to direct call results and repeated-byte literals; statements below about
+unavailable temporary ranges describe this checkpoint.
 
 ## Syntax and static admission
 
@@ -56,9 +59,9 @@ offset.
 
 ## Deferred general views
 
-Dynamic or computed endpoints, ranges over temporaries and direct call results,
-literals and nested expressions, plus persistent borrows, remain unavailable, so
-general view expressions are still pending work. Named array-result bindings stay
+Dynamic or computed endpoints, nested range expressions and persistent borrows
+remain unavailable, so general view expressions are still pending work. Temporary
+sources are handled by the successor above. Named array-result bindings stay
 supported as ordinary named arrays. Caller-side host limits are unchanged:
 table-to-backing association stays a trusted native obligation. Version JSON now
 reports `"array_utf8_ranges": true` beside `array_utf8_predicate`,

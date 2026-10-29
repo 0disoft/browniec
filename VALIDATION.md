@@ -1,13 +1,22 @@
 # Validation
 
+- UTF-8 ranges on temporary arrays: implemented at `d70da59` and verified in
+  development/release, each with 16 native groups and 832 CLI cases.
+  `text::valid_utf8(make()[S..E])` and `text::valid_utf8([value; N][S..E])`
+  scan a literal range of a temporary and drop it immediately after the existing
+  opcode 52, with no new opcode, Fuel price or second owner. Empty ranges still
+  evaluate their filler and arguments once. Version JSON adds
+  `array_utf8_temporary_ranges: true`. Dynamic endpoints, repeated slicing and persistent
+  borrows remain deferred. See [the temporary-range contract](docs/engineering/m2-array-utf8-temporary-ranges.md).
+
 - Named-array UTF-8 ranges: implemented at `92feb5e` and verified in
   development/release, each with 15 native groups and 582 CLI cases.
   `text::valid_utf8(a[START..END])` accepts a named live `u8` array (local,
   parameter or named array result) with explicit literal endpoints in 0..4096 and
   `start <= end <= length`. It reuses opcode 52 with prepaid `65 + 4*K` Fuel and
   adds no owner, payload copy or retained borrow. Version JSON adds
-  `array_utf8_ranges: true`. Dynamic, temporary and persistent-borrow ranges
-  remain deferred. See [the range-source contract](docs/engineering/m2-array-utf8-ranges.md).
+  `array_utf8_ranges: true`. Dynamic and persistent-borrow ranges remain
+  deferred. See [the range-source contract](docs/engineering/m2-array-utf8-ranges.md).
 
 - Private array range UTF-8 instruction: implemented at `65af78d` and verified
   in development/release, each with 41 native groups and 14 CLI cases. Opcode 52
