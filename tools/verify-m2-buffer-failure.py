@@ -10,8 +10,8 @@ import shutil
 import subprocess
 
 ROOT = Path(__file__).resolve().parent.parent
-MODULES = ['buffer_growth.fy', 'buffer_storage.fy', 'buffer_owners.fy', 'buffer_replacement.fy', 'buffer_append.fy', 'buffer_close.fy', 'buffer_truncate.fy', 'buffer_resize.fy', 'buffer_create.fy', 'buffer_write.fy', 'buffer_utf8.fy', 'buffer_utf8_scan.fy', 'buffer_utf8_meter.fy', 'buffer_utf8_session.fy', 'buffer_utf8_pool.fy', 'buffer_host_close.fy']
-FIXTURES = ['main.fy', 'grow_resize.fy', 'create.fy', 'copy_out.fy', 'write.fy', 'prepared_write.fy', 'utf8.fy', 'utf8_scan.fy', 'utf8_meter.fy', 'utf8_cancel.fy', 'read_lease.fy', 'utf8_session.fy', 'utf8_pool.fy', 'host_close.fy', 'host_batch.fy']
+MODULES = ['buffer_growth.fy', 'buffer_storage.fy', 'buffer_owners.fy', 'buffer_replacement.fy', 'buffer_append.fy', 'buffer_close.fy', 'buffer_truncate.fy', 'buffer_resize.fy', 'buffer_create.fy', 'buffer_write.fy', 'buffer_utf8.fy', 'buffer_utf8_scan.fy', 'buffer_utf8_meter.fy', 'buffer_utf8_session.fy', 'buffer_utf8_pool.fy', 'buffer_host_close.fy', 'buffer_host_sweep.fy']
+FIXTURES = ['main.fy', 'grow_resize.fy', 'create.fy', 'copy_out.fy', 'write.fy', 'prepared_write.fy', 'utf8.fy', 'utf8_scan.fy', 'utf8_meter.fy', 'utf8_cancel.fy', 'read_lease.fy', 'utf8_session.fy', 'utf8_pool.fy', 'host_close.fy', 'host_batch.fy', 'host_sweep.fy']
 MODES = [('normal-min', None), ('normal-preferred', None), ('abandon', None),
          ('oom-min', 320), ('oom-preferred', 384), ('append-success', None),
          ('append-capacity', None), ('append-identity', None), ('append-state', None),
@@ -51,7 +51,9 @@ MODES = [('normal-min', None), ('normal-preferred', None), ('abandon', None),
          ('close-host-success', None), ('close-host-retry', None),
          ('close-host-preflight', None), ('close-host-accounting', None),
          ('close-batch-partial', None), ('close-batch-preflight', None),
-         ('close-batch-accounting', None), ('close-batch-coverage', None)]
+         ('close-batch-accounting', None), ('close-batch-coverage', None),
+         ('close-sweep-order', None), ('close-sweep-preflight', None),
+         ('close-sweep-leases', None), ('close-sweep-accounting', None)]
 
 
 def sha(path):
@@ -147,7 +149,7 @@ def main():
             need(len(lines) == 2 and lines[0] == 'buffer-failure: passed', 'Probe output')
             counters = json.loads(lines[1])
             single = (mode.startswith(('append-', 'close-', 'truncate-', 'resize-', 'create-', 'copy-out-', 'write-', 'utf8-', 'read-lease-', 'session-', 'pool-'))
-                      or mode in ('grow-append-preflight', 'grow-resize-preflight')) and mode not in ('copy-out-pending', 'write-state', 'utf8-pending', 'utf8-scan-pending', 'utf8-meter-pending', 'utf8-cancel-pending', 'read-lease-state', 'close-batch-partial', 'close-batch-preflight', 'close-batch-accounting', 'close-batch-coverage')
+                      or mode in ('grow-append-preflight', 'grow-resize-preflight')) and mode not in ('copy-out-pending', 'write-state', 'utf8-pending', 'utf8-scan-pending', 'utf8-meter-pending', 'utf8-cancel-pending', 'read-lease-state', 'close-batch-partial', 'close-batch-preflight', 'close-batch-accounting', 'close-batch-coverage', 'close-sweep-order', 'close-sweep-preflight', 'close-sweep-leases', 'close-sweep-accounting')
             expected = dict(schema='browniec.buffer-allocator/v2', live=0, target=target or 0,
                             targetAttempts=2 if target else 0, failures=1 if target else 0,
                             attempts=3 if target else 1 if single else 2,
@@ -167,7 +169,7 @@ def main():
                   sourceSha256=inputs, generatedSourceSha256=generated,
                   generatedLockSha256=lock_hash, forcedInclude=str(header), commands=commands,
                   profileReceipts=outcomes,
-                  limitations=['Windows native probe with byte-identical copies of sixteen production modules. '
+                  limitations=['Windows native probe with byte-identical copies of seventeen production modules. '
                                'Only FY system-heap allocations are counted, not all process memory. '
                                'Provider inconsistency injection, full suites, M0, Linux, isolation, DLL, '
                                'packaging and elapsed-time performance were not run. Guest Buffer is not implemented.'])

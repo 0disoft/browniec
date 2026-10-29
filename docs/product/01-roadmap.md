@@ -1,5 +1,12 @@
 # Roadmap
 
+- Host shutdown descriptor sweep: implemented and verified in development/release,
+  each with 99 native scenarios; all 198 processes exit with zero tracked live
+  allocations. Existing owners are enumerated in descending slot order; failed
+  preflight advances the pass, pending accounting pins its offer, and explicit
+  retry revisits survivors. Native resources remain host-owned.
+  See [the sweep contract](../engineering/m2-buffer-host-sweep.md).
+
 - Explicit multi-root host shutdown visitation: implemented and verified in
   development/release, each with 95 native scenarios; all 190 processes exit
   with zero tracked live allocations. Independently writable roots close during

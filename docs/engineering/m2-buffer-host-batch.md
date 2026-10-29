@@ -6,6 +6,10 @@ Implemented and verified on Windows in development and release. Root
 [receipt](../evidence/m2-buffer-host-batch-windows-20261029.json) records inputs,
 instrumented artifacts and exact allocator counters.
 
+The [descriptor sweep successor](m2-buffer-host-sweep.md) now selects live
+shutdown targets and tracks attempted slots/offers over this protocol. The host
+still supplies and retains actual native resources.
+
 ## Host protocol
 
 The [single-root shutdown](m2-buffer-host-close.md) now shares its actual
