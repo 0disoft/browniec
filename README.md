@@ -1,5 +1,14 @@
 # Brownie C
 
+- Private array range UTF-8 instruction: implemented at `65af78d` and verified
+  in development/release, each with 41 native groups and 14 CLI cases. Opcode 52
+  checks a literal half-open
+  u8 range without a payload copy, new owner or retained lease. It prepays
+  `65 + 4*K` Fuel for K selected bytes and preserves the source owner.
+  Independent verification checks function ownership, liveness, destination
+  and range bounds. Guest range syntax and persistent borrows remain pending.
+  See [the range VM contract](docs/engineering/m2-array-range-utf8.md).
+
 - Explicit array read sessions: implemented at `f85bd4d` and verified in
   development/release, each with 34 native groups and 14 CLI cases. One session per root allows
   multiple range reads while blocking write/fill/destination assignment, result
