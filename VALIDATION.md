@@ -1,5 +1,13 @@
 # Validation
 
+- Private checked array views: implemented at `0c22fb8` and verified in development/
+  release, each with 16 native groups and 14 CLI cases. Range descriptors support
+  scalar reads, subviews and selected u8 UTF-8 checks without payload copies or
+  new owner slots. Every use revalidates current metadata and backing bounds.
+  Descriptors do not pin roots or enforce borrow conflicts; guest integration,
+  metering and origin table/backing association remain separate obligations.
+  See [the range contract](docs/engineering/m2-array-views.md) for verification and limits.
+
 - Direct UTF-8 repeated-byte literals: implemented at `3d569fa` and verified in
   development/release, each with 13 native groups and 380 CLI cases.
   `text::valid_utf8([value; N])` evaluates
