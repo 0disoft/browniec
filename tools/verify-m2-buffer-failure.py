@@ -11,7 +11,7 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parent.parent
 MODULES = ['buffer_growth.fy', 'buffer_storage.fy', 'buffer_owners.fy', 'buffer_replacement.fy', 'buffer_append.fy', 'buffer_close.fy', 'buffer_truncate.fy', 'buffer_resize.fy', 'buffer_create.fy', 'buffer_write.fy']
-FIXTURES = ['main.fy', 'grow_resize.fy', 'create.fy', 'copy_out.fy', 'write.fy']
+FIXTURES = ['main.fy', 'grow_resize.fy', 'create.fy', 'copy_out.fy', 'write.fy', 'prepared_write.fy']
 MODES = [('normal-min', None), ('normal-preferred', None), ('abandon', None),
          ('oom-min', 320), ('oom-preferred', 384), ('append-success', None),
          ('append-capacity', None), ('append-identity', None), ('append-state', None),
@@ -28,7 +28,9 @@ MODES = [('normal-min', None), ('normal-preferred', None), ('abandon', None),
          ('grow-resize-abandon', None), ('grow-resize-truncated', None), ('grow-resize-preflight', None),
          ('create-success', None), ('create-preflight', None), ('create-state', None), ('create-slots', None),
          ('copy-out-success', None), ('copy-out-bounds', None), ('copy-out-identity', None), ('copy-out-pending', None),
-         ('write-success', None), ('write-bounds', None), ('write-identity', None), ('write-state', None)]
+         ('write-success', None), ('write-bounds', None), ('write-identity', None), ('write-state', None),
+         ('prepared-write-success', None), ('prepared-write-bounds', None),
+         ('prepared-write-preflight', None), ('prepared-write-abandon', None)]
 
 
 def sha(path):

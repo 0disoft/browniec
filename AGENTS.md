@@ -10,6 +10,12 @@ own the affected contract. Broader scaffold procedures are optional.
 
 ## Current state
 
+- Private Buffer writes before replacement publication: implemented and verified
+  in development and release, each with 51 native scenarios (4 new, 47 regressions);
+  all 102 processes exit with zero tracked live allocations. Writes validate full
+  transaction snapshots, native metadata, current quotas and initialized bounds.
+  The old root, Plan, table and ledger remain unchanged; writes add no allocation.
+  See [the prepared-write contract](docs/engineering/m2-buffer-prepared-write.md).
 - Private Buffer writes within initialized length: implemented and verified in
   development and release, each with 47 native scenarios (4 new, 43 regressions);
   all 94 processes exit with zero tracked live allocations. Complete preflight

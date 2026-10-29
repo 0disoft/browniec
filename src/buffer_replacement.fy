@@ -126,6 +126,24 @@ fn Result<owners::Owner,Error> validate(ref owners::Table table,ref growth::Ledg
     };
     return .ok(owner);
 }
+pub enum WriteError { State; Quota; Bounds; }
+// Fill only initialized replacement bytes; the original root stays unchanged.
+// Native root association and input non-aliasing remain caller obligations.
+pub fn Result<usize,WriteError> write_prepared(ref owners::Table table,
+    ref mut bytes::Buffer replacement,usize start,ref u8[] input,growth::Limits limits,
+    ref growth::Ledger ledger,ref Plan plan) {
+    switch(validate(table,ledger,plan)) {
+        case .ok(_):{}case .err(_):{return .err(.State);}
+    };
+    if(bytes::len(replacement)!=plan.length || bytes::capacity(replacement)!=plan.capacity) {return .err(.State);}
+    // Include the live old root and pending owner in current quota checks.
+    if(plan.capacity>limits.object || ledger.used>limits.instance || ledger.engine_used>limits.engine) {return .err(.Quota);}
+    if(start>plan.length) {return .err(.Bounds);}
+    if(input.len>plan.length-start) {return .err(.Bounds);}
+    let ref mut u8[] view=bytes::view_mut(replacement);
+    var usize i=0;while(i<input.len) {view[start+i]=input[i];i+=1;}
+    return .ok(input.len);
+}
 // Caller has already replaced its root and dropped the old native allocation.
 pub fn Result<owners::Token,Error> commit(ref mut owners::Table table,ref bytes::Buffer published,
     ref mut growth::Ledger ledger,ref mut Plan plan) {
