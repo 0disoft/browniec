@@ -539,6 +539,10 @@ fn i32 main() {
     else if(bytes::equal(mode,b"pool-tickets")) {utf8_pool::run(1);}
     else if(bytes::equal(mode,b"pool-capacity")) {utf8_pool::run(2);}
     else if(bytes::equal(mode,b"pool-drain")) {utf8_pool::run(3);}
+    else if(bytes::equal(mode,b"pool-shutdown-close")) {utf8_pool::run(4);}
+    else if(bytes::equal(mode,b"pool-shutdown-retry")) {utf8_pool::run(5);}
+    else if(bytes::equal(mode,b"pool-shutdown-complete")) {utf8_pool::run(6);}
+    else if(bytes::equal(mode,b"pool-shutdown-state")) {utf8_pool::run(7);}
     else {return 2;}
     return switch(io::write("buffer-failure: passed\n")){case .ok(_):{0}case .err(_):{1}};
 }

@@ -67,8 +67,10 @@ from the delegated bounded scan. No elapsed-time benchmark is claimed.
 ## Caller and integration boundary
 
 Use one stable Pool with its associated owner table and native root bindings.
-The caller must invoke drain when discarding its host context; this slice does
-not install an Instance shutdown hook or resource destructor. Dropping/overwriting
+The original registry slice requires explicit drain. The
+[shutdown successor](m2-buffer-utf8-shutdown.md) adds one-way admission closure
+and retryable cleanup; callers must invoke that hook before discarding host state.
+Neither slice installs an Instance destructor. Dropping/overwriting
 the whole plain Pool can still lose cleanup state. Do not clone/replay Pool or
 Session metadata, end its leases through lower-level APIs, or use raw native
 mutation/destruction while registered operations depend on roots.

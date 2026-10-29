@@ -43,7 +43,9 @@ MODES = [('normal-min', None), ('normal-preferred', None), ('abandon', None),
          ('session-success', None), ('session-fuel', None),
          ('session-errors', None), ('session-cancel', None),
          ('pool-lifecycle', None), ('pool-tickets', None),
-         ('pool-capacity', None), ('pool-drain', None)]
+         ('pool-capacity', None), ('pool-drain', None),
+         ('pool-shutdown-close', None), ('pool-shutdown-retry', None),
+         ('pool-shutdown-complete', None), ('pool-shutdown-state', None)]
 
 
 def sha(path):

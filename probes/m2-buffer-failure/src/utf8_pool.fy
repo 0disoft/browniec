@@ -4,6 +4,7 @@ import buffer_growth as growth;
 import buffer_storage as storage;
 import buffer_owners as owners;
 import buffer_create as create;
+import buffer_close as close;
 import buffer_utf8_pool as pools;
 import buffer_utf8_meter as meter;
 
@@ -23,6 +24,9 @@ fn void failed(Result<usize,meter::ControlError> r,u8 expected){
 }
 fn void count(Result<usize,meter::ControlError> r,usize expected){
     assert(switch(r){case .ok(v):{v==expected}case .err(_):{false}});
+}
+fn void phase(ref pools::Pool pool,u8 expected){
+    assert(pool.phase==expected);
 }
 fn void same_slot(ref pools::Slot a,ref pools::Slot b){
     assert(a.generation==b.generation && a.live==b.live && a.session.held==b.session.held &&
@@ -120,21 +124,75 @@ pub fn void run(u8 mode){
         step_failed(pools::step(true,ref mut pool,tickets[0],ref mut table,ref b,1,ref mut fuel),3);assert(table.slots[token.slot].reading);
         count(pools::drain(ref mut pool,ref mut table),15);count(pools::drain(ref mut pool,ref mut table),0);
         i=0;while(i<16){assert(!table.slots[i].reading);i+=1;}assert(pool.s0.generation==0);same_usage(ref ledger,ref full);
-    }else{
+    }else if(mode==3 || mode==5){
         var bytes::Buffer second=bytes::empty();fuel=256;
         let pools::Ticket first=opened(pools::begin(false,ref mut pool,ref mut table,token,ref b,ref ledger,ref mut fuel));
         let pools::Ticket other=empty_ticket(ref mut pool,ref mut table,ref second,ref mut ledger);
         let growth::Ledger admitted=ledger;let owners::Table pinned=owners::Table{.slots=table.slots};
         table.slots[token.slot].generation+=1;
-        failed(pools::drain(ref mut pool,ref mut table),4);
+        if(mode==3){failed(pools::drain(ref mut pool,ref mut table),4);}else{
+            failed(pools::shutdown(ref mut pool,ref mut table),4);phase(ref pool,1);
+            fuel=1000;let pools::Slot held=pool.s0;
+            begin_failed(pools::begin(false,ref mut pool,ref mut table,token,ref b,ref ledger,ref mut fuel),4);
+            step_failed(pools::step(false,ref mut pool,first,ref mut table,ref b,4,ref mut fuel),4);
+            step_failed(pools::step(true,ref mut pool,first,ref mut table,ref second,0,ref mut fuel),4);
+            same_slot(ref pool.s0,ref held);assert(fuel==1000 && table.slots[token.slot].reading);
+        }
         assert(pool.s0.live && pool.s0.session.held && !pool.s0.session.cursor.active && !pool.s1.live && pool.s1.generation==2);
         assert(table.slots[token.slot].reading && !table.slots[1].reading);
         failed(pools::abandon(ref mut pool,other,ref mut table),3);
         table.slots[token.slot].generation=token.generation;
-        count(pools::drain(ref mut pool,ref mut table),1);count(pools::drain(ref mut pool,ref mut table),0);
+        if(mode==3){count(pools::drain(ref mut pool,ref mut table),1);}else{
+            count(pools::shutdown(ref mut pool,ref mut table),1);phase(ref pool,2);
+            count(pools::shutdown(ref mut pool,ref mut table),0);phase(ref pool,2);
+        }
+        count(pools::drain(ref mut pool,ref mut table),0);
         assert(!pool.s0.live && pool.s0.generation==2 && !table.slots[token.slot].reading && !table.slots[1].reading);
         failed(pools::abandon(ref mut pool,first,ref mut table),3);same_usage(ref ledger,ref admitted);
         var owners::Table expected=owners::Table{.slots=pinned.slots};expected.slots[token.slot].reading=false;expected.slots[1].reading=false;same_table(ref table,ref expected);
+    }else if(mode==4){
+        phase(ref pool,0);fuel=256;
+        let pools::Ticket ticket=opened(pools::begin(false,ref mut pool,ref mut table,token,ref b,ref ledger,ref mut fuel));
+        fuel=260;assert(switch(pools::step(false,ref mut pool,ticket,ref mut table,ref b,1,ref mut fuel)){case .ok(v):{!v}case .err(_):{false}});
+        var close::Plan plan=close::empty();
+        assert(switch(close::begin(ref mut table,token,ref b,ref ledger,ref mut plan)){case .ok(_):{false}case .err(_):{true}});
+        count(pools::shutdown(ref mut pool,ref mut table),1);phase(ref pool,2);assert(fuel==0);
+        same_table(ref table,ref before);same_usage(ref ledger,ref usage);
+        assert(!pool.s0.live && pool.s0.generation==2 && !pool.s0.session.cursor.active);
+        fuel=1000;begin_failed(pools::begin(false,ref mut pool,ref mut table,token,ref b,ref ledger,ref mut fuel),4);
+        begin_failed(pools::begin(true,ref mut pool,ref mut table,token,ref b,ref ledger,ref mut fuel),1);
+        step_failed(pools::step(true,ref mut pool,ticket,ref mut table,ref b,4,ref mut fuel),3);assert(fuel==1000);
+        count(pools::shutdown(ref mut pool,ref mut table),0);assert(pool.s0.generation==2);
+        // Actual root destruction is caller-ordered, after every session is released.
+        assert(switch(close::begin(ref mut table,token,ref b,ref ledger,ref mut plan)){case .ok(n):{n==320}case .err(_):{false}});
+        b=bytes::empty();assert(switch(close::finish(ref table,ref mut ledger,ref mut plan)){case .ok(n):{n==0}case .err(_):{false}});
+        assert(ledger.used==0 && ledger.engine_used==32 && !table.slots[token.slot].live);return;
+    }else if(mode==6){
+        // Closing an already completed registry never advances generations again.
+        fuel=256;let pools::Ticket ticket=opened(pools::begin(false,ref mut pool,ref mut table,token,ref b,ref ledger,ref mut fuel));
+        fuel=272;assert(switch(pools::step(false,ref mut pool,ticket,ref mut table,ref b,4,ref mut fuel)){case .ok(v):{v}case .err(_):{false}});
+        count(pools::shutdown(ref mut pool,ref mut table),0);phase(ref pool,2);
+        count(pools::shutdown(ref mut pool,ref mut table),0);assert(pool.s0.generation==2 && fuel==0);
+        failed(pools::abandon(ref mut pool,ticket,ref mut table),3);
+        same_table(ref table,ref before);same_usage(ref ledger,ref usage);
+    }else{
+        fuel=256;let pools::Ticket ticket=opened(pools::begin(false,ref mut pool,ref mut table,token,ref b,ref ledger,ref mut fuel));
+        let pools::Slot vacant=pool.s15;pool.s15.session.held=true;
+        failed(pools::shutdown(ref mut pool,ref mut table),4);phase(ref pool,1);
+        assert(table.slots[token.slot].reading && pool.s0.live);
+        pool.s15=vacant;fuel=1000;
+        begin_failed(pools::begin(false,ref mut pool,ref mut table,token,ref b,ref ledger,ref mut fuel),4);assert(fuel==1000);
+        // Individual recovery remains available; drain alone never reopens the Pool.
+        count(pools::abandon(ref mut pool,ticket,ref mut table),0);phase(ref pool,1);
+        count(pools::drain(ref mut pool,ref mut table),0);phase(ref pool,1);
+        count(pools::shutdown(ref mut pool,ref mut table),0);phase(ref pool,2);
+        // Malformed Closed state must not be silently accepted as idempotent success.
+        pool.s15.session.held=true;failed(pools::shutdown(ref mut pool,ref mut table),4);phase(ref pool,2);
+        pool.s15=vacant;count(pools::shutdown(ref mut pool,ref mut table),0);
+        pool.phase=255;failed(pools::shutdown(ref mut pool,ref mut table),4);phase(ref pool,255);
+        begin_failed(pools::begin(false,ref mut pool,ref mut table,token,ref b,ref ledger,ref mut fuel),4);
+        pool.phase=2;count(pools::shutdown(ref mut pool,ref mut table),0);assert(fuel==1000);
+        same_table(ref table,ref before);same_usage(ref ledger,ref usage);
     }
     assert(bytes::equal(bytes::view(ref b),ref scalar[..]));
 }

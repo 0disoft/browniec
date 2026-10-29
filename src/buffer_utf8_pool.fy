@@ -10,6 +10,7 @@ pub struct Ticket { usize slot; usize generation; }
 pub struct Slot { usize generation; bool live; sessions::Session session; }
 // Explicit fields avoid unsupported mutation of nested-record array elements.
 pub struct Pool {
+    u8 phase; // 0 Open, 1 Closing, 2 Closed; reject all other values.
     Slot s0;
     Slot s1;
     Slot s2;
@@ -28,7 +29,8 @@ pub struct Pool {
     Slot s15;
 }
 fn Slot fresh(){return Slot{.generation=1,.live=false,.session=sessions::empty()};}
-pub fn Pool empty(){return Pool{.s0=fresh(),.s1=fresh(),.s2=fresh(),.s3=fresh(),.s4=fresh(),.s5=fresh(),.s6=fresh(),.s7=fresh(),.s8=fresh(),.s9=fresh(),.s10=fresh(),.s11=fresh(),.s12=fresh(),.s13=fresh(),.s14=fresh(),.s15=fresh()};}
+pub fn Pool empty(){return Pool{.phase=0,.s0=fresh(),.s1=fresh(),.s2=fresh(),.s3=fresh(),.s4=fresh(),.s5=fresh(),.s6=fresh(),.s7=fresh(),.s8=fresh(),.s9=fresh(),.s10=fresh(),.s11=fresh(),.s12=fresh(),.s13=fresh(),.s14=fresh(),.s15=fresh()};}
+fn bool open(ref Pool pool){return pool.phase==0;}
 // Internal indices are always checked against the fixed 16-slot bound.
 fn Slot at(ref Pool pool,usize index){
     if(index==0){return pool.s0;}
@@ -67,9 +69,11 @@ fn void put(ref mut Pool pool,usize index,Slot entry){
     pool.s15=entry;
 }
 fn bool valid(ref Pool pool){
+    if(pool.phase>2){return false;}
     var usize i=0;while(i<16){
         let Slot entry=at(pool,i);
         if(entry.live){
+            if(pool.phase==2){return false;}
             if(entry.generation==0 || !entry.session.held || entry.session.source.slot>=16 || entry.session.source.generation==0){return false;}
             var usize j=0;while(j<i){
                 let Slot earlier=at(pool,j);
@@ -95,6 +99,7 @@ fn void retire(ref mut Pool pool,usize index){
 pub fn Result<Ticket,meter::ControlError> begin(bool cancel_requested,ref mut Pool pool,
     ref mut owners::Table table,owners::Token source,ref bytes::Buffer b,ref growth::Ledger ledger,ref mut usize fuel){
     if(cancel_requested){return .err(.Cancelled);}
+    if(!open(pool)){return .err(.State);}
     if(!valid(pool)){return .err(.State);}
     var usize index=0;while(index<16){let Slot entry=at(pool,index);if(!entry.live && entry.generation!=0){break;}index+=1;}
     if(index==16){return .err(.State);}
@@ -106,6 +111,7 @@ pub fn Result<Ticket,meter::ControlError> begin(bool cancel_requested,ref mut Po
 pub fn Result<bool,meter::ControlError> step(bool cancel_requested,ref mut Pool pool,Ticket ticket,
     ref mut owners::Table table,ref bytes::Buffer b,usize max_bytes,ref mut usize fuel){
     let usize index=resolve(pool,ticket)?;var Slot entry=at(pool,index);
+    if(!open(pool)){return .err(.State);}
     let Result<bool,meter::ControlError> outcome=sessions::step(cancel_requested,table,b,max_bytes,ref mut entry.session,fuel);
     if(entry.session.held){put(pool,index,entry);}else{retire(pool,index);}
     return outcome;
@@ -130,5 +136,13 @@ pub fn Result<usize,meter::ControlError> drain(ref mut Pool pool,ref mut owners:
         i+=1;
     }
     if(failed){return .err(.State);}
+    return .ok(count);
+}
+// One-way host shutdown entry point. Failure retains Closing and retryable leases.
+// This explicit hook does not install an automatic destructor or own native roots.
+pub fn Result<usize,meter::ControlError> shutdown(ref mut Pool pool,ref mut owners::Table table){
+    if(pool.phase==0){pool.phase=1;}
+    let usize count=drain(pool,table)?;
+    pool.phase=2;
     return .ok(count);
 }

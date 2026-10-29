@@ -1,10 +1,18 @@
 # Brownie C
 
+- Private UTF-8 registry shutdown: implemented and verified in development/release,
+  each with 83 native scenarios (4 new, 79 regressions); all 166 processes exit
+  with zero tracked live allocations. One-way Open/Closing/Closed state blocks
+  admission and scan progress once shutdown starts; failures remain retryable.
+  Explicit host hook only; automatic Instance teardown/VM wiring is pending.
+  See [the shutdown contract](docs/engineering/m2-buffer-utf8-shutdown.md).
+
 - Private host UTF-8 session registry: implemented and verified in development/
   release, each with 79 native scenarios (4 new, 75 regressions); all 158 processes
   exit with zero tracked live allocations. Sixteen fixed slots retain sessions,
   generation tickets reject stale operations, and batch cleanup retains failures
-  for retry. No extra heap allocation; host shutdown/VM integration is pending.
+  for retry. No extra heap allocation; the explicit shutdown successor is above.
+  Automatic Instance teardown and VM integration remain pending.
   See [the registry contract](docs/engineering/m2-buffer-utf8-pool.md).
 - Private leased UTF-8 sessions: implemented and verified in development/release,
   each with 75 native scenarios (4 new, 71 regressions); all 150 processes exit
