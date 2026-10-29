@@ -6,6 +6,11 @@ with a lock refresh (69 sources, 552 MIR functions), followed by
 The [Windows receipt](../evidence/m2-buffer-utf8-windows-20261029.json) records
 the tested input hashes and both native binaries.
 
+The [resumable successor](m2-buffer-utf8-scan.md) adds bounded private scanning.
+The synchronous API and 55-scenario checkpoint below retain their original scope;
+statements about unfinished chunking describe that earlier checkpoint. Fuel and
+guest integration remain unfinished in both slices.
+
 `buffer_utf8::validate(table, token, buffer)` checks the entire initialized byte
 range and returns its byte length on success. It reuses the pinned Fairy C SDK's
 allocation-free `std::text::validate_utf8`, already used for Brownie source input.
