@@ -11,6 +11,7 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parent.parent
 MODULES = ['buffer_growth.fy', 'buffer_storage.fy', 'buffer_owners.fy', 'buffer_replacement.fy', 'buffer_append.fy', 'buffer_close.fy', 'buffer_truncate.fy', 'buffer_resize.fy']
+FIXTURES = ['main.fy', 'grow_resize.fy']
 MODES = [('normal-min', None), ('normal-preferred', None), ('abandon', None),
          ('oom-min', 320), ('oom-preferred', 384), ('append-success', None),
          ('append-capacity', None), ('append-identity', None), ('append-state', None),
@@ -21,7 +22,10 @@ MODES = [('normal-min', None), ('normal-preferred', None), ('abandon', None),
          ('truncate-success', None), ('truncate-bounds', None),
          ('truncate-generation', None), ('truncate-state', None),
          ('resize-success', None), ('resize-capacity', None),
-         ('resize-generation', None), ('resize-state', None)]
+         ('resize-generation', None), ('resize-state', None),
+         ('grow-resize-preferred', None), ('grow-resize-min', None),
+         ('grow-resize-oom-min', 320), ('grow-resize-oom-preferred', 384),
+         ('grow-resize-abandon', None), ('grow-resize-truncated', None), ('grow-resize-preflight', None)]
 
 
 def sha(path):
@@ -68,7 +72,8 @@ def main():
     root_lock = json.loads((ROOT / 'fairy.lock').read_text(encoding='utf-8'))
     sdk = [p for p in root_lock['packages'] if p['role'] != 'root']
     paths = [ROOT / 'src' / name for name in MODULES]
-    paths += [fixture / 'src/main.fy', fixture / 'fairy.toml', fixture / 'allocator_probe.h',
+    paths += [fixture / 'src' / name for name in FIXTURES]
+    paths += [fixture / 'fairy.toml', fixture / 'allocator_probe.h',
               ROOT / 'tools/verify-m2-buffer-failure.py', ROOT / 'fairy.toml',
               ROOT / 'fairy.lock', ROOT / 'toolchain.json']
     inputs = [dict(path=p.relative_to(ROOT).as_posix(), sha256=sha(p)) for p in sorted(paths)]
@@ -76,15 +81,16 @@ def main():
     source = project / 'src'
     source.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(fixture / 'fairy.toml', project / 'fairy.toml')
-    shutil.copyfile(fixture / 'src/main.fy', source / 'main.fy')
+    for name in FIXTURES:
+        shutil.copyfile(fixture / 'src' / name, source / name)
     for name in MODULES:
         shutil.copyfile(ROOT / 'src' / name, source / name)
     need(all(sha(source / name) == sha(ROOT / 'src' / name) for name in MODULES),
          'Generated modules differ from production sources')
-    need(sha(source / 'main.fy') == sha(fixture / 'src/main.fy')
+    need(all(sha(source / name) == sha(fixture / 'src' / name) for name in FIXTURES)
          and sha(project / 'fairy.toml') == sha(fixture / 'fairy.toml'), 'Generated fixture differs')
-    need({p.name for p in source.rglob('*.fy')} == set(MODULES + ['main.fy'])
-         and len(list(source.rglob('*.fy'))) == len(MODULES) + 1, 'Unexpected generated source')
+    need({p.name for p in source.rglob('*.fy')} == set(MODULES + FIXTURES)
+         and len(list(source.rglob('*.fy'))) == len(MODULES) + len(FIXTURES), 'Unexpected generated source')
     generated = [dict(path=p.relative_to(ROOT).as_posix(), sha256=sha(p))
                  for p in sorted(source.glob('*.fy'))]
     run([compiler, 'check'], cwd=project)
@@ -116,8 +122,8 @@ def main():
             counters = json.loads(lines[1])
             expected = dict(schema='browniec.buffer-allocator/v2', live=0, target=target or 0,
                             targetAttempts=2 if target else 0, failures=1 if target else 0,
-                            attempts=3 if target else 1 if (mode.startswith(('append-', 'close-', 'truncate-', 'resize-')) or mode == 'grow-append-preflight') else 2,
-                            frees=1 if (mode.startswith(('append-', 'close-', 'truncate-', 'resize-')) or mode == 'grow-append-preflight') else 2)
+                            attempts=3 if target else 1 if (mode.startswith(('append-', 'close-', 'truncate-', 'resize-')) or mode in ('grow-append-preflight', 'grow-resize-preflight')) else 2,
+                            frees=1 if (mode.startswith(('append-', 'close-', 'truncate-', 'resize-')) or mode in ('grow-append-preflight', 'grow-resize-preflight')) else 2)
             need(counters == expected, 'Allocator counters: ' + str(counters))
             cases.append(dict(mode=mode, allocator=counters))
         need(sha(exe) == binary_hash, 'Executable changed')

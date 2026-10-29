@@ -1,5 +1,11 @@
 # Validation
 
+- Buffer grow-and-resize preparation: implemented and verified in development and
+  release, each with 35 native scenarios (7 new, 28 regressions); all 70 processes
+  exit with zero tracked live allocations. Growth-only
+  preparation preserves the old root and zeroes the unpublished replacement's
+  new bytes. Publication and metadata commit remain explicit caller steps.
+  See [the grow-and-resize contract](docs/engineering/m2-buffer-grow-resize.md).
 - Buffer resize within retained capacity: implemented and verified in development
   and release, each with 28 native scenarios (4 new, 24 regressions); all 56
   processes exit with zero tracked live allocations.
@@ -1947,3 +1953,28 @@ and two binaries. Provider fault injection, full native/CLI
 suites, M0, Linux, isolation, DLL embedding, packaging and elapsed-time performance
 were not run. Guest syntax, VM integration, borrow enforcement and whole-Instance
 cleanup remain unfinished; unexpected SDK mutation is not rolled back.
+
+## Private Buffer grow-and-resize preparation
+
+Root `fairyc check` passed with a lock refresh (66 sources, 544 MIR functions).
+`python -B tools/verify-m2-buffer-failure.py` then passed 35 native scenarios per
+development/release profile: seven grow-resize cases plus 28 regressions. Coverage
+includes preferred/minimum growth, both one-shot OOM/retry sizes, abandonment,
+growth after truncation and preflight rejection. Full suffix checks pass before
+and after commit; old data/token stay valid while pending. Preferred close reaches
+0/32 usage after native destruction, preserving peaks; abandonment restores usage
+after dropping the replacement and retains peaks. The final fixture confirms a
+fresh-token zero read at index 256 and exactly `Token` for an old token with empty
+backing; both profiles passed again after those assertions were added.
+
+FY heap counts are two allocation attempts/two frees normally; three
+attempts, one failure, two target-size attempts/two frees for OOM/retry; one initial
+allocation/one free for preflight; all 70 processes exit with `live=0`.
+See [the contract](docs/engineering/m2-buffer-grow-resize.md).
+The regenerated [Windows receipt](docs/evidence/m2-buffer-grow-resize-windows-20261029.json)
+records the final 16 input hashes, ten generated sources (eight byte-identical
+production modules plus `main.fy` and `grow_resize.fy`) and two binaries.
+Provider fault injection, full native/CLI suites, M0, Linux, isolation, DLL embedding,
+packaging and elapsed-time performance were not run. Guest syntax, VM integration,
+borrow enforcement, atomic native publication and whole-Instance cleanup remain
+unfinished.

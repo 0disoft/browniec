@@ -1,5 +1,11 @@
 # Roadmap
 
+- Buffer grow-and-resize preparation: implemented and verified in development and
+  release, each with 35 native scenarios (7 new, 28 regressions); all 70 processes
+  exit with zero tracked live allocations. Growth-only
+  preparation preserves the old root and zeroes the unpublished replacement's
+  new bytes. Publication and metadata commit remain explicit caller steps.
+  See [the grow-and-resize contract](../engineering/m2-buffer-grow-resize.md).
 - Buffer resize within retained capacity: implemented and verified in development
   and release, each with 28 native scenarios (4 new, 24 regressions); all 56
   processes exit with zero tracked live allocations.

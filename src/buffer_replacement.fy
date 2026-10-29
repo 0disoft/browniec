@@ -88,6 +88,30 @@ pub fn Result<bytes::Buffer,Error> prepare_append(ref owners::Table table,owners
     plan.length=length;
     return .ok(ready);
 }
+// Keep zero initialization private until the replacement is ready to publish.
+fn Result<bytes::Buffer,Error> resize_prepared(bytes::Buffer source,usize capacity,usize length) {
+    var bytes::Buffer replacement=source;
+    let usize actual=switch(bytes::resize_zeroed(ref mut replacement,length)) {
+        case .ok(value):{value}case .err(_):{return .err(.Provider);}
+    };
+    if(actual!=length || bytes::len(ref replacement)!=length || bytes::capacity(ref replacement)!=capacity) {return .err(.Provider);}
+    return .ok(replacement);
+}
+// Growth-only resize: use buffer_resize when existing capacity suffices.
+pub fn Result<bytes::Buffer,Error> prepare_resize(ref owners::Table table,owners::Token source,
+    ref bytes::Buffer old,usize length,growth::Limits limits,ref mut growth::Ledger ledger,ref mut Plan plan) {
+    let bytes::Buffer replacement=prepare(table,source,old,length,limits,ledger,plan)?;
+    let bytes::Buffer ready=switch(resize_prepared(replacement,plan.capacity,length)) {
+        case .ok(value):{value}
+        case .err(e): {
+            // The failed helper has dropped its replacement before cancellation.
+            switch(cancel(table,ledger,plan)){case .ok(_):{}case .err(_):{return .err(.State);}};
+            return .err(e);
+        }
+    };
+    plan.length=length;
+    return .ok(ready);
+}
 // Verify both snapshots and the complete accounting transaction before mutation.
 fn Result<owners::Owner,Error> validate(ref owners::Table table,ref growth::Ledger ledger,ref Plan plan) {
     if(!plan.active || !same_table(table,ref plan.before) || !same_ledger(ledger,ref plan.reserved)) {return .err(.State);}

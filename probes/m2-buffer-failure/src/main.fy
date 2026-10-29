@@ -10,6 +10,7 @@ import buffer_append as append;
 import buffer_close as close;
 import buffer_truncate as truncate;
 import buffer_resize as resize;
+import grow_resize as grow_resize;
 
 fn growth::Limits limits(bool minimum) {
     return growth::Limits{.object=4096,.instance=if(minimum){704}else{8192},
@@ -476,6 +477,13 @@ fn i32 main() {
     else if(bytes::equal(mode,b"resize-capacity")) {run_resize(1);}
     else if(bytes::equal(mode,b"resize-generation")) {run_resize(2);}
     else if(bytes::equal(mode,b"resize-state")) {run_resize(3);}
+    else if(bytes::equal(mode,b"grow-resize-preferred")) {grow_resize::run(0);}
+    else if(bytes::equal(mode,b"grow-resize-min")) {grow_resize::run(1);}
+    else if(bytes::equal(mode,b"grow-resize-oom-min")) {grow_resize::run(2);}
+    else if(bytes::equal(mode,b"grow-resize-oom-preferred")) {grow_resize::run(3);}
+    else if(bytes::equal(mode,b"grow-resize-abandon")) {grow_resize::run(4);}
+    else if(bytes::equal(mode,b"grow-resize-truncated")) {grow_resize::run(5);}
+    else if(bytes::equal(mode,b"grow-resize-preflight")) {grow_resize::run(6);}
     else {return 2;}
     return switch(io::write("buffer-failure: passed\n")){case .ok(_):{0}case .err(_):{1}};
 }
