@@ -11,6 +11,7 @@ import buffer_close as close;
 import buffer_truncate as truncate;
 import buffer_resize as resize;
 import grow_resize as grow_resize;
+import create as create_probe;
 
 fn growth::Limits limits(bool minimum) {
     return growth::Limits{.object=4096,.instance=if(minimum){704}else{8192},
@@ -484,6 +485,10 @@ fn i32 main() {
     else if(bytes::equal(mode,b"grow-resize-abandon")) {grow_resize::run(4);}
     else if(bytes::equal(mode,b"grow-resize-truncated")) {grow_resize::run(5);}
     else if(bytes::equal(mode,b"grow-resize-preflight")) {grow_resize::run(6);}
+    else if(bytes::equal(mode,b"create-success")) {create_probe::run(0);}
+    else if(bytes::equal(mode,b"create-preflight")) {create_probe::run(1);}
+    else if(bytes::equal(mode,b"create-state")) {create_probe::run(2);}
+    else if(bytes::equal(mode,b"create-slots")) {create_probe::run(3);}
     else {return 2;}
     return switch(io::write("buffer-failure: passed\n")){case .ok(_):{0}case .err(_):{1}};
 }

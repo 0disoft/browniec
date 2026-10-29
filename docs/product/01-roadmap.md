@@ -1,5 +1,11 @@
 # Roadmap
 
+- Empty Buffer registration: implemented and verified in development and release,
+  each with 39 native scenarios (4 new, 35 regressions); all 78 processes exit
+  with zero tracked live allocations. Each registration
+  admits a 64-byte logical owner without payload allocation. Multiple empty roots
+  and registration after final close share caller-managed accounting.
+  See [the create contract](../engineering/m2-buffer-create.md).
 - Buffer grow-and-resize preparation: implemented and verified in development and
   release, each with 35 native scenarios (7 new, 28 regressions); all 70 processes
   exit with zero tracked live allocations. Growth-only

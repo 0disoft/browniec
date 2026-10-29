@@ -1,5 +1,11 @@
 # Validation
 
+- Empty Buffer registration: implemented and verified in development and release,
+  each with 39 native scenarios (4 new, 35 regressions); all 78 processes exit
+  with zero tracked live allocations. Each registration
+  admits a 64-byte logical owner without payload allocation. Multiple empty roots
+  and registration after final close share caller-managed accounting.
+  See [the create contract](docs/engineering/m2-buffer-create.md).
 - Buffer grow-and-resize preparation: implemented and verified in development and
   release, each with 35 native scenarios (7 new, 28 regressions); all 70 processes
   exit with zero tracked live allocations. Growth-only
@@ -1978,3 +1984,27 @@ Provider fault injection, full native/CLI suites, M0, Linux, isolation, DLL embe
 packaging and elapsed-time performance were not run. Guest syntax, VM integration,
 borrow enforcement, atomic native publication and whole-Instance cleanup remain
 unfinished.
+
+## Private empty Buffer registration
+
+Root `fairyc check` passed with a lock refresh (67 sources, 548 MIR functions).
+`python -B tools/verify-m2-buffer-failure.py` then passed 39 native scenarios per
+development/release profile: `create-success`, `create-preflight`, `create-state`
+and `create-slots`, plus 35 regressions. Coverage includes multiple registrations,
+close/re-register accounting and peaks, current quotas, allocated-root rejection,
+all nine malformed ledger fields, insufficient existing-table coverage, checked
+addition overflow, exact-`MAX` admission and full/retired slots. Registering slot 2
+at generation `MAX` then closing retires it at generation zero; further creation
+rejects it. Slot and extreme-usage fixtures are synthetic, with no 16 real roots
+or giant allocation.
+
+Each new process allocates payload once for its seeded 256-byte root and frees it
+once; empty registrations add no allocation.
+All 78 processes exit with `live=0`. See [the contract](docs/engineering/m2-buffer-create.md).
+The archived [Windows receipt](docs/evidence/m2-buffer-create-windows-20261029.json)
+records 18 input hashes, twelve generated sources (nine byte-identical
+production modules plus `main.fy`, `grow_resize.fy` and `create.fy`) and two binaries.
+Provider fault injection, full native/CLI suites, M0, Linux,
+isolation, DLL embedding, packaging and elapsed-time performance were not run.
+Guest syntax, VM integration, borrow enforcement, whole-Instance integration and
+physical table-memory admission remain unfinished.

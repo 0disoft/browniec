@@ -10,6 +10,11 @@ pub struct Ledger {
 }
 pub enum Error { State; Overflow; Quota; NoGrowth; }
 
+// No Buffer owner has been admitted yet; also valid after final close.
+pub fn Ledger unowned() {
+    return Ledger { .used=0, .engine_used=0, .peak=0, .engine_peak=0,
+        .pending=0, .old_capacity=0, .new_capacity=0, .before_used=0, .before_engine_used=0 };
+}
 // One empty Buffer owner is already accounted; no payload is allocated here.
 pub fn Ledger empty() {
     return Ledger { .used=64, .engine_used=64, .peak=64, .engine_peak=64,
@@ -19,10 +24,12 @@ fn bool counters(ref Ledger ledger) {
     return ledger.used<=ledger.engine_used && ledger.used<=ledger.peak &&
         ledger.engine_used<=ledger.engine_peak && ledger.peak<=ledger.engine_peak;
 }
+fn bool idle(ref Ledger ledger) {
+    return counters(ledger) && ledger.pending==0 && ledger.old_capacity==0 && ledger.new_capacity==0 &&
+        ledger.before_used==0 && ledger.before_engine_used==0;
+}
 fn bool clean(ref Ledger ledger,usize old) {
-    if(old%64!=0 || old>18446744073709551551 || !counters(ledger)) {return false;}
-    return ledger.pending==0 && ledger.old_capacity==0 && ledger.new_capacity==0 &&
-        ledger.before_used==0 && ledger.before_engine_used==0 && ledger.used>=old+64;
+    return old%64==0 && old<=18446744073709551551 && idle(ledger) && ledger.used>=old+64;
 }
 fn Result<usize,Error> rounded(usize value) {
     if(value>18446744073709551552) {return .err(.Overflow);}
@@ -33,6 +40,16 @@ fn bool fits(usize capacity,Limits limits,ref Ledger ledger) {
     let usize charge=capacity+64;
     return ledger.used<=limits.instance && ledger.engine_used<=limits.engine &&
         charge<=limits.instance-ledger.used && charge<=limits.engine-ledger.engine_used;
+}
+// Admit one additional empty owner, preserving background usage and prior peaks.
+pub fn Result<usize,Error> admit_empty(Limits limits,ref mut Ledger ledger) {
+    if(!idle(ledger)) {return .err(.State);}
+    if(ledger.used>18446744073709551551 || ledger.engine_used>18446744073709551551) {return .err(.Overflow);}
+    if(!fits(0,limits,ledger)) {return .err(.Quota);}
+    ledger.used+=64;ledger.engine_used+=64;
+    if(ledger.used>ledger.peak) {ledger.peak=ledger.used;}
+    if(ledger.engine_used>ledger.engine_peak) {ledger.engine_peak=ledger.engine_used;}
+    return .ok(ledger.used);
 }
 pub fn Result<usize,Error> plan(usize old,usize required,Limits limits,ref Ledger ledger) {
     if(!clean(ledger,old)) {return .err(.State);}
