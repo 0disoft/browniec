@@ -6,6 +6,10 @@ with a lock refresh (71 sources, 564 MIR functions), followed by
 The [Windows receipt](../evidence/m2-buffer-utf8-meter-windows-20261029.json)
 records the tested inputs and both native binaries.
 
+The [cooperative cancellation successor](m2-buffer-utf8-cancel.md) adds separate
+control entrypoints with a caller-supplied cancellation snapshot. The original
+metered API and 63-scenario checkpoint below retain their original scope.
+
 `buffer_utf8_meter` adds explicit Fuel accounting around the existing
 [resumable scanner](m2-buffer-utf8-scan.md). Both `begin(table, token, buffer,
 fuel)` and `step(table, buffer, max_bytes, cursor, fuel)` take an exclusive native

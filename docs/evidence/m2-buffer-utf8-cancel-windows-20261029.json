@@ -1,0 +1,3326 @@
+{
+  "schema": "browniec.buffer-utf8-cancel-windows/v1",
+  "status": "passed",
+  "recordedAt": "2026-10-29T11:59:45.692208+00:00",
+  "baselineCommit": "8d64bc8e1a742f35c0071da8deb9dc4633c2b207",
+  "os": "Windows-11-10.0.26300-SP0",
+  "profiles": [
+    "development",
+    "release"
+  ],
+  "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261022210249-4ce1264273be\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.86\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: 4ce1264273be6051ee560173e94690e1b99c9eaf\nmodified: false",
+  "compilerSha256": "572395f7f1e425d613c5a69f50b30ed177cda37ca2b1638bd0c11cf79fcbcc77",
+  "lockedCheck": "check ok: 2 instance(s), 71 source file(s), 567 MIR function(s), lock verified",
+  "standardLibraryLockIdentity": [
+    {
+      "id": "fypi1-sha256-c18350128fcbce1cee2c63f0e7acc467f9f77ff184c458af1d20eab69a58e89a",
+      "role": "standard-library",
+      "packageUid": "fairyc.std",
+      "sourceKind": "sdk",
+      "localPath": "",
+      "sdkIdentity": "fairyc-sdk-stdlib/0",
+      "runtimeAbi": "fairyc-runtime/0",
+      "sourceIdentity": "fairyc-sdk-stdlib/0;fairyc-runtime/0;fysrc1-sha256-782df5e2039ff3f7817c1055454caa24feb2ea755e62f78d8ee67418916a5b83",
+      "sourceDigest": "fysrc1-sha256-782df5e2039ff3f7817c1055454caa24feb2ea755e62f78d8ee67418916a5b83",
+      "version": "0.0.0-stage0.86",
+      "features": []
+    }
+  ],
+  "sourceSha256": [
+    {
+      "path": "fairy.lock",
+      "sha256": "f5df4d5f57b4e3e9b802bee89ea006f04c9b8f574120c8a001f17c43bea22278"
+    },
+    {
+      "path": "fairy.toml",
+      "sha256": "f5254ba793d9012470c697e8657688a4ea5465c138fba6d748707d5bfa4b31fb"
+    },
+    {
+      "path": "probes/m2-buffer-failure/allocator_probe.h",
+      "sha256": "9844bccfe731fc1ea98a665c0fd3efd36a920646c2e2103b0ee31e06aff62fb2"
+    },
+    {
+      "path": "probes/m2-buffer-failure/fairy.toml",
+      "sha256": "d778dfd6480f54c26ec66935bf8f64453079ac0dce4878b931da307c20561b03"
+    },
+    {
+      "path": "probes/m2-buffer-failure/src/copy_out.fy",
+      "sha256": "ef66e8abc13562675597ff313e53e9a15d9152d9bff3e3fe457e4bbee5b8fbf2"
+    },
+    {
+      "path": "probes/m2-buffer-failure/src/create.fy",
+      "sha256": "bc109e48817040b9d13b3e44812f14f2ae957246d5ddb8c7b4edbf4f1cbf5a77"
+    },
+    {
+      "path": "probes/m2-buffer-failure/src/grow_resize.fy",
+      "sha256": "1fbd3efc58430782213550d10e3534faef0bf469dabdf6c04c8d1558162aad82"
+    },
+    {
+      "path": "probes/m2-buffer-failure/src/main.fy",
+      "sha256": "e2a4021ea5de6db41b62fad60a940cea44734a076aae2be43e3b93240d93a67f"
+    },
+    {
+      "path": "probes/m2-buffer-failure/src/prepared_write.fy",
+      "sha256": "dc23e90dc164f12f3f684c8afb37dbebda3d0fe3f9bb5da820486b0212c0c365"
+    },
+    {
+      "path": "probes/m2-buffer-failure/src/utf8.fy",
+      "sha256": "c62a29f4f58eec874fe86db630a0380ebf706f9830ab25ef4f0bc255b4cb41c5"
+    },
+    {
+      "path": "probes/m2-buffer-failure/src/utf8_cancel.fy",
+      "sha256": "444a168e6519caaab8dd4bef0a1955b296a4e6360ee9b34722adf46aba70cd6c"
+    },
+    {
+      "path": "probes/m2-buffer-failure/src/utf8_meter.fy",
+      "sha256": "03454f6f97dbca4a18eb825bd6547696460a21351f6f94797fdf34ffb46ea4f9"
+    },
+    {
+      "path": "probes/m2-buffer-failure/src/utf8_scan.fy",
+      "sha256": "9b192fb938302d27d239de712287b6843bc10f2713d67b5041ce13c67cfa9f1d"
+    },
+    {
+      "path": "probes/m2-buffer-failure/src/write.fy",
+      "sha256": "5461a59c7f631e49b63e34bafcc9e7d67f108363beb9e78d6d3a9384117272f1"
+    },
+    {
+      "path": "src/buffer_append.fy",
+      "sha256": "ff4be06e1ad7c454671af0e89ba93243bf28742df2f1cd04f7095a54132a8a66"
+    },
+    {
+      "path": "src/buffer_close.fy",
+      "sha256": "e10fcc8f944e58d7626e9bad634c86c9ff43a5af31f700f9bde668f39b5b6239"
+    },
+    {
+      "path": "src/buffer_create.fy",
+      "sha256": "f133713a4f815f70cfd973933f81dd1156b7fa5c637eeb9dbad9e87f309308e0"
+    },
+    {
+      "path": "src/buffer_growth.fy",
+      "sha256": "0c275dcc6d8bdfd60b535a9bc86c3622c084471e58ce5868e53f3476ac103b2d"
+    },
+    {
+      "path": "src/buffer_owners.fy",
+      "sha256": "dbe72b4c441b2319425a67578ef2c6d95cdf2d5495d22a4dc0722af2a57052bc"
+    },
+    {
+      "path": "src/buffer_replacement.fy",
+      "sha256": "8defa8e2e2435359d4592cb224d22c65984c25d75311a3de288d2313a1bed679"
+    },
+    {
+      "path": "src/buffer_resize.fy",
+      "sha256": "9718d69f6852c016b2d3df28e44c7798d828af6ff081a2acfbf490e9c520908f"
+    },
+    {
+      "path": "src/buffer_storage.fy",
+      "sha256": "4f6b9f8e5fc5ae55551618d70eac1e74289d09a933249bf95940f98d5b2fbe8d"
+    },
+    {
+      "path": "src/buffer_truncate.fy",
+      "sha256": "1c939205c987b13981d7cc3b481f8af7786c918115fafc7603b0104c6520cadf"
+    },
+    {
+      "path": "src/buffer_utf8.fy",
+      "sha256": "a59e01627bb46851405334d0650426a9ef816a69cf1c0a5dbf6f3cec43f8b255"
+    },
+    {
+      "path": "src/buffer_utf8_meter.fy",
+      "sha256": "b066f8b567b465d709cc356193c92aeea33d8918ae7c500fb23992993d455142"
+    },
+    {
+      "path": "src/buffer_utf8_scan.fy",
+      "sha256": "f51a409ff4f1f6fd427b1b0ef9526d16c506af197478ba0281d6e376ff9e6a7a"
+    },
+    {
+      "path": "src/buffer_write.fy",
+      "sha256": "2d5177cab9536b86a785378d31d049bfa9c6da631c4d4fbe015378daf07b20ee"
+    },
+    {
+      "path": "toolchain.json",
+      "sha256": "e744c8866ba200fd9213ee99ff61a11f60f9ed0f31e9106219f97d7da26971ef"
+    },
+    {
+      "path": "tools/verify-m2-buffer-failure.py",
+      "sha256": "3aaf551037e58b4db142a963b54654b88f4c31f4e810ffbd9eab9cc1523ac667"
+    }
+  ],
+  "generatedSourceSha256": [
+    {
+      "path": "build/m2-buffer-failure/project/src/buffer_append.fy",
+      "sha256": "ff4be06e1ad7c454671af0e89ba93243bf28742df2f1cd04f7095a54132a8a66"
+    },
+    {
+      "path": "build/m2-buffer-failure/project/src/buffer_close.fy",
+      "sha256": "e10fcc8f944e58d7626e9bad634c86c9ff43a5af31f700f9bde668f39b5b6239"
+    },
+    {
+      "path": "build/m2-buffer-failure/project/src/buffer_create.fy",
+      "sha256": "f133713a4f815f70cfd973933f81dd1156b7fa5c637eeb9dbad9e87f309308e0"
+    },
+    {
+      "path": "build/m2-buffer-failure/project/src/buffer_growth.fy",
+      "sha256": "0c275dcc6d8bdfd60b535a9bc86c3622c084471e58ce5868e53f3476ac103b2d"
+    },
+    {
+      "path": "build/m2-buffer-failure/project/src/buffer_owners.fy",
+      "sha256": "dbe72b4c441b2319425a67578ef2c6d95cdf2d5495d22a4dc0722af2a57052bc"
+    },
+    {
+      "path": "build/m2-buffer-failure/project/src/buffer_replacement.fy",
+      "sha256": "8defa8e2e2435359d4592cb224d22c65984c25d75311a3de288d2313a1bed679"
+    },
+    {
+      "path": "build/m2-buffer-failure/project/src/buffer_resize.fy",
+      "sha256": "9718d69f6852c016b2d3df28e44c7798d828af6ff081a2acfbf490e9c520908f"
+    },
+    {
+      "path": "build/m2-buffer-failure/project/src/buffer_storage.fy",
+      "sha256": "4f6b9f8e5fc5ae55551618d70eac1e74289d09a933249bf95940f98d5b2fbe8d"
+    },
+    {
+      "path": "build/m2-buffer-failure/project/src/buffer_truncate.fy",
+      "sha256": "1c939205c987b13981d7cc3b481f8af7786c918115fafc7603b0104c6520cadf"
+    },
+    {
+      "path": "build/m2-buffer-failure/project/src/buffer_utf8.fy",
+      "sha256": "a59e01627bb46851405334d0650426a9ef816a69cf1c0a5dbf6f3cec43f8b255"
+    },
+    {
+      "path": "build/m2-buffer-failure/project/src/buffer_utf8_meter.fy",
+      "sha256": "b066f8b567b465d709cc356193c92aeea33d8918ae7c500fb23992993d455142"
+    },
+    {
+      "path": "build/m2-buffer-failure/project/src/buffer_utf8_scan.fy",
+      "sha256": "f51a409ff4f1f6fd427b1b0ef9526d16c506af197478ba0281d6e376ff9e6a7a"
+    },
+    {
+      "path": "build/m2-buffer-failure/project/src/buffer_write.fy",
+      "sha256": "2d5177cab9536b86a785378d31d049bfa9c6da631c4d4fbe015378daf07b20ee"
+    },
+    {
+      "path": "build/m2-buffer-failure/project/src/copy_out.fy",
+      "sha256": "ef66e8abc13562675597ff313e53e9a15d9152d9bff3e3fe457e4bbee5b8fbf2"
+    },
+    {
+      "path": "build/m2-buffer-failure/project/src/create.fy",
+      "sha256": "bc109e48817040b9d13b3e44812f14f2ae957246d5ddb8c7b4edbf4f1cbf5a77"
+    },
+    {
+      "path": "build/m2-buffer-failure/project/src/grow_resize.fy",
+      "sha256": "1fbd3efc58430782213550d10e3534faef0bf469dabdf6c04c8d1558162aad82"
+    },
+    {
+      "path": "build/m2-buffer-failure/project/src/main.fy",
+      "sha256": "e2a4021ea5de6db41b62fad60a940cea44734a076aae2be43e3b93240d93a67f"
+    },
+    {
+      "path": "build/m2-buffer-failure/project/src/prepared_write.fy",
+      "sha256": "dc23e90dc164f12f3f684c8afb37dbebda3d0fe3f9bb5da820486b0212c0c365"
+    },
+    {
+      "path": "build/m2-buffer-failure/project/src/utf8.fy",
+      "sha256": "c62a29f4f58eec874fe86db630a0380ebf706f9830ab25ef4f0bc255b4cb41c5"
+    },
+    {
+      "path": "build/m2-buffer-failure/project/src/utf8_cancel.fy",
+      "sha256": "444a168e6519caaab8dd4bef0a1955b296a4e6360ee9b34722adf46aba70cd6c"
+    },
+    {
+      "path": "build/m2-buffer-failure/project/src/utf8_meter.fy",
+      "sha256": "03454f6f97dbca4a18eb825bd6547696460a21351f6f94797fdf34ffb46ea4f9"
+    },
+    {
+      "path": "build/m2-buffer-failure/project/src/utf8_scan.fy",
+      "sha256": "9b192fb938302d27d239de712287b6843bc10f2713d67b5041ce13c67cfa9f1d"
+    },
+    {
+      "path": "build/m2-buffer-failure/project/src/write.fy",
+      "sha256": "5461a59c7f631e49b63e34bafcc9e7d67f108363beb9e78d6d3a9384117272f1"
+    }
+  ],
+  "generatedLockSha256": "675c7bdc28cfa3fc7264953e1e34187d6f613cce65c396ff2b9df653ed031958",
+  "forcedInclude": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\probes\\m2-buffer-failure\\allocator_probe.h",
+  "commands": [
+    {
+      "command": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec",
+      "exit": 0,
+      "stdout": "8d64bc8e1a742f35c0071da8deb9dc4633c2b207\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+        "--version"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec",
+      "exit": 0,
+      "stdout": "Fairy C Stage 0\ncompiler: v0.0.0-20261022210249-4ce1264273be\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.86\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: 4ce1264273be6051ee560173e94690e1b99c9eaf\nmodified: false\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+        "check",
+        "--locked"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec",
+      "exit": 0,
+      "stdout": "check ok: 2 instance(s), 71 source file(s), 567 MIR function(s), lock verified\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+        "check"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\project",
+      "exit": 0,
+      "stdout": "check ok: 2 instance(s), 30 source file(s), 319 MIR function(s), lock updated\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+        "build",
+        "--locked"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\project",
+      "exit": 0,
+      "stdout": "built: build/brownie-buffer-failure.exe (x86_64-windows-msvc, development, lock verified)\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "normal-min"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "normal-preferred"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "abandon"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "oom-min"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":320,\"targetAttempts\":2,\"failures\":1,\"attempts\":3,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "oom-preferred"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":384,\"targetAttempts\":2,\"failures\":1,\"attempts\":3,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "append-success"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "append-capacity"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "append-identity"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "append-state"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "close-success"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "close-preflight"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "close-snapshot"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "close-generation"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "grow-append-preferred"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "grow-append-min"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "grow-append-oom-min"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":320,\"targetAttempts\":2,\"failures\":1,\"attempts\":3,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "grow-append-oom-preferred"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":384,\"targetAttempts\":2,\"failures\":1,\"attempts\":3,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "grow-append-abandon"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "grow-append-self"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "grow-append-preflight"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "truncate-success"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "truncate-bounds"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "truncate-generation"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "truncate-state"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "resize-success"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "resize-capacity"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "resize-generation"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "resize-state"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "grow-resize-preferred"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "grow-resize-min"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "grow-resize-oom-min"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":320,\"targetAttempts\":2,\"failures\":1,\"attempts\":3,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "grow-resize-oom-preferred"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":384,\"targetAttempts\":2,\"failures\":1,\"attempts\":3,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "grow-resize-abandon"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "grow-resize-truncated"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "grow-resize-preflight"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "create-success"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "create-preflight"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "create-state"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "create-slots"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "copy-out-success"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "copy-out-bounds"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "copy-out-identity"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "copy-out-pending"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "write-success"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "write-bounds"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "write-identity"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "write-state"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "prepared-write-success"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "prepared-write-bounds"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "prepared-write-preflight"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "prepared-write-abandon"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "utf8-valid"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "utf8-invalid"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "utf8-identity"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "utf8-pending"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "utf8-scan-valid"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "utf8-scan-invalid"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "utf8-scan-state"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "utf8-scan-pending"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "utf8-meter-success"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "utf8-meter-fuel"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "utf8-meter-errors"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "utf8-meter-pending"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "utf8-cancel-entry"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "utf8-cancel-mid"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "utf8-cancel-errors"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-development.exe",
+        "utf8-cancel-pending"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+        "build",
+        "--locked",
+        "--release"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\project",
+      "exit": 0,
+      "stdout": "built: build/brownie-buffer-failure.exe (x86_64-windows-msvc, release, lock verified)\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "normal-min"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "normal-preferred"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "abandon"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "oom-min"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":320,\"targetAttempts\":2,\"failures\":1,\"attempts\":3,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "oom-preferred"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":384,\"targetAttempts\":2,\"failures\":1,\"attempts\":3,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "append-success"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "append-capacity"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "append-identity"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "append-state"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "close-success"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "close-preflight"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "close-snapshot"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "close-generation"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "grow-append-preferred"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "grow-append-min"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "grow-append-oom-min"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":320,\"targetAttempts\":2,\"failures\":1,\"attempts\":3,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "grow-append-oom-preferred"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":384,\"targetAttempts\":2,\"failures\":1,\"attempts\":3,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "grow-append-abandon"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "grow-append-self"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "grow-append-preflight"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "truncate-success"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "truncate-bounds"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "truncate-generation"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "truncate-state"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "resize-success"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "resize-capacity"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "resize-generation"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "resize-state"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "grow-resize-preferred"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "grow-resize-min"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "grow-resize-oom-min"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":320,\"targetAttempts\":2,\"failures\":1,\"attempts\":3,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "grow-resize-oom-preferred"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":384,\"targetAttempts\":2,\"failures\":1,\"attempts\":3,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "grow-resize-abandon"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "grow-resize-truncated"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "grow-resize-preflight"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "create-success"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "create-preflight"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "create-state"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "create-slots"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "copy-out-success"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "copy-out-bounds"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "copy-out-identity"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "copy-out-pending"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "write-success"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "write-bounds"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "write-identity"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "write-state"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "prepared-write-success"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "prepared-write-bounds"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "prepared-write-preflight"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "prepared-write-abandon"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "utf8-valid"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "utf8-invalid"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "utf8-identity"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "utf8-pending"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "utf8-scan-valid"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "utf8-scan-invalid"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "utf8-scan-state"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "utf8-scan-pending"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "utf8-meter-success"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "utf8-meter-fuel"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "utf8-meter-errors"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "utf8-meter-pending"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "utf8-cancel-entry"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "utf8-cancel-mid"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "utf8-cancel-errors"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":1,\"frees\":1}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\buffer-failure-release.exe",
+        "utf8-cancel-pending"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-failure\\no-runtime-tools",
+      "exit": 0,
+      "stdout": "buffer-failure: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    }
+  ],
+  "profileReceipts": [
+    {
+      "profile": "development",
+      "build": "built: build/brownie-buffer-failure.exe (x86_64-windows-msvc, development, lock verified)",
+      "executable": "build/m2-buffer-failure/buffer-failure-development.exe",
+      "exeSha256": "ac2d1acac9049003db672d7af6a8916b3d09772759334cb7b2033bec19f9a496",
+      "cases": [
+        {
+          "mode": "normal-min",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "normal-preferred",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "abandon",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "oom-min",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 320,
+            "targetAttempts": 2,
+            "failures": 1,
+            "attempts": 3,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "oom-preferred",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 384,
+            "targetAttempts": 2,
+            "failures": 1,
+            "attempts": 3,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "append-success",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "append-capacity",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "append-identity",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "append-state",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "close-success",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "close-preflight",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "close-snapshot",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "close-generation",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "grow-append-preferred",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "grow-append-min",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "grow-append-oom-min",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 320,
+            "targetAttempts": 2,
+            "failures": 1,
+            "attempts": 3,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "grow-append-oom-preferred",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 384,
+            "targetAttempts": 2,
+            "failures": 1,
+            "attempts": 3,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "grow-append-abandon",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "grow-append-self",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "grow-append-preflight",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "truncate-success",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "truncate-bounds",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "truncate-generation",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "truncate-state",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "resize-success",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "resize-capacity",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "resize-generation",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "resize-state",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "grow-resize-preferred",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "grow-resize-min",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "grow-resize-oom-min",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 320,
+            "targetAttempts": 2,
+            "failures": 1,
+            "attempts": 3,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "grow-resize-oom-preferred",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 384,
+            "targetAttempts": 2,
+            "failures": 1,
+            "attempts": 3,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "grow-resize-abandon",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "grow-resize-truncated",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "grow-resize-preflight",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "create-success",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "create-preflight",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "create-state",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "create-slots",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "copy-out-success",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "copy-out-bounds",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "copy-out-identity",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "copy-out-pending",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "write-success",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "write-bounds",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "write-identity",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "write-state",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "prepared-write-success",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "prepared-write-bounds",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "prepared-write-preflight",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "prepared-write-abandon",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "utf8-valid",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "utf8-invalid",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "utf8-identity",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "utf8-pending",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "utf8-scan-valid",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "utf8-scan-invalid",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "utf8-scan-state",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "utf8-scan-pending",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "utf8-meter-success",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "utf8-meter-fuel",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "utf8-meter-errors",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "utf8-meter-pending",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "utf8-cancel-entry",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "utf8-cancel-mid",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "utf8-cancel-errors",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "utf8-cancel-pending",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        }
+      ]
+    },
+    {
+      "profile": "release",
+      "build": "built: build/brownie-buffer-failure.exe (x86_64-windows-msvc, release, lock verified)",
+      "executable": "build/m2-buffer-failure/buffer-failure-release.exe",
+      "exeSha256": "4f6ae8297b9e2144868f4bd77f23c9713ec70ea48f8f6a290af63b025a5e86f5",
+      "cases": [
+        {
+          "mode": "normal-min",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "normal-preferred",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "abandon",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "oom-min",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 320,
+            "targetAttempts": 2,
+            "failures": 1,
+            "attempts": 3,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "oom-preferred",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 384,
+            "targetAttempts": 2,
+            "failures": 1,
+            "attempts": 3,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "append-success",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "append-capacity",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "append-identity",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "append-state",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "close-success",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "close-preflight",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "close-snapshot",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "close-generation",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "grow-append-preferred",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "grow-append-min",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "grow-append-oom-min",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 320,
+            "targetAttempts": 2,
+            "failures": 1,
+            "attempts": 3,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "grow-append-oom-preferred",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 384,
+            "targetAttempts": 2,
+            "failures": 1,
+            "attempts": 3,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "grow-append-abandon",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "grow-append-self",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "grow-append-preflight",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "truncate-success",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "truncate-bounds",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "truncate-generation",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "truncate-state",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "resize-success",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "resize-capacity",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "resize-generation",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "resize-state",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "grow-resize-preferred",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "grow-resize-min",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "grow-resize-oom-min",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 320,
+            "targetAttempts": 2,
+            "failures": 1,
+            "attempts": 3,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "grow-resize-oom-preferred",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 384,
+            "targetAttempts": 2,
+            "failures": 1,
+            "attempts": 3,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "grow-resize-abandon",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "grow-resize-truncated",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "grow-resize-preflight",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "create-success",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "create-preflight",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "create-state",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "create-slots",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "copy-out-success",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "copy-out-bounds",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "copy-out-identity",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "copy-out-pending",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "write-success",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "write-bounds",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "write-identity",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "write-state",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "prepared-write-success",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "prepared-write-bounds",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "prepared-write-preflight",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "prepared-write-abandon",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "utf8-valid",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "utf8-invalid",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "utf8-identity",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "utf8-pending",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "utf8-scan-valid",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "utf8-scan-invalid",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "utf8-scan-state",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "utf8-scan-pending",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "utf8-meter-success",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "utf8-meter-fuel",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "utf8-meter-errors",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "utf8-meter-pending",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        },
+        {
+          "mode": "utf8-cancel-entry",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "utf8-cancel-mid",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "utf8-cancel-errors",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 1,
+            "frees": 1
+          }
+        },
+        {
+          "mode": "utf8-cancel-pending",
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 2,
+            "frees": 2
+          }
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Windows native probe with byte-identical copies of thirteen production modules. Only FY system-heap allocations are counted, not all process memory. Provider inconsistency injection, full suites, M0, Linux, isolation, DLL, packaging and elapsed-time performance were not run. Guest Buffer is not implemented."
+  ],
+  "archivedAt": "2026-10-29T12:01:14.033701+00:00",
+  "originalReceipt": "build/m2-buffer-failure/receipt.json",
+  "originalReceiptSha256": "c9a3db6d6f5e189ec2a675ffbce0b5c336e8779bfde5073d9aa7982504d37a44",
+  "generatedLock": {
+    "schema": "fairyc.lock/v1",
+    "packageInstanceAlgorithm": "fairyc.package-instance/v1",
+    "sourceDigestAlgorithm": "fairyc.package-source/v1",
+    "language": "fairyc-language/20",
+    "root": "fypi1-sha256-57390b7c3ff52927ed058c91243e1b8121f1c44abe917afe39846b15f82d043f",
+    "packages": [
+      {
+        "id": "fypi1-sha256-57390b7c3ff52927ed058c91243e1b8121f1c44abe917afe39846b15f82d043f",
+        "role": "root",
+        "packageUid": "browniec.buffer-failure",
+        "sourceKind": "local",
+        "localPath": ".",
+        "sdkIdentity": "",
+        "runtimeAbi": "",
+        "sourceIdentity": "fysrc1-sha256-d71885cbb9e3d78111a9306ce0d68c38315fb54a28b0f54498eb527c8e030e9b",
+        "sourceDigest": "fysrc1-sha256-d71885cbb9e3d78111a9306ce0d68c38315fb54a28b0f54498eb527c8e030e9b",
+        "version": "0.1.0",
+        "features": []
+      },
+      {
+        "id": "fypi1-sha256-c18350128fcbce1cee2c63f0e7acc467f9f77ff184c458af1d20eab69a58e89a",
+        "role": "standard-library",
+        "packageUid": "fairyc.std",
+        "sourceKind": "sdk",
+        "localPath": "",
+        "sdkIdentity": "fairyc-sdk-stdlib/0",
+        "runtimeAbi": "fairyc-runtime/0",
+        "sourceIdentity": "fairyc-sdk-stdlib/0;fairyc-runtime/0;fysrc1-sha256-782df5e2039ff3f7817c1055454caa24feb2ea755e62f78d8ee67418916a5b83",
+        "sourceDigest": "fysrc1-sha256-782df5e2039ff3f7817c1055454caa24feb2ea755e62f78d8ee67418916a5b83",
+        "version": "0.0.0-stage0.86",
+        "features": []
+      }
+    ],
+    "dependencies": [
+      {
+        "owner": "fypi1-sha256-57390b7c3ff52927ed058c91243e1b8121f1c44abe917afe39846b15f82d043f",
+        "binding": "stdlib",
+        "target": "fypi1-sha256-c18350128fcbce1cee2c63f0e7acc467f9f77ff184c458af1d20eab69a58e89a"
+      }
+    ]
+  },
+  "nativeScenariosPerProfile": 67,
+  "provenance": "Four cooperative UTF-8 cancellation scenarios plus 63 lifecycle/allocator regressions per profile. Thirteen production modules and ten fixture modules match generated copies byte for byte. Cancellation entry/mid/errors each allocate and free one 256-byte payload; pending allocates/frees two payloads for the old root and replacement. Control entrypoints and cancellation add no allocation. All 134 processes exit live=0. Tests check cancellation precedence over Fuel, identity, backing and byte budget; terminal retirement at each partial-scalar boundary; unchanged Fuel/offset/carry; non-cancelled paid-error propagation; explicit fresh scans; and unchanged pending replacement snapshots/accounting. A boolean request is sampled by the trusted caller at call boundaries. VM/scheduler, cross-thread cancellation and guest integration are not implemented. The baseline is pre-commit provenance; source hashes identify the tested implementation. Only FY system-heap allocations are counted, not all process memory."
+}

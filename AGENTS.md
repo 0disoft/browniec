@@ -10,6 +10,12 @@ own the affected contract. Broader scaffold procedures are optional.
 
 ## Current state
 
+- Private cooperative UTF-8 scan cancellation: implemented and verified in
+  development and release, each with 67 native scenarios (4 new, 63 regressions);
+  all 134 processes exit with zero tracked live allocations. A caller-supplied
+  cancellation snapshot retires scan progress before Fuel or byte access, without
+  changing Buffer storage or reservation accounting. VM/scheduler wiring is pending.
+  See [the cancellation contract](docs/engineering/m2-buffer-utf8-cancel.md).
 - Private prepaid Buffer UTF-8 scanning: implemented and verified in development
   and release, each with 63 native scenarios (4 new, 59 regressions); all 126
   processes exit with zero tracked live allocations. Begin costs 128 Fuel; each

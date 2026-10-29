@@ -18,6 +18,7 @@ import prepared_write as prepared_write;
 import utf8 as utf8_probe;
 import utf8_scan as utf8_scan;
 import utf8_meter as utf8_meter;
+import utf8_cancel as utf8_cancel;
 
 fn growth::Limits limits(bool minimum) {
     return growth::Limits{.object=4096,.instance=if(minimum){704}else{8192},
@@ -519,6 +520,10 @@ fn i32 main() {
     else if(bytes::equal(mode,b"utf8-meter-fuel")) {utf8_meter::run(1);}
     else if(bytes::equal(mode,b"utf8-meter-errors")) {utf8_meter::run(2);}
     else if(bytes::equal(mode,b"utf8-meter-pending")) {utf8_meter::run(3);}
+    else if(bytes::equal(mode,b"utf8-cancel-entry")) {utf8_cancel::run(0);}
+    else if(bytes::equal(mode,b"utf8-cancel-mid")) {utf8_cancel::run(1);}
+    else if(bytes::equal(mode,b"utf8-cancel-errors")) {utf8_cancel::run(2);}
+    else if(bytes::equal(mode,b"utf8-cancel-pending")) {utf8_cancel::run(3);}
     else {return 2;}
     return switch(io::write("buffer-failure: passed\n")){case .ok(_):{0}case .err(_):{1}};
 }

@@ -29,3 +29,20 @@ pub fn Result<bool,Error> step(ref owners::Table table,ref bytes::Buffer b,
     *fuel=available-charged;
     return switch(scan::step(table,b,max_bytes,cursor)){case .ok(done):{.ok(done)}case .err(e):{.err(failure(e))}};
 }
+
+pub enum ControlError { Cancelled; Fuel; Token; State; Utf8; }
+fn ControlError controlled(Error e){
+    return switch(e){case .Fuel:{.Fuel}case .Token:{.Token}case .State:{.State}case .Utf8:{.Utf8}};
+}
+// The caller polls cancellation before each bounded operation. No callbacks/replay.
+pub fn Result<scan::Cursor,ControlError> begin_cancellable(bool cancel_requested,
+    ref owners::Table table,owners::Token source,ref bytes::Buffer b,ref mut usize fuel){
+    if(cancel_requested){return .err(.Cancelled);}
+    return switch(begin(table,source,b,fuel)){case .ok(v):{.ok(v)}case .err(e):{.err(controlled(e))}};
+}
+pub fn Result<bool,ControlError> step_cancellable(bool cancel_requested,
+    ref owners::Table table,ref bytes::Buffer b,usize max_bytes,ref mut scan::Cursor cursor,ref mut usize fuel){
+    // Cancellation is terminal even with zero Fuel or malformed backing/progress.
+    if(cancel_requested){cursor.active=false;return .err(.Cancelled);}
+    return switch(step(table,b,max_bytes,cursor,fuel)){case .ok(done):{.ok(done)}case .err(e):{.err(controlled(e))}};
+}
