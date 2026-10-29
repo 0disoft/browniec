@@ -1,5 +1,12 @@
 # Validation
 
+- Private Buffer writes within initialized length: implemented and verified in
+  development and release, each with 47 native scenarios (4 new, 43 regressions);
+  all 94 processes exit with zero tracked live allocations. Complete preflight
+  includes ledger and current-quota checks even for empty input; this guarded
+  path rejects pending growth with State. No allocation, resize, token/generation
+  or accounting change. The Windows receipt is archived.
+  See [the write contract](docs/engineering/m2-buffer-write.md).
 - Private Buffer bulk copy-out: implemented and verified in development and
   release, each with 43 native scenarios (4 new, 39 regressions); all 86 processes
   exit with zero tracked live allocations. Copies initialized binary bytes into
@@ -2050,3 +2057,41 @@ Full native/CLI suites, M0, Linux, DLL embedding, isolation, packaging,
 elapsed-time performance and Provider fault injection were not run.
 Native root association and non-aliasing remain trusted caller obligations;
 guest Buffer/VM integration and guest borrow enforcement remain unfinished.
+
+## Private Buffer writes within initialized length
+
+Root `fairyc check` passed with a lock refresh (68 sources, 550 MIR functions).
+`python -B tools/verify-m2-buffer-failure.py` then passed 47 native scenarios per
+development/release profile: `write-success`, `write-bounds`, `write-identity`
+and `write-state`, plus 43 regressions. All 94 processes exited with `live=0`.
+
+The authoritative `write.fy` fixture writes `[0,254,129]` at index 1, preserving
+input and the outside prefix/suffix, then writes `[255,0,128,1,2,3]` across the
+whole initialized range. Exact counts, empty input at the end and full copy-out
+verify binary content. Rejected `MAX`/oversized/end ranges preserve the root.
+Invalid/stale identity returns exactly `Token` before missing-backing checks;
+bad backing metadata and malformed table state return `State`.
+Generation `MAX` permits content writes without advancing generation.
+
+The state case rejects corruption of each of the nine ledger fields without
+changing content or the supplied ledger. Instance quota rejects a content write;
+Engine and object quotas reject empty writes. A real pending replacement rejects
+both content and empty writes with `State`, preserving old-root content,
+the prepared prefix and reserved usage. Dropping the replacement before cancel
+restores Instance/Engine usage 320/352 while retaining peaks 768/800.
+FY heap counts are one initial allocation/one free for each of the first three
+new cases and two allocations/two frees for the state case.
+Writes themselves add no allocation and leave length, capacity, token/generation,
+table and ledger unchanged.
+
+See [the contract](docs/engineering/m2-buffer-write.md) and the archived
+[Windows receipt](docs/evidence/m2-buffer-write-windows-20261029.json).
+The receipt records 21 input hashes, 15 generated sources (ten byte-identical
+production modules plus `main.fy`, `grow_resize.fy`, `create.fy`, `copy_out.fy`
+and `write.fy`) and two binaries. Final inputs were unchanged after the pass.
+Full native/CLI suites, M0, Linux, DLL embedding, isolation, packaging,
+elapsed-time performance and Provider fault injection were not run.
+Native input non-aliasing and root association remain trusted caller obligations.
+The pending-write guard belongs to `within_length`; raw `owners::write` remains
+a lower-level API whose trusted callers must follow the transaction protocol.
+Guest Buffer/VM integration and guest borrow enforcement remain unfinished.

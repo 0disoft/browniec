@@ -13,6 +13,7 @@ import buffer_resize as resize;
 import grow_resize as grow_resize;
 import create as create_probe;
 import copy_out as copy_out;
+import write as write_probe;
 
 fn growth::Limits limits(bool minimum) {
     return growth::Limits{.object=4096,.instance=if(minimum){704}else{8192},
@@ -494,6 +495,10 @@ fn i32 main() {
     else if(bytes::equal(mode,b"copy-out-bounds")) {copy_out::run(1);}
     else if(bytes::equal(mode,b"copy-out-identity")) {copy_out::run(2);}
     else if(bytes::equal(mode,b"copy-out-pending")) {copy_out::run(3);}
+    else if(bytes::equal(mode,b"write-success")) {write_probe::run(0);}
+    else if(bytes::equal(mode,b"write-bounds")) {write_probe::run(1);}
+    else if(bytes::equal(mode,b"write-identity")) {write_probe::run(2);}
+    else if(bytes::equal(mode,b"write-state")) {write_probe::run(3);}
     else {return 2;}
     return switch(io::write("buffer-failure: passed\n")){case .ok(_):{0}case .err(_):{1}};
 }

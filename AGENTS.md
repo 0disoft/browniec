@@ -10,6 +10,13 @@ own the affected contract. Broader scaffold procedures are optional.
 
 ## Current state
 
+- Private Buffer writes within initialized length: implemented and verified in
+  development and release, each with 47 native scenarios (4 new, 43 regressions);
+  all 94 processes exit with zero tracked live allocations. Complete preflight
+  includes ledger and current-quota checks even for empty input; this guarded
+  path rejects pending growth with State. No allocation, resize, token/generation
+  or accounting change. The Windows receipt is archived.
+  See [the write contract](docs/engineering/m2-buffer-write.md).
 - Private Buffer bulk copy-out: implemented and verified in development and
   release, each with 43 native scenarios (4 new, 39 regressions); all 86 processes
   exit with zero tracked live allocations. Copies initialized binary bytes into
