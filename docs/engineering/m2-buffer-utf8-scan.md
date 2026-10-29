@@ -6,6 +6,10 @@ with a lock refresh (70 sources, 559 MIR functions), followed by
 The [Windows receipt](../evidence/m2-buffer-utf8-scan-windows-20261029.json)
 records the tested inputs and both native binaries.
 
+The [prepaid successor](m2-buffer-utf8-meter.md) adds private Fuel accounting around
+begin/step. The unmetered API and 59-scenario checkpoint below retain their
+original scope. VM dispatch and guest integration remain unfinished.
+
 `buffer_utf8_scan::begin(table, token, buffer)` creates a private Cursor after
 checking token identity, the complete 16-slot owner table and exact native
 initialized length/capacity. The Cursor starts active at byte offset zero,

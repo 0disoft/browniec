@@ -10,8 +10,8 @@ import shutil
 import subprocess
 
 ROOT = Path(__file__).resolve().parent.parent
-MODULES = ['buffer_growth.fy', 'buffer_storage.fy', 'buffer_owners.fy', 'buffer_replacement.fy', 'buffer_append.fy', 'buffer_close.fy', 'buffer_truncate.fy', 'buffer_resize.fy', 'buffer_create.fy', 'buffer_write.fy', 'buffer_utf8.fy', 'buffer_utf8_scan.fy']
-FIXTURES = ['main.fy', 'grow_resize.fy', 'create.fy', 'copy_out.fy', 'write.fy', 'prepared_write.fy', 'utf8.fy', 'utf8_scan.fy']
+MODULES = ['buffer_growth.fy', 'buffer_storage.fy', 'buffer_owners.fy', 'buffer_replacement.fy', 'buffer_append.fy', 'buffer_close.fy', 'buffer_truncate.fy', 'buffer_resize.fy', 'buffer_create.fy', 'buffer_write.fy', 'buffer_utf8.fy', 'buffer_utf8_scan.fy', 'buffer_utf8_meter.fy']
+FIXTURES = ['main.fy', 'grow_resize.fy', 'create.fy', 'copy_out.fy', 'write.fy', 'prepared_write.fy', 'utf8.fy', 'utf8_scan.fy', 'utf8_meter.fy']
 MODES = [('normal-min', None), ('normal-preferred', None), ('abandon', None),
          ('oom-min', 320), ('oom-preferred', 384), ('append-success', None),
          ('append-capacity', None), ('append-identity', None), ('append-state', None),
@@ -33,7 +33,9 @@ MODES = [('normal-min', None), ('normal-preferred', None), ('abandon', None),
          ('prepared-write-preflight', None), ('prepared-write-abandon', None),
          ('utf8-valid', None), ('utf8-invalid', None), ('utf8-identity', None), ('utf8-pending', None),
          ('utf8-scan-valid', None), ('utf8-scan-invalid', None),
-         ('utf8-scan-state', None), ('utf8-scan-pending', None)]
+         ('utf8-scan-state', None), ('utf8-scan-pending', None),
+         ('utf8-meter-success', None), ('utf8-meter-fuel', None),
+         ('utf8-meter-errors', None), ('utf8-meter-pending', None)]
 
 
 def sha(path):
@@ -129,7 +131,7 @@ def main():
             need(len(lines) == 2 and lines[0] == 'buffer-failure: passed', 'Probe output')
             counters = json.loads(lines[1])
             single = (mode.startswith(('append-', 'close-', 'truncate-', 'resize-', 'create-', 'copy-out-', 'write-', 'utf8-'))
-                      or mode in ('grow-append-preflight', 'grow-resize-preflight')) and mode not in ('copy-out-pending', 'write-state', 'utf8-pending', 'utf8-scan-pending')
+                      or mode in ('grow-append-preflight', 'grow-resize-preflight')) and mode not in ('copy-out-pending', 'write-state', 'utf8-pending', 'utf8-scan-pending', 'utf8-meter-pending')
             expected = dict(schema='browniec.buffer-allocator/v2', live=0, target=target or 0,
                             targetAttempts=2 if target else 0, failures=1 if target else 0,
                             attempts=3 if target else 1 if single else 2,
@@ -149,7 +151,7 @@ def main():
                   sourceSha256=inputs, generatedSourceSha256=generated,
                   generatedLockSha256=lock_hash, forcedInclude=str(header), commands=commands,
                   profileReceipts=outcomes,
-                  limitations=['Windows native probe with byte-identical copies of twelve production modules. '
+                  limitations=['Windows native probe with byte-identical copies of thirteen production modules. '
                                'Only FY system-heap allocations are counted, not all process memory. '
                                'Provider inconsistency injection, full suites, M0, Linux, isolation, DLL, '
                                'packaging and elapsed-time performance were not run. Guest Buffer is not implemented.'])

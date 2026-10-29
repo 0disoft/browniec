@@ -1,10 +1,17 @@
 # Brownie C
 
+- Private prepaid Buffer UTF-8 scanning: implemented and verified in development
+  and release, each with 63 native scenarios (4 new, 59 regressions); all 126
+  processes exit with zero tracked live allocations. Begin costs 128 Fuel; each
+  step prepays `128 + 4*min(request,256)` before validation. Short budgets preserve
+  progress and Fuel; admitted errors keep their charge. VM/guest wiring is pending.
+  See [the metered contract](docs/engineering/m2-buffer-utf8-meter.md).
 - Private resumable Buffer UTF-8 scanning: implemented and verified in development
   and release, each with 59 native scenarios (4 new, 55 regressions); all 118
   processes exit with zero tracked live allocations. Each call processes at most
   256 new bytes, retaining at most three suffix bytes across calls. No allocation;
-  stable content remains a caller obligation. Fuel and guest integration are pending.
+  stable content remains a caller obligation. Its prepaid successor is above;
+  VM and guest integration remain pending.
   See [the scan contract](docs/engineering/m2-buffer-utf8-scan.md).
 - Private Buffer UTF-8 validation: implemented and verified in development and
   release, each with 55 native scenarios (4 new, 51 regressions); all 110 processes
