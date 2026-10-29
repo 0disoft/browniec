@@ -59,7 +59,7 @@ fn void temporaries_keep_static_range_and_type_admission_rules() {
     rejected(b"module main;fn u8[1] make(){return [65;1];}fn i32 main(){let bool b=text::valid_utf8(make()[1..0]);return 0;}");
     rejected(b"module main;fn u8[1] make(){return [65;1];}fn i32 main(){let bool b=text::valid_utf8(make()[0..2]);return 0;}");
     rejected(b"module main;fn i32 main(){let bool b=text::valid_utf8([65;1][0..2]);return 0;}");
-    rejected(b"module main;fn i32 main(){let usize n=1;let bool b=text::valid_utf8([65;1][0..n]);return 0;}");
+    rejected(b"module main;fn i32 main(){let u32 n=1;let bool b=text::valid_utf8([65;1][0..n]);return 0;}");
     rejected(b"module main;fn i32[1] make(){return [0;1];}fn i32 main(){let bool b=text::valid_utf8(make()[0..1]);return 0;}");
     rejected(b"module main;fn i32 main(){let bool b=text::valid_utf8([65;1][0..1][0..1]);return 0;}");
 }

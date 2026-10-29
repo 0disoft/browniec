@@ -8,8 +8,9 @@ import errors as errors;
 import cells as cells;
 
 // No guest expression may run between publication, scan and temporary cleanup.
-pub fn Result<usize, errors::Error> temporary(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, usize id, usize at) {
-    let usize value = predicate(source, s, p, id, at)?;
+pub fn Result<usize, errors::Error> temporary(ref u8[] source, ref mut lexer::State s,
+    ref mut ir::Program p, ref locals::Table table, usize id, usize at) {
+    let usize value = predicate(source, s, p, table, id, at)?;
     let usize dropped = ir::array_drop(p, id, at)?;
     return .ok(value);
 }
@@ -35,7 +36,17 @@ pub fn Result<usize, errors::Error> named(ref u8[] source, ref mut lexer::State 
     if (id >= p.arrays.count || id >= 16 || p.arrays.elements[id] != 10 ||
         p.array_functions[id] as usize != table.function) { return .err(errors::make(3, s.begin)); }
     let usize argument = lexer::next(source, s)?;
-    if (s.kind != 91) { return predicate(source, s, p, id, at); }
+    return predicate(source, s, p, table, id, at);
+}
+// Every source form shares bounds parsing. Only names/literals can follow
+// publication, so no guest call or control-flow exit can bypass temporary drop.
+fn Result<usize, errors::Error> predicate(ref u8[] source, ref mut lexer::State s,
+    ref mut ir::Program p, ref locals::Table table, usize id, usize at) {
+    if (s.kind != 91) {
+        let usize close = lexer::punctuation(source, s, 41)?;
+        return ir::array_utf8(p, id, at);
+    }
+    if (id >= 16 || id >= p.arrays.count) { return .err(errors::make(3, at)); }
     let usize open = lexer::next(source, s)?;
     let Endpoint start = if (s.kind == 46) { Endpoint { .value = 0, .dynamic = false } }
         else { named_endpoint(source, s, p, table)? };
@@ -75,23 +86,6 @@ fn Result<usize, errors::Error> endpoint_register(ref mut ir::Program p, Endpoin
     if (endpoint.dynamic) { return .ok(endpoint.value); }
     let i64 value = cells::pack(endpoint.value, at)?;
     return ir::integer(p, value, 12, at);
-}
-// The optional range suffix contains literals only, so it cannot run guest code.
-fn Result<usize, errors::Error> predicate(ref u8[] source, ref mut lexer::State s,
-    ref mut ir::Program p, usize id, usize at) {
-    if (s.kind == 91) {
-        let usize open = lexer::next(source, s)?;
-        if (id >= 16 || id >= p.arrays.count) { return .err(errors::make(3, at)); }
-        let usize start = if (s.kind == 46) { 0 } else { endpoint(source, s)? };
-        let usize first = lexer::punctuation(source, s, 46)?;
-        let usize second = lexer::punctuation(source, s, 46)?;
-        let usize end = if (s.kind == 93) { p.arrays.lengths[id] } else { endpoint(source, s)? };
-        let usize bracket = lexer::punctuation(source, s, 93)?;
-        let usize close = lexer::punctuation(source, s, 41)?;
-        return ir::array_range_utf8(p, id, start, end, at);
-    }
-    let usize close = lexer::punctuation(source, s, 41)?;
-    return ir::array_utf8(p, id, at);
 }
 // Literal endpoints permit zero but never the scanner's wrapped unsigned cells.
 fn Result<usize, errors::Error> endpoint(ref u8[] source, ref mut lexer::State s) {

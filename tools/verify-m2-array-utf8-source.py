@@ -33,9 +33,10 @@ def main():
     selection.add_argument('--temporary-ranges', action='store_true', help='Verify literal ranges on temporary calls and literals')
     selection.add_argument('--open-ranges', action='store_true', help='Verify omitted static UTF-8 range endpoints')
     selection.add_argument('--dynamic-ranges', action='store_true', help='Verify named-array ranges with usize local endpoints')
+    selection.add_argument('--temporary-dynamic-ranges', action='store_true', help='Verify usize endpoints on temporary arrays')
     args = parser.parse_args()
     compiler = args.compiler.resolve(strict=True)
-    kind = ('array-utf8-dynamic-ranges' if args.dynamic_ranges else 'array-utf8-open-ranges' if args.open_ranges else 'array-utf8-temporary-ranges' if args.temporary_ranges else 'array-utf8-ranges' if args.ranges else 'array-utf8-literals' if args.literals else
+    kind = ('array-utf8-temporary-dynamic-ranges' if args.temporary_dynamic_ranges else 'array-utf8-dynamic-ranges' if args.dynamic_ranges else 'array-utf8-open-ranges' if args.open_ranges else 'array-utf8-temporary-ranges' if args.temporary_ranges else 'array-utf8-ranges' if args.ranges else 'array-utf8-literals' if args.literals else
             'array-utf8-calls' if args.call_results else 'array-utf8-source')
     output = ROOT / ('build/m2-' + kind) / args.profile
     output.mkdir(parents=True, exist_ok=True)
@@ -68,7 +69,8 @@ def main():
     paths.update(ROOT.glob('tests/**/*.fy'))
     paths.update(ROOT.glob('tools/*.py'))
     inputs = [dict(path=p.relative_to(ROOT).as_posix(), sha256=digest(p)) for p in sorted(paths)]
-    groups = ({'array_utf8_dynamic_ranges': 5, 'array_dynamic_utf8': 5, 'array_range_utf8': 6, 'array_utf8_ranges': 4, 'array_utf8_open_ranges': 4}
+    groups = ({'array_utf8_temporary_dynamic_ranges': 5, 'array_utf8_dynamic_ranges': 5, 'array_utf8_temporary_ranges': 4, 'array_utf8_open_ranges': 4, 'array_dynamic_utf8': 5}
+              if args.temporary_dynamic_ranges else {'array_utf8_dynamic_ranges': 5, 'array_dynamic_utf8': 5, 'array_range_utf8': 6, 'array_utf8_ranges': 4, 'array_utf8_open_ranges': 4}
               if args.dynamic_ranges else {'array_utf8_open_ranges': 4, 'array_utf8_temporary_ranges': 4, 'array_utf8_ranges': 4}
               if args.open_ranges else {'array_utf8_temporary_ranges': 4, 'array_utf8_ranges': 4, 'array_utf8_calls': 4, 'array_utf8_literals': 4}
               if args.temporary_ranges else {'array_utf8_ranges': 4, 'array_utf8_source': 5, 'array_range_utf8': 6}
@@ -128,7 +130,8 @@ def main():
                             exit=done.returncode, result=result))
     print(f'PASS: {args.profile}: {len(cli)} CLI sentinels; Buffer syntax remains rejected', flush=True)
     matrices = []
-    matrices_to_run = ({'array-utf8-dynamic-ranges': 634, 'array-utf8-open-ranges': 270, 'array-utf8-ranges': 202}
+    matrices_to_run = ({'array-utf8-temporary-dynamic-ranges': 484, 'array-utf8-dynamic-ranges': 634, 'array-utf8-temporary-ranges': 250, 'array-utf8-open-ranges': 270}
+                       if args.temporary_dynamic_ranges else {'array-utf8-dynamic-ranges': 634, 'array-utf8-open-ranges': 270, 'array-utf8-ranges': 202}
                        if args.dynamic_ranges else {'array-utf8-open-ranges': 270, 'array-utf8-temporary-ranges': 250, 'array-utf8-ranges': 202, 'array-utf8-source': 142, 'array-utf8-calls': 100, 'array-utf8-literals': 130}
                        if args.open_ranges else {'array-utf8-temporary-ranges': 250, 'array-utf8-ranges': 202, 'array-utf8-source': 142, 'array-utf8-calls': 100, 'array-utf8-literals': 130}
                        if args.temporary_ranges else {'array-utf8-ranges': 202, 'array-utf8-source': 142, 'array-utf8-calls': 100, 'array-utf8-literals': 130}
@@ -156,7 +159,7 @@ def main():
                   compilerSha256=compiler_hash, lockedCheck=check, commands=commands,
                   standardLibraryLockIdentity=[p for p in lock['packages'] if p['role'] != 'root'],
                   sourceSha256=inputs, native=native, build=build, exeSha256=exe_hash, cli=cli, matrices=matrices,
-                  limitations=['Qualified text::valid_utf8 over named u8 arrays, direct u8-array call results and repeated-byte literals. Named-array and temporary literal ranges have focused selections. Buffer/text ownership, persistent views, dynamic ranges on temporaries and computed endpoint expressions remain unavailable. Named-array dynamic ranges have a focused selection. Focused native and CLI sentinels. Full suites, M0, Linux, '
+                  limitations=['Qualified text::valid_utf8 over named u8 arrays, direct u8-array call results and repeated-byte literals. Named-array and temporary literal ranges have focused selections. Buffer/text ownership, persistent views and computed endpoint expressions remain unavailable. Named-array and temporary dynamic ranges have focused selections using scalar usize names. Focused native and CLI sentinels. Full suites, M0, Linux, '
                                'isolation, DLL, packaging, allocation instrumentation and performance not run.'])
     receipt.write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
     print('PASS: ' + receipt.relative_to(ROOT).as_posix(), flush=True)

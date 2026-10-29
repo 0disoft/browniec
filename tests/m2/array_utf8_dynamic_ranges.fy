@@ -56,7 +56,7 @@ fn void full_partial_and_empty_ranges_prepay_root_cost_without_an_owner_copy() {
 }
 
 @test
-fn void only_in_scope_usize_names_are_dynamic_and_temporaries_stay_static() {
+fn void only_in_scope_usize_names_are_dynamic_and_other_types_are_rejected() {
     rejected(b"module main;fn i32 main(){let u8[1] a=[65;1];let i32 lo=0;let bool b=text::valid_utf8(a[lo..1]);return 0;}");
     rejected(b"module main;fn i32 main(){let u8[1] a=[65;1];let usize[1] lo=[0;1];let bool b=text::valid_utf8(a[lo..1]);return 0;}");
     rejected(b"module main;fn bool test(usize[1] lo){let u8[1] a=[65;1];return text::valid_utf8(a[lo..1]);}fn i32 main(){return 0;}");
@@ -65,6 +65,6 @@ fn void only_in_scope_usize_names_are_dynamic_and_temporaries_stay_static() {
     rejected(b"module main;fn i32 main(){let u8[1] a=[65;1];let bool b=text::valid_utf8(a[missing..1]);return 0;}");
     rejected(b"module main;fn i32 main(){let u8[1] a=[65;1];let usize lo=0;let bool b=text::valid_utf8(a[lo+0..1]);return 0;}");
     rejected(b"module main;fn usize end(){return 1;}fn i32 main(){let u8[1] a=[65;1];let bool b=text::valid_utf8(a[0..end()]);return 0;}");
-    rejected(b"module main;fn i32 main(){let usize hi=1;let bool b=text::valid_utf8([65;1][..hi]);return 0;}");
-    rejected(b"module main;fn u8[1] make(){return [65;1];}fn i32 main(){let usize hi=1;let bool b=text::valid_utf8(make()[0..hi]);return 0;}");
+    rejected(b"module main;fn i32 main(){let u32 hi=1;let bool b=text::valid_utf8([65;1][..hi]);return 0;}");
+    rejected(b"module main;fn u8[1] make(){return [65;1];}fn i32 main(){let u32 hi=1;let bool b=text::valid_utf8(make()[0..hi]);return 0;}");
 }
