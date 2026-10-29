@@ -1,8 +1,9 @@
 # Register-bounded UTF-8 ranges (private VM foundation)
 
 Opcode **53** validates UTF-8 over a `u8` array range whose endpoints come from
-existing `usize` registers. This is a private IR/VM foundation: no guest syntax
-names it, no source lowering emits it and no version capability flag exposes it.
+existing `usize` registers. This private IR/VM foundation originally had no guest syntax, source lowering
+or version capability flag. The [named-array source successor](m2-array-utf8-dynamic-ranges.md)
+now emits it for scalar usize endpoint bindings.
 Callers build it through `ir::array_dynamic_utf8` and run it through the existing
 array path.
 
@@ -52,12 +53,13 @@ The direct-IR test program builds a custom arena of `N` bytes and runs for
 exactly **180 + 6 * N** Fuel; `N = 4` needs **204**. That total describes the
 private test program, not a CLI or guest-source charge.
 
-## Not exposed to source
+## Source availability
 
-Guest code cannot spell a dynamic range: `text::valid_utf8(a[lo..1])` with a
+At the foundation checkpoint, guest code could not spell a dynamic range: `text::valid_utf8(a[lo..1])` with a
 `usize` local fails compilation, and the same holds for the temporary forms.
-Static literal and open-ended ranges keep their existing behavior. General
-slices, computed bounds and persistent borrows remain unavailable.
+The source successor accepts named-array ranges with scalar usize bindings;
+dynamic temporary ranges, computed endpoint expressions, general slices and
+persistent borrows remain unavailable. Static forms keep their behavior.
 
 ## Focused verification
 
@@ -66,7 +68,9 @@ and repeat with `--profile release`. Each profile selects **30 native groups**:
 five new dynamic-range groups, six static-range groups, six whole-UTF-8 groups,
 five array IR groups and eight struct VM groups. It also runs **18 tool-free CLI
 invocations** from nine programs, confirming that the existing static forms still
-work and that guest source still rejects dynamic bounds and Buffer syntax.
+work and that guest source rejects wrongly typed endpoint bindings and Buffer
+syntax. The original receipt below predates source integration and records the
+then-required rejection of a usize bound.
 
 The five new groups cover endpoint cells selecting multibyte boundaries without
 touching the source, prepaid root-length Fuel for empty, partial, invalid and

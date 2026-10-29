@@ -5,9 +5,14 @@ endpoint on any supported source: a named live `u8` array, a direct call result
 and a repeated-byte literal. The frontend fills the missing bound at compile
 time, so the backend sees an explicit range and nothing else.
 
+The [named-array dynamic successor](m2-array-utf8-dynamic-ranges.md) now accepts
+scalar usize endpoint bindings on named arrays. Statements below about dynamic
+rejection describe the static checkpoint; direct temporary bounds stay static.
+
 ## Parsing and defaults
 
-The shared `text_source::predicate` suffix parser already owns every range form.
+At this checkpoint, the shared `text_source::predicate` parser owned every range
+suffix. The dynamic successor gives named arrays a separate endpoint parser.
 After `[` it treats a leading `.` as `START = 0`, and after the second `.` it
 treats `]` as `END = length` for the selected catalog entry. Both defaults are
 resolved before the instruction is built, which is why no new token, opcode or

@@ -1,13 +1,25 @@
 # Brownie C
 
+- Named-array dynamic UTF-8 ranges: implemented at `9bb31ed`.
+  `text::valid_utf8(a[lo..hi])` accepts existing scalar `usize` locals and
+  parameters, mixed literal bounds and omitted endpoints on named live u8 arrays.
+  Mutable names load their current value; immutable names reuse their register.
+  Opcode 53 prepays `65 + 4*N` for the full root, with runtime bounds errors
+  and no owner, payload copy or retained lease. Static forms keep opcode 52.
+  Version JSON adds `array_utf8_dynamic_ranges: true`. Dynamic temporaries,
+  endpoint expressions and persistent borrows remain unavailable.
+  Development and release each passed 24 native groups and 1,114 CLI
+  invocations. See
+  [the source contract](docs/engineering/m2-array-utf8-dynamic-ranges.md).
+
 - Register-bounded UTF-8 ranges: private VM foundation implemented at `4a076e5`
   and verified in development/release, each with 30 native groups and 18 CLI
   invocations. Opcode 53 takes `a` as the array catalog ID,
   `b` as the start `usize` register and byte 4 as the end `usize` register,
   producing a fresh bool. It prepays the full root length `65 + 4*N` before
   reading endpoint cells and reuses the checked view scan with no owner, payload
-  copy or retained lease. Guest syntax, source lowering and a version flag
-  remain unavailable. See
+  copy or retained lease. Guest syntax was unavailable at that checkpoint;
+  the named-array source successor above now exposes scalar usize bounds. See
   [the dynamic-range foundation](docs/engineering/m2-array-dynamic-utf8.md).
 
 - Open-ended UTF-8 ranges: implemented at `c7830fc` and verified in

@@ -8,7 +8,8 @@ This slice adds no new IR opcode and no new runtime path. A later
 suffix to direct call results and repeated-byte literals; statements below about
 unavailable temporary ranges describe this checkpoint. The [open-range
 successor](m2-array-utf8-open-ranges.md) accepts omitted endpoints; the
-rejection list below describes this checkpoint.
+rejection list below describes this checkpoint. The [dynamic successor](m2-array-utf8-dynamic-ranges.md)
+adds scalar usize endpoint bindings on named arrays.
 
 ## Syntax and static admission
 
