@@ -20,6 +20,7 @@ import utf8_scan as utf8_scan;
 import utf8_meter as utf8_meter;
 import utf8_cancel as utf8_cancel;
 import read_lease as read_lease;
+import utf8_session as utf8_session;
 
 fn growth::Limits limits(bool minimum) {
     return growth::Limits{.object=4096,.instance=if(minimum){704}else{8192},
@@ -529,6 +530,10 @@ fn i32 main() {
     else if(bytes::equal(mode,b"read-lease-mutations")) {read_lease::run(1);}
     else if(bytes::equal(mode,b"read-lease-state")) {read_lease::run(2);}
     else if(bytes::equal(mode,b"read-lease-scan")) {read_lease::run(3);}
+    else if(bytes::equal(mode,b"session-success")) {utf8_session::run(0);}
+    else if(bytes::equal(mode,b"session-fuel")) {utf8_session::run(1);}
+    else if(bytes::equal(mode,b"session-errors")) {utf8_session::run(2);}
+    else if(bytes::equal(mode,b"session-cancel")) {utf8_session::run(3);}
     else {return 2;}
     return switch(io::write("buffer-failure: passed\n")){case .ok(_):{0}case .err(_):{1}};
 }

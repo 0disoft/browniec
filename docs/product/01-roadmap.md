@@ -1,10 +1,16 @@
 # Roadmap
 
+- Private leased UTF-8 sessions: implemented and verified in development/release,
+  each with 75 native scenarios (4 new, 71 regressions); all 150 processes exit
+  with zero tracked live allocations. Sessions acquire a read lease, retain it
+  on Fuel shortage and release it on completion, scan error, cancellation or
+  explicit abandonment. Cleanup failures retain ownership; VM/guest wiring is pending.
+  See [the session contract](../engineering/m2-buffer-utf8-session.md).
 - Private Buffer read leases: implemented and verified in development and release,
   each with 71 instrumented native scenarios (4 new, 67 regressions); all 142
   processes exit with zero tracked live allocations. A leased owner permits reads
   and rejects descriptor-aware writes, resizing, replacement, close and release.
-  Acquisition/release are explicit; automatic scanner/guest binding is unfinished.
+  Acquisition/release are explicit; guest borrow enforcement remains unfinished.
   See [the read-lease contract](../engineering/m2-buffer-read-lease.md).
 - Private cooperative UTF-8 scan cancellation: implemented and verified in
   development and release, each with 67 native scenarios (4 new, 63 regressions);

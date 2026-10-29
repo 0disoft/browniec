@@ -6,6 +6,10 @@ with a lock refresh (71 sources, 570 MIR functions), followed by
 The [Windows receipt](../evidence/m2-buffer-read-lease-windows-20261029.json)
 records the tested inputs and both instrumented native binaries.
 
+The [session successor](m2-buffer-utf8-session.md) binds acquisition and terminal
+release to private UTF-8 progress. The explicit-lease APIs and historical
+71-scenario checkpoint below retain their original manual lifecycle.
+
 The native owner descriptor now includes `reading`, initially false. A live root
 can hold one private read lease at a time. The table remains bounded at 16 slots;
 the existing 64-byte logical owner charge is unchanged. No payload copy or heap
