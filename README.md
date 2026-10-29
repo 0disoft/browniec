@@ -1,5 +1,12 @@
 # Brownie C
 
+- Private Buffer bulk copy-out: implemented and verified in development and
+  release, each with 43 native scenarios (4 new, 39 regressions); all 86 processes
+  exit with zero tracked live allocations. Copies initialized binary bytes into
+  distinct caller-owned native output after token, full-table, exact backing
+  metadata and overflow-safe range checks. No allocation, token/generation,
+  metadata or ledger change. The Windows receipt is archived.
+  See [the copy-out contract](docs/engineering/m2-buffer-copy-out.md).
 - Empty Buffer registration: implemented and verified in development and release,
   each with 39 native scenarios (4 new, 35 regressions); all 78 processes exit
   with zero tracked live allocations. Each registration

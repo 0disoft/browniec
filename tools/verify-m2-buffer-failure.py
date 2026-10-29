@@ -11,7 +11,7 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parent.parent
 MODULES = ['buffer_growth.fy', 'buffer_storage.fy', 'buffer_owners.fy', 'buffer_replacement.fy', 'buffer_append.fy', 'buffer_close.fy', 'buffer_truncate.fy', 'buffer_resize.fy', 'buffer_create.fy']
-FIXTURES = ['main.fy', 'grow_resize.fy', 'create.fy']
+FIXTURES = ['main.fy', 'grow_resize.fy', 'create.fy', 'copy_out.fy']
 MODES = [('normal-min', None), ('normal-preferred', None), ('abandon', None),
          ('oom-min', 320), ('oom-preferred', 384), ('append-success', None),
          ('append-capacity', None), ('append-identity', None), ('append-state', None),
@@ -26,7 +26,8 @@ MODES = [('normal-min', None), ('normal-preferred', None), ('abandon', None),
          ('grow-resize-preferred', None), ('grow-resize-min', None),
          ('grow-resize-oom-min', 320), ('grow-resize-oom-preferred', 384),
          ('grow-resize-abandon', None), ('grow-resize-truncated', None), ('grow-resize-preflight', None),
-         ('create-success', None), ('create-preflight', None), ('create-state', None), ('create-slots', None)]
+         ('create-success', None), ('create-preflight', None), ('create-state', None), ('create-slots', None),
+         ('copy-out-success', None), ('copy-out-bounds', None), ('copy-out-identity', None), ('copy-out-pending', None)]
 
 
 def sha(path):
@@ -121,10 +122,12 @@ def main():
             lines = run([exe, mode], cwd=empty, env=env, timeout=30).splitlines()
             need(len(lines) == 2 and lines[0] == 'buffer-failure: passed', 'Probe output')
             counters = json.loads(lines[1])
+            single = (mode.startswith(('append-', 'close-', 'truncate-', 'resize-', 'create-', 'copy-out-'))
+                      or mode in ('grow-append-preflight', 'grow-resize-preflight')) and mode != 'copy-out-pending'
             expected = dict(schema='browniec.buffer-allocator/v2', live=0, target=target or 0,
                             targetAttempts=2 if target else 0, failures=1 if target else 0,
-                            attempts=3 if target else 1 if (mode.startswith(('append-', 'close-', 'truncate-', 'resize-', 'create-')) or mode in ('grow-append-preflight', 'grow-resize-preflight')) else 2,
-                            frees=1 if (mode.startswith(('append-', 'close-', 'truncate-', 'resize-', 'create-')) or mode in ('grow-append-preflight', 'grow-resize-preflight')) else 2)
+                            attempts=3 if target else 1 if single else 2,
+                            frees=1 if single else 2)
             need(counters == expected, 'Allocator counters: ' + str(counters))
             cases.append(dict(mode=mode, allocator=counters))
         need(sha(exe) == binary_hash, 'Executable changed')

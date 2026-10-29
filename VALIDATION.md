@@ -1,5 +1,12 @@
 # Validation
 
+- Private Buffer bulk copy-out: implemented and verified in development and
+  release, each with 43 native scenarios (4 new, 39 regressions); all 86 processes
+  exit with zero tracked live allocations. Copies initialized binary bytes into
+  distinct caller-owned native output after token, full-table, exact backing
+  metadata and overflow-safe range checks. No allocation, token/generation,
+  metadata or ledger change. The Windows receipt is archived.
+  See [the copy-out contract](docs/engineering/m2-buffer-copy-out.md).
 - Empty Buffer registration: implemented and verified in development and release,
   each with 39 native scenarios (4 new, 35 regressions); all 78 processes exit
   with zero tracked live allocations. Each registration
@@ -2008,3 +2015,38 @@ Provider fault injection, full native/CLI suites, M0, Linux,
 isolation, DLL embedding, packaging and elapsed-time performance were not run.
 Guest syntax, VM integration, borrow enforcement, whole-Instance integration and
 physical table-memory admission remain unfinished.
+
+## Private Buffer bulk copy-out
+
+Root `fairyc check` passed with a lock refresh (67 sources, 549 MIR functions).
+`python -B tools/verify-m2-buffer-failure.py` then passed 43 native scenarios
+per development/release profile: `copy-out-success`, `copy-out-bounds`,
+`copy-out-identity` and `copy-out-pending`, plus 39 regressions.
+All 86 processes exited with `live=0`.
+
+The authoritative `copy_out.fy` success fixture copies all six binary source
+bytes (`0..6`) and subrange `1..4`, checks surrounding output canaries and counts,
+and accepts empty output at initialized length. Binary coverage includes NUL,
+255 and 128. Prefix coverage belongs to the identity case: after append makes
+the source seven bytes long, generation `MAX` reads its first six bytes.
+Invalid/stale tokens return exactly `Token` before missing-backing checks;
+bad backing metadata and malformed table state return `State`.
+Rejected identity/state and `MAX`/oversized/end range calls preserve output.
+
+A real `prepare_resize` keeps old-root bytes readable while pending, without
+changing reserved usage. Dropping the replacement before cancel restores
+Instance/Engine usage 320/352 and retains peaks 768/800; the old root remains
+readable after cancellation. FY heap counts are one initial allocation/one free
+for each of the first three new cases and two allocations/two frees for the
+pending case. Copy-out itself adds no allocation and leaves token/generation,
+owner metadata and ledger unchanged.
+
+See [the contract](docs/engineering/m2-buffer-copy-out.md) and the archived
+[Windows receipt](docs/evidence/m2-buffer-copy-out-windows-20261029.json).
+The receipt records 19 input hashes, 13 generated sources (nine byte-identical
+production modules plus `main.fy`, `grow_resize.fy`, `create.fy` and `copy_out.fy`)
+and two binaries. Final source and test inputs were unchanged after the pass.
+Full native/CLI suites, M0, Linux, DLL embedding, isolation, packaging,
+elapsed-time performance and Provider fault injection were not run.
+Native root association and non-aliasing remain trusted caller obligations;
+guest Buffer/VM integration and guest borrow enforcement remain unfinished.

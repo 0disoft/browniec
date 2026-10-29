@@ -69,6 +69,21 @@ pub fn Result<u8,Error> read(ref Table table,Token token,usize index,ref bytes::
     let ref u8[] view=bytes::view(buffer);
     return .ok(view[at]);
 }
+// Read into distinct caller-owned storage; validate the complete range before writes.
+pub fn Result<usize,Error> copy_out(ref Table table,Token token,usize start,
+    ref bytes::Buffer buffer,ref mut u8[] output) {
+    let Owner owner=resolve(table,token)?;
+    if(bytes::len(buffer)!=owner.length || bytes::capacity(buffer)!=owner.capacity) {return .err(.State);}
+    if(start>owner.length) {return .err(.Bounds);}
+    if(output.len>owner.length-start) {return .err(.Bounds);}
+    let ref u8[] view=bytes::view(buffer);
+    var usize i=0;
+    while(i<output.len) {
+        // start + i is below initialized length; the subtraction check excludes overflow.
+        output[i]=view[start+i];i+=1;
+    }
+    return .ok(output.len);
+}
 pub fn Result<usize,Error> write(ref Table table,Token token,usize index,u8 value,ref mut bytes::Buffer buffer) {
     let usize at=address(table,token,index,buffer)?;
     let ref mut u8[] view=bytes::view_mut(buffer);view[at]=value;
