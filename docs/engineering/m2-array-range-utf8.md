@@ -7,7 +7,8 @@ type, returns a plain bool, and is the backend companion to the whole-array
 predicate in [m2-array-utf8.md](m2-array-utf8.md). Guest source now reaches this
 operation through the [named-array range syntax](m2-array-utf8-ranges.md); the
 statements below about unchanged guest syntax describe this private-opcode
-checkpoint.
+checkpoint. A private [register-bounded successor](m2-array-dynamic-utf8.md)
+adds opcode 53 for register endpoints while leaving guest source unchanged.
 
 ## Instruction encoding
 

@@ -1,5 +1,15 @@
 # Roadmap
 
+- Register-bounded UTF-8 ranges: private VM foundation implemented at `4a076e5`
+  and verified in development/release, each with 30 native groups and 18 CLI
+  invocations. Opcode 53 takes `a` as the array catalog ID,
+  `b` as the start `usize` register and byte 4 as the end `usize` register,
+  producing a fresh bool. It prepays the full root length `65 + 4*N` before
+  reading endpoint cells and reuses the checked view scan with no owner, payload
+  copy or retained lease. Guest syntax, source lowering and a version flag
+  remain unavailable. See
+  [the dynamic-range foundation](../engineering/m2-array-dynamic-utf8.md).
+
 - Open-ended UTF-8 ranges: implemented at `c7830fc` and verified in
   development/release, each with 12 native groups and 1102 CLI cases.
   `text::valid_utf8(a[..])`, `a[..END]` and `a[START..]` accept omitted bounds
