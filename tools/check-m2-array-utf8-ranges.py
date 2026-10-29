@@ -81,8 +81,8 @@ for n in [1, 4, 4096]:
             case(source, 'fuel', fuel=exact-52, anchor='text::valid_utf8')
 for expr, error in [
     ('a[0]', 'syntax'), ('a[0..1', 'syntax'), ('a[0...1]', 'type'),
-    ('a[0..=1]', 'type'), ('a[0..1][0..1]', 'syntax'),
-    ('a[0+0..1]', 'syntax'), ('a[(0)..1]', 'type'), ('a[0..a.len]', 'type'),
+    ('a[0..=1]', 'syntax'), ('a[0..1][0..1]', 'syntax'),
+    ('a[0+0..(1]', 'syntax'), ('a[(true)..1]', 'type'), ('a[0..a.len==1]', 'type'),
     ('a[0..-1]', 'type'), ('a[0..4097]', 'type'),
     ('a[0..9223372036854775808]', 'type'), ('a[0..18446744073709551616]', 'type'),
     ('missing[0..1]', 'type'),

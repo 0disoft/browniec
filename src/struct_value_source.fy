@@ -69,7 +69,11 @@ fn Result<Leaf, errors::Error> path(ref u8[] source, ref mut lexer::State s,
         let usize slot = record*16+selected;
         let usize member = lexer::next(source, s)?;
         if (p.records.layouts.kinds[slot] == 0) {
-            if (s.kind == 46) { return .err(errors::make(2, s.begin)); }
+            if (s.kind == 46) {
+                var lexer::State look = lexer::snapshot(s);
+                let usize next = lexer::next(source, ref mut look)?;
+                if (look.kind != 46) { return .err(errors::make(2, s.begin)); }
+            }
             return .ok(Leaf { .ordinal = ordinal, .tag = p.records.layouts.types[slot], .record = record });
         }
         record = p.records.layouts.types[slot] as usize;

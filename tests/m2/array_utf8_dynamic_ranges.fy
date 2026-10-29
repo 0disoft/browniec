@@ -63,8 +63,8 @@ fn void only_in_scope_usize_names_are_dynamic_and_other_types_are_rejected() {
     rejected(b"module main;struct P{usize x;}fn i32 main(){let u8[1] a=[65;1];let P lo=P{.x=0};let bool b=text::valid_utf8(a[lo..1]);return 0;}");
     rejected(b"module main;fn i32 main(){let u8[1] a=[65;1];{let usize lo=0;}let bool b=text::valid_utf8(a[lo..1]);return 0;}");
     rejected(b"module main;fn i32 main(){let u8[1] a=[65;1];let bool b=text::valid_utf8(a[missing..1]);return 0;}");
-    rejected(b"module main;fn i32 main(){let u8[1] a=[65;1];let usize lo=0;let bool b=text::valid_utf8(a[lo+0..1]);return 0;}");
-    rejected(b"module main;fn usize end(){return 1;}fn i32 main(){let u8[1] a=[65;1];let bool b=text::valid_utf8(a[0..end()]);return 0;}");
+    rejected(b"module main;fn i32 main(){let u8[1] a=[65;1];let usize lo=0;let bool b=text::valid_utf8(a[lo+0..(1]);return 0;}");
+    rejected(b"module main;fn u32 end(){return 1;}fn i32 main(){let u8[1] a=[65;1];let bool b=text::valid_utf8(a[0..end()]);return 0;}");
     rejected(b"module main;fn i32 main(){let u32 hi=1;let bool b=text::valid_utf8([65;1][..hi]);return 0;}");
     rejected(b"module main;fn u8[1] make(){return [65;1];}fn i32 main(){let u32 hi=1;let bool b=text::valid_utf8(make()[0..hi]);return 0;}");
 }

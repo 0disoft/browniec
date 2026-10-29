@@ -29,6 +29,11 @@ pub fn Result<usize, errors::Error> begin(ref u8[] source, ref mut lexer::State 
 // Named arguments retain their owner and require no call or payload copy.
 pub fn Result<usize, errors::Error> named(ref u8[] source, ref mut lexer::State s,
     ref mut ir::Program p, ref locals::Table table, usize at) {
+    let usize id = argument(source, s, p, table)?;
+    return predicate(source, s, p, table, id, at);
+}
+pub fn Result<usize, errors::Error> argument(ref u8[] source, ref mut lexer::State s,
+    ref ir::Program p, ref locals::Table table) {
     if (s.kind != 2) { return .err(errors::make(3, s.begin)); }
     let usize index = locals::find(source, table, s.begin, s.end);
     if (!arrays::binding(table, index)) { return .err(errors::make(3, s.begin)); }
@@ -36,11 +41,25 @@ pub fn Result<usize, errors::Error> named(ref u8[] source, ref mut lexer::State 
     if (id >= p.arrays.count || id >= 16 || p.arrays.elements[id] != 10 ||
         p.array_functions[id] as usize != table.function) { return .err(errors::make(3, s.begin)); }
     let usize argument = lexer::next(source, s)?;
-    return predicate(source, s, p, table, id, at);
+    return .ok(id);
+}
+// Bounded token lookahead preserves the immediate/static lowering exactly.
+// Complex named-array bounds are delegated to the ordinary expression parser.
+pub fn Result<bool, errors::Error> simple(ref u8[] source, ref lexer::State s) {
+    if (s.kind != 91) { return .ok(true); }
+    var lexer::State look = lexer::snapshot(s);
+    let usize open = lexer::next(source, ref mut look)?;
+    if (look.kind == 1 || look.kind == 2) { let usize value = lexer::next(source, ref mut look)?; }
+    if (look.kind != 46) { return .ok(false); }
+    let usize first = lexer::next(source, ref mut look)?;
+    if (look.kind != 46) { return .ok(false); }
+    let usize second = lexer::next(source, ref mut look)?;
+    if (look.kind == 1 || look.kind == 2) { let usize value = lexer::next(source, ref mut look)?; }
+    return .ok(look.kind == 93);
 }
 // Every source form shares bounds parsing. Only names/literals can follow
 // publication, so no guest call or control-flow exit can bypass temporary drop.
-fn Result<usize, errors::Error> predicate(ref u8[] source, ref mut lexer::State s,
+pub fn Result<usize, errors::Error> predicate(ref u8[] source, ref mut lexer::State s,
     ref mut ir::Program p, ref locals::Table table, usize id, usize at) {
     if (s.kind != 91) {
         let usize close = lexer::punctuation(source, s, 41)?;

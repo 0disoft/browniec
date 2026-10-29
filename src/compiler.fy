@@ -195,7 +195,27 @@ fn Result<usize,errors::Error> utf8_value(ref u8[] source,ref mut lexer::State s
             return text_source::temporary(source,s,p,table,temporary,at);
         }
     }
-    return text_source::named(source,s,p,table,at);
+    let usize id=text_source::argument(source,s,p,table)?;
+    if(text_source::simple(source,s)?) {return text_source::predicate(source,s,p,table,id,at);}
+    return utf8_computed_range(source,s,p,table,signatures,id,at,depth,result_type,structure,loop_state);
+}
+// Only named roots enter here: existing lexical cleanup owns every early exit.
+// Evaluate and snapshot the start value before any effects in the end expression.
+fn Result<usize,errors::Error> utf8_computed_range(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    usize id,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state) {
+    let usize open=lexer::punctuation(source,s,91)?;
+    let usize lo=if(s.kind==46) {ir::integer(p,0,12,at)?}
+        else {expression(source,s,p,table,signatures,1,depth+1,12,result_type,structure,loop_state)?};
+    if(p.types[lo]!=12) {return .err(errors::make(3,at));}
+    let usize first=lexer::punctuation(source,s,46)?;
+    let usize second=lexer::punctuation(source,s,46)?;
+    let usize hi=if(s.kind==93) {arrays::length_value(p,id,at)?}
+        else {expression(source,s,p,table,signatures,1,depth+1,12,result_type,structure,loop_state)?};
+    if(p.types[hi]!=12) {return .err(errors::make(3,at));}
+    let usize bracket=lexer::punctuation(source,s,93)?;
+    let usize close=lexer::punctuation(source,s,41)?;
+    return ir::array_dynamic_utf8(p,id,lo,hi,at);
 }
 // Field paths contain no expressions: the returned owner is read and dropped
 // consecutively, with no lexical capture needed between the two operations.
