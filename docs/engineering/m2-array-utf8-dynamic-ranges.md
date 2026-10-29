@@ -1,5 +1,9 @@
 # Named-array UTF-8 ranges with local endpoints
 
+The [computed-endpoint successor](m2-array-utf8-computed-ranges.md) now accepts
+ordinary usize expressions on named arrays. Restrictions below describe this
+checkpoint; temporary computed bounds and persistent views remain unavailable.
+
 `text::valid_utf8(a[lo..hi])` accepts existing scalar `usize` bindings as
 endpoints on a named live `u8` array. Local `let` and `var` bindings and scalar
 function parameters are supported. Bindings may hold values computed by earlier

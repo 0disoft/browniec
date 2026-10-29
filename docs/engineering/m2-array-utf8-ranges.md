@@ -1,5 +1,9 @@
 # Named-array UTF-8 ranges (frontend slice)
 
+The [computed-endpoint successor](m2-array-utf8-computed-ranges.md) now accepts
+ordinary usize expressions on named arrays. Restrictions below describe this
+checkpoint; temporary computed bounds and persistent views remain unavailable.
+
 `text::valid_utf8(a[START..END])` now passes a byte range of a named `u8` array
 to the existing private opcode 52. The frontend admits only statically known
 slices; the scan and Fuel rules are those of [opcode 52](m2-array-range-utf8.md).

@@ -1,5 +1,16 @@
 # Validation
 
+- Computed UTF-8 range endpoints: implemented at `b2ce341` on named live u8 arrays.
+  `text::valid_utf8(a[start + 1..a.len])` reuses ordinary usize expression
+  parsing with once-only left-to-right evaluation and existing exit cleanup.
+  Calls, scalar fields, indexed reads, widening casts and switches are supported.
+  Original literal/name forms retain their code and Fuel; computed forms use
+  existing opcode 53 after ordinary endpoint evaluation, with no new root owner
+  or payload copy. Version JSON adds `array_utf8_computed_ranges: true`.
+  Development and release each passed 23 native groups and 1,794 CLI
+  invocations. Computed temporary bounds and persistent borrows
+  remain unavailable. See [the source contract](docs/engineering/m2-array-utf8-computed-ranges.md).
+
 - Dynamic UTF-8 ranges on temporary arrays: implemented at `bb7476a`.
   `text::valid_utf8(make()[lo..hi])` and
   `text::valid_utf8([value; N][lo..hi])` accept
@@ -9,8 +20,9 @@
   The shared parser retains static opcode 52 and dynamic opcode 53 with existing
   Fuel prices. Version JSON adds `array_utf8_temporary_dynamic_ranges: true`.
   Development and release each passed 23 native groups and 1,646 CLI
-  invocations. Endpoint expressions and persistent borrows remain
-  unavailable. See [the source contract](docs/engineering/m2-array-utf8-temporary-dynamic-ranges.md).
+  invocations. Endpoint expressions were unavailable at this checkpoint;
+  the successor above accepts them on named arrays. Computed temporary bounds
+  and persistent borrows remain unavailable. See [the source contract](docs/engineering/m2-array-utf8-temporary-dynamic-ranges.md).
 
 - Named-array dynamic UTF-8 ranges: implemented at `9bb31ed`.
   `text::valid_utf8(a[lo..hi])` accepts existing scalar `usize` locals and

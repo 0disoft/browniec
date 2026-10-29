@@ -1,5 +1,8 @@
 # Open-ended UTF-8 ranges
 
+The [computed-endpoint successor](m2-array-utf8-computed-ranges.md) accepts
+ordinary usize expressions on named arrays while preserving these static forms.
+
 `text::valid_utf8(a[..])`, `a[..END]` and `a[START..]` now accept an omitted
 endpoint on any supported source: a named live `u8` array, a direct call result
 and a repeated-byte literal. The frontend fills the missing bound at compile
