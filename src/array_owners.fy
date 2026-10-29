@@ -2,6 +2,7 @@ module array_owners;
 
 import array_layout as layouts;
 import array_storage as storage;
+import std::text as text;
 import scalar_codec as codec;
 import struct_layout as records;
 import struct_nested_storage as record_storage;
@@ -140,6 +141,13 @@ pub fn Result<i64, Error> read(ref Table table, Token token, usize index, ref u8
     return switch (storage::read(ref layout, owner.base, index, bytes, ref table.arena)) {
         case .ok(value): { .ok(value) } case .err(e): { .err(storage_error(e)) }
     };
+}
+// Read-only UTF-8 predicate over one exact-shape live u8 array. No cached result.
+pub fn Result<bool,Error> utf8_valid(ref Table table,Token token,usize length,ref u8[] bytes){
+    let Owner owner=resolve(table,token,bytes.len)?;
+    if(owner.element!=10){return .err(.Type);}
+    if(owner.length!=length){return .err(.Length);}
+    return .ok(text::validate_utf8(bytes[owner.base..owner.end]).is_ok);
 }
 // Rehoming a unique owner needs no allocation or payload write. Validate its
 // exact shape and all bool bytes before a caller publishes the existing token.

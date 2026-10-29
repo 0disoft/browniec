@@ -28,6 +28,7 @@ pub fn Result<usize, errors::Error> cost(ref meta::Catalog catalog, u8 op, usize
     let layouts::Array layout = switch (layouts::scalar(catalog.elements[id], catalog.lengths[id])) {
         case .ok(value): { value } case .err(_): { return .err(errors::make(5, offset)); }
     };
+    if(op==51){if(layout.element!=10){return .err(errors::make(5,offset));}return .ok(33+4*layout.length);}
     // Descriptor visits are charged at the fixed 16-record ceiling; payload work
     // is charged by byte, including worst-case alignment and codec scratch work.
     if (op == 33) { return .ok(49 + 2 * layout.stride + layout.bytes + 7); }
@@ -52,9 +53,17 @@ pub fn errors::Error failure(owners::Error error, usize offset) {
 pub fn Result<usize, errors::Error> execute(u8 op, usize dst, usize a, usize b, usize frame, ref meta::Catalog catalog,
     ref mut State state, ref mut bytes::Buffer buffer, ref mut i64[] registers, usize offset) {
     if (frame >= 32) { return .err(errors::make(5, offset)); }
+    if(op==51 && (a>=16 || a>=catalog.count || catalog.elements[a]!=10 || b!=0 || dst>=registers.len)){
+        return .err(errors::make(5,offset));
+    }
     let usize base = frame * 16;
     let ref mut u8[] data = bytes::view_mut(buffer);
-    if (op == 33) {
+    if(op==51){
+        let bool valid=switch(owners::utf8_valid(ref state.owners,state.tokens[base+a],catalog.lengths[a],data)){
+            case .ok(v):{v}case .err(e):{return .err(failure(e,offset));}
+        };
+        registers[dst]=if(valid){1}else{0};
+    } else if (op == 33) {
         let layouts::Array layout = switch (layouts::scalar(catalog.elements[dst], catalog.lengths[dst])) {
             case .ok(value): { value } case .err(_): { return .err(errors::make(5, offset)); }
         };

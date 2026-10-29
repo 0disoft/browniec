@@ -67,7 +67,7 @@ pub fn Result<i64, errors::Error> run_with_array_limit(ref ir::Program p, usize 
                 ref registers[base..base+128],remaining,p.offsets[pc])?;
             pc += 1; continue;
         }
-        if (op >= 41) {
+        if (op >= 41 && op!=51) {
             let usize base = frame * 128;
             remaining = struct_vm::step(op, dst, a, b, frame, ref p.records, ref mut records,
                 ref mut arrays, ref mut payload, ref mut registers[base..base + 128], remaining, p.offsets[pc])?;
@@ -94,7 +94,7 @@ pub fn Result<i64, errors::Error> run_with_array_limit(ref ir::Program p, usize 
             continue;
         }
         let usize cost = if(op==39) {array_results::cost(p,a,p.offsets[pc])?}
-            else if (op >= 33) { array_vm::cost(ref p.arrays, op, if (op == 35) { a } else { dst }, p.offsets[pc])? }
+            else if (op >= 33) { array_vm::cost(ref p.arrays, op, if (op == 35 || op==51) { a } else { dst }, p.offsets[pc])? }
             else { 1 };
         if (remaining < cost) { return .err(errors::make(8, p.offsets[pc])); }
         remaining -= cost;

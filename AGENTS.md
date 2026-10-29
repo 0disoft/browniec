@@ -10,6 +10,13 @@ own the affected contract. Broader scaffold procedures are optional.
 
 ## Current state
 
+- Private u8-array UTF-8 opcode: implemented and verified in development/release,
+  each with 25 native groups (6 new, 19 regressions) and 8 CLI sentinels.
+  Opcode 51 independently verifies a live function-owned u8 array and bool
+  result, prepays 33+4*length Fuel and preserves payload/ownership. Guest
+  syntax and version capabilities are unchanged; frontend integration is pending.
+  See [the UTF-8 VM contract](docs/engineering/m2-array-utf8.md).
+
 - Host shutdown descriptor sweep: implemented and verified in development/release,
   each with 99 native scenarios; all 198 processes exit with zero tracked live
   allocations. Existing owners are enumerated in descending slot order; failed
