@@ -10,8 +10,8 @@ import shutil
 import subprocess
 
 ROOT = Path(__file__).resolve().parent.parent
-MODULES = ['buffer_growth.fy', 'buffer_storage.fy', 'buffer_owners.fy', 'buffer_replacement.fy', 'buffer_append.fy', 'buffer_close.fy', 'buffer_truncate.fy', 'buffer_resize.fy', 'buffer_create.fy', 'buffer_write.fy', 'buffer_utf8.fy', 'buffer_utf8_scan.fy', 'buffer_utf8_meter.fy', 'buffer_utf8_session.fy', 'buffer_utf8_pool.fy']
-FIXTURES = ['main.fy', 'grow_resize.fy', 'create.fy', 'copy_out.fy', 'write.fy', 'prepared_write.fy', 'utf8.fy', 'utf8_scan.fy', 'utf8_meter.fy', 'utf8_cancel.fy', 'read_lease.fy', 'utf8_session.fy', 'utf8_pool.fy']
+MODULES = ['buffer_growth.fy', 'buffer_storage.fy', 'buffer_owners.fy', 'buffer_replacement.fy', 'buffer_append.fy', 'buffer_close.fy', 'buffer_truncate.fy', 'buffer_resize.fy', 'buffer_create.fy', 'buffer_write.fy', 'buffer_utf8.fy', 'buffer_utf8_scan.fy', 'buffer_utf8_meter.fy', 'buffer_utf8_session.fy', 'buffer_utf8_pool.fy', 'buffer_host_close.fy']
+FIXTURES = ['main.fy', 'grow_resize.fy', 'create.fy', 'copy_out.fy', 'write.fy', 'prepared_write.fy', 'utf8.fy', 'utf8_scan.fy', 'utf8_meter.fy', 'utf8_cancel.fy', 'read_lease.fy', 'utf8_session.fy', 'utf8_pool.fy', 'host_close.fy']
 MODES = [('normal-min', None), ('normal-preferred', None), ('abandon', None),
          ('oom-min', 320), ('oom-preferred', 384), ('append-success', None),
          ('append-capacity', None), ('append-identity', None), ('append-state', None),
@@ -47,7 +47,9 @@ MODES = [('normal-min', None), ('normal-preferred', None), ('abandon', None),
          ('pool-shutdown-close', None), ('pool-shutdown-retry', None),
          ('pool-shutdown-complete', None), ('pool-shutdown-state', None),
          ('pool-admit-success', None), ('pool-admit-quota', None),
-         ('pool-admit-state', None), ('pool-admit-release', None)]
+         ('pool-admit-state', None), ('pool-admit-release', None),
+         ('close-host-success', None), ('close-host-retry', None),
+         ('close-host-preflight', None), ('close-host-accounting', None)]
 
 
 def sha(path):
@@ -163,7 +165,7 @@ def main():
                   sourceSha256=inputs, generatedSourceSha256=generated,
                   generatedLockSha256=lock_hash, forcedInclude=str(header), commands=commands,
                   profileReceipts=outcomes,
-                  limitations=['Windows native probe with byte-identical copies of fifteen production modules. '
+                  limitations=['Windows native probe with byte-identical copies of sixteen production modules. '
                                'Only FY system-heap allocations are counted, not all process memory. '
                                'Provider inconsistency injection, full suites, M0, Linux, isolation, DLL, '
                                'packaging and elapsed-time performance were not run. Guest Buffer is not implemented.'])

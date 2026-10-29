@@ -5,6 +5,10 @@ Implemented and verified in development and release on Windows by root
 The [receipt](../evidence/m2-buffer-utf8-admission-windows-20261029.json) records
 the tested sources, generated project and instrumented binaries.
 
+The [host-close successor](m2-buffer-host-close.md) now coordinates Pool shutdown,
+actual destruction of one supplied native root and its checked owner refund.
+It remains an explicit host call; whole-Instance ownership is still pending.
+
 ## Fixed logical reservation
 
 `buffer_utf8_pool::empty()` creates unadmitted host bookkeeping. Before its first

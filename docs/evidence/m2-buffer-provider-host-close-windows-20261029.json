@@ -1,0 +1,1006 @@
+{
+  "schema": "browniec.buffer-provider-windows/v1",
+  "status": "passed",
+  "recordedAt": "2026-10-29T13:30:10.625091+00:00",
+  "baselineCommit": "3b40c96542dcda813ab87f4154275030bf5b0a54",
+  "os": "Windows-11-10.0.26300-SP0",
+  "profiles": [
+    "development",
+    "release"
+  ],
+  "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261022210249-4ce1264273be\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.86\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: 4ce1264273be6051ee560173e94690e1b99c9eaf\nmodified: false",
+  "compilerSha256": "572395f7f1e425d613c5a69f50b30ed177cda37ca2b1638bd0c11cf79fcbcc77",
+  "pinnedRuntimeSources": [
+    {
+      "revision": "4ce1264273be6051ee560173e94690e1b99c9eaf",
+      "path": "internal/cstdlib/stage0_system_heap.c",
+      "sha256": "cae6664fa1ec70722b76025c3e2c3daadc133cd90d95fa9f02f2385915d3e55c"
+    },
+    {
+      "revision": "4ce1264273be6051ee560173e94690e1b99c9eaf",
+      "path": "internal/cstdlib/stage0_buffer.c",
+      "sha256": "41c7a26acb8b9f22fd5e0f82c976f4b59964df2e2e73e7ddb5fa8bee70e8390c"
+    },
+    {
+      "revision": "4ce1264273be6051ee560173e94690e1b99c9eaf",
+      "path": "internal/cstdlib/stage0_windows_console.c",
+      "sha256": "076bc219ff0ff8ab6945ef0838230c77a254de8cefc460dfd05a842549bab306"
+    },
+    {
+      "revision": "4ce1264273be6051ee560173e94690e1b99c9eaf",
+      "path": "internal/cstdlib/stage0_windows_process_args.c",
+      "sha256": "8def696dd31522223fa626123ae6703967e2d0aca19c65a076b22f204c9c10d4"
+    },
+    {
+      "revision": "4ce1264273be6051ee560173e94690e1b99c9eaf",
+      "path": "internal/cruntime/stage0_scalar.c",
+      "sha256": "d8e7974d8f566e7c9228d1c064f1ee2429461862935e703883b96dd0c0b59f11"
+    }
+  ],
+  "lockedCheck": "check ok: 2 instance(s), 74 source file(s), 599 MIR function(s), lock verified",
+  "sourceSha256": [
+    {
+      "path": "fairy.lock",
+      "sha256": "0a6b577f11536930e8b033f2e67f9a29c40ec2257612c72c790f92c528da89df"
+    },
+    {
+      "path": "fairy.toml",
+      "sha256": "f5254ba793d9012470c697e8657688a4ea5465c138fba6d748707d5bfa4b31fb"
+    },
+    {
+      "path": "probes/m2-buffer-failure/allocator_probe.h",
+      "sha256": "9844bccfe731fc1ea98a665c0fd3efd36a920646c2e2103b0ee31e06aff62fb2"
+    },
+    {
+      "path": "probes/m2-buffer-provider/fairy.toml",
+      "sha256": "99318b2075d07c790d6336ed0f72cf3e2894023c1c659156781d0d0f0ef94185"
+    },
+    {
+      "path": "probes/m2-buffer-provider/provider_probe.h",
+      "sha256": "70d76fbad067ccf6c8d66e795f79351cb26f29afc4bd5a876ac347fdeb7528de"
+    },
+    {
+      "path": "probes/m2-buffer-provider/src/main.fy",
+      "sha256": "1bb1dad6ca8cfc942fc74ca9f40c04be1ca4c3d8ba97ce5b3be7ca4cdb25d57c"
+    },
+    {
+      "path": "src/buffer_append.fy",
+      "sha256": "7a4de27685b41b772569e5a687a7626bc200f7c6152b77082cc93052bf78527a"
+    },
+    {
+      "path": "src/buffer_close.fy",
+      "sha256": "ae68d02649e04196854ba4b41f475c0c550d6d0ac5f80ebd2bbeb537fbcfaac7"
+    },
+    {
+      "path": "src/buffer_create.fy",
+      "sha256": "f133713a4f815f70cfd973933f81dd1156b7fa5c637eeb9dbad9e87f309308e0"
+    },
+    {
+      "path": "src/buffer_growth.fy",
+      "sha256": "113bb0e6b05ba17c4d9c08b2b4e46a823bfa05290ac1b4d2a5022da9ce54c285"
+    },
+    {
+      "path": "src/buffer_host_close.fy",
+      "sha256": "97a271f0276d78bb938057c4c4b47da9b455b758de6c5a88e3d2ea12d8bf4fed"
+    },
+    {
+      "path": "src/buffer_owners.fy",
+      "sha256": "0dd45d859fec557cbe729b64f4b838b11b1d1f9dde3f779c9251cfad3bb82576"
+    },
+    {
+      "path": "src/buffer_replacement.fy",
+      "sha256": "7f8a58181ad531924d4a3f1d887c552a952ebf6df493d714b00d56112a92ae51"
+    },
+    {
+      "path": "src/buffer_resize.fy",
+      "sha256": "1870bbf133aa6e9535eb5a901cbdd54bf8e520ae2520a54b9bd03b955b9cf057"
+    },
+    {
+      "path": "src/buffer_storage.fy",
+      "sha256": "4f6b9f8e5fc5ae55551618d70eac1e74289d09a933249bf95940f98d5b2fbe8d"
+    },
+    {
+      "path": "src/buffer_truncate.fy",
+      "sha256": "9b5900d8ee8d1360c47afb4589473adfb5fe523c83de941e7a88412f9d3425fc"
+    },
+    {
+      "path": "src/buffer_utf8.fy",
+      "sha256": "a59e01627bb46851405334d0650426a9ef816a69cf1c0a5dbf6f3cec43f8b255"
+    },
+    {
+      "path": "src/buffer_utf8_meter.fy",
+      "sha256": "b066f8b567b465d709cc356193c92aeea33d8918ae7c500fb23992993d455142"
+    },
+    {
+      "path": "src/buffer_utf8_pool.fy",
+      "sha256": "74eafd20969398df0475dee122130292aa3bd51dfbfea2a32cea3819def397df"
+    },
+    {
+      "path": "src/buffer_utf8_scan.fy",
+      "sha256": "f51a409ff4f1f6fd427b1b0ef9526d16c506af197478ba0281d6e376ff9e6a7a"
+    },
+    {
+      "path": "src/buffer_utf8_session.fy",
+      "sha256": "709338c5a33d28ea20ae41851a27d0139b40c1b7f69c4a827503bccf7da54330"
+    },
+    {
+      "path": "src/buffer_write.fy",
+      "sha256": "ddb6db325a50f5f660c90971661144a582794ec84c0be5f675d503c237829dab"
+    },
+    {
+      "path": "toolchain.json",
+      "sha256": "e744c8866ba200fd9213ee99ff61a11f60f9ed0f31e9106219f97d7da26971ef"
+    },
+    {
+      "path": "tools/verify-m2-buffer-failure.py",
+      "sha256": "eddb4a95e34d7da3daffb38ec67109d1b616dbbfeb0bbba91f4486e22cdc1be2"
+    },
+    {
+      "path": "tools/verify-m2-buffer-provider.py",
+      "sha256": "50a3f12afdb39dfc1124b7f204e11d9926448712396e768e7bcae00939a6b4da"
+    }
+  ],
+  "generatedSourceSha256": [
+    {
+      "path": "build/m2-buffer-provider/project/src/buffer_append.fy",
+      "sha256": "7a4de27685b41b772569e5a687a7626bc200f7c6152b77082cc93052bf78527a"
+    },
+    {
+      "path": "build/m2-buffer-provider/project/src/buffer_close.fy",
+      "sha256": "ae68d02649e04196854ba4b41f475c0c550d6d0ac5f80ebd2bbeb537fbcfaac7"
+    },
+    {
+      "path": "build/m2-buffer-provider/project/src/buffer_create.fy",
+      "sha256": "f133713a4f815f70cfd973933f81dd1156b7fa5c637eeb9dbad9e87f309308e0"
+    },
+    {
+      "path": "build/m2-buffer-provider/project/src/buffer_growth.fy",
+      "sha256": "113bb0e6b05ba17c4d9c08b2b4e46a823bfa05290ac1b4d2a5022da9ce54c285"
+    },
+    {
+      "path": "build/m2-buffer-provider/project/src/buffer_host_close.fy",
+      "sha256": "97a271f0276d78bb938057c4c4b47da9b455b758de6c5a88e3d2ea12d8bf4fed"
+    },
+    {
+      "path": "build/m2-buffer-provider/project/src/buffer_owners.fy",
+      "sha256": "0dd45d859fec557cbe729b64f4b838b11b1d1f9dde3f779c9251cfad3bb82576"
+    },
+    {
+      "path": "build/m2-buffer-provider/project/src/buffer_replacement.fy",
+      "sha256": "7f8a58181ad531924d4a3f1d887c552a952ebf6df493d714b00d56112a92ae51"
+    },
+    {
+      "path": "build/m2-buffer-provider/project/src/buffer_resize.fy",
+      "sha256": "1870bbf133aa6e9535eb5a901cbdd54bf8e520ae2520a54b9bd03b955b9cf057"
+    },
+    {
+      "path": "build/m2-buffer-provider/project/src/buffer_storage.fy",
+      "sha256": "4f6b9f8e5fc5ae55551618d70eac1e74289d09a933249bf95940f98d5b2fbe8d"
+    },
+    {
+      "path": "build/m2-buffer-provider/project/src/buffer_truncate.fy",
+      "sha256": "9b5900d8ee8d1360c47afb4589473adfb5fe523c83de941e7a88412f9d3425fc"
+    },
+    {
+      "path": "build/m2-buffer-provider/project/src/buffer_utf8.fy",
+      "sha256": "a59e01627bb46851405334d0650426a9ef816a69cf1c0a5dbf6f3cec43f8b255"
+    },
+    {
+      "path": "build/m2-buffer-provider/project/src/buffer_utf8_meter.fy",
+      "sha256": "b066f8b567b465d709cc356193c92aeea33d8918ae7c500fb23992993d455142"
+    },
+    {
+      "path": "build/m2-buffer-provider/project/src/buffer_utf8_pool.fy",
+      "sha256": "74eafd20969398df0475dee122130292aa3bd51dfbfea2a32cea3819def397df"
+    },
+    {
+      "path": "build/m2-buffer-provider/project/src/buffer_utf8_scan.fy",
+      "sha256": "f51a409ff4f1f6fd427b1b0ef9526d16c506af197478ba0281d6e376ff9e6a7a"
+    },
+    {
+      "path": "build/m2-buffer-provider/project/src/buffer_utf8_session.fy",
+      "sha256": "709338c5a33d28ea20ae41851a27d0139b40c1b7f69c4a827503bccf7da54330"
+    },
+    {
+      "path": "build/m2-buffer-provider/project/src/buffer_write.fy",
+      "sha256": "ddb6db325a50f5f660c90971661144a582794ec84c0be5f675d503c237829dab"
+    },
+    {
+      "path": "build/m2-buffer-provider/project/src/main.fy",
+      "sha256": "1bb1dad6ca8cfc942fc74ca9f40c04be1ca4c3d8ba97ce5b3be7ca4cdb25d57c"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "build/m2-buffer-provider/original.c",
+      "sha256": "a8ae856055bd24b42fc0dac21a4f1b9be34ddb8304064d6d147804e4ac5cd619"
+    },
+    {
+      "path": "build/m2-buffer-provider/runtime-original.c",
+      "sha256": "5501ca6ffd93ced761b5a755b53466745e7c5e0d745784e8f6964629371f94a0"
+    },
+    {
+      "path": "build/m2-buffer-provider/provider.c",
+      "sha256": "39009b42561d6f735bebf693ce3fe51c02de64755c11df636c08a5a3cdff2592"
+    },
+    {
+      "path": "build/m2-buffer-provider/project/fairy.lock",
+      "sha256": "c0d010b158001f49e4ce87bce8a92a09fbc1546766f7a73654eabbf6967258d2"
+    },
+    {
+      "path": "build/m2-buffer-provider/provider-development.exe",
+      "sha256": "3f56344fea90f5cf0fc925ff0dd1fb8f5af6293750472663ddba1f0f42c11495"
+    },
+    {
+      "path": "build/m2-buffer-provider/provider-release.exe",
+      "sha256": "b6ca06a1b7d0c44e927c1315fc72c16ff90d3afb559b02ff55e6c62b8af9690c"
+    }
+  ],
+  "standardLibraryLockIdentity": [
+    {
+      "id": "fypi1-sha256-c18350128fcbce1cee2c63f0e7acc467f9f77ff184c458af1d20eab69a58e89a",
+      "role": "standard-library",
+      "packageUid": "fairyc.std",
+      "sourceKind": "sdk",
+      "localPath": "",
+      "sdkIdentity": "fairyc-sdk-stdlib/0",
+      "runtimeAbi": "fairyc-runtime/0",
+      "sourceIdentity": "fairyc-sdk-stdlib/0;fairyc-runtime/0;fysrc1-sha256-782df5e2039ff3f7817c1055454caa24feb2ea755e62f78d8ee67418916a5b83",
+      "sourceDigest": "fysrc1-sha256-782df5e2039ff3f7817c1055454caa24feb2ea755e62f78d8ee67418916a5b83",
+      "version": "0.0.0-stage0.86",
+      "features": []
+    }
+  ],
+  "generatedLockSha256": "c0d010b158001f49e4ce87bce8a92a09fbc1546766f7a73654eabbf6967258d2",
+  "nativeToolchain": {
+    "compiler": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+    "sha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+    "msvcVersion": "14.51.36231",
+    "windowsSdk": "10.0.26100.0"
+  },
+  "commands": [
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+        "--version"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec",
+      "exit": 0,
+      "stdoutSha256": null,
+      "stdout": "Fairy C Stage 0\ncompiler: v0.0.0-20261022210249-4ce1264273be\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.86\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: 4ce1264273be6051ee560173e94690e1b99c9eaf\nmodified: false\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+        "check",
+        "--locked"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec",
+      "exit": 0,
+      "stdoutSha256": null,
+      "stdout": "check ok: 2 instance(s), 74 source file(s), 599 MIR function(s), lock verified\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec",
+      "exit": 0,
+      "stdoutSha256": null,
+      "stdout": "3b40c96542dcda813ab87f4154275030bf5b0a54\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+        "check"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\project",
+      "exit": 0,
+      "stdoutSha256": null,
+      "stdout": "check ok: 2 instance(s), 24 source file(s), 260 MIR function(s), lock updated\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+        "experimental",
+        "emit-workspace-c",
+        "--target",
+        "x86_64-windows-msvc",
+        "--locked"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\project",
+      "exit": 0,
+      "stdoutSha256": "a8ae856055bd24b42fc0dac21a4f1b9be34ddb8304064d6d147804e4ac5cd619",
+      "stdout": "<emitted C retained separately>",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "-C",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\fairyc",
+        "show",
+        "4ce1264273be6051ee560173e94690e1b99c9eaf:internal/cstdlib/stage0_system_heap.c"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec",
+      "exit": 0,
+      "stdoutSha256": "cae6664fa1ec70722b76025c3e2c3daadc133cd90d95fa9f02f2385915d3e55c",
+      "stdout": "<emitted C retained separately>",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "-C",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\fairyc",
+        "show",
+        "4ce1264273be6051ee560173e94690e1b99c9eaf:internal/cstdlib/stage0_buffer.c"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec",
+      "exit": 0,
+      "stdoutSha256": "41c7a26acb8b9f22fd5e0f82c976f4b59964df2e2e73e7ddb5fa8bee70e8390c",
+      "stdout": "<emitted C retained separately>",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "-C",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\fairyc",
+        "show",
+        "4ce1264273be6051ee560173e94690e1b99c9eaf:internal/cstdlib/stage0_windows_console.c"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec",
+      "exit": 0,
+      "stdoutSha256": "076bc219ff0ff8ab6945ef0838230c77a254de8cefc460dfd05a842549bab306",
+      "stdout": "<emitted C retained separately>",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "-C",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\fairyc",
+        "show",
+        "4ce1264273be6051ee560173e94690e1b99c9eaf:internal/cstdlib/stage0_windows_process_args.c"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec",
+      "exit": 0,
+      "stdoutSha256": "8def696dd31522223fa626123ae6703967e2d0aca19c65a076b22f204c9c10d4",
+      "stdout": "<emitted C retained separately>",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "-C",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\fairyc",
+        "show",
+        "4ce1264273be6051ee560173e94690e1b99c9eaf:internal/cruntime/stage0_scalar.c"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec",
+      "exit": 0,
+      "stdoutSha256": "d8e7974d8f566e7c9228d1c064f1ee2429461862935e703883b96dd0c0b59f11",
+      "stdout": "<emitted C retained separately>",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe",
+        "-latest",
+        "-products",
+        "*",
+        "-requires",
+        "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
+        "-property",
+        "installationPath"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec",
+      "exit": 0,
+      "stdoutSha256": null,
+      "stdout": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+        "/nologo",
+        "/std:c11",
+        "/TC",
+        "/MT",
+        "/W4",
+        "/WX",
+        "/Od",
+        "/c",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\original.c",
+        "/Fo:C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\product-development.obj"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider",
+      "exit": 0,
+      "stdoutSha256": null,
+      "stdout": "original.c\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+        "/nologo",
+        "/std:c11",
+        "/TC",
+        "/MT",
+        "/W4",
+        "/WX",
+        "/Od",
+        "/FIC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\probes\\m2-buffer-provider\\provider_probe.h",
+        "/c",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\provider.c",
+        "/Fo:C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\runtime-development.obj"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider",
+      "exit": 0,
+      "stdoutSha256": null,
+      "stdout": "provider.c\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+        "/nologo",
+        "/MT",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\product-development.obj",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\runtime-development.obj",
+        "/Fe:C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\provider-development.exe",
+        "/link",
+        "/INCREMENTAL:NO",
+        "/Brepro"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider",
+      "exit": 0,
+      "stdoutSha256": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\provider-development.exe",
+        "capacity",
+        "control"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\no-runtime-tools",
+      "exit": 0,
+      "stdoutSha256": null,
+      "stdout": "buffer-provider: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\provider-development.exe",
+        "capacity"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\no-runtime-tools",
+      "exit": 0,
+      "stdoutSha256": null,
+      "stdout": "buffer-provider: passed\n{\"schema\":\"browniec.buffer-provider/v1\",\"hits\":1}\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":3,\"frees\":3}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\provider-development.exe",
+        "copy",
+        "control"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\no-runtime-tools",
+      "exit": 0,
+      "stdoutSha256": null,
+      "stdout": "buffer-provider: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\provider-development.exe",
+        "copy"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\no-runtime-tools",
+      "exit": 0,
+      "stdoutSha256": null,
+      "stdout": "buffer-provider: passed\n{\"schema\":\"browniec.buffer-provider/v1\",\"hits\":1}\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":3,\"frees\":3}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\provider-development.exe",
+        "append",
+        "control"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\no-runtime-tools",
+      "exit": 0,
+      "stdoutSha256": null,
+      "stdout": "buffer-provider: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\provider-development.exe",
+        "append"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\no-runtime-tools",
+      "exit": 0,
+      "stdoutSha256": null,
+      "stdout": "buffer-provider: passed\n{\"schema\":\"browniec.buffer-provider/v1\",\"hits\":1}\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":3,\"frees\":3}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\provider-development.exe",
+        "resize",
+        "control"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\no-runtime-tools",
+      "exit": 0,
+      "stdoutSha256": null,
+      "stdout": "buffer-provider: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\provider-development.exe",
+        "resize"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\no-runtime-tools",
+      "exit": 0,
+      "stdoutSha256": null,
+      "stdout": "buffer-provider: passed\n{\"schema\":\"browniec.buffer-provider/v1\",\"hits\":1}\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":3,\"frees\":3}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+        "/nologo",
+        "/std:c11",
+        "/TC",
+        "/MT",
+        "/W4",
+        "/WX",
+        "/O2",
+        "/c",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\original.c",
+        "/Fo:C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\product-release.obj"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider",
+      "exit": 0,
+      "stdoutSha256": null,
+      "stdout": "original.c\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+        "/nologo",
+        "/std:c11",
+        "/TC",
+        "/MT",
+        "/W4",
+        "/WX",
+        "/O2",
+        "/FIC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\probes\\m2-buffer-provider\\provider_probe.h",
+        "/c",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\provider.c",
+        "/Fo:C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\runtime-release.obj"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider",
+      "exit": 0,
+      "stdoutSha256": null,
+      "stdout": "provider.c\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+        "/nologo",
+        "/MT",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\product-release.obj",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\runtime-release.obj",
+        "/Fe:C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\provider-release.exe",
+        "/link",
+        "/INCREMENTAL:NO",
+        "/Brepro"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider",
+      "exit": 0,
+      "stdoutSha256": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\provider-release.exe",
+        "capacity",
+        "control"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\no-runtime-tools",
+      "exit": 0,
+      "stdoutSha256": null,
+      "stdout": "buffer-provider: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\provider-release.exe",
+        "capacity"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\no-runtime-tools",
+      "exit": 0,
+      "stdoutSha256": null,
+      "stdout": "buffer-provider: passed\n{\"schema\":\"browniec.buffer-provider/v1\",\"hits\":1}\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":3,\"frees\":3}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\provider-release.exe",
+        "copy",
+        "control"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\no-runtime-tools",
+      "exit": 0,
+      "stdoutSha256": null,
+      "stdout": "buffer-provider: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\provider-release.exe",
+        "copy"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\no-runtime-tools",
+      "exit": 0,
+      "stdoutSha256": null,
+      "stdout": "buffer-provider: passed\n{\"schema\":\"browniec.buffer-provider/v1\",\"hits\":1}\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":3,\"frees\":3}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\provider-release.exe",
+        "append",
+        "control"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\no-runtime-tools",
+      "exit": 0,
+      "stdoutSha256": null,
+      "stdout": "buffer-provider: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\provider-release.exe",
+        "append"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\no-runtime-tools",
+      "exit": 0,
+      "stdoutSha256": null,
+      "stdout": "buffer-provider: passed\n{\"schema\":\"browniec.buffer-provider/v1\",\"hits\":1}\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":3,\"frees\":3}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\provider-release.exe",
+        "resize",
+        "control"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\no-runtime-tools",
+      "exit": 0,
+      "stdoutSha256": null,
+      "stdout": "buffer-provider: passed\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":2,\"frees\":2}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\provider-release.exe",
+        "resize"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-buffer-provider\\no-runtime-tools",
+      "exit": 0,
+      "stdoutSha256": null,
+      "stdout": "buffer-provider: passed\n{\"schema\":\"browniec.buffer-provider/v1\",\"hits\":1}\n{\"schema\":\"browniec.buffer-allocator/v2\",\"live\":0,\"target\":0,\"targetAttempts\":0,\"failures\":0,\"attempts\":3,\"frees\":3}\n",
+      "stderr": ""
+    }
+  ],
+  "profileReceipts": [
+    {
+      "profile": "development",
+      "cases": [
+        {
+          "mode": "capacity",
+          "injected": false,
+          "reports": {
+            "browniec.buffer-allocator/v2": {
+              "schema": "browniec.buffer-allocator/v2",
+              "live": 0,
+              "target": 0,
+              "targetAttempts": 0,
+              "failures": 0,
+              "attempts": 2,
+              "frees": 2
+            }
+          }
+        },
+        {
+          "mode": "capacity",
+          "injected": true,
+          "reports": {
+            "browniec.buffer-provider/v1": {
+              "schema": "browniec.buffer-provider/v1",
+              "hits": 1
+            },
+            "browniec.buffer-allocator/v2": {
+              "schema": "browniec.buffer-allocator/v2",
+              "live": 0,
+              "target": 0,
+              "targetAttempts": 0,
+              "failures": 0,
+              "attempts": 3,
+              "frees": 3
+            }
+          }
+        },
+        {
+          "mode": "copy",
+          "injected": false,
+          "reports": {
+            "browniec.buffer-allocator/v2": {
+              "schema": "browniec.buffer-allocator/v2",
+              "live": 0,
+              "target": 0,
+              "targetAttempts": 0,
+              "failures": 0,
+              "attempts": 2,
+              "frees": 2
+            }
+          }
+        },
+        {
+          "mode": "copy",
+          "injected": true,
+          "reports": {
+            "browniec.buffer-provider/v1": {
+              "schema": "browniec.buffer-provider/v1",
+              "hits": 1
+            },
+            "browniec.buffer-allocator/v2": {
+              "schema": "browniec.buffer-allocator/v2",
+              "live": 0,
+              "target": 0,
+              "targetAttempts": 0,
+              "failures": 0,
+              "attempts": 3,
+              "frees": 3
+            }
+          }
+        },
+        {
+          "mode": "append",
+          "injected": false,
+          "reports": {
+            "browniec.buffer-allocator/v2": {
+              "schema": "browniec.buffer-allocator/v2",
+              "live": 0,
+              "target": 0,
+              "targetAttempts": 0,
+              "failures": 0,
+              "attempts": 2,
+              "frees": 2
+            }
+          }
+        },
+        {
+          "mode": "append",
+          "injected": true,
+          "reports": {
+            "browniec.buffer-provider/v1": {
+              "schema": "browniec.buffer-provider/v1",
+              "hits": 1
+            },
+            "browniec.buffer-allocator/v2": {
+              "schema": "browniec.buffer-allocator/v2",
+              "live": 0,
+              "target": 0,
+              "targetAttempts": 0,
+              "failures": 0,
+              "attempts": 3,
+              "frees": 3
+            }
+          }
+        },
+        {
+          "mode": "resize",
+          "injected": false,
+          "reports": {
+            "browniec.buffer-allocator/v2": {
+              "schema": "browniec.buffer-allocator/v2",
+              "live": 0,
+              "target": 0,
+              "targetAttempts": 0,
+              "failures": 0,
+              "attempts": 2,
+              "frees": 2
+            }
+          }
+        },
+        {
+          "mode": "resize",
+          "injected": true,
+          "reports": {
+            "browniec.buffer-provider/v1": {
+              "schema": "browniec.buffer-provider/v1",
+              "hits": 1
+            },
+            "browniec.buffer-allocator/v2": {
+              "schema": "browniec.buffer-allocator/v2",
+              "live": 0,
+              "target": 0,
+              "targetAttempts": 0,
+              "failures": 0,
+              "attempts": 3,
+              "frees": 3
+            }
+          }
+        }
+      ]
+    },
+    {
+      "profile": "release",
+      "cases": [
+        {
+          "mode": "capacity",
+          "injected": false,
+          "reports": {
+            "browniec.buffer-allocator/v2": {
+              "schema": "browniec.buffer-allocator/v2",
+              "live": 0,
+              "target": 0,
+              "targetAttempts": 0,
+              "failures": 0,
+              "attempts": 2,
+              "frees": 2
+            }
+          }
+        },
+        {
+          "mode": "capacity",
+          "injected": true,
+          "reports": {
+            "browniec.buffer-provider/v1": {
+              "schema": "browniec.buffer-provider/v1",
+              "hits": 1
+            },
+            "browniec.buffer-allocator/v2": {
+              "schema": "browniec.buffer-allocator/v2",
+              "live": 0,
+              "target": 0,
+              "targetAttempts": 0,
+              "failures": 0,
+              "attempts": 3,
+              "frees": 3
+            }
+          }
+        },
+        {
+          "mode": "copy",
+          "injected": false,
+          "reports": {
+            "browniec.buffer-allocator/v2": {
+              "schema": "browniec.buffer-allocator/v2",
+              "live": 0,
+              "target": 0,
+              "targetAttempts": 0,
+              "failures": 0,
+              "attempts": 2,
+              "frees": 2
+            }
+          }
+        },
+        {
+          "mode": "copy",
+          "injected": true,
+          "reports": {
+            "browniec.buffer-provider/v1": {
+              "schema": "browniec.buffer-provider/v1",
+              "hits": 1
+            },
+            "browniec.buffer-allocator/v2": {
+              "schema": "browniec.buffer-allocator/v2",
+              "live": 0,
+              "target": 0,
+              "targetAttempts": 0,
+              "failures": 0,
+              "attempts": 3,
+              "frees": 3
+            }
+          }
+        },
+        {
+          "mode": "append",
+          "injected": false,
+          "reports": {
+            "browniec.buffer-allocator/v2": {
+              "schema": "browniec.buffer-allocator/v2",
+              "live": 0,
+              "target": 0,
+              "targetAttempts": 0,
+              "failures": 0,
+              "attempts": 2,
+              "frees": 2
+            }
+          }
+        },
+        {
+          "mode": "append",
+          "injected": true,
+          "reports": {
+            "browniec.buffer-provider/v1": {
+              "schema": "browniec.buffer-provider/v1",
+              "hits": 1
+            },
+            "browniec.buffer-allocator/v2": {
+              "schema": "browniec.buffer-allocator/v2",
+              "live": 0,
+              "target": 0,
+              "targetAttempts": 0,
+              "failures": 0,
+              "attempts": 3,
+              "frees": 3
+            }
+          }
+        },
+        {
+          "mode": "resize",
+          "injected": false,
+          "reports": {
+            "browniec.buffer-allocator/v2": {
+              "schema": "browniec.buffer-allocator/v2",
+              "live": 0,
+              "target": 0,
+              "targetAttempts": 0,
+              "failures": 0,
+              "attempts": 2,
+              "frees": 2
+            }
+          }
+        },
+        {
+          "mode": "resize",
+          "injected": true,
+          "reports": {
+            "browniec.buffer-provider/v1": {
+              "schema": "browniec.buffer-provider/v1",
+              "hits": 1
+            },
+            "browniec.buffer-allocator/v2": {
+              "schema": "browniec.buffer-allocator/v2",
+              "live": 0,
+              "target": 0,
+              "targetAttempts": 0,
+              "failures": 0,
+              "attempts": 3,
+              "frees": 3
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Test-only pinned native provider injections linked to emitted product C, not production binaries. Fairy product modules are byte-identical copies.",
+    "Metadata shortening and post-write error injection only; no out-of-bounds pointers, arbitrary corruption, all-provider-failure or process-RSS guarantee.",
+    "Full lifecycle/native/CLI suites, M0, Linux, DLL, packaging, isolation, performance and automatic Instance teardown were not run."
+  ],
+  "archivedAt": "2026-10-29T13:30:44.869609+00:00",
+  "originalReceipt": "build/m2-buffer-provider/receipt.json",
+  "originalReceiptSha256": "7f226fc092cc11ea72fc96816fb2c1bdb57d7469fc454ff729e7074013a9de0c",
+  "provenance": "Two profiles each execute four one-shot native Provider faults and four disabled-hook controls. Sixteen byte-identical product modules; new host-close module and refreshed root lock; provider runtime logic unchanged. All 16 processes exit live=0. Each injected case reports exactly one hook hit, three successful allocations and three frees; each control has two allocations/two frees. Test-only binaries link compiler-emitted product C to the native runtime from five Git objects at the pinned compiler revision. Raw provider metadata shortening and a post-write error exercise existing Provider rejection, temporary destruction and reservation rollback before explicit retry. Read-lease preflight, original token/table/data preservation, retained metadata charge, exact peaks, generation publication and final registry refund are asserted. No full-suite, Linux, packaging, isolation, DLL, performance or automatic Instance integration claim."
+}

@@ -1,5 +1,13 @@
 # Brownie C
 
+- Explicit single-root host shutdown: implemented and verified in development/
+  release, each with 91 lifecycle/allocator scenarios; all 182 processes exit
+  with zero tracked live allocations. One ownership-taking call drains sessions,
+  destroys the selected native root and refunds its charge. Preflight errors
+  return ownership; failed finish retains the Plan for accounting-only retry.
+  Provider regressions also passed 16 processes. Full Instance wiring is pending.
+  See [the host close contract](docs/engineering/m2-buffer-host-close.md).
+
 - Buffer Provider inconsistency injection: verified in development and release,
   each with four injected faults and four no-fault controls; all 16 processes
   exit with zero tracked live allocations. Capacity/copy/append/resize failures

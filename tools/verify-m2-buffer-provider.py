@@ -178,7 +178,7 @@ def main():
                   artifacts=artifacts, standardLibraryLockIdentity=sdk, generatedLockSha256=lock_hash,
                   nativeToolchain=dict(compiler=str(cl), sha256=sha(cl), msvcVersion=msvc_version, windowsSdk=sdk_version),
                   commands=commands, profileReceipts=results,
-                  limitations=['Test-only pinned native provider injections linked to emitted product C, not production binaries. Fifteen Fairy product modules are byte-identical copies.',
+                  limitations=['Test-only pinned native provider injections linked to emitted product C, not production binaries. Fairy product modules are byte-identical copies.',
                                'Metadata shortening and post-write error injection only; no out-of-bounds pointers, arbitrary corruption, all-provider-failure or process-RSS guarantee.',
                                'Full lifecycle/native/CLI suites, M0, Linux, DLL, packaging, isolation, performance and automatic Instance teardown were not run.'])
     receipt.write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8', newline='\n')
