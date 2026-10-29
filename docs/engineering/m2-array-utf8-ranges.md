@@ -6,7 +6,9 @@ slices; the scan and Fuel rules are those of [opcode 52](m2-array-range-utf8.md)
 This slice adds no new IR opcode and no new runtime path. A later
 [temporary-range successor](m2-array-utf8-temporary-ranges.md) applies the same
 suffix to direct call results and repeated-byte literals; statements below about
-unavailable temporary ranges describe this checkpoint.
+unavailable temporary ranges describe this checkpoint. The [open-range
+successor](m2-array-utf8-open-ranges.md) accepts omitted endpoints; the
+rejection list below describes this checkpoint.
 
 ## Syntax and static admission
 

@@ -1,5 +1,15 @@
 # Validation
 
+- Open-ended UTF-8 ranges: implemented at `c7830fc` and verified in
+  development/release, each with 12 native groups and 1102 CLI cases.
+  `text::valid_utf8(a[..])`, `a[..END]` and `a[START..]` accept omitted bounds
+  for named `u8` arrays, direct call results and repeated-byte literals; the
+  missing bound becomes 0 or the catalog length at compile time, reusing opcode
+  52 with `65 + 4*K` Fuel and adding no register, owner or payload copy. Version
+  JSON adds `array_utf8_open_ranges: true`. General slices, dynamic bounds and
+  persistent borrows remain deferred. See
+  [the open-range contract](docs/engineering/m2-array-utf8-open-ranges.md).
+
 - UTF-8 ranges on temporary arrays: implemented at `d70da59` and verified in
   development/release, each with 16 native groups and 832 CLI cases.
   `text::valid_utf8(make()[S..E])` and `text::valid_utf8([value; N][S..E])`

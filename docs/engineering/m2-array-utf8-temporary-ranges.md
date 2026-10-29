@@ -18,8 +18,10 @@ parser for every source form, and no new lexer token or keyword was introduced.
 Endpoints must be explicit non-negative integer literals in 0..4096 with
 `start <= end <= length`. `[0]`, `[-1..1]`, `[0..]`, `[0..4097]`, an
 unterminated suffix and a nested `[0..1][0..1]` are rejected at compile time,
-and a computed bound is rejected rather than deferred. Whichever form is used,
-the endpoint check sees only the temporary's own length.
+and a computed bound is rejected rather than deferred. Omitted endpoints such as
+`[0..]` were rejected here; the [open-range
+successor](m2-array-utf8-open-ranges.md) now accepts them. Whichever form is
+used, the endpoint check sees only the temporary's own length.
 
 ## Lowering and ownership
 
