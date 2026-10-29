@@ -34,6 +34,20 @@ fn Result<Owner,Error> resolve(ref Table table,Token token) {
     return .ok(owner);
 }
 // Metadata-only preflight for storage transactions, before native buffer access.
+pub fn Result<usize,Error> accounted(ref Table table) {
+    if(!valid(table)){return .err(.State);}
+    var usize total=0;var usize i=0;
+    while(i<16){
+        if(table.slots[i].live){
+            let usize charge=table.slots[i].capacity+64;
+            if(charge>18446744073709551615-total){return .err(.State);}
+            total+=charge;
+        }
+        i+=1;
+    }
+    return .ok(total);
+}
+// Metadata-only preflight for storage transactions, before native buffer access.
 pub fn Result<Owner,Error> describe(ref Table table,Token token) {
     return resolve(table,token);
 }

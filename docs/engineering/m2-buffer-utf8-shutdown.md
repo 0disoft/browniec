@@ -5,6 +5,11 @@ Implemented and verified on Windows in development and release by
 The [receipt](../evidence/m2-buffer-utf8-shutdown-windows-20261029.json) identifies
 the inputs, generated project, instrumented binaries and allocator counters.
 
+The [storage admission successor](m2-buffer-utf8-admission.md) now requires
+`admit` before use and adds a mutable Ledger argument to shutdown for its final
+refund. The results and unchanged-accounting statements below describe the
+original shutdown slice at `469f9b8`.
+
 ## One-way lifecycle
 
 The private [session registry](m2-buffer-utf8-pool.md) now exposes

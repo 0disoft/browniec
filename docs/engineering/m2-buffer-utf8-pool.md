@@ -77,8 +77,10 @@ mutation/destruction while registered operations depend on roots.
 
 Tickets are Pool-local private identities, not authenticated guest capabilities
 or cross-Instance handles. Matching native metadata does not authenticate a root.
-Pool storage admission, guest dispatch, scheduler integration, thread safety and
-complete Instance root destruction/accounting cleanup remain unfinished. The
+The [storage admission successor](m2-buffer-utf8-admission.md) requires an
+explicit fixed Pool charge before begin and refunds it on completed shutdown.
+Guest dispatch, scheduler integration, thread safety and complete Instance root
+destruction/accounting cleanup remain unfinished. The
 explicit 16-slot limit is a private implementation bound, not a public language
 capacity guarantee.
 

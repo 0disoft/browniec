@@ -1,5 +1,12 @@
 # Roadmap
 
+- Private UTF-8 registry storage admission: implemented and verified in development/
+  release, each with 87 native scenarios (4 new, 83 regressions); all 174 processes
+  exit with zero tracked live allocations. Each active Pool reserves 2,112 logical
+  bytes against Instance/Engine limits before use. Failed shutdown keeps its charge;
+  completed shutdown refunds once and preserves peaks. No new heap allocation.
+  See [the admission contract](../engineering/m2-buffer-utf8-admission.md).
+
 - Private UTF-8 registry shutdown: implemented and verified in development/release,
   each with 83 native scenarios (4 new, 79 regressions); all 166 processes exit
   with zero tracked live allocations. One-way Open/Closing/Closed state blocks

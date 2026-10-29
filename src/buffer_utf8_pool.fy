@@ -11,6 +11,7 @@ pub struct Slot { usize generation; bool live; sessions::Session session; }
 // Explicit fields avoid unsupported mutation of nested-record array elements.
 pub struct Pool {
     u8 phase; // 0 Open, 1 Closing, 2 Closed; reject all other values.
+    bool admitted;
     Slot s0;
     Slot s1;
     Slot s2;
@@ -29,7 +30,10 @@ pub struct Pool {
     Slot s15;
 }
 fn Slot fresh(){return Slot{.generation=1,.live=false,.session=sessions::empty()};}
-pub fn Pool empty(){return Pool{.phase=0,.s0=fresh(),.s1=fresh(),.s2=fresh(),.s3=fresh(),.s4=fresh(),.s5=fresh(),.s6=fresh(),.s7=fresh(),.s8=fresh(),.s9=fresh(),.s10=fresh(),.s11=fresh(),.s12=fresh(),.s13=fresh(),.s14=fresh(),.s15=fresh()};}
+pub fn Pool empty(){return Pool{.phase=0,.admitted=false,.s0=fresh(),.s1=fresh(),.s2=fresh(),.s3=fresh(),.s4=fresh(),.s5=fresh(),.s6=fresh(),.s7=fresh(),.s8=fresh(),.s9=fresh(),.s10=fresh(),.s11=fresh(),.s12=fresh(),.s13=fresh(),.s14=fresh(),.s15=fresh()};}
+// Logical policy: 64-byte registry header plus sixteen 128-byte metadata slots.
+// Not sizeof(Pool), native allocation size, or a charge for external Ticket copies.
+pub fn usize metadata_charge(){return 2112;}
 fn bool open(ref Pool pool){return pool.phase==0;}
 // Internal indices are always checked against the fixed 16-slot bound.
 fn Slot at(ref Pool pool,usize index){
@@ -69,11 +73,11 @@ fn void put(ref mut Pool pool,usize index,Slot entry){
     pool.s15=entry;
 }
 fn bool valid(ref Pool pool){
-    if(pool.phase>2){return false;}
+    if(pool.phase>2 || (pool.phase==2 && pool.admitted)){return false;}
     var usize i=0;while(i<16){
         let Slot entry=at(pool,i);
         if(entry.live){
-            if(pool.phase==2){return false;}
+            if(pool.phase==2 || !pool.admitted){return false;}
             if(entry.generation==0 || !entry.session.held || entry.session.source.slot>=16 || entry.session.source.generation==0){return false;}
             var usize j=0;while(j<i){
                 let Slot earlier=at(pool,j);
@@ -83,6 +87,15 @@ fn bool valid(ref Pool pool){
         i+=1;
     }
     return true;
+}
+pub fn Result<usize,growth::Error> admit(ref mut Pool pool,growth::Limits limits,ref mut growth::Ledger ledger){
+    if(!open(pool) || pool.admitted || !valid(pool)){return .err(.State);}
+    let usize used=growth::admit_metadata(metadata_charge(),limits,ledger)?;
+    pool.admitted=true;return .ok(used);
+}
+fn bool covered(ref owners::Table table,ref growth::Ledger ledger){
+    let usize roots=switch(owners::accounted(table)){case .ok(n):{n}case .err(_):{return false;}};
+    return roots<=18446744073709551615-metadata_charge() && ledger.used>=roots+metadata_charge();
 }
 fn Result<usize,meter::ControlError> resolve(ref Pool pool,Ticket ticket){
     if(ticket.slot>=16 || ticket.generation==0){return .err(.Token);}
@@ -99,8 +112,9 @@ fn void retire(ref mut Pool pool,usize index){
 pub fn Result<Ticket,meter::ControlError> begin(bool cancel_requested,ref mut Pool pool,
     ref mut owners::Table table,owners::Token source,ref bytes::Buffer b,ref growth::Ledger ledger,ref mut usize fuel){
     if(cancel_requested){return .err(.Cancelled);}
-    if(!open(pool)){return .err(.State);}
+    if(!open(pool) || !pool.admitted){return .err(.State);}
     if(!valid(pool)){return .err(.State);}
+    if(!covered(table,ledger)){return .err(.State);}
     var usize index=0;while(index<16){let Slot entry=at(pool,index);if(!entry.live && entry.generation!=0){break;}index+=1;}
     if(index==16){return .err(.State);}
     let sessions::Session session=sessions::begin(false,table,source,b,ledger,fuel)?;
@@ -140,9 +154,14 @@ pub fn Result<usize,meter::ControlError> drain(ref mut Pool pool,ref mut owners:
 }
 // One-way host shutdown entry point. Failure retains Closing and retryable leases.
 // This explicit hook does not install an automatic destructor or own native roots.
-pub fn Result<usize,meter::ControlError> shutdown(ref mut Pool pool,ref mut owners::Table table){
+pub fn Result<usize,meter::ControlError> shutdown(ref mut Pool pool,ref mut owners::Table table,ref mut growth::Ledger ledger){
     if(pool.phase==0){pool.phase=1;}
     let usize count=drain(pool,table)?;
+    if(pool.admitted){
+        if(!covered(table,ledger)){return .err(.State);}
+        switch(growth::release_metadata(metadata_charge(),ledger)){case .ok(_):{}case .err(_):{return .err(.State);}};
+        pool.admitted=false;
+    }
     pool.phase=2;
     return .ok(count);
 }

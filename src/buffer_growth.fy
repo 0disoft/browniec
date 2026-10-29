@@ -51,6 +51,22 @@ pub fn Result<usize,Error> admit_empty(Limits limits,ref mut Ledger ledger) {
     if(ledger.engine_used>ledger.engine_peak) {ledger.engine_peak=ledger.engine_used;}
     return .ok(ledger.used);
 }
+// Fixed host metadata policy charge; independent of the per-Buffer object limit.
+pub fn Result<usize,Error> admit_metadata(usize charge,Limits limits,ref mut Ledger ledger) {
+    if(charge==0 || charge%64!=0 || !idle(ledger)){return .err(.State);}
+    if(charge>18446744073709551615-ledger.used || charge>18446744073709551615-ledger.engine_used){return .err(.Overflow);}
+    if(ledger.used>limits.instance || ledger.engine_used>limits.engine ||
+        charge>limits.instance-ledger.used || charge>limits.engine-ledger.engine_used){return .err(.Quota);}
+    ledger.used+=charge;ledger.engine_used+=charge;
+    if(ledger.used>ledger.peak){ledger.peak=ledger.used;}
+    if(ledger.engine_used>ledger.engine_peak){ledger.engine_peak=ledger.engine_used;}
+    return .ok(ledger.used);
+}
+// Caller proves the fixed reservation is still held; preserve historical peaks.
+pub fn Result<usize,Error> release_metadata(usize charge,ref mut Ledger ledger) {
+    if(charge==0 || charge%64!=0 || !idle(ledger) || ledger.used<charge){return .err(.State);}
+    ledger.used-=charge;ledger.engine_used-=charge;return .ok(ledger.used);
+}
 pub fn Result<usize,Error> plan(usize old,usize required,Limits limits,ref Ledger ledger) {
     if(!clean(ledger,old)) {return .err(.State);}
     if(old>limits.object || ledger.used>limits.instance || ledger.engine_used>limits.engine) {return .err(.Quota);}

@@ -45,7 +45,9 @@ MODES = [('normal-min', None), ('normal-preferred', None), ('abandon', None),
          ('pool-lifecycle', None), ('pool-tickets', None),
          ('pool-capacity', None), ('pool-drain', None),
          ('pool-shutdown-close', None), ('pool-shutdown-retry', None),
-         ('pool-shutdown-complete', None), ('pool-shutdown-state', None)]
+         ('pool-shutdown-complete', None), ('pool-shutdown-state', None),
+         ('pool-admit-success', None), ('pool-admit-quota', None),
+         ('pool-admit-state', None), ('pool-admit-release', None)]
 
 
 def sha(path):
