@@ -6,6 +6,10 @@ Implemented and verified on Windows in development and release. Root
 [receipt](../evidence/m2-buffer-host-close-windows-20261029.json) records the tested
 inputs, instrumented native artifacts and allocator counters.
 
+The [multi-root successor](m2-buffer-host-batch.md) shares this destruction path
+with Closing-state visitation and adds checked aggregate coverage plus final
+completion. The single-root API retains the shutdown ordering described below.
+
 ## Ownership-returning shutdown
 
 `buffer_host_close::shutdown(root, source, pool, table, ledger, plan)` takes

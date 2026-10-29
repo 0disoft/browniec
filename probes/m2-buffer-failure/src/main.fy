@@ -23,6 +23,7 @@ import read_lease as read_lease;
 import utf8_session as utf8_session;
 import utf8_pool as utf8_pool;
 import host_close as host_close;
+import host_batch as host_batch;
 
 fn growth::Limits limits(bool minimum) {
     return growth::Limits{.object=4096,.instance=if(minimum){704}else{8192},
@@ -552,6 +553,10 @@ fn i32 main() {
     else if(bytes::equal(mode,b"close-host-retry")) {host_close::run(1);}
     else if(bytes::equal(mode,b"close-host-preflight")) {host_close::run(2);}
     else if(bytes::equal(mode,b"close-host-accounting")) {host_close::run(3);}
+    else if(bytes::equal(mode,b"close-batch-partial")) {host_batch::run(0);}
+    else if(bytes::equal(mode,b"close-batch-preflight")) {host_batch::run(1);}
+    else if(bytes::equal(mode,b"close-batch-accounting")) {host_batch::run(2);}
+    else if(bytes::equal(mode,b"close-batch-coverage")) {host_batch::run(3);}
     else {return 2;}
     return switch(io::write("buffer-failure: passed\n")){case .ok(_):{0}case .err(_):{1}};
 }

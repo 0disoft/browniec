@@ -28,6 +28,7 @@ fn bool idle(ref Ledger ledger) {
     return counters(ledger) && ledger.pending==0 && ledger.old_capacity==0 && ledger.new_capacity==0 &&
         ledger.before_used==0 && ledger.before_engine_used==0;
 }
+pub fn bool settled(ref Ledger ledger){return idle(ledger);}
 fn bool clean(ref Ledger ledger,usize old) {
     return old%64==0 && old<=18446744073709551551 && idle(ledger) && ledger.used>=old+64;
 }

@@ -1,5 +1,12 @@
 # Validation
 
+- Explicit multi-root host shutdown visitation: implemented and verified in
+  development/release, each with 95 native scenarios; all 190 processes exit
+  with zero tracked live allocations. Independently writable roots close during
+  partial lease cleanup; one shared pending close Plan blocks other closes
+  until settled. Completion requires no live owners or pending accounting.
+  See [the visitation contract](docs/engineering/m2-buffer-host-batch.md).
+
 - Explicit single-root host shutdown: implemented and verified in development/
   release, each with 91 lifecycle/allocator scenarios; all 182 processes exit
   with zero tracked live allocations. One ownership-taking call drains sessions,
