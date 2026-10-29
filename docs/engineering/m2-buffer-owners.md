@@ -12,6 +12,10 @@ The [replacement successor](m2-buffer-replacement.md) now validates descriptor
 and ledger snapshots together during preparation/completion. Native root
 publication and root association remain explicit trusted caller responsibilities.
 
+The [read-lease successor](m2-buffer-read-lease.md) adds a reading flag and gates
+descriptor-aware mutation while an explicit private lease is active. The original
+descriptor contract and receipt below retain their historical scope.
+
 ## Table and token contract
 
 A table contains 16 slots. Each stores generation, live state, initialized length

@@ -7,7 +7,7 @@ import buffer_growth as growth;
 pub enum Error { Token; Owners; State; Overflow; Quota; Bounds; }
 pub fn Result<usize,Error> within_length(ref owners::Table table,owners::Token source,
     usize start,ref mut bytes::Buffer buffer,ref u8[] input,growth::Limits limits,ref growth::Ledger ledger) {
-    let owners::Owner owner=switch(owners::describe(table,source)) {
+    let owners::Owner owner=switch(owners::writable(table,source)) {
         case .ok(value):{value}
         case .err(e):{return .err(switch(e){case .Token:{.Token}case .Owners:{.Owners}
             case .State:{.State}case .Bounds:{.State}});}

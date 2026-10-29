@@ -10,6 +10,12 @@ own the affected contract. Broader scaffold procedures are optional.
 
 ## Current state
 
+- Private Buffer read leases: implemented and verified in development and release,
+  each with 71 instrumented native scenarios (4 new, 67 regressions); all 142
+  processes exit with zero tracked live allocations. A leased owner permits reads
+  and rejects descriptor-aware writes, resizing, replacement, close and release.
+  Acquisition/release are explicit; automatic scanner/guest binding is unfinished.
+  See [the read-lease contract](docs/engineering/m2-buffer-read-lease.md).
 - Private cooperative UTF-8 scan cancellation: implemented and verified in
   development and release, each with 67 native scenarios (4 new, 63 regressions);
   all 134 processes exit with zero tracked live allocations. A caller-supplied

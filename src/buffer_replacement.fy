@@ -34,7 +34,7 @@ fn bool same_ledger(ref growth::Ledger a,ref growth::Ledger b) {
 fn bool same_table(ref owners::Table a,ref owners::Table b) {
     var usize i=0;while(i<16) {
         let owners::Owner x=a.slots[i];let owners::Owner y=b.slots[i];
-        if(x.generation!=y.generation || x.live!=y.live || x.length!=y.length || x.capacity!=y.capacity) {return false;}
+        if(x.generation!=y.generation || x.live!=y.live || x.length!=y.length || x.capacity!=y.capacity || x.reading!=y.reading) {return false;}
         i+=1;
     }
     return true;
@@ -42,7 +42,7 @@ fn bool same_table(ref owners::Table a,ref owners::Table b) {
 pub fn Result<bytes::Buffer,Error> prepare(ref owners::Table table,owners::Token source,
     ref bytes::Buffer old,usize required,growth::Limits limits,ref mut growth::Ledger ledger,ref mut Plan plan) {
     if(plan.active) {return .err(.State);}
-    let owners::Owner owner=switch(owners::describe(table,source)) {
+    let owners::Owner owner=switch(owners::writable(table,source)) {
         case .ok(value):{value}case .err(e):{return .err(owner_error(e));}
     };
     if(bytes::len(old)!=owner.length || bytes::capacity(old)!=owner.capacity) {return .err(.State);}
