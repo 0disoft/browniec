@@ -4,7 +4,10 @@ This slice adds a private IR/VM operation that validates UTF-8 over an explicit
 byte range of a live `u8` array. It stays below the frontend: guest syntax, type
 rules and version capabilities are unchanged. It publishes no text or Buffer
 type, returns a plain bool, and is the backend companion to the whole-array
-predicate in [m2-array-utf8.md](m2-array-utf8.md).
+predicate in [m2-array-utf8.md](m2-array-utf8.md). Guest source now reaches this
+operation through the [named-array range syntax](m2-array-utf8-ranges.md); the
+statements below about unchanged guest syntax describe this private-opcode
+checkpoint.
 
 ## Instruction encoding
 

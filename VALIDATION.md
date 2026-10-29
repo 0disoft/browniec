@@ -1,12 +1,22 @@
 # Validation
 
+- Named-array UTF-8 ranges: implemented at `92feb5e` and verified in
+  development/release, each with 15 native groups and 582 CLI cases.
+  `text::valid_utf8(a[START..END])` accepts a named live `u8` array (local,
+  parameter or named array result) with explicit literal endpoints in 0..4096 and
+  `start <= end <= length`. It reuses opcode 52 with prepaid `65 + 4*K` Fuel and
+  adds no owner, payload copy or retained borrow. Version JSON adds
+  `array_utf8_ranges: true`. Dynamic, temporary and persistent-borrow ranges
+  remain deferred. See [the range-source contract](docs/engineering/m2-array-utf8-ranges.md).
+
 - Private array range UTF-8 instruction: implemented at `65af78d` and verified
   in development/release, each with 41 native groups and 14 CLI cases. Opcode 52
   checks a literal half-open
   u8 range without a payload copy, new owner or retained lease. It prepays
   `65 + 4*K` Fuel for K selected bytes and preserves the source owner.
   Independent verification checks function ownership, liveness, destination
-  and range bounds. Guest range syntax and persistent borrows remain pending.
+  and range bounds. Guest range syntax now comes from the range-source successor
+  above; persistent borrows remain pending.
   See [the range VM contract](docs/engineering/m2-array-range-utf8.md).
 
 - Explicit array read sessions: implemented at `f85bd4d` and verified in

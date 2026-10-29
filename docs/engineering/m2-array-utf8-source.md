@@ -2,7 +2,10 @@
 
 This document records the named-array checkpoint. The
 [direct-call successor](m2-array-utf8-calls.md) now also accepts array-result calls.
-The original verification counts below remain historical for that checkpoint.
+The original verification counts below remain historical for that checkpoint. The
+later [range successor](m2-array-utf8-ranges.md) accepts explicit literal ranges
+over the same named arrays; statements below about unavailable guest ranges
+describe this checkpoint only.
 
 `text::valid_utf8(bytes)` returns a `bool` for one visible, named `u8[N]`
 array, including helper locals, immutable by-value parameters and named array
