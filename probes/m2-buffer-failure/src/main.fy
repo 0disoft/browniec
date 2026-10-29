@@ -21,6 +21,7 @@ import utf8_meter as utf8_meter;
 import utf8_cancel as utf8_cancel;
 import read_lease as read_lease;
 import utf8_session as utf8_session;
+import utf8_pool as utf8_pool;
 
 fn growth::Limits limits(bool minimum) {
     return growth::Limits{.object=4096,.instance=if(minimum){704}else{8192},
@@ -534,6 +535,10 @@ fn i32 main() {
     else if(bytes::equal(mode,b"session-fuel")) {utf8_session::run(1);}
     else if(bytes::equal(mode,b"session-errors")) {utf8_session::run(2);}
     else if(bytes::equal(mode,b"session-cancel")) {utf8_session::run(3);}
+    else if(bytes::equal(mode,b"pool-lifecycle")) {utf8_pool::run(0);}
+    else if(bytes::equal(mode,b"pool-tickets")) {utf8_pool::run(1);}
+    else if(bytes::equal(mode,b"pool-capacity")) {utf8_pool::run(2);}
+    else if(bytes::equal(mode,b"pool-drain")) {utf8_pool::run(3);}
     else {return 2;}
     return switch(io::write("buffer-failure: passed\n")){case .ok(_):{0}case .err(_):{1}};
 }

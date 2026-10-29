@@ -6,6 +6,10 @@ with a lock refresh (72 sources, 579 MIR functions), followed by
 The [Windows receipt](../evidence/m2-buffer-utf8-session-windows-20261029.json)
 records the tested inputs and both instrumented native binaries.
 
+The [host registry successor](m2-buffer-utf8-pool.md) stores up to 16 sessions
+behind generation-checked Tickets and supplies batch cleanup. The loose Session
+API and 75-scenario checkpoint below retain their original lifecycle scope.
+
 `buffer_utf8_session` binds the existing [read lease](m2-buffer-read-lease.md) to
 bounded UTF-8 progress. A private Session stores the lease token separately from
 its Cursor and records whether the lease is still held. Session state is plain
