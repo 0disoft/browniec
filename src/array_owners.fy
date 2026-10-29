@@ -13,11 +13,13 @@ pub struct Token { usize slot; usize generation; }
 // Private, table-local range descriptor. It owns no storage and pins no root.
 // Every use revalidates its token, original shape, range and current backing.
 pub struct View { Token root; u8 element; usize length; usize start; usize end; }
+// One explicit read session per array root; multiple views may share it.
+pub struct ReadLease { Token root; usize generation; }
 pub struct Owner {
-    usize generation; bool occupied; bool live; usize mark; usize base; usize end;
+    usize generation; bool occupied; bool live; bool reading; usize mark; usize base; usize end;
     // element 0 denotes a record: length is bytes, record/alignment identify its layout.
     // Arrays retain their scalar element/length and zero record/alignment fields.
-    u8 element; usize length; usize record; usize alignment;
+    u8 element; usize length; usize record; usize alignment; usize read_generation;
 }
 pub struct Table { Owner[16] slots; usize[16] order; usize depth; storage::Arena arena; }
 // Dense array-argument results, in input order. Scalar arguments are not included.
@@ -29,6 +31,7 @@ pub enum Error { Token; Owners; State; Type; Length; Metadata; Overflow; Quota; 
 
 pub fn Table empty(usize limit) {
     return Table { .slots = [Owner { .generation = 1, .occupied = false, .live = false,
+        .reading = false, .read_generation = 1,
         .mark = 0, .base = 0, .end = 0, .element = 0, .length = 0, .record = 0, .alignment = 0 }; 16],
         .order = [0; 16], .depth = 0, .arena = storage::empty(limit) };
 }
@@ -70,6 +73,7 @@ fn bool valid(ref Table table, usize capacity) {
         seen[slot] = true;
         let Owner owner = table.slots[slot];
         if (!owner.occupied || owner.mark != cursor || (owner.live && owner.generation == 0)) { return false; }
+        if (owner.reading && (!owner.live || owner.element == 0 || owner.read_generation == 0)) { return false; }
         let layouts::Array layout = switch (allocation_layout(ref owner)) {
             case .ok(value): { value } case .err(_): { return false; }
         };
@@ -84,6 +88,7 @@ fn bool valid(ref Table table, usize capacity) {
     i = 0;
     while (i < 16) {
         if (table.slots[i].occupied != seen[i] || (table.slots[i].live && !seen[i])) { return false; }
+        if (table.slots[i].reading && !seen[i]) { return false; }
         i += 1;
     }
     return true;
@@ -108,6 +113,38 @@ fn Result<Owner, Error> resolve(ref Table table, Token token, usize capacity) {
     if (owner.element == 0) { return .err(.Type); }
     return .ok(owner);
 }
+fn Result<Owner, Error> writable(ref Table table, Token token, usize capacity) {
+    let Owner owner = resolve(table, token, capacity)?;
+    if (owner.reading) { return .err(.State); }
+    return .ok(owner);
+}
+fn Result<Owner, Error> resolve_read(ref Table table, ReadLease lease, usize capacity) {
+    let Owner owner = resolve(table, lease.root, capacity)?;
+    if (!owner.reading || lease.generation == 0 || lease.generation != owner.read_generation) { return .err(.State); }
+    return .ok(owner);
+}
+pub fn Result<ReadLease, Error> begin_read(ref mut Table table, Token root, usize capacity) {
+    let Owner owner = writable(table, root, capacity)?;
+    if (owner.read_generation == 0) { return .err(.State); }
+    table.slots[root.slot].reading = true;
+    return .ok(ReadLease { .root = root, .generation = owner.read_generation });
+}
+pub fn Result<usize, Error> end_read(ref mut Table table, ReadLease lease, usize capacity) {
+    let Owner owner = resolve_read(table, lease, capacity)?;
+    table.slots[lease.root.slot].reading = false;
+    table.slots[lease.root.slot].read_generation = next_generation(owner.read_generation);
+    return .ok(lease.root.slot);
+}
+pub fn Result<i64, Error> leased_read(ref Table table, ReadLease lease, ref View view, usize index, ref u8[] bytes) {
+    let Owner owner = resolve_read(table, lease, bytes.len)?;
+    if (view.root.slot != lease.root.slot || view.root.generation != lease.root.generation) { return .err(.Token); }
+    return view_read(table, view, index, bytes);
+}
+pub fn Result<bool, Error> leased_utf8(ref Table table, ReadLease lease, ref View view, ref u8[] bytes) {
+    let Owner owner = resolve_read(table, lease, bytes.len)?;
+    if (view.root.slot != lease.root.slot || view.root.generation != lease.root.generation) { return .err(.Token); }
+    return view_utf8(table, view, bytes);
+}
 fn Result<usize, Error> free_slot(ref Table table) {
     var usize i = 0;
     while (i < 16) {
@@ -121,6 +158,7 @@ fn Token publish(ref mut Table table, usize slot, ref layouts::Array layout, usi
     let usize end = table.arena.used;
     let usize depth = table.depth;
     table.slots[slot] = Owner { .generation = generation, .occupied = true, .live = true,
+        .reading = false, .read_generation = 1,
         .mark = mark, .base = base, .end = end, .element = layout.element, .length = layout.length, .record = 0, .alignment = 0 };
     table.order[depth] = slot;
     table.depth += 1;
@@ -193,7 +231,7 @@ pub fn Result<bool, Error> view_utf8(ref Table table, ref View view, ref u8[] by
 // Rehoming a unique owner needs no allocation or payload write. Validate its
 // exact shape and all bool bytes before a caller publishes the existing token.
 pub fn Result<usize,Error> validate_result(ref Table table,Token token,u8 element,usize length,ref u8[] bytes) {
-    let Owner owner=resolve(table,token,bytes.len)?;
+    let Owner owner=writable(table,token,bytes.len)?;
     if(owner.element!=element) {return .err(.Type);}
     if(owner.length!=length) {return .err(.Length);}
     if(element==2) {
@@ -205,7 +243,7 @@ pub fn Result<usize,Error> validate_result(ref Table table,Token token,u8 elemen
 // Validate the entire extent and encode once before the first write. Owner and
 // arena metadata remain immutable, including when every descriptor is occupied.
 pub fn Result<usize,Error> fill(ref Table table,Token token,i64 cell,ref mut u8[] bytes) {
-    let Owner owner=resolve(table,token,bytes.len)?;
+    let Owner owner=writable(table,token,bytes.len)?;
     let layouts::Array layout=switch(layouts::scalar(owner.element,owner.length)) {
         case .ok(a):{a}case .err(_):{return .err(.State);}
     };
@@ -222,7 +260,7 @@ pub fn Result<usize,Error> fill(ref Table table,Token token,i64 cell,ref mut u8[
     return .ok(layout.bytes);
 }
 pub fn Result<usize, Error> write(ref Table table, Token token, usize index, i64 cell, ref mut u8[] bytes) {
-    let Owner owner = resolve(table, token, bytes.len)?;
+    let Owner owner = writable(table, token, bytes.len)?;
     let layouts::Array layout = switch (layouts::scalar(owner.element, owner.length)) {
         case .ok(value): { value } case .err(_): { return .err(.State); }
     };
@@ -408,7 +446,7 @@ pub fn Result<Copies, Error> copy_call_arguments(ref records::Catalog catalog,
 // Replace an existing extent. Resolve both tokens and validate the full bool
 // source before the first write; valid owners are disjoint unless identical.
 pub fn Result<usize, Error> assign(Token destination, Token source, ref mut u8[] bytes, ref Table table) {
-    let Owner target = resolve(table, destination, bytes.len)?;
+    let Owner target = writable(table, destination, bytes.len)?;
     let Owner origin = resolve(table, source, bytes.len)?;
     if (target.element != origin.element) { return .err(.Type); }
     if (target.length != origin.length) { return .err(.Length); }
@@ -427,12 +465,14 @@ pub fn Result<usize, Error> assign(Token destination, Token source, ref mut u8[]
 fn void forget(ref mut Table table, usize slot) {
     table.slots[slot].occupied = false;
     table.slots[slot].live = false;
+    table.slots[slot].reading = false; table.slots[slot].read_generation = 1;
     table.slots[slot].mark = 0; table.slots[slot].base = 0; table.slots[slot].end = 0;
     table.slots[slot].element = 0; table.slots[slot].length = 0;
     table.slots[slot].record = 0; table.slots[slot].alignment = 0;
 }
 pub fn Result<usize, Error> release(ref mut Table table, Token token, usize capacity) {
     let Owner owner = resolve_any(table, token, capacity)?;
+    if (owner.reading) { return .err(.State); }
     let usize before = table.arena.used;
     table.slots[token.slot].live = false;
     table.slots[token.slot].generation = next_generation(owner.generation);
@@ -449,6 +489,8 @@ pub fn Result<usize, Error> release(ref mut Table table, Token token, usize capa
 }
 pub fn Result<usize, Error> clear(ref mut Table table, usize capacity) {
     if (!valid(table, capacity)) { return .err(.State); }
+    var usize checked = 0;
+    while (checked < 16) { if (table.slots[checked].reading) { return .err(.State); } checked += 1; }
     let usize before = table.arena.used;
     var usize i = 0;
     while (i < 16) {
@@ -495,6 +537,7 @@ fn Token publish_record(ref mut Table table, usize slot, usize record, usize byt
     let usize end = table.arena.used;
     let usize depth = table.depth;
     table.slots[slot] = Owner { .generation = generation, .occupied = true, .live = true,
+        .reading = false, .read_generation = 1,
         .mark = mark, .base = base, .end = end, .element = 0,
         .length = bytes, .record = record, .alignment = alignment };
     table.order[depth] = slot;

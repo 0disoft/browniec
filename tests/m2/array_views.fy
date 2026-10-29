@@ -31,6 +31,7 @@ fn void same(ref owners::Table a,ref owners::Table b,ref u8[] bytes,ref u8[] bef
         assert(a.slots[i].generation==b.slots[i].generation && a.slots[i].occupied==b.slots[i].occupied && a.slots[i].live==b.slots[i].live);
         assert(a.slots[i].mark==b.slots[i].mark && a.slots[i].base==b.slots[i].base && a.slots[i].end==b.slots[i].end);
         assert(a.slots[i].element==b.slots[i].element && a.slots[i].length==b.slots[i].length);
+        assert(a.slots[i].reading==b.slots[i].reading && a.slots[i].read_generation==b.slots[i].read_generation);
         assert(a.slots[i].record==b.slots[i].record && a.slots[i].alignment==b.slots[i].alignment);i+=1;
     }
     assert(bytes.len==before.len);i=0;while(i<bytes.len){assert(bytes[i]==before[i]);i+=1;}
