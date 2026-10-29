@@ -29,9 +29,10 @@ def main():
     selection = parser.add_mutually_exclusive_group()
     selection.add_argument('--call-results', action='store_true', help='Verify direct UTF-8 array-result calls')
     selection.add_argument('--literals', action='store_true', help='Verify repeated-byte UTF-8 literals')
+    selection.add_argument('--ranges', action='store_true', help='Verify named-array literal UTF-8 ranges')
     args = parser.parse_args()
     compiler = args.compiler.resolve(strict=True)
-    kind = ('array-utf8-literals' if args.literals else
+    kind = ('array-utf8-ranges' if args.ranges else 'array-utf8-literals' if args.literals else
             'array-utf8-calls' if args.call_results else 'array-utf8-source')
     output = ROOT / ('build/m2-' + kind) / args.profile
     output.mkdir(parents=True, exist_ok=True)
@@ -64,7 +65,8 @@ def main():
     paths.update(ROOT.glob('tests/**/*.fy'))
     paths.update(ROOT.glob('tools/*.py'))
     inputs = [dict(path=p.relative_to(ROOT).as_posix(), sha256=digest(p)) for p in sorted(paths)]
-    groups = ({'array_utf8_literals': 4, 'array_utf8_source': 5, 'array_utf8_calls': 4}
+    groups = ({'array_utf8_ranges': 4, 'array_utf8_source': 5, 'array_range_utf8': 6}
+              if args.ranges else {'array_utf8_literals': 4, 'array_utf8_source': 5, 'array_utf8_calls': 4}
               if args.literals else
               {'array_utf8_calls': 4, 'array_utf8_source': 5, 'array_call_reads': 4}
               if args.call_results else GROUPS)
@@ -120,7 +122,8 @@ def main():
                             exit=done.returncode, result=result))
     print(f'PASS: {args.profile}: {len(cli)} CLI sentinels; Buffer syntax remains rejected', flush=True)
     matrices = []
-    matrices_to_run = ({'array-utf8-literals': 130, 'array-utf8-source': 142, 'array-utf8-calls': 100}
+    matrices_to_run = ({'array-utf8-ranges': 202, 'array-utf8-source': 142, 'array-utf8-calls': 100, 'array-utf8-literals': 130}
+                       if args.ranges else {'array-utf8-literals': 130, 'array-utf8-source': 142, 'array-utf8-calls': 100}
                        if args.literals else {'array-utf8-calls': 100, **CLI} if args.call_results else CLI)
     for selection, count in matrices_to_run.items():
         print(run([os.sys.executable, '-B', ROOT / ('tools/check-m2-' + selection + '.py'),
@@ -144,7 +147,7 @@ def main():
                   compilerSha256=compiler_hash, lockedCheck=check, commands=commands,
                   standardLibraryLockIdentity=[p for p in lock['packages'] if p['role'] != 'root'],
                   sourceSha256=inputs, native=native, build=build, exeSha256=exe_hash, cli=cli, matrices=matrices,
-                  limitations=['Qualified text::valid_utf8 over named u8 arrays, direct u8-array call results and repeated-byte literals. Buffer/text ownership, views and general aggregate expressions remain unavailable. Focused native and CLI sentinels. Full suites, M0, Linux, '
+                  limitations=['Qualified text::valid_utf8 over named u8 arrays, direct u8-array call results and repeated-byte literals. Named-array literal ranges are available through the ranges selection. Buffer/text ownership, persistent views, dynamic ranges and general aggregate expressions remain unavailable. Focused native and CLI sentinels. Full suites, M0, Linux, '
                                'isolation, DLL, packaging, allocation instrumentation and performance not run.'])
     receipt.write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
     print('PASS: ' + receipt.relative_to(ROOT).as_posix(), flush=True)
