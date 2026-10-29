@@ -1,9 +1,11 @@
 # Metered UTF-8 predicate for live u8 arrays
 
-Implemented as a private IR/VM operation. Source syntax and version capabilities
-are unchanged: this slice does not expose a new guest builtin, Buffer or text
-type. It connects existing array ownership/storage to UTF-8 validation before
-frontend syntax is introduced.
+This foundation was implemented as a private IR/VM operation. Its
+[source successor](m2-array-utf8-source.md) now exposes named-array calls.
+At the foundation checkpoint, source syntax and version capabilities
+were unchanged. The private operation connected existing array ownership/storage
+to UTF-8 validation before frontend syntax was introduced. It added no Buffer or
+text type.
 
 ## Instruction and independent validation
 
@@ -85,4 +87,4 @@ lifecycle/Provider receipts remain historical for their exact inputs.
 
 Full native/CLI suites, Buffer lifecycle/Provider probes, M0, Linux, DLL embedding,
 isolation, packaging, allocator instrumentation and elapsed-time performance
-were not run. Source-level calls to this predicate remain a following slice.
+were not run. Source-level calls are now covered by the source successor above.

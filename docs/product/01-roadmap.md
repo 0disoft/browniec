@@ -1,10 +1,18 @@
 # Roadmap
 
+- Source u8-array UTF-8 predicate: implemented and verified in development/release,
+  each with 18 native groups and 256 CLI cases. `text::valid_utf8(bytes)` lowers to opcode 51
+  without an array copy or extra owner. Named locals, parameters and array-result
+  bindings are supported; direct temporary expressions and Buffer/text APIs remain
+  unavailable. Version JSON adds `array_utf8_predicate: true`.
+  See [the source contract](../engineering/m2-array-utf8-source.md) for verification and limits.
+
 - Private u8-array UTF-8 opcode: implemented and verified in development/release,
   each with 25 native groups (6 new, 19 regressions) and 8 CLI sentinels.
   Opcode 51 independently verifies a live function-owned u8 array and bool
   result, prepays 33+4*length Fuel and preserves payload/ownership. Guest
-  syntax and version capabilities are unchanged; frontend integration is pending.
+  syntax and version capabilities were unchanged at that checkpoint; the source
+  successor above now exposes the named-array predicate.
   See [the UTF-8 VM contract](../engineering/m2-array-utf8.md).
 
 - Host shutdown descriptor sweep: implemented and verified in development/release,

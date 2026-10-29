@@ -1,0 +1,9 @@
+module main;
+
+fn i32 main() {
+    var u8[3] bytes = [128; 3];
+    bytes[0] = 234;
+    bytes[1] = 176;
+    if (text::valid_utf8(bytes)) { return 42; }
+    return 0;
+}

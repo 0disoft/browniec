@@ -18,6 +18,7 @@ import struct_call_source as record_calls;
 import array_result_source as array_results;
 import struct_result_source as record_results;
 import std::text as text;
+import text_source as text_source;
 
 fn u8 precedence(u8 kind) {
     if (kind == 133) { return 1; }
@@ -103,6 +104,11 @@ fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s,
         return ir::integer(p, value, tag, at);
     }
     if (s.kind == 2) {
+        if (word_is(source, s, b"text")) {
+            var lexer::State look = lexer::snapshot(s);
+            let usize next = lexer::next(source, ref mut look)?;
+            if (look.kind == 58) { return text_source::valid_utf8(source, s, p, table); }
+        }
         if (word_is(source, s, b"true") || word_is(source, s, b"false")) {
             let bool value = word_is(source, s, b"true");
             let usize advanced = lexer::next(source, s)?;

@@ -1,0 +1,144 @@
+"""Verify the source-level u8-array UTF-8 predicate with focused native and CLI checks."""
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+
+ROOT = Path(__file__).resolve().parent.parent
+GROUPS = {'array_utf8_source': 5, 'array_utf8': 6, 'array_length': 3, 'array_call_reads': 4}
+CLI = {'array-utf8-source': 142, 'array-call-reads': 106}
+
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def require(condition, message):
+    if not condition:
+        raise RuntimeError(message)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--profile', choices=['development', 'release'], required=True)
+    parser.add_argument('--compiler', type=Path, default=ROOT / 'build/toolchain' /
+                        ('fairyc.exe' if os.name == 'nt' else 'fairyc'))
+    args = parser.parse_args()
+    compiler = args.compiler.resolve(strict=True)
+    output = ROOT / 'build/m2-array-utf8-source' / args.profile
+    output.mkdir(parents=True, exist_ok=True)
+    receipt = output / 'receipt.json'
+    receipt.write_text('{"status":"incomplete"}\n', encoding='utf-8')
+    require(not os.environ.get('CL') and not os.environ.get('_CL_'), 'CL/_CL_ override')
+    commands = []
+
+    def run(command):
+        command = list(map(str, command))
+        commands.append(command)
+        result = subprocess.run(command, cwd=ROOT, capture_output=True, text=True,
+                                encoding='utf-8', timeout=600,
+                                env={**os.environ, 'PYTHONUTF8': '1'})
+        require(result.returncode == 0 and not result.stderr,
+                f'{command}: {result.returncode}\n{result.stdout}\n{result.stderr}')
+        return result.stdout.strip()
+
+    baseline = run(['git', 'rev-parse', 'HEAD'])
+    compiler_hash = digest(compiler)
+    pinned = json.loads((ROOT / 'toolchain.json').read_text(encoding='utf-8'))
+    platform_key = 'windows/amd64' if os.name == 'nt' else 'linux/amd64'
+    require(compiler_hash == pinned['platforms'][platform_key]['sha256'], 'Compiler checksum mismatch')
+    version = run([compiler, '--version'])
+    require(pinned['compiler']['revision'] in version and pinned['sdk']['version'] in version, 'Compiler/SDK mismatch')
+    check = run([compiler, 'check', '--locked'])
+    paths = set(ROOT.glob('src/*.fy'))
+    paths.update(ROOT / p for p in ['fairy.toml', 'fairy.lock', 'toolchain.json',
+                                   'tools/verify-m2-array-utf8-source.py'])
+    paths.update(ROOT.glob('tests/**/*.fy'))
+    paths.update(ROOT.glob('tools/*.py'))
+    inputs = [dict(path=p.relative_to(ROOT).as_posix(), sha256=digest(p)) for p in sorted(paths)]
+    groups = GROUPS
+    command = [compiler, 'test', '--native', '--capture-output', '--json', '--locked']
+    if args.profile == 'release':
+        command.append('--release')
+    for name in groups:
+        command.extend(['--file', 'tests/m2/' + name + '.fy'])
+    native = json.loads(run(command))
+    expected = sum(groups.values())
+    require(native['status'] == 'ok' and native['count'] == native['passed'] == expected
+            and native['failed'] == 0 and native['engine'] == 'native'
+            and native['profile'] == args.profile, 'Native outcomes/profile mismatch')
+    tests = native['tests']
+    require(len(tests) == len({t['identity'] for t in tests}) == expected, 'Duplicate/missing tests')
+    require(all(sum(t['identity'].startswith('tests::m2::' + name + '::') for t in tests)
+                == count for name, count in groups.items()), 'Native selection mismatch')
+    require(all(t['outcome'] == 'passed' and t['trapCategory'] is None
+                and not t['stdoutBase64'] and not t['stderrBase64'] for t in tests), 'Native failure/output')
+    print(f'PASS: {args.profile}: {expected} native groups', flush=True)
+    build = None
+    exe_hash = None
+    cli = []
+    build = run([compiler, 'build', '--locked'] + (['--release'] if args.profile == 'release' else []))
+    exe = ROOT / 'build' / ('browniec.exe' if os.name == 'nt' else 'browniec')
+    exe_hash = digest(exe)
+    empty = output / 'no-runtime-tools'
+    empty.mkdir(exist_ok=True)
+    env = {key: str(empty) for key in ['PATH', 'TEMP', 'TMP']}
+    env.update({key: os.environ[key] for key in ['SystemRoot', 'WINDIR'] if key in os.environ})
+    sentinels = [
+        ('module main;fn i32 main(){return 42;}', None),
+        ('module main;fn i32 main(){let i32[2] a=[21;2];return a[0]+a[1];}', None),
+        ('module main;struct P{i32 x;}fn i32 main(){let P p=P{.x=42};return p.x;}', None),
+        ('module main;fn i32 main(){let Buffer b=Buffer{};return 42;}', 'type'),
+    ]
+    for i, (source, error) in enumerate(sentinels):
+        path = output / f'sentinel-{i}.brc'
+        path.write_text(source, encoding='utf-8')
+        for mode in ['check', 'run']:
+            cmd = [str(exe), mode, str(path), '--json']
+            if mode == 'run':
+                cmd += ['--fuel', '1000000']
+            commands.append(cmd)
+            done = subprocess.run(cmd, cwd=empty, env=env, capture_output=True, timeout=15)
+            require(done.returncode == (3 if error else 0) and not done.stderr, str(done))
+            result = json.loads(done.stdout)
+            require(result['schema'] == 'browniec.result/v1' and result['command'] == mode, 'CLI schema')
+            require(result['status'] == ('error' if error else 'checked' if mode == 'check' else 'completed'), 'CLI status')
+            require(result['return_i32'] == (42 if not error and mode == 'run' else None), 'CLI value')
+            require((result['error']['kind'] == error) if error else result['error'] is None, 'CLI error')
+            cli.append(dict(command=cmd, sourceSha256=hashlib.sha256(source.encode()).hexdigest(),
+                            exit=done.returncode, result=result))
+    print(f'PASS: {args.profile}: {len(cli)} CLI sentinels; Buffer syntax remains rejected', flush=True)
+    matrices = []
+    for selection, count in CLI.items():
+        print(run([os.sys.executable, '-B', ROOT / ('tools/check-m2-' + selection + '.py'),
+                   '--exe', exe, '--profile', args.profile]), flush=True)
+        report = ROOT / ('build/m2-' + selection) / args.profile / 'cli-receipt.json'
+        cases = json.loads(report.read_text(encoding='utf-8'))
+        require(cases['status'] == 'passed' and cases['exeSha256'] == exe_hash
+                and cases['count'] == len(cases['cases'])
+                and (count is None or count == cases['count']), 'CLI identity/count mismatch')
+        matrices.append(dict(selection=selection, count=cases['count'], receiptSha256=digest(report)))
+    retained = output / exe.name
+    import shutil
+    shutil.copyfile(exe, retained)
+    require(digest(retained) == exe_hash, 'Retained CLI mismatch')
+    require(all(digest(ROOT / p['path']) == p['sha256'] for p in inputs), 'Inputs changed')
+    require(digest(compiler) == compiler_hash, 'Compiler changed')
+    lock = json.loads((ROOT / 'fairy.lock').read_text(encoding='utf-8'))
+    result = dict(schema='browniec.array-utf8-source/v1', status='passed',
+                  recordedAt=datetime.now(timezone.utc).isoformat(), baselineCommit=baseline,
+                  profile=args.profile, compilerVersion=version,
+                  compilerSha256=compiler_hash, lockedCheck=check, commands=commands,
+                  standardLibraryLockIdentity=[p for p in lock['packages'] if p['role'] != 'root'],
+                  sourceSha256=inputs, native=native, build=build, exeSha256=exe_hash, cli=cli, matrices=matrices,
+                  limitations=['Qualified text::valid_utf8 over named u8 arrays only; array_utf8_predicate capability added. Buffer/text ownership and general view expressions remain unavailable. Focused native and CLI sentinels. Full suites, M0, Linux, '
+                               'isolation, DLL, packaging, allocation instrumentation and performance not run.'])
+    receipt.write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
+    print('PASS: ' + receipt.relative_to(ROOT).as_posix(), flush=True)
+
+
+if __name__ == '__main__':
+    main()
