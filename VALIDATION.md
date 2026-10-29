@@ -1,5 +1,11 @@
 # Validation
 
+- Private Buffer UTF-8 validation: implemented and verified in development and
+  release, each with 55 native scenarios (4 new, 51 regressions); all 110 processes
+  exit with zero tracked live allocations. Token/table/backing checks precede an
+  allocation-free SDK scan of initialized bytes. Results are not cached; chunked
+  validation, Fuel integration and guest text syntax remain unfinished.
+  See [the UTF-8 contract](docs/engineering/m2-buffer-utf8.md).
 - Private Buffer writes before replacement publication: implemented and verified
   in development and release, each with 51 native scenarios (4 new, 47 regressions);
   all 102 processes exit with zero tracked live allocations. Writes validate full

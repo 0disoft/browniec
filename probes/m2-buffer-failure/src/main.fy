@@ -15,6 +15,7 @@ import create as create_probe;
 import copy_out as copy_out;
 import write as write_probe;
 import prepared_write as prepared_write;
+import utf8 as utf8_probe;
 
 fn growth::Limits limits(bool minimum) {
     return growth::Limits{.object=4096,.instance=if(minimum){704}else{8192},
@@ -504,6 +505,10 @@ fn i32 main() {
     else if(bytes::equal(mode,b"prepared-write-bounds")) {prepared_write::run(1);}
     else if(bytes::equal(mode,b"prepared-write-preflight")) {prepared_write::run(2);}
     else if(bytes::equal(mode,b"prepared-write-abandon")) {prepared_write::run(3);}
+    else if(bytes::equal(mode,b"utf8-valid")) {utf8_probe::run(0);}
+    else if(bytes::equal(mode,b"utf8-invalid")) {utf8_probe::run(1);}
+    else if(bytes::equal(mode,b"utf8-identity")) {utf8_probe::run(2);}
+    else if(bytes::equal(mode,b"utf8-pending")) {utf8_probe::run(3);}
     else {return 2;}
     return switch(io::write("buffer-failure: passed\n")){case .ok(_):{0}case .err(_):{1}};
 }
