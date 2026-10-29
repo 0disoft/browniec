@@ -78,7 +78,7 @@ for form in ['named','call','literal']:
         case(source,'fuel',fuel=exact-52,anchor='text::valid_utf8')
 for form in ['named','call','literal']:
     for suffix,error in [('[...]','type'),('[..=1]','type'),('[..18446744073709551615]','type'),('[2..]','type'),('[..1][..]','syntax')]:
-        case(program(form,1,65,suffix),'syntax' if form=='named' and suffix=='[..=1]' else error)
+        case(program(form,1,65,suffix),'syntax' if suffix=='[..=1]' else error)
 # Complete and cut multibyte scalars at inferred prefix/suffix boundaries.
 for call in [False,True]:
     for prefix,suffix,valid in [(True,'[..4]',True),(True,'[..3]',False),(False,'[1..]',True),(False,'[2..]',False)]:

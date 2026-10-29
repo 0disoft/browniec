@@ -44,7 +44,7 @@ pub fn Result<usize, errors::Error> argument(ref u8[] source, ref mut lexer::Sta
     return .ok(id);
 }
 // Bounded token lookahead preserves the immediate/static lowering exactly.
-// Complex named-array bounds are delegated to the ordinary expression parser.
+// Complex bounds are delegated to the ordinary expression parser.
 pub fn Result<bool, errors::Error> simple(ref u8[] source, ref lexer::State s) {
     if (s.kind != 91) { return .ok(true); }
     var lexer::State look = lexer::snapshot(s);
@@ -57,8 +57,8 @@ pub fn Result<bool, errors::Error> simple(ref u8[] source, ref lexer::State s) {
     if (look.kind == 1 || look.kind == 2) { let usize value = lexer::next(source, ref mut look)?; }
     return .ok(look.kind == 93);
 }
-// Every source form shares bounds parsing. Only names/literals can follow
-// publication, so no guest call or control-flow exit can bypass temporary drop.
+// Fast suffix parsing for names/literals. Computed bounds use compiler-owned
+// expression parsing with lexical cleanup for temporary owners.
 pub fn Result<usize, errors::Error> predicate(ref u8[] source, ref mut lexer::State s,
     ref mut ir::Program p, ref locals::Table table, usize id, usize at) {
     if (s.kind != 91) {

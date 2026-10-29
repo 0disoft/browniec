@@ -161,7 +161,7 @@ fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s,
     return .err(errors::make(2, s.begin));
 }
 // A pending UTF-8 call result stays absent from names during argument exits.
-// No guest expression runs between CALL, validation and immediate result drop.
+// After publication, computed bounds capture their owner for lexical cleanup.
 fn Result<usize,errors::Error> utf8_value(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
     usize depth,u8 result_type,usize structure,ref mut loops::State loop_state) {
@@ -176,7 +176,7 @@ fn Result<usize,errors::Error> utf8_value(ref u8[] source,ref mut lexer::State s
         let usize close_array=lexer::punctuation(source,s,93)?;
         let usize temporary=ir::array_in(p,table.function,10,length,false,literal_at)?;
         let usize initialized=ir::array_init(p,temporary,filler,literal_at)?;
-        return text_source::temporary(source,s,p,table,temporary,at);
+        return utf8_temporary_range(source,s,p,table,signatures,temporary,at,depth,result_type,structure,loop_state);
     }
     if(s.kind==2) {
         var lexer::State look=lexer::snapshot(s);
@@ -192,14 +192,26 @@ fn Result<usize,errors::Error> utf8_value(ref u8[] source,ref mut lexer::State s
             let usize name=lexer::next(source,s)?;
             let usize called=call_value(source,s,p,table,signatures,target,temporary,call_at,
                 depth+1,result_type,structure,loop_state)?;
-            return text_source::temporary(source,s,p,table,temporary,at);
+            return utf8_temporary_range(source,s,p,table,signatures,temporary,at,depth,result_type,structure,loop_state);
         }
     }
     let usize id=text_source::argument(source,s,p,table)?;
     if(text_source::simple(source,s)?) {return text_source::predicate(source,s,p,table,id,at);}
     return utf8_computed_range(source,s,p,table,signatures,id,at,depth,result_type,structure,loop_state);
 }
-// Only named roots enter here: existing lexical cleanup owns every early exit.
+// Publish no name to guest lookup, but include the owner in every endpoint exit.
+// Simple suffixes retain their original lowering and need no capture-table slot.
+fn Result<usize,errors::Error> utf8_temporary_range(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    usize id,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state) {
+    if(text_source::simple(source,s)?) {return text_source::temporary(source,s,p,table,id,at);}
+    var locals::Table names=locals::snapshot(table);
+    let usize capture=locals::declare(ref mut names,at,at,128+id,false)?;
+    let usize value=utf8_computed_range(source,s,p,ref names,signatures,id,at,depth,result_type,structure,loop_state)?;
+    let usize dropped=ir::array_drop(p,id,at)?;
+    return .ok(value);
+}
+// Named or captured roots remain visible to existing lexical exit cleanup.
 // Evaluate and snapshot the start value before any effects in the end expression.
 fn Result<usize,errors::Error> utf8_computed_range(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,

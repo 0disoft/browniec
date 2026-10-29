@@ -78,8 +78,8 @@ fn void runtime_bounds_and_exact_root_fuel_match_the_named_array_path() {
 @test
 fn void endpoint_expressions_wrong_types_and_escaping_views_stay_rejected() {
     rejected(b"module main;fn i32 main(){let u32 hi=1;let bool b=text::valid_utf8([65;1][..hi]);return 0;}");
-    rejected(b"module main;fn u8[1] make(){return [65;1];}fn i32 main(){let usize hi=1;let bool b=text::valid_utf8(make()[0..hi+0]);return 0;}");
-    rejected(b"module main;fn usize end(){return 1;}fn i32 main(){let bool b=text::valid_utf8([65;1][..end()]);return 0;}");
+    rejected(b"module main;fn u8[1] make(){return [65;1];}fn i32 main(){let usize hi=1;let bool b=text::valid_utf8(make()[0..hi+)]);return 0;}");
+    rejected(b"module main;fn u32 end(){return 1;}fn i32 main(){let bool b=text::valid_utf8([65;1][..end()]);return 0;}");
     rejected(b"module main;fn i32 main(){let usize[1] hi=[1;1];let bool b=text::valid_utf8([65;1][..hi]);return 0;}");
     rejected(b"module main;fn i32 main(){let usize hi=1;let bool b=text::valid_utf8([65;1][..hi][..]);return 0;}");
     rejected(b"module main;fn i32 main(){let usize hi=1;let ref u8[] v=ref [65;1][..hi];return 0;}");
