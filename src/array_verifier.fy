@@ -15,7 +15,7 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, usize pc, usize f,
     let usize dst = p.code[at + 1] as usize;
     let usize a = p.code[at + 2] as usize;
     let usize b = p.code[at + 3] as usize;
-    let usize id = if (op == 35 || op==51 || op==52) { a } else { dst };
+    let usize id = if (op == 35 || op==51 || op==52 || op==53) { a } else { dst };
     if (id >= p.arrays.count || p.array_functions[id] as usize != f) { return .err(errors::make(5, pc)); }
     let usize one = 1;
     let usize mask = one << id;
@@ -36,8 +36,13 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, usize pc, usize f,
         let usize end = p.code[at + 6] as usize + 256 * (p.code[at + 7] as usize);
         if (start > end || end > p.arrays.lengths[id]) { return .err(errors::make(5, pc)); }
     }
-    if(op==51 || op==52){
-        if(b!=0 || element!=10 || dst<p.register_starts[f] || dst>=p.register_ends[f] ||
+    if (op == 53) {
+        if (!readable(p, defined, b, f, 12) || !readable(p, defined, p.code[at + 4] as usize, f, 12)) {
+            return .err(errors::make(5, pc));
+        }
+    }
+    if(op==51 || op==52 || op==53){
+        if((op != 53 && b!=0) || element!=10 || dst<p.register_starts[f] || dst>=p.register_ends[f] ||
             p.slots[dst] || registers::contains(written,dst) || p.types[dst]!=2){return .err(errors::make(5,pc));}
         registers::insert(defined,dst);registers::insert(written,dst);return .ok(live);
     }

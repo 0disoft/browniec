@@ -99,7 +99,7 @@ fn void verifier_rejects_bad_ranges_types_destinations_and_dead_or_foreign_sourc
         else if(i==4){p.code[22]=5;} else if(i==5){p.code[21]=1;}
         else if(i==6){p.code[23]=16;} else if(i==7){p.code[17]=0;}
         else if(i==8){p.slots[1]=true;} else if(i==9){p.code[18]=16;}
-        else if(i==10){p.code[18]=255;} else if(i==11){p.code[16]=53;}
+        else if(i==10){p.code[18]=255;} else if(i==11){p.code[16]=54;}
         else if(i==12){p.register_ends[0]=1;}
         else if(i==13){p.array_functions[0]=1;}
         else {p.code[8]=37;p.code[10]=0;}

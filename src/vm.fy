@@ -68,7 +68,7 @@ pub fn Result<i64, errors::Error> run_with_array_limit(ref ir::Program p, usize 
                 ref registers[base..base+128],remaining,p.offsets[pc])?;
             pc += 1; continue;
         }
-        if (op == 52) {
+        if (op == 52 || op == 53) {
             let usize base = frame * 128;
             remaining = array_ranges::step(p, pc, frame, ref arrays, ref payload,
                 ref mut registers[base..base + 128], remaining)?;
