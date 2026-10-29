@@ -9,6 +9,7 @@ import arithmetic as arithmetic;
 import bits as bits;
 import shifts as shifts;
 import array_vm as array_vm;
+import array_range_vm as array_ranges;
 import struct_vm as struct_vm;
 import struct_call_vm as calls;
 import array_result_vm as array_results;
@@ -65,6 +66,12 @@ pub fn Result<i64, errors::Error> run_with_array_limit(ref ir::Program p, usize 
             remaining = struct_vm::subreplace(dst,a,b,p.code[at+4] as usize,frame,
                 ref p.records,ref mut records,ref mut arrays,ref mut payload,
                 ref registers[base..base+128],remaining,p.offsets[pc])?;
+            pc += 1; continue;
+        }
+        if (op == 52) {
+            let usize base = frame * 128;
+            remaining = array_ranges::step(p, pc, frame, ref arrays, ref payload,
+                ref mut registers[base..base + 128], remaining)?;
             pc += 1; continue;
         }
         if (op >= 41 && op!=51) {

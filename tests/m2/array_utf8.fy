@@ -70,7 +70,7 @@ fn void independent_verifier_rejects_wrong_types_operands_and_dead_sources(){
         if(i==0){p.arrays.elements[0]=1;}else if(i==1){p.types[1]=1;}else if(i==2){p.code[19]=1;}
         else if(i==3){p.code[20]=1;}else if(i==4){p.code[18]=16;}else if(i==5){p.code[17]=0;}
         else if(i==6){p.slots[1]=true;}else if(i==7){p.code[8]=37;p.code[10]=0;}
-        else if(i==8){p.code[16]=52;}else{p.code[18]=255;}
+        else if(i==8){p.code[16]=53;}else{p.code[18]=255;}
         invalid(ref p);i+=1;
     }
     var ir::Program dropped=baseline;

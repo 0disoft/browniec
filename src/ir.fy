@@ -26,6 +26,7 @@ import std::num as num;
 // 49 atomic subtree replacement: same operands; byte 4=target leaf, 5..7=0.
 // 50 return the sole remaining callee record owner: dst=0,a=site,b=0.
 // 51 read-only UTF-8 predicate: bool dst, a=live u8 array catalog ID, b=0.
+// 52 selected UTF-8 range: same operands; bytes 4..5=start, 6..7=end (little endian).
 pub struct Program {
     u8[2048] code;
     i64[128] constants;
@@ -93,7 +94,7 @@ pub fn Result<usize, errors::Error> emit(ref mut Program p, u8 op, usize a, usiz
     p.offsets[index] = offset;
     p.count += 1;
     if (op != 8) {
-        let u8 tag = if ((op >= 10 && op <= 16) || op==51) { 2 } else if (op == 9) { p.return_types[a] }
+        let u8 tag = if ((op >= 10 && op <= 16) || op==51 || op==52) { 2 } else if (op == 9) { p.return_types[a] }
             else if (op == 17 || op>=27 || (op >= 2 && op <= 7)) { p.types[a] } else { 1 };
         p.types[dst] = tag;
         p.registers += 1;
@@ -235,6 +236,17 @@ pub fn Result<usize, errors::Error> array_drop(ref mut Program p, usize id, usiz
 pub fn Result<usize,errors::Error> array_utf8(ref mut Program p,usize id,usize offset){
     if(id>=16 || id>=p.arrays.count || p.arrays.elements[id]!=10){return .err(errors::make(3,offset));}
     return emit(p,51,id,0,offset);
+}
+pub fn Result<usize, errors::Error> array_range_utf8(ref mut Program p, usize id, usize start, usize end, usize offset) {
+    if (id >= 16 || id >= p.arrays.count || p.arrays.elements[id] != 10 ||
+        start > end || end > p.arrays.lengths[id] || end > 4096) { return .err(errors::make(3, offset)); }
+    let usize pc = p.count;
+    let usize result = emit(p, 52, id, 0, offset)?;
+    p.code[pc * 8 + 4] = byte(start % 256, offset)?;
+    p.code[pc * 8 + 5] = byte(start / 256, offset)?;
+    p.code[pc * 8 + 6] = byte(end % 256, offset)?;
+    p.code[pc * 8 + 7] = byte(end / 256, offset)?;
+    return .ok(result);
 }
 pub fn Result<usize,errors::Error> array_call(ref mut Program p,usize target,usize destination,ref usize[] arguments,usize offset) {
     if(p.call_count>=32 || arguments.len>8 || destination>=16) {return .err(errors::make(4,offset));}

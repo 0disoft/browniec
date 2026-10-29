@@ -58,8 +58,8 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
-        if (op < 1 || op > 51 || (op!=24 && op!=47 && op!=49 && p.code[at + 4] != 0) ||
-            (op!=47 && p.code[at + 5] != 0) || p.code[at + 6] != 0 || p.code[at + 7] != 0) { return .err(errors::make(5, pc)); }
+        if (op < 1 || op > 52 || (op != 52 && ((op!=24 && op!=47 && op!=49 && p.code[at + 4] != 0) ||
+            (op!=47 && p.code[at + 5] != 0) || p.code[at + 6] != 0 || p.code[at + 7] != 0))) { return .err(errors::make(5, pc)); }
         if (op==25) {
             if(dst!=0 || a!=0 || b!=0) {return .err(errors::make(5,pc));}
             pc+=1; continue;
@@ -105,7 +105,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
             live=if(p.record_results[a]!=0){struct_results::call(p,a,dst,f,live,pc)?}
                 else{array_results::call(p,a,dst,f,live,pc)?};
             used_calls[b]=true;
-        } else if (op >= 41 && op!=51) {
+        } else if (op >= 41 && op!=51 && op!=52) {
             live = struct_verifier::step(p, shapes, pc, f, ref mut defined, ref mut written, live)?;
         } else if (op >= 33) {
             live = array_verifier::step(p, pc, f, ref mut defined, ref mut written, live)?;
