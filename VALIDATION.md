@@ -1,5 +1,11 @@
 # Validation
 
+- Buffer resize within retained capacity: implemented and verified in development
+  and release, each with 28 native scenarios (4 new, 24 regressions); all 56
+  processes exit with zero tracked live allocations.
+  Shrinking preserves the prefix; growing zeroes newly exposed bytes. Capacity
+  and accounting stay unchanged; equal length retains the token without SDK work.
+  See [the resize contract](docs/engineering/m2-buffer-resize.md).
 - Buffer truncate and clear: implemented and verified in development and release,
   each with 24 native scenarios (4 new, 20 regressions); all 48 processes exit
   with zero tracked live allocations. Shortening advances generation once;
@@ -1919,3 +1925,25 @@ Provider fault injection, full native/CLI suites, M0, Linux, isolation, DLL
 embedding, packaging and elapsed-time performance were not run. This private API
 does not complete guest syntax, VM integration, borrow enforcement or
 whole-Instance cleanup; unexpected SDK mutation on `Provider` is not rolled back.
+
+## Private Buffer resize within retained capacity
+
+Root `fairyc check` passed with a lock refresh (66 sources, 542 MIR functions).
+`python -B tools/verify-m2-buffer-failure.py` then passed 28 native scenarios
+per development/release profile: four new resize cases plus 24 regressions.
+All 56 processes exit with `live=0`. Each new process reports one initial native
+allocation and one final free, with no extra allocation for resizing.
+
+Coverage includes preserved prefixes and zeroed suffixes after shrink,
+truncate and clear; append reuse and close after native destruction; invalid
+token/backing/table; over-capacity requests including `usize::MAX`; generation
+exhaustion/no-op/last growth; all nine malformed ledger fields and current quotas.
+Capacity, all ledger fields and unrelated slots remain unchanged by resize.
+
+See [the contract](docs/engineering/m2-buffer-resize.md) and
+[Windows receipt](docs/evidence/m2-buffer-resize-windows-20261029.json), recording
+15 input hashes, nine generated sources, eight byte-identical production modules
+and two binaries. Provider fault injection, full native/CLI
+suites, M0, Linux, isolation, DLL embedding, packaging and elapsed-time performance
+were not run. Guest syntax, VM integration, borrow enforcement and whole-Instance
+cleanup remain unfinished; unexpected SDK mutation is not rolled back.

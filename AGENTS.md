@@ -10,6 +10,12 @@ own the affected contract. Broader scaffold procedures are optional.
 
 ## Current state
 
+- Buffer resize within retained capacity: implemented and verified in development
+  and release, each with 28 native scenarios (4 new, 24 regressions); all 56
+  processes exit with zero tracked live allocations.
+  Shrinking preserves the prefix; growing zeroes newly exposed bytes. Capacity
+  and accounting stay unchanged; equal length retains the token without SDK work.
+  See [the resize contract](docs/engineering/m2-buffer-resize.md).
 - Buffer truncate and clear: implemented and verified in development and release,
   each with 24 native scenarios (4 new, 20 regressions); all 48 processes exit
   with zero tracked live allocations. Shortening advances generation once;

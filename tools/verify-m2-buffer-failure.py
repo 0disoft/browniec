@@ -10,7 +10,7 @@ import shutil
 import subprocess
 
 ROOT = Path(__file__).resolve().parent.parent
-MODULES = ['buffer_growth.fy', 'buffer_storage.fy', 'buffer_owners.fy', 'buffer_replacement.fy', 'buffer_append.fy', 'buffer_close.fy', 'buffer_truncate.fy']
+MODULES = ['buffer_growth.fy', 'buffer_storage.fy', 'buffer_owners.fy', 'buffer_replacement.fy', 'buffer_append.fy', 'buffer_close.fy', 'buffer_truncate.fy', 'buffer_resize.fy']
 MODES = [('normal-min', None), ('normal-preferred', None), ('abandon', None),
          ('oom-min', 320), ('oom-preferred', 384), ('append-success', None),
          ('append-capacity', None), ('append-identity', None), ('append-state', None),
@@ -19,7 +19,9 @@ MODES = [('normal-min', None), ('normal-preferred', None), ('abandon', None),
          ('grow-append-oom-min', 320), ('grow-append-oom-preferred', 384),
          ('grow-append-abandon', None), ('grow-append-self', None), ('grow-append-preflight', None),
          ('truncate-success', None), ('truncate-bounds', None),
-         ('truncate-generation', None), ('truncate-state', None)]
+         ('truncate-generation', None), ('truncate-state', None),
+         ('resize-success', None), ('resize-capacity', None),
+         ('resize-generation', None), ('resize-state', None)]
 
 
 def sha(path):
@@ -114,8 +116,8 @@ def main():
             counters = json.loads(lines[1])
             expected = dict(schema='browniec.buffer-allocator/v2', live=0, target=target or 0,
                             targetAttempts=2 if target else 0, failures=1 if target else 0,
-                            attempts=3 if target else 1 if (mode.startswith(('append-', 'close-', 'truncate-')) or mode == 'grow-append-preflight') else 2,
-                            frees=1 if (mode.startswith(('append-', 'close-', 'truncate-')) or mode == 'grow-append-preflight') else 2)
+                            attempts=3 if target else 1 if (mode.startswith(('append-', 'close-', 'truncate-', 'resize-')) or mode == 'grow-append-preflight') else 2,
+                            frees=1 if (mode.startswith(('append-', 'close-', 'truncate-', 'resize-')) or mode == 'grow-append-preflight') else 2)
             need(counters == expected, 'Allocator counters: ' + str(counters))
             cases.append(dict(mode=mode, allocator=counters))
         need(sha(exe) == binary_hash, 'Executable changed')
@@ -131,7 +133,7 @@ def main():
                   sourceSha256=inputs, generatedSourceSha256=generated,
                   generatedLockSha256=lock_hash, forcedInclude=str(header), commands=commands,
                   profileReceipts=outcomes,
-                  limitations=['Windows native probe with byte-identical copies of seven production modules. '
+                  limitations=['Windows native probe with byte-identical copies of eight production modules. '
                                'Only FY system-heap allocations are counted, not all process memory. '
                                'Provider inconsistency injection, full suites, M0, Linux, isolation, DLL, '
                                'packaging and elapsed-time performance were not run. Guest Buffer is not implemented.'])

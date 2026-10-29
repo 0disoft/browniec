@@ -9,6 +9,7 @@ import buffer_replacement as tx;
 import buffer_append as append;
 import buffer_close as close;
 import buffer_truncate as truncate;
+import buffer_resize as resize;
 
 fn growth::Limits limits(bool minimum) {
     return growth::Limits{.object=4096,.instance=if(minimum){704}else{8192},
@@ -350,6 +351,97 @@ fn void run_truncate(u8 mode) {
             table.slots[i].length==unchanged.slots[i].length && table.slots[i].capacity==unchanged.slots[i].capacity);i+=1;
     }
 }
+fn owners::Token resized(Result<owners::Token,resize::Error> r) {
+    return switch(r){case .ok(v):{v}case .err(_):{assert(false);owners::Token{.slot=16,.generation=0}}};
+}
+fn void resize_failed(Result<owners::Token,resize::Error> r,u8 expected) {
+    assert(switch(r){case .ok(_):{false}case .err(e):{switch(e){
+        case .Token:{expected==1}case .Owners:{expected==2}case .State:{expected==3}
+        case .Overflow:{expected==4}case .Quota:{expected==5}case .Capacity:{expected==6}case .Provider:{expected==7}}}});
+}
+fn void zero_tail(ref owners::Table table,owners::Token t,ref bytes::Buffer b,usize first,usize last) {
+    var usize i=first;while(i<last) {
+        assert(switch(owners::read(table,t,i,b)){case .ok(v):{v==0}case .err(_):{false}});i+=1;
+    }
+}
+fn void run_resize(u8 mode) {
+    var growth::Ledger l=growth::empty();var bytes::Buffer b=close_root(ref mut l);
+    l.engine_used+=32;l.engine_peak+=32;
+    var owners::Table table=owners::empty();table.slots[15].generation=7;
+    let owners::Token old=token(owners::create(ref mut table,ref b));let growth::Ledger before=l;
+    let owners::Table unchanged=owners::Table{.slots=table.slots};
+    if(mode==0) {
+        let owners::Token small=shortened(truncate::to_length(ref mut table,old,ref mut b,2,limits(false),ref l));
+        let owners::Token grown=resized(resize::within_capacity(ref mut table,small,ref mut b,4,limits(false),ref l));
+        assert(grown.slot==small.slot && grown.generation==small.generation+1 && table.slots[grown.slot].length==4);
+        assert(bytes::view(ref b)[0]==107 && bytes::view(ref b)[1]==101);zero_tail(ref table,grown,ref b,2,4);
+        resize_failed(resize::within_capacity(ref mut table,small,ref mut b,3,limits(false),ref l),1);
+        assert(switch(owners::write(ref table,grown,3,88,ref mut b)){case .ok(n):{n==3}case .err(_):{false}});
+        let owners::Token shrunk=resized(resize::within_capacity(ref mut table,grown,ref mut b,2,limits(false),ref l));
+        assert(shrunk.generation==grown.generation+1 && bytes::equal(bytes::view(ref b),b"ke"));
+        let owners::Token full=resized(resize::within_capacity(ref mut table,shrunk,ref mut b,256,limits(false),ref l));
+        assert(bytes::len(ref b)==256 && bytes::capacity(ref b)==256 && table.slots[full.slot].length==256);
+        zero_tail(ref table,full,ref b,2,256);
+        let owners::Token same=resized(resize::within_capacity(ref mut table,full,ref mut b,256,limits(false),ref l));
+        assert(same.generation==full.generation);
+        let owners::Token empty=resized(resize::within_capacity(ref mut table,full,ref mut b,0,limits(false),ref l));
+        let owners::Token fresh=resized(resize::within_capacity(ref mut table,empty,ref mut b,16,limits(false),ref l));
+        zero_tail(ref table,fresh,ref b,0,16);
+        let owners::Token extended=appended(append::within_capacity(ref mut table,fresh,ref mut b,b"!",limits(false),ref l));
+        assert(bytes::len(ref b)==17 && switch(owners::read(ref table,extended,16,ref b)){case .ok(n):{n==33}case .err(_):{false}});
+        same_usage(ref l,ref before);
+        var close::Plan closed=close::empty();
+        assert(switch(close::begin(ref mut table,extended,ref b,ref l,ref mut closed)){case .ok(n):{n==320}case .err(_):{false}});
+        {let bytes::Buffer disposed=b;}
+        assert(switch(close::finish(ref table,ref mut l,ref mut closed)){case .ok(n):{n==0}case .err(_):{false}});
+        assert(l.engine_used==32 && l.peak==before.peak && l.engine_peak==before.engine_peak);
+    } else {
+        if(mode==1) {
+            resize_failed(resize::within_capacity(ref mut table,old,ref mut b,257,limits(false),ref l),6);
+            resize_failed(resize::within_capacity(ref mut table,old,ref mut b,18446744073709551615,limits(false),ref l),6);
+            let owners::Token same=resized(resize::within_capacity(ref mut table,old,ref mut b,4,limits(false),ref l));
+            assert(same.generation==old.generation);
+            var bytes::Buffer missing=bytes::empty();
+            resize_failed(resize::within_capacity(ref mut table,owners::Token{.slot=16,.generation=0},ref mut missing,0,limits(false),ref l),1);
+            resize_failed(resize::within_capacity(ref mut table,old,ref mut missing,0,limits(false),ref l),3);
+            table.slots[15].length=1;
+            resize_failed(resize::within_capacity(ref mut table,old,ref mut b,0,limits(false),ref l),3);table.slots[15].length=0;
+            kept(ref table,old,ref b);
+        } else if(mode==2) {
+            table.slots[old.slot].generation=18446744073709551615;
+            let owners::Token last=owners::Token{.slot=old.slot,.generation=18446744073709551615};
+            resize_failed(resize::within_capacity(ref mut table,last,ref mut b,5,limits(false),ref l),2);
+            resize_failed(resize::within_capacity(ref mut table,last,ref mut b,2,limits(false),ref l),2);
+            let owners::Token same=resized(resize::within_capacity(ref mut table,last,ref mut b,4,limits(false),ref l));
+            assert(same.generation==last.generation);kept(ref table,last,ref b);
+            table.slots[old.slot].generation=18446744073709551614;
+            let owners::Token almost=owners::Token{.slot=old.slot,.generation=18446744073709551614};
+            let owners::Token fresh=resized(resize::within_capacity(ref mut table,almost,ref mut b,5,limits(false),ref l));
+            assert(fresh.generation==last.generation && table.slots[fresh.slot].length==5 && bytes::len(ref b)==5);
+            zero_tail(ref table,fresh,ref b,4,5);
+            let owners::Token again=resized(resize::within_capacity(ref mut table,fresh,ref mut b,5,limits(false),ref l));
+            assert(again.generation==last.generation);
+        } else {
+            var usize i=0;while(i<9) {
+                if(i==0){l.pending=1;}else if(i==1){l.old_capacity=64;}else if(i==2){l.new_capacity=64;}
+                else if(i==3){l.before_used=64;}else if(i==4){l.before_engine_used=64;}else if(i==5){l.used=319;}
+                else if(i==6){l.engine_used=319;}else if(i==7){l.peak=319;}else{l.engine_peak=319;}
+                let growth::Ledger corrupt=l;
+                resize_failed(resize::within_capacity(ref mut table,old,ref mut b,5,limits(false),ref l),3);
+                same_usage(ref l,ref corrupt);kept(ref table,old,ref b);l=before;i+=1;
+            }
+            resize_failed(resize::within_capacity(ref mut table,old,ref mut b,5,growth::Limits{.object=4096,.instance=319,.engine=8192},ref l),5);
+            resize_failed(resize::within_capacity(ref mut table,old,ref mut b,0,growth::Limits{.object=4096,.instance=8192,.engine=351},ref l),5);
+            resize_failed(resize::within_capacity(ref mut table,old,ref mut b,4,growth::Limits{.object=255,.instance=8192,.engine=8192},ref l),5);
+            kept(ref table,old,ref b);
+        }
+        same_usage(ref l,ref before);{let bytes::Buffer disposed=b;}
+    }
+    var usize i=1;while(i<16) {
+        assert(table.slots[i].generation==unchanged.slots[i].generation && table.slots[i].live==unchanged.slots[i].live &&
+            table.slots[i].length==unchanged.slots[i].length && table.slots[i].capacity==unchanged.slots[i].capacity);i+=1;
+    }
+}
 @effects(console)
 fn i32 main() {
     if(process::arg_count()!=2) {return 2;}
@@ -380,6 +472,10 @@ fn i32 main() {
     else if(bytes::equal(mode,b"truncate-bounds")) {run_truncate(1);}
     else if(bytes::equal(mode,b"truncate-generation")) {run_truncate(2);}
     else if(bytes::equal(mode,b"truncate-state")) {run_truncate(3);}
+    else if(bytes::equal(mode,b"resize-success")) {run_resize(0);}
+    else if(bytes::equal(mode,b"resize-capacity")) {run_resize(1);}
+    else if(bytes::equal(mode,b"resize-generation")) {run_resize(2);}
+    else if(bytes::equal(mode,b"resize-state")) {run_resize(3);}
     else {return 2;}
     return switch(io::write("buffer-failure: passed\n")){case .ok(_):{0}case .err(_):{1}};
 }
