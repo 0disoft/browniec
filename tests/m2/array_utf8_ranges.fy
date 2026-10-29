@@ -48,8 +48,8 @@ fn void ranges_require_named_u8_arrays_and_two_in_bounds_literal_endpoints() {
     rejected(b"module main;fn i32 main(){let u8[1] a=[0;1];let bool b=text::valid_utf8(a[0..]);return 0;}");
     rejected(b"module main;fn i32 main(){let u8[1] a=[0;1];let bool b=text::valid_utf8(a[..1]);return 0;}");
     rejected(b"module main;fn i32 main(){let u8[1] a=[0;1];let bool b=text::valid_utf8(a[0..1],a);return 0;}");
-    rejected(b"module main;fn u8[1] make(){return [65;1];}fn i32 main(){let bool b=text::valid_utf8(make()[0..1]);return 0;}");
-    rejected(b"module main;fn i32 main(){let bool b=text::valid_utf8([65;1][0..1]);return 0;}");
+    rejected(b"module main;fn u8[1] make(){return [65;1];}fn i32 main(){let bool b=text::valid_utf8(make()[0..1][0..1]);return 0;}");
+    rejected(b"module main;fn i32 main(){let bool b=text::valid_utf8([65;1][0..1][0..1]);return 0;}");
     rejected(b"module main;fn i32 main(){let u8[1] a=[0;1];let ref u8[] v=ref a[0..1];return 0;}");
 }
 

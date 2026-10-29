@@ -8,8 +8,8 @@ import errors as errors;
 import cells as cells;
 
 // No guest expression may run between publication, scan and temporary cleanup.
-pub fn Result<usize, errors::Error> temporary(ref mut ir::Program p, usize id, usize at) {
-    let usize value = ir::array_utf8(p, id, at)?;
+pub fn Result<usize, errors::Error> temporary(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, usize id, usize at) {
+    let usize value = predicate(source, s, p, id, at)?;
     let usize dropped = ir::array_drop(p, id, at)?;
     return .ok(value);
 }
@@ -35,6 +35,11 @@ pub fn Result<usize, errors::Error> named(ref u8[] source, ref mut lexer::State 
     if (id >= p.arrays.count || id >= 16 || p.arrays.elements[id] != 10 ||
         p.array_functions[id] as usize != table.function) { return .err(errors::make(3, s.begin)); }
     let usize argument = lexer::next(source, s)?;
+    return predicate(source, s, p, id, at);
+}
+// The optional range suffix contains literals only, so it cannot run guest code.
+fn Result<usize, errors::Error> predicate(ref u8[] source, ref mut lexer::State s,
+    ref mut ir::Program p, usize id, usize at) {
     if (s.kind == 91) {
         let usize open = lexer::next(source, s)?;
         let usize start = endpoint(source, s)?;
