@@ -10,6 +10,14 @@ own the affected contract. Broader scaffold procedures are optional.
 
 ## Current state
 
+- Explicit array read sessions: implemented at `f85bd4d` and verified in
+  development/release, each with 34 native groups and 14 CLI cases. One session per root allows
+  multiple range reads while blocking write/fill/destination assignment, result
+  transfer, release and clear. Value copies stay allowed and start unleased.
+  Old tickets cannot end a new session. Guest origins, automatic scope cleanup
+  and metering remain pending.
+  See [the session contract](docs/engineering/m2-array-read-leases.md) for verification and limits.
+
 - Private checked array views: implemented at `0c22fb8` and verified in development/
   release, each with 16 native groups and 14 CLI cases. Range descriptors support
   scalar reads, subviews and selected u8 UTF-8 checks without payload copies or

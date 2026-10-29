@@ -1,6 +1,9 @@
 # Checked array range descriptors
 
 Implementation: `0c22fb8`.
+The [explicit read-session successor](m2-array-read-leases.md) now guards
+root mutation and transfer when the caller acquires a session. Bare descriptors
+keep the original behavior documented below.
 
 The private owner layer now provides table-local, read-only range descriptors
 over live scalar arrays. These are groundwork for later guest views, not guest
