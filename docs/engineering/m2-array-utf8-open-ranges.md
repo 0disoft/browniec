@@ -7,12 +7,14 @@ time, so the backend sees an explicit range and nothing else.
 
 The [named-array dynamic successor](m2-array-utf8-dynamic-ranges.md) now accepts
 scalar usize endpoint bindings on named arrays. Statements below about dynamic
-rejection describe the static checkpoint; direct temporary bounds stay static.
+rejection describe the static checkpoint. The [temporary dynamic successor](m2-array-utf8-temporary-dynamic-ranges.md)
+now extends the same scalar-name bounds to direct calls and literals.
 
 ## Parsing and defaults
 
 At this checkpoint, the shared `text_source::predicate` parser owned every range
-suffix. The dynamic successor gives named arrays a separate endpoint parser.
+suffix. The named dynamic successor briefly split endpoint parsing; the
+temporary dynamic successor reunifies all three forms with scalar-name support.
 After `[` it treats a leading `.` as `START = 0`, and after the second `.` it
 treats `]` as `END = length` for the selected catalog entry. Both defaults are
 resolved before the instruction is built, which is why no new token, opcode or

@@ -56,10 +56,11 @@ private test program, not a CLI or guest-source charge.
 ## Source availability
 
 At the foundation checkpoint, guest code could not spell a dynamic range: `text::valid_utf8(a[lo..1])` with a
-`usize` local fails compilation, and the same holds for the temporary forms.
+`usize` local failed compilation, as did the temporary forms.
 The source successor accepts named-array ranges with scalar usize bindings;
-dynamic temporary ranges, computed endpoint expressions, general slices and
-persistent borrows remain unavailable. Static forms keep their behavior.
+the [temporary dynamic successor](m2-array-utf8-temporary-dynamic-ranges.md)
+extends this to calls and literals. Computed endpoint expressions, general
+slices and persistent borrows remain unavailable. Static forms keep their behavior.
 
 ## Focused verification
 

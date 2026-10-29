@@ -56,8 +56,9 @@ not a general program pricing formula.
 
 ## Unsupported forms
 
-Dynamic endpoints on direct temporary calls or repeated-byte literals remain
-rejected. Their publication/scan/drop sequence stays unchanged. Endpoint calls,
+At this checkpoint, dynamic endpoints on direct temporary calls or repeated-byte
+literals were rejected. The [temporary dynamic successor](m2-array-utf8-temporary-dynamic-ranges.md)
+now supports them with the same name/literal admission and immediate drop. Endpoint calls,
 arithmetic, casts, parentheses, field/index expressions, general slices and
 persistent borrows remain unavailable. Compute a scalar value in an earlier
 binding to use it as a bound. The CLI version adds

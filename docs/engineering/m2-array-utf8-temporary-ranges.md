@@ -7,6 +7,10 @@ this successor applies the same suffix to direct call results and repeated-byte
 literals without adding an opcode, a runtime path or a second owner. Version
 JSON reports `array_utf8_temporary_ranges: true`.
 
+The [temporary dynamic successor](m2-array-utf8-temporary-dynamic-ranges.md)
+now accepts scalar usize names and omitted endpoints. Restrictions below describe
+the static checkpoint.
+
 ## Shared suffix parsing
 
 `compiler::utf8_value` classifies the argument by its first token: `[` starts a
