@@ -6,6 +6,13 @@ import array_source as arrays;
 import ir as ir;
 import errors as errors;
 
+// No guest expression may run between publication, scan and temporary cleanup.
+pub fn Result<usize, errors::Error> temporary(ref mut ir::Program p, usize id, usize at) {
+    let usize value = ir::array_utf8(p, id, at)?;
+    let usize dropped = ir::array_drop(p, id, at)?;
+    return .ok(value);
+}
+
 // Split the qualified prefix from argument lowering so the compiler can reuse
 // its ordinary CALL/ARET path. Bare `text` names keep ordinary lookup behavior.
 pub fn Result<usize, errors::Error> begin(ref u8[] source, ref mut lexer::State s) {

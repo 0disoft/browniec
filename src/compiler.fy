@@ -166,6 +166,19 @@ fn Result<usize,errors::Error> utf8_value(ref u8[] source,ref mut lexer::State s
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
     usize depth,u8 result_type,usize structure,ref mut loops::State loop_state) {
     let usize at=text_source::begin(source,s)?;
+    if(s.kind==91) {
+        let usize literal_at=s.begin;
+        let usize open=lexer::next(source,s)?;
+        let usize filler=expression(source,s,p,table,signatures,1,depth+1,10,result_type,structure,loop_state)?;
+        if(p.types[filler]!=10) {return .err(errors::make(3,literal_at));}
+        let usize separator=lexer::punctuation(source,s,59)?;
+        let usize length=arrays::count(source,s)?;
+        let usize close_array=lexer::punctuation(source,s,93)?;
+        let usize close=lexer::punctuation(source,s,41)?;
+        let usize temporary=ir::array_in(p,table.function,10,length,false,literal_at)?;
+        let usize initialized=ir::array_init(p,temporary,filler,literal_at)?;
+        return text_source::temporary(p,temporary,at);
+    }
     if(s.kind==2) {
         var lexer::State look=lexer::snapshot(s);
         let usize next=lexer::next(source,ref mut look)?;
@@ -181,9 +194,7 @@ fn Result<usize,errors::Error> utf8_value(ref u8[] source,ref mut lexer::State s
             let usize called=call_value(source,s,p,table,signatures,target,temporary,call_at,
                 depth+1,result_type,structure,loop_state)?;
             let usize close=lexer::punctuation(source,s,41)?;
-            let usize value=ir::array_utf8(p,temporary,at)?;
-            let usize dropped=ir::array_drop(p,temporary,at)?;
-            return .ok(value);
+            return text_source::temporary(p,temporary,at);
         }
     }
     return text_source::named(source,s,p,table,at);
