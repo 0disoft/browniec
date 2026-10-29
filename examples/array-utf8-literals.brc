@@ -1,0 +1,6 @@
+module main;
+
+fn i32 main() {
+    if (text::valid_utf8([65; 16])) { return 42; }
+    return 0;
+}

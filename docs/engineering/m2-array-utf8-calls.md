@@ -1,5 +1,8 @@
 # UTF-8 validation of direct array call results
 
+The [literal successor](m2-array-utf8-literals.md) also accepts repeated-byte
+array literals. This document records the original call-result checkpoint.
+
 `text::valid_utf8(make(...))` now accepts a direct function call returning
 `u8[N]`. Forward declarations and ordinary call arguments work, including
 nested calls, array/record captures and control flow inside arguments. The
@@ -59,8 +62,9 @@ requires a static destination just like a named array result. Invalid UTF-8 is
 false, and NUL remains valid. No normalization or result cache is introduced.
 
 Unknown/scalar/record/non-u8-array callees, local callee shadowing, wrong arity
-and extra outer arguments fail compilation. Array literals, indexing the call
-result inside this argument, parenthesized aggregate expressions, slices, views,
+and extra outer arguments fail compilation. Array literals were added by the
+successor above. Indexing the call result inside this argument, parenthesized
+aggregate expressions, slices, views,
 general module resolution and Buffer/text ownership remain outside this slice.
 
 ## Focused verification

@@ -30,8 +30,9 @@ The example encodes U+AC00. An executable copy is in
 Only a visible array name is accepted as the single argument. Other element
 types, scalars, record roots, unknown/out-of-scope names and extra arguments fail
 compilation. There is no implicit integer conversion of the bool result. Array
-literals, indexing, parenthesized array expressions and `ref` arguments remain
-outside this slice. Direct array-result calls were initially excluded and are
+literals were added by the [literal successor](m2-array-utf8-literals.md).
+Indexing, parenthesized array expressions and `ref` arguments remain outside
+this slice. Direct array-result calls were initially excluded and are
 now covered by the successor above. No general module resolver, text value or
 guest Buffer API is introduced.
 

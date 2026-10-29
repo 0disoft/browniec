@@ -1,5 +1,13 @@
 # Brownie C
 
+- Direct UTF-8 repeated-byte literals: implemented at `3d569fa` and verified in
+  development/release, each with 13 native groups and 380 CLI cases.
+  `text::valid_utf8([value; N])` evaluates
+  its u8 filler once before publishing one temporary array, then scans and drops
+  it immediately. Pending filler exits create no owner; nested temporaries reuse
+  capacity. Version JSON adds `array_utf8_literals: true`.
+  See [the literal contract](docs/engineering/m2-array-utf8-literals.md) for verification and limits.
+
 - Direct UTF-8 array-result calls: implemented and verified in development/release,
   each with 13 native groups and 356 CLI cases. `text::valid_utf8(make(...))` reuses ordinary
   CALL/ARET, scans once and immediately drops its anonymous result. Argument
