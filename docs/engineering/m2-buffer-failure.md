@@ -6,7 +6,9 @@ See the [Windows receipt](../evidence/m2-buffer-failure-windows-20261029.json).
 The probe exercises actual [replacement transactions](m2-buffer-replacement.md)
 through a one-shot target allocator failure. It closes the Allocation-path fault
 injection gap of the preceding storage/replacement checkpoints; Provider
-inconsistency injection remains deferred.
+inconsistency injection is now covered by the focused
+[Provider probe](m2-buffer-provider.md). The original results below retain their
+Allocation-only scope.
 
 The [append successor](m2-buffer-append.md) expands the current harness to nine
 scenarios over five production modules, using allocator counters v2. The five-case

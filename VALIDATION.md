@@ -1,5 +1,12 @@
 # Validation
 
+- Buffer Provider inconsistency injection: verified in development and release,
+  each with four injected faults and four no-fault controls; all 16 processes
+  exit with zero tracked live allocations. Capacity/copy/append/resize failures
+  preserve the old root/token and registry charge, clean unpublished storage,
+  restore reservations, and allow explicit retry. Product Fairy sources unchanged.
+  See [the provider probe](docs/engineering/m2-buffer-provider.md).
+
 - Private UTF-8 registry storage admission: implemented and verified in development/
   release, each with 87 native scenarios (4 new, 83 regressions); all 174 processes
   exit with zero tracked live allocations. Each active Pool reserves 2,112 logical
