@@ -42,10 +42,11 @@ fn Result<usize, errors::Error> predicate(ref u8[] source, ref mut lexer::State 
     ref mut ir::Program p, usize id, usize at) {
     if (s.kind == 91) {
         let usize open = lexer::next(source, s)?;
-        let usize start = endpoint(source, s)?;
+        if (id >= 16 || id >= p.arrays.count) { return .err(errors::make(3, at)); }
+        let usize start = if (s.kind == 46) { 0 } else { endpoint(source, s)? };
         let usize first = lexer::punctuation(source, s, 46)?;
         let usize second = lexer::punctuation(source, s, 46)?;
-        let usize end = endpoint(source, s)?;
+        let usize end = if (s.kind == 93) { p.arrays.lengths[id] } else { endpoint(source, s)? };
         let usize bracket = lexer::punctuation(source, s, 93)?;
         let usize close = lexer::punctuation(source, s, 41)?;
         return ir::array_range_utf8(p, id, start, end, at);

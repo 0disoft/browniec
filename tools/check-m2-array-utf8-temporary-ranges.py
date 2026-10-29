@@ -79,7 +79,7 @@ for n in [1,4,4096]:
                 case(source, fuel=exact)
                 case(source, 'fuel', fuel=exact-1)
                 case(source, 'fuel', fuel=exact-52, anchor='text::valid_utf8')
-for suffix, error in [('[0]', 'syntax'), ('[-1..1]', 'type'), ('[0..]', 'type'),
+for suffix, error in [('[0]', 'syntax'), ('[-1..1]', 'type'), ('[0...]', 'type'),
                       ('[0..1][0..1]', 'syntax'), ('[0..4097]', 'type'), ('[0..1', 'syntax')]:
     for arg in ['make()', '[65;1]']:
         case('module main;fn u8[1] make(){return [65;1];}fn i32 main(){let bool b=text::valid_utf8('+arg+suffix+');return 42;}', error)

@@ -37,7 +37,7 @@ fn void selected_boundaries_preserve_source_and_work_in_calls_scopes_and_recursi
 }
 
 @test
-fn void ranges_require_named_u8_arrays_and_two_in_bounds_literal_endpoints() {
+fn void ranges_require_named_u8_arrays_and_valid_static_bounds() {
     rejected(b"module main;fn i32 main(){let i32[1] a=[0;1];let bool b=text::valid_utf8(a[0..1]);return 0;}");
     rejected(b"module main;fn i32 main(){let u8 a=0;let bool b=text::valid_utf8(a[0..1]);return 0;}");
     rejected(b"module main;fn i32 main(){let u8[2] a=[0;2];let bool b=text::valid_utf8(a[2..1]);return 0;}");
@@ -45,8 +45,8 @@ fn void ranges_require_named_u8_arrays_and_two_in_bounds_literal_endpoints() {
     rejected(b"module main;fn i32 main(){let u8[1] a=[0;1];let bool b=text::valid_utf8(a[-1..1]);return 0;}");
     rejected(b"module main;fn i32 main(){let u8[1] a=[0;1];let bool b=text::valid_utf8(a[0..18446744073709551615]);return 0;}");
     rejected(b"module main;fn i32 main(){let usize start=0;let u8[1] a=[0;1];let bool b=text::valid_utf8(a[start..1]);return 0;}");
-    rejected(b"module main;fn i32 main(){let u8[1] a=[0;1];let bool b=text::valid_utf8(a[0..]);return 0;}");
-    rejected(b"module main;fn i32 main(){let u8[1] a=[0;1];let bool b=text::valid_utf8(a[..1]);return 0;}");
+    rejected(b"module main;fn i32 main(){let u8[1] a=[0;1];let bool b=text::valid_utf8(a[0...]);return 0;}");
+    rejected(b"module main;fn i32 main(){let u8[1] a=[0;1];let bool b=text::valid_utf8(a[...1]);return 0;}");
     rejected(b"module main;fn i32 main(){let u8[1] a=[0;1];let bool b=text::valid_utf8(a[0..1],a);return 0;}");
     rejected(b"module main;fn u8[1] make(){return [65;1];}fn i32 main(){let bool b=text::valid_utf8(make()[0..1][0..1]);return 0;}");
     rejected(b"module main;fn i32 main(){let bool b=text::valid_utf8([65;1][0..1][0..1]);return 0;}");

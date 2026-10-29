@@ -31,9 +31,10 @@ def main():
     selection.add_argument('--literals', action='store_true', help='Verify repeated-byte UTF-8 literals')
     selection.add_argument('--ranges', action='store_true', help='Verify named-array literal UTF-8 ranges')
     selection.add_argument('--temporary-ranges', action='store_true', help='Verify literal ranges on temporary calls and literals')
+    selection.add_argument('--open-ranges', action='store_true', help='Verify omitted static UTF-8 range endpoints')
     args = parser.parse_args()
     compiler = args.compiler.resolve(strict=True)
-    kind = ('array-utf8-temporary-ranges' if args.temporary_ranges else 'array-utf8-ranges' if args.ranges else 'array-utf8-literals' if args.literals else
+    kind = ('array-utf8-open-ranges' if args.open_ranges else 'array-utf8-temporary-ranges' if args.temporary_ranges else 'array-utf8-ranges' if args.ranges else 'array-utf8-literals' if args.literals else
             'array-utf8-calls' if args.call_results else 'array-utf8-source')
     output = ROOT / ('build/m2-' + kind) / args.profile
     output.mkdir(parents=True, exist_ok=True)
@@ -66,7 +67,8 @@ def main():
     paths.update(ROOT.glob('tests/**/*.fy'))
     paths.update(ROOT.glob('tools/*.py'))
     inputs = [dict(path=p.relative_to(ROOT).as_posix(), sha256=digest(p)) for p in sorted(paths)]
-    groups = ({'array_utf8_temporary_ranges': 4, 'array_utf8_ranges': 4, 'array_utf8_calls': 4, 'array_utf8_literals': 4}
+    groups = ({'array_utf8_open_ranges': 4, 'array_utf8_temporary_ranges': 4, 'array_utf8_ranges': 4}
+              if args.open_ranges else {'array_utf8_temporary_ranges': 4, 'array_utf8_ranges': 4, 'array_utf8_calls': 4, 'array_utf8_literals': 4}
               if args.temporary_ranges else {'array_utf8_ranges': 4, 'array_utf8_source': 5, 'array_range_utf8': 6}
               if args.ranges else {'array_utf8_literals': 4, 'array_utf8_source': 5, 'array_utf8_calls': 4}
               if args.literals else
@@ -124,7 +126,8 @@ def main():
                             exit=done.returncode, result=result))
     print(f'PASS: {args.profile}: {len(cli)} CLI sentinels; Buffer syntax remains rejected', flush=True)
     matrices = []
-    matrices_to_run = ({'array-utf8-temporary-ranges': 250, 'array-utf8-ranges': 202, 'array-utf8-source': 142, 'array-utf8-calls': 100, 'array-utf8-literals': 130}
+    matrices_to_run = ({'array-utf8-open-ranges': 270, 'array-utf8-temporary-ranges': 250, 'array-utf8-ranges': 202, 'array-utf8-source': 142, 'array-utf8-calls': 100, 'array-utf8-literals': 130}
+                       if args.open_ranges else {'array-utf8-temporary-ranges': 250, 'array-utf8-ranges': 202, 'array-utf8-source': 142, 'array-utf8-calls': 100, 'array-utf8-literals': 130}
                        if args.temporary_ranges else {'array-utf8-ranges': 202, 'array-utf8-source': 142, 'array-utf8-calls': 100, 'array-utf8-literals': 130}
                        if args.ranges else {'array-utf8-literals': 130, 'array-utf8-source': 142, 'array-utf8-calls': 100}
                        if args.literals else {'array-utf8-calls': 100, **CLI} if args.call_results else CLI)
