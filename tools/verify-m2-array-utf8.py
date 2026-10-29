@@ -26,9 +26,11 @@ def main():
     parser.add_argument('--profile', choices=['development', 'release'], required=True)
     parser.add_argument('--compiler', type=Path, default=ROOT / 'build/toolchain' /
                         ('fairyc.exe' if os.name == 'nt' else 'fairyc'))
+    parser.add_argument('--views', action='store_true', help='Verify private array range descriptors')
     args = parser.parse_args()
     compiler = args.compiler.resolve(strict=True)
-    output = ROOT / 'build/m2-array-utf8' / args.profile
+    kind = 'array-views' if args.views else 'array-utf8'
+    output = ROOT / ('build/m2-' + kind) / args.profile
     output.mkdir(parents=True, exist_ok=True)
     receipt = output / 'receipt.json'
     receipt.write_text('{"status":"incomplete"}\n', encoding='utf-8')
@@ -59,7 +61,7 @@ def main():
     paths.update(ROOT.glob('tests/**/*.fy'))
     paths.update(ROOT.glob('tools/*.py'))
     inputs = [dict(path=p.relative_to(ROOT).as_posix(), sha256=digest(p)) for p in sorted(paths)]
-    groups = GROUPS
+    groups = {'array_views': 5, 'array_owners': 5, 'array_utf8': 6} if args.views else GROUPS
     command = [compiler, 'test', '--native', '--capture-output', '--json', '--locked']
     if args.profile == 'release':
         command.append('--release')
@@ -93,6 +95,12 @@ def main():
         ('module main;struct P{i32 x;}fn i32 main(){let P p=P{.x=42};return p.x;}', None),
         ('module main;fn i32 main(){let Buffer b=Buffer{};return 42;}', 'type'),
     ]
+    if args.views:
+        sentinels.extend([
+            ('module main;fn i32 main(){let u8[1] a=[65;1];if(text::valid_utf8(a)){return 42;}return 0;}', None),
+            ('module main;fn u8[1] make(){return [65;1];}fn i32 main(){if(text::valid_utf8(make()) && text::valid_utf8([0;1])){return 42;}return 0;}', None),
+            ('module main;fn i32 main(){let u8[1] a=[65;1];let ref u8[] v=ref a;return 42;}', 'type'),
+        ])
     for i, (source, error) in enumerate(sentinels):
         path = output / f'sentinel-{i}.brc'
         path.write_text(source, encoding='utf-8')
@@ -111,16 +119,20 @@ def main():
             cli.append(dict(command=cmd, sourceSha256=hashlib.sha256(source.encode()).hexdigest(),
                             exit=done.returncode, result=result))
     print(f'PASS: {args.profile}: {len(cli)} CLI sentinels; Buffer syntax remains rejected', flush=True)
+    import shutil
+    retained = output / exe.name
+    shutil.copyfile(exe, retained)
+    require(digest(retained) == exe_hash, 'Retained CLI mismatch')
     require(all(digest(ROOT / p['path']) == p['sha256'] for p in inputs), 'Inputs changed')
     require(digest(compiler) == compiler_hash, 'Compiler changed')
     lock = json.loads((ROOT / 'fairy.lock').read_text(encoding='utf-8'))
-    result = dict(schema='browniec.array-utf8/v1', status='passed',
+    result = dict(schema='browniec.' + kind + '/v1', status='passed',
                   recordedAt=datetime.now(timezone.utc).isoformat(), baselineCommit=baseline,
                   profile=args.profile, compilerVersion=version,
                   compilerSha256=compiler_hash, lockedCheck=check, commands=commands,
                   standardLibraryLockIdentity=[p for p in lock['packages'] if p['role'] != 'root'],
                   sourceSha256=inputs, native=native, build=build, exeSha256=exe_hash, cli=cli,
-                  limitations=['Private u8-array UTF-8 opcode only; guest source syntax and version capabilities are unchanged. Focused native and CLI sentinels. Full suites, M0, Linux, '
+                  limitations=['Private array descriptors and UTF-8 backend selection; this probe adds no guest syntax or capabilities. Descriptors do not pin roots or implement borrow conflicts; origin table/backing association remains a caller obligation. Focused native and CLI sentinels. Full suites, M0, Linux, '
                                'isolation, DLL, packaging, allocation instrumentation and performance not run.'])
     receipt.write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
     print('PASS: ' + receipt.relative_to(ROOT).as_posix(), flush=True)

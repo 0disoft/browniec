@@ -10,6 +10,9 @@ import struct_range as record_range;
 
 // Instance-local metadata over caller-owned backing bytes. No guest/raw pointer.
 pub struct Token { usize slot; usize generation; }
+// Private, table-local range descriptor. It owns no storage and pins no root.
+// Every use revalidates its token, original shape, range and current backing.
+pub struct View { Token root; u8 element; usize length; usize start; usize end; }
 pub struct Owner {
     usize generation; bool occupied; bool live; usize mark; usize base; usize end;
     // element 0 denotes a record: length is bytes, record/alignment identify its layout.
@@ -148,6 +151,44 @@ pub fn Result<bool,Error> utf8_valid(ref Table table,Token token,usize length,re
     if(owner.element!=10){return .err(.Type);}
     if(owner.length!=length){return .err(.Length);}
     return .ok(text::validate_utf8(bytes[owner.base..owner.end]).is_ok);
+}
+fn Result<Owner, Error> resolve_view(ref Table table, ref View view, usize capacity) {
+    let Owner owner = resolve(table, view.root, capacity)?;
+    if (view.element != owner.element) { return .err(.Type); }
+    if (view.length != owner.length) { return .err(.Length); }
+    if (view.start > view.end || view.end > owner.length) { return .err(.Bounds); }
+    return .ok(owner);
+}
+pub fn Result<View, Error> view(ref Table table, Token token, usize start, usize end, usize capacity) {
+    let Owner owner = resolve(table, token, capacity)?;
+    if (start > end || end > owner.length) { return .err(.Bounds); }
+    return .ok(View { .root = token, .element = owner.element, .length = owner.length, .start = start, .end = end });
+}
+pub fn Result<usize, Error> view_length(ref Table table, ref View view, usize capacity) {
+    let Owner owner = resolve_view(table, view, capacity)?;
+    return .ok(view.end - view.start);
+}
+pub fn Result<View, Error> subview(ref Table table, ref View parent, usize start, usize end, usize capacity) {
+    let Owner owner = resolve_view(table, parent, capacity)?;
+    if (start > end || end > parent.end - parent.start) { return .err(.Bounds); }
+    return .ok(View { .root = parent.root, .element = parent.element, .length = parent.length,
+        .start = parent.start + start, .end = parent.start + end });
+}
+pub fn Result<i64, Error> view_read(ref Table table, ref View view, usize index, ref u8[] bytes) {
+    let Owner owner = resolve_view(table, view, bytes.len)?;
+    if (index >= view.end - view.start) { return .err(.Bounds); }
+    let layouts::Array layout = switch (layouts::scalar(owner.element, owner.length)) {
+        case .ok(value): { value } case .err(_): { return .err(.State); }
+    };
+    return switch (storage::read(ref layout, owner.base, view.start + index, bytes, ref table.arena)) {
+        case .ok(value): { .ok(value) } case .err(e): { .err(storage_error(e)) }
+    };
+}
+pub fn Result<bool, Error> view_utf8(ref Table table, ref View view, ref u8[] bytes) {
+    let Owner owner = resolve_view(table, view, bytes.len)?;
+    if (owner.element != 10) { return .err(.Type); }
+    // Valid u8 layout proves both additions are bounded by the initialized end.
+    return .ok(text::validate_utf8(bytes[owner.base + view.start..owner.base + view.end]).is_ok);
 }
 // Rehoming a unique owner needs no allocation or payload write. Validate its
 // exact shape and all bool bytes before a caller publishes the existing token.
