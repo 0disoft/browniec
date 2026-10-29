@@ -1,5 +1,9 @@
 # UTF-8 validation from guest source
 
+This document records the named-array checkpoint. The
+[direct-call successor](m2-array-utf8-calls.md) now also accepts array-result calls.
+The original verification counts below remain historical for that checkpoint.
+
 `text::valid_utf8(bytes)` returns a `bool` for one visible, named `u8[N]`
 array, including helper locals, immutable by-value parameters and named array
 results. This qualified intrinsic uses the design baseline's spelling. It needs
@@ -26,10 +30,10 @@ The example encodes U+AC00. An executable copy is in
 Only a visible array name is accepted as the single argument. Other element
 types, scalars, record roots, unknown/out-of-scope names and extra arguments fail
 compilation. There is no implicit integer conversion of the bool result. Array
-literals, indexing, parenthesized array expressions, `ref` arguments and direct
-array-result calls are outside this slice; bind an array result first, then
-validate the binding. No general module resolver, text value or guest Buffer
-API is introduced.
+literals, indexing, parenthesized array expressions and `ref` arguments remain
+outside this slice. Direct array-result calls were initially excluded and are
+now covered by the successor above. No general module resolver, text value or
+guest Buffer API is introduced.
 
 The frontend checks the current function and exact u8 catalog entry, then emits
 one opcode 51 with the offset of `text`. It introduces no array copy, catalog
@@ -83,5 +87,5 @@ to its original inputs.
 
 Full suites, Buffer lifecycle/Provider probes, M0, Linux, DLL embedding, Windows
 isolation, packaging, allocation instrumentation and timing benchmarks are not
-part of this selection. Buffer/text integration, views and direct temporary
-arguments remain future work.
+part of this selection. Buffer/text integration and views remain future work. Direct call arguments
+are covered by the successor above.

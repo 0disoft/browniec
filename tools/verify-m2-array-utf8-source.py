@@ -26,9 +26,11 @@ def main():
     parser.add_argument('--profile', choices=['development', 'release'], required=True)
     parser.add_argument('--compiler', type=Path, default=ROOT / 'build/toolchain' /
                         ('fairyc.exe' if os.name == 'nt' else 'fairyc'))
+    parser.add_argument('--call-results', action='store_true', help='Verify direct UTF-8 array-result calls')
     args = parser.parse_args()
     compiler = args.compiler.resolve(strict=True)
-    output = ROOT / 'build/m2-array-utf8-source' / args.profile
+    kind = 'array-utf8-calls' if args.call_results else 'array-utf8-source'
+    output = ROOT / ('build/m2-' + kind) / args.profile
     output.mkdir(parents=True, exist_ok=True)
     receipt = output / 'receipt.json'
     receipt.write_text('{"status":"incomplete"}\n', encoding='utf-8')
@@ -59,7 +61,8 @@ def main():
     paths.update(ROOT.glob('tests/**/*.fy'))
     paths.update(ROOT.glob('tools/*.py'))
     inputs = [dict(path=p.relative_to(ROOT).as_posix(), sha256=digest(p)) for p in sorted(paths)]
-    groups = GROUPS
+    groups = ({'array_utf8_calls': 4, 'array_utf8_source': 5, 'array_call_reads': 4}
+              if args.call_results else GROUPS)
     command = [compiler, 'test', '--native', '--capture-output', '--json', '--locked']
     if args.profile == 'release':
         command.append('--release')
@@ -112,7 +115,8 @@ def main():
                             exit=done.returncode, result=result))
     print(f'PASS: {args.profile}: {len(cli)} CLI sentinels; Buffer syntax remains rejected', flush=True)
     matrices = []
-    for selection, count in CLI.items():
+    matrices_to_run = ({'array-utf8-calls': 100, **CLI} if args.call_results else CLI)
+    for selection, count in matrices_to_run.items():
         print(run([os.sys.executable, '-B', ROOT / ('tools/check-m2-' + selection + '.py'),
                    '--exe', exe, '--profile', args.profile]), flush=True)
         report = ROOT / ('build/m2-' + selection) / args.profile / 'cli-receipt.json'
@@ -128,13 +132,13 @@ def main():
     require(all(digest(ROOT / p['path']) == p['sha256'] for p in inputs), 'Inputs changed')
     require(digest(compiler) == compiler_hash, 'Compiler changed')
     lock = json.loads((ROOT / 'fairy.lock').read_text(encoding='utf-8'))
-    result = dict(schema='browniec.array-utf8-source/v1', status='passed',
+    result = dict(schema='browniec.' + kind + '/v1', status='passed',
                   recordedAt=datetime.now(timezone.utc).isoformat(), baselineCommit=baseline,
                   profile=args.profile, compilerVersion=version,
                   compilerSha256=compiler_hash, lockedCheck=check, commands=commands,
                   standardLibraryLockIdentity=[p for p in lock['packages'] if p['role'] != 'root'],
                   sourceSha256=inputs, native=native, build=build, exeSha256=exe_hash, cli=cli, matrices=matrices,
-                  limitations=['Qualified text::valid_utf8 over named u8 arrays only; array_utf8_predicate capability added. Buffer/text ownership and general view expressions remain unavailable. Focused native and CLI sentinels. Full suites, M0, Linux, '
+                  limitations=['Qualified text::valid_utf8 over named u8 arrays and direct u8-array call results. Buffer/text ownership, views and general aggregate expressions remain unavailable. Focused native and CLI sentinels. Full suites, M0, Linux, '
                                'isolation, DLL, packaging, allocation instrumentation and performance not run.'])
     receipt.write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
     print('PASS: ' + receipt.relative_to(ROOT).as_posix(), flush=True)

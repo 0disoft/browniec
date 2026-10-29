@@ -1,10 +1,17 @@
 # Roadmap
 
+- Direct UTF-8 array-result calls: implemented and verified in development/release,
+  each with 13 native groups and 356 CLI cases. `text::valid_utf8(make(...))` reuses ordinary
+  CALL/ARET, scans once and immediately drops its anonymous result. Argument
+  exits retain existing cleanup; no result payload copy is added. Version JSON
+  adds `array_utf8_call_results: true`.
+  See [the call-result contract](../engineering/m2-array-utf8-calls.md) for verification and limits.
+
 - Source u8-array UTF-8 predicate: implemented and verified in development/release,
   each with 18 native groups and 256 CLI cases. `text::valid_utf8(bytes)` lowers to opcode 51
   without an array copy or extra owner. Named locals, parameters and array-result
-  bindings are supported; direct temporary expressions and Buffer/text APIs remain
-  unavailable. Version JSON adds `array_utf8_predicate: true`.
+  bindings are supported. Direct temporary calls were unavailable at that checkpoint;
+  the successor above now accepts them. Buffer/text APIs remain unavailable. Version JSON adds `array_utf8_predicate: true`.
   See [the source contract](../engineering/m2-array-utf8-source.md) for verification and limits.
 
 - Private u8-array UTF-8 opcode: implemented and verified in development/release,

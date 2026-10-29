@@ -49,7 +49,7 @@ fn void names_types_scope_and_argument_grammar_remain_explicit() {
     rejected(b"module main;fn i32 main(){let u8 a=0;let bool b=text::valid_utf8(a);return 0;}");
     rejected(b"module main;fn i32 main(){let u8[1] a=[0;1];return text::valid_utf8(a);}");
     rejected(b"module main;fn i32 main(){{let u8[1] a=[0;1];}let bool b=text::valid_utf8(a);return 0;}");
-    rejected(b"module main;fn u8[1] make(){return [0;1];}fn i32 main(){let bool b=text::valid_utf8(make());return 0;}");
+    rejected(b"module main;fn u8 make(){return 0;}fn i32 main(){let bool b=text::valid_utf8(make());return 0;}");
     rejected(b"module main;fn i32 main(){let u8[1] a=[0;1];let bool b=text::valid_utf8(a,a);return 0;}");
     rejected(b"module main;fn i32 main(){let u8[1] a=[0;1];let bool b=text::valid_utf8();return 0;}");
     rejected(b"module main;fn i32 main(){let u8[1] a=[0;1];let bool b=text::unknown(a);return 0;}");

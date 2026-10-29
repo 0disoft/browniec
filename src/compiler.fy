@@ -107,7 +107,7 @@ fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s,
         if (word_is(source, s, b"text")) {
             var lexer::State look = lexer::snapshot(s);
             let usize next = lexer::next(source, ref mut look)?;
-            if (look.kind == 58) { return text_source::valid_utf8(source, s, p, table); }
+            if (look.kind == 58) { return utf8_value(source,s,p,table,signatures,depth,result_type,structure,loop_state); }
         }
         if (word_is(source, s, b"true") || word_is(source, s, b"false")) {
             let bool value = word_is(source, s, b"true");
@@ -159,6 +159,34 @@ fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s,
         return .ok(result);
     }
     return .err(errors::make(2, s.begin));
+}
+// A pending UTF-8 call result stays absent from names during argument exits.
+// No guest expression runs between CALL, validation and immediate result drop.
+fn Result<usize,errors::Error> utf8_value(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    usize depth,u8 result_type,usize structure,ref mut loops::State loop_state) {
+    let usize at=text_source::begin(source,s)?;
+    if(s.kind==2) {
+        var lexer::State look=lexer::snapshot(s);
+        let usize next=lexer::next(source,ref mut look)?;
+        if(look.kind==40) {
+            let usize call_at=s.begin;
+            if(locals::find(source,table,s.begin,s.end)!=64) {return .err(errors::make(3,call_at));}
+            let usize target=functions::find(source,signatures,s.begin,s.end);
+            if(target>=16 || target>=signatures.count || signatures.return_types[target]!=10 ||
+                signatures.return_lengths[target]==0) {return .err(errors::make(3,call_at));}
+            let usize temporary=array_results::destination(signatures,target,10,
+                signatures.return_lengths[target],false,p,table.function,call_at)?;
+            let usize name=lexer::next(source,s)?;
+            let usize called=call_value(source,s,p,table,signatures,target,temporary,call_at,
+                depth+1,result_type,structure,loop_state)?;
+            let usize close=lexer::punctuation(source,s,41)?;
+            let usize value=ir::array_utf8(p,temporary,at)?;
+            let usize dropped=ir::array_drop(p,temporary,at)?;
+            return .ok(value);
+        }
+    }
+    return text_source::named(source,s,p,table,at);
 }
 // Field paths contain no expressions: the returned owner is read and dropped
 // consecutively, with no lexical capture needed between the two operations.

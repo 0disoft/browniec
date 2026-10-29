@@ -1,0 +1,12 @@
+module main;
+
+fn u8[3] make() {
+    var u8[3] bytes = [128; 3];
+    bytes[0] = 234;
+    bytes[1] = 176;
+    return bytes;
+}
+fn i32 main() {
+    if (text::valid_utf8(make())) { return 42; }
+    return 0;
+}

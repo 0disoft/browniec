@@ -86,7 +86,7 @@ for prefix, expr, error in [
 ]:
     case(f'module main;fn i32 main(){{{prefix}let bool b={expr};return 0;}}', error)
 case('module main;fn i32 main(){let u8[1] a=[0;1];return text::valid_utf8(a);}', 'type')
-case('module main;fn u8[1] make(){return [0;1];}fn i32 main(){let bool b=text::valid_utf8(make());return 0;}', 'type')
+case('module main;fn u8 make(){return 0;}fn i32 main(){let bool b=text::valid_utf8(make());return 0;}', 'type')
 
 for n in [1, 4, 4096]:
     for byte in [65, 255]:
