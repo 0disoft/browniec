@@ -1,5 +1,10 @@
 # Validation
 
+- Buffer truncate and clear: implemented and verified in development and release,
+  each with 24 native scenarios (4 new, 20 regressions); all 48 processes exit
+  with zero tracked live allocations. Shortening advances generation once;
+  equal length retains the token. Capacity and accounting stay unchanged.
+  See [the truncate contract](docs/engineering/m2-buffer-truncate.md).
 - Status: accepted evidence policy; M0 verified; bool/branch, loop, tagged, `?`, switch-expression, i64, and unsigned receipts are verified historical evidence; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified; private entry-array IR/VM and source-array reads, writes, copy initializers, parameters, results, and assignment forms implemented; in-place repeated-literal assignment verified; private entry-owned struct IR/verifier verified historically; private struct VM verified with native 38/38 and CLI 115 in both profiles; declaration-only source structs historically verified in development and release (23 native groups and 2,208 CLI cases per profile); bounded source struct construction and field reads form a verified historical read baseline; entry-only one-level scalar-field writes have historical focused development/release validation; entry-only scalar-record copy initialization and whole-record assignment are verified stepwise in development and release; bounded nested constructors, multi-segment scalar paths, and whole-root copies have results that are historical after child-binding compiler changes; whole-record child binding initializers have historical receipts; subrecord declaration initializer receipts are historical after assignment changes; atomic subrecord assignment is verified in development and release; constructor child subrecord paths verified in development and release; private scalar-value record replacement verified; metered atomic root replacement verified; private frame-local record VM verified in development and release (46 native groups and 2,383 CLI cases per profile); immutable by-value source record parameters are verified in development and release (51 native groups and 2,318 CLI cases per profile); private record-result IR/verifier verified in development and release (39 native groups and 2,317 CLI cases per profile), with its kind 11 VM gate historical and superseded; private record-result VM ownership transfer is verified for its source-gated inputs; bounded source record results are verified in development and release at `bb401a4` (14 native groups and 2,438 CLI cases per profile), with 219 rechecked inputs and a focused 70-case-per-profile checker metadata repair; direct nominal record constructor returns are verified in development and release at `0a7b539`; exact-nominal subrecord return paths are implemented at `d4aa643`; development and release each passed 25 native groups and 579 CLI cases with 205 matching input hashes; record calls in constructor child fields are implemented at `c4cd6ab`, verified in development and release
 - Root constructor assignment: verified in development and release; child constructor assignment is verified in development and release.
 - Child record call-result assignment: implemented at `63be9e5` and verified in
@@ -1890,3 +1895,27 @@ enforcement and whole-Instance cleanup remain unfinished. Native root publicatio
 still precedes metadata commit and is not atomic with it. Provider fault injection,
 full native/CLI suites, M0, Linux, isolation, DLL embedding, packaging and elapsed-time
 performance were not run. Earlier receipts retain their original inputs.
+
+## Private Buffer truncate and clear
+
+`fairyc check` passed with a lock refresh, followed by
+`python -B tools/verify-m2-buffer-failure.py`: development and release each passed
+24 native scenarios (4 truncate, 20 existing regressions). All 48 processes exit
+with `live=0`. Each new truncate process records one initial native allocation
+and one final free, with no extra allocation during shortening or clear.
+
+The new cases cover `keep` -> `ke` -> `ke!` -> clear -> `new`, close after native
+destruction, stale tokens, unrelated-slot preservation, Bounds through
+`usize::MAX`, invalid identity/backing/table, generation exhaustion and no-op at
+`MAX`, clear to `MAX`, all nine malformed ledger fields without mutation, and
+current quota rejection even on shortening/no-op. Capacity and all ledger fields
+stay unchanged until explicit close. Clear is logical, not secure erasure.
+
+See [the contract](docs/engineering/m2-buffer-truncate.md) and
+[Windows receipt](docs/evidence/m2-buffer-truncate-windows-20261029.json),
+which records 14 input hashes, eight generated sources, seven byte-identical production
+modules and two retained binaries. No source/test changes followed the pass.
+Provider fault injection, full native/CLI suites, M0, Linux, isolation, DLL
+embedding, packaging and elapsed-time performance were not run. This private API
+does not complete guest syntax, VM integration, borrow enforcement or
+whole-Instance cleanup; unexpected SDK mutation on `Provider` is not rolled back.

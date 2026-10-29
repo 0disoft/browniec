@@ -8,6 +8,7 @@ import buffer_owners as owners;
 import buffer_replacement as tx;
 import buffer_append as append;
 import buffer_close as close;
+import buffer_truncate as truncate;
 
 fn growth::Limits limits(bool minimum) {
     return growth::Limits{.object=4096,.instance=if(minimum){704}else{8192},
@@ -264,6 +265,91 @@ fn void run_grow_append(bool minimum,bool oom,bool abandon,bool self_append,bool
         assert(l.engine_used==32 && l.peak==peak && !closed.active);
     } else {let bytes::Buffer disposed=b;}
 }
+fn owners::Token shortened(Result<owners::Token,truncate::Error> r) {
+    return switch(r){case .ok(v):{v}case .err(_):{assert(false);owners::Token{.slot=16,.generation=0}}};
+}
+fn void truncate_failed(Result<owners::Token,truncate::Error> r,u8 expected) {
+    assert(switch(r){case .ok(_):{false}case .err(e):{switch(e){
+        case .Token:{expected==1}case .Owners:{expected==2}case .State:{expected==3}
+        case .Overflow:{expected==4}case .Quota:{expected==5}case .Bounds:{expected==6}case .Provider:{expected==7}}}});
+}
+fn void same_usage(ref growth::Ledger a,ref growth::Ledger b) {
+    assert(a.used==b.used && a.engine_used==b.engine_used && a.peak==b.peak && a.engine_peak==b.engine_peak &&
+        a.pending==b.pending && a.old_capacity==b.old_capacity && a.new_capacity==b.new_capacity &&
+        a.before_used==b.before_used && a.before_engine_used==b.before_engine_used);
+}
+fn void run_truncate(u8 mode) {
+    var growth::Ledger l=growth::empty();var bytes::Buffer b=close_root(ref mut l);
+    l.engine_used+=32;l.engine_peak+=32;
+    var owners::Table table=owners::empty();table.slots[15].generation=7;
+    let owners::Token old=token(owners::create(ref mut table,ref b));let growth::Ledger before=l;
+    let owners::Table unchanged=owners::Table{.slots=table.slots};
+    if(mode==0) {
+        let owners::Token small=shortened(truncate::to_length(ref mut table,old,ref mut b,2,limits(false),ref l));
+        assert(small.slot==old.slot && small.generation==old.generation+1 && table.slots[small.slot].length==2);
+        assert(bytes::equal(bytes::view(ref b),b"ke") && bytes::capacity(ref b)==256);
+        assert(switch(owners::read(ref table,small,2,ref b)){case .ok(_):{false}case .err(e):{switch(e){case .Bounds:{true}case .Token:{false}case .Owners:{false}case .State:{false}}}});
+        truncate_failed(truncate::clear(ref mut table,old,ref mut b,limits(false),ref l),1);
+        let owners::Token extended=appended(append::within_capacity(ref mut table,small,ref mut b,b"!",limits(false),ref l));
+        assert(bytes::equal(bytes::view(ref b),b"ke!"));
+        let owners::Token empty=shortened(truncate::clear(ref mut table,extended,ref mut b,limits(false),ref l));
+        assert(empty.generation==extended.generation+1 && bytes::len(ref b)==0 && table.slots[empty.slot].length==0);
+        let owners::Token same=shortened(truncate::clear(ref mut table,empty,ref mut b,limits(false),ref l));
+        assert(same.generation==empty.generation);
+        let owners::Token reused=appended(append::within_capacity(ref mut table,empty,ref mut b,b"new",limits(false),ref l));
+        assert(bytes::equal(bytes::view(ref b),b"new") && table.slots[reused.slot].length==3);
+        same_usage(ref l,ref before);
+        var close::Plan closed=close::empty();
+        assert(switch(close::begin(ref mut table,reused,ref b,ref l,ref mut closed)){case .ok(n):{n==320}case .err(_):{false}});
+        {let bytes::Buffer disposed=b;}
+        assert(switch(close::finish(ref table,ref mut l,ref mut closed)){case .ok(n):{n==0}case .err(_):{false}});
+        assert(l.engine_used==32 && l.peak==before.peak && l.engine_peak==before.engine_peak);
+    } else {
+        if(mode==1) {
+            truncate_failed(truncate::to_length(ref mut table,old,ref mut b,5,limits(false),ref l),6);
+            truncate_failed(truncate::to_length(ref mut table,old,ref mut b,18446744073709551615,limits(false),ref l),6);
+            let owners::Token same=shortened(truncate::to_length(ref mut table,old,ref mut b,4,limits(false),ref l));
+            assert(same.generation==old.generation);
+            var bytes::Buffer missing=bytes::empty();
+            truncate_failed(truncate::to_length(ref mut table,owners::Token{.slot=16,.generation=0},ref mut missing,0,limits(false),ref l),1);
+            truncate_failed(truncate::clear(ref mut table,old,ref mut missing,limits(false),ref l),3);
+            table.slots[15].length=1;
+            truncate_failed(truncate::clear(ref mut table,old,ref mut b,limits(false),ref l),3);table.slots[15].length=0;
+            kept(ref table,old,ref b);
+        } else if(mode==2) {
+            table.slots[old.slot].generation=18446744073709551615;
+            let owners::Token last=owners::Token{.slot=old.slot,.generation=18446744073709551615};
+            truncate_failed(truncate::to_length(ref mut table,last,ref mut b,2,limits(false),ref l),2);
+            truncate_failed(truncate::clear(ref mut table,last,ref mut b,limits(false),ref l),2);
+            let owners::Token same=shortened(truncate::to_length(ref mut table,last,ref mut b,4,limits(false),ref l));
+            assert(same.generation==last.generation);kept(ref table,last,ref b);
+            table.slots[old.slot].generation=18446744073709551614;
+            let owners::Token almost=owners::Token{.slot=old.slot,.generation=18446744073709551614};
+            let owners::Token empty=shortened(truncate::clear(ref mut table,almost,ref mut b,limits(false),ref l));
+            assert(empty.generation==last.generation && table.slots[empty.slot].length==0 && bytes::len(ref b)==0);
+            let owners::Token again=shortened(truncate::clear(ref mut table,empty,ref mut b,limits(false),ref l));
+            assert(again.generation==last.generation);
+        } else {
+            var usize i=0;while(i<9) {
+                if(i==0){l.pending=1;}else if(i==1){l.old_capacity=64;}else if(i==2){l.new_capacity=64;}
+                else if(i==3){l.before_used=64;}else if(i==4){l.before_engine_used=64;}else if(i==5){l.used=319;}
+                else if(i==6){l.engine_used=319;}else if(i==7){l.peak=319;}else{l.engine_peak=319;}
+                let growth::Ledger corrupt=l;
+                truncate_failed(truncate::clear(ref mut table,old,ref mut b,limits(false),ref l),3);
+                same_usage(ref l,ref corrupt);kept(ref table,old,ref b);l=before;i+=1;
+            }
+            truncate_failed(truncate::clear(ref mut table,old,ref mut b,growth::Limits{.object=4096,.instance=319,.engine=8192},ref l),5);
+            truncate_failed(truncate::clear(ref mut table,old,ref mut b,growth::Limits{.object=4096,.instance=8192,.engine=351},ref l),5);
+            truncate_failed(truncate::to_length(ref mut table,old,ref mut b,4,growth::Limits{.object=255,.instance=8192,.engine=8192},ref l),5);
+            kept(ref table,old,ref b);
+        }
+        same_usage(ref l,ref before);{let bytes::Buffer disposed=b;}
+    }
+    var usize i=1;while(i<16) {
+        assert(table.slots[i].generation==unchanged.slots[i].generation && table.slots[i].live==unchanged.slots[i].live &&
+            table.slots[i].length==unchanged.slots[i].length && table.slots[i].capacity==unchanged.slots[i].capacity);i+=1;
+    }
+}
 @effects(console)
 fn i32 main() {
     if(process::arg_count()!=2) {return 2;}
@@ -290,6 +376,10 @@ fn i32 main() {
     else if(bytes::equal(mode,b"grow-append-abandon")) {run_grow_append(false,false,true,false,false);}
     else if(bytes::equal(mode,b"grow-append-self")) {run_grow_append(false,false,false,true,false);}
     else if(bytes::equal(mode,b"grow-append-preflight")) {run_grow_append(false,false,false,false,true);}
+    else if(bytes::equal(mode,b"truncate-success")) {run_truncate(0);}
+    else if(bytes::equal(mode,b"truncate-bounds")) {run_truncate(1);}
+    else if(bytes::equal(mode,b"truncate-generation")) {run_truncate(2);}
+    else if(bytes::equal(mode,b"truncate-state")) {run_truncate(3);}
     else {return 2;}
     return switch(io::write("buffer-failure: passed\n")){case .ok(_):{0}case .err(_):{1}};
 }

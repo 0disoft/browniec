@@ -1,5 +1,10 @@
 # Roadmap
 
+- Buffer truncate and clear: implemented and verified in development and release,
+  each with 24 native scenarios (4 new, 20 regressions); all 48 processes exit
+  with zero tracked live allocations. Shortening advances generation once;
+  equal length retains the token. Capacity and accounting stay unchanged.
+  See [the truncate contract](../engineering/m2-buffer-truncate.md).
 - Buffer grow-and-append preparation: implemented and verified in development
   and release, each with 20 native scenarios (7 new, 13 lifecycle/allocator
   regressions). Growth-only preparation appends into an unpublished replacement
