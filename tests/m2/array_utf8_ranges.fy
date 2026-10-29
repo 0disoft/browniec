@@ -44,7 +44,7 @@ fn void ranges_require_named_u8_arrays_and_valid_static_bounds() {
     rejected(b"module main;fn i32 main(){let u8[2] a=[0;2];let bool b=text::valid_utf8(a[0..3]);return 0;}");
     rejected(b"module main;fn i32 main(){let u8[1] a=[0;1];let bool b=text::valid_utf8(a[-1..1]);return 0;}");
     rejected(b"module main;fn i32 main(){let u8[1] a=[0;1];let bool b=text::valid_utf8(a[0..18446744073709551615]);return 0;}");
-    rejected(b"module main;fn i32 main(){let usize start=0;let u8[1] a=[0;1];let bool b=text::valid_utf8(a[start..1]);return 0;}");
+    rejected(b"module main;fn i32 main(){let u32 start=0;let u8[1] a=[0;1];let bool b=text::valid_utf8(a[start..1]);return 0;}");
     rejected(b"module main;fn i32 main(){let u8[1] a=[0;1];let bool b=text::valid_utf8(a[0...]);return 0;}");
     rejected(b"module main;fn i32 main(){let u8[1] a=[0;1];let bool b=text::valid_utf8(a[...1]);return 0;}");
     rejected(b"module main;fn i32 main(){let u8[1] a=[0;1];let bool b=text::valid_utf8(a[0..1],a);return 0;}");

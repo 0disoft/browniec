@@ -114,7 +114,7 @@ def main():
     if args.dynamic_vm:
         sentinels.extend([
             ('module main;fn i32 main(){let u8[2] a=[65;2];if(text::valid_utf8(a[..])){return 42;}return 0;}', None),
-            ('module main;fn i32 main(){let usize lo=0;let u8[1] a=[65;1];let bool b=text::valid_utf8(a[lo..1]);return 42;}', 'type'),
+            ('module main;fn i32 main(){let u32 lo=0;let u8[1] a=[65;1];let bool b=text::valid_utf8(a[lo..1]);return 42;}', 'type'),
         ])
     for i, (source, error) in enumerate(sentinels):
         path = output / f'sentinel-{i}.brc'
@@ -147,7 +147,7 @@ def main():
                   compilerSha256=compiler_hash, lockedCheck=check, commands=commands,
                   standardLibraryLockIdentity=[p for p in lock['packages'] if p['role'] != 'root'],
                   sourceSha256=inputs, native=native, build=build, exeSha256=exe_hash, cli=cli,
-                  limitations=['Private array descriptors and UTF-8 backend selection; range-vm selects opcode52 with literal endpoints and 65+4*K Fuel; dynamic-vm selects opcode53 with usize register bounds and worst-case65+4*N Fuel before endpoint reads, retaining no source syntax or capability for dynamic ranges. The scan is synchronous and owns no retained view or read session; this probe adds no guest syntax or capabilities. Bare descriptors do not pin roots; explicit per-root read sessions guard writes, transfer and cleanup. Guest borrow enforcement and origin table/backing association remain caller obligations. Focused native and CLI sentinels. Full suites, M0, Linux, '
+                  limitations=['Private array descriptors and UTF-8 backend selection; range-vm selects opcode52 with literal endpoints and 65+4*K Fuel; dynamic-vm selects opcode53 with usize register bounds and worst-case65+4*N Fuel before endpoint reads, with named usize source endpoints exposed by the separate source selection. The scan is synchronous and owns no retained view or read session; this backend probe adds no guest syntax or capabilities. Bare descriptors do not pin roots; explicit per-root read sessions guard writes, transfer and cleanup. Guest borrow enforcement and origin table/backing association remain caller obligations. Focused native and CLI sentinels. Full suites, M0, Linux, '
                                'isolation, DLL, packaging, allocation instrumentation and performance not run.'])
     receipt.write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
     print('PASS: ' + receipt.relative_to(ROOT).as_posix(), flush=True)

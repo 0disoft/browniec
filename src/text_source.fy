@@ -35,7 +35,46 @@ pub fn Result<usize, errors::Error> named(ref u8[] source, ref mut lexer::State 
     if (id >= p.arrays.count || id >= 16 || p.arrays.elements[id] != 10 ||
         p.array_functions[id] as usize != table.function) { return .err(errors::make(3, s.begin)); }
     let usize argument = lexer::next(source, s)?;
-    return predicate(source, s, p, id, at);
+    if (s.kind != 91) { return predicate(source, s, p, id, at); }
+    let usize open = lexer::next(source, s)?;
+    let Endpoint start = if (s.kind == 46) { Endpoint { .value = 0, .dynamic = false } }
+        else { named_endpoint(source, s, p, table)? };
+    let usize first = lexer::punctuation(source, s, 46)?;
+    let usize second = lexer::punctuation(source, s, 46)?;
+    let Endpoint end = if (s.kind == 93) { Endpoint { .value = p.arrays.lengths[id], .dynamic = false } }
+        else { named_endpoint(source, s, p, table)? };
+    let usize bracket = lexer::punctuation(source, s, 93)?;
+    let usize close = lexer::punctuation(source, s, 41)?;
+    if (!start.dynamic && !end.dynamic) { return ir::array_range_utf8(p, id, start.value, end.value, at); }
+    let usize lo = endpoint_register(p, start, at)?;
+    let usize hi = endpoint_register(p, end, at)?;
+    return ir::array_dynamic_utf8(p, id, lo, hi, at);
+}
+
+struct Endpoint { usize value; bool dynamic; }
+// Only scalar names may be dynamic. No calls, casts or expressions execute here.
+fn Result<Endpoint, errors::Error> named_endpoint(ref u8[] source, ref mut lexer::State s,
+    ref mut ir::Program p, ref locals::Table table) {
+    if (s.kind != 2) {
+        let usize value = endpoint(source, s)?;
+        return .ok(Endpoint { .value = value, .dynamic = false });
+    }
+    let usize at = s.begin;
+    let usize index = locals::find(source, table, s.begin, s.end);
+    if (index >= table.count) { return .err(errors::make(3, at)); }
+    let usize register = table.registers[index];
+    if (register >= 128 || register >= p.registers || p.types[register] != 12 ||
+        p.array_parameters[register] != 0 || p.record_parameters[register] != 0) {
+        return .err(errors::make(3, at));
+    }
+    let usize advanced = lexer::next(source, s)?;
+    let usize value = if (p.slots[register]) { ir::emit(p, 17, register, 0, at)? } else { register };
+    return .ok(Endpoint { .value = value, .dynamic = true });
+}
+fn Result<usize, errors::Error> endpoint_register(ref mut ir::Program p, Endpoint endpoint, usize at) {
+    if (endpoint.dynamic) { return .ok(endpoint.value); }
+    let i64 value = cells::pack(endpoint.value, at)?;
+    return ir::integer(p, value, 12, at);
 }
 // The optional range suffix contains literals only, so it cannot run guest code.
 fn Result<usize, errors::Error> predicate(ref u8[] source, ref mut lexer::State s,
