@@ -1,5 +1,10 @@
 # UTF-8 temporary-array ranges with local endpoints
 
+The [temporary-computed successor](m2-array-utf8-temporary-computed-ranges.md)
+now accepts endpoint expressions on direct call results and repeated literals,
+with anonymous lexical capture for early-exit cleanup. Restrictions and the
+older temporary-parser diagnostic distinction below describe this checkpoint.
+
 The [computed-endpoint successor](m2-array-utf8-computed-ranges.md) now accepts
 ordinary usize expressions on named arrays. Restrictions below describe this
 checkpoint; temporary computed bounds and persistent views remain unavailable.

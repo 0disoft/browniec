@@ -1,5 +1,18 @@
 # AGENTS.md
 
+- Computed UTF-8 endpoints on temporary arrays: implemented at `62ad15f`.
+  `text::valid_utf8(make()[start + 1..end()])` and repeated-literal ranges
+  reuse ordinary usize expressions. Computed suffixes capture the published
+  owner anonymously for existing reverse-order cleanup on return, question
+  propagation, continue and break; normal completion scans then immediately drops.
+  Simple suffixes retain their code, Fuel and binding requirements. The computed
+  path needs one entry in the existing 64-binding table; nested temporaries need
+  overlapping capacity. No extra root owner or payload copy is added. Version
+  JSON adds `array_utf8_temporary_computed_ranges: true`. Development and
+  release each passed 23 native groups and 1,518 CLI invocations.
+  General slices and persistent borrows remain unavailable. See
+  [the source contract](docs/engineering/m2-array-utf8-temporary-computed-ranges.md).
+
 - Computed UTF-8 range endpoints: implemented at `b2ce341` on named live u8 arrays.
   `text::valid_utf8(a[start + 1..a.len])` reuses ordinary usize expression
   parsing with once-only left-to-right evaluation and existing exit cleanup.
@@ -8,8 +21,9 @@
   existing opcode 53 after ordinary endpoint evaluation, with no new root owner
   or payload copy. Version JSON adds `array_utf8_computed_ranges: true`.
   Development and release each passed 23 native groups and 1,794 CLI
-  invocations. Computed temporary bounds and persistent borrows
-  remain unavailable. See [the source contract](docs/engineering/m2-array-utf8-computed-ranges.md).
+  invocations. Computed temporary bounds were unavailable at this checkpoint;
+  the successor above now supports them. Persistent borrows remain unavailable.
+  See [the source contract](docs/engineering/m2-array-utf8-computed-ranges.md).
 
 - Dynamic UTF-8 ranges on temporary arrays: implemented at `bb7476a`.
   `text::valid_utf8(make()[lo..hi])` and

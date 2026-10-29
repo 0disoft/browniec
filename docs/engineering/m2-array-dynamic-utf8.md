@@ -60,8 +60,9 @@ At the foundation checkpoint, guest code could not spell a dynamic range: `text:
 The source successor accepts named-array ranges with scalar usize bindings;
 the [temporary dynamic successor](m2-array-utf8-temporary-dynamic-ranges.md)
 extends this to calls and literals. The [computed-endpoint successor](m2-array-utf8-computed-ranges.md) accepts
-ordinary usize expressions on named arrays. Computed temporary endpoints,
-general slices and persistent borrows remain unavailable. Static forms keep their behavior.
+ordinary usize expressions on named arrays. The [temporary-computed successor](m2-array-utf8-temporary-computed-ranges.md)
+extends expression endpoints to direct calls and literals with lexical cleanup.
+General slices and persistent borrows remain unavailable. Static forms keep their behavior.
 
 ## Focused verification
 

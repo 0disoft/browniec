@@ -1,5 +1,10 @@
 # Computed UTF-8 range endpoints on named arrays
 
+The [temporary-computed successor](m2-array-utf8-temporary-computed-ranges.md)
+now accepts endpoint expressions on direct call results and repeated literals,
+with anonymous lexical capture for early-exit cleanup. Restrictions and the
+older temporary-parser diagnostic distinction below describe this checkpoint.
+
 `text::valid_utf8(a[lo + 1..a.len])` accepts ordinary scalar `usize`
 expressions as endpoints when `a` is a named live u8 array. Arithmetic, calls,
 parentheses, supported widening casts, array reads, scalar record fields and
