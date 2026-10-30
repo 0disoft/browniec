@@ -383,8 +383,42 @@ pub fn Result<usize, errors::Error> slice(ref mut Program p, usize root, usize o
     p.slice_roots[id] = byte(root + 1, offset)?;
     return .ok(id);
 }
+// Construction-time shape lookup, including prospective rootless u8 borrows.
+// This is not a liveness/control-flow proof or permission to execute a borrow.
+fn Result<u8, errors::Error> slice_element(ref Program p, usize id, usize offset) {
+    if (id >= 16) { return .err(errors::make(3, offset)); }
+    let usize root = p.slice_roots[id] as usize;
+    let usize origin = p.slice_origins[id] as usize;
+    let usize function = p.slice_functions[id] as usize;
+    if (root != 0) {
+        if (root > 16 || root > p.arrays.count || origin != 0 || function != 0) { return .err(errors::make(3, offset)); }
+        return .ok(p.arrays.elements[root - 1]);
+    }
+    if (origin == 0 || origin > 16 || function == 0 || function > 16 ||
+        p.function_count > 16 || function > p.function_count || p.registers > 128) { return .err(errors::make(3, offset)); }
+    let usize anchor = origin - 1;
+    let usize f = function - 1;
+    if (p.slice_roots[anchor] != 0 || p.slice_origins[anchor] as usize != origin ||
+        p.slice_functions[anchor] as usize != function || p.arities[f] > 8 ||
+        p.register_starts[f] > p.registers ||
+        p.arities[f] > p.registers - p.register_starts[f]) { return .err(errors::make(3, offset)); }
+    var usize i = 0; var usize matches = 0;
+    while (i < p.arities[f]) {
+        let usize r = p.register_starts[f] + i;
+        if (p.slice_parameters[r] as usize == origin) {
+            if (p.types[r] != 0 || p.slots[r] || p.array_parameters[r] != 0 ||
+                p.record_parameters[r] != 0) { return .err(errors::make(3, offset)); }
+            matches += 1;
+        }
+        i += 1;
+    }
+    if (matches != 1) { return .err(errors::make(3, offset)); }
+    return .ok(10);
+}
 pub fn Result<usize, errors::Error> slice_open(ref mut Program p, usize id, usize start, usize end, usize offset) {
-    if (id >= 16 || p.slice_roots[id] == 0 || p.slice_roots[id] > 16 || p.slice_roots[id] as usize > p.arrays.count ||
+    let u8 element = slice_element(p, id, offset)?;
+    // Borrowed formals arrive through CALL, never an owned-root open.
+    if (p.slice_roots[id] == 0 ||
         start >= p.registers || end >= p.registers || start >= 128 || end >= 128 ||
         p.types[start] != 12 || p.types[end] != 12 || p.slots[start] || p.slots[end] ||
         p.array_parameters[start] != 0 || p.record_parameters[start] != 0 ||
@@ -392,39 +426,40 @@ pub fn Result<usize, errors::Error> slice_open(ref mut Program p, usize id, usiz
     return raw(p, 54, id, start, end, offset);
 }
 pub fn Result<usize, errors::Error> slice_utf8(ref mut Program p, usize id, usize offset) {
-    if (id >= 16 || p.slice_roots[id] == 0 || p.slice_roots[id] > 16 || p.slice_roots[id] as usize > p.arrays.count ||
-        p.arrays.elements[(p.slice_roots[id] as usize) - 1] != 10) { return .err(errors::make(3, offset)); }
+    let u8 element = slice_element(p, id, offset)?;
+    if (element != 10) { return .err(errors::make(3, offset)); }
     return emit(p, 55, id, 0, offset);
 }
 pub fn Result<usize, errors::Error> slice_close(ref mut Program p, usize id, usize offset) {
-    if (id >= 16 || p.slice_roots[id] == 0) { return .err(errors::make(3, offset)); }
+    let u8 element = slice_element(p, id, offset)?;
     return raw(p, 56, id, 0, 0, offset);
 }
 
 pub fn Result<usize, errors::Error> slice_length(ref mut Program p, usize id, usize offset) {
-    if (id >= 16 || p.slice_roots[id] == 0 || p.slice_roots[id] > 16 ||
-        p.slice_roots[id] as usize > p.arrays.count) { return .err(errors::make(3, offset)); }
+    let u8 element = slice_element(p, id, offset)?;
     return emit(p, 57, id, 0, offset);
 }
 
 pub fn Result<usize, errors::Error> slice_read(ref mut Program p, usize id, usize index, usize offset) {
-    if (id >= 16 || p.slice_roots[id] == 0 || p.slice_roots[id] > 16 ||
-        p.slice_roots[id] as usize > p.arrays.count || index >= 128 || index >= p.registers ||
+    let u8 element = slice_element(p, id, offset)?;
+    if (index >= 128 || index >= p.registers ||
         p.types[index] != 12 || p.slots[index] || p.array_parameters[index] != 0 ||
-        p.record_parameters[index] != 0) { return .err(errors::make(3, offset)); }
-    let u8 element = p.arrays.elements[(p.slice_roots[id] as usize) - 1];
+        p.record_parameters[index] != 0 || p.slice_parameters[index] != 0) { return .err(errors::make(3, offset)); }
     let usize dst = emit(p, 58, id, index, offset)?;
     p.types[dst] = element;
     return .ok(dst);
 }
 
 pub fn Result<usize, errors::Error> slice_sub(ref mut Program p, usize id, usize parent, usize start, usize end, usize offset) {
-    if (id >= 16 || parent >= 16 || id == parent || p.slice_roots[id] == 0 ||
-        p.slice_roots[id] > 16 || p.slice_roots[id] as usize > p.arrays.count ||
-        p.slice_roots[id] != p.slice_roots[parent] || start >= 128 || end >= 128 ||
+    let u8 element = slice_element(p, id, offset)?;
+    let u8 parent_element = slice_element(p, parent, offset)?;
+    if (id == parent || p.slice_roots[id] != p.slice_roots[parent] ||
+        p.slice_origins[id] != p.slice_origins[parent] || p.slice_functions[id] != p.slice_functions[parent] ||
+        (p.slice_roots[id] == 0 && p.slice_origins[id] as usize == id + 1) || start >= 128 || end >= 128 ||
         start >= p.registers || end >= p.registers || p.types[start] != 12 || p.types[end] != 12 ||
         p.slots[start] || p.slots[end] || p.array_parameters[start] != 0 || p.array_parameters[end] != 0 ||
-        p.record_parameters[start] != 0 || p.record_parameters[end] != 0) { return .err(errors::make(3, offset)); }
+        p.record_parameters[start] != 0 || p.record_parameters[end] != 0 ||
+        p.slice_parameters[start] != 0 || p.slice_parameters[end] != 0) { return .err(errors::make(3, offset)); }
     let usize pc = raw(p, 59, id, parent, start, offset)?;
     p.code[pc * 8 + 4] = byte(end, offset)?;
     return .ok(pc);
