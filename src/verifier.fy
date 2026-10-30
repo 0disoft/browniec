@@ -8,6 +8,7 @@ import struct_meta as records;
 import struct_verifier as struct_verifier;
 import array_verifier as array_verifier;
 import slice_verifier as slice_verifier;
+import slice_parameters as slice_parameters;
 import array_parameters as array_parameters;
 import array_results as array_results;
 import register_set as registers;
@@ -200,6 +201,9 @@ pub fn Result<usize, errors::Error> verify(ref ir::Program p) {
         code_end = p.ends[f]; register_end = p.register_ends[f]; f += 1;
     }
     if (code_end != p.count || register_end != p.registers) { return .err(errors::make(5, 0)); }
+    let usize borrowed_parameters = slice_parameters::metadata(p)?;
+    // Origin metadata is checked now; guest execution waits for metered CALL/frame support.
+    if (borrowed_parameters != 0) { return .err(errors::make(5, 0)); }
     let usize parameters = array_parameters::metadata(p)?;
     let usize record_parameters = struct_parameters::metadata(p)?;
     let usize results = array_results::metadata(p)?;

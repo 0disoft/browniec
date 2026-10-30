@@ -69,6 +69,13 @@ pub struct Program {
     u8[16] record_results;
     // Zero unused; otherwise slice origin array catalog ID + 1.
     u8[16] slice_roots;
+    // Reserved borrowed-parameter metadata. Nonzero entries are not executable yet.
+    // Parameter register -> slice site + 1; these positions hold no scalar cell.
+    u8[128] slice_parameters;
+    // Rootless borrowed site -> formal anchor site + 1 (formal anchors name self).
+    u8[16] slice_origins;
+    // Rootless borrowed site -> owning function + 1; owned array sites keep zero.
+    u8[16] slice_functions;
 }
 
 pub fn Program empty() {
@@ -78,7 +85,8 @@ pub fn Program empty() {
         .register_ends = [0; 16], .arities = [0; 16], .call_args = [0; 256],
         .call_arities = [0; 32], .function_count = 0, .entry = 0, .call_count = 0,
         .types = [0; 128], .return_types = [0; 16], .slots = [false; 128], .arrays = arrays::empty(), .records = records::empty(),
-        .array_functions = [0; 16], .record_functions = [0; 16], .array_parameters = [0; 128], .record_parameters = [0; 128], .array_results = [0; 16], .record_results = [0; 16], .slice_roots = [0; 16] };
+        .array_functions = [0; 16], .record_functions = [0; 16], .array_parameters = [0; 128], .record_parameters = [0; 128], .array_results = [0; 16], .record_results = [0; 16], .slice_roots = [0; 16],
+        .slice_parameters = [0; 128], .slice_origins = [0; 16], .slice_functions = [0; 16] };
 }
 
 fn Result<u8, errors::Error> byte(usize value, usize offset) {
