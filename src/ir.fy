@@ -27,6 +27,8 @@ import std::num as num;
 // 50 return the sole remaining callee record owner: dst=0,a=site,b=0.
 // 51 read-only UTF-8 predicate: bool dst, a=live u8 array catalog ID, b=0.
 // 52 selected UTF-8 range: same operands; bytes 4..5=start, 6..7=end (little endian).
+// 54 slice open: dst=slice ID,a=start usize register,b=end usize register.
+// 55 slice UTF-8: bool dst,a=slice ID,b=0. 56 slice close: dst=slice ID,a=b=0.
 // 53 register UTF-8 range: bool dst,a=array,b=start usize register,byte4=end register;5..7=0.
 pub struct Program {
     u8[2048] code;
@@ -62,6 +64,8 @@ pub struct Program {
     u8[16] array_results;
     // Zero scalar/array, otherwise a callee-owned nominal record anchor (site + 1).
     u8[16] record_results;
+    // Zero unused; otherwise slice origin array catalog ID + 1.
+    u8[16] slice_roots;
 }
 
 pub fn Program empty() {
@@ -71,7 +75,7 @@ pub fn Program empty() {
         .register_ends = [0; 16], .arities = [0; 16], .call_args = [0; 256],
         .call_arities = [0; 32], .function_count = 0, .entry = 0, .call_count = 0,
         .types = [0; 128], .return_types = [0; 16], .slots = [false; 128], .arrays = arrays::empty(), .records = records::empty(),
-        .array_functions = [0; 16], .record_functions = [0; 16], .array_parameters = [0; 128], .record_parameters = [0; 128], .array_results = [0; 16], .record_results = [0; 16] };
+        .array_functions = [0; 16], .record_functions = [0; 16], .array_parameters = [0; 128], .record_parameters = [0; 128], .array_results = [0; 16], .record_results = [0; 16], .slice_roots = [0; 16] };
 }
 
 fn Result<u8, errors::Error> byte(usize value, usize offset) {
@@ -95,7 +99,7 @@ pub fn Result<usize, errors::Error> emit(ref mut Program p, u8 op, usize a, usiz
     p.offsets[index] = offset;
     p.count += 1;
     if (op != 8) {
-        let u8 tag = if ((op >= 10 && op <= 16) || op==51 || op==52 || op==53) { 2 } else if (op == 9) { p.return_types[a] }
+        let u8 tag = if ((op >= 10 && op <= 16) || op==51 || op==52 || op==53 || op==55) { 2 } else if (op == 9) { p.return_types[a] }
             else if (op == 17 || op>=27 || (op >= 2 && op <= 7)) { p.types[a] } else { 1 };
         p.types[dst] = tag;
         p.registers += 1;
@@ -349,4 +353,32 @@ pub fn Result<usize,errors::Error> record_call(ref mut Program p,usize target,us
 }
 pub fn Result<usize,errors::Error> record_return(ref mut Program p,usize source,usize offset) {
     return raw(p,50,0,source,0,offset);
+}
+
+// Declare a static slice site; the root determines function and scalar shape.
+pub fn Result<usize, errors::Error> slice(ref mut Program p, usize root, usize offset) {
+    if (root >= 16 || root >= p.arrays.count) { return .err(errors::make(3, offset)); }
+    var usize id = 0;
+    while (id < 16) {
+        if (p.slice_roots[id] == 0) { p.slice_roots[id] = byte(root + 1, offset)?; return .ok(id); }
+        id += 1;
+    }
+    return .err(errors::make(4, offset));
+}
+pub fn Result<usize, errors::Error> slice_open(ref mut Program p, usize id, usize start, usize end, usize offset) {
+    if (id >= 16 || p.slice_roots[id] == 0 || p.slice_roots[id] > 16 || p.slice_roots[id] as usize > p.arrays.count ||
+        start >= p.registers || end >= p.registers || start >= 128 || end >= 128 ||
+        p.types[start] != 12 || p.types[end] != 12 || p.slots[start] || p.slots[end] ||
+        p.array_parameters[start] != 0 || p.record_parameters[start] != 0 ||
+        p.array_parameters[end] != 0 || p.record_parameters[end] != 0) { return .err(errors::make(3, offset)); }
+    return raw(p, 54, id, start, end, offset);
+}
+pub fn Result<usize, errors::Error> slice_utf8(ref mut Program p, usize id, usize offset) {
+    if (id >= 16 || p.slice_roots[id] == 0 || p.slice_roots[id] > 16 || p.slice_roots[id] as usize > p.arrays.count ||
+        p.arrays.elements[(p.slice_roots[id] as usize) - 1] != 10) { return .err(errors::make(3, offset)); }
+    return emit(p, 55, id, 0, offset);
+}
+pub fn Result<usize, errors::Error> slice_close(ref mut Program p, usize id, usize offset) {
+    if (id >= 16 || p.slice_roots[id] == 0) { return .err(errors::make(3, offset)); }
+    return raw(p, 56, id, 0, 0, offset);
 }

@@ -29,12 +29,13 @@ def main():
     selection = parser.add_mutually_exclusive_group()
     selection.add_argument('--views', action='store_true', help='Verify private array range descriptors')
     selection.add_argument('--read-leases', action='store_true', help='Verify explicit array read sessions')
+    selection.add_argument('--slice-vm', action='store_true', help='Verify private metered slice instructions and abort cleanup')
     selection.add_argument('--slices', action='store_true', help='Verify private shared read-only slice handles')
     selection.add_argument('--range-vm', action='store_true', help='Verify the private metered UTF-8 range instruction')
     selection.add_argument('--dynamic-vm', action='store_true', help='Verify private register-bounded UTF-8 ranges')
     args = parser.parse_args()
     compiler = args.compiler.resolve(strict=True)
-    kind = 'array-slices' if args.slices else 'array-dynamic-utf8' if args.dynamic_vm else 'array-range-utf8' if args.range_vm else 'array-read-leases' if args.read_leases else 'array-views' if args.views else 'array-utf8'
+    kind = 'array-slice-vm' if args.slice_vm else 'array-slices' if args.slices else 'array-dynamic-utf8' if args.dynamic_vm else 'array-range-utf8' if args.range_vm else 'array-read-leases' if args.read_leases else 'array-views' if args.views else 'array-utf8'
     output = ROOT / ('build/m2-' + kind) / args.profile
     output.mkdir(parents=True, exist_ok=True)
     receipt = output / 'receipt.json'
@@ -66,7 +67,8 @@ def main():
     paths.update(ROOT.glob('tests/**/*.fy'))
     paths.update(ROOT.glob('tools/*.py'))
     inputs = [dict(path=p.relative_to(ROOT).as_posix(), sha256=digest(p)) for p in sorted(paths)]
-    groups = ({'array_slices': 7, 'array_read_leases': 5, 'array_views': 5, 'array_owners': 5, 'array_result_vm': 6}
+    groups = ({'slice_vm': 8, 'array_slices': 7, 'array_read_leases': 5, 'array_dynamic_utf8': 5, 'array_result_vm': 6, 'struct_vm': 8}
+              if args.slice_vm else {'array_slices': 7, 'array_read_leases': 5, 'array_views': 5, 'array_owners': 5, 'array_result_vm': 6}
               if args.slices else {'array_dynamic_utf8': 5, 'array_range_utf8': 6, 'array_utf8': 6, 'array_ir': 5, 'struct_vm': 8}
               if args.dynamic_vm else {'array_range_utf8': 6, 'array_utf8': 6, 'array_ir': 5, 'array_vm': 6,
                'struct_vm': 8, 'array_read_leases': 5, 'array_views': 5}
@@ -108,7 +110,7 @@ def main():
         ('module main;struct P{i32 x;}fn i32 main(){let P p=P{.x=42};return p.x;}', None),
         ('module main;fn i32 main(){let Buffer b=Buffer{};return 42;}', 'type'),
     ]
-    if args.views or args.read_leases or args.slices or args.range_vm or args.dynamic_vm:
+    if args.views or args.read_leases or args.slices or args.slice_vm or args.range_vm or args.dynamic_vm:
         sentinels.extend([
             ('module main;fn i32 main(){let u8[1] a=[65;1];if(text::valid_utf8(a)){return 42;}return 0;}', None),
             ('module main;fn u8[1] make(){return [65;1];}fn i32 main(){if(text::valid_utf8(make()) && text::valid_utf8([0;1])){return 42;}return 0;}', None),
@@ -150,7 +152,7 @@ def main():
                   compilerSha256=compiler_hash, lockedCheck=check, commands=commands,
                   standardLibraryLockIdentity=[p for p in lock['packages'] if p['role'] != 'root'],
                   sourceSha256=inputs, native=native, build=build, exeSha256=exe_hash, cli=cli,
-                  limitations=['Private array descriptors and UTF-8 backend selection; slices selects sixteen independently retired read-only handles sharing one explicit session per root. No guest integration, automatic lexical cleanup, metering or capability is added. Slice pools and tickets remain table-local and require native caller ownership; raw session manipulation can invalidate them. range-vm selects opcode52 with literal endpoints and 65+4*K Fuel; dynamic-vm selects opcode53 with usize register bounds and worst-case65+4*N Fuel before endpoint reads, with named usize source endpoints exposed by the separate source selection. The scan is synchronous; this backend probe adds no guest syntax or capabilities. Bare descriptors do not pin roots; explicit per-root read sessions guard writes, transfer and cleanup. Guest borrow enforcement and origin table/backing association remain caller obligations. Focused native and CLI sentinels. Full suites, M0, Linux, '
+                  limitations=['Private array descriptors and UTF-8 backend selection; slice-vm selects private opcodes54/55/56, independently verified function-local origins and live masks, shared sessions, prepaid65537 open/4097+4*N scan/4097 close, and whole-invocation cleanup on success or VM error. No source borrow syntax or capability is added. slices selects sixteen independently retired read-only handles sharing one explicit session per root. No guest integration, automatic lexical cleanup, metering or capability is added. Slice pools and tickets remain table-local and require native caller ownership; raw session manipulation can invalidate them. range-vm selects opcode52 with literal endpoints and 65+4*K Fuel; dynamic-vm selects opcode53 with usize register bounds and worst-case65+4*N Fuel before endpoint reads, with named usize source endpoints exposed by the separate source selection. The scan is synchronous; this backend probe adds no guest syntax or capabilities. Bare descriptors do not pin roots; explicit per-root read sessions guard writes, transfer and cleanup. Guest borrow enforcement and origin table/backing association remain caller obligations. Focused native and CLI sentinels. Full suites, M0, Linux, '
                                'isolation, DLL, packaging, allocation instrumentation and performance not run.'])
     receipt.write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
     print('PASS: ' + receipt.relative_to(ROOT).as_posix(), flush=True)
