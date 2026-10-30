@@ -2,6 +2,9 @@
 
 Implementation: `1ed056f`.
 
+The [argument-batch foundation](m2-array-slice-arguments.md) prepares atomic
+native call-time borrowing and cleanup. It does not enable source parameters.
+
 `let ref u8[] other = ref part;` reborrows the complete retained range of a
 named live lexical slice. It is shorthand for `ref part[..]`, using the existing
 [subslice implementation](m2-array-slice-sub.md). Version JSON adds

@@ -1,5 +1,17 @@
 # AGENTS.md
 
+- Private atomic slice argument batches: implemented at `515c274`.
+  Up to eight incoming tickets are validated against the original pool before
+  staging independent whole-range handles sharing their existing read sessions.
+  Reverse-order batch cleanup stages both metadata tables; late failures preserve
+  the original tables, generations and batch. Caller/peer handles survive.
+  No payload copy, new owner, opcode, Fuel price or version capability is added.
+  This is an unmetered native foundation: source slice parameters/results,
+  dynamic parameter origins, CALL/frame integration and mixed argument
+  transactions remain pending. Development and release each passed 14 native
+  groups and 252 tool-free CLI invocations.
+  See [the batch contract](docs/engineering/m2-array-slice-arguments.md).
+
 - Checked read-only slice aliases: implemented at `1ed056f`.
   `let ref u8[] other = ref part;` reborrows the complete retained range through
   the same checked length/subslice/close lowering as `ref part[..]`. Each alias

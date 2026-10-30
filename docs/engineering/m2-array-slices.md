@@ -1,14 +1,20 @@
 # Private shared read-only array slices
 
+The [atomic argument-batch successor](m2-array-slice-arguments.md) adds native
+all-or-nothing borrowing and cleanup for up to eight caller tickets. Guest
+slice parameters and VM CALL integration remain pending.
+
 The [source successor](m2-array-utf8-slices.md) now exposes lexical read-only
-u8 slice bindings and UTF-8 scans with reverse-order scope/exit cleanup. Guest
-indexing, length, reslicing, aliases, parameters/results and temporary roots
-remain unavailable. The private backend contract below is unchanged.
+u8 slice bindings and UTF-8 scans with reverse-order scope/exit cleanup.
+[Checked lengths](m2-array-slice-length.md), [indexing](m2-array-slice-index.md),
+[subslice declarations](m2-array-slice-sub.md) and [aliases](m2-array-slice-alias.md)
+now extend the source consumer set. Source parameters/results and temporary
+roots remain unavailable. The contract below records the original registry.
 
 The [private VM successor](m2-array-slice-vm.md) now adds verified origins,
 open/UTF-8/close instructions, metering and whole-invocation cleanup on VM
-success/error. Guest syntax and automatic lexical lowering remain pending.
-The native registry contract below retains its explicit caller obligations.
+success/error. Source lifetime lowering is covered by the source successor
+above. The native registry retains its explicit caller obligations.
 
 Implementation: `12071a8`.
 
