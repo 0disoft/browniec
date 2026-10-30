@@ -620,8 +620,8 @@ fn Result<usize, errors::Error> slice_declaration(ref u8[] source, ref mut lexer
     if (parent < 16) {
         root = (p.slice_roots[parent] as usize)-1;
         let usize name = lexer::next(source,s)?;
-        // Explicit ranges distinguish subslicing from unavailable slice aliases.
-        if (s.kind != 91) { return .err(errors::make(3,header.begin)); }
+        // A bare parent reborrows its complete retained range through SUBSLICE.
+        if (s.kind != 91 && s.kind != 59) { return .err(errors::make(3,header.begin)); }
     } else { root = text_source::argument(source,s,p,table)?; }
     var usize lo = 0;
     var usize hi = 0;
@@ -638,7 +638,8 @@ fn Result<usize, errors::Error> slice_declaration(ref u8[] source, ref mut lexer
         let usize close = lexer::punctuation(source,s,93)?;
     } else {
         lo = ir::integer(p,0,12,header.begin)?;
-        hi = arrays::length_value(p,root,header.begin)?;
+        hi = if (parent < 16) { ir::slice_length(p,parent,header.begin)? }
+            else { arrays::length_value(p,root,header.begin)? };
     }
     let usize end = lexer::punctuation(source,s,59)?;
     let usize site = ir::slice(p,root,header.begin)?;

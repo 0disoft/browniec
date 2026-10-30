@@ -55,7 +55,7 @@ fn void unavailable_escapes_mutation_and_scalar_uses_fail_before_verification() 
     rejected(b"module main;fn i32 main(){let u8[1] a=[65;1];let ref u8[] p=ref a;let usize n=p.capacity;return 42;}");
     rejected(b"module main;fn i32 main(){let u8[1] a=[65;1];let ref u8[] p=ref a;let u8 n=p[true];return 42;}");
     rejected(b"module main;fn i32 main(){let u8[1] a=[65;1];var ref u8[] p=ref a;return 42;}");
-    rejected(b"module main;fn i32 main(){let u8[1] a=[65;1];let ref u8[] p=ref a;let ref u8[] q=ref p;return 42;}");
+    rejected(b"module main;fn i32 main(){let u8[1] a=[65;1];let ref u8[] p=ref a;let ref u8[] q=ref q;return 42;}");
     rejected(b"module main;fn i32 main(){let u8[1] a=[65;1];{let ref u8[] p=ref a;}if(text::valid_utf8(p)){return 42;}return 0;}");
     rejected(b"module main;fn i32 main(){let u8[1] a=[65;1];let ref u8[] p=ref a;if(text::valid_utf8(p[..])){return 42;}return 0;}");
     rejected(b"module main;fn u8[1] make(){return [65;1];}fn i32 main(){let ref u8[] p=ref make();return 42;}");

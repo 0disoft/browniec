@@ -27,7 +27,7 @@ fn void endpoints_run_once_in_order_and_pending_children_follow_existing_exit_cl
     value(b"module main;fn i32 main(){var u8[1] a=[42;1];var i32 n=0;let Option<i32> o=.none;while(n<2){let ref u8[] p=ref a;let ref u8[] q=ref p[switch(o){case .some(v):{0}case .none:{n=n+1;continue;}}..1];}a[0]=0;return n+40;}",1);
     value(b"module main;fn i32 main(){var u8[1] a=[42;1];let Option<i32> o=.none;while(true){let ref u8[] p=ref a;let ref u8[] q=ref p[0..switch(o){case .some(v):{1}case .none:{break;}}];}a[0]=0;return 42;}",1);
     value(b"module main;fn i32 main(){let u8[2] a=[42;2];let ref u8[] p=ref a;let Option<i32> o=.none;let u8 b=switch(o){case .some(v):{0}case .none:{let ref u8[] q=ref p[1..];q[0]}};return b as i32;}",2);
-    rejected(b"module main;fn i32 main(){let u8[1] a=[42;1];let ref u8[] p=ref a;let ref u8[] q=ref p;return 42;}");
+    rejected(b"module main;fn i32 main(){let u8[1] a=[42;1];let ref u8[] p=ref a;let ref u8[] q=ref q;return 42;}");
     rejected(b"module main;fn i32 main(){var u8[1] a=[42;1];let ref u8[] p=ref a;{let ref u8[] q=ref p[..];}a[0]=0;return 42;}");
     rejected(b"module main;fn i32 main(){let u8[1] a=[42;1];let ref u8[] p=ref a;let ref u8[] q=ref p[true..];return 42;}");
     rejected(b"module main;fn i32 main(){let u8[1] a=[42;1];let ref u8[] p=ref a;let i32 i=0;let ref u8[] q=ref p[..i];return 42;}");
