@@ -366,15 +366,22 @@ pub fn Result<usize,errors::Error> record_return(ref mut Program p,usize source,
     return raw(p,50,0,source,0,offset);
 }
 
-// Declare a static slice site; the root determines function and scalar shape.
-pub fn Result<usize, errors::Error> slice(ref mut Program p, usize root, usize offset) {
-    if (root >= 16 || root >= p.arrays.count) { return .err(errors::make(3, offset)); }
+// Find a free site across both owned and prospective borrowed declarations.
+// The caller publishes metadata only after all remaining checks succeed.
+pub fn Result<usize, errors::Error> slice_site(ref Program p, usize offset) {
     var usize id = 0;
     while (id < 16) {
-        if (p.slice_roots[id] == 0) { p.slice_roots[id] = byte(root + 1, offset)?; return .ok(id); }
+        if (p.slice_roots[id] == 0 && p.slice_origins[id] == 0 && p.slice_functions[id] == 0) { return .ok(id); }
         id += 1;
     }
     return .err(errors::make(4, offset));
+}
+// Declare a static slice site; the root determines function and scalar shape.
+pub fn Result<usize, errors::Error> slice(ref mut Program p, usize root, usize offset) {
+    if (root >= 16 || root >= p.arrays.count) { return .err(errors::make(3, offset)); }
+    let usize id = slice_site(p, offset)?;
+    p.slice_roots[id] = byte(root + 1, offset)?;
+    return .ok(id);
 }
 pub fn Result<usize, errors::Error> slice_open(ref mut Program p, usize id, usize start, usize end, usize offset) {
     if (id >= 16 || p.slice_roots[id] == 0 || p.slice_roots[id] > 16 || p.slice_roots[id] as usize > p.arrays.count ||
