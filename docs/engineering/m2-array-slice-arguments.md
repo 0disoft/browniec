@@ -4,6 +4,11 @@ Implementation: `515c274`. This is a native storage foundation for
 future borrowed slice parameters; it does not enable guest parameter syntax,
 change CALL, add an opcode/Fuel price or advertise a version capability.
 
+The [parameter-origin successor](m2-array-slice-parameters.md) adds checked
+private formal/derived IR metadata and argument helpers. It keeps borrowed
+programs behind an explicit execution gate; source syntax and VM CALL remain
+unavailable.
+
 The existing [shared slice registry](m2-array-slices.md) now has `Arguments`,
 `empty_arguments`, `borrow_arguments` and `close_arguments`. A batch contains up
 to eight independent tickets, matching the current function arity ceiling.

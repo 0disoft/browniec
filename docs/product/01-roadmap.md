@@ -1,5 +1,16 @@
 # Roadmap
 
+- Private borrowed slice parameter origins: implemented at `3f678ca`.
+  Bounded formal-position, formal/derived origin and function metadata share the
+  existing sixteen slice sites, with exclusive parameter kinds and independent
+  liveness/ownership checks for proposed u8 call arguments. Entry masks do not
+  claim owned array roots. The core verifier checks then rejects declared borrow
+  parameters before VM backing/Fuel/dispatch until runtime integration exists.
+  Existing source Programs keep zero metadata; no source syntax, opcode, Fuel
+  price or version capability is enabled. Development and release each passed
+  20 native groups and 252 tool-free CLI invocations.
+  See [the origin contract](../engineering/m2-array-slice-parameters.md).
+
 - Private atomic slice argument batches: implemented at `515c274`.
   Up to eight incoming tickets are validated against the original pool before
   staging independent whole-range handles sharing their existing read sessions.
