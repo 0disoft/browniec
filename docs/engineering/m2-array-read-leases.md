@@ -1,5 +1,10 @@
 # Explicit array read sessions
 
+The [private slice registry successor](m2-array-slices.md) now registers
+independently closable ranges sharing one explicit session per root. It keeps
+the source owner locked until the last entry closes. Guest syntax and automatic
+lexical cleanup remain pending; bare views retain their earlier behavior.
+
 Implementation: `f85bd4d`.
 
 The private array owner layer now supports one explicit read session per array

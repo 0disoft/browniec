@@ -1,5 +1,10 @@
 # Checked array range descriptors
 
+The [private slice registry successor](m2-array-slices.md) now registers
+independently closable ranges sharing one explicit session per root. It keeps
+the source owner locked until the last entry closes. Guest syntax and automatic
+lexical cleanup remain pending; bare views retain their earlier behavior.
+
 Implementation: `0c22fb8`.
 The [explicit read-session successor](m2-array-read-leases.md) now guards
 root mutation and transfer when the caller acquires a session. Bare descriptors

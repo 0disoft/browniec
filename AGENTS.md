@@ -1,5 +1,15 @@
 # AGENTS.md
 
+- Private shared read-only array slices: implemented at `12071a8`.
+  Sixteen independently closable range handles share one explicit session per
+  root. Parent cleanup preserves children/peers; the final close unlocks the
+  root. Admission failures preserve both tables; whole-pool clear stages only
+  metadata. Generations never wrap; no payload copy or extra owner is added.
+  Development and release each passed 28 native groups and 14 tool-free CLI
+  sentinels. Guest slice syntax, independent IR borrow verification, automatic
+  lexical cleanup and metering remain pending; no version capability changes.
+  See [the slice registry contract](docs/engineering/m2-array-slices.md).
+
 - Computed UTF-8 endpoints on temporary arrays: implemented at `62ad15f`.
   `text::valid_utf8(make()[start + 1..end()])` and repeated-literal ranges
   reuse ordinary usize expressions. Computed suffixes capture the published
