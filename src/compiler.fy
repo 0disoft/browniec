@@ -614,7 +614,15 @@ fn Result<usize, errors::Error> slice_declaration(ref u8[] source, ref mut lexer
     ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures,
     bool mutable, u8 terminator, u8 result_type, usize depth, usize structure, ref mut loops::State loop_state) {
     let slices::Header header = slices::header(source,s,table,mutable,terminator,result_type)?;
-    let usize root = text_source::argument(source,s,p,table)?;
+    let usize index = if (s.kind == 2) { locals::find(source,table,s.begin,s.end) } else { 64 };
+    let usize parent = if (slices::binding(table,index)) { table.registers[index]-160 } else { 16 };
+    var usize root = 0;
+    if (parent < 16) {
+        root = (p.slice_roots[parent] as usize)-1;
+        let usize name = lexer::next(source,s)?;
+        // Explicit ranges distinguish subslicing from unavailable slice aliases.
+        if (s.kind != 91) { return .err(errors::make(3,header.begin)); }
+    } else { root = text_source::argument(source,s,p,table)?; }
     var usize lo = 0;
     var usize hi = 0;
     if (s.kind == 91) {
@@ -624,7 +632,7 @@ fn Result<usize, errors::Error> slice_declaration(ref u8[] source, ref mut lexer
         if (p.types[lo] != 12) { return .err(errors::make(3,header.begin)); }
         let usize first = lexer::punctuation(source,s,46)?;
         let usize second = lexer::punctuation(source,s,46)?;
-        hi = if (s.kind == 93) { arrays::length_value(p,root,header.begin)? }
+        hi = if (s.kind == 93) { if (parent < 16) { ir::slice_length(p,parent,header.begin)? } else { arrays::length_value(p,root,header.begin)? } }
             else { expression(source,s,p,table,signatures,1,depth+1,12,result_type,structure,loop_state)? };
         if (p.types[hi] != 12) { return .err(errors::make(3,header.begin)); }
         let usize close = lexer::punctuation(source,s,93)?;
@@ -634,7 +642,8 @@ fn Result<usize, errors::Error> slice_declaration(ref u8[] source, ref mut lexer
     }
     let usize end = lexer::punctuation(source,s,59)?;
     let usize site = ir::slice(p,root,header.begin)?;
-    let usize opened = ir::slice_open(p,site,lo,hi,header.begin)?;
+    let usize opened = if (parent < 16) { ir::slice_sub(p,site,parent,lo,hi,header.begin)? }
+        else { ir::slice_open(p,site,lo,hi,header.begin)? };
     return locals::declare(table,header.begin,header.end,160+site,false);
 }
 fn Result<usize, errors::Error> declaration(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 terminator, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {
