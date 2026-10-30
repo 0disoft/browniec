@@ -33,7 +33,7 @@ fn void lengths_are_scalar_snapshots_and_keep_scope_and_root_conflict_rules() {
     rejected(b"module main;fn i32 main(){let u8[1] a=[65;1];{let ref u8[] p=ref a;}let usize n=p.len;return 42;}");
     rejected(b"module main;fn i32 main(){let u8[1] a=[65;1];let ref u8[] p=ref a;let u32 n=p.len;return 42;}");
     rejected(b"module main;fn i32 main(){let u8[1] a=[65;1];let ref u8[] p=ref a;let usize n=p.capacity;return 42;}");
-    rejected(b"module main;fn i32 main(){let u8[1] a=[65;1];let ref u8[] p=ref a;let u8 n=p[0];return 42;}");
+    rejected(b"module main;fn i32 main(){let u8[1] a=[65;1];let ref u8[] p=ref a;let u8 n=p[true];return 42;}");
 }
 
 fn ir::Program program(usize length) {

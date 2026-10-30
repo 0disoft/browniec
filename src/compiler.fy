@@ -149,7 +149,15 @@ fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s,
             let usize close = lexer::punctuation(source, s, 93)?;
             return ir::array_read(p, register - 128, subscript, at);
         }
-        if (slices::binding(table,index)) { return slices::member(source,s,p,register-160,at); }
+        if (slices::binding(table,index)) {
+            if (s.kind == 46) { return slices::member(source,s,p,register-160,at); }
+            if (s.kind != 91) { return .err(errors::make(3, at)); }
+            let usize open = lexer::next(source, s)?;
+            let usize subscript = expression(source,s,p,table,signatures,1,depth+1,12,result_type,structure,loop_state)?;
+            if (p.types[subscript] != 12) { return .err(errors::make(3, at)); }
+            let usize close = lexer::punctuation(source, s, 93)?;
+            return ir::slice_read(p, register-160, subscript, at);
+        }
         if (register >= 128 || s.kind == 91) { return .err(errors::make(3, at)); }
         if (p.slots[register]) { return ir::emit(p, 17, register, 0, at); }
         return .ok(register);
