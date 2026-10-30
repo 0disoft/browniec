@@ -1,5 +1,17 @@
 # Roadmap
 
+- Checked read-only subslice bindings: implemented at `f1216c3` on VM
+  foundation `5b37d6b`. `let ref u8[] child = ref parent[start..end];` supports
+  parent-relative computed/open/empty/nested ranges. Private opcode 59 validates
+  the live parent and shared root before publishing one independent handle,
+  without copying payload or adding an owner. Parent close preserves children;
+  the last handle restores writes. It prepays 65537 Fuel; omitted ends also use
+  the existing 4097-Fuel checked length getter. Version JSON adds
+  `array_slice_sub: true`. Development and release each passed 19 native groups
+  and 670 tool-free CLI invocations. Plain aliases, slice
+  parameters/results, mutable slices and temporary roots remain unavailable.
+  See [the subslice contract](../engineering/m2-array-slice-sub.md).
+
 - Checked read-only slice indexing: implemented at `b7eda85` on VM foundation
   `74ce29c`. `part[index]` evaluates an ordinary usize index once and returns a
   fresh u8 snapshot. Private opcode 58 validates the active origin, ticket,
@@ -7,7 +19,7 @@
   preserve lexical loans and prepay 4131 Fuel for u8; existing prices stay
   unchanged. Version JSON adds `array_slice_index: true`. Development and
   release each passed 27 native groups and 546 tool-free CLI invocations.
-  Reslicing, aliases, slice parameters/results, mutable slices and temporary
+  Plain aliases, slice parameters/results, mutable slices and temporary
   roots remain unavailable. See [the indexing contract](../engineering/m2-array-slice-index.md).
 
 - Checked slice length: implemented at `f56e4aa`.
@@ -17,7 +29,7 @@
   and preserves root loans. Existing cleanup and ordinary array length prices
   are unchanged. Version JSON adds `array_slice_length: true`. Development and
   release each passed 21 native groups and 360 tool-free CLI invocations.
-  Reslicing, aliases, slice parameters/results and temporary
+  Plain aliases, slice parameters/results and temporary
   roots remain unavailable. See [the length contract](../engineering/m2-array-slice-length.md).
 
 - Lexical read-only u8 slices: implemented at `718ab34`.
@@ -28,8 +40,8 @@
   Borrowed-root writes/fills/assignments are source type errors; reads/copies
   remain allowed. No payload copy, extra owner, opcode or Fuel schedule is added.
   Version JSON adds `array_utf8_slices: true`. Development and release each
-  passed 29 native groups and 762 tool-free CLI invocations. Reslicing,
-  aliases, parameters/results and borrowing temporaries remain
+  passed 29 native groups and 762 tool-free CLI invocations. Plain aliases,
+  parameters/results and borrowing temporaries remain
   unavailable. Sixteen static sites and 64 lexical entries remain bounded.
   See [the source slice contract](../engineering/m2-array-utf8-slices.md).
 

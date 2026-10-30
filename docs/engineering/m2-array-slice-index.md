@@ -38,7 +38,8 @@ Existing reverse-order cleanup applies to normal completion, return, question
 propagation, break and continue, including exits inside an index expression.
 The runtime abort finisher still closes retained sessions after an error.
 
-Reslicing, slice aliases, slice parameters/results, mutable slices, non-u8 source
+The [subslice successor](m2-array-slice-sub.md) adds checked parent-relative
+range declarations. Plain aliases, slice parameters/results, mutable slices, non-u8 source
 slices and borrowing temporaries remain unavailable. General postfix chaining
 is not added. Sixteen static sites, sixteen concurrent handles, sixty-four
 lexical bindings and the 128-register ceiling are unchanged.

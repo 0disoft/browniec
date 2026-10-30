@@ -28,7 +28,8 @@ It does not end a borrow; root writes remain blocked until lexical cleanup.
 Existing scope, return/question/break/continue cleanup is unchanged.
 
 The [indexing successor](m2-array-slice-index.md) adds checked scalar reads.
-Reslicing, aliases, parameters/results as slices, mutable slices
+The [subslice successor](m2-array-slice-sub.md) adds parent-relative ranges.
+Plain aliases, parameters/results as slices, mutable slices
 and borrowing temporaries remain unavailable. Unknown members are type errors.
 Calling `.len()` or appending another suffix is rejected by the existing grammar.
 There is no implicit narrowing from usize to u32/i32. Ordinary array `.len` still
