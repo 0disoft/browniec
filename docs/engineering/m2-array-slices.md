@@ -1,5 +1,10 @@
 # Private shared read-only array slices
 
+The [private VM successor](m2-array-slice-vm.md) now adds verified origins,
+open/UTF-8/close instructions, metering and whole-invocation cleanup on VM
+success/error. Guest syntax and automatic lexical lowering remain pending.
+The native registry contract below retains its explicit caller obligations.
+
 Implementation: `12071a8`.
 
 The private `array_slices` module provides sixteen retained range entries over

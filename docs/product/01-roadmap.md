@@ -1,5 +1,15 @@
 # Roadmap
 
+- Private metered slice VM: implemented at `272f359`.
+  Opcodes 54/55/56 open, scan and close function-local slice sites. Independent
+  verification tracks exact live sets through branches/backedges and blocks
+  borrowed-root mutation, release and transfer. Invocation cleanup drains all
+  remaining sessions after success or VM error, preserving the original outcome
+  when cleanup succeeds. Open prepays cleanup; no source capability is added.
+  Development and release each passed 39 native groups and 14 tool-free CLI
+  sentinels. Guest slice syntax and automatic lexical lowering remain pending.
+  See [the slice VM contract](../engineering/m2-array-slice-vm.md).
+
 - Private shared read-only array slices: implemented at `12071a8`.
   Sixteen independently closable range handles share one explicit session per
   root. Parent cleanup preserves children/peers; the final close unlocks the
