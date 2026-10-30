@@ -48,9 +48,9 @@ break and continue. A pending child's endpoint exits close only previously
 published loans/owners. VM abort cleanup drains all retained tickets and preserves
 the original outcome when cleanup succeeds.
 
-An explicit range is required: `ref parent[..]` creates another checked handle;
-`ref parent` remains an unsupported alias. Reslicing is available only in a
-slice declaration, not as a general expression such as
+The [alias successor](m2-array-slice-alias.md) adds `ref parent` as shorthand
+for `ref parent[..]`, creating another independent checked handle. Reslicing
+remains available only in a slice declaration, not as a general expression such as
 `text::valid_utf8(parent[..])`. Slice parameters/results, mutable slices, non-u8
 source slices, borrowing temporaries and general postfix chaining remain
 unavailable. Each child consumes one of sixteen static sites, one live handle

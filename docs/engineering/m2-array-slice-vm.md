@@ -4,7 +4,8 @@ The [source successor](m2-array-utf8-slices.md) now exposes lexical read-only
 u8 slice bindings and UTF-8 scans with reverse-order scope/exit cleanup. Guest
 length and indexing are covered by [checked lengths](m2-array-slice-length.md)
 and [checked reads](m2-array-slice-index.md). [Subslice declarations](m2-array-slice-sub.md)
-add opcode 59. Plain aliases, parameters/results and temporary roots remain
+add opcode 59. [Alias declarations](m2-array-slice-alias.md) reuse whole-parent
+subslice lowering. Slice parameters/results and temporary roots remain
 unavailable. The contract below records the earlier open/scan/close instruction
 set.
 
