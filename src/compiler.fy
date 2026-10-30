@@ -19,6 +19,7 @@ import array_result_source as array_results;
 import struct_result_source as record_results;
 import std::text as text;
 import text_source as text_source;
+import slice_source as slices;
 
 fn u8 precedence(u8 kind) {
     if (kind == 133) { return 1; }
@@ -148,7 +149,7 @@ fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s,
             let usize close = lexer::punctuation(source, s, 93)?;
             return ir::array_read(p, register - 128, subscript, at);
         }
-        if (s.kind == 91) { return .err(errors::make(3, at)); }
+        if (register >= 128 || s.kind == 91) { return .err(errors::make(3, at)); }
         if (p.slots[register]) { return ir::emit(p, 17, register, 0, at); }
         return .ok(register);
     }
@@ -194,6 +195,10 @@ fn Result<usize,errors::Error> utf8_value(ref u8[] source,ref mut lexer::State s
                 depth+1,result_type,structure,loop_state)?;
             return utf8_temporary_range(source,s,p,table,signatures,temporary,at,depth,result_type,structure,loop_state);
         }
+    }
+    if (s.kind == 2) {
+        let usize index = locals::find(source, table, s.begin, s.end);
+        if (slices::binding(table, index)) { return slices::predicate(source,s,p,table,index,at); }
     }
     let usize id=text_source::argument(source,s,p,table)?;
     if(text_source::simple(source,s)?) {return text_source::predicate(source,s,p,table,id,at);}
@@ -482,6 +487,7 @@ fn Result<usize, errors::Error> array_statement(ref u8[] source, ref mut lexer::
     // scalar register in the header/post validation paths.
     if (result_type == 0) { return .err(errors::make(3, at)); }
     let usize id = table.registers[index] - 128;
+    if (slices::borrowed(table,p,id)) { return .err(errors::make(3,at)); }
     if (s.kind == 61) {
         let usize equals = lexer::next(source, s)?;
         if(s.kind==91) {
@@ -593,10 +599,42 @@ fn Result<usize, errors::Error> record_declaration(ref u8[] source, ref mut lexe
     return locals::declare(table,header.begin,header.end,144+id,mutable);
 }
 
+// Keep the pending slice absent from names while ordinary endpoint expressions
+// execute. Existing exits then clean only the owners/borrows already published.
+fn Result<usize, errors::Error> slice_declaration(ref u8[] source, ref mut lexer::State s,
+    ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures,
+    bool mutable, u8 terminator, u8 result_type, usize depth, usize structure, ref mut loops::State loop_state) {
+    let slices::Header header = slices::header(source,s,table,mutable,terminator,result_type)?;
+    let usize root = text_source::argument(source,s,p,table)?;
+    var usize lo = 0;
+    var usize hi = 0;
+    if (s.kind == 91) {
+        let usize open = lexer::next(source,s)?;
+        lo = if (s.kind == 46) { ir::integer(p,0,12,header.begin)? }
+            else { expression(source,s,p,table,signatures,1,depth+1,12,result_type,structure,loop_state)? };
+        if (p.types[lo] != 12) { return .err(errors::make(3,header.begin)); }
+        let usize first = lexer::punctuation(source,s,46)?;
+        let usize second = lexer::punctuation(source,s,46)?;
+        hi = if (s.kind == 93) { arrays::length_value(p,root,header.begin)? }
+            else { expression(source,s,p,table,signatures,1,depth+1,12,result_type,structure,loop_state)? };
+        if (p.types[hi] != 12) { return .err(errors::make(3,header.begin)); }
+        let usize close = lexer::punctuation(source,s,93)?;
+    } else {
+        lo = ir::integer(p,0,12,header.begin)?;
+        hi = arrays::length_value(p,root,header.begin)?;
+    }
+    let usize end = lexer::punctuation(source,s,59)?;
+    let usize site = ir::slice(p,root,header.begin)?;
+    let usize opened = ir::slice_open(p,site,lo,hi,header.begin)?;
+    return locals::declare(table,header.begin,header.end,160+site,false);
+}
 fn Result<usize, errors::Error> declaration(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 terminator, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {
     if (word_is(source, s, b"let") || word_is(source, s, b"var")) {
         let bool mutable = word_is(source, s, b"var");
         let usize keyword = lexer::next(source, s)?;
+        if (word_is(source,s,b"ref")) {
+            return slice_declaration(source,s,p,table,signatures,mutable,terminator,result_type,expr_depth,structure,loop_state);
+        }
         if (s.kind == 2 && !locals::reserved(source[s.begin..s.end])) {
             return record_declaration(source,s,p,table,signatures,mutable,terminator,result_type,expr_depth,structure,loop_state);
         }

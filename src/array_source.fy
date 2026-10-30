@@ -119,6 +119,9 @@ pub fn Result<usize, errors::Error> release_from(ref locals::Table table, ref mu
         if (binding(table, i)) {
             let usize drop = ir::array_drop(p, table.registers[i] - 128, offset)?;
             dropped += 1;
+        } else if (table.registers[i] >= 160 && table.registers[i] < 176) {
+            let usize close = ir::slice_close(p, table.registers[i] - 160, offset)?;
+            dropped += 1;
         } else if (table.registers[i] >= 144 && table.registers[i] < 160) {
             let usize drop = ir::record_drop(p, table.registers[i] - 144, offset)?;
             dropped += 1;

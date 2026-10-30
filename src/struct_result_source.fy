@@ -98,7 +98,9 @@ pub fn Result<usize,errors::Error> finish(ref mut ir::Program p,
     var usize i=names.count;
     while(i>0) {
         i-=1;
-        if(arrays::binding(names,i)) {let usize drop=ir::array_drop(p,names.registers[i]-128,at)?;}
+        if(names.registers[i]>=160 && names.registers[i]<176) {
+            let usize close=ir::slice_close(p,names.registers[i]-160,at)?;
+        } else if(arrays::binding(names,i)) {let usize drop=ir::array_drop(p,names.registers[i]-128,at)?;}
         else if(values::binding(names,i) && names.registers[i]!=144+id) {
             let usize drop=ir::record_drop(p,names.registers[i]-144,at)?;
         }

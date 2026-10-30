@@ -64,5 +64,5 @@ fn void wrong_types_malformed_temporary_expressions_and_escaping_views_are_rejec
     rejected(b"module main;fn i32 main(){let bool b=text::valid_utf8([65;1][0..1+)]);return 0;}");
     rejected(b"module main;fn u8[1] make(){return [65;1];}fn i32 main(){let bool b=text::valid_utf8(make()[0+0..(1]);return 0;}");
     rejected(b"module main;struct P{usize lo;}fn i32 main(){let P p=P{.lo=0};let u8[1] a=[65;1];let bool b=text::valid_utf8(a[p.lo.bad..1]);return 0;}");
-    rejected(b"module main;fn i32 main(){let u8[1] a=[65;1];let ref u8[] v=ref a[0+0..1];return 0;}");
+    rejected(b"module main;fn i32 main(){let u8[1] a=[65;1];let ref u8[] v=ref a[0+0..1];let ref u8[] w=ref v;return 0;}");
 }
