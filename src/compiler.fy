@@ -149,6 +149,7 @@ fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s,
             let usize close = lexer::punctuation(source, s, 93)?;
             return ir::array_read(p, register - 128, subscript, at);
         }
+        if (slices::binding(table,index)) { return slices::member(source,s,p,register-160,at); }
         if (register >= 128 || s.kind == 91) { return .err(errors::make(3, at)); }
         if (p.slots[register]) { return ir::emit(p, 17, register, 0, at); }
         return .ok(register);

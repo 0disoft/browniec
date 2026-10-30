@@ -25,7 +25,7 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, usize pc, usize f,
     let usize dst = p.code[at + 1] as usize;
     let usize a = p.code[at + 2] as usize;
     let usize b = p.code[at + 3] as usize;
-    let usize id = if (op == 55) { a } else { dst };
+    let usize id = if (op == 55 || op == 57) { a } else { dst };
     if (id >= 16 || p.slice_roots[id] == 0) { return .err(errors::make(5, pc)); }
     let usize root = (p.slice_roots[id] as usize) - 1;
     if (root >= p.arrays.count || p.array_functions[root] as usize != f) { return .err(errors::make(5, pc)); }
@@ -41,9 +41,9 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, usize pc, usize f,
         if (a != 0 || b != 0) { return .err(errors::make(5, pc)); }
         return .ok(live ^ mask);
     }
-    if (op != 55 || b != 0 || p.arrays.elements[root] != 10 || dst < p.register_starts[f] ||
+    if ((op != 55 && op != 57) || b != 0 || (op == 55 && p.arrays.elements[root] != 10) || dst < p.register_starts[f] ||
         dst >= p.register_ends[f] || p.slots[dst] || p.array_parameters[dst] != 0 ||
-        p.record_parameters[dst] != 0 || p.types[dst] != 2 || registers::contains(written, dst)) { return .err(errors::make(5, pc)); }
+        p.record_parameters[dst] != 0 || p.types[dst] != if (op == 57) { 12 } else { 2 } || registers::contains(written, dst)) { return .err(errors::make(5, pc)); }
     registers::insert(defined, dst);
     registers::insert(written, dst);
     return .ok(live);

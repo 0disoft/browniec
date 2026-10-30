@@ -29,6 +29,7 @@ import std::num as num;
 // 52 selected UTF-8 range: same operands; bytes 4..5=start, 6..7=end (little endian).
 // 54 slice open: dst=slice ID,a=start usize register,b=end usize register.
 // 55 slice UTF-8: bool dst,a=slice ID,b=0. 56 slice close: dst=slice ID,a=b=0.
+// 57 slice length: fresh usize dst,a=live slice ID,b=0.
 // 53 register UTF-8 range: bool dst,a=array,b=start usize register,byte4=end register;5..7=0.
 pub struct Program {
     u8[2048] code;
@@ -99,7 +100,7 @@ pub fn Result<usize, errors::Error> emit(ref mut Program p, u8 op, usize a, usiz
     p.offsets[index] = offset;
     p.count += 1;
     if (op != 8) {
-        let u8 tag = if ((op >= 10 && op <= 16) || op==51 || op==52 || op==53 || op==55) { 2 } else if (op == 9) { p.return_types[a] }
+        let u8 tag = if (op==57) { 12 } else if ((op >= 10 && op <= 16) || op==51 || op==52 || op==53 || op==55) { 2 } else if (op == 9) { p.return_types[a] }
             else if (op == 17 || op>=27 || (op >= 2 && op <= 7)) { p.types[a] } else { 1 };
         p.types[dst] = tag;
         p.registers += 1;
@@ -381,4 +382,10 @@ pub fn Result<usize, errors::Error> slice_utf8(ref mut Program p, usize id, usiz
 pub fn Result<usize, errors::Error> slice_close(ref mut Program p, usize id, usize offset) {
     if (id >= 16 || p.slice_roots[id] == 0) { return .err(errors::make(3, offset)); }
     return raw(p, 56, id, 0, 0, offset);
+}
+
+pub fn Result<usize, errors::Error> slice_length(ref mut Program p, usize id, usize offset) {
+    if (id >= 16 || p.slice_roots[id] == 0 || p.slice_roots[id] > 16 ||
+        p.slice_roots[id] as usize > p.arrays.count) { return .err(errors::make(3, offset)); }
+    return emit(p, 57, id, 0, offset);
 }

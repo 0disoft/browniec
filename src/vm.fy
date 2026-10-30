@@ -54,7 +54,7 @@ fn Result<i64, errors::Error> execute(ref ir::Program p, usize fuel,
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
-        if (op >= 54 && op <= 56) {
+        if (op >= 54 && op <= 57) {
             let usize base = frame * 128;
             remaining = slices::step(p, pc, frame, loans, arrays, payload,
                 ref mut registers[base..base + 128], remaining)?;

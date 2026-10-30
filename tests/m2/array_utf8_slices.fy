@@ -52,7 +52,7 @@ fn void unavailable_escapes_mutation_and_scalar_uses_fail_before_verification() 
     rejected(b"module main;fn i32 main(){var u8[1] a=[65;1];let ref u8[] p=ref a;a=[0;1];return 42;}");
     rejected(b"module main;fn i32 main(){var u8[1] a=[65;1];let u8[1] b=[0;1];let ref u8[] p=ref a;a=b;return 42;}");
     rejected(b"module main;fn i32 main(){let u8[1] a=[65;1];let ref u8[] p=ref a;let i32 n=p;return 42;}");
-    rejected(b"module main;fn i32 main(){let u8[1] a=[65;1];let ref u8[] p=ref a;let usize n=p.len;return 42;}");
+    rejected(b"module main;fn i32 main(){let u8[1] a=[65;1];let ref u8[] p=ref a;let usize n=p.capacity;return 42;}");
     rejected(b"module main;fn i32 main(){let u8[1] a=[65;1];let ref u8[] p=ref a;let u8 n=p[0];return 42;}");
     rejected(b"module main;fn i32 main(){let u8[1] a=[65;1];var ref u8[] p=ref a;return 42;}");
     rejected(b"module main;fn i32 main(){let u8[1] a=[65;1];let ref u8[] p=ref a;let ref u8[] q=ref p;return 42;}");

@@ -59,7 +59,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
-        if (op < 1 || op > 56 || (op != 52 && ((op!=24 && op!=47 && op!=49 && op!=53 && p.code[at + 4] != 0) ||
+        if (op < 1 || op > 57 || (op != 52 && ((op!=24 && op!=47 && op!=49 && op!=53 && p.code[at + 4] != 0) ||
             (op!=47 && p.code[at + 5] != 0) || p.code[at + 6] != 0 || p.code[at + 7] != 0))) { return .err(errors::make(5, pc)); }
         if (op==25) {
             if(dst!=0 || a!=0 || b!=0) {return .err(errors::make(5,pc));}

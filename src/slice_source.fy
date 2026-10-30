@@ -45,3 +45,12 @@ pub fn Result<usize, errors::Error> predicate(ref u8[] source, ref mut lexer::St
     let usize close = lexer::next(source, s)?;
     return ir::slice_utf8(p, names.registers[index] - 160, at);
 }
+
+pub fn Result<usize, errors::Error> member(ref u8[] source, ref mut lexer::State s,
+    ref mut ir::Program p, usize site, usize at) {
+    if (s.kind != 46) { return .err(errors::make(3, at)); }
+    let usize dot = lexer::next(source, s)?;
+    if (s.kind != 2 || !lexer::equal(source[s.begin..s.end], b"len")) { return .err(errors::make(3, s.begin)); }
+    let usize name = lexer::next(source, s)?;
+    return ir::slice_length(p, site, at);
+}

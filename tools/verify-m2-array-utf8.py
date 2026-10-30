@@ -114,7 +114,7 @@ def main():
         sentinels.extend([
             ('module main;fn i32 main(){let u8[1] a=[65;1];if(text::valid_utf8(a)){return 42;}return 0;}', None),
             ('module main;fn u8[1] make(){return [65;1];}fn i32 main(){if(text::valid_utf8(make()) && text::valid_utf8([0;1])){return 42;}return 0;}', None),
-            ('module main;fn i32 main(){let u8[1] a=[65;1];let ref u8[] v=ref a;let usize n=v.len;return 42;}', 'type'),
+            ('module main;fn i32 main(){let u8[1] a=[65;1];let ref u8[] v=ref a;let usize n=v.capacity;return 42;}', 'type'),
         ])
     if args.dynamic_vm:
         sentinels.extend([
