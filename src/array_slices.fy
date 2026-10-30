@@ -5,6 +5,11 @@ import array_owners as owners;
 pub struct Ticket { usize slot; usize generation; }
 pub struct Slot { usize generation; bool live; owners::View view; owners::ReadLease lease; }
 pub struct Pool { Slot[16] slots; }
+// Private call-entry batch. Every result is an independent retained range ticket.
+pub struct Arguments { Ticket[8] tickets; usize count; }
+pub fn Arguments empty_arguments() {
+    return Arguments { .tickets = [Ticket { .slot = 16, .generation = 0 }; 8], .count = 0 };
+}
 
 fn Slot fresh() {
     let owners::Token none = owners::Token { .slot = 16, .generation = 0 };
@@ -135,5 +140,63 @@ pub fn Result<usize, owners::Error> clear(ref mut Pool pool, ref mut owners::Tab
     }
     pool.slots = planned.slots;
     table.slots = planned_table.slots;
+    return .ok(count);
+}
+
+// Validate every caller ticket against the original pool before staging children.
+// A fabricated later argument must not become valid through earlier publication.
+pub fn Result<Arguments, owners::Error> borrow_arguments(ref mut Pool pool,
+    ref Ticket[] sources, ref owners::Table table, usize capacity) {
+    if (sources.len > 8) { return .err(.Length); }
+    let usize checked = validate(pool, table, capacity)?;
+    var usize[8] lengths = [0; 8];
+    var usize i = 0;
+    while (i < sources.len) { lengths[i] = length(pool, sources[i], table, capacity)?; i += 1; }
+    var Pool planned = Pool { .slots = pool.slots };
+    var Arguments result = empty_arguments();
+    i = 0;
+    while (i < sources.len) {
+        let Ticket child = subslice(ref mut planned, sources[i], table, 0, lengths[i], capacity)?;
+        result.tickets[i] = child;
+        i += 1;
+    }
+    let usize count = sources.len;
+    result.count = count;
+    pool.slots = planned.slots;
+    return .ok(result);
+}
+
+// Consume only the batch's handles in reverse order, staging all metadata first.
+// Caller/peer handles survive; a late failure leaves the batch and tables intact.
+pub fn Result<usize, owners::Error> close_arguments(ref mut Pool pool,
+    ref mut Arguments arguments, ref mut owners::Table table, usize capacity) {
+    if (arguments.count > 8) { return .err(.Length); }
+    var usize i = 0;
+    while (i < 8) {
+        let Ticket ticket = arguments.tickets[i];
+        if (i < arguments.count) {
+            if (ticket.slot >= 16 || ticket.generation == 0) { return .err(.Token); }
+            var usize j = 0;
+            while (j < i) {
+                if (arguments.tickets[j].slot == ticket.slot) { return .err(.State); }
+                j += 1;
+            }
+        } else if (ticket.slot != 16 || ticket.generation != 0) { return .err(.State); }
+        i += 1;
+    }
+    let usize checked = validate(pool, table, capacity)?;
+    var Pool planned = Pool { .slots = pool.slots };
+    var owners::Table planned_table = owners::Table { .slots = table.slots,
+        .order = table.order, .depth = table.depth, .arena = table.arena };
+    let usize count = arguments.count;
+    i = count;
+    while (i > 0) {
+        i -= 1;
+        let usize closed = close(ref mut planned, arguments.tickets[i], ref mut planned_table, capacity)?;
+    }
+    pool.slots = planned.slots;
+    table.slots = planned_table.slots;
+    arguments.tickets = [Ticket { .slot = 16, .generation = 0 }; 8];
+    arguments.count = 0;
     return .ok(count);
 }
