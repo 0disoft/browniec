@@ -1,5 +1,15 @@
 # Roadmap
 
+- Private borrowed slice instruction builders: implemented at `d001a75`.
+  Existing UTF-8, length, read, close and subslice helpers now construct typed IR
+  for rootless u8 formal/derived sites. Shape checks require one same-function
+  formal; subslices require a derived destination and matching origin/function.
+  Validation and capacity failures preserve IR. Owned-root open remains private
+  to owned sites, and the core execution gate remains unchanged. No guest syntax,
+  VM dispatch, Fuel or capability is enabled. Development and release each passed
+  19 native groups and 252 tool-free CLI invocations.
+  See [the instruction builder contract](../engineering/m2-array-slice-borrow-ir.md).
+
 - Private borrow-aware slice IR builders: implemented at `d776d1d`.
   Owned, formal and derived sites share one collision-free sixteen-site lookup.
   Formal declarations reserve non-scalar positions; derived declarations flatten

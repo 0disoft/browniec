@@ -4,6 +4,8 @@ Implementation: `d776d1d`. This checkpoint adds construction
 helpers for the [borrowed parameter metadata](m2-array-slice-parameters.md).
 It does not enable guest slice signatures, borrowed VM instructions or CALL
 execution. The existing verifier gate remains in place.
+The [instruction-builder successor](m2-array-slice-borrow-ir.md) adds rootless
+UTF-8, length, read, close and subslice emission behind the same gate.
 
 ## Shared site reservation
 
@@ -53,8 +55,7 @@ offset. The helper is read-only and emits no CALL or runtime borrow.
 Existing CALL builders can store these bytes, but this checkpoint does not
 change their arity/signature validation or general failure-publication contract.
 The core verifier continues rejecting declared borrowed formals before VM
-allocation, Fuel preparation or dispatch. Source syntax, borrowed slice
-open/read/close/subslice instruction builders, frame integration, mixed owned
+allocation, Fuel preparation or dispatch. Source syntax, borrowed-root open, frame integration, mixed owned
 and borrowed argument transactions, forwarding/recursion execution and metering
 remain pending. Slice results remain unavailable. No capability or Fuel price
 changes.
