@@ -1,5 +1,15 @@
 # Brownie C
 
+- Private borrow-aware slice IR builders: implemented at `d776d1d`.
+  Owned, formal and derived sites share one collision-free sixteen-site lookup.
+  Formal declarations reserve non-scalar positions; derived declarations flatten
+  origins to the same-function formal. Checked live argument helpers return the
+  existing CALL-table encoding. Admission failures preserve prior declarations.
+  The execution gate remains; guest signatures, borrowed instruction lowering,
+  VM CALL/frame transactions and metering are pending. No capability changes.
+  Development and release each passed 15 native groups and 252 tool-free CLI
+  invocations. See [the builder contract](docs/engineering/m2-array-slice-builders.md).
+
 - Private borrowed slice parameter origins: implemented at `3f678ca`.
   Bounded formal-position, formal/derived origin and function metadata share the
   existing sixteen slice sites, with exclusive parameter kinds and independent

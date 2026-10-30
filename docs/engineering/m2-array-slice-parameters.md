@@ -65,12 +65,12 @@ so prospective metadata cannot be ignored by the old runtime.
 The source parser still rejects slice parameters/results and publishes no new
 capability. No borrowed instruction, source signature lowering, dynamic runtime
 origin, frame admission, CALL mutation, result escape or metering is implemented
-here. Borrow-aware IR declaration/site builders are also pending. The
-[atomic argument batches](m2-array-slice-arguments.md) remain the native
+here. The [builder successor](m2-array-slice-builders.md) adds shared site reservation,
+formal/derived declarations and checked argument encoding while retaining the
+execution gate. The [atomic argument batches](m2-array-slice-arguments.md) remain the native
 storage foundation for a future combined call transaction.
 
-Next integration must reserve site IDs across both owned and borrowed metadata,
-initialize callee origins from retained runtime tickets,
+Next integration must initialize callee origins from retained runtime tickets,
 combine mixed owned copies and borrowed batches before publishing frame state,
 verify borrowed control flow and cleanup, and prepay normal/error cleanup work.
 The execution gate must remain until those paths are implemented and verified.
