@@ -27,7 +27,8 @@ unrelated variable previously used as a bound cannot change the selected length.
 It does not end a borrow; root writes remain blocked until lexical cleanup.
 Existing scope, return/question/break/continue cleanup is unchanged.
 
-Slice indexing, reslicing, aliases, parameters/results as slices, mutable slices
+The [indexing successor](m2-array-slice-index.md) adds checked scalar reads.
+Reslicing, aliases, parameters/results as slices, mutable slices
 and borrowing temporaries remain unavailable. Unknown members are type errors.
 Calling `.len()` or appending another suffix is rejected by the existing grammar.
 There is no implicit narrowing from usize to u32/i32. Ordinary array `.len` still

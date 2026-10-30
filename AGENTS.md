@@ -1,5 +1,15 @@
 # AGENTS.md
 
+- Checked read-only slice indexing: implemented at `b7eda85` on VM foundation
+  `74ce29c`. `part[index]` evaluates an ordinary usize index once and returns a
+  fresh u8 snapshot. Private opcode 58 validates the active origin, ticket,
+  session, range, backing and selected-length bound before publication. Reads
+  preserve lexical loans and prepay 4131 Fuel for u8; existing prices stay
+  unchanged. Version JSON adds `array_slice_index: true`. Development and
+  release each passed 27 native groups and 546 tool-free CLI invocations.
+  Reslicing, aliases, slice parameters/results, mutable slices and temporary
+  roots remain unavailable. See [the indexing contract](docs/engineering/m2-array-slice-index.md).
+
 - Checked slice length: implemented at `f56e4aa`.
   `part.len` returns a fresh usize byte count through private opcode 57, after
   active origin/ticket/session/range/backing validation, including empty ranges.
@@ -7,7 +17,7 @@
   and preserves root loans. Existing cleanup and ordinary array length prices
   are unchanged. Version JSON adds `array_slice_length: true`. Development and
   release each passed 21 native groups and 360 tool-free CLI invocations.
-  Slice indexing, reslicing, aliases, slice parameters/results and temporary
+  Reslicing, aliases, slice parameters/results and temporary
   roots remain unavailable. See [the length contract](docs/engineering/m2-array-slice-length.md).
 
 - Lexical read-only u8 slices: implemented at `718ab34`.
@@ -18,8 +28,8 @@
   Borrowed-root writes/fills/assignments are source type errors; reads/copies
   remain allowed. No payload copy, extra owner, opcode or Fuel schedule is added.
   Version JSON adds `array_utf8_slices: true`. Development and release each
-  passed 29 native groups and 762 tool-free CLI invocations. Slice indexing,
-  length, reslicing, aliases, parameters/results and borrowing temporaries remain
+  passed 29 native groups and 762 tool-free CLI invocations. Reslicing,
+  aliases, parameters/results and borrowing temporaries remain
   unavailable. Sixteen static sites and 64 lexical entries remain bounded.
   See [the source slice contract](docs/engineering/m2-array-utf8-slices.md).
 

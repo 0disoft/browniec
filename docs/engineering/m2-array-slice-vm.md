@@ -2,8 +2,10 @@
 
 The [source successor](m2-array-utf8-slices.md) now exposes lexical read-only
 u8 slice bindings and UTF-8 scans with reverse-order scope/exit cleanup. Guest
-indexing, length, reslicing, aliases, parameters/results and temporary roots
-remain unavailable. The private backend contract below is unchanged.
+length and indexing are covered by [checked lengths](m2-array-slice-length.md)
+and [checked reads](m2-array-slice-index.md). Reslicing, aliases,
+parameters/results and temporary roots remain unavailable. The private backend
+contract below records the earlier open/scan/close instruction set.
 
 Implementation: `272f359`.
 
