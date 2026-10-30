@@ -30,6 +30,7 @@ import std::num as num;
 // 54 slice open: dst=slice ID,a=start usize register,b=end usize register.
 // 55 slice UTF-8: bool dst,a=slice ID,b=0. 56 slice close: dst=slice ID,a=b=0.
 // 57 slice length: fresh usize dst,a=live slice ID,b=0.
+// 58 slice read: fresh element dst,a=live slice ID,b=usize index register.
 // 53 register UTF-8 range: bool dst,a=array,b=start usize register,byte4=end register;5..7=0.
 pub struct Program {
     u8[2048] code;
@@ -388,4 +389,15 @@ pub fn Result<usize, errors::Error> slice_length(ref mut Program p, usize id, us
     if (id >= 16 || p.slice_roots[id] == 0 || p.slice_roots[id] > 16 ||
         p.slice_roots[id] as usize > p.arrays.count) { return .err(errors::make(3, offset)); }
     return emit(p, 57, id, 0, offset);
+}
+
+pub fn Result<usize, errors::Error> slice_read(ref mut Program p, usize id, usize index, usize offset) {
+    if (id >= 16 || p.slice_roots[id] == 0 || p.slice_roots[id] > 16 ||
+        p.slice_roots[id] as usize > p.arrays.count || index >= 128 || index >= p.registers ||
+        p.types[index] != 12 || p.slots[index] || p.array_parameters[index] != 0 ||
+        p.record_parameters[index] != 0) { return .err(errors::make(3, offset)); }
+    let u8 element = p.arrays.elements[(p.slice_roots[id] as usize) - 1];
+    let usize dst = emit(p, 58, id, index, offset)?;
+    p.types[dst] = element;
+    return .ok(dst);
 }

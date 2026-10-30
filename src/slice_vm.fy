@@ -23,15 +23,17 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, usize pc, usize fram
     let usize dst = p.code[at + 1] as usize;
     let usize a = p.code[at + 2] as usize;
     let usize b = p.code[at + 3] as usize;
-    let usize id = if (op == 55 || op == 57) { a } else { dst };
-    if (op < 54 || op > 57 || frame >= 32 || id >= 16 || p.slice_roots[id] == 0 ||
+    let usize id = if (op == 55 || op == 57 || op == 58) { a } else { dst };
+    if (op < 54 || op > 58 || frame >= 32 || id >= 16 || p.slice_roots[id] == 0 ||
         p.code[at+4] != 0 || p.code[at+5] != 0 || p.code[at+6] != 0 || p.code[at+7] != 0) { return .err(errors::make(5, offset)); }
     let usize root = (p.slice_roots[id] as usize) - 1;
     if (root >= 16 || root >= p.arrays.count || p.arrays.lengths[root] == 0 || p.arrays.lengths[root] > 4096 ||
         (op == 54 && (a >= registers.len || b >= registers.len)) ||
         ((op == 55 || op == 57) && (dst >= registers.len || b != 0 || (op == 55 && p.arrays.elements[root] != 10))) ||
+        (op == 58 && (dst >= registers.len || b >= registers.len)) ||
         (op == 56 && (a != 0 || b != 0))) { return .err(errors::make(5, offset)); }
-    let usize cost = if (op == 54) { 65537 } else if (op == 55) { 4097 + 4 * p.arrays.lengths[root] } else { 4097 };
+    let usize cost = if (op == 54) { 65537 } else if (op == 55) { 4097 + 4 * p.arrays.lengths[root] }
+        else if (op == 58) { 4097 + arrays::cost(ref p.arrays, 35, root, offset)? } else { 4097 };
     if (fuel < cost) { return .err(errors::make(8, offset)); }
     let usize slot = frame * 16 + id;
     let ref u8[] data = bytes::view(buffer);
@@ -61,6 +63,12 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, usize pc, usize fram
                 case .ok(v): { v } case .err(e): { return .err(arrays::failure(e, offset)); }
             };
             registers[dst] = if (valid) { 1 } else { 0 };
+        } else if (op == 58) {
+            let usize index = cells::unpack(registers[b], offset)?;
+            let i64 value = switch (slices::read(ref state.pool, ticket, ref arrays.owners, index, data)) {
+                case .ok(v): { v } case .err(e): { return .err(arrays::failure(e, offset)); }
+            };
+            registers[dst] = value;
         } else if (op == 57) {
             let usize length = switch (slices::length(ref state.pool, ticket, ref arrays.owners, data.len)) {
                 case .ok(v): { v } case .err(e): { return .err(arrays::failure(e, offset)); }
