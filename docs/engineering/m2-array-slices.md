@@ -1,5 +1,10 @@
 # Private shared read-only array slices
 
+The [source successor](m2-array-utf8-slices.md) now exposes lexical read-only
+u8 slice bindings and UTF-8 scans with reverse-order scope/exit cleanup. Guest
+indexing, length, reslicing, aliases, parameters/results and temporary roots
+remain unavailable. The private backend contract below is unchanged.
+
 The [private VM successor](m2-array-slice-vm.md) now adds verified origins,
 open/UTF-8/close instructions, metering and whole-invocation cleanup on VM
 success/error. Guest syntax and automatic lexical lowering remain pending.

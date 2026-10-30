@@ -1,5 +1,18 @@
 # Validation
 
+- Lexical read-only u8 slices: implemented at `718ab34`.
+  `let ref u8[] part = ref bytes[start + 1..bytes.len];` supports named u8
+  locals/parameters/results and `text::valid_utf8(part)`. Ordinary usize bounds
+  evaluate before publication. Reverse-order cleanup closes loans on block,
+  value-arm and return/question/break/continue exits, including aggregate returns.
+  Borrowed-root writes/fills/assignments are source type errors; reads/copies
+  remain allowed. No payload copy, extra owner, opcode or Fuel schedule is added.
+  Version JSON adds `array_utf8_slices: true`. Development and release each
+  passed 29 native groups and 762 tool-free CLI invocations. Slice indexing,
+  length, reslicing, aliases, parameters/results and borrowing temporaries remain
+  unavailable. Sixteen static sites and 64 lexical entries remain bounded.
+  See [the source slice contract](docs/engineering/m2-array-utf8-slices.md).
+
 - Private metered slice VM: implemented at `272f359`.
   Opcodes 54/55/56 open, scan and close function-local slice sites. Independent
   verification tracks exact live sets through branches/backedges and blocks

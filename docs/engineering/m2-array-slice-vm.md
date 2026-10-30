@@ -1,5 +1,10 @@
 # Private metered array slice instructions
 
+The [source successor](m2-array-utf8-slices.md) now exposes lexical read-only
+u8 slice bindings and UTF-8 scans with reverse-order scope/exit cleanup. Guest
+indexing, length, reslicing, aliases, parameters/results and temporary roots
+remain unavailable. The private backend contract below is unchanged.
+
 Implementation: `272f359`.
 
 The private IR/VM now connects the [shared slice registry](m2-array-slices.md)
