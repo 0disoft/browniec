@@ -1,5 +1,10 @@
 # Lexical read-only u8 slice bindings
 
+The [checked length successor](m2-array-slice-length.md) now supports `.len`
+as an ordinary usize value while preserving each root loan. Indexing, reslicing,
+aliases, slice parameters/results and temporary roots remain unavailable. The
+source checkpoint below records the earlier UTF-8-only consumer set.
+
 Implementation: `718ab34`.
 
 Brownie source now supports immutable local `ref u8[]` bindings over named live

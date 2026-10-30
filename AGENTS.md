@@ -1,5 +1,15 @@
 # AGENTS.md
 
+- Checked slice length: implemented at `f56e4aa`.
+  `part.len` returns a fresh usize byte count through private opcode 57, after
+  active origin/ticket/session/range/backing validation, including empty ranges.
+  The getter prepays 4097 Fuel, does not scan/copy payload or reexecute bounds,
+  and preserves root loans. Existing cleanup and ordinary array length prices
+  are unchanged. Version JSON adds `array_slice_length: true`. Development and
+  release each passed 21 native groups and 360 tool-free CLI invocations.
+  Slice indexing, reslicing, aliases, slice parameters/results and temporary
+  roots remain unavailable. See [the length contract](docs/engineering/m2-array-slice-length.md).
+
 - Lexical read-only u8 slices: implemented at `718ab34`.
   `let ref u8[] part = ref bytes[start + 1..bytes.len];` supports named u8
   locals/parameters/results and `text::valid_utf8(part)`. Ordinary usize bounds
