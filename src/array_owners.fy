@@ -145,6 +145,11 @@ pub fn Result<bool, Error> leased_utf8(ref Table table, ReadLease lease, ref Vie
     if (view.root.slot != lease.root.slot || view.root.generation != lease.root.generation) { return .err(.Token); }
     return view_utf8(table, view, bytes);
 }
+pub fn Result<usize, Error> leased_length(ref Table table, ReadLease lease, ref View view, usize capacity) {
+    let Owner owner = resolve_read(table, lease, capacity)?;
+    if (view.root.slot != lease.root.slot || view.root.generation != lease.root.generation) { return .err(.Token); }
+    return view_length(table, view, capacity);
+}
 fn Result<usize, Error> free_slot(ref Table table) {
     var usize i = 0;
     while (i < 16) {
