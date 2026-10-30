@@ -24,15 +24,17 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, usize pc, usize fram
     let usize a = p.code[at + 2] as usize;
     let usize b = p.code[at + 3] as usize;
     let usize id = if (op == 55 || op == 57 || op == 58) { a } else { dst };
-    if (op < 54 || op > 58 || frame >= 32 || id >= 16 || p.slice_roots[id] == 0 ||
-        p.code[at+4] != 0 || p.code[at+5] != 0 || p.code[at+6] != 0 || p.code[at+7] != 0) { return .err(errors::make(5, offset)); }
+    if (op < 54 || op > 59 || frame >= 32 || id >= 16 || p.slice_roots[id] == 0 ||
+        (op != 59 && p.code[at+4] != 0) || p.code[at+5] != 0 || p.code[at+6] != 0 || p.code[at+7] != 0) { return .err(errors::make(5, offset)); }
     let usize root = (p.slice_roots[id] as usize) - 1;
     if (root >= 16 || root >= p.arrays.count || p.arrays.lengths[root] == 0 || p.arrays.lengths[root] > 4096 ||
         (op == 54 && (a >= registers.len || b >= registers.len)) ||
         ((op == 55 || op == 57) && (dst >= registers.len || b != 0 || (op == 55 && p.arrays.elements[root] != 10))) ||
         (op == 58 && (dst >= registers.len || b >= registers.len)) ||
+        (op == 59 && (a >= 16 || p.slice_roots[a] != p.slice_roots[id] || b >= registers.len ||
+            p.code[at+4] as usize >= registers.len)) ||
         (op == 56 && (a != 0 || b != 0))) { return .err(errors::make(5, offset)); }
-    let usize cost = if (op == 54) { 65537 } else if (op == 55) { 4097 + 4 * p.arrays.lengths[root] }
+    let usize cost = if (op == 54 || op == 59) { 65537 } else if (op == 55) { 4097 + 4 * p.arrays.lengths[root] }
         else if (op == 58) { 4097 + arrays::cost(ref p.arrays, 35, root, offset)? } else { 4097 };
     if (fuel < cost) { return .err(errors::make(8, offset)); }
     let usize slot = frame * 16 + id;
@@ -52,13 +54,21 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, usize pc, usize fram
         };
         state.tickets[slot] = opened;
     } else {
-        let slices::Ticket ticket = state.tickets[slot];
+        if (op == 59 && state.tickets[slot].generation != 0) { return .err(errors::make(5, offset)); }
+        let slices::Ticket ticket = state.tickets[if (op == 59) { frame * 16 + a } else { slot }];
         if (ticket.slot >= 16 || ticket.generation == 0) { return .err(errors::make(5, offset)); }
         let slices::Slot entry = state.pool.slots[ticket.slot];
         let owners::Token token = arrays.tokens[frame * 16 + root];
         if (entry.view.root.slot != token.slot || entry.view.root.generation != token.generation ||
             entry.view.element != p.arrays.elements[root] || entry.view.length != p.arrays.lengths[root]) { return .err(errors::make(5, offset)); }
-        if (op == 55) {
+        if (op == 59) {
+            let usize start = cells::unpack(registers[b], offset)?;
+            let usize end = cells::unpack(registers[p.code[at+4] as usize], offset)?;
+            let slices::Ticket child = switch (slices::subslice(ref mut state.pool, ticket, ref arrays.owners, start, end, data.len)) {
+                case .ok(v): { v } case .err(e): { return .err(arrays::failure(e, offset)); }
+            };
+            state.tickets[slot] = child;
+        } else if (op == 55) {
             let bool valid = switch (slices::utf8(ref state.pool, ticket, ref arrays.owners, data)) {
                 case .ok(v): { v } case .err(e): { return .err(arrays::failure(e, offset)); }
             };

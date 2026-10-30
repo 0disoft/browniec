@@ -32,6 +32,13 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, usize pc, usize f,
     let usize one = 1;
     let usize mask = one << (32 + id);
     if ((live & (one << root)) == 0) { return .err(errors::make(5, pc)); }
+    if (op == 59) {
+        let usize end = p.code[at + 4] as usize;
+        if ((live & mask) != 0 || a >= 16 || p.slice_roots[a] != p.slice_roots[id] ||
+            (live & (one << (32 + a))) == 0 || !readable(p, defined, b, f) ||
+            !readable(p, defined, end, f)) { return .err(errors::make(5, pc)); }
+        return .ok(live | mask);
+    }
     if (op == 54) {
         if ((live & mask) != 0 || !readable(p, defined, a, f) || !readable(p, defined, b, f)) { return .err(errors::make(5, pc)); }
         return .ok(live | mask);
