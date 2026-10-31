@@ -4,15 +4,14 @@ Implementation: `8278682`. Source lowering now accepts read-only
 `ref u8[]` parameters and explicit `ref name` arguments naming existing lexical
 slices. It produces prospective private IR using the existing
 [borrowed instruction builders](m2-array-slice-borrow-ir.md).
-The core verifier gate is unchanged: any borrowed signature, even in an unused
-function, still makes CLI `check` and `run` fail with verification kind 5
-(CLI exit 6). This checkpoint does not enable executable borrowed calls or
-advertise a version capability.
+The initial source-only checkpoint retained an execution gate. The later
+[public parameter promotion](m2-array-slice-parameters-public.md) removes that
+temporary rejection after metered CALL, dynamic roots and cleanup integration.
+Version JSON now reports `array_slice_parameters: true`.
 
 ## Source forms and limits
 
-The compiler can lower this example, but the CLI deliberately refuses to verify
-or execute it until the runtime and borrow-aware verifier are integrated:
+The compiler and public VM now admit this example with an explicit Fuel budget:
 
 ```c
 module main;
@@ -71,19 +70,14 @@ at the call site. Existing argument evaluation/capture order is unchanged.
 
 ## Execution boundary and remaining work
 
-The source API `compiler.compile` may return prospective borrowed IR, while the
-independent verifier and all VM entry points reject it. This is intentional and
-also applies when `main` never calls the borrowed function. Tests use zero Fuel
-and zero array quota to verify rejection before runtime admission. CLI checks
-also exercise a main-body division by zero that must never dispatch.
+The initial `8278682` checkpoint produced prospective IR and rejected execution.
+The [public successor](m2-array-slice-parameters-public.md) now admits it after the
+same full metadata and control-flow proof used by inspection. Well-formed unused
+helper signatures are allowed. Invalid IR still fails before Fuel or backing
+admission; valid programs reach their actual runtime outcome.
 
-Borrow-aware per-PC control-flow validation, dynamic callee origins, retained
-argument tickets, failure-safe mixed owned/borrowed frame admission, recursive
-frame cleanup and metering remain pending. Forwarding and recursion are source
-lowering cases, not successful runtime invocations. The gate must remain until
-those paths are implemented and independently verified. The
-[flow-inspection successor](m2-array-slice-borrow-flow.md) adds shared independent
-per-PC borrow validation while retaining execution rejection.
+The historical source-only receipt below remains unchanged. Its gate-specific
+expectations are historical; current verification uses the promoted CLI matrix.
 
 No opcode, Fuel price, Program/frame field, runtime owner or payload-copy path
 is added. The signature scratch table gains 128 boolean entries; native layout,

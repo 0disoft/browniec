@@ -4,8 +4,9 @@ Implemented at `eb8fcdd`. Development and release each passed five native
 groups and 2,541 CLI invocations, with 372 matching input hashes and retained
 CLI identities. The public [VM wrapper](../../src/vm.fy) still calls
 execution verification before preparing backing or entering the shared
-[execution core](../../src/vm_execution.fy). Borrowed signatures remain rejected
-by public VM entry points and CLI check/run. No source capability is enabled.
+[execution core](../../src/vm_execution.fy). At the original checkpoint borrowed signatures remained rejected. The later
+[public promotion](m2-array-slice-parameters-public.md) now admits them after the
+same complete proof; the historical lifecycle receipt stays unchanged.
 
 ## Shared execution and normal return
 
@@ -62,7 +63,8 @@ slices, frame reuse, array/record returns, `?`, while/for break/continue, nested
 division failure, overflow, bounds, Fuel exhaustion, and failed cleanup followed
 by explicit test repair. Successful returns leave no live loan or root binding;
 failed executions are drained while preserving the original error and offset.
-Public rejection is asserted separately for every fixture.
+The original tests asserted public rejection. Current tests also execute every
+fixture through the public wrapper after the admission promotion.
 
 Native fixtures provision backing separately and supply execution-only Fuel.
 They do not demonstrate public borrowed-source admission or promote a new CLI
@@ -73,4 +75,4 @@ records actual outcomes, input and retained image hashes, commands and limits.
 
 Full native suites, other M2 matrices, M0, Linux, isolation, packaging and timing
 were not rerun. Public gate promotion, capability reporting and borrowed CLI
-conformance remain a separate follow-up.
+conformance are now covered by the [public successor](m2-array-slice-parameters-public.md).

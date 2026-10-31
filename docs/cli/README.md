@@ -4,6 +4,11 @@
 - Native runtime intent: direct .brc source execution
 - Contract owner: docs/cli/command-contract.md
 
+Readonly `ref u8[]` parameters and explicit ref-name calls are now available
+through the [public parameter contract](../engineering/m2-array-slice-parameters-public.md).
+Use an explicit Fuel budget for array/slice programs; default Fuel remains 256.
+Version JSON reports `array_slice_parameters: true`.
+
 ## Boundary
 
 The CLI is the developer-facing route to the Brownie compiler, verifier, and native

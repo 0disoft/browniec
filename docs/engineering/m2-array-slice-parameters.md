@@ -1,5 +1,9 @@
 # Private borrowed slice parameter origins
 
+Admission update: the [public successor](m2-array-slice-parameters-public.md)
+now enables verified readonly u8 slice calls. Gate-rejection statements below
+refer to the original private checkpoint and its historical receipts.
+
 Implementation: `3f678ca`. This checkpoint prepares the IR and
 independent verifier for readonly u8 slice parameters. Source syntax, VM CALL
 execution, opcode/Fuel schedules and version capabilities are unchanged.

@@ -13,6 +13,12 @@ evaluation. These are starting workloads, not proven market requirements.
 The native VM reads .brc source. Running a program must not start Go, MSVC, a C
 compiler, an interpreter subprocess, or a disk bytecode runtime.
 
+The implemented readonly u8 slice parameter increment is described in the
+[public VM/CLI contract](../engineering/m2-array-slice-parameters-public.md).
+It enables explicit ref-name calls after full borrow-aware validation while
+retaining the existing profiles and Fuel limits; mutable/non-u8 slices and slice
+results remain unavailable.
+
 ## First source profile
 
 The initial storage and value types are:

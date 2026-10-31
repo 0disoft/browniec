@@ -6,8 +6,9 @@ CLI identities.
 
 The [CALL adapter](../../src/call_frame_vm.fy) connects the executable VM's
 CALL opcode to [mixed owned/borrowed admission](m2-array-mixed-call-vm.md).
-Public execution still rejects borrowed signatures before backing preparation
-or dispatch. This slice does not enable borrowed guest execution.
+The original slice kept borrowed public execution gated. The later
+[public promotion](m2-array-slice-parameters-public.md) now admits verified
+borrowed signatures through this same CALL boundary.
 
 ## Transaction boundary
 
@@ -67,5 +68,5 @@ performance are outside this focused selection.
 
 The [shared lifecycle successor](m2-array-slice-lifecycle-vm.md) connects dynamic
 slice instructions and automatic normal/error cleanup, including native question
-propagation and loop-transfer cases. Public borrowed execution remains gated;
-public admission and CLI conformance are a separate follow-up.
+propagation and loop-transfer cases. Public admission and CLI conformance are covered by the
+[public promotion](m2-array-slice-parameters-public.md).

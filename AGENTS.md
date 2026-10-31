@@ -1,5 +1,16 @@
 # AGENTS.md
 
+- Public readonly u8 slice parameters: implemented at `6a7d206`.
+  Public VM and CLI now admit verified `ref u8[]` signatures and explicit
+  ref-name arguments. Full metadata/type/flow/lifetime validation remains;
+  version JSON adds `array_slice_parameters: true`. Existing profiles, schemas,
+  instruction prices and CLI Fuel limits are unchanged. Public calls use the
+  shared metered CALL, dynamic slice dispatch and normal/error cleanup.
+  Development and release each passed eleven native groups and 2,605 CLI cases,
+  with 373 matching input hashes and retained CLI identities. Full native suites
+  and Linux were not rerun.
+  See [the public parameter contract](docs/engineering/m2-array-slice-parameters-public.md).
+
 - Shared VM slice lifecycle: implemented at `eb8fcdd`.
   The shared execution loop tracks function/frame context, uses dynamic slice
   dispatch, and cleans borrowed roots before scalar/array/record returns.

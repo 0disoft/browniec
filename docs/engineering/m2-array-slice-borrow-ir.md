@@ -1,5 +1,9 @@
 # Private borrowed slice instruction builders
 
+Admission update: the [public successor](m2-array-slice-parameters-public.md)
+now enables verified readonly u8 slice calls. Gate-rejection statements below
+refer to the original private checkpoint and its historical receipts.
+
 Implementation: `d001a75`. This checkpoint extends the existing
 slice instruction builders to rootless u8 formal and derived sites declared by
 the [borrow-aware IR builders](m2-array-slice-builders.md). The independent core

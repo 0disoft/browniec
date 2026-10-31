@@ -26,7 +26,10 @@ its [named-array](../engineering/m2-array-utf8-ranges.md),
 [temporary-array](../engineering/m2-array-utf8-temporary-ranges.md) and
 [open-ended](../engineering/m2-array-utf8-open-ranges.md) range forms),
 and [helper-local records](../engineering/m2-struct-function-source.md)
-are implemented. Project, input-byte, policy, catalog, inspect, and worker options
+are implemented, as are [readonly u8 slice parameters](../engineering/m2-array-slice-parameters-public.md)
+with explicit ref-name arguments. Version JSON adds `array_slice_parameters: true`;
+profile names, result fields and Fuel limits are unchanged. Project, input-byte,
+policy, catalog, inspect, and worker options
 remain unavailable. `--isolated` returns an availability denial, with no fallback.
 
 ## Execution rules

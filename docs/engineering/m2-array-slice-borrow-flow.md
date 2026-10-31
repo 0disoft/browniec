@@ -1,5 +1,9 @@
 # Independent borrowed slice control-flow inspection
 
+Admission update: the [public successor](m2-array-slice-parameters-public.md)
+now enables verified readonly u8 slice calls. Gate-rejection statements below
+refer to the original private checkpoint and its historical receipts.
+
 Implementation: `b6b5525`. The shared private IR verifier now
 checks borrowed formal/derived slice dataflow through `verifier.inspect`.
 This is an inspection result, not an execution permit. `verifier.verify`, CLI

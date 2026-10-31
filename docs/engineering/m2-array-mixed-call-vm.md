@@ -1,5 +1,9 @@
 # M2 Private Mixed Borrowed/Owned Call Transaction
 
+Admission update: the [public successor](m2-array-slice-parameters-public.md)
+now enables verified readonly u8 slice calls. Gate-rejection statements below
+refer to the original private checkpoint and its historical receipts.
+
 - Status: implemented at `6282245`; verified within the focused scopes below.
 - Scope: CALL (9) admission for owned arrays/records together with borrowed
   u8 slices.

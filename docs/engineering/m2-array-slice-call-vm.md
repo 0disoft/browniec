@@ -1,5 +1,9 @@
 # Private metered borrowed-frame adapter
 
+Admission update: the [public successor](m2-array-slice-parameters-public.md)
+now enables verified readonly u8 slice calls. Gate-rejection statements below
+refer to the original private checkpoint and its historical receipts.
+
 Implementation: `c70abfa`. `slice_call_vm` adds prospective native
 CALL admission and frame cleanup for borrowed u8 slices. It uses Programs that
 passed [independent flow inspection](m2-array-slice-borrow-flow.md). Admission is now

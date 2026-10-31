@@ -1,5 +1,9 @@
 # Private dynamic slice instruction adapter
 
+Admission update: the [public successor](m2-array-slice-parameters-public.md)
+now enables verified readonly u8 slice calls. Gate-rejection statements below
+refer to the original private checkpoint and its historical receipts.
+
 Implementation: `af8ad1e`. [`slice_frame_vm.fy`](../../src/slice_frame_vm.fy)
 adds a private native instruction boundary for immutable, independently
 inspected Programs. It combines a same-function PC partition with the

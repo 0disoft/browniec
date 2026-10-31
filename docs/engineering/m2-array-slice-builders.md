@@ -1,5 +1,9 @@
 # Private borrow-aware slice IR builders
 
+Admission update: the [public successor](m2-array-slice-parameters-public.md)
+now enables verified readonly u8 slice calls. Gate-rejection statements below
+refer to the original private checkpoint and its historical receipts.
+
 Implementation: `d776d1d`. This checkpoint adds construction
 helpers for the [borrowed parameter metadata](m2-array-slice-parameters.md).
 It does not enable guest slice signatures, borrowed VM instructions or CALL
