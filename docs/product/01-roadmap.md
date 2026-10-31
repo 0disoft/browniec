@@ -1,5 +1,12 @@
 # Roadmap
 
+- Mutable scalar slices: the private exclusive array-session foundation is
+  implemented. Guest integration still needs exclusive origins and borrow-flow
+  checking, metered instructions, dispatch and lexical/error cleanup. See
+  [the owner-layer contract](../engineering/m2-array-write-leases.md). Public
+  readonly slices already support all six scalar tags; historical entries below
+  retain their original implementation-stage boundaries.
+
 - Fairy C toolchain adoption: implemented at `465e380`.
   The compiler is now `eb274643` with SDK `0.0.0-stage0.87`; language `/20`
   and runtime ABI `/0` remain unchanged. Root and M0 SDK locks were adopted

@@ -20,6 +20,10 @@ browniec check examples/slice-elements.brc --json
 browniec run examples/slice-elements.brc --fuel 1000000 --json
 ```
 
+The private owner layer also has an
+[exclusive array session foundation](docs/engineering/m2-array-write-leases.md)
+for future mutable slices. Guest mutable-slice syntax is not enabled yet.
+
 ## Historical stages
 
 The notes below record implementation stages and gated behavior at the named

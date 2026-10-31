@@ -1,5 +1,18 @@
 # AGENTS.md
 
+- Private exclusive array sessions: implemented at `78685b1`.
+  `array_owners::WriteLease` locks one whole
+  scalar-array root for checked relative reads/writes over a selected range.
+  Ordinary root/view access, copies, CALL copy batches, transfer and cleanup
+  reject exclusive roots. Shared read/write epochs never wrap; failed ends
+  retain the lock. No guest mutable-slice syntax, VM dispatch or Fuel/capability
+  change is added. Development and release each passed 32 selected native groups
+  and 206 CLI cases, with 351 identical current inputs and rechecked artifact
+  identities. Full native/M1/other M2, Linux, M0, isolation, packaging, allocator
+  and timing checks were not rerun. No push/publication/release/deployment.
+  See [the contract](docs/engineering/m2-array-write-leases.md) and
+  [Windows evidence](docs/evidence/m2-array-write-leases-windows-20261101.json).
+
 - Public readonly scalar slice elements: all six scalar tags (`i32`, `bool`,
   `i64`, `u8`, `u32`, `usize`) are implemented and locally committed at
   `ec73328` for same-function owned lexical array roots, immutable `ref Tag[]`
