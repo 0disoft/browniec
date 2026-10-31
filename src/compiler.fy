@@ -20,6 +20,8 @@ import struct_result_source as record_results;
 import std::text as text;
 import text_source as text_source;
 import slice_source as slices;
+import slice_call_source as slice_calls;
+import slice_builders as slice_builders;
 
 fn u8 precedence(u8 kind) {
     if (kind == 133) { return 1; }
@@ -374,7 +376,10 @@ fn Result<usize,errors::Error> call_value(ref u8[] source,ref mut lexer::State s
         let u8 tag=if(arity<signatures.arities[target]){signatures.param_types[target*8+arity]}else{0};
         let usize length=if(arity<signatures.arities[target]){signatures.param_lengths[target*8+arity]}else{0};
         let usize record=if(arity<signatures.arities[target]){signatures.param_records[target*8+arity] as usize}else{0};
-        if(record!=0) {arguments[arity]=record_argument(source,s,p,ref mut names,signatures,record-1,depth,result_type,structure,loop_state)?;}
+        if(arity<signatures.arities[target] && signatures.param_slices[target*8+arity]) {
+            arguments[arity]=slice_calls::capture(source,s,p,ref names)?;
+        }
+        else if(record!=0) {arguments[arity]=record_argument(source,s,p,ref mut names,signatures,record-1,depth,result_type,structure,loop_state)?;}
         else if(length!=0) {arguments[arity]=array_argument(source,s,p,ref mut names,signatures,tag,length,depth,result_type,structure,loop_state)?;}
         else {
             arguments[arity]=expression(source,s,p,ref names,signatures,1,depth+1,tag,result_type,structure,loop_state)?;
@@ -618,7 +623,7 @@ fn Result<usize, errors::Error> slice_declaration(ref u8[] source, ref mut lexer
     let usize parent = if (slices::binding(table,index)) { table.registers[index]-160 } else { 16 };
     var usize root = 0;
     if (parent < 16) {
-        root = (p.slice_roots[parent] as usize)-1;
+        if (p.slice_roots[parent] != 0) { root = (p.slice_roots[parent] as usize)-1; }
         let usize name = lexer::next(source,s)?;
         // A bare parent reborrows its complete retained range through SUBSLICE.
         if (s.kind != 91 && s.kind != 59) { return .err(errors::make(3,header.begin)); }
@@ -642,7 +647,9 @@ fn Result<usize, errors::Error> slice_declaration(ref u8[] source, ref mut lexer
             else { arrays::length_value(p,root,header.begin)? };
     }
     let usize end = lexer::punctuation(source,s,59)?;
-    let usize site = ir::slice(p,root,header.begin)?;
+    let usize site = if (parent < 16 && p.slice_origins[parent] != 0) {
+        slice_builders::derived(p,parent,table.function,header.begin)?
+    } else { ir::slice(p,root,header.begin)? };
     let usize opened = if (parent < 16) { ir::slice_sub(p,site,parent,lo,hi,header.begin)? }
         else { ir::slice_open(p,site,lo,hi,header.begin)? };
     return locals::declare(table,header.begin,header.end,160+site,false);
@@ -1172,7 +1179,8 @@ fn Result<usize, errors::Error> body(ref u8[] source, ref functions::Table signa
     var usize i = 0;
     while (i < arity) {
         let usize at = f * 8 + i;
-        let usize parameter = if(signatures.param_records[at]!=0){record_calls::bind(signatures,at,p,ref mut table)?}
+        let usize parameter = if(signatures.param_slices[at]){slice_calls::bind(signatures,at,p,ref mut table)?}
+            else if(signatures.param_records[at]!=0){record_calls::bind(signatures,at,p,ref mut table)?}
             else{array_calls::bind(signatures,at,p,ref mut table)?};
         i += 1;
     }

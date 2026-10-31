@@ -129,6 +129,6 @@ fn void eight_arguments_full_pool_scalar_types_maximum_ranges_and_empty_batches_
     let slices::Ticket[1] input=[whole]; var slices::Arguments wide=arguments(slices::borrow_arguments(ref mut ranges,ref input,ref big,4096));
     assert(size(slices::length(ref ranges,wide.tickets[0],ref big,4096))==4096 && value(slices::read(ref ranges,wide.tickets[0],ref big,4095,ref large))==65);
     assert(size(slices::close_arguments(ref mut ranges,ref mut wide,ref mut big,4096))==1 && big.arena.used==4096 && big.depth==1);
-    assert(!compiler::compile(b"module main;fn i32 f(ref u8[] p){return p[0] as i32;}fn i32 main(){return 42;}").is_ok);
+    assert(compiler::compile(b"module main;fn i32 f(ref u8[] p){return p[0] as i32;}fn i32 main(){return 42;}").is_ok);
     assert(!compiler::compile(b"module main;fn ref u8[] f(){let u8[1] a=[42;1];return ref a;}fn i32 main(){return 42;}").is_ok);
 }

@@ -88,5 +88,6 @@ fn void all_sixteen_sites_fit_entry_masks_and_prospective_metadata_never_enables
     let ir::Program ordinary=switch(compiler::compile(b"module main;fn i32 main(){return 42;}")) { case .ok(v): { v } case .err(_): { assert(false); ir::empty() } };
     assert(built(parameters::metadata(ref ordinary))==0 && verifier::verify(ref ordinary).is_ok);
     assert(switch(vm::run(ref ordinary,100)) { case .ok(v): { v==42 } case .err(_): { false } });
-    assert(!compiler::compile(b"module main;fn i32 f(ref u8[] p){return p[0] as i32;}fn i32 main(){return 42;}").is_ok);
+    let ir::Program parsed=switch(compiler::compile(b"module main;fn i32 f(ref u8[] p){return p[0] as i32;}fn i32 main(){return 42;}")) { case .ok(v): { v } case .err(_): { assert(false); ir::empty() } };
+    assert(!verifier::verify(ref parsed).is_ok);
 }
