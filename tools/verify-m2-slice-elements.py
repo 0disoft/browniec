@@ -28,11 +28,15 @@ def require(condition, message):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--profile', choices=['development', 'release'], required=True)
-    parser.add_argument('--parameter-source', action='store_true', help='Verify gated scalar slice parameter source lowering and M1 parser regression')
+    selection = parser.add_mutually_exclusive_group()
+    selection.add_argument('--parameter-source', action='store_true', help='Verify gated scalar slice parameter source lowering and M1 parser regression')
+    selection.add_argument('--element-vm', action='store_true', help='Verify private typed borrowed CALL, dynamic reads and normal/error cleanup')
     args = parser.parse_args()
-    kind = 'slice-element-source' if args.parameter_source else 'slice-elements'
-    groups = {'slice_element_source': 5, 'slice_parameters_source': 5, 'slice_elements': 4} if args.parameter_source else GROUPS
-    matrices_to_run = {'slice-element-source': 252, **MATRICES} if args.parameter_source else MATRICES
+    kind = 'slice-element-vm' if args.element_vm else 'slice-element-source' if args.parameter_source else 'slice-elements'
+    groups = ({'slice_element_vm': 5, 'slice_call_vm': 4, 'slice_frame_vm': 4, 'slice_lifecycle_vm': 6}
+              if args.element_vm else {'slice_element_source': 5, 'slice_parameters_source': 5, 'slice_elements': 4}
+              if args.parameter_source else GROUPS)
+    matrices_to_run = {'slice-element-source': 252, **MATRICES} if args.parameter_source or args.element_vm else MATRICES
     output = ROOT / ('build/m2-' + kind) / args.profile
     output.mkdir(parents=True, exist_ok=True)
     receipt = output / 'receipt.json'
@@ -99,7 +103,7 @@ def main():
     env = {key: str(empty) for key in ['PATH', 'TEMP', 'TMP']}
     env.update({key: os.environ[key] for key in ['SystemRoot', 'WINDIR'] if key in os.environ})
     boundaries = []
-    for tag in ([] if args.parameter_source else ['i32', 'bool', 'i64', 'u32', 'usize']):
+    for tag in ([] if args.parameter_source or args.element_vm else ['i32', 'bool', 'i64', 'u32', 'usize']):
         for index, declaration in enumerate([f'fn i32 f(ref {tag}[] p){{return 42;}}fn i32 main(){{return 42;}}',
                             f'fn i32 main(){{let {tag}[1] a=[{"true" if tag == "bool" else "42"};1];let ref {tag}[] p=ref a;return 42;}}']):
             path = output / f'boundary-{len(boundaries)}.brc'
@@ -131,7 +135,7 @@ def main():
                   retainedArtifact=dict(path=retained.relative_to(ROOT).as_posix(), sha256=exe_hash, bytes=retained.stat().st_size),
                   matrices=matrices, boundaries=boundaries, m1=m1, nativeGroups=sum(groups.values()),
                   cliCases=sum(matrices_to_run.values()) + len(boundaries) + (m1['count'] if m1 else 0),
-                  limitations=['Typed borrowed signatures and derived source bindings lower to independently inspected IR; non-u8 VM admission remains gated. Non-u8 owned-root bindings remain unavailable in source.',
+                  limitations=['Typed borrowed signatures lower to independently inspected IR. The element-vm selection exercises private typed CALL/dispatch/cleanup; public non-u8 VM admission and owned-root source bindings remain gated.',
                                'Focused native and CLI selection only; no full native/other M2, Linux, M0, packaging, isolation or performance rerun.',
                                'The parameter-source selection runs full M1 CLI on Windows only; other selections do not rerun M1.'])
     receipt.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')

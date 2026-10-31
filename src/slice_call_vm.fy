@@ -5,9 +5,10 @@ import slice_vm as loans;
 import array_vm as arrays;
 import array_slices as slices;
 import array_owners as owners;
+import types as types;
 import std::bytes as bytes;
 
-// Private invocation CALL context; executable borrowed signatures stay gated.
+// Private invocation CALL context; non-u8 public admission remains gated.
 // Formal ordinals need at most 8 roots per frame; derived sites share them.
 pub struct Frames { owners::Token[256] origins; }
 pub fn Frames empty() { return Frames { .origins = [owners::Token { .slot=16, .generation=0 };256] }; }
@@ -28,7 +29,8 @@ pub fn Result<usize, errors::Error> cost(ref ir::Program p, usize target, usize 
             if(encoded>16 || p.types[r]!=0 || p.slots[r] || p.array_parameters[r]!=0 || p.record_parameters[r]!=0) { return .err(errors::make(5,offset)); }
             let usize site=encoded-1;
             if(p.slice_roots[site]!=0 || p.slice_origins[site] as usize!=encoded ||
-                p.slice_functions[site] as usize!=target+1 || (seen & (one<<site))!=0) { return .err(errors::make(5,offset)); }
+                p.slice_functions[site] as usize!=target+1 || !types::scalar(p.slice_elements[site]) ||
+                (seen & (one<<site))!=0) { return .err(errors::make(5,offset)); }
             seen|=one<<site; count+=1;
         }
         i+=1;
@@ -46,13 +48,14 @@ pub fn Result<owners::Token, errors::Error> root(ref ir::Program p, usize functi
     let usize owned=p.slice_roots[site] as usize;
     if(owned!=0) {
         if(owned>16 || owned>p.arrays.count || p.array_functions[owned-1] as usize!=function ||
-            p.slice_origins[site]!=0 || p.slice_functions[site]!=0) { return .err(errors::make(5,offset)); }
+            p.slice_origins[site]!=0 || p.slice_functions[site]!=0 || p.slice_elements[site]!=0) { return .err(errors::make(5,offset)); }
         return .ok(state.tokens[frame*16+owned-1]);
     }
     let usize origin=p.slice_origins[site] as usize;
     if(origin==0 || origin>16 || p.slice_functions[site] as usize!=function+1 ||
         p.slice_roots[origin-1]!=0 || p.slice_origins[origin-1] as usize!=origin ||
-        p.slice_functions[origin-1]!=p.slice_functions[site]) { return .err(errors::make(5,offset)); }
+        p.slice_functions[origin-1]!=p.slice_functions[site] || !types::scalar(p.slice_elements[site]) ||
+        p.slice_elements[origin-1]!=p.slice_elements[site]) { return .err(errors::make(5,offset)); }
     var usize i=0;
     while(i<p.arities[function]) {
         if(p.slice_parameters[p.register_starts[function]+i] as usize==origin) {
@@ -73,7 +76,7 @@ fn Result<owners::Token, errors::Error> checked(ref ir::Program p, usize functio
     };
     let slices::Slot entry=loan.pool.slots[ticket.slot];
     let usize owned=p.slice_roots[site] as usize;
-    let u8 element=if(owned==0){10}else{p.arrays.elements[owned-1]};
+    let u8 element=if(owned==0){p.slice_elements[site]}else{p.arrays.elements[owned-1]};
     if(!same(entry.view.root,expected) || entry.view.element!=element || entry.view.length==0 || entry.view.length>4096 ||
         (owned!=0 && entry.view.length!=p.arrays.lengths[owned-1])) { return .err(errors::make(5,offset)); }
     return .ok(expected);
@@ -118,7 +121,7 @@ pub fn Result<Admission, errors::Error> prepare(ref ir::Program p, usize pc, usi
             if(source<160 || source>=176) { return .err(errors::make(5,offset)); }
             roots[count]=checked(p,caller,parent,source-160,frames,loan,state,bytes::len(buffer),offset)?;
             sources[count]=loan.tickets[parent*16+source-160];
-            if(loan.pool.slots[sources[count].slot].view.element!=10) { return .err(errors::make(5,offset)); }
+            if(loan.pool.slots[sources[count].slot].view.element!=p.slice_elements[encoded-1]) { return .err(errors::make(5,offset)); }
             sites[count]=encoded-1; positions[count]=i; count+=1;
         }
         i+=1;
@@ -163,7 +166,8 @@ pub fn Result<usize, errors::Error> leave(ref ir::Program p, usize function, usi
             let owners::View view=switch(owners::view(ref state.owners,token,0,0,bytes::len(buffer))) {
                 case .ok(v): { v } case .err(e): { return .err(arrays::failure(e,offset)); }
             };
-            if(view.element!=10 || view.length==0 || view.length>4096) { return .err(errors::make(5,offset)); }
+            let usize site=(p.slice_parameters[p.register_starts[function]+i] as usize)-1;
+            if(view.element!=p.slice_elements[site] || view.length==0 || view.length>4096) { return .err(errors::make(5,offset)); }
         } else if(!none(token)) { return .err(errors::make(5,offset)); }
         i+=1;
     }

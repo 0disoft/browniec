@@ -7,11 +7,12 @@ import slice_vm as loans;
 import array_vm as arrays;
 import array_slices as slices;
 import array_owners as owners;
+import array_layout as layouts;
 import std::bytes as bytes;
 
 // Private instruction adapter for immutable independently inspected Programs.
-// Owned roots keep the existing dispatch and exact prices. The executable gate
-// stays in place until CALL, return and invocation cleanup integration is ready.
+// Owned roots keep their dispatch. Rootless reads use the same element-width
+// price; non-u8 public admission stays gated until source/CLI promotion.
 pub fn Result<usize,errors::Error> step(ref ir::Program p,usize function,usize pc,usize frame,
     ref calls::Frames frames,ref mut loans::State loan,ref mut arrays::State state,
     ref bytes::Buffer buffer,ref mut i64[] registers,usize fuel) {
@@ -31,17 +32,23 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,usize function,usize p
         (op==56 && (a!=0 || b!=0)) ||
         (op==59 && (a>=16 || b>=registers.len || p.code[at+4] as usize>=registers.len ||
             p.slice_roots[a]!=0 || p.slice_origins[a]!=p.slice_origins[id] ||
-            p.slice_functions[a]!=p.slice_functions[id] || p.slice_origins[id] as usize==id+1))) {
+            p.slice_functions[a]!=p.slice_functions[id] || p.slice_elements[a]!=p.slice_elements[id] ||
+            p.slice_origins[id] as usize==id+1))) {
         return .err(errors::make(5,offset));
     }
-    let usize base=if(op==59){65537}else if(op==58){4131}else{4097};
+    let u8 element=p.slice_elements[id];
+    let layouts::Array shape=switch(layouts::scalar(element,1)) {
+        case .ok(v):{v} case .err(_):{return .err(errors::make(5,offset));}
+    };
+    if(op==55 && element!=10) { return .err(errors::make(5,offset)); }
+    let usize base=if(op==59){65537}else if(op==58){4130+shape.stride}else{4097};
     if(fuel<base) { return .err(errors::make(8,offset)); }
     let owners::Token root=calls::root(p,function,frame,id,frames,state,offset)?;
     // Metadata-only resolution is covered by base. No payload is read here.
     let owners::View view=switch(owners::view(ref state.owners,root,0,0,bytes::len(buffer))) {
         case .ok(v):{v} case .err(e):{return .err(arrays::failure(e,offset));}
     };
-    if(view.element!=10 || view.length==0 || view.length>4096) { return .err(errors::make(5,offset)); }
+    if(view.element!=element || view.length==0 || view.length>4096) { return .err(errors::make(5,offset)); }
     let usize work=base+if(op==55){4*view.length}else{0};
     if(fuel<work) { return .err(errors::make(8,offset)); }
     let usize slot=frame*16+id;
@@ -50,7 +57,7 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,usize function,usize p
     if(source.slot>=16 || source.generation==0) { return .err(errors::make(5,offset)); }
     let slices::Slot entry=loan.pool.slots[source.slot];
     if(entry.view.root.slot!=root.slot || entry.view.root.generation!=root.generation ||
-        entry.view.element!=10 || entry.view.length!=view.length) { return .err(errors::make(5,offset)); }
+        entry.view.element!=element || entry.view.length!=view.length) { return .err(errors::make(5,offset)); }
     let ref u8[] data=bytes::view(buffer);
     if(op==59) {
         let usize start=cells::unpack(registers[b],offset)?;
