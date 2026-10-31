@@ -7,7 +7,7 @@ import array_slices as slices;
 import array_owners as owners;
 import std::bytes as bytes;
 
-// Private prospective CALL context, not yet allocated by the executable VM.
+// Private invocation CALL context; executable borrowed signatures stay gated.
 // Formal ordinals need at most 8 roots per frame; derived sites share them.
 pub struct Frames { owners::Token[256] origins; }
 pub fn Frames empty() { return Frames { .origins = [owners::Token { .slot=16, .generation=0 };256] }; }

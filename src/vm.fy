@@ -12,7 +12,8 @@ import array_vm as array_vm;
 import array_range_vm as array_ranges;
 import slice_vm as slices;
 import struct_vm as struct_vm;
-import struct_call_vm as calls;
+import call_frame_vm as calls;
+import slice_call_vm as borrowed;
 import array_result_vm as array_results;
 import struct_result_vm as record_results;
 import std::bytes as bytes;
@@ -46,6 +47,7 @@ fn Result<i64, errors::Error> execute(ref ir::Program p, usize fuel,
     var i64[4096] registers = [0; 4096];
     var usize[32] return_pcs = [0; 32];
     var usize[32] return_dsts = [0; 32];
+    var borrowed::Frames borrowed_frames = borrowed::empty();
     var usize frame = 0;
     var usize pc = p.starts[p.entry];
     while (true) {
@@ -95,21 +97,9 @@ fn Result<i64, errors::Error> execute(ref ir::Program p, usize fuel,
             pc += 1; continue;
         }
         if (op == 9) {
-            remaining = calls::step(p,a,b,frame,ref mut records,arrays,
-                payload,remaining,p.offsets[pc])?;
+            remaining = calls::step(p,pc,frame,ref mut borrowed_frames,loans,ref mut records,arrays,
+                payload,ref mut registers,ref mut return_pcs,ref mut return_dsts,remaining)?;
             let usize child = frame + 1;
-            let usize child_base = child * 128;
-            var usize i = 0;
-            while (i < p.arities[a]) {
-                let usize formal = p.register_starts[a] + i;
-                if (p.array_parameters[formal] == 0 && p.record_parameters[formal] == 0) {
-                    let usize source = p.call_args[b * 8 + i] as usize;
-                    registers[child_base + formal] = registers[frame * 128 + source];
-                }
-                i += 1;
-            }
-            return_pcs[child] = pc + 1;
-            return_dsts[child] = dst;
             frame = child;
             pc = p.starts[a];
             continue;
