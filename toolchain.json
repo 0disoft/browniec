@@ -1,13 +1,13 @@
 {
   "schema": "browniec.toolchain/v2",
   "compiler": {
-    "version": "v0.0.0-20261022210249-4ce1264273be",
-    "revision": "4ce1264273be6051ee560173e94690e1b99c9eaf"
+    "version": "v0.0.0-20261031093456-eb274643bfcf",
+    "revision": "eb274643bfcfe746617121ddc6f130b018978b53"
   },
   "sdk": {
     "identity": "fairyc-sdk-stdlib/0",
-    "version": "0.0.0-stage0.86",
-    "sourceDigest": "fysrc1-sha256-782df5e2039ff3f7817c1055454caa24feb2ea755e62f78d8ee67418916a5b83"
+    "version": "0.0.0-stage0.87",
+    "sourceDigest": "fysrc1-sha256-c531e88e52b684a34cf9688eda19e5cafcc5788e7a4bbf7e5121e86874a7246a"
   },
   "language": "fairyc-language/20",
   "runtimeAbi": "fairyc-runtime/0",
@@ -27,12 +27,12 @@
   "platforms": {
     "windows/amd64": {
       "executable": "fairyc.exe",
-      "sha256": "572395f7f1e425d613c5a69f50b30ed177cda37ca2b1638bd0c11cf79fcbcc77",
+      "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
       "verification": "native-verified"
     },
     "linux/amd64": {
       "executable": "fairyc",
-      "sha256": "5c9e50e6b6ea45060a1b1511ab4b7c11fb9d6cc3939f65337970a6dfdc417b9b",
+      "sha256": "619511bb8f98f5bd9ec543cfb33f6367de15fc2389d41b27506790234f4f93d6",
       "verification": "cross-build-only"
     }
   }
