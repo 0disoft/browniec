@@ -24,7 +24,7 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, usize pc, usize fram
     let usize a = p.code[at + 2] as usize;
     let usize b = p.code[at + 3] as usize;
     let usize id = if (op == 55 || op == 57 || op == 58) { a } else { dst };
-    if (op < 54 || op > 59 || frame >= 32 || id >= 16 || p.slice_roots[id] == 0 ||
+    if (op < 54 || op > 59 || frame >= 32 || id >= 16 || ir::exclusive(p, id) || p.slice_roots[id] == 0 ||
         (op != 59 && p.code[at+4] != 0) || p.code[at+5] != 0 || p.code[at+6] != 0 || p.code[at+7] != 0) { return .err(errors::make(5, offset)); }
     let usize root = (p.slice_roots[id] as usize) - 1;
     if (root >= 16 || root >= p.arrays.count || p.arrays.lengths[root] == 0 || p.arrays.lengths[root] > 4096 ||
@@ -58,6 +58,7 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, usize pc, usize fram
         let slices::Ticket ticket = state.tickets[if (op == 59) { frame * 16 + a } else { slot }];
         if (ticket.slot >= 16 || ticket.generation == 0) { return .err(errors::make(5, offset)); }
         let slices::Slot entry = state.pool.slots[ticket.slot];
+        if (entry.exclusive) { return .err(errors::make(5, offset)); }
         let owners::Token token = arrays.tokens[frame * 16 + root];
         if (entry.view.root.slot != token.slot || entry.view.root.generation != token.generation ||
             entry.view.element != p.arrays.elements[root] || entry.view.length != p.arrays.lengths[root]) { return .err(errors::make(5, offset)); }

@@ -205,6 +205,12 @@ pub fn Result<usize, Error> exclusive_write(ref Table table, ref WriteLease leas
         case .ok(value): { .ok(value) } case .err(e): { .err(storage_error(e)) }
     };
 }
+pub fn Result<bool, Error> exclusive_utf8(ref Table table, ref WriteLease lease, ref u8[] bytes) {
+    let Owner owner = resolve_write(table, lease, bytes.len)?;
+    if (owner.element != 10) { return .err(.Type); }
+    // Validated u8 shape/range bounds both additions by the initialized extent.
+    return .ok(text::validate_utf8(bytes[owner.base + lease.view.start..owner.base + lease.view.end]).is_ok);
+}
 fn Result<usize, Error> free_slot(ref Table table) {
     var usize i = 0;
     while (i < 16) {

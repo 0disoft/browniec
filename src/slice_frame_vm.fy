@@ -56,6 +56,7 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,usize function,usize p
     let slices::Ticket source=loan.tickets[if(op==59){frame*16+a}else{slot}];
     if(source.slot>=16 || source.generation==0) { return .err(errors::make(5,offset)); }
     let slices::Slot entry=loan.pool.slots[source.slot];
+    if(entry.exclusive) { return .err(errors::make(5,offset)); }
     if(entry.view.root.slot!=root.slot || entry.view.root.generation!=root.generation ||
         entry.view.element!=element || entry.view.length!=view.length) { return .err(errors::make(5,offset)); }
     let ref u8[] data=bytes::view(buffer);

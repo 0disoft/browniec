@@ -77,7 +77,7 @@ fn Result<owners::Token, errors::Error> checked(ref ir::Program p, usize functio
     let slices::Slot entry=loan.pool.slots[ticket.slot];
     let usize owned=p.slice_roots[site] as usize;
     let u8 element=if(owned==0){p.slice_elements[site]}else{p.arrays.elements[owned-1]};
-    if(!same(entry.view.root,expected) || entry.view.element!=element || entry.view.length==0 || entry.view.length>4096 ||
+    if(entry.exclusive || !same(entry.view.root,expected) || entry.view.element!=element || entry.view.length==0 || entry.view.length>4096 ||
         (owned!=0 && entry.view.length!=p.arrays.lengths[owned-1])) { return .err(errors::make(5,offset)); }
     return .ok(expected);
 }
