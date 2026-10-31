@@ -944,225 +944,255 @@ fn Result<bool, errors::Error> block(ref u8[] source, ref mut lexer::State s, re
     let usize close = lexer::next(source, s)?;
     return .ok(terminal);
 }
+// Keep unrelated statement scratch out of recursive dispatcher frames.
 fn Result<bool, errors::Error> control(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 result_type, usize depth, usize expr_depth, ref mut loops::State loop_state) {
     if (depth > 32) { return .err(errors::make(4, s.begin)); }
-    let usize at = s.begin;
     if (word_is(source,s,b"break") || word_is(source,s,b"continue")) {
-        let bool leave=word_is(source,s,b"break");
-        let usize keyword=lexer::next(source,s)?;
-        let usize end=lexer::punctuation(source,s,59)?;
-        if (loop_state.depth == 0) { return .err(errors::make(2,at)); }
-        let usize dropped=arrays::release_from(table,p,loop_state.bindings[loop_state.depth-1],at)?;
-        let usize jump=loops::transfer(loop_state,p,leave,at)?;
-        return .ok(true);
+        return control_transfer(source,s,p,table,signatures,result_type,depth,expr_depth,loop_state);
     }
     if (word_is(source,s,b"switch")) {
-        let usize keyword=lexer::next(source,s)?;
-        let usize open=lexer::punctuation(source,s,40)?;
-        let usize subject=expression(source,s,p,table,signatures,1,expr_depth,0,result_type,depth,loop_state)?;
-        let u8 tag=p.types[subject];
-        if(!types::tagged(tag)) {return .err(errors::make(3,at));}
-        let usize close=lexer::punctuation(source,s,41)?;
-        let usize brace=lexer::punctuation(source,s,123)?;
-        var usize[2] skips=[256;2];
-        var usize previous=256;
-        var u8 first_variant=2;
-        var bool terminal=true;
-        var usize arm=0;
-        while(arm<2) {
-            if(s.kind==125) {return .err(errors::make(3,at));}
-            let patterns::Pattern pattern=patterns::parse(source,s,tag)?;
-            if(arm==1 && pattern.variant==first_variant) {return .err(errors::make(3,at));}
-            if(arm==0) {first_variant=pattern.variant;}
-            else {
-                let usize next=p.count;
-                let usize patched=ir::patch(p,previous,next,at)?;
-            }
-            let ir::Case branch=ir::branch_case(p,subject,pattern.variant,at)?;
-            let usize outer=table.count;
-            if(pattern.binding) {
-                if(locals::find(source,table,pattern.begin,pattern.end)!=64) {return .err(errors::make(3,pattern.begin));}
-                let usize binding=locals::declare(table,pattern.begin,pattern.end,branch.payload,false)?;
-            }
-            let bool stopped=block(source,s,p,table,signatures,result_type,depth+2,expr_depth,loop_state)?;
-            table.count=outer;
-            terminal=terminal && stopped;
-            if(!stopped) {skips[arm]=ir::raw(p,19,0,0,0,at)?;}
-            previous=branch.instruction;
-            arm+=1;
-        }
-        let usize end=lexer::punctuation(source,s,125)?;
-        let usize failure=p.count;
-        let usize trap=ir::raw(p,25,0,0,0,at)?;
-        let usize patched=ir::patch(p,previous,failure,at)?;
-        let usize target=p.count;
-        arm=0;
-        while(arm<2) {
-            if(skips[arm]!=256) {let usize skip=ir::patch(p,skips[arm],target,at)?;}
-            arm+=1;
-        }
-        return .ok(terminal);
+        return control_switch(source,s,p,table,signatures,result_type,depth,expr_depth,loop_state);
     }
     if (word_is(source,s,b"for")) {
-        let usize outer=table.count;
-        let usize keyword=lexer::next(source,s)?;
-        let usize open=lexer::punctuation(source,s,40)?;
-        let usize calls=p.call_count;
-        if (s.kind==59) {let usize empty=lexer::next(source,s)?;}
-        else {
-            let usize init=statement(source,s,p,table,signatures,59,0,expr_depth,depth,loop_state)?;
-            if (!types::scalar(p.types[table.registers[init]])) {return .err(errors::make(3,at));}
-        }
-        let usize head=p.count;
-        let usize condition=if (s.kind==59) {ir::boolean(p,true,at)?}
-            else {expression(source,s,p,table,signatures,1,expr_depth,2,0,depth,loop_state)?};
-        if (p.types[condition]!=2 || p.call_count!=calls) {return .err(errors::make(3,at));}
-        let usize separator=lexer::punctuation(source,s,59)?;
-        let usize exit=ir::raw(p,20,0,condition,0,at)?;
-        let bool has_post=s.kind!=41;
-        let usize post_start=s.begin;
-        if (has_post) {let usize validated=checked_post(source,s,p,table,signatures,expr_depth,depth,loop_state)?;}
-        else {let usize empty=lexer::next(source,s)?;}
-        let usize level=loops::enter(loop_state,head,true,at)?;
-        loop_state.bindings[level]=table.count;
-        let bool stopped=block(source,s,p,table,signatures,result_type,depth+1,expr_depth,loop_state)?;
-        let usize post_target=p.count;
-        let usize continues=loops::resolve(loop_state,p,false,post_target,at)?;
-        if (!stopped || continues!=0) {
-            if (has_post) {
-                var lexer::State post=lexer::empty();
-                post.cursor=post_start;
-                let usize first=lexer::next(source,ref mut post)?;
-                let usize emitted=statement(source,ref mut post,p,table,signatures,41,0,expr_depth,depth,loop_state)?;
-            }
-            let usize back=ir::raw(p,22,0,head,0,at)?;
-        }
-        let usize target=p.count;
-        let usize branch=ir::patch(p,exit,target,at)?;
-        let usize breaks=loops::resolve(loop_state,p,true,target,at)?;
-        loop_state.depth-=1; table.count=outer;
-        return .ok(false);
+        return control_for(source,s,p,table,signatures,result_type,depth,expr_depth,loop_state);
     }
     if (word_is(source,s,b"while")) {
-        let usize keyword=lexer::next(source,s)?;
-        let usize open=lexer::punctuation(source,s,40)?;
-        let usize head=p.count;
-        let usize level=loops::enter(loop_state,head,false,at)?;
-        loop_state.bindings[level]=table.count;
-        let usize condition=expression(source,s,p,table,signatures,1,expr_depth,2,result_type,depth,loop_state)?;
-        if (p.types[condition]!=2) {return .err(errors::make(3,at));}
-        let usize close=lexer::punctuation(source,s,41)?;
-        let usize exit=ir::raw(p,20,0,condition,0,at)?;
-        let bool stopped=block(source,s,p,table,signatures,result_type,depth+1,expr_depth,loop_state)?;
-        if (!stopped) {let usize back=ir::raw(p,22,0,head,0,at)?;}
-        let usize target=p.count;
-        let usize branch=ir::patch(p,exit,target,at)?;
-        let usize breaks=loops::resolve(loop_state,p,true,target,at)?;
-        loop_state.depth-=1;
-        return .ok(false);
+        return control_while(source,s,p,table,signatures,result_type,depth,expr_depth,loop_state);
     }
     if (word_is(source, s, b"return")) {
-        let usize keyword = lexer::next(source, s)?;
-        if(p.record_results[table.function]!=0) {
-            if(s.kind==2) {
-                var lexer::State look=lexer::snapshot(s);
-                let usize next=lexer::next(source,ref mut look)?;
-                if(look.kind==123) {
-                    let usize shape=(p.record_results[table.function] as usize)-1;
-                    let usize record=p.records.records[shape] as usize;
-                    let bool constructor=record_values::constructor(source,s,record)?;
-                    let usize first=record_constructor(source,s,p,table,signatures,record,at,result_type,expr_depth,depth,loop_state)?;
-                    // Publish no name or owner while field expressions can leave.
-                    let usize id=ir::record_in(p,table.function,record,false,at)?;
-                    let usize init=ir::record_init(p,id,first,at)?;
-                    let usize returned=record_results::finish(p,table,id,at)?;
-                    return .ok(true);
-                }
-                if(look.kind==40) {
-                    if(locals::find(source,table,s.begin,s.end)!=64) {return .err(errors::make(3,s.begin));}
-                    let usize target=functions::find(source,signatures,s.begin,s.end);
-                    let usize shape=(p.record_results[table.function] as usize)-1;
-                    if(target>=signatures.count || signatures.return_records[target]==0) {return .err(errors::make(3,s.begin));}
-                    let usize record=p.records.records[shape] as usize;
-                    let usize nominal=(signatures.return_records[target] as usize)-1;
-                    var usize id=record_results::destination(signatures,target,nominal,false,p,table.function,s.begin)?;
-                    let usize name=lexer::next(source,s)?;
-                    let usize called=call_value(source,s,p,table,signatures,target,144+id,at,expr_depth,result_type,depth,loop_state)?;
-                    if(s.kind==46) {
-                        id=record_values::extracted_call(source,s,p,table.function,id,record,false,at,false)?;
-                    } else {
-                        if(nominal!=record || s.kind!=59) {return .err(errors::make(3,s.begin));}
-                        let usize end=lexer::next(source,s)?;
-                    }
-                    let usize returned=record_results::finish(p,table,id,at)?;
-                    return .ok(true);
-                }
-            }
-            let usize returned=record_results::returned(source,s,p,table,at)?;
-            return .ok(true);
-        }
-        if(p.array_results[table.function]!=0) {
-            if(s.kind==91) {
-                let usize shape=(p.array_results[table.function] as usize)-1;
-                let u8 element=p.arrays.elements[shape];
-                let usize open=lexer::next(source,s)?;
-                let usize value=expression(source,s,p,table,signatures,1,expr_depth,element,result_type,depth,loop_state)?;
-                let usize returned=array_results::repeated(source,s,p,table,value,at)?;
-                return .ok(true);
-            }
-            var lexer::State look=lexer::snapshot(s);
-            let usize next=lexer::next(source,ref mut look)?;
-            if(s.kind==2 && look.kind==40) {
-                if(locals::find(source,table,s.begin,s.end)!=64) {return .err(errors::make(3,s.begin));}
-                let usize target=functions::find(source,signatures,s.begin,s.end);
-                let usize shape=(p.array_results[table.function] as usize)-1;
-                let usize id=array_results::destination(signatures,target,p.arrays.elements[shape],p.arrays.lengths[shape],false,p,table.function,s.begin)?;
-                let usize name=lexer::next(source,s)?;
-                let usize called=call_value(source,s,p,table,signatures,target,id,at,expr_depth,result_type,depth,loop_state)?;
-                if(s.kind!=59) {return .err(errors::make(3,s.begin));}
-                let usize end=lexer::next(source,s)?;
-                let usize returned=array_results::finish(p,table,id,at)?;
-                return .ok(true);
-            }
-            let usize returned=array_results::returned(source,s,p,table,at)?;
-            return .ok(true);
-        }
-        let usize value = expression(source,s,p,table,signatures,1,expr_depth,result_type,result_type,depth,loop_state)?;
-        if (p.types[value] != result_type) { return .err(errors::make(3, at)); }
-        let usize end = lexer::punctuation(source, s, 59)?;
-        let usize dropped = arrays::release_visible(table, p, at)?;
-        let usize returned = ir::emit(p, 8, value, 0, at)?;
-        return .ok(true);
+        return control_return(source,s,p,table,signatures,result_type,depth,expr_depth,loop_state);
     }
     if (word_is(source, s, b"if")) {
-        let usize keyword = lexer::next(source, s)?;
-        let usize open = lexer::punctuation(source, s, 40)?;
-        let usize condition = expression(source,s,p,table,signatures,1,expr_depth,2,result_type,depth,loop_state)?;
-        if (p.types[condition] != 2) { return .err(errors::make(3, at)); }
-        let usize close = lexer::punctuation(source, s, 41)?;
-        let usize branch = ir::raw(p, 20, 0, condition, 0, at)?;
-        let bool then_returns = block(source,s,p,table,signatures,result_type,depth + 1,expr_depth,loop_state)?;
-        if (word_is(source, s, b"else")) {
-            var usize skip = 256;
-            if (!then_returns) { skip = ir::raw(p, 19, 0, 0, 0, at)?; }
-            let usize else_start = p.count;
-            let usize patched = ir::patch(p, branch, else_start, at)?;
-            let usize else_word = lexer::next(source, s)?;
-            let bool else_returns = if (word_is(source, s, b"if")) {
-                control(source,s,p,table,signatures,result_type,depth + 1,expr_depth,loop_state)?
-            } else { block(source,s,p,table,signatures,result_type,depth + 1,expr_depth,loop_state)? };
-            if (skip != 256) {
-                let usize continuation = p.count;
-                let usize skipped = ir::patch(p, skip, continuation, at)?;
-            }
-            return .ok(then_returns && else_returns);
-        }
-        let usize continuation = p.count;
-        let usize patched = ir::patch(p, branch, continuation, at)?;
-        return .ok(false);
+        return control_if(source,s,p,table,signatures,result_type,depth,expr_depth,loop_state);
     }
     if (s.kind == 123) { return block(source,s,p,table,signatures,result_type,depth + 1,expr_depth,loop_state); }
     let usize regular = statement(source,s,p,table,signatures,59,result_type,expr_depth,depth,loop_state)?;
+    return .ok(false);
+}
+
+fn Result<bool, errors::Error> control_transfer(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 result_type, usize depth, usize expr_depth, ref mut loops::State loop_state) {
+    let usize at = s.begin;
+    let bool leave=word_is(source,s,b"break");
+    let usize keyword=lexer::next(source,s)?;
+    let usize end=lexer::punctuation(source,s,59)?;
+    if (loop_state.depth == 0) { return .err(errors::make(2,at)); }
+    let usize dropped=arrays::release_from(table,p,loop_state.bindings[loop_state.depth-1],at)?;
+    let usize jump=loops::transfer(loop_state,p,leave,at)?;
+    return .ok(true);
+}
+
+fn Result<bool, errors::Error> control_switch(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 result_type, usize depth, usize expr_depth, ref mut loops::State loop_state) {
+    let usize at = s.begin;
+    let usize keyword=lexer::next(source,s)?;
+    let usize open=lexer::punctuation(source,s,40)?;
+    let usize subject=expression(source,s,p,table,signatures,1,expr_depth,0,result_type,depth,loop_state)?;
+    let u8 tag=p.types[subject];
+    if(!types::tagged(tag)) {return .err(errors::make(3,at));}
+    let usize close=lexer::punctuation(source,s,41)?;
+    let usize brace=lexer::punctuation(source,s,123)?;
+    var usize[2] skips=[256;2];
+    var usize previous=256;
+    var u8 first_variant=2;
+    var bool terminal=true;
+    var usize arm=0;
+    while(arm<2) {
+        if(s.kind==125) {return .err(errors::make(3,at));}
+        let patterns::Pattern pattern=patterns::parse(source,s,tag)?;
+        if(arm==1 && pattern.variant==first_variant) {return .err(errors::make(3,at));}
+        if(arm==0) {first_variant=pattern.variant;}
+        else {
+            let usize next=p.count;
+            let usize patched=ir::patch(p,previous,next,at)?;
+        }
+        let ir::Case branch=ir::branch_case(p,subject,pattern.variant,at)?;
+        let usize outer=table.count;
+        if(pattern.binding) {
+            if(locals::find(source,table,pattern.begin,pattern.end)!=64) {return .err(errors::make(3,pattern.begin));}
+            let usize binding=locals::declare(table,pattern.begin,pattern.end,branch.payload,false)?;
+        }
+        let bool stopped=block(source,s,p,table,signatures,result_type,depth+2,expr_depth,loop_state)?;
+        table.count=outer;
+        terminal=terminal && stopped;
+        if(!stopped) {skips[arm]=ir::raw(p,19,0,0,0,at)?;}
+        previous=branch.instruction;
+        arm+=1;
+    }
+    let usize end=lexer::punctuation(source,s,125)?;
+    let usize failure=p.count;
+    let usize trap=ir::raw(p,25,0,0,0,at)?;
+    let usize patched=ir::patch(p,previous,failure,at)?;
+    let usize target=p.count;
+    arm=0;
+    while(arm<2) {
+        if(skips[arm]!=256) {let usize skip=ir::patch(p,skips[arm],target,at)?;}
+        arm+=1;
+    }
+    return .ok(terminal);
+}
+
+fn Result<bool, errors::Error> control_for(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 result_type, usize depth, usize expr_depth, ref mut loops::State loop_state) {
+    let usize at = s.begin;
+    let usize outer=table.count;
+    let usize keyword=lexer::next(source,s)?;
+    let usize open=lexer::punctuation(source,s,40)?;
+    let usize calls=p.call_count;
+    if (s.kind==59) {let usize empty=lexer::next(source,s)?;}
+    else {
+        let usize init=statement(source,s,p,table,signatures,59,0,expr_depth,depth,loop_state)?;
+        if (!types::scalar(p.types[table.registers[init]])) {return .err(errors::make(3,at));}
+    }
+    let usize head=p.count;
+    let usize condition=if (s.kind==59) {ir::boolean(p,true,at)?}
+        else {expression(source,s,p,table,signatures,1,expr_depth,2,0,depth,loop_state)?};
+    if (p.types[condition]!=2 || p.call_count!=calls) {return .err(errors::make(3,at));}
+    let usize separator=lexer::punctuation(source,s,59)?;
+    let usize exit=ir::raw(p,20,0,condition,0,at)?;
+    let bool has_post=s.kind!=41;
+    let usize post_start=s.begin;
+    if (has_post) {let usize validated=checked_post(source,s,p,table,signatures,expr_depth,depth,loop_state)?;}
+    else {let usize empty=lexer::next(source,s)?;}
+    let usize level=loops::enter(loop_state,head,true,at)?;
+    loop_state.bindings[level]=table.count;
+    let bool stopped=block(source,s,p,table,signatures,result_type,depth+1,expr_depth,loop_state)?;
+    let usize post_target=p.count;
+    let usize continues=loops::resolve(loop_state,p,false,post_target,at)?;
+    if (!stopped || continues!=0) {
+        if (has_post) {
+            var lexer::State post=lexer::empty();
+            post.cursor=post_start;
+            let usize first=lexer::next(source,ref mut post)?;
+            let usize emitted=statement(source,ref mut post,p,table,signatures,41,0,expr_depth,depth,loop_state)?;
+        }
+        let usize back=ir::raw(p,22,0,head,0,at)?;
+    }
+    let usize target=p.count;
+    let usize branch=ir::patch(p,exit,target,at)?;
+    let usize breaks=loops::resolve(loop_state,p,true,target,at)?;
+    loop_state.depth-=1; table.count=outer;
+    return .ok(false);
+}
+
+fn Result<bool, errors::Error> control_while(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 result_type, usize depth, usize expr_depth, ref mut loops::State loop_state) {
+    let usize at = s.begin;
+    let usize keyword=lexer::next(source,s)?;
+    let usize open=lexer::punctuation(source,s,40)?;
+    let usize head=p.count;
+    let usize level=loops::enter(loop_state,head,false,at)?;
+    loop_state.bindings[level]=table.count;
+    let usize condition=expression(source,s,p,table,signatures,1,expr_depth,2,result_type,depth,loop_state)?;
+    if (p.types[condition]!=2) {return .err(errors::make(3,at));}
+    let usize close=lexer::punctuation(source,s,41)?;
+    let usize exit=ir::raw(p,20,0,condition,0,at)?;
+    let bool stopped=block(source,s,p,table,signatures,result_type,depth+1,expr_depth,loop_state)?;
+    if (!stopped) {let usize back=ir::raw(p,22,0,head,0,at)?;}
+    let usize target=p.count;
+    let usize branch=ir::patch(p,exit,target,at)?;
+    let usize breaks=loops::resolve(loop_state,p,true,target,at)?;
+    loop_state.depth-=1;
+    return .ok(false);
+}
+
+fn Result<bool, errors::Error> control_return(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 result_type, usize depth, usize expr_depth, ref mut loops::State loop_state) {
+    let usize at = s.begin;
+    let usize keyword = lexer::next(source, s)?;
+    if(p.record_results[table.function]!=0) {
+        if(s.kind==2) {
+            var lexer::State look=lexer::snapshot(s);
+            let usize next=lexer::next(source,ref mut look)?;
+            if(look.kind==123) {
+                let usize shape=(p.record_results[table.function] as usize)-1;
+                let usize record=p.records.records[shape] as usize;
+                let bool constructor=record_values::constructor(source,s,record)?;
+                let usize first=record_constructor(source,s,p,table,signatures,record,at,result_type,expr_depth,depth,loop_state)?;
+                // Publish no name or owner while field expressions can leave.
+                let usize id=ir::record_in(p,table.function,record,false,at)?;
+                let usize init=ir::record_init(p,id,first,at)?;
+                let usize returned=record_results::finish(p,table,id,at)?;
+                return .ok(true);
+            }
+            if(look.kind==40) {
+                if(locals::find(source,table,s.begin,s.end)!=64) {return .err(errors::make(3,s.begin));}
+                let usize target=functions::find(source,signatures,s.begin,s.end);
+                let usize shape=(p.record_results[table.function] as usize)-1;
+                if(target>=signatures.count || signatures.return_records[target]==0) {return .err(errors::make(3,s.begin));}
+                let usize record=p.records.records[shape] as usize;
+                let usize nominal=(signatures.return_records[target] as usize)-1;
+                var usize id=record_results::destination(signatures,target,nominal,false,p,table.function,s.begin)?;
+                let usize name=lexer::next(source,s)?;
+                let usize called=call_value(source,s,p,table,signatures,target,144+id,at,expr_depth,result_type,depth,loop_state)?;
+                if(s.kind==46) {
+                    id=record_values::extracted_call(source,s,p,table.function,id,record,false,at,false)?;
+                } else {
+                    if(nominal!=record || s.kind!=59) {return .err(errors::make(3,s.begin));}
+                    let usize end=lexer::next(source,s)?;
+                }
+                let usize returned=record_results::finish(p,table,id,at)?;
+                return .ok(true);
+            }
+        }
+        let usize returned=record_results::returned(source,s,p,table,at)?;
+        return .ok(true);
+    }
+    if(p.array_results[table.function]!=0) {
+        if(s.kind==91) {
+            let usize shape=(p.array_results[table.function] as usize)-1;
+            let u8 element=p.arrays.elements[shape];
+            let usize open=lexer::next(source,s)?;
+            let usize value=expression(source,s,p,table,signatures,1,expr_depth,element,result_type,depth,loop_state)?;
+            let usize returned=array_results::repeated(source,s,p,table,value,at)?;
+            return .ok(true);
+        }
+        var lexer::State look=lexer::snapshot(s);
+        let usize next=lexer::next(source,ref mut look)?;
+        if(s.kind==2 && look.kind==40) {
+            if(locals::find(source,table,s.begin,s.end)!=64) {return .err(errors::make(3,s.begin));}
+            let usize target=functions::find(source,signatures,s.begin,s.end);
+            let usize shape=(p.array_results[table.function] as usize)-1;
+            let usize id=array_results::destination(signatures,target,p.arrays.elements[shape],p.arrays.lengths[shape],false,p,table.function,s.begin)?;
+            let usize name=lexer::next(source,s)?;
+            let usize called=call_value(source,s,p,table,signatures,target,id,at,expr_depth,result_type,depth,loop_state)?;
+            if(s.kind!=59) {return .err(errors::make(3,s.begin));}
+            let usize end=lexer::next(source,s)?;
+            let usize returned=array_results::finish(p,table,id,at)?;
+            return .ok(true);
+        }
+        let usize returned=array_results::returned(source,s,p,table,at)?;
+        return .ok(true);
+    }
+    let usize value = expression(source,s,p,table,signatures,1,expr_depth,result_type,result_type,depth,loop_state)?;
+    if (p.types[value] != result_type) { return .err(errors::make(3, at)); }
+    let usize end = lexer::punctuation(source, s, 59)?;
+    let usize dropped = arrays::release_visible(table, p, at)?;
+    let usize returned = ir::emit(p, 8, value, 0, at)?;
+    return .ok(true);
+}
+
+fn Result<bool, errors::Error> control_if(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 result_type, usize depth, usize expr_depth, ref mut loops::State loop_state) {
+    let usize at = s.begin;
+    let usize keyword = lexer::next(source, s)?;
+    let usize open = lexer::punctuation(source, s, 40)?;
+    let usize condition = expression(source,s,p,table,signatures,1,expr_depth,2,result_type,depth,loop_state)?;
+    if (p.types[condition] != 2) { return .err(errors::make(3, at)); }
+    let usize close = lexer::punctuation(source, s, 41)?;
+    let usize branch = ir::raw(p, 20, 0, condition, 0, at)?;
+    let bool then_returns = block(source,s,p,table,signatures,result_type,depth + 1,expr_depth,loop_state)?;
+    if (word_is(source, s, b"else")) {
+        var usize skip = 256;
+        if (!then_returns) { skip = ir::raw(p, 19, 0, 0, 0, at)?; }
+        let usize else_start = p.count;
+        let usize patched = ir::patch(p, branch, else_start, at)?;
+        let usize else_word = lexer::next(source, s)?;
+        let bool else_returns = if (word_is(source, s, b"if")) {
+            control(source,s,p,table,signatures,result_type,depth + 1,expr_depth,loop_state)?
+        } else { block(source,s,p,table,signatures,result_type,depth + 1,expr_depth,loop_state)? };
+        if (skip != 256) {
+            let usize continuation = p.count;
+            let usize skipped = ir::patch(p, skip, continuation, at)?;
+        }
+        return .ok(then_returns && else_returns);
+    }
+    let usize continuation = p.count;
+    let usize patched = ir::patch(p, branch, continuation, at)?;
     return .ok(false);
 }
 

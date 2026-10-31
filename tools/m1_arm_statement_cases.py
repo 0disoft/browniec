@@ -72,6 +72,25 @@ def run_arm_statements(case, body, root):
         for i in range(depth):
             nested = f"switch(x) {{case .some(_): {{if(true) {{let i32 n{i}={nested};}} 42}} case .none: {{0}}}}"
         case(f"arm-depth-mixed-{depth}", body("let Option<i32> x=.some(1); return " + nested + ";"), 42 if depth == 10 else None, error=None if depth == 10 else "compile_limit", fuel=10000)
+    # Exercise the native frontend stack in both CLI entry paths. These budgets
+    # cross value-arm / statement boundaries without being reset by the helper.
+    for shape in ["mixed", "block", "return", "while", "for"]:
+        for depth in [10, 11, 32]:
+            nested = "42"
+            for i in range(depth):
+                inner = {"mixed": f"if(true) {{let i32 n{i}={nested};}} 42",
+                         "block": f"{{let i32 n{i}={nested};}} 42",
+                         "return": f"if(true) {{return {nested};}} 42",
+                         "while": f"while(false) {{let i32 n{i}={nested};}} 42",
+                         "for": f"for(;false;) {{let i32 n{i}={nested};}} 42"}[shape]
+                nested = f"switch(x) {{case .some(_): {{{inner}}} case .none: {{0}}}}"
+            source = body("let Option<i32> x=.some(1); return " + nested + ";")
+            assert len(source) <= 4096, (shape, depth)
+            for mode in ["check", "run"]:
+                case(f"arm-stack-{shape}-{depth}-{mode}", source,
+                     42 if depth == 10 and mode == "run" else None,
+                     error=None if depth == 10 else "compile_limit", mode=mode,
+                     fuel=10000 if mode == "run" else None)
     exact = body(prefix + "if(false) {return 0;} v" + suffix)
     case("arm-fuel-exact", exact, 42, fuel=9)
     case("arm-fuel-short", exact, error="fuel", fuel=8)
