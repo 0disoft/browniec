@@ -1,5 +1,20 @@
 # AGENTS.md
 
+- Public readonly scalar slice elements: all six scalar tags (`i32`, `bool`,
+  `i64`, `u8`, `u32`, `usize`) are implemented and locally committed at
+  `ec73328` for same-function owned lexical array roots, immutable `ref Tag[]`
+  aliases and explicit `ref name` CALL arguments. Public `verify` and CLI
+  `check`/`run` share the complete metadata/type/flow/lifetime proof and the
+  existing VM lifecycle; version JSON adds `array_slice_scalar_elements: true`.
+  UTF-8 predicates apply only to `u8` arrays and slices. Development and release
+  each passed 22 native groups and 2,833 CLI cases, including all 2,007 M1 cases.
+  Both matched 351 current input hashes; pinned compiler, retained CLI identities
+  and all six matrix receipts were rechecked. Full native and other M2 suites,
+  Linux, M0, isolation, packaging, allocator and timing checks were not rerun.
+  No push, publication, packaged release or deployment was performed. See the
+  [Windows evidence](docs/evidence/m2-slice-element-public-windows-20261101.json).
+  See [the public contract](docs/engineering/m2-slice-element-public.md).
+
 - Private typed borrowed slice VM: implemented and verified at `b8ba1e0`.
   Development and release each passed 19 native groups (5 typed VM, 4 borrowed
   CALL, 4 dynamic frame, 6 lifecycle) and 634 CLI cases (252 typed source gate,

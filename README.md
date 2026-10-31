@@ -1,5 +1,30 @@
 # Brownie C
 
+## Current public scalar slices
+
+Public `check` and `run` support readonly `i32`, `bool`, `i64`, `u8`, `u32`
+and `usize` slices over existing same-function owned lexical arrays, immutable
+`let ref Tag[]` bindings and `ref Tag[]` parameters. Whole, ranged, computed,
+open and empty bounds, exact-tag aliases, forwarding, recursion and explicit
+`ref name` arguments are supported. UTF-8 predicates apply only to `u8`
+arrays and slices. See the
+[public scalar-slice contract](docs/engineering/m2-slice-element-public.md)
+and the working [summing example](examples/slice-elements.brc). Implemented at
+`ec73328`; development and release each passed 22 native groups and 2,833 CLI
+cases, including all 2,007 M1 CLI cases. Both profiles matched 351 current input
+hashes and their retained CLI identities. See the
+[Windows evidence](docs/evidence/m2-slice-element-public-windows-20261101.json).
+
+```text
+browniec check examples/slice-elements.brc --json
+browniec run examples/slice-elements.brc --fuel 1000000 --json
+```
+
+## Historical stages
+
+The notes below record implementation stages and gated behavior at the named
+commits. They are historical receipts, not current usage instructions.
+
 - Fairy C toolchain adoption: implemented at `465e380`.
   The compiler is now `eb274643` with SDK `0.0.0-stage0.87`; language `/20`
   and runtime ABI `/0` remain unchanged. Root and M0 SDK locks were adopted
