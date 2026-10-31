@@ -27,6 +27,7 @@ def main():
     parser.add_argument('--compiler', type=Path, default=ROOT / 'build/toolchain' /
                         ('fairyc.exe' if os.name == 'nt' else 'fairyc'))
     selection = parser.add_mutually_exclusive_group()
+    selection.add_argument('--slice-lifecycle-vm', action='store_true', help='Verify shared VM slice dispatch and normal/abort frame cleanup behind the public gate')
     selection.add_argument('--call-frame-vm', action='store_true', help='Verify VM CALL scalar/control publication after mixed admission')
     selection.add_argument('--slice-frame-vm', action='store_true', help='Verify private dynamic-root borrowed slice instruction dispatch')
     selection.add_argument('--mixed-call-vm', action='store_true', help='Verify private atomic owned and borrowed CALL admission')
@@ -53,7 +54,7 @@ def main():
     selection.add_argument('--temporary-computed-ranges', action='store_true', help='Verify computed usize bounds on temporary arrays')
     args = parser.parse_args()
     compiler = args.compiler.resolve(strict=True)
-    kind = ('array-call-frame-vm' if args.call_frame_vm else 'array-slice-frame-vm' if args.slice_frame_vm else 'array-mixed-call-vm' if args.mixed_call_vm else 'array-slice-call-vm' if args.slice_call_vm else 'array-slice-borrow-flow' if args.slice_borrow_flow else 'array-slice-parameter-source' if args.slice_parameter_source else 'array-slice-borrow-ir' if args.slice_borrow_ir else 'array-slice-builders' if args.slice_builders else 'array-slice-parameters' if args.slice_parameters else 'array-slice-arguments' if args.slice_arguments else 'array-slice-alias' if args.slice_alias else 'array-slice-sub' if args.slice_sub else 'array-slice-index' if args.slice_index else 'array-slice-length' if args.slice_length else 'array-utf8-slices' if args.slices else 'array-utf8-temporary-computed-ranges' if args.temporary_computed_ranges else 'array-utf8-computed-ranges' if args.computed_ranges else 'array-utf8-temporary-dynamic-ranges' if args.temporary_dynamic_ranges else 'array-utf8-dynamic-ranges' if args.dynamic_ranges else 'array-utf8-open-ranges' if args.open_ranges else 'array-utf8-temporary-ranges' if args.temporary_ranges else 'array-utf8-ranges' if args.ranges else 'array-utf8-literals' if args.literals else
+    kind = ('array-slice-lifecycle-vm' if args.slice_lifecycle_vm else 'array-call-frame-vm' if args.call_frame_vm else 'array-slice-frame-vm' if args.slice_frame_vm else 'array-mixed-call-vm' if args.mixed_call_vm else 'array-slice-call-vm' if args.slice_call_vm else 'array-slice-borrow-flow' if args.slice_borrow_flow else 'array-slice-parameter-source' if args.slice_parameter_source else 'array-slice-borrow-ir' if args.slice_borrow_ir else 'array-slice-builders' if args.slice_builders else 'array-slice-parameters' if args.slice_parameters else 'array-slice-arguments' if args.slice_arguments else 'array-slice-alias' if args.slice_alias else 'array-slice-sub' if args.slice_sub else 'array-slice-index' if args.slice_index else 'array-slice-length' if args.slice_length else 'array-utf8-slices' if args.slices else 'array-utf8-temporary-computed-ranges' if args.temporary_computed_ranges else 'array-utf8-computed-ranges' if args.computed_ranges else 'array-utf8-temporary-dynamic-ranges' if args.temporary_dynamic_ranges else 'array-utf8-dynamic-ranges' if args.dynamic_ranges else 'array-utf8-open-ranges' if args.open_ranges else 'array-utf8-temporary-ranges' if args.temporary_ranges else 'array-utf8-ranges' if args.ranges else 'array-utf8-literals' if args.literals else
             'array-utf8-calls' if args.call_results else 'array-utf8-source')
     output = ROOT / ('build/m2-' + kind) / args.profile
     output.mkdir(parents=True, exist_ok=True)
@@ -83,12 +84,12 @@ def main():
     paths = set(ROOT.glob('src/*.fy'))
     paths.update(ROOT / p for p in ['fairy.toml', 'fairy.lock', 'toolchain.json',
                                    'tools/verify-m2-array-utf8-source.py'])
-    if args.call_frame_vm:
+    if args.call_frame_vm or args.slice_lifecycle_vm:
         paths.update(ROOT.glob('examples/*.brc'))
     paths.update(ROOT.glob('tests/**/*.fy'))
     paths.update(ROOT.glob('tools/*.py'))
     inputs = [dict(path=p.relative_to(ROOT).as_posix(), sha256=digest(p)) for p in sorted(paths)]
-    groups = ({'call_frame_vm': 4} if args.call_frame_vm else {'slice_frame_vm': 4, 'slice_sub_vm': 3}
+    groups = ({'slice_lifecycle_vm': 5} if args.slice_lifecycle_vm else {'call_frame_vm': 4} if args.call_frame_vm else {'slice_frame_vm': 4, 'slice_sub_vm': 3}
               if args.slice_frame_vm else {'mixed_call_vm': 5, 'slice_call_vm': 4, 'struct_call_vm': 8, 'slice_arguments': 4}
               if args.mixed_call_vm else {'slice_call_vm': 4, 'slice_arguments': 4, 'slice_borrow_flow': 5, 'slice_sub_vm': 3}
               if args.slice_call_vm else {'slice_borrow_flow': 5, 'slice_parameters_source': 5, 'slice_sub_vm': 3, 'slice_index_vm': 3}
@@ -167,7 +168,8 @@ def main():
                             exit=done.returncode, result=result))
     print(f'PASS: {args.profile}: {len(cli)} CLI sentinels; Buffer syntax remains rejected', flush=True)
     matrices = []
-    matrices_to_run = ({'array-call-reads': 106, 'struct-call-reads': 102, 'array-slice-parameter-source': 74}
+    matrices_to_run = ({'array-call-reads': 106, 'struct-call-reads': 102, 'array-slice-parameter-source': 74, 'array-slice-alias': 120, 'array-slice-sub': 124}
+                       if args.slice_lifecycle_vm else {'array-call-reads': 106, 'struct-call-reads': 102, 'array-slice-parameter-source': 74}
                        if args.call_frame_vm else {'array-slice-parameter-source': None, 'array-slice-alias': 120, 'array-slice-sub': 124}
                        if args.slice_frame_vm or args.mixed_call_vm or args.slice_parameter_source or args.slice_borrow_flow or args.slice_call_vm else {'array-slice-alias': 120, 'array-slice-sub': 124}
                        if args.slice_parameters or args.slice_builders or args.slice_borrow_ir else {'array-slice-alias': 120, 'array-slice-sub': 124}
@@ -195,7 +197,7 @@ def main():
                 and (count is None or count == cases['count']), 'CLI identity/count mismatch')
         matrices.append(dict(selection=selection, count=cases['count'], receiptSha256=digest(report)))
     m1 = None
-    if args.call_frame_vm:
+    if args.call_frame_vm or args.slice_lifecycle_vm:
         print(run([os.sys.executable, '-B', ROOT / 'tools/check-m1-cli.py',
                    '--exe', exe, '--profile', args.profile]), flush=True)
         m1_path = ROOT / 'build/m1' / args.profile / 'cli-receipt.json'
@@ -220,9 +222,11 @@ def main():
                   sourceSha256=inputs, native=native, build=build, exeSha256=exe_hash, cli=cli, matrices=matrices,
                   limitations=['Qualified text::valid_utf8 over named u8 arrays, direct u8-array call results and repeated-byte literals. Named-array and temporary literal ranges have focused selections. Lexical let ref u8[] bindings over named arrays support text::valid_utf8 and reverse-order cleanup through a focused slices selection. Borrowed roots reject writes; copies remain allowed. Slice length has a focused slice-length selection using opcode57 and a fresh usize value; reads revalidate active sessions and backing capacity before publishing. Slice indexing has a focused slice-index selection using opcode58, a once-only usize index and a fresh element value. Reads preserve loans and revalidate relative bounds. Lexical subslice declarations have a focused slice-sub selection using opcode59 and parent-relative bounds; children share the active root session without payload copies. Explicit ref-name slice aliases have a focused slice-alias selection that reuses whole-parent opcode59 lowering with independent tickets and identical Fuel. Private atomic slice-argument borrowing and batch cleanup have a focused slice-arguments selection; incoming tickets are validated against the original pool before staged publication. This is an unmetered native foundation with no CALL/signature integration. A focused slice-borrow-ir selection checks rootless formal/derived UTF8, length, read, close and same-origin subslice instruction builders while keeping owned-root open and the core execution gate unchanged. A focused slice-builders selection checks shared site reservation, formal and flattened derived declarations and checked argument encoding. It does not enable borrowed instructions or CALL execution. A focused slice-parameters selection checks private formal/derived borrow metadata, initial live masks and live u8 CALL sources; the core verifier explicitly rejects nonzero borrowed-parameter metadata until metered runtime support exists. A focused slice-parameter-source selection parses readonly ref u8[] signatures, explicit ref-name slice arguments and formal-derived bindings into prospective IR. A focused slice-borrow-flow selection independently inspects whole-Program scalar/owner/borrow control flow, function entry masks, live argument kinds and cleanup through the shared verifier, while execution verify retains the early gate. A focused slice-call-vm selection checks private metered retain/cleanup of frame tickets with per-formal dynamic owner roots in a separate context. This adapter is not connected to executable dispatch. A focused mixed-call-vm selection prepares borrowed retention without publication, then runs the atomic owned copier and publishes retained tickets only after success. It prepays base/scalar plus owned plus borrowed costs once, with no payload clone or full frame-table snapshots. A private slice-frame-vm selection dispatches rootless length/read/UTF8/subslice/close instructions through formal frame origins, retaining exact owned-root dispatch and prices. It admits fixed metadata Fuel before runtime root shape validation and prepays full-origin UTF8 work before ticket resolution or payload reads. Executable VM dispatch and automatic VM cleanup remain pending. Both CLI check and run remain verification errors for any borrowed signature until runtime integration. Slice results and borrowing temporaries remain unavailable, as do Buffer/text ownership and general slice expressions. Sixteen static slice sites and sixty-four lexical bindings remain bounded. Named and temporary computed usize endpoints have focused selections. Computed temporary endpoints use an anonymous lexical capture for cleanup; nested allocations require overlapping capacity. Focused native and CLI sentinels. Full suites, M0, Linux, '
                                'isolation, DLL, packaging, allocation instrumentation and performance not run.'])
-    if args.call_frame_vm:
+    if args.call_frame_vm or args.slice_lifecycle_vm:
         result['m1'] = m1
         result['limitations'] = ['CALL publication is wired into the gated VM. Borrowed native admission is tested directly; automatic normal/error frame cleanup and dynamic slice dispatch integration remain pending. Borrowed signatures remain rejected by executable verification. Four focused native groups, full M1 CLI and three relevant M2 CLI matrices only. Full native suites, other M2 matrices, M0, Linux, isolation, packaging and performance were not rerun.']
+    if args.slice_lifecycle_vm:
+        result['limitations'] = ['The shared internal execution core is exercised after independent inspection with borrowed source Programs. Public VM/CLI still reject borrowed signatures. Five focused native groups, full M1 CLI and five related M2 matrices only. No public capability, opcode or Fuel schedule changes. Full native suites, other matrices, Linux, M0, isolation, packaging and performance were not rerun.']
     receipt.write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
     print('PASS: ' + receipt.relative_to(ROOT).as_posix(), flush=True)
 

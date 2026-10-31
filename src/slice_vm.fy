@@ -99,11 +99,18 @@ pub fn Result<i64, errors::Error> finish(ref mut State state, ref mut arrays::St
     ref bytes::Buffer buffer, Result<i64, errors::Error> outcome) {
     var errors::Error failure = errors::make(0, 0);
     let i64 value = switch (outcome) { case .ok(v): { v } case .err(e): { failure = e; 0 } };
+    let usize closed = drain(state, arrays, buffer)?;
+    if (failure.kind != 0) { return .err(failure); }
+    return .ok(value);
+}
+
+// Shared invocation cleanup; table publication precedes clearing ticket entries.
+pub fn Result<usize, errors::Error> drain(ref mut State state, ref mut arrays::State arrays,
+    ref bytes::Buffer buffer) {
     let usize closed = switch (slices::clear(ref mut state.pool, ref mut arrays.owners, bytes::len(buffer))) {
         case .ok(v): { v } case .err(e): { return .err(arrays::failure(e, 0)); }
     };
     var usize i = 0;
     while (i < 512) { state.tickets[i] = slices::Ticket { .slot = 16, .generation = 0 }; i += 1; }
-    if (failure.kind != 0) { return .err(failure); }
-    return .ok(value);
+    return .ok(closed);
 }
