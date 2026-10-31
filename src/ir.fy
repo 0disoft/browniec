@@ -69,13 +69,15 @@ pub struct Program {
     u8[16] record_results;
     // Zero unused; otherwise slice origin array catalog ID + 1.
     u8[16] slice_roots;
-    // Reserved borrowed-parameter metadata. Nonzero entries are not executable yet.
+    // Borrowed-parameter metadata. Only readonly u8 borrows are executable.
     // Parameter register -> slice site + 1; these positions hold no scalar cell.
     u8[128] slice_parameters;
     // Rootless borrowed site -> formal anchor site + 1 (formal anchors name self).
     u8[16] slice_origins;
     // Rootless borrowed site -> owning function + 1; owned array sites keep zero.
     u8[16] slice_functions;
+    // Rootless sites carry an exact scalar element tag; owned/unused sites keep zero.
+    u8[16] slice_elements;
 }
 
 pub fn Program empty() {
@@ -86,7 +88,7 @@ pub fn Program empty() {
         .call_arities = [0; 32], .function_count = 0, .entry = 0, .call_count = 0,
         .types = [0; 128], .return_types = [0; 16], .slots = [false; 128], .arrays = arrays::empty(), .records = records::empty(),
         .array_functions = [0; 16], .record_functions = [0; 16], .array_parameters = [0; 128], .record_parameters = [0; 128], .array_results = [0; 16], .record_results = [0; 16], .slice_roots = [0; 16],
-        .slice_parameters = [0; 128], .slice_origins = [0; 16], .slice_functions = [0; 16] };
+        .slice_parameters = [0; 128], .slice_origins = [0; 16], .slice_functions = [0; 16], .slice_elements = [0; 16] };
 }
 
 fn Result<u8, errors::Error> byte(usize value, usize offset) {
@@ -371,7 +373,7 @@ pub fn Result<usize,errors::Error> record_return(ref mut Program p,usize source,
 pub fn Result<usize, errors::Error> slice_site(ref Program p, usize offset) {
     var usize id = 0;
     while (id < 16) {
-        if (p.slice_roots[id] == 0 && p.slice_origins[id] == 0 && p.slice_functions[id] == 0) { return .ok(id); }
+        if (p.slice_roots[id] == 0 && p.slice_origins[id] == 0 && p.slice_functions[id] == 0 && p.slice_elements[id] == 0) { return .ok(id); }
         id += 1;
     }
     return .err(errors::make(4, offset));
@@ -383,7 +385,7 @@ pub fn Result<usize, errors::Error> slice(ref mut Program p, usize root, usize o
     p.slice_roots[id] = byte(root + 1, offset)?;
     return .ok(id);
 }
-// Construction-time shape lookup, including prospective rootless u8 borrows.
+// Construction-time shape lookup, including private typed rootless borrows.
 // This is not a liveness/control-flow proof or permission to execute a borrow.
 fn Result<u8, errors::Error> slice_element(ref Program p, usize id, usize offset) {
     if (id >= 16) { return .err(errors::make(3, offset)); }
@@ -391,7 +393,7 @@ fn Result<u8, errors::Error> slice_element(ref Program p, usize id, usize offset
     let usize origin = p.slice_origins[id] as usize;
     let usize function = p.slice_functions[id] as usize;
     if (root != 0) {
-        if (root > 16 || root > p.arrays.count || origin != 0 || function != 0) { return .err(errors::make(3, offset)); }
+        if (root > 16 || root > p.arrays.count || origin != 0 || function != 0 || p.slice_elements[id] != 0) { return .err(errors::make(3, offset)); }
         return .ok(p.arrays.elements[root - 1]);
     }
     if (origin == 0 || origin > 16 || function == 0 || function > 16 ||
@@ -399,7 +401,8 @@ fn Result<u8, errors::Error> slice_element(ref Program p, usize id, usize offset
     let usize anchor = origin - 1;
     let usize f = function - 1;
     if (p.slice_roots[anchor] != 0 || p.slice_origins[anchor] as usize != origin ||
-        p.slice_functions[anchor] as usize != function || p.arities[f] > 8 ||
+        p.slice_functions[anchor] as usize != function || !types::scalar(p.slice_elements[id]) ||
+        p.slice_elements[anchor] != p.slice_elements[id] || p.arities[f] > 8 ||
         p.register_starts[f] > p.registers ||
         p.arities[f] > p.registers - p.register_starts[f]) { return .err(errors::make(3, offset)); }
     var usize i = 0; var usize matches = 0;
@@ -413,7 +416,7 @@ fn Result<u8, errors::Error> slice_element(ref Program p, usize id, usize offset
         i += 1;
     }
     if (matches != 1) { return .err(errors::make(3, offset)); }
-    return .ok(10);
+    return .ok(p.slice_elements[id]);
 }
 pub fn Result<usize, errors::Error> slice_open(ref mut Program p, usize id, usize start, usize end, usize offset) {
     let u8 element = slice_element(p, id, offset)?;
@@ -453,7 +456,7 @@ pub fn Result<usize, errors::Error> slice_read(ref mut Program p, usize id, usiz
 pub fn Result<usize, errors::Error> slice_sub(ref mut Program p, usize id, usize parent, usize start, usize end, usize offset) {
     let u8 element = slice_element(p, id, offset)?;
     let u8 parent_element = slice_element(p, parent, offset)?;
-    if (id == parent || p.slice_roots[id] != p.slice_roots[parent] ||
+    if (id == parent || element != parent_element || p.slice_roots[id] != p.slice_roots[parent] ||
         p.slice_origins[id] != p.slice_origins[parent] || p.slice_functions[id] != p.slice_functions[parent] ||
         (p.slice_roots[id] == 0 && p.slice_origins[id] as usize == id + 1) || start >= 128 || end >= 128 ||
         start >= p.registers || end >= p.registers || p.types[start] != 12 || p.types[end] != 12 ||

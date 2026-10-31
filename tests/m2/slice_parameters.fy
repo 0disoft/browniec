@@ -14,7 +14,7 @@ fn void rejected(ref ir::Program p,usize parameter,usize source,usize caller,usi
 fn ir::Program program() {
     var ir::Program p=ir::empty(); p.function_count=2; p.entry=1; p.arities[0]=1;
     p.registers=1; p.slice_parameters[0]=1; p.slice_origins[0]=1; p.slice_functions[0]=1;
-    p.slice_origins[1]=1; p.slice_functions[1]=1;
+    p.slice_origins[1]=1; p.slice_functions[1]=1; p.slice_elements[0]=10; p.slice_elements[1]=10;
     let usize value=built(ir::literal(ref mut p,42,0)); let usize ret=built(ir::emit(ref mut p,8,value,0,0));
     let usize end=p.count; let usize registers=p.registers; p.ends[0]=end; p.register_ends[0]=registers; p.return_types[0]=1;
     p.starts[1]=end; p.register_starts[1]=registers;
@@ -78,7 +78,7 @@ fn void all_sixteen_sites_fit_and_metadata_never_bypasses_complete_verification(
     p.register_ends[0]=8; p.register_starts[1]=8; p.register_ends[1]=16; p.register_starts[2]=16; p.register_ends[2]=17;
     p.arities[0]=8; p.arities[1]=8; p.types[16]=1;
     var usize i=0; var u8 encoded=1;
-    while(i<16) { p.slice_parameters[i]=encoded; p.slice_origins[i]=encoded; p.slice_functions[i]=if(i<8){1}else{2}; i+=1; encoded+=1; }
+    while(i<16) { p.slice_parameters[i]=encoded; p.slice_origins[i]=encoded; p.slice_functions[i]=if(i<8){1}else{2}; p.slice_elements[i]=10; i+=1; encoded+=1; }
     assert(built(parameters::metadata(ref p))==65535); let usize one=1; let usize low=255;
     assert(built(parameters::initial(ref p,0))==(low<<32) && built(parameters::initial(ref p,1))==(low<<40));
     assert(built(parameters::argument(ref p,0,175,1,one<<47,77))==15);

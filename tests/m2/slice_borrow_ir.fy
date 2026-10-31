@@ -22,7 +22,7 @@ fn void unchanged(ref ir::Program p, ref ir::Program old) {
     while(i<2048) { assert(p.code[i]==old.code[i]); i+=1; }
     i=0; while(i<256) { assert(p.offsets[i]==old.offsets[i]); i+=1; }
     i=0; while(i<128) { assert(p.types[i]==old.types[i] && p.slice_parameters[i]==old.slice_parameters[i]); i+=1; }
-    i=0; while(i<16) { assert(p.slice_roots[i]==old.slice_roots[i] && p.slice_origins[i]==old.slice_origins[i] && p.slice_functions[i]==old.slice_functions[i]); i+=1; }
+    i=0; while(i<16) { assert(p.slice_roots[i]==old.slice_roots[i] && p.slice_origins[i]==old.slice_origins[i] && p.slice_functions[i]==old.slice_functions[i] && p.slice_elements[i]==old.slice_elements[i]); i+=1; }
 }
 
 @test

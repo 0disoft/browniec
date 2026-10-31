@@ -1,12 +1,13 @@
 module slice_parameters;
 import ir as ir;
 import errors as errors;
+import types as types;
 
-// Private u8 borrow signatures. No scalar value or owned-array shape is implied.
+// Exact scalar borrow signatures. No scalar value or owned-array shape is implied.
 fn bool formal(ref ir::Program p, usize r, usize site, usize f) {
     return r < 128 && r < p.registers && site < 16 && f < p.function_count && f < 16 &&
         p.slice_parameters[r] as usize == site + 1 && p.slice_roots[site] == 0 &&
-        p.slice_origins[site] as usize == site + 1 && p.slice_functions[site] as usize == f + 1 &&
+        p.slice_origins[site] as usize == site + 1 && p.slice_functions[site] as usize == f + 1 && types::scalar(p.slice_elements[site]) &&
         p.arities[f] <= 8 && p.register_starts[f] <= r && p.register_ends[f] <= p.registers &&
         r < p.register_ends[f] && r - p.register_starts[f] < p.arities[f] &&
         p.types[r] == 0 && !p.slots[r] && p.array_parameters[r] == 0 && p.record_parameters[r] == 0;
@@ -29,12 +30,13 @@ pub fn Result<usize, errors::Error> metadata(ref ir::Program p) {
         let usize function = p.slice_functions[site] as usize;
         let usize root = p.slice_roots[site] as usize;
         if (root > p.arrays.count || (root != 0 && (origin != 0 || function != 0)) ||
-            (origin == 0 && function != 0)) { return .err(errors::make(5, 0)); }
+            (origin == 0 && (function != 0 || p.slice_elements[site] != 0))) { return .err(errors::make(5, 0)); }
         if (origin != 0) {
             if (origin > 16 || function == 0 || function > p.function_count) { return .err(errors::make(5, 0)); }
             let usize anchor = origin - 1;
             if (p.slice_roots[anchor] != 0 || p.slice_origins[anchor] as usize != origin ||
-                p.slice_functions[anchor] as usize != function) { return .err(errors::make(5, 0)); }
+                p.slice_functions[anchor] as usize != function || !types::scalar(p.slice_elements[site]) ||
+                p.slice_elements[anchor] != p.slice_elements[site]) { return .err(errors::make(5, 0)); }
         }
         site += 1;
     }
@@ -100,11 +102,12 @@ pub fn Result<usize, errors::Error> argument(ref ir::Program p, usize parameter,
         if (origin > 16 || p.slice_functions[site] as usize != caller + 1 || p.slice_roots[site] != 0) { return .err(errors::make(5, at)); }
         let usize anchor = origin - 1;
         if (p.slice_origins[anchor] as usize != origin || p.slice_functions[anchor] as usize != caller + 1 ||
-            p.slice_roots[anchor] != 0) { return .err(errors::make(5, at)); }
+            p.slice_roots[anchor] != 0 || p.slice_elements[site] != p.slice_elements[anchor] ||
+            p.slice_elements[site] != p.slice_elements[destination]) { return .err(errors::make(5, at)); }
     } else {
         let usize root = p.slice_roots[site] as usize;
         if (root == 0 || root > 16 || root > p.arrays.count || p.slice_functions[site] != 0) { return .err(errors::make(5, at)); }
-        if (p.array_functions[root - 1] as usize != caller || p.arrays.elements[root - 1] != 10 ||
+        if (p.array_functions[root - 1] as usize != caller || p.arrays.elements[root - 1] != p.slice_elements[destination] ||
             (live & (one << (root - 1))) == 0) { return .err(errors::make(5, at)); }
     }
     return .ok(site);

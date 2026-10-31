@@ -3,6 +3,7 @@ import ir as ir;
 import errors as errors;
 import slice_parameters as parameters;
 import std::num as num;
+import types as types;
 
 fn Result<u8, errors::Error> encoded(usize n, usize offset) {
     // Callers bound n to 1..16 before conversion.
@@ -13,6 +14,12 @@ fn Result<u8, errors::Error> encoded(usize n, usize offset) {
 // The function's start and arity are declared before its formal positions.
 // Like owned aggregate builders, this reserves one position, not a scalar cell.
 pub fn Result<usize, errors::Error> parameter(ref mut ir::Program p, usize function, usize offset) {
+    return parameter_typed(p, function, 10, offset);
+}
+
+// Private typed declarations; non-u8 execution remains gated by verifier::verify.
+pub fn Result<usize, errors::Error> parameter_typed(ref mut ir::Program p, usize function, u8 element, usize offset) {
+    if (!types::scalar(element)) { return .err(errors::make(3, offset)); }
     if (p.registers >= 128) { return .err(errors::make(4, offset)); }
     if (p.function_count == 0 || p.function_count > 16 || function >= p.function_count ||
         function == p.entry || p.arities[function] == 0 || p.arities[function] > 8 ||
@@ -25,7 +32,7 @@ pub fn Result<usize, errors::Error> parameter(ref mut ir::Program p, usize funct
     let u8 origin = encoded(site + 1, offset)?;
     let u8 owner = encoded(function + 1, offset)?;
     p.slice_parameters[r] = origin; p.slice_origins[site] = origin;
-    p.slice_functions[site] = owner; p.registers += 1;
+    p.slice_functions[site] = owner; p.slice_elements[site] = element; p.registers += 1;
     return .ok(site);
 }
 
@@ -41,7 +48,8 @@ pub fn Result<usize, errors::Error> derived(ref mut ir::Program p, usize parent,
         p.slice_functions[parent] as usize != function + 1) { return .err(errors::make(3, offset)); }
     let usize anchor = origin - 1;
     if (p.slice_roots[anchor] != 0 || p.slice_origins[anchor] as usize != origin ||
-        p.slice_functions[anchor] as usize != function + 1) { return .err(errors::make(3, offset)); }
+        p.slice_functions[anchor] as usize != function + 1 || !types::scalar(p.slice_elements[parent]) ||
+        p.slice_elements[anchor] != p.slice_elements[parent]) { return .err(errors::make(3, offset)); }
     var usize i = 0; var usize matches = 0;
     while (i < p.arities[function]) {
         let usize r = p.register_starts[function] + i;
@@ -56,6 +64,7 @@ pub fn Result<usize, errors::Error> derived(ref mut ir::Program p, usize parent,
     let usize site = ir::slice_site(p, offset)?;
     let u8 source = encoded(origin, offset)?; let u8 owner = encoded(function + 1, offset)?;
     p.slice_origins[site] = source; p.slice_functions[site] = owner;
+    let u8 element = p.slice_elements[parent]; p.slice_elements[site] = element;
     return .ok(site);
 }
 
