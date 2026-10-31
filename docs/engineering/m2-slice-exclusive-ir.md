@@ -7,6 +7,9 @@ cleanup are implemented. Public readonly scalar slices keep their behavior.
 
 Implementation: `ae66b1b`.
 
+The [write-instruction successor](m2-slice-write-ir.md) adds private opcode 60
+construction and inspection. Exclusive VM execution and guest syntax stay gated.
+
 ## Metadata and construction
 
 For owned sites, `Program.slice_elements` uses zero for readonly and the

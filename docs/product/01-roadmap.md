@@ -2,8 +2,9 @@
 
 - Mutable scalar slices: the private exclusive array-session foundation and
   [owned exclusive IR inspection](../engineering/m2-slice-exclusive-ir.md) are
-  implemented. Public exclusive execution remains blocked. Next integration
-  needs a checked write instruction, runtime ticket storage, metered dispatch,
+  implemented. The [checked write instruction](../engineering/m2-slice-write-ir.md)
+  now has private construction and inspection. Public exclusive execution remains
+  blocked. Next integration needs runtime ticket storage, metered dispatch,
   lexical/error cleanup and then guest lowering. Exclusive parameters,
   subloans and returned borrows remain unsupported. See
   [the owner-layer contract](../engineering/m2-array-write-leases.md). Public

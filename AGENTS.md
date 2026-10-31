@@ -1,5 +1,22 @@
 # AGENTS.md
 
+- Private exclusive slice-write IR: implemented at `caea3d2`.
+  Opcode 60 describes a store through a live owned
+  exclusive site using ordinary same-function defined `usize` index and exact
+  scalar value snapshots. `ir::slice_write` emits no scalar register; failures
+  preserve code/offsets/counts. Independent inspection rejects readonly/closed
+  sites, wrong tags, foreign/undefined operands and nonzero reserved bytes.
+  Defined/written registers and loan live sets remain unchanged. Public
+  verification/VM admission is still gated; no guest syntax, execution, Fuel
+  price or capability is enabled. Development and release each passed 14 selected
+  native groups and 2,199 CLI cases (192 public scalar slices plus 2,007 M1), with
+  354 identical current inputs and rechecked compiler/artifact/receipt identities.
+  Program fields remain unchanged; depth32 succeeds and depth33/64 return
+  compile_limit in check/run. Full native/other M2, Linux, M0, isolation,
+  packaging, allocator and timing were not rerun. No push/publication/release/deploy.
+  See [the contract](docs/engineering/m2-slice-write-ir.md) and
+  [Windows evidence](docs/evidence/m2-slice-write-ir-windows-20261101.json).
+
 - Private owned exclusive slice IR: implemented at `ae66b1b`.
   Owned `slice_elements` marker 128 denotes
   exclusivity without growing Program; `ir::exclusive_slice` reserves a checked

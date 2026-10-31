@@ -26,6 +26,9 @@ for future mutable slices. Guest mutable-slice syntax is not enabled yet.
 The [private exclusive IR](docs/engineering/m2-slice-exclusive-ir.md) now proves
 owned-root exclusion and lifetimes independently; public execution remains
 blocked until exclusive VM dispatch and cleanup are connected.
+The [private slice-write instruction](docs/engineering/m2-slice-write-ir.md)
+adds exact-typed store construction and inspection; guest write execution
+remains gated.
 
 ## Historical stages
 
