@@ -79,17 +79,26 @@ fn Result<owners::Token, errors::Error> checked(ref ir::Program p, usize functio
     return .ok(expected);
 }
 
-// No registers, return frame, owned copies or payload bytes are published here.
-// Mixed owned/borrowed CALL atomicity must be integrated before VM admission.
-pub fn Result<usize, errors::Error> enter(ref ir::Program p, usize pc, usize parent,
-    ref mut Frames frames, ref mut loans::State loan, ref arrays::State state, ref bytes::Buffer buffer, usize fuel) {
+// A private, single-use plan over an immutable inspected Program. Between
+// prepare and publish only the owned CALL copier may run: it preserves existing
+// roots, sessions and the slice pool. Never publish after another slice mutation.
+pub struct Admission {
+    slices::Pool pool; slices::Ticket[8] tickets; owners::Token[8] roots;
+    usize[8] sites; usize[8] positions; usize count; usize child; usize remaining;
+}
+pub fn Result<Admission, errors::Error> prepare(ref ir::Program p, usize pc, usize parent,
+    ref Frames frames, ref loans::State loan, ref arrays::State state, ref bytes::Buffer buffer, usize fuel) {
     if(pc>=p.count || pc>=256 || p.code[pc*8]!=9) { return .err(errors::make(5,0)); }
     let usize offset=p.offsets[pc]; let usize target=p.code[pc*8+2] as usize; let usize call=p.code[pc*8+3] as usize;
     let usize work=cost(p,target,offset)?;
     if(call>=p.call_count || call>=32 || p.call_arities[call] as usize!=p.arities[target]) { return .err(errors::make(5,offset)); }
     if(fuel<work) { return .err(errors::make(8,offset)); }
     if(parent>=31) { return .err(errors::make(12,offset)); }
-    if(work==0) { return .ok(fuel); }
+    var Admission plan=Admission { .pool=slices::Pool{.slots=loan.pool.slots},
+        .tickets=[slices::Ticket{.slot=16,.generation=0};8],
+        .roots=[owners::Token{.slot=16,.generation=0};8],.sites=[0;8],.positions=[0;8],
+        .count=0,.child=parent+1,.remaining=fuel-work };
+    if(work==0) { return .ok(plan); }
     var usize caller=0;
     while(caller<p.function_count && (pc<p.starts[caller] || pc>=p.ends[caller])) { caller+=1; }
     if(caller==p.function_count) { return .err(errors::make(5,offset)); }
@@ -114,13 +123,29 @@ pub fn Result<usize, errors::Error> enter(ref ir::Program p, usize pc, usize par
         }
         i+=1;
     }
-    let slices::Arguments retained=switch(slices::borrow_arguments(ref mut loan.pool,ref sources[..count],ref state.owners,bytes::len(buffer))) {
+    let slices::Arguments retained=switch(slices::borrow_arguments(ref mut plan.pool,ref sources[..count],ref state.owners,bytes::len(buffer))) {
         case .ok(v): { v } case .err(e): { return .err(arrays::failure(e,offset)); }
     };
-    i=0; while(i<count) {
-        loan.tickets[child*16+sites[i]]=retained.tickets[i]; frames.origins[child*8+positions[i]]=roots[i]; i+=1;
+    plan.tickets=retained.tickets; plan.roots=roots; plan.sites=sites;
+    plan.positions=positions; plan.count=count;
+    return .ok(plan);
+}
+
+// Infallible publication, immediately after all borrowed and owned work succeeds.
+// No payload, register or return-frame work belongs after the first publication.
+pub fn void publish(ref Admission plan,ref mut Frames frames,ref mut loans::State loan) {
+    if(plan.count==0) { return; }
+    loan.pool.slots=plan.pool.slots;
+    var usize i=0; while(i<plan.count) {
+        loan.tickets[plan.child*16+plan.sites[i]]=plan.tickets[i];
+        frames.origins[plan.child*8+plan.positions[i]]=plan.roots[i]; i+=1;
     }
-    return .ok(fuel-work);
+}
+pub fn Result<usize, errors::Error> enter(ref ir::Program p,usize pc,usize parent,
+    ref mut Frames frames,ref mut loans::State loan,ref arrays::State state,ref bytes::Buffer buffer,usize fuel) {
+    let Admission plan=prepare(p,pc,parent,frames,loan,state,buffer,fuel)?;
+    publish(ref plan,frames,loan);
+    return .ok(plan.remaining);
 }
 
 // The fixed cleanup reserve was prepaid by a successful borrowed enter.
