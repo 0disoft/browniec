@@ -4,6 +4,7 @@ import ir as ir;
 import errors as errors;
 import register_set as registers;
 import struct_parameters as records;
+import slice_parameters as slices;
 
 // Called after catalog and function/register partitions have been verified.
 pub fn Result<usize, errors::Error> metadata(ref ir::Program p) {
@@ -43,7 +44,9 @@ pub fn Result<usize, errors::Error> arguments(ref ir::Program p, usize target, u
         if (arg < count) {
             let usize parameter = p.register_starts[target] + arg;
             let usize encoded = p.array_parameters[parameter] as usize;
-            if (p.record_parameters[parameter] != 0) {
+            if (p.slice_parameters[parameter] != 0) {
+                let usize checked = slices::argument(p, parameter, source, caller, live, pc)?;
+            } else if (p.record_parameters[parameter] != 0) {
                 let usize checked = records::argument(p, p.record_parameters[parameter] as usize, source, caller, live, pc)?;
             } else if (encoded != 0) {
                 if (source < 128) { return .err(errors::make(5, pc)); }
@@ -55,7 +58,7 @@ pub fn Result<usize, errors::Error> arguments(ref ir::Program p, usize target, u
                     p.arrays.lengths[id] != p.arrays.lengths[destination]) { return .err(errors::make(5, pc)); }
             } else {
                 if (source < p.register_starts[caller] || source >= p.register_ends[caller] ||
-                    p.slots[source] || p.array_parameters[source] != 0 || p.record_parameters[source] != 0 || !registers::contains(defined, source) ||
+                    p.slots[source] || p.array_parameters[source] != 0 || p.record_parameters[source] != 0 || p.slice_parameters[source] != 0 || !registers::contains(defined, source) ||
                     p.types[source] != p.types[parameter]) { return .err(errors::make(5, pc)); }
             }
         } else if (source != 0) { return .err(errors::make(5, pc)); }

@@ -9,7 +9,7 @@ import struct_parameters as parameters;
 
 fn bool readable(ref ir::Program p, ref registers::Set defined, usize r, usize f, u8 tag) {
     return r >= p.register_starts[f] && r < p.register_ends[f] && !p.slots[r] &&
-        p.array_parameters[r] == 0 && p.record_parameters[r] == 0 && registers::contains(defined, r) && p.types[r] == tag;
+        p.array_parameters[r] == 0 && p.record_parameters[r] == 0 && p.slice_parameters[r] == 0 && registers::contains(defined, r) && p.types[r] == tag;
 }
 fn Result<usize, errors::Error> span(ref ir::Program p, ref meta::Prepared shapes,
     ref registers::Set defined, usize id, usize first, usize start, usize count, usize f, usize pc) {

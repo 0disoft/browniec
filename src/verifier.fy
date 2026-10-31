@@ -16,7 +16,7 @@ import struct_parameters as struct_parameters;
 import struct_results as struct_results;
 
 fn bool readable(ref ir::Program p, ref registers::Set defined, usize r, usize start, usize end) {
-    return r >= start && r < end && !p.slots[r] && p.array_parameters[r] == 0 && p.record_parameters[r] == 0 && registers::contains(defined, r);
+    return r >= start && r < end && !p.slots[r] && p.array_parameters[r] == 0 && p.record_parameters[r] == 0 && p.slice_parameters[r] == 0 && registers::contains(defined, r);
 }
 fn bool merge(ref mut usize[] states, ref mut bool[] seen, ref registers::Set defined, usize target, ref mut usize[] array_states, usize live) {
     if (seen[target] && array_states[target] != live) { return false; }
@@ -39,15 +39,16 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
     var registers::Set defined = registers::empty();
     var usize i = start;
     while (i < end) {
-        if (p.record_parameters[i] == 0 && !types::valid(p.types[i])) { return .err(errors::make(5, p.starts[f])); }
+        if (p.record_parameters[i] == 0 && p.slice_parameters[i] == 0 && !types::valid(p.types[i])) { return .err(errors::make(5, p.starts[f])); }
         if (i < start + arity) {
             if (p.slots[i]) { return .err(errors::make(5, p.starts[f])); }
             registers::insert(ref mut written, i);
-            if (p.array_parameters[i] == 0 && p.record_parameters[i] == 0) { registers::insert(ref mut defined, i); }
+            if (p.array_parameters[i] == 0 && p.record_parameters[i] == 0 && p.slice_parameters[i] == 0) { registers::insert(ref mut defined, i); }
         }
         i += 1;
     }
-    let bool entered = merge(ref mut states, ref mut seen, ref defined, p.starts[f], ref mut array_states, array_parameters::initial(p, f) | struct_parameters::initial(p, f));
+    let usize borrowed_entry = slice_parameters::initial(p, f)?;
+    let bool entered = merge(ref mut states, ref mut seen, ref defined, p.starts[f], ref mut array_states, array_parameters::initial(p, f) | struct_parameters::initial(p, f) | borrowed_entry);
     var usize pc = p.starts[f];
     // Solve the forward graph, then check each backedge preserves its target's
     // entry invariant. This bounded inductive proof needs no cyclic worklist.
@@ -174,7 +175,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
     return .ok(end - start);
 }
 
-pub fn Result<usize, errors::Error> verify(ref ir::Program p) {
+fn Result<usize, errors::Error> validate(ref ir::Program p, bool execution) {
     if (p.count == 0 || p.count > 256 || p.registers == 0 || p.registers > 128 || p.constant_count > 128 ||
         p.function_count == 0 || p.function_count > 16 || p.entry >= p.function_count || p.call_count > 32) { return .err(errors::make(5, 0)); }
     if (!arrays::valid(ref p.arrays)) { return .err(errors::make(5, 0)); }
@@ -203,7 +204,7 @@ pub fn Result<usize, errors::Error> verify(ref ir::Program p) {
     if (code_end != p.count || register_end != p.registers) { return .err(errors::make(5, 0)); }
     let usize borrowed_parameters = slice_parameters::metadata(p)?;
     // Origin metadata is checked now; guest execution waits for metered CALL/frame support.
-    if (borrowed_parameters != 0) { return .err(errors::make(5, 0)); }
+    if (execution && borrowed_parameters != 0) { return .err(errors::make(5, 0)); }
     let usize parameters = array_parameters::metadata(p)?;
     let usize record_parameters = struct_parameters::metadata(p)?;
     let usize results = array_results::metadata(p)?;
@@ -214,4 +215,13 @@ pub fn Result<usize, errors::Error> verify(ref ir::Program p) {
     var usize call = 0;
     while (call < p.call_count) { if (!used_calls[call]) { return .err(errors::make(5, 0)); } call += 1; }
     return .ok(p.count);
+}
+
+// Inspection is a full private IR/dataflow proof, not an execution permit.
+// VM and CLI continue to call verify and retain the early borrowed-CALL gate.
+pub fn Result<usize, errors::Error> inspect(ref ir::Program p) {
+    return validate(p, false);
+}
+pub fn Result<usize, errors::Error> verify(ref ir::Program p) {
+    return validate(p, true);
 }

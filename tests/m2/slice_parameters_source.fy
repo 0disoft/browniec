@@ -6,7 +6,10 @@ import slice_parameters as parameters;
 import verifier as verifier;
 import vm as vm;
 
-fn ir::Program compiled(ref u8[] source) { return switch(compiler::compile(source)) { case .ok(p): { p } case .err(_): { assert(false); ir::empty() } }; }
+fn ir::Program compiled(ref u8[] source) {
+    let ir::Program p=switch(compiler::compile(source)) { case .ok(v): { v } case .err(_): { assert(false); ir::empty() } };
+    assert(verifier::inspect(ref p).is_ok); return p;
+}
 fn void prospective(ref u8[] source) {
     let ir::Program p=compiled(source);
     assert(switch(parameters::metadata(ref p)) { case .ok(mask): { mask!=0 } case .err(_): { false } });
