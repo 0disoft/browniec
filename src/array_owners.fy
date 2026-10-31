@@ -15,8 +15,11 @@ pub struct Token { usize slot; usize generation; }
 pub struct View { Token root; u8 element; usize length; usize start; usize end; }
 // One explicit read session per array root; multiple views may share it.
 pub struct ReadLease { Token root; usize generation; }
+// A single exclusive session locks the whole root, even for an empty range.
+// Read and write sessions share an epoch so neither kind can resurrect a ticket.
+pub struct WriteLease { View view; usize generation; }
 pub struct Owner {
-    usize generation; bool occupied; bool live; bool reading; usize mark; usize base; usize end;
+    usize generation; bool occupied; bool live; bool reading; bool writing; usize mark; usize base; usize end;
     // element 0 denotes a record: length is bytes, record/alignment identify its layout.
     // Arrays retain their scalar element/length and zero record/alignment fields.
     u8 element; usize length; usize record; usize alignment; usize read_generation;
@@ -31,7 +34,7 @@ pub enum Error { Token; Owners; State; Type; Length; Metadata; Overflow; Quota; 
 
 pub fn Table empty(usize limit) {
     return Table { .slots = [Owner { .generation = 1, .occupied = false, .live = false,
-        .reading = false, .read_generation = 1,
+        .reading = false, .writing = false, .read_generation = 1,
         .mark = 0, .base = 0, .end = 0, .element = 0, .length = 0, .record = 0, .alignment = 0 }; 16],
         .order = [0; 16], .depth = 0, .arena = storage::empty(limit) };
 }
@@ -73,7 +76,8 @@ fn bool valid(ref Table table, usize capacity) {
         seen[slot] = true;
         let Owner owner = table.slots[slot];
         if (!owner.occupied || owner.mark != cursor || (owner.live && owner.generation == 0)) { return false; }
-        if (owner.reading && (!owner.live || owner.element == 0 || owner.read_generation == 0)) { return false; }
+        if ((owner.reading || owner.writing) && (!owner.live || owner.element == 0 || owner.read_generation == 0)) { return false; }
+        if (owner.reading && owner.writing) { return false; }
         let layouts::Array layout = switch (allocation_layout(ref owner)) {
             case .ok(value): { value } case .err(_): { return false; }
         };
@@ -88,7 +92,7 @@ fn bool valid(ref Table table, usize capacity) {
     i = 0;
     while (i < 16) {
         if (table.slots[i].occupied != seen[i] || (table.slots[i].live && !seen[i])) { return false; }
-        if (table.slots[i].reading && !seen[i]) { return false; }
+        if ((table.slots[i].reading || table.slots[i].writing) && !seen[i]) { return false; }
         i += 1;
     }
     return true;
@@ -111,6 +115,7 @@ fn Result<Owner, Error> resolve_any(ref Table table, Token token, usize capacity
 fn Result<Owner, Error> resolve(ref Table table, Token token, usize capacity) {
     let Owner owner = resolve_any(table, token, capacity)?;
     if (owner.element == 0) { return .err(.Type); }
+    if (owner.writing) { return .err(.State); }
     return .ok(owner);
 }
 fn Result<Owner, Error> writable(ref Table table, Token token, usize capacity) {
@@ -150,6 +155,56 @@ pub fn Result<usize, Error> leased_length(ref Table table, ReadLease lease, ref 
     if (view.root.slot != lease.root.slot || view.root.generation != lease.root.generation) { return .err(.Token); }
     return view_length(table, view, capacity);
 }
+pub fn Result<WriteLease, Error> begin_write(ref mut Table table, Token root,
+    usize start, usize end, usize capacity) {
+    let Owner owner = writable(table, root, capacity)?;
+    if (owner.read_generation == 0) { return .err(.State); }
+    // Validate before locking: failed range admission preserves the whole table.
+    let View selected = view(table, root, start, end, capacity)?;
+    table.slots[root.slot].writing = true;
+    return .ok(WriteLease { .view = selected, .generation = owner.read_generation });
+}
+fn Result<Owner, Error> resolve_write(ref Table table, ref WriteLease lease, usize capacity) {
+    let Owner owner = resolve_any(table, lease.view.root, capacity)?;
+    if (owner.element == 0) { return .err(.Type); }
+    if (!owner.writing || lease.generation == 0 || lease.generation != owner.read_generation) { return .err(.State); }
+    if (lease.view.element != owner.element) { return .err(.Type); }
+    if (lease.view.length != owner.length) { return .err(.Length); }
+    if (lease.view.start > lease.view.end || lease.view.end > owner.length) { return .err(.Bounds); }
+    return .ok(owner);
+}
+pub fn Result<usize, Error> end_write(ref mut Table table, ref WriteLease lease, usize capacity) {
+    let Owner owner = resolve_write(table, lease, capacity)?;
+    table.slots[lease.view.root.slot].writing = false;
+    table.slots[lease.view.root.slot].read_generation = next_generation(owner.read_generation);
+    return .ok(lease.view.root.slot);
+}
+pub fn Result<usize, Error> exclusive_length(ref Table table, ref WriteLease lease, usize capacity) {
+    let Owner owner = resolve_write(table, lease, capacity)?;
+    return .ok(lease.view.end - lease.view.start);
+}
+pub fn Result<i64, Error> exclusive_read(ref Table table, ref WriteLease lease, usize index, ref u8[] bytes) {
+    let Owner owner = resolve_write(table, lease, bytes.len)?;
+    if (index >= lease.view.end - lease.view.start) { return .err(.Bounds); }
+    let layouts::Array layout = switch (layouts::scalar(owner.element, owner.length)) {
+        case .ok(value): { value } case .err(_): { return .err(.State); }
+    };
+    return switch (storage::read(ref layout, owner.base, lease.view.start + index, bytes, ref table.arena)) {
+        case .ok(value): { .ok(value) } case .err(e): { .err(storage_error(e)) }
+    };
+}
+pub fn Result<usize, Error> exclusive_write(ref Table table, ref WriteLease lease,
+    usize index, i64 cell, ref mut u8[] bytes) {
+    let Owner owner = resolve_write(table, lease, bytes.len)?;
+    if (index >= lease.view.end - lease.view.start) { return .err(.Bounds); }
+    let layouts::Array layout = switch (layouts::scalar(owner.element, owner.length)) {
+        case .ok(value): { value } case .err(_): { return .err(.State); }
+    };
+    // The scalar codec stages at most eight bytes before publishing the element.
+    return switch (storage::write(ref layout, owner.base, lease.view.start + index, cell, bytes, ref table.arena)) {
+        case .ok(value): { .ok(value) } case .err(e): { .err(storage_error(e)) }
+    };
+}
 fn Result<usize, Error> free_slot(ref Table table) {
     var usize i = 0;
     while (i < 16) {
@@ -163,7 +218,7 @@ fn Token publish(ref mut Table table, usize slot, ref layouts::Array layout, usi
     let usize end = table.arena.used;
     let usize depth = table.depth;
     table.slots[slot] = Owner { .generation = generation, .occupied = true, .live = true,
-        .reading = false, .read_generation = 1,
+        .reading = false, .writing = false, .read_generation = 1,
         .mark = mark, .base = base, .end = end, .element = layout.element, .length = layout.length, .record = 0, .alignment = 0 };
     table.order[depth] = slot;
     table.depth += 1;
@@ -330,6 +385,7 @@ pub fn Result<Copies, Error> copy_arguments(ref Token[] sources, ref layouts::Ar
     var usize i = 0;
     while (i < sources.len) {
         let Owner owner = lookup(table, sources[i])?;
+        if (owner.writing) { return .err(.State); }
         if (owner.element == 0) { return .err(.Type); }
         let layouts::Array shape = shapes[i];
         if (owner.element != shape.element) { return .err(.Type); }
@@ -392,6 +448,7 @@ pub fn Result<Copies, Error> copy_call_arguments(ref records::Catalog catalog,
     while (i < arguments.len) {
         let CallArgument argument = arguments[i];
         let Owner owner = lookup(table, argument.source)?;
+        if (owner.writing) { return .err(.State); }
         if (owner.element != argument.element) { return .err(.Type); }
         if (argument.element == 0) {
             if (argument.length != 0) { return .err(.Metadata); }
@@ -470,14 +527,14 @@ pub fn Result<usize, Error> assign(Token destination, Token source, ref mut u8[]
 fn void forget(ref mut Table table, usize slot) {
     table.slots[slot].occupied = false;
     table.slots[slot].live = false;
-    table.slots[slot].reading = false; table.slots[slot].read_generation = 1;
+    table.slots[slot].reading = false; table.slots[slot].writing = false; table.slots[slot].read_generation = 1;
     table.slots[slot].mark = 0; table.slots[slot].base = 0; table.slots[slot].end = 0;
     table.slots[slot].element = 0; table.slots[slot].length = 0;
     table.slots[slot].record = 0; table.slots[slot].alignment = 0;
 }
 pub fn Result<usize, Error> release(ref mut Table table, Token token, usize capacity) {
     let Owner owner = resolve_any(table, token, capacity)?;
-    if (owner.reading) { return .err(.State); }
+    if (owner.reading || owner.writing) { return .err(.State); }
     let usize before = table.arena.used;
     table.slots[token.slot].live = false;
     table.slots[token.slot].generation = next_generation(owner.generation);
@@ -495,7 +552,7 @@ pub fn Result<usize, Error> release(ref mut Table table, Token token, usize capa
 pub fn Result<usize, Error> clear(ref mut Table table, usize capacity) {
     if (!valid(table, capacity)) { return .err(.State); }
     var usize checked = 0;
-    while (checked < 16) { if (table.slots[checked].reading) { return .err(.State); } checked += 1; }
+    while (checked < 16) { if (table.slots[checked].reading || table.slots[checked].writing) { return .err(.State); } checked += 1; }
     let usize before = table.arena.used;
     var usize i = 0;
     while (i < 16) {
@@ -542,7 +599,7 @@ fn Token publish_record(ref mut Table table, usize slot, usize record, usize byt
     let usize end = table.arena.used;
     let usize depth = table.depth;
     table.slots[slot] = Owner { .generation = generation, .occupied = true, .live = true,
-        .reading = false, .read_generation = 1,
+        .reading = false, .writing = false, .read_generation = 1,
         .mark = mark, .base = base, .end = end, .element = 0,
         .length = bytes, .record = record, .alignment = alignment };
     table.order[depth] = slot;
