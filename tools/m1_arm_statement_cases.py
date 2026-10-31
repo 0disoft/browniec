@@ -91,6 +91,18 @@ def run_arm_statements(case, body, root):
                      42 if depth == 10 and mode == "run" else None,
                      error=None if depth == 10 else "compile_limit", mode=mode,
                      fuel=10000 if mode == "run" else None)
+    for depth in [32, 33, 64]:
+        source = ("module main; fn i32 id(i32 n) {return n;} fn i32 main() {return "
+                  + "id(" * depth + "42" + ")" * depth + ";}").encode()
+        for mode in ["check", "run"]:
+            case(f"arm-stack-calls-{depth}-{mode}", source,
+                 42 if depth == 32 and mode == "run" else None,
+                 error=None if depth == 32 else "compile_limit", mode=mode,
+                 fuel=10000 if mode == "run" else None)
+    # Structural and expression budgets are independent, both remain available.
+    source = body("{" * 32 + "return " + "(" * 32 + "42" + ")" * 32 + ";" + "}" * 32)
+    for mode in ["check", "run"]:
+        case(f"arm-stack-combined-budgets-{mode}", source, 42 if mode == "run" else None, mode=mode)
     exact = body(prefix + "if(false) {return 0;} v" + suffix)
     case("arm-fuel-exact", exact, 42, fuel=9)
     case("arm-fuel-short", exact, error="fuel", fuel=8)

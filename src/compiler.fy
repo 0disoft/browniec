@@ -107,62 +107,7 @@ fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s,
         return ir::integer(p, value, tag, at);
     }
     if (s.kind == 2) {
-        if (word_is(source, s, b"text")) {
-            var lexer::State look = lexer::snapshot(s);
-            let usize next = lexer::next(source, ref mut look)?;
-            if (look.kind == 58) { return utf8_value(source,s,p,table,signatures,depth,result_type,structure,loop_state); }
-        }
-        if (word_is(source, s, b"true") || word_is(source, s, b"false")) {
-            let bool value = word_is(source, s, b"true");
-            let usize advanced = lexer::next(source, s)?;
-            return ir::boolean(p, value, at);
-        }
-        if (locals::reserved(source[s.begin..s.end])) { return .err(errors::make(2, at)); }
-        let usize begin = s.begin;
-        let usize end = s.end;
-        let usize index = locals::find(source, table, begin, end);
-        let usize advanced = lexer::next(source, s)?;
-        if (s.kind == 40) {
-            if (index != 64) { return .err(errors::make(3, at)); }
-            let usize target = functions::find(source, signatures, begin, end);
-            if (target == 16) { return .err(errors::make(3, at)); }
-            if(signatures.return_lengths[target]!=0) {
-                return array_call_read(source,s,p,table,signatures,target,at,depth,result_type,structure,loop_state);
-            }
-            if(signatures.return_records[target]!=0) {
-                return record_call_read(source,s,p,table,signatures,target,at,depth,result_type,structure,loop_state);
-            }
-            return call_value(source,s,p,table,signatures,target,16,at,depth,result_type,structure,loop_state);
-        }
-        if (index == 64) { return .err(errors::make(3, at)); }
-        let usize register = table.registers[index];
-        if (record_values::binding(table, index)) { return record_values::read(source, s, p, register - 144, at); }
-        if (arrays::binding(table, index)) {
-            if (s.kind == 46) {
-                let usize dot = lexer::next(source, s)?;
-                if (!word_is(source, s, b"len")) { return .err(errors::make(3, s.begin)); }
-                let usize member = lexer::next(source, s)?;
-                return arrays::length_value(p, register - 128, at);
-            }
-            if (s.kind != 91) { return .err(errors::make(3, at)); }
-            let usize open = lexer::punctuation(source, s, 91)?;
-            let usize subscript = expression(source,s,p,table,signatures,1,depth+1,12,result_type,structure,loop_state)?;
-            if (p.types[subscript] != 12) { return .err(errors::make(3, at)); }
-            let usize close = lexer::punctuation(source, s, 93)?;
-            return ir::array_read(p, register - 128, subscript, at);
-        }
-        if (slices::binding(table,index)) {
-            if (s.kind == 46) { return slices::member(source,s,p,register-160,at); }
-            if (s.kind != 91) { return .err(errors::make(3, at)); }
-            let usize open = lexer::next(source, s)?;
-            let usize subscript = expression(source,s,p,table,signatures,1,depth+1,12,result_type,structure,loop_state)?;
-            if (p.types[subscript] != 12) { return .err(errors::make(3, at)); }
-            let usize close = lexer::punctuation(source, s, 93)?;
-            return ir::slice_read(p, register-160, subscript, at);
-        }
-        if (register >= 128 || s.kind == 91) { return .err(errors::make(3, at)); }
-        if (p.slots[register]) { return ir::emit(p, 17, register, 0, at); }
-        return .ok(register);
+        return named_operand(source,s,p,table,signatures,depth,expected,result_type,structure,loop_state);
     }
     if (s.kind == 40) {
         let usize advanced = lexer::next(source, s)?;
@@ -171,6 +116,68 @@ fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s,
         return .ok(result);
     }
     return .err(errors::make(2, s.begin));
+}
+fn Result<usize, errors::Error> named_operand(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize depth, u8 expected, u8 result_type, usize structure, ref mut loops::State loop_state) {
+    let usize at = s.begin;
+    if (word_is(source, s, b"text")) {
+        var lexer::State look = lexer::snapshot(s);
+        let usize next = lexer::next(source, ref mut look)?;
+        if (look.kind == 58) { return utf8_value(source,s,p,table,signatures,depth,result_type,structure,loop_state); }
+    }
+    if (word_is(source, s, b"true") || word_is(source, s, b"false")) {
+        let bool value = word_is(source, s, b"true");
+        let usize advanced = lexer::next(source, s)?;
+        return ir::boolean(p, value, at);
+    }
+    if (locals::reserved(source[s.begin..s.end])) { return .err(errors::make(2, at)); }
+    let usize begin = s.begin;
+    let usize end = s.end;
+    let usize index = locals::find(source, table, begin, end);
+    let usize advanced = lexer::next(source, s)?;
+    if (s.kind == 40) {
+        if (index != 64) { return .err(errors::make(3, at)); }
+        let usize target = functions::find(source, signatures, begin, end);
+        if (target == 16) { return .err(errors::make(3, at)); }
+        if(signatures.return_lengths[target]!=0) {
+            return array_call_read(source,s,p,table,signatures,target,at,depth,result_type,structure,loop_state);
+        }
+        if(signatures.return_records[target]!=0) {
+            return record_call_read(source,s,p,table,signatures,target,at,depth,result_type,structure,loop_state);
+        }
+        return call_value(source,s,p,table,signatures,target,16,at,depth,result_type,structure,loop_state);
+    }
+    return binding_operand(source,s,p,table,signatures,index,at,depth,result_type,structure,loop_state);
+}
+fn Result<usize, errors::Error> binding_operand(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize index, usize at, usize depth, u8 result_type, usize structure, ref mut loops::State loop_state) {
+    if (index == 64) { return .err(errors::make(3, at)); }
+    let usize register = table.registers[index];
+    if (record_values::binding(table, index)) { return record_values::read(source, s, p, register - 144, at); }
+    if (arrays::binding(table, index)) {
+        if (s.kind == 46) {
+            let usize dot = lexer::next(source, s)?;
+            if (!word_is(source, s, b"len")) { return .err(errors::make(3, s.begin)); }
+            let usize member = lexer::next(source, s)?;
+            return arrays::length_value(p, register - 128, at);
+        }
+        if (s.kind != 91) { return .err(errors::make(3, at)); }
+        let usize open = lexer::punctuation(source, s, 91)?;
+        let usize subscript = expression(source,s,p,table,signatures,1,depth+1,12,result_type,structure,loop_state)?;
+        if (p.types[subscript] != 12) { return .err(errors::make(3, at)); }
+        let usize close = lexer::punctuation(source, s, 93)?;
+        return ir::array_read(p, register - 128, subscript, at);
+    }
+    if (slices::binding(table,index)) {
+        if (s.kind == 46) { return slices::member(source,s,p,register-160,at); }
+        if (s.kind != 91) { return .err(errors::make(3, at)); }
+        let usize open = lexer::next(source, s)?;
+        let usize subscript = expression(source,s,p,table,signatures,1,depth+1,12,result_type,structure,loop_state)?;
+        if (p.types[subscript] != 12) { return .err(errors::make(3, at)); }
+        let usize close = lexer::punctuation(source, s, 93)?;
+        return ir::slice_read(p, register-160, subscript, at);
+    }
+    if (register >= 128 || s.kind == 91) { return .err(errors::make(3, at)); }
+    if (p.slots[register]) { return ir::emit(p, 17, register, 0, at); }
+    return .ok(register);
 }
 // A pending UTF-8 call result stays absent from names during argument exits.
 // After publication, computed bounds capture their owner for lexical cleanup.
