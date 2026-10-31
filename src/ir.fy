@@ -32,6 +32,7 @@ import std::num as num;
 // 57 slice length: fresh usize dst,a=live slice ID,b=0.
 // 58 slice read: fresh element dst,a=live slice ID,b=usize index register.
 // 59 subslice: dst=new slice ID,a=live parent ID,b=start usize,byte4=end usize.
+// 60 private slice write: dst=live exclusive site,a=usize index,b=exact element.
 // 53 register UTF-8 range: bool dst,a=array,b=start usize register,byte4=end register;5..7=0.
 pub struct Program {
     u8[2048] code;
@@ -76,7 +77,7 @@ pub struct Program {
     u8[16] slice_origins;
     // Rootless borrowed site -> owning function + 1; owned array sites keep zero.
     u8[16] slice_functions;
-    // Rootless sites carry an exact scalar element tag; owned/unused sites keep zero.
+    // Rootless sites carry an exact scalar tag; owned sites use 0/shared or 128/exclusive.
     u8[16] slice_elements;
 }
 
@@ -463,6 +464,19 @@ pub fn Result<usize, errors::Error> slice_read(ref mut Program p, usize id, usiz
     let usize dst = emit(p, 58, id, index, offset)?;
     p.types[dst] = element;
     return .ok(dst);
+}
+
+// Type/shape construction only. Independent inspection proves definitions,
+// function ownership and a live exclusive ticket; public execution stays gated.
+pub fn Result<usize, errors::Error> slice_write(ref mut Program p, usize id,
+    usize index, usize value, usize offset) {
+    let u8 element = slice_element(p, id, offset)?;
+    if (!types::scalar(element) || !exclusive(p, id) || index >= 128 || index >= p.registers ||
+        value >= 128 || value >= p.registers || p.types[index] != 12 ||
+        p.types[value] != element || p.slots[index] || p.slots[value] ||
+        p.array_parameters[index] != 0 || p.record_parameters[index] != 0 || p.slice_parameters[index] != 0 ||
+        p.array_parameters[value] != 0 || p.record_parameters[value] != 0 || p.slice_parameters[value] != 0) { return .err(errors::make(3, offset)); }
+    return raw(p, 60, id, index, value, offset);
 }
 
 pub fn Result<usize, errors::Error> slice_sub(ref mut Program p, usize id, usize parent, usize start, usize end, usize offset) {

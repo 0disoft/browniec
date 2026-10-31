@@ -67,6 +67,14 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, usize pc, usize f,
         if (a != 0 || b != 0) { return .err(errors::make(5, pc)); }
         return .ok(live ^ mask);
     }
+    if (op == 60) {
+        if (!ir::exclusive(p, id) || !readable(p, defined, a, f) ||
+            b < p.register_starts[f] || b >= p.register_ends[f] || p.slots[b] ||
+            p.array_parameters[b] != 0 || p.record_parameters[b] != 0 || p.slice_parameters[b] != 0 ||
+            p.types[b] != element || !registers::contains(defined, b)) { return .err(errors::make(5, pc)); }
+        // A store consumes scalar snapshots; it defines no register or loan.
+        return .ok(live);
+    }
     if ((op != 55 && op != 57 && op != 58) ||
         (op == 58 && !readable(p, defined, b, f)) || (op != 58 && b != 0) ||
         (op == 55 && element != 10) || dst < p.register_starts[f] ||
