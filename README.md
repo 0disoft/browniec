@@ -23,6 +23,9 @@ browniec run examples/slice-elements.brc --fuel 1000000 --json
 The private owner layer also has an
 [exclusive array session foundation](docs/engineering/m2-array-write-leases.md)
 for future mutable slices. Guest mutable-slice syntax is not enabled yet.
+The [private exclusive IR](docs/engineering/m2-slice-exclusive-ir.md) now proves
+owned-root exclusion and lifetimes independently; public execution remains
+blocked until exclusive VM dispatch and cleanup are connected.
 
 ## Historical stages
 

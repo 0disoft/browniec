@@ -1,8 +1,11 @@
 # Roadmap
 
-- Mutable scalar slices: the private exclusive array-session foundation is
-  implemented. Guest integration still needs exclusive origins and borrow-flow
-  checking, metered instructions, dispatch and lexical/error cleanup. See
+- Mutable scalar slices: the private exclusive array-session foundation and
+  [owned exclusive IR inspection](../engineering/m2-slice-exclusive-ir.md) are
+  implemented. Public exclusive execution remains blocked. Next integration
+  needs a checked write instruction, runtime ticket storage, metered dispatch,
+  lexical/error cleanup and then guest lowering. Exclusive parameters,
+  subloans and returned borrows remain unsupported. See
   [the owner-layer contract](../engineering/m2-array-write-leases.md). Public
   readonly slices already support all six scalar tags; historical entries below
   retain their original implementation-stage boundaries.

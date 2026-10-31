@@ -1,5 +1,23 @@
 # AGENTS.md
 
+- Private owned exclusive slice IR: implemented at `ae66b1b`.
+  Owned `slice_elements` marker 128 denotes
+  exclusivity without growing Program; `ir::exclusive_slice` reserves a checked
+  site. `inspect` proves
+  root-wide read/write exclusion, source-copy gates and exact control-flow
+  lifetimes. Aliases/subranges, rootless mutable formals and readonly CALL
+  coercions are rejected. Public `verify` performs the full proof then rejects
+  every exclusive flag before VM backing/Fuel/dispatch. No guest syntax, opcode,
+  Fuel price, runtime integration or version capability change is added.
+  Development and release each passed 14 selected native groups and 2,199 CLI
+  cases (192 public scalar slices plus 2,007 full M1), with 353 identical current
+  input hashes and rechecked compiler/artifact/receipt identities. Depth 32
+  succeeds and depths 33/64 return compile_limit in check/run; no stack-size
+  measurement is claimed. Full native/other M2, Linux, M0, isolation, packaging,
+  allocator and timing checks were not rerun. No push/publication/release/deploy.
+  See [the contract](docs/engineering/m2-slice-exclusive-ir.md) and
+  [Windows evidence](docs/evidence/m2-slice-exclusive-ir-windows-20261101.json).
+
 - Private exclusive array sessions: implemented at `78685b1`.
   `array_owners::WriteLease` locks one whole
   scalar-array root for checked relative reads/writes over a selected range.
