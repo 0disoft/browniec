@@ -1,5 +1,18 @@
 # AGENTS.md
 
+- Private typed borrowed slice VM: implemented and verified at `b8ba1e0`.
+  Development and release each passed 19 native groups (5 typed VM, 4 borrowed
+  CALL, 4 dynamic frame, 6 lifecycle) and 634 CLI cases (252 typed source gate,
+  64 public u8, 74 source, 120 alias, 124 sub). Both runs matched 348 identical
+  current input hashes; both retained CLI identities and all five matrix receipt
+  hashes were rechecked. See the [Windows evidence](docs/evidence/m2-slice-element-vm-windows-20261101.json).
+  Public `u8` slices work; non-`u8` admission and typed owned-root bindings remain
+  gated. Full M1 and full native were not rerun (`m1=null`); the parser and
+  source-lowering implementation remains unchanged, while VM source and metadata
+  checks changed. Other M2, Linux, M0, isolation, packaging, allocator and timing
+  were not rerun. No push, publication, release or deployment was performed. See
+  [the private typed VM contract](docs/engineering/m2-slice-element-vm.md).
+
 - Typed slice element source: implemented and verified at `5401efb`; non-`u8`
   borrowed VM execution remains gated. Source lowering accepts readonly
   `ref i32[]`, `bool[]`, `i64[]`, `u8[]`, `u32[]` and `usize[]` formals,
