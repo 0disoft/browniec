@@ -1,5 +1,17 @@
 # Brownie C
 
+- Private mixed owned/borrowed CALL admission: implemented at `6282245`.
+  Borrowed retention now prepares an unpublished pool/argument plan. Atomic owned
+  array/record copying runs next; only success publishes retained tickets and
+  origins. Complete Fuel combines the existing base/scalar, owned and borrowed
+  costs once. Failures preserve original metadata and backing bytes without a
+  payload clone or full frame snapshots. Executable dispatch and automatic VM
+  cleanup remain pending, so the borrowed-signature gate is unchanged.
+  Development passed 21 native groups; release passed nine focused native groups
+  after the combined 21-group command timed out at 600 seconds. Both profiles
+  passed 326 tool-free CLI invocations, with 335 matching input hashes.
+  See [the mixed CALL contract](docs/engineering/m2-array-mixed-call-vm.md).
+
 - Private metered borrowed-frame adapter: implemented at `c70abfa`.
   A separate native context binds dynamic roots by frame/formal ordinal. Entry
   prepays retention and cleanup, validates every original caller ticket, then

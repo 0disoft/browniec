@@ -90,12 +90,13 @@ pool/owner scans. Cleanup stages fixed metadata tables and visits sixteen sites.
 No unbounded traversal or payload copy is added; timing and allocator/process
 memory instrumentation were not run.
 
-The next transaction must combine this borrowed admission with existing owned
-array/record copies before publishing either side, registers or return-frame
-state. Slice instruction dispatch must resolve dynamic roots and charge their
-actual shape; normal/error frame cleanup and all reserves must then be connected
-and verified. Until that work is complete, every borrowed Program remains
-rejected by executable verification and CLI check/run. No source capability or
+A [private mixed CALL successor](m2-array-mixed-call-vm.md) now combines borrowed
+admission with owned array/record copies before the mixed operation succeeds.
+It separates retention preparation from publication and leaves registers and
+return-frame state outside that boundary. Slice instruction dispatch must still
+resolve dynamic roots and charge their actual shape; normal/error frame cleanup
+and all reserves must then be connected and verified. Until that work is complete,
+every borrowed Program remains rejected by executable verification and CLI check/run. No source capability or
 successful guest forwarding/recursion execution is claimed here.
 
 ## Focused verification
@@ -105,8 +106,10 @@ and repeat with `--profile release`. Each profile selects sixteen native groups:
 four frame-adapter, four registry-batch, five independent-flow and three subslice
 VM groups. CLI regression selects 326 tool-free invocations: 74 gated-source,
 120 aliases, 124 subslices and eight ordinary/unsupported-Buffer sentinels.
-Both profiles passed with 333 matching input hashes. Exact checkout bytes match
-both receipts; committed text matches after CRLF-to-LF normalization.
+Both profiles passed at `c70abfa` with 333 matching input hashes. That receipt
+is historical for shared adapter, lock, test and tool inputs changed by the mixed
+CALL successor. Its original checkout bytes matched both receipts; committed
+text matched after CRLF-to-LF normalization.
 
 Coverage includes non-dense mixed formal ordinals, duplicate ranges, exact Fuel,
 unchanged caller storage/owned tokens, frame reuse, retained-child forwarding
