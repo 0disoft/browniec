@@ -82,10 +82,11 @@ owner generations, sessions and payload unchanged; rooted failures preserve
 `slice_vm.step` atomic behavior.
 
 This boundary copies no payload, creates no owner or context, adds no opcode or
-capability, and does not enable the gate. Automatic normal/error cleanup, CALL
-integration and executable VM wiring remain pending. The
-[mixed borrowed/owned transaction](m2-array-mixed-call-vm.md) also remains
-outside executable dispatch.
+capability, and does not enable the gate. Automatic normal/error cleanup and
+executable dynamic slice instruction wiring remain pending. The
+[mixed borrowed/owned transaction](m2-array-mixed-call-vm.md) is now connected
+to executable CALL through the [frame publication adapter](m2-array-call-frame-vm.md).
+That does not yet connect dynamic slice instruction dispatch or automatic cleanup.
 
 ## Focused verification
 

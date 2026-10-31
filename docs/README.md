@@ -19,6 +19,7 @@
 | Runtime invariants | [Project invariants](engineering/00-project-invariants.md) |
 | Resource targets and trust controls | [Performance](engineering/03-performance-budget.md), [security](engineering/04-security-baseline.md) |
 | Current M1 grammar and limits | [Scalar slice](engineering/m1-scalar-slice.md), [i64 scalars](engineering/m1-i64.md), [unsigned scalars](engineering/m1-unsigned.md), [explicit widening](engineering/m1-widening.md), [integer operators](engineering/m1-integer-operators.md), [direct functions](engineering/m1-functions.md), [bool and branches](engineering/m1-branches.md), [loops](engineering/m1-loops.md), [tagged values](engineering/m1-tagged.md), [`?` propagation](engineering/m1-propagation.md), [switch expressions](engineering/m1-switch-expressions.md), [arm statements](engineering/m1-switch-arm-statements.md), [parser stack containment](engineering/m1-parser-stack.md) |
+| Gated VM CALL publication | [Frame transaction](engineering/m2-array-call-frame-vm.md) |
 | Evidence and testing | [Validation](../VALIDATION.md), [testing standard](engineering/05-testing-standard.md) |
 | Dependencies and compatibility | [Change policy](engineering/06-dependency-and-change-policy.md) |
 | Failure and operating responsibility | [Failure standard](engineering/07-operability-and-failure-standard.md), [operational contract](ops/00-operational-contract.md) |

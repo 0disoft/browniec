@@ -1,5 +1,14 @@
 # Checklist Router
 
+- Gated VM CALL frame publication: implemented at `89bd0bf`.
+  CALL now uses mixed owner/borrow admission, stages at most eight scalar values,
+  and publishes scalar arguments and child return metadata only after success.
+  Non-scalar positions remain untouched. Public borrowed execution stays gated;
+  dynamic slice dispatch and automatic normal/error cleanup are the next slice.
+  Development and release each passed four native groups and 2,297 CLI cases,
+  with 369 matching input hashes and retained CLI identities.
+  See [the CALL frame contract](docs/engineering/m2-array-call-frame-vm.md).
+
 - Parser stack containment: implemented at `10822ee` and `6cbe716`.
   Separate statement, identifier and local-read handlers keep unrelated scratch
   off recursive paths. Mixed-arm depth 10 and scalar-call depth 32 remain valid;

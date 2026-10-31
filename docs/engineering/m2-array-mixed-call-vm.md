@@ -10,8 +10,8 @@
 - Evidence: [Windows receipt](../evidence/m2-array-mixed-call-vm-windows-20261031.json).
 
 `mixed_call_vm` is a private native boundary for a Program that has passed
-independent flow inspection. It is not connected to executable VM dispatch, and
-borrowed IR remains rejected by the executable gate. The source evaluator is
+independent flow inspection. The later [CALL frame adapter](m2-array-call-frame-vm.md)
+connects it to executable dispatch; borrowed IR remains rejected by the executable gate. The source evaluator is
 unchanged. This checkpoint does not enable a source capability, opcode, profile,
 or CLI path.
 
@@ -100,9 +100,11 @@ measured peak memory, allocation count, execution time, or latency.
 
 A [private dynamic slice adapter](m2-array-slice-frame-vm.md) now dispatches
 borrowed instructions through frame origins. The executable VM does not yet
-connect that adapter or resolve this mixed CALL path from live instruction context. Automatic normal and
-error cleanup is also pending, so frame release isn't part of this admission
-claim. Gate integration and guest execution of borrowed source remain disabled.
+connect that dynamic instruction adapter. The [CALL frame successor](m2-array-call-frame-vm.md)
+now resolves mixed admission from live CALL context and publishes scalar/return
+state after success. Automatic normal/error frame cleanup remains pending, so
+frame release is not part of this admission claim. Gate integration and guest
+execution of borrowed source remain disabled.
 
 ## Focused verification
 

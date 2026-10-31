@@ -2,8 +2,9 @@
 
 Implementation: `c70abfa`. `slice_call_vm` adds prospective native
 CALL admission and frame cleanup for borrowed u8 slices. It uses Programs that
-passed [independent flow inspection](m2-array-slice-borrow-flow.md), but is not
-connected to executable VM dispatch. The existing execution gate, CLI behavior,
+passed [independent flow inspection](m2-array-slice-borrow-flow.md). Admission is now
+connected through the [gated CALL frame adapter](m2-array-call-frame-vm.md);
+automatic VM cleanup remains pending. The existing execution gate, CLI behavior,
 opcodes, Fuel prices and version capabilities remain unchanged.
 
 ## Frame origins and provenance
@@ -14,8 +15,8 @@ allocating another root entry. Slots/generations are copied without truncation.
 Bindings remain available after the formal ticket closes, until frame cleanup,
 so a retained child can be validated and forwarded without a live anchor ticket.
 
-The context is not allocated by the existing executable VM. There is no change
-to Program or `slice_vm.State` fields. Its native layout/process-memory cost has
+The VM now creates one context per invocation for gated CALL admission.
+There is no change to Program or `slice_vm.State` fields. Its native layout/process-memory cost has
 not been measured. It is bounded metadata, not payload storage or an owner of
 backing bytes. No new owner, payload copy/scan, root read session or runtime heap
 allocation path is introduced by admission.
@@ -93,9 +94,11 @@ memory instrumentation were not run.
 A [private mixed CALL successor](m2-array-mixed-call-vm.md) now combines borrowed
 admission with owned array/record copies before the mixed operation succeeds.
 It separates retention preparation from publication and leaves registers and
-return-frame state outside that boundary. Slice instruction dispatch must still
-resolve dynamic roots and charge their actual shape; normal/error frame cleanup
-and all reserves must then be connected and verified. Until that work is complete,
+return-frame state outside that boundary. The [CALL frame successor](m2-array-call-frame-vm.md)
+now publishes those registers and return tables after mixed success. The
+[dynamic slice adapter](m2-array-slice-frame-vm.md) resolves runtime roots privately;
+its executable instruction wiring, normal/error frame cleanup and all reserves
+still need to be connected and verified. Until that work is complete,
 every borrowed Program remains rejected by executable verification and CLI check/run. No source capability or
 successful guest forwarding/recursion execution is claimed here.
 
