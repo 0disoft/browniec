@@ -3,6 +3,7 @@ import locals as locals;
 import lexer as lexer;
 import ir as ir;
 import errors as errors;
+import types as types;
 
 // Lexical-only read handles: 160..175 are not scalar registers or array owners.
 pub fn bool binding(ref locals::Table names, usize index) {
@@ -16,14 +17,14 @@ pub fn bool borrowed(ref locals::Table names, ref ir::Program p, usize root) {
     }
     return false;
 }
-pub struct Header { usize begin; usize end; }
-// Called after let/var. Only immutable local ref u8[] bindings are admitted.
+pub struct Header { usize begin; usize end; u8 element; }
+// Called after let/var. The RHS must match the exact readonly scalar[] tag.
 pub fn Result<Header, errors::Error> header(ref u8[] source, ref mut lexer::State s,
     ref locals::Table names, bool mutable, u8 terminator, u8 result_type) {
     if (mutable || terminator != 59 || result_type == 0) { return .err(errors::make(3, s.begin)); }
     let usize keyword = lexer::word(source, s, b"ref")?;
-    if (s.kind != 2 || !lexer::equal(source[s.begin..s.end], b"u8")) { return .err(errors::make(3, s.begin)); }
-    let usize tag = lexer::next(source, s)?;
+    let u8 element = types::parse(source, s)?;
+    if (!types::scalar(element)) { return .err(errors::make(3, s.begin)); }
     let usize open = lexer::punctuation(source, s, 91)?;
     let usize close = lexer::punctuation(source, s, 93)?;
     if (s.kind != 2 || locals::reserved(source[s.begin..s.end])) { return .err(errors::make(2, s.begin)); }
@@ -34,7 +35,7 @@ pub fn Result<Header, errors::Error> header(ref u8[] source, ref mut lexer::Stat
     let usize name = lexer::next(source, s)?;
     let usize equals = lexer::punctuation(source, s, 61)?;
     let usize reference = lexer::word(source, s, b"ref")?;
-    return .ok(Header { .begin = begin, .end = end });
+    return .ok(Header { .begin = begin, .end = end, .element = element });
 }
 pub fn Result<usize, errors::Error> predicate(ref u8[] source, ref mut lexer::State s,
     ref mut ir::Program p, ref locals::Table names, usize index, usize at) {

@@ -384,7 +384,7 @@ fn Result<usize,errors::Error> call_value(ref u8[] source,ref mut lexer::State s
         let usize length=if(arity<signatures.arities[target]){signatures.param_lengths[target*8+arity]}else{0};
         let usize record=if(arity<signatures.arities[target]){signatures.param_records[target*8+arity] as usize}else{0};
         if(arity<signatures.arities[target] && signatures.param_slices[target*8+arity]) {
-            arguments[arity]=slice_calls::capture(source,s,p,ref names)?;
+            arguments[arity]=slice_calls::capture(source,s,p,ref names,signatures,target*8+arity)?;
         }
         else if(record!=0) {arguments[arity]=record_argument(source,s,p,ref mut names,signatures,record-1,depth,result_type,structure,loop_state)?;}
         else if(length!=0) {arguments[arity]=array_argument(source,s,p,ref mut names,signatures,tag,length,depth,result_type,structure,loop_state)?;}
@@ -635,6 +635,8 @@ fn Result<usize, errors::Error> slice_declaration(ref u8[] source, ref mut lexer
         // A bare parent reborrows its complete retained range through SUBSLICE.
         if (s.kind != 91 && s.kind != 59) { return .err(errors::make(3,header.begin)); }
     } else { root = text_source::argument(source,s,p,table)?; }
+    let u8 element = if (parent < 16) { ir::slice_element(p,parent,header.begin)? } else { p.arrays.elements[root] };
+    if (element != header.element) { return .err(errors::make(3,header.begin)); }
     var usize lo = 0;
     var usize hi = 0;
     if (s.kind == 91) {

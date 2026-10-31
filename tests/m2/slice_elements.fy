@@ -137,8 +137,9 @@ fn void invalid_tags_capacity_and_derived_corruption_preserve_declarations() {
     var ir::Program bad=program(9); bad.slice_elements[1]=1;
     rejected(builders::derived(ref mut bad,1,0,77),3,77);
     assert(bad.slice_origins[2]==0 && bad.slice_elements[2]==0);
-    // Source stays u8-only while private IR inspection is generalized.
-    assert(switch(compiler::compile(b"module main;fn i32 f(ref i32[] p){return 42;}fn i32 main(){return 42;}")) {
-        case .ok(_):{false} case .err(e):{e.kind==2}
-    });
+    // Source lowers typed signatures; public VM admission still rejects them.
+    let ir::Program source=switch(compiler::compile(b"module main;fn i32 f(ref i32[] p){return 42;}fn i32 main(){return 42;}")) {
+        case .ok(v):{v} case .err(_):{assert(false);ir::empty()}
+    };
+    assert(verifier::inspect(ref source).is_ok); rejected(verifier::verify(ref source),5,0);
 }

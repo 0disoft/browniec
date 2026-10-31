@@ -30,8 +30,9 @@ pub struct Table {
     u8[128] param_arrays;
     // Zero scalar/array; otherwise nominal source record ID + 1. No runtime site.
     u8[128] param_records;
-    // Read-only u8[] borrow; neither scalar type nor owned aggregate shape.
+    // Readonly scalar[] borrow; neither scalar register nor owned aggregate shape.
     bool[128] param_slices;
+    u8[128] param_slice_elements;
     usize count;
     usize entry;
 }
@@ -39,7 +40,7 @@ pub fn Table empty() {
     return Table { .begins = [0; 16], .ends = [0; 16], .bodies = [0; 16],
         .body_ends = [0; 16], .arities = [0; 16], .return_lengths = [0; 16], .return_records = [0; 16], .param_begins = [0; 128],
         .param_ends = [0; 128], .return_types = [0; 16], .param_types = [0; 128],
-        .param_lengths = [0; 128], .param_arrays = [0; 128], .param_records = [0; 128], .param_slices = [false; 128], .count = 0, .entry = 16 };
+        .param_lengths = [0; 128], .param_arrays = [0; 128], .param_records = [0; 128], .param_slices = [false; 128], .param_slice_elements = [0; 128], .count = 0, .entry = 16 };
 }
 pub fn usize find(ref u8[] source, ref Table t, usize begin, usize end) {
     var usize i = 0;
@@ -88,9 +89,11 @@ fn Result<usize, errors::Error> signature(ref u8[] source, ref mut lexer::State 
     while (s.kind != 41) {
         if (arity >= 8) { return .err(errors::make(4, s.begin)); }
         let bool parameter_slice = s.kind == 2 && lexer::equal(source[s.begin..s.end], b"ref");
+        var u8 slice_element = 0;
         if (parameter_slice) {
             let usize reference = lexer::next(source, s)?;
-            let usize byte_type = lexer::word(source, s, b"u8")?;
+            slice_element = types::parse(source, s)?;
+            if (!types::scalar(slice_element)) { return .err(errors::make(3, s.begin)); }
             let usize open_slice = lexer::punctuation(source, s, 91)?;
             let usize close_slice = lexer::punctuation(source, s, 93)?;
         }
@@ -115,6 +118,7 @@ fn Result<usize, errors::Error> signature(ref u8[] source, ref mut lexer::State 
         t.param_lengths[at] = parameter_length;
         t.param_records[at] = parameter_record;
         t.param_slices[at] = parameter_slice;
+        t.param_slice_elements[at] = slice_element;
         arity += 1;
         let usize next = lexer::next(source, s)?;
         if (s.kind == 41) { break; }

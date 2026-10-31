@@ -63,7 +63,7 @@ fn void function_exit_paths_close_formals_and_derived_bindings_without_closing_c
 @test
 fn void unsupported_signatures_arguments_escapes_and_borrowed_root_mutation_are_rejected() {
     rejected(b"module main;fn i32 f(ref mut u8[] p){return 42;}fn i32 main(){return 42;}");
-    rejected(b"module main;fn i32 f(ref i32[] p){return 42;}fn i32 main(){return 42;}");
+    rejected(b"module main;fn i32 f(ref Option<i32>[] p){return 42;}fn i32 main(){return 42;}");
     rejected(b"module main;fn i32 f(ref u8[1] p){return 42;}fn i32 main(){return 42;}");
     rejected(b"module main;fn ref u8[] f(ref u8[] p){return ref p;}fn i32 main(){return 42;}");
     rejected(b"module main;fn i32 main(ref u8[] p){return 42;}");

@@ -387,7 +387,7 @@ pub fn Result<usize, errors::Error> slice(ref mut Program p, usize root, usize o
 }
 // Construction-time shape lookup, including private typed rootless borrows.
 // This is not a liveness/control-flow proof or permission to execute a borrow.
-fn Result<u8, errors::Error> slice_element(ref Program p, usize id, usize offset) {
+pub fn Result<u8, errors::Error> slice_element(ref Program p, usize id, usize offset) {
     if (id >= 16) { return .err(errors::make(3, offset)); }
     let usize root = p.slice_roots[id] as usize;
     let usize origin = p.slice_origins[id] as usize;

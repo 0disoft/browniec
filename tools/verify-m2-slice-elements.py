@@ -28,8 +28,12 @@ def require(condition, message):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--profile', choices=['development', 'release'], required=True)
+    parser.add_argument('--parameter-source', action='store_true', help='Verify gated scalar slice parameter source lowering and M1 parser regression')
     args = parser.parse_args()
-    output = ROOT / 'build/m2-slice-elements' / args.profile
+    kind = 'slice-element-source' if args.parameter_source else 'slice-elements'
+    groups = {'slice_element_source': 5, 'slice_parameters_source': 5, 'slice_elements': 4} if args.parameter_source else GROUPS
+    matrices_to_run = {'slice-element-source': 252, **MATRICES} if args.parameter_source else MATRICES
+    output = ROOT / ('build/m2-' + kind) / args.profile
     output.mkdir(parents=True, exist_ok=True)
     receipt = output / 'receipt.json'
     receipt.write_text('{"status":"incomplete"}\n', encoding='utf-8')
@@ -59,7 +63,7 @@ def main():
     inputs = [dict(path=p.relative_to(ROOT).as_posix(), sha256=digest(p)) for p in sorted(paths)]
     flags = ['--release'] if args.profile == 'release' else []
     native = []
-    for name, count in GROUPS.items():
+    for name, count in groups.items():
         report = json.loads(run([compiler, 'test', '--native', '--capture-output', '--json',
                                  '--locked', *flags, '--file', f'tests/m2/{name}.fy']))
         require(report['status'] == 'ok' and report['count'] == report['passed'] == count
@@ -79,7 +83,7 @@ def main():
     shutil.copyfile(exe, retained)
     exe_hash = digest(retained)
     matrices = []
-    for name, count in MATRICES.items():
+    for name, count in matrices_to_run.items():
         run([sys.executable, '-B', ROOT / f'tools/check-m2-{name}.py',
              '--exe', retained, '--profile', args.profile])
         directory = 'array-slice-parameters-public' if name == 'array-slice-parameters' else name
@@ -95,9 +99,9 @@ def main():
     env = {key: str(empty) for key in ['PATH', 'TEMP', 'TMP']}
     env.update({key: os.environ[key] for key in ['SystemRoot', 'WINDIR'] if key in os.environ})
     boundaries = []
-    for tag in ['i32', 'bool', 'i64', 'u32', 'usize']:
-        for declaration in [f'fn i32 f(ref {tag}[] p){{return 42;}}fn i32 main(){{return 42;}}',
-                            f'fn i32 main(){{let {tag}[1] a=[{"true" if tag == "bool" else "42"};1];let ref {tag}[] p=ref a;return 42;}}']:
+    for tag in ([] if args.parameter_source else ['i32', 'bool', 'i64', 'u32', 'usize']):
+        for index, declaration in enumerate([f'fn i32 f(ref {tag}[] p){{return 42;}}fn i32 main(){{return 42;}}',
+                            f'fn i32 main(){{let {tag}[1] a=[{"true" if tag == "bool" else "42"};1];let ref {tag}[] p=ref a;return 42;}}']):
             path = output / f'boundary-{len(boundaries)}.brc'
             path.write_text('module main;' + declaration, encoding='utf-8')
             for mode in ['check', 'run']:
@@ -105,21 +109,31 @@ def main():
                 commands.append(command)
                 done = subprocess.run(command, cwd=empty, env=env, capture_output=True, timeout=15)
                 result = json.loads(done.stdout)
-                require(done.returncode == 3 and not done.stderr and result['status'] == 'error'
+                require(done.returncode == (6 if index == 0 else 3) and not done.stderr and result['status'] == 'error'
                         and result['command'] == mode and result['schema'] == 'browniec.result/v1'
-                        and result['return_i32'] is None and result['error']['kind'] in ['syntax', 'type'], str(result))
+                        and result['return_i32'] is None and result['error']['kind'] == ('verification' if index == 0 else 'type'), str(result))
                 boundaries.append(dict(command=command, sourceSha256=digest(path), exit=done.returncode, result=result))
+    m1 = None
+    if args.parameter_source and os.name == 'nt':
+        run([sys.executable, '-B', ROOT / 'tools/check-m1-cli.py', '--exe', retained, '--profile', args.profile])
+        path = ROOT / 'build/m1' / args.profile / 'cli-receipt.json'
+        report = json.loads(path.read_text(encoding='utf-8'))
+        require(report['status'] == 'passed' and report['count'] == 2007 and report['exeSha256'] == exe_hash, 'M1 CLI regression')
+        shutil.copyfile(path, output / 'm1-cli.json')
+        m1 = dict(count=report['count'], receiptSha256=digest(path))
+        print(f'PASS: {args.profile}: M1: {m1["count"]} CLI cases', flush=True)
     require(all(digest(ROOT / row['path']) == row['sha256'] for row in inputs), 'Inputs changed')
     require(digest(compiler) == compiler_hash and digest(retained) == exe_hash, 'Artifact changed')
-    report = dict(schema='browniec.slice-elements/v1', status='passed', profile=args.profile,
+    report = dict(schema='browniec.' + kind + '/v1', status='passed', profile=args.profile,
                   recordedAt=datetime.now(timezone.utc).isoformat(), baselineCommit=baseline,
                   compilerVersion=version, compilerSha256=compiler_hash, lockedCheck=check,
                   sourceSha256=inputs, commands=commands, native=native, build=build,
                   retainedArtifact=dict(path=retained.relative_to(ROOT).as_posix(), sha256=exe_hash, bytes=retained.stat().st_size),
-                  matrices=matrices, boundaries=boundaries, nativeGroups=sum(GROUPS.values()),
-                  cliCases=sum(MATRICES.values()) + len(boundaries),
-                  limitations=['Private typed IR inspection only; public source/VM remain readonly u8-only.',
-                               'No full native/M1/other M2, Linux, M0, packaging, isolation or performance rerun.'])
+                  matrices=matrices, boundaries=boundaries, m1=m1, nativeGroups=sum(groups.values()),
+                  cliCases=sum(matrices_to_run.values()) + len(boundaries) + (m1['count'] if m1 else 0),
+                  limitations=['Typed borrowed signatures and derived source bindings lower to independently inspected IR; non-u8 VM admission remains gated. Non-u8 owned-root bindings remain unavailable in source.',
+                               'Focused native and CLI selection only; no full native/other M2, Linux, M0, packaging, isolation or performance rerun.',
+                               'The parameter-source selection runs full M1 CLI on Windows only; other selections do not rerun M1.'])
     receipt.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
     print(f'PASS: {args.profile}: {report["nativeGroups"]} native groups; {report["cliCases"]} CLI cases', flush=True)
 
