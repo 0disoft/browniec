@@ -1,5 +1,18 @@
 # AGENTS.md
 
+- Private typed readonly slice IR: implemented at `f9bc9d6`.
+  `Program.slice_elements` records exact scalar tags for borrowed formals and
+  derived sites; typed read/length/subslice/close preserve the shape, and
+  argument and verification checks require exact matches. `inspect` accepts
+  the proved private IR; `verify` then rejects every non-u8 borrowed site
+  before VM backing, Fuel or dispatch. Public source and CLI remain `ref u8[]`
+  only. Development and release each passed 28 native groups and 402 CLI cases,
+  with 345 identical current input hashes; both CLI binaries were retained and
+  identity-checked. Full native, M1 and other M2 suites, Linux, M0, isolation,
+  packaging, allocator and timing checks were not rerun. See
+  [the private typed slice contract](docs/engineering/m2-slice-elements.md) and
+  [the Windows evidence](docs/evidence/m2-slice-elements-windows-20261101.json).
+
 - Public readonly u8 slice parameters: implemented at `6a7d206`.
   Public VM and CLI now admit verified `ref u8[]` signatures and explicit
   ref-name arguments. Full metadata/type/flow/lifetime validation remains;
