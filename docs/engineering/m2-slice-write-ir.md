@@ -7,6 +7,9 @@ runtime write dispatch or instruction Fuel price is enabled.
 
 Implementation: `caea3d2`.
 
+The [runtime pool successor](m2-slice-exclusive-pool.md) supplies exclusive native
+tickets and mixed-mode drain. Opcode 60 dispatch and metering remain pending.
+
 ## Encoding and construction
 
 Private opcode 60 uses the existing eight-byte encoding:

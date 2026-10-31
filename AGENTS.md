@@ -1,5 +1,22 @@
 # AGENTS.md
 
+- Private shared/exclusive runtime slice pool: implemented at `1a278a1`.
+  The existing sixteen slots now
+  carry a mode bit and checked native exclusive reads/writes/selected UTF-8.
+  Both modes share ticket/owner epochs and atomic reverse-order clear. Existing
+  VM drain preserves result/error on success or retains metadata on cleanup
+  failure. Readonly VM adapters and CALL batches reject writers. Public exclusive
+  admission and instruction dispatch remain gated; no new Fuel price, mutable
+  source syntax or capability is enabled. Development and release each passed
+  22 selected native groups and 2,199 CLI cases (192 public scalar slices plus
+  2,007 M1), with 355 identical current input hashes and rechecked compiler/CLI/
+  receipt identities. Program fields remain unchanged; depth32 succeeds and
+  depth33/64 return compile_limit in check/run. Full native/other M2, Linux, M0,
+  isolation, packaging, allocator and timing checks were not rerun. No push,
+  publication, packaged release or deployment. See
+  [the contract](docs/engineering/m2-slice-exclusive-pool.md) and
+  [Windows evidence](docs/evidence/m2-slice-exclusive-pool-windows-20261101.json).
+
 - Private exclusive slice-write IR: implemented at `caea3d2`.
   Opcode 60 describes a store through a live owned
   exclusive site using ordinary same-function defined `usize` index and exact

@@ -29,6 +29,9 @@ blocked until exclusive VM dispatch and cleanup are connected.
 The [private slice-write instruction](docs/engineering/m2-slice-write-ir.md)
 adds exact-typed store construction and inspection; guest write execution
 remains gated.
+The [runtime ticket pool](docs/engineering/m2-slice-exclusive-pool.md) now supports
+exclusive native reads/writes and mixed-mode drain under the same sixteen-handle
+limit; metered exclusive opcode dispatch remains pending.
 
 ## Historical stages
 

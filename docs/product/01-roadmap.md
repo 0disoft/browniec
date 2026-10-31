@@ -4,7 +4,9 @@
   [owned exclusive IR inspection](../engineering/m2-slice-exclusive-ir.md) are
   implemented. The [checked write instruction](../engineering/m2-slice-write-ir.md)
   now has private construction and inspection. Public exclusive execution remains
-  blocked. Next integration needs runtime ticket storage, metered dispatch,
+  blocked. The [runtime ticket pool](../engineering/m2-slice-exclusive-pool.md)
+  now stores both modes with native writes and mixed-mode drain. Next integration
+  needs metered dispatch,
   lexical/error cleanup and then guest lowering. Exclusive parameters,
   subloans and returned borrows remain unsupported. See
   [the owner-layer contract](../engineering/m2-array-write-leases.md). Public
