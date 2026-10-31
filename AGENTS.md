@@ -1,5 +1,20 @@
 # AGENTS.md
 
+- Typed slice element source: implemented and verified at `5401efb`; non-`u8`
+  borrowed VM execution remains gated. Source lowering accepts readonly
+  `ref i32[]`, `bool[]`, `i64[]`, `u8[]`, `u32[]` and `usize[]` formals,
+  exact typed aliases/subranges and `ref name` calls. `inspect` proves the
+  private IR; `verify` rejects non-`u8` borrows before VM admission.
+  `u8` owned bindings and borrowed execution work; non-`u8` owned-root
+  bindings remain unavailable. Development and release each passed 14 native
+  groups and 2,641 CLI cases, with 347 identical current input hashes and
+  verified CLI identities. The recursive CALL signature-index scratch repair
+  is included; no stack-size measurement is claimed. Historical parser-stack
+  docs remain unchanged. No opcode, Fuel, capability, version or profile change.
+  No push, publication or release/deployment was performed. See [the source
+  contract](docs/engineering/m2-slice-element-source.md) and [Windows
+  evidence](docs/evidence/m2-slice-element-source-windows-20261101.json).
+
 - Private typed readonly slice IR: implemented at `f9bc9d6`.
   `Program.slice_elements` records exact scalar tags for borrowed formals and
   derived sites; typed read/length/subslice/close preserve the shape, and
