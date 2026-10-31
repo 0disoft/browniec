@@ -1,5 +1,16 @@
 # Roadmap
 
+- Private dynamic slice instruction adapter: implemented at `af8ad1e`.
+  Borrowed and derived u8 sites now resolve full-width owner tokens from the
+  function/frame context for length, read, UTF-8, subslice and close. Retained
+  children work after formal close. Fixed metadata Fuel precedes runtime root
+  resolution; UTF-8 prepays the actual full-origin length before reading bytes.
+  Owned sites retain existing dispatch and prices. Executable VM wiring and
+  automatic normal/error cleanup remain pending; the execution gate is unchanged.
+  Development and release each passed seven native groups and 326 tool-free CLI
+  invocations, with 337 matching input hashes and retained CLI binaries.
+  See [the dynamic slice contract](../engineering/m2-array-slice-frame-vm.md).
+
 - Private mixed owned/borrowed CALL admission: implemented at `6282245`.
   Borrowed retention now prepares an unpublished pool/argument plan. Atomic owned
   array/record copying runs next; only success publishes retained tickets and

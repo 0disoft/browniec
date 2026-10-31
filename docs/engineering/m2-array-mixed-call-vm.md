@@ -98,8 +98,9 @@ measured peak memory, allocation count, execution time, or latency.
 
 ## Pending integration
 
-Dynamic borrowed dispatch is still pending: the executable VM does not yet
-resolve this mixed call path from live instruction context. Automatic normal and
+A [private dynamic slice adapter](m2-array-slice-frame-vm.md) now dispatches
+borrowed instructions through frame origins. The executable VM does not yet
+connect that adapter or resolve this mixed CALL path from live instruction context. Automatic normal and
 error cleanup is also pending, so frame release isn't part of this admission
 claim. Gate integration and guest execution of borrowed source remain disabled.
 
