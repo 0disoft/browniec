@@ -82,7 +82,9 @@ The VM still calls `verify` before Fuel/backing admission, so inspected borrowed
 IR remains rejected even with zero Fuel and zero array quota. Dynamic callee
 origins, retained runtime argument tickets, mixed owned/borrowed frame admission,
 recursive-frame cleanup and metering remain pending. No opcode, Fuel price or
-version capability is added.
+version capability is added. The [frame-adapter successor](m2-array-slice-call-vm.md)
+adds private metered retention/cleanup and dynamic origin bindings, still without
+executable dispatch or mixed aggregate transaction integration.
 
 ## Focused verification
 

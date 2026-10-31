@@ -1,5 +1,15 @@
 # Validation
 
+- Private metered borrowed-frame adapter: implemented at `c70abfa`.
+  A separate native context binds dynamic roots by frame/formal ordinal. Entry
+  prepays retention and cleanup, validates every original caller ticket, then
+  atomically publishes independent child handles and root bindings. Cleanup stages
+  all frame closes before clearing bindings; caller tickets and payload survive.
+  Retained children remain forwardable after anchor close. This adapter is not
+  connected to executable dispatch or mixed aggregate copies; the gate remains.
+  Development and release each passed 16 native groups and 326 tool-free CLI
+  invocations. See [the frame adapter contract](docs/engineering/m2-array-slice-call-vm.md).
+
 - Independent borrowed slice flow inspection: implemented at `b6b5525`.
   `verifier.inspect` uses the shared validator to check formal entry masks,
   rootless reads/subranges/cleanup, exact join/backedge live sets, mixed CALL
