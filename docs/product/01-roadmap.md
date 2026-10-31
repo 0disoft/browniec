@@ -1,5 +1,17 @@
 # Roadmap
 
+- Fairy C toolchain adoption: implemented at `465e380`.
+  The compiler is now `eb274643` with SDK `0.0.0-stage0.87`; language `/20`
+  and runtime ABI `/0` remain unchanged. Root and M0 SDK locks were adopted
+  together. Windows exact-source reproduction and eleven provisioning cases pass;
+  Linux is cross-built with static ELF/build-metadata checks only.
+  Development M1 exposed a pre-existing parser stack overflow on
+  `arm-depth-mixed-10`, reproduced in both old/new images with identical Brownie
+  source bytes. The full development M1 matrix is not a pass. Both profiles
+  passed nine native groups; development passed 526 M2 CLI cases, and release
+  passed 2,495 CLI cases including all 1,969 M1 cases. Further verification
+  and its limits are recorded in [the adoption contract](../engineering/toolchain-setup.md).
+
 - Private dynamic slice instruction adapter: implemented at `af8ad1e`.
   Borrowed and derived u8 sites now resolve full-width owner tokens from the
   function/frame context for length, read, UTF-8, subslice and close. Retained

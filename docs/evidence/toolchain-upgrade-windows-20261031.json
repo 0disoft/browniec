@@ -1,0 +1,2447 @@
+{
+  "schema": "browniec.toolchain-upgrade-windows/v1",
+  "status": "completed-with-known-baseline-failure",
+  "implementationCommit": "465e3809ed1eb2326e406aadfef2f4f10ce00309",
+  "recordedAt": "2026-10-31T10:15:19.595029+00:00",
+  "manifest": {
+    "schema": "browniec.toolchain/v2",
+    "compiler": {
+      "version": "v0.0.0-20261031093456-eb274643bfcf",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53"
+    },
+    "sdk": {
+      "identity": "fairyc-sdk-stdlib/0",
+      "version": "0.0.0-stage0.87",
+      "sourceDigest": "fysrc1-sha256-c531e88e52b684a34cf9688eda19e5cafcc5788e7a4bbf7e5121e86874a7246a"
+    },
+    "language": "fairyc-language/20",
+    "runtimeAbi": "fairyc-runtime/0",
+    "source": {
+      "repository": "https://github.com/0disoft/fairyc.git",
+      "localRepository": "../fairyc"
+    },
+    "bootstrap": {
+      "goVersion": "go1.27.1",
+      "package": "./cmd/fairyc",
+      "buildFlags": [
+        "-mod=readonly",
+        "-trimpath",
+        "-buildvcs=true"
+      ]
+    },
+    "platforms": {
+      "windows/amd64": {
+        "executable": "fairyc.exe",
+        "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+        "verification": "native-verified"
+      },
+      "linux/amd64": {
+        "executable": "fairyc",
+        "sha256": "619511bb8f98f5bd9ec543cfb33f6367de15fc2389d41b27506790234f4f93d6",
+        "verification": "cross-build-only"
+      }
+    }
+  },
+  "records": {
+    "build": {
+      "schema": "browniec.toolchain-upgrade-build/v1",
+      "status": "passed",
+      "recordedAt": "2026-10-31T09:51:09.704138+00:00",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "previous": {
+        "schema": "browniec.toolchain/v2",
+        "compiler": {
+          "version": "v0.0.0-20261022210249-4ce1264273be",
+          "revision": "4ce1264273be6051ee560173e94690e1b99c9eaf"
+        },
+        "sdk": {
+          "identity": "fairyc-sdk-stdlib/0",
+          "version": "0.0.0-stage0.86",
+          "sourceDigest": "fysrc1-sha256-782df5e2039ff3f7817c1055454caa24feb2ea755e62f78d8ee67418916a5b83"
+        },
+        "language": "fairyc-language/20",
+        "runtimeAbi": "fairyc-runtime/0",
+        "source": {
+          "repository": "https://github.com/0disoft/fairyc.git",
+          "localRepository": "../fairyc"
+        },
+        "bootstrap": {
+          "goVersion": "go1.27.1",
+          "package": "./cmd/fairyc",
+          "buildFlags": [
+            "-mod=readonly",
+            "-trimpath",
+            "-buildvcs=true"
+          ]
+        },
+        "platforms": {
+          "windows/amd64": {
+            "executable": "fairyc.exe",
+            "sha256": "572395f7f1e425d613c5a69f50b30ed177cda37ca2b1638bd0c11cf79fcbcc77",
+            "verification": "native-verified"
+          },
+          "linux/amd64": {
+            "executable": "fairyc",
+            "sha256": "5c9e50e6b6ea45060a1b1511ab4b7c11fb9d6cc3939f65337970a6dfdc417b9b",
+            "verification": "cross-build-only"
+          }
+        }
+      },
+      "goVersion": "go1.27.1",
+      "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false",
+      "check": "check ok: 2 instance(s), 87 source file(s), 706 MIR function(s), lock updated",
+      "commands": [
+        {
+          "command": [
+            "go",
+            "env",
+            "GOVERSION"
+          ],
+          "seconds": 0.11051329999463633,
+          "exit": 0,
+          "stdout": "go1.27.1\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "git",
+            "init",
+            "--quiet",
+            "--template=C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain-upgrade\\empty-template",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain-upgrade\\source"
+          ],
+          "seconds": 0.12184729997534305,
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "git",
+            "-C",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain-upgrade\\source",
+            "config",
+            "core.autocrlf",
+            "false"
+          ],
+          "seconds": 0.08186490001389757,
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "git",
+            "-C",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain-upgrade\\source",
+            "config",
+            "core.longpaths",
+            "true"
+          ],
+          "seconds": 0.09340670000528917,
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "git",
+            "-C",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain-upgrade\\source",
+            "fetch",
+            "--quiet",
+            "--no-tags",
+            "--depth=1",
+            "--",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\fairyc",
+            "eb274643bfcfe746617121ddc6f130b018978b53"
+          ],
+          "seconds": 7.1859781999955885,
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "git",
+            "-C",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain-upgrade\\source",
+            "checkout",
+            "--quiet",
+            "--detach",
+            "FETCH_HEAD"
+          ],
+          "seconds": 13.169511900050566,
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "git",
+            "-C",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain-upgrade\\source",
+            "rev-parse",
+            "HEAD"
+          ],
+          "seconds": 0.10459210001863539,
+          "exit": 0,
+          "stdout": "eb274643bfcfe746617121ddc6f130b018978b53\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "go",
+            "build",
+            "-mod=readonly",
+            "-trimpath",
+            "-buildvcs=true",
+            "-o",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain-upgrade\\fairyc.exe",
+            "./cmd/fairyc"
+          ],
+          "seconds": 22.283449800044764,
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "go",
+            "build",
+            "-mod=readonly",
+            "-trimpath",
+            "-buildvcs=true",
+            "-o",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain-upgrade\\fairyc",
+            "./cmd/fairyc"
+          ],
+          "seconds": 34.31205979996594,
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "git",
+            "-C",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain-upgrade\\source",
+            "status",
+            "--porcelain",
+            "--untracked-files=all"
+          ],
+          "seconds": 0.6413761000148952,
+          "exit": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain-upgrade\\fairyc.exe",
+            "--version"
+          ],
+          "seconds": 0.11655989999417216,
+          "exit": 0,
+          "stdout": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain-upgrade\\fairyc.exe",
+            "check"
+          ],
+          "seconds": 2.777024300012272,
+          "exit": 0,
+          "stdout": "check ok: 2 instance(s), 87 source file(s), 706 MIR function(s), lock updated\n",
+          "stderr": ""
+        }
+      ],
+      "artifacts": {
+        "windows/amd64": {
+          "path": "build/toolchain-upgrade/fairyc.exe",
+          "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+          "verification": "native-verified"
+        },
+        "linux/amd64": {
+          "path": "build/toolchain-upgrade/fairyc",
+          "sha256": "619511bb8f98f5bd9ec543cfb33f6367de15fc2389d41b27506790234f4f93d6",
+          "verification": "cross-build-only"
+        }
+      },
+      "sdk": {
+        "id": "fypi1-sha256-674bab7b189dd71fd8e59dfdd36327d4f5ea5dd5698f9920c9cc6700f85c3bf2",
+        "role": "standard-library",
+        "packageUid": "fairyc.std",
+        "sourceKind": "sdk",
+        "localPath": "",
+        "sdkIdentity": "fairyc-sdk-stdlib/0",
+        "runtimeAbi": "fairyc-runtime/0",
+        "sourceIdentity": "fairyc-sdk-stdlib/0;fairyc-runtime/0;fysrc1-sha256-c531e88e52b684a34cf9688eda19e5cafcc5788e7a4bbf7e5121e86874a7246a",
+        "sourceDigest": "fysrc1-sha256-c531e88e52b684a34cf9688eda19e5cafcc5788e7a4bbf7e5121e86874a7246a",
+        "version": "0.0.0-stage0.87",
+        "features": []
+      }
+    },
+    "installation": {
+      "schema": "browniec.toolchain-setup/v2",
+      "status": "passed",
+      "mode": "file",
+      "platform": "windows/amd64",
+      "recordedAt": "2026-10-31T09:52:07.368035+00:00",
+      "manifestSha256": "0a1a5c2b5a219099b7c3c2b42a8dde9cb70b68e435e8a071e36c36213d1740be",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "compilerVersion": [
+        "Fairy C Stage 0",
+        "compiler: v0.0.0-20261031093456-eb274643bfcf",
+        "sdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87",
+        "language: fairyc-language/20",
+        "runtime: fairyc-runtime/0",
+        "revision: eb274643bfcfe746617121ddc6f130b018978b53",
+        "modified: false"
+      ],
+      "artifact": "build/toolchain/fairyc.exe"
+    },
+    "provisioning": {
+      "schema": "browniec.toolchain-verification/v2",
+      "status": "passed",
+      "recordedAt": "2026-10-31T09:53:43.194188+00:00",
+      "platform": "windows/amd64",
+      "pythonVersion": "3.14.6",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "compilerRevision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "goVersion": "go1.27.1",
+      "cases": [
+        "verified executable import",
+        "existing compiler reuse",
+        "corrupt input rejected before execution; existing compiler preserved",
+        "version metadata mismatch rejected; existing compiler preserved",
+        "SDK lock mismatch rejected",
+        "tampered cached compiler rejected before execution",
+        "default exact-commit isolated source bootstrap reproduces native SHA-256",
+        "unavailable source commit rejected; existing compiler preserved",
+        "Windows and Linux AMD64 platform selection (logic only)",
+        "unsupported OS and architecture rejected",
+        "Git and Go overrides sanitized without mutating parent environment"
+      ],
+      "count": 11,
+      "sourceSha256": [
+        {
+          "path": "toolchain.json",
+          "sha256": "0a1a5c2b5a219099b7c3c2b42a8dde9cb70b68e435e8a071e36c36213d1740be"
+        },
+        {
+          "path": "fairy.lock",
+          "sha256": "15b2549cd1a723b1dd1cab142a90d7ef1c71feeea7aa8b0ca7c9652a1a4e75d8"
+        },
+        {
+          "path": "tools/setup-toolchain.py",
+          "sha256": "e626bef29a57ef1539eae2637ff2636f1d6ff8d7f33c51681cfc5fd6a350cf78"
+        },
+        {
+          "path": "tools/setup-toolchain.ps1",
+          "sha256": "a1a7405698b15ac006c8c1f022949d44f44b10edb568ed537c16b292b7a1f464"
+        },
+        {
+          "path": "tools/verify-toolchain.py",
+          "sha256": "9a59d1c6daa43f17a85867ae05a77f78a0f2730b589b2c508a5096170eae0309"
+        },
+        {
+          "path": "tools/verify-toolchain.ps1",
+          "sha256": "21cc6deb3955297f2246799f05dcf0496b479f9bc12d2bcbaf000175e8a9e717"
+        }
+      ],
+      "limitations": [
+        "Native provisioning checks on the recorded host only; not a Brownie VM regression.",
+        "Platform-selection logic does not establish Linux native execution.",
+        "HTTPS acquisition, empty module caches and clean-machine setup were not exercised."
+      ]
+    },
+    "compatibility": {
+      "schema": "browniec.toolchain-upgrade-verification/v1",
+      "status": "passed-with-known-baseline-failure",
+      "knownFailures": [
+        {
+          "profile": "development",
+          "selection": "m1",
+          "status": "failed",
+          "case": "arm-depth-mixed-10",
+          "exit": 3221225725,
+          "comparison": [
+            {
+              "label": "previous-toolchain",
+              "exe": "build\\m2-array-slice-frame-vm\\development\\browniec.exe",
+              "exeSha256": "6c434257a03f997c7ca5ff2a1c1f5c5a702f070cd023a68ecd4912c952a7e9ca",
+              "exit": 3221225725,
+              "stdout": "",
+              "stderr": ""
+            },
+            {
+              "label": "upgraded-toolchain",
+              "exe": "build/toolchain-upgrade/development/browniec.exe",
+              "exeSha256": "7b867423528b4ec34e0f0476a9595011d7daf9e2cb83daaaabb050c442a1809c",
+              "exit": 3221225725,
+              "stdout": "",
+              "stderr": ""
+            }
+          ],
+          "scope": "Original full matrix aborted at this case; not rerun or marked passed."
+        }
+      ],
+      "recordedAt": "2026-10-31T10:12:15.267703+00:00",
+      "baselineCommit": "465e3809ed1eb2326e406aadfef2f4f10ce00309",
+      "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "lockedCheck": "check ok: 2 instance(s), 87 source file(s), 706 MIR function(s), lock verified",
+      "commands": [
+        {
+          "command": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "check",
+            "--locked"
+          ],
+          "exit": 0,
+          "seconds": 1.4478034999920055,
+          "stdout": "check ok: 2 instance(s), 87 source file(s), 706 MIR function(s), lock verified\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "--version"
+          ],
+          "exit": 0,
+          "seconds": 0.08611939998809248,
+          "stdout": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "test",
+            "--native",
+            "--capture-output",
+            "--json",
+            "--locked",
+            "--file",
+            "tests/m2/slice_frame_vm.fy"
+          ],
+          "reuse": {
+            "path": "build/toolchain-upgrade/development/native-slice_frame_vm.json",
+            "sha256": "9bb043b7e914446734f5785d9c4a11fcb71de920ee4c20d70d44bb550f1226dc",
+            "reason": "Immediate preceding native invocation passed; only ignored harness recovery changed, tracked inputs and compiler are unchanged."
+          }
+        },
+        {
+          "command": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "test",
+            "--native",
+            "--capture-output",
+            "--json",
+            "--locked",
+            "--file",
+            "tests/m2/mixed_call_vm.fy"
+          ],
+          "reuse": {
+            "path": "build/toolchain-upgrade/development/native-mixed_call_vm.json",
+            "sha256": "f958ded81928a7af3d5326bbe8c80c74f9dd6a30c200480aeaa421d84287031a",
+            "reason": "Immediate preceding native invocation passed; only ignored harness recovery changed, tracked inputs and compiler are unchanged."
+          }
+        },
+        {
+          "command": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "build",
+            "--locked"
+          ],
+          "exit": 0,
+          "seconds": 5.458129699982237,
+          "stdout": "built: build/browniec.exe (x86_64-windows-msvc, development, lock verified)\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "C:\\Users\\cherr\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+            "-B",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\tools\\check-m2-array-call-reads.py",
+            "--exe",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain-upgrade\\development\\browniec.exe",
+            "--profile",
+            "development"
+          ],
+          "exit": 0,
+          "seconds": 4.703128699969966,
+          "stdout": "PASS: development: 106 array-call-reads CLI cases\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "C:\\Users\\cherr\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+            "-B",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\tools\\check-m2-struct-call-reads.py",
+            "--exe",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain-upgrade\\development\\browniec.exe",
+            "--profile",
+            "development"
+          ],
+          "exit": 0,
+          "seconds": 4.466459600022063,
+          "stdout": "PASS: development: 102 struct-call-reads CLI cases\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "C:\\Users\\cherr\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+            "-B",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\tools\\check-m2-array-slice-parameter-source.py",
+            "--exe",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain-upgrade\\development\\browniec.exe",
+            "--profile",
+            "development"
+          ],
+          "exit": 0,
+          "seconds": 2.3404781999997795,
+          "stdout": "PASS: development: 74 array-slice-parameter-source CLI cases\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "C:\\Users\\cherr\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+            "-B",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\tools\\check-m2-array-slice-alias.py",
+            "--exe",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain-upgrade\\development\\browniec.exe",
+            "--profile",
+            "development"
+          ],
+          "exit": 0,
+          "seconds": 3.14659830002347,
+          "stdout": "PASS: development: 120 array-slice-alias CLI cases\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "C:\\Users\\cherr\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+            "-B",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\tools\\check-m2-array-slice-sub.py",
+            "--exe",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain-upgrade\\development\\browniec.exe",
+            "--profile",
+            "development"
+          ],
+          "exit": 0,
+          "seconds": 3.3637852999963798,
+          "stdout": "PASS: development: 124 array-slice-sub CLI cases\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "test",
+            "--native",
+            "--capture-output",
+            "--json",
+            "--locked",
+            "--release",
+            "--file",
+            "tests/m2/slice_frame_vm.fy"
+          ],
+          "exit": 0,
+          "seconds": 68.91303210001206,
+          "stdout": "{\"schemaVersion\":\"fairyc.test-report/v4\",\"engine\":\"native\",\"target\":\"x86_64-windows-msvc\",\"profile\":\"release\",\"tests\":[{\"identity\":\"tests::m2::slice_frame_vm::dynamic_origin_lengths_exact_prices_and_children_after_formal_close_dispatch\",\"outcome\":\"passed\",\"trapCategory\":null,\"stdoutBase64\":\"\",\"stderrBase64\":\"\"},{\"identity\":\"tests::m2::slice_frame_vm::empty_subranges_utf8_values_and_root_shape_mismatches_use_actual_backing\",\"outcome\":\"passed\",\"trapCategory\":null,\"stdoutBase64\":\"\",\"stderrBase64\":\"\"},{\"identity\":\"tests::m2::slice_frame_vm::fuel_bounds_backing_and_stale_provenance_fail_without_ticket_or_register_publication\",\"outcome\":\"passed\",\"trapCategory\":null,\"stdoutBase64\":\"\",\"stderrBase64\":\"\"},{\"identity\":\"tests::m2::slice_frame_vm::malformed_rootless_operands_and_partial_pool_capacity_preserve_existing_sessions\",\"outcome\":\"passed\",\"trapCategory\":null,\"stdoutBase64\":\"\",\"stderrBase64\":\"\"}],\"count\":4,\"passed\":4,\"failed\":0,\"status\":\"ok\",\"lock\":\"verified\"}\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "test",
+            "--native",
+            "--capture-output",
+            "--json",
+            "--locked",
+            "--release",
+            "--file",
+            "tests/m2/mixed_call_vm.fy"
+          ],
+          "exit": 0,
+          "seconds": 95.76705329999095,
+          "stdout": "{\"schemaVersion\":\"fairyc.test-report/v4\",\"engine\":\"native\",\"target\":\"x86_64-windows-msvc\",\"profile\":\"release\",\"tests\":[{\"identity\":\"tests::m2::mixed_call_vm::borrowed_capacity_and_stale_tickets_fail_before_any_owned_copy\",\"outcome\":\"passed\",\"trapCategory\":null,\"stdoutBase64\":\"\",\"stderrBase64\":\"\"},{\"identity\":\"tests::m2::mixed_call_vm::exact_combined_fuel_duplicate_empty_ranges_and_owned_copies_publish_together\",\"outcome\":\"passed\",\"trapCategory\":null,\"stdoutBase64\":\"\",\"stderrBase64\":\"\"},{\"identity\":\"tests::m2::mixed_call_vm::fuel_precedes_frame_backing_and_scalar_only_calls_keep_exact_prices\",\"outcome\":\"passed\",\"trapCategory\":null,\"stdoutBase64\":\"\",\"stderrBase64\":\"\"},{\"identity\":\"tests::m2::mixed_call_vm::late_owned_failures_discard_prepared_retains_without_consuming_generations_or_payload\",\"outcome\":\"passed\",\"trapCategory\":null,\"stdoutBase64\":\"\",\"stderrBase64\":\"\"},{\"identity\":\"tests::m2::mixed_call_vm::nested_forwarding_copies_owned_parameters_and_retains_original_borrow_roots\",\"outcome\":\"passed\",\"trapCategory\":null,\"stdoutBase64\":\"\",\"stderrBase64\":\"\"}],\"count\":5,\"passed\":5,\"failed\":0,\"status\":\"ok\",\"lock\":\"verified\"}\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "build",
+            "--locked",
+            "--release"
+          ],
+          "exit": 0,
+          "seconds": 13.157818700012285,
+          "stdout": "built: build/browniec.exe (x86_64-windows-msvc, release, lock verified)\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "C:\\Users\\cherr\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+            "-B",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\tools\\check-m1-cli.py",
+            "--exe",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain-upgrade\\release\\browniec.exe",
+            "--profile",
+            "release"
+          ],
+          "exit": 0,
+          "seconds": 52.136787299998105,
+          "stdout": "PASS: release: 1969 native CLI cases\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "C:\\Users\\cherr\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+            "-B",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\tools\\check-m2-array-call-reads.py",
+            "--exe",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain-upgrade\\release\\browniec.exe",
+            "--profile",
+            "release"
+          ],
+          "exit": 0,
+          "seconds": 3.248746299999766,
+          "stdout": "PASS: release: 106 array-call-reads CLI cases\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "C:\\Users\\cherr\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+            "-B",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\tools\\check-m2-struct-call-reads.py",
+            "--exe",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain-upgrade\\release\\browniec.exe",
+            "--profile",
+            "release"
+          ],
+          "exit": 0,
+          "seconds": 2.8127302999491803,
+          "stdout": "PASS: release: 102 struct-call-reads CLI cases\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "C:\\Users\\cherr\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+            "-B",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\tools\\check-m2-array-slice-parameter-source.py",
+            "--exe",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain-upgrade\\release\\browniec.exe",
+            "--profile",
+            "release"
+          ],
+          "exit": 0,
+          "seconds": 2.4424710999592207,
+          "stdout": "PASS: release: 74 array-slice-parameter-source CLI cases\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "C:\\Users\\cherr\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+            "-B",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\tools\\check-m2-array-slice-alias.py",
+            "--exe",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain-upgrade\\release\\browniec.exe",
+            "--profile",
+            "release"
+          ],
+          "exit": 0,
+          "seconds": 3.6077701000031084,
+          "stdout": "PASS: release: 120 array-slice-alias CLI cases\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "C:\\Users\\cherr\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+            "-B",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\tools\\check-m2-array-slice-sub.py",
+            "--exe",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain-upgrade\\release\\browniec.exe",
+            "--profile",
+            "release"
+          ],
+          "exit": 0,
+          "seconds": 4.329899200005457,
+          "stdout": "PASS: release: 124 array-slice-sub CLI cases\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "git",
+            "rev-parse",
+            "HEAD"
+          ],
+          "exit": 0,
+          "seconds": 0.07397230004426092,
+          "stdout": "465e3809ed1eb2326e406aadfef2f4f10ce00309\n",
+          "stderr": ""
+        }
+      ],
+      "profiles": [
+        {
+          "profile": "development",
+          "native": [
+            {
+              "schemaVersion": "fairyc.test-report/v4",
+              "engine": "native",
+              "target": "x86_64-windows-msvc",
+              "profile": "development",
+              "tests": [
+                {
+                  "identity": "tests::m2::slice_frame_vm::dynamic_origin_lengths_exact_prices_and_children_after_formal_close_dispatch",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::slice_frame_vm::empty_subranges_utf8_values_and_root_shape_mismatches_use_actual_backing",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::slice_frame_vm::fuel_bounds_backing_and_stale_provenance_fail_without_ticket_or_register_publication",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::slice_frame_vm::malformed_rootless_operands_and_partial_pool_capacity_preserve_existing_sessions",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                }
+              ],
+              "count": 4,
+              "passed": 4,
+              "failed": 0,
+              "status": "ok",
+              "lock": "verified"
+            },
+            {
+              "schemaVersion": "fairyc.test-report/v4",
+              "engine": "native",
+              "target": "x86_64-windows-msvc",
+              "profile": "development",
+              "tests": [
+                {
+                  "identity": "tests::m2::mixed_call_vm::borrowed_capacity_and_stale_tickets_fail_before_any_owned_copy",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::mixed_call_vm::exact_combined_fuel_duplicate_empty_ranges_and_owned_copies_publish_together",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::mixed_call_vm::fuel_precedes_frame_backing_and_scalar_only_calls_keep_exact_prices",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::mixed_call_vm::late_owned_failures_discard_prepared_retains_without_consuming_generations_or_payload",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::mixed_call_vm::nested_forwarding_copies_owned_parameters_and_retains_original_borrow_roots",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                }
+              ],
+              "count": 5,
+              "passed": 5,
+              "failed": 0,
+              "status": "ok",
+              "lock": "verified"
+            }
+          ],
+          "nativeCount": 9,
+          "build": "built: build/browniec.exe (x86_64-windows-msvc, development, lock verified)",
+          "artifact": "build/toolchain-upgrade/development/browniec.exe",
+          "exeSha256": "7b867423528b4ec34e0f0476a9595011d7daf9e2cb83daaaabb050c442a1809c",
+          "cliCount": 526,
+          "matrices": [
+            {
+              "selection": "m2-array-call-reads",
+              "count": 106,
+              "receipt": "build/m2-array-call-reads/development/cli-receipt.json",
+              "receiptSha256": "ab71fde8b455a0920cae505f13e537ece26696e2f63e96b0a24c01bd05fb6bea"
+            },
+            {
+              "selection": "m2-struct-call-reads",
+              "count": 102,
+              "receipt": "build/m2-struct-call-reads/development/cli-receipt.json",
+              "receiptSha256": "fff6b1432f272cdefc0157986955f020aeb98563f90e8f56aa3dd3946e526a67"
+            },
+            {
+              "selection": "m2-array-slice-parameter-source",
+              "count": 74,
+              "receipt": "build/m2-array-slice-parameter-source/development/cli-receipt.json",
+              "receiptSha256": "2fe860d6498244808fda6e82fe4e59bac8f356b008043d83b602a7db09206e42"
+            },
+            {
+              "selection": "m2-array-slice-alias",
+              "count": 120,
+              "receipt": "build/m2-array-slice-alias/development/cli-receipt.json",
+              "receiptSha256": "54f76e249b6547e90b0a24f691f3018caf036784473fccaf553b146744487314"
+            },
+            {
+              "selection": "m2-array-slice-sub",
+              "count": 124,
+              "receipt": "build/m2-array-slice-sub/development/cli-receipt.json",
+              "receiptSha256": "f25ef89abf56c4b6d82b8549609803bb8fdc0e7089f048775be85769baa68be2"
+            }
+          ]
+        },
+        {
+          "profile": "release",
+          "native": [
+            {
+              "schemaVersion": "fairyc.test-report/v4",
+              "engine": "native",
+              "target": "x86_64-windows-msvc",
+              "profile": "release",
+              "tests": [
+                {
+                  "identity": "tests::m2::slice_frame_vm::dynamic_origin_lengths_exact_prices_and_children_after_formal_close_dispatch",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::slice_frame_vm::empty_subranges_utf8_values_and_root_shape_mismatches_use_actual_backing",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::slice_frame_vm::fuel_bounds_backing_and_stale_provenance_fail_without_ticket_or_register_publication",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::slice_frame_vm::malformed_rootless_operands_and_partial_pool_capacity_preserve_existing_sessions",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                }
+              ],
+              "count": 4,
+              "passed": 4,
+              "failed": 0,
+              "status": "ok",
+              "lock": "verified"
+            },
+            {
+              "schemaVersion": "fairyc.test-report/v4",
+              "engine": "native",
+              "target": "x86_64-windows-msvc",
+              "profile": "release",
+              "tests": [
+                {
+                  "identity": "tests::m2::mixed_call_vm::borrowed_capacity_and_stale_tickets_fail_before_any_owned_copy",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::mixed_call_vm::exact_combined_fuel_duplicate_empty_ranges_and_owned_copies_publish_together",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::mixed_call_vm::fuel_precedes_frame_backing_and_scalar_only_calls_keep_exact_prices",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::mixed_call_vm::late_owned_failures_discard_prepared_retains_without_consuming_generations_or_payload",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::mixed_call_vm::nested_forwarding_copies_owned_parameters_and_retains_original_borrow_roots",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                }
+              ],
+              "count": 5,
+              "passed": 5,
+              "failed": 0,
+              "status": "ok",
+              "lock": "verified"
+            }
+          ],
+          "nativeCount": 9,
+          "build": "built: build/browniec.exe (x86_64-windows-msvc, release, lock verified)",
+          "artifact": "build/toolchain-upgrade/release/browniec.exe",
+          "exeSha256": "b5b0514aaa86ee620439c4db7caed631d6f5201309f7038fb0f8159849b5362a",
+          "cliCount": 2495,
+          "matrices": [
+            {
+              "selection": "m1",
+              "count": 1969,
+              "receipt": "build/m1/release/cli-receipt.json",
+              "receiptSha256": "cc0e09d4dac11a33e7e647d8e73563ca5d31a28caa3ebe07b127c2de5d817b02"
+            },
+            {
+              "selection": "m2-array-call-reads",
+              "count": 106,
+              "receipt": "build/m2-array-call-reads/release/cli-receipt.json",
+              "receiptSha256": "0a89a65ef05cb810bdd2a3408209327e40717e4901bae323bb7cf4cdeee7d7b2"
+            },
+            {
+              "selection": "m2-struct-call-reads",
+              "count": 102,
+              "receipt": "build/m2-struct-call-reads/release/cli-receipt.json",
+              "receiptSha256": "b574c6be116c118fcfda227f09ee927fd67ece593f81451d0257c920507b7813"
+            },
+            {
+              "selection": "m2-array-slice-parameter-source",
+              "count": 74,
+              "receipt": "build/m2-array-slice-parameter-source/release/cli-receipt.json",
+              "receiptSha256": "54c09ec32dd73e4123283836daf02effc64a2b0587b23852ae7e372173cb30da"
+            },
+            {
+              "selection": "m2-array-slice-alias",
+              "count": 120,
+              "receipt": "build/m2-array-slice-alias/release/cli-receipt.json",
+              "receiptSha256": "2bcfc19f2096a41eb6fd67659e37da4fee0014e71b2015cdd79bd57688135d75"
+            },
+            {
+              "selection": "m2-array-slice-sub",
+              "count": 124,
+              "receipt": "build/m2-array-slice-sub/release/cli-receipt.json",
+              "receiptSha256": "f1404623644c1007d5eafbb2e08a03d6b8c5344cffdbb940f1f90821a6ac748b"
+            }
+          ]
+        }
+      ],
+      "sourceSha256": [
+        {
+          "path": "fairy.lock",
+          "sha256": "15b2549cd1a723b1dd1cab142a90d7ef1c71feeea7aa8b0ca7c9652a1a4e75d8"
+        },
+        {
+          "path": "fairy.toml",
+          "sha256": "f5254ba793d9012470c697e8657688a4ea5465c138fba6d748707d5bfa4b31fb"
+        },
+        {
+          "path": "src/arithmetic.fy",
+          "sha256": "8192e6ba97498d059b0505307bc2bf84ac58d9722dc5f597587f8ae81a1081d3"
+        },
+        {
+          "path": "src/array_call_source.fy",
+          "sha256": "57af1c63a68bf060d6c555d1ec3f929d3c53715691074d68a5ae6f7ab58392a2"
+        },
+        {
+          "path": "src/array_call_vm.fy",
+          "sha256": "9da46f3a605e5a63ee7309d607c06473a3c175ae9e30f6e0b759e9da9a51e6da"
+        },
+        {
+          "path": "src/array_layout.fy",
+          "sha256": "d3497dfb6bb7e9ac8ceece4ae88a2274b6b40b49e3c5fecfc509179c03c91cdd"
+        },
+        {
+          "path": "src/array_meta.fy",
+          "sha256": "d1a07319dc2bb7eb95298e3920eaec63c1a4c1390a00c5469528a77e97612894"
+        },
+        {
+          "path": "src/array_owners.fy",
+          "sha256": "9dcf8250ad214578e9cfb5f9727cec318a63864f7a92783ff10245b16d8c6b63"
+        },
+        {
+          "path": "src/array_parameters.fy",
+          "sha256": "5928d2bff6129d55c849c3798dc857cfcdcc88a2fe9b38fcd5c997b2373c18f4"
+        },
+        {
+          "path": "src/array_range_vm.fy",
+          "sha256": "c91afd89b2f3f8f650d61cff3820ff5958f49a6280ba36114fe13b47376db8d3"
+        },
+        {
+          "path": "src/array_result_source.fy",
+          "sha256": "378a8dc6bd5ecd79aec30a95d402dba0702004e6c18f3ff5d57b4341514c85bd"
+        },
+        {
+          "path": "src/array_result_vm.fy",
+          "sha256": "3cd5388806afa0f4c3a6a8518f154adaf6f9904b18bc7c30ed787d37c43eacfa"
+        },
+        {
+          "path": "src/array_results.fy",
+          "sha256": "1dccba6ebbc493654aea82e305b7c3f9b0c226c8c475d1c80f19fa1014e63e8e"
+        },
+        {
+          "path": "src/array_slices.fy",
+          "sha256": "23b3a9f5fc7003f1df9235d81b31992cfd48c23561915eeb88d5a4e3f1e9e0c5"
+        },
+        {
+          "path": "src/array_source.fy",
+          "sha256": "969b16d67e852a5d47b7d06bdc48382259ea5d7139ac8f7edfddc4889dd7cea6"
+        },
+        {
+          "path": "src/array_storage.fy",
+          "sha256": "00808c116e0fb86ce063d7fd4cc9d1f8fd29f19b277449e59e3569491a3ee534"
+        },
+        {
+          "path": "src/array_verifier.fy",
+          "sha256": "067bd08931ef07a2a60d368fb2c933e73d218ee886c048ce2cd42bda18d14d8f"
+        },
+        {
+          "path": "src/array_vm.fy",
+          "sha256": "1192be6ce580ae392317e9f7cca6316d372501d0e3e5a464f63e0d2572b1930d"
+        },
+        {
+          "path": "src/bits.fy",
+          "sha256": "0b030757624a8dbaea9475f90d757aeff78b9154a121af7a4d9ebd80042db1a0"
+        },
+        {
+          "path": "src/buffer_append.fy",
+          "sha256": "7a4de27685b41b772569e5a687a7626bc200f7c6152b77082cc93052bf78527a"
+        },
+        {
+          "path": "src/buffer_close.fy",
+          "sha256": "ae68d02649e04196854ba4b41f475c0c550d6d0ac5f80ebd2bbeb537fbcfaac7"
+        },
+        {
+          "path": "src/buffer_create.fy",
+          "sha256": "f133713a4f815f70cfd973933f81dd1156b7fa5c637eeb9dbad9e87f309308e0"
+        },
+        {
+          "path": "src/buffer_growth.fy",
+          "sha256": "71b855cc0e2e4e9d092cf66cf9de94ce62079e3c141e33d6b4c715fecebd1177"
+        },
+        {
+          "path": "src/buffer_host_close.fy",
+          "sha256": "4e5bcef18c020b3eccd4034cf5a5c0a8b81b53b6709ba043b876d64eaf8b7aea"
+        },
+        {
+          "path": "src/buffer_host_sweep.fy",
+          "sha256": "3a043bc009e60b55e11d07ffe40c12dcf75e44b88ea878a37405e61b414c606a"
+        },
+        {
+          "path": "src/buffer_owners.fy",
+          "sha256": "0dd45d859fec557cbe729b64f4b838b11b1d1f9dde3f779c9251cfad3bb82576"
+        },
+        {
+          "path": "src/buffer_replacement.fy",
+          "sha256": "7f8a58181ad531924d4a3f1d887c552a952ebf6df493d714b00d56112a92ae51"
+        },
+        {
+          "path": "src/buffer_resize.fy",
+          "sha256": "1870bbf133aa6e9535eb5a901cbdd54bf8e520ae2520a54b9bd03b955b9cf057"
+        },
+        {
+          "path": "src/buffer_storage.fy",
+          "sha256": "4f6b9f8e5fc5ae55551618d70eac1e74289d09a933249bf95940f98d5b2fbe8d"
+        },
+        {
+          "path": "src/buffer_truncate.fy",
+          "sha256": "9b5900d8ee8d1360c47afb4589473adfb5fe523c83de941e7a88412f9d3425fc"
+        },
+        {
+          "path": "src/buffer_utf8.fy",
+          "sha256": "a59e01627bb46851405334d0650426a9ef816a69cf1c0a5dbf6f3cec43f8b255"
+        },
+        {
+          "path": "src/buffer_utf8_meter.fy",
+          "sha256": "b066f8b567b465d709cc356193c92aeea33d8918ae7c500fb23992993d455142"
+        },
+        {
+          "path": "src/buffer_utf8_pool.fy",
+          "sha256": "74eafd20969398df0475dee122130292aa3bd51dfbfea2a32cea3819def397df"
+        },
+        {
+          "path": "src/buffer_utf8_scan.fy",
+          "sha256": "f51a409ff4f1f6fd427b1b0ef9526d16c506af197478ba0281d6e376ff9e6a7a"
+        },
+        {
+          "path": "src/buffer_utf8_session.fy",
+          "sha256": "709338c5a33d28ea20ae41851a27d0139b40c1b7f69c4a827503bccf7da54330"
+        },
+        {
+          "path": "src/buffer_write.fy",
+          "sha256": "ddb6db325a50f5f660c90971661144a582794ec84c0be5f675d503c237829dab"
+        },
+        {
+          "path": "src/casts.fy",
+          "sha256": "59da4a4ecef63833cc383495390e150b964bf41b353c4b150dcacb6be66caba6"
+        },
+        {
+          "path": "src/cells.fy",
+          "sha256": "71b82add3e95b86a1b7bcb88c3f97f6ae38bae0ac3ec8b1a2de925b10a64e433"
+        },
+        {
+          "path": "src/cli_input.fy",
+          "sha256": "ec91de62e6b5147d117d6fe0366ebcf617b556c074bf1dd91cb10188f96507ba"
+        },
+        {
+          "path": "src/compiler.fy",
+          "sha256": "2d537c9c70914f9a5354d0741aec953bb3b5e2201ca74bb64ffae91028c2f6f0"
+        },
+        {
+          "path": "src/errors.fy",
+          "sha256": "e8070ef5c6380460dacb579c33f2e180b9e683286c8cb0827e30d82a581a4646"
+        },
+        {
+          "path": "src/functions.fy",
+          "sha256": "e0c6c9526212519b08eb39ce63ba53227d0d7c0ce81b271666db8f4055a2d9f1"
+        },
+        {
+          "path": "src/ir.fy",
+          "sha256": "a1bdee57266e352afd9fef96388c3752f3b3a48a2e7edda23dd195092762d461"
+        },
+        {
+          "path": "src/lexer.fy",
+          "sha256": "0a64c45b3a3512ada4610c244ce874d306e417cde0fce4cd99a419048002861e"
+        },
+        {
+          "path": "src/locals.fy",
+          "sha256": "f89cab6159330ec0ac269ef02cedd59d15f6f3cfae2d60fc89d43b5ccdf32cda"
+        },
+        {
+          "path": "src/loops.fy",
+          "sha256": "d25dccfb4d3d50daa6e82a6a2f8df345ea72fd4a559e3a8882d6cda0230cbee2"
+        },
+        {
+          "path": "src/main.fy",
+          "sha256": "a0ea02fedcb677af4a670bd7f30dd62ace5ee4fbaa69a07c34fdb342cd2ba9b3"
+        },
+        {
+          "path": "src/mixed_call_vm.fy",
+          "sha256": "9e15d08944a87d3a97ce499f88e8ba0712a9723f396e5a9e3913551ebcc21884"
+        },
+        {
+          "path": "src/patterns.fy",
+          "sha256": "d9ba2ff9dba626968b7514c636a414932e50856c19b9d41d6825b4f91c9797aa"
+        },
+        {
+          "path": "src/propagation.fy",
+          "sha256": "9b58f0e5ed3ef79c44cf819c651e0ec456e38441c3ce8579aca31e0d7eb80bdc"
+        },
+        {
+          "path": "src/register_set.fy",
+          "sha256": "478e2690ee311bb3961c329becc6f9ef035276759619733cbfd0f6e441f36b73"
+        },
+        {
+          "path": "src/render.fy",
+          "sha256": "e86fb9d531c5c32321dd9df792478ca396523394ae469281a1036b57fbbd6e2d"
+        },
+        {
+          "path": "src/scalar_codec.fy",
+          "sha256": "c28ca5e5cdc38dee01d79489d8c5a709022a49001854af638258ec4536ad66f0"
+        },
+        {
+          "path": "src/shifts.fy",
+          "sha256": "510dc6a90591de165de424a377eb267917ea9973972b9b95656cc9c435675eeb"
+        },
+        {
+          "path": "src/slice_builders.fy",
+          "sha256": "4c04bb17304835fd65bacacbb2d4ac31f7abd9c0b1adc1a8f394b5859d7fe330"
+        },
+        {
+          "path": "src/slice_call_source.fy",
+          "sha256": "6ba4a8994899491eee7aa525547d2f80fdda6106060dcce8a45c202de9cf2af8"
+        },
+        {
+          "path": "src/slice_call_vm.fy",
+          "sha256": "72351c59a0a92f97cf8f4bfcb5028a0d4cae2bbdaa97922ad245f06b791cf57c"
+        },
+        {
+          "path": "src/slice_frame_vm.fy",
+          "sha256": "f2b6aea5c4cf683a2d323444841d15328d41c4fdc6aaa83fe04c5d7b1fe0115b"
+        },
+        {
+          "path": "src/slice_parameters.fy",
+          "sha256": "f7b4dca46696cd3e021b67ad7123117f926d275d5ba61b8b9f8f1ad064d13325"
+        },
+        {
+          "path": "src/slice_source.fy",
+          "sha256": "ba4a56cd429ee0d4fcb8d3651258392807af6f1ac9e4390a3e11fd69dc946dad"
+        },
+        {
+          "path": "src/slice_verifier.fy",
+          "sha256": "e3f9ea0e6aa15a7c2f52058368044ef8ccd9995709436473bcb18128a6edb07a"
+        },
+        {
+          "path": "src/slice_vm.fy",
+          "sha256": "7743454d22e5ae1969d49f7518437492626678c4177148d023ca0cf338512fb7"
+        },
+        {
+          "path": "src/struct_call_source.fy",
+          "sha256": "ee9e295b082b31f810dd2f6f983a4f2aa68ac064823f74205c486d3c865a3304"
+        },
+        {
+          "path": "src/struct_call_vm.fy",
+          "sha256": "d46de926715d2d9e4fdfab5018a54e56c4017ff6f2800692fb9904056ce97219"
+        },
+        {
+          "path": "src/struct_layout.fy",
+          "sha256": "6ab7d28a9e7216938d4386cff21563ba20997b38d27e37fa5ef803660d2d5aac"
+        },
+        {
+          "path": "src/struct_meta.fy",
+          "sha256": "078d12717b20ed04a04eefaa22409c03292b363995a2d951be617716fe8b52cd"
+        },
+        {
+          "path": "src/struct_nested_storage.fy",
+          "sha256": "e0ff5e2b75380330c99d52271af9e7fabe41f5f6ddd59090aebd1f0d1afc0651"
+        },
+        {
+          "path": "src/struct_parameters.fy",
+          "sha256": "e65267f4b68748895d6fa856fb729df03693e496616e1d596cfcf5c2cb636aea"
+        },
+        {
+          "path": "src/struct_range.fy",
+          "sha256": "4c214845f97fb4ae0ebc0e676475855526d804d033bc8f6d31c39283b6fa0b20"
+        },
+        {
+          "path": "src/struct_result_source.fy",
+          "sha256": "3e8590e9cf6c9e7133d19481ffa308408fff06abd0ff8f46ffcaaf8d24d09eec"
+        },
+        {
+          "path": "src/struct_result_vm.fy",
+          "sha256": "4dd31897726afc3528a91294f330b7575d611187021d3808709a4dc40f08192a"
+        },
+        {
+          "path": "src/struct_results.fy",
+          "sha256": "5682caf6754803249a6d77c161927724ffa7839a7d44da60c5972ea6d31eb452"
+        },
+        {
+          "path": "src/struct_source.fy",
+          "sha256": "58eacd663dd6f0bbd9a231783ad90c0a06c154d1f20cc175f093831eb1614a05"
+        },
+        {
+          "path": "src/struct_storage.fy",
+          "sha256": "f371eedc083aea535fa6cc35f245fb6bd1c8ded52b8c4470c19fd0c4d9df0596"
+        },
+        {
+          "path": "src/struct_value_source.fy",
+          "sha256": "63224e9db2bd27d9f540eac698b1dfe3b728605625152f528b58bf104033cbb0"
+        },
+        {
+          "path": "src/struct_verifier.fy",
+          "sha256": "f68b5b4292be683128953dc4e440647c0fa2557b3fd0b5fd7674eaedced1d8f5"
+        },
+        {
+          "path": "src/struct_vm.fy",
+          "sha256": "370f32db5f75e6eca439fc338c414fdde084d97c9a519e2cb49aa07bfdb702d2"
+        },
+        {
+          "path": "src/tagged.fy",
+          "sha256": "67770f8ec8f3e35a2a6196cda87310844d37358f86f8b22eb81b49df1f65f1bf"
+        },
+        {
+          "path": "src/text_source.fy",
+          "sha256": "17dc833c6377b59f66c015c8ce471ec58095606d5f9261884694793fea6c4040"
+        },
+        {
+          "path": "src/types.fy",
+          "sha256": "906f5ba160de53f60d23e344e141181f902f36de60a4060375bef97a2162be23"
+        },
+        {
+          "path": "src/verifier.fy",
+          "sha256": "c46dc452a192e03d540f445805c95b7fbffeba9d1c8899fadc61918bb576eac0"
+        },
+        {
+          "path": "src/vm.fy",
+          "sha256": "cd28ab07b33989ae05ca0653e06f7dfb3e0ba9fb2383f36a93fcb60345f5e127"
+        },
+        {
+          "path": "tests/bitwise.fy",
+          "sha256": "c840b7b8317d94ac5fa39d91bdff9644a0e15f4f339cb1ed92dfc305ec0061a0"
+        },
+        {
+          "path": "tests/bools.fy",
+          "sha256": "281f9bca67b5d0dc3786fe2ed051c3fdc90a6cb06bc4a76b02c33ece340f01d5"
+        },
+        {
+          "path": "tests/branches.fy",
+          "sha256": "75dd35a997a5c050acaff68adae77bc6913a73e63475ecd2445ae40dc3bcf9f5"
+        },
+        {
+          "path": "tests/cells.fy",
+          "sha256": "1aa771483c6fe34bd77fc390cd45e87d9537cf8498f542d57856f81c404594b2"
+        },
+        {
+          "path": "tests/core.fy",
+          "sha256": "f8666d14fadaa91a07649e64b62a710276fc78315fc0c420262608872802b42c"
+        },
+        {
+          "path": "tests/functions.fy",
+          "sha256": "b4abd043cae4710bc39895ce72cc1f09b07eba7431bef5eaa0a4f4bea86ec11a"
+        },
+        {
+          "path": "tests/i64_scalars.fy",
+          "sha256": "b2b7dfc016ac233f15f7dc4f2f13109fab610f25f33a4258f8a2cb01a1ec9307"
+        },
+        {
+          "path": "tests/loops.fy",
+          "sha256": "ba83dae2bb797ba367b1b8d994b1d74b63fb1b9386791a8e35c1e3cc951fc2f1"
+        },
+        {
+          "path": "tests/m2/array_allocation.fy",
+          "sha256": "b84e56c8607064c76d433bcde1559c3d7aeed380b6c8acc9fa3a31d8662526e5"
+        },
+        {
+          "path": "tests/m2/array_argument_copies.fy",
+          "sha256": "48a374c3c852c14bc46469f7bac811104ec51a654d9931e557810a65c902406f"
+        },
+        {
+          "path": "tests/m2/array_assign_storage.fy",
+          "sha256": "347d9529c9f6ac41e5c45b7ced2b7153c2ffe9d33d57a17618e85e6974d153eb"
+        },
+        {
+          "path": "tests/m2/array_assignment.fy",
+          "sha256": "1b5519470b81d2cb4b1fbd13dbd8c91f016aac84fdfafb120dce6e886a0181c0"
+        },
+        {
+          "path": "tests/m2/array_call_assignment.fy",
+          "sha256": "7b3bae35247b7c75c65c3e86602e0ecd945ce41854bcce58df1717f2349aadb8"
+        },
+        {
+          "path": "tests/m2/array_call_reads.fy",
+          "sha256": "776fae511954f5ddb0065774c5542b4df46f5eca82811de12d6620203d1a7f42"
+        },
+        {
+          "path": "tests/m2/array_calls.fy",
+          "sha256": "38ca740fb98467a54bcecd415869194230b30e85fe334f2c788c1a87f146c4e9"
+        },
+        {
+          "path": "tests/m2/array_copy.fy",
+          "sha256": "3df942474a34aba8c5fc5affc0514f37ec972bc918f856ea82326cb389517c51"
+        },
+        {
+          "path": "tests/m2/array_copy_source.fy",
+          "sha256": "a81e5ff84fb51e745830689afa94281ed2522d3ba5c22c28a205c0010a7032f2"
+        },
+        {
+          "path": "tests/m2/array_dynamic_utf8.fy",
+          "sha256": "70ef7248631a1e440ff20597935a26afd2f316052c54d17df144f819bc6898c2"
+        },
+        {
+          "path": "tests/m2/array_fill.fy",
+          "sha256": "064fe9f6fda55eb2712060c81d8edc5a2bd25dc8649740d544dc3e4a5789ca88"
+        },
+        {
+          "path": "tests/m2/array_frames.fy",
+          "sha256": "09761070700b961e80849c748d6d7a4964b21ed6c15eba9e76e1fb250befe25b"
+        },
+        {
+          "path": "tests/m2/array_functions.fy",
+          "sha256": "098e869573e9e958fc5a36ad3fd2004d722b56d1f32855757b5534ae9792f631"
+        },
+        {
+          "path": "tests/m2/array_helpers.fy",
+          "sha256": "30a75872a461c5b59b2e06fc55799710c0bfcdae8aff5e2bc643a2dd4b8accd9"
+        },
+        {
+          "path": "tests/m2/array_ir.fy",
+          "sha256": "2a1cc69aa982a9445636c08a0c3b7c2579e457b0170460975f31089406173be4"
+        },
+        {
+          "path": "tests/m2/array_layout.fy",
+          "sha256": "4aecf1a3c691dd8fc055d7ce1fa5950feb98eb7d1aa82d2d9d4f77fcd57a673b"
+        },
+        {
+          "path": "tests/m2/array_length.fy",
+          "sha256": "231e8a891f8df49b7ae88d64435a79ab282926ae852ac6f29beeb3cd7734a979"
+        },
+        {
+          "path": "tests/m2/array_literal_arguments.fy",
+          "sha256": "342170d3870c2cad9ac0fa5574b2f589c20fab36f86c1ed963dba4d00c68f405"
+        },
+        {
+          "path": "tests/m2/array_literal_assignment.fy",
+          "sha256": "eef75b58988317bbfe2b6b5cbf06579a2f649f638b1859e46f1dd9a5b06554bc"
+        },
+        {
+          "path": "tests/m2/array_owners.fy",
+          "sha256": "11b56c453e190a5d75917c4e09852c61151be6ddaca8c0c307b751212de02cf3"
+        },
+        {
+          "path": "tests/m2/array_parameters_source.fy",
+          "sha256": "d58f1673807f1999b27da6acb1d46758ac36814a5f323d8ea43fcf06a9617473"
+        },
+        {
+          "path": "tests/m2/array_range_utf8.fy",
+          "sha256": "c94283af5c7a08b151faed8c2facd0e8f67bfe46c63fbd1d6c3ff1b3820e4c6f"
+        },
+        {
+          "path": "tests/m2/array_read_leases.fy",
+          "sha256": "4f7f0e09002e17c982138ca82403561bc500b82992e98ca1251651eee327c547"
+        },
+        {
+          "path": "tests/m2/array_result_arguments.fy",
+          "sha256": "4fc009cd0ff04fc6b03c6fa0e899f7faf16fa41ec610c926aca2f2af195827b1"
+        },
+        {
+          "path": "tests/m2/array_result_edges.fy",
+          "sha256": "2ed09f5333b72b9857fa0aa5d3f37af1ca253097a0f27f803f09b5051207d5d6"
+        },
+        {
+          "path": "tests/m2/array_result_signatures.fy",
+          "sha256": "ca5c8a1738a3d5fc4f4d21e7837123152648adc272449a6586059d2c52b19f65"
+        },
+        {
+          "path": "tests/m2/array_result_source.fy",
+          "sha256": "3642870d74abc7269472fc666f244c1cb8a1575d2346d4f2a2386f5f23c2d573"
+        },
+        {
+          "path": "tests/m2/array_result_vm.fy",
+          "sha256": "e55ce6cb07fbc32dc40576ec241311350a68598bd2ad48411bb6595cbbe8dcbc"
+        },
+        {
+          "path": "tests/m2/array_results.fy",
+          "sha256": "23e0c26bdd1d68d7fb77947f845616d376e572ec833410c886c0627ddac3a6b1"
+        },
+        {
+          "path": "tests/m2/array_return_calls.fy",
+          "sha256": "63c112fee4d4c7ec97a6288233001bff2cf3dc93bff7b93b6de976dea289f14b"
+        },
+        {
+          "path": "tests/m2/array_return_literals.fy",
+          "sha256": "fdcc73feea09edf75cfa7b309b1fc889692c808aad47c354fa03e4acb2b8c8bc"
+        },
+        {
+          "path": "tests/m2/array_scopes.fy",
+          "sha256": "bbdde659b574a3b5caaa1ce6d111960f8b53c9821a962375be868e1313dde01f"
+        },
+        {
+          "path": "tests/m2/array_signatures.fy",
+          "sha256": "f419995728a1e6bec1a48da3854b5121bf1717f6c5e5d2eabc3feb7ba87fa039"
+        },
+        {
+          "path": "tests/m2/array_slice_alias.fy",
+          "sha256": "7604b0d75271648e85124aba7896917e14b3411c4cc394ab94be03049cac7046"
+        },
+        {
+          "path": "tests/m2/array_slice_index.fy",
+          "sha256": "b7bbd7ff57262c54bb53306384a72fb1b42ee15ffd9791a743e9536022398c1d"
+        },
+        {
+          "path": "tests/m2/array_slice_length.fy",
+          "sha256": "e9a7ef99f4dba6104338ef92d158446f0b270ac3ffde98f3806e61420cf07f3c"
+        },
+        {
+          "path": "tests/m2/array_slice_sub.fy",
+          "sha256": "78f900616867e21780dd860d38cec228ff1e54eceecbad354b055a40fd24b1ae"
+        },
+        {
+          "path": "tests/m2/array_slices.fy",
+          "sha256": "de6eecd5b94eacf097979f0ef98d1b68aefa06833d994845e180de6fe55dd9dc"
+        },
+        {
+          "path": "tests/m2/array_source.fy",
+          "sha256": "dd9848a82edf09b88db8c6152eec8f13b9266b8c5f180d8afc3d4f8bff8cf295"
+        },
+        {
+          "path": "tests/m2/array_storage.fy",
+          "sha256": "05e47d2d69f0524eea4099e2b58e3438c8e8f14b335d8577cf0a5fb65c822963"
+        },
+        {
+          "path": "tests/m2/array_utf8.fy",
+          "sha256": "6b399a4f935570187689da63afac8f9107f371be977981de88ea1abd4c0f1ea4"
+        },
+        {
+          "path": "tests/m2/array_utf8_calls.fy",
+          "sha256": "67e69f6f405fa3778ee4f5a5591579035a2d763d078e22472b041124320cc390"
+        },
+        {
+          "path": "tests/m2/array_utf8_computed_ranges.fy",
+          "sha256": "78468b3be45fef3dba6d668f200afdb7f28fc96b307a14e4535ff9b09edbc16e"
+        },
+        {
+          "path": "tests/m2/array_utf8_dynamic_ranges.fy",
+          "sha256": "1fb7968e72c2d591ac5372f0baf3fff39428e8c9acc4c8b1fa264b91331eb815"
+        },
+        {
+          "path": "tests/m2/array_utf8_literals.fy",
+          "sha256": "3a52d5f676380ca4891368e79667b0e8f9ec1630f5122059fea39761191d109b"
+        },
+        {
+          "path": "tests/m2/array_utf8_open_ranges.fy",
+          "sha256": "5f3b1b10fbe36deb2595dcc1b45b5f5a549111aab67fdfeeeb57e249c78509fc"
+        },
+        {
+          "path": "tests/m2/array_utf8_ranges.fy",
+          "sha256": "665eb942b8b2fac427581e6539d40bd6c59559d1d24a9d275cb59a3dfbeb1fb2"
+        },
+        {
+          "path": "tests/m2/array_utf8_slices.fy",
+          "sha256": "d03f1158394210950b3509de1e488d3bc53df3afd8990f4aec7acf41ba81d3fb"
+        },
+        {
+          "path": "tests/m2/array_utf8_source.fy",
+          "sha256": "21b9dc228e640a5bd321214778f901dba09fa0c514fec2eac825501845d5099c"
+        },
+        {
+          "path": "tests/m2/array_utf8_temporary_computed_ranges.fy",
+          "sha256": "0620c1413196a1efd74ac323f2f098b06c5a996cb72265cbc64302d9cb7dfa92"
+        },
+        {
+          "path": "tests/m2/array_utf8_temporary_dynamic_ranges.fy",
+          "sha256": "bfee51c3b02aae928b9093ec5645570aebd7f86b5767bad3ca80b8aaaba1fe42"
+        },
+        {
+          "path": "tests/m2/array_utf8_temporary_ranges.fy",
+          "sha256": "4c6f66ed18a77a268962856d7196c427c112df1ad9112847cdbc39302ccc6683"
+        },
+        {
+          "path": "tests/m2/array_views.fy",
+          "sha256": "2ef502ef08e2e8691774f5fbe66e62c8d39735cf65d898c96f087529746a6df2"
+        },
+        {
+          "path": "tests/m2/array_vm.fy",
+          "sha256": "c92b7784d8d3091c91d93fa1a648700f3d4884f82aa220e211a5ca8500786d61"
+        },
+        {
+          "path": "tests/m2/array_write.fy",
+          "sha256": "e7674c983ceeb7060358b053efe80a28493d3bb7ea8d7055b6ae946a0c2d646d"
+        },
+        {
+          "path": "tests/m2/buffer_growth.fy",
+          "sha256": "4351563adf74b0d91260f1aa298dd23194e72e3f3cab6cdf37b358d8c4f46f19"
+        },
+        {
+          "path": "tests/m2/buffer_owners.fy",
+          "sha256": "3b6b75fcb9130b4fd6e3de99e7d7b20215e0b1a3e0138bfd0b831f858d3419d7"
+        },
+        {
+          "path": "tests/m2/buffer_replacement.fy",
+          "sha256": "3b28371b265ca37a68a30aa258dc32634c83a39fe6093faee0d13a4b1679c68a"
+        },
+        {
+          "path": "tests/m2/buffer_storage.fy",
+          "sha256": "80e29c26f7af3fa18f69ab6d852cabce78b7032728929bef95e4d8b0f4ed2488"
+        },
+        {
+          "path": "tests/m2/call_argument_copies.fy",
+          "sha256": "6892dd3751ff810489bbe02261f57e843ea68c40f2492205b9cec6beabe8e45a"
+        },
+        {
+          "path": "tests/m2/mixed_call_vm.fy",
+          "sha256": "b916fc92faaac75d68cf7292d15c64ab3478d0222070eb1998738ceb5cb6bcab"
+        },
+        {
+          "path": "tests/m2/scalar_codec.fy",
+          "sha256": "63e5709b6b46addea1510db1cce5f27ea6e52ab8e2f5fd5da98aaa7bb216d323"
+        },
+        {
+          "path": "tests/m2/slice_arguments.fy",
+          "sha256": "82874183e4ca3d7d8d86a3e0db992a35d2b0c0c26cc234708401460b2b5a8e78"
+        },
+        {
+          "path": "tests/m2/slice_borrow_flow.fy",
+          "sha256": "6d14e6469bd993a4efd63069968cf962b93a6793228b28ae1ef1503cd09fddf7"
+        },
+        {
+          "path": "tests/m2/slice_borrow_ir.fy",
+          "sha256": "a6744c8feae2506001017a989f4f49d0e668b785ee3105c404f525f3b8001c3d"
+        },
+        {
+          "path": "tests/m2/slice_builders.fy",
+          "sha256": "736f771bb68f3b1f62bee5e0a4627ec9e3199145a49ef195a0f2d3f48c2ceba4"
+        },
+        {
+          "path": "tests/m2/slice_call_vm.fy",
+          "sha256": "8249ffb8f24bcac10837e383d5529bf459ac7c2597b75add633785b0d92565a3"
+        },
+        {
+          "path": "tests/m2/slice_frame_vm.fy",
+          "sha256": "cce2d293b4455da1f3e63355f010b4de0490f6d82780873d855375a404c9ccf3"
+        },
+        {
+          "path": "tests/m2/slice_index_vm.fy",
+          "sha256": "953f76e1dd750b1856376a38c24e88ddd43d801526b2e25f0fa30d9e479739b4"
+        },
+        {
+          "path": "tests/m2/slice_parameters.fy",
+          "sha256": "652f3884e43c7cab8862e30b1ec9cc6dc392491974597444e6aa6e8a9a029f4f"
+        },
+        {
+          "path": "tests/m2/slice_parameters_source.fy",
+          "sha256": "837b1674b016295eaccbba070bd4d99f7f2b58f2ef716f175724a4de369b3449"
+        },
+        {
+          "path": "tests/m2/slice_sub_vm.fy",
+          "sha256": "3c4e81697ddc0d6d85c131029ad5eadd2d7a8767fd41bbee4b93e2f262aabbcb"
+        },
+        {
+          "path": "tests/m2/slice_vm.fy",
+          "sha256": "3dad7aa18479363fe06eb48a3e07b8b8b0fdfba641611933d9582cdf865088dc"
+        },
+        {
+          "path": "tests/m2/struct_atomic_source.fy",
+          "sha256": "5a02d292d3fea70eabd09315fd2b5ca87d6bc3e18b99cdfe19c85110c356b76b"
+        },
+        {
+          "path": "tests/m2/struct_call_assignment.fy",
+          "sha256": "faef1df2982d2bdd98dab8ef7575ddd7c42f2619d6b62409909949c0ba219fbc"
+        },
+        {
+          "path": "tests/m2/struct_call_path_arguments.fy",
+          "sha256": "8f16d1cea241e07d8a7396ef9d35fc1c5348ae8f471d512ea74bc9ab084ae8e6"
+        },
+        {
+          "path": "tests/m2/struct_call_path_assignment.fy",
+          "sha256": "8f0f5c61e6a2aa3970ba20b5ecaf757e3043f2a7df56640b3412197bfeb19ffa"
+        },
+        {
+          "path": "tests/m2/struct_call_path_declarations.fy",
+          "sha256": "35c5a2d65ac9b62861dc9d894c6033e300d36d1b3f215bedb491a37a542c64f6"
+        },
+        {
+          "path": "tests/m2/struct_call_path_returns.fy",
+          "sha256": "a2779306cdb034de8174121726060daf1e978bb1cbb3eb10e996c8bd4f2a6868"
+        },
+        {
+          "path": "tests/m2/struct_call_reads.fy",
+          "sha256": "b611fac446a09943d50b5026bc8b298806d62557b094bc10cd9e9f0f1a5f1995"
+        },
+        {
+          "path": "tests/m2/struct_call_vm.fy",
+          "sha256": "2a4770a47b609940181cd74064c6b3021d9ef2c4772092f694b50e904e31f5fa"
+        },
+        {
+          "path": "tests/m2/struct_child_call_assignment.fy",
+          "sha256": "c9b5bab771cd7e267921f43ac194fd4a3f2c9f95b885922b324e975b5bc16b59"
+        },
+        {
+          "path": "tests/m2/struct_child_call_paths.fy",
+          "sha256": "d25a6b81063a43129af9638847dcadc1a91aef7ef5566c9a856c87722ba0c9f0"
+        },
+        {
+          "path": "tests/m2/struct_child_calls.fy",
+          "sha256": "bdfd8d22dd63a7d6a19ac7110db56467de8410a92df76acca9acd43026427ca3"
+        },
+        {
+          "path": "tests/m2/struct_child_path_source.fy",
+          "sha256": "e3f83e0f28fdcd7c7b4a897dae12d6b7bcebeafb816bc0d0250dc80b0811145a"
+        },
+        {
+          "path": "tests/m2/struct_child_source.fy",
+          "sha256": "3f66a806d2a38225b1cfcc81b349406803062c4ea63decd68c0a7ad8c37ee333"
+        },
+        {
+          "path": "tests/m2/struct_constructor_arguments.fy",
+          "sha256": "6574ea4667959dbe2a4029f867a35fbd2aa2b27abdb04566d4cd10ed3ffe8675"
+        },
+        {
+          "path": "tests/m2/struct_copy.fy",
+          "sha256": "d706abc37dd1f89afcb687cd950f752767e9183c8e4d657ff53206ba645d6480"
+        },
+        {
+          "path": "tests/m2/struct_extract_source.fy",
+          "sha256": "6b68ee6d050b53722df5c879c5e08b6a6d87059b4592a5f9771aa70eaed894de"
+        },
+        {
+          "path": "tests/m2/struct_function_ir.fy",
+          "sha256": "a04e8ee6f181a2d0466dcb6467460026b459a311ae16f6c5fd2fe3e4f765844c"
+        },
+        {
+          "path": "tests/m2/struct_function_source.fy",
+          "sha256": "4d2f559517ef9e8dc245e6ade109cb9be65c8d36f97ca041b82051f6ee721232"
+        },
+        {
+          "path": "tests/m2/struct_function_vm.fy",
+          "sha256": "5a955d67591bfb36077625e0bd8a4f9aa992d31ece2f596cb4ad5337e60a9898"
+        },
+        {
+          "path": "tests/m2/struct_ir.fy",
+          "sha256": "5c52a7e2f5eafb42a7ae6af237e25be10c5010ea7af9eef1e2a2b074e05efb53"
+        },
+        {
+          "path": "tests/m2/struct_layout.fy",
+          "sha256": "91298a39cc24b7843f917c054e7f37c295a2bc34da740fd36360590d17f8e073"
+        },
+        {
+          "path": "tests/m2/struct_layout_order.fy",
+          "sha256": "3596d85a5c4b345ef4ec37af567ac3bf67d4e5cae4bf915ab8b2ec36be316594"
+        },
+        {
+          "path": "tests/m2/struct_nested_copy.fy",
+          "sha256": "f2f5dbb950fef90ffa342eee9b97c10f602ba004e46122d15a87b81962a5f1d3"
+        },
+        {
+          "path": "tests/m2/struct_nested_storage.fy",
+          "sha256": "60faf1883a1ae50d9d370864857d57995f5df79da1ed0400c5d98b43c75bc106"
+        },
+        {
+          "path": "tests/m2/struct_owner_copy.fy",
+          "sha256": "b55ea8089fd1edf6096d4388ac4ef49aa0e79b928f9c20e106cd09d9be6000ac"
+        },
+        {
+          "path": "tests/m2/struct_owners.fy",
+          "sha256": "819394f0e666109814e8b421da4e2a1e6452cf4b97aa5c2beed01f509de0f056"
+        },
+        {
+          "path": "tests/m2/struct_parameter_signatures.fy",
+          "sha256": "72a87251e1f5f3bb6620d1415e0803bcf3e69b993fed2b0a98cde6181de8e617"
+        },
+        {
+          "path": "tests/m2/struct_parameters_ir.fy",
+          "sha256": "b7160a1c45a0a9cc225f927cb25bc620e4ba1901a592a504ab439257d0045cd2"
+        },
+        {
+          "path": "tests/m2/struct_parameters_source.fy",
+          "sha256": "848184dd7c7ba93de9cab0df5bfaadea31164b30a70924bec07037423742c8a8"
+        },
+        {
+          "path": "tests/m2/struct_path_arguments.fy",
+          "sha256": "bb788abb2c1399bbe799954e06fbd71719bf825d077c93cf51caece3aa42150f"
+        },
+        {
+          "path": "tests/m2/struct_replace_source.fy",
+          "sha256": "69e4ecd0ac19b6be05116003d5b46c3e210151b1a0a7ecd427e8edaaef87c287"
+        },
+        {
+          "path": "tests/m2/struct_replace_values.fy",
+          "sha256": "eb8f82b5bbf21fea8dd612b500568aa7b3cc615696c37a66618131032e88f376"
+        },
+        {
+          "path": "tests/m2/struct_replace_vm.fy",
+          "sha256": "7e7765d080ff7ad53525e0a2004337b2ac8b1041fd0fb98061f488fd63b34891"
+        },
+        {
+          "path": "tests/m2/struct_result_arguments.fy",
+          "sha256": "0bff9b72277b8e1b6f476d79cc86e5e4202f1d4fdd1dab54d12645ad61d0ae95"
+        },
+        {
+          "path": "tests/m2/struct_result_signatures.fy",
+          "sha256": "799e11957a839226a5e4d54a4fe879133940e7143e652c505d2cf27189263bfe"
+        },
+        {
+          "path": "tests/m2/struct_result_source.fy",
+          "sha256": "68608e2ebeaea297233c500788893c0fa802a30b895744e50976076126740b73"
+        },
+        {
+          "path": "tests/m2/struct_result_vm.fy",
+          "sha256": "29e4ddd7bfa8254b1cce526339016bc51dfa7105a9f18c35e34b034447e87389"
+        },
+        {
+          "path": "tests/m2/struct_results_ir.fy",
+          "sha256": "12d4e2e5ba475d7fb4ff50aa2be1b863a1cc66f9cb7422de76a37d7d724e3e52"
+        },
+        {
+          "path": "tests/m2/struct_return_calls.fy",
+          "sha256": "548f50e24d0ba412c2c510e0149acec6567b3adb467f6614d76f6583c1b21135"
+        },
+        {
+          "path": "tests/m2/struct_return_constructors.fy",
+          "sha256": "7d6135c878db8f2505058794243a51e202bbd88cf06e7249d8ccaa0fb2d3cf0c"
+        },
+        {
+          "path": "tests/m2/struct_return_paths.fy",
+          "sha256": "fd0db1273c29b06d28c78da7a20f43e9346fe623ce09e3247834da8e9a8053a6"
+        },
+        {
+          "path": "tests/m2/struct_source.fy",
+          "sha256": "39677186eb2a229e7717f8e195e7e6859b16dfa7331930c802c4d251de25fa24"
+        },
+        {
+          "path": "tests/m2/struct_source_copy.fy",
+          "sha256": "239cc90ba092cd254e4391c3ec988b2d08a48464f9724b65aa0bbeba43f804a8"
+        },
+        {
+          "path": "tests/m2/struct_source_nested.fy",
+          "sha256": "63537bcd0cb40077549ee3a510335559eab98cfd33b7eb7f0bd08c293f591a77"
+        },
+        {
+          "path": "tests/m2/struct_storage.fy",
+          "sha256": "34dcc195a212979f0270a90cc7cf619d41160fdc57dc2950b8e30ae8ab6d3b88"
+        },
+        {
+          "path": "tests/m2/struct_subassign_owners.fy",
+          "sha256": "3e6fd7bbed24bc5c4277d59eddd512459bd872d0b7e3d7d3b7f61a992d9093b9"
+        },
+        {
+          "path": "tests/m2/struct_subassign_source.fy",
+          "sha256": "86e293631e3cc1f62827eeefd3089507512c5a16b8bebb7606b01fbd65043cfb"
+        },
+        {
+          "path": "tests/m2/struct_subreplace_source.fy",
+          "sha256": "9822a1679293910c6d5c67b883d4d153e63f9c25b3ca26bacb884453fd3202b9"
+        },
+        {
+          "path": "tests/m2/struct_subreplace_vm.fy",
+          "sha256": "a662ff9c96acd027d5c10ae3b803ef54d787af2eb763196397228d42f48832aa"
+        },
+        {
+          "path": "tests/m2/struct_values.fy",
+          "sha256": "599be83359eb4af36f11cf6e6b0c22f74dce3e815053828fde73b8d98f1fc5cf"
+        },
+        {
+          "path": "tests/m2/struct_vm.fy",
+          "sha256": "c91054149203a96853299ef586c4be0e22f4d06a05c68e2e00d6eb4ba2675e0c"
+        },
+        {
+          "path": "tests/m2/struct_write.fy",
+          "sha256": "7ee2095b889f7ff256de8e3362a20583206c3a4deca9b559a20c92dc83b558bc"
+        },
+        {
+          "path": "tests/propagation.fy",
+          "sha256": "754fcab373afd31191c5c1c696ddceb14da24e5f54136fd16c57156b8e003327"
+        },
+        {
+          "path": "tests/register_sets.fy",
+          "sha256": "697a099a453b8516d8767003853011af4343b3365f5bc2c1637bd7cdb7ceda7a"
+        },
+        {
+          "path": "tests/shifts.fy",
+          "sha256": "a4f94cce04bf3ddab357f2319a19ffdcf1e771e3923405b61808378dcc41a4b7"
+        },
+        {
+          "path": "tests/switch_arm_statements.fy",
+          "sha256": "f2d8a75759bf6d3f69be2951714ea55868de0960e8afb43215c5a3c21bfce9ba"
+        },
+        {
+          "path": "tests/switch_expression.fy",
+          "sha256": "4acd6db95205951f9ee3f73a32257203f73e8045920a435b7b4cec43f21748ff"
+        },
+        {
+          "path": "tests/tagged.fy",
+          "sha256": "f95e95079183d7fd3f2da7366148168b6965fb46f4cddb9929a269b75cdc0e45"
+        },
+        {
+          "path": "tests/unsigned_scalars.fy",
+          "sha256": "c864bf5aef2d2964be7827aa2d0fa91ccf318cd518fb15198fbb8c3b93e2d029"
+        },
+        {
+          "path": "tests/widening.fy",
+          "sha256": "300fe36e84caa4a42277629e5def62f2da111110f0b853755eec2bde6005df7a"
+        },
+        {
+          "path": "toolchain.json",
+          "sha256": "0a1a5c2b5a219099b7c3c2b42a8dde9cb70b68e435e8a071e36c36213d1740be"
+        },
+        {
+          "path": "tools/check-m1-cli.py",
+          "sha256": "9de0f8c340f3da1f769c23e148088bea2ec1381284232494409aabae1ea29302"
+        },
+        {
+          "path": "tools/check-m2-array-assignment.py",
+          "sha256": "8ae9f6b6664d5a6566ebbeb45e37a2c836937e53ebeb86b195fc567865c3e611"
+        },
+        {
+          "path": "tools/check-m2-array-call-assignment.py",
+          "sha256": "18c809cc7037103bd25a2e0fa70378fbe9ea625634acd1a51930883cb8a67d11"
+        },
+        {
+          "path": "tools/check-m2-array-call-reads.py",
+          "sha256": "95a0bceb6ca959aafd5951afdb24eaa7b26a05cdf1af12176ee7f2daf0678e57"
+        },
+        {
+          "path": "tools/check-m2-array-copy-source.py",
+          "sha256": "7ec1c99b252f3ef4a9dec2594f86921a3aa2c3fae374f238cf1637105bad0096"
+        },
+        {
+          "path": "tools/check-m2-array-helpers.py",
+          "sha256": "2aed57914032073ea45cc1c4c18eb730109a0872f436d4456879a2d353dc91f9"
+        },
+        {
+          "path": "tools/check-m2-array-length.py",
+          "sha256": "32dce33a7dd30f41c5898b3465c73000ddb0ad292e61ef5ab40ce616ad7246a7"
+        },
+        {
+          "path": "tools/check-m2-array-literal-arguments.py",
+          "sha256": "9b7d0b65d61ca7bed9f83b358fec5fcc47a07c220e6d733a610a22b8ff886565"
+        },
+        {
+          "path": "tools/check-m2-array-literal-assignment.py",
+          "sha256": "35af05339c0bab949211637a32ed5980aaf33e3e47267b7982f4d58e0e40b4f7"
+        },
+        {
+          "path": "tools/check-m2-array-parameters.py",
+          "sha256": "94d9f7dca33b12947241974f46a4755790b99ceb3e9b119993894ee9fdc610a5"
+        },
+        {
+          "path": "tools/check-m2-array-result-arguments.py",
+          "sha256": "c1b846090b970d603f65c5e51f31aa52f8233896fca91e9a7608f9a707890453"
+        },
+        {
+          "path": "tools/check-m2-array-result-signatures.py",
+          "sha256": "4e6f890949f882a3339f56c75adac69c1cefa6cec9824c452dc94df005b3eb81"
+        },
+        {
+          "path": "tools/check-m2-array-result-source.py",
+          "sha256": "c136caaeaff0a86dc8e4736c94c5c43ac2fdabde92210d62a05964edd50114ef"
+        },
+        {
+          "path": "tools/check-m2-array-return-calls.py",
+          "sha256": "ea631e1322adb55763f56ac592bf936c1b28ec8564feb7d904f4906ab3c0a863"
+        },
+        {
+          "path": "tools/check-m2-array-return-literals.py",
+          "sha256": "39009c54d6af5d4d6f2d8353089e729ba674d2675f673e35bb858286f41e8913"
+        },
+        {
+          "path": "tools/check-m2-array-scopes.py",
+          "sha256": "7eaa68c9b1266f681557009c299203bb85edbb54ef85319de14acec1526cb4a0"
+        },
+        {
+          "path": "tools/check-m2-array-slice-alias.py",
+          "sha256": "e623322885f14b5a0423dad6f9d6eea0bf1c757257414a5cdbeb0a580e5ed95e"
+        },
+        {
+          "path": "tools/check-m2-array-slice-index.py",
+          "sha256": "ef361d031dc0f1a4e5525d4dd70441141d689a46563560bd0d24df0f14ae4c02"
+        },
+        {
+          "path": "tools/check-m2-array-slice-length.py",
+          "sha256": "177340f64728df29ec5a3eefc7a31538e9539731104098e4abb5205e8669ec0b"
+        },
+        {
+          "path": "tools/check-m2-array-slice-parameter-source.py",
+          "sha256": "5054f8bdc6f31b958cb8055c69fce2a4af0a1611e2d8fef44dab4a4a43683eb9"
+        },
+        {
+          "path": "tools/check-m2-array-slice-sub.py",
+          "sha256": "b683da9014756ed7606c212e40f0bbd1835d0ab6de028123de0784c949362558"
+        },
+        {
+          "path": "tools/check-m2-array-source.py",
+          "sha256": "2563032969eae20f06d98cf3f48d651100bf83db02d805358a31cc6d3d083150"
+        },
+        {
+          "path": "tools/check-m2-array-utf8-calls.py",
+          "sha256": "b69ecb2a2d6c2baccc63065384a434e7ec7258d858416d014eb1eb7ffa2a99de"
+        },
+        {
+          "path": "tools/check-m2-array-utf8-computed-ranges.py",
+          "sha256": "0bb94d0364ff3b6e22640a4c0acc0818cfc1cad6753a4bda6cbde766aa91845a"
+        },
+        {
+          "path": "tools/check-m2-array-utf8-dynamic-ranges.py",
+          "sha256": "c2b96ee1b0be8878b779a1ead4adf347e9fba6e4cd5fc8327e93a513258c5209"
+        },
+        {
+          "path": "tools/check-m2-array-utf8-literals.py",
+          "sha256": "e5f8d18871dbc284b8596bb6f78f5da7563d74325e62ac3931fe3b22622eb6a8"
+        },
+        {
+          "path": "tools/check-m2-array-utf8-open-ranges.py",
+          "sha256": "e12783392bc617c49a3fa32eccf2026e904e5c65d7f698c9e798f28a0ca25585"
+        },
+        {
+          "path": "tools/check-m2-array-utf8-ranges.py",
+          "sha256": "74315194147ec6c37bfdb28fb93d5bcbdc0c1eb16a79a18829111c9fd965f246"
+        },
+        {
+          "path": "tools/check-m2-array-utf8-slices.py",
+          "sha256": "0c412c49cb5b442b5248f99651edf7f1a67468a6bccfa99e197e1f1f39fc6402"
+        },
+        {
+          "path": "tools/check-m2-array-utf8-source.py",
+          "sha256": "4ace414c91d66877ed099ca379d31e337ad6c312f2a0d931d5770a1081c42b25"
+        },
+        {
+          "path": "tools/check-m2-array-utf8-temporary-computed-ranges.py",
+          "sha256": "ab08ef8946413968e55fa3ff909db68fd4d551d53a23ece5f1bd0dc36b1772ec"
+        },
+        {
+          "path": "tools/check-m2-array-utf8-temporary-dynamic-ranges.py",
+          "sha256": "345f90e64962c4003e1474b7215ca9ed280cb636296d7f6135d3aa64f00f35e0"
+        },
+        {
+          "path": "tools/check-m2-array-utf8-temporary-ranges.py",
+          "sha256": "74cd169ff5690cecfd91a01f204d04ce25f012a82013996c9e3841ef3ad7a7de"
+        },
+        {
+          "path": "tools/check-m2-array-write.py",
+          "sha256": "2dac6d18d64f56294ebf48bde7ef712b7bc52b2d9404bd065a71d454fcbab63a"
+        },
+        {
+          "path": "tools/check-m2-struct-call-assignment.py",
+          "sha256": "df6a6d70e3068486bad9e9556d0da228d10a169d982bf08918ebfc12f1972243"
+        },
+        {
+          "path": "tools/check-m2-struct-call-path-arguments.py",
+          "sha256": "e42e21798d5a8ddda0c1d0965580fd8cfdd9a1742da6eda09e36922fb9cfa157"
+        },
+        {
+          "path": "tools/check-m2-struct-call-path-assignment.py",
+          "sha256": "6db28e13d6dd10e70c51285b750399fb8d3314ff383045a77a7c570424c6b606"
+        },
+        {
+          "path": "tools/check-m2-struct-call-path-declarations.py",
+          "sha256": "a632a3fee43c5e2bb79d7e69e0d118f8854e735810f2837e9e97a230e5cc62e8"
+        },
+        {
+          "path": "tools/check-m2-struct-call-path-returns.py",
+          "sha256": "93149ee046e8caeca97b608750d51d9833c88621669d0784659536d7ebdcabf2"
+        },
+        {
+          "path": "tools/check-m2-struct-call-reads.py",
+          "sha256": "ff3cf7dfe42533a5a2e43bafde10d460c43bb1babe2b50a8a0c25fafdd1ac38b"
+        },
+        {
+          "path": "tools/check-m2-struct-child-call-assignment.py",
+          "sha256": "f244e75c6654a9b5aa18125f518f30da071e676a4a819d00e73650a1d07e311d"
+        },
+        {
+          "path": "tools/check-m2-struct-child-call-paths.py",
+          "sha256": "651b2828cec0b7c6b644e51c80c7ff76676463869c694b4a885095c5330b8aa6"
+        },
+        {
+          "path": "tools/check-m2-struct-child-calls.py",
+          "sha256": "ba63c80fd4846a5394c93475ad29e97eb760f43ccdb601d155f6a16696ab7f13"
+        },
+        {
+          "path": "tools/check-m2-struct-child-path.py",
+          "sha256": "e60fa07667c7b82aaab3f6dc92eba6b5576a6cc77a5241b8d59edf21220fd9a3"
+        },
+        {
+          "path": "tools/check-m2-struct-child.py",
+          "sha256": "d5443351bb8ead4a14587fb4a9e19263f153ee2615b212516beaadcdef7bd4dc"
+        },
+        {
+          "path": "tools/check-m2-struct-constructor-arguments.py",
+          "sha256": "0ce5a9dd0228945049dc83e44186716e7cccbcd1251c0939bd71d8820dbeb6d9"
+        },
+        {
+          "path": "tools/check-m2-struct-extract.py",
+          "sha256": "287a454069fbd36fc4003ad5cb68b81504af88959a4a37e45e74d7eba932321f"
+        },
+        {
+          "path": "tools/check-m2-struct-function-source.py",
+          "sha256": "3bd76655790199462820b00cd372156c2b29a1ddb4ccc8f507bde335589300bf"
+        },
+        {
+          "path": "tools/check-m2-struct-parameter-signatures.py",
+          "sha256": "bfb0545560470344a217c84dfeeb65d1ed9f3259c89fe724c955401702c148a6"
+        },
+        {
+          "path": "tools/check-m2-struct-parameters-source.py",
+          "sha256": "1f584688270e8189f8cc3673b4c15046f69adaed6aee87c8d8b52f6896f8c93d"
+        },
+        {
+          "path": "tools/check-m2-struct-path-arguments.py",
+          "sha256": "e4757575169e2a14a5e785dd913d43cf98a21b9734da36de8d0948ad09e42b07"
+        },
+        {
+          "path": "tools/check-m2-struct-replace-source.py",
+          "sha256": "0213a1a112d1d86a38ec26f7c3f3a4bfe9c247264bfc70bbe56e3fcd0171de06"
+        },
+        {
+          "path": "tools/check-m2-struct-result-arguments.py",
+          "sha256": "7687a5c66dce86231b3e2561e266f5e2a89efbb1ec01f94e925b58197ac0a53e"
+        },
+        {
+          "path": "tools/check-m2-struct-result-signatures.py",
+          "sha256": "6a6353fa5416fa0f9b6559bcec55c9b3ca17132383111125d2ad8472c9aa3c6d"
+        },
+        {
+          "path": "tools/check-m2-struct-result-source.py",
+          "sha256": "7ccf1244f8ddcbb43ceacc2b9408ae970b860e0305470ff53032ca18131423f1"
+        },
+        {
+          "path": "tools/check-m2-struct-return-calls.py",
+          "sha256": "789abde855e0e7b5defba5f04f911cac3aeb453c5342e780182ba66cb713abc5"
+        },
+        {
+          "path": "tools/check-m2-struct-return-constructors.py",
+          "sha256": "41ac7e712fe4cb6ec5944b1d776761942564c17e7832312f59f631b7f1d2f620"
+        },
+        {
+          "path": "tools/check-m2-struct-return-paths.py",
+          "sha256": "110c032d6368455c1cd090153c41502daddad12cd7bb30c9b991afb7e7eb2440"
+        },
+        {
+          "path": "tools/check-m2-struct-source-copy.py",
+          "sha256": "77f398f051aa36e1f7d8c662de9cb48ff97f229d5915a0efeeff00a206e201f8"
+        },
+        {
+          "path": "tools/check-m2-struct-source-nested.py",
+          "sha256": "f855b41f877b0c5548bc9146af8f1a281c0dd5c3fe4b46d889aaca22dd64f410"
+        },
+        {
+          "path": "tools/check-m2-struct-source.py",
+          "sha256": "57ec7e3d83cc12e14e51e2124275406cbdcb7d1de15acb49305aab7bb4de76ca"
+        },
+        {
+          "path": "tools/check-m2-struct-subassign.py",
+          "sha256": "33d5567d88fc352a34fc642e17ead3385f07048ed9b697d3907da28eab49369b"
+        },
+        {
+          "path": "tools/check-m2-struct-subreplace-source.py",
+          "sha256": "08cb8b3d47909adf25cfc85864871f41f03e498e91971e9dc1c437a820029089"
+        },
+        {
+          "path": "tools/check-m2-struct-values.py",
+          "sha256": "ef1e4bb6e04a097b8d52345e8a42f8a675c29564e8753a060447cd68c57e8bdf"
+        },
+        {
+          "path": "tools/check-m2-struct-write.py",
+          "sha256": "8aa226aa987db7cb07be33fac856564304ea1e77e8c5cca82871748704173b2f"
+        },
+        {
+          "path": "tools/m1_arm_statement_cases.py",
+          "sha256": "f1a19497ae47f04ebaec0fb0cd3c4f8eed8f964bbf8524b6307592b2f67d82ef"
+        },
+        {
+          "path": "tools/m1_bitwise_cases.py",
+          "sha256": "44b474577db55d5afd8f5a3a4cdd0b4d13bf44fb1b4a8b4e2eee170698359ca0"
+        },
+        {
+          "path": "tools/m1_i64_cases.py",
+          "sha256": "161a45f662295cad8742655bdd59aae4bdfe13e10a241894d3b82ad1bc1eefdc"
+        },
+        {
+          "path": "tools/m1_propagation_cases.py",
+          "sha256": "f3728cffafc48866c44e16badb8a256f3e45c0299ab3c7a3d0c1c1ab69dbd986"
+        },
+        {
+          "path": "tools/m1_shift_cases.py",
+          "sha256": "7b12d715d1ed86b142fbf75c25fdb678f253b0c40ac07229d8f9d9bb0afa4acf"
+        },
+        {
+          "path": "tools/m1_switch_expression_cases.py",
+          "sha256": "09759b7891ad407dadabfa18c0c51afa9cb7751912928da8b9fae0598c18b32b"
+        },
+        {
+          "path": "tools/m1_tagged_cases.py",
+          "sha256": "70de6cf5e68e1fe11ee3dd4e72b506b1a19677133a8b483b7a039efb651d963f"
+        },
+        {
+          "path": "tools/m1_unsigned_cases.py",
+          "sha256": "2c0232b88abab5e8d7821cb0d91ad8efa8b4ca6e5048a6e9d6fe9793245b5d9b"
+        },
+        {
+          "path": "tools/m1_widening_cases.py",
+          "sha256": "6a4d87dbd0d3570c50bab7b3760839fbee6670cd16152892bbf536f0662e50cc"
+        },
+        {
+          "path": "tools/record-m2-array-evidence.py",
+          "sha256": "4d8cda41cb74364b187dd6672b6f6379faab412dd5d5957e7fb8db69e9e38380"
+        },
+        {
+          "path": "tools/record-m2-array-write-evidence.py",
+          "sha256": "1d117b9c284ce521569f6a6b87d82549703fe7f449719fbf9337224a08529245"
+        },
+        {
+          "path": "tools/setup-toolchain.py",
+          "sha256": "e626bef29a57ef1539eae2637ff2636f1d6ff8d7f33c51681cfc5fd6a350cf78"
+        },
+        {
+          "path": "tools/verify-m2-array-call-reads.py",
+          "sha256": "b2067c23962ec9a4bcc9f38ada9537b755faf1c02a10db3fcaf42857018fe461"
+        },
+        {
+          "path": "tools/verify-m2-array-literal-arguments.py",
+          "sha256": "128bebba0bc278ec1b66aec51691dd29edd6643e108dcfd588b8553843c77b6f"
+        },
+        {
+          "path": "tools/verify-m2-array-result-arguments.py",
+          "sha256": "e83bbb573841214c45667f4d553945845b56a27c468d5fdd45d183dd0241680f"
+        },
+        {
+          "path": "tools/verify-m2-array-utf8-source.py",
+          "sha256": "5ae87950965a41a56993d3040413b910605f7ab1dad7c99cd8bfd2bede14894e"
+        },
+        {
+          "path": "tools/verify-m2-array-utf8.py",
+          "sha256": "c41a102a775d827a3f16ba30f023d69d4eb35ff7a7ae49bc8ff9cce428edf229"
+        },
+        {
+          "path": "tools/verify-m2-buffer-failure.py",
+          "sha256": "3418555a333a06ee882cd6bf2d0e3d47570e987ed38340ce76a30ae088f1fec6"
+        },
+        {
+          "path": "tools/verify-m2-buffer-growth.py",
+          "sha256": "0f710bb9d591725f0efc3d5cca5d6b8660bd023f6d13a7e0d2426fe0c3b10a8c"
+        },
+        {
+          "path": "tools/verify-m2-buffer-owners.py",
+          "sha256": "7395e1e6f9545607dd6832c98ca0ff2368880b890118c7858f21e47805ee9284"
+        },
+        {
+          "path": "tools/verify-m2-buffer-provider.py",
+          "sha256": "50a3f12afdb39dfc1124b7f204e11d9926448712396e768e7bcae00939a6b4da"
+        },
+        {
+          "path": "tools/verify-m2-buffer-replacement.py",
+          "sha256": "743e4f0cbce23c888a351818161801e59cc40281f53ff4814fd0e6684dcbf9e1"
+        },
+        {
+          "path": "tools/verify-m2-buffer-storage.py",
+          "sha256": "4919f50b150788729b858d0aa607864b971069b17835090f405f6b3119fe4e3e"
+        },
+        {
+          "path": "tools/verify-m2-struct-call-assignment.py",
+          "sha256": "b0b5d3c4054fc6da123d86771b23125c5c5b6c07686bed0180bee92b0dce9bcf"
+        },
+        {
+          "path": "tools/verify-m2-struct-call-path-arguments.py",
+          "sha256": "d47d715591ce2835c20f16ea11248db5d01080f3db9f2377ad0f8a1f2cc989e1"
+        },
+        {
+          "path": "tools/verify-m2-struct-call-path-assignment.py",
+          "sha256": "dbae748ddefd8fcd3810ee77a5d32affa0a5fc4c24445b45dfada3ba70853c73"
+        },
+        {
+          "path": "tools/verify-m2-struct-call-path-declarations.py",
+          "sha256": "e54661992977d3b2efaf0b708f98923d091656d11b997096c1d005dc44f56719"
+        },
+        {
+          "path": "tools/verify-m2-struct-call-path-returns.py",
+          "sha256": "a92d19f76cbc97a3aedb759c2d0354225a8dbbda4e9cca987d08b192efd63bf1"
+        },
+        {
+          "path": "tools/verify-m2-struct-call-reads.py",
+          "sha256": "069718d3266acf7d1b0ea788da4aa71952785f732a106338c07d72b1fa10c889"
+        },
+        {
+          "path": "tools/verify-m2-struct-call-vm.py",
+          "sha256": "7c14a1381ce922adcd58a4b24a7824afc553640c3725a26c854bfe833d460b63"
+        },
+        {
+          "path": "tools/verify-m2-struct-child-call-assignment.py",
+          "sha256": "a3185d08c3d1d05453caf18c4aefa348cf30619106f2b3b9b3d6d37a5b2bd733"
+        },
+        {
+          "path": "tools/verify-m2-struct-child-call-paths.py",
+          "sha256": "15e4d83de34a1ebe38c82ab757b38863697d41ab7f33e586ad9f8e07fc3024d4"
+        },
+        {
+          "path": "tools/verify-m2-struct-child-calls.py",
+          "sha256": "61afba648e966e11b6355a8c7a0f9082d4e56baf28b2da87e97818a4e5cfd495"
+        },
+        {
+          "path": "tools/verify-m2-struct-constructor-arguments.py",
+          "sha256": "e5cd91c9386cf9c723a6c1d46d92229c174d1a3af49f50e31acb686d59e5af70"
+        },
+        {
+          "path": "tools/verify-m2-struct-layout.py",
+          "sha256": "3c47dc9f89ea83b9666e07cc944c86fded515ba6e6987742efc647d6b822827a"
+        },
+        {
+          "path": "tools/verify-m2-struct-parameters-source.py",
+          "sha256": "76d9438381894cbf3193403df832dcde8f67c06e9aa94ec063962fe6f83808a1"
+        },
+        {
+          "path": "tools/verify-m2-struct-path-arguments.py",
+          "sha256": "5765f5ffa5b061c3e03281cf08c6d2ac5d4a7eba53e17b9bfba5ba88da4261f0"
+        },
+        {
+          "path": "tools/verify-m2-struct-result-arguments.py",
+          "sha256": "dd7f0e527eba1ce652699d48f7d9f3a077961c576a2d2d6421a3377f1dec47a0"
+        },
+        {
+          "path": "tools/verify-m2-struct-result-signatures.py",
+          "sha256": "cf0c9116dd4577d756bb672b1bc2fe14989ad0c354d62e66300136b182329701"
+        },
+        {
+          "path": "tools/verify-m2-struct-result-source.py",
+          "sha256": "4ee6accf8bb7aa3db20431fd5d510f8e2329d711087a284edd442c116e9635db"
+        },
+        {
+          "path": "tools/verify-m2-struct-result-vm.py",
+          "sha256": "8c465e509eb9e1ea4793120690660a65f8f7c00767689c6d95c437c51882add0"
+        },
+        {
+          "path": "tools/verify-m2-struct-results-ir.py",
+          "sha256": "dde0ee14ffc547befaa4c9aa479474a85106f26ee63fdc06c649494650b5c5dc"
+        },
+        {
+          "path": "tools/verify-m2-struct-return-calls.py",
+          "sha256": "d71c58cced01f5ce7aea35f95de16581e5f1994ead06cb2591bb509b1d32cd65"
+        },
+        {
+          "path": "tools/verify-m2-struct-return-constructors.py",
+          "sha256": "f4cc983047c0fa75f16cee22505e3e030a819a74dbffc1dffc346b5a29ef3ef3"
+        },
+        {
+          "path": "tools/verify-m2-struct-return-paths.py",
+          "sha256": "471658685d248dd656638be366a75c147c60c0d9dac32599ecc25780c9d4ddd9"
+        },
+        {
+          "path": "tools/verify-m2-struct-source.py",
+          "sha256": "ec4c36f8e8167b117b4589603c216e8fac07e1342b4e5ca8a7733057301b1db0"
+        },
+        {
+          "path": "tools/verify-m2-struct-values.py",
+          "sha256": "4423b50382d118827634f0604d6ead896796e1cd3f0ce53b30fe6b8b1c8753a1"
+        },
+        {
+          "path": "tools/verify-toolchain.py",
+          "sha256": "9a59d1c6daa43f17a85867ae05a77f78a0f2730b589b2c508a5096170eae0309"
+        }
+      ],
+      "harness": {
+        "path": "build/toolchain-upgrade/verify.py",
+        "sha256": "86621e8c63bbfa9b113ba8af71313682be8c4097138c68b353c1a79d4647bd2a",
+        "source": "from pathlib import Path\nimport hashlib,json,os,shutil,subprocess,sys,time\nfrom datetime import datetime,timezone\nroot=Path.cwd();out=root/'build/toolchain-upgrade';compiler=root/'build/toolchain/fairyc.exe'\nsha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()\ncommands=[]\nknown_failures=[]\ndef run(args,timeout=600):\n    args=list(map(str,args));start=time.monotonic();r=subprocess.run(args,cwd=root,capture_output=True,text=True,encoding='utf-8',timeout=timeout,env={**os.environ,'PYTHONUTF8':'1'})\n    commands.append(dict(command=args,exit=r.returncode,seconds=time.monotonic()-start,stdout=r.stdout,stderr=r.stderr))\n    assert r.returncode==0 and not r.stderr,(args,r.returncode,r.stdout,r.stderr)\n    return r.stdout.strip()\nassert not os.environ.get('CL') and not os.environ.get('_CL_')\nconfig=json.loads((root/'toolchain.json').read_text());assert sha(compiler)==config['platforms']['windows/amd64']['sha256']\ncheck=run([compiler,'check','--locked']);version=run([compiler,'--version'])\npaths=set(root.glob('src/*.fy'))|set(root.glob('tests/**/*.fy'))|set(root.glob('tools/*.py'))|{root/p for p in ['toolchain.json','fairy.toml','fairy.lock']}\ninputs=[dict(path=p.relative_to(root).as_posix(),sha256=sha(p)) for p in sorted(paths)]\nprofiles=[]\nfor profile in ['development','release']:\n    folder=out/profile;folder.mkdir(exist_ok=True);reports=[]\n    for name,count in [('slice_frame_vm',4),('mixed_call_vm',5)]:\n        cmd=[compiler,'test','--native','--capture-output','--json','--locked']+(['--release'] if profile=='release' else [])+['--file','tests/m2/'+name+'.fy']\n        cached=folder/('native-'+name+'.json')\n        if cached.exists():\n            assert subprocess.run(['git','diff','--quiet','HEAD','--','src','tests','tools','toolchain.json','fairy.toml','fairy.lock'],cwd=root).returncode==0\n            n=json.loads(cached.read_text())\n            commands.append(dict(command=list(map(str,cmd)),reuse=dict(path=cached.relative_to(root).as_posix(),sha256=sha(cached),reason='Immediate preceding native invocation passed; only ignored harness recovery changed, tracked inputs and compiler are unchanged.')))\n        else:\n            n=json.loads(run(cmd))\n        assert n['status']=='ok' and n['engine']=='native' and n['profile']==profile and n['count']==n['passed']==count and n['failed']==0\n        assert len(n['tests'])==len({t['identity'] for t in n['tests']})==count\n        assert all(t['identity'].startswith('tests::m2::'+name+'::') and t['outcome']=='passed' and t['trapCategory'] is None and not t['stdoutBase64'] and not t['stderrBase64'] for t in n['tests'])\n        (folder/('native-'+name+'.json')).write_text(json.dumps(n,indent=2)+'\\n');reports.append(n);print(f'PASS: {profile}: {name}: {count} native groups',flush=True)\n    build=run([compiler,'build','--locked']+(['--release'] if profile=='release' else []))\n    binary=folder/'browniec.exe';shutil.copyfile(root/'build/browniec.exe',binary);exe_hash=sha(binary)\n    matrices=[]\n    for name in ['m1','m2-array-call-reads','m2-struct-call-reads','m2-array-slice-parameter-source','m2-array-slice-alias','m2-array-slice-sub']:\n        script='check-'+('m1-cli' if name=='m1' else name)+'.py'\n        if name=='m1' and profile=='development':\n            baseline=json.loads((out/'stack-comparison.json').read_text())\n            assert len(baseline)==2 and all(row['exit']==3221225725 for row in baseline)\n            if baseline[1]['exeSha256']!=exe_hash:\n                source=root/'build/m1/development/arm-depth-mixed-10.brc'\n                outcome=subprocess.run([str(binary),'run',str(source),'--json','--fuel','10000'],capture_output=True,timeout=30)\n                assert outcome.returncode==3221225725\n                baseline[1]=dict(label='upgraded-toolchain',exe=binary.relative_to(root).as_posix(),exeSha256=exe_hash,exit=outcome.returncode,stdout=outcome.stdout.decode('utf-8','replace'),stderr=outcome.stderr.decode('utf-8','replace'))\n                (out/'stack-comparison.json').write_text(json.dumps(baseline,indent=2)+'\\n')\n                failure=json.loads((out/'known-stack-failure.json').read_text());failure['comparison']=baseline;(out/'known-stack-failure.json').write_text(json.dumps(failure,indent=2)+'\\n')\n            known_failures.append(dict(profile=profile,selection='m1',status='failed',case='arm-depth-mixed-10',exit=3221225725,comparison=baseline,scope='Original full matrix aborted at this case; not rerun or marked passed.'))\n            print('KNOWN BASELINE FAILURE: development M1 arm-depth-mixed-10; both old and upgraded compiler images stack-overflow',flush=True)\n            continue\n        print(run([sys.executable,'-B',root/'tools'/script,'--exe',binary,'--profile',profile]),flush=True)\n        path=root/'build'/name/profile/'cli-receipt.json';r=json.loads(path.read_text(encoding='utf-8-sig'))\n        assert r['status']=='passed' and r['exeSha256']==exe_hash\n        assert r['count']==len(r['cases']);matrices.append(dict(selection=name,count=r['count'],receipt=path.relative_to(root).as_posix(),receiptSha256=sha(path)))\n        shutil.copyfile(path,folder/(name+'-cli-receipt.json'))\n    profiles.append(dict(profile=profile,native=reports,nativeCount=sum(n['passed'] for n in reports),build=build,artifact=binary.relative_to(root).as_posix(),exeSha256=exe_hash,cliCount=sum(m['count'] for m in matrices),matrices=matrices))\n    assert all(sha(root/p['path'])==p['sha256'] for p in inputs),'Inputs changed during verification'\n    (out/'partial-verification.json').write_text(json.dumps(dict(profiles=profiles,sourceSha256=inputs),indent=2)+'\\n')\nresult=dict(schema='browniec.toolchain-upgrade-verification/v1',status='passed-with-known-baseline-failure',knownFailures=known_failures,recordedAt=datetime.now(timezone.utc).isoformat(),baselineCommit=run(['git','rev-parse','HEAD']),compilerVersion=version,compilerSha256=sha(compiler),lockedCheck=check,commands=commands,profiles=profiles,sourceSha256=inputs,harness=dict(path=Path(__file__).relative_to(root).as_posix(),sha256=sha(Path(__file__))),limitations=['Focused Windows native and tool-free CLI compatibility only; full native and M2 suites not rerun.','Linux compiler cross-built only, no Linux native compiler or Brownie execution.','DLL embedding, isolation, packaging, allocator instrumentation and timing benchmarks not run.'])\n(out/'verification-receipt.json').write_text(json.dumps(result,indent=2)+'\\n')\nprint('PASS: build/toolchain-upgrade/verification-receipt.json',flush=True)\n"
+      },
+      "limitations": [
+        "Focused Windows native and tool-free CLI compatibility only; full native and M2 suites not rerun.",
+        "Linux compiler cross-built only, no Linux native compiler or Brownie execution.",
+        "DLL embedding, isolation, packaging, allocator instrumentation and timing benchmarks not run."
+      ]
+    },
+    "linuxStatic": {
+      "schema": "browniec.toolchain-linux-static/v1",
+      "status": "passed",
+      "format": "ELF64 little-endian x86-64",
+      "sha256": "619511bb8f98f5bd9ec543cfb33f6367de15fc2389d41b27506790234f4f93d6",
+      "bytes": 18087360,
+      "goBuildMetadata": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain-upgrade\\fairyc: go1.27.1\n\tpath\tgithub.com/0disoft/fairyc/cmd/fairyc\n\tmod\tgithub.com/0disoft/fairyc\tv0.0.0-20261031093456-eb274643bfcf\t\n\tdep\tgithub.com/BurntSushi/toml\tv1.6.0\th1:dRaEfpa2VI55EwlIW72hMRHdWouJeRF7TPYhI+AUQjk=\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\t-trimpath=true\n\tbuild\tDefaultGODEBUG=tracebacklabels=0,x509sslcertoverrideplatform=0\n\tbuild\tCGO_ENABLED=0\n\tbuild\tGOARCH=amd64\n\tbuild\tGOOS=linux\n\tbuild\tGOAMD64=v1\n\tbuild\tvcs=git\n\tbuild\tvcs.revision=eb274643bfcfe746617121ddc6f130b018978b53\n\tbuild\tvcs.time=2026-10-31T09:34:56Z\n\tbuild\tvcs.modified=false\n",
+      "nativeExecution": "not run"
+    },
+    "m0Source": {
+      "schema": "browniec.toolchain-m0-source-check/v1",
+      "status": "passed",
+      "scope": "source-check-only",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "commands": [
+        {
+          "command": [
+            "../../build/toolchain/fairyc.exe",
+            "check"
+          ],
+          "cwd": "probes/m0",
+          "exit": 0,
+          "stdout": "check ok: 2 instance(s), 17 source file(s), 203 MIR function(s), lock updated"
+        },
+        {
+          "command": [
+            "../../build/toolchain/fairyc.exe",
+            "check",
+            "--locked"
+          ],
+          "cwd": "probes/m0",
+          "exit": 0,
+          "stdout": "check ok: 2 instance(s), 17 source file(s), 203 MIR function(s), lock verified"
+        }
+      ],
+      "inputs": [
+        {
+          "path": "probes/m0/fairy.toml",
+          "sha256": "19ba12593b45dc5bcd09e5e8e68c686a0c5859ba56f27847a3b14f142b17e211"
+        },
+        {
+          "path": "probes/m0/fairy.lock",
+          "sha256": "64fd697e230194c20dcd08eb948e4583c587b92de1f8a406a4e4e140597d3e12"
+        },
+        {
+          "path": "probes/m0/src/arithmetic.fy",
+          "sha256": "802ed03d8f94b1cc053effabac8a10abf86e5eeff417671d60103934b101a30b"
+        },
+        {
+          "path": "probes/m0/src/arithmetic_checks.fy",
+          "sha256": "6da57d69bb286e9ac4eee4f30508841fc3bf9dd760ab3446e630f65badbb5336"
+        },
+        {
+          "path": "probes/m0/src/codec.fy",
+          "sha256": "7a048fb229082d67b3ea44001d1e5214aac7b231fd0c7973774c56b2edfcb7e1"
+        },
+        {
+          "path": "probes/m0/src/codec_checks.fy",
+          "sha256": "2aa6543018247ddb770475950d01cb151101c7dbd28b8429a2541fa786939acc"
+        },
+        {
+          "path": "probes/m0/src/frame_checks.fy",
+          "sha256": "6086ad03abe20096acc8b2e0a0e638701ecbd34dac41cfd1ee8eebfbbb965ff0"
+        },
+        {
+          "path": "probes/m0/src/main.fy",
+          "sha256": "87211da04a83f8beb20713ad37fbce7eb1ae7dc3098fc59ede251e13bdeaa6d9"
+        },
+        {
+          "path": "probes/m0/src/owner_checks.fy",
+          "sha256": "dc908b48c0d0cd3a9e92e5f8f7106484f833b9d81d064fb710f17cec1ae4d779"
+        },
+        {
+          "path": "probes/m0/src/owners.fy",
+          "sha256": "eb9b38ab6019ecd16c2534b1c394d0ab58f782573b2496c64623766e83326a20"
+        },
+        {
+          "path": "probes/m0/src/storage.fy",
+          "sha256": "aa8176254b282a827bb613505cb41ea9e37c7614001d16a61a6932b1578e1869"
+        },
+        {
+          "path": "probes/m0/src/storage_checks.fy",
+          "sha256": "0e8e80a5192475dde1b57d3059c1c34949a9f92f099d25f8f2acb1de4db9ee5d"
+        }
+      ],
+      "nativeExecution": "not run"
+    },
+    "knownStackFailure": {
+      "schema": "browniec.preexisting-parser-stack-failure/v1",
+      "status": "reproduced-on-both-compilers",
+      "case": "arm-depth-mixed-10",
+      "exit": 3221225725,
+      "exitHex": "0xC00000FD",
+      "baselineEvidence": "docs/evidence/m2-array-slice-frame-vm-windows-20261031.json",
+      "baselineEvidenceSha256": "9acec026761ce4f3eeffb6944c0c92978d86eb1a50980ff5c4bcf395e20df9b2",
+      "unchangedBrownieSourceFiles": 80,
+      "source": "module main; fn i32 main() { let Option<i32> x=.some(1); return switch(x) {case .some(_): {if(true) {let i32 n9=switch(x) {case .some(_): {if(true) {let i32 n8=switch(x) {case .some(_): {if(true) {let i32 n7=switch(x) {case .some(_): {if(true) {let i32 n6=switch(x) {case .some(_): {if(true) {let i32 n5=switch(x) {case .some(_): {if(true) {let i32 n4=switch(x) {case .some(_): {if(true) {let i32 n3=switch(x) {case .some(_): {if(true) {let i32 n2=switch(x) {case .some(_): {if(true) {let i32 n1=switch(x) {case .some(_): {if(true) {let i32 n0=42;} 42} case .none: {0}};} 42} case .none: {0}};} 42} case .none: {0}};} 42} case .none: {0}};} 42} case .none: {0}};} 42} case .none: {0}};} 42} case .none: {0}};} 42} case .none: {0}};} 42} case .none: {0}};} 42} case .none: {0}}; }",
+      "sourceSha256": "f95b882cdfa3ab9e84ed75627b3f90bf98ace5d7bd3a175fb9c4cc53d681a695",
+      "comparison": [
+        {
+          "label": "previous-toolchain",
+          "exe": "build\\m2-array-slice-frame-vm\\development\\browniec.exe",
+          "exeSha256": "6c434257a03f997c7ca5ff2a1c1f5c5a702f070cd023a68ecd4912c952a7e9ca",
+          "exit": 3221225725,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "label": "upgraded-toolchain",
+          "exe": "build/toolchain-upgrade/development/browniec.exe",
+          "exeSha256": "7b867423528b4ec34e0f0476a9595011d7daf9e2cb83daaaabb050c442a1809c",
+          "exit": 3221225725,
+          "stdout": "",
+          "stderr": ""
+        }
+      ],
+      "scope": "Full development M1 run aborted at this case; no full pass or total completed-case count is asserted. Baseline and new images share the exact80 Brownie source files. This is a pre-existing failure, not proof that other compiler compatibility is complete.",
+      "checkOnly": {
+        "command": [
+          "build\\toolchain-upgrade\\development\\browniec.exe",
+          "check",
+          "build\\m1\\development\\arm-depth-mixed-10.brc",
+          "--json"
+        ],
+        "exit": 3221225725,
+        "stdout": "",
+        "stderr": ""
+      }
+    }
+  },
+  "provenance": "Reviewed exact-commit compiler adoption from 4ce12642/SDK0.86 to eb274643/SDK0.87. Go1.27.1 isolated Windows and Linux builds use the same manifest recipe. The Windows executable was imported through the existing hash-first Python setup, and11 provisioning cases include a second exact-source Windows build reproducing its hash. Root and M0 SDK locks were updated together; no Brownie Fairy source was edited. M0 was source-checked only. Both Windows profiles passed4 dynamic slice and5 mixed transaction native groups plus the recorded five M2 tool-free CLI matrices. Full development M1 regression aborted at arm-depth-mixed-10 with Windows0xC00000FD; the exact same input also crashes the retained old-compiler Brownie image. That image matches prior committed evidence and all80 Brownie source files match, proving this is a pre-existing parser failure. The failed M1 run is not marked passed or included in development CLI pass totals. Release M1 outcome is recorded separately in its matrices. No parser behavior or test expectation was changed to hide this failure. Raw native reports and exact verification harness source are included. Source hashes and retained binary identities match current checkout and implementation commit after line-ending normalization. Linux is cross-build and static ELF/build-metadata validation only. Compiler command elapsed values are diagnostic observations, not performance benchmarks. Full M0/M1/M2 native suites, other CLI matrices, Linux execution, DLL embedding, isolation, packaging and allocator benchmarks were not rerun."
+}
