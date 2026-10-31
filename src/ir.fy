@@ -385,6 +385,17 @@ pub fn Result<usize, errors::Error> slice(ref mut Program p, usize root, usize o
     p.slice_roots[id] = byte(root + 1, offset)?;
     return .ok(id);
 }
+// Owned sites use element 0 for shared, 128 for exclusive; rootless sites keep
+// their exact scalar tag. This reuses reserved metadata without growing Program
+// scratch on recursive compiler paths.
+pub fn bool exclusive(ref Program p, usize site) { return site < 16 && p.slice_elements[site] == 128; }
+// Declare an owned-root exclusive site without enabling shared VM execution.
+pub fn Result<usize, errors::Error> exclusive_slice(ref mut Program p, usize root, usize offset) {
+    if (root >= 16 || root >= p.arrays.count || !p.arrays.mutable[root]) { return .err(errors::make(3, offset)); }
+    let usize site = slice(p, root, offset)?;
+    p.slice_elements[site] = 128;
+    return .ok(site);
+}
 // Construction-time shape lookup, including private typed rootless borrows.
 // This is not a liveness/control-flow proof or permission to execute a borrow.
 pub fn Result<u8, errors::Error> slice_element(ref Program p, usize id, usize offset) {
@@ -392,8 +403,9 @@ pub fn Result<u8, errors::Error> slice_element(ref Program p, usize id, usize of
     let usize root = p.slice_roots[id] as usize;
     let usize origin = p.slice_origins[id] as usize;
     let usize function = p.slice_functions[id] as usize;
+    if (exclusive(p, id) && (root == 0 || root > 16 || root > p.arrays.count || !p.arrays.mutable[root - 1])) { return .err(errors::make(3, offset)); }
     if (root != 0) {
-        if (root > 16 || root > p.arrays.count || origin != 0 || function != 0 || p.slice_elements[id] != 0) { return .err(errors::make(3, offset)); }
+        if (root > 16 || root > p.arrays.count || origin != 0 || function != 0 || (p.slice_elements[id] != 0 && p.slice_elements[id] != 128)) { return .err(errors::make(3, offset)); }
         return .ok(p.arrays.elements[root - 1]);
     }
     if (origin == 0 || origin > 16 || function == 0 || function > 16 ||
@@ -456,7 +468,7 @@ pub fn Result<usize, errors::Error> slice_read(ref mut Program p, usize id, usiz
 pub fn Result<usize, errors::Error> slice_sub(ref mut Program p, usize id, usize parent, usize start, usize end, usize offset) {
     let u8 element = slice_element(p, id, offset)?;
     let u8 parent_element = slice_element(p, parent, offset)?;
-    if (id == parent || element != parent_element || p.slice_roots[id] != p.slice_roots[parent] ||
+    if (exclusive(p, id) || exclusive(p, parent) || id == parent || element != parent_element || p.slice_roots[id] != p.slice_roots[parent] ||
         p.slice_origins[id] != p.slice_origins[parent] || p.slice_functions[id] != p.slice_functions[parent] ||
         (p.slice_roots[id] == 0 && p.slice_origins[id] as usize == id + 1) || start >= 128 || end >= 128 ||
         start >= p.registers || end >= p.registers || p.types[start] != 12 || p.types[end] != 12 ||

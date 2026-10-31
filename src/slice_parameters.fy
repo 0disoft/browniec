@@ -29,8 +29,9 @@ pub fn Result<usize, errors::Error> metadata(ref ir::Program p) {
         let usize origin = p.slice_origins[site] as usize;
         let usize function = p.slice_functions[site] as usize;
         let usize root = p.slice_roots[site] as usize;
+        if (ir::exclusive(p, site) && (root == 0 || root > p.arrays.count || !p.arrays.mutable[root - 1])) { return .err(errors::make(5, 0)); }
         if (root > p.arrays.count || (root != 0 && (origin != 0 || function != 0)) ||
-            (origin == 0 && (function != 0 || p.slice_elements[site] != 0))) { return .err(errors::make(5, 0)); }
+            (origin == 0 && (function != 0 || (p.slice_elements[site] != 0 && p.slice_elements[site] != 128)))) { return .err(errors::make(5, 0)); }
         if (origin != 0) {
             if (origin > 16 || function == 0 || function > p.function_count) { return .err(errors::make(5, 0)); }
             let usize anchor = origin - 1;
@@ -95,6 +96,7 @@ pub fn Result<usize, errors::Error> argument(ref ir::Program p, usize parameter,
     let usize function = p.slice_functions[destination] as usize;
     if (function == 0 || !formal(p, parameter, destination, function - 1)) { return .err(errors::make(5, at)); }
     let usize site = source - 160;
+    if (ir::exclusive(p, site)) { return .err(errors::make(5, at)); }
     let usize one = 1;
     if ((live & (one << (32 + site))) == 0) { return .err(errors::make(5, at)); }
     let usize origin = p.slice_origins[site] as usize;

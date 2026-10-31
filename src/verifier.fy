@@ -221,5 +221,12 @@ pub fn Result<usize, errors::Error> inspect(ref ir::Program p) {
     return validate(p);
 }
 pub fn Result<usize, errors::Error> verify(ref ir::Program p) {
-    return validate(p);
+    let usize checked = validate(p)?;
+    // Do not route exclusive sites through the existing shared-read VM adapter.
+    var usize site = 0;
+    while (site < 16) {
+        if (ir::exclusive(p, site)) { return .err(errors::make(5, 0)); }
+        site += 1;
+    }
+    return .ok(checked);
 }

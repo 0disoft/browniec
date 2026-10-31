@@ -21,6 +21,8 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, usize pc, usize f,
     let usize one = 1;
     let usize mask = one << id;
     let u8 element = p.arrays.elements[id];
+    if (slices::exclusive(p, id, live) ||
+        ((op == 34 || op == 38) && slices::exclusive(p, a, live))) { return .err(errors::make(5, pc)); }
     if ((op == 36 || op == 37 || op == 38 || op == 40) && slices::borrowed(p, id, live)) { return .err(errors::make(5, pc)); }
     if (op == 33 || op == 34) {
         if (b != 0 || (live & mask) != 0 || (parameters::initial(p, f) & mask) != 0) { return .err(errors::make(5, pc)); }

@@ -18,6 +18,16 @@ fn bool readable(ref ir::Program p, ref registers::Set defined, usize r, usize f
         p.array_parameters[r] == 0 && p.record_parameters[r] == 0 && p.slice_parameters[r] == 0 &&
         p.types[r] == 12 && registers::contains(defined, r);
 }
+pub fn bool exclusive(ref ir::Program p, usize root, usize live) {
+    let usize one = 1;
+    var usize site = 0;
+    while (site < 16) {
+        if (ir::exclusive(p, site) && p.slice_roots[site] as usize == root + 1 &&
+            (live & (one << (32 + site))) != 0) { return true; }
+        site += 1;
+    }
+    return false;
+}
 pub fn Result<usize, errors::Error> step(ref ir::Program p, usize pc, usize f,
     ref mut registers::Set defined, ref mut registers::Set written, usize live) {
     let usize at = pc * 8;
@@ -40,7 +50,7 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, usize pc, usize f,
     } else if (origin == 0 || origin > 16 || p.slice_functions[id] as usize != f + 1) { return .err(errors::make(5, pc)); }
     if (op == 59) {
         let usize end = p.code[at + 4] as usize;
-        if ((live & mask) != 0 || a >= 16 || a == id || p.slice_roots[a] != p.slice_roots[id] ||
+        if (ir::exclusive(p, id) || (a < 16 && ir::exclusive(p, a)) || (live & mask) != 0 || a >= 16 || a == id || p.slice_roots[a] != p.slice_roots[id] ||
             p.slice_origins[a] != p.slice_origins[id] || p.slice_functions[a] != p.slice_functions[id] ||
             (root == 0 && origin == id + 1) ||
             (live & (one << (32 + a))) == 0 || !readable(p, defined, b, f) ||
@@ -49,6 +59,7 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, usize pc, usize f,
     }
     if (op == 54) {
         if (root == 0 || (live & mask) != 0 || !readable(p, defined, a, f) || !readable(p, defined, b, f)) { return .err(errors::make(5, pc)); }
+        if (exclusive(p, root - 1, live) || (ir::exclusive(p, id) && borrowed(p, root - 1, live))) { return .err(errors::make(5, pc)); }
         return .ok(live | mask);
     }
     if ((live & mask) == 0) { return .err(errors::make(5, pc)); }
