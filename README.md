@@ -1,5 +1,15 @@
 # Brownie C
 
+- Independent borrowed slice flow inspection: implemented at `b6b5525`.
+  `verifier.inspect` uses the shared validator to check formal entry masks,
+  rootless reads/subranges/cleanup, exact join/backedge live sets, mixed CALL
+  argument kinds and nonescaping normal exits. Borrowed positions never become
+  scalar values; retained children can outlive closed formal tickets. Execution
+  verify and VM/CLI admission retain the early borrowed-signature gate. No VM
+  frame, opcode, Fuel or capability is enabled. Development and release each
+  passed 16 native groups and 326 tool-free CLI invocations.
+  See [the flow inspection contract](docs/engineering/m2-array-slice-borrow-flow.md).
+
 - Gated borrowed slice source parameters: implemented at `8278682`.
   Source lowering accepts readonly `ref u8[]` formals and explicit `ref name`
   arguments over existing lexical slices, including forward/recursive forms and

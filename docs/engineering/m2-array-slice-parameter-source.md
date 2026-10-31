@@ -81,7 +81,9 @@ Borrow-aware per-PC control-flow validation, dynamic callee origins, retained
 argument tickets, failure-safe mixed owned/borrowed frame admission, recursive
 frame cleanup and metering remain pending. Forwarding and recursion are source
 lowering cases, not successful runtime invocations. The gate must remain until
-those paths are implemented and independently verified.
+those paths are implemented and independently verified. The
+[flow-inspection successor](m2-array-slice-borrow-flow.md) adds shared independent
+per-PC borrow validation while retaining execution rejection.
 
 No opcode, Fuel price, Program/frame field, runtime owner or payload-copy path
 is added. The signature scratch table gains 128 boolean entries; native layout,
