@@ -215,17 +215,11 @@ fn Result<usize, errors::Error> validate(ref ir::Program p) {
     return .ok(p.count);
 }
 
-// Both entry points require the complete IR/dataflow proof. Private typed
-// inspection does not enable non-u8 execution before VM integration.
+// Inspection and public admission share the complete IR/dataflow proof for
+// every supported readonly scalar slice element.
 pub fn Result<usize, errors::Error> inspect(ref ir::Program p) {
     return validate(p);
 }
 pub fn Result<usize, errors::Error> verify(ref ir::Program p) {
-    let usize checked = validate(p)?;
-    var usize site = 0;
-    while (site < 16) {
-        if (p.slice_origins[site] != 0 && p.slice_elements[site] != 10) { return .err(errors::make(5, 0)); }
-        site += 1;
-    }
-    return .ok(checked);
+    return validate(p);
 }

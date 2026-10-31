@@ -8,7 +8,7 @@ import array_owners as owners;
 import types as types;
 import std::bytes as bytes;
 
-// Private invocation CALL context; non-u8 public admission remains gated.
+// Invocation CALL context for readonly scalar slices.
 // Formal ordinals need at most 8 roots per frame; derived sites share them.
 pub struct Frames { owners::Token[256] origins; }
 pub fn Frames empty() { return Frames { .origins = [owners::Token { .slot=16, .generation=0 };256] }; }

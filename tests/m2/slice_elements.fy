@@ -19,7 +19,7 @@ fn void finish(ref mut ir::Program p,usize f) {
     p.ends[f]=end; p.register_ends[f]=registers;
 }
 // A complete helper with a retained child read after closing its formal anchor.
-// Entry deliberately does not call it: even an unused typed signature is gated.
+// Entry deliberately does not call it: unused well-formed signatures are admitted.
 fn ir::Program program(u8 element) {
     var ir::Program p=ir::empty(); p.function_count=2; p.entry=1; p.arities[0]=1;
     p.return_types[0]=1; p.return_types[1]=1;
@@ -42,17 +42,14 @@ fn ir::Program program(u8 element) {
 fn usize read_register(ref ir::Program p) { return p.code[4*8+1] as usize; }
 
 @test
-fn void six_scalar_kinds_have_typed_reads_and_flow_but_only_u8_executes() {
+fn void six_scalar_kinds_have_typed_reads_flow_and_public_admission() {
     let u8[6] tags=[1,2,9,10,11,12]; var usize i=0;
     while(i<6) {
         let u8 element=tags[i]; let ir::Program p=program(element);
         assert(p.slice_elements[0]==element && p.slice_elements[1]==element);
         assert(built(parameters::metadata(ref p))==1 && built(verifier::inspect(ref p))==p.count);
-        if(element==10) { assert(built(verifier::verify(ref p))==p.count); }
-        else {
-            rejected(verifier::verify(ref p),5,0);
-            assert(switch(vm::run_with_array_limit(ref p,0,0)) {case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==0}});
-        }
+        assert(built(verifier::verify(ref p))==p.count);
+        assert(switch(vm::run_with_array_limit(ref p,0,0)) {case .ok(_):{false}case .err(e):{e.kind==8}});
         i+=1;
     }
     let ir::Program ordinary=program(10);
@@ -137,9 +134,9 @@ fn void invalid_tags_capacity_and_derived_corruption_preserve_declarations() {
     var ir::Program bad=program(9); bad.slice_elements[1]=1;
     rejected(builders::derived(ref mut bad,1,0,77),3,77);
     assert(bad.slice_origins[2]==0 && bad.slice_elements[2]==0);
-    // Source lowers typed signatures; public VM admission still rejects them.
+    // Source and public VM admit unused typed signatures after complete proof.
     let ir::Program source=switch(compiler::compile(b"module main;fn i32 f(ref i32[] p){return 42;}fn i32 main(){return 42;}")) {
         case .ok(v):{v} case .err(_):{assert(false);ir::empty()}
     };
-    assert(verifier::inspect(ref source).is_ok); rejected(verifier::verify(ref source),5,0);
+    assert(verifier::inspect(ref source).is_ok && verifier::verify(ref source).is_ok);
 }

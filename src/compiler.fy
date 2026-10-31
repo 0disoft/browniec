@@ -634,7 +634,7 @@ fn Result<usize, errors::Error> slice_declaration(ref u8[] source, ref mut lexer
         let usize name = lexer::next(source,s)?;
         // A bare parent reborrows its complete retained range through SUBSLICE.
         if (s.kind != 91 && s.kind != 59) { return .err(errors::make(3,header.begin)); }
-    } else { root = text_source::argument(source,s,p,table)?; }
+    } else { root = slices::root_argument(source,s,p,table,header.element)?; }
     let u8 element = if (parent < 16) { ir::slice_element(p,parent,header.begin)? } else { p.arrays.elements[root] };
     if (element != header.element) { return .err(errors::make(3,header.begin)); }
     var usize lo = 0;

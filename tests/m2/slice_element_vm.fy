@@ -26,7 +26,7 @@ fn void begin(ref mut ir::Program p,usize f) {let usize pc=p.count;let usize r=p
 fn usize instruction(ref ir::Program p,u8 op,usize f) {
     var usize pc=p.starts[f];while(pc<p.ends[f]){if(p.code[pc*8]==op){return pc;}pc+=1;}assert(false);return 0;
 }
-// Full independently inspected IR: source owned-root syntax remains gated.
+// Full independently inspected IR, also executed through the public wrapper.
 // mode1 faults on a selected-range read, mode2 faults with a live child,
 // mode3 observes an empty retained range without reading it.
 fn ir::Program program(u8 tag,i64 value,bool forward,u8 mode) {
@@ -83,13 +83,13 @@ fn void run(ref ir::Program p,usize fuel,u8 expected) {
     if(expected==8){assert(f.origins[8].generation!=0);}
     assert(switch(lifecycle::finish(ref mut f,ref mut l,ref mut a,ref b,outcome)){case .ok(v):{expected==0 && v==42}case .err(e):{e.kind==expected && e.offset==77}});
     cleared(ref f,ref l,ref a);
-    if(p.slice_elements[0]!=10) {
-        assert(switch(vm::run_with_array_limit(p,0,0)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==0}});
-    }
+    assert(switch(vm::run_with_array_limit(p,fuel+65,64)){
+        case .ok(v):{expected==0 && v==42}case .err(e):{e.kind==expected && e.offset==77}
+    });
 }
 
 @test
-fn void all_scalar_widths_and_signed_unsigned_edges_run_without_public_promotion() {
+fn void all_scalar_widths_and_signed_unsigned_edges_run_with_public_verification() {
     let u8[12] tags=[1,1,2,2,9,9,10,10,11,11,12,12];
     let i64[12] values=[-2147483648,2147483647,0,1,-9223372036854775808,9223372036854775807,0,255,0,4294967295,0,-1];
     var usize i=0;while(i<12){let ir::Program p=program(tags[i],values[i],false,0);run(ref p,4000000,0);i+=1;}

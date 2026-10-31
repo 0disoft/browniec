@@ -4,6 +4,7 @@ import lexer as lexer;
 import ir as ir;
 import errors as errors;
 import types as types;
+import array_source as arrays;
 
 // Lexical-only read handles: 160..175 are not scalar registers or array owners.
 pub fn bool binding(ref locals::Table names, usize index) {
@@ -18,6 +19,19 @@ pub fn bool borrowed(ref locals::Table names, ref ir::Program p, usize root) {
     return false;
 }
 pub struct Header { usize begin; usize end; u8 element; }
+// Only an existing same-function array may anchor a lexical slice. Keep this
+// separate from the u8-only text predicate's argument admission.
+pub fn Result<usize, errors::Error> root_argument(ref u8[] source, ref mut lexer::State s,
+    ref ir::Program p, ref locals::Table names, u8 element) {
+    if (s.kind != 2 || !types::scalar(element)) { return .err(errors::make(3, s.begin)); }
+    let usize index = locals::find(source,names,s.begin,s.end);
+    if (!arrays::binding(names,index)) { return .err(errors::make(3, s.begin)); }
+    let usize root = names.registers[index]-128;
+    if (root >= 16 || root >= p.arrays.count || p.arrays.elements[root] != element ||
+        p.array_functions[root] as usize != names.function) { return .err(errors::make(3, s.begin)); }
+    let usize name = lexer::next(source,s)?;
+    return .ok(root);
+}
 // Called after let/var. The RHS must match the exact readonly scalar[] tag.
 pub fn Result<Header, errors::Error> header(ref u8[] source, ref mut lexer::State s,
     ref locals::Table names, bool mutable, u8 terminator, u8 result_type) {

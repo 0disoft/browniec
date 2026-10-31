@@ -8,7 +8,7 @@ import struct_vm as records;
 import array_vm as arrays;
 import std::bytes as bytes;
 
-// Private admission only; executable verification still rejects borrowed IR.
+// Shared atomic admission for owned and readonly borrowed arguments.
 // Return the complete charge, including base/scalar, owned and borrowed work.
 pub fn Result<usize,errors::Error> cost(ref ir::Program p,usize target,usize offset) {
     let usize retention=borrowed::cost(p,target,offset)?;

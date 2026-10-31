@@ -1,4 +1,4 @@
-"""Verify private typed slice IR while retaining public readonly u8 execution."""
+"""Verify readonly scalar slice IR, VM integration and public source admission."""
 import argparse
 from datetime import datetime, timezone
 import hashlib
@@ -29,14 +29,17 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--profile', choices=['development', 'release'], required=True)
     selection = parser.add_mutually_exclusive_group()
-    selection.add_argument('--parameter-source', action='store_true', help='Verify gated scalar slice parameter source lowering and M1 parser regression')
+    selection.add_argument('--parameter-source', action='store_true', help='Verify scalar slice parameter source lowering and M1 parser regression')
     selection.add_argument('--element-vm', action='store_true', help='Verify private typed borrowed CALL, dynamic reads and normal/error cleanup')
+    selection.add_argument('--public-elements', action='store_true', help='Verify public scalar slice roots, CALLs, full admission and M1 parser regression')
     args = parser.parse_args()
-    kind = 'slice-element-vm' if args.element_vm else 'slice-element-source' if args.parameter_source else 'slice-elements'
-    groups = ({'slice_element_vm': 5, 'slice_call_vm': 4, 'slice_frame_vm': 4, 'slice_lifecycle_vm': 6}
+    kind = 'slice-element-public' if args.public_elements else 'slice-element-vm' if args.element_vm else 'slice-element-source' if args.parameter_source else 'slice-elements'
+    groups = ({'slice_element_public': 3, 'slice_element_vm': 5, 'slice_element_source': 5, 'slice_elements': 4, 'slice_borrow_flow': 5}
+              if args.public_elements else {'slice_element_vm': 5, 'slice_call_vm': 4, 'slice_frame_vm': 4, 'slice_lifecycle_vm': 6}
               if args.element_vm else {'slice_element_source': 5, 'slice_parameters_source': 5, 'slice_elements': 4}
               if args.parameter_source else GROUPS)
-    matrices_to_run = {'slice-element-source': 252, **MATRICES} if args.parameter_source or args.element_vm else MATRICES
+    matrices_to_run = ({'slice-element-public': 192, 'slice-element-source': 252, **MATRICES} if args.public_elements
+                       else {'slice-element-source': 252, **MATRICES} if args.parameter_source or args.element_vm else MATRICES)
     output = ROOT / ('build/m2-' + kind) / args.profile
     output.mkdir(parents=True, exist_ok=True)
     receipt = output / 'receipt.json'
@@ -64,6 +67,7 @@ def main():
     check = run([compiler, 'check', '--locked'])
     paths = set(ROOT.glob('src/*.fy')) | set(ROOT.glob('tests/**/*.fy')) | set(ROOT.glob('tools/*.py'))
     paths.update(ROOT / name for name in ['fairy.toml', 'fairy.lock', 'toolchain.json'])
+    paths.add(ROOT / 'examples/slice-elements.brc')
     inputs = [dict(path=p.relative_to(ROOT).as_posix(), sha256=digest(p)) for p in sorted(paths)]
     flags = ['--release'] if args.profile == 'release' else []
     native = []
@@ -103,22 +107,24 @@ def main():
     env = {key: str(empty) for key in ['PATH', 'TEMP', 'TMP']}
     env.update({key: os.environ[key] for key in ['SystemRoot', 'WINDIR'] if key in os.environ})
     boundaries = []
-    for tag in ([] if args.parameter_source or args.element_vm else ['i32', 'bool', 'i64', 'u32', 'usize']):
+    for tag in ([] if args.parameter_source or args.element_vm or args.public_elements else ['i32', 'bool', 'i64', 'u32', 'usize']):
         for index, declaration in enumerate([f'fn i32 f(ref {tag}[] p){{return 42;}}fn i32 main(){{return 42;}}',
                             f'fn i32 main(){{let {tag}[1] a=[{"true" if tag == "bool" else "42"};1];let ref {tag}[] p=ref a;return 42;}}']):
             path = output / f'boundary-{len(boundaries)}.brc'
             path.write_text('module main;' + declaration, encoding='utf-8')
             for mode in ['check', 'run']:
                 command = [str(retained), mode, str(path), '--json']
+                if mode == 'run':
+                    command += ['--fuel', '1000000']
                 commands.append(command)
                 done = subprocess.run(command, cwd=empty, env=env, capture_output=True, timeout=15)
                 result = json.loads(done.stdout)
-                require(done.returncode == (6 if index == 0 else 3) and not done.stderr and result['status'] == 'error'
+                require(done.returncode == 0 and not done.stderr and result['status'] == ('checked' if mode == 'check' else 'completed')
                         and result['command'] == mode and result['schema'] == 'browniec.result/v1'
-                        and result['return_i32'] is None and result['error']['kind'] == ('verification' if index == 0 else 'type'), str(result))
+                        and result['return_i32'] == (None if mode == 'check' else 42) and result['error'] is None, str(result))
                 boundaries.append(dict(command=command, sourceSha256=digest(path), exit=done.returncode, result=result))
     m1 = None
-    if args.parameter_source and os.name == 'nt':
+    if (args.parameter_source or args.public_elements) and os.name == 'nt':
         run([sys.executable, '-B', ROOT / 'tools/check-m1-cli.py', '--exe', retained, '--profile', args.profile])
         path = ROOT / 'build/m1' / args.profile / 'cli-receipt.json'
         report = json.loads(path.read_text(encoding='utf-8'))
@@ -135,9 +141,9 @@ def main():
                   retainedArtifact=dict(path=retained.relative_to(ROOT).as_posix(), sha256=exe_hash, bytes=retained.stat().st_size),
                   matrices=matrices, boundaries=boundaries, m1=m1, nativeGroups=sum(groups.values()),
                   cliCases=sum(matrices_to_run.values()) + len(boundaries) + (m1['count'] if m1 else 0),
-                  limitations=['Typed borrowed signatures lower to independently inspected IR. The element-vm selection exercises private typed CALL/dispatch/cleanup; public non-u8 VM admission and owned-root source bindings remain gated.',
+                  limitations=['Readonly i32/bool/i64/u8/u32/usize slices use complete public metadata/type/flow validation and shared metered VM execution. Mutable/non-scalar slices, slice results, temporary roots and escaping references remain unavailable.',
                                'Focused native and CLI selection only; no full native/other M2, Linux, M0, packaging, isolation or performance rerun.',
-                               'The parameter-source selection runs full M1 CLI on Windows only; other selections do not rerun M1.'])
+                               'The parameter-source and public-elements selections run full M1 CLI on Windows only; other selections do not rerun M1.'])
     receipt.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
     print(f'PASS: {args.profile}: {report["nativeGroups"]} native groups; {report["cliCases"]} CLI cases', flush=True)
 

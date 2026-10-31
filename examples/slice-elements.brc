@@ -1,0 +1,12 @@
+module main;
+
+fn i64 sum(ref i64[] values) {
+    return values[0] + values[1];
+}
+
+fn i32 main() {
+    let i64[2] values = [21; 2];
+    let ref i64[] part = ref values;
+    if (sum(ref part) == 42) { return 42; }
+    return 0;
+}

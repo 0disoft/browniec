@@ -12,7 +12,7 @@ import std::bytes as bytes;
 
 // Private instruction adapter for immutable independently inspected Programs.
 // Owned roots keep their dispatch. Rootless reads use the same element-width
-// price; non-u8 public admission stays gated until source/CLI promotion.
+// price. Public admission retains the complete metadata and flow proof.
 pub fn Result<usize,errors::Error> step(ref ir::Program p,usize function,usize pc,usize frame,
     ref calls::Frames frames,ref mut loans::State loan,ref mut arrays::State state,
     ref bytes::Buffer buffer,ref mut i64[] registers,usize fuel) {

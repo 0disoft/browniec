@@ -10,8 +10,8 @@ fn ir::Program compiled(ref u8[] source) {
 }
 fn void accepted(ref u8[] source) {
     let ir::Program p=compiled(source); assert(verifier::inspect(ref p).is_ok);
-    assert(switch(verifier::verify(ref p)) {case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==0}});
-    assert(switch(vm::run_with_array_limit(ref p,0,0)) {case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==0}});
+    assert(verifier::verify(ref p).is_ok);
+    assert(switch(vm::run_with_array_limit(ref p,0,0)) {case .ok(_):{false}case .err(e):{e.kind==8}});
 }
 fn void rejected(ref u8[] source) {
     assert(switch(compiler::compile(source)) {case .ok(_):{false}case .err(e):{e.kind==3 || e.kind==2}});
@@ -63,7 +63,7 @@ fn void mismatched_alias_call_read_utf8_and_unsupported_roots_fail_during_source
     rejected(b"module main;fn i32 f(ref Option<i32>[] p){return 42;}fn i32 main(){return 42;}");
     rejected(b"module main;fn i32 f(ref i32[] p){p[0]=1;return 42;}fn i32 main(){return 42;}");
     rejected(b"module main;fn i32 f(ref i32[] p){return 42;}fn i32 g(ref i32[] p){return f(p);}fn i32 main(){return 42;}");
-    rejected(b"module main;fn i32 main(){let i32[1] a=[42;1];let ref i32[] p=ref a;return 42;}");
+    accepted(b"module main;fn i32 main(){let i32[1] a=[42;1];let ref i32[] p=ref a;return 42;}");
     rejected(b"module main;fn i32 main(){let u8[1] a=[42;1];let ref i32[] p=ref a;return 42;}");
     rejected(b"module main;fn i32 f(ref i32[] p){return 42;}fn i32 main(){let i32[1] a=[42;1];return f(ref a);}");
     rejected(b"module main;fn i32 f(ref i32[] p){return 42;}fn i32 main(){return f(ref [42;1]);}");

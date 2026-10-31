@@ -17,7 +17,7 @@ pub fn Result<usize, errors::Error> parameter(ref mut ir::Program p, usize funct
     return parameter_typed(p, function, 10, offset);
 }
 
-// Private typed declarations; non-u8 execution remains gated by verifier::verify.
+// Typed readonly declarations retain complete metadata and flow validation.
 pub fn Result<usize, errors::Error> parameter_typed(ref mut ir::Program p, usize function, u8 element, usize offset) {
     if (!types::scalar(element)) { return .err(errors::make(3, offset)); }
     if (p.registers >= 128) { return .err(errors::make(4, offset)); }
