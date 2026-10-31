@@ -24,7 +24,7 @@ fn ir::Program program() {
     var ir::Program p=switch(compiler::compile(b"module main;fn i32 f(ref u8[] part,bool[2] a,i32 n){return f(ref part,a,n);}fn i32 main(){let u8[4] root=[65;4];let bool[2] a=[true;2];let ref u8[] part=ref root;return f(ref part,a,42);}")) {
         case .ok(v):{v} case .err(_):{assert(false);ir::empty()}
     };
-    assert(verifier::inspect(ref p).is_ok && !verifier::verify(ref p).is_ok);
+    assert(verifier::inspect(ref p).is_ok && verifier::verify(ref p).is_ok);
     var usize pc=0; while(pc<p.count) { if(p.code[pc*8]==9) {p.offsets[pc]=77;} pc+=1; } return p;
 }
 fn usize call_pc(ref ir::Program p,usize f) {
@@ -91,7 +91,7 @@ fn void mixed_publication_copies_only_scalars_and_supports_nested_forwarding() {
     assert(f.origins[8].slot==f.origins[16].slot && f.origins[8].generation==f.origins[16].generation);
     assert(built(borrowed::leave(ref p,0,2,ref mut f,ref mut l,ref mut a,ref b,77))==1);
     assert(built(borrowed::leave(ref p,0,1,ref mut f,ref mut l,ref mut a,ref b,77))==1);
-    assert(switch(vm::run_with_array_limit(ref p,0,0)) {case .ok(_):{false} case .err(e):{e.kind==5}});
+    assert(switch(vm::run_with_array_limit(ref p,0,0)) {case .ok(_):{false} case .err(e):{e.kind==8}});
 }
 
 @test

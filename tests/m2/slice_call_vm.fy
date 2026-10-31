@@ -28,7 +28,7 @@ fn ir::Program program(u8 mode) {
         b"module main;struct P{i32 x;}fn i32 f(i32 n,ref u8[] p,u8[4] a,P r,ref u8[] q){return n+p[0] as i32+r.x;}fn i32 main(){let u8[4] a=[65;4];let ref u8[] p=ref a[1..3];let P r=P{.x=0};return f(0,ref p,a,r,ref p);}"
     };
     var ir::Program p=switch(compiler::compile(source)) { case .ok(v): { v } case .err(_): { assert(false); ir::empty() } };
-    assert(verifier::inspect(ref p).is_ok && !verifier::verify(ref p).is_ok);
+    assert(verifier::inspect(ref p).is_ok && verifier::verify(ref p).is_ok);
     var usize pc=0; while(pc<p.count) { if(p.code[pc*8]==9) { p.offsets[pc]=77; } pc+=1; } return p;
 }
 fn usize call_pc(ref ir::Program p,usize function) { var usize pc=p.starts[function]; while(pc<p.ends[function] && p.code[pc*8]!=9) { pc+=1; } assert(pc<p.ends[function]); return pc; }
@@ -86,7 +86,7 @@ fn void mixed_formal_ordinals_duplicate_ranges_exact_fuel_and_frame_reuse_preser
     assert(built(calls::enter(ref p,pc,0,ref mut frame,ref mut loan,ref state,ref data,work))==0);
     assert(built(calls::leave(ref p,0,1,ref mut frame,ref mut loan,ref mut state,ref data,77))==2);
     let ref u8[] payload=bytes::view(ref data); assert(payload[0]==65 && payload[3]==65 && payload[4]==0 && payload.len==16);
-    assert(switch(vm::run_with_array_limit(ref p,0,0)) { case .ok(_): { false } case .err(e): { e.kind==5 } });
+    assert(switch(vm::run_with_array_limit(ref p,0,0)) { case .ok(_): { false } case .err(e): { e.kind==8 } });
 }
 
 @test

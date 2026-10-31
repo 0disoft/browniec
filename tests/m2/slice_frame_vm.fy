@@ -32,7 +32,7 @@ fn ir::Program program(usize length) {
     let usize[1] args=[160+parent]; let usize answer=built(ir::call(ref mut p,0,ref args,77));
     let usize close=built(ir::slice_close(ref mut p,parent,77)); let usize drop=built(ir::array_drop(ref mut p,root,77)); let usize done=built(ir::emit(ref mut p,8,answer,0,77));
     let usize finish=p.count; let usize limit=p.registers; p.ends[1]=finish; p.register_ends[1]=limit;
-    assert(verifier::inspect(ref p).is_ok && !verifier::verify(ref p).is_ok); return p;
+    assert(verifier::inspect(ref p).is_ok && verifier::verify(ref p).is_ok); return p;
 }
 fn usize instruction(ref ir::Program p,u8 op,usize site,usize function) {
     var usize pc=p.starts[function]; while(pc<p.ends[function]) {
@@ -83,7 +83,7 @@ fn void dynamic_origin_lengths_exact_prices_and_children_after_formal_close_disp
         assert(step(ref p,56,1,ref f,ref mut l,ref mut a,ref b,ref mut r,4097)==0);
         assert(built(calls::leave(ref p,0,1,ref mut f,ref mut l,ref mut a,ref b,77))==0 && a.owners.slots[0].reading);
         assert(switch(loans::finish(ref mut l,ref mut a,ref b,.ok(42))) { case .ok(v):{v==42} case .err(_):{false} }); assert(!a.owners.slots[0].reading);
-        assert(switch(vm::run_with_array_limit(ref p,0,0)) { case .err(e):{e.kind==5} case .ok(_):{false} }); i+=1;
+        assert(switch(vm::run_with_array_limit(ref p,0,0)) { case .err(e):{e.kind==8} case .ok(_):{false} }); i+=1;
     }
 }
 

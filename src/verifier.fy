@@ -175,7 +175,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
     return .ok(end - start);
 }
 
-fn Result<usize, errors::Error> validate(ref ir::Program p, bool execution) {
+fn Result<usize, errors::Error> validate(ref ir::Program p) {
     if (p.count == 0 || p.count > 256 || p.registers == 0 || p.registers > 128 || p.constant_count > 128 ||
         p.function_count == 0 || p.function_count > 16 || p.entry >= p.function_count || p.call_count > 32) { return .err(errors::make(5, 0)); }
     if (!arrays::valid(ref p.arrays)) { return .err(errors::make(5, 0)); }
@@ -203,8 +203,6 @@ fn Result<usize, errors::Error> validate(ref ir::Program p, bool execution) {
     }
     if (code_end != p.count || register_end != p.registers) { return .err(errors::make(5, 0)); }
     let usize borrowed_parameters = slice_parameters::metadata(p)?;
-    // Origin metadata is checked now; guest execution waits for metered CALL/frame support.
-    if (execution && borrowed_parameters != 0) { return .err(errors::make(5, 0)); }
     let usize parameters = array_parameters::metadata(p)?;
     let usize record_parameters = struct_parameters::metadata(p)?;
     let usize results = array_results::metadata(p)?;
@@ -217,11 +215,11 @@ fn Result<usize, errors::Error> validate(ref ir::Program p, bool execution) {
     return .ok(p.count);
 }
 
-// Inspection is a full private IR/dataflow proof, not an execution permit.
-// VM and CLI continue to call verify and retain the early borrowed-CALL gate.
+// Inspection and public admission use the same complete IR/dataflow proof.
+// Borrowed signatures still require all origin, type, liveness and exit checks.
 pub fn Result<usize, errors::Error> inspect(ref ir::Program p) {
-    return validate(p, false);
+    return validate(p);
 }
 pub fn Result<usize, errors::Error> verify(ref ir::Program p) {
-    return validate(p, true);
+    return validate(p);
 }

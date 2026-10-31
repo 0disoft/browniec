@@ -20,8 +20,8 @@ fn void cleared(ref calls::Frames frames,ref loans::State loan,ref arrays::State
 }
 fn void run(ref u8[] source,usize fuel,u8 expected,i64 value,bool corrupt) {
     let ir::Program p=switch(compiler::compile(source)){case .ok(v):{v}case .err(e):{assert(false);ir::empty()}};
-    assert(verifier::inspect(ref p).is_ok && !verifier::verify(ref p).is_ok);
-    assert(switch(vm::run_with_array_limit(ref p,0,0)){case .ok(_):{false}case .err(e):{e.kind==5}});
+    assert(verifier::inspect(ref p).is_ok && verifier::verify(ref p).is_ok);
+    assert(switch(vm::run_with_array_limit(ref p,0,0)){case .ok(_):{false}case .err(e):{e.kind==8}});
     var arrays::State state=arrays::empty(256);var loans::State loan=loans::empty();var calls::Frames frames=calls::empty();
     var bytes::Buffer data=switch(arrays::prepare(256)){case .ok(v):{v}case .err(_):{assert(false);bytes::empty()}};
     var u8 kind=0;var usize offset=0;
@@ -46,6 +46,11 @@ fn void run(ref u8[] source,usize fuel,u8 expected,i64 value,bool corrupt) {
     } else {
         assert(switch(lifecycle::finish(ref mut frames,ref mut loan,ref mut state,ref data,.err(errors::make(kind,offset)))){case .ok(_):{false}case .err(e):{e.kind==kind && e.offset==offset}});
     }
+    // The public wrapper prepays backing before this same execution budget.
+    assert(switch(vm::run_with_array_limit(ref p,fuel+257,256)) {
+        case .ok(v):{expected==0 && v==value}
+        case .err(e):{e.kind==expected && e.offset==offset}
+    });
     cleared(ref frames,ref loan,ref state);
 }
 
@@ -79,4 +84,12 @@ fn void abort_cleanup_preserves_fuel_bounds_arithmetic_and_nested_errors() {
 @test
 fn void failed_cleanup_keeps_bindings_until_successful_repair() {
     run(b"module main;fn i32 f(ref u8[] p){return (p[0] as i32)/0;}fn i32 main(){let u8[2] a=[42;2];let ref u8[] p=ref a;return f(ref p);}",3000000,7,0,true);
+}
+
+@test
+fn void public_capacity_failures_are_contained_after_borrowed_admission() {
+    run(b"module main;fn i32 f(ref u8[] p,i32 n){if(n==0){return p[0] as i32;}return f(ref p,n-1);}fn i32 main(){let u8[1] a=[42;1];let ref u8[] p=ref a;return f(ref p,30);}",5000000,13,0,false);
+    let ir::Program p=switch(compiler::compile(b"module main;fn i32 f(ref u8[] p,u8[4] a){return a[0] as i32;}fn i32 main(){let u8[4] a=[42;4];let ref u8[] p=ref a;return f(ref p,a);}")){case .ok(v):{v}case .err(_):{assert(false);ir::empty()}};
+    assert(verifier::verify(ref p).is_ok);
+    assert(switch(vm::run_with_array_limit(ref p,1000000,4)){case .ok(_):{false}case .err(e):{e.kind==13}});
 }

@@ -73,7 +73,7 @@ fn void arguments_require_live_function_owned_u8_sources_and_not_scalar_or_recor
 }
 
 @test
-fn void all_sixteen_sites_fit_entry_masks_and_prospective_metadata_never_enables_execution() {
+fn void all_sixteen_sites_fit_and_metadata_never_bypasses_complete_verification() {
     var ir::Program p=ir::empty(); p.function_count=3; p.entry=2; p.registers=17;
     p.register_ends[0]=8; p.register_starts[1]=8; p.register_ends[1]=16; p.register_starts[2]=16; p.register_ends[2]=17;
     p.arities[0]=8; p.arities[1]=8; p.types[16]=1;
@@ -89,5 +89,6 @@ fn void all_sixteen_sites_fit_entry_masks_and_prospective_metadata_never_enables
     assert(built(parameters::metadata(ref ordinary))==0 && verifier::verify(ref ordinary).is_ok);
     assert(switch(vm::run(ref ordinary,100)) { case .ok(v): { v==42 } case .err(_): { false } });
     let ir::Program parsed=switch(compiler::compile(b"module main;fn i32 f(ref u8[] p){return p[0] as i32;}fn i32 main(){return 42;}")) { case .ok(v): { v } case .err(_): { assert(false); ir::empty() } };
-    assert(!verifier::verify(ref parsed).is_ok);
+    assert(verifier::verify(ref parsed).is_ok);
+    assert(switch(vm::run(ref parsed,100)) {case .ok(v):{v==42}case .err(_):{false}});
 }

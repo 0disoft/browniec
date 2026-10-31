@@ -26,7 +26,7 @@ fn void unchanged(ref ir::Program p, ref ir::Program old) {
 }
 
 @test
-fn void rootless_formals_and_retained_children_emit_existing_typed_instructions_but_stay_gated() {
+fn void rootless_formals_and_retained_children_emit_existing_typed_instructions_and_pass_public_verification() {
     var ir::Program p=declarations();
     assert(built(ir::slice_sub(ref mut p,1,0,1,2,77))==2);
     assert(built(ir::slice_close(ref mut p,0,77))==3);
@@ -46,8 +46,8 @@ fn void rootless_formals_and_retained_children_emit_existing_typed_instructions_
     assert(p.code[24]==56 && p.code[32]==55 && p.code[40]==57 && p.code[48]==58);
     assert(p.code[56]==59 && p.code[57]==2 && p.code[58]==1 && p.slice_origins[2]==1);
     assert(p.arrays.count==0 && built(parameters::metadata(ref p))==1);
-    assert(!verifier::verify(ref p).is_ok);
-    assert(switch(vm::run_with_array_limit(ref p,0,0)) { case .ok(_): { false } case .err(e): { e.kind==5 } });
+    assert(verifier::verify(ref p).is_ok);
+    assert(switch(vm::run_with_array_limit(ref p,0,0)) { case .ok(_): { false } case .err(e): { e.kind==8 } });
 }
 
 @test

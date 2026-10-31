@@ -10,10 +10,14 @@ fn usize built(Result<usize, errors::Error> r) { return switch(r) { case .ok(v):
 fn ir::Program compiled(ref u8[] source) { return switch(compiler::compile(source)) { case .ok(v): { v } case .err(_): { assert(false); ir::empty() } }; }
 fn void accepted(ref ir::Program p) {
     assert(built(verifier::inspect(p))==p.count);
-    assert(switch(verifier::verify(p)) { case .ok(_): { false } case .err(e): { e.kind==5 && e.offset==0 } });
-    assert(switch(vm::run_with_array_limit(p,0,0)) { case .ok(_): { false } case .err(e): { e.kind==5 } });
+    assert(built(verifier::verify(p))==p.count);
+    assert(switch(vm::run_with_array_limit(p,0,0)) { case .ok(_): { false } case .err(e): { e.kind==8 } });
 }
-fn void rejected(ref ir::Program p, usize pc) { assert(switch(verifier::inspect(p)) { case .ok(_): { false } case .err(e): { e.kind==5 && e.offset==pc } }); }
+fn void rejected(ref ir::Program p, usize pc) {
+    assert(switch(verifier::inspect(p)) { case .ok(_): { false } case .err(e): { e.kind==5 && e.offset==pc } });
+    assert(switch(verifier::verify(p)) { case .ok(_): { false } case .err(e): { e.kind==5 && e.offset==pc } });
+    assert(switch(vm::run_with_array_limit(p,0,0)) { case .ok(_): { false } case .err(e): { e.kind==5 && e.offset==pc } });
+}
 fn void finish(ref mut ir::Program p, usize f) { let usize end=p.count; let usize regs=p.registers; p.ends[f]=end; p.register_ends[f]=regs; }
 fn void entry(ref mut ir::Program p) {
     let usize start=p.count; let usize regs=p.registers; p.starts[1]=start; p.register_starts[1]=regs;
@@ -49,7 +53,7 @@ fn void skip(ref mut ir::Program p, usize pc) {
 }
 
 @test
-fn void retained_children_are_readable_and_forwardable_after_anchor_close_without_execution_permission() {
+fn void retained_children_are_readable_and_forwardable_after_anchor_close_with_public_verification() {
     let ir::Program p=retained(false); accepted(ref p); let ir::Program call=retained(true); accepted(ref call);
     let ir::Program source=compiled(b"module main;fn i32 f(ref u8[] p,i32 n){if(n==0){return p[0] as i32;}let ref u8[] q=ref p;return f(ref q,n-1);}fn i32 main(){let u8[1] a=[42;1];let ref u8[] p=ref a;return f(ref p,2);}"); accepted(ref source);
     let ir::Program ordinary=compiled(b"module main;fn i32 f(u8[1] a){return a[0] as i32;}fn i32 main(){let u8[1] a=[42;1];return f(a);}");

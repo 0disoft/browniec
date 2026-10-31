@@ -27,7 +27,7 @@ fn ir::Program program(bool boolean) {
         b"module main;struct P{bool good;i32 x;}fn i32 f(ref u8[] p,u8[4] a,P r,ref u8[] q){return f(ref p,a,r,ref q);}fn i32 main(){let u8[4] a=[65;4];let P r=P{.good=true,.x=20};let ref u8[] p=ref a;return f(ref p,a,r,ref p);}"
     };
     var ir::Program p=switch(compiler::compile(source)) { case .ok(v):{v} case .err(_):{assert(false);ir::empty()} };
-    assert(verifier::inspect(ref p).is_ok && !verifier::verify(ref p).is_ok);
+    assert(verifier::inspect(ref p).is_ok && verifier::verify(ref p).is_ok);
     var usize pc=0; while(pc<p.count) { if(p.code[pc*8]==9) { p.offsets[pc]=77; } pc+=1; } return p;
 }
 fn usize call_pc(ref ir::Program p,usize f) { var usize pc=p.starts[f]; while(pc<p.ends[f] && p.code[pc*8]!=9) { pc+=1; } assert(pc<p.ends[f]); return pc; }
@@ -93,7 +93,7 @@ fn void exact_combined_fuel_duplicate_empty_ranges_and_owned_copies_publish_toge
         let usize caller=p.call_args[site*8] as usize-160; assert(count(slices::length(ref l.pool,l.tickets[caller],ref a.owners,128))==if(iteration==1){0}else{2});
         iteration+=1;
     }
-    assert(switch(vm::run_with_array_limit(ref p,0,0)) { case .err(e):{e.kind==5} case .ok(_):{false} });
+    assert(switch(vm::run_with_array_limit(ref p,0,0)) { case .err(e):{e.kind==8} case .ok(_):{false} });
 }
 
 @test
