@@ -124,8 +124,10 @@ exact source, old and rebuilt image hashes, both exits, the 80-file match, and
 instead of this document, because a fresh native rebuild changed the new image PE
 hash while the compiler executable hash stayed identical.
 
-The Brownie parser behavior was not changed by this adoption. The next separate
-task is parser stack containment. No parser source edit was made here.
+The Brownie parser behavior was not changed by this adoption. No parser source
+edit was made here. The later [parser stack containment](m1-parser-stack.md)
+fixes the reproduced failures and records successful development/release CLI
+checks separately. The adoption evidence retains its original result.
 
 ## Evidence
 

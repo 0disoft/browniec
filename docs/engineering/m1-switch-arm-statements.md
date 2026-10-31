@@ -115,3 +115,8 @@ Source commits are `ea2b915` (parser context) and `aa131b6` (arm statements).
 not full-profile conformance. Arrays, structs, and borrows remain M2 work. Workers,
 DLL embedding, Windows isolation, clean-machine packaging, and performance remain
 unimplemented or unverified.
+
+The later [parser stack containment](m1-parser-stack.md) preserves these budgets
+and adds 38 frontend depth regressions. Its separate receipt verifies 2,007 M1
+CLI cases and the six focused arm-statement native groups per Windows profile
+with compiler `eb274643`. Earlier receipt counts remain historical.

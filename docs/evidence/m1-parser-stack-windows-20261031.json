@@ -1,0 +1,1522 @@
+{
+  "schema": "browniec.m1-parser-stack/v1",
+  "status": "passed",
+  "recordedAt": "2026-10-31T10:32:52.351092+00:00",
+  "implementationCommits": [
+    "10822eeaa054d7069fbfbdcbf98449fa5ceb5e56",
+    "6cbe716106b6ab1e3b4aaf08627576cc653bb4ee"
+  ],
+  "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false",
+  "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+  "os": "Windows-11-10.0.26300-SP0",
+  "baseline": {
+    "exeSha256": "7b867423528b4ec34e0f0476a9595011d7daf9e2cb83daaaabb050c442a1809c",
+    "cases": [
+      {
+        "command": [
+          "build/toolchain-upgrade/development/browniec.exe",
+          "check",
+          "build/m1/development/arm-depth-mixed-10.brc",
+          "--json"
+        ],
+        "sourceSha256": "f95b882cdfa3ab9e84ed75627b3f90bf98ace5d7bd3a175fb9c4cc53d681a695",
+        "exit": 3221225725,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "build/toolchain-upgrade/development/browniec.exe",
+          "check",
+          "build/parser-stack/call-32.brc",
+          "--json"
+        ],
+        "sourceSha256": "97ee4a11710c846f5bab2cae1899955738b79995c44b587b5403fabdd40a6f89",
+        "exit": 3221225725,
+        "stdout": "",
+        "stderr": ""
+      }
+    ]
+  },
+  "historicalAdoptionEvidence": {
+    "path": "docs/evidence/toolchain-upgrade-windows-20261031.json",
+    "sha256": "dbfb0f9578fc037b10c4fd57b33735d519b5e767b4f76508f9bbb6f890a07e7d",
+    "unchangedStatus": "completed-with-known-baseline-failure"
+  },
+  "profiles": [
+    {
+      "profile": "development",
+      "cliArtifact": "build/parser-stack/final-development.exe",
+      "sha256": "604634d3d45f6db04ccc0c5c40cd1f1dabbaea5459ce29d104ad1b1d92f604ba",
+      "bytes": 1623040,
+      "buildCommand": [
+        "build/toolchain/fairyc.exe",
+        "experimental",
+        "build-workspace",
+        "--target",
+        "x86_64-windows-msvc",
+        "--profile",
+        "low",
+        "--output",
+        "build/parser-stack/final-development.exe",
+        "--locked"
+      ],
+      "cliCases": 2335,
+      "cli": [
+        {
+          "suite": "m1",
+          "count": 2007,
+          "status": "passed",
+          "receipt": "build/parser-stack/m1-development.json",
+          "receiptSha256": "80448fb95afa2e07f936522d369df9c60f8cf783c521f6563e2eca1274385a8b",
+          "command": [
+            "python",
+            "-B",
+            "tools/check-m1-cli.py",
+            "--exe",
+            "build/parser-stack/final-development.exe",
+            "--profile",
+            "development"
+          ]
+        },
+        {
+          "suite": "m2-array-call-reads",
+          "count": 106,
+          "status": "passed",
+          "receipt": "build/parser-stack/m2-array-call-reads-development.json",
+          "receiptSha256": "cfb4dc61a47a2f1e1cddb083762454fd5f733a6cbe960ea3608a1737d67f0df5",
+          "command": [
+            "python",
+            "-B",
+            "tools/check-m2-array-call-reads.py",
+            "--exe",
+            "build/parser-stack/final-development.exe",
+            "--profile",
+            "development"
+          ]
+        },
+        {
+          "suite": "m2-struct-call-reads",
+          "count": 102,
+          "status": "passed",
+          "receipt": "build/parser-stack/m2-struct-call-reads-development.json",
+          "receiptSha256": "bf03dd4ce664a55ac7eef95580a9b09d49e4e979e000ed697f80498ad52dd1b3",
+          "command": [
+            "python",
+            "-B",
+            "tools/check-m2-struct-call-reads.py",
+            "--exe",
+            "build/parser-stack/final-development.exe",
+            "--profile",
+            "development"
+          ]
+        },
+        {
+          "suite": "m2-array-slice-alias",
+          "count": 120,
+          "status": "passed",
+          "receipt": "build/parser-stack/m2-array-slice-alias-development.json",
+          "receiptSha256": "8746a63e63ccf6dc172375ab9efb3a7b7c8e78a31ebce9a860304e050c1d4e25",
+          "command": [
+            "python",
+            "-B",
+            "tools/check-m2-array-slice-alias.py",
+            "--exe",
+            "build/parser-stack/final-development.exe",
+            "--profile",
+            "development"
+          ]
+        }
+      ],
+      "native": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "development",
+        "tests": [
+          {
+            "identity": "tests::switch_arm_statements::branches_blocks_and_terminal_arms",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::switch_arm_statements::conditional_join_initialization_and_exact_fuel",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::switch_arm_statements::local_loops_and_nested_statement_switches",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::switch_arm_statements::outer_loop_transfers_skip_pending_expression_work",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::switch_arm_statements::reject_missing_values_unreachable_work_and_scope_escape",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::switch_arm_statements::while_condition_owns_transfers_and_propagation",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 6,
+        "passed": 6,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "nativeReceiptSha256": "6a18f8dc37e02e41d1374d6ed5440fe7b075625a6dfe2067b68575b21cfd9075",
+      "nativeCommand": [
+        "build/toolchain/fairyc.exe",
+        "test",
+        "--native",
+        "--capture-output",
+        "--json",
+        "--file",
+        "tests/switch_arm_statements.fy",
+        "--locked"
+      ]
+    },
+    {
+      "profile": "release",
+      "cliArtifact": "build/parser-stack/final-release.exe",
+      "sha256": "d865e73020bfb205887384ee71d6e15d3db13b57b70f7a038e1aeddb86e4a58a",
+      "bytes": 539136,
+      "buildCommand": [
+        "build/toolchain/fairyc.exe",
+        "experimental",
+        "build-workspace",
+        "--target",
+        "x86_64-windows-msvc",
+        "--profile",
+        "optimized",
+        "--output",
+        "build/parser-stack/final-release.exe",
+        "--locked"
+      ],
+      "cliCases": 2335,
+      "cli": [
+        {
+          "suite": "m1",
+          "count": 2007,
+          "status": "passed",
+          "receipt": "build/parser-stack/m1-release.json",
+          "receiptSha256": "17ba18c03f0c59233f7675d15ce468c75e3603781380b8478da0d9a09599a857",
+          "command": [
+            "python",
+            "-B",
+            "tools/check-m1-cli.py",
+            "--exe",
+            "build/parser-stack/final-release.exe",
+            "--profile",
+            "release"
+          ]
+        },
+        {
+          "suite": "m2-array-call-reads",
+          "count": 106,
+          "status": "passed",
+          "receipt": "build/parser-stack/m2-array-call-reads-release.json",
+          "receiptSha256": "809da8722e23fac6484b9917964eb9ffc1b9a47199998edef1253c9403f06a4d",
+          "command": [
+            "python",
+            "-B",
+            "tools/check-m2-array-call-reads.py",
+            "--exe",
+            "build/parser-stack/final-release.exe",
+            "--profile",
+            "release"
+          ]
+        },
+        {
+          "suite": "m2-struct-call-reads",
+          "count": 102,
+          "status": "passed",
+          "receipt": "build/parser-stack/m2-struct-call-reads-release.json",
+          "receiptSha256": "0e8f95de6736c90baf2636128e4deaffc91005463bed8c8cc3eeadfdd7064670",
+          "command": [
+            "python",
+            "-B",
+            "tools/check-m2-struct-call-reads.py",
+            "--exe",
+            "build/parser-stack/final-release.exe",
+            "--profile",
+            "release"
+          ]
+        },
+        {
+          "suite": "m2-array-slice-alias",
+          "count": 120,
+          "status": "passed",
+          "receipt": "build/parser-stack/m2-array-slice-alias-release.json",
+          "receiptSha256": "17a29f2f3ca140290049d8cf80d34d36e63d29f9daacb18250a29f500ba19956",
+          "command": [
+            "python",
+            "-B",
+            "tools/check-m2-array-slice-alias.py",
+            "--exe",
+            "build/parser-stack/final-release.exe",
+            "--profile",
+            "release"
+          ]
+        }
+      ],
+      "native": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "release",
+        "tests": [
+          {
+            "identity": "tests::switch_arm_statements::branches_blocks_and_terminal_arms",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::switch_arm_statements::conditional_join_initialization_and_exact_fuel",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::switch_arm_statements::local_loops_and_nested_statement_switches",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::switch_arm_statements::outer_loop_transfers_skip_pending_expression_work",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::switch_arm_statements::reject_missing_values_unreachable_work_and_scope_escape",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::switch_arm_statements::while_condition_owns_transfers_and_propagation",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 6,
+        "passed": 6,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "nativeReceiptSha256": "f1e6d174a8ab217e36e8192b377190df1291a89899d792e1aac30602d94410bc",
+      "nativeCommand": [
+        "build/toolchain/fairyc.exe",
+        "test",
+        "--native",
+        "--capture-output",
+        "--json",
+        "--file",
+        "tests/switch_arm_statements.fy",
+        "--release",
+        "--locked"
+      ]
+    }
+  ],
+  "sharedRegressionCases": [
+    {
+      "case": "arm-stack-mixed-10-check",
+      "sourceSha256": "f95b882cdfa3ab9e84ed75627b3f90bf98ace5d7bd3a175fb9c4cc53d681a695",
+      "exit": 0,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "check",
+        "status": "checked",
+        "return_i32": null,
+        "error": null
+      }
+    },
+    {
+      "case": "arm-stack-mixed-10-run",
+      "sourceSha256": "f95b882cdfa3ab9e84ed75627b3f90bf98ace5d7bd3a175fb9c4cc53d681a695",
+      "exit": 0,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "run",
+        "status": "completed",
+        "return_i32": 42,
+        "error": null
+      }
+    },
+    {
+      "case": "arm-stack-mixed-11-check",
+      "sourceSha256": "325aed4461847b620c559e390fa7c803b2c64223c76f6f71d1313acab9bec652",
+      "exit": 3,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "check",
+        "status": "error",
+        "return_i32": null,
+        "error": {
+          "kind": "compile_limit",
+          "byte_offset": 581
+        }
+      }
+    },
+    {
+      "case": "arm-stack-mixed-11-run",
+      "sourceSha256": "325aed4461847b620c559e390fa7c803b2c64223c76f6f71d1313acab9bec652",
+      "exit": 3,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "run",
+        "status": "error",
+        "return_i32": null,
+        "error": {
+          "kind": "compile_limit",
+          "byte_offset": 581
+        }
+      }
+    },
+    {
+      "case": "arm-stack-mixed-32-check",
+      "sourceSha256": "ef677edc6d41f07ec9f4656e05c105d192f3e3c6e6a081aac373203faffcedf3",
+      "exit": 3,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "check",
+        "status": "error",
+        "return_i32": null,
+        "error": {
+          "kind": "compile_limit",
+          "byte_offset": 590
+        }
+      }
+    },
+    {
+      "case": "arm-stack-mixed-32-run",
+      "sourceSha256": "ef677edc6d41f07ec9f4656e05c105d192f3e3c6e6a081aac373203faffcedf3",
+      "exit": 3,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "run",
+        "status": "error",
+        "return_i32": null,
+        "error": {
+          "kind": "compile_limit",
+          "byte_offset": 590
+        }
+      }
+    },
+    {
+      "case": "arm-stack-block-10-check",
+      "sourceSha256": "1e1a78ca69df29f5676a4e2601a9949835a418dbe7159d71f00500e11fabdbf6",
+      "exit": 0,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "check",
+        "status": "checked",
+        "return_i32": null,
+        "error": null
+      }
+    },
+    {
+      "case": "arm-stack-block-10-run",
+      "sourceSha256": "1e1a78ca69df29f5676a4e2601a9949835a418dbe7159d71f00500e11fabdbf6",
+      "exit": 0,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "run",
+        "status": "completed",
+        "return_i32": 42,
+        "error": null
+      }
+    },
+    {
+      "case": "arm-stack-block-11-check",
+      "sourceSha256": "95e7dac4f51557ea6228f3444ba6a880b4d799ae4b04cbaecffb5f185d5d777a",
+      "exit": 3,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "check",
+        "status": "error",
+        "return_i32": null,
+        "error": {
+          "kind": "compile_limit",
+          "byte_offset": 482
+        }
+      }
+    },
+    {
+      "case": "arm-stack-block-11-run",
+      "sourceSha256": "95e7dac4f51557ea6228f3444ba6a880b4d799ae4b04cbaecffb5f185d5d777a",
+      "exit": 3,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "run",
+        "status": "error",
+        "return_i32": null,
+        "error": {
+          "kind": "compile_limit",
+          "byte_offset": 482
+        }
+      }
+    },
+    {
+      "case": "arm-stack-block-32-check",
+      "sourceSha256": "4b9cd13306eab3973c65a7c13eccda24e01ae991b09ff698a60208f8d61f6c1d",
+      "exit": 3,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "check",
+        "status": "error",
+        "return_i32": null,
+        "error": {
+          "kind": "compile_limit",
+          "byte_offset": 491
+        }
+      }
+    },
+    {
+      "case": "arm-stack-block-32-run",
+      "sourceSha256": "4b9cd13306eab3973c65a7c13eccda24e01ae991b09ff698a60208f8d61f6c1d",
+      "exit": 3,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "run",
+        "status": "error",
+        "return_i32": null,
+        "error": {
+          "kind": "compile_limit",
+          "byte_offset": 491
+        }
+      }
+    },
+    {
+      "case": "arm-stack-return-10-check",
+      "sourceSha256": "947540bce7943b19e99b239d3c38942d88c18396baeebc72a49e28c378a84f73",
+      "exit": 0,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "check",
+        "status": "checked",
+        "return_i32": null,
+        "error": null
+      }
+    },
+    {
+      "case": "arm-stack-return-10-run",
+      "sourceSha256": "947540bce7943b19e99b239d3c38942d88c18396baeebc72a49e28c378a84f73",
+      "exit": 0,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "run",
+        "status": "completed",
+        "return_i32": 42,
+        "error": null
+      }
+    },
+    {
+      "case": "arm-stack-return-11-check",
+      "sourceSha256": "10eb82886180d05b732e7c01f6db5ff7655f5abed8f652e460cc3a9c05ae83b1",
+      "exit": 3,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "check",
+        "status": "error",
+        "return_i32": null,
+        "error": {
+          "kind": "compile_limit",
+          "byte_offset": 540
+        }
+      }
+    },
+    {
+      "case": "arm-stack-return-11-run",
+      "sourceSha256": "10eb82886180d05b732e7c01f6db5ff7655f5abed8f652e460cc3a9c05ae83b1",
+      "exit": 3,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "run",
+        "status": "error",
+        "return_i32": null,
+        "error": {
+          "kind": "compile_limit",
+          "byte_offset": 540
+        }
+      }
+    },
+    {
+      "case": "arm-stack-return-32-check",
+      "sourceSha256": "2e6e172e826c058f3a2d34751ae488be0263b22ec039c7e23fd4707a901c11e1",
+      "exit": 3,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "check",
+        "status": "error",
+        "return_i32": null,
+        "error": {
+          "kind": "compile_limit",
+          "byte_offset": 540
+        }
+      }
+    },
+    {
+      "case": "arm-stack-return-32-run",
+      "sourceSha256": "2e6e172e826c058f3a2d34751ae488be0263b22ec039c7e23fd4707a901c11e1",
+      "exit": 3,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "run",
+        "status": "error",
+        "return_i32": null,
+        "error": {
+          "kind": "compile_limit",
+          "byte_offset": 540
+        }
+      }
+    },
+    {
+      "case": "arm-stack-while-10-check",
+      "sourceSha256": "ec0d3eba86d72c5350a2f33ad045c0bec7ef7f031f30e171ae9c2092e6f4982b",
+      "exit": 0,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "check",
+        "status": "checked",
+        "return_i32": null,
+        "error": null
+      }
+    },
+    {
+      "case": "arm-stack-while-10-run",
+      "sourceSha256": "ec0d3eba86d72c5350a2f33ad045c0bec7ef7f031f30e171ae9c2092e6f4982b",
+      "exit": 0,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "run",
+        "status": "completed",
+        "return_i32": 42,
+        "error": null
+      }
+    },
+    {
+      "case": "arm-stack-while-11-check",
+      "sourceSha256": "1e82bb9e7a6cce7973b837457bfc68b855180e313fa4c13073c895620738d56d",
+      "exit": 3,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "check",
+        "status": "error",
+        "return_i32": null,
+        "error": {
+          "kind": "compile_limit",
+          "byte_offset": 625
+        }
+      }
+    },
+    {
+      "case": "arm-stack-while-11-run",
+      "sourceSha256": "1e82bb9e7a6cce7973b837457bfc68b855180e313fa4c13073c895620738d56d",
+      "exit": 3,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "run",
+        "status": "error",
+        "return_i32": null,
+        "error": {
+          "kind": "compile_limit",
+          "byte_offset": 625
+        }
+      }
+    },
+    {
+      "case": "arm-stack-while-32-check",
+      "sourceSha256": "0305ad4e21c9d4653d01a5bc017699c8abc58dd327d6dc807ec62b1a611657fa",
+      "exit": 3,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "check",
+        "status": "error",
+        "return_i32": null,
+        "error": {
+          "kind": "compile_limit",
+          "byte_offset": 634
+        }
+      }
+    },
+    {
+      "case": "arm-stack-while-32-run",
+      "sourceSha256": "0305ad4e21c9d4653d01a5bc017699c8abc58dd327d6dc807ec62b1a611657fa",
+      "exit": 3,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "run",
+        "status": "error",
+        "return_i32": null,
+        "error": {
+          "kind": "compile_limit",
+          "byte_offset": 634
+        }
+      }
+    },
+    {
+      "case": "arm-stack-for-10-check",
+      "sourceSha256": "61e942464ee8ff620526afde65766bc6b061d19867f5844ee930cced43d6b2d1",
+      "exit": 0,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "check",
+        "status": "checked",
+        "return_i32": null,
+        "error": null
+      }
+    },
+    {
+      "case": "arm-stack-for-10-run",
+      "sourceSha256": "61e942464ee8ff620526afde65766bc6b061d19867f5844ee930cced43d6b2d1",
+      "exit": 0,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "run",
+        "status": "completed",
+        "return_i32": 42,
+        "error": null
+      }
+    },
+    {
+      "case": "arm-stack-for-11-check",
+      "sourceSha256": "882c104a72a8b423478c88ef5527cbcde19bb3724314a2477d2964e48f775f77",
+      "exit": 3,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "check",
+        "status": "error",
+        "return_i32": null,
+        "error": {
+          "kind": "compile_limit",
+          "byte_offset": 625
+        }
+      }
+    },
+    {
+      "case": "arm-stack-for-11-run",
+      "sourceSha256": "882c104a72a8b423478c88ef5527cbcde19bb3724314a2477d2964e48f775f77",
+      "exit": 3,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "run",
+        "status": "error",
+        "return_i32": null,
+        "error": {
+          "kind": "compile_limit",
+          "byte_offset": 625
+        }
+      }
+    },
+    {
+      "case": "arm-stack-for-32-check",
+      "sourceSha256": "1218b8f6517307825d1fdeef06461b7ff1b377c1a31e756112dd007f2f460b86",
+      "exit": 3,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "check",
+        "status": "error",
+        "return_i32": null,
+        "error": {
+          "kind": "compile_limit",
+          "byte_offset": 634
+        }
+      }
+    },
+    {
+      "case": "arm-stack-for-32-run",
+      "sourceSha256": "1218b8f6517307825d1fdeef06461b7ff1b377c1a31e756112dd007f2f460b86",
+      "exit": 3,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "run",
+        "status": "error",
+        "return_i32": null,
+        "error": {
+          "kind": "compile_limit",
+          "byte_offset": 634
+        }
+      }
+    },
+    {
+      "case": "arm-stack-calls-32-check",
+      "sourceSha256": "97ee4a11710c846f5bab2cae1899955738b79995c44b587b5403fabdd40a6f89",
+      "exit": 0,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "check",
+        "status": "checked",
+        "return_i32": null,
+        "error": null
+      }
+    },
+    {
+      "case": "arm-stack-calls-32-run",
+      "sourceSha256": "97ee4a11710c846f5bab2cae1899955738b79995c44b587b5403fabdd40a6f89",
+      "exit": 0,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "run",
+        "status": "completed",
+        "return_i32": 42,
+        "error": null
+      }
+    },
+    {
+      "case": "arm-stack-calls-33-check",
+      "sourceSha256": "39a1d777b648069c7227fd185038bc2347dbd4980e2b96e6e2a34cde4cdecee9",
+      "exit": 3,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "check",
+        "status": "error",
+        "return_i32": null,
+        "error": {
+          "kind": "compile_limit",
+          "byte_offset": 163
+        }
+      }
+    },
+    {
+      "case": "arm-stack-calls-33-run",
+      "sourceSha256": "39a1d777b648069c7227fd185038bc2347dbd4980e2b96e6e2a34cde4cdecee9",
+      "exit": 3,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "run",
+        "status": "error",
+        "return_i32": null,
+        "error": {
+          "kind": "compile_limit",
+          "byte_offset": 163
+        }
+      }
+    },
+    {
+      "case": "arm-stack-calls-64-check",
+      "sourceSha256": "1955d05378dceb834674f9ae13e85594903cafd1afb4cc9d58eff2ced2faf26c",
+      "exit": 3,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "check",
+        "status": "error",
+        "return_i32": null,
+        "error": {
+          "kind": "compile_limit",
+          "byte_offset": 163
+        }
+      }
+    },
+    {
+      "case": "arm-stack-calls-64-run",
+      "sourceSha256": "1955d05378dceb834674f9ae13e85594903cafd1afb4cc9d58eff2ced2faf26c",
+      "exit": 3,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "run",
+        "status": "error",
+        "return_i32": null,
+        "error": {
+          "kind": "compile_limit",
+          "byte_offset": 163
+        }
+      }
+    },
+    {
+      "case": "arm-stack-combined-budgets-check",
+      "sourceSha256": "a2e56968876db0dac188ae0acaa09c90d73091a5ca17a47a051e16e06f7d204d",
+      "exit": 0,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "check",
+        "status": "checked",
+        "return_i32": null,
+        "error": null
+      }
+    },
+    {
+      "case": "arm-stack-combined-budgets-run",
+      "sourceSha256": "a2e56968876db0dac188ae0acaa09c90d73091a5ca17a47a051e16e06f7d204d",
+      "exit": 0,
+      "result": {
+        "schema": "browniec.result/v1",
+        "profile": "brownie.m1-scalar/1",
+        "command": "run",
+        "status": "completed",
+        "return_i32": 42,
+        "error": null
+      }
+    }
+  ],
+  "frameInspection": {
+    "kind": "MSVC development prologue reservation, not peak stack measurement",
+    "msvcVersion": "14.51.36231",
+    "flags": [
+      "/std:c11",
+      "/TC",
+      "/MT",
+      "/Od",
+      "/c",
+      "/FAs"
+    ],
+    "emitCommand": [
+      "build/toolchain/fairyc.exe",
+      "experimental",
+      "emit-workspace-c",
+      "--target",
+      "x86_64-windows-msvc",
+      "--locked"
+    ],
+    "beforeC": {
+      "path": "build/parser-stack/before.c",
+      "sha256": "e9f8148705d6907423dca6e32bf1336c40aa2badae607f43ae335ba9e7d5a811"
+    },
+    "afterC": {
+      "path": "build/parser-stack/final.c",
+      "sha256": "22ee231bef2f14b5656d55fec8cdfd0845bd8e887558d6260bab30d5332fcbf6"
+    },
+    "before": {
+      "control": {
+        "cSymbol": "fy_fn_139",
+        "prologueReservationBytes": 20920
+      },
+      "operand": {
+        "cSymbol": "fy_fn_144",
+        "prologueReservationBytes": 10424
+      }
+    },
+    "after": {
+      "control": {
+        "cSymbol": "fy_fn_140",
+        "prologueReservationBytes": 1464
+      },
+      "control_if": {
+        "cSymbol": "fy_fn_142",
+        "prologueReservationBytes": 2680
+      },
+      "control_for": {
+        "cSymbol": "fy_fn_141",
+        "prologueReservationBytes": 3912
+      },
+      "control_while": {
+        "cSymbol": "fy_fn_146",
+        "prologueReservationBytes": 2072
+      },
+      "control_return": {
+        "cSymbol": "fy_fn_143",
+        "prologueReservationBytes": 7624
+      },
+      "control_switch": {
+        "cSymbol": "fy_fn_144",
+        "prologueReservationBytes": 3480
+      },
+      "control_transfer": {
+        "cSymbol": "fy_fn_145",
+        "prologueReservationBytes": 1016
+      },
+      "operand": {
+        "cSymbol": "fy_fn_152",
+        "prologueReservationBytes": 5208
+      },
+      "named_operand": {
+        "cSymbol": "fy_fn_150",
+        "prologueReservationBytes": 2408
+      },
+      "binding_operand": {
+        "cSymbol": "fy_fn_134",
+        "prologueReservationBytes": 3304
+      }
+    },
+    "limitations": [
+      "Saved registers, call overhead and other frames excluded.",
+      "Inspection unit was compiled only; CLI outcomes use Fairy C build artifacts.",
+      "No linker stack-reserve override or runtime code patch."
+    ]
+  },
+  "inputSha256": [
+    {
+      "path": "examples/answer.brc",
+      "sha256": "d4bc07a5089dc27642c87167cf42363c416f20eb7e3ed413612f5edc73fcccfd"
+    },
+    {
+      "path": "examples/array-assignment.brc",
+      "sha256": "13fdfc3681adf166752b8929c250f8909df42e42fc2819c28ec9828a20256010"
+    },
+    {
+      "path": "examples/array-call-assignment.brc",
+      "sha256": "7daee96a561348289a225382475b5810c2f8441f4a489ee0851ac7412f1336eb"
+    },
+    {
+      "path": "examples/array-copy.brc",
+      "sha256": "a5778a41335b3e4d61ac871ffcfc3433d020476e352223bfa913293d923a39a9"
+    },
+    {
+      "path": "examples/array-helpers.brc",
+      "sha256": "906e2ee664c3023775430d370baa27ae7e8285c68e68d2acf94f8f5732d54df3"
+    },
+    {
+      "path": "examples/array-length.brc",
+      "sha256": "490119c406bcd9b61ec8ce9444ee7bc5cac06e42bdb69c025d4e86592a57da81"
+    },
+    {
+      "path": "examples/array-literal-assignment.brc",
+      "sha256": "108e1a0ea38e90ad76d347f5ec61c215ec4e061cb577dd0b4309816104e41bbd"
+    },
+    {
+      "path": "examples/array-parameters.brc",
+      "sha256": "48b705f298d5af0a36c8fba573e6044322f92c69d7288d38eb8d443d1f679e78"
+    },
+    {
+      "path": "examples/array-read.brc",
+      "sha256": "8763063bdb093f91a40f30b350cdc5abb7e46bdbf850989a9085c115a8399539"
+    },
+    {
+      "path": "examples/array-results.brc",
+      "sha256": "cfd5591ee22a786e46b5a93637efcae58f857af24fe8a4941353ca12f041ee5f"
+    },
+    {
+      "path": "examples/array-return-calls.brc",
+      "sha256": "a108f01e364aee72563e3291a035109fe2cb92fd837afa900cf6e490968982f0"
+    },
+    {
+      "path": "examples/array-return-literals.brc",
+      "sha256": "ee04f57f1d3fe848ed5a4db459cbddb34dc249d65456b3a1d7be7c168bc0a1e5"
+    },
+    {
+      "path": "examples/array-scopes.brc",
+      "sha256": "d289003eb1523babd1afa91b9da623be25e48b5274dec4e12912ae1712a4c0b0"
+    },
+    {
+      "path": "examples/array-utf8-calls.brc",
+      "sha256": "736fac78f6743fa036f1bfe82816b757011a63ab66c78fa54bbe48e94c9c3fbf"
+    },
+    {
+      "path": "examples/array-utf8-literals.brc",
+      "sha256": "cc67e42c35f4954ec899b05ee7b6c12b04ebca60d3f9c30ee689a986537fb538"
+    },
+    {
+      "path": "examples/array-utf8.brc",
+      "sha256": "9c79fef0e366527802b7b485c764ee619aef474abd4b059399bb0f71f20cc869"
+    },
+    {
+      "path": "examples/array-write.brc",
+      "sha256": "9d7b41ca01f6d14dbb11dcc4d25cbdf4c7e54f2b18b3066272acc7f89f55c84a"
+    },
+    {
+      "path": "examples/bitwise.brc",
+      "sha256": "c3999f980ebf27ce60661e4d99e4710a9ab72277b11fbf10cd6740110385fd78"
+    },
+    {
+      "path": "examples/branches.brc",
+      "sha256": "a7e3cf0aaf73a7db73829b4198924dae41ecb4f8e517112d6dc1f89b687a7648"
+    },
+    {
+      "path": "examples/functions.brc",
+      "sha256": "e34112715dd364859da2f99137f7fd54235017258fa54ddd40b0b7e43dc8ce1b"
+    },
+    {
+      "path": "examples/helper-records.brc",
+      "sha256": "68f935b7bd1f79093d5b30cd91599e82f4606a159d3b7e6a3e48ef63ecab5a04"
+    },
+    {
+      "path": "examples/i64.brc",
+      "sha256": "3d177e58842b754a1b421f6cf9616e934b9ce05bf892c36e7f69512f7240f9b4"
+    },
+    {
+      "path": "examples/locals.brc",
+      "sha256": "7f7be3b0aa4c8d7cda69d323f9434e56d7ac170eb646dafedff46627fce346e5"
+    },
+    {
+      "path": "examples/loops.brc",
+      "sha256": "06c3e64a80e65d8088cb373c7fa1f0f2589980fb2b0f4d3dbc5aa124922789f6"
+    },
+    {
+      "path": "examples/propagation.brc",
+      "sha256": "ecb67b872f32f8616a35208819564b952fa3894d5e44f308f2781de559763c13"
+    },
+    {
+      "path": "examples/switch-arm-statements.brc",
+      "sha256": "8f6d4dfbe92aced9bf414146b39543b51cfae41763a82da92b596cb39e0f2b0b"
+    },
+    {
+      "path": "examples/switch-expression.brc",
+      "sha256": "cff29c8d5c330d49d142a12b0ddd1a6bf9fcedf087e7d15ce9827b112f893af2"
+    },
+    {
+      "path": "examples/tagged.brc",
+      "sha256": "fd9fe2238a6e65eb4e0d2febf0eb6cdef92a0051802251676308258c05ff3bb4"
+    },
+    {
+      "path": "examples/unsigned.brc",
+      "sha256": "03bfeca00b804495c0ddb8d72ada169b639f9527edbae333a8c354178d83173d"
+    },
+    {
+      "path": "examples/widening.brc",
+      "sha256": "73bee579f0b68d4bd1dd15f08e0b4ed2c22e416affce1abd515ae1d50983778b"
+    },
+    {
+      "path": "fairy.lock",
+      "sha256": "bd4e3d0a5291a81024a7fc47deff0fb847a1bcf102ccca602b1159e74f675ee7"
+    },
+    {
+      "path": "fairy.toml",
+      "sha256": "f5254ba793d9012470c697e8657688a4ea5465c138fba6d748707d5bfa4b31fb"
+    },
+    {
+      "path": "src/arithmetic.fy",
+      "sha256": "8192e6ba97498d059b0505307bc2bf84ac58d9722dc5f597587f8ae81a1081d3"
+    },
+    {
+      "path": "src/array_call_source.fy",
+      "sha256": "57af1c63a68bf060d6c555d1ec3f929d3c53715691074d68a5ae6f7ab58392a2"
+    },
+    {
+      "path": "src/array_call_vm.fy",
+      "sha256": "9da46f3a605e5a63ee7309d607c06473a3c175ae9e30f6e0b759e9da9a51e6da"
+    },
+    {
+      "path": "src/array_layout.fy",
+      "sha256": "d3497dfb6bb7e9ac8ceece4ae88a2274b6b40b49e3c5fecfc509179c03c91cdd"
+    },
+    {
+      "path": "src/array_meta.fy",
+      "sha256": "d1a07319dc2bb7eb95298e3920eaec63c1a4c1390a00c5469528a77e97612894"
+    },
+    {
+      "path": "src/array_owners.fy",
+      "sha256": "9dcf8250ad214578e9cfb5f9727cec318a63864f7a92783ff10245b16d8c6b63"
+    },
+    {
+      "path": "src/array_parameters.fy",
+      "sha256": "5928d2bff6129d55c849c3798dc857cfcdcc88a2fe9b38fcd5c997b2373c18f4"
+    },
+    {
+      "path": "src/array_range_vm.fy",
+      "sha256": "c91afd89b2f3f8f650d61cff3820ff5958f49a6280ba36114fe13b47376db8d3"
+    },
+    {
+      "path": "src/array_result_source.fy",
+      "sha256": "378a8dc6bd5ecd79aec30a95d402dba0702004e6c18f3ff5d57b4341514c85bd"
+    },
+    {
+      "path": "src/array_result_vm.fy",
+      "sha256": "3cd5388806afa0f4c3a6a8518f154adaf6f9904b18bc7c30ed787d37c43eacfa"
+    },
+    {
+      "path": "src/array_results.fy",
+      "sha256": "1dccba6ebbc493654aea82e305b7c3f9b0c226c8c475d1c80f19fa1014e63e8e"
+    },
+    {
+      "path": "src/array_slices.fy",
+      "sha256": "23b3a9f5fc7003f1df9235d81b31992cfd48c23561915eeb88d5a4e3f1e9e0c5"
+    },
+    {
+      "path": "src/array_source.fy",
+      "sha256": "969b16d67e852a5d47b7d06bdc48382259ea5d7139ac8f7edfddc4889dd7cea6"
+    },
+    {
+      "path": "src/array_storage.fy",
+      "sha256": "00808c116e0fb86ce063d7fd4cc9d1f8fd29f19b277449e59e3569491a3ee534"
+    },
+    {
+      "path": "src/array_verifier.fy",
+      "sha256": "067bd08931ef07a2a60d368fb2c933e73d218ee886c048ce2cd42bda18d14d8f"
+    },
+    {
+      "path": "src/array_vm.fy",
+      "sha256": "1192be6ce580ae392317e9f7cca6316d372501d0e3e5a464f63e0d2572b1930d"
+    },
+    {
+      "path": "src/bits.fy",
+      "sha256": "0b030757624a8dbaea9475f90d757aeff78b9154a121af7a4d9ebd80042db1a0"
+    },
+    {
+      "path": "src/buffer_append.fy",
+      "sha256": "7a4de27685b41b772569e5a687a7626bc200f7c6152b77082cc93052bf78527a"
+    },
+    {
+      "path": "src/buffer_close.fy",
+      "sha256": "ae68d02649e04196854ba4b41f475c0c550d6d0ac5f80ebd2bbeb537fbcfaac7"
+    },
+    {
+      "path": "src/buffer_create.fy",
+      "sha256": "f133713a4f815f70cfd973933f81dd1156b7fa5c637eeb9dbad9e87f309308e0"
+    },
+    {
+      "path": "src/buffer_growth.fy",
+      "sha256": "71b855cc0e2e4e9d092cf66cf9de94ce62079e3c141e33d6b4c715fecebd1177"
+    },
+    {
+      "path": "src/buffer_host_close.fy",
+      "sha256": "4e5bcef18c020b3eccd4034cf5a5c0a8b81b53b6709ba043b876d64eaf8b7aea"
+    },
+    {
+      "path": "src/buffer_host_sweep.fy",
+      "sha256": "3a043bc009e60b55e11d07ffe40c12dcf75e44b88ea878a37405e61b414c606a"
+    },
+    {
+      "path": "src/buffer_owners.fy",
+      "sha256": "0dd45d859fec557cbe729b64f4b838b11b1d1f9dde3f779c9251cfad3bb82576"
+    },
+    {
+      "path": "src/buffer_replacement.fy",
+      "sha256": "7f8a58181ad531924d4a3f1d887c552a952ebf6df493d714b00d56112a92ae51"
+    },
+    {
+      "path": "src/buffer_resize.fy",
+      "sha256": "1870bbf133aa6e9535eb5a901cbdd54bf8e520ae2520a54b9bd03b955b9cf057"
+    },
+    {
+      "path": "src/buffer_storage.fy",
+      "sha256": "4f6b9f8e5fc5ae55551618d70eac1e74289d09a933249bf95940f98d5b2fbe8d"
+    },
+    {
+      "path": "src/buffer_truncate.fy",
+      "sha256": "9b5900d8ee8d1360c47afb4589473adfb5fe523c83de941e7a88412f9d3425fc"
+    },
+    {
+      "path": "src/buffer_utf8.fy",
+      "sha256": "a59e01627bb46851405334d0650426a9ef816a69cf1c0a5dbf6f3cec43f8b255"
+    },
+    {
+      "path": "src/buffer_utf8_meter.fy",
+      "sha256": "b066f8b567b465d709cc356193c92aeea33d8918ae7c500fb23992993d455142"
+    },
+    {
+      "path": "src/buffer_utf8_pool.fy",
+      "sha256": "74eafd20969398df0475dee122130292aa3bd51dfbfea2a32cea3819def397df"
+    },
+    {
+      "path": "src/buffer_utf8_scan.fy",
+      "sha256": "f51a409ff4f1f6fd427b1b0ef9526d16c506af197478ba0281d6e376ff9e6a7a"
+    },
+    {
+      "path": "src/buffer_utf8_session.fy",
+      "sha256": "709338c5a33d28ea20ae41851a27d0139b40c1b7f69c4a827503bccf7da54330"
+    },
+    {
+      "path": "src/buffer_write.fy",
+      "sha256": "ddb6db325a50f5f660c90971661144a582794ec84c0be5f675d503c237829dab"
+    },
+    {
+      "path": "src/casts.fy",
+      "sha256": "59da4a4ecef63833cc383495390e150b964bf41b353c4b150dcacb6be66caba6"
+    },
+    {
+      "path": "src/cells.fy",
+      "sha256": "71b82add3e95b86a1b7bcb88c3f97f6ae38bae0ac3ec8b1a2de925b10a64e433"
+    },
+    {
+      "path": "src/cli_input.fy",
+      "sha256": "ec91de62e6b5147d117d6fe0366ebcf617b556c074bf1dd91cb10188f96507ba"
+    },
+    {
+      "path": "src/compiler.fy",
+      "sha256": "783fb4dd2d4a01bd08993ec961d2f3feda09635838921ba19ff35ee9c219ae24"
+    },
+    {
+      "path": "src/errors.fy",
+      "sha256": "e8070ef5c6380460dacb579c33f2e180b9e683286c8cb0827e30d82a581a4646"
+    },
+    {
+      "path": "src/functions.fy",
+      "sha256": "e0c6c9526212519b08eb39ce63ba53227d0d7c0ce81b271666db8f4055a2d9f1"
+    },
+    {
+      "path": "src/ir.fy",
+      "sha256": "a1bdee57266e352afd9fef96388c3752f3b3a48a2e7edda23dd195092762d461"
+    },
+    {
+      "path": "src/lexer.fy",
+      "sha256": "0a64c45b3a3512ada4610c244ce874d306e417cde0fce4cd99a419048002861e"
+    },
+    {
+      "path": "src/locals.fy",
+      "sha256": "f89cab6159330ec0ac269ef02cedd59d15f6f3cfae2d60fc89d43b5ccdf32cda"
+    },
+    {
+      "path": "src/loops.fy",
+      "sha256": "d25dccfb4d3d50daa6e82a6a2f8df345ea72fd4a559e3a8882d6cda0230cbee2"
+    },
+    {
+      "path": "src/main.fy",
+      "sha256": "a0ea02fedcb677af4a670bd7f30dd62ace5ee4fbaa69a07c34fdb342cd2ba9b3"
+    },
+    {
+      "path": "src/mixed_call_vm.fy",
+      "sha256": "9e15d08944a87d3a97ce499f88e8ba0712a9723f396e5a9e3913551ebcc21884"
+    },
+    {
+      "path": "src/patterns.fy",
+      "sha256": "d9ba2ff9dba626968b7514c636a414932e50856c19b9d41d6825b4f91c9797aa"
+    },
+    {
+      "path": "src/propagation.fy",
+      "sha256": "9b58f0e5ed3ef79c44cf819c651e0ec456e38441c3ce8579aca31e0d7eb80bdc"
+    },
+    {
+      "path": "src/register_set.fy",
+      "sha256": "478e2690ee311bb3961c329becc6f9ef035276759619733cbfd0f6e441f36b73"
+    },
+    {
+      "path": "src/render.fy",
+      "sha256": "e86fb9d531c5c32321dd9df792478ca396523394ae469281a1036b57fbbd6e2d"
+    },
+    {
+      "path": "src/scalar_codec.fy",
+      "sha256": "c28ca5e5cdc38dee01d79489d8c5a709022a49001854af638258ec4536ad66f0"
+    },
+    {
+      "path": "src/shifts.fy",
+      "sha256": "510dc6a90591de165de424a377eb267917ea9973972b9b95656cc9c435675eeb"
+    },
+    {
+      "path": "src/slice_builders.fy",
+      "sha256": "4c04bb17304835fd65bacacbb2d4ac31f7abd9c0b1adc1a8f394b5859d7fe330"
+    },
+    {
+      "path": "src/slice_call_source.fy",
+      "sha256": "6ba4a8994899491eee7aa525547d2f80fdda6106060dcce8a45c202de9cf2af8"
+    },
+    {
+      "path": "src/slice_call_vm.fy",
+      "sha256": "72351c59a0a92f97cf8f4bfcb5028a0d4cae2bbdaa97922ad245f06b791cf57c"
+    },
+    {
+      "path": "src/slice_frame_vm.fy",
+      "sha256": "f2b6aea5c4cf683a2d323444841d15328d41c4fdc6aaa83fe04c5d7b1fe0115b"
+    },
+    {
+      "path": "src/slice_parameters.fy",
+      "sha256": "f7b4dca46696cd3e021b67ad7123117f926d275d5ba61b8b9f8f1ad064d13325"
+    },
+    {
+      "path": "src/slice_source.fy",
+      "sha256": "ba4a56cd429ee0d4fcb8d3651258392807af6f1ac9e4390a3e11fd69dc946dad"
+    },
+    {
+      "path": "src/slice_verifier.fy",
+      "sha256": "e3f9ea0e6aa15a7c2f52058368044ef8ccd9995709436473bcb18128a6edb07a"
+    },
+    {
+      "path": "src/slice_vm.fy",
+      "sha256": "7743454d22e5ae1969d49f7518437492626678c4177148d023ca0cf338512fb7"
+    },
+    {
+      "path": "src/struct_call_source.fy",
+      "sha256": "ee9e295b082b31f810dd2f6f983a4f2aa68ac064823f74205c486d3c865a3304"
+    },
+    {
+      "path": "src/struct_call_vm.fy",
+      "sha256": "d46de926715d2d9e4fdfab5018a54e56c4017ff6f2800692fb9904056ce97219"
+    },
+    {
+      "path": "src/struct_layout.fy",
+      "sha256": "6ab7d28a9e7216938d4386cff21563ba20997b38d27e37fa5ef803660d2d5aac"
+    },
+    {
+      "path": "src/struct_meta.fy",
+      "sha256": "078d12717b20ed04a04eefaa22409c03292b363995a2d951be617716fe8b52cd"
+    },
+    {
+      "path": "src/struct_nested_storage.fy",
+      "sha256": "e0ff5e2b75380330c99d52271af9e7fabe41f5f6ddd59090aebd1f0d1afc0651"
+    },
+    {
+      "path": "src/struct_parameters.fy",
+      "sha256": "e65267f4b68748895d6fa856fb729df03693e496616e1d596cfcf5c2cb636aea"
+    },
+    {
+      "path": "src/struct_range.fy",
+      "sha256": "4c214845f97fb4ae0ebc0e676475855526d804d033bc8f6d31c39283b6fa0b20"
+    },
+    {
+      "path": "src/struct_result_source.fy",
+      "sha256": "3e8590e9cf6c9e7133d19481ffa308408fff06abd0ff8f46ffcaaf8d24d09eec"
+    },
+    {
+      "path": "src/struct_result_vm.fy",
+      "sha256": "4dd31897726afc3528a91294f330b7575d611187021d3808709a4dc40f08192a"
+    },
+    {
+      "path": "src/struct_results.fy",
+      "sha256": "5682caf6754803249a6d77c161927724ffa7839a7d44da60c5972ea6d31eb452"
+    },
+    {
+      "path": "src/struct_source.fy",
+      "sha256": "58eacd663dd6f0bbd9a231783ad90c0a06c154d1f20cc175f093831eb1614a05"
+    },
+    {
+      "path": "src/struct_storage.fy",
+      "sha256": "f371eedc083aea535fa6cc35f245fb6bd1c8ded52b8c4470c19fd0c4d9df0596"
+    },
+    {
+      "path": "src/struct_value_source.fy",
+      "sha256": "63224e9db2bd27d9f540eac698b1dfe3b728605625152f528b58bf104033cbb0"
+    },
+    {
+      "path": "src/struct_verifier.fy",
+      "sha256": "f68b5b4292be683128953dc4e440647c0fa2557b3fd0b5fd7674eaedced1d8f5"
+    },
+    {
+      "path": "src/struct_vm.fy",
+      "sha256": "370f32db5f75e6eca439fc338c414fdde084d97c9a519e2cb49aa07bfdb702d2"
+    },
+    {
+      "path": "src/tagged.fy",
+      "sha256": "67770f8ec8f3e35a2a6196cda87310844d37358f86f8b22eb81b49df1f65f1bf"
+    },
+    {
+      "path": "src/text_source.fy",
+      "sha256": "17dc833c6377b59f66c015c8ce471ec58095606d5f9261884694793fea6c4040"
+    },
+    {
+      "path": "src/types.fy",
+      "sha256": "906f5ba160de53f60d23e344e141181f902f36de60a4060375bef97a2162be23"
+    },
+    {
+      "path": "src/verifier.fy",
+      "sha256": "c46dc452a192e03d540f445805c95b7fbffeba9d1c8899fadc61918bb576eac0"
+    },
+    {
+      "path": "src/vm.fy",
+      "sha256": "cd28ab07b33989ae05ca0653e06f7dfb3e0ba9fb2383f36a93fcb60345f5e127"
+    },
+    {
+      "path": "tests/switch_arm_statements.fy",
+      "sha256": "f2d8a75759bf6d3f69be2951714ea55868de0960e8afb43215c5a3c21bfce9ba"
+    },
+    {
+      "path": "toolchain.json",
+      "sha256": "0a1a5c2b5a219099b7c3c2b42a8dde9cb70b68e435e8a071e36c36213d1740be"
+    },
+    {
+      "path": "tools/check-m1-cli.py",
+      "sha256": "9de0f8c340f3da1f769c23e148088bea2ec1381284232494409aabae1ea29302"
+    },
+    {
+      "path": "tools/check-m2-array-call-reads.py",
+      "sha256": "95a0bceb6ca959aafd5951afdb24eaa7b26a05cdf1af12176ee7f2daf0678e57"
+    },
+    {
+      "path": "tools/check-m2-array-slice-alias.py",
+      "sha256": "e623322885f14b5a0423dad6f9d6eea0bf1c757257414a5cdbeb0a580e5ed95e"
+    },
+    {
+      "path": "tools/check-m2-struct-call-reads.py",
+      "sha256": "ff3cf7dfe42533a5a2e43bafde10d460c43bb1babe2b50a8a0c25fafdd1ac38b"
+    },
+    {
+      "path": "tools/m1_arm_statement_cases.py",
+      "sha256": "4c6c967769d1f81f3a0eb679c130ad8a7bdf87076aebebf45970f9211e29ae8f"
+    },
+    {
+      "path": "tools/m1_bitwise_cases.py",
+      "sha256": "44b474577db55d5afd8f5a3a4cdd0b4d13bf44fb1b4a8b4e2eee170698359ca0"
+    },
+    {
+      "path": "tools/m1_i64_cases.py",
+      "sha256": "161a45f662295cad8742655bdd59aae4bdfe13e10a241894d3b82ad1bc1eefdc"
+    },
+    {
+      "path": "tools/m1_propagation_cases.py",
+      "sha256": "f3728cffafc48866c44e16badb8a256f3e45c0299ab3c7a3d0c1c1ab69dbd986"
+    },
+    {
+      "path": "tools/m1_shift_cases.py",
+      "sha256": "7b12d715d1ed86b142fbf75c25fdb678f253b0c40ac07229d8f9d9bb0afa4acf"
+    },
+    {
+      "path": "tools/m1_switch_expression_cases.py",
+      "sha256": "09759b7891ad407dadabfa18c0c51afa9cb7751912928da8b9fae0598c18b32b"
+    },
+    {
+      "path": "tools/m1_tagged_cases.py",
+      "sha256": "70de6cf5e68e1fe11ee3dd4e72b506b1a19677133a8b483b7a039efb651d963f"
+    },
+    {
+      "path": "tools/m1_unsigned_cases.py",
+      "sha256": "2c0232b88abab5e8d7821cb0d91ad8efa8b4ca6e5048a6e9d6fe9793245b5d9b"
+    },
+    {
+      "path": "tools/m1_widening_cases.py",
+      "sha256": "6a4d87dbd0d3570c50bab7b3760839fbee6670cd16152892bbf536f0662e50cc"
+    }
+  ],
+  "limitations": [
+    "Six focused native groups per profile, not the complete 84-group M1 native suite.",
+    "All M1 CLI cases and three relevant M2 CLI matrices passed; other M2 matrices were not rerun.",
+    "CLI runtime uses a cleared environment and tool-free PATH; not OS isolation evidence.",
+    "No Linux execution, M0 rerun, clean-machine packaging or throughput measurement.",
+    "Bounded recursive descent remains; not a proof for every source or host stack size.",
+    "Borrowed-signature execution remains gated; no opcode, Fuel or source capability changes."
+  ]
+}
