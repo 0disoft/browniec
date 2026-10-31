@@ -22,7 +22,9 @@ slice namespace with ordinary owned-array slices:
 A site cannot have both an owned-array root and a borrowed origin. The fields
 add 160 fixed u8 entries to Program; no per-PC state or runtime frame table is
 added. Native layout/process-memory changes have not been measured. Existing
-Programs produced by the source compiler leave all new entries zero.
+Programs without borrowed signatures leave all new entries zero. The
+[gated source successor](m2-array-slice-parameter-source.md) now constructs
+prospective borrowed signatures while preserving the execution gate.
 
 ## Metadata and argument checks
 
@@ -62,8 +64,10 @@ borrowed declaration is rejected by metadata validation itself. The VM always
 calls the core verifier before backing allocation, Fuel preparation or dispatch,
 so prospective metadata cannot be ignored by the old runtime.
 
-The source parser still rejects slice parameters/results and publishes no new
-capability. No borrowed instruction, source signature lowering, dynamic runtime
+At this metadata checkpoint, the source parser rejected slice parameters/results.
+The gated source successor now parses borrowed formals and explicit reference
+arguments, but CLI verification/execution and slice results remain unavailable.
+No new capability is published. No borrowed instruction, source signature lowering, dynamic runtime
 origin, frame admission, CALL mutation, result escape or metering is implemented
 here. The [builder successor](m2-array-slice-builders.md) adds shared site reservation,
 formal/derived declarations and checked argument encoding while retaining the
@@ -94,7 +98,8 @@ Coverage includes formal/derived origins, retained children without live anchors
 28 malformed metadata variants, duplicate formal bindings, all sixteen sites,
 eight positions per function, foreign/dead/non-u8 argument rejection, exact source
 kind separation, ordinary Program compatibility and execution rejection before
-Fuel/backing admission. Source parameter syntax remains honestly rejected.
+Fuel/backing admission. The current source successor accepts parameter lowering while honestly rejecting
+CLI verification/execution.
 The [Windows evidence](../evidence/m2-array-slice-parameters-windows-20261031.json)
 records matching profile inputs, compiler/SDK identities, native reports, CLI
 matrix receipt hashes and retained executable hashes.

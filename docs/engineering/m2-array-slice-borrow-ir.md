@@ -5,7 +5,8 @@ slice instruction builders to rootless u8 formal and derived sites declared by
 the [borrow-aware IR builders](m2-array-slice-builders.md). The independent core
 verifier still rejects borrowed parameter metadata before runtime admission.
 No guest syntax, runtime borrow instruction support or version capability is
-enabled by this construction-only change.
+enabled by this construction-only change. The [source successor](m2-array-slice-parameter-source.md)
+adds gated signature and explicit reference argument lowering.
 
 ## Construction contract
 
@@ -57,8 +58,9 @@ Fuel schedule and source parser. Existing owned-array slices retain their opcode
 encoding and scalar result types. No Program field, payload copy, array owner
 or runtime allocation is added.
 
-Source parameter declaration/binding, borrowed call argument parsing,
-independent borrowed control-flow verification, dynamic runtime origins, mixed
+Source parameter declaration/binding and borrowed call argument parsing are
+covered by the gated source successor. Independent borrowed control-flow
+verification, dynamic runtime origins, mixed
 owned/borrowed frame admission, forwarding/recursion execution and metered normal
 and error cleanup remain pending. Slice results remain unavailable. The gate
 must remain until runtime and verifier integration are implemented and verified.

@@ -1,5 +1,15 @@
 # Brownie C
 
+- Gated borrowed slice source parameters: implemented at `8278682`.
+  Source lowering accepts readonly `ref u8[]` formals and explicit `ref name`
+  arguments over existing lexical slices, including forward/recursive forms and
+  mixed scalar/array/record signatures. Formal-derived bindings use rootless
+  origins and existing reverse cleanup. The core verifier still rejects every
+  borrowed signature before runtime admission; CLI check/run return verification
+  errors. No borrowed CALL execution or new opcode/Fuel/capability is enabled.
+  Development and release each passed 19 native groups and 326 tool-free CLI
+  invocations. See [the source contract](docs/engineering/m2-array-slice-parameter-source.md).
+
 - Private borrowed slice instruction builders: implemented at `d001a75`.
   Existing UTF-8, length, read, close and subslice helpers now construct typed IR
   for rootless u8 formal/derived sites. Shape checks require one same-function
