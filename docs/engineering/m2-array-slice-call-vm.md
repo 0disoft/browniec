@@ -4,7 +4,7 @@ Implementation: `c70abfa`. `slice_call_vm` adds prospective native
 CALL admission and frame cleanup for borrowed u8 slices. It uses Programs that
 passed [independent flow inspection](m2-array-slice-borrow-flow.md). Admission is now
 connected through the [gated CALL frame adapter](m2-array-call-frame-vm.md);
-automatic VM cleanup remains pending. The existing execution gate, CLI behavior,
+the later [shared lifecycle](m2-array-slice-lifecycle-vm.md) connects automatic cleanup. The existing execution gate, CLI behavior,
 opcodes, Fuel prices and version capabilities remain unchanged.
 
 ## Frame origins and provenance
@@ -79,7 +79,9 @@ Reusing the child frame is safe after successful cleanup.
 Cleanup uses the reserve prepaid by successful admission. This is a private
 primitive, not an independently metered arbitrary host cleanup service. Automatic
 VM return/error/cancellation paths and preservation of an original VM outcome
-are not connected in this checkpoint. The old invocation cleanup is unchanged.
+were not connected in the original checkpoint. The later
+[shared lifecycle](m2-array-slice-lifecycle-vm.md) now connects them and shares
+the staged pool drain with invocation cleanup.
 
 ## Bounds and remaining integration
 
@@ -97,10 +99,11 @@ It separates retention preparation from publication and leaves registers and
 return-frame state outside that boundary. The [CALL frame successor](m2-array-call-frame-vm.md)
 now publishes those registers and return tables after mixed success. The
 [dynamic slice adapter](m2-array-slice-frame-vm.md) resolves runtime roots privately;
-its executable instruction wiring, normal/error frame cleanup and all reserves
-still need to be connected and verified. Until that work is complete,
-every borrowed Program remains rejected by executable verification and CLI check/run. No source capability or
-successful guest forwarding/recursion execution is claimed here.
+the [shared lifecycle](m2-array-slice-lifecycle-vm.md) now connects its instruction
+dispatch and normal/error cleanup. Until public admission is promoted,
+every borrowed Program remains rejected by public execution verification and
+CLI check/run. No public source capability or public forwarding/recursion
+execution is claimed here.
 
 ## Focused verification
 

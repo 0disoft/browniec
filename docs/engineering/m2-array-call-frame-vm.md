@@ -65,6 +65,7 @@ Retained CLI hashes, input hashes and actual outcomes are recorded in the
 Full native suites, other M2 matrices, M0, Linux, isolation, packaging and
 performance are outside this focused selection.
 
-Dynamic slice instruction wiring and automatic normal/error frame cleanup remain
-the next integration work. The execution gate stays closed until those paths,
-including question propagation and loop transfers, are verified together.
+The [shared lifecycle successor](m2-array-slice-lifecycle-vm.md) connects dynamic
+slice instructions and automatic normal/error cleanup, including native question
+propagation and loop-transfer cases. Public borrowed execution remains gated;
+public admission and CLI conformance are a separate follow-up.

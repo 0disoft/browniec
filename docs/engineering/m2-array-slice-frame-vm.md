@@ -5,8 +5,8 @@ adds a private native instruction boundary for immutable, independently
 inspected Programs. It combines a same-function PC partition with the
 [borrowed-frame context](m2-array-slice-call-vm.md) and supports opcode 55
 (`slice_utf8`), 56 (`slice_close`), 57 (`slice_length`), 58 (`slice_read`)
-and 59 (`slice_sub`). It uses only private native state; no executable VM or
-CLI wiring.
+and 59 (`slice_sub`). The later [shared lifecycle](m2-array-slice-lifecycle-vm.md)
+connects it to the shared VM loop; public borrowed CLI execution stays gated.
 
 ## Dispatch and roots
 
@@ -82,11 +82,12 @@ owner generations, sessions and payload unchanged; rooted failures preserve
 `slice_vm.step` atomic behavior.
 
 This boundary copies no payload, creates no owner or context, adds no opcode or
-capability, and does not enable the gate. Automatic normal/error cleanup and
-executable dynamic slice instruction wiring remain pending. The
+capability, and does not enable the gate. The later
+[shared lifecycle](m2-array-slice-lifecycle-vm.md) connects instruction dispatch
+and normal/error cleanup. The
 [mixed borrowed/owned transaction](m2-array-mixed-call-vm.md) is now connected
 to executable CALL through the [frame publication adapter](m2-array-call-frame-vm.md).
-That does not yet connect dynamic slice instruction dispatch or automatic cleanup.
+Public borrowed-source gate promotion remains separate.
 
 ## Focused verification
 

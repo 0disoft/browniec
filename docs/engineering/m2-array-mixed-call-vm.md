@@ -99,11 +99,12 @@ measured peak memory, allocation count, execution time, or latency.
 ## Pending integration
 
 A [private dynamic slice adapter](m2-array-slice-frame-vm.md) now dispatches
-borrowed instructions through frame origins. The executable VM does not yet
-connect that dynamic instruction adapter. The [CALL frame successor](m2-array-call-frame-vm.md)
+borrowed instructions through frame origins. The
+[shared lifecycle successor](m2-array-slice-lifecycle-vm.md) now connects it
+to the common execution loop and normal/error cleanup. The [CALL frame successor](m2-array-call-frame-vm.md)
 now resolves mixed admission from live CALL context and publishes scalar/return
-state after success. Automatic normal/error frame cleanup remains pending, so
-frame release is not part of this admission claim. Gate integration and guest
+state after success. Frame release is covered by the lifecycle successor,
+not this original admission-only claim. Public gate promotion and public
 execution of borrowed source remain disabled.
 
 ## Focused verification
