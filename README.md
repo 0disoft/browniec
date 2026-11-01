@@ -79,6 +79,13 @@ Implemented at `6ea599c`; development and release each passed 15 native groups
 and 2,421 CLI cases, with 366 matching current input hashes. See the
 [mutable frame Windows evidence](docs/evidence/m2-slice-mutable-call-vm-windows-20261101.json).
 
+The [private mutable CALL execution stage](docs/engineering/m2-slice-mutable-execution.md)
+now performs mutable formal reads/writes through the shared VM core, publishes
+scalar/control frames after successful transactions and restores callers across
+scalar/tagged/array/record returns. Native tests execute nested and reused frames,
+actual writes and abort cleanup. Mutable source parameters and public admission
+remain gated; this is inspected IR execution.
+
 ## Historical stages
 
 The notes below record implementation stages and gated behavior at the named

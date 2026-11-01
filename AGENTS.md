@@ -1,5 +1,18 @@
 # AGENTS.md
 
+- Private mutable CALL execution: the shared core now routes mutable CALLs
+  through checked scalar/control publication and the native frame transaction.
+  Rootless mutable instructions authenticate the receipt/session, use existing
+  read/write/length/UTF-8/close prices and detach formals on close. Scalar/tagged,
+  array and record returns restore caller authority; abort uses mutable finish.
+  `execute_mutable` requires inspected immutable IR,32 initialized unique native
+  receipts and mandatory finish on every result. Legacy execute passes an empty
+  view backed by one inert receipt rather than allocating the full collection.
+  Public verify/VM and mutable source grammar remain gated; no Program fields,
+  opcodes, profile, capability or public/readonly price changes. Next is exact
+  mutable parameter/argument source lowering and deliberate public promotion.
+  See [the contract](docs/engineering/m2-slice-mutable-execution.md).
+
 - Private mutable slice CALL frame adapter: implemented at `6ea599c`.
   `slice_mutable_call_vm` stages mixed shared retention and exclusive handoff, copies owned arguments last, then
   publishes child loan/origin bindings and a unique per-CALL receipt. Formal

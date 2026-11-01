@@ -131,6 +131,20 @@ pub fn Result<usize,errors::Error> enter(ref ir::Program p,usize pc,usize parent
     staged.active=true;store(receipt,ref staged);return .ok(remaining);
 }
 
+// Authenticated mutable-formal metadata only; payload access and complete
+// instruction charging belong to the dispatch adapter.
+pub fn Result<owners::View,errors::Error> view(ref ir::Program p,usize function,usize frame,usize site,
+    ref Frame receipt,ref shared::Frames frames,ref loans::State loan,ref arrays::State state,usize capacity,usize offset){
+    if(!receipt.active || frame==0 || frame>=32 || site>=16 || receipt.parent!=frame-1 || receipt.target!=function ||
+        receipt.batch.count==0 || receipt.batch.count>8 || receipt.batch.frame!=receipt.parent || p.slice_roots[site]!=0 || !ir::exclusive(p,site)){return .err(errors::make(5,offset));}
+    var usize i=0;while(i<receipt.batch.count){if(receipt.sites[i]==site){
+        if(!absent(receipt.detached[i])){return .err(errors::make(5,offset));}
+        let slices::Ticket ticket=loan.tickets[frame*16+site];let owners::Token token=checked(p,function,frame,site,ticket,frames,loan,state,capacity,offset)?;
+        if(!same(token,receipt.batch.leases[i].view.root) || !session(receipt,i,ticket,ref loan.pool)){return .err(errors::make(5,offset));}
+        return .ok(loan.pool.slots[ticket.slot].view);
+    }i+=1;}return .err(errors::make(5,offset));
+}
+
 // Closing a mutable formal relinquishes its binding, not the caller's owner
 // session. Keep the current capability in the private receipt until return.
 pub fn Result<usize,errors::Error> release(ref ir::Program p,usize function,usize frame,usize site,

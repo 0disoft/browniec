@@ -124,3 +124,7 @@ public admission. The legacy mutable-signature gates remain intact in this slice
 Full native, other M2, Linux, M0, isolation, packaging, allocator and timing checks
 are outside this selection. No native memory/stack/performance measurement is
 claimed. Local commits only; no push, publication, packaged release or deployment.
+
+The [private shared-loop execution successor](m2-slice-mutable-execution.md) now
+connects scalar/control publication, mutable formal dispatch, normal returns and
+abort cleanup. Mutable source parameters and public admission remain gated.
