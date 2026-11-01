@@ -54,11 +54,17 @@ The [private exclusive CALL handoff foundation](docs/engineering/m2-slice-exclus
 now transfers and restores fresh exclusive tickets atomically in the existing
 pool slots, preserving owner sessions and invalidating older generations.
 Native tests cover actual scalar writes, 31 nested handoffs, generation reserves
-and abort cleanup in a full mixed pool. Mutable CALL IR/VM wiring and guest
+and abort cleanup in a full mixed pool. Mutable CALL runtime wiring and guest
 parameters remain gated; this is a native protocol foundation. Implemented at
 `88b96ff`; development and release each passed 26 native groups and 2,421 CLI
 cases, with 363 matching input hashes. See the
 [handoff Windows evidence](docs/evidence/m2-slice-exclusive-handoff-windows-20261101.json).
+
+The [private mutable CALL IR proof](docs/engineering/m2-slice-mutable-call-ir.md)
+now admits exact mutable arguments and formal forwarding during independent
+inspection, rejects repeated exclusive sources/owned roots and preserves shared
+duplicate arguments. Runtime frame handoff/restore and guest mutable parameters
+remain gated. No public capability or Fuel price changes.
 
 ## Historical stages
 

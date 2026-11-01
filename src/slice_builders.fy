@@ -36,7 +36,7 @@ pub fn Result<usize, errors::Error> parameter_typed(ref mut ir::Program p, usize
     return .ok(site);
 }
 
-// Private descriptor only: CALL admission and public execution remain gated.
+// Private descriptor: CALL proof is supported; runtime/public execution is gated.
 // All fallible checks finish in parameter_typed before setting the mode bit.
 pub fn Result<usize,errors::Error> parameter_exclusive(ref mut ir::Program p,usize function,u8 element,usize offset) {
     let usize site=parameter_typed(p,function,element,offset)?;
@@ -77,7 +77,8 @@ pub fn Result<usize, errors::Error> derived(ref mut ir::Program p, usize parent,
 }
 
 // After whole-Program metadata validation, encode one checked live source for
-// the existing CALL builders. This does not enable borrowed CALL execution.
+// the existing CALL builders. Mutable arguments still require batch uniqueness
+// proof and do not enable mutable CALL execution.
 pub fn Result<usize, errors::Error> argument(ref ir::Program p, usize parameter,
     usize site, usize caller, usize live, usize offset) {
     if (site >= 16) { return .err(errors::make(5, offset)); }

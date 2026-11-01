@@ -40,8 +40,9 @@ def main():
     selection.add_argument('--public-exclusive', action='store_true', help='Verify public mutable scalar slices, full admission, checked execution and M1 regression')
     selection.add_argument('--mutable-parameters-ir', action='store_true', help='Verify private mutable formal metadata/body proof and unchanged public execution')
     selection.add_argument('--exclusive-handoff', action='store_true', help='Verify private exclusive ticket transfer/restore, generation reserves and abort cleanup')
+    selection.add_argument('--mutable-call-ir', action='store_true', help='Verify private exact-mode mutable CALL proof, uniqueness and unchanged execution gates')
     args = parser.parse_args()
-    kind = 'slice-exclusive-handoff' if args.exclusive_handoff else 'slice-mutable-parameters-ir' if args.mutable_parameters_ir else 'slice-exclusive-public' if args.public_exclusive else 'slice-exclusive-source' if args.exclusive_source else 'slice-exclusive-vm' if args.exclusive_vm else 'slice-exclusive-pool' if args.exclusive_pool else 'slice-write-ir' if args.slice_write_ir else 'slice-exclusive-ir' if args.exclusive_ir else 'slice-element-public' if args.public_elements else 'slice-element-vm' if args.element_vm else 'slice-element-source' if args.parameter_source else 'slice-elements'
+    kind = 'slice-mutable-call-ir' if args.mutable_call_ir else 'slice-exclusive-handoff' if args.exclusive_handoff else 'slice-mutable-parameters-ir' if args.mutable_parameters_ir else 'slice-exclusive-public' if args.public_exclusive else 'slice-exclusive-source' if args.exclusive_source else 'slice-exclusive-vm' if args.exclusive_vm else 'slice-exclusive-pool' if args.exclusive_pool else 'slice-write-ir' if args.slice_write_ir else 'slice-exclusive-ir' if args.exclusive_ir else 'slice-element-public' if args.public_elements else 'slice-element-vm' if args.element_vm else 'slice-element-source' if args.parameter_source else 'slice-elements'
     groups = ({'slice_element_public': 3, 'slice_element_vm': 5, 'slice_element_source': 5, 'slice_elements': 4, 'slice_borrow_flow': 5}
               if args.public_elements else {'slice_element_vm': 5, 'slice_call_vm': 4, 'slice_frame_vm': 4, 'slice_lifecycle_vm': 6}
               if args.element_vm else {'slice_element_source': 5, 'slice_parameters_source': 5, 'slice_elements': 4}
@@ -75,6 +76,10 @@ def main():
     if args.exclusive_handoff:
         groups = {'slice_handoff': 6, 'slice_exclusive_pool': 6, 'slice_arguments': 4,
                   'slice_call_vm': 4, 'slice_mutable_parameters': 6}
+        matrices_to_run = {'slice-exclusive-source': 222, 'slice-element-public': 192}
+    if args.mutable_call_ir:
+        groups = {'slice_mutable_calls': 6, 'slice_mutable_parameters': 6,
+                  'slice_borrow_flow': 5, 'slice_parameters': 4}
         matrices_to_run = {'slice-exclusive-source': 222, 'slice-element-public': 192}
     output = ROOT / ('build/m2-' + kind) / args.profile
     output.mkdir(parents=True, exist_ok=True)
@@ -144,7 +149,7 @@ def main():
     env = {key: str(empty) for key in ['PATH', 'TEMP', 'TMP']}
     env.update({key: os.environ[key] for key in ['SystemRoot', 'WINDIR'] if key in os.environ})
     boundaries = []
-    for tag in ([] if args.exclusive_handoff or args.mutable_parameters_ir or args.public_exclusive or args.exclusive_source or args.exclusive_vm or args.exclusive_pool or args.slice_write_ir or args.exclusive_ir or args.parameter_source or args.element_vm or args.public_elements else ['i32', 'bool', 'i64', 'u32', 'usize']):
+    for tag in ([] if args.mutable_call_ir or args.exclusive_handoff or args.mutable_parameters_ir or args.public_exclusive or args.exclusive_source or args.exclusive_vm or args.exclusive_pool or args.slice_write_ir or args.exclusive_ir or args.parameter_source or args.element_vm or args.public_elements else ['i32', 'bool', 'i64', 'u32', 'usize']):
         for index, declaration in enumerate([f'fn i32 f(ref {tag}[] p){{return 42;}}fn i32 main(){{return 42;}}',
                             f'fn i32 main(){{let {tag}[1] a=[{"true" if tag == "bool" else "42"};1];let ref {tag}[] p=ref a;return 42;}}']):
             path = output / f'boundary-{len(boundaries)}.brc'
@@ -161,7 +166,7 @@ def main():
                         and result['return_i32'] == (None if mode == 'check' else 42) and result['error'] is None, str(result))
                 boundaries.append(dict(command=command, sourceSha256=digest(path), exit=done.returncode, result=result))
     m1 = None
-    if (args.exclusive_handoff or args.mutable_parameters_ir or args.public_exclusive or args.exclusive_source or args.exclusive_vm or args.exclusive_pool or args.slice_write_ir or args.exclusive_ir or args.parameter_source or args.public_elements) and os.name == 'nt':
+    if (args.mutable_call_ir or args.exclusive_handoff or args.mutable_parameters_ir or args.public_exclusive or args.exclusive_source or args.exclusive_vm or args.exclusive_pool or args.slice_write_ir or args.exclusive_ir or args.parameter_source or args.public_elements) and os.name == 'nt':
         run([sys.executable, '-B', ROOT / 'tools/check-m1-cli.py', '--exe', retained, '--profile', args.profile])
         path = ROOT / 'build/m1' / args.profile / 'cli-receipt.json'
         report = json.loads(path.read_text(encoding='utf-8'))
@@ -214,6 +219,10 @@ def main():
         report['limitations'] = ['Private native exclusive batch transfer/restore only. Fresh generations replace caller/callee tickets in the same pool slots without ending owner sessions, changing views, growing Program/pool slots or cloning payloads. Native tests perform actual scalar writes, nested transfers, failure preservation and abort drain.',
                                 'Mutable CALL IR admission, VM frame publication, runtime formal dispatch, source parameters and their public admission remain gated. No new Fuel price, opcode, profile or capability. Existing owned mutable and readonly execution stays public.',
                                 'Trusted native callers supply the real frame depth, retain one private receipt per CALL and pass current tickets after nested returns. Receipt/table cloning, direct session mutation and unrelated generation rotations are outside this protocol.',
+                                'Selected native and public mutable/readonly CLI matrices plus full M1 on Windows only. Full native, other M2, Linux, M0, isolation, packaging, allocator and timing checks were not rerun.']
+    if args.mutable_call_ir:
+        report['limitations'] = ['Private mutable CALL IR proof for exact scalar tags and access modes, live same-function sources, unique exclusive sites and statically known owned roots. Caller live sets are preserved across synchronous CALL. Shared duplicates remain legal.',
+                                'Public verify/VM still reject rootless exclusive formals after complete proof and before allocation/Fuel/dispatch. Runtime CALL costs/adapters remain gated; no mutable source parameters, frame handoff publication, new opcode, Program field, Fuel price or capability.',
                                 'Selected native and public mutable/readonly CLI matrices plus full M1 on Windows only. Full native, other M2, Linux, M0, isolation, packaging, allocator and timing checks were not rerun.']
     receipt.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
     print(f'PASS: {args.profile}: {report["nativeGroups"]} native groups; {report["cliCases"]} CLI cases', flush=True)

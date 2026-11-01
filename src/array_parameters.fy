@@ -39,6 +39,7 @@ pub fn Result<usize, errors::Error> arguments(ref ir::Program p, usize target, u
     ref registers::Set defined, usize live, usize pc) {
     let usize count = p.call_arities[site] as usize;
     var usize arg = 0;
+    var usize writers = 0; var usize writer_roots = 0; let usize one = 1;
     while (arg < 8) {
         let usize source = p.call_args[site * 8 + arg] as usize;
         if (arg < count) {
@@ -46,6 +47,15 @@ pub fn Result<usize, errors::Error> arguments(ref ir::Program p, usize target, u
             let usize encoded = p.array_parameters[parameter] as usize;
             if (p.slice_parameters[parameter] != 0) {
                 let usize checked = slices::argument(p, parameter, source, caller, live, pc)?;
+                if (ir::exclusive(p,checked)) {
+                    let usize bit = one << checked;
+                    let usize root = p.slice_roots[checked] as usize;
+                    let usize root_bit = if(root==0){0}else{one << (root-1)};
+                    // Shared duplicates remain legal. Each exclusive source and
+                    // statically known owner root may appear only once per CALL.
+                    if ((writers & bit)!=0 || (writer_roots & root_bit)!=0) { return .err(errors::make(5,pc)); }
+                    writers |= bit; writer_roots |= root_bit;
+                }
             } else if (p.record_parameters[parameter] != 0) {
                 let usize checked = records::argument(p, p.record_parameters[parameter] as usize, source, caller, live, pc)?;
             } else if (encoded != 0) {

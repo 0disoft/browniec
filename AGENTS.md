@@ -1,5 +1,16 @@
 # AGENTS.md
 
+- Private mutable scalar-slice CALL IR proof: exact tags/modes, live same-function
+  owned or formal sources and per-CALL exclusive site/owned-root uniqueness are
+  checked by the shared scalar/aggregate argument proof. Shared duplicates stay
+  legal. CALL preserves the caller live set for synchronous restoration. Public
+  verify/VM still reject rootless exclusive formals after full proof and before
+  backing/Fuel/dispatch; runtime cost/frame adapters and guest syntax stay gated.
+  No Program fields, opcodes, Fuel prices or capabilities change. Next is mixed
+  runtime CALL admission, staged frame publication and return restoration using
+  the native handoff foundation. See
+  [the contract](docs/engineering/m2-slice-mutable-call-ir.md).
+
 - Private exclusive CALL handoff/restore foundation: implemented at `88b96ff`.
   `slice_handoff` validates up to eight original exclusive tickets, rotates their generations in a staged
   sixteen-slot pool and preserves exact owner write sessions. Restore validates

@@ -90,17 +90,17 @@ fn void stores_require_exact_defined_operands_and_balanced_function_lifetimes(){
 }
 
 @test
-fn void neither_mutable_call_destinations_nor_readonly_coercions_bypass_the_private_boundary(){
+fn void exact_mutable_call_proof_stays_private_and_readonly_coercions_are_rejected(){
     var ir::Program p=header(10,42);let usize root=built(ir::array_in(ref mut p,1,10,1,true,77));let usize site=built(ir::exclusive_slice(ref mut p,root,77));
     let usize fill=constant(ref mut p,10,42);let usize init=built(ir::array_init(ref mut p,root,fill,77));let usize lo=constant(ref mut p,12,0);let usize hi=constant(ref mut p,12,1);let usize opened=built(ir::slice_open(ref mut p,site,lo,hi,77));
     let usize one=1;let usize live=1|(one<<33);
-    error(builders::argument(ref p,0,site,1,live,77),5,77);
+    assert(built(builders::argument(ref p,0,site,1,live,77))==161);
     p.slice_elements[site]=0;error(builders::argument(ref p,0,site,1,live,77),5,77);
     p.slice_elements[0]=10;assert(built(builders::argument(ref p,0,site,1,live,77))==161);
     p.slice_elements[site]=128;error(builders::argument(ref p,0,site,1,live,77),5,77);p.slice_elements[0]=138;
     let usize[1] args=[161];let usize result=built(ir::call(ref mut p,0,ref args,77));let usize call_pc=pc(ref p,9);
     let usize closed=built(ir::slice_close(ref mut p,site,77));let usize drop=built(ir::array_drop(ref mut p,root,77));let usize returned=built(ir::emit(ref mut p,8,result,0,77));finish(ref mut p,1);
-    error(verifier::inspect(ref p),5,call_pc);error(verifier::verify(ref p),5,call_pc);
+    assert(built(verifier::inspect(ref p))==p.count);error(verifier::verify(ref p),5,0);
 }
 
 @test

@@ -100,9 +100,9 @@ pub fn Result<usize, errors::Error> argument(ref ir::Program p, usize parameter,
     let usize function = p.slice_functions[destination] as usize;
     if (function == 0 || !formal(p, parameter, destination, function - 1)) { return .err(errors::make(5, at)); }
     let usize site = source - 160;
-    // Mutable formals need an exclusive CALL handoff/restore protocol. Neither
-    // access mode may coerce across this boundary before that protocol exists.
-    if (ir::exclusive(p, site) || ir::exclusive(p,destination)) { return .err(errors::make(5, at)); }
+    // Private mutable CALL proof requires exact modes; it is not VM admission.
+    // In particular, writers never coerce to shared borrows or vice versa.
+    if (ir::exclusive(p, site) != ir::exclusive(p,destination)) { return .err(errors::make(5, at)); }
     let usize one = 1;
     if ((live & (one << (32 + site))) == 0) { return .err(errors::make(5, at)); }
     let usize origin = p.slice_origins[site] as usize;
@@ -115,7 +115,8 @@ pub fn Result<usize, errors::Error> argument(ref ir::Program p, usize parameter,
     } else {
         let usize root = p.slice_roots[site] as usize;
         if (root == 0 || root > 16 || root > p.arrays.count || p.slice_functions[site] != 0) { return .err(errors::make(5, at)); }
-        if (p.array_functions[root - 1] as usize != caller || p.arrays.elements[root - 1] != p.slice_elements[destination] ||
+        if (p.array_functions[root - 1] as usize != caller || p.arrays.elements[root - 1] != ir::borrow_element(p,destination) ||
+            (ir::exclusive(p,site) && !p.arrays.mutable[root-1]) ||
             (live & (one << (root - 1))) == 0) { return .err(errors::make(5, at)); }
     }
     return .ok(site);

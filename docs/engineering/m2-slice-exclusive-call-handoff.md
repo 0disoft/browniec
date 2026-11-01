@@ -101,3 +101,7 @@ Full native and other M2 suites, Linux, M0, isolation, packaging, allocator and
 timing checks are outside this selection. No push, publication, packaged release
 or deployment is part of this local delivery. Earlier receipts remain historical
 for their original inputs.
+
+The [mutable CALL IR successor](m2-slice-mutable-call-ir.md) adds exact-mode
+argument and exclusive uniqueness proof. Runtime mixed admission, frame
+publication/restore and guest syntax remain gated.

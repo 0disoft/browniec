@@ -1,5 +1,12 @@
 # Roadmap
 
+- [Private mutable CALL IR proof](../engineering/m2-slice-mutable-call-ir.md)
+  now checks exact tags/modes, source lifetimes and exclusive batch uniqueness.
+  Recursive and mutual forwarding inspect successfully; shared duplicates stay
+  legal. Public verification, runtime CALL adapters and source parameters remain
+  gated. Next is mixed runtime admission, staged frame publication and return
+  restoration using the native generation handoff protocol.
+
 - [Private exclusive CALL handoff/restore](../engineering/m2-slice-exclusive-call-handoff.md)
   now rotates at most eight exclusive tickets atomically without new pool slots,
   payload copies or owner sessions. Fresh returns invalidate old tickets and
