@@ -7,6 +7,8 @@ Mutable CALL IR admission, VM frame integration, runtime formal dispatch and
 source parameters remain gated. Existing public owned mutable and readonly
 slices keep their current behavior.
 
+Implementation: `88b96ff`.
+
 ## Authority and publication
 
 `array_slices::rotate_exclusive` validates the complete pool and selected live
@@ -79,9 +81,12 @@ and 2,007 M1 cases. The new groups exercise actual writes for all six scalar
 tags, relative/empty ranges, 31 nested transfers, stale/fabricated/reordered
 inputs, generation exhaustion, changed owner epochs and full-pool abort cleanup.
 
-Development passed all 26 selected native groups and 2,421 CLI cases. Release
-verification and the combined evidence record follow in a separate documentation
-commit.
+Development and release each passed all 26 selected native groups and 2,421
+CLI cases. Both matched 363 identical current input hashes. Compiler, retained
+CLI and matrix/M1 receipt identities were rechecked; the Program declaration
+matches `85e76f3`. Both profiles accept parser depth32 and reject depths33/64
+with `compile_limit` in check/run. See the
+[Windows evidence](../evidence/m2-slice-exclusive-handoff-windows-20261101.json).
 
 Next, integrate this protocol with CALL argument validation, mixed owned/shared/
 exclusive admission and frame return/error lifecycle. Entry must run on the

@@ -6,7 +6,10 @@
   reserve generation headroom for outstanding frames. Native tests cover six
   scalar tags, 31 nested calls, malformed/stale inputs and full-pool abort drain.
   Next is mixed CALL admission, frame publication/return and mutable formal
-  dispatch; source parameters and public mutable CALLs remain gated.
+  dispatch; source parameters and public mutable CALLs remain gated. Implemented
+  at `88b96ff`; development/release each passed 26 native groups and 2,421 CLI
+  cases, with 363 matching input hashes and rechecked artifact/receipt identities.
+  See [Windows evidence](../evidence/m2-slice-exclusive-handoff-windows-20261101.json).
 
 - [Private mutable scalar-slice formals](../engineering/m2-slice-mutable-parameters-ir.md)
   now reuse the existing element byte for exact scalar type plus access mode.
