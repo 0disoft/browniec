@@ -98,3 +98,8 @@ Full native and other M2 suites, Linux, M0, isolation, packaging, allocator and
 timing checks are outside this selection. No push, publication, packaged release
 or deployment is part of this local delivery. Earlier receipts remain historical
 for their original inputs.
+
+The [exclusive CALL handoff successor](m2-slice-exclusive-call-handoff.md) now
+implements native transfer/restore and generation reserves. Its tests exercise
+actual writes and abort drain, while mutable CALL IR admission, VM integration
+and source syntax remain gated.

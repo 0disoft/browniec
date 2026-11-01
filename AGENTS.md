@@ -1,5 +1,18 @@
 # AGENTS.md
 
+- Private exclusive CALL handoff/restore foundation: `slice_handoff` validates up
+  to eight original exclusive tickets, rotates their generations in a staged
+  sixteen-slot pool and preserves exact owner write sessions. Restore validates
+  the receipt and latest nested-return tickets before publishing fresh caller
+  tickets; entry/restore failures leave state unchanged. Depth0..30 reserves
+  generation headroom for all outstanding returns. No Program/pool fields grow,
+  extra payload extent or public capability is added. Native tests cover six
+  scalar writes, 31 nested handoffs and full-pool abort drain. Mutable CALL IR
+  admission, VM frame integration, runtime formal dispatch and source parameters
+  remain gated. Next is mixed CALL admission and return/error lifecycle using
+  staged unpublished handoff plans. See
+  [the contract](docs/engineering/m2-slice-exclusive-call-handoff.md).
+
 - Private mutable scalar-slice formal IR: implemented at `33da699`.
   Rootless mutable formals use bit128 plus an exact low-seven-bit scalar tag in
   the existing element byte (129/130/137/138/139/140). The checked builder,

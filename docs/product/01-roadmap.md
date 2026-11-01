@@ -1,11 +1,19 @@
 # Roadmap
 
+- [Private exclusive CALL handoff/restore](../engineering/m2-slice-exclusive-call-handoff.md)
+  now rotates at most eight exclusive tickets atomically without new pool slots,
+  payload copies or owner sessions. Fresh returns invalidate old tickets and
+  reserve generation headroom for outstanding frames. Native tests cover six
+  scalar tags, 31 nested calls, malformed/stale inputs and full-pool abort drain.
+  Next is mixed CALL admission, frame publication/return and mutable formal
+  dispatch; source parameters and public mutable CALLs remain gated.
+
 - [Private mutable scalar-slice formals](../engineering/m2-slice-mutable-parameters-ir.md)
   now reuse the existing element byte for exact scalar type plus access mode.
   Construction, metadata and independent body/lifetime proof are implemented;
   public verify rejects rootless mutable descriptors after the complete proof.
-  CALL argument admission and source syntax stay gated. Next is atomic exclusive
-  CALL handoff/restore with duplicate-root rejection and return/error cleanup.
+  CALL argument admission and source syntax stay gated. Next is exclusive
+  CALL admission and frame integration using the private handoff foundation above.
   Existing owned mutable and readonly execution remains public.
 
 - [Public mutable scalar slices](../engineering/m2-slice-exclusive-public.md)

@@ -143,6 +143,18 @@ pub fn Result<usize, owners::Error> write(ref Pool pool, Ticket ticket, ref owne
     let owners::WriteLease lease = writer(ref entry);
     return owners::exclusive_write(table, ref lease, index, cell, bytes);
 }
+// Private authority transfer within one live exclusive slot. Never resurrect a
+// prior generation or end/reopen the owner session. Batch callers reserve the
+// headroom required by all outstanding returns before issuing a child ticket.
+pub fn Result<Ticket, owners::Error> rotate_exclusive(ref mut Pool pool, Ticket ticket,
+    ref owners::Table table, usize capacity) {
+    let usize index = resolve(pool, ticket, table, capacity)?;
+    let Slot entry = pool.slots[index];
+    if (!entry.exclusive || entry.generation == 18446744073709551615) { return .err(.State); }
+    let usize generation = entry.generation + 1;
+    pool.slots[index].generation = generation;
+    return .ok(Ticket { .slot = index, .generation = generation });
+}
 pub fn Result<usize, owners::Error> close(ref mut Pool pool, Ticket ticket,
     ref mut owners::Table table, usize capacity) {
     let usize index = resolve(pool, ticket, table, capacity)?;
