@@ -75,6 +75,9 @@ exclusive owner sessions across formal release and restores fresh caller tickets
 on return. Native tests exercise actual writes, nested frames and abort cleanup.
 Shared VM-loop/control wiring, mutable formal instruction dispatch and guest
 parameters remain unconnected; the existing public admission gate stays intact.
+Implemented at `6ea599c`; development and release each passed 15 native groups
+and 2,421 CLI cases, with 366 matching current input hashes. See the
+[mutable frame Windows evidence](docs/evidence/m2-slice-mutable-call-vm-windows-20261101.json).
 
 ## Historical stages
 

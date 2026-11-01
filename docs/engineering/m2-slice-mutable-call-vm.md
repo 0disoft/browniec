@@ -11,6 +11,8 @@ shared VM loop, scalar/control publication, mutable formal instruction adapter,
 guest parameter grammar and public admission are still unconnected. Existing
 public owned mutable slices and readonly CALLs retain their current paths.
 
+Implementation: `6ea599c`.
+
 ## Entry transaction and cost
 
 The caller supplies an immutable independently inspected Program, invocation-owned
@@ -105,8 +107,13 @@ cover unchanged existing paths. CLI regression covers 222 public owned mutable,
 192 readonly scalar and 2,007 M1 cases. New mutable CALL evidence is native
 adapter execution, not guest source or shared VM-loop execution.
 
-The six focused native adapter groups passed in development. The legacy native
-and CLI regression selection and release verification follow separately.
+Development and release each passed 15 selected native groups and 2,421 CLI
+cases, with 366 identical current input hashes. The pinned compiler, retained
+CLI and matrix/M1 receipt identities were rechecked, and the Program declaration
+still matches `2135237`. Both profiles accept parser depth32 in check/run and
+reject depths33/64 with `compile_limit`. Both complete selections ran all
+15 groups without report reuse. See the
+[Windows evidence](../evidence/m2-slice-mutable-call-vm-windows-20261101.json).
 
 Next, publish scalar/control frames through the shared CALL coordinator, route
 mutable formal instructions through authenticated root/binding resolution and

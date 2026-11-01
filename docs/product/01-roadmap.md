@@ -6,6 +6,10 @@
   tickets on normal return and drains detached handles during abort. Next is
   shared executable CALL/control publication, mutable formal dispatch and
   normal-return/abort wiring. Source parameters and public admission stay gated.
+  Implemented at `6ea599c`; development/release each passed 15 native groups and
+  2,421 CLI cases, with 366 matching inputs and rechecked compiler/artifact/
+  receipt identities. See
+  [Windows evidence](../evidence/m2-slice-mutable-call-vm-windows-20261101.json).
 
 - [Private mutable CALL IR proof](../engineering/m2-slice-mutable-call-ir.md)
   now checks exact tags/modes, source lifetimes and exclusive batch uniqueness.
