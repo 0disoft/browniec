@@ -18,6 +18,7 @@ import struct_result_vm as record_results;
 import std::bytes as bytes;
 
 import slice_frame_vm as slice_dispatch;
+import slice_exclusive_vm as exclusive_dispatch;
 import slice_lifecycle_vm as lifecycle;
 
 // Internal execution core: caller supplies an immutable independently inspected
@@ -39,10 +40,16 @@ pub fn Result<i64, errors::Error> execute(ref ir::Program p, usize fuel,
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
-        if (op >= 54 && op <= 59) {
+        if (op >= 54 && op <= 60) {
             let usize base = frame * 128;
-            remaining = slice_dispatch::step(p, functions[frame], pc, frame, borrowed_frames, loans, arrays, payload,
-                ref mut registers[base..base + 128], remaining)?;
+            let usize site=if(op==55 || op==57 || op==58){a}else{dst};
+            remaining = if(ir::exclusive(p,site)) {
+                exclusive_dispatch::step(p,functions[frame],pc,frame,loans,arrays,payload,
+                    ref mut registers[base..base+128],remaining)?
+            } else {
+                slice_dispatch::step(p, functions[frame], pc, frame, borrowed_frames, loans, arrays, payload,
+                    ref mut registers[base..base + 128], remaining)?
+            };
             pc += 1; continue;
         }
         if (op == 50) {
