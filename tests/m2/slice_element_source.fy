@@ -59,7 +59,7 @@ fn void mismatched_alias_call_read_utf8_and_unsupported_roots_fail_during_source
     rejected(b"module main;fn i32 f(ref i32[] p){let bool n=p[0];return 42;}fn i32 main(){return 42;}");
     rejected(b"module main;fn i32 f(ref bool[] p){return p[0];}fn i32 main(){return 42;}");
     rejected(b"module main;fn i32 f(ref i64[] p){if(text::valid_utf8(p)){return 42;}return 0;}fn i32 main(){return 42;}");
-    rejected(b"module main;fn i32 f(ref mut i32[] p){return 42;}fn i32 main(){return 42;}");
+    rejected(b"module main;fn i32 f(ref mut mut i32[] p){return 42;}fn i32 main(){return 42;}");
     rejected(b"module main;fn i32 f(ref Option<i32>[] p){return 42;}fn i32 main(){return 42;}");
     rejected(b"module main;fn i32 f(ref i32[] p){p[0]=1;return 42;}fn i32 main(){return 42;}");
     rejected(b"module main;fn i32 f(ref i32[] p){return 42;}fn i32 g(ref i32[] p){return f(p);}fn i32 main(){return 42;}");

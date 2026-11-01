@@ -30,7 +30,7 @@ pub struct Table {
     u8[128] param_arrays;
     // Zero scalar/array; otherwise nominal source record ID + 1. No runtime site.
     u8[128] param_records;
-    // Readonly scalar[] borrow; neither scalar register nor owned aggregate shape.
+    // Scalar[] borrow; element bit128 denotes exclusive access, as in IR.
     bool[128] param_slices;
     u8[128] param_slice_elements;
     usize count;
@@ -92,8 +92,11 @@ fn Result<usize, errors::Error> signature(ref u8[] source, ref mut lexer::State 
         var u8 slice_element = 0;
         if (parameter_slice) {
             let usize reference = lexer::next(source, s)?;
+            let bool exclusive = s.kind == 2 && lexer::equal(source[s.begin..s.end], b"mut");
+            if (exclusive) { let usize access = lexer::next(source, s)?; }
             slice_element = types::parse(source, s)?;
             if (!types::scalar(slice_element)) { return .err(errors::make(3, s.begin)); }
+            if (exclusive) { slice_element |= 128; }
             let usize open_slice = lexer::punctuation(source, s, 91)?;
             let usize close_slice = lexer::punctuation(source, s, 93)?;
         }

@@ -90,5 +90,6 @@ fn void public_and_runtime_call_gates_reject_proved_mutable_calls_before_any_pub
     assert(!calls::prepare(ref p,pc,0,ref f,ref l,ref a,ref b,10000000).is_ok);
     error(frames::step(ref p,pc,0,ref mut f,ref mut l,ref mut s,ref mut a,ref mut b,ref mut r,ref mut pcs,ref mut dsts,10000000),77);
     assert(a.owners.depth==0 && a.owners.arena.used==0 && bytes::len(ref b)==0);var usize i=0;while(i<256){assert(r[i]==99 && f.origins[i].generation==0);i+=1;}i=0;while(i<32){assert(pcs[i]==77 && dsts[i]==88);i+=1;}i=0;while(i<512){assert(l.tickets[i].generation==0 && a.tokens[i].generation==0 && s.tokens[i].generation==0);i+=1;}i=0;while(i<16){assert(!l.pool.slots[i].live);i+=1;}
-    assert(!compiler::compile(b"module main;fn i32 f(ref mut u8[] p){return 42;}fn i32 main(){return 42;}").is_ok);
+    let ir::Program source=switch(compiler::compile(b"module main;fn i32 f(ref mut u8[] p){return 42;}fn i32 main(){return 42;}")){case .ok(v):{v}case .err(_):{assert(false);ir::empty()}};
+    assert(verifier::inspect(ref source).is_ok && !verifier::verify(ref source).is_ok);
 }

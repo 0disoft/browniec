@@ -79,7 +79,7 @@ fn void readonly_roots_mode_mismatches_aliases_call_coercions_and_rebinding_fail
     rejected(b"module main;fn i32 main(){var i32[1] a=[0;1];let ref i32[] p=ref a;let ref mut i32[] q=ref mut p;return 42;}");
     rejected(b"module main;fn i32 main(){var i32[1] a=[0;1];let ref mut i32[] p=ref mut a;let ref mut i32[] q=ref mut p[..];return 42;}");
     rejected(b"module main;fn i32 f(ref i32[] p){return 42;}fn i32 main(){var i32[1] a=[0;1];let ref mut i32[] p=ref mut a;return f(ref p);}");
-    rejected(b"module main;fn i32 f(ref mut i32[] p){return 42;}fn i32 main(){return 42;}");
+    rejected(b"module main;fn i32 f(ref mut mut i32[] p){return 42;}fn i32 main(){return 42;}");
     rejected(b"module main;fn i32 main(){var i32[1] a=[0;1];let ref mut i32[] p=ref mut a;p=p;return 42;}");
     rejected(b"module main;fn i32 main(){var i32[1] a=[0;1];let ref mut i32[] p=ref mut a;p[true]=42;return 42;}");
     rejected(b"module main;fn i32 main(){var i32[1] a=[0;1];let ref mut i32[] p=ref mut a;p[0]=true;return 42;}");

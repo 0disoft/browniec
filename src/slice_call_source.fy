@@ -12,25 +12,31 @@ import errors as errors;
 pub fn Result<usize, errors::Error> bind(ref functions::Table signatures, usize at,
     ref mut ir::Program p, ref mut locals::Table names) {
     if (at >= 128 || !signatures.param_slices[at] || names.count >= 64) { return .err(errors::make(4, 0)); }
-    let usize site = builders::parameter_typed(p, names.function, signatures.param_slice_elements[at], signatures.param_begins[at])?;
-    return locals::declare(names, signatures.param_begins[at], signatures.param_ends[at], 160 + site, false);
+    let u8 encoded = signatures.param_slice_elements[at];
+    let bool exclusive = (encoded & 128) != 0;
+    let usize site = if (exclusive) { builders::parameter_exclusive(p, names.function, encoded & 127, signatures.param_begins[at])? }
+        else { builders::parameter_typed(p, names.function, encoded, signatures.param_begins[at])? };
+    return locals::declare(names, signatures.param_begins[at], signatures.param_ends[at], 160 + site, exclusive);
 }
 
-// Initial source form: explicit ref followed by one existing lexical slice.
+// Explicit ref [mut] followed by one existing lexical slice with exact access.
 // No array/temporary coercion, new handle, payload copy or caller-side close.
 // Keep signature-array indexing scratch off the recursive scalar CALL path.
 pub fn Result<usize, errors::Error> capture(ref u8[] source, ref mut lexer::State s,
     ref ir::Program p, ref locals::Table names, ref functions::Table signatures, usize parameter) {
     let usize at = s.begin;
     if (parameter >= 128 || !signatures.param_slices[parameter]) { return .err(errors::make(3, at)); }
-    let u8 element = signatures.param_slice_elements[parameter];
+    let u8 encoded = signatures.param_slice_elements[parameter];
+    let u8 element = encoded & 127;
+    let bool exclusive = (encoded & 128) != 0;
     if (s.kind != 2 || !lexer::equal(source[s.begin..s.end], b"ref")) { return .err(errors::make(3, at)); }
     let usize reference = lexer::next(source, s)?;
+    if (exclusive) { let usize access = lexer::word(source, s, b"mut")?; }
     if (s.kind != 2) { return .err(errors::make(3, s.begin)); }
     let usize index = locals::find(source, names, s.begin, s.end);
     if (!slices::binding(names, index)) { return .err(errors::make(3, s.begin)); }
     let usize site = names.registers[index] - 160;
-    if (ir::exclusive(p,site)) { return .err(errors::make(3,at)); }
+    if (ir::exclusive(p,site) != exclusive) { return .err(errors::make(3,at)); }
     let usize root = p.slice_roots[site] as usize;
     let usize origin = p.slice_origins[site] as usize;
     if (root != 0) {

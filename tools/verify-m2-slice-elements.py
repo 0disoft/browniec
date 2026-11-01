@@ -43,8 +43,9 @@ def main():
     selection.add_argument('--mutable-call-ir', action='store_true', help='Verify private exact-mode mutable CALL proof, uniqueness and unchanged execution gates')
     selection.add_argument('--mutable-call-vm', action='store_true', help='Verify private mixed mutable CALL frame transfer, formal release, return restore and abort drain')
     selection.add_argument('--mutable-execution', action='store_true', help='Verify private mutable CALL/control/formal execution in the shared VM loop')
+    selection.add_argument('--mutable-parameters-source', action='store_true', help='Verify exact mutable source parameters/arguments, private execution and public gates')
     args = parser.parse_args()
-    kind = 'slice-mutable-execution' if args.mutable_execution else 'slice-mutable-call-vm' if args.mutable_call_vm else 'slice-mutable-call-ir' if args.mutable_call_ir else 'slice-exclusive-handoff' if args.exclusive_handoff else 'slice-mutable-parameters-ir' if args.mutable_parameters_ir else 'slice-exclusive-public' if args.public_exclusive else 'slice-exclusive-source' if args.exclusive_source else 'slice-exclusive-vm' if args.exclusive_vm else 'slice-exclusive-pool' if args.exclusive_pool else 'slice-write-ir' if args.slice_write_ir else 'slice-exclusive-ir' if args.exclusive_ir else 'slice-element-public' if args.public_elements else 'slice-element-vm' if args.element_vm else 'slice-element-source' if args.parameter_source else 'slice-elements'
+    kind = 'slice-mutable-parameters-source' if args.mutable_parameters_source else 'slice-mutable-execution' if args.mutable_execution else 'slice-mutable-call-vm' if args.mutable_call_vm else 'slice-mutable-call-ir' if args.mutable_call_ir else 'slice-exclusive-handoff' if args.exclusive_handoff else 'slice-mutable-parameters-ir' if args.mutable_parameters_ir else 'slice-exclusive-public' if args.public_exclusive else 'slice-exclusive-source' if args.exclusive_source else 'slice-exclusive-vm' if args.exclusive_vm else 'slice-exclusive-pool' if args.exclusive_pool else 'slice-write-ir' if args.slice_write_ir else 'slice-exclusive-ir' if args.exclusive_ir else 'slice-element-public' if args.public_elements else 'slice-element-vm' if args.element_vm else 'slice-element-source' if args.parameter_source else 'slice-elements'
     groups = ({'slice_element_public': 3, 'slice_element_vm': 5, 'slice_element_source': 5, 'slice_elements': 4, 'slice_borrow_flow': 5}
               if args.public_elements else {'slice_element_vm': 5, 'slice_call_vm': 4, 'slice_frame_vm': 4, 'slice_lifecycle_vm': 6}
               if args.element_vm else {'slice_element_source': 5, 'slice_parameters_source': 5, 'slice_elements': 4}
@@ -89,6 +90,10 @@ def main():
     if args.mutable_execution:
         groups = {'slice_mutable_execution': 6, 'call_frame_vm': 4, 'slice_lifecycle_vm': 6}
         matrices_to_run = {'slice-exclusive-source': 222, 'slice-element-public': 192}
+    if args.mutable_parameters_source:
+        groups = {'slice_mutable_parameters_source': 6, 'slice_parameters_source': 5,
+                  'slice_element_source': 5, 'slice_mutable_calls': 6}
+        matrices_to_run = {'slice-mutable-parameters-source': 68, 'slice-exclusive-source': 222, 'slice-element-public': 192}
     output = ROOT / ('build/m2-' + kind) / args.profile
     output.mkdir(parents=True, exist_ok=True)
     receipt = output / 'receipt.json'
@@ -157,7 +162,7 @@ def main():
     env = {key: str(empty) for key in ['PATH', 'TEMP', 'TMP']}
     env.update({key: os.environ[key] for key in ['SystemRoot', 'WINDIR'] if key in os.environ})
     boundaries = []
-    for tag in ([] if args.mutable_execution or args.mutable_call_vm or args.mutable_call_ir or args.exclusive_handoff or args.mutable_parameters_ir or args.public_exclusive or args.exclusive_source or args.exclusive_vm or args.exclusive_pool or args.slice_write_ir or args.exclusive_ir or args.parameter_source or args.element_vm or args.public_elements else ['i32', 'bool', 'i64', 'u32', 'usize']):
+    for tag in ([] if args.mutable_parameters_source or args.mutable_execution or args.mutable_call_vm or args.mutable_call_ir or args.exclusive_handoff or args.mutable_parameters_ir or args.public_exclusive or args.exclusive_source or args.exclusive_vm or args.exclusive_pool or args.slice_write_ir or args.exclusive_ir or args.parameter_source or args.element_vm or args.public_elements else ['i32', 'bool', 'i64', 'u32', 'usize']):
         for index, declaration in enumerate([f'fn i32 f(ref {tag}[] p){{return 42;}}fn i32 main(){{return 42;}}',
                             f'fn i32 main(){{let {tag}[1] a=[{"true" if tag == "bool" else "42"};1];let ref {tag}[] p=ref a;return 42;}}']):
             path = output / f'boundary-{len(boundaries)}.brc'
@@ -174,7 +179,7 @@ def main():
                         and result['return_i32'] == (None if mode == 'check' else 42) and result['error'] is None, str(result))
                 boundaries.append(dict(command=command, sourceSha256=digest(path), exit=done.returncode, result=result))
     m1 = None
-    if (args.mutable_execution or args.mutable_call_vm or args.mutable_call_ir or args.exclusive_handoff or args.mutable_parameters_ir or args.public_exclusive or args.exclusive_source or args.exclusive_vm or args.exclusive_pool or args.slice_write_ir or args.exclusive_ir or args.parameter_source or args.public_elements) and os.name == 'nt':
+    if (args.mutable_parameters_source or args.mutable_execution or args.mutable_call_vm or args.mutable_call_ir or args.exclusive_handoff or args.mutable_parameters_ir or args.public_exclusive or args.exclusive_source or args.exclusive_vm or args.exclusive_pool or args.slice_write_ir or args.exclusive_ir or args.parameter_source or args.public_elements) and os.name == 'nt':
         run([sys.executable, '-B', ROOT / 'tools/check-m1-cli.py', '--exe', retained, '--profile', args.profile])
         path = ROOT / 'build/m1' / args.profile / 'cli-receipt.json'
         report = json.loads(path.read_text(encoding='utf-8'))
@@ -242,6 +247,10 @@ def main():
                                 'Public verify/VM still reject rootless exclusive formals before backing/Fuel/dispatch; mutable source grammar and public admission remain unavailable. No Program field, opcode, profile or capability change. Existing public/readonly prices stay unchanged.',
                                 'Private callers own 32 initialized unique receipts and must use mutable finish for every result. Legacy execute passes an empty slice backed by one inert native receipt, avoiding the full array; this is not a native memory/stack measurement.',
                                 'Selected native and public mutable/readonly CLI matrices plus full M1 on Windows only. Full native, other M2, Linux, M0, isolation, packaging, allocator and timing checks were not rerun.']
+    if args.mutable_parameters_source:
+        report['limitations'] = ['Source ref mut Tag[] parameters and exact ref mut named-slice arguments lower to existing private mutable CALL IR; native tests inspect and execute actual source for all six scalar tags, nested calls, mixed arguments, returns and abort cleanup.',
+                                'Public verify/VM/CLI still reject rootless exclusive formals before backing/Fuel/dispatch, including unused signatures. No public capability, Program/signature-table field, opcode or price change. Coercions, aliases/subloans, temporary roots and returned borrows remain unsupported.',
+                                'Selected native groups, private-source CLI gate matrix, public owned mutable/readonly CLI matrices and full M1 on Windows only. Full native, other M2, Linux, M0, isolation, packaging, allocator and timing checks were not rerun.']
     receipt.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
     print(f'PASS: {args.profile}: {report["nativeGroups"]} native groups; {report["cliCases"]} CLI cases', flush=True)
 
