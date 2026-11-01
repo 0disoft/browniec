@@ -1,5 +1,28 @@
 # AGENTS.md
 
+- Public mutable scalar-slice parameters: implemented at `914ae79`.
+  Public verify and inspect now share complete metadata/type/flow/lifetime proof,
+  including exact exclusive CALL sources and rootless mutable formals. The public
+  VM selects a separate receipt-owning helper only for mutable-formal Programs,
+  executes the shared core and invokes mutable finish on every outcome. Readonly
+  and owned-only programs keep the legacy entry/cleanup. CLI version JSON reports
+  `array_slice_mutable_parameters: true`. No Program/signature-table fields,
+  opcodes, profile or existing instruction/CALL prices change. The CLI keeps its
+  1,000,000 Fuel cap; native sufficient-Fuel tests cover the deeper frame bound.
+  Mutable aliases/subloans, coercions, temporary roots and returned borrows remain
+  unsupported. Remaining M2 includes these borrow extensions, Buffer and I/O.
+  Development/release each passed 33 native groups and 2,495 CLI cases (74 mutable
+  parameter, 222 owned mutable, 192 readonly scalar, 2,007 M1), with 372 identical
+  current inputs and rechecked compiler/artifact/matrix/M1 identities. Program
+  and signature-table fields match `69f96c9`. Parser depth32 passes; depths33/64
+  return compile_limit. Development native/build preceded a CLI-only Fuel-test
+  correction; its unchanged native result was retained and CLI phases completed
+  separately. Release ran the full corrected selection. Full native, other M2,
+  Linux, M0, isolation, packaging, allocator and timing were not rerun. No push.
+  See [the public contract](docs/engineering/m2-slice-mutable-parameters-public.md)
+  and [working example](examples/mutable-slice-parameters.brc).
+  Evidence: [Windows receipt](docs/evidence/m2-slice-mutable-parameters-public-windows-20261101.json).
+
 - Private mutable parameter source lowering: implemented at `2f9cc0d`.
   Source `ref mut Tag[]` formals and exact `ref mut name` arguments lower to
   existing exclusive descriptors/CALL arguments without new signature-table or

@@ -1,5 +1,8 @@
 # Private mutable slice parameter source lowering
 
+This dated stage is superseded for public admission by the
+[public mutable parameter successor](m2-slice-mutable-parameters-public.md).
+
 Source functions can now declare `ref mut Tag[] name` parameters and pass an
 existing exact mutable slice as `ref mut name`. `Tag` is one of i32, bool, i64,
 u8, u32 and usize. The compiler lowers these forms to the existing independently

@@ -34,15 +34,42 @@ browniec run examples/mutable-slices.brc --fuel 1000000 --json
 ```
 
 See the [public mutable-slice contract](docs/engineering/m2-slice-exclusive-public.md)
-and [working example](examples/mutable-slices.brc). Mutable parameters, aliases,
-subranges of an existing slice, slice returns and readonly CALL coercions remain
-unsupported. The existing readonly slice and parameter behavior is unchanged.
+and [working example](examples/mutable-slices.brc). Mutable aliases, subranges of
+an existing slice, slice returns and readonly CALL coercions remain unsupported. The existing readonly slice and parameter behavior is unchanged.
 
 Implemented at `ecfe96c`; development and release each passed 26 selected native
 groups and 2,421 CLI cases, with 360 matching current input hashes. See the
 [Windows evidence](docs/evidence/m2-slice-exclusive-public-windows-20261101.json).
 
-## Current private mutable parameter source lowering
+## Current public mutable scalar-slice parameters
+
+`check` and `run` support `ref mut Tag[]` formals and explicit `ref mut name`
+arguments for all six scalar tags. Exact mode/type proof, bounded CALL execution,
+normal caller restoration and mandatory invocation cleanup are connected.
+Version JSON reports `array_slice_mutable_parameters: true`. Readonly/owned
+programs retain their existing execution path and prices.
+
+```text
+browniec check examples/mutable-slice-parameters.brc --json
+browniec run examples/mutable-slice-parameters.brc --fuel 1000000 --json
+```
+
+See the [public parameter contract](docs/engineering/m2-slice-mutable-parameters-public.md)
+and [working example](examples/mutable-slice-parameters.brc). Mutable aliases,
+subloans, coercions and returned borrows remain unavailable.
+
+Implemented at `914ae79`; development and release each passed 33 selected native
+groups and 2,495 CLI cases, with 372 matching current input hashes and rechecked
+artifact/receipt identities. The CLI retains its one-million Fuel maximum;
+native sufficient-Fuel tests cover 31 nested calls and the next-frame limit.
+See the [public parameter Windows evidence](docs/evidence/m2-slice-mutable-parameters-public-windows-20261101.json).
+
+## Historical stages
+
+The notes below record implementation stages and gated behavior at the named
+commits. They are historical receipts, not current usage instructions.
+
+### Private mutable parameter source stage
 
 The [mutable parameter source stage](docs/engineering/m2-slice-mutable-parameters-source.md)
 accepts `ref mut Tag[]` formals and explicit `ref mut name` arguments for all six
@@ -59,11 +86,6 @@ Development and release each passed 22 selected native groups and 2,489 CLI
 cases, with 370 matching current input hashes and rechecked artifact/receipt
 identities. See the
 [source Windows evidence](docs/evidence/m2-slice-mutable-parameters-source-windows-20261101.json).
-
-## Historical stages
-
-The notes below record implementation stages and gated behavior at the named
-commits. They are historical receipts, not current usage instructions.
 
 The [private mutable-formal IR foundation](docs/engineering/m2-slice-mutable-parameters-ir.md)
 now constructs and independently checks all six mutable argument descriptors.

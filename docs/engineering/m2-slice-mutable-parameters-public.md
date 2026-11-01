@@ -5,7 +5,7 @@ Public `check` and `run` admit `ref mut Tag[]` parameters and explicit
 the existing [source lowering](m2-slice-mutable-parameters-source.md) and
 [shared CALL execution](m2-slice-mutable-execution.md) together with invocation
 receipt ownership and mandatory cleanup. Version JSON reports
-`array_slice_mutable_parameters: true`.
+`array_slice_mutable_parameters: true`. Implementation: `914ae79`.
 
 ```text
 browniec check examples/mutable-slice-parameters.brc --json
@@ -78,6 +78,20 @@ aliasing. The CLI retains its existing maximum of 1,000,000 Fuel; deep recursive
 source cases therefore report Fuel exhaustion. Native tests with sufficient Fuel
 exercise 31 nested calls and the next-frame kind12 limit. Native tests also check verification before quota/Fuel, repeated calls,
 exact and one-short Fuel, two simultaneous exclusive roots and shared helpers.
+
+Development and release each passed all 33 selected native groups and 2,495 CLI
+cases, with 372 matching current input hashes. Compiler, retained CLI and all
+matrix/M1 receipt identities were rechecked. Program and signature-table fields
+remain unchanged from `69f96c9`. Both profiles accept parser depth32 in check/run
+and reject depths33/64 with `compile_limit`. See the
+[Windows evidence](../evidence/m2-slice-mutable-parameters-public-windows-20261101.json).
+
+Development native tests and its build completed before correcting the CLI
+matrix's unsupported 16-million Fuel input to the existing one-million maximum.
+The unchanged native source/lock, successful 33-group report and retained CLI
+were kept; the corrected 74-case matrix and remaining CLI regressions completed
+in a separate phase. Release executed the complete selection with corrected CLI
+expectations. The receipt records these development phases explicitly.
 
 Full native, other M2, Linux, M0, isolation, packaging, allocator and timing checks
 are outside this selection. Local commits only; no push, publication, packaged

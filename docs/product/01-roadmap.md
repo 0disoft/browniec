@@ -1,5 +1,16 @@
 # Roadmap
 
+- [Public mutable scalar-slice parameters](../engineering/m2-slice-mutable-parameters-public.md)
+  connect exact source formals/arguments, complete public proof, shared-core CALLs,
+  invocation-owned receipts and mandatory cleanup. The CLI capability is
+  `array_slice_mutable_parameters`. This completes the scalar mutable parameter
+  chain; the entries below retain their dated stage boundaries. Remaining M2
+  borrow work includes mutable aliases/subloans and escaping/returned borrows;
+  Buffer and input/output integration remain separate milestone obligations.
+  Implemented at `914ae79`; development/release each passed 33 selected native
+  groups and 2,495 CLI cases, with 372 matching input hashes. See
+  [Windows evidence](../evidence/m2-slice-mutable-parameters-public-windows-20261101.json).
+
 - [Private mutable CALL execution](../engineering/m2-slice-mutable-execution.md)
   now connects shared-loop CALL/control publication, authenticated mutable formal
   instructions, scalar/tagged/aggregate returns and abort cleanup. Native tests
