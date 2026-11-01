@@ -103,9 +103,10 @@ execution core contain the new private proof/gates. Both profiles accept parser
 depth32 in check/run and reject depths33/64 with `compile_limit`. See the
 [Windows evidence](../evidence/m2-slice-reborrow-ir-windows-20261102.json).
 
-Next is combined CALL/reborrow depth admission and invocation/frame receipt
-ownership, followed by metering and executable VM integration. Guest syntax and
-public admission remain separate deliveries.
+The [native authority successor](m2-slice-authority.md) now coordinates combined
+CALL/reborrow depth and receipt ownership. Its strict independent-root restore
+order must align with inspected IR before metering and executable VM integration.
+Guest syntax and public admission remain separate deliveries.
 
 Public CLI regression runs 74 mutable parameter, 222 owned mutable, 192 readonly
 scalar and 2007 M1 cases on Windows. Full native, other M2, Linux, M0, isolation,

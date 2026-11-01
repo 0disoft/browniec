@@ -96,5 +96,14 @@ proof/public/internal-gate groups. Public CLI regression includes 74 mutable
 parameter, 222 owned mutable, 192 readonly scalar and 2007 M1 cases on Windows.
 New combined execution evidence is native coordination, not guest VM execution.
 
+Implemented at `d0567c6`. Development and release each passed all 24 selected
+native groups and 2,495 CLI cases, with 378 matching current inputs. Compiler,
+retained CLI and all matrix/M1 receipt identities were rechecked. Program and
+signature declarations, owner/pool/native handoff/reborrow, existing frame
+helpers, verifier, execution core and CLI/compiler entries match `bc44a1f`.
+Both profiles accept parser depth32 in check/run and reject depths33/64 with
+`compile_limit`. See the
+[Windows evidence](../evidence/m2-slice-authority-windows-20261102.json).
+
 Full native, other M2, Linux, M0, isolation, packaging and performance are outside
 this selection. Local commits only; no push, publication, release or deployment.

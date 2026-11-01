@@ -1,5 +1,26 @@
 # AGENTS.md
 
+- Private combined CALL/reborrow authority stack: implemented at `d0567c6`.
+  `slice_authority` owns canonical native CALL/subrange receipts and counts all
+  pending restorations in one 31-entry bound, including empty CALLs. Generation
+  reserves use combined depth; creator-frame checks and strict reverse order
+  prevent wrong-frame/type/ancestor restoration. Atomic abort drains the existing
+  pool before clearing the private stack and preserves prior payload writes.
+  Native fixed metadata is added; no Program/signature/owner/pool/shared-frame
+  field, payload extent, source grammar, opcode, public capability or price changes.
+  Existing mutable VM receipts and op61/62 execution gates remain unchanged.
+  Next is aligning independent-root IR lifetimes with the stack's strict order,
+  then metered VM binding/control/return/abort integration without duplicate
+  canonical receipts. Guest/public promotion remains separate.
+  Development/release each passed 24 selected native groups and 2,495 CLI cases,
+  with 378 identical current inputs and rechecked compiler/artifact/matrix/M1
+  identities. Verifier, execution, CLI/compiler and existing native loan/CALL
+  primitives remain unchanged from `bc44a1f`. Parser depth32 passes; depths33/64
+  return compile_limit. Full native, other M2, Linux, M0, isolation, packaging,
+  allocator, native size/stack and timing were not rerun. No push/release. See
+  [the authority contract](docs/engineering/m2-slice-authority.md) and
+  [Windows evidence](docs/evidence/m2-slice-authority-windows-20261102.json).
+
 - Private exclusive reborrow IR proof: implemented at `3987195`.
   Checked private op61/62 derive a unique acyclic child/parent forest from immutable
   code and prove available/suspended lifetimes over owned and rootless formal

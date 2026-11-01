@@ -64,6 +64,22 @@ artifact/receipt identities. The CLI retains its one-million Fuel maximum;
 native sufficient-Fuel tests cover 31 nested calls and the next-frame limit.
 See the [public parameter Windows evidence](docs/evidence/m2-slice-mutable-parameters-public-windows-20261101.json).
 
+## Private combined CALL/reborrow authority
+
+The [native authority stack](docs/engineering/m2-slice-authority.md) now owns
+CALL/subrange receipts, counts all pending restores (including empty CALLs) in
+one 31-entry bound and reserves generations using that combined depth. Returns
+validate frame ownership and strict reverse order; abort atomically drains the
+existing pool before clearing receipts while preserving writes. Implemented at
+`d0567c6`. This adds fixed private metadata, with no measured memory or speed
+claim and no change to public VM execution, source grammar or existing prices.
+Independent-root IR lifetime policy must align with this stack before metered
+VM binding/control/return integration and guest/public admission.
+
+Development and release each passed 24 selected native groups and 2,495 CLI
+cases, with 378 matching inputs and rechecked artifact/receipt identities. See
+[authority Windows evidence](docs/evidence/m2-slice-authority-windows-20261102.json).
+
 ## Private exclusive reborrow IR proof
 
 [Private op61/62 and independent inspection](docs/engineering/m2-slice-reborrow-ir.md)
