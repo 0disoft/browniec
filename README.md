@@ -42,6 +42,29 @@ Implemented at `ecfe96c`; development and release each passed 26 selected native
 groups and 2,421 CLI cases, with 360 matching current input hashes. See the
 [Windows evidence](docs/evidence/m2-slice-exclusive-public-windows-20261101.json).
 
+## Current private mutable parameter source lowering
+
+The [mutable parameter source stage](docs/engineering/m2-slice-mutable-parameters-source.md)
+accepts `ref mut Tag[]` formals and explicit `ref mut name` arguments for all six
+scalar tags. Native tests compile actual source, independently inspect the IR and
+perform writes, nested CALLs, mixed arguments, returns and error cleanup through
+the shared private VM. Access modes and tags must match exactly; aliases,
+subloans and returned borrows remain unavailable. Implemented at `2f9cc0d`.
+
+Public verification and CLI admission still reject mutable formals before
+backing, Fuel or dispatch, including unused functions. Public promotion is the
+next delivery; the owned mutable and readonly behavior above is unchanged.
+
+Development and release each passed 22 selected native groups and 2,489 CLI
+cases, with 370 matching current input hashes and rechecked artifact/receipt
+identities. See the
+[source Windows evidence](docs/evidence/m2-slice-mutable-parameters-source-windows-20261101.json).
+
+## Historical stages
+
+The notes below record implementation stages and gated behavior at the named
+commits. They are historical receipts, not current usage instructions.
+
 The [private mutable-formal IR foundation](docs/engineering/m2-slice-mutable-parameters-ir.md)
 now constructs and independently checks all six mutable argument descriptors.
 Mutable CALL execution, runtime formal dispatch and source parameters
@@ -88,11 +111,6 @@ remain gated; this is inspected IR execution. Implemented at `f22a6da`;
 development and release each passed 16 native groups and 2,421 CLI cases, with
 368 matching current input hashes. See the
 [mutable execution Windows evidence](docs/evidence/m2-slice-mutable-execution-windows-20261101.json).
-
-## Historical stages
-
-The notes below record implementation stages and gated behavior at the named
-commits. They are historical receipts, not current usage instructions.
 
 - Fairy C toolchain adoption: implemented at `465e380`.
   The compiler is now `eb274643` with SDK `0.0.0-stage0.87`; language `/20`

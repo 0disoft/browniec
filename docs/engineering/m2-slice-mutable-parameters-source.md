@@ -10,6 +10,8 @@ formal after complete proof and before backing allocation, Fuel or dispatch.
 This includes unused functions. This stage adds source lowering, not a public
 mutable parameter capability. Existing owned mutable slices remain public.
 
+Implementation: `2f9cc0d`.
+
 ```text
 module main;
 fn i32 fill(ref mut i32[] p) { p[0] = 42; return p[0]; }
@@ -78,5 +80,18 @@ The CLI selection includes 68 private source admission/rejection cases,
 Windows. Native mutable recursion accepts 31 nested CALLs and rejects the next
 frame with kind12 when sufficient Fuel remains.
 
+Development and release each passed all 22 selected native groups and 2,489 CLI
+cases, with 370 matching current input hashes. Compiler, retained CLI and
+matrix/M1 receipt identities were rechecked. Both profiles accept parser depth32
+in check/run and reject depths33/64 with `compile_limit`. Program and signature
+table fields remain unchanged from `6eabce5`. See the
+[Windows evidence](../evidence/m2-slice-mutable-parameters-source-windows-20261101.json).
+
+Next is public mutable parameter admission: connect the public VM entry to
+invocation-owned receipts and mandatory mutable cleanup, promote the version
+capability and change the CLI matrix from private rejection to public execution.
+These changes must be delivered together; this source stage keeps the gate.
+
 Full native, other M2, Linux, M0, isolation, packaging, allocator and timing checks
 are outside this selection. No performance or native stack measurement is claimed.
+Local commits only; no push, publication, packaged release or deployment.

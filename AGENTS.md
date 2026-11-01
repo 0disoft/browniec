@@ -1,5 +1,26 @@
 # AGENTS.md
 
+- Private mutable parameter source lowering: implemented at `2f9cc0d`.
+  Source `ref mut Tag[]` formals and exact `ref mut name` arguments lower to
+  existing exclusive descriptors/CALL arguments without new signature-table or
+  Program fields. Existing lexical close releases a formal into its receipt;
+  immutable inspected source executes with 32 unique receipts and mandatory
+  mutable finish. Exact mode/tag checks reject coercions and non-named sources;
+  independent proof rejects duplicate exclusive arguments and borrowed-root copies.
+  Public verify/VM/CLI still reject rootless exclusive formals before backing,
+  Fuel or dispatch, including unused signatures. No opcode, price, profile or
+  capability change. Next is deliberate public VM/CLI admission and capability
+  promotion. Aliases/subloans, returned borrows and temporary roots stay unsupported.
+  Development/release each passed 22 native groups and 2,489 CLI cases (68 private
+  source gates, 222 owned mutable, 192 readonly scalar and 2,007 M1), with 370
+  identical current inputs and rechecked compiler/artifact/receipt identities.
+  Program/signature-table fields are unchanged from `6eabce5`; depth32 parser
+  passes and depths33/64 return compile_limit. Native source executes 31 nested
+  mutable calls and rejects the next with kind12. Full native, other M2, Linux,
+  M0, isolation, packaging, allocator and timing were not rerun. No push/release.
+  See [the source contract](docs/engineering/m2-slice-mutable-parameters-source.md).
+  Evidence: [Windows receipt](docs/evidence/m2-slice-mutable-parameters-source-windows-20261101.json).
+
 - Private mutable CALL execution: implemented at `f22a6da`. The shared core
   routes mutable CALLs through checked scalar/control publication and the native frame transaction.
   Rootless mutable instructions authenticate the receipt/session, use existing
