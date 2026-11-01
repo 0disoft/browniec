@@ -64,6 +64,20 @@ artifact/receipt identities. The CLI retains its one-million Fuel maximum;
 native sufficient-Fuel tests cover 31 nested calls and the next-frame limit.
 See the [public parameter Windows evidence](docs/evidence/m2-slice-mutable-parameters-public-windows-20261101.json).
 
+## Private independent-root reborrow order proof
+
+The [IR order proof](docs/engineering/m2-slice-reborrow-order.md) now matches the
+native authority stack's reverse restoration across independent roots. Immutable
+begin-PC ranks and sixteen newer-child masks identify the pending order from
+existing live words, including suspended children, without another per-PC stack.
+Implemented at `0163a26`. Site allocation order does not determine restore order.
+Public/internal reborrow execution and CALL during suspension remain gated;
+metered site/binding and shared VM lifecycle integration precede admission.
+
+Development and release each passed 23 selected native groups and 2,495 CLI
+cases, with 379 matching inputs and rechecked artifact/receipt identities. See
+[order Windows evidence](docs/evidence/m2-slice-reborrow-order-windows-20261102.json).
+
 ## Private combined CALL/reborrow authority
 
 The [native authority stack](docs/engineering/m2-slice-authority.md) now owns
@@ -73,8 +87,9 @@ validate frame ownership and strict reverse order; abort atomically drains the
 existing pool before clearing receipts while preserving writes. Implemented at
 `d0567c6`. This adds fixed private metadata, with no measured memory or speed
 claim and no change to public VM execution, source grammar or existing prices.
-Independent-root IR lifetime policy must align with this stack before metered
-VM binding/control/return integration and guest/public admission.
+The IR order proof above now aligns independent-root restoration with this stack.
+Metered VM binding/control/return integration and guest/public admission remain
+separate deliveries.
 
 Development and release each passed 24 selected native groups and 2,495 CLI
 cases, with 378 matching inputs and rechecked artifact/receipt identities. See

@@ -42,10 +42,10 @@ stale tickets with fresh generations, clear the consumed entry and update the
 combined depth; CALL return also decrements the frame counter.
 
 The protocol is deliberately strict reverse order across independent roots too.
-The current IR inspector permits some independent-root lifetimes that this
-native protocol does not execute. A future VM adapter must align its independent
-root lifetime policy with receipt ownership before admitting op61/62. Existing
-IR remains inspection-only and public/internal execution continues rejecting it.
+The [IR order successor](m2-slice-reborrow-order.md) now enforces that policy
+using immutable creation ranks and existing live words. IR remains inspection-only
+and public/internal execution continues rejecting op61/62 until metered VM
+lifecycle integration is complete.
 
 The existing native primitives stage/validate every input before pool publication.
 The stack stages its receipt locally and publishes/clears entries only after the
@@ -76,9 +76,9 @@ account for shared arguments and owned copies, publish scalar/control state,
 route every CALL (including one with no writers) through combined admission,
 coordinate normal aggregate returns and preserve the original outcome on abort.
 It must reconcile the existing mutable frame adapter with this canonical stack,
-rather than keeping duplicate live receipts. Metering and independent-root
-lifetime policy precede private executable dispatch; guest/public promotion
-remains separate.
+rather than keeping duplicate live receipts. The IR successor aligns the
+independent-root lifetime policy; metering and lifecycle integration still
+precede private executable dispatch and guest/public promotion.
 
 ## Verification selection
 

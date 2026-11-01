@@ -83,6 +83,14 @@ agreement. They run with six existing reborrow IR groups, five slice flow groups
 and six native authority groups. Existing gate tests cover public and internal
 execution, including private instructions in an unused function.
 
+Implemented at `0163a26`. Development and release each passed all 23 selected
+native groups and 2,495 CLI cases, with 379 matching current inputs. Compiler,
+retained CLI and all matrix/M1 receipt identities were rechecked. Program and
+signature declarations, owner/pool/native receipts/authority, verifier source,
+execution core and CLI/compiler entries match `38c4a33`. Both profiles accept
+parser depth32 in check/run and reject depths33/64 with `compile_limit`. See the
+[Windows evidence](../evidence/m2-slice-reborrow-order-windows-20261102.json).
+
 CLI regression covers 74 mutable-parameter, 222 owned mutable, 192 readonly
 scalar and 2007 M1 cases on Windows. Full native, other M2, Linux, M0, isolation,
 packaging, allocator, native size/stack and timing are outside the selection.

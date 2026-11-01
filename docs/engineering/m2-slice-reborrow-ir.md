@@ -57,7 +57,8 @@ Suspended parent read/write/length/UTF-8/close/reopen fail. Child use after end
 fails. Derived sites cannot bypass the protocol through ordinary open, readonly
 subslice or ordinary close. Wrong-parent and ancestor-before-descendant restores
 fail even for equal ranges: ordering follows the proved graph and state, not
-native range equality. Independent roots may retain independent lifetimes.
+native range equality. The [order successor](m2-slice-reborrow-order.md) now
+requires reverse creation order across independent roots too.
 
 The available exclusive leaf retains the owned root conflict guard, so direct
 root access, mutation, copying and destruction cannot bypass suspension. Exact
@@ -103,10 +104,11 @@ execution core contain the new private proof/gates. Both profiles accept parser
 depth32 in check/run and reject depths33/64 with `compile_limit`. See the
 [Windows evidence](../evidence/m2-slice-reborrow-ir-windows-20261102.json).
 
-The [native authority successor](m2-slice-authority.md) now coordinates combined
-CALL/reborrow depth and receipt ownership. Its strict independent-root restore
-order must align with inspected IR before metering and executable VM integration.
-Guest syntax and public admission remain separate deliveries.
+The [native authority successor](m2-slice-authority.md) coordinates combined
+CALL/reborrow depth and receipt ownership. The [order proof](m2-slice-reborrow-order.md)
+now aligns its independent-root restore policy with inspected IR. Metering,
+executable VM integration, guest syntax and public admission remain separate
+deliveries.
 
 Public CLI regression runs 74 mutable parameter, 222 owned mutable, 192 readonly
 scalar and 2007 M1 cases on Windows. Full native, other M2, Linux, M0, isolation,

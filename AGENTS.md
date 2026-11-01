@@ -1,5 +1,27 @@
 # AGENTS.md
 
+- Private independent-root reborrow order proof: implemented at `0163a26`.
+  Immutable begin-PC ranks and sixteen newer-child masks enforce increasing
+  creation rank and reverse restoration across independent roots, matching the
+  native authority stack. Available and suspended derived children both count.
+  Existing live-word equality uniquely determines pending order at joins/backedges;
+  no new per-PC stack/word or Program/signature field is added. Metadata adds
+  sixteen mask words and sixteen temporary begin-PC words, without a measured
+  native size/stack/allocator/timing claim. Site allocation order is irrelevant.
+  Public/internal op61/62 execution and CALL during suspension remain gated.
+  Native authority, verifier source and VM/CLI paths remain unchanged.
+  Next is metered site/binding instruction adaptation and shared CALL/return/abort
+  integration using canonical native receipts, then deliberate private CALL proof
+  admission. Guest syntax and public promotion remain separate.
+  Development/release each passed 23 selected native groups and 2,495 CLI cases,
+  with 379 identical current inputs and rechecked compiler/artifact/matrix/M1
+  identities. Program/signature declarations and owner/pool/native receipt/VM/
+  compiler/verifier sources match `38c4a33`. Parser depth32 passes; depths33/64
+  return compile_limit. Full native, other M2, Linux, M0, isolation, packaging,
+  allocator, size/stack and timing were not rerun. No push/release. See
+  [the order contract](docs/engineering/m2-slice-reborrow-order.md) and
+  [Windows evidence](docs/evidence/m2-slice-reborrow-order-windows-20261102.json).
+
 - Private combined CALL/reborrow authority stack: implemented at `d0567c6`.
   `slice_authority` owns canonical native CALL/subrange receipts and counts all
   pending restorations in one 31-entry bound, including empty CALLs. Generation
