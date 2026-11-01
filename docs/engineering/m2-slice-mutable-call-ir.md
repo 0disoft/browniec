@@ -6,6 +6,8 @@ the argument-proof prerequisite of the [native handoff protocol](m2-slice-exclus
 It does not publish runtime handoffs, execute mutable formals or enable guest
 mutable parameters. Public owned mutable and readonly behavior remains unchanged.
 
+Implementation: `20afacd`.
+
 ## Exact arguments and batch uniqueness
 
 `slice_parameters::argument` still requires a declared formal, source encoding
@@ -74,8 +76,12 @@ duplicates, exact mode/tag/kind rules, dead and foreign sources, mixed signature
 and public/native execution gates. They do not claim payload writes by mutable
 CALLs, new Fuel accounting, runtime rollback or performance measurements.
 
-Development passed all 21 selected native groups and 2,421 CLI cases. Release
-verification and the combined evidence record follow in a documentation commit.
+Development and release each passed all 21 selected native groups and 2,421
+CLI cases, with 364 matching current input hashes. Compiler, retained CLI and
+matrix/M1 receipt identities were rechecked; the Program declaration still
+matches `dfa2aee`. Both profiles accept parser depth32 in check/run and reject
+depths33/64 with `compile_limit`. See the
+[Windows evidence](../evidence/m2-slice-mutable-call-ir-windows-20261101.json).
 
 Full native, other M2 suites, Linux, M0, isolation, packaging, allocator and timing
 checks are outside this selection. Local commits only; no push, publication,

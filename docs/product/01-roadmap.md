@@ -5,7 +5,10 @@
   Recursive and mutual forwarding inspect successfully; shared duplicates stay
   legal. Public verification, runtime CALL adapters and source parameters remain
   gated. Next is mixed runtime admission, staged frame publication and return
-  restoration using the native generation handoff protocol.
+  restoration using the native generation handoff protocol. Implemented at
+  `20afacd`; both profiles passed 21 native groups and 2,421 CLI cases, with 364
+  matching inputs and rechecked compiler/artifact/receipt identities. See
+  [Windows evidence](../evidence/m2-slice-mutable-call-ir-windows-20261101.json).
 
 - [Private exclusive CALL handoff/restore](../engineering/m2-slice-exclusive-call-handoff.md)
   now rotates at most eight exclusive tickets atomically without new pool slots,

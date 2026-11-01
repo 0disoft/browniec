@@ -64,7 +64,10 @@ The [private mutable CALL IR proof](docs/engineering/m2-slice-mutable-call-ir.md
 now admits exact mutable arguments and formal forwarding during independent
 inspection, rejects repeated exclusive sources/owned roots and preserves shared
 duplicate arguments. Runtime frame handoff/restore and guest mutable parameters
-remain gated. No public capability or Fuel price changes.
+remain gated. No public capability or Fuel price changes. Implemented at
+`20afacd`; development and release each passed 21 native groups and 2,421 CLI
+cases, with 364 matching input hashes. See the
+[mutable CALL IR Windows evidence](docs/evidence/m2-slice-mutable-call-ir-windows-20261101.json).
 
 ## Historical stages
 
