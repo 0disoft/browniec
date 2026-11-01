@@ -7,8 +7,8 @@ import std::num as num;
 
 // Private op61 begins a child; op62 ends it and restores its parent.
 // Prove the forest once from immutable code, not trusted Program metadata.
-pub struct Sites { usize[16] parents; usize count; }
-fn Sites empty() { return Sites { .parents=[16;16],.count=0 }; }
+pub struct Sites { usize[16] parents; usize[16] newer; usize count; }
+fn Sites empty() { return Sites { .parents=[16;16],.newer=[0;16],.count=0 }; }
 pub fn bool present(ref ir::Program p) {
     if(p.count>256) { return true; }
     var usize pc=0;
@@ -27,14 +27,14 @@ fn usize function(ref ir::Program p,usize site) {
     return if(root!=0){p.array_functions[root-1] as usize}else{(p.slice_functions[site] as usize)-1};
 }
 pub fn Result<Sites,errors::Error> metadata(ref ir::Program p) {
-    var Sites sites=empty();var usize f=0;
+    var Sites sites=empty();var usize[16] begins=[256;16];var usize f=0;
     while(f<p.function_count) {
         var usize pc=p.starts[f];
         while(pc<p.ends[f]) {
             if(p.code[pc*8]==61) {
                 let usize child=p.code[pc*8+1] as usize;let usize parent=p.code[pc*8+2] as usize;
                 if(!compatible(p,child,parent) || sites.parents[child]!=16 || function(p,child)!=f) { return .err(errors::make(5,pc)); }
-                sites.parents[child]=parent;sites.count+=1;
+                sites.parents[child]=parent;begins[child]=pc;sites.count+=1;
             }
             pc+=1;
         }
@@ -47,6 +47,15 @@ pub fn Result<Sites,errors::Error> metadata(ref ir::Program p) {
         while(sites.parents[cursor]!=16) {
             cursor=sites.parents[cursor];steps+=1;
             if(steps>=16) { return .err(errors::make(5,0)); }
+        }
+        // Creation rank is immutable, independent of site allocation order.
+        // Together with the live word it uniquely determines the pending stack.
+        if(begins[site]!=256) {
+            var usize other=0;let usize one=1;
+            while(other<16) {
+                if(begins[other]!=256 && begins[other]>begins[site]) { sites.newer[site]|=one<<other; }
+                other+=1;
+            }
         }
         site+=1;
     }
@@ -97,6 +106,10 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,ref Sites sites,usize 
         if(root!=0 && (live&(one<<(root-1)))==0) { return .err(errors::make(5,pc)); }
         let usize c=one<<(32+child);let usize cs=one<<(48+child);
         let usize a=one<<(32+parent);let usize suspended=one<<(48+parent);
+        // Available and suspended derived children both own pending receipts.
+        // Push in increasing creation rank and pop the greatest active rank.
+        let usize pending=(live>>32)|(live>>48);
+        if((pending&sites.newer[child])!=0) { return .err(errors::make(5,pc)); }
         if(op==61) {
             if((live&(c|cs|suspended))!=0 || (live&a)==0 ||
                 !readable(p,defined,p.code[at+3] as usize,f) || !readable(p,defined,p.code[at+4] as usize,f)) { return .err(errors::make(5,pc)); }

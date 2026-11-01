@@ -39,7 +39,7 @@ fn ir::Program program(u8 tag,bool formal,usize levels,bool loop){
 @test
 fn void six_scalar_owned_and_formal_children_inspect_without_growing_program_or_scalar_positions(){
     let u8[6] tags=[1,2,9,10,11,12];var usize i=0;while(i<6){let ir::Program owned=program(tags[i],false,2,false);let ir::Program formal=program(tags[i],true,2,false);accepted(ref owned);accepted(ref formal);
-        let loans::Sites mapping=switch(loans::metadata(ref formal)){case .ok(v):{v}case .err(_):{assert(false);loans::Sites{.parents=[16;16],.count=0}}};assert(mapping.count==2 && mapping.parents[1]==0 && mapping.parents[2]==1 && formal.slice_parameters[0]==1 && formal.slice_origins[2]==1 && formal.slice_elements[2]==(tags[i]|128));i+=1;}
+        let loans::Sites mapping=switch(loans::metadata(ref formal)){case .ok(v):{v}case .err(_):{assert(false);loans::Sites{.parents=[16;16],.newer=[0;16],.count=0}}};assert(mapping.count==2 && mapping.parents[1]==0 && mapping.parents[2]==1 && formal.slice_parameters[0]==1 && formal.slice_origins[2]==1 && formal.slice_elements[2]==(tags[i]|128));i+=1;}
     let ir::Program full=program(10,true,15,false);accepted(ref full);assert(full.slice_elements[15]==138);
 }
 @test
