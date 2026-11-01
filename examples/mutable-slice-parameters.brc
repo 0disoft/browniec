@@ -1,0 +1,16 @@
+module main;
+
+fn i32 fill(ref mut i32[] selected) {
+    selected[0] = 42;
+    return selected[0];
+}
+
+fn i32 main() {
+    var i32[2] values = [0; 2];
+    {
+        let ref mut i32[] selected = ref mut values[1..];
+        let i32 result = fill(ref mut selected);
+        if (result != selected[0]) { return 0; }
+    }
+    return values[1];
+}

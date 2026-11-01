@@ -17,7 +17,7 @@ fn i64 cell(Result<i64,owners::Error> r){return switch(r){case .ok(v):{v}case .e
 fn bytes::Buffer backing(){return switch(arrays::prepare(256)){case .ok(v):{v}case .err(_):{assert(false);bytes::empty()}};}
 fn ir::Program compiled(ref u8[] s){return switch(compiler::compile(s)){case .ok(v):{v}case .err(_):{assert(false);ir::empty()}};}
 fn usize pc(ref ir::Program p,u8 op,usize f){var usize i=p.starts[f];while(i<p.ends[f] && p.code[i*8]!=op){i+=1;}assert(i<p.ends[f]);return i;}
-fn void inspected(ref ir::Program p){assert(verifier::inspect(p).is_ok);assert(switch(vm::run_with_array_limit(p,0,0)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==0}});}
+fn void inspected(ref ir::Program p){assert(verifier::inspect(p).is_ok && verifier::verify(p).is_ok);assert(switch(vm::run_with_array_limit(p,0,0)){case .ok(_):{false}case .err(e):{e.kind==8}});}
 fn void cleared(ref calls::Frame[] receipts,ref shared::Frames f,ref loans::State l,ref arrays::State a){var usize i=0;while(i<receipts.len){assert(!receipts[i].active && receipts[i].batch.count==0);i+=1;}i=0;while(i<256){assert(f.origins[i].slot==16 && f.origins[i].generation==0);i+=1;}i=0;while(i<512){assert(l.tickets[i].slot==16 && l.tickets[i].generation==0);i+=1;}i=0;while(i<16){assert(!l.pool.slots[i].live && !a.owners.slots[i].reading && !a.owners.slots[i].writing);i+=1;}}
 fn void run(ref ir::Program p,usize fuel,u8 expected){
     inspected(p);var calls::Frame[32] receipts=[calls::empty();32];var shared::Frames f=shared::empty();var loans::State l=loans::empty();var arrays::State a=arrays::empty(256);var bytes::Buffer b=backing();var errors::Error failure=errors::make(0,0);var bool failed=false;
@@ -26,7 +26,7 @@ fn void run(ref ir::Program p,usize fuel,u8 expected){
     let Result<i64,errors::Error> outcome=if(failed){.err(failure)}else{.ok(answer)};
     assert(switch(calls::finish(ref mut receipts,ref mut f,ref mut l,ref mut a,ref b,outcome)){case .ok(v):{expected==0 && v==42}case .err(e):{e.kind==expected && e.offset==failure.offset}});cleared(ref receipts,ref f,ref l,ref a);
 }
-fn void run_source(ref u8[] source,u8 expected){let ir::Program p=compiled(source);run(ref p,16000000,expected);}
+fn void run_source(ref u8[] source,u8 expected){let ir::Program p=compiled(source);run(ref p,16000000,expected);assert(switch(vm::run_with_array_limit(ref p,16000000,256)){case .ok(v):{expected==0 && v==42}case .err(e):{e.kind==expected}});}
 fn void rejected(ref u8[] source){assert(!compiler::compile(source).is_ok);}
 fn void conflict(ref u8[] source){let ir::Program p=compiled(source);assert(!verifier::inspect(ref p).is_ok);}
 
@@ -89,7 +89,7 @@ fn void source_errors_abort_all_receipts_and_preserve_prior_payload_writes(){
 }
 
 @test
-fn void unused_mutable_signatures_stay_private_and_body_close_releases_formal_binding(){
+fn void unused_mutable_signatures_are_public_and_body_close_releases_formal_binding(){
     let ref u8[] source=b"module main;fn i32 f(ref mut u8[] p){return 42;}fn i32 main(){return 42;}";
     let functions::Table signature=switch(functions::scan(source)){case .ok(v):{v}case .err(_):{assert(false);functions::empty()}};
     assert(signature.param_slices[0] && signature.param_slice_elements[0]==138 && signature.param_types[0]==0);

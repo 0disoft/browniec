@@ -39,13 +39,13 @@ fn void builder_error(ref mut ir::Program p,usize f,u8 tag,u8 kind){
 }
 
 @test
-fn void six_scalar_formals_inspect_reads_stores_lengths_and_utf8_but_public_admission_is_gated(){
+fn void six_scalar_formals_inspect_reads_stores_lengths_and_utf8_and_public_admission_is_proved(){
     let u8[6] tags=[1,2,9,10,11,12];let i64[6] cells=[-2147483648,1,-9223372036854775807-1,255,4294967295,-1];var usize i=0;let usize one=1;
     while(i<6){let ir::Program p=program(tags[i],cells[i]);assert(p.slice_elements[0]==(tags[i]|128) && ir::exclusive(ref p,0) && p.slice_roots[0]==0 && p.slice_origins[0]==1 && p.slice_functions[0]==1);
         assert(switch(ir::slice_element(ref p,0,77)){case .ok(v):{v==tags[i]}case .err(_):{false}});
         assert(built(parameters::metadata(ref p))==1 && built(parameters::initial(ref p,0))==(one<<32));
-        assert(built(verifier::inspect(ref p))==p.count);error(verifier::verify(ref p),5,0);
-        assert(switch(vm::run_with_array_limit(ref p,0,65537)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==0}});i+=1;
+        assert(built(verifier::inspect(ref p))==p.count);assert(built(verifier::verify(ref p))==p.count);
+        assert(switch(vm::run_with_array_limit(ref p,0,65537)){case .ok(_):{false}case .err(e):{e.kind==8}});i+=1;
     }
 }
 
@@ -90,7 +90,7 @@ fn void stores_require_exact_defined_operands_and_balanced_function_lifetimes(){
 }
 
 @test
-fn void exact_mutable_call_proof_stays_private_and_readonly_coercions_are_rejected(){
+fn void exact_mutable_call_proof_is_public_and_readonly_coercions_are_rejected(){
     var ir::Program p=header(10,42);let usize root=built(ir::array_in(ref mut p,1,10,1,true,77));let usize site=built(ir::exclusive_slice(ref mut p,root,77));
     let usize fill=constant(ref mut p,10,42);let usize init=built(ir::array_init(ref mut p,root,fill,77));let usize lo=constant(ref mut p,12,0);let usize hi=constant(ref mut p,12,1);let usize opened=built(ir::slice_open(ref mut p,site,lo,hi,77));
     let usize one=1;let usize live=1|(one<<33);
@@ -100,7 +100,7 @@ fn void exact_mutable_call_proof_stays_private_and_readonly_coercions_are_reject
     p.slice_elements[site]=128;error(builders::argument(ref p,0,site,1,live,77),5,77);p.slice_elements[0]=138;
     let usize[1] args=[161];let usize result=built(ir::call(ref mut p,0,ref args,77));let usize call_pc=pc(ref p,9);
     let usize closed=built(ir::slice_close(ref mut p,site,77));let usize drop=built(ir::array_drop(ref mut p,root,77));let usize returned=built(ir::emit(ref mut p,8,result,0,77));finish(ref mut p,1);
-    assert(built(verifier::inspect(ref p))==p.count);error(verifier::verify(ref p),5,0);
+    assert(built(verifier::inspect(ref p))==p.count);assert(built(verifier::verify(ref p))==p.count);
 }
 
 @test

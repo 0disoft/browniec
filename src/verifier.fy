@@ -216,18 +216,10 @@ fn Result<usize, errors::Error> validate(ref ir::Program p) {
 }
 
 // Inspection and public admission share the complete IR/dataflow proof for
-// every supported readonly and owned exclusive scalar slice element.
+// every supported shared/exclusive scalar slice, including CALL formals.
 pub fn Result<usize, errors::Error> inspect(ref ir::Program p) {
     return validate(p);
 }
 pub fn Result<usize, errors::Error> verify(ref ir::Program p) {
-    let usize checked=validate(p)?;
-    // Owned mutable slices stay public. Rootless mutable formals still require
-    // a checked CALL handoff/restore protocol before VM allocation or dispatch.
-    var usize site=0;
-    while(site<16) {
-        if(p.slice_roots[site]==0 && ir::exclusive(p,site)) { return .err(errors::make(5,0)); }
-        site+=1;
-    }
-    return .ok(checked);
+    return validate(p);
 }

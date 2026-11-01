@@ -21,7 +21,7 @@ fn void error(Result<usize,errors::Error> r,usize pc){assert(switch(r){case .ok(
 fn usize opcode(ref ir::Program p,u8 op,usize f){var usize pc=p.starts[f];while(pc<p.ends[f]){if(p.code[pc*8]==op){return pc;}pc+=1;}assert(false);return 0;}
 fn void finish(ref mut ir::Program p,usize f){let usize end=p.count;let usize regs=p.registers;p.ends[f]=end;p.register_ends[f]=regs;}
 fn void mark(ref mut ir::Program p){var usize i=0;while(i<16){if(p.slice_roots[i]!=0 || p.slice_origins[i]!=0){let u8 value=p.slice_elements[i];p.slice_elements[i]=value|128;}i+=1;}}
-fn void accepted(ref ir::Program p){assert(built(verifier::inspect(p))==p.count);error(verifier::verify(p),0);assert(switch(vm::run_with_array_limit(p,0,0)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==0}});}
+fn void accepted(ref ir::Program p){assert(built(verifier::inspect(p))==p.count);assert(built(verifier::verify(p))==p.count);assert(switch(vm::run_with_array_limit(p,0,0)){case .ok(_):{false}case .err(e):{e.kind==8}});}
 fn void rejected(ref ir::Program p,usize pc){error(verifier::inspect(p),pc);error(verifier::verify(p),pc);assert(switch(vm::run_with_array_limit(p,0,0)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==pc}});}
 fn void aggregate(ref u8[] source){var ir::Program p=compiled(source);mark(ref mut p);accepted(ref p);let usize pc=opcode(ref p,9,p.entry);let usize base=(p.code[pc*8+3] as usize)*8;let u8 first=p.call_args[base];p.call_args[base+1]=first;rejected(ref p,pc);}
 fn usize constant(ref mut ir::Program p,u8 tag,i64 value){return built(if(tag==2){ir::boolean(p,value==1,77)}else{ir::integer(p,value,tag,77)});}
@@ -84,12 +84,12 @@ fn void mixed_scalar_owned_array_record_shared_and_exclusive_positions_are_check
 }
 
 @test
-fn void public_and_runtime_call_gates_reject_proved_mutable_calls_before_any_publication(){
+fn void legacy_runtime_call_adapters_reject_mutable_calls_before_any_publication(){
     let ir::Program p=owned(10,42);accepted(ref p);let usize pc=opcode(ref p,9,1);var calls::Frames f=calls::empty();var loans::State l=loans::empty();var arrays::State a=arrays::empty(0);var records::State s=records::empty();var bytes::Buffer b=bytes::empty();var i64[256] r=[99;256];var usize[32] pcs=[77;32];var usize[32] dsts=[88;32];
     error(calls::cost(ref p,0,77),77);error(mixed::cost(ref p,0,77),77);
     assert(!calls::prepare(ref p,pc,0,ref f,ref l,ref a,ref b,10000000).is_ok);
     error(frames::step(ref p,pc,0,ref mut f,ref mut l,ref mut s,ref mut a,ref mut b,ref mut r,ref mut pcs,ref mut dsts,10000000),77);
     assert(a.owners.depth==0 && a.owners.arena.used==0 && bytes::len(ref b)==0);var usize i=0;while(i<256){assert(r[i]==99 && f.origins[i].generation==0);i+=1;}i=0;while(i<32){assert(pcs[i]==77 && dsts[i]==88);i+=1;}i=0;while(i<512){assert(l.tickets[i].generation==0 && a.tokens[i].generation==0 && s.tokens[i].generation==0);i+=1;}i=0;while(i<16){assert(!l.pool.slots[i].live);i+=1;}
     let ir::Program source=switch(compiler::compile(b"module main;fn i32 f(ref mut u8[] p){return 42;}fn i32 main(){return 42;}")){case .ok(v):{v}case .err(_):{assert(false);ir::empty()}};
-    assert(verifier::inspect(ref source).is_ok && !verifier::verify(ref source).is_ok);
+    assert(verifier::inspect(ref source).is_ok && verifier::verify(ref source).is_ok);
 }

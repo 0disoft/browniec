@@ -1,4 +1,4 @@
-"""Check private mutable parameter source gates through the tool-free CLI."""
+"""Check public mutable parameter source execution through the tool-free CLI."""
 import argparse
 import hashlib
 import json
@@ -54,14 +54,25 @@ fixtures += re.findall(r'let ref u8\[\] source=b"([^"\n]+)"', native)
 negatives = re.findall(r'rejected\(b"([^"\n]+)"', native)
 conflicts = re.findall(r'conflict\(b"([^"\n]+)"', native)
 assert (len(fixtures), len(negatives), len(conflicts)) == (17, 15, 2)
-for source in fixtures + conflicts:
+errors = {0: None, 7: 'zero_divisor', 12: 'frame_limit', 14: 'bounds'}
+expected = {source: errors[int(kind)] for source, kind in re.findall(r'run_source\(b"([^"\n]+)",(\d+)\)', native)}
+for source in fixtures:
+    error = expected.get(source, 'bounds' if 'p[1]=0' in source else None)
+    if ',30)' in source or ',31)' in source or 'return f(ref mut p,2)+f(ref mut p,2)' in source:
+        error = 'fuel'
+    case(source, runtime_error=error, fuel=1000000)
+for source in conflicts:
     case(source, 'conflict', fuel=0)
 for source in negatives:
     case(source, 'source', fuel=0)
+# Valid admission reaches Fuel/array quotas; malformed programs above do not.
+case(fixtures[0], runtime_error='fuel', fuel=0)
+case('module main;fn i32 f(ref mut i32[] p){p[0]=42;return 42;}fn i32 main(){var i32[1] a=[0;1];let ref mut i32[] p=ref mut a;return f(ref mut p);}', runtime_error='fuel', fuel=65537)
+case((root / 'examples/mutable-slice-parameters.brc').read_text(encoding='utf-8'), fuel=1000000)
 version = json.loads(subprocess.check_output([str(exe), '--version', '--json'], cwd=empty, env=env))
-assert version['array_slice_mutable'] is True and version['array_slice_parameters'] is True
-assert len(rows) == 68, len(rows)
-receipt.write_text(json.dumps(dict(schema='browniec.slice-mutable-parameters-source-cli/v1', status='passed',
+assert version['array_slice_mutable_parameters'] is True and version['array_slice_mutable'] is True and version['array_slice_parameters'] is True
+assert len(rows) == 74, len(rows)
+receipt.write_text(json.dumps(dict(schema='browniec.slice-mutable-parameters-source-cli/v2', status='passed',
     profile=args.profile, exeSha256=hashlib.sha256(exe.read_bytes()).hexdigest(),
     runtimeEnvironment='cleared; tool-free PATH', count=len(rows), cases=rows, version=version), indent=2)+'\n', encoding='utf-8')
-print(f'PASS: {args.profile}: {len(rows)} private mutable parameter source CLI gate cases')
+print(f'PASS: {args.profile}: {len(rows)} public mutable parameter source CLI cases')

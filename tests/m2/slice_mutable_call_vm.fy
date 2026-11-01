@@ -24,7 +24,7 @@ fn slices::Ticket ticket(Result<slices::Ticket,owners::Error> r){return switch(r
 fn bytes::Buffer backing(){return switch(arrays::prepare(256)){case .ok(v):{v}case .err(_):{assert(false);bytes::empty()}};}
 fn usize pc(ref ir::Program p,usize f){var usize i=p.starts[f];while(i<p.ends[f] && p.code[i*8]!=9){i+=1;}assert(i<p.ends[f]);return i;}
 fn void finish(ref mut ir::Program p,usize f){let usize end=p.count;let usize regs=p.registers;p.ends[f]=end;p.register_ends[f]=regs;}
-fn void inspected(ref ir::Program p){assert(verifier::inspect(p).is_ok);assert(switch(verifier::verify(p)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==0}});assert(switch(vm::run_with_array_limit(p,0,0)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==0}});}
+fn void inspected(ref ir::Program p){assert(verifier::inspect(p).is_ok && verifier::verify(p).is_ok);assert(switch(vm::run_with_array_limit(p,0,0)){case .ok(_):{false}case .err(e):{e.kind==8}});}
 fn ir::Program program(u8 tag,bool recursive){
     var ir::Program p=ir::empty();p.function_count=2;p.entry=1;p.arities[0]=1;p.return_types[0]=1;p.return_types[1]=1;
     let usize formal=built(builders::parameter_exclusive(ref mut p,0,tag,77));let usize[1] forwarded=[160+formal];let usize value=built(if(recursive){ir::call(ref mut p,0,ref forwarded,77)}else{ir::literal(ref mut p,42,77)});let usize close=built(ir::slice_close(ref mut p,formal,77));let usize ret=built(ir::emit(ref mut p,8,value,0,77));finish(ref mut p,0);
