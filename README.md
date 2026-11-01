@@ -42,6 +42,14 @@ Implemented at `ecfe96c`; development and release each passed 26 selected native
 groups and 2,421 CLI cases, with 360 matching current input hashes. See the
 [Windows evidence](docs/evidence/m2-slice-exclusive-public-windows-20261101.json).
 
+The [private mutable-formal IR foundation](docs/engineering/m2-slice-mutable-parameters-ir.md)
+now constructs and independently checks all six mutable argument descriptors.
+Mutable CALL handoff/restore, runtime formal execution and source parameters
+remain unavailable; public owned mutable slices keep the behavior above.
+Implemented at `33da699`; development and release each passed 26 selected native
+groups and 2,421 CLI cases, with 361 matching current input hashes. See the
+[formal-IR Windows evidence](docs/evidence/m2-slice-mutable-parameters-ir-windows-20261101.json).
+
 ## Historical stages
 
 The notes below record implementation stages and gated behavior at the named

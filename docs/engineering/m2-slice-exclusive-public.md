@@ -61,6 +61,11 @@ aliases/subranges, readonly aliases of writers, or readonly CALL coercions.
 `var ref mut` and whole-handle assignment remain rejected. These restrictions
 apply in both source and independent IR validation.
 
+The later [private mutable-formal IR foundation](m2-slice-mutable-parameters-ir.md)
+adds descriptor construction and independent body inspection only. Public verify
+still rejects rootless mutable formals, and mutable CALL execution/source syntax
+remain unavailable. The public owned-slice behavior in this contract is unchanged.
+
 ## Bounds and Fuel
 
 The existing ceilings remain: 16 declared slice sites per Program, 16 live shared

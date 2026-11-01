@@ -6,6 +6,8 @@ mutable CALL arguments. Existing owned mutable slices and readonly parameters
 remain public. Mutable formals, their CALL execution and source syntax remain
 unavailable.
 
+Implementation: `33da699`.
+
 ## Encoding without growing Program
 
 `Program.slice_elements` keeps its existing sixteen bytes. Owned sites retain
@@ -78,6 +80,13 @@ Public CLI regression covers 222 owned mutable, 192 readonly scalar and all 2,00
 M1 cases. No version capability, opcode, Program field, source grammar or Fuel
 price changes. New native tests are descriptor/proof/gate evidence, while CLI
 tests exercise the already-public owned mutable and readonly implementations.
+
+Development and release each passed all 26 selected native groups and 2,421 CLI
+cases. Both matched 361 identical current input hashes; pinned compiler,
+retained CLI, both matrix and full M1 receipt identities were rechecked. Both
+profiles accept parser depth 32 and reject depths 33/64 with `compile_limit` in
+check/run. Program fields remain unchanged. See the
+[Windows evidence](../evidence/m2-slice-mutable-parameters-ir-windows-20261101.json).
 
 The next integration needs an atomic exclusive CALL handoff/restore protocol,
 including duplicate-root rejection, callee return/error cleanup and retained

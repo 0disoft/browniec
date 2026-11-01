@@ -1,5 +1,13 @@
 # Roadmap
 
+- [Private mutable scalar-slice formals](../engineering/m2-slice-mutable-parameters-ir.md)
+  now reuse the existing element byte for exact scalar type plus access mode.
+  Construction, metadata and independent body/lifetime proof are implemented;
+  public verify rejects rootless mutable descriptors after the complete proof.
+  CALL argument admission and source syntax stay gated. Next is atomic exclusive
+  CALL handoff/restore with duplicate-root rejection and return/error cleanup.
+  Existing owned mutable and readonly execution remains public.
+
 - [Public mutable scalar slices](../engineering/m2-slice-exclusive-public.md)
   now use the complete metadata/type/flow/lifetime proof and checked metered
   execution for same-function owned mutable roots of all six scalar tags.

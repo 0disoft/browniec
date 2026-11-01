@@ -1,5 +1,25 @@
 # AGENTS.md
 
+- Private mutable scalar-slice formal IR: implemented at `33da699`.
+  Rootless mutable formals use bit128 plus an exact low-seven-bit scalar tag in
+  the existing element byte (129/130/137/138/139/140). The checked builder,
+  metadata/entry masks and independent body proof support all six scalar tags
+  without new Program fields. Reads, stores, length, u8 UTF-8 and exact lifetimes
+  are inspected; this is not mutable-formal execution evidence. Mutable CALL
+  sources/destinations, aliases/subloans and source formals remain unavailable.
+  Public verify proves the whole Program then rejects rootless exclusive sites
+  before backing/Fuel/dispatch. Owned mutable slices and readonly parameters
+  stay public, with unchanged opcodes, Fuel, profiles and capabilities. Next is
+  atomic exclusive CALL handoff/restore. Development and release each passed 26
+  selected native groups and 2,421 CLI cases (222 owned mutable, 192 readonly
+  scalar and 2,007 M1), with 361 identical current input hashes and rechecked
+  compiler/artifact/receipt identities. Program fields remain unchanged;
+  depth32 succeeds and depth33/64 return compile_limit. Full native, other M2,
+  Linux, M0, isolation, packaging, allocator and timing were not rerun. No push,
+  publication, packaged release or deployment. See
+  [the contract](docs/engineering/m2-slice-mutable-parameters-ir.md) and
+  [Windows evidence](docs/evidence/m2-slice-mutable-parameters-ir-windows-20261101.json).
+
 - Public mutable scalar slices: implemented at `ecfe96c`.
   Public verify now uses the same complete metadata/type/flow/lifetime proof as
   inspect without the final blanket exclusive-site gate. CLI check/run admit
