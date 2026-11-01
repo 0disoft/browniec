@@ -4,7 +4,9 @@ The VM's existing `array_slices::Pool` now holds both readonly shared tickets an
 exclusive range tickets within the same sixteen-slot ceiling. This is the
 runtime storage foundation for the private exclusive IR and write instruction.
 Public exclusive admission remains gated. Metered exclusive instruction dispatch
-and guest mutable-slice syntax are not enabled by this stage.
+and guest mutable-slice syntax are not enabled by this stage. The
+[VM successor](m2-slice-exclusive-vm.md) adds private metered execution and
+invocation cleanup; guest syntax and public admission remain gated there.
 
 Implementation: `1a278a1`.
 

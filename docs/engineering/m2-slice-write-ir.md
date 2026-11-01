@@ -8,7 +8,10 @@ runtime write dispatch or instruction Fuel price is enabled.
 Implementation: `caea3d2`.
 
 The [runtime pool successor](m2-slice-exclusive-pool.md) supplies exclusive native
-tickets and mixed-mode drain. Opcode 60 dispatch and metering remain pending.
+tickets and mixed-mode drain. The later
+[metered VM successor](m2-slice-exclusive-vm.md) connects opcode 60 and the other
+owned exclusive operations to private execution; public admission remains gated.
+The remaining sections describe this IR-only checkpoint.
 
 ## Encoding and construction
 

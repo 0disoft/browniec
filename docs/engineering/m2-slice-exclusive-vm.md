@@ -8,6 +8,8 @@ prices are unchanged. Public `verify` still rejects every exclusive site before
 payload allocation, Fuel consumption or execution. No mutable guest syntax or
 public capability is enabled.
 
+Implementation: `b8b3d58`.
+
 The private execution boundary requires an immutable Program that passed
 independent `inspect`. Metadata/type/control-flow/lifetime inspection remains
 mandatory; calling the adapter is not a replacement for it. Owned roots must be
@@ -84,6 +86,13 @@ every exact/one-short instruction price, selected/empty UTF-8, failed writes,
 stale/corrupt metadata, cleanup failure and execution-loop bounds/arithmetic/Fuel
 errors with live writers. Public VM admission is checked separately and remains
 gated.
+
+Development and release each passed all 28 selected native groups and 2,199 CLI
+cases. Both matched 357 identical current input hashes; pinned compiler,
+retained CLI, public matrix and full M1 receipt identities were rechecked. Both
+profiles accept parser depth 32 and reject depths 33/64 with `compile_limit` in
+check/run. Program fields remain unchanged. See the
+[Windows evidence](../evidence/m2-slice-exclusive-vm-windows-20261101.json).
 
 Full native and other M2 suites, Linux, M0, isolation, packaging, allocator and
 timing checks are outside this selection. Earlier receipts remain historical

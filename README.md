@@ -24,14 +24,19 @@ The private owner layer also has an
 [exclusive array session foundation](docs/engineering/m2-array-write-leases.md)
 for future mutable slices. Guest mutable-slice syntax is not enabled yet.
 The [private exclusive IR](docs/engineering/m2-slice-exclusive-ir.md) now proves
-owned-root exclusion and lifetimes independently; public execution remains
-blocked until exclusive VM dispatch and cleanup are connected.
+owned-root exclusion and lifetimes independently; public execution remains gated.
 The [private slice-write instruction](docs/engineering/m2-slice-write-ir.md)
-adds exact-typed store construction and inspection; guest write execution
+adds exact-typed store construction and inspection; public guest write execution
 remains gated.
 The [runtime ticket pool](docs/engineering/m2-slice-exclusive-pool.md) now supports
 exclusive native reads/writes and mixed-mode drain under the same sixteen-handle
-limit; metered exclusive opcode dispatch remains pending.
+limit. The [private metered VM adapter](docs/engineering/m2-slice-exclusive-vm.md)
+connects open/read/write/length/UTF-8/close to the shared execution loop and
+invocation cleanup. Public admission and guest mutable-slice lowering remain
+the next steps; no public mutable-slice capability is enabled.
+Implemented at `b8b3d58`; development and release each passed 28 selected native
+groups and 2,199 CLI cases, with 357 matching input hashes. See the
+[Windows evidence](docs/evidence/m2-slice-exclusive-vm-windows-20261101.json).
 
 ## Historical stages
 

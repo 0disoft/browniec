@@ -1,5 +1,23 @@
 # AGENTS.md
 
+- Private metered exclusive slice VM: implemented at `b8b3d58`.
+  The internal execution loop routes owned marker128 sites through checked
+  open/read/write/length/u8 UTF-8/close over the existing unified pool. Every
+  operation prepays its complete price before runtime state or payload access;
+  opcode60 costs 4,130 + twice the scalar width. Explicit normal closes and the
+  existing invocation drain retain their lifetime/error semantics. Public verify
+  still rejects all exclusive metadata before allocation/Fuel/dispatch. No guest
+  mutable-slice syntax, mutable parameters, subloans or capability is enabled.
+  Program fields and readonly instruction prices are unchanged. Development and
+  release each passed 28 selected native groups and 2,199 CLI cases (192 public
+  scalar slices plus 2,007 M1), with 357 identical current input hashes and
+  rechecked compiler/artifact/receipt identities. Depth32 succeeds; depth33/64
+  return compile_limit. Full native/other M2, Linux, M0, isolation, packaging,
+  allocator and timing were not rerun. No push/publication/release/deployment.
+  Public admission and mutable guest lowering are next. See
+  [the contract](docs/engineering/m2-slice-exclusive-vm.md) and
+  [Windows evidence](docs/evidence/m2-slice-exclusive-vm-windows-20261101.json).
+
 - Private shared/exclusive runtime slice pool: implemented at `1a278a1`.
   The existing sixteen slots now
   carry a mode bit and checked native exclusive reads/writes/selected UTF-8.

@@ -5,9 +5,10 @@
   implemented. The [checked write instruction](../engineering/m2-slice-write-ir.md)
   now has private construction and inspection. Public exclusive execution remains
   blocked. The [runtime ticket pool](../engineering/m2-slice-exclusive-pool.md)
-  now stores both modes with native writes and mixed-mode drain. Next integration
-  needs metered dispatch,
-  lexical/error cleanup and then guest lowering. Exclusive parameters,
+  now stores both modes with native writes and mixed-mode drain. The
+  [private metered VM adapter](../engineering/m2-slice-exclusive-vm.md) connects
+  open/read/write/length/UTF-8/close and invocation error cleanup to the shared
+  execution loop. Public admission and guest lowering are next. Exclusive parameters,
   subloans and returned borrows remain unsupported. See
   [the owner-layer contract](../engineering/m2-array-write-leases.md). Public
   readonly slices already support all six scalar tags; historical entries below
