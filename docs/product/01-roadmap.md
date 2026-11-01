@@ -1,5 +1,12 @@
 # Roadmap
 
+- [Private mutable CALL frame adapter](../engineering/m2-slice-mutable-call-vm.md)
+  now publishes mixed shared/exclusive handoffs only after owned copies succeed,
+  detaches closed formals without ending owner sessions, restores fresh caller
+  tickets on normal return and drains detached handles during abort. Next is
+  shared executable CALL/control publication, mutable formal dispatch and
+  normal-return/abort wiring. Source parameters and public admission stay gated.
+
 - [Private mutable CALL IR proof](../engineering/m2-slice-mutable-call-ir.md)
   now checks exact tags/modes, source lifetimes and exclusive batch uniqueness.
   Recursive and mutual forwarding inspect successfully; shared duplicates stay

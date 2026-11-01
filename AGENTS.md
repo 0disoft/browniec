@@ -1,5 +1,19 @@
 # AGENTS.md
 
+- Private mutable slice CALL frame adapter: `slice_mutable_call_vm` stages mixed
+  shared retention and exclusive handoff, copies owned arguments last, then
+  publishes child loan/origin bindings and a unique per-CALL receipt. Formal
+  release detaches the capability without unlocking its owner; return stages
+  ordinary loan closes and fresh caller restoration before publication. Abort
+  drain clears receipts only on success and preserves prior writes/original
+  outcomes. Scalar/control frames, shared execution-loop wiring, mutable formal
+  instructions and source/public admission remain unconnected. Legacy gates and
+  public/readonly prices are unchanged. Private CALL prepays base/scalar + owned
+  copies + 65537*(1 + shared + 2*exclusive); release costs 4097. No Program,
+  shared Frames or pool-slot fields grow. Next is executable coordinator/formal
+  dispatch and return/abort integration. See
+  [the contract](docs/engineering/m2-slice-mutable-call-vm.md).
+
 - Private mutable scalar-slice CALL IR proof: implemented at `20afacd`. Exact
   tags/modes, live same-function owned or formal sources and per-CALL exclusive site/owned-root uniqueness are
   checked by the shared scalar/aggregate argument proof. Shared duplicates stay

@@ -88,3 +88,7 @@ checks are outside this selection. Local commits only; no push, publication,
 packaged release or deployment. Earlier evidence remains historical at its own
 source identities. Next is mixed runtime CALL admission and staged frame
 publication, followed by return restoration and mutable formal dispatch.
+
+The [native frame-adapter successor](m2-slice-mutable-call-vm.md) now executes
+mixed transfer, binding release, return restoration and abort drain. The shared
+VM loop, mutable formal instructions and source/public admission remain gated.

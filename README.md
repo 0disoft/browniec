@@ -69,6 +69,13 @@ remain gated. No public capability or Fuel price changes. Implemented at
 cases, with 364 matching input hashes. See the
 [mutable CALL IR Windows evidence](docs/evidence/m2-slice-mutable-call-ir-windows-20261101.json).
 
+The [private mutable CALL frame adapter](docs/engineering/m2-slice-mutable-call-vm.md)
+now transfers mixed borrowed arguments after atomic owned copies, preserves
+exclusive owner sessions across formal release and restores fresh caller tickets
+on return. Native tests exercise actual writes, nested frames and abort cleanup.
+Shared VM-loop/control wiring, mutable formal instruction dispatch and guest
+parameters remain unconnected; the existing public admission gate stays intact.
+
 ## Historical stages
 
 The notes below record implementation stages and gated behavior at the named
