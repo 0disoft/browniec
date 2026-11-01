@@ -8,7 +8,9 @@
   now stores both modes with native writes and mixed-mode drain. The
   [private metered VM adapter](../engineering/m2-slice-exclusive-vm.md) connects
   open/read/write/length/UTF-8/close and invocation error cleanup to the shared
-  execution loop. Public admission and guest lowering are next. Exclusive parameters,
+  execution loop. [Private source lowering](../engineering/m2-slice-exclusive-source.md)
+  now covers owned `let ref mut Tag[]` declarations and exact typed element
+  stores, including existing lexical cleanup. Public admission is next. Exclusive parameters,
   subloans and returned borrows remain unsupported. See
   [the owner-layer contract](../engineering/m2-array-write-leases.md). Public
   readonly slices already support all six scalar tags; historical entries below

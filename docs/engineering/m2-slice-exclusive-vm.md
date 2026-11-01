@@ -10,6 +10,9 @@ public capability is enabled.
 
 Implementation: `b8b3d58`.
 
+The [source successor](m2-slice-exclusive-source.md) adds private mutable-slice
+declarations and element-store lowering. Public admission remains gated.
+
 The private execution boundary requires an immutable Program that passed
 independent `inspect`. Metadata/type/control-flow/lifetime inspection remains
 mandatory; calling the adapter is not a replacement for it. Owned roots must be

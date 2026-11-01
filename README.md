@@ -22,7 +22,7 @@ browniec run examples/slice-elements.brc --fuel 1000000 --json
 
 The private owner layer also has an
 [exclusive array session foundation](docs/engineering/m2-array-write-leases.md)
-for future mutable slices. Guest mutable-slice syntax is not enabled yet.
+for mutable slices. Guest mutable slices are not publicly enabled yet.
 The [private exclusive IR](docs/engineering/m2-slice-exclusive-ir.md) now proves
 owned-root exclusion and lifetimes independently; public execution remains gated.
 The [private slice-write instruction](docs/engineering/m2-slice-write-ir.md)
@@ -32,11 +32,16 @@ The [runtime ticket pool](docs/engineering/m2-slice-exclusive-pool.md) now suppo
 exclusive native reads/writes and mixed-mode drain under the same sixteen-handle
 limit. The [private metered VM adapter](docs/engineering/m2-slice-exclusive-vm.md)
 connects open/read/write/length/UTF-8/close to the shared execution loop and
-invocation cleanup. Public admission and guest mutable-slice lowering remain
-the next steps; no public mutable-slice capability is enabled.
+invocation cleanup. The [private source lowering](docs/engineering/m2-slice-exclusive-source.md)
+now lowers `let ref mut Tag[] p = ref mut a[lo..hi];` and `p[index] = value`
+for native internal execution. Public admission is next; CLI `check` and `run`
+still reject exclusive Programs and no public mutable-slice capability is enabled.
 Implemented at `b8b3d58`; development and release each passed 28 selected native
 groups and 2,199 CLI cases, with 357 matching input hashes. See the
 [Windows evidence](docs/evidence/m2-slice-exclusive-vm-windows-20261101.json).
+Private source lowering is implemented at `e0a0ec0`; development and release each
+passed 17 selected native groups and 2,363 CLI cases, with 359 matching input
+hashes. See the [source Windows evidence](docs/evidence/m2-slice-exclusive-source-windows-20261101.json).
 
 ## Historical stages
 

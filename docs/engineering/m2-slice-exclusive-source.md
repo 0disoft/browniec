@@ -20,6 +20,8 @@ backing allocation, Fuel or dispatch. The example above is not yet a public CLI
 feature. Public admission is the next delivery slice; no version capability,
 profile, instruction encoding, Fuel price or Program field changes here.
 
+Implementation: `e0a0ec0`.
+
 ## Source boundary
 
 Both declaration and initializer require `mut`. The binding uses `let`; `var ref
@@ -76,6 +78,13 @@ tests perform actual source-to-IR-to-VM execution; the new CLI cases prove hones
 rejection rather than mutable-slice execution. Zero-Fuel runs still reach the
 public exclusive gate first. The scripts retain artifacts and record input,
 compiler, executable and receipt identities.
+
+Development and release each passed all 17 selected native groups and 2,363 CLI
+cases. Both matched 359 identical current input hashes; pinned compiler, retained
+CLI, both matrix and full M1 receipt identities were rechecked. Both profiles
+accept parser depth 32 and reject depths 33/64 with `compile_limit` in check/run.
+Program fields remain unchanged. See the
+[Windows evidence](../evidence/m2-slice-exclusive-source-windows-20261101.json).
 
 Full native and other M2 suites, Linux, M0, isolation, packaging, allocator and
 timing checks are outside this selection. Earlier receipts remain historical

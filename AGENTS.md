@@ -1,5 +1,24 @@
 # AGENTS.md
 
+- Private mutable scalar-slice source: implemented at `e0a0ec0`.
+  Source lowering accepts `let ref mut Tag[] p = ref mut a[lo..hi];` over an
+  existing same-function mutable scalar-array root, and exact typed relative
+  element stores. It reuses marker128, opcode60 and reverse lexical cleanup.
+  Pending endpoints and store index/value expressions preserve evaluation order.
+  Independent inspection rejects payload root access/copies and conflicting
+  sessions. Source rejects mode mismatches, immutable roots, aliases/subloans,
+  rebinding, mutable formals and readonly CALL coercions. Public verify and CLI
+  still reject exclusive metadata before backing/Fuel/dispatch. Public admission
+  is next; no public capability, Program fields or Fuel prices change.
+  Development and release each passed 17 selected native groups and 2,363 CLI
+  cases (164 private source-gate, 192 public readonly scalar and 2,007 M1), with
+  359 matching current input hashes and rechecked compiler/artifact/receipt
+  identities. Depth32 succeeds; depth33/64 return compile_limit. Full native,
+  other M2, Linux, M0, isolation, packaging, allocator and timing were not rerun.
+  No push/publication/release/deployment. See
+  [the contract](docs/engineering/m2-slice-exclusive-source.md) and
+  [Windows evidence](docs/evidence/m2-slice-exclusive-source-windows-20261101.json).
+
 - Private metered exclusive slice VM: implemented at `b8b3d58`.
   The internal execution loop routes owned marker128 sites through checked
   open/read/write/length/u8 UTF-8/close over the existing unified pool. Every
