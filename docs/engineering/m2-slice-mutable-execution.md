@@ -12,6 +12,8 @@ CALL admission and a parameter capability flag remain unavailable. The source
 compiler and CLI keep their existing public behavior. No opcode, Program field,
 profile or public/readonly instruction price changes.
 
+Implementation: `f22a6da`.
+
 ## CALL publication and the shared core
 
 `call_frame_vm` now shares immutable scalar/control preflight and infallible
@@ -94,8 +96,13 @@ the unchanged public paths. CLI regression covers 222 owned mutable, 192 readonl
 scalar and all 2007 M1 cases. New mutable CALL execution evidence is private
 inspected IR; it is not public source execution.
 
-The six focused native execution groups passed in development before the
-implementation commit. The complete regression and release selection follows.
+Development and release each passed all 16 selected native groups and 2,421
+CLI cases, with 368 identical current input hashes. The pinned compiler,
+retained CLI and matrix/M1 receipt identities were rechecked, and the Program
+declaration still matches `cfd8275`. Both profiles accept parser depth32 in
+check/run and reject depths33/64 with `compile_limit`. Both complete selections
+ran all 16 native groups without report reuse. See the
+[Windows evidence](../evidence/m2-slice-mutable-execution-windows-20261101.json).
 
 Next is mutable parameter/argument source lowering with exact mode/type rules,
 followed by deliberate public admission and CLI capability promotion. Mutable

@@ -3,9 +3,13 @@
 - [Private mutable CALL execution](../engineering/m2-slice-mutable-execution.md)
   now connects shared-loop CALL/control publication, authenticated mutable formal
   instructions, scalar/tagged/aggregate returns and abort cleanup. Native tests
-  execute actual writes and31 nested calls with caller restoration. Next is exact
+  execute actual writes and 31 nested calls with caller restoration. Next is exact
   mutable parameter/argument source lowering, then deliberate public admission.
   Source syntax and public capabilities remain unchanged in this private stage.
+  Implemented at `f22a6da`; development/release each passed 16 native groups and
+  2,421 CLI cases, with 368 matching inputs and rechecked artifact/receipt
+  identities. See
+  [Windows evidence](../evidence/m2-slice-mutable-execution-windows-20261101.json).
 
 - [Private mutable CALL frame adapter](../engineering/m2-slice-mutable-call-vm.md)
   now publishes mixed shared/exclusive handoffs only after owned copies succeed,

@@ -84,7 +84,10 @@ now performs mutable formal reads/writes through the shared VM core, publishes
 scalar/control frames after successful transactions and restores callers across
 scalar/tagged/array/record returns. Native tests execute nested and reused frames,
 actual writes and abort cleanup. Mutable source parameters and public admission
-remain gated; this is inspected IR execution.
+remain gated; this is inspected IR execution. Implemented at `f22a6da`;
+development and release each passed 16 native groups and 2,421 CLI cases, with
+368 matching current input hashes. See the
+[mutable execution Windows evidence](docs/evidence/m2-slice-mutable-execution-windows-20261101.json).
 
 ## Historical stages
 

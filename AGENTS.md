@@ -1,17 +1,25 @@
 # AGENTS.md
 
-- Private mutable CALL execution: the shared core now routes mutable CALLs
-  through checked scalar/control publication and the native frame transaction.
+- Private mutable CALL execution: implemented at `f22a6da`. The shared core
+  routes mutable CALLs through checked scalar/control publication and the native frame transaction.
   Rootless mutable instructions authenticate the receipt/session, use existing
   read/write/length/UTF-8/close prices and detach formals on close. Scalar/tagged,
   array and record returns restore caller authority; abort uses mutable finish.
-  `execute_mutable` requires inspected immutable IR,32 initialized unique native
+  `execute_mutable` requires inspected immutable IR, 32 initialized unique native
   receipts and mandatory finish on every result. Legacy execute passes an empty
   view backed by one inert receipt rather than allocating the full collection.
   Public verify/VM and mutable source grammar remain gated; no Program fields,
   opcodes, profile, capability or public/readonly price changes. Next is exact
   mutable parameter/argument source lowering and deliberate public promotion.
-  See [the contract](docs/engineering/m2-slice-mutable-execution.md).
+  Development/release each passed 16 selected native groups and 2,421 CLI cases
+  (222 mutable, 192 readonly scalar, 2,007 M1), with 368 identical current inputs
+  and rechecked compiler/artifact/receipt identities. Program fields remain
+  unchanged; parser depth32 passes and depths33/64 return compile_limit. Native
+  mutable execution accepts 31 nested calls; the next frame returns kind12 with
+  sufficient Fuel. Full native, other M2, Linux, M0, isolation, packaging,
+  allocator and timing were not rerun. No push/publication/release/deployment.
+  See [the contract](docs/engineering/m2-slice-mutable-execution.md) and
+  [Windows evidence](docs/evidence/m2-slice-mutable-execution-windows-20261101.json).
 
 - Private mutable slice CALL frame adapter: implemented at `6ea599c`.
   `slice_mutable_call_vm` stages mixed shared retention and exclusive handoff, copies owned arguments last, then
