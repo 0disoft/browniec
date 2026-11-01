@@ -46,9 +46,10 @@ def main():
     selection.add_argument('--mutable-parameters-source', action='store_true', help='Verify exact mutable source parameters/arguments, private execution and public gates')
     selection.add_argument('--public-mutable-parameters', action='store_true', help='Verify public mutable parameter admission, CALL execution, cleanup and CLI capability')
     selection.add_argument('--exclusive-reborrow', action='store_true', help='Verify private exclusive subrange suspension/restoration and unchanged public behavior')
+    selection.add_argument('--authority', action='store_true', help='Verify private combined CALL/reborrow depth, receipt ownership and public regression')
     selection.add_argument('--reborrow-ir', action='store_true', help='Verify private exclusive child/parent IR flow, execution gates and public regressions')
     args = parser.parse_args()
-    kind = 'slice-reborrow-ir' if args.reborrow_ir else 'slice-exclusive-reborrow' if args.exclusive_reborrow else 'slice-mutable-parameters-public' if args.public_mutable_parameters else 'slice-mutable-parameters-source' if args.mutable_parameters_source else 'slice-mutable-execution' if args.mutable_execution else 'slice-mutable-call-vm' if args.mutable_call_vm else 'slice-mutable-call-ir' if args.mutable_call_ir else 'slice-exclusive-handoff' if args.exclusive_handoff else 'slice-mutable-parameters-ir' if args.mutable_parameters_ir else 'slice-exclusive-public' if args.public_exclusive else 'slice-exclusive-source' if args.exclusive_source else 'slice-exclusive-vm' if args.exclusive_vm else 'slice-exclusive-pool' if args.exclusive_pool else 'slice-write-ir' if args.slice_write_ir else 'slice-exclusive-ir' if args.exclusive_ir else 'slice-element-public' if args.public_elements else 'slice-element-vm' if args.element_vm else 'slice-element-source' if args.parameter_source else 'slice-elements'
+    kind = 'slice-authority' if args.authority else 'slice-reborrow-ir' if args.reborrow_ir else 'slice-exclusive-reborrow' if args.exclusive_reborrow else 'slice-mutable-parameters-public' if args.public_mutable_parameters else 'slice-mutable-parameters-source' if args.mutable_parameters_source else 'slice-mutable-execution' if args.mutable_execution else 'slice-mutable-call-vm' if args.mutable_call_vm else 'slice-mutable-call-ir' if args.mutable_call_ir else 'slice-exclusive-handoff' if args.exclusive_handoff else 'slice-mutable-parameters-ir' if args.mutable_parameters_ir else 'slice-exclusive-public' if args.public_exclusive else 'slice-exclusive-source' if args.exclusive_source else 'slice-exclusive-vm' if args.exclusive_vm else 'slice-exclusive-pool' if args.exclusive_pool else 'slice-write-ir' if args.slice_write_ir else 'slice-exclusive-ir' if args.exclusive_ir else 'slice-element-public' if args.public_elements else 'slice-element-vm' if args.element_vm else 'slice-element-source' if args.parameter_source else 'slice-elements'
     groups = ({'slice_element_public': 3, 'slice_element_vm': 5, 'slice_element_source': 5, 'slice_elements': 4, 'slice_borrow_flow': 5}
               if args.public_elements else {'slice_element_vm': 5, 'slice_call_vm': 4, 'slice_frame_vm': 4, 'slice_lifecycle_vm': 6}
               if args.element_vm else {'slice_element_source': 5, 'slice_parameters_source': 5, 'slice_elements': 4}
@@ -109,6 +110,9 @@ def main():
         groups = {'slice_reborrow_ir': 6, 'slice_borrow_flow': 5,
                   'slice_mutable_parameters': 6, 'slice_mutable_parameters_source': 6}
         matrices_to_run = {'slice-mutable-parameters-source': 74, 'slice-exclusive-source': 222, 'slice-element-public': 192}
+    if args.authority:
+        groups = {'slice_authority': 6, 'slice_reborrow': 6, 'slice_handoff': 6, 'slice_reborrow_ir': 6}
+        matrices_to_run = {'slice-mutable-parameters-source': 74, 'slice-exclusive-source': 222, 'slice-element-public': 192}
     output = ROOT / ('build/m2-' + kind) / args.profile
     output.mkdir(parents=True, exist_ok=True)
     receipt = output / 'receipt.json'
@@ -142,9 +146,9 @@ def main():
     inputs = [dict(path=p.relative_to(ROOT).as_posix(), sha256=digest(p)) for p in sorted(paths)]
     flags = ['--release'] if args.profile == 'release' else []
     native = []
-    batches = [groups] if args.reborrow_ir or args.exclusive_reborrow or args.public_mutable_parameters else [{name: count} for name, count in groups.items()]
+    batches = [groups] if args.authority or args.reborrow_ir or args.exclusive_reborrow or args.public_mutable_parameters else [{name: count} for name, count in groups.items()]
     for batch in batches:
-        name = ('reborrow-ir-batch' if args.reborrow_ir else 'exclusive-reborrow-batch' if args.exclusive_reborrow else 'mutable-public-batch') if len(batch) > 1 else next(iter(batch))
+        name = ('authority-batch' if args.authority else 'reborrow-ir-batch' if args.reborrow_ir else 'exclusive-reborrow-batch' if args.exclusive_reborrow else 'mutable-public-batch') if len(batch) > 1 else next(iter(batch))
         count = sum(batch.values())
         files = [item for group in batch for item in ['--file', f'tests/m2/{group}.fy']]
         report = json.loads(run([compiler, 'test', '--native', '--capture-output', '--json',
@@ -184,7 +188,7 @@ def main():
     env = {key: str(empty) for key in ['PATH', 'TEMP', 'TMP']}
     env.update({key: os.environ[key] for key in ['SystemRoot', 'WINDIR'] if key in os.environ})
     boundaries = []
-    for tag in ([] if args.reborrow_ir or args.exclusive_reborrow or args.public_mutable_parameters or args.mutable_parameters_source or args.mutable_execution or args.mutable_call_vm or args.mutable_call_ir or args.exclusive_handoff or args.mutable_parameters_ir or args.public_exclusive or args.exclusive_source or args.exclusive_vm or args.exclusive_pool or args.slice_write_ir or args.exclusive_ir or args.parameter_source or args.element_vm or args.public_elements else ['i32', 'bool', 'i64', 'u32', 'usize']):
+    for tag in ([] if args.authority or args.reborrow_ir or args.exclusive_reborrow or args.public_mutable_parameters or args.mutable_parameters_source or args.mutable_execution or args.mutable_call_vm or args.mutable_call_ir or args.exclusive_handoff or args.mutable_parameters_ir or args.public_exclusive or args.exclusive_source or args.exclusive_vm or args.exclusive_pool or args.slice_write_ir or args.exclusive_ir or args.parameter_source or args.element_vm or args.public_elements else ['i32', 'bool', 'i64', 'u32', 'usize']):
         for index, declaration in enumerate([f'fn i32 f(ref {tag}[] p){{return 42;}}fn i32 main(){{return 42;}}',
                             f'fn i32 main(){{let {tag}[1] a=[{"true" if tag == "bool" else "42"};1];let ref {tag}[] p=ref a;return 42;}}']):
             path = output / f'boundary-{len(boundaries)}.brc'
@@ -201,7 +205,7 @@ def main():
                         and result['return_i32'] == (None if mode == 'check' else 42) and result['error'] is None, str(result))
                 boundaries.append(dict(command=command, sourceSha256=digest(path), exit=done.returncode, result=result))
     m1 = None
-    if (args.reborrow_ir or args.exclusive_reborrow or args.public_mutable_parameters or args.mutable_parameters_source or args.mutable_execution or args.mutable_call_vm or args.mutable_call_ir or args.exclusive_handoff or args.mutable_parameters_ir or args.public_exclusive or args.exclusive_source or args.exclusive_vm or args.exclusive_pool or args.slice_write_ir or args.exclusive_ir or args.parameter_source or args.public_elements) and os.name == 'nt':
+    if (args.authority or args.reborrow_ir or args.exclusive_reborrow or args.public_mutable_parameters or args.mutable_parameters_source or args.mutable_execution or args.mutable_call_vm or args.mutable_call_ir or args.exclusive_handoff or args.mutable_parameters_ir or args.public_exclusive or args.exclusive_source or args.exclusive_vm or args.exclusive_pool or args.slice_write_ir or args.exclusive_ir or args.parameter_source or args.public_elements) and os.name == 'nt':
         run([sys.executable, '-B', ROOT / 'tools/check-m1-cli.py', '--exe', retained, '--profile', args.profile])
         path = ROOT / 'build/m1' / args.profile / 'cli-receipt.json'
         report = json.loads(path.read_text(encoding='utf-8'))
@@ -273,7 +277,7 @@ def main():
         report['limitations'] = ['Source ref mut Tag[] parameters and exact ref mut named-slice arguments lower to existing private mutable CALL IR; native tests inspect and execute actual source for all six scalar tags, nested calls, mixed arguments, returns and abort cleanup.',
                                 'Public verify/VM/CLI still reject rootless exclusive formals before backing/Fuel/dispatch, including unused signatures. No public capability, Program/signature-table field, opcode or price change. Coercions, aliases/subloans, temporary roots and returned borrows remain unsupported.',
                                 'Selected native groups, private-source CLI gate matrix, public owned mutable/readonly CLI matrices and full M1 on Windows only. Full native, other M2, Linux, M0, isolation, packaging, allocator and timing checks were not rerun.']
-    if args.reborrow_ir or args.exclusive_reborrow or args.public_mutable_parameters or args.mutable_parameters_source:
+    if args.authority or args.reborrow_ir or args.exclusive_reborrow or args.public_mutable_parameters or args.mutable_parameters_source:
         report['limitations'] = ['Public exact mutable scalar-slice parameters and named arguments use complete independent proof, checked shared-core CALL execution and mandatory invocation-owned receipt cleanup. Version JSON reports array_slice_mutable_parameters.',
                                 'Readonly/owned execution retains its legacy entry; mutable aliases/subloans, coercions, temporary roots and escaping borrows remain unsupported. Program fields, opcodes and existing instruction/CALL prices are unchanged.',
                                 'Selected native groups and public mutable-parameter, owned mutable, readonly CLI matrices plus full M1 on Windows only. Full native, other M2, Linux, M0, isolation, packaging, allocator and timing were not rerun.']
@@ -285,6 +289,10 @@ def main():
         report['limitations'] = ['Private op61/62 construct and independently prove a unique acyclic exact-mode child/parent forest, scalar bounds definitions, exclusive active/suspended lifetimes, restoration, exact joins/backedges and normal exits for owned and rootless formal scalar slices. No Program fields grow; existing flow words use bits48..63 for suspended sites.',
                                 'Public verify rejects new instructions after complete proof and before backing/Fuel/dispatch. Both internal execution entries also preflight-reject them without state publication. CALLs during pending reborrow are rejected until combined depth/receipt integration. No source syntax, metering, new public capability or runtime subloan dispatch.',
                                 'Selected native groups and public mutable-parameter, owned mutable, readonly CLI matrices plus M1 on Windows only. Full native, other M2, Linux, M0, isolation, packaging, allocator, timing and native stack/memory measurements were not rerun.']
+    if args.authority:
+        report['limitations'] = ['Private native authority stack owns canonical CALL and subrange receipts. All pending restores share the 31-entry admission and generation reserve; entries record frame ownership and restore in exact reverse order. Empty CALLs also consume combined depth.',
+                                'No Program, owner, pool-slot, shared Frames, source grammar, public capability, verifier admission, VM execution or existing Fuel prices change. The stack has fixed private metadata backing; no allocator, native size, stack or timing measurement is claimed.',
+                                'Selected native transactions and private IR/public execution gates plus public scalar slice matrices and full M1 CLI on Windows only. Full native, other M2, Linux, M0, isolation and packaging were not rerun.']
     receipt.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
     print(f'PASS: {args.profile}: {report["nativeGroups"]} native groups; {report["cliCases"]} CLI cases', flush=True)
 
