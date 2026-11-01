@@ -7,8 +7,8 @@ import array_meta as arrays;
 import struct_meta as records;
 import struct_verifier as struct_verifier;
 import array_verifier as array_verifier;
-import slice_verifier as slice_verifier;
 import slice_parameters as slice_parameters;
+import slice_reborrow_ir as reborrows;
 import array_parameters as array_parameters;
 import array_results as array_results;
 import register_set as registers;
@@ -28,7 +28,7 @@ fn bool merge(ref mut usize[] states, ref mut bool[] seen, ref registers::Set de
     seen[target] = true;
     return true;
 }
-fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records::Prepared shapes, ref mut bool[] used_calls) {
+fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records::Prepared shapes, ref reborrows::Sites loans, ref mut bool[] used_calls) {
     let usize start = p.register_starts[f];
     let usize end = p.register_ends[f];
     let usize arity = p.arities[f];
@@ -61,8 +61,10 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
-        if (op < 1 || op > 60 || (op != 52 && ((op!=24 && op!=47 && op!=49 && op!=53 && op!=59 && p.code[at + 4] != 0) ||
+        if (op < 1 || op > 62 || (op != 52 && ((op!=24 && op!=47 && op!=49 && op!=53 && op!=59 && op!=61 && p.code[at + 4] != 0) ||
             (op!=47 && p.code[at + 5] != 0) || p.code[at + 6] != 0 || p.code[at + 7] != 0))) { return .err(errors::make(5, pc)); }
+        // CALL admission during reborrow awaits combined depth/receipt integration.
+        if(op==9 && (live>>48)!=0) { return .err(errors::make(5,pc)); }
         if (op==25) {
             if(dst!=0 || a!=0 || b!=0) {return .err(errors::make(5,pc));}
             pc+=1; continue;
@@ -103,7 +105,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
             pc+=1; continue;
         }
         if (op >= 54) {
-            live = slice_verifier::step(p, pc, f, ref mut defined, ref mut written, live)?;
+            live = reborrows::step(p, loans, pc, f, ref mut defined, ref mut written, live)?;
         } else if(op==9 && a<p.function_count && (p.array_results[a]!=0 || p.record_results[a]!=0)) {
             if(b>=p.call_count || used_calls[b] || a==p.entry || p.call_arities[b] as usize!=p.arities[a]) {return .err(errors::make(5,pc));}
             let usize checked=array_parameters::arguments(p,a,b,f,ref defined,live,pc)?;
@@ -203,13 +205,14 @@ fn Result<usize, errors::Error> validate(ref ir::Program p) {
     }
     if (code_end != p.count || register_end != p.registers) { return .err(errors::make(5, 0)); }
     let usize borrowed_parameters = slice_parameters::metadata(p)?;
+    let reborrows::Sites loans = reborrows::metadata(p)?;
     let usize parameters = array_parameters::metadata(p)?;
     let usize record_parameters = struct_parameters::metadata(p)?;
     let usize results = array_results::metadata(p)?;
     let usize record_results = struct_results::metadata(p)?;
     var bool[32] used_calls = [false; 32];
     f = 0;
-    while (f < p.function_count) { let usize checked = function(p, f, ref shapes, ref mut used_calls)?; f += 1; }
+    while (f < p.function_count) { let usize checked = function(p, f, ref shapes, ref loans, ref mut used_calls)?; f += 1; }
     var usize call = 0;
     while (call < p.call_count) { if (!used_calls[call]) { return .err(errors::make(5, 0)); } call += 1; }
     return .ok(p.count);
@@ -221,5 +224,7 @@ pub fn Result<usize, errors::Error> inspect(ref ir::Program p) {
     return validate(p);
 }
 pub fn Result<usize, errors::Error> verify(ref ir::Program p) {
-    return validate(p);
+    let usize checked=validate(p)?;
+    if(reborrows::present(p)) { return .err(errors::make(5,0)); }
+    return .ok(checked);
 }

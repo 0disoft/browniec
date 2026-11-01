@@ -32,7 +32,7 @@ pub fn Result<usize, errors::Error> metadata(ref ir::Program p) {
         if (ir::exclusive(p, site)) {
             if (root != 0) {
                 if (root > p.arrays.count || !p.arrays.mutable[root - 1]) { return .err(errors::make(5, 0)); }
-            } else if (origin != site + 1 || !types::scalar(ir::borrow_element(p,site))) { return .err(errors::make(5, 0)); }
+            } else if (!types::scalar(ir::borrow_element(p,site))) { return .err(errors::make(5, 0)); }
         }
         if (root > p.arrays.count || (root != 0 && (origin != 0 || function != 0)) ||
             (origin == 0 && (function != 0 || (p.slice_elements[site] != 0 && p.slice_elements[site] != 128)))) { return .err(errors::make(5, 0)); }

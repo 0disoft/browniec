@@ -33,6 +33,8 @@ import std::num as num;
 // 58 slice read: fresh element dst,a=live slice ID,b=usize index register.
 // 59 subslice: dst=new slice ID,a=live parent ID,b=start usize,byte4=end usize.
 // 60 private slice write: dst=live exclusive site,a=usize index,b=exact element.
+// 61 private reborrow begin: dst=child,a=parent,b=start,byte4=end usize register.
+// 62 private reborrow end: dst=child,a=parent,b=0; restore parent authority.
 // 53 register UTF-8 range: bool dst,a=array,b=start usize register,byte4=end register;5..7=0.
 pub struct Program {
     u8[2048] code;
@@ -387,7 +389,7 @@ pub fn Result<usize, errors::Error> slice(ref mut Program p, usize root, usize o
     return .ok(id);
 }
 // Owned sites use element 0 for shared, 128 for exclusive. Rootless sites keep
-// their exact scalar tag in low bits and may add 128 for private mutable formals.
+// their exact scalar tag in low bits and may add 128 for mutable formals/children.
 // This reuses reserved metadata without growing Program
 // scratch on recursive compiler paths.
 pub fn bool exclusive(ref Program p, usize site) { return site < 16 && (p.slice_elements[site] & 128) != 0; }
@@ -417,7 +419,6 @@ pub fn Result<u8, errors::Error> slice_element(ref Program p, usize id, usize of
     let usize f = function - 1;
     if (p.slice_roots[anchor] != 0 || p.slice_origins[anchor] as usize != origin ||
         p.slice_functions[anchor] as usize != function || !types::scalar(borrow_element(p,id)) ||
-        (exclusive(p,id) && origin != id + 1) ||
         p.slice_elements[anchor] != p.slice_elements[id] || p.arities[f] > 8 ||
         p.register_starts[f] > p.registers ||
         p.arities[f] > p.registers - p.register_starts[f]) { return .err(errors::make(3, offset)); }

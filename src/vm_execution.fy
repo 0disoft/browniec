@@ -22,6 +22,7 @@ import slice_exclusive_vm as exclusive_dispatch;
 import slice_lifecycle_vm as lifecycle;
 import slice_mutable_call_vm as mutable;
 import slice_mutable_frame_vm as mutable_dispatch;
+import slice_reborrow_ir as reborrows;
 
 // Existing public/readonly execution passes an empty view, avoiding the full
 // 32-frame receipt array. One inert native receipt supplies that empty view.
@@ -55,6 +56,7 @@ fn Result<usize,errors::Error> leave(ref ir::Program p,usize function,usize fram
 // Program and invocation-owned state. Public VM entry points still use verify.
 fn Result<i64, errors::Error> core(ref ir::Program p, usize fuel,
     ref mut array_vm::State arrays, ref mut bytes::Buffer payload, ref mut slices::State loans, ref mut borrowed::Frames borrowed_frames, ref mut mutable::Frame[] receipts) {
+    if(reborrows::present(p)) { return .err(errors::make(5,0)); }
     var usize remaining = fuel;
     var struct_vm::State records = struct_vm::empty();
     var i64[4096] registers = [0; 4096];
