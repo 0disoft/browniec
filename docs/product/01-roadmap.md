@@ -1,20 +1,14 @@
 # Roadmap
 
-- Mutable scalar slices: the private exclusive array-session foundation and
-  [owned exclusive IR inspection](../engineering/m2-slice-exclusive-ir.md) are
-  implemented. The [checked write instruction](../engineering/m2-slice-write-ir.md)
-  now has private construction and inspection. Public exclusive execution remains
-  blocked. The [runtime ticket pool](../engineering/m2-slice-exclusive-pool.md)
-  now stores both modes with native writes and mixed-mode drain. The
-  [private metered VM adapter](../engineering/m2-slice-exclusive-vm.md) connects
-  open/read/write/length/UTF-8/close and invocation error cleanup to the shared
-  execution loop. [Private source lowering](../engineering/m2-slice-exclusive-source.md)
-  now covers owned `let ref mut Tag[]` declarations and exact typed element
-  stores, including existing lexical cleanup. Public admission is next. Exclusive parameters,
-  subloans and returned borrows remain unsupported. See
-  [the owner-layer contract](../engineering/m2-array-write-leases.md). Public
-  readonly slices already support all six scalar tags; historical entries below
-  retain their original implementation-stage boundaries.
+- [Public mutable scalar slices](../engineering/m2-slice-exclusive-public.md)
+  now use the complete metadata/type/flow/lifetime proof and checked metered
+  execution for same-function owned mutable roots of all six scalar tags.
+  `let ref mut Tag[]` declarations, exact typed relative stores, length, reads,
+  selected u8 UTF-8 and lexical/error cleanup are connected to public check/run.
+  Version JSON reports `array_slice_mutable: true`. Readonly slices retain their
+  existing behavior. Mutable parameters, aliases/subloans, readonly CALL
+  coercions and returned borrows remain future work. Historical entries below
+  retain the boundaries at their original implementation commits.
 
 - Fairy C toolchain adoption: implemented at `465e380`.
   The compiler is now `eb274643` with SDK `0.0.0-stage0.87`; language `/20`

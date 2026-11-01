@@ -5,6 +5,8 @@ over all six scalar tags: `i32`, `bool`, `i64`, `u8`, `u32` and `usize`.
 Version JSON reports `array_slice_mutable: true`. Existing profiles, result
 schemas, Program fields, opcodes, Fuel prices and CLI Fuel limits are unchanged.
 
+Implementation: `ecfe96c`.
+
 ```text
 module main;
 fn i32 main() {
@@ -90,6 +92,20 @@ version capability is checked through a cleared, tool-free environment. A
 sixteen-ticket attempt is admitted by check and hits the unchanged one-million
 CLI Fuel ceiling during run; this is not a ticket-capacity failure. Native
 adapter Fuel tests use separately supplied VM budgets.
+
+Development and release each passed all 26 selected native groups and 2,421 CLI
+cases. Both matched 360 identical current input hashes; pinned compiler,
+retained CLI, both matrix and full M1 receipt identities were rechecked. Both
+profiles accept parser depth 32 and reject depths 33/64 with `compile_limit` in
+check/run. Program fields remain unchanged. See the
+[Windows evidence](../evidence/m2-slice-exclusive-public-windows-20261101.json).
+
+All 26 development native groups passed before the initial CLI checker requested
+unsupported Fuel 4,000,000. After correcting only Python checks/help and docs,
+the unchanged native reports and retained CLI were reused; both CLI matrices and
+full M1 were run with the corrected checks. The receipt records native report
+identities and current native-input hashes captured at reuse, rather than
+claiming an earlier input snapshot. Release ran the full corrected selection.
 
 The earlier source CLI selection is now an execution matrix with schema
 `browniec.slice-exclusive-source-cli/v2`; dated v1 receipts retain their original

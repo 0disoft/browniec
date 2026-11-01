@@ -1,5 +1,27 @@
 # AGENTS.md
 
+- Public mutable scalar slices: implemented at `ecfe96c`.
+  Public verify now uses the same complete metadata/type/flow/lifetime proof as
+  inspect without the final blanket exclusive-site gate. CLI check/run admit
+  same-function owned mutable roots for all six scalar tags, `let ref mut Tag[]`
+  declarations and exact typed relative stores. Reads, length, selected u8 UTF-8,
+  metered dispatch and normal/error cleanup use the existing unified pool.
+  Version JSON reports `array_slice_mutable: true`. Program fields, instruction
+  prices, profiles and CLI Fuel limits are unchanged. Mutable formals, aliases/
+  subloans, returned borrows, temporary roots and readonly CALL coercions remain
+  unsupported. See [the public contract](docs/engineering/m2-slice-exclusive-public.md)
+  and [working example](examples/mutable-slices.brc). Development and release
+  each passed 26 selected native groups and 2,421 CLI cases (222 mutable, 192
+  readonly scalar and 2,007 M1), with 360 identical current input hashes and
+  rechecked compiler/artifact/receipt identities. Development native reports were
+  reused after CLI-only test corrections; release ran the complete selection.
+  Depth32 succeeds; depth33/64 return compile_limit. Full native, other M2,
+  Linux, M0, isolation, packaging, allocator and timing were not rerun. No push,
+  publication, packaged release or deployment. See
+  [Windows evidence](docs/evidence/m2-slice-exclusive-public-windows-20261101.json).
+  Earlier private-stage entries below record their original boundaries at the
+  named commits.
+
 - Private mutable scalar-slice source: implemented at `e0a0ec0`.
   Source lowering accepts `let ref mut Tag[] p = ref mut a[lo..hi];` over an
   existing same-function mutable scalar-array root, and exact typed relative

@@ -1,5 +1,9 @@
 # Private exclusive slice-write instruction
 
+This document records its named implementation checkpoint. The
+[public mutable-slice successor](m2-slice-exclusive-public.md) now enables public
+verification and execution; gate statements below describe the earlier stage.
+
 The independently inspected exclusive IR now has a typed store instruction.
 It is a construction and verification foundation; public execution remains
 blocked by the existing exclusive-site gate. No guest mutable-slice syntax,

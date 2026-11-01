@@ -1,5 +1,9 @@
 # Shared and exclusive runtime slice tickets
 
+This document records its named implementation checkpoint. The
+[public mutable-slice successor](m2-slice-exclusive-public.md) now enables public
+verification and execution; gate statements below describe the earlier stage.
+
 The VM's existing `array_slices::Pool` now holds both readonly shared tickets and
 exclusive range tickets within the same sixteen-slot ceiling. This is the
 runtime storage foundation for the private exclusive IR and write instruction.

@@ -1,5 +1,9 @@
 # Private owned mutable-slice source lowering
 
+This document records its named implementation checkpoint. The
+[public mutable-slice successor](m2-slice-exclusive-public.md) now enables public
+verification and execution; gate statements below describe the earlier stage.
+
 The source compiler now lowers a lexical exclusive slice declaration and element
 stores for all six exact scalar tags (`i32`, `bool`, `i64`, `u8`, `u32`, `usize`):
 

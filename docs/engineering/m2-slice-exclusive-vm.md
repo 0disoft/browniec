@@ -1,5 +1,9 @@
 # Private metered exclusive slice execution
 
+This document records its named implementation checkpoint. The
+[public mutable-slice successor](m2-slice-exclusive-public.md) now enables public
+verification and execution; gate statements below describe the earlier stage.
+
 The internal execution loop now dispatches owned exclusive sites (marker `128`)
 through `slice_exclusive_vm::step`. It executes open (54), selected UTF-8 (55),
 close (56), length (57), relative scalar read (58) and relative scalar write (60)

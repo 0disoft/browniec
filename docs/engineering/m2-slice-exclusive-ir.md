@@ -1,5 +1,9 @@
 # Private owned exclusive slice IR
 
+This document records its named implementation checkpoint. The
+[public mutable-slice successor](m2-slice-exclusive-public.md) now enables public
+verification and execution; gate statements below describe the earlier stage.
+
 The IR now represents function-local exclusive slices over mutable owned scalar
 arrays. This is an independently inspected foundation. Public `verify` and VM
 entry reject every exclusive declaration until metered exclusive dispatch and
