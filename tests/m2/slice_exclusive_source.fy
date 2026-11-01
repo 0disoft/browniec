@@ -13,8 +13,8 @@ import std::bytes as bytes;
 fn ir::Program compiled(ref u8[] source){return switch(compiler::compile(source)){case .ok(v):{v}case .err(_):{assert(false);ir::empty()}};}
 fn void run(ref u8[] source,u8 error){
     let ir::Program p=compiled(source);assert(verifier::inspect(ref p).is_ok);
-    assert(switch(verifier::verify(ref p)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==0}});
-    assert(switch(vm::run_with_array_limit(ref p,0,0)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==0}});
+    assert(verifier::verify(ref p).is_ok);
+    assert(switch(vm::run_with_array_limit(ref p,4000065,64)){case .ok(v):{error==0 && v==42}case .err(e):{e.kind==error && e.offset<source.len}});
     var arrays::State a=arrays::empty(64);var loans::State l=loans::empty();var calls::Frames f=calls::empty();
     var bytes::Buffer b=switch(arrays::prepare(64)){case .ok(v):{v}case .err(_):{assert(false);bytes::empty()}};
     let result=execution::execute(ref p,4000000,ref mut a,ref mut b,ref mut l,ref mut f);
@@ -24,7 +24,11 @@ fn void run(ref u8[] source,u8 error){
     i=0;while(i<512){assert(l.tickets[i].generation==0);i+=1;}
 }
 fn void rejected(ref u8[] source){assert(switch(compiler::compile(source)){case .ok(_):{false}case .err(e):{e.kind==2 || e.kind==3}});}
-fn void conflict(ref u8[] source){let ir::Program p=compiled(source);assert(!verifier::inspect(ref p).is_ok);}
+fn void conflict(ref u8[] source){
+    let ir::Program p=compiled(source);assert(!verifier::inspect(ref p).is_ok);
+    assert(!verifier::verify(ref p).is_ok);
+    assert(switch(vm::run_with_array_limit(ref p,0,65537)){case .ok(_):{false}case .err(e):{e.kind==5}});
+}
 
 @test
 fn void six_scalar_tags_whole_computed_open_and_empty_ranges_lower_to_owned_exclusive_sites(){

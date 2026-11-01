@@ -8,18 +8,18 @@ import vm as vm;
 fn usize built(Result<usize,errors::Error> r){return switch(r){case .ok(v):{v}case .err(_):{assert(false);0}};}
 fn ir::Program compiled(ref u8[] source){return switch(compiler::compile(source)){case .ok(v):{v}case .err(_):{assert(false);ir::empty()}};}
 fn usize opcode(ref ir::Program p,u8 op){var usize pc=0;while(pc<p.count){if(p.code[pc*8]==op){return pc;}pc+=1;}assert(false);return 0;}
-fn void rejected(ref ir::Program p){assert(switch(verifier::inspect(p)){case .ok(_):{false}case .err(e):{e.kind==5}});}
-fn void rejected_at(ref ir::Program p,usize pc){assert(switch(verifier::inspect(p)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==pc}});}
-fn void private_only(ref ir::Program p){
+fn void rejected(ref ir::Program p){assert(switch(verifier::inspect(p)){case .ok(_):{false}case .err(e):{e.kind==5}});assert(!verifier::verify(p).is_ok);assert(switch(vm::run_with_array_limit(p,0,65537)){case .ok(_):{false}case .err(e):{e.kind==5}});}
+fn void rejected_at(ref ir::Program p,usize pc){assert(switch(verifier::inspect(p)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==pc}});assert(switch(verifier::verify(p)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==pc}});assert(switch(vm::run_with_array_limit(p,0,65537)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==pc}});}
+fn void admitted(ref ir::Program p){
     assert(built(verifier::inspect(p))==p.count);
-    assert(switch(verifier::verify(p)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==0}});
-    assert(switch(vm::run_with_array_limit(p,0,0)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==0}});
+    assert(built(verifier::verify(p))==p.count);
+    assert(switch(vm::run_with_array_limit(p,4000000,64)){case .ok(v):{v==42}case .err(_):{false}});
 }
 fn void skip(ref mut ir::Program p,usize pc){p.code[pc*8]=19;p.code[pc*8+1]=0;p.code[pc*8+3]=0;let usize patched=built(ir::patch(p,pc,pc+1,0));}
-fn void typed(ref u8[] source){var ir::Program p=compiled(source);p.slice_elements[0]=128;private_only(ref p);}
+fn void typed(ref u8[] source){var ir::Program p=compiled(source);p.slice_elements[0]=128;admitted(ref p);}
 
 @test
-fn void all_scalar_owned_exclusive_sites_inspect_but_never_enter_the_shared_vm(){
+fn void all_scalar_owned_exclusive_sites_verify_and_execute_with_checked_dispatch(){
     typed(b"module main;fn i32 main(){var i32[1] a=[42;1];{let ref i32[] p=ref a;let i32 x=p[0];}a[0]=0;return 42;}");
     typed(b"module main;fn i32 main(){var bool[1] a=[true;1];{let ref bool[] p=ref a;let bool x=p[0];}a[0]=false;return 42;}");
     typed(b"module main;fn i32 main(){var i64[1] a=[42;1];{let ref i64[] p=ref a;let i64 x=p[0];}a[0]=0;return 42;}");
@@ -27,7 +27,7 @@ fn void all_scalar_owned_exclusive_sites_inspect_but_never_enter_the_shared_vm()
     typed(b"module main;fn i32 main(){var u32[1] a=[42;1];{let ref u32[] p=ref a;let u32 x=p[0];}a[0]=0;return 42;}");
     typed(b"module main;fn i32 main(){var usize[1] a=[42;1];{let ref usize[] p=ref a;let usize x=p[0];}a[0]=0;return 42;}");
     var ir::Program p=compiled(b"module main;fn i32 main(){var u8[1] a=[42;1];{let ref u8[] p=ref a[1..1];let usize n=p.len;}return 42;}");
-    p.slice_elements[0]=128;private_only(ref p);
+    p.slice_elements[0]=128;admitted(ref p);
 }
 
 @test
@@ -38,9 +38,9 @@ fn void read_write_and_write_write_conflicts_are_root_wide_and_end_at_close(){
     bad=p;bad.slice_elements[1]=128;rejected_at(ref bad,second);
     bad.slice_elements[0]=128;rejected_at(ref bad,second);
     var ir::Program sequential=compiled(b"module main;fn i32 main(){var u8[1] a=[42;1];{let ref u8[] p=ref a;let u8 x=p[0];}{let ref u8[] q=ref a;let u8 y=q[0];}return 42;}");
-    sequential.slice_elements[0]=128;sequential.slice_elements[1]=128;private_only(ref sequential);
+    sequential.slice_elements[0]=128;sequential.slice_elements[1]=128;admitted(ref sequential);
     var ir::Program unrelated=compiled(b"module main;fn i32 main(){var u8[1] a=[42;1];var u8[1] b=[42;1];let ref u8[] p=ref a;let ref u8[] q=ref b;return 42;}");
-    unrelated.slice_elements[0]=128;unrelated.slice_elements[1]=128;private_only(ref unrelated);
+    unrelated.slice_elements[0]=128;unrelated.slice_elements[1]=128;admitted(ref unrelated);
 }
 
 @test
@@ -88,13 +88,13 @@ fn void exclusive_metadata_and_builder_failures_do_not_publish_or_reuse_sites(){
 @test
 fn void branches_backedges_and_returns_require_balanced_exclusive_live_sets(){
     var ir::Program branch=compiled(b"module main;fn i32 main(){var u8[1] a=[42;1];if(true){let ref u8[] p=ref a;let u8 x=p[0];}return 42;}");
-    branch.slice_elements[0]=128;private_only(ref branch);
+    branch.slice_elements[0]=128;admitted(ref branch);
     var ir::Program bad=branch;let usize branch_close=opcode(ref bad,56);skip(ref mut bad,branch_close);rejected(ref bad);
     var ir::Program loop=compiled(b"module main;fn i32 main(){var u8[1] a=[42;1];var usize n=0;while(n<2){let ref u8[] p=ref a;let u8 x=p[0];n=n+1;}return 42;}");
-    loop.slice_elements[0]=128;private_only(ref loop);
+    loop.slice_elements[0]=128;admitted(ref loop);
     bad=loop;let usize loop_close=opcode(ref bad,56);skip(ref mut bad,loop_close);rejected(ref bad);
     var ir::Program returned=compiled(b"module main;fn i32 main(){var u8[1] a=[42;1];let ref u8[] p=ref a;return 42;}");
-    returned.slice_elements[0]=128;private_only(ref returned);
+    returned.slice_elements[0]=128;admitted(ref returned);
     bad=returned;let usize return_close=opcode(ref bad,56);skip(ref mut bad,return_close);rejected(ref bad);
     bad=returned;let usize close=opcode(ref bad,56);bad.code[close*8]=37;bad.code[close*8+1]=0;rejected_at(ref bad,close);
 }

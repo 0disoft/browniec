@@ -7,11 +7,11 @@ import slice_verifier as slices;
 import register_set as registers;
 
 fn usize built(Result<usize,errors::Error> r){return switch(r){case .ok(v):{v}case .err(_):{assert(false);0}};}
-fn void rejected(ref ir::Program p,usize pc){assert(switch(verifier::inspect(p)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==pc}});}
-fn void private_only(ref ir::Program p){
+fn void rejected(ref ir::Program p,usize pc){assert(switch(verifier::inspect(p)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==pc}});assert(switch(verifier::verify(p)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==pc}});assert(switch(vm::run_with_array_limit(p,0,65537)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==pc}});}
+fn void admitted(ref ir::Program p){
     assert(built(verifier::inspect(p))==p.count);
-    assert(switch(verifier::verify(p)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==0}});
-    assert(switch(vm::run_with_array_limit(p,0,0)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==0}});
+    assert(built(verifier::verify(p))==p.count);
+    assert(switch(vm::run_with_array_limit(p,4000000,64)){case .ok(v):{v==42}case .err(_):{false}});
 }
 fn ir::Program program(u8 tag,i64 cell){
     var ir::Program p=ir::empty();p.function_count=1;p.return_types[0]=1;
@@ -43,7 +43,7 @@ fn void builder_reject(ref mut ir::Program p,usize site,usize index,usize value,
 @test
 fn void six_exact_scalar_tags_and_repeated_stores_preserve_definitions_and_loans(){
     let u8[6] tags=[1,2,9,10,11,12];let i64[6] cells=[-2147483648,1,-9223372036854775807-1,255,4294967295,-1];
-    var usize i=0;while(i<6){let ir::Program p=program(tags[i],cells[i]);private_only(ref p);i+=1;}
+    var usize i=0;while(i<6){let ir::Program p=program(tags[i],cells[i]);admitted(ref p);i+=1;}
     let ir::Program p=program(10,42);var registers::Set defined=registers::Set{.low=15,.high=0};
     var registers::Set written=defined;let usize live=4294967297;
     assert(built(slices::step(ref p,6,0,ref mut defined,ref mut written,live))==live);
@@ -95,7 +95,7 @@ fn void stores_require_live_exclusive_owned_sites_and_all_reserved_bytes_zero(){
 fn void stores_do_not_supply_missing_cleanup_or_change_branch_join_live_sets(){
     var ir::Program p=program(10,42);
     // Branch over the first store: both paths retain exactly the same loan.
-    p.code[48]=19;p.code[49]=0;p.code[50]=7;p.code[51]=0;private_only(ref p);
+    p.code[48]=19;p.code[49]=0;p.code[50]=7;p.code[51]=0;admitted(ref p);
     var ir::Program bad=p;bad.code[72]=19;bad.code[73]=0;bad.code[74]=10;bad.code[75]=0;rejected(ref bad,10);
     // A write cannot become a definition for a later scalar read/return.
     bad=program(10,42);bad.code[64]=19;bad.code[65]=0;bad.code[66]=9;bad.code[67]=0;

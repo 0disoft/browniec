@@ -216,17 +216,10 @@ fn Result<usize, errors::Error> validate(ref ir::Program p) {
 }
 
 // Inspection and public admission share the complete IR/dataflow proof for
-// every supported readonly scalar slice element.
+// every supported readonly and owned exclusive scalar slice element.
 pub fn Result<usize, errors::Error> inspect(ref ir::Program p) {
     return validate(p);
 }
 pub fn Result<usize, errors::Error> verify(ref ir::Program p) {
-    let usize checked = validate(p)?;
-    // Do not route exclusive sites through the existing shared-read VM adapter.
-    var usize site = 0;
-    while (site < 16) {
-        if (ir::exclusive(p, site)) { return .err(errors::make(5, 0)); }
-        site += 1;
-    }
-    return .ok(checked);
+    return validate(p);
 }

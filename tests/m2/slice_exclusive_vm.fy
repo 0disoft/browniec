@@ -68,7 +68,7 @@ fn void exact_and_one_short_fuel_cover_all_opcodes_and_six_scalar_widths(){
 }
 
 @test
-fn void complete_private_execution_and_bounds_arithmetic_fuel_errors_drain_writers(){
+fn void public_execution_and_bounds_arithmetic_fuel_errors_drain_writers(){
     let u8[6] tags=[1,2,9,10,11,12];var usize i=0;while(i<6){var u8 mode=0;while(mode<4){
         let ir::Program p=program(tags[i],if(tags[i]==2){1}else{42},if(mode==3){0}else{mode});
         var loans::State l=loans::empty();var arrays::State a=arrays::empty(64);var bytes::Buffer b=backing();var calls::Frames f=calls::empty();
@@ -81,7 +81,7 @@ fn void complete_private_execution_and_bounds_arithmetic_fuel_errors_drain_write
         if(mode!=0){assert(a.owners.slots[0].writing && l.tickets[0].generation!=0);}
         assert(switch(lifecycle::finish(ref mut f,ref mut l,ref mut a,ref b,result)){case .ok(v):{expected==0 && v==42}case .err(e):{e.kind==expected && e.offset==77}});
         clear(ref mut l,ref mut a,ref b);
-        assert(switch(vm::run_with_array_limit(ref p,0,0)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==0}});
+        assert(switch(vm::run_with_array_limit(ref p,fuel+65,64)){case .ok(v):{expected==0 && v==42}case .err(e):{e.kind==expected && e.offset==77}});
         mode+=1;
     }i+=1;}
 }

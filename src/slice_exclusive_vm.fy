@@ -10,7 +10,7 @@ import slice_vm as loans;
 import std::bytes as bytes;
 
 // Private adapter: an immutable independently inspected Program is required.
-// Public verify still rejects marker128 before allocation or execution.
+// Public VM admission runs the same complete proof before allocation/execution.
 pub fn Result<usize,errors::Error> step(ref ir::Program p,usize function,usize pc,usize frame,
     ref mut loans::State loan,ref mut arrays::State state,ref mut bytes::Buffer buffer,
     ref mut i64[] registers,usize fuel) {
