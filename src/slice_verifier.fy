@@ -39,7 +39,7 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, usize pc, usize f,
     if (id >= 16) { return .err(errors::make(5, pc)); }
     let usize root = p.slice_roots[id] as usize;
     let usize origin = p.slice_origins[id] as usize;
-    var u8 element = p.slice_elements[id];
+    var u8 element = ir::borrow_element(p,id);
     let usize one = 1;
     let usize mask = one << (32 + id);
     // Whole-Program metadata was checked before any per-PC table access.

@@ -386,10 +386,12 @@ pub fn Result<usize, errors::Error> slice(ref mut Program p, usize root, usize o
     p.slice_roots[id] = byte(root + 1, offset)?;
     return .ok(id);
 }
-// Owned sites use element 0 for shared, 128 for exclusive; rootless sites keep
-// their exact scalar tag. This reuses reserved metadata without growing Program
+// Owned sites use element 0 for shared, 128 for exclusive. Rootless sites keep
+// their exact scalar tag in low bits and may add 128 for private mutable formals.
+// This reuses reserved metadata without growing Program
 // scratch on recursive compiler paths.
-pub fn bool exclusive(ref Program p, usize site) { return site < 16 && p.slice_elements[site] == 128; }
+pub fn bool exclusive(ref Program p, usize site) { return site < 16 && (p.slice_elements[site] & 128) != 0; }
+pub fn u8 borrow_element(ref Program p, usize site) { return if(site < 16){p.slice_elements[site] & 127}else{0}; }
 // Declare an owned-root exclusive site without enabling shared VM execution.
 pub fn Result<usize, errors::Error> exclusive_slice(ref mut Program p, usize root, usize offset) {
     if (root >= 16 || root >= p.arrays.count || !p.arrays.mutable[root]) { return .err(errors::make(3, offset)); }
@@ -404,7 +406,7 @@ pub fn Result<u8, errors::Error> slice_element(ref Program p, usize id, usize of
     let usize root = p.slice_roots[id] as usize;
     let usize origin = p.slice_origins[id] as usize;
     let usize function = p.slice_functions[id] as usize;
-    if (exclusive(p, id) && (root == 0 || root > 16 || root > p.arrays.count || !p.arrays.mutable[root - 1])) { return .err(errors::make(3, offset)); }
+    if (exclusive(p, id) && root != 0 && (root > 16 || root > p.arrays.count || !p.arrays.mutable[root - 1])) { return .err(errors::make(3, offset)); }
     if (root != 0) {
         if (root > 16 || root > p.arrays.count || origin != 0 || function != 0 || (p.slice_elements[id] != 0 && p.slice_elements[id] != 128)) { return .err(errors::make(3, offset)); }
         return .ok(p.arrays.elements[root - 1]);
@@ -414,7 +416,8 @@ pub fn Result<u8, errors::Error> slice_element(ref Program p, usize id, usize of
     let usize anchor = origin - 1;
     let usize f = function - 1;
     if (p.slice_roots[anchor] != 0 || p.slice_origins[anchor] as usize != origin ||
-        p.slice_functions[anchor] as usize != function || !types::scalar(p.slice_elements[id]) ||
+        p.slice_functions[anchor] as usize != function || !types::scalar(borrow_element(p,id)) ||
+        (exclusive(p,id) && origin != id + 1) ||
         p.slice_elements[anchor] != p.slice_elements[id] || p.arities[f] > 8 ||
         p.register_starts[f] > p.registers ||
         p.arities[f] > p.registers - p.register_starts[f]) { return .err(errors::make(3, offset)); }
@@ -429,7 +432,7 @@ pub fn Result<u8, errors::Error> slice_element(ref Program p, usize id, usize of
         i += 1;
     }
     if (matches != 1) { return .err(errors::make(3, offset)); }
-    return .ok(p.slice_elements[id]);
+    return .ok(borrow_element(p,id));
 }
 pub fn Result<usize, errors::Error> slice_open(ref mut Program p, usize id, usize start, usize end, usize offset) {
     let u8 element = slice_element(p, id, offset)?;
@@ -467,7 +470,7 @@ pub fn Result<usize, errors::Error> slice_read(ref mut Program p, usize id, usiz
 }
 
 // Type/shape construction only. Independent inspection proves definitions,
-// function ownership and a live exclusive ticket; public execution stays gated.
+// function ownership and a live exclusive ticket. Mutable formals stay gated.
 pub fn Result<usize, errors::Error> slice_write(ref mut Program p, usize id,
     usize index, usize value, usize offset) {
     let u8 element = slice_element(p, id, offset)?;

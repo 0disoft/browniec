@@ -36,11 +36,19 @@ pub fn Result<usize, errors::Error> parameter_typed(ref mut ir::Program p, usize
     return .ok(site);
 }
 
+// Private descriptor only: CALL admission and public execution remain gated.
+// All fallible checks finish in parameter_typed before setting the mode bit.
+pub fn Result<usize,errors::Error> parameter_exclusive(ref mut ir::Program p,usize function,u8 element,usize offset) {
+    let usize site=parameter_typed(p,function,element,offset)?;
+    p.slice_elements[site]=element | 128;
+    return .ok(site);
+}
+
 // Reserve a rootless derived site, flattening its origin to a declared formal.
 // No borrow instruction, register, live ticket or CALL frame is published.
 pub fn Result<usize, errors::Error> derived(ref mut ir::Program p, usize parent, usize function, usize offset) {
     if (p.function_count == 0 || p.function_count > 16 || function >= p.function_count ||
-        parent >= 16 || p.registers > 128 || p.arities[function] > 8 ||
+        parent >= 16 || ir::exclusive(p,parent) || p.registers > 128 || p.arities[function] > 8 ||
         p.register_starts[function] > p.registers ||
         p.arities[function] > p.registers - p.register_starts[function]) { return .err(errors::make(3, offset)); }
     let usize origin = p.slice_origins[parent] as usize;
