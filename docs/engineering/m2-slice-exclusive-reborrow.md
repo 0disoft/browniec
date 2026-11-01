@@ -99,10 +99,10 @@ verifier and CLI entry remain unchanged from `80adbb7`. Both profiles accept
 parser depth32 in check/run and reject depths33/64 with `compile_limit`. See the
 [Windows evidence](../evidence/m2-slice-exclusive-reborrow-windows-20261102.json).
 
-Next is independent IR proof for active children, suspended/restored parents and
-all exit/join/backedge paths, followed by combined CALL/reborrow depth admission
-and receipt ownership. Metering, executable VM integration and source/public
-promotion remain separate deliveries.
+The [IR successor](m2-slice-reborrow-ir.md) now proves active children,
+suspended/restored parents and exit/join/backedge paths. Next is combined
+CALL/reborrow depth admission and receipt ownership. Metering, executable VM
+integration and source/public promotion remain separate deliveries.
 
 Full native, other M2, Linux, M0, isolation, packaging, allocator and timing checks
 are outside this selection. Local commits only; no push, publication, packaged

@@ -94,6 +94,19 @@ are construction/proof evidence; actual reborrow writes remain native transactio
 evidence from the preceding stage. Runtime index/range values are not executed
 or range-checked by this proof.
 
+Implemented at `3987195`. Development and release each passed all 23 selected
+native groups and 2,495 CLI cases, with 376 matching current input hashes.
+Compiler, retained CLI and all matrix/M1 receipt identities were rechecked.
+Program/signature declarations and owner/pool/native reborrow/handoff/shared-frame
+helpers, compiler and public VM/CLI entry files match `febe841`; the verifier and
+execution core contain the new private proof/gates. Both profiles accept parser
+depth32 in check/run and reject depths33/64 with `compile_limit`. See the
+[Windows evidence](../evidence/m2-slice-reborrow-ir-windows-20261102.json).
+
+Next is combined CALL/reborrow depth admission and invocation/frame receipt
+ownership, followed by metering and executable VM integration. Guest syntax and
+public admission remain separate deliveries.
+
 Public CLI regression runs 74 mutable parameter, 222 owned mutable, 192 readonly
 scalar and 2007 M1 cases on Windows. Full native, other M2, Linux, M0, isolation,
 packaging, allocator, timing and native memory/stack measurements are outside the

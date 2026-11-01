@@ -1,5 +1,25 @@
 # AGENTS.md
 
+- Private exclusive reborrow IR proof: implemented at `3987195`.
+  Checked private op61/62 derive a unique acyclic child/parent forest from immutable
+  code and prove available/suspended lifetimes over owned and rootless formal
+  scalar slices. Existing live bits48..63 hold suspended parents; no Program,
+  signature or per-PC flow words are added. Parent access, direct-root bypass,
+  stale children, wrong restores and mismatched joins/backedges fail inspection.
+  Public verification and both internal execution entries reject the instructions
+  before dispatch/state publication. CALL during pending reborrow remains gated.
+  Next is combined CALL/reborrow depth admission and per-frame receipt ownership,
+  before metering, executable VM integration and guest/public promotion.
+  Development/release each passed 23 selected native groups and 2,495 CLI cases,
+  with 376 identical current inputs and rechecked compiler/artifact/matrix/M1
+  identities. Program/signature declarations, owner/pool/native reborrow/handoff,
+  shared frame helpers, compiler and public VM/CLI entries match `febe841`.
+  Parser depth32 passes; depths33/64 return compile_limit. Full native, other M2,
+  Linux, M0, isolation, packaging, allocator, timing and native stack/memory checks
+  were not rerun. No push/release. See
+  [the IR contract](docs/engineering/m2-slice-reborrow-ir.md) and
+  [Windows evidence](docs/evidence/m2-slice-reborrow-ir-windows-20261102.json).
+
 - Private exclusive subrange foundation: implemented at `ab85195`.
   `slice_reborrow` narrows one existing exclusive pool slot, invalidates the
   parent ticket and restores its original range with a fresh generation.
