@@ -18,7 +18,7 @@ pub fn bool borrowed(ref locals::Table names, ref ir::Program p, usize root) {
     }
     return false;
 }
-pub struct Header { usize begin; usize end; u8 element; }
+pub struct Header { usize begin; usize end; u8 element; bool exclusive; }
 // Only an existing same-function array may anchor a lexical slice. Keep this
 // separate from the u8-only text predicate's argument admission.
 pub fn Result<usize, errors::Error> root_argument(ref u8[] source, ref mut lexer::State s,
@@ -32,11 +32,13 @@ pub fn Result<usize, errors::Error> root_argument(ref u8[] source, ref mut lexer
     let usize name = lexer::next(source,s)?;
     return .ok(root);
 }
-// Called after let/var. The RHS must match the exact readonly scalar[] tag.
+// let ref [mut] Tag[] name = ref [mut] root; both access modes must agree.
 pub fn Result<Header, errors::Error> header(ref u8[] source, ref mut lexer::State s,
     ref locals::Table names, bool mutable, u8 terminator, u8 result_type) {
     if (mutable || terminator != 59 || result_type == 0) { return .err(errors::make(3, s.begin)); }
     let usize keyword = lexer::word(source, s, b"ref")?;
+    let bool exclusive = s.kind == 2 && lexer::equal(source[s.begin..s.end], b"mut");
+    if (exclusive) { let usize access = lexer::next(source,s)?; }
     let u8 element = types::parse(source, s)?;
     if (!types::scalar(element)) { return .err(errors::make(3, s.begin)); }
     let usize open = lexer::punctuation(source, s, 91)?;
@@ -49,7 +51,8 @@ pub fn Result<Header, errors::Error> header(ref u8[] source, ref mut lexer::Stat
     let usize name = lexer::next(source, s)?;
     let usize equals = lexer::punctuation(source, s, 61)?;
     let usize reference = lexer::word(source, s, b"ref")?;
-    return .ok(Header { .begin = begin, .end = end, .element = element });
+    if (exclusive) { let usize access = lexer::word(source,s,b"mut")?; }
+    return .ok(Header { .begin = begin, .end = end, .element = element, .exclusive = exclusive });
 }
 pub fn Result<usize, errors::Error> predicate(ref u8[] source, ref mut lexer::State s,
     ref mut ir::Program p, ref locals::Table names, usize index, usize at) {

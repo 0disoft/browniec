@@ -30,6 +30,7 @@ pub fn Result<usize, errors::Error> capture(ref u8[] source, ref mut lexer::Stat
     let usize index = locals::find(source, names, s.begin, s.end);
     if (!slices::binding(names, index)) { return .err(errors::make(3, s.begin)); }
     let usize site = names.registers[index] - 160;
+    if (ir::exclusive(p,site)) { return .err(errors::make(3,at)); }
     let usize root = p.slice_roots[site] as usize;
     let usize origin = p.slice_origins[site] as usize;
     if (root != 0) {

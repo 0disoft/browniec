@@ -628,6 +628,7 @@ fn Result<usize, errors::Error> slice_declaration(ref u8[] source, ref mut lexer
     let slices::Header header = slices::header(source,s,table,mutable,terminator,result_type)?;
     let usize index = if (s.kind == 2) { locals::find(source,table,s.begin,s.end) } else { 64 };
     let usize parent = if (slices::binding(table,index)) { table.registers[index]-160 } else { 16 };
+    if (parent < 16 && (header.exclusive || ir::exclusive(p,parent))) { return .err(errors::make(3,header.begin)); }
     var usize root = 0;
     if (parent < 16) {
         if (p.slice_roots[parent] != 0) { root = (p.slice_roots[parent] as usize)-1; }
@@ -637,6 +638,7 @@ fn Result<usize, errors::Error> slice_declaration(ref u8[] source, ref mut lexer
     } else { root = slices::root_argument(source,s,p,table,header.element)?; }
     let u8 element = if (parent < 16) { ir::slice_element(p,parent,header.begin)? } else { p.arrays.elements[root] };
     if (element != header.element) { return .err(errors::make(3,header.begin)); }
+    if (header.exclusive && (!p.arrays.mutable[root] || !table.mutable[index])) { return .err(errors::make(3,header.begin)); }
     var usize lo = 0;
     var usize hi = 0;
     if (s.kind == 91) {
@@ -658,10 +660,29 @@ fn Result<usize, errors::Error> slice_declaration(ref u8[] source, ref mut lexer
     let usize end = lexer::punctuation(source,s,59)?;
     let usize site = if (parent < 16 && p.slice_origins[parent] != 0) {
         slice_builders::derived(p,parent,table.function,header.begin)?
-    } else { ir::slice(p,root,header.begin)? };
+    } else if (header.exclusive) { ir::exclusive_slice(p,root,header.begin)? }
+        else { ir::slice(p,root,header.begin)? };
     let usize opened = if (parent < 16) { ir::slice_sub(p,site,parent,lo,hi,header.begin)? }
         else { ir::slice_open(p,site,lo,hi,header.begin)? };
-    return locals::declare(table,header.begin,header.end,160+site,false);
+    return locals::declare(table,header.begin,header.end,160+site,header.exclusive);
+}
+// Exclusive bindings permit element stores, never rebinding or scalar STORE.
+// Keep index/value expression scratch off the recursive scalar statement path.
+fn Result<usize,errors::Error> slice_write_statement(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    usize index,usize at,u8 terminator,u8 result_type,usize depth,usize structure,ref mut loops::State loop_state) {
+    let usize site=table.registers[index]-160;
+    if(result_type==0 || !ir::exclusive(p,site) || s.kind!=91) { return .err(errors::make(3,at)); }
+    let usize open=lexer::next(source,s)?;
+    let usize subscript=expression(source,s,p,table,signatures,1,depth+1,12,result_type,structure,loop_state)?;
+    if(p.types[subscript]!=12) { return .err(errors::make(3,at)); }
+    let usize close=lexer::punctuation(source,s,93)?;let usize equals=lexer::punctuation(source,s,61)?;
+    let u8 element=ir::slice_element(p,site,at)?;
+    let usize value=expression(source,s,p,table,signatures,1,depth,element,result_type,structure,loop_state)?;
+    if(p.types[value]!=element) { return .err(errors::make(3,at)); }
+    let usize end=lexer::punctuation(source,s,terminator)?;
+    let usize written=ir::slice_write(p,site,subscript,value,at)?;
+    return .ok(index);
 }
 fn Result<usize, errors::Error> declaration(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 terminator, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {
     if (word_is(source, s, b"let") || word_is(source, s, b"var")) {
@@ -820,6 +841,9 @@ fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State 
     }
     if (arrays::binding(table, index)) {
         return array_statement(source,s,p,table,signatures,index,at,terminator,result_type,expr_depth,structure,loop_state);
+    }
+    if (slices::binding(table,index)) {
+        return slice_write_statement(source,s,p,table,signatures,index,at,terminator,result_type,expr_depth,structure,loop_state);
     }
     let usize equals = lexer::punctuation(source, s, 61)?;
     let u8 target_type=p.types[table.registers[index]];
