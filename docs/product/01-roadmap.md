@@ -1,5 +1,15 @@
 # Roadmap
 
+- [Private exclusive subrange suspension/restoration](../engineering/m2-slice-exclusive-reborrow.md)
+  is implemented at `ab85195`. A native linear receipt preserves the parent range
+  and write epoch while one existing pool slot represents the active child.
+  Next is independent IR proof for active children and restored parents,
+  combined CALL/reborrow depth admission and receipt ownership. Metering,
+  executable VM integration, source grammar and public promotion remain pending.
+  Development/release each passed 18 selected native groups and 2,495 CLI cases,
+  with 374 matching inputs. See
+  [Windows evidence](../evidence/m2-slice-exclusive-reborrow-windows-20261102.json).
+
 - [Public mutable scalar-slice parameters](../engineering/m2-slice-mutable-parameters-public.md)
   connect exact source formals/arguments, complete public proof, shared-core CALLs,
   invocation-owned receipts and mandatory cleanup. The CLI capability is

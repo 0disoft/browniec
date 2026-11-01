@@ -1,5 +1,27 @@
 # AGENTS.md
 
+- Private exclusive subrange foundation: implemented at `ab85195`.
+  `slice_reborrow` narrows one existing exclusive pool slot, invalidates the
+  parent ticket and restores its original range with a fresh generation.
+  Private linear native receipts retain the original write session. Empty and
+  nested ranges preserve the whole-root lock; abort atomically drains the active
+  pool before clearing at most 32 receipts and preserves payload writes.
+  No Program/owner/pool-slot/shared-frame fields, owner session or payload extent
+  is added. Native coordinators must preserve authentic receipts, reverse nesting
+  order, latest tickets and generation reserves for the entire authority chain.
+  Current CALL depth admission is not integrated. Next is independent IR
+  suspended-parent/child lifetime proof plus combined CALL/reborrow depth and
+  receipt ownership, before metering/VM/source/public promotion. Public mutable
+  aliases/subloans, coercions and returned borrows remain unsupported.
+  Development/release each passed 18 selected native groups and 2,495 CLI cases,
+  with 374 identical current inputs and rechecked compiler/artifact/matrix/M1
+  identities. Core owner/pool/handoff/frames/VM/execution/verifier/CLI files remain
+  unchanged from `80adbb7`. Parser depth32 passes and depths33/64 return
+  compile_limit. Full native, other M2, Linux, M0, isolation, packaging, allocator,
+  timing and native stack/memory measurements were not rerun. No push/release.
+  See [the native contract](docs/engineering/m2-slice-exclusive-reborrow.md).
+  Evidence: [Windows receipt](docs/evidence/m2-slice-exclusive-reborrow-windows-20261102.json).
+
 - Public mutable scalar-slice parameters: implemented at `914ae79`.
   Public verify and inspect now share complete metadata/type/flow/lifetime proof,
   including exact exclusive CALL sources and rootless mutable formals. The public

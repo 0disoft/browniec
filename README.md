@@ -64,6 +64,20 @@ artifact/receipt identities. The CLI retains its one-million Fuel maximum;
 native sufficient-Fuel tests cover 31 nested calls and the next-frame limit.
 See the [public parameter Windows evidence](docs/evidence/m2-slice-mutable-parameters-public-windows-20261101.json).
 
+## Private exclusive subrange foundation
+
+The [native reborrow foundation](docs/engineering/m2-slice-exclusive-reborrow.md)
+suspends an exclusive parent by narrowing its existing ticket slot, then restores
+its original range under a fresh generation. It retains the same owner write
+session and uses no extra pool slot or payload extent. Implemented at `ab85195`.
+Guest reborrow syntax, IR lifetime proof, combined CALL/reborrow admission and VM
+integration remain pending; the public features above are unchanged.
+
+Development and release each passed 18 selected native groups and 2,495 CLI
+cases, with 374 matching current input hashes and rechecked artifact/receipt
+identities. See the
+[reborrow Windows evidence](docs/evidence/m2-slice-exclusive-reborrow-windows-20261102.json).
+
 ## Historical stages
 
 The notes below record implementation stages and gated behavior at the named

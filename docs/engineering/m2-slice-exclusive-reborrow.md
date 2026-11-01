@@ -6,6 +6,8 @@ the parent ticket becomes stale immediately. A retained linear `Loan` receipt
 records the original range and write session. Restoration validates the latest
 child ticket, reinstates the original range and issues another fresh generation.
 
+Implementation: `ab85195`.
+
 This stage does not add guest syntax, IR construction or independent lifetime
 proof, opcode dispatch, Fuel prices, VM cleanup wiring or a public capability.
 Existing public mutable parameters and owned/readonly scalar slices keep their
@@ -88,6 +90,19 @@ exhaustion and unchanged state on failures. A full sixteen-root pool exercises
 abort failure preservation and successful drain while preserving earlier writes.
 Public CLI regression runs 74 mutable-parameter, 222 owned mutable, 192 readonly
 scalar and 2007 M1 cases on Windows.
+
+Development and release each passed all 18 selected native groups and 2,495 CLI
+cases, with 374 matching current input hashes. Compiler, retained CLI and all
+matrix/M1 receipt identities were rechecked. Program/signature declarations,
+owner/pool modules, CALL handoff, shared CALL frames, public VM, execution core,
+verifier and CLI entry remain unchanged from `80adbb7`. Both profiles accept
+parser depth32 in check/run and reject depths33/64 with `compile_limit`. See the
+[Windows evidence](../evidence/m2-slice-exclusive-reborrow-windows-20261102.json).
+
+Next is independent IR proof for active children, suspended/restored parents and
+all exit/join/backedge paths, followed by combined CALL/reborrow depth admission
+and receipt ownership. Metering, executable VM integration and source/public
+promotion remain separate deliveries.
 
 Full native, other M2, Linux, M0, isolation, packaging, allocator and timing checks
 are outside this selection. Local commits only; no push, publication, packaged
