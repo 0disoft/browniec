@@ -66,18 +66,18 @@ See the [public parameter Windows evidence](docs/evidence/m2-slice-mutable-param
 
 ## Current private canonical CALL execution
 
-The [canonical coordinator](docs/engineering/m2-slice-shared-call-authority.md)
-now executes scalar, shared and exclusive CALL arguments through the shared
-reborrow VM core. Shared duplicates, derived shared forwarding after formal close
-and mixed readers/writers use staged admission/return cleanup and existing
-authority/maps. Existing logical prices and public CLI behavior are unchanged.
-Owned arguments, aggregate results, suspended/derived exclusive CALLs and
-guest/public reborrow promotion remain gated. Next is owned scalar-array argument
-copying. The earlier adapter/proof stages below describe their own checkpoints.
+The [canonical coordinator](docs/engineering/m2-slice-owned-call-authority.md)
+now executes scalar, owned scalar-array, shared and exclusive CALL arguments
+through the shared reborrow VM core. Loan metadata is prepared before the existing
+atomic array copier; only infallible authority/map/control publication follows.
+Existing logical prices and public CLI behavior are unchanged. Record arguments,
+aggregate results, suspended/derived exclusive CALLs and guest/public reborrow
+promotion remain gated. Next is owned record argument coordination. The earlier
+adapter/proof stages below describe their own checkpoints.
 
-Implemented at `29d7dda`; development and release each passed 30 selected native
-groups and 2,495 CLI cases, with 390 matching input hashes and rechecked artifact
-identities. See [Windows evidence](docs/evidence/m2-slice-shared-call-authority-windows-20261102.json).
+Implemented at `29ddc4a`; development and release each passed 30 selected native
+groups and 2,495 CLI cases, with 391 matching input hashes and rechecked artifact
+identities. See [Windows evidence](docs/evidence/m2-slice-owned-call-authority-windows-20261102.json).
 Native size/stack, allocator and timing remain unmeasured. Local commits only.
 
 ## Private metered owned reborrow adapter

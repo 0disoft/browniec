@@ -90,3 +90,14 @@ Next is owned record argument coordination as a separate transaction slice,
 before aggregate results and suspended CALL proof. Full native, other M2, Linux,
 M0, isolation, packaging, native size/stack, allocator and timing are outside this
 selection. Local commits only; no push, publication, release or deployment.
+
+Implemented at `29ddc4a`. Development and release each passed 30 selected native
+groups and 2,495 CLI cases, with 391 identical current input hashes. Compiler,
+retained executable, original receipt and matrix/M1 identities were rechecked.
+Both profiles accept parser depth32 in check/run and reject depths33/64 with
+`compile_limit`. Eighteen core/public/native modules match `18d2a87`, including IR,
+signatures, verifier, compiler, public VM, shared execution loop, array copier,
+readonly adapter, formal reborrow and invocation admission/cleanup. Authority
+State and canonical CALL binding declarations, existing scalar/control helpers,
+and canonical release/return/abort bodies also match the baseline.
+See the [Windows evidence](../evidence/m2-slice-owned-call-authority-windows-20261102.json).

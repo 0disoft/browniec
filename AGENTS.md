@@ -1,5 +1,32 @@
 # AGENTS.md
 
+- Private canonical owned scalar-array arguments: implemented at `29ddc4a`.
+  Immutable exact-shape array values now interleave with scalar/shared/exclusive
+  arguments. Complete Fuel includes existing array copy work once. Native
+  authority prepare/publish stages a fresh Entry without mutating its State;
+  canonical Admission stages loan metadata before unchanged atomic array copying.
+  Only infallible authority/pool/binding/scalar/control publication follows copy
+  success. Plans are trusted native, single-use, with unchanged authority/root
+  sessions between phases; only the atomic copier may intervene. The readonly
+  compatibility enter still rejects owned signatures; enter_owned needs mutable
+  owners/backing. Existing core cleanup drops copied parameters before return.
+  Abort preserves copied owners, prior writes and original outcomes or failed
+  cleanup metadata; owned roots/backing remain the native caller's responsibility.
+  No persistent fields, receipt collections or payload snapshots are added.
+  Temporary Admission/Entry staging and prior inert-view backing have no measured
+  native size/stack/allocator/performance claim. Public paths/prices are unchanged.
+  Development/release each passed 30 native groups and 2,495 CLI cases, with 391
+  matching current inputs and rechecked compiler/artifact/matrix/M1/receipt
+  identities. Parser depth32 passes; depths33/64 return compile_limit. Eighteen core/public/native
+  modules match `18d2a87`, as do authority/CALL binding declarations, scalar/control
+  helpers and canonical release/return/abort bodies. Full native, other M2, Linux,
+  M0, isolation, packaging, size/stack, allocator and timing were not rerun.
+  Record arguments, aggregate results, suspended/derived exclusive CALLs and
+  guest/public reborrow promotion remain gated. Next is owned record argument
+  coordination as a separate transaction slice. Local commits only; no push/release.
+  See [the owned CALL contract](docs/engineering/m2-slice-owned-call-authority.md)
+  and [Windows evidence](docs/evidence/m2-slice-owned-call-authority-windows-20261102.json).
+
 - Private canonical shared-argument CALLs: implemented at `29d7dda`.
   Shared/scalar/exclusive formals now interleave through the existing core and
   canonical authority. Prices remain 1+arity, plus 65537*(1+readers+2*writers)
