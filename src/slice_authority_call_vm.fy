@@ -74,7 +74,7 @@ pub fn Result<owners::Token,errors::Error> origin(ref ir::Program p,usize functi
     if(pos==p.arities[function] || !same(frames.origins[frame*8+pos],lease.view.root) || lease.view.element!=tag){return .err(errors::make(5,offset));}
     return .ok(lease.view.root);
 }
-fn Result<usize,errors::Error> valid(ref ir::Program p,ref Bindings bindings,ref authority::State receipts,
+pub fn Result<usize,errors::Error> inspect(ref ir::Program p,ref Bindings bindings,ref authority::State receipts,
     ref shared::Frames frames,ref loans::State loan,ref arrays::State state,usize offset){
     let usize depth=switch(authority::inspect(receipts)){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}};
     var usize i=0;while(i<31){
@@ -97,6 +97,20 @@ fn Result<usize,errors::Error> valid(ref ir::Program p,ref Bindings bindings,ref
     }
     return .ok(depth);
 }
+// Authenticate the first lexical child's suspended formal against its CALL.
+// Readonly snapshots are not another persistent owner of either receipt.
+pub fn Result<usize,errors::Error> suspended(ref ir::Program p,usize function,usize frame,usize site,
+    owners::WriteLease parent,slices::Ticket issued,ref Bindings bindings,ref authority::State receipts,
+    ref shared::Frames frames,ref arrays::State state,usize offset){
+    let owners::Token expected=origin(p,function,frame,site,bindings,receipts,frames,state,offset)?;
+    let usize i=index(receipts,frame,offset)?;let Call call=info(p,bindings.pcs[i],offset)?;let usize j=writer(p,call,site,offset)?;
+    let owners::WriteLease lease=receipts.leases[i*8+j];let slices::Ticket original=receipts.tickets[i*8+j];
+    if(!absent(bindings.detached[i*8+j]) || !same(expected,parent.view.root) || parent.generation!=lease.generation ||
+        parent.view.element!=lease.view.element || parent.view.length!=lease.view.length ||
+        parent.view.start!=lease.view.start || parent.view.end!=lease.view.end ||
+        issued.slot!=original.slot || issued.generation<=original.generation){return .err(errors::make(5,offset));}
+    return .ok(i);
+}
 fn Result<owners::View,errors::Error> authenticated(ref ir::Program p,usize function,usize frame,usize site,slices::Ticket ticket,
     ref Bindings bindings,ref authority::State receipts,ref shared::Frames frames,ref loans::State loan,ref arrays::State state,usize capacity,usize offset){
     let owners::Token expected=origin(p,function,frame,site,bindings,receipts,frames,state,offset)?;
@@ -113,7 +127,7 @@ fn Result<owners::View,errors::Error> authenticated(ref ir::Program p,usize func
 }
 pub fn Result<owners::View,errors::Error> view(ref ir::Program p,usize function,usize frame,usize site,
     ref Bindings bindings,ref authority::State receipts,ref shared::Frames frames,ref loans::State loan,ref arrays::State state,usize capacity,usize offset){
-    let usize depth=valid(p,bindings,receipts,frames,loan,state,offset)?;
+    let usize depth=inspect(p,bindings,receipts,frames,loan,state,offset)?;
     if(frame!=receipts.frame || site>=16 || p.slice_roots[site]!=0){return .err(errors::make(5,offset));}
     let usize i=index(receipts,frame,offset)?;let Call call=info(p,bindings.pcs[i],offset)?;let usize j=writer(p,call,site,offset)?;
     if(!absent(bindings.detached[i*8+j])){return .err(errors::make(5,offset));}
@@ -126,7 +140,7 @@ pub fn Result<usize,errors::Error> enter(ref ir::Program p,ref proof::Sites site
     ref mut loans::State loan,ref arrays::State state,ref records::State record_state,ref bytes::Buffer buffer,usize fuel){
     let usize offset=if(pc<p.count && pc<256){p.offsets[pc]}else{0};let Call call=info(p,pc,offset)?;let usize charge=cost(p,pc,offset)?;
     if(fuel<charge){return .err(errors::make(8,offset));}
-    let usize depth=valid(p,bindings,receipts,frames,loan,state,offset)?;
+    let usize depth=inspect(p,bindings,receipts,frames,loan,state,offset)?;
     if(parent>=31 || depth>=31){return .err(errors::make(12,offset));}if(parent!=receipts.frame){return .err(errors::make(5,offset));}
     let usize child=parent+1;var usize i=0;while(i<16){if(!absent(loan.tickets[child*16+i]) || state.tokens[child*16+i].generation!=0 || record_state.tokens[child*16+i].generation!=0){return .err(errors::make(5,offset));}i+=1;}
     i=0;while(i<8){let owners::Token root=frames.origins[child*8+i];if(root.slot!=16 || root.generation!=0){return .err(errors::make(5,offset));}i+=1;}
@@ -154,7 +168,7 @@ pub fn Result<usize,errors::Error> release(ref ir::Program p,usize function,usiz
 pub fn Result<usize,errors::Error> leave(ref ir::Program p,usize function,usize frame,ref mut Bindings bindings,
     ref mut authority::State receipts,ref mut shared::Frames frames,ref mut loans::State loan,
     ref arrays::State state,ref records::State record_state,ref bytes::Buffer buffer,usize offset){
-    let usize depth=valid(p,bindings,receipts,frames,loan,state,offset)?;
+    let usize depth=inspect(p,bindings,receipts,frames,loan,state,offset)?;
     if(depth==0 || frame==0 || frame!=receipts.frame || receipts.kinds[depth-1]!=1){return .err(errors::make(5,offset));}
     let usize i=depth-1;let Call call=info(p,bindings.pcs[i],offset)?;if(function!=call.target){return .err(errors::make(5,offset));}
     var slices::Ticket[8] current=[none();8];var usize j=0;var usize pos=0;var usize allowed=0;let usize one=1;
@@ -167,10 +181,16 @@ pub fn Result<usize,errors::Error> leave(ref ir::Program p,usize function,usize 
     bindings.pcs[i]=256;slot=0;while(slot<8){bindings.detached[i*8+slot]=none();frames.origins[frame*8+slot]=owners::Token{.slot=16,.generation=0};slot+=1;}slot=0;while(slot<16){loan.tickets[frame*16+slot]=none();slot+=1;}
     return .ok(j);
 }
+// Drain before clearing maps. Both standalone CALL and lexical coordinators use
+// this one cleanup transaction; a failed drain preserves all diagnostic maps.
+pub fn Result<usize,errors::Error> drain(ref mut Bindings bindings,ref mut authority::State receipts,
+    ref mut shared::Frames frames,ref mut loans::State loan,ref mut arrays::State state,ref bytes::Buffer buffer){
+    let usize count=switch(authority::finish(receipts,ref mut loan.pool,ref mut state.owners,bytes::len(buffer))){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,0));}};
+    var usize i=0;while(i<31){bindings.pcs[i]=256;i+=1;}i=0;while(i<248){bindings.detached[i]=none();i+=1;}i=0;while(i<512){loan.tickets[i]=none();i+=1;}i=0;while(i<256){frames.origins[i]=owners::Token{.slot=16,.generation=0};i+=1;}
+    return .ok(count);
+}
 pub fn Result<i64,errors::Error> finish(ref mut Bindings bindings,ref mut authority::State receipts,
     ref mut shared::Frames frames,ref mut loans::State loan,ref mut arrays::State state,ref bytes::Buffer buffer,Result<i64,errors::Error> outcome){
     var bool failed=false;var errors::Error failure=errors::make(0,0);let i64 value=switch(outcome){case .ok(v):{v}case .err(e):{failed=true;failure=e;0}};
-    let usize count=switch(authority::finish(receipts,ref mut loan.pool,ref mut state.owners,bytes::len(buffer))){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,0));}};
-    var usize i=0;while(i<31){bindings.pcs[i]=256;i+=1;}i=0;while(i<248){bindings.detached[i]=none();i+=1;}i=0;while(i<512){loan.tickets[i]=none();i+=1;}i=0;while(i<256){frames.origins[i]=owners::Token{.slot=16,.generation=0};i+=1;}
-    if(failed){return .err(failure);}return .ok(value);
+    let usize count=drain(bindings,receipts,frames,loan,state,buffer)?;if(failed){return .err(failure);}return .ok(value);
 }
