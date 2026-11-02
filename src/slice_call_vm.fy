@@ -67,7 +67,7 @@ pub fn Result<owners::Token, errors::Error> root(ref ir::Program p, usize functi
     }
     return .err(errors::make(5,offset));
 }
-fn Result<owners::Token, errors::Error> checked(ref ir::Program p, usize function, usize frame,
+pub fn Result<owners::Token, errors::Error> checked(ref ir::Program p, usize function, usize frame,
     usize site, ref Frames frames, ref loans::State loan, ref arrays::State state, usize capacity, usize offset) {
     let owners::Token expected=root(p,function,frame,site,frames,state,offset)?;
     let slices::Ticket ticket=loan.tickets[frame*16+site];

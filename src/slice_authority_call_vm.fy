@@ -15,7 +15,7 @@ import std::bytes as bytes;
 // PC derives caller/target/argument positions from immutable inspected IR.
 // These maps never own a duplicate Batch or Loan. Canonical receipts stay in authority.
 pub struct Bindings { usize[31] pcs; slices::Ticket[248] detached; }
-pub struct Call { usize caller; usize target; usize args; usize count; }
+pub struct Call { usize caller; usize target; usize args; usize count; usize readers; }
 fn slices::Ticket none(){return slices::Ticket{.slot=16,.generation=0};}
 fn bool absent(slices::Ticket t){return t.slot==16 && t.generation==0;}
 fn bool same(owners::Token a,owners::Token b){return a.slot==b.slot && a.generation==b.generation;}
@@ -27,25 +27,25 @@ fn Result<Call,errors::Error> info(ref ir::Program p,usize pc,usize offset){
         p.register_starts[target]>p.registers || p.arities[target]>p.registers-p.register_starts[target] || p.array_results[target]!=0 || p.record_results[target]!=0){return .err(errors::make(5,offset));}
     var usize caller=0;while(caller<p.function_count && (pc<p.starts[caller] || pc>=p.ends[caller])){caller+=1;}
     if(caller==p.function_count){return .err(errors::make(5,offset));}
-    var usize count=0;var usize seen=0;let usize one=1;var usize i=0;
+    var usize count=0;var usize readers=0;var usize seen=0;let usize one=1;var usize i=0;
     while(i<p.arities[target]){
         let usize r=p.register_starts[target]+i;let usize encoded=p.slice_parameters[r] as usize;let usize source=p.call_args[args*8+i] as usize;
-        // This private bridge handles scalar plus exclusive formals only.
+        // Owned arguments and aggregate results remain outside this bridge.
         if(p.array_parameters[r]!=0 || p.record_parameters[r]!=0 || p.slots[r]){return .err(errors::make(5,offset));}
         if(encoded!=0){
-            if(encoded>16 || p.types[r]!=0 || !ir::exclusive(p,encoded-1) || p.slice_roots[encoded-1]!=0 ||
+            if(encoded>16 || p.types[r]!=0 || p.slice_roots[encoded-1]!=0 ||
                 p.slice_origins[encoded-1] as usize!=encoded || p.slice_functions[encoded-1] as usize!=target+1 ||
                 !types::scalar(ir::borrow_element(p,encoded-1)) || (seen&(one<<(encoded-1)))!=0 || source<160 || source>=176){return .err(errors::make(5,offset));}
-            seen|=one<<(encoded-1);count+=1;
+            seen|=one<<(encoded-1);if(ir::exclusive(p,encoded-1)){count+=1;}else{readers+=1;}
         }else if(!types::valid(p.types[r]) || source>=p.registers || source<p.register_starts[caller] || source>=p.register_ends[caller] ||
             p.types[source]!=p.types[r] || p.slots[source] || p.array_parameters[source]!=0 || p.record_parameters[source]!=0 || p.slice_parameters[source]!=0){return .err(errors::make(5,offset));}
         i+=1;
     }
-    return .ok(Call{.caller=caller,.target=target,.args=args,.count=count});
+    return .ok(Call{.caller=caller,.target=target,.args=args,.count=count,.readers=readers});
 }
 pub fn Result<usize,errors::Error> cost(ref ir::Program p,usize pc,usize offset){
     let Call call=info(p,pc,offset)?;
-    return .ok(1+p.arities[call.target]+if(call.count==0){0}else{65537*(1+2*call.count)});
+    return .ok(1+p.arities[call.target]+if(call.count+call.readers==0){0}else{65537*(1+call.readers+2*call.count)});
 }
 fn Result<usize,errors::Error> index(ref authority::State receipts,usize frame,usize offset){
     if(frame==0 || frame>=32 || receipts.depth>31){return .err(errors::make(5,offset));}
@@ -55,7 +55,7 @@ fn Result<usize,errors::Error> index(ref authority::State receipts,usize frame,u
 fn Result<usize,errors::Error> writer(ref ir::Program p,Call call,usize site,usize offset){
     var usize j=0;var usize position=0;while(position<p.arities[call.target]){
         let usize encoded=p.slice_parameters[p.register_starts[call.target]+position] as usize;
-        if(encoded!=0){if(encoded==site+1){return .ok(j);}j+=1;}position+=1;
+        if(encoded!=0 && ir::exclusive(p,encoded-1)){if(encoded==site+1){return .ok(j);}j+=1;}position+=1;
     }return .err(errors::make(5,offset));
 }
 // A root binding survives release/forwarding. Immutable argument positions,
@@ -82,12 +82,17 @@ pub fn Result<usize,errors::Error> inspect(ref ir::Program p,ref Bindings bindin
             let usize parent=receipts.frames[i];var usize j=0;var usize pos=0;
             while(pos<8){
                 let usize encoded=if(pos<p.arities[call.target]){p.slice_parameters[p.register_starts[call.target]+pos] as usize}else{0};
-                if(encoded!=0){
+                if(encoded!=0 && ir::exclusive(p,encoded-1)){
                     let usize source=(p.call_args[call.args*8+pos] as usize)-160;let owners::WriteLease lease=receipts.leases[i*8+j];
                     let owners::Token expected=origin(p,call.caller,parent,source,bindings,receipts,frames,state,offset)?;
                     if(!same(expected,lease.view.root) || !same(frames.origins[(parent+1)*8+pos],lease.view.root) ||
                         lease.view.element!=ir::borrow_element(p,encoded-1) || !absent(loan.tickets[parent*16+source]) ||
                         (!absent(loan.tickets[(parent+1)*16+encoded-1]) && !absent(bindings.detached[i*8+j]))){return .err(errors::make(5,offset));}j+=1;
+                }else if(encoded!=0){
+                    let usize source=(p.call_args[call.args*8+pos] as usize)-160;
+                    let owners::Token expected=shared::root(p,call.caller,parent,source,frames,state,offset)?;
+                    let owners::Token actual=shared::root(p,call.target,parent+1,encoded-1,frames,state,offset)?;
+                    if(ir::exclusive(p,source) || !same(expected,actual)){return .err(errors::make(5,offset));}
                 }else{let owners::Token token=frames.origins[(parent+1)*8+pos];if(token.slot!=16 || token.generation!=0){return .err(errors::make(5,offset));}}
                 pos+=1;
             }
@@ -143,15 +148,26 @@ pub fn Result<usize,errors::Error> enter(ref ir::Program p,ref proof::Sites site
     if(parent>=31 || depth>=31){return .err(errors::make(12,offset));}if(parent!=receipts.frame){return .err(errors::make(5,offset));}
     let usize child=parent+1;var usize i=0;while(i<16){if(!absent(loan.tickets[child*16+i]) || state.tokens[child*16+i].generation!=0 || record_state.tokens[child*16+i].generation!=0){return .err(errors::make(5,offset));}i+=1;}
     i=0;while(i<8){let owners::Token root=frames.origins[child*8+i];if(root.slot!=16 || root.generation!=0){return .err(errors::make(5,offset));}i+=1;}
-    var slices::Ticket[8] sources=[none();8];var owners::Token[8] roots=[owners::Token{.slot=16,.generation=0};8];var usize n=0;i=0;
+    var slices::Ticket[8] sources=[none();8];var slices::Ticket[8] readers=[none();8];
+    var owners::Token[8] roots=[owners::Token{.slot=16,.generation=0};8];var usize n=0;var usize nr=0;i=0;
     while(i<p.arities[call.target]){let usize encoded=p.slice_parameters[p.register_starts[call.target]+i] as usize;if(encoded!=0){
         let usize source=(p.call_args[call.args*8+i] as usize)-160;
-        if(sites.parents[source]!=16){return .err(errors::make(5,offset));}
-        let slices::Ticket current=loan.tickets[parent*16+source];let owners::View selected=authenticated(p,call.caller,parent,source,current,bindings,receipts,frames,loan,state,bytes::len(buffer),offset)?;
-        if(selected.element!=ir::borrow_element(p,encoded-1)){return .err(errors::make(5,offset));}sources[n]=current;roots[n]=selected.root;n+=1;}i+=1;}
-    let slices::Arguments issued=switch(authority::enter_call(receipts,ref mut loan.pool,ref sources[..n],ref state.owners,bytes::len(buffer),parent)){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}};
-    bindings.pcs[depth]=pc;n=0;i=0;while(i<p.arities[call.target]){let usize encoded=p.slice_parameters[p.register_starts[call.target]+i] as usize;if(encoded!=0){
-        let usize source=(p.call_args[call.args*8+i] as usize)-160;loan.tickets[parent*16+source]=none();loan.tickets[child*16+encoded-1]=issued.tickets[n];frames.origins[child*8+i]=roots[n];n+=1;}i+=1;}
+        if(ir::exclusive(p,encoded-1)){
+            if(sites.parents[source]!=16){return .err(errors::make(5,offset));}
+            let slices::Ticket current=loan.tickets[parent*16+source];let owners::View selected=authenticated(p,call.caller,parent,source,current,bindings,receipts,frames,loan,state,bytes::len(buffer),offset)?;
+            if(selected.element!=ir::borrow_element(p,encoded-1)){return .err(errors::make(5,offset));}sources[n]=current;roots[i]=selected.root;n+=1;
+        }else{
+            roots[i]=shared::checked(p,call.caller,parent,source,frames,loan,state,bytes::len(buffer),offset)?;
+            let slices::Ticket current=loan.tickets[parent*16+source];
+            if(loan.pool.slots[current.slot].view.element!=ir::borrow_element(p,encoded-1)){return .err(errors::make(5,offset));}readers[nr]=current;nr+=1;
+        }}i+=1;}
+    // Validate every original before staged retain; authority publication is last.
+    var slices::Pool planned=slices::Pool{.slots=loan.pool.slots};
+    let slices::Arguments retained=switch(slices::borrow_arguments(ref mut planned,ref readers[..nr],ref state.owners,bytes::len(buffer))){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}};
+    let slices::Arguments issued=switch(authority::enter_call(receipts,ref mut planned,ref sources[..n],ref state.owners,bytes::len(buffer),parent)){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}};
+    loan.pool.slots=planned.slots;bindings.pcs[depth]=pc;n=0;nr=0;i=0;while(i<p.arities[call.target]){let usize encoded=p.slice_parameters[p.register_starts[call.target]+i] as usize;if(encoded!=0){
+        if(ir::exclusive(p,encoded-1)){let usize source=(p.call_args[call.args*8+i] as usize)-160;loan.tickets[parent*16+source]=none();loan.tickets[child*16+encoded-1]=issued.tickets[n];n+=1;}
+        else{loan.tickets[child*16+encoded-1]=retained.tickets[nr];nr+=1;}frames.origins[child*8+i]=roots[i];}i+=1;}
     return .ok(fuel-charge);
 }
 pub fn Result<usize,errors::Error> release(ref ir::Program p,usize function,usize frame,usize site,
@@ -162,21 +178,30 @@ pub fn Result<usize,errors::Error> release(ref ir::Program p,usize function,usiz
     let usize i=index(receipts,frame,offset)?;let Call call=info(p,bindings.pcs[i],offset)?;let usize j=writer(p,call,site,offset)?;
     bindings.detached[i*8+j]=loan.tickets[frame*16+site];loan.tickets[frame*16+site]=none();return .ok(fuel-4097);
 }
-// Every exclusive formal must be live OR detached. All other frame loans and
-// owned values must already be cleaned by the VM coordinator before return.
+// Every exclusive formal must be live OR detached. Stage readonly child cleanup
+// before canonical restoration; owned values must already be cleaned by the core.
 pub fn Result<usize,errors::Error> leave(ref ir::Program p,usize function,usize frame,ref mut Bindings bindings,
     ref mut authority::State receipts,ref mut shared::Frames frames,ref mut loans::State loan,
-    ref arrays::State state,ref records::State record_state,ref bytes::Buffer buffer,usize offset){
+    ref mut arrays::State state,ref records::State record_state,ref bytes::Buffer buffer,usize offset){
     let usize depth=inspect(p,bindings,receipts,frames,loan,state,offset)?;
     if(depth==0 || frame==0 || frame!=receipts.frame || receipts.kinds[depth-1]!=1){return .err(errors::make(5,offset));}
     let usize i=depth-1;let Call call=info(p,bindings.pcs[i],offset)?;if(function!=call.target){return .err(errors::make(5,offset));}
     var slices::Ticket[8] current=[none();8];var usize j=0;var usize pos=0;var usize allowed=0;let usize one=1;
-    while(pos<p.arities[function]){let usize encoded=p.slice_parameters[p.register_starts[function]+pos] as usize;if(encoded!=0){
+    while(pos<p.arities[function]){let usize encoded=p.slice_parameters[p.register_starts[function]+pos] as usize;if(encoded!=0 && ir::exclusive(p,encoded-1)){
         let usize site=encoded-1;allowed|=one<<site;let slices::Ticket live=loan.tickets[frame*16+site];let slices::Ticket saved=bindings.detached[i*8+j];
         current[j]=if(absent(live)){saved}else{live};let owners::View selected=authenticated(p,function,frame,site,current[j],bindings,receipts,frames,loan,state,bytes::len(buffer),offset)?;j+=1;}pos+=1;}
-    var usize slot=0;while(slot<16){if(((allowed&(one<<slot))==0 && !absent(loan.tickets[frame*16+slot])) || state.tokens[frame*16+slot].generation!=0 || record_state.tokens[frame*16+slot].generation!=0){return .err(errors::make(5,offset));}slot+=1;}
-    let slices::Arguments restored=switch(authority::leave_call(receipts,ref mut loan.pool,ref current[..j],ref state.owners,bytes::len(buffer),frame)){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}};
-    j=0;pos=0;while(pos<p.arities[function]){let usize encoded=p.slice_parameters[p.register_starts[function]+pos] as usize;if(encoded!=0){let usize source=(p.call_args[call.args*8+pos] as usize)-160;loan.tickets[(frame-1)*16+source]=restored.tickets[j];j+=1;}pos+=1;}
+    var slices::Pool planned=slices::Pool{.slots=loan.pool.slots};
+    var owners::Table planned_owners=owners::Table{.slots=state.owners.slots,.order=state.owners.order,.depth=state.owners.depth,.arena=state.owners.arena};
+    var usize slot=16;while(slot>0){slot-=1;
+        if(state.tokens[frame*16+slot].generation!=0 || record_state.tokens[frame*16+slot].generation!=0){return .err(errors::make(5,offset));}
+        if((allowed&(one<<slot))==0 && !absent(loan.tickets[frame*16+slot])){
+            let owners::Token valid=shared::checked(p,function,frame,slot,frames,loan,state,bytes::len(buffer),offset)?;
+            let usize closed=switch(slices::close(ref mut planned,loan.tickets[frame*16+slot],ref mut planned_owners,bytes::len(buffer))){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}};
+        }
+    }
+    let slices::Arguments restored=switch(authority::leave_call(receipts,ref mut planned,ref current[..j],ref planned_owners,bytes::len(buffer),frame)){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}};
+    loan.pool.slots=planned.slots;state.owners.slots=planned_owners.slots;
+    j=0;pos=0;while(pos<p.arities[function]){let usize encoded=p.slice_parameters[p.register_starts[function]+pos] as usize;if(encoded!=0 && ir::exclusive(p,encoded-1)){let usize source=(p.call_args[call.args*8+pos] as usize)-160;loan.tickets[(frame-1)*16+source]=restored.tickets[j];j+=1;}pos+=1;}
     bindings.pcs[i]=256;slot=0;while(slot<8){bindings.detached[i*8+slot]=none();frames.origins[frame*8+slot]=owners::Token{.slot=16,.generation=0};slot+=1;}slot=0;while(slot<16){loan.tickets[frame*16+slot]=none();slot+=1;}
     return .ok(j);
 }
