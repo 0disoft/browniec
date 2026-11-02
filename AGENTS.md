@@ -1,5 +1,21 @@
 # AGENTS.md
 
+- Derived mutable CALLs with owned arguments are implemented at `c9f2294`.
+  Loan preparation precedes existing atomic array/record copying, then only
+  infallible authority, ticket, origin and scalar/control publication follows.
+  The old readonly-backing `enter` rejects owned arguments; `enter_owned` is the
+  canonical mutable entry. Existing charge includes copying once. No persistent
+  layout, price or source-grammar change; version JSON adds
+  `array_slice_reborrow_owned_arguments: true`. Derived aggregate results remain
+  gated, including unreachable functions. Development/release each passed 16
+  native groups and 188 CLI cases; all 441 input hashes match and artifact/receipt
+  hashes were rechecked. Five production paths differ from `80c5b9e`; 95 others
+  match under Git LF. Evidence includes the final test-only unused-helper fix.
+  Full native/M1/other M2/Linux/isolation/packaging/allocator/native size-stack/
+  timing were not rerun. Local only; no push. See the
+  [contract](docs/engineering/m2-slice-reborrow-owned-calls.md) and
+  [Windows evidence](docs/evidence/m2-derived-owned-call-windows-20261103.json).
+
 - Lexical mutable reborrow source is implemented at `3a07820`. Exact-mode
   `let ref mut Tag[] child = ref mut parent[lo..hi]` uses existing op61/62;
   bare/open-ended ranges and nested owned/formal children work. All lexical

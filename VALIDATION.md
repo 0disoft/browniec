@@ -1,5 +1,16 @@
 # Validation
 
+- Owned arguments in derived mutable CALLs: implemented at `c9f2294`. Loan
+  preparation precedes atomic array/record copying; only infallible authority and
+  control publication follows. Exact charge, late bool/quota/stale-token failures,
+  dirty cells and short register spans preserve the original invocation. Windows
+  development/release each passed 16 native groups and 188 tool-free CLI cases,
+  with 441 matching input hashes and retained compiler/artifact/receipt identities
+  rechecked. Derived aggregate results remain gated. Full native/M1, other M2,
+  Linux, isolation, packaging, allocator, native size/stack and timing were not
+  rerun. See the [contract](docs/engineering/m2-slice-reborrow-owned-calls.md) and
+  [Windows evidence](docs/evidence/m2-derived-owned-call-windows-20261103.json).
+
 - Lexical mutable reborrow source: implemented at `3a07820`. Exact-mode children
   use existing op61/62 and restore their parents at all lexical exits, including
   array/record result transfer. Public independent proof rejects suspended access

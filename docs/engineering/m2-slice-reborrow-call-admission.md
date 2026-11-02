@@ -1,5 +1,9 @@
 # Private native admission for CALLs with derived reborrow sources
 
+The [owned-argument successor](m2-slice-reborrow-owned-calls.md) extends loan
+preparation to owned descriptors and requires atomic copying before publication.
+The preparation restrictions below describe the `a4a1430` checkpoint.
+
 The subsequent [native handoff protocol](m2-slice-reborrow-call-vm.md) consumes
 this preparation internally and adds coordinated publication, return and abort.
 This document still describes the standalone preparation API, which exposes no

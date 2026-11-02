@@ -1,5 +1,8 @@
 # Lexical mutable slice reborrows
 
+Owned-argument successor: [derived CALL copying](m2-slice-reborrow-owned-calls.md).
+The argument restrictions below describe the `3a07820` checkpoint.
+
 Implemented at `3a07820` after public IR admission at `409d77c`.
 Windows development and release verification passed with matching inputs.
 

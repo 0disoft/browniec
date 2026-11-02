@@ -1,12 +1,9 @@
 module tests::m2::slice_reborrow_owned_calls;
 import compiler as compiler;
 import ir as ir;
-import errors as errors;
 import verifier as verifier;
 import vm as vm;
 fn ir::Program compiled(ref u8[] source){return switch(compiler::compile(source)){case .ok(p):{p}case .err(_):{assert(false);ir::empty()}};}
-fn usize built(Result<usize,errors::Error> result){return switch(result){case .ok(n):{n}case .err(_):{assert(false);0}};}
-fn proof::Sites sites(ref ir::Program p){return switch(verifier::verify_sites(p)){case .ok(v):{v}case .err(_):{assert(false);proof::Sites{.parents=[16;16],.newer=[0;16],.count=0}}};}
 fn void run_source(ref u8[] source,u8 expected){let ir::Program p=compiled(source);assert(verifier::verify(ref p).is_ok);assert(switch(vm::run_with_array_limit(ref p,16000000,256)){case .ok(v):{expected==0 && v==42}case .err(e):{e.kind==expected}});}
 fn void conflict(ref u8[] source){let ir::Program p=compiled(source);assert(!verifier::verify(ref p).is_ok);assert(switch(vm::run_with_array_limit(ref p,0,65537)){case .ok(_):{false}case .err(e):{e.kind==5}});}
 

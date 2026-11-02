@@ -1,5 +1,18 @@
 # Brownie C
 
+## Owned arguments with mutable reborrow calls
+
+Implemented at `c9f2294`. A derived mutable slice may now be passed with owned
+scalar arrays and records, readonly slices, other independent writers and scalar
+arguments. Atomic copying completes before loan/control publication. Derived
+array/record results remain gated. Development and release each passed 16 native
+groups and 188 CLI cases with 441 matching input hashes. Full native/M1, other M2,
+Linux, isolation, packaging and performance were not rerun. Local only; no push.
+See the
+[example](examples/mutable-slice-owned-call.brc) and
+[contract](docs/engineering/m2-slice-reborrow-owned-calls.md), with
+[verified evidence](docs/evidence/m2-derived-owned-call-windows-20261103.json).
+
 ## Mutable slice reborrows from source
 
 Implemented at `3a07820`. `let ref mut i32[] child = ref mut parent[lo..hi];`
