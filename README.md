@@ -1,5 +1,36 @@
 # Brownie C
 
+## Private native derived CALL execution
+
+Explicit native `inspect_derived` and `execute_derived` run exclusive-source
+derived CALLs through the shared VM. They reuse the existing scalar/control
+preflight and canonical cleanup. Ordinary CALLs retain owned and aggregate
+transactions; the derived path accepts borrowed or scalar arguments and returns
+a scalar only. Existing native wrapper, public, legacy, source and CLI gates
+remain closed, and the program layout and logical prices are unchanged.
+
+Implemented at `cce170a`. Development passed 8 new native groups. Release
+passed those 8 plus 10 regression groups, and all 74 release public
+mutable-parameter CLI cases passed. All 402 current input hashes and retained
+compiler, CLI and native receipt identities were verified. An initial 30-group
+regression batch exceeded 600 seconds and has no completed verdict, so it is not
+counted as a pass. The final selector limits that run to 10 directly affected
+groups; core manifests differ from final regression/CLI only in
+`tools/verify-m2-slice-elements.py`. Production, test, lockfile and compiler
+inputs were identical across completed phases.
+
+Four production sources changed; 94 other production sources are unchanged
+under Git LF normalization. Existing call-frame and handoff bodies are unchanged
+except for two imports in the call-frame module. Cleanup preserves guest writes
+and the original outcome or retryable metadata; owned storage and backing
+disposal remain the caller's responsibility. The next step is promotion through
+existing/default checked admission. Owned derived arguments, aggregate results
+and guest/public promotion remain gaps. No full native, other M2, full M1,
+Linux, isolation, packaging, allocator, native-size/stack or timing rerun was
+performed. This work is local only; no push was made. See the
+[execution contract](docs/engineering/m2-slice-derived-call-execution.md) and
+[Windows evidence](docs/evidence/m2-derived-call-execution-windows-20261103.json).
+
 ## Private native derived CALL handoff
 
 `slice_reborrow_call_vm::enter` now publishes checked child loans to callee

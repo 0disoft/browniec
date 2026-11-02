@@ -187,8 +187,7 @@ def main():
     if args.derived_execution:
         kind = 'slice-derived-call-execution-' + args.derived_execution_phase
         groups = ({'slice_derived_call_execution': 8} if args.derived_execution_phase == 'core'
-                  else {'slice_reborrow_call_vm': 8, 'slice_reborrow_call_admission': 6,
-                        'slice_authority_call_vm': 6, 'call_frame_vm': 4, 'slice_reborrow_execution': 6})
+                  else {'call_frame_vm': 4, 'slice_reborrow_execution': 6})
         matrices_to_run = {}
     output = ROOT / ('build/m2-' + kind) / args.profile
     output.mkdir(parents=True, exist_ok=True)

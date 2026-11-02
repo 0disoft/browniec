@@ -1,5 +1,26 @@
 # AGENTS.md
 
+- Shared-VM native derived CALL execution: implemented at `cce170a`.
+  Explicit native `inspect_derived`/`execute_derived` runs exclusive-source
+  derived CALLs through the shared VM with the existing scalar/control preflight
+  and canonical cleanup. Ordinary CALLs retain their owned/aggregate transaction;
+  derived CALLs accept borrowed/scalar arguments and a scalar result only.
+  Existing native wrapper, public, legacy, source and CLI gates remain closed;
+  layouts and prices are unchanged. Development passed 8 new native groups;
+  release passed those 8 plus 10 regression groups, with all 74 public
+  mutable-parameter CLI cases passing. All 402 current input hashes and compiler,
+  retained CLI and native receipt identities were verified. The initial
+  30-group regression batch exceeded 600 seconds and has no completed verdict;
+  the final selector narrows it to 10 directly affected groups, and its only
+  manifest delta is `tools/verify-m2-slice-elements.py`. Four production
+  sources changed; 94 others are unchanged under Git LF normalization. Next is
+  deliberate existing/default checked-admission promotion. Owned derived
+  arguments, aggregate results and guest/public promotion remain gaps. Full
+  native, other M2, full M1, Linux, isolation, packaging, allocator,
+  native-size/stack and timing were not rerun. Local only; no push. See the
+  [execution contract](docs/engineering/m2-slice-derived-call-execution.md) and
+  [Windows evidence](docs/evidence/m2-derived-call-execution-windows-20261103.json).
+
 - Native derived CALL loan handoff: implemented at `cf18d2d`.
   enter consumes prepared metadata synchronously; all failure precedes infallible
   canonical receipt/pool/CALL-map PC/ticket/origin publication. Owned and formal
