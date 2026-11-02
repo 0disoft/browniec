@@ -40,7 +40,7 @@ pub fn Result<usize, errors::Error> cost(u8 op, usize offset) {
 fn Result<Selection, errors::Error> select(ref layouts::Catalog catalog, usize root, usize ordinal, usize offset) {
     if (catalog.count > 32 || root >= catalog.count || ordinal > 128) { return .err(errors::make(5, offset)); }
     var usize[16] records = [0; 16]; var usize[16] fields = [0; 16];
-    var Selection result = Selection { .leaves = 0, .length = 0, .path = [0; 16] };
+    var usize leaves = 0; var usize[16] path = [0; 16];
     records[0] = root; var usize depth = 1; var usize visits = 0;
     while (depth > 0) {
         if (visits >= 4096) { return .err(errors::make(5, offset)); }
@@ -50,12 +50,12 @@ fn Result<Selection, errors::Error> select(ref layouts::Catalog catalog, usize r
         let usize field = fields[level];
         if (field >= catalog.fields[record] as usize) { depth -= 1; }
         else {
-            fields[level] += 1; result.path[level] = field;
+            fields[level] += 1; path[level] = field;
             let usize slot = record * 16 + field;
             if (catalog.kinds[slot] == 0) {
-                if (result.leaves >= 128) { return .err(errors::make(5, offset)); }
-                if (result.leaves == ordinal) { result.length = depth; return .ok(result); }
-                result.leaves += 1;
+                if (leaves >= 128) { return .err(errors::make(5, offset)); }
+                if (leaves == ordinal) { return .ok(Selection { .leaves = leaves, .length = depth, .path = path }); }
+                leaves += 1;
             } else {
                 if (catalog.kinds[slot] != 1 || depth >= 16) { return .err(errors::make(5, offset)); }
                 records[depth] = catalog.types[slot] as usize; fields[depth] = 0; depth += 1;
@@ -63,7 +63,7 @@ fn Result<Selection, errors::Error> select(ref layouts::Catalog catalog, usize r
         }
     }
     if (ordinal != 128) { return .err(errors::make(5, offset)); }
-    return .ok(result);
+    return .ok(Selection { .leaves = leaves, .length = 0, .path = path });
 }
 fn bool bound(ref meta::Catalog catalog, usize id, usize frame, ref State state, ref owners::Table table) {
     if (frame >= 32 || id >= catalog.count || id >= 16) { return false; }
