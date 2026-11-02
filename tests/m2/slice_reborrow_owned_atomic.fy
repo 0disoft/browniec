@@ -24,6 +24,7 @@ struct Runtime { arrays::State arrays; records::State records; loans::State loan
     i64[256] cells; usize[32] pcs; usize[32] dsts; }
 fn usize built(Result<usize,errors::Error> result){return switch(result){case .ok(n):{n}case .err(_):{assert(false);0}};}
 fn ir::Program fixture(){return switch(compiler::compile(b"module main;fn i32 f(ref mut i32[] q,u8[1] b,bool[1] c){return 42;}fn i32 main(){var i32[1] a=[0;1];let u8[1] b=[42;1];let bool[1] c=[true;1];let ref mut i32[] p=ref mut a[0..1];let ref mut i32[] q=ref mut p[0..1];return f(ref mut q,b,c);}")){case .ok(p):{p}case .err(_):{assert(false);ir::empty()}};}
+fn ir::Program array_fixture(){return switch(compiler::compile(b"module main;fn u8[1] f(ref mut i32[] q,u8[1] b,bool[1] c){return b;}fn i32 main(){var i32[1] a=[0;1];let u8[1] b=[42;1];let bool[1] c=[true;1];let ref mut i32[] p=ref mut a[0..1];let ref mut i32[] q=ref mut p[0..1];let u8[1] answer=f(ref mut q,b,c);return answer[0] as i32;}")){case .ok(p):{p}case .err(_):{assert(false);ir::empty()}};}
 fn proof::Sites sites(ref ir::Program p){return switch(verifier::verify_sites(p)){case .ok(v):{v}case .err(_):{assert(false);proof::Sites{.parents=[16;16],.newer=[0;16],.count=0}}};}
 fn bytes::Buffer backing(){return switch(arrays::prepare(256)){case .ok(b):{b}case .err(_):{assert(false);bytes::empty()}};}
 fn usize initialize(ref ir::Program p,ref proof::Sites map,ref mut arrays::State array_state,ref mut loans::State loan,ref mut calls::Bindings call_sites,ref mut children::Bindings links,ref mut authority::State auth,ref shared::Frames frames,ref mut i64[] cells,ref mut bytes::Buffer b){
@@ -63,16 +64,18 @@ fn Runtime snapshot(ref arrays::State a,ref records::State r,ref loans::State l,
 }
 fn void check_unchanged(ref Runtime before,ref arrays::State a,ref records::State r,ref loans::State l,ref calls::Bindings c,ref children::Bindings child,ref authority::State auth,ref shared::Frames f,ref i64[] cells,ref usize[] pcs,ref usize[] dsts,ref u8[] data,ref bytes::Buffer b){let Runtime after=snapshot(a,r,l,c,child,auth,f,cells,pcs,dsts);unchanged(before,ref after,data,b);}
 fn void exercise(usize mode){
-    let ir::Program p=fixture();let proof::Sites map=sites(ref p);var arrays::State array_state=arrays::empty(256);var records::State record_state=records::empty();var loans::State loan=loans::empty();var calls::Bindings call_sites=calls::empty();var children::Bindings links=children::empty();var authority::State auth=authority::empty();var shared::Frames frames=shared::empty();var i64[256] cells=[99;256];var usize[32] pcs=[77;32];var usize[32] dsts=[88;32];var bytes::Buffer b=backing();let usize pc=initialize(ref p,ref map,ref mut array_state,ref mut loan,ref mut call_sites,ref mut links,ref mut auth,ref frames,ref mut cells[..128],ref mut b);let usize args=p.code[pc*8+3] as usize;let usize boolean=(p.call_args[args*8+2] as usize)-128;let owners::Token source=array_state.tokens[boolean];let usize price=built(calls::cost(ref p,pc,p.offsets[pc]));
+    let ir::Program p=if(mode>=7){array_fixture()}else{fixture()};let proof::Sites map=sites(ref p);var arrays::State array_state=arrays::empty(256);var records::State record_state=records::empty();var loans::State loan=loans::empty();var calls::Bindings call_sites=calls::empty();var children::Bindings links=children::empty();var authority::State auth=authority::empty();var shared::Frames frames=shared::empty();var i64[256] cells=[99;256];var usize[32] pcs=[77;32];var usize[32] dsts=[88;32];var bytes::Buffer b=backing();let usize pc=initialize(ref p,ref map,ref mut array_state,ref mut loan,ref mut call_sites,ref mut links,ref mut auth,ref frames,ref mut cells[..128],ref mut b);let usize args=p.code[pc*8+3] as usize;let usize boolean=(p.call_args[args*8+2] as usize)-128;let owners::Token source=array_state.tokens[boolean];let usize price=built(calls::cost(ref p,pc,p.offsets[pc]));
     if(mode==1){let ref mut u8[] payload=bytes::view_mut(ref mut b);payload[array_state.owners.slots[source.slot].base]=2;}
     if(mode==2){let usize used=array_state.owners.arena.used;array_state.owners.arena.limit=used;}
     if(mode==3){array_state.tokens[boolean]=owners::Token{.slot=source.slot,.generation=source.generation+1};}
     if(mode==4){array_state.tokens[16]=owners::Token{.slot=1,.generation=0};}
+    let usize destination=if(mode>=7){(p.code[pc*8+1] as usize)-128}else{0};
+    if(mode>=7){array_state.tokens[destination]=if(mode==7){source}else{owners::Token{.slot=1,.generation=0}};}
     let Runtime before=snapshot(ref array_state,ref record_state,ref loan,ref call_sites,ref links,ref auth,ref frames,ref cells,ref pcs,ref dsts);var u8[256] saved=[0;256];let ref u8[] payload=bytes::view(ref b);var usize i=0;while(i<256){saved[i]=payload[i];i+=1;}
     // The readonly-backing compatibility adapter still refuses owned arguments.
     assert(!derived::enter(ref p,ref map,pc,0,ref links,ref mut call_sites,ref mut auth,ref mut frames,ref mut loan,ref array_state,ref record_state,ref b,price).is_ok);check_unchanged(ref before,ref array_state,ref record_state,ref loan,ref call_sites,ref links,ref auth,ref frames,ref cells,ref pcs,ref dsts,ref saved,ref b);
     let Result<usize,errors::Error> result=control::step_canonical_derived(ref p,ref map,pc,0,ref links,ref mut call_sites,ref mut auth,ref mut frames,ref mut loan,ref mut record_state,ref mut array_state,ref mut b,ref mut cells[..if(mode==5){128}else{256}],ref mut pcs,ref mut dsts,if(mode==0){price-1}else{price});
-    if(mode<6){assert(switch(result){case .ok(_):{false}case .err(e):{e.kind==if(mode==0){8}else if(mode==2){13}else{5} && e.offset==p.offsets[pc]}});check_unchanged(ref before,ref array_state,ref record_state,ref loan,ref call_sites,ref links,ref auth,ref frames,ref cells,ref pcs,ref dsts,ref saved,ref b);}
+    if(mode<6 || mode>=7){assert(switch(result){case .ok(_):{false}case .err(e):{e.kind==if(mode==0){8}else if(mode==2){13}else{5} && e.offset==p.offsets[pc]}});check_unchanged(ref before,ref array_state,ref record_state,ref loan,ref call_sites,ref links,ref auth,ref frames,ref cells,ref pcs,ref dsts,ref saved,ref b);}
     else{
         assert(built(result)==0 && auth.depth==2 && auth.frame==1 && pcs[1]==pc+1);
         let usize u8formal=(p.array_parameters[1] as usize)-1;let usize boolformal=(p.array_parameters[2] as usize)-1;
@@ -85,9 +88,13 @@ fn void exercise(usize mode){
         let usize child=(p.call_args[args*8] as usize)-160;let owners::View resumed=switch(adapter::view(ref p,ref map,p.entry,0,child,ref links,ref call_sites,ref auth,ref frames,ref loan,ref array_state,256,0)){case .ok(v):{v}case .err(_):{assert(false);before.auth.children[0].selected}};same_view(resumed,before.auth.children[0].selected);
     }
     if(mode==2){array_state.owners.arena.limit=256;}if(mode==3){array_state.tokens[boolean]=source;}if(mode==4){array_state.tokens[16]=owners::Token{.slot=0,.generation=0};}
+    if(mode>=7){array_state.tokens[destination]=owners::Token{.slot=0,.generation=0};}
     assert(switch(adapter::finish(ref mut links,ref mut call_sites,ref mut auth,ref mut frames,ref mut loan,ref mut array_state,ref b,.ok(42))){case .ok(v):{v==42}case .err(_):{false}});assert(auth.depth==0);
 }
 @test
 fn void copy_and_preflight_failures_preserve_payload_receipts_maps_and_control(){var usize mode=0;while(mode<6){exercise(mode);mode+=1;}}
 @test
 fn void exact_full_charge_copies_before_publication_and_restores_child_on_return(){exercise(6);}
+
+@test
+fn void array_result_destinations_reject_live_and_malformed_tokens_before_publication(){exercise(7);exercise(8);}

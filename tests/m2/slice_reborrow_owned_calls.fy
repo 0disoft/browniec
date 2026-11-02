@@ -39,9 +39,9 @@ fn void owned_copy_quota_and_callee_errors_fail_without_replay(){
 }
 
 @test
-fn void aggregate_results_aliases_and_unreachable_invalid_calls_keep_their_gates(){
-    conflict(b"module main;fn i32[1] f(ref mut i32[] q,i32[1] b){return b;}fn i32 main(){var i32[1] a=[0;1];let i32[1] b=[42;1];let ref mut i32[] p=ref mut a;let ref mut i32[] q=ref mut p;let i32[1] c=f(ref mut q,b);return 42;}");
+fn void array_results_admit_while_records_aliases_and_unreachable_invalid_calls_reject(){
+    run_source(b"module main;fn i32[1] f(ref mut i32[] q,i32[1] b){return b;}fn i32 main(){var i32[1] a=[0;1];let i32[1] b=[42;1];let ref mut i32[] p=ref mut a;let ref mut i32[] q=ref mut p;let i32[1] c=f(ref mut q,b);return c[0];}",0);
     conflict(b"module main;struct P{i32 x;}fn P f(ref mut i32[] q,P v){return v;}fn i32 main(){var i32[1] a=[0;1];let P v=P{.x=42};let ref mut i32[] p=ref mut a;let ref mut i32[] q=ref mut p;let P w=f(ref mut q,v);return 42;}");
     conflict(b"module main;fn i32 f(ref mut i32[] q,ref mut i32[] r,i32[1] b){return 42;}fn i32 main(){var i32[1] a=[0;1];let i32[1] b=[42;1];let ref mut i32[] p=ref mut a;let ref mut i32[] q=ref mut p;return f(ref mut q,ref mut q,b);}");
-    conflict(b"module main;fn i32[1] f(ref mut i32[] q){return [42;1];}fn i32 unused(){var i32[1] a=[0;1];let ref mut i32[] p=ref mut a;let ref mut i32[] q=ref mut p;let i32[1] b=f(ref mut q);return 42;}fn i32 main(){return 42;}");
+    conflict(b"module main;struct P{i32 x;}fn P f(ref mut i32[] q){return P{.x=42};}fn i32 unused(){var i32[1] a=[0;1];let ref mut i32[] p=ref mut a;let ref mut i32[] q=ref mut p;let P b=f(ref mut q);return 42;}fn i32 main(){return 42;}");
 }

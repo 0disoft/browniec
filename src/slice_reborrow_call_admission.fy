@@ -32,9 +32,16 @@ pub fn Result<Prepared,errors::Error> prepare(ref ir::Program p,ref proof::Sites
     let calls::Call call=calls::info(p,pc,offset)?;
     // Loan staging does not copy owned arguments. The mutable handoff performs
     // atomic copying as its last fallible operation before publishing this plan.
-    if(p.array_results[call.target]!=0 || p.record_results[call.target]!=0){return .err(errors::make(5,offset));}
+    if(p.record_results[call.target]!=0){return .err(errors::make(5,offset));}
     let usize charge=calls::cost(p,pc,offset)?;
     if(fuel<charge){return .err(errors::make(8,offset));}
+    // A pending result must not overwrite a caller owner, even if no argument
+    // copying is needed. Check before loan staging or payload publication.
+    if(p.array_results[call.target]!=0 && frame<32){
+        let usize destination=(p.code[pc*8+1] as usize)-128;
+        let owners::Token current=state.tokens[frame*16+destination];
+        if(current.slot!=0 || current.generation!=0){return .err(errors::make(5,offset));}
+    }
     let usize depth=source::checked(p,sites,child_sites,call_sites,receipts,frames,loan,state,bytes::len(buffer),offset)?;
     if(frame>=31 || depth>=31){return .err(errors::make(12,offset));}
     if(frame!=receipts.frame){return .err(errors::make(5,offset));}
