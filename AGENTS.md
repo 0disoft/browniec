@@ -1,5 +1,33 @@
 # AGENTS.md
 
+- Private scalar-only canonical CALLs: implemented at `c1b2c0c`.
+  The canonical CALL adapter admits zero-writer scalar arguments/results with the
+  existing price `1 + arity`. Writer reserve/price is unchanged. Empty native Batch
+  events consume VM and combined restoration depth without rotating pool tickets,
+  changing views or ending sessions. Existing CALL PC cells record scalar targets;
+  mapped empty events validate scalar positions, empty origins and detached cells.
+  Normal return requires its real mapped PC/target and clean child bindings.
+  Native unmapped empty events remain compatible with direct protocols; canonical
+  adapter return still rejects a missing PC. Shared scalar/control/core/cleanup
+  code and native primitives are unchanged. No state fields, receipt collections,
+  backing values or heap allocations are added. Existing inert-view backing and
+  unmeasured native stack/allocator/performance limitations remain.
+  Scalar helpers can interleave with available outer mutable formals and execute
+  owned local reborrow. Empty ancestors count toward later conservative writer
+  generation headroom. Admission failure is atomic; abort preserves earlier
+  writes and original outcomes or empty/nonempty failed-cleanup records.
+  Development/release each passed 18 native groups and 2,495 CLI cases, with 389
+  matching current inputs and rechecked compiler/artifact/matrix/M1 identities.
+  Existing Program/signature/map fields, primitive/adaptor, compiler, verifier,
+  public VM/CLI and shared core/control/admission/cleanup sources match `e960ec0`.
+  Parser depth32 passes; depths33/64 return compile_limit. Full native, other M2,
+  Linux, M0, isolation, packaging, size/stack, allocator and timing were not rerun.
+  Local commits only; no push/release. Shared/owned arguments, aggregate results,
+  suspended/derived CALLs and guest/public reborrow promotion remain gated. Next
+  is remaining canonical CALL argument/result coordination. See
+  [the scalar CALL contract](docs/engineering/m2-slice-scalar-call-authority.md) and
+  [Windows evidence](docs/evidence/m2-slice-scalar-call-authority-windows-20261102.json).
+
 - Private canonical reborrow shared-core execution: implemented at `94d73bd`.
   `vm_reborrow_execution` runs independent IR/flow/Sites and private subset
   admission, checks three unique fresh invocation roots and finishes every

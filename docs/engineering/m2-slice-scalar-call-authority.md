@@ -84,3 +84,16 @@ packaging, native size/stack, allocator and timing are outside the selection.
 Next is canonical coordination for remaining shared/owned argument and result
 shapes before deliberate suspended CALL proof and guest/public promotion.
 No push, publication, packaged release or deployment.
+
+Implemented at `c1b2c0c`. Development and release each passed all 18 selected
+native groups and 2,495 CLI cases, with 389 matching current input hashes.
+Compiler, retained CLI, original receipt and matrix/M1 identities were rechecked.
+Program/signature/map declarations, native authority/handoff/reborrow/owner/pool
+primitives, compiler, verifier, public VM/CLI, shared core/control and invocation
+admission/cleanup sources match `e960ec0`. Only canonical CALL shape/price/mapped
+inspection admission changes; the prior execution test now expects Fuel rather
+than unsupported-shape failure for a zero-budget scalar CALL program.
+Both profiles accept parser depth32 in check/run and reject depths33/64 with
+`compile_limit`. See the
+[Windows evidence](../evidence/m2-slice-scalar-call-authority-windows-20261102.json).
+Local commits only; no push, publication, packaged release or deployment.
