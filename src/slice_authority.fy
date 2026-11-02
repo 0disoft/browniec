@@ -57,6 +57,9 @@ fn Result<usize,owners::Error> valid(ref State state) {
     return .ok(state.depth);
 }
 
+// Read-only admission for private adapters using this canonical receipt stack.
+pub fn Result<usize,owners::Error> inspect(ref State state) { return valid(state); }
+
 // Reserve ALL pending restores, not merely CALL frames. The receipt remains in
 // this stack; only the child tickets escape to the native binding coordinator.
 pub fn Result<slices::Arguments,owners::Error> enter_call(ref mut State state,
