@@ -8,6 +8,9 @@ import slice_vm as loans;
 import struct_vm as records;
 import array_vm as arrays;
 import std::bytes as bytes;
+import slice_authority_call_vm as canonical;
+import slice_reborrow_ir as proof;
+import slice_authority as authority;
 
 // Shared immutable preflight. No register/control state is published before
 // all scalar checks and the selected owner/loan transaction succeed.
@@ -86,5 +89,17 @@ pub fn Result<usize,errors::Error> step_mutable(ref ir::Program p,usize pc,usize
     let usize charge=mutable::cost(p,p.code[pc*8+2] as usize,p.offsets[pc])?;
     let Prepared plan=prepare(p,pc,parent,registers,return_pcs,return_dsts,fuel,charge)?;
     let usize remaining=mutable::enter(p,pc,parent,receipt,frames,loan,record_state,state,buffer,fuel)?;
+    publish(p,ref plan,registers,return_pcs,return_dsts);return .ok(remaining);
+}
+
+// Reuse the same scalar/control preflight; canonical authority publication is
+// the last fallible operation before register and return-control publication.
+pub fn Result<usize,errors::Error> step_canonical(ref ir::Program p,ref proof::Sites sites,usize pc,usize parent,
+    ref mut canonical::Bindings bindings,ref mut authority::State receipts,ref mut borrowed::Frames frames,ref mut loans::State loan,
+    ref records::State record_state,ref arrays::State state,ref bytes::Buffer buffer,ref mut i64[] registers,
+    ref mut usize[] return_pcs,ref mut usize[] return_dsts,usize fuel){
+    let usize charge=canonical::cost(p,pc,if(pc<p.count && pc<256){p.offsets[pc]}else{0})?;
+    let Prepared plan=prepare(p,pc,parent,registers,return_pcs,return_dsts,fuel,charge)?;
+    let usize remaining=canonical::enter(p,sites,pc,parent,bindings,receipts,frames,loan,state,record_state,buffer,fuel)?;
     publish(p,ref plan,registers,return_pcs,return_dsts);return .ok(remaining);
 }

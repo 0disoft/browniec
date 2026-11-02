@@ -23,13 +23,21 @@ import slice_lifecycle_vm as lifecycle;
 import slice_mutable_call_vm as mutable;
 import slice_mutable_frame_vm as mutable_dispatch;
 import slice_reborrow_ir as reborrows;
+import slice_authority as canonical;
+import slice_reborrow_vm as child_sites;
+import slice_authority_call_vm as canonical_calls;
+import slice_formal_reborrow_vm as canonical_dispatch;
 
 // Existing public/readonly execution passes an empty view, avoiding the full
 // 32-frame receipt array. One inert native receipt supplies that empty view.
 pub fn Result<i64, errors::Error> execute(ref ir::Program p,usize fuel,
     ref mut array_vm::State arrays,ref mut bytes::Buffer payload,ref mut slices::State loans,ref mut borrowed::Frames borrowed_frames){
     var mutable::Frame[1] receipts=[mutable::empty();1];
-    return core(p,fuel,arrays,payload,loans,borrowed_frames,ref mut receipts[..0]);
+    var canonical::State[1] authority=[canonical::empty();1];
+    var canonical_calls::Bindings[1] call_sites=[canonical_calls::empty();1];
+    var child_sites::Bindings[1] child_bindings=[child_sites::empty();1];
+    let reborrows::Sites sites=reborrows::Sites{.parents=[16;16],.newer=[0;16],.count=0};
+    return core(p,fuel,arrays,payload,loans,borrowed_frames,ref mut receipts[..0],ref mut authority[..0],ref mut call_sites[..0],ref mut child_bindings[..0],ref sites);
 }
 // Private integration entry: caller owns 32 initialized, unique frame receipts,
 // has independently inspected the immutable Program, and calls mutable::finish
@@ -39,7 +47,21 @@ pub fn Result<i64, errors::Error> execute_mutable(ref ir::Program p,usize fuel,
     ref mut mutable::Frame[] receipts){
     if(receipts.len!=32){return .err(errors::make(5,0));}
     var usize i=0;while(i<32){if(receipts[i].active){return .err(errors::make(5,0));}i+=1;}
-    return core(p,fuel,arrays,payload,loans,borrowed_frames,receipts);
+    var canonical::State[1] authority=[canonical::empty();1];
+    var canonical_calls::Bindings[1] call_sites=[canonical_calls::empty();1];
+    var child_sites::Bindings[1] child_bindings=[child_sites::empty();1];
+    let reborrows::Sites sites=reborrows::Sites{.parents=[16;16],.newer=[0;16],.count=0};
+    return core(p,fuel,arrays,payload,loans,borrowed_frames,receipts,ref mut authority[..0],ref mut call_sites[..0],ref mut child_bindings[..0],ref sites);
+}
+// Native-only raw entry. Caller independently inspects immutable IR/Sites,
+// admits the canonical CALL subset and fresh unique context, then finishes every
+// outcome. vm_reborrow_execution supplies that admission and mandatory finish.
+pub fn Result<i64,errors::Error> execute_canonical(ref ir::Program p,ref reborrows::Sites sites,usize fuel,
+    ref mut array_vm::State arrays,ref mut bytes::Buffer payload,ref mut slices::State loans,ref mut borrowed::Frames frames,
+    ref mut canonical::State[] authority,ref mut canonical_calls::Bindings[] call_sites,ref mut child_sites::Bindings[] child_bindings){
+    if(authority.len!=1 || call_sites.len!=1 || child_bindings.len!=1){return .err(errors::make(5,0));}
+    var mutable::Frame[1] unused=[mutable::empty();1];
+    return core(p,fuel,arrays,payload,loans,frames,ref mut unused[..0],authority,call_sites,child_bindings,sites);
 }
 fn bool mutable_function(ref ir::Program p,usize function){
     var usize i=0;while(i<p.arities[function]){let usize site=p.slice_parameters[p.register_starts[function]+i] as usize;
@@ -47,7 +69,8 @@ fn bool mutable_function(ref ir::Program p,usize function){
 }
 fn Result<usize,errors::Error> leave(ref ir::Program p,usize function,usize frame,
     ref mut array_vm::State arrays,ref bytes::Buffer payload,ref mut slices::State loans,ref mut borrowed::Frames frames,
-    ref mut mutable::Frame[] receipts,usize offset){
+    ref mut mutable::Frame[] receipts,ref mut canonical::State[] authority,ref mut canonical_calls::Bindings[] call_sites,ref mut child_sites::Bindings[] child_bindings,ref struct_vm::State records,usize offset){
+    if(authority.len==1 && frame>0){return canonical_calls::leave(p,function,frame,ref mut call_sites[0],ref mut authority[0],frames,loans,arrays,records,payload,offset);}
     if(frame>0 && receipts.len==32 && receipts[frame].active){return mutable::leave(p,function,frame,ref mut receipts[frame],frames,loans,arrays,payload,offset);}
     return lifecycle::leave(p,function,frame,frames,loans,arrays,payload,offset);
 }
@@ -55,8 +78,9 @@ fn Result<usize,errors::Error> leave(ref ir::Program p,usize function,usize fram
 // Internal execution core: caller supplies an immutable independently inspected
 // Program and invocation-owned state. Public VM entry points still use verify.
 fn Result<i64, errors::Error> core(ref ir::Program p, usize fuel,
-    ref mut array_vm::State arrays, ref mut bytes::Buffer payload, ref mut slices::State loans, ref mut borrowed::Frames borrowed_frames, ref mut mutable::Frame[] receipts) {
-    if(reborrows::present(p)) { return .err(errors::make(5,0)); }
+    ref mut array_vm::State arrays, ref mut bytes::Buffer payload, ref mut slices::State loans, ref mut borrowed::Frames borrowed_frames, ref mut mutable::Frame[] receipts, ref mut canonical::State[] authority,ref mut canonical_calls::Bindings[] call_sites,ref mut child_sites::Bindings[] child_bindings, ref reborrows::Sites sites) {
+    if(authority.len>1 || call_sites.len!=authority.len || child_bindings.len!=authority.len){return .err(errors::make(5,0));}
+    if(authority.len==0 && reborrows::present(p)) { return .err(errors::make(5,0)); }
     var usize remaining = fuel;
     var struct_vm::State records = struct_vm::empty();
     var i64[4096] registers = [0; 4096];
@@ -72,10 +96,23 @@ fn Result<i64, errors::Error> core(ref ir::Program p, usize fuel,
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
+        if(op==61 || op==62){
+            if(authority.len!=1 || call_sites.len!=1 || child_bindings.len!=1){return .err(errors::make(5,p.offsets[pc]));}
+            let usize base=frame*128;
+            remaining=canonical_dispatch::step(p,sites,functions[frame],pc,frame,ref mut child_bindings[0],ref call_sites[0],
+                ref mut authority[0],borrowed_frames,loans,arrays,payload,ref registers[base..base+128],remaining)?;
+            pc+=1;continue;
+        }
         if (op >= 54 && op <= 60) {
             let usize base = frame * 128;
             let usize site=if(op==55 || op==57 || op==58){a}else{dst};
-            remaining = if(ir::exclusive(p,site) && p.slice_roots[site]==0) {
+            remaining = if(authority.len==1 && ir::exclusive(p,site) && (op==55 || op==57 || op==58 || op==60)){
+                canonical_dispatch::access(p,sites,functions[frame],pc,frame,ref child_bindings[0],ref call_sites[0],
+                    ref authority[0],borrowed_frames,loans,arrays,payload,ref mut registers[base..base+128],remaining)?
+            }else if(authority.len==1 && ir::exclusive(p,site) && p.slice_roots[site]==0 && op==56){
+                canonical_calls::release(p,functions[frame],frame,site,ref mut call_sites[0],ref authority[0],
+                    borrowed_frames,loans,arrays,payload,remaining,p.offsets[pc])?
+            }else if(ir::exclusive(p,site) && p.slice_roots[site]==0) {
                 if(receipts.len!=32 || frame==0){return .err(errors::make(5,p.offsets[pc]));}
                 mutable_dispatch::step(p,functions[frame],pc,frame,ref mut receipts[frame],borrowed_frames,loans,arrays,payload,
                     ref mut registers[base..base+128],remaining)?
@@ -92,7 +129,7 @@ fn Result<i64, errors::Error> core(ref ir::Program p, usize fuel,
             if(frame==0 || return_dsts[frame]<144 || return_dsts[frame]>=160) {
                 return .err(errors::make(5,p.offsets[pc]));
             }
-            let usize closed=leave(p,functions[frame],frame,arrays,payload,loans,borrowed_frames,receipts,p.offsets[pc])?;
+            let usize closed=leave(p,functions[frame],frame,arrays,payload,loans,borrowed_frames,receipts,authority,call_sites,child_bindings,ref records,p.offsets[pc])?;
             let usize call=(return_pcs[frame]-1)*8;
             remaining=record_results::step(p,p.code[call+2] as usize,a,
                 return_dsts[frame]-144,frame,ref mut records,arrays,payload,
@@ -124,7 +161,10 @@ fn Result<i64, errors::Error> core(ref ir::Program p, usize fuel,
             pc += 1; continue;
         }
         if (op == 9) {
-            if(mutable_function(p,a)){
+            if(authority.len==1){
+                remaining=calls::step_canonical(p,sites,pc,frame,ref mut call_sites[0],ref mut authority[0],borrowed_frames,loans,ref records,arrays,payload,
+                    ref mut registers,ref mut return_pcs,ref mut return_dsts,remaining)?;
+            }else if(mutable_function(p,a)){
                 if(receipts.len!=32){return .err(errors::make(5,p.offsets[pc]));}
                 remaining=calls::step_mutable(p,pc,frame,ref mut receipts[if(frame<31){frame+1}else{31}],borrowed_frames,loans,ref mut records,arrays,
                     payload,ref mut registers,ref mut return_pcs,ref mut return_dsts,remaining)?;
@@ -146,7 +186,7 @@ fn Result<i64, errors::Error> core(ref ir::Program p, usize fuel,
         let usize base = frame * 128;
         if(op==39) {
             if(frame==0 || return_dsts[frame]<128) {return .err(errors::make(5,p.offsets[pc]));}
-            let usize closed=leave(p,functions[frame],frame,arrays,payload,loans,borrowed_frames,receipts,p.offsets[pc])?;
+            let usize closed=leave(p,functions[frame],frame,arrays,payload,loans,borrowed_frames,receipts,authority,call_sites,child_bindings,ref records,p.offsets[pc])?;
             let usize call=(return_pcs[frame]-1)*8;
             let usize transferred=array_results::leave(p,p.code[call+2] as usize,a,return_dsts[frame]-128,frame,arrays,payload,p.offsets[pc])?;
             pc=return_pcs[frame];frame-=1;continue;
@@ -179,7 +219,7 @@ fn Result<i64, errors::Error> core(ref ir::Program p, usize fuel,
         }
         if (op == 8) {
             let i64 value = registers[base + a];
-            let usize closed=leave(p,functions[frame],frame,arrays,payload,loans,borrowed_frames,receipts,p.offsets[pc])?;
+            let usize closed=leave(p,functions[frame],frame,arrays,payload,loans,borrowed_frames,receipts,authority,call_sites,child_bindings,ref records,p.offsets[pc])?;
             if (frame == 0) { return .ok(value); }
             let usize parent_base = (frame - 1) * 128;
             let usize parent_dst = return_dsts[frame];
