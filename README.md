@@ -76,9 +76,10 @@ Suspended/derived exclusive CALLs and guest/public reborrow promotion remain
 gated. Next is suspended/derived exclusive CALL proof. Earlier adapter/proof
 stages below describe their own checkpoints.
 
-Development/release core each passed 15 native groups (seven canonical record
-result, eight legacy record result), with 395 matching current input hashes.
-Canonical array-result/record-argument/shared CALL and CLI regression is pending.
+Implemented at `4a87cb1`. Development and release each passed 34 distinct native
+groups (15 core, 19 regression) and 2,495 CLI cases. All 395 current input hashes
+were rechecked; the core inventory's one unselected test update is documented in
+[Windows evidence](docs/evidence/m2-slice-record-result-authority-windows-20261102.json).
 Native size/stack, allocator and timing remain unmeasured. Local commits only.
 
 ## Private metered owned reborrow adapter

@@ -84,7 +84,26 @@ Core and regression do not repeat native groups. Full native, other M2, Linux,
 M0, isolation, packaging, native size/stack, allocator and timing are outside
 this selection.
 
-Development and release core each passed 15 native groups, with 395 identical
-current input hashes. Canonical CALL/public CLI regression is pending.
+Implemented at `4a87cb1`. Development and release each passed 34 distinct native
+groups (15 core and 19 regression) and 2,495 CLI cases. The
+[Windows evidence](../evidence/m2-slice-record-result-authority-windows-20261102.json)
+rechecks 395 current input hashes, compiler identity, both retained CLIs, original
+receipt hashes, native outcomes and six parser boundary cases per profile.
+Depth32 passes; depths33/64 return `compile_limit`.
+
+Core inventories match each other. Compared with final regression inputs, they
+differ only in an unselected record-argument test whose historical rejection of
+record results now becomes an acceptance check. Final regression executes that
+updated test. Original/current hashes for this single delta are recorded; no
+production or selected core test source changed after core verification.
+
+The production delta is limited to `struct_result_vm`, `slice_authority_call_vm`,
+`vm_execution` and `vm_reborrow_execution`. The other 91 production source files
+match `67ce203`, including compiler, verifier, public VM, array-result primitives,
+scalar/control CALL preflight and native owner/pool/authority primitives.
+CALL/Admission/binding layouts and canonical drain/finish are unchanged. Shared
+leave differs only in allowing the validated retained record. Array return adds
+only the no-record sentinel when invoking shared leave.
+
 Local commits only; no push, publication, packaged release or deployment.
 Next is suspended/derived exclusive CALL proof.

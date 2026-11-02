@@ -1,6 +1,6 @@
 # AGENTS.md
 
-- Private canonical exact-nominal record results are implemented. CALL result
+- Private canonical exact-nominal record results: implemented at `4a87cb1`. CALL result
   anchors/destinations must have matching nominal identity and correct functions;
   equal-sized other records are rejected. Caller destinations are checked empty
   before any argument copy or loan publication. Existing record return validation
@@ -10,15 +10,22 @@
   Existing fixed 128-byte validation scratch remains; no additional payload
   snapshot, extent, persistent field, authority clone or receipt collection is
   added. Scalar/array returns pass a no-record sentinel to shared cleanup.
-  Development/release core each passed 15 native groups (seven canonical record
-  result, eight legacy record result), with 395 matching current input hashes.
-  Canonical array-result/record-argument/shared CALL and CLI regression is pending.
+  Development/release each passed 34 distinct native groups (15 core, 19
+  regression) and 2,495 CLI cases. All 395 current input hashes and compiler/
+  artifact/receipt identities were rechecked. Core inventories differ only in
+  one unselected record-argument test subsequently updated to accept the new
+  result signatures; final regression executes that expectation. This delta is
+  recorded explicitly; production and selected core tests are unchanged.
+  The production delta is four files; 91 other sources match `67ce203`.
+  CALL/Admission/binding layouts, scalar/control preflight and canonical drain/
+  finish are unchanged. Parser depth32 passes; depths33/64 return compile_limit.
   Suspended/derived exclusive CALLs and guest/public reborrow promotion remain
   gated. Abort preserves writes, returned/copied owners and original outcomes
   or failed-cleanup metadata; native callers dispose owned storage/backing.
   Native size/stack, allocation counts and timing remain unmeasured. Next is
   suspended/derived exclusive CALL proof. Local commits only; no push/release.
   See [the record result contract](docs/engineering/m2-slice-record-result-authority.md).
+  See [Windows evidence](docs/evidence/m2-slice-record-result-authority-windows-20261102.json).
 
 - Private canonical scalar-array results: implemented at `f7c0827`. Exact-shape CALL
   destinations must be empty before admission. Existing return validation now

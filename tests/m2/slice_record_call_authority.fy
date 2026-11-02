@@ -99,7 +99,8 @@ fn void control_and_exact_nominal_gates_fail_before_publication(){
     assert(!control::step_canonical(ref p,ref map,at,0,ref mut c,ref mut auth,ref mut f,ref mut l,ref mut s,ref mut a,ref mut b,ref mut r[..128],ref mut pcs,ref mut dsts,price).is_ok);assert(!calls::enter(ref p,ref map,at,0,ref mut c,ref mut auth,ref mut f,ref mut l,ref a,ref s,ref b,price).is_ok);unchanged(ref a,ref old,ref l,ref previous,ref b,ref data,ref auth,ref c,ref f);same_records(ref s,ref old_records);
     var usize i=0;while(i<256){assert(r[i]==99);i+=1;}i=0;while(i<32){assert(pcs[i]==77 && dsts[i]==88);i+=1;}
     var ir::Program bad=p;let usize id=(p.record_parameters[3] as usize)-1;bad.records.mutable[id]=true;assert(!runner::inspect(ref bad).is_ok && !calls::cost(ref bad,at,77).is_ok);bad=p;bad.records.records[id]=0;assert(!calls::cost(ref bad,at,77).is_ok);bad=p;bad.call_args[(p.code[at*8+3] as usize)*8+3]=128;assert(!calls::cost(ref bad,at,77).is_ok);
-    let ir::Program result=compiled(b"module main;struct R{i32 x;}fn R f(R r){return r;}fn i32 main(){let R r=f(R{.x=42});return r.x;}");assert(!runner::inspect(ref result).is_ok);
+    // Canonical record-result delivery promotes this previously rejected signature.
+    let ir::Program result=compiled(b"module main;struct R{i32 x;}fn R f(R r){return r;}fn i32 main(){let R r=f(R{.x=42});return r.x;}");assert(runner::inspect(ref result).is_ok);
 }
 @test
 fn void constructors_child_paths_mutable_snapshots_and_tagged_scalar_results_execute(){
