@@ -1,5 +1,19 @@
 # Brownie C
 
+## Private native derived CALL handoff
+
+`slice_reborrow_call_vm::enter` now publishes checked child loans to callee
+formals. Native tests perform real writes, recursive forwarding, exact ticket
+and selected-view restoration, and abort cleanup that preserves writes. Rootless
+derived sources resolve through their immutable formal anchor. Scalar/control
+publication and shared VM dispatch are the next integration; public admission
+remains gated.
+
+Implemented at `cf18d2d`. Development passed 8 new native groups; release passed
+those 8 plus 12 prior admission/CALL groups. All 401 current input hashes match.
+CLI and Linux were not rerun. See the [handoff contract](docs/engineering/m2-slice-reborrow-call-vm.md)
+and [Windows evidence](docs/evidence/m2-slice-reborrow-call-vm-windows-20261103.json).
+
 ## Private derived-source CALL preparation
 
 Native `slice_reborrow_call_admission::prepare` authenticates live reborrow

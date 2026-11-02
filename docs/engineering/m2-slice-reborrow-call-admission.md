@@ -1,5 +1,10 @@
 # Private native admission for CALLs with derived reborrow sources
 
+The subsequent [native handoff protocol](m2-slice-reborrow-call-vm.md) consumes
+this preparation internally and adds coordinated publication, return and abort.
+This document still describes the standalone preparation API, which exposes no
+publish operation; callers must not activate its plan outside that protocol.
+
 `slice_reborrow_call_admission::prepare` builds a private, single-use `Prepared`
 value for a CALL whose exclusive source is a live, checked reborrow child. This
 is native preparation only: it does not execute or publish a CALL, restore a

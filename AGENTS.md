@@ -1,5 +1,26 @@
 # AGENTS.md
 
+- Native derived CALL loan handoff: implemented at `cf18d2d`.
+  enter consumes prepared metadata synchronously; all failure precedes infallible
+  canonical receipt/pool/CALL-map PC/ticket/origin publication. Owned and formal
+  descendants now transfer to callee formals, support actual scalar writes and
+  recursive forwarding, then use existing release/leave to restore exact caller
+  child tickets and views in combined-depth order. Rootless derived origin
+  resolves through the immutable formal anchor to the real CALL lease. Abort
+  preserves writes and the original result or retained failed-cleanup metadata.
+  No extra receipt owner, persistent layout, payload copy, opcode, price or public
+  capability is added. Native callers preflight scalar/control/register state
+  before enter; those publications and shared-core dispatch remain separate.
+  Development passed 8 new native groups; release passed those 8 plus 12 existing
+  admission/CALL groups. All 401 current input hashes/compiler/native receipts
+  match. The existing CALL module changes only origin; 96 other sources match
+  `edb9b0a`. No CLI/full native/other M2/Linux/isolation/packaging/allocator/native
+  size/stack/timing rerun. Existing legacy and checked/public gates remain.
+  Next is shared VM scalar/control wiring, then deliberate checked admission.
+  Owned arguments and aggregate results remain outside this derived CALL path.
+  Local commits only. See [the handoff contract](docs/engineering/m2-slice-reborrow-call-vm.md)
+  and [Windows evidence](docs/evidence/m2-slice-reborrow-call-vm-windows-20261103.json).
+
 - Private unpublished derived-source CALL preparation: implemented at `a4a1430`.
   New native prepare authenticates the complete receipt/child maps and every
   original borrowed source before local shared retention and writer rotation.
