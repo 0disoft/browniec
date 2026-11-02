@@ -41,12 +41,11 @@ fn Result<Call,errors::Error> info(ref ir::Program p,usize pc,usize offset){
             p.types[source]!=p.types[r] || p.slots[source] || p.array_parameters[source]!=0 || p.record_parameters[source]!=0 || p.slice_parameters[source]!=0){return .err(errors::make(5,offset));}
         i+=1;
     }
-    if(count==0){return .err(errors::make(5,offset));}
     return .ok(Call{.caller=caller,.target=target,.args=args,.count=count});
 }
 pub fn Result<usize,errors::Error> cost(ref ir::Program p,usize pc,usize offset){
     let Call call=info(p,pc,offset)?;
-    return .ok(1+p.arities[call.target]+65537*(1+2*call.count));
+    return .ok(1+p.arities[call.target]+if(call.count==0){0}else{65537*(1+2*call.count)});
 }
 fn Result<usize,errors::Error> index(ref authority::State receipts,usize frame,usize offset){
     if(frame==0 || frame>=32 || receipts.depth>31){return .err(errors::make(5,offset));}
@@ -78,7 +77,7 @@ pub fn Result<usize,errors::Error> inspect(ref ir::Program p,ref Bindings bindin
     ref shared::Frames frames,ref loans::State loan,ref arrays::State state,usize offset){
     let usize depth=switch(authority::inspect(receipts)){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}};
     var usize i=0;while(i<31){
-        if(receipts.kinds[i]==1 && receipts.counts[i]!=0){
+        if(receipts.kinds[i]==1 && (receipts.counts[i]!=0 || bindings.pcs[i]!=256)){
             let Call call=info(p,bindings.pcs[i],offset)?;if(call.count!=receipts.counts[i]){return .err(errors::make(5,offset));}
             let usize parent=receipts.frames[i];var usize j=0;var usize pos=0;
             while(pos<8){
