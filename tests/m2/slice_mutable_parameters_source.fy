@@ -66,7 +66,7 @@ fn void exact_modes_tags_named_sources_and_non_escaping_bindings_are_required(){
     rejected(b"module main;fn i32 f(ref mut i32[] p){return 42;}fn i32 main(){var i32[1] a=[0;1];return f(ref mut a);}");
     rejected(b"module main;fn i32 f(ref mut i32[] p){return 42;}fn i32 main(){return f(ref mut [0;1]);}");
     rejected(b"module main;fn i32 f(ref mut i32[] p){return 42;}fn i32 main(){var i32[1] a=[0;1];let ref mut i32[] p=ref mut a;return f(ref mut p[..]);}");
-    rejected(b"module main;fn i32 f(ref mut i32[] p){let ref mut i32[] q=ref mut p;return 42;}fn i32 main(){return 42;}");
+    rejected(b"module main;fn i32 f(ref mut i32[] p){let ref mut u32[] q=ref mut p;return 42;}fn i32 main(){return 42;}");
     rejected(b"module main;fn i32 f(ref mut i32[] p){let ref i32[] q=ref p;return 42;}fn i32 main(){return 42;}");
     rejected(b"module main;fn i32 f(ref mut i32[] p){p[0]=true;return 42;}fn i32 main(){return 42;}");
     rejected(b"module main;fn i32 f(ref mut Option<i32>[] p){return 42;}fn i32 main(){return 42;}");

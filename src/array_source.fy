@@ -5,6 +5,7 @@ import locals as locals;
 import ir as ir;
 import cells as cells;
 import errors as errors;
+import slice_cleanup_source as slice_cleanup;
 
 // Local binding values 128..143 denote private array catalog IDs, never scalar
 // registers. Each binding belongs to its function's lexical scopes.
@@ -120,7 +121,7 @@ pub fn Result<usize, errors::Error> release_from(ref locals::Table table, ref mu
             let usize drop = ir::array_drop(p, table.registers[i] - 128, offset)?;
             dropped += 1;
         } else if (table.registers[i] >= 160 && table.registers[i] < 176) {
-            let usize close = ir::slice_close(p, table.registers[i] - 160, offset)?;
+            let usize close = slice_cleanup::close(p, table.registers[i] - 160, offset)?;
             dropped += 1;
         } else if (table.registers[i] >= 144 && table.registers[i] < 160) {
             let usize drop = ir::record_drop(p, table.registers[i] - 144, offset)?;

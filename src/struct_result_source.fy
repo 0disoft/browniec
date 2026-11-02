@@ -1,4 +1,5 @@
 module struct_result_source;
+import slice_cleanup_source as slice_cleanup;
 import functions as functions;
 import ir as ir;
 import lexer as lexer;
@@ -99,7 +100,7 @@ pub fn Result<usize,errors::Error> finish(ref mut ir::Program p,
     while(i>0) {
         i-=1;
         if(names.registers[i]>=160 && names.registers[i]<176) {
-            let usize close=ir::slice_close(p,names.registers[i]-160,at)?;
+            let usize close=slice_cleanup::close(p,names.registers[i]-160,at)?;
         } else if(arrays::binding(names,i)) {let usize drop=ir::array_drop(p,names.registers[i]-128,at)?;}
         else if(values::binding(names,i) && names.registers[i]!=144+id) {
             let usize drop=ir::record_drop(p,names.registers[i]-144,at)?;

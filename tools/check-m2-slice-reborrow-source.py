@@ -1,0 +1,85 @@
+"""Exercise lexical mutable reborrows through a tool-free public CLI."""
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--exe', required=True, type=Path)
+parser.add_argument('--profile', required=True)
+args = parser.parse_args()
+root = Path(__file__).resolve().parent.parent
+output = root / 'build/m2-slice-reborrow-source' / args.profile
+output.mkdir(parents=True, exist_ok=True)
+receipt = output / 'cli-receipt.json'
+receipt.write_text('{"status":"incomplete"}\n', encoding='utf-8')
+empty = output / 'no-runtime-tools'
+empty.mkdir(exist_ok=True)
+exe = args.exe.resolve(strict=True)
+env = {key: str(empty) for key in ['PATH', 'TEMP', 'TMP']}
+env.update({key: os.environ[key] for key in ['SystemRoot', 'WINDIR'] if key in os.environ})
+rows = []
+
+
+def case(source, category='public', expected=0, fuel=1000000):
+    data = source.encode()
+    path = output / f'case-{len(rows):03}.brc'
+    path.write_bytes(data)
+    for mode in ['check', 'run']:
+        command = [str(exe), mode, str(path), '--json']
+        if mode == 'run':
+            command += ['--fuel', str(fuel)]
+        done = subprocess.run(command, cwd=empty, env=env, capture_output=True, timeout=15)
+        result = json.loads(done.stdout)
+        assert not done.stderr and result['schema'] == 'browniec.result/v1', (source, done)
+        assert result['command'] == mode, result
+        error = ('verification' if category == 'conflict' else 'source' if category == 'source'
+                 else {0: None, 7: 'zero_divisor', 8: 'fuel', 12: 'frame_limit', 14: 'bounds'}[expected]
+                 if mode == 'run' else None)
+        if error:
+            code = 6 if category == 'conflict' else 3 if category == 'source' else 5
+            kinds = ['type', 'syntax', 'compile_limit'] if error == 'source' else [error]
+            assert done.returncode == code and result['status'] == 'error', (source, done)
+            assert result['return_i32'] is None and result['error']['kind'] in kinds, (source, result)
+            assert 0 <= result['error']['byte_offset'] < len(data), result
+        else:
+            assert done.returncode == 0 and result['error'] is None, (source, done)
+            assert result['status'] == ('checked' if mode == 'check' else 'completed'), result
+            assert result['return_i32'] == (None if mode == 'check' else 42), (source, result)
+        rows.append(dict(category=category, command=command, sourceSha256=hashlib.sha256(data).hexdigest(),
+                         exit=done.returncode, result=result))
+
+
+native = (root / 'tests/m2/slice_reborrow_source.fy').read_text(encoding='utf-8')
+fixtures = re.findall(r'run_source\(b"([^"\n]+)",(\d+)\)', native)
+conflicts = re.findall(r'conflict\(b"([^"\n]+)"', native)
+negatives = re.findall(r'rejected\(b"([^"\n]+)"', native)
+assert (len(fixtures), len(conflicts), len(negatives)) == (20, 7, 3)
+for source, expected in fixtures:
+    # Native tests have 16M Fuel; the public CLI intentionally caps it at 1M.
+    expected = 8 if 'return f(ref mut q,n-1)' in source else int(expected)
+    case(source, expected=expected)
+for source in conflicts:
+    case(source, 'conflict', fuel=0)
+for source in negatives:
+    case(source, 'source', fuel=0)
+case(fixtures[0][0], expected=8, fuel=0)
+case((root / 'examples/mutable-slice-reborrow.brc').read_text(encoding='utf-8'))
+# Exactly 16 static sites fit; one more child fails at compilation, before Fuel.
+for count in [15, 16]:
+    source = 'module main;fn i32 main(){var i32[1] a=[42;1];let ref mut i32[] p=ref mut a;'
+    for i in range(count):
+        parent = 'p' if i == 0 else f'q{i-1}'
+        source += f'let ref mut i32[] q{i}=ref mut {parent};'
+    source += f'return q{count-1}[0];}}'
+    case(source, 'public' if count == 15 else 'source', expected=8 if count == 15 else 0)
+version = json.loads(subprocess.check_output([str(exe), '--version', '--json'], cwd=empty, env=env))
+assert version['array_slice_mutable_reborrow'] is True
+assert len(rows) == 68, len(rows)
+receipt.write_text(json.dumps(dict(schema='browniec.slice-reborrow-source-cli/v1', status='passed',
+    profile=args.profile, exeSha256=hashlib.sha256(exe.read_bytes()).hexdigest(),
+    runtimeEnvironment='cleared; tool-free PATH', count=len(rows), cases=rows, version=version), indent=2)+'\n', encoding='utf-8')
+print(f'PASS: {args.profile}: {len(rows)} public reborrow source CLI cases')

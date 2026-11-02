@@ -22,6 +22,7 @@ import text_source as text_source;
 import slice_source as slices;
 import slice_call_source as slice_calls;
 import slice_builders as slice_builders;
+import slice_reborrow_ir as reborrow;
 
 fn u8 precedence(u8 kind) {
     if (kind == 133) { return 1; }
@@ -628,7 +629,7 @@ fn Result<usize, errors::Error> slice_declaration(ref u8[] source, ref mut lexer
     let slices::Header header = slices::header(source,s,table,mutable,terminator,result_type)?;
     let usize index = if (s.kind == 2) { locals::find(source,table,s.begin,s.end) } else { 64 };
     let usize parent = if (slices::binding(table,index)) { table.registers[index]-160 } else { 16 };
-    if (parent < 16 && (header.exclusive || ir::exclusive(p,parent))) { return .err(errors::make(3,header.begin)); }
+    if (parent < 16 && header.exclusive != ir::exclusive(p,parent)) { return .err(errors::make(3,header.begin)); }
     var usize root = 0;
     if (parent < 16) {
         if (p.slice_roots[parent] != 0) { root = (p.slice_roots[parent] as usize)-1; }
@@ -638,7 +639,7 @@ fn Result<usize, errors::Error> slice_declaration(ref u8[] source, ref mut lexer
     } else { root = slices::root_argument(source,s,p,table,header.element)?; }
     let u8 element = if (parent < 16) { ir::slice_element(p,parent,header.begin)? } else { p.arrays.elements[root] };
     if (element != header.element) { return .err(errors::make(3,header.begin)); }
-    if (header.exclusive && (!p.arrays.mutable[root] || !table.mutable[index])) { return .err(errors::make(3,header.begin)); }
+    if (header.exclusive && parent == 16 && (!p.arrays.mutable[root] || !table.mutable[index])) { return .err(errors::make(3,header.begin)); }
     var usize lo = 0;
     var usize hi = 0;
     if (s.kind == 91) {
@@ -658,11 +659,13 @@ fn Result<usize, errors::Error> slice_declaration(ref u8[] source, ref mut lexer
             else { arrays::length_value(p,root,header.begin)? };
     }
     let usize end = lexer::punctuation(source,s,59)?;
-    let usize site = if (parent < 16 && p.slice_origins[parent] != 0) {
+    let usize site = if (parent < 16 && header.exclusive) { reborrow::derived(p,parent,header.begin)? }
+    else if (parent < 16 && p.slice_origins[parent] != 0) {
         slice_builders::derived(p,parent,table.function,header.begin)?
     } else if (header.exclusive) { ir::exclusive_slice(p,root,header.begin)? }
         else { ir::slice(p,root,header.begin)? };
-    let usize opened = if (parent < 16) { ir::slice_sub(p,site,parent,lo,hi,header.begin)? }
+    let usize opened = if (parent < 16 && header.exclusive) { reborrow::begin(p,site,parent,lo,hi,header.begin)? }
+        else if (parent < 16) { ir::slice_sub(p,site,parent,lo,hi,header.begin)? }
         else { ir::slice_open(p,site,lo,hi,header.begin)? };
     return locals::declare(table,header.begin,header.end,160+site,header.exclusive);
 }

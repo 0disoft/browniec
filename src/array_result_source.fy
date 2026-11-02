@@ -1,4 +1,5 @@
 module array_result_source;
+import slice_cleanup_source as slice_cleanup;
 
 import functions as functions;
 import ir as ir;
@@ -88,7 +89,7 @@ pub fn Result<usize,errors::Error> finish(ref mut ir::Program p,ref locals::Tabl
     while(i>0) {
         i-=1;
         if(names.registers[i]>=160 && names.registers[i]<176) {
-            let usize close=ir::slice_close(p,names.registers[i]-160,at)?;
+            let usize close=slice_cleanup::close(p,names.registers[i]-160,at)?;
         } else if(arrays::binding(names,i) && names.registers[i]!=128+id) {
             let usize dropped=ir::array_drop(p,names.registers[i]-128,at)?;
         } else if(names.registers[i]>=144 && names.registers[i]<160) {

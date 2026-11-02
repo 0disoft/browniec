@@ -1,0 +1,17 @@
+module main;
+
+fn i32 set_answer(ref mut i32[] selected) {
+    selected[0] = 42;
+    return selected[0];
+}
+
+fn i32 main() {
+    var i32[3] values = [0; 3];
+    let ref mut i32[] parent = ref mut values;
+    {
+        let ref mut i32[] child = ref mut parent[1..2];
+        let i32 answer = set_answer(ref mut child);
+        if (child[0] != answer) { return 0; }
+    }
+    return parent[1];
+}
