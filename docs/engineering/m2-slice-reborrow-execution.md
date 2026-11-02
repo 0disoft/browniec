@@ -106,3 +106,16 @@ zero-writer/scalar-only frames, while retaining exact ownership and prices.
 Suspended/derived CALL proof, guest grammar and public promotion remain separate.
 Full native, other M2, Linux, M0, isolation, packaging, native stack/allocator and
 performance are outside this selection. No push, publication, release or deployment.
+
+Implemented at `94d73bd`. Development and release each passed all 16 selected
+native groups and 2,495 CLI cases, with 388 matching current input hashes.
+Compiler, retained CLI, original receipt and matrix/M1 identities were rechecked.
+Program/signature and existing map declarations, native authority/loan/owner/pool
+primitives, formal/owned reborrow and canonical CALL adapters, verifier, compiler
+and public VM/CLI sources match `7b899d1`. Existing scalar/control preflight and
+publication bodies also match that baseline; only a new canonical CALL entry is
+appended to that module. Shared-core dispatch changes are described above.
+Both profiles accept parser depth32 in check/run and reject depths33/64 with
+`compile_limit`. See the
+[Windows evidence](../evidence/m2-slice-reborrow-execution-windows-20261102.json).
+Local commits only; no push, publication, packaged release or deployment.

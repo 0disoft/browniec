@@ -1,5 +1,35 @@
 # AGENTS.md
 
+- Private canonical reborrow shared-core execution: implemented at `94d73bd`.
+  `vm_reborrow_execution` runs independent IR/flow/Sites and private subset
+  admission, checks three unique fresh invocation roots and finishes every
+  admitted outcome through combined drain. Existing vm_execution::core now wires
+  canonical begin/end, data access, formal release, CALL and scalar return into
+  its shared scalar/control loop. call_frame_vm::step_canonical reuses unchanged
+  scalar/control prepare/publish; authority handoff is its last fallible step.
+  Native authority remains the sole receipt owner. Existing map/Program/signature/
+  owner/pool/shared-frame fields and logical prices are unchanged. Public/legacy
+  entries still reject op61/62. Shared slices, zero-writer/scalar-only, shared/
+  owned-argument and aggregate-result CALL shapes, suspended/derived CALLs and
+  guest/public promotion remain outside this private mode. Guest recursion
+  uses fixed VM frames rather than native recursion. The wrapper preserves dirty admission state
+  without executing or draining it; runtime abort preserves writes and original
+  outcomes or failed-cleanup diagnostics. Callers dispose owned roots/backing.
+  Legacy wrappers now use one inert authority/CALL/site-map backing value each
+  for empty views; canonical execution uses one inert legacy Frame. These add
+  fixed local storage. Native stack size, allocator and performance are unmeasured.
+  Development/release each passed 16 native groups and 2,495 CLI cases, with 388
+  matching current inputs and rechecked compiler/artifact/matrix/M1 identities.
+  Existing Program/signature/map fields, native primitives/adapters, verifier,
+  compiler and public VM/CLI sources match `7b899d1`; old scalar/control preflight
+  and publication bodies also match. Parser depth32 passes; depths33/64 return
+  compile_limit. Full native, other M2, Linux, M0, isolation, packaging, native
+  stack/allocator and timing were not rerun. Local commits only; no push/release.
+  Next is canonical zero-writer/scalar-only frame coordination before other CALL
+  shapes and deliberate guest/public promotion. See
+  [the shared-core contract](docs/engineering/m2-slice-reborrow-execution.md) and
+  [Windows evidence](docs/evidence/m2-slice-reborrow-execution-windows-20261102.json).
+
 - Private canonical formal reborrow/data adapter: implemented at `5baffe4`.
   `slice_formal_reborrow_vm` supports owned roots and rootless exclusive formal
   children using the existing 93 site-map cells and canonical CALL maps. It adds
