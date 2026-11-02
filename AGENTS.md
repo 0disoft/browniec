@@ -1,5 +1,20 @@
 # AGENTS.md
 
+- Public canonical routing for exclusive mutable formals: implemented at `0d57882`
+  on `main`. Development and release each passed 5 native groups (2 new legacy
+  differential and 3 existing public mutable) plus 74 public mutable CLI cases.
+  All 403 current inputs exactly match across both phase manifests; compiler,
+  native-report, retained CLI artifact and CLI receipt hashes were rechecked. The
+  sole production delta is `src/vm.fy` versus `a023542`; 97 other production
+  sources match under Git LF. The public entry body and verifier-before-Fuel/quota/
+  backing/selection are unchanged; exclusive formals use local canonical state and
+  two maps with no second proof or new grammar/opcode/capability. Public opcode
+  61/62 admission and source grammar remain gated while native execution remains
+  available. See [contract](docs/engineering/m2-slice-public-canonical.md) and
+  [verified evidence](docs/evidence/m2-slice-public-canonical-windows-20261103.json).
+  Full native/other M2/full M1/Linux/isolation/packaging/allocator/native size-stack/
+  timing and performance were not rerun. Local commits only; no push.
+
 - Default checked native derived CALL admission: implemented at `2a30fae`.
   Default `inspect` reuses the former `inspect_derived` body after LF normalization; `execute`/`run` keep their bodies. Compatibility names delegate without a second proof.
   Owned/aggregate derived shapes reject before Fuel/effects in every function, including unreachable ones; dirty contexts fail.

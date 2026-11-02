@@ -1,5 +1,20 @@
 # Brownie C
 
+## Public canonical routing for exclusive mutable formals
+
+Implemented at `0d57882` on `main`. Exclusive mutable formals now use fresh local
+canonical state and two maps with exact empty Sites and no second proof; ordinary
+readonly execution, the public entry body, native wrapper, verifier and dispatch
+helpers remain unchanged. Development and release each passed 5 native groups
+(2 new differential plus 3 existing public mutable) and 74 public mutable CLI cases;
+all 403 inputs matched both manifests and artifact hashes were rechecked. The sole
+production delta is `src/vm.fy` versus `a023542`; 97 other sources match under Git LF.
+Public opcode 61/62 admission and derived source grammar remain gated, while native
+execution remains available; empty Sites must change with public verification.
+Full native/other M2/M1/Linux/isolation/packaging/allocator/native size-stack/timing
+and performance were not rerun. Local commits only; no push. See the
+[contract](docs/engineering/m2-slice-public-canonical.md) and [verified evidence](docs/evidence/m2-slice-public-canonical-windows-20261103.json).
+
 ## Default checked native derived CALL admission
 
 Implemented at `2a30fae` on `main`. Default `inspect` reuses the former `inspect_derived` body after LF normalization; `execute`/`run` keep their bodies. Compatibility names delegate without a second proof.
