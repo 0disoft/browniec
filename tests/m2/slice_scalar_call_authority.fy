@@ -75,7 +75,7 @@ fn void thirty_empty_calls_reserve_the_next_writer_and_the_following_frame_fails
 @test
 fn void scalar_callees_execute_owned_reborrow_before_empty_batch_return(){
     let ir::Program p=owned_reborrow();var authority::State[1] auth=[authority::empty();1];var calls::Bindings[1] c=[calls::empty();1];var children::Bindings[1] links=[children::empty();1];var loans::State l=loans::empty();var shared::Frames f=shared::empty();var arrays::State a=arrays::empty(64);var bytes::Buffer b=backing();
-    assert(!verifier::verify(ref p).is_ok);assert(answer(runner::execute(ref p,1000000,ref mut a,ref mut b,ref mut l,ref mut f,ref mut auth,ref mut c,ref mut links))==42);empty(ref auth,ref c,ref links,ref l,ref f);assert(a.owners.depth==0 && a.owners.arena.used==0);
+    assert(verifier::verify(ref p).is_ok && answer(vm::run_with_array_limit(ref p,1000000,64))==42);assert(answer(runner::execute(ref p,1000000,ref mut a,ref mut b,ref mut l,ref mut f,ref mut auth,ref mut c,ref mut links))==42);empty(ref auth,ref c,ref links,ref l,ref f);assert(a.owners.depth==0 && a.owners.arena.used==0);
 }
 @test
 fn void empty_frame_abort_preserves_outer_writes_and_failed_cleanup_records(){

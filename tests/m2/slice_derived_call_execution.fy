@@ -102,9 +102,16 @@ fn i64 checked(Result<i64,errors::Error> r){return switch(r){case .ok(v):{v}case
 fn void error(Result<i64,errors::Error> r,u8 kind){assert(switch(r){case .ok(_):{false}case .err(e):{e.kind==kind}});}
 fn usize opcode(ref ir::Program p,u8 op,usize f){return at(p,op,f);}
 fn void clean(ref authority::State[] auth,ref calls::Bindings[] c,ref children::Bindings[] links,ref loans::State loan,ref shared::Frames frames){assert(context::ready(ref auth[0],ref c[0],ref links[0],loan,frames).is_ok);}
-fn Result<i64,errors::Error> run(ref ir::Program p,usize fuel){
+fn void equivalent(Result<i64,errors::Error> a,Result<i64,errors::Error> b){
+    switch(a){case .ok(x):{assert(switch(b){case .ok(y):{x==y}case .err(_):{false}});}case .err(x):{assert(switch(b){case .ok(_):{false}case .err(y):{x.kind==y.kind && x.offset==y.offset}});}};
+}
+fn Result<i64,errors::Error> native(ref ir::Program p,usize fuel){
     var authority::State[1] auth=[authority::empty();1];var calls::Bindings[1] c=[calls::empty();1];var children::Bindings[1] links=[children::empty();1];var arrays::State a=arrays::empty(256);var loans::State l=loans::empty();var shared::Frames f=shared::empty();var bytes::Buffer b=backing();
     let Result<i64,errors::Error> result=runner::execute(p,fuel,ref mut a,ref mut b,ref mut l,ref mut f,ref mut auth,ref mut c,ref mut links);clean(ref auth,ref c,ref links,ref l,ref f);if(result.is_ok){assert(a.owners.depth==0 && a.owners.arena.used==0);}return result;
+}
+fn Result<i64,errors::Error> run(ref ir::Program p,usize fuel){
+    let Result<i64,errors::Error> result=native(p,fuel);
+    let Result<i64,errors::Error> public=vm::run_with_array_limit(p,fuel+257,256);equivalent(result,public);return public;
 }
 
 fn ir::Program mixed_owned(bool derived){
@@ -158,7 +165,7 @@ fn void unsupported_derived_owned_calls_and_dirty_contexts_reject_before_executi
     while(variant<2){
         assert(verifier::inspect_reborrow_calls(ref unsupported).is_ok);
         assert(switch(runner::inspect(ref unsupported)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==77}});
-        assert(!runner::inspect_derived(ref unsupported).is_ok);error(run(ref unsupported,0),5);
+        assert(!runner::inspect_derived(ref unsupported).is_ok && !verifier::verify(ref unsupported).is_ok);error(vm::run_with_array_limit(ref unsupported,0,65537),5);error(run(ref unsupported,0),5);
         if(variant==0){
             // The same unsupported CALL must also reject in an unreachable function.
             unsupported.function_count=3;unsupported.entry=2;unsupported.return_types[2]=1;
@@ -168,7 +175,8 @@ fn void unsupported_derived_owned_calls_and_dirty_contexts_reject_before_executi
         variant+=1;
     }
     let ir::Program p=program(10,true,1,1,false,false);var authority::State[1] auth=[authority::empty();1];var calls::Bindings[1] c=[calls::empty();1];var children::Bindings[1] links=[children::empty();1];var arrays::State a=arrays::empty(256);var loans::State l=loans::empty();var shared::Frames f=shared::empty();var bytes::Buffer b=backing();
-    assert(runner::inspect(ref p).is_ok && runner::inspect_derived(ref p).is_ok && !verifier::inspect(ref p).is_ok && !verifier::verify(ref p).is_ok && !vm::run_with_array_limit(ref p,0,0).is_ok);
+    assert(runner::inspect(ref p).is_ok && runner::inspect_derived(ref p).is_ok && !verifier::inspect(ref p).is_ok && verifier::verify(ref p).is_ok);
+    error(vm::run_with_array_limit(ref p,0,0),8);error(vm::run_with_array_limit(ref p,0,65537),13);
     error(execution::execute(ref p,16000000,ref mut a,ref mut b,ref mut l,ref mut f),5);clean(ref auth,ref c,ref links,ref l,ref f);assert(a.owners.depth==0 && a.owners.arena.used==0);
     dirty(ref mut links[0],0);error(runner::execute(ref p,0,ref mut a,ref mut b,ref mut l,ref mut f,ref mut auth,ref mut c,ref mut links),5);
     assert(links[0].children[30]==0 && a.owners.depth==0 && a.owners.arena.used==0);dirty(ref mut links[0],16);clean(ref auth,ref c,ref links,ref l,ref f);

@@ -10,6 +10,7 @@ import array_verifier as array_verifier;
 import slice_parameters as slice_parameters;
 import slice_reborrow_ir as reborrows;
 import slice_reborrow_call_ir as reborrow_calls;
+import slice_reborrow_admission_ir as executable;
 import array_parameters as array_parameters;
 import array_results as array_results;
 import register_set as registers;
@@ -64,7 +65,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
         let usize b = p.code[at + 3] as usize;
         if (op < 1 || op > 62 || (op != 52 && ((op!=24 && op!=47 && op!=49 && op!=53 && op!=59 && op!=61 && p.code[at + 4] != 0) ||
             (op!=47 && p.code[at + 5] != 0) || p.code[at + 6] != 0 || p.code[at + 7] != 0))) { return .err(errors::make(5, pc)); }
-        // New analysis is opt-in; existing checked execution keeps its gate.
+        // Strict analysis retains its gate; executable proof may admit this CALL.
         if(op==9 && (live>>48)!=0) {
             if(!allow_reborrow_calls){return .err(errors::make(5,pc));}
             let usize preserved=reborrow_calls::inspect(p,loans,pc,f,live)?;
@@ -181,7 +182,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
     return .ok(end - start);
 }
 
-fn Result<usize, errors::Error> validate(ref ir::Program p,bool allow_reborrow_calls) {
+fn Result<reborrows::Sites, errors::Error> validate(ref ir::Program p,bool allow_reborrow_calls) {
     if (p.count == 0 || p.count > 256 || p.registers == 0 || p.registers > 128 || p.constant_count > 128 ||
         p.function_count == 0 || p.function_count > 16 || p.entry >= p.function_count || p.call_count > 32) { return .err(errors::make(5, 0)); }
     if (!arrays::valid(ref p.arrays)) { return .err(errors::make(5, 0)); }
@@ -219,22 +220,27 @@ fn Result<usize, errors::Error> validate(ref ir::Program p,bool allow_reborrow_c
     while (f < p.function_count) { let usize checked = function(p, f, ref shapes, ref loans, allow_reborrow_calls, ref mut used_calls)?; f += 1; }
     var usize call = 0;
     while (call < p.call_count) { if (!used_calls[call]) { return .err(errors::make(5, 0)); } call += 1; }
-    return .ok(p.count);
+    return .ok(loans);
 }
 
-// Inspection and public admission share the complete IR/dataflow proof for
-// every supported shared/exclusive scalar slice, including CALL formals.
+// Strict inspection keeps its historical suspended-CALL analysis gate.
 pub fn Result<usize, errors::Error> inspect(ref ir::Program p) {
-    return validate(p,false);
+    let reborrows::Sites sites=validate(p,false)?;return .ok(p.count);
+}
+// Public admission returns the exact forest produced by the complete proof.
+// Unsupported derived CALL shapes reject in every function before guest effects.
+pub fn Result<reborrows::Sites,errors::Error> verify_sites(ref ir::Program p){
+    let reborrows::Sites sites=validate(p,reborrows::present(p))?;
+    if(sites.count!=0){var usize pc=0;while(pc<p.count){
+        if(p.code[pc*8]==9){let usize allowed=executable::call(p,ref sites,pc)?;}
+        pc+=1;
+    }}
+    return .ok(sites);
 }
 pub fn Result<usize, errors::Error> verify(ref ir::Program p) {
-    let usize checked=validate(p,false)?;
-    if(reborrows::present(p)) { return .err(errors::make(5,0)); }
-    return .ok(checked);
+    let reborrows::Sites sites=verify_sites(p)?;return .ok(p.count);
 }
-
-// Proof-only opt-in. Native CALL handoff for suspended/derived sources remains
-// gated by inspect and checked VM admission until receipt integration is added.
+// Analysis-only proof does not impose the executable derived CALL subset.
 pub fn Result<usize, errors::Error> inspect_reborrow_calls(ref ir::Program p) {
-    return validate(p,true);
+    let reborrows::Sites sites=validate(p,true)?;return .ok(p.count);
 }

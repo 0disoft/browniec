@@ -154,6 +154,6 @@ fn void combined_depth_and_generation_reserves_include_every_pending_lexical_res
 @test
 fn void preparation_keeps_legacy_and_public_execution_gates(){
     let ir::Program p=program(10,false,2,1,false);let forest::Sites map=sites(ref p);var Runtime r=empty();var bytes::Buffer b=backing();initialize(ref p,ref map,false,0,ref mut r,ref mut b);let Runtime before=r;var u8[256] data=[0;256];snapshot(ref b,ref mut data);
-    assert(prepare(ref p,ref map,0,ref r,ref b,2000000).is_ok);assert(!verifier::inspect(ref p).is_ok && !verifier::verify(ref p).is_ok && runner::inspect(ref p).is_ok);assert(!vm::run_with_array_limit(ref p,0,0).is_ok);
+    assert(prepare(ref p,ref map,0,ref r,ref b,2000000).is_ok);assert(!verifier::inspect(ref p).is_ok && verifier::verify(ref p).is_ok && runner::inspect(ref p).is_ok);assert(!vm::run_with_array_limit(ref p,0,0).is_ok);
     assert(!legacy_enter(ref p,ref map,ref mut r,ref b).is_ok);unchanged(ref before,ref r,ref data,ref b);dispose(ref mut r,ref b);
 }

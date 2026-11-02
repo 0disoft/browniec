@@ -14,7 +14,7 @@ import std::bytes as bytes;
 fn usize built(Result<usize,errors::Error> r){return switch(r){case .ok(v):{v}case .err(_):{assert(false);0}};}
 fn void finish(ref mut ir::Program p,usize f){let usize end=p.count;let usize regs=p.registers;p.ends[f]=end;p.register_ends[f]=regs;}
 fn usize pc(ref ir::Program p,u8 op){var usize i=p.starts[0];while(i<p.ends[0] && p.code[i*8]!=op){i+=1;}assert(i<p.ends[0]);return i;}
-fn void accepted(ref ir::Program p){assert(verifier::inspect(p).is_ok);assert(switch(verifier::verify(p)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==0}});assert(switch(vm::run_with_array_limit(p,0,65537)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==0}});}
+fn void accepted(ref ir::Program p){assert(verifier::inspect(p).is_ok && verifier::verify(p).is_ok);let bool backing=p.arrays.count!=0 || p.records.count!=0;assert(switch(vm::run_with_array_limit(p,0,65537)){case .ok(_):{false}case .err(e):{e.kind==if(backing){13}else{8} && e.offset==if(backing){0}else{p.offsets[p.starts[p.entry]]}}});}
 fn void rejected(ref ir::Program p){assert(!verifier::inspect(p).is_ok && !verifier::verify(p).is_ok);}
 fn void rejected_at(ref ir::Program p,usize at){assert(switch(verifier::inspect(p)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==at}});rejected(p);}
 fn void skip(ref mut ir::Program p,usize at){p.code[at*8]=19;p.code[at*8+1]=0;p.code[at*8+3]=0;p.code[at*8+4]=0;let usize done=built(ir::patch(p,at,at+1,77));}
@@ -83,14 +83,14 @@ fn void balanced_loops_and_joins_preserve_both_available_and_suspended_sets(){
 
 }
 @test
-fn void public_and_internal_execution_gates_reject_before_fuel_or_state_publication(){
+fn void public_admission_and_legacy_execution_keep_distinct_boundaries(){
     let ir::Program p=program(10,false,1,false);accepted(ref p);var arrays::State a=arrays::empty(0);var slices::State l=slices::empty();var calls::Frames f=calls::empty();var bytes::Buffer b=bytes::empty();var mutable::Frame[32] receipts=[mutable::empty();32];
     assert(switch(execution::execute(ref p,0,ref mut a,ref mut b,ref mut l,ref mut f)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==0}});
     assert(switch(execution::execute_mutable(ref p,10000000,ref mut a,ref mut b,ref mut l,ref mut f,ref mut receipts)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==0}});
     assert(a.owners.depth==0 && a.owners.arena.used==0 && bytes::len(ref b)==0);var usize i=0;while(i<32){assert(!receipts[i].active);i+=1;}i=0;while(i<16){assert(!l.pool.slots[i].live);i+=1;}
-    // A structurally valid recursive CALL is rejected only while reborrow is live.
+    // Strict inspection rejects the suspended CALL; public executable proof admits it.
     let usize answer_pc=p.ends[0]-2;let u8 answer=p.code[answer_pc*8+1];let usize store=pc(ref p,60);var ir::Program bad=p;bad.call_count=1;
-    bad.code[store*8]=9;bad.code[store*8+1]=answer;bad.code[store*8+2]=0;bad.code[store*8+3]=0;skip(ref mut bad,answer_pc);rejected_at(ref bad,store);
+    bad.code[store*8]=9;bad.code[store*8+1]=answer;bad.code[store*8+2]=0;bad.code[store*8+3]=0;skip(ref mut bad,answer_pc);assert(switch(verifier::inspect(ref bad)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==store}});assert(verifier::verify(ref bad).is_ok);
     var ir::Program after=p;after.call_count=1;after.code[answer_pc*8]=9;after.code[answer_pc*8+2]=0;after.code[answer_pc*8+3]=0;accepted(ref after);
 }
 @test

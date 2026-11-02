@@ -15,7 +15,7 @@ fn usize built(Result<usize,errors::Error> r){return switch(r){case .ok(v):{v}ca
 fn void finish(ref mut ir::Program p,usize f){let usize n=p.count;let usize r=p.registers;p.ends[f]=n;p.register_ends[f]=r;}
 fn usize opcode(ref ir::Program p,u8 op){var usize pc=p.starts[1];while(pc<p.ends[1]){if(p.code[pc*8]==op){return pc;}pc+=1;}assert(false);return 0;}
 fn void bad(ref ir::Program p,usize at){assert(switch(verifier::inspect_reborrow_calls(p)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==at}});}
-fn void good(ref ir::Program p){assert(built(verifier::inspect_reborrow_calls(p))==p.count);let usize at=opcode(p,9);assert(switch(verifier::inspect(p)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==at}});assert(!verifier::verify(p).is_ok);}
+fn void good(ref ir::Program p){assert(built(verifier::inspect_reborrow_calls(p))==p.count);let usize at=opcode(p,9);assert(switch(verifier::inspect(p)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==at}});assert(verifier::verify(p).is_ok);}
 fn void skip(ref mut ir::Program p,usize pc){p.code[pc*8]=19;p.code[pc*8+1]=0;p.code[pc*8+3]=0;p.code[pc*8+4]=0;let usize patched=built(ir::patch(p,pc,pc+1,77));}
 fn ir::Program program(u8 tag,bool formal,usize levels,usize argc,bool loop){
     var ir::Program p=ir::empty();p.function_count=3;p.entry=2;p.arities[0]=argc;p.return_types[0]=1;p.return_types[1]=1;p.return_types[2]=1;
@@ -106,10 +106,10 @@ fn void forged_live_forest_is_rejected_without_mutating_the_supplied_snapshot(){
     assert(built(proof::inspect(ref p,ref sites,at,1,live))==live);
 }
 @test
-fn void analysis_only_does_not_promote_checked_execution_or_publish_runtime_state(){
+fn void public_admission_keeps_legacy_execution_rejected_before_state_publication(){
     let ir::Program p=program(10,false,1,1,false);good(ref p);var arrays::State a=arrays::empty(0);var slices::State l=slices::empty();var calls::Frames f=calls::empty();var bytes::Buffer b=bytes::empty();
     assert(switch(execution::execute(ref p,0,ref mut a,ref mut b,ref mut l,ref mut f)){case .ok(_):{false}case .err(e):{e.kind==5}});
-    assert(switch(vm::run_with_array_limit(ref p,0,0)){case .ok(_):{false}case .err(e):{e.kind==5}});
+    assert(switch(vm::run_with_array_limit(ref p,0,0)){case .ok(_):{false}case .err(e):{e.kind==8}});
     assert(a.owners.depth==0 && a.owners.arena.used==0 && bytes::len(ref b)==0);
     var usize i=0;while(i<16){assert(!l.pool.slots[i].live);i+=1;}good(ref p);
 }

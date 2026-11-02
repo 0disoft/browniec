@@ -28,7 +28,7 @@ fn void same_owners(ref owners::Table a,ref owners::Table b){
 fn usize built(Result<usize,errors::Error> r){return switch(r){case .ok(v):{v}case .err(_):{assert(false);0}};}
 fn void finish(ref mut ir::Program p,usize f){let usize end=p.count;let usize regs=p.registers;p.ends[f]=end;p.register_ends[f]=regs;}
 fn usize pc(ref ir::Program p,u8 op){var usize i=p.starts[0];while(i<p.ends[0] && p.code[i*8]!=op){i+=1;}assert(i<p.ends[0]);return i;}
-fn void accepted(ref ir::Program p){assert(verifier::inspect(p).is_ok);assert(switch(verifier::verify(p)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==0}});assert(switch(vm::run_with_array_limit(p,0,65537)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==0}});}
+fn void accepted(ref ir::Program p){assert(verifier::inspect(p).is_ok && verifier::verify(p).is_ok);let bool backing=p.arrays.count!=0 || p.records.count!=0;assert(switch(vm::run_with_array_limit(p,0,65537)){case .ok(_):{false}case .err(e):{e.kind==if(backing){13}else{8} && e.offset==if(backing){0}else{p.offsets[p.starts[p.entry]]}}});}
 fn void rejected(ref ir::Program p){assert(!verifier::inspect(p).is_ok && !verifier::verify(p).is_ok);}
 fn void rejected_at(ref ir::Program p,usize at){assert(switch(verifier::inspect(p)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==at}});rejected(p);}
 fn void skip(ref mut ir::Program p,usize at){p.code[at*8]=19;p.code[at*8+1]=0;p.code[at*8+3]=0;p.code[at*8+4]=0;let usize done=built(ir::patch(p,at,at+1,77));}

@@ -215,6 +215,6 @@ fn void combined_depth_boundary_and_reserved_generations_survive_real_call_retur
 @test
 fn void new_native_handoff_keeps_existing_legacy_and_public_execution_gates(){
     let ir::Program p=program(10,false,1,1,false,false);let forest::Sites map=sites(ref p);var Runtime r=empty();var bytes::Buffer b=backing();initialize(ref p,ref map,false,0,ref mut r,ref mut b);let Runtime before=r;var u8[256] saved=[0;256];snapshot(ref b,ref mut saved);
-    assert(verifier::inspect_reborrow_calls(ref p).is_ok && !verifier::inspect(ref p).is_ok && !verifier::verify(ref p).is_ok && runner::inspect(ref p).is_ok && !vm::run_with_array_limit(ref p,0,0).is_ok);fail(legacy_enter(ref p,ref map,ref mut r,ref b),5);unchanged(ref before,ref r,ref saved,ref b);
+    assert(verifier::inspect_reborrow_calls(ref p).is_ok && !verifier::inspect(ref p).is_ok && verifier::verify(ref p).is_ok && runner::inspect(ref p).is_ok && !vm::run_with_array_limit(ref p,0,0).is_ok);fail(legacy_enter(ref p,ref map,ref mut r,ref b),5);unchanged(ref before,ref r,ref saved,ref b);
     let usize entered=built(enter_at(ref p,ref map,at(ref p,9,1),0,ref mut r,ref b,2000000));data_access(ref p,ref map,1,ref r,ref mut b);assert(built(leave_at(ref p,1,ref mut r,ref b))==1);resume(ref p,ref map,0,ref mut r,ref b);dispose(ref mut r,ref b);
 }

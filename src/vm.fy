@@ -19,22 +19,20 @@ import std::bytes as bytes;
 pub fn Result<i64, errors::Error> run(ref ir::Program p, usize fuel) {
     return run_with_array_limit(p, fuel, 65536);
 }
-// Called only after public verify: op61/62 are absent, so the exact Sites forest
-// is empty. Fresh local roots need no second whole-program proof. Every outcome
-// passes through canonical drain before the invocation backing is disposed.
-fn Result<i64, errors::Error> run_mutable(ref ir::Program p, usize fuel,
+// Public admission supplies the exact immutable forest before Fuel/backing.
+// Fresh roots need no second proof; every outcome passes through canonical drain.
+fn Result<i64, errors::Error> run_canonical(ref ir::Program p, ref proof::Sites sites, usize fuel,
     ref mut array_vm::State arrays, ref mut bytes::Buffer payload,
     ref mut slices::State loans, ref mut borrowed::Frames frames) {
-    let proof::Sites sites=proof::Sites{.parents=[16;16],.newer=[0;16],.count=0};
     var authority::State[1] receipts=[authority::empty();1];
     var calls::Bindings[1] call_sites=[calls::empty();1];
     var children::Bindings[1] child_sites=[children::empty();1];
-    let Result<i64,errors::Error> outcome=execution::execute_canonical(p,ref sites,fuel,
+    let Result<i64,errors::Error> outcome=execution::execute_canonical(p,sites,fuel,
         arrays,payload,loans,frames,ref mut receipts,ref mut call_sites,ref mut child_sites);
     return context::finish(ref mut child_sites[0],ref mut call_sites[0],ref mut receipts[0],frames,loans,arrays,payload,outcome);
 }
 pub fn Result<i64, errors::Error> run_with_array_limit(ref ir::Program p, usize fuel, usize array_limit) {
-    let usize verified = verifier::verify(p)?;
+    let proof::Sites sites = verifier::verify_sites(p)?;
     var usize remaining = fuel;
     var bytes::Buffer payload = bytes::empty();
     let bool aggregates = p.arrays.count != 0 || p.records.count != 0;
@@ -48,10 +46,13 @@ pub fn Result<i64, errors::Error> run_with_array_limit(ref ir::Program p, usize 
     }
     var slices::State loans = slices::empty();
     var borrowed::Frames frames = borrowed::empty();
+    if(sites.count!=0){
+        return run_canonical(p,ref sites,remaining,ref mut arrays,ref mut payload,ref mut loans,ref mut frames);
+    }
     var usize site = 0;
     while (site < 16) {
         if (p.slice_roots[site] == 0 && ir::exclusive(p, site)) {
-            return run_mutable(p, remaining, ref mut arrays, ref mut payload, ref mut loans, ref mut frames);
+            return run_canonical(p, ref sites, remaining, ref mut arrays, ref mut payload, ref mut loans, ref mut frames);
         }
         site += 1;
     }
