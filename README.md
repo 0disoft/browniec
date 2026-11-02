@@ -1,5 +1,16 @@
 # Brownie C
 
+## Default checked native derived CALL admission
+
+Implemented at `2a30fae` on `main`. Default `inspect` reuses the former `inspect_derived` body after LF normalization; `execute`/`run` keep their bodies. Compatibility names delegate without a second proof.
+Owned/aggregate derived shapes reject before Fuel/effects in every function, including unreachable ones; dirty contexts fail before execution.
+Prices, cleanup, native authority and layouts are unchanged. Development and release each passed 8 core groups; release also passed 8 regression groups, 16 native groups total.
+All 402 current input hashes and receipt identities were rechecked; only `vm_reborrow_execution` changes production, while 97 sources match baseline `8c9c8b6`.
+Core manifests differ only in two previously unselected gate fixtures, exercised by final regression.
+Native default only: public/compiler/legacy remain gated; no production module imports the wrapper, so no CLI rebuild was needed.
+Public VM/source promotion and derived owned/aggregate support remain separate; no CLI/full native/other M2/M1/Linux/performance rerun or push.
+See [contract](docs/engineering/m2-slice-derived-call-default.md) and [verified evidence](docs/evidence/m2-derived-call-default-windows-20261103.json).
+
 ## Private native derived CALL execution
 
 Explicit native `inspect_derived` and `execute_derived` run exclusive-source

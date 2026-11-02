@@ -1,5 +1,16 @@
 # AGENTS.md
 
+- Default checked native derived CALL admission: implemented at `2a30fae`.
+  Default `inspect` reuses the former `inspect_derived` body after LF normalization; `execute`/`run` keep their bodies. Compatibility names delegate without a second proof.
+  Owned/aggregate derived shapes reject before Fuel/effects in every function, including unreachable ones; dirty contexts fail.
+  Prices, cleanup, authority and layouts are unchanged. Development/release passed 8 core groups each; release
+  also passed 8 regression groups, 16 native groups total. All 402 current input hashes and receipt identities were rechecked; 97 sources
+  match baseline `8c9c8b6`, leaving only `vm_reborrow_execution` changed. Native default only: public/compiler/legacy
+  stay gated; no production module imports the wrapper, so no CLI rebuild was needed. Public VM/source promotion and
+  derived owned/aggregate support remain separate. No CLI/full native/other M2/M1/Linux/perf rerun or push.
+  Core manifests differ only in two unselected gate fixtures, exercised by final regression.
+  See [contract](docs/engineering/m2-slice-derived-call-default.md) and [verified evidence](docs/evidence/m2-derived-call-default-windows-20261103.json).
+
 - Shared-VM native derived CALL execution: implemented at `cce170a`.
   Explicit native `inspect_derived`/`execute_derived` runs exclusive-source
   derived CALLs through the shared VM with the existing scalar/control preflight
