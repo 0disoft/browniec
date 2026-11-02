@@ -17,8 +17,7 @@ import slice_reborrow_vm as children;
 // changes. Reject unsupported signatures/CALL shapes before any execution effect.
 pub fn Result<proof::Sites,errors::Error> inspect(ref ir::Program p){
     let usize valid=verifier::inspect(p)?;
-    var usize i=0;while(i<p.function_count){if(p.record_results[i]!=0){return .err(errors::make(5,0));}i+=1;}
-    i=0;while(i<p.count){if(p.code[i*8]==9){let usize charge=calls::cost(p,i,p.offsets[i])?;}i+=1;}
+    var usize i=0;while(i<p.count){if(p.code[i*8]==9){let usize charge=calls::cost(p,i,p.offsets[i])?;}i+=1;}
     return proof::metadata(p);
 }
 pub fn Result<i64,errors::Error> execute(ref ir::Program p,usize fuel,ref mut arrays::State arrays,

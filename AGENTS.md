@@ -1,5 +1,25 @@
 # AGENTS.md
 
+- Private canonical exact-nominal record results are implemented. CALL result
+  anchors/destinations must have matching nominal identity and correct functions;
+  equal-sized other records are rejected. Caller destinations are checked empty
+  before any argument copy or loan publication. Existing record return validation
+  prepares one native single-use Transfer, retaining its unique result record
+  while canonical authority restores. Only infallible token movement follows.
+  Legacy step preserves its interface, validation order and 42,113 Fuel price.
+  Existing fixed 128-byte validation scratch remains; no additional payload
+  snapshot, extent, persistent field, authority clone or receipt collection is
+  added. Scalar/array returns pass a no-record sentinel to shared cleanup.
+  Development/release core each passed 15 native groups (seven canonical record
+  result, eight legacy record result), with 395 matching current input hashes.
+  Canonical array-result/record-argument/shared CALL and CLI regression is pending.
+  Suspended/derived exclusive CALLs and guest/public reborrow promotion remain
+  gated. Abort preserves writes, returned/copied owners and original outcomes
+  or failed-cleanup metadata; native callers dispose owned storage/backing.
+  Native size/stack, allocation counts and timing remain unmeasured. Next is
+  suspended/derived exclusive CALL proof. Local commits only; no push/release.
+  See [the record result contract](docs/engineering/m2-slice-record-result-authority.md).
+
 - Private canonical scalar-array results: implemented at `f7c0827`. Exact-shape CALL
   destinations must be empty before admission. Existing return validation now
   prepares a single-use native Transfer; canonical restoration is last fallible

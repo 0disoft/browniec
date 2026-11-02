@@ -13,14 +13,12 @@ pub fn usize cost() {
     return 2 * 18432 + 4096 + 1024 + 129;
 }
 
-// Only independently verified immutable programs enter this boundary. Prepay
-// before token scans, owner resolution or payload reads. Every fallible check
-// precedes both token writes; frame/PC publication remains with the VM caller.
-pub fn Result<usize,errors::Error> step(ref ir::Program p,usize target,usize source,
-    usize destination,usize frame,ref mut records::State record_state,
-    ref arrays::State state,ref bytes::Buffer buffer,usize fuel,usize offset) {
-    let usize work=cost();
-    if(fuel<work) {return .err(errors::make(8,offset));}
+// Trusted native single-use transfer. Only canonical restoration preserving
+// the prepared unique result owner may intervene before publication.
+pub struct Transfer { owners::Token token; usize child; usize parent; }
+pub fn Result<Transfer,errors::Error> prepare(ref ir::Program p,usize target,usize source,
+    usize destination,usize frame,ref records::State record_state,
+    ref arrays::State state,ref bytes::Buffer buffer,usize offset) {
     if(frame==0 || frame>=32 || p.function_count>16 || target>=p.function_count ||
         target==p.entry || p.records.count>16 || source>=p.records.count || destination>=p.records.count) {
         return .err(errors::make(5,offset));
@@ -50,7 +48,20 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,usize target,usize sou
         ref state.owners,token,nominal,bytes::view(buffer))) {
         case .ok(n):{n} case .err(e):{return .err(arrays::failure(e,offset));}
     };
-    record_state.tokens[child+source]=owners::Token{.slot=0,.generation=0};
-    record_state.tokens[parent]=token;
+    return .ok(Transfer{.token=token,.child=child+source,.parent=parent});
+}
+
+pub fn void publish(ref Transfer plan,ref mut records::State state) {
+    state.tokens[plan.child]=owners::Token{.slot=0,.generation=0};
+    state.tokens[plan.parent]=plan.token;
+}
+// Preserve legacy prepayment, validation order and remaining Fuel.
+pub fn Result<usize,errors::Error> step(ref ir::Program p,usize target,usize source,
+    usize destination,usize frame,ref mut records::State record_state,
+    ref arrays::State state,ref bytes::Buffer buffer,usize fuel,usize offset) {
+    let usize work=cost();
+    if(fuel<work) {return .err(errors::make(8,offset));}
+    let Transfer plan=prepare(p,target,source,destination,frame,record_state,state,buffer,offset)?;
+    publish(ref plan,record_state);
     return .ok(fuel-work);
 }

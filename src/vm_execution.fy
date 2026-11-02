@@ -129,11 +129,16 @@ fn Result<i64, errors::Error> core(ref ir::Program p, usize fuel,
             if(frame==0 || return_dsts[frame]<144 || return_dsts[frame]>=160) {
                 return .err(errors::make(5,p.offsets[pc]));
             }
+            if(authority.len==1){
+                remaining=canonical_calls::return_record(p,functions[frame],frame,a,return_dsts[frame]-144,
+                    ref mut call_sites[0],ref mut authority[0],borrowed_frames,loans,arrays,ref mut records,payload,remaining,p.offsets[pc])?;
+            }else{
             let usize closed=leave(p,functions[frame],frame,arrays,payload,loans,borrowed_frames,receipts,authority,call_sites,child_bindings,ref records,p.offsets[pc])?;
             let usize call=(return_pcs[frame]-1)*8;
             remaining=record_results::step(p,p.code[call+2] as usize,a,
                 return_dsts[frame]-144,frame,ref mut records,arrays,payload,
                 remaining,p.offsets[pc])?;
+            }
             pc=return_pcs[frame];frame-=1;continue;
         }
         if (op == 47) {

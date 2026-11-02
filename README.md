@@ -66,20 +66,19 @@ See the [public parameter Windows evidence](docs/evidence/m2-slice-mutable-param
 
 ## Current private canonical CALL execution
 
-The [canonical coordinator](docs/engineering/m2-slice-array-result-authority.md)
-now executes scalar and exact-shape array results with scalar, owned array/record,
-shared and exclusive CALL arguments through the shared reborrow VM core. Result
-validation precedes canonical loan restoration; only infallible ownership-token
-movement follows. Array returns retain their existing payload and owner generation
-without a second extent. Copy/return prices and public capabilities are unchanged.
-Record results, suspended/derived exclusive CALLs and guest/public reborrow
-promotion remain gated. Next is canonical record results. Earlier adapter/proof
+The [canonical coordinator](docs/engineering/m2-slice-record-result-authority.md)
+now executes scalar, exact-shape array and exact-nominal record results with
+scalar, owned array/record, shared and exclusive CALL arguments. Result validation
+precedes canonical loan restoration; only infallible ownership-token movement
+follows. Aggregate returns retain their existing payload and owner generation
+without a second extent. Logical prices and public capabilities are unchanged.
+Suspended/derived exclusive CALLs and guest/public reborrow promotion remain
+gated. Next is suspended/derived exclusive CALL proof. Earlier adapter/proof
 stages below describe their own checkpoints.
 
-Implemented at `f7c0827`. Development and release each passed 31 distinct native
-groups (13 core, 18 canonical regression) and 2,495 CLI cases, with 394 matching
-input hashes across all four phases. See the
-[Windows evidence](docs/evidence/m2-slice-array-result-authority-windows-20261102.json).
+Development/release core each passed 15 native groups (seven canonical record
+result, eight legacy record result), with 395 matching current input hashes.
+Canonical array-result/record-argument/shared CALL and CLI regression is pending.
 Native size/stack, allocator and timing remain unmeasured. Local commits only.
 
 ## Private metered owned reborrow adapter

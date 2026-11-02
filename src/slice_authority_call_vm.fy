@@ -12,6 +12,7 @@ import slice_authority as authority;
 import slice_reborrow_ir as proof;
 import struct_call_vm as copies;
 import array_result_vm as results;
+import struct_result_vm as record_results;
 import std::bytes as bytes;
 
 // PC derives caller/target/argument positions from immutable inspected IR.
@@ -26,9 +27,18 @@ fn Result<Call,errors::Error> info(ref ir::Program p,usize pc,usize offset){
     if(p.function_count==0 || p.function_count>16 || p.registers>128 || pc>=p.count || pc>=256 || p.code[pc*8]!=9){return .err(errors::make(5,offset));}
     let usize target=p.code[pc*8+2] as usize;let usize args=p.code[pc*8+3] as usize;
     if(target>=p.function_count || args>=p.call_count || args>=32 || p.arities[target]>8 || p.call_arities[args] as usize!=p.arities[target] ||
-        p.register_starts[target]>p.registers || p.arities[target]>p.registers-p.register_starts[target] || p.record_results[target]!=0){return .err(errors::make(5,offset));}
+        p.register_starts[target]>p.registers || p.arities[target]>p.registers-p.register_starts[target]){return .err(errors::make(5,offset));}
     var usize caller=0;while(caller<p.function_count && (pc<p.starts[caller] || pc>=p.ends[caller])){caller+=1;}
     if(caller==p.function_count){return .err(errors::make(5,offset));}
+    let usize record_result=p.record_results[target] as usize;
+    if(record_result!=0){
+        let usize dst=p.code[pc*8+1] as usize;
+        if(record_result>16 || record_result>p.records.count || p.array_results[target]!=0 || p.return_types[target]!=0 ||
+            dst<144 || dst>=160 || dst-144>=p.records.count){return .err(errors::make(5,offset));}
+        let usize shape=record_result-1;let usize destination=dst-144;
+        if(p.record_functions[shape] as usize!=target || p.record_functions[destination] as usize!=caller ||
+            p.records.records[shape] as usize>=p.records.layouts.count || p.records.records[destination]!=p.records.records[shape]){return .err(errors::make(5,offset));}
+    }
     let usize result=p.array_results[target] as usize;
     if(result!=0){
         let usize dst=p.code[pc*8+1] as usize;
@@ -179,6 +189,11 @@ fn Result<Admission,errors::Error> prepare(ref ir::Program p,ref proof::Sites si
         let owners::Token dead=state.tokens[parent*16+destination];
         if(dead.slot!=0 || dead.generation!=0){return .err(errors::make(5,offset));}
     }
+    if(p.record_results[call.target]!=0 && parent<32){
+        let usize destination=(p.code[pc*8+1] as usize)-144;
+        let owners::Token dead=record_state.tokens[parent*16+destination];
+        if(dead.slot!=0 || dead.generation!=0){return .err(errors::make(5,offset));}
+    }
     let usize depth=inspect(p,bindings,receipts,frames,loan,state,offset)?;
     if(parent>=31 || depth>=31){return .err(errors::make(12,offset));}if(parent!=receipts.frame){return .err(errors::make(5,offset));}
     let usize child=parent+1;var usize i=0;while(i<16){if(!absent(loan.tickets[child*16+i]) || state.tokens[child*16+i].generation!=0 || record_state.tokens[child*16+i].generation!=0){return .err(errors::make(5,offset));}i+=1;}
@@ -240,8 +255,8 @@ pub fn Result<usize,errors::Error> release(ref ir::Program p,usize function,usiz
     bindings.detached[i*8+j]=loan.tickets[frame*16+site];loan.tickets[frame*16+site]=none();return .ok(fuel-4097);
 }
 // Every exclusive formal must be live OR detached. Stage readonly child cleanup
-// before canonical restoration; owned values must already be cleaned by the core.
-fn Result<usize,errors::Error> leave_inner(ref ir::Program p,usize function,usize frame,usize retained,ref mut Bindings bindings,
+// before canonical restoration; only a prevalidated result may remain owned.
+fn Result<usize,errors::Error> leave_inner(ref ir::Program p,usize function,usize frame,usize retained,usize retained_record,ref mut Bindings bindings,
     ref mut authority::State receipts,ref mut shared::Frames frames,ref mut loans::State loan,
     ref mut arrays::State state,ref records::State record_state,ref bytes::Buffer buffer,usize offset){
     let usize depth=inspect(p,bindings,receipts,frames,loan,state,offset)?;
@@ -254,7 +269,7 @@ fn Result<usize,errors::Error> leave_inner(ref ir::Program p,usize function,usiz
     var slices::Pool planned=slices::Pool{.slots=loan.pool.slots};
     var owners::Table planned_owners=owners::Table{.slots=state.owners.slots,.order=state.owners.order,.depth=state.owners.depth,.arena=state.owners.arena};
     var usize slot=16;while(slot>0){slot-=1;
-        if((slot!=retained && state.tokens[frame*16+slot].generation!=0) || record_state.tokens[frame*16+slot].generation!=0){return .err(errors::make(5,offset));}
+        if((slot!=retained && state.tokens[frame*16+slot].generation!=0) || (slot!=retained_record && record_state.tokens[frame*16+slot].generation!=0)){return .err(errors::make(5,offset));}
         if((allowed&(one<<slot))==0 && !absent(loan.tickets[frame*16+slot])){
             let owners::Token valid=shared::checked(p,function,frame,slot,frames,loan,state,bytes::len(buffer),offset)?;
             let usize closed=switch(slices::close(ref mut planned,loan.tickets[frame*16+slot],ref mut planned_owners,bytes::len(buffer))){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}};
@@ -269,7 +284,7 @@ fn Result<usize,errors::Error> leave_inner(ref ir::Program p,usize function,usiz
 pub fn Result<usize,errors::Error> leave(ref ir::Program p,usize function,usize frame,ref mut Bindings bindings,
     ref mut authority::State receipts,ref mut shared::Frames frames,ref mut loans::State loan,
     ref mut arrays::State state,ref records::State record_state,ref bytes::Buffer buffer,usize offset){
-    return leave_inner(p,function,frame,16,bindings,receipts,frames,loan,state,record_state,buffer,offset);
+    return leave_inner(p,function,frame,16,16,bindings,receipts,frames,loan,state,record_state,buffer,offset);
 }
 // Caller prepays existing ARET cost. Validate the result and actual mapped CALL
 // before restoration; only infallible token movement follows the last failure.
@@ -280,8 +295,23 @@ pub fn Result<usize,errors::Error> return_array(ref ir::Program p,usize function
     let Call call=info(p,bindings.pcs[i],offset)?;
     if(call.target!=function || destination>=16 || p.code[bindings.pcs[i]*8+1] as usize!=128+destination){return .err(errors::make(5,offset));}
     let results::Transfer plan=results::prepare(p,function,source,destination,frame,state,buffer,offset)?;
-    let usize restored=leave_inner(p,function,frame,source,bindings,receipts,frames,loan,state,record_state,buffer,offset)?;
+    let usize restored=leave_inner(p,function,frame,source,16,bindings,receipts,frames,loan,state,record_state,buffer,offset)?;
     return .ok(results::publish(ref plan,state));
+}
+// Prepay before metadata/payload validation. Restore authority last, then move
+// the existing exact-nominal result owner without another payload snapshot.
+pub fn Result<usize,errors::Error> return_record(ref ir::Program p,usize function,usize frame,usize source,usize destination,
+    ref mut Bindings bindings,ref mut authority::State receipts,ref mut shared::Frames frames,ref mut loans::State loan,
+    ref mut arrays::State state,ref mut records::State record_state,ref bytes::Buffer buffer,usize fuel,usize offset){
+    let usize work=record_results::cost();
+    if(fuel<work){return .err(errors::make(8,offset));}
+    let usize i=index(receipts,frame,offset)?;
+    let Call call=info(p,bindings.pcs[i],offset)?;
+    if(call.target!=function || destination>=16 || p.code[bindings.pcs[i]*8+1] as usize!=144+destination){return .err(errors::make(5,offset));}
+    let record_results::Transfer plan=record_results::prepare(p,function,source,destination,frame,record_state,state,buffer,offset)?;
+    let usize restored=leave_inner(p,function,frame,16,source,bindings,receipts,frames,loan,state,record_state,buffer,offset)?;
+    record_results::publish(ref plan,record_state);
+    return .ok(fuel-work);
 }
 // Drain before clearing maps. Both standalone CALL and lexical coordinators use
 // this one cleanup transaction; a failed drain preserves all diagnostic maps.
