@@ -60,6 +60,7 @@ def main():
     selection.add_argument('--reborrow-vm', action='store_true', help='Verify private metered owned reborrow transitions, site binding and abort cleanup')
     selection.add_argument('--reborrow-order', action='store_true', help='Verify private IR reverse restoration across independent roots and native agreement')
     selection.add_argument('--authority', action='store_true', help='Verify private combined CALL/reborrow depth, receipt ownership and public regression')
+    selection.add_argument('--reborrow-call-ir', action='store_true', help='Verify opt-in suspended/derived CALL flow proof and unchanged execution gates')
     selection.add_argument('--reborrow-ir', action='store_true', help='Verify private exclusive child/parent IR flow, execution gates and public regressions')
     args = parser.parse_args()
     result_authority = args.array_result_authority or args.record_result_authority
@@ -163,6 +164,10 @@ def main():
         groups = ({'slice_record_result_authority': 7, 'struct_result_vm': 8} if args.record_result_phase == 'core'
                   else {'slice_array_result_authority': 7, 'slice_record_call_authority': 6, 'slice_shared_call_authority': 6})
         matrices_to_run = {'slice-mutable-parameters-source': 74, 'slice-exclusive-source': 222, 'slice-element-public': 192}
+    if args.reborrow_call_ir:
+        kind = 'slice-reborrow-call-ir'
+        groups = {'slice_reborrow_calls': 8, 'slice_reborrow_ir': 6, 'slice_mutable_calls': 6}
+        matrices_to_run = {'slice-mutable-parameters-source': 74, 'slice-exclusive-source': 222, 'slice-element-public': 192}
     output = ROOT / ('build/m2-' + kind) / args.profile
     output.mkdir(parents=True, exist_ok=True)
     receipt = output / 'receipt.json'
@@ -196,9 +201,11 @@ def main():
     inputs = [dict(path=p.relative_to(ROOT).as_posix(), sha256=digest(p)) for p in sorted(paths)]
     flags = ['--release'] if args.profile == 'release' else []
     native = []
-    batches = [groups] if result_authority or args.record_call_authority or args.owned_call_authority or args.shared_call_authority or args.scalar_call_authority or args.reborrow_execution or args.formal_reborrow_vm or args.authority_call_vm or args.reborrow_vm or args.reborrow_order or args.authority or args.reborrow_ir or args.exclusive_reborrow or args.public_mutable_parameters else [{name: count} for name, count in groups.items()]
+    batches = [groups] if args.reborrow_call_ir or result_authority or args.record_call_authority or args.owned_call_authority or args.shared_call_authority or args.scalar_call_authority or args.reborrow_execution or args.formal_reborrow_vm or args.authority_call_vm or args.reborrow_vm or args.reborrow_order or args.authority or args.reborrow_ir or args.exclusive_reborrow or args.public_mutable_parameters else [{name: count} for name, count in groups.items()]
     for batch in batches:
         name = ('record-result-authority-batch' if args.record_result_authority else 'array-result-authority-batch' if args.array_result_authority else 'record-call-authority-batch' if args.record_call_authority else 'owned-call-authority-batch' if args.owned_call_authority else 'shared-call-authority-batch' if args.shared_call_authority else 'scalar-call-authority-batch' if args.scalar_call_authority else 'reborrow-execution-batch' if args.reborrow_execution else 'formal-reborrow-vm-batch' if args.formal_reborrow_vm else 'authority-call-vm-batch' if args.authority_call_vm else 'reborrow-vm-batch' if args.reborrow_vm else 'reborrow-order-batch' if args.reborrow_order else 'authority-batch' if args.authority else 'reborrow-ir-batch' if args.reborrow_ir else 'exclusive-reborrow-batch' if args.exclusive_reborrow else 'mutable-public-batch') if len(batch) > 1 else next(iter(batch))
+        if args.reborrow_call_ir:
+            name = 'reborrow-call-ir-batch'
         count = sum(batch.values())
         files = [item for group in batch for item in ['--file', f'tests/m2/{group}.fy']]
         report = json.loads(run([compiler, 'test', '--native', '--capture-output', '--json',
@@ -247,7 +254,7 @@ def main():
     env = {key: str(empty) for key in ['PATH', 'TEMP', 'TMP']}
     env.update({key: os.environ[key] for key in ['SystemRoot', 'WINDIR'] if key in os.environ})
     boundaries = []
-    for tag in ([] if result_authority or args.record_call_authority or args.owned_call_authority or args.shared_call_authority or args.scalar_call_authority or args.reborrow_execution or args.formal_reborrow_vm or args.authority_call_vm or args.reborrow_vm or args.reborrow_order or args.authority or args.reborrow_ir or args.exclusive_reborrow or args.public_mutable_parameters or args.mutable_parameters_source or args.mutable_execution or args.mutable_call_vm or args.mutable_call_ir or args.exclusive_handoff or args.mutable_parameters_ir or args.public_exclusive or args.exclusive_source or args.exclusive_vm or args.exclusive_pool or args.slice_write_ir or args.exclusive_ir or args.parameter_source or args.element_vm or args.public_elements else ['i32', 'bool', 'i64', 'u32', 'usize']):
+    for tag in ([] if args.reborrow_call_ir or result_authority or args.record_call_authority or args.owned_call_authority or args.shared_call_authority or args.scalar_call_authority or args.reborrow_execution or args.formal_reborrow_vm or args.authority_call_vm or args.reborrow_vm or args.reborrow_order or args.authority or args.reborrow_ir or args.exclusive_reborrow or args.public_mutable_parameters or args.mutable_parameters_source or args.mutable_execution or args.mutable_call_vm or args.mutable_call_ir or args.exclusive_handoff or args.mutable_parameters_ir or args.public_exclusive or args.exclusive_source or args.exclusive_vm or args.exclusive_pool or args.slice_write_ir or args.exclusive_ir or args.parameter_source or args.element_vm or args.public_elements else ['i32', 'bool', 'i64', 'u32', 'usize']):
         for index, declaration in enumerate([f'fn i32 f(ref {tag}[] p){{return 42;}}fn i32 main(){{return 42;}}',
                             f'fn i32 main(){{let {tag}[1] a=[{"true" if tag == "bool" else "42"};1];let ref {tag}[] p=ref a;return 42;}}']):
             path = output / f'boundary-{len(boundaries)}.brc'
@@ -264,7 +271,7 @@ def main():
                         and result['return_i32'] == (None if mode == 'check' else 42) and result['error'] is None, str(result))
                 boundaries.append(dict(command=command, sourceSha256=digest(path), exit=done.returncode, result=result))
     m1 = None
-    if (result_authority or args.record_call_authority or args.owned_call_authority or args.shared_call_authority or args.scalar_call_authority or args.reborrow_execution or args.formal_reborrow_vm or args.authority_call_vm or args.reborrow_vm or args.reborrow_order or args.authority or args.reborrow_ir or args.exclusive_reborrow or args.public_mutable_parameters or args.mutable_parameters_source or args.mutable_execution or args.mutable_call_vm or args.mutable_call_ir or args.exclusive_handoff or args.mutable_parameters_ir or args.public_exclusive or args.exclusive_source or args.exclusive_vm or args.exclusive_pool or args.slice_write_ir or args.exclusive_ir or args.parameter_source or args.public_elements) and os.name == 'nt':
+    if (args.reborrow_call_ir or result_authority or args.record_call_authority or args.owned_call_authority or args.shared_call_authority or args.scalar_call_authority or args.reborrow_execution or args.formal_reborrow_vm or args.authority_call_vm or args.reborrow_vm or args.reborrow_order or args.authority or args.reborrow_ir or args.exclusive_reborrow or args.public_mutable_parameters or args.mutable_parameters_source or args.mutable_execution or args.mutable_call_vm or args.mutable_call_ir or args.exclusive_handoff or args.mutable_parameters_ir or args.public_exclusive or args.exclusive_source or args.exclusive_vm or args.exclusive_pool or args.slice_write_ir or args.exclusive_ir or args.parameter_source or args.public_elements) and os.name == 'nt':
         run([sys.executable, '-B', ROOT / 'tools/check-m1-cli.py', '--exe', retained, '--profile', args.profile])
         path = ROOT / 'build/m1' / args.profile / 'cli-receipt.json'
         report = json.loads(path.read_text(encoding='utf-8'))
@@ -398,6 +405,10 @@ def main():
         report['limitations'] = ['Private canonical record results validate exact nominal identity, unique writable ownership, bounded nested bool/layout checks and mapped caller destination before canonical restoration, then publish the existing record token without payload copying.',
                                 'Existing SRET42113 and CALL prices, public capabilities and persistent layouts remain unchanged. Suspended/derived exclusive CALLs and guest/public reborrow promotion remain gated.',
                                 'This regression phase covers canonical array-result/record-argument/shared CALL groups and Windows public slice plus M1 CLI. Core native record transfer and legacy record results are recorded separately. Full native, other M2, Linux, isolation, packaging, allocator, size/stack and timing were not rerun.']
+    if args.reborrow_call_ir:
+        report['limitations'] = ['Analysis-only inspect_reborrow_calls opts into suspended/derived CALL proof. Exact caller live words, unique leaf writers, roots/origins, metadata/type/flow, joins/backedges and reverse cleanup remain required.',
+                                'Existing inspect, verify, checked canonical and public execution gates remain unchanged. Native receipt authentication, combined-depth reservation and ticket-generation restoration for derived CALL sources are not implemented. No opcode, layout, Fuel or capability change.',
+                                'Selected Windows native and public slice/M1 CLI regression only. Full native, other M2, Linux, isolation, packaging, allocator, size/stack and timing were not rerun.']
     receipt.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
     print(f'PASS: {args.profile}: {report["nativeGroups"]} native groups; {report["cliCases"]} CLI cases', flush=True)
 
