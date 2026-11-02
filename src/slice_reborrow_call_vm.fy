@@ -12,6 +12,7 @@ import slice_authority_call_vm as calls;
 import slice_reborrow_vm as children;
 import slice_reborrow_ir as proof;
 import slice_reborrow_call_admission as admission;
+import struct_call_vm as copies;
 import std::bytes as bytes;
 
 // Native loan handoff only, after independent inspect_reborrow_calls/Sites proof.
@@ -22,8 +23,25 @@ pub fn Result<usize,errors::Error> enter(ref ir::Program p,ref proof::Sites site
     ref children::Bindings child_sites,ref mut calls::Bindings call_sites,ref mut authority::State receipts,
     ref mut shared::Frames frames,ref mut loans::State loan,ref arrays::State state,
     ref records::State record_state,ref bytes::Buffer buffer,usize fuel){
+    let calls::Call call=calls::info(p,pc,if(pc<p.count && pc<256){p.offsets[pc]}else{0})?;
+    if(call.owned!=0){return .err(errors::make(5,p.offsets[pc]));}
     let admission::Prepared plan=admission::prepare(p,sites,pc,frame,child_sites,call_sites,receipts,frames,loan,state,record_state,buffer,fuel)?;
-    // Immutable metadata was checked by prepare. Nothing fallible follows it.
+    return .ok(publish(p,ref plan,call_sites,receipts,frames,loan));
+}
+// Complete charge and loan authentication precede atomic owned copying. Existing
+// roots/sessions survive the copy; only infallible publication follows it.
+pub fn Result<usize,errors::Error> enter_owned(ref ir::Program p,ref proof::Sites sites,usize pc,usize frame,
+    ref children::Bindings child_sites,ref mut calls::Bindings call_sites,ref mut authority::State receipts,
+    ref mut shared::Frames frames,ref mut loans::State loan,ref mut arrays::State state,
+    ref mut records::State record_state,ref mut bytes::Buffer buffer,usize fuel){
+    let admission::Prepared plan=admission::prepare(p,sites,pc,frame,child_sites,call_sites,receipts,frames,loan,state,record_state,buffer,fuel)?;
+    let usize target=p.code[pc*8+2] as usize;let usize args=p.code[pc*8+3] as usize;
+    let usize copied=copies::step(p,target,args,frame,record_state,state,buffer,fuel,p.offsets[pc])?;
+    return .ok(publish(p,ref plan,call_sites,receipts,frames,loan));
+}
+fn usize publish(ref ir::Program p,ref admission::Prepared plan,ref mut calls::Bindings call_sites,
+    ref mut authority::State receipts,ref mut shared::Frames frames,ref mut loans::State loan){
+    let usize pc=plan.pc;let usize frame=plan.frame;
     let usize target=p.code[pc*8+2] as usize;let usize args=p.code[pc*8+3] as usize;
     let slices::Arguments issued=authority::publish_call(receipts,plan.receipt);
     loan.pool.slots=plan.pool.slots;call_sites.pcs[plan.depth]=pc;
@@ -40,7 +58,7 @@ pub fn Result<usize,errors::Error> enter(ref ir::Program p,ref proof::Sites site
         }
         i+=1;
     }
-    return .ok(plan.remaining);
+    return plan.remaining;
 }
 
 // Call only after independent metadata proof and CALL cost/descriptor validation.

@@ -1,0 +1,21 @@
+module main;
+
+struct Adjustment { i32 amount; }
+
+fn i32 update(ref mut i32[] child, i32[1] input, Adjustment adjustment) {
+    child[0] = input[0] + adjustment.amount;
+    return child[0];
+}
+
+fn i32 main() {
+    var i32[2] values = [0; 2];
+    let i32[1] input = [40; 1];
+    let Adjustment adjustment = Adjustment { .amount = 2 };
+    let ref mut i32[] parent = ref mut values;
+    {
+        let ref mut i32[] child = ref mut parent[1..];
+        let i32 answer = update(ref mut child, input, adjustment);
+        if (child[0] != answer) { return 0; }
+    }
+    return parent[1];
+}

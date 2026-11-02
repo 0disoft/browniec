@@ -160,17 +160,17 @@ fn void raw_core_failure_keeps_maps_until_cleanup_and_failed_cleanup_is_retryabl
     let usize epoch=a.owners.slots[0].read_generation;a.owners.slots[0].read_generation+=1;let slices::Pool before=l.pool;let authority::State receipts=auth[0];assert(switch(context::finish(ref mut links[0],ref mut c[0],ref mut auth[0],ref mut f,ref mut l,ref mut a,ref b,outcome)){case .ok(_):{false}case .err(e):{e.kind==5}});same_pool(ref before,ref l.pool);same_state(ref receipts,ref auth[0]);assert(c[0].pcs[3]!=256);a.owners.slots[0].read_generation=epoch;error(context::finish(ref mut links[0],ref mut c[0],ref mut auth[0],ref mut f,ref mut l,ref mut a,ref b,outcome),14);clean(ref auth,ref c,ref links,ref l,ref f);assert(cell(owners::read(ref a.owners,a.tokens[0],0,bytes::view(ref b)))==255);
 }
 @test
-fn void unsupported_derived_owned_calls_and_dirty_contexts_reject_before_execution(){
-    var ir::Program unsupported=mixed_owned(true);var usize variant=0;
+fn void owned_derived_calls_admit_but_dirty_contexts_reject_before_execution(){
+    var ir::Program owned=mixed_owned(true);var usize variant=0;
     while(variant<2){
-        assert(verifier::inspect_reborrow_calls(ref unsupported).is_ok);
-        assert(switch(runner::inspect(ref unsupported)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==77}});
-        assert(!runner::inspect_derived(ref unsupported).is_ok && !verifier::verify(ref unsupported).is_ok);error(vm::run_with_array_limit(ref unsupported,0,65537),5);error(run(ref unsupported,0),5);
+        assert(verifier::inspect_reborrow_calls(ref owned).is_ok);
+        assert(runner::inspect(ref owned).is_ok && runner::inspect_derived(ref owned).is_ok && verifier::verify(ref owned).is_ok);
+        error(vm::run_with_array_limit(ref owned,0,65537),13);error(run(ref owned,0),8);assert(checked(run(ref owned,16000000))==42);
         if(variant==0){
-            // The same unsupported CALL must also reject in an unreachable function.
-            unsupported.function_count=3;unsupported.entry=2;unsupported.return_types[2]=1;
-            let usize start=unsupported.count;let usize regs=unsupported.registers;unsupported.starts[2]=start;unsupported.register_starts[2]=regs;
-            let usize answer=built(ir::literal(ref mut unsupported,42,0));let usize ret=built(ir::emit(ref mut unsupported,8,answer,0,0));finish(ref mut unsupported,2);
+            // Valid owned arguments also admit in an unreachable function.
+            owned.function_count=3;owned.entry=2;owned.return_types[2]=1;
+            let usize start=owned.count;let usize regs=owned.registers;owned.starts[2]=start;owned.register_starts[2]=regs;
+            let usize answer=built(ir::literal(ref mut owned,42,0));let usize ret=built(ir::emit(ref mut owned,8,answer,0,0));finish(ref mut owned,2);
         }
         variant+=1;
     }

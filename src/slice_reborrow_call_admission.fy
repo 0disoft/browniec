@@ -16,8 +16,8 @@ import std::bytes as bytes;
 
 // Unpublished, single-use native staging only. No canonical receipt is copied.
 // Immutable independently inspected IR/Sites and one unchanged invocation are
-// prerequisites. This module intentionally exposes no publication operation:
-// derived CALL return/authentication must be integrated before VM admission.
+// prerequisites. This module exposes no publication operation. The synchronous
+// handoff must finish owned copying before publishing its loan plan.
 pub struct Prepared { slices::Pool pool; authority::Entry receipt;
     slices::Arguments retained; owners::Token[8] roots;
     usize pc; usize frame; usize depth; usize remaining; }
@@ -30,8 +30,9 @@ pub fn Result<Prepared,errors::Error> prepare(ref ir::Program p,ref proof::Sites
     ref records::State record_state,ref bytes::Buffer buffer,usize fuel){
     let usize offset=if(pc<p.count && pc<256){p.offsets[pc]}else{0};
     let calls::Call call=calls::info(p,pc,offset)?;
-    // Owned copies and aggregate-result coordination remain in the legacy path.
-    if(call.owned!=0 || p.array_results[call.target]!=0 || p.record_results[call.target]!=0){return .err(errors::make(5,offset));}
+    // Loan staging does not copy owned arguments. The mutable handoff performs
+    // atomic copying as its last fallible operation before publishing this plan.
+    if(p.array_results[call.target]!=0 || p.record_results[call.target]!=0){return .err(errors::make(5,offset));}
     let usize charge=calls::cost(p,pc,offset)?;
     if(fuel<charge){return .err(errors::make(8,offset));}
     let usize depth=source::checked(p,sites,child_sites,call_sites,receipts,frames,loan,state,bytes::len(buffer),offset)?;

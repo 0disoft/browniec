@@ -10,9 +10,11 @@ import subprocess
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--exe', required=True, type=Path)
 parser.add_argument('--profile', required=True)
+parser.add_argument('--owned-calls', action='store_true', help='Check derived CALLs with owned array/record arguments')
 args = parser.parse_args()
 root = Path(__file__).resolve().parent.parent
-output = root / 'build/m2-slice-reborrow-source' / args.profile
+kind = 'slice-reborrow-owned-calls' if args.owned_calls else 'slice-reborrow-source'
+output = root / f'build/m2-{kind}' / args.profile
 output.mkdir(parents=True, exist_ok=True)
 receipt = output / 'cli-receipt.json'
 receipt.write_text('{"status":"incomplete"}\n', encoding='utf-8')
@@ -37,7 +39,7 @@ def case(source, category='public', expected=0, fuel=1000000):
         assert not done.stderr and result['schema'] == 'browniec.result/v1', (source, done)
         assert result['command'] == mode, result
         error = ('verification' if category == 'conflict' else 'source' if category == 'source'
-                 else {0: None, 7: 'zero_divisor', 8: 'fuel', 12: 'frame_limit', 14: 'bounds'}[expected]
+                 else {0: None, 7: 'zero_divisor', 8: 'fuel', 12: 'frame_limit', 13: 'array_limit', 14: 'bounds'}[expected]
                  if mode == 'run' else None)
         if error:
             code = 6 if category == 'conflict' else 3 if category == 'source' else 5
@@ -53,33 +55,43 @@ def case(source, category='public', expected=0, fuel=1000000):
                          exit=done.returncode, result=result))
 
 
-native = (root / 'tests/m2/slice_reborrow_source.fy').read_text(encoding='utf-8')
+native_file = 'slice_reborrow_owned_calls' if args.owned_calls else 'slice_reborrow_source'
+native = (root / f'tests/m2/{native_file}.fy').read_text(encoding='utf-8')
 fixtures = re.findall(r'run_source\(b"([^"\n]+)",(\d+)\)', native)
 conflicts = re.findall(r'conflict\(b"([^"\n]+)"', native)
 negatives = re.findall(r'rejected\(b"([^"\n]+)"', native)
-assert (len(fixtures), len(conflicts), len(negatives)) == (20, 7, 3)
+assert (len(fixtures), len(conflicts), len(negatives)) == ((15, 4, 0) if args.owned_calls else (20, 7, 3))
 for source, expected in fixtures:
     # Native tests have 16M Fuel; the public CLI intentionally caps it at 1M.
-    expected = 8 if 'return f(ref mut q,n-1)' in source else int(expected)
+    expected = 8 if 'return f(ref mut q,n-1)' in source or 'return f(ref mut q,b,n-1)' in source else int(expected)
+    # The native copy-quota fixture uses 256-byte backing; the CLI has 64KiB.
+    if args.owned_calls and expected == 13:
+        expected = 0
     case(source, expected=expected)
 for source in conflicts:
     case(source, 'conflict', fuel=0)
 for source in negatives:
     case(source, 'source', fuel=0)
 case(fixtures[0][0], expected=8, fuel=0)
-case((root / 'examples/mutable-slice-reborrow.brc').read_text(encoding='utf-8'))
+example = 'mutable-slice-owned-call' if args.owned_calls else 'mutable-slice-reborrow'
+case((root / f'examples/{example}.brc').read_text(encoding='utf-8'))
 # Exactly 16 static sites fit; one more child fails at compilation, before Fuel.
-for count in [15, 16]:
+for count in ([] if args.owned_calls else [15, 16]):
     source = 'module main;fn i32 main(){var i32[1] a=[42;1];let ref mut i32[] p=ref mut a;'
     for i in range(count):
         parent = 'p' if i == 0 else f'q{i-1}'
         source += f'let ref mut i32[] q{i}=ref mut {parent};'
     source += f'return q{count-1}[0];}}'
     case(source, 'public' if count == 15 else 'source', expected=8 if count == 15 else 0)
+if args.owned_calls:
+    case('module main;fn i32 f(ref mut i32[] q,i64[4096] b){return 42;}fn i32 main(){var i32[1] a=[0;1];let i64[4096] b=[0;4096];let ref mut i32[] p=ref mut a;let ref mut i32[] q=ref mut p;return f(ref mut q,b);}', expected=13)
+    case('module main;fn i32 f(ref mut i32[] q,i32[1] b){return b[0];}fn i32 unused(){var i32[1] a=[0;1];let i32[1] b=[42;1];let ref mut i32[] p=ref mut a;let ref mut i32[] q=ref mut p;return f(ref mut q,b);}fn i32 main(){return 42;}')
 version = json.loads(subprocess.check_output([str(exe), '--version', '--json'], cwd=empty, env=env))
 assert version['array_slice_mutable_reborrow'] is True
-assert len(rows) == 68, len(rows)
-receipt.write_text(json.dumps(dict(schema='browniec.slice-reborrow-source-cli/v1', status='passed',
+if args.owned_calls:
+    assert version['array_slice_reborrow_owned_arguments'] is True
+assert len(rows) == (46 if args.owned_calls else 68), len(rows)
+receipt.write_text(json.dumps(dict(schema=f'browniec.{kind}-cli/v1', status='passed',
     profile=args.profile, exeSha256=hashlib.sha256(exe.read_bytes()).hexdigest(),
     runtimeEnvironment='cleared; tool-free PATH', count=len(rows), cases=rows, version=version), indent=2)+'\n', encoding='utf-8')
-print(f'PASS: {args.profile}: {len(rows)} public reborrow source CLI cases')
+print(f'PASS: {args.profile}: {len(rows)} public {kind} CLI cases')

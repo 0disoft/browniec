@@ -17,15 +17,11 @@ pub fn bool required(ref ir::Program p,ref proof::Sites sites,usize pc){
     return false;
 }
 // Executable subset shared by checked native and public admission. Ordinary
-// CALLs retain owned arguments and aggregate results, even in a suspended scope.
+// CALLs retain aggregate results even in a suspended scope. Derived CALLs may
+// copy owned arguments but still reject aggregate results before execution.
 pub fn Result<usize,errors::Error> call(ref ir::Program p,ref proof::Sites sites,usize pc){
     if(!required(p,sites,pc)){return .ok(0);}
     let usize target=p.code[pc*8+2] as usize;let usize offset=p.offsets[pc];
     if(p.array_results[target]!=0 || p.record_results[target]!=0){return .err(errors::make(5,offset));}
-    var usize i=0;while(i<p.arities[target]){
-        let usize formal=p.register_starts[target]+i;
-        if(p.array_parameters[formal]!=0 || p.record_parameters[formal]!=0){return .err(errors::make(5,offset));}
-        i+=1;
-    }
     return .ok(0);
 }

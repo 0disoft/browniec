@@ -58,7 +58,7 @@ fn void suspended_access_modes_and_unsupported_calls_reject_before_effects(){
     conflict(b"module main;fn i32 main(){var i32[1] a=[0;1];let ref mut i32[] p=ref mut a;let ref mut i32[] q=ref mut p;let ref mut i32[] r=ref mut p;return 42;}");
     conflict(b"module main;fn i32 f(ref mut i32[] p){return p[0];}fn i32 main(){var i32[1] a=[0;1];let ref mut i32[] p=ref mut a;let ref mut i32[] q=ref mut p;return f(ref mut p);}");
     conflict(b"module main;fn i32[1] f(ref mut i32[] p){return [p[0];1];}fn i32 main(){var i32[1] a=[0;1];let ref mut i32[] p=ref mut a;let ref mut i32[] q=ref mut p;let i32[1] b=f(ref mut q);return 42;}");
-    conflict(b"module main;fn i32 f(ref mut i32[] p,i32[1] a){return 42;}fn i32 main(){var i32[1] a=[0;1];let i32[1] b=[0;1];let ref mut i32[] p=ref mut a;let ref mut i32[] q=ref mut p;return f(ref mut q,b);}");
+    conflict(b"module main;struct P{i32 x;}fn P f(ref mut i32[] p){return P{.x=p[0]};}fn i32 main(){var i32[1] a=[0;1];let ref mut i32[] p=ref mut a;let ref mut i32[] q=ref mut p;let P b=f(ref mut q);return 42;}");
     rejected(b"module main;fn i32 main(){var i32[1] a=[0;1];let ref i32[] p=ref a;let ref mut i32[] q=ref mut p;return 42;}");
     rejected(b"module main;fn i32 main(){var i32[1] a=[0;1];let ref mut i32[] p=ref mut a;let ref i32[] q=ref p;return 42;}");
     rejected(b"module main;fn i32 main(){{var i32[1] a=[0;1];let ref mut i32[] p=ref mut a;let ref mut i32[] q=ref mut p;}return q[0];}");

@@ -107,8 +107,8 @@ pub fn Result<usize,errors::Error> step_canonical(ref ir::Program p,ref proof::S
 }
 
 // Same scalar/control preflight and publication as existing CALLs. New derived
-// loan handoff is the last fallible work; only infallible scalar/control writes
-// follow. Ordinary signatures retain their owned/aggregate transaction.
+// loan preparation precedes atomic owned copying; only infallible metadata and
+// scalar/control writes follow. Ordinary signatures retain their transaction.
 pub fn Result<usize,errors::Error> step_canonical_derived(ref ir::Program p,ref proof::Sites sites,usize pc,usize parent,
     ref children::Bindings child_sites,ref mut canonical::Bindings bindings,ref mut authority::State receipts,
     ref mut borrowed::Frames frames,ref mut loans::State loan,ref mut records::State record_state,
@@ -117,7 +117,7 @@ pub fn Result<usize,errors::Error> step_canonical_derived(ref ir::Program p,ref 
     let usize charge=canonical::cost(p,pc,if(pc<p.count && pc<256){p.offsets[pc]}else{0})?;
     let Prepared plan=prepare(p,pc,parent,registers,return_pcs,return_dsts,fuel,charge)?;
     let usize remaining=if(derived::required(p,sites,pc)){
-        derived::enter(p,sites,pc,parent,child_sites,bindings,receipts,frames,loan,state,record_state,buffer,fuel)?
+        derived::enter_owned(p,sites,pc,parent,child_sites,bindings,receipts,frames,loan,state,record_state,buffer,fuel)?
     }else{canonical::enter_owned(p,sites,pc,parent,bindings,receipts,frames,loan,state,record_state,buffer,fuel)?};
     publish(p,ref plan,registers,return_pcs,return_dsts);return .ok(remaining);
 }
