@@ -1,5 +1,28 @@
 # AGENTS.md
 
+- Public IR reborrow admission and execution: implemented at `409d77c` on `main`
+  after shared-guard preparation `42a66e9`. `verifier::verify_sites` returns the
+  exact proved `Sites` before public quota, preparation Fuel, backing or local
+  authority effects. Nonempty sites and exclusive formals route to canonical core
+  without a second whole-program proof or forest reconstruction; owned-only opcode
+  61/62 programs route without a formal. Public IR 61/62 are admitted and executed.
+  Source grammar/parser/compiler and CLI capabilities remain gated. Derived CALLs
+  accept borrowed/scalar arguments and scalar results only; owned arguments and
+  aggregate results reject before effects, including in unreachable functions.
+  Strict `inspect` and raw legacy execution keep separate gates. Prices, bounds,
+  layouts and external-bytecode prohibition are unchanged. Development passed 8
+  core groups; release passed 19 (8 core, 6 boundary, 5 proof), with 74
+  mutable-parameter CLI cases per profile. All 404 current inputs match; 94 of 99
+  production sources are unchanged against `e952162`, with five paths differing.
+  Final core reruns passed after overlapping native/public test helper context
+  lifetimes were split. The development core input differs only in unselected
+  `slice_formal_reborrow_vm` Fuel, raised from 1M to 16M to reach the frame boundary
+  and exercised by release boundary tests. No stack-size measurement was made.
+  Full native/other M2/M1/Linux/isolation/packaging/allocator/timing were not
+  rerun. Local only; no push. See the
+  [contract](docs/engineering/m2-slice-public-reborrow.md) and
+  [verified evidence](docs/evidence/m2-slice-public-reborrow-windows-20261103.json).
+
 - Public canonical routing for exclusive mutable formals: implemented at `0d57882`
   on `main`. Development and release each passed 5 native groups (2 new legacy
   differential and 3 existing public mutable) plus 74 public mutable CLI cases.

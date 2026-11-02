@@ -1,5 +1,31 @@
 # Brownie C
 
+## Public IR reborrow admission and execution
+
+Implemented at `409d77c` on `main`, following shared-guard preparation at
+`42a66e9`. Public `verifier::verify_sites` returns the exact proved `Sites` forest
+before the VM checks quota, reserves preparation Fuel, constructs backing or
+publishes local authority. Nonempty sites and exclusive mutable formals route to
+the canonical core with that forest; owned-only opcode 61/62 programs route without
+a formal. Public IR opcode 61/62 admission and execution are enabled.
+
+Derived CALLs accept borrowed/scalar arguments and scalar results only. Owned
+arguments and aggregate results reject before effects, including in unreachable
+functions. Ordinary CALLs retain owned arguments and aggregate results. Strict
+`inspect` and raw legacy execution keep their separate gates. Source grammar,
+parser, compiler and CLI capability flags remain gated, and prices, bounds,
+layouts and external-bytecode prohibition are unchanged.
+
+Development passed 8 core groups; release passed 19 groups (8 core, 6 boundary,
+5 proof), with 74 mutable-parameter CLI cases in each profile. All 404 current
+inputs matched, with 94 production sources unchanged against `e952162`; five
+production paths differ. Final core reruns passed after overlapping native and
+public test helper context lifetimes were split. No stack-size measurement was
+made. Full native/other M2/M1/Linux/isolation/packaging/allocator/timing were not
+rerun. Local only; no push. See the
+[contract](docs/engineering/m2-slice-public-reborrow.md) and
+[verified evidence](docs/evidence/m2-slice-public-reborrow-windows-20261103.json).
+
 ## Public canonical routing for exclusive mutable formals
 
 Implemented at `0d57882` on `main`. Exclusive mutable formals now use fresh local
