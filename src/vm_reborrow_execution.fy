@@ -12,7 +12,7 @@ import array_vm as arrays;
 import std::bytes as bytes;
 import slice_authority as authority;
 import slice_reborrow_vm as children;
-import slice_reborrow_call_vm as derived;
+import slice_reborrow_admission_ir as admission;
 
 // Default checked native admission includes supported derived CALLs. The
 // public/legacy gates stay separate. Reject unsupported shapes in every function
@@ -21,10 +21,7 @@ pub fn Result<proof::Sites,errors::Error> inspect(ref ir::Program p){
     let usize valid=verifier::inspect_reborrow_calls(p)?;let proof::Sites sites=proof::metadata(p)?;
     var usize pc=0;while(pc<p.count){if(p.code[pc*8]==9){
         let usize charge=calls::cost(p,pc,p.offsets[pc])?;
-        if(derived::required(p,ref sites,pc)){
-            let calls::Call call=calls::info(p,pc,p.offsets[pc])?;
-            if(call.owned!=0 || p.array_results[call.target]!=0 || p.record_results[call.target]!=0){return .err(errors::make(5,p.offsets[pc]));}
-        }
+        let usize allowed=admission::call(p,ref sites,pc)?;
     }pc+=1;}
     return .ok(sites);
 }
