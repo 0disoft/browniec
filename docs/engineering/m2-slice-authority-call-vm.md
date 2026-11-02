@@ -28,7 +28,7 @@ It prepays bounded entry/return/abort metadata work. Release costs 4,097; normal
 return uses its prepaid reserve. These are logical Fuel costs, not native timing
 claims. Static unsupported shapes fail before admission. A short budget fails
 before runtime maps, source tickets, frame state or generation lookup. The next
-event beyond the combined31 bound returns kind12 before publication.
+event beyond the combined 31 bound returns kind12 before publication.
 
 Entry validates all original source capabilities and an unused child frame.
 The formal tag/mode must match exactly. Shared origin cells and caller tokens
@@ -70,7 +70,7 @@ PC and detached cells. A late error in a second argument cannot publish the
 first argument's rotation. Scalar return/control publication is still external.
 
 Abort drains the authentic pool before clearing canonical receipts, CALL maps,
-all512 ticket cells and all256 shared origins. Cleanup failure retains metadata
+all 512 ticket cells and all 256 shared origins. Cleanup failure retains metadata
 and overrides the original outcome. Success retains prior payload writes and
 the original success/error. Owned roots are not destroyed. Other private child
 site maps owned by a future outer coordinator must be cleared only after a
@@ -93,13 +93,13 @@ python -B tools/verify-m2-slice-elements.py --profile release --authority-call-v
 Six new native groups cover six scalar writes, exact/one-short prices, live and
 detached return, 31 recursive handoffs, surviving origins after forwarding,
 interleaved scalar/two-writer positions, late multi-argument failure, corrupt
-origins/PC maps, combined-depth generation exhaustion after30 unrelated native
+origins/PC maps, combined-depth generation exhaustion after 30 unrelated native
 subranges, empty ranges, abort preservation and explicit unsupported-mode gates.
 Each native transition receives its own sufficient Fuel; this is not evidence
-that the public CLI's unchanged one-million invocation budget executes31 calls.
+that the public CLI's unchanged one-million invocation budget executes 31 calls.
 The selection also runs six legacy mutable CALL, six authority and six owned
-reborrow adapter groups, plus74 mutable parameter,222 owned mutable,192 readonly
-scalar and2007 M1 CLI cases on Windows.
+reborrow adapter groups, plus 74 mutable parameter, 222 owned mutable, 192 readonly
+scalar and 2007 M1 CLI cases on Windows.
 
 Next, reuse these canonical origin/argument bindings for rootless mutable-formal
 reborrow transitions and data dispatch, then integrate CALL/scalar/control and
@@ -107,3 +107,13 @@ normal/abort lifecycle into the shared execution core without duplicate receipts
 Suspended CALL inspection, reborrow execution and guest/public promotion remain
 separate and gated. Full native, other M2, Linux, M0, isolation, packaging and
 performance are outside the selection. No push, publication, release or deployment.
+
+Implemented at `c5c9a91`. Development and release each passed all 24 selected
+native groups and 2,495 CLI cases. All 383 input hashes match across profiles
+and the current checkout. Compiler, retained CLI, original receipt and matrix/M1
+identities were rechecked. The Program/signature declarations and existing
+owner/pool/native handoff/reborrow/authority, compiler, verifier, execution and
+legacy CALL adapter sources match `16da4f2`. Both profiles accept parser depth32
+in check/run and reject depths33/64 with `compile_limit`. See the
+[Windows evidence](../evidence/m2-slice-authority-call-vm-windows-20261102.json).
+Local commits only; no push, publication, packaged release or deployment.

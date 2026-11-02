@@ -1,5 +1,30 @@
 # AGENTS.md
 
+- Private canonical exclusive CALL binding: implemented at `c5c9a91`.
+  `slice_authority_call_vm` derives caller/target/argument positions from 31 CALL
+  PC cells, retains 248 detached-ticket cells and keeps canonical Batch/Loan
+  receipts exclusively in native authority. It authenticates entry, formal
+  release, return and abort against immutable IR, frame/origin/session maps and
+  combined pending restoration depth. All originals validate before handoff;
+  late multi-argument failure preserves earlier inputs. Abort drains before map
+  cleanup and preserves writes/outcomes or failed-cleanup diagnostic state.
+  This private bridge admits scalar/exclusive arguments only. Shared/owned args,
+  aggregate results and derived reborrow CALL sources remain rejected. Scalar/
+  control publication and unrelated callee cleanup belong to the coordinator.
+  Existing public CALL and owned reborrow adapters remain unchanged. No Program/
+  signature/owner/pool/shared-frame fields, opcode or public capability/price
+  changes. Rootless reborrow instructions and shared execution-loop wiring are
+  next; suspended CALL proof and guest/public promotion remain separate gates.
+  Development/release each passed 24 native groups and 2,495 CLI cases, with 383
+  matching current inputs and rechecked compiler/artifact/matrix/M1 identities.
+  Program/signature declarations and existing authority, native primitives, IR,
+  verifier, VM/CLI/compiler and CALL/reborrow adapter sources match `16da4f2`.
+  Parser depth32 passes; depths33/64 return compile_limit. Full native, other M2,
+  Linux, M0, isolation, packaging, allocator, native size/stack and timing were not
+  rerun. Local commits only; no push/release. See
+  [the CALL binding contract](docs/engineering/m2-slice-authority-call-vm.md) and
+  [Windows evidence](docs/evidence/m2-slice-authority-call-vm-windows-20261102.json).
+
 - Private metered owned reborrow adapter: implemented at `995e22f`.
   `slice_reborrow_vm` prepays 65,537 Fuel per op61/62 before runtime lookups,
   authenticates frame/root/site/canonical receipts and publishes fresh child or
