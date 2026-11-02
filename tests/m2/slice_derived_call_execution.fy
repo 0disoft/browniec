@@ -104,7 +104,7 @@ fn usize opcode(ref ir::Program p,u8 op,usize f){return at(p,op,f);}
 fn void clean(ref authority::State[] auth,ref calls::Bindings[] c,ref children::Bindings[] links,ref loans::State loan,ref shared::Frames frames){assert(context::ready(ref auth[0],ref c[0],ref links[0],loan,frames).is_ok);}
 fn Result<i64,errors::Error> run(ref ir::Program p,usize fuel){
     var authority::State[1] auth=[authority::empty();1];var calls::Bindings[1] c=[calls::empty();1];var children::Bindings[1] links=[children::empty();1];var arrays::State a=arrays::empty(256);var loans::State l=loans::empty();var shared::Frames f=shared::empty();var bytes::Buffer b=backing();
-    let Result<i64,errors::Error> result=runner::execute_derived(p,fuel,ref mut a,ref mut b,ref mut l,ref mut f,ref mut auth,ref mut c,ref mut links);clean(ref auth,ref c,ref links,ref l,ref f);if(result.is_ok){assert(a.owners.depth==0 && a.owners.arena.used==0);}return result;
+    let Result<i64,errors::Error> result=runner::execute(p,fuel,ref mut a,ref mut b,ref mut l,ref mut f,ref mut auth,ref mut c,ref mut links);clean(ref auth,ref c,ref links,ref l,ref f);if(result.is_ok){assert(a.owners.depth==0 && a.owners.arena.used==0);}return result;
 }
 
 fn ir::Program mixed_owned(bool derived){
@@ -115,7 +115,7 @@ fn ir::Program mixed_owned(bool derived){
 }
 @test
 fn void all_six_owned_and_formal_derived_calls_execute_complete_programs(){
-    let u8[6] tags=[1,2,9,10,11,12];var usize i=0;while(i<6){let ir::Program owned=program(tags[i],false,2,1,false,false);let ir::Program formal=program(tags[i],true,2,1,false,false);assert(runner::inspect_derived(ref owned).is_ok && runner::inspect_derived(ref formal).is_ok);assert(checked(run(ref owned,16000000))==42 && checked(run(ref formal,16000000))==42);i+=1;}
+    let u8[6] tags=[1,2,9,10,11,12];var usize i=0;while(i<6){let ir::Program owned=program(tags[i],false,2,1,false,false);let ir::Program formal=program(tags[i],true,2,1,false,false);assert(runner::inspect(ref owned).is_ok && runner::inspect(ref formal).is_ok);assert(checked(run(ref owned,16000000))==42 && checked(run(ref formal,16000000))==42);i+=1;}
 }
 @test
 fn void recursive_scalar_counters_and_combined_depth_are_executed_by_the_shared_loop(){
@@ -129,7 +129,7 @@ fn void mixed_shared_and_multiple_writers_reuse_call_frames_and_keep_normal_owne
 fn void bounds_arithmetic_and_fuel_failures_drain_loans_and_preserve_prior_writes(){
     var usize variant=0;while(variant<2){let ir::Program p=program(10,variant==1,2,1,false,false);var ir::Program bad=p;let usize read=opcode(ref bad,58,0);bad.code[read*8+3]+=1;
         var authority::State[1] auth=[authority::empty();1];var calls::Bindings[1] c=[calls::empty();1];var children::Bindings[1] links=[children::empty();1];var arrays::State a=arrays::empty(256);var loans::State l=loans::empty();var shared::Frames f=shared::empty();var bytes::Buffer b=backing();
-        error(runner::execute_derived(ref bad,16000000,ref mut a,ref mut b,ref mut l,ref mut f,ref mut auth,ref mut c,ref mut links),14);clean(ref auth,ref c,ref links,ref l,ref f);assert(a.owners.depth==1);let usize owner=if(variant==1){0}else{16};assert(cell(owners::read(ref a.owners,a.tokens[owner],0,bytes::view(ref b)))==255);
+        error(runner::execute(ref bad,16000000,ref mut a,ref mut b,ref mut l,ref mut f,ref mut auth,ref mut c,ref mut links),14);clean(ref auth,ref c,ref links,ref l,ref f);assert(a.owners.depth==1);let usize owner=if(variant==1){0}else{16};assert(cell(owners::read(ref a.owners,a.tokens[owner],0,bytes::view(ref b)))==255);
         bad=p;let usize division=opcode(ref bad,5,0);let u8 denominator=bad.code[division*8+3];var usize pc=bad.starts[0];while(pc<bad.ends[0]){if(bad.code[pc*8]==1 && bad.code[pc*8+1]==denominator){let usize id=bad.code[pc*8+2] as usize;bad.constants[id]=0;}pc+=1;}error(run(ref bad,16000000),7);error(run(ref p,0),8);variant+=1;}
 }
 @test
@@ -138,7 +138,7 @@ fn void exact_execution_fuel_and_one_short_budget_keep_cleanup_deterministic(){
 }
 @test
 fn void scalar_and_control_preflight_publish_nothing_until_derived_handoff_succeeds(){
-    let ir::Program p=program(10,false,1,1,false,true);let forest::Sites map=switch(runner::inspect_derived(ref p)){case .ok(v):{v}case .err(_):{assert(false);forest::Sites{.parents=[16;16],.newer=[0;16],.count=0}}};
+    let ir::Program p=program(10,false,1,1,false,true);let forest::Sites map=switch(runner::inspect(ref p)){case .ok(v):{v}case .err(_):{assert(false);forest::Sites{.parents=[16;16],.newer=[0;16],.count=0}}};
     var arrays::State a=arrays::empty(256);var records::State record_state=records::empty();var loans::State l=loans::empty();var shared::Frames f=shared::empty();var authority::State auth=authority::empty();var calls::Bindings c=calls::empty();var children::Bindings links=children::empty();var bytes::Buffer b=backing();
     let layouts::Array shape=switch(layouts::scalar(10,2)){case .ok(v):{v}case .err(_):{assert(false);layouts::Array{.element=10,.length=2,.stride=1,.alignment=1,.bytes=2}}};let owners::Token root=switch(owners::create(ref shape,0,bytes::view_mut(ref mut b),ref mut a.owners)){case .ok(v):{v}case .err(_):{assert(false);owners::Token{.slot=16,.generation=0}}};a.tokens[0]=root;
     var i64[256] r=[99;256];var usize i=0;while(i<p.count){if(p.code[i*8]==1){r[p.code[i*8+1] as usize]=p.constants[p.code[i*8+2] as usize];}i+=1;}let usize opened=built(ordinary::step(ref p,1,opcode(ref p,54,1),0,ref mut l,ref mut a,ref mut b,ref mut r[..128],65537));let usize begun=built(adapter::step(ref p,ref map,1,opcode(ref p,61,1),0,ref mut links,ref c,ref mut auth,ref f,ref mut l,ref a,ref b,ref r[..128],65537));
@@ -148,15 +148,32 @@ fn void scalar_and_control_preflight_publish_nothing_until_derived_handoff_succe
 }
 @test
 fn void raw_core_failure_keeps_maps_until_cleanup_and_failed_cleanup_is_retryable(){
-    var ir::Program p=program(10,true,2,1,false,false);let usize read=opcode(ref p,58,0);p.code[read*8+3]+=1;let forest::Sites map=switch(runner::inspect_derived(ref p)){case .ok(v):{v}case .err(_):{assert(false);forest::Sites{.parents=[16;16],.newer=[0;16],.count=0}}};var authority::State[1] auth=[authority::empty();1];var calls::Bindings[1] c=[calls::empty();1];var children::Bindings[1] links=[children::empty();1];var arrays::State a=arrays::empty(256);var loans::State l=loans::empty();var shared::Frames f=shared::empty();var bytes::Buffer b=backing();
+    var ir::Program p=program(10,true,2,1,false,false);let usize read=opcode(ref p,58,0);p.code[read*8+3]+=1;let forest::Sites map=switch(runner::inspect(ref p)){case .ok(v):{v}case .err(_):{assert(false);forest::Sites{.parents=[16;16],.newer=[0;16],.count=0}}};var authority::State[1] auth=[authority::empty();1];var calls::Bindings[1] c=[calls::empty();1];var children::Bindings[1] links=[children::empty();1];var arrays::State a=arrays::empty(256);var loans::State l=loans::empty();var shared::Frames f=shared::empty();var bytes::Buffer b=backing();
     let Result<i64,errors::Error> outcome=execution::execute_canonical(ref p,ref map,16000000,ref mut a,ref mut b,ref mut l,ref mut f,ref mut auth,ref mut c,ref mut links);error(outcome,14);assert(auth[0].depth==4 && auth[0].frame==2 && c[0].pcs[3]!=256 && links[0].children[1]!=16 && links[0].children[2]!=16);
     let usize epoch=a.owners.slots[0].read_generation;a.owners.slots[0].read_generation+=1;let slices::Pool before=l.pool;let authority::State receipts=auth[0];assert(switch(context::finish(ref mut links[0],ref mut c[0],ref mut auth[0],ref mut f,ref mut l,ref mut a,ref b,outcome)){case .ok(_):{false}case .err(e):{e.kind==5}});same_pool(ref before,ref l.pool);same_state(ref receipts,ref auth[0]);assert(c[0].pcs[3]!=256);a.owners.slots[0].read_generation=epoch;error(context::finish(ref mut links[0],ref mut c[0],ref mut auth[0],ref mut f,ref mut l,ref mut a,ref b,outcome),14);clean(ref auth,ref c,ref links,ref l,ref f);assert(cell(owners::read(ref a.owners,a.tokens[0],0,bytes::view(ref b)))==255);
 }
 @test
 fn void unsupported_derived_owned_calls_and_dirty_contexts_reject_before_execution(){
-    let ir::Program unsupported=mixed_owned(true);assert(verifier::inspect_reborrow_calls(ref unsupported).is_ok && !runner::inspect_derived(ref unsupported).is_ok);error(run(ref unsupported,0),5);
+    var ir::Program unsupported=mixed_owned(true);var usize variant=0;
+    while(variant<2){
+        assert(verifier::inspect_reborrow_calls(ref unsupported).is_ok);
+        assert(switch(runner::inspect(ref unsupported)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==77}});
+        assert(!runner::inspect_derived(ref unsupported).is_ok);error(run(ref unsupported,0),5);
+        if(variant==0){
+            // The same unsupported CALL must also reject in an unreachable function.
+            unsupported.function_count=3;unsupported.entry=2;unsupported.return_types[2]=1;
+            let usize start=unsupported.count;let usize regs=unsupported.registers;unsupported.starts[2]=start;unsupported.register_starts[2]=regs;
+            let usize answer=built(ir::literal(ref mut unsupported,42,0));let usize ret=built(ir::emit(ref mut unsupported,8,answer,0,0));finish(ref mut unsupported,2);
+        }
+        variant+=1;
+    }
     let ir::Program p=program(10,true,1,1,false,false);var authority::State[1] auth=[authority::empty();1];var calls::Bindings[1] c=[calls::empty();1];var children::Bindings[1] links=[children::empty();1];var arrays::State a=arrays::empty(256);var loans::State l=loans::empty();var shared::Frames f=shared::empty();var bytes::Buffer b=backing();
-    assert(!runner::inspect(ref p).is_ok && !verifier::verify(ref p).is_ok && !vm::run_with_array_limit(ref p,0,0).is_ok);error(runner::execute(ref p,16000000,ref mut a,ref mut b,ref mut l,ref mut f,ref mut auth,ref mut c,ref mut links),5);error(execution::execute(ref p,16000000,ref mut a,ref mut b,ref mut l,ref mut f),5);clean(ref auth,ref c,ref links,ref l,ref f);dirty(ref mut links[0],0);error(runner::execute_derived(ref p,0,ref mut a,ref mut b,ref mut l,ref mut f,ref mut auth,ref mut c,ref mut links),5);assert(links[0].children[30]==0 && a.owners.depth==0 && a.owners.arena.used==0);dirty(ref mut links[0],16);clean(ref auth,ref c,ref links,ref l,ref f);
+    assert(runner::inspect(ref p).is_ok && runner::inspect_derived(ref p).is_ok && !verifier::inspect(ref p).is_ok && !verifier::verify(ref p).is_ok && !vm::run_with_array_limit(ref p,0,0).is_ok);
+    error(execution::execute(ref p,16000000,ref mut a,ref mut b,ref mut l,ref mut f),5);clean(ref auth,ref c,ref links,ref l,ref f);assert(a.owners.depth==0 && a.owners.arena.used==0);
+    dirty(ref mut links[0],0);error(runner::execute(ref p,0,ref mut a,ref mut b,ref mut l,ref mut f,ref mut auth,ref mut c,ref mut links),5);
+    assert(links[0].children[30]==0 && a.owners.depth==0 && a.owners.arena.used==0);dirty(ref mut links[0],16);clean(ref auth,ref c,ref links,ref l,ref f);
+    error(runner::execute(ref p,0,ref mut a,ref mut b,ref mut l,ref mut f,ref mut auth,ref mut c,ref mut links),8);clean(ref auth,ref c,ref links,ref l,ref f);
+    assert(checked(runner::execute_derived(ref p,16000000,ref mut a,ref mut b,ref mut l,ref mut f,ref mut auth,ref mut c,ref mut links))==42);clean(ref auth,ref c,ref links,ref l,ref f);assert(a.owners.depth==0 && a.owners.arena.used==0);
 }
 
 fn void dirty(ref mut children::Bindings sites,usize value){sites.children[30]=value;}
