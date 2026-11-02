@@ -1,5 +1,24 @@
 # Validation
 
+- Call-scoped whole-array borrows are implemented at `528934b`. Explicit
+  `ref array` / `ref mut array` open anonymous handles during argument evaluation,
+  before later arguments. Existing mixed capture cleanup closes them after CALL
+  or on argument-time lexical exits; invocation cleanup drains runtime failures.
+  Six scalar types, exact modes, duplicate readers, independent writers, nested
+  calls and scalar/array/record results work. One temporary adds a static slice
+  site/local, two registers and four existing instructions, without a payload
+  copy or array owner. Version JSON adds `array_slice_array_arguments: true`.
+  Windows development/release each passed 11 native groups and 644 tool-free CLI
+  cases, with 448 matching final inputs and rechecked retained hashes. Development
+  native results are reused after a readonly CLI expected-value-list correction;
+  its original inputs/command are recorded. Three production paths differ from
+  `04ab3ef`; 97 others match under Git LF. Inline ranges, temporary roots, mode
+  coercions and returned/escaping borrows remain unsupported. Full native/M1/
+  other M2/Linux/isolation/packaging/allocator/native size-stack/timing were not
+  rerun. Local only; no push, release or deployment. See the
+  [contract](docs/engineering/m2-array-borrow-arguments.md) and
+  [Windows evidence](docs/evidence/m2-array-borrow-arguments-windows-20261103.json).
+
 - Derived mutable CALL record results are implemented at `e8105f6`. Strict
   zero-slot/zero-generation record destinations precede loan staging and owned
   copying. Unchanged canonical SRET validates the exact-nominal unique result,

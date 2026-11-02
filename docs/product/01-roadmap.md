@@ -1,5 +1,17 @@
 # Roadmap
 
+- [Call-scoped whole-array borrow arguments](../engineering/m2-array-borrow-arguments.md)
+  are implemented at `528934b` after public lexical reborrows and derived
+  scalar/array/record CALL support. Existing array names now work directly in
+  `ref` / `ref mut` argument positions, with argument-time acquisition and normal,
+  lexical-exit and runtime-failure cleanup. Windows development/release each passed
+  11 native groups and 644 CLI cases, with 448 matching final inputs. See the
+  [Windows evidence](../evidence/m2-array-borrow-arguments-windows-20261103.json).
+  Inline ranges and temporary-root arguments remain a separate frontend slice;
+  returned/escaping borrows require a separate lifetime/result contract. Buffer,
+  input/output, host suspension, isolation and packaging remain milestone work.
+  Earlier entries below retain the gates at their named implementation commits.
+
 - [Private exclusive subrange suspension/restoration](../engineering/m2-slice-exclusive-reborrow.md)
   is implemented at `ab85195`. A native linear receipt preserves the parent range
   and write epoch while one existing pool slot represents the active child.

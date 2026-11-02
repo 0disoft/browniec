@@ -1,5 +1,24 @@
 # Brownie C
 
+## Borrow arrays directly in CALL arguments
+
+Implemented at `528934b`. `update(ref mut output, ref input)` borrows existing
+whole arrays for one call, with exact scalar types and explicit access modes.
+The handle opens during argument evaluation and closes after return, so later
+arguments observe the active borrow and the caller can access the array again
+when the call completes. Early exits and runtime failures use existing cleanup.
+Scalar, array and record results are supported. See the
+[example](examples/array-borrow-arguments.brc) and
+[contract](docs/engineering/m2-array-borrow-arguments.md).
+
+Windows development/release each passed 11 native groups and 644 tool-free CLI
+cases, with 448 matching final inputs. The evidence records development native
+reuse after a CLI-only expected-value correction and retained artifact hashes.
+Inline ranges, temporary roots and escaping borrows remain unsupported. Full
+native/M1, other M2, Linux, isolation, packaging and performance were not rerun.
+Local only; no push, release or deployment. See the
+[verified evidence](docs/evidence/m2-array-borrow-arguments-windows-20261103.json).
+
 ## Record results from mutable reborrow calls
 
 Implemented at `e8105f6`. Functions receiving an exclusive child may now return

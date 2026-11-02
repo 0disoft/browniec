@@ -88,5 +88,8 @@ allocator, native size/stack and timing are not part of this focused verificatio
 No performance claim is made.
 
 Escaping borrows and inline temporary CALL borrows remain outside this slice.
+The [whole-array argument successor](m2-array-borrow-arguments.md) now permits
+call-scoped borrows of existing whole-array names; inline ranges and temporary
+roots remain unsupported.
 There is no external bytecode loader, runtime code cache, JIT or guest GC.
 Local work only; no push, release or deployment.
