@@ -61,7 +61,7 @@ fn void six_tags_owned_only_recursion_and_reused_frames_execute(){
 fn void owned_shared_writer_mixture_executes_and_copies_are_independent(){
     run(b"module main;fn i32 f(u8[2] a,ref u8[] q,ref mut i32[] p,bool[2] b){if(b[0]){p[0]=a[0] as i32+q[0] as i32;}return p[0];}fn i32 main(){let u8[2] a=[21;2];let bool[2] b=[true;2];var i32[1] c=[0;1];let ref u8[] q=ref a;let ref mut i32[] p=ref mut c;return f(a,ref q,ref mut p,b);}",42);
     let ir::Program p=fixture();let proof::Sites map=sites(ref p);var arrays::State a=arrays::empty(256);var loans::State l=loans::empty();var shared::Frames f=shared::empty();var calls::Bindings c=calls::empty();var authority::State auth=authority::empty();var records::State s=records::empty();var bytes::Buffer b=backing();initialize(ref p,ref mut a,ref mut l,ref mut b);let usize at=pc(ref p);
-    assert(built(calls::cost(ref p,at,77))==built(legacy::cost(ref p,0,77)));let usize used=a.owners.arena.used;let usize count=a.owners.depth;assert(built(calls::enter_owned(ref p,ref map,at,0,ref mut c,ref mut auth,ref mut f,ref mut l,ref mut a,ref s,ref mut b,built(calls::cost(ref p,at,77))))==0);
+    assert(built(calls::cost(ref p,at,77))==built(legacy::cost(ref p,0,77)));let usize used=a.owners.arena.used;let usize count=a.owners.depth;assert(built(calls::enter_owned(ref p,ref map,at,0,ref mut c,ref mut auth,ref mut f,ref mut l,ref mut a,ref mut s,ref mut b,built(calls::cost(ref p,at,77))))==0);
     let usize dst=(p.array_parameters[0] as usize)-1;let usize src=(p.call_args[(p.code[at*8+3] as usize)*8] as usize)-128;assert(a.owners.depth==count+2 && a.owners.arena.used==used+4 && a.tokens[16+dst].slot!=a.tokens[src].slot && auth.depth==1 && auth.counts[0]==1);
     let owners::Token child=a.tokens[16+dst];let usize written=done(owners::write(ref a.owners,child,0,99,bytes::view_mut(ref mut b)));assert(switch(owners::read(ref a.owners,a.tokens[src],0,bytes::view(ref b))){case .ok(v):{v==21}case .err(_):{false}});
     assert(!calls::leave(ref p,0,1,ref mut c,ref mut auth,ref mut f,ref mut l,ref mut a,ref s,ref b,77).is_ok && auth.depth==1);
@@ -81,7 +81,7 @@ fn void late_owned_failures_and_earlier_loan_failures_preserve_every_original(){
         else if(mode==6){let usize slot=l.tickets[w].slot;l.pool.slots[slot].generation=18446744073709551615;l.tickets[w].generation=18446744073709551615;}
         else if(mode==7){a.tokens[16]=owners::Token{.slot=0,.generation=1};}
         let arrays::State old=saved_arrays(ref a);let loans::State previous=saved_loans(ref l);let u8[256] data=saved_bytes(ref b);
-        assert(switch(calls::enter_owned(ref p,ref map,at,0,ref mut c,ref mut auth,ref mut f,ref mut l,ref mut a,ref s,ref mut b,if(mode==0){price-1}else{price})){case .ok(_):{false}case .err(e):{e.kind==if(mode==0){8}else{if(mode==1 || mode==4 || mode==5){13}else{5}}}});
+        assert(switch(calls::enter_owned(ref p,ref map,at,0,ref mut c,ref mut auth,ref mut f,ref mut l,ref mut a,ref mut s,ref mut b,if(mode==0){price-1}else{price})){case .ok(_):{false}case .err(e):{e.kind==if(mode==0){8}else{if(mode==1 || mode==4 || mode==5){13}else{5}}}});
         unchanged(ref a,ref old,ref l,ref previous,ref b,ref data,ref auth,ref c,ref f);mode+=1;
     }
 }
@@ -89,13 +89,13 @@ fn void late_owned_failures_and_earlier_loan_failures_preserve_every_original(){
 fn void scalar_control_preflight_and_compatibility_entry_cannot_publish_owned_calls(){
     let ir::Program p=fixture();let proof::Sites map=sites(ref p);let usize at=pc(ref p);let usize price=built(calls::cost(ref p,at,77));var arrays::State a=arrays::empty(256);var loans::State l=loans::empty();var shared::Frames f=shared::empty();var calls::Bindings c=calls::empty();var authority::State auth=authority::empty();var records::State s=records::empty();var bytes::Buffer b=backing();initialize(ref p,ref mut a,ref mut l,ref mut b);
     let arrays::State old=saved_arrays(ref a);let loans::State previous=saved_loans(ref l);let u8[256] data=saved_bytes(ref b);var i64[256] r=[99;256];var usize[32] pcs=[77;32];var usize[32] dsts=[88;32];
-    assert(!control::step_canonical(ref p,ref map,at,0,ref mut c,ref mut auth,ref mut f,ref mut l,ref s,ref mut a,ref mut b,ref mut r[..128],ref mut pcs,ref mut dsts,price).is_ok);assert(!calls::enter(ref p,ref map,at,0,ref mut c,ref mut auth,ref mut f,ref mut l,ref a,ref s,ref b,price).is_ok);unchanged(ref a,ref old,ref l,ref previous,ref b,ref data,ref auth,ref c,ref f);
+    assert(!control::step_canonical(ref p,ref map,at,0,ref mut c,ref mut auth,ref mut f,ref mut l,ref mut s,ref mut a,ref mut b,ref mut r[..128],ref mut pcs,ref mut dsts,price).is_ok);assert(!calls::enter(ref p,ref map,at,0,ref mut c,ref mut auth,ref mut f,ref mut l,ref a,ref s,ref b,price).is_ok);unchanged(ref a,ref old,ref l,ref previous,ref b,ref data,ref auth,ref c,ref f);
     var usize i=0;while(i<256){assert(r[i]==99);i+=1;}i=0;while(i<32){assert(pcs[i]==77 && dsts[i]==88);i+=1;}
 }
 @test
 fn void static_shape_and_aggregate_gates_reject_before_effects(){
     let ir::Program p=fixture();let usize at=pc(ref p);var ir::Program bad=p;bad.arrays.mutable[0]=true;assert(!runner::inspect(ref bad).is_ok && !calls::cost(ref bad,at,77).is_ok);bad=p;bad.arrays.lengths[0]=3;assert(!runner::inspect(ref bad).is_ok);bad=p;bad.call_args[(p.code[at*8+3] as usize)*8]=144;assert(!calls::cost(ref bad,at,77).is_ok);
-    let ir::Program record=compiled(b"module main;struct P{i32 x;}fn i32 f(P p){return p.x;}fn i32 main(){return f(P{.x=42});}");assert(!runner::inspect(ref record).is_ok);
+    let ir::Program record=compiled(b"module main;struct P{i32 x;}fn i32 f(P p){return p.x;}fn i32 main(){return f(P{.x=42});}");assert(runner::inspect(ref record).is_ok);
     let ir::Program result=compiled(b"module main;fn u8[1] f(u8[1] p){return p;}fn i32 main(){let u8[1] a=[42;1];let u8[1] b=f(a);return b[0] as i32;}");assert(!runner::inspect(ref result).is_ok);
 }
 @test

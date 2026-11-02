@@ -96,7 +96,7 @@ pub fn Result<usize,errors::Error> step_mutable(ref ir::Program p,usize pc,usize
 // owned copying. Only infallible authority/register/control publication follows.
 pub fn Result<usize,errors::Error> step_canonical(ref ir::Program p,ref proof::Sites sites,usize pc,usize parent,
     ref mut canonical::Bindings bindings,ref mut authority::State receipts,ref mut borrowed::Frames frames,ref mut loans::State loan,
-    ref records::State record_state,ref mut arrays::State state,ref mut bytes::Buffer buffer,ref mut i64[] registers,
+    ref mut records::State record_state,ref mut arrays::State state,ref mut bytes::Buffer buffer,ref mut i64[] registers,
     ref mut usize[] return_pcs,ref mut usize[] return_dsts,usize fuel){
     let usize charge=canonical::cost(p,pc,if(pc<p.count && pc<256){p.offsets[pc]}else{0})?;
     let Prepared plan=prepare(p,pc,parent,registers,return_pcs,return_dsts,fuel,charge)?;

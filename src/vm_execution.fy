@@ -162,7 +162,7 @@ fn Result<i64, errors::Error> core(ref ir::Program p, usize fuel,
         }
         if (op == 9) {
             if(authority.len==1){
-                remaining=calls::step_canonical(p,sites,pc,frame,ref mut call_sites[0],ref mut authority[0],borrowed_frames,loans,ref records,arrays,payload,
+                remaining=calls::step_canonical(p,sites,pc,frame,ref mut call_sites[0],ref mut authority[0],borrowed_frames,loans,ref mut records,arrays,payload,
                     ref mut registers,ref mut return_pcs,ref mut return_dsts,remaining)?;
             }else if(mutable_function(p,a)){
                 if(receipts.len!=32){return .err(errors::make(5,p.offsets[pc]));}

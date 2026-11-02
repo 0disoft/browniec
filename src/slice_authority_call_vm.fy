@@ -10,7 +10,7 @@ import slice_vm as loans;
 import slice_call_vm as shared;
 import slice_authority as authority;
 import slice_reborrow_ir as proof;
-import array_call_vm as copies;
+import struct_call_vm as copies;
 import std::bytes as bytes;
 
 // PC derives caller/target/argument positions from immutable inspected IR.
@@ -28,13 +28,20 @@ fn Result<Call,errors::Error> info(ref ir::Program p,usize pc,usize offset){
         p.register_starts[target]>p.registers || p.arities[target]>p.registers-p.register_starts[target] || p.array_results[target]!=0 || p.record_results[target]!=0){return .err(errors::make(5,offset));}
     var usize caller=0;while(caller<p.function_count && (pc<p.starts[caller] || pc>=p.ends[caller])){caller+=1;}
     if(caller==p.function_count){return .err(errors::make(5,offset));}
-    var usize count=0;var usize readers=0;var usize owned=0;var usize arrays_seen=0;var usize seen=0;let usize one=1;var usize i=0;
+    var usize count=0;var usize readers=0;var usize owned=0;var usize arrays_seen=0;var usize records_seen=0;var usize seen=0;let usize one=1;var usize i=0;
     while(i<p.arities[target]){
         let usize r=p.register_starts[target]+i;let usize encoded=p.slice_parameters[r] as usize;let usize source=p.call_args[args*8+i] as usize;
-        // Record arguments and aggregate results remain outside this bridge.
-        if(p.record_parameters[r]!=0 || p.slots[r]){return .err(errors::make(5,offset));}
-        let usize array=p.array_parameters[r] as usize;
-        if(array!=0){
+        // Aggregate results remain outside this bridge.
+        if(p.slots[r]){return .err(errors::make(5,offset));}
+        let usize array=p.array_parameters[r] as usize;let usize record=p.record_parameters[r] as usize;
+        if(record!=0){
+            if(encoded!=0 || array!=0 || p.types[r]!=0 || record>16 || record>p.records.count || source<144 || source>=160 || source-144>=p.records.count){return .err(errors::make(5,offset));}
+            let usize dst=record-1;let usize src=source-144;
+            if((records_seen&(one<<dst))!=0 || p.record_functions[dst] as usize!=target || p.record_functions[src] as usize!=caller ||
+                p.records.mutable[dst] || p.records.mutable[src] || p.records.records[dst]!=p.records.records[src] ||
+                p.records.records[dst] as usize>=p.records.layouts.count){return .err(errors::make(5,offset));}
+            records_seen|=one<<dst;owned+=1;
+        }else if(array!=0){
             if(encoded!=0 || array>16 || array>p.arrays.count || source<128 || source>=144 || source-128>=p.arrays.count){return .err(errors::make(5,offset));}
             let usize dst=array-1;let usize src=source-128;
             if((arrays_seen&(one<<dst))!=0 || p.array_functions[dst] as usize!=target || p.array_functions[src] as usize!=caller ||
@@ -198,13 +205,14 @@ pub fn Result<usize,errors::Error> enter(ref ir::Program p,ref proof::Sites site
     let Admission plan=prepare(p,sites,pc,parent,bindings,receipts,frames,loan,state,record_state,buffer,fuel)?;
     return .ok(publish(p,ref plan,bindings,receipts,frames,loan));
 }
-// Atomic copying is the last fallible operation. No receipt/state cloning or
-// payload snapshot is used; existing owner sessions remain valid for the plan.
+// Atomic copying is last fallible work, preserving existing roots/sessions.
+// No authority clone or additional payload snapshot; the mixed copier retains
+// its existing fixed 1024-byte record snapshot/padding normalization scratch.
 pub fn Result<usize,errors::Error> enter_owned(ref ir::Program p,ref proof::Sites sites,usize pc,usize parent,
     ref mut Bindings bindings,ref mut authority::State receipts,ref mut shared::Frames frames,
-    ref mut loans::State loan,ref mut arrays::State state,ref records::State record_state,ref mut bytes::Buffer buffer,usize fuel){
+    ref mut loans::State loan,ref mut arrays::State state,ref mut records::State record_state,ref mut bytes::Buffer buffer,usize fuel){
     let Admission plan=prepare(p,sites,pc,parent,bindings,receipts,frames,loan,state,record_state,buffer,fuel)?;
-    if(plan.call.owned!=0){let usize copied=copies::enter(p,plan.call.target,plan.call.args,parent,state,buffer,p.offsets[pc])?;}
+    if(plan.call.owned!=0){let usize copied=copies::step(p,plan.call.target,plan.call.args,parent,record_state,state,buffer,fuel,p.offsets[pc])?;}
     return .ok(publish(p,ref plan,bindings,receipts,frames,loan));
 }
 pub fn Result<usize,errors::Error> release(ref ir::Program p,usize function,usize frame,usize site,
