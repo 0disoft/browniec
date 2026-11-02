@@ -1,5 +1,27 @@
 # Brownie C
 
+## Record results from mutable reborrow calls
+
+Implemented at `e8105f6`. Functions receiving an exclusive child may now return
+exact-nominal records, including nested records and all six scalar field types.
+Owned arguments, readonly slices, independent writers, forwarding, recursion and
+record-result assignment use the existing CALL and authenticated return path.
+The caller destination must be empty before loan/copy publication; canonical
+restoration precedes moving the existing result token. See the
+[example](examples/mutable-slice-record-result.brc) and
+[contract](docs/engineering/m2-slice-reborrow-record-results.md).
+
+Windows development/release each passed 20 native groups and 282 tool-free CLI
+cases, with 445 matching final inputs. The evidence records development native
+reuse after a CLI-only harness change and rechecked artifact/receipt hashes.
+The larger mixed-record, recursive and repeated-assignment fixtures reach the
+existing public 1M Fuel cap; lighter mixed and repeated-result cases complete.
+Full native/M1, other M2, Linux, isolation, packaging and performance were not
+rerun. Local only; no push, release or deployment. See the
+[verified evidence](docs/evidence/m2-derived-record-result-windows-20261103.json).
+
+Earlier sections record their named commits; superseded gates are historical.
+
 ## Array results from mutable reborrow calls
 
 Implemented at `56842b9`. A function receiving an exclusive child may return a

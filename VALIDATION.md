@@ -1,5 +1,25 @@
 # Validation
 
+- Derived mutable CALL record results are implemented at `e8105f6`. Strict
+  zero-slot/zero-generation record destinations precede loan staging and owned
+  copying. Unchanged canonical SRET validates the exact-nominal unique result,
+  restores the child and moves its existing token, without a second persistent
+  result extent or payload snapshot. Six scalar field types, nested records,
+  owned/shared/multiple-writer arguments, forwarding, recursion and assignment
+  are supported. Version JSON adds `array_slice_reborrow_record_results: true`.
+  Windows development/release each passed 20 native groups and 282 tool-free CLI
+  cases (50 record result, 44 array result, 46 owned argument, 68 lexical reborrow,
+  74 mutable parameter), with 445 matching final inputs and rechecked retained
+  hashes. Development native results are reused after a CLI-only harness change;
+  original native inputs and that reuse are recorded. Three production paths
+  differ from `f8642ea`; 97 others match under Git LF. Full native/M1/other M2/
+  Linux/isolation/packaging/allocator/native size-stack/timing were not rerun.
+  Local only; no push, release or deployment. See the
+  [contract](docs/engineering/m2-slice-reborrow-record-results.md) and
+  [Windows evidence](docs/evidence/m2-derived-record-result-windows-20261103.json).
+
+Earlier entries record their named commits; superseded gates are historical.
+
 - Derived mutable CALL array results: implemented at `56842b9`. Strict empty
   caller destinations precede loan staging/copy publication. Existing canonical
   result validation, restoration and token transfer are unchanged. Development/

@@ -1,5 +1,8 @@
 # Array results from derived slice CALLs
 
+This historical contract records `56842b9`. Its record-result gate is superseded
+by [derived record results](m2-slice-reborrow-record-results.md) at `e8105f6`.
+
 Implemented at `56842b9`, following owned argument support at `c9f2294`.
 Windows development and release verification passed with matching inputs.
 
