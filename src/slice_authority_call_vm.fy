@@ -23,7 +23,7 @@ fn slices::Ticket none(){return slices::Ticket{.slot=16,.generation=0};}
 fn bool absent(slices::Ticket t){return t.slot==16 && t.generation==0;}
 fn bool same(owners::Token a,owners::Token b){return a.slot==b.slot && a.generation==b.generation;}
 pub fn Bindings empty(){return Bindings{.pcs=[256;31],.detached=[none();248]};}
-fn Result<Call,errors::Error> info(ref ir::Program p,usize pc,usize offset){
+pub fn Result<Call,errors::Error> info(ref ir::Program p,usize pc,usize offset){
     if(p.function_count==0 || p.function_count>16 || p.registers>128 || pc>=p.count || pc>=256 || p.code[pc*8]!=9){return .err(errors::make(5,offset));}
     let usize target=p.code[pc*8+2] as usize;let usize args=p.code[pc*8+3] as usize;
     if(target>=p.function_count || args>=p.call_count || args>=32 || p.arities[target]>8 || p.call_arities[args] as usize!=p.arities[target] ||

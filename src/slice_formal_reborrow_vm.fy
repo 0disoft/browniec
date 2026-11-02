@@ -37,7 +37,7 @@ fn Result<usize,errors::Error> key(ref ir::Program p,ref proof::Sites sites,usiz
         if(cursor>=16 || count>=15 || sites.parents[cursor]>=16){return .err(errors::make(5,offset));}cursor=sites.parents[cursor];count+=1;
     }return .ok(16+anchor);
 }
-fn Result<usize,errors::Error> checked(ref ir::Program p,ref proof::Sites sites,ref owned::Bindings bindings,
+pub fn Result<usize,errors::Error> checked(ref ir::Program p,ref proof::Sites sites,ref owned::Bindings bindings,
     ref calls::Bindings call_bindings,ref authority::State receipts,ref shared::Frames frames,
     ref loans::State loan,ref arrays::State state,usize capacity,usize offset){
     let usize depth=calls::inspect(p,call_bindings,receipts,frames,loan,state,offset)?;

@@ -60,6 +60,8 @@ def main():
     selection.add_argument('--reborrow-vm', action='store_true', help='Verify private metered owned reborrow transitions, site binding and abort cleanup')
     selection.add_argument('--reborrow-order', action='store_true', help='Verify private IR reverse restoration across independent roots and native agreement')
     selection.add_argument('--authority', action='store_true', help='Verify private combined CALL/reborrow depth, receipt ownership and public regression')
+    selection.add_argument('--reborrow-call-admission', action='store_true', help='Verify unpublished native CALL preparation for derived slice sources')
+    parser.add_argument('--admission-phase', choices=['core', 'regression'], default='core')
     selection.add_argument('--reborrow-call-ir', action='store_true', help='Verify opt-in suspended/derived CALL flow proof and unchanged execution gates')
     selection.add_argument('--reborrow-ir', action='store_true', help='Verify private exclusive child/parent IR flow, execution gates and public regressions')
     args = parser.parse_args()
@@ -168,6 +170,11 @@ def main():
         kind = 'slice-reborrow-call-ir'
         groups = {'slice_reborrow_calls': 8, 'slice_reborrow_ir': 6, 'slice_mutable_calls': 6}
         matrices_to_run = {'slice-mutable-parameters-source': 74, 'slice-exclusive-source': 222, 'slice-element-public': 192}
+    if args.reborrow_call_admission:
+        kind = 'slice-reborrow-call-admission-' + args.admission_phase
+        groups = ({'slice_reborrow_call_admission': 6} if args.admission_phase == 'core'
+                  else {'slice_formal_reborrow_vm': 6, 'slice_authority': 6})
+        matrices_to_run = {}
     output = ROOT / ('build/m2-' + kind) / args.profile
     output.mkdir(parents=True, exist_ok=True)
     receipt = output / 'receipt.json'
@@ -201,11 +208,13 @@ def main():
     inputs = [dict(path=p.relative_to(ROOT).as_posix(), sha256=digest(p)) for p in sorted(paths)]
     flags = ['--release'] if args.profile == 'release' else []
     native = []
-    batches = [groups] if args.reborrow_call_ir or result_authority or args.record_call_authority or args.owned_call_authority or args.shared_call_authority or args.scalar_call_authority or args.reborrow_execution or args.formal_reborrow_vm or args.authority_call_vm or args.reborrow_vm or args.reborrow_order or args.authority or args.reborrow_ir or args.exclusive_reborrow or args.public_mutable_parameters else [{name: count} for name, count in groups.items()]
+    batches = [groups] if args.reborrow_call_admission or args.reborrow_call_ir or result_authority or args.record_call_authority or args.owned_call_authority or args.shared_call_authority or args.scalar_call_authority or args.reborrow_execution or args.formal_reborrow_vm or args.authority_call_vm or args.reborrow_vm or args.reborrow_order or args.authority or args.reborrow_ir or args.exclusive_reborrow or args.public_mutable_parameters else [{name: count} for name, count in groups.items()]
     for batch in batches:
         name = ('record-result-authority-batch' if args.record_result_authority else 'array-result-authority-batch' if args.array_result_authority else 'record-call-authority-batch' if args.record_call_authority else 'owned-call-authority-batch' if args.owned_call_authority else 'shared-call-authority-batch' if args.shared_call_authority else 'scalar-call-authority-batch' if args.scalar_call_authority else 'reborrow-execution-batch' if args.reborrow_execution else 'formal-reborrow-vm-batch' if args.formal_reborrow_vm else 'authority-call-vm-batch' if args.authority_call_vm else 'reborrow-vm-batch' if args.reborrow_vm else 'reborrow-order-batch' if args.reborrow_order else 'authority-batch' if args.authority else 'reborrow-ir-batch' if args.reborrow_ir else 'exclusive-reborrow-batch' if args.exclusive_reborrow else 'mutable-public-batch') if len(batch) > 1 else next(iter(batch))
         if args.reborrow_call_ir:
             name = 'reborrow-call-ir-batch'
+        if args.reborrow_call_admission:
+            name = 'reborrow-call-admission-' + args.admission_phase
         count = sum(batch.values())
         files = [item for group in batch for item in ['--file', f'tests/m2/{group}.fy']]
         report = json.loads(run([compiler, 'test', '--native', '--capture-output', '--json',
@@ -223,13 +232,17 @@ def main():
         native.append(report)
         (output / f'{name}.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
         print(f'PASS: {args.profile}: {name}: {count} native groups', flush=True)
-    if result_authority and result_phase == 'core':
+    if args.reborrow_call_admission or (result_authority and result_phase == 'core'):
         report = dict(schema='browniec.' + kind + '/v1', status='passed', profile=args.profile,
                       baselineHead=baseline, compilerSha256=compiler_hash, compilerVersion=version,
                       sourceSha256=inputs, commands=commands, native=native,
                       nativeGroups=sum(groups.values()), cliCases=0,
                       limitations=['Private native canonical aggregate-result transfer and selected legacy result regression only.',
                                    'No public capability change, suspended CALL promotion or measured performance claim.'])
+        if args.reborrow_call_admission:
+            report['limitations'] = ['Unpublished native CALL preparation only: original child/formal/shared sources authenticate before local retention and writer rotation, with combined-depth/generation reserves. Original invocation and payload are unchanged on every result.',
+                                     'Borrowed/scalar signatures and scalar results only. No plan publication, return/abort integration, owned copying, aggregate results, executable/public promotion or new Fuel price. Existing canonical helpers change visibility only.',
+                                     'Selected Windows native tests only; CLI, full native, other M2, Linux, isolation, packaging, allocator, native size/stack and timing were not rerun.']
         receipt.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
         return
     build = run([compiler, 'build', '--locked', *flags])
