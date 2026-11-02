@@ -1,5 +1,8 @@
 # Public reborrow IR admission and execution
 
+Source successor: [lexical mutable reborrows](m2-slice-reborrow-source.md).
+The source gates below describe the `409d77c` checkpoint.
+
 Status: implemented at `409d77c`; Windows verification passed. Public IR opcodes 61 and 62
 are admitted and executed through the verifier and VM. Source grammar, parser,
 compiler and CLI capabilities remain gated.

@@ -1,5 +1,22 @@
 # AGENTS.md
 
+- Lexical mutable reborrow source is implemented at `3a07820`. Exact-mode
+  `let ref mut Tag[] child = ref mut parent[lo..hi]` uses existing op61/62;
+  bare/open-ended ranges and nested owned/formal children work. All lexical
+  exits and owned array/record result cleanup end children before closing parents.
+  Independent public proof rejects suspended-parent access and unsupported derived
+  CALL shapes before effects. Source snapshots and runtime layouts are unchanged;
+  cleanup finds each parent in at most 256 emitted instructions. Version JSON adds
+  `array_slice_mutable_reborrow: true`; CLI Fuel remains capped at 1M.
+  Development/release each passed 9 native groups and 2,615 CLI cases including
+  68 new cases and full M1. All 438 input hashes match across profiles; retained
+  artifact hashes were rechecked;
+  94 other production sources match `101e36e` under Git LF normalization.
+  Full native/other M2/Linux/isolation/packaging/allocator/native size-stack/timing
+  were not rerun. Local only; no push. See the
+  [source contract](docs/engineering/m2-slice-reborrow-source.md) and
+  [Windows evidence](docs/evidence/m2-slice-reborrow-source-windows-20261103.json).
+
 - Public IR reborrow admission and execution: implemented at `409d77c` on `main`
   after shared-guard preparation `42a66e9`. `verifier::verify_sites` returns the
   exact proved `Sites` before public quota, preparation Fuel, backing or local

@@ -1,5 +1,16 @@
 # Validation
 
+- Lexical mutable reborrow source: implemented at `3a07820`. Exact-mode children
+  use existing op61/62 and restore their parents at all lexical exits, including
+  array/record result transfer. Public independent proof rejects suspended access
+  and unsupported derived CALLs before effects. Windows development/release each
+  passed 9 native groups and 2,615 CLI cases (68 new reborrow, 74 mutable parameter,
+  222 mutable slice, 244 readonly alias/subslice, 2,007 full M1). All 438 inputs and
+  retained compiler/CLI/receipt identities were rechecked. Full native/other M2/Linux,
+  isolation, packaging, allocator, native size/stack and timing were not rerun.
+  See the [source contract](docs/engineering/m2-slice-reborrow-source.md) and
+  [Windows evidence](docs/evidence/m2-slice-reborrow-source-windows-20261103.json).
+
 - Public readonly u8 slice parameters: implemented at `6a7d206`.
   Public VM and CLI now admit verified `ref u8[]` signatures and explicit
   ref-name arguments. Full metadata/type/flow/lifetime validation remains;

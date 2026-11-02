@@ -1,5 +1,21 @@
 # Brownie C
 
+## Mutable slice reborrows from source
+
+Implemented at `3a07820`. `let ref mut i32[] child = ref mut parent[lo..hi];`
+selects a temporary exclusive range from an owned slice, mutable formal or child.
+The parent is unavailable until the child leaves scope; normal exits, early
+returns, loops, tagged propagation and aggregate-result cleanup restore it.
+All six scalar element types work, and `array_slice_mutable_reborrow` is now true
+in version JSON. Derived CALLs still reject owned arguments and aggregate results.
+The CLI Fuel cap, static-site limits, profiles and instruction prices are unchanged.
+Development and release each passed 9 native groups and 2,615 CLI cases, including
+68 new reborrow cases and full M1; all 438 input hashes match. Full native, other
+M2, Linux, isolation, packaging and performance were not rerun. Local only; no push.
+See the [example](examples/mutable-slice-reborrow.brc) and
+[source contract](docs/engineering/m2-slice-reborrow-source.md), with
+[verified Windows evidence](docs/evidence/m2-slice-reborrow-source-windows-20261103.json).
+
 ## Public IR reborrow admission and execution
 
 Implemented at `409d77c` on `main`, following shared-guard preparation at
