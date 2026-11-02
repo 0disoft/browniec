@@ -66,18 +66,21 @@ See the [public parameter Windows evidence](docs/evidence/m2-slice-mutable-param
 
 ## Current private canonical CALL execution
 
-The [canonical coordinator](docs/engineering/m2-slice-owned-call-authority.md)
-now executes scalar, owned scalar-array, shared and exclusive CALL arguments
-through the shared reborrow VM core. Loan metadata is prepared before the existing
-atomic array copier; only infallible authority/map/control publication follows.
-Existing logical prices and public CLI behavior are unchanged. Record arguments,
-aggregate results, suspended/derived exclusive CALLs and guest/public reborrow
-promotion remain gated. Next is owned record argument coordination. The earlier
-adapter/proof stages below describe their own checkpoints.
+The [canonical coordinator](docs/engineering/m2-slice-record-call-authority.md)
+now executes scalar, owned array/record, shared and exclusive CALL arguments
+through the shared reborrow VM core. Loan metadata is prepared before existing
+atomic copying; only infallible authority/map/control publication follows. Record
+copies reuse nested bool validation and normalized padding with existing fixed
+scratch. Logical prices and public capabilities are unchanged. Aggregate results,
+suspended/derived exclusive CALLs and guest/public reborrow promotion remain gated.
+Next is canonical scalar-array results. The earlier adapter/proof stages below
+describe their own checkpoints.
 
-Implemented at `29ddc4a`; development and release each passed 30 selected native
-groups and 2,495 CLI cases, with 391 matching input hashes and rechecked artifact
-identities. See [Windows evidence](docs/evidence/m2-slice-owned-call-authority-windows-20261102.json).
+Implemented at `b35b867`, with the release field-path repair at `518a9cb`.
+Development and release each passed 32 canonical CALL native groups and 2,495
+CLI cases, with 393 matching input hashes. Separate record VM/path checks passed
+10 native groups and one public wide-record CLI regression per profile. See the
+[Windows evidence](docs/evidence/m2-slice-record-call-authority-windows-20261102.json).
 Native size/stack, allocator and timing remain unmeasured. Local commits only.
 
 ## Private metered owned reborrow adapter

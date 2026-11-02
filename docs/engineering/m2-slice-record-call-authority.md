@@ -75,3 +75,40 @@ Next is canonical scalar-array result coordination as a separate delivery, then
 record results and suspended CALL proof. Full native, other M2, Linux, M0,
 isolation, packaging, native size/stack, allocator and timing are outside this
 selection. Local commits only; no push, publication, release or deployment.
+
+Implemented at `b35b867`, with the release field-path repair at `518a9cb`.
+Development and release each passed 32 canonical CALL native groups and 2,495
+CLI cases, with 393 matching current input hashes. Separate record VM/path checks
+passed 10 native groups and one public wide-record CLI regression per profile.
+See the [Windows evidence](../evidence/m2-slice-record-call-authority-windows-20261102.json)
+for compiler/artifact identities, original receipt hashes, parser boundaries and
+the additional field-path reports.
+Nineteen core/public/native modules match `02e0140`, including IR, signatures,
+verifier, compiler, public VM, native authority, both copy adapters, owner/pool
+primitives, formal reborrow and invocation admission/cleanup. Existing
+scalar/control and canonical release/return/abort bodies and authority/CALL
+declarations also match. The shared core differs only in the mutability of the
+record-state argument passed to canonical CALL. The remaining struct VM change
+is limited to its field selector.
+
+## Release field-path repair
+
+The original release build returned path `[0]` for scalar ordinal 2 in a record
+containing all six scalar tags. The `i64` minimum comparison consequently read
+the leading `i32` field. The same guest IR succeeded in development; direct
+codec and owner reads retained the minimum in release. Both canonical and public
+execution reproduced the incorrect result before the repair.
+
+The selector now stages the path array and leaf counter as separate locals and
+constructs `Selection` at return. Depth 16, 128 leaves, the 4,096-visit ceiling,
+error handling, payload quotas and logical Fuel prices are unchanged. The rest
+of `struct_vm` matches the baseline. No Fairy C checkout or compiler binary was
+modified; the underlying compiler cause has not been established.
+
+Separate native checks exercise every mixed-width flat/nested ordinal, verify
+all neighbors after each write, release storage, and rerun all eight existing
+record VM groups, including maximum depth/leaves and exact Fuel/quota tests.
+
+All ten record VM/path groups passed in both profiles. The original six-tag
+source also returned 42 through each retained public CLI using a tool-free PATH.
+The canonical CALL batch retains its original six record groups and assertions.

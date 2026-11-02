@@ -1,5 +1,35 @@
 # AGENTS.md
 
+- Private canonical owned record arguments: implemented at `b35b867`.
+  Immutable exact-nominal records now mix with arrays/scalars/shared/exclusive
+  formals. Existing struct_call_vm dispatches unchanged array-only or mixed
+  copying after loan/authority preparation; only infallible publication follows.
+  Complete existing copy/CALL prices are charged once. Repeated records get
+  independent copies; nested bool checks and padding normalization precede writes.
+  The mixed copier retains its existing fixed 1024-byte snapshot scratch. No
+  additional payload snapshot, authority clone, persistent field or receipt
+  collection is added; CALL/Admission/authority declarations remain unchanged.
+  Prior native single-use plan, return cleanup and abort ownership contracts
+  remain. Copied parameters must be dropped before return. Abort preserves writes,
+  copies and original outcomes or failed-cleanup maps; native callers dispose
+  owned storage/backing. Public source/capabilities/prices remain unchanged.
+  The release-only record field-path repair is committed at `518a9cb`. Its
+  standalone path/counter staging preserves existing bounds and logical prices.
+  Development/release each passed 32 canonical native groups and 2,495 CLI
+  cases, with 393 matching current input hashes. Separate record VM/path checks
+  passed 10 native groups and one public wide-record CLI regression per profile.
+  Nineteen core/public/native modules match `02e0140`; the remaining struct VM
+  change is limited to the selector. Scalar/control and canonical release/return/abort bodies
+  and binding/authority layouts are unchanged. Shared core changes only the
+  readonly-to-mutable record argument passed into canonical CALL. Full native,
+  other M2, Linux, M0, isolation, packaging, native size/stack, allocator and timing
+  were not rerun; no measured memory/performance improvement is claimed.
+  Aggregate results, suspended/derived exclusive CALLs and guest/public reborrow
+  promotion remain gated. Next is canonical scalar-array results as a separate
+  slice, then record results and suspended CALL proof. Local commits only;
+  no push/release. See [the record CALL contract](docs/engineering/m2-slice-record-call-authority.md)
+  and [Windows evidence](docs/evidence/m2-slice-record-call-authority-windows-20261102.json).
+
 - Private canonical owned scalar-array arguments: implemented at `29ddc4a`.
   Immutable exact-shape array values now interleave with scalar/shared/exclusive
   arguments. Complete Fuel includes existing array copy work once. Native
