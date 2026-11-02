@@ -62,14 +62,25 @@ pub fn Result<usize,owners::Error> inspect(ref State state) { return valid(state
 
 // Reserve ALL pending restores, not merely CALL frames. The receipt remains in
 // this stack; only the child tickets escape to the native binding coordinator.
-pub fn Result<slices::Arguments,owners::Error> enter_call(ref mut State state,
+pub fn Result<Entry,owners::Error> prepare_call(ref State state,
     ref mut slices::Pool pool,ref slices::Ticket[] sources,ref owners::Table table,usize capacity,usize frame) {
     let usize depth=valid(state)?;
     if(frame!=state.frame || frame>=31 || depth>=31) { return .err(.State); }
     let handoff::Batch receipt=handoff::begin(pool,sources,table,capacity,depth)?;
-    let slices::Arguments result=slices::Arguments { .tickets=receipt.tickets,.count=receipt.count };
-    put(state,depth,Entry { .call=receipt,.child=reborrow::empty(),.kind=1,.frame=frame });
-    state.depth=depth+1;state.frame=frame+1;
+    return .ok(Entry { .call=receipt,.child=reborrow::empty(),.kind=1,.frame=frame });
+}
+// Private single-use plan: state must remain unchanged between prepare/publish.
+// Only atomic owned copying may intervene; it preserves existing roots/sessions.
+pub fn slices::Arguments publish_call(ref mut State state,Entry plan) {
+    let usize depth=state.depth;let usize frame=state.frame;
+    let slices::Arguments result=slices::Arguments { .tickets=plan.call.tickets,.count=plan.call.count };
+    put(state,depth,plan);state.depth=depth+1;state.frame=frame+1;
+    return result;
+}
+pub fn Result<slices::Arguments,owners::Error> enter_call(ref mut State state,
+    ref mut slices::Pool pool,ref slices::Ticket[] sources,ref owners::Table table,usize capacity,usize frame) {
+    let Entry plan=prepare_call(state,pool,sources,table,capacity,frame)?;
+    let slices::Arguments result=publish_call(state,plan);
     return .ok(result);
 }
 pub fn Result<slices::Arguments,owners::Error> leave_call(ref mut State state,

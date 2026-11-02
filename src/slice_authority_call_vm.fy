@@ -10,12 +10,13 @@ import slice_vm as loans;
 import slice_call_vm as shared;
 import slice_authority as authority;
 import slice_reborrow_ir as proof;
+import array_call_vm as copies;
 import std::bytes as bytes;
 
 // PC derives caller/target/argument positions from immutable inspected IR.
 // These maps never own a duplicate Batch or Loan. Canonical receipts stay in authority.
 pub struct Bindings { usize[31] pcs; slices::Ticket[248] detached; }
-pub struct Call { usize caller; usize target; usize args; usize count; usize readers; }
+pub struct Call { usize caller; usize target; usize args; usize count; usize readers; usize owned; }
 fn slices::Ticket none(){return slices::Ticket{.slot=16,.generation=0};}
 fn bool absent(slices::Ticket t){return t.slot==16 && t.generation==0;}
 fn bool same(owners::Token a,owners::Token b){return a.slot==b.slot && a.generation==b.generation;}
@@ -27,12 +28,21 @@ fn Result<Call,errors::Error> info(ref ir::Program p,usize pc,usize offset){
         p.register_starts[target]>p.registers || p.arities[target]>p.registers-p.register_starts[target] || p.array_results[target]!=0 || p.record_results[target]!=0){return .err(errors::make(5,offset));}
     var usize caller=0;while(caller<p.function_count && (pc<p.starts[caller] || pc>=p.ends[caller])){caller+=1;}
     if(caller==p.function_count){return .err(errors::make(5,offset));}
-    var usize count=0;var usize readers=0;var usize seen=0;let usize one=1;var usize i=0;
+    var usize count=0;var usize readers=0;var usize owned=0;var usize arrays_seen=0;var usize seen=0;let usize one=1;var usize i=0;
     while(i<p.arities[target]){
         let usize r=p.register_starts[target]+i;let usize encoded=p.slice_parameters[r] as usize;let usize source=p.call_args[args*8+i] as usize;
-        // Owned arguments and aggregate results remain outside this bridge.
-        if(p.array_parameters[r]!=0 || p.record_parameters[r]!=0 || p.slots[r]){return .err(errors::make(5,offset));}
-        if(encoded!=0){
+        // Record arguments and aggregate results remain outside this bridge.
+        if(p.record_parameters[r]!=0 || p.slots[r]){return .err(errors::make(5,offset));}
+        let usize array=p.array_parameters[r] as usize;
+        if(array!=0){
+            if(encoded!=0 || array>16 || array>p.arrays.count || source<128 || source>=144 || source-128>=p.arrays.count){return .err(errors::make(5,offset));}
+            let usize dst=array-1;let usize src=source-128;
+            if((arrays_seen&(one<<dst))!=0 || p.array_functions[dst] as usize!=target || p.array_functions[src] as usize!=caller ||
+                p.arrays.mutable[dst] || p.arrays.mutable[src] || !types::scalar(p.arrays.elements[dst]) || p.types[r]!=p.arrays.elements[dst] ||
+                p.arrays.elements[src]!=p.arrays.elements[dst] || p.arrays.lengths[dst]==0 || p.arrays.lengths[dst]>4096 ||
+                p.arrays.lengths[src]!=p.arrays.lengths[dst]){return .err(errors::make(5,offset));}
+            arrays_seen|=one<<dst;owned+=1;
+        }else if(encoded!=0){
             if(encoded>16 || p.types[r]!=0 || p.slice_roots[encoded-1]!=0 ||
                 p.slice_origins[encoded-1] as usize!=encoded || p.slice_functions[encoded-1] as usize!=target+1 ||
                 !types::scalar(ir::borrow_element(p,encoded-1)) || (seen&(one<<(encoded-1)))!=0 || source<160 || source>=176){return .err(errors::make(5,offset));}
@@ -41,11 +51,12 @@ fn Result<Call,errors::Error> info(ref ir::Program p,usize pc,usize offset){
             p.types[source]!=p.types[r] || p.slots[source] || p.array_parameters[source]!=0 || p.record_parameters[source]!=0 || p.slice_parameters[source]!=0){return .err(errors::make(5,offset));}
         i+=1;
     }
-    return .ok(Call{.caller=caller,.target=target,.args=args,.count=count,.readers=readers});
+    return .ok(Call{.caller=caller,.target=target,.args=args,.count=count,.readers=readers,.owned=owned});
 }
 pub fn Result<usize,errors::Error> cost(ref ir::Program p,usize pc,usize offset){
     let Call call=info(p,pc,offset)?;
-    return .ok(1+p.arities[call.target]+if(call.count+call.readers==0){0}else{65537*(1+call.readers+2*call.count)});
+    let usize copying=copies::cost(p,call.target,offset)?;
+    return .ok(1+p.arities[call.target]+copying+if(call.count+call.readers==0){0}else{65537*(1+call.readers+2*call.count)});
 }
 fn Result<usize,errors::Error> index(ref authority::State receipts,usize frame,usize offset){
     if(frame==0 || frame>=32 || receipts.depth>31){return .err(errors::make(5,offset));}
@@ -137,11 +148,12 @@ pub fn Result<owners::View,errors::Error> view(ref ir::Program p,usize function,
     if(!absent(bindings.detached[i*8+j])){return .err(errors::make(5,offset));}
     return authenticated(p,function,frame,site,loan.tickets[frame*16+site],bindings,receipts,frames,loan,state,capacity,offset);
 }
-// Scalar/control copies are the coordinator's responsibility. No fallible work
-// follows the one canonical handoff publication; all original inputs check first.
-pub fn Result<usize,errors::Error> enter(ref ir::Program p,ref proof::Sites sites,usize pc,usize parent,
-    ref mut Bindings bindings,ref mut authority::State receipts,ref mut shared::Frames frames,
-    ref mut loans::State loan,ref arrays::State state,ref records::State record_state,ref bytes::Buffer buffer,usize fuel){
+// Unpublished invocation-local metadata, never a second persistent receipt owner.
+struct Admission { slices::Pool pool; authority::Entry receipt; slices::Arguments retained;
+    owners::Token[8] roots; Call call; usize pc; usize parent; usize depth; usize remaining; }
+fn Result<Admission,errors::Error> prepare(ref ir::Program p,ref proof::Sites sites,usize pc,usize parent,
+    ref Bindings bindings,ref authority::State receipts,ref shared::Frames frames,
+    ref loans::State loan,ref arrays::State state,ref records::State record_state,ref bytes::Buffer buffer,usize fuel){
     let usize offset=if(pc<p.count && pc<256){p.offsets[pc]}else{0};let Call call=info(p,pc,offset)?;let usize charge=cost(p,pc,offset)?;
     if(fuel<charge){return .err(errors::make(8,offset));}
     let usize depth=inspect(p,bindings,receipts,frames,loan,state,offset)?;
@@ -161,14 +173,39 @@ pub fn Result<usize,errors::Error> enter(ref ir::Program p,ref proof::Sites site
             let slices::Ticket current=loan.tickets[parent*16+source];
             if(loan.pool.slots[current.slot].view.element!=ir::borrow_element(p,encoded-1)){return .err(errors::make(5,offset));}readers[nr]=current;nr+=1;
         }}i+=1;}
-    // Validate every original before staged retain; authority publication is last.
+    // Every source checks against original state before any staged mutation.
     var slices::Pool planned=slices::Pool{.slots=loan.pool.slots};
     let slices::Arguments retained=switch(slices::borrow_arguments(ref mut planned,ref readers[..nr],ref state.owners,bytes::len(buffer))){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}};
-    let slices::Arguments issued=switch(authority::enter_call(receipts,ref mut planned,ref sources[..n],ref state.owners,bytes::len(buffer),parent)){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}};
-    loan.pool.slots=planned.slots;bindings.pcs[depth]=pc;n=0;nr=0;i=0;while(i<p.arities[call.target]){let usize encoded=p.slice_parameters[p.register_starts[call.target]+i] as usize;if(encoded!=0){
+    let authority::Entry receipt=switch(authority::prepare_call(receipts,ref mut planned,ref sources[..n],ref state.owners,bytes::len(buffer),parent)){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}};
+    return .ok(Admission{.pool=planned,.receipt=receipt,.retained=retained,.roots=roots,.call=call,.pc=pc,.parent=parent,.depth=depth,.remaining=fuel-charge});
+}
+fn usize publish(ref ir::Program p,ref Admission plan,ref mut Bindings bindings,ref mut authority::State receipts,
+    ref mut shared::Frames frames,ref mut loans::State loan){
+    let slices::Arguments issued=authority::publish_call(receipts,plan.receipt);
+    let Call call=plan.call;let usize parent=plan.parent;let usize child=parent+1;
+    loan.pool.slots=plan.pool.slots;bindings.pcs[plan.depth]=plan.pc;var usize n=0;var usize nr=0;var usize i=0;
+    while(i<p.arities[call.target]){let usize encoded=p.slice_parameters[p.register_starts[call.target]+i] as usize;if(encoded!=0){
         if(ir::exclusive(p,encoded-1)){let usize source=(p.call_args[call.args*8+i] as usize)-160;loan.tickets[parent*16+source]=none();loan.tickets[child*16+encoded-1]=issued.tickets[n];n+=1;}
-        else{loan.tickets[child*16+encoded-1]=retained.tickets[nr];nr+=1;}frames.origins[child*8+i]=roots[i];}i+=1;}
-    return .ok(fuel-charge);
+        else{loan.tickets[child*16+encoded-1]=plan.retained.tickets[nr];nr+=1;}frames.origins[child*8+i]=plan.roots[i];}i+=1;}
+    return plan.remaining;
+}
+// Compatibility entry for readonly backing. Owned signatures need enter_owned.
+pub fn Result<usize,errors::Error> enter(ref ir::Program p,ref proof::Sites sites,usize pc,usize parent,
+    ref mut Bindings bindings,ref mut authority::State receipts,ref mut shared::Frames frames,
+    ref mut loans::State loan,ref arrays::State state,ref records::State record_state,ref bytes::Buffer buffer,usize fuel){
+    let Call call=info(p,pc,if(pc<p.count && pc<256){p.offsets[pc]}else{0})?;
+    if(call.owned!=0){return .err(errors::make(5,p.offsets[pc]));}
+    let Admission plan=prepare(p,sites,pc,parent,bindings,receipts,frames,loan,state,record_state,buffer,fuel)?;
+    return .ok(publish(p,ref plan,bindings,receipts,frames,loan));
+}
+// Atomic copying is the last fallible operation. No receipt/state cloning or
+// payload snapshot is used; existing owner sessions remain valid for the plan.
+pub fn Result<usize,errors::Error> enter_owned(ref ir::Program p,ref proof::Sites sites,usize pc,usize parent,
+    ref mut Bindings bindings,ref mut authority::State receipts,ref mut shared::Frames frames,
+    ref mut loans::State loan,ref mut arrays::State state,ref records::State record_state,ref mut bytes::Buffer buffer,usize fuel){
+    let Admission plan=prepare(p,sites,pc,parent,bindings,receipts,frames,loan,state,record_state,buffer,fuel)?;
+    if(plan.call.owned!=0){let usize copied=copies::enter(p,plan.call.target,plan.call.args,parent,state,buffer,p.offsets[pc])?;}
+    return .ok(publish(p,ref plan,bindings,receipts,frames,loan));
 }
 pub fn Result<usize,errors::Error> release(ref ir::Program p,usize function,usize frame,usize site,
     ref mut Bindings bindings,ref authority::State receipts,ref shared::Frames frames,ref mut loans::State loan,

@@ -92,14 +92,14 @@ pub fn Result<usize,errors::Error> step_mutable(ref ir::Program p,usize pc,usize
     publish(p,ref plan,registers,return_pcs,return_dsts);return .ok(remaining);
 }
 
-// Reuse the same scalar/control preflight; canonical authority publication is
-// the last fallible operation before register and return-control publication.
+// Reuse scalar/control preflight; canonical loan preparation precedes atomic
+// owned copying. Only infallible authority/register/control publication follows.
 pub fn Result<usize,errors::Error> step_canonical(ref ir::Program p,ref proof::Sites sites,usize pc,usize parent,
     ref mut canonical::Bindings bindings,ref mut authority::State receipts,ref mut borrowed::Frames frames,ref mut loans::State loan,
-    ref records::State record_state,ref arrays::State state,ref bytes::Buffer buffer,ref mut i64[] registers,
+    ref records::State record_state,ref mut arrays::State state,ref mut bytes::Buffer buffer,ref mut i64[] registers,
     ref mut usize[] return_pcs,ref mut usize[] return_dsts,usize fuel){
     let usize charge=canonical::cost(p,pc,if(pc<p.count && pc<256){p.offsets[pc]}else{0})?;
     let Prepared plan=prepare(p,pc,parent,registers,return_pcs,return_dsts,fuel,charge)?;
-    let usize remaining=canonical::enter(p,sites,pc,parent,bindings,receipts,frames,loan,state,record_state,buffer,fuel)?;
+    let usize remaining=canonical::enter_owned(p,sites,pc,parent,bindings,receipts,frames,loan,state,record_state,buffer,fuel)?;
     publish(p,ref plan,registers,return_pcs,return_dsts);return .ok(remaining);
 }
