@@ -66,21 +66,19 @@ See the [public parameter Windows evidence](docs/evidence/m2-slice-mutable-param
 
 ## Current private canonical CALL execution
 
-The [canonical coordinator](docs/engineering/m2-slice-record-call-authority.md)
-now executes scalar, owned array/record, shared and exclusive CALL arguments
-through the shared reborrow VM core. Loan metadata is prepared before existing
-atomic copying; only infallible authority/map/control publication follows. Record
-copies reuse nested bool validation and normalized padding with existing fixed
-scratch. Logical prices and public capabilities are unchanged. Aggregate results,
-suspended/derived exclusive CALLs and guest/public reborrow promotion remain gated.
-Next is canonical scalar-array results. The earlier adapter/proof stages below
-describe their own checkpoints.
+The [canonical coordinator](docs/engineering/m2-slice-array-result-authority.md)
+now executes scalar and exact-shape array results with scalar, owned array/record,
+shared and exclusive CALL arguments through the shared reborrow VM core. Result
+validation precedes canonical loan restoration; only infallible ownership-token
+movement follows. Array returns retain their existing payload and owner generation
+without a second extent. Copy/return prices and public capabilities are unchanged.
+Record results, suspended/derived exclusive CALLs and guest/public reborrow
+promotion remain gated. Next is canonical record results. Earlier adapter/proof
+stages below describe their own checkpoints.
 
-Implemented at `b35b867`, with the release field-path repair at `518a9cb`.
-Development and release each passed 32 canonical CALL native groups and 2,495
-CLI cases, with 393 matching input hashes. Separate record VM/path checks passed
-10 native groups and one public wide-record CLI regression per profile. See the
-[Windows evidence](docs/evidence/m2-slice-record-call-authority-windows-20261102.json).
+Development and release core verification each passed 13 native groups (seven
+canonical result, six legacy array-result), with 394 matching current inputs.
+Existing canonical CALL and public CLI regression verification is pending.
 Native size/stack, allocator and timing remain unmeasured. Local commits only.
 
 ## Private metered owned reborrow adapter

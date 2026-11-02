@@ -186,9 +186,14 @@ fn Result<i64, errors::Error> core(ref ir::Program p, usize fuel,
         let usize base = frame * 128;
         if(op==39) {
             if(frame==0 || return_dsts[frame]<128) {return .err(errors::make(5,p.offsets[pc]));}
+            if(authority.len==1){
+                let usize transferred=canonical_calls::return_array(p,functions[frame],frame,a,return_dsts[frame]-128,
+                    ref mut call_sites[0],ref mut authority[0],borrowed_frames,loans,arrays,ref records,payload,p.offsets[pc])?;
+            }else{
             let usize closed=leave(p,functions[frame],frame,arrays,payload,loans,borrowed_frames,receipts,authority,call_sites,child_bindings,ref records,p.offsets[pc])?;
             let usize call=(return_pcs[frame]-1)*8;
             let usize transferred=array_results::leave(p,p.code[call+2] as usize,a,return_dsts[frame]-128,frame,arrays,payload,p.offsets[pc])?;
+            }
             pc=return_pcs[frame];frame-=1;continue;
         }
         if (op >= 33) {

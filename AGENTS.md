@@ -1,5 +1,23 @@
 # AGENTS.md
 
+- Private canonical scalar-array results are implemented. Exact-shape CALL
+  destinations must be empty before admission. Existing return validation now
+  prepares a single-use native Transfer; canonical restoration is last fallible
+  work, followed only by moving the existing token. No result payload copy,
+  second extent, persistent field or authority clone is added. Source/IR/public
+  capabilities and logical prices are unchanged. The legacy result leave API
+  composes the same prepare/publish phases. Scalar returns retain prior cleanup;
+  array return permits only its validated child result to survive cleanup.
+  Development/release core verification each passed 13 native groups (seven
+  canonical result, six legacy array-result), with 394 matching current inputs.
+  Existing canonical CALL and public CLI regression verification is pending.
+  Record results, suspended/derived exclusive CALLs and guest/public reborrow
+  promotion remain gated. Abort preserves writes, transferred/copied owners and
+  original outcomes or failed-cleanup diagnostics; native callers dispose owned
+  storage/backing. Native size/stack, allocator and timing remain unmeasured.
+  Next is canonical record results, then suspended CALL proof. Local commits
+  only; no push/release. See [the array result contract](docs/engineering/m2-slice-array-result-authority.md).
+
 - Private canonical owned record arguments: implemented at `b35b867`.
   Immutable exact-nominal records now mix with arrays/scalars/shared/exclusive
   formals. Existing struct_call_vm dispatches unchanged array-only or mixed

@@ -11,6 +11,7 @@ import slice_call_vm as shared;
 import slice_authority as authority;
 import slice_reborrow_ir as proof;
 import struct_call_vm as copies;
+import array_result_vm as results;
 import std::bytes as bytes;
 
 // PC derives caller/target/argument positions from immutable inspected IR.
@@ -25,13 +26,23 @@ fn Result<Call,errors::Error> info(ref ir::Program p,usize pc,usize offset){
     if(p.function_count==0 || p.function_count>16 || p.registers>128 || pc>=p.count || pc>=256 || p.code[pc*8]!=9){return .err(errors::make(5,offset));}
     let usize target=p.code[pc*8+2] as usize;let usize args=p.code[pc*8+3] as usize;
     if(target>=p.function_count || args>=p.call_count || args>=32 || p.arities[target]>8 || p.call_arities[args] as usize!=p.arities[target] ||
-        p.register_starts[target]>p.registers || p.arities[target]>p.registers-p.register_starts[target] || p.array_results[target]!=0 || p.record_results[target]!=0){return .err(errors::make(5,offset));}
+        p.register_starts[target]>p.registers || p.arities[target]>p.registers-p.register_starts[target] || p.record_results[target]!=0){return .err(errors::make(5,offset));}
     var usize caller=0;while(caller<p.function_count && (pc<p.starts[caller] || pc>=p.ends[caller])){caller+=1;}
     if(caller==p.function_count){return .err(errors::make(5,offset));}
+    let usize result=p.array_results[target] as usize;
+    if(result!=0){
+        let usize dst=p.code[pc*8+1] as usize;
+        if(result>16 || result>p.arrays.count || dst<128 || dst>=144 || dst-128>=p.arrays.count){return .err(errors::make(5,offset));}
+        let usize shape=result-1;let usize destination=dst-128;
+        if(p.array_functions[shape] as usize!=target || p.array_functions[destination] as usize!=caller ||
+            !types::scalar(p.arrays.elements[shape]) || p.return_types[target]!=p.arrays.elements[shape] ||
+            p.arrays.lengths[shape]==0 || p.arrays.lengths[shape]>4096 ||
+            p.arrays.elements[destination]!=p.arrays.elements[shape] || p.arrays.lengths[destination]!=p.arrays.lengths[shape]){return .err(errors::make(5,offset));}
+    }
     var usize count=0;var usize readers=0;var usize owned=0;var usize arrays_seen=0;var usize records_seen=0;var usize seen=0;let usize one=1;var usize i=0;
     while(i<p.arities[target]){
         let usize r=p.register_starts[target]+i;let usize encoded=p.slice_parameters[r] as usize;let usize source=p.call_args[args*8+i] as usize;
-        // Aggregate results remain outside this bridge.
+        // Aggregate placeholders cannot be scalar arguments.
         if(p.slots[r]){return .err(errors::make(5,offset));}
         let usize array=p.array_parameters[r] as usize;let usize record=p.record_parameters[r] as usize;
         if(record!=0){
@@ -163,6 +174,11 @@ fn Result<Admission,errors::Error> prepare(ref ir::Program p,ref proof::Sites si
     ref loans::State loan,ref arrays::State state,ref records::State record_state,ref bytes::Buffer buffer,usize fuel){
     let usize offset=if(pc<p.count && pc<256){p.offsets[pc]}else{0};let Call call=info(p,pc,offset)?;let usize charge=cost(p,pc,offset)?;
     if(fuel<charge){return .err(errors::make(8,offset));}
+    if(p.array_results[call.target]!=0 && parent<32){
+        let usize destination=(p.code[pc*8+1] as usize)-128;
+        let owners::Token dead=state.tokens[parent*16+destination];
+        if(dead.slot!=0 || dead.generation!=0){return .err(errors::make(5,offset));}
+    }
     let usize depth=inspect(p,bindings,receipts,frames,loan,state,offset)?;
     if(parent>=31 || depth>=31){return .err(errors::make(12,offset));}if(parent!=receipts.frame){return .err(errors::make(5,offset));}
     let usize child=parent+1;var usize i=0;while(i<16){if(!absent(loan.tickets[child*16+i]) || state.tokens[child*16+i].generation!=0 || record_state.tokens[child*16+i].generation!=0){return .err(errors::make(5,offset));}i+=1;}
@@ -225,7 +241,7 @@ pub fn Result<usize,errors::Error> release(ref ir::Program p,usize function,usiz
 }
 // Every exclusive formal must be live OR detached. Stage readonly child cleanup
 // before canonical restoration; owned values must already be cleaned by the core.
-pub fn Result<usize,errors::Error> leave(ref ir::Program p,usize function,usize frame,ref mut Bindings bindings,
+fn Result<usize,errors::Error> leave_inner(ref ir::Program p,usize function,usize frame,usize retained,ref mut Bindings bindings,
     ref mut authority::State receipts,ref mut shared::Frames frames,ref mut loans::State loan,
     ref mut arrays::State state,ref records::State record_state,ref bytes::Buffer buffer,usize offset){
     let usize depth=inspect(p,bindings,receipts,frames,loan,state,offset)?;
@@ -238,7 +254,7 @@ pub fn Result<usize,errors::Error> leave(ref ir::Program p,usize function,usize 
     var slices::Pool planned=slices::Pool{.slots=loan.pool.slots};
     var owners::Table planned_owners=owners::Table{.slots=state.owners.slots,.order=state.owners.order,.depth=state.owners.depth,.arena=state.owners.arena};
     var usize slot=16;while(slot>0){slot-=1;
-        if(state.tokens[frame*16+slot].generation!=0 || record_state.tokens[frame*16+slot].generation!=0){return .err(errors::make(5,offset));}
+        if((slot!=retained && state.tokens[frame*16+slot].generation!=0) || record_state.tokens[frame*16+slot].generation!=0){return .err(errors::make(5,offset));}
         if((allowed&(one<<slot))==0 && !absent(loan.tickets[frame*16+slot])){
             let owners::Token valid=shared::checked(p,function,frame,slot,frames,loan,state,bytes::len(buffer),offset)?;
             let usize closed=switch(slices::close(ref mut planned,loan.tickets[frame*16+slot],ref mut planned_owners,bytes::len(buffer))){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}};
@@ -249,6 +265,23 @@ pub fn Result<usize,errors::Error> leave(ref ir::Program p,usize function,usize 
     j=0;pos=0;while(pos<p.arities[function]){let usize encoded=p.slice_parameters[p.register_starts[function]+pos] as usize;if(encoded!=0 && ir::exclusive(p,encoded-1)){let usize source=(p.call_args[call.args*8+pos] as usize)-160;loan.tickets[(frame-1)*16+source]=restored.tickets[j];j+=1;}pos+=1;}
     bindings.pcs[i]=256;slot=0;while(slot<8){bindings.detached[i*8+slot]=none();frames.origins[frame*8+slot]=owners::Token{.slot=16,.generation=0};slot+=1;}slot=0;while(slot<16){loan.tickets[frame*16+slot]=none();slot+=1;}
     return .ok(j);
+}
+pub fn Result<usize,errors::Error> leave(ref ir::Program p,usize function,usize frame,ref mut Bindings bindings,
+    ref mut authority::State receipts,ref mut shared::Frames frames,ref mut loans::State loan,
+    ref mut arrays::State state,ref records::State record_state,ref bytes::Buffer buffer,usize offset){
+    return leave_inner(p,function,frame,16,bindings,receipts,frames,loan,state,record_state,buffer,offset);
+}
+// Caller prepays existing ARET cost. Validate the result and actual mapped CALL
+// before restoration; only infallible token movement follows the last failure.
+pub fn Result<usize,errors::Error> return_array(ref ir::Program p,usize function,usize frame,usize source,usize destination,
+    ref mut Bindings bindings,ref mut authority::State receipts,ref mut shared::Frames frames,ref mut loans::State loan,
+    ref mut arrays::State state,ref records::State record_state,ref bytes::Buffer buffer,usize offset){
+    let usize i=index(receipts,frame,offset)?;
+    let Call call=info(p,bindings.pcs[i],offset)?;
+    if(call.target!=function || destination>=16 || p.code[bindings.pcs[i]*8+1] as usize!=128+destination){return .err(errors::make(5,offset));}
+    let results::Transfer plan=results::prepare(p,function,source,destination,frame,state,buffer,offset)?;
+    let usize restored=leave_inner(p,function,frame,source,bindings,receipts,frames,loan,state,record_state,buffer,offset)?;
+    return .ok(results::publish(ref plan,state));
 }
 // Drain before clearing maps. Both standalone CALL and lexical coordinators use
 // this one cleanup transaction; a failed drain preserves all diagnostic maps.

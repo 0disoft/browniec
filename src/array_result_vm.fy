@@ -11,10 +11,12 @@ pub fn Result<usize,errors::Error> cost(ref ir::Program p,usize source,usize off
     // Prepay the frame token scan, owner metadata validation and bool traversal.
     return .ok(65+if(p.arrays.elements[source]==2){p.arrays.lengths[source]}else{0});
 }
-// Verified ARET retains only its result owner. All fallible work precedes both
-// token writes. The descriptor, generation, arena and payload remain unchanged.
-pub fn Result<usize,errors::Error> leave(ref ir::Program p,usize target,usize source,usize destination,usize frame,
-    ref mut arrays::State state,ref bytes::Buffer buffer,usize offset) {
+// Trusted native, single-use plan: no owner/token mutation may intervene except
+// canonical loan restoration, which must preserve this unique result owner.
+pub struct Transfer { owners::Token token; usize child; usize parent; usize bytes; }
+// Verified ARET retains only its result owner. Preparation does not mutate state.
+pub fn Result<Transfer,errors::Error> prepare(ref ir::Program p,usize target,usize source,usize destination,usize frame,
+    ref arrays::State state,ref bytes::Buffer buffer,usize offset) {
     if(frame==0 || frame>=32 || target>=p.function_count || source>=p.arrays.count || destination>=p.arrays.count) {
         return .err(errors::make(5,offset));
     }
@@ -36,7 +38,17 @@ pub fn Result<usize,errors::Error> leave(ref ir::Program p,usize target,usize so
     let usize checked=switch(owners::validate_result(ref state.owners,token,p.arrays.elements[shape],p.arrays.lengths[shape],bytes::view(buffer))) {
         case .ok(n):{n} case .err(e):{return .err(arrays::failure(e,offset));}
     };
-    state.tokens[child+source]=owners::Token{.slot=0,.generation=0};
-    state.tokens[parent]=token;
-    return .ok(checked);
+    return .ok(Transfer{.token=token,.child=child+source,.parent=parent,.bytes=checked});
+}
+
+// Infallible publication after preparation and any canonical loan restoration.
+pub fn usize publish(ref Transfer plan,ref mut arrays::State state) {
+    state.tokens[plan.child]=owners::Token{.slot=0,.generation=0};
+    state.tokens[plan.parent]=plan.token;
+    return plan.bytes;
+}
+pub fn Result<usize,errors::Error> leave(ref ir::Program p,usize target,usize source,usize destination,usize frame,
+    ref mut arrays::State state,ref bytes::Buffer buffer,usize offset) {
+    let Transfer plan=prepare(p,target,source,destination,frame,state,buffer,offset)?;
+    return .ok(publish(ref plan,state));
 }
