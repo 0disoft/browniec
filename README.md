@@ -76,9 +76,10 @@ Record results, suspended/derived exclusive CALLs and guest/public reborrow
 promotion remain gated. Next is canonical record results. Earlier adapter/proof
 stages below describe their own checkpoints.
 
-Development and release core verification each passed 13 native groups (seven
-canonical result, six legacy array-result), with 394 matching current inputs.
-Existing canonical CALL and public CLI regression verification is pending.
+Implemented at `f7c0827`. Development and release each passed 31 distinct native
+groups (13 core, 18 canonical regression) and 2,495 CLI cases, with 394 matching
+input hashes across all four phases. See the
+[Windows evidence](docs/evidence/m2-slice-array-result-authority-windows-20261102.json).
 Native size/stack, allocator and timing remain unmeasured. Local commits only.
 
 ## Private metered owned reborrow adapter

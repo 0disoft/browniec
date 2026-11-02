@@ -79,7 +79,19 @@ and 2,007 M1 CLI cases per profile. Phases share input hashes and do not repeat
 native groups. Full native, other M2, Linux, M0, isolation, packaging, allocator,
 native size/stack and timing are outside this selection.
 
-Development and release core verification each passed 13 native groups, with
-394 matching current input hashes. Canonical CALL/public CLI regression is
-pending. Local commits only; no push, publication, packaged release or deployment.
+Implemented at `f7c0827`. Development and release each passed 31 distinct native
+groups (13 core and 18 regression) and 2,495 CLI cases. All four phases match 394
+current input hashes. The [Windows evidence](../evidence/m2-slice-array-result-authority-windows-20261102.json)
+records compiler identity, both retained CLIs, original receipt hashes, native
+outcomes and the six parser boundary cases per profile. Depth32 passes;
+depths33/64 return `compile_limit`.
+
+The production delta is limited to `array_result_vm`, `slice_authority_call_vm`,
+`vm_execution` and `vm_reborrow_execution`. The remaining 91 production source
+files match `1a4912b`, including compiler, verifier, public VM, native owner/pool
+and authority primitives, formal reborrow and scalar/control CALL preflight.
+CALL, Admission and binding layouts are unchanged. Canonical leave differs only
+in allowing the validated result array; canonical drain/finish are unchanged.
+
+Local commits only; no push, publication, packaged release or deployment.
 Next is canonical record results, then suspended CALL proof.

@@ -1,6 +1,6 @@
 # AGENTS.md
 
-- Private canonical scalar-array results are implemented. Exact-shape CALL
+- Private canonical scalar-array results: implemented at `f7c0827`. Exact-shape CALL
   destinations must be empty before admission. Existing return validation now
   prepares a single-use native Transfer; canonical restoration is last fallible
   work, followed only by moving the existing token. No result payload copy,
@@ -8,15 +8,21 @@
   capabilities and logical prices are unchanged. The legacy result leave API
   composes the same prepare/publish phases. Scalar returns retain prior cleanup;
   array return permits only its validated child result to survive cleanup.
-  Development/release core verification each passed 13 native groups (seven
-  canonical result, six legacy array-result), with 394 matching current inputs.
-  Existing canonical CALL and public CLI regression verification is pending.
+  Development/release each passed 31 distinct native groups (13 core, 18
+  canonical regression) and 2,495 CLI cases, with 394 matching current inputs
+  across all four phases. Compiler/artifact/receipt identities were rechecked;
+  parser depth32 passes and depths33/64 return compile_limit. The four-file
+  production delta leaves 91 other source files unchanged from `1a4912b`,
+  including compiler, verifier, public VM, native authority/owner/pool primitives
+  and scalar/control CALL preflight. CALL/Admission/binding layouts, canonical
+  drain/finish and logical prices are unchanged.
   Record results, suspended/derived exclusive CALLs and guest/public reborrow
   promotion remain gated. Abort preserves writes, transferred/copied owners and
   original outcomes or failed-cleanup diagnostics; native callers dispose owned
   storage/backing. Native size/stack, allocator and timing remain unmeasured.
   Next is canonical record results, then suspended CALL proof. Local commits
   only; no push/release. See [the array result contract](docs/engineering/m2-slice-array-result-authority.md).
+  See [Windows evidence](docs/evidence/m2-slice-array-result-authority-windows-20261102.json).
 
 - Private canonical owned record arguments: implemented at `b35b867`.
   Immutable exact-nominal records now mix with arrays/scalars/shared/exclusive
