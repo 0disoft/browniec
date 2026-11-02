@@ -1,5 +1,22 @@
 # AGENTS.md
 
+- Analysis-only suspended/derived CALL proof: implemented at `eb2a0ce`.
+  `verifier::inspect_reborrow_calls` preserves exact caller live words, requires
+  available leaf sources and closed suspended forests, and checks exact modes,
+  tags, caller function/origin and unique exclusive source/root/formal-origin use.
+  Existing full metadata/type/flow, joins/backedges and reverse cleanup remain.
+  Legacy inspect/verify, checked canonical and public execution gates are unchanged.
+  Development/release each passed 20 native groups and 2,495 CLI cases; all 397
+  current input hashes and retained compiler/artifact/receipt identities match.
+  The production delta is verifier plus one new proof module; 94 existing sources
+  are unchanged from `5fa17ca`. No Program field, opcode, layout, Fuel or capability
+  is added. Native receipt authentication, combined-depth reservation and ticket
+  generation restoration for derived CALL sources remain the next integration.
+  Full native, other M2, Linux, isolation, packaging, native size/stack, allocator
+  and timing were not rerun. Local commits only; no push/release.
+  See [the proof contract](docs/engineering/m2-slice-reborrow-call-ir.md) and
+  [Windows evidence](docs/evidence/m2-slice-reborrow-call-ir-windows-20261103.json).
+
 - Private canonical exact-nominal record results: implemented at `4a87cb1`. CALL result
   anchors/destinations must have matching nominal identity and correct functions;
   equal-sized other records are rejected. Caller destinations are checked empty

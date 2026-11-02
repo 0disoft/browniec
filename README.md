@@ -1,5 +1,20 @@
 # Brownie C
 
+## Private suspended-reborrow CALL proof
+
+`verifier::inspect_reborrow_calls` adds an analysis-only proof for synchronous
+CALLs across suspended exclusive-reborrow forests. It preserves the caller's
+exact live set, validates available leaf sources and exact modes/tags/origins,
+and rejects duplicate exclusive sources, roots or formal origins. Existing
+inspection and checked execution gates remain in place.
+
+Implemented at `eb2a0ce`; development and release each passed 20 native groups
+and 2,495 public slice/M1 CLI cases, with 397 matching current input hashes.
+Native receipt authentication, combined-depth reservation and ticket-generation
+restoration are the next step before enabling these calls for execution.
+See the [proof contract](docs/engineering/m2-slice-reborrow-call-ir.md) and
+[Windows evidence](docs/evidence/m2-slice-reborrow-call-ir-windows-20261103.json).
+
 ## Current public scalar slices
 
 Public `check` and `run` support readonly `i32`, `bool`, `i64`, `u8`, `u32`
