@@ -1,5 +1,24 @@
 # AGENTS.md
 
+- Private unpublished derived-source CALL preparation: implemented at `a4a1430`.
+  New native prepare authenticates the complete receipt/child maps and every
+  original borrowed source before local shared retention and writer rotation.
+  Existing CALL Fuel prepays first; frame and combined depth must both be below
+  31, with fresh callee cells and sufficient generation headroom for every
+  pending restore. The original invocation, owners, pool, payload and maps remain
+  unchanged on success/failure. Prepared holds one unpublished Entry and metadata;
+  it exposes no publication or executable admission. Borrowed/scalar signatures
+  and scalar results only; owned copies and aggregate results stay outside it.
+  Development passed 6 new native groups; release passed the same 6 plus 12
+  existing helper groups. All 399 current input hashes and compiler/native
+  receipts match. Existing info/checked helpers only add pub; their bodies and
+  94 other production sources match `27bdb90`. No CLI, full native, other M2,
+  Linux, isolation, packaging, allocator, native size/stack or timing rerun.
+  Next is derived-source CALL publication, return authentication/restoration and
+  abort coordination. Guest/public gates remain unchanged. Local commits only.
+  See [the admission contract](docs/engineering/m2-slice-reborrow-call-admission.md)
+  and [Windows evidence](docs/evidence/m2-slice-reborrow-call-admission-windows-20261103.json).
+
 - Analysis-only suspended/derived CALL proof: implemented at `eb2a0ce`.
   `verifier::inspect_reborrow_calls` preserves exact caller live words, requires
   available leaf sources and closed suspended forests, and checks exact modes,

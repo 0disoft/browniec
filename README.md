@@ -1,5 +1,19 @@
 # Brownie C
 
+## Private derived-source CALL preparation
+
+Native `slice_reborrow_call_admission::prepare` authenticates live reborrow
+children and stages a CALL's ticket generations, shared retention and roots.
+It checks frame/combined-depth limits and preserves the original invocation and
+payload on every result. Preparation exposes no publication or execution path;
+return authentication, ticket restoration and abort coordination come next.
+
+Implemented at `a4a1430`. New native tests passed six groups in each profile;
+release also passed twelve existing helper regression groups. All 399 current
+input hashes match. CLI and Linux were not rerun in this increment. See the
+[admission contract](docs/engineering/m2-slice-reborrow-call-admission.md) and
+[Windows evidence](docs/evidence/m2-slice-reborrow-call-admission-windows-20261103.json).
+
 ## Private suspended-reborrow CALL proof
 
 `verifier::inspect_reborrow_calls` adds an analysis-only proof for synchronous
