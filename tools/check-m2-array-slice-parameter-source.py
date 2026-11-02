@@ -53,8 +53,8 @@ def case(source, errors=None, fuel=1000000, expected=42, runtime_error=None):
 fixtures = (root / 'tests/m2/slice_parameters_source.fy').read_text(encoding='utf-8')
 positives = re.findall(r'(?:accepted|compiled)\(b"([^"\n]+)"\)', fixtures)
 negatives = re.findall(r'rejected\(b"([^"\n]+)"\)', fixtures)
-assert len(positives) == 11 and len(negatives) == 17, (len(positives), len(negatives))
-for source, expected in zip(positives, [42] * 10 + [84], strict=True):
+assert len(positives) == 12 and len(negatives) == 16, (len(positives), len(negatives))
+for source, expected in zip(positives, [42] * 10 + [84, 42], strict=True):
     case(source, expected=expected)
 for source in negatives:
     case(source, ('syntax', 'type'))

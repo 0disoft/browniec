@@ -6,6 +6,7 @@ import ir as ir;
 import slice_source as slices;
 import slice_builders as builders;
 import errors as errors;
+import array_source as arrays;
 
 // Signature kinds are known before bodies; site/register IDs are assigned in
 // body order. Forward calls need only the signature, never a future ticket.
@@ -19,11 +20,29 @@ pub fn Result<usize, errors::Error> bind(ref functions::Table signatures, usize 
     return locals::declare(names, signatures.param_begins[at], signatures.param_ends[at], 160 + site, exclusive);
 }
 
-// Explicit ref [mut] followed by one existing lexical slice with exact access.
-// No array/temporary coercion, new handle, payload copy or caller-side close.
+// An owned whole-array argument opens an anonymous lexical handle at evaluation
+// time. Existing CALL capture cleanup closes it after return or an argument exit.
+fn Result<usize,errors::Error> owned(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref mut locals::Table names,u8 element,bool exclusive,usize at){
+    let usize index=locals::find(source,names,s.begin,s.end);
+    if(names.count>=64){return .err(errors::make(4,at));}
+    if(!arrays::binding(names,index)){return .err(errors::make(3,s.begin));}
+    let usize root=names.registers[index]-128;
+    if(exclusive && (!names.mutable[index] || !p.arrays.mutable[root])){return .err(errors::make(3,at));}
+    let usize selected=slices::root_argument(source,s,p,names,element)?;
+    if(s.kind!=44 && s.kind!=41){return .err(errors::make(3,s.begin));}
+    let usize lo=ir::integer(p,0,12,at)?;
+    let usize hi=arrays::length_value(p,selected,at)?;
+    let usize site=if(exclusive){ir::exclusive_slice(p,selected,at)?}else{ir::slice(p,selected,at)?};
+    let usize opened=ir::slice_open(p,site,lo,hi,at)?;
+    let usize anonymous=locals::declare(names,at,at,160+site,exclusive)?;
+    return .ok(160+site);
+}
+// Explicit ref [mut] requires exact access and scalar element type. Named slices
+// keep their existing ticket; owned arrays use a call-scoped anonymous handle.
 // Keep signature-array indexing scratch off the recursive scalar CALL path.
 pub fn Result<usize, errors::Error> capture(ref u8[] source, ref mut lexer::State s,
-    ref ir::Program p, ref locals::Table names, ref functions::Table signatures, usize parameter) {
+    ref mut ir::Program p, ref mut locals::Table names, ref functions::Table signatures, usize parameter) {
     let usize at = s.begin;
     if (parameter >= 128 || !signatures.param_slices[parameter]) { return .err(errors::make(3, at)); }
     let u8 encoded = signatures.param_slice_elements[parameter];
@@ -34,6 +53,7 @@ pub fn Result<usize, errors::Error> capture(ref u8[] source, ref mut lexer::Stat
     if (exclusive) { let usize access = lexer::word(source, s, b"mut")?; }
     if (s.kind != 2) { return .err(errors::make(3, s.begin)); }
     let usize index = locals::find(source, names, s.begin, s.end);
+    if(arrays::binding(names,index)){return owned(source,s,p,names,element,exclusive,at);}
     if (!slices::binding(names, index)) { return .err(errors::make(3, s.begin)); }
     let usize site = names.registers[index] - 160;
     if (ir::exclusive(p,site) != exclusive) { return .err(errors::make(3,at)); }

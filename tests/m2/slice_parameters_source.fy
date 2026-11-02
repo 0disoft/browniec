@@ -69,7 +69,7 @@ fn void unsupported_signatures_arguments_escapes_and_borrowed_root_mutation_are_
     rejected(b"module main;fn i32 main(ref u8[] p){return 42;}");
     rejected(b"module main;fn i32 f(ref u8[] p,i32 p){return 42;}fn i32 main(){return 42;}");
     rejected(b"module main;fn i32 f(ref u8[] p){return 42;}fn i32 main(){let u8[1] a=[42;1];let ref u8[] p=ref a;return f(p);}");
-    rejected(b"module main;fn i32 f(ref u8[] p){return 42;}fn i32 main(){let u8[1] a=[42;1];return f(ref a);}");
+    accepted(b"module main;fn i32 f(ref u8[] p){return 42;}fn i32 main(){let u8[1] a=[42;1];return f(ref a);}");
     rejected(b"module main;fn i32 f(ref u8[] p){return 42;}fn i32 main(){return f(ref [42;1]);}");
     rejected(b"module main;fn i32 f(ref u8[] p){return 42;}fn i32 main(){let u8[1] a=[42;1];let ref u8[] p=ref a;return f(ref p[..]);}");
     rejected(b"module main;fn i32 f(ref u8[] p){return 42;}fn i32 main(){{let u8[1] a=[42;1];let ref u8[] p=ref a;}return f(ref p);}");

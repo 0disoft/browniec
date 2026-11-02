@@ -51,7 +51,7 @@ native = (root / 'tests/m2/slice_element_source.fy').read_text(encoding='utf-8')
 positives = re.findall(r'accepted\(b"([^"\n]+)"\)', native)
 negatives = re.findall(r'rejected\(b"([^"\n]+)"\)', native)
 signatures = re.findall(r'let ref u8\[\] source=b"([^"\n]+)"', native)
-assert (len(positives), len(negatives), len(signatures)) == (15, 14, 1)
+assert (len(positives), len(negatives), len(signatures)) == (16, 13, 1)
 for source in [*signatures, *positives]:
     case(source)
 for source in negatives:

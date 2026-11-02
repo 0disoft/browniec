@@ -385,7 +385,7 @@ fn Result<usize,errors::Error> call_value(ref u8[] source,ref mut lexer::State s
         let usize length=if(arity<signatures.arities[target]){signatures.param_lengths[target*8+arity]}else{0};
         let usize record=if(arity<signatures.arities[target]){signatures.param_records[target*8+arity] as usize}else{0};
         if(arity<signatures.arities[target] && signatures.param_slices[target*8+arity]) {
-            arguments[arity]=slice_calls::capture(source,s,p,ref names,signatures,target*8+arity)?;
+            arguments[arity]=slice_calls::capture(source,s,p,ref mut names,signatures,target*8+arity)?;
         }
         else if(record!=0) {arguments[arity]=record_argument(source,s,p,ref mut names,signatures,record-1,depth,result_type,structure,loop_state)?;}
         else if(length!=0) {arguments[arity]=array_argument(source,s,p,ref mut names,signatures,tag,length,depth,result_type,structure,loop_state)?;}
