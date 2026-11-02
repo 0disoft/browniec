@@ -104,11 +104,15 @@ pub fn Result<owners::Token,errors::Error> origin(ref ir::Program p,usize functi
     if(function>=p.function_count || function>=16 || frame>=32 || site>=16 || !ir::exclusive(p,site)){return .err(errors::make(5,offset));}
     let u8 tag=ir::slice_element(p,site,offset)?;let usize owned=p.slice_roots[site] as usize;
     if(owned!=0){if(owned>16 || owned>p.arrays.count || p.array_functions[owned-1] as usize!=function){return .err(errors::make(5,offset));}return .ok(state.tokens[frame*16+owned-1]);}
-    if(p.slice_origins[site] as usize!=site+1 || p.slice_functions[site] as usize!=function+1){return .err(errors::make(5,offset));}
+    // Derived formal sources resolve through their immutable formal anchor.
+    // Their actual selected range/ticket is authenticated before publication.
+    let usize encoded=p.slice_origins[site] as usize;
+    if(encoded==0 || encoded>16 || p.slice_functions[site] as usize!=function+1){return .err(errors::make(5,offset));}
+    let usize anchor=encoded-1;
     let usize i=index(receipts,frame,offset)?;let Call call=info(p,bindings.pcs[i],offset)?;
     if(call.target!=function || call.count!=receipts.counts[i]){return .err(errors::make(5,offset));}
-    let usize j=writer(p,call,site,offset)?;let owners::WriteLease lease=receipts.leases[i*8+j];var usize pos=0;
-    while(pos<p.arities[function] && p.slice_parameters[p.register_starts[function]+pos] as usize!=site+1){pos+=1;}
+    let usize j=writer(p,call,anchor,offset)?;let owners::WriteLease lease=receipts.leases[i*8+j];var usize pos=0;
+    while(pos<p.arities[function] && p.slice_parameters[p.register_starts[function]+pos] as usize!=encoded){pos+=1;}
     if(pos==p.arities[function] || !same(frames.origins[frame*8+pos],lease.view.root) || lease.view.element!=tag){return .err(errors::make(5,offset));}
     return .ok(lease.view.root);
 }
