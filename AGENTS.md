@@ -1,5 +1,28 @@
 # AGENTS.md
 
+- Private metered owned reborrow adapter: implemented at `995e22f`.
+  `slice_reborrow_vm` prepays 65,537 Fuel per op61/62 before runtime lookups,
+  authenticates frame/root/site/canonical receipts and publishes fresh child or
+  restored parent bindings only after native success. Three 31-entry maps retain
+  parent/child/function identities without duplicate Loan/Batch receipts. Existing
+  owned dispatch handles available child scalar reads/writes/length/u8 UTF-8.
+  Abort drains first, then clears maps/tickets/shared origins while preserving
+  prior writes and the original result; failed cleanup preserves diagnostic state.
+  Native authority adds readonly inspect only; existing State/algorithms match
+  `19e1886`. No Program/signature/owner/pool/shared-frame fields or existing prices
+  change. Public/internal op61/62 execution and suspended CALL proof remain gated.
+  Rootless formals are rejected by this adapter pending canonical CALL parameter
+  maps. Next is shared CALL/site/lifecycle coordination, rootless adaptation and
+  shared-core wiring without duplicate receipts, before guest/public promotion.
+  Development/release each passed 24 selected native groups and 2,495 CLI cases,
+  with 381 identical current inputs and rechecked compiler/artifact/matrix/M1
+  identities. Verifier/core/CLI/compiler/IR/native primitive sources match
+  `19e1886`; authority differs only by readonly inspection. Parser depth32 passes;
+  depths33/64 return compile_limit. Full native, other M2, Linux, M0, isolation,
+  packaging, allocator, native size/stack and timing were not rerun. No push/release.
+  See [the adapter contract](docs/engineering/m2-slice-reborrow-vm.md) and
+  [Windows evidence](docs/evidence/m2-slice-reborrow-vm-windows-20261102.json).
+
 - Private independent-root reborrow order proof: implemented at `0163a26`.
   Immutable begin-PC ranks and sixteen newer-child masks enforce increasing
   creation rank and reverse restoration across independent roots, matching the

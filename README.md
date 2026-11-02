@@ -64,6 +64,23 @@ artifact/receipt identities. The CLI retains its one-million Fuel maximum;
 native sufficient-Fuel tests cover 31 nested calls and the next-frame limit.
 See the [public parameter Windows evidence](docs/evidence/m2-slice-mutable-parameters-public-windows-20261101.json).
 
+## Private metered owned reborrow adapter
+
+The [native instruction adapter](docs/engineering/m2-slice-reborrow-vm.md) now
+executes owned op61/62 with 65,537 Fuel per transition, canonical receipt/site/frame
+checks and atomic child/parent binding publication. Existing owned dispatch reads
+and writes available child ranges. Abort drains before clearing metadata and
+preserves prior writes and original outcomes. Implemented at `995e22f`.
+Three fixed 31-entry maps add private metadata without duplicating receipts;
+there is no native memory or speed claim. Rootless formal adaptation, canonical
+CALL maps and shared VM-loop wiring remain pending. Public/internal reborrow
+execution and suspended CALL inspection remain gated; existing prices and
+capabilities are unchanged.
+
+Development and release each passed 24 selected native groups and 2,495 CLI
+cases, with 381 matching inputs and rechecked artifact/receipt identities. See
+[adapter Windows evidence](docs/evidence/m2-slice-reborrow-vm-windows-20261102.json).
+
 ## Private independent-root reborrow order proof
 
 The [IR order proof](docs/engineering/m2-slice-reborrow-order.md) now matches the

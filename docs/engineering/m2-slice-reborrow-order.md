@@ -64,9 +64,10 @@ The proof is not dynamic bounds checking, metered reborrow dispatch or guest VM
 execution. CALL while suspended remains rejected until the future adapter can
 route every frame through combined admission and canonical receipt ownership.
 
-Next is metered site/binding instruction adaptation and normal/abort lifecycle
-integration with the shared VM, followed by deliberate private CALL inspection
-admission. Guest syntax and public promotion remain separate deliveries.
+The [owned instruction successor](m2-slice-reborrow-vm.md) now adapts metered
+op61/62 and abort cleanup through canonical native receipts. Canonical CALL
+parameter maps, rootless adaptation and shared VM lifecycle wiring precede
+private CALL inspection admission, guest syntax and public promotion.
 
 ## Verification selection
 

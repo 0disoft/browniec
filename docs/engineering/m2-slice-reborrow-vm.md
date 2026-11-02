@@ -25,7 +25,7 @@ runtime ticket, map, bound or owner lookup. With sufficient Fuel, the adapter
 checks the canonical stack and all active child-site maps, then checks current
 frame identity. Combined-depth exhaustion on begin returns kind12.
 
-The private `Bindings` has three fixed31-entry parent/child/function columns,
+The private `Bindings` has three fixed 31-entry parent/child/function columns,
 indexed by the authority receipt index. It stores no duplicate Loan/Batch
 receipts, owner sessions or payload bytes. A readonly authority inspection API
 reuses existing stack validation; admission/restore algorithms and State fields
@@ -55,7 +55,7 @@ patterns can represent large usize values and fail bounds without wrapping.
 ## Abort and lifecycle boundary
 
 `finish` drains the authentic pool through the canonical authority stack before
-clearing child maps, all512 invocation ticket bindings and all256 shared origin
+clearing child maps, all 512 invocation ticket bindings and all 256 shared origin
 bindings. Failed drain overrides the original outcome with cleanup failure and
 preserves diagnostic metadata. Successful drain preserves prior writes and the
 original success/error, even after a failed Fuel/bounds instruction. It releases
@@ -91,6 +91,15 @@ Next is canonical CALL parameter/site mapping and lifecycle integration, includi
 rootless formal adaptation, then shared execution-loop wiring and deliberate
 private inspection admission for suspended CALLs. Guest grammar and public
 promotion remain separate deliveries.
+
+Implemented at `995e22f`. Development and release each passed all 24 selected
+native groups and 2,495 CLI cases, with 381 matching current inputs. Compiler,
+retained CLI and all matrix/M1 receipt identities were rechecked. Program,
+signature, verifier, execution-core, CLI/compiler, IR and native primitive sources
+match `19e1886`. Native authority differs only by the readonly inspection API;
+its State fields and previous algorithms match that baseline. Both profiles
+accept parser depth32 in check/run and reject depths33/64 with `compile_limit`.
+See the [Windows evidence](../evidence/m2-slice-reborrow-vm-windows-20261102.json).
 
 Public CLI regression covers 74 mutable parameter, 222 owned mutable, 192 readonly
 scalar and 2007 M1 cases on Windows. Full native, other M2, Linux, M0, isolation,
