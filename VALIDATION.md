@@ -1,5 +1,16 @@
 # Validation
 
+- Derived mutable CALL array results: implemented at `56842b9`. Strict empty
+  caller destinations precede loan staging/copy publication. Existing canonical
+  result validation, restoration and token transfer are unchanged. Development/
+  release each passed 13 native groups and 232 tool-free CLI cases (44 array
+  result, 46 owned argument, 68 lexical reborrow, 74 mutable parameter), with all
+  443 input hashes matching and compiler/artifact/receipt identities rechecked.
+  Derived record results remain gated. Full native/M1/other M2/Linux/isolation/
+  packaging/allocator/native size-stack/timing were not rerun. See the
+  [contract](docs/engineering/m2-slice-reborrow-array-results.md) and
+  [Windows evidence](docs/evidence/m2-derived-array-result-windows-20261103.json).
+
 - Owned arguments in derived mutable CALLs: implemented at `c9f2294`. Loan
   preparation precedes atomic array/record copying; only infallible authority and
   control publication follows. Exact charge, late bool/quota/stale-token failures,

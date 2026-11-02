@@ -1,5 +1,20 @@
 # AGENTS.md
 
+- Derived mutable CALL array results are implemented at `56842b9`. Complete
+  prepayment precedes a strict zero-slot/zero-generation caller destination
+  check, then existing loan/owned admission. Unchanged canonical ARET validates
+  the result, restores the child and moves its unique owner token; no second
+  result extent or payload copy. Existing prices/layouts/grammar/profiles remain;
+  version JSON adds `array_slice_reborrow_array_results: true`. Record results
+  remain gated for derived CALLs, including unreachable functions. Development/
+  release each passed 13 native groups and 232 tool-free CLI cases; all 443 input
+  hashes match and retained artifact/receipt hashes were rechecked. Three
+  production paths differ from `7980328`; 97 others match under Git LF. Full
+  native/M1/other M2/Linux/isolation/packaging/allocator/native size-stack/timing
+  were not rerun. Local only; no push. See the
+  [contract](docs/engineering/m2-slice-reborrow-array-results.md) and
+  [Windows evidence](docs/evidence/m2-derived-array-result-windows-20261103.json).
+
 - Derived mutable CALLs with owned arguments are implemented at `c9f2294`.
   Loan preparation precedes existing atomic array/record copying, then only
   infallible authority, ticket, origin and scalar/control publication follows.

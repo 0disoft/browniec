@@ -1,5 +1,8 @@
 # Owned arguments in derived slice CALLs
 
+Array-result successor: [derived array results](m2-slice-reborrow-array-results.md).
+The result restrictions below describe the `c9f2294` checkpoint.
+
 Implemented at `c9f2294`, following lexical reborrow source at `3a07820`.
 Windows development and release verification passed with matching inputs.
 

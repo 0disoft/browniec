@@ -1,5 +1,18 @@
 # Brownie C
 
+## Array results from mutable reborrow calls
+
+Implemented at `56842b9`. A function receiving an exclusive child may return a
+fixed scalar array, including with owned arguments. Result validation and caller
+restoration precede the existing token transfer; an occupied caller destination
+rejects before loan/copy publication. Derived record results remain gated. See
+the [example](examples/mutable-slice-array-result.brc) and
+[contract](docs/engineering/m2-slice-reborrow-array-results.md).
+Development/release each passed 13 native groups and 232 CLI cases, with 443
+matching input hashes and rechecked artifact/receipt hashes. Full native/M1,
+other M2, Linux, isolation, packaging and performance were not rerun. Local only;
+no push. See the [verified evidence](docs/evidence/m2-derived-array-result-windows-20261103.json).
+
 ## Owned arguments with mutable reborrow calls
 
 Implemented at `c9f2294`. A derived mutable slice may now be passed with owned
