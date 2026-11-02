@@ -64,6 +64,22 @@ artifact/receipt identities. The CLI retains its one-million Fuel maximum;
 native sufficient-Fuel tests cover 31 nested calls and the next-frame limit.
 See the [public parameter Windows evidence](docs/evidence/m2-slice-mutable-parameters-public-windows-20261101.json).
 
+## Current private canonical CALL execution
+
+The [canonical coordinator](docs/engineering/m2-slice-shared-call-authority.md)
+now executes scalar, shared and exclusive CALL arguments through the shared
+reborrow VM core. Shared duplicates, derived shared forwarding after formal close
+and mixed readers/writers use staged admission/return cleanup and existing
+authority/maps. Existing logical prices and public CLI behavior are unchanged.
+Owned arguments, aggregate results, suspended/derived exclusive CALLs and
+guest/public reborrow promotion remain gated. Next is owned scalar-array argument
+copying. The earlier adapter/proof stages below describe their own checkpoints.
+
+Implemented at `29d7dda`; development and release each passed 30 selected native
+groups and 2,495 CLI cases, with 390 matching input hashes and rechecked artifact
+identities. See [Windows evidence](docs/evidence/m2-slice-shared-call-authority-windows-20261102.json).
+Native size/stack, allocator and timing remain unmeasured. Local commits only.
+
 ## Private metered owned reborrow adapter
 
 The [native instruction adapter](docs/engineering/m2-slice-reborrow-vm.md) now

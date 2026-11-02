@@ -79,3 +79,13 @@ and guest/public reborrow promotion remain gated. Next is canonical owned scalar
 array argument copying as a separate transaction slice. Full native, other M2,
 Linux, M0, isolation, packaging, native size/stack, allocator and timing are outside
 this selection. Local commits only; no push, publication, release or deployment.
+
+Implemented at `29d7dda`. Development and release each passed 30 selected native
+groups and 2,495 CLI cases, with 390 identical current input hashes. Compiler,
+retained executable, original receipt and matrix/M1 identities were rechecked.
+Both profiles accept parser depth32 in check/run and reject depths33/64 with
+`compile_limit`. Fifteen core/public/native modules match `d0d66a1`, including
+IR, verifier, compiler, VM/core/control, formal reborrow and native primitives.
+The readonly CALL module changes only `checked` visibility; its body and the
+canonical CALL binding declaration match the baseline. See the
+[Windows evidence](../evidence/m2-slice-shared-call-authority-windows-20261102.json).

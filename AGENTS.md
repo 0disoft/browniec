@@ -1,5 +1,30 @@
 # AGENTS.md
 
+- Private canonical shared-argument CALLs: implemented at `29d7dda`.
+  Shared/scalar/exclusive formals now interleave through the existing core and
+  canonical authority. Prices remain 1+arity, plus 65537*(1+readers+2*writers)
+  when any slice is passed. Shared-only empty Batches consume combined depth;
+  caller shared generations remain unchanged. Every original argument checks
+  before staged retention; authority admission/restoration is the last fallible
+  operation before publication. Return stages readonly child cleanup in reverse
+  site order, preserves writer ordinals/detached bindings and clears maps only
+  after success. Shared duplicates and derived forwarding after formal close
+  retain existing behavior. Abort preserves writes and original outcomes or
+  failed-cleanup diagnostics. No persistent fields or receipt collections grow;
+  local pool/owner staging adds scratch, without a measured size/stack/allocator
+  or performance claim. Existing inert-view backing remains.
+  Development/release each passed 30 native groups and 2,495 CLI cases, with 390
+  matching current inputs and rechecked compiler/artifact/matrix/M1/receipt
+  identities. Fifteen core/public/native modules match `d0d66a1`; readonly CALL
+  changes only helper visibility, and the CALL binding declaration is unchanged.
+  Parser depth32 passes; depths33/64 return compile_limit. Full native, other M2,
+  Linux, M0, isolation, packaging, allocator, size/stack and timing were not rerun.
+  Owned arguments, aggregate results, suspended/derived exclusive CALLs and
+  guest/public reborrow promotion remain gated. Next is canonical owned scalar
+  array argument copying as a separate transaction slice. Local commits only;
+  no push/release. See [the shared CALL contract](docs/engineering/m2-slice-shared-call-authority.md)
+  and [Windows evidence](docs/evidence/m2-slice-shared-call-authority-windows-20261102.json).
+
 - Private scalar-only canonical CALLs: implemented at `c1b2c0c`.
   The canonical CALL adapter admits zero-writer scalar arguments/results with the
   existing price `1 + arity`. Writer reserve/price is unchanged. Empty native Batch
