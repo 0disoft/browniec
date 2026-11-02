@@ -1,0 +1,20 @@
+module main;
+
+struct Answer { bool ready; i32 value; }
+
+fn Answer update(ref mut i32[] child, i32[1] input) {
+    child[0] = input[0];
+    return Answer { .ready = true, .value = child[0] };
+}
+
+fn i32 main() {
+    var i32[2] values = [0; 2];
+    let i32[1] input = [42; 1];
+    let ref mut i32[] parent = ref mut values;
+    {
+        let ref mut i32[] child = ref mut parent[1..];
+        let Answer result = update(ref mut child, input);
+        if (!result.ready || result.value != 42 || child[0] != 42) { return 0; }
+    }
+    return parent[1];
+}

@@ -40,8 +40,8 @@ fn void bounds_arithmetic_and_result_allocation_failures_propagate(){
 }
 
 @test
-fn void record_results_duplicate_children_and_unreachable_record_calls_reject(){
-    conflict(b"module main;struct P{i32 x;}fn P f(ref mut i32[] q){return P{.x=42};}fn i32 main(){var i32[1] a=[0;1];let ref mut i32[] p=ref mut a;let ref mut i32[] q=ref mut p;let P r=f(ref mut q);return 42;}");
+fn void record_results_and_unreachable_calls_admit_while_duplicate_children_reject(){
+    run_source(b"module main;struct P{i32 x;}fn P f(ref mut i32[] q){return P{.x=42};}fn i32 main(){var i32[1] a=[0;1];let ref mut i32[] p=ref mut a;let ref mut i32[] q=ref mut p;let P r=f(ref mut q);return 42;}",0);
     conflict(b"module main;fn i32[1] f(ref mut i32[] q,ref mut i32[] r){return [42;1];}fn i32 main(){var i32[1] a=[0;1];let ref mut i32[] p=ref mut a;let ref mut i32[] q=ref mut p;let i32[1] r=f(ref mut q,ref mut q);return 42;}");
-    conflict(b"module main;struct P{i32 x;}fn P f(ref mut i32[] q){return P{.x=42};}fn i32 unused(){var i32[1] a=[0;1];let ref mut i32[] p=ref mut a;let ref mut i32[] q=ref mut p;let P r=f(ref mut q);return 42;}fn i32 main(){return 42;}");
+    run_source(b"module main;struct P{i32 x;}fn P f(ref mut i32[] q){return P{.x=42};}fn i32 unused(){var i32[1] a=[0;1];let ref mut i32[] p=ref mut a;let ref mut i32[] q=ref mut p;let P r=f(ref mut q);return 42;}fn i32 main(){return 42;}",0);
 }
