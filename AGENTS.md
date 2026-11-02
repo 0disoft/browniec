@@ -1,5 +1,32 @@
 # AGENTS.md
 
+- Private canonical formal reborrow/data adapter: implemented at `5baffe4`.
+  `slice_formal_reborrow_vm` supports owned roots and rootless exclusive formal
+  children using the existing 93 site-map cells and canonical CALL maps. It adds
+  no persistent fields or duplicate receipts. First children authenticate their
+  suspended formal against the original CALL range/session/slot; nested children
+  authenticate the exact previous selection and session. Current child tickets
+  must match canonical receipts, owner sessions and generation bounds.
+  Begin/end prepay 65,537 Fuel before runtime lookup. Authenticated length/read/
+  write/u8 UTF-8 use existing scalar codecs and prices; UTF-8 charges original
+  owner length before payload access. CALL exposes readonly inspect/suspended and
+  one shared drain transaction. Combined finish clears all CALL and child maps
+  only after successful pool drain, preserving writes/original outcomes or failed
+  cleanup metadata. The owned-only adapter and its rootless rejection are intact.
+  Native adapter only: shared-core dispatch, suspended/derived CALL admission,
+  guest syntax and public promotion remain gated. No Program/signature/owner/
+  pool/shared-frame fields or existing public capability/price changes.
+  Development/release each passed 18 native groups and 2,495 CLI cases, with 385
+  matching current inputs and rechecked compiler/artifact/matrix/M1 identities.
+  Program/signature and existing map declarations and core/native sources match
+  `f3f7fd1`; CALL changes only readonly authentication and shared drain extraction.
+  Parser depth32 passes; depths33/64 return compile_limit. Full native, other M2,
+  Linux, M0, isolation, packaging, allocator, size/stack and timing were not rerun.
+  Local commits only; no push/release. Next is shared execution-loop and complete
+  scalar/CALL/return/abort coordination using unique maps and canonical receipts.
+  See [the formal adapter contract](docs/engineering/m2-slice-formal-reborrow-vm.md)
+  and [Windows evidence](docs/evidence/m2-slice-formal-reborrow-vm-windows-20261102.json).
+
 - Private canonical exclusive CALL binding: implemented at `c5c9a91`.
   `slice_authority_call_vm` derives caller/target/argument positions from 31 CALL
   PC cells, retains 248 detached-ticket cells and keeps canonical Batch/Loan

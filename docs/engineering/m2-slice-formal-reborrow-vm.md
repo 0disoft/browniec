@@ -87,3 +87,15 @@ steps. Program/signature/owner/pool/shared-frame fields, existing public prices,
 verifier admission and existing execution entries remain unchanged. Full native,
 other M2, Linux, M0, isolation, packaging, allocator, size/stack and timing are
 outside the selection. No push, publication, packaged release or deployment.
+
+Implemented at `5baffe4`. Development and release each passed all 18 selected
+native groups and 2,495 CLI cases, with 385 matching current input hashes.
+Compiler, retained CLI, original receipt and matrix/M1 identities were rechecked.
+The Program/signature declarations, existing owner/pool/native authority, handoff,
+reborrow, verifier, compiler and VM/CLI sources match `f3f7fd1`. Existing CALL and
+lexical map layouts also match that baseline; the CALL adapter adds readonly
+inspection/suspension authentication and extracts its existing drain transaction.
+Both profiles accept parser depth32 in check/run and reject depths33/64 with
+`compile_limit`. See the
+[Windows evidence](../evidence/m2-slice-formal-reborrow-vm-windows-20261102.json).
+Local commits only; no push, publication, packaged release or deployment.
