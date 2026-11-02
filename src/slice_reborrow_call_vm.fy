@@ -41,3 +41,19 @@ pub fn Result<usize,errors::Error> enter(ref ir::Program p,ref proof::Sites site
     }
     return .ok(plan.remaining);
 }
+
+// Call only after independent metadata proof and CALL cost/descriptor validation.
+// Classification is static; suspended callers with no derived arguments can
+// continue using the existing scalar/shared/owned/result transaction.
+pub fn bool required(ref ir::Program p,ref proof::Sites sites,usize pc){
+    let usize target=p.code[pc*8+2] as usize;let usize args=p.code[pc*8+3] as usize;var usize i=0;
+    while(i<p.arities[target]){
+        let usize encoded=p.slice_parameters[p.register_starts[target]+i] as usize;
+        if(encoded!=0 && ir::exclusive(p,encoded-1)){
+            let usize source=(p.call_args[args*8+i] as usize)-160;
+            if(sites.parents[source]!=16){return true;}
+        }
+        i+=1;
+    }
+    return false;
+}

@@ -12,6 +12,7 @@ import array_vm as arrays;
 import std::bytes as bytes;
 import slice_authority as authority;
 import slice_reborrow_vm as children;
+import slice_reborrow_call_vm as derived;
 
 // Native-only admission. No public verifier, source grammar or CLI capability
 // changes. Reject unsupported signatures/CALL shapes before any execution effect.
@@ -23,8 +24,31 @@ pub fn Result<proof::Sites,errors::Error> inspect(ref ir::Program p){
 pub fn Result<i64,errors::Error> execute(ref ir::Program p,usize fuel,ref mut arrays::State arrays,
     ref mut bytes::Buffer payload,ref mut loans::State loan,ref mut shared::Frames frames,ref mut authority::State[] receipts,ref mut calls::Bindings[] call_sites,ref mut children::Bindings[] child_sites){
     let proof::Sites sites=inspect(p)?;
+    return run(p,ref sites,fuel,arrays,payload,loan,frames,receipts,call_sites,child_sites);
+}
+fn Result<i64,errors::Error> run(ref ir::Program p,ref proof::Sites sites,usize fuel,ref mut arrays::State arrays,
+    ref mut bytes::Buffer payload,ref mut loans::State loan,ref mut shared::Frames frames,ref mut authority::State[] receipts,ref mut calls::Bindings[] call_sites,ref mut children::Bindings[] child_sites){
     if(receipts.len!=1 || call_sites.len!=1 || child_sites.len!=1){return .err(errors::make(5,0));}
     let usize fresh=context::ready(ref receipts[0],ref call_sites[0],ref child_sites[0],loan,frames)?;
-    let Result<i64,errors::Error> outcome=execution::execute_canonical(p,ref sites,fuel,arrays,payload,loan,frames,receipts,call_sites,child_sites);
+    let Result<i64,errors::Error> outcome=execution::execute_canonical(p,sites,fuel,arrays,payload,loan,frames,receipts,call_sites,child_sites);
     return context::finish(ref mut child_sites[0],ref mut call_sites[0],ref mut receipts[0],frames,loan,arrays,payload,outcome);
+}
+
+// Explicit native opt-in. Unsupported derived CALL signatures are rejected in
+// every function before context validation, Fuel, allocation or dispatch.
+pub fn Result<proof::Sites,errors::Error> inspect_derived(ref ir::Program p){
+    let usize valid=verifier::inspect_reborrow_calls(p)?;let proof::Sites sites=proof::metadata(p)?;
+    var usize pc=0;while(pc<p.count){if(p.code[pc*8]==9){
+        let usize charge=calls::cost(p,pc,p.offsets[pc])?;
+        if(derived::required(p,ref sites,pc)){
+            let calls::Call call=calls::info(p,pc,p.offsets[pc])?;
+            if(call.owned!=0 || p.array_results[call.target]!=0 || p.record_results[call.target]!=0){return .err(errors::make(5,p.offsets[pc]));}
+        }
+    }pc+=1;}
+    return .ok(sites);
+}
+pub fn Result<i64,errors::Error> execute_derived(ref ir::Program p,usize fuel,ref mut arrays::State arrays,
+    ref mut bytes::Buffer payload,ref mut loans::State loan,ref mut shared::Frames frames,ref mut authority::State[] receipts,ref mut calls::Bindings[] call_sites,ref mut children::Bindings[] child_sites){
+    let proof::Sites sites=inspect_derived(p)?;
+    return run(p,ref sites,fuel,arrays,payload,loan,frames,receipts,call_sites,child_sites);
 }

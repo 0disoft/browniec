@@ -11,6 +11,8 @@ import std::bytes as bytes;
 import slice_authority_call_vm as canonical;
 import slice_reborrow_ir as proof;
 import slice_authority as authority;
+import slice_reborrow_vm as children;
+import slice_reborrow_call_vm as derived;
 
 // Shared immutable preflight. No register/control state is published before
 // all scalar checks and the selected owner/loan transaction succeed.
@@ -101,5 +103,21 @@ pub fn Result<usize,errors::Error> step_canonical(ref ir::Program p,ref proof::S
     let usize charge=canonical::cost(p,pc,if(pc<p.count && pc<256){p.offsets[pc]}else{0})?;
     let Prepared plan=prepare(p,pc,parent,registers,return_pcs,return_dsts,fuel,charge)?;
     let usize remaining=canonical::enter_owned(p,sites,pc,parent,bindings,receipts,frames,loan,state,record_state,buffer,fuel)?;
+    publish(p,ref plan,registers,return_pcs,return_dsts);return .ok(remaining);
+}
+
+// Same scalar/control preflight and publication as existing CALLs. New derived
+// loan handoff is the last fallible work; only infallible scalar/control writes
+// follow. Ordinary signatures retain their owned/aggregate transaction.
+pub fn Result<usize,errors::Error> step_canonical_derived(ref ir::Program p,ref proof::Sites sites,usize pc,usize parent,
+    ref children::Bindings child_sites,ref mut canonical::Bindings bindings,ref mut authority::State receipts,
+    ref mut borrowed::Frames frames,ref mut loans::State loan,ref mut records::State record_state,
+    ref mut arrays::State state,ref mut bytes::Buffer buffer,ref mut i64[] registers,
+    ref mut usize[] return_pcs,ref mut usize[] return_dsts,usize fuel){
+    let usize charge=canonical::cost(p,pc,if(pc<p.count && pc<256){p.offsets[pc]}else{0})?;
+    let Prepared plan=prepare(p,pc,parent,registers,return_pcs,return_dsts,fuel,charge)?;
+    let usize remaining=if(derived::required(p,sites,pc)){
+        derived::enter(p,sites,pc,parent,child_sites,bindings,receipts,frames,loan,state,record_state,buffer,fuel)?
+    }else{canonical::enter_owned(p,sites,pc,parent,bindings,receipts,frames,loan,state,record_state,buffer,fuel)?};
     publish(p,ref plan,registers,return_pcs,return_dsts);return .ok(remaining);
 }
