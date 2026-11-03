@@ -1,5 +1,8 @@
 # Call-scoped named-slice range arguments
 
+This historical slice records `b8ab0eb`. Its temporary-root gate is superseded
+by [temporary-array borrow arguments](m2-temporary-array-borrow-arguments.md).
+
 Implemented at `b8ab0eb`, following owned-array ranges at `749f9bf`.
 
 Existing scalar slice names may supply a relative range directly to an exact

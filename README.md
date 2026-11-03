@@ -1,5 +1,23 @@
 # Brownie C
 
+## Borrow temporary arrays in CALL arguments
+
+Implemented at `8983737`. Literals and owned array results now work directly in
+slice argument positions: `read(ref [42; 3])`, `update(ref mut make())`, and
+`update(ref mut make()[1..])`. The temporary stays alive through endpoint and
+argument evaluation and CALL; cleanup closes its view before dropping its owner.
+Six scalar types, exact modes and scalar/array/record results are supported.
+See the [example](examples/temporary-array-borrow-arguments.brc) and
+[contract](docs/engineering/m2-temporary-array-borrow-arguments.md).
+
+Windows development/release each passed 16 native groups and 812 tool-free CLI
+cases, with 457 matching final inputs and rechecked retained identities. Repeated
+site fixtures may hit the existing 1M public Fuel cap. Parenthesized roots,
+repeated slicing and returned/escaping borrows remain unsupported. Full native/
+M1/other M2/Linux/isolation/packaging/performance were not rerun. Local only; no
+push, release or deployment. See the
+[verified evidence](docs/evidence/m2-temporary-array-borrow-arguments-windows-20261103.json).
+
 ## Borrow named slice ranges in CALL arguments
 
 Implemented at `b8ab0eb`. `update(ref mut part[lo..hi])` and readonly range

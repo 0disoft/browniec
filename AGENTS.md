@@ -1,5 +1,25 @@
 # AGENTS.md
 
+- Call-scoped temporary-array borrows are implemented at `8983737`.
+  Explicit `ref [value; N]` and `ref mut make()[lo..hi]` accept repeated literals
+  and owned array CALL results, with whole/open/empty ranges and exact six-scalar
+  modes. The hidden owner is published after initialization/CALL and before
+  endpoints; OPEN follows endpoint evaluation. Reverse capture cleanup closes
+  the view before DROP on normal return and lexical exits. Runtime failure drains
+  canonical sessions and preserves errors/prior writes; initialized native
+  failure payload may remain until invocation disposal. No second borrow owner,
+  payload copy, runtime layout, opcode, price, Fuel or profile change. Version
+  JSON adds `array_slice_temporary_arguments: true`. Windows development/release
+  each passed 16 native groups and 812 tool-free CLI cases, with 457 matching
+  final inputs and retained identities rechecked. Three production paths differ
+  from `cbb9c41`; 97 others match under Git LF. Six prior test modules now reject
+  wrong temporary element types instead of rejecting every temporary root.
+  Parenthesized roots, repeated slicing, coercions and returned/escaping borrows
+  remain unsupported. Full native/M1/other M2/Linux/isolation/packaging/allocator/
+  native size-stack/timing were not rerun. Local only; no push/release/deployment.
+  See the [contract](docs/engineering/m2-temporary-array-borrow-arguments.md) and
+  [Windows evidence](docs/evidence/m2-temporary-array-borrow-arguments-windows-20261103.json).
+
 - Call-scoped named-slice range arguments are implemented at `b8ab0eb`.
   Exact-mode `ref part[lo..hi]` / `ref mut part[lo..hi]` support six scalar types,
   owned/formal/derived parents, relative open/empty ranges and aggregate results.

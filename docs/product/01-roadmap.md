@@ -1,5 +1,16 @@
 # Roadmap
 
+- [Call-scoped temporary-array borrows](../engineering/m2-temporary-array-borrow-arguments.md)
+  are implemented at `8983737`. Literals and owned CALL results support exact
+  scalar `ref`/`ref mut` arguments and single whole/relative/open/empty ranges.
+  A hidden owner precedes endpoint evaluation; capture cleanup closes the view
+  before DROP. Windows development/release each passed 16 native groups and 812
+  CLI cases, with 457 matching final inputs. See the
+  [Windows evidence](../evidence/m2-temporary-array-borrow-arguments-windows-20261103.json).
+  Returned/escaping borrows still need an explicit lifetime/result contract.
+  Buffer, input/output, host suspension, isolation and packaging remain milestone
+  work. Earlier entries retain their named-commit gates.
+
 - [Call-scoped named-slice range arguments](../engineering/m2-named-slice-range-arguments.md)
   are implemented at `b8ab0eb`. Lexical slices, formals and derived children
   support exact-mode inline ranges using existing SUBSLICE or BEGIN/END, with
