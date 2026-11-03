@@ -440,6 +440,36 @@ fn Result<usize,errors::Error> call_value(ref u8[] source,ref mut lexer::State s
     usize depth,u8 result_type,usize structure,ref mut loops::State loop_state) {
     if(depth>32) {return .err(errors::make(4,at));}
     if(destination==16 && (signatures.return_lengths[target]!=0 || signatures.return_records[target]!=0)) {return .err(errors::make(3,at));}
+    var bool plain=destination==16;var usize i=0;
+    while(i<signatures.arities[target]){let usize parameter=target*8+i;
+        if(signatures.param_slices[parameter] || signatures.param_lengths[parameter]!=0 || signatures.param_records[parameter]!=0){plain=false;}i+=1;
+    }
+    if(plain){return scalar_call(source,s,p,table,signatures,target,at,depth,result_type,structure,loop_state);}
+    return captured_call(source,s,p,table,signatures,target,destination,at,depth,result_type,structure,loop_state);
+}
+// No aggregate formal can capture a temporary across scalar argument evaluation.
+// Keep the 64-entry lexical snapshot out of every scalar recursion frame.
+fn Result<usize,errors::Error> scalar_call(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
+    ref locals::Table table,ref functions::Table signatures,usize target,usize at,
+    usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
+    let usize open=lexer::punctuation(source,s,40)?;var usize[8] arguments=[0;8];var usize arity=0;
+    while(s.kind!=41){
+        if(arity>=8){return .err(errors::make(4,s.begin));}
+        let u8 tag=if(arity<signatures.arities[target]){signatures.param_types[target*8+arity]}else{0};
+        arguments[arity]=expression(source,s,p,table,signatures,1,depth+1,tag,result_type,structure,loop_state)?;
+        if(arity>=signatures.arities[target] || p.types[arguments[arity]]!=tag){return .err(errors::make(3,at));}
+        arity+=1;if(s.kind==41){break;}
+        let usize comma=lexer::punctuation(source,s,44)?;if(s.kind==41){return .err(errors::make(2,s.begin));}
+    }
+    if(arity!=signatures.arities[target]){return .err(errors::make(3,at));}
+    let usize close=lexer::punctuation(source,s,41)?;
+    return ir::call(p,target,ref arguments[..arity],at);
+}
+fn Result<usize,errors::Error> captured_call(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
+    ref locals::Table table,ref functions::Table signatures,usize target,usize destination,usize at,
+    usize depth,u8 result_type,usize structure,ref mut loops::State loop_state) {
+    if(depth>32) {return .err(errors::make(4,at));}
+    if(destination==16 && (signatures.return_lengths[target]!=0 || signatures.return_records[target]!=0)) {return .err(errors::make(3,at));}
     let usize open=lexer::punctuation(source,s,40)?;
     var usize[8] arguments=[0;8];var locals::Table names=locals::snapshot(table);var usize arity=0;
     while(s.kind!=41) {
