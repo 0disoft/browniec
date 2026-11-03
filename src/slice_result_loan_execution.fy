@@ -8,6 +8,8 @@ import array_vm as arrays;
 import ir as ir;
 import cells as cells;
 import errors as errors;
+import fuel as meter;
+import array_layout as layouts;
 
 // Private rootless-formal/subview dialect. IR and frame/site bounds are proved
 // before execution. Physical metadata mutations stage independently of payload.
@@ -17,7 +19,14 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,usize pc,
     let usize at=pc*8;let usize offset=p.offsets[pc];let u8 op=p.code[at];
     let usize dst=p.code[at+1] as usize;let usize a=p.code[at+2] as usize;let usize b=p.code[at+3] as usize;
     let usize base=bindings.frame*16;
-    let usize cost=if(op==55){81921}else if(op==54 || op==56 || op==59 || op==61 || op==62){65537}else{4097};
+    let usize site=if(op==60){dst}else{a};
+    var usize stride=0;
+    if(op==58 || op==60){
+        let u8 tag=ir::slice_element(p,site,offset)?;
+        let layouts::Array shape=switch(layouts::scalar(tag,1)){case .ok(v):{v}case .err(_):{return .err(errors::make(5,offset));}};
+        stride=shape.stride;
+    }
+    var usize cost=meter::slice_base(op,stride);
     if(fuel<cost){return .err(errors::make(8,offset));}
     if(op==56 && p.slice_roots[dst]==0 && p.slice_origins[dst] as usize==dst+1){
         // Formal sessions belong to the CALL transaction. Source CLOSE ends the
@@ -25,6 +34,13 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,usize pc,
         bindings.sites[base+dst]=frames::none();return .ok(fuel-cost);
     }
     if(op==55){
+        // Authenticate under the base reserve before pricing the bounded scan.
+        let slices::Ticket current=bindings.sites[base+a];
+        let usize length=switch(slices::length(ref state.runtime.pool,current,ref state.runtime.owners,data.len)){
+            case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}
+        };
+        cost+=meter::utf8_scan(state.runtime.pool.slots[current.slot].view.length);
+        if(fuel<cost){return .err(errors::make(8,offset));}
         let bool value=switch(slices::utf8(ref state.runtime.pool,bindings.sites[base+a],ref state.runtime.owners,data)){
             case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}
         };registers[dst]=if(value){1}else{0};

@@ -18,8 +18,8 @@ fn runtime::Contract binding(ref u8[] source,usize function){
 }
 fn base::Program compiler_program(){return base::empty();}
 fn runtime::Call entered(ref mut runtime::State state,runtime::Contract c,ref runtime::Capture[] captures,usize capacity){return switch(runtime::enter(state,c,captures,capacity,runtime::cost())){case .ok(v):{assert(v.remaining==0);v}case .err(_):{assert(false);runtime::Call{.captures=[runtime::capture(slices::Ticket{.slot=16,.generation=0},false,false);8],.views=[state.runtime.pool.slots[0].view;8],.issued=[slices::Ticket{.slot=16,.generation=0};8],.before=[slices::Ticket{.slot=16,.generation=0};16],.contract=c,.depth=0,.frame=0,.remaining=0,.active=false}}};}
-fn runtime::Returned returned(ref mut runtime::State state,ref mut runtime::Call call,slices::Ticket selected,usize capacity){return switch(runtime::handoff(state,call,selected,capacity,runtime::cost())){case .ok(v):{assert(v.remaining==0);v}case .err(_):{assert(false);runtime::Returned{.held=runtime::Held{.issued=selected,.view=call.views[0],.exclusive=false,.close_parent=false,.drop=false,.depth=0,.frame=0,.active=false},.resumed=[slices::Ticket{.slot=16,.generation=0};8],.remaining=0}}};}
-fn slices::Ticket ended(ref mut runtime::State state,ref mut runtime::Held held,slices::Ticket current,usize capacity){return switch(runtime::close(state,held,current,capacity,runtime::cost())){case .ok(v):{assert(v.remaining==0);v.parent}case .err(_):{assert(false);slices::Ticket{.slot=16,.generation=0}}};}
+fn runtime::Returned returned(ref mut runtime::State state,ref mut runtime::Call call,slices::Ticket selected,usize capacity){return switch(runtime::handoff(state,call,selected,capacity,runtime::handoff_cost())){case .ok(v):{assert(v.remaining==0);v}case .err(_):{assert(false);runtime::Returned{.held=runtime::Held{.issued=selected,.view=call.views[0],.exclusive=false,.close_parent=false,.drop=false,.depth=0,.frame=0,.active=false},.resumed=[slices::Ticket{.slot=16,.generation=0};8],.remaining=0}}};}
+fn slices::Ticket ended(ref mut runtime::State state,ref mut runtime::Held held,slices::Ticket current,usize capacity){return switch(runtime::close(state,held,current,capacity,0)){case .ok(v):{assert(v.remaining==0);v.parent}case .err(_):{assert(false);slices::Ticket{.slot=16,.generation=0}}};}
 fn owners::Token create(ref mut runtime::State state,u8 tag,ref mut u8[] data){
     let layouts::Array shape=switch(layouts::scalar(tag,4)){case .ok(v):{v}case .err(_):{assert(false);layouts::Array{.element=10,.length=1,.stride=1,.alignment=1,.bytes=1}}};
     return switch(owners::create(ref shape,0,data,ref mut state.runtime.owners)){case .ok(v):{v}case .err(_):{assert(false);owners::Token{.slot=16,.generation=0}}};
@@ -90,7 +90,7 @@ fn void shared_return_transfers_ticket_and_pins_owner_after_callee_cleanup(){
     assert(!owners::release(ref mut state.runtime.owners,root,64).is_ok);
     let slices::Ticket current=result.held.issued;let slices::Ticket resumed=ended(ref mut state,ref mut result.held,current,64);
     assert(resumed.slot==16 && !result.held.active && owners::release(ref mut state.runtime.owners,root,64).is_ok);
-    assert(!runtime::handoff(ref mut state,ref mut call,current,64,runtime::cost()).is_ok);
+    assert(!runtime::handoff(ref mut state,ref mut call,current,64,runtime::handoff_cost()).is_ok);
 }
 
 @test
@@ -104,7 +104,7 @@ fn void exclusive_descendant_result_keeps_parent_suspended_until_last_child_ends
     assert(!slices::read(ref state.runtime.pool,parent,ref state.runtime.owners,0,ref data).is_ok && !owners::release(ref mut state.runtime.owners,root,64).is_ok);
     let usize written=size(slices::write(ref state.runtime.pool,returned_view,ref state.runtime.owners,0,42,ref mut data));
     let slices::Ticket grandchild=child(ref mut state,returned_view,0,2,64);let runtime::State before=state;
-    assert(!runtime::close(ref mut state,ref mut result.held,grandchild,64,runtime::cost()).is_ok);unchanged(ref state,ref before);
+    assert(!runtime::close(ref mut state,ref mut result.held,grandchild,64,0).is_ok);unchanged(ref state,ref before);
     let slices::Ticket current=restore(ref mut state,grandchild,64);let slices::Ticket resumed=ended(ref mut state,ref mut result.held,current,64);
     assert(cell(slices::read(ref state.runtime.pool,resumed,ref state.runtime.owners,1,ref data))==42 && size(slices::length(ref state.runtime.pool,resumed,ref state.runtime.owners,64))==4);
     assert(!slices::length(ref state.runtime.pool,returned_view,ref state.runtime.owners,64).is_ok);
@@ -133,7 +133,7 @@ fn void nested_forwarding_consumes_inner_result_without_resuming_original_parent
     let slices::Ticket source=outer.issued[0];let runtime::Capture[1] second=[runtime::capture(source,false,false)];var runtime::Call inner=entered(ref mut state,c,ref second,64);
     let slices::Ticket selected=inner.issued[0];var runtime::Returned a=returned(ref mut state,ref mut inner,selected,64);let slices::Ticket forwarded=a.held.issued;
     var runtime::Returned b=returned(ref mut state,ref mut outer,forwarded,64);let runtime::State before=state;
-    assert(!runtime::close(ref mut state,ref mut a.held,forwarded,64,runtime::cost()).is_ok);unchanged(ref state,ref before);
+    assert(!runtime::close(ref mut state,ref mut a.held,forwarded,64,0).is_ok);unchanged(ref state,ref before);
     let slices::Ticket current=b.held.issued;let slices::Ticket resumed=ended(ref mut state,ref mut b.held,current,64);
     close_ticket(ref mut state,resumed,64);assert(owners::release(ref mut state.runtime.owners,root,64).is_ok);
 }
@@ -146,10 +146,10 @@ fn void late_capture_drop_failure_rolls_back_handoff_and_preserves_prior_writes(
     var runtime::Call call=entered(ref mut state,binding(b"module main;fn ref mut i32[] f(ref mut i32[] p,ref i32[] q){return ref mut p;}fn i32 main(){return 42;}",0),ref args,64);
     let slices::Ticket selected=call.issued[0];let usize written=size(slices::write(ref state.runtime.pool,selected,ref state.runtime.owners,0,42,ref mut data));
     let runtime::State before=state;
-    assert(!runtime::handoff(ref mut state,ref mut call,selected,64,runtime::cost()).is_ok && call.active);unchanged(ref state,ref before);
+    assert(!runtime::handoff(ref mut state,ref mut call,selected,64,runtime::handoff_cost()).is_ok && call.active);unchanged(ref state,ref before);
     assert(cell(slices::read(ref state.runtime.pool,selected,ref state.runtime.owners,0,ref data))==42);
-    assert(!runtime::handoff(ref mut state,ref mut call,selected,64,runtime::cost()-1).is_ok);unchanged(ref state,ref before);
-    let slices::Ticket wrong=call.issued[1];assert(!runtime::handoff(ref mut state,ref mut call,wrong,64,runtime::cost()).is_ok);unchanged(ref state,ref before);
+    assert(!runtime::handoff(ref mut state,ref mut call,selected,64,runtime::handoff_cost()-1).is_ok);unchanged(ref state,ref before);
+    let slices::Ticket wrong=call.issued[1];assert(!runtime::handoff(ref mut state,ref mut call,wrong,64,runtime::handoff_cost()).is_ok);unchanged(ref state,ref before);
     close_ticket(ref mut state,alias,64);var runtime::Returned result=returned(ref mut state,ref mut call,selected,64);
     let slices::Ticket current=result.held.issued;let slices::Ticket resumed=ended(ref mut state,ref mut result.held,current,64);
     close_ticket(ref mut state,resumed,64);assert(owners::release(ref mut state.runtime.owners,first,64).is_ok && state.runtime.owners.depth==0);
@@ -163,7 +163,7 @@ fn void full_shared_pool_transfers_in_place_and_abort_needs_no_execution_fuel(){
     let slices::Ticket selected=call.issued[0];var runtime::Returned result=returned(ref mut state,ref mut call,selected,64);assert(result.held.issued.slot==selected.slot);
     switch(runtime::abort(ref mut state,64,0)){case .ok(v):{assert(v==0);}case .err(_):{assert(false);}};
     assert(state.runtime.owners.depth==0 && state.runtime.authority.depth==0);
-    let slices::Ticket current=result.held.issued;assert(!runtime::close(ref mut state,ref mut result.held,current,64,runtime::cost()).is_ok);
+    let slices::Ticket current=result.held.issued;assert(!runtime::close(ref mut state,ref mut result.held,current,64,0).is_ok);
 }
 
 @test
@@ -212,8 +212,8 @@ fn void generation_exhaustion_and_corrupt_frame_fail_before_publication(){
     var runtime::Call call=entered(ref mut state,binding(b"module main;fn ref mut i32[] f(ref mut i32[] p){return ref mut p;}fn i32 main(){return 42;}",0),ref args,64);
     let usize slot=call.issued[0].slot;state.runtime.pool.slots[slot].generation=18446744073709551613;
     let slices::Ticket selected=slices::Ticket{.slot=slot,.generation=18446744073709551613};let runtime::State before=state;
-    assert(!runtime::handoff(ref mut state,ref mut call,selected,64,runtime::cost()).is_ok && call.active);unchanged(ref state,ref before);
-    call.frame=18446744073709551615;assert(!runtime::handoff(ref mut state,ref mut call,selected,64,runtime::cost()).is_ok);unchanged(ref state,ref before);
+    assert(!runtime::handoff(ref mut state,ref mut call,selected,64,runtime::handoff_cost()).is_ok && call.active);unchanged(ref state,ref before);
+    call.frame=18446744073709551615;assert(!runtime::handoff(ref mut state,ref mut call,selected,64,runtime::handoff_cost()).is_ok);unchanged(ref state,ref before);
     assert(runtime::abort(ref mut state,64,0).is_ok && state.runtime.authority.depth==0 && state.runtime.owners.depth==0);
 }
 
@@ -246,7 +246,7 @@ fn void late_failure_rolls_back_anonymous_parent_restoration_and_result_installa
     let runtime::Capture[3] args=[runtime::capture(ca,true,false),runtime::capture(cb,true,false),runtime::capture(pc,true,true)];
     var runtime::Call call=entered(ref mut state,binding(b"module main;fn ref mut i32[] f(ref mut i32[] p,ref mut i32[] q,ref i32[] r){return ref mut p;}fn i32 main(){return 42;}",0),ref args,64);
     let slices::Ticket selected=call.issued[0];let runtime::State before=state;
-    assert(!runtime::handoff(ref mut state,ref mut call,selected,64,runtime::cost()).is_ok && call.active);unchanged(ref state,ref before);
+    assert(!runtime::handoff(ref mut state,ref mut call,selected,64,runtime::handoff_cost()).is_ok && call.active);unchanged(ref state,ref before);
     close_ticket(ref mut state,peer,64);var runtime::Returned result=returned(ref mut state,ref mut call,selected,64);
     let slices::Ticket current=result.held.issued;let slices::Ticket other=result.resumed[1];let slices::Ticket resumed=ended(ref mut state,ref mut result.held,current,64);
     close_ticket(ref mut state,other,64);close_ticket(ref mut state,resumed,64);

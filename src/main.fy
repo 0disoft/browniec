@@ -8,6 +8,7 @@ import lexer as lexer;
 import render as render;
 import verifier as verifier;
 import vm as vm;
+import fuel as meter;
 import std::process as process;
 import std::num as num;
 import std::io as io;
@@ -47,7 +48,7 @@ fn i32 main() {
     if (argc < 3) { return fail(false, run, 10, 0); }
     var bool json = false;
     var bool fuel_seen = false;
-    var usize fuel = 256;
+    var usize fuel = meter::cli_default();
     var usize at = 3;
     while (at < argc) {
         var u8[64] option = [0; 64];
@@ -66,10 +67,11 @@ fn i32 main() {
             let i64 parsed = switch (num::parse_i64_decimal(number[..count])) {
                 case .ok(n): { n } case .err(_): { return fail(json, run, 10, 0); }
             };
-            if (parsed < 0 || parsed > 1000000) { return fail(json, run, 10, 0); }
+            if (parsed < 0) { return fail(json, run, 10, 0); }
             fuel = switch (num::usize_from_i64(parsed)) {
                 case .ok(n): { n } case .err(_): { return fail(json, run, 10, 0); }
             };
+            if (fuel > meter::cli_limit()) { return fail(json, run, 10, 0); }
             fuel_seen = true;
         } else if (lexer::equal(view[..length], b"--isolated")) { return fail(json, run, 11, 0); }
         else { return fail(json, run, 10, 0); }

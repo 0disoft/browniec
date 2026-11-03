@@ -43,7 +43,7 @@ fn Result<usize,errors::Error> batch(bool corrupt,usize capacity,bool fail){
         let usize[1] path=[0];let owners::Token copied=entered.copies.tokens[0];
         assert(owners::write_record(ref catalog,ref state.runtime.owners,copied,ref path,42,ref mut data[..capacity]).is_ok);
         let i64 original=switch(owners::read_record(ref catalog,ref state.runtime.owners,record,ref path,ref data[..capacity])){case .ok(v):{v}case .err(_):{assert(false);0}};assert(original==20);
-        let runtime::Resumed resumed=runtime::leave_call(ref mut state,ref mut entered.call,capacity,runtime::cost())?;
+        let runtime::Resumed resumed=runtime::leave_call(ref mut state,ref mut entered.call,capacity,runtime::leave_cost())?;
         assert(slices::length(ref state.runtime.pool,resumed.tickets[0],ref state.runtime.owners,capacity).is_ok);
         assert(!slices::length(ref state.runtime.pool,parent,ref state.runtime.owners,capacity).is_ok);
     }
@@ -68,12 +68,12 @@ fn Result<usize,errors::Error> handoff(){
     var runtime::Call call=runtime::enter(ref mut state,c,ref captures,32,runtime::cost())?;
     let owners::Table before=state.runtime.owners;let slices::Ticket selected=call.issued[0];
     let owners::Token[2] duplicate=[record,record];
-    assert(!runtime::handoff_roots(ref mut state,ref mut call,selected,ref duplicate,32,runtime::cost()).is_ok);
+    assert(!runtime::handoff_roots(ref mut state,ref mut call,selected,ref duplicate,32,runtime::handoff_cost()).is_ok);
     same(ref state.runtime.owners,ref before);assert(call.active && state.runtime.authority.frame==1);
     assert(slices::length(ref state.runtime.pool,selected,ref state.runtime.owners,32).is_ok);
-    var runtime::Returned result=runtime::handoff_roots(ref mut state,ref mut call,selected,ref duplicate[..1],32,runtime::cost())?;
+    var runtime::Returned result=runtime::handoff_roots(ref mut state,ref mut call,selected,ref duplicate[..1],32,runtime::handoff_cost())?;
     assert(!state.runtime.owners.slots[record.slot].live);
-    let slices::Ticket current=result.held.issued;let runtime::Closed closed=runtime::close(ref mut state,ref mut result.held,current,32,runtime::cost())?;
+    let slices::Ticket current=result.held.issued;let runtime::Closed closed=runtime::close(ref mut state,ref mut result.held,current,32,0)?;
     assert(state.runtime.owners.depth==0 && state.runtime.owners.arena.used==0 && state.runtime.authority.depth==0);return .ok(0);
 }
 @test fn void record_cleanup_failure_rolls_back_handoff_and_success_releases_local(){assert(handoff().is_ok);}

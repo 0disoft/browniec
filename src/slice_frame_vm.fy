@@ -1,6 +1,7 @@
 module slice_frame_vm;
 import ir as ir;
 import errors as errors;
+import fuel as meter;
 import cells as cells;
 import slice_call_vm as calls;
 import slice_vm as loans;
@@ -41,7 +42,7 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,usize function,usize p
         case .ok(v):{v} case .err(_):{return .err(errors::make(5,offset));}
     };
     if(op==55 && element!=10) { return .err(errors::make(5,offset)); }
-    let usize base=if(op==59){65537}else if(op==58){4130+shape.stride}else{4097};
+    let usize base=meter::slice_base(op,shape.stride);
     if(fuel<base) { return .err(errors::make(8,offset)); }
     let owners::Token root=calls::root(p,function,frame,id,frames,state,offset)?;
     // Metadata-only resolution is covered by base. No payload is read here.
@@ -49,7 +50,7 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,usize function,usize p
         case .ok(v):{v} case .err(e):{return .err(arrays::failure(e,offset));}
     };
     if(view.element!=element || view.length==0 || view.length>4096) { return .err(errors::make(5,offset)); }
-    let usize work=base+if(op==55){4*view.length}else{0};
+    let usize work=base+if(op==55){meter::utf8_scan(view.length)}else{0};
     if(fuel<work) { return .err(errors::make(8,offset)); }
     let usize slot=frame*16+id;
     if(op==59 && (loan.tickets[slot].slot!=16 || loan.tickets[slot].generation!=0)) { return .err(errors::make(5,offset)); }

@@ -48,7 +48,7 @@ fn Result<usize,errors::Error> array_case(ref u8[] source,u8 tag,i64 fill,i64 ex
     assert(read(ref state,result.held.issued,0,ref data)==expected);
     let i64 original=switch(owners::read(ref state.runtime.owners,input,0,ref data)){case .ok(v):{v}case .err(_):{assert(false);0}};assert(original==fill);
     var usize live=0;var usize i=0;while(i<16){if(state.runtime.owners.slots[i].live){live+=1;}i+=1;}assert(live==2);
-    let slices::Ticket current=result.held.issued;let runtime::Closed closed=runtime::close(ref mut state,ref mut result.held,current,512,runtime::cost())?;
+    let slices::Ticket current=result.held.issued;let runtime::Closed closed=runtime::close(ref mut state,ref mut result.held,current,512,0)?;
     assert(owners::release(ref mut state.runtime.owners,input,512).is_ok);drained(ref state);return .ok(0);
 }
 @test fn void six_native_array_element_types_copy_independently(){
@@ -76,7 +76,7 @@ fn Result<usize,errors::Error> mixed(ref u8[] source,ref i64[] cells,i64 expecte
     assert(read(ref state,result.held.issued,0,ref data)==expected);
     var usize i=16;while(i<used){assert(data[i]==saved[i]);i+=1;}
     var usize live=0;i=0;while(i<16){if(state.runtime.owners.slots[i].live){live+=1;}i+=1;}assert(live==3);
-    let slices::Ticket current=result.held.issued;let runtime::Closed closed=runtime::close(ref mut state,ref mut result.held,current,512,runtime::cost())?;
+    let slices::Ticket current=result.held.issued;let runtime::Closed closed=runtime::close(ref mut state,ref mut result.held,current,512,0)?;
     assert(owners::release(ref mut state.runtime.owners,record,512).is_ok && owners::release(ref mut state.runtime.owners,array,512).is_ok);drained(ref state);return .ok(0);
 }
 @test fn void mixed_native_record_array_scalar_inputs_forward_through_ordinary_calls(){
@@ -93,7 +93,7 @@ fn Result<usize,errors::Error> shared(){
     let owners::Token[2] inputs=[owners::Token{.slot=0,.generation=0},root];let i64[2] values=[0,0];
     var runtime::Returned result=vm::run_slice_result_owned(ref unit,0,ref captures,ref values,ref inputs,ref mut state,ref mut data,1000000000)?;
     assert(read(ref state,result.held.issued,0,ref data)==42 && read(ref state,parent,0,ref data)==42);
-    let slices::Ticket current=result.held.issued;let runtime::Closed closed=runtime::close(ref mut state,ref mut result.held,current,128,runtime::cost())?;
+    let slices::Ticket current=result.held.issued;let runtime::Closed closed=runtime::close(ref mut state,ref mut result.held,current,128,0)?;
     assert(read(ref state,parent,0,ref data)==42);let usize cleared=runtime::abort(ref mut state,128,0)?;drained(ref state);return .ok(0);
 }
 @test fn void duplicate_value_inputs_copy_separately_and_shared_source_can_also_copy(){
@@ -119,7 +119,7 @@ fn Result<usize,errors::Error> rejected(usize mode){
     var owners::Token[3] inputs=[owners::Token{.slot=0,.generation=0},array,record];var i64[3] values=[0;3];
     if(mode==1){inputs[1]=owners::Token{.slot=array.slot,.generation=array.generation+1};}
     if(mode==7){inputs[0]=array;}if(mode==8){values[1]=1;}if(mode==9){captures[1]=captures[0];}if(mode==13){inputs[1]=root;}
-    let usize length_inputs=if(mode==6){2}else{3};let usize fuel=if(mode==11){runtime::cost()+calls::cost(ref unit.body,0,0)?-1}else{1000000000};
+    let usize length_inputs=if(mode==6){2}else{3};let usize fuel=if(mode==11){runtime::cost()+calls::cost(ref unit.body,0,0)?+unit.body.arities[0]-1}else{1000000000};
     let Result<runtime::Returned,errors::Error> result=if(mode==10){vm::run_slice_result(ref unit,0,ref captures,ref values,ref mut state,ref mut data[..capacity],fuel)}else{vm::run_slice_result_owned(ref unit,0,ref captures,ref values,ref inputs[..length_inputs],ref mut state,ref mut data[..capacity],fuel)};
     switch(result){case .ok(_):{assert(false);}case .err(e):{assert(e.kind==if(mode==0 || mode==12){13}else if(mode==11){8}else{5});}};
     same(ref state.runtime.owners,ref before);assert(state.runtime.authority.depth==0 && state.runtime.authority.frame==0);

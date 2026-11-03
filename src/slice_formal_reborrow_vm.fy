@@ -1,6 +1,7 @@
 module slice_formal_reborrow_vm;
 import ir as ir;
 import errors as errors;
+import fuel as meter;
 import cells as cells;
 import array_layout as layouts;
 import array_vm as arrays;
@@ -136,9 +137,9 @@ pub fn Result<usize,errors::Error> access(ref ir::Program p,ref proof::Sites sit
     let usize identity=key(p,sites,function,site,offset)?;let u8 tag=ir::slice_element(p,site,offset)?;
     let layouts::Array shape=switch(layouts::scalar(tag,1)){case .ok(v):{v}case .err(_):{return .err(errors::make(5,offset));}};
     if(op==55 && tag!=10){return .err(errors::make(5,offset));}
-    let usize base=if(op==58){4130+shape.stride}else if(op==60){4130+2*shape.stride}else{4097};if(fuel<base){return .err(errors::make(8,offset));}
+    let usize base=meter::slice_base(op,shape.stride);if(fuel<base){return .err(errors::make(8,offset));}
     let owners::View current=view(p,sites,function,frame,site,bindings,call_bindings,receipts,frames,loan,state,bytes::len(buffer),offset)?;
-    let usize price=base+if(op==55){4*current.length}else{0};if(fuel<price){return .err(errors::make(8,offset));}
+    let usize price=base+if(op==55){meter::utf8_scan(current.length)}else{0};if(fuel<price){return .err(errors::make(8,offset));}
     let slices::Ticket ticket=loan.tickets[frame*16+site];
     if(op==60){let usize index=cells::unpack(registers[a],offset)?;let usize n=switch(slices::write(ref loan.pool,ticket,ref state.owners,index,registers[b],bytes::view_mut(buffer))){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}};}
     else if(op==58){let usize index=cells::unpack(registers[b],offset)?;let i64 value=switch(slices::read(ref loan.pool,ticket,ref state.owners,index,bytes::view(buffer))){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}};registers[dst]=value;}

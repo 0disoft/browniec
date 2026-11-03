@@ -36,7 +36,7 @@ fn Result<usize,errors::Error> roundtrip(ref u8[] source,u8 tag,bool exclusive,i
     assert(result.held.exclusive==exclusive && read(ref state,current,1,ref data)==value);
     assert(!slices::length(ref state.runtime.pool,parent,ref state.runtime.owners,64).is_ok);
     if(exclusive){assert(slices::write(ref state.runtime.pool,current,ref state.runtime.owners,0,value,ref mut data).is_ok);}
-    let runtime::Closed closed=runtime::close(ref mut state,ref mut result.held,current,64,runtime::cost())?;
+    let runtime::Closed closed=runtime::close(ref mut state,ref mut result.held,current,64,0)?;
     assert(closed.parent.slot==16);drained(ref state);return .ok(0);
 }
 @test fn void six_scalar_readonly_and_mutable_ir_roundtrips(){
@@ -63,7 +63,7 @@ fn Result<usize,errors::Error> subview(bool branch,bool exclusive){
     let usize length=if(branch){4}else{2};assert(result.held.view.end-result.held.view.start==length);
     if(exclusive){assert(read(ref state,result.held.issued,0,ref data)==if(branch){2}else{42});}
     let slices::Ticket current=result.held.issued;
-    let runtime::Closed closed=runtime::close(ref mut state,ref mut result.held,current,16,runtime::cost())?;
+    let runtime::Closed closed=runtime::close(ref mut state,ref mut result.held,current,16,0)?;
     if(exclusive){assert(closed.parent.slot<16 && read(ref state,closed.parent,0,ref data)==2);}
     let usize cleared=runtime::abort(ref mut state,16,0)?;drained(ref state);return .ok(0);
 }
@@ -76,7 +76,7 @@ fn Result<usize,errors::Error> forwarded(bool exclusive){
     var runtime::Returned result=vm::run_slice_result(ref unit,0,ref args,ref values,ref mut state,ref mut data,1000000000)?;
     assert(result.held.view.root.slot==first.slot && !state.runtime.owners.slots[second.slot].live);
     if(exclusive){assert(read(ref state,result.held.issued,1,ref data)==42);}
-    let slices::Ticket current=result.held.issued;let runtime::Closed closed=runtime::close(ref mut state,ref mut result.held,current,32,runtime::cost())?;
+    let slices::Ticket current=result.held.issued;let runtime::Closed closed=runtime::close(ref mut state,ref mut result.held,current,32,0)?;
     drained(ref state);return .ok(0);
 }
 @test fn void forwarding_remaps_destinations_and_drops_unselected_captures(){assert(forwarded(false).is_ok && forwarded(true).is_ok);}
@@ -85,7 +85,7 @@ fn Result<usize,errors::Error> recursive(i64 n,bool expected){
     var u8[16] data=[0;16];var runtime::State state=runtime::empty(16);let owners::Token root=create(ref mut state,1,ref mut data);let slices::Ticket parent=open(ref mut state,root,true,16);
     let runtime::Capture[2] args=[runtime::capture(parent,true,true),runtime::capture(slices::Ticket{.slot=16,.generation=0},false,false)];let i64[2] values=[0,n];
     switch(vm::run_slice_result(ref unit,0,ref args,ref values,ref mut state,ref mut data,1000000000)){
-        case .ok(r):{assert(expected);var runtime::Held held=r.held;assert(held.view.start==1 && held.view.end==3);let slices::Ticket current=held.issued;let runtime::Closed closed=runtime::close(ref mut state,ref mut held,current,16,runtime::cost())?;}
+        case .ok(r):{assert(expected);var runtime::Held held=r.held;assert(held.view.start==1 && held.view.end==3);let slices::Ticket current=held.issued;let runtime::Closed closed=runtime::close(ref mut state,ref mut held,current,16,0)?;}
         case .err(e):{assert(!expected && e.kind==12);}
     };drained(ref state);return .ok(0);
 }
@@ -118,13 +118,13 @@ fn Result<usize,errors::Error> descendants(){
     var authority::State stack=state.runtime.authority;var slices::Pool pool=state.runtime.pool;
     let slices::Ticket child=switch(authority::enter_child(ref mut stack,ref mut pool,result.held.issued,ref state.runtime.owners,1,3,16,0)){case .ok(v):{v}case .err(_):{assert(false);parent}};
     state.runtime.authority=stack;state.runtime.pool=pool;let slices::Ticket old=result.held.issued;
-    assert(!runtime::close(ref mut state,ref mut result.held,old,16,runtime::cost()).is_ok && result.held.active);
+    assert(!runtime::close(ref mut state,ref mut result.held,old,16,0).is_ok && result.held.active);
     assert(!slices::length(ref state.runtime.pool,old,ref state.runtime.owners,16).is_ok);
     assert(slices::write(ref state.runtime.pool,child,ref state.runtime.owners,0,42,ref mut data).is_ok);
     stack=state.runtime.authority;pool=state.runtime.pool;
     let slices::Ticket current=switch(authority::leave_child(ref mut stack,ref mut pool,child,ref state.runtime.owners,16,0)){case .ok(v):{v}case .err(_):{assert(false);parent}};
     state.runtime.authority=stack;state.runtime.pool=pool;
-    let runtime::Closed closed=runtime::close(ref mut state,ref mut result.held,current,16,runtime::cost())?;
+    let runtime::Closed closed=runtime::close(ref mut state,ref mut result.held,current,16,0)?;
     assert(read(ref state,closed.parent,1,ref data)==42);
     let usize cleared=runtime::abort(ref mut state,16,0)?;drained(ref state);return .ok(0);
 }
@@ -155,7 +155,7 @@ fn Result<usize,errors::Error> alias_empty(bool invalid){
     let slices::Ticket parent=open(ref mut state,root,false,16);let runtime::Capture[1] args=[runtime::capture(parent,true,true)];let i64[1] values=[0];
     var runtime::Returned result=vm::run_slice_result(ref unit,0,ref args,ref values,ref mut state,ref mut data,1000000000)?;
     assert(result.held.view.end-result.held.view.start==if(invalid){2}else{0});
-    let slices::Ticket current=result.held.issued;let runtime::Closed closed=runtime::close(ref mut state,ref mut result.held,current,16,runtime::cost())?;
+    let slices::Ticket current=result.held.issued;let runtime::Closed closed=runtime::close(ref mut state,ref mut result.held,current,16,0)?;
     drained(ref state);return .ok(0);
 }
 @test fn void scoped_alias_cleanup_utf8_and_empty_results(){assert(alias_empty(false).is_ok && alias_empty(true).is_ok);}

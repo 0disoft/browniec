@@ -7,6 +7,7 @@ import slice_result_verifier as verifier;
 import array_vm as arrays;
 import array_layout as layouts;
 import errors as errors;
+import fuel as meter;
 import struct_layout as records;
 
 // Invocation-private coordinator. All copies below are unpublished metadata
@@ -36,8 +37,10 @@ fn Result<slices::Ticket,errors::Error> ticket(Result<slices::Ticket,owners::Err
 fn Result<slices::Arguments,errors::Error> loan_arguments(Result<slices::Arguments,owners::Error> value){return switch(value){case .ok(v):{.ok(v)}case .err(e):{.err(arrays::failure(e,0))}};}
 pub fn State empty(usize capacity){return State{.runtime=Runtime{.authority=authority::empty(),.pool=slices::empty(),.owners=owners::empty(capacity)}};}
 pub fn Capture capture(slices::Ticket value,bool close,bool drop){return Capture{.ticket=value,.close=close,.drop=drop};}
-// Private conservative metadata admission; not a public opcode/cost revision.
-pub fn usize cost(){return 65537*80;}
+// Entry includes emergency cleanup. Handoff additionally prepays Held.close.
+pub fn usize cost(){return meter::result_enter();}
+pub fn usize handoff_cost(){return meter::result_handoff();}
+pub fn usize leave_cost(){return meter::result_leave();}
 pub fn Result<Contract,errors::Error> contract(ref ir::Program unit,usize function){
     let verifier::Proof checked=verifier::inspect(unit)?;
     if(function>=unit.body.function_count || function>=16 || unit.elements[function]==0){return .err(errors::make(5,0));}
@@ -133,7 +136,7 @@ pub fn Result<Returned,errors::Error> handoff(ref mut State state,ref mut Call c
 }
 pub fn Result<Returned,errors::Error> handoff_roots(ref mut State state,ref mut Call call,slices::Ticket selected,
     ref owners::Token[] roots,usize capacity,usize fuel){
-    if(fuel<cost()){return .err(errors::make(8,0));}
+    if(fuel<handoff_cost()){return .err(errors::make(8,0));}
     let usize depth=size(authority::inspect(ref state.runtime.authority))?;
     if(!call.active || call.contract.arity>8 || call.contract.selected==0 || call.contract.selected>call.contract.arity ||
         call.depth>=31 || call.frame>=31 || depth<=call.depth || state.runtime.authority.frame!=call.frame+1 ||
@@ -207,11 +210,11 @@ pub fn Result<Returned,errors::Error> handoff_roots(ref mut State state,ref mut 
     let usize released=release_roots(ref mut next_pool,ref mut next_owners,call,roots,capacity)?;
     let Held held=Held{.issued=issued,.view=entry.view,.exclusive=entry.exclusive,.close_parent=call.captures[chosen].close && !restored_capture[chosen],
         .drop=drop,.depth=result_depth,.frame=call.frame,.active=true};
-    state.runtime=Runtime{.authority=next_authority,.pool=next_pool,.owners=next_owners};call.active=false;return .ok(Returned{.held=held,.resumed=resumed,.remaining=fuel-cost()});
+    state.runtime=Runtime{.authority=next_authority,.pool=next_pool,.owners=next_owners};call.active=false;return .ok(Returned{.held=held,.resumed=resumed,.remaining=fuel-handoff_cost()});
 }
 
 pub fn Result<Closed,errors::Error> close(ref mut State state,ref mut Held held,slices::Ticket current,usize capacity,usize fuel){
-    if(fuel<cost()){return .err(errors::make(8,0));}
+    // Only a successful, funded handoff issues this linear cleanup receipt.
     if(!held.active || current.slot!=held.issued.slot || current.generation<held.issued.generation || (!held.exclusive && !same(current,held.issued))){return .err(errors::make(5,0));}
     let usize length=size(slices::length(ref state.runtime.pool,current,ref state.runtime.owners,capacity))?;
     if(!view(state.runtime.pool.slots[current.slot].view,held.view)){return .err(errors::make(5,0));}
@@ -226,7 +229,7 @@ pub fn Result<Closed,errors::Error> close(ref mut State state,ref mut Held held,
         if(held.close_parent){let usize closed=size(slices::close(ref mut next_pool,parent,ref mut next_owners,capacity))?;parent=none();}
     }else{let usize closed=size(slices::close(ref mut next_pool,current,ref mut next_owners,capacity))?;}
     if(held.drop){let usize released=size(owners::release(ref mut next_owners,held.view.root,capacity))?;}
-    state.runtime=Runtime{.authority=next_authority,.pool=next_pool,.owners=next_owners};held.active=false;return .ok(Closed{.parent=parent,.remaining=fuel-cost()});
+    state.runtime=Runtime{.authority=next_authority,.pool=next_pool,.owners=next_owners};held.active=false;return .ok(Closed{.parent=parent,.remaining=fuel});
 }
 // Terminal cleanup uses the admission reserve even with zero execution Fuel.
 pub fn Result<usize,errors::Error> abort(ref mut State state,usize capacity,usize fuel){
@@ -286,7 +289,7 @@ fn Result<usize,errors::Error> release_roots(ref mut slices::Pool pool,ref mut o
     }return .ok(roots.len);
 }
 pub fn Result<Resumed,errors::Error> leave_call(ref mut State state,ref mut Call call,usize capacity,usize fuel){
-    if(fuel<cost()){return .err(errors::make(8,0));}
+    if(fuel<leave_cost()){return .err(errors::make(8,0));}
     let usize depth=size(authority::inspect(ref state.runtime.authority))?;
     if(!call.active || call.contract.selected!=0 || call.contract.arity>8 || call.depth>=31 || call.frame>=31 ||
         depth<=call.depth || state.runtime.authority.frame!=call.frame+1 || state.runtime.authority.kinds[call.depth]!=1 ||
@@ -304,5 +307,5 @@ pub fn Result<Resumed,errors::Error> leave_call(ref mut State state,ref mut Call
         }
     }
     state.runtime=Runtime{.authority=stack,.pool=pool,.owners=table};call.active=false;
-    return .ok(Resumed{.tickets=resumed,.remaining=fuel-cost()});
+    return .ok(Resumed{.tickets=resumed,.remaining=fuel-leave_cost()});
 }

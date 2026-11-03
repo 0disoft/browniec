@@ -36,17 +36,17 @@ fn Result<usize,errors::Error> forwarding(ref u8[] source,bool exclusive){
     assert(frames::prepare(ref mut stack,7,selected).is_ok);
     assert(!frames::selected(ref stack,8).is_ok && frames::selected(ref stack,7)?==2);
     var runtime::Call call=frames::current(ref stack);
-    let runtime::Returned result=runtime::handoff(ref mut state,ref mut call,selected,16,runtime::cost())?;
+    let runtime::Returned result=runtime::handoff(ref mut state,ref mut call,selected,16,runtime::handoff_cost())?;
     assert(frames::pop(ref unit.body,ref mut stack,result)?==pc+1);
     assert(stack.frame==1 && stack.prepared[1] && stack.identities[1]==destination);
     assert(!stack.prepared[2] && !stack.active[2] && stack.results[2].slot==16);
     assert(frames::selected(ref stack,destination)?==1);
     call=frames::current(ref stack);let slices::Ticket forwarded=stack.results[1];
-    var runtime::Returned final=runtime::handoff(ref mut state,ref mut call,forwarded,16,runtime::cost())?;
+    var runtime::Returned final=runtime::handoff(ref mut state,ref mut call,forwarded,16,runtime::handoff_cost())?;
     assert(frames::pop(ref unit.body,ref mut stack,final)?==0 && stack.frame==0);
     assert(!frames::selected(ref stack,destination).is_ok);
     let slices::Ticket current=final.held.issued;
-    assert(runtime::close(ref mut state,ref mut final.held,current,16,runtime::cost()).is_ok);
+    assert(runtime::close(ref mut state,ref mut final.held,current,16,0).is_ok);
     assert(state.runtime.owners.depth==0 && state.runtime.authority.depth==0);return .ok(0);
 }
 @test fn void readonly_destination_and_frame(){assert(forwarding(b"module main;fn ref i32[] g(ref i32[] p){return ref p;}fn ref i32[] f(ref i32[] p){return g(ref p);}fn i32 main(){return 0;}",false).is_ok);}

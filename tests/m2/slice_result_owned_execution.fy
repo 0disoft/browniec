@@ -32,7 +32,7 @@ fn Result<usize,errors::Error> success(ref u8[] source,i64 expected){
     var runtime::Returned result=vm::run_slice_result(ref unit,0,ref args,ref values,ref mut state,ref mut data,1000000000)?;
     assert(read(ref state,result.held.issued,0,ref data)==expected);
     var usize live=0;var usize i=0;while(i<16){if(state.runtime.owners.slots[i].live){live+=1;}i+=1;}assert(live==1);
-    let slices::Ticket current=result.held.issued;let runtime::Closed closed=runtime::close(ref mut state,ref mut result.held,current,256,runtime::cost())?;
+    let slices::Ticket current=result.held.issued;let runtime::Closed closed=runtime::close(ref mut state,ref mut result.held,current,256,0)?;
     drained(ref state);return .ok(0);
 }
 @test fn void all_scalar_temporary_capture_modes_cleanup_once(){

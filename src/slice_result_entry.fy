@@ -13,7 +13,7 @@ import errors as errors;
 pub fn Result<runtime::Entered,errors::Error> enter(ref ir::Program p,usize function,
     runtime::Contract contract,ref runtime::Capture[] captures,ref owners::Token[] inputs,
     ref mut runtime::State state,ref mut u8[] data,usize fuel){
-    let usize work=calls::cost(p,function,0)?;
+    let usize work=calls::cost(p,function,0)?+contract.arity;
     if(fuel<runtime::cost()+work){return .err(errors::make(8,0));}
     var owners::CallArgument[8] arguments=[owners::CallArgument{
         .source=owners::Token{.slot=0,.generation=0},.element=0,.length=0,.record=0};8];
@@ -27,7 +27,7 @@ pub fn Result<runtime::Entered,errors::Error> enter(ref ir::Program p,usize func
         i+=1;
     }
     if(count==0){
-        let runtime::Call call=runtime::enter(state,contract,captures,data.len,fuel)?;
+        let runtime::Call call=runtime::enter(state,contract,captures,data.len,fuel-work)?;
         return .ok(runtime::Entered{.call=call,.copies=owners::Copies{
             .tokens=[owners::Token{.slot=0,.generation=0};8],.count=0}});
     }

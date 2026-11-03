@@ -32,7 +32,7 @@ fn Result<usize,errors::Error> success_at(ref u8[] source,i64 expected,usize cap
     var runtime::Returned result=vm::run_slice_result(ref unit,0,ref args,ref values,ref mut state,ref mut data[..capacity],1000000000)?;
     assert(read(ref state,result.held.issued,0,ref data)==expected);
     var usize live=0;var usize i=0;while(i<16){if(state.runtime.owners.slots[i].live){live+=1;}i+=1;}assert(live==1);
-    let slices::Ticket current=result.held.issued;let runtime::Closed closed=runtime::close(ref mut state,ref mut result.held,current,capacity,runtime::cost())?;
+    let slices::Ticket current=result.held.issued;let runtime::Closed closed=runtime::close(ref mut state,ref mut result.held,current,capacity,0)?;
     drained(ref state);return .ok(0);
 }
 fn Result<usize,errors::Error> success(ref u8[] source,i64 expected){return success_at(source,expected,256);}
