@@ -126,14 +126,45 @@ pub fn Result<Returned,errors::Error> handoff(ref mut State state,ref mut Call c
     let slices::Arguments restored=arguments(authority::leave_call(ref mut next_authority,ref mut next_pool,ref writers[..count],ref next_owners,capacity,call.frame+1))?;
     var slices::Ticket[8] resumed=[none();8];var usize writer=0;i=0;
     while(i<call.contract.arity){if(call.contract.tags[i]!=0){if((call.contract.tags[i]&128)!=0){resumed[i]=restored.tickets[writer];writer+=1;}else{resumed[i]=call.captures[i].ticket;}}i+=1;}
-    var slices::Ticket issued=selected;
+    // Anonymous mutable range arguments own a caller reborrow, not its whole
+    // write session. End these in reverse capture order before installing the
+    // returned child; otherwise a retained later argument would block cleanup.
+    var bool[8] restored_capture=[false;8];
+    var usize closed_mask=0;let usize one=1;var bool drop=false;i=call.contract.arity;
+    while(i>0){i-=1;if(call.contract.tags[i]!=0){
+        let Capture c=call.captures[i];
+        if(c.drop && root(call.views[i].root,entry.view.root)){drop=true;}
+        if(c.close && (call.contract.tags[i]&128)!=0){
+            var bool pending=false;var usize at=0;
+            while(at<next_authority.depth){
+                if(next_authority.kinds[at]==2 && next_authority.children[at].issued.slot==resumed[i].slot){pending=true;}
+                at+=1;
+            }
+            if(pending){
+                let usize depth=next_authority.depth;
+                if(c.drop || depth==0 || next_authority.kinds[depth-1]!=2 ||
+                    next_authority.frames[depth-1]!=call.frame ||
+                    next_authority.children[depth-1].issued.slot!=resumed[i].slot){return .err(errors::make(5,0));}
+                resumed[i]=ticket(authority::leave_child(ref mut next_authority,ref mut next_pool,resumed[i],ref next_owners,capacity,call.frame))?;
+                restored_capture[i]=true;
+            }else if(!(entry.exclusive && i==chosen)){
+                let usize closed=size(slices::close(ref mut next_pool,resumed[i],ref mut next_owners,capacity))?;resumed[i]=none();
+            }
+        }else if(c.close){
+            if((closed_mask&(one<<resumed[i].slot))==0){
+                let usize closed=size(slices::close(ref mut next_pool,resumed[i],ref mut next_owners,capacity))?;closed_mask|=one<<resumed[i].slot;
+            }
+            resumed[i]=none();
+        }
+    }}
+    var slices::Ticket issued=selected;let usize result_depth=next_authority.depth;
     if(entry.exclusive){
-        let owners::View parent=call.views[chosen];
+        let owners::View parent=next_pool.slots[resumed[chosen].slot].view;
+        if(!root(parent.root,entry.view.root) || entry.view.start<parent.start || entry.view.end>parent.end){return .err(errors::make(5,0));}
         issued=ticket(authority::enter_child(ref mut next_authority,ref mut next_pool,resumed[chosen],ref next_owners,entry.view.start-parent.start,entry.view.end-parent.start,capacity,call.frame))?;
         resumed[chosen]=none();
     }else{
-        // Transfer the selected slot without another slot or read session. The
-        // callee's handle becomes stale, even when every pool slot is occupied.
+        // Transfer in place without a spare slot or another read session.
         if(selected.generation==18446744073709551615){return .err(errors::make(5,0));}
         issued=slices::Ticket{.slot=selected.slot,.generation=selected.generation+1};next_pool.slots[selected.slot].generation=issued.generation;
     }
@@ -143,23 +174,13 @@ pub fn Result<Returned,errors::Error> handoff(ref mut State state,ref mut Call c
             let usize closed=size(slices::close(ref mut next_pool,slices::Ticket{.slot=i,.generation=slot.generation},ref mut next_owners,capacity))?;
         }
     }
-    var usize closed_mask=0;let usize one=1;var bool drop=false;i=call.contract.arity;
-    while(i>0){i-=1;if(call.contract.tags[i]!=0){
-        let Capture c=call.captures[i];let bool retained=entry.exclusive && i==chosen;
-        if(c.drop && root(call.views[i].root,entry.view.root)){drop=true;}
-        if(c.close && !retained && (closed_mask&(one<<resumed[i].slot))==0){
-            let usize closed=size(slices::close(ref mut next_pool,resumed[i],ref mut next_owners,capacity))?;
-            closed_mask|=one<<resumed[i].slot;
-        }
-        if(c.close){resumed[i]=none();}
-    }}
     var usize dropped=0;i=call.contract.arity;
     while(i>0){i-=1;if(call.captures[i].drop && call.contract.tags[i]!=0 && !root(call.views[i].root,entry.view.root)){
         let owners::Token token=call.views[i].root;
         if((dropped&(one<<token.slot))==0){let usize released=size(owners::release(ref mut next_owners,token,capacity))?;dropped|=one<<token.slot;}
     }}
-    let Held held=Held{.issued=issued,.view=entry.view,.exclusive=entry.exclusive,.close_parent=call.captures[chosen].close,
-        .drop=drop,.depth=call.depth,.frame=call.frame,.active=true};
+    let Held held=Held{.issued=issued,.view=entry.view,.exclusive=entry.exclusive,.close_parent=call.captures[chosen].close && !restored_capture[chosen],
+        .drop=drop,.depth=result_depth,.frame=call.frame,.active=true};
     state.runtime=Runtime{.authority=next_authority,.pool=next_pool,.owners=next_owners};call.active=false;return .ok(Returned{.held=held,.resumed=resumed,.remaining=fuel-cost()});
 }
 

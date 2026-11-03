@@ -19,7 +19,9 @@ The final VM adapter must bind it to its immutable Program/function.
 `enter` authenticates all original tickets before any retain/rotation, then stages
 canonical writer CALL transfer and independent readonly formal tickets. A Capture
 states whether the caller owns an anonymous view and/or its temporary array root.
-Owning a root requires owning its view. Duplicate shared handles cannot claim
+Owning a root requires owning an independently opened view/session. Anonymous
+mutable reborrow captures instead own one caller-side restoration, never the
+parent session or owner. Duplicate shared handles cannot claim
 conflicting view ownership. Native Call and Held receipts are linear: do not clone,
 forge, publish twice or mutate them. Callee readonly formal tickets stay live until
 handoff; the eventual dispatcher must arrange cleanup accordingly.
@@ -31,21 +33,29 @@ and contained range against the chosen actual. It stages all state in local meta
 
 1. Unwind callee lexical mutable descendants in canonical reverse order.
 2. Authenticate and restore the CALL's writers privately, then pop the callee frame.
-3. For an exclusive result, install a caller-frame child before publication. The
+3. End anonymous mutable argument reborrows in reverse capture order before
+   installing the result. Restore their named parents privately; preserve the
+   selected returned range separately. Independently opened anonymous views use
+   CLOSE instead of END. Result depth is the resulting canonical depth, not the
+   old CALL depth. Both earlier/later selected argument orders are supported.
+4. For an exclusive result, install a caller-frame child before publication. The
    fresh parent ticket remains only in the canonical restoration receipt; caller
    bindings receive no selected parent ticket while the result is live.
-4. For a shared result, rotate the selected live slot's generation in place. Keep
+5. For a shared result, rotate the selected live slot's generation in place. Keep
    its read session, including when all sixteen pool slots are occupied. The
    callee's old handle becomes stale without an allocation or payload copy.
-5. Close callee-created readonly handles and unselected anonymous captures. Drop
+6. Close callee-created readonly handles and unselected anonymous captures. Drop
    unselected temporary roots once per root; retain a selected temporary root until
    its result ends, even through aliased shared arguments.
-6. Publish the complete Runtime, consume the Call receipt and return the held view
-   plus fresh unselected named-parent tickets for caller binding updates.
+7. Publish the complete Runtime, consume the Call receipt and return the held view
+   plus fresh unselected named-parent tickets for caller binding updates. An
+   anonymous reborrow capture may produce a resumed named-parent ticket even
+   though its own capture has been consumed.
 
 A selected mutable parent remains suspended through returned descendants. `close`
 requires the canonical result child to be on top, restores its parent only after
-all descendants end, closes an owned anonymous parent view, then drops a selected
+all descendants end. A consumed anonymous reborrow restores its named parent;
+an independently opened anonymous parent view closes instead. Then it drops a selected
 temporary owner. Shared results close their own transferred ticket. Owner sessions
 block mutation/move/drop while any appropriate result/peer view remains alive.
 
@@ -68,6 +78,9 @@ Each enter/handoff/close prepays the private conservative metadata charge
 This is not a public opcode price or a change to the CLI's 1M Fuel ceiling. It is
 an internal admission/cleanup reserve, not a measured instruction count or latency.
 The returned remaining Fuel is zero when admitted with that exact amount.
+This deliberately exceeds the public 1M ceiling: derive/reconcile the eventual
+verified VM charge before public source promotion, rather than wiring this private
+reserve unchanged into public execution.
 
 `abort` drains pool sessions, discards canonical receipts and clears invocation
 owners, using the prepaid cleanup reserve even with zero execution Fuel. It
@@ -91,5 +104,7 @@ The first development native checkpoint passed six groups: shared owner pinning,
 mutable returned descendants/parent suspension, selected versus unselected temporary
 owners, nested forwarding, late-failure rollback preserving payload writes, and
 in-place full-pool transfer/zero-Fuel abort. Follow-up verification covers remaining
-type/alias/generation boundaries and the unchanged public CLI gate. These are native
+type/alias/generation boundaries, anonymous mutable argument restoration in both
+selection orders, rollback after caller-restoration/result-installation, and the
+unchanged public CLI gate. These are native
 component checks, not guest returned-reference execution or Python model checks.
