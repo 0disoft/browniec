@@ -1,13 +1,14 @@
 # Runtime Flow
 
-- Status: Designed full flow; M0 and first M1 scalar execution path implemented
+- Status: Target full flow; narrow scalar/aggregate/scalar-slice execution implemented (2026-11-03)
 
-The flow below is the target architecture. M0 verifies selected native primitives,
-including storage and owner bookkeeping. M1 separately parses, verifies, and runs
-i32/i64/u8/u32/usize/bool expressions, initialized locals/assignment, branches, loops, shallow
-tags, and direct calls through bounded VM frames. The unsigned slice is verified by its
-[receipt](../evidence/m1-unsigned-windows-20261023.json). Host suspension and the
-restricted path below remain future work.
+The flow below is the target architecture. The current CLI reads one bounded source,
+compiles/verifies and executes scalar, array, record and scalar-slice programs with
+Fuel and bounded VM frames. Private Buffer and returned-origin components do not
+provide guest Buffer or returned-reference execution. Explicit projects/input,
+Engine/Instance stepping, typed host suspension, guest-output staging, restricted
+workers and embedding remain open in the
+[complete remaining-work audit](../product/04-remaining-work.md).
 
 ## Source to result
 

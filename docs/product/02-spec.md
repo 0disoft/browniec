@@ -1,7 +1,7 @@
 # Product Specification
 
 - Status: Accepted for design, 2026-10-23
-- Implementation status: M1 branches, loops, shallow Option/Result, switch statements and expressions, scalar `?` propagation, i64, and unsigned scalars have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified; full profile not implemented
+- Implementation status: Reconciled 2026-11-03; bounded M1 and public M2 array/record/scalar-slice subsets; full profile incomplete
 - Source profile name: brownie.safe/0.3
 
 ## Product boundary
@@ -13,11 +13,30 @@ evaluation. These are starting workloads, not proven market requirements.
 The native VM reads .brc source. Running a program must not start Go, MSVC, a C
 compiler, an interpreter subprocess, or a disk bytecode runtime.
 
-The implemented readonly u8 slice parameter increment is described in the
-[public VM/CLI contract](../engineering/m2-array-slice-parameters-public.md).
-It enables explicit ref-name calls after full borrow-aware validation while
-retaining the existing profiles and Fuel limits; mutable/non-u8 slices and slice
-results remain unavailable.
+## Current implementation versus target
+
+The remainder defines the accepted target `brownie.safe/0.3`; it is not a list of
+already available features. Current version JSON retains narrower experimental
+profiles and feature flags. Six scalar types, arrays, nominal scalar/nested records,
+by-value aggregate parameters/results and shared/exclusive scalar slices are public.
+Whole/ranged/named-slice/temporary-array CALL borrows and fixed-array UTF-8 views
+are available. Root exclusion remains whole-root, including disjoint mutable ranges.
+
+Private returned-slice signatures and single-input body-origin analysis exist;
+every borrowed-result declaration still rejects publicly and no result executes.
+Buffer storage/leases/scanning have private native evidence but no guest Buffer
+execution path. There is no general Engine/Instance API, guest input/output, host
+suspension, restricted worker or public DLL.
+
+The [complete remaining-work audit](04-remaining-work.md) maps all 40 reference
+required features and the wider delivery gaps. The [roadmap](01-roadmap.md) orders
+them. [Typed mutable parameters](../engineering/m2-slice-mutable-parameters-public.md),
+[temporary arguments](../engineering/m2-temporary-array-borrow-arguments.md) and
+[private returned origins](../engineering/m2-slice-result-origins.md) own the newest
+borrow boundaries. Existing shallow tags remain i32/bool, depth one; text, general
+references, wide/resource-bearing tags and full module/visibility/inference syntax
+are target work. Current M1 accepts Option `?` as an intentional narrow extension;
+reconcile it explicitly before claiming raw-package dialect conformance.
 
 ## First source profile
 
@@ -293,8 +312,9 @@ records 75 native groups and 1,898 CLI cases in each profile, including 626 new 
 The [arm-statement receipt](../evidence/m1-switch-arm-statements-windows-20261023.json)
 records 81 native groups and 1,969 CLI cases in each profile, including 71 new cases.
 The [M1 audit](../engineering/m1-checkpoint-audit.md) closes the bounded scalar
-checkpoint. Arrays, structs, borrows,
-and Windows isolation remain unimplemented or unverified. The slice does not
-satisfy full-profile ownership, allocation, host, isolation, or embed criteria.
-Claims require scoped [M1 details](../engineering/m1-scalar-slice.md) and recorded
-evidence, not acceptance of this specification alone.
+checkpoint. Subsequent M2 increments add the scoped arrays, records and scalar
+borrows above. They do not establish executable returned references, guest Buffer,
+full-profile ownership/accounting, host, isolation or embed criteria. Use the
+[remaining-work audit](04-remaining-work.md) and exact dated engineering receipts;
+acceptance of this specification and historical totals are not current full-profile
+conformance evidence.

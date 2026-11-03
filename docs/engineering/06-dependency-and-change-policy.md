@@ -1,6 +1,6 @@
 # Dependency and Change Policy
 
-- Status: Accepted initial policy; no dependency manifest yet
+- Status: Accepted policy; toolchain.json records the adopted compiler/SDK and platform artifact identities
 
 ## Necessity
 

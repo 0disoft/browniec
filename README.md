@@ -1,5 +1,10 @@
 # Brownie C
 
+The [remaining-work audit](docs/product/04-remaining-work.md) and
+[current roadmap](docs/product/01-roadmap.md) reconcile full-profile requirements
+with the implemented experimental core as of 2026-11-03. Sections below retain
+their named increments and historical evidence.
+
 ## Borrowed-result input-origin analysis: execution gated
 
 Implemented privately at `0d1a8cb`. `compiler::inspect_slice_results` proves one

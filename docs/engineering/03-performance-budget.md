@@ -45,3 +45,12 @@ code size, compile time, and safety cost with every optimization.
 
 Long fuzzing and precise benchmarks are manual, risk-based runs rather than mandatory
 per-push suites. No benchmark runner or measured budget exists today.
+
+## Current measurement blockers (2026-11-03)
+
+The native CLI currently caps source at 4096 UTF-8 bytes, so the 10KiB compile
+workload cannot yet run through it. Explicitly reconcile the benchmark/profile
+before raising limits; do not describe this target as measured. Full Instance
+setup, guest Buffer/input/output, host, worker and embed workloads need their
+missing integration first. The [remaining-work audit](../product/04-remaining-work.md)
+tracks those prerequisites and separate runtime/build-footprint measurements.

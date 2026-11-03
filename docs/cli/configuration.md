@@ -1,6 +1,6 @@
 # CLI Configuration
 
-- Status: Scalar CLI flags implemented; project/policy configuration designed only
+- Status: SOURCE/JSON/Fuel flags implemented for bounded M1/M2; project/policy/input configuration designed only (2026-11-03)
 - Default host capability: deny
 
 ## Explicit inputs
@@ -38,6 +38,12 @@ Diagnostics may report selected source names, limits, and policy identities. The
 must not expose secret values or unrelated file contents. A future effective-config
 output is diagnostic only and does not authorize execution.
 
-The current CLI implements only source selection, --json, and a run-only --fuel
-limit. No project, policy, catalog, environment configuration, effective-config, or
+The current scalar/array/record/scalar-slice CLI implements only SOURCE selection,
+`--json` and run-only `--fuel` (default 256, range 0..1000000). SOURCE is one UTF-8
+code file up to 4096 bytes, not guest input; zero-argument i32 `main` is fixed. No project, policy, catalog, environment configuration, effective-config, or
 run-grant loader exists. Unsupported options are rejected rather than ignored.
+
+`--isolated` reports unavailable without fallback. Guest input/output, deadline and
+cancellation settings have no implementation. See the
+[complete remaining-work audit](../product/04-remaining-work.md) before treating any
+target configuration field or reference-package schema as accepted by this CLI.

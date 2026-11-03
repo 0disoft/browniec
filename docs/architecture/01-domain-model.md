@@ -1,6 +1,10 @@
 # Domain Model
 
-- Status: Designed full lifecycle; scalar Program and fresh run-state subset implemented
+- Status: Designed full lifecycle; narrow reusable Program/fresh VM state and aggregate/slice owners implemented (2026-11-03)
+
+Public arrays/records/scalar slices and private Buffer ledgers do not yet provide
+the full Engine/one-shot Instance/host/output lifecycle below. See the
+[remaining-work audit](../product/04-remaining-work.md).
 
 | Concept | Meaning and lifecycle |
 | --- | --- |

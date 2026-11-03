@@ -36,6 +36,23 @@ machine delivery are not implemented. `core: true` in the experimental version
 JSON means that the narrow native CLI exists; it does not certify the full
 `brownie.safe/0.3` profile or completion of M3. Restricted/embed remain false.
 
+## Status and priority
+
+Accepted/designed means a contract exists. Implemented means source exists in its
+stated scope. Verified means an actual recorded execution covers that scope.
+Private/gated code is not a public capability. Missing means no implemented public
+surface; unverified means the claimed execution/OS/measurement evidence is absent.
+No one label implies full-profile or release readiness.
+
+| Priority | Work IDs and dependency | Owning contracts |
+| --- | --- | --- |
+| Next | B01-B04: independent result proof before ticket/capture handoff and public admission | [Returned-origin boundary](../engineering/m2-slice-result-origins.md), [result signatures](../engineering/m2-slice-result-signatures.md) |
+| M2 integration | D01-D05, L03-L06, I01-I02: private Buffer and aggregate foundations -> useful guest byte/text/input/output path | [Specification](02-spec.md), [Buffer storage](../engineering/m2-buffer-storage.md), [UTF-8 sessions](../engineering/m2-buffer-utf8-session.md), [output](../cli/output-and-exit-codes.md) |
+| Full-profile prerequisites | L01-L02/L07, B05, C01-C05: accepted language, references, configuration and limit reconciliation | [Specification](02-spec.md), [command](../cli/command-contract.md), [configuration](../cli/configuration.md) |
+| M3 prerequisite/core | R01-R05 -> H01-H04: Engine/Instance/accounting/step/cancel -> fake typed host boundary | [Runtime flow](../architecture/02-runtime-flow.md), [invariants](../engineering/00-project-invariants.md) |
+| M4 | W01-W06 after bounded core/authority contracts | [System boundary](../architecture/00-system-boundary.md), [runtime flow](../architecture/02-runtime-flow.md) |
+| M5 and release evidence | E01-E04, V01-V05; measure relevant slices earlier | [Architecture](../../ARCHITECTURE.md), [testing](../engineering/05-testing-standard.md), [performance](../engineering/03-performance-budget.md), [validation](../../VALIDATION.md) |
+
 ## Coverage of every reference required feature
 
 The reference ZIP's `contracts/profile.json` lists 40 required features. Narrow
@@ -171,7 +188,7 @@ requirements of this audit. They need a justified profile decision if desired.
 
 | ID | Work and completion condition |
 | --- | --- |
-| E01 | Establish an actual Brownie native DLL export and C-host call with ABI bootstrap/layout/version/capacity validation. Existing Fairy pub functions or historical adapter inspection are not Brownie export evidence. |
+| E01 | Establish an actual Brownie native DLL export and C-host call for public ABI revision 2, including `bc_get_abi_info_v2` and bootstrap/layout/version/capacity validation. Existing Fairy pub functions or historical adapter inspection are not Brownie export evidence. |
 | E02 | Implement the bounded process-wide lazy typed handle registry, nonwrapping/retired generations, Engine ownership, owner-thread lifetime identity, synchronization and busy/reentry rejection. Do not pretend arbitrary C pointers can be validated safely. |
 | E03 | Implement Program/Instance pin/release/destroy, sized output structs, event/reply/output pointer lifetimes and stable terminal metrics/errors across C calls, including malformed/wrong-thread/stale-handle cases. |
 | E04 | Package executable/required runtime (and DLL for embed), license/dependency notices and integrity metadata; run without developer compilers on a clean Windows machine. Verify Linux natively before promising Linux support: the toolchain has a Linux cross-build artifact, not a Brownie Linux execution pass. |
@@ -185,7 +202,8 @@ requirements of this audit. They need a justified profile decision if desired.
 
 The accepted initial targets remain: reused setup p95 <=1ms; 10KiB pure compile+
 verify p95 <=10ms; empty Instance accounted memory <=32KiB; zero warm scalar-loop
-heap allocations; 100 retained edit builds <=32MiB project outputs. All are
+heap allocations; 100 retained edit builds <=32MiB project outputs, excluding explicitly reported
+debug/toolchain artifacts. All are
 unmeasured. The current 4KiB source ceiling cannot run the 10KiB compilation target;
 C05 must define the intended benchmark/profile rather than silently raising caps.
 

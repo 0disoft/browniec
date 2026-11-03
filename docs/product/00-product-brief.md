@@ -1,8 +1,8 @@
 # Product Brief
 
-- Status: Accepted initial direction, 2026-10-23
+- Status: Accepted initial direction; delivery reconciled 2026-11-03
 - Product owner: Zerodi / Rodisoft
-- Implementation: M0 verified; experimental i32/i64/u8/u32/usize/bool scalar CLI/VM implemented and verified for the bounded M1 scalar subset; broader product pending
+- Implementation: M0/M1 checkpoint evidence; public M2 arrays, records and scalar slices; private Buffer/returned-origin foundations; M3-M5 unavailable
 
 ## Intended outcome
 
@@ -15,9 +15,16 @@ advantage over existing languages, or commitment to replace Python.
 
 ## First delivery
 
-Windows 11 x64 is the first target. M0 native feasibility and the experimental
-scalar source-to-VM CLI are implemented; aggregates and bytes, typed host
-suspension, restricted workers, and trusted DLL embedding remain future work.
+Windows 11 x64 is the first target. The experimental native CLI runs six scalar
+types, arrays, nominal scalar/nested records, aggregate parameters/results and
+shared/exclusive scalar slices, including inline ranged/temporary CALL arguments.
+Fixed-array UTF-8 validation is public. Private Buffer components and returned-
+origin analysis do not yet provide guest Buffer or executable returned references.
+
+Full-profile language/reference completion, guest input/text/output, Engine/Instance
+integration, typed host suspension, restricted workers, trusted DLL embedding,
+clean-machine packaging and measured performance remain open. The
+[complete remaining-work audit](04-remaining-work.md) distinguishes these states.
 
 The [specification](02-spec.md) owns the source profile; the [roadmap](01-roadmap.md)
 owns M0-M5. Do not delay the core CLI until every later delivery level exists.

@@ -2,7 +2,7 @@
 
 - Status: accepted design baseline
 - Decision date: 2026-10-23
-- Implementation: M0 verified; experimental M1 scalar pipeline and VM implemented; earlier slices and unsigned scalars have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified
+- Implementation: Reconciled 2026-11-03; native scalar/array/record/scalar-slice subsets; private Buffer/return-origin foundations; M3-M5 pending
 
 ## Intent
 
@@ -12,6 +12,19 @@ make trust crossings explicit.
 
 The system is not a C interpreter and does not expose C memory layout to source.
 Its explicit Fairy-like syntax is its own safe profile.
+
+## Current implementation boundary
+
+The public native frontend/verifier/VM also handles six-scalar arrays, nominal
+scalar/nested records, aggregate parameters/results, shared/exclusive scalar slices
+and whole/ranged/temporary CALL borrows. Private Buffer resources/leases/UTF-8
+sessions and returned-origin analysis are foundations; guest Buffer and actual
+returned references remain unavailable. The
+[remaining-work audit](docs/product/04-remaining-work.md) owns the complete gap list.
+
+The scalar foundation below explains the M1 checkpoint. Its dated receipts remain
+historical; later M2 contracts extend the implementation. The ownership/lifecycle/
+host/publication sections describe the target where not specifically implemented.
 
 The implemented [M1 scalar slice](docs/engineering/m1-scalar-slice.md) runs real `.brc`
 expressions through lexing/parsing, i32/i64/u8/u32/usize/bool type checks, private IR, verifier,
@@ -81,14 +94,11 @@ paths bypass the typed value join. While conditions enter their own loop before
 compilation so their transfers target that loop. No opcode or VM change is added.
 The [arm-statement receipt](docs/evidence/m1-switch-arm-statements-windows-20261023.json)
 records 81 native groups and 1,969 CLI cases in each development and release profile.
-Ownership, lifecycle
-APIs, Engine, host calls, workers, and DLLs remain designs. The bounded scalar
-M1 checkpoint is verified; arrays,
-structs, borrows, Windows isolation, DLL embedding,
-and performance remain
-unimplemented or unverified. M0
-separately exercises native arithmetic, codec, storage, allocator, owner, and frame
-primitives.
+The bounded scalar M1 checkpoint is verified and public M2 arrays, records and
+scalar slices extend it. Full-profile ownership/lifecycle, Engine/host APIs,
+worker, DLL, clean-machine delivery and performance remain incomplete or unverified.
+M0 separately exercises native arithmetic, codec, storage, allocator, owner and
+frame primitives.
 
 ## Main path
 
@@ -105,8 +115,9 @@ The intended pipeline is:
 
 Source, compiler, verifier, VM, and simple platform shims are primarily Fairy C.
 Allocator, scalar codec, and OS access may use narrow shims with recorded preconditions.
-M0 implements the first allocator and scalar checks in Fairy C and a test-only C
-allocator header; it does not make the pipeline below executable.
+M0 implements separate allocator/scalar probes and a test-only C allocator header.
+The narrow single-source pipeline is executable; explicit module/project/authority,
+Instance stepping, host suspension and publication above are target integration.
 
 ## Ownership model
 
@@ -131,9 +142,10 @@ external source belongs in a restricted process with AppContainer access limits,
 Job resource limits, a bounded parent broker, and independently verified Windows
 IPC. Preparation failure must not fall back to an unrestricted child.
 
-The ABI is planned, not present. Current Fairy C documentation states that its
-pub/callback adapter does not export public C symbols. An actual DLL export and call
-belong to the embed milestone.
+The Brownie ABI is planned, not present. Historical inspection of the Fairy
+pub/callback adapter was not Brownie export evidence. The adopted toolchain is
+recorded in `toolchain.json`; an actual Brownie DLL symbol export and C-host call
+still belong to the embed milestone.
 
 ## Failure and publication
 

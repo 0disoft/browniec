@@ -1,29 +1,36 @@
 # Risk Register
 
-- Status: Initial open risks, 2026-10-23
+- Status: Reconciled 2026-11-03 against source and scoped historical receipts
 - Decision owner: Zerodi / Rodisoft
-- No risk below is closed by accepting the design
+- Design acceptance alone closes no risk; scope-specific native evidence is retained.
 
-| Risk | Failure scenario | Response and closure evidence |
-| --- | --- | --- |
-| R1: Native feasibility | Fairy C cannot return storage/arithmetic failure without trapping | M0 native probes; narrow or revise implementation before expansion |
-| R2: Native memory safety | A shim or VM ledger error corrupts the host | Narrow shims, stale-token and quota probes, worker containment; no safety proof claimed |
-| R3: Broker ordering | Illegal or late frames dispatch host work or publish cancelled output | M4 negative phase, cancellation, exit/EOF, and I/O lease tests |
-| R4: Layout budget coupling | Valid structs fail when wrapped in Option/Result | Independent structural, wrapper, and total-work budgets with boundary cases |
-| R5: Buffer growth rejection | Preferred capacity fails although minimum capacity fits | Test minimum rounded fallback with old-plus-new peak reservations |
-| R6: ABI gap | A callable Fairy function is mistaken for a public DLL export | M5 actual symbol/export/call test before embed delivery |
-| R7: Cost targets | Compilation, startup, RAM, or retained builds exceed budgets | Measure named workloads separately; narrow scope before complex optimization |
-| R8: Product mismatch | No useful task benefits from a new language | Test validation, bytes, and rules with developer feedback before broadening scope |
-| R9: Unknown effects | Cancellation hides an already performed host effect | Report known/unknown effect state; host owns reconciliation; no automatic replay |
-| R10: Toolchain drift | Compiler/SDK changes alter semantics or native behavior | Record build identities and run narrow compatibility probes on adoption |
+| Risk | Current exposure and remaining closure evidence |
+| --- | --- |
+| R1: Native feasibility | M0 and the M1 checkpoint have scoped Windows native evidence. The core interpreter exists; new Buffer, lifecycle, worker and ABI boundaries need their own failure evidence. |
+| R2: Native memory safety | Public aggregate/slice code and native shims require correct identity, loan and rollback bookkeeping. Scoped stale-token/quota tests are not a proof for the entire VM; restricted containment is absent. |
+| R3: Broker ordering | No worker/broker is implemented. M4 must reject illegal phases and late dispatch/publication, including cancellation, exit/EOF and I/O-lease races. |
+| R4: Layout budget coupling | Scalar/nested records work, but wide/resource-bearing depth-four tags do not. Separate plain nesting, tagged depth and total traversal/bytes before full-profile acceptance. |
+| R5: Buffer growth rejection | Minimum rounded fallback and old-plus-new accounting have private native evidence. Guest Buffer/VM/Instance integration remains open and must preserve those semantics. |
+| R6: ABI gap | Brownie has no public DLL ABI. Callable Fairy functions or historical adapter findings do not prove exports; M5 needs actual symbol/export/C-host-call evidence. |
+| R7: Cost targets | Startup/compile/reuse, stack/heap, total memory and retained builds are unmeasured. The current 4KiB source cap cannot execute the 10KiB compile target unchanged. |
+| R8: Product mismatch | No representative input -> transform -> staged-output guest workload has been delivered. Validate a usable workload and developer benefit before optional language expansion. |
+| R9: Unknown effects | Typed host and cancellation paths are not implemented. Preserve known/unknown effect state and host reconciliation; no automatic replay. |
+| R10: Toolchain drift | `toolchain.json` records the adopted compiler/SDK, not a permanent version freeze. Windows narrow evidence does not establish Linux runtime support or compatibility of a future update. |
+| R11: Returned-view lifetime | Private origin analysis is not runtime authentication. Keep public results gated until independent IR proof, ticket handoff, selected-capture retention and exclusive-parent suspension are verified. |
+| R12: Resource and terminal boundaries | Fuel and an aggregate arena cap exist, but complete Engine-total accounting, bounded step/cleanup, cancellation/deadline and persistent poison do not. Do not expose those lifecycle guarantees early. |
+| R13: Stale status or overclaim | Historical increment gates/counts can contradict newer features. Current inventory and version availability must separate private foundations, public execution, full profile, OS and packaged delivery. |
 
 ## Exposure and ownership
 
-The implementation does not exist, so production likelihood and incident frequency
-are unknown. The maintainer implementing each slice owns its mitigation evidence;
-Zerodi / Rodisoft owns scope and release decisions.
+An experimental native core exists and is intended for trusted local source. It
+has no verified restricted worker for arbitrary external source. Production incident
+rates and full-profile performance/safety guarantees are not established.
 
-Reassess at each affected milestone or after a counterexample. Close a risk only
-with evidence for its stated scope and retain residual limits. Failed native probes,
-unavailable isolation, or missing exports block the corresponding delivery level.
-See the [review findings](../design-baseline.md) and [validation policy](../../VALIDATION.md).
+The maintainer implementing each slice owns its mitigation evidence; Zerodi /
+Rodisoft owns scope and release decisions. Reassess affected risks after each
+counterexample or implementation boundary. Retain residual limits when a narrow
+case closes; failed native probes, unavailable isolation and missing DLL exports
+block their corresponding deliveries.
+
+See the [complete inventory](04-remaining-work.md), [roadmap](01-roadmap.md),
+[review findings](../design-baseline.md) and [validation policy](../../VALIDATION.md).

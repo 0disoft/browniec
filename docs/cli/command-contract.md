@@ -1,15 +1,15 @@
 # Command Contract
 
-- Status: Experimental scalar check/run/version implemented; other surfaces designed
+- Status: Experimental native scalar/aggregate/scalar-slice check/run/version; wider surfaces designed (2026-11-03)
 - Repository type: cli-tool
 
 ## Surface and availability
 
 | Command | Intended behavior | Current state |
 | --- | --- | --- |
-| browniec --version | Report experimental profile and delivery availability; full metadata planned | Implemented for brownie.m1-scalar/1 |
-| browniec check SOURCE | Compile and verify without running guest code or host calls | Implemented for brownie.m1-scalar/1 |
-| browniec run SOURCE | Compile, verify, and run one selected source | Implemented for brownie.m1-scalar/1 |
+| browniec --version | Report experimental profile and delivery availability; full metadata planned | Implemented for the bounded M1/M2 feature subsets |
+| browniec check SOURCE | Compile and verify without running guest code or host calls | Implemented for the bounded M1/M2 feature subsets |
+| browniec run SOURCE | Compile, verify, and run one selected source | Implemented for the bounded M1/M2 feature subsets |
 | browniec run --project FILE | Use an explicit source map, policy, entry, grants, and run limits | Not implemented |
 | browniec check SOURCE --isolated | Use a restricted compile-only worker | Designed; unavailable |
 | browniec run SOURCE --isolated | Use the restricted worker and parent broker | Designed; unavailable |
@@ -20,19 +20,23 @@ The implemented grammar is `browniec check SOURCE [--json]` and
 `browniec run SOURCE [--fuel N] [--json]`, plus `--version [--json]` and `--help`.
 Fuel defaults to 256 and accepts 0..1000000; duplicate/unknown options are errors.
 Run grants no guest host capability. SOURCE selects one local disk file with a
-4096-byte UTF-8 source limit. The experimental [M1 scalar subset](../engineering/m1-scalar-slice.md),
-scalar arrays (including [named u8-array UTF-8 validation](../engineering/m2-array-utf8-source.md),
-its [named-array](../engineering/m2-array-utf8-ranges.md),
-[temporary-array](../engineering/m2-array-utf8-temporary-ranges.md) and
-[open-ended](../engineering/m2-array-utf8-open-ranges.md) range forms),
-and [helper-local records](../engineering/m2-struct-function-source.md)
-are implemented, as are [readonly u8 slice parameters](../engineering/m2-array-slice-parameters-public.md)
-with explicit ref-name arguments. Version JSON adds `array_slice_parameters: true`;
-profile names, result fields and Fuel limits are unchanged. Project, input-byte,
-policy, catalog, inspect, and worker options
-remain unavailable. `--isolated` returns an availability denial, with no fallback.
+4096-byte UTF-8 source limit. The public language supports six scalar types,
+fixed scalar arrays, nominal scalar/nested records, aggregate parameters/results,
+shared/exclusive scalar slices, inline whole/ranged/temporary CALL borrows and
+array/view UTF-8 checks. Exact grammar and limits remain narrower than the target
+profile; the [complete audit](../product/04-remaining-work.md) lists every gap.
+
+Version JSON reports incremental flags alongside the existing scalar/array/struct
+profile identifiers. `core: true` advertises only the experimental native CLI.
+Returned-slice analysis is private and every borrowed-result declaration rejects.
+Guest Buffer/input/output, project/policy/catalog/grant loaders, inspect, worker,
+cancellation and deadlines remain unavailable. `--isolated` returns an availability
+denial, with no unrestricted fallback. Zero-argument i32 `main` is the only entry;
+the source file is not a guest input snapshot.
 
 ## Execution rules
+
+Project and worker rules below are target contracts, not implemented loaders.
 
 check and run read bounded source snapshots and invoke the native Brownie frontend
 directly. Neither may launch Go, MSVC, a C compiler, or another compiler child.
@@ -45,6 +49,9 @@ case collisions are rejected by design. Untrusted file collection requires ancho
 root membership and reparse-point checks; until implemented, use a host snapshot.
 
 ## Failure and compatibility
+
+Cancellation/publication below describe the target lifecycle; current availability
+is stated above and in the [output contract](output-and-exit-codes.md).
 
 Cancellation closes publication immediately. Preparation failure for isolated mode
 must reject rather than fall back to an unrestricted process. External effects are

@@ -1,85 +1,54 @@
 # CLI Tool
 
-- Status: Experimental native M1 scalar CLI implemented; earlier slices and unsigned scalars have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified
-- Native runtime intent: direct .brc source execution
-- Contract owner: docs/cli/command-contract.md
+- Status: Experimental native scalar/array/record/scalar-slice CLI (2026-11-03)
+- Native runtime: direct bounded `.brc` source execution
+- Command owner: [command contract](command-contract.md)
 
-Readonly `ref u8[]` parameters and explicit ref-name calls are now available
-through the [public parameter contract](../engineering/m2-array-slice-parameters-public.md).
-Use an explicit Fuel budget for array/slice programs; default Fuel remains 256.
-Version JSON reports `array_slice_parameters: true`.
+## Available now
 
-## Boundary
+```text
+browniec --version [--json]
+browniec --help
+browniec check SOURCE [--json]
+browniec run SOURCE [--fuel N] [--json]
+```
 
-The CLI is the developer-facing route to the Brownie compiler, verifier, and native
-VM. It does not ship a Go runtime or compiler toolchain to end users. Compile and run
-must work without launching Go, MSVC, a C compiler, or an interpreter subprocess.
-Restricted mode may launch the designated native worker.
+SOURCE is one local UTF-8 code file, at most 4096 bytes. The entry is zero-argument
+`fn i32 main`. Fuel defaults to 256 and accepts 0..1000000; aggregate runs need an
+explicit larger budget, usually `--fuel 100000` or `--fuel 1000000`.
 
-The proposed surface is --version, check, run, inspect, and worker, with explicit
---project and --isolated options where applicable. check, run, --version and --help
-are implemented for the M1 scalar profile.
-The broader commands/options remain designed or unavailable.
+The public frontend/VM supports six scalars, branches/loops, shallow i32/bool tags,
+explicit widening, fixed scalar arrays, nominal scalar/nested records, aggregate
+parameters/results and shared/exclusive scalar-slice parameters. Whole/ranged/
+named-slice/temporary-array CALL borrows and array/view UTF-8 checks are available.
+See the [documentation index](../README.md) for owning language increment contracts.
 
-The current scalar increment adds i32/i64/u8/u32/usize/bool values, explicit
-widening, bounded branches, loops, shallow `Option`/`Result` values with exhaustive
-`switch` statements and expressions. It keeps
-`main` as a zero-argument i32 function, so the CLI result field remains
-`return_i32`; guest integer, bool, and wrapper values are internal to the program. The tagged slice
-remains verified by its [historical receipt](../evidence/m1-tagged-windows-20261023.json).
-Postfix `?` propagates shallow scalar Option and Result payloads. Switch expressions
-add exhaustive shallow-wrapper arms in expression position with one exact yield
-type, statement-bearing arms, and optional function/loop transfers. The earlier
-receipts, including i64, are historical; the switch-expression receipt records 41
-native groups and 580 CLI cases, and the i64 receipt records 49 native groups and
-760 CLI cases in each profile. The unsigned increment keeps `main` and the JSON
-result contract unchanged while adding internal unsigned values. Wrappers remain
-i32/bool payloads; i64 and unsigned wrapper payloads are unsupported, and functions
-returning i64 or an unsigned type reject `?`. The
-[unsigned receipt](../evidence/m1-unsigned-windows-20261023.json) records 59 native
-groups and 1,159 CLI cases in both development and release, including 399 cases; it
-remains historical after explicit widening. `EXPR as TYPE` admits seven
-domain-preserving integer pairs and adds no implicit conversion or promotion. The
-CLI profile and `return_i32` field are unchanged. The
-[widening receipt](../evidence/m1-widening-windows-20261023.json) records 67 native
-groups and 1,272 CLI cases in each profile, including 113 widening cases.
-The [integer-operator contract](../engineering/m1-integer-operators.md) adds
-fixed-width bitwise operations and checked shifts. Shift count and range failures
-use the existing runtime `overflow` outcome and exit code 5. There is no new CLI
-option, result field, profile identifier, or implicit integer/bool conversion.
-The [integer-operator receipt](../evidence/m1-integer-operators-windows-20261023.json)
-records 75 native groups and 1,898 CLI cases in each development and release profile.
-The [arm-statement contract](../engineering/m1-switch-arm-statements.md) adds
-structured statements and lexical loop transfers inside switch-expression arms.
-It keeps the CLI result/profile contract unchanged; missing values and illegal
-transfers remain compile errors rather than runtime fallbacks.
-The [arm-statement receipt](../evidence/m1-switch-arm-statements-windows-20261023.json)
-records 81 native groups and 1,969 CLI cases in each development and release profile.
-Language contracts are in the [branch](../engineering/m1-branches.md), [loop](../engineering/m1-loops.md),
-[tagged](../engineering/m1-tagged.md), and
-[propagation](../engineering/m1-propagation.md) documents, with switch-expression
-rules in the [switch-expression contract](../engineering/m1-switch-expressions.md),
-full-width signed integer rules in the [i64 contract](../engineering/m1-i64.md),
-unsigned rules in the [unsigned contract](../engineering/m1-unsigned.md), and cast
-rules in the [widening contract](../engineering/m1-widening.md). Command availability,
-output framing, and exit behavior remain governed by the owning CLI documents.
+Returned-slice signatures/body-origin analysis remain private; every borrowed-
+result declaration rejects publicly. Buffer native resources/leases/scanning are
+not guest features. The [complete remaining-work audit](../product/04-remaining-work.md)
+tracks general references, wider tags, module/visibility/inference syntax and the
+runtime/delivery gaps.
 
-## Authority and availability
+## Planned surfaces
 
-Command syntax, paths, cancellation, and compatibility are owned by the command
-contract. Configuration precedence is owned by configuration.md. Output framing and
-exit status are owned by output-and-exit-codes.md.
+Project, policy, catalog, run grants, guest `--input`, output capabilities, inspect
+and worker commands are not implemented. `--isolated` reports unavailable and
+never launches an unrestricted fallback. Cancellation, deadlines, Engine/Instance
+stepping, host suspension and the public DLL are also unavailable.
 
-Core CLI, restricted worker, and embed DLL are separate delivery levels. Missing
-restricted support rejects isolated commands. Missing ABI support does not block the
-core CLI. Capabilities never expand because a command option is present.
+`core: true` in version JSON means this experimental native CLI exists; it does
+not certify full `brownie.safe/0.3`. Restricted/embed remain false. Check/run use
+the native frontend directly and do not launch Go, MSVC or a compiler subprocess.
+The broad restricted path is a later delivery with its own actual OS evidence.
 
-## Review blockers
+## Observable contract
 
-- A command claims execution without a native artifact and recorded evidence.
-- check or run starts a compiler child process.
-- Policy or catalog files are discovered implicitly from the source folder.
-- Guest return data is reported as the CLI process exit code.
-- Output is published before normal completion and its publication barrier.
-- External effects are automatically replayed after an unknown outcome.
-- Help, JSON framing, diagnostics, and exit codes disagree with actual state.
+[Configuration](configuration.md) owns input precedence and
+[output/exit codes](output-and-exit-codes.md) owns framing. `return_i32` is guest
+data, never the process exit code. Current stdout JSON is one bounded result;
+staged guest output and `output_b64` are future capabilities.
+
+Command/profile changes must update help and the owning contracts together.
+Never claim a native/OS/packaged capability from a design or private model, grant
+ambient authority, publish failed guest output, or automatically replay external
+effects after an unknown outcome.

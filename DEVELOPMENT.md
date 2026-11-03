@@ -1,7 +1,12 @@
 # Development
 
-- Status: M0 verified; experimental native M1 scalar CLI implemented; earlier slices and unsigned scalars have verified historical receipts; explicit widening historically verified; integer operators historically verified; switch-arm statements implemented and verified
+- Status: Bounded M1 and public M2 scalar/aggregate/scalar-slice subsets; full runtime/delivery pending (2026-11-03)
 - Current repository content: Fairy C frontend, private IR/verifier/VM, CLI, tests, and M0 probes
+
+Current capability omissions and full-profile work are tracked in the
+[remaining-work audit](docs/product/04-remaining-work.md); use the
+[roadmap](docs/product/01-roadmap.md) for implementation order. Dated increment
+receipts are scoped evidence, not an accumulated full-suite pass.
 
 ## Current reality
 

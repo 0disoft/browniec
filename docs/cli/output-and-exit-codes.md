@@ -1,6 +1,6 @@
 # Output and Exit Codes
 
-- Status: Experimental M1 scalar and M2 source-array results implemented; read verification recorded; write focused verification passed in development and release; array copy focused verification passed in development and release; wider output remains designed
+- Status: Scalar/array/record/scalar-slice results implemented; guest output and broader lifecycle remain designed (2026-11-03)
 - Guest integer: data, never the process exit code
 
 ## Process exits
@@ -15,7 +15,7 @@
 | 6 | Internal compiler or VM invariant failure |
 | 7 | Worker, IPC, forced termination, or output-sink failure |
 
-The CLI implements these classes for its scalar and array subsets. There is no
+The CLI uses these exit classes for its bounded scalar, array, record and scalar-slice subsets. There is no
 cancellation, deadline, worker IPC, or host-binding implementation yet. A source-file read failure
 uses code 7. Invalid or missing source main declarations are compile/type errors
 (code 3); external entry binding in code 4 remains a future interface. Verification
@@ -73,7 +73,10 @@ Text mode leaves stdout empty and writes checked status, return_i32, or diagnost
 to stderr. Guest output bytes and output_b64 are not implemented. Version JSON uses
 `browniec.version/v1`, preserves `profile` as `brownie.m1-scalar/1`, adds the
 `array_profile`, `array_write_profile`, and `array_copy_profile` fields, and
-reports delivery availability:
+reports delivery availability. The following shows selected fields only: actual
+version JSON also emits struct profile identifiers and per-increment feature flags
+for record construction/parameters/results, UTF-8 and typed mutable/reborrow/ranged/
+temporary CALL slices. `core: true` does not certify full safe/0.3 completion:
 
 ```json
 {"schema":"browniec.version/v1","profile":"brownie.m1-scalar/1","array_profile":"brownie.m2-array-read/1","array_write_profile":"brownie.m2-array-write/1","array_copy_profile":"brownie.m2-array-copy/1","core":true,"restricted":false,"embed":false}
@@ -94,6 +97,11 @@ No second success/error document is appended to partially written JSON.
 
 ## Completion and failure
 
+The general cancellation/deadline/worker publication rules below are target
+contracts; these lifecycle paths and guest output are not currently implemented.
+Native result-JSON buffering is implemented and is separate from guest Buffer or
+`output::emit` support.
+
 A normal result requires the expected computation to complete, required output staging
 to succeed, and publication checks to pass. Guest nonzero remains a normal run result.
 Trap, cancellation, deadline, quota, or internal failure publishes no staged output.
@@ -102,9 +110,19 @@ A host output sink may fail after computation with code 7. Its partial external 
 is reported rather than hidden or replayed. Cancellation closes publication; unknown
 external effects remain unknown. No automatic retry or exactly-once claim is allowed.
 
-Source [helper-local records](../engineering/m2-struct-function-source.md) add
-`struct_helper_locals: true` to version JSON. They use the existing struct result
-profiles: nested metadata or child replacement selects the nested profile, root
-copy/assignment selects copy, mutable roots select write, and other roots select
-read. Helper placement adds no profile or command syntax. Record parameters/results
-and borrows remain unavailable.
+## Record and borrow result profiles
+
+Records use `brownie.m2-struct-read/1`, `brownie.m2-struct-write/1`,
+`brownie.m2-struct-copy/1` or `brownie.m2-struct-nested/1`. Nested layouts select
+nested; root copy/replacement/assignment selects copy; otherwise emitted scalar
+field writes select write and other record programs select read. Record profiles
+take precedence over array profiles in mixed Programs.
+The result remains i32 from `main`; helper aggregate values never become CLI return
+types. Record parameters/results and typed shared/exclusive scalar-slice arguments
+are now public. No new result schema is implied by those version feature flags.
+
+Private result signatures/origin analysis expose no public borrowed result or
+runtime ticket. Public compilation rejects every borrowed-result declaration.
+For exact current capabilities and future metrics/output/ABI/IPC fields, use the
+[complete remaining-work audit](../product/04-remaining-work.md), not a historical
+increment's old rejection list.

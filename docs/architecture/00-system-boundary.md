@@ -1,7 +1,12 @@
 # System Boundary
 
-- Status: Accepted design boundary; scalar source/VM subset implemented
+- Status: Accepted target; public scalar/aggregate/scalar-slice subsets, private foundations, M3-M5 pending (2026-11-03)
 - Owner: Zerodi / Rodisoft
+
+The [current implementation/remaining-work audit](../product/04-remaining-work.md)
+separates executable core features from target responsibilities below. Engine
+poison, host suspension, staged guest output, isolation and the embed ABI are not
+implemented merely because they are invariants of the intended system.
 
 ## Owned responsibilities
 

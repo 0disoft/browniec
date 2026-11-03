@@ -1,8 +1,19 @@
 # Design Baseline
 
 - Status: Accepted for design, 2026-10-23
-- Implementation status: M0 verified; first experimental M1 scalar source/VM slice verified
+- Implementation status: Reconciled 2026-11-03; bounded M1 and public M2 subsets; private Buffer/returned-origin foundations; M3-M5 pending
 - Provenance role: this file records the reviewed baseline; source material is not vendored
+
+## Current reconciliation: 2026-11-03
+
+M0 feasibility and the bounded M1 checkpoint have scoped native evidence. Public
+M2 now includes arrays, nominal scalar/nested records, aggregate parameters/results,
+fixed-array UTF-8 checks and shared/exclusive scalar-slice CALL arguments, including
+ranges and temporary arrays. Returned signatures/body-origin analysis and Buffer
+resources/leases/scanners are private foundations; guest Buffer and executable
+returned borrows remain unavailable. M3-M5, full-profile conformance and performance
+are not completed. Use the [remaining-work audit](product/04-remaining-work.md) and
+[current roadmap](product/01-roadmap.md); the evidence sections below are historical.
 
 ## Baseline decisions
 
@@ -70,10 +81,26 @@ a compiler recorded as SHA-256
 That is dated M0 identity. It is not a permanent pin; the harness validates the
 requested checkout against the compiler build identity.
 
-Fairy C language document 0007 and ADR0481 state that the pub/callback adapter does
-not export public C symbols. Brownie therefore has no approved generic C export today.
-M0 inspected the Buffer and native primitive signatures used by its probes. It did
-not establish a public C export; M5 must prove the final export and call.
+The adopted build baseline is now recorded in [toolchain.json](../toolchain.json):
+
+| Identity | Adopted value |
+| --- | --- |
+| Fairy source | `eb274643bfcfe746617121ddc6f130b018978b53` |
+| Compiler version | `v0.0.0-20261031093456-eb274643bfcf` |
+| SDK | `0.0.0-stage0.87` |
+| SDK source digest | `fysrc1-sha256-c531e88e52b684a34cf9688eda19e5cafcc5788e7a4bbf7e5121e86874a7246a` |
+| Language | `fairyc-language/20` |
+| Windows compiler SHA-256 | `9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a` |
+| Linux compiler | Cross-build-only; no Brownie Linux execution claim |
+
+These identities supersede the earlier build selection without rewriting M0
+provenance. Pre-stable adoption still needs focused compatibility evidence; neither
+the old package snapshot nor the adopted identity is a permanent freeze or a claim
+about current upstream HEAD.
+
+Historical Fairy language/adapter inspection did not establish a public Brownie C
+export. Callable Fairy functions are insufficient: M5 must prove the actual DLL
+export and C-host call on its adopted toolchain.
 
 ## Historical design-package evidence
 
@@ -126,9 +153,10 @@ historical findings are retained as review context, not current implementation c
 ## Claim boundaries
 
 M0 native arithmetic, codec, storage, allocator, owner, and frame primitives have
-recorded Windows evidence. The first M1 i32 expression pipeline also has native
-execution evidence; full-profile VM behavior, Windows isolation, ABI, clean-machine
-packaging, performance, and security claims remain unverified. The design package's
+recorded Windows evidence. The bounded M1 checkpoint and scoped public M2
+array/record/scalar-slice increments have their own historical native evidence;
+full-profile VM/lifecycle/host behavior, Windows isolation, ABI, clean-machine
+packaging, performance and broad security claims remain incomplete or unverified. The design package's
 models are not production parsers, race-free native code, pointer-safety proofs, or
 Windows scheduling evidence.
 
