@@ -24,6 +24,8 @@ import slice_call_source as slice_calls;
 import slice_builders as slice_builders;
 import slice_reborrow_ir as reborrow;
 import slice_result_origins as slice_origins;
+import slice_result_ir as slice_result_ir;
+import slice_result_verifier as slice_result_verifier;
 
 fn u8 precedence(u8 kind) {
     if (kind == 133) { return 1; }
@@ -1434,4 +1436,13 @@ pub fn Result<slice_origins::Summary,errors::Error> inspect_slice_results(ref u8
     let ir::Program p=lower(source,true)?;
     let functions::Table signatures=functions::scan(source)?;
     return slice_origins::inspect(ref p,ref signatures);
+}
+
+// Non-executable returned-view IR. Public compile retains its declaration gate.
+pub fn Result<slice_result_ir::Program,errors::Error> inspect_slice_result_ir(ref u8[] source){
+    let ir::Program p=lower(source,true)?;
+    let functions::Table signatures=functions::scan(source)?;
+    let slice_result_ir::Program unit=slice_result_ir::from_proxy(p,ref signatures)?;
+    let slice_result_verifier::Proof checked=slice_result_verifier::inspect(ref unit)?;
+    return .ok(unit);
 }

@@ -1,0 +1,77 @@
+# Private returned-view preparation IR and independent proof
+
+Introduced after `f2d6588`, following private body-origin analysis at `0d1a8cb`.
+This is the B01 preparation subset, not runtime result handoff or public execution.
+
+## Representation
+
+`slice_result_ir::Program` contains the existing bounded `ir::Program` plus sixteen
+exact element/access tags and sixteen claimed one-based formal input origins.
+The 32 extra field bytes are logical payload, not a native sizeof/stack measurement.
+Existing VM Program fields, public opcodes, prices, profiles and flags are unchanged.
+
+Within this separate, non-executable type, eight-byte instructions add:
+
+| Opcode | Fields | Meaning |
+| --- | --- | --- |
+| 63 PREPARE_VIEW | dst=result identity, a=live slice site, b=0 | Select an exact named view before cleanup |
+| 64 PREPARE_FORWARD | dst=result identity, a=callee, b=argument-map ID | Select a typed borrowed-result CALL |
+| 65 RETURN_VIEW | dst=0, a=prepared result identity, b=0 | Finish that result recipe |
+
+Reserved bytes are zero. A result identity uses a bounded register position but
+is not a guest usize. It can only flow through cleanup to its paired RETURN_VIEW.
+This representation selects an existing view/range; it creates no runtime owner,
+loan, descriptor, ticket or executable returned reference.
+
+## Source bridge and independent verification
+
+`compiler::inspect_slice_result_ir` uses the existing source/type/Flow lowerer,
+converts its private proxies into explicit preparation/forward/return instructions,
+and runs `slice_result_verifier::inspect` before returning the private unit.
+`slice_result_ir::from_proxy` is construction, not admission by itself.
+
+The verifier accepts only the private unit, with no source signature table or
+compiler proof supplied. It rejects malformed dimensions before indexing and
+builds fresh signature facts from the unit's typed function metadata. A private
+local normalization maps preparation to existing LEN/CALL/RET proof operations.
+That normalized Program is never returned or executed.
+
+The existing verifier independently reconstructs function partitions, definitions,
+CFG joins/backedges, scalar/access types, exact formal/derived live loans and
+suspended-parent restrictions. The origin solver independently recomputes selected
+inputs, including reordered forwarding and grounded recursion, then compares all
+sixteen claimed origin slots. Local, by-value or selected temporary owners cannot
+become input origins. Unselected temporary CALL roots may clean up normally.
+
+Additional recipe proof requires a unique preparation for every private return;
+only array/record drop, slice close or reborrow-end may intervene. It rejects normal
+scalar returns from borrowed-result functions, ordinary CALL opcodes targeting
+borrowed-result functions, scalar consumers after selection, wrong/unused metadata,
+wrong source identities and mismatched markers/reserved bytes. Even a normalized
+Program that is valid ordinary scalar IR can fail this stricter result proof.
+
+The bounded origin solver retains at most 17 passes over 16 functions/256
+instructions. Recipe scans add O(I squared) work and O(I) matched-return scratch;
+this is compile-time analysis, not a runtime/Fuel or measured speed claim.
+
+## Execution boundary and next unit
+
+Public compilation still rejects every borrowed-result declaration, including
+unreachable functions. Ordinary verifier/VM admission rejects the new instructions
+before guest effects. Ordinary programs inspected through this API remain ordinary.
+The private proof is not a transferable authorization or protection against later
+unit mutation: re-inspect changed IR.
+
+B02/B03 must establish real ticket/destination handoff, selected caller capture/
+owner retention, returned child lifetime and exclusive-parent suspension. Current
+cleanup deliberately still ends views/parents as in analysis; it is NOT executable
+escaping-reference cleanup. Static origins, inline return reslicing and general
+borrowed-result binding/expression/argument admission remain later work.
+
+## Focused verification
+
+Development native execution passed ten new groups covering all six scalar modes,
+lexical/branch/loop/switch results, forwarding/recursion, forged metadata/instructions,
+valid-normalization scalar misuse, suspended/dead selections and unchanged public
+admission. Final profile/CLI/identity evidence is recorded in the follow-up evidence
+entry; no full native/M1/M2/Linux/isolation/ABI/packaging/performance pass follows.
