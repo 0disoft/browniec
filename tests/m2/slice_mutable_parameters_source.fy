@@ -26,6 +26,7 @@ fn void run(ref ir::Program p,usize fuel,u8 expected){
     let Result<i64,errors::Error> outcome=if(failed){.err(failure)}else{.ok(answer)};
     assert(switch(calls::finish(ref mut receipts,ref mut f,ref mut l,ref mut a,ref b,outcome)){case .ok(v):{expected==0 && v==42}case .err(e):{e.kind==expected && e.offset==failure.offset}});cleared(ref receipts,ref f,ref l,ref a);
 }
+fn void public_source(ref u8[] source,u8 expected){let ir::Program p=compiled(source);assert(verifier::verify(ref p).is_ok);assert(switch(vm::run_with_array_limit(ref p,16000000,256)){case .ok(v):{expected==0 && v==42}case .err(e):{e.kind==expected}});}
 fn void run_source(ref u8[] source,u8 expected){let ir::Program p=compiled(source);run(ref p,16000000,expected);assert(switch(vm::run_with_array_limit(ref p,16000000,256)){case .ok(v):{expected==0 && v==42}case .err(e):{e.kind==expected}});}
 fn void rejected(ref u8[] source){assert(!compiler::compile(source).is_ok);}
 fn void conflict(ref u8[] source){let ir::Program p=compiled(source);assert(!verifier::inspect(ref p).is_ok);}
@@ -65,7 +66,7 @@ fn void exact_modes_tags_named_sources_and_non_escaping_bindings_are_required(){
     rejected(b"module main;fn i32 f(ref mut i32[] p){return 42;}fn i32 main(){var u32[1] a=[0;1];let ref mut u32[] p=ref mut a;return f(ref mut p);}");
     run_source(b"module main;fn i32 f(ref mut i32[] p){return 42;}fn i32 main(){var i32[1] a=[0;1];return f(ref mut a);}",0);
     rejected(b"module main;fn i32 f(ref mut i32[] p){return 42;}fn i32 main(){return f(ref mut [0;1]);}");
-    rejected(b"module main;fn i32 f(ref mut i32[] p){return 42;}fn i32 main(){var i32[1] a=[0;1];let ref mut i32[] p=ref mut a;return f(ref mut p[..]);}");
+    public_source(b"module main;fn i32 f(ref mut i32[] p){return 42;}fn i32 main(){var i32[1] a=[0;1];let ref mut i32[] p=ref mut a;return f(ref mut p[..]);}",0);
     rejected(b"module main;fn i32 f(ref mut i32[] p){let ref mut u32[] q=ref mut p;return 42;}fn i32 main(){return 42;}");
     rejected(b"module main;fn i32 f(ref mut i32[] p){let ref i32[] q=ref p;return 42;}fn i32 main(){return 42;}");
     rejected(b"module main;fn i32 f(ref mut i32[] p){p[0]=true;return 42;}fn i32 main(){return 42;}");

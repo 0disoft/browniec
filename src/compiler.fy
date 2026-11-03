@@ -371,24 +371,24 @@ fn Result<usize,errors::Error> array_argument(ref u8[] source,ref mut lexer::Sta
     return array_calls::capture(source,s,p,names,element,length);
 }
 // Keep endpoint parsing and its capture descriptor off the scalar CALL frame.
-// The owned root is not borrowed until both usize endpoints have completed.
+// The root or parent is not newly borrowed until both endpoints complete.
 fn Result<usize,errors::Error> slice_argument(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
     usize parameter,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
     let slice_calls::Capture captured=slice_calls::capture(source,s,p,names,signatures,parameter)?;
-    if(captured.root==16){return .ok(captured.value);}
+    if(captured.root==16 && captured.parent==16){return .ok(captured.value);}
     let usize at=captured.offset;
     let usize open=lexer::punctuation(source,s,91)?;
     let usize lo=if(s.kind==46){ir::integer(p,0,12,at)?}
         else{expression(source,s,p,names,signatures,1,depth+1,12,result_type,structure,loop_state)?};
     if(p.types[lo]!=12){return .err(errors::make(3,at));}
     let usize first=lexer::punctuation(source,s,46)?;let usize second=lexer::punctuation(source,s,46)?;
-    let usize hi=if(s.kind==93){arrays::length_value(p,captured.root,at)?}
+    let usize hi=if(s.kind==93){if(captured.parent<16){ir::slice_length(p,captured.parent,at)?}else{arrays::length_value(p,captured.root,at)?}}
         else{expression(source,s,p,names,signatures,1,depth+1,12,result_type,structure,loop_state)?};
     if(p.types[hi]!=12){return .err(errors::make(3,at));}
     let usize close=lexer::punctuation(source,s,93)?;
     if(s.kind!=44 && s.kind!=41){return .err(errors::make(3,s.begin));}
-    return slice_calls::open(p,names,captured.root,lo,hi,captured.exclusive,at);
+    return slice_calls::range(p,names,ref captured,lo,hi);
 }
 // All result kinds share argument evaluation and capture cleanup. Destinations
 // 0..15 are dead array sites, 16 is scalar, and 144..159 are dead record sites.

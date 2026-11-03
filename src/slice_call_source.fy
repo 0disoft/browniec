@@ -7,6 +7,7 @@ import slice_source as slices;
 import slice_builders as builders;
 import errors as errors;
 import array_source as arrays;
+import slice_reborrow_ir as reborrow;
 
 // Signature kinds are known before bodies; site/register IDs are assigned in
 // body order. Forward calls need only the signature, never a future ticket.
@@ -20,9 +21,9 @@ pub fn Result<usize, errors::Error> bind(ref functions::Table signatures, usize 
     return locals::declare(names, signatures.param_begins[at], signatures.param_ends[at], 160 + site, exclusive);
 }
 
-// A capture is ready when root==16. An owned range with root<16 is only a
-// checked source descriptor: the compiler evaluates endpoints before OPEN.
-pub struct Capture { usize value; usize root; bool exclusive; usize offset; }
+// A capture is ready when root==parent==16. Otherwise it describes an owned
+// root or named parent whose endpoints must complete before acquisition.
+pub struct Capture { usize value; usize root; usize parent; bool exclusive; usize offset; }
 // An owned whole-array argument opens an anonymous lexical handle at evaluation
 // time. Existing CALL capture cleanup closes it after return or an argument exit.
 fn Result<Capture,errors::Error> owned(ref u8[] source,ref mut lexer::State s,
@@ -33,12 +34,12 @@ fn Result<Capture,errors::Error> owned(ref u8[] source,ref mut lexer::State s,
     let usize root=names.registers[index]-128;
     if(exclusive && (!names.mutable[index] || !p.arrays.mutable[root])){return .err(errors::make(3,at));}
     let usize selected=slices::root_argument(source,s,p,names,element)?;
-    if(s.kind==91){return .ok(Capture{.value=0,.root=selected,.exclusive=exclusive,.offset=at});}
+    if(s.kind==91){return .ok(Capture{.value=0,.root=selected,.parent=16,.exclusive=exclusive,.offset=at});}
     if(s.kind!=44 && s.kind!=41){return .err(errors::make(3,s.begin));}
     let usize lo=ir::integer(p,0,12,at)?;
     let usize hi=arrays::length_value(p,selected,at)?;
     let usize value=open(p,names,selected,lo,hi,exclusive,at)?;
-    return .ok(Capture{.value=value,.root=16,.exclusive=exclusive,.offset=at});
+    return .ok(Capture{.value=value,.root=16,.parent=16,.exclusive=exclusive,.offset=at});
 }
 // Endpoints have completed before this single acquisition/publication point.
 pub fn Result<usize,errors::Error> open(ref mut ir::Program p,ref mut locals::Table names,
@@ -47,6 +48,21 @@ pub fn Result<usize,errors::Error> open(ref mut ir::Program p,ref mut locals::Ta
     let usize site=if(exclusive){ir::exclusive_slice(p,root,at)?}else{ir::slice(p,root,at)?};
     let usize opened=ir::slice_open(p,site,lo,hi,at)?;
     let usize anonymous=locals::declare(names,at,at,160+site,exclusive)?;
+    return .ok(160+site);
+}
+// Exact-mode named ranges reuse lexical SUBSLICE/BEGIN and capture cleanup.
+// The anonymous child is not visible until both endpoint expressions complete.
+pub fn Result<usize,errors::Error> range(ref mut ir::Program p,ref mut locals::Table names,
+    ref Capture captured,usize lo,usize hi){
+    let usize at=captured.offset;let usize parent=captured.parent;
+    if(parent==16){return open(p,names,captured.root,lo,hi,captured.exclusive,at);}
+    if(names.count>=64){return .err(errors::make(4,at));}
+    let usize site=if(captured.exclusive){reborrow::derived(p,parent,at)?}
+        else if(p.slice_origins[parent]!=0){builders::derived(p,parent,names.function,at)?}
+        else{let usize root=(p.slice_roots[parent] as usize)-1;ir::slice(p,root,at)?};
+    let usize opened=if(captured.exclusive){reborrow::begin(p,site,parent,lo,hi,at)?}
+        else{ir::slice_sub(p,site,parent,lo,hi,at)?};
+    let usize anonymous=locals::declare(names,at,at,160+site,captured.exclusive)?;
     return .ok(160+site);
 }
 // Explicit ref [mut] requires exact access and scalar element type. Named slices
@@ -82,6 +98,7 @@ pub fn Result<Capture, errors::Error> capture(ref u8[] source, ref mut lexer::St
     let u8 actual = ir::slice_element(p, site, at)?;
     if (actual != element) { return .err(errors::make(3, at)); }
     let usize name = lexer::next(source, s)?;
+    if(s.kind==91){return .ok(Capture{.value=0,.root=16,.parent=site,.exclusive=exclusive,.offset=at});}
     if (s.kind != 44 && s.kind != 41) { return .err(errors::make(3, s.begin)); }
-    return .ok(Capture{.value=160+site,.root=16,.exclusive=exclusive,.offset=at});
+    return .ok(Capture{.value=160+site,.root=16,.parent=16,.exclusive=exclusive,.offset=at});
 }

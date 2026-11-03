@@ -49,13 +49,13 @@ def case(source, category='public', runtime_error=None, fuel=1000000):
 
 
 native = (root / 'tests/m2/slice_mutable_parameters_source.fy').read_text(encoding='utf-8')
-fixtures = re.findall(r'(?:run_source|compiled)\(b"([^"\n]+)"', native)
+fixtures = re.findall(r'(?:run_source|public_source|compiled)\(b"([^"\n]+)"', native)
 fixtures += re.findall(r'let ref u8\[\] source=b"([^"\n]+)"', native)
 negatives = re.findall(r'rejected\(b"([^"\n]+)"', native)
 conflicts = re.findall(r'conflict\(b"([^"\n]+)"', native)
-assert (len(fixtures), len(negatives), len(conflicts)) == (18, 14, 2)
+assert (len(fixtures), len(negatives), len(conflicts)) == (19, 13, 2)
 errors = {0: None, 7: 'zero_divisor', 12: 'frame_limit', 14: 'bounds'}
-expected = {source: errors[int(kind)] for source, kind in re.findall(r'run_source\(b"([^"\n]+)",(\d+)\)', native)}
+expected = {source: errors[int(kind)] for source, kind in re.findall(r'(?:run_source|public_source)\(b"([^"\n]+)",(\d+)\)', native)}
 for source in fixtures:
     error = expected.get(source, 'bounds' if 'p[1]=0' in source else None)
     if ',30)' in source or ',31)' in source or 'return f(ref mut p,2)+f(ref mut p,2)' in source:
