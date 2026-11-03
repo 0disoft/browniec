@@ -4,6 +4,7 @@ import array_slices as slices;
 import ir as ir;
 import array_owners as owners;
 import errors as errors;
+import slice_result_record_bindings as records;
 
 // Invocation-private bindings. Result identities never enter scalar registers.
 // Calls and prepared tickets are linear receipts; this object must not escape.
@@ -12,7 +13,7 @@ pub struct Frames {
     slices::Ticket[256] issued; slices::Ticket[512] before;
     u8[256] tags; usize[32] arities; usize[32] selected;
     usize[32] depths; usize[32] remaining; bool[32] active;
-    owners::Token[512] tokens;
+    owners::Token[512] tokens; records::State records;
     slices::Ticket[512] sites;
     slices::Ticket[32] results;
     usize[32] functions; usize[32] continuations; usize[32] maps;
@@ -24,7 +25,7 @@ pub fn Frames empty(ref runtime::State state){
     return Frames{.captures=[runtime::capture(none(),false,false);256],
         .views=[state.runtime.pool.slots[0].view;256],.issued=[none();256],.before=[none();512],
         .tags=[0;256],.arities=[0;32],.selected=[0;32],.depths=[0;32],.remaining=[0;32],.active=[false;32],
-        .tokens=[owners::Token{.slot=0,.generation=0};512],.sites=[none();512],.results=[none();32],
+        .records=records::empty(),.tokens=[owners::Token{.slot=0,.generation=0};512],.sites=[none();512],.results=[none();32],
         .functions=[16;32],.continuations=[0;32],.maps=[32;32],
         .destinations=[128;32],.identities=[128;32],.prepared=[false;32],.frame=0};
 }
@@ -34,7 +35,7 @@ pub fn Result<usize,errors::Error> push(ref ir::Program p,ref mut Frames binding
     runtime::Call call,usize function,usize destination,usize map,usize continuation){
     let usize child=bindings.frame+1;
     if(child>=32 || function>=p.function_count || !call.active || call.frame!=bindings.frame ||
-        (child>1 && (destination>=144 || map>=p.call_count || bindings.prepared[bindings.frame]))){
+        (child>1 && (destination>=160 || map>=p.call_count || bindings.prepared[bindings.frame]))){
         return .err(errors::make(5,0));
     }
     var usize argument=0;while(argument<8){
@@ -49,6 +50,7 @@ pub fn Result<usize,errors::Error> push(ref ir::Program p,ref mut Frames binding
     bindings.continuations[child]=continuation;bindings.prepared[child]=false;
     bindings.identities[child]=128;bindings.results[child]=none();
     var usize i=0;while(i<16){bindings.sites[child*16+i]=none();bindings.tokens[child*16+i]=owners::Token{.slot=0,.generation=0};i+=1;}
+    records::clear_frame(ref mut bindings.records,child);
     i=0;while(i<call.contract.arity){
         let usize parameter=p.slice_parameters[p.register_starts[function]+i] as usize;
         if(parameter!=0){bindings.sites[child*16+parameter-1]=call.issued[i];}i+=1;
@@ -83,7 +85,7 @@ pub fn Result<usize,errors::Error> pop(ref ir::Program p,ref mut Frames bindings
     bindings.active[child]=false;bindings.prepared[child]=false;
     bindings.results[child]=none();bindings.identities[child]=128;bindings.functions[child]=16;
     var usize i=0;while(i<16){bindings.sites[child*16+i]=none();bindings.tokens[child*16+i]=owners::Token{.slot=0,.generation=0};i+=1;}
-    bindings.frame=parent;return .ok(next);
+    records::clear_frame(ref mut bindings.records,child);bindings.frame=parent;return .ok(next);
 }
 fn Result<usize,errors::Error> prepare_parent(ref mut Frames bindings,usize parent,usize identity,slices::Ticket selected){
     if(parent==0 || parent>=32 || !bindings.active[parent] || selected.slot>=16 || selected.generation==0){return .err(errors::make(5,0));}
@@ -113,5 +115,5 @@ pub fn Result<usize,errors::Error> pop_call(ref ir::Program p,ref mut Frames bin
     }
     bindings.active[child]=false;bindings.functions[child]=16;
     i=0;while(i<16){bindings.sites[child*16+i]=none();bindings.tokens[child*16+i]=owners::Token{.slot=0,.generation=0};i+=1;}
-    bindings.frame=parent;return .ok(next);
+    records::clear_frame(ref mut bindings.records,child);bindings.frame=parent;return .ok(next);
 }

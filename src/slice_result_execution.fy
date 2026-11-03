@@ -8,6 +8,7 @@ import vm_execution as scalar;
 import slice_authority as authority;
 import array_vm as arrays;
 import slice_result_owned_execution as owned;
+import slice_result_record_execution as records;
 import array_slices as slices;
 import types as types;
 import tagged as tagged;
@@ -19,20 +20,17 @@ fn runtime::Contract binding(ref ir::Program unit,usize f){
         if(site!=0){c.tags[i]=unit.body.slice_elements[site-1];}i+=1;}return c;
 }
 // Deliberately separate admission from ordinary Program/CLI execution. This
-// dialect has native borrowed inputs, owned arrays, scalar/array CALLs and
-// forwarded results. Record and public-source result admission remain gated.
+// dialect has native borrowed inputs, owned arrays/records, ordinary CALLs and
+// forwarded results. Native owned entry/public-source result admission stay gated.
 fn Result<usize,errors::Error> admit(ref ir::Program unit,usize function,ref i64[] values,usize captures){
     let verifier::Proof proof=verifier::inspect(unit)?;
     if(function>=unit.body.function_count || unit.elements[function]==0 ||
-        values.len!=unit.body.arities[function] || captures!=values.len || unit.body.records.count!=0){return .err(errors::make(5,0));}
+        values.len!=unit.body.arities[function] || captures!=values.len){return .err(errors::make(5,0));}
     var usize i=0;
     i=0;while(i<unit.body.function_count){var usize a=0;while(a<unit.body.arities[i]){
         let usize r=unit.body.register_starts[i]+a;
-        if(unit.body.slice_parameters[r]==0 && unit.body.array_parameters[r]==0 && !types::valid(unit.body.types[r])){return .err(errors::make(5,0));}a+=1;
+        if(unit.body.slice_parameters[r]==0 && unit.body.array_parameters[r]==0 && unit.body.record_parameters[r]==0 && !types::valid(unit.body.types[r])){return .err(errors::make(5,0));}a+=1;
     }i+=1;}
-    i=0;while(i<unit.body.count){let u8 op=unit.body.code[i*8];
-        if(op>=41 && op<=50){return .err(errors::make(5,unit.body.offsets[i]));}i+=1;
-    }
     i=0;while(i<values.len){let usize r=unit.body.register_starts[function]+i;
         if(unit.body.slice_parameters[r]!=0){if(values[i]!=0){return .err(errors::make(5,0));}}
         else{let u8 tag=unit.body.types[r];if(!types::scalar(tag)){return .err(errors::make(5,0));}if(if(tag==2){values[i]!=0 && values[i]!=1}else{!types::fits(tag,values[i])}){return .err(errors::make(5,0));}}i+=1;
@@ -43,9 +41,8 @@ pub fn Result<runtime::Returned,errors::Error> execute(ref ir::Program unit,usiz
     let usize admitted=admit(unit,function,values,captures.len)?;
     let usize depth=switch(authority::inspect(ref state.runtime.authority)){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,0));}};
     if(state.runtime.authority.frame!=0 || depth>=31){return .err(errors::make(5,0));}
-    var frames::Frames bindings=frames::empty(state);
     let runtime::Call first=runtime::enter(state,binding(unit,function),captures,data.len,fuel)?;
-    let Result<runtime::Returned,errors::Error> outcome=run(unit,function,first,values,ref mut bindings,state,data);
+    let Result<runtime::Returned,errors::Error> outcome=start(unit,function,first,values,state,data);
     return switch(outcome){
         case .ok(v):{.ok(v)}
         case .err(e):{
@@ -55,6 +52,13 @@ pub fn Result<runtime::Returned,errors::Error> execute(ref ir::Program unit,usiz
             .err(e)
         }
     };
+}
+// Keep the large frame maps out of the independent admission call stack.
+// Their native storage is needed only after verification and initial entry.
+fn Result<runtime::Returned,errors::Error> start(ref ir::Program unit,usize function,runtime::Call first,
+    ref i64[] values,ref mut runtime::State state,ref mut u8[] data){
+    var frames::Frames bindings=frames::empty(state);
+    return run(unit,function,first,values,ref mut bindings,state,data);
 }
 fn Result<runtime::Returned,errors::Error> run(ref ir::Program unit,usize function,runtime::Call first,
     ref i64[] values,ref mut frames::Frames bindings,ref mut runtime::State state,ref mut u8[] data){
@@ -69,7 +73,7 @@ fn Result<runtime::Returned,errors::Error> run(ref ir::Program unit,usize functi
         let usize dst=unit.body.code[at+1] as usize;let usize a=unit.body.code[at+2] as usize;let usize b=unit.body.code[at+3] as usize;
         let usize base=frame*128;
         if(remaining==0){return .err(errors::make(8,offset));}remaining-=1;
-        if(bindings.prepared[frame] && (op==37 || op==56 || op==62)){
+        if(bindings.prepared[frame] && (op==37 || op==45 || op==56 || op==62)){
             // The terminal recipe is independently proved. Physical CLOSE/END
             // belongs to native handoff's staged cleanup, never to both paths.
             pc+=1;continue;
@@ -85,25 +89,26 @@ fn Result<runtime::Returned,errors::Error> run(ref ir::Program unit,usize functi
                 case .ok(v):{v}case .err(e):{return .err(errors::make(e.kind,offset));}
             };
             i=0;while(i<c.arity){let usize formal=unit.body.register_starts[a]+i;let usize source=unit.body.call_args[b*8+i] as usize;
-                if(c.tags[i]==0 && unit.body.array_parameters[formal]==0){registers[(frame+1)*128+formal]=registers[base+source];}i+=1;
+                if(c.tags[i]==0 && unit.body.array_parameters[formal]==0 && unit.body.record_parameters[formal]==0){registers[(frame+1)*128+formal]=registers[base+source];}i+=1;
             }pc=unit.body.starts[a];continue;
         }
         if(op==65){
             let usize selected=frames::selected(bindings,a)?;var runtime::Call call=frames::current(bindings);
-            let runtime::Returned result=switch(runtime::handoff_roots(state,ref mut call,bindings.results[selected],ref bindings.tokens[frame*16..frame*16+16],data.len,remaining)){
+            let runtime::Returned result=switch(records::handoff(bindings,state,ref mut call,bindings.results[selected],data.len,remaining)){
                 case .ok(v):{v}case .err(e):{return .err(errors::make(e.kind,offset));}
             };remaining=result.remaining;
             pc=frames::pop(ref unit.body,bindings,result)?;
             if(bindings.frame==0){return .ok(result);}continue;
         }
-        if(op==8 || op==39){
+        if(op==8 || op==39 || op==50){
             let usize destination=bindings.destinations[frame];let usize next=bindings.continuations[frame];
             let i64 value=if(op==8){registers[base+a]}else{0};
-            remaining=switch(owned::leave(ref unit.body,pc,op==39,bindings,state,data,remaining)){
+            remaining=switch(owned::leave(ref unit.body,pc,op,bindings,state,data,remaining)){
                 case .ok(v):{v}case .err(e):{return .err(errors::make(e.kind,offset));}
             };
             if(op==8){registers[(frame-1)*128+destination]=value;}pc=next;continue;
         }
+        if(op>=41 && op<=49){remaining=records::step(ref unit.body,pc,bindings,state,ref mut registers[base..base+128],data,remaining)?;pc+=1;continue;}
         if((op>=33 && op<=40) || (op>=51 && op<=53)){remaining=owned::step(ref unit.body,pc,bindings,state,ref mut registers[base..base+128],data,remaining)?;pc+=1;continue;}
         if(op>=54 && op<=62){remaining=loans::step(ref unit.body,pc,bindings,state,ref mut registers[base..base+128],data,remaining)?;pc+=1;continue;}
         if(op==8 || op==9 || op==25 || op>=33){return .err(errors::make(5,offset));}

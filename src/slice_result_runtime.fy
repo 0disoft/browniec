@@ -7,6 +7,7 @@ import slice_result_verifier as verifier;
 import array_vm as arrays;
 import array_layout as layouts;
 import errors as errors;
+import struct_layout as records;
 
 // Invocation-private coordinator. All copies below are unpublished metadata
 // transactions, never independently usable owners. Backing bytes are not copied.
@@ -32,7 +33,7 @@ fn bool root(owners::Token a,owners::Token b){return a.slot==b.slot && a.generat
 fn bool view(owners::View a,owners::View b){return root(a.root,b.root) && a.element==b.element && a.length==b.length && a.start==b.start && a.end==b.end;}
 fn Result<usize,errors::Error> size(Result<usize,owners::Error> value){return switch(value){case .ok(v):{.ok(v)}case .err(e):{.err(arrays::failure(e,0))}};}
 fn Result<slices::Ticket,errors::Error> ticket(Result<slices::Ticket,owners::Error> value){return switch(value){case .ok(v):{.ok(v)}case .err(e):{.err(arrays::failure(e,0))}};}
-fn Result<slices::Arguments,errors::Error> arguments(Result<slices::Arguments,owners::Error> value){return switch(value){case .ok(v):{.ok(v)}case .err(e):{.err(arrays::failure(e,0))}};}
+fn Result<slices::Arguments,errors::Error> loan_arguments(Result<slices::Arguments,owners::Error> value){return switch(value){case .ok(v):{.ok(v)}case .err(e):{.err(arrays::failure(e,0))}};}
 pub fn State empty(usize capacity){return State{.runtime=Runtime{.authority=authority::empty(),.pool=slices::empty(),.owners=owners::empty(capacity)}};}
 pub fn Capture capture(slices::Ticket value,bool close,bool drop){return Capture{.ticket=value,.close=close,.drop=drop};}
 // Private conservative metadata admission; not a public opcode/cost revision.
@@ -63,6 +64,22 @@ pub fn Result<Call,errors::Error> enter_call(ref mut State state,Contract bindin
 // copy_arguments validates every source/reservation before its first byte write.
 pub fn Result<Entered,errors::Error> enter_arrays(ref mut State state,Contract binding,ref Capture[] captures,
     ref owners::Token[] sources,ref layouts::Array[] shapes,ref mut u8[] data,usize capacity,usize fuel){
+    let records::Catalog catalog=records::empty();
+    let owners::CallArgument[1] arguments=[owners::CallArgument{.source=owners::Token{.slot=0,.generation=0},.element=0,.length=0,.record=0}];
+    return enter_values(state,binding,captures,sources,shapes,ref catalog,ref arguments[..0],data,capacity,fuel);
+}
+pub fn Result<Entered,errors::Error> enter_records(ref mut State state,Contract binding,ref Capture[] captures,
+    ref records::Catalog catalog,ref owners::CallArgument[] arguments,ref mut u8[] data,usize fuel){
+    let owners::Token[1] sources=[owners::Token{.slot=0,.generation=0}];
+    let layouts::Array[1] shapes=[layouts::Array{.element=0,.length=0,.stride=0,.alignment=0,.bytes=0}];
+    return enter_values(state,binding,captures,ref sources[..0],ref shapes[..0],catalog,arguments,data,data.len,fuel);
+}
+// One authority/pool/owner plan for the whole mixed argument batch. Nothing
+// fallible follows its validated payload copy before metadata publication.
+fn Result<Entered,errors::Error> enter_values(ref mut State state,Contract binding,ref Capture[] captures,
+    ref owners::Token[] sources,ref layouts::Array[] shapes,ref records::Catalog catalog,
+    ref owners::CallArgument[] arguments,ref mut u8[] data,usize capacity,usize fuel){
+    if(arguments.len>binding.arity || (arguments.len!=0 && (sources.len!=0 || data.len!=capacity))){return .err(errors::make(5,0));}
     if(sources.len>binding.arity || sources.len!=shapes.len || (sources.len!=0 && data.len!=capacity)){return .err(errors::make(5,0));}
     if(fuel<cost()){return .err(errors::make(8,0));}
     if(binding.arity>8 || captures.len!=binding.arity || binding.selected>binding.arity ||
@@ -90,7 +107,7 @@ pub fn Result<Entered,errors::Error> enter_arrays(ref mut State state,Contract b
     var authority::State next_authority=state.runtime.authority;
     var slices::Pool next_pool=state.runtime.pool;
     var owners::Table next_owners=state.runtime.owners;
-    let slices::Arguments moved=arguments(authority::enter_call(ref mut next_authority,ref mut next_pool,ref writers[..count],ref next_owners,capacity,frame))?;
+    let slices::Arguments moved=loan_arguments(authority::enter_call(ref mut next_authority,ref mut next_pool,ref writers[..count],ref next_owners,capacity,frame))?;
     var usize writer=0;i=0;
     while(i<captures.len){
         if(binding.tags[i]!=0){
@@ -100,6 +117,9 @@ pub fn Result<Entered,errors::Error> enter_arrays(ref mut State state,Contract b
     }
     var owners::Copies copies=owners::Copies{.tokens=[owners::Token{.slot=0,.generation=0};8],.count=0};
     if(sources.len!=0){copies=switch(owners::copy_arguments(sources,shapes,data,ref mut next_owners)){
+        case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,0));}
+    };}
+    if(arguments.len!=0){copies=switch(owners::copy_call_arguments(catalog,arguments,data,ref mut next_owners)){
         case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,0));}
     };}
     state.runtime=Runtime{.authority=next_authority,.pool=next_pool,.owners=next_owners};return .ok(Entered{.call=result,.copies=copies});
@@ -247,7 +267,7 @@ fn Result<slices::Arguments,errors::Error> restore(ref mut authority::State stac
             }else{let usize valid=size(slices::length(pool,issued,table,capacity))?;}
         }i+=1;
     }
-    let slices::Arguments restored=arguments(authority::leave_call(stack,pool,ref writers[..count],table,capacity,call.frame+1))?;
+    let slices::Arguments restored=loan_arguments(authority::leave_call(stack,pool,ref writers[..count],table,capacity,call.frame+1))?;
     return .ok(restored);
 }
 fn Result<usize,errors::Error> release_roots(ref mut slices::Pool pool,ref mut owners::Table table,
