@@ -36,8 +36,9 @@ to atomic handoff, including callee-owned root cleanup. Other lexical exits perf
 
 The [owned-array increment](m2-slice-result-owned-vm.md), implemented at `5cccbd3`,
 now admits owned locals, temporary repeated arrays and owned CALL results,
-scalar/array ordinary CALLs and owned argument copies. Record sites and native
-owned entry arguments remain gated. Source results still require the independently
+scalar/array ordinary CALLs and owned argument copies. The
+[record successor](m2-slice-result-record-vm.md) adds record sites and mixed CALLs.
+Native owned entry arguments remain gated. Source results still require the independently
 proved borrowed input origin: callee-local/by-value/temporary roots cannot escape.
 General result locals/expressions/argument use, direct return-range syntax and
 Static remain gated.

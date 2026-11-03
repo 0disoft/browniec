@@ -69,7 +69,8 @@ handoff, selected capture/root retention and exclusive-parent suspension. The
 [private VM dialect](m2-slice-result-vm.md), added at `d468ca1`, now connects result
 destinations, frames, rootless sites and op63/64/65. It defers the proved terminal
 CLOSE/END recipe to atomic handoff; the ordinary VM must not execute that recipe
-unchanged. Owned-local/ordinary CALL integration, final public metering, Static
+unchanged. [Owned array/record locals and ordinary CALL integration](m2-slice-result-record-vm.md)
+now execute privately. Native owned entry inputs, final public metering, Static
 origins, inline return reslicing and general
 borrowed-result binding/expression/argument admission remain later work.
 

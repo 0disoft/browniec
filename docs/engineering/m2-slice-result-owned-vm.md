@@ -6,6 +6,10 @@ still a borrowed-result function with scalar/borrowed inputs. Records, native
 owned entry arguments, general returned-reference locals/arguments, Static and
 public source/capability promotion remain gated.
 
+The [record successor](m2-slice-result-record-vm.md) now connects record locals
+and scalar/array/record CALLs. The record gate above describes this earlier slice.
+Native owned entry inputs and public promotion remain pending.
+
 ## One owner table and original backing
 
 Each private VM frame now maps array catalog sites to owner tokens. Array

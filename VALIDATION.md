@@ -1,5 +1,28 @@
 # Validation
 
+- Private record CALL and local ownership are implemented at `e01a9b1`, following
+  shared record byte-view adapters at `bcd56f4`. The returned-view VM executes
+  record create/copy/read/write/drop/assign/subassign/replace/subreplace and
+  ordinary mixed scalar/array/record arguments/results. `enter_records` stages
+  borrowed authority and the complete aggregate-copy batch together. SRET moves
+  the sole validated owner token without payload copying. Proved terminal SDROP
+  defers to the same atomic handoff as array/loan cleanup.
+  The private registry retains sixteen exact-generation tokens/locations rather
+  than a permanent 512-token record map. Frame initialization follows independent
+  admission. Early dense-map native stack failures are superseded; final tests
+  use no stack/compiler overrides and no result reuse.
+  Final Windows development/release each passed 58 native groups and 506 CLI
+  cases, with 494 matching input hashes and all 110 production files matching
+  `e01a9b1` under Git LF. Both final profiles start at that implementation commit;
+  native phase/CLI continuation inputs match. Full M1/other M2/Linux/
+  isolation/ABI/packaging/allocator/native size-stack/timing were not verified.
+  Native owned entry inputs, public metering and general result source bindings
+  remain pending; public syntax/flags/Fuel stay unchanged. Local only; no push,
+  release or deployment. See the [contract](docs/engineering/m2-slice-result-record-vm.md)
+  and [Windows evidence](docs/evidence/m2-slice-result-record-vm-windows-20261104.json).
+
+Earlier entries below retain their named implementation and verification scopes.
+
 - Private owned-array and ordinary scalar/array CALL integration is implemented
   at `5cccbd3`, following native restoration/root cleanup at `9be6c7e`.
   `vm::run_slice_result` now runs owned locals, temporary repeated-array/owned
