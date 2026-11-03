@@ -65,19 +65,25 @@ pub fn Result<usize,errors::Error> range(ref mut ir::Program p,ref mut locals::T
     let usize anonymous=locals::declare(names,at,at,160+site,captured.exclusive)?;
     return .ok(160+site);
 }
-// Explicit ref [mut] requires exact access and scalar element type. Named slices
-// keep their existing ticket; owned arrays use a call-scoped anonymous handle.
-// Keep signature-array indexing scratch off the recursive scalar CALL path.
-pub fn Result<Capture, errors::Error> capture(ref u8[] source, ref mut lexer::State s,
-    ref mut ir::Program p, ref mut locals::Table names, ref functions::Table signatures, usize parameter) {
+// Decode access once before choosing a named or temporary source. Keep signature
+// indexing scratch off the recursive scalar CALL path.
+pub fn Result<u8, errors::Error> prefix(ref u8[] source, ref mut lexer::State s,
+    ref functions::Table signatures, usize parameter) {
     let usize at = s.begin;
     if (parameter >= 128 || !signatures.param_slices[parameter]) { return .err(errors::make(3, at)); }
     let u8 encoded = signatures.param_slice_elements[parameter];
-    let u8 element = encoded & 127;
     let bool exclusive = (encoded & 128) != 0;
     if (s.kind != 2 || !lexer::equal(source[s.begin..s.end], b"ref")) { return .err(errors::make(3, at)); }
     let usize reference = lexer::next(source, s)?;
     if (exclusive) { let usize access = lexer::word(source, s, b"mut")?; }
+    return .ok(encoded);
+}
+// Explicit access and scalar types match exactly. Named slices retain their
+// ticket; existing owned arrays acquire an anonymous call-scoped handle.
+pub fn Result<Capture, errors::Error> capture(ref u8[] source, ref mut lexer::State s,
+    ref mut ir::Program p, ref mut locals::Table names, u8 encoded, usize at) {
+    let u8 element = encoded & 127;
+    let bool exclusive = (encoded & 128) != 0;
     if (s.kind != 2) { return .err(errors::make(3, s.begin)); }
     let usize index = locals::find(source, names, s.begin, s.end);
     if(arrays::binding(names,index)){return owned(source,s,p,names,element,exclusive,at);}

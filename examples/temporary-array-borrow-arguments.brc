@@ -1,0 +1,8 @@
+module main;
+
+fn i32[3] make() { return [0; 3]; }
+fn i32 update(ref mut i32[] selected) {
+    selected[0] = 42;
+    return selected[0];
+}
+fn i32 main() { return update(ref mut make()[1..2]); }

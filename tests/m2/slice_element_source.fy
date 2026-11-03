@@ -66,7 +66,7 @@ fn void mismatched_alias_call_read_utf8_and_unsupported_roots_fail_during_source
     accepted(b"module main;fn i32 main(){let i32[1] a=[42;1];let ref i32[] p=ref a;return 42;}");
     rejected(b"module main;fn i32 main(){let u8[1] a=[42;1];let ref i32[] p=ref a;return 42;}");
     accepted(b"module main;fn i32 f(ref i32[] p){return 42;}fn i32 main(){let i32[1] a=[42;1];return f(ref a);}");
-    rejected(b"module main;fn i32 f(ref i32[] p){return 42;}fn i32 main(){return f(ref [42;1]);}");
+    rejected(b"module main;fn i32 f(ref i32[] p){return 42;}fn i32 main(){return f(ref [true;1]);}");
 }
 
 @test

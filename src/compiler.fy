@@ -370,14 +370,53 @@ fn Result<usize,errors::Error> array_argument(ref u8[] source,ref mut lexer::Sta
     }
     return array_calls::capture(source,s,p,names,element,length);
 }
+// A fresh literal or owned CALL result becomes a hidden owner before endpoints.
+// Publishing the owner first makes every lexical exit close the view before DROP.
+fn Result<slice_calls::Capture,errors::Error> slice_temporary(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
+    u8 encoded,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
+    let u8 element=encoded & 127;let bool exclusive=(encoded & 128)!=0;
+    var usize id=16;
+    if(s.kind==91){
+        let usize open=lexer::next(source,s)?;
+        let usize fill=expression(source,s,p,names,signatures,1,depth+1,element,result_type,structure,loop_state)?;
+        if(p.types[fill]!=element){return .err(errors::make(3,at));}
+        let usize separator=lexer::punctuation(source,s,59)?;
+        let usize length=arrays::count(source,s)?;
+        let usize close=lexer::punctuation(source,s,93)?;
+        id=ir::array_in(p,names.function,element,length,exclusive,at)?;
+        let usize initialized=ir::array_init(p,id,fill,at)?;
+    }else{
+        if(s.kind!=2 || locals::find(source,names,s.begin,s.end)!=64){return .err(errors::make(3,s.begin));}
+        let usize target=functions::find(source,signatures,s.begin,s.end);
+        if(target>=signatures.count){return .err(errors::make(3,s.begin));}
+        id=array_results::destination(signatures,target,element,signatures.return_lengths[target],exclusive,p,names.function,at)?;
+        let usize name=lexer::next(source,s)?;
+        let usize called=call_value(source,s,p,names,signatures,target,id,at,depth+1,result_type,structure,loop_state)?;
+    }
+    if(s.kind!=91 && s.kind!=44 && s.kind!=41){return .err(errors::make(3,s.begin));}
+    let usize owner=locals::declare(names,at,at,128+id,exclusive)?;
+    return .ok(slice_calls::Capture{.value=0,.root=id,.parent=16,.exclusive=exclusive,.offset=at});
+}
 // Keep endpoint parsing and its capture descriptor off the scalar CALL frame.
 // The root or parent is not newly borrowed until both endpoints complete.
 fn Result<usize,errors::Error> slice_argument(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
     usize parameter,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
-    let slice_calls::Capture captured=slice_calls::capture(source,s,p,names,signatures,parameter)?;
+    let usize reference=s.begin;
+    let u8 encoded=slice_calls::prefix(source,s,signatures,parameter)?;
+    var lexer::State look=lexer::snapshot(s);
+    if(s.kind==2){let usize next=lexer::next(source,ref mut look)?;}
+    let slice_calls::Capture captured=if(s.kind==91 || (s.kind==2 && look.kind==40)){
+        slice_temporary(source,s,p,names,signatures,encoded,reference,depth,result_type,structure,loop_state)?
+    }else{slice_calls::capture(source,s,p,names,encoded,reference)?};
     if(captured.root==16 && captured.parent==16){return .ok(captured.value);}
     let usize at=captured.offset;
+    if(s.kind==44 || s.kind==41){
+        let usize lo=ir::integer(p,0,12,at)?;
+        let usize hi=arrays::length_value(p,captured.root,at)?;
+        return slice_calls::range(p,names,ref captured,lo,hi);
+    }
     let usize open=lexer::punctuation(source,s,91)?;
     let usize lo=if(s.kind==46){ir::integer(p,0,12,at)?}
         else{expression(source,s,p,names,signatures,1,depth+1,12,result_type,structure,loop_state)?};

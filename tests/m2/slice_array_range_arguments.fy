@@ -92,7 +92,7 @@ fn void range_syntax_types_and_unsupported_roots_reject(){
     rejected(b"module main;fn i32 f(ref i32[] p){return 42;}fn i32 main(){let i32[2] a=[42;2];return f(ref a[0..=1]);}");
     rejected(b"module main;fn i32 f(ref i32[] p){return 42;}fn i32 main(){let i32[2] a=[42;2];return f(ref a[..][..]);}");
     run_source(b"module main;fn i32 f(ref i32[] p){return 42;}fn i32 main(){let i32[2] a=[42;2];let ref i32[] p=ref a;return f(ref p[..]);}",0);
-    rejected(b"module main;fn i32 f(ref i32[] p){return 42;}fn i32 main(){return f(ref [42;2][..]);}");
+    rejected(b"module main;fn i32 f(ref i32[] p){return 42;}fn i32 main(){return f(ref [true;2][..]);}");
 }
 
 fn void failed(ref u8[] source,u8 expected,i64 payload){
