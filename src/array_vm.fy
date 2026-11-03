@@ -52,12 +52,16 @@ pub fn errors::Error failure(owners::Error error, usize offset) {
 }
 pub fn Result<usize, errors::Error> execute(u8 op, usize dst, usize a, usize b, usize frame, ref meta::Catalog catalog,
     ref mut State state, ref mut bytes::Buffer buffer, ref mut i64[] registers, usize offset) {
+    return execute_data(op,dst,a,b,frame,catalog,state,bytes::view_mut(buffer),registers,offset);
+}
+// Same verified instruction semantics over invocation-owned backing bytes.
+pub fn Result<usize,errors::Error> execute_data(u8 op,usize dst,usize a,usize b,usize frame,ref meta::Catalog catalog,
+    ref mut State state,ref mut u8[] data,ref mut i64[] registers,usize offset){
     if (frame >= 32) { return .err(errors::make(5, offset)); }
     if(op==51 && (a>=16 || a>=catalog.count || catalog.elements[a]!=10 || b!=0 || dst>=registers.len)){
         return .err(errors::make(5,offset));
     }
     let usize base = frame * 16;
-    let ref mut u8[] data = bytes::view_mut(buffer);
     if(op==51){
         let bool valid=switch(owners::utf8_valid(ref state.owners,state.tokens[base+a],catalog.lengths[a],data)){
             case .ok(v):{v}case .err(e):{return .err(failure(e,offset));}

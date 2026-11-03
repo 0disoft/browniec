@@ -29,6 +29,10 @@ pub fn Result<usize,errors::Error> cost(ref ir::Program p,usize target,usize off
 // register or return-frame mutation occurs until this array transaction succeeds.
 pub fn Result<usize,errors::Error> enter(ref ir::Program p,usize target,usize site,usize parent,
     ref mut arrays::State state,ref mut bytes::Buffer buffer,usize offset) {
+    return enter_data(p,target,site,parent,state,bytes::view_mut(buffer),offset);
+}
+pub fn Result<usize,errors::Error> enter_data(ref ir::Program p,usize target,usize site,usize parent,
+    ref mut arrays::State state,ref mut u8[] data,usize offset){
     var owners::Token[8] sources=[owners::Token{.slot=0,.generation=0};8];
     var layouts::Array[8] shapes=[layouts::Array{.element=0,.length=0,.stride=0,.alignment=0,.bytes=0};8];
     var usize[8] destinations=[0;8];
@@ -50,7 +54,6 @@ pub fn Result<usize,errors::Error> enter(ref ir::Program p,usize target,usize si
         arg+=1;
     }
     if(count==0) {return .ok(0);}
-    let ref mut u8[] data=bytes::view_mut(buffer);
     let owners::Copies copies=switch(owners::copy_arguments(ref sources[..count],ref shapes[..count],data,ref mut state.owners)) {
         case .ok(c):{c} case .err(e):{return .err(arrays::failure(e,offset));}
     };

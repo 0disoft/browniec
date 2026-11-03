@@ -17,6 +17,10 @@ pub struct Transfer { owners::Token token; usize child; usize parent; usize byte
 // Verified ARET retains only its result owner. Preparation does not mutate state.
 pub fn Result<Transfer,errors::Error> prepare(ref ir::Program p,usize target,usize source,usize destination,usize frame,
     ref arrays::State state,ref bytes::Buffer buffer,usize offset) {
+    return prepare_data(p,target,source,destination,frame,state,bytes::view(buffer),offset);
+}
+pub fn Result<Transfer,errors::Error> prepare_data(ref ir::Program p,usize target,usize source,usize destination,usize frame,
+    ref arrays::State state,ref u8[] data,usize offset){
     if(frame==0 || frame>=32 || target>=p.function_count || source>=p.arrays.count || destination>=p.arrays.count) {
         return .err(errors::make(5,offset));
     }
@@ -35,7 +39,7 @@ pub fn Result<Transfer,errors::Error> prepare(ref ir::Program p,usize target,usi
         i+=1;
     }
     let owners::Token token=state.tokens[child+source];
-    let usize checked=switch(owners::validate_result(ref state.owners,token,p.arrays.elements[shape],p.arrays.lengths[shape],bytes::view(buffer))) {
+    let usize checked=switch(owners::validate_result(ref state.owners,token,p.arrays.elements[shape],p.arrays.lengths[shape],data)) {
         case .ok(n):{n} case .err(e):{return .err(arrays::failure(e,offset));}
     };
     return .ok(Transfer{.token=token,.child=child+source,.parent=parent,.bytes=checked});
