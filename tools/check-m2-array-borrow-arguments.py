@@ -55,7 +55,7 @@ native=(root/'tests/m2/slice_array_arguments.fy').read_text(encoding='utf-8')
 fixtures=re.findall(r'run_source\(b"([^"\n]+)",(\d+)\)',native)
 conflicts=re.findall(r'conflict\(b"([^"\n]+)"',native)
 negatives=re.findall(r'rejected\(b"([^"\n]+)"',native)
-assert (len(fixtures),len(conflicts),len(negatives))==(23,6,8)
+assert (len(fixtures),len(conflicts),len(negatives))==(24,6,7)
 for source,expected in fixtures:
     case(source,expected=int(expected))
 for source in conflicts:

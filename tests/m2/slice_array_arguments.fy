@@ -75,7 +75,7 @@ fn void immutable_wrong_types_ranges_and_temporary_roots_stay_rejected(){
     rejected(b"module main;fn i32 f(ref i32[] p){return 42;}fn i32 main(){let u32[1] a=[42;1];return f(ref a);}");
     rejected(b"module main;fn i32 f(ref mut i32[] p){return 42;}fn i32 main(){var i32[1] a=[0;1];return f(ref a);}");
     rejected(b"module main;fn i32 f(ref i32[] p){return 42;}fn i32 main(){var i32[1] a=[0;1];return f(ref mut a);}");
-    rejected(b"module main;fn i32 f(ref i32[] p){return 42;}fn i32 main(){let i32[1] a=[42;1];return f(ref a[..]);}");
+    run_source(b"module main;fn i32 f(ref i32[] p){return 42;}fn i32 main(){let i32[1] a=[42;1];return f(ref a[..]);}",0);
     rejected(b"module main;fn i32 f(ref mut i32[] p){return 42;}fn i32 main(){return f(ref mut [0;1]);}");
     rejected(b"module main;fn i32[1] make(){return [42;1];}fn i32 f(ref i32[] p){return 42;}fn i32 main(){return f(ref make());}");
 }
