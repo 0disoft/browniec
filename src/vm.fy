@@ -16,6 +16,7 @@ import std::bytes as bytes;
 import slice_result_ir as result_ir;
 import slice_result_runtime as result_runtime;
 import slice_result_execution as result_execution;
+import array_owners as owners;
 
 // Native-only private dialect, independently admitted. Ordinary run/CLI and
 // capability flags still reject borrowed-result source and private opcodes.
@@ -23,6 +24,14 @@ pub fn Result<result_runtime::Returned,errors::Error> run_slice_result(ref resul
     usize function,ref result_runtime::Capture[] captures,ref i64[] values,
     ref mut result_runtime::State state,ref mut u8[] data,usize fuel){
     return result_execution::execute(p,function,captures,values,state,data,fuel);
+}
+
+// Formal-indexed native owned roots copy by value in the initial transaction.
+// This private entry point does not enable borrowed results in public source/ABI.
+pub fn Result<result_runtime::Returned,errors::Error> run_slice_result_owned(ref result_ir::Program p,
+    usize function,ref result_runtime::Capture[] captures,ref i64[] values,ref owners::Token[] inputs,
+    ref mut result_runtime::State state,ref mut u8[] data,usize fuel){
+    return result_execution::execute_owned(p,function,captures,values,inputs,state,data,fuel);
 }
 
 // Guest calls use bounded VM frames, never native recursion. Register reads are

@@ -140,7 +140,7 @@ fn Result<usize,errors::Error> private_gates(){
     assert(!vm::run_slice_result(ref unit,0,ref stale,ref good,ref mut state,ref mut data,1000000000).is_ok);
     let ir::Program owned=compiler::inspect_slice_result_ir(b"module main;struct Point{i32 x;}fn ref mut i32[] f(ref mut i32[] p,Point a){return ref mut p;}fn i32 main(){return 0;}")?;
     let ir::Program ordinary=compiler::inspect_slice_result_ir(b"module main;fn ref mut i32[] f(ref mut i32[] p,i32[1] a){return ref mut p;}fn i32 main(){return 0;}")?;
-    // Owned native entry parameters remain gated; record locals now execute.
+    // Legacy entry rejects owned parameters; the explicit owned entry is separate.
     let i64[2] value=[0,0];
     assert(!vm::run_slice_result(ref owned,0,ref args,ref value,ref mut state,ref mut data,1000000000).is_ok);
     assert(!vm::run_slice_result(ref ordinary,0,ref args,ref value,ref mut state,ref mut data,1000000000).is_ok);
