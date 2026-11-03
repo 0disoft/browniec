@@ -19,6 +19,11 @@ pub struct Transfer { owners::Token token; usize child; usize parent; }
 pub fn Result<Transfer,errors::Error> prepare(ref ir::Program p,usize target,usize source,
     usize destination,usize frame,ref records::State record_state,
     ref arrays::State state,ref bytes::Buffer buffer,usize offset) {
+    return prepare_data(p,target,source,destination,frame,record_state,state,bytes::view(buffer),offset);
+}
+pub fn Result<Transfer,errors::Error> prepare_data(ref ir::Program p,usize target,usize source,
+    usize destination,usize frame,ref records::State record_state,
+    ref arrays::State state,ref u8[] data,usize offset) {
     if(frame==0 || frame>=32 || p.function_count>16 || target>=p.function_count ||
         target==p.entry || p.records.count>16 || source>=p.records.count || destination>=p.records.count) {
         return .err(errors::make(5,offset));
@@ -45,7 +50,7 @@ pub fn Result<Transfer,errors::Error> prepare(ref ir::Program p,usize target,usi
     }
     let owners::Token token=record_state.tokens[child+source];
     let usize checked=switch(owners::validate_record_result(ref p.records.layouts,
-        ref state.owners,token,nominal,bytes::view(buffer))) {
+        ref state.owners,token,nominal,data)) {
         case .ok(n):{n} case .err(e):{return .err(arrays::failure(e,offset));}
     };
     return .ok(Transfer{.token=token,.child=child+source,.parent=parent});
