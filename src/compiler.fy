@@ -23,6 +23,7 @@ import slice_source as slices;
 import slice_call_source as slice_calls;
 import slice_builders as slice_builders;
 import slice_reborrow_ir as reborrow;
+import slice_result_origins as slice_origins;
 
 fn u8 precedence(u8 kind) {
     if (kind == 133) { return 1; }
@@ -139,6 +140,7 @@ fn Result<usize, errors::Error> named_operand(ref u8[] source, ref mut lexer::St
         if (index != 64) { return .err(errors::make(3, at)); }
         let usize target = functions::find(source, signatures, begin, end);
         if (target == 16) { return .err(errors::make(3, at)); }
+        if (signatures.return_slice_elements[target] != 0) { return .err(errors::make(3, at)); }
         if(signatures.return_lengths[target]!=0) {
             return array_call_read(source,s,p,table,signatures,target,at,depth,result_type,structure,loop_state);
         }
@@ -1187,9 +1189,43 @@ fn Result<bool, errors::Error> control_while(ref u8[] source, ref mut lexer::Sta
     return .ok(false);
 }
 
+// Analysis uses a length observation, never an escaping runtime ticket. Ordinary
+// expressions cannot consume borrowed CALL results as their scalar proxies.
+fn Result<bool,errors::Error> slice_origin_return(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    usize at,usize depth,usize expr_depth,ref mut loops::State loop_state){
+    let u8 encoded=signatures.return_slice_elements[table.function];
+    var usize value=128;
+    if(word_is(source,s,b"ref")){
+        let usize reference=lexer::next(source,s)?;
+        if((encoded & 128)!=0){let usize access=lexer::word(source,s,b"mut")?;}
+        if(s.kind!=2){return .err(errors::make(3,s.begin));}
+        let usize index=locals::find(source,table,s.begin,s.end);
+        if(!slices::binding(table,index)){return .err(errors::make(3,s.begin));}
+        let usize site=table.registers[index]-160;
+        if(ir::borrow_element(p,site)!=(encoded & 127) || ir::exclusive(p,site)!=((encoded & 128)!=0)){
+            return .err(errors::make(3,s.begin));
+        }
+        let usize name=lexer::next(source,s)?;
+        value=ir::slice_length(p,site,at)?;
+    }else{
+        if(s.kind!=2 || locals::find(source,table,s.begin,s.end)!=64){return .err(errors::make(3,s.begin));}
+        let usize target=functions::find(source,signatures,s.begin,s.end);
+        if(target>=signatures.count || signatures.return_slice_elements[target]!=encoded){return .err(errors::make(3,s.begin));}
+        let usize name=lexer::next(source,s)?;
+        value=call_value(source,s,p,table,signatures,target,16,at,expr_depth,12,depth,loop_state)?;
+    }
+    let usize end=lexer::punctuation(source,s,59)?;
+    let usize dropped=arrays::release_visible(table,p,at)?;
+    let usize returned=ir::emit(p,8,value,0,at)?;
+    return .ok(true);
+}
 fn Result<bool, errors::Error> control_return(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 result_type, usize depth, usize expr_depth, ref mut loops::State loop_state) {
     let usize at = s.begin;
     let usize keyword = lexer::next(source, s)?;
+    if(signatures.return_slice_elements[table.function]!=0){
+        return slice_origin_return(source,s,p,table,signatures,at,depth,expr_depth,loop_state);
+    }
     if(p.record_results[table.function]!=0) {
         if(s.kind==2) {
             var lexer::State look=lexer::snapshot(s);
@@ -1346,7 +1382,7 @@ fn Result<usize, errors::Error> prepare_aggregates(ref u8[] source, ref mut func
     return .ok(records.layouts.count);
 }
 
-pub fn Result<ir::Program, errors::Error> compile(ref u8[] source) {
+fn Result<ir::Program, errors::Error> lower(ref u8[] source,bool origin_analysis) {
     if (source.len > 4096) { return .err(errors::make(4, 4096)); }
     let ref str valid = switch (text::validate_utf8(source)) {
         case .ok(value): { value } case .err(_): { return .err(errors::make(1, 0)); }
@@ -1357,7 +1393,7 @@ pub fn Result<ir::Program, errors::Error> compile(ref u8[] source) {
     // Program/result preparation can mistake it for an ordinary scalar result.
     var usize declaration = 0;
     while (declaration < signatures.count) {
-        if (signatures.return_slice_elements[declaration] != 0) {
+        if (!origin_analysis && signatures.return_slice_elements[declaration] != 0) {
             return .err(errors::make(3, signatures.begins[declaration]));
         }
         declaration += 1;
@@ -1366,6 +1402,13 @@ pub fn Result<ir::Program, errors::Error> compile(ref u8[] source) {
     p.function_count = signatures.count;
     p.entry = signatures.entry;
     p.return_types = signatures.return_types;
+    if(origin_analysis){
+        declaration=0;
+        while(declaration<signatures.count){
+            if(signatures.return_slice_elements[declaration]!=0){p.return_types[declaration]=12;}
+            declaration+=1;
+        }
+    }
     let usize aggregates = prepare_aggregates(source, ref mut signatures, ref mut p)?;
     var usize f = 0;
     while (f < signatures.count) {
@@ -1383,4 +1426,12 @@ pub fn Result<ir::Program, errors::Error> compile(ref u8[] source) {
         }
     }
     return .ok(p);
+}
+
+pub fn Result<ir::Program,errors::Error> compile(ref u8[] source){return lower(source,false);}
+// The analysis Program stays private and is never returned to an executor.
+pub fn Result<slice_origins::Summary,errors::Error> inspect_slice_results(ref u8[] source){
+    let ir::Program p=lower(source,true)?;
+    let functions::Table signatures=functions::scan(source)?;
+    return slice_origins::inspect(ref p,ref signatures);
 }
