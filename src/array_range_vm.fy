@@ -11,6 +11,10 @@ import std::bytes as bytes;
 // Call only with the VM-owned table and its associated backing buffer.
 pub fn Result<usize, errors::Error> step(ref ir::Program p, usize pc, usize frame,
     ref arrays::State state, ref bytes::Buffer buffer, ref mut i64[] registers, usize fuel) {
+    return step_data(p,pc,frame,state,bytes::view(buffer),registers,fuel);
+}
+pub fn Result<usize,errors::Error> step_data(ref ir::Program p,usize pc,usize frame,
+    ref arrays::State state,ref u8[] data,ref mut i64[] registers,usize fuel){
     if (pc >= p.count || pc >= 256) { return .err(errors::make(5, 0)); }
     let usize at = pc * 8;
     let usize offset = p.offsets[pc];
@@ -37,7 +41,6 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, usize pc, usize fram
         end = cells::unpack(registers[end_register], offset)?;
         if (start > end || end > p.arrays.lengths[id]) { return .err(errors::make(14, offset)); }
     }
-    let ref u8[] data = bytes::view(buffer);
     let owners::View view = switch (owners::view(ref state.owners, state.tokens[frame * 16 + id], start, end, data.len)) {
         case .ok(v): { v } case .err(e): { return .err(arrays::failure(e, offset)); }
     };

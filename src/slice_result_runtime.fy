@@ -5,6 +5,7 @@ import slice_authority as authority;
 import slice_result_ir as ir;
 import slice_result_verifier as verifier;
 import array_vm as arrays;
+import array_layout as layouts;
 import errors as errors;
 
 // Invocation-private coordinator. All copies below are unpublished metadata
@@ -17,6 +18,7 @@ pub struct Call {
     Capture[8] captures; owners::View[8] views; slices::Ticket[8] issued;
     slices::Ticket[16] before; Contract contract; usize depth; usize frame; usize remaining; bool active;
 }
+pub struct Entered { Call call; owners::Copies copies; }
 pub struct Held {
     slices::Ticket issued; owners::View view; bool exclusive; bool close_parent;
     bool drop; usize depth; usize frame; bool active;
@@ -52,6 +54,16 @@ pub fn Result<Call,errors::Error> enter(ref mut State state,Contract binding,ref
 // Ordinary calls use selected=0, including zero-argument calls. Borrowed-result
 // calls still require a nonzero selected formal through enter/IR admission.
 pub fn Result<Call,errors::Error> enter_call(ref mut State state,Contract binding,ref Capture[] captures,usize capacity,usize fuel){
+    let owners::Token[1] sources=[owners::Token{.slot=0,.generation=0};1];
+    let layouts::Array[1] shapes=[layouts::Array{.element=0,.length=0,.stride=0,.alignment=0,.bytes=0};1];var u8[1] data=[0];
+    let Entered entered=enter_arrays(state,binding,captures,ref sources[..0],ref shapes[..0],ref mut data[..0],capacity,fuel)?;
+    return .ok(entered.call);
+}
+// Borrowed authority and owned value arguments commit in one metadata plan.
+// copy_arguments validates every source/reservation before its first byte write.
+pub fn Result<Entered,errors::Error> enter_arrays(ref mut State state,Contract binding,ref Capture[] captures,
+    ref owners::Token[] sources,ref layouts::Array[] shapes,ref mut u8[] data,usize capacity,usize fuel){
+    if(sources.len>binding.arity || sources.len!=shapes.len || (sources.len!=0 && data.len!=capacity)){return .err(errors::make(5,0));}
     if(fuel<cost()){return .err(errors::make(8,0));}
     if(binding.arity>8 || captures.len!=binding.arity || binding.selected>binding.arity ||
         (binding.selected!=0 && binding.tags[binding.selected-1]==0)){return .err(errors::make(5,0));}
@@ -86,7 +98,11 @@ pub fn Result<Call,errors::Error> enter_call(ref mut State state,Contract bindin
             else{let usize length=result.views[i].end-result.views[i].start;result.issued[i]=ticket(slices::subslice(ref mut next_pool,captures[i].ticket,ref next_owners,0,length,capacity))?;}
         }i+=1;
     }
-    state.runtime=Runtime{.authority=next_authority,.pool=next_pool,.owners=next_owners};return .ok(result);
+    var owners::Copies copies=owners::Copies{.tokens=[owners::Token{.slot=0,.generation=0};8],.count=0};
+    if(sources.len!=0){copies=switch(owners::copy_arguments(sources,shapes,data,ref mut next_owners)){
+        case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,0));}
+    };}
+    state.runtime=Runtime{.authority=next_authority,.pool=next_pool,.owners=next_owners};return .ok(Entered{.call=result,.copies=copies});
 }
 
 // Caller supplies the live descriptor selected by independently verified IR.

@@ -138,8 +138,8 @@ fn Result<usize,errors::Error> private_gates(){
     assert(!vm::run_slice_result(ref unit,0,ref args,ref good,ref mut state,ref mut data,runtime::cost()-1).is_ok);
     let runtime::Capture[2] stale=[runtime::capture(slices::Ticket{.slot=parent.slot,.generation=parent.generation+1},true,true),runtime::capture(none,false,false)];
     assert(!vm::run_slice_result(ref unit,0,ref stale,ref good,ref mut state,ref mut data,1000000000).is_ok);
-    let ir::Program owned=compiler::inspect_slice_result_ir(b"module main;fn ref mut i32[] f(ref mut i32[] p){let i32[1] a=[42;1];return ref mut p;}fn i32 main(){return 0;}")?;
-    let ir::Program ordinary=compiler::inspect_slice_result_ir(b"module main;fn ref mut i32[] f(ref mut i32[] p){let i32 n=g();return ref mut p;}fn i32 g(){return 1;}fn i32 main(){return 0;}")?;
+    let ir::Program owned=compiler::inspect_slice_result_ir(b"module main;struct Point{i32 x;}fn ref mut i32[] f(ref mut i32[] p){let Point a=Point{.x=1};return ref mut p;}fn i32 main(){return 0;}")?;
+    let ir::Program ordinary=compiler::inspect_slice_result_ir(b"module main;struct Point{i32 x;}fn ref mut i32[] f(ref mut i32[] p){let Point a=Point{.x=g()};return ref mut p;}fn i32 g(){return 1;}fn i32 main(){return 0;}")?;
     let runtime::Capture[1] single=[runtime::capture(parent,true,true)];let i64[1] value=[0];
     assert(!vm::run_slice_result(ref owned,0,ref single,ref value,ref mut state,ref mut data,1000000000).is_ok);
     assert(!vm::run_slice_result(ref ordinary,0,ref single,ref value,ref mut state,ref mut data,1000000000).is_ok);

@@ -17,8 +17,13 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,usize pc,
     let usize at=pc*8;let usize offset=p.offsets[pc];let u8 op=p.code[at];
     let usize dst=p.code[at+1] as usize;let usize a=p.code[at+2] as usize;let usize b=p.code[at+3] as usize;
     let usize base=bindings.frame*16;
-    let usize cost=if(op==55){81921}else if(op==56 || op==59 || op==61 || op==62){65537}else{4097};
+    let usize cost=if(op==55){81921}else if(op==54 || op==56 || op==59 || op==61 || op==62){65537}else{4097};
     if(fuel<cost){return .err(errors::make(8,offset));}
+    if(op==56 && p.slice_roots[dst]==0 && p.slice_origins[dst] as usize==dst+1){
+        // Formal sessions belong to the CALL transaction. Source CLOSE ends the
+        // logical site; physical release/restoration is performed at return.
+        bindings.sites[base+dst]=frames::none();return .ok(fuel-cost);
+    }
     if(op==55){
         let bool value=switch(slices::utf8(ref state.runtime.pool,bindings.sites[base+a],ref state.runtime.owners,data)){
             case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}
@@ -40,7 +45,14 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,usize pc,
     }else{
         var authority::State stack=state.runtime.authority;var slices::Pool pool=state.runtime.pool;
         var owners::Table table=state.runtime.owners;var slices::Ticket issued=frames::none();
-        if(op==56){
+        if(op==54){
+            if(bindings.sites[base+dst].slot!=16){return .err(errors::make(5,offset));}
+            let usize root=p.slice_roots[dst] as usize-1;let owners::Token token=bindings.tokens[base+root];
+            let usize lo=cells::unpack(registers[a],offset)?;let usize hi=cells::unpack(registers[b],offset)?;
+            issued=switch(if(ir::exclusive(p,dst)){slices::open_exclusive(ref mut pool,ref mut table,token,lo,hi,data.len)}else{slices::open(ref mut pool,ref mut table,token,lo,hi,data.len)}){
+                case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}
+            };
+        }else if(op==56){
             let usize closed=switch(slices::close(ref mut pool,bindings.sites[base+dst],ref mut table,data.len)){
                 case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}
             };
