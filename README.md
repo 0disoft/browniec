@@ -1,5 +1,21 @@
 # Brownie C
 
+## Borrowed-result signature analysis: execution gated
+
+Implemented at `1ced18e`. Private frontend analysis describes `fn ref T[]` and
+`fn ref mut T[]` declarations for the six scalar types, with exact-mode candidate
+input positions. A candidate mask does not prove the body's actual return origin.
+Public compilation continues to reject every borrowed-result declaration,
+including unreachable helpers. No returned borrow executes. See the
+[contract and remaining lifetime obligations](docs/engineering/m2-slice-result-signatures.md).
+
+Windows development/release each passed 12 native groups and 902 tool-free CLI
+cases, with 459 matching final inputs and rechecked retained identities. Public
+borrow features below remain available; VM layouts, prices and capabilities are
+unchanged. Full native/M1/other M2/Linux/isolation/packaging/performance were not
+rerun. Local only; no push, release or deployment. See the
+[verified evidence](docs/evidence/m2-slice-result-signatures-windows-20261103.json).
+
 ## Borrow temporary arrays in CALL arguments
 
 Implemented at `8983737`. Literals and owned array results now work directly in

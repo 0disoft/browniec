@@ -1,0 +1,2598 @@
+{
+  "schema": "browniec.slice-result-signatures-windows/v1",
+  "status": "passed",
+  "clientDate": "2026-11-03",
+  "recordedAt": "2026-11-03T10:31:51.652340+00:00",
+  "implementationCommit": "1ced18e7b8d59292068a1a00c2a36baf0eabee8a",
+  "baselineCommit": "d0924f85991acbdcaea3ead59b59791a68648dc7",
+  "sourceCount": 459,
+  "sourceSha256": [
+    {
+      "path": "examples/answer.brc",
+      "sha256": "d4bc07a5089dc27642c87167cf42363c416f20eb7e3ed413612f5edc73fcccfd"
+    },
+    {
+      "path": "examples/array-assignment.brc",
+      "sha256": "13fdfc3681adf166752b8929c250f8909df42e42fc2819c28ec9828a20256010"
+    },
+    {
+      "path": "examples/array-borrow-arguments.brc",
+      "sha256": "d77100c55000326b179d634d751c613213b7af68a5ab08a2d1a38344f5583169"
+    },
+    {
+      "path": "examples/array-call-assignment.brc",
+      "sha256": "7daee96a561348289a225382475b5810c2f8441f4a489ee0851ac7412f1336eb"
+    },
+    {
+      "path": "examples/array-copy.brc",
+      "sha256": "a5778a41335b3e4d61ac871ffcfc3433d020476e352223bfa913293d923a39a9"
+    },
+    {
+      "path": "examples/array-helpers.brc",
+      "sha256": "906e2ee664c3023775430d370baa27ae7e8285c68e68d2acf94f8f5732d54df3"
+    },
+    {
+      "path": "examples/array-length.brc",
+      "sha256": "490119c406bcd9b61ec8ce9444ee7bc5cac06e42bdb69c025d4e86592a57da81"
+    },
+    {
+      "path": "examples/array-literal-assignment.brc",
+      "sha256": "108e1a0ea38e90ad76d347f5ec61c215ec4e061cb577dd0b4309816104e41bbd"
+    },
+    {
+      "path": "examples/array-parameters.brc",
+      "sha256": "48b705f298d5af0a36c8fba573e6044322f92c69d7288d38eb8d443d1f679e78"
+    },
+    {
+      "path": "examples/array-range-borrow-arguments.brc",
+      "sha256": "48fcd2026593ed5dc4ff1275e1647e0942b808ea4b7d91872565922c020d78e1"
+    },
+    {
+      "path": "examples/array-read.brc",
+      "sha256": "8763063bdb093f91a40f30b350cdc5abb7e46bdbf850989a9085c115a8399539"
+    },
+    {
+      "path": "examples/array-results.brc",
+      "sha256": "cfd5591ee22a786e46b5a93637efcae58f857af24fe8a4941353ca12f041ee5f"
+    },
+    {
+      "path": "examples/array-return-calls.brc",
+      "sha256": "a108f01e364aee72563e3291a035109fe2cb92fd837afa900cf6e490968982f0"
+    },
+    {
+      "path": "examples/array-return-literals.brc",
+      "sha256": "ee04f57f1d3fe848ed5a4db459cbddb34dc249d65456b3a1d7be7c168bc0a1e5"
+    },
+    {
+      "path": "examples/array-scopes.brc",
+      "sha256": "d289003eb1523babd1afa91b9da623be25e48b5274dec4e12912ae1712a4c0b0"
+    },
+    {
+      "path": "examples/array-utf8-calls.brc",
+      "sha256": "736fac78f6743fa036f1bfe82816b757011a63ab66c78fa54bbe48e94c9c3fbf"
+    },
+    {
+      "path": "examples/array-utf8-literals.brc",
+      "sha256": "cc67e42c35f4954ec899b05ee7b6c12b04ebca60d3f9c30ee689a986537fb538"
+    },
+    {
+      "path": "examples/array-utf8.brc",
+      "sha256": "9c79fef0e366527802b7b485c764ee619aef474abd4b059399bb0f71f20cc869"
+    },
+    {
+      "path": "examples/array-write.brc",
+      "sha256": "9d7b41ca01f6d14dbb11dcc4d25cbdf4c7e54f2b18b3066272acc7f89f55c84a"
+    },
+    {
+      "path": "examples/bitwise.brc",
+      "sha256": "c3999f980ebf27ce60661e4d99e4710a9ab72277b11fbf10cd6740110385fd78"
+    },
+    {
+      "path": "examples/branches.brc",
+      "sha256": "a7e3cf0aaf73a7db73829b4198924dae41ecb4f8e517112d6dc1f89b687a7648"
+    },
+    {
+      "path": "examples/functions.brc",
+      "sha256": "e34112715dd364859da2f99137f7fd54235017258fa54ddd40b0b7e43dc8ce1b"
+    },
+    {
+      "path": "examples/helper-records.brc",
+      "sha256": "68f935b7bd1f79093d5b30cd91599e82f4606a159d3b7e6a3e48ef63ecab5a04"
+    },
+    {
+      "path": "examples/i64.brc",
+      "sha256": "3d177e58842b754a1b421f6cf9616e934b9ce05bf892c36e7f69512f7240f9b4"
+    },
+    {
+      "path": "examples/locals.brc",
+      "sha256": "7f7be3b0aa4c8d7cda69d323f9434e56d7ac170eb646dafedff46627fce346e5"
+    },
+    {
+      "path": "examples/loops.brc",
+      "sha256": "06c3e64a80e65d8088cb373c7fa1f0f2589980fb2b0f4d3dbc5aa124922789f6"
+    },
+    {
+      "path": "examples/mutable-slice-array-result.brc",
+      "sha256": "e9e6b20152dc898833454d44d61710dbc0876a6559f1da1579701f18401eddf4"
+    },
+    {
+      "path": "examples/mutable-slice-owned-call.brc",
+      "sha256": "cc2c1ef32a448e3c9e7bbcba08be013a78948b4bbd5faa47ad1dfeb783b2f84b"
+    },
+    {
+      "path": "examples/mutable-slice-parameters.brc",
+      "sha256": "a7d76238d02e4b33fad2445d961d2f6b27a10b7a6d66900e0edb5ee843fcdf9e"
+    },
+    {
+      "path": "examples/mutable-slice-reborrow.brc",
+      "sha256": "ef2b63d4c91f70dd1ec9de54de13c08e87d78bed2ab6709dafdc64e3b3960c7e"
+    },
+    {
+      "path": "examples/mutable-slice-record-result.brc",
+      "sha256": "9afe595b7df278a3c62251cb00851bc3bf19df67259d2ad2de5711462cc67ccf"
+    },
+    {
+      "path": "examples/mutable-slices.brc",
+      "sha256": "d2ee9f593fddcaa32c17488c2e74cc5135ee1aedef8a405ac837c411446bb8f1"
+    },
+    {
+      "path": "examples/named-slice-range-arguments.brc",
+      "sha256": "1f4099617b69d202b61570a9dde4b8815e6bec9faa129b74200c634944a3b1d4"
+    },
+    {
+      "path": "examples/propagation.brc",
+      "sha256": "ecb67b872f32f8616a35208819564b952fa3894d5e44f308f2781de559763c13"
+    },
+    {
+      "path": "examples/slice-elements.brc",
+      "sha256": "05b155a660c74d00302d90ee680314eefe85326f7ce501e16b393ca66d2e1560"
+    },
+    {
+      "path": "examples/switch-arm-statements.brc",
+      "sha256": "8f6d4dfbe92aced9bf414146b39543b51cfae41763a82da92b596cb39e0f2b0b"
+    },
+    {
+      "path": "examples/switch-expression.brc",
+      "sha256": "cff29c8d5c330d49d142a12b0ddd1a6bf9fcedf087e7d15ce9827b112f893af2"
+    },
+    {
+      "path": "examples/tagged.brc",
+      "sha256": "fd9fe2238a6e65eb4e0d2febf0eb6cdef92a0051802251676308258c05ff3bb4"
+    },
+    {
+      "path": "examples/temporary-array-borrow-arguments.brc",
+      "sha256": "be275598018a79bdf2763b46bd13359bf397f0dfec83d1ecca8a035bd358eb76"
+    },
+    {
+      "path": "examples/unsigned.brc",
+      "sha256": "03bfeca00b804495c0ddb8d72ada169b639f9527edbae333a8c354178d83173d"
+    },
+    {
+      "path": "examples/widening.brc",
+      "sha256": "73bee579f0b68d4bd1dd15f08e0b4ed2c22e416affce1abd515ae1d50983778b"
+    },
+    {
+      "path": "fairy.lock",
+      "sha256": "2be9547add7c70a17bf8fab1cda162eef8f716d7d511635160c51222a1098dab"
+    },
+    {
+      "path": "fairy.toml",
+      "sha256": "f5254ba793d9012470c697e8657688a4ea5465c138fba6d748707d5bfa4b31fb"
+    },
+    {
+      "path": "src/arithmetic.fy",
+      "sha256": "8192e6ba97498d059b0505307bc2bf84ac58d9722dc5f597587f8ae81a1081d3"
+    },
+    {
+      "path": "src/array_call_source.fy",
+      "sha256": "57af1c63a68bf060d6c555d1ec3f929d3c53715691074d68a5ae6f7ab58392a2"
+    },
+    {
+      "path": "src/array_call_vm.fy",
+      "sha256": "9da46f3a605e5a63ee7309d607c06473a3c175ae9e30f6e0b759e9da9a51e6da"
+    },
+    {
+      "path": "src/array_layout.fy",
+      "sha256": "d3497dfb6bb7e9ac8ceece4ae88a2274b6b40b49e3c5fecfc509179c03c91cdd"
+    },
+    {
+      "path": "src/array_meta.fy",
+      "sha256": "d1a07319dc2bb7eb95298e3920eaec63c1a4c1390a00c5469528a77e97612894"
+    },
+    {
+      "path": "src/array_owners.fy",
+      "sha256": "78e09a527b42b1ee18bf2d25bcc97f2adea545c8559920b10136d3d9df9424bd"
+    },
+    {
+      "path": "src/array_parameters.fy",
+      "sha256": "bc9d641ea11177587392784f0d1be4a19789e993218c7cba02fc4159d1f5297b"
+    },
+    {
+      "path": "src/array_range_vm.fy",
+      "sha256": "c91afd89b2f3f8f650d61cff3820ff5958f49a6280ba36114fe13b47376db8d3"
+    },
+    {
+      "path": "src/array_result_source.fy",
+      "sha256": "8ba04ee641fb5f5d0543640d10b717fd43f285ac27a923551bd1f1306955e45a"
+    },
+    {
+      "path": "src/array_result_vm.fy",
+      "sha256": "505123ffe87b956e622613a5207aa0c6589140074bed3e59bbd31e6590f2e8f2"
+    },
+    {
+      "path": "src/array_results.fy",
+      "sha256": "1dccba6ebbc493654aea82e305b7c3f9b0c226c8c475d1c80f19fa1014e63e8e"
+    },
+    {
+      "path": "src/array_slices.fy",
+      "sha256": "079ad1fe12bee4b8c8bb099dfa3d2384fd3b0bee8f791d678b41aec291378171"
+    },
+    {
+      "path": "src/array_source.fy",
+      "sha256": "bd13189717b308d2e6abbf3afa6a6b099ebd31f5fa541674aa671849dbbecff0"
+    },
+    {
+      "path": "src/array_storage.fy",
+      "sha256": "00808c116e0fb86ce063d7fd4cc9d1f8fd29f19b277449e59e3569491a3ee534"
+    },
+    {
+      "path": "src/array_verifier.fy",
+      "sha256": "b64906e2b8dd674c26211dee85cf8a362b7f32bfc6d26c7134b0168f49e32ed3"
+    },
+    {
+      "path": "src/array_vm.fy",
+      "sha256": "1192be6ce580ae392317e9f7cca6316d372501d0e3e5a464f63e0d2572b1930d"
+    },
+    {
+      "path": "src/bits.fy",
+      "sha256": "0b030757624a8dbaea9475f90d757aeff78b9154a121af7a4d9ebd80042db1a0"
+    },
+    {
+      "path": "src/buffer_append.fy",
+      "sha256": "7a4de27685b41b772569e5a687a7626bc200f7c6152b77082cc93052bf78527a"
+    },
+    {
+      "path": "src/buffer_close.fy",
+      "sha256": "ae68d02649e04196854ba4b41f475c0c550d6d0ac5f80ebd2bbeb537fbcfaac7"
+    },
+    {
+      "path": "src/buffer_create.fy",
+      "sha256": "f133713a4f815f70cfd973933f81dd1156b7fa5c637eeb9dbad9e87f309308e0"
+    },
+    {
+      "path": "src/buffer_growth.fy",
+      "sha256": "71b855cc0e2e4e9d092cf66cf9de94ce62079e3c141e33d6b4c715fecebd1177"
+    },
+    {
+      "path": "src/buffer_host_close.fy",
+      "sha256": "4e5bcef18c020b3eccd4034cf5a5c0a8b81b53b6709ba043b876d64eaf8b7aea"
+    },
+    {
+      "path": "src/buffer_host_sweep.fy",
+      "sha256": "3a043bc009e60b55e11d07ffe40c12dcf75e44b88ea878a37405e61b414c606a"
+    },
+    {
+      "path": "src/buffer_owners.fy",
+      "sha256": "0dd45d859fec557cbe729b64f4b838b11b1d1f9dde3f779c9251cfad3bb82576"
+    },
+    {
+      "path": "src/buffer_replacement.fy",
+      "sha256": "7f8a58181ad531924d4a3f1d887c552a952ebf6df493d714b00d56112a92ae51"
+    },
+    {
+      "path": "src/buffer_resize.fy",
+      "sha256": "1870bbf133aa6e9535eb5a901cbdd54bf8e520ae2520a54b9bd03b955b9cf057"
+    },
+    {
+      "path": "src/buffer_storage.fy",
+      "sha256": "4f6b9f8e5fc5ae55551618d70eac1e74289d09a933249bf95940f98d5b2fbe8d"
+    },
+    {
+      "path": "src/buffer_truncate.fy",
+      "sha256": "9b5900d8ee8d1360c47afb4589473adfb5fe523c83de941e7a88412f9d3425fc"
+    },
+    {
+      "path": "src/buffer_utf8.fy",
+      "sha256": "a59e01627bb46851405334d0650426a9ef816a69cf1c0a5dbf6f3cec43f8b255"
+    },
+    {
+      "path": "src/buffer_utf8_meter.fy",
+      "sha256": "b066f8b567b465d709cc356193c92aeea33d8918ae7c500fb23992993d455142"
+    },
+    {
+      "path": "src/buffer_utf8_pool.fy",
+      "sha256": "74eafd20969398df0475dee122130292aa3bd51dfbfea2a32cea3819def397df"
+    },
+    {
+      "path": "src/buffer_utf8_scan.fy",
+      "sha256": "f51a409ff4f1f6fd427b1b0ef9526d16c506af197478ba0281d6e376ff9e6a7a"
+    },
+    {
+      "path": "src/buffer_utf8_session.fy",
+      "sha256": "709338c5a33d28ea20ae41851a27d0139b40c1b7f69c4a827503bccf7da54330"
+    },
+    {
+      "path": "src/buffer_write.fy",
+      "sha256": "ddb6db325a50f5f660c90971661144a582794ec84c0be5f675d503c237829dab"
+    },
+    {
+      "path": "src/call_frame_vm.fy",
+      "sha256": "224e3c7a89ea37f0c152b4222a5ca88cf8c28692651ffb97fec322c889426e28"
+    },
+    {
+      "path": "src/casts.fy",
+      "sha256": "59da4a4ecef63833cc383495390e150b964bf41b353c4b150dcacb6be66caba6"
+    },
+    {
+      "path": "src/cells.fy",
+      "sha256": "71b82add3e95b86a1b7bcb88c3f97f6ae38bae0ac3ec8b1a2de925b10a64e433"
+    },
+    {
+      "path": "src/cli_input.fy",
+      "sha256": "ec91de62e6b5147d117d6fe0366ebcf617b556c074bf1dd91cb10188f96507ba"
+    },
+    {
+      "path": "src/compiler.fy",
+      "sha256": "b9f3eedf7984c72beb0c8cf7dc6ef0884e44a91d9cc92eccac581fcf1a114c83"
+    },
+    {
+      "path": "src/errors.fy",
+      "sha256": "e8070ef5c6380460dacb579c33f2e180b9e683286c8cb0827e30d82a581a4646"
+    },
+    {
+      "path": "src/functions.fy",
+      "sha256": "beb85bc1f86ab8112d4abd25dd274e80db359a4da09b95297624a554d1ffe123"
+    },
+    {
+      "path": "src/ir.fy",
+      "sha256": "7f794a815e3ac596baea7867e977aacc10b8ba504bf8d21100feb8256bf5fc79"
+    },
+    {
+      "path": "src/lexer.fy",
+      "sha256": "0a64c45b3a3512ada4610c244ce874d306e417cde0fce4cd99a419048002861e"
+    },
+    {
+      "path": "src/locals.fy",
+      "sha256": "f89cab6159330ec0ac269ef02cedd59d15f6f3cfae2d60fc89d43b5ccdf32cda"
+    },
+    {
+      "path": "src/loops.fy",
+      "sha256": "d25dccfb4d3d50daa6e82a6a2f8df345ea72fd4a559e3a8882d6cda0230cbee2"
+    },
+    {
+      "path": "src/main.fy",
+      "sha256": "d9058a90b59bb71848f67b0b9e13b91226943aeb3c7f9736b0d32d261624c23d"
+    },
+    {
+      "path": "src/mixed_call_vm.fy",
+      "sha256": "e84928ddf78e43777eb9b9f740f2095e66aeead61c34f3c1f1fdd4ae6646b009"
+    },
+    {
+      "path": "src/patterns.fy",
+      "sha256": "d9ba2ff9dba626968b7514c636a414932e50856c19b9d41d6825b4f91c9797aa"
+    },
+    {
+      "path": "src/propagation.fy",
+      "sha256": "9b58f0e5ed3ef79c44cf819c651e0ec456e38441c3ce8579aca31e0d7eb80bdc"
+    },
+    {
+      "path": "src/register_set.fy",
+      "sha256": "478e2690ee311bb3961c329becc6f9ef035276759619733cbfd0f6e441f36b73"
+    },
+    {
+      "path": "src/render.fy",
+      "sha256": "e86fb9d531c5c32321dd9df792478ca396523394ae469281a1036b57fbbd6e2d"
+    },
+    {
+      "path": "src/scalar_codec.fy",
+      "sha256": "c28ca5e5cdc38dee01d79489d8c5a709022a49001854af638258ec4536ad66f0"
+    },
+    {
+      "path": "src/shifts.fy",
+      "sha256": "510dc6a90591de165de424a377eb267917ea9973972b9b95656cc9c435675eeb"
+    },
+    {
+      "path": "src/slice_authority.fy",
+      "sha256": "b06e7c503a739c77454cf60f8f4c291cf60968cde40ecd87005e3f0c267a73a1"
+    },
+    {
+      "path": "src/slice_authority_call_vm.fy",
+      "sha256": "10ec356493e4b7a8572506468420413bbf8f5be71e132cadff11b927fe7d12ac"
+    },
+    {
+      "path": "src/slice_builders.fy",
+      "sha256": "0ea4753e648c64426e87e931819c0a8de54aa933b7ab269e203c52138a7323f6"
+    },
+    {
+      "path": "src/slice_call_source.fy",
+      "sha256": "a7bc0a9dff9a3784b5bdf5e92684cff21edf8340925b30be048fa0c08be7a44d"
+    },
+    {
+      "path": "src/slice_call_vm.fy",
+      "sha256": "a23ec0de1de83616e6ff1f45eefc8162404d13af223d56565329b2edb60a81b9"
+    },
+    {
+      "path": "src/slice_cleanup_source.fy",
+      "sha256": "9967ff2c911c8bfff420f2c112632b79f363820cd3f69f098b0cec8a6f7da855"
+    },
+    {
+      "path": "src/slice_exclusive_vm.fy",
+      "sha256": "f864a43b1159a416570b0a8bb629eb85ccd3c90dd5ce2c12c38267f7d4a37b3e"
+    },
+    {
+      "path": "src/slice_formal_reborrow_vm.fy",
+      "sha256": "a86c1faccdb087a5e8ec9bfabb7027564cb91f900987407105b92a7c3458e694"
+    },
+    {
+      "path": "src/slice_frame_vm.fy",
+      "sha256": "ab5a038e278868dd705c3a70deb20baea5fb1857cc2a961bc4a0eb9c1e5d88d6"
+    },
+    {
+      "path": "src/slice_handoff.fy",
+      "sha256": "c591215b3ed04a70d184c39ca264e781f95d99c9ae034eb99161fd587ee5a5a3"
+    },
+    {
+      "path": "src/slice_lifecycle_vm.fy",
+      "sha256": "bb9413fa1adb08755ac885e207f016bf06e1f673c2fdff6282367850a8e8c6da"
+    },
+    {
+      "path": "src/slice_mutable_call_vm.fy",
+      "sha256": "23a9af3799d01cd47a5f1bbcbb7f0ff89f1afbf073007461e15e1acbd740240a"
+    },
+    {
+      "path": "src/slice_mutable_frame_vm.fy",
+      "sha256": "34e27668a6fd806f6f66c6cf1fbc7d7874f515e8bc72f1dfdfc19df4924823ce"
+    },
+    {
+      "path": "src/slice_parameters.fy",
+      "sha256": "ec2414f2ae8232a79eeca6d3411f7f17bdba5f8dfe4fb530eb608a2b3715cd49"
+    },
+    {
+      "path": "src/slice_reborrow.fy",
+      "sha256": "bbfc3c07db26d988ced20299c65747a399da492ea0a79d8c74e87efa376e99f1"
+    },
+    {
+      "path": "src/slice_reborrow_admission_ir.fy",
+      "sha256": "2009a536abda6b2a8c032d7ddef81843273243a41aab7e2a6abfea70581be360"
+    },
+    {
+      "path": "src/slice_reborrow_call_admission.fy",
+      "sha256": "847a3ecf05e2ae17e5780509b416f93572b04fa75ab95739d717dae6a0e22994"
+    },
+    {
+      "path": "src/slice_reborrow_call_ir.fy",
+      "sha256": "5e8460663b52ef88f752beeb89b7fb7582912dfd67b2de063f3e83cd75ed4473"
+    },
+    {
+      "path": "src/slice_reborrow_call_vm.fy",
+      "sha256": "138a040a43a5a8e9e8765a879f16414bdffe5438e65510ac842e0a3d7c49895d"
+    },
+    {
+      "path": "src/slice_reborrow_context.fy",
+      "sha256": "9083e2b6c008bfd920f0c18a1a144df2ff0cbd6122cdc0226975182165f0a1b2"
+    },
+    {
+      "path": "src/slice_reborrow_ir.fy",
+      "sha256": "fdffe1cfe97dfb406c96f27c5479839ecca7c7a8564f02d05f864b367dc8cd70"
+    },
+    {
+      "path": "src/slice_reborrow_vm.fy",
+      "sha256": "31471823796d03a46c02c642230de0347915be2cbfbf007212d56bb2b9835aeb"
+    },
+    {
+      "path": "src/slice_source.fy",
+      "sha256": "6bf52140e82c0b4e29e2a0681c5642c65fd4d08aaaa80d437a4d27b64e2e9732"
+    },
+    {
+      "path": "src/slice_verifier.fy",
+      "sha256": "cb97f17cd15923b21056e64bd0ecbc2c77b9958800de6f159722521338d1b895"
+    },
+    {
+      "path": "src/slice_vm.fy",
+      "sha256": "ccae91880dd198c54815be4396abee1524d637117ae9c014d64a544d4cb9ac37"
+    },
+    {
+      "path": "src/struct_call_source.fy",
+      "sha256": "ee9e295b082b31f810dd2f6f983a4f2aa68ac064823f74205c486d3c865a3304"
+    },
+    {
+      "path": "src/struct_call_vm.fy",
+      "sha256": "d46de926715d2d9e4fdfab5018a54e56c4017ff6f2800692fb9904056ce97219"
+    },
+    {
+      "path": "src/struct_layout.fy",
+      "sha256": "6ab7d28a9e7216938d4386cff21563ba20997b38d27e37fa5ef803660d2d5aac"
+    },
+    {
+      "path": "src/struct_meta.fy",
+      "sha256": "078d12717b20ed04a04eefaa22409c03292b363995a2d951be617716fe8b52cd"
+    },
+    {
+      "path": "src/struct_nested_storage.fy",
+      "sha256": "e0ff5e2b75380330c99d52271af9e7fabe41f5f6ddd59090aebd1f0d1afc0651"
+    },
+    {
+      "path": "src/struct_parameters.fy",
+      "sha256": "e65267f4b68748895d6fa856fb729df03693e496616e1d596cfcf5c2cb636aea"
+    },
+    {
+      "path": "src/struct_range.fy",
+      "sha256": "4c214845f97fb4ae0ebc0e676475855526d804d033bc8f6d31c39283b6fa0b20"
+    },
+    {
+      "path": "src/struct_result_source.fy",
+      "sha256": "e38aa08469133d8abede84eb5f5ac4ce1de41536a1c7b524744832f8b1a3623d"
+    },
+    {
+      "path": "src/struct_result_vm.fy",
+      "sha256": "ed79117065c515c4851bb0e80c91a273caa059862b72107b731463a10a60b3b3"
+    },
+    {
+      "path": "src/struct_results.fy",
+      "sha256": "5682caf6754803249a6d77c161927724ffa7839a7d44da60c5972ea6d31eb452"
+    },
+    {
+      "path": "src/struct_source.fy",
+      "sha256": "58eacd663dd6f0bbd9a231783ad90c0a06c154d1f20cc175f093831eb1614a05"
+    },
+    {
+      "path": "src/struct_storage.fy",
+      "sha256": "f371eedc083aea535fa6cc35f245fb6bd1c8ded52b8c4470c19fd0c4d9df0596"
+    },
+    {
+      "path": "src/struct_value_source.fy",
+      "sha256": "63224e9db2bd27d9f540eac698b1dfe3b728605625152f528b58bf104033cbb0"
+    },
+    {
+      "path": "src/struct_verifier.fy",
+      "sha256": "f68b5b4292be683128953dc4e440647c0fa2557b3fd0b5fd7674eaedced1d8f5"
+    },
+    {
+      "path": "src/struct_vm.fy",
+      "sha256": "e74f6311ea23f18dbe8c6b11777f048ee15e9838d11b45f12a9da7c7fafe56e0"
+    },
+    {
+      "path": "src/tagged.fy",
+      "sha256": "67770f8ec8f3e35a2a6196cda87310844d37358f86f8b22eb81b49df1f65f1bf"
+    },
+    {
+      "path": "src/text_source.fy",
+      "sha256": "17dc833c6377b59f66c015c8ce471ec58095606d5f9261884694793fea6c4040"
+    },
+    {
+      "path": "src/types.fy",
+      "sha256": "906f5ba160de53f60d23e344e141181f902f36de60a4060375bef97a2162be23"
+    },
+    {
+      "path": "src/verifier.fy",
+      "sha256": "6fc1b1d46762a04517955bf94f5f1f83a080a5bfb7301ea324f8eab1401baf5c"
+    },
+    {
+      "path": "src/vm.fy",
+      "sha256": "bde6b9ab0aed8e3836a7faf5e3736db7e10037aff797ece51031846fdfddff2d"
+    },
+    {
+      "path": "src/vm_execution.fy",
+      "sha256": "edaaffad56fe4f90be0f27ab6c16cf95fe4bf61e1137b50fb966b8fc132be92c"
+    },
+    {
+      "path": "src/vm_reborrow_execution.fy",
+      "sha256": "ac64e0a261f0904c4259a7ceeb77dbf907f1b8175af92dc9edc392b1fd470296"
+    },
+    {
+      "path": "tests/bitwise.fy",
+      "sha256": "c840b7b8317d94ac5fa39d91bdff9644a0e15f4f339cb1ed92dfc305ec0061a0"
+    },
+    {
+      "path": "tests/bools.fy",
+      "sha256": "281f9bca67b5d0dc3786fe2ed051c3fdc90a6cb06bc4a76b02c33ece340f01d5"
+    },
+    {
+      "path": "tests/branches.fy",
+      "sha256": "75dd35a997a5c050acaff68adae77bc6913a73e63475ecd2445ae40dc3bcf9f5"
+    },
+    {
+      "path": "tests/cells.fy",
+      "sha256": "1aa771483c6fe34bd77fc390cd45e87d9537cf8498f542d57856f81c404594b2"
+    },
+    {
+      "path": "tests/core.fy",
+      "sha256": "f8666d14fadaa91a07649e64b62a710276fc78315fc0c420262608872802b42c"
+    },
+    {
+      "path": "tests/functions.fy",
+      "sha256": "b4abd043cae4710bc39895ce72cc1f09b07eba7431bef5eaa0a4f4bea86ec11a"
+    },
+    {
+      "path": "tests/i64_scalars.fy",
+      "sha256": "b2b7dfc016ac233f15f7dc4f2f13109fab610f25f33a4258f8a2cb01a1ec9307"
+    },
+    {
+      "path": "tests/loops.fy",
+      "sha256": "ba83dae2bb797ba367b1b8d994b1d74b63fb1b9386791a8e35c1e3cc951fc2f1"
+    },
+    {
+      "path": "tests/m2/array_allocation.fy",
+      "sha256": "b84e56c8607064c76d433bcde1559c3d7aeed380b6c8acc9fa3a31d8662526e5"
+    },
+    {
+      "path": "tests/m2/array_argument_copies.fy",
+      "sha256": "48a374c3c852c14bc46469f7bac811104ec51a654d9931e557810a65c902406f"
+    },
+    {
+      "path": "tests/m2/array_assign_storage.fy",
+      "sha256": "347d9529c9f6ac41e5c45b7ced2b7153c2ffe9d33d57a17618e85e6974d153eb"
+    },
+    {
+      "path": "tests/m2/array_assignment.fy",
+      "sha256": "1b5519470b81d2cb4b1fbd13dbd8c91f016aac84fdfafb120dce6e886a0181c0"
+    },
+    {
+      "path": "tests/m2/array_call_assignment.fy",
+      "sha256": "7b3bae35247b7c75c65c3e86602e0ecd945ce41854bcce58df1717f2349aadb8"
+    },
+    {
+      "path": "tests/m2/array_call_reads.fy",
+      "sha256": "776fae511954f5ddb0065774c5542b4df46f5eca82811de12d6620203d1a7f42"
+    },
+    {
+      "path": "tests/m2/array_calls.fy",
+      "sha256": "38ca740fb98467a54bcecd415869194230b30e85fe334f2c788c1a87f146c4e9"
+    },
+    {
+      "path": "tests/m2/array_copy.fy",
+      "sha256": "3df942474a34aba8c5fc5affc0514f37ec972bc918f856ea82326cb389517c51"
+    },
+    {
+      "path": "tests/m2/array_copy_source.fy",
+      "sha256": "a81e5ff84fb51e745830689afa94281ed2522d3ba5c22c28a205c0010a7032f2"
+    },
+    {
+      "path": "tests/m2/array_dynamic_utf8.fy",
+      "sha256": "70ef7248631a1e440ff20597935a26afd2f316052c54d17df144f819bc6898c2"
+    },
+    {
+      "path": "tests/m2/array_fill.fy",
+      "sha256": "064fe9f6fda55eb2712060c81d8edc5a2bd25dc8649740d544dc3e4a5789ca88"
+    },
+    {
+      "path": "tests/m2/array_frames.fy",
+      "sha256": "09761070700b961e80849c748d6d7a4964b21ed6c15eba9e76e1fb250befe25b"
+    },
+    {
+      "path": "tests/m2/array_functions.fy",
+      "sha256": "098e869573e9e958fc5a36ad3fd2004d722b56d1f32855757b5534ae9792f631"
+    },
+    {
+      "path": "tests/m2/array_helpers.fy",
+      "sha256": "30a75872a461c5b59b2e06fc55799710c0bfcdae8aff5e2bc643a2dd4b8accd9"
+    },
+    {
+      "path": "tests/m2/array_ir.fy",
+      "sha256": "2a1cc69aa982a9445636c08a0c3b7c2579e457b0170460975f31089406173be4"
+    },
+    {
+      "path": "tests/m2/array_layout.fy",
+      "sha256": "4aecf1a3c691dd8fc055d7ce1fa5950feb98eb7d1aa82d2d9d4f77fcd57a673b"
+    },
+    {
+      "path": "tests/m2/array_length.fy",
+      "sha256": "231e8a891f8df49b7ae88d64435a79ab282926ae852ac6f29beeb3cd7734a979"
+    },
+    {
+      "path": "tests/m2/array_literal_arguments.fy",
+      "sha256": "342170d3870c2cad9ac0fa5574b2f589c20fab36f86c1ed963dba4d00c68f405"
+    },
+    {
+      "path": "tests/m2/array_literal_assignment.fy",
+      "sha256": "eef75b58988317bbfe2b6b5cbf06579a2f649f638b1859e46f1dd9a5b06554bc"
+    },
+    {
+      "path": "tests/m2/array_owners.fy",
+      "sha256": "11b56c453e190a5d75917c4e09852c61151be6ddaca8c0c307b751212de02cf3"
+    },
+    {
+      "path": "tests/m2/array_parameters_source.fy",
+      "sha256": "d58f1673807f1999b27da6acb1d46758ac36814a5f323d8ea43fcf06a9617473"
+    },
+    {
+      "path": "tests/m2/array_range_utf8.fy",
+      "sha256": "c94283af5c7a08b151faed8c2facd0e8f67bfe46c63fbd1d6c3ff1b3820e4c6f"
+    },
+    {
+      "path": "tests/m2/array_read_leases.fy",
+      "sha256": "4f7f0e09002e17c982138ca82403561bc500b82992e98ca1251651eee327c547"
+    },
+    {
+      "path": "tests/m2/array_result_arguments.fy",
+      "sha256": "4fc009cd0ff04fc6b03c6fa0e899f7faf16fa41ec610c926aca2f2af195827b1"
+    },
+    {
+      "path": "tests/m2/array_result_edges.fy",
+      "sha256": "2ed09f5333b72b9857fa0aa5d3f37af1ca253097a0f27f803f09b5051207d5d6"
+    },
+    {
+      "path": "tests/m2/array_result_signatures.fy",
+      "sha256": "ca5c8a1738a3d5fc4f4d21e7837123152648adc272449a6586059d2c52b19f65"
+    },
+    {
+      "path": "tests/m2/array_result_source.fy",
+      "sha256": "3642870d74abc7269472fc666f244c1cb8a1575d2346d4f2a2386f5f23c2d573"
+    },
+    {
+      "path": "tests/m2/array_result_vm.fy",
+      "sha256": "e55ce6cb07fbc32dc40576ec241311350a68598bd2ad48411bb6595cbbe8dcbc"
+    },
+    {
+      "path": "tests/m2/array_results.fy",
+      "sha256": "23e0c26bdd1d68d7fb77947f845616d376e572ec833410c886c0627ddac3a6b1"
+    },
+    {
+      "path": "tests/m2/array_return_calls.fy",
+      "sha256": "63c112fee4d4c7ec97a6288233001bff2cf3dc93bff7b93b6de976dea289f14b"
+    },
+    {
+      "path": "tests/m2/array_return_literals.fy",
+      "sha256": "fdcc73feea09edf75cfa7b309b1fc889692c808aad47c354fa03e4acb2b8c8bc"
+    },
+    {
+      "path": "tests/m2/array_scopes.fy",
+      "sha256": "bbdde659b574a3b5caaa1ce6d111960f8b53c9821a962375be868e1313dde01f"
+    },
+    {
+      "path": "tests/m2/array_signatures.fy",
+      "sha256": "f419995728a1e6bec1a48da3854b5121bf1717f6c5e5d2eabc3feb7ba87fa039"
+    },
+    {
+      "path": "tests/m2/array_slice_alias.fy",
+      "sha256": "7604b0d75271648e85124aba7896917e14b3411c4cc394ab94be03049cac7046"
+    },
+    {
+      "path": "tests/m2/array_slice_index.fy",
+      "sha256": "b7bbd7ff57262c54bb53306384a72fb1b42ee15ffd9791a743e9536022398c1d"
+    },
+    {
+      "path": "tests/m2/array_slice_length.fy",
+      "sha256": "e9a7ef99f4dba6104338ef92d158446f0b270ac3ffde98f3806e61420cf07f3c"
+    },
+    {
+      "path": "tests/m2/array_slice_sub.fy",
+      "sha256": "78f900616867e21780dd860d38cec228ff1e54eceecbad354b055a40fd24b1ae"
+    },
+    {
+      "path": "tests/m2/array_slices.fy",
+      "sha256": "de6eecd5b94eacf097979f0ef98d1b68aefa06833d994845e180de6fe55dd9dc"
+    },
+    {
+      "path": "tests/m2/array_source.fy",
+      "sha256": "dd9848a82edf09b88db8c6152eec8f13b9266b8c5f180d8afc3d4f8bff8cf295"
+    },
+    {
+      "path": "tests/m2/array_storage.fy",
+      "sha256": "05e47d2d69f0524eea4099e2b58e3438c8e8f14b335d8577cf0a5fb65c822963"
+    },
+    {
+      "path": "tests/m2/array_utf8.fy",
+      "sha256": "6b399a4f935570187689da63afac8f9107f371be977981de88ea1abd4c0f1ea4"
+    },
+    {
+      "path": "tests/m2/array_utf8_calls.fy",
+      "sha256": "67e69f6f405fa3778ee4f5a5591579035a2d763d078e22472b041124320cc390"
+    },
+    {
+      "path": "tests/m2/array_utf8_computed_ranges.fy",
+      "sha256": "78468b3be45fef3dba6d668f200afdb7f28fc96b307a14e4535ff9b09edbc16e"
+    },
+    {
+      "path": "tests/m2/array_utf8_dynamic_ranges.fy",
+      "sha256": "1fb7968e72c2d591ac5372f0baf3fff39428e8c9acc4c8b1fa264b91331eb815"
+    },
+    {
+      "path": "tests/m2/array_utf8_literals.fy",
+      "sha256": "3a52d5f676380ca4891368e79667b0e8f9ec1630f5122059fea39761191d109b"
+    },
+    {
+      "path": "tests/m2/array_utf8_open_ranges.fy",
+      "sha256": "5f3b1b10fbe36deb2595dcc1b45b5f5a549111aab67fdfeeeb57e249c78509fc"
+    },
+    {
+      "path": "tests/m2/array_utf8_ranges.fy",
+      "sha256": "665eb942b8b2fac427581e6539d40bd6c59559d1d24a9d275cb59a3dfbeb1fb2"
+    },
+    {
+      "path": "tests/m2/array_utf8_slices.fy",
+      "sha256": "d03f1158394210950b3509de1e488d3bc53df3afd8990f4aec7acf41ba81d3fb"
+    },
+    {
+      "path": "tests/m2/array_utf8_source.fy",
+      "sha256": "21b9dc228e640a5bd321214778f901dba09fa0c514fec2eac825501845d5099c"
+    },
+    {
+      "path": "tests/m2/array_utf8_temporary_computed_ranges.fy",
+      "sha256": "0620c1413196a1efd74ac323f2f098b06c5a996cb72265cbc64302d9cb7dfa92"
+    },
+    {
+      "path": "tests/m2/array_utf8_temporary_dynamic_ranges.fy",
+      "sha256": "bfee51c3b02aae928b9093ec5645570aebd7f86b5767bad3ca80b8aaaba1fe42"
+    },
+    {
+      "path": "tests/m2/array_utf8_temporary_ranges.fy",
+      "sha256": "4c6f66ed18a77a268962856d7196c427c112df1ad9112847cdbc39302ccc6683"
+    },
+    {
+      "path": "tests/m2/array_views.fy",
+      "sha256": "2ef502ef08e2e8691774f5fbe66e62c8d39735cf65d898c96f087529746a6df2"
+    },
+    {
+      "path": "tests/m2/array_vm.fy",
+      "sha256": "c92b7784d8d3091c91d93fa1a648700f3d4884f82aa220e211a5ca8500786d61"
+    },
+    {
+      "path": "tests/m2/array_write.fy",
+      "sha256": "e7674c983ceeb7060358b053efe80a28493d3bb7ea8d7055b6ae946a0c2d646d"
+    },
+    {
+      "path": "tests/m2/array_write_leases.fy",
+      "sha256": "cd1bd1758262caa0af9c73da4f350792d24b8c2101ced07ba1e68779a43fe192"
+    },
+    {
+      "path": "tests/m2/buffer_growth.fy",
+      "sha256": "4351563adf74b0d91260f1aa298dd23194e72e3f3cab6cdf37b358d8c4f46f19"
+    },
+    {
+      "path": "tests/m2/buffer_owners.fy",
+      "sha256": "3b6b75fcb9130b4fd6e3de99e7d7b20215e0b1a3e0138bfd0b831f858d3419d7"
+    },
+    {
+      "path": "tests/m2/buffer_replacement.fy",
+      "sha256": "3b28371b265ca37a68a30aa258dc32634c83a39fe6093faee0d13a4b1679c68a"
+    },
+    {
+      "path": "tests/m2/buffer_storage.fy",
+      "sha256": "80e29c26f7af3fa18f69ab6d852cabce78b7032728929bef95e4d8b0f4ed2488"
+    },
+    {
+      "path": "tests/m2/call_argument_copies.fy",
+      "sha256": "6892dd3751ff810489bbe02261f57e843ea68c40f2492205b9cec6beabe8e45a"
+    },
+    {
+      "path": "tests/m2/call_frame_vm.fy",
+      "sha256": "95e7b2a61839f0ff164f20aeb62a4095233833167bcba6f5d333cad19b4f8349"
+    },
+    {
+      "path": "tests/m2/mixed_call_vm.fy",
+      "sha256": "d33e73b47c6661b5bbc8cd193d1eb7ef05e9e8c75c50efd881568aa611fb0a8a"
+    },
+    {
+      "path": "tests/m2/scalar_codec.fy",
+      "sha256": "63e5709b6b46addea1510db1cce5f27ea6e52ab8e2f5fd5da98aaa7bb216d323"
+    },
+    {
+      "path": "tests/m2/slice_arguments.fy",
+      "sha256": "82874183e4ca3d7d8d86a3e0db992a35d2b0c0c26cc234708401460b2b5a8e78"
+    },
+    {
+      "path": "tests/m2/slice_array_arguments.fy",
+      "sha256": "8946521287e5e0f625764dc1b2d8a2327117b9be9c50b42fae1e032264ecc0f8"
+    },
+    {
+      "path": "tests/m2/slice_array_range_arguments.fy",
+      "sha256": "6154e45419e2e5249c9dfadb72b91935c9021eb7535415f1078811395cbc139a"
+    },
+    {
+      "path": "tests/m2/slice_array_result_authority.fy",
+      "sha256": "8914db6a8040820281e8571944c5c268917ebe53ab800fc86cff25e944560a23"
+    },
+    {
+      "path": "tests/m2/slice_authority.fy",
+      "sha256": "e16f380583ec0e51d0ae321c6dce5b0aa111d1c116b48df22526e926740784f4"
+    },
+    {
+      "path": "tests/m2/slice_authority_call_vm.fy",
+      "sha256": "9ec2b080fc70134a94b2f16abe8ab8a1e36bad64487b1b7ea8463124bbb8232f"
+    },
+    {
+      "path": "tests/m2/slice_borrow_flow.fy",
+      "sha256": "5915846a1c63e20f52f299e4814dd54d37403ac86bea9e5f59d7bb7bf72e3d21"
+    },
+    {
+      "path": "tests/m2/slice_borrow_ir.fy",
+      "sha256": "1db4573ba2b0d6903c2a42e1261c8d457b6cc84c4dd2aeedc4970e39ef67b2a3"
+    },
+    {
+      "path": "tests/m2/slice_builders.fy",
+      "sha256": "dd515db4ec62b782041e6cd9718b5621920672fa4d13b7f0943ac38023df6d93"
+    },
+    {
+      "path": "tests/m2/slice_call_vm.fy",
+      "sha256": "128e0fcd80e6c9330884b5c6298a875c25bb6264ec6b49bb74e3828d8681e351"
+    },
+    {
+      "path": "tests/m2/slice_derived_call_execution.fy",
+      "sha256": "d78104e20fa7e32fcda642e51cb6157e61601a0bb4fe6125ab00742676ff5b4b"
+    },
+    {
+      "path": "tests/m2/slice_element_public.fy",
+      "sha256": "c35ceee033c21277fbbfc22520aa21e0628ce6e821d431406023e174e1c1d7ad"
+    },
+    {
+      "path": "tests/m2/slice_element_source.fy",
+      "sha256": "c6288a3af06f70c221ccd88e7061cc36f283d8395ed01ea646760b22b34e3adf"
+    },
+    {
+      "path": "tests/m2/slice_element_vm.fy",
+      "sha256": "612bb96d788a58c5abbd0737b08e72b3036833d28f72675a1ba8cc393a9f7796"
+    },
+    {
+      "path": "tests/m2/slice_elements.fy",
+      "sha256": "9733edf8eb1df44faae2ce38f6fdc3ffdebf4640058a4c5e23a8efc67dbcbe74"
+    },
+    {
+      "path": "tests/m2/slice_exclusive_ir.fy",
+      "sha256": "3b7e7c6277ca8590086830e5a2e37e456675d032e4eccde34b2b082005d96391"
+    },
+    {
+      "path": "tests/m2/slice_exclusive_pool.fy",
+      "sha256": "66a98d1c6f36e98ed08c46d3caad7af5d973b4b406a907e7f54344b6b26432b7"
+    },
+    {
+      "path": "tests/m2/slice_exclusive_source.fy",
+      "sha256": "55ddeb1056a8fdf09754a349d7ba1cfa662df803cfca1eb0a1e53ae8c3b42a18"
+    },
+    {
+      "path": "tests/m2/slice_exclusive_vm.fy",
+      "sha256": "d3f0d0617db1dd8206c97cd14acd6ca13095b6a10a89f2927e2f281ad1c49688"
+    },
+    {
+      "path": "tests/m2/slice_formal_reborrow_vm.fy",
+      "sha256": "7721c167fa156f1d11e55505058b392ad438193e09001821c25e49567d9765ac"
+    },
+    {
+      "path": "tests/m2/slice_frame_vm.fy",
+      "sha256": "22a74fc73ced2540558d628fea87f7dd3cd35b6fd12f8b0815dcbac935fbf2d6"
+    },
+    {
+      "path": "tests/m2/slice_handoff.fy",
+      "sha256": "b6f8c70a60b35638c8cf9148fd2aa26768ce74c318149c45df6deefe6d9a7905"
+    },
+    {
+      "path": "tests/m2/slice_index_vm.fy",
+      "sha256": "953f76e1dd750b1856376a38c24e88ddd43d801526b2e25f0fa30d9e479739b4"
+    },
+    {
+      "path": "tests/m2/slice_lifecycle_vm.fy",
+      "sha256": "57865d7efff0d061d031e91d04850af067ea438c4ad6b2b439dbb79d72517914"
+    },
+    {
+      "path": "tests/m2/slice_mutable_call_vm.fy",
+      "sha256": "7df1a9fbd0273136ca228a1dee960726ca4387470e046d92a6806c3327f57ada"
+    },
+    {
+      "path": "tests/m2/slice_mutable_calls.fy",
+      "sha256": "4c181c548050385344bca718ffc3555fa9aae11577004a36c1ec79adefdafde9"
+    },
+    {
+      "path": "tests/m2/slice_mutable_execution.fy",
+      "sha256": "8d50f57b76d7bf6b5811d7d39c416d4d3b4b0901c0cb003b46146c0187569d4f"
+    },
+    {
+      "path": "tests/m2/slice_mutable_parameters.fy",
+      "sha256": "0acc8cef97280319c20321dca0696a3399f653a5e37733ae47126f918f5b7898"
+    },
+    {
+      "path": "tests/m2/slice_mutable_parameters_source.fy",
+      "sha256": "816659c16539ed16c75be28d749b282f2f7668b413eade6417c6ddd8b54bb529"
+    },
+    {
+      "path": "tests/m2/slice_mutable_public.fy",
+      "sha256": "9801a181b49a957fd3ee61a084889970e78c1c49f8a86bb08960cdd05670bcb4"
+    },
+    {
+      "path": "tests/m2/slice_named_range_arguments.fy",
+      "sha256": "be0cead29ae70b84820f8148e17b2049e4175a5b4a50d8fd464f2f09a1357079"
+    },
+    {
+      "path": "tests/m2/slice_owned_call_authority.fy",
+      "sha256": "12da0fe49a16080db404306901930a54c4f5ef987ce12e4cb1d133d002f5f4c0"
+    },
+    {
+      "path": "tests/m2/slice_parameters.fy",
+      "sha256": "c03819de7bef82bb887463e65d41d622a99ccae58284987e1a69939776c3dbc4"
+    },
+    {
+      "path": "tests/m2/slice_parameters_source.fy",
+      "sha256": "504c20c39d49849925d72b6d8881946a983142fcd605b0cbe7b30ceebcc02940"
+    },
+    {
+      "path": "tests/m2/slice_public_canonical.fy",
+      "sha256": "8732241a1173b0f8b87c8cc1ea50518b3f1d0fc75f9c4ff48e4e17d515cce456"
+    },
+    {
+      "path": "tests/m2/slice_reborrow.fy",
+      "sha256": "ab876a69d4c7910608b2535b285f5fa2e2d103278e05318491d6ea5280cf736a"
+    },
+    {
+      "path": "tests/m2/slice_reborrow_array_results.fy",
+      "sha256": "e779ea09a3ebafcf70e39d3b92ee36cc507ec3e03878e05480327ba1ffe0b0b2"
+    },
+    {
+      "path": "tests/m2/slice_reborrow_call_admission.fy",
+      "sha256": "77ebb2357fde4c724ac9d4e301bfa3a1438f5e11f6709fe6aaf2cc5bc84351cd"
+    },
+    {
+      "path": "tests/m2/slice_reborrow_call_vm.fy",
+      "sha256": "c1d242e2b335390f09be29ecf2420a759f7415e60d1bc3e4faa401317fdac2fc"
+    },
+    {
+      "path": "tests/m2/slice_reborrow_calls.fy",
+      "sha256": "2f237c62b1da09889b84f41310eace0fad4a2e23fb5d132b9a96ec3ea061cab3"
+    },
+    {
+      "path": "tests/m2/slice_reborrow_execution.fy",
+      "sha256": "0e9b4f28ee938a09f1c0644c9ba45cb094ab2864d15663e9630efd227dbe8a5a"
+    },
+    {
+      "path": "tests/m2/slice_reborrow_ir.fy",
+      "sha256": "99161dd63fbfede000f4b40a0e64e0767dfd0455ac60d83ae952762c68c52f82"
+    },
+    {
+      "path": "tests/m2/slice_reborrow_order.fy",
+      "sha256": "c68c6e489b8cda92b395818485175408684efa7c13dc0f5d11c85f14d3eba1b1"
+    },
+    {
+      "path": "tests/m2/slice_reborrow_owned_atomic.fy",
+      "sha256": "74dcb3cc59883c1d4f14a0f2d18bd550953574f1a128034cf6f058436c683772"
+    },
+    {
+      "path": "tests/m2/slice_reborrow_owned_calls.fy",
+      "sha256": "b09e715e0d42c874d6d7b17e1e6bfabef3a3c24baddb208a090f66d0bce28eb3"
+    },
+    {
+      "path": "tests/m2/slice_reborrow_record_results.fy",
+      "sha256": "d6ef72beaf62ce09329ccda39e52e8f8382e3da96560b9d210ffbe8a926ee30f"
+    },
+    {
+      "path": "tests/m2/slice_reborrow_source.fy",
+      "sha256": "54b8413fc058aa40308afc1de01c696bfef4105ab77b5fcdd794a22b8bf56a32"
+    },
+    {
+      "path": "tests/m2/slice_reborrow_vm.fy",
+      "sha256": "28ce4ebb0e2d6e3b6bd7ce40af7da634464332a86fda1b8b7351dd902ec1fab0"
+    },
+    {
+      "path": "tests/m2/slice_record_call_authority.fy",
+      "sha256": "435623cd3e8d4c03168746288212a64199f0c43995cdd28b45487078c41399ca"
+    },
+    {
+      "path": "tests/m2/slice_record_result_authority.fy",
+      "sha256": "0403e5a0fbfd25a2ab17c2044d4acf484320d38399c873197695ce1a5c212dd5"
+    },
+    {
+      "path": "tests/m2/slice_result_signatures.fy",
+      "sha256": "c4695f13129d834eadae06e944dd914d9913404b5dbfc9849f1ac62ca3baa87c"
+    },
+    {
+      "path": "tests/m2/slice_scalar_call_authority.fy",
+      "sha256": "694e4f2def1ecfd5446e74e2635b5fdffe2e6fe5b74a57a2ec937b67ee5e1a1a"
+    },
+    {
+      "path": "tests/m2/slice_shared_call_authority.fy",
+      "sha256": "98f1bf83a9f1bed3033b00329f3a5c5f6d78a1ae0fe5557b0573e530ccbd57d8"
+    },
+    {
+      "path": "tests/m2/slice_sub_vm.fy",
+      "sha256": "3c4e81697ddc0d6d85c131029ad5eadd2d7a8767fd41bbee4b93e2f262aabbcb"
+    },
+    {
+      "path": "tests/m2/slice_temporary_arguments.fy",
+      "sha256": "a99d78ea6eea488bec0715908a7c02f144244cb881a728cad9ec2718c71b4fb2"
+    },
+    {
+      "path": "tests/m2/slice_vm.fy",
+      "sha256": "3dad7aa18479363fe06eb48a3e07b8b8b0fdfba641611933d9582cdf865088dc"
+    },
+    {
+      "path": "tests/m2/slice_write_ir.fy",
+      "sha256": "3ac07c45c2e46ae94b17aa97cfa54ec64cc750f702d24856273f569b52e8b594"
+    },
+    {
+      "path": "tests/m2/struct_atomic_source.fy",
+      "sha256": "5a02d292d3fea70eabd09315fd2b5ca87d6bc3e18b99cdfe19c85110c356b76b"
+    },
+    {
+      "path": "tests/m2/struct_call_assignment.fy",
+      "sha256": "faef1df2982d2bdd98dab8ef7575ddd7c42f2619d6b62409909949c0ba219fbc"
+    },
+    {
+      "path": "tests/m2/struct_call_path_arguments.fy",
+      "sha256": "8f16d1cea241e07d8a7396ef9d35fc1c5348ae8f471d512ea74bc9ab084ae8e6"
+    },
+    {
+      "path": "tests/m2/struct_call_path_assignment.fy",
+      "sha256": "8f0f5c61e6a2aa3970ba20b5ecaf757e3043f2a7df56640b3412197bfeb19ffa"
+    },
+    {
+      "path": "tests/m2/struct_call_path_declarations.fy",
+      "sha256": "35c5a2d65ac9b62861dc9d894c6033e300d36d1b3f215bedb491a37a542c64f6"
+    },
+    {
+      "path": "tests/m2/struct_call_path_returns.fy",
+      "sha256": "a2779306cdb034de8174121726060daf1e978bb1cbb3eb10e996c8bd4f2a6868"
+    },
+    {
+      "path": "tests/m2/struct_call_reads.fy",
+      "sha256": "b611fac446a09943d50b5026bc8b298806d62557b094bc10cd9e9f0f1a5f1995"
+    },
+    {
+      "path": "tests/m2/struct_call_vm.fy",
+      "sha256": "2a4770a47b609940181cd74064c6b3021d9ef2c4772092f694b50e904e31f5fa"
+    },
+    {
+      "path": "tests/m2/struct_child_call_assignment.fy",
+      "sha256": "c9b5bab771cd7e267921f43ac194fd4a3f2c9f95b885922b324e975b5bc16b59"
+    },
+    {
+      "path": "tests/m2/struct_child_call_paths.fy",
+      "sha256": "d25a6b81063a43129af9638847dcadc1a91aef7ef5566c9a856c87722ba0c9f0"
+    },
+    {
+      "path": "tests/m2/struct_child_calls.fy",
+      "sha256": "bdfd8d22dd63a7d6a19ac7110db56467de8410a92df76acca9acd43026427ca3"
+    },
+    {
+      "path": "tests/m2/struct_child_path_source.fy",
+      "sha256": "e3f83e0f28fdcd7c7b4a897dae12d6b7bcebeafb816bc0d0250dc80b0811145a"
+    },
+    {
+      "path": "tests/m2/struct_child_source.fy",
+      "sha256": "3f66a806d2a38225b1cfcc81b349406803062c4ea63decd68c0a7ad8c37ee333"
+    },
+    {
+      "path": "tests/m2/struct_constructor_arguments.fy",
+      "sha256": "6574ea4667959dbe2a4029f867a35fbd2aa2b27abdb04566d4cd10ed3ffe8675"
+    },
+    {
+      "path": "tests/m2/struct_copy.fy",
+      "sha256": "d706abc37dd1f89afcb687cd950f752767e9183c8e4d657ff53206ba645d6480"
+    },
+    {
+      "path": "tests/m2/struct_extract_source.fy",
+      "sha256": "6b68ee6d050b53722df5c879c5e08b6a6d87059b4592a5f9771aa70eaed894de"
+    },
+    {
+      "path": "tests/m2/struct_function_ir.fy",
+      "sha256": "a04e8ee6f181a2d0466dcb6467460026b459a311ae16f6c5fd2fe3e4f765844c"
+    },
+    {
+      "path": "tests/m2/struct_function_source.fy",
+      "sha256": "4d2f559517ef9e8dc245e6ade109cb9be65c8d36f97ca041b82051f6ee721232"
+    },
+    {
+      "path": "tests/m2/struct_function_vm.fy",
+      "sha256": "5a955d67591bfb36077625e0bd8a4f9aa992d31ece2f596cb4ad5337e60a9898"
+    },
+    {
+      "path": "tests/m2/struct_ir.fy",
+      "sha256": "5c52a7e2f5eafb42a7ae6af237e25be10c5010ea7af9eef1e2a2b074e05efb53"
+    },
+    {
+      "path": "tests/m2/struct_layout.fy",
+      "sha256": "91298a39cc24b7843f917c054e7f37c295a2bc34da740fd36360590d17f8e073"
+    },
+    {
+      "path": "tests/m2/struct_layout_order.fy",
+      "sha256": "3596d85a5c4b345ef4ec37af567ac3bf67d4e5cae4bf915ab8b2ec36be316594"
+    },
+    {
+      "path": "tests/m2/struct_nested_copy.fy",
+      "sha256": "f2f5dbb950fef90ffa342eee9b97c10f602ba004e46122d15a87b81962a5f1d3"
+    },
+    {
+      "path": "tests/m2/struct_nested_storage.fy",
+      "sha256": "60faf1883a1ae50d9d370864857d57995f5df79da1ed0400c5d98b43c75bc106"
+    },
+    {
+      "path": "tests/m2/struct_owner_copy.fy",
+      "sha256": "b55ea8089fd1edf6096d4388ac4ef49aa0e79b928f9c20e106cd09d9be6000ac"
+    },
+    {
+      "path": "tests/m2/struct_owners.fy",
+      "sha256": "819394f0e666109814e8b421da4e2a1e6452cf4b97aa5c2beed01f509de0f056"
+    },
+    {
+      "path": "tests/m2/struct_parameter_signatures.fy",
+      "sha256": "72a87251e1f5f3bb6620d1415e0803bcf3e69b993fed2b0a98cde6181de8e617"
+    },
+    {
+      "path": "tests/m2/struct_parameters_ir.fy",
+      "sha256": "b7160a1c45a0a9cc225f927cb25bc620e4ba1901a592a504ab439257d0045cd2"
+    },
+    {
+      "path": "tests/m2/struct_parameters_source.fy",
+      "sha256": "848184dd7c7ba93de9cab0df5bfaadea31164b30a70924bec07037423742c8a8"
+    },
+    {
+      "path": "tests/m2/struct_path_arguments.fy",
+      "sha256": "bb788abb2c1399bbe799954e06fbd71719bf825d077c93cf51caece3aa42150f"
+    },
+    {
+      "path": "tests/m2/struct_replace_source.fy",
+      "sha256": "69e4ecd0ac19b6be05116003d5b46c3e210151b1a0a7ecd427e8edaaef87c287"
+    },
+    {
+      "path": "tests/m2/struct_replace_values.fy",
+      "sha256": "eb8f82b5bbf21fea8dd612b500568aa7b3cc615696c37a66618131032e88f376"
+    },
+    {
+      "path": "tests/m2/struct_replace_vm.fy",
+      "sha256": "7e7765d080ff7ad53525e0a2004337b2ac8b1041fd0fb98061f488fd63b34891"
+    },
+    {
+      "path": "tests/m2/struct_result_arguments.fy",
+      "sha256": "0bff9b72277b8e1b6f476d79cc86e5e4202f1d4fdd1dab54d12645ad61d0ae95"
+    },
+    {
+      "path": "tests/m2/struct_result_signatures.fy",
+      "sha256": "799e11957a839226a5e4d54a4fe879133940e7143e652c505d2cf27189263bfe"
+    },
+    {
+      "path": "tests/m2/struct_result_source.fy",
+      "sha256": "68608e2ebeaea297233c500788893c0fa802a30b895744e50976076126740b73"
+    },
+    {
+      "path": "tests/m2/struct_result_vm.fy",
+      "sha256": "29e4ddd7bfa8254b1cce526339016bc51dfa7105a9f18c35e34b034447e87389"
+    },
+    {
+      "path": "tests/m2/struct_results_ir.fy",
+      "sha256": "12d4e2e5ba475d7fb4ff50aa2be1b863a1cc66f9cb7422de76a37d7d724e3e52"
+    },
+    {
+      "path": "tests/m2/struct_return_calls.fy",
+      "sha256": "548f50e24d0ba412c2c510e0149acec6567b3adb467f6614d76f6583c1b21135"
+    },
+    {
+      "path": "tests/m2/struct_return_constructors.fy",
+      "sha256": "7d6135c878db8f2505058794243a51e202bbd88cf06e7249d8ccaa0fb2d3cf0c"
+    },
+    {
+      "path": "tests/m2/struct_return_paths.fy",
+      "sha256": "fd0db1273c29b06d28c78da7a20f43e9346fe623ce09e3247834da8e9a8053a6"
+    },
+    {
+      "path": "tests/m2/struct_source.fy",
+      "sha256": "39677186eb2a229e7717f8e195e7e6859b16dfa7331930c802c4d251de25fa24"
+    },
+    {
+      "path": "tests/m2/struct_source_copy.fy",
+      "sha256": "239cc90ba092cd254e4391c3ec988b2d08a48464f9724b65aa0bbeba43f804a8"
+    },
+    {
+      "path": "tests/m2/struct_source_nested.fy",
+      "sha256": "63537bcd0cb40077549ee3a510335559eab98cfd33b7eb7f0bd08c293f591a77"
+    },
+    {
+      "path": "tests/m2/struct_storage.fy",
+      "sha256": "34dcc195a212979f0270a90cc7cf619d41160fdc57dc2950b8e30ae8ab6d3b88"
+    },
+    {
+      "path": "tests/m2/struct_subassign_owners.fy",
+      "sha256": "3e6fd7bbed24bc5c4277d59eddd512459bd872d0b7e3d7d3b7f61a992d9093b9"
+    },
+    {
+      "path": "tests/m2/struct_subassign_source.fy",
+      "sha256": "86e293631e3cc1f62827eeefd3089507512c5a16b8bebb7606b01fbd65043cfb"
+    },
+    {
+      "path": "tests/m2/struct_subreplace_source.fy",
+      "sha256": "9822a1679293910c6d5c67b883d4d153e63f9c25b3ca26bacb884453fd3202b9"
+    },
+    {
+      "path": "tests/m2/struct_subreplace_vm.fy",
+      "sha256": "a662ff9c96acd027d5c10ae3b803ef54d787af2eb763196397228d42f48832aa"
+    },
+    {
+      "path": "tests/m2/struct_values.fy",
+      "sha256": "599be83359eb4af36f11cf6e6b0c22f74dce3e815053828fde73b8d98f1fc5cf"
+    },
+    {
+      "path": "tests/m2/struct_vm.fy",
+      "sha256": "c91054149203a96853299ef586c4be0e22f4d06a05c68e2e00d6eb4ba2675e0c"
+    },
+    {
+      "path": "tests/m2/struct_vm_paths.fy",
+      "sha256": "9d2ea1f63fa44805a40e57b6da63dfa04354018b528e8e402529124a2c020b2b"
+    },
+    {
+      "path": "tests/m2/struct_write.fy",
+      "sha256": "7ee2095b889f7ff256de8e3362a20583206c3a4deca9b559a20c92dc83b558bc"
+    },
+    {
+      "path": "tests/propagation.fy",
+      "sha256": "754fcab373afd31191c5c1c696ddceb14da24e5f54136fd16c57156b8e003327"
+    },
+    {
+      "path": "tests/register_sets.fy",
+      "sha256": "697a099a453b8516d8767003853011af4343b3365f5bc2c1637bd7cdb7ceda7a"
+    },
+    {
+      "path": "tests/shifts.fy",
+      "sha256": "a4f94cce04bf3ddab357f2319a19ffdcf1e771e3923405b61808378dcc41a4b7"
+    },
+    {
+      "path": "tests/switch_arm_statements.fy",
+      "sha256": "f2d8a75759bf6d3f69be2951714ea55868de0960e8afb43215c5a3c21bfce9ba"
+    },
+    {
+      "path": "tests/switch_expression.fy",
+      "sha256": "4acd6db95205951f9ee3f73a32257203f73e8045920a435b7b4cec43f21748ff"
+    },
+    {
+      "path": "tests/tagged.fy",
+      "sha256": "f95e95079183d7fd3f2da7366148168b6965fb46f4cddb9929a269b75cdc0e45"
+    },
+    {
+      "path": "tests/unsigned_scalars.fy",
+      "sha256": "c864bf5aef2d2964be7827aa2d0fa91ccf318cd518fb15198fbb8c3b93e2d029"
+    },
+    {
+      "path": "tests/widening.fy",
+      "sha256": "300fe36e84caa4a42277629e5def62f2da111110f0b853755eec2bde6005df7a"
+    },
+    {
+      "path": "toolchain.json",
+      "sha256": "0a1a5c2b5a219099b7c3c2b42a8dde9cb70b68e435e8a071e36c36213d1740be"
+    },
+    {
+      "path": "tools/check-m1-cli.py",
+      "sha256": "9de0f8c340f3da1f769c23e148088bea2ec1381284232494409aabae1ea29302"
+    },
+    {
+      "path": "tools/check-m2-array-assignment.py",
+      "sha256": "8ae9f6b6664d5a6566ebbeb45e37a2c836937e53ebeb86b195fc567865c3e611"
+    },
+    {
+      "path": "tools/check-m2-array-borrow-arguments.py",
+      "sha256": "afc142d873e51d677cfc40362444a1f9fa3e7cb06f3026356e0e6c722274cbdb"
+    },
+    {
+      "path": "tools/check-m2-array-borrow-range-arguments.py",
+      "sha256": "13113082190d7d5464f76ebb25c990bb4f38cc9e87a0b56a10a1fcbb772414b9"
+    },
+    {
+      "path": "tools/check-m2-array-call-assignment.py",
+      "sha256": "18c809cc7037103bd25a2e0fa70378fbe9ea625634acd1a51930883cb8a67d11"
+    },
+    {
+      "path": "tools/check-m2-array-call-reads.py",
+      "sha256": "95a0bceb6ca959aafd5951afdb24eaa7b26a05cdf1af12176ee7f2daf0678e57"
+    },
+    {
+      "path": "tools/check-m2-array-copy-source.py",
+      "sha256": "7ec1c99b252f3ef4a9dec2594f86921a3aa2c3fae374f238cf1637105bad0096"
+    },
+    {
+      "path": "tools/check-m2-array-helpers.py",
+      "sha256": "2aed57914032073ea45cc1c4c18eb730109a0872f436d4456879a2d353dc91f9"
+    },
+    {
+      "path": "tools/check-m2-array-length.py",
+      "sha256": "32dce33a7dd30f41c5898b3465c73000ddb0ad292e61ef5ab40ce616ad7246a7"
+    },
+    {
+      "path": "tools/check-m2-array-literal-arguments.py",
+      "sha256": "9b7d0b65d61ca7bed9f83b358fec5fcc47a07c220e6d733a610a22b8ff886565"
+    },
+    {
+      "path": "tools/check-m2-array-literal-assignment.py",
+      "sha256": "35af05339c0bab949211637a32ed5980aaf33e3e47267b7982f4d58e0e40b4f7"
+    },
+    {
+      "path": "tools/check-m2-array-parameters.py",
+      "sha256": "94d9f7dca33b12947241974f46a4755790b99ceb3e9b119993894ee9fdc610a5"
+    },
+    {
+      "path": "tools/check-m2-array-result-arguments.py",
+      "sha256": "c1b846090b970d603f65c5e51f31aa52f8233896fca91e9a7608f9a707890453"
+    },
+    {
+      "path": "tools/check-m2-array-result-signatures.py",
+      "sha256": "4e6f890949f882a3339f56c75adac69c1cefa6cec9824c452dc94df005b3eb81"
+    },
+    {
+      "path": "tools/check-m2-array-result-source.py",
+      "sha256": "c136caaeaff0a86dc8e4736c94c5c43ac2fdabde92210d62a05964edd50114ef"
+    },
+    {
+      "path": "tools/check-m2-array-return-calls.py",
+      "sha256": "ea631e1322adb55763f56ac592bf936c1b28ec8564feb7d904f4906ab3c0a863"
+    },
+    {
+      "path": "tools/check-m2-array-return-literals.py",
+      "sha256": "39009c54d6af5d4d6f2d8353089e729ba674d2675f673e35bb858286f41e8913"
+    },
+    {
+      "path": "tools/check-m2-array-scopes.py",
+      "sha256": "7eaa68c9b1266f681557009c299203bb85edbb54ef85319de14acec1526cb4a0"
+    },
+    {
+      "path": "tools/check-m2-array-slice-alias.py",
+      "sha256": "e623322885f14b5a0423dad6f9d6eea0bf1c757257414a5cdbeb0a580e5ed95e"
+    },
+    {
+      "path": "tools/check-m2-array-slice-index.py",
+      "sha256": "ef361d031dc0f1a4e5525d4dd70441141d689a46563560bd0d24df0f14ae4c02"
+    },
+    {
+      "path": "tools/check-m2-array-slice-length.py",
+      "sha256": "177340f64728df29ec5a3eefc7a31538e9539731104098e4abb5205e8669ec0b"
+    },
+    {
+      "path": "tools/check-m2-array-slice-parameter-source.py",
+      "sha256": "5de0bd11bc7399b9d9ae3b1204953779c28b114b93db5110016b260ec7c3779b"
+    },
+    {
+      "path": "tools/check-m2-array-slice-parameters.py",
+      "sha256": "285a62d4d87cb1906e0c138a8787e6b2c7ed220b5f5e2cd6f8136132230caf68"
+    },
+    {
+      "path": "tools/check-m2-array-slice-sub.py",
+      "sha256": "b683da9014756ed7606c212e40f0bbd1835d0ab6de028123de0784c949362558"
+    },
+    {
+      "path": "tools/check-m2-array-source.py",
+      "sha256": "2563032969eae20f06d98cf3f48d651100bf83db02d805358a31cc6d3d083150"
+    },
+    {
+      "path": "tools/check-m2-array-utf8-calls.py",
+      "sha256": "b69ecb2a2d6c2baccc63065384a434e7ec7258d858416d014eb1eb7ffa2a99de"
+    },
+    {
+      "path": "tools/check-m2-array-utf8-computed-ranges.py",
+      "sha256": "0bb94d0364ff3b6e22640a4c0acc0818cfc1cad6753a4bda6cbde766aa91845a"
+    },
+    {
+      "path": "tools/check-m2-array-utf8-dynamic-ranges.py",
+      "sha256": "c2b96ee1b0be8878b779a1ead4adf347e9fba6e4cd5fc8327e93a513258c5209"
+    },
+    {
+      "path": "tools/check-m2-array-utf8-literals.py",
+      "sha256": "e5f8d18871dbc284b8596bb6f78f5da7563d74325e62ac3931fe3b22622eb6a8"
+    },
+    {
+      "path": "tools/check-m2-array-utf8-open-ranges.py",
+      "sha256": "e12783392bc617c49a3fa32eccf2026e904e5c65d7f698c9e798f28a0ca25585"
+    },
+    {
+      "path": "tools/check-m2-array-utf8-ranges.py",
+      "sha256": "74315194147ec6c37bfdb28fb93d5bcbdc0c1eb16a79a18829111c9fd965f246"
+    },
+    {
+      "path": "tools/check-m2-array-utf8-slices.py",
+      "sha256": "0c412c49cb5b442b5248f99651edf7f1a67468a6bccfa99e197e1f1f39fc6402"
+    },
+    {
+      "path": "tools/check-m2-array-utf8-source.py",
+      "sha256": "4ace414c91d66877ed099ca379d31e337ad6c312f2a0d931d5770a1081c42b25"
+    },
+    {
+      "path": "tools/check-m2-array-utf8-temporary-computed-ranges.py",
+      "sha256": "ab08ef8946413968e55fa3ff909db68fd4d551d53a23ece5f1bd0dc36b1772ec"
+    },
+    {
+      "path": "tools/check-m2-array-utf8-temporary-dynamic-ranges.py",
+      "sha256": "345f90e64962c4003e1474b7215ca9ed280cb636296d7f6135d3aa64f00f35e0"
+    },
+    {
+      "path": "tools/check-m2-array-utf8-temporary-ranges.py",
+      "sha256": "74cd169ff5690cecfd91a01f204d04ce25f012a82013996c9e3841ef3ad7a7de"
+    },
+    {
+      "path": "tools/check-m2-array-write.py",
+      "sha256": "2dac6d18d64f56294ebf48bde7ef712b7bc52b2d9404bd065a71d454fcbab63a"
+    },
+    {
+      "path": "tools/check-m2-named-slice-range-arguments.py",
+      "sha256": "1e13442d625229d8dddda4e888bcc2087c1ff367c6c1fc45027942c5dc8495e7"
+    },
+    {
+      "path": "tools/check-m2-slice-element-public.py",
+      "sha256": "aa562446d82ec8b10cc7c460d0875e998bbb88a9bcff6ee53da70443e55a63bf"
+    },
+    {
+      "path": "tools/check-m2-slice-element-source.py",
+      "sha256": "fae1ed32bab0de213f87204ccc84fa2e3028ffb6a2168002f054fd0f15ea547a"
+    },
+    {
+      "path": "tools/check-m2-slice-exclusive-source.py",
+      "sha256": "79eb29ba37ebe6014fe5e816147ac5bfb670188aef4d86cd22be07af8d8e9969"
+    },
+    {
+      "path": "tools/check-m2-slice-mutable-parameters-source.py",
+      "sha256": "dce34d88210aa78b29db3ac32aa7160c7a565e069f263f744e96b563bcdbd886"
+    },
+    {
+      "path": "tools/check-m2-slice-reborrow-source.py",
+      "sha256": "4e647d037e7be204e6ce3b0b0a9905e489b72f6a299e5dde92fdd15bee29ea5a"
+    },
+    {
+      "path": "tools/check-m2-slice-result-signatures.py",
+      "sha256": "fd4e29b73a6a1d78d5e7661cf1e03f0cc9f84912bddac1fd3799b1afa2f4e38b"
+    },
+    {
+      "path": "tools/check-m2-struct-call-assignment.py",
+      "sha256": "df6a6d70e3068486bad9e9556d0da228d10a169d982bf08918ebfc12f1972243"
+    },
+    {
+      "path": "tools/check-m2-struct-call-path-arguments.py",
+      "sha256": "e42e21798d5a8ddda0c1d0965580fd8cfdd9a1742da6eda09e36922fb9cfa157"
+    },
+    {
+      "path": "tools/check-m2-struct-call-path-assignment.py",
+      "sha256": "6db28e13d6dd10e70c51285b750399fb8d3314ff383045a77a7c570424c6b606"
+    },
+    {
+      "path": "tools/check-m2-struct-call-path-declarations.py",
+      "sha256": "a632a3fee43c5e2bb79d7e69e0d118f8854e735810f2837e9e97a230e5cc62e8"
+    },
+    {
+      "path": "tools/check-m2-struct-call-path-returns.py",
+      "sha256": "93149ee046e8caeca97b608750d51d9833c88621669d0784659536d7ebdcabf2"
+    },
+    {
+      "path": "tools/check-m2-struct-call-reads.py",
+      "sha256": "ff3cf7dfe42533a5a2e43bafde10d460c43bb1babe2b50a8a0c25fafdd1ac38b"
+    },
+    {
+      "path": "tools/check-m2-struct-child-call-assignment.py",
+      "sha256": "f244e75c6654a9b5aa18125f518f30da071e676a4a819d00e73650a1d07e311d"
+    },
+    {
+      "path": "tools/check-m2-struct-child-call-paths.py",
+      "sha256": "651b2828cec0b7c6b644e51c80c7ff76676463869c694b4a885095c5330b8aa6"
+    },
+    {
+      "path": "tools/check-m2-struct-child-calls.py",
+      "sha256": "ba63c80fd4846a5394c93475ad29e97eb760f43ccdb601d155f6a16696ab7f13"
+    },
+    {
+      "path": "tools/check-m2-struct-child-path.py",
+      "sha256": "e60fa07667c7b82aaab3f6dc92eba6b5576a6cc77a5241b8d59edf21220fd9a3"
+    },
+    {
+      "path": "tools/check-m2-struct-child.py",
+      "sha256": "d5443351bb8ead4a14587fb4a9e19263f153ee2615b212516beaadcdef7bd4dc"
+    },
+    {
+      "path": "tools/check-m2-struct-constructor-arguments.py",
+      "sha256": "0ce5a9dd0228945049dc83e44186716e7cccbcd1251c0939bd71d8820dbeb6d9"
+    },
+    {
+      "path": "tools/check-m2-struct-extract.py",
+      "sha256": "287a454069fbd36fc4003ad5cb68b81504af88959a4a37e45e74d7eba932321f"
+    },
+    {
+      "path": "tools/check-m2-struct-function-source.py",
+      "sha256": "3bd76655790199462820b00cd372156c2b29a1ddb4ccc8f507bde335589300bf"
+    },
+    {
+      "path": "tools/check-m2-struct-parameter-signatures.py",
+      "sha256": "bfb0545560470344a217c84dfeeb65d1ed9f3259c89fe724c955401702c148a6"
+    },
+    {
+      "path": "tools/check-m2-struct-parameters-source.py",
+      "sha256": "1f584688270e8189f8cc3673b4c15046f69adaed6aee87c8d8b52f6896f8c93d"
+    },
+    {
+      "path": "tools/check-m2-struct-path-arguments.py",
+      "sha256": "e4757575169e2a14a5e785dd913d43cf98a21b9734da36de8d0948ad09e42b07"
+    },
+    {
+      "path": "tools/check-m2-struct-replace-source.py",
+      "sha256": "0213a1a112d1d86a38ec26f7c3f3a4bfe9c247264bfc70bbe56e3fcd0171de06"
+    },
+    {
+      "path": "tools/check-m2-struct-result-arguments.py",
+      "sha256": "7687a5c66dce86231b3e2561e266f5e2a89efbb1ec01f94e925b58197ac0a53e"
+    },
+    {
+      "path": "tools/check-m2-struct-result-signatures.py",
+      "sha256": "6a6353fa5416fa0f9b6559bcec55c9b3ca17132383111125d2ad8472c9aa3c6d"
+    },
+    {
+      "path": "tools/check-m2-struct-result-source.py",
+      "sha256": "7ccf1244f8ddcbb43ceacc2b9408ae970b860e0305470ff53032ca18131423f1"
+    },
+    {
+      "path": "tools/check-m2-struct-return-calls.py",
+      "sha256": "789abde855e0e7b5defba5f04f911cac3aeb453c5342e780182ba66cb713abc5"
+    },
+    {
+      "path": "tools/check-m2-struct-return-constructors.py",
+      "sha256": "41ac7e712fe4cb6ec5944b1d776761942564c17e7832312f59f631b7f1d2f620"
+    },
+    {
+      "path": "tools/check-m2-struct-return-paths.py",
+      "sha256": "110c032d6368455c1cd090153c41502daddad12cd7bb30c9b991afb7e7eb2440"
+    },
+    {
+      "path": "tools/check-m2-struct-source-copy.py",
+      "sha256": "77f398f051aa36e1f7d8c662de9cb48ff97f229d5915a0efeeff00a206e201f8"
+    },
+    {
+      "path": "tools/check-m2-struct-source-nested.py",
+      "sha256": "f855b41f877b0c5548bc9146af8f1a281c0dd5c3fe4b46d889aaca22dd64f410"
+    },
+    {
+      "path": "tools/check-m2-struct-source.py",
+      "sha256": "57ec7e3d83cc12e14e51e2124275406cbdcb7d1de15acb49305aab7bb4de76ca"
+    },
+    {
+      "path": "tools/check-m2-struct-subassign.py",
+      "sha256": "33d5567d88fc352a34fc642e17ead3385f07048ed9b697d3907da28eab49369b"
+    },
+    {
+      "path": "tools/check-m2-struct-subreplace-source.py",
+      "sha256": "08cb8b3d47909adf25cfc85864871f41f03e498e91971e9dc1c437a820029089"
+    },
+    {
+      "path": "tools/check-m2-struct-values.py",
+      "sha256": "ef1e4bb6e04a097b8d52345e8a42f8a675c29564e8753a060447cd68c57e8bdf"
+    },
+    {
+      "path": "tools/check-m2-struct-write.py",
+      "sha256": "8aa226aa987db7cb07be33fac856564304ea1e77e8c5cca82871748704173b2f"
+    },
+    {
+      "path": "tools/check-m2-temporary-array-borrow-arguments.py",
+      "sha256": "9d60d60cb82b7927230585b05ca80378340dc4e6f75a740fd9e32427ded3b248"
+    },
+    {
+      "path": "tools/m1_arm_statement_cases.py",
+      "sha256": "4c6c967769d1f81f3a0eb679c130ad8a7bdf87076aebebf45970f9211e29ae8f"
+    },
+    {
+      "path": "tools/m1_bitwise_cases.py",
+      "sha256": "44b474577db55d5afd8f5a3a4cdd0b4d13bf44fb1b4a8b4e2eee170698359ca0"
+    },
+    {
+      "path": "tools/m1_i64_cases.py",
+      "sha256": "161a45f662295cad8742655bdd59aae4bdfe13e10a241894d3b82ad1bc1eefdc"
+    },
+    {
+      "path": "tools/m1_propagation_cases.py",
+      "sha256": "f3728cffafc48866c44e16badb8a256f3e45c0299ab3c7a3d0c1c1ab69dbd986"
+    },
+    {
+      "path": "tools/m1_shift_cases.py",
+      "sha256": "7b12d715d1ed86b142fbf75c25fdb678f253b0c40ac07229d8f9d9bb0afa4acf"
+    },
+    {
+      "path": "tools/m1_switch_expression_cases.py",
+      "sha256": "09759b7891ad407dadabfa18c0c51afa9cb7751912928da8b9fae0598c18b32b"
+    },
+    {
+      "path": "tools/m1_tagged_cases.py",
+      "sha256": "70de6cf5e68e1fe11ee3dd4e72b506b1a19677133a8b483b7a039efb651d963f"
+    },
+    {
+      "path": "tools/m1_unsigned_cases.py",
+      "sha256": "2c0232b88abab5e8d7821cb0d91ad8efa8b4ca6e5048a6e9d6fe9793245b5d9b"
+    },
+    {
+      "path": "tools/m1_widening_cases.py",
+      "sha256": "6a4d87dbd0d3570c50bab7b3760839fbee6670cd16152892bbf536f0662e50cc"
+    },
+    {
+      "path": "tools/record-m2-array-evidence.py",
+      "sha256": "4d8cda41cb74364b187dd6672b6f6379faab412dd5d5957e7fb8db69e9e38380"
+    },
+    {
+      "path": "tools/record-m2-array-write-evidence.py",
+      "sha256": "1d117b9c284ce521569f6a6b87d82549703fe7f449719fbf9337224a08529245"
+    },
+    {
+      "path": "tools/setup-toolchain.py",
+      "sha256": "e626bef29a57ef1539eae2637ff2636f1d6ff8d7f33c51681cfc5fd6a350cf78"
+    },
+    {
+      "path": "tools/verify-m2-array-call-reads.py",
+      "sha256": "b2067c23962ec9a4bcc9f38ada9537b755faf1c02a10db3fcaf42857018fe461"
+    },
+    {
+      "path": "tools/verify-m2-array-literal-arguments.py",
+      "sha256": "128bebba0bc278ec1b66aec51691dd29edd6643e108dcfd588b8553843c77b6f"
+    },
+    {
+      "path": "tools/verify-m2-array-result-arguments.py",
+      "sha256": "e83bbb573841214c45667f4d553945845b56a27c468d5fdd45d183dd0241680f"
+    },
+    {
+      "path": "tools/verify-m2-array-utf8-source.py",
+      "sha256": "46f96ba1f7aec744e4f46feb36bfc3b641a6eb87d9a57ac9b18a1c906fa38c25"
+    },
+    {
+      "path": "tools/verify-m2-array-utf8.py",
+      "sha256": "df45fd907bdaad775b1b4722c1d47ce4fc356282a754f3dfac9ffdb6942a7afe"
+    },
+    {
+      "path": "tools/verify-m2-buffer-failure.py",
+      "sha256": "3418555a333a06ee882cd6bf2d0e3d47570e987ed38340ce76a30ae088f1fec6"
+    },
+    {
+      "path": "tools/verify-m2-buffer-growth.py",
+      "sha256": "0f710bb9d591725f0efc3d5cca5d6b8660bd023f6d13a7e0d2426fe0c3b10a8c"
+    },
+    {
+      "path": "tools/verify-m2-buffer-owners.py",
+      "sha256": "7395e1e6f9545607dd6832c98ca0ff2368880b890118c7858f21e47805ee9284"
+    },
+    {
+      "path": "tools/verify-m2-buffer-provider.py",
+      "sha256": "50a3f12afdb39dfc1124b7f204e11d9926448712396e768e7bcae00939a6b4da"
+    },
+    {
+      "path": "tools/verify-m2-buffer-replacement.py",
+      "sha256": "743e4f0cbce23c888a351818161801e59cc40281f53ff4814fd0e6684dcbf9e1"
+    },
+    {
+      "path": "tools/verify-m2-buffer-storage.py",
+      "sha256": "4919f50b150788729b858d0aa607864b971069b17835090f405f6b3119fe4e3e"
+    },
+    {
+      "path": "tools/verify-m2-slice-elements.py",
+      "sha256": "a545549bdff7ee80d9103955617b9369e77692ffa804da9f7e88c3944ec8cd0d"
+    },
+    {
+      "path": "tools/verify-m2-struct-call-assignment.py",
+      "sha256": "b0b5d3c4054fc6da123d86771b23125c5c5b6c07686bed0180bee92b0dce9bcf"
+    },
+    {
+      "path": "tools/verify-m2-struct-call-path-arguments.py",
+      "sha256": "d47d715591ce2835c20f16ea11248db5d01080f3db9f2377ad0f8a1f2cc989e1"
+    },
+    {
+      "path": "tools/verify-m2-struct-call-path-assignment.py",
+      "sha256": "dbae748ddefd8fcd3810ee77a5d32affa0a5fc4c24445b45dfada3ba70853c73"
+    },
+    {
+      "path": "tools/verify-m2-struct-call-path-declarations.py",
+      "sha256": "e54661992977d3b2efaf0b708f98923d091656d11b997096c1d005dc44f56719"
+    },
+    {
+      "path": "tools/verify-m2-struct-call-path-returns.py",
+      "sha256": "a92d19f76cbc97a3aedb759c2d0354225a8dbbda4e9cca987d08b192efd63bf1"
+    },
+    {
+      "path": "tools/verify-m2-struct-call-reads.py",
+      "sha256": "069718d3266acf7d1b0ea788da4aa71952785f732a106338c07d72b1fa10c889"
+    },
+    {
+      "path": "tools/verify-m2-struct-call-vm.py",
+      "sha256": "7c14a1381ce922adcd58a4b24a7824afc553640c3725a26c854bfe833d460b63"
+    },
+    {
+      "path": "tools/verify-m2-struct-child-call-assignment.py",
+      "sha256": "a3185d08c3d1d05453caf18c4aefa348cf30619106f2b3b9b3d6d37a5b2bd733"
+    },
+    {
+      "path": "tools/verify-m2-struct-child-call-paths.py",
+      "sha256": "15e4d83de34a1ebe38c82ab757b38863697d41ab7f33e586ad9f8e07fc3024d4"
+    },
+    {
+      "path": "tools/verify-m2-struct-child-calls.py",
+      "sha256": "61afba648e966e11b6355a8c7a0f9082d4e56baf28b2da87e97818a4e5cfd495"
+    },
+    {
+      "path": "tools/verify-m2-struct-constructor-arguments.py",
+      "sha256": "e5cd91c9386cf9c723a6c1d46d92229c174d1a3af49f50e31acb686d59e5af70"
+    },
+    {
+      "path": "tools/verify-m2-struct-layout.py",
+      "sha256": "3c47dc9f89ea83b9666e07cc944c86fded515ba6e6987742efc647d6b822827a"
+    },
+    {
+      "path": "tools/verify-m2-struct-parameters-source.py",
+      "sha256": "76d9438381894cbf3193403df832dcde8f67c06e9aa94ec063962fe6f83808a1"
+    },
+    {
+      "path": "tools/verify-m2-struct-path-arguments.py",
+      "sha256": "5765f5ffa5b061c3e03281cf08c6d2ac5d4a7eba53e17b9bfba5ba88da4261f0"
+    },
+    {
+      "path": "tools/verify-m2-struct-result-arguments.py",
+      "sha256": "dd7f0e527eba1ce652699d48f7d9f3a077961c576a2d2d6421a3377f1dec47a0"
+    },
+    {
+      "path": "tools/verify-m2-struct-result-signatures.py",
+      "sha256": "cf0c9116dd4577d756bb672b1bc2fe14989ad0c354d62e66300136b182329701"
+    },
+    {
+      "path": "tools/verify-m2-struct-result-source.py",
+      "sha256": "4ee6accf8bb7aa3db20431fd5d510f8e2329d711087a284edd442c116e9635db"
+    },
+    {
+      "path": "tools/verify-m2-struct-result-vm.py",
+      "sha256": "8c465e509eb9e1ea4793120690660a65f8f7c00767689c6d95c437c51882add0"
+    },
+    {
+      "path": "tools/verify-m2-struct-results-ir.py",
+      "sha256": "dde0ee14ffc547befaa4c9aa479474a85106f26ee63fdc06c649494650b5c5dc"
+    },
+    {
+      "path": "tools/verify-m2-struct-return-calls.py",
+      "sha256": "d71c58cced01f5ce7aea35f95de16581e5f1994ead06cb2591bb509b1d32cd65"
+    },
+    {
+      "path": "tools/verify-m2-struct-return-constructors.py",
+      "sha256": "f4cc983047c0fa75f16cee22505e3e030a819a74dbffc1dffc346b5a29ef3ef3"
+    },
+    {
+      "path": "tools/verify-m2-struct-return-paths.py",
+      "sha256": "471658685d248dd656638be366a75c147c60c0d9dac32599ecc25780c9d4ddd9"
+    },
+    {
+      "path": "tools/verify-m2-struct-source.py",
+      "sha256": "ec4c36f8e8167b117b4589603c216e8fac07e1342b4e5ca8a7733057301b1db0"
+    },
+    {
+      "path": "tools/verify-m2-struct-values.py",
+      "sha256": "4423b50382d118827634f0604d6ead896796e1cd3f0ce53b30fe6b8b1c8753a1"
+    },
+    {
+      "path": "tools/verify-toolchain.py",
+      "sha256": "9a59d1c6daa43f17a85867ae05a77f78a0f2730b589b2c508a5096170eae0309"
+    }
+  ],
+  "phases": [
+    {
+      "receipt": {
+        "path": "build/m2-slice-result-signatures-call/development/receipt.json",
+        "sha256": "b476467109cd16d3719122683d7d5138e01b12a1bb049ffbcd2346d39d20b54a"
+      },
+      "status": "passed",
+      "profile": "development",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false",
+      "check": "check ok: 2 instance(s), 107 source file(s), 875 MIR function(s), lock verified",
+      "native": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "development",
+        "tests": [
+          {
+            "identity": "tests::functions::signature_pass",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_result_signatures::exact_result_shapes_cover_all_six_elements_and_scalar_wrapper_sentinels",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_parameters_source::signature_kinds_forward_names_and_non_scalar_formal_positions_are_distinct",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_signatures::candidate_bits_use_argument_positions_and_exact_types_and_modes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_signatures::candidate_sets_do_not_prove_which_input_or_local_body_returns",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_signatures::final_function_and_eighth_parameter_bits_remain_bounded",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_signatures::malformed_wrapped_nominal_and_overwide_signatures_reject",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_signatures::old_result_kinds_and_unused_signature_slots_keep_zero_sentinels",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_signatures::owned_local_static_and_incompatible_origins_are_not_candidates",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_signatures::six_scalar_results_preserve_exact_shared_and_exclusive_modes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_signatures::unreachable_forward_recursive_and_invalid_bodies_cannot_bypass_gate",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_result_signatures::nominal_result_ids_are_disjoint_from_scalar_array_and_wrapper_metadata",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 12,
+        "passed": 12,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "nativeGroups": 12,
+      "cli": [
+        {
+          "matrix": "slice-result-signatures",
+          "count": 90,
+          "receipt": {
+            "path": "build/m2-slice-result-signatures-call/development/slice-result-signatures-cli.json",
+            "sha256": "aa199f50f6085f53c39a412bc9bc5db0d20d812b93879d34d651d86022606e3d"
+          }
+        },
+        {
+          "matrix": "temporary-array-borrow-arguments",
+          "count": 120,
+          "receipt": {
+            "path": "build/m2-slice-result-signatures-call/development/temporary-array-borrow-arguments-cli.json",
+            "sha256": "d6cfa84676a4c78ef5502fc23de26d26995d53fa8ab7bd9e49f308769279744e"
+          }
+        },
+        {
+          "matrix": "named-slice-range-arguments",
+          "count": 102,
+          "receipt": {
+            "path": "build/m2-slice-result-signatures-call/development/named-slice-range-arguments-cli.json",
+            "sha256": "ddac6c0985314472611d5f7f15b521da6b4837b120ed250670013817ae32af47"
+          }
+        },
+        {
+          "matrix": "array-borrow-range-arguments",
+          "count": 108,
+          "receipt": {
+            "path": "build/m2-slice-result-signatures-call/development/array-borrow-range-arguments-cli.json",
+            "sha256": "3fd16d7413ea5fcf3a9d7c259811e69c5b630d5f2e281a6268206739ed9652a8"
+          }
+        },
+        {
+          "matrix": "array-borrow-arguments",
+          "count": 82,
+          "receipt": {
+            "path": "build/m2-slice-result-signatures-call/development/array-borrow-arguments-cli.json",
+            "sha256": "fcd35b45ec53bb826d16eadfaa8d7cdb8ee3fe766b04a5ff26c8e4ea413c8448"
+          }
+        },
+        {
+          "matrix": "slice-mutable-parameters-source",
+          "count": 74,
+          "receipt": {
+            "path": "build/m2-slice-result-signatures-call/development/slice-mutable-parameters-source-cli.json",
+            "sha256": "cb3188cf86001a2346213fe5c396bd1b03a9a23a5417a42d56bddad41b9546a9"
+          }
+        },
+        {
+          "matrix": "array-slice-parameter-source",
+          "count": 74,
+          "receipt": {
+            "path": "build/m2-slice-result-signatures-call/development/array-slice-parameter-source-cli.json",
+            "sha256": "66e01a4cd291b9cc821abb2298831e6ee49a1e74ecf7d4983339fab79ce3c8a7"
+          }
+        },
+        {
+          "matrix": "slice-element-source",
+          "count": 252,
+          "receipt": {
+            "path": "build/m2-slice-result-signatures-call/development/slice-element-source-cli.json",
+            "sha256": "9760e9c2885243f4475a0706476a2b40891ed65a69fbdbb4d371bdc1ddbb1371"
+          }
+        }
+      ],
+      "cliCases": 902,
+      "artifact": {
+        "path": "build/m2-slice-result-signatures-call/development/browniec.exe",
+        "sha256": "d1518b0cf1d7c56276baf4d7defced4e7834759bf58c4b964cac6877ec178769",
+        "bytes": 2430464
+      },
+      "commands": [
+        [
+          "git",
+          "rev-parse",
+          "HEAD"
+        ],
+        [
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+          "--version"
+        ],
+        [
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+          "check",
+          "--locked"
+        ],
+        [
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+          "test",
+          "--native",
+          "--capture-output",
+          "--json",
+          "--locked",
+          "--exact",
+          "tests::m2::slice_result_signatures::six_scalar_results_preserve_exact_shared_and_exclusive_modes",
+          "--exact",
+          "tests::m2::slice_result_signatures::candidate_bits_use_argument_positions_and_exact_types_and_modes",
+          "--exact",
+          "tests::m2::slice_result_signatures::candidate_sets_do_not_prove_which_input_or_local_body_returns",
+          "--exact",
+          "tests::m2::slice_result_signatures::owned_local_static_and_incompatible_origins_are_not_candidates",
+          "--exact",
+          "tests::m2::slice_result_signatures::malformed_wrapped_nominal_and_overwide_signatures_reject",
+          "--exact",
+          "tests::m2::slice_result_signatures::final_function_and_eighth_parameter_bits_remain_bounded",
+          "--exact",
+          "tests::m2::slice_result_signatures::old_result_kinds_and_unused_signature_slots_keep_zero_sentinels",
+          "--exact",
+          "tests::m2::slice_result_signatures::unreachable_forward_recursive_and_invalid_bodies_cannot_bypass_gate",
+          "--exact",
+          "tests::functions::signature_pass",
+          "--exact",
+          "tests::m2::array_result_signatures::exact_result_shapes_cover_all_six_elements_and_scalar_wrapper_sentinels",
+          "--exact",
+          "tests::m2::struct_result_signatures::nominal_result_ids_are_disjoint_from_scalar_array_and_wrapper_metadata",
+          "--exact",
+          "tests::m2::slice_parameters_source::signature_kinds_forward_names_and_non_scalar_formal_positions_are_distinct"
+        ],
+        [
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+          "build",
+          "--locked"
+        ],
+        [
+          "C:\\Users\\cherr\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+          "-B",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\tools\\check-m2-slice-result-signatures.py",
+          "--exe",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-slice-result-signatures-call\\development\\browniec.exe",
+          "--profile",
+          "development"
+        ],
+        [
+          "C:\\Users\\cherr\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+          "-B",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\tools\\check-m2-temporary-array-borrow-arguments.py",
+          "--exe",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-slice-result-signatures-call\\development\\browniec.exe",
+          "--profile",
+          "development"
+        ],
+        [
+          "C:\\Users\\cherr\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+          "-B",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\tools\\check-m2-named-slice-range-arguments.py",
+          "--exe",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-slice-result-signatures-call\\development\\browniec.exe",
+          "--profile",
+          "development"
+        ],
+        [
+          "C:\\Users\\cherr\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+          "-B",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\tools\\check-m2-array-borrow-range-arguments.py",
+          "--exe",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-slice-result-signatures-call\\development\\browniec.exe",
+          "--profile",
+          "development"
+        ],
+        [
+          "C:\\Users\\cherr\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+          "-B",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\tools\\check-m2-array-borrow-arguments.py",
+          "--exe",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-slice-result-signatures-call\\development\\browniec.exe",
+          "--profile",
+          "development"
+        ],
+        [
+          "C:\\Users\\cherr\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+          "-B",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\tools\\check-m2-slice-mutable-parameters-source.py",
+          "--exe",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-slice-result-signatures-call\\development\\browniec.exe",
+          "--profile",
+          "development"
+        ],
+        [
+          "C:\\Users\\cherr\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+          "-B",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\tools\\check-m2-array-slice-parameter-source.py",
+          "--exe",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-slice-result-signatures-call\\development\\browniec.exe",
+          "--profile",
+          "development"
+        ],
+        [
+          "C:\\Users\\cherr\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+          "-B",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\tools\\check-m2-slice-element-source.py",
+          "--exe",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-slice-result-signatures-call\\development\\browniec.exe",
+          "--profile",
+          "development"
+        ]
+      ],
+      "build": "built: build/browniec.exe (x86_64-windows-msvc, development, lock verified)",
+      "nativeReceipt": {
+        "path": "build/m2-slice-result-signatures-call/development/native.json",
+        "sha256": "59ac8c2ed04d0180c02324c5d7066ec273dd828e38db811850a8fa1ebf9f2f5c"
+      },
+      "verificationStartedAtCommit": "d0924f85991acbdcaea3ead59b59791a68648dc7"
+    },
+    {
+      "receipt": {
+        "path": "build/m2-slice-result-signatures-call/release/receipt.json",
+        "sha256": "750a01bcf95c3b378fdf89147f2684c5d3036196297aa9039338882c796c8e36"
+      },
+      "status": "passed",
+      "profile": "release",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false",
+      "check": "check ok: 2 instance(s), 107 source file(s), 875 MIR function(s), lock verified",
+      "native": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "release",
+        "tests": [
+          {
+            "identity": "tests::functions::signature_pass",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::array_result_signatures::exact_result_shapes_cover_all_six_elements_and_scalar_wrapper_sentinels",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_parameters_source::signature_kinds_forward_names_and_non_scalar_formal_positions_are_distinct",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_signatures::candidate_bits_use_argument_positions_and_exact_types_and_modes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_signatures::candidate_sets_do_not_prove_which_input_or_local_body_returns",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_signatures::final_function_and_eighth_parameter_bits_remain_bounded",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_signatures::malformed_wrapped_nominal_and_overwide_signatures_reject",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_signatures::old_result_kinds_and_unused_signature_slots_keep_zero_sentinels",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_signatures::owned_local_static_and_incompatible_origins_are_not_candidates",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_signatures::six_scalar_results_preserve_exact_shared_and_exclusive_modes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_signatures::unreachable_forward_recursive_and_invalid_bodies_cannot_bypass_gate",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::struct_result_signatures::nominal_result_ids_are_disjoint_from_scalar_array_and_wrapper_metadata",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 12,
+        "passed": 12,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "nativeGroups": 12,
+      "cli": [
+        {
+          "matrix": "slice-result-signatures",
+          "count": 90,
+          "receipt": {
+            "path": "build/m2-slice-result-signatures-call/release/slice-result-signatures-cli.json",
+            "sha256": "feea670316e91985604c93bc00b8ea366a089d80e59d1275468eebd611c65d4d"
+          }
+        },
+        {
+          "matrix": "temporary-array-borrow-arguments",
+          "count": 120,
+          "receipt": {
+            "path": "build/m2-slice-result-signatures-call/release/temporary-array-borrow-arguments-cli.json",
+            "sha256": "f8f3f35985d1d8cdd30b5da11ae17b6556c9b0c511c4980325bebc50ba267d2d"
+          }
+        },
+        {
+          "matrix": "named-slice-range-arguments",
+          "count": 102,
+          "receipt": {
+            "path": "build/m2-slice-result-signatures-call/release/named-slice-range-arguments-cli.json",
+            "sha256": "7579a7bf76b1dec89cb6f03cfae3e88e98b9317af2fa31b409e2d421104a4712"
+          }
+        },
+        {
+          "matrix": "array-borrow-range-arguments",
+          "count": 108,
+          "receipt": {
+            "path": "build/m2-slice-result-signatures-call/release/array-borrow-range-arguments-cli.json",
+            "sha256": "27d239f699a5c0160cdf311c60a6f2903cb037084b61955d6a472f13ac8d6517"
+          }
+        },
+        {
+          "matrix": "array-borrow-arguments",
+          "count": 82,
+          "receipt": {
+            "path": "build/m2-slice-result-signatures-call/release/array-borrow-arguments-cli.json",
+            "sha256": "771576693836108076b340282b4d75e3ee840722ffee5b0b297582d1ee6807ed"
+          }
+        },
+        {
+          "matrix": "slice-mutable-parameters-source",
+          "count": 74,
+          "receipt": {
+            "path": "build/m2-slice-result-signatures-call/release/slice-mutable-parameters-source-cli.json",
+            "sha256": "b3d77bce3f137662e710f38ca925b18fbd073ad17695c1c5f5d0f429b590754b"
+          }
+        },
+        {
+          "matrix": "array-slice-parameter-source",
+          "count": 74,
+          "receipt": {
+            "path": "build/m2-slice-result-signatures-call/release/array-slice-parameter-source-cli.json",
+            "sha256": "82a19f56cf76b08bee6d5c49072443df63a4a1aa35984d14a0a7f2cd8a8fdab8"
+          }
+        },
+        {
+          "matrix": "slice-element-source",
+          "count": 252,
+          "receipt": {
+            "path": "build/m2-slice-result-signatures-call/release/slice-element-source-cli.json",
+            "sha256": "a93745ed71a724e2d5464589a7d63ae514cfff01d0a270b5889cb1c6998acc7b"
+          }
+        }
+      ],
+      "cliCases": 902,
+      "artifact": {
+        "path": "build/m2-slice-result-signatures-call/release/browniec.exe",
+        "sha256": "07a15ca7b90cc780e8e1c4091c9ce401cbb2068aa5b5837767658c8a8d16475a",
+        "bytes": 771072
+      },
+      "commands": [
+        [
+          "git",
+          "rev-parse",
+          "HEAD"
+        ],
+        [
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+          "--version"
+        ],
+        [
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+          "check",
+          "--locked"
+        ],
+        [
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+          "test",
+          "--native",
+          "--capture-output",
+          "--json",
+          "--locked",
+          "--release",
+          "--exact",
+          "tests::m2::slice_result_signatures::six_scalar_results_preserve_exact_shared_and_exclusive_modes",
+          "--exact",
+          "tests::m2::slice_result_signatures::candidate_bits_use_argument_positions_and_exact_types_and_modes",
+          "--exact",
+          "tests::m2::slice_result_signatures::candidate_sets_do_not_prove_which_input_or_local_body_returns",
+          "--exact",
+          "tests::m2::slice_result_signatures::owned_local_static_and_incompatible_origins_are_not_candidates",
+          "--exact",
+          "tests::m2::slice_result_signatures::malformed_wrapped_nominal_and_overwide_signatures_reject",
+          "--exact",
+          "tests::m2::slice_result_signatures::final_function_and_eighth_parameter_bits_remain_bounded",
+          "--exact",
+          "tests::m2::slice_result_signatures::old_result_kinds_and_unused_signature_slots_keep_zero_sentinels",
+          "--exact",
+          "tests::m2::slice_result_signatures::unreachable_forward_recursive_and_invalid_bodies_cannot_bypass_gate",
+          "--exact",
+          "tests::functions::signature_pass",
+          "--exact",
+          "tests::m2::array_result_signatures::exact_result_shapes_cover_all_six_elements_and_scalar_wrapper_sentinels",
+          "--exact",
+          "tests::m2::struct_result_signatures::nominal_result_ids_are_disjoint_from_scalar_array_and_wrapper_metadata",
+          "--exact",
+          "tests::m2::slice_parameters_source::signature_kinds_forward_names_and_non_scalar_formal_positions_are_distinct"
+        ],
+        [
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+          "build",
+          "--locked",
+          "--release"
+        ],
+        [
+          "C:\\Users\\cherr\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+          "-B",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\tools\\check-m2-slice-result-signatures.py",
+          "--exe",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-slice-result-signatures-call\\release\\browniec.exe",
+          "--profile",
+          "release"
+        ],
+        [
+          "C:\\Users\\cherr\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+          "-B",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\tools\\check-m2-temporary-array-borrow-arguments.py",
+          "--exe",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-slice-result-signatures-call\\release\\browniec.exe",
+          "--profile",
+          "release"
+        ],
+        [
+          "C:\\Users\\cherr\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+          "-B",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\tools\\check-m2-named-slice-range-arguments.py",
+          "--exe",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-slice-result-signatures-call\\release\\browniec.exe",
+          "--profile",
+          "release"
+        ],
+        [
+          "C:\\Users\\cherr\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+          "-B",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\tools\\check-m2-array-borrow-range-arguments.py",
+          "--exe",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-slice-result-signatures-call\\release\\browniec.exe",
+          "--profile",
+          "release"
+        ],
+        [
+          "C:\\Users\\cherr\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+          "-B",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\tools\\check-m2-array-borrow-arguments.py",
+          "--exe",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-slice-result-signatures-call\\release\\browniec.exe",
+          "--profile",
+          "release"
+        ],
+        [
+          "C:\\Users\\cherr\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+          "-B",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\tools\\check-m2-slice-mutable-parameters-source.py",
+          "--exe",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-slice-result-signatures-call\\release\\browniec.exe",
+          "--profile",
+          "release"
+        ],
+        [
+          "C:\\Users\\cherr\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+          "-B",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\tools\\check-m2-array-slice-parameter-source.py",
+          "--exe",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-slice-result-signatures-call\\release\\browniec.exe",
+          "--profile",
+          "release"
+        ],
+        [
+          "C:\\Users\\cherr\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+          "-B",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\tools\\check-m2-slice-element-source.py",
+          "--exe",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\m2-slice-result-signatures-call\\release\\browniec.exe",
+          "--profile",
+          "release"
+        ]
+      ],
+      "build": "built: build/browniec.exe (x86_64-windows-msvc, release, lock verified)",
+      "nativeReceipt": {
+        "path": "build/m2-slice-result-signatures-call/release/native.json",
+        "sha256": "212e543db15e3bb4e46816f00cc314808afa584d12db685e1fe20d977e77a2b3"
+      },
+      "verificationStartedAtCommit": "1ced18e7b8d59292068a1a00c2a36baf0eabee8a"
+    }
+  ],
+  "productionDelta": [
+    "src/compiler.fy",
+    "src/functions.fy"
+  ],
+  "unchangedSourceCount": 98,
+  "unchangedSources": [
+    "src/arithmetic.fy",
+    "src/array_call_source.fy",
+    "src/array_call_vm.fy",
+    "src/array_layout.fy",
+    "src/array_meta.fy",
+    "src/array_owners.fy",
+    "src/array_parameters.fy",
+    "src/array_range_vm.fy",
+    "src/array_result_source.fy",
+    "src/array_result_vm.fy",
+    "src/array_results.fy",
+    "src/array_slices.fy",
+    "src/array_source.fy",
+    "src/array_storage.fy",
+    "src/array_verifier.fy",
+    "src/array_vm.fy",
+    "src/bits.fy",
+    "src/buffer_append.fy",
+    "src/buffer_close.fy",
+    "src/buffer_create.fy",
+    "src/buffer_growth.fy",
+    "src/buffer_host_close.fy",
+    "src/buffer_host_sweep.fy",
+    "src/buffer_owners.fy",
+    "src/buffer_replacement.fy",
+    "src/buffer_resize.fy",
+    "src/buffer_storage.fy",
+    "src/buffer_truncate.fy",
+    "src/buffer_utf8.fy",
+    "src/buffer_utf8_meter.fy",
+    "src/buffer_utf8_pool.fy",
+    "src/buffer_utf8_scan.fy",
+    "src/buffer_utf8_session.fy",
+    "src/buffer_write.fy",
+    "src/call_frame_vm.fy",
+    "src/casts.fy",
+    "src/cells.fy",
+    "src/cli_input.fy",
+    "src/errors.fy",
+    "src/ir.fy",
+    "src/lexer.fy",
+    "src/locals.fy",
+    "src/loops.fy",
+    "src/main.fy",
+    "src/mixed_call_vm.fy",
+    "src/patterns.fy",
+    "src/propagation.fy",
+    "src/register_set.fy",
+    "src/render.fy",
+    "src/scalar_codec.fy",
+    "src/shifts.fy",
+    "src/slice_authority.fy",
+    "src/slice_authority_call_vm.fy",
+    "src/slice_builders.fy",
+    "src/slice_call_source.fy",
+    "src/slice_call_vm.fy",
+    "src/slice_cleanup_source.fy",
+    "src/slice_exclusive_vm.fy",
+    "src/slice_formal_reborrow_vm.fy",
+    "src/slice_frame_vm.fy",
+    "src/slice_handoff.fy",
+    "src/slice_lifecycle_vm.fy",
+    "src/slice_mutable_call_vm.fy",
+    "src/slice_mutable_frame_vm.fy",
+    "src/slice_parameters.fy",
+    "src/slice_reborrow.fy",
+    "src/slice_reborrow_admission_ir.fy",
+    "src/slice_reborrow_call_admission.fy",
+    "src/slice_reborrow_call_ir.fy",
+    "src/slice_reborrow_call_vm.fy",
+    "src/slice_reborrow_context.fy",
+    "src/slice_reborrow_ir.fy",
+    "src/slice_reborrow_vm.fy",
+    "src/slice_source.fy",
+    "src/slice_verifier.fy",
+    "src/slice_vm.fy",
+    "src/struct_call_source.fy",
+    "src/struct_call_vm.fy",
+    "src/struct_layout.fy",
+    "src/struct_meta.fy",
+    "src/struct_nested_storage.fy",
+    "src/struct_parameters.fy",
+    "src/struct_range.fy",
+    "src/struct_result_source.fy",
+    "src/struct_result_vm.fy",
+    "src/struct_results.fy",
+    "src/struct_source.fy",
+    "src/struct_storage.fy",
+    "src/struct_value_source.fy",
+    "src/struct_verifier.fy",
+    "src/struct_vm.fy",
+    "src/tagged.fy",
+    "src/text_source.fy",
+    "src/types.fy",
+    "src/verifier.fy",
+    "src/vm.fy",
+    "src/vm_execution.fy",
+    "src/vm_reborrow_execution.fy"
+  ],
+  "nativeGroupsPerProfile": {
+    "development": 12,
+    "release": 12
+  },
+  "cliCasesPerProfile": {
+    "development": 902,
+    "release": 902
+  },
+  "limitations": [
+    "Private functions::scan recognizes fn ref T[] and fn ref mut T[] result declarations for six exact scalar types. Two u8 fields per function describe element/access and an upper-bound candidate input mask, adding 32 logical source-signature field bytes, not a measured native size.",
+    "Only exact type/mode borrowed input positions enter the eight-bit mask. Owned/scalar parameters, local/temporary roots and Static storage are not candidates in this subset. Zero-candidate declarations reject; several candidates do not imply several permitted return origins.",
+    "Candidate metadata is not body, origin or lifetime proof. A sole candidate can still accompany an invalid local/temporary return body. Public compilation rejects every borrowed-result declaration at its function name, including unreachable, recursive, forward and invalid-body cases, before IR/result preparation.",
+    "IR Program, VM authority/tickets, dispatch, layouts, opcodes, prices, Fuel, profiles and public capabilities are unchanged. No returned borrow executes. Single-origin body summaries and actual CALL/result handoff with capture retention remain required.",
+    "Eight new native groups check six scalar modes, candidate masks including argument bit seven, filtering, multiple versus absent candidates, unsafe bodies, malformed/unsupported results, all 16 function slots, legacy zero sentinels and the compiler gate. Four prior native groups cover scalar/array/record/borrowed-parameter signature regression.",
+    "Both profiles execute 90 new gate/depth CLI checks and 812 existing borrow CLI checks in cleared tool-free environments. Parenthesis depths 32/33/64 complete/reject/reject respectively under existing guards. Guest source never bypasses public compilation.",
+    "Both profiles use identical final inputs, checked against disk and the implementation commit under Git LF normalization. Development starts before the implementation commit; two production files differ from the baseline and 98 are unchanged.",
+    "Selected Windows native and CLI checks only. Body-origin proof, native return-lifetime transfer, Static storage, full native/full M1/other M2/Linux/isolation/packaging/allocator/native size-stack/timing are not verified. No measured performance claim. Local only; no push, release or deployment."
+  ]
+}

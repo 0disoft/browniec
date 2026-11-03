@@ -1,5 +1,21 @@
 # AGENTS.md
 
+- Private scalar-slice result signatures are implemented at `1ced18e`.
+  `functions::scan` records exact scalar/access metadata and an eight-bit upper
+  bound of compatible input positions. Candidates are not a body-origin or
+  lifetime proof. Public compilation rejects every borrowed-result declaration
+  before IR/result preparation, including unreachable functions. No returned
+  borrow executes; VM layouts, prices, profiles and public capabilities stay
+  unchanged. Windows development/release each passed 12 native groups and 902
+  tool-free CLI cases, with 459 matching final inputs and retained identities
+  rechecked. Two production paths differ from `d0924f8`; 98 match under Git LF.
+  Next is independent single-origin body proof, then result/capture handoff.
+  Full native/M1/other M2/Linux/isolation/packaging/allocator/native size-stack/
+  timing and actual returned-reference execution were not verified. Local only;
+  no push/release/deployment. See the
+  [contract](docs/engineering/m2-slice-result-signatures.md) and
+  [Windows evidence](docs/evidence/m2-slice-result-signatures-windows-20261103.json).
+
 - Call-scoped temporary-array borrows are implemented at `8983737`.
   Explicit `ref [value; N]` and `ref mut make()[lo..hi]` accept repeated literals
   and owned array CALL results, with whole/open/empty ranges and exact six-scalar

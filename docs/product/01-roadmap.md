@@ -1,5 +1,16 @@
 # Roadmap
 
+- [Scalar-slice result signatures](../engineering/m2-slice-result-signatures.md)
+  are implemented privately at `1ced18e`. Exact type/mode and bounded candidate
+  input masks are metadata only; public compilation still rejects all borrowed
+  results. Windows development/release each passed 12 native groups and 902 CLI
+  cases, with 459 matching final inputs. See the
+  [Windows evidence](../evidence/m2-slice-result-signatures-windows-20261103.json).
+  Next is independent single-origin body proof, then return/CALL handoff and
+  selected-argument capture retention through the result lifetime. Static origins
+  and actual returned-reference execution remain outside this stage. Buffer,
+  input/output, host suspension, isolation and packaging remain milestone work.
+
 - [Call-scoped temporary-array borrows](../engineering/m2-temporary-array-borrow-arguments.md)
   are implemented at `8983737`. Literals and owned CALL results support exact
   scalar `ref`/`ref mut` arguments and single whole/relative/open/empty ranges.
