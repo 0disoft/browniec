@@ -93,9 +93,11 @@ an earlier execution error. The final dispatcher owns first-cause reporting.
 The native component performs actual read/write-capable ticket transfer and owner
 retention. It is not an interpreter for private opcodes 63/64/65. The existing
 public compiler/VM, Program layout, prices, profiles and availability flags stay
-unchanged. Remaining integration includes private result destination bindings,
-verified preparation-site selection, frame registers, routing capture and callee-
-local cleanup through these transactions, opcode dispatch and final metering.
+unchanged. The [private VM dialect](m2-slice-result-vm.md) at `d468ca1` now connects
+result destinations, checked preparation sites, frame registers, rootless loans
+and private opcode dispatch. Its proved terminal CLOSE/END recipe routes through
+these transactions. Owned-local/ordinary CALL capture cleanup and final public
+metering remain pending.
 General borrowed-result expressions/locals/arguments, Static and public promotion
 remain separately gated. No Engine lifecycle, isolation or packaging is implied.
 

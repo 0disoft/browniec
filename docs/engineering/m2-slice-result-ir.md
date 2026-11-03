@@ -10,7 +10,9 @@ exact element/access tags and sixteen claimed one-based formal input origins.
 The 32 extra field bytes are logical payload, not a native sizeof/stack measurement.
 Existing VM Program fields, public opcodes, prices, profiles and flags are unchanged.
 
-Within this separate, non-executable type, eight-byte instructions add:
+Within this separate private type, eight-byte instructions add the following
+markers. Proof alone does not authorize execution; the private VM adapter has
+its own admission and ownership transactions.
 
 | Opcode | Fields | Meaning |
 | --- | --- | --- |
@@ -63,10 +65,12 @@ The private proof is not a transferable authorization or protection against late
 unit mutation: re-inspect changed IR.
 
 [B02/B03 native transactions](m2-slice-result-runtime.md) now implement ticket
-handoff, selected capture/root retention and exclusive-parent suspension. Actual
-result destinations, frame/site/opcode dispatch and cleanup still need integration. Current
-cleanup deliberately still ends views/parents as in analysis; it is NOT executable
-escaping-reference cleanup. Static origins, inline return reslicing and general
+handoff, selected capture/root retention and exclusive-parent suspension. The
+[private VM dialect](m2-slice-result-vm.md), added at `d468ca1`, now connects result
+destinations, frames, rootless sites and op63/64/65. It defers the proved terminal
+CLOSE/END recipe to atomic handoff; the ordinary VM must not execute that recipe
+unchanged. Owned-local/ordinary CALL integration, final public metering, Static
+origins, inline return reslicing and general
 borrowed-result binding/expression/argument admission remain later work.
 
 ## Focused verification

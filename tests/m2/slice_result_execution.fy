@@ -54,7 +54,7 @@ fn Result<usize,errors::Error> roundtrip(ref u8[] source,u8 tag,bool exclusive,i
     assert(roundtrip(b"module main;fn ref mut usize[] f(ref mut usize[] p){return ref mut p;}fn i32 main(){return 0;}",12,true,-1).is_ok);
 }
 fn Result<usize,errors::Error> subview(bool branch,bool exclusive){
-    let ir::Program unit=compiler::inspect_slice_result_ir(if(exclusive){b"module main;fn ref mut i32[] f(ref mut i32[] p,bool b){var i32 i=0;while(i<2){p[0]=p[0]+1;i=i+1;}if(b){return ref mut p;}let ref mut i32[] q=ref mut p[1..3];q[0]=42;return ref mut q;}fn i32 main(){return 0;}"}else{b"module main;fn ref i32[] f(ref i32[] p,bool b){if(b){return ref p;}let ref i32[] q=ref p[1..3];return ref q;}fn i32 main(){return 0;}"})?;
+    let ir::Program unit=compiler::inspect_slice_result_ir(if(exclusive){b"module main;fn ref mut i32[] f(ref mut i32[] p,bool b){var i32 i=0;while(i<2){{let ref mut i32[] part=ref mut p;part[0]=part[0]+1;}i=i+1;}if(b){return ref mut p;}let ref mut i32[] q=ref mut p[1..3];q[0]=42;return ref mut q;}fn i32 main(){return 0;}"}else{b"module main;fn ref i32[] f(ref i32[] p,bool b){if(b){return ref p;}let ref i32[] q=ref p[1..3];return ref q;}fn i32 main(){return 0;}"})?;
     var u8[16] data=[0;16];var runtime::State state=runtime::empty(16);let owners::Token root=create(ref mut state,1,ref mut data);
     let slices::Ticket parent=open(ref mut state,root,exclusive,16);
     let runtime::Capture[2] args=[runtime::capture(parent,false,false),runtime::capture(slices::Ticket{.slot=16,.generation=0},false,false)];

@@ -1,7 +1,7 @@
 # Remaining Work and Design Reconciliation
 
 - Reviewed: 2026-11-03, implementation `0d1a8cb`, documentation baseline `df56e7d`.
-- B01 preparation increment: 2026-11-04, `670a041`; B02/B03 native transaction increment: `7f8f455`/`b82500d`. Other audit findings retain their original scope.
+- B01 preparation: `670a041`; B02/B03 native transactions: `7f8f455`/`b82500d`; private returned-view VM: `d468ca1`, updated 2026-11-04. Other audit findings retain their original scope.
 - Scope: completion of the accepted Brownie design and its M0-M5 delivery gates.
 - Evidence method: source/contract review, reference ZIP inspection, import-graph
   inspection and existing receipt/hash checks. No new native execution, benchmark,
@@ -21,10 +21,12 @@ arguments. Exclusion remains per owned root.
 
 Returned-slice signatures, single-input body-origin summaries and explicit
 returned-view preparation IR/independent proof are private only. The
-[preparation contract](../engineering/m2-slice-result-ir.md) adds a non-executable
+[preparation contract](../engineering/m2-slice-result-ir.md) adds a separate private
 unit. [Native handoff/capture transactions](../engineering/m2-slice-result-runtime.md)
-now implement the ownership operations, but private result/frame/site dispatch and
-cleanup integration remain missing. Public compilation rejects
+now connect to [private VM execution](../engineering/m2-slice-result-vm.md) for
+rootless borrowed inputs, caller result/frame/site destinations and deferred
+terminal cleanup. Guest-owned temporary roots, ordinary CALLs and final public
+metering still need integration. Public compilation rejects
 all borrowed-result declarations.
 The original audit's focused [receipt](../evidence/m2-slice-result-origins-windows-20261103.json)
 records 12 native groups and 990 CLI cases per Windows development/release profile.
@@ -62,7 +64,7 @@ No one label implies full-profile or release readiness.
 
 | Priority | Work IDs and dependency | Owning contracts |
 | --- | --- | --- |
-| Next | B01 proof and B02/B03 native transactions exist; complete result/frame/site/cleanup/dispatch integration before B04 public admission | [Preparation IR](../engineering/m2-slice-result-ir.md), [Returned-origin boundary](../engineering/m2-slice-result-origins.md), [result signatures](../engineering/m2-slice-result-signatures.md) |
+| Next | Private result/frame/site/cleanup/dispatch works for rootless inputs; complete owned-local/ordinary CALL capture integration and metering before B04 public admission | [Private VM](../engineering/m2-slice-result-vm.md), [Preparation IR](../engineering/m2-slice-result-ir.md), [Returned-origin boundary](../engineering/m2-slice-result-origins.md) |
 | M2 integration | D01-D05, L03-L06, I01-I02: private Buffer and aggregate foundations -> useful guest byte/text/input/output path | [Specification](02-spec.md), [Buffer storage](../engineering/m2-buffer-storage.md), [UTF-8 sessions](../engineering/m2-buffer-utf8-session.md), [output](../cli/output-and-exit-codes.md) |
 | Full-profile prerequisites | L01-L02/L07, B05, C01-C05: accepted language, references, configuration and limit reconciliation | [Specification](02-spec.md), [command](../cli/command-contract.md), [configuration](../cli/configuration.md) |
 | M3 prerequisite/core | R01-R05 -> H01-H04: Engine/Instance/accounting/step/cancel -> fake typed host boundary | [Runtime flow](../architecture/02-runtime-flow.md), [invariants](../engineering/00-project-invariants.md) |
@@ -96,7 +98,7 @@ below cover prose obligations beyond this feature list as well.
 | plain_structs | Narrow scalar/nested records | L03, L05, V01 |
 | shared_borrows | Scalar slices | B05 |
 | mutable_borrows | Scalar slices and lexical children | B05 |
-| single_parameter_borrow_returns | Private signatures/origin/preparation IR proof; no runtime handoff | B01-B04 |
+| single_parameter_borrow_returns | Private proof/VM handoff for rootless borrowed inputs; public source remains gated | B01-B04 |
 | array_views | Narrow scalar views | B02-B05 |
 | half_open_slices | Narrow scalar ranges | B04, B05 |
 | option_result | i32/bool payloads, depth one | L05 |
@@ -136,9 +138,9 @@ below cover prose obligations beyond this feature list as well.
 
 | ID | Work and completion condition |
 | --- | --- |
-| B01 | Preparation subset implemented at `670a041`: explicit view/forward/return IR, result-identity pairing and independent CFG/type/access/live-origin reconstruction. This is a non-executable unit, not an escaping-result lifetime or runtime destination/ticket proof. Complete those contracts with B02/B03 before public admission. |
-| B02 | Native transaction implemented at `7f8f455`: atomic shared/exclusive handoff, generation checks, exclusive parent suspension, stale ticket rejection and zero-Fuel abort. Remaining: wire immutable private IR to actual caller result/frame/site destinations and opcode dispatch; retain independent proof and full failure/metering integration. |
-| B03 | Native capture/root retention implemented at `7f8f455`, including selected anonymous ownership, aliased shared roots, unselected cleanup and returned mutable descendants. Remaining: route compiler captures and callee-local cleanup through it; ordinary VM CALL cleanup still closes captures and must not execute borrowed results unchanged. |
+| B01 | Preparation subset at `670a041`: explicit view/forward/return IR, identity pairing and independent CFG/type/access/live-origin reconstruction. The private VM at `d468ca1` separately admits a rootless subset; proof alone remains insufficient for ordinary/public execution. |
+| B02 | Native transaction at `7f8f455`; private result/frame/site/63-65 dispatch at `d468ca1`. Shared/exclusive handoff, parent suspension, generation checks and zero-Fuel abort are connected. Remaining: owned-local/ordinary CALL integration and final public metering. |
+| B03 | Native capture/root retention at `7f8f455`; private rootless callee cleanup routes through handoff at `d468ca1`. Selected external temporary roots/descendants use native Capture receipts. Remaining: integrate guest-created temporary ownership and mixed CALL captures; ordinary VM cleanup must not execute borrowed-result recipes unchanged. |
 | B04 | Admit borrowed-result source bindings, direct forwarding, use as arguments/projections and return-range forms only after proof/runtime wiring. Add Static origin with an actual backing/lifetime representation. Promote public compilation and capability metadata only after end-to-end checks. |
 | B05 | Complete the target's scalar/array/record/Buffer references and CFG last-use rules, beyond current scalar-slice references. Enforce whole-root conflicts, mutation/move/drop exclusions, lexical/root generations and bounded group/descriptor reclamation. |
 

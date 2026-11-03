@@ -1,5 +1,24 @@
 # Brownie C
 
+## Private returned-view VM
+
+Frame/destination bindings are implemented at `e183e7a`, with actual private
+op63/64/65 execution at `d468ca1`. `vm::run_slice_result` independently admits
+rootless borrowed inputs, executes scalar bodies/loans/forwarded calls and returns
+a native Held receipt. Shared/mutable results retain the selected input lifetime;
+mutable parents stay suspended through returned descendants. Terminal cleanup
+runs through the atomic handoff, and execution failure drains invocation metadata
+without undoing prior writes. See the [contract](docs/engineering/m2-slice-result-vm.md).
+Final Windows development/release each passed 11 native groups and 2,215 CLI
+cases on 485 matching inputs, without native result reuse. The development scalar
+parser stack regression is fixed at `af4aa13`. See the
+[evidence](docs/evidence/m2-slice-result-vm-windows-20261104.json).
+
+Guest-owned temporary roots, ordinary CALL integration, result locals/arguments
+and public metering remain gated. Public compilation, ordinary VM admission and
+capability flags still reject borrowed results. The implementation increments
+below retain their original verification scope.
+
 ## Private returned-view handoff and capture lifetime
 
 Implemented at `7f8f455`, with anonymous mutable capture restoration at
@@ -14,16 +33,17 @@ Windows development/release each passed 12 native groups and 208 CLI cases on
 [evidence](docs/evidence/m2-slice-result-runtime-windows-20261104.json).
 
 
-This is native component execution, not guest op63/64/65 dispatch. Public borrowed
-results stay gated until result/frame/capture bindings and cleanup are integrated.
+That increment covers native component execution. The private VM integration
+above now executes op63/64/65 in its admitted subset; public results stay gated.
 
-## Private returned-view IR: execution gated
+## Private returned-view IR preparation
 
 Implemented at `670a041`. A separate preparation/forward/return IR carries exact
 scalar/access and input-origin metadata. Its independent verifier rechecks CFG,
 live loans, suspended parents, recursive origins and unique cleanup-to-return
 recipes. Prepared identities cannot become ordinary scalar values. Public compile
-and VM admission stay closed; no returned reference or ticket executes. See the
+and ordinary VM admission stay closed. That increment's proof alone does not
+authorize execution; the private VM above separately admits its subset. See the
 [contract](docs/engineering/m2-slice-result-ir.md).
 Windows development/release each passed 10 native groups and 208 CLI cases on
 476 matching inputs; see the

@@ -50,8 +50,8 @@ writes. No Held receipt escapes on failure. The supplied State is invocation-own
 its input owners must not be reused after such a terminal failure.
 
 Private entry/forward/return use the provisional `80 * 65537` native transaction
-reserve. Each dispatched instruction costs one in addition; slice metadata/read/
-write cost 65537/4097 and UTF-8 costs a conservative 81921. Deferred recipe cleanup
+reserve. Each dispatched instruction costs one in addition; SUBSLICE/CLOSE/BEGIN/
+END cost 65537, LEN/READ/WRITE cost 4097 and UTF-8 costs a conservative 81921. Deferred recipe cleanup
 uses the transaction reserve rather than performing a second physical release.
 This budget exceeds the public one-million Fuel cap and is not a public price
 contract. Result close separately needs its existing native charge; abort is the
@@ -61,11 +61,37 @@ Public source compilation, ordinary VM opcode admission, capability flags, profi
 names and public prices/Fuel limits remain unchanged. This is not public source
 returned-reference support, Engine/Instance integration or a C ABI.
 
-## Initial verification
+## Verification
 
-Windows development passed nine native VM groups: twelve direct scalar/access
-roundtrips, branches/loops/subviews, reordered forwarding, grounded recursion and
-depth exhaustion, Fuel failure with retained writes/first offset, malformed result
-identity, returned descendants, UTF-8/scoped aliases/empty views and initial gates.
-The frame component separately passed two native development groups.
-Final reproducible development/release verification is recorded separately.
+Final Windows development and release each passed **11 native groups and 2,215
+CLI cases**, with 485 matching source/tool/fixture input hashes and no final native
+result reuse. Native groups comprise two frame groups and nine instruction-loop
+VM groups: twelve scalar/access roundtrips, branches/loops/subviews, reordered
+forwarding, grounded recursion/depth exhaustion, Fuel failure with retained writes
+and first offset, malformed identities, returned descendants, UTF-8/scoped aliases/
+empty views and initial admission gates. Mutable loop children END before parent
+reuse; terminal cleanup is performed once by handoff.
+
+CLI coverage per profile is 2,007 M1, 88 borrowed-result rejection and 120 temporary
+array borrow cases. Retained reports, CLI artifacts, compiler and every input were
+rechecked. All production files match `af4aa13` under Git LF. The final test-only
+mutable-loop strengthening and new verification harness are included in both
+snapshots. See [Windows evidence](../evidence/m2-slice-result-vm-windows-20261104.json).
+
+The first development M1 audit exposed a pre-existing native stack regression:
+32 nested scalar calls also overflowed in the retained prior runtime artifact.
+`af4aa13` splits scalar-only argument parsing away from aggregate capture parsing,
+removing its 64-binding lexical snapshot. Existing depth-32 check/run cases now
+succeed, while 33/64 produce the original compile limit. Both final profiles rerun
+all checks after this fix; pre-fix results are not reused as final evidence.
+
+To reproduce:
+
+```text
+python3 tools/verify-m2-slice-result-vm.py --profile development
+python3 tools/verify-m2-slice-result-vm.py --profile release
+```
+
+Full native M1/other M2 suites, Linux, OS isolation, ABI, packaging, allocator
+instrumentation and native size/stack-usage/timing were not verified. Local only;
+no push, release or deployment. Public returned-reference promotion remains gated.

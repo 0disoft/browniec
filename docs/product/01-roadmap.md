@@ -1,6 +1,6 @@
 # Roadmap
 
-- Reconciled: 2026-11-03; B01 preparation at `670a041` and B02/B03 native transactions at `7f8f455`/`b82500d`, updated 2026-11-04.
+- Reconciled: 2026-11-03; private returned-view VM integration at `d468ca1`, updated 2026-11-04.
 - This is the current delivery plan. The old increment log is preserved in
   [history](history/roadmap-20261103.md); its dated gates are not current TODOs.
 - The complete requirement crosswalk and actionable gaps are in
@@ -57,14 +57,15 @@ required; this native transaction does not promote public execution.
 
 ## Next implementation units
 
-1. B01 preparation subset is implemented: explicit non-executable result recipes
-   with independent proof. Complete escaping lifetime/runtime destination proof
-   through B02/B03; do not make this IR executable by changing opcode admission alone.
-2. B02 native handoff and zero-Fuel abort are implemented. Next bind checked
-   result metadata to caller frame/site destinations and private op63/64/65 dispatch.
-3. B03 native selected capture/root lifetime and descendant suspension are
-   implemented. Route compiler captures/callee-local cleanup through the transaction
-   and verify the integrated VM failure and metering paths.
+1. B01 preparation recipes and independent proof are implemented. The private VM
+   adapter separately admits a rootless borrowed-input dialect; proof alone never
+   authorizes ordinary Program execution.
+2. B02 native handoff/abort, caller result/frame/site bindings and private op63/64/65
+   dispatch are connected. Complete mixed owned-local/ordinary CALL integration and
+   reconcile the provisional private reserve with public metering.
+3. B03 native capture/root lifetime and descendant suspension are implemented.
+   Rootless callee cleanup runs through handoff; integrate guest-created temporary
+   roots and owned CALL captures before broad source execution.
 4. B04: lower admitted borrowed-result uses and promote public execution only
    after end-to-end validation. Extend origin/grammar support deliberately.
 5. D01-D04 and L05-L06: connect guest Buffer, resource-bearing wrappers and

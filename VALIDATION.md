@@ -1,5 +1,27 @@
 # Validation
 
+- Private returned-view VM bindings/dispatch are implemented at `e183e7a` and
+  `d468ca1`; the existing scalar parser stack regression is fixed at `af4aa13`.
+  `vm::run_slice_result` independently admits rootless borrowed inputs and executes
+  63/64/65 with separate result identities, bounded frames, canonical loans,
+  forwarding and transaction-owned terminal cleanup. A native Held receipt escapes
+  only after successful handoff; parents stay suspended through descendants.
+  After initial enter, failures drain invocation metadata at zero Fuel while
+  preserving the first error and prior writes. Initial admission failure preserves
+  input ownership. Guest-owned temporary roots and ordinary CALLs stay gated.
+  Private reserve remains 80*65537; do not promote public syntax/flags/Fuel yet.
+  Final Windows development/release each passed 11 native groups and 2,215 CLI
+  cases, with 485 matching inputs and no final native result reuse. All production
+  sources match `af4aa13` under Git LF. Pre-fix checks are superseded; final profiles
+  rerun after the parser fix. Full native M1/other M2/Linux/isolation/ABI/packaging/
+  allocator/native size-stack-usage/timing were not verified. Local only; no push.
+  Next: mixed owned-local/ordinary CALL capture integration and public metering,
+  then B04 source bindings/admission. See the
+  [contract](docs/engineering/m2-slice-result-vm.md) and
+  [Windows evidence](docs/evidence/m2-slice-result-vm-windows-20261104.json).
+
+Earlier entries below describe their named implementation commits.
+
 - Private scalar-slice body-origin analysis is implemented at `0d1a8cb`.
   `compiler::inspect_slice_results` returns one-based formal input summaries only.
   An internal length/CALL proxy Program reuses source and independent CFG/type/
