@@ -23,6 +23,12 @@ pub struct Table {
     usize[16] return_lengths;
     // Zero scalar/array/wrapper; otherwise nominal record ID + 1, not a VM site.
     u8[16] return_records;
+    // Nonzero encodes a scalar[] result; bit128 is exclusive access. These
+    // declarations are analysis-only until body-origin proof and VM handoff.
+    u8[16] return_slice_elements;
+    // Upper bound on exact-mode input origins, one bit per argument position.
+    // Multiple candidates are not a multi-origin return or an origin proof.
+    u8[16] return_slice_candidates;
     u8[128] param_types;
     // Zero denotes a scalar/wrapper; 1..4096 is an exact scalar-array shape.
     usize[128] param_lengths;
@@ -38,7 +44,8 @@ pub struct Table {
 }
 pub fn Table empty() {
     return Table { .begins = [0; 16], .ends = [0; 16], .bodies = [0; 16],
-        .body_ends = [0; 16], .arities = [0; 16], .return_lengths = [0; 16], .return_records = [0; 16], .param_begins = [0; 128],
+        .body_ends = [0; 16], .arities = [0; 16], .return_lengths = [0; 16], .return_records = [0; 16],
+        .return_slice_elements = [0; 16], .return_slice_candidates = [0; 16], .param_begins = [0; 128],
         .param_ends = [0; 128], .return_types = [0; 16], .param_types = [0; 128],
         .param_lengths = [0; 128], .param_arrays = [0; 128], .param_records = [0; 128], .param_slices = [false; 128], .param_slice_elements = [0; 128], .count = 0, .entry = 16 };
 }
@@ -64,8 +71,20 @@ fn Result<u8, errors::Error> record_type(ref u8[] source, ref lexer::State s) {
 fn Result<usize, errors::Error> signature(ref u8[] source, ref mut lexer::State s, ref mut Table t) {
     if (t.count >= 16) { return .err(errors::make(4, s.begin)); }
     let usize fn_word = lexer::word(source, s, b"fn")?;
-    let u8 result_record = record_type(source, s)?;
-    let u8 result_type = if (result_record == 0) { types::parse(source, s)? }
+    let bool result_slice = s.kind == 2 && lexer::equal(source[s.begin..s.end], b"ref");
+    var u8 result_element = 0;
+    if (result_slice) {
+        let usize reference = lexer::next(source, s)?;
+        let bool exclusive = s.kind == 2 && lexer::equal(source[s.begin..s.end], b"mut");
+        if (exclusive) { let usize access = lexer::next(source, s)?; }
+        result_element = types::parse(source, s)?;
+        if (!types::scalar(result_element)) { return .err(errors::make(3, s.begin)); }
+        if (exclusive) { result_element |= 128; }
+        let usize open_slice = lexer::punctuation(source, s, 91)?;
+        let usize close_slice = lexer::punctuation(source, s, 93)?;
+    }
+    let u8 result_record = if (result_slice) { 0 } else { record_type(source, s)? };
+    let u8 result_type = if (result_slice) { 0 } else if (result_record == 0) { types::parse(source, s)? }
         else { let usize named = lexer::next(source, s)?; 0 };
     if (result_record != 0 && s.kind == 60) { return .err(errors::make(3, s.begin)); }
     var usize result_length = 0;
@@ -79,6 +98,7 @@ fn Result<usize, errors::Error> signature(ref u8[] source, ref mut lexer::State 
     t.return_types[f] = result_type;
     t.return_lengths[f] = result_length;
     t.return_records[f] = result_record;
+    t.return_slice_elements[f] = result_element;
     t.begins[f] = s.begin;
     t.ends[f] = s.end;
     let bool main = lexer::equal(source[s.begin..s.end], b"main");
@@ -122,13 +142,22 @@ fn Result<usize, errors::Error> signature(ref u8[] source, ref mut lexer::State 
         t.param_records[at] = parameter_record;
         t.param_slices[at] = parameter_slice;
         t.param_slice_elements[at] = slice_element;
+        if (result_slice && parameter_slice && slice_element == result_element) {
+            let usize one = 1;
+            let i64 candidate = cells::pack(one << arity, begin)?;
+            let u8 bit = switch (num::u8_from_i64(candidate)) {
+                case .ok(value): { value } case .err(_): { return .err(errors::make(4, begin)); }
+            };
+            t.return_slice_candidates[f] |= bit;
+        }
         arity += 1;
         let usize next = lexer::next(source, s)?;
         if (s.kind == 41) { break; }
         let usize comma = lexer::punctuation(source, s, 44)?;
         if (s.kind == 41) { return .err(errors::make(2, s.begin)); }
     }
-    if (main && (arity != 0 || result_type != 1 || result_length != 0 || result_record != 0)) { return .err(errors::make(3, t.begins[f])); }
+    if (result_slice && t.return_slice_candidates[f] == 0) { return .err(errors::make(3, t.begins[f])); }
+    if (main && (arity != 0 || result_type != 1 || result_length != 0 || result_record != 0 || result_slice)) { return .err(errors::make(3, t.begins[f])); }
     if (main) { t.entry = f; }
     t.arities[f] = arity;
     let usize close = lexer::punctuation(source, s, 41)?;

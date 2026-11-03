@@ -1352,6 +1352,16 @@ pub fn Result<ir::Program, errors::Error> compile(ref u8[] source) {
         case .ok(value): { value } case .err(_): { return .err(errors::make(1, 0)); }
     };
     var functions::Table signatures = functions::scan(source)?;
+    // Signature candidates do not prove a returned borrow's origin or lifetime.
+    // Reject every such declaration, including unreachable functions, before
+    // Program/result preparation can mistake it for an ordinary scalar result.
+    var usize declaration = 0;
+    while (declaration < signatures.count) {
+        if (signatures.return_slice_elements[declaration] != 0) {
+            return .err(errors::make(3, signatures.begins[declaration]));
+        }
+        declaration += 1;
+    }
     var ir::Program p = ir::empty();
     p.function_count = signatures.count;
     p.entry = signatures.entry;

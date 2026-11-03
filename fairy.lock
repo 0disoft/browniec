@@ -3,21 +3,8 @@
   "packageInstanceAlgorithm": "fairyc.package-instance/v1",
   "sourceDigestAlgorithm": "fairyc.package-source/v1",
   "language": "fairyc-language/20",
-  "root": "fypi1-sha256-159056b6123b6474cde0908484e1628a78171063d193b815dd9600cc766691e8",
+  "root": "fypi1-sha256-e75330c9d1bc0e7f1810ca5316bd22f4b0ff9308dfc5b1c65894e04a62d7cd19",
   "packages": [
-    {
-      "id": "fypi1-sha256-159056b6123b6474cde0908484e1628a78171063d193b815dd9600cc766691e8",
-      "role": "root",
-      "packageUid": "browniec.cli",
-      "sourceKind": "local",
-      "localPath": ".",
-      "sdkIdentity": "",
-      "runtimeAbi": "",
-      "sourceIdentity": "fysrc1-sha256-4b0b45539c8d4417835525dc3e78e1e56f837c933e2223f0015d24fe091cb67b",
-      "sourceDigest": "fysrc1-sha256-4b0b45539c8d4417835525dc3e78e1e56f837c933e2223f0015d24fe091cb67b",
-      "version": "0.1.0",
-      "features": []
-    },
     {
       "id": "fypi1-sha256-674bab7b189dd71fd8e59dfdd36327d4f5ea5dd5698f9920c9cc6700f85c3bf2",
       "role": "standard-library",
@@ -30,11 +17,24 @@
       "sourceDigest": "fysrc1-sha256-c531e88e52b684a34cf9688eda19e5cafcc5788e7a4bbf7e5121e86874a7246a",
       "version": "0.0.0-stage0.87",
       "features": []
+    },
+    {
+      "id": "fypi1-sha256-e75330c9d1bc0e7f1810ca5316bd22f4b0ff9308dfc5b1c65894e04a62d7cd19",
+      "role": "root",
+      "packageUid": "browniec.cli",
+      "sourceKind": "local",
+      "localPath": ".",
+      "sdkIdentity": "",
+      "runtimeAbi": "",
+      "sourceIdentity": "fysrc1-sha256-202f09fad1aec21867852d7aa9b5bc69a14f215cfd4f8640ffd76e5913c70e17",
+      "sourceDigest": "fysrc1-sha256-202f09fad1aec21867852d7aa9b5bc69a14f215cfd4f8640ffd76e5913c70e17",
+      "version": "0.1.0",
+      "features": []
     }
   ],
   "dependencies": [
     {
-      "owner": "fypi1-sha256-159056b6123b6474cde0908484e1628a78171063d193b815dd9600cc766691e8",
+      "owner": "fypi1-sha256-e75330c9d1bc0e7f1810ca5316bd22f4b0ff9308dfc5b1c65894e04a62d7cd19",
       "binding": "stdlib",
       "target": "fypi1-sha256-674bab7b189dd71fd8e59dfdd36327d4f5ea5dd5698f9920c9cc6700f85c3bf2"
     }
