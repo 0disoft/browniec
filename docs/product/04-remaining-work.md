@@ -1,0 +1,211 @@
+# Remaining Work and Design Reconciliation
+
+- Reviewed: 2026-11-03, implementation `0d1a8cb`, documentation baseline `df56e7d`.
+- Scope: completion of the accepted Brownie design and its M0-M5 delivery gates.
+- Evidence method: source/contract review, reference ZIP inspection, import-graph
+  inspection and existing receipt/hash checks. No new native execution, benchmark,
+  isolation, ABI or full-profile conformance run was performed for this audit.
+- Authority: repository owning contracts and ADRs take precedence over the external
+  design package. This audit records gaps; it does not silently adopt its schemas,
+  limits, opcodes, commands or embedded instructions.
+
+## Current delivery
+
+M0 feasibility and the bounded M1 scalar checkpoint have recorded evidence. M2
+public source supports six scalar arrays, nominal scalar/nested records, helper
+locals, by-value parameters/results, construction, copy/replacement/assignment,
+array/record result expressions and paths, fixed-array UTF-8 checks, typed shared/
+exclusive scalar slices, lexical aliases/reborrows and whole/ranged/temporary CALL
+arguments. Exclusion remains per owned root.
+
+Returned-slice signatures and single-input body-origin summaries are private
+analysis only. Public compilation rejects all borrowed-result declarations.
+The latest focused [receipt](../evidence/m2-slice-result-origins-windows-20261103.json)
+records 12 native groups and 990 CLI cases per Windows development/release profile.
+This audit rechecked all 462 recorded input hashes and both retained CLI artifact
+hashes. Development's documented harness-only result reuse remains explicit;
+release ran the entire selected scope. These are not full M2 or full-profile tests.
+
+There are 17 private Buffer modules, with focused historical native receipts for
+storage/ownership, growth, writes, append/resize, leases, UTF-8 sessions and host
+cleanup. None is reachable from the CLI's current local-module import graph.
+They are reusable foundations, not guest Buffer/Instance integration.
+
+M3 typed host suspension, M4 restricted Windows delivery and M5 public DLL/clean-
+machine delivery are not implemented. `core: true` in the experimental version
+JSON means that the narrow native CLI exists; it does not certify the full
+`brownie.safe/0.3` profile or completion of M3. Restricted/embed remain false.
+
+## Coverage of every reference required feature
+
+The reference ZIP's `contracts/profile.json` lists 40 required features. Narrow
+means implemented within the experimental profile, not full-profile conformance.
+Partial/private means source or native foundations exist but integration is open.
+Missing means the planned public surface has no implementation. The work IDs
+below cover prose obligations beyond this feature list as well.
+
+| Reference feature | Current scope | Remaining work |
+| --- | --- | --- |
+| modules | One fixed `module main` | L01, C01 |
+| explicit_import_alias | Missing | L01 |
+| public_functions | Missing | L01, I01 |
+| local_type_inference | Explicit local types required | L02 |
+| let_var | Narrow | L02, L05 |
+| checked_integer_arithmetic | Narrow six scalar types | V01, V02 |
+| bool_short_circuit | Narrow | V01 |
+| if_expression | Statement if only | L02 |
+| while | Narrow | R03, V01 |
+| classic_for | Narrow, pure scalar headers | L02, V01 |
+| break_continue | Narrow lexical transfers | R03, V01 |
+| direct_function_calls | Narrow | L01, R03, V01 |
+| recursion_with_frame_limit | Narrow bounded VM frames | R02, C05, V01 |
+| scalar_fixed_arrays | Narrow, repeated initializers | L03, C05 |
+| plain_structs | Narrow scalar/nested records | L03, L05, V01 |
+| shared_borrows | Scalar slices | B05 |
+| mutable_borrows | Scalar slices and lexical children | B05 |
+| single_parameter_borrow_returns | Private signatures/origin analysis | B01-B04 |
+| array_views | Narrow scalar views | B02-B05 |
+| half_open_slices | Narrow scalar ranges | B04, B05 |
+| option_result | i32/bool payloads, depth one | L05 |
+| result_propagation | Narrow Result and accepted M1 Option extension | L05, L06 |
+| exhaustive_shallow_switch | Narrow | L05, V01 |
+| must_use_result | Missing | L06 |
+| owned_buffer | Private native foundations | D01-D04 |
+| utf8_validation | Fixed-array views; private Buffer scanner | D05, R03 |
+| capability_output | Missing | I02, H01 |
+| typed_host_requests | Missing | H01-H04 |
+| fuel | Narrow opcode prices; private Buffer metering | R02-R04, C05 |
+| memory_quota | Aggregate backing cap; private Buffer ledgers | R01-R03 |
+| deadline | Missing general runtime/compile deadline | R04 |
+| source_diagnostics | Single-source byte offset | C03 |
+| utf8_text_literals_ref_str | Missing | D05 |
+| explicit_text_bytes | Missing | D05 |
+| bounded_step_work | Private Buffer continuations; no VM step API | R03, R05 |
+| engine_total_quota | Private ledger arithmetic, no Engine coordinator | R01, R02 |
+| complete_aggregate_construction | Narrow arrays/records | L03, L05, V01 |
+| explicit_root_lifetimes | Narrow array/record/slice generations | B05, R02, R05 |
+| engine_poison_boundary | Missing persistent Engine state | R01, R04 |
+| streaming_utf8_validation | Private Buffer scanner/session | D05, R03 |
+
+## Language completion
+
+| ID | Work and completion condition |
+| --- | --- |
+| L01 | Implement explicit multi-module snapshots, import aliases, name resolution, `pub` visibility and public entry selection. Preserve source identities across resolution and reject duplicate/ambiguous/cyclic-invalid definitions within compile budgets. |
+| L02 | Add the target's local type inference, `void` returns and `if` expressions. Review current pure-for restrictions and other narrow grammar choices explicitly rather than silently widening them. Add only the agreed target syntax. |
+| L03 | Complete array element-list initialization and record field shorthand, preserving exact arity, source evaluation order, complete initialization and independent values. Existing repeated-array/record constructors must keep their current behavior. |
+| L04 | Implement selected-place receiver/index evaluation before RHS and agreed compound assignment forms; hold the originally selected root/location through RHS effects and independently verify its identity, lifetime and overlap. Ordinary current stores are not a generic selected-place contract. |
+| L05 | Extend Option/Result to the agreed wide scalars, arrays, records, Buffer and nested tagged values. Separate wrapper depth (target four), plain-struct depth and total traversal/size budgets. Compute whole-type copyability and moves, including inactive Buffer variants; retain the first-profile forbidden field/type combinations. |
+| L06 | Implement must-use Result handling, explicit discard and `.is_ok` under the target semantics, with proper errors for unhandled values. Extend switch/propagation and cleanup to resource-bearing payloads. Preserve or deliberately reconcile the accepted M1 Option propagation extension. |
+| L07 | Reconcile lexical compatibility: leading BOM, LF/CRLF versus lone CR, raw NUL, nested block comments and byte spans. The current lexer has line comments, treats CR as whitespace and does not implement the full reference lexical contract. |
+
+## Borrowed results and general references
+
+| ID | Work and completion condition |
+| --- | --- |
+| B01 | Define returned-view IR metadata/instructions and reconstruct exact origin, type, access, destination and live-loan facts independently. Private origin summaries are groundwork, not a result-lifetime proof. |
+| B02 | Implement atomic CALL/return ticket handoff, generation headroom, caller destination publication and abort cleanup. Shared/exclusive results must survive callee cleanup without duplicate ownership or stale tickets. |
+| B03 | Retain only the selected actual argument's captures/owner until the returned view ends, including anonymous literal/producer roots. Keep exclusive parents suspended through the returned child's lifetime. Ordinary CALL currently ends all captures. |
+| B04 | Admit borrowed-result source bindings, direct forwarding, use as arguments/projections and return-range forms only after proof/runtime wiring. Add Static origin with an actual backing/lifetime representation. Promote public compilation and capability metadata only after end-to-end checks. |
+| B05 | Complete the target's scalar/array/record/Buffer references and CFG last-use rules, beyond current scalar-slice references. Enforce whole-root conflicts, mutation/move/drop exclusions, lexical/root generations and bounded group/descriptor reclamation. |
+
+Grounded recursive origin analysis, typed scalar slices, lexical mutable children,
+inline CALL ranges and temporary CALL roots are already implemented; do not
+schedule them again. Parenthesized temporary roots, repeated slice chaining,
+implicit access-mode coercions and disjoint mutable splitting are not automatic
+requirements of this audit. They need a justified profile decision if desired.
+
+## Guest Buffer and text integration
+
+| ID | Work and completion condition |
+| --- | --- |
+| D01 | Add the guest move-only Buffer type, ownership-aware locals/parameters/results and typed IR/verifier/VM integration. Connect the existing native resource/owner/accounting implementation to actual Instance ownership. |
+| D02 | Expose and type-check `bytes::empty`, `copy`, `append`, `push`, `reserve`, `view`, `len`. Separate allocator Result errors from hard quota/Fuel traps. Keep old values unchanged on preparation failure and reject self-append through a live view. |
+| D03 | Coordinate admitted owner/session registries, replacement transactions, generation retirement, object/Instance/Engine old-plus-new peaks and native metadata allocation. Integrate host sweep/close with automatic Instance teardown; private explicit host hooks are insufficient. |
+| D04 | Integrate Buffer moves, loans, tagged payloads, failure/cancellation and partial initialization cleanup without guest cleanup on failure. Preserve exactly one owner and account for retained capacity and pending work. |
+| D05 | Add Static UTF-8 literals/`ref str`, explicit `text::bytes`, byte `text::equal` and guest Buffer/input UTF-8 scanning. Reuse native continuation/lease machinery, preserve split sequences across 4096-byte chunks, precharge reads and resume cursors without replay. No dynamic/mutable owned text or constant-time equality promise is required. |
+
+## Engine, Instance and bounded runtime
+
+| ID | Work and completion condition |
+| --- | --- |
+| R01 | Implement owner-thread Engine and one-shot Instance lifecycle APIs, immutable explicitly reusable/pinned Programs, serialized compilation and reentry guards. Current `vm::run` fresh state is not the complete Engine/Instance API. |
+| R02 | Account for control, compile scratch, Program retention, frames/input/owners/loans/descriptors, pending reply/output and all simultaneous Instances under Engine ceilings. Reserve before allocation, distinguish native OOM from quota and actual process RAM from logical accounting. |
+| R03 | Add bounded `step(1..4096)` and resumable transfer/initialization/CALL/RET/copy/tag/store/cleanup recipes. Bound payload chunks and metadata visits, including planning and final publication; do not hide whole-table/type-graph work in one unit. |
+| R04 | Implement compile/run monotonic deadlines, cancellation, first-cause precedence, STOPPING cleanup and stable terminal snapshots. Separate guest/input/quota failures from persistent Engine poison; propagate poison to nonterminal children while preserving existing terminal results. |
+| R05 | Make cleanup work-budgeted even after Fuel exhaustion; preserve source/target ownership through multi-chunk commits, check stale generations and invalidate roots/groups without unbounded scans. Prove quantum-independent result/Fuel for equal resource/host outcomes. |
+
+## Input, output and typed host boundary
+
+| ID | Work and completion condition |
+| --- | --- |
+| I01 | Bind an allowed public i32 entry with zero arguments or `ref u8[]` input. Own a bounded input snapshot; limit file/stdin reads before allocation and preserve the same snapshot through execution. Current SOURCE is code input, not guest input bytes. |
+| I02 | Implement grant-controlled `output::emit`, staged output storage and limits, success-only publication, output ownership and binary/JSON/text sinks. Trap/cancel/deadline/poison must discard unpublished output; sink partial failure must not replay computation. |
+| H01 | Implement policy/run/project/catalog admission and the reachable-requirements <= declarations <= grants <= Engine-ceiling chain. Source metadata never grants authority; builtins and host imports need one consistent typed contract. |
+| H02 | Implement bounded typed host catalog binding/digest and exact TLV request/reply codecs, including signed/canonical-bool/wire-layout validation and unknown/duplicate/malformed rejection. No ambient filesystem/network/command authority enters the guest. |
+| H03 | Add HOST_REQUEST/WAITING_HOST/reply/INSTALL_REPLY state transitions, unique request identity, one outstanding exchange, limits/deadlines/cancel, malformed/duplicate/late replies and stable request/terminal observations. Start with an in-memory fake adapter. |
+| H04 | Snapshot/adopt valid reply backing with quota/Fuel preflight, preserving request/Fuel on preparation OOM and preventing retry after commit. Bound host-call count, per-call/cumulative payloads and adapter cost; report unknown external effects without automatic replay. |
+
+## CLI, diagnostics and profile graduation
+
+| ID | Work and completion condition |
+| --- | --- |
+| C01 | Add explicit project/run/policy/catalog loaders and source maps. Validate strict bounded JSON, explicit entries, canonical path uniqueness, anchored root membership/reparse rejection and Windows path/device/ADS/case rules. No ambient discovery or glob expansion. |
+| C02 | Add the planned guest `--input`, project/policy/grant controls, `inspect --ir`, restricted check/run and broker-only worker surfaces as their underlying implementations become available. Preserve explicit unavailable errors and no unrestricted fallback. |
+| C03 | Extend diagnostics to source index and half-open start/end byte spans, stable line maps, bounded UTF-8 messages/counts and explicit no-source values. Validate child spans and escape terminal-control/line injection; never read arbitrary files for snippets. |
+| C04 | Complete version/result metadata for build/profile/IR/cost/ABI/IPC, delivery availability, metrics and staged output. Keep guest return data separate from process status and distinguish computation, publication, transfer and external-effect outcomes. |
+| C05 | Deliberately reconcile the narrow implementation with the full target's limits and IR/cost revisions. Current source is 4096 bytes, 1024 tokens, 16 functions, 128 global value registers, 256 instructions, 32 call frames, 16 array/record/slice sites and 64KiB aggregate backing. The package's much larger policy limits and u16 operand format are not already supported and must not be copied as current capabilities. |
+
+## Restricted Windows delivery
+
+| ID | Work and completion condition |
+| --- | --- |
+| W01 | Create and verify the restricted process/token/AppContainer, explicit inherited handles, Job process/commit/CPU limits and suspended-start/assignment sequence before untrusted compilation. Fail setup closed. |
+| W02 | Implement authenticated private pipe setup/ACL/nonce, bounded RX/TX and exact IPC framing/correlation/revision validation. Reject truncated/duplicate/trailing/malformed frames and strict JSON violations before dispatch or publication. |
+| W03 | Implement serialized parent broker phases, source/entry/policy authority and the staged-result publication barrier: valid result, exit 0, expected EOF/no trailing frame, no prior cancellation/failure and live deadline. Check-only uses the same publication discipline. |
+| W04 | Implement cancellation races, late lawful-message drain without host dispatch/output, noninterleaved CANCEL TX, monotonic session/phase/idle deadlines, bounded grace and forced Job termination. Do not overwrite the first cause. |
+| W05 | Keep OVERLAPPED/buffer/handle/session I/O leases until actual completion, not merely CancelIoEx or child exit. Bound REAPING, pending I/O, event queues and adapter residual work; retain session slots/reservations until their real release conditions. |
+| W06 | Enforce aggregate parent/session/child-commit/transport/adapter/request/reply budgets and verify the required Windows race/denial cases on the real OS. Only then enable restricted availability. Isolation does not establish that a guest decision is correct. |
+
+## Embedding, packaging and evidence
+
+| ID | Work and completion condition |
+| --- | --- |
+| E01 | Establish an actual Brownie native DLL export and C-host call with ABI bootstrap/layout/version/capacity validation. Existing Fairy pub functions or historical adapter inspection are not Brownie export evidence. |
+| E02 | Implement the bounded process-wide lazy typed handle registry, nonwrapping/retired generations, Engine ownership, owner-thread lifetime identity, synchronization and busy/reentry rejection. Do not pretend arbitrary C pointers can be validated safely. |
+| E03 | Implement Program/Instance pin/release/destroy, sized output structs, event/reply/output pointer lifetimes and stable terminal metrics/errors across C calls, including malformed/wrong-thread/stale-handle cases. |
+| E04 | Package executable/required runtime (and DLL for embed), license/dependency notices and integrity metadata; run without developer compilers on a clean Windows machine. Verify Linux natively before promising Linux support: the toolchain has a Linux cross-build artifact, not a Brownie Linux execution pass. |
+| V01 | Close full-profile conformance using native source-to-VM cases, not model checks or a sum of increment counts. Map/adapt the reference's 32 original source cases and wider accepted obligations explicitly; primitive negative tests alone do not execute the original policy/entry envelopes. |
+| V02 | Add risk-focused parser/verifier/lifetime/TLV/IPC mutation/fuzz and allocator/shim failure coverage as the corresponding boundaries are implemented. Check arithmetic/initialization/overlap/generation/rollback and the broker/layout/Buffer-fallback review counterexamples. |
+| V03 | Measure representative validation, byte-transform and rule workloads: cold/warm compile, explicit Program reuse, setup/run/publication, heap allocation, accounted/retained/process memory, worker/IPC/host costs and quantum invariance. No current performance target is a measured guarantee. |
+| V04 | Measure and bound retained build outputs/cache/symbols/toolchain costs and successful/failed scratch cleanup, including 100 retained edit builds. Keep invocation scratch separate and never prune user sources or another active build. |
+| V05 | Define a profile-specific release unit, compatibility/rollback and supported-platform evidence, minimal relevant CI checks and useful user examples/runbooks. There is currently no configured GitHub Actions workflow; do not create an expensive matrix merely to audit docs. Release/push decisions remain separately authorized. |
+
+## Budget and compatibility decisions still open
+
+The accepted initial targets remain: reused setup p95 <=1ms; 10KiB pure compile+
+verify p95 <=10ms; empty Instance accounted memory <=32KiB; zero warm scalar-loop
+heap allocations; 100 retained edit builds <=32MiB project outputs. All are
+unmeasured. The current 4KiB source ceiling cannot run the 10KiB compilation target;
+C05 must define the intended benchmark/profile rather than silently raising caps.
+
+Raw-package dialect differences (including its Result-only propagation versus
+accepted M1 Option propagation), IR numbering/operand widths, exact trap/cost
+codes and public `core` wording require deliberate reconciliation. Preserve the
+working experimental contracts until an intentional profile promotion is agreed.
+
+## Not a remaining-work promise
+
+JIT, guest GC, external bytecode/runtime disk caches, arbitrary FFI/dynamic library
+loading, user generics/enums/resources, floating point, Map, regex, closures,
+dynamic text ownership, threads and multi-tenant worker pools remain excluded or
+out of the first profile. No optional ergonomic syntax or generated ops template
+becomes a release requirement merely because a file mentions it.
+
+## Update discipline
+
+Use this inventory for current omissions and the [roadmap](01-roadmap.md) for
+ordering. Keep completed increments and exact receipts historical; the previous
+roadmap is preserved in [history](history/roadmap-20261103.md). Update the owning
+contract, this inventory and actual delivery flags when a gap is closed. Never
+convert private native evidence into public guest/OS/ABI completion by wording.
