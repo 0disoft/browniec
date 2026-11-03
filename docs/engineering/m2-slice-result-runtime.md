@@ -99,7 +99,8 @@ and private opcode dispatch. Its proved terminal CLOSE/END recipe routes through
 these transactions. [Owned-array/ordinary CALL integration](m2-slice-result-owned-vm.md) now adds
 owned roots and scalar/array CALLs through the same transaction. The
 [record successor](m2-slice-result-record-vm.md) adds record locals and mixed CALL
-batches. Native owned entry inputs and final public metering remain pending.
+batches. [Explicit native owned entry](m2-slice-result-entry.md) now uses the same
+initial transaction. Final public metering remains pending.
 General borrowed-result expressions/locals/arguments, Static and public promotion
 remain separately gated. No Engine lifecycle, isolation or packaging is implied.
 

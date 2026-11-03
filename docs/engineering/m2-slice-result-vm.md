@@ -38,7 +38,8 @@ The [owned-array increment](m2-slice-result-owned-vm.md), implemented at `5cccbd
 now admits owned locals, temporary repeated arrays and owned CALL results,
 scalar/array ordinary CALLs and owned argument copies. The
 [record successor](m2-slice-result-record-vm.md) adds record sites and mixed CALLs.
-Native owned entry arguments remain gated. Source results still require the independently
+The [explicit native entry](m2-slice-result-entry.md) now accepts owned arguments;
+the legacy entry stays scalar/borrowed-only. Source results still require the independently
 proved borrowed input origin: callee-local/by-value/temporary roots cannot escape.
 General result locals/expressions/argument use, direct return-range syntax and
 Static remain gated.

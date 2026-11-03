@@ -1,5 +1,30 @@
 # Validation
 
+- Explicit native owned entry is implemented at `8bf37de`. The private
+  `vm::run_slice_result_owned` accepts formal-indexed array/record owner tokens
+  alongside scalar cells and borrowed captures. It prepays the existing aggregate
+  CALL work and stages authority plus all value copies in one initial transaction.
+  Copied formals bind into the existing frame/record registry; ordinary CALL,
+  owned return and borrowed handoff cleanup reuse their existing paths. Value
+  copying does not consume source tokens; borrowed Capture drop flags still apply.
+  Admission/initial-entry failure preserves native owners/pool/payload. Execution
+  failure after entry drains originals and copies at zero Fuel, preserving prior
+  writes and the first error. Revalidate native input tokens after any error.
+  Legacy `run_slice_result` stays scalar/borrowed-only. No public syntax, capability,
+  Program-layout, price or public Fuel-cap changes; the private reserve is unchanged.
+  Final Windows development/release each passed 30 native groups and 208 CLI cases
+  on 497 matching input hashes. All 111 production files match `8bf37de`
+  under Git LF. Development's seven-group entry batch began before the commit with
+  identical final inputs; original batch HEADs are retained. Fresh native batches
+  resume only with matching input/compiler/report hashes; no historical result reuse.
+  Full M1/other M2/Linux/isolation/ABI/packaging/allocator/native size-stack/timing
+  were not verified. Next: reconcile public metering, then general returned-view
+  source bindings/admission. Local only; no push/release/deployment. See the
+  [contract](docs/engineering/m2-slice-result-entry.md) and
+  [Windows evidence](docs/evidence/m2-slice-result-entry-windows-20261104.json).
+
+Earlier entries below retain their named implementation and verification scopes.
+
 - Private record CALL and local ownership are implemented at `e01a9b1`, following
   shared record byte-view adapters at `bcd56f4`. The returned-view VM executes
   record create/copy/read/write/drop/assign/subassign/replace/subreplace and

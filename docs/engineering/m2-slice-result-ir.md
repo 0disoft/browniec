@@ -70,7 +70,8 @@ handoff, selected capture/root retention and exclusive-parent suspension. The
 destinations, frames, rootless sites and op63/64/65. It defers the proved terminal
 CLOSE/END recipe to atomic handoff; the ordinary VM must not execute that recipe
 unchanged. [Owned array/record locals and ordinary CALL integration](m2-slice-result-record-vm.md)
-now execute privately. Native owned entry inputs, final public metering, Static
+now execute privately. [Explicit native owned entry](m2-slice-result-entry.md) is
+also connected. Final public metering, Static
 origins, inline return reslicing and general
 borrowed-result binding/expression/argument admission remain later work.
 

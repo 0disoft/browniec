@@ -1,6 +1,6 @@
 # Roadmap
 
-- Reconciled: 2026-11-03; private owned-array/CALL integration at `5cccbd3`; record integration at `e01a9b1` is described in [the successor contract](../engineering/m2-slice-result-record-vm.md), updated 2026-11-04.
+- Reconciled: 2026-11-03; private owned-array/CALL integration at `5cccbd3`; record integration at `e01a9b1` is described in [the successor contract](../engineering/m2-slice-result-record-vm.md), explicit native owned entry at `8bf37de`, updated 2026-11-04.
 - This is the current delivery plan. The old increment log is preserved in
   [history](history/roadmap-20261103.md); its dated gates are not current TODOs.
 - The complete requirement crosswalk and actionable gaps are in
@@ -66,7 +66,8 @@ required; this native transaction does not promote public execution.
    are integrated; reconcile the private reserve with public metering.
 3. B03 native capture/root lifetime and descendant suspension are implemented.
    Guest-created array temporaries, record locals and mixed CALL captures now use
-   the same owner table and terminal cleanup. Complete native owned entry inputs.
+   the same owner table and terminal cleanup. [Explicit native owned entry](../engineering/m2-slice-result-entry.md)
+   now copies array/record inputs through the initial transaction.
 4. B04: lower admitted borrowed-result uses and promote public execution only
    after end-to-end validation. Extend origin/grammar support deliberately.
 5. D01-D04 and L05-L06: connect guest Buffer, resource-bearing wrappers and

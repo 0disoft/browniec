@@ -91,8 +91,9 @@ share the root build artifact. CLI continuation rechecks all input/compiler and
 report hashes against the retained fresh native receipt. Failed native stdout
 is retained as diagnostic evidence; it never qualifies for continuation.
 
-Native owned entry arrays/records, general returned-reference source bindings,
-Static and public promotion remain gated. The provisional private reserve remains
+The [native-entry successor](m2-slice-result-entry.md) now admits explicit owned
+array/record inputs. General returned-reference source bindings, Static and public
+promotion remain gated. The provisional private reserve remains
 `80 * 65537`; public metering needs reconciliation before promotion. Full M1/
 other M2 suites, Linux, isolation, ABI, packaging, allocator instrumentation and
 native size/stack/timing are outside this increment's verification scope.

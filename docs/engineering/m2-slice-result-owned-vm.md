@@ -8,7 +8,8 @@ public source/capability promotion remain gated.
 
 The [record successor](m2-slice-result-record-vm.md) now connects record locals
 and scalar/array/record CALLs. The record gate above describes this earlier slice.
-Native owned entry inputs and public promotion remain pending.
+The [native-entry successor](m2-slice-result-entry.md) adds explicit owned value
+inputs. Public promotion remains pending.
 
 ## One owner table and original backing
 
