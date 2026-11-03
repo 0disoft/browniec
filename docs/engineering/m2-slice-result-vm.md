@@ -31,15 +31,16 @@ whose Held value must be closed using the existing runtime API.
 Scalar arithmetic shares `vm_execution::scalar` with the ordinary VM. Branches,
 loops, lexical shared subviews, mutable BEGIN/END, slice reads/writes/length and
 UTF-8 run on the canonical invocation metadata and original external payload.
-The proved cleanup-only recipe after preparation defers physical CLOSE/END to
-the atomic handoff. Other lexical exits perform their ordinary loan cleanup.
+The proved cleanup-only recipe after preparation defers physical CLOSE/END/DROP
+to atomic handoff, including callee-owned root cleanup. Other lexical exits perform their ordinary loan cleanup.
 
-This first dialect rejects any owned array/record site, owned-root slice, ordinary
-CALL or tagged scalar formal before entering. Consequently guest-owned temporary
-argument creation/drop and mixed owned CALL cleanup are not integrated. Native
-Capture close/drop flags can still retain an external selected temporary root;
-the existing native runtime owns that lifetime. General result locals/expressions,
-argument use, direct return-range syntax and Static remain gated.
+The [owned-array increment](m2-slice-result-owned-vm.md), implemented at `5cccbd3`,
+now admits owned locals, temporary repeated arrays and owned CALL results,
+scalar/array ordinary CALLs and owned argument copies. Record sites and native
+owned entry arguments remain gated. Source results still require the independently
+proved borrowed input origin: callee-local/by-value/temporary roots cannot escape.
+General result locals/expressions/argument use, direct return-range syntax and
+Static remain gated.
 
 ## Failure and Fuel boundary
 
@@ -61,7 +62,9 @@ Public source compilation, ordinary VM opcode admission, capability flags, profi
 names and public prices/Fuel limits remain unchanged. This is not public source
 returned-reference support, Engine/Instance integration or a C ABI.
 
-## Verification
+## Initial rootless increment verification
+
+The owned-array increment has its own verification record linked above.
 
 Final Windows development and release each passed **11 native groups and 2,215
 CLI cases**, with 485 matching source/tool/fixture input hashes and no final native

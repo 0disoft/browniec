@@ -1,6 +1,6 @@
 # Roadmap
 
-- Reconciled: 2026-11-03; private returned-view VM integration at `d468ca1`, updated 2026-11-04.
+- Reconciled: 2026-11-03; private owned-array/CALL integration at `5cccbd3`, updated 2026-11-04.
 - This is the current delivery plan. The old increment log is preserved in
   [history](history/roadmap-20261103.md); its dated gates are not current TODOs.
 - The complete requirement crosswalk and actionable gaps are in
@@ -61,11 +61,11 @@ required; this native transaction does not promote public execution.
    adapter separately admits a rootless borrowed-input dialect; proof alone never
    authorizes ordinary Program execution.
 2. B02 native handoff/abort, caller result/frame/site bindings and private op63/64/65
-   dispatch are connected. Complete mixed owned-local/ordinary CALL integration and
-   reconcile the provisional private reserve with public metering.
+   dispatch are connected. Owned-array/scalar CALL integration is implemented;
+   complete record CALLs and reconcile the private reserve with public metering.
 3. B03 native capture/root lifetime and descendant suspension are implemented.
-   Rootless callee cleanup runs through handoff; integrate guest-created temporary
-   roots and owned CALL captures before broad source execution.
+   Guest-created array temporaries and owned/scalar CALL captures now use the same
+   owner table and terminal cleanup. Complete remaining record/entry ownership.
 4. B04: lower admitted borrowed-result uses and promote public execution only
    after end-to-end validation. Extend origin/grammar support deliberately.
 5. D01-D04 and L05-L06: connect guest Buffer, resource-bearing wrappers and

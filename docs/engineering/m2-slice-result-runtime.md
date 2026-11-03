@@ -96,8 +96,9 @@ public compiler/VM, Program layout, prices, profiles and availability flags stay
 unchanged. The [private VM dialect](m2-slice-result-vm.md) at `d468ca1` now connects
 result destinations, checked preparation sites, frame registers, rootless loans
 and private opcode dispatch. Its proved terminal CLOSE/END recipe routes through
-these transactions. Owned-local/ordinary CALL capture cleanup and final public
-metering remain pending.
+these transactions. [Owned-array/ordinary CALL integration](m2-slice-result-owned-vm.md) now adds
+owned roots and scalar/array CALLs through the same transaction. Record integration
+and final public metering remain pending.
 General borrowed-result expressions/locals/arguments, Static and public promotion
 remain separately gated. No Engine lifecycle, isolation or packaging is implied.
 

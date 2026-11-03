@@ -1,5 +1,28 @@
 # Validation
 
+- Private owned-array and ordinary scalar/array CALL integration is implemented
+  at `5cccbd3`, following native restoration/root cleanup at `9be6c7e`.
+  `vm::run_slice_result` now runs owned locals, temporary repeated-array/owned
+  CALL-result borrows, value argument copies, ordinary returns and token-moving
+  ARET. Raw byte-view adapters reuse the existing public array VM semantics.
+  `enter_arrays` stages borrowed authority and owned copies in one transaction;
+  do not clone the full Runtime around it (that overflowed native dev stacks).
+  Formal CLOSE is logical until Call restoration. Proved terminal CLOSE/END/DROP
+  defer to atomic handoff_roots; failed cleanup preserves original metadata.
+  Failures drain invocation state at zero Fuel, preserving first errors/writes.
+  Final Windows development/release each passed 33 native groups and 2,215 CLI
+  cases with 489 matching inputs, no final result reuse, and all 108 production
+  sources matching `5cccbd3` under Git LF. Development started before the commit
+  with identical final inputs; its original HEAD is retained. Full native M1/
+  other M2/Linux/isolation/ABI/packaging/allocator/native size-stack/timing were
+  not verified. Local only; no push/release/deployment.
+  Next: record CALL and native owned entry inputs, public metering, then B04
+  result source bindings/admission. Public syntax/flags/Fuel stay unchanged.
+  See the [contract](docs/engineering/m2-slice-result-owned-vm.md) and
+  [Windows evidence](docs/evidence/m2-slice-result-owned-vm-windows-20261104.json).
+
+Earlier entries below describe their named implementation commits.
+
 - Private returned-view VM bindings/dispatch are implemented at `e183e7a` and
   `d468ca1`; the existing scalar parser stack regression is fixed at `af4aa13`.
   `vm::run_slice_result` independently admits rootless borrowed inputs and executes
@@ -19,8 +42,6 @@
   then B04 source bindings/admission. See the
   [contract](docs/engineering/m2-slice-result-vm.md) and
   [Windows evidence](docs/evidence/m2-slice-result-vm-windows-20261104.json).
-
-Earlier entries below describe their named implementation commits.
 
 - Private scalar-slice body-origin analysis is implemented at `0d1a8cb`.
   `compiler::inspect_slice_results` returns one-based formal input summaries only.

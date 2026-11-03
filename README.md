@@ -1,5 +1,21 @@
 # Brownie C
 
+## Owned arrays and ordinary CALLs in the private VM
+
+Implemented at `5cccbd3`, with native transaction support at `9be6c7e`. The private
+VM now executes temporary array borrows, owned array locals, scalar/array CALL
+arguments/results and borrowed-result forwarding. Borrowed authority and owned
+copies publish in one transaction; ARET moves the result token without copying its
+payload. Terminal cleanup closes local views and drops their roots atomically.
+See the [contract](docs/engineering/m2-slice-result-owned-vm.md).
+
+Windows development/release each passed 33 native groups and 2,215 CLI cases on
+489 matching inputs, with no final native result reuse. See the
+[evidence](docs/evidence/m2-slice-result-owned-vm-windows-20261104.json).
+Record CALLs, native owned entry inputs, general result bindings and public
+metering remain gated. Public borrowed-result compilation/capabilities stay closed.
+The earlier increments below retain their original verification scope.
+
 ## Private returned-view VM
 
 Frame/destination bindings are implemented at `e183e7a`, with actual private
@@ -14,8 +30,9 @@ cases on 485 matching inputs, without native result reuse. The development scala
 parser stack regression is fixed at `af4aa13`. See the
 [evidence](docs/evidence/m2-slice-result-vm-windows-20261104.json).
 
-Guest-owned temporary roots, ordinary CALL integration, result locals/arguments
-and public metering remain gated. Public compilation, ordinary VM admission and
+That rootless increment initially gated owned temporaries and ordinary CALLs.
+The owned-array increment above now admits them for scalar/array calls; result
+locals/arguments and public metering remain gated. Public compilation, ordinary VM admission and
 capability flags still reject borrowed results. The implementation increments
 below retain their original verification scope.
 
