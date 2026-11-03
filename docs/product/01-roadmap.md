@@ -1,5 +1,18 @@
 # Roadmap
 
+- [Private returned-slice origin analysis](../engineering/m2-slice-result-origins.md)
+  is implemented at `0d1a8cb`. Existing source/CFG/type/loan checks and bounded
+  fixed-point summaries prove one exact formal origin through direct named
+  returns, lexical subviews and forwarding. Grounded recursion is checked;
+  ungrounded cycles and inconsistent origins reject. Public execution stays
+  gated. Windows development/release each passed 12 native groups and 990 CLI
+  cases, with 462 matching final inputs and documented harness-only result reuse.
+  See the [Windows evidence](../evidence/m2-slice-result-origins-windows-20261103.json).
+  Next is returned-view IR/result handoff proof and selected actual capture/owner
+  retention through the returned view lifetime. Static/general borrowed-result
+  expressions and inline return ranges remain outside this slice. Buffer,
+  input/output, host suspension, isolation and packaging remain milestone work.
+
 - [Scalar-slice result signatures](../engineering/m2-slice-result-signatures.md)
   are implemented privately at `1ced18e`. Exact type/mode and bounded candidate
   input masks are metadata only; public compilation still rejects all borrowed

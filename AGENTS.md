@@ -1,5 +1,26 @@
 # AGENTS.md
 
+- Private scalar-slice body-origin analysis is implemented at `0d1a8cb`.
+  `compiler::inspect_slice_results` returns one-based formal input summaries only.
+  An internal length/CALL proxy Program reuses source and independent CFG/type/
+  loan proof; no Program or runtime ticket escapes this entry point. Exact formal
+  anchors, reordered forwarding, lexical subviews and grounded recursion resolve
+  in at most 17 monotone passes. Conflicting, local/temporary/by-value origins and
+  ungrounded cycles reject; every emitted return is checked conservatively.
+  Public compilation and actual returned-reference execution remain gated.
+  Windows development/release each passed 12 native groups and 990 CLI cases,
+  with 462 matching final inputs and retained identities rechecked. Development
+  native checks precede a CLI-only fixture-count correction; CLI results precede
+  an ignored verifier serialization fix. Exact original inputs/reuse are recorded;
+  release reruns all selected checks. Two production paths differ from `45e74f3`;
+  99 old sources match under Git LF. VM layouts/opcodes/prices/capabilities stay.
+  Next is returned-view IR/result handoff proof and selected-capture retention.
+  Full native/M1/other M2/Linux/isolation/packaging/allocator/native size-stack/
+  timing and actual returned-reference execution were not verified. Local only;
+  no push/release/deployment. See the
+  [contract](docs/engineering/m2-slice-result-origins.md) and
+  [Windows evidence](docs/evidence/m2-slice-result-origins-windows-20261103.json).
+
 - Private scalar-slice result signatures are implemented at `1ced18e`.
   `functions::scan` records exact scalar/access metadata and an eight-bit upper
   bound of compatible input positions. Candidates are not a body-origin or

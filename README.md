@@ -1,5 +1,23 @@
 # Brownie C
 
+## Borrowed-result input-origin analysis: execution gated
+
+Implemented privately at `0d1a8cb`. `compiler::inspect_slice_results` proves one
+input origin for each admitted borrowed-result body, including lexical subviews,
+branches, forwarding and grounded recursive summaries. It rejects conflicting
+origins and callee-owned/temporary roots. Only input-position facts leave analysis;
+no runtime ticket or internal analysis Program is returned. Public compilation
+still rejects every borrowed-result declaration. See the
+[contract and remaining lifetime obligations](docs/engineering/m2-slice-result-origins.md).
+
+Windows development/release each passed 12 native groups and 990 tool-free CLI
+cases, with 462 matching final inputs. Development retains native/CLI results
+across harness-only corrections; original inputs and reuse are explicit in the
+[evidence](docs/evidence/m2-slice-result-origins-windows-20261103.json). Release
+reruns the entire selected scope. Returned-view lifetime/handoff, full native/M1/
+other M2/Linux/isolation/packaging/performance remain unverified. Local only;
+no push, release or deployment.
+
 ## Borrowed-result signature analysis: execution gated
 
 Implemented at `1ced18e`. Private frontend analysis describes `fn ref T[]` and

@@ -1,5 +1,8 @@
 # Scalar-slice result signatures
 
+The [body-origin successor](m2-slice-result-origins.md) adds private source-body
+analysis; public returned-reference execution stays gated.
+
 Implemented at `1ced18e`, following temporary-array borrows at `8983737`.
 
 This is a private signature-analysis stage. `functions::scan` describes scalar
