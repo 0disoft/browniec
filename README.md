@@ -1,5 +1,22 @@
 # Brownie C
 
+## Borrow array ranges directly in CALL arguments
+
+Implemented at `749f9bf`. Existing arrays support `ref array[lo..hi]` and
+`ref mut array[lo..hi]`, including open and empty ranges. Endpoints are evaluated
+once in order, before the new borrow opens. Existing cleanup handles endpoint
+exits, later arguments and runtime errors. Scalar, array and record results work.
+Exclusion remains per root, so two mutable ranges of one array still conflict.
+See the [example](examples/array-range-borrow-arguments.brc) and
+[contract](docs/engineering/m2-array-borrow-range-arguments.md).
+
+Windows development/release each passed 11 native groups and 752 tool-free CLI
+cases, with 451 matching final inputs and rechecked retained identities.
+Named-slice ranges, temporary roots and escaping borrows remain unsupported.
+Full native/M1, other M2, Linux, isolation, packaging and performance were not
+rerun. Local only; no push, release or deployment. See the
+[verified evidence](docs/evidence/m2-array-borrow-range-arguments-windows-20261103.json).
+
 ## Borrow arrays directly in CALL arguments
 
 Implemented at `528934b`. `update(ref mut output, ref input)` borrows existing

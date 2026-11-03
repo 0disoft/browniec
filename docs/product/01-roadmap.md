@@ -1,5 +1,17 @@
 # Roadmap
 
+- [Call-scoped owned-array range arguments](../engineering/m2-array-borrow-range-arguments.md)
+  are implemented at `749f9bf`. Open/empty ranges and one-time usize endpoint
+  evaluation precede acquisition; normal/early/error cleanup preserves prior
+  effects. Exclusion still applies to the whole owned root. Windows development/
+  release each passed 11 native groups and 752 CLI cases, with 451 matching final
+  inputs. See the
+  [Windows evidence](../evidence/m2-array-borrow-range-arguments-windows-20261103.json).
+  Named-slice range arguments remain a separate source slice; temporary roots and
+  returned/escaping borrows require their own lifetime contracts. Buffer, input/
+  output, host suspension, isolation and packaging remain milestone work.
+  Earlier entries retain the gates at their named commits.
+
 - [Call-scoped whole-array borrow arguments](../engineering/m2-array-borrow-arguments.md)
   are implemented at `528934b` after public lexical reborrows and derived
   scalar/array/record CALL support. Existing array names now work directly in

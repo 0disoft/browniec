@@ -1,5 +1,8 @@
 # Call-scoped whole-array borrow arguments
 
+This historical slice records `528934b`. Its inline-range gate is superseded
+by [owned-array range arguments](m2-array-borrow-range-arguments.md).
+
 Implemented at `528934b`, following derived record results at `e8105f6`.
 
 A visible existing array may be passed directly to an exact scalar slice formal:

@@ -1,5 +1,23 @@
 # AGENTS.md
 
+- Call-scoped owned-array range arguments are implemented at `749f9bf`.
+  `ref array[lo..hi]` / `ref mut array[lo..hi]`, open-ended and empty ranges
+  evaluate usize endpoints once in order before OPEN and anonymous publication.
+  The source-only capture descriptor owns no runtime ticket. Endpoint/later
+  argument exits and runtime failures reuse existing cleanup; prior writes and
+  original errors survive. Six scalar types and aggregate results work. Exclusion
+  remains per owned root, including disjoint mutable ranges. Version JSON adds
+  `array_slice_array_range_arguments: true`. Windows development/release each
+  passed 11 native groups and 752 tool-free CLI cases, with all 451 final input
+  hashes matching and retained identities rechecked. Three production paths
+  differ from `e51b0ed`; 97 others match under Git LF. No runtime layout, opcode,
+  price or payload-copy change. Named-slice ranges, temporary roots, mode coercions
+  and returned/escaping borrows remain unsupported. Full native/M1/other M2/Linux/
+  isolation/packaging/allocator/native size-stack/timing were not rerun. Local only;
+  no push, release or deployment. See the
+  [contract](docs/engineering/m2-array-borrow-range-arguments.md) and
+  [Windows evidence](docs/evidence/m2-array-borrow-range-arguments-windows-20261103.json).
+
 - Call-scoped whole-array borrows are implemented at `528934b`. Explicit
   `ref array` / `ref mut array` open anonymous handles during argument evaluation,
   before later arguments. Existing mixed capture cleanup closes them after CALL
