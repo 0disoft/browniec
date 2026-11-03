@@ -238,34 +238,43 @@ fn Result<i64, errors::Error> core(ref ir::Program p, usize fuel,
             frame -= 1;
             continue;
         }
-        var i64 value = 0;
-        if (op == 1) { value = p.constants[a]; }
-        else if (op == 23) {
-            let i64 payload=if(types::payload(p.types[dst],p.code[at + 3])==0) {0} else {registers[base+a]};
-            value=tagged::pack(payload,p.code[at + 3]);
-        }
-        else if (op == 17 || op == 26) { value = registers[base + a]; }
-        else {
-            let i64 left = registers[base + a];
-            // Unary negation has no right register; b=0 may belong to another function.
-            let i64 right = if (op == 7 || op == 10 || op == 27) { 0 } else { registers[base + b] };
-            if (op >= 2 && op <= 7) {
-                value=if(types::unsigned(p.types[dst])) {arithmetic::unsigned(op,left,right,p.types[dst],p.offsets[pc])?}
-                    else {arithmetic::signed(op,left,right,p.types[dst],p.offsets[pc])?};
-            }
-            else if (op >= 31) {value=shifts::apply(op,left,right,p.types[dst],p.offsets[pc])?;}
-            else if (op >= 27) {value=bits::apply(op,left,right,p.types[dst],p.offsets[pc])?;}
-            else if (op == 10) { value = if (left == 0) { 1 } else { 0 }; }
-            else if (op == 11) { value = if (left == right) { 1 } else { 0 }; }
-            else if (op == 12) { value = if (left != right) { 1 } else { 0 }; }
-            else if (types::unsigned(p.types[a])) {value=arithmetic::ordering(op,left,right,p.offsets[pc])?;}
-            else if (op == 13) { value = if (left < right) { 1 } else { 0 }; }
-            else if (op == 14) { value = if (left <= right) { 1 } else { 0 }; }
-            else if (op == 15) { value = if (left > right) { 1 } else { 0 }; }
-            else if (op == 16) { value = if (left >= right) { 1 } else { 0 }; }
-        }
+        let i64 value=scalar(p,pc,ref registers[base..base+128])?;
         registers[base + dst] = value;
         pc += 1;
     }
     return .err(errors::make(5, pc));
+}
+
+// Shared scalar value semantics for independently inspected immutable IR. The
+// caller handles branches, STORE, CALL and RETURN, and charges instruction Fuel.
+pub fn Result<i64,errors::Error> scalar(ref ir::Program p,usize pc,ref i64[] registers){
+    let usize at=pc*8;let u8 op=p.code[at];let usize dst=p.code[at+1] as usize;
+    let usize a=p.code[at+2] as usize;let usize b=p.code[at+3] as usize;
+    var i64 value = 0;
+    if (op == 1) { value = p.constants[a]; }
+    else if (op == 23) {
+        let i64 payload=if(types::payload(p.types[dst],p.code[at + 3])==0) {0} else {registers[a]};
+        value=tagged::pack(payload,p.code[at + 3]);
+    }
+    else if (op == 17 || op == 26) { value = registers[a]; }
+    else {
+        let i64 left = registers[a];
+        // Unary negation has no right register; b=0 may belong to another function.
+        let i64 right = if (op == 7 || op == 10 || op == 27) { 0 } else { registers[b] };
+        if (op >= 2 && op <= 7) {
+            value=if(types::unsigned(p.types[dst])) {arithmetic::unsigned(op,left,right,p.types[dst],p.offsets[pc])?}
+                else {arithmetic::signed(op,left,right,p.types[dst],p.offsets[pc])?};
+        }
+        else if (op >= 31) {value=shifts::apply(op,left,right,p.types[dst],p.offsets[pc])?;}
+        else if (op >= 27) {value=bits::apply(op,left,right,p.types[dst],p.offsets[pc])?;}
+        else if (op == 10) { value = if (left == 0) { 1 } else { 0 }; }
+        else if (op == 11) { value = if (left == right) { 1 } else { 0 }; }
+        else if (op == 12) { value = if (left != right) { 1 } else { 0 }; }
+        else if (types::unsigned(p.types[a])) {value=arithmetic::ordering(op,left,right,p.offsets[pc])?;}
+        else if (op == 13) { value = if (left < right) { 1 } else { 0 }; }
+        else if (op == 14) { value = if (left <= right) { 1 } else { 0 }; }
+        else if (op == 15) { value = if (left > right) { 1 } else { 0 }; }
+        else if (op == 16) { value = if (left >= right) { 1 } else { 0 }; }
+    }
+    return .ok(value);
 }

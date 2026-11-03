@@ -4,7 +4,8 @@ import functions as functions;
 import slice_result_origins as origins;
 import errors as errors;
 
-// Private, NON-EXECUTABLE extension. Ordinary Program layout/opcodes stay fixed.
+// Private extension; only vm::run_slice_result admits an executable subset.
+// Ordinary Program layout/opcode admission stays fixed.
 // 63 PREPARE_VIEW: dst=result identity, a=live slice site, b=0.
 // 64 PREPARE_FORWARD: dst=result identity, a=callee, b=CALL argument-map ID.
 // 65 RETURN_VIEW: dst=0, a=prepared result identity, b=0.
