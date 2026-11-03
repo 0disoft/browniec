@@ -32,6 +32,7 @@ fn Result<usize,errors::Error> admit(ref ir::Program unit,usize function,ref i64
         if(unit.body.slice_parameters[r]==0 && unit.body.array_parameters[r]==0 && unit.body.record_parameters[r]==0 && !types::valid(unit.body.types[r])){return .err(errors::make(5,0));}a+=1;
     }i+=1;}
     i=0;while(i<values.len){let usize r=unit.body.register_starts[function]+i;
+        if(unit.body.array_parameters[r]!=0 || unit.body.record_parameters[r]!=0){return .err(errors::make(5,0));}
         if(unit.body.slice_parameters[r]!=0){if(values[i]!=0){return .err(errors::make(5,0));}}
         else{let u8 tag=unit.body.types[r];if(!types::scalar(tag)){return .err(errors::make(5,0));}if(if(tag==2){values[i]!=0 && values[i]!=1}else{!types::fits(tag,values[i])}){return .err(errors::make(5,0));}}i+=1;
     }return .ok(proof.returns);
