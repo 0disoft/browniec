@@ -1,5 +1,20 @@
 # Brownie C
 
+## Private returned-view IR: execution gated
+
+Implemented at `670a041`. A separate preparation/forward/return IR carries exact
+scalar/access and input-origin metadata. Its independent verifier rechecks CFG,
+live loans, suspended parents, recursive origins and unique cleanup-to-return
+recipes. Prepared identities cannot become ordinary scalar values. Public compile
+and VM admission stay closed; no returned reference or ticket executes. See the
+[contract](docs/engineering/m2-slice-result-ir.md).
+Windows development/release each passed 10 native groups and 208 CLI cases on
+476 matching inputs; see the
+[evidence](docs/evidence/m2-slice-result-ir-windows-20261104.json). These are private
+analysis and closed-gate checks; runtime handoff/lifetime, full suites, Linux,
+isolation, packaging and performance remain unverified. Local only; no push.
+
+
 The [remaining-work audit](docs/product/04-remaining-work.md) and
 [current roadmap](docs/product/01-roadmap.md) reconcile full-profile requirements
 with the implemented experimental core as of 2026-11-03. Sections below retain

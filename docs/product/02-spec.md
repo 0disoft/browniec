@@ -22,7 +22,8 @@ by-value aggregate parameters/results and shared/exclusive scalar slices are pub
 Whole/ranged/named-slice/temporary-array CALL borrows and fixed-array UTF-8 views
 are available. Root exclusion remains whole-root, including disjoint mutable ranges.
 
-Private returned-slice signatures and single-input body-origin analysis exist;
+Private returned-slice signatures, body-origin analysis and explicit
+[preparation IR/independent proof](../engineering/m2-slice-result-ir.md) exist;
 every borrowed-result declaration still rejects publicly and no result executes.
 Buffer storage/leases/scanning have private native evidence but no guest Buffer
 execution path. There is no general Engine/Instance API, guest input/output, host

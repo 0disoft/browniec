@@ -1,6 +1,7 @@
 # Remaining Work and Design Reconciliation
 
 - Reviewed: 2026-11-03, implementation `0d1a8cb`, documentation baseline `df56e7d`.
+- B01 preparation increment: 2026-11-04, `670a041`; other audit findings retain their original scope.
 - Scope: completion of the accepted Brownie design and its M0-M5 delivery gates.
 - Evidence method: source/contract review, reference ZIP inspection, import-graph
   inspection and existing receipt/hash checks. No new native execution, benchmark,
@@ -18,11 +19,14 @@ array/record result expressions and paths, fixed-array UTF-8 checks, typed share
 exclusive scalar slices, lexical aliases/reborrows and whole/ranged/temporary CALL
 arguments. Exclusion remains per owned root.
 
-Returned-slice signatures and single-input body-origin summaries are private
-analysis only. Public compilation rejects all borrowed-result declarations.
-The latest focused [receipt](../evidence/m2-slice-result-origins-windows-20261103.json)
+Returned-slice signatures, single-input body-origin summaries and explicit
+returned-view preparation IR/independent proof are private only. The
+[preparation contract](../engineering/m2-slice-result-ir.md) adds a non-executable
+unit; runtime ticket/capture handoff is still missing. Public compilation rejects
+all borrowed-result declarations.
+The original audit's focused [receipt](../evidence/m2-slice-result-origins-windows-20261103.json)
 records 12 native groups and 990 CLI cases per Windows development/release profile.
-This audit rechecked all 462 recorded input hashes and both retained CLI artifact
+The 2026-11-03 audit rechecked all 462 recorded input hashes and both retained CLI artifact
 hashes. Development's documented harness-only result reuse remains explicit;
 release ran the entire selected scope. These are not full M2 or full-profile tests.
 
@@ -36,6 +40,11 @@ machine delivery are not implemented. `core: true` in the experimental version
 JSON means that the narrow native CLI exists; it does not certify the full
 `brownie.safe/0.3` profile or completion of M3. Restricted/embed remain false.
 
+The 2026-11-04 [preparation-IR evidence](../evidence/m2-slice-result-ir-windows-20261104.json)
+records 10 native groups and 208 CLI cases per profile on 476 matching inputs,
+without final result reuse. This focused increment does not replace the earlier
+broader receipts or establish runtime returned-reference/lifetime support.
+
 ## Status and priority
 
 Accepted/designed means a contract exists. Implemented means source exists in its
@@ -46,7 +55,7 @@ No one label implies full-profile or release readiness.
 
 | Priority | Work IDs and dependency | Owning contracts |
 | --- | --- | --- |
-| Next | B01-B04: independent result proof before ticket/capture handoff and public admission | [Returned-origin boundary](../engineering/m2-slice-result-origins.md), [result signatures](../engineering/m2-slice-result-signatures.md) |
+| Next | B01 preparation proof exists; B02-B04 must establish ticket/capture handoff and public admission | [Preparation IR](../engineering/m2-slice-result-ir.md), [Returned-origin boundary](../engineering/m2-slice-result-origins.md), [result signatures](../engineering/m2-slice-result-signatures.md) |
 | M2 integration | D01-D05, L03-L06, I01-I02: private Buffer and aggregate foundations -> useful guest byte/text/input/output path | [Specification](02-spec.md), [Buffer storage](../engineering/m2-buffer-storage.md), [UTF-8 sessions](../engineering/m2-buffer-utf8-session.md), [output](../cli/output-and-exit-codes.md) |
 | Full-profile prerequisites | L01-L02/L07, B05, C01-C05: accepted language, references, configuration and limit reconciliation | [Specification](02-spec.md), [command](../cli/command-contract.md), [configuration](../cli/configuration.md) |
 | M3 prerequisite/core | R01-R05 -> H01-H04: Engine/Instance/accounting/step/cancel -> fake typed host boundary | [Runtime flow](../architecture/02-runtime-flow.md), [invariants](../engineering/00-project-invariants.md) |
@@ -80,7 +89,7 @@ below cover prose obligations beyond this feature list as well.
 | plain_structs | Narrow scalar/nested records | L03, L05, V01 |
 | shared_borrows | Scalar slices | B05 |
 | mutable_borrows | Scalar slices and lexical children | B05 |
-| single_parameter_borrow_returns | Private signatures/origin analysis | B01-B04 |
+| single_parameter_borrow_returns | Private signatures/origin/preparation IR proof; no runtime handoff | B01-B04 |
 | array_views | Narrow scalar views | B02-B05 |
 | half_open_slices | Narrow scalar ranges | B04, B05 |
 | option_result | i32/bool payloads, depth one | L05 |
@@ -120,7 +129,7 @@ below cover prose obligations beyond this feature list as well.
 
 | ID | Work and completion condition |
 | --- | --- |
-| B01 | Define returned-view IR metadata/instructions and reconstruct exact origin, type, access, destination and live-loan facts independently. Private origin summaries are groundwork, not a result-lifetime proof. |
+| B01 | Preparation subset implemented at `670a041`: explicit view/forward/return IR, result-identity pairing and independent CFG/type/access/live-origin reconstruction. This is a non-executable unit, not an escaping-result lifetime or runtime destination/ticket proof. Complete those contracts with B02/B03 before public admission. |
 | B02 | Implement atomic CALL/return ticket handoff, generation headroom, caller destination publication and abort cleanup. Shared/exclusive results must survive callee cleanup without duplicate ownership or stale tickets. |
 | B03 | Retain only the selected actual argument's captures/owner until the returned view ends, including anonymous literal/producer roots. Keep exclusive parents suspended through the returned child's lifetime. Ordinary CALL currently ends all captures. |
 | B04 | Admit borrowed-result source bindings, direct forwarding, use as arguments/projections and return-range forms only after proof/runtime wiring. Add Static origin with an actual backing/lifetime representation. Promote public compilation and capability metadata only after end-to-end checks. |

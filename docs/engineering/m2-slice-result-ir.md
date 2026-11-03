@@ -1,6 +1,6 @@
 # Private returned-view preparation IR and independent proof
 
-Introduced after `f2d6588`, following private body-origin analysis at `0d1a8cb`.
+Implemented at `670a041`, following private body-origin analysis at `0d1a8cb`.
 This is the B01 preparation subset, not runtime result handoff or public execution.
 
 ## Representation
@@ -70,8 +70,26 @@ borrowed-result binding/expression/argument admission remain later work.
 
 ## Focused verification
 
-Development native execution passed ten new groups covering all six scalar modes,
-lexical/branch/loop/switch results, forwarding/recursion, forged metadata/instructions,
-valid-normalization scalar misuse, suspended/dead selections and unchanged public
-admission. Final profile/CLI/identity evidence is recorded in the follow-up evidence
-entry; no full native/M1/M2/Linux/isolation/ABI/packaging/performance pass follows.
+Windows development and release each passed **10 native groups and 208 CLI cases**
+with no result reuse in the final recorded runs. Native coverage includes all six
+scalar modes, lexical/branch/loop/switch results, forwarding/recursion, forged
+metadata/instructions, valid-normalization scalar misuse, suspended/dead selections
+and unchanged public admission. CLI coverage is 88 existing public borrowed-result
+rejections plus 120 temporary-array borrow regressions, using cleared/tool-free
+environments. All 476 final input hashes agree across profiles and retained CLI
+artifacts/reports were rechecked. 100 prior source files match `f2d6588` under
+Git LF; only the compiler and two new private modules differ in production.
+
+The source commit precedes a root lock refresh after compiler LF normalization.
+The final runs use that refreshed lock and unchanged adopted SDK, recorded in the
+[Windows evidence](../evidence/m2-slice-result-ir-windows-20261104.json). This is native analysis/closed-gate evidence,
+not actual guest returned-reference execution, a full native/M1/M2 corpus run,
+Linux/isolation/ABI/packaging, allocator instrumentation or native size/stack/timing
+verification. Local only; no push, release or deployment.
+
+To reproduce the selected scope from the repository root:
+
+```text
+python3 tools/verify-m2-slice-result-ir.py --profile development
+python3 tools/verify-m2-slice-result-ir.py --profile release
+```

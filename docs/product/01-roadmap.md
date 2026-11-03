@@ -1,6 +1,6 @@
 # Roadmap
 
-- Reconciled: 2026-11-03, implementation `0d1a8cb`, evidence/documentation `df56e7d`.
+- Reconciled: 2026-11-03; B01 preparation IR/proof updated 2026-11-04 at `670a041`.
 - This is the current delivery plan. The old increment log is preserved in
   [history](history/roadmap-20261103.md); its dated gates are not current TODOs.
 - The complete requirement crosswalk and actionable gaps are in
@@ -35,16 +35,25 @@ has not been verified by the toolchain's Linux cross-build alone.
 - Fixed-array/view UTF-8 checks; private Buffer storage/accounting/lease/scanner/
   cleanup components with scoped native evidence, not guest integration.
 - Private result-signature and body-origin analysis through named/subview returns,
-  branches, forwarding and grounded recursion. Actual borrowed results stay gated.
+  branches, forwarding and grounded recursion, plus explicit
+  [returned-view preparation IR/independent proof](../engineering/m2-slice-result-ir.md).
+  Actual borrowed results stay gated.
 
-The latest [focused Windows receipt](../evidence/m2-slice-result-origins-windows-20261103.json)
+The original audit's [focused Windows receipt](../evidence/m2-slice-result-origins-windows-20261103.json)
 records 12 native groups and 990 CLI cases per profile on 462 matching inputs.
 Development reuse is documented; release reruns the selected scope. This audit
 rechecked identities, not native tests, and does not claim full M1/M2 conformance.
 
+The 2026-11-04 [preparation-IR evidence](../evidence/m2-slice-result-ir-windows-20261104.json)
+records 10 native groups and 208 CLI cases per profile on 476 matching inputs,
+without final result reuse. This focused increment does not replace the earlier
+broader receipts or establish runtime returned-reference/lifetime support.
+
 ## Next implementation units
 
-1. B01: define independently checked returned-view IR/result metadata.
+1. B01 preparation subset is implemented: explicit non-executable result recipes
+   with independent proof. Complete escaping lifetime/runtime destination proof
+   through B02/B03; do not make this IR executable by changing opcode admission alone.
 2. B02: implement atomic ticket/result handoff and failure cleanup.
 3. B03: retain selected actual captures/owners for the result lifetime and keep
    exclusive parents suspended until their returned descendants end.

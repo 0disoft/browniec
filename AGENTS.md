@@ -1,5 +1,24 @@
 # AGENTS.md
 
+- Private returned-view preparation IR and independent proof are implemented at
+  `670a041`. `compiler::inspect_slice_result_ir` returns a separate non-executable
+  unit, with exact scalar/access and selected-input metadata. Private 63/64/65
+  markers preserve preparation/forward/return identity; ordinary Program layout,
+  VM opcode admission, prices, profiles and flags are unchanged. The independent
+  verifier reconstructs CFG/live-loan/origin facts and permits only cleanup before
+  the paired return. This is B01 preparation only, not an escaping-result lifetime
+  proof. Next: atomic runtime destination/ticket handoff and selected actual
+  capture/owner retention with exclusive-parent suspension (B02/B03).
+  Windows development/release each passed 10 native groups and 208 CLI cases,
+  with 476 matching inputs and retained hashes rechecked. Final runs reuse no
+  results and use the LF-normalized root lock; the adopted SDK is unchanged.
+  Full native/M1/other M2/Linux/isolation/ABI/packaging/allocator/native size-stack/
+  timing and actual returned-reference execution were not verified. Local only.
+  See [the contract](docs/engineering/m2-slice-result-ir.md).
+  See [Windows evidence](docs/evidence/m2-slice-result-ir-windows-20261104.json).
+
+Earlier entries below describe their named implementation commits.
+
 - Private scalar-slice body-origin analysis is implemented at `0d1a8cb`.
   `compiler::inspect_slice_results` returns one-based formal input summaries only.
   An internal length/CALL proxy Program reuses source and independent CFG/type/
