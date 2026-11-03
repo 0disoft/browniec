@@ -1,11 +1,12 @@
 # Remaining Work and Design Reconciliation
 
 - Reviewed: 2026-11-03, implementation `0d1a8cb`, documentation baseline `df56e7d`.
-- B01 preparation: `670a041`; B02/B03 native transactions: `7f8f455`/`b82500d`; private returned-view VM: `d468ca1`; owned-array/CALL integration: `5cccbd3`; record CALL/local ownership: `e01a9b1`; explicit native owned entry: `8bf37de`, updated 2026-11-04. Other audit findings retain their original scope.
+- B01 preparation: `670a041`; B02/B03 native transactions: `7f8f455`/`b82500d`; private returned-view VM: `d468ca1`; owned-array/CALL integration: `5cccbd3`; record CALL/local ownership: `e01a9b1`; explicit native owned entry: `8bf37de`; bounded returned-view Fuel: `275abfd`, updated 2026-11-04. Other audit findings retain their original scope.
 - Scope: completion of the accepted Brownie design and its M0-M5 delivery gates.
 - Evidence method: source/contract review, reference ZIP inspection, import-graph
   inspection and existing receipt/hash checks. No new native execution, benchmark,
-  isolation, ABI or full-profile conformance run was performed for this audit.
+  isolation, ABI or full-profile conformance run was performed for the original
+  2026-11-03 audit; later focused increment evidence is linked separately.
 - Authority: repository owning contracts and ADRs take precedence over the external
   design package. This audit records gaps; it does not silently adopt its schemas,
   limits, opcodes, commands or embedded instructions.
@@ -28,7 +29,8 @@ rootless borrowed inputs, caller result/frame/site destinations and deferred
 terminal cleanup. [Owned arrays and scalar/array CALLs](../engineering/m2-slice-result-owned-vm.md)
 are integrated at `5cccbd3`; [record CALLs and locals](../engineering/m2-slice-result-record-vm.md)
 now share their ownership transactions. [Native owned entry](../engineering/m2-slice-result-entry.md)
-now accepts explicit array/record value tokens. Public metering remains pending. Public compilation rejects
+now accepts explicit array/record value tokens. [Bounded returned-view metering](../engineering/m2-slice-result-fuel.md)
+now reconciles the private schedule and cleanup reserves with CLI-sized budgets. Public compilation rejects
 all borrowed-result declarations.
 The original audit's focused [receipt](../evidence/m2-slice-result-origins-windows-20261103.json)
 records 12 native groups and 990 CLI cases per Windows development/release profile.
@@ -56,6 +58,12 @@ records 12 native groups and 208 CLI cases per profile on 479 matching inputs,
 with no final result reuse. Source result/dispatch/cleanup integration is still
 required; this native transaction does not promote public execution.
 
+The 2026-11-04 [Fuel evidence](../evidence/m2-slice-result-fuel-windows-20261104.json)
+records 56 native groups and 217 CLI cases per Windows development/release profile,
+with 500 matching inputs and all 112 production files matching `275abfd` under
+Git LF. Phase reserves now cover zero-Fuel abort/final close. Public defaults/cap
+are unchanged; B04 source bindings and ordinary public execution remain gated.
+
 ## Status and priority
 
 Accepted/designed means a contract exists. Implemented means source exists in its
@@ -66,7 +74,7 @@ No one label implies full-profile or release readiness.
 
 | Priority | Work IDs and dependency | Owning contracts |
 | --- | --- | --- |
-| Next | Private owned arrays/records and mixed CALLs work; reconcile public metering before B04 source admission; explicit native owned entry is connected | [Private VM](../engineering/m2-slice-result-vm.md), [Preparation IR](../engineering/m2-slice-result-ir.md), [Returned-origin boundary](../engineering/m2-slice-result-origins.md) |
+| Next | B04 public result bindings/admission: owned entry and bounded returned-view metering are connected; public end-to-end execution remains gated | [Private VM](../engineering/m2-slice-result-vm.md), [Preparation IR](../engineering/m2-slice-result-ir.md), [Returned-origin boundary](../engineering/m2-slice-result-origins.md) |
 | M2 integration | D01-D05, L03-L06, I01-I02: private Buffer and aggregate foundations -> useful guest byte/text/input/output path | [Specification](02-spec.md), [Buffer storage](../engineering/m2-buffer-storage.md), [UTF-8 sessions](../engineering/m2-buffer-utf8-session.md), [output](../cli/output-and-exit-codes.md) |
 | Full-profile prerequisites | L01-L02/L07, B05, C01-C05: accepted language, references, configuration and limit reconciliation | [Specification](02-spec.md), [command](../cli/command-contract.md), [configuration](../cli/configuration.md) |
 | M3 prerequisite/core | R01-R05 -> H01-H04: Engine/Instance/accounting/step/cancel -> fake typed host boundary | [Runtime flow](../architecture/02-runtime-flow.md), [invariants](../engineering/00-project-invariants.md) |
@@ -141,7 +149,7 @@ below cover prose obligations beyond this feature list as well.
 | ID | Work and completion condition |
 | --- | --- |
 | B01 | Preparation subset at `670a041`: explicit view/forward/return IR, identity pairing and independent CFG/type/access/live-origin reconstruction. The private VM at `d468ca1` separately admits a rootless subset; proof alone remains insufficient for ordinary/public execution. |
-| B02 | Native transaction at `7f8f455`; private result/frame/site/63-65 dispatch at `d468ca1`. Shared/exclusive handoff, parent suspension, generation checks and zero-Fuel abort are connected. Owned-array and scalar/array CALL integration is implemented at `5cccbd3`. Record CALLs/locals are now connected; see [the successor](../engineering/m2-slice-result-record-vm.md). Explicit native owned entry is connected; see [the entry contract](../engineering/m2-slice-result-entry.md). Remaining: public metering. |
+| B02 | Native transaction at `7f8f455`; private result/frame/site/63-65 dispatch at `d468ca1`. Shared/exclusive handoff, parent suspension, generation checks and zero-Fuel abort are connected. Owned-array and scalar/array CALL integration is implemented at `5cccbd3`. Record CALLs/locals are now connected; see [the successor](../engineering/m2-slice-result-record-vm.md). Explicit native owned entry is connected; see [the entry contract](../engineering/m2-slice-result-entry.md). Bounded metadata/copy/Fuel reconciliation is connected; see [the schedule](../engineering/m2-slice-result-fuel.md). Remaining: B04 public integration and end-to-end admission. |
 | B03 | Native capture/root retention at `7f8f455`; private rootless callee cleanup routes through handoff at `d468ca1`. Selected external temporary roots/descendants use native Capture receipts. Guest-created array temporary ownership and mixed scalar/array CALL captures are integrated at `5cccbd3`. Record locals and mixed record CALL captures are now connected. Explicit native owned entry is connected. Remaining: public source bindings; ordinary VM must not admit these private recipes without its own proof/metering. |
 | B04 | Admit borrowed-result source bindings, direct forwarding, use as arguments/projections and return-range forms only after proof/runtime wiring. Add Static origin with an actual backing/lifetime representation. Promote public compilation and capability metadata only after end-to-end checks. |
 | B05 | Complete the target's scalar/array/record/Buffer references and CFG last-use rules, beyond current scalar-slice references. Enforce whole-root conflicts, mutation/move/drop exclusions, lexical/root generations and bounded group/descriptor reclamation. |

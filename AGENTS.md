@@ -1,5 +1,34 @@
 # AGENTS.md
 
+- Returned-view Fuel accounting is implemented at `275abfd`. The shared
+  `fuel` module owns CLI default/cap and slice value/UTF-8 prices. Private
+  returned-view entry is 147456, borrowed handoff 294912 and ordinary return
+  196608, plus dispatch/arity and existing aggregate-copy/result charges. These
+  replace the provisional 80*65537 reserve. Entry prepays emergency abort;
+  handoff prepays linear Held.close, which now preserves supplied remaining Fuel
+  and works at zero. Each cleanup reserve is 65536; none is refunded. Native
+  handoff/ordinary-return callers use handoff_cost()/leave_cost(); cost() is entry
+  only. Lower-level native ownership transactions meter metadata; their VM
+  callers prepay aggregate-copy work separately, once. First-error/prior-write,
+  initial-failure preservation and post-entry invocation-drain contracts remain.
+  Native APIs retain explicit host Fuel budgets; the unchanged 256 default and
+  1000000 cap belong to CLI arguments. Public result syntax/flags stay gated.
+  Final Windows development/release each passed 56 native groups and 217 CLI
+  cases (208 regressions plus nine CLI Fuel boundaries), with 500 matching input
+  hashes and all 112 production sources matching `275abfd` under Git LF. All
+  native batches began at c455e54 with those same final inputs; their actual
+  starting heads are retained. CLI runs began after the implementation commit.
+  No changed-input/historical native result reuse. Exact/one-short Fuel, zero-Fuel
+  close, full 16-owner/16-view/31-authority limits, nested forwarding and owned
+  entry within 1000000 are covered. Full M1/other M2/Linux/isolation/ABI/packaging/
+  allocator/native size-stack/timing were not verified. Next: B04 general result
+  bindings/lowering and ordinary public Program admission/dispatch proof, before
+  public capability promotion. Local only; no push/release/deployment. See the
+  [schedule](docs/engineering/m2-slice-result-fuel.md) and
+  [Windows evidence](docs/evidence/m2-slice-result-fuel-windows-20261104.json).
+
+Earlier entries below retain their named implementation and verification scopes.
+
 - Explicit native owned entry is implemented at `8bf37de`. The private
   `vm::run_slice_result_owned` accepts formal-indexed array/record owner tokens
   alongside scalar cells and borrowed captures. It prepays the existing aggregate

@@ -1,5 +1,10 @@
 # Native owned inputs for the private returned-view VM
 
+Fuel successor (2026-11-04): [bounded phase accounting](m2-slice-result-fuel.md)
+replaces the provisional private reserve and prepays result finalization. The
+verification receipts below retain their original implementation scope.
+
+
 Implementation: `8bf37de`.
 
 `vm::run_slice_result_owned` accepts native array and nominal record value

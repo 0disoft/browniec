@@ -121,7 +121,29 @@ parallel; CLI builds must be serialized because they share `build/browniec.exe`.
 Continuation validates input/compiler/report hashes and never accepts historical
 native results under changed inputs.
 
+Additional tool-free CLI boundaries use `module main;fn i32 main(){return 42;}`
+and `run SOURCE --json [--fuel N]`: default, 2 and 1000000 complete with 42;
+0 and 1 return Fuel error/exit 5; 1000001, -1, 9223372036854775807 and
+9223372036854775808 return usage error/exit 2. These nine cases are separate
+from the verifier's 208 origin/temporary-array CLI regression cases.
+
 This reconciles prices and demonstrated CLI-sized budgets. B04 still requires
 general result bindings/lowering, ordinary Program admission/dispatch integration,
 end-to-end public source proof and capability promotion. Full-profile limits,
 Engine/Instance stepping/cancellation and restricted/embed delivery remain open.
+
+## Recorded Windows validation
+
+Implementation: `275abfd`. Development and release each passed 56 native groups
+and 217 tool-free CLI cases, including six new Fuel groups and nine CLI Fuel
+boundaries. All 500 final input hashes match across profiles; all 112 production
+files match the implementation commit under Git LF. Native batches started at
+`c455e54` with the same final inputs, before the implementation commit; their
+original starting heads are retained. No changed-input/historical native result
+reuse. The exploratory four-group run is not included in final totals.
+
+See [retained evidence](../evidence/m2-slice-result-fuel-windows-20261104.json)
+for compiler identity, OS, commands, batch/report/artifact hashes and outcomes.
+Full M1/other M2, Linux, isolation, ABI, packaging, allocator instrumentation and
+native size/stack/timing were not verified. Local commits only; no push, release
+or deployment.

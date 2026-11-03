@@ -63,7 +63,8 @@ required; this native transaction does not promote public execution.
    authorizes ordinary Program execution.
 2. B02 native handoff/abort, caller result/frame/site bindings and private op63/64/65
    dispatch are connected. Owned array/record locals and scalar/array/record CALLs
-   are integrated; reconcile the private reserve with public metering.
+   are integrated; [bounded Fuel accounting](../engineering/m2-slice-result-fuel.md)
+   now replaces the private reserve and prepays terminal cleanup.
 3. B03 native capture/root lifetime and descendant suspension are implemented.
    Guest-created array temporaries, record locals and mixed CALL captures now use
    the same owner table and terminal cleanup. [Explicit native owned entry](../engineering/m2-slice-result-entry.md)
