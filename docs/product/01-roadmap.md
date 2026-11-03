@@ -1,5 +1,17 @@
 # Roadmap
 
+- [Call-scoped named-slice range arguments](../engineering/m2-named-slice-range-arguments.md)
+  are implemented at `b8ab0eb`. Lexical slices, formals and derived children
+  support exact-mode inline ranges using existing SUBSLICE or BEGIN/END, with
+  endpoint-time acquisition and canonical parent restoration after CALL. Windows
+  development/release each passed 12 native groups and 854 CLI cases, with 454
+  matching final inputs. See the
+  [Windows evidence](../evidence/m2-named-slice-range-arguments-windows-20261103.json).
+  Literal/call-result temporary roots and returned/escaping borrows still need
+  separate lifetime/ownership contracts. Buffer, input/output, host suspension,
+  isolation and packaging remain milestone work. Earlier entries retain their
+  named-commit gates.
+
 - [Call-scoped owned-array range arguments](../engineering/m2-array-borrow-range-arguments.md)
   are implemented at `749f9bf`. Open/empty ranges and one-time usize endpoint
   evaluation precede acquisition; normal/early/error cleanup preserves prior

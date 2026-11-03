@@ -1,5 +1,24 @@
 # Brownie C
 
+## Borrow named slice ranges in CALL arguments
+
+Implemented at `b8ab0eb`. `update(ref mut part[lo..hi])` and readonly range
+arguments accept existing lexical slices, formals and derived children. Bounds
+are relative to the parent and evaluate once before acquisition. Mutable children
+suspend the parent during the call; capture cleanup resumes it after return.
+Scalar, array and record results use the existing paths. See the
+[example](examples/named-slice-range-arguments.brc) and
+[contract](docs/engineering/m2-named-slice-range-arguments.md).
+
+Windows development/release each passed 12 native groups and 854 tool-free CLI
+cases, with 454 matching final inputs and rechecked retained identities. Recursive
+and repeated-site boundary fixtures reach the existing public 1M Fuel cap;
+ordinary forwarding and range cases complete. Temporary roots, repeated slicing
+and escaping borrows remain unsupported. Full native/M1, other M2, Linux,
+isolation, packaging and performance were not rerun. Local only; no push, release
+or deployment. See the
+[verified evidence](docs/evidence/m2-named-slice-range-arguments-windows-20261103.json).
+
 ## Borrow array ranges directly in CALL arguments
 
 Implemented at `749f9bf`. Existing arrays support `ref array[lo..hi]` and

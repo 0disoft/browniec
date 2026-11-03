@@ -1,5 +1,25 @@
 # Validation
 
+- Call-scoped named-slice range arguments are implemented at `b8ab0eb`.
+  Exact-mode `ref part[lo..hi]` / `ref mut part[lo..hi]` support six scalar types,
+  owned/formal/derived parents, relative open/empty ranges and aggregate results.
+  Endpoints complete before acquisition; readonly children reuse SUBSLICE/CLOSE,
+  mutable children reuse BEGIN/END and canonical derived CALLs. CALL restores the
+  anonymous child before capture cleanup resumes its named parent. Existing
+  early-exit/error cleanup preserves original errors and earlier writes. The
+  source-only descriptor gains a parent discriminator; runtime layouts, prices,
+  opcodes and payload-copy behavior are unchanged. Version JSON adds
+  `array_slice_named_range_arguments: true`. Windows development/release each
+  passed 12 native groups and 854 tool-free CLI cases, with 454 matching final
+  inputs and retained identities rechecked. Three production paths differ from
+  `4b6ab2c`; 97 others match under Git LF. The new mutable admission fixture uses
+  public execution while legacy gates remain. Temporary roots, repeated slicing,
+  mode coercions and escaping/returned borrows remain unsupported. Full native/
+  M1/other M2/Linux/isolation/packaging/allocator/native size-stack/timing were not
+  rerun. Local only; no push, release or deployment. See the
+  [contract](docs/engineering/m2-named-slice-range-arguments.md) and
+  [Windows evidence](docs/evidence/m2-named-slice-range-arguments-windows-20261103.json).
+
 - Call-scoped owned-array range arguments are implemented at `749f9bf`.
   `ref array[lo..hi]` / `ref mut array[lo..hi]`, open-ended and empty ranges
   evaluate usize endpoints once in order before OPEN and anonymous publication.

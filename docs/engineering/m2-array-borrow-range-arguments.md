@@ -1,5 +1,8 @@
 # Call-scoped owned-array range arguments
 
+This historical slice records `749f9bf`. Its named-slice range gate is superseded
+by [named-slice range arguments](m2-named-slice-range-arguments.md).
+
 Implemented at `749f9bf`, following whole-array arguments at `528934b`.
 
 An existing owned array may supply a selected range directly to an exact slice
