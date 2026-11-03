@@ -24,7 +24,10 @@ are available. Root exclusion remains whole-root, including disjoint mutable ran
 
 Private returned-slice signatures, body-origin analysis and explicit
 [preparation IR/independent proof](../engineering/m2-slice-result-ir.md) exist;
-every borrowed-result declaration still rejects publicly and no result executes.
+every borrowed-result declaration still rejects publicly and no guest result
+executes. [Native ownership transactions](../engineering/m2-slice-result-runtime.md)
+now support handoff/retention; private destination/dispatch/cleanup integration is
+still required before source admission.
 Buffer storage/leases/scanning have private native evidence but no guest Buffer
 execution path. There is no general Engine/Instance API, guest input/output, host
 suspension, restricted worker or public DLL.

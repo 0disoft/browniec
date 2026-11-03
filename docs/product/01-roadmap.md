@@ -1,6 +1,6 @@
 # Roadmap
 
-- Reconciled: 2026-11-03; B01 preparation IR/proof updated 2026-11-04 at `670a041`.
+- Reconciled: 2026-11-03; B01 preparation at `670a041` and B02/B03 native transactions at `7f8f455`/`b82500d`, updated 2026-11-04.
 - This is the current delivery plan. The old increment log is preserved in
   [history](history/roadmap-20261103.md); its dated gates are not current TODOs.
 - The complete requirement crosswalk and actionable gaps are in
@@ -37,7 +37,8 @@ has not been verified by the toolchain's Linux cross-build alone.
 - Private result-signature and body-origin analysis through named/subview returns,
   branches, forwarding and grounded recursion, plus explicit
   [returned-view preparation IR/independent proof](../engineering/m2-slice-result-ir.md).
-  Actual borrowed results stay gated.
+  [Native handoff/capture transactions](../engineering/m2-slice-result-runtime.md)
+  now retain selected owners and suspended parents; guest IR dispatch stays gated.
 
 The original audit's [focused Windows receipt](../evidence/m2-slice-result-origins-windows-20261103.json)
 records 12 native groups and 990 CLI cases per profile on 462 matching inputs.
@@ -49,14 +50,21 @@ records 10 native groups and 208 CLI cases per profile on 476 matching inputs,
 without final result reuse. This focused increment does not replace the earlier
 broader receipts or establish runtime returned-reference/lifetime support.
 
+The final 2026-11-04 [native handoff/lifetime evidence](../evidence/m2-slice-result-runtime-windows-20261104.json)
+records 12 native groups and 208 CLI cases per profile on 479 matching inputs,
+with no final result reuse. Source result/dispatch/cleanup integration is still
+required; this native transaction does not promote public execution.
+
 ## Next implementation units
 
 1. B01 preparation subset is implemented: explicit non-executable result recipes
    with independent proof. Complete escaping lifetime/runtime destination proof
    through B02/B03; do not make this IR executable by changing opcode admission alone.
-2. B02: implement atomic ticket/result handoff and failure cleanup.
-3. B03: retain selected actual captures/owners for the result lifetime and keep
-   exclusive parents suspended until their returned descendants end.
+2. B02 native handoff and zero-Fuel abort are implemented. Next bind checked
+   result metadata to caller frame/site destinations and private op63/64/65 dispatch.
+3. B03 native selected capture/root lifetime and descendant suspension are
+   implemented. Route compiler captures/callee-local cleanup through the transaction
+   and verify the integrated VM failure and metering paths.
 4. B04: lower admitted borrowed-result uses and promote public execution only
    after end-to-end validation. Extend origin/grammar support deliberately.
 5. D01-D04 and L05-L06: connect guest Buffer, resource-bearing wrappers and

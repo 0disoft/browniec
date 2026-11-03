@@ -1,5 +1,32 @@
 # AGENTS.md
 
+- Private returned-view native handoff/capture lifetimes are implemented at
+  `7f8f455`, with anonymous mutable capture restoration at `b82500d`.
+  `slice_result_runtime` uses invocation-owned canonical authority, pool
+  and owner metadata; actual payload bytes are external and never copied by its
+  transactions. Contract derives selected formal/type/access from checked private
+  IR. Atomic handoff transfers shared tickets in place or installs a caller-frame
+  exclusive child, cleans unselected captures and retains a selected temporary
+  root until result close. Exclusive parents stay suspended through descendants;
+  nested forwarding invalidates consumed inner receipts. Anonymous mutable range
+  captures END caller reborrows in reverse argument order before result creation;
+  independently opened views CLOSE instead. Returned/resumed bindings restore
+  named parents, using the post-cleanup canonical result depth. Failure preserves live
+  metadata and earlier writes; abort uses prepaid cleanup at zero execution Fuel.
+  Private admission cost is 80*65537; public prices/Fuel/capabilities are unchanged.
+  No guest returned-view IR executes. Next: private result destination/frame/site
+  bindings and op63/64/65 dispatch, including routing existing capture/callee-local
+  cleanup through this transaction. Do not promote public syntax/flags yet.
+  See [the contract](docs/engineering/m2-slice-result-runtime.md).
+  Final Windows development/release each passed 12 native groups and 208 CLI cases,
+  with 479 matching inputs and no final result reuse. All 103 prior source
+  files match `ba1a62a`. Development started before the fix commit with the same
+  final inputs; original HEAD and skips are explicit. Full native/M1/other M2/
+  Linux/isolation/ABI/packaging/allocator/native size-stack/timing were not verified.
+  See [Windows evidence](docs/evidence/m2-slice-result-runtime-windows-20261104.json).
+
+
+
 - Private returned-view preparation IR and independent proof are implemented at
   `670a041`. `compiler::inspect_slice_result_ir` returns a separate non-executable
   unit, with exact scalar/access and selected-input metadata. Private 63/64/65

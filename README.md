@@ -1,5 +1,22 @@
 # Brownie C
 
+## Private returned-view handoff and capture lifetime
+
+Implemented at `7f8f455`, with anonymous mutable capture restoration at
+`b82500d`. Native transactions transfer selected shared/exclusive
+views, retain selected anonymous array owners, release unselected captures and
+keep exclusive parents suspended through returned descendants. Preparation and
+late cleanup failures preserve metadata and earlier payload writes; zero-Fuel
+invocation abort drains the owned resources. See the
+[contract](docs/engineering/m2-slice-result-runtime.md).
+Windows development/release each passed 12 native groups and 208 CLI cases on
+479 matching inputs, without final result reuse. See the
+[evidence](docs/evidence/m2-slice-result-runtime-windows-20261104.json).
+
+
+This is native component execution, not guest op63/64/65 dispatch. Public borrowed
+results stay gated until result/frame/capture bindings and cleanup are integrated.
+
 ## Private returned-view IR: execution gated
 
 Implemented at `670a041`. A separate preparation/forward/return IR carries exact

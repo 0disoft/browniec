@@ -1,6 +1,7 @@
 # Private returned-view handoff and capture lifetime
 
-Introduced after `ba1a62a`. This is a real native ownership transaction over the
+Implemented at `7f8f455`, with anonymous mutable capture restoration at
+`b82500d`, following `ba1a62a`. This is a real native ownership transaction over the
 existing array owners, slice pool and canonical CALL/reborrow stack. It does not
 execute guest returned-view IR or enable public borrowed-result source.
 
@@ -100,11 +101,30 @@ remain separately gated. No Engine lifecycle, isolation or packaging is implied.
 
 ## Verification
 
-The first development native checkpoint passed six groups: shared owner pinning,
-mutable returned descendants/parent suspension, selected versus unselected temporary
-owners, nested forwarding, late-failure rollback preserving payload writes, and
-in-place full-pool transfer/zero-Fuel abort. Follow-up verification covers remaining
-type/alias/generation boundaries, anonymous mutable argument restoration in both
-selection orders, rollback after caller-restoration/result-installation, and the
-unchanged public CLI gate. These are native
-component checks, not guest returned-reference execution or Python model checks.
+Windows development and release each passed **12 native groups and 208 CLI cases**
+in fresh final runs without result reuse. The native groups cover all six scalar
+shared/exclusive modes, selected temporary roots, aliased shared ranges, nested
+forwarding/descendants, full/exhausted slots, generation/frame errors, Fuel/late-
+cleanup failure and zero-Fuel abort. Anonymous mutable argument cases cover both
+selection orders and complete rollback after caller restoration/result installation.
+
+CLI checks are 88 existing borrowed-result rejections plus 120 temporary-array
+borrow regressions in cleared/tool-free environments. All 479 input hashes agree
+across profiles and retained reports/artifacts were rechecked. All 103 prior
+source files match `ba1a62a`; the only production addition is this native module.
+Development started before `b82500d` was committed with the same final inputs;
+its original recorded HEAD remains explicit in the
+[Windows evidence](../evidence/m2-slice-result-runtime-windows-20261104.json).
+Earlier 6+4/10-group checkpoints are historical and were not reused as final passes.
+
+To reproduce:
+
+```text
+python3 tools/verify-m2-slice-result-runtime.py --profile development
+python3 tools/verify-m2-slice-result-runtime.py --profile release
+```
+
+These are actual native component/payload checks, not guest returned-view execution
+or Python model results. Full native/M1/other M2/Linux/isolation/ABI/packaging,
+allocator instrumentation and native size/stack/timing were not verified. Local
+only; no push, release or deployment.

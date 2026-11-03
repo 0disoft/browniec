@@ -62,8 +62,9 @@ before guest effects. Ordinary programs inspected through this API remain ordina
 The private proof is not a transferable authorization or protection against later
 unit mutation: re-inspect changed IR.
 
-B02/B03 must establish real ticket/destination handoff, selected caller capture/
-owner retention, returned child lifetime and exclusive-parent suspension. Current
+[B02/B03 native transactions](m2-slice-result-runtime.md) now implement ticket
+handoff, selected capture/root retention and exclusive-parent suspension. Actual
+result destinations, frame/site/opcode dispatch and cleanup still need integration. Current
 cleanup deliberately still ends views/parents as in analysis; it is NOT executable
 escaping-reference cleanup. Static origins, inline return reslicing and general
 borrowed-result binding/expression/argument admission remain later work.

@@ -16,7 +16,7 @@
 | R8: Product mismatch | No representative input -> transform -> staged-output guest workload has been delivered. Validate a usable workload and developer benefit before optional language expansion. |
 | R9: Unknown effects | Typed host and cancellation paths are not implemented. Preserve known/unknown effect state and host reconciliation; no automatic replay. |
 | R10: Toolchain drift | `toolchain.json` records the adopted compiler/SDK, not a permanent version freeze. Windows narrow evidence does not establish Linux runtime support or compatibility of a future update. |
-| R11: Returned-view lifetime | Private origin analysis is not runtime authentication. Keep public results gated until independent IR proof, ticket handoff, selected-capture retention and exclusive-parent suspension are verified. |
+| R11: Returned-view lifetime | Private IR proof and scoped native handoff/retention now exist. Keep public results gated until result/frame/site bindings, opcode dispatch, capture/callee cleanup and integrated lifetime/failure proof are verified. |
 | R12: Resource and terminal boundaries | Fuel and an aggregate arena cap exist, but complete Engine-total accounting, bounded step/cleanup, cancellation/deadline and persistent poison do not. Do not expose those lifecycle guarantees early. |
 | R13: Stale status or overclaim | Historical increment gates/counts can contradict newer features. Current inventory and version availability must separate private foundations, public execution, full profile, OS and packaged delivery. |
 
