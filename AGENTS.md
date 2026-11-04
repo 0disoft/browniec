@@ -1,3 +1,26 @@
+- Native compiler::compile_image now collects bounded source literals into a
+  staged kind-specific builder, lowers immediate byte reads/lengths and explicit
+  text-literal text::bytes projections, freezes exact used payload and retains
+  independently proved code/image together. Whole-collection errors preserve
+  the caller's builder; raw-span index metadata remains compiler scratch.
+  Dynamic usize indices/CALLs and loop reentry use the existing canonical VM,
+  with zero guest array backing for these expressions. One-byte source execution
+  costs 39 plus unchanged entry/leave reserves; exact image charge is 577.
+  Public compile/origin-analysis and returned-reference declaration gates remain.
+  Static definitions and source occurrences each retain the 16-entry bound.
+  Speculative for-post rollback now zeros discarded instruction bytes before
+  scalar body emission can inherit OPEN range bytes; a classic-for regression
+  verifies replay. Metadata-only site allocation follows actual retained code.
+  Windows development/release each passed 32 focused native groups (eight new)
+  and 88 tool-free CLI cases on 134 matching final inputs and a 221-file test
+  discovery identity. All 124 production files are LF; locked LF mirrors pass.
+  No overrides/historical reuse. Pre-correction passes and the intentionally
+  stopped older release native run are excluded from final evidence.
+  Full profiles/general stack/RAM/allocator/timing/Linux/restricted/C ABI/package
+  evidence remains open. Typed Static locals/aliases/ref str, general byte-view
+  expressions/text::equal arguments, Static CALL/return receipts and public
+  admission are next; the complete objective remains active. See
+  docs/engineering/literal-compiler.md and its focused Windows evidence.
 - Private image EQUAL now admits live immutable byte/text operands, including
   mixed backing kinds, without coercing bytes to text. Actual-image kind/range,
   function/definition/liveness and bool destination proof remain mandatory;

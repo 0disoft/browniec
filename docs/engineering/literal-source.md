@@ -78,8 +78,10 @@ early CLI probe and the initial development selection before three fixture
 corrections are excluded. Full-profile, general native-stack, RAM/timing,
 allocator/OOM, Linux, restricted delivery and C ABI claims remain open.
 
-Next connect compiler-owned literal collection, typed Static locals and
-`text::bytes`, then Static CALL/return origins and public result admission.
+The [native source compiler successor](literal-compiler.md) now owns literal
+collection and lowers immediate byte and explicit text-literal byte projections.
+Typed Static locals/aliases, general text::bytes arguments, Static CALL/return
+origins and public result admission remain next.
 The accepted `text::equal` API takes byte views. Its [private equality successor](static-byte-equality.md)
 now admits byte operands through actual image proof/execution. Connect source
 argument checking and explicit conversions before promoting the guest API.

@@ -29,6 +29,10 @@ import slice_result_verifier as slice_result_verifier;
 import slice_result_range_source as return_ranges;
 import slice_result_source_origins as source_origins;
 import slice_result_call_source as result_calls;
+import literal_collection as literal_collection;
+import static_builders as static_builders;
+import static_image as static_images;
+import program_image as program_images;
 
 fn u8 precedence(u8 kind) {
     if (kind == 133) { return 1; }
@@ -64,6 +68,9 @@ fn u8 opcode(u8 kind) {
 fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize depth, u8 expected, u8 result_type, usize structure, ref mut loops::State loop_state) {
     if (depth > 32) { return .err(errors::make(4, s.begin)); }
     let usize at = s.begin;
+    if(s.kind==3 && signatures.literals.enabled){
+        return literal_projection(source,s,p,table,signatures,depth,result_type,structure,loop_state,false);
+    }
     if(word_is(source,s,b"switch")) {
         return switch_value(source,s,p,table,signatures,depth,expected,result_type,structure,loop_state);
     }
@@ -124,11 +131,49 @@ fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s,
     }
     return .err(errors::make(2, s.begin));
 }
+// Literal evaluation has no guest effect or owning temporary. Evaluate a
+// computed index before OPEN, so early returns need no hidden Static cleanup.
+fn Result<usize,errors::Error> literal_projection(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    usize depth,u8 result_type,usize structure,ref mut loops::State loop_state,bool text_bytes){
+    let usize at=s.begin;
+    if(s.kind!=if(text_bytes){4}else{3}){return .err(errors::make(3,at));}
+    let usize row=literal_collection::find(ref signatures.literals,s.begin,s.end)?;
+    let usize literal=signatures.literals.literals[row];let usize size=signatures.literals.lengths[row];
+    let u8 kind=signatures.literals.kinds[row];
+    let usize advanced=lexer::next(source,s)?;
+    if(text_bytes){let usize call_close=lexer::punctuation(source,s,41)?;}
+    let bool length=s.kind==46;var usize index=0;
+    if(length){let usize dot=lexer::next(source,s)?;let usize member=lexer::word(source,s,b"len")?;}
+    else{
+        let usize bracket=lexer::punctuation(source,s,91)?;
+        index=expression(source,s,p,table,signatures,1,depth+1,12,result_type,structure,loop_state)?;
+        if(p.types[index]!=12){return .err(errors::make(3,at));}
+        let usize bracket_close=lexer::punctuation(source,s,93)?;
+    }
+    var usize site=static_builders::open(p,literal,kind,size,at)?;
+    if(text_bytes){let usize text=site;site=static_builders::bytes(p,text,at)?;
+        let usize close_text=static_builders::close(p,text,at)?;}
+    let usize value=static_builders::scalar(p,site,index,length,at)?;
+    let usize closed=static_builders::close(p,site,at)?;return .ok(value);
+}
 fn Result<usize, errors::Error> named_operand(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize depth, u8 expected, u8 result_type, usize structure, ref mut loops::State loop_state) {
     let usize at = s.begin;
     if (word_is(source, s, b"text")) {
         var lexer::State look = lexer::snapshot(s);
         let usize next = lexer::next(source, ref mut look)?;
+        if(look.kind==58 && signatures.literals.enabled){
+            let usize first=lexer::next(source,ref mut look)?;
+            let usize second=lexer::punctuation(source,ref mut look,58)?;
+            if(word_is(source,ref look,b"bytes")){
+                let usize module_name=lexer::next(source,s)?;
+                let usize colon=lexer::punctuation(source,s,58)?;
+                let usize path=lexer::punctuation(source,s,58)?;
+                let usize method=lexer::word(source,s,b"bytes")?;
+                let usize open=lexer::punctuation(source,s,40)?;
+                return literal_projection(source,s,p,table,signatures,depth,result_type,structure,loop_state,true);
+            }
+        }
         if (look.kind == 58) { return utf8_value(source,s,p,table,signatures,depth,result_type,structure,loop_state); }
     }
     if (word_is(source, s, b"true") || word_is(source, s, b"false")) {
@@ -1134,6 +1179,10 @@ fn Result<usize, errors::Error> checked_post(ref u8[] source, ref mut lexer::Sta
     if (p.call_count!=calls || !types::scalar(p.types[table.registers[post]])) {return .err(errors::make(3,at));}
     var usize r=registers;
     while(r<p.registers) {p.slots[r]=false; p.types[r]=0; r+=1;}
+    // Extended instructions carry nonzero range bytes. Clear the discarded
+    // region before body emission can reuse it for ordinary scalar operations.
+    var usize discarded=code*8;let usize end=p.count*8;
+    while(discarded<end){p.code[discarded]=0;discarded+=1;}
     p.count=code; p.registers=registers; p.constant_count=constants;
     return .ok(post);
 }
@@ -1539,12 +1588,13 @@ fn Result<usize, errors::Error> prepare_aggregates(ref u8[] source, ref mut func
 
 // Scratch belongs to the wrapper and never escapes on failure. Avoid a large
 // Result<Program> value throughout nested source lowering in native debug code.
-fn Result<usize, errors::Error> lower_into(ref u8[] source,bool origin_analysis,ref mut ir::Program p) {
+fn Result<usize, errors::Error> lower_into(ref u8[] source,bool origin_analysis,ref literal_collection::Index literals,ref mut ir::Program p) {
     if (source.len > 4096) { return .err(errors::make(4, 4096)); }
     let ref str valid = switch (text::validate_utf8(source)) {
         case .ok(value): { value } case .err(_): { return .err(errors::make(1, 0)); }
     };
     var functions::Table signatures = functions::scan(source)?;
+    signatures.literals=*literals;
     // Signature candidates do not prove a returned borrow's origin or lifetime.
     // Reject every such declaration, including unreachable functions, before
     // Program/result preparation can mistake it for an ordinary scalar result.
@@ -1587,13 +1637,15 @@ fn Result<usize, errors::Error> lower_into(ref u8[] source,bool origin_analysis,
 
 pub fn Result<ir::Program,errors::Error> compile(ref u8[] source){
     var ir::Program p=ir::empty();
-    let usize lowered=lower_into(source,false,ref mut p)?;
+    let literal_collection::Index literals=literal_collection::empty();
+    let usize lowered=lower_into(source,false,ref literals,ref mut p)?;
     return .ok(p);
 }
 // The analysis Program stays private and is never returned to an executor.
 pub fn Result<slice_origins::Summary,errors::Error> inspect_slice_results(ref u8[] source){
     var ir::Program p=ir::empty();
-    let usize lowered=lower_into(source,true,ref mut p)?;
+    let literal_collection::Index literals=literal_collection::empty();
+    let usize lowered=lower_into(source,true,ref literals,ref mut p)?;
     let functions::Table signatures=functions::scan(source)?;
     let slice_result_ir::Program unit=slice_result_ir::from_proxy(p,ref signatures)?;
     let slice_result_verifier::Proof checked=slice_result_verifier::inspect(ref unit)?;
@@ -1603,9 +1655,41 @@ pub fn Result<slice_origins::Summary,errors::Error> inspect_slice_results(ref u8
 // Non-executable returned-view IR. Public compile retains its declaration gate.
 pub fn Result<slice_result_ir::Program,errors::Error> inspect_slice_result_ir(ref u8[] source){
     var ir::Program p=ir::empty();
-    let usize lowered=lower_into(source,true,ref mut p)?;
+    let literal_collection::Index literals=literal_collection::empty();
+    let usize lowered=lower_into(source,true,ref literals,ref mut p)?;
     let functions::Table signatures=functions::scan(source)?;
     let slice_result_ir::Program unit=slice_result_ir::from_proxy(p,ref signatures)?;
     let slice_result_verifier::Proof checked=slice_result_verifier::inspect(ref unit)?;
     return .ok(unit);
+}
+
+fn program_images::Error image_source_error(errors::Error e){
+    return program_images::Error{.kind=.Code,.code=e,.literal=.State};
+}
+fn program_images::Error image_literal_error(static_images::Error e){
+    return program_images::Error{.kind=.Literal,.code=errors::make(0,0),.literal=e};
+}
+// Native retained-image source entry. Source/IR/image scratch never escapes on
+// failure. Returned-reference declarations keep their existing public gate here.
+// image_limit covers image metadata+payload, not complete compiler/Program RAM.
+pub fn Result<program_images::Program,program_images::Error> compile_image(ref u8[] source,usize image_limit){
+    var static_images::Builder builder=switch(static_images::builder(4096)){
+        case .ok(v):{v}case .err(e):{return .err(image_literal_error(e));}
+    };
+    let literal_collection::Index literals=switch(literal_collection::collect(ref mut builder,source)){
+        case .ok(v):{v}case .err(e):{
+            let program_images::Error mapped=switch(e.kind){
+                case .Source:{image_source_error(e.source)}case .Image:{image_literal_error(e.image)}
+            };return .err(mapped);
+        }
+    };
+    var ir::Program body=ir::empty();
+    switch(lower_into(source,false,ref literals,ref mut body)){
+        case .ok(_):{}case .err(e):{return .err(image_source_error(e));}
+    };
+    let static_images::Image image=switch(static_images::freeze(ref builder,image_limit)){
+        case .ok(v):{v}case .err(e):{return .err(image_literal_error(e));}
+    };
+    let slice_result_ir::Program code=slice_result_ir::Program{.body=body,.elements=[0;16],.parameters=[0;16]};
+    return program_images::retain(ref code,image,image_limit);
 }

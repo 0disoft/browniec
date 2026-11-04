@@ -55,5 +55,6 @@ passed. No compiler/stack overrides or historical result reuse were used.
 See [focused Windows evidence](../evidence/static-byte-equality-windows-20261105.json).
 Full profiles, general stack/RAM, allocator/OOM, timing, Linux, restricted delivery
 and C ABI/packaging were not verified by this focused selection.
-Guest literals/types, Static CALL/return receipts and public result admission
-remain next. The complete accepted implementation remains open.
+The [native source compiler successor](literal-compiler.md) now lowers immediate
+byte/text projections. Typed Static locals, text::equal argument lowering,
+Static CALL/return receipts and public result admission remain next. The complete accepted implementation remains open.
