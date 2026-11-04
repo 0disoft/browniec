@@ -4,6 +4,19 @@
   docs/product/04-remaining-work.md. Do not redefine completion around the
   experimental subset. Execution order and next B04 constraints are recorded in
   docs/engineering/completion-plan.md. Remote delivery remains separate.
+- Native Program retention now owns independently verified copyable IR and the
+  move-only literal image together in src/program_image.fy. Private fields/shared
+  getters preserve immutable snapshots; scalar native execution borrows the owner
+  and reuses existing admission/Fuel/cleanup. Image ownership moves on all outcomes.
+  Development/release each passed 20 native groups on 126 matching final inputs,
+  with a 217-file discovery digest and 119 LF production files; LF mirror checks
+  passed without native overrides/result reuse. Earlier probes are excluded.
+  No Static opcode/origin/returned receipt, guest literal syntax, Engine handles,
+  Instance pinning, global accounting or public promotion is implemented yet.
+  Next prove real Static definitions against this image and connect VM lifetimes;
+  keep the complete objective active. See docs/engineering/retained-program-image.md
+  and its Windows evidence. Whole-profile/CLI/Linux/ABI/allocator/stack/RAM/timing
+  checks were not run; no native stack-safety claim follows from fixture splitting.
 - Static literal backing now has a private move-only native Image in
   src/static_image.fy. Compiler scratch interns exact byte/text kinds, bounds
   rows/bytes and validates UTF-8 before mutation. Freezing independently validates
@@ -16,8 +29,9 @@
   and a 216-file discovery digest; all 118 production files are LF and an LF
   mirror passed check --locked. Final runs follow final capture; no native
   overrides/historical reuse. Earlier field-slicing/resource-privacy/Result-equality
-  probes and pre-snapshot results are excluded. Program retention, Static IR/
-  authority/VM lifetime, guest literals and public promotion remain open; this
+  probes and pre-snapshot results are excluded. At this storage checkpoint, Program
+  retention and Static IR/authority/VM lifetime were open; the successor above now
+  supplies native Program ownership. Guest literals and public promotion remain open; this
   actual owning-storage prerequisite does not complete B04/D05 or the objective.
   No old VM/CLI/full-profile/Linux/restricted/ABI/packaging/allocator OOM or native
   timing/stack/RAM evidence was produced. Next integrate a retained Program image

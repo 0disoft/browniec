@@ -73,8 +73,10 @@ and empty spans, equality, hostile usize bounds and forged scratch metadata.
 
 ## Next integration
 
-1. Retain the owning image beside copyable proof IR in an immutable Program owner.
-   Do not make proof snapshots copy or alias a mutable native allocation.
+1. Implemented by the [retained native Program](retained-program-image.md): the
+   private move-only owner retains the real image beside independently verified
+   copyable IR. It exposes shared borrows and existing native scalar execution;
+   Engine/Instance pinning and Static execution remain open.
 2. Introduce independently checked Static definitions/origins, distinct from input
    origins and local owned roots. Program admission must inspect the real image
    and prove every literal index, exact read-only type, range and definition.
