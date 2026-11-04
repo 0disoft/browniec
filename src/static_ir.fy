@@ -14,11 +14,11 @@ import errors as errors;
 // Bytes5..7 are zero. Dynamic definitions retain their maximum image window.
 // Definitions are reconstructed from actual code/image, never caller metadata.
 // This copyable proof does not own/pin storage or authenticate a Program handle.
-pub struct Sites { usize[16] definitions; usize[16] functions; usize[16] starts; u8[16] kinds; images::Span[16] spans; usize count; usize dynamic; }
+pub struct Sites { usize[16] definitions; usize[16] functions; usize[16] starts; u8[16] kinds; images::Span[16] spans; usize count; usize dynamic; u8[128] parameters; u8[128] formal_sites; u8[16] results; u8[16] origins; usize[16] roots; usize generic; bool call_profile; }
 pub fn Sites empty(){return Sites{.definitions=[256;16],.functions=[16;16],.starts=[0;16],.kinds=[0;16],
-    .spans=[images::Span{.literal=16,.start=0,.end=0};16],.count=0,.dynamic=0};}
+    .spans=[images::Span{.literal=16,.start=0,.end=0};16],.count=0,.dynamic=0,.parameters=[0;128],.formal_sites=[0;128],.results=[0;16],.origins=[0;16],.roots=[0;16],.generic=0,.call_profile=false};}
 fn errors::Error invalid(usize pc){return errors::make(5,pc);}
-pub fn bool operation(u8 op){return op>=69 && op<=76;}
+pub fn bool operation(u8 op){return op>=69 && op<=77;}
 
 // This checks partitions before reading any PC. Complete ordinary CFG/type/loan
 // proof is still mandatory and is supplied by verifier::inspect_statics.
@@ -79,9 +79,14 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,ref Sites sites,usize 
     let usize a=p.code[at+2] as usize;let usize b=p.code[at+3] as usize;let usize one=1;
     if(!operation(op) || sites.count==0){return .err(invalid(pc));}
     if(op!=69 && op!=76 && (p.code[at+4]!=0 || p.code[at+5]!=0 || p.code[at+6]!=0 || p.code[at+7]!=0)){return .err(invalid(pc));}
-    if(op==69 || op==74 || op==75 || op==76){
+    if(op==69 || op==74 || op==75 || op==76 || op==77){
         if(dst>=16 || sites.definitions[dst]!=pc || sites.functions[dst]!=f || (live&(one<<dst))!=0 ||
             ((op==74 || op==75) && (!live_site(sites,a,f,if(op==74){2}else{0},live) || b!=0))){return .err(invalid(pc));}
+        if(op==77){
+            if(a<p.register_starts[f] || a>=p.register_starts[f]+p.arities[f] ||
+                sites.parameters[a]!=p.code[at+3] || sites.formal_sites[a] as usize!=dst+1 || p.types[a]!=0 ||
+                (b!=1 && b!=2)){return .err(invalid(pc));}
+        }
         if(op==76){let usize hi=p.code[at+4] as usize;
             if(!live_site(sites,a,f,1,live) || !scalar(p,defined,b,f) || !scalar(p,defined,hi,f) ||
                 p.types[b]!=12 || p.types[hi]!=12 || p.code[at+5]!=0 || p.code[at+6]!=0 || p.code[at+7]!=0){return .err(invalid(pc));}}

@@ -44,7 +44,7 @@ fn Result<Step,errors::Error> execute(ref ir::Program p,ref statics::Sites sites
     let usize at=pc*8;let usize offset=p.offsets[pc];let u8 op=p.code[at];
     let usize dst=p.code[at+1] as usize;let usize a=p.code[at+2] as usize;
     let usize b=p.code[at+3] as usize;let usize one=1;
-    if(!statics::operation(op) || (op==76 && words.len!=16)){return .err(invalid(offset));}
+    if(!statics::operation(op) || op==77 || (op==76 && words.len!=16)){return .err(invalid(offset));}
     var views::Span left=views::Span{.start=0,.length=0};var usize right=0;var usize other=0;
     if(op==69 || op==74 || op==75 || op==76){
         if(dst>=16 || sites.definitions[dst]!=pc || sites.functions[dst]!=f || (live&(one<<dst))!=0){return .err(invalid(offset));}

@@ -32,6 +32,19 @@ pub fn Result<Span,errors::Error> inspect(ref statics::Sites sites,usize site,us
         sites.definitions[site]>=256 || sites.functions[site]!=function ||
         (sites.kinds[site]!=1 && sites.kinds[site]!=2) ||
         (kind!=0 && sites.kinds[site]!=kind)){return .err(invalid(offset));}
+    let usize one=1;
+    if((sites.generic&(one<<site))!=0){
+        let Span actual=unpack(word,payload,offset)?;var usize root=0;
+        while(root<16){if((sites.roots[site]&(one<<root))!=0){
+                if(sites.definitions[root]>=256 || sites.kinds[root]==0 || (sites.generic&(one<<root))!=0){return .err(invalid(offset));}
+                let usize lo=sites.spans[root].start;let usize hi=sites.spans[root].end;let usize base=sites.starts[root];
+                if(hi<lo || hi>4096 || sites.spans[root].literal>=16 || base>payload || hi-lo>payload-base){return .err(invalid(offset));}
+                let usize size=hi-lo;
+                if(actual.start>=base && actual.start<=base+size && actual.length<=base+size-actual.start &&
+                    (sites.kinds[site]!=2 || (sites.kinds[root]==2 && actual.start==base && actual.length==size))){return .ok(actual);}
+            }root+=1;
+        }return .err(invalid(offset));
+    }
     let usize lo=sites.spans[site].start;let usize hi=sites.spans[site].end;
     if(hi<lo || hi>4096 || sites.spans[site].literal>=16){return .err(invalid(offset));}
     let usize base=sites.starts[site];let usize size=hi-lo;

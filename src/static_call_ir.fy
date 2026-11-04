@@ -106,7 +106,10 @@ fn Result<usize,errors::Error> arguments(ref Program unit,ref Proof proof,usize 
         let u8 kind=unit.parameters[formal];
         if(kind!=0){
             if(value<192 || value>=208 || !live(proof,value-192,f,bits) || proof.kinds[value-192]!=kind){return .err(invalid(pc));}
-        }else if(value>=128){return .err(invalid(pc));}i+=1;
+        }else if(p.array_parameters[formal]!=0){if(value<128 || value>=144){return .err(invalid(pc));}}
+        else if(p.record_parameters[formal]!=0){if(value<144 || value>=160){return .err(invalid(pc));}}
+        else if(p.slice_parameters[formal]!=0){if(value<160 || value>=176){return .err(invalid(pc));}}
+        else if(value>=128){return .err(invalid(pc));}i+=1;
     }
     while(i<8){if(p.call_args[map*8+i]!=0){return .err(invalid(pc));}i+=1;}
     used[map]=true;return .ok(map);

@@ -37,6 +37,12 @@ pub fn usize initial(ref ir::Program p, usize f) {
 }
 pub fn Result<usize, errors::Error> arguments(ref ir::Program p, usize target, usize site, usize caller,
     ref registers::Set defined, usize live, usize pc) {
+    let u8[1] empty=[0];return arguments_static(p,target,site,caller,defined,live,pc,ref empty[..0]);
+}
+// The complete image verifier has independently classified these Static positions.
+// Ordinary scalar/array/record/loan positions retain the same canonical proof.
+pub fn Result<usize, errors::Error> arguments_static(ref ir::Program p,usize target,usize site,usize caller,
+    ref registers::Set defined,usize live,usize pc,ref u8[] statics){
     let usize count = p.call_arities[site] as usize;
     var usize arg = 0;
     var usize writers = 0; var usize writer_roots = 0; let usize one = 1;
@@ -45,6 +51,7 @@ pub fn Result<usize, errors::Error> arguments(ref ir::Program p, usize target, u
         if (arg < count) {
             let usize parameter = p.register_starts[target] + arg;
             let usize encoded = p.array_parameters[parameter] as usize;
+            if(statics.len==128 && statics[parameter]!=0){arg+=1;continue;}
             if (p.slice_parameters[parameter] != 0) {
                 let usize checked = slices::argument(p, parameter, source, caller, live, pc)?;
                 if (ir::exclusive(p,checked)) {

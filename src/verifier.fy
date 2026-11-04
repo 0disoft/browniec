@@ -18,9 +18,11 @@ import struct_parameters as struct_parameters;
 import struct_results as struct_results;
 import static_ir as statics;
 import static_image as images;
+import static_call_ir as image_calls;
+import static_call_sites as image_sites;
 
 fn bool readable(ref ir::Program p, ref registers::Set defined, usize r, usize start, usize end) {
-    return r >= start && r < end && !p.slots[r] && p.array_parameters[r] == 0 && p.record_parameters[r] == 0 && p.slice_parameters[r] == 0 && registers::contains(defined, r);
+    return r >= start && r < end && p.types[r]!=0 && !p.slots[r] && p.array_parameters[r] == 0 && p.record_parameters[r] == 0 && p.slice_parameters[r] == 0 && registers::contains(defined, r);
 }
 fn bool merge(ref mut usize[] states, ref mut bool[] seen, ref registers::Set defined, usize target, ref mut usize[] array_states, usize live, ref mut usize[] static_states, usize static_live) {
     if (seen[target] && (array_states[target] != live || static_states[target] != static_live)) { return false; }
@@ -45,11 +47,11 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
     var registers::Set defined = registers::empty();
     var usize i = start;
     while (i < end) {
-        if (p.record_parameters[i] == 0 && p.slice_parameters[i] == 0 && !types::valid(p.types[i])) { return .err(errors::make(5, p.starts[f])); }
+        if (p.record_parameters[i] == 0 && p.slice_parameters[i] == 0 && static_sites.parameters[i]==0 && !types::valid(p.types[i])) { return .err(errors::make(5, p.starts[f])); }
         if (i < start + arity) {
             if (p.slots[i]) { return .err(errors::make(5, p.starts[f])); }
             registers::insert(ref mut written, i);
-            if (p.array_parameters[i] == 0 && p.record_parameters[i] == 0 && p.slice_parameters[i] == 0) { registers::insert(ref mut defined, i); }
+            if (p.array_parameters[i] == 0 && p.record_parameters[i] == 0 && p.slice_parameters[i] == 0 && static_sites.parameters[i]==0) { registers::insert(ref mut defined, i); }
         }
         i += 1;
     }
@@ -68,6 +70,33 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
+        if(op==78){
+            if(!static_sites.call_profile){return .err(errors::make(5,pc));}
+            if(a>=p.function_count || a==p.entry || b>=p.call_count || used_calls[b] ||
+                p.call_arities[b] as usize!=p.arities[a]){return .err(errors::make(5,pc));}
+            if((live>>48)!=0){let usize preserved=reborrow_calls::inspect(p,loans,pc,f,live)?;}
+            let usize checked=array_parameters::arguments_static(p,a,b,f,ref defined,live,pc,ref static_sites.parameters)?;
+            if(static_sites.results[a]!=0){let usize one=1;
+                if(dst>=16 || static_sites.definitions[dst]!=pc || static_sites.functions[dst]!=f ||
+                    static_sites.kinds[dst]!=static_sites.results[a] || (static_live&(one<<dst))!=0){return .err(errors::make(5,pc));}
+                static_live|=one<<dst;
+            }else if(p.array_results[a]!=0 || p.record_results[a]!=0){
+                live=if(p.record_results[a]!=0){struct_results::call(p,a,dst,f,live,pc)?}else{array_results::call(p,a,dst,f,live,pc)?};
+            }else{
+                if(dst<start || dst>=end || p.slots[dst] || registers::contains(ref written,dst) ||
+                    p.types[dst]!=p.return_types[a] || !types::valid(p.types[dst])){return .err(errors::make(5,pc));}
+                registers::insert(ref mut defined,dst);registers::insert(ref mut written,dst);
+            }
+            used_calls[b]=true;
+            if(pc+1>=p.ends[f] || !merge(ref mut states,ref mut seen,ref defined,pc+1,
+                ref mut array_states,live,ref mut static_states,static_live)){return .err(errors::make(5,pc));}
+            pc+=1;continue;
+        }
+        if(op==79){let usize one=1;
+            if(static_sites.results[f]==0 || live!=0 || a>=16 || static_live!=(one<<a) ||
+                static_sites.functions[a]!=f || static_sites.kinds[a]!=static_sites.results[f]){return .err(errors::make(5,pc));}
+            pc+=1;continue;
+        }
         if (statics::operation(op)) {
             static_live = statics::step(p, static_sites, pc, f, ref mut defined, ref mut written, static_live)?;
             if (pc + 1 >= p.ends[f] || !merge(ref mut states, ref mut seen, ref defined, pc + 1,
@@ -213,7 +242,7 @@ fn Result<reborrows::Sites, errors::Error> validate(ref ir::Program p,bool allow
     var usize code_end = 0;
     var usize register_end = 0;
     while (f < p.function_count) {
-        if (p.record_results[f]==0 && !types::valid(p.return_types[f])) { return .err(errors::make(5, code_end)); }
+        if (p.record_results[f]==0 && static_sites.results[f]==0 && !types::valid(p.return_types[f])) { return .err(errors::make(5, code_end)); }
         if (p.starts[f] != code_end || p.ends[f] <= code_end || p.ends[f] > p.count ||
             p.register_starts[f] != register_end || p.register_ends[f] < register_end ||
             p.register_ends[f] > p.registers || p.arities[f] > 8 ||
@@ -235,7 +264,7 @@ fn Result<reborrows::Sites, errors::Error> validate(ref ir::Program p,bool allow
     return .ok(loans);
 }
 
-// Ordinary entry points carry no Static authority and keep rejecting 69-76.
+// Ordinary entry points carry no Static authority and keep rejecting 69-79.
 fn Result<reborrows::Sites,errors::Error> plain(ref ir::Program p,bool calls) {
     let statics::Sites sites = statics::empty(); return validate(p,calls,ref sites);
 }
@@ -255,7 +284,7 @@ pub fn Result<usize, errors::Error> inspect(ref ir::Program p) {
 // Unsupported derived CALL shapes reject in every function before guest effects.
 fn Result<usize,errors::Error> executable_calls(ref ir::Program p,ref reborrows::Sites sites){
     if(sites.count!=0){var usize pc=0;while(pc<p.count){
-        if(p.code[pc*8]==9){let usize allowed=executable::call(p,sites,pc)?;}
+        if(p.code[pc*8]==9 || p.code[pc*8]==78){let usize allowed=executable::call(p,sites,pc)?;}
         pc+=1;
     }}
     return .ok(p.count);
@@ -277,4 +306,16 @@ pub fn Result<usize, errors::Error> verify(ref ir::Program p) {
 // Analysis-only proof does not impose the executable derived CALL subset.
 pub fn Result<usize, errors::Error> inspect_reborrow_calls(ref ir::Program p) {
     let reborrows::Sites sites=plain(p,true)?;return .ok(p.count);
+}
+
+// This combines actual recipe/image origins with the canonical whole-program
+// scalar/aggregate/loan proof. It does not retain an image or enable dispatch.
+pub struct StaticCallProof { image_calls::Proof recipes; statics::Sites statics; reborrows::Sites loans; }
+pub fn Result<StaticCallProof,errors::Error> verify_static_calls(ref image_calls::Program unit,ref images::Image image){
+    let image_calls::Proof recipes=image_calls::inspect(unit,image)?;
+    let statics::Sites sites=image_sites::prepare(unit,ref recipes,image)?;
+    let ref ir::Program p=ref unit.body;
+    let reborrows::Sites loans=validate(p,true,ref sites)?;
+    let usize executable=executable_calls(p,ref loans)?;
+    return .ok(StaticCallProof{.recipes=recipes,.statics=sites,.loans=loans});
 }
