@@ -87,3 +87,9 @@ recipes, and native retained Held dispatch/fresh parent restoration are connecte
 by the execution successor. Then add borrowed-result argument/projection handling, Static backing
 and independent public admission/dispatch. This proof prerequisite does not
 complete B04 or the full implementation objective.
+
+The [caller END-chain successor](m2-slice-result-capture-chains.md) generalizes one
+masked actual from one BEGIN close to a proved ancestry of BEGIN/BIND_RESULT
+closes. Mask and marker operands retain their layout. Its independent chain proof,
+funded native unwind and receipt retirement supersede the original one-child rule.
+Direct returned-actual source syntax remains pending.

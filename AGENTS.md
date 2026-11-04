@@ -4,6 +4,24 @@
   docs/product/04-remaining-work.md. Do not redefine completion around the
   experimental subset. Execution order and next B04 constraints are recorded in
   docs/engineering/completion-plan.md. Remote delivery remains separate.
+- B04 private caller END chains now consume multiple existing BEGIN/BIND_RESULT
+  ancestors per actual atomically before installing the selected returned child.
+  Independent proof checks each real definition/parent, exact formal mask,
+  complete reverse acquisition order and surviving selected anchor. Native
+  captures carry a bounded proved count; consumed Helds are retired once and
+  fresh parents bind at final anchors. Single-END/native host behavior remains.
+  Coupled caller+callee children share the 31-entry stack, keeping the existing
+  handoff/cleanup Fuel allowances; bounded recipe/receipt scans fit staging.
+  Windows development passed 15 native groups; release passed 5 on 123 matching
+  final inputs and a 213-file discovery digest. All 117 production files are LF;
+  an LF mirror passed check --locked. No stack/compiler overrides or result reuse.
+  Final groups ran after the snapshot; exploratory semantic/early native results
+  are excluded. Standalone CLI/full-profile/Linux/restricted/ABI/packaging/
+  allocator/performance were not run. Next connect direct returned actuals,
+  transitive selected ownership, source origin recursion and reference ranges.
+  See docs/engineering/m2-slice-result-capture-chains.md, especially its next
+  source bridge requirements. Public admission/Static/general references and
+  the complete objective remain open; do not mark them complete from this slice.
 - B04 immediate scalar projections now execute in the private returned-view
   coordinator: returned CALL indexing for all six scalar/access modes, actual
   range length and u8 UTF-8 inspection. A separate post-CALL lexical snapshot

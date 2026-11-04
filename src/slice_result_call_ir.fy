@@ -37,7 +37,24 @@ pub fn Result<usize,errors::Error> rewrite(ref mut ir::Program p){
     }return .ok(count);
 }
 pub fn usize creator(ref ir::Program p,usize site){
-    var usize pc=0;while(pc<p.count){if(p.code[pc*8]==61 && p.code[pc*8+1] as usize==site){return pc;}pc+=1;}return 256;
+    if(p.count>256 || site>=16){return 256;}
+    var usize pc=0;while(pc<p.count){if((p.code[pc*8]==61 || p.code[pc*8]==67) && p.code[pc*8+1] as usize==site){return pc;}pc+=1;}return 256;
+}
+pub struct Chain { usize parent; usize count; }
+// Recipes use existing END markers to unwind one actual through a proved
+// ancestry. No depth, parent or native receipt is inferred from scalar values.
+pub fn Result<Chain,errors::Error> chain(ref ir::Program p,usize pc,usize argument){
+    if(p.count>256 || pc>=p.count || pc>=256 || p.code[pc*8]!=66){return .err(errors::make(5,pc));}
+    let usize map=p.code[pc*8+3] as usize;
+    if(p.call_count>32 || map>=p.call_count || map>=32 || argument>=8 || p.call_arities[map]>8 || argument>=p.call_arities[map] as usize){return .err(errors::make(5,pc));}
+    let usize value=p.call_args[map*8+argument] as usize;
+    if(value<160 || value>=176){return .err(errors::make(5,pc));}
+    var usize parent=value-160;var usize count=0;let usize end=binding(p,pc)?;
+    var usize at=pc+1;while(at<end){if(p.code[at*8]==68 && p.code[at*8+1] as usize==parent){
+        let usize made=creator(p,parent);
+        if(made>=pc || p.code[at*8+2]!=p.code[made*8+2] || count>=16){return .err(errors::make(5,pc));}
+        parent=p.code[at*8+2] as usize;if(parent>=16){return .err(errors::make(5,pc));}count+=1;
+    }at+=1;}return .ok(Chain{.parent=parent,.count=count});
 }
 // Called only after complete normalized CFG/type/loan proof has bounded operands.
 fn Result<bool,errors::Error> reads(ref ir::Program p,usize pc,usize r){
@@ -64,21 +81,27 @@ pub fn Result<usize,errors::Error> inspect(ref ir::Program normalized,ref ir::Pr
                 ir::slice_element(normalized,site,pc)?!=(elements[target]&127) || ir::exclusive(normalized,site)!=((elements[target]&128)!=0)){return .err(errors::make(5,pc));}
             let usize mask=recipes.code[at+4] as usize;let usize one=1;
             if(mask>=(one<<normalized.arities[target])){return .err(errors::make(5,pc));}
-            var usize expected=0;var usize previous=0;var usize i=0;
-            while(i<normalized.arities[target]){if((mask&(one<<i))!=0){
+            var usize expected=0;var usize i=0;
+            while(i<normalized.arities[target]){
                 let usize source=normalized.call_args[map*8+i] as usize;
-                if(source<160 || source>=176){return .err(errors::make(5,pc));}
-                let usize made=creator(recipes,source-160);
-                if(made==256 || made>=pc || (expected!=0 && made<=previous)){return .err(errors::make(5,pc));}previous=made;
-                var usize found=0;var usize step=pc+1;
-                while(step<end){if(recipes.code[step*8]==68 && recipes.code[step*8+1] as usize==source-160 && recipes.code[step*8+2]==recipes.code[made*8+2]){found+=1;}step+=1;}
-                if(found!=1){return .err(errors::make(5,pc));}expected+=1;
-            }i+=1;}
-            var usize actual=normalized.call_args[map*8+chosen-1] as usize;
-            if(actual<160 || actual>=176){return .err(errors::make(5,pc));}actual-=160;
-            if((mask&(one<<(chosen-1)))!=0){actual=recipes.code[creator(recipes,actual)*8+2] as usize;}
-            if(parent!=actual){return .err(errors::make(5,pc));}
-            var usize seen=0;var usize step=pc+1;while(step<end){if(recipes.code[step*8]==68){seen+=1;}step+=1;}
+                if(source>=160 && source<176){
+                    let Chain ends=chain(recipes,pc,i)?;
+                    if(((mask&(one<<i))!=0)!=(ends.count!=0)){return .err(errors::make(5,pc));}
+                    expected+=ends.count;
+                }else if((mask&(one<<i))!=0){return .err(errors::make(5,pc));}i+=1;
+            }
+            let usize chosen_actual=normalized.call_args[map*8+chosen-1] as usize;
+            if(chosen_actual<160 || chosen_actual>=176){return .err(errors::make(5,pc));}
+            let Chain selected_chain=chain(recipes,pc,chosen-1)?;
+            if(parent!=selected_chain.parent){return .err(errors::make(5,pc));}
+            var usize seen=0;var usize previous=256;var usize step=pc+1;
+            while(step<end){if(recipes.code[step*8]==68){
+                let usize child=recipes.code[step*8+1] as usize;
+                if(child>=16 || !ir::exclusive(normalized,child)){return .err(errors::make(5,step));}
+                let usize made=creator(recipes,child);
+                if(made>=pc || made>=previous){return .err(errors::make(5,step));}
+                previous=made;seen+=1;
+            }step+=1;}
             if(seen!=expected){return .err(errors::make(5,pc));}
             let usize identity=recipes.code[at+1] as usize;step=0;
             while(step<normalized.count){if(reads(normalized,step,identity)?){return .err(errors::make(5,step));}step+=1;}

@@ -100,3 +100,9 @@ delivery and DLL exports are still open after the lexical/range increments.
   and unifies public slice cost formulas. This resolves the narrow budget gap.
   Ordinary returned-reference Program admission/dispatch and other C05 capacities
   remain open; public result promotion still needs its own end-to-end proof.
+
+The native/IR [caller END-chain prerequisite](m2-slice-result-capture-chains.md)
+now supports multiple temporary Held/reborrow closes before result installation.
+Its next-source-bridge section records ancestry retention, prompt unselected
+cleanup, recursive source hints and endpoint/exit requirements. Connect these
+source forms next; this foundation does not complete B04 or public admission.

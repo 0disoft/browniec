@@ -51,3 +51,9 @@ pub fn void transferred(ref mut State state,usize frame){
         state.held[i]=unused();state.locations[i]=512;state.parents[i]=512;
     }i+=1;}
 }
+
+// A proved caller END chain was already consumed by native atomic handoff.
+// Never run Held.close again. Admission/entry authenticated these receipts.
+pub fn void consumed(ref mut State state,usize location){
+    let usize i=find(state,location);if(i<47){state.held[i]=unused();state.locations[i]=512;state.parents[i]=512;}
+}

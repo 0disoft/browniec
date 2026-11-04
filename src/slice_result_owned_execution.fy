@@ -13,6 +13,7 @@ import array_layout as layouts;
 import ir as ir;
 import errors as errors;
 import slice_result_bindings as result_bindings;
+import slice_result_call_ir as recipes;
 
 // These arrays::State values are unpublished metadata plans. Runtime owns the
 // sole owner table; actual backing bytes are always the original mutable view.
@@ -37,7 +38,20 @@ pub fn Result<usize,errors::Error> enter(ref ir::Program p,usize pc,runtime::Con
     let usize parent=bindings.frame;var runtime::Capture[8] captures=[runtime::capture(frames::none(),false,false);8];
     let usize mask=if(p.code[at]==66){p.code[at+4] as usize}else{0};let usize one=1;
     var usize i=0;while(i<contract.arity){let usize source=p.call_args[map*8+i] as usize;
-        if(contract.tags[i]!=0){captures[i]=runtime::capture(bindings.sites[parent*16+source-160],(mask&(one<<i))!=0,false);}i+=1;
+        if(contract.tags[i]!=0){
+            let usize count=if((mask&(one<<i))!=0){let recipes::Chain chain=recipes::chain(p,pc,i)?;chain.count}else{0};
+            captures[i]=runtime::chain_capture(bindings.sites[parent*16+source-160],count);
+        }i+=1;
+    }
+    if(p.code[at]==66){
+        let usize end=recipes::binding(p,pc)?;var usize marker=pc+1;
+        while(marker<end){if(p.code[marker*8]==68){
+            let usize site=p.code[marker*8+1] as usize;let usize made=recipes::creator(p,site);
+            let usize held=result_bindings::find(ref bindings.loans,parent*16+site);
+            if(p.code[made*8]==67){
+                if(held==47 || !bindings.loans.held[held].exclusive || bindings.loans.held[held].close_parent || bindings.loans.held[held].drop){return .err(errors::make(5,p.offsets[pc]));}
+            }else if(held!=47){return .err(errors::make(5,p.offsets[pc]));}
+        }marker+=1;}
     }
     var owners::Token[8] sources=[owners::Token{.slot=0,.generation=0};8];
     var layouts::Array[8] shapes=[layouts::Array{.element=0,.length=0,.stride=0,.alignment=0,.bytes=0};8];

@@ -25,7 +25,7 @@ pub fn Result<usize,errors::Error> finish(ref mut ir::Program p,ref locals::Tabl
     let usize value=args[chosen-1];if(value<160 || value>=176){return .err(errors::make(3,at));}
     let usize source=value-160;var usize parent=source;let usize first=names.count;
     let bool temporary=captured(captures,first,value)!=64;
-    let usize made=calls::creator(p,source);let bool ended=temporary && made!=256;
+    let usize made=calls::creator(p,source);let bool ended=temporary && ir::exclusive(p,source) && made!=256;
     if(ended){parent=p.code[made*8+2] as usize;}
     let usize retained=if(temporary && !ended){value}else{176};
     let usize root=p.slice_roots[source] as usize;let usize owner=if(retained!=176 && root!=0){127+root}else{176};

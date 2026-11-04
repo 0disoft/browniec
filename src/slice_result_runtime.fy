@@ -15,7 +15,7 @@ import struct_layout as records;
 pub struct Runtime { authority::State authority; slices::Pool pool; owners::Table owners; }
 pub struct State { Runtime runtime; }
 pub struct Contract { u8[8] tags; usize arity; usize selected; }
-pub struct Capture { slices::Ticket ticket; bool close; bool drop; }
+pub struct Capture { slices::Ticket ticket; bool close; bool drop; usize ends; }
 pub struct Call {
     Capture[8] captures; owners::View[8] views; slices::Ticket[8] issued;
     slices::Ticket[16] before; Contract contract; usize depth; usize frame; usize remaining; bool active;
@@ -36,7 +36,9 @@ fn Result<usize,errors::Error> size(Result<usize,owners::Error> value){return sw
 fn Result<slices::Ticket,errors::Error> ticket(Result<slices::Ticket,owners::Error> value){return switch(value){case .ok(v):{.ok(v)}case .err(e):{.err(arrays::failure(e,0))}};}
 fn Result<slices::Arguments,errors::Error> loan_arguments(Result<slices::Arguments,owners::Error> value){return switch(value){case .ok(v):{.ok(v)}case .err(e):{.err(arrays::failure(e,0))}};}
 pub fn State empty(usize capacity){return State{.runtime=Runtime{.authority=authority::empty(),.pool=slices::empty(),.owners=owners::empty(capacity)}};}
-pub fn Capture capture(slices::Ticket value,bool close,bool drop){return Capture{.ticket=value,.close=close,.drop=drop};}
+pub fn Capture capture(slices::Ticket value,bool close,bool drop){return Capture{.ticket=value,.close=close,.drop=drop,.ends=if(close){1}else{0}};}
+// Private guest recipe count, independently proved before constructing this.
+pub fn Capture chain_capture(slices::Ticket value,usize count){return Capture{.ticket=value,.close=count!=0,.drop=false,.ends=count};}
 // Entry includes emergency cleanup. Handoff additionally prepays Held.close.
 pub fn usize cost(){return meter::result_enter();}
 pub fn usize handoff_cost(){return meter::result_handoff();}
@@ -96,12 +98,13 @@ fn Result<Entered,errors::Error> enter_values(ref mut State state,Contract bindi
     // Authenticate all original actuals before any staged retain/rotation.
     while(i<captures.len){
         let Capture c=captures[i];result.captures[i]=c;
+        if(c.ends>16 || c.close!=(c.ends!=0) || (c.ends>1 && (c.drop || binding.selected==0))){return .err(errors::make(5,0));}
         if(binding.tags[i]==0){if(!same(c.ticket,none()) || c.close || c.drop){return .err(errors::make(5,0));}}
         else{
             let usize length=size(slices::length(ref state.runtime.pool,c.ticket,ref state.runtime.owners,capacity))?;
             let slices::Slot entry=state.runtime.pool.slots[c.ticket.slot];
             let u8 tag=entry.view.element | if(entry.exclusive){128}else{0};
-            if(tag!=binding.tags[i] || (c.drop && !c.close)){return .err(errors::make(5,0));}
+            if(tag!=binding.tags[i] || (c.drop && !c.close) || (c.ends>1 && !entry.exclusive)){return .err(errors::make(5,0));}
             var usize prior=0;while(prior<i){if(same(c.ticket,captures[prior].ticket) && c.close!=captures[prior].close){return .err(errors::make(5,0));}prior+=1;}
             result.views[i]=entry.view;
             if(entry.exclusive){writers[count]=c.ticket;count+=1;}
@@ -169,13 +172,16 @@ pub fn Result<Returned,errors::Error> handoff_roots(ref mut State state,ref mut 
                 at+=1;
             }
             if(pending){
-                let usize depth=next_authority.depth;
-                if(c.drop || depth==0 || next_authority.kinds[depth-1]!=2 ||
-                    next_authority.frames[depth-1]!=call.frame ||
-                    next_authority.children[depth-1].issued.slot!=resumed[i].slot){return .err(errors::make(5,0));}
-                resumed[i]=ticket(authority::leave_child(ref mut next_authority,ref mut next_pool,resumed[i],ref next_owners,capacity,call.frame))?;
-                restored_capture[i]=true;
-            }else if(!(entry.exclusive && i==chosen)){
+                var usize ended=0;while(ended<c.ends){
+                    let usize depth=next_authority.depth;
+                    if(c.drop || depth==0 || next_authority.kinds[depth-1]!=2 ||
+                        next_authority.frames[depth-1]!=call.frame ||
+                        next_authority.children[depth-1].issued.slot!=resumed[i].slot){return .err(errors::make(5,0));}
+                    resumed[i]=ticket(authority::leave_child(ref mut next_authority,ref mut next_pool,resumed[i],ref next_owners,capacity,call.frame))?;
+                    ended+=1;
+                }restored_capture[i]=true;
+            }else if(c.ends>1){return .err(errors::make(5,0));}
+            else if(!(entry.exclusive && i==chosen)){
                 let usize closed=size(slices::close(ref mut next_pool,resumed[i],ref mut next_owners,capacity))?;resumed[i]=none();
             }
         }else if(c.close){

@@ -81,16 +81,21 @@ pub fn Result<usize,errors::Error> pop(ref ir::Program p,ref mut Frames bindings
         if(map>=p.call_count || (destination>=128 && (destination<160 || destination>=176)) || bindings.prepared[parent]){return .err(errors::make(5,0));}
         let usize call=if(next>0 && next<=p.count && p.code[(next-1)*8]==66){next-1}else{256};
         let usize mask=if(call!=256){p.code[call*8+4] as usize}else{0};let usize one=1;
+        if(call!=256){
+            let usize end=calls::binding(p,call)?;var usize at=call+1;
+            while(at<end){if(p.code[at*8]==68){
+                let usize site=p.code[at*8+1] as usize;
+                loans::consumed(ref mut bindings.loans,parent*16+site);
+                bindings.sites[parent*16+site]=none();
+            }at+=1;}
+        }
         var usize i=0;while(i<bindings.arities[child]){
             let usize argument=p.call_args[map*8+i] as usize;
             if(argument>=160 && argument<176){
                 var usize site=argument-160;
                 if((mask&(one<<i))!=0){
-                    let usize made=calls::creator(p,site);
-                    if(made>=call){return .err(errors::make(5,0));}
-                    let usize surviving=p.code[made*8+2] as usize;
-                    if(surviving>=16){return .err(errors::make(5,0));}
-                    bindings.sites[parent*16+site]=none();site=surviving;
+                    let calls::Chain ended=calls::chain(p,call,i)?;
+                    site=ended.parent;
                 }
                 bindings.sites[parent*16+site]=returned.resumed[i];
             }i+=1;

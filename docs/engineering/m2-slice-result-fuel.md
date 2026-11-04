@@ -154,3 +154,8 @@ for compiler identity, OS, commands, batch/report/artifact hashes and outcomes.
 Full M1/other M2, Linux, isolation, ABI, packaging, allocator instrumentation and
 native size/stack/timing were not verified. Local commits only; no push, release
 or deployment.
+
+The [caller END-chain successor](m2-slice-result-capture-chains.md) preserves these
+prices: caller and callee child unwinds share the global 31-entry stack, so their
+combined bound is 30 rather than the earlier independent 30+8 estimate. Its bounded
+recipe/receipt scans fit the fixed staging allowance. No cleanup reserve is refunded.
