@@ -1,7 +1,7 @@
 # Product Specification
 
 - Status: Accepted for design, 2026-10-23
-- Implementation status: Reconciled 2026-11-03; bounded M1 and public M2 array/record/scalar-slice subsets; full profile incomplete
+- Implementation status: Reconciled 2026-11-04; bounded M1 and public M2 array/record/scalar-slice subsets; full profile incomplete
 - Source profile name: brownie.safe/0.3
 
 ## Product boundary
@@ -24,10 +24,11 @@ are available. Root exclusion remains whole-root, including disjoint mutable ran
 
 Private returned-slice signatures, body-origin analysis and explicit
 [preparation IR/independent proof](../engineering/m2-slice-result-ir.md) exist;
-every borrowed-result declaration still rejects publicly and no guest result
-executes. [Native ownership transactions](../engineering/m2-slice-result-runtime.md)
-now support handoff/retention; private destination/dispatch/cleanup integration is
-still required before source admission.
+every borrowed-result declaration still rejects publicly. [Native ownership transactions](../engineering/m2-slice-result-runtime.md)
+now support private returned-view VM execution, owned array/record inputs and CALLs,
+root retention and prepaid finalization. [Direct return ranges](../engineering/m2-slice-result-ranges.md)
+now use those same preparation/proof/handoff recipes. General returned-result
+bindings and ordinary public execution admission remain open.
 Buffer storage/leases/scanning have private native evidence but no guest Buffer
 execution path. There is no general Engine/Instance API, guest input/output, host
 suspension, restricted worker or public DLL.
@@ -52,6 +53,10 @@ The initial storage and value types are:
 - ref and ref mut borrows, with static ref str and explicit byte views for text;
 - Option and Result with scalar, array, struct, Buffer, or shallow tagged payloads;
 - move-only brownie::bytes::Buffer and staged output bytes.
+
+The current lexer accepts a leading UTF-8 BOM, LF/CRLF and nested block comments,
+and rejects a misplaced BOM, lone CR or raw NUL with original byte positions.
+See [lexical compatibility](../engineering/lexical-compatibility.md).
 
 Source functions use explicit Fairy-like declarations such as fn Type name.
 Modules and imports are explicit. let and var introduce initialized locals.

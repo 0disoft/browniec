@@ -1,6 +1,6 @@
 # Lexical Compatibility
 
-- Status: Implemented; five focused interpreter groups passed. Native CLI validation follows integration.
+- Status: Implemented; five focused interpreter groups and 36 native CLI cases passed.
 - Scope: Brownie source trivia and lexical byte positions. The compiler's public
   grammar and token kinds are unchanged.
 
@@ -50,6 +50,10 @@ The intended focused command is:
 build/toolchain/fairyc.exe test --native --file tests/lexer_compatibility.fy --locked
 ```
 
-That command has not been executed for this source change. A development/release
-build, the full M1 suite, performance measurement, and clean-machine packaging were
-also not run.
+The lexer-only semantic interpreter command passed five groups. The development
+standalone CLI build passed 36 tool-free `check`/`run` cases through
+`python -B tools/check-lexical-compatibility.py --exe build/m2-slice-result-ranges/browniec.exe`.
+The direct native lexer command above was not run; native CLI cases exercise the
+actual source loader/compiler, while the interpreter cases cover direct token spans
+and the token ceiling. Release, Linux, full M1, performance measurement and
+clean-machine packaging were not run. See the [combined evidence](../evidence/returned-ranges-lexical-windows-20261104.json).

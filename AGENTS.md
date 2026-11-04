@@ -1,5 +1,31 @@
 # AGENTS.md
 
+- Active objective: complete every accepted missing implementation item in
+  docs/product/04-remaining-work.md. Do not redefine completion around the
+  experimental subset. Execution order and next B04 constraints are recorded in
+  docs/engineering/completion-plan.md. Remote delivery remains separate.
+- L07 lexical compatibility is implemented at `5bb055b`: leading BOM, LF/CRLF,
+  rejection of misplaced BOM/lone CR/raw NUL, nested block comments and raw spans.
+  Direct return ranges are implemented at `9737710` in the private returned-view
+  dialect: open/empty/dynamic/relative ranges, exact six-scalar modes and ordered
+  endpoints use existing site proof and handoff. No new opcode or public flag.
+  Source-owned roots still cannot escape; ordinary public declarations stay gated.
+  Windows development passed 27 native groups (four range, eight origin, six Fuel,
+  nine execution), five lexer interpreter groups and 244 tool-free CLI cases
+  (36 lexical, 88 origin gate, 120 temporary borrows). All 319 captured compilation
+  input hashes were rechecked and all 113 production files match `9737710` under
+  Git LF. Native run started at `5bb055b` with the final range inputs; no result
+  reuse. The full VM cannot execute in the semantic interpreter because UTF-8
+  byte-slice operations need the native backend. Release/Linux/full M1/M2/
+  isolation/ABI/allocator/performance were not run in this increment.
+  Next: B04 lexical result destinations, Held retention/fresh parent restoration,
+  ordinary scalar entry/return, independent CFG/lifetime proof and public execution.
+  Native registry alone is not B04 completion; keep the full objective active.
+  See docs/evidence/returned-ranges-lexical-windows-20261104.json.
+
+Earlier entries below retain their original implementation/evidence scopes.
+
+
 - Returned-view Fuel accounting is implemented at `275abfd`. The shared
   `fuel` module owns CLI default/cap and slice value/UTF-8 prices. Private
   returned-view entry is 147456, borrowed handoff 294912 and ordinary return

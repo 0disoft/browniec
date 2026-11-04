@@ -64,6 +64,13 @@ with 500 matching inputs and all 112 production files matching `275abfd` under
 Git LF. Phase reserves now cover zero-Fuel abort/final close. Public defaults/cap
 are unchanged; B04 source bindings and ordinary public execution remain gated.
 
+The [lexical/range increment](../evidence/returned-ranges-lexical-windows-20261104.json)
+records five lexical interpreter groups, 27 native range/origin/Fuel/execution
+groups and 244 standalone CLI cases on Windows development. L07 is implemented;
+B04 inline return ranges are integrated privately. General result bindings,
+Static backing and public result execution are still pending. The full objective
+and implementation order are retained in the [completion plan](../engineering/completion-plan.md).
+
 ## Status and priority
 
 Accepted/designed means a contract exists. Implemented means source exists in its
@@ -142,7 +149,7 @@ below cover prose obligations beyond this feature list as well.
 | L04 | Implement selected-place receiver/index evaluation before RHS and agreed compound assignment forms; hold the originally selected root/location through RHS effects and independently verify its identity, lifetime and overlap. Ordinary current stores are not a generic selected-place contract. |
 | L05 | Extend Option/Result to the agreed wide scalars, arrays, records, Buffer and nested tagged values. Separate wrapper depth (target four), plain-struct depth and total traversal/size budgets. Compute whole-type copyability and moves, including inactive Buffer variants; retain the first-profile forbidden field/type combinations. |
 | L06 | Implement must-use Result handling, explicit discard and `.is_ok` under the target semantics, with proper errors for unhandled values. Extend switch/propagation and cleanup to resource-bearing payloads. Preserve or deliberately reconcile the accepted M1 Option propagation extension. |
-| L07 | Reconcile lexical compatibility: leading BOM, LF/CRLF versus lone CR, raw NUL, nested block comments and byte spans. The current lexer has line comments, treats CR as whitespace and does not implement the full reference lexical contract. |
+| L07 | Implemented at `5bb055b`: leading BOM, LF/CRLF, rejection of lone CR/raw NUL, nested block comments and raw byte spans. Five focused interpreter groups and 36 native CLI cases passed. See [lexical compatibility](../engineering/lexical-compatibility.md). |
 
 ## Borrowed results and general references
 
@@ -151,7 +158,7 @@ below cover prose obligations beyond this feature list as well.
 | B01 | Preparation subset at `670a041`: explicit view/forward/return IR, identity pairing and independent CFG/type/access/live-origin reconstruction. The private VM at `d468ca1` separately admits a rootless subset; proof alone remains insufficient for ordinary/public execution. |
 | B02 | Native transaction at `7f8f455`; private result/frame/site/63-65 dispatch at `d468ca1`. Shared/exclusive handoff, parent suspension, generation checks and zero-Fuel abort are connected. Owned-array and scalar/array CALL integration is implemented at `5cccbd3`. Record CALLs/locals are now connected; see [the successor](../engineering/m2-slice-result-record-vm.md). Explicit native owned entry is connected; see [the entry contract](../engineering/m2-slice-result-entry.md). Bounded metadata/copy/Fuel reconciliation is connected; see [the schedule](../engineering/m2-slice-result-fuel.md). Remaining: B04 public integration and end-to-end admission. |
 | B03 | Native capture/root retention at `7f8f455`; private rootless callee cleanup routes through handoff at `d468ca1`. Selected external temporary roots/descendants use native Capture receipts. Guest-created array temporary ownership and mixed scalar/array CALL captures are integrated at `5cccbd3`. Record locals and mixed record CALL captures are now connected. Explicit native owned entry is connected. Remaining: public source bindings; ordinary VM must not admit these private recipes without its own proof/metering. |
-| B04 | Admit borrowed-result source bindings, direct forwarding, use as arguments/projections and return-range forms only after proof/runtime wiring. Add Static origin with an actual backing/lifetime representation. Promote public compilation and capability metadata only after end-to-end checks. |
+| B04 | Direct return ranges now lower through existing independently proved view/handoff recipes; see [range integration](../engineering/m2-slice-result-ranges.md). Remaining: borrowed-result source bindings and use as arguments/projections after proof/runtime wiring. Add Static origin with an actual backing/lifetime representation. Promote public compilation and capability metadata only after end-to-end checks. |
 | B05 | Complete the target's scalar/array/record/Buffer references and CFG last-use rules, beyond current scalar-slice references. Enforce whole-root conflicts, mutation/move/drop exclusions, lexical/root generations and bounded group/descriptor reclamation. |
 
 Grounded recursive origin analysis, typed scalar slices, lexical mutable children,

@@ -1,0 +1,86 @@
+# Completing the accepted implementation
+
+Objective: implement the accepted remaining Brownie C design, not merely the
+current experimental subset. The requirement-by-requirement inventory remains
+[04-remaining-work.md](../product/04-remaining-work.md); this file gives execution
+order. A green increment does not establish full-profile completion. Features
+explicitly excluded from the first profile remain excluded.
+
+Work on main in small local commits. Verify changed behavior and its affected
+regressions, then commit; record broader checks only when actually run. Do not
+enable public syntax, delivery flags or ABI availability ahead of implemented
+admission, execution and cleanup. Push/release/deployment are separate actions.
+
+## Implementation sequence
+
+1. **Returned references: B04/B05.** Preserve the existing origin, independent
+   proof, canonical authority and Fuel work. Direct return ranges now reuse those
+   recipes. Next connect returned CALL values to lexical destinations, parent
+   restoration, close/move and ordinary scalar callers; then arguments/projections,
+   Static backing and the general scalar/array/record/Buffer reference contract.
+   Validate actual public source execution before promoting its capability.
+2. **Language completion: L01-L06, C03/C05.** Finish explicit module snapshots and
+   visibility, inference/void/if values, complete array/record construction,
+   selected-place compound assignment, wider/resource-bearing tags and must-use
+   handling. Reconcile operand/source/type/compile limits deliberately rather than
+   silently treating the old experimental bounds as full-profile conformance.
+   L07 byte compatibility is implemented at `5bb055b` and has focused checks.
+3. **Engine and Instance: R01-R05.** Implement lifecycle/reentry/Program retention,
+   complete accounting and preallocation, bounded resumable operations, deadlines,
+   cancellation, poison and stable terminal state. Include cleanup at zero guest
+   Fuel and prove result/Fuel invariance across step sizes. Current fresh-state VM
+   invocation and flat metadata prices do not meet this step/Instance contract.
+4. **Useful byte/text workload: D01-D05, I01-I02.** Connect native Buffer owners
+   and leases to guest move-only values, wrappers and Instance teardown. Expose
+   bounded byte/text operations, actual guest input and staged success-only output.
+   Run a complete input -> validation/transform -> output example.
+5. **Authority and host exchange: H01-H04, C01-C02/C04.** Add strict bounded
+   project/policy/catalog/run loaders, source identities, ceilings/declarations/
+   grants, typed TLV and a resumable host request/reply state machine. Start with
+   an in-memory adapter, including malformed/late/duplicate reply handling. Expose
+   only the CLI controls and metadata whose underlying paths exist.
+6. **Restricted Windows delivery: W01-W06.** Implement actual restricted process
+   creation, Job and handle limits, authenticated bounded transport, broker phases
+   and publication barrier, cancellation and I/O lease/reaping budgets. Verify
+   races and denial behavior on the real OS before advertising isolation.
+7. **Embedding and packages: E01-E04.** Export the actual v2 DLL/C ABI, implement
+   typed generation handles and thread/lifetime rules, bounded data exchange,
+   clean-machine packages and native platform evidence. Fairy module visibility
+   alone is not a public C ABI or clean-machine proof.
+8. **Full-profile evidence and delivery: V01-V05.** Execute the accepted reference
+   source cases and complete profile cases; apply focused mutation/failure tests
+   to implemented trust boundaries; measure compile/reuse/runtime/memory/build
+   retention targets. Record supported-platform, compatibility and release-unit
+   evidence. Keep CI limited to necessary checks and batch remote delivery only
+   when authorized.
+
+These groups overlap where a vertical feature needs its runtime prerequisite;
+they are not permission gates for routine local implementation. No group is
+complete until its owning inventory conditions have current evidence. In
+particular B04 public bindings, Buffer, Engine/Instance, host exchange, restricted
+delivery and DLL exports are still open after the lexical/range increments.
+
+## Next B04 integration constraints
+
+- `slice_result_execution::admit` currently requires a borrowed-result entry;
+  public scalar `main` needs its own ordinary entry/terminal path. `entry::enter`
+  and `frames::pop_call` likewise assume a borrowed top-level invocation. Preserve
+  existing native borrowed entry APIs while adding the scalar caller path.
+- `frames::pop` currently treats every borrowed return as terminal forwarding and
+  prepares its parent frame. General result destinations must instead bind a
+  live slice site and permit subsequent instructions in the caller.
+- Retain each Held receipt until its actual close; exclusive close must publish
+  the fresh restored ticket back into the original caller binding. Keep the
+  canonical authority/owner/pool, generation checks and prepaid finalizer.
+- Bound result receipt storage by the sixteen physical view slots. Do not add
+  a dense 32-frame by 16-site array of large Held records; prior dense ownership
+  maps already caused native stack failures.
+- Independent admission must prove the destination's exact type/access, selected
+  input origin and whole-root conflict/lifetime, including CFG joins and cleanup.
+  An ordinary scalar proxy or an unchecked CALL flag is not that proof.
+- Anonymous array/range captures currently have immediate call-scoped cleanup.
+  A selected returned result must retain the appropriate owner/parent until close;
+  returning an unrelated view must still clean unselected arguments.
+- Public promotion requires source-to-execution cases for ordinary callers,
+  aliases, nested uses, traps and cleanup, plus accurate capability metadata.
+  Implementing only a native registry does not close B04.
