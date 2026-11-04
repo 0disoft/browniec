@@ -26,6 +26,7 @@ import slice_reborrow_ir as reborrow;
 import slice_result_origins as slice_origins;
 import slice_result_ir as slice_result_ir;
 import slice_result_verifier as slice_result_verifier;
+import slice_result_range_source as return_ranges;
 
 fn u8 precedence(u8 kind) {
     if (kind == 133) { return 1; }
@@ -1223,11 +1224,25 @@ fn Result<bool, errors::Error> control_while(ref u8[] source, ref mut lexer::Sta
 
 // Analysis uses a length observation, never an escaping runtime ticket. Ordinary
 // expressions cannot consume borrowed CALL results as their scalar proxies.
+fn Result<usize,errors::Error> slice_return_range(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    usize parent,usize at,usize structure,usize depth,ref mut loops::State loop_state){
+    let usize open=lexer::punctuation(source,s,91)?;
+    let usize lo=if(s.kind==46){ir::integer(p,0,12,at)?}
+        else{expression(source,s,p,table,signatures,1,depth+1,12,12,structure,loop_state)?};
+    if(p.types[lo]!=12){return .err(errors::make(3,at));}
+    let usize first=lexer::punctuation(source,s,46)?;let usize second=lexer::punctuation(source,s,46)?;
+    let usize hi=if(s.kind==93){ir::slice_length(p,parent,at)?}
+        else{expression(source,s,p,table,signatures,1,depth+1,12,12,structure,loop_state)?};
+    if(p.types[hi]!=12){return .err(errors::make(3,at));}
+    let usize close=lexer::punctuation(source,s,93)?;
+    return return_ranges::acquire(p,parent,table.function,lo,hi,at);
+}
 fn Result<bool,errors::Error> slice_origin_return(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
     usize at,usize depth,usize expr_depth,ref mut loops::State loop_state){
     let u8 encoded=signatures.return_slice_elements[table.function];
-    var usize value=128;
+    var usize value=128;var usize child=16;var usize parent=16;
     if(word_is(source,s,b"ref")){
         let usize reference=lexer::next(source,s)?;
         if((encoded & 128)!=0){let usize access=lexer::word(source,s,b"mut")?;}
@@ -1239,7 +1254,10 @@ fn Result<bool,errors::Error> slice_origin_return(ref u8[] source,ref mut lexer:
             return .err(errors::make(3,s.begin));
         }
         let usize name=lexer::next(source,s)?;
-        value=ir::slice_length(p,site,at)?;
+        if(s.kind==91){
+            parent=site;child=slice_return_range(source,s,p,table,signatures,site,at,depth,expr_depth,loop_state)?;
+            value=ir::slice_length(p,child,at)?;
+        }else{value=ir::slice_length(p,site,at)?;}
     }else{
         if(s.kind!=2 || locals::find(source,table,s.begin,s.end)!=64){return .err(errors::make(3,s.begin));}
         let usize target=functions::find(source,signatures,s.begin,s.end);
@@ -1248,6 +1266,7 @@ fn Result<bool,errors::Error> slice_origin_return(ref u8[] source,ref mut lexer:
         value=call_value(source,s,p,table,signatures,target,16,at,expr_depth,12,depth,loop_state)?;
     }
     let usize end=lexer::punctuation(source,s,59)?;
+    if(child!=16){let usize ended=return_ranges::release(p,child,parent,at)?;}
     let usize dropped=arrays::release_visible(table,p,at)?;
     let usize returned=ir::emit(p,8,value,0,at)?;
     return .ok(true);

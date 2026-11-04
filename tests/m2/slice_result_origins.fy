@@ -72,7 +72,7 @@ fn void existing_flow_proof_rejects_suspended_parents_and_scalar_proxy_use(){
     rejected(b"module main;fn ref i32[] f(ref i32[] p){let usize n=g(ref p);return ref p;}fn ref i32[] g(ref i32[] p){return ref p;}fn i32 main(){return 42;}");
     rejected(b"module main;fn ref i32[] f(ref i32[] p){return p.len;}fn i32 main(){return 42;}");
     rejected(b"module main;fn ref i32[] f(ref i32[] p){return g(ref p);}fn usize g(ref i32[] p){return p.len;}fn i32 main(){return 42;}");
-    rejected(b"module main;fn ref i32[] f(ref i32[] p){return ref p[..];}fn i32 main(){return 42;}");
+    proved(b"module main;fn ref i32[] f(ref i32[] p){return ref p[..];}fn i32 main(){return 42;}",0,1);
     rejected(b"module main;fn ref i32[] f(ref i32[] p){if(true){return ref p;}}fn i32 main(){return 42;}");
 }
 
