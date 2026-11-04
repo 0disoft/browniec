@@ -35,3 +35,8 @@ pub fn usize static_instruction(u8 op,usize left,usize right){
     if(op==76){return 127;}
     return 16+if(op==71){1}else if(op==73){left+right}else{0};
 }
+
+// Private image CALLs move at most eight descriptors, never payload bytes.
+// Base covers bounded frame bookkeeping; each actual checks up to sixteen roots.
+// Native ownership entry/leave, argument copies and dispatch remain additive.
+pub fn usize static_call(usize arguments){return 16+16*arguments;}
