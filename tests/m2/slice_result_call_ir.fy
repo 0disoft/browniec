@@ -128,15 +128,21 @@ fn void control_flow_cannot_enter_between_call_and_finalizer(){
     assert(bind==6);assert(!calls::rewrite(ref mut p.body).is_ok);
     p=unit(129,true,false);let usize end=opcode(ref p,68);p.body.starts[1]=end;rejected(ref p);
 }
-fn void dispatch_rejected(ref results::Program p){
-    var runtime::State state=runtime::empty(4);var u8[4] data=[42;4];
+fn slices::Ticket native_input(ref mut runtime::State state,ref mut u8[] data){
     let layout::Array shape=switch(layout::scalar(1,1)){case .ok(v):{v}case .err(_):{assert(false);layout::Array{.element=1,.length=1,.stride=4,.alignment=4,.bytes=4}}};
-    let owners::Token root=switch(owners::create(ref shape,42,ref mut data,ref mut state.runtime.owners)){case .ok(v):{v}case .err(_):{assert(false);owners::Token{.slot=16,.generation=0}}};
+    let owners::Token root=switch(owners::create(ref shape,42,data,ref mut state.runtime.owners)){case .ok(v):{v}case .err(_):{assert(false);owners::Token{.slot=16,.generation=0}}};
     var slices::Pool pool=state.runtime.pool;var owners::Table table=state.runtime.owners;
     let slices::Ticket ticket=switch(slices::open(ref mut pool,ref mut table,root,0,1,4)){case .ok(v):{v}case .err(_):{assert(false);slices::Ticket{.slot=16,.generation=0}}};
-    state.runtime.pool=pool;state.runtime.owners=table;
+    state.runtime.pool=pool;state.runtime.owners=table;return ticket;
+}
+fn void dispatch_checked(ref results::Program p,bool valid){
+    var runtime::State state=runtime::empty(4);var u8[4] data=[42;4];
+    let slices::Ticket ticket=native_input(ref mut state,ref mut data);
+    let owners::Token root=state.runtime.pool.slots[ticket.slot].view.root;
     let runtime::Capture[2] captures=[runtime::capture(ticket,false,false),runtime::capture(ticket,false,false)];let i64[2] values=[0,0];let owners::Token[1] inputs=[owners::Token{.slot=0,.generation=0}];
-    assert(!vm::run_slice_scalar(p,1,ref captures,ref values,ref inputs[..0],ref mut state,ref mut data,1000000).is_ok);
+    let result=vm::run_slice_scalar(p,1,ref captures,ref values,ref inputs[..0],ref mut state,ref mut data,1000000);
+    if(valid){switch(result){case .ok(v):{assert(v.value==1 && v.remaining>0);}case .err(_):{assert(false);}};}
+    else{switch(result){case .ok(_):{assert(false);}case .err(e):{assert(e.kind==5);}};}
     assert(state.runtime.authority.frame==0 && state.runtime.authority.depth==0 && state.runtime.owners.depth==1);
     assert(owners::view(ref state.runtime.owners,root,0,1,4).is_ok);
     assert(state.runtime.pool.slots[ticket.slot].live && state.runtime.pool.slots[ticket.slot].generation==ticket.generation);
@@ -144,6 +150,7 @@ fn void dispatch_rejected(ref results::Program p){
 }
 
 @test
-fn void unsupported_binding_dispatch_rejects_before_initial_ownership_entry(){
-    let results::Program p=unit(1,false,false);dispatch_rejected(ref p);
+fn void proved_binding_dispatch_runs_and_invalid_recipes_preserve_native_inputs(){
+    var results::Program p=unit(1,false,false);dispatch_checked(ref p,true);
+    let usize call=opcode(ref p,66);p.body.code[call*8+7]=1;dispatch_checked(ref p,false);
 }

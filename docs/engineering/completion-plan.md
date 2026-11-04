@@ -16,8 +16,8 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
 1. **Returned references: B04/B05.** Preserve the existing origin, independent
    proof, canonical authority and Fuel work. Direct return ranges now reuse those
    recipes, and typed lexical CALL bindings now lower to independently proved IR.
-   Next connect native returned CALL destinations, parent
-   restoration, close/move and ordinary scalar callers; then arguments/projections,
+   Native lexical CALL destinations, parent restoration and prepaid close are now
+   connected; next finish borrowed-result arguments/projections,
    Static backing and the general scalar/array/record/Buffer reference contract.
    Validate actual public source execution before promoting its capability.
 2. **Language completion: L01-L06, C03/C05.** Finish explicit module snapshots and
@@ -80,9 +80,9 @@ delivery and DLL exports are still open after the lexical/range increments.
 - Private CALL-binding IR now has a [destination/origin proof](m2-slice-result-call-ir.md),
   including exact END masks and definition-based recursive origins. Source lowering
   is connected by the [source successor](m2-slice-result-call-source.md), including
-  selected temporary retention in IR. Executable binding dispatch remains pending;
-  native VM entry rejects these markers before ownership transfer. Connect the
-  runtime destinations, masks and lifetimes next.
+  selected temporary retention in IR. The [execution successor](m2-slice-result-call-execution.md)
+  now connects native destinations, masks, fresh parents and actual owner lifetime.
+  Public admission/dispatch and remaining argument/Static forms stay open.
 - Independent admission must prove the destination's exact type/access, selected
   input origin and whole-root conflict/lifetime, including CFG joins and cleanup.
   An ordinary scalar proxy or an unchecked CALL flag is not that proof.
@@ -93,3 +93,7 @@ delivery and DLL exports are still open after the lexical/range increments.
 - Public promotion requires source-to-execution cases for ordinary callers,
   aliases, nested uses, traps and cleanup, plus accurate capability metadata.
   Implementing only a native registry does not close B04.
+
+- Before public returned-reference promotion, reconcile the public Fuel ceiling:
+  simple new bindings fit 1000000, but complex/nested native cases use larger
+  explicit budgets. This is a C05 limit decision, not a hidden CLI cap increase.

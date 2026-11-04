@@ -35,8 +35,9 @@ pub fn Result<usize,errors::Error> enter(ref ir::Program p,usize pc,runtime::Con
     let usize owned=calls::cost(p,target,p.offsets[pc])?+contract.arity;
     if(fuel<runtime::cost()+owned){return .err(errors::make(8,p.offsets[pc]));}
     let usize parent=bindings.frame;var runtime::Capture[8] captures=[runtime::capture(frames::none(),false,false);8];
+    let usize mask=if(p.code[at]==66){p.code[at+4] as usize}else{0};let usize one=1;
     var usize i=0;while(i<contract.arity){let usize source=p.call_args[map*8+i] as usize;
-        if(contract.tags[i]!=0){captures[i]=runtime::capture(bindings.sites[parent*16+source-160],false,false);}i+=1;
+        if(contract.tags[i]!=0){captures[i]=runtime::capture(bindings.sites[parent*16+source-160],(mask&(one<<i))!=0,false);}i+=1;
     }
     var owners::Token[8] sources=[owners::Token{.slot=0,.generation=0};8];
     var layouts::Array[8] shapes=[layouts::Array{.element=0,.length=0,.stride=0,.alignment=0,.bytes=0};8];
@@ -61,7 +62,8 @@ pub fn Result<usize,errors::Error> enter(ref ir::Program p,usize pc,runtime::Con
     }
     let runtime::Entered entered=if(records){runtime::enter_records(state,contract,ref captures[..contract.arity],ref p.records.layouts,ref arguments[..count],data,fuel-owned)?}
         else{runtime::enter_arrays(state,contract,ref captures[..contract.arity],ref sources[..count],ref shapes[..count],data,data.len,fuel-owned)?};
-    let usize child=frames::push(p,bindings,entered.call,target,p.code[at+1] as usize,map,pc+1)?;
+    let usize destination=if(p.code[at]==66){160+p.code[at+5] as usize}else{p.code[at+1] as usize};
+    let usize child=frames::push(p,bindings,entered.call,target,destination,map,pc+1)?;
     i=0;while(i<count){if(record_args[i]){record_bindings::bind(ref mut bindings.records,destinations[i],entered.copies.tokens[i]);}
         else{bindings.tokens[destinations[i]]=entered.copies.tokens[i];}i+=1;}
     let usize cleared=suspend(p,map,parent,contract,bindings);return .ok(entered.call.remaining);

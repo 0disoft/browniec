@@ -2,8 +2,9 @@
 
 Date: 2026-11-04. Scope: typed lexical borrowed-result initializers in the private
 returned-view dialect. This connects source lowering to the independently proved
-[CALL-binding IR](m2-slice-result-call-ir.md). It does not enable public syntax or
-native binding dispatch. The [full completion objective](completion-plan.md) remains active.
+[CALL-binding IR](m2-slice-result-call-ir.md). Public syntax remains gated;
+[private native binding dispatch](m2-slice-result-call-execution.md) is connected
+by the successor. The [full completion objective](completion-plan.md) remains active.
 
 ## Source and construction
 
@@ -64,11 +65,11 @@ allocator, native stack-size or performance claim.
 
 ## Execution and evidence
 
-Private VM entry still rejects 66-68 before ownership transfer. This increment
-constructs independently admitted IR, not an executed returned binding. Runtime
-integration must route the destination, consume END_CAPTURE exactly once, publish
-fresh resumed tickets and retain the selected parent's/owner's lifetime. Ordinary
-public admission/dispatch, arguments/projections and Static backing remain open.
+This source increment constructs independently admitted IR. The
+[execution successor](m2-slice-result-call-execution.md) now routes native
+destinations, consumes END_CAPTURE exactly once, publishes fresh resumed tickets
+and retains selected parents/owners through actual cleanup. Ordinary public
+admission/dispatch, arguments/projections and Static backing remain open.
 
 The [Windows evidence](../evidence/m2-slice-result-call-source-windows-20261104.json)
 records 18 development native groups (six new source, eight existing origin and
@@ -80,7 +81,7 @@ not run. The semantic interpreter cannot execute the compiler's reachable
 UTF-8 byte-slice operations; no semantic execution pass is claimed. Exploratory
 runs are excluded. Final native runs use default compiler/stack settings.
 
-## Next runtime connection
+## Runtime connection (implemented by successor)
 
 CALL_BIND must pass its result site as the frame destination and mark only its
 END-mask captures for native handoff cleanup. Returned resumed tickets for these

@@ -4,6 +4,23 @@
   docs/product/04-remaining-work.md. Do not redefine completion around the
   experimental subset. Execution order and next B04 constraints are recorded in
   docs/engineering/completion-plan.md. Remote delivery remains separate.
+- B04 lexical returned CALLs now execute in the private canonical VM: exact
+  caller destinations, funded END masks, fresh resumed parent mapping, retained
+  Held and prepaid close. Source-selected temporary parents/owners have actual
+  lexical lifetimes; nested/recursive returns consume transferred receipts once.
+  Native owned entry can return a bound subview and close it at zero Fuel.
+  Windows development passed 25 native groups (7 new, 9 IR/admission, 9 old VM);
+  release passed 8 (7 new plus native-input preservation). All 123 inputs and the
+  210-file test-tree digest match; all 117 production files are LF and an LF mirror
+  passed check --locked. No stack/compiler overrides or historical-result reuse.
+  Constructor scratch in the raw-input fixture is separate from the VM call.
+  Standalone CLI/full-profile/Linux/delivery/performance were not run.
+  Simple new programs fit 1000000 native Fuel; complex cases use explicit larger
+  budgets. C05 must reconcile public budgets before promotion. Public result
+  compile/ordinary Program/capability gates stay in place. Next: direct returned
+  CALL arguments/projections, Static backing and public admission/dispatch. Keep
+  the full objective active; earlier entries retain their original scope. See
+  docs/engineering/m2-slice-result-call-execution.md and its focused evidence.
 - B04 typed lexical CALL-result source lowering is connected for all six scalar
   types/access modes. Source hints select construction candidates; independent
   IR proof still checks them. Selected temporary literals/owned CALL results keep

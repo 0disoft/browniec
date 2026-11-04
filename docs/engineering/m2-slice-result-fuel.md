@@ -63,6 +63,10 @@ to capacities or nested scans requires re-auditing the schedule.
   failure stops the transaction; 96 allowances include that failing attempt
   and margin. Sixteen local-root scans of sixteen slots, at most sixteen owner
   releases and 8-by-31 pending-child scans fit the separate 32768 fixed allowance.
+  Lexical CALL binding publication additionally scans at most 8 * 256 = 2048
+  instruction records for masked BEGIN parents and at most two 47-record Held
+  registry passes, plus direct frame-site updates. These bounded additions remain
+  within that fixed allowance and add no payload-length term.
 - Ordinary return has no selected result installation/caller-capture cleanup:
   `30 + 8 + 16 + 16 = 70` pool primitives; reserve 80 plus the fixed allowance.
 - Abort validates the pool once, closes at most sixteen slots, clears sixteen

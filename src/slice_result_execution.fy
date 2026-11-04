@@ -43,12 +43,6 @@ fn runtime::Contract binding(ref ir::Program unit,usize f){
 // dialect has native borrowed inputs, owned arrays/records, ordinary CALLs and
 // forwarded results. Explicit native owned entry is separate from public source admission.
 fn Result<usize,errors::Error> admit(ref ir::Program unit,usize function,ref i64[] values,usize captures,ref owners::Token[] inputs,bool view){
-    // Binding recipes currently prove lifetime/CFG only. Reject before entering
-    // canonical ownership until dispatch can publish/restore the retained result.
-    if(unit.body.count>256){return .err(errors::make(5,0));}
-    var usize pc=0;while(pc<unit.body.count){
-        if(unit.body.code[pc*8]>=66){return .err(errors::make(5,pc));}pc+=1;
-    }
     let verifier::Proof proof=verifier::inspect(unit)?;
     if(function>=unit.body.function_count ||
         values.len!=unit.body.arities[function] || captures!=values.len || (inputs.len!=0 && inputs.len!=values.len)){return .err(errors::make(5,0));}
@@ -143,7 +137,14 @@ fn Result<Outcome,errors::Error> run(ref ir::Program unit,usize function,ref run
             let slices::Ticket current=bindings.sites[frame*16+a];
             let usize prepared=frames::prepare(bindings,dst,current)?;pc+=1;continue;
         }
-        if(op==9 || op==64){
+        if(op==67 || op==68){
+            // Native handoff and frame publication have already committed this
+            // proved recipe. Never acquire or close the same child twice.
+            if((op==67 && !frames::result_bound(bindings,dst)) ||
+                (op==68 && bindings.sites[frame*16+dst].slot!=16)){return .err(errors::make(5,offset));}
+            pc+=1;continue;
+        }
+        if(op==9 || op==64 || op==66){
             if(frame>=31 || !available(ref state.runtime.authority,false)){return .err(errors::make(12,offset));}
             let runtime::Contract c=binding(unit,a);
             remaining=switch(owned::enter(ref unit.body,pc,c,bindings,state,data,remaining)){

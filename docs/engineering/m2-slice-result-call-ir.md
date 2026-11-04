@@ -2,7 +2,8 @@
 
 Date: 2026-11-04. This B04 increment adds independent IR lifetime/origin proof.
 [Source result-binding lowering](m2-slice-result-call-source.md) is connected by
-the successor; executable binding dispatch remains pending.
+the source successor; [private binding execution](m2-slice-result-call-execution.md)
+is connected as well. Public result execution remains gated.
 The full objective remains [completion of the accepted design](completion-plan.md).
 
 ## Representation
@@ -57,9 +58,9 @@ changes in this increment.
 `slice_result_verifier::inspect` rechecks it without compiler signatures or hints.
 The [source bridge](m2-slice-result-call-source.md) now emits these recipes for
 typed lexical initializers. Public result syntax and capability promotion remain
-gated. Private VM entry rejects these
-unsupported markers before independent admission/initial ownership transfer.
-It therefore preserves native owner tokens, pool tickets and backing bytes.
+gated. The [private VM](m2-slice-result-call-execution.md) now executes admitted binding
+recipes. Rejected IR still preserves native owner tokens, pool tickets and backing
+bytes before initial ownership transfer.
 
 ## Verification and next work
 
@@ -82,7 +83,7 @@ that exploratory result is excluded. Final runs use the default compiler and
 stack settings, with no historical-result reuse.
 
 Source result destinations and selected temporary retention now lower to these
-recipes. Next connect native retained Held dispatch, fresh parent tickets and
-selected temporary owner retention through execution. Then add borrowed-result argument/projection handling, Static backing
+recipes, and native retained Held dispatch/fresh parent restoration are connected
+by the execution successor. Then add borrowed-result argument/projection handling, Static backing
 and independent public admission/dispatch. This proof prerequisite does not
 complete B04 or the full implementation objective.
