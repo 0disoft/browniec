@@ -82,6 +82,11 @@ pub fn Result<usize,Error> inspect(ref Image image){
 }
 pub fn usize payload_bytes(ref Image image){return bytes::len(ref image.data);}
 pub fn usize payload_capacity(ref Image image){return bytes::capacity(ref image.data);}
+pub fn Result<u8,Error> kind(ref Image image,usize literal){
+    let usize count=shape(ref image.catalog,bytes::len(ref image.data))?;
+    if(literal>=count){return .err(.Bounds);}
+    return .ok(if(image.catalog.text[literal]){2}else{1});
+}
 pub fn Result<usize,Error> charge(ref Image image){
     let usize count=shape(ref image.catalog,bytes::len(ref image.data))?;
     let usize capacity=bytes::capacity(ref image.data);if(capacity!=image.catalog.used){return .err(.State);}

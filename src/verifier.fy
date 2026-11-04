@@ -16,13 +16,16 @@ import array_results as array_results;
 import register_set as registers;
 import struct_parameters as struct_parameters;
 import struct_results as struct_results;
+import static_ir as statics;
+import static_image as images;
 
 fn bool readable(ref ir::Program p, ref registers::Set defined, usize r, usize start, usize end) {
     return r >= start && r < end && !p.slots[r] && p.array_parameters[r] == 0 && p.record_parameters[r] == 0 && p.slice_parameters[r] == 0 && registers::contains(defined, r);
 }
-fn bool merge(ref mut usize[] states, ref mut bool[] seen, ref registers::Set defined, usize target, ref mut usize[] array_states, usize live) {
-    if (seen[target] && array_states[target] != live) { return false; }
+fn bool merge(ref mut usize[] states, ref mut bool[] seen, ref registers::Set defined, usize target, ref mut usize[] array_states, usize live, ref mut usize[] static_states, usize static_live) {
+    if (seen[target] && (array_states[target] != live || static_states[target] != static_live)) { return false; }
     array_states[target] = live;
+    static_states[target] = static_live;
     let usize low = states[target * 2];
     let usize high = states[target * 2 + 1];
     states[target * 2] = if (seen[target]) { low & defined.low } else { defined.low };
@@ -30,13 +33,14 @@ fn bool merge(ref mut usize[] states, ref mut bool[] seen, ref registers::Set de
     seen[target] = true;
     return true;
 }
-fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records::Prepared shapes, ref reborrows::Sites loans, bool allow_reborrow_calls, ref mut bool[] used_calls) {
+fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records::Prepared shapes, ref reborrows::Sites loans, ref statics::Sites static_sites, bool allow_reborrow_calls, ref mut bool[] used_calls) {
     let usize start = p.register_starts[f];
     let usize end = p.register_ends[f];
     let usize arity = p.arities[f];
     var usize[512] states = [0; 512];
     var bool[256] seen = [false; 256];
     var usize[256] array_states = [0; 256];
+    var usize[256] static_states = [0; 256];
     var registers::Set written = registers::empty();
     var registers::Set defined = registers::empty();
     var usize i = start;
@@ -50,7 +54,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
         i += 1;
     }
     let usize borrowed_entry = slice_parameters::initial(p, f)?;
-    let bool entered = merge(ref mut states, ref mut seen, ref defined, p.starts[f], ref mut array_states, array_parameters::initial(p, f) | struct_parameters::initial(p, f) | borrowed_entry);
+    let bool entered = merge(ref mut states, ref mut seen, ref defined, p.starts[f], ref mut array_states, array_parameters::initial(p, f) | struct_parameters::initial(p, f) | borrowed_entry, ref mut static_states, 0);
     var usize pc = p.starts[f];
     // Solve the forward graph, then check each backedge preserves its target's
     // entry invariant. This bounded inductive proof needs no cyclic worklist.
@@ -58,11 +62,19 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
         if (!seen[pc]) { return .err(errors::make(5, pc)); }
         defined = registers::Set { .low = states[pc * 2], .high = states[pc * 2 + 1] };
         var usize live = array_states[pc];
+        var usize static_live = static_states[pc];
         let usize at = pc * 8;
         let u8 op = p.code[at];
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
+        if (statics::operation(op)) {
+            static_live = statics::step(p, static_sites, pc, f, ref mut defined, ref mut written, static_live)?;
+            if (pc + 1 >= p.ends[f] || !merge(ref mut states, ref mut seen, ref defined, pc + 1,
+                ref mut array_states, live, ref mut static_states, static_live)) { return .err(errors::make(5, pc)); }
+            pc += 1; continue;
+        }
+        if ((op == 8 || op == 39 || op == 50) && static_live != 0) { return .err(errors::make(5, pc)); }
         if (op < 1 || op > 62 || (op != 52 && ((op!=24 && op!=47 && op!=49 && op!=53 && op!=59 && op!=61 && p.code[at + 4] != 0) ||
             (op!=47 && p.code[at + 5] != 0) || p.code[at + 6] != 0 || p.code[at + 7] != 0))) { return .err(errors::make(5, pc)); }
         // Strict analysis retains its gate; executable proof may admit this CALL.
@@ -81,10 +93,10 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
             if(tag==0) {if(dst!=0) {return .err(errors::make(5,pc));}}
             else if(dst<start || dst>=end || p.slots[dst] || registers::contains(ref written, dst) || p.types[dst]!=tag) {return .err(errors::make(5,pc));}
             // The mismatch path receives no payload definition.
-            if (!merge(ref mut states,ref mut seen,ref defined,target,ref mut array_states,live)) {return .err(errors::make(5,pc));}
+            if (!merge(ref mut states,ref mut seen,ref defined,target,ref mut array_states,live,ref mut static_states,static_live)) {return .err(errors::make(5,pc));}
             if(tag!=0) {registers::insert(ref mut defined, dst);registers::insert(ref mut written, dst);}
             if(pc+1>=p.ends[f]) {return .err(errors::make(5,pc));}
-            if (!merge(ref mut states,ref mut seen,ref defined,pc+1,ref mut array_states,live)) {return .err(errors::make(5,pc));}
+            if (!merge(ref mut states,ref mut seen,ref defined,pc+1,ref mut array_states,live,ref mut static_states,static_live)) {return .err(errors::make(5,pc));}
             pc+=1; continue;
         }
         if(op==50) {
@@ -104,7 +116,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
             pc += 1; continue;
         }
         if (op == 22) {
-            if (dst != 0 || b != 0 || a < p.starts[f] || a >= pc || !seen[a] || live != array_states[a]) { return .err(errors::make(5, pc)); }
+            if (dst != 0 || b != 0 || a < p.starts[f] || a >= pc || !seen[a] || live != array_states[a] || static_live != static_states[a]) { return .err(errors::make(5, pc)); }
             if ((states[a * 2] & defined.low) != states[a * 2] ||
                 (states[a * 2 + 1] & defined.high) != states[a * 2 + 1]) { return .err(errors::make(5, pc)); }
             pc+=1; continue;
@@ -129,7 +141,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
             } else {
                 if (!readable(p, ref defined, a, start, end) || p.types[a] != 2) { return .err(errors::make(5, pc)); }
             }
-            if (!merge(ref mut states, ref mut seen, ref defined, target, ref mut array_states, live)) {return .err(errors::make(5,pc));}
+            if (!merge(ref mut states, ref mut seen, ref defined, target, ref mut array_states, live, ref mut static_states, static_live)) {return .err(errors::make(5,pc));}
             if (op == 19) { pc += 1; continue; }
         } else if (op == 18) {
             if (dst < start || dst >= end || !p.slots[dst] || b != 0 || !readable(p, ref defined, a, start, end)) { return .err(errors::make(5, pc)); }
@@ -174,7 +186,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
             registers::insert(ref mut defined, dst); registers::insert(ref mut written, dst);
         }
         if (pc + 1 >= p.ends[f]) { return .err(errors::make(5, pc)); }
-        if (!merge(ref mut states, ref mut seen, ref defined, pc + 1, ref mut array_states, live)) {return .err(errors::make(5,pc));}
+        if (!merge(ref mut states, ref mut seen, ref defined, pc + 1, ref mut array_states, live, ref mut static_states, static_live)) {return .err(errors::make(5,pc));}
         pc += 1;
     }
     i = start;
@@ -182,7 +194,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
     return .ok(end - start);
 }
 
-fn Result<reborrows::Sites, errors::Error> validate(ref ir::Program p,bool allow_reborrow_calls) {
+fn Result<reborrows::Sites, errors::Error> validate(ref ir::Program p,bool allow_reborrow_calls, ref statics::Sites static_sites) {
     if (p.count == 0 || p.count > 256 || p.registers == 0 || p.registers > 128 || p.constant_count > 128 ||
         p.function_count == 0 || p.function_count > 16 || p.entry >= p.function_count || p.call_count > 32) { return .err(errors::make(5, 0)); }
     if (!arrays::valid(ref p.arrays)) { return .err(errors::make(5, 0)); }
@@ -217,20 +229,32 @@ fn Result<reborrows::Sites, errors::Error> validate(ref ir::Program p,bool allow
     let usize record_results = struct_results::metadata(p)?;
     var bool[32] used_calls = [false; 32];
     f = 0;
-    while (f < p.function_count) { let usize checked = function(p, f, ref shapes, ref loans, allow_reborrow_calls, ref mut used_calls)?; f += 1; }
+    while (f < p.function_count) { let usize checked = function(p, f, ref shapes, ref loans, static_sites, allow_reborrow_calls, ref mut used_calls)?; f += 1; }
     var usize call = 0;
     while (call < p.call_count) { if (!used_calls[call]) { return .err(errors::make(5, 0)); } call += 1; }
     return .ok(loans);
 }
 
+// Ordinary entry points carry no Static authority and keep rejecting 69-74.
+fn Result<reborrows::Sites,errors::Error> plain(ref ir::Program p,bool calls) {
+    let statics::Sites sites = statics::empty(); return validate(p,calls,ref sites);
+}
+// Analysis-only preparation: exact image bytes plus ordinary metadata, scalar
+// definitions, owners/loans and CFG proof. Static joins/backedges use their own
+// live-state plane. This neither pins an image nor admits Static VM execution.
+pub fn Result<statics::Sites,errors::Error> inspect_statics(ref ir::Program p,ref images::Image image) {
+    let statics::Sites sites = statics::definitions(p,image)?;
+    let reborrows::Sites loans = validate(p,true,ref sites)?; return .ok(sites);
+}
+
 // Strict inspection keeps its historical suspended-CALL analysis gate.
 pub fn Result<usize, errors::Error> inspect(ref ir::Program p) {
-    let reborrows::Sites sites=validate(p,false)?;return .ok(p.count);
+    let reborrows::Sites sites=plain(p,false)?;return .ok(p.count);
 }
 // Public admission returns the exact forest produced by the complete proof.
 // Unsupported derived CALL shapes reject in every function before guest effects.
 pub fn Result<reborrows::Sites,errors::Error> verify_sites(ref ir::Program p){
-    let reborrows::Sites sites=validate(p,reborrows::present(p))?;
+    let reborrows::Sites sites=plain(p,reborrows::present(p))?;
     if(sites.count!=0){var usize pc=0;while(pc<p.count){
         if(p.code[pc*8]==9){let usize allowed=executable::call(p,ref sites,pc)?;}
         pc+=1;
@@ -242,5 +266,5 @@ pub fn Result<usize, errors::Error> verify(ref ir::Program p) {
 }
 // Analysis-only proof does not impose the executable derived CALL subset.
 pub fn Result<usize, errors::Error> inspect_reborrow_calls(ref ir::Program p) {
-    let reborrows::Sites sites=validate(p,true)?;return .ok(p.count);
+    let reborrows::Sites sites=plain(p,true)?;return .ok(p.count);
 }

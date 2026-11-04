@@ -27,8 +27,10 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    owns that image beside independently verified copyable IR and borrows both for
    existing scalar execution. The [native return-stack fix](native-return-stack.md)
    removes reproduced return-transaction stack amplification without changing
-   ownership APIs, VM capacities or prices. Next prove and execute actual Static
-   definitions/origins, then finish the general reference contract.
+   ownership APIs, VM capacities or prices. The [private Static IR proof](static-ir.md)
+   now reconstructs real image definitions, scalar types and independent CFG
+   lifetimes. Next connect retained Program admission, actual Static execution,
+   prices and image-backed CALL/return origins, then finish general references.
    Validate actual public source execution before promoting its capability.
 2. **Language completion: L01-L06, C03/C05.** Finish explicit module snapshots and
    visibility, inference/void/if values, complete array/record construction,

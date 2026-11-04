@@ -1,5 +1,23 @@
 # AGENTS.md
 
+- Private Static IR preparation now reconstructs actual image definitions and
+  exact kinds/ranges/UTF-8 boundaries in src/static_ir.fy. The image-aware ordinary
+  verifier reuses complete metadata/scalar/owner/loan proof and a separate Static
+  live-state plane for branch joins/backedges; all 64 existing owner/loan bits are
+  already allocated. Six private opcodes 69-74 prepare open/close/read/length/
+  equality/text-bytes views. Sites are image-local analysis metadata, not pinned
+  storage or authenticated handles. Normal returns require closed Static sites.
+  Ordinary/public verifier, retained Program admission and VM still reject them;
+  no guest syntax, pricing, capacity or capability change is claimed.
+  Windows development/release each passed 31 focused native groups (eight new)
+  on 129 matching final inputs and a 218-file discovery digest. All 120 production
+  files are LF and locked LF mirrors pass; no native overrides/historical reuse.
+  Early fixture-checker corrections and the pre-snapshot eight-group probe are
+  excluded. Standalone CLI/full profiles/Linux/restricted/ABI/packaging and native
+  stack/RAM/timing/allocator evidence were not run. Next connect retained Program
+  admission with actual Static dispatch, exact Fuel and image-backed lifetimes,
+  then CALL/return origins and guest text syntax. The full objective remains open.
+  See docs/engineering/static-ir.md and its focused Windows evidence.
 - Active objective: complete every accepted missing implementation item in
   docs/product/04-remaining-work.md. Do not redefine completion around the
   experimental subset. Execution order and next B04 constraints are recorded in
