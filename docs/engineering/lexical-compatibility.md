@@ -57,3 +57,10 @@ The direct native lexer command above was not run; native CLI cases exercise the
 actual source loader/compiler, while the interpreter cases cover direct token spans
 and the token ceiling. Release, Linux, full M1, performance measurement and
 clean-machine packaging were not run. See the [combined evidence](../evidence/returned-ranges-lexical-windows-20261104.json).
+
+## Literal successor
+
+The [bounded byte/text decoder](literal-source.md) adds literal token kinds 3/4
+and exact escape/UTF-8 validation. The unchanged-grammar description above owns
+the earlier trivia increment. Its BOM/NUL/newline rules and existing token limit
+continue to apply; literal expression lowering is still separate work.

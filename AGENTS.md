@@ -1,3 +1,21 @@
+- Bounded literal_source decoding now emits byte/text lexer kinds 3/4 with raw
+  spans and unchanged lexer State. Shared escapes plus text-only Unicode scalars
+  are checked before complete cooked UTF-8 acceptance. Compiler scratch stays
+  outside token snapshots; production intern decodes fully before kind-specific
+  immutable-image insertion and preserves the builder on Source/Image failures.
+  Raw source-byte policies, 4096 source/scratch and 1024 tokens remain unchanged.
+  Public expression/ref str lowering and capability promotion remain gated.
+  Development/release each passed 25 native groups (8 new) plus 88 tool-free CLI
+  cases: 52 literal diagnostics/gates and 36 existing lexical cases. All 132 inputs
+  and the 220-file discovery digest match; 122 LF production modules and locked LF
+  mirrors pass. Final runs use no overrides/historical reuse; early CLI and the
+  failed development fixture probe are excluded. Full profiles/Linux/restricted/
+  C ABI/packaging and general stack/RAM/timing/allocator evidence remain open.
+  Next connect compiler-owned literal collection, typed Static locals and
+  text::bytes. The accepted text::equal takes byte views; extend private EQUAL's
+  text-only proof before lowering that signature. Static CALL/return receipts,
+  public admission and the complete goal remain open. See
+  docs/engineering/literal-source.md and its focused Windows evidence.
 - Retained-image Static execution now admits and runs private operations 69-74
   through the existing canonical driver, tied to the exact immutable Program
   image. Independent image/ordinary CFG/type/owner/loan/origin proof precedes

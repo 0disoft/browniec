@@ -2,8 +2,11 @@ module lexer;
 
 import errors as errors;
 import cells as cells;
+import literal_source as literals;
 
-// 0 EOF, 1 integer, 2 identifier; punctuation uses its ASCII byte.
+// 0 EOF, 1 integer, 2 identifier, 3 byte literal, 4 text literal.
+// Literal spans retain raw spelling; decoded storage belongs to the compiler.
+// Other punctuation uses its ASCII byte.
 // 128 ==, 129 !=, 130 <=, 131 >=, 132 &&, 133 ||, 134 <<, 135 >>.
 pub struct State { usize cursor; usize begin; usize end; usize tokens; u8 kind; i64 value; bool min_magnitude; }
 pub fn State empty() {
@@ -110,6 +113,13 @@ pub fn Result<usize, errors::Error> next(ref u8[] source, ref mut State s) {
     s.min_magnitude = false;
     if (s.cursor == source.len) { s.kind = 0; s.end = s.cursor; return .ok(0); }
     let u8 ch = source[s.cursor];
+    let u8 literal=literals::kind(source,s.cursor);
+    if(literal!=0){
+        let usize end=literals::scan(source,s.cursor)?;
+        s.kind=literal;s.cursor=end;s.end=end;return .ok(0);
+    }
+    // C string ownership/FFI is outside the accepted guest profile.
+    if(ch==99 && s.cursor+1<source.len && source[s.cursor+1]==34){return .err(errors::make(1,s.begin));}
     if (digit(ch)) {
         s.kind = 1;
         var usize magnitude=0;

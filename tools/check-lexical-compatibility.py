@@ -8,9 +8,10 @@ import subprocess
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--exe', type=Path, required=True)
+parser.add_argument('--output', type=Path)
 args = parser.parse_args()
 root = Path(__file__).resolve().parent.parent
-output = root / 'build/lexical-compatibility'
+output = args.output.resolve() if args.output else root / 'build/lexical-compatibility'
 output.mkdir(parents=True, exist_ok=True)
 empty = output / 'no-runtime-tools'
 empty.mkdir(exist_ok=True)
