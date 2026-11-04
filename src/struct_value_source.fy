@@ -178,14 +178,29 @@ pub fn Result<usize, errors::Error> leaf_count(ref ir::Program p, usize root, us
     }
     return .ok(count);
 }
-pub struct Initializer { usize[16] records; usize[16] fields; usize depth; }
+pub struct Initializer {
+    usize[16] records; usize[16] fields; usize depth;
+    lexer::State shorthand; bool is_shorthand;
+}
 pub fn Initializer initializer(usize root) {
-    var Initializer result = Initializer { .records = [0; 16], .fields = [0; 16], .depth = 1 };
+    var Initializer result = Initializer { .records = [0; 16], .fields = [0; 16], .depth = 1,
+        .shorthand = lexer::empty(), .is_shorthand = false };
     result.records[0] = root; return result;
+}
+pub fn bool shorthand(ref Initializer state) { return state.is_shorthand; }
+// The cursor already consumed the member name while deciding whether it was
+// followed by '='. Restore that token so the ordinary scalar expression parser
+// resolves the same-name local exactly once.
+pub fn void rewind_shorthand(ref mut lexer::State s, ref Initializer state) {
+    *s = state.shorthand;
+}
+pub fn void consumed_shorthand(ref mut Initializer state) {
+    state.is_shorthand = false; state.shorthand = lexer::empty();
 }
 // A completed scalar or child constructor advances exactly one enclosing field.
 pub fn Result<usize, errors::Error> advance(ref u8[] source, ref mut lexer::State s,
     ref ir::Program p, ref mut Initializer state) {
+    state.is_shorthand = false; state.shorthand = lexer::empty();
     let usize level = state.depth-1; state.fields[level] += 1;
     if (state.fields[level] < p.records.layouts.fields[state.records[level]] as usize) {
         let usize comma = lexer::punctuation(source, s, 44)?;
@@ -207,12 +222,20 @@ pub fn Result<u8, errors::Error> next_leaf(ref u8[] source, ref mut lexer::State
             let usize dot = lexer::punctuation(source,s,46)?;
             let usize found = field(source,p,record,s.begin,s.end)?;
             if (s.kind != 2 || found != selected) { return .err(errors::make(3,s.begin)); }
+            let lexer::State member = lexer::snapshot(s);
             let usize name = lexer::next(source,s)?;
-            let usize equals = lexer::punctuation(source,s,61)?;
+            var bool short = false;
+            if (s.kind == 61) { let usize equals = lexer::next(source,s)?; }
+            else if (s.kind == 44 || s.kind == 125) { short = true; }
+            else { return .err(errors::make(2,s.begin)); }
             let usize slot = record*16+selected;
-            if (p.records.layouts.kinds[slot] == 0) { return .ok(p.records.layouts.types[slot]); }
+            if (p.records.layouts.kinds[slot] == 0) {
+                state.shorthand = member; state.is_shorthand = short;
+                return .ok(p.records.layouts.types[slot]);
+            }
             let usize child = p.records.layouts.types[slot] as usize;
             // 255 requests binding/path child staging, never a scalar tag.
+            if (short) { state.shorthand = member; state.is_shorthand = true; return .ok(255); }
             if (!constructor(source,s,child)?) { return .ok(255); }
             if (state.depth >= 16) { return .err(errors::make(4,at)); }
             let usize depth = state.depth; state.records[depth] = child; state.fields[depth] = 0; state.depth += 1;

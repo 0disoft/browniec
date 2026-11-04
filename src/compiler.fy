@@ -661,10 +661,18 @@ fn Result<usize, errors::Error> record_constructor_value(ref u8[] source, ref mu
     while (i < leaves) {
         let u8 tag = record_values::next_leaf(source,s,p,ref mut state,at)?;
         if (tag == 255) {
+            if (record_values::shorthand(ref state)) {
+                record_values::rewind_shorthand(s,ref state);
+                record_values::consumed_shorthand(ref mut state);
+            }
             let usize called=record_child_call(source,s,p,table,signatures,ref mut state,ref mut slots,i,at,result_type,expr_depth,structure,loop_state)?;
             if(called!=0) {i+=called;continue;}
             let usize copied = record_values::stage_child(source,s,p,table,ref mut state,ref mut slots,i,at)?;
             i += copied; continue;
+        }
+        if (record_values::shorthand(ref state)) {
+            record_values::rewind_shorthand(s,ref state);
+            record_values::consumed_shorthand(ref mut state);
         }
         slots[i] = ir::slot(p,tag,at)?;
         let usize value = expression(source,s,p,table,signatures,1,expr_depth+2,tag,result_type,structure+1,loop_state)?;

@@ -4,6 +4,18 @@
   docs/product/04-remaining-work.md. Do not redefine completion around the
   experimental subset. Execution order and next B04 constraints are recorded in
   docs/engineering/completion-plan.md. Remote delivery remains separate.
+- L03 record field shorthand now supports `.field` for exact scalar/plain-record
+  locals through existing ordered constructor staging. Windows final LF inputs
+  passed 21 development and four release native groups, plus 362 tool-free CLI
+  cases per profile, on 507 matching inputs. See the shorthand contract/evidence.
+  Array element-list initialization remains open; public returned results remain
+  gated. Other native/full-profile/platform/delivery/performance suites were not
+  rerun for this increment.
+- Preserve LF when writing production sources before refreshing `fairy.lock`.
+  The Fairy source digest includes raw source bytes: a mixed CRLF workspace made
+  its lock stale in a Git LF checkout. Sources and the lock are now consistent;
+  a separate LF mirror passed `check --locked`. Write Python source edits with
+  `newline='\n'` or bytes. Do not reuse pre-normalization input receipts as current.
 - Ordinary scalar entry now shares the canonical returned-view VM through
   `vm::run_slice_scalar`: exact scalar admission, fresh resumed inputs, native
   value-copy arguments and transactional reverse-order capture cleanup. The
