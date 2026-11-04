@@ -64,8 +64,12 @@ It therefore preserves native owner tokens, pool tickets and backing bytes.
 The focused [Windows evidence](../evidence/m2-slice-result-call-ir-windows-20261104.json)
 records 26 development native groups (nine new binding, ten existing IR and seven
 scalar-entry groups), and the nine new groups in release. All 122 captured input
-hashes still match; all 116 production modules use LF, and an LF mirror passed
-`check --locked`. Standalone CLI and broader/full-profile/platform/delivery/
+hashes match the implementation commit under Git LF, including the three selected
+test files. Two existing CRLF regression fixtures were normalized to their existing
+Git LF content and all final native selections were re-executed. All 208 test
+discovery files retain the recorded aggregate identity. The 116 production modules
+use LF and an LF mirror passed `check --locked`. Standalone CLI and broader/
+full-profile/platform/delivery/
 performance checks were not run. New cases cover
 all six scalar types in both access modes, non-first selected inputs, anonymous
 exclusive capture cleanup, recursive-origin laundering, scalar identity misuse,

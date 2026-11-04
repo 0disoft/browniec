@@ -9,7 +9,9 @@
   Definition tracing rejects fabricated recursive grounding. Source lowering and
   binding execution remain pending; VM entry rejects 66-68 before ownership transfer.
   Windows development passed 26 native groups; release passed nine new groups.
-  All 122 inputs match and an LF mirror passed check --locked; no overrides/reuse.
+  All 122 inputs match Git LF and all 208 test-discovery files have a recorded
+  aggregate identity. Final selections were re-executed after regression-fixture
+  LF normalization. An LF mirror passed check --locked; no overrides/reuse.
   Standalone CLI/full-profile/Linux/delivery/performance were not run.
   See docs/engineering/m2-slice-result-call-ir.md and its focused Windows evidence.
   Next connect source recipes and retained Held dispatch; keep the full objective

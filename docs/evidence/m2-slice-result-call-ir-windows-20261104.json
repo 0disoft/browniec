@@ -1,14 +1,14 @@
 {
   "schema": "browniec.slice-result-call-ir-windows/v1",
   "status": "passed",
-  "recordedAt": "2026-11-04T11:22:28.116979+00:00",
+  "recordedAt": "2026-11-04T11:34:40.720817+00:00",
   "platform": "Windows-11-10.0.26300-SP0",
-  "startingHead": "8fb703da8ffa63ab8e06ccd44dc8e653485c1528",
-  "implementationState": "Final working-tree inputs; implementation commit also contains this receipt.",
+  "startingHead": "126aecf8f776b1975b8db16125c3213490a58bbb",
+  "implementationState": "All 122 captured file inputs match the implementation commit under Git LF. This successor documentation commit records final re-execution after LF normalization.",
   "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
   "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false",
-  "inputSnapshotCapturedAt": "2026-11-04T11:15:19.042076+00:00",
-  "inputSnapshotTiming": "Captured while the final development binding batch was running; no compiled input changed after that batch was dispatched. Every captured hash was checked after all three final native batches.",
+  "inputSnapshotCapturedAt": "2026-11-04T11:26:04.206893+00:00",
+  "inputSnapshotTiming": "Captured after LF normalization and before all three final native batches. The aggregate test-discovery identity was captured during the regression batch, before either binding batch. No compiled source/test input changed afterward.",
   "inputs": [
     {
       "path": "fairy.lock",
@@ -488,11 +488,11 @@
     },
     {
       "path": "tests/m2/slice_result_ir.fy",
-      "sha256": "a9c344cec1fbacc7fdfcabe800267c41639ce4be29c623264a1de86d0365a2fa"
+      "sha256": "355051165513d7a17d33701381293c25e0a92b6050a00f5ba91439ec4b576104"
     },
     {
       "path": "tests/m2/slice_scalar_entry.fy",
-      "sha256": "038929a2c1c496fb88eb7b4fb0c44efefc5f852aef9b0f337e8b318458a15666"
+      "sha256": "c2e35675c59955826524f4bff849b8d58dbf4e9e3061376538c4de9e96358ac2"
     },
     {
       "path": "toolchain.json",
@@ -503,19 +503,25 @@
     "workspace": "check ok: 2 instance(s), 123 source file(s), 1003 MIR function(s), lock verified",
     "lfMirror": "check ok: 2 instance(s), 123 source file(s), 1003 MIR function(s), lock verified",
     "productionFiles": 116,
-    "nativeOverrides": false
+    "nativeOverrides": false,
+    "committedLFInputBlobs": 122,
+    "testDiscovery": {
+      "files": 208,
+      "sha256": "30e3da3dd743edba5cd04e0ea82c4b9572ee417abf70ab4d52aa2d907b319d68",
+      "format": "Sorted portable path, one space, raw-file SHA256, LF; hashed as UTF-8."
+    }
   },
   "native": [
     {
       "command": [
         "build/toolchain/fairyc.exe",
         "test",
-        "--file",
-        "tests/m2/slice_result_call_ir.fy",
         "--native",
         "--capture-output",
         "--json",
-        "--locked"
+        "--locked",
+        "--file",
+        "tests/m2/slice_result_call_ir.fy"
       ],
       "report": {
         "schemaVersion": "fairyc.test-report/v4",
@@ -837,12 +843,14 @@
   "cliCases": 0,
   "excludedExploratoryResults": [
     "The first fixture used wrapper tag 3 instead of i64 tag 9; excluded.",
-    "Combined IR-construction/runtime-state fixture overflowed the default development stack; split into sequential call frames. Early payload assertion corrected to canonical i32 bytes. No exploratory run is counted above."
+    "Combined IR-construction/runtime-state fixture overflowed the default development stack; split into sequential call frames. Early payload assertion corrected to canonical i32 bytes. No exploratory run is counted above.",
+    "Earlier green native batches preceding LF normalization of two existing regression fixtures are excluded. All counted batches were re-executed on the final captured inputs."
   ],
   "limitations": [
     "Private CALL-binding independent IR proof only; source lowering, binding dispatch and selected temporary retention remain pending.",
     "VM rejects unsupported binding markers before ownership entry. Public syntax/capabilities and Fuel prices/default/cap remain unchanged.",
     "Final native commands used default compiler/stack settings, no overrides or historical-result reuse.",
     "Standalone CLI, other/full M1/M2, Linux, isolation, ABI, packaging, allocator instrumentation and native size/stack/timing were not run."
-  ]
+  ],
+  "implementationCommit": "126aecf8f776b1975b8db16125c3213490a58bbb"
 }
