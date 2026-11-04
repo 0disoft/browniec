@@ -1903,3 +1903,8 @@ passes 38 groups in each development and release profile. The
 [focused CLI receipt](docs/evidence/m2-struct-vm-cli-windows-20261026.json) passes
 115 cases per profile. The earlier 46-group IR and 115-case CLI receipts remain
 historical for changed runtime, test, harness, and root-lock inputs.
+
+The CLI Fuel default is 256; an explicit `--fuel` accepts 0..16000000. Version
+JSON reports `fuel_default`/`fuel_limit`. For an eight-writer CALL that exceeds
+the former one-million ceiling, run `examples/fuel-wide-call.brc` with
+`--fuel 16000000`. See [public Fuel costs and limits](docs/engineering/public-fuel-limits.md).

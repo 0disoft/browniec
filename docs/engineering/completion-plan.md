@@ -94,6 +94,8 @@ delivery and DLL exports are still open after the lexical/range increments.
   aliases, nested uses, traps and cleanup, plus accurate capability metadata.
   Implementing only a native registry does not close B04.
 
-- Before public returned-reference promotion, reconcile the public Fuel ceiling:
-  simple new bindings fit 1000000, but complex/nested native cases use larger
-  explicit budgets. This is a C05 limit decision, not a hidden CLI cap increase.
+- The [public Fuel successor](public-fuel-limits.md) deliberately raises the
+  explicit CLI ceiling to 16000000, retains the 256 default and existing prices,
+  and unifies public slice cost formulas. This resolves the narrow budget gap.
+  Ordinary returned-reference Program admission/dispatch and other C05 capacities
+  remain open; public result promotion still needs its own end-to-end proof.

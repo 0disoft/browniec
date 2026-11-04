@@ -4,6 +4,23 @@
   docs/product/04-remaining-work.md. Do not redefine completion around the
   experimental subset. Execution order and next B04 constraints are recorded in
   docs/engineering/completion-plan.md. Remote delivery remains separate.
+- Public Fuel reconciliation now deliberately raises the explicit CLI ceiling
+  from 1000000 to 16000000; default 256 and operation prices are preserved.
+  Shared/exclusive rooted/formal/canonical/legacy slice dispatch and CALL pricing
+  use the common fuel module, including BEGIN/END/CLOSE. Version JSON exposes
+  fuel_default/fuel_limit from that same module. Native host budgets remain
+  independent. An eight-writer CALL alone reserves 1114129 before dispatch,
+  arguments, OPENs and backing, so the old ceiling could not run it.
+  Windows development and release each passed 25 focused native groups and 33
+  tool-free CLI cases. All 129 inputs and the 211-file test-tree digest match;
+  all 117 production files are LF and an LF mirror passed check --locked.
+  Exact/one-short operation/source budgets, six-scalar/UTF-8/cleanup regressions,
+  old/new cap boundaries, overflow/duplicate usage and four existing record
+  stress programs are covered without compiler/stack overrides or result reuse.
+  Full M1/M2/Linux/restricted/ABI/packaging/performance were not run. Other C05
+  capacities, B04 public result admission and the complete objective remain open.
+  See docs/engineering/public-fuel-limits.md and its focused Windows evidence.
+  Earlier entries retain their original schedules, ceilings and evidence scope.
 - B04 lexical returned CALLs now execute in the private canonical VM: exact
   caller destinations, funded END masks, fresh resumed parent mapping, retained
   Held and prepaid close. Source-selected temporary parents/owners have actual

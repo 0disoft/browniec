@@ -1,6 +1,7 @@
 module slice_reborrow_vm;
 import ir as ir;
 import errors as errors;
+import fuel as meter;
 import cells as cells;
 import array_vm as arrays;
 import array_owners as owners;
@@ -83,7 +84,7 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,ref proof::Sites sites
         hi<p.register_starts[function] || lo>=p.register_ends[function] || hi>=p.register_ends[function]))) { return .err(errors::make(5,offset)); }
     let usize child_root=root(p,function,child,offset)?;let usize parent_root=root(p,function,parent,offset)?;
     if(child_root!=parent_root) { return .err(errors::make(5,offset)); }
-    if(fuel<65537) { return .err(errors::make(8,offset)); }
+    if(fuel<meter::slice_base(op,0)) { return .err(errors::make(8,offset)); }
     let usize depth=checked(p,sites,bindings,receipts,loan,offset)?;
     if(frame!=receipts.frame) { return .err(errors::make(5,offset)); }
     let usize c=frame*16+child;let usize a=frame*16+parent;let usize capacity=bytes::len(buffer);
@@ -110,7 +111,7 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,ref proof::Sites sites
         bindings.parents[depth-1]=16;bindings.children[depth-1]=16;bindings.functions[depth-1]=16;
         loan.tickets[c]=none();loan.tickets[a]=resumed;
     }
-    return .ok(fuel-65537);
+    return .ok(fuel-meter::slice_base(op,0));
 }
 
 // Invocation abort, not lexical restore. Drain first; preserve all metadata if

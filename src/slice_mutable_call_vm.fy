@@ -1,6 +1,7 @@
 module slice_mutable_call_vm;
 import ir as ir;
 import errors as errors;
+import fuel as meter;
 import types as types;
 import slice_call_vm as shared;
 import slice_handoff as handoff;
@@ -53,7 +54,7 @@ fn Result<usize,errors::Error> reserve(ref ir::Program p,usize target,usize offs
         }i+=1;
     }
     if(writers==0){return .err(errors::make(5,offset));}
-    return .ok(65537*(1+readers+2*writers));
+    return .ok(meter::slice_call(readers,writers));
 }
 pub fn Result<usize,errors::Error> cost(ref ir::Program p,usize target,usize offset){
     let usize work=reserve(p,target,offset)?;let usize copies=owned::cost(p,target,offset)?;
@@ -150,13 +151,13 @@ pub fn Result<owners::View,errors::Error> view(ref ir::Program p,usize function,
 pub fn Result<usize,errors::Error> release(ref ir::Program p,usize function,usize frame,usize site,
     ref mut Frame receipt,ref shared::Frames frames,ref mut loans::State loan,ref arrays::State state,
     ref bytes::Buffer buffer,usize fuel,usize offset){
-    if(fuel<4097){return .err(errors::make(8,offset));}
+    if(fuel<meter::slice_base(56,0)){return .err(errors::make(8,offset));}
     if(!receipt.active || frame==0 || frame>=32 || receipt.parent!=frame-1 || receipt.target!=function || site>=16 || receipt.batch.count==0 || receipt.batch.count>8 || receipt.batch.frame!=receipt.parent){return .err(errors::make(5,offset));}
     var usize i=0;while(i<receipt.batch.count){if(receipt.sites[i]==site){
         if(!absent(receipt.detached[i])){return .err(errors::make(5,offset));}
         let slices::Ticket ticket=loan.tickets[frame*16+site];let owners::Token token=checked(p,function,frame,site,ticket,frames,loan,state,bytes::len(buffer),offset)?;
         if(!same(token,receipt.batch.leases[i].view.root) || !session(receipt,i,ticket,ref loan.pool)){return .err(errors::make(5,offset));}
-        receipt.detached[i]=ticket;loan.tickets[frame*16+site]=none();return .ok(fuel-4097);
+        receipt.detached[i]=ticket;loan.tickets[frame*16+site]=none();return .ok(fuel-meter::slice_base(56,0));
     }i+=1;}return .err(errors::make(5,offset));
 }
 

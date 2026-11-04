@@ -1,0 +1,79 @@
+# Public Fuel costs and CLI ceiling
+
+Date: 2026-11-04. This is a narrow C05 successor to the
+[returned-view schedule](m2-slice-result-fuel.md), not full-profile limit adoption.
+
+## Deliberate limit change
+
+The trusted local CLI accepts `--fuel 0..16000000`; its default remains 256.
+`src/fuel.fy` supplies both argument validation and the additive `fuel_default`
+and `fuel_limit` numbers in `--version --json`. Existing profile strings and
+feature flags keep their meanings. Native VM APIs still accept a host-selected
+`usize` budget independently of CLI policy.
+
+The previous 1000000 ceiling could not fund a legal eight-writer CALL: its
+retention/restoration reserve alone is `65537 * (1 + 2*8) = 1114129`, before
+nine units for dispatch/formal transfer, root OPENs or backing preparation.
+Existing record-loop stress cases also needed larger native budgets. The new
+16000000 ceiling uses the established stress-test budget; selecting it is explicit.
+It does not enlarge backing, frame, owner, source or operand capacities, change
+any operation price, grant a capability or imply that arbitrary loops terminate.
+Fuel exhaustion remains a runtime error. Policy/Engine/step/deadline limits from
+the accepted full profile remain separate work.
+
+## One slice price source
+
+All rooted/formal, shared/exclusive, canonical and legacy slice adapters now use
+`fuel::slice_base`, `utf8_scan` and `slice_call`, including formal CLOSE and
+BEGIN/END. Every caller authenticates bounded metadata first; runtime tickets,
+payload access and publication still follow the Fuel preflight. Call pricing
+requires at most eight readers plus writers, element stride is at most eight,
+and validated root length is at most 4096, so these additions/multiplications are
+bounded without host-sized arithmetic overflow.
+
+| Existing public work | Exact charge |
+| --- | ---: |
+| OPEN/SUB/BEGIN/END | 65537 |
+| CLOSE/length | 4097 |
+| Scalar read | 4130 + stride |
+| Scalar write | 4130 + 2*stride |
+| UTF-8 | 4097 + 4*root length |
+| CALL retention/restoration | 0 without borrows; otherwise 65537*(1+readers+2*writers) |
+
+Public instruction charges already include their dispatch unit; CALL adds its
+existing `1 + arity + aggregate-copy cost` once. Return restoration and emergency
+cleanup remain prepaid. The private returned-result coordinator keeps its
+explicit per-dispatch unit and entry/handoff/leave reserves as documented in the
+prior schedule. Connecting that coordinator to ordinary public admission remains
+B04 work; this increment does not claim equal whole-invocation costs between
+those different execution paths. Array/record pricing is unchanged.
+
+## Verification
+
+`python -B tools/verify-public-fuel.py --profile development` runs focused native
+checks, builds the standalone CLI and executes it with a tool-free PATH. Repeat
+with `--profile release`. Native phases can run independently with `--phase
+native`; serialize CLI phases (`--phase cli`) because builds share the output
+artifact. Each phase fingerprints inputs, compiler and test discovery, checks the
+lock and rejects compiler/stack overrides and changed inputs.
+
+New native cases use an independent numeric oracle for straight-line source:
+exact budget succeeds, one-short fails and one-more succeeds, for shared roots,
+exclusive roots and all eight writer arguments. The eight-writer example also
+uses the standard public 65536-byte backing. Scalar two-unit execution, native
+host budgets above the CLI cap and proof-before-Fuel/backing are covered.
+Affected canonical/legacy six-scalar, UTF-8, returned-binding and cleanup suites
+are included. CLI cases exercise default/zero/one/exact scalar budgets, old and
+new ceilings, invalid/overflowing/duplicate arguments, version discovery and four
+record stress sources at both 1000000 and 16000000. The old budgets still produce
+Fuel errors; explicit larger budgets complete with 42.
+
+Windows development and release each passed 25 native groups and 33 standalone
+CLI cases on 129 matching inputs and the 211-file test-discovery identity. All
+117 production files are LF; an LF mirror passed `check --locked`. Final runs
+used no compiler/stack overrides or historical-result reuse.
+
+See [focused Windows evidence](../evidence/public-fuel-windows-20261104.json).
+Full M1/M2, Linux, restricted delivery, ABI, packaging and elapsed-time/allocator/
+stack-size benchmarks are outside this increment. B04 result declarations remain
+publicly gated; other C05 capacities and the complete objective remain open.

@@ -1,6 +1,7 @@
 module slice_call_vm;
 import ir as ir;
 import errors as errors;
+import fuel as meter;
 import slice_vm as loans;
 import array_vm as arrays;
 import array_slices as slices;
@@ -35,7 +36,7 @@ pub fn Result<usize, errors::Error> cost(ref ir::Program p, usize target, usize 
         }
         i+=1;
     }
-    return .ok(if(count==0){0}else{65537*(count+1)});
+    return .ok(meter::slice_call(count,0));
 }
 
 // A formal root binding survives closing its ticket, so retained children can

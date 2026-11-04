@@ -39,7 +39,7 @@ must not expose secret values or unrelated file contents. A future effective-con
 output is diagnostic only and does not authorize execution.
 
 The current scalar/array/record/scalar-slice CLI implements only SOURCE selection,
-`--json` and run-only `--fuel` (default 256, range 0..1000000). SOURCE is one UTF-8
+`--json` and run-only `--fuel` (default 256, range 0..16000000). SOURCE is one UTF-8
 code file up to 4096 bytes, not guest input; zero-argument i32 `main` is fixed. No project, policy, catalog, environment configuration, effective-config, or
 run-grant loader exists. Unsupported options are rejected rather than ignored.
 
@@ -47,3 +47,8 @@ run-grant loader exists. Unsupported options are rejected rather than ignored.
 cancellation settings have no implementation. See the
 [complete remaining-work audit](../product/04-remaining-work.md) before treating any
 target configuration field or reference-package schema as accepted by this CLI.
+
+Version JSON exposes `fuel_default` and `fuel_limit` from the same schedule as argument
+validation. Existing lower budgets remain valid. See the
+[public cost/limit contract](../engineering/public-fuel-limits.md) for the exact
+price formulas, full-arity CALL rationale and verification scope.

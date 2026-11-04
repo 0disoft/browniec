@@ -14,7 +14,7 @@ browniec run SOURCE [--fuel N] [--json]
 ```
 
 SOURCE is one local UTF-8 code file, at most 4096 bytes. The entry is zero-argument
-`fn i32 main`. Fuel defaults to 256 and accepts 0..1000000; aggregate runs need an
+`fn i32 main`. Fuel defaults to 256 and accepts 0..16000000; aggregate runs need an
 explicit larger budget, usually `--fuel 100000` or `--fuel 1000000`.
 
 The public frontend/VM supports six scalars, branches/loops, shallow i32/bool tags,
@@ -52,3 +52,8 @@ Command/profile changes must update help and the owning contracts together.
 Never claim a native/OS/packaged capability from a design or private model, grant
 ambient authority, publish failed guest output, or automatically replay external
 effects after an unknown outcome.
+
+Version JSON exposes `fuel_default` and `fuel_limit` from the same schedule as argument
+validation. Existing lower budgets remain valid. See the
+[public cost/limit contract](../engineering/public-fuel-limits.md) for the exact
+price formulas, full-arity CALL rationale and verification scope.

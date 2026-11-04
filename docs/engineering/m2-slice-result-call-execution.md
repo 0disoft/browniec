@@ -43,6 +43,10 @@ that frame's old receipts rather than closing transferred authority twice.
 
 ## Fuel, failure and bounded work
 
+The later [public Fuel/limit contract](public-fuel-limits.md) supersedes this
+increment's 1000000 CLI ceiling discussion with an explicit 16000000 ceiling.
+Its default remains 256 and the prices described below are unchanged.
+
 The existing schedule and public CLI Fuel default/cap are unchanged. CALL_BIND
 pays the existing dispatch, arity, metadata/abort reserve and aggregate-copy work.
 Borrowed return prepays final close. Ghost markers pay one dispatch each; masked

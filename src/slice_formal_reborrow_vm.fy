@@ -107,7 +107,7 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,ref proof::Sites sites
         p.slots[lo] || p.slots[hi] || p.array_parameters[lo]!=0 || p.array_parameters[hi]!=0 || p.record_parameters[lo]!=0 || p.record_parameters[hi]!=0 ||
         p.slice_parameters[lo]!=0 || p.slice_parameters[hi]!=0 || lo<p.register_starts[function] || hi<p.register_starts[function] || lo>=p.register_ends[function] || hi>=p.register_ends[function]))){return .err(errors::make(5,offset));}
     let usize child_key=key(p,sites,function,child,offset)?;if(child_key!=key(p,sites,function,parent,offset)?){return .err(errors::make(5,offset));}
-    if(fuel<65537){return .err(errors::make(8,offset));}
+    if(fuel<meter::slice_base(op,0)){return .err(errors::make(8,offset));}
     let usize depth=checked(p,sites,bindings,call_bindings,receipts,frames,loan,state,bytes::len(buffer),offset)?;
     if(frame!=receipts.frame){return .err(errors::make(5,offset));}
     let usize a=frame*16+parent;let usize c=frame*16+child;let usize capacity=bytes::len(buffer);
@@ -123,7 +123,7 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,ref proof::Sites sites
         let owners::View child_view=selected(p,sites,function,frame,child,bindings,call_bindings,receipts,frames,loan,state,capacity,offset)?;
         let slices::Ticket source=loan.tickets[c];let slices::Ticket resumed=switch(authority::leave_child(receipts,ref mut loan.pool,source,ref state.owners,capacity,frame)){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}};
         bindings.parents[depth-1]=16;bindings.children[depth-1]=16;bindings.functions[depth-1]=16;loan.tickets[c]=none();loan.tickets[a]=resumed;
-    }return .ok(fuel-65537);
+    }return .ok(fuel-meter::slice_base(op,0));
 }
 // Data access only. Derived close must use op62, formal close uses calls::release.
 pub fn Result<usize,errors::Error> access(ref ir::Program p,ref proof::Sites sites,usize function,usize pc,usize frame,

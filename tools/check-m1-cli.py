@@ -405,7 +405,7 @@ for name, argv, code, error in [
     ("duplicate-json", ["run", fixture, "--json", "--json"], 2, "usage"),
     ("duplicate-fuel", ["run", fixture, "--json", "--fuel", "1", "--fuel", "1"], 2, "usage"),
     ("negative-fuel", ["run", fixture, "--json", "--fuel", "-1"], 2, "usage"),
-    ("large-fuel", ["run", fixture, "--json", "--fuel", "1000001"], 2, "usage"),
+    ("large-fuel", ["run", fixture, "--json", "--fuel", "16000001"], 2, "usage"),
     ("check-fuel", ["check", fixture, "--json", "--fuel", "1"], 2, "usage"),
     ("isolated-unavailable", ["run", fixture, "--json", "--isolated"], 4, "unavailable"),
     ("missing-file", ["run", output / "missing.brc", "--json"], 7, "input_io"),

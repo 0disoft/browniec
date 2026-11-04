@@ -144,7 +144,7 @@ def main():
           nativeNote='Fresh split batches; continuation requires identical inputs/compiler and validated report hashes.',
           cli=cli, cliCases=208, artifact=dict(path=artifact.relative_to(ROOT).as_posix(), sha256=digest(artifact)),
           build=build, commands=commands,
-          limitations=['Bounded returned-view metering; public result syntax and capabilities stay gated; CLI cap unchanged.',
+          limitations=['Bounded returned-view metering; public result syntax and capabilities stay gated; CLI cap follows the common fuel module; see the public-limit successor.',
                        'Full M1/other M2, Linux, isolation, ABI, packaging, allocator instrumentation and size/stack/timing not verified.']))
     print(f'PASS: {receipt.relative_to(ROOT).as_posix()}', flush=True)
 

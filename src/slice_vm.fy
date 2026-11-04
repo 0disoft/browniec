@@ -5,6 +5,8 @@ import array_slices as slices;
 import array_owners as owners;
 import cells as cells;
 import errors as errors;
+import fuel as meter;
+import array_layout as layouts;
 import std::bytes as bytes;
 
 pub struct State { slices::Pool pool; slices::Ticket[512] tickets; }
@@ -34,8 +36,10 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, usize pc, usize fram
         (op == 59 && (a >= 16 || p.slice_roots[a] != p.slice_roots[id] || b >= registers.len ||
             p.code[at+4] as usize >= registers.len)) ||
         (op == 56 && (a != 0 || b != 0))) { return .err(errors::make(5, offset)); }
-    let usize cost = if (op == 54 || op == 59) { 65537 } else if (op == 55) { 4097 + 4 * p.arrays.lengths[root] }
-        else if (op == 58) { 4097 + arrays::cost(ref p.arrays, 35, root, offset)? } else { 4097 };
+    let layouts::Array shape=switch(layouts::scalar(p.arrays.elements[root],p.arrays.lengths[root])) {
+        case .ok(v):{v}case .err(_):{return .err(errors::make(5,offset));}
+    };
+    let usize cost=meter::slice_base(op,shape.stride)+if(op==55){meter::utf8_scan(shape.length)}else{0};
     if (fuel < cost) { return .err(errors::make(8, offset)); }
     let usize slot = frame * 16 + id;
     let ref u8[] data = bytes::view(buffer);

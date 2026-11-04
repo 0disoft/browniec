@@ -61,8 +61,8 @@ required; this native transaction does not promote public execution.
 The 2026-11-04 [Fuel evidence](../evidence/m2-slice-result-fuel-windows-20261104.json)
 records 56 native groups and 217 CLI cases per Windows development/release profile,
 with 500 matching inputs and all 112 production files matching `275abfd` under
-Git LF. Phase reserves now cover zero-Fuel abort/final close. Public defaults/cap
-are unchanged; B04 source bindings and ordinary public execution remain gated.
+Git LF. Phase reserves now cover zero-Fuel abort/final close. At that historical checkpoint, public defaults/cap
+were unchanged; B04 source bindings and ordinary public execution remain gated.
 
 The [lexical/range increment](../evidence/returned-ranges-lexical-windows-20261104.json)
 records five lexical interpreter groups, 27 native range/origin/Fuel/execution
@@ -77,6 +77,12 @@ and definition-based recursive origins. The [source bridge](../engineering/m2-sl
 lexical bindings and selected temporary retention into these recipes. The [private VM successor](../engineering/m2-slice-result-call-execution.md) now
 executes these recipes with exact parent restoration and actual owner cleanup.
 Public result admission/dispatch remains gated. See its focused Windows evidence.
+
+The [public Fuel successor](../engineering/public-fuel-limits.md) deliberately
+raises the explicit CLI ceiling to 16000000 while preserving the 256 default
+and operation prices. All public slice paths share the cost functions; version
+JSON exposes the same limits. This addresses the narrow budget gap, not remaining
+C05 source/IR/resource capacities or B04 public returned-reference admission.
 
 ## Status and priority
 
@@ -165,7 +171,7 @@ below cover prose obligations beyond this feature list as well.
 | B01 | Preparation subset at `670a041`: explicit view/forward/return IR, identity pairing and independent CFG/type/access/live-origin reconstruction. The private VM at `d468ca1` separately admits a rootless subset; proof alone remains insufficient for ordinary/public execution. |
 | B02 | Native transaction at `7f8f455`; private result/frame/site/63-65 dispatch at `d468ca1`. Shared/exclusive handoff, parent suspension, generation checks and zero-Fuel abort are connected. Owned-array and scalar/array CALL integration is implemented at `5cccbd3`. Record CALLs/locals are now connected; see [the successor](../engineering/m2-slice-result-record-vm.md). Explicit native owned entry is connected; see [the entry contract](../engineering/m2-slice-result-entry.md). Bounded metadata/copy/Fuel reconciliation is connected; see [the schedule](../engineering/m2-slice-result-fuel.md). Remaining: B04 public integration and end-to-end admission. |
 | B03 | Native capture/root retention at `7f8f455`; private rootless callee cleanup routes through handoff at `d468ca1`. Selected external temporary roots/descendants use native Capture receipts. Guest-created array temporary ownership and mixed scalar/array CALL captures are integrated at `5cccbd3`. Record locals and mixed record CALL captures are now connected. Explicit native owned entry is connected. Remaining: public source bindings; ordinary VM must not admit these private recipes without its own proof/metering. |
-| B04 | Direct return ranges now lower through existing independently proved view/handoff recipes; see [range integration](../engineering/m2-slice-result-ranges.md). Ordinary scalar native entry/terminal cleanup is connected through the [scalar entry path](../engineering/m2-slice-scalar-entry.md). Native frames now have [retained Held bindings and fresh parent restoration](../engineering/m2-slice-result-bindings.md), with a sparse bound that supports exclusive same-slot descendants. Private CALL-binding IR destination/origin proof is now implemented; see the [binding recipe contract](../engineering/m2-slice-result-call-ir.md). Typed lexical source result lowering and selected temporary retention now produce independently proved IR; see the [source bridge](../engineering/m2-slice-result-call-source.md). Private binding dispatch and selected owner/parent retention through runtime are now connected; see the [execution contract](../engineering/m2-slice-result-call-execution.md). Remaining: borrowed-result arguments/projections, Static origin with an actual backing/lifetime representation, and ordinary public Program admission/dispatch with deliberate Fuel-limit reconciliation. Promote public compilation and capability metadata only after end-to-end checks. |
+| B04 | Direct return ranges now lower through existing independently proved view/handoff recipes; see [range integration](../engineering/m2-slice-result-ranges.md). Ordinary scalar native entry/terminal cleanup is connected through the [scalar entry path](../engineering/m2-slice-scalar-entry.md). Native frames now have [retained Held bindings and fresh parent restoration](../engineering/m2-slice-result-bindings.md), with a sparse bound that supports exclusive same-slot descendants. Private CALL-binding IR destination/origin proof is now implemented; see the [binding recipe contract](../engineering/m2-slice-result-call-ir.md). Typed lexical source result lowering and selected temporary retention now produce independently proved IR; see the [source bridge](../engineering/m2-slice-result-call-source.md). Private binding dispatch and selected owner/parent retention through runtime are now connected; see the [execution contract](../engineering/m2-slice-result-call-execution.md). Remaining: borrowed-result arguments/projections, Static origin with an actual backing/lifetime representation, and ordinary public Program admission/dispatch with its remaining execution/admission proof. The narrow CLI Fuel gap is addressed by the [public-limit successor](../engineering/public-fuel-limits.md). Promote public compilation and capability metadata only after end-to-end checks. |
 | B05 | Complete the target's scalar/array/record/Buffer references and CFG last-use rules, beyond current scalar-slice references. Enforce whole-root conflicts, mutation/move/drop exclusions, lexical/root generations and bounded group/descriptor reclamation. |
 
 Grounded recursive origin analysis, typed scalar slices, lexical mutable children,
@@ -213,7 +219,7 @@ requirements of this audit. They need a justified profile decision if desired.
 | C02 | Add the planned guest `--input`, project/policy/grant controls, `inspect --ir`, restricted check/run and broker-only worker surfaces as their underlying implementations become available. Preserve explicit unavailable errors and no unrestricted fallback. |
 | C03 | Extend diagnostics to source index and half-open start/end byte spans, stable line maps, bounded UTF-8 messages/counts and explicit no-source values. Validate child spans and escape terminal-control/line injection; never read arbitrary files for snippets. |
 | C04 | Complete version/result metadata for build/profile/IR/cost/ABI/IPC, delivery availability, metrics and staged output. Keep guest return data separate from process status and distinguish computation, publication, transfer and external-effect outcomes. |
-| C05 | Deliberately reconcile the narrow implementation with the full target's limits and IR/cost revisions. Current source is 4096 bytes, 1024 tokens, 16 functions, 128 global value registers, 256 instructions, 32 call frames, 16 array/record/slice sites and 64KiB aggregate backing. The package's much larger policy limits and u16 operand format are not already supported and must not be copied as current capabilities. |
+| C05 | The [public Fuel ceiling/cost successor](../engineering/public-fuel-limits.md) resolves the narrow CLI budget gap. Deliberately reconcile the narrow implementation with the full target's limits and IR/cost revisions. Current source is 4096 bytes, 1024 tokens, 16 functions, 128 global value registers, 256 instructions, 32 call frames, 16 array/record/slice sites and 64KiB aggregate backing. The package's much larger policy limits and u16 operand format are not already supported and must not be copied as current capabilities. |
 
 ## Restricted Windows delivery
 

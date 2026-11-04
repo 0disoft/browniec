@@ -79,13 +79,13 @@ for record construction/parameters/results, UTF-8 and typed mutable/reborrow/ran
 temporary CALL slices. `core: true` does not certify full safe/0.3 completion:
 
 ```json
-{"schema":"browniec.version/v1","profile":"brownie.m1-scalar/1","array_profile":"brownie.m2-array-read/1","array_write_profile":"brownie.m2-array-write/1","array_copy_profile":"brownie.m2-array-copy/1","core":true,"restricted":false,"embed":false}
+{"schema":"browniec.version/v1","profile":"brownie.m1-scalar/1","array_profile":"brownie.m2-array-read/1","array_write_profile":"brownie.m2-array-write/1","array_copy_profile":"brownie.m2-array-copy/1","core":true,"restricted":false,"embed":false,"fuel_default":256,"fuel_limit":16000000}
 ```
 
 The CLI Fuel default remains 256 for scalar compatibility. A Program with an array
 catalog prepares the default 65536-byte arena before guest execution, which costs
 65537 Fuel. Array runs therefore need an explicit larger budget in the current
-CLI; use `--fuel 100000` or `--fuel 1000000`. The accepted maximum is 1000000, and
+CLI; use `--fuel 100000` or `--fuel 1000000`. The accepted maximum is 16000000, and
 remaining instruction and array-operation costs still apply. `ACOPY` charges
 `49 + payload_bytes + 7 + (bool ? length : 0)`. Source and destination payloads
 share the existing 65536-byte arena, and a copy adds no separate heap backing

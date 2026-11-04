@@ -2,6 +2,7 @@ module slice_authority_call_vm;
 import ir as ir;
 import types as types;
 import errors as errors;
+import fuel as meter;
 import array_vm as arrays;
 import array_owners as owners;
 import array_slices as slices;
@@ -84,7 +85,7 @@ pub fn Result<Call,errors::Error> info(ref ir::Program p,usize pc,usize offset){
 pub fn Result<usize,errors::Error> cost(ref ir::Program p,usize pc,usize offset){
     let Call call=info(p,pc,offset)?;
     let usize copying=copies::cost(p,call.target,offset)?;
-    return .ok(1+p.arities[call.target]+copying+if(call.count+call.readers==0){0}else{65537*(1+call.readers+2*call.count)});
+    return .ok(1+p.arities[call.target]+copying+meter::slice_call(call.readers,call.count));
 }
 fn Result<usize,errors::Error> index(ref authority::State receipts,usize frame,usize offset){
     if(frame==0 || frame>=32 || receipts.depth>31){return .err(errors::make(5,offset));}
@@ -253,10 +254,10 @@ pub fn Result<usize,errors::Error> enter_owned(ref ir::Program p,ref proof::Site
 pub fn Result<usize,errors::Error> release(ref ir::Program p,usize function,usize frame,usize site,
     ref mut Bindings bindings,ref authority::State receipts,ref shared::Frames frames,ref mut loans::State loan,
     ref arrays::State state,ref bytes::Buffer buffer,usize fuel,usize offset){
-    if(fuel<4097){return .err(errors::make(8,offset));}
+    if(fuel<meter::slice_base(56,0)){return .err(errors::make(8,offset));}
     let owners::View selected=view(p,function,frame,site,bindings,receipts,frames,loan,state,bytes::len(buffer),offset)?;
     let usize i=index(receipts,frame,offset)?;let Call call=info(p,bindings.pcs[i],offset)?;let usize j=writer(p,call,site,offset)?;
-    bindings.detached[i*8+j]=loan.tickets[frame*16+site];loan.tickets[frame*16+site]=none();return .ok(fuel-4097);
+    bindings.detached[i*8+j]=loan.tickets[frame*16+site];loan.tickets[frame*16+site]=none();return .ok(fuel-meter::slice_base(56,0));
 }
 // Every exclusive formal must be live OR detached. Stage readonly child cleanup
 // before canonical restoration; only a prevalidated result may remain owned.

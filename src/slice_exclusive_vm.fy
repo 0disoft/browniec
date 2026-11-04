@@ -1,6 +1,7 @@
 module slice_exclusive_vm;
 import ir as ir;
 import errors as errors;
+import fuel as meter;
 import cells as cells;
 import array_layout as layouts;
 import array_vm as arrays;
@@ -36,8 +37,7 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,usize function,usize p
     if(op==55 && shape.element!=10) { return .err(errors::make(5,offset)); }
     // Bounded metadata and abort cleanup use the existing slice reserves.
     // Stores additionally cover scalar validation/encoding, as ordinary stores do.
-    let usize cost=if(op==54){65537}else if(op==55){4097+4*shape.length}
-        else if(op==58){4130+shape.stride}else if(op==60){4130+2*shape.stride}else{4097};
+    let usize cost=meter::slice_base(op,shape.stride)+if(op==55){meter::utf8_scan(shape.length)}else{0};
     if(fuel<cost) { return .err(errors::make(8,offset)); }
     let usize slot=frame*16+id;let usize capacity=bytes::len(buffer);
     let owners::Token token=state.tokens[frame*16+root];

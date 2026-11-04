@@ -18,7 +18,7 @@
 
 The implemented grammar is `browniec check SOURCE [--json]` and
 `browniec run SOURCE [--fuel N] [--json]`, plus `--version [--json]` and `--help`.
-Fuel defaults to 256 and accepts 0..1000000; duplicate/unknown options are errors.
+Fuel defaults to 256 and accepts 0..16000000; duplicate/unknown options are errors.
 Run grants no guest host capability. SOURCE selects one local disk file with a
 4096-byte UTF-8 source limit. The public language supports six scalar types,
 fixed scalar arrays, nominal scalar/nested records, aggregate parameters/results,
@@ -60,3 +60,8 @@ not replayed automatically. Guest i32 return data is separate from CLI exit stat
 Changing command grammar, path resolution, output framing, exit codes, or delivery
 availability requires updates to configuration.md, output-and-exit-codes.md, and
 compatible consumer evidence.
+
+Version JSON exposes `fuel_default` and `fuel_limit` from the same schedule as argument
+validation. Existing lower budgets remain valid. See the
+[public cost/limit contract](../engineering/public-fuel-limits.md) for the exact
+price formulas, full-arity CALL rationale and verification scope.

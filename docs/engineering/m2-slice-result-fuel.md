@@ -105,8 +105,9 @@ owners, pool and payload. Existing quota/payload rejection remains transactional
 
 ## Limit scope and public gate
 
-CLI default remains 256 and accepted `--fuel` remains 0..1000000. `main` reads
-both values from the common schedule. The native VM APIs, including existing
+CLI default remains 256. The [public-limit successor](public-fuel-limits.md)
+deliberately raises accepted `--fuel` from 0..1000000 to 0..16000000, without
+changing these phase prices. `main` reads both values from the common schedule. The native VM APIs, including existing
 ordinary `vm::run`, accept an explicit host-sized Fuel budget; the CLI argument
 limit is not a new native API restriction. Deep recursion/longer native tests
 may therefore deliberately supply more than 1000000.
@@ -125,14 +126,16 @@ parallel; CLI builds must be serialized because they share `build/browniec.exe`.
 Continuation validates input/compiler/report hashes and never accepts historical
 native results under changed inputs.
 
-Additional tool-free CLI boundaries use `module main;fn i32 main(){return 42;}`
+The historical validation below used the previous 1000000 CLI ceiling.
+At that checkpoint, additional tool-free CLI boundaries used `module main;fn i32 main(){return 42;}`
 and `run SOURCE --json [--fuel N]`: default, 2 and 1000000 complete with 42;
 0 and 1 return Fuel error/exit 5; 1000001, -1, 9223372036854775807 and
 9223372036854775808 return usage error/exit 2. These nine cases are separate
 from the verifier's 208 origin/temporary-array CLI regression cases.
 
-This reconciles prices and demonstrated CLI-sized budgets. B04 still requires
-general result bindings/lowering, ordinary Program admission/dispatch integration,
+The historical increment reconciled phase prices and simple CLI-sized budgets.
+Private lexical bindings now execute; B04 still requires
+remaining argument/Static forms, ordinary Program admission/dispatch integration,
 end-to-end public source proof and capability promotion. Full-profile limits,
 Engine/Instance stepping/cancellation and restricted/embed delivery remain open.
 

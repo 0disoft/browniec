@@ -1,6 +1,7 @@
 module render;
 
 import errors as errors;
+import fuel as meter;
 import std::bytes as bytes;
 import std::io as io;
 import std::text as text;
@@ -91,4 +92,21 @@ pub fn i32 selected_outcome(bool json, bool run, bool failed, i64 value, errors:
             !io::write_stderr("\n").is_ok) { return 7; }
     } else if (!io::write_stderr("checked\n").is_ok) { return 7; }
     return code;
+}
+
+// Append discoverable limits to the existing version object, then write once.
+fn Result<bytes::Buffer,bytes::BufferError> encode_version(ref str prefix){
+    var bytes::Buffer output=bytes::with_capacity(4096)?;
+    let usize a=bytes::append(ref mut output,text::as_bytes(prefix))?;
+    let usize b=bytes::append(ref mut output,b",\"fuel_default\":")?;
+    let usize c=bytes::append_usize(ref mut output,meter::cli_default())?;
+    let usize d=bytes::append(ref mut output,b",\"fuel_limit\":")?;
+    let usize e=bytes::append_usize(ref mut output,meter::cli_limit())?;
+    let usize f=bytes::append(ref mut output,b"}\n")?;return .ok(output);
+}
+@effects(console)
+pub fn i32 version(ref str prefix){
+    let bytes::Buffer output=switch(encode_version(prefix)){case .ok(v):{v}case .err(_):{return 7;}};
+    let ref u8[] view=bytes::view(ref output);
+    return switch(io::write_bytes(view)){case .ok(n):{if(n==view.len){0}else{7}}case .err(_):{7}};
 }
