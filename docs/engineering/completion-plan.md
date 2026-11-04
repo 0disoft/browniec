@@ -52,7 +52,12 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    [range-source successor](static-range-source.md) now lowers computed byte
    endpoints with hidden parent cleanup on return/propagation/break/continue and
    retains an owned equality left argument across right-argument exits. Finish
-   Static CALL/return receipts and general references.
+   Static CALL/return receipts and general references. The
+   [Static CALL recipe proof](static-call-ir.md) now reconstructs typed argument
+   classes, separate view lifetimes and grounded logical-input/Static origins
+   from actual IR, including transitive calls and recursive witnesses. Complete
+   scalar/owner/loan admission and canonical VM transfer still need integration;
+   the recipe proof alone cannot promote execution or public source syntax.
    Validate actual public source execution before promoting its capability.
 2. **Language completion: L01-L06, C03/C05.** Finish explicit module snapshots and
    visibility, inference/void/if values, complete array/record construction,

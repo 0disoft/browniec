@@ -85,6 +85,8 @@ general stack/RAM/allocator/timing, Linux, restricted Windows or C ABI/package
 conformance. Public compile and returned-reference capability promotion still
 require the remaining admission and lifetime work.
 
-Next connect image-backed Static CALL actuals/returns to retained Program origin
-and lifetime receipts, then validate public end-to-end admission. The full
+The [CALL recipe successor](static-call-ir.md) now checks actual IR argument
+classes, CFG view lifetimes and grounded input/Static origin claims. Complete
+image-aware admission, canonical transfer and retained Program lifetime handling
+remain next before source CALL lowering and public end-to-end admission. The full
 accepted implementation objective remains active.

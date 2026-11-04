@@ -1,3 +1,22 @@
+- Static CALL recipe proof now reconstructs actual PARAM 77/CALL 78/RETURN 79
+  signatures, globally unique view sites, CFG liveness and grounded logical-input
+  or Static origins. Type-zero formals are view placeholders; encoded actuals
+  are never scalar cells. BYTES/ALIAS/RANGE preserve lineage; calls remap exact
+  logical positions, including scalar prefixes. Every return agrees; conflicting
+  origins and ungrounded recursive cycles reject. Parameter preludes cannot be
+  replayed by jumps. This is recipe proof only: complete scalar/owner/loan
+  admission, actual frame/image receipt transfer, source CALL lowering and public
+  promotion remain open. Current bare/retained execution rejects the new opcodes.
+  Development/release each passed 17 native groups (11 new, 6 retained-Program)
+  on 133 matching inputs and a 228-file discovery identity. All 127 production
+  modules are LF; locked LF mirrors pass. No overrides or historical reuse.
+  Earlier checker/native and fifteen-group probes are excluded. CLI/full profiles/
+  general stack/RAM/allocator/timing/Linux/restricted/C ABI/package checks were
+  not run. Code a6a62d5. Next integrate complete image-aware admission, then
+  canonical transfer with actual spans and prepaid Fuel; a formal must support
+  different image windows at different calls and text must retain validated
+  boundaries. Keep the complete goal active. See docs/engineering/static-call-ir.md
+  and focused Windows evidence.
 - Native compile_image now lowers computed immutable byte ranges from literals,
   named/ref/parenthesized views and text::bytes. Omitted endpoints use usize zero
   and actual parent LEN; nested ranges, scalar projections and equality reuse
