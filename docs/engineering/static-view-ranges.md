@@ -4,8 +4,9 @@ Date: 2026-11-05. This prepares dynamic image-backed byte ranges after
 [source equality](static-equality-source.md). The new `static_views` module is
 bounded metadata preparation at this checkpoint. The
 [execution successor](static-range-execution.md) now adds independently proved
-RANGE 76 and actual frame spans. Source range syntax and public promotion remain
-open; the preparation itself introduced neither.
+RANGE 76 and actual frame spans. The [source successor](static-range-source.md)
+now lowers computed endpoints and exit cleanup; public promotion remains open.
+The preparation itself introduced no source syntax or public capability.
 
 ## Compact range metadata
 
@@ -66,6 +67,7 @@ delivery or C ABI/package verification was run for this preparation.
 The [execution successor](static-range-execution.md) now adds independently
 proved RANGE 76 and routes OPEN/BYTES/ALIAS/READ/LEN/EQUAL through actual frame
 spans, including recursive CALLs and aliases after parent close. Publication
-follows complete Fuel and bounds preflight. Next connect computed source
-endpoints, cleanup on endpoint exits and source-to-execution examples. Existing prices and capacities are not
+follows complete Fuel and bounds preflight. The
+[source successor](static-range-source.md) now lowers computed endpoints and
+their nonlocal exit cleanup, with retained-image source execution cases. Existing prices and capacities are not
 changed by this preparation. The complete accepted objective remains open.

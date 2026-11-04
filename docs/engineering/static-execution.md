@@ -2,8 +2,8 @@
 
 Date: 2026-11-05. This B04/D05 increment executes independently proved Static
 instructions in the existing canonical returned-view coordinator. It follows the
-[Static IR proof](static-ir.md); guest text syntax and returned Static views are
-still separate work.
+[Static IR proof](static-ir.md). Source lowering has its own successor contracts;
+returned Static view lifetimes remain separate work.
 
 ## Exact-image admission
 
@@ -130,8 +130,8 @@ checks were not run. The focused passes do not establish those guarantees.
 The source successors now lower byte/text literals, typed `ref str`/byte locals,
 aliases, `text::bytes` and immutable byte-view `text::equal`. The private
 [range successor](static-range-execution.md) executes computed byte endpoints
-from independently proved IR; source endpoint lowering and exit cleanup remain
-next. Connect Static CALL actuals and returned views to
+from independently proved IR. The [source successor](static-range-source.md)
+now lowers those endpoints and their nonlocal exit cleanup. Connect Static CALL actuals and returned views to
 real Program lifetime/origin receipts before permitting their escape. General
 references, ordinary public returned-result admission, Engine/Instance lifecycle,
 input/output, Buffer, host exchange, Windows restrictions and the C ABI remain

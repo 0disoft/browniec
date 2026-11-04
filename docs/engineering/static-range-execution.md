@@ -2,8 +2,9 @@
 
 Date: 2026-11-05. This private B04/D05 increment connects the
 [packed range metadata](static-view-ranges.md) to independently proved IR and
-the canonical retained-image VM. Computed source range syntax, Static CALL/return
-origins and ordinary public returned-reference admission remain separate work.
+the canonical retained-image VM. The [source successor](static-range-source.md)
+now supplies computed endpoints and exit cleanup. Static CALL/return origins
+and ordinary public returned-reference admission remain separate work.
 
 ## Proof and frame storage
 
@@ -79,7 +80,8 @@ early core probes are excluded. No CLI/full-profile, general stack/RAM,
 allocator/OOM/timing, Linux, restricted Windows or C ABI/package checks were run
 for this increment.
 
-Next lower computed source byte endpoints with cleanup on every endpoint exit,
-then connect Static CALL/return origins and retained receipts. Dynamic runtime,
+The [source successor](static-range-source.md) now lowers computed byte
+endpoints with cleanup on every endpoint exit, including effectful equality
+arguments. Next connect Static CALL/return origins and retained receipts. Dynamic runtime,
 Buffer/input views and ordinary public admission remain open in the complete
 inventory. Focused private execution does not complete B04/D05 or the full goal.

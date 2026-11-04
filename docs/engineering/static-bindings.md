@@ -78,8 +78,10 @@ self-initialization through the new text declaration path rather than expecting
 a type error from the legacy byte-reference grammar's missing `ref` prefix.
 
 The [source equality successor](static-equality-source.md) now checks and lowers
-text::equal over immutable byte-view arguments. Remaining: general Static
-range/view expressions, dynamic runtime/Buffer/input equality, Static CALL
+text::equal over immutable byte-view arguments. The
+[range-source successor](static-range-source.md) now lowers computed immutable
+byte ranges/view expressions with endpoint exit cleanup. Remaining: dynamic
+runtime/Buffer/input equality, Static CALL
 actuals and returned origin/lifetime receipts,
 ordinary public admission, Buffer/input text and complete Engine/Instance
 accounting. Full profiles, general native stack/RAM/allocator/timing, Linux,

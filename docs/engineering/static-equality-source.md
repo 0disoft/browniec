@@ -22,10 +22,11 @@ separate integration obligation, rather than a completed part of this signature.
 
 Arguments are constructed left to right. The builder emits one EQUAL with a
 fresh bool destination. Only owned argument temporaries close, in right-to-left
-order after comparison; named views remain live. View construction currently has
-no guest CALL, scalar index or control effect. Before effectful/general view
-arguments are added, the left temporary must be retained through all exits from
-the right argument. No new runtime state, payload copy or allocation is needed.
+order after comparison; named views remain live. At this checkpoint arguments
+were pure view construction. The [range-source successor](static-range-source.md)
+now admits computed range endpoints with ordinary CALL/control effects and
+retains the left temporary through every right-argument exit. No payload copy
+or guest backing allocation is needed.
 
 Independent image-aware admission still proves both real image spans, kinds,
 functions and liveness, and the fresh bool destination. The source checker
@@ -68,7 +69,9 @@ compiler/stack override or historical-result reuse was used. The
 [focused Windows evidence](../evidence/static-equality-source-windows-20261105.json)
 records exact selections and source/compiler/report/artifact identities.
 
-General view/range expressions, dynamic runtime/Buffer/input equality, Static
+The [range-source successor](static-range-source.md) now lowers immutable byte
+range/view expressions and their nonlocal cleanup. Dynamic runtime/Buffer/input
+equality, Static
 CALL actuals and returned origin/lifetime receipts, ordinary public admission
 and complete Engine/Instance accounting remain open. Full-profile, general
 native stack/RAM/allocator/timing, Linux, restricted delivery and C ABI/package

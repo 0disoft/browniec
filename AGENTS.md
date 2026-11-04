@@ -1,3 +1,21 @@
+- Native compile_image now lowers computed immutable byte ranges from literals,
+  named/ref/parenthesized views and text::bytes. Omitted endpoints use usize zero
+  and actual parent LEN; nested ranges, scalar projections and equality reuse
+  independently proved RANGE 76. Hidden owned parents join lexical cleanup before
+  endpoints. Owned equality left arguments remain retained through every right
+  endpoint return/propagation/break/continue. Named bindings remain live and pending
+  result names are not visible in their own initializer. Member dots/nested reads
+  do not become range delimiters; endpoint expressions evaluate left to right
+  before RANGE validates bounds. All prices/capacities/public gates remain.
+  Development/release each passed 32 native groups (11 new, 21 existing) and 88
+  tool-free CLI cases on 140 matching final inputs and a 227-file discovery
+  identity. All 126 production modules are LF; locked LF mirrors pass. No native
+  overrides or historical reuse. Early probes, including a corrected invalid
+  narrowing in the Fuel fixture, are excluded. Full profiles/general stack/RAM/
+  allocator/timing/Linux/restricted/C ABI/package checks were not run. Code commit
+  9b97263. Next connect Static CALL/return origin/lifetime receipts, then ordinary
+  public admission. Dynamic runtime/Buffer/input views and the complete inventory
+  remain open. See docs/engineering/static-range-source.md and focused evidence.
 - Private Static RANGE (76) now independently proves byte source/liveness and
   defined non-slot usize endpoints, retaining maximum proof windows plus dynamic
   alias flags. Canonical dispatch uses actual per-frame words for all Static

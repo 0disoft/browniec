@@ -38,7 +38,7 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    image. The [alias IR successor](static-alias.md) now preserves same-kind views
    and source liveness without copying payload. The [typed binding successor](static-bindings.md)
    now lowers native Static byte/text locals, aliases and explicit text::bytes
-   projections with lexical/nonlocal-exit cleanup. Next connect general Static
+   projections with lexical/nonlocal-exit cleanup. Next connect general runtime
    view expressions and image-backed CALL/return origins. Keep source scratch separate from retained authority. The [byte-view equality successor](static-byte-equality.md) now extends private
    EQUAL proof/execution to immutable bytes without changing its price. The
    [source equality successor](static-equality-source.md) now lowers the byte-view
@@ -48,7 +48,11 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    [range execution successor](static-range-execution.md) now adds independently
    proved RANGE 76 and actual per-frame spans with complete Fuel/bounds preflight,
    nested narrowing, recursive isolation and loop reentry. General runtime view
-   arguments, Static source endpoints/exit cleanup and CALL/return origins remain. Finish general references.
+   arguments and Static CALL/return origins remain. The
+   [range-source successor](static-range-source.md) now lowers computed byte
+   endpoints with hidden parent cleanup on return/propagation/break/continue and
+   retains an owned equality left argument across right-argument exits. Finish
+   Static CALL/return receipts and general references.
    Validate actual public source execution before promoting its capability.
 2. **Language completion: L01-L06, C03/C05.** Finish explicit module snapshots and
    visibility, inference/void/if values, complete array/record construction,
