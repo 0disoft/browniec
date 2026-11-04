@@ -100,3 +100,11 @@ reads, CALL/binding/return/close and failure cleanup to the retained image witho
 copying it into each Instance. Then connect guest source literals and text APIs,
 complete Engine/Instance lifetime/accounting and promote public admission only
 after source-to-execution evidence. This owner does not complete B04, R01 or D05.
+
+## Static execution successor
+
+The [retained-image execution successor](static-execution.md) adds independent
+code/image admission and Static execution through the canonical scalar driver.
+Its native API can execute real immutable-image operations; the earlier absence
+statements above describe this storage checkpoint. Guest syntax, returned Static
+receipts, Engine handles and ordinary CLI admission remain open.

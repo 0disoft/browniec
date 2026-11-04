@@ -4,6 +4,8 @@ import functions as functions;
 import verifier as verifier;
 import errors as errors;
 import types as types;
+import static_ir as statics;
+import static_image as images;
 
 // Input positions are one-based, zero means no grounded result summary. These
 // source-analysis facts contain no runtime ticket, view, owner or executable IR.
@@ -83,7 +85,16 @@ fn Result<u8,errors::Error> returned(ref ir::Program p,ref functions::Table t,
 // Every emitted return must agree, conservatively including constant branches.
 pub fn Result<Summary,errors::Error> inspect(ref ir::Program p,ref functions::Table t){return inspect_recipes(p,t,p);}
 pub fn Result<Summary,errors::Error> inspect_recipes(ref ir::Program p,ref functions::Table t,ref ir::Program recipes){
-    let usize valid=verifier::verify(p)?;
+    let usize valid=verifier::verify(p)?;return finish(p,t,recipes);
+}
+pub struct ImageSummary { Summary origins; statics::Sites statics; }
+pub fn Result<ImageSummary,errors::Error> inspect_recipes_image(ref ir::Program p,ref functions::Table t,
+    ref ir::Program recipes,ref images::Image image){
+    let statics::Sites sites=verifier::verify_statics(p,image)?;
+    let Summary summary=finish(p,t,recipes)?;return .ok(ImageSummary{.origins=summary,.statics=sites});
+}
+// Only entered after complete ordinary or exact-image executable CFG proof.
+fn Result<Summary,errors::Error> finish(ref ir::Program p,ref functions::Table t,ref ir::Program recipes){
     if(recipes.count!=p.count){return .err(errors::make(5,0));}
     var bool bindings=false;var usize recipe=0;while(recipe<p.count){if(recipes.code[recipe*8]==66){bindings=true;}recipe+=1;}
     if(t.count!=p.function_count || t.entry!=p.entry){return .err(errors::make(5,0));}

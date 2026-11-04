@@ -24,8 +24,9 @@ pub struct Frames {
 }
 pub fn slices::Ticket none(){return slices::Ticket{.slot=16,.generation=0};}
 pub fn Frames empty(ref runtime::State state){
+    let ref slices::Pool pool=ref state.runtime.pool;
     return Frames{.captures=[runtime::capture(none(),false,false);256],
-        .views=[state.runtime.pool.slots[0].view;256],.issued=[none();256],.before=[none();512],
+        .views=[pool.slots[0].view;256],.issued=[none();256],.before=[none();512],
         .tags=[0;256],.arities=[0;32],.selected=[0;32],.depths=[0;32],.remaining=[0;32],.active=[false;32],
         .records=records::empty(),.loans=loans::empty(),.tokens=[owners::Token{.slot=0,.generation=0};512],.sites=[none();512],.results=[none();32],
         .functions=[16;32],.continuations=[0;32],.maps=[32;32],

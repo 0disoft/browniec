@@ -1537,7 +1537,9 @@ fn Result<usize, errors::Error> prepare_aggregates(ref u8[] source, ref mut func
     return .ok(records.layouts.count);
 }
 
-fn Result<ir::Program, errors::Error> lower(ref u8[] source,bool origin_analysis) {
+// Scratch belongs to the wrapper and never escapes on failure. Avoid a large
+// Result<Program> value throughout nested source lowering in native debug code.
+fn Result<usize, errors::Error> lower_into(ref u8[] source,bool origin_analysis,ref mut ir::Program p) {
     if (source.len > 4096) { return .err(errors::make(4, 4096)); }
     let ref str valid = switch (text::validate_utf8(source)) {
         case .ok(value): { value } case .err(_): { return .err(errors::make(1, 0)); }
@@ -1554,7 +1556,6 @@ fn Result<ir::Program, errors::Error> lower(ref u8[] source,bool origin_analysis
         declaration += 1;
     }
     if(origin_analysis){let usize inferred=source_origins::infer(source,ref mut signatures)?;}
-    var ir::Program p = ir::empty();
     p.function_count = signatures.count;
     p.entry = signatures.entry;
     p.return_types = signatures.return_types;
@@ -1565,10 +1566,10 @@ fn Result<ir::Program, errors::Error> lower(ref u8[] source,bool origin_analysis
             declaration+=1;
         }
     }
-    let usize aggregates = prepare_aggregates(source, ref mut signatures, ref mut p)?;
+    let usize aggregates = prepare_aggregates(source, ref mut signatures, p)?;
     var usize f = 0;
     while (f < signatures.count) {
-        let usize emitted = body(source, ref signatures, f, ref mut p)?;
+        let usize emitted = body(source, ref signatures, f, p)?;
         f += 1;
     }
     // Preserve the current source/IR restriction on entry calls in array programs.
@@ -1581,13 +1582,18 @@ fn Result<ir::Program, errors::Error> lower(ref u8[] source,bool origin_analysis
             pc += 1;
         }
     }
-    return .ok(p);
+    return .ok(p.count);
 }
 
-pub fn Result<ir::Program,errors::Error> compile(ref u8[] source){return lower(source,false);}
+pub fn Result<ir::Program,errors::Error> compile(ref u8[] source){
+    var ir::Program p=ir::empty();
+    let usize lowered=lower_into(source,false,ref mut p)?;
+    return .ok(p);
+}
 // The analysis Program stays private and is never returned to an executor.
 pub fn Result<slice_origins::Summary,errors::Error> inspect_slice_results(ref u8[] source){
-    let ir::Program p=lower(source,true)?;
+    var ir::Program p=ir::empty();
+    let usize lowered=lower_into(source,true,ref mut p)?;
     let functions::Table signatures=functions::scan(source)?;
     let slice_result_ir::Program unit=slice_result_ir::from_proxy(p,ref signatures)?;
     let slice_result_verifier::Proof checked=slice_result_verifier::inspect(ref unit)?;
@@ -1596,7 +1602,8 @@ pub fn Result<slice_origins::Summary,errors::Error> inspect_slice_results(ref u8
 
 // Non-executable returned-view IR. Public compile retains its declaration gate.
 pub fn Result<slice_result_ir::Program,errors::Error> inspect_slice_result_ir(ref u8[] source){
-    let ir::Program p=lower(source,true)?;
+    var ir::Program p=ir::empty();
+    let usize lowered=lower_into(source,true,ref mut p)?;
     let functions::Table signatures=functions::scan(source)?;
     let slice_result_ir::Program unit=slice_result_ir::from_proxy(p,ref signatures)?;
     let slice_result_verifier::Proof checked=slice_result_verifier::inspect(ref unit)?;

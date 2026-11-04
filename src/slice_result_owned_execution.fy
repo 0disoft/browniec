@@ -19,14 +19,15 @@ import slice_result_call_ir as recipes;
 // sole owner table; actual backing bytes are always the original mutable view.
 pub fn Result<usize,errors::Error> step(ref ir::Program p,usize pc,ref mut frames::Frames bindings,
     ref mut runtime::State state,ref mut i64[] registers,ref mut u8[] data,usize fuel){
+    let ref owners::Table original_owners=ref state.runtime.owners;
     let usize at=pc*8;let u8 op=p.code[at];let usize dst=p.code[at+1] as usize;
     let usize a=p.code[at+2] as usize;let usize b=p.code[at+3] as usize;
-    if(op==52 || op==53){let arrays::State plan=arrays::State{.owners=state.runtime.owners,.tokens=bindings.tokens};
+    if(op==52 || op==53){let arrays::State plan=arrays::State{.owners=*original_owners,.tokens=bindings.tokens};
         return ranges::step_data(p,pc,bindings.frame,ref plan,data,registers,fuel);
     }
     let usize id=if(op==35 || op==51){a}else{dst};let usize cost=arrays::cost(ref p.arrays,op,id,p.offsets[pc])?;
     if(fuel<cost){return .err(errors::make(8,p.offsets[pc]));}
-    var arrays::State plan=arrays::State{.owners=state.runtime.owners,.tokens=bindings.tokens};
+    var arrays::State plan=arrays::State{.owners=*original_owners,.tokens=bindings.tokens};
     let usize executed=arrays::execute_data(op,dst,a,b,bindings.frame,ref p.arrays,ref mut plan,data,registers,p.offsets[pc])?;
     state.runtime.owners=plan.owners;bindings.tokens=plan.tokens;return .ok(fuel-cost);
 }
@@ -96,7 +97,24 @@ pub fn Result<runtime::Resumed,errors::Error> leave(ref ir::Program p,usize pc,u
     let usize source=p.code[pc*8+2] as usize;let usize destination=bindings.destinations[frame];
     let usize extra=if(op==39){results::cost(p,source,offset)?}else if(op==50){record_results::cost()}else{0};
     if(fuel<runtime::leave_cost()+extra){return .err(errors::make(8,offset));}
-    var arrays::State plan=arrays::State{.owners=state.runtime.owners,.tokens=bindings.tokens};
+    let ref owners::Table original_owners=ref state.runtime.owners;
+    let owners::Token result=prepare_result(p,f,source,destination,frame,op,bindings,original_owners,data,offset)?;
+    var runtime::Call call=frames::current(bindings);
+    let runtime::Resumed resumed=runtime::leave_call(state,ref mut call,data.len,fuel-extra)?;
+    if(frame==1){
+        bindings.active[frame]=false;bindings.functions[frame]=16;bindings.frame=0;
+    }else{let usize next=frames::pop_call(p,bindings,resumed)?;}
+    if(op==39){bindings.tokens[(frame-1)*16+destination-128]=result;}
+    if(op==50){record_bindings::bind(ref mut bindings.records,(frame-1)*16+destination-144,result);}
+    return .ok(resumed);
+}
+
+// Validate unpublished result maps before native loan restoration. These large
+// compatibility plans are gone before leave_call stages its own transaction.
+fn Result<owners::Token,errors::Error> prepare_result(ref ir::Program p,usize f,
+    usize source,usize destination,usize frame,u8 op,ref frames::Frames bindings,
+    ref owners::Table table,ref u8[] data,usize offset){
+    var arrays::State plan=arrays::State{.owners=*table,.tokens=bindings.tokens};
     var owners::Token result=owners::Token{.slot=0,.generation=0};
     var usize i=0;while(i<16){
         if(op!=50 && record_bindings::get(ref bindings.records,frame*16+i).generation!=0){return .err(errors::make(5,offset));}i+=1;
@@ -111,12 +129,5 @@ pub fn Result<runtime::Resumed,errors::Error> leave(ref ir::Program p,usize pc,u
         let record_results::Transfer transfer=record_results::prepare_data(p,f,source,destination-144,frame,ref record_plan,ref plan,data,offset)?;
         result=transfer.token;
     }else{i=0;while(i<16){if(plan.tokens[frame*16+i].generation!=0){return .err(errors::make(5,offset));}i+=1;}}
-    var runtime::Call call=frames::current(bindings);
-    let runtime::Resumed resumed=runtime::leave_call(state,ref mut call,data.len,fuel-extra)?;
-    if(frame==1){
-        bindings.active[frame]=false;bindings.functions[frame]=16;bindings.frame=0;
-    }else{let usize next=frames::pop_call(p,bindings,resumed)?;}
-    if(op==39){bindings.tokens[(frame-1)*16+destination-128]=result;}
-    if(op==50){record_bindings::bind(ref mut bindings.records,(frame-1)*16+destination-144,result);}
-    return .ok(resumed);
+    return .ok(result);
 }

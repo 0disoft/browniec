@@ -61,6 +61,7 @@ fn Result<bool,errors::Error> reads(ref ir::Program p,usize pc,usize r){
     let usize at=pc*8;let u8 op=p.code[at];let usize dst=p.code[at+1] as usize;let usize a=p.code[at+2] as usize;let usize b=p.code[at+3] as usize;
     if((op>=2 && op<=6) || (op>=11 && op<=16) || (op>=28 && op<=32) || op==36 || op==54 || op==60){return .ok(a==r || b==r);}
     if(op==7 || op==8 || op==10 || op==17 || op==18 || op==20 || op==21 || op==24 || op==26 || op==27 || op==33 || op==40){return .ok(a==r);}
+    if(op==71){return .ok(b==r);}
     if(op==23){return .ok(a==r && b<=1 && types::payload(p.types[dst],p.code[at+3])!=0);}
     if(op==9){var usize i=0;while(i<p.call_arities[b] as usize){if(p.call_args[b*8+i] as usize==r){return .ok(true);}i+=1;}}
     if(op==35 || op==58){return .ok(b==r);}

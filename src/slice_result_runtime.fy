@@ -84,16 +84,21 @@ pub fn Result<Entered,errors::Error> enter_records(ref mut State state,Contract 
 fn Result<Entered,errors::Error> enter_values(ref mut State state,Contract binding,ref Capture[] captures,
     ref owners::Token[] sources,ref layouts::Array[] shapes,ref records::Catalog catalog,
     ref owners::CallArgument[] arguments,ref mut u8[] data,usize capacity,usize fuel){
+    // Borrow original fields once. Chained Runtime reads and whole-Runtime
+    // construction materialize large native temporaries in the pinned backend.
+    let ref authority::State original_authority=ref state.runtime.authority;
+    let ref slices::Pool original_pool=ref state.runtime.pool;
+    let ref owners::Table original_owners=ref state.runtime.owners;
     if(arguments.len>binding.arity || (arguments.len!=0 && (sources.len!=0 || data.len!=capacity))){return .err(errors::make(5,0));}
     if(sources.len>binding.arity || sources.len!=shapes.len || (sources.len!=0 && data.len!=capacity)){return .err(errors::make(5,0));}
     if(fuel<cost()){return .err(errors::make(8,0));}
     if(binding.arity>8 || captures.len!=binding.arity || binding.selected>binding.arity ||
         (binding.selected!=0 && binding.tags[binding.selected-1]==0)){return .err(errors::make(5,0));}
-    let usize depth=size(authority::inspect(ref state.runtime.authority))?;
-    let usize frame=state.runtime.authority.frame;
-    var Call result=Call{.captures=[capture(none(),false,false);8],.views=[state.runtime.pool.slots[0].view;8],
+    let usize depth=size(authority::inspect(original_authority))?;
+    let usize frame=original_authority.frame;
+    var Call result=Call{.captures=[capture(none(),false,false);8],.views=[original_pool.slots[0].view;8],
         .issued=[none();8],.before=[none();16],.contract=binding,.depth=depth,.frame=frame,.remaining=fuel-cost(),.active=true};
-    var usize i=0;while(i<16){if(state.runtime.pool.slots[i].live){result.before[i]=slices::Ticket{.slot=i,.generation=state.runtime.pool.slots[i].generation};}i+=1;}
+    var usize i=0;while(i<16){if(original_pool.slots[i].live){result.before[i]=slices::Ticket{.slot=i,.generation=original_pool.slots[i].generation};}i+=1;}
     var slices::Ticket[8] writers=[none();8];var usize count=0;i=0;
     // Authenticate all original actuals before any staged retain/rotation.
     while(i<captures.len){
@@ -101,8 +106,8 @@ fn Result<Entered,errors::Error> enter_values(ref mut State state,Contract bindi
         if(c.ends>16 || c.close!=(c.ends!=0) || (c.ends>1 && (c.drop || binding.selected==0))){return .err(errors::make(5,0));}
         if(binding.tags[i]==0){if(!same(c.ticket,none()) || c.close || c.drop){return .err(errors::make(5,0));}}
         else{
-            let usize length=size(slices::length(ref state.runtime.pool,c.ticket,ref state.runtime.owners,capacity))?;
-            let slices::Slot entry=state.runtime.pool.slots[c.ticket.slot];
+            let usize length=size(slices::length(original_pool,c.ticket,original_owners,capacity))?;
+            let slices::Slot entry=original_pool.slots[c.ticket.slot];
             let u8 tag=entry.view.element | if(entry.exclusive){128}else{0};
             if(tag!=binding.tags[i] || (c.drop && !c.close) || (c.ends>1 && !entry.exclusive)){return .err(errors::make(5,0));}
             var usize prior=0;while(prior<i){if(same(c.ticket,captures[prior].ticket) && c.close!=captures[prior].close){return .err(errors::make(5,0));}prior+=1;}
@@ -110,9 +115,9 @@ fn Result<Entered,errors::Error> enter_values(ref mut State state,Contract bindi
             if(entry.exclusive){writers[count]=c.ticket;count+=1;}
         }i+=1;
     }
-    var authority::State next_authority=state.runtime.authority;
-    var slices::Pool next_pool=state.runtime.pool;
-    var owners::Table next_owners=state.runtime.owners;
+    var authority::State next_authority=*original_authority;
+    var slices::Pool next_pool=*original_pool;
+    var owners::Table next_owners=*original_owners;
     let slices::Arguments moved=loan_arguments(authority::enter_call(ref mut next_authority,ref mut next_pool,ref writers[..count],ref next_owners,capacity,frame))?;
     var usize writer=0;i=0;
     while(i<captures.len){
@@ -128,7 +133,10 @@ fn Result<Entered,errors::Error> enter_values(ref mut State state,Contract bindi
     if(arguments.len!=0){copies=switch(owners::copy_call_arguments(catalog,arguments,data,ref mut next_owners)){
         case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,0));}
     };}
-    state.runtime=Runtime{.authority=next_authority,.pool=next_pool,.owners=next_owners};return .ok(Entered{.call=result,.copies=copies});
+    // All fallible work has finished. Publish staged metadata without another
+    // complete Runtime value; these plain assignments cannot fail or call out.
+    state.runtime.authority=next_authority;state.runtime.pool=next_pool;state.runtime.owners=next_owners;
+    return .ok(Entered{.call=result,.copies=copies});
 }
 
 // Caller supplies the live descriptor selected by independently verified IR.
@@ -139,21 +147,24 @@ pub fn Result<Returned,errors::Error> handoff(ref mut State state,ref mut Call c
 }
 pub fn Result<Returned,errors::Error> handoff_roots(ref mut State state,ref mut Call call,slices::Ticket selected,
     ref owners::Token[] roots,usize capacity,usize fuel){
+    let ref authority::State original_authority=ref state.runtime.authority;
+    let ref slices::Pool original_pool=ref state.runtime.pool;
+    let ref owners::Table original_owners=ref state.runtime.owners;
     if(fuel<handoff_cost()){return .err(errors::make(8,0));}
-    let usize depth=size(authority::inspect(ref state.runtime.authority))?;
+    let usize depth=size(authority::inspect(original_authority))?;
     if(!call.active || call.contract.arity>8 || call.contract.selected==0 || call.contract.selected>call.contract.arity ||
-        call.depth>=31 || call.frame>=31 || depth<=call.depth || state.runtime.authority.frame!=call.frame+1 ||
-        state.runtime.authority.kinds[call.depth]!=1 || state.runtime.authority.frames[call.depth]!=call.frame){return .err(errors::make(5,0));}
+        call.depth>=31 || call.frame>=31 || depth<=call.depth || original_authority.frame!=call.frame+1 ||
+        original_authority.kinds[call.depth]!=1 || original_authority.frames[call.depth]!=call.frame){return .err(errors::make(5,0));}
     let usize chosen=call.contract.selected-1;
-    let usize length=size(slices::length(ref state.runtime.pool,selected,ref state.runtime.owners,capacity))?;
-    let slices::Slot entry=state.runtime.pool.slots[selected.slot];let owners::View expected=call.views[chosen];
+    let usize length=size(slices::length(original_pool,selected,original_owners,capacity))?;
+    let slices::Slot entry=original_pool.slots[selected.slot];let owners::View expected=call.views[chosen];
     if(!root(entry.view.root,expected.root) || entry.view.element!=expected.element || entry.view.length!=expected.length ||
         entry.view.start<expected.start || entry.view.end>expected.end || entry.exclusive!=((call.contract.tags[chosen]&128)!=0) ||
         (!entry.exclusive && same(call.before[selected.slot],selected))){return .err(errors::make(5,0));}
     if(entry.exclusive && selected.slot!=call.issued[chosen].slot){return .err(errors::make(5,0));}
-    var authority::State next_authority=state.runtime.authority;
-    var slices::Pool next_pool=state.runtime.pool;
-    var owners::Table next_owners=state.runtime.owners;
+    var authority::State next_authority=*original_authority;
+    var slices::Pool next_pool=*original_pool;
+    var owners::Table next_owners=*original_owners;
     let slices::Arguments restored=restore(ref mut next_authority,ref mut next_pool,ref next_owners,call,capacity)?;
     var slices::Ticket[8] resumed=[none();8];var usize writer=0;var usize i=0;
     while(i<call.contract.arity){if(call.contract.tags[i]!=0){if((call.contract.tags[i]&128)!=0){resumed[i]=restored.tickets[writer];writer+=1;}else{resumed[i]=call.captures[i].ticket;}}i+=1;}
@@ -216,17 +227,20 @@ pub fn Result<Returned,errors::Error> handoff_roots(ref mut State state,ref mut 
     let usize released=release_roots(ref mut next_pool,ref mut next_owners,call,roots,capacity)?;
     let Held held=Held{.issued=issued,.view=entry.view,.exclusive=entry.exclusive,.close_parent=call.captures[chosen].close && !restored_capture[chosen],
         .drop=drop,.depth=result_depth,.frame=call.frame,.active=true};
-    state.runtime=Runtime{.authority=next_authority,.pool=next_pool,.owners=next_owners};call.active=false;return .ok(Returned{.held=held,.resumed=resumed,.remaining=fuel-handoff_cost()});
+    state.runtime.authority=next_authority;state.runtime.pool=next_pool;state.runtime.owners=next_owners;call.active=false;return .ok(Returned{.held=held,.resumed=resumed,.remaining=fuel-handoff_cost()});
 }
 
 pub fn Result<Closed,errors::Error> close(ref mut State state,ref mut Held held,slices::Ticket current,usize capacity,usize fuel){
+    let ref authority::State original_authority=ref state.runtime.authority;
+    let ref slices::Pool original_pool=ref state.runtime.pool;
+    let ref owners::Table original_owners=ref state.runtime.owners;
     // Only a successful, funded handoff issues this linear cleanup receipt.
     if(!held.active || current.slot!=held.issued.slot || current.generation<held.issued.generation || (!held.exclusive && !same(current,held.issued))){return .err(errors::make(5,0));}
-    let usize length=size(slices::length(ref state.runtime.pool,current,ref state.runtime.owners,capacity))?;
-    if(!view(state.runtime.pool.slots[current.slot].view,held.view)){return .err(errors::make(5,0));}
-    var authority::State next_authority=state.runtime.authority;
-    var slices::Pool next_pool=state.runtime.pool;
-    var owners::Table next_owners=state.runtime.owners;var slices::Ticket parent=none();
+    let usize length=size(slices::length(original_pool,current,original_owners,capacity))?;
+    if(!view(original_pool.slots[current.slot].view,held.view)){return .err(errors::make(5,0));}
+    var authority::State next_authority=*original_authority;
+    var slices::Pool next_pool=*original_pool;
+    var owners::Table next_owners=*original_owners;var slices::Ticket parent=none();
     if(held.exclusive){
         let usize depth=size(authority::inspect(ref next_authority))?;
         if(held.depth>=31 || depth!=held.depth+1 || next_authority.kinds[held.depth]!=2 || next_authority.frame!=held.frame ||
@@ -235,16 +249,19 @@ pub fn Result<Closed,errors::Error> close(ref mut State state,ref mut Held held,
         if(held.close_parent){let usize closed=size(slices::close(ref mut next_pool,parent,ref mut next_owners,capacity))?;parent=none();}
     }else{let usize closed=size(slices::close(ref mut next_pool,current,ref mut next_owners,capacity))?;}
     if(held.drop){let usize released=size(owners::release(ref mut next_owners,held.view.root,capacity))?;}
-    state.runtime=Runtime{.authority=next_authority,.pool=next_pool,.owners=next_owners};held.active=false;return .ok(Closed{.parent=parent,.remaining=fuel});
+    state.runtime.authority=next_authority;state.runtime.pool=next_pool;state.runtime.owners=next_owners;held.active=false;return .ok(Closed{.parent=parent,.remaining=fuel});
 }
 // Terminal cleanup uses the admission reserve even with zero execution Fuel.
 pub fn Result<usize,errors::Error> abort(ref mut State state,usize capacity,usize fuel){
-    var authority::State next_authority=state.runtime.authority;
-    var slices::Pool next_pool=state.runtime.pool;
-    var owners::Table next_owners=state.runtime.owners;
+    let ref authority::State original_authority=ref state.runtime.authority;
+    let ref slices::Pool original_pool=ref state.runtime.pool;
+    let ref owners::Table original_owners=ref state.runtime.owners;
+    var authority::State next_authority=*original_authority;
+    var slices::Pool next_pool=*original_pool;
+    var owners::Table next_owners=*original_owners;
     let usize cleared=size(authority::finish(ref mut next_authority,ref mut next_pool,ref mut next_owners,capacity))?;
     let usize released=size(owners::clear(ref mut next_owners,capacity))?;
-    state.runtime=Runtime{.authority=next_authority,.pool=next_pool,.owners=next_owners};return .ok(fuel);
+    state.runtime.authority=next_authority;state.runtime.pool=next_pool;state.runtime.owners=next_owners;return .ok(fuel);
 }
 
 // Shared restoration for owned/scalar and borrowed returns. All arguments are

@@ -253,12 +253,22 @@ pub fn Result<usize, errors::Error> inspect(ref ir::Program p) {
 }
 // Public admission returns the exact forest produced by the complete proof.
 // Unsupported derived CALL shapes reject in every function before guest effects.
-pub fn Result<reborrows::Sites,errors::Error> verify_sites(ref ir::Program p){
-    let reborrows::Sites sites=plain(p,reborrows::present(p))?;
+fn Result<usize,errors::Error> executable_calls(ref ir::Program p,ref reborrows::Sites sites){
     if(sites.count!=0){var usize pc=0;while(pc<p.count){
-        if(p.code[pc*8]==9){let usize allowed=executable::call(p,ref sites,pc)?;}
+        if(p.code[pc*8]==9){let usize allowed=executable::call(p,sites,pc)?;}
         pc+=1;
     }}
+    return .ok(p.count);
+}
+// Complete executable shape proof tied to actual immutable image bytes.
+pub fn Result<statics::Sites,errors::Error> verify_statics(ref ir::Program p,ref images::Image image){
+    let statics::Sites sites=statics::definitions(p,image)?;
+    let reborrows::Sites loans=validate(p,reborrows::present(p),ref sites)?;
+    let usize calls=executable_calls(p,ref loans)?;return .ok(sites);
+}
+pub fn Result<reborrows::Sites,errors::Error> verify_sites(ref ir::Program p){
+    let reborrows::Sites sites=plain(p,reborrows::present(p))?;
+    let usize calls=executable_calls(p,ref sites)?;
     return .ok(sites);
 }
 pub fn Result<usize, errors::Error> verify(ref ir::Program p) {

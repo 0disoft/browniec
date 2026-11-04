@@ -29,8 +29,12 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    removes reproduced return-transaction stack amplification without changing
    ownership APIs, VM capacities or prices. The [private Static IR proof](static-ir.md)
    now reconstructs real image definitions, scalar types and independent CFG
-   lifetimes. Next connect retained Program admission, actual Static execution,
-   prices and image-backed CALL/return origins, then finish general references.
+   lifetimes. The [native Static successor](static-execution.md) now connects
+   retained Program admission, canonical dispatch, frame-local aliases and exact
+   prices. The current lexer has no byte/text literal token, so first add bounded
+   token/escape decoding and immutable image construction; then lower guest
+   literal/text bindings and connect image-backed CALL/return origins. Keep source
+   scratch separate from retained image authority, and finish general references.
    Validate actual public source execution before promoting its capability.
 2. **Language completion: L01-L06, C03/C05.** Finish explicit module snapshots and
    visibility, inference/void/if values, complete array/record construction,

@@ -11,8 +11,8 @@ import errors as errors;
 // 74 BYTES dst=new byte site,a=live text site,b=0. Reserved bytes are zero.
 // Definitions are reconstructed from actual code/image, never caller metadata.
 // This copyable proof does not own/pin storage or authenticate a Program handle.
-pub struct Sites { usize[16] definitions; usize[16] functions; u8[16] kinds; images::Span[16] spans; usize count; }
-pub fn Sites empty(){return Sites{.definitions=[256;16],.functions=[16;16],.kinds=[0;16],
+pub struct Sites { usize[16] definitions; usize[16] functions; usize[16] starts; u8[16] kinds; images::Span[16] spans; usize count; }
+pub fn Sites empty(){return Sites{.definitions=[256;16],.functions=[16;16],.starts=[0;16],.kinds=[0;16],
     .spans=[images::Span{.literal=16,.start=0,.end=0};16],.count=0};}
 fn errors::Error invalid(usize pc){return errors::make(5,pc);}
 pub fn bool operation(u8 op){return op>=69 && op<=74;}
@@ -48,7 +48,8 @@ pub fn Result<Sites,errors::Error> definitions(ref ir::Program p,ref images::Ima
                     p.code[at+3]!=0 || p.code[at+4]!=0 || p.code[at+5]!=0 || p.code[at+6]!=0 || p.code[at+7]!=0){return .err(invalid(pc));}
                 span=sites.spans[a];
             }
-            sites.definitions[dst]=pc;sites.functions[dst]=f;sites.kinds[dst]=kind;sites.spans[dst]=span;sites.count+=1;
+            let usize absolute=switch(images::absolute(image,span)){case .ok(v):{v}case .err(_):{return .err(invalid(pc));}};
+            sites.definitions[dst]=pc;sites.functions[dst]=f;sites.starts[dst]=absolute;sites.kinds[dst]=kind;sites.spans[dst]=span;sites.count+=1;
         }
         pc+=1;
     }f+=1;}return .ok(sites);

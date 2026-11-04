@@ -1,3 +1,24 @@
+- Retained-image Static execution now admits and runs private operations 69-74
+  through the existing canonical driver, tied to the exact immutable Program
+  image. Independent image/ordinary CFG/type/owner/loan/origin proof precedes
+  native transfers; separate frame words track Static aliases. CALL_BIND opaque
+  identities cannot be read by Static indexing. Bare ordinary verifier/VM and
+  public guest syntax/capability promotion remain gated. Prices include dispatch:
+  OPEN/BYTES/LEN 17, CLOSE 1, READ 18, EQUAL 17 plus both byte lengths.
+  Native stack reproductions required borrowed IR/runtime field reads, staged
+  field publication, separate return-map validation and wrapper-owned compiler
+  lowering scratch. Existing APIs, rollback, cleanup order and guest limits/prices
+  are preserved; combined fixtures were not split. No general stack bound follows.
+  Development/release each passed 59 focused native groups plus 33 tool-free
+  public Fuel CLI cases on 133 matching native inputs and a 219-file discovery
+  digest. All 121 production files are LF; locked LF mirrors pass. Final counted
+  runs use no overrides or historical reuse. Earlier probes/generated-C diagnostics,
+  including a diagnostic larger-stack run, are excluded. Full profiles/Linux/
+  restricted/ABI/packaging and allocator/OOM/general stack/RAM/timing remain open.
+  Next add bounded literal token/escape decoding and guest text bindings, then
+  Static CALL/return origin receipts and public result admission. The complete
+  objective remains active. See docs/engineering/static-execution.md and its
+  focused Windows evidence. Earlier entries retain their checkpoint scope.
 # AGENTS.md
 
 - Private Static IR preparation now reconstructs actual image definitions and

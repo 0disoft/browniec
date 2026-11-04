@@ -8,6 +8,11 @@ import slice_result_call_ir as calls;
 import slice_reborrow_ir as reborrow;
 import verifier as verifier;
 import vm as vm;
+import compiler as compiler;
+import static_image as images;
+import program_image as programs;
+import slice_result_execution as execution;
+import slice_authority as authority;
 import slice_result_runtime as runtime;
 import array_owners as owners;
 import array_slices as slices;
@@ -153,4 +158,72 @@ fn void dispatch_checked(ref results::Program p,bool valid){
 fn void proved_binding_dispatch_runs_and_invalid_recipes_preserve_native_inputs(){
     var results::Program p=unit(1,false,false);dispatch_checked(ref p,true);
     let usize call=opcode(ref p,66);p.body.code[call*8+7]=1;dispatch_checked(ref p,false);
+}
+
+// Branch-free fixture insertion preserves scalar/CALL-map/site identities.
+// Only these known straight-line recipes use this helper.
+fn void insert_static(ref mut ir::Program p,usize pc,u8 op,u8 kind){
+    let usize count=p.count;assert(count<256 && pc<count);
+    var usize i=count;
+    while(i>pc){i-=1;var usize j=0;while(j<8){
+        let u8 value=p.code[i*8+j];p.code[(i+1)*8+j]=value;j+=1;
+    }let usize offset=p.offsets[i];p.offsets[i+1]=offset;}
+    var usize j=0;while(j<8){p.code[pc*8+j]=0;j+=1;}
+    p.code[pc*8]=op;
+    if(op==69){p.code[pc*8+3]=kind;p.code[pc*8+6]=1;}
+    p.count=count+1;let usize functions=p.function_count;var usize f=0;
+    while(f<functions){let usize start=p.starts[f];let usize end=p.ends[f];
+        if(start>pc){p.starts[f]=start+1;}if(end>pc){p.ends[f]=end+1;}f+=1;
+    }
+}
+fn Result<images::Image,images::Error> literal(bool text){
+    var images::Builder b=images::builder(1)?;
+    let usize id=if(text){images::intern_text(ref mut b,b"*")?}else{images::intern_bytes(ref mut b,b"*")?};
+    return images::freeze(ref b,577);
+}
+@test fn void static_index_cannot_observe_call_bind_proof_identities(){
+    let images::Image image=switch(literal(false)){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    var results::Program p=unit(1,false,false);
+    let usize call=opcode(ref p,66);let u8 opaque=p.body.code[call*8+1];
+    let usize bind=opcode(ref p,67);let u8 zero=p.body.code[bind*8+3];
+    let usize at=bind+1;insert_static(ref mut p.body,at,69,1);
+    let usize read=at+1;let usize dst=p.body.code[read*8+1] as usize;
+    p.body.code[read*8]=71;p.body.code[read*8+2]=0;p.body.code[read*8+3]=zero;
+    p.body.types[dst]=10;p.body.return_types[1]=10;
+    insert_static(ref mut p.body,read+1,70,0);
+    assert(proof::inspect_image(ref p,ref image).is_ok);
+    p.body.code[read*8+3]=opaque;
+    let ir::Program proxy=normalized(ref p);
+    // The normalized scalar proof alone accepts this input. Full recipe proof
+    // must reject it: runtime never publishes a scalar into CALL_BIND's dst.
+    assert(verifier::verify_statics(ref proxy,ref image).is_ok);
+    switch(proof::inspect_image(ref p,ref image)){
+        case .ok(_):{assert(false);}case .err(e):{assert(e.kind==5 && e.offset==read);}
+    };
+}
+@test fn void retained_image_executes_static_close_inside_prepared_return_cleanup(){
+    var results::Program p=switch(compiler::inspect_slice_result_ir(b"module main;fn ref i32[] f(ref i32[] p){return ref p;}fn i32 main(){let i32[2] a=[42;2];let ref i32[] r=f(ref a);return r[0];}")){
+        case .ok(v):{v}case .err(_):{assert(false);return;}
+    };
+    let usize prepare=opcode(ref p,63);
+    insert_static(ref mut p.body,prepare,69,2);
+    insert_static(ref mut p.body,prepare+2,70,0);
+    let images::Image image=switch(literal(true)){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    let programs::Program retained=switch(programs::retain(ref p,image,577)){
+        case .ok(v):{v}case .err(_):{assert(false);return;}
+    };
+    var runtime::State state=runtime::empty(16);var u8[16] data=[0;16];
+    let runtime::Capture[1] captures=[runtime::capture(slices::Ticket{.slot=16,.generation=0},false,false)];
+    let i64[1] values=[0];let owners::Token[1] inputs=[owners::Token{.slot=0,.generation=0}];
+    let ref ir::Program body=ref p.body;let usize function=body.entry;
+    let Result<execution::Scalar,errors::Error> result=programs::run_scalar(ref retained,function,
+        ref captures[..0],ref values[..0],ref inputs[..0],ref mut state,ref mut data,10000000);
+    switch(result){case .ok(v):{assert(v.value==42);}case .err(_):{assert(false);}};
+    let ref runtime::Runtime current=ref state.runtime;
+    let ref authority::State stack=ref current.authority;
+    let ref owners::Table table=ref current.owners;let ref slices::Pool pool=ref current.pool;
+    assert(stack.depth==0 && stack.frame==0 && table.arena.used==0);
+    var usize i=0;while(i<16){assert(!pool.slots[i].live);i+=1;}
+    let ref images::Image backing=programs::literals(ref retained);
+    assert(images::text(backing,images::Span{.literal=0,.start=0,.end=1}).is_ok);
 }

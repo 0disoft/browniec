@@ -22,6 +22,9 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,usize pc,
     if((op==56 || op==62) && frames::result_bound(bindings,dst)){
         return frames::close_result(bindings,state,dst,data.len,fuel);
     }
+    let ref authority::State original_authority=ref state.runtime.authority;
+    let ref slices::Pool original_pool=ref state.runtime.pool;
+    let ref owners::Table original_owners=ref state.runtime.owners;
     let usize site=if(op==60){dst}else{a};
     var usize stride=0;
     if(op==58 || op==60){
@@ -39,31 +42,31 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,usize pc,
     if(op==55){
         // Authenticate under the base reserve before pricing the bounded scan.
         let slices::Ticket current=bindings.sites[base+a];
-        let usize length=switch(slices::length(ref state.runtime.pool,current,ref state.runtime.owners,data.len)){
+        let usize length=switch(slices::length(original_pool,current,original_owners,data.len)){
             case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}
         };
-        cost+=meter::utf8_scan(state.runtime.pool.slots[current.slot].view.length);
+        cost+=meter::utf8_scan(original_pool.slots[current.slot].view.length);
         if(fuel<cost){return .err(errors::make(8,offset));}
-        let bool value=switch(slices::utf8(ref state.runtime.pool,bindings.sites[base+a],ref state.runtime.owners,data)){
+        let bool value=switch(slices::utf8(original_pool,bindings.sites[base+a],original_owners,data)){
             case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}
         };registers[dst]=if(value){1}else{0};
     }else if(op==57){
-        let usize value=switch(slices::length(ref state.runtime.pool,bindings.sites[base+a],ref state.runtime.owners,data.len)){
+        let usize value=switch(slices::length(original_pool,bindings.sites[base+a],original_owners,data.len)){
             case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}
         };registers[dst]=cells::pack(value,offset)?;
     }else if(op==58){
         let usize index=cells::unpack(registers[b],offset)?;
-        registers[dst]=switch(slices::read(ref state.runtime.pool,bindings.sites[base+a],ref state.runtime.owners,index,data)){
+        registers[dst]=switch(slices::read(original_pool,bindings.sites[base+a],original_owners,index,data)){
             case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}
         };
     }else if(op==60){
         let usize index=cells::unpack(registers[a],offset)?;
-        let usize wrote=switch(slices::write(ref state.runtime.pool,bindings.sites[base+dst],ref state.runtime.owners,index,registers[b],data)){
+        let usize wrote=switch(slices::write(original_pool,bindings.sites[base+dst],original_owners,index,registers[b],data)){
             case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}
         };
     }else{
-        var authority::State stack=state.runtime.authority;var slices::Pool pool=state.runtime.pool;
-        var owners::Table table=state.runtime.owners;var slices::Ticket issued=frames::none();
+        var authority::State stack=*original_authority;var slices::Pool pool=*original_pool;
+        var owners::Table table=*original_owners;var slices::Ticket issued=frames::none();
         if(op==54){
             if(bindings.sites[base+dst].slot!=16){return .err(errors::make(5,offset));}
             let usize root=p.slice_roots[dst] as usize-1;let owners::Token token=bindings.tokens[base+root];
@@ -88,7 +91,9 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,usize pc,
                 case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}
             };
         }else{return .err(errors::make(5,offset));}
-        state.runtime=runtime::Runtime{.authority=stack,.pool=pool,.owners=table};
+        // No fallible operation follows metadata publication. Avoid another
+        // large aggregate Runtime value while nested return cleanup is live.
+        state.runtime.authority=stack;state.runtime.pool=pool;state.runtime.owners=table;
         if(op==62){bindings.sites[base+a]=issued;bindings.sites[base+dst]=frames::none();}
         else{bindings.sites[base+dst]=issued;if(op==61){bindings.sites[base+a]=frames::none();}}
     }

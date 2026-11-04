@@ -80,6 +80,9 @@ pub fn Result<usize,Error> inspect(ref Image image){
     if(bytes::capacity(ref image.data)!=bytes::len(ref image.data)){return .err(.State);}
     return contents(ref image.catalog,bytes::view(ref image.data));
 }
+// Shared payload only; the caller must keep this exact immutable Image alive.
+pub fn ref u8[] payload(ref Image image){return bytes::view(ref image.data);}
+pub fn Result<usize,Error> absolute(ref Image image,Span span){return selected(image,span);}
 pub fn usize payload_bytes(ref Image image){return bytes::len(ref image.data);}
 pub fn usize payload_capacity(ref Image image){return bytes::capacity(ref image.data);}
 pub fn Result<u8,Error> kind(ref Image image,usize literal){

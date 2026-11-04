@@ -60,8 +60,11 @@ capacities are unchanged.
 
 ## Execution boundary and next work
 
-Ordinary `inspect`, `verify`, VM admission and `program_image::retain` continue
-rejecting Static opcodes. Existing Program reuse and public Fuel behavior retain
+At this proof checkpoint, ordinary `inspect`, `verify`, VM admission and
+`program_image::retain` rejected Static opcodes. The
+[execution successor](static-execution.md) now admits real Static operations only
+through retained-image native Program execution; bare ordinary admission stays
+gated. Existing Program reuse and public Fuel behavior retain
 their contracts. Static proof alone cannot promote an executable Program.
 
 Next connect this proof to retained Program admission together with real Static

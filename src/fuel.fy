@@ -26,3 +26,10 @@ pub fn usize slice_base(u8 op,usize stride){
     return 4097;
 }
 pub fn usize utf8_scan(usize root_length){return 4*root_length;}
+
+// Private immutable-image operations. Driver charges dispatch separately;
+// lengths are proved <=4096 before this arithmetic, no owner/loan table scans.
+pub fn usize static_instruction(u8 op,usize left,usize right){
+    if(op==70){return 0;}
+    return 16+if(op==71){1}else if(op==73){left+right}else{0};
+}

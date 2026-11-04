@@ -3,6 +3,7 @@ import ir as ir;
 import errors as errors;
 import static_image as images;
 import verifier as verifier;
+import static_ir as statics;
 
 fn usize built(Result<usize,errors::Error> result){
     return switch(result){case .ok(value):{value}case .err(_):{assert(false);0}};
@@ -119,6 +120,11 @@ fn ir::Program rich_program(){
 fn void scalar_reads_lengths_text_equality_and_detached_bytes_views_verify(){
     let images::Image image=switch(fixture_image()){case .ok(value):{value}case .err(_):{assert(false);return;}};
     let ir::Program p=rich_program();accepted(ref p,ref image);
+    let statics::Sites sites=switch(verifier::inspect_statics(ref p,ref image)){
+        case .ok(value):{value}case .err(_):{assert(false);statics::empty()}
+    };
+    assert(sites.count==7 && sites.starts[0]==0 && sites.starts[1]==1 && sites.starts[2]==4);
+    assert(sites.starts[3]==1 && sites.starts[4]==5 && sites.starts[5]==1 && sites.starts[6]==4);
 }
 
 @test
@@ -299,4 +305,3 @@ fn void ordinary_inspect_and_verify_still_reject_static_opcodes(){
     plain_inspect_rejected_at(ref p,open);
     plain_verify_rejected_at(ref p,open);
 }
-
