@@ -23,14 +23,82 @@ fn bool letter(u8 ch) {
     return (ch >= 65 && ch <= 90) || (ch >= 97 && ch <= 122) || ch == 95;
 }
 fn bool digit(u8 ch) { return ch >= 48 && ch <= 57; }
+fn bool bom(ref u8[] source, usize at) {
+    return at + 2 < source.len && source[at] == 239 && source[at + 1] == 187 && source[at + 2] == 191;
+}
+
+fn Result<usize, errors::Error> block_comment(ref u8[] source, usize cursor, usize begin) {
+    var usize depth = 1;
+    var usize at = cursor + 2;
+    while (at < source.len && depth != 0) {
+        let u8 ch = source[at];
+        if (ch == 0) { return .err(errors::make(1, at)); }
+        if (bom(source, at)) { return .err(errors::make(1, at)); }
+        if (ch == 13) {
+            if (at + 1 < source.len && source[at + 1] == 10) {
+                at += 2;
+                continue;
+            }
+            return .err(errors::make(1, at));
+        }
+        if (ch == 47 && at + 1 < source.len && source[at + 1] == 42) {
+            if (depth == 2048) { return .err(errors::make(4, at)); }
+            depth += 1;
+            at += 2;
+            continue;
+        }
+        if (ch == 42 && at + 1 < source.len && source[at + 1] == 47) {
+            depth -= 1;
+            at += 2;
+            continue;
+        }
+        at += 1;
+    }
+    if (depth != 0) { return .err(errors::make(1, begin)); }
+    return .ok(at);
+}
+
+fn Result<usize, errors::Error> line_comment(ref u8[] source, usize cursor) {
+    var usize at = cursor + 2;
+    while (at < source.len) {
+        let u8 ch = source[at];
+        if (ch == 0) { return .err(errors::make(1, at)); }
+        if (bom(source, at)) { return .err(errors::make(1, at)); }
+        if (ch == 10) { return .ok(at + 1); }
+        if (ch == 13) {
+            if (at + 1 < source.len && source[at + 1] == 10) {
+                return .ok(at + 2);
+            }
+            return .err(errors::make(1, at));
+        }
+        at += 1;
+    }
+    return .ok(at);
+}
 
 pub fn Result<usize, errors::Error> next(ref u8[] source, ref mut State s) {
     while (s.cursor < source.len) {
+        if (s.cursor == 0 && bom(source, 0)) { s.cursor = 3; continue; }
         let u8 ch = source[s.cursor];
-        if (ch == 32 || ch == 9 || ch == 10 || ch == 13) { s.cursor += 1; continue; }
+        if (bom(source, s.cursor)) { return .err(errors::make(1, s.cursor)); }
+        if (ch == 0) { return .err(errors::make(1, s.cursor)); }
+        if (ch == 32 || ch == 9 || ch == 10) { s.cursor += 1; continue; }
+        if (ch == 13) {
+            if (s.cursor + 1 < source.len && source[s.cursor + 1] == 10) {
+                s.cursor += 2;
+                continue;
+            }
+            return .err(errors::make(1, s.cursor));
+        }
         if (ch == 47 && s.cursor + 1 < source.len && source[s.cursor + 1] == 47) {
-            s.cursor += 2;
-            while (s.cursor < source.len && source[s.cursor] != 10) { s.cursor += 1; }
+            let usize closed = line_comment(source, s.cursor)?;
+            s.cursor = closed;
+            continue;
+        }
+        if (ch == 47 && s.cursor + 1 < source.len && source[s.cursor + 1] == 42) {
+            let usize opener = s.cursor;
+            let usize closed = block_comment(source, s.cursor, opener)?;
+            s.cursor = closed;
             continue;
         }
         break;
