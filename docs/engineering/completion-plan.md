@@ -76,6 +76,10 @@ delivery and DLL exports are still open after the lexical/range increments.
   so sixteen pool slots are not a sixteen-receipt limit: at most 31 canonical
   exclusive children plus shared slots bound the live set, with one publication
   spare. Preserve canonical authority/owners/pool and exact generations.
+- Private CALL-binding IR now has a [destination/origin proof](m2-slice-result-call-ir.md),
+  including exact END masks and definition-based recursive origins. Source lowering
+  and executable binding dispatch remain pending; native VM entry rejects these
+  markers before ownership transfer. Connect those paths next.
 - Independent admission must prove the destination's exact type/access, selected
   input origin and whole-root conflict/lifetime, including CFG joins and cleanup.
   An ordinary scalar proxy or an unchecked CALL flag is not that proof.

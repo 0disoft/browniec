@@ -19,9 +19,11 @@ There are at most seventeen passes across sixteen functions. Names are bounded
 by the existing 64-local limit. This is compile-time work, not runtime Fuel.
 
 These are advisory source facts only. Syntax/type/Flow checking and independent
-IR proof remain authoritative. In particular, the eventual IR verifier must trace
+IR proof remain authoritative. The private [CALL-binding IR verifier](m2-slice-result-call-ir.md) now traces
 CALL-defined bindings through callee summaries and alias definitions, rather than
 accepting flattened site provenance as evidence that a recursive cycle grounds.
+Source result-binding lowering still has to connect these independently checked
+recipes; advisory hints alone do not authorize that path.
 
 Windows development passed three semantic-interpreter and three native groups.
 The final runs include cache-reset rejection; exploratory earlier results are

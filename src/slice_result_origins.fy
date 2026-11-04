@@ -9,7 +9,7 @@ import types as types;
 // source-analysis facts contain no runtime ticket, view, owner or executable IR.
 pub struct Summary { u8[16] parameters; usize rounds; }
 
-fn Result<u8,errors::Error> origin(ref ir::Program p,ref functions::Table t,
+fn Result<u8,errors::Error> flat_origin(ref ir::Program p,ref functions::Table t,
     usize f,usize site,usize at){
     if(site>=16 || p.slice_roots[site]!=0 || p.slice_functions[site] as usize!=f+1 ||
         p.slice_elements[site]!=t.return_slice_elements[f]){return .err(errors::make(5,at));}
@@ -27,8 +27,35 @@ fn Result<u8,errors::Error> origin(ref ir::Program p,ref functions::Table t,
     return .err(errors::make(5,at));
 }
 
+// Follow actual alias/CALL definitions when bindings are present. Flattened
+// origin metadata alone could otherwise manufacture a base for recursive cycles.
+fn Result<u8,errors::Error> origin(ref ir::Program p,ref functions::Table t,ref Summary summaries,
+    ref ir::Program recipes,bool bindings,usize f,usize initial,usize at){
+    if(!bindings){return flat_origin(p,t,f,initial,at);}
+    var usize site=initial;var usize steps=0;
+    while(steps<16){steps+=1;
+        if(site>=16 || p.slice_roots[site]!=0 || p.slice_functions[site] as usize!=f+1 || p.slice_elements[site]!=t.return_slice_elements[f]){return .err(errors::make(5,at));}
+        var usize i=0;while(i<p.arities[f]){if(p.slice_parameters[p.register_starts[f]+i] as usize==site+1){
+            return .ok(if(i==0){1}else if(i==1){2}else if(i==2){3}else if(i==3){4}else if(i==4){5}else if(i==5){6}else if(i==6){7}else{8});
+        }i+=1;}
+        var usize definition=256;var usize pc=p.starts[f];
+        while(pc<p.ends[f]){let u8 op=p.code[pc*8];if((op==59 || op==61) && p.code[pc*8+1] as usize==site){
+            if(definition!=256){return .err(errors::make(5,at));}definition=pc;
+        }pc+=1;}
+        if(definition==256){return .err(errors::make(5,at));}
+        if(recipes.code[definition*8]==67){
+            pc=definition;while(pc>p.starts[f] && recipes.code[pc*8]!=66){pc-=1;}
+            if(recipes.code[pc*8]!=66){return .err(errors::make(5,at));}
+            let usize target=p.code[pc*8+2] as usize;let usize chosen=summaries.parameters[target] as usize;
+            if(chosen==0){return .ok(0);}if(chosen>p.arities[target]){return .err(errors::make(5,at));}
+            let usize map=p.code[pc*8+3] as usize;let usize actual=p.call_args[map*8+chosen-1] as usize;
+            if(actual<160 || actual>=176){return .err(errors::make(5,at));}site=actual-160;
+        }else{site=p.code[definition*8+2] as usize;}
+    }return .err(errors::make(5,at));
+}
+
 fn Result<u8,errors::Error> returned(ref ir::Program p,ref functions::Table t,
-    ref Summary summaries,usize f,usize pc){
+    ref Summary summaries,ref ir::Program recipes,bool bindings,usize f,usize pc){
     let usize r=p.code[pc*8+2] as usize;
     var usize definition=256;var usize at=p.starts[f];
     while(at<pc){
@@ -40,7 +67,7 @@ fn Result<u8,errors::Error> returned(ref ir::Program p,ref functions::Table t,
     }
     if(definition==256){return .err(errors::make(5,p.offsets[pc]));}
     at=definition*8;
-    if(p.code[at]==57){return origin(p,t,f,p.code[at+2] as usize,p.offsets[pc]);}
+    if(p.code[at]==57){return origin(p,t,summaries,recipes,bindings,f,p.code[at+2] as usize,p.offsets[pc]);}
     let usize target=p.code[at+2] as usize;
     if(t.return_slice_elements[target]!=t.return_slice_elements[f]){return .err(errors::make(5,p.offsets[pc]));}
     let usize selected=summaries.parameters[target] as usize;
@@ -49,13 +76,16 @@ fn Result<u8,errors::Error> returned(ref ir::Program p,ref functions::Table t,
     let usize call=p.code[at+3] as usize;
     let usize actual=p.call_args[call*8+selected-1] as usize;
     if(actual<160 || actual>=176){return .err(errors::make(5,p.offsets[pc]));}
-    return origin(p,t,f,actual-160,p.offsets[pc]);
+    return origin(p,t,summaries,recipes,bindings,f,actual-160,p.offsets[pc]);
 }
 
 // Reuse independent CFG/type/loan proof before indexing or trusting definitions.
 // Every emitted return must agree, conservatively including constant branches.
-pub fn Result<Summary,errors::Error> inspect(ref ir::Program p,ref functions::Table t){
+pub fn Result<Summary,errors::Error> inspect(ref ir::Program p,ref functions::Table t){return inspect_recipes(p,t,p);}
+pub fn Result<Summary,errors::Error> inspect_recipes(ref ir::Program p,ref functions::Table t,ref ir::Program recipes){
     let usize valid=verifier::verify(p)?;
+    if(recipes.count!=p.count){return .err(errors::make(5,0));}
+    var bool bindings=false;var usize recipe=0;while(recipe<p.count){if(recipes.code[recipe*8]==66){bindings=true;}recipe+=1;}
     if(t.count!=p.function_count || t.entry!=p.entry){return .err(errors::make(5,0));}
     var usize f=0;
     while(f<t.count){
@@ -74,7 +104,7 @@ pub fn Result<Summary,errors::Error> inspect(ref ir::Program p,ref functions::Ta
                 var u8 selected=result.parameters[f];var usize returns=0;var usize pc=p.starts[f];
                 while(pc<p.ends[f]){
                     if(p.code[pc*8]==8){
-                        returns+=1;let u8 found=returned(p,t,ref result,f,pc)?;
+                        returns+=1;let u8 found=returned(p,t,ref result,recipes,bindings,f,pc)?;
                         if(found==0){pending=true;}
                         else if(selected!=0 && selected!=found){return .err(errors::make(5,p.offsets[pc]));}
                         else{selected=found;}

@@ -56,6 +56,11 @@ The bounded origin solver retains at most 17 passes over 16 functions/256
 instructions. Recipe scans add O(I squared) work and O(I) matched-return scratch;
 this is compile-time analysis, not a runtime/Fuel or measured speed claim.
 
+The [CALL-binding proof successor](m2-slice-result-call-ir.md) adds private
+66-68 recipes with caller destination/END-mask checks and definition-based origin
+tracing. It remains separate from source binding lowering and VM binding dispatch;
+native entry rejects those unsupported markers before ownership transfer.
+
 ## Execution boundary and next unit
 
 Public compilation still rejects every borrowed-result declaration, including

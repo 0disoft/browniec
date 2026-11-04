@@ -3,6 +3,7 @@ import ir as ir;
 import functions as functions;
 import slice_result_origins as origins;
 import errors as errors;
+import slice_result_call_ir as calls;
 
 // Private extension; only vm::run_slice_result admits an executable subset.
 // Ordinary Program layout/opcode admission stays fixed.
@@ -20,7 +21,9 @@ pub struct Program {
 // Bridge the existing source lowerer, preserving PC/register/cleanup identities.
 // Construction is not admission: inspect with slice_result_verifier afterwards.
 pub fn Result<Program,errors::Error> from_proxy(ir::Program p,ref functions::Table t){
-    let origins::Summary summary=origins::inspect(ref p,t)?;
+    var ir::Program proxy=p;let usize rewritten=calls::rewrite(ref mut proxy)?;
+    let origins::Summary summary=origins::inspect_recipes(ref proxy,t,ref p)?;
+    let usize bindings=calls::inspect(ref proxy,ref p,ref t.return_slice_elements,ref summary.parameters)?;
     var Program result=Program{.body=p,.elements=t.return_slice_elements,.parameters=summary.parameters};
     var usize f=0;
     while(f<p.function_count){

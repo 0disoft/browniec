@@ -43,6 +43,12 @@ fn runtime::Contract binding(ref ir::Program unit,usize f){
 // dialect has native borrowed inputs, owned arrays/records, ordinary CALLs and
 // forwarded results. Explicit native owned entry is separate from public source admission.
 fn Result<usize,errors::Error> admit(ref ir::Program unit,usize function,ref i64[] values,usize captures,ref owners::Token[] inputs,bool view){
+    // Binding recipes currently prove lifetime/CFG only. Reject before entering
+    // canonical ownership until dispatch can publish/restore the retained result.
+    if(unit.body.count>256){return .err(errors::make(5,0));}
+    var usize pc=0;while(pc<unit.body.count){
+        if(unit.body.code[pc*8]>=66){return .err(errors::make(5,pc));}pc+=1;
+    }
     let verifier::Proof proof=verifier::inspect(unit)?;
     if(function>=unit.body.function_count ||
         values.len!=unit.body.arities[function] || captures!=values.len || (inputs.len!=0 && inputs.len!=values.len)){return .err(errors::make(5,0));}

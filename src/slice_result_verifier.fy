@@ -5,6 +5,7 @@ import ir as ir;
 import functions as functions;
 import types as types;
 import errors as errors;
+import slice_result_call_ir as calls;
 
 pub struct Proof {
     u8[16] parameters;
@@ -47,9 +48,10 @@ pub fn Result<Proof,errors::Error> inspect(ref results::Program unit){
         }
         f+=1;
     }
+    let usize rewritten=calls::rewrite(ref mut proxy)?;
     var usize pc=0;
     while(pc<proxy.count){
-        let u8 op=proxy.code[pc*8];
+        let u8 op=unit.body.code[pc*8];
         if(op==63){proxy.code[pc*8]=57;}
         else if(op==64){proxy.code[pc*8]=9;}
         else if(op==65){proxy.code[pc*8]=8;}
@@ -62,7 +64,8 @@ pub fn Result<Proof,errors::Error> inspect(ref results::Program unit){
     // This reconstructs CFG/definitions, exact formal/derived loans and recursive
     // origins from the normalized instructions, never trusting selected claims.
     // The normalized Program stays local and is never returned or executed.
-    let origins::Summary grounded=origins::inspect(ref proxy,ref signatures)?;
+    let origins::Summary grounded=origins::inspect_recipes(ref proxy,ref signatures,ref unit.body)?;
+    let usize bindings=calls::inspect(ref proxy,ref unit.body,ref unit.elements,ref grounded.parameters)?;
     var Proof proof=Proof{.parameters=grounded.parameters,.preparations=0,.forwards=0,
         .returns=0,.rounds=grounded.rounds};
     var bool[256] matched=[false;256];f=0;

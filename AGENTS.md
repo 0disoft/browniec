@@ -4,6 +4,16 @@
   docs/product/04-remaining-work.md. Do not redefine completion around the
   experimental subset. Execution order and next B04 constraints are recorded in
   docs/engineering/completion-plan.md. Remote delivery remains separate.
+- B04 private CALL-binding IR now proves exact destinations, selected input origins,
+  anonymous exclusive END masks, whole-program CFG/loans and opaque scalar IDs.
+  Definition tracing rejects fabricated recursive grounding. Source lowering and
+  binding execution remain pending; VM entry rejects 66-68 before ownership transfer.
+  Windows development passed 26 native groups; release passed nine new groups.
+  All 122 inputs match and an LF mirror passed check --locked; no overrides/reuse.
+  Standalone CLI/full-profile/Linux/delivery/performance were not run.
+  See docs/engineering/m2-slice-result-call-ir.md and its focused Windows evidence.
+  Next connect source recipes and retained Held dispatch; keep the full objective
+  active. Earlier origin-hint/retained-binding entries describe their prior scope.
 - B04 source origin hints now have a separate advisory pass and signature column.
   It handles lexical aliases, reordered inputs and grounded recursion, resets old
   hints and rejects ungrounded cycles. Three interpreter and three development
