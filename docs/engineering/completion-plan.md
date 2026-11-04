@@ -43,8 +43,11 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    EQUAL proof/execution to immutable bytes without changing its price. The
    [source equality successor](static-equality-source.md) now lowers the byte-view
    signature for immutable image views with explicit text::bytes conversion.
-   General runtime view arguments, Static ranges and CALL/return origins remain.
-   Finish general references.
+   [Checked frame range metadata](static-view-ranges.md) now supplies compact
+   descriptor bounds, kind/function and liveness checks for the next dynamic
+   range opcode/VM path. It does not change current fixed-span execution.
+   General runtime view arguments, Static range execution/source and CALL/return
+   origins remain. Finish general references.
    Validate actual public source execution before promoting its capability.
 2. **Language completion: L01-L06, C03/C05.** Finish explicit module snapshots and
    visibility, inference/void/if values, complete array/record construction,

@@ -1,3 +1,20 @@
+- static_views now prepares packed frame-local byte ranges against admitted
+  image windows, function/kind and separate liveness. Thirteen-bit start/length
+  fields fit u32; 32x16 descriptors require 2048 bytes. Packing is bounded to
+  26 iterations with the pinned SDK; decoding/inspection do not repack. Empty
+  ranges are allowed, byte windows cannot broaden, text retains its exact
+  validated window and raw bytes cannot coerce to text. Check bounds before
+  arithmetic; metadata failures are IR 5, guest relative endpoint failures are
+  Bounds 14. Words alone do not own/pin/authenticate image authority.
+  This is metadata preparation only: no opcode, driver/source or public change.
+  Development/release each passed 7 focused native groups on 131 matching inputs
+  and a 225-file discovery identity, including proof from a real retained source
+  Program. All 126 production modules are LF and locked LF mirrors pass; no
+  overrides or historical reuse. CLI/full profiles/general stack/RAM/allocator/
+  timing/Linux/restricted/C ABI/package checks were not run. Next add independently
+  proved dynamic range IR and actual frame span execution, then computed source
+  endpoints and their exit cleanup. Keep the full goal active. See
+  docs/engineering/static-view-ranges.md and focused Windows evidence.
 - Native compile_image now lowers text::equal over exactly two immutable byte
   views: literals, named/explicit-ref/parenthesized views and explicit text::bytes
   conversion. Text and runtime mutable/owner-backed views are not coerced into
