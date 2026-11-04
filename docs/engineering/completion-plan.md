@@ -17,7 +17,8 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    proof, canonical authority and Fuel work. Direct return ranges now reuse those
    recipes, and typed lexical CALL bindings now lower to independently proved IR.
    Native lexical CALL destinations, parent restoration and prepaid close are now
-   connected; next finish borrowed-result arguments/projections,
+   connected. [Immediate scalar projections](m2-slice-result-projections.md) now
+   reuse that path; next finish direct returned CALL arguments/range projections,
    Static backing and the general scalar/array/record/Buffer reference contract.
    Validate actual public source execution before promoting its capability.
 2. **Language completion: L01-L06, C03/C05.** Finish explicit module snapshots and

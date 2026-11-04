@@ -69,7 +69,9 @@ This source increment constructs independently admitted IR. The
 [execution successor](m2-slice-result-call-execution.md) now routes native
 destinations, consumes END_CAPTURE exactly once, publishes fresh resumed tickets
 and retains selected parents/owners through actual cleanup. Ordinary public
-admission/dispatch, arguments/projections and Static backing remain open.
+admission/dispatch, direct returned CALL arguments/range projections and Static
+backing remain open. [Immediate scalar projections](m2-slice-result-projections.md)
+now reuse the native CALL binding path.
 
 The [Windows evidence](../evidence/m2-slice-result-call-source-windows-20261104.json)
 records 18 development native groups (six new source, eight existing origin and

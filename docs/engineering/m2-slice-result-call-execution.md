@@ -91,8 +91,9 @@ Its input-construction scratch is in a separate function from the live VM call,
 so temporary pool/table snapshots do not overlap that call's development stack.
 Final verification uses the default compiler/stack settings.
 
-No public result flags or ordinary Program layout are promoted. Next finish
-borrowed-result arguments/projections and Static backing, deliberate public
-Program/CLI admission/dispatch and Fuel-limit reconciliation. General references,
+No public result flags or ordinary Program layout are promoted.
+The [immediate scalar projections](m2-slice-result-projections.md) are connected.
+Direct returned CALL arguments/range projections, Static backing and ordinary
+public Program/CLI admission/dispatch remain pending. General references,
 Buffer, Engine/Instance, host exchange, restricted delivery, DLL/packaging and full
 conformance/performance evidence remain in the accepted completion inventory.

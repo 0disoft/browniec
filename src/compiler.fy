@@ -145,7 +145,9 @@ fn Result<usize, errors::Error> named_operand(ref u8[] source, ref mut lexer::St
         if (index != 64) { return .err(errors::make(3, at)); }
         let usize target = functions::find(source, signatures, begin, end);
         if (target == 16) { return .err(errors::make(3, at)); }
-        if (signatures.return_slice_elements[target] != 0) { return .err(errors::make(3, at)); }
+        if(signatures.return_slice_elements[target]!=0){
+            return slice_call_read(source,s,p,table,signatures,target,at,depth,result_type,structure,loop_state,false);
+        }
         if(signatures.return_lengths[target]!=0) {
             return array_call_read(source,s,p,table,signatures,target,at,depth,result_type,structure,loop_state);
         }
@@ -212,8 +214,13 @@ fn Result<usize,errors::Error> utf8_value(ref u8[] source,ref mut lexer::State s
             let usize call_at=s.begin;
             if(locals::find(source,table,s.begin,s.end)!=64) {return .err(errors::make(3,call_at));}
             let usize target=functions::find(source,signatures,s.begin,s.end);
-            if(target>=16 || target>=signatures.count || signatures.return_types[target]!=10 ||
-                signatures.return_lengths[target]==0) {return .err(errors::make(3,call_at));}
+            if(target>=16 || target>=signatures.count){return .err(errors::make(3,call_at));}
+            if(signatures.return_slice_elements[target]!=0){
+                if((signatures.return_slice_elements[target]&127)!=10){return .err(errors::make(3,call_at));}
+                let usize name=lexer::next(source,s)?;
+                return slice_call_read(source,s,p,table,signatures,target,call_at,depth,result_type,structure,loop_state,true);
+            }
+            if(signatures.return_types[target]!=10 || signatures.return_lengths[target]==0){return .err(errors::make(3,call_at));}
             let usize temporary=array_results::destination(signatures,target,10,
                 signatures.return_lengths[target],false,p,table.function,call_at)?;
             let usize name=lexer::next(source,s)?;
@@ -271,6 +278,36 @@ fn Result<usize,errors::Error> record_call_read(ref u8[] source,ref mut lexer::S
     let usize value=record_values::read(source,s,p,temporary,at)?;
     let usize dropped=ir::record_drop(p,temporary,at)?;
     return .ok(value);
+}
+// Finish CALL before snapshotting lexical names. Recursive scalar calls must
+// not retain a 64-entry snapshot at every parser frame.
+fn Result<usize,errors::Error> slice_call_read(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    usize target,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state,bool utf8){
+    let usize value=call_value(source,s,p,table,signatures,target,176,at,depth+1,result_type,structure,loop_state)?;
+    return slice_projection(source,s,p,table,signatures,value,at,depth,result_type,structure,loop_state,utf8);
+}
+// The anonymous result and retained parents/owners participate in every index
+// expression exit. Materialize the scalar before releasing the capture suffix.
+fn Result<usize,errors::Error> slice_projection(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    usize result,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state,bool utf8){
+    var locals::Table names=locals::snapshot(table);
+    let usize retained=result_calls::publish(p,ref mut names,result,at)?;
+    let usize captured=locals::declare(ref mut names,at,at,result,ir::exclusive(p,result-160))?;
+    var usize value=0;
+    if(utf8){
+        let usize close=lexer::punctuation(source,s,41)?;
+        value=ir::slice_utf8(p,result-160,at)?;
+    }else if(s.kind==46){value=slices::member(source,s,p,result-160,at)?;}
+    else{
+        let usize open=lexer::punctuation(source,s,91)?;
+        let usize index=expression(source,s,p,ref names,signatures,1,depth+1,12,result_type,structure,loop_state)?;
+        if(p.types[index]!=12){return .err(errors::make(3,at));}
+        let usize close=lexer::punctuation(source,s,93)?;
+        value=ir::slice_read(p,result-160,index,at)?;
+    }
+    let usize released=arrays::release_from(ref names,p,table.count,at)?;return .ok(value);
 }
 // Keep the returned owner visible to index-expression exits, then release it
 // immediately after materializing the scalar read or length.

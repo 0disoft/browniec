@@ -4,6 +4,23 @@
   docs/product/04-remaining-work.md. Do not redefine completion around the
   experimental subset. Execution order and next B04 constraints are recorded in
   docs/engineering/completion-plan.md. Remote delivery remains separate.
+- B04 immediate scalar projections now execute in the private returned-view
+  coordinator: returned CALL indexing for all six scalar/access modes, actual
+  range length and u8 UTF-8 inspection. A separate post-CALL lexical snapshot
+  retains the returned Held and selected anonymous parent/owner through computed
+  indices and exits; successful scalar materialization immediately closes them.
+  Existing reverse cleanup handles return/?/break/continue; named writers receive
+  fresh parents before the next expression. No opcode/price/capability promotion.
+  Windows development passed 14 native groups (5 new and 9 affected regressions);
+  release passed 6 (5 new plus existing owned UTF-8 CALL). All 124 inputs and the
+  212-file discovery digest match; all 117 production files are LF and an LF
+  mirror passed check --locked. No compiler/stack overrides or historical reuse.
+  The first fresh 5-group run completed before its raw snapshot; no input edits
+  intervened. Subsequent selections require that exact snapshot. Standalone CLI,
+  full profiles/Linux/restricted/ABI/packaging/allocator/performance were not run.
+  Next: direct returned CALL arguments/reference-valued range projections, Static
+  backing and public admission. General references and the full objective remain
+  open. See docs/engineering/m2-slice-result-projections.md and its Windows evidence.
 - Public Fuel reconciliation now deliberately raises the explicit CLI ceiling
   from 1000000 to 16000000; default 256 and operation prices are preserved.
   Shared/exclusive rooted/formal/canonical/legacy slice dispatch and CALL pricing
