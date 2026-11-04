@@ -34,9 +34,8 @@ pub fn Result<bool,errors::Error> candidate(ref u8[] source,ref lexer::State s,r
     let usize module_name=lexer::next(source,ref mut look)?;return .ok(look.kind==58);
 }
 
-// Parse immutable views only. Source CALLs and runtime mutable views are handled
-// by their existing owner/loan machinery, never coerced into an image view.
-pub fn Result<View,errors::Error> view(ref u8[] source,ref mut lexer::State s,
+// Pure atoms stay separate from effectful endpoint parsing in compiler.
+pub fn Result<View,errors::Error> atom(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table names,ref literals::Index index,usize depth){
     let usize at=s.begin;if(depth>32 || !index.enabled){return .err(errors::make(4,at));}
     if(s.kind==3 || s.kind==4){
@@ -45,16 +44,6 @@ pub fn Result<View,errors::Error> view(ref u8[] source,ref mut lexer::State s,
         let usize next=lexer::next(source,s)?;
         return .ok(View{.site=made,.kind=index.kinds[row],.owned=true});
     }
-    if(s.kind==40){let usize open=lexer::next(source,s)?;
-        let View value=view(source,s,p,names,index,depth+1)?;let usize close=lexer::punctuation(source,s,41)?;return .ok(value);}
-    if(word(source,s,b"text")){
-        var lexer::State look=lexer::snapshot(s);let usize next=lexer::next(source,ref mut look)?;
-        if(look.kind==58){
-            let usize module_name=lexer::next(source,s)?;let usize first=lexer::punctuation(source,s,58)?;
-            let usize second=lexer::punctuation(source,s,58)?;let usize method=lexer::word(source,s,b"bytes")?;
-            let usize open=lexer::punctuation(source,s,40)?;return bytes_argument(source,s,p,names,index,at,depth+1);
-        }
-    }
     if(word(source,s,b"ref")){let usize reference=lexer::next(source,s)?;}
     if(s.kind!=2){return .err(errors::make(3,at));}
     let usize local=locals::find(source,names,s.begin,s.end);
@@ -62,17 +51,40 @@ pub fn Result<View,errors::Error> view(ref u8[] source,ref mut lexer::State s,
     let usize encoded=names.registers[local];let usize next=lexer::next(source,s)?;
     return .ok(View{.site=site(encoded),.kind=kind(encoded),.owned=false});
 }
-pub fn Result<View,errors::Error> bytes_argument(ref u8[] source,ref mut lexer::State s,
-    ref mut ir::Program p,ref locals::Table names,ref literals::Index index,usize at,usize depth){
-    let View text=view(source,s,p,names,index,depth)?;
-    if(text.kind!=2){return .err(errors::make(3,at));}
-    let usize close=lexer::punctuation(source,s,41)?;let usize made=builders::bytes(p,text.site,at)?;
-    if(text.owned){let usize closed=builders::close(p,text.site,at)?;}
-    return .ok(View{.site=made,.kind=1,.owned=true});
+// Lookahead never lowers/evaluates endpoints. Ignore dots in nested expressions.
+pub fn Result<bool,errors::Error> range_follows(ref u8[] source,ref lexer::State s){
+    if(s.kind!=91){return .ok(false);}
+    var lexer::State look=lexer::snapshot(s);var usize brackets=1;var usize groups=0;
+    while(brackets!=0){let usize next=lexer::next(source,ref mut look)?;
+        if(look.kind==0){return .err(errors::make(2,s.begin));}
+        if(look.kind==91){brackets+=1;}else if(look.kind==93){brackets-=1;}
+        else if(look.kind==40 || look.kind==123){groups+=1;}
+        else if(look.kind==41 || look.kind==125){if(groups==0){return .err(errors::make(2,look.begin));}groups-=1;}
+        else if(look.kind==46 && brackets==1 && groups==0){
+            let usize dot=lexer::next(source,ref mut look)?;if(look.kind==46){return .ok(true);}
+        }
+    }return .ok(false);
 }
-
-pub fn Result<usize,errors::Error> declare(ref u8[] source,ref mut lexer::State s,
-    ref mut ir::Program p,ref mut locals::Table names,ref literals::Index index,
+// A parenthesized view needs a following projection in scalar context. Preserve
+// ordinary scalar grouping, including groups that merely contain view reads.
+pub fn Result<bool,errors::Error> grouped_projection(ref u8[] source,ref lexer::State s,ref locals::Table names){
+    if(s.kind!=40){return .ok(false);}var lexer::State look=lexer::snapshot(s);
+    var usize depth=0;
+    while(look.kind==40){depth+=1;if(depth>32){return .err(errors::make(4,s.begin));}let usize next=lexer::next(source,ref mut look)?;}
+    if(word(source,ref look,b"ref")){let usize next=lexer::next(source,ref mut look)?;}
+    let bool possible=look.kind==3 || look.kind==4 || (look.kind==2 &&
+        (binding(names,locals::find(source,names,look.begin,look.end)) || word(source,ref look,b"text")));
+    if(!possible){return .ok(false);}
+    look=lexer::snapshot(s);depth=1;
+    while(depth!=0){let usize next=lexer::next(source,ref mut look)?;
+        if(look.kind==0){return .err(errors::make(2,s.begin));}
+        if(look.kind==40){depth+=1;}else if(look.kind==41){depth-=1;}
+    }
+    let usize after=lexer::next(source,ref mut look)?;return .ok(look.kind==91 || look.kind==46);
+}
+pub struct Header { usize begin; usize end; u8 kind; }
+pub fn Result<Header,errors::Error> header(ref u8[] source,ref mut lexer::State s,
+    ref locals::Table names,
     bool mutable,u8 terminator,u8 result_type){
     if(mutable || terminator!=59 || result_type==0){return .err(errors::make(3,s.begin));}
     let usize keyword=lexer::word(source,s,b"ref")?;
@@ -85,29 +97,16 @@ pub fn Result<usize,errors::Error> declare(ref u8[] source,ref mut lexer::State 
     if(locals::find(source,names,begin,end)!=64){return .err(errors::make(3,begin));}
     if(names.count>=64){return .err(errors::make(4,begin));}
     let usize name=lexer::next(source,s)?;let usize equal=lexer::punctuation(source,s,61)?;
-    let View value=view(source,s,p,names,index,0)?;
-    if(value.kind!=expected){return .err(errors::make(3,begin));}
-    let usize finished=lexer::punctuation(source,s,terminator)?;
-    let usize made=if(value.owned){value.site}else{builders::alias(p,value.site,begin)?};
-    return locals::declare(names,begin,end,192+(expected as usize-1)*16+made,false);
+    return .ok(Header{.begin=begin,.end=end,.kind=expected});
 }
-
-// Both arguments currently contain only immutable view construction/lookup,
-// without guest CALLs or control effects. Extending view() to effectful forms
-// must first retain the left temporary through every right-argument exit.
-pub fn Result<usize,errors::Error> equal(ref u8[] source,ref mut lexer::State s,
-    ref mut ir::Program p,ref locals::Table names,ref literals::Index index){
+pub fn Result<usize,errors::Error> bind(ref mut ir::Program p,ref mut locals::Table names,
+    ref Header header,ref View value){
+    if(value.kind!=header.kind){return .err(errors::make(3,header.begin));}
+    let usize made=if(value.owned){value.site}else{builders::alias(p,value.site,header.begin)?};
+    return locals::declare(names,header.begin,header.end,192+(header.kind as usize-1)*16+made,false);
+}
+pub fn Result<usize,errors::Error> equal_head(ref u8[] source,ref mut lexer::State s){
     let usize at=s.begin;let usize module_name=lexer::word(source,s,b"text")?;
     let usize first=lexer::punctuation(source,s,58)?;let usize second=lexer::punctuation(source,s,58)?;
-    let usize method=lexer::word(source,s,b"equal")?;let usize open=lexer::punctuation(source,s,40)?;
-    let View left=view(source,s,p,names,index,0)?;
-    if(left.kind!=1){return .err(errors::make(3,at));}
-    let usize comma=lexer::punctuation(source,s,44)?;
-    let View right=view(source,s,p,names,index,0)?;
-    if(right.kind!=1){return .err(errors::make(3,at));}
-    let usize close=lexer::punctuation(source,s,41)?;
-    let usize result=builders::equal(p,left.site,right.site,at)?;
-    if(right.owned){let usize closed=builders::close(p,right.site,at)?;}
-    if(left.owned){let usize closed=builders::close(p,left.site,at)?;}
-    return .ok(result);
+    let usize method=lexer::word(source,s,b"equal")?;let usize open=lexer::punctuation(source,s,40)?;return .ok(at);
 }

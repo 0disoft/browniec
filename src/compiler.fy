@@ -70,6 +70,11 @@ fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s,
     if (depth > 32) { return .err(errors::make(4, s.begin)); }
     let usize at = s.begin;
     if(s.kind==3 && signatures.literals.enabled){
+        var lexer::State look=lexer::snapshot(s);let usize next=lexer::next(source,ref mut look)?;
+        if(static_source::range_follows(source,ref look)?){
+            let static_source::View view=static_view(source,s,p,table,signatures,depth,result_type,structure,loop_state)?;
+            return static_projection(source,s,p,table,signatures,ref view,at,depth,result_type,structure,loop_state);
+        }
         return literal_projection(source,s,p,table,signatures,depth,result_type,structure,loop_state,false);
     }
     if(word_is(source,s,b"switch")) {
@@ -125,6 +130,10 @@ fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s,
         return named_operand(source,s,p,table,signatures,depth,expected,result_type,structure,loop_state);
     }
     if (s.kind == 40) {
+        if(signatures.literals.enabled && static_source::grouped_projection(source,s,table)?){
+            let static_source::View view=static_view(source,s,p,table,signatures,depth,result_type,structure,loop_state)?;
+            return static_projection(source,s,p,table,signatures,ref view,at,depth,result_type,structure,loop_state);
+        }
         let usize advanced = lexer::next(source, s)?;
         let usize result = expression(source,s,p,table,signatures,1,depth + 1,expected,result_type,structure,loop_state)?;
         let usize closed = lexer::punctuation(source, s, 41)?;
@@ -163,6 +172,10 @@ fn Result<usize,errors::Error> literal_projection(ref u8[] source,ref mut lexer:
 fn Result<usize,errors::Error> static_projection(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
     ref static_source::View view,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
+    if(static_source::range_follows(source,s)?){
+        let static_source::View child=static_ranges(source,s,p,table,signatures,view,depth,result_type,structure,loop_state)?;
+        return static_projection(source,s,p,table,signatures,ref child,at,depth,result_type,structure,loop_state);
+    }
     if(view.kind!=1){return .err(errors::make(3,at));}
     if(!view.owned){return static_read(source,s,p,table,signatures,view.site,at,depth,result_type,structure,loop_state);}
     if(s.kind==46){
@@ -189,6 +202,100 @@ fn Result<usize,errors::Error> static_read(ref u8[] source,ref mut lexer::State 
         if(p.types[index]!=12){return .err(errors::make(3,at));}let usize close=lexer::punctuation(source,s,93)?;}
     return static_builders::scalar(p,site,index,length,at);
 }
+// Every owned parent joins lexical cleanup before effectful endpoints.
+fn Result<static_source::View,errors::Error> static_view(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
+    if(depth>32){return .err(errors::make(4,s.begin));}
+    let usize at=s.begin;var static_source::View value=static_source::View{.site=16,.kind=0,.owned=false};
+    if(s.kind==40){let usize open=lexer::next(source,s)?;
+        value=static_view(source,s,p,table,signatures,depth+1,result_type,structure,loop_state)?;
+        let usize close=lexer::punctuation(source,s,41)?;
+    }else if(word_is(source,s,b"text")){
+        var lexer::State look=lexer::snapshot(s);let usize next=lexer::next(source,ref mut look)?;
+        if(look.kind==58){let usize module_name=lexer::next(source,s)?;
+            let usize colon=lexer::punctuation(source,s,58)?;let usize path=lexer::punctuation(source,s,58)?;
+            let usize method=lexer::word(source,s,b"bytes")?;let usize open=lexer::punctuation(source,s,40)?;
+            value=static_bytes_argument(source,s,p,table,signatures,at,depth+1,result_type,structure,loop_state)?;
+        }else{value=static_source::atom(source,s,p,table,ref signatures.literals,depth)?;}
+    }else{value=static_source::atom(source,s,p,table,ref signatures.literals,depth)?;}
+    return static_ranges(source,s,p,table,signatures,ref value,depth,result_type,structure,loop_state);
+}
+fn Result<static_source::View,errors::Error> static_bytes_argument(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
+    let static_source::View text=static_view(source,s,p,table,signatures,depth+1,result_type,structure,loop_state)?;
+    if(text.kind!=2){return .err(errors::make(3,at));}
+    let usize close=lexer::punctuation(source,s,41)?;let usize made=static_builders::bytes(p,text.site,at)?;
+    if(text.owned){let usize closed=static_builders::close(p,text.site,at)?;}
+    return .ok(static_source::View{.site=made,.kind=1,.owned=true});
+}
+fn Result<static_source::View,errors::Error> static_ranges(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    ref static_source::View parent,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
+    var static_source::View value=static_source::View{.site=parent.site,.kind=parent.kind,.owned=parent.owned};
+    while(static_source::range_follows(source,s)?){
+        if(value.kind!=1){return .err(errors::make(3,s.begin));}
+        let static_source::View next=if(value.owned){static_owned_range(source,s,p,table,signatures,value.site,depth,result_type,structure,loop_state)?}
+            else{static_range(source,s,p,table,signatures,value.site,depth,result_type,structure,loop_state)?};
+        value=next;
+    }return .ok(value);
+}
+fn Result<static_source::View,errors::Error> static_owned_range(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    usize parent,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
+    let usize at=s.begin;var locals::Table names=locals::snapshot(table);
+    let usize hidden=locals::declare(ref mut names,at,at,192+parent,false)?;
+    let static_source::View child=static_range(source,s,p,ref names,signatures,parent,depth,result_type,structure,loop_state)?;
+    let usize closed=arrays::release_from(ref names,p,table.count,at)?;return .ok(child);
+}
+fn Result<static_source::View,errors::Error> static_range(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    usize parent,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
+    let usize at=s.begin;let usize open=lexer::punctuation(source,s,91)?;
+    let usize lo=if(s.kind==46){ir::integer(p,0,12,at)?}
+        else{expression(source,s,p,table,signatures,1,depth+1,12,result_type,structure,loop_state)?};
+    if(p.types[lo]!=12){return .err(errors::make(3,at));}
+    let usize first=lexer::punctuation(source,s,46)?;let usize second=lexer::punctuation(source,s,46)?;
+    let usize hi=if(s.kind==93){static_builders::scalar(p,parent,0,true,at)?}
+        else{expression(source,s,p,table,signatures,1,depth+1,12,result_type,structure,loop_state)?};
+    if(p.types[hi]!=12){return .err(errors::make(3,at));}
+    let usize close=lexer::punctuation(source,s,93)?;let usize site=static_builders::range(p,parent,lo,hi,at)?;
+    return .ok(static_source::View{.site=site,.kind=1,.owned=true});
+}
+fn Result<usize,errors::Error> static_declaration(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref mut locals::Table table,ref functions::Table signatures,
+    bool mutable,u8 terminator,u8 result_type,usize depth,usize structure,ref mut loops::State loop_state){
+    let static_source::Header header=static_source::header(source,s,table,mutable,terminator,result_type)?;
+    let static_source::View value=static_view(source,s,p,table,signatures,depth,result_type,structure,loop_state)?;
+    let usize end=lexer::punctuation(source,s,terminator)?;return static_source::bind(p,table,ref header,ref value);
+}
+fn Result<usize,errors::Error> static_equal(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
+    let usize at=static_source::equal_head(source,s)?;
+    let static_source::View left=static_view(source,s,p,table,signatures,depth,result_type,structure,loop_state)?;
+    if(left.kind!=1){return .err(errors::make(3,at));}
+    if(left.owned){return static_equal_owned(source,s,p,table,signatures,ref left,at,depth,result_type,structure,loop_state);}
+    return static_equal_right(source,s,p,table,signatures,left.site,at,depth,result_type,structure,loop_state);
+}
+fn Result<usize,errors::Error> static_equal_owned(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    ref static_source::View left,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
+    var locals::Table names=locals::snapshot(table);
+    let usize hidden=locals::declare(ref mut names,at,at,192+left.site,false)?;
+    let usize value=static_equal_right(source,s,p,ref names,signatures,left.site,at,depth,result_type,structure,loop_state)?;
+    let usize closed=arrays::release_from(ref names,p,table.count,at)?;return .ok(value);
+}
+fn Result<usize,errors::Error> static_equal_right(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    usize left,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
+    let usize comma=lexer::punctuation(source,s,44)?;
+    let static_source::View right=static_view(source,s,p,table,signatures,depth,result_type,structure,loop_state)?;
+    if(right.kind!=1){return .err(errors::make(3,at));}
+    let usize close=lexer::punctuation(source,s,41)?;let usize value=static_builders::equal(p,left,right.site,at)?;
+    if(right.owned){let usize closed=static_builders::close(p,right.site,at)?;}return .ok(value);
+}
 fn Result<usize, errors::Error> named_operand(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize depth, u8 expected, u8 result_type, usize structure, ref mut loops::State loop_state) {
     let usize at = s.begin;
     if (word_is(source, s, b"text")) {
@@ -198,15 +305,14 @@ fn Result<usize, errors::Error> named_operand(ref u8[] source, ref mut lexer::St
         if(qualified && signatures.literals.enabled){
             let usize first=lexer::next(source,ref mut look)?;
             let usize second=lexer::punctuation(source,ref mut look,58)?;
-            if(word_is(source,ref look,b"equal")){return static_source::equal(source,s,p,table,ref signatures.literals);}
+            if(word_is(source,ref look,b"equal")){return static_equal(source,s,p,table,signatures,depth,result_type,structure,loop_state);}
             if(word_is(source,ref look,b"bytes")){
                 let usize module_name=lexer::next(source,s)?;
                 let usize colon=lexer::punctuation(source,s,58)?;
                 let usize path=lexer::punctuation(source,s,58)?;
                 let usize method=lexer::word(source,s,b"bytes")?;
                 let usize open=lexer::punctuation(source,s,40)?;
-                if(s.kind==4){return literal_projection(source,s,p,table,signatures,depth,result_type,structure,loop_state,true);}
-                let static_source::View view=static_source::bytes_argument(source,s,p,table,ref signatures.literals,at,0)?;
+                let static_source::View view=static_bytes_argument(source,s,p,table,signatures,at,depth,result_type,structure,loop_state)?;
                 return static_projection(source,s,p,table,signatures,ref view,at,depth,result_type,structure,loop_state);
             }
         }
@@ -950,7 +1056,7 @@ fn Result<usize, errors::Error> declaration(ref u8[] source, ref mut lexer::Stat
         let usize keyword = lexer::next(source, s)?;
         if (word_is(source,s,b"ref")) {
             if(signatures.literals.enabled && static_source::candidate(source,s,table)?){
-                return static_source::declare(source,s,p,table,ref signatures.literals,mutable,terminator,result_type);
+                return static_declaration(source,s,p,table,signatures,mutable,terminator,result_type,expr_depth,structure,loop_state);
             }
             return slice_declaration(source,s,p,table,signatures,mutable,terminator,result_type,expr_depth,structure,loop_state);
         }
