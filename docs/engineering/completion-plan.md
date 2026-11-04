@@ -19,9 +19,10 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    Native lexical CALL destinations, parent restoration and prepaid close are now
    connected. [Immediate scalar projections](m2-slice-result-projections.md) now
    reuse that path. [Direct returned CALL arguments](m2-slice-result-arguments.md)
-   now retain transitive selected ancestry and close unselected captures; next finish
-   reference-valued declaration/return range projections,
-   Static backing and the general scalar/array/record/Buffer reference contract.
+   now retain transitive selected ancestry and close unselected captures.
+   [Declaration/return range projections](m2-slice-result-range-projections.md)
+   reuse the same retained results and terminal handoff. Next finish Static backing
+   and the general scalar/array/record/Buffer reference contract.
    Validate actual public source execution before promoting its capability.
 2. **Language completion: L01-L06, C03/C05.** Finish explicit module snapshots and
    visibility, inference/void/if values, complete array/record construction,
@@ -112,5 +113,6 @@ source forms next; this foundation does not complete B04 or public admission.
 The [direct-argument successor](m2-slice-result-arguments.md) now connects nested
 returned actuals, including argument ranges, transitive shared/owned retention,
 exclusive chain collapse and recursive advisory source hints. Ordinary result
-kinds retain reverse capture cleanup. Reference-valued declaration/return ranges,
-Static backing, general references and public promotion remain next.
+kinds retain reverse capture cleanup. The [range-projection successor](m2-slice-result-range-projections.md)
+now connects declaration/return ranges over retained CALL results. Static backing,
+general references and public promotion remain next.

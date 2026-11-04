@@ -46,3 +46,9 @@ borrow cases. Release, Linux, the full M1/M2 suites, isolation, ABI, allocator a
 performance measurement were not run for this increment. Full-runtime test
 execution requires the native backend; the semantic interpreter cannot execute
 std::text::validate_utf8's byte-slice operations.
+
+The [CALL-result range successor](m2-slice-result-range-projections.md) connects
+reference-valued declaration and terminal-return ranges over retained returned
+CALLs, including selected temporary backing and endpoint exits. Bare forwarding
+keeps the earlier recipe. The validation above remains historical for this
+named-parent range increment.

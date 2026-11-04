@@ -786,9 +786,14 @@ fn Result<usize, errors::Error> slice_declaration(ref u8[] source, ref mut lexer
             if(locals::find(source,table,s.begin,s.end)!=64 || target>=signatures.count ||
                 signatures.return_slice_elements[target]!=(header.element|if(header.exclusive){128}else{0})){return .err(errors::make(3,s.begin));}
             let usize name=lexer::next(source,s)?;
-            let usize value=call_value(source,s,p,table,signatures,target,176,header.begin,depth,result_type,structure,loop_state)?;
-            let usize end=lexer::punctuation(source,s,59)?;
+            var usize value=call_value(source,s,p,table,signatures,target,176,header.begin,depth,result_type,structure,loop_state)?;
             let usize retained=result_calls::publish(p,table,value,header.begin)?;
+            if(s.kind==91){
+                let usize captured=locals::declare(table,header.begin,header.begin,value,header.exclusive)?;
+                let return_ranges::Bounds bounds=slice_bounds(source,s,p,table,signatures,value-160,header.begin,structure,depth,result_type,loop_state)?;
+                let usize end=lexer::punctuation(source,s,59)?;
+                value=160+return_ranges::acquire(p,value-160,table.function,bounds.lo,bounds.hi,header.begin)?;
+            }else{let usize end=lexer::punctuation(source,s,59)?;}
             return locals::declare(table,header.begin,header.end,value,header.exclusive);
         }
     }
@@ -1297,19 +1302,41 @@ fn Result<bool, errors::Error> control_while(ref u8[] source, ref mut lexer::Sta
 
 // Analysis uses a length observation, never an escaping runtime ticket. Ordinary
 // expressions cannot consume borrowed CALL results as their scalar proxies.
-fn Result<usize,errors::Error> slice_return_range(ref u8[] source,ref mut lexer::State s,
+fn Result<return_ranges::Bounds,errors::Error> slice_bounds(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
-    usize parent,usize at,usize structure,usize depth,ref mut loops::State loop_state){
+    usize parent,usize at,usize structure,usize depth,u8 result_type,ref mut loops::State loop_state){
     let usize open=lexer::punctuation(source,s,91)?;
     let usize lo=if(s.kind==46){ir::integer(p,0,12,at)?}
-        else{expression(source,s,p,table,signatures,1,depth+1,12,12,structure,loop_state)?};
+        else{expression(source,s,p,table,signatures,1,depth+1,12,result_type,structure,loop_state)?};
     if(p.types[lo]!=12){return .err(errors::make(3,at));}
     let usize first=lexer::punctuation(source,s,46)?;let usize second=lexer::punctuation(source,s,46)?;
     let usize hi=if(s.kind==93){ir::slice_length(p,parent,at)?}
-        else{expression(source,s,p,table,signatures,1,depth+1,12,12,structure,loop_state)?};
+        else{expression(source,s,p,table,signatures,1,depth+1,12,result_type,structure,loop_state)?};
     if(p.types[hi]!=12){return .err(errors::make(3,at));}
     let usize close=lexer::punctuation(source,s,93)?;
-    return return_ranges::acquire(p,parent,table.function,lo,hi,at);
+    return .ok(return_ranges::Bounds{.lo=lo,.hi=hi});
+}
+fn Result<usize,errors::Error> slice_range(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    usize parent,usize at,usize structure,usize depth,u8 result_type,ref mut loops::State loop_state){
+    let return_ranges::Bounds bounds=slice_bounds(source,s,p,table,signatures,parent,at,structure,depth,result_type,loop_state)?;
+    return return_ranges::acquire(p,parent,table.function,bounds.lo,bounds.hi,at);
+}
+// A returned CALL is already live while its endpoints evaluate. Keep its hidden
+// ancestors in a separate post-CALL snapshot, never on every scalar parse frame.
+fn Result<bool,errors::Error> slice_return_projection(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    usize result,usize at,usize structure,usize depth,ref mut loops::State loop_state){
+    var locals::Table names=locals::snapshot(table);
+    let usize retained=result_calls::publish(p,ref mut names,result,at)?;
+    let usize captured=locals::declare(ref mut names,at,at,result,ir::exclusive(p,result-160))?;
+    let return_ranges::Bounds bounds=slice_bounds(source,s,p,ref names,signatures,result-160,at,structure,depth,12,loop_state)?;
+    let usize end=lexer::punctuation(source,s,59)?;
+    let usize child=return_ranges::acquire(p,result-160,names.function,bounds.lo,bounds.hi,at)?;
+    let usize value=ir::slice_length(p,child,at)?;
+    let usize closed=return_ranges::release(p,child,result-160,at)?;
+    let usize dropped=arrays::release_visible(ref names,p,at)?;
+    let usize returned=ir::emit(p,8,value,0,at)?;return .ok(true);
 }
 fn Result<bool,errors::Error> slice_origin_return(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
@@ -1328,7 +1355,7 @@ fn Result<bool,errors::Error> slice_origin_return(ref u8[] source,ref mut lexer:
         }
         let usize name=lexer::next(source,s)?;
         if(s.kind==91){
-            parent=site;child=slice_return_range(source,s,p,table,signatures,site,at,depth,expr_depth,loop_state)?;
+            parent=site;child=slice_range(source,s,p,table,signatures,site,at,depth,expr_depth,12,loop_state)?;
             value=ir::slice_length(p,child,at)?;
         }else{value=ir::slice_length(p,site,at)?;}
     }else{
@@ -1336,6 +1363,10 @@ fn Result<bool,errors::Error> slice_origin_return(ref u8[] source,ref mut lexer:
         let usize target=functions::find(source,signatures,s.begin,s.end);
         if(target>=signatures.count || signatures.return_slice_elements[target]!=encoded){return .err(errors::make(3,s.begin));}
         let usize name=lexer::next(source,s)?;
+        if(return_ranges::follows(source,s)?){
+            let usize result=call_value(source,s,p,table,signatures,target,176,at,expr_depth,12,depth,loop_state)?;
+            return slice_return_projection(source,s,p,table,signatures,result,at,depth,expr_depth,loop_state);
+        }
         value=call_value(source,s,p,table,signatures,target,16,at,expr_depth,12,depth,loop_state)?;
     }
     let usize end=lexer::punctuation(source,s,59)?;

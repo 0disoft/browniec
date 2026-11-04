@@ -4,6 +4,25 @@
   docs/product/04-remaining-work.md. Do not redefine completion around the
   experimental subset. Execution order and next B04 constraints are recorded in
   docs/engineering/completion-plan.md. Remote delivery remains separate.
+- B04 declaration and terminal-return ranges over retained CALL results now
+  execute privately. Parse exact-usize endpoints in order with hidden result/
+  ancestry live; declarations finish delimiters before child acquisition and
+  publish one user binding. Ranged returns use a post-CALL snapshot and existing
+  PREPARE_VIEW/handoff cleanup, preserving real returned-relative bounds and
+  consuming Helds once. A bounded lexer snapshot keeps bare PREPARE_FORWARD
+  unchanged. Rooted temporary backing is local; independent origin proof rejects
+  its escape. No opcode, cost, capability or public limit change.
+  Windows development passed 14 native groups and release eight on 125 matching
+  final inputs and a 215-file discovery digest. All 117 production files are LF;
+  an LF mirror passed check --locked. All counted groups ran after final capture;
+  no native overrides or historical reuse. Earlier probes corrected unsupported
+  bool-switch and root-shape-versus-selected-length fixture assumptions and are
+  excluded. Native external results prove actual bounds, exact/one-short Fuel,
+  zero-Fuel close, double-close/stale rejection and invocation drain. Standalone
+  CLI/full profiles/Linux/restricted/ABI/packaging/allocator/performance were not
+  run. Next: actual Static backing, general references and public result admission.
+  The complete objective remains open. See
+  docs/engineering/m2-slice-result-range-projections.md and its Windows evidence.
 - B04 direct returned CALL actuals now lower and execute privately, including
   argument ranges, temporary literal/owned CALL backing and all six scalar/access
   modes. Publish hidden selected ancestry before later arguments/endpoints;

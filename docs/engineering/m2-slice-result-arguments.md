@@ -67,3 +67,7 @@ Reference-valued declaration/return range projections, Static backing, general
 references and ordinary public Program/CLI result admission remain open. Full
 M1/M2, standalone CLI, Linux, restricted delivery, ABI, packages, allocator
 instrumentation and timing/stack-size measurements are outside this increment.
+
+The [range-projection successor](m2-slice-result-range-projections.md) now connects
+reference-valued declaration/return ranges over CALL results. The verification
+counts above retain this direct-argument increment's original scope.
