@@ -4,6 +4,14 @@
   docs/product/04-remaining-work.md. Do not redefine completion around the
   experimental subset. Execution order and next B04 constraints are recorded in
   docs/engineering/completion-plan.md. Remote delivery remains separate.
+- B04 source origin hints now have a separate advisory pass and signature column.
+  It handles lexical aliases, reordered inputs and grounded recursion, resets old
+  hints and rejects ungrounded cycles. Three interpreter and three development
+  native groups passed on 119 matching compilation inputs. It is not connected
+  to source lowering/admission yet. Next build the CALL/binding recipe and have
+  independent origin proof trace its definitions, not flattened claimed metadata.
+  See docs/engineering/m2-slice-source-origins.md. No public promotion; the full
+  objective and remaining B04/language/runtime/delivery work remain active.
 - Native caller frames can now retain returned Held receipts in slice sites,
   continue, and publish fresh parent tickets on prepaid close. A sparse 47-entry
   map supports same-slot exclusive descendants; seventeen live native receipts

@@ -26,6 +26,8 @@ pub struct Table {
     // Nonzero encodes a scalar[] result; bit128 is exclusive access. These
     // declarations are analysis-only until body-origin proof and VM handoff.
     u8[16] return_slice_elements;
+    // Advisory body-derived origin hints; independently recomputed at IR admission.
+    u8[16] return_slice_inputs;
     // Upper bound on exact-mode input origins, one bit per argument position.
     // Multiple candidates are not a multi-origin return or an origin proof.
     u8[16] return_slice_candidates;
@@ -45,7 +47,7 @@ pub struct Table {
 pub fn Table empty() {
     return Table { .begins = [0; 16], .ends = [0; 16], .bodies = [0; 16],
         .body_ends = [0; 16], .arities = [0; 16], .return_lengths = [0; 16], .return_records = [0; 16],
-        .return_slice_elements = [0; 16], .return_slice_candidates = [0; 16], .param_begins = [0; 128],
+        .return_slice_elements = [0; 16], .return_slice_inputs = [0; 16], .return_slice_candidates = [0; 16], .param_begins = [0; 128],
         .param_ends = [0; 128], .return_types = [0; 16], .param_types = [0; 128],
         .param_lengths = [0; 128], .param_arrays = [0; 128], .param_records = [0; 128], .param_slices = [false; 128], .param_slice_elements = [0; 128], .count = 0, .entry = 16 };
 }
