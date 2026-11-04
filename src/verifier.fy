@@ -235,7 +235,7 @@ fn Result<reborrows::Sites, errors::Error> validate(ref ir::Program p,bool allow
     return .ok(loans);
 }
 
-// Ordinary entry points carry no Static authority and keep rejecting 69-74.
+// Ordinary entry points carry no Static authority and keep rejecting 69-75.
 fn Result<reborrows::Sites,errors::Error> plain(ref ir::Program p,bool calls) {
     let statics::Sites sites = statics::empty(); return validate(p,calls,ref sites);
 }

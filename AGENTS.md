@@ -1,3 +1,19 @@
+- Private Static ALIAS (75) now preserves exact immutable byte/text kind,
+  image range and function while keeping source/destination independently live.
+  Closing the source preserves its aliases. No payload allocation/copy or new
+  runtime state is introduced; exact cost is 17 including dispatch, preflighted
+  before destination publication. All definitions share the existing 16-site cap.
+  Independent proof rejects invalid operands, foreign/closed sources and kind
+  coercion. The builder derives allocation from actual retained instructions.
+  Windows development/release each passed 32 focused native groups on 131 matching
+  inputs and a 221-file discovery identity. All 124 production files are LF;
+  locked LF mirrors pass. Current public Fuel CLI phases each passed 33 tool-free
+  cases on 136 matching CLI inputs: default 256, explicit cap 16000000 unchanged.
+  No native overrides/historical reuse. Public Fuel native/full-profile/Linux/
+  restricted/ABI/packaging and general stack/RAM/allocator/timing were not rerun.
+  Typed Static local/alias syntax, ref str, general view expressions and Static
+  CALL/return origins remain next; public promotion and the complete inventory
+  stay open. See docs/engineering/static-alias.md and its Windows evidence.
 - Native compiler::compile_image now collects bounded source literals into a
   staged kind-specific builder, lowers immediate byte reads/lengths and explicit
   text-literal text::bytes projections, freezes exact used payload and retains

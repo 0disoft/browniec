@@ -24,7 +24,7 @@ can execute with zero guest backing. Program image charge still covers image
 metadata/capacity only, not complete Program/Engine/process accounting.
 
 The ordinary bare verifier/VM entry points carry no image authority and continue
-rejecting 69-74. Image-aware admission is an explicit native API path, not a guest
+rejecting 69-75. Image-aware admission is an explicit native API path, not a guest
 numeric flag or a public CLI/capability promotion. A copyable Sites value alone
 cannot select the admitted payload at the invocation boundary.
 
@@ -37,7 +37,7 @@ normalized scalar proof accepts the index while full recipe proof rejects it.
 
 Image-aware entry reuses existing argument admission, owner transfer, frame
 push/pop, ordinary scalar/array/record CALLs, returned-loan handoff and first-error
-abort. There is no second scalar interpreter. Driver dispatch routes 69-74 to
+abort. There is no second scalar interpreter. Driver dispatch routes 69-75 to
 `static_execution::step` with the exact payload and independently rebuilt sites.
 
 A separate 32-word local table tracks Static live sites per call frame. Its
@@ -54,6 +54,8 @@ the running invocation; no Static pointer or receipt escapes a scalar result.
 Failure discards the local alias words and uses existing zero-Fuel native abort
 for real owners/loans. The retained image remains intact for subsequent runs.
 This is not Engine handle pinning or an external returned-Static lifetime API.
+The [alias successor](static-alias.md) now copies same-kind immutable descriptors
+through opcode 75, preserving exact spans and independent lifetimes.
 
 Initial development probes reproduced Windows stack overflow in both an existing
 CALL-binding test and the new retained-image integration. Verifier/driver field
@@ -87,7 +89,7 @@ price preflight, preserving Fuel as first cause when both fail.
 
 | Operation | Total including dispatch |
 | --- | ---: |
-| OPEN, BYTES, LEN | 17 |
+| OPEN, BYTES, ALIAS, LEN | 17 |
 | CLOSE | 1 |
 | READ | 18 |
 | EQUAL | 17 + selected left byte length + selected right byte length |

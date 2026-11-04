@@ -8,14 +8,15 @@ import errors as errors;
 // 69 OPEN dst=site,a=literal,b=1 bytes/2 text; bytes4..5 lo,6..7 hi (LE u16).
 // 70 CLOSE dst=site,a=b=0. 71 READ u8 dst,a=byte site,b=usize index register.
 // 72 LEN usize dst,a=byte site,b=0. 73 EQUAL bool dst,a/b=read-only byte/text sites.
-// 74 BYTES dst=new byte site,a=live text site,b=0. Reserved bytes are zero.
+// 74 BYTES dst=new byte site,a=live text site,b=0.
+// 75 ALIAS dst=new same-kind site,a=live byte/text site,b=0. Reserved bytes are zero.
 // Definitions are reconstructed from actual code/image, never caller metadata.
 // This copyable proof does not own/pin storage or authenticate a Program handle.
 pub struct Sites { usize[16] definitions; usize[16] functions; usize[16] starts; u8[16] kinds; images::Span[16] spans; usize count; }
 pub fn Sites empty(){return Sites{.definitions=[256;16],.functions=[16;16],.starts=[0;16],.kinds=[0;16],
     .spans=[images::Span{.literal=16,.start=0,.end=0};16],.count=0};}
 fn errors::Error invalid(usize pc){return errors::make(5,pc);}
-pub fn bool operation(u8 op){return op>=69 && op<=74;}
+pub fn bool operation(u8 op){return op>=69 && op<=75;}
 
 // This checks partitions before reading any PC. Complete ordinary CFG/type/loan
 // proof is still mandatory and is supplied by verifier::inspect_statics.
@@ -31,7 +32,7 @@ pub fn Result<Sites,errors::Error> definitions(ref ir::Program p,ref images::Ima
     var Sites sites=empty();f=0;
     while(f<p.function_count){var usize pc=p.starts[f];while(pc<p.ends[f]){
         let usize at=pc*8;let u8 op=p.code[at];
-        if(op==69 || op==74){
+        if(op==69 || op==74 || op==75){
             let usize dst=p.code[at+1] as usize;let usize a=p.code[at+2] as usize;
             if(dst>=16 || sites.definitions[dst]!=256){return .err(invalid(pc));}
             var images::Span span=images::Span{.literal=16,.start=0,.end=0};var u8 kind=1;
@@ -44,9 +45,10 @@ pub fn Result<Sites,errors::Error> definitions(ref ir::Program p,ref images::Ima
                 switch(images::view(image,span)){case .ok(_):{}case .err(_):{return .err(invalid(pc));}};
                 if(kind==2){switch(images::text(image,span)){case .ok(_):{}case .err(_):{return .err(invalid(pc));}};}
             }else{
-                if(a>=16 || a==dst || sites.kinds[a]!=2 || sites.functions[a]!=f || sites.definitions[a]>=pc ||
+                if(a>=16 || a==dst || (sites.kinds[a]!=1 && sites.kinds[a]!=2) ||
+                    (op==74 && sites.kinds[a]!=2) || sites.functions[a]!=f || sites.definitions[a]>=pc ||
                     p.code[at+3]!=0 || p.code[at+4]!=0 || p.code[at+5]!=0 || p.code[at+6]!=0 || p.code[at+7]!=0){return .err(invalid(pc));}
-                span=sites.spans[a];
+                span=sites.spans[a];kind=if(op==75){sites.kinds[a]}else{1};
             }
             let usize absolute=switch(images::absolute(image,span)){case .ok(v):{v}case .err(_):{return .err(invalid(pc));}};
             sites.definitions[dst]=pc;sites.functions[dst]=f;sites.starts[dst]=absolute;sites.kinds[dst]=kind;sites.spans[dst]=span;sites.count+=1;
@@ -72,9 +74,9 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,ref Sites sites,usize 
     let usize a=p.code[at+2] as usize;let usize b=p.code[at+3] as usize;let usize one=1;
     if(!operation(op) || sites.count==0){return .err(invalid(pc));}
     if(op!=69 && (p.code[at+4]!=0 || p.code[at+5]!=0 || p.code[at+6]!=0 || p.code[at+7]!=0)){return .err(invalid(pc));}
-    if(op==69 || op==74){
+    if(op==69 || op==74 || op==75){
         if(dst>=16 || sites.definitions[dst]!=pc || sites.functions[dst]!=f || (live&(one<<dst))!=0 ||
-            (op==74 && (!live_site(sites,a,f,2,live) || b!=0))){return .err(invalid(pc));}
+            ((op==74 || op==75) && (!live_site(sites,a,f,if(op==74){2}else{0},live) || b!=0))){return .err(invalid(pc));}
         return .ok(live|(one<<dst));
     }
     if(op==70){

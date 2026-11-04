@@ -35,8 +35,9 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    tokens and stages checked UTF-8/escape data before kind-specific image interning.
    The [native source compiler](literal-compiler.md) now owns atomic literal
    collection and lowers immediate byte/text projections through the retained
-   image. Next connect typed Static locals/aliases and ref str, then image-backed
-   CALL/return origins. Keep source scratch separate from retained authority. The [byte-view equality successor](static-byte-equality.md) now extends private
+   image. The [alias IR successor](static-alias.md) now preserves same-kind views
+   and source liveness without copying payload. Next connect typed Static
+   locals/aliases and ref str, then image-backed CALL/return origins. Keep source scratch separate from retained authority. The [byte-view equality successor](static-byte-equality.md) now extends private
    EQUAL proof/execution to immutable bytes without changing its price. Lower the
    accepted byte-view source signature with explicit text::bytes conversion. Finish general references.
    Validate actual public source execution before promoting its capability.

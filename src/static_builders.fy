@@ -12,7 +12,7 @@ fn Result<u8,errors::Error> byte(usize value,usize offset){
 fn Result<usize,errors::Error> fresh(ref ir::Program p,usize offset){
     if(p.count>256){return .err(errors::make(4,offset));}
     var usize count=0;var usize pc=0;while(pc<p.count){let usize at=pc*8;
-        if(p.code[at]==69 || p.code[at]==74){let usize site=p.code[at+1] as usize;
+        if(p.code[at]==69 || p.code[at]==74 || p.code[at]==75){let usize site=p.code[at+1] as usize;
             if(site>=16){return .err(errors::make(4,offset));}if(site>=count){count=site+1;}}
         pc+=1;
     }if(count==16){return .err(errors::make(4,offset));}return .ok(count);
@@ -35,4 +35,11 @@ pub fn Result<usize,errors::Error> scalar(ref mut ir::Program p,usize site,usize
     if(p.registers>=128){return .err(errors::make(4,offset));}
     let usize dst=p.registers;let usize pc=ir::raw(p,if(length){72}else{71},dst,site,if(length){0}else{index},offset)?;
     p.types[dst]=if(length){12}else{10};p.registers+=1;return .ok(dst);
+}
+
+// Copy a shared descriptor, preserving its actual kind/range and independent
+// Program-image lifetime. Complete source liveness is proved at admission.
+pub fn Result<usize,errors::Error> alias(ref mut ir::Program p,usize source,usize offset){
+    if(source>=16){return .err(errors::make(3,offset));}
+    let usize site=fresh(p,offset)?;let usize pc=ir::raw(p,75,site,source,0,offset)?;return .ok(site);
 }

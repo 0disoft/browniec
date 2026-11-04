@@ -14,6 +14,7 @@ import verifier as verifier;
 import vm as vm;
 import static_ir as statics;
 import static_execution as static_vm;
+import static_builders as static_builders;
 
 fn usize built(Result<usize,errors::Error> result){
     return switch(result){case .ok(value):{value}case .err(_):{assert(false);0}};
@@ -451,5 +452,56 @@ fn Result<images::Image,images::Error> mixed_image(){
     assert(registers[dst]==99);
     switch(static_vm::step(ref unit.body,ref sites,payload,pc,0,ref mut registers,3,22)){
         case .ok(v):{assert(v.live==3 && v.remaining==0 && registers[dst]==1);}case .err(_):{assert(false);}
+    };
+}
+
+fn ir::Program alias_program(u8 mode){
+    var ordinary_ir::Program p=ordinary_ir::empty();p.function_count=1;p.entry=0;p.return_types[0]=1;
+    let usize index=index_zero(ref mut p);
+    let usize root=open_site(ref mut p,0,0,if(mode==0){1}else{2},0,if(mode==0){1}else{3});
+    let usize first=if(mode==2){built(static_builders::bytes(ref mut p,0,0))}
+        else{built(static_builders::alias(ref mut p,0,0))};
+    assert(first==1);let usize close_root=close_site(ref mut p,0);
+    let usize second=if(mode==1){built(static_builders::bytes(ref mut p,first,0))}
+        else{built(static_builders::alias(ref mut p,first,0))};
+    assert(second==2);let usize close_first=close_site(ref mut p,first);
+    let usize byte=fresh(ref mut p,10);let usize read=read_site(ref mut p,byte,second,index);
+    let usize result=built(ordinary_ir::widen(ref mut p,byte,1,0));
+    let usize close_second=close_site(ref mut p,second);
+    let usize done=returned(ref mut p,result);function_end(ref mut p,0);
+    return ir::Program{.body=p,.elements=[0;16],.parameters=[0;16]};
+}
+@test fn void aliases_keep_bytes_text_and_converted_bytes_after_parent_close(){
+    let ir::Program raw=alias_program(0);
+    let programs::Program a=switch(one_kept(ref raw,42)){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    let usize exact=runtime::cost()+runtime::leave_cost()+75;
+    switch(run_zero(ref a,0,exact)){case .ok(v):{assert(v.value==42 && v.remaining==0);}case .err(_):{assert(false);}};
+    switch(run_zero(ref a,0,exact-1)){case .ok(_):{assert(false);}case .err(e):{assert(e.kind==8);}};
+    switch(run_zero(ref a,0,exact+1)){case .ok(v):{assert(v.value==42 && v.remaining==1);}case .err(_):{assert(false);}};
+    let u8[3] korean=[237,149,156];
+    let ir::Program text=alias_program(1);
+    let images::Image image=switch(text_image(ref korean)){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    let programs::Program b=switch(attach(ref text,image)){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    switch(run_zero(ref b,0,exact)){case .ok(v):{assert(v.value==237 && v.remaining==0);}case .err(_):{assert(false);}};
+    let ir::Program converted=alias_program(2);
+    let images::Image backing=switch(text_image(ref korean)){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    let programs::Program c=switch(attach(ref converted,backing)){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    switch(run_zero(ref c,0,exact)){case .ok(v):{assert(v.value==237 && v.remaining==0);}case .err(_):{assert(false);}};
+    assert(content(ref b,0,ref korean) && content(ref c,0,ref korean));
+}
+@test fn void alias_preflight_keeps_source_live_and_publishes_only_after_full_fuel(){
+    let ir::Program unit=alias_program(0);
+    let images::Image image=switch(one_image(42)){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    let statics::Sites sites=switch(verifier::inspect_statics(ref unit.body,ref image)){
+        case .ok(v):{v}case .err(_):{assert(false);statics::empty()}
+    };
+    let usize pc=nth_opcode(ref unit.body,75,0);var i64[128] registers=[99;128];
+    let ref u8[] payload=images::payload(ref image);
+    switch(static_vm::step(ref unit.body,ref sites,payload,pc,0,ref mut registers,1,15)){
+        case .ok(_):{assert(false);}case .err(e):{assert(e.kind==8);}
+    };
+    assert(registers[0]==99);
+    switch(static_vm::step(ref unit.body,ref sites,payload,pc,0,ref mut registers,1,16)){
+        case .ok(v):{assert(v.live==3 && v.remaining==0 && registers[0]==99);}case .err(_):{assert(false);}
     };
 }

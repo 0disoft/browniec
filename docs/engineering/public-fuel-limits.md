@@ -68,12 +68,24 @@ new ceilings, invalid/overflowing/duplicate arguments, version discovery and fou
 record stress sources at both 1000000 and 16000000. The old budgets still produce
 Fuel errors; explicit larger budgets complete with 42.
 
-Windows development and release each passed 25 native groups and 33 standalone
+At the original 2026-11-04 checkpoint, Windows development and release each
+passed 25 native groups and 33 standalone
 CLI cases on 129 matching inputs and the 211-file test-discovery identity. All
 117 production files are LF; an LF mirror passed `check --locked`. Final runs
 used no compiler/stack overrides or historical-result reuse.
 
 See [focused Windows evidence](../evidence/public-fuel-windows-20261104.json).
+
+The 2026-11-05 [Static alias successor](static-alias.md) reran this runner's
+CLI-only phase on both current profiles: all 33 tool-free cases passed, with
+136 matching CLI input hashes and unchanged reported limits. Its separate
+32-group private image/proof/VM selection verifies ALIAS costs exactly 17
+including dispatch, rejects a seventeenth Static definition, and publishes no
+alias on Fuel shortage. These private checks do not rerun the original public
+native selection or promote guest alias syntax. The
+[successor evidence](../evidence/static-alias-windows-20261105.json) records both
+current CLI artifacts and the focused private native results.
+
 Full M1/M2, Linux, restricted delivery, ABI, packaging and elapsed-time/allocator/
 stack-size benchmarks are outside this increment. B04 result declarations remain
 publicly gated; other C05 capacities and the complete objective remain open.

@@ -29,10 +29,10 @@ pub fn Result<Step,errors::Error> step(ref ir::Program p,ref statics::Sites site
     let usize dst=p.code[at+1] as usize;let usize a=p.code[at+2] as usize;
     let usize b=p.code[at+3] as usize;let usize one=1;
     if(!statics::operation(op)){return .err(invalid(offset));}
-    if(op==69 || op==74){
+    if(op==69 || op==74 || op==75){
         if(dst>=16 || sites.definitions[dst]!=pc || sites.functions[dst]!=f || (live&(one<<dst))!=0){return .err(invalid(offset));}
         let usize length=span(sites,dst,f,0,live|(one<<dst),payload,offset)?;
-        if(op==74){let usize text=span(sites,a,f,2,live,payload,offset)?;}
+        if(op==74 || op==75){let usize source=span(sites,a,f,if(op==74){2}else{0},live,payload,offset)?;}
     }else if(op==70){let usize length=span(sites,dst,f,0,live,payload,offset)?;}
     var usize left=0;var usize right=0;
     if(op==71 || op==72 || op==73){
@@ -43,7 +43,7 @@ pub fn Result<Step,errors::Error> step(ref ir::Program p,ref statics::Sites site
     let usize price=fuel::static_instruction(op,left,right);
     if(remaining<price){return .err(errors::make(8,offset));}
     let usize paid=remaining-price;
-    if(op==69 || op==74){return .ok(Step{.live=live|(one<<dst),.remaining=paid});}
+    if(op==69 || op==74 || op==75){return .ok(Step{.live=live|(one<<dst),.remaining=paid});}
     if(op==70){return .ok(Step{.live=live^(one<<dst),.remaining=paid});}
     var i64 value=0;
     if(op==71){

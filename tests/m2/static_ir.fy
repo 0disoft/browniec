@@ -4,6 +4,7 @@ import errors as errors;
 import static_image as images;
 import verifier as verifier;
 import static_ir as statics;
+import static_builders as static_builders;
 
 fn usize built(Result<usize,errors::Error> result){
     return switch(result){case .ok(value):{value}case .err(_):{assert(false);0}};
@@ -318,4 +319,65 @@ fn void ordinary_inspect_and_verify_still_reject_static_opcodes(){
     p.code[equal*8+2]=0;p.code[equal*8+3]=0;
     let usize next=nth_opcode(ref p,73,0);p.code[next*8+2]=0;
     rejected_at(ref p,ref image,next);
+}
+
+fn ir::Program alias_program(bool text){
+    var ir::Program p=ir::empty();p.function_count=1;p.entry=0;p.return_types[0]=1;
+    let usize index=index_zero(ref mut p);
+    let usize source=open_site(ref mut p,0,if(text){1}else{0},if(text){2}else{1},0,if(text){3}else{1});
+    let usize alias=built(static_builders::alias(ref mut p,source,0));assert(alias==1);
+    let usize closed=close_site(ref mut p,source);
+    let usize bytes=if(text){built(static_builders::bytes(ref mut p,alias,0))}else{alias};
+    if(text){let usize close_alias=close_site(ref mut p,alias);}
+    let usize dst=fresh(ref mut p,10);let usize read=read_site(ref mut p,dst,bytes,index);
+    let usize close_bytes=close_site(ref mut p,bytes);let usize returned=answer(ref mut p);
+    end_function(ref mut p,0);return p;
+}
+@test fn void alias_metadata_inherits_actual_image_kind_range_and_function(){
+    let images::Image image=switch(fixture_image()){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    let ir::Program bytes=alias_program(false);accepted(ref bytes,ref image);
+    let statics::Sites raw=switch(verifier::inspect_statics(ref bytes,ref image)){
+        case .ok(v):{v}case .err(_):{assert(false);statics::empty()}
+    };
+    assert(raw.count==2 && raw.kinds[1]==1 && raw.functions[1]==0 && raw.starts[1]==0);
+    assert(raw.spans[1].literal==0 && raw.spans[1].start==0 && raw.spans[1].end==1);
+    let ir::Program text=alias_program(true);accepted(ref text,ref image);
+    let statics::Sites utf8=switch(verifier::inspect_statics(ref text,ref image)){
+        case .ok(v):{v}case .err(_):{assert(false);statics::empty()}
+    };
+    assert(utf8.count==3 && utf8.kinds[1]==2 && utf8.kinds[2]==1 && utf8.starts[1]==1 && utf8.starts[2]==1);
+    assert(utf8.spans[1].literal==1 && utf8.spans[1].start==0 && utf8.spans[1].end==3);
+    let usize alias=nth_opcode(ref bytes,75,0);plain_inspect_rejected_at(ref bytes,nth_opcode(ref bytes,69,0));
+}
+@test fn void alias_rejects_forged_operands_closed_sources_and_scalar_kind_coercion(){
+    let images::Image image=switch(fixture_image()){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    var ir::Program p=alias_program(false);let usize alias=nth_opcode(ref p,75,0);
+    p.code[alias*8+3]=2;rejected_at(ref p,ref image,alias);
+    p=alias_program(false);p.code[alias*8+4]=1;rejected_at(ref p,ref image,alias);
+    p=alias_program(false);p.code[alias*8+2]=255;rejected_at(ref p,ref image,alias);
+    p=alias_program(false);p.code[alias*8+2]=1;rejected_at(ref p,ref image,alias);
+    p=alias_program(false);p.code[alias*8+1]=0;rejected_at(ref p,ref image,alias);
+    p=alias_program(false);let usize closed=nth_opcode(ref p,70,0);var usize i=0;
+    while(i<8){let u8 saved=p.code[alias*8+i];let u8 other=p.code[closed*8+i];p.code[alias*8+i]=other;p.code[closed*8+i]=saved;i+=1;}
+    rejected_at(ref p,ref image,closed);
+    p=alias_program(true);let usize read=nth_opcode(ref p,71,0);let usize text_close=nth_opcode(ref p,70,1);i=0;
+    while(i<8){let u8 saved=p.code[read*8+i];let u8 other=p.code[text_close*8+i];p.code[read*8+i]=other;p.code[text_close*8+i]=saved;i+=1;}
+    p.code[text_close*8+2]=1;rejected_at(ref p,ref image,text_close);
+    p=ir::empty();p.function_count=2;p.entry=0;p.return_types[0]=1;p.return_types[1]=1;
+    let usize root=open_site(ref mut p,0,0,1,0,1);let usize close_root=close_site(ref mut p,root);
+    let usize first_return=answer(ref mut p);end_function(ref mut p,0);
+    let usize crossed=p.count;let usize foreign=built(static_builders::alias(ref mut p,root,0));
+    let usize close_foreign=close_site(ref mut p,foreign);let usize final_return=answer(ref mut p);
+    end_function(ref mut p,1);rejected_at(ref p,ref image,crossed);
+}
+@test fn void alias_builders_count_every_definition_and_preserve_the_sixteen_site_bound(){
+    let images::Image image=switch(fixture_image()){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    var ir::Program p=ir::empty();p.function_count=1;p.entry=0;p.return_types[0]=1;
+    let usize source=open_site(ref mut p,0,0,1,0,1);var usize site=1;
+    while(site<16){let usize made=built(static_builders::alias(ref mut p,site-1,0));assert(made==site);
+        let usize closed=close_site(ref mut p,site-1);site+=1;}
+    let usize count=p.count;
+    switch(static_builders::alias(ref mut p,15,0)){case .ok(_):{assert(false);}case .err(e):{assert(e.kind==4);}};
+    assert(p.count==count);let usize closed=close_site(ref mut p,15);
+    let usize returned=answer(ref mut p);end_function(ref mut p,0);accepted(ref p,ref image);
 }

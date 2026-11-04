@@ -42,9 +42,12 @@ invalid/repeated scalar destinations reject with the ordinary IR error.
 | 72 LEN | fresh usize `dst`, `a=live byte site`; remaining bytes zero |
 | 73 EQUAL | fresh bool `dst`, `a/b=live read-only byte or text sites` |
 | 74 BYTES | `dst=new byte site`, `a=live text site`; remaining bytes zero |
+| 75 ALIAS | `dst=new same-kind site`, `a=live byte/text site`; remaining bytes zero |
 
 The [byte-view equality successor](static-byte-equality.md) extends EQUAL operands
-while retaining text validation and the independent live-state proof.
+while retaining text validation and the independent live-state proof. The
+[alias successor](static-alias.md) adds same-kind descriptor copying with
+independent source/destination liveness and unchanged image ownership.
 
 Bytes 4..7 are reserved zero except in OPEN. Definitions are globally unique,
 function-local and bounded to 16 sites across the Program. BYTES inherits the
