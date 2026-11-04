@@ -1,3 +1,9 @@
+- Retained-image compilation now preserves text::valid_utf8 dispatch after
+  speculative text::bytes lookahead. Plain text bindings, prices and limits are
+  unchanged. The exact fixture fails at 58c6b92; development/release each pass
+  one native group with three source executions and owner/loan teardown checks.
+  See docs/engineering/image-text-dispatch.md and focused Windows evidence.
+  Static local/alias/ref str lowering remains next; the complete goal stays open.
 - Private Static ALIAS (75) now preserves exact immutable byte/text kind,
   image range and function while keeping source/destination independently live.
   Closing the source preserves its aliases. No payload allocation/copy or new

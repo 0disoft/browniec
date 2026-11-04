@@ -162,7 +162,8 @@ fn Result<usize, errors::Error> named_operand(ref u8[] source, ref mut lexer::St
     if (word_is(source, s, b"text")) {
         var lexer::State look = lexer::snapshot(s);
         let usize next = lexer::next(source, ref mut look)?;
-        if(look.kind==58 && signatures.literals.enabled){
+        let bool qualified=look.kind==58;
+        if(qualified && signatures.literals.enabled){
             let usize first=lexer::next(source,ref mut look)?;
             let usize second=lexer::punctuation(source,ref mut look,58)?;
             if(word_is(source,ref look,b"bytes")){
@@ -174,7 +175,7 @@ fn Result<usize, errors::Error> named_operand(ref u8[] source, ref mut lexer::St
                 return literal_projection(source,s,p,table,signatures,depth,result_type,structure,loop_state,true);
             }
         }
-        if (look.kind == 58) { return utf8_value(source,s,p,table,signatures,depth,result_type,structure,loop_state); }
+        if (qualified) { return utf8_value(source,s,p,table,signatures,depth,result_type,structure,loop_state); }
     }
     if (word_is(source, s, b"true") || word_is(source, s, b"false")) {
         let bool value = word_is(source, s, b"true");
