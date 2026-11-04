@@ -80,6 +80,6 @@ allocator/OOM, Linux, restricted delivery and C ABI claims remain open.
 
 Next connect compiler-owned literal collection, typed Static locals and
 `text::bytes`, then Static CALL/return origins and public result admission.
-The accepted `text::equal` API takes byte views; the current private text-only
-EQUAL proof must be extended deliberately before lowering that API. Do not turn
-arbitrary byte literals into text merely to reuse its current operand check.
+The accepted `text::equal` API takes byte views. Its [private equality successor](static-byte-equality.md)
+now admits byte operands through actual image proof/execution. Connect source
+argument checking and explicit conversions before promoting the guest API.

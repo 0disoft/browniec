@@ -1,3 +1,18 @@
+- Private image EQUAL now admits live immutable byte/text operands, including
+  mixed backing kinds, without coercing bytes to text. Actual-image kind/range,
+  function/definition/liveness and bool destination proof remain mandatory;
+  READ/LEN stay byte-only and BYTES text-only. Unknown native kind tags reject.
+  Pricing is unchanged: 17 plus both complete selected byte lengths, with no
+  new allocation/backing copy and no result publication on insufficient Fuel.
+  Windows development/release each passed 27 focused native groups (five new)
+  on 129 matching inputs and a 220-file discovery identity; all 122 production
+  files are LF and locked LF mirrors pass. No overrides/historical reuse.
+  Full profiles/CLI/general stack/RAM/allocator/timing/Linux/restricted/C ABI
+  were not run. Source literals/types, explicit text::bytes and byte-view
+  text::equal argument checking, Static CALL/return receipts and public admission
+  remain open; the complete objective is active. Next connect compiler-owned
+  literal collection and real source lowering to retained images. See
+  docs/engineering/static-byte-equality.md and its focused Windows evidence.
 - Bounded literal_source decoding now emits byte/text lexer kinds 3/4 with raw
   spans and unchanged lexer State. Shared escapes plus text-only Unicode scalars
   are checked before complete cooked UTF-8 acceptance. Compiler scratch stays

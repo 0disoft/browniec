@@ -25,8 +25,12 @@ def write(path, value):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--profile', choices=['development', 'release'], required=True)
-    profile = parser.parse_args().profile
-    out = ROOT / 'build/static-execution' / profile
+    parser.add_argument('--selection', choices=['all', 'statics'], default='all',
+                        help='statics runs the changed image/proof/VM suites; all adds return and source regressions')
+    args = parser.parse_args()
+    profile = args.profile
+    files = FILES if args.selection == 'all' else FILES[:3]
+    out = ROOT / 'build/static-execution' / profile / args.selection
     out.mkdir(parents=True, exist_ok=True)
     receipt = out / 'receipt.json'
     write(receipt, {'status': 'incomplete'})
@@ -37,7 +41,7 @@ def main():
     assert compiler_hash == json.loads((ROOT / 'toolchain.json').read_text())['platforms'][target]['sha256']
     production = sorted(p.relative_to(ROOT).as_posix() for p in (ROOT / 'src').rglob('*.fy'))
     assert all(b'\r' not in (ROOT / p).read_bytes() for p in production)
-    paths = sorted(production + FILES + ['fairy.toml', 'fairy.lock', 'toolchain.json',
+    paths = sorted(production + files + ['fairy.toml', 'fairy.lock', 'toolchain.json',
                                        'tools/verify-static-execution.py'])
     inputs = [dict(path=p, sha256=digest(ROOT / p)) for p in paths]
 
@@ -67,7 +71,7 @@ def main():
     if profile == 'release':
         command.append('--release')
     expected = set()
-    for path in FILES:
+    for path in files:
         command.extend(['--file', path])
         source = (ROOT / path).read_text(encoding='utf-8')
         names = re.findall(r'@test\s+fn void (\w+)\(', source)
@@ -86,7 +90,7 @@ def main():
     assert all(digest(ROOT / i['path']) == i['sha256'] for i in inputs)
     assert discovery() == tree and digest(compiler) == compiler_hash
     write(receipt, dict(schema='browniec.static-execution-verification/v1', status='passed',
-                       profile=profile, startingHead=run(['git', 'rev-parse', 'HEAD']).stdout.strip(),
+                       profile=profile, selection=args.selection, startingHead=run(['git', 'rev-parse', 'HEAD']).stdout.strip(),
                        platform=platform.platform(), compilerSha256=compiler_hash,
                        compilerVersion=run([compiler, '--version']).stdout.strip(),
                        inputSnapshotCapturedAt=captured, inputs=inputs, testDiscovery=tree,

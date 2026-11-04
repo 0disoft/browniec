@@ -40,8 +40,11 @@ invalid/repeated scalar destinations reject with the ordinary IR error.
 | 70 CLOSE | `dst=live site`; all remaining bytes zero |
 | 71 READ | fresh u8 `dst`, `a=live byte site`, `b=defined usize index register` |
 | 72 LEN | fresh usize `dst`, `a=live byte site`; remaining bytes zero |
-| 73 EQUAL | fresh bool `dst`, `a/b=live text sites` |
+| 73 EQUAL | fresh bool `dst`, `a/b=live read-only byte or text sites` |
 | 74 BYTES | `dst=new byte site`, `a=live text site`; remaining bytes zero |
+
+The [byte-view equality successor](static-byte-equality.md) extends EQUAL operands
+while retaining text validation and the independent live-state proof.
 
 Bytes 4..7 are reserved zero except in OPEN. Definitions are globally unique,
 function-local and bounded to 16 sites across the Program. BYTES inherits the

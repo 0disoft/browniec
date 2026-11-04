@@ -12,6 +12,8 @@ import std::bytes as bytes;
 import errors as errors;
 import verifier as verifier;
 import vm as vm;
+import static_ir as statics;
+import static_execution as static_vm;
 
 fn usize built(Result<usize,errors::Error> result){
     return switch(result){case .ok(value):{value}case .err(_):{assert(false);0}};
@@ -106,10 +108,10 @@ fn ir::Program text_length_program(){
     let usize done=returned(ref mut p,answer);function_end(ref mut p,0);
     return ir::Program{.body=p,.elements=[0;16],.parameters=[0;16]};
 }
-fn ir::Program equality_program(u8 left_len,u8 right_len){
+fn ir::Program equality_program(u8 left_len,u8 right_len,u8 left_kind,u8 right_kind){
     var ordinary_ir::Program p=ordinary_ir::empty();p.function_count=1;p.entry=0;p.return_types[0]=1;
-    let usize left=open_site(ref mut p,0,0,2,0,left_len);
-    let usize right=open_site(ref mut p,1,if(left_len==0 && right_len==0){0}else{1},2,0,right_len);
+    let usize left=open_site(ref mut p,0,0,left_kind,0,left_len);
+    let usize right=open_site(ref mut p,1,if(left_len==0 && right_len==0){0}else{1},right_kind,0,right_len);
     let usize equal=fresh(ref mut p,2);let usize compared=equal_sites(ref mut p,equal,0,1);
     let usize close_left=close_site(ref mut p,0);let usize close_right=close_site(ref mut p,1);
     let usize answer=choose_i32(ref mut p,equal,42,7);
@@ -295,11 +297,11 @@ fn Result<execution::Scalar,errors::Error> run_zero(ref programs::Program p,usiz
 }
 
 @test fn void text_equality_handles_embedded_nul_and_empty_utf8(){
-    let ir::Program unequal=equality_program(3,2);
+    let ir::Program unequal=equality_program(3,2,2,2);
     let images::Image nul=switch(nul_image()){case .ok(value):{value}case .err(_):{assert(false);return;}};
     let programs::Program different=switch(attach(ref unequal,nul)){case .ok(value):{value}case .err(_):{assert(false);return;}};
     switch(run_zero(ref different,0,1000000)){case .ok(value):{assert(value.value==7);}case .err(_):{assert(false);}};
-    let ir::Program same=equality_program(0,0);
+    let ir::Program same=equality_program(0,0,2,2);
     let images::Image empty=switch(empty_image()){case .ok(value):{value}case .err(_):{assert(false);return;}};
     let programs::Program equal=switch(attach(ref same,empty)){case .ok(value):{value}case .err(_):{assert(false);return;}};
     switch(run_zero(ref equal,0,1000000)){case .ok(value):{assert(value.value==42);}case .err(_):{assert(false);}};
@@ -378,4 +380,76 @@ fn Result<execution::Scalar,errors::Error> run_zero(ref programs::Program p,usiz
     switch(run(ref p,0,10000000)){case .ok(value):{assert(value.value==42);}case .err(_):{assert(false);}};
     let u8[1] first=[1];let u8[1] second=[39];
     assert(content(ref p,0,ref first) && content(ref p,1,ref second));
+}
+
+fn ir::Program binary_program(u8 right_begin,u8 right_end){
+    var ordinary_ir::Program p=ordinary_ir::empty();p.function_count=1;p.entry=0;p.return_types[0]=1;
+    let usize left=open_site(ref mut p,0,0,1,0,3);
+    let usize right=open_site(ref mut p,1,0,1,right_begin,right_end);
+    let usize equal=fresh(ref mut p,2);let usize compared=equal_sites(ref mut p,equal,0,1);
+    let usize close_left=close_site(ref mut p,0);let usize close_right=close_site(ref mut p,1);
+    let usize answer=choose_i32(ref mut p,equal,42,7);
+    let usize done=returned(ref mut p,answer);function_end(ref mut p,0);
+    return ir::Program{.body=p,.elements=[0;16],.parameters=[0;16]};
+}
+fn Result<images::Image,images::Error> binary_image(){
+    var images::Builder b=images::builder(6)?;
+    let u8[6] payload=[255,0,195,255,0,195];
+    let usize literal=images::intern_bytes(ref mut b,ref payload)?;
+    assert(literal==0);return images::freeze(ref b,8192);
+}
+fn Result<images::Image,images::Error> mixed_image(){
+    var images::Builder b=images::builder(6)?;
+    let u8[3] payload=[97,0,98];
+    let usize raw=images::intern_bytes(ref mut b,ref payload)?;
+    let usize text=images::intern_text(ref mut b,ref payload)?;
+    assert(raw==0 && text==1);return images::freeze(ref b,8192);
+}
+@test fn void byte_equality_compares_invalid_utf8_and_nul_without_guest_backing(){
+    let ir::Program same=binary_program(3,6);
+    let images::Image backing=switch(binary_image()){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    let programs::Program p=switch(attach(ref same,backing)){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    // Two OPENs 34, EQUAL 23, two CLOSEs 2, and six scalar/branch instructions.
+    let usize exact=runtime::cost()+runtime::leave_cost()+65;
+    switch(run_zero(ref p,0,exact)){case .ok(v):{assert(v.value==42 && v.remaining==0);}case .err(_):{assert(false);}};
+    switch(run_zero(ref p,0,exact-1)){case .ok(_):{assert(false);}case .err(e):{assert(e.kind==8);}};
+    switch(run_zero(ref p,0,exact+1)){case .ok(v):{assert(v.value==42 && v.remaining==1);}case .err(_):{assert(false);}};
+    let u8[6] payload=[255,0,195,255,0,195];assert(content(ref p,0,ref payload));
+}
+@test fn void byte_equality_distinguishes_content_length_and_empty_spans(){
+    let ir::Program different=binary_program(1,4);
+    let images::Image unequal=switch(binary_image()){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    let programs::Program a=switch(attach(ref different,unequal)){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    switch(run_zero(ref a,0,1000000)){case .ok(v):{assert(v.value==7);}case .err(_):{assert(false);}};
+    let ir::Program shorter=binary_program(0,2);
+    let images::Image short_image=switch(binary_image()){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    let programs::Program b=switch(attach(ref shorter,short_image)){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    switch(run_zero(ref b,0,1000000)){case .ok(v):{assert(v.value==7);}case .err(_):{assert(false);}};
+    var ir::Program empty=binary_program(6,6);let usize left=nth_opcode(ref empty.body,69,0);
+    empty.body.code[left*8+4]=6;empty.body.code[left*8+6]=6;
+    let images::Image empty_image=switch(binary_image()){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    let programs::Program c=switch(attach(ref empty,empty_image)){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    switch(run_zero(ref c,0,1000000)){case .ok(v):{assert(v.value==42);}case .err(_):{assert(false);}};
+}
+@test fn void equality_can_compare_explicit_bytes_views_and_text_backing(){
+    let ir::Program unit=equality_program(3,3,1,2);
+    let images::Image backing=switch(mixed_image()){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    let programs::Program p=switch(attach(ref unit,backing)){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    switch(run_zero(ref p,0,1000000)){case .ok(v):{assert(v.value==42);}case .err(_):{assert(false);}};
+}
+@test fn void byte_equality_precharges_both_selected_lengths_before_publication(){
+    let ir::Program unit=binary_program(3,6);
+    let images::Image image=switch(binary_image()){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    let statics::Sites sites=switch(verifier::inspect_statics(ref unit.body,ref image)){
+        case .ok(v):{v}case .err(_):{assert(false);statics::empty()}
+    };
+    let usize pc=nth_opcode(ref unit.body,73,0);let usize dst=unit.body.code[pc*8+1] as usize;
+    var i64[128] registers=[99;128];let ref u8[] payload=images::payload(ref image);
+    switch(static_vm::step(ref unit.body,ref sites,payload,pc,0,ref mut registers,3,21)){
+        case .ok(_):{assert(false);}case .err(e):{assert(e.kind==8);}
+    };
+    assert(registers[dst]==99);
+    switch(static_vm::step(ref unit.body,ref sites,payload,pc,0,ref mut registers,3,22)){
+        case .ok(v):{assert(v.live==3 && v.remaining==0 && registers[dst]==1);}case .err(_):{assert(false);}
+    };
 }

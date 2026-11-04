@@ -14,7 +14,7 @@ fn Result<usize,errors::Error> span(ref statics::Sites sites,usize site,usize f,
     u8 kind,usize live,ref u8[] payload,usize offset){
     let usize one=1;
     if(site>=16 || sites.functions[site]!=f || (kind!=0 && sites.kinds[site]!=kind) ||
-        sites.kinds[site]==0 || (live&(one<<site))==0){return .err(invalid(offset));}
+        (sites.kinds[site]!=1 && sites.kinds[site]!=2) || (live&(one<<site))==0){return .err(invalid(offset));}
     let usize lo=sites.spans[site].start;let usize hi=sites.spans[site].end;
     let usize start=sites.starts[site];
     if(hi<lo || hi-lo>4096 || start>payload.len || hi-lo>payload.len-start){return .err(invalid(offset));}
@@ -37,8 +37,8 @@ pub fn Result<Step,errors::Error> step(ref ir::Program p,ref statics::Sites site
     var usize left=0;var usize right=0;
     if(op==71 || op==72 || op==73){
         if(dst>=registers.len || (op==71 && b>=registers.len)){return .err(invalid(offset));}
-        left=span(sites,a,f,if(op==73){2}else{1},live,payload,offset)?;
-        if(op==73){right=span(sites,b,f,2,live,payload,offset)?;}
+        left=span(sites,a,f,if(op==73){0}else{1},live,payload,offset)?;
+        if(op==73){right=span(sites,b,f,0,live,payload,offset)?;}
     }
     let usize price=fuel::static_instruction(op,left,right);
     if(remaining<price){return .err(errors::make(8,offset));}

@@ -305,3 +305,17 @@ fn void ordinary_inspect_and_verify_still_reject_static_opcodes(){
     plain_inspect_rejected_at(ref p,open);
     plain_verify_rejected_at(ref p,open);
 }
+
+@test fn void equality_accepts_live_byte_operands_without_weakening_site_proof(){
+    let images::Image image=switch(fixture_image()){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    var ir::Program p=rich_program();let usize equal=nth_opcode(ref p,73,0);
+    p.code[equal*8+2]=0;p.code[equal*8+3]=0;accepted(ref p,ref image);
+    p=rich_program();p.code[equal*8+2]=0;accepted(ref p,ref image);
+    p=rich_program();p.code[equal*8+3]=0;accepted(ref p,ref image);
+    p=rich_program();p.code[equal*8+2]=255;rejected_at(ref p,ref image,equal);
+    p=rich_program();p.code[equal*8+2]=5;rejected_at(ref p,ref image,equal);
+    p=rich_program();p.code[equal*8]=70;p.code[equal*8+1]=0;
+    p.code[equal*8+2]=0;p.code[equal*8+3]=0;
+    let usize next=nth_opcode(ref p,73,0);p.code[next*8+2]=0;
+    rejected_at(ref p,ref image,next);
+}

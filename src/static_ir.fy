@@ -7,7 +7,7 @@ import errors as errors;
 // Private Static dialect. Site IDs occupy their own read-only namespace:
 // 69 OPEN dst=site,a=literal,b=1 bytes/2 text; bytes4..5 lo,6..7 hi (LE u16).
 // 70 CLOSE dst=site,a=b=0. 71 READ u8 dst,a=byte site,b=usize index register.
-// 72 LEN usize dst,a=byte site,b=0. 73 EQUAL bool dst,a/b=text sites.
+// 72 LEN usize dst,a=byte site,b=0. 73 EQUAL bool dst,a/b=read-only byte/text sites.
 // 74 BYTES dst=new byte site,a=live text site,b=0. Reserved bytes are zero.
 // Definitions are reconstructed from actual code/image, never caller metadata.
 // This copyable proof does not own/pin storage or authenticate a Program handle.
@@ -56,7 +56,8 @@ pub fn Result<Sites,errors::Error> definitions(ref ir::Program p,ref images::Ima
 }
 fn bool live_site(ref Sites sites,usize site,usize f,u8 kind,usize live){
     let usize one=1;
-    return site<16 && sites.functions[site]==f && sites.kinds[site]==kind && (live&(one<<site))!=0;
+    return site<16 && sites.functions[site]==f && (sites.kinds[site]==1 || sites.kinds[site]==2) &&
+        (kind==0 || sites.kinds[site]==kind) && (live&(one<<site))!=0;
 }
 fn bool scalar(ref ir::Program p,ref registers::Set defined,usize r,usize f){
     return r>=p.register_starts[f] && r<p.register_ends[f] && r<128 && !p.slots[r] &&
@@ -83,7 +84,7 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,ref Sites sites,usize 
     if(op==71 || op==72){
         if(!live_site(sites,a,f,1,live) || (op==71 && (!scalar(p,defined,b,f) || p.types[b]!=12)) ||
             (op==72 && b!=0)){return .err(invalid(pc));}
-    }else if(op==73){if(!live_site(sites,a,f,2,live) || !live_site(sites,b,f,2,live)){return .err(invalid(pc));}}
+    }else if(op==73){if(!live_site(sites,a,f,0,live) || !live_site(sites,b,f,0,live)){return .err(invalid(pc));}}
     else{return .err(invalid(pc));}
     let u8 tag=if(op==71){10}else if(op==72){12}else{2};
     if(dst<p.register_starts[f] || dst>=p.register_ends[f] || dst>=128 || p.slots[dst] ||

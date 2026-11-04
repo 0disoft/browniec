@@ -35,8 +35,9 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    tokens and stages checked UTF-8/escape data before kind-specific image interning.
    Next connect compiler-owned literal collection and typed Static locals, then
    image-backed CALL/return origins. Keep source scratch separate from retained
-   image authority. The accepted text::equal takes byte views; extend the current
-   private text-only EQUAL proof before lowering it. Finish general references.
+   image authority. The [byte-view equality successor](static-byte-equality.md) now extends private
+   EQUAL proof/execution to immutable bytes without changing its price. Lower the
+   accepted byte-view source signature with explicit text::bytes conversion. Finish general references.
    Validate actual public source execution before promoting its capability.
 2. **Language completion: L01-L06, C03/C05.** Finish explicit module snapshots and
    visibility, inference/void/if values, complete array/record construction,
