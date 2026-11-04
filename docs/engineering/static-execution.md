@@ -24,7 +24,7 @@ can execute with zero guest backing. Program image charge still covers image
 metadata/capacity only, not complete Program/Engine/process accounting.
 
 The ordinary bare verifier/VM entry points carry no image authority and continue
-rejecting 69-75. Image-aware admission is an explicit native API path, not a guest
+rejecting 69-76. Image-aware admission is an explicit native API path, not a guest
 numeric flag or a public CLI/capability promotion. A copyable Sites value alone
 cannot select the admitted payload at the invocation boundary.
 
@@ -37,8 +37,11 @@ normalized scalar proof accepts the index while full recipe proof rejects it.
 
 Image-aware entry reuses existing argument admission, owner transfer, frame
 push/pop, ordinary scalar/array/record CALLs, returned-loan handoff and first-error
-abort. There is no second scalar interpreter. Driver dispatch routes 69-75 to
-`static_execution::step` with the exact payload and independently rebuilt sites.
+abort. There is no second scalar interpreter. Driver dispatch now routes 69-76 to `static_execution::step_frame` with the exact
+payload, independently rebuilt sites and sixteen words for the current frame.
+The [range successor](static-range-execution.md) adds those 2048 descriptor bytes
+across all 32 frames and actual relative byte-range execution. The original
+fixed-span `step` API remains available only for programs without dynamic sites.
 
 A separate 32-word local table tracks Static live sites per call frame. Its
 logical elements total 256 bytes on the current 64-bit targets, excluding native
@@ -91,6 +94,7 @@ price preflight, preserving Fuel as first cause when both fail.
 | --- | ---: |
 | OPEN, BYTES, ALIAS, LEN | 17 |
 | CLOSE | 1 |
+| RANGE (private range successor) | 128 |
 | READ | 18 |
 | EQUAL | 17 + selected left byte length + selected right byte length |
 
@@ -123,8 +127,11 @@ Earlier checker/native probes and generated-C diagnostics, including a diagnosti
 restricted delivery, C ABI/packaging, allocator/OOM, general stack/RAM and timing
 checks were not run. The focused passes do not establish those guarantees.
 
-Next lower real byte/text literals, `ref str`, `text::bytes` and `text::equal`
-through this image-aware path. Connect Static CALL actuals and returned views to
+The source successors now lower byte/text literals, typed `ref str`/byte locals,
+aliases, `text::bytes` and immutable byte-view `text::equal`. The private
+[range successor](static-range-execution.md) executes computed byte endpoints
+from independently proved IR; source endpoint lowering and exit cleanup remain
+next. Connect Static CALL actuals and returned views to
 real Program lifetime/origin receipts before permitting their escape. General
 references, ordinary public returned-result admission, Engine/Instance lifecycle,
 input/output, Buffer, host exchange, Windows restrictions and the C ABI remain

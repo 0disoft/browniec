@@ -143,7 +143,7 @@ fn Result<Outcome,errors::Error> start(ref ir::Program unit,usize function,ref r
 fn Result<Outcome,errors::Error> run(ref ir::Program unit,usize function,ref runtime::Entered first,
     ref i64[] values,ref mut frames::Frames bindings,ref mut runtime::State state,ref mut u8[] data,ref statics::Sites sites,ref u8[] literals){
     let ref body_ir::Program body=ref unit.body;
-    var usize[32] static_live=[0;32];
+    var usize[32] static_live=[0;32];var u32[512] static_words=[0;512];
     var i64[4096] registers=[0;4096];var usize remaining=first.call.remaining;
     let usize entered=frames::push(body,bindings,first.call,function,128,32,0)?;
     entry::bind(body,function,ref first.copies,bindings);
@@ -157,8 +157,8 @@ fn Result<Outcome,errors::Error> run(ref ir::Program unit,usize function,ref run
         let usize base=frame*128;
         if(remaining==0){return .err(errors::make(8,offset));}remaining-=1;
         if(statics::operation(op)){
-            let immutable::Step next=immutable::step(body,sites,literals,pc,f,
-                ref mut registers[base..base+128],static_live[frame],remaining)?;
+            let immutable::Step next=immutable::step_frame(body,sites,literals,pc,f,
+                ref mut registers[base..base+128],static_live[frame],remaining,ref mut static_words[frame*16..frame*16+16])?;
             static_live[frame]=next.live;remaining=next.remaining;pc+=1;continue;
         }
         if(bindings.prepared[frame] && (op==37 || op==45 || op==56 || op==62)){

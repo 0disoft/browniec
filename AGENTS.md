@@ -1,7 +1,24 @@
+- Private Static RANGE (76) now independently proves byte source/liveness and
+  defined non-slot usize endpoints, retaining maximum proof windows plus dynamic
+  alias flags. Canonical dispatch uses actual per-frame words for all Static
+  operations: 32x16 u32 descriptors add 2048 logical bytes, separate from live
+  bits. Nested ranges cannot re-expand; closing a parent preserves descendants.
+  Fuel 128 including dispatch is prepaid before endpoint checks/publication;
+  shortage and invalid endpoints publish no word/register changes. Existing
+  prices, public default 256/cap 16000000 and all capacities remain.
+  Development/release each passed 35 focused native groups (9 new, 26 existing)
+  on 133 matching inputs and a 226-file discovery identity. All 126 production
+  modules are LF and locked LF mirrors pass; no native overrides or historical
+  reuse. Early core probes are excluded. CLI/full profiles/general stack/RAM/
+  allocator/timing/Linux/restricted/C ABI/package checks were not run. Next lower
+  computed source endpoints with cleanup on all exits, then Static CALL/return
+  origins and retained receipts. Public promotion and the complete inventory
+  remain open. See docs/engineering/static-range-execution.md and evidence.
 - static_views now prepares packed frame-local byte ranges against admitted
   image windows, function/kind and separate liveness. Thirteen-bit start/length
   fields fit u32; 32x16 descriptors require 2048 bytes. Packing is bounded to
-  26 iterations with the pinned SDK; decoding/inspection do not repack. Empty
+  26 iterations per pack with the pinned SDK; decoding does not repack the actual
+  word; inspection separately validates the maximum window through pack. Empty
   ranges are allowed, byte windows cannot broaden, text retains its exact
   validated window and raw bytes cannot coerce to text. Check bounds before
   arithmetic; metadata failures are IR 5, guest relative endpoint failures are

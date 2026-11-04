@@ -44,10 +44,11 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    [source equality successor](static-equality-source.md) now lowers the byte-view
    signature for immutable image views with explicit text::bytes conversion.
    [Checked frame range metadata](static-view-ranges.md) now supplies compact
-   descriptor bounds, kind/function and liveness checks for the next dynamic
-   range opcode/VM path. It does not change current fixed-span execution.
-   General runtime view arguments, Static range execution/source and CALL/return
-   origins remain. Finish general references.
+   descriptor bounds, kind/function and liveness checks. The
+   [range execution successor](static-range-execution.md) now adds independently
+   proved RANGE 76 and actual per-frame spans with complete Fuel/bounds preflight,
+   nested narrowing, recursive isolation and loop reentry. General runtime view
+   arguments, Static source endpoints/exit cleanup and CALL/return origins remain. Finish general references.
    Validate actual public source execution before promoting its capability.
 2. **Language completion: L01-L06, C03/C05.** Finish explicit module snapshots and
    visibility, inference/void/if values, complete array/record construction,

@@ -32,5 +32,6 @@ pub fn usize utf8_scan(usize root_length){return 4*root_length;}
 // before this arithmetic; no owner/loan table scans.
 pub fn usize static_instruction(u8 op,usize left,usize right){
     if(op==70){return 0;}
+    if(op==76){return 127;}
     return 16+if(op==71){1}else if(op==73){left+right}else{0};
 }
