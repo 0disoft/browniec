@@ -434,6 +434,15 @@ fn Result<slice_calls::Capture,errors::Error> slice_temporary(ref u8[] source,re
         if(s.kind!=2 || locals::find(source,names,s.begin,s.end)!=64){return .err(errors::make(3,s.begin));}
         let usize target=functions::find(source,signatures,s.begin,s.end);
         if(target>=signatures.count){return .err(errors::make(3,s.begin));}
+        if(signatures.return_slice_elements[target]!=0){
+            if(signatures.return_slice_elements[target]!=encoded){return .err(errors::make(3,s.begin));}
+            let usize name=lexer::next(source,s)?;
+            let usize value=call_value(source,s,p,names,signatures,target,176,at,depth+1,result_type,structure,loop_state)?;
+            if(s.kind!=44 && s.kind!=41 && s.kind!=91){return .err(errors::make(3,s.begin));}
+            let usize retained=result_calls::publish(p,names,value,at)?;
+            let usize captured=locals::declare(names,at,at,value,exclusive)?;
+            return .ok(slice_calls::Capture{.value=value,.root=16,.parent=if(s.kind==91){value-160}else{16},.exclusive=exclusive,.offset=at});
+        }
         id=array_results::destination(signatures,target,element,signatures.return_lengths[target],exclusive,p,names.function,at)?;
         let usize name=lexer::next(source,s)?;
         let usize called=call_value(source,s,p,names,signatures,target,id,at,depth+1,result_type,structure,loop_state)?;

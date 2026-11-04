@@ -18,7 +18,9 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    recipes, and typed lexical CALL bindings now lower to independently proved IR.
    Native lexical CALL destinations, parent restoration and prepaid close are now
    connected. [Immediate scalar projections](m2-slice-result-projections.md) now
-   reuse that path; next finish direct returned CALL arguments/range projections,
+   reuse that path. [Direct returned CALL arguments](m2-slice-result-arguments.md)
+   now retain transitive selected ancestry and close unselected captures; next finish
+   reference-valued declaration/return range projections,
    Static backing and the general scalar/array/record/Buffer reference contract.
    Validate actual public source execution before promoting its capability.
 2. **Language completion: L01-L06, C03/C05.** Finish explicit module snapshots and
@@ -106,3 +108,9 @@ now supports multiple temporary Held/reborrow closes before result installation.
 Its next-source-bridge section records ancestry retention, prompt unselected
 cleanup, recursive source hints and endpoint/exit requirements. Connect these
 source forms next; this foundation does not complete B04 or public admission.
+
+The [direct-argument successor](m2-slice-result-arguments.md) now connects nested
+returned actuals, including argument ranges, transitive shared/owned retention,
+exclusive chain collapse and recursive advisory source hints. Ordinary result
+kinds retain reverse capture cleanup. Reference-valued declaration/return ranges,
+Static backing, general references and public promotion remain next.

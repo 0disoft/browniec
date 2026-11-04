@@ -89,7 +89,11 @@ complete invocation drain. Mutation cases reject wrong masks, parents, duplicate
 links and helper argument overflow. Existing single-END, recursive, native owned
 entry and independent recipe cases are selected for regression.
 
-Next connect the source frontend to this runtime/IR prerequisite:
+The [direct-argument successor](m2-slice-result-arguments.md) connects nested
+returned actuals and argument ranges to this prerequisite. The bridge requirements
+below record that original next step; declaration/return range projections remain
+open:
+
 
 - Evaluate a nested returned actual with CALL_BIND, then publish its hidden owner/
   parent ancestry in acquisition order before later argument/endpoint expressions.

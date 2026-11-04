@@ -14,6 +14,30 @@ fn Result<u8,errors::Error> byte(usize value,usize at){
     return switch(num::u8_from_i64(wide)){case .ok(v):{.ok(v)}case .err(_):{.err(errors::make(4,at))}};
 }
 fn usize captured(ref locals::Table names,usize first,usize value){var usize i=first;while(i<names.count){if(names.registers[i]==value){return i;}i+=1;}return 64;}
+// Shared SUBSLICE dependencies also need lexical retention. This is construction
+// metadata only; independent definition/CFG proof authenticates the final IR.
+fn usize ancestor(ref ir::Program p,usize site){
+    var usize pc=0;while(pc<p.count && pc<256){let u8 op=p.code[pc*8];
+        if((op==59 || op==61 || op==67) && p.code[pc*8+1] as usize==site){return p.code[pc*8+2] as usize;}pc+=1;
+    }return 16;
+}
+fn bool contains(ref ir::Program p,usize value,usize item){
+    if(value<160 || value>=176){return false;}var usize site=value-160;var usize steps=0;
+    while(site<16 && steps<16){if(item==160+site){return true;}site=ancestor(p,site);steps+=1;}return false;
+}
+// Keep the selected dependency suffix, including every shared returned parent
+// and its hidden owned backing. Exclusive anonymous children collapse to anchor.
+fn Result<usize,errors::Error> retain(ref ir::Program p,ref locals::Table captures,
+    usize first,usize site,ref mut bool[] keep,usize at){
+    var usize parent=site;var usize steps=0;
+    while(parent<16){
+        let usize i=captured(captures,first,160+parent);if(i==64){return .ok(steps);}
+        if(steps>=16){return .err(errors::make(4,at));}steps+=1;keep[i]=true;
+        let usize root=p.slice_roots[parent] as usize;
+        if(root!=0){let usize owner=captured(captures,first,127+root);if(owner!=64){keep[owner]=true;}}
+        parent=ancestor(p,parent);
+    }return .ok(steps);
+}
 // Names remain unpublished during argument evaluation. Keep exactly the selected
 // anonymous view and its temporary owner, or end an anonymous exclusive child
 // and bind the returned view under its surviving parent. Hints only guide this
@@ -24,11 +48,13 @@ pub fn Result<usize,errors::Error> finish(ref mut ir::Program p,ref locals::Tabl
     if(chosen==0 || chosen>args.len || signatures.return_slice_elements[target]==0 || p.return_types[target]!=12){return .err(errors::make(3,at));}
     let usize value=args[chosen-1];if(value<160 || value>=176){return .err(errors::make(3,at));}
     let usize source=value-160;var usize parent=source;let usize first=names.count;
-    let bool temporary=captured(captures,first,value)!=64;
-    let usize made=calls::creator(p,source);let bool ended=temporary && ir::exclusive(p,source) && made!=256;
-    if(ended){parent=p.code[made*8+2] as usize;}
-    let usize retained=if(temporary && !ended){value}else{176};
-    let usize root=p.slice_roots[source] as usize;let usize owner=if(retained!=176 && root!=0){127+root}else{176};
+    var usize steps=0;
+    while(captured(captures,first,160+parent)!=64 && ir::exclusive(p,parent)){
+        let usize made=calls::creator(p,parent);if(made==256){break;}
+        if(steps>=16){return .err(errors::make(4,at));}steps+=1;parent=p.code[made*8+2] as usize;
+        if(parent>=16){return .err(errors::make(3,at));}
+    }
+    var bool[64] keep=[false;64];let usize retained=retain(p,captures,first,parent,ref mut keep,at)?;
     let usize parent_root=p.slice_roots[parent] as usize;
     let usize site=if(ir::exclusive(p,parent)){reborrow::derived(p,parent,at)?}
         else if(p.slice_origins[parent]!=0){builders::derived(p,parent,names.function,at)?}
@@ -37,11 +63,11 @@ pub fn Result<usize,errors::Error> finish(ref mut ir::Program p,ref locals::Tabl
     p.code[call*8]=66;p.code[call*8+5]=byte(site,at)?;p.code[call*8+6]=byte(parent,at)?;
     var usize mask=0;var usize i=captures.count;let usize one=1;
     while(i>first){i-=1;let usize item=captures.registers[i];
-        if(item!=retained && item!=owner){
+        if(!keep[i]){
             let usize end=p.count;let usize released=arrays::release_at(captures,p,i,at)?;
             if(released!=0 && p.code[end*8]==62){
                 var usize arg=0;var bool matched=false;
-                while(arg<args.len){if(args[arg]==item){mask|=one<<arg;matched=true;}arg+=1;}
+                while(arg<args.len){if(contains(p,args[arg],item)){mask|=one<<arg;matched=true;}arg+=1;}
                 if(!matched){return .err(errors::make(3,at));}p.code[end*8]=68;
             }
         }
@@ -56,10 +82,13 @@ pub fn Result<usize,errors::Error> finish(ref mut ir::Program p,ref locals::Tabl
 // recursive scalar CALL's lexical table shared and its stack frame unchanged.
 pub fn Result<usize,errors::Error> publish(ref ir::Program p,ref mut locals::Table names,usize value,usize at){
     if(p.count==0 || p.code[(p.count-1)*8]!=67 || value!=160+p.code[(p.count-1)*8+1] as usize){return .err(errors::make(3,at));}
-    let usize parent=p.code[(p.count-1)*8+2] as usize;
-    if(captured(names,0,160+parent)!=64){return .ok(0);}
-    let usize root=p.slice_roots[parent] as usize;
-    if(root!=0 && captured(names,0,127+root)==64){let usize owner=locals::declare(names,at,at,127+root,p.arrays.mutable[root-1])?;}
-    let usize view=locals::declare(names,at,at,160+parent,ir::exclusive(p,parent))?;
-    return .ok(view);
+    var usize parent=p.code[(p.count-1)*8+2] as usize;var usize[16] chain=[16;16];var usize count=0;
+    while(parent<16 && captured(names,0,160+parent)==64){
+        if(count>=16){return .err(errors::make(4,at));}chain[count]=parent;count+=1;parent=ancestor(p,parent);
+    }
+    let usize total=count;
+    while(count>0){count-=1;let usize site=chain[count];let usize root=p.slice_roots[site] as usize;
+        if(root!=0 && captured(names,0,127+root)==64){let usize owner=locals::declare(names,at,at,127+root,p.arrays.mutable[root-1])?;}
+        let usize view=locals::declare(names,at,at,160+site,ir::exclusive(p,site))?;
+    }return .ok(total);
 }

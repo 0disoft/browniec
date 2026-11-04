@@ -4,6 +4,24 @@
   docs/product/04-remaining-work.md. Do not redefine completion around the
   experimental subset. Execution order and next B04 constraints are recorded in
   docs/engineering/completion-plan.md. Remote delivery remains separate.
+- B04 direct returned CALL actuals now lower and execute privately, including
+  argument ranges, temporary literal/owned CALL backing and all six scalar/access
+  modes. Publish hidden selected ancestry before later arguments/endpoints;
+  shared chains retain every anonymous parent/owner transitively, while exclusive
+  anonymous BEGIN/BIND_RESULT chains collapse to the surviving lexical/root view.
+  Unselected captures close before installing the outer result. Ordinary scalar/
+  array/record CALLs retain reverse cleanup. Recursive advisory source hints now
+  follow selected nested actuals; independent definitions/CFG/origins/loans remain
+  mandatory. No opcode, operation price, public capability or CLI limit changed.
+  Windows development passed 37 native groups and release 15 on 126 matching final
+  inputs and a 214-file discovery digest; all 117 production files are LF and an
+  LF mirror passed check --locked. No compiler/stack overrides or result reuse.
+  All counted groups ran after the final snapshot; the earlier seven-group probe
+  is excluded. Standalone CLI/full profiles/Linux/restricted/ABI/packaging/
+  allocator/performance were not run. Next: reference-valued declaration/return
+  ranges, Static backing and ordinary public result admission. The complete
+  objective remains open. See docs/engineering/m2-slice-result-arguments.md and
+  its focused Windows evidence. Earlier entries retain their historical scope.
 - B04 private caller END chains now consume multiple existing BEGIN/BIND_RESULT
   ancestors per actual atomically before installing the selected returned child.
   Independent proof checks each real definition/parent, exact formal mask,

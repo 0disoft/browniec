@@ -31,11 +31,15 @@ fn Result<usize,errors::Error> next_actual(ref u8[] source,ref mut lexer::State 
     }return .err(errors::make(2,s.begin));
 }
 fn Result<u8,errors::Error> expression(ref u8[] source,ref mut lexer::State s,
-    ref functions::Table t,ref u8[] summaries,ref Names names,u8 tag){
+    ref functions::Table t,ref u8[] summaries,ref Names names,u8 tag,usize depth){
+    if(depth>32){return .err(errors::make(4,s.begin));}
     if(word(source,s,b"ref")){
         let usize reference=lexer::next(source,s)?;
         if((tag&128)!=0){let usize access=lexer::word(source,s,b"mut")?;}
-        if(s.kind!=2){return .ok(255);}return .ok(lookup(source,names,s,tag));
+        if(s.kind!=2){return .ok(255);}
+        var lexer::State look=lexer::snapshot(s);let usize advanced=lexer::next(source,ref mut look)?;
+        if(look.kind==40){return expression(source,s,t,summaries,names,tag,depth+1);}
+        return .ok(lookup(source,names,s,tag));
     }
     if(s.kind!=2){return .ok(255);}
     let usize target=functions::find(source,t,s.begin,s.end);
@@ -46,9 +50,8 @@ fn Result<u8,errors::Error> expression(ref u8[] source,ref mut lexer::State s,
     while(argument<chosen){let usize skipped=next_actual(source,s)?;let usize comma=lexer::punctuation(source,s,44)?;argument+=1;}
     let usize parameter=target*8+chosen-1;
     if(!t.param_slices[parameter] || t.param_slice_elements[parameter]!=tag){return .ok(255);}
-    let usize reference=lexer::word(source,s,b"ref")?;
-    if((tag&128)!=0){let usize access=lexer::word(source,s,b"mut")?;}
-    if(s.kind!=2){return .ok(255);}return .ok(lookup(source,names,s,tag));
+    if(!word(source,s,b"ref")){return .ok(255);}
+    return expression(source,s,t,summaries,names,tag,depth+1);
 }
 fn Result<u8,errors::Error> body(ref u8[] source,ref functions::Table t,ref u8[] summaries,usize f){
     var Names names=Names{.begins=[0;64],.ends=[0;64],.depths=[0;64],.tags=[0;64],.inputs=[0;64],.count=0};
@@ -73,12 +76,12 @@ fn Result<u8,errors::Error> body(ref u8[] source,ref functions::Table t,ref u8[]
                 if(look.kind!=2){return .err(errors::make(2,look.begin));}
                 let usize begin=look.begin;let usize end=look.end;let usize name=lexer::next(source,ref mut look)?;
                 let usize equals=lexer::punctuation(source,ref mut look,61)?;let u8 tag=element|if(writer){128}else{0};
-                let u8 input=expression(source,ref mut look,t,summaries,ref names,tag)?;
+                let u8 input=expression(source,ref mut look,t,summaries,ref names,tag,0)?;
                 let usize added=add(ref mut names,begin,end,depth,tag,input)?;
             }
         }else if(word(source,ref s,b"return")){
             var lexer::State look=lexer::snapshot(ref s);let usize keyword=lexer::next(source,ref mut look)?;
-            let u8 found=expression(source,ref mut look,t,summaries,ref names,t.return_slice_elements[f])?;returns+=1;
+            let u8 found=expression(source,ref mut look,t,summaries,ref names,t.return_slice_elements[f],0)?;returns+=1;
             if(found==255){return .err(errors::make(3,s.begin));}
             if(found!=0){if(selected!=0 && selected!=found){return .err(errors::make(3,s.begin));}selected=found;}
         }

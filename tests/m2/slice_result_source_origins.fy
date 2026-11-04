@@ -30,3 +30,9 @@ fn bool rejected(ref u8[] source){
     var functions::Table stale=switch(functions::scan(cycle)){case .ok(v):{v}case .err(_):{assert(false);functions::empty()}};
     stale.return_slice_inputs[0]=1;assert(!origins::infer(cycle,ref mut stale).is_ok);
 }
+
+@test fn void nested_selected_actuals_ground_origins_without_trusting_owned_roots(){
+    assert(inferred(b"module main;fn ref i32[] select(ref i32[] a,ref i32[] b){return ref b;}fn ref i32[] forward(ref i32[] a,ref i32[] b){return select(ref a,ref select(ref b,ref a));}fn i32 main(){return 0;}",1,1).is_ok);
+    assert(inferred(b"module main;fn ref mut i32[] id(ref mut i32[] p){return ref mut p;}fn ref mut i32[] rec(ref mut i32[] p,i32 n){if(n==0){return ref mut p;}return rec(ref mut id(ref mut p),n-1);}fn i32 main(){return 0;}",1,1).is_ok);
+    assert(rejected(b"module main;fn ref i32[] id(ref i32[] p){return ref p;}fn ref i32[] bad(ref i32[] p){return id(ref id(ref [42;1]));}fn i32 main(){return 0;}"));
+}
