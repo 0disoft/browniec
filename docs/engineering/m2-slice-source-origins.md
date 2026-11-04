@@ -1,7 +1,7 @@
 # Advisory source origins for result binding lowering
 
 Date: 2026-11-04. This is a lowering prerequisite for B04, not admission proof.
-The source compiler does not yet invoke this pass or admit a result binding.
+The private source compiler now invokes this pass for [result binding lowering](m2-slice-result-call-source.md). Public source admission remains gated.
 
 `slice_result_source_origins::infer` fills the signature table's new
 `return_slice_inputs` column. Each nonzero entry names one input position, 1..8.
@@ -22,8 +22,8 @@ These are advisory source facts only. Syntax/type/Flow checking and independent
 IR proof remain authoritative. The private [CALL-binding IR verifier](m2-slice-result-call-ir.md) now traces
 CALL-defined bindings through callee summaries and alias definitions, rather than
 accepting flattened site provenance as evidence that a recursive cycle grounds.
-Source result-binding lowering still has to connect these independently checked
-recipes; advisory hints alone do not authorize that path.
+Source result-binding lowering now connects these independently checked recipes;
+advisory hints alone never authorize that path.
 
 Windows development passed three semantic-interpreter and three native groups.
 The final runs include cache-reset rejection; exploratory earlier results are

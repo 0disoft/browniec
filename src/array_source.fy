@@ -117,16 +117,16 @@ pub fn Result<usize, errors::Error> release_from(ref locals::Table table, ref mu
     var usize dropped = 0;
     while (i > first) {
         i -= 1;
-        if (binding(table, i)) {
-            let usize drop = ir::array_drop(p, table.registers[i] - 128, offset)?;
-            dropped += 1;
-        } else if (table.registers[i] >= 160 && table.registers[i] < 176) {
-            let usize close = slice_cleanup::close(p, table.registers[i] - 160, offset)?;
-            dropped += 1;
-        } else if (table.registers[i] >= 144 && table.registers[i] < 160) {
-            let usize drop = ir::record_drop(p, table.registers[i] - 144, offset)?;
-            dropped += 1;
-        }
+        dropped+=release_at(table,p,i,offset)?;
     }
     return .ok(dropped);
+}
+
+// Selective capture retention uses the same canonical lexical finalizers.
+pub fn Result<usize,errors::Error> release_at(ref locals::Table table,ref mut ir::Program p,usize i,usize offset){
+    if(i>=table.count){return .err(errors::make(4,offset));}
+    if(binding(table,i)){let usize dropped=ir::array_drop(p,table.registers[i]-128,offset)?;return .ok(1);}
+    if(table.registers[i]>=160 && table.registers[i]<176){let usize closed=slice_cleanup::close(p,table.registers[i]-160,offset)?;return .ok(1);}
+    if(table.registers[i]>=144 && table.registers[i]<160){let usize dropped=ir::record_drop(p,table.registers[i]-144,offset)?;return .ok(1);}
+    return .ok(0);
 }

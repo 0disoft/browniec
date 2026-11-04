@@ -8,7 +8,7 @@ import slice_reborrow_ir as reborrow;
 pub fn Result<usize,errors::Error> close(ref mut ir::Program p,usize site,usize offset){
     var usize pc=0;
     while(pc<p.count && pc<256){
-        if(p.code[pc*8]==61 && p.code[pc*8+1] as usize==site){
+        if((p.code[pc*8]==61 || (p.code[pc*8]==67 && ir::exclusive(p,site))) && p.code[pc*8+1] as usize==site){
             let usize parent=p.code[pc*8+2] as usize;
             return reborrow::end(p,site,parent,offset);
         }

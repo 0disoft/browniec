@@ -33,7 +33,7 @@ pub fn Result<usize, errors::Error> root_argument(ref u8[] source, ref mut lexer
     return .ok(root);
 }
 // let ref [mut] Tag[] name = ref [mut] root; both access modes must agree.
-pub fn Result<Header, errors::Error> header(ref u8[] source, ref mut lexer::State s,
+pub fn Result<Header, errors::Error> declaration(ref u8[] source, ref mut lexer::State s,
     ref locals::Table names, bool mutable, u8 terminator, u8 result_type) {
     if (mutable || terminator != 59 || result_type == 0) { return .err(errors::make(3, s.begin)); }
     let usize keyword = lexer::word(source, s, b"ref")?;
@@ -50,9 +50,13 @@ pub fn Result<Header, errors::Error> header(ref u8[] source, ref mut lexer::Stat
     if (names.count >= 64) { return .err(errors::make(4, begin)); }
     let usize name = lexer::next(source, s)?;
     let usize equals = lexer::punctuation(source, s, 61)?;
-    let usize reference = lexer::word(source, s, b"ref")?;
-    if (exclusive) { let usize access = lexer::word(source,s,b"mut")?; }
     return .ok(Header { .begin = begin, .end = end, .element = element, .exclusive = exclusive });
+}
+pub fn Result<Header,errors::Error> header(ref u8[] source,ref mut lexer::State s,
+    ref locals::Table names,bool mutable,u8 terminator,u8 result_type){
+    let Header h=declaration(source,s,names,mutable,terminator,result_type)?;
+    let usize reference=lexer::word(source,s,b"ref")?;
+    if(h.exclusive){let usize access=lexer::word(source,s,b"mut")?;}return .ok(h);
 }
 pub fn Result<usize, errors::Error> predicate(ref u8[] source, ref mut lexer::State s,
     ref mut ir::Program p, ref locals::Table names, usize index, usize at) {

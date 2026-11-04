@@ -1,7 +1,8 @@
 # Private returned CALL binding proof
 
 Date: 2026-11-04. This B04 increment adds independent IR lifetime/origin proof.
-Source result-binding lowering and executable binding dispatch remain pending.
+[Source result-binding lowering](m2-slice-result-call-source.md) is connected by
+the successor; executable binding dispatch remains pending.
 The full objective remains [completion of the accepted design](completion-plan.md).
 
 ## Representation
@@ -54,8 +55,9 @@ changes in this increment.
 
 `slice_result_ir::from_proxy` constructs the private representation; independent
 `slice_result_verifier::inspect` rechecks it without compiler signatures or hints.
-The compiler still does not emit binding recipes from source. Both public result
-syntax and capability promotion remain gated. Private VM entry rejects these
+The [source bridge](m2-slice-result-call-source.md) now emits these recipes for
+typed lexical initializers. Public result syntax and capability promotion remain
+gated. Private VM entry rejects these
 unsupported markers before independent admission/initial ownership transfer.
 It therefore preserves native owner tokens, pool tickets and backing bytes.
 
@@ -79,8 +81,8 @@ separate function: their combined development stack previously overflowed and
 that exploratory result is excluded. Final runs use the default compiler and
 stack settings, with no historical-result reuse.
 
-Next connect source result destinations to these recipes and native retained
-Held bindings, including fresh parent tickets and selected temporary owner
-retention. Then add borrowed-result argument/projection handling, Static backing
+Source result destinations and selected temporary retention now lower to these
+recipes. Next connect native retained Held dispatch, fresh parent tickets and
+selected temporary owner retention through execution. Then add borrowed-result argument/projection handling, Static backing
 and independent public admission/dispatch. This proof prerequisite does not
 complete B04 or the full implementation objective.

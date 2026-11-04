@@ -15,7 +15,8 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
 
 1. **Returned references: B04/B05.** Preserve the existing origin, independent
    proof, canonical authority and Fuel work. Direct return ranges now reuse those
-   recipes. Next connect returned CALL values to lexical destinations, parent
+   recipes, and typed lexical CALL bindings now lower to independently proved IR.
+   Next connect native returned CALL destinations, parent
    restoration, close/move and ordinary scalar callers; then arguments/projections,
    Static backing and the general scalar/array/record/Buffer reference contract.
    Validate actual public source execution before promoting its capability.
@@ -78,14 +79,17 @@ delivery and DLL exports are still open after the lexical/range increments.
   spare. Preserve canonical authority/owners/pool and exact generations.
 - Private CALL-binding IR now has a [destination/origin proof](m2-slice-result-call-ir.md),
   including exact END masks and definition-based recursive origins. Source lowering
-  and executable binding dispatch remain pending; native VM entry rejects these
-  markers before ownership transfer. Connect those paths next.
+  is connected by the [source successor](m2-slice-result-call-source.md), including
+  selected temporary retention in IR. Executable binding dispatch remains pending;
+  native VM entry rejects these markers before ownership transfer. Connect the
+  runtime destinations, masks and lifetimes next.
 - Independent admission must prove the destination's exact type/access, selected
   input origin and whole-root conflict/lifetime, including CFG joins and cleanup.
   An ordinary scalar proxy or an unchecked CALL flag is not that proof.
-- Anonymous array/range captures currently have immediate call-scoped cleanup.
-  A selected returned result must retain the appropriate owner/parent until close;
-  returning an unrelated view must still clean unselected arguments.
+- Ordinary array/range CALL captures retain immediate call-scoped cleanup. The
+  new private result-binding IR retains selected temporary parents/owners through
+  lexical cleanup. Connect this proved lifetime to actual VM handoff/close; keep
+  unselected capture cleanup and fresh parent publication exact.
 - Public promotion requires source-to-execution cases for ordinary callers,
   aliases, nested uses, traps and cleanup, plus accurate capability metadata.
   Implementing only a native registry does not close B04.

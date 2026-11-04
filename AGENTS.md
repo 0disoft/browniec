@@ -4,6 +4,21 @@
   docs/product/04-remaining-work.md. Do not redefine completion around the
   experimental subset. Execution order and next B04 constraints are recorded in
   docs/engineering/completion-plan.md. Remote delivery remains separate.
+- B04 typed lexical CALL-result source lowering is connected for all six scalar
+  types/access modes. Source hints select construction candidates; independent
+  IR proof still checks them. Selected temporary literals/owned CALL results keep
+  their parent/owner names through result cleanup; unselected captures release
+  normally. Anonymous exclusive ranges emit exact END masks. Scalar CALL tables
+  remain shared; no recursive lexical-table copy was added.
+  Windows development passed 18 native groups and release six new groups on 123
+  matching inputs, with all 209 test-discovery files fingerprinted. All 117
+  production modules are LF and an LF mirror passed check --locked. No native
+  overrides/result reuse. Semantic execution is unsupported by UTF-8 primitives;
+  standalone CLI/full-profile/Linux/delivery/performance were not run.
+  VM binding dispatch remains gated. Next route native destinations/masks, remap
+  resumed tickets to surviving parents, retain/close Held and verify exact Fuel,
+  traps and temporary owners. Keep the full objective active. See
+  docs/engineering/m2-slice-result-call-source.md and its focused Windows evidence.
 - B04 private CALL-binding IR now proves exact destinations, selected input origins,
   anonymous exclusive END masks, whole-program CFG/loans and opaque scalar IDs.
   Definition tracing rejects fabricated recursive grounding. Source lowering and

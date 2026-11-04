@@ -27,6 +27,8 @@ import slice_result_origins as slice_origins;
 import slice_result_ir as slice_result_ir;
 import slice_result_verifier as slice_result_verifier;
 import slice_result_range_source as return_ranges;
+import slice_result_source_origins as source_origins;
+import slice_result_call_source as result_calls;
 
 fn u8 precedence(u8 kind) {
     if (kind == 133) { return 1; }
@@ -471,6 +473,7 @@ fn Result<usize,errors::Error> captured_call(ref u8[] source,ref mut lexer::Stat
     usize depth,u8 result_type,usize structure,ref mut loops::State loop_state) {
     if(depth>32) {return .err(errors::make(4,at));}
     if(destination==16 && (signatures.return_lengths[target]!=0 || signatures.return_records[target]!=0)) {return .err(errors::make(3,at));}
+    let usize zero=if(destination==176){ir::integer(p,0,12,at)?}else{128};
     let usize open=lexer::punctuation(source,s,40)?;
     var usize[8] arguments=[0;8];var locals::Table names=locals::snapshot(table);var usize arity=0;
     while(s.kind!=41) {
@@ -494,6 +497,7 @@ fn Result<usize,errors::Error> captured_call(ref u8[] source,ref mut lexer::Stat
     }
     if(arity!=signatures.arities[target]) {return .err(errors::make(3,at));}
     let usize close=lexer::punctuation(source,s,41)?;
+    if(destination==176){return result_calls::finish(p,table,ref names,signatures,target,ref arguments[..arity],zero,at);}
     let ref usize[] view=ref arguments;
     let usize called=if(destination<16){ir::array_call(p,target,destination,view[..arity],at)?}
         else if(destination>=144 && destination<160){ir::record_call(p,target,destination-144,view[..arity],at)?}
@@ -728,7 +732,22 @@ fn Result<usize, errors::Error> record_declaration(ref u8[] source, ref mut lexe
 fn Result<usize, errors::Error> slice_declaration(ref u8[] source, ref mut lexer::State s,
     ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures,
     bool mutable, u8 terminator, u8 result_type, usize depth, usize structure, ref mut loops::State loop_state) {
-    let slices::Header header = slices::header(source,s,table,mutable,terminator,result_type)?;
+    let slices::Header header = slices::declaration(source,s,table,mutable,terminator,result_type)?;
+    if(s.kind==2 && !word_is(source,s,b"ref")){
+        var lexer::State look=lexer::snapshot(s);let usize next=lexer::next(source,ref mut look)?;
+        if(look.kind==40){
+            let usize target=functions::find(source,signatures,s.begin,s.end);
+            if(locals::find(source,table,s.begin,s.end)!=64 || target>=signatures.count ||
+                signatures.return_slice_elements[target]!=(header.element|if(header.exclusive){128}else{0})){return .err(errors::make(3,s.begin));}
+            let usize name=lexer::next(source,s)?;
+            let usize value=call_value(source,s,p,table,signatures,target,176,header.begin,depth,result_type,structure,loop_state)?;
+            let usize end=lexer::punctuation(source,s,59)?;
+            let usize retained=result_calls::publish(p,table,value,header.begin)?;
+            return locals::declare(table,header.begin,header.end,value,header.exclusive);
+        }
+    }
+    let usize reference=lexer::word(source,s,b"ref")?;
+    if(header.exclusive){let usize access=lexer::word(source,s,b"mut")?;}
     let usize index = if (s.kind == 2) { locals::find(source,table,s.begin,s.end) } else { 64 };
     let usize parent = if (slices::binding(table,index)) { table.registers[index]-160 } else { 16 };
     if (parent < 16 && header.exclusive != ir::exclusive(p,parent)) { return .err(errors::make(3,header.begin)); }
@@ -1457,6 +1476,7 @@ fn Result<ir::Program, errors::Error> lower(ref u8[] source,bool origin_analysis
         }
         declaration += 1;
     }
+    if(origin_analysis){let usize inferred=source_origins::infer(source,ref mut signatures)?;}
     var ir::Program p = ir::empty();
     p.function_count = signatures.count;
     p.entry = signatures.entry;
@@ -1492,7 +1512,9 @@ pub fn Result<ir::Program,errors::Error> compile(ref u8[] source){return lower(s
 pub fn Result<slice_origins::Summary,errors::Error> inspect_slice_results(ref u8[] source){
     let ir::Program p=lower(source,true)?;
     let functions::Table signatures=functions::scan(source)?;
-    return slice_origins::inspect(ref p,ref signatures);
+    let slice_result_ir::Program unit=slice_result_ir::from_proxy(p,ref signatures)?;
+    let slice_result_verifier::Proof checked=slice_result_verifier::inspect(ref unit)?;
+    return .ok(slice_origins::Summary{.parameters=checked.parameters,.rounds=checked.rounds});
 }
 
 // Non-executable returned-view IR. Public compile retains its declaration gate.
