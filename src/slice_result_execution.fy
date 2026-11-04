@@ -16,6 +16,24 @@ import errors as errors;
 import array_owners as owners;
 import slice_result_entry as entry;
 
+pub struct Scalar { i64 value; usize remaining; slices::Ticket[8] resumed; }
+// Internal tagged completion; inactive fields never escape either native API.
+struct Outcome { bool view; runtime::Returned borrowed; Scalar scalar; }
+fn Outcome transferred(runtime::Returned value){
+    return Outcome{.view=true,.borrowed=value,.scalar=Scalar{.value=0,.remaining=value.remaining,.resumed=value.resumed}};
+}
+fn Outcome completed(Scalar value){
+    let slices::Ticket dead=slices::Ticket{.slot=16,.generation=0};
+    let owners::View empty=owners::View{.root=owners::Token{.slot=16,.generation=0},.element=0,.length=0,.start=0,.end=0};
+    return Outcome{.view=false,.scalar=value,.borrowed=runtime::Returned{.held=runtime::Held{
+        .issued=dead,.view=empty,.exclusive=false,.close_parent=false,.drop=false,.depth=0,.frame=0,.active=false},
+        .resumed=[dead;8],.remaining=value.remaining}};
+}
+
+// Read the canonical stack through its own reference; do not keep full outer
+// State snapshots alive in the native driver across ownership transactions.
+fn bool available(ref authority::State stack,bool root){return stack.depth<31 && (!root || stack.frame==0);}
+
 fn runtime::Contract binding(ref ir::Program unit,usize f){
     var runtime::Contract c=runtime::Contract{.tags=[0;8],.arity=unit.body.arities[f],.selected=unit.parameters[f] as usize};
     var usize i=0;while(i<c.arity){let usize site=unit.body.slice_parameters[unit.body.register_starts[f]+i] as usize;
@@ -24,10 +42,13 @@ fn runtime::Contract binding(ref ir::Program unit,usize f){
 // Deliberately separate admission from ordinary Program/CLI execution. This
 // dialect has native borrowed inputs, owned arrays/records, ordinary CALLs and
 // forwarded results. Explicit native owned entry is separate from public source admission.
-fn Result<usize,errors::Error> admit(ref ir::Program unit,usize function,ref i64[] values,usize captures,ref owners::Token[] inputs){
+fn Result<usize,errors::Error> admit(ref ir::Program unit,usize function,ref i64[] values,usize captures,ref owners::Token[] inputs,bool view){
     let verifier::Proof proof=verifier::inspect(unit)?;
-    if(function>=unit.body.function_count || unit.elements[function]==0 ||
+    if(function>=unit.body.function_count ||
         values.len!=unit.body.arities[function] || captures!=values.len || (inputs.len!=0 && inputs.len!=values.len)){return .err(errors::make(5,0));}
+    if(view){if(unit.elements[function]==0){return .err(errors::make(5,0));}}
+    else if(unit.elements[function]!=0 || !types::scalar(unit.body.return_types[function]) ||
+        unit.body.array_results[function]!=0 || unit.body.record_results[function]!=0){return .err(errors::make(5,0));}
     var usize i=0;
     i=0;while(i<unit.body.function_count){var usize a=0;while(a<unit.body.arities[i]){
         let usize r=unit.body.register_starts[i]+a;
@@ -53,11 +74,29 @@ pub fn Result<runtime::Returned,errors::Error> execute(ref ir::Program unit,usiz
 pub fn Result<runtime::Returned,errors::Error> execute_owned(ref ir::Program unit,usize function,
     ref runtime::Capture[] captures,ref i64[] values,ref owners::Token[] inputs,
     ref mut runtime::State state,ref mut u8[] data,usize fuel){
-    let usize admitted=admit(unit,function,values,captures.len,inputs)?;
+    return switch(invoke(unit,function,captures,values,inputs,state,data,fuel,true)){
+        case .ok(outcome):{if(outcome.view){.ok(outcome.borrowed)}else{.err(errors::make(5,0))}}
+        case .err(e):{.err(e)}
+    };
+}
+// Ordinary entries use the same canonical ownership/dispatch/abort path. Return
+// fresh resumed inputs explicitly; the host must not guess a rotated generation.
+pub fn Result<Scalar,errors::Error> execute_scalar(ref ir::Program unit,usize function,
+    ref runtime::Capture[] captures,ref i64[] values,ref owners::Token[] inputs,
+    ref mut runtime::State state,ref mut u8[] data,usize fuel){
+    return switch(invoke(unit,function,captures,values,inputs,state,data,fuel,false)){
+        case .ok(outcome):{if(!outcome.view){.ok(outcome.scalar)}else{.err(errors::make(5,0))}}
+        case .err(e):{.err(e)}
+    };
+}
+fn Result<Outcome,errors::Error> invoke(ref ir::Program unit,usize function,
+    ref runtime::Capture[] captures,ref i64[] values,ref owners::Token[] inputs,
+    ref mut runtime::State state,ref mut u8[] data,usize fuel,bool view){
+    let usize admitted=admit(unit,function,values,captures.len,inputs,view)?;
     let usize depth=switch(authority::inspect(ref state.runtime.authority)){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,0));}};
-    if(state.runtime.authority.frame!=0 || depth>=31){return .err(errors::make(5,0));}
+    if(!available(ref state.runtime.authority,true)){return .err(errors::make(5,0));}
     let runtime::Entered first=entry::enter(ref unit.body,function,binding(unit,function),captures,inputs,state,data,fuel)?;
-    let Result<runtime::Returned,errors::Error> outcome=start(unit,function,first,values,state,data);
+    let Result<Outcome,errors::Error> outcome=start(unit,function,ref first,values,state,data);
     return switch(outcome){
         case .ok(v):{.ok(v)}
         case .err(e):{
@@ -70,12 +109,12 @@ pub fn Result<runtime::Returned,errors::Error> execute_owned(ref ir::Program uni
 }
 // Keep the large frame maps out of the independent admission call stack.
 // Their native storage is needed only after verification and initial entry.
-fn Result<runtime::Returned,errors::Error> start(ref ir::Program unit,usize function,runtime::Entered first,
+fn Result<Outcome,errors::Error> start(ref ir::Program unit,usize function,ref runtime::Entered first,
     ref i64[] values,ref mut runtime::State state,ref mut u8[] data){
     var frames::Frames bindings=frames::empty(state);
     return run(unit,function,first,values,ref mut bindings,state,data);
 }
-fn Result<runtime::Returned,errors::Error> run(ref ir::Program unit,usize function,runtime::Entered first,
+fn Result<Outcome,errors::Error> run(ref ir::Program unit,usize function,ref runtime::Entered first,
     ref i64[] values,ref mut frames::Frames bindings,ref mut runtime::State state,ref mut u8[] data){
     var i64[4096] registers=[0;4096];var usize remaining=first.call.remaining;
     let usize entered=frames::push(ref unit.body,bindings,first.call,function,128,32,0)?;
@@ -99,7 +138,7 @@ fn Result<runtime::Returned,errors::Error> run(ref ir::Program unit,usize functi
             let usize prepared=frames::prepare(bindings,dst,current)?;pc+=1;continue;
         }
         if(op==9 || op==64){
-            if(frame>=31 || state.runtime.authority.depth>=31){return .err(errors::make(12,offset));}
+            if(frame>=31 || !available(ref state.runtime.authority,false)){return .err(errors::make(12,offset));}
             let runtime::Contract c=binding(unit,a);
             remaining=switch(owned::enter(ref unit.body,pc,c,bindings,state,data,remaining)){
                 case .ok(v):{v}case .err(e):{return .err(errors::make(e.kind,offset));}
@@ -114,14 +153,16 @@ fn Result<runtime::Returned,errors::Error> run(ref ir::Program unit,usize functi
                 case .ok(v):{v}case .err(e):{return .err(errors::make(e.kind,offset));}
             };remaining=result.remaining;
             pc=frames::pop(ref unit.body,bindings,result)?;
-            if(bindings.frame==0){return .ok(result);}continue;
+            if(bindings.frame==0){return .ok(transferred(result));}continue;
         }
         if(op==8 || op==39 || op==50){
             let usize destination=bindings.destinations[frame];let usize next=bindings.continuations[frame];
             let i64 value=if(op==8){registers[base+a]}else{0};
-            remaining=switch(owned::leave(ref unit.body,pc,op,bindings,state,data,remaining)){
+            let runtime::Resumed resumed=switch(owned::leave(ref unit.body,pc,op,bindings,state,data,remaining)){
                 case .ok(v):{v}case .err(e):{return .err(errors::make(e.kind,offset));}
             };
+            remaining=resumed.remaining;
+            if(frame==1){return .ok(completed(Scalar{.value=value,.remaining=remaining,.resumed=resumed.tickets}));}
             if(op==8){registers[(frame-1)*128+destination]=value;}pc=next;continue;
         }
         if(op>=41 && op<=49){remaining=records::step(ref unit.body,pc,bindings,state,ref mut registers[base..base+128],data,remaining)?;pc+=1;continue;}

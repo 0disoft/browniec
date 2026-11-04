@@ -62,10 +62,11 @@ delivery and DLL exports are still open after the lexical/range increments.
 
 ## Next B04 integration constraints
 
-- `slice_result_execution::admit` currently requires a borrowed-result entry;
-  public scalar `main` needs its own ordinary entry/terminal path. `entry::enter`
-  and `frames::pop_call` likewise assume a borrowed top-level invocation. Preserve
-  existing native borrowed entry APIs while adding the scalar caller path.
+- Ordinary scalar entry/terminal execution now uses the same canonical native
+  coordinator through `vm::run_slice_scalar`; retained inputs return fresh resumed
+  tickets and anonymous captures close transactionally. See the
+  [scalar entry contract](m2-slice-scalar-entry.md). This is a prerequisite for
+  public scalar callers, not public returned-result admission or lexical binding.
 - `frames::pop` currently treats every borrowed return as terminal forwarding and
   prepares its parent frame. General result destinations must instead bind a
   live slice site and permit subsequent instructions in the caller.

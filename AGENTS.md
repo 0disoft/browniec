@@ -4,6 +4,18 @@
   docs/product/04-remaining-work.md. Do not redefine completion around the
   experimental subset. Execution order and next B04 constraints are recorded in
   docs/engineering/completion-plan.md. Remote delivery remains separate.
+- Ordinary scalar entry now shares the canonical returned-view VM through
+  `vm::run_slice_scalar`: exact scalar admission, fresh resumed inputs, native
+  value-copy arguments and transactional reverse-order capture cleanup. The
+  default Windows stack overflow in the exploratory descendant/anonymous paths
+  is fixed by borrowing entry snapshots and reading authority by reference.
+  Windows development passed 63 native groups and 217 tool-free CLI cases on
+  505 matching inputs, without stack/compiler overrides or native result reuse.
+  Release/full M1/other M2/Linux/isolation/ABI/allocator/performance were not run.
+  Public returned-result declarations/bindings remain gated. Next: lexical result
+  destinations, Held retention and fresh parent restoration, then independent
+  public admission/dispatch. See docs/engineering/m2-slice-scalar-entry.md and
+  docs/evidence/m2-slice-scalar-entry-windows-20261104.json.
 - L07 lexical compatibility is implemented at `5bb055b`: leading BOM, LF/CRLF,
   rejection of misplaced BOM/lone CR/raw NUL, nested block comments and raw spans.
   Direct return ranges are implemented at `9737710` in the private returned-view

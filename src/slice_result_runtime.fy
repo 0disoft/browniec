@@ -298,7 +298,6 @@ pub fn Result<Resumed,errors::Error> leave_call(ref mut State state,ref mut Call
     let slices::Arguments restored=restore(ref mut stack,ref mut pool,ref table,call,capacity)?;
     var slices::Ticket[8] resumed=[none();8];var usize writer=0;var usize i=0;
     while(i<call.contract.arity){
-        if(call.captures[i].close || call.captures[i].drop){return .err(errors::make(5,0));}
         if(call.contract.tags[i]!=0){if((call.contract.tags[i]&128)!=0){resumed[i]=restored.tickets[writer];writer+=1;}else{resumed[i]=call.captures[i].ticket;}}i+=1;
     }
     i=16;while(i>0){i-=1;let slices::Slot slot=pool.slots[i];
@@ -306,6 +305,40 @@ pub fn Result<Resumed,errors::Error> leave_call(ref mut State state,ref mut Call
             let usize closed=size(slices::close(ref mut pool,slices::Ticket{.slot=i,.generation=slot.generation},ref mut table,capacity))?;
         }
     }
+    let usize cleaned=finish_captures(ref mut stack,ref mut pool,ref mut table,call,ref mut resumed,capacity)?;
     state.runtime=Runtime{.authority=stack,.pool=pool,.owners=table};call.active=false;
     return .ok(Resumed{.tickets=resumed,.remaining=fuel-leave_cost()});
+}
+
+// Ordinary returns retain no selected view. Close anonymous captures in reverse
+// acquisition order, then release requested roots after callee readers are gone.
+// This mutates only the caller's unpublished leave_call plan.
+fn Result<usize,errors::Error> finish_captures(ref mut authority::State stack,ref mut slices::Pool pool,
+    ref mut owners::Table table,ref Call call,ref mut slices::Ticket[] resumed,usize capacity){
+    let usize one=1;var usize closed=0;var usize i=call.contract.arity;
+    while(i>0){i-=1;let Capture capture=call.captures[i];
+        if((capture.drop && !capture.close) || (call.contract.tags[i]==0 &&
+            (capture.close || capture.drop || !same(capture.ticket,none())))){return .err(errors::make(5,0));}
+        if(call.contract.tags[i]!=0 && capture.close){
+            let slices::Ticket current=resumed[i];
+            if(current.slot>=16){return .err(errors::make(5,0));}
+            var bool pending=false;var usize at=0;
+            if((call.contract.tags[i]&128)!=0){
+                while(at<stack.depth){if(stack.kinds[at]==2 && stack.children[at].issued.slot==current.slot){pending=true;}at+=1;}
+            }
+            if(pending){
+                if(capture.drop || stack.depth==0 || stack.kinds[stack.depth-1]!=2 || stack.frames[stack.depth-1]!=call.frame ||
+                    stack.children[stack.depth-1].issued.slot!=current.slot){return .err(errors::make(5,0));}
+                resumed[i]=ticket(authority::leave_child(stack,pool,current,table,capacity,call.frame))?;
+            }else{
+                if((closed&(one<<current.slot))==0){let usize ended=size(slices::close(pool,current,table,capacity))?;closed|=one<<current.slot;}
+                resumed[i]=none();
+            }
+        }
+    }
+    var usize dropped=0;i=call.contract.arity;
+    while(i>0){i-=1;if(call.contract.tags[i]!=0 && call.captures[i].drop){
+        let owners::Token token=call.views[i].root;
+        if((dropped&(one<<token.slot))==0){let usize released=size(owners::release(table,token,capacity))?;dropped|=one<<token.slot;}
+    }}return .ok(0);
 }

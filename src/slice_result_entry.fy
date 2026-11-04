@@ -27,7 +27,8 @@ pub fn Result<runtime::Entered,errors::Error> enter(ref ir::Program p,usize func
         i+=1;
     }
     if(count==0){
-        let runtime::Call call=runtime::enter(state,contract,captures,data.len,fuel-work)?;
+        let runtime::Call call=if(contract.selected==0){runtime::enter_call(state,contract,captures,data.len,fuel-work)?}
+            else{runtime::enter(state,contract,captures,data.len,fuel-work)?};
         return .ok(runtime::Entered{.call=call,.copies=owners::Copies{
             .tokens=[owners::Token{.slot=0,.generation=0};8],.count=0}});
     }

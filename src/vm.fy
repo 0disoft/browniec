@@ -34,6 +34,14 @@ pub fn Result<result_runtime::Returned,errors::Error> run_slice_result_owned(ref
     return result_execution::execute_owned(p,function,captures,values,inputs,state,data,fuel);
 }
 
+// Ordinary scalar entry in the canonical returned-view coordinator. Borrowed
+// source declarations remain gated publicly; this is the native caller path.
+pub fn Result<result_execution::Scalar,errors::Error> run_slice_scalar(ref result_ir::Program p,
+    usize function,ref result_runtime::Capture[] captures,ref i64[] values,ref owners::Token[] inputs,
+    ref mut result_runtime::State state,ref mut u8[] data,usize fuel){
+    return result_execution::execute_scalar(p,function,captures,values,inputs,state,data,fuel);
+}
+
 // Guest calls use bounded VM frames, never native recursion. Register reads are
 // verified per function, so reclaimed frame slots need no per-call zero-fill.
 pub fn Result<i64, errors::Error> run(ref ir::Program p, usize fuel) {
