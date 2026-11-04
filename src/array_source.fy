@@ -6,6 +6,8 @@ import ir as ir;
 import cells as cells;
 import errors as errors;
 import slice_cleanup_source as slice_cleanup;
+import static_source as statics;
+import static_builders as static_builders;
 
 // Local binding values 128..143 denote private array catalog IDs, never scalar
 // registers. Each binding belongs to its function's lexical scopes.
@@ -125,6 +127,7 @@ pub fn Result<usize, errors::Error> release_from(ref locals::Table table, ref mu
 // Selective capture retention uses the same canonical lexical finalizers.
 pub fn Result<usize,errors::Error> release_at(ref locals::Table table,ref mut ir::Program p,usize i,usize offset){
     if(i>=table.count){return .err(errors::make(4,offset));}
+    if(statics::binding(table,i)){let usize closed=static_builders::close(p,statics::site(table.registers[i]),offset)?;return .ok(1);}
     if(binding(table,i)){let usize dropped=ir::array_drop(p,table.registers[i]-128,offset)?;return .ok(1);}
     if(table.registers[i]>=160 && table.registers[i]<176){let usize closed=slice_cleanup::close(p,table.registers[i]-160,offset)?;return .ok(1);}
     if(table.registers[i]>=144 && table.registers[i]<160){let usize dropped=ir::record_drop(p,table.registers[i]-144,offset)?;return .ok(1);}

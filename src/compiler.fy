@@ -31,6 +31,7 @@ import slice_result_source_origins as source_origins;
 import slice_result_call_source as result_calls;
 import literal_collection as literal_collection;
 import static_builders as static_builders;
+import static_source as static_source;
 import static_image as static_images;
 import program_image as program_images;
 
@@ -157,6 +158,37 @@ fn Result<usize,errors::Error> literal_projection(ref u8[] source,ref mut lexer:
     let usize value=static_builders::scalar(p,site,index,length,at)?;
     let usize closed=static_builders::close(p,site,at)?;return .ok(value);
 }
+// Owned temporary views join lexical cleanup before evaluating an index, so
+// return/propagation/break/continue inside that index cannot leak a live site.
+fn Result<usize,errors::Error> static_projection(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    ref static_source::View view,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
+    if(view.kind!=1){return .err(errors::make(3,at));}
+    if(!view.owned){return static_read(source,s,p,table,signatures,view.site,at,depth,result_type,structure,loop_state);}
+    if(s.kind==46){
+        let usize value=static_read(source,s,p,table,signatures,view.site,at,depth,result_type,structure,loop_state)?;
+        let usize closed=static_builders::close(p,view.site,at)?;return .ok(value);
+    }
+    return static_temporary_projection(source,s,p,table,signatures,view.site,at,depth,result_type,structure,loop_state);
+}
+fn Result<usize,errors::Error> static_temporary_projection(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    usize site,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
+    var locals::Table names=locals::snapshot(table);
+    let usize hidden=locals::declare(ref mut names,at,at,192+site,false)?;
+    let usize value=static_read(source,s,p,ref names,signatures,site,at,depth,result_type,structure,loop_state)?;
+    let usize closed=arrays::release_from(ref names,p,table.count,at)?;return .ok(value);
+}
+fn Result<usize,errors::Error> static_read(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    usize site,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
+    let bool length=s.kind==46;var usize index=0;
+    if(length){let usize dot=lexer::next(source,s)?;let usize member=lexer::word(source,s,b"len")?;}
+    else{let usize open=lexer::punctuation(source,s,91)?;
+        index=expression(source,s,p,table,signatures,1,depth+1,12,result_type,structure,loop_state)?;
+        if(p.types[index]!=12){return .err(errors::make(3,at));}let usize close=lexer::punctuation(source,s,93)?;}
+    return static_builders::scalar(p,site,index,length,at);
+}
 fn Result<usize, errors::Error> named_operand(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize depth, u8 expected, u8 result_type, usize structure, ref mut loops::State loop_state) {
     let usize at = s.begin;
     if (word_is(source, s, b"text")) {
@@ -172,7 +204,9 @@ fn Result<usize, errors::Error> named_operand(ref u8[] source, ref mut lexer::St
                 let usize path=lexer::punctuation(source,s,58)?;
                 let usize method=lexer::word(source,s,b"bytes")?;
                 let usize open=lexer::punctuation(source,s,40)?;
-                return literal_projection(source,s,p,table,signatures,depth,result_type,structure,loop_state,true);
+                if(s.kind==4){return literal_projection(source,s,p,table,signatures,depth,result_type,structure,loop_state,true);}
+                let static_source::View view=static_source::bytes_argument(source,s,p,table,ref signatures.literals,at,0)?;
+                return static_projection(source,s,p,table,signatures,ref view,at,depth,result_type,structure,loop_state);
             }
         }
         if (qualified) { return utf8_value(source,s,p,table,signatures,depth,result_type,structure,loop_state); }
@@ -207,6 +241,10 @@ fn Result<usize, errors::Error> named_operand(ref u8[] source, ref mut lexer::St
 fn Result<usize, errors::Error> binding_operand(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize index, usize at, usize depth, u8 result_type, usize structure, ref mut loops::State loop_state) {
     if (index == 64) { return .err(errors::make(3, at)); }
     let usize register = table.registers[index];
+    if(static_source::binding(table,index)){
+        let static_source::View view=static_source::View{.site=static_source::site(register),.kind=static_source::kind(register),.owned=false};
+        return static_projection(source,s,p,table,signatures,ref view,at,depth,result_type,structure,loop_state);
+    }
     if (record_values::binding(table, index)) { return record_values::read(source, s, p, register - 144, at); }
     if (arrays::binding(table, index)) {
         if (s.kind == 46) {
@@ -910,6 +948,9 @@ fn Result<usize, errors::Error> declaration(ref u8[] source, ref mut lexer::Stat
         let bool mutable = word_is(source, s, b"var");
         let usize keyword = lexer::next(source, s)?;
         if (word_is(source,s,b"ref")) {
+            if(signatures.literals.enabled && static_source::candidate(source,s,table)?){
+                return static_source::declare(source,s,p,table,ref signatures.literals,mutable,terminator,result_type);
+            }
             return slice_declaration(source,s,p,table,signatures,mutable,terminator,result_type,expr_depth,structure,loop_state);
         }
         if (s.kind == 2 && !locals::reserved(source[s.begin..s.end])) {

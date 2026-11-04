@@ -57,8 +57,9 @@ for exact native/CLI selections, inputs, compiler, report and artifact identitie
 The earlier E2101 fixture compile failure was corrected before these final input
 snapshots; it is not counted as a verification pass.
 
-Typed ref str/byte local bindings, lexical alias cleanup, general text::bytes and
-byte-view text::equal source arguments remain next. Static CALL/return receipts,
+The [typed binding successor](static-bindings.md) now lowers native ref str/byte
+locals, aliases and text::bytes projections with lexical/nonlocal-exit cleanup.
+General Static view expressions and byte-view text::equal source arguments remain next. Static CALL/return receipts,
 public returned-result admission and the complete inventory remain open. No
 Engine/Instance pin, external result receipt, full-profile, general stack/RAM,
 allocator/OOM, timing, Linux, restrictions or C ABI/packaging claim follows.

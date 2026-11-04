@@ -1,3 +1,21 @@
+- Native compile_image now lowers typed Static ref u8[]/ref str locals,
+  same-kind aliases and explicit text::bytes projections over retained images.
+  Compiler-only encodings 192..223 never become scalar cells or owner tickets.
+  Lexical block/value-arm/return/propagation/break/continue cleanup includes
+  Static views; aggregate returns reuse the per-binding finalizer while keeping
+  their returned owner. Owned projected views enter hidden cleanup before index
+  effects; simple length projections avoid the hidden local/table snapshot.
+  Byte/text kind separation, immutable access, independent CFG proof and all
+  existing capacities/prices remain. A one-byte binding+alias costs 57 plus
+  entry/leave reserves, retains one byte at quota 577 and runs at zero backing.
+  Development/release each passed 16 native groups (7 new, 9 regressions) and
+  88 tool-free CLI cases on 137 matching inputs and a 223-file discovery identity.
+  All 125 production files are LF and locked LF mirrors pass; no native override
+  or historical reuse. Full profiles/general stack/RAM/allocator/timing/Linux/
+  restricted/C ABI/package evidence was not run. Source text::equal/general view
+  expressions, Static CALL/return receipts and ordinary public admission remain
+  next; the complete objective stays active. See docs/engineering/static-bindings.md
+  and its focused Windows evidence.
 - Retained-image compilation now preserves text::valid_utf8 dispatch after
   speculative text::bytes lookahead. Plain text bindings, prices and limits are
   unchanged. The exact fixture fails at 58c6b92; development/release each pass
