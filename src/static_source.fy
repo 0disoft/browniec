@@ -91,3 +91,23 @@ pub fn Result<usize,errors::Error> declare(ref u8[] source,ref mut lexer::State 
     let usize made=if(value.owned){value.site}else{builders::alias(p,value.site,begin)?};
     return locals::declare(names,begin,end,192+(expected as usize-1)*16+made,false);
 }
+
+// Both arguments currently contain only immutable view construction/lookup,
+// without guest CALLs or control effects. Extending view() to effectful forms
+// must first retain the left temporary through every right-argument exit.
+pub fn Result<usize,errors::Error> equal(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table names,ref literals::Index index){
+    let usize at=s.begin;let usize module_name=lexer::word(source,s,b"text")?;
+    let usize first=lexer::punctuation(source,s,58)?;let usize second=lexer::punctuation(source,s,58)?;
+    let usize method=lexer::word(source,s,b"equal")?;let usize open=lexer::punctuation(source,s,40)?;
+    let View left=view(source,s,p,names,index,0)?;
+    if(left.kind!=1){return .err(errors::make(3,at));}
+    let usize comma=lexer::punctuation(source,s,44)?;
+    let View right=view(source,s,p,names,index,0)?;
+    if(right.kind!=1){return .err(errors::make(3,at));}
+    let usize close=lexer::punctuation(source,s,41)?;
+    let usize result=builders::equal(p,left.site,right.site,at)?;
+    if(right.owned){let usize closed=builders::close(p,right.site,at)?;}
+    if(left.owned){let usize closed=builders::close(p,left.site,at)?;}
+    return .ok(result);
+}

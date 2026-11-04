@@ -93,8 +93,10 @@ regression and follow final input capture. Full profiles, general stack/RAM,
 allocator/OOM, timing, Linux, restrictions and C ABI/packaging were not verified.
 
 The [typed binding successor](static-bindings.md) now supplies native Static
-locals/aliases, ref str and explicit text::bytes projections. General view expressions,
-byte-view text::equal argument lowering, Static CALL/return origin receipts and
+locals/aliases, ref str and explicit text::bytes projections. The
+[source equality successor](static-equality-source.md) now checks and lowers
+immutable byte-view equality. General runtime/range view expressions, Static
+CALL/return origin receipts and
 ordinary public admission remain unfinished. Existing returned-reference source
 declaration gates also apply to this constructor. Buffer/input text, Engine/
 Instance/step, host exchange, restrictions, ABI and the complete inventory remain

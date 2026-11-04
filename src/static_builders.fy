@@ -43,3 +43,12 @@ pub fn Result<usize,errors::Error> alias(ref mut ir::Program p,usize source,usiz
     if(source>=16){return .err(errors::make(3,offset));}
     let usize site=fresh(p,offset)?;let usize pc=ir::raw(p,75,site,source,0,offset)?;return .ok(site);
 }
+
+// Type/liveness/image authority are reconstructed independently at admission.
+// Source callers enforce the byte-view signature before reaching this builder.
+pub fn Result<usize,errors::Error> equal(ref mut ir::Program p,usize left,usize right,usize offset){
+    if(left>=16 || right>=16){return .err(errors::make(3,offset));}
+    if(p.registers>=128){return .err(errors::make(4,offset));}
+    let usize dst=p.registers;let usize pc=ir::raw(p,73,dst,left,right,offset)?;
+    p.types[dst]=2;p.registers+=1;return .ok(dst);
+}

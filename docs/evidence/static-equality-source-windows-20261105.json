@@ -1,0 +1,4489 @@
+{
+  "schema": "browniec.static-equality-source-windows/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-04T21:38:35.384887+00:00",
+  "startingHead": "ed836945c4a540f712c691e586c67661e3371199",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false",
+  "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+  "inputs": [
+    {
+      "path": "fairy.lock",
+      "sha256": "196f1ef9651f75deee4e382dd02d114f4f1589697942423d93465f45db628138"
+    },
+    {
+      "path": "fairy.toml",
+      "sha256": "f5254ba793d9012470c697e8657688a4ea5465c138fba6d748707d5bfa4b31fb"
+    },
+    {
+      "path": "src/arithmetic.fy",
+      "sha256": "8192e6ba97498d059b0505307bc2bf84ac58d9722dc5f597587f8ae81a1081d3"
+    },
+    {
+      "path": "src/array_call_source.fy",
+      "sha256": "57af1c63a68bf060d6c555d1ec3f929d3c53715691074d68a5ae6f7ab58392a2"
+    },
+    {
+      "path": "src/array_call_vm.fy",
+      "sha256": "1c87ed296016233b7d3546b89576dddc5b48f7660f16a553e299e7faf8552e22"
+    },
+    {
+      "path": "src/array_layout.fy",
+      "sha256": "d3497dfb6bb7e9ac8ceece4ae88a2274b6b40b49e3c5fecfc509179c03c91cdd"
+    },
+    {
+      "path": "src/array_meta.fy",
+      "sha256": "d1a07319dc2bb7eb95298e3920eaec63c1a4c1390a00c5469528a77e97612894"
+    },
+    {
+      "path": "src/array_owners.fy",
+      "sha256": "2f9b2e87dc8021a277c085b1783afa35e8902e4de5aab9bac765de240b4c1caa"
+    },
+    {
+      "path": "src/array_parameters.fy",
+      "sha256": "bc9d641ea11177587392784f0d1be4a19789e993218c7cba02fc4159d1f5297b"
+    },
+    {
+      "path": "src/array_range_vm.fy",
+      "sha256": "966ebb47ce33bb506fa0466a8d3ce2bee3f0ba3a9ee77266d0e7deab0bb64d40"
+    },
+    {
+      "path": "src/array_result_source.fy",
+      "sha256": "1e97221f906c112e9b3f3124867af4c32080e765f7da6cc0f1bb1b02e6e01050"
+    },
+    {
+      "path": "src/array_result_vm.fy",
+      "sha256": "e6db758edc0822994373babe283ae05d66bd3a8fd3137554987535132c17b547"
+    },
+    {
+      "path": "src/array_results.fy",
+      "sha256": "1dccba6ebbc493654aea82e305b7c3f9b0c226c8c475d1c80f19fa1014e63e8e"
+    },
+    {
+      "path": "src/array_slices.fy",
+      "sha256": "079ad1fe12bee4b8c8bb099dfa3d2384fd3b0bee8f791d678b41aec291378171"
+    },
+    {
+      "path": "src/array_source.fy",
+      "sha256": "10b8fbaa53eec0aa9eadc6c961d12da86aeea9daa7b093e5c486b70f5a3659b9"
+    },
+    {
+      "path": "src/array_storage.fy",
+      "sha256": "00808c116e0fb86ce063d7fd4cc9d1f8fd29f19b277449e59e3569491a3ee534"
+    },
+    {
+      "path": "src/array_verifier.fy",
+      "sha256": "b64906e2b8dd674c26211dee85cf8a362b7f32bfc6d26c7134b0168f49e32ed3"
+    },
+    {
+      "path": "src/array_vm.fy",
+      "sha256": "2b9b59f5effbb5a4677882192102d6c1c48dea0c9388ab863d59691d58a053ac"
+    },
+    {
+      "path": "src/bits.fy",
+      "sha256": "0b030757624a8dbaea9475f90d757aeff78b9154a121af7a4d9ebd80042db1a0"
+    },
+    {
+      "path": "src/buffer_append.fy",
+      "sha256": "7a4de27685b41b772569e5a687a7626bc200f7c6152b77082cc93052bf78527a"
+    },
+    {
+      "path": "src/buffer_close.fy",
+      "sha256": "ae68d02649e04196854ba4b41f475c0c550d6d0ac5f80ebd2bbeb537fbcfaac7"
+    },
+    {
+      "path": "src/buffer_create.fy",
+      "sha256": "f133713a4f815f70cfd973933f81dd1156b7fa5c637eeb9dbad9e87f309308e0"
+    },
+    {
+      "path": "src/buffer_growth.fy",
+      "sha256": "71b855cc0e2e4e9d092cf66cf9de94ce62079e3c141e33d6b4c715fecebd1177"
+    },
+    {
+      "path": "src/buffer_host_close.fy",
+      "sha256": "4e5bcef18c020b3eccd4034cf5a5c0a8b81b53b6709ba043b876d64eaf8b7aea"
+    },
+    {
+      "path": "src/buffer_host_sweep.fy",
+      "sha256": "3a043bc009e60b55e11d07ffe40c12dcf75e44b88ea878a37405e61b414c606a"
+    },
+    {
+      "path": "src/buffer_owners.fy",
+      "sha256": "0dd45d859fec557cbe729b64f4b838b11b1d1f9dde3f779c9251cfad3bb82576"
+    },
+    {
+      "path": "src/buffer_replacement.fy",
+      "sha256": "7f8a58181ad531924d4a3f1d887c552a952ebf6df493d714b00d56112a92ae51"
+    },
+    {
+      "path": "src/buffer_resize.fy",
+      "sha256": "1870bbf133aa6e9535eb5a901cbdd54bf8e520ae2520a54b9bd03b955b9cf057"
+    },
+    {
+      "path": "src/buffer_storage.fy",
+      "sha256": "4f6b9f8e5fc5ae55551618d70eac1e74289d09a933249bf95940f98d5b2fbe8d"
+    },
+    {
+      "path": "src/buffer_truncate.fy",
+      "sha256": "9b5900d8ee8d1360c47afb4589473adfb5fe523c83de941e7a88412f9d3425fc"
+    },
+    {
+      "path": "src/buffer_utf8.fy",
+      "sha256": "a59e01627bb46851405334d0650426a9ef816a69cf1c0a5dbf6f3cec43f8b255"
+    },
+    {
+      "path": "src/buffer_utf8_meter.fy",
+      "sha256": "b066f8b567b465d709cc356193c92aeea33d8918ae7c500fb23992993d455142"
+    },
+    {
+      "path": "src/buffer_utf8_pool.fy",
+      "sha256": "74eafd20969398df0475dee122130292aa3bd51dfbfea2a32cea3819def397df"
+    },
+    {
+      "path": "src/buffer_utf8_scan.fy",
+      "sha256": "f51a409ff4f1f6fd427b1b0ef9526d16c506af197478ba0281d6e376ff9e6a7a"
+    },
+    {
+      "path": "src/buffer_utf8_session.fy",
+      "sha256": "709338c5a33d28ea20ae41851a27d0139b40c1b7f69c4a827503bccf7da54330"
+    },
+    {
+      "path": "src/buffer_write.fy",
+      "sha256": "ddb6db325a50f5f660c90971661144a582794ec84c0be5f675d503c237829dab"
+    },
+    {
+      "path": "src/call_frame_vm.fy",
+      "sha256": "224e3c7a89ea37f0c152b4222a5ca88cf8c28692651ffb97fec322c889426e28"
+    },
+    {
+      "path": "src/casts.fy",
+      "sha256": "59da4a4ecef63833cc383495390e150b964bf41b353c4b150dcacb6be66caba6"
+    },
+    {
+      "path": "src/cells.fy",
+      "sha256": "71b82add3e95b86a1b7bcb88c3f97f6ae38bae0ac3ec8b1a2de925b10a64e433"
+    },
+    {
+      "path": "src/cli_input.fy",
+      "sha256": "ec91de62e6b5147d117d6fe0366ebcf617b556c074bf1dd91cb10188f96507ba"
+    },
+    {
+      "path": "src/compiler.fy",
+      "sha256": "7fd244d10711e0ac33170f04d58b17b96195ba6c0d122f0c47dfbe3d13434fe8"
+    },
+    {
+      "path": "src/errors.fy",
+      "sha256": "e8070ef5c6380460dacb579c33f2e180b9e683286c8cb0827e30d82a581a4646"
+    },
+    {
+      "path": "src/fuel.fy",
+      "sha256": "2ab68b1be379415ca85bc29b5defb4d4e527b05c8056578741198779a8806cfb"
+    },
+    {
+      "path": "src/functions.fy",
+      "sha256": "184dc2db5647ade440147f7f21c732dd14dc7f9bd1a2eebd19d23e56475756f4"
+    },
+    {
+      "path": "src/ir.fy",
+      "sha256": "d2dedb007bfde302d103c9e7f0d16a2a6bf0cc6c137fdb8b3508556ec666cd95"
+    },
+    {
+      "path": "src/lexer.fy",
+      "sha256": "be08dee60b93b5ed44181e3367d6e67fd11372d77420ca4790dc2fc345ff14d6"
+    },
+    {
+      "path": "src/literal_collection.fy",
+      "sha256": "45598d7b05e05688f335e87cf967ad8ed4df1095ec59ad62918f98c0e9215a6e"
+    },
+    {
+      "path": "src/literal_source.fy",
+      "sha256": "839a8e04b202381ccba12d243c9dea1ea28608f8a2c0596f6e2ec8f648850ebd"
+    },
+    {
+      "path": "src/locals.fy",
+      "sha256": "f89cab6159330ec0ac269ef02cedd59d15f6f3cfae2d60fc89d43b5ccdf32cda"
+    },
+    {
+      "path": "src/loops.fy",
+      "sha256": "d25dccfb4d3d50daa6e82a6a2f8df345ea72fd4a559e3a8882d6cda0230cbee2"
+    },
+    {
+      "path": "src/main.fy",
+      "sha256": "056a503fe980c5f06eb715919e7785e7209fbd4c43dcd0cdc9539830fa779da5"
+    },
+    {
+      "path": "src/mixed_call_vm.fy",
+      "sha256": "e84928ddf78e43777eb9b9f740f2095e66aeead61c34f3c1f1fdd4ae6646b009"
+    },
+    {
+      "path": "src/patterns.fy",
+      "sha256": "d9ba2ff9dba626968b7514c636a414932e50856c19b9d41d6825b4f91c9797aa"
+    },
+    {
+      "path": "src/program_image.fy",
+      "sha256": "3be72625a7199467655c55e29814379e75c4449117e6ab64d09ad7bb8c8e17c9"
+    },
+    {
+      "path": "src/propagation.fy",
+      "sha256": "9b58f0e5ed3ef79c44cf819c651e0ec456e38441c3ce8579aca31e0d7eb80bdc"
+    },
+    {
+      "path": "src/register_set.fy",
+      "sha256": "478e2690ee311bb3961c329becc6f9ef035276759619733cbfd0f6e441f36b73"
+    },
+    {
+      "path": "src/render.fy",
+      "sha256": "6094b3f2099d8f076986088b358e4c1e4afc13d4da6c8d4a47ff47c33f1db295"
+    },
+    {
+      "path": "src/scalar_codec.fy",
+      "sha256": "c28ca5e5cdc38dee01d79489d8c5a709022a49001854af638258ec4536ad66f0"
+    },
+    {
+      "path": "src/shifts.fy",
+      "sha256": "510dc6a90591de165de424a377eb267917ea9973972b9b95656cc9c435675eeb"
+    },
+    {
+      "path": "src/slice_authority.fy",
+      "sha256": "b06e7c503a739c77454cf60f8f4c291cf60968cde40ecd87005e3f0c267a73a1"
+    },
+    {
+      "path": "src/slice_authority_call_vm.fy",
+      "sha256": "7eb5162c7ba7f08ad40d3607caa592ce821143ef309ad6b1a7b976dfb7696f4d"
+    },
+    {
+      "path": "src/slice_builders.fy",
+      "sha256": "0ea4753e648c64426e87e931819c0a8de54aa933b7ab269e203c52138a7323f6"
+    },
+    {
+      "path": "src/slice_call_source.fy",
+      "sha256": "249db6c1882a8eeb25550287835f29308dd34c12558bc454b454b07600a451e9"
+    },
+    {
+      "path": "src/slice_call_vm.fy",
+      "sha256": "92e8fee15ad77104bb856b626f885ce6a97d62f5d9ca958aa60ce3918f44310e"
+    },
+    {
+      "path": "src/slice_cleanup_source.fy",
+      "sha256": "610ef1de22e861215c94282bd6737b3fbd0a1cf994fe818319378088409a601b"
+    },
+    {
+      "path": "src/slice_exclusive_vm.fy",
+      "sha256": "d471f9a9db84930ccae6f54dabfdf2c46584de67884baa900dc42d6bb6874f2d"
+    },
+    {
+      "path": "src/slice_formal_reborrow_vm.fy",
+      "sha256": "ab01f986c96e714568e66b7aad365f96b957edabd639171ed3038aefda956a1d"
+    },
+    {
+      "path": "src/slice_frame_vm.fy",
+      "sha256": "8954ff0c1134c7aea3ba1b2b8d812a7248ff6b8be6b2980b1168c5a81a715316"
+    },
+    {
+      "path": "src/slice_handoff.fy",
+      "sha256": "c591215b3ed04a70d184c39ca264e781f95d99c9ae034eb99161fd587ee5a5a3"
+    },
+    {
+      "path": "src/slice_lifecycle_vm.fy",
+      "sha256": "bb9413fa1adb08755ac885e207f016bf06e1f673c2fdff6282367850a8e8c6da"
+    },
+    {
+      "path": "src/slice_mutable_call_vm.fy",
+      "sha256": "4d62c7fdac5b11da56d9b962e2009c393b8d6fac5e19ab400945930588255184"
+    },
+    {
+      "path": "src/slice_mutable_frame_vm.fy",
+      "sha256": "c456d279e724cc33e39f72b237b64b916e4effe81b16bed939209fa9cb4a64ca"
+    },
+    {
+      "path": "src/slice_parameters.fy",
+      "sha256": "7a0f938a04486ba7077935822b1d1cda58237669d5d30f0b91c06efaf6eadecd"
+    },
+    {
+      "path": "src/slice_reborrow.fy",
+      "sha256": "bbfc3c07db26d988ced20299c65747a399da492ea0a79d8c74e87efa376e99f1"
+    },
+    {
+      "path": "src/slice_reborrow_admission_ir.fy",
+      "sha256": "2009a536abda6b2a8c032d7ddef81843273243a41aab7e2a6abfea70581be360"
+    },
+    {
+      "path": "src/slice_reborrow_call_admission.fy",
+      "sha256": "847a3ecf05e2ae17e5780509b416f93572b04fa75ab95739d717dae6a0e22994"
+    },
+    {
+      "path": "src/slice_reborrow_call_ir.fy",
+      "sha256": "5e8460663b52ef88f752beeb89b7fb7582912dfd67b2de063f3e83cd75ed4473"
+    },
+    {
+      "path": "src/slice_reborrow_call_vm.fy",
+      "sha256": "138a040a43a5a8e9e8765a879f16414bdffe5438e65510ac842e0a3d7c49895d"
+    },
+    {
+      "path": "src/slice_reborrow_context.fy",
+      "sha256": "98a1d9dadfe1a07acca3971ec081c3091db8b14a4ac838bc172ecbe7ff159fd9"
+    },
+    {
+      "path": "src/slice_reborrow_ir.fy",
+      "sha256": "aec9c37d4bb9f36fe56f3c4388fc88c69d73ad1cb7f77cb56712ce6938a7b457"
+    },
+    {
+      "path": "src/slice_reborrow_vm.fy",
+      "sha256": "e4466f33f301d0cb9da2aac299b5557428169d0d02ca99bfe0a8401b96604de2"
+    },
+    {
+      "path": "src/slice_result_bindings.fy",
+      "sha256": "df9549fe305231dda924bd57ff3fa29c58360ba9ef762bf5d70ef69af8517f79"
+    },
+    {
+      "path": "src/slice_result_call_ir.fy",
+      "sha256": "a862980453eb1a78fd2c0561ada0d85ee735c9dc2091248f4a38e5664803178c"
+    },
+    {
+      "path": "src/slice_result_call_source.fy",
+      "sha256": "43820226cdd01586ce28d6bf42be3dc1a7f96a99f898e9ad0641674c9fb11d88"
+    },
+    {
+      "path": "src/slice_result_entry.fy",
+      "sha256": "8097ac0fe0a176c5e17b268f799549553c6bad3305c57d8fa055a08b6d6a2512"
+    },
+    {
+      "path": "src/slice_result_execution.fy",
+      "sha256": "978fdce536b65f2497f42e58f45ed7c0f9f37ea9744b01726d252732cbda6e89"
+    },
+    {
+      "path": "src/slice_result_frames.fy",
+      "sha256": "87c731690a184c6f2c87cf9d12abbac15ca904b9bde16ed97ce0fe412961c8cf"
+    },
+    {
+      "path": "src/slice_result_ir.fy",
+      "sha256": "b1ac9179c231250025b05c7b14f6a743065c83157c17269d4b2828c55556e675"
+    },
+    {
+      "path": "src/slice_result_loan_execution.fy",
+      "sha256": "05beec63eb6d67571918e56664004b7112d74feda841d2e30431695d44a11d8b"
+    },
+    {
+      "path": "src/slice_result_origins.fy",
+      "sha256": "69d537ba2473365af57fcf4074f7beca9e8f6f4b51efd256d986e6f4b79b9eef"
+    },
+    {
+      "path": "src/slice_result_owned_execution.fy",
+      "sha256": "4a7639ff19b4ae108cad7ad195c4fee596d4f845418b84fd2c8ebd46fd76bc5c"
+    },
+    {
+      "path": "src/slice_result_range_source.fy",
+      "sha256": "f6f992a9d2999eb8864220a6d2251f8576891fe235833fba071cc89fdf8ef091"
+    },
+    {
+      "path": "src/slice_result_record_bindings.fy",
+      "sha256": "fabd34134bcf79bdbfcb88f46097ac0ec24b5342e7e28d771e523b656f95ac8f"
+    },
+    {
+      "path": "src/slice_result_record_execution.fy",
+      "sha256": "ca4a5aac74158d056a65c7d0385d3cb8afe381998807a5736ae23456ba746613"
+    },
+    {
+      "path": "src/slice_result_runtime.fy",
+      "sha256": "3b3c56222ca58e169963d01309156ad23efaf477a67b66e202b8babd5db8b966"
+    },
+    {
+      "path": "src/slice_result_source_origins.fy",
+      "sha256": "38c6662baa20a0b41742b804ecd18a6721c7260637749639da3a8ea8c5f50f7c"
+    },
+    {
+      "path": "src/slice_result_verifier.fy",
+      "sha256": "cf40e48975461622fab0d0261f0324667576af02ee2b037ff9efda85cdaa8bbe"
+    },
+    {
+      "path": "src/slice_source.fy",
+      "sha256": "bacff4e4998effcd1d90e98f83891384b0d7b4f569bef6f8ac2e00f994749359"
+    },
+    {
+      "path": "src/slice_verifier.fy",
+      "sha256": "cb97f17cd15923b21056e64bd0ecbc2c77b9958800de6f159722521338d1b895"
+    },
+    {
+      "path": "src/slice_vm.fy",
+      "sha256": "77d223e53ff0e8871b2ab98edd6f3f74411d6107f79e54954a0f632ad118664b"
+    },
+    {
+      "path": "src/static_builders.fy",
+      "sha256": "37ccadb2bf52dedac5eded814eeeca215a6c121b470d4a54c899b6ddb595b27c"
+    },
+    {
+      "path": "src/static_execution.fy",
+      "sha256": "0e7f399a2c33955205a8163f01439c57258abf88da01f6ca6a2c584b7a23df8b"
+    },
+    {
+      "path": "src/static_image.fy",
+      "sha256": "8966eca88fc4db8b172da51d57e5c10b72f0a0fffac174773c5cd11922f6ead0"
+    },
+    {
+      "path": "src/static_ir.fy",
+      "sha256": "60dd0ea1114b87b8d442635f0eb7e2f90aa09fd84df3ad95e9f619dd14e0b513"
+    },
+    {
+      "path": "src/static_source.fy",
+      "sha256": "f31d2bf0c05a3de1cacb12457e9425ad6013ef50bed535af26638f7966169f1d"
+    },
+    {
+      "path": "src/struct_call_source.fy",
+      "sha256": "ee9e295b082b31f810dd2f6f983a4f2aa68ac064823f74205c486d3c865a3304"
+    },
+    {
+      "path": "src/struct_call_vm.fy",
+      "sha256": "d46de926715d2d9e4fdfab5018a54e56c4017ff6f2800692fb9904056ce97219"
+    },
+    {
+      "path": "src/struct_layout.fy",
+      "sha256": "6ab7d28a9e7216938d4386cff21563ba20997b38d27e37fa5ef803660d2d5aac"
+    },
+    {
+      "path": "src/struct_meta.fy",
+      "sha256": "078d12717b20ed04a04eefaa22409c03292b363995a2d951be617716fe8b52cd"
+    },
+    {
+      "path": "src/struct_nested_storage.fy",
+      "sha256": "e0ff5e2b75380330c99d52271af9e7fabe41f5f6ddd59090aebd1f0d1afc0651"
+    },
+    {
+      "path": "src/struct_parameters.fy",
+      "sha256": "e65267f4b68748895d6fa856fb729df03693e496616e1d596cfcf5c2cb636aea"
+    },
+    {
+      "path": "src/struct_range.fy",
+      "sha256": "d0eebe91b9d0e0179750fd27f6111c1a21f6748b004cd3a2b378cb9a97e73fd5"
+    },
+    {
+      "path": "src/struct_result_source.fy",
+      "sha256": "66e4a87d7189dcfae4781388dc234b443c7e80cfa9d324335851501e50e9ac6a"
+    },
+    {
+      "path": "src/struct_result_vm.fy",
+      "sha256": "d593733b703c275306575bfffea533051046923c3b5edb670cb643079be926f4"
+    },
+    {
+      "path": "src/struct_results.fy",
+      "sha256": "dc12921005971af48d1eabcd8492627efa2e26d012f69e1c1661e955af37041d"
+    },
+    {
+      "path": "src/struct_source.fy",
+      "sha256": "58eacd663dd6f0bbd9a231783ad90c0a06c154d1f20cc175f093831eb1614a05"
+    },
+    {
+      "path": "src/struct_storage.fy",
+      "sha256": "f371eedc083aea535fa6cc35f245fb6bd1c8ded52b8c4470c19fd0c4d9df0596"
+    },
+    {
+      "path": "src/struct_value_source.fy",
+      "sha256": "14b878f24bcdec4b43db544e0bd832aea846a1054137f1a04f78ba4571f742fc"
+    },
+    {
+      "path": "src/struct_verifier.fy",
+      "sha256": "f68b5b4292be683128953dc4e440647c0fa2557b3fd0b5fd7674eaedced1d8f5"
+    },
+    {
+      "path": "src/struct_vm.fy",
+      "sha256": "72b8d242d8b67e5ac9ed79d29016a458991032aa6e64ea517325a840fb05e7f7"
+    },
+    {
+      "path": "src/tagged.fy",
+      "sha256": "67770f8ec8f3e35a2a6196cda87310844d37358f86f8b22eb81b49df1f65f1bf"
+    },
+    {
+      "path": "src/text_source.fy",
+      "sha256": "17dc833c6377b59f66c015c8ce471ec58095606d5f9261884694793fea6c4040"
+    },
+    {
+      "path": "src/types.fy",
+      "sha256": "906f5ba160de53f60d23e344e141181f902f36de60a4060375bef97a2162be23"
+    },
+    {
+      "path": "src/verifier.fy",
+      "sha256": "6327318e252fef8085a5c2158608ed5b8e186ed555b3be140ba5fa5f27808759"
+    },
+    {
+      "path": "src/vm.fy",
+      "sha256": "aa442131c5094a7311f4105ad46176f8cf947044e20248529837158d09fe8acb"
+    },
+    {
+      "path": "src/vm_execution.fy",
+      "sha256": "deefac4b76b08e4422c49f47be4a54f1e8e82a14788e8ccb9a27f2d94e1dec77"
+    },
+    {
+      "path": "src/vm_reborrow_execution.fy",
+      "sha256": "ac64e0a261f0904c4259a7ceeb77dbf907f1b8175af92dc9edc392b1fd470296"
+    },
+    {
+      "path": "tests/core.fy",
+      "sha256": "f8666d14fadaa91a07649e64b62a710276fc78315fc0c420262608872802b42c"
+    },
+    {
+      "path": "tests/functions.fy",
+      "sha256": "b4abd043cae4710bc39895ce72cc1f09b07eba7431bef5eaa0a4f4bea86ec11a"
+    },
+    {
+      "path": "tests/m2/image_text_dispatch.fy",
+      "sha256": "bf978674ea07445b6430952470080e96d646c35af70cb130cfb75ee530f763fa"
+    },
+    {
+      "path": "tests/m2/literal_compiler.fy",
+      "sha256": "0690faa355288a02fa39f6fe8c75cd22d260d2872de9831be54afaba48c1329f"
+    },
+    {
+      "path": "tests/m2/static_bindings_source.fy",
+      "sha256": "d2259953db7e10e6179bcfd616dd6c5b5546be7fe8aea1c221979199289e5103"
+    },
+    {
+      "path": "tests/m2/static_equality_source.fy",
+      "sha256": "75b16ced5f41d3eadb1c24d367f9f4f2fa449691385ca3d016787d7c597454cc"
+    },
+    {
+      "path": "tests/m2/static_execution.fy",
+      "sha256": "85b57566b5f9c4b39b01c95415eab193f721886ac35e7c4f57088c795631a50c"
+    },
+    {
+      "path": "toolchain.json",
+      "sha256": "0a1a5c2b5a219099b7c3c2b42a8dde9cb70b68e435e8a071e36c36213d1740be"
+    },
+    {
+      "path": "tools/check-lexical-compatibility.py",
+      "sha256": "4c91c480255f0117ce8406b830bcca2e231878fa25c89631fe9139a0aa54af25"
+    },
+    {
+      "path": "tools/check-literal-source.py",
+      "sha256": "92ece6409012a84cfbb0283109f2a10c9ac9939afcaa719a4b49d614c569d69f"
+    },
+    {
+      "path": "tools/verify-literal-compiler.py",
+      "sha256": "076133782e08f93932bde74d418a8f65dda5b88696b177a3fca31ae57aaac815"
+    }
+  ],
+  "testDiscovery": {
+    "count": 224,
+    "sha256": "51f5be646bd405f767feaac2af3ca87175992cbe44218790efe75454e6ae2d59"
+  },
+  "productionFiles": 125,
+  "profiles": {
+    "development": {
+      "nativeGroups": 21,
+      "cliCases": 88,
+      "nativeCommand": [
+        "build/toolchain/fairyc.exe",
+        "test",
+        "--native",
+        "--capture-output",
+        "--json",
+        "--locked",
+        "--file",
+        "tests/m2/static_equality_source.fy",
+        "--file",
+        "tests/m2/static_bindings_source.fy",
+        "--file",
+        "tests/m2/literal_compiler.fy",
+        "--file",
+        "tests/m2/image_text_dispatch.fy"
+      ],
+      "nativeReportSha256": "7069065b6571ae9784f720437f51d78c564ef28ee4d0431feedc70dca7fcdce0",
+      "lfMirror": {
+        "command": [
+          "build/toolchain/fairyc.exe",
+          "check",
+          "--locked"
+        ],
+        "workingDirectory": "build/static-equality-source/development/lf-workspace",
+        "productionFiles": 125,
+        "result": "check ok: 2 instance(s), 132 source file(s), 1120 MIR function(s), lock verified"
+      },
+      "nativeInputCapturedAt": "2026-11-04T21:28:53.956758+00:00",
+      "cliInputCapturedAt": "2026-11-04T21:30:16.138471+00:00",
+      "tests": [
+        {
+          "identity": "tests::m2::image_text_dispatch::image_compilation_preserves_existing_utf8_and_plain_text_name_dispatch",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::literal_compiler::byte_bounds_follow_complete_read_precharge_and_image_quota_is_separate",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::literal_compiler::computed_indices_calls_and_loop_reentry_use_the_same_static_sites",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::literal_compiler::explicit_text_bytes_projects_cooked_utf8_and_byte_lengths",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::literal_compiler::occurrence_and_ir_site_bounds_are_distinct_and_preserve_existing_limits",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::literal_compiler::ordinary_compilation_keeps_literal_execution_and_text_values_gated",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::literal_compiler::source_byte_projection_executes_with_exact_fuel_and_no_guest_backing",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::literal_compiler::source_spelling_dedup_retains_one_exact_used_prefix",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::literal_compiler::whole_literal_collection_rolls_back_lexical_and_image_failures",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::static_bindings_source::aggregate_returns_close_static_locals_and_existing_runtime_slices_stay_distinct",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::static_bindings_source::all_static_kinds_share_the_sixteen_definition_limit",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::static_bindings_source::byte_and_text_locals_aliases_and_explicit_conversion_preserve_kinds",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::static_bindings_source::owned_projection_temporaries_survive_index_exits_without_leaking",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::static_bindings_source::scopes_value_arms_and_loop_transfers_close_only_their_static_suffix",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::static_bindings_source::static_binding_fuel_is_exact_and_bounds_fail_after_precharge",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::static_bindings_source::static_types_lifetimes_and_public_admission_remain_independent",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::static_equality_source::converted_arguments_share_the_existing_global_static_site_limit",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::static_equality_source::equality_reuses_static_sites_across_loops_short_circuit_and_scalar_calls",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::static_equality_source::equality_signature_requires_two_bytes_views_and_keeps_public_admission_gated",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::static_equality_source::immutable_byte_equality_covers_contents_kinds_and_named_view_liveness",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::static_equality_source::source_equality_precharges_full_lengths_with_exact_invocation_fuel",
+          "outcome": "passed"
+        }
+      ],
+      "artifact": {
+        "path": "build/static-equality-source/development/browniec.exe",
+        "sha256": "475556528d46ed040f76c532f3268453406e4b8c4017b8a870eb9cb26100a780"
+      },
+      "literalCli": {
+        "status": "passed",
+        "count": 52,
+        "exeSha256": "475556528d46ed040f76c532f3268453406e4b8c4017b8a870eb9cb26100a780",
+        "harnessSha256": "92ece6409012a84cfbb0283109f2a10c9ac9939afcaa719a4b49d614c569d69f",
+        "environment": "cleared; tool-free PATH",
+        "cases": [
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-000.brc",
+              "--json"
+            ],
+            "sourceSha256": "4f16daeb3ca1c6a36d3881fde88d056d8e9580c3c5381a7848011072f1e4d56a",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "syntax",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-000.brc",
+              "--json"
+            ],
+            "sourceSha256": "4f16daeb3ca1c6a36d3881fde88d056d8e9580c3c5381a7848011072f1e4d56a",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "syntax",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-001.brc",
+              "--json"
+            ],
+            "sourceSha256": "26bb70dc5765fa1823e5abea06f21c5c0e9611fed4e224d2258233c1958a4ab1",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "syntax",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-001.brc",
+              "--json"
+            ],
+            "sourceSha256": "26bb70dc5765fa1823e5abea06f21c5c0e9611fed4e224d2258233c1958a4ab1",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "syntax",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-002.brc",
+              "--json"
+            ],
+            "sourceSha256": "9d4b6676c9ce030cc11f29ed66ad83b8bfde15de2bc1efdfce4c0f3cae270e39",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "syntax",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-002.brc",
+              "--json"
+            ],
+            "sourceSha256": "9d4b6676c9ce030cc11f29ed66ad83b8bfde15de2bc1efdfce4c0f3cae270e39",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "syntax",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-003.brc",
+              "--json"
+            ],
+            "sourceSha256": "6c88a756dad68932d07c7a4440deb394f1f5f82e0953e7b861c05698ad037ca3",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "syntax",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-003.brc",
+              "--json"
+            ],
+            "sourceSha256": "6c88a756dad68932d07c7a4440deb394f1f5f82e0953e7b861c05698ad037ca3",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "syntax",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-004.brc",
+              "--json"
+            ],
+            "sourceSha256": "33f626e06475aad8127526051a8803004f732b56a2f53f184b220557280a57dd",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "syntax",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-004.brc",
+              "--json"
+            ],
+            "sourceSha256": "33f626e06475aad8127526051a8803004f732b56a2f53f184b220557280a57dd",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "syntax",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-005.brc",
+              "--json"
+            ],
+            "sourceSha256": "bd8e0d55c309471cb234728680aa69bce392d2bac73d4fc7768bc3c665906f40",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "syntax",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-005.brc",
+              "--json"
+            ],
+            "sourceSha256": "bd8e0d55c309471cb234728680aa69bce392d2bac73d4fc7768bc3c665906f40",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "syntax",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-006.brc",
+              "--json"
+            ],
+            "sourceSha256": "58e51dd4601417f975768561771bee7278d125817d9dcdd653d779dcaef1d716",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "syntax",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-006.brc",
+              "--json"
+            ],
+            "sourceSha256": "58e51dd4601417f975768561771bee7278d125817d9dcdd653d779dcaef1d716",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "syntax",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-007.brc",
+              "--json"
+            ],
+            "sourceSha256": "394902bde2085e87bab227fa2f475e52e3973b7ab1e62fd317c83f050bf4624e",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "syntax",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-007.brc",
+              "--json"
+            ],
+            "sourceSha256": "394902bde2085e87bab227fa2f475e52e3973b7ab1e62fd317c83f050bf4624e",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "syntax",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-008.brc",
+              "--json"
+            ],
+            "sourceSha256": "2dcef077ecb46a60a40fd7c20760b7cc1c59c2283b044ee3eb6ff03ac02b1d22",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-008.brc",
+              "--json"
+            ],
+            "sourceSha256": "2dcef077ecb46a60a40fd7c20760b7cc1c59c2283b044ee3eb6ff03ac02b1d22",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-009.brc",
+              "--json"
+            ],
+            "sourceSha256": "8cef155844c68715288bb870ad2e3b3c196c8d00656585b84b35f2235ad9a36e",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 35
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-009.brc",
+              "--json"
+            ],
+            "sourceSha256": "8cef155844c68715288bb870ad2e3b3c196c8d00656585b84b35f2235ad9a36e",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 35
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-010.brc",
+              "--json"
+            ],
+            "sourceSha256": "c86e3730296990096d753ca0dd68e445c795c9483e0ca0f091da249d75cc66ce",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-010.brc",
+              "--json"
+            ],
+            "sourceSha256": "c86e3730296990096d753ca0dd68e445c795c9483e0ca0f091da249d75cc66ce",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-011.brc",
+              "--json"
+            ],
+            "sourceSha256": "db5126f7731a56d53c15f729c78652ac51fe730508e010c90babde00fdc29a3d",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-011.brc",
+              "--json"
+            ],
+            "sourceSha256": "db5126f7731a56d53c15f729c78652ac51fe730508e010c90babde00fdc29a3d",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-012.brc",
+              "--json"
+            ],
+            "sourceSha256": "70c666388276bbce34512261e06b58c0ffd7bdbb8bca68f25d778e4cc76e1718",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-012.brc",
+              "--json"
+            ],
+            "sourceSha256": "70c666388276bbce34512261e06b58c0ffd7bdbb8bca68f25d778e4cc76e1718",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-013.brc",
+              "--json"
+            ],
+            "sourceSha256": "87c2b0c98bcdc2c653a878bc102b040b52c0c5257494001a36ee41e7eccf504a",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-013.brc",
+              "--json"
+            ],
+            "sourceSha256": "87c2b0c98bcdc2c653a878bc102b040b52c0c5257494001a36ee41e7eccf504a",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-014.brc",
+              "--json"
+            ],
+            "sourceSha256": "d3a4683d2e1db5ba02ee5e01bfdfc512e0d413ba9867c24c98c569d1b19fd75b",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-014.brc",
+              "--json"
+            ],
+            "sourceSha256": "d3a4683d2e1db5ba02ee5e01bfdfc512e0d413ba9867c24c98c569d1b19fd75b",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-015.brc",
+              "--json"
+            ],
+            "sourceSha256": "73294f151d531cb3614b4fffef2e586917be61ada3dae17a63989b082a236110",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-015.brc",
+              "--json"
+            ],
+            "sourceSha256": "73294f151d531cb3614b4fffef2e586917be61ada3dae17a63989b082a236110",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-016.brc",
+              "--json"
+            ],
+            "sourceSha256": "7655cd36915abbecdbece268009dc61f5df3d1d73c956a8ae2cf0aa6234a21f9",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-016.brc",
+              "--json"
+            ],
+            "sourceSha256": "7655cd36915abbecdbece268009dc61f5df3d1d73c956a8ae2cf0aa6234a21f9",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-017.brc",
+              "--json"
+            ],
+            "sourceSha256": "20d5211d15b3a3857f288215a50ab581f11454d8ed4fe1c377170bb1b76eed5c",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-017.brc",
+              "--json"
+            ],
+            "sourceSha256": "20d5211d15b3a3857f288215a50ab581f11454d8ed4fe1c377170bb1b76eed5c",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-018.brc",
+              "--json"
+            ],
+            "sourceSha256": "836d6bee634eaa519a2a9b32d2318ec2ca24321cf7875d57d3ad0b498533b4d7",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-018.brc",
+              "--json"
+            ],
+            "sourceSha256": "836d6bee634eaa519a2a9b32d2318ec2ca24321cf7875d57d3ad0b498533b4d7",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-019.brc",
+              "--json"
+            ],
+            "sourceSha256": "919388cd60b2b2540d0136307fb8712867c1ef23e80110ce811e946300789abb",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-019.brc",
+              "--json"
+            ],
+            "sourceSha256": "919388cd60b2b2540d0136307fb8712867c1ef23e80110ce811e946300789abb",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-020.brc",
+              "--json"
+            ],
+            "sourceSha256": "7d3760df753aabba89d4841f09bd296d594784e5173d6f0bc28d5f21670de837",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-020.brc",
+              "--json"
+            ],
+            "sourceSha256": "7d3760df753aabba89d4841f09bd296d594784e5173d6f0bc28d5f21670de837",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-021.brc",
+              "--json"
+            ],
+            "sourceSha256": "fc7414339cb154daac2e3549efba35356ecdc92ca104fa5f6e24866166a94931",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-021.brc",
+              "--json"
+            ],
+            "sourceSha256": "fc7414339cb154daac2e3549efba35356ecdc92ca104fa5f6e24866166a94931",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-022.brc",
+              "--json"
+            ],
+            "sourceSha256": "f154f25f407adc2c0d7815f40dd79972da4089880651308620bfa56e8a9ca191",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-022.brc",
+              "--json"
+            ],
+            "sourceSha256": "f154f25f407adc2c0d7815f40dd79972da4089880651308620bfa56e8a9ca191",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-023.brc",
+              "--json"
+            ],
+            "sourceSha256": "d12f2e81837b2c860d46f623239a220ce17104f9f93ba82c7f41d2b39f1f15fe",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-023.brc",
+              "--json"
+            ],
+            "sourceSha256": "d12f2e81837b2c860d46f623239a220ce17104f9f93ba82c7f41d2b39f1f15fe",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-024.brc",
+              "--json"
+            ],
+            "sourceSha256": "76c291c23eef9e92017f87ccb2890aa883860bf8932f8a34d872b3bc6bc51405",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-024.brc",
+              "--json"
+            ],
+            "sourceSha256": "76c291c23eef9e92017f87ccb2890aa883860bf8932f8a34d872b3bc6bc51405",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-025.brc",
+              "--json"
+            ],
+            "sourceSha256": "5662fc51078b3563e6f8ad2a52f1f95559b62875ff1b2f8a7085837ed7d8ded3",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 0
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\literal-cli\\case-025.brc",
+              "--json"
+            ],
+            "sourceSha256": "5662fc51078b3563e6f8ad2a52f1f95559b62875ff1b2f8a7085837ed7d8ded3",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 0
+              }
+            }
+          }
+        ]
+      },
+      "lexicalCli": {
+        "status": "passed",
+        "count": 36,
+        "exeSha256": "475556528d46ed040f76c532f3268453406e4b8c4017b8a870eb9cb26100a780",
+        "harnessSha256": "4c91c480255f0117ce8406b830bcca2e231878fa25c89631fe9139a0aa54af25",
+        "environment": "cleared; tool-free PATH",
+        "cases": [
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-0.brc",
+              "--json"
+            ],
+            "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "checked",
+              "return_i32": null,
+              "error": null
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-0.brc",
+              "--json"
+            ],
+            "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-1.brc",
+              "--json"
+            ],
+            "sourceSha256": "0c2ca13e617a6764a428acb2283a40ce9663460f418680e9ea763bdf13d1a62a",
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "checked",
+              "return_i32": null,
+              "error": null
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-1.brc",
+              "--json"
+            ],
+            "sourceSha256": "0c2ca13e617a6764a428acb2283a40ce9663460f418680e9ea763bdf13d1a62a",
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-2.brc",
+              "--json"
+            ],
+            "sourceSha256": "d29e7cd8634a06bb3fcaf532561cb65f2eda76d82b885fec3a6a31dc849b4b26",
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "checked",
+              "return_i32": null,
+              "error": null
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-2.brc",
+              "--json"
+            ],
+            "sourceSha256": "d29e7cd8634a06bb3fcaf532561cb65f2eda76d82b885fec3a6a31dc849b4b26",
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-3.brc",
+              "--json"
+            ],
+            "sourceSha256": "6bfe62b94855d52f1a213e5ef10c8144782435db2a85c9b5d7ca1eb4fbe58fb8",
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "checked",
+              "return_i32": null,
+              "error": null
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-3.brc",
+              "--json"
+            ],
+            "sourceSha256": "6bfe62b94855d52f1a213e5ef10c8144782435db2a85c9b5d7ca1eb4fbe58fb8",
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-4.brc",
+              "--json"
+            ],
+            "sourceSha256": "84a3682d1af9a97f5fa1b0e76cb0da9de6ee0b887796733a8c26de12bf395246",
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "checked",
+              "return_i32": null,
+              "error": null
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-4.brc",
+              "--json"
+            ],
+            "sourceSha256": "84a3682d1af9a97f5fa1b0e76cb0da9de6ee0b887796733a8c26de12bf395246",
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-5.brc",
+              "--json"
+            ],
+            "sourceSha256": "1486051339d26da668ec0cd06ba5fef46eb032d56b448274adda67b9016f471e",
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "checked",
+              "return_i32": null,
+              "error": null
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-5.brc",
+              "--json"
+            ],
+            "sourceSha256": "1486051339d26da668ec0cd06ba5fef46eb032d56b448274adda67b9016f471e",
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-6.brc",
+              "--json"
+            ],
+            "sourceSha256": "5b413d336ce2c7859805e87c250990df0b661b3972050659f3143fb6fefc7c62",
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "checked",
+              "return_i32": null,
+              "error": null
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-6.brc",
+              "--json"
+            ],
+            "sourceSha256": "5b413d336ce2c7859805e87c250990df0b661b3972050659f3143fb6fefc7c62",
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-7.brc",
+              "--json"
+            ],
+            "sourceSha256": "d5b73606b0fcf0004c33ad18048796d92d7e14176f5b339792ddff2b26cc8535",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 0
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-7.brc",
+              "--json"
+            ],
+            "sourceSha256": "d5b73606b0fcf0004c33ad18048796d92d7e14176f5b339792ddff2b26cc8535",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 0
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-8.brc",
+              "--json"
+            ],
+            "sourceSha256": "f63d918a1231393fc3149c8f93b38796a4b517bfaf8a4847203847a23624ad37",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 37
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-8.brc",
+              "--json"
+            ],
+            "sourceSha256": "f63d918a1231393fc3149c8f93b38796a4b517bfaf8a4847203847a23624ad37",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 37
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-9.brc",
+              "--json"
+            ],
+            "sourceSha256": "2cd96521434b0336213744a207259d774fd81be38fa2f7804bc409b1f5660c0b",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 5
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-9.brc",
+              "--json"
+            ],
+            "sourceSha256": "2cd96521434b0336213744a207259d774fd81be38fa2f7804bc409b1f5660c0b",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 5
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-10.brc",
+              "--json"
+            ],
+            "sourceSha256": "cb48e9a016d09a10b824eb24dddf884d509379c9ed0b4599cd69e9900a99ca16",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 5
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-10.brc",
+              "--json"
+            ],
+            "sourceSha256": "cb48e9a016d09a10b824eb24dddf884d509379c9ed0b4599cd69e9900a99ca16",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 5
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-11.brc",
+              "--json"
+            ],
+            "sourceSha256": "7d35aef4fae317034e3f28024407e63105c18ddecc20bf95e1ee692abecf2191",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 0
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-11.brc",
+              "--json"
+            ],
+            "sourceSha256": "7d35aef4fae317034e3f28024407e63105c18ddecc20bf95e1ee692abecf2191",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 0
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-12.brc",
+              "--json"
+            ],
+            "sourceSha256": "e2e5cc5a7f5ceae5f6c018d37717c17bb4071ee85413b5c40e845f9891a83798",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 37
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-12.brc",
+              "--json"
+            ],
+            "sourceSha256": "e2e5cc5a7f5ceae5f6c018d37717c17bb4071ee85413b5c40e845f9891a83798",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 37
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-13.brc",
+              "--json"
+            ],
+            "sourceSha256": "85b133cee43d3c6a6c224c8e4cbf2fbadeb2969a2e2bfa23cfa50d68c36c023e",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 5
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-13.brc",
+              "--json"
+            ],
+            "sourceSha256": "85b133cee43d3c6a6c224c8e4cbf2fbadeb2969a2e2bfa23cfa50d68c36c023e",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 5
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-14.brc",
+              "--json"
+            ],
+            "sourceSha256": "0e23d79cf9be8c389aa1b4c2b8e24b3ba11e1dc99764fffb620dd5123d254435",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 5
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-14.brc",
+              "--json"
+            ],
+            "sourceSha256": "0e23d79cf9be8c389aa1b4c2b8e24b3ba11e1dc99764fffb620dd5123d254435",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 5
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-15.brc",
+              "--json"
+            ],
+            "sourceSha256": "994d9192265d39f2d3010e36097d72a2ff2e3100ab5740bba29edc530a73094f",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 1
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-15.brc",
+              "--json"
+            ],
+            "sourceSha256": "994d9192265d39f2d3010e36097d72a2ff2e3100ab5740bba29edc530a73094f",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 1
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-16.brc",
+              "--json"
+            ],
+            "sourceSha256": "05234a153720d785d2882c622d5cff3728f841df34eab902040f382792aa9d67",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 2
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-16.brc",
+              "--json"
+            ],
+            "sourceSha256": "05234a153720d785d2882c622d5cff3728f841df34eab902040f382792aa9d67",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 2
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-17.brc",
+              "--json"
+            ],
+            "sourceSha256": "e95142c8e86de45cada0be86454aec7bbc791ddf95ed028703bca7b88f3c7ce1",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 0
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\development\\lexical-cli\\case-17.brc",
+              "--json"
+            ],
+            "sourceSha256": "e95142c8e86de45cada0be86454aec7bbc791ddf95ed028703bca7b88f3c7ce1",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 0
+              }
+            }
+          }
+        ]
+      }
+    },
+    "release": {
+      "nativeGroups": 21,
+      "cliCases": 88,
+      "nativeCommand": [
+        "build/toolchain/fairyc.exe",
+        "test",
+        "--native",
+        "--capture-output",
+        "--json",
+        "--locked",
+        "--release",
+        "--file",
+        "tests/m2/static_equality_source.fy",
+        "--file",
+        "tests/m2/static_bindings_source.fy",
+        "--file",
+        "tests/m2/literal_compiler.fy",
+        "--file",
+        "tests/m2/image_text_dispatch.fy"
+      ],
+      "nativeReportSha256": "d6d1612f1b8241e6b14640e98d4dae88afa05c862d61dfa1f4b6ac780b20cacf",
+      "lfMirror": {
+        "command": [
+          "build/toolchain/fairyc.exe",
+          "check",
+          "--locked"
+        ],
+        "workingDirectory": "build/static-equality-source/release/lf-workspace",
+        "productionFiles": 125,
+        "result": "check ok: 2 instance(s), 132 source file(s), 1120 MIR function(s), lock verified"
+      },
+      "nativeInputCapturedAt": "2026-11-04T21:30:06.059583+00:00",
+      "cliInputCapturedAt": "2026-11-04T21:32:11.761293+00:00",
+      "tests": [
+        {
+          "identity": "tests::m2::image_text_dispatch::image_compilation_preserves_existing_utf8_and_plain_text_name_dispatch",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::literal_compiler::byte_bounds_follow_complete_read_precharge_and_image_quota_is_separate",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::literal_compiler::computed_indices_calls_and_loop_reentry_use_the_same_static_sites",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::literal_compiler::explicit_text_bytes_projects_cooked_utf8_and_byte_lengths",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::literal_compiler::occurrence_and_ir_site_bounds_are_distinct_and_preserve_existing_limits",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::literal_compiler::ordinary_compilation_keeps_literal_execution_and_text_values_gated",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::literal_compiler::source_byte_projection_executes_with_exact_fuel_and_no_guest_backing",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::literal_compiler::source_spelling_dedup_retains_one_exact_used_prefix",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::literal_compiler::whole_literal_collection_rolls_back_lexical_and_image_failures",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::static_bindings_source::aggregate_returns_close_static_locals_and_existing_runtime_slices_stay_distinct",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::static_bindings_source::all_static_kinds_share_the_sixteen_definition_limit",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::static_bindings_source::byte_and_text_locals_aliases_and_explicit_conversion_preserve_kinds",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::static_bindings_source::owned_projection_temporaries_survive_index_exits_without_leaking",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::static_bindings_source::scopes_value_arms_and_loop_transfers_close_only_their_static_suffix",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::static_bindings_source::static_binding_fuel_is_exact_and_bounds_fail_after_precharge",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::static_bindings_source::static_types_lifetimes_and_public_admission_remain_independent",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::static_equality_source::converted_arguments_share_the_existing_global_static_site_limit",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::static_equality_source::equality_reuses_static_sites_across_loops_short_circuit_and_scalar_calls",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::static_equality_source::equality_signature_requires_two_bytes_views_and_keeps_public_admission_gated",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::static_equality_source::immutable_byte_equality_covers_contents_kinds_and_named_view_liveness",
+          "outcome": "passed"
+        },
+        {
+          "identity": "tests::m2::static_equality_source::source_equality_precharges_full_lengths_with_exact_invocation_fuel",
+          "outcome": "passed"
+        }
+      ],
+      "artifact": {
+        "path": "build/static-equality-source/release/browniec.exe",
+        "sha256": "d43cb4d4433eb008b87d9e9c41e5b2948557a50b62551d31ad4649f81ce3130e"
+      },
+      "literalCli": {
+        "status": "passed",
+        "count": 52,
+        "exeSha256": "d43cb4d4433eb008b87d9e9c41e5b2948557a50b62551d31ad4649f81ce3130e",
+        "harnessSha256": "92ece6409012a84cfbb0283109f2a10c9ac9939afcaa719a4b49d614c569d69f",
+        "environment": "cleared; tool-free PATH",
+        "cases": [
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-000.brc",
+              "--json"
+            ],
+            "sourceSha256": "4f16daeb3ca1c6a36d3881fde88d056d8e9580c3c5381a7848011072f1e4d56a",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "syntax",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-000.brc",
+              "--json"
+            ],
+            "sourceSha256": "4f16daeb3ca1c6a36d3881fde88d056d8e9580c3c5381a7848011072f1e4d56a",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "syntax",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-001.brc",
+              "--json"
+            ],
+            "sourceSha256": "26bb70dc5765fa1823e5abea06f21c5c0e9611fed4e224d2258233c1958a4ab1",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "syntax",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-001.brc",
+              "--json"
+            ],
+            "sourceSha256": "26bb70dc5765fa1823e5abea06f21c5c0e9611fed4e224d2258233c1958a4ab1",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "syntax",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-002.brc",
+              "--json"
+            ],
+            "sourceSha256": "9d4b6676c9ce030cc11f29ed66ad83b8bfde15de2bc1efdfce4c0f3cae270e39",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "syntax",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-002.brc",
+              "--json"
+            ],
+            "sourceSha256": "9d4b6676c9ce030cc11f29ed66ad83b8bfde15de2bc1efdfce4c0f3cae270e39",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "syntax",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-003.brc",
+              "--json"
+            ],
+            "sourceSha256": "6c88a756dad68932d07c7a4440deb394f1f5f82e0953e7b861c05698ad037ca3",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "syntax",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-003.brc",
+              "--json"
+            ],
+            "sourceSha256": "6c88a756dad68932d07c7a4440deb394f1f5f82e0953e7b861c05698ad037ca3",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "syntax",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-004.brc",
+              "--json"
+            ],
+            "sourceSha256": "33f626e06475aad8127526051a8803004f732b56a2f53f184b220557280a57dd",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "syntax",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-004.brc",
+              "--json"
+            ],
+            "sourceSha256": "33f626e06475aad8127526051a8803004f732b56a2f53f184b220557280a57dd",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "syntax",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-005.brc",
+              "--json"
+            ],
+            "sourceSha256": "bd8e0d55c309471cb234728680aa69bce392d2bac73d4fc7768bc3c665906f40",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "syntax",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-005.brc",
+              "--json"
+            ],
+            "sourceSha256": "bd8e0d55c309471cb234728680aa69bce392d2bac73d4fc7768bc3c665906f40",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "syntax",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-006.brc",
+              "--json"
+            ],
+            "sourceSha256": "58e51dd4601417f975768561771bee7278d125817d9dcdd653d779dcaef1d716",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "syntax",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-006.brc",
+              "--json"
+            ],
+            "sourceSha256": "58e51dd4601417f975768561771bee7278d125817d9dcdd653d779dcaef1d716",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "syntax",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-007.brc",
+              "--json"
+            ],
+            "sourceSha256": "394902bde2085e87bab227fa2f475e52e3973b7ab1e62fd317c83f050bf4624e",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "syntax",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-007.brc",
+              "--json"
+            ],
+            "sourceSha256": "394902bde2085e87bab227fa2f475e52e3973b7ab1e62fd317c83f050bf4624e",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "syntax",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-008.brc",
+              "--json"
+            ],
+            "sourceSha256": "2dcef077ecb46a60a40fd7c20760b7cc1c59c2283b044ee3eb6ff03ac02b1d22",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-008.brc",
+              "--json"
+            ],
+            "sourceSha256": "2dcef077ecb46a60a40fd7c20760b7cc1c59c2283b044ee3eb6ff03ac02b1d22",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-009.brc",
+              "--json"
+            ],
+            "sourceSha256": "8cef155844c68715288bb870ad2e3b3c196c8d00656585b84b35f2235ad9a36e",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 35
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-009.brc",
+              "--json"
+            ],
+            "sourceSha256": "8cef155844c68715288bb870ad2e3b3c196c8d00656585b84b35f2235ad9a36e",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 35
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-010.brc",
+              "--json"
+            ],
+            "sourceSha256": "c86e3730296990096d753ca0dd68e445c795c9483e0ca0f091da249d75cc66ce",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-010.brc",
+              "--json"
+            ],
+            "sourceSha256": "c86e3730296990096d753ca0dd68e445c795c9483e0ca0f091da249d75cc66ce",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-011.brc",
+              "--json"
+            ],
+            "sourceSha256": "db5126f7731a56d53c15f729c78652ac51fe730508e010c90babde00fdc29a3d",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-011.brc",
+              "--json"
+            ],
+            "sourceSha256": "db5126f7731a56d53c15f729c78652ac51fe730508e010c90babde00fdc29a3d",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-012.brc",
+              "--json"
+            ],
+            "sourceSha256": "70c666388276bbce34512261e06b58c0ffd7bdbb8bca68f25d778e4cc76e1718",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-012.brc",
+              "--json"
+            ],
+            "sourceSha256": "70c666388276bbce34512261e06b58c0ffd7bdbb8bca68f25d778e4cc76e1718",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-013.brc",
+              "--json"
+            ],
+            "sourceSha256": "87c2b0c98bcdc2c653a878bc102b040b52c0c5257494001a36ee41e7eccf504a",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-013.brc",
+              "--json"
+            ],
+            "sourceSha256": "87c2b0c98bcdc2c653a878bc102b040b52c0c5257494001a36ee41e7eccf504a",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-014.brc",
+              "--json"
+            ],
+            "sourceSha256": "d3a4683d2e1db5ba02ee5e01bfdfc512e0d413ba9867c24c98c569d1b19fd75b",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-014.brc",
+              "--json"
+            ],
+            "sourceSha256": "d3a4683d2e1db5ba02ee5e01bfdfc512e0d413ba9867c24c98c569d1b19fd75b",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-015.brc",
+              "--json"
+            ],
+            "sourceSha256": "73294f151d531cb3614b4fffef2e586917be61ada3dae17a63989b082a236110",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-015.brc",
+              "--json"
+            ],
+            "sourceSha256": "73294f151d531cb3614b4fffef2e586917be61ada3dae17a63989b082a236110",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-016.brc",
+              "--json"
+            ],
+            "sourceSha256": "7655cd36915abbecdbece268009dc61f5df3d1d73c956a8ae2cf0aa6234a21f9",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-016.brc",
+              "--json"
+            ],
+            "sourceSha256": "7655cd36915abbecdbece268009dc61f5df3d1d73c956a8ae2cf0aa6234a21f9",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-017.brc",
+              "--json"
+            ],
+            "sourceSha256": "20d5211d15b3a3857f288215a50ab581f11454d8ed4fe1c377170bb1b76eed5c",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-017.brc",
+              "--json"
+            ],
+            "sourceSha256": "20d5211d15b3a3857f288215a50ab581f11454d8ed4fe1c377170bb1b76eed5c",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-018.brc",
+              "--json"
+            ],
+            "sourceSha256": "836d6bee634eaa519a2a9b32d2318ec2ca24321cf7875d57d3ad0b498533b4d7",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-018.brc",
+              "--json"
+            ],
+            "sourceSha256": "836d6bee634eaa519a2a9b32d2318ec2ca24321cf7875d57d3ad0b498533b4d7",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-019.brc",
+              "--json"
+            ],
+            "sourceSha256": "919388cd60b2b2540d0136307fb8712867c1ef23e80110ce811e946300789abb",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-019.brc",
+              "--json"
+            ],
+            "sourceSha256": "919388cd60b2b2540d0136307fb8712867c1ef23e80110ce811e946300789abb",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-020.brc",
+              "--json"
+            ],
+            "sourceSha256": "7d3760df753aabba89d4841f09bd296d594784e5173d6f0bc28d5f21670de837",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-020.brc",
+              "--json"
+            ],
+            "sourceSha256": "7d3760df753aabba89d4841f09bd296d594784e5173d6f0bc28d5f21670de837",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-021.brc",
+              "--json"
+            ],
+            "sourceSha256": "fc7414339cb154daac2e3549efba35356ecdc92ca104fa5f6e24866166a94931",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-021.brc",
+              "--json"
+            ],
+            "sourceSha256": "fc7414339cb154daac2e3549efba35356ecdc92ca104fa5f6e24866166a94931",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-022.brc",
+              "--json"
+            ],
+            "sourceSha256": "f154f25f407adc2c0d7815f40dd79972da4089880651308620bfa56e8a9ca191",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-022.brc",
+              "--json"
+            ],
+            "sourceSha256": "f154f25f407adc2c0d7815f40dd79972da4089880651308620bfa56e8a9ca191",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-023.brc",
+              "--json"
+            ],
+            "sourceSha256": "d12f2e81837b2c860d46f623239a220ce17104f9f93ba82c7f41d2b39f1f15fe",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-023.brc",
+              "--json"
+            ],
+            "sourceSha256": "d12f2e81837b2c860d46f623239a220ce17104f9f93ba82c7f41d2b39f1f15fe",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-024.brc",
+              "--json"
+            ],
+            "sourceSha256": "76c291c23eef9e92017f87ccb2890aa883860bf8932f8a34d872b3bc6bc51405",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-024.brc",
+              "--json"
+            ],
+            "sourceSha256": "76c291c23eef9e92017f87ccb2890aa883860bf8932f8a34d872b3bc6bc51405",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 33
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-025.brc",
+              "--json"
+            ],
+            "sourceSha256": "5662fc51078b3563e6f8ad2a52f1f95559b62875ff1b2f8a7085837ed7d8ded3",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 0
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\literal-cli\\case-025.brc",
+              "--json"
+            ],
+            "sourceSha256": "5662fc51078b3563e6f8ad2a52f1f95559b62875ff1b2f8a7085837ed7d8ded3",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 0
+              }
+            }
+          }
+        ]
+      },
+      "lexicalCli": {
+        "status": "passed",
+        "count": 36,
+        "exeSha256": "d43cb4d4433eb008b87d9e9c41e5b2948557a50b62551d31ad4649f81ce3130e",
+        "harnessSha256": "4c91c480255f0117ce8406b830bcca2e231878fa25c89631fe9139a0aa54af25",
+        "environment": "cleared; tool-free PATH",
+        "cases": [
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-0.brc",
+              "--json"
+            ],
+            "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "checked",
+              "return_i32": null,
+              "error": null
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-0.brc",
+              "--json"
+            ],
+            "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-1.brc",
+              "--json"
+            ],
+            "sourceSha256": "0c2ca13e617a6764a428acb2283a40ce9663460f418680e9ea763bdf13d1a62a",
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "checked",
+              "return_i32": null,
+              "error": null
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-1.brc",
+              "--json"
+            ],
+            "sourceSha256": "0c2ca13e617a6764a428acb2283a40ce9663460f418680e9ea763bdf13d1a62a",
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-2.brc",
+              "--json"
+            ],
+            "sourceSha256": "d29e7cd8634a06bb3fcaf532561cb65f2eda76d82b885fec3a6a31dc849b4b26",
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "checked",
+              "return_i32": null,
+              "error": null
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-2.brc",
+              "--json"
+            ],
+            "sourceSha256": "d29e7cd8634a06bb3fcaf532561cb65f2eda76d82b885fec3a6a31dc849b4b26",
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-3.brc",
+              "--json"
+            ],
+            "sourceSha256": "6bfe62b94855d52f1a213e5ef10c8144782435db2a85c9b5d7ca1eb4fbe58fb8",
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "checked",
+              "return_i32": null,
+              "error": null
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-3.brc",
+              "--json"
+            ],
+            "sourceSha256": "6bfe62b94855d52f1a213e5ef10c8144782435db2a85c9b5d7ca1eb4fbe58fb8",
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-4.brc",
+              "--json"
+            ],
+            "sourceSha256": "84a3682d1af9a97f5fa1b0e76cb0da9de6ee0b887796733a8c26de12bf395246",
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "checked",
+              "return_i32": null,
+              "error": null
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-4.brc",
+              "--json"
+            ],
+            "sourceSha256": "84a3682d1af9a97f5fa1b0e76cb0da9de6ee0b887796733a8c26de12bf395246",
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-5.brc",
+              "--json"
+            ],
+            "sourceSha256": "1486051339d26da668ec0cd06ba5fef46eb032d56b448274adda67b9016f471e",
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "checked",
+              "return_i32": null,
+              "error": null
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-5.brc",
+              "--json"
+            ],
+            "sourceSha256": "1486051339d26da668ec0cd06ba5fef46eb032d56b448274adda67b9016f471e",
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-6.brc",
+              "--json"
+            ],
+            "sourceSha256": "5b413d336ce2c7859805e87c250990df0b661b3972050659f3143fb6fefc7c62",
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "checked",
+              "return_i32": null,
+              "error": null
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-6.brc",
+              "--json"
+            ],
+            "sourceSha256": "5b413d336ce2c7859805e87c250990df0b661b3972050659f3143fb6fefc7c62",
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-7.brc",
+              "--json"
+            ],
+            "sourceSha256": "d5b73606b0fcf0004c33ad18048796d92d7e14176f5b339792ddff2b26cc8535",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 0
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-7.brc",
+              "--json"
+            ],
+            "sourceSha256": "d5b73606b0fcf0004c33ad18048796d92d7e14176f5b339792ddff2b26cc8535",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 0
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-8.brc",
+              "--json"
+            ],
+            "sourceSha256": "f63d918a1231393fc3149c8f93b38796a4b517bfaf8a4847203847a23624ad37",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 37
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-8.brc",
+              "--json"
+            ],
+            "sourceSha256": "f63d918a1231393fc3149c8f93b38796a4b517bfaf8a4847203847a23624ad37",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 37
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-9.brc",
+              "--json"
+            ],
+            "sourceSha256": "2cd96521434b0336213744a207259d774fd81be38fa2f7804bc409b1f5660c0b",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 5
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-9.brc",
+              "--json"
+            ],
+            "sourceSha256": "2cd96521434b0336213744a207259d774fd81be38fa2f7804bc409b1f5660c0b",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 5
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-10.brc",
+              "--json"
+            ],
+            "sourceSha256": "cb48e9a016d09a10b824eb24dddf884d509379c9ed0b4599cd69e9900a99ca16",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 5
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-10.brc",
+              "--json"
+            ],
+            "sourceSha256": "cb48e9a016d09a10b824eb24dddf884d509379c9ed0b4599cd69e9900a99ca16",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 5
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-11.brc",
+              "--json"
+            ],
+            "sourceSha256": "7d35aef4fae317034e3f28024407e63105c18ddecc20bf95e1ee692abecf2191",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 0
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-11.brc",
+              "--json"
+            ],
+            "sourceSha256": "7d35aef4fae317034e3f28024407e63105c18ddecc20bf95e1ee692abecf2191",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 0
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-12.brc",
+              "--json"
+            ],
+            "sourceSha256": "e2e5cc5a7f5ceae5f6c018d37717c17bb4071ee85413b5c40e845f9891a83798",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 37
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-12.brc",
+              "--json"
+            ],
+            "sourceSha256": "e2e5cc5a7f5ceae5f6c018d37717c17bb4071ee85413b5c40e845f9891a83798",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 37
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-13.brc",
+              "--json"
+            ],
+            "sourceSha256": "85b133cee43d3c6a6c224c8e4cbf2fbadeb2969a2e2bfa23cfa50d68c36c023e",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 5
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-13.brc",
+              "--json"
+            ],
+            "sourceSha256": "85b133cee43d3c6a6c224c8e4cbf2fbadeb2969a2e2bfa23cfa50d68c36c023e",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 5
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-14.brc",
+              "--json"
+            ],
+            "sourceSha256": "0e23d79cf9be8c389aa1b4c2b8e24b3ba11e1dc99764fffb620dd5123d254435",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 5
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-14.brc",
+              "--json"
+            ],
+            "sourceSha256": "0e23d79cf9be8c389aa1b4c2b8e24b3ba11e1dc99764fffb620dd5123d254435",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 5
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-15.brc",
+              "--json"
+            ],
+            "sourceSha256": "994d9192265d39f2d3010e36097d72a2ff2e3100ab5740bba29edc530a73094f",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 1
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-15.brc",
+              "--json"
+            ],
+            "sourceSha256": "994d9192265d39f2d3010e36097d72a2ff2e3100ab5740bba29edc530a73094f",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 1
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-16.brc",
+              "--json"
+            ],
+            "sourceSha256": "05234a153720d785d2882c622d5cff3728f841df34eab902040f382792aa9d67",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 2
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-16.brc",
+              "--json"
+            ],
+            "sourceSha256": "05234a153720d785d2882c622d5cff3728f841df34eab902040f382792aa9d67",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 2
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "check",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-17.brc",
+              "--json"
+            ],
+            "sourceSha256": "e95142c8e86de45cada0be86454aec7bbc791ddf95ed028703bca7b88f3c7ce1",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 0
+              }
+            }
+          },
+          {
+            "command": [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\browniec.exe",
+              "run",
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\static-equality-source\\release\\lexical-cli\\case-17.brc",
+              "--json"
+            ],
+            "sourceSha256": "e95142c8e86de45cada0be86454aec7bbc791ddf95ed028703bca7b88f3c7ce1",
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "lexical",
+                "byte_offset": 0
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "nativeOverrides": false,
+  "historicalResultReuse": false,
+  "scope": {
+    "nativeImmutableByteEquality": true,
+    "byteOnlySourceSignature": true,
+    "sameKindAliases": true,
+    "explicitTextBytes": true,
+    "lexicalAndNonlocalCleanup": true,
+    "aggregateReturnCleanup": true,
+    "zeroGuestBacking": true,
+    "exactSourceExecutionFuel": [
+      58,
+      62,
+      56
+    ],
+    "existingSixteenSiteLimit": true,
+    "publicAdmission": false
+  },
+  "limitations": [
+    "Five new equality groups plus sixteen existing binding/literal/text-dispatch regressions per Windows profile.",
+    "Counted source equality runs follow final input capture; no compiler/stack overrides or historical reuse.",
+    "No full profiles, general native stack/RAM, allocator/OOM/timing, Linux, restricted Windows delivery or C ABI/packaging evidence.",
+    "General Static ranges/view expressions, dynamic runtime/Buffer/input equality, Static CALL/return lifetime receipts and ordinary public admission remain open."
+  ]
+}

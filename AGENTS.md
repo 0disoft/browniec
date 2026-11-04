@@ -1,3 +1,22 @@
+- Native compile_image now lowers text::equal over exactly two immutable byte
+  views: literals, named/explicit-ref/parenthesized views and explicit text::bytes
+  conversion. Text and runtime mutable/owner-backed views are not coerced into
+  image sites. EQUAL emits a fresh bool and closes only owned argument temporaries
+  in reverse order, preserving named view liveness. Both current arguments are
+  pure immutable view construction; future effectful right arguments must retain
+  the left temporary through every exit before being admitted.
+  Existing image/CFG/type proof, prices, source/site/register limits and public
+  gates remain. EQUAL costs 17 plus both entire selected byte lengths, even on
+  immediate mismatch. Complete one-byte/three-byte-unequal/empty source examples
+  cost 58/62/56 plus entry/leave reserves and run with zero guest backing.
+  Development/release each passed 21 native groups (5 new, 16 regressions) and
+  88 tool-free CLI cases on 138 matching inputs and a 224-file discovery identity.
+  All 125 production modules are LF and locked LF mirrors pass; no native override
+  or historical reuse. Full profiles/general stack/RAM/allocator/timing/Linux/
+  restrictions/C ABI/package checks were not run. General runtime/range views,
+  dynamic input/Buffer equality, Static CALL/return receipts and ordinary public
+  admission remain open; keep the complete goal active. See
+  docs/engineering/static-equality-source.md and focused Windows evidence.
 - Native compile_image now lowers typed Static ref u8[]/ref str locals,
   same-kind aliases and explicit text::bytes projections over retained images.
   Compiler-only encodings 192..223 never become scalar cells or owner tickets.

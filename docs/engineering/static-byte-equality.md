@@ -56,5 +56,8 @@ See [focused Windows evidence](../evidence/static-byte-equality-windows-20261105
 Full profiles, general stack/RAM, allocator/OOM, timing, Linux, restricted delivery
 and C ABI/packaging were not verified by this focused selection.
 The [native source compiler successor](literal-compiler.md) now lowers immediate
-byte/text projections. Typed Static locals, text::equal argument lowering,
-Static CALL/return receipts and public result admission remain next. The complete accepted implementation remains open.
+byte/text projections. The [typed binding successor](static-bindings.md) now
+supplies native byte/text locals and aliases. The [source equality successor](static-equality-source.md)
+now enforces the byte-view signature and lowers immutable arguments through
+EQUAL. General runtime/range views, Static CALL/return receipts and ordinary
+public admission remain next. The complete accepted implementation remains open.

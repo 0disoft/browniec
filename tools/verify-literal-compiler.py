@@ -16,6 +16,7 @@ FILES = ['tests/m2/literal_compiler.fy', 'tests/m2/static_execution.fy',
          'tests/core.fy', 'tests/functions.fy']
 BINDING_FILES = ['tests/m2/static_bindings_source.fy', 'tests/m2/literal_compiler.fy',
                  'tests/m2/image_text_dispatch.fy']
+EQUALITY_FILES = ['tests/m2/static_equality_source.fy'] + BINDING_FILES
 
 
 def digest(path):
@@ -30,11 +31,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--profile', choices=['development', 'release'], required=True)
     parser.add_argument('--phase', choices=['native', 'cli', 'all'], default='all')
-    parser.add_argument('--selection', choices=['all', 'bindings'], default='all')
+    parser.add_argument('--selection', choices=['all', 'bindings', 'equality'], default='all')
     args = parser.parse_args()
     profile = args.profile
-    files = FILES + [BINDING_FILES[0], BINDING_FILES[2]] if args.selection == 'all' else BINDING_FILES
-    out = ROOT / ('build/literal-compiler' if args.selection == 'all' else 'build/static-bindings') / profile
+    files = FILES + [BINDING_FILES[0], BINDING_FILES[2], EQUALITY_FILES[0]] if args.selection == 'all' else EQUALITY_FILES if args.selection == 'equality' else BINDING_FILES
+    output = {'all': 'build/literal-compiler', 'bindings': 'build/static-bindings', 'equality': 'build/static-equality-source'}
+    out = ROOT / output[args.selection] / profile
     out.mkdir(parents=True, exist_ok=True)
     receipt = out / (args.phase + '-receipt.json')
     write(receipt, {'status': 'incomplete'})
@@ -45,7 +47,7 @@ def main():
     assert compiler_hash == json.loads((ROOT / 'toolchain.json').read_text())['platforms'][target]['sha256']
     production = sorted(p.relative_to(ROOT).as_posix() for p in (ROOT / 'src').rglob('*.fy'))
     assert all(b'\r' not in (ROOT / p).read_bytes() for p in production)
-    paths = sorted(production + list(dict.fromkeys(FILES + BINDING_FILES)) + ['fairy.toml', 'fairy.lock', 'toolchain.json',
+    paths = sorted(production + list(dict.fromkeys(FILES + EQUALITY_FILES)) + ['fairy.toml', 'fairy.lock', 'toolchain.json',
                                        'tools/verify-literal-compiler.py', 'tools/check-literal-source.py',
                                        'tools/check-lexical-compatibility.py'])
     inputs = [dict(path=p, sha256=digest(ROOT / p)) for p in paths]

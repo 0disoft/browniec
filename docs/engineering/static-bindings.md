@@ -77,8 +77,10 @@ pre-correction native run are excluded. The fixture correction checks invisible
 self-initialization through the new text declaration path rather than expecting
 a type error from the legacy byte-reference grammar's missing `ref` prefix.
 
-Remaining: general Static range/view expressions and byte-view `text::equal`
-source lowering, Static CALL actuals and returned origin/lifetime receipts,
+The [source equality successor](static-equality-source.md) now checks and lowers
+text::equal over immutable byte-view arguments. Remaining: general Static
+range/view expressions, dynamic runtime/Buffer/input equality, Static CALL
+actuals and returned origin/lifetime receipts,
 ordinary public admission, Buffer/input text and complete Engine/Instance
 accounting. Full profiles, general native stack/RAM/allocator/timing, Linux,
 restricted Windows delivery and C ABI/packaging are not established here. The

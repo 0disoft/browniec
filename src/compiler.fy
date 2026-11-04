@@ -198,6 +198,7 @@ fn Result<usize, errors::Error> named_operand(ref u8[] source, ref mut lexer::St
         if(qualified && signatures.literals.enabled){
             let usize first=lexer::next(source,ref mut look)?;
             let usize second=lexer::punctuation(source,ref mut look,58)?;
+            if(word_is(source,ref look,b"equal")){return static_source::equal(source,s,p,table,ref signatures.literals);}
             if(word_is(source,ref look,b"bytes")){
                 let usize module_name=lexer::next(source,s)?;
                 let usize colon=lexer::punctuation(source,s,58)?;

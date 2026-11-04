@@ -59,7 +59,8 @@ snapshots; it is not counted as a verification pass.
 
 The [typed binding successor](static-bindings.md) now lowers native ref str/byte
 locals, aliases and text::bytes projections with lexical/nonlocal-exit cleanup.
-General Static view expressions and byte-view text::equal source arguments remain next. Static CALL/return receipts,
+The [source equality successor](static-equality-source.md) now checks and lowers
+immutable byte-view equality. General runtime/range view expressions remain next. Static CALL/return receipts,
 public returned-result admission and the complete inventory remain open. No
 Engine/Instance pin, external result receipt, full-profile, general stack/RAM,
 allocator/OOM, timing, Linux, restrictions or C ABI/packaging claim follows.

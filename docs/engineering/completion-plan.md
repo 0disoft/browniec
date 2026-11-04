@@ -40,8 +40,11 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    now lowers native Static byte/text locals, aliases and explicit text::bytes
    projections with lexical/nonlocal-exit cleanup. Next connect general Static
    view expressions and image-backed CALL/return origins. Keep source scratch separate from retained authority. The [byte-view equality successor](static-byte-equality.md) now extends private
-   EQUAL proof/execution to immutable bytes without changing its price. Lower the
-   accepted byte-view source signature with explicit text::bytes conversion. Finish general references.
+   EQUAL proof/execution to immutable bytes without changing its price. The
+   [source equality successor](static-equality-source.md) now lowers the byte-view
+   signature for immutable image views with explicit text::bytes conversion.
+   General runtime view arguments, Static ranges and CALL/return origins remain.
+   Finish general references.
    Validate actual public source execution before promoting its capability.
 2. **Language completion: L01-L06, C03/C05.** Finish explicit module snapshots and
    visibility, inference/void/if values, complete array/record construction,
