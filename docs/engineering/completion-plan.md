@@ -21,8 +21,11 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    reuse that path. [Direct returned CALL arguments](m2-slice-result-arguments.md)
    now retain transitive selected ancestry and close unselected captures.
    [Declaration/return range projections](m2-slice-result-range-projections.md)
-   reuse the same retained results and terminal handoff. Next finish Static backing
-   and the general scalar/array/record/Buffer reference contract.
+   reuse the same retained results and terminal handoff. The
+   [native literal-image prerequisite](static-literal-image.md) now owns immutable
+   deduplicated bytes. Next attach that real image to Program ownership, prove and
+   execute Static origins, and finish the general scalar/array/record/Buffer
+   reference contract.
    Validate actual public source execution before promoting its capability.
 2. **Language completion: L01-L06, C03/C05.** Finish explicit module snapshots and
    visibility, inference/void/if values, complete array/record construction,

@@ -4,6 +4,26 @@
   docs/product/04-remaining-work.md. Do not redefine completion around the
   experimental subset. Execution order and next B04 constraints are recorded in
   docs/engineering/completion-plan.md. Remote delivery remains separate.
+- Static literal backing now has a private move-only native Image in
+  src/static_image.fy. Compiler scratch interns exact byte/text kinds, bounds
+  rows/bytes and validates UTF-8 before mutation. Freezing independently validates
+  metadata/text, preflights retained bytes and owns an exact used-prefix copy.
+  Resource fields are private; no mutable image API exists. Shared byte/text
+  ranges and equality require the live owning image; spans are image-local
+  offsets, not authenticated Program handles. Logical charge is 576 plus payload
+  capacity; whole Engine/Program/scratch accounting is not implemented here.
+  Development/release each passed six native groups on 122 matching final inputs
+  and a 216-file discovery digest; all 118 production files are LF and an LF
+  mirror passed check --locked. Final runs follow final capture; no native
+  overrides/historical reuse. Earlier field-slicing/resource-privacy/Result-equality
+  probes and pre-snapshot results are excluded. Program retention, Static IR/
+  authority/VM lifetime, guest literals and public promotion remain open; this
+  actual owning-storage prerequisite does not complete B04/D05 or the objective.
+  No old VM/CLI/full-profile/Linux/restricted/ABI/packaging/allocator OOM or native
+  timing/stack/RAM evidence was produced. Next integrate a retained Program image
+  alongside copyable proof IR, independently prove static definitions/origins,
+  then connect views and source with exact metering. See
+  docs/engineering/static-literal-image.md and its focused Windows evidence.
 - B04 declaration and terminal-return ranges over retained CALL results now
   execute privately. Parse exact-usize endpoints in order with hidden result/
   ancestry live; declarations finish delimiters before child acquisition and
