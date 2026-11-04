@@ -10,8 +10,7 @@ import re
 import subprocess
 
 ROOT = Path(__file__).resolve().parent.parent
-FILES = ['tests/m2/program_image.fy', 'tests/m2/static_image.fy',
-         'tests/m2/slice_scalar_entry.fy']
+FILES = ['tests/m2/program_image.fy', 'tests/m2/slice_scalar_entry.fy']
 
 
 def digest(path):

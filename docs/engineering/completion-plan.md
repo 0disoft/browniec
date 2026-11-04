@@ -25,8 +25,10 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    [native literal-image prerequisite](static-literal-image.md) now owns immutable
    deduplicated bytes. A [retained native Program](retained-program-image.md) now
    owns that image beside independently verified copyable IR and borrows both for
-   existing scalar execution. Next prove and execute actual Static definitions/
-   origins, then finish the general scalar/array/record/Buffer reference contract.
+   existing scalar execution. The [native return-stack fix](native-return-stack.md)
+   removes reproduced return-transaction stack amplification without changing
+   ownership APIs, VM capacities or prices. Next prove and execute actual Static
+   definitions/origins, then finish the general reference contract.
    Validate actual public source execution before promoting its capability.
 2. **Language completion: L01-L06, C03/C05.** Finish explicit module snapshots and
    visibility, inference/void/if values, complete array/record construction,

@@ -77,9 +77,6 @@ fn Result<programs::Program,programs::Error> escaped(){
     assert(!kept(ref unit,b"",575).is_ok && !kept(ref unit,b"abc",0).is_ok);
     assert(kept(ref unit,b"",576).is_ok && kept(ref unit,b"abc",579).is_ok);
     assert(kept(ref unit,b"abc",18446744073709551615).is_ok);
-}
-@test fn void empty_catalog_program_runs_without_literal_payload(){
-    let ir::Program unit=code(b"module main;fn i32 main(){return 42;}");
     let images::Builder scratch=switch(images::builder(0)){case .ok(v):{v}case .err(_):{assert(false);return;}};
     let images::Image no_literals=switch(images::freeze(ref scratch,576)){case .ok(v):{v}case .err(_):{assert(false);return;}};
     let programs::Program blank=switch(programs::retain(ref unit,no_literals,576)){case .ok(v):{v}case .err(_):{assert(false);return;}};

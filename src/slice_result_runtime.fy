@@ -296,11 +296,16 @@ fn Result<usize,errors::Error> release_roots(ref mut slices::Pool pool,ref mut o
 }
 pub fn Result<Resumed,errors::Error> leave_call(ref mut State state,ref mut Call call,usize capacity,usize fuel){
     if(fuel<leave_cost()){return .err(errors::make(8,0));}
-    let usize depth=size(authority::inspect(ref state.runtime.authority))?;
+    // Borrow through the nested Runtime once. Chained value reads otherwise
+    // materialize large Runtime/authority temporaries in the native debug lane.
+    let ref authority::State observed=ref state.runtime.authority;
+    let usize depth=size(authority::inspect(observed))?;
     if(!call.active || call.contract.selected!=0 || call.contract.arity>8 || call.depth>=31 || call.frame>=31 ||
-        depth<=call.depth || state.runtime.authority.frame!=call.frame+1 || state.runtime.authority.kinds[call.depth]!=1 ||
-        state.runtime.authority.frames[call.depth]!=call.frame){return .err(errors::make(5,0));}
-    var authority::State stack=state.runtime.authority;var slices::Pool pool=state.runtime.pool;var owners::Table table=state.runtime.owners;
+        depth<=call.depth || observed.frame!=call.frame+1 || observed.kinds[call.depth]!=1 ||
+        observed.frames[call.depth]!=call.frame){return .err(errors::make(5,0));}
+    var authority::State stack=*observed;
+    let ref slices::Pool original_pool=ref state.runtime.pool;var slices::Pool pool=*original_pool;
+    let ref owners::Table original_table=ref state.runtime.owners;var owners::Table table=*original_table;
     let slices::Arguments restored=restore(ref mut stack,ref mut pool,ref table,call,capacity)?;
     var slices::Ticket[8] resumed=[none();8];var usize writer=0;var usize i=0;
     while(i<call.contract.arity){
@@ -312,7 +317,9 @@ pub fn Result<Resumed,errors::Error> leave_call(ref mut State state,ref mut Call
         }
     }
     let usize cleaned=finish_captures(ref mut stack,ref mut pool,ref mut table,call,ref mut resumed,capacity)?;
-    state.runtime=Runtime{.authority=stack,.pool=pool,.owners=table};call.active=false;
+    // Every fallible check precedes these plain field copies. No aggregate
+    // Runtime temporary, allocation or callback intervenes during publication.
+    state.runtime.authority=stack;state.runtime.pool=pool;state.runtime.owners=table;call.active=false;
     return .ok(Resumed{.tickets=resumed,.remaining=fuel-leave_cost()});
 }
 

@@ -30,11 +30,12 @@ need R02 integration. `static_image::freeze` remains responsible for preflightin
 its own allocation. Empty catalogs and empty literals both retain zero payload
 capacity, with distinct literal metadata.
 
-The IR is still inline in the native owning resource. Combining the multi-resource
-quota fixture with empty-image VM execution in one function produced Windows
-stack-overflow status `-1073741571`. Final tests keep these as separate groups;
-that establishes the focused paths, not arbitrary native caller stack safety.
-Persistent Program/frame allocation and stack containment remain R02 work.
+The IR remains inline in the native owning resource. At this ownership checkpoint,
+combining the multi-resource quota fixture with empty-image VM execution produced
+Windows stack-overflow status `-1073741571`; separating the fixture was not a fix.
+The [native return-stack successor](native-return-stack.md) now removes the large
+intermediate return-transaction snapshots and runs the original combined case.
+Persistent Program/frame allocation and general stack containment remain R02 work.
 
 ## Reuse and execution
 
@@ -72,7 +73,7 @@ The verifier captures all production sources, selected tests, manifest, lock,
 toolchain and itself before execution. It fingerprints the complete test-discovery
 tree, checks an LF mirror with `--locked`, requires exact native test identities,
 empty captured process streams and no native traps, then rechecks input hashes.
-The [Windows evidence](../evidence/retained-program-image-windows-20261105.json)
+The ownership-checkpoint [Windows evidence](../evidence/retained-program-image-windows-20261105.json)
 records 20 development and 20 release native groups (seven new and thirteen
 affected regressions), on 126 matching final inputs and a 217-file discovery
 digest. All 119 production files are LF and both LF mirror checks passed. All
@@ -83,8 +84,12 @@ excluded; native stack/RAM/allocator safety is not established by these checks.
 Seven new groups cover compiler-scope escape, candidate mutation, separate images,
 exact/one-short/hostile image ceilings, empty catalogs, hostile IR/unknown opcode
 claims, repeated scalar execution, exact/one-short Fuel, guest arithmetic failure,
-immutable payload capacity and existing returned-input CALL cleanup. Existing
-image and native scalar-entry groups are selected as affected regressions.
+immutable payload capacity and existing returned-input CALL cleanup. Image and
+native scalar-entry groups were selected at that checkpoint. The current verifier
+selects retained-Program and native scalar-entry groups for the
+[return-stack successor](native-return-stack.md); the original combined fixture
+now executes in one group. Direct image checks remain separate when its storage
+implementation changes.
 
 ## Next integration
 

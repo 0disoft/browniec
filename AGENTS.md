@@ -4,6 +4,19 @@
   docs/product/04-remaining-work.md. Do not redefine completion around the
   experimental subset. Execution order and next B04 constraints are recorded in
   docs/engineering/completion-plan.md. Remote delivery remains separate.
+- The default Windows combined quota/empty-image Program fixture now passes.
+  src/slice_result_runtime.fy leave_call borrows nested authority/pool/table before
+  private staging and publishes three fields only after every fallible operation.
+  This avoids large native intermediate Runtime values, retaining rollback,
+  first errors, cleanup order, 32 frames, Program API and all guest prices.
+  Development/release each passed 13 focused native groups on 125 matching inputs
+  and a 217-file discovery digest; 119 production files are LF and LF mirrors pass.
+  The baseline at 16aea0c fails with byte-identical fixture input; no overrides or
+  historical reuse. Diagnostic /Od emitted frame drops 263544 -> 58152 bytes;
+  this is not total/release stack, RAM, allocator or timing evidence. Packed IR/
+  resource-replacement prototypes were discarded. General R02 containment and
+  Static/Engine/public integration remain open. See native-return-stack.md under
+  docs/engineering and its Windows evidence. Keep the full objective active.
 - Native Program retention now owns independently verified copyable IR and the
   move-only literal image together in src/program_image.fy. Private fields/shared
   getters preserve immutable snapshots; scalar native execution borrows the owner
