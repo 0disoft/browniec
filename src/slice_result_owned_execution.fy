@@ -12,6 +12,7 @@ import array_owners as owners;
 import array_layout as layouts;
 import ir as ir;
 import errors as errors;
+import slice_result_bindings as result_bindings;
 
 // These arrays::State values are unpublished metadata plans. Runtime owns the
 // sole owner table; actual backing bytes are always the original mutable view.
@@ -75,7 +76,7 @@ fn usize suspend(ref ir::Program p,usize map,usize parent,runtime::Contract cont
 pub fn Result<runtime::Resumed,errors::Error> leave(ref ir::Program p,usize pc,u8 op,
     ref mut frames::Frames bindings,ref mut runtime::State state,ref u8[] data,usize fuel){
     let usize frame=bindings.frame;let usize f=bindings.functions[frame];let usize offset=p.offsets[pc];
-    if(frame==1 && op!=8){return .err(errors::make(5,offset));}
+    if(result_bindings::in_frame(ref bindings.loans,frame) || (frame==1 && op!=8)){return .err(errors::make(5,offset));}
     let usize source=p.code[pc*8+2] as usize;let usize destination=bindings.destinations[frame];
     let usize extra=if(op==39){results::cost(p,source,offset)?}else if(op==50){record_results::cost()}else{0};
     if(fuel<runtime::leave_cost()+extra){return .err(errors::make(8,offset));}

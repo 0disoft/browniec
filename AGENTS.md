@@ -4,6 +4,20 @@
   docs/product/04-remaining-work.md. Do not redefine completion around the
   experimental subset. Execution order and next B04 constraints are recorded in
   docs/engineering/completion-plan.md. Remote delivery remains separate.
+- Native caller frames can now retain returned Held receipts in slice sites,
+  continue, and publish fresh parent tickets on prepaid close. A sparse 47-entry
+  map supports same-slot exclusive descendants; seventeen live native receipts
+  across two frames use one physical writer slot in the new test. Successful
+  terminal handoff consumes callee records; ordinary returns reject live Helds.
+  Windows development passed 43 native groups and 217 CLI cases; release passed
+  five new binding native groups. All 509 captured inputs match and all 114
+  production sources are LF; an LF mirror passed `check --locked`. No result
+  reuse or stack/compiler overrides. Other/full M1/M2/Linux/isolation/ABI/
+  allocator/performance checks were not run. Source/new executable IR result
+  bindings and public capabilities remain gated. Next connect independently
+  proved source/IR destinations and selected temporary capture retention; this
+  native foundation does not complete B04 or the active objective. See
+  docs/engineering/m2-slice-result-bindings.md and its linked Windows evidence.
 - L03 record field shorthand now supports `.field` for exact scalar/plain-record
   locals through existing ordered constructor staging. Windows final LF inputs
   passed 21 development and four release native groups, plus 362 tool-free CLI

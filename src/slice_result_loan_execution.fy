@@ -19,6 +19,9 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,usize pc,
     let usize at=pc*8;let usize offset=p.offsets[pc];let u8 op=p.code[at];
     let usize dst=p.code[at+1] as usize;let usize a=p.code[at+2] as usize;let usize b=p.code[at+3] as usize;
     let usize base=bindings.frame*16;
+    if((op==56 || op==62) && frames::result_bound(bindings,dst)){
+        return frames::close_result(bindings,state,dst,data.len,fuel);
+    }
     let usize site=if(op==60){dst}else{a};
     var usize stride=0;
     if(op==58 || op==60){

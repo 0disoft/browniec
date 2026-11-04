@@ -67,15 +67,15 @@ delivery and DLL exports are still open after the lexical/range increments.
   tickets and anonymous captures close transactionally. See the
   [scalar entry contract](m2-slice-scalar-entry.md). This is a prerequisite for
   public scalar callers, not public returned-result admission or lexical binding.
-- `frames::pop` currently treats every borrowed return as terminal forwarding and
-  prepares its parent frame. General result destinations must instead bind a
-  live slice site and permit subsequent instructions in the caller.
-- Retain each Held receipt until its actual close; exclusive close must publish
-  the fresh restored ticket back into the original caller binding. Keep the
-  canonical authority/owner/pool, generation checks and prepaid finalizer.
-- Bound result receipt storage by the sixteen physical view slots. Do not add
-  a dense 32-frame by 16-site array of large Held records; prior dense ownership
-  maps already caused native stack failures.
+- Native `frames::pop` can now retain a result in a caller slice site without
+  preparing that caller. Held close restores the fresh parent binding and uses
+  its prepaid finalizer; terminal handoff consumes the callee's receipts. See
+  the [binding foundation](m2-slice-result-bindings.md). Source/new IR admission
+  must still prove and route those destinations before guest code can use them.
+- Use the 47-entry sparse Held map. Exclusive descendants share physical slots,
+  so sixteen pool slots are not a sixteen-receipt limit: at most 31 canonical
+  exclusive children plus shared slots bound the live set, with one publication
+  spare. Preserve canonical authority/owners/pool and exact generations.
 - Independent admission must prove the destination's exact type/access, selected
   input origin and whole-root conflict/lifetime, including CFG joins and cleanup.
   An ordinary scalar proxy or an unchecked CALL flag is not that proof.
