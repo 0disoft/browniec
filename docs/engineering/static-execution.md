@@ -131,7 +131,10 @@ The source successors now lower byte/text literals, typed `ref str`/byte locals,
 aliases, `text::bytes` and immutable byte-view `text::equal`. The private
 [range successor](static-range-execution.md) executes computed byte endpoints
 from independently proved IR. The [source successor](static-range-source.md)
-now lowers those endpoints and their nonlocal exit cleanup. Connect Static CALL actuals and returned views to
+now lowers those endpoints and their nonlocal exit cleanup. The
+[Static CALL analysis successor](static-call-admission.md) combines actual
+recipes with canonical scalar/owner/loan checks and possible image-root windows;
+it does not enable dispatch. Connect Static CALL actuals and returned views to
 real Program lifetime/origin receipts before permitting their escape. General
 references, ordinary public returned-result admission, Engine/Instance lifecycle,
 input/output, Buffer, host exchange, Windows restrictions and the C ABI remain

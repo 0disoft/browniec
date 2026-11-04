@@ -1,3 +1,24 @@
+- Private Static CALL analysis now combines reconstructed PARAM/CALL/RETURN
+  recipes and grounded origins with canonical scalar/array/record/loan proof.
+  Static type-zero formals never become scalar cells or destinations; Static
+  returns cannot leak ordinary owned state. Bounded possible-root sets support
+  different literal windows at different calls; byte spans stay in one real root
+  and text keeps an exact validated window. This is copyable analysis metadata,
+  not retained image/frame authority or executable/public admission. PARAM 77
+  remains rejected by the legacy Static executor; source CALL lowering is open.
+  Development/release each passed 38 native groups (8 new, 30 regressions) on
+  136 matching final inputs and a 229-file discovery identity. All 128 production
+  modules are LF; locked LF mirrors pass. Public Fuel CLI-only phases each pass
+  33 tool-free cases on 140 matching CLI inputs; default 256/cap 16000000 remain.
+  No compiler/stack overrides or historical-result reuse. The earlier 37/38
+  development run, superseded release run and diagnostic probes are excluded;
+  the loan fixture now uses required explicit ref syntax. Original public Fuel
+  native/full profiles/general stack/RAM/allocator/timing/Linux/restricted/C ABI/
+  package checks were not rerun. Code 1dff6a1. Next connect actual frame/image
+  transfer to canonical VM execution with full Fuel/destination preflight,
+  actual-span preservation, ordinary owner/loan cleanup and zero-Fuel abort.
+  Source/public promotion and the complete inventory remain open. See
+  docs/engineering/static-call-admission.md and focused Windows evidence.
 - Static CALL recipe proof now reconstructs actual PARAM 77/CALL 78/RETURN 79
   signatures, globally unique view sites, CFG liveness and grounded logical-input
   or Static origins. Type-zero formals are view placeholders; encoded actuals

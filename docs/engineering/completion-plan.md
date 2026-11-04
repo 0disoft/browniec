@@ -56,8 +56,11 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    [Static CALL recipe proof](static-call-ir.md) now reconstructs typed argument
    classes, separate view lifetimes and grounded logical-input/Static origins
    from actual IR, including transitive calls and recursive witnesses. Complete
-   scalar/owner/loan admission and canonical VM transfer still need integration;
-   the recipe proof alone cannot promote execution or public source syntax.
+   scalar/owner/loan analysis is now connected by the
+   [Static CALL admission successor](static-call-admission.md), including possible
+   real image roots and exact text windows. Canonical frame/image transfer with
+   complete Fuel preflight remains next; analysis alone cannot promote execution
+   or public source syntax.
    Validate actual public source execution before promoting its capability.
 2. **Language completion: L01-L06, C03/C05.** Finish explicit module snapshots and
    visibility, inference/void/if values, complete array/record construction,

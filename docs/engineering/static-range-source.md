@@ -87,6 +87,8 @@ require the remaining admission and lifetime work.
 
 The [CALL recipe successor](static-call-ir.md) now checks actual IR argument
 classes, CFG view lifetimes and grounded input/Static origin claims. Complete
-image-aware admission, canonical transfer and retained Program lifetime handling
-remain next before source CALL lowering and public end-to-end admission. The full
+image-aware analysis is now supplied by the
+[admission successor](static-call-admission.md). Canonical transfer and retained
+Program lifetime handling remain next before source CALL lowering and public
+end-to-end admission. The full
 accepted implementation objective remains active.

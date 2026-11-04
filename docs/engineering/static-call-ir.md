@@ -77,6 +77,8 @@ Implementation is committed as `a6a62d5`; evidence records the preceding startin
 head and exact final input hashes. Earlier checker/native and fifteen-group
 probes are excluded.
 
+The [complete analysis successor](static-call-admission.md) now combines these
+recipes with canonical scalar/owner/loan checks and possible real image roots.
 The current bare verifier/VM and retained-Program admission still reject 77..79.
 The recipe proof cannot substitute for their complete scalar definitions/types,
 ordinary argument/aggregate/loan shapes, ownership or metering proof. No guest
@@ -84,8 +86,8 @@ price, capability flag, source gate, runtime descriptor table or ABI is promoted
 Focused proof tests cannot establish runtime lifetime retention or full-profile,
 stack/RAM/allocator/timing, Linux, restricted Windows or C ABI/package behavior.
 
-Next integrate this recipe contract into complete image-aware admission, then
-canonical CALL/return dispatch. Preflight full transfer Fuel and all destinations
+Next connect the complete analysis to canonical CALL/return dispatch. Preflight
+full transfer Fuel and all destinations
 before publishing frame words; retain the exact image for the invocation and
 copy actual spans without payload allocation. A formal may receive different
 image windows at different CALLs; do not bind it permanently to one literal or

@@ -86,6 +86,14 @@ native selection or promote guest alias syntax. The
 [successor evidence](../evidence/static-alias-windows-20261105.json) records both
 current CLI artifacts and the focused private native results.
 
+The 2026-11-05 [Static CALL analysis successor](static-call-admission.md) reran
+the CLI-only phase after canonical verifier integration. Development and release
+each passed all 33 tool-free cases on 140 matching CLI input hashes and the
+229-file discovery identity, with the same 256 default and 16000000 ceiling.
+Its [focused evidence](../evidence/static-call-admission-windows-20261105.json)
+records both artifacts and the separate 38-group private native selection.
+The original public Fuel native selection was not rerun by this successor.
+
 Full M1/M2, Linux, restricted delivery, ABI, packaging and elapsed-time/allocator/
 stack-size benchmarks are outside this increment. B04 result declarations remain
 publicly gated; other C05 capacities and the complete objective remain open.
