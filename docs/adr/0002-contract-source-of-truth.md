@@ -19,6 +19,7 @@ apply and could make model results look like implemented behavior.
 | System ownership and trust crossings | [Architecture](../../ARCHITECTURE.md) |
 | CLI commands and arguments | [Command contract](../cli/command-contract.md) |
 | Configuration authority and precedence | [Configuration](../cli/configuration.md) |
+| Explicit project metadata and native semantic checks | [Project format](../cli/project-format.md) |
 | Output and process results | [Output and exit codes](../cli/output-and-exit-codes.md) |
 | Performance targets and measurement boundaries | [Performance budget](../engineering/03-performance-budget.md) |
 | Delivery sequence | [Roadmap](../product/01-roadmap.md) |

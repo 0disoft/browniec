@@ -25,7 +25,7 @@ def write(path, value):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--profile', choices=['development', 'release'], required=True)
-    parser.add_argument('--selection', choices=['all', 'statics', 'views', 'ranges', 'range-core', 'call-ir', 'call-proof', 'call-transfer-core', 'call-transfer', 'call-mixed', 'reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts', 'reference-return-execution', 'reference-source', 'reference-return-source', 'public-program', 'source-snapshot', 'module-index', 'module-entry', 'source-context', 'module-program', 'module-program-core', 'project-names'], default='all',
+    parser.add_argument('--selection', choices=['all', 'statics', 'views', 'ranges', 'range-core', 'call-ir', 'call-proof', 'call-transfer-core', 'call-transfer', 'call-mixed', 'reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts', 'reference-return-execution', 'reference-source', 'reference-return-source', 'public-program', 'source-snapshot', 'module-index', 'module-entry', 'source-context', 'module-program', 'module-program-core', 'project-names', 'project-manifest'], default='all',
                         help='statics runs the changed image/proof/VM suites; all adds return and source regressions')
     args = parser.parse_args()
     profile = args.profile
@@ -47,6 +47,7 @@ def main():
                   'reference-return-source': ['tests/m2/reference_return_source.fy',
                                               'tests/m2/reference_return_execution.fy',
                                               'tests/m2/reference_call_source.fy'],
+                  'project-manifest': ['tests/m2/json_tokens.fy', 'tests/m2/project_names.fy', 'tests/m2/project_manifest.fy'],
                   'project-names': ['tests/m2/json_tokens.fy', 'tests/m2/project_names.fy'],
                   'module-program-core': ['tests/m2/module_program.fy', 'tests/m2/struct_metadata.fy'],
                   'module-program': ['tests/m2/module_program.fy', 'tests/m2/public_program.fy', 'tests/m2/struct_call_assignment.fy', 'tests/m2/struct_child_call_paths.fy', 'tests/m2/struct_metadata.fy'],

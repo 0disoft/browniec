@@ -1,6 +1,6 @@
 # CLI Configuration
 
-- Status: SOURCE/JSON/Fuel flags implemented for bounded M1/M2; project/policy/input configuration designed only (2026-11-03)
+- Status: SOURCE/JSON/Fuel flags and native project metadata implemented; project file/CLI, policy and input loaders pending (2026-11-05)
 - Default host capability: deny
 
 ## Explicit inputs
@@ -40,7 +40,7 @@ output is diagnostic only and does not authorize execution.
 
 The current scalar/array/record/scalar-slice CLI implements only SOURCE selection,
 `--json` and run-only `--fuel` (default 256, range 0..16000000). SOURCE is one UTF-8
-code file up to 4096 bytes, not guest input; zero-argument i32 `main` is fixed. No project, policy, catalog, environment configuration, effective-config, or
+code file up to 4096 bytes, not guest input; zero-argument i32 `main` is fixed. This CLI has no project, policy, catalog, environment configuration, effective-config, or
 run-grant loader exists. Unsupported options are rejected rather than ignored.
 
 `--isolated` reports unavailable without fallback. Guest input/output, deadline and
@@ -56,8 +56,9 @@ price formulas, full-arity CALL rationale and verification scope.
 The [retained public path](../engineering/public-program.md) admits byte/text and
 shared-byte result source with its canonical Fuel schedule. Native [source
 snapshots](../engineering/module-sources.md) now own explicit identities and original
-bytes, but no project/source-map loader or additional CLI flag is implemented.
+bytes, but no filesystem project/source-map loader or additional CLI flag is implemented.
 
 The [native project input primitives](../engineering/project-input.md) now supply
-bounded JSON tokens and canonical spelling checks. Their native tests do not
-establish project-schema admission, filesystem anchoring, a CLI flag or grants.
+bounded JSON tokens and canonical spelling checks. The [typed native project format](project-format.md) now admits a complete owning
+source map, entry and declared requirements. File collection, filesystem anchoring,
+a CLI flag and grants remain pending.

@@ -1,3 +1,12 @@
+- Native project_manifest now validates and owns brownie.project/0.3 metadata:
+  all required/unknown/duplicate decoded fields, 32 source mappings, 256 declared
+  requirements, canonical path collisions and entry-module membership. It grants
+  nothing and opens no files. See docs/cli/project-format.md and schemas/project.schema.json.
+  Development/release each passed 20 native groups on 154 matching inputs; locked
+  LF mirrors pass. See docs/evidence/project-manifest-windows-20261105.json.
+  Next bind exact source/header snapshots, then anchored collection and CLI.
+  The full objective, policy/Engine/Instance/host/worker/ABI gates remain open.
+  No CLI/full-profile/Linux/OOM or filesystem-race claim; local commits only.
 - Native project input primitives now provide bounded UTF-8 JSON tokens and
   canonical project/module/function/capability/member spelling checks. This is
   lexical/name validation only, not a schema loader, filesystem collector, CLI

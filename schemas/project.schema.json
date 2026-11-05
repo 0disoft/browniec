@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:brownie:project:0.3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "name",
+    "entry",
+    "sources",
+    "requires"
+  ],
+  "properties": {
+    "schema": {
+      "const": "brownie.project/0.3"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "module",
+        "function"
+      ],
+      "properties": {
+        "module": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*(::[A-Za-z_][A-Za-z0-9_]*)*$",
+          "maxLength": 128
+        },
+        "function": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "maxLength": 64
+        }
+      }
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "module",
+          "path"
+        ],
+        "properties": {
+          "module": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*(::[A-Za-z_][A-Za-z0-9_]*)*$",
+            "maxLength": 128
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 240,
+            "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\)(?!.*:)[A-Za-z0-9_./-]+\\.(?:brc|fy)$"
+          }
+        }
+      }
+    },
+    "requires": {
+      "type": "array",
+      "maxItems": 256,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "maxLength": 128,
+        "pattern": "^[a-z][a-z0-9]*(\\.[a-z][a-z0-9]*)+$"
+      }
+    }
+  },
+  "$comment": "Owning contract: docs/cli/project-format.md. Native admission additionally checks decoded duplicate keys, reserved identifiers/namespaces, canonical member components, Windows devices, module/path collisions, and entry module membership. This format grants no authority or filesystem access."
+}

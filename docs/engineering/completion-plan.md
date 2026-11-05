@@ -191,3 +191,8 @@ exclusive chain collapse and recursive advisory source hints. Ordinary result
 kinds retain reverse capture cleanup. The [range-projection successor](m2-slice-result-range-projections.md)
 now connects declaration/return ranges over retained CALL results. Static backing,
 general references and public promotion remain next.
+
+Native project metadata now admits the complete explicit source map and entry
+under the [owning format](../cli/project-format.md). Next bind exact host snapshots
+to that map, then implement anchored filesystem collection and public project CLI.
+Policy/grants and the full completion objective remain open.

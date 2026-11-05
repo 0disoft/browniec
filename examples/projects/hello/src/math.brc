@@ -1,0 +1,2 @@
+module util::math;
+pub fn i32 answer(){return 42;}

@@ -1,0 +1,19 @@
+{
+  "schema": "brownie.project/0.3",
+  "name": "hello",
+  "entry": {
+    "module": "app",
+    "function": "start"
+  },
+  "sources": [
+    {
+      "module": "app",
+      "path": "src/main.brc"
+    },
+    {
+      "module": "util::math",
+      "path": "src/math.brc"
+    }
+  ],
+  "requires": []
+}

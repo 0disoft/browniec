@@ -1,0 +1,3 @@
+module app;
+import util::math as math;
+pub fn i32 start(){return math::answer();}
