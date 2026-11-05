@@ -93,7 +93,9 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    canonical module names, explicit aliases and public/private declarations while
    owning that exact snapshot. The [entry signature successor](module-entry.md)
    now retains a named public zero-argument i32 entry beside its exact Index.
-   Next connect qualified value/type references and carry that selected entry
+   The [source context](source-context.md) supplies exact file fences, scoped name
+   lookup and qualified function signatures/nominal record catalogs. Next carry
+   that context through expression/constructor/field lowering and the selected entry
    through body/type/ownership proof, independently verified IR and actual
    multi-module compilation; name/signature proof alone does not finish L01.
    Finish inference/void/if values, complete array/record construction,

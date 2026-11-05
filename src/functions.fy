@@ -9,9 +9,13 @@ import struct_source as structs;
 import cells as cells;
 import std::num as num;
 import literal_collection as literal_collection;
+import source_context as context;
+import module_entry as entries;
+import module_index as modules;
 
 // Bounded signature pass enables forward calls without trusting unparsed bodies.
 pub struct Table {
+    context::Table context;
     literal_collection::Index literals;
     // Private native mixed-backing byte CALL lowering, never public admission.
     bool reference_calls;
@@ -50,13 +54,15 @@ pub struct Table {
     usize entry;
 }
 pub fn Table empty() {
-    return Table { .literals=literal_collection::empty(), .reference_calls=false, .reference_returns=false, .begins = [0; 16], .ends = [0; 16], .bodies = [0; 16],
+    return Table { .context=context::empty(), .literals=literal_collection::empty(), .reference_calls=false, .reference_returns=false, .begins = [0; 16], .ends = [0; 16], .bodies = [0; 16],
         .body_ends = [0; 16], .arities = [0; 16], .return_lengths = [0; 16], .return_records = [0; 16],
         .return_slice_elements = [0; 16], .return_slice_inputs = [0; 16], .return_slice_candidates = [0; 16], .param_begins = [0; 128],
         .param_ends = [0; 128], .return_types = [0; 16], .param_types = [0; 128],
         .param_lengths = [0; 128], .param_arrays = [0; 128], .param_records = [0; 128], .param_slices = [false; 128], .param_slice_elements = [0; 128], .count = 0, .entry = 16 };
 }
 pub fn usize find(ref u8[] source, ref Table t, usize begin, usize end) {
+    if(t.count>16 || begin>end || end>source.len){return 16;}
+    if(t.context.modules!=0){let usize id=context::lookup(source,ref t.context,begin,end,false);return if(id<t.count){id}else{16};}
     var usize i = 0;
     while (i < t.count) {
         if (lexer::equal(source[begin..end], source[t.begins[i]..t.ends[i]])) { return i; }
@@ -66,11 +72,13 @@ pub fn usize find(ref u8[] source, ref Table t, usize begin, usize end) {
 }
 // Primitive/wrapper spellings keep the existing parser and do not rescan source.
 // Only nominal names need the bounded declaration lookup, including forward types.
-fn Result<u8, errors::Error> record_type(ref u8[] source, ref lexer::State s) {
-    if (s.kind != 2 || locals::reserved(source[s.begin..s.end])) { return .ok(0); }
-    let structs::Location found = structs::locate(source, s.begin, s.end, 32)?;
-    if (found.record >= 32) { return .err(errors::make(3, s.begin)); }
-    let i64 encoded = cells::pack(found.record + 1, s.begin)?;
+fn Result<u8, errors::Error> record_type(ref u8[] source, ref lexer::State s,ref context::Table scope) {
+    if ((s.kind!=2 && s.kind!=5) || locals::reserved(source[s.begin..s.end])) { return .ok(0); }
+    var usize record=32;
+    if(scope.modules!=0){record=context::lookup(source,scope,s.begin,s.end,true);}
+    else{let structs::Location found=structs::locate(source,s.begin,s.end,32)?;record=found.record;}
+    if(record>=32){return .err(errors::make(3,s.begin));}
+    let i64 encoded = cells::pack(record + 1, s.begin)?;
     return switch (num::u8_from_i64(encoded)) {
         case .ok(value): { .ok(value) } case .err(_): { .err(errors::make(4, s.begin)) }
     };
@@ -90,7 +98,7 @@ fn Result<usize, errors::Error> signature(ref u8[] source, ref mut lexer::State 
         let usize open_slice = lexer::punctuation(source, s, 91)?;
         let usize close_slice = lexer::punctuation(source, s, 93)?;
     }
-    let u8 result_record = if (result_slice) { 0 } else { record_type(source, s)? };
+    let u8 result_record = if (result_slice) { 0 } else { record_type(source, s,ref t.context)? };
     let u8 result_type = if (result_slice) { 0 } else if (result_record == 0) { types::parse(source, s)? }
         else { let usize named = lexer::next(source, s)?; 0 };
     if (result_record != 0 && s.kind == 60) { return .err(errors::make(3, s.begin)); }
@@ -108,7 +116,7 @@ fn Result<usize, errors::Error> signature(ref u8[] source, ref mut lexer::State 
     t.return_slice_elements[f] = result_element;
     t.begins[f] = s.begin;
     t.ends[f] = s.end;
-    let bool main = lexer::equal(source[s.begin..s.end], b"main");
+    let bool main = t.context.modules==0 && lexer::equal(source[s.begin..s.end], b"main");
     let usize name = lexer::next(source, s)?;
     let usize open = lexer::punctuation(source, s, 40)?;
     var usize arity = 0;
@@ -127,7 +135,7 @@ fn Result<usize, errors::Error> signature(ref u8[] source, ref mut lexer::State 
             let usize open_slice = lexer::punctuation(source, s, 91)?;
             let usize close_slice = lexer::punctuation(source, s, 93)?;
         }
-        let u8 parameter_record = if (parameter_slice) { 0 } else { record_type(source, s)? };
+        let u8 parameter_record = if (parameter_slice) { 0 } else { record_type(source, s,ref t.context)? };
         let u8 parameter_type = if (parameter_slice) { 0 } else if (parameter_record == 0) { types::parse(source, s)? }
             else { let usize named = lexer::next(source, s)?; 0 };
         if (parameter_record != 0 && s.kind == 60) { return .err(errors::make(3, s.begin)); }
@@ -200,3 +208,31 @@ fn Result<Table, errors::Error> scan_mode(ref u8[] source,bool returns) {
 
 pub fn Result<Table,errors::Error> scan(ref u8[] source){return scan_mode(source,false);}
 pub fn Result<Table,errors::Error> scan_reference_returns(ref u8[] source){return scan_mode(source,true);}
+
+// Explicit immutable module selection supplies ownership/visibility candidates;
+// complete body/type/IR proof still belongs to subsequent compilation/admission.
+pub fn Result<Table,errors::Error> scan_scoped(ref u8[] source,ref context::Table scope,ref entries::Entry selected,bool returns){
+    if(!context::valid(source,scope)){return .err(errors::make(5,0));}
+    let ref modules::Index index=entries::index(selected);
+    var Table t=empty();t.context=*scope;t.reference_returns=returns;
+    var usize i=0;
+    while(i<modules::symbol_count(index)){
+        let modules::Symbol item=switch(modules::symbol(index,i)){
+            case .ok(v):{v}case .err(_):{return .err(errors::make(5,0));}
+        };
+        if(item.kind==1){
+            let usize base=if(item.owner==0){0}else{scope.ends[item.owner-1] as usize};
+            let usize begin=base+item.definition.start;
+            var lexer::State s=context::state(source,scope,begin)?;
+            let usize first=lexer::next(source,ref mut s)?;
+            if(s.kind==2 && lexer::equal(source[s.begin..s.end],b"pub")){let usize public=lexer::next(source,ref mut s)?;}
+            let usize f=signature(source,ref mut s,ref mut t)?;
+            if(f>=scope.function_count || t.begins[f]!=context::begin(scope.functions[f]) || t.ends[f]!=context::end(scope.functions[f])){
+                return .err(errors::make(5,begin));
+            }
+            if(i==entries::selected(selected)){t.entry=f;}
+        }i+=1;
+    }
+    if(t.count!=scope.function_count || t.entry>=t.count){return .err(errors::make(5,0));}
+    return .ok(t);
+}

@@ -6,13 +6,16 @@ import types as types;
 import struct_layout as layouts;
 import errors as errors;
 import std::num as num;
+import source_context as context;
 
 // Names are spans in the immutable source. No object bindings or guest values.
-pub struct Table { layouts::Catalog layouts; usize[32] begins; usize[32] ends; usize[32] bodies; }
+pub struct Table { context::Table context; layouts::Catalog layouts; usize[32] begins; usize[32] ends; usize[32] bodies; }
 fn Table empty() {
-    return Table { .layouts = layouts::empty(), .begins = [0; 32], .ends = [0; 32], .bodies = [0; 32] };
+    return Table { .context=context::empty(), .layouts = layouts::empty(), .begins = [0; 32], .ends = [0; 32], .bodies = [0; 32] };
 }
 pub fn usize find(ref u8[] source, ref Table table, usize begin, usize end) {
+    if(table.layouts.count>32 || begin>end || end>source.len){return 32;}
+    if(table.context.modules!=0){let usize id=context::lookup(source,ref table.context,begin,end,true);return if(id<table.layouts.count){id}else{32};}
     var usize i = 0;
     while (i < table.layouts.count) {
         if (lexer::equal(source[begin..end], source[table.begins[i]..table.ends[i]])) { return i; }
@@ -32,10 +35,13 @@ fn Result<usize, errors::Error> name(ref u8[] source, ref mut lexer::State s) {
 pub fn Result<usize, errors::Error> skip(ref u8[] source, ref mut lexer::State s) {
     let usize keyword = lexer::word(source, s, b"struct")?;
     let usize named = name(source, s)?;
+    return members(source,s);
+}
+fn Result<usize,errors::Error> members(ref u8[] source,ref mut lexer::State s){
     let usize open = lexer::punctuation(source, s, 123)?;
     var usize count = 0;
     while (s.kind != 125) {
-        if (s.kind != 2) { return .err(errors::make(2, s.begin)); }
+        if (s.kind!=2 && s.kind!=5) { return .err(errors::make(2, s.begin)); }
         if (count >= 16) { return .err(errors::make(4, s.begin)); }
         let usize type_name = lexer::next(source, s)?;
         if (s.kind == 60 || s.kind == 91) { return .err(errors::make(3, s.begin)); }
@@ -72,7 +78,7 @@ fn Result<u8, errors::Error> code(usize id, usize offset) {
     };
 }
 fn Result<usize, errors::Error> resolve(ref u8[] source, ref mut Table table, usize record) {
-    var lexer::State s = lexer::empty(); s.cursor = table.bodies[record];
+    var lexer::State s = context::state(source,ref table.context,table.bodies[record])?;
     let usize first = lexer::next(source, ref mut s)?;
     var usize[16] begins = [0; 16]; var usize[16] ends = [0; 16];
     var usize field = 0;
@@ -160,4 +166,36 @@ pub fn Result<Location, errors::Error> locate(ref u8[] source, usize begin, usiz
         } else { let usize skipped = function_body(source, ref mut s)?; }
     }
     return .ok(Location { .record = 32, .body = 0 });
+}
+
+// Declaration IDs remain global ordinals; name lookup uses the owning module.
+pub fn Result<Table,errors::Error> scan_scoped(ref u8[] source,ref context::Table scope){
+    if(!context::valid(source,scope)){return .err(errors::make(5,0));}
+    var Table table=empty();table.context=*scope;table.layouts.count=scope.record_count;
+    var usize id=0;
+    while(id<scope.record_count){
+        let usize begin=context::definition(source,scope,id,true)?;
+        var lexer::State s=context::state(source,scope,begin)?;
+        let usize first=lexer::next(source,ref mut s)?;
+        if(s.kind!=2 || locals::reserved(source[s.begin..s.end])){return .err(errors::make(2,s.begin));}
+        table.begins[id]=s.begin;table.ends[id]=s.end;
+        let usize named=lexer::next(source,ref mut s)?;var lexer::State look=lexer::snapshot(ref s);
+        let usize open=lexer::punctuation(source,ref mut look,123)?;table.bodies[id]=look.begin;
+        let usize fields=members(source,ref mut s)?;id+=1;
+    }
+    id=0;while(id<scope.record_count){let usize fields=resolve(source,ref mut table,id)?;id+=1;}
+    switch(layouts::plan(ref table.layouts,18446744073709551615)){
+        case .ok(_):{}case .err(_):{return .err(errors::make(3,if(scope.record_count==0){0}else{table.begins[0]}));}
+    };
+    return .ok(table);
+}
+pub fn Result<Location,errors::Error> locate_scoped(ref u8[] source,ref context::Table scope,usize begin,usize end,usize selected){
+    if(scope.modules==0){return locate(source,begin,end,selected);}
+    if(!context::valid(source,scope)){return .err(errors::make(5,begin));}
+    let usize id=if(selected<32){selected}else{context::lookup(source,scope,begin,end,true)};
+    if(id>=scope.record_count){return .ok(Location{.record=32,.body=0});}
+    var lexer::State s=context::state(source,scope,context::definition(source,scope,id,true)?)?;
+    let usize first=lexer::next(source,ref mut s)?;let usize name=lexer::next(source,ref mut s)?;
+    let usize open=lexer::punctuation(source,ref mut s,123)?;
+    return .ok(Location{.record=id,.body=s.begin});
 }

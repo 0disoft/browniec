@@ -103,3 +103,9 @@ incorrectly rename shadowing locals or record field labels. The selected entry
 must receive complete parameter/result proof rather than merely a public-name
 check. Project collection,
 strict JSON/policy/grants and restricted delivery remain separate accepted work.
+
+The [source-context successor](source-context.md) now supplies exact file fences,
+scoped name lookup and typed qualified function/record declarations using this
+Index. Expression/constructor/field lowering and complete executable module
+admission remain open. Its copyable metadata is compiler scratch, not a substitute
+for the private Index or independent Program/ownership proof.

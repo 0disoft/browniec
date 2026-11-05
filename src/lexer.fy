@@ -6,15 +6,16 @@ import literal_source as literals;
 
 // 0 EOF, 1 integer, 2 identifier, 3 byte literal, 4 text literal.
 // Literal spans retain raw spelling; decoded storage belongs to the compiler.
+// 5 is a qualified name in explicitly scoped source only.
 // Other punctuation uses its ASCII byte.
 // 128 ==, 129 !=, 130 <=, 131 >=, 132 &&, 133 ||, 134 <<, 135 >>.
-pub struct State { usize cursor; usize begin; usize end; usize tokens; u8 kind; i64 value; bool min_magnitude; }
+pub struct State { usize cursor; usize begin; usize end; usize tokens; u8 kind; i64 value; bool min_magnitude; u32 context; }
 pub fn State empty() {
-    return State { .cursor = 0, .begin = 0, .end = 0, .tokens = 0, .kind = 0, .value = 0, .min_magnitude = false };
+    return State { .cursor = 0, .begin = 0, .end = 0, .tokens = 0, .kind = 0, .value = 0, .min_magnitude = false, .context = 0 };
 }
 pub fn State snapshot(ref State s) {
     return State {.cursor=s.cursor,.begin=s.begin,.end=s.end,
-        .tokens=s.tokens,.kind=s.kind,.value=s.value,.min_magnitude=s.min_magnitude};
+        .tokens=s.tokens,.kind=s.kind,.value=s.value,.min_magnitude=s.min_magnitude,.context=s.context};
 }
 pub fn bool equal(ref u8[] a, ref u8[] b) {
     if (a.len != b.len) { return false; }
@@ -79,9 +80,9 @@ fn Result<usize, errors::Error> line_comment(ref u8[] source, usize cursor) {
     return .ok(at);
 }
 
-pub fn Result<usize, errors::Error> next(ref u8[] source, ref mut State s) {
+fn Result<usize, errors::Error> scan(ref u8[] source, ref mut State s) {
     while (s.cursor < source.len) {
-        if (s.cursor == 0 && bom(source, 0)) { s.cursor = 3; continue; }
+        if (s.cursor == (s.context as usize & 8191) && bom(source, s.cursor)) { s.cursor += 3; continue; }
         let u8 ch = source[s.cursor];
         if (bom(source, s.cursor)) { return .err(errors::make(1, s.cursor)); }
         if (ch == 0) { return .err(errors::make(1, s.cursor)); }
@@ -162,6 +163,38 @@ pub fn Result<usize, errors::Error> next(ref u8[] source, ref mut State s) {
     }
     s.end = s.cursor;
     return .ok(0);
+}
+
+// Original start/end offsets (13 bits each), scoped flag and text-alias flag.
+// This opt-in fence preserves file EOF/comments/BOM without rewriting bytes.
+pub fn Result<State,errors::Error> scoped(ref u8[] source,usize start,usize end,bool text_alias){
+    if(start>end || end>source.len || end>4096){return .err(errors::make(4,start));}
+    let usize bits=start | (end<<13) | 67108864 | if(text_alias){134217728}else{0};
+    var usize rest=bits;var u32 packed=0;var u32 power=1;
+    while(rest!=0){if((rest&1)!=0){packed|=power;}rest>>=1;if(rest!=0){power<<=1;}}
+    var State s=empty();s.cursor=start;s.context=packed;return .ok(s);
+}
+pub fn bool simple(ref u8[] source,usize start,usize end){
+    if(start>=end || end>source.len || !letter(source[start])){return false;}
+    var usize i=start+1;while(i<end){if(!letter(source[i]) && !digit(source[i])){return false;}i+=1;}return true;
+}
+fn Result<usize,errors::Error> qualified(ref u8[] source,ref mut State s){
+    let usize first=scan(source,s)?;
+    if(s.kind!=2 || (equal(source[s.begin..s.end],b"text") && (s.context&134217728)==0)){return .ok(first);}
+    var State look=snapshot(s);
+    while(true){
+        let usize colon=scan(source,ref mut look)?;if(look.kind!=58){return .ok(first);}
+        let usize second=scan(source,ref mut look)?;if(look.kind!=58){return .ok(first);}
+        let usize name=scan(source,ref mut look)?;
+        if(look.kind!=2){return .err(errors::make(2,look.begin));}
+        s.cursor=look.cursor;s.end=look.end;s.tokens=look.tokens;s.kind=5;
+    }return .ok(first);
+}
+pub fn Result<usize, errors::Error> next(ref u8[] source, ref mut State s) {
+    if(s.context==0){return scan(source,s);}
+    let usize bits=s.context as usize;let usize start=bits&8191;let usize end=(bits>>13)&8191;
+    if((bits>>28)!=0 || (bits&67108864)==0 || start>end || end>source.len || s.cursor<start || s.cursor>end){return .err(errors::make(5,s.cursor));}
+    return qualified(source[..end],s);
 }
 
 pub fn Result<usize, errors::Error> word(ref u8[] source, ref mut State s, ref u8[] expected) {

@@ -160,6 +160,10 @@ pub fn ref sources::Snapshot snapshot(ref Index p){return ref p.sources;}
 fn ref Table table(ref Index p){return ref p.table;}
 pub fn usize count(ref Index p){return table(p).count;}
 pub fn usize symbol_count(ref Index p){return table(p).symbol_count;}
+pub fn usize import_count(ref Index p){return table(p).import_count;}
+pub fn Result<Import,Error> import_at(ref Index p,usize id){
+    let ref Table t=table(p);if(id>=t.import_count){return .err(error(.Bounds,sources::no_source()));}return .ok(t.imports[id]);
+}
 pub fn Result<Module,Error> module_at(ref Index p,usize id){
     let ref Table t=table(p);if(id>=t.count){return .err(error(.Bounds,sources::no_source()));}return .ok(t.modules[id]);
 }

@@ -80,3 +80,8 @@ the same 246-file test discovery identity. Both locked LF mirrors passed without
 compiler/stack overrides or historical-result reuse. The earlier test-source
 syntax failure is excluded. See the
 [focused Windows evidence](../evidence/module-entry-windows-20261105.json).
+
+The [source-context successor](source-context.md) now uses the explicit selection
+for scoped function signature tables and qualified nominal record declarations.
+Complete body lowering/IR admission and public project entry selection remain
+subsequent work; the Entry signature resource does not acquire executable authority.
