@@ -31,7 +31,12 @@ fn void depth(usize count,bool pass,bool image,bool first,bool mutable,bool reco
     append(ref mut source,b"42");i=0;
     while(i<count){append(ref mut source,if(first){b")"}else{b",a)"});i+=1;}append(ref mut source,b";}");
     if(image){retained(bytes::view(ref source),pass);return;}
-    switch(compiler::compile(bytes::view(ref source))){
+    ordinary(bytes::view(ref source),pass);
+}
+// Retained cases must not reserve the unused ordinary Program/Result staging
+// from this separate path on their native call stack. Inputs/assertions stay the same.
+fn void ordinary(ref u8[] source,bool pass){
+    switch(compiler::compile(source)){
         case .ok(p):{
             assert(pass && verifier::verify(ref p).is_ok);
             switch(vm::run_with_array_limit(ref p,16000000,1024)){

@@ -171,3 +171,9 @@ fn void declaration_error(ref u8[] a,ref u8[] b,u8 kind,u8 first){
     }append(ref mut deep,b"pub fn i32 chosen(){return 0;}");
     declaration_error(library,bytes::view(ref deep),4,65);
 }
+
+@test fn void grouped_array_values_and_projections_cross_both_qualified_compiler_routes(){
+    let ref u8[] library=b"module lib;pub fn i32[2] make(){return ([20,22]);}pub fn i32 sum(i32[2] a){return (a)[0]+(a)[1];}";
+    value(library,b"module app;import lib as m;pub fn i32 chosen(){let a=((m::make()));return m::sum((a));}",42);
+    value(library,b"module app;import lib as m;pub fn i32 chosen(){let ref u8[] marker=b\"*\";return (m::make())[0]+(m::make())[1];}",42);
+}

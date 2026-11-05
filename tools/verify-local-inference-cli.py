@@ -25,12 +25,15 @@ def main():
     selection.add_argument('--array-lists', action='store_true', help='add scalar element-list declarations')
     selection.add_argument('--array-list-assignment', action='store_true', help='add exact-shape list replacement and all earlier list cases')
     selection.add_argument('--array-literal-projections', action='store_true', help='add list/repeated scalar projections, UTF-8 and all earlier list cases')
+    selection.add_argument('--array-expression-projections', action='store_true', help='add grouped array values and projections')
     args = parser.parse_args()
+    if args.array_expression_projections:
+        args.array_literal_projections = True
     if args.array_literal_projections:
         args.array_list_assignment = True
     if args.array_list_assignment:
         args.array_lists = True
-    suite = 'array-literal-projections' if args.array_literal_projections else 'array-list-assignment' if args.array_list_assignment else 'array-list' if args.array_lists else 'option' if args.options else 'reference' if args.references else 'aggregate' if args.aggregate else 'local'
+    suite = 'array-expression-projections' if args.array_expression_projections else 'array-literal-projections' if args.array_literal_projections else 'array-list-assignment' if args.array_list_assignment else 'array-list' if args.array_lists else 'option' if args.options else 'reference' if args.references else 'aggregate' if args.aggregate else 'local'
     out = ROOT / ('build/' + suite + '-inference-cli') / args.profile
     out.mkdir(parents=True, exist_ok=True)
     receipt = out / 'receipt.json'
@@ -265,6 +268,40 @@ def main():
             ('projection-bad-comma', b'module main;fn i32 main(){return [1,,2][0];}', 'check', None, 'syntax', None, scalar),
             ('utf8-list-bad-byte', b'module main;fn i32 main(){if(text::valid_utf8([256])){return 42;}return 0;}', 'check', None, 'type', None, scalar),
         ]
+    if args.array_expression_projections:
+        read = 'brownie.m2-array-read/1'; write = 'brownie.m2-array-write/1'; copy = 'brownie.m2-array-copy/1'
+        cases += [
+            ('grouped-0', b'module main;fn i32[2] make(){return [20,22];}fn i32 main(){let a=[20,22];let n=((a))[0];return n+(make())[1];}', 'run', 42, None, 16000000, read),
+            ('grouped-1', b'module main;fn i64[1] big(){return [-9223372036854775808];}fn u32[1] word(){return [4294967295];}fn usize[1] size(){return [18446744073709551615];}fn i32 main(){let u8[1] a=[42];let bool[1] b=[true];if((big())[0]==-9223372036854775808 && (word())[0]==4294967295 && (size())[0]==18446744073709551615 && (b)[0]){return (a)[0] as i32;}return 0;}', 'run', 42, None, 16000000, read),
+            ('grouped-2', b'module main;fn i32[2] make(){return [20,22];}fn i32 take(i32 x){return x;}fn i32 main(){let a=[0,0];let n=(a).len;let m=((make())).len;if(n==2 && m==2){return take((make())[0])+22;}return 0;}', 'run', 42, None, 16000000, read),
+            ('grouped-3', b'module main;fn i32[2] make(){return ([20,22]);}fn i32[2] pass(i32[2] a){return ((a));}fn i32 main(){let a=((make()));var i32[2] b=(a);b=([0,22]);return (a)[0]+(pass((b)))[1];}', 'run', 42, None, 16000000, copy),
+            ('grouped-4', b'module main;fn i32[2] make(){return (([20;2]));}fn i32[2] forward(){return ((make()));}fn i32 take(i32[2] a){return a[0]+a[1];}fn i32 main(){var a=([0,0]);a=((forward()));a=([21;2]);return take(((a)));}', 'run', 42, None, 16000000, copy),
+            ('grouped-5', b'module main;fn i32 main(){let a=(([20,22]));let b=((a));var c=([0;2]);c=(b);return (c)[0]+(c)[1];}', 'run', 42, None, 16000000, copy),
+            ('grouped-6', b'module main;fn i32 change(ref mut i32[] a){a[0]=22;return 0;}fn i32 take(i32[1] a,i32 n){return a[0]+n;}fn i32 main(){var a=[20];let n=take((a),change(ref mut a));return n+(a)[0];}', 'run', 42, None, 16000000, copy),
+            ('grouped-7', b'module main;fn i32[1] make(ref mut i32[] c){c[0]=c[0]+1;return [40];}fn usize pick(ref mut i32[] c){c[0]=c[0]+1;return 0;}fn i32 main(){var c=[0];let n=((make(ref mut c)))[pick(ref mut c)];return n+(c)[0];}', 'run', 42, None, 16000000, write),
+            ('grouped-8', b'module main;fn i32[1] make(ref mut i32[] a){a[0]=1;return [21];}fn i32 main(){var a=[0];a=((make(ref mut a)));return (a)[0]+21;}', 'run', 42, None, 16000000, copy),
+            ('grouped-9', b'module main;fn i32[1] make(){return [0];}fn i32 main(){let Option<i32> o=.none;var n=0;while(n<42){let v=(make())[switch(o){case .some(v):{0}case .none:{n=n+1;continue;}}];}while(true){let v=((make()))[switch(o){case .some(v):{0}case .none:{break;}}];}return n;}', 'run', 42, None, 16000000, read),
+            ('grouped-10', b'module main;fn i32[1] make(){return [0];}fn usize pick(i32 n){return 0;}fn Option<i32> work(Option<i32> o){return .some((make())[pick(o?)]);}fn i32 main(){switch(work(.none)){case .some(_):{return 0;}case .none:{}}switch(work(.some(0))){case .some(v):{return v+42;}case .none:{return 0;}}}', 'run', 42, None, 16000000, read),
+            ('grouped-11', b'module main;fn i32[1] make(){return [0];}fn i32 main(){let ref u8[] marker=b"*";let Option<i32> o=.none;return ((make()))[switch(o){case .some(v):{0}case .none:{return 42;}}];}', 'run', 42, None, 16000000, reference),
+            ('grouped-12', b'module main;fn u8[2] make(){return [195,169];}fn i32 main(){let u8[2] a=[195,169];if(text::valid_utf8(((a))) && text::valid_utf8((make())) && text::valid_utf8(([195,169])) && !text::valid_utf8((a)[1..])){return 42;}return 0;}', 'run', 42, None, 16000000, read),
+            ('grouped-13', b'module main;fn u8[2] make(){return [65,66];}fn i32 main(){let Option<i32> o=.none;if(text::valid_utf8(((make()))[0..switch(o){case .some(v):{1}case .none:{return 42;}}])){return 0;}return 0;}', 'run', 42, None, 16000000, read),
+            ('grouped-reject-0', b'module main;fn i32 main(){let a=[42];return (a).missing;}', 'check', None, 'type', None, scalar),
+            ('grouped-reject-1', b'module main;fn i32 main(){let a=[42];return (a)[true];}', 'check', None, 'type', None, scalar),
+            ('grouped-reject-2', b'module main;fn i32 main(){let a=[42];let i32[2] b=(a);return 0;}', 'check', None, 'type', None, scalar),
+            ('grouped-reject-3', b'module main;fn i32 take(u8[1] a){return 0;}fn i32 main(){let a=[42];return take((a));}', 'check', None, 'type', None, scalar),
+            ('grouped-reject-4', b'module main;fn i32 main(){let a=[42];return ((a)[0];}', 'check', None, 'syntax', None, scalar),
+            ('grouped-reject-5', b'module main;fn ref u8[] id(ref u8[] p){return ref p;}fn i32 main(){var u8[1] a=[42];let p=id(ref a);a=([0]);return p[0] as i32;}', 'check', None, 'verification', None, scalar),
+        ]
+        for outer, inner, ok in [(31, 0, True), (32, 0, False), (33, 0, False), (15, 15, True), (16, 16, False)]:
+            source = ('module main;fn i32 main(){let a=[42];return ' + '(' * outer + 'a' + ')' * outer + '[' + '(' * inner + '0' + ')' * inner + '];}').encode()
+            cases.append((f'grouped-depth-{outer}-{inner}', source, 'run' if ok else 'check', 42 if ok else None, None if ok else 'compile_limit', 16000000 if ok else None, read if ok else scalar))
+        for count in [32, 33]:
+            for retained in [False, True]:
+                for first in [False, True]:
+                    parameters = 'i32[1] a,i32 n' if first else 'i32 n,i32[1] a'
+                    prefix, suffix = ('id((a),', ')') if first else ('id(', ',(a))')
+                    source = ('module main;fn i32 id(' + parameters + '){return n;}fn i32 main(){let a=[0];' + ('let ref u8[] marker=b"*";' if retained else '') + 'return ' + prefix * count + '42' + suffix * count + ';}').encode()
+                    cases.append((f'grouped-call-{count}-{retained}-{first}', source, 'run' if count == 32 else 'check', 42 if count == 32 else None, None if count == 32 else 'compile_limit', 16000000 if count == 32 else None, (reference if retained else read) if count == 32 else scalar))
     version = None
     if args.array_lists:
         ran = subprocess.run([str(exe), '--version', '--json'], cwd=empty, env=env, capture_output=True, timeout=15)
@@ -278,6 +315,8 @@ def main():
         assert version['core'] is True and version['restricted'] is False and version['embed'] is False
         if args.array_literal_projections:
             assert version['array_literal_projections'] is True and version['array_utf8_element_lists'] is True
+    if args.array_expression_projections:
+        assert version['array_expression_projections'] is True and version['array_grouped_values'] is True
     results = []
     for identity, source, mode, expected, error, fuel, profile in cases:
         fixture = out / (identity + '.brc')
@@ -301,7 +340,7 @@ def main():
     assert all(sha(ROOT / i['path']) == i['sha256'] for i in inputs)
     assert sha(compiler) == compiler_hash and sha(exe) == binary_hash
     data = dict(schema='browniec.local-inference-cli/v1', status='passed', profile=args.profile,
-                selection='array-literal-projections' if args.array_literal_projections else 'array-list-assignment' if args.array_list_assignment else 'array-list' if args.array_lists else 'option' if args.options else 'reference' if args.references else 'aggregate' if args.aggregate else 'scalar',
+                selection='array-expression-projections' if args.array_expression_projections else 'array-literal-projections' if args.array_literal_projections else 'array-list-assignment' if args.array_list_assignment else 'array-list' if args.array_lists else 'option' if args.options else 'reference' if args.references else 'aggregate' if args.aggregate else 'scalar',
                 startingHead=head, inputSnapshotCapturedAt=captured, inputs=inputs, compilerSha256=compiler_hash,
                 compilerVersion=subprocess.check_output([str(compiler), '--version'], text=True).strip(),
                 buildCommand=[compiler.relative_to(ROOT).as_posix(), *command[1:]],

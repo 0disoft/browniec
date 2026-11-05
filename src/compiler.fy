@@ -22,6 +22,7 @@ import array_call_source as array_calls;
 import call_prefix_source as call_prefix;
 import struct_call_source as record_calls;
 import array_result_source as array_results;
+import array_expression_source as array_expressions;
 import struct_result_source as record_results;
 import std::text as text;
 import text_source as text_source;
@@ -91,6 +92,9 @@ fn Result<usize, errors::Error> compound_operand(ref u8[] source, ref mut lexer:
     if (depth > 32) { return .err(errors::make(4, s.begin)); }
     let ref literal_collection::Index literals=ref signatures.literals;
     let usize at = s.begin;
+    if(s.kind==40 && array_expressions::projected(source,s,p,table,signatures)?){
+        return array_grouped_projection(source,s,p,table,signatures,at,depth,result_type,structure,loop_state);
+    }
     if(s.kind==91 || s.kind==40){
         let array_locals::Projection view=array_locals::projection(source,s)?;
         if(view.kind!=0){return array_literal_projection(source,s,p,table,signatures,view,at,depth,expected,result_type,structure,loop_state);}
@@ -442,9 +446,15 @@ fn Result<usize,errors::Error> utf8_value(ref u8[] source,ref mut lexer::State s
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
     usize depth,u8 result_type,usize structure,ref mut loops::State loop_state) {
     let usize at=text_source::begin(source,s)?;
+    if(s.kind==40){
+        let array_expressions::Value value=array_grouped_value(source,s,p,table,signatures,10,0,false,at,depth,result_type,structure,loop_state)?;
+        if(value.owned){return utf8_temporary_range(source,s,p,table,signatures,value.id,at,value.depth,result_type,structure,loop_state);}
+        if(text_source::simple(source,s)?){return text_source::predicate(source,s,p,table,value.id,at);}
+        return utf8_computed_range(source,s,p,table,signatures,value.id,at,value.depth,result_type,structure,loop_state);
+    }
     if(s.kind==91) {
         let usize literal_at=s.begin;
-        let usize temporary=array_literal_value(source,s,p,table,signatures,10,literal_at,depth+1,result_type,structure,loop_state)?;
+        let usize temporary=array_literal_value(source,s,p,table,signatures,10,0,false,literal_at,depth+1,result_type,structure,loop_state)?;
         return utf8_temporary_range(source,s,p,table,signatures,temporary,at,depth,result_type,structure,loop_state);
     }
     if((s.kind==2 || s.kind==5)) {
@@ -566,22 +576,23 @@ fn Result<usize,errors::Error> array_literal_projection(ref u8[] source,ref mut 
     if(depth>32 || view.groups>32-depth){return .err(errors::make(4,at));}
     var usize i=0;while(i<view.groups){let usize open=lexer::punctuation(source,s,40)?;i+=1;}
     let u8 element=if(view.kind==91 && types::integer(expected)){expected}else{0};
-    let usize id=array_literal_value(source,s,p,table,signatures,element,at,depth+view.groups+1,result_type,structure,loop_state)?;
+    let usize id=array_literal_value(source,s,p,table,signatures,element,0,false,at,depth+view.groups+1,result_type,structure,loop_state)?;
     i=0;while(i<view.groups){let usize close=lexer::punctuation(source,s,41)?;i+=1;}
     return array_temporary_read(source,s,p,table,signatures,id,at,depth+view.groups,result_type,structure,loop_state);
 }
 fn Result<usize,errors::Error> array_literal_value(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
-    u8 expected,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
+    u8 expected,usize expected_length,bool mutable,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
     if(!array_locals::is_repeated(source,s)?){
-        return array_list_value(source,s,p,table,signatures,expected,0,false,at,depth,result_type,structure,loop_state);
+        return array_list_value(source,s,p,table,signatures,expected,expected_length,mutable,at,depth,result_type,structure,loop_state);
     }
     let usize open=lexer::punctuation(source,s,91)?;
     let usize filler=expression(source,s,p,table,signatures,1,depth,expected,result_type,structure,loop_state)?;
     let u8 element=p.types[filler];
     if(!types::scalar(element) || (expected!=0 && element!=expected)){return .err(errors::make(3,at));}
     let usize separator=lexer::punctuation(source,s,59)?;let usize length=arrays::count(source,s)?;
-    let usize close=lexer::punctuation(source,s,93)?;let usize id=ir::array_in(p,table.function,element,length,false,at)?;
+    if(expected_length!=0 && expected_length!=length){return .err(errors::make(3,at));}
+    let usize close=lexer::punctuation(source,s,93)?;let usize id=ir::array_in(p,table.function,element,length,mutable,at)?;
     let usize initialized=ir::array_init(p,id,filler,at)?;return .ok(id);
 }
 // CALL results and literal values have the same completed-owner lifetime:
@@ -591,10 +602,16 @@ fn Result<usize,errors::Error> array_temporary_read(ref u8[] source,ref mut lexe
     usize temporary,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
     var locals::Table names=locals::snapshot(table);
     let usize capture=locals::declare(ref mut names,at,at,128+temporary,false)?;
+    let usize value=array_scalar_read(source,s,p,ref names,signatures,temporary,at,depth,result_type,structure,loop_state)?;
+    let usize dropped=ir::array_drop(p,temporary,at)?;return .ok(value);
+}
+fn Result<usize,errors::Error> array_scalar_read(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    usize temporary,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
     var usize value=0;
     if(s.kind==91) {
         let usize open=lexer::next(source,s)?;
-        let usize index=expression(source,s,p,ref names,signatures,1,depth+1,12,result_type,structure,loop_state)?;
+        let usize index=expression(source,s,p,table,signatures,1,depth+1,12,result_type,structure,loop_state)?;
         if(p.types[index]!=12) {return .err(errors::make(3,at));}
         let usize close=lexer::punctuation(source,s,93)?;
         value=ir::array_read(p,temporary,index,at)?;
@@ -604,8 +621,44 @@ fn Result<usize,errors::Error> array_temporary_read(ref u8[] source,ref mut lexe
         let usize member=lexer::next(source,s)?;
         value=arrays::length_value(p,temporary,at)?;
     } else {return .err(errors::make(3,s.begin));}
-    let usize dropped=ir::array_drop(p,temporary,at)?;
     return .ok(value);
+}
+// A named owner is borrowed by this source atom; only a literal/CALL creates an
+// unpublished owner. Callers choose copy, capture, move, or prompt finalization.
+fn Result<array_expressions::Value,errors::Error> array_grouped_value(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table names,ref functions::Table signatures,
+    u8 expected,usize length,bool mutable,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
+    let usize groups=array_expressions::open(source,s,depth)?;var usize id=16;var bool owned=false;
+    if(s.kind==91){
+        id=array_literal_value(source,s,p,names,signatures,expected,length,mutable,at,depth+groups,result_type,structure,loop_state)?;owned=true;
+    }else{
+        if(s.kind!=2 && s.kind!=5){return .err(errors::make(3,s.begin));}
+        let usize index=locals::find(source,names,s.begin,s.end);let usize target=functions::find(source,signatures,s.begin,s.end);
+        var lexer::State look=lexer::snapshot(s);let usize next=lexer::next(source,ref mut look)?;
+        if(look.kind==40){
+            if(index!=64 || target>=signatures.count || signatures.return_lengths[target]==0){return .err(errors::make(3,s.begin));}
+            let u8 element=signatures.return_types[target];let usize size=signatures.return_lengths[target];
+            if((expected!=0 && expected!=element) || (length!=0 && length!=size)){return .err(errors::make(3,at));}
+            id=array_results::destination(signatures,target,element,size,mutable,p,names.function,s.begin)?;
+            let usize name=lexer::next(source,s)?;
+            let usize called=call_value(source,s,p,names,signatures,target,id,at,depth+groups,result_type,structure,loop_state)?;owned=true;
+        }else{
+            if(!arrays::binding(names,index)){return .err(errors::make(3,s.begin));}
+            id=names.registers[index]-128;let usize name=lexer::next(source,s)?;
+        }
+    }
+    if(id>=16 || id>=p.arrays.count || p.array_functions[id] as usize!=names.function ||
+        (expected!=0 && p.arrays.elements[id]!=expected) || (length!=0 && p.arrays.lengths[id]!=length)){
+        return .err(errors::make(3,at));}
+    let usize close=array_expressions::close(source,s,groups)?;
+    return .ok(array_expressions::Value{.id=id,.owned=owned,.depth=depth+groups});
+}
+fn Result<usize,errors::Error> array_grouped_projection(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table names,ref functions::Table signatures,
+    usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
+    let array_expressions::Value value=array_grouped_value(source,s,p,names,signatures,0,0,false,at,depth,result_type,structure,loop_state)?;
+    if(value.owned){return array_temporary_read(source,s,p,names,signatures,value.id,at,value.depth,result_type,structure,loop_state);}
+    return array_scalar_read(source,s,p,names,signatures,value.id,at,value.depth,result_type,structure,loop_state);
 }
 // A nested result becomes an anonymous argument capture only after its CALL
 // succeeds. Later arguments and early exits then use the existing mixed cleanup.
@@ -654,6 +707,12 @@ fn Result<usize,errors::Error> record_argument(ref u8[] source,ref mut lexer::St
 fn Result<usize,errors::Error> array_argument(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
     u8 element,usize length,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state) {
+    if(s.kind==40){let usize at=s.begin;
+        let array_expressions::Value value=array_grouped_value(source,s,p,names,signatures,element,length,false,at,depth,result_type,structure,loop_state)?;
+        if(s.kind!=44 && s.kind!=41){return .err(errors::make(3,s.begin));}
+        if(!value.owned){return array_calls::capture_id(p,names,value.id,element,length,at);}
+        let usize captured=locals::declare(names,at,at,128+value.id,false)?;return .ok(128+value.id);
+    }
     if(s.kind==91) {
         let usize at=s.begin;
         if(!array_locals::is_repeated(source,s)?){
@@ -827,7 +886,7 @@ fn Result<usize,errors::Error> captured_call(ref u8[] source,ref mut lexer::Stat
         let u8 tag=signatures.param_types[parameter];
         let usize length=signatures.param_lengths[parameter];let usize record=signatures.param_records[parameter] as usize;
         if(length!=0 || record!=0){
-            let usize stable=call_prefix::stable(source,s,p,table,tag,length,record)?;
+            let usize stable=call_prefix::stable(source,s,p,table,tag,length,record,depth)?;
             if(stable==256){break;}arguments[arity]=stable;
         }else{
             arguments[arity]=expression(source,s,p,table,signatures,1,depth+1,tag,result_type,structure,loop_state)?;
@@ -934,6 +993,15 @@ fn bool word_is(ref u8[] source, ref lexer::State s, ref u8[] word) {
 }
 
 fn Result<usize, errors::Error> array_copy_statement(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize index, usize at, usize id, u8 terminator, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {
+    if(s.kind==40){
+        let array_expressions::Plan plan=array_expressions::inspect(source,s,p,table,signatures)?;
+        if(plan.kind==1){return array_grouped_literal_assignment(source,s,p,table,signatures,index,id,at,terminator,result_type,expr_depth,structure,loop_state);}
+        let u8 element=p.arrays.elements[id];let usize length=p.arrays.lengths[id];
+        let array_expressions::Value value=array_grouped_value(source,s,p,table,signatures,element,length,false,at,expr_depth,result_type,structure,loop_state)?;
+        let usize end=lexer::punctuation(source,s,terminator)?;
+        let usize assigned=if(value.owned){array_results::assigned(p,id,value.id,at)?}else{arrays::assign(p,id,value.id,at)?};
+        return .ok(index);
+    }
     if ((s.kind!=2 && s.kind!=5)) { return .err(errors::make(3, s.begin)); }
     let usize origin = locals::find(source, table, s.begin, s.end);
     var lexer::State look=lexer::snapshot(s);
@@ -982,7 +1050,7 @@ fn Result<usize, errors::Error> array_statement(ref u8[] source, ref mut lexer::
         let usize equals = lexer::next(source, s)?;
         if(s.kind==91) {
             if(!array_locals::is_repeated(source,s)?){
-                return array_list_assignment(source,s,p,table,signatures,index,id,at,terminator,result_type,expr_depth,structure,loop_state);
+                return array_list_assignment(source,s,p,table,signatures,index,id,at,terminator,result_type,expr_depth,structure,loop_state,0);
             }
             let u8 element=p.arrays.elements[id];
             let usize open=lexer::next(source,s)?;
@@ -1205,6 +1273,12 @@ fn Result<usize,errors::Error> inferred_declaration(ref u8[] source,ref mut lexe
     if(view.kind!=0){
         return inferred_reference(source,s,p,table,signatures,name,view,mutable,terminator,result_type,expr_depth,structure,loop_state);
     }
+    if(s.kind==40){
+        let array_expressions::Plan plan=array_expressions::inspect(source,s,p,table,signatures)?;
+        if(plan.kind!=0 && plan.suffix==terminator){
+            return array_grouped_initializer(source,s,p,table,signatures,name,0,0,mutable,terminator,result_type,expr_depth,structure,loop_state);
+        }
+    }
     if(s.kind==91 && array_locals::projection(source,s)?.kind==0){
         if(!array_locals::is_repeated(source,s)?){
             return array_list_initializer(source,s,p,table,signatures,name,0,0,mutable,terminator,result_type,expr_depth,structure,loop_state);
@@ -1254,6 +1328,9 @@ fn Result<usize,errors::Error> array_initializer(ref u8[] source,ref mut lexer::
     inference::Header binding,u8 tag,usize length,bool mutable,u8 terminator,u8 result_type,
     usize expr_depth,usize structure,ref mut loops::State loop_state){
     if(result_type==0 || terminator!=59 || !types::scalar(tag)){return .err(errors::make(3,binding.begin));}
+    if(s.kind==40){
+        return array_grouped_initializer(source,s,p,table,signatures,binding,tag,length,mutable,terminator,result_type,expr_depth,structure,loop_state);
+    }
     if(s.kind==2 || s.kind==5){
         let usize source_index=locals::find(source,table,s.begin,s.end);
         var lexer::State look=lexer::snapshot(s);let usize advance=lexer::next(source,ref mut look)?;
@@ -1279,6 +1356,19 @@ fn Result<usize,errors::Error> array_initializer(ref u8[] source,ref mut lexer::
     let usize value=expression(source,s,p,table,signatures,1,expr_depth,tag,result_type,structure,loop_state)?;
     return array_locals::repeated(source,s,p,table,binding,value,tag,length,mutable,terminator);
 }
+// Grouping alone never creates a second literal/CALL owner. Named values copy
+// only at a by-value declaration, preserving the original independent extent.
+fn Result<usize,errors::Error> array_grouped_initializer(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref mut locals::Table table,ref functions::Table signatures,
+    inference::Header binding,u8 tag,usize length,bool mutable,u8 terminator,u8 result_type,
+    usize depth,usize structure,ref mut loops::State loop_state){
+    if(result_type==0 || terminator!=59){return .err(errors::make(3,binding.begin));}
+    let array_expressions::Value value=array_grouped_value(source,s,p,table,signatures,tag,length,mutable,binding.begin,depth,result_type,structure,loop_state)?;
+    let usize end=lexer::punctuation(source,s,terminator)?;var usize id=value.id;
+    if(!value.owned){let u8 element=p.arrays.elements[id];let usize size=p.arrays.lengths[id];
+        id=arrays::copy(p,table.function,id,element,size,mutable,binding.begin)?;}
+    return locals::declare(table,binding.begin,binding.end,128+id,mutable);
+}
 fn Result<usize,errors::Error> array_list_initializer(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref mut locals::Table table,ref functions::Table signatures,
     inference::Header name,u8 expected,usize length,bool mutable,u8 terminator,u8 result_type,
@@ -1302,14 +1392,36 @@ fn Result<usize,errors::Error> array_list_value(ref u8[] source,ref mut lexer::S
 fn Result<usize,errors::Error> array_list_assignment(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
     usize index,usize id,usize at,u8 terminator,u8 result_type,usize depth,
-    usize structure,ref mut loops::State loop_state){
+    usize structure,ref mut loops::State loop_state,usize groups){
     if(terminator!=59){return .err(errors::make(3,at));}
     let u8 element=p.arrays.elements[id];let usize length=p.arrays.lengths[id];
     let vec::Vec<usize> values=array_list_cells(source,s,p,table,signatures,element,depth,result_type,structure,loop_state)?;
     if(vec::len<usize>(ref values)!=length){return .err(errors::make(3,at));}
+    let usize close=array_expressions::close(source,s,groups)?;
     let usize end=lexer::punctuation(source,s,terminator)?;
     let usize replaced=ir::array_replace_values(p,id,vec::view_usize(ref values),at)?;
     return .ok(index);
+}
+// Parenthesized literal assignment uses the original in-place replacement or
+// refill instruction: no temporary owner or extra quota is introduced.
+fn Result<usize,errors::Error> array_grouped_literal_assignment(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    usize index,usize id,usize at,u8 terminator,u8 result_type,usize depth,
+    usize structure,ref mut loops::State loop_state){
+    if(terminator!=59){return .err(errors::make(3,at));}
+    let usize groups=array_expressions::open(source,s,depth)?;
+    if(!array_locals::is_repeated(source,s)?){
+        return array_list_assignment(source,s,p,table,signatures,index,id,at,terminator,result_type,depth+groups,structure,loop_state,groups);
+    }
+    let usize open=lexer::punctuation(source,s,91)?;
+    let u8 element=p.arrays.elements[id];
+    let usize value=expression(source,s,p,table,signatures,1,depth+groups,element,result_type,structure,loop_state)?;
+    if(p.types[value]!=p.arrays.elements[id]){return .err(errors::make(3,at));}
+    let usize separator=lexer::punctuation(source,s,59)?;let usize length=arrays::count(source,s)?;
+    if(length!=p.arrays.lengths[id]){return .err(errors::make(3,at));}
+    let usize close=lexer::punctuation(source,s,93)?;let usize grouped=array_expressions::close(source,s,groups)?;
+    let usize end=lexer::punctuation(source,s,terminator)?;
+    let usize filled=ir::array_fill(p,id,value,at)?;return .ok(index);
 }
 // Evaluation is shared by fresh values and existing destinations. Only the
 // caller publishes an owner or replacement after its complete context validates.
@@ -1893,6 +2005,13 @@ fn Result<bool, errors::Error> control_return(ref u8[] source, ref mut lexer::St
         return .ok(true);
     }
     if(p.array_results[table.function]!=0) {
+        if(s.kind==40){
+            let usize shape=(p.array_results[table.function] as usize)-1;
+            let u8 element=p.arrays.elements[shape];let usize length=p.arrays.lengths[shape];
+            let array_expressions::Value value=array_grouped_value(source,s,p,table,signatures,element,length,false,at,expr_depth,result_type,depth,loop_state)?;
+            let usize end=lexer::punctuation(source,s,59)?;
+            let usize returned=array_results::finish(p,table,value.id,at)?;return .ok(true);
+        }
         if(s.kind==91) {
             let usize shape=(p.array_results[table.function] as usize)-1;
             let u8 element=p.arrays.elements[shape];
