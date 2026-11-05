@@ -1,3 +1,19 @@
+- Shared byte kind-3 formals now execute private canonical CALL/PARAM through a
+  retained ReferenceProgram. Image/runtime words preserve exact selected windows
+  and logical formal indices, with full tickets in existing native Call receipts.
+  Runtime actuals are captured once; alias/range/close shares transaction-owned
+  input without extra pool leases. The 32x16 u32 table stays 2048 logical bytes;
+  no second dense ticket map. Complete Fuel precedes entry/publication and existing
+  prepaid abort drains failures. Code d9f1929; word/window prerequisite 87cfba1.
+  Windows development/release each passed 18 native groups and 33 tool-free CLI
+  cases on 141 native/144 CLI matching paths, 150 distinct committed inputs,
+  132 LF modules and 236-file discovery; both locked LF mirrors pass. No compiler/
+  stack overrides or historical reuse; earlier probes/fixture rejection excluded.
+  Native public Fuel original selection/full profiles/general RAM-stack/timing/
+  Linux/restricted/ABI/package were not rerun. See docs/engineering/reference-vm.md.
+  Next connect generic reference results, source signatures/actuals/returns and
+  public admission. Equality for kind 3, text/non-byte references and Buffer/input
+  backing remain open. The complete objective stays active. Local only; no push.
 - Shared byte formal kind 3 now has separate recipe and canonical analysis via
   verifier::inspect_reference_calls and a distinct ReferenceCallProof. One IR
   signature accepts image/universal sites or live shared runtime u8[] actuals;

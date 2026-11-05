@@ -120,6 +120,15 @@ analysis plus existing Static execution regression evidence, not execution of
 the new shared-byte formal kind. See
 [the focused evidence](../evidence/reference-formals-windows-20261105.json).
 
+The [shared byte-formal VM successor](reference-vm.md) reran both serialized
+CLI-only profiles: 33 cases each on 144 matching CLI inputs and the 236-file
+discovery identity. Default 256, cap 16000000 and existing public prices remain.
+Its separate 18-group native selection checks private mixed-backing CALL/PARAM,
+independent exact reference budgets and affected canonical regressions on 141
+matching inputs. The [focused evidence](../evidence/reference-vm-windows-20261105.json)
+records those final artifacts; the original public Fuel native selection was
+not rerun. The new private reference charges do not enable public source syntax.
+
 Full M1/M2, Linux, restricted delivery, ABI, packaging and elapsed-time/allocator/
 stack-size benchmarks are outside this increment. B04 result declarations remain
 publicly gated; other C05 capacities and the complete objective remain open.

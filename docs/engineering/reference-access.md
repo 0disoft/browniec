@@ -81,8 +81,10 @@ were not rerun. These focused results do not certify the complete profile.
 This increment unifies instruction access only. The subsequent
 [shared byte-formal analysis](reference-formals.md) now proves mixed image/runtime
 actuals through one private IR signature, including canonical loan validation.
-Its VM transfer and source lowering remain open; a single guest source formal
-cannot yet select either backing kind. Storage-independent guest reference signatures/actuals/
+The [native VM successor](reference-vm.md) now executes those formals through
+canonical CALL/PARAM, preserving exact selected windows in existing frame words
+and issued-formal receipts. Source lowering remains open; a single guest source
+formal cannot yet select either backing kind. Storage-independent guest reference signatures/actuals/
 returns, text and non-byte references, source CALL lowering, ordinary public
 Program admission and host-visible returned-image lifetime APIs remain open.
 Buffer/input views and the complete [inventory](../product/04-remaining-work.md)

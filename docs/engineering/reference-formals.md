@@ -2,7 +2,8 @@
 
 Date: 2026-11-05. This B04/B05 increment follows the instruction-local
 [byte access interface](reference-access.md). It implements independent IR
-analysis; native transfer and source lowering remain subsequent steps.
+analysis. The [native VM successor](reference-vm.md) now connects canonical
+CALL/PARAM transfer; source lowering and generic results remain subsequent steps.
 
 ## Signature and proof
 
@@ -46,7 +47,9 @@ The result has the distinct `ReferenceCallProof` type. It is copyable analysis,
 without retained image, frame, ticket or executable Program authority. Existing
 `verify_static_calls`, `retain_calls`, bare/public admission and executable
 entry points retain their prior signature gates. They reject the new kind.
-There is no new source syntax, VM result support, public capability or ABI export.
+At this analysis checkpoint there was no new source syntax, VM result support,
+public capability or ABI export. The successor adds a separate private retained
+ReferenceProgram/scalar-entry API; generic results and public gates remain closed.
 
 Generic references are currently formal-only and cannot escape via a returned
 reference. Callees may return existing ordinary values or independently proved
@@ -80,17 +83,17 @@ The original public Fuel native selection, full profiles, general native
 stack/RAM, allocator/OOM/timing, Linux, restricted delivery and ABI/package
 checks were not rerun. Public default 256, cap 16000000 and prices remain.
 
-## Next integration
+## Native execution successor and next integration
 
-Connect a retained reference-aware Program and canonical CALL/PARAM handling to
-the invocation's existing native ownership transaction. Capture each runtime
-actual through that transaction, prepay the complete access/transfer cost before
-publication and preserve its exact range and original image/loan authority.
-Reuse the frame word table and issued-formal receipts where possible instead of
-adding a second dense ticket map. Logical alias/range lifetimes must not close a
-transaction-owned input prematurely. Failure must reuse prepaid zero-Fuel abort.
+The [native VM successor](reference-vm.md) now retains a distinct ReferenceProgram
+and connects CALL/PARAM through the existing ownership transaction. Compact words
+select exact issued-formal receipts and windows; aliases/ranges share that input
+without extra leases. Complete Fuel precedes entry/publication and failures use
+prepaid zero-Fuel abort. Development/release each passed 18 focused native groups
+and 33 public Fuel CLI cases on final inputs. The analysis results above remain
+historical for their own commit; the successor records current execution scope.
 
-Then implement returned generic references with origin-selected retention,
+Next implement returned generic references with origin-selected retention,
 caller destination publication, close and image lifetime handling, followed by
 source signatures/actuals/returns and ordinary public admission. Text/non-byte
 references, Buffer/input backing and the full [inventory](../product/04-remaining-work.md)
