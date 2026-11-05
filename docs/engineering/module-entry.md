@@ -73,3 +73,10 @@ worker, C ABI and package evidence must be recorded separately when executed.
 Next carry this exact selected function through qualified source lowering and
 complete independently verified executable admission. Public project loading and
 entry flags remain unavailable until that path exists.
+
+Implementation `86f7b78`: Windows development and release each passed all 18
+native groups on 148 matching committed inputs, 141 LF production modules and
+the same 246-file test discovery identity. Both locked LF mirrors passed without
+compiler/stack overrides or historical-result reuse. The earlier test-source
+syntax failure is excluded. See the
+[focused Windows evidence](../evidence/module-entry-windows-20261105.json).
