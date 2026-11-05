@@ -119,6 +119,11 @@ fn void depth(usize n,bool retained,bool pass){
 @test fn void both_compiler_routes_keep_the_32_deep_call_limit_without_native_stack_overrides(){
     depth(32,false,true);depth(32,true,true);depth(33,false,false);depth(33,true,false);
 }
+@test fn void scalar_element_lists_cross_qualified_calls_and_owned_results(){
+    let ref u8[] library=b"module lib;pub fn u8[2] make(){return [20,22];}pub fn i32 take(u8[2] a){return a[0] as i32+a[1] as i32;}";
+    value(library,b"module app;import lib as m;pub fn i32 chosen(){let a=m::make();return m::take([a[0],a[1]]);}",42);
+    value(library,b"module app;import lib as m;pub fn i32 chosen(){let ref u8[] marker=b\"*\";let a=m::make();return m::take([a[0],a[1]]);}",42);
+}
 
 fn void admission_rejected(ref u8[] a,ref u8[] b,usize limit,u8 kind,usize owner){
     switch(programs::compile(entry(a,b),limit)){case .ok(_):{assert(false);}case .err(e):{

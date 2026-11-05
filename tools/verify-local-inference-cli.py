@@ -167,12 +167,39 @@ def main():
             ('list-self-error', b'module main;fn i32 main(){let a=[a[0],22];return 0;}', 'check', None, 'type', None, scalar),
             ('list-comma-error', b'module main;fn i32 main(){let a=[1,,2];return 0;}', 'check', None, 'syntax', None, scalar),
         ]
+        argument = b'module main;fn i32 take(i32[2] a){return a[0]+a[1];}fn i32 main(){return take([20,22]);}'
+        returned = b'module main;fn i32[2] make(){return [20,22];}fn i32 main(){let a=make();return a[0]+a[1];}'
+        cases += [
+            ('list-argument-check', argument, 'check', None, None, None, read),
+            ('list-argument-run', argument, 'run', 42, None, 16000000, read),
+            ('list-argument-exact', argument, 'run', 42, None, 66340, read),
+            ('list-argument-short', argument, 'run', None, 'fuel', 66339, read),
+            ('list-argument-more', argument, 'run', 42, None, 66341, read),
+            ('list-result-check', returned, 'check', None, None, None, read),
+            ('list-result-run', returned, 'run', 42, None, 16000000, read),
+            ('list-result-exact', returned, 'run', 42, None, 66083, read),
+            ('list-result-short', returned, 'run', None, 'fuel', 66082, read),
+            ('list-result-more', returned, 'run', 42, None, 66084, read),
+            ('list-nested-retained', b'module main;fn i32 take(i32[2] a){return a[0]+a[1];}fn i32[2] id(i32[2] a){return a;}fn i32 main(){let ref u8[] marker=b"*";return take(id([20,22]));}', 'run', 42, None, 16000000, reference),
+            ('list-borrow-argument', b'module main;fn i32 take(ref i32[] a){return a[0]+a[1];}fn i32 main(){return take(ref [20,22]);}', 'run', 42, None, 16000000, read),
+            ('list-exclusive-argument', b'module main;fn i32 take(ref mut i32[] a){a[0]=a[0]+2;return a[0]+a[1];}fn i32 main(){return take(ref mut [20,20][..]);}', 'run', 42, None, 16000000, write),
+            ('list-selected-result', b'module main;fn ref u8[] pick(ref u8[] a,ref u8[] b){return ref a;}fn i32 main(){let p=pick(ref [20,22],ref [0]);return p[0] as i32+p[1] as i32;}', 'run', 42, None, 16000000, reference),
+            ('list-result-element-exit', b'module main;fn i32[1] make(){let Option<i32> o=.none;return [switch(o){case .some(v):{v}case .none:{return [42];}}];}fn i32 main(){let a=make();return a[0];}', 'run', 42, None, 16000000, read),
+            ('list-argument-propagation', b'module main;fn i32 take(i32[1] a,i32[2] b){return b[0]+b[1];}fn Option<i32> work(Option<i32> o){return .some(take([7],[20,o?]));}fn i32 main(){switch(work(.none)){case .some(_):{return 0;}case .none:{}}switch(work(.some(22))){case .some(v):{return v;}case .none:{return 0;}}}', 'run', 42, None, 16000000, read),
+            ('list-later-argument-exit', b'module main;fn i32 take(ref i32[] a,i32 n){return 0;}fn i32 main(){let Option<i32> o=.none;return take(ref [20,22],switch(o){case .some(v):{v}case .none:{return 42;}});}', 'run', 42, None, 16000000, read),
+            ('list-argument-arity-error', b'module main;fn i32 take(i32[1] a){return 0;}fn i32 main(){return take([20,22]);}', 'check', None, 'type', None, scalar),
+            ('list-result-arity-error', b'module main;fn i32[1] make(){return [20,22];}fn i32 main(){return 0;}', 'check', None, 'type', None, scalar),
+            ('list-borrow-mode-error', b'module main;fn i32 take(ref mut i32[] a){return 0;}fn i32 main(){return take(ref [42]);}', 'check', None, 'syntax', None, scalar),
+        ]
     version = None
     if args.array_lists:
         ran = subprocess.run([str(exe), '--version', '--json'], cwd=empty, env=env, capture_output=True, timeout=15)
         assert ran.returncode == 0 and not ran.stderr
         version = json.loads(ran.stdout)
         assert version['array_element_list_declarations'] is True
+        assert all(version[key] is True for key in (
+            'array_element_list_arguments', 'array_element_list_returns', 'array_element_list_temporary_borrows'))
+        assert version['fuel_default'] == 256 and version['fuel_limit'] == 16000000
         assert version['core'] is True and version['restricted'] is False and version['embed'] is False
     results = []
     for identity, source, mode, expected, error, fuel, profile in cases:

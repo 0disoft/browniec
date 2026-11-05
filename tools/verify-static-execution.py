@@ -27,7 +27,7 @@ def main():
     parser.add_argument('--profile', choices=['development', 'release'], required=True)
     parser.add_argument('--shard', type=int, default=1, help='one-based native test shard')
     parser.add_argument('--shards', type=int, default=1, help='partition the complete selected identity set')
-    parser.add_argument('--selection', choices=['all', 'statics', 'views', 'ranges', 'range-core', 'call-ir', 'call-proof', 'call-transfer-core', 'call-transfer', 'call-mixed', 'reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts', 'reference-return-execution', 'reference-source', 'reference-return-source', 'public-program', 'source-snapshot', 'module-index', 'module-entry', 'source-context', 'module-program', 'module-program-core', 'module-retention', 'project-program-core', 'project-program', 'project-names', 'project-manifest', 'project-sources', 'captured-call-stack', 'local-inference', 'aggregate-inference', 'reference-inference', 'reference-inference-shadow', 'option-inference', 'array-list-storage', 'array-list-execution', 'array-list-source'], default='all',
+    parser.add_argument('--selection', choices=['all', 'statics', 'views', 'ranges', 'range-core', 'call-ir', 'call-proof', 'call-transfer-core', 'call-transfer', 'call-mixed', 'reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts', 'reference-return-execution', 'reference-source', 'reference-return-source', 'public-program', 'source-snapshot', 'module-index', 'module-entry', 'source-context', 'module-program', 'module-program-core', 'module-retention', 'project-program-core', 'project-program', 'project-names', 'project-manifest', 'project-sources', 'captured-call-stack', 'local-inference', 'aggregate-inference', 'reference-inference', 'reference-inference-shadow', 'option-inference', 'array-list-storage', 'array-list-execution', 'array-list-source', 'array-list-contexts'], default='all',
                         help='statics runs the changed image/proof/VM suites; all adds return and source regressions')
     args = parser.parse_args()
     if not 1 <= args.shard <= args.shards <= 16:
@@ -95,6 +95,9 @@ def main():
     selections['array-list-storage'] = ['tests/m2/array_list_storage.fy', 'tests/m2/array_storage.fy', 'tests/m2/array_owners.fy']
     selections['array-list-execution'] = ['tests/m2/array_list_execution.fy', 'tests/m2/array_vm.fy', 'tests/m2/module_program.fy']
     selections['array-list-source'] = ['tests/m2/array_list_source.fy', 'tests/m2/aggregate_inference.fy', 'tests/m2/array_list_execution.fy', 'tests/m2/module_program.fy']
+    selections['array-list-contexts'] = ['tests/m2/array_list_contexts.fy', 'tests/m2/array_list_source.fy',
+                                         'tests/m2/array_literal_arguments.fy', 'tests/m2/array_return_literals.fy',
+                                         'tests/m2/slice_temporary_arguments.fy', 'tests/m2/module_program.fy']
     files = selections[args.selection]
     out = ROOT / 'build/static-execution' / profile / args.selection
     if args.shards != 1:
@@ -212,7 +215,16 @@ def main():
                                     'early_initializer_exits_do_not_publish_pending_array_or_record_owners'},
             'array_list_execution': {'six_scalar_domains_execute_at_independently_computed_exact_fuel'},
             'module_program': {'both_compiler_routes_keep_the_32_deep_call_limit_without_native_stack_overrides'}}
-    exact = args.selection in ('array-list-source', 'option-inference', 'array-list-storage', 'array-list-execution') or args.selection in ('reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts', 'reference-return-execution', 'reference-source', 'reference-return-source', 'public-program', 'reference-inference')
+    if args.selection == 'array-list-contexts':
+        focused = {
+            'array_list_source': {'source_list_ir_has_one_complete_pool_span_and_exact_independent_fuel',
+                                  'lists_keep_existing_source_register_and_32_deep_call_limits'},
+            'array_literal_arguments': {'pending_and_prior_captures_cleanup_on_early_exits'},
+            'array_return_literals': {'literals_mix_with_named_and_direct_returns_at_existing_fuel_and_frame_limits'},
+            'slice_temporary_arguments': {'early_exits_release_only_published_owners_and_views'},
+            'module_program': {'both_compiler_routes_keep_the_32_deep_call_limit_without_native_stack_overrides',
+                               'scalar_element_lists_cross_qualified_calls_and_owned_results'}}
+    exact = args.selection in ('array-list-contexts', 'array-list-source', 'option-inference', 'array-list-storage', 'array-list-execution') or args.selection in ('reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts', 'reference-return-execution', 'reference-source', 'reference-return-source', 'public-program', 'reference-inference')
     for path in files:
         if not exact and args.shards == 1:
             command.extend(['--file', path])
@@ -228,7 +240,7 @@ def main():
     if args.shards > len(complete):
         parser.error('shards must not exceed selected tests')
     if exact:
-        assert len(expected) == (13 if args.selection == 'array-list-source' else 9 if args.selection == 'array-list-execution' else 5 if args.selection in ('option-inference', 'array-list-storage') else 36 if args.selection == 'reference-inference' else 18)
+        assert len(expected) == (14 if args.selection == 'array-list-contexts' else 13 if args.selection == 'array-list-source' else 9 if args.selection == 'array-list-execution' else 5 if args.selection in ('option-inference', 'array-list-storage') else 36 if args.selection == 'reference-inference' else 18)
     if args.shards != 1:
         expected = set(complete[args.shard - 1::args.shards])
     if exact or args.shards != 1:

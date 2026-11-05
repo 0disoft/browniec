@@ -27,13 +27,13 @@ pub fn Result<bool,errors::Error> is_repeated(ref u8[] source,ref lexer::State s
 
 // No lexical owner/name exists during evaluation of any cell. Complete
 // initialization is the single publication point, as for repeated arrays.
-pub fn Result<usize,errors::Error> list(ref mut ir::Program p,ref mut locals::Table names,
-    inference::Header name,ref usize[] values,u8 element,usize expected,bool mutable){
+pub fn Result<usize,errors::Error> list(ref mut ir::Program p,usize function,
+    ref usize[] values,u8 element,usize expected,bool mutable,usize at){
     if(values.len==0 || (expected!=0 && expected!=values.len) || !types::scalar(element)){
-        return .err(errors::make(3,name.begin));}
-    let usize id=ir::array_in(p,names.function,element,values.len,mutable,name.begin)?;
-    let usize initialized=ir::array_values(p,id,values,name.begin)?;
-    return locals::declare(names,name.begin,name.end,128+id,mutable);
+        return .err(errors::make(3,at));}
+    let usize id=ir::array_in(p,function,element,values.len,mutable,at)?;
+    let usize initialized=ir::array_values(p,id,values,at)?;
+    return .ok(id);
 }
 
 // The filler is already evaluated once. Zero expected length means infer the
