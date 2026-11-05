@@ -1,3 +1,12 @@
+- Public Fuel revalidation on the inference source baseline `624eac6` passed
+  25 native groups and 33 tool-free CLI cases in development on 166 matching
+  inputs, 154 LF modules and the 260-file discovery identity. Inputs match the
+  checkout and Git raw bytes. Release revalidation is pending for this baseline;
+  older release evidence remains historical. Default 256, cap 16000000, operation
+  prices and independent native host budgets remain unchanged. See the public
+  Fuel contract and `docs/evidence/public-fuel-windows-20261106.json`. No full
+  profiles, retained-source oracle suite, LF mirror, Linux or delivery rerun.
+  Other language/runtime/host/delivery work and the full objective remain open.
 - Payload-derived Option constructor inference is implemented at `92ca0d4`.
   `.some` infers existing i32/bool payloads once through the original constructor
   emitter; missing none/Result domains, wider/nested/resource payloads and broader

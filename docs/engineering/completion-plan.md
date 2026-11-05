@@ -188,8 +188,10 @@ delivery and DLL exports are still open after the lexical/range increments.
 - The [public Fuel successor](public-fuel-limits.md) deliberately raises the
   explicit CLI ceiling to 16000000, retains the 256 default and existing prices,
   and unifies public slice cost formulas. This resolves the narrow budget gap.
-  Ordinary returned-reference Program admission/dispatch and other C05 capacities
-  remain open; public result promotion still needs its own end-to-end proof.
+  The [public retained Program](public-program.md) now admits and executes the
+  shared-byte image/runtime result subset with its canonical prepaid schedule.
+  General mutable/non-byte/Buffer/input results, Engine/Instance budgets and
+  other C05 capacities remain open; this ceiling does not promote those limits.
 
 The native/IR [caller END-chain prerequisite](m2-slice-result-capture-chains.md)
 now supports multiple temporary Held/reborrow closes before result installation.

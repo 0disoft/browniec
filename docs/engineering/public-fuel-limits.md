@@ -179,6 +179,19 @@ records each starting head, compiler, report and CLI artifact hash. See the
 This rerun does not repeat the retained-source numeric oracle suite or an LF
 mirror check.
 
+After scalar, aggregate, reference and Option inference, the original public
+Fuel selection was rerun on source baseline `624eac6` on 2026-11-06. Development
+passed all 25 native groups and 33 tool-free CLI cases on 166 matching input
+hashes, 154 LF production modules and the 260-file test-discovery identity.
+The inputs also match Git raw bytes. The locked native and CLI phases ran afresh
+without compiler/stack overrides or historical-result reuse. Default 256, ceiling
+16000000, operation prices and independent native host budgets are unchanged.
+Release revalidation is pending for this baseline; earlier release evidence
+remains tied to its original sources. See the
+[inference-source evidence](../evidence/public-fuel-windows-20261106.json).
+This rerun does not repeat the retained-source numeric oracle suite or an LF
+mirror check, and does not implement other C05 or Engine/Instance budgets.
+
 Full M1/M2, Linux, restricted delivery, ABI, packaging and elapsed-time/allocator/
 stack-size benchmarks are outside this increment. The [public Program successor](public-program.md)
 now admits the shared-byte result subset; general mutable/non-byte/Buffer/input
