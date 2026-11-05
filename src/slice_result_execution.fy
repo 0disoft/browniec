@@ -23,6 +23,7 @@ import static_call_execution as transfer;
 import static_call_ir as image_calls;
 import verifier as image_verifier;
 import reference_access as access;
+import reference_execution as references;
 
 pub struct Scalar { i64 value; usize remaining; slices::Ticket[8] resumed; }
 // Internal tagged completion; inactive fields never escape either native API.
@@ -122,6 +123,19 @@ pub fn Result<Scalar,errors::Error> execute_static_scalar(ref image_calls::Progr
         case .err(e):{.err(e)}
     };
 }
+// The retained reference-aware Program owns this exact proved code/image.
+// Kind-3 external entry/results stay gated; internal CALLs select actual backing.
+pub fn Result<Scalar,errors::Error> execute_reference_scalar(ref image_calls::Program unit,ref images::Image image,
+    usize function,ref runtime::Capture[] captures,ref i64[] values,ref owners::Token[] inputs,
+    ref mut runtime::State state,ref mut u8[] data,usize fuel){
+    let image_verifier::ReferenceCallProof proof=image_verifier::inspect_reference_calls(unit,image)?;
+    let u8[16] none=[0;16];
+    return switch(invoke_proved(ref unit.body,ref none,ref none,function,captures,values,inputs,state,data,fuel,false,
+        ref proof.statics,images::payload(image))){
+        case .ok(outcome):{if(!outcome.view){.ok(outcome.scalar)}else{.err(errors::make(5,0))}}
+        case .err(e):{.err(e)}
+    };
+}
 fn Result<Outcome,errors::Error> invoke(ref ir::Program unit,usize function,
     ref runtime::Capture[] captures,ref i64[] values,ref owners::Token[] inputs,
     ref mut runtime::State state,ref mut u8[] data,usize fuel,bool view){
@@ -173,7 +187,9 @@ fn Result<Outcome,errors::Error> run(ref body_ir::Program body,ref u8[] paramete
         var bool byte_loan=false;
         if(op==57 || op==58){byte_loan=body_ir::slice_element(body,a,offset)?==10;}
         if(op==71 || op==72 || byte_loan){
-            let access::Source source=if(byte_loan){access::loan(bindings.sites[frame*16+a])}else{access::image(a)};
+            let access::Source source=if(byte_loan){access::loan(bindings.sites[frame*16+a])}
+                else if(sites.kinds[a]==3){references::source(body,sites,f,a,ref static_words[frame*16..frame*16+16],static_live[frame],bindings,literals.len,offset)?}
+                else{access::image(a)};
             let access::Value result=if(op==71 || op==58){access::read(ref source,sites,f,
                     ref static_words[frame*16..frame*16+16],static_live[frame],literals,
                     ref state.runtime.pool,ref state.runtime.owners,data,registers[base+b],remaining,offset)?}
@@ -183,9 +199,17 @@ fn Result<Outcome,errors::Error> run(ref body_ir::Program body,ref u8[] paramete
             registers[base+dst]=result.value;remaining=result.remaining;pc+=1;continue;
         }
         if(op==77){
-            remaining=transfer::parameter(body,sites,literals.len,pc,f,
-                ref static_words[frame*16..frame*16+16],static_live[frame],remaining)?;
+            remaining=if(body.code[at+3]==3){references::parameter(body,sites,pc,f,
+                ref static_words[frame*16..frame*16+16],static_live[frame],bindings,state,literals,data.len,remaining)?}
+                else{transfer::parameter(body,sites,literals.len,pc,f,
+                    ref static_words[frame*16..frame*16+16],static_live[frame],remaining)?};
             let usize one=1;static_live[frame]|=one<<dst;pc+=1;continue;
+        }
+        if((op==70 || op==75 || op==76) && dst<16 && sites.kinds[dst]==3){
+            let references::Step next=references::step(body,sites,pc,f,
+                ref mut static_words[frame*16..frame*16+16],static_live[frame],bindings,
+                ref registers[base..base+128],literals.len,remaining)?;
+            static_live[frame]=next.live;remaining=next.remaining;pc+=1;continue;
         }
         if(statics::operation(op)){
             let immutable::Step next=immutable::step_frame(body,sites,literals,pc,f,
@@ -210,15 +234,20 @@ fn Result<Outcome,errors::Error> run(ref body_ir::Program body,ref u8[] paramete
         }
         if(op==9 || op==64 || op==66 || op==78){
             if(frame>=31 || !available(ref state.runtime.authority,false)){return .err(errors::make(12,offset));}
-            let runtime::Contract c=binding(body,parameters,a);
+            var runtime::Contract c=binding(body,parameters,a);
+            let bool generic=op==78 && references::parameters(body,sites,a);
             var transfer::Arguments staged=transfer::Arguments{.words=[0;16],.remaining=remaining};
-            if(op==78){staged=transfer::arguments(body,sites,literals.len,pc,f,
+            var references::Arguments captured=references::empty(remaining);
+            if(generic){captured=references::arguments(body,sites,pc,f,ref static_words[frame*16..frame*16+16],
+                static_live[frame],bindings,state,data.len,literals.len,remaining)?;c.tags=captured.tags;}
+            else if(op==78){staged=transfer::arguments(body,sites,literals.len,pc,f,
                 ref static_words[frame*16..frame*16+16],static_live[frame],remaining)?;}
-            remaining=switch(owned::enter(body,pc,c,bindings,state,data,staged.remaining)){
+            remaining=switch(if(generic){owned::enter_captured(body,pc,c,bindings,state,data,captured.remaining,ref captured.captures[..c.arity])}
+                else{owned::enter(body,pc,c,bindings,state,data,staged.remaining)}){
                 case .ok(v):{v}case .err(e):{return .err(errors::make(e.kind,offset));}
             };
             static_live[frame+1]=0;
-            i=0;while(i<16){static_words[(frame+1)*16+i]=staged.words[i];i+=1;}
+            i=0;while(i<16){static_words[(frame+1)*16+i]=if(generic){captured.words[i]}else{staged.words[i]};i+=1;}
             i=0;while(i<c.arity){let usize formal=body.register_starts[a]+i;let usize source=body.call_args[b*8+i] as usize;
                 if(c.tags[i]==0 && body.array_parameters[formal]==0 && body.record_parameters[formal]==0 && sites.parameters[formal]==0){registers[(frame+1)*128+formal]=registers[base+source];}i+=1;
             }pc=body.starts[a];continue;

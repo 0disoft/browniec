@@ -66,3 +66,22 @@ pub fn Result<execution::Scalar,errors::Error> run_call_scalar(ref CallProgram p
     ref mut runtime::State state,ref mut u8[] data,usize fuel){
     return execution::execute_static_scalar(ref p.code,ref p.image,function,captures,values,inputs,state,data,fuel);
 }
+
+// Independent reference analysis plus the exact immutable image retained behind
+// private fields. Existing Program and CallProgram admission remain unchanged.
+pub resource ReferenceProgram { calls::Program code; images::Image image; cleanup { } }
+pub fn Result<ReferenceProgram,Error> retain_references(ref calls::Program code,images::Image image,usize image_limit){
+    switch(call_verifier::inspect_reference_calls(code,ref image)){
+        case .ok(_):{}case .err(e):{return .err(code_error(e));}
+    };
+    let usize charge=switch(images::charge(ref image)){case .ok(v):{v}case .err(e):{return .err(image_error(e));}};
+    if(charge>image_limit){return .err(image_error(.Quota));}
+    return .ok(ReferenceProgram{.code=*code,.image=image});
+}
+pub fn ref calls::Program reference_code(ref ReferenceProgram p){return ref p.code;}
+pub fn ref images::Image reference_literals(ref ReferenceProgram p){return ref p.image;}
+pub fn Result<execution::Scalar,errors::Error> run_reference_scalar(ref ReferenceProgram p,usize function,
+    ref runtime::Capture[] captures,ref i64[] values,ref owners::Token[] inputs,
+    ref mut runtime::State state,ref mut u8[] data,usize fuel){
+    return execution::execute_reference_scalar(ref p.code,ref p.image,function,captures,values,inputs,state,data,fuel);
+}

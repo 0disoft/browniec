@@ -30,8 +30,8 @@ pub fn Result<Span,errors::Error> inspect(ref statics::Sites sites,usize site,us
     u8 kind,u32 word,usize payload,usize offset){
     if(sites.count==0 || sites.count>16 || site>=16 || function>=16 || kind>2 ||
         sites.definitions[site]>=256 || sites.functions[site]!=function ||
-        (sites.kinds[site]!=1 && sites.kinds[site]!=2) ||
-        (kind!=0 && sites.kinds[site]!=kind)){return .err(invalid(offset));}
+        (sites.kinds[site]!=1 && sites.kinds[site]!=2 && sites.kinds[site]!=3) ||
+        (kind!=0 && sites.kinds[site]!=kind && !(kind==1 && sites.kinds[site]==3))){return .err(invalid(offset));}
     let usize one=1;
     if((sites.generic&(one<<site))!=0){
         let Span actual=unpack(word,payload,offset)?;var usize root=0;

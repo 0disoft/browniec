@@ -33,13 +33,22 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,usize pc,ref mut frame
 }
 pub fn Result<usize,errors::Error> enter(ref ir::Program p,usize pc,runtime::Contract contract,
     ref mut frames::Frames bindings,ref mut runtime::State state,ref mut u8[] data,usize fuel){
+    let runtime::Capture[1] none=[runtime::capture(frames::none(),false,false)];
+    return enter_captured(p,pc,contract,bindings,state,data,fuel,ref none[..0]);
+}
+// A reference-aware CALL supplies its fully proved/authenticated capture batch.
+// Ordinary entry keeps deriving captures from the original slice namespace.
+pub fn Result<usize,errors::Error> enter_captured(ref ir::Program p,usize pc,runtime::Contract contract,
+    ref mut frames::Frames bindings,ref mut runtime::State state,ref mut u8[] data,usize fuel,ref runtime::Capture[] supplied){
     let usize at=pc*8;let usize target=p.code[at+2] as usize;let usize map=p.code[at+3] as usize;
     let usize owned=calls::cost(p,target,p.offsets[pc])?+contract.arity;
     if(fuel<runtime::cost()+owned){return .err(errors::make(8,p.offsets[pc]));}
     let usize parent=bindings.frame;var runtime::Capture[8] captures=[runtime::capture(frames::none(),false,false);8];
     let usize mask=if(p.code[at]==66){p.code[at+4] as usize}else{0};let usize one=1;
+    if(supplied.len!=0 && supplied.len!=contract.arity){return .err(errors::make(5,p.offsets[pc]));}
     var usize i=0;while(i<contract.arity){let usize source=p.call_args[map*8+i] as usize;
-        if(contract.tags[i]!=0){
+        if(supplied.len!=0){captures[i]=supplied[i];}
+        else if(contract.tags[i]!=0){
             let usize count=if((mask&(one<<i))!=0){let recipes::Chain chain=recipes::chain(p,pc,i)?;chain.count}else{0};
             captures[i]=runtime::chain_capture(bindings.sites[parent*16+source-160],count);
         }i+=1;

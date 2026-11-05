@@ -42,3 +42,8 @@ pub fn usize static_instruction(u8 op,usize left,usize right){
 pub fn usize static_call(usize arguments){return 32+32*arguments;}
 // Two bounded root scans plus clearing the sixteen consumed child words.
 pub fn usize static_return(){return 48;}
+
+// Generic formals additionally authenticate each runtime actual once; native
+// entry/leave and owned value copies remain their existing separate charges.
+pub fn usize reference_call(usize arguments,usize runtime){return static_call(arguments)+4097*runtime;}
+pub fn usize reference_parameter(bool runtime){return 16+if(runtime){4097}else{0};}
