@@ -36,6 +36,7 @@ import static_image as static_images;
 import program_image as program_images;
 import reference_call_source as reference_calls;
 import static_call_ir as reference_ir;
+import reference_result_source as reference_results;
 
 fn u8 precedence(u8 kind) {
     if (kind == 133) { return 1; }
@@ -180,7 +181,7 @@ fn Result<usize,errors::Error> static_projection(ref u8[] source,ref mut lexer::
     }
     if(view.kind!=1){return .err(errors::make(3,at));}
     if(!view.owned){return static_read(source,s,p,table,signatures,view.site,at,depth,result_type,structure,loop_state);}
-    if(s.kind==46){
+    if(s.kind==46 && (!signatures.reference_returns || reference_results::owners(p,signatures,192+view.site,0,at)?==0)){
         let usize value=static_read(source,s,p,table,signatures,view.site,at,depth,result_type,structure,loop_state)?;
         let usize closed=static_builders::close(p,view.site,at)?;return .ok(value);
     }
@@ -190,6 +191,7 @@ fn Result<usize,errors::Error> static_temporary_projection(ref u8[] source,ref m
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
     usize site,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
     var locals::Table names=locals::snapshot(table);
+    if(signatures.reference_returns){let usize roots=reference_results::publish(p,signatures,ref mut names,site,at)?;}
     let usize hidden=locals::declare(ref mut names,at,at,192+site,false)?;
     let usize value=static_read(source,s,p,ref names,signatures,site,at,depth,result_type,structure,loop_state)?;
     let usize closed=arrays::release_from(ref names,p,table.count,at)?;return .ok(value);
@@ -210,7 +212,12 @@ fn Result<static_source::View,errors::Error> static_view(ref u8[] source,ref mut
     usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
     if(depth>32){return .err(errors::make(4,s.begin));}
     let usize at=s.begin;var static_source::View value=static_source::View{.site=16,.kind=0,.owned=false};
-    if(s.kind==40){let usize open=lexer::next(source,s)?;
+    if(word_is(source,s,b"ref")){let usize prefix=lexer::next(source,s)?;}
+    if(reference_calls::returned_atom(source,s,table,signatures)?){
+        let usize target=functions::find(source,signatures,s.begin,s.end);let usize name=lexer::next(source,s)?;
+        let usize made=call_value(source,s,p,table,signatures,target,240,at,depth,result_type,structure,loop_state)?;
+        value=static_source::View{.site=made-192,.kind=1,.owned=true};
+    }else if(s.kind==40){let usize open=lexer::next(source,s)?;
         value=static_view(source,s,p,table,signatures,depth+1,result_type,structure,loop_state)?;
         let usize close=lexer::punctuation(source,s,41)?;
     }else if(word_is(source,s,b"text")){
@@ -247,9 +254,13 @@ fn Result<static_source::View,errors::Error> static_owned_range(ref u8[] source,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
     usize parent,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
     let usize at=s.begin;var locals::Table names=locals::snapshot(table);
+    if(signatures.reference_returns){let usize roots=reference_results::publish(p,signatures,ref mut names,parent,at)?;}
     let usize hidden=locals::declare(ref mut names,at,at,192+parent,false)?;
     let static_source::View child=static_range(source,s,p,ref names,signatures,parent,depth,result_type,structure,loop_state)?;
-    let usize closed=arrays::release_from(ref names,p,table.count,at)?;return .ok(child);
+    let usize closed=if(signatures.reference_returns){
+        let usize keep=reference_results::owners(p,signatures,192+child.site,0,at)?;
+        reference_results::release(p,ref names,table.count,keep,at)?
+    }else{arrays::release_from(ref names,p,table.count,at)?};return .ok(child);
 }
 fn Result<static_source::View,errors::Error> static_range(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
@@ -270,7 +281,9 @@ fn Result<usize,errors::Error> static_declaration(ref u8[] source,ref mut lexer:
     bool mutable,u8 terminator,u8 result_type,usize depth,usize structure,ref mut loops::State loop_state){
     let static_source::Header header=static_source::header(source,s,table,mutable,terminator,result_type)?;
     let static_source::View value=static_view(source,s,p,table,signatures,depth,result_type,structure,loop_state)?;
-    let usize end=lexer::punctuation(source,s,terminator)?;return static_source::bind(p,table,ref header,ref value);
+    let usize end=lexer::punctuation(source,s,terminator)?;
+    if(signatures.reference_returns){let usize roots=reference_results::publish(p,signatures,table,value.site,header.begin)?;}
+    return static_source::bind(p,table,ref header,ref value);
 }
 fn Result<usize,errors::Error> static_equal(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
@@ -334,6 +347,11 @@ fn Result<usize, errors::Error> named_operand(ref u8[] source, ref mut lexer::St
         if (index != 64) { return .err(errors::make(3, at)); }
         let usize target = functions::find(source, signatures, begin, end);
         if (target == 16) { return .err(errors::make(3, at)); }
+        if(reference_calls::result(signatures,target)){
+            let usize result=call_value(source,s,p,table,signatures,target,240,at,depth,result_type,structure,loop_state)?;
+            let static_source::View view=static_source::View{.site=result-192,.kind=1,.owned=true};
+            return static_projection(source,s,p,table,signatures,ref view,at,depth,result_type,structure,loop_state);
+        }
         if(signatures.return_slice_elements[target]!=0){
             return slice_call_read(source,s,p,table,signatures,target,at,depth,result_type,structure,loop_state,false);
         }
@@ -680,13 +698,16 @@ fn Result<usize,errors::Error> slice_argument(ref u8[] source,ref mut lexer::Sta
 fn Result<usize,errors::Error> reference_argument(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
     usize parameter,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
-    if(!reference_calls::image_argument(source,s,names)?){
+    if(!reference_calls::image_argument(source,s,names)? && !reference_calls::returned_atom(source,s,names,signatures)?){
         return slice_argument(source,s,p,names,signatures,parameter,depth,result_type,structure,loop_state);
     }
     let usize at=s.begin;let usize prefix=lexer::word(source,s,b"ref")?;
     let static_source::View value=static_view(source,s,p,names,signatures,depth,result_type,structure,loop_state)?;
     if(value.kind!=1 || (s.kind!=44 && s.kind!=41)){return .err(errors::make(3,at));}
-    if(value.owned){let usize hidden=locals::declare(names,at,at,192+value.site,false)?;}
+    if(value.owned){
+        if(signatures.reference_returns){let usize roots=reference_results::publish(p,signatures,names,value.site,at)?;}
+        let usize hidden=locals::declare(names,at,at,192+value.site,false)?;
+    }
     return .ok(192+value.site);
 }
 // All result kinds share argument evaluation and capture cleanup. Destinations
@@ -752,6 +773,7 @@ fn Result<usize,errors::Error> captured_call(ref u8[] source,ref mut lexer::Stat
     }
     if(arity!=signatures.arities[target]) {return .err(errors::make(3,at));}
     let usize close=lexer::punctuation(source,s,41)?;
+    if(reference_calls::result(signatures,target)){return reference_results::call(p,signatures,table,ref names,target,ref arguments[..arity],at);}
     if(destination==176){return result_calls::finish(p,table,ref names,signatures,target,ref arguments[..arity],zero,at);}
     let ref usize[] view=ref arguments;let usize call_pc=p.count;
     let usize called=if(destination<16){ir::array_call(p,target,destination,view[..arity],at)?}
@@ -1074,7 +1096,7 @@ fn Result<usize, errors::Error> declaration(ref u8[] source, ref mut lexer::Stat
         let bool mutable = word_is(source, s, b"var");
         let usize keyword = lexer::next(source, s)?;
         if (word_is(source,s,b"ref")) {
-            if(signatures.literals.enabled && static_source::candidate(source,s,table)?){
+            if(signatures.literals.enabled && (static_source::candidate(source,s,table)? || reference_calls::declaration(source,s,table,signatures)?)){
                 return static_declaration(source,s,p,table,signatures,mutable,terminator,result_type,expr_depth,structure,loop_state);
             }
             return slice_declaration(source,s,p,table,signatures,mutable,terminator,result_type,expr_depth,structure,loop_state);
@@ -1592,9 +1614,23 @@ fn Result<bool,errors::Error> slice_origin_return(ref u8[] source,ref mut lexer:
     let usize returned=ir::emit(p,8,value,0,at)?;
     return .ok(true);
 }
+// RETURN carries exactly one live byte view; all other lexical resources close
+// before native handoff. Input/image origins are independently proved at retain.
+fn Result<bool,errors::Error> reference_return(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    usize at,usize structure,usize depth,ref mut loops::State loop_state){
+    let static_source::View value=static_view(source,s,p,table,signatures,depth,12,structure,loop_state)?;
+    if(value.kind!=1){return .err(errors::make(3,at));}
+    let usize end=lexer::punctuation(source,s,59)?;var usize i=table.count;
+    while(i>0){i-=1;if(table.registers[i]!=192+value.site){let usize closed=arrays::release_at(table,p,i,at)?;}}
+    let usize returned=ir::raw(p,79,0,value.site,0,at)?;return .ok(true);
+}
 fn Result<bool, errors::Error> control_return(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 result_type, usize depth, usize expr_depth, ref mut loops::State loop_state) {
     let usize at = s.begin;
     let usize keyword = lexer::next(source, s)?;
+    if(reference_calls::result(signatures,table.function)){
+        return reference_return(source,s,p,table,signatures,at,depth,expr_depth,loop_state);
+    }
     if(signatures.return_slice_elements[table.function]!=0){
         return slice_origin_return(source,s,p,table,signatures,at,depth,expr_depth,loop_state);
     }
@@ -1722,7 +1758,7 @@ fn Result<usize, errors::Error> body(ref u8[] source, ref functions::Table signa
     s.cursor = signatures.bodies[f];
     let usize first = lexer::next(source, ref mut s)?;
     var loops::State loop_state=loops::empty();
-    let u8 result_context=record_results::context(p,f);
+    let u8 result_context=if(reference_calls::result(signatures,f)){12}else{record_results::context(p,f)};
     var bool terminal = false;
     while (s.kind != 125) {
         if (terminal || s.kind == 0) { return .err(errors::make(2, s.begin)); }
@@ -1757,24 +1793,24 @@ fn Result<usize, errors::Error> prepare_aggregates(ref u8[] source, ref mut func
 
 // Scratch belongs to the wrapper and never escapes on failure. Avoid a large
 // Result<Program> value throughout nested source lowering in native debug code.
-fn Result<usize, errors::Error> lower_into(ref u8[] source,bool origin_analysis,bool references,ref literal_collection::Index literals,ref mut ir::Program p) {
+fn Result<usize, errors::Error> lower_into(ref u8[] source,bool origin_analysis,bool references,bool returns,ref literal_collection::Index literals,ref mut ir::Program p) {
     if (source.len > 4096) { return .err(errors::make(4, 4096)); }
     let ref str valid = switch (text::validate_utf8(source)) {
         case .ok(value): { value } case .err(_): { return .err(errors::make(1, 0)); }
     };
-    var functions::Table signatures = functions::scan(source)?;
+    var functions::Table signatures = if(returns){functions::scan_reference_returns(source)?}else{functions::scan(source)?};
     signatures.literals=*literals;signatures.reference_calls=references;
     // Signature candidates do not prove a returned borrow's origin or lifetime.
     // Reject every such declaration, including unreachable functions, before
     // Program/result preparation can mistake it for an ordinary scalar result.
     var usize declaration = 0;
     while (declaration < signatures.count) {
-        if (!origin_analysis && signatures.return_slice_elements[declaration] != 0) {
+        if (!origin_analysis && signatures.return_slice_elements[declaration] != 0 && !reference_calls::result(ref signatures,declaration)) {
             return .err(errors::make(3, signatures.begins[declaration]));
         }
         declaration += 1;
     }
-    if(origin_analysis){let usize inferred=source_origins::infer(source,ref mut signatures)?;}
+    if(origin_analysis || returns){let usize inferred=source_origins::infer(source,ref mut signatures)?;}
     p.function_count = signatures.count;
     p.entry = signatures.entry;
     p.return_types = signatures.return_types;
@@ -1807,14 +1843,14 @@ fn Result<usize, errors::Error> lower_into(ref u8[] source,bool origin_analysis,
 pub fn Result<ir::Program,errors::Error> compile(ref u8[] source){
     var ir::Program p=ir::empty();
     let literal_collection::Index literals=literal_collection::empty();
-    let usize lowered=lower_into(source,false,false,ref literals,ref mut p)?;
+    let usize lowered=lower_into(source,false,false,false,ref literals,ref mut p)?;
     return .ok(p);
 }
 // The analysis Program stays private and is never returned to an executor.
 pub fn Result<slice_origins::Summary,errors::Error> inspect_slice_results(ref u8[] source){
     var ir::Program p=ir::empty();
     let literal_collection::Index literals=literal_collection::empty();
-    let usize lowered=lower_into(source,true,false,ref literals,ref mut p)?;
+    let usize lowered=lower_into(source,true,false,false,ref literals,ref mut p)?;
     let functions::Table signatures=functions::scan(source)?;
     let slice_result_ir::Program unit=slice_result_ir::from_proxy(p,ref signatures)?;
     let slice_result_verifier::Proof checked=slice_result_verifier::inspect(ref unit)?;
@@ -1825,7 +1861,7 @@ pub fn Result<slice_origins::Summary,errors::Error> inspect_slice_results(ref u8
 pub fn Result<slice_result_ir::Program,errors::Error> inspect_slice_result_ir(ref u8[] source){
     var ir::Program p=ir::empty();
     let literal_collection::Index literals=literal_collection::empty();
-    let usize lowered=lower_into(source,true,false,ref literals,ref mut p)?;
+    let usize lowered=lower_into(source,true,false,false,ref literals,ref mut p)?;
     let functions::Table signatures=functions::scan(source)?;
     let slice_result_ir::Program unit=slice_result_ir::from_proxy(p,ref signatures)?;
     let slice_result_verifier::Proof checked=slice_result_verifier::inspect(ref unit)?;
@@ -1853,7 +1889,7 @@ pub fn Result<program_images::Program,program_images::Error> compile_image(ref u
         }
     };
     var ir::Program body=ir::empty();
-    switch(lower_into(source,false,false,ref literals,ref mut body)){
+    switch(lower_into(source,false,false,false,ref literals,ref mut body)){
         case .ok(_):{}case .err(e):{return .err(image_source_error(e));}
     };
     let static_images::Image image=switch(static_images::freeze(ref builder,image_limit)){
@@ -1875,7 +1911,7 @@ pub fn Result<program_images::ReferenceProgram,program_images::Error> compile_re
         });}
     };
     var ir::Program body=ir::empty();
-    switch(lower_into(source,false,true,ref literals,ref mut body)){
+    switch(lower_into(source,false,true,false,ref literals,ref mut body)){
         case .ok(_):{}case .err(e):{return .err(image_source_error(e));}
     };
     let functions::Table signatures=switch(functions::scan(source)){
@@ -1890,4 +1926,36 @@ pub fn Result<program_images::ReferenceProgram,program_images::Error> compile_re
         case .ok(v):{v}case .err(e):{return .err(image_literal_error(e));}
     };
     return program_images::retain_references(ref code,image,image_limit);
+}
+
+// Private returned-reference source path. Generic result admission remains
+// separate from the ordinary public compiler and host-visible reference ABI.
+pub fn Result<program_images::ReferenceReturnProgram,program_images::Error> compile_reference_returns(ref u8[] source,usize image_limit){
+    var static_images::Builder builder=switch(static_images::builder(4096)){
+        case .ok(v):{v}case .err(e):{return .err(image_literal_error(e));}
+    };
+    let literal_collection::Index literals=switch(literal_collection::collect(ref mut builder,source)){
+        case .ok(v):{v}case .err(e):{return .err(switch(e.kind){
+            case .Source:{image_source_error(e.source)}case .Image:{image_literal_error(e.image)}
+        });}
+    };
+    var ir::Program body=ir::empty();
+    switch(lower_into(source,false,true,true,ref literals,ref mut body)){
+        case .ok(_):{}case .err(e):{return .err(image_source_error(e));}
+    };
+    var functions::Table signatures=switch(functions::scan_reference_returns(source)){
+        case .ok(v):{v}case .err(e):{return .err(image_source_error(e));}
+    };
+    switch(source_origins::infer(source,ref mut signatures)){case .ok(_):{}case .err(e):{return .err(image_source_error(e));}};
+    var reference_ir::Program code=reference_ir::Program{.body=body,.parameters=[0;128],.results=[0;16],.origins=signatures.return_slice_inputs};
+    var usize f=0;while(f<signatures.count){
+        if(signatures.return_slice_elements[f]==10){code.results[f]=3;}
+        var usize i=0;while(i<signatures.arities[f]){let usize at=f*8+i;
+            if(signatures.param_slices[at] && signatures.param_slice_elements[at]==10){code.parameters[body.register_starts[f]+i]=3;}i+=1;
+        }f+=1;
+    }
+    let static_images::Image image=switch(static_images::freeze(ref builder,image_limit)){
+        case .ok(v):{v}case .err(e):{return .err(image_literal_error(e));}
+    };
+    return program_images::retain_reference_returns(ref code,image,image_limit);
 }

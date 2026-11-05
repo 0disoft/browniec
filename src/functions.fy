@@ -15,6 +15,7 @@ pub struct Table {
     literal_collection::Index literals;
     // Private native mixed-backing byte CALL lowering, never public admission.
     bool reference_calls;
+    bool reference_returns;
     usize[16] begins;
     usize[16] ends;
     usize[16] bodies;
@@ -49,7 +50,7 @@ pub struct Table {
     usize entry;
 }
 pub fn Table empty() {
-    return Table { .literals=literal_collection::empty(), .reference_calls=false, .begins = [0; 16], .ends = [0; 16], .bodies = [0; 16],
+    return Table { .literals=literal_collection::empty(), .reference_calls=false, .reference_returns=false, .begins = [0; 16], .ends = [0; 16], .bodies = [0; 16],
         .body_ends = [0; 16], .arities = [0; 16], .return_lengths = [0; 16], .return_records = [0; 16],
         .return_slice_elements = [0; 16], .return_slice_inputs = [0; 16], .return_slice_candidates = [0; 16], .param_begins = [0; 128],
         .param_ends = [0; 128], .return_types = [0; 16], .param_types = [0; 128],
@@ -162,7 +163,7 @@ fn Result<usize, errors::Error> signature(ref u8[] source, ref mut lexer::State 
         let usize comma = lexer::punctuation(source, s, 44)?;
         if (s.kind == 41) { return .err(errors::make(2, s.begin)); }
     }
-    if (result_slice && t.return_slice_candidates[f] == 0) { return .err(errors::make(3, t.begins[f])); }
+    if (result_slice && t.return_slice_candidates[f] == 0 && !(t.reference_returns && result_element==10)) { return .err(errors::make(3, t.begins[f])); }
     if (main && (arity != 0 || result_type != 1 || result_length != 0 || result_record != 0 || result_slice)) { return .err(errors::make(3, t.begins[f])); }
     if (main) { t.entry = f; }
     t.arities[f] = arity;
@@ -181,8 +182,8 @@ fn Result<usize, errors::Error> signature(ref u8[] source, ref mut lexer::State 
     t.count += 1;
     return .ok(f);
 }
-pub fn Result<Table, errors::Error> scan(ref u8[] source) {
-    var Table t = empty();
+fn Result<Table, errors::Error> scan_mode(ref u8[] source,bool returns) {
+    var Table t = empty();t.reference_returns=returns;
     var lexer::State s = lexer::empty();
     let usize first = lexer::next(source, ref mut s)?;
     let usize module_word = lexer::word(source, ref mut s, b"module")?;
@@ -196,3 +197,6 @@ pub fn Result<Table, errors::Error> scan(ref u8[] source) {
     if (t.entry == 16) { return .err(errors::make(3, source.len)); }
     return .ok(t);
 }
+
+pub fn Result<Table,errors::Error> scan(ref u8[] source){return scan_mode(source,false);}
+pub fn Result<Table,errors::Error> scan_reference_returns(ref u8[] source){return scan_mode(source,true);}

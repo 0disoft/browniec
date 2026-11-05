@@ -9,10 +9,12 @@ fn Result<u8,errors::Error> byte(usize value,usize offset){
 }
 // Derive the next global definition from actual retained code. Rewinding a pure
 // for-post candidate therefore also rewinds Static site allocation.
-fn Result<usize,errors::Error> fresh(ref ir::Program p,usize offset){
+pub fn Result<usize,errors::Error> fresh(ref ir::Program p,usize offset){
     if(p.count>256){return .err(errors::make(4,offset));}
     var usize count=0;var usize pc=0;while(pc<p.count){let usize at=pc*8;
-        if(p.code[at]==69 || p.code[at]==74 || p.code[at]==75 || p.code[at]==76 || p.code[at]==77){let usize site=p.code[at+1] as usize;
+        if(p.code[at]==69 || p.code[at]==74 || p.code[at]==75 || p.code[at]==76 || p.code[at]==77 ||
+            (p.code[at]==78 && p.code[at+2]<16 && p.return_types[p.code[at+2] as usize]==0 &&
+             p.array_results[p.code[at+2] as usize]==0 && p.record_results[p.code[at+2] as usize]==0)){let usize site=p.code[at+1] as usize;
             if(site>=16){return .err(errors::make(4,offset));}if(site>=count){count=site+1;}}
         pc+=1;
     }if(count==16){return .err(errors::make(4,offset));}return .ok(count);

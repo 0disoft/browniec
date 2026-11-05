@@ -36,3 +36,25 @@ pub fn Result<usize,errors::Error> promote(ref mut ir::Program p,usize pc,usize 
     if(pc>=p.count || p.code[pc*8]!=9){return .err(errors::make(3,offset));}
     p.code[pc*8]=78;return .ok(pc);
 }
+
+pub fn bool result(ref functions::Table signatures,usize f){
+    return signatures.reference_returns && f<signatures.count && signatures.return_slice_elements[f]==10;
+}
+pub fn Result<bool,errors::Error> returned_atom(ref u8[] source,ref lexer::State s,ref locals::Table names,ref functions::Table signatures){
+    var lexer::State look=lexer::snapshot(s);
+    if(look.kind==2 && lexer::equal(source[look.begin..look.end],b"ref")){let usize prefix=lexer::next(source,ref mut look)?;}
+    if(look.kind!=2 || locals::find(source,names,look.begin,look.end)!=64){return .ok(false);}
+    let usize f=functions::find(source,signatures,look.begin,look.end);if(!result(signatures,f)){return .ok(false);}
+    let usize next=lexer::next(source,ref mut look)?;return .ok(look.kind==40);
+}
+pub fn Result<bool,errors::Error> declaration(ref u8[] source,ref lexer::State s,ref locals::Table names,ref functions::Table signatures){
+    if(!signatures.reference_returns){return .ok(false);}
+    var lexer::State look=lexer::snapshot(s);let usize prefix=lexer::next(source,ref mut look)?;
+    if(look.kind!=2 || !lexer::equal(source[look.begin..look.end],b"u8")){return .ok(false);}
+    let usize tag=lexer::next(source,ref mut look)?;
+    if(look.kind!=91){return .ok(false);}let usize open=lexer::next(source,ref mut look)?;
+    if(look.kind!=93){return .ok(false);}let usize close=lexer::next(source,ref mut look)?;
+    if(look.kind!=2){return .ok(false);}let usize name=lexer::next(source,ref mut look)?;
+    if(look.kind!=61){return .ok(false);}let usize equal=lexer::next(source,ref mut look)?;
+    return returned_atom(source,ref look,names,signatures);
+}

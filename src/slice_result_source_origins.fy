@@ -33,6 +33,21 @@ fn Result<usize,errors::Error> next_actual(ref u8[] source,ref mut lexer::State 
 fn Result<u8,errors::Error> expression(ref u8[] source,ref mut lexer::State s,
     ref functions::Table t,ref u8[] summaries,ref Names names,u8 tag,usize depth){
     if(depth>32){return .err(errors::make(4,s.begin));}
+    if(t.reference_returns && (tag==10 || tag==0)){
+        if(s.kind==40){let usize open=lexer::next(source,s)?;return expression(source,s,t,summaries,names,tag,depth+1);}
+        if(word(source,s,b"ref")){let usize prefix=lexer::next(source,s)?;
+            return expression(source,s,t,summaries,names,tag,depth+1);}
+        if((tag==10 && s.kind==3) || (tag==0 && s.kind==4)){return .ok(9);}
+        if(tag==10 && word(source,s,b"text")){
+            var lexer::State look=lexer::snapshot(s);let usize next=lexer::next(source,ref mut look)?;
+            if(look.kind==58){let usize module_name=lexer::next(source,s)?;
+                let usize a=lexer::punctuation(source,s,58)?;let usize b=lexer::punctuation(source,s,58)?;
+                let usize method=lexer::word(source,s,b"bytes")?;let usize open=lexer::punctuation(source,s,40)?;
+                return expression(source,s,t,summaries,names,0,depth+1);
+            }
+        }
+        if(s.kind==2){let u8 named=lookup(source,names,s,tag);if(named!=255){return .ok(named);}}
+    }
     if(word(source,s,b"ref")){
         let usize reference=lexer::next(source,s)?;
         if((tag&128)!=0){let usize access=lexer::word(source,s,b"mut")?;}
@@ -46,6 +61,7 @@ fn Result<u8,errors::Error> expression(ref u8[] source,ref mut lexer::State s,
     if(target>=t.count || t.return_slice_elements[target]!=tag){return .ok(255);}
     let usize name=lexer::next(source,s)?;let usize open=lexer::punctuation(source,s,40)?;
     let usize chosen=summaries[target] as usize;if(chosen==0){return .ok(0);}
+    if(t.reference_returns && chosen==9){return .ok(9);}
     var usize argument=1;
     while(argument<chosen){let usize skipped=next_actual(source,s)?;let usize comma=lexer::punctuation(source,s,44)?;argument+=1;}
     let usize parameter=target*8+chosen-1;
@@ -71,8 +87,9 @@ fn Result<u8,errors::Error> body(ref u8[] source,ref functions::Table t,ref u8[]
             if(word(source,ref look,b"ref")){
                 let usize reference=lexer::next(source,ref mut look)?;let bool writer=word(source,ref look,b"mut");
                 if(writer){let usize access=lexer::next(source,ref mut look)?;}
-                let u8 element=types::parse(source,ref mut look)?;
-                let usize open=lexer::punctuation(source,ref mut look,91)?;let usize close=lexer::punctuation(source,ref mut look,93)?;
+                let bool text=t.reference_returns && word(source,ref look,b"str");
+                let u8 element=if(text){let usize tag=lexer::next(source,ref mut look)?;0}else{types::parse(source,ref mut look)?};
+                if(!text){let usize open=lexer::punctuation(source,ref mut look,91)?;let usize close=lexer::punctuation(source,ref mut look,93)?;}
                 if(look.kind!=2){return .err(errors::make(2,look.begin));}
                 let usize begin=look.begin;let usize end=look.end;let usize name=lexer::next(source,ref mut look)?;
                 let usize equals=lexer::punctuation(source,ref mut look,61)?;let u8 tag=element|if(writer){128}else{0};
