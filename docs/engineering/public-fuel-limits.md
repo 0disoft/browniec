@@ -165,6 +165,17 @@ CLI artifacts. Its separate reference result profile preserves the canonical
 32-deep expression limit; the added 33/64-depth rejection regressions exercise
 check and run without native stack overrides. Version Fuel discovery is unchanged.
 
+After the native project-source binding increment, the original public Fuel
+selection was rerun on source baseline `6d7ab75`. Windows development passed all
+25 native groups and 33 tool-free CLI cases on 160 matching input hashes, 148
+production modules and the 253-file test-discovery identity. Both native and CLI
+phases ran afresh with `check --locked`, without compiler/stack overrides or
+historical-result reuse. The default remains 256 and the ceiling 16000000;
+operation prices and host-selected native budgets are unchanged. Release
+revalidation is pending. See the [current-source evidence](../evidence/public-fuel-windows-20261105.json).
+This rerun does not repeat the retained-source numeric oracle suite or an LF
+mirror check.
+
 Full M1/M2, Linux, restricted delivery, ABI, packaging and elapsed-time/allocator/
 stack-size benchmarks are outside this increment. The [public Program successor](public-program.md)
 now admits the shared-byte result subset; general mutable/non-byte/Buffer/input
