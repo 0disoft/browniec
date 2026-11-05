@@ -79,7 +79,7 @@ probes are excluded.
 
 The [complete analysis successor](static-call-admission.md) now combines these
 recipes with canonical scalar/owner/loan checks and possible real image roots.
-The current bare verifier/VM and retained-Program admission still reject 77..79.
+The bare verifier/VM and legacy retained-Program admission still reject 77..79.
 The recipe proof cannot substitute for their complete scalar definitions/types,
 ordinary argument/aggregate/loan shapes, ownership or metering proof. No guest
 price, capability flag, source gate, runtime descriptor table or ABI is promoted.
@@ -97,3 +97,9 @@ return and zero-Fuel abort. Native external entry must not manufacture Static
 arguments from scalar values or expose a returned frame word without a real
 Program lifetime API. Then lower source actuals/returned views and verify
 end-to-end cases before public admission. The complete accepted goal stays open.
+
+The [canonical native transfer successor](static-call-transfer.md) now owns the
+proved recipe/image in a private `CallProgram` and executes PARAM/CALL/RETURN
+through the shared native coordinator with exact spans, prepaid publication and
+ordinary ownership restoration. Bare/legacy entry remains gated. General
+storage-independent references, source lowering and public promotion remain open.

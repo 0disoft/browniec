@@ -94,6 +94,14 @@ Its [focused evidence](../evidence/static-call-admission-windows-20261105.json)
 records both artifacts and the separate 38-group private native selection.
 The original public Fuel native selection was not rerun by this successor.
 
+The subsequent [canonical Static CALL transfer](static-call-transfer.md) reran
+both CLI-only profiles after connecting actual frame/image words. All 33 cases
+passed per profile on 141 matching CLI inputs and a 230-file discovery identity.
+Its separate 24-group native selection covers private transfer/exact budgets and
+affected scalar-entry/range regressions. Existing public prices and reported
+limits are unchanged; new private CALL/RETURN prices do not promote source syntax.
+See [the focused evidence](../evidence/static-call-vm-windows-20261105.json).
+
 Full M1/M2, Linux, restricted delivery, ABI, packaging and elapsed-time/allocator/
 stack-size benchmarks are outside this increment. B04 result declarations remain
 publicly gated; other C05 capacities and the complete objective remain open.

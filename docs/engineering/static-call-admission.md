@@ -75,19 +75,21 @@ Final results, committed code and exact input identities are recorded in the
 These checks do not establish full-profile conformance, general stack/RAM,
 allocator/OOM/timing, Linux, restricted Windows or C ABI/package behavior.
 
-## Next runtime slice
+## Runtime successor and remaining boundary
 
-Bare verification, retained-Program admission and the current fixed-frame
-Static executor continue to reject the new CALL profile. In particular, PARAM
-77 is explicitly rejected by the legacy step helper. This analysis API cannot
-substitute for actual frame/image receipt transfer or public source admission.
+Bare verification, legacy retained-Program admission and the fixed-frame Static
+executor continue to reject the new CALL profile. PARAM 77 is explicitly rejected
+by the legacy step helper. Copyable analysis proof never substitutes for an
+owning Program/image or runtime authority.
 
-Connect PARAM/CALL/RETURN to the retained-image coordinator. Preflight the full
-transfer Fuel and every destination before publishing any frame/result word.
-Keep Static words separate from scalar cells, copy the authenticated actual span
-and kind without payload allocation, and validate the returned word against the
-selected recipient and same retained image. Preserve ordinary owner/loan entry,
-return and zero-Fuel abort. A root-window set must never broaden a transferred
-actual span. Native external entry/results require real Program lifetime APIs.
-Source CALL lowering and public promotion remain subsequent work; the complete
-accepted implementation inventory remains open.
+The [canonical transfer successor](static-call-transfer.md) now executes these
+recipes through a separately proved native `CallProgram` retaining the exact
+image. It preflights full transfer Fuel/destinations, keeps actual words outside
+scalar cells, preserves actual spans/kinds, restores ordinary owner/loan state
+and drains failures with prepaid abort. A root-window set cannot broaden an
+actual transferred view. The analysis result by itself still grants neither
+execution nor lifetime authority.
+
+Storage-independent references, source signatures/CALL lowering, ordinary public
+admission and host-visible returned-image lifetime APIs remain subsequent work.
+The complete accepted inventory remains open.

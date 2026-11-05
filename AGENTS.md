@@ -1,3 +1,30 @@
+- Native Static PARAM 77/CALL 78/RETURN 79 now execute through the existing
+  canonical coordinator, borrowing body/origin tables without another IR wrapper.
+  Private CallProgram retains a completely proved code/image snapshot; legacy
+  Program/bare admission stays gated and external entry/results stay scalar-only.
+  Actual word/kind/span transfer, including packed-zero empty views, never reads
+  Static formals as scalar cells or broadens to proof root unions. Complete Fuel
+  precedes child publication; native leave succeeds before caller publication.
+  Existing owner/loan transactions and prepaid zero-Fuel abort remain shared.
+  PARAM costs 17 including dispatch; CALL adds 32+32*N metadata (0..8 actuals)
+  plus existing dispatch/arity/copy/native entry; Static RETURN adds 49 including
+  dispatch plus native leave. Existing prices/default256/cap16000000 remain.
+  The 32x16 u32 word table remains 2048 logical bytes; no image payload is copied.
+  Development/release each passed 24 native groups (8 transfer/VM, 9 ranges,
+  7 scalar-entry) on 136 matching native inputs and 33 tool-free public Fuel CLI
+  cases on 141 matching CLI inputs. All 129 production modules are LF; locked
+  mirrors pass; test discovery is 230 files. No overrides or historical reuse.
+  Exact/one-short/one-more zero-backing examples, literal/text/byte/empty returns,
+  eight actuals/scalar prefixes, recursive spans, frame-limit abort, retained
+  immutability and owned array argument copies/drop pass. Earlier checker/native
+  probes are excluded. New mixed-Static record/loan arguments and aggregate
+  results reuse canonical adapters but have no new mixed runtime fixture here.
+  Full profiles/original public Fuel native/general stack/RAM/allocator/timing/
+  Linux/restricted/ABI/package checks were not rerun. Code a1b555a; metadata-only
+  predecessor 39f4688. Next complete mixed runtime coverage and storage-independent
+  reference/source CALL integration, then ordinary public and returned-image
+  lifetime APIs. The complete inventory/goal remains open. See
+  docs/engineering/static-call-transfer.md and focused Windows evidence.
 - Private Static CALL analysis now combines reconstructed PARAM/CALL/RETURN
   recipes and grounded origins with canonical scalar/array/record/loan proof.
   Static type-zero formals never become scalar cells or destinations; Static
