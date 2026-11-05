@@ -82,9 +82,11 @@ Linux, restricted delivery and ABI/package checks were not rerun.
 
 ## Next integration
 
-Connect this complete proof to a retained returned-reference Program and native
-selected handoff, caller destination publication, last-alias close and prepaid
-abort. Reuse full-generation native receipts without conflating ordinary slice
+The [native receipt successor](reference-receipts.md) now supplies compact
+returned selectors, disjoint sparse receipt locations and transactional last-alias
+close with prepaid native finalization. Next connect this complete proof and
+those helpers to a retained returned-reference Program and canonical selected
+handoff/caller publication, with complete Fuel and prepaid abort. Reuse full-generation native receipts without conflating ordinary slice
 and immutable/universal site namespaces. Preserve actual runtime windows, image
 borrows, selected owners/parents and recursive scope. Then lower source signatures,
 actuals/returns and complete public admission. The [full inventory](../product/04-remaining-work.md)

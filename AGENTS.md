@@ -1,3 +1,21 @@
+- Native returned-byte receipt helpers now use existing u32 words and sparse
+  47-slot Held storage. Returned selectors decode as 16..31; formal selectors
+  stay 0..7. Ordinary locations 0..511, absent512 and universal1024..1535 stay
+  disjoint. Same-numbered sites cannot select each other's full native ticket.
+  Last-alias close prepays 128 metadata units; physical close remains prepaid by
+  handoff. Failed final owner drop preserves word/receipt/native state. Frame
+  retirement handles both namespaces only after native handoff/abort. No new
+  decoded Word fields, dense ticket map, frame fields or pool reservation.
+  Code ec27142; docs/engineering/reference-receipts.md records boundaries.
+  Development/release each passed 18 native groups on 142 matching inputs,
+  134 LF modules and 239-file discovery; both locked LF mirrors pass. No overrides/
+  historical reuse; earlier rejected fixtures excluded. Old shared-byte formal
+  VM and sparse writer nesting regressions pass. Public CLI/Fuel selections/full
+  profiles/general RAM-stack/timing/Linux/restricted/ABI/package were not rerun.
+  Next connect retained returned-reference Program and complete canonical generic
+  CALL/RETURN transfer, selector/access Fuel and caller publication. Generic
+  results remain unexecuted through IR/public admission. Source signatures/
+  actuals/returns and the complete objective remain open. Local only; no push.
 - Generic returned-byte recipes now combine complete scalar/owner/loan/CFG proof
   with local-owner dependency masks via verifier::inspect_reference_returns and
   distinct ReferenceReturnProof. Image actuals have no owner mask; runtime actuals

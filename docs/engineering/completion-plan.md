@@ -73,7 +73,10 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    result signatures and grounded image/input/local origins. The
    [canonical result-analysis successor](reference-return-lifetimes.md) now adds
    complete scalar/owner/loan proof and local-owner exclusion through all returned
-   aliases. Next connect native selected result handoff/publication/close, then
+   aliases. The [native receipt prerequisite](reference-receipts.md) now provides
+   disjoint sparse bindings, exact returned windows and transactional last-alias
+   close without another frame map. Next connect retained admission and canonical
+   selected result CALL/RETURN handoff/publication, then
    source signatures/actuals/returns;
    private execution alone cannot promote public source syntax.
    Validate actual public source execution before promoting its capability.

@@ -98,7 +98,9 @@ The [returned-reference recipe successor](reference-return-ir.md) now reconstruc
 shared byte results and exact image/input/local origins through actual IR. Next
 use the [complete canonical lifetime proof](reference-return-lifetimes.md),
 then connect native origin-selected retention, caller publication and image/owner
-lifetime handling. Then lower source
+lifetime handling. The [native receipt prerequisite](reference-receipts.md) now
+supplies disjoint sparse bindings and last-alias close without another frame map;
+canonical generic-result CALL/RETURN dispatch remains to be connected. Then lower source
 signatures, actuals and returns and complete ordinary public admission. Equality
 for kind 3, text/non-byte references and Buffer/input backing remain open.
 The [complete inventory](../product/04-remaining-work.md) and
