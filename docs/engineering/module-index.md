@@ -39,7 +39,9 @@ compiler/type/ownership proof.
 
 `entry` binds a named public function; it rejects private symbols and struct names.
 It deliberately does not prove zero arguments, i32 results or guest-input ABI
-shape. The full compiler must check the selected function signature before execution.
+shape. The [entry signature successor](module-entry.md) separately retains and
+checks a selected public zero-argument i32 function. The full compiler must still
+connect that exact selection to complete body/type/ownership and IR admission.
 `module_at`, `symbol`, `module_name` and the retained Snapshot expose shared views
 or value metadata; no mutable Index field or source borrow escapes its owner.
 

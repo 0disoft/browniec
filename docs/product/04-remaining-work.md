@@ -128,7 +128,7 @@ below cover prose obligations beyond this feature list as well.
 | --- | --- | --- |
 | modules | CLI fixed module main; native immutable snapshots and linked module index | L01, C01 |
 | explicit_import_alias | Native alias binding; full source compilation remains open | L01 |
-| public_functions | Native declaration/visibility/entry-name binding; guest lowering remains open | L01, I01 |
+| public_functions | Native declaration/visibility binding and retained zero-argument i32 entry signature; guest lowering remains open | L01, I01 |
 | local_type_inference | Explicit local types required | L02 |
 | let_var | Narrow | L02, L05 |
 | checked_integer_arithmetic | Narrow six scalar types | V01, V02 |
@@ -171,7 +171,7 @@ below cover prose obligations beyond this feature list as well.
 
 | ID | Work and completion condition |
 | --- | --- |
-| L01 | Native [source snapshots](../engineering/module-sources.md) now retain immutable source/name bytes, stable source indices and checked original-byte spans. The [native module index](../engineering/module-index.md) now binds canonical module paths, explicit aliases, public/private function/struct names and public entry names against that snapshot. Remaining: qualified value/type lowering, complete entry signature/type/ownership checks, executable multi-module compilation and public project entry selection. Preserve source identities across resolution and reject duplicate/ambiguous/cyclic-invalid definitions within compile budgets. |
+| L01 | Native [source snapshots](../engineering/module-sources.md) now retain immutable source/name bytes, stable source indices and checked original-byte spans. The [native module index](../engineering/module-index.md) now binds canonical module paths, explicit aliases, public/private function/struct names and public entry names against that snapshot. The [entry signature successor](../engineering/module-entry.md) now retains a named public zero-argument i32 entry against that exact Index. Remaining: qualified value/type lowering, carrying the selected entry through complete body/type/ownership and independent IR checks, executable multi-module compilation and public project entry selection. Preserve source identities across resolution and reject duplicate/ambiguous/cyclic-invalid definitions within compile budgets. |
 | L02 | Add the target's local type inference, `void` returns and `if` expressions. Review current pure-for restrictions and other narrow grammar choices explicitly rather than silently widening them. Add only the agreed target syntax. |
 | L03 | Record field shorthand is implemented for scalar and plain-record members through existing typed ordered staging; see [the contract](../engineering/m2-struct-shorthand.md). Remaining: complete array element-list initialization with exact arity, source evaluation order, complete initialization and independent values. Existing repeated-array/record constructors must keep their current behavior. |
 | L04 | Implement selected-place receiver/index evaluation before RHS and agreed compound assignment forms; hold the originally selected root/location through RHS effects and independently verify its identity, lifetime and overlap. Ordinary current stores are not a generic selected-place contract. |
