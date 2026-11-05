@@ -9,10 +9,13 @@ import errors as errors;
 import ir as ir;
 import static_call_ir as candidate;
 import static_image as images;
+import std::vec as vec;
 
 // Only internally rebuilt source/context plus complete canonical admission can
 // create this resource. Compiler name tables are not retained at runtime.
-pub resource Program { sources::Snapshot sources; programs::PublicProgram code; cleanup { } }
+// Keep both code and original-source storage out of owning return slots.
+resource Stored { sources::Snapshot sources; programs::PublicProgram code; cleanup { } }
+pub resource Program { vec::Vec<Stored> stored; cleanup { } }
 pub fn Result<Program,diagnostics::Error> compile(entries::Entry selected,usize image_limit){
     var images::Builder builder=switch(images::builder(4096)){
         case .ok(v):{v}case .err(_):{return .err(diagnostics::absent(errors::make(5,0)));}
@@ -37,7 +40,7 @@ fn diagnostics::Error admission_error(ref entries::Entry selected,programs::Erro
 }
 fn Result<Program,diagnostics::Error> finish_legacy(ref entries::Entry selected,ref ir::Program code){
     return switch(programs::retain_public_legacy(code)){
-        case .ok(v):{.ok(retain(selected,v))}case .err(e):{.err(admission_error(selected,e,code))}
+        case .ok(v):{retain(selected,v)}case .err(e):{.err(admission_error(selected,e,code))}
     };
 }
 fn Result<Program,diagnostics::Error> finish_references(ref entries::Entry selected,ref images::Builder builder,
@@ -46,21 +49,29 @@ fn Result<Program,diagnostics::Error> finish_references(ref entries::Entry selec
         case .ok(v):{v}case .err(e):{return .err(error(selected,compiler::public_error(programs::Error{.kind=.Literal,.code=errors::make(0,0),.literal=e})));}
     };
     return switch(programs::retain_reference_returns(code,image,image_limit)){
-        case .ok(v):{.ok(retain(selected,programs::retain_public_references(v)))}
+        case .ok(v):{retain(selected,programs::retain_public_references(v))}
         case .err(e):{.err(admission_error(selected,e,ref code.body))}
     };
 }
 // Source duplication and final owning construction happen after compiler scratch
 // and complete admission have returned; none of these slots burden that stack.
-fn Program retain(ref entries::Entry selected,programs::PublicProgram code){
+fn Result<Program,diagnostics::Error> retain(ref entries::Entry selected,programs::PublicProgram code){
+    var vec::Vec<Stored> stored=vec::empty<Stored>();
+    let usize reserved=switch(vec::reserve<Stored>(ref mut stored,1)){
+        case .ok(v):{v}case .err(_):{return .err(diagnostics::absent(errors::make(15,0)));}
+    };
     let sources::Snapshot retained=sources::duplicate(modules::snapshot(entries::index(selected)));
-    return Program{.sources=retained,.code=code};
+    let usize placed=switch(vec::push<Stored>(ref mut stored,Stored{.sources=retained,.code=code})){
+        case .ok(v):{v}case .err(_):{return .err(diagnostics::absent(errors::make(15,0)));}
+    };
+    return .ok(Program{.stored=stored});
 }
-pub fn ref sources::Snapshot snapshot(ref Program program){return ref program.sources;}
-pub fn ref ir::Program body(ref Program program){return programs::public_body(ref program.code);}
-pub fn u8 profile(ref Program program){return programs::public_profile(ref program.code);}
+fn ref Stored stored(ref Program program){return vec::at<Stored>(ref program.stored,0);}
+pub fn ref sources::Snapshot snapshot(ref Program program){return ref stored(program).sources;}
+pub fn ref ir::Program body(ref Program program){return programs::public_body(ref stored(program).code);}
+pub fn u8 profile(ref Program program){return programs::public_profile(ref stored(program).code);}
 pub fn Result<i64,diagnostics::Error> run(ref Program program,usize fuel){
-    return switch(programs::run_public(ref program.code,fuel)){
-        case .ok(v):{.ok(v)}case .err(e):{.err(if(e.offset==0){diagnostics::absent(e)}else{diagnostics::map(ref program.sources,e,16)})}
+    return switch(programs::run_public(ref stored(program).code,fuel)){
+        case .ok(v):{.ok(v)}case .err(e):{.err(if(e.offset==0){diagnostics::absent(e)}else{diagnostics::map(ref stored(program).sources,e,16)})}
     };
 }

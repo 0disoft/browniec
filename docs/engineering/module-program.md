@@ -31,7 +31,8 @@ freezes the actual literal image and performs complete reference/origin/owner/
 loan verification before publishing `PublicProgram`. Failed admission publishes
 no executable resource and never retries another compiler, VM or Fuel schedule.
 A private `module_program::Program` owns that sealed executable and a duplicate
-of the immutable original source/name snapshot. Compiler-only module tables are
+of the immutable original source/name snapshot through the
+[typed retention owner](native-module-retention.md). Compiler-only module tables are
 not retained at runtime. Read-only body/snapshot access cannot mutate authority.
 
 ## Native stack boundaries
@@ -54,8 +55,10 @@ layout/cycle/depth proof. Both admission proofs, image quota checks and failure
 cleanup remain. Identifier operands use a thin parser path; literal/unary/group construction
 scratch stays outside each nested named CALL frame. The original combined record
 group remains combined, and the 32-deep scalar and retained source CALL cases remain accepted while depth 33 is
-rejected. No compiler/linker stack override, new heap representation or larger
-language limit is used. This is regression evidence, not a general peak-stack,
+rejected. That original checkpoint used no compiler/linker stack override, new
+heap representation or larger language limit. The
+[retention successor](native-module-retention.md) now moves the owning payload
+behind typed SDK storage while preserving those limits. This is regression evidence, not a general peak-stack,
 process-memory, allocator/OOM, timing or Engine preallocation bound.
 
 ## Source-local diagnostics and execution

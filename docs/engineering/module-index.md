@@ -65,7 +65,9 @@ at most 64 aliases and 48 declarations. There is no recursive graph walk, source
 replay, mutable global state, compiler subprocess, file access or capability grant.
 Bound targets stage separately before publication under the native whole-root
 borrow rules. A failed build consumes/drops its private source owner and publishes
-no Index.
+no Index. The [typed retention successor](native-module-retention.md) now keeps
+the exact snapshot and completed table behind one private SDK storage owner;
+allocation failure is reported separately as `Allocation`, without a source span.
 
 Header scanning locates types/parameters/bodies without validating their full
 language semantics. Missing returns, unknown types, invalid parameter syntax,

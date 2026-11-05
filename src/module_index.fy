@@ -3,10 +3,11 @@ import source_snapshot as sources;
 import lexer as lexer;
 import locals as locals;
 import std::bytes as bytes;
+import std::vec as vec;
 
 // Sealed header/name binding, not typed executable admission. Every span refers
 // to the exact Snapshot moved into Index. No filesystem or builtin fallback.
-pub enum Failure { Lexical; Syntax; Limit; Duplicate; Missing; Private; Reserved; Bounds; Kind; }
+pub enum Failure { Lexical; Syntax; Limit; Duplicate; Missing; Private; Reserved; Bounds; Kind; Allocation; }
 pub struct Error { Failure kind; sources::Span at; }
 pub struct Module { sources::Span path; usize begin; usize end; }
 pub struct Import { usize owner; usize target; sources::Span alias; sources::Span path; usize begin; usize end; }
@@ -17,7 +18,9 @@ struct Table {
     Module[16] modules; Import[64] imports; Symbol[48] symbols;
     usize count; usize import_count; usize symbol_count; usize functions; usize records;
 }
-pub resource Index { sources::Snapshot sources; Table table; cleanup { } }
+// Large immutable binding data stays behind one private typed owner.
+resource Stored { sources::Snapshot sources; Table table; cleanup { } }
+pub resource Index { vec::Vec<Stored> stored; cleanup { } }
 fn Error error(Failure kind,sources::Span at){return Error{.kind=kind,.at=at};}
 fn Table empty(){
     let sources::Span none=sources::no_source();
@@ -154,10 +157,18 @@ fn Result<usize,Error> prepare(ref sources::Snapshot snapshot,ref mut Table t){
 }
 pub fn Result<Index,Error> build(sources::Snapshot snapshot){
     var Table t=empty();let usize ready=prepare(ref snapshot,ref mut t)?;
-    return .ok(Index{.sources=snapshot,.table=t});
+    var vec::Vec<Stored> stored=vec::empty<Stored>();
+    let usize capacity=switch(vec::reserve<Stored>(ref mut stored,1)){
+        case .ok(v):{v}case .err(_):{return .err(error(.Allocation,sources::no_source()));}
+    };
+    let usize count=switch(vec::push<Stored>(ref mut stored,Stored{.sources=snapshot,.table=t})){
+        case .ok(v):{v}case .err(_):{return .err(error(.Allocation,sources::no_source()));}
+    };
+    return .ok(Index{.stored=stored});
 }
-pub fn ref sources::Snapshot snapshot(ref Index p){return ref p.sources;}
-fn ref Table table(ref Index p){return ref p.table;}
+fn ref Stored stored(ref Index p){return vec::at<Stored>(ref p.stored,0);}
+pub fn ref sources::Snapshot snapshot(ref Index p){return ref stored(p).sources;}
+fn ref Table table(ref Index p){return ref stored(p).table;}
 pub fn usize count(ref Index p){return table(p).count;}
 pub fn usize symbol_count(ref Index p){return table(p).symbol_count;}
 pub fn usize import_count(ref Index p){return table(p).import_count;}
