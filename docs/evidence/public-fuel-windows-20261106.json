@@ -1,7 +1,7 @@
 {
   "schema": "browniec.public-fuel-revalidation/v1",
-  "status": "development-passed-release-pending",
-  "recordedAt": "2026-11-05T17:43:41.467042+00:00",
+  "status": "passed",
+  "recordedAt": "2026-11-05T17:57:47.965400+00:00",
   "sourceBaseline": "624eac6aa6886c12a9bb7c46f0aba2785695a8a3",
   "scope": "Public Fuel exact costs and CLI boundaries after local/aggregate/reference/Option inference",
   "profiles": {
@@ -1005,6 +1005,1009 @@
         "fuel_default": 256,
         "fuel_limit": 16000000
       }
+    },
+    "release": {
+      "startingHead": "7c8f0f4e7811779fc6a9b7ffb9824992cc2024c4",
+      "recordedAt": "2026-11-05T17:44:33.554487+00:00",
+      "nativeGroups": 25,
+      "cliCases": 33,
+      "check": "check ok: 2 instance(s), 162 source file(s), 1519 MIR function(s), lock verified\n",
+      "build": "built: build/browniec.exe (x86_64-windows-msvc, release, lock verified)\n",
+      "commands": [
+        [
+          "git",
+          "rev-parse",
+          "HEAD"
+        ],
+        [
+          ".\\build\\toolchain\\fairyc.exe",
+          "--version"
+        ],
+        [
+          ".\\build\\toolchain\\fairyc.exe",
+          "check",
+          "--locked"
+        ],
+        [
+          ".\\build\\toolchain\\fairyc.exe",
+          "test",
+          "--native",
+          "--capture-output",
+          "--json",
+          "--locked",
+          "--release",
+          "--file",
+          "tests/m2/public_fuel.fy",
+          "--file",
+          "tests/m2/slice_public_canonical.fy",
+          "--file",
+          "tests/m2/slice_mutable_execution.fy",
+          "--file",
+          "tests/m2/slice_result_fuel.fy",
+          "--file",
+          "tests/m2/slice_result_call_execution.fy"
+        ],
+        [
+          ".\\build\\toolchain\\fairyc.exe",
+          "build",
+          "--locked",
+          "--release"
+        ]
+      ],
+      "nativeReport": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "release",
+        "tests": [
+          {
+            "identity": "tests::m2::public_fuel::admission_still_precedes_runtime_fuel_and_backing_limits",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::public_fuel::eight_writer_call_is_executable_under_the_public_ceiling",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::public_fuel::rooted_shared_and_exclusive_operations_keep_their_exact_prices",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::public_fuel::scalar_defaults_and_native_host_budgets_remain_independent",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_mutable_execution::formal_instruction_prices_one_short_payload_guards_utf8_and_release_are_checked",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_mutable_execution::fuel_bounds_arithmetic_and_failed_abort_cleanup_preserve_writes_and_receipts",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_mutable_execution::mixed_readonly_helpers_owned_arguments_and_scalar_array_record_tagged_returns_execute",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_mutable_execution::recursive_mutual_and_reused_mutable_frames_reach_depth32_without_native_recursion",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_mutable_execution::scalar_control_preflight_and_late_owned_failure_publish_nothing_before_success",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_mutable_execution::six_scalar_mutable_calls_write_read_restore_and_return_through_the_shared_loop",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_public_canonical::public_canonical_calls_match_legacy_shared_owned_results_and_scalar_frames",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_public_canonical::public_canonical_fuel_quotas_and_error_offsets_match_legacy",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_call_execution::ended_anonymous_captures_restore_both_parents_and_actual_ranges",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_call_execution::exact_fuel_succeeds_one_short_drains_and_initial_short_preserves_bytes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_call_execution::failure_after_borrowed_result_retains_prior_writes_and_drains_hidden_owners",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_call_execution::native_owned_entry_can_return_bound_subviews_and_close_at_zero_fuel",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_call_execution::nested_results_aliases_and_recursive_forwarding_preserve_generations",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_call_execution::selected_temporary_owners_and_unselected_copies_clean_up_exactly_once",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_call_execution::shared_and_exclusive_results_execute_all_six_scalar_types",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_fuel::exact_whole_invocation_budget_and_one_short_have_distinct_state_contracts",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_fuel::full_owner_pool_and_authority_limits_handoff_or_abort_without_extra_fuel",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_fuel::owned_entry_copy_work_is_prepaid_once_and_fits_the_cli_limit",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_fuel::shared_mutable_and_ordinary_nested_calls_fit_the_cli_limit",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_fuel::slice_reads_writes_and_utf8_use_the_existing_public_prices",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_fuel::transaction_boundaries_precede_mutation_and_finalization_is_prepaid",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 25,
+        "passed": 25,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "nativeReportSha256": "e734fb6305a63791cab413936a24124b0105c00d86caac7361c31ab0aaaf1372",
+      "receiptPath": "build/public-fuel/release/all-receipt.json",
+      "receiptSha256": "f4eac00ab9455cad1cdf9fe6bc293c41b5ee510fbf5b08b3e248e537521cc002",
+      "artifact": {
+        "path": "build/public-fuel/release/browniec.exe",
+        "sha256": "70b895f681581feabde1a34b5ed1416999e847849ba4e1c410cf354e5a8994ae"
+      },
+      "runtimeEnvironment": "cleared; tool-free PATH",
+      "cli": [
+        {
+          "command": [
+            ".\\build\\public-fuel\\release\\browniec.exe",
+            "run",
+            ".\\build\\public-fuel\\release\\case-000.brc",
+            "--json"
+          ],
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "exit": 0,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m1-scalar/1",
+            "command": "run",
+            "status": "completed",
+            "return_i32": 42,
+            "error": null
+          }
+        },
+        {
+          "command": [
+            ".\\build\\public-fuel\\release\\browniec.exe",
+            "run",
+            ".\\build\\public-fuel\\release\\case-001.brc",
+            "--json",
+            "--fuel",
+            "0"
+          ],
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "exit": 5,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m1-scalar/1",
+            "command": "run",
+            "status": "error",
+            "return_i32": null,
+            "error": {
+              "kind": "fuel",
+              "byte_offset": 33
+            }
+          }
+        },
+        {
+          "command": [
+            ".\\build\\public-fuel\\release\\browniec.exe",
+            "run",
+            ".\\build\\public-fuel\\release\\case-002.brc",
+            "--json",
+            "--fuel",
+            "1"
+          ],
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "exit": 5,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m1-scalar/1",
+            "command": "run",
+            "status": "error",
+            "return_i32": null,
+            "error": {
+              "kind": "fuel",
+              "byte_offset": 26
+            }
+          }
+        },
+        {
+          "command": [
+            ".\\build\\public-fuel\\release\\browniec.exe",
+            "run",
+            ".\\build\\public-fuel\\release\\case-003.brc",
+            "--json",
+            "--fuel",
+            "2"
+          ],
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "exit": 0,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m1-scalar/1",
+            "command": "run",
+            "status": "completed",
+            "return_i32": 42,
+            "error": null
+          }
+        },
+        {
+          "command": [
+            ".\\build\\public-fuel\\release\\browniec.exe",
+            "run",
+            ".\\build\\public-fuel\\release\\case-004.brc",
+            "--json",
+            "--fuel",
+            "256"
+          ],
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "exit": 0,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m1-scalar/1",
+            "command": "run",
+            "status": "completed",
+            "return_i32": 42,
+            "error": null
+          }
+        },
+        {
+          "command": [
+            ".\\build\\public-fuel\\release\\browniec.exe",
+            "run",
+            ".\\build\\public-fuel\\release\\case-005.brc",
+            "--json",
+            "--fuel",
+            "1000000"
+          ],
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "exit": 0,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m1-scalar/1",
+            "command": "run",
+            "status": "completed",
+            "return_i32": 42,
+            "error": null
+          }
+        },
+        {
+          "command": [
+            ".\\build\\public-fuel\\release\\browniec.exe",
+            "run",
+            ".\\build\\public-fuel\\release\\case-006.brc",
+            "--json",
+            "--fuel",
+            "1000001"
+          ],
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "exit": 0,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m1-scalar/1",
+            "command": "run",
+            "status": "completed",
+            "return_i32": 42,
+            "error": null
+          }
+        },
+        {
+          "command": [
+            ".\\build\\public-fuel\\release\\browniec.exe",
+            "run",
+            ".\\build\\public-fuel\\release\\case-007.brc",
+            "--json",
+            "--fuel",
+            "16000000"
+          ],
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "exit": 0,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m1-scalar/1",
+            "command": "run",
+            "status": "completed",
+            "return_i32": 42,
+            "error": null
+          }
+        },
+        {
+          "command": [
+            ".\\build\\public-fuel\\release\\browniec.exe",
+            "run",
+            ".\\build\\public-fuel\\release\\case-008.brc",
+            "--json",
+            "--fuel",
+            "-1"
+          ],
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "exit": 2,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m1-scalar/1",
+            "command": "run",
+            "status": "error",
+            "return_i32": null,
+            "error": {
+              "kind": "usage",
+              "byte_offset": 0
+            }
+          }
+        },
+        {
+          "command": [
+            ".\\build\\public-fuel\\release\\browniec.exe",
+            "run",
+            ".\\build\\public-fuel\\release\\case-009.brc",
+            "--json",
+            "--fuel",
+            "16000001"
+          ],
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "exit": 2,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m1-scalar/1",
+            "command": "run",
+            "status": "error",
+            "return_i32": null,
+            "error": {
+              "kind": "usage",
+              "byte_offset": 0
+            }
+          }
+        },
+        {
+          "command": [
+            ".\\build\\public-fuel\\release\\browniec.exe",
+            "run",
+            ".\\build\\public-fuel\\release\\case-010.brc",
+            "--json",
+            "--fuel",
+            "9223372036854775807"
+          ],
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "exit": 2,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m1-scalar/1",
+            "command": "run",
+            "status": "error",
+            "return_i32": null,
+            "error": {
+              "kind": "usage",
+              "byte_offset": 0
+            }
+          }
+        },
+        {
+          "command": [
+            ".\\build\\public-fuel\\release\\browniec.exe",
+            "run",
+            ".\\build\\public-fuel\\release\\case-011.brc",
+            "--json",
+            "--fuel",
+            "9223372036854775808"
+          ],
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "exit": 2,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m1-scalar/1",
+            "command": "run",
+            "status": "error",
+            "return_i32": null,
+            "error": {
+              "kind": "usage",
+              "byte_offset": 0
+            }
+          }
+        },
+        {
+          "command": [
+            ".\\build\\public-fuel\\release\\browniec.exe",
+            "run",
+            ".\\build\\public-fuel\\release\\case-012.brc",
+            "--json",
+            "--fuel",
+            "18446744073709551615"
+          ],
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "exit": 2,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m1-scalar/1",
+            "command": "run",
+            "status": "error",
+            "return_i32": null,
+            "error": {
+              "kind": "usage",
+              "byte_offset": 0
+            }
+          }
+        },
+        {
+          "command": [
+            ".\\build\\public-fuel\\release\\browniec.exe",
+            "run",
+            ".\\build\\public-fuel\\release\\case-013.brc",
+            "--json",
+            "--fuel",
+            "184467440737095516150"
+          ],
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "exit": 2,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m1-scalar/1",
+            "command": "run",
+            "status": "error",
+            "return_i32": null,
+            "error": {
+              "kind": "usage",
+              "byte_offset": 0
+            }
+          }
+        },
+        {
+          "command": [
+            ".\\build\\public-fuel\\release\\browniec.exe",
+            "run",
+            ".\\build\\public-fuel\\release\\case-014.brc",
+            "--json",
+            "--fuel",
+            ""
+          ],
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "exit": 2,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m1-scalar/1",
+            "command": "run",
+            "status": "error",
+            "return_i32": null,
+            "error": {
+              "kind": "usage",
+              "byte_offset": 0
+            }
+          }
+        },
+        {
+          "command": [
+            ".\\build\\public-fuel\\release\\browniec.exe",
+            "run",
+            ".\\build\\public-fuel\\release\\case-015.brc",
+            "--json",
+            "--fuel",
+            "1.5"
+          ],
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "exit": 2,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m1-scalar/1",
+            "command": "run",
+            "status": "error",
+            "return_i32": null,
+            "error": {
+              "kind": "usage",
+              "byte_offset": 0
+            }
+          }
+        },
+        {
+          "command": [
+            ".\\build\\public-fuel\\release\\browniec.exe",
+            "run",
+            ".\\build\\public-fuel\\release\\case-016.brc",
+            "--json",
+            "--fuel",
+            "nope"
+          ],
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "exit": 2,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m1-scalar/1",
+            "command": "run",
+            "status": "error",
+            "return_i32": null,
+            "error": {
+              "kind": "usage",
+              "byte_offset": 0
+            }
+          }
+        },
+        {
+          "command": [
+            ".\\build\\public-fuel\\release\\browniec.exe",
+            "run",
+            ".\\build\\public-fuel\\release\\case-017.brc",
+            "--json",
+            "--fuel"
+          ],
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "exit": 2,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m1-scalar/1",
+            "command": "run",
+            "status": "error",
+            "return_i32": null,
+            "error": {
+              "kind": "usage",
+              "byte_offset": 0
+            }
+          }
+        },
+        {
+          "command": [
+            ".\\build\\public-fuel\\release\\browniec.exe",
+            "run",
+            ".\\build\\public-fuel\\release\\case-018.brc",
+            "--json",
+            "--fuel",
+            "1",
+            "--fuel",
+            "2"
+          ],
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "exit": 2,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m1-scalar/1",
+            "command": "run",
+            "status": "error",
+            "return_i32": null,
+            "error": {
+              "kind": "usage",
+              "byte_offset": 0
+            }
+          }
+        },
+        {
+          "command": [
+            ".\\build\\public-fuel\\release\\browniec.exe",
+            "run",
+            ".\\build\\public-fuel\\release\\case-019.brc",
+            "--json",
+            "--json"
+          ],
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "exit": 2,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m1-scalar/1",
+            "command": "run",
+            "status": "error",
+            "return_i32": null,
+            "error": {
+              "kind": "usage",
+              "byte_offset": 0
+            }
+          }
+        },
+        {
+          "command": [
+            ".\\build\\public-fuel\\release\\browniec.exe",
+            "check",
+            ".\\build\\public-fuel\\release\\case-020.brc",
+            "--json",
+            "--fuel",
+            "2"
+          ],
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "exit": 2,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m1-scalar/1",
+            "command": "check",
+            "status": "error",
+            "return_i32": null,
+            "error": {
+              "kind": "usage",
+              "byte_offset": 0
+            }
+          }
+        },
+        {
+          "command": [
+            ".\\build\\public-fuel\\release\\browniec.exe",
+            "check",
+            ".\\build\\public-fuel\\release\\case-021.brc",
+            "--json"
+          ],
+          "sourceSha256": "d55fb0cbf7813657d59978262752664274c0aa97fe9b69910077066e6b52032e",
+          "exit": 0,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m2-array-write/1",
+            "command": "check",
+            "status": "checked",
+            "return_i32": null,
+            "error": null
+          }
+        },
+        {
+          "command": [
+            ".\\build\\public-fuel\\release\\browniec.exe",
+            "run",
+            ".\\build\\public-fuel\\release\\case-022.brc",
+            "--json",
+            "--fuel",
+            "1000000"
+          ],
+          "sourceSha256": "d55fb0cbf7813657d59978262752664274c0aa97fe9b69910077066e6b52032e",
+          "exit": 5,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m2-array-write/1",
+            "command": "run",
+            "status": "error",
+            "return_i32": null,
+            "error": {
+              "kind": "fuel",
+              "byte_offset": 596
+            }
+          }
+        },
+        {
+          "command": [
+            ".\\build\\public-fuel\\release\\browniec.exe",
+            "run",
+            ".\\build\\public-fuel\\release\\case-023.brc",
+            "--json",
+            "--fuel",
+            "16000000"
+          ],
+          "sourceSha256": "d55fb0cbf7813657d59978262752664274c0aa97fe9b69910077066e6b52032e",
+          "exit": 0,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m2-array-write/1",
+            "command": "run",
+            "status": "completed",
+            "return_i32": 42,
+            "error": null
+          }
+        },
+        {
+          "command": [
+            ".\\build\\public-fuel\\release\\browniec.exe",
+            "run",
+            ".\\build\\public-fuel\\release\\case-024.brc",
+            "--json",
+            "--fuel",
+            "1000000"
+          ],
+          "sourceSha256": "806a773380c4a8beb5513d4b50b68b8de3451214a8f89c0fc9ca11620a6afa16",
+          "exit": 5,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m2-struct-copy/1",
+            "command": "run",
+            "status": "error",
+            "return_i32": null,
+            "error": {
+              "kind": "fuel",
+              "byte_offset": 103
+            }
+          }
+        },
+        {
+          "command": [
+            ".\\build\\public-fuel\\release\\browniec.exe",
+            "run",
+            ".\\build\\public-fuel\\release\\case-025.brc",
+            "--json",
+            "--fuel",
+            "16000000"
+          ],
+          "sourceSha256": "806a773380c4a8beb5513d4b50b68b8de3451214a8f89c0fc9ca11620a6afa16",
+          "exit": 0,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m2-struct-copy/1",
+            "command": "run",
+            "status": "completed",
+            "return_i32": 42,
+            "error": null
+          }
+        },
+        {
+          "command": [
+            ".\\build\\public-fuel\\release\\browniec.exe",
+            "run",
+            ".\\build\\public-fuel\\release\\case-026.brc",
+            "--json",
+            "--fuel",
+            "1000000"
+          ],
+          "sourceSha256": "0c0ebd872781646f51eaf43bbd596bd659052e7d3d8710a209effb76f55875db",
+          "exit": 5,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m2-struct-read/1",
+            "command": "run",
+            "status": "error",
+            "return_i32": null,
+            "error": {
+              "kind": "fuel",
+              "byte_offset": 148
+            }
+          }
+        },
+        {
+          "command": [
+            ".\\build\\public-fuel\\release\\browniec.exe",
+            "run",
+            ".\\build\\public-fuel\\release\\case-027.brc",
+            "--json",
+            "--fuel",
+            "16000000"
+          ],
+          "sourceSha256": "0c0ebd872781646f51eaf43bbd596bd659052e7d3d8710a209effb76f55875db",
+          "exit": 0,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m2-struct-read/1",
+            "command": "run",
+            "status": "completed",
+            "return_i32": 42,
+            "error": null
+          }
+        },
+        {
+          "command": [
+            ".\\build\\public-fuel\\release\\browniec.exe",
+            "run",
+            ".\\build\\public-fuel\\release\\case-028.brc",
+            "--json",
+            "--fuel",
+            "1000000"
+          ],
+          "sourceSha256": "ceff304f8b6b52bf68271efb914a2593090194c3d81c21239bb27aa8288a9c6c",
+          "exit": 5,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m2-struct-copy/1",
+            "command": "run",
+            "status": "error",
+            "return_i32": null,
+            "error": {
+              "kind": "fuel",
+              "byte_offset": 152
+            }
+          }
+        },
+        {
+          "command": [
+            ".\\build\\public-fuel\\release\\browniec.exe",
+            "run",
+            ".\\build\\public-fuel\\release\\case-029.brc",
+            "--json",
+            "--fuel",
+            "16000000"
+          ],
+          "sourceSha256": "ceff304f8b6b52bf68271efb914a2593090194c3d81c21239bb27aa8288a9c6c",
+          "exit": 0,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m2-struct-copy/1",
+            "command": "run",
+            "status": "completed",
+            "return_i32": 42,
+            "error": null
+          }
+        },
+        {
+          "command": [
+            ".\\build\\public-fuel\\release\\browniec.exe",
+            "run",
+            ".\\build\\public-fuel\\release\\case-030.brc",
+            "--json",
+            "--fuel",
+            "1000000"
+          ],
+          "sourceSha256": "40996fc117e668a6efa64c41e21687e33297d9ad957d52f28bba6029748010d1",
+          "exit": 5,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m2-struct-read/1",
+            "command": "run",
+            "status": "error",
+            "return_i32": null,
+            "error": {
+              "kind": "fuel",
+              "byte_offset": 278
+            }
+          }
+        },
+        {
+          "command": [
+            ".\\build\\public-fuel\\release\\browniec.exe",
+            "run",
+            ".\\build\\public-fuel\\release\\case-031.brc",
+            "--json",
+            "--fuel",
+            "16000000"
+          ],
+          "sourceSha256": "40996fc117e668a6efa64c41e21687e33297d9ad957d52f28bba6029748010d1",
+          "exit": 0,
+          "result": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m2-struct-read/1",
+            "command": "run",
+            "status": "completed",
+            "return_i32": 42,
+            "error": null
+          }
+        }
+      ],
+      "version": {
+        "schema": "browniec.version/v1",
+        "profile": "brownie.m1-scalar/1",
+        "array_profile": "brownie.m2-array-read/1",
+        "array_write_profile": "brownie.m2-array-write/1",
+        "array_copy_profile": "brownie.m2-array-copy/1",
+        "struct_read_profile": "brownie.m2-struct-read/1",
+        "struct_write_profile": "brownie.m2-struct-write/1",
+        "struct_copy_profile": "brownie.m2-struct-copy/1",
+        "struct_nested_profile": "brownie.m2-struct-nested/1",
+        "struct_child_binding_initializers": true,
+        "struct_child_path_initializers": true,
+        "struct_subrecord_initializers": true,
+        "struct_subrecord_assignment": true,
+        "struct_subrecord_assignment_atomic": true,
+        "struct_constructor_assignment": true,
+        "struct_subrecord_constructor_assignment": true,
+        "struct_helper_locals": true,
+        "struct_parameters": true,
+        "struct_field_shorthand": true,
+        "struct_results": true,
+        "array_utf8_predicate": true,
+        "array_utf8_call_results": true,
+        "array_utf8_literals": true,
+        "array_utf8_ranges": true,
+        "array_utf8_temporary_ranges": true,
+        "array_utf8_open_ranges": true,
+        "array_utf8_dynamic_ranges": true,
+        "array_utf8_temporary_dynamic_ranges": true,
+        "array_utf8_computed_ranges": true,
+        "array_utf8_temporary_computed_ranges": true,
+        "array_utf8_slices": true,
+        "array_slice_length": true,
+        "array_slice_index": true,
+        "array_slice_sub": true,
+        "array_slice_alias": true,
+        "array_slice_parameters": true,
+        "array_slice_scalar_elements": true,
+        "array_slice_mutable": true,
+        "array_slice_mutable_parameters": true,
+        "array_slice_mutable_reborrow": true,
+        "array_slice_reborrow_owned_arguments": true,
+        "array_slice_reborrow_array_results": true,
+        "array_slice_reborrow_record_results": true,
+        "array_slice_array_arguments": true,
+        "array_slice_array_range_arguments": true,
+        "array_slice_named_range_arguments": true,
+        "array_slice_temporary_arguments": true,
+        "reference_profile": "brownie.m2-reference/1",
+        "byte_literals": true,
+        "text_literals": true,
+        "immutable_byte_views": true,
+        "shared_byte_parameters": true,
+        "shared_byte_results": true,
+        "core": true,
+        "restricted": false,
+        "embed": false,
+        "fuel_default": 256,
+        "fuel_limit": 16000000
+      }
     }
   },
   "platform": "Windows-11-10.0.26300-SP0",
@@ -1701,7 +2704,6 @@
     "Engine/Instance and real-time budgets",
     "restricted worker",
     "DLL/C ABI/package",
-    "allocator, stack-size and elapsed-time benchmarks",
-    "release revalidation pending on this source baseline"
+    "allocator, stack-size and elapsed-time benchmarks"
   ]
 }

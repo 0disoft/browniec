@@ -1,8 +1,8 @@
 - Public Fuel revalidation on the inference source baseline `624eac6` passed
-  25 native groups and 33 tool-free CLI cases in development on 166 matching
+  25 native groups and 33 tool-free CLI cases per Windows profile on 166 matching
   inputs, 154 LF modules and the 260-file discovery identity. Inputs match the
-  checkout and Git raw bytes. Release revalidation is pending for this baseline;
-  older release evidence remains historical. Default 256, cap 16000000, operation
+  checkout and Git raw bytes. Development started at `624eac6`; release started
+  at the documentation-only successor `7c8f0f4`. Default 256, cap 16000000, operation
   prices and independent native host budgets remain unchanged. See the public
   Fuel contract and `docs/evidence/public-fuel-windows-20261106.json`. No full
   profiles, retained-source oracle suite, LF mirror, Linux or delivery rerun.
