@@ -76,9 +76,12 @@ derives `.some` from existing i32/bool payloads. The
 left-to-right one-time evaluation and publication after complete initialization.
 The [contextual successor](../engineering/array-list-contexts.md) now connects
 direct list arguments, returned literals and temporary borrows. Whole-array list
-replacement and general list-expression forms remain separate work. Broader constructor context and
-general aggregate-expression inference remain pending; this is not a full-profile
-promotion.
+replacement is covered by the [assignment successor](../engineering/array-list-assignment.md).
+The [literal projection](../engineering/array-literal-projections.md),
+[grouped array](../engineering/array-expression-projections.md) and
+[grouped record](../engineering/record-expression-projections.md) successors now
+compose the documented bounded aggregate forms. Broader constructor context and
+aggregate-valued control flow remain pending; this is not a full-profile promotion.
 
 The experimental M1 increment keeps `fn i32 main()` as the zero-argument entry
 point. Other functions and their parameters may use i32, i64, u8, u32, usize, or bool. Bool is canonical
@@ -142,6 +145,15 @@ At least one arm must still yield. A leading switch is the final expression;
 wrap a statement switch in a standalone block. Expression and structural depth
 budgets are inherited through arm statements. While conditions own their loop
 transfers, and classic-for headers remain pure scalar.
+
+The [if-expression successor](../engineering/if-expressions.md) now admits
+`if (condition) { value } else { value }` and else-if chains for the existing
+scalar and shallow-tagged types. A condition is exactly bool, only the selected
+arm executes, and every continuing arm yields one exact type. Nested final
+conditionals compose without extra parentheses; existing arm statements and
+nonlocal cleanup remain. Missing else, mismatched types, entirely terminal
+operands and pure-for usage are rejected. Aggregate/reference/Buffer joins and
+void functions remain separate work.
 
 The i64 increment admits `i64` locals, function parameters and results, call
 arguments and returns, assignments, loop variables and expressions, and

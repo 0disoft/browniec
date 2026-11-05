@@ -1,3 +1,21 @@
+- Scalar/shallow-tagged if expressions are implemented at `98a30ca`: exact bool
+  conditions, mandatory value alternatives, else-if chains, inferred/contextual
+  values, nested tails and existing arm scope/nonlocal cleanup use existing IR.
+  Development/release each passed 11 native groups and 216 tool-free CLI cases
+  on 168 checkout/Git-raw-matching inputs, 159 LF modules and common 271-file
+  discovery; both locked LF mirrors pass. Forty-one unselected discovery files
+  differ only by CRLF/LF, with both hashes recorded. Original inferred-local
+  32/33 probes reproduced a pre-existing native harness overflow at `7b9a9de`;
+  isolated ordinary/retained helper frames now preserve the original guest
+  inputs, assertions and two successful runs. Four exact original sources also
+  cover the full public wrappers in each native CLI profile. No stack override
+  or smaller parser limit. See the [contract](docs/engineering/if-expressions.md)
+  and [Windows evidence](docs/evidence/if-expressions-windows-20261106.json).
+  Existing operation prices/default256/cap16000000 remain. Aggregate/reference/
+  Buffer joins, broader constructor context, void functions, full C05/Instance/
+  host/delivery and the full objective remain open. No full matrices/Linux/OOM/
+  general stack/timing/delivery rerun. Local only.
+
 - Grouped record values/projections are implemented at `7e26edd`, with focused
   verification at `7b9a9de`. Constructors, named owners and CALLs now compose
   through scalar field paths, inferred/typed locals, by-value arguments, returns,

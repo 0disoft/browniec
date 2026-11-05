@@ -28,6 +28,10 @@ projections](docs/engineering/record-expression-projections.md) now add construc
 field reads, grouped named/CALL paths, initializers, by-value arguments, returns
 and whole/child assignment. Aggregate-valued control flow, grouped lvalues/borrows
 and nested/resource-bearing array elements remain unfinished.
+[If value expressions](docs/engineering/if-expressions.md) now support the existing
+scalar and shallow-tagged domains, including inferred locals, nested tails,
+else-if chains and existing nonlocal-exit cleanup. Aggregate/reference/Buffer
+joins and void functions remain separate work.
 [Native project metadata](docs/cli/project-format.md) now admits complete explicit
 source maps, entries and declared requirements; it opens no files and grants nothing.
 Public project loading and CLI module/entry flags, general mutable/non-byte/
