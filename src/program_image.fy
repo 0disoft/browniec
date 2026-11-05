@@ -8,6 +8,12 @@ import array_owners as owners;
 import errors as errors;
 import static_call_ir as calls;
 import verifier as call_verifier;
+import ir as ordinary;
+import vm as vm;
+import array_source as arrays;
+import array_vm as backing;
+import array_slices as slices;
+import std::bytes as bytes;
 
 pub enum Failure { Code; Literal; }
 pub struct Error { Failure kind; errors::Error code; images::Error literal; }
@@ -100,4 +106,52 @@ pub fn Result<execution::Scalar,errors::Error> run_reference_returns_scalar(ref 
     ref runtime::Capture[] captures,ref i64[] values,ref owners::Token[] inputs,
     ref mut runtime::State state,ref mut u8[] data,usize fuel){
     return execution::execute_reference_returns_scalar(ref p.code,ref p.image,function,captures,values,inputs,state,data,fuel);
+}
+
+// One retained IR and one optional-empty image owner across both public paths.
+// Fields stay private: body borrows cannot change the admitted code/image/mode.
+pub resource PublicProgram { ReferenceReturnProgram program; bool reference; cleanup { } }
+pub fn Result<PublicProgram,Error> retain_public_legacy(ref ordinary::Program code){
+    switch(call_verifier::verify(code)){case .ok(_):{}case .err(e):{return .err(code_error(e));}};
+    var images::Builder builder=switch(images::builder(0)){case .ok(v):{v}case .err(e):{return .err(image_error(e));}};
+    let images::Image image=switch(images::freeze(ref builder,images::metadata_charge())){
+        case .ok(v):{v}case .err(e):{return .err(image_error(e));}
+    };
+    let calls::Program unit=calls::Program{.body=*code,.parameters=[0;128],.results=[0;16],.origins=[0;16]};
+    let ReferenceReturnProgram retained=switch(retain_reference_returns(ref unit,image,images::metadata_charge())){
+        case .ok(v):{v}case .err(e):{return .err(e);}
+    };
+    return .ok(PublicProgram{.program=retained,.reference=false});
+}
+// Consuming a sealed retained resource transfers its exact proved authority.
+pub fn PublicProgram retain_public_references(ReferenceReturnProgram p){
+    return PublicProgram{.program=p,.reference=true};
+}
+pub fn ref ordinary::Program public_body(ref PublicProgram p){
+    let ref ReferenceReturnProgram retained=ref p.program;
+    let ref calls::Program code=ref retained.code;
+    return ref code.body;
+}
+pub fn u8 public_profile(ref PublicProgram p){return if(p.reference){8}else{arrays::profile(public_body(p))};}
+pub fn Result<i64,errors::Error> run_public(ref PublicProgram p,usize fuel){
+    if(!p.reference){return vm::run(public_body(p),fuel);}
+    return run_public_references(ref p.program,fuel);
+}
+// Keep canonical state off the legacy call stack. Program admission precedes
+// this allocation; dispatch repeats complete proof before entering native state.
+pub fn Result<i64,errors::Error> run_public_references(ref ReferenceReturnProgram retained,usize fuel){
+    let ref calls::Program code=ref retained.code;
+    let ref ordinary::Program body=ref code.body;
+    let ref images::Image image=ref retained.image;
+    let usize capacity=if(body.arrays.count!=0 || body.records.count!=0){65536}else{0};
+    let usize preparation=if(capacity==0){0}else{1+capacity};
+    if(fuel<preparation+runtime::cost()){return .err(errors::make(8,0));}
+    var bytes::Buffer payload=if(capacity==0){bytes::empty()}else{backing::prepare(capacity)?};
+    var runtime::State state=runtime::empty(capacity);
+    let runtime::Capture[1] captures=[runtime::capture(slices::Ticket{.slot=16,.generation=0},false,false)];
+    let i64[1] values=[0];let owners::Token[1] inputs=[owners::Token{.slot=0,.generation=0}];
+    return switch(execution::execute_reference_returns_scalar(code,image,body.entry,
+        ref captures[..0],ref values[..0],ref inputs[..0],ref mut state,bytes::view_mut(ref mut payload),fuel-preparation)){
+        case .ok(v):{.ok(v.value)}case .err(e):{.err(e)}
+    };
 }

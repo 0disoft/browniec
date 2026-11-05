@@ -3,11 +3,14 @@ module main;
 import cli_input as input;
 import compiler as compiler;
 import array_source as arrays;
+import verifier as verifier;
+import vm as vm;
+import source_features as features;
 import errors as errors;
 import lexer as lexer;
 import render as render;
-import verifier as verifier;
-import vm as vm;
+import program_image as programs;
+import static_image as images;
 import fuel as meter;
 import std::process as process;
 import std::num as num;
@@ -36,10 +39,10 @@ fn i32 main() {
         };
         let ref u8[] view = ref option;
         if (argc != 3 || !lexer::equal(view[..size], b"--json")) { return fail(false, false, 10, 0); }
-        return render::version("{\"schema\":\"browniec.version/v1\",\"profile\":\"brownie.m1-scalar/1\",\"array_profile\":\"brownie.m2-array-read/1\",\"array_write_profile\":\"brownie.m2-array-write/1\",\"array_copy_profile\":\"brownie.m2-array-copy/1\",\"struct_read_profile\":\"brownie.m2-struct-read/1\",\"struct_write_profile\":\"brownie.m2-struct-write/1\",\"struct_copy_profile\":\"brownie.m2-struct-copy/1\",\"struct_nested_profile\":\"brownie.m2-struct-nested/1\",\"struct_child_binding_initializers\":true,\"struct_child_path_initializers\":true,\"struct_subrecord_initializers\":true,\"struct_subrecord_assignment\":true,\"struct_subrecord_assignment_atomic\":true,\"struct_constructor_assignment\":true,\"struct_subrecord_constructor_assignment\":true,\"struct_helper_locals\":true,\"struct_parameters\":true,\"struct_field_shorthand\":true,\"struct_results\":true,\"array_utf8_predicate\":true,\"array_utf8_call_results\":true,\"array_utf8_literals\":true,\"array_utf8_ranges\":true,\"array_utf8_temporary_ranges\":true,\"array_utf8_open_ranges\":true,\"array_utf8_dynamic_ranges\":true,\"array_utf8_temporary_dynamic_ranges\":true,\"array_utf8_computed_ranges\":true,\"array_utf8_temporary_computed_ranges\":true,\"array_utf8_slices\":true,\"array_slice_length\":true,\"array_slice_index\":true,\"array_slice_sub\":true,\"array_slice_alias\":true,\"array_slice_parameters\":true,\"array_slice_scalar_elements\":true,\"array_slice_mutable\":true,\"array_slice_mutable_parameters\":true,\"array_slice_mutable_reborrow\":true,\"array_slice_reborrow_owned_arguments\":true,\"array_slice_reborrow_array_results\":true,\"array_slice_reborrow_record_results\":true,\"array_slice_array_arguments\":true,\"array_slice_array_range_arguments\":true,\"array_slice_named_range_arguments\":true,\"array_slice_temporary_arguments\":true,\"core\":true,\"restricted\":false,\"embed\":false");
+        return render::version("{\"schema\":\"browniec.version/v1\",\"profile\":\"brownie.m1-scalar/1\",\"array_profile\":\"brownie.m2-array-read/1\",\"array_write_profile\":\"brownie.m2-array-write/1\",\"array_copy_profile\":\"brownie.m2-array-copy/1\",\"struct_read_profile\":\"brownie.m2-struct-read/1\",\"struct_write_profile\":\"brownie.m2-struct-write/1\",\"struct_copy_profile\":\"brownie.m2-struct-copy/1\",\"struct_nested_profile\":\"brownie.m2-struct-nested/1\",\"struct_child_binding_initializers\":true,\"struct_child_path_initializers\":true,\"struct_subrecord_initializers\":true,\"struct_subrecord_assignment\":true,\"struct_subrecord_assignment_atomic\":true,\"struct_constructor_assignment\":true,\"struct_subrecord_constructor_assignment\":true,\"struct_helper_locals\":true,\"struct_parameters\":true,\"struct_field_shorthand\":true,\"struct_results\":true,\"array_utf8_predicate\":true,\"array_utf8_call_results\":true,\"array_utf8_literals\":true,\"array_utf8_ranges\":true,\"array_utf8_temporary_ranges\":true,\"array_utf8_open_ranges\":true,\"array_utf8_dynamic_ranges\":true,\"array_utf8_temporary_dynamic_ranges\":true,\"array_utf8_computed_ranges\":true,\"array_utf8_temporary_computed_ranges\":true,\"array_utf8_slices\":true,\"array_slice_length\":true,\"array_slice_index\":true,\"array_slice_sub\":true,\"array_slice_alias\":true,\"array_slice_parameters\":true,\"array_slice_scalar_elements\":true,\"array_slice_mutable\":true,\"array_slice_mutable_parameters\":true,\"array_slice_mutable_reborrow\":true,\"array_slice_reborrow_owned_arguments\":true,\"array_slice_reborrow_array_results\":true,\"array_slice_reborrow_record_results\":true,\"array_slice_array_arguments\":true,\"array_slice_array_range_arguments\":true,\"array_slice_named_range_arguments\":true,\"array_slice_temporary_arguments\":true,\"reference_profile\":\"brownie.m2-reference/1\",\"byte_literals\":true,\"text_literals\":true,\"immutable_byte_views\":true,\"shared_byte_parameters\":true,\"shared_byte_results\":true,\"core\":true,\"restricted\":false,\"embed\":false");
     }
     if (lexer::equal(command_view[..command_length], b"--help") && argc == 2) {
-        return if (io::write("browniec check SOURCE [--json]\nbrowniec run SOURCE [--fuel N] [--json]\nTrusted local source only; experimental bool/u8/i32/i64/u32/usize functions, branches and loops.\n").is_ok) { 0 } else { 7 };
+        return if (io::write("browniec check SOURCE [--json]\nbrowniec run SOURCE [--fuel N] [--json]\nTrusted local source only; experimental scalar/aggregate functions, byte/text literals and shared byte results.\nLiteral/reference execution uses the canonical Fuel schedule; use --fuel 16000000 for larger programs.\n").is_ok) { 0 } else { 7 };
     }
     let bool run = lexer::equal(command_view[..command_length], b"run");
     if (!run && !lexer::equal(command_view[..command_length], b"check")) {
@@ -81,18 +84,40 @@ fn i32 main() {
         case .ok(value): { value } case .err(e): { return fail(json, run, e.kind, e.offset); }
     };
     let ref u8[] source_view = ref source.data;
-    let program = switch (compiler::compile(source_view[..source.length])) {
-        case .ok(value): { value } case .err(e): { return fail(json, run, e.kind, e.offset); }
+    let bool retained=switch(features::retained(source_view[..source.length])){
+        case .ok(v):{v}case .err(e):{return fail(json,run,e.kind,e.offset);}
     };
-    if (!run) {
-        let usize verified = switch (verifier::verify(ref program)) {
-            case .ok(n): { n } case .err(e): { return render::selected_outcome(json, false, true, 0, e, arrays::profile(ref program)); }
+    if(retained){return retained_source(source_view[..source.length],json,run,fuel);}
+    return legacy_source(source_view[..source.length],json,run,fuel);
+}
+// Keep the retained Program's large return slots off the legacy parser stack.
+// The legacy compiler/verification/VM route keeps its existing source limits.
+@effects(console)
+fn i32 legacy_source(ref u8[] source,bool json,bool run,usize fuel){
+    let program=switch(compiler::compile(source)){
+        case .ok(v):{v}case .err(e):{return fail(json,run,e.kind,e.offset);}
+    };
+    let u8 profile=arrays::profile(ref program);
+    if(!run){
+        let usize verified=switch(verifier::verify(ref program)){
+            case .ok(v):{v}case .err(e):{return render::selected_outcome(json,false,true,0,e,profile);}
         };
-        return render::selected_outcome(json, false, false, 0, errors::make(0, 0), arrays::profile(ref program));
+        return render::selected_outcome(json,false,false,0,errors::make(0,0),profile);
     }
-    // vm::run verifies before dispatch; check-only mode needs its own verifier.
-    return switch (vm::run(ref program, fuel)) {
-        case .ok(value): { render::selected_outcome(json, true, false, value, errors::make(0, 0), arrays::profile(ref program)) }
-        case .err(e): { render::selected_outcome(json, true, true, 0, e, arrays::profile(ref program)) }
+    return switch(vm::run(ref program,fuel)){
+        case .ok(v):{render::selected_outcome(json,true,false,v,errors::make(0,0),profile)}
+        case .err(e):{render::selected_outcome(json,true,true,0,e,profile)}
+    };
+}
+@effects(console)
+fn i32 retained_source(ref u8[] source,bool json,bool run,usize fuel){
+    let programs::ReferenceReturnProgram program=switch(compiler::compile_reference_returns(source,images::metadata_charge()+images::byte_limit())){
+        case .ok(value):{value}case .err(error):{let errors::Error e=compiler::public_error(error);return fail(json,run,e.kind,e.offset);}
+    };
+    let u8 profile=8;
+    if(!run){return render::selected_outcome(json,false,false,0,errors::make(0,0),profile);}
+    return switch(programs::run_public_references(ref program,fuel)){
+        case .ok(value):{render::selected_outcome(json,true,false,value,errors::make(0,0),profile)}
+        case .err(e):{render::selected_outcome(json,true,true,0,e,profile)}
     };
 }

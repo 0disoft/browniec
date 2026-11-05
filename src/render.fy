@@ -34,7 +34,9 @@ pub fn i32 exit_code(u8 kind) {
 
 fn Result<bytes::Buffer, bytes::BufferError> encode(bool run, bool failed, i64 value, errors::Error error, u8 arrays) {
     var bytes::Buffer output = bytes::with_capacity(512)?;
-    let usize header = bytes::append(ref mut output, if (arrays == 7) {
+    let usize header = bytes::append(ref mut output, if (arrays == 8) {
+        b"{\"schema\":\"browniec.result/v1\",\"profile\":\"brownie.m2-reference/1\",\"command\":"
+    } else if (arrays == 7) {
         b"{\"schema\":\"browniec.result/v1\",\"profile\":\"brownie.m2-struct-nested/1\",\"command\":"
     } else if (arrays == 6) {
         b"{\"schema\":\"browniec.result/v1\",\"profile\":\"brownie.m2-struct-copy/1\",\"command\":"

@@ -25,7 +25,7 @@ def write(path, value):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--profile', choices=['development', 'release'], required=True)
-    parser.add_argument('--selection', choices=['all', 'statics', 'views', 'ranges', 'range-core', 'call-ir', 'call-proof', 'call-transfer-core', 'call-transfer', 'call-mixed', 'reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts', 'reference-return-execution', 'reference-source', 'reference-return-source'], default='all',
+    parser.add_argument('--selection', choices=['all', 'statics', 'views', 'ranges', 'range-core', 'call-ir', 'call-proof', 'call-transfer-core', 'call-transfer', 'call-mixed', 'reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts', 'reference-return-execution', 'reference-source', 'reference-return-source', 'public-program'], default='all',
                         help='statics runs the changed image/proof/VM suites; all adds return and source regressions')
     args = parser.parse_args()
     profile = args.profile
@@ -47,6 +47,8 @@ def main():
                   'reference-return-source': ['tests/m2/reference_return_source.fy',
                                               'tests/m2/reference_return_execution.fy',
                                               'tests/m2/reference_call_source.fy'],
+                  'public-program': ['tests/m2/public_program.fy', 'tests/m2/reference_return_source.fy',
+                                     'tests/m2/static_bindings_source.fy'],
                   'reference-source': ['tests/m2/reference_call_source.fy', 'tests/m2/static_bindings_source.fy',
                                        'tests/m2/reference_call_mixed.fy'],
                   'reference-return-execution': ['tests/m2/reference_return_execution.fy',
@@ -145,7 +147,11 @@ def main():
     if args.selection == 'reference-return-source':
         focused = {'reference_call_source': {'image_and_runtime_values_keep_distinct_backings',
                                             'arguments_and_endpoints_evaluate_left_to_right_with_early_exit_cleanup'}}
-    exact = args.selection in ('reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts', 'reference-return-execution', 'reference-source', 'reference-return-source')
+    if args.selection == 'public-program':
+        focused = {'static_bindings_source': {
+            'byte_and_text_locals_aliases_and_explicit_conversion_preserve_kinds',
+            'aggregate_returns_close_static_locals_and_existing_runtime_slices_stay_distinct'}}
+    exact = args.selection in ('reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts', 'reference-return-execution', 'reference-source', 'reference-return-source', 'public-program')
     for path in files:
         if not exact:
             command.extend(['--file', path])

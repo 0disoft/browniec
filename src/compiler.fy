@@ -37,6 +37,7 @@ import program_image as program_images;
 import reference_call_source as reference_calls;
 import static_call_ir as reference_ir;
 import reference_result_source as reference_results;
+import source_features as source_features;
 
 fn u8 precedence(u8 kind) {
     if (kind == 133) { return 1; }
@@ -1791,6 +1792,12 @@ fn Result<usize, errors::Error> prepare_aggregates(ref u8[] source, ref mut func
     return .ok(records.layouts.count);
 }
 
+// Signature selection temporaries are gone before recursive body lowering.
+fn Result<functions::Table,errors::Error> lowering_signatures(ref u8[] source,bool returns){
+    if(returns){return functions::scan_reference_returns(source);}
+    return functions::scan(source);
+}
+
 // Scratch belongs to the wrapper and never escapes on failure. Avoid a large
 // Result<Program> value throughout nested source lowering in native debug code.
 fn Result<usize, errors::Error> lower_into(ref u8[] source,bool origin_analysis,bool references,bool returns,ref literal_collection::Index literals,ref mut ir::Program p) {
@@ -1798,7 +1805,7 @@ fn Result<usize, errors::Error> lower_into(ref u8[] source,bool origin_analysis,
     let ref str valid = switch (text::validate_utf8(source)) {
         case .ok(value): { value } case .err(_): { return .err(errors::make(1, 0)); }
     };
-    var functions::Table signatures = if(returns){functions::scan_reference_returns(source)?}else{functions::scan(source)?};
+    var functions::Table signatures = lowering_signatures(source,returns)?;
     signatures.literals=*literals;signatures.reference_calls=references;
     // Signature candidates do not prove a returned borrow's origin or lifetime.
     // Reject every such declaration, including unreachable functions, before
@@ -1934,28 +1941,74 @@ pub fn Result<program_images::ReferenceReturnProgram,program_images::Error> comp
     var static_images::Builder builder=switch(static_images::builder(4096)){
         case .ok(v):{v}case .err(e):{return .err(image_literal_error(e));}
     };
-    let literal_collection::Index literals=switch(literal_collection::collect(ref mut builder,source)){
+    var reference_ir::Program code=reference_ir::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]};
+    let usize lowered=lower_reference_returns(source,ref mut builder,ref mut code)?;
+    return finish_reference_returns(ref builder,ref code,image_limit);
+}
+fn Result<program_images::ReferenceReturnProgram,program_images::Error> finish_reference_returns(
+    ref static_images::Builder builder,ref reference_ir::Program code,usize image_limit){
+    let static_images::Image image=switch(static_images::freeze(builder,image_limit)){
+        case .ok(v):{v}case .err(e):{return .err(image_literal_error(e));}
+    };
+    return program_images::retain_reference_returns(code,image,image_limit);
+}
+// Recursive lowering must not retain large Result<ReferenceReturnProgram>
+// error/return slots or the signature pass's separate scratch on its stack.
+fn Result<usize,program_images::Error> lower_reference_returns(ref u8[] source,
+    ref mut static_images::Builder builder,ref mut reference_ir::Program code){
+    let literal_collection::Index literals=switch(literal_collection::collect(builder,source)){
         case .ok(v):{v}case .err(e):{return .err(switch(e.kind){
             case .Source:{image_source_error(e.source)}case .Image:{image_literal_error(e.image)}
         });}
     };
-    var ir::Program body=ir::empty();
-    switch(lower_into(source,false,true,true,ref literals,ref mut body)){
+    switch(lower_into(source,false,true,true,ref literals,ref mut code.body)){
         case .ok(_):{}case .err(e):{return .err(image_source_error(e));}
     };
+    return reference_return_signature(source,code);
+}
+fn Result<usize,program_images::Error> reference_return_signature(ref u8[] source,ref mut reference_ir::Program code){
     var functions::Table signatures=switch(functions::scan_reference_returns(source)){
         case .ok(v):{v}case .err(e):{return .err(image_source_error(e));}
     };
     switch(source_origins::infer(source,ref mut signatures)){case .ok(_):{}case .err(e):{return .err(image_source_error(e));}};
-    var reference_ir::Program code=reference_ir::Program{.body=body,.parameters=[0;128],.results=[0;16],.origins=signatures.return_slice_inputs};
+    code.origins=signatures.return_slice_inputs;
+    var u8[128] parameters=[0;128];var u8[16] results=[0;16];
+    let ref ir::Program body=ref code.body;
     var usize f=0;while(f<signatures.count){
-        if(signatures.return_slice_elements[f]==10){code.results[f]=3;}
+        if(signatures.return_slice_elements[f]==10){results[f]=3;}
         var usize i=0;while(i<signatures.arities[f]){let usize at=f*8+i;
-            if(signatures.param_slices[at] && signatures.param_slice_elements[at]==10){code.parameters[body.register_starts[f]+i]=3;}i+=1;
+            if(signatures.param_slices[at] && signatures.param_slice_elements[at]==10){parameters[body.register_starts[f]+i]=3;}i+=1;
         }f+=1;
     }
-    let static_images::Image image=switch(static_images::freeze(ref builder,image_limit)){
-        case .ok(v):{v}case .err(e):{return .err(image_literal_error(e));}
+    code.parameters=parameters;code.results=results;
+    return .ok(signatures.count);
+}
+
+pub fn errors::Error public_error(program_images::Error error){
+    return switch(error.kind){case .Code:{error.code}case .Literal:{switch(error.literal){
+        case .Allocation:{errors::make(15,0)}case .Utf8:{errors::make(1,0)}
+        case .Limit:{errors::make(4,0)}case .Quota:{errors::make(4,0)}case .Literals:{errors::make(4,0)}
+        case .State:{errors::make(5,0)}case .Kind:{errors::make(5,0)}case .Bounds:{errors::make(5,0)}case .Provider:{errors::make(5,0)}
+    }}};
+}
+// Public source admission chooses one complete path from explicit token syntax.
+// A failed compile is never retried under a different language or Fuel schedule.
+pub fn Result<program_images::PublicProgram,errors::Error> compile_program(ref u8[] source,usize image_limit){
+    if(source_features::retained(source)?){return compile_public_references(source,image_limit);}
+    return compile_public_legacy(source);
+}
+// Keep mutually exclusive admission temporaries off each other's native stack.
+fn Result<program_images::PublicProgram,errors::Error> compile_public_references(ref u8[] source,usize image_limit){
+    return switch(compile_reference_returns(source,image_limit)){
+        case .ok(p):{.ok(program_images::retain_public_references(p))}
+        case .err(e):{.err(public_error(e))}
     };
-    return program_images::retain_reference_returns(ref code,image,image_limit);
+}
+fn Result<program_images::PublicProgram,errors::Error> compile_public_legacy(ref u8[] source){
+    var ir::Program code=ir::empty();
+    let literal_collection::Index literals=literal_collection::empty();
+    let usize lowered=lower_into(source,false,false,false,ref literals,ref mut code)?;
+    return switch(program_images::retain_public_legacy(ref code)){
+        case .ok(v):{.ok(v)}case .err(e):{.err(public_error(e))}
+    };
 }
