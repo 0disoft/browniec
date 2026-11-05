@@ -1,3 +1,14 @@
+- Native project_sources now matches an explicit Project to exact sealed host
+  snapshot identities irrespective of order, proves every canonical header and
+  selects its named public zero-argument i32 entry. Original source spans and
+  snapshot identities are preserved; >16 mapped files fail with Limit.
+  Development/release each passed 26 native groups on 156 matching inputs; both
+  locked LF mirrors pass. Owning Entry adaptation no longer duplicates its error
+  domain; signature proof uses a small private result before publication. The
+  combined 16/17-file case remains intact; no stack/compiler overrides. See
+  docs/engineering/project-sources.md and its focused evidence. Diagnostic probes
+  and the input-invalidated run are excluded. This is not filesystem proof, body
+  admission, project CLI or grants; retain the caller Project authority.
 - Native project_manifest now validates and owns brownie.project/0.3 metadata:
   all required/unknown/duplicate decoded fields, 32 source mappings, 256 declared
   requirements, canonical path collisions and entry-module membership. It grants

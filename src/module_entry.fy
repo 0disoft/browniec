@@ -6,6 +6,7 @@ import lexer as lexer;
 // A selected entry signature, bound to the exact immutable Index it owns.
 // This is not body/type/ownership proof or executable Program admission.
 pub resource Entry { modules::Index index; usize selected; sources::Span signature; cleanup { } }
+struct Checked { usize selected; sources::Span signature; }
 fn modules::Error error(modules::Failure kind,sources::Span at){return modules::Error{.kind=kind,.at=at};}
 fn sources::Span token(usize id,ref lexer::State s){return sources::Span{.source=id,.start=s.begin,.end=s.end};}
 fn Result<usize,modules::Error> next(ref u8[] source,usize id,ref mut lexer::State s){
@@ -53,10 +54,14 @@ fn Result<sources::Span,modules::Error> signature(ref modules::Index index,usize
 }
 // Explicit first-profile convention: public zero-argument i32, any selected name.
 // Unsupported entry ABIs do not restrict ordinary helper declarations in Index.
+fn Result<Checked,modules::Error> checked(ref modules::Index index,ref u8[] path,ref u8[] name){
+    let usize selected=modules::entry(index,path,name)?;
+    let sources::Span signature=signature(index,selected)?;
+    return .ok(Checked{.selected=selected,.signature=signature});
+}
 pub fn Result<Entry,modules::Error> select_i32(modules::Index index,ref u8[] path,ref u8[] name){
-    let usize selected=modules::entry(ref index,path,name)?;
-    let sources::Span checked=signature(ref index,selected)?;
-    return .ok(Entry{.index=index,.selected=selected,.signature=checked});
+    let Checked proof=checked(ref index,path,name)?;
+    return .ok(Entry{.index=index,.selected=proof.selected,.signature=proof.signature});
 }
 pub fn ref modules::Index index(ref Entry entry){return ref entry.index;}
 pub fn usize selected(ref Entry entry){return entry.selected;}

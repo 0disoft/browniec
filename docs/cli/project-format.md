@@ -30,8 +30,9 @@ Modules use canonical double-colon-separated existing language identifiers, up
 to 128 bytes. Functions use one existing identifier, up to 64. Reserved words
 and guest roots std/brownie fail under the existing declaration rules. Source
 module identities are unique and the entry module must occur in the source map.
-The later exact source index must still prove each file's matching header,
-visibility, selected entry ABI and complete executable admission.
+The [native snapshot binding](../engineering/project-sources.md) now proves each
+exact member identity/header and selected public i32 entry. Complete executable
+admission still follows through the retained module Program.
 
 Member paths are canonical root-relative ASCII source names up to 240 bytes,
 ending in lowercase .brc or .fy. The [input primitives](../engineering/project-input.md)
