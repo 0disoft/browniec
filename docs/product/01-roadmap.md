@@ -13,7 +13,7 @@
 | --- | --- | --- |
 | M0: native feasibility | Scoped native primitive evidence recorded | Revisit only for a new platform/shim/toolchain requirement; not a full product gate |
 | M1: scalar source to native VM | Bounded scalar checkpoint met | Keep regressions on semantic changes; full safe/0.3 is not M1 completion |
-| M2: aggregates, borrows and bytes | Substantial public arrays/records/scalar-slice support; private Buffer and returned-origin foundations | Executable returned references, general reference/type gaps, guest Buffer/text, input/output and full accounting/runtime integration |
+| M2: aggregates, borrows and bytes | Public arrays/records/scalar slices plus retained literal/shared-byte results; private Buffer foundations | General returned references, general reference/type gaps, guest Buffer/text, input/output and full accounting/runtime integration |
 | M3: typed host suspension | Not implemented | Engine/Instance stepping, authority chain, fake typed host request/reply, failure/cancel/poison and reply adoption |
 | M4: restricted Windows worker | Not implemented | Real AppContainer/Job/private IPC, broker publication/cancel races and I/O lease/budget evidence |
 | M5: embed and clean-machine delivery | Not implemented | Real DLL/C ABI/handle lifecycle, clean-machine packaging and measured workload/build footprint |
@@ -69,8 +69,10 @@ required; this native transaction does not promote public execution.
    Guest-created array temporaries, record locals and mixed CALL captures now use
    the same owner table and terminal cleanup. [Explicit native owned entry](../engineering/m2-slice-result-entry.md)
    now copies array/record inputs through the initial transaction.
-4. B04: lower admitted borrowed-result uses and promote public execution only
-   after end-to-end validation. Extend origin/grammar support deliberately.
+4. B04 shared-byte results now have [public retained execution](../engineering/public-program.md).
+   General mutable/non-byte/Buffer/input results and host-visible lifetimes remain.
+   L01 now has [native source snapshots](../engineering/module-sources.md); bind
+   module/import/visibility tables before connecting multi-module compilation.
 5. D01-D04 and L05-L06: connect guest Buffer, resource-bearing wrappers and
    ownership-aware builtins to the VM/Instance, using existing native components.
 6. D05 and I01-I02: deliver a real input -> Buffer/text -> staged-output workload.

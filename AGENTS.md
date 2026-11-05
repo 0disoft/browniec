@@ -1,3 +1,17 @@
+- L01/C03 native source snapshots now own exact source/name byte copies and
+  checked original-byte spans. Copyable Builder scratch is independently proved
+  before private Snapshot retention; failed appends leave both pools unchanged.
+  IDs are local to the exact snapshot. Names are opaque host identities, not
+  validated paths. Up to 16 files, 4096 source bytes, 4096 name bytes and 256-byte
+  identities; no CLI/source/profile limit promotion. Code f7a67b5; see
+  docs/engineering/module-sources.md and focused Windows evidence.
+  Development/release each passed six native groups on 144 matching committed
+  inputs, 139 LF modules and 244-file discovery; both locked LF mirrors pass.
+  No overrides or historical reuse. CLI/full VM/profile, general RAM/stack/OOM/
+  timing/Linux/restricted/ABI/package were not rerun. Next bind module headers,
+  aliases, declarations/visibility and source-local resolution, then connect
+  multi-module compilation/project entry. L01/C03 and the full objective remain
+  open. No public module flag or project loader. Local only; no push.
 - Public check/run now admits retained byte/text/shared-byte source, including
   single-origin results and selected temporary owners, under brownie.m2-reference/1.
   Native PublicProgram moves the whole sealed resource; CLI uses thin selected

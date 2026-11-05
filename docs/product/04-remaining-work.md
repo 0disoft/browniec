@@ -111,7 +111,7 @@ No one label implies full-profile or release readiness.
 | --- | --- | --- |
 | Next | Language completion L01-L06 and remaining B04/B05 general mutable/non-byte/Buffer/input views; shared-byte public retained execution is connected | [Private VM](../engineering/m2-slice-result-vm.md), [Preparation IR](../engineering/m2-slice-result-ir.md), [Returned-origin boundary](../engineering/m2-slice-result-origins.md) |
 | M2 integration | D01-D05, L03-L06, I01-I02: private Buffer and aggregate foundations -> useful guest byte/text/input/output path | [Specification](02-spec.md), [Buffer storage](../engineering/m2-buffer-storage.md), [UTF-8 sessions](../engineering/m2-buffer-utf8-session.md), [output](../cli/output-and-exit-codes.md) |
-| Full-profile prerequisites | L01-L02/L07, B05, C01-C05: accepted language, references, configuration and limit reconciliation | [Specification](02-spec.md), [command](../cli/command-contract.md), [configuration](../cli/configuration.md) |
+| Full-profile prerequisites | L01-L02, B05, C01-C05: accepted language, references, configuration and limit reconciliation | [Specification](02-spec.md), [command](../cli/command-contract.md), [configuration](../cli/configuration.md) |
 | M3 prerequisite/core | R01-R05 -> H01-H04: Engine/Instance/accounting/step/cancel -> fake typed host boundary | [Runtime flow](../architecture/02-runtime-flow.md), [invariants](../engineering/00-project-invariants.md) |
 | M4 | W01-W06 after bounded core/authority contracts | [System boundary](../architecture/00-system-boundary.md), [runtime flow](../architecture/02-runtime-flow.md) |
 | M5 and release evidence | E01-E04, V01-V05; measure relevant slices earlier | [Architecture](../../ARCHITECTURE.md), [testing](../engineering/05-testing-standard.md), [performance](../engineering/03-performance-budget.md), [validation](../../VALIDATION.md) |
@@ -159,7 +159,7 @@ below cover prose obligations beyond this feature list as well.
 | deadline | Missing general runtime/compile deadline | R04 |
 | source_diagnostics | Single-source byte offset | C03 |
 | utf8_text_literals_ref_str | Public immutable literal text and explicit text::bytes; Buffer/input text remains missing | D05 |
-| explicit_text_bytes | Missing | D05 |
+| explicit_text_bytes | Public immutable literal text::bytes; runtime Buffer/input text remains open | D05 |
 | bounded_step_work | Private Buffer continuations; no VM step API | R03, R05 |
 | engine_total_quota | Private ledger arithmetic, no Engine coordinator | R01, R02 |
 | complete_aggregate_construction | Narrow arrays/records | L03, L05, V01 |
@@ -171,7 +171,7 @@ below cover prose obligations beyond this feature list as well.
 
 | ID | Work and completion condition |
 | --- | --- |
-| L01 | Implement explicit multi-module snapshots, import aliases, name resolution, `pub` visibility and public entry selection. Preserve source identities across resolution and reject duplicate/ambiguous/cyclic-invalid definitions within compile budgets. |
+| L01 | Native [source snapshots](../engineering/module-sources.md) now retain immutable source/name bytes, stable source indices and checked original-byte spans. Remaining: bind modules and explicit import aliases, name resolution, `pub` visibility, multi-module compilation and public entry selection. Preserve source identities across resolution and reject duplicate/ambiguous/cyclic-invalid definitions within compile budgets. |
 | L02 | Add the target's local type inference, `void` returns and `if` expressions. Review current pure-for restrictions and other narrow grammar choices explicitly rather than silently widening them. Add only the agreed target syntax. |
 | L03 | Record field shorthand is implemented for scalar and plain-record members through existing typed ordered staging; see [the contract](../engineering/m2-struct-shorthand.md). Remaining: complete array element-list initialization with exact arity, source evaluation order, complete initialization and independent values. Existing repeated-array/record constructors must keep their current behavior. |
 | L04 | Implement selected-place receiver/index evaluation before RHS and agreed compound assignment forms; hold the originally selected root/location through RHS effects and independently verify its identity, lifetime and overlap. Ordinary current stores are not a generic selected-place contract. |

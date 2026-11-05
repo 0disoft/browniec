@@ -52,3 +52,8 @@ Version JSON exposes `fuel_default` and `fuel_limit` from the same schedule as a
 validation. Existing lower budgets remain valid. See the
 [public cost/limit contract](../engineering/public-fuel-limits.md) for the exact
 price formulas, full-arity CALL rationale and verification scope.
+
+The [retained public path](../engineering/public-program.md) admits byte/text and
+shared-byte result source with its canonical Fuel schedule. Native [source
+snapshots](../engineering/module-sources.md) now own explicit identities and original
+bytes, but no project/source-map loader or additional CLI flag is implemented.

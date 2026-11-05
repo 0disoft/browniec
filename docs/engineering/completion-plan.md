@@ -87,8 +87,11 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    complete admission, fresh native state and explicit canonical Fuel prices.
    General mutable/non-byte/Buffer/input results and host-visible lifetimes remain.
    Continue language completion while preserving those explicit boundaries.
-2. **Language completion: L01-L06, C03/C05.** Finish explicit module snapshots and
-   visibility, inference/void/if values, complete array/record construction,
+2. **Language completion: L01-L06, C03/C05.** The [source snapshot prerequisite](module-sources.md)
+   now retains native explicit source identities, immutable original bytes and
+   checked source-local spans. Next bind module/import/visibility tables and
+   connect multi-module compilation; snapshot ownership alone does not finish L01.
+   Finish visibility, inference/void/if values, complete array/record construction,
    selected-place compound assignment, wider/resource-bearing tags and must-use
    handling. Reconcile operand/source/type/compile limits deliberately rather than
    silently treating the old experimental bounds as full-profile conformance.

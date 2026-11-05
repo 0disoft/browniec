@@ -121,8 +121,20 @@ The result remains i32 from `main`; helper aggregate values never become CLI ret
 types. Record parameters/results and typed shared/exclusive scalar-slice arguments
 are now public. No new result schema is implied by those version feature flags.
 
-Private result signatures/origin analysis expose no public borrowed result or
-runtime ticket. Public compilation rejects every borrowed-result declaration.
+The retained `brownie.m2-reference/1` path now admits shared-byte image/runtime
+results internally; the CLI still returns only scalar data and exposes no runtime
+ticket. General mutable/non-byte/Buffer/input results remain unavailable.
 For exact current capabilities and future metrics/output/ABI/IPC fields, use the
 [complete remaining-work audit](../product/04-remaining-work.md), not a historical
 increment's old rejection list.
+
+## Retained literal and shared-byte result profile
+
+Successfully admitted retained source uses `brownie.m2-reference/1` for check/run
+results, including runtime failures. Version JSON adds `reference_profile`,
+`byte_literals`, `text_literals`, `immutable_byte_views`, `shared_byte_parameters`
+and `shared_byte_results`; general `array_slice_results` remains false/absent.
+The schema, process exits, default 256 and ceiling 16000000 remain unchanged.
+Canonical entry/leave prices apply even to image-only source, so small literal
+programs need an explicit larger Fuel budget. See [the public retained contract](../engineering/public-program.md)
+for exact pricing and current native/standalone evidence.

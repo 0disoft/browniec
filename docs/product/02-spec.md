@@ -1,7 +1,7 @@
 # Product Specification
 
 - Status: Accepted for design, 2026-10-23
-- Implementation status: Reconciled 2026-11-04; bounded M1 and public M2 array/record/scalar-slice subsets; full profile incomplete
+- Implementation status: Reconciled 2026-11-05; bounded M1 and public M2 aggregate/slice/literal/shared-byte-result subsets; full profile incomplete
 - Source profile name: brownie.safe/0.3
 
 ## Product boundary
@@ -24,11 +24,13 @@ are available. Root exclusion remains whole-root, including disjoint mutable ran
 
 Private returned-slice signatures, body-origin analysis and explicit
 [preparation IR/independent proof](../engineering/m2-slice-result-ir.md) exist;
-every borrowed-result declaration still rejects publicly. [Native ownership transactions](../engineering/m2-slice-result-runtime.md)
+the [retained public successor](../engineering/public-program.md) now admits
+byte/text literals and shared-byte image/runtime results through check/run. [Native ownership transactions](../engineering/m2-slice-result-runtime.md)
 now support private returned-view VM execution, owned array/record inputs and CALLs,
 root retention and prepaid finalization. [Direct return ranges](../engineering/m2-slice-result-ranges.md)
 now use those same preparation/proof/handoff recipes. General returned-result
-bindings and ordinary public execution admission remain open.
+forms beyond shared-byte results, Buffer/input backing and host-visible reference
+lifetimes remain open.
 Buffer storage/leases/scanning have private native evidence but no guest Buffer
 execution path. There is no general Engine/Instance API, guest input/output, host
 suspension, restricted worker or public DLL.
@@ -38,8 +40,9 @@ required features and the wider delivery gaps. The [roadmap](01-roadmap.md) orde
 them. [Typed mutable parameters](../engineering/m2-slice-mutable-parameters-public.md),
 [temporary arguments](../engineering/m2-temporary-array-borrow-arguments.md) and
 [private returned origins](../engineering/m2-slice-result-origins.md) own the newest
-borrow boundaries. Existing shallow tags remain i32/bool, depth one; text, general
-references, wide/resource-bearing tags and full module/visibility/inference syntax
+borrow boundaries. Immutable literal text and explicit text::bytes are public;
+general runtime/Buffer/input text remains open. Existing shallow tags remain
+i32/bool, depth one; general references, wide/resource-bearing tags and full module/visibility/inference syntax
 are target work. Current M1 accepts Option `?` as an intentional narrow extension;
 reconcile it explicitly before claiming raw-package dialect conformance.
 

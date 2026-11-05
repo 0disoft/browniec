@@ -23,8 +23,9 @@ parameters/results and shared/exclusive scalar-slice parameters. Whole/ranged/
 named-slice/temporary-array CALL borrows and array/view UTF-8 checks are available.
 See the [documentation index](../README.md) for owning language increment contracts.
 
-Returned-slice signatures/body-origin analysis remain private; every borrowed-
-result declaration rejects publicly. Buffer native resources/leases/scanning are
+Retained byte/text/shared-byte result source is public under
+`brownie.m2-reference/1`; general mutable/non-byte/Buffer/input results and
+host-visible reference lifetimes remain open. Buffer native resources/leases/scanning are
 not guest features. The [complete remaining-work audit](../product/04-remaining-work.md)
 tracks general references, wider tags, module/visibility/inference syntax and the
 runtime/delivery gaps.

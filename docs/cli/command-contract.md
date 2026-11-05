@@ -28,7 +28,10 @@ profile; the [complete audit](../product/04-remaining-work.md) lists every gap.
 
 Version JSON reports incremental flags alongside the existing scalar/array/struct
 profile identifiers. `core: true` advertises only the experimental native CLI.
-Returned-slice analysis is private and every borrowed-result declaration rejects.
+The [retained reference profile](../engineering/public-program.md) admits immutable
+byte/text literals, explicit text::bytes/equality and shared byte parameters/results.
+General mutable/non-byte/Buffer/input results and host-visible reference tickets
+remain unavailable.
 Guest Buffer/input/output, project/policy/catalog/grant loaders, inspect, worker,
 cancellation and deadlines remain unavailable. `--isolated` returns an availability
 denial, with no unrestricted fallback. Zero-argument i32 `main` is the only entry;
