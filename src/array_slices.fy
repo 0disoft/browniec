@@ -126,6 +126,18 @@ pub fn Result<i64, owners::Error> read(ref Pool pool, Ticket ticket, ref owners:
     }
     return owners::leased_read(table, entry.lease, ref entry.view, index, bytes);
 }
+// Authenticate once, then read a narrowed logical window of the same lease.
+// No extra pool slot/session is needed for instruction-local generic ranges.
+pub fn Result<i64,owners::Error> read_window(ref Pool pool,Ticket ticket,ref owners::Table table,
+    usize start,usize length,usize index,ref u8[] bytes){
+    let usize slot=resolve(pool,ticket,table,bytes.len)?;let Slot entry=pool.slots[slot];
+    let usize size=entry.view.end-entry.view.start;
+    if(start>size || length>size-start){return .err(.State);}
+    if(index>=length){return .err(.Bounds);}
+    if(entry.exclusive){let owners::WriteLease lease=writer(ref entry);
+        return owners::exclusive_read(table,ref lease,start+index,bytes);}
+    return owners::leased_read(table,entry.lease,ref entry.view,start+index,bytes);
+}
 pub fn Result<bool, owners::Error> utf8(ref Pool pool, Ticket ticket, ref owners::Table table, ref u8[] bytes) {
     let usize index = resolve(pool, ticket, table, bytes.len)?;
     let Slot entry = pool.slots[index];

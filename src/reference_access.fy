@@ -12,13 +12,16 @@ import std::num as num;
 // An invocation-local access selector, not a retained descriptor or authority.
 // The caller still holds its proved frame, exact image borrow and native leases.
 // Inactive fields are canonical; no integer/pointer coercion chooses storage.
-pub struct Source { u8 storage; usize site; slices::Ticket ticket; }
+pub struct Source { u8 storage; usize site; slices::Ticket ticket; bool window; views::Span span; }
 pub struct Value { i64 value; usize remaining; }
-pub fn Source image(usize site){return Source{.storage=1,.site=site,.ticket=slices::Ticket{.slot=16,.generation=0}};}
-pub fn Source loan(slices::Ticket ticket){return Source{.storage=2,.site=16,.ticket=ticket};}
+pub fn Source image(usize site){return Source{.storage=1,.site=site,.ticket=slices::Ticket{.slot=16,.generation=0},.window=false,.span=views::Span{.start=0,.length=0}};}
+pub fn Source loan(slices::Ticket ticket){return Source{.storage=2,.site=16,.ticket=ticket,.window=false,.span=views::Span{.start=0,.length=0}};}
+pub fn Source loan_window(slices::Ticket ticket,views::Span span){return Source{.storage=2,.site=16,.ticket=ticket,.window=true,.span=span};}
 fn bool canonical(ref Source source){
-    if(source.storage==1){return source.site<16 && source.ticket.slot==16 && source.ticket.generation==0;}
-    return source.storage==2 && source.site==16;
+    let bool inactive=!source.window && source.span.start==0 && source.span.length==0;
+    if(source.storage==1){return source.site<16 && source.ticket.slot==16 && source.ticket.generation==0 && inactive;}
+    return source.storage==2 && source.site==16 &&
+        (inactive || (source.window && source.span.start<=4096 && source.span.length<=4096-source.span.start));
 }
 fn errors::Error invalid(usize offset){return errors::make(5,offset);}
 fn Result<usize,errors::Error> byte_ticket(ref slices::Pool pool,slices::Ticket ticket,usize offset){
@@ -52,7 +55,8 @@ pub fn Result<Value,errors::Error> read(ref Source source,ref statics::Sites sit
     if(remaining<price){return .err(errors::make(8,offset));}
     let usize selected=cells::unpack(index,offset)?;
     let usize slot=byte_ticket(pool,source.ticket,offset)?;
-    let i64 value=switch(slices::read(pool,source.ticket,table,selected,data)){
+    let i64 value=switch(if(source.window){slices::read_window(pool,source.ticket,table,source.span.start,source.span.length,selected,data)}
+        else{slices::read(pool,source.ticket,table,selected,data)}){
         case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}
     };
     return .ok(Value{.value=value,.remaining=remaining-price});
@@ -73,6 +77,8 @@ pub fn Result<Value,errors::Error> length(ref Source source,ref statics::Sites s
         length=switch(slices::length(pool,source.ticket,table,capacity)){
             case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}
         };
+        if(source.window){if(source.span.start>length || source.span.length>length-source.span.start){return .err(invalid(offset));}
+            length=source.span.length;}
     }
     return .ok(Value{.value=cells::pack(length,offset)?,.remaining=remaining-price});
 }
