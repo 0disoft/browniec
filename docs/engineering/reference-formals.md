@@ -93,6 +93,9 @@ prepaid zero-Fuel abort. Development/release each passed 18 focused native group
 and 33 public Fuel CLI cases on final inputs. The analysis results above remain
 historical for their own commit; the successor records current execution scope.
 
+The [returned-reference recipe successor](reference-return-ir.md) now reconstructs
+shared-byte result signatures and actual grounded image/input/local origins.
+Complete canonical lifetime proof and native result transfer remain open.
 Next implement returned generic references with origin-selected retention,
 caller destination publication, close and image lifetime handling, followed by
 source signatures/actuals/returns and ordinary public admission. Text/non-byte

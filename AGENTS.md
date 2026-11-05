@@ -1,3 +1,18 @@
+- Shared byte return recipes now reconstruct kind-3 results through actual
+  PARAM/CALL/ALIAS/RANGE/RETURN and exact image/input/local origins. Rootless shared
+  byte inputs map to their logical formal. Symbolic local origin 10 can describe
+  caller temporaries but cannot satisfy any declared function result. Runtime
+  actuals contribute no image roots and are never indexed as actual-192.
+  Code 969456a; docs/engineering/reference-return-ir.md records scope and next work.
+  Windows development/release each passed 18 native groups on 139 matching inputs,
+  132 LF modules and 237-file discovery; both locked LF mirrors pass. No overrides/
+  historical reuse. Earlier fixture errors/unsupported interpreter probe excluded.
+  This is recipe analysis, not complete canonical returned-loan lifetime proof or
+  native generic-result execution. Existing canonical/retained/public admission
+  still rejects result kind 3. Next implement canonical owner/drop/write lifetime
+  proof, native selected handoff and last-alias close, then source/public lowering.
+  Public CLI/Fuel selections/full profiles/general RAM-stack/timing/Linux/
+  restricted/ABI/package were not rerun. Full objective remains active; local only.
 - Shared byte kind-3 formals now execute private canonical CALL/PARAM through a
   retained ReferenceProgram. Image/runtime words preserve exact selected windows
   and logical formal indices, with full tickets in existing native Call receipts.

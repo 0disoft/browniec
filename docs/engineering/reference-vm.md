@@ -94,8 +94,10 @@ allocator/OOM/timing, Linux, restricted delivery and ABI/package were not rerun.
 
 ## Remaining work
 
-Next connect returned generic references with origin-selected retention, caller
-destination publication and image/owner lifetime handling. Then lower source
+The [returned-reference recipe successor](reference-return-ir.md) now reconstructs
+shared byte results and exact image/input/local origins through actual IR. Next
+connect complete canonical lifetime proof, native origin-selected retention,
+caller publication and image/owner lifetime handling. Then lower source
 signatures, actuals and returns and complete ordinary public admission. Equality
 for kind 3, text/non-byte references and Buffer/input backing remain open.
 The [complete inventory](../product/04-remaining-work.md) and

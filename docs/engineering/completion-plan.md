@@ -68,8 +68,11 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    now combines mixed-backing signature/CFG recipes with canonical runtime loan
    type, owner and liveness proof. The [native VM successor](reference-vm.md) now
    executes mixed-backing CALL/PARAM using existing native captures and compact
-   window words, with exact Fuel and prepaid failure cleanup. Next connect generic
-   reference results and source signatures/actuals/returns;
+   window words, with exact Fuel and prepaid failure cleanup. The
+   [returned-reference recipes](reference-return-ir.md) now reconstruct shared-byte
+   result signatures and grounded image/input/local origins. Next add complete
+   canonical returned-loan lifetime proof and native result handoff/close, then
+   source signatures/actuals/returns;
    private execution alone cannot promote public source syntax.
    Validate actual public source execution before promoting its capability.
 2. **Language completion: L01-L06, C03/C05.** Finish explicit module snapshots and
