@@ -90,6 +90,9 @@ and drains failures with prepaid abort. A root-window set cannot broaden an
 actual transferred view. The analysis result by itself still grants neither
 execution nor lifetime authority.
 
-Storage-independent references, source signatures/CALL lowering, ordinary public
+The [shared byte-formal successor](reference-formals.md) now adds separate
+mixed-backing signature/CFG analysis and canonical runtime loan validation.
+Its native transfer and returned-reference paths are still pending.
+Storage-independent reference execution, source signatures/CALL lowering, ordinary public
 admission and host-visible returned-image lifetime APIs remain subsequent work.
 The complete accepted inventory remains open.

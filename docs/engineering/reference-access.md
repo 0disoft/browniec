@@ -78,8 +78,11 @@ were not rerun. These focused results do not certify the complete profile.
 
 ## Remaining integration
 
-This unifies instruction access only. A single guest formal cannot yet select
-either backing kind. Storage-independent guest reference signatures/actuals/
+This increment unifies instruction access only. The subsequent
+[shared byte-formal analysis](reference-formals.md) now proves mixed image/runtime
+actuals through one private IR signature, including canonical loan validation.
+Its VM transfer and source lowering remain open; a single guest source formal
+cannot yet select either backing kind. Storage-independent guest reference signatures/actuals/
 returns, text and non-byte references, source CALL lowering, ordinary public
 Program admission and host-visible returned-image lifetime APIs remain open.
 Buffer/input views and the complete [inventory](../product/04-remaining-work.md)

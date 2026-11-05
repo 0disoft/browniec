@@ -1,3 +1,20 @@
+- Shared byte formal kind 3 now has separate recipe and canonical analysis via
+  verifier::inspect_reference_calls and a distinct ReferenceCallProof. One IR
+  signature accepts image/universal sites or live shared runtime u8[] actuals;
+  logical prefixes, eight actuals, alias/range kind and transitive origins remain.
+  Runtime actuals require canonical caller liveness, exact byte/shared mode and
+  rooted owner or rootless formal ancestry. Scalar/owned/text coercion rejects.
+  Kind 3 is formal-only; equality/results/native VM transfer/source lowering stay
+  open. Existing Static retain/verify and public admission keep rejecting it.
+  Code 68826d4; docs/engineering/reference-formals.md records the next native
+  CALL/PARAM/receipt step. No new Program/proof layout, descriptor table, opcode,
+  price, public flag or ABI. Keep the complete objective active.
+  Windows development/release each passed 18 native groups (8 new, 8 admission,
+  2 existing Static VM) and 33 tool-free CLI cases. Native 137/CLI 142 paths match;
+  146 distinct committed inputs, 130 LF modules and 233-file discovery. Both
+  locked LF mirrors pass; no overrides/historical reuse. Earlier probes excluded.
+  Original public Fuel native/full profiles/general RAM-stack/allocator/timing/
+  Linux/restricted/ABI/package checks were not rerun. Local only; no push/release.
 - Instruction-local byte READ/LEN now share reference_access across immutable
   image sites and runtime u8[] loan tickets. Canonical tags reject mixed storage;
   frame/image spans and full runtime ticket/root/lease validation remain required.

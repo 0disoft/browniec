@@ -64,7 +64,10 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    full Fuel/destination preflight and ordinary ownership cleanup. The
    [byte-access successor](reference-access.md) now shares instruction-local
    READ/LEN across image sites and runtime byte loans while retaining their
-   authentication and prices. Next unify guest reference formals and lower source signatures/actuals/returns;
+   authentication and prices. The [shared byte-formal analysis](reference-formals.md)
+   now combines mixed-backing signature/CFG recipes with canonical runtime loan
+   type, owner and liveness proof. Next connect those formals to actual native
+   CALL/PARAM transactions, then reference results and source signatures/actuals/returns;
    private execution alone cannot promote public source syntax.
    Validate actual public source execution before promoting its capability.
 2. **Language completion: L01-L06, C03/C05.** Finish explicit module snapshots and

@@ -112,6 +112,14 @@ numeric byte READ/LEN/WRITE/CLOSE boundaries and other affected routes passed
 the final artifacts and source identities; the original public native selection
 was not rerun.
 
+The [shared byte-formal analysis](reference-formals.md) subsequently reran both
+CLI-only profiles after canonical argument-proof integration. All 33 cases per
+profile passed on 142 matching CLI inputs and a 233-file discovery identity;
+prices and reported limits remain. Its separate 18-group native selection is
+analysis plus existing Static execution regression evidence, not execution of
+the new shared-byte formal kind. See
+[the focused evidence](../evidence/reference-formals-windows-20261105.json).
+
 Full M1/M2, Linux, restricted delivery, ABI, packaging and elapsed-time/allocator/
 stack-size benchmarks are outside this increment. B04 result declarations remain
 publicly gated; other C05 capacities and the complete objective remain open.
