@@ -1,3 +1,16 @@
+- Scalar literal projections are implemented at `cb44a35`: list/repeated
+  indexing and length, literal grouping and UTF-8 element lists. Inferred scalar
+  locals use read-only lookahead; completed literal/CALL owners share endpoint
+  cleanup and prompt drop. Development/release each passed 14 native groups and
+  112 tool-free CLI cases on 168 checkout/Git-raw-matching inputs, 156 LF modules
+  and 268-file discovery, with both locked LF mirrors. Exact list 450 native/
+  65978 public/410045 retained and repeated 170 native/65698 public Fuel pass.
+  Sixteen nested sites and four-byte sequential reuse pass; original combined
+  call-depth 32/33 cases remain. See the scalar literal projection contract and
+  Windows evidence. Existing prices/default256/cap16000000 remain. Broader
+  grouped-name/CALL/control-flow aggregates, nested/resource elements, full
+  L02/L03/C05/Instance/host/delivery/objective remain open. No full matrices/Linux/
+  OOM injection/general stack/timing/delivery rerun. Local only.
 - Scalar element-list source assignment is implemented at `bd34554`: mutable
   `a=[x,y];` shares the complete ordered scalar evaluator, validates exact existing
   type/arity and terminator, then emits one replacement without another array

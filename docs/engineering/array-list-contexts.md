@@ -112,6 +112,7 @@ compiler-borrow and missing-mut diagnostic-expectation drafts are excluded.
 Full profiles and CLI/native matrices, Linux, allocator fault injection, general
 native stack/timing, Instance accounting/resumability and restricted/ABI/package
 delivery remain outside this evidence. The [assignment successor](array-list-assignment.md)
-now supplies whole-array scalar list replacement. Immediate general list
-expressions/projections and nested/resource-bearing elements remain
+now supplies whole-array scalar list replacement. The [scalar projection successor](array-literal-projections.md)
+adds immediate index/length expressions, grouping and UTF-8 lists. Broader
+aggregate expressions/projections and nested/resource-bearing elements remain
 language work; this increment does not complete L03/C05 or the full objective.

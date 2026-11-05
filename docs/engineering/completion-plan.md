@@ -124,7 +124,9 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    independent IR proof and both VM drivers with exact prepaid replacement Fuel.
    The [source assignment successor](array-list-assignment.md) now connects
    existing mutable destinations, ordered evaluation and nonlocal-exit cleanup.
-   Finish general list expressions; then continue with
+   The [scalar literal projection successor](array-literal-projections.md) now
+   adds index/length expressions, grouping, prompt temporary cleanup and UTF-8
+   element lists. Finish broader aggregate expressions/projections; then continue with
    selected-place compound assignment, wider/resource-bearing
    tags and must-use
    handling. Reconcile operand/source/type/compile limits deliberately rather than

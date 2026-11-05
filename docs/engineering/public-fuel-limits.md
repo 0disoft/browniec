@@ -88,6 +88,12 @@ For `var a=[0;2];a=[20,22];return a[0]+a[1];`, public backing requires 66083:
 66082 fails and 66083/66084 succeed. Native backing-eight and retained coordinator
 oracles require 555 and 410152 respectively; they retain their distinct schedules.
 
+The [scalar literal projection successor](array-literal-projections.md) adds no
+price or limit changes. `return [20,42][1];` requires 450 native Fuel with eight
+backing bytes, 65978 with public backing, or 410045 in the retained coordinator.
+`return [42;2][1];` requires 170 native or 65698 public Fuel. Exact/one-short/
+one-more checks preserve each distinct schedule and original temporary cleanup.
+
 ## Verification
 
 `python -B tools/verify-public-fuel.py --profile development` runs focused native

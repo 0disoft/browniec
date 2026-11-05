@@ -91,7 +91,9 @@ u32/usize test fixtures used unsupported narrowing casts; corrected comparisons
 are used in every final run. The earlier native result/snapshot is excluded and
 both complete native selections reran on final inputs.
 
-General list expressions/projections, nested/resource elements and full L03/C05
+The [scalar literal projection successor](array-literal-projections.md) now adds
+immediate index/length expressions, grouping and UTF-8 lists. Broader aggregate
+expressions/projections, nested/resource elements and full L03/C05
 remain open. Full native/CLI matrices, Linux, allocator fault injection, general
 stack/timing benchmarks, complete Instance accounting/resumability, host/project
 CLI, restricted worker, ABI and package delivery are separate obligations.
