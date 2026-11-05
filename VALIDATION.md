@@ -1,3 +1,19 @@
+- Grouped record values/projections are implemented at `7e26edd`, with focused
+  verification at `7b9a9de`. Constructors, named owners and CALLs now compose
+  through scalar field paths, inferred/typed locals, by-value arguments, returns,
+  nested constructor fields and whole/child assignment. Constructor projections
+  need zero record sites/backing; grouped pairs preserve exact instruction bytes.
+  Development/release each passed 17 native groups and 178 tool-free CLI cases
+  on 170 checkout/Git-raw-matching inputs, 158 LF production modules and common
+  270-file discovery; both locked LF mirrors pass. Forty-one unselected legacy
+  discovery files differ from Git only by CRLF/LF, with both hashes recorded.
+  See the [contract](docs/engineering/record-expression-projections.md) and
+  [Windows evidence](docs/evidence/record-expression-projections-windows-20261106.json).
+  Existing prices/default256/cap16000000 remain. Aggregate-valued control flow,
+  grouped lvalues/borrows, nested/resource array elements, full C05/Instance,
+  host and delivery remain open. No full matrices/Linux/OOM/general stack/timing/
+  delivery rerun. Local only.
+
 # Validation
 
 - Grouped array values/projections are implemented at `658ef47`: existing owners,

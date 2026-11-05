@@ -23,9 +23,11 @@ now support immediate indexing/length on list and repeated literals, including
 grouping and existing UTF-8 element-list checks. [Grouped array values and
 projections](docs/engineering/array-expression-projections.md) now extend named
 owners and CALL results through index/length, initializers, by-value arguments,
-returns, assignment and exact-u8 UTF-8 checks. Broader record/control-flow
-expressions, grouped lvalues/borrows and nested/resource-bearing elements remain
-unfinished.
+returns, assignment and exact-u8 UTF-8 checks. [Grouped record values and
+projections](docs/engineering/record-expression-projections.md) now add constructor
+field reads, grouped named/CALL paths, initializers, by-value arguments, returns
+and whole/child assignment. Aggregate-valued control flow, grouped lvalues/borrows
+and nested/resource-bearing array elements remain unfinished.
 [Native project metadata](docs/cli/project-format.md) now admits complete explicit
 source maps, entries and declared requirements; it opens no files and grants nothing.
 Public project loading and CLI module/entry flags, general mutable/non-byte/
