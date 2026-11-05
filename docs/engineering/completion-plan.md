@@ -79,8 +79,10 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    now connects retained admission and canonical selected CALL/RETURN handoff,
    caller publication, exact windows and complete Fuel preflight. The
    [shared byte CALL source successor](reference-call-source.md) now lowers shared
-   formals and image/runtime actuals through retained native CALL execution. Next
-   lower source returns and result bindings;
+   formals and image/runtime actuals through retained native CALL execution. The
+   [returned-source successor](reference-return-source.md) now lowers return
+   expressions, result bindings and selected temporary owner lifetimes through
+   the same complete proof/native VM. Next connect ordinary public admission;
    private execution alone cannot promote public source syntax.
    Validate actual public source execution before promoting its capability.
 2. **Language completion: L01-L06, C03/C05.** Finish explicit module snapshots and

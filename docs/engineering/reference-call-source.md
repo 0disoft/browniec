@@ -80,9 +80,10 @@ limitations are recorded in
 [focused evidence](../evidence/reference-call-source-windows-20261105.json).
 The original public Fuel native selection was not rerun by this successor.
 
-Next lower source return expressions, result bindings and selected lifetimes
-through the [existing canonical result VM](reference-return-vm.md), then connect
-ordinary public admission and CLI execution. Kind-3 equality, mixed-backing text/non-byte
+The [returned-source successor](reference-return-source.md) now lowers return
+expressions, result bindings and selected temporary owners through the existing
+canonical result VM, including prompt unselected cleanup and nonlocal exits.
+Next connect ordinary public admission and CLI execution. Kind-3 equality, mixed-backing text/non-byte
 references, Buffer/input backing and host-visible reference lifetime APIs
 remain open. Full profiles, Linux, general RAM/stack, allocator/OOM/timing,
 restricted delivery and ABI/package checks are outside this increment. The

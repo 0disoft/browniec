@@ -76,6 +76,7 @@ receipts and complete proof to retained private admission and canonical
 CALL/RETURN dispatch. Selector/access and complete native return costs are
 prepaid; exact windows, post-success publication and consumed-frame retirement
 are connected. The [source CALL successor](reference-call-source.md) now lowers shared byte
-formals and mixed-backing actuals. Source returns/result bindings and ordinary
-public admission follow. The complete
+formals and mixed-backing actuals. The [returned-source successor](reference-return-source.md) now connects return
+expressions/result bindings and selected temporary owners. Ordinary public
+admission follows. The complete
 [inventory](../product/04-remaining-work.md) and [plan](completion-plan.md) stay open.

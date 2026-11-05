@@ -1,3 +1,21 @@
+- Shared byte source returns and result bindings now compile through private
+  compiler::compile_reference_returns into the existing ReferenceReturnProgram.
+  Source hints distinguish exact inputs/image origins; complete IR/canonical
+  owner-lifetime proof independently authenticates them before retained admission.
+  Only selected owned temporary arrays survive CALL. Temporary source views and
+  unselected owners close promptly; hidden selected owners join cleanup before
+  result endpoints/later arguments. Aliases/ranges/nested calls and nonlocal
+  exits reuse existing finalizers. No runtime frame/table/price changes.
+  Code 0173333; see docs/engineering/reference-return-source.md and focused evidence.
+  Development/release each passed 18 native groups (8 new source returns, 8 result
+  VM, 2 source CALL) and 33 tool-free CLI cases on 153 matching distinct committed
+  inputs, 137 LF modules and 242-file discovery. Both locked LF mirrors pass.
+  Source Fuel boundaries are measured; existing result VM numeric oracles remain.
+  No overrides/historical reuse; earlier direct and rejected-fixture probes excluded.
+  Ordinary public Program/CLI admission is next; mixed-backing text/non-byte and
+  Buffer/input references, host-visible lifetimes and the complete objective stay
+  open. Original public Fuel native/full profiles/general RAM-stack/allocator/
+  timing/Linux/restricted/ABI/package were not rerun. Local only; no push.
 - Shared byte CALL source now lowers through compiler::compile_references into
   the existing retained ReferenceProgram. One ref u8[] formal accepts image/text
   byte views and ordinary rooted/owned runtime loan actuals with explicit ref.

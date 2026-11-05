@@ -103,8 +103,9 @@ supplies disjoint sparse bindings and last-alias close without another frame map
 the [native result VM successor](reference-return-vm.md) now connects canonical
 generic-result CALL/RETURN dispatch, retained admission and complete selector/return
 Fuel. The [source CALL successor](reference-call-source.md) now lowers shared
-byte formals and mixed-backing actuals through native retained execution. Next
-lower source returns/result bindings and complete ordinary public admission. Equality
+byte formals and mixed-backing actuals through native retained execution. The [returned-source successor](reference-return-source.md) now connects return
+expressions/result bindings and selected temporary retention. Next complete
+ordinary public admission. Equality
 for kind 3, text/non-byte references and Buffer/input backing remain open.
 The [complete inventory](../product/04-remaining-work.md) and
 [completion plan](completion-plan.md) remain active.

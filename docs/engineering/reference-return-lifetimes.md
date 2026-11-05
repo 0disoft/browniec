@@ -89,6 +89,7 @@ now connects complete proof to retained returned-reference admission, canonical
 selected handoff/caller publication, exact runtime windows and complete Fuel
 preflight. Full-generation receipts keep ordinary and universal site namespaces
 disjoint; native abort owns failure cleanup. The [source CALL successor](reference-call-source.md) now lowers shared byte
-formals and mixed-backing actuals. Next lower source returns/result bindings
-and complete public admission. The [full inventory](../product/04-remaining-work.md)
+formals and mixed-backing actuals. The [returned-source successor](reference-return-source.md) now connects return
+expressions/result bindings and selected temporary owners. Next complete public
+admission. The [full inventory](../product/04-remaining-work.md)
 and [completion plan](completion-plan.md) remain active.

@@ -149,6 +149,14 @@ covers source CALL execution, legacy Static bindings and mixed native CALLs on
 143 matching paths. The original public Fuel native selection was not rerun.
 See [focused evidence](../evidence/reference-call-source-windows-20261105.json).
 
+The [returned-byte source successor](reference-return-source.md) reran both
+serialized CLI-only phases: 33 cases per Windows profile on 149 matching input
+paths and a 242-file discovery identity, with unchanged prices/default/cap.
+Its separate 18-group native selection covers new source returns/temporary owner
+lifetimes, existing result VM numeric oracles and source CALL regressions on 144
+matching paths. The original public Fuel native selection was not rerun. See
+[focused evidence](../evidence/reference-return-source-windows-20261105.json).
+
 Full M1/M2, Linux, restricted delivery, ABI, packaging and elapsed-time/allocator/
 stack-size benchmarks are outside this increment. B04 result declarations remain
 publicly gated; other C05 capacities and the complete objective remain open.
