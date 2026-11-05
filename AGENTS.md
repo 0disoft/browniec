@@ -1,3 +1,15 @@
+- Native exact-shape array-list replacement storage is implemented at `6e2b75f`.
+  Complete scalar staging precedes writes into the existing extent; shared creation/
+  replacement encoding keeps six domains and 4096 cells. Owner/token/order/epoch/
+  arena metadata stay read-only, including 64 replacements with all 16 slots and
+  the 23-byte backing quota full. Stale/record/borrowed/corrupt inputs fail before
+  publication. Development/release each passed 10 native groups on 163 Git-raw/
+  checkout-matching inputs, 156 LF modules and 265-file discovery; both locked LF
+  mirrors pass. See the replacement-storage contract and Windows evidence.
+  No new opcode/source/capability/Fuel price or default/cap change. Whole-array list
+  assignment still needs independent IR proof, both VM drivers, exact Fuel and
+  source cleanup. Full L03/C05/Instance/host/delivery/objective remain open. Public
+  CLI/full matrices/Linux/OOM injection/general stack/timing/delivery not rerun.
 - Scalar element-list CALL arguments, returned literals and temporary borrows are
   implemented at `6fea8e4`, using the declaration evaluator and existing canonical
   captures, ARET and returned-view owner retention. New scope-specific version

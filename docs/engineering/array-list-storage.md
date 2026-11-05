@@ -1,7 +1,9 @@
 # Atomic array element-list storage
 
-Date: 2026-11-06. Native storage prerequisite for L03; source element-list
-syntax, its IR proof and VM dispatch remain to be connected.
+Date: 2026-11-06. Native creation prerequisite for L03. Later
+[IR/VM](array-list-execution.md) and [source contexts](array-list-contexts.md)
+connect the implementation below; [replacement storage](array-list-replace-storage.md)
+adds atomic overwrites of existing scalar arrays.
 
 ## Transaction
 
@@ -64,13 +66,15 @@ elapsed-time benchmarks and delivery checks were not run for this prerequisite.
 
 The [native IR/VM successor](array-list-execution.md) now connects complete
 operand/CFG/owner proof, invocation scratch, atomic ordinary/retained execution
-and explicit precharged prices. Guest `[x, y]` declarations/expressions remain
-unavailable until source integration.
-Next distinguish element lists from `[filler; N]` without evaluating guest
-expressions during lookahead. Lower elements left to right exactly once, infer
-or enforce exact type and arity, and expose the name only after initialization.
-Emit the successor's independently verified atomic initialization. Preserve current
-repeated initializer prices, backing/owner limits and nonlocal-exit cleanup.
+and explicit precharged prices. The [source declaration successor](array-list-source.md)
+and [contextual successor](array-list-contexts.md) now lower ordered element lists
+for inferred/annotated locals, direct arguments, array returns and temporary
+borrows. They distinguish repeated arrays without guest evaluation in lookahead,
+enforce exact scalar types/arity and preserve lexical/nonlocal-exit cleanup.
+The [replacement storage successor](array-list-replace-storage.md) now overwrites
+existing exact-shape arrays without another owner or extent. Whole-array list
+assignment still needs independent IR/VM/Fuel/source integration. General list
+expressions/projections and nested/resource-bearing elements remain separate work.
 
 The current compiler's 128 global value registers, 256 instructions and 4096-byte
 source limit remain separate C05 constraints. Native 4096-element support does

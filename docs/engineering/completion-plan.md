@@ -118,7 +118,10 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    now connects inferred/annotated lists, exact arity/types, left-to-right one-time
    evaluation and nonlocal-exit cleanup. The [contextual successor](array-list-contexts.md)
    now adds direct list arguments, returned literals and borrowed temporaries.
-   Finish whole-array list replacement and general list expressions; then continue with
+   The [replacement storage prerequisite](array-list-replace-storage.md) now
+   atomically overwrites exact scalar extents without another owner or allocation.
+   Finish its independent IR proof, both VM drivers/Fuel and whole-array assignment
+   source, plus general list expressions; then continue with
    selected-place compound assignment, wider/resource-bearing
    tags and must-use
    handling. Reconcile operand/source/type/compile limits deliberately rather than
