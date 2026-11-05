@@ -185,7 +185,13 @@ pub fn Result<Table,errors::Error> scan_scoped(ref u8[] source,ref context::Tabl
     }
     id=0;while(id<scope.record_count){let usize fields=resolve(source,ref mut table,id)?;id+=1;}
     switch(layouts::plan(ref table.layouts,18446744073709551615)){
-        case .ok(_):{}case .err(_):{return .err(errors::make(3,if(scope.record_count==0){0}else{table.begins[0]}));}
+        case .ok(_):{}case .err(e):{
+            let u8 kind=switch(e){case .Depth:{4}case .Overflow:{4}case .Quota:{4}case .Limit:{4}
+                case .Fields:{3}case .Type:{3}case .Metadata:{3}case .Cycle:{3}};
+            let usize at=switch(layouts::failed_root(ref table.layouts,18446744073709551615)){
+                case .ok(root):{table.begins[root]}case .err(_):{0}
+            };return .err(errors::make(kind,at));
+        }
     };
     return .ok(table);
 }

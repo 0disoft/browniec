@@ -120,3 +120,21 @@ fn void admission_rejected(ref u8[] a,ref u8[] b,usize limit,u8 kind,usize owner
     let ref u8[] equality=b"module app;import lib as m;pub fn i32 chosen(){let ref u8[] p=m::same(ref b\"x\");if(text::equal(p,b\"x\")){return 42;}return 0;}";
     admission_rejected(generic,equality,65536,5,1);
 }
+
+fn void declaration_error(ref u8[] a,ref u8[] b,u8 kind,u8 first){
+    switch(programs::compile(entry(a,b),65536)){case .ok(_):{assert(false);}case .err(e):{
+        assert(e.code.kind==kind && e.at.source==1 && e.at.start<b.len && b[e.at.start]==first);
+    }};
+}
+@test fn void unresolved_origins_cycles_and_deep_layouts_identify_the_actual_later_file(){
+    let ref u8[] library=b"module lib;pub struct Ok{i32 x;}pub fn i32 ok(){return 0;}";
+    declaration_error(library,b"module app;pub fn i32 chosen(){return 0;}pub fn ref u8[] loop(){return loop();}",3,108);
+    declaration_error(library,b"module app;pub struct A{B b;}pub struct B{A a;}pub fn i32 chosen(){return 0;}",3,65);
+    var bytes::Buffer deep=bytes::empty();append(ref mut deep,b"module app;");
+    let ref u8[] letters=b"ABCDEFGHIJKLMNOPQ";var usize id=0;
+    while(id<17){append(ref mut deep,b"pub struct ");append(ref mut deep,letters[id..id+1]);append(ref mut deep,b"{");
+        if(id+1<17){append(ref mut deep,letters[id+1..id+2]);append(ref mut deep,b" child;");}
+        else{append(ref mut deep,b"i32 x;");}append(ref mut deep,b"}");id+=1;
+    }append(ref mut deep,b"pub fn i32 chosen(){return 0;}");
+    declaration_error(library,bytes::view(ref deep),4,65);
+}

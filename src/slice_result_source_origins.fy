@@ -116,13 +116,13 @@ pub fn Result<usize,errors::Error> infer(ref u8[] source,ref mut functions::Tabl
         if(t.arities[checked]>8 || t.bodies[checked]>t.body_ends[checked] || t.body_ends[checked]>source.len){return .err(errors::make(3,0));}checked+=1;
     }
     var usize rounds=0;
-    while(rounds<17){rounds+=1;var bool changed=false;var bool unresolved=false;var usize f=0;
+    while(rounds<17){rounds+=1;var bool changed=false;var usize unresolved=16;var usize f=0;
         while(f<t.count){if(t.return_slice_elements[f]!=0){
             let u8 found=body(source,t,ref t.return_slice_inputs,f)?;
-            if(found==0){unresolved=true;}
+            if(found==0){if(unresolved==16){unresolved=f;}}
             else if(t.return_slice_inputs[f]!=0 && t.return_slice_inputs[f]!=found){return .err(errors::make(3,t.begins[f]));}
             else if(t.return_slice_inputs[f]==0){t.return_slice_inputs[f]=found;changed=true;}
         }f+=1;}
-        if(!changed){if(unresolved){return .err(errors::make(3,0));}return .ok(rounds);}
+        if(!changed){if(unresolved<16){return .err(errors::make(3,t.begins[unresolved]));}return .ok(rounds);}
     }return .err(errors::make(3,0));
 }

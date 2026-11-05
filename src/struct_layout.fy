@@ -145,3 +145,16 @@ pub fn Result<Plan, Error> plan(ref Catalog catalog, usize limit) {
     }
     return .ok(result);
 }
+
+// Failure-only source diagnostics. Reuse the same checked resolver and preserve
+// completed roots, so the first root depending on an invalid layout is reported.
+// This scalar receipt is not a layout proof or executable authority.
+pub fn Result<usize,Error> failed_root(ref Catalog catalog,usize limit){
+    let usize count=validate(catalog)?;var Plan result=blank(count);
+    var Cursor cursor=Cursor{.records=[0;32],.fields=[0;32],.active=[false;32]};
+    var usize record=0;while(record<count){
+        if(result.depths[record]==0){switch(resolve(catalog,ref mut result,ref mut cursor,record,limit)){
+            case .ok(_):{}case .err(_):{return .ok(record);}
+        };}record+=1;
+    }return .err(.Metadata);
+}

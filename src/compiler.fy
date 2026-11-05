@@ -2053,7 +2053,7 @@ pub fn Result<bool,source_errors::Error> lower_modules(ref module_entries::Entry
     }return .ok(retained);
 }
 fn source_errors::Error module_error(ref module_entries::Entry selected,errors::Error error,usize active){
-    return source_errors::map(module_index::snapshot(module_entries::index(selected)),error,active);
+    return if(error.offset==0){source_errors::absent(error)}else{source_errors::map(module_index::snapshot(module_entries::index(selected)),error,active)};
 }
 fn Result<usize,errors::Error> lower_module(ref u8[] source,ref source_context::Table scope,
     ref module_entries::Entry selected,bool references,ref literal_collection::Index literals,ref mut ir::Program code,ref mut usize active){
