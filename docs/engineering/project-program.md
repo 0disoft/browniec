@@ -69,6 +69,20 @@ requirement denial at zero and sufficient Fuel, independent wrong-entry/path
 binding, complete unused-body admission, source-local compile/runtime failures,
 retry after Fuel exhaustion and actual literal/shared-byte module results.
 
+Implementation `83370c1` passed 14 focused development groups and all 30
+integrated release groups. The final development input set (155 paths) is an
+exact subset of the release set (157 paths); all match current checkout and Git
+raw bytes. Both use 149 LF production modules and the same 254-file discovery
+identity, and both locked LF mirrors passed. The earlier retention foundation's
+16 development groups used its own 253-file snapshot; they were not reused as a
+final-input development result. All sixteen identities also pass in the final
+integrated release run. No compiler/stack overrides or historical-result reuse
+were used. See the [focused Windows evidence](../evidence/project-program-windows-20261105.json).
+
+Diagnostic probes and the initial exhaustive-enum fixture failure are excluded.
+Public CLI/Fuel/full profiles, Linux, allocator fault injection, general memory/
+stack/timing measurements and delivery/ABI/package checks were not rerun.
+
 Anchored filesystem collection, public project loading, policy/grants, guest
 Buffer/input, Engine/Instance, restricted worker, ABI/package and complete
 profile/platform evidence remain open.

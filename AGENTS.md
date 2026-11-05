@@ -1,3 +1,24 @@
+- Native project_program now owns the complete Project beside its admitted
+  module Program. It independently rechecks exact map/header/entry agreement,
+  preserves original diagnostics, runs with fresh VM state and denies nonempty
+  requirements before guest/backing/Fuel work. No policy/grant API is implied.
+  Code 83370c1 builds on typed Index/Program owners at 2e611f6. See
+  docs/engineering/project-program.md and its focused Windows evidence.
+  Final development passed 14 project/source groups and integrated release passed
+  30 groups, on 155/157 matching input paths, 149 LF production modules and the
+  same 254-file discovery. All final inputs match checkout and Git raw bytes;
+  both locked LF mirrors pass. The earlier 16-group development retention
+  foundation has a separate 253-file snapshot; do not reuse it as a final-input
+  development run. Release explicitly covers all sixteen foundation identities.
+  Original combined 16/17-file and legacy/reference 32/33-depth cases remain.
+  No compiler/stack overrides or historical-result reuse. Diagnostics/enum-fixture
+  failures are excluded. CLI/Fuel/full profiles/Linux/allocator-fault injection/
+  general memory-stack timing/restricted/ABI/package were not rerun. Public
+  default256/cap16000000 and existing operation prices remain. Next: anchored
+  collection/project CLI plus grant integration, and independent remaining
+  language completion. Stable SDK ordinary opens are not anchored filesystem
+  proof; preserve the explicit OS-boundary work. Engine/Instance, general views,
+  Buffer/input, worker, ABI and the complete objective remain open. Local only.
 - Native project_sources now matches an explicit Project to exact sealed host
   snapshot identities irrespective of order, proves every canonical header and
   selects its named public zero-argument i32 entry. Original source spans and

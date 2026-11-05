@@ -62,10 +62,15 @@ The development foundation passed all 16 groups on 154 matching main inputs,
 mirror passed. Two other discovery fixtures were updated only to handle the
 new allocation error exhaustively; their hashes are retained separately.
 See the [foundation evidence](../evidence/native-module-retention-windows-20261105.json).
-Release verification is pending the integrated project increment so the same
-foundation does not need a separate repeated release run.
+The [project successor](project-program.md) subsequently passed all 16 foundation
+identities within its 30-group integrated release selection on 157 matching final
+inputs. Its separate 14-group development run covers the new project/source
+behavior. The original development foundation remains scoped to its own earlier
+snapshot; it is not reused as a final-input development result. See the
+[integrated evidence](../evidence/project-program-windows-20261105.json).
 
 Project-facade experiments and generated-C diagnostics are excluded from product
-verification. Retaining project requirements and connecting exact project binding
-to complete executable admission remain the next increment. Filesystem collection,
-project CLI, grants, Engine/Instance and the full objective remain open.
+verification. The [project successor](project-program.md) now retains project
+requirements and connects exact project binding to complete executable admission.
+Filesystem collection, project CLI, grants, Engine/Instance and the full objective
+remain open.
