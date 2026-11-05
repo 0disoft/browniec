@@ -14,6 +14,7 @@ import propagation as propagation;
 import casts as casts;
 import array_source as arrays;
 import array_call_source as array_calls;
+import call_prefix_source as call_prefix;
 import struct_call_source as record_calls;
 import array_result_source as array_results;
 import struct_result_source as record_results;
@@ -760,7 +761,30 @@ fn Result<usize,errors::Error> captured_call(ref u8[] source,ref mut lexer::Stat
     if(destination==16 && (signatures.return_lengths[target]!=0 || signatures.return_records[target]!=0)) {return .err(errors::make(3,at));}
     let usize zero=if(destination==176){ir::integer(p,0,12,at)?}else{128};
     let usize open=lexer::punctuation(source,s,40)?;
-    var usize[8] arguments=[0;8];var locals::Table names=locals::snapshot(table);var usize arity=0;
+    var usize[8] arguments=[0;8];var usize arity=0;
+    // Scalars and bare immutable owners need no hidden lexical captures. Finish
+    // this prefix before a separate frame retains any capture-table snapshot.
+    while(s.kind!=41 && arity<signatures.arities[target]){
+        let usize parameter=target*8+arity;
+        if(signatures.param_slices[parameter]){break;}
+        let u8 tag=signatures.param_types[parameter];
+        let usize length=signatures.param_lengths[parameter];let usize record=signatures.param_records[parameter] as usize;
+        if(length!=0 || record!=0){
+            let usize stable=call_prefix::stable(source,s,p,table,tag,length,record)?;
+            if(stable==256){break;}arguments[arity]=stable;
+        }else{
+            arguments[arity]=expression(source,s,p,table,signatures,1,depth+1,tag,result_type,structure,loop_state)?;
+            if(p.types[arguments[arity]]!=tag){return .err(errors::make(3,at));}
+        }
+        arity+=1;if(s.kind==41){break;}
+        let usize comma=lexer::punctuation(source,s,44)?;if(s.kind==41){return .err(errors::make(2,s.begin));}
+    }
+    return captured_tail(source,s,p,table,signatures,target,destination,at,depth,result_type,structure,loop_state,ref mut arguments,arity,zero);
+}
+fn Result<usize,errors::Error> captured_tail(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
+    ref locals::Table table,ref functions::Table signatures,usize target,usize destination,usize at,
+    usize depth,u8 result_type,usize structure,ref mut loops::State loop_state,ref mut usize[] arguments,usize first,usize zero){
+    var locals::Table names=locals::snapshot(table);var usize arity=first;
     while(s.kind!=41) {
         if(arity>=8) {return .err(errors::make(4,s.begin));}
         let u8 tag=if(arity<signatures.arities[target]){signatures.param_types[target*8+arity]}else{0};
@@ -784,12 +808,12 @@ fn Result<usize,errors::Error> captured_call(ref u8[] source,ref mut lexer::Stat
     }
     if(arity!=signatures.arities[target]) {return .err(errors::make(3,at));}
     let usize close=lexer::punctuation(source,s,41)?;
-    if(reference_calls::result(signatures,target)){return reference_results::call(p,signatures,table,ref names,target,ref arguments[..arity],at);}
-    if(destination==176){return result_calls::finish(p,table,ref names,signatures,target,ref arguments[..arity],zero,at);}
-    let ref usize[] view=ref arguments;let usize call_pc=p.count;
-    let usize called=if(destination<16){ir::array_call(p,target,destination,view[..arity],at)?}
-        else if(destination>=144 && destination<160){ir::record_call(p,target,destination-144,view[..arity],at)?}
-        else{ir::call(p,target,view[..arity],at)?};
+    if(reference_calls::result(signatures,target)){return reference_results::call(p,signatures,table,ref names,target,arguments[..arity],at);}
+    if(destination==176){return result_calls::finish(p,table,ref names,signatures,target,arguments[..arity],zero,at);}
+    let usize call_pc=p.count;
+    let usize called=if(destination<16){ir::array_call(p,target,destination,arguments[..arity],at)?}
+        else if(destination>=144 && destination<160){ir::record_call(p,target,destination-144,arguments[..arity],at)?}
+        else{ir::call(p,target,arguments[..arity],at)?};
     if(reference_calls::target(signatures,target)){let usize promoted=reference_calls::promote(p,call_pc,at)?;}
     let usize dropped=arrays::release_from(ref names,p,table.count,at)?;
     return .ok(if(destination<16){128+destination}else if(destination>=144 && destination<160){destination}else{called});
