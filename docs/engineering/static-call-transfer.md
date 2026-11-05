@@ -84,8 +84,15 @@ scalar prefixes, eight shared actuals, differing recursive spans, frame-limit
 abort, entry/CALL/RETURN Fuel shortage, retained-code immutability, legacy gates
 and mixed Static plus owned-array argument copying/drop. Existing range and
 scalar-entry tests cover affected canonical scalar/array/record/loan cleanup.
-New mixed-Static record/loan arguments and aggregate results reuse those adapters
-but have no new mixed runtime fixture in this selection.
+At the original `a1b555a` checkpoint, new mixed-Static record/loan arguments and
+aggregate results reused those adapters without a new mixed runtime fixture.
+The subsequent [mixed-call evidence](../evidence/static-call-mixed-windows-20261105.json)
+now records three groups per Windows development/release profile on 134 matching
+inputs and a 231-file discovery identity. Five examples combine Static formals
+with record values, shared/exclusive loans and array/record results. They retain
+canonical cleanup and measured exact/one-short Fuel boundaries; a kind-confused
+actual rejects. All 129 production modules are unchanged and LF, with locked
+mirrors passing. Source signatures were not enabled by those private fixtures.
 
 Final results and committed input identities are recorded in the
 [focused Windows evidence](../evidence/static-call-vm-windows-20261105.json).

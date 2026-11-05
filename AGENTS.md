@@ -1,3 +1,14 @@
+- Mixed Static CALL coverage now directly executes record arguments, shared/
+  exclusive runtime loans and owned array/record results through canonical
+  adapters. Five examples plus kind-confusion rejection pass three groups per
+  Windows development/release profile on 134 matching inputs, 129 unchanged LF
+  production modules and a 231-file discovery identity. Exact/one-short budgets
+  here are measured, not independent price oracles. No overrides/historical reuse.
+  Fixtures replace an unused scalar marker with a private Static formal; no
+  source signature, opcode, runtime price or public capability changes. CLI/full
+  profiles/general memory/timing/Linux/restricted/ABI/package were not rerun.
+  See docs/engineering/static-call-transfer.md and mixed-call evidence. Next unify
+  byte reference access across backing kinds, then source/formal/lifetime paths.
 - Native Static PARAM 77/CALL 78/RETURN 79 now execute through the existing
   canonical coordinator, borrowing body/origin tables without another IR wrapper.
   Private CallProgram retains a completely proved code/image snapshot; legacy
