@@ -45,8 +45,12 @@ ReferenceProgram/CallProgram and ordinary public admission still reject result
 kind 3. Existing shared-byte formal VM execution remains supported. This separate
 entry point does not enable source result syntax or host-visible references.
 
-Next combine these recipes with canonical owner/loan lifetime analysis, including
-writes/drops while a returned runtime reference remains live. Then connect native
+The [canonical lifetime successor](reference-return-lifetimes.md) now combines
+these recipes with complete ordinary scalar/owner/loan and CFG proof plus local
+owner dependencies for returned views. It rejects writes/drops/exclusive access
+while any returned alias depends on that owner, while preserving unrelated
+owner mutation and rootless input ancestry. Executable admission remains closed.
+Next connect native
 handoff, caller publication, last-alias close, selected owner/parent retention and
 prepaid abort. Image results must keep their retained Program borrow; runtime
 results must keep full-generation native receipts. Source signatures/actuals/

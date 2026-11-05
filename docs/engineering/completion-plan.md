@@ -70,8 +70,10 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    executes mixed-backing CALL/PARAM using existing native captures and compact
    window words, with exact Fuel and prepaid failure cleanup. The
    [returned-reference recipes](reference-return-ir.md) now reconstruct shared-byte
-   result signatures and grounded image/input/local origins. Next add complete
-   canonical returned-loan lifetime proof and native result handoff/close, then
+   result signatures and grounded image/input/local origins. The
+   [canonical result-analysis successor](reference-return-lifetimes.md) now adds
+   complete scalar/owner/loan proof and local-owner exclusion through all returned
+   aliases. Next connect native selected result handoff/publication/close, then
    source signatures/actuals/returns;
    private execution alone cannot promote public source syntax.
    Validate actual public source execution before promoting its capability.

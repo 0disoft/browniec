@@ -1,3 +1,20 @@
+- Generic returned-byte recipes now combine complete scalar/owner/loan/CFG proof
+  with local-owner dependency masks via verifier::inspect_reference_returns and
+  distinct ReferenceReturnProof. Image actuals have no owner mask; runtime actuals
+  remap local roots at each CALL; formals do not alias same-numbered recursive
+  locals. Last-alias liveness rejects owner drop/write/fill/assignment/exclusive
+  access while permitting original source-loan close and unrelated owner writes.
+  Sixteen usize masks add 128 logical bytes to analysis on the 64-bit target;
+  no runtime frame/pool/Program/Sites/price changes. Code 00dcedd.
+  Development/release each passed 18 native groups on 140 matching inputs,
+  133 LF modules and 238-file discovery; both locked LF mirrors pass. No overrides
+  or historical reuse; earlier eight-group core probe excluded. See
+  docs/engineering/reference-return-lifetimes.md. Generic results are still not
+  executable: old canonical/retained/public gates reject result kind 3. Next native
+  selected handoff/publication/last-alias close with exact windows and receipt
+  namespaces, then source signatures/actuals/returns and ordinary public admission.
+  Public CLI/Fuel selections/full profiles/general RAM-stack/timing/Linux/
+  restricted/ABI/package were not rerun. Full objective stays active; local only.
 - Shared byte return recipes now reconstruct kind-3 results through actual
   PARAM/CALL/ALIAS/RANGE/RETURN and exact image/input/local origins. Rootless shared
   byte inputs map to their logical formal. Symbolic local origin 10 can describe
