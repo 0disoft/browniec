@@ -114,6 +114,7 @@ def main():
             raise RuntimeError(f'{command}\n{result.stdout[-8000:]}\n{result.stderr[-3000:]}')
         return result
 
+    starting_head = run(['git', 'rev-parse', 'HEAD']).stdout.strip()
     mirror = out / 'lf-workspace'
     for path in production + ['fairy.toml', 'fairy.lock']:
         destination = mirror / path
@@ -198,7 +199,7 @@ def main():
     assert all(digest(ROOT / i['path']) == i['sha256'] for i in inputs)
     assert discovery() == tree and digest(compiler) == compiler_hash
     write(receipt, dict(schema='browniec.static-execution-verification/v1', status='passed',
-                       profile=profile, selection=args.selection, startingHead=run(['git', 'rev-parse', 'HEAD']).stdout.strip(),
+                       profile=profile, selection=args.selection, startingHead=starting_head,
                        platform=platform.platform(), compilerSha256=compiler_hash,
                        compilerVersion=run([compiler, '--version']).stdout.strip(),
                        inputSnapshotCapturedAt=captured, inputs=inputs, testDiscovery=tree,
