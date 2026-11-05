@@ -166,13 +166,16 @@ CLI artifacts. Its separate reference result profile preserves the canonical
 check and run without native stack overrides. Version Fuel discovery is unchanged.
 
 After the native project-source binding increment, the original public Fuel
-selection was rerun on source baseline `6d7ab75`. Windows development passed all
-25 native groups and 33 tool-free CLI cases on 160 matching input hashes, 148
-production modules and the 253-file test-discovery identity. Both native and CLI
-phases ran afresh with `check --locked`, without compiler/stack overrides or
-historical-result reuse. The default remains 256 and the ceiling 16000000;
-operation prices and host-selected native budgets are unchanged. Release
-revalidation is pending. See the [current-source evidence](../evidence/public-fuel-windows-20261105.json).
+selection was rerun on source baseline `6d7ab75`. Windows development and release
+each passed all 25 native groups and 33 tool-free CLI cases on the same 160
+matching input hashes, 148 production modules and the 253-file test-discovery
+identity. Native and CLI phases ran afresh in both profiles with `check --locked`,
+without compiler/stack overrides or historical-result reuse. The default remains
+256 and the ceiling 16000000; operation prices and host-selected native budgets
+are unchanged. Development started at `6d7ab75`; release started at the
+documentation-only successor `757e837`. The evidence rechecks all inputs and
+records each starting head, compiler, report and CLI artifact hash. See the
+[current-source evidence](../evidence/public-fuel-windows-20261105.json).
 This rerun does not repeat the retained-source numeric oracle suite or an LF
 mirror check.
 

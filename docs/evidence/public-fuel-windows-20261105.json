@@ -1,7 +1,7 @@
 {
   "schema": "browniec.public-fuel-revalidation/v1",
   "status": "passed",
-  "recordedAt": "2026-11-05T11:07:22.435877+00:00",
+  "recordedAt": "2026-11-05T11:20:21.242680+00:00",
   "scope": "Current source public Fuel costs and CLI argument/version boundaries",
   "profiles": {
     "development": {
@@ -54,6 +54,61 @@
       "artifact": {
         "path": "build/public-fuel/development/browniec.exe",
         "sha256": "fb518a78593bed197dcd8cd3d3535c9874ba6c191ea04be9b39918110732f79f"
+      },
+      "runtimeEnvironment": "cleared; tool-free PATH"
+    },
+    "release": {
+      "startingHead": "757e837ed1b5535b207ab8aed90c3ebe9a743fe6",
+      "nativeGroups": 25,
+      "cliCases": 33,
+      "check": "check ok: 2 instance(s), 155 source file(s), 1450 MIR function(s), lock verified\n",
+      "build": "built: build/browniec.exe (x86_64-windows-msvc, release, lock verified)\n",
+      "commands": [
+        [
+          "git",
+          "rev-parse",
+          "HEAD"
+        ],
+        [
+          "./build/toolchain/fairyc.exe",
+          "--version"
+        ],
+        [
+          "./build/toolchain/fairyc.exe",
+          "check",
+          "--locked"
+        ],
+        [
+          "./build/toolchain/fairyc.exe",
+          "test",
+          "--native",
+          "--capture-output",
+          "--json",
+          "--locked",
+          "--release",
+          "--file",
+          "tests/m2/public_fuel.fy",
+          "--file",
+          "tests/m2/slice_public_canonical.fy",
+          "--file",
+          "tests/m2/slice_mutable_execution.fy",
+          "--file",
+          "tests/m2/slice_result_fuel.fy",
+          "--file",
+          "tests/m2/slice_result_call_execution.fy"
+        ],
+        [
+          "./build/toolchain/fairyc.exe",
+          "build",
+          "--locked",
+          "--release"
+        ]
+      ],
+      "nativeReportSha256": "e734fb6305a63791cab413936a24124b0105c00d86caac7361c31ab0aaaf1372",
+      "receiptSha256": "e4b8e9f0ed2ecf60a28fda44d0e1fab51b21c2acf60f34f11788a91a208a5c3d",
+      "artifact": {
+        "path": "build/public-fuel/release/browniec.exe",
+        "sha256": "c1bd02304bc29260e278340c7e72dbbc4f3cfa9e92fe3ef6b2d527cd19d1f87f"
       },
       "runtimeEnvironment": "cleared; tool-free PATH"
     }
