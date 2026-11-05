@@ -81,9 +81,10 @@ direct probes and corrected fixture borrow/narrowing/capacity errors are exclude
 from final counts. Final identities, outcomes and limitations are recorded in
 [focused evidence](../evidence/reference-return-source-windows-20261105.json).
 
-Next connect ordinary retained Program/public source admission and CLI execution
-with the corresponding ownership, image and cleanup proof before promoting
-capabilities. Kind-3 equality, mixed-backing text/non-byte references, Buffer/input
+The [public Program successor](public-program.md) now connects ordinary retained
+admission and CLI check/run with the complete ownership/image/cleanup proof and
+an explicit canonical Fuel schedule. Its evidence is separate from the historical
+private-source results above. Kind-3 equality, mixed-backing text/non-byte references, Buffer/input
 backing and host-visible reference lifetimes remain open. Full profiles, original
 public Fuel native selection, general RAM/stack, allocator/OOM/timing, Linux,
 restricted delivery and ABI/package checks are outside this increment. The

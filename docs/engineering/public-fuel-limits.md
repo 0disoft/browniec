@@ -44,9 +44,10 @@ Public instruction charges already include their dispatch unit; CALL adds its
 existing `1 + arity + aggregate-copy cost` once. Return restoration and emergency
 cleanup remain prepaid. The private returned-result coordinator keeps its
 explicit per-dispatch unit and entry/handoff/leave reserves as documented in the
-prior schedule. Connecting that coordinator to ordinary public admission remains
-B04 work; this increment does not claim equal whole-invocation costs between
-those different execution paths. Array/record pricing is unchanged.
+prior schedule. The [public Program successor](public-program.md) now connects
+that coordinator to public literal/shared-byte source admission with its distinct
+result profile. Whole-invocation costs differ from the legacy path; no retry or
+fallback chooses another schedule. Array/record pricing is unchanged.
 
 ## Verification
 
@@ -157,6 +158,14 @@ lifetimes, existing result VM numeric oracles and source CALL regressions on 144
 matching paths. The original public Fuel native selection was not rerun. See
 [focused evidence](../evidence/reference-return-source-windows-20261105.json).
 
+The [public retained successor](public-program.md) additionally checks the literal
+source oracle 344103 at exact/one-short/one-more budgets through both standalone
+CLI artifacts. Its separate reference result profile preserves the canonical
+147456 entry and 196608 leave reserves. Both source routes keep the existing
+32-deep expression limit; the added 33/64-depth rejection regressions exercise
+check and run without native stack overrides. Version Fuel discovery is unchanged.
+
 Full M1/M2, Linux, restricted delivery, ABI, packaging and elapsed-time/allocator/
-stack-size benchmarks are outside this increment. B04 result declarations remain
-publicly gated; other C05 capacities and the complete objective remain open.
+stack-size benchmarks are outside this increment. The [public Program successor](public-program.md)
+now admits the shared-byte result subset; general mutable/non-byte/Buffer/input
+results, other C05 capacities and the complete objective remain open.

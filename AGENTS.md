@@ -1,3 +1,22 @@
+- Public check/run now admits retained byte/text/shared-byte source, including
+  single-origin results and selected temporary owners, under brownie.m2-reference/1.
+  Native PublicProgram moves the whole sealed resource; CLI uses thin selected
+  branches to keep inactive owning return slots off the native parser stack.
+  Small-result lowering/signature phases preserve 32-deep source calls; 33/64
+  reject with compile_limit on both paths instead of overflowing native stack.
+  Code 63c8fb7; see docs/engineering/public-program.md and focused Windows evidence.
+  Development/release each passed 18 native groups and 2112 tool-free CLI cases
+  (33 Fuel, 72 retained/depth, 2007 M1), on 164 matching distinct committed inputs,
+  138 LF modules and 243-file discovery. Both locked LF mirrors pass. No compiler/
+  stack overrides or historical reuse; earlier fixture failures, stack probes and
+  interrupted native runs excluded. Literal exact Fuel oracle is 344103; legacy
+  scalar remains 2, default256/cap16000000 stay, and runtime prices are unchanged.
+  Original public Fuel native selection/full M2/general RAM-stack/allocator/OOM/
+  timing/Linux/restricted/ABI/package were not rerun. General mutable/non-byte/
+  Buffer/input results, mixed runtime equality, host lifetimes and Engine/Instance
+  integration remain open; array_slice_results/restricted/embed stay false.
+  Continue the completion plan's language work and retain remaining B04/B05 gates.
+  The complete objective stays open. Local commits only; no push.
 - Shared byte source returns and result bindings now compile through private
   compiler::compile_reference_returns into the existing ReferenceReturnProgram.
   Source hints distinguish exact inputs/image origins; complete IR/canonical

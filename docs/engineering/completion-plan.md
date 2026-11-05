@@ -82,9 +82,11 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    formals and image/runtime actuals through retained native CALL execution. The
    [returned-source successor](reference-return-source.md) now lowers return
    expressions, result bindings and selected temporary owner lifetimes through
-   the same complete proof/native VM. Next connect ordinary public admission;
-   private execution alone cannot promote public source syntax.
-   Validate actual public source execution before promoting its capability.
+   the same complete proof/native VM. The [public Program successor](public-program.md)
+   now connects retained byte/text/shared-byte source to public check/run with
+   complete admission, fresh native state and explicit canonical Fuel prices.
+   General mutable/non-byte/Buffer/input results and host-visible lifetimes remain.
+   Continue language completion while preserving those explicit boundaries.
 2. **Language completion: L01-L06, C03/C05.** Finish explicit module snapshots and
    visibility, inference/void/if values, complete array/record construction,
    selected-place compound assignment, wider/resource-bearing tags and must-use
