@@ -1,3 +1,9 @@
+- Native project input primitives now provide bounded UTF-8 JSON tokens and
+  canonical project/module/function/capability/member spelling checks. This is
+  lexical/name validation only, not a schema loader, filesystem collector, CLI
+  project flag or grant. Development/release each passed 13 native groups on
+  152 matching inputs, with locked LF mirrors. See docs/engineering/project-input.md
+  and docs/evidence/project-input-windows-20261105.json.
 - L01/C03 retained native module Programs now execute an explicitly selected public
   i32 entry with scoped function/nominal record/field/shared-byte lowering and
   complete independent IR/image/owner admission. Original source/name snapshots

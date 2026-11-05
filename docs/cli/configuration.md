@@ -57,3 +57,7 @@ The [retained public path](../engineering/public-program.md) admits byte/text an
 shared-byte result source with its canonical Fuel schedule. Native [source
 snapshots](../engineering/module-sources.md) now own explicit identities and original
 bytes, but no project/source-map loader or additional CLI flag is implemented.
+
+The [native project input primitives](../engineering/project-input.md) now supply
+bounded JSON tokens and canonical spelling checks. Their native tests do not
+establish project-schema admission, filesystem anchoring, a CLI flag or grants.
