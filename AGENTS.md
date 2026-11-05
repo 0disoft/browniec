@@ -1,3 +1,12 @@
+- Call capture lowering now defers its lexical Table snapshot until scalar and
+  bare immutable-owner prefixes finish. Code 51437c1 fixes a reproduced retained
+  compiler native stack overflow without depth/owner/IR/Fuel changes. Both
+  development and release passed 28 groups on the same 158 Git-matching inputs,
+  150 LF production modules and 255-file discovery; both locked LF mirrors pass.
+  The final byte-identical boundary fixture overflows on baseline 3160751.
+  See docs/engineering/native-call-capture-stack.md and focused Windows evidence.
+  Real captures retain their old suffix/cleanup; general R02 stack/accounting,
+  preallocation, full profiles and the complete objective remain open. Local only.
 - Native project_program now owns the complete Project beside its admitted
   module Program. It independently rechecks exact map/header/entry agreement,
   preserves original diagnostics, runs with fresh VM state and denies nonempty

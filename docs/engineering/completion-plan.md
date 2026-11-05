@@ -105,7 +105,10 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    handling. Reconcile operand/source/type/compile limits deliberately rather than
    silently treating the old experimental bounds as full-profile conformance.
    L07 byte compatibility is implemented at `5bb055b` and has focused checks.
-3. **Engine and Instance: R01-R05.** Implement lifecycle/reentry/Program retention,
+3. **Engine and Instance: R01-R05.** The [call capture-stack fix](native-call-capture-stack.md)
+   removes a reproduced retained compiler overflow without changing depth/owner
+   limits; it does not close general R02 stack/accounting obligations.
+   Implement lifecycle/reentry/Program retention,
    complete accounting and preallocation, bounded resumable operations, deadlines,
    cancellation, poison and stable terminal state. Include cleanup at zero guest
    Fuel and prove result/Fuel invariance across step sizes. Current fresh-state VM
