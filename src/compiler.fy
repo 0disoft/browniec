@@ -102,23 +102,32 @@ fn Result<usize, errors::Error> compound_operand(ref u8[] source, ref mut lexer:
         return switch_value(source,s,p,table,signatures,depth,expected,result_type,structure,loop_state);
     }
     if (s.kind == 46) {
-        if (!types::tagged(expected)) {return .err(errors::make(3,at));}
+        if (expected!=0 && !types::tagged(expected)) {return .err(errors::make(3,at));}
         let usize dot=lexer::next(source,s)?;
         let bool positive=word_is(source,s,b"some") || word_is(source,s,b"ok");
-        if (expected<=4) {
+        if(expected==0){
+            // Only Option's positive constructor carries its complete type.
+            // No default payload/error domain is invented for none/ok/err.
+            if(!word_is(source,s,b"some")){return .err(errors::make(3,at));}
+        }else if (expected<=4) {
             if (!word_is(source,s,b"some") && !word_is(source,s,b"none")) {return .err(errors::make(3,at));}
         } else if (!word_is(source,s,b"ok") && !word_is(source,s,b"err")) {return .err(errors::make(3,at));}
         let u8 variant=if(positive) {1} else {0};
-        let u8 payload_type=types::payload(expected,variant);
+        let u8 payload_type=if(expected==0){0}else{types::payload(expected,variant)};
         let usize name=lexer::next(source,s)?;
         var usize value=0;
-        if (payload_type!=0) {
+        if (payload_type!=0 || expected==0) {
             let usize open=lexer::punctuation(source,s,40)?;
             value=expression(source,s,p,table,signatures,1,depth+1,payload_type,result_type,structure,loop_state)?;
-            if (p.types[value]!=payload_type) {return .err(errors::make(3,at));}
+            if (expected!=0 && p.types[value]!=payload_type) {return .err(errors::make(3,at));}
             let usize close=lexer::punctuation(source,s,41)?;
         }
-        return ir::construct(p,expected,variant,value,at);
+        var u8 tag=expected;
+        if(tag==0){
+            tag=if(p.types[value]==1){3}else if(p.types[value]==2){4}else{0};
+            if(tag==0){return .err(errors::make(3,at));}
+        }
+        return ir::construct(p,tag,variant,value,at);
     }
     if (s.kind == 45 || s.kind == 33 || s.kind == 126) {
         let bool negative = s.kind == 45;

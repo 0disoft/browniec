@@ -21,8 +21,9 @@ def main():
     selection = parser.add_mutually_exclusive_group()
     selection.add_argument('--aggregate', action='store_true', help='add owned aggregate inference cases')
     selection.add_argument('--references', action='store_true', help='add reference and text inference cases')
+    selection.add_argument('--options', action='store_true', help='add payload-derived Option constructor cases')
     args = parser.parse_args()
-    suite = 'reference' if args.references else 'aggregate' if args.aggregate else 'local'
+    suite = 'option' if args.options else 'reference' if args.references else 'aggregate' if args.aggregate else 'local'
     out = ROOT / ('build/' + suite + '-inference-cli') / args.profile
     out.mkdir(parents=True, exist_ok=True)
     receipt = out / 'receipt.json'
@@ -118,6 +119,23 @@ def main():
                   ('reference-short-fuel', native, 'run', None, 'fuel', 286934, 'brownie.m2-array-write/1'),
                   ('alias-exact-fuel', shared, 'run', 42, None, 344121, reference),
                   ('alias-short-fuel', shared, 'run', None, 'fuel', 344120, reference)]
+    if args.options:
+        option = b'module main;fn i32 main(){let o=.some(42);switch(o){case .some(v):{return v;}case .none:{return 0;}}}'
+        cases += [
+            ('some-check', option, 'check', None, None, None, scalar),
+            ('some-run', option, 'run', 42, None, None, scalar),
+            ('some-exact', option, 'run', 42, None, 4, scalar),
+            ('some-short', option, 'run', None, 'fuel', 3, scalar),
+            ('some-bool', b'module main;fn i32 main(){let o=.some(false);switch(o){case .some(v):{if(v){return 0;}return 42;}case .none:{return 0;}}}', 'run', 42, None, None, scalar),
+            ('some-mutable', b'module main;fn i32 main(){var o=.some(42);let copy=o;o=.none;switch(copy){case .some(v):{return v;}case .none:{return 0;}}}', 'run', 42, None, None, scalar),
+            ('some-propagation', b'module main;fn Option<i32> f(Option<i32> o){let p=.some(o?+2);return p;}fn i32 main(){switch(f(.none)){case .some(_):{return 0;}case .none:{}}switch(f(.some(40))){case .some(v):{return v;}case .none:{return 0;}}}', 'run', 42, None, None, scalar),
+            ('some-switch', b'module main;fn i32 main(){let o=switch(.some(true)){case .some(v):{.some(42)}case .none:{.none}};switch(o){case .some(v):{return v;}case .none:{return 0;}}}', 'run', 42, None, None, scalar),
+            ('some-retained', b'module main;fn i32 main(){let o=.some(b"*"[0] as i32);switch(o){case .some(v):{return v;}case .none:{return 0;}}}', 'run', 42, None, 16000000, reference),
+            ('some-unsupported-byte', b'module main;fn u8 byte(){return 42;}fn i32 main(){let o=.some(byte());return 0;}', 'check', None, 'type', None, scalar),
+            ('some-nested', b'module main;fn i32 main(){let o=.some(.some(42));return 0;}', 'check', None, 'type', None, scalar),
+            ('some-changing-type', b'module main;fn i32 main(){var o=.some(42);o=.some(true);return 0;}', 'check', None, 'type', None, scalar),
+            ('err-ambiguous', b'module main;fn i32 main(){let o=.err(true);return 0;}', 'check', None, 'type', None, scalar),
+        ]
     results = []
     for identity, source, mode, expected, error, fuel, profile in cases:
         fixture = out / (identity + '.brc')
@@ -141,7 +159,7 @@ def main():
     assert all(sha(ROOT / i['path']) == i['sha256'] for i in inputs)
     assert sha(compiler) == compiler_hash and sha(exe) == binary_hash
     data = dict(schema='browniec.local-inference-cli/v1', status='passed', profile=args.profile,
-                selection='reference' if args.references else 'aggregate' if args.aggregate else 'scalar',
+                selection='option' if args.options else 'reference' if args.references else 'aggregate' if args.aggregate else 'scalar',
                 startingHead=head, inputSnapshotCapturedAt=captured, inputs=inputs, compilerSha256=compiler_hash,
                 compilerVersion=subprocess.check_output([str(compiler), '--version'], text=True).strip(),
                 buildCommand=[compiler.relative_to(ROOT).as_posix(), *command[1:]],
