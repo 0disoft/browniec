@@ -25,7 +25,7 @@ def write(path, value):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--profile', choices=['development', 'release'], required=True)
-    parser.add_argument('--selection', choices=['all', 'statics', 'views', 'ranges', 'range-core', 'call-ir', 'call-proof', 'call-transfer-core', 'call-transfer', 'call-mixed', 'reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts', 'reference-return-execution', 'reference-source', 'reference-return-source', 'public-program', 'source-snapshot', 'module-index', 'module-entry', 'source-context', 'module-program', 'module-program-core', 'module-retention', 'project-program-core', 'project-program', 'project-names', 'project-manifest', 'project-sources', 'captured-call-stack', 'local-inference', 'aggregate-inference'], default='all',
+    parser.add_argument('--selection', choices=['all', 'statics', 'views', 'ranges', 'range-core', 'call-ir', 'call-proof', 'call-transfer-core', 'call-transfer', 'call-mixed', 'reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts', 'reference-return-execution', 'reference-source', 'reference-return-source', 'public-program', 'source-snapshot', 'module-index', 'module-entry', 'source-context', 'module-program', 'module-program-core', 'module-retention', 'project-program-core', 'project-program', 'project-names', 'project-manifest', 'project-sources', 'captured-call-stack', 'local-inference', 'aggregate-inference', 'reference-inference'], default='all',
                         help='statics runs the changed image/proof/VM suites; all adds return and source regressions')
     args = parser.parse_args()
     profile = args.profile
@@ -83,6 +83,9 @@ def main():
                                      'tests/loops.fy', 'tests/m2/module_program.fy']
     selections['aggregate-inference'] = ['tests/m2/aggregate_inference.fy', 'tests/m2/local_inference.fy',
                                          'tests/m2/module_program.fy', 'tests/m2/array_scopes.fy']
+    selections['reference-inference'] = ['tests/m2/reference_inference.fy', 'tests/m2/local_inference.fy',
+                                         'tests/m2/aggregate_inference.fy', 'tests/m2/static_bindings_source.fy',
+                                         'tests/m2/reference_return_source.fy', 'tests/m2/module_program.fy']
     files = selections[args.selection]
     out = ROOT / 'build/static-execution' / profile / args.selection
     out.mkdir(parents=True, exist_ok=True)
@@ -170,7 +173,17 @@ def main():
         focused = {'static_bindings_source': {
             'byte_and_text_locals_aliases_and_explicit_conversion_preserve_kinds',
             'aggregate_returns_close_static_locals_and_existing_runtime_slices_stay_distinct'}}
-    exact = args.selection in ('reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts', 'reference-return-execution', 'reference-source', 'reference-return-source', 'public-program')
+    if args.selection == 'reference-inference':
+        focused = {
+            'static_bindings_source': {'byte_and_text_locals_aliases_and_explicit_conversion_preserve_kinds',
+                                      'aggregate_returns_close_static_locals_and_existing_runtime_slices_stay_distinct'},
+            'reference_return_source': {'returned_aliases_narrowed_and_empty_windows_support_read_and_length',
+                                        'agreeing_branches_forwarding_and_grounded_recursion_reject_conflicts_and_cycles',
+                                        'selected_temporaries_cleanup_across_return_propagation_break_continue_and_later_arguments'},
+            'module_program': {'inferred_reference_aliases_and_return_origins_keep_qualified_resolution',
+                               'shared_byte_returns_literals_ranges_and_text_cross_real_module_calls',
+                               'both_compiler_routes_keep_the_32_deep_call_limit_without_native_stack_overrides'}}
+    exact = args.selection in ('reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts', 'reference-return-execution', 'reference-source', 'reference-return-source', 'public-program', 'reference-inference')
     for path in files:
         if not exact:
             command.extend(['--file', path])
@@ -183,7 +196,7 @@ def main():
         module = re.search(r'\bmodule\s+([\w:]+);', source).group(1)
         expected.update(module + '::' + name for name in names)
     if exact:
-        assert len(expected) == 18
+        assert len(expected) == (36 if args.selection == 'reference-inference' else 18)
         for identity in sorted(expected):
             command.extend(['--exact', identity])
     result = run(command)

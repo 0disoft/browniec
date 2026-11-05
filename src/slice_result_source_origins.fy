@@ -70,6 +70,34 @@ fn Result<u8,errors::Error> expression(ref u8[] source,ref mut lexer::State s,
     if(!word(source,s,b"ref")){return .ok(255);}
     return expression(source,s,t,summaries,names,tag,depth+1);
 }
+// Advisory local type hints for inferred reference initializers. These do not
+// grant a lifetime: final lowering and independent IR proof recheck everything.
+// Text uses tag 0, so 255 is the distinct non-reference sentinel.
+fn Result<u8,errors::Error> inferred_tag(ref u8[] source,ref mut lexer::State s,
+    ref functions::Table t,ref Names names,usize depth){
+    if(depth>32){return .err(errors::make(4,s.begin));}
+    if(s.kind==40){let usize open=lexer::next(source,s)?;return inferred_tag(source,s,t,names,depth+1);}
+    if(word(source,s,b"ref")){
+        let usize prefix=lexer::next(source,s)?;let bool writer=word(source,s,b"mut");
+        if(writer){let usize access=lexer::next(source,s)?;}
+        let u8 tag=inferred_tag(source,s,t,names,depth+1)?;
+        return .ok(if(tag==255){255}else{tag|if(writer){128}else{0}});
+    }
+    if(t.reference_returns && (s.kind==3 || s.kind==4)){return .ok(if(s.kind==3){10}else{0});}
+    if(s.kind!=2 && s.kind!=5){return .ok(255);}
+    if(t.reference_returns && word(source,s,b"text")){
+        var lexer::State look=lexer::snapshot(s);let usize next=lexer::next(source,ref mut look)?;
+        if(look.kind==58){let usize colon=lexer::next(source,ref mut look)?;
+            let usize path=lexer::punctuation(source,ref mut look,58)?;
+            if(word(source,ref look,b"bytes")){return .ok(10);}
+        }
+    }
+    var usize i=names.count;while(i>0){i-=1;
+        if(lexer::equal(source[s.begin..s.end],source[names.begins[i]..names.ends[i]])){return .ok(names.tags[i]);}
+    }
+    let usize f=functions::find(source,t,s.begin,s.end);
+    return .ok(if(f<t.count && t.return_slice_elements[f]!=0){t.return_slice_elements[f]}else{255});
+}
 fn Result<u8,errors::Error> body(ref u8[] source,ref functions::Table t,ref u8[] summaries,usize f){
     var Names names=Names{.begins=[0;64],.ends=[0;64],.depths=[0;64],.tags=[0;64],.inputs=[0;64],.count=0};
     var usize i=0;while(i<t.arities[f]){let usize at=f*8+i;
@@ -96,6 +124,16 @@ fn Result<u8,errors::Error> body(ref u8[] source,ref functions::Table t,ref u8[]
                 let usize equals=lexer::punctuation(source,ref mut look,61)?;let u8 tag=element|if(writer){128}else{0};
                 let u8 input=expression(source,ref mut look,t,summaries,ref names,tag,0)?;
                 let usize added=add(ref mut names,begin,end,depth,tag,input)?;
+            }else if(look.kind==2){
+                let usize begin=look.begin;let usize end=look.end;let usize name=lexer::next(source,ref mut look)?;
+                if(look.kind==61){let usize equal=lexer::next(source,ref mut look)?;
+                    var lexer::State shape=lexer::snapshot(ref look);
+                    let u8 tag=inferred_tag(source,ref mut shape,t,ref names,0)?;
+                    if(tag!=255){
+                        let u8 input=expression(source,ref mut look,t,summaries,ref names,tag,0)?;
+                        let usize added=add(ref mut names,begin,end,depth,tag,input)?;
+                    }
+                }
             }
         }else if(word(source,ref s,b"return")){
             var lexer::State look=lexer::snapshot(ref s);let usize keyword=lexer::next(source,ref mut look)?;

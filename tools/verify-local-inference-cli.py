@@ -18,9 +18,12 @@ def sha(path):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--profile', choices=['development', 'release'], required=True)
-    parser.add_argument('--aggregate', action='store_true', help='add owned aggregate inference cases')
+    selection = parser.add_mutually_exclusive_group()
+    selection.add_argument('--aggregate', action='store_true', help='add owned aggregate inference cases')
+    selection.add_argument('--references', action='store_true', help='add reference and text inference cases')
     args = parser.parse_args()
-    out = ROOT / ('build/aggregate-inference-cli' if args.aggregate else 'build/local-inference-cli') / args.profile
+    suite = 'reference' if args.references else 'aggregate' if args.aggregate else 'local'
+    out = ROOT / ('build/' + suite + '-inference-cli') / args.profile
     out.mkdir(parents=True, exist_ok=True)
     receipt = out / 'receipt.json'
     receipt.write_text('{"status":"incomplete"}\n', encoding='utf-8')
@@ -86,13 +89,39 @@ def main():
             ('array-zero', b'module main;fn i32 main(){let a=[1;0];return 0;}', 'check', None, 'type', None, scalar),
             ('retained-array', b'module main;fn i32 main(){let ref u8[] marker=b"*";let a=[21;2];return a[0]+a[1];}', 'run', 42, None, 16000000, reference),
         ]
+    if args.references:
+        shared = b'module main;fn i32 main(){let a=b"*";let alias=a;return alias[0] as i32;}'
+        returned = b'module main;fn ref u8[] id(ref u8[] p){return ref p;}fn i32 main(){let p=id(ref [42;3]);let alias=p[1..];return alias[1] as i32;}'
+        cases += [
+            ('byte-alias-check', shared, 'check', None, None, None, reference),
+            ('byte-alias-run', shared, 'run', 42, None, 16000000, reference),
+            ('text', 'module main;fn i32 main(){let t="한";let alias=ref t;let b=text::bytes(alias);if(b.len==3){return b[0] as i32;}return 0;}'.encode(), 'run', 237, None, 16000000, reference),
+            ('grouped', b'module main;fn i32 main(){let p=(text::bytes("*"))[..];let alias=(ref p);return alias[0] as i32;}', 'run', 42, None, 16000000, reference),
+            ('scalar-projections', b'module main;fn i32 main(){let p=b"*";let n=(p[0]);let len=p.len;if(len==1){return n as i32;}return 0;}', 'run', 42, None, 16000000, reference),
+            ('returned-check', returned, 'check', None, None, None, reference),
+            ('returned-run', returned, 'run', 42, None, 16000000, reference),
+            ('returned-early-exit', b'module main;fn ref u8[] id(ref u8[] p){return ref p;}fn i32 main(){let Option<i32> o=.none;let p=id(ref [42;2])[..switch(o){case .some(v):{1}case .none:{return 42;}}];return 0;}', 'run', 42, None, 16000000, reference),
+            ('shared-root', b'module main;fn i32 main(){let a=[42;1];let p=ref a;let q=p;return q[0];}', 'run', 42, None, 16000000, 'brownie.m2-array-read/1'),
+            ('exclusive-root', b'module main;fn i32 main(){var a=[0;1];{let p=ref mut a;p[0]=42;}return a[0];}', 'run', 42, None, 16000000, 'brownie.m2-array-write/1'),
+            ('exclusive-reborrow', b'module main;fn i32 main(){var a=[0;1];{let p=ref mut a;{let q=ref mut p;q[0]=40;}p[0]=p[0]+2;}return a[0];}', 'run', 42, None, 16000000, 'brownie.m2-array-write/1'),
+            ('mutable-view-error', b'module main;fn i32 main(){var p=b"*";return 0;}', 'check', None, 'type', None, scalar),
+            ('mutable-literal-error', b'module main;fn i32 main(){let p=ref mut b"*";return 0;}', 'check', None, 'type', None, scalar),
+            ('self-reference-error', b'module main;fn i32 main(){let p=ref p;return 0;}', 'check', None, 'type', None, scalar),
+            ('borrow-conflict-error', b'module main;fn i32 main(){var a=[42;1];let p=ref a;let q=ref mut a;return p[0];}', 'check', None, 'verification', None, 'brownie.m2-array-write/1'),
+            ('selected-owner-error', b'module main;fn ref u8[] id(ref u8[] p){return ref p;}fn i32 main(){var u8[1] a=[42;1];let p=id(ref a);let q=p;a[0]=0;return q[0] as i32;}', 'check', None, 'verification', None, scalar),
+        ]
+        native = b'module main;fn i32 main(){var i32[1] a=[0;1];{let p=ref mut a;p[0]=42;}let p=ref a;let q=p;return q[0];}'
+        cases += [('reference-exact-fuel', native, 'run', 42, None, 286935, 'brownie.m2-array-write/1'),
+                  ('reference-short-fuel', native, 'run', None, 'fuel', 286934, 'brownie.m2-array-write/1'),
+                  ('alias-exact-fuel', shared, 'run', 42, None, 344121, reference),
+                  ('alias-short-fuel', shared, 'run', None, 'fuel', 344120, reference)]
     results = []
     for identity, source, mode, expected, error, fuel, profile in cases:
         fixture = out / (identity + '.brc')
         fixture.write_bytes(source)
         argv = [mode, str(fixture), '--json'] + ([] if fuel is None else ['--fuel', str(fuel)])
         ran = subprocess.run([str(exe), *argv], cwd=empty, env=env, capture_output=True, timeout=15)
-        expected_exit = 0 if error is None else (5 if error == 'fuel' else 3)
+        expected_exit = 0 if error is None else (5 if error == 'fuel' else 6 if error == 'verification' else 3)
         assert ran.returncode == expected_exit and not ran.stderr, (identity, ran.returncode, ran.stdout, ran.stderr)
         result = json.loads(ran.stdout)
         assert set(result) == {'schema', 'profile', 'command', 'status', 'return_i32', 'error'}, (identity, result)
@@ -109,7 +138,7 @@ def main():
     assert all(sha(ROOT / i['path']) == i['sha256'] for i in inputs)
     assert sha(compiler) == compiler_hash and sha(exe) == binary_hash
     data = dict(schema='browniec.local-inference-cli/v1', status='passed', profile=args.profile,
-                selection='aggregate' if args.aggregate else 'scalar',
+                selection='reference' if args.references else 'aggregate' if args.aggregate else 'scalar',
                 startingHead=head, inputSnapshotCapturedAt=captured, inputs=inputs, compilerSha256=compiler_hash,
                 compilerVersion=subprocess.check_output([str(compiler), '--version'], text=True).strip(),
                 buildCommand=[compiler.relative_to(ROOT).as_posix(), *command[1:]],

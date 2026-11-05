@@ -55,6 +55,12 @@ fn void rejected(ref u8[] a,ref u8[] b,usize owner){switch(programs::compile(ent
     rejected(b"module lib;pub struct P{i32 x;}pub fn P make(){return P{.x=1};}",
         b"module app;import lib as m;struct P{i32 x;}pub fn i32 chosen(){var p=m::make();p=P{.x=2};return p.x;}",1);
 }
+@test fn void inferred_reference_aliases_and_return_origins_keep_qualified_resolution(){
+    value(b"module lib;pub fn ref u8[] tail(ref u8[] p){let q=p;return ref q[1..];}",
+        b"module app;import lib as m;pub fn i32 chosen(){let p=m::tail(ref [42;3]);let q=p;let text=\"*\";let b=text::bytes(text);if(q.len==2 && b[0]==42){return q[0] as i32;}return 0;}",42);
+    rejected(b"module lib;pub fn ref u8[] bad(ref u8[] p){let q=missing;return ref q;}",
+        b"module app;pub fn i32 chosen(){return 42;}",0);
+}
 
 @test fn void qualified_record_constructors_arguments_results_and_fields_keep_nominal_identity(){
     value(b"module lib;pub struct Point{i32 x;i32 y;}pub struct Box{Point inner;}pub fn Point make(){return Point{.x=20,.y=22};}pub fn Box pack(Point p){return Box{.inner=p};}",

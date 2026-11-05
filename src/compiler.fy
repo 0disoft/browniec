@@ -6,6 +6,7 @@ import ir as ir;
 import locals as locals;
 import local_inference as inference;
 import aggregate_inference as aggregate_inference;
+import reference_inference as reference_inference;
 import array_local_source as array_locals;
 import functions as functions;
 import struct_source as structs;
@@ -294,6 +295,11 @@ fn Result<usize,errors::Error> static_declaration(ref u8[] source,ref mut lexer:
     ref mut ir::Program p,ref mut locals::Table table,ref functions::Table signatures,
     bool mutable,u8 terminator,u8 result_type,usize depth,usize structure,ref mut loops::State loop_state){
     let static_source::Header header=static_source::header(source,s,table,mutable,terminator,result_type)?;
+    return static_initializer(source,s,p,table,signatures,header,terminator,result_type,depth,structure,loop_state);
+}
+fn Result<usize,errors::Error> static_initializer(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref mut locals::Table table,ref functions::Table signatures,
+    static_source::Header header,u8 terminator,u8 result_type,usize depth,usize structure,ref mut loops::State loop_state){
     let static_source::View value=static_view(source,s,p,table,signatures,depth,result_type,structure,loop_state)?;
     let usize end=lexer::punctuation(source,s,terminator)?;
     if(signatures.reference_returns){let usize roots=reference_results::publish(p,signatures,table,value.site,header.begin)?;}
@@ -1055,6 +1061,11 @@ fn Result<usize, errors::Error> slice_declaration(ref u8[] source, ref mut lexer
     ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures,
     bool mutable, u8 terminator, u8 result_type, usize depth, usize structure, ref mut loops::State loop_state) {
     let slices::Header header = slices::declaration(source,s,table,mutable,terminator,result_type)?;
+    return slice_initializer(source,s,p,table,signatures,header,false,result_type,depth,structure,loop_state);
+}
+fn Result<usize, errors::Error> slice_initializer(ref u8[] source, ref mut lexer::State s,
+    ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures,
+    slices::Header header,bool inferred,u8 result_type,usize depth,usize structure,ref mut loops::State loop_state) {
     if((s.kind==2 || s.kind==5) && !word_is(source,s,b"ref")){
         var lexer::State look=lexer::snapshot(s);let usize next=lexer::next(source,ref mut look)?;
         if(look.kind==40){
@@ -1073,7 +1084,7 @@ fn Result<usize, errors::Error> slice_declaration(ref u8[] source, ref mut lexer
             return locals::declare(table,header.begin,header.end,value,header.exclusive);
         }
     }
-    let usize reference=lexer::word(source,s,b"ref")?;
+    if(!inferred || word_is(source,s,b"ref")){let usize reference=lexer::word(source,s,b"ref")?;}
     if(header.exclusive){let usize access=lexer::word(source,s,b"mut")?;}
     let usize index = if ((s.kind==2 || s.kind==5)) { locals::find(source,table,s.begin,s.end) } else { 64 };
     let usize parent = if (slices::binding(table,index)) { table.registers[index]-160 } else { 16 };
@@ -1139,6 +1150,10 @@ fn Result<usize,errors::Error> inferred_declaration(ref u8[] source,ref mut lexe
     ref mut ir::Program p,ref mut locals::Table table,ref functions::Table signatures,
     bool mutable,u8 terminator,u8 result_type,usize expr_depth,usize structure,ref mut loops::State loop_state){
     let inference::Header name=inference::header(source,s,table)?;
+    let reference_inference::Shape view=reference_inference::inspect(source,s,p,table,signatures)?;
+    if(view.kind!=0){
+        return inferred_reference(source,s,p,table,signatures,name,view,mutable,terminator,result_type,expr_depth,structure,loop_state);
+    }
     if(s.kind==91){
         return inferred_repeated_array(source,s,p,table,signatures,name,mutable,terminator,result_type,expr_depth,structure,loop_state);
     }
@@ -1156,6 +1171,19 @@ fn Result<usize,errors::Error> inferred_declaration(ref u8[] source,ref mut lexe
     let usize value=expression(source,s,p,table,signatures,1,expr_depth,0,result_type,structure,loop_state)?;
     let usize end=lexer::punctuation(source,s,terminator)?;
     return inference::bind(p,table,name,value,mutable,result_type==0);
+}
+fn Result<usize,errors::Error> inferred_reference(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref mut locals::Table table,ref functions::Table signatures,
+    inference::Header name,reference_inference::Shape shape,bool mutable,u8 terminator,u8 result_type,
+    usize depth,usize structure,ref mut loops::State loop_state){
+    if(mutable || terminator!=59 || result_type==0){return .err(errors::make(3,name.begin));}
+    if(shape.kind==1 || shape.kind==2){
+        if(shape.exclusive || !signatures.literals.enabled){return .err(errors::make(3,name.begin));}
+        let static_source::Header header=static_source::Header{.begin=name.begin,.end=name.end,.kind=shape.kind};
+        return static_initializer(source,s,p,table,signatures,header,terminator,result_type,depth,structure,loop_state);
+    }
+    let slices::Header header=slices::Header{.begin=name.begin,.end=name.end,.element=shape.element,.exclusive=shape.exclusive};
+    return slice_initializer(source,s,p,table,signatures,header,true,result_type,depth,structure,loop_state);
 }
 fn Result<usize,errors::Error> inferred_repeated_array(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref mut locals::Table table,ref functions::Table signatures,
