@@ -1,3 +1,12 @@
+- Owned aggregate local inference is implemented at 6c7d94f: repeated scalar
+  arrays, nominal constructors, bare copies, aggregate CALLs and exact local/
+  returned record child paths share existing typed initializers and ownership.
+  No active-lexer/IR mutation or guest evaluation during source-shape lookup.
+  Development/release each passed 32 native groups and 24 CLI cases on 161/157
+  inputs (162-path union), 153 LF modules and the same 257-file discovery. All
+  inputs match Git raw bytes; both LF mirrors pass. See the aggregate-inference
+  contract/evidence. Reference/text/tag constructor/general aggregate-expression
+  inference, element lists, void/if and full L02/objective remain open. Local only.
 - Local scalar/complete-tagged expression inference is implemented at 6edab73:
   let/var name=value keeps exact types, one-time initialization and existing
   scopes/IR/Fuel/limits. Development/release each passed 29 native groups and

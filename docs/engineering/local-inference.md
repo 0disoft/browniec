@@ -39,12 +39,15 @@ opcode, Fuel price, limit, execution profile or full-profile capability is added
 
 ## Remaining inference work
 
-Array/record literal and whole-value inference, inferred aggregate CALL results,
-borrow/text binding inference and all associated owner/loan/origin integration
-remain separate work. Constructor inference must distinguish missing type context
+The [owned aggregate successor](aggregate-inference.md) now adds repeated arrays,
+nominal record constructors, bare value copies, aggregate CALL results and exact
+record child paths through the existing initializers. Element lists/general
+aggregate expressions and borrow/text binding inference remain separate work.
+Tag constructor inference must distinguish missing type context
 from a construct whose complete type is derivable from its payload. These cases
-must not be relabeled as implemented merely because scalar projection inference
-works. Existing annotated aggregate/borrow forms remain usable.
+must not be relabeled as implemented merely because projection inference works.
+Existing annotated borrow forms remain usable. Results below retain this
+foundation's original input snapshot; the successor has separate final evidence.
 
 Before adding `void` returns, separate the current `result_type == 0` pure-header
 sentinel from actual function return types throughout lowering; a future void

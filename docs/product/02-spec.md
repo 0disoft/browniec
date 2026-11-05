@@ -65,8 +65,10 @@ Source functions use explicit Fairy-like declarations such as fn Type name.
 Modules and imports are explicit. let and var introduce initialized locals.
 The [local inference increment](../engineering/local-inference.md) now admits
 `let name = value;` and `var name = value;` for existing scalar and complete
-tagged expression types. Aggregate/borrow/text and constructor inference remain
-pending; this is not complete target inference or a full-profile promotion.
+tagged expression types. The [owned aggregate successor](../engineering/aggregate-inference.md)
+adds repeated arrays, nominal constructors, bare copies, aggregate CALLs and exact
+record child paths. Reference/text/tag constructor and general aggregate-expression
+inference remain pending; this is not a full-profile promotion.
 
 The experimental M1 increment keeps `fn i32 main()` as the zero-argument entry
 point. Other functions and their parameters may use i32, i64, u8, u32, usize, or bool. Bool is canonical

@@ -24,7 +24,9 @@ named-slice/temporary-array CALL borrows and array/view UTF-8 checks are availab
 See the [documentation index](../README.md) for owning language increment contracts.
 Local types can be omitted for existing scalar and complete tagged expressions:
 `let name = value;` or `var name = value;`. See the [implemented boundary](../engineering/local-inference.md);
-aggregate/borrow/text and constructor inference remain pending.
+the [owned aggregate successor](../engineering/aggregate-inference.md) adds repeated
+arrays, nominal constructors, copies, aggregate CALLs and record child paths.
+Reference/text/tag constructor and general aggregate-expression inference remain pending.
 
 Retained byte/text/shared-byte result source is public under
 `brownie.m2-reference/1`; general mutable/non-byte/Buffer/input results and
