@@ -27,7 +27,7 @@ def main():
     parser.add_argument('--profile', choices=['development', 'release'], required=True)
     parser.add_argument('--shard', type=int, default=1, help='one-based native test shard')
     parser.add_argument('--shards', type=int, default=1, help='partition the complete selected identity set')
-    parser.add_argument('--selection', choices=['all', 'statics', 'views', 'ranges', 'range-core', 'call-ir', 'call-proof', 'call-transfer-core', 'call-transfer', 'call-mixed', 'reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts', 'reference-return-execution', 'reference-source', 'reference-return-source', 'public-program', 'source-snapshot', 'module-index', 'module-entry', 'source-context', 'module-program', 'module-program-core', 'module-retention', 'project-program-core', 'project-program', 'project-names', 'project-manifest', 'project-sources', 'captured-call-stack', 'local-inference', 'aggregate-inference', 'reference-inference', 'reference-inference-shadow', 'option-inference'], default='all',
+    parser.add_argument('--selection', choices=['all', 'statics', 'views', 'ranges', 'range-core', 'call-ir', 'call-proof', 'call-transfer-core', 'call-transfer', 'call-mixed', 'reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts', 'reference-return-execution', 'reference-source', 'reference-return-source', 'public-program', 'source-snapshot', 'module-index', 'module-entry', 'source-context', 'module-program', 'module-program-core', 'module-retention', 'project-program-core', 'project-program', 'project-names', 'project-manifest', 'project-sources', 'captured-call-stack', 'local-inference', 'aggregate-inference', 'reference-inference', 'reference-inference-shadow', 'option-inference', 'array-list-storage'], default='all',
                         help='statics runs the changed image/proof/VM suites; all adds return and source regressions')
     args = parser.parse_args()
     if not 1 <= args.shard <= args.shards <= 16:
@@ -92,6 +92,7 @@ def main():
                                          'tests/m2/reference_return_source.fy', 'tests/m2/module_program.fy']
     selections['reference-inference-shadow'] = ['tests/m2/reference_inference_shadow.fy']
     selections['option-inference'] = ['tests/m2/option_constructor_inference.fy', 'tests/tagged.fy', 'tests/m2/local_inference.fy']
+    selections['array-list-storage'] = ['tests/m2/array_list_storage.fy', 'tests/m2/array_storage.fy', 'tests/m2/array_owners.fy']
     files = selections[args.selection]
     out = ROOT / 'build/static-execution' / profile / args.selection
     if args.shards != 1:
@@ -195,7 +196,11 @@ def main():
         focused = {
             'tagged': {'wrapper_types_copies_and_calls', 'guarded_case_initialization_fuel_and_failure'},
             'local_inference': {'complete_tagged_expression_types_survive_inference_and_reassignment'}}
-    exact = args.selection == 'option-inference' or args.selection in ('reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts', 'reference-return-execution', 'reference-source', 'reference-return-source', 'public-program', 'reference-inference')
+    if args.selection == 'array-list-storage':
+        focused = {
+            'array_storage': {'alignment_is_zeroed_and_failed_initialization_rolls_back'},
+            'array_owners': {'quota_value_and_owner_pressure_fail_without_publication'}}
+    exact = args.selection in ('option-inference', 'array-list-storage') or args.selection in ('reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts', 'reference-return-execution', 'reference-source', 'reference-return-source', 'public-program', 'reference-inference')
     for path in files:
         if not exact and args.shards == 1:
             command.extend(['--file', path])
@@ -211,7 +216,7 @@ def main():
     if args.shards > len(complete):
         parser.error('shards must not exceed selected tests')
     if exact:
-        assert len(expected) == (5 if args.selection == 'option-inference' else 36 if args.selection == 'reference-inference' else 18)
+        assert len(expected) == (5 if args.selection in ('option-inference', 'array-list-storage') else 36 if args.selection == 'reference-inference' else 18)
     if args.shards != 1:
         expected = set(complete[args.shard - 1::args.shards])
     if exact or args.shards != 1:

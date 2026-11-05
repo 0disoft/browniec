@@ -4,7 +4,7 @@ import array_layout as layouts;
 import scalar_codec as codec;
 
 // Caller-owned backing bytes; no heap allocation, ownership token, or VM opcode.
-// This private cursor publishes only fully initialized repeated scalar arrays.
+// This private cursor publishes only fully initialized scalar arrays.
 pub struct Arena { usize used; usize limit; }
 pub enum Error { Type; Length; Metadata; Overflow; Quota; Bounds; Alignment; Value; State; }
 
@@ -47,6 +47,28 @@ pub fn Result<usize, Error> initialize(ref layouts::Array layout, i64 fill,
     }
     arena.used = plan.end;
     return .ok(plan.offset);
+}
+
+// Scratch belongs to the caller and must not overlap values or storage. Its
+// contents are discardable on failure; storage and the arena remain unchanged.
+// Exact payload-sized staging supports all 4096 elements without heap work.
+pub fn Result<usize,Error> initialize_values(ref layouts::Array layout,ref i64[] values,
+    ref mut u8[] scratch,ref mut u8[] storage,ref mut Arena arena){
+    if(!valid(arena,storage.len)){return .err(.State);}
+    let layouts::Reservation plan=switch(layouts::reserve(layout,arena.used,arena.limit)){
+        case .ok(value):{value}case .err(error):{return .err(layout_error(error));}
+    };
+    if(values.len!=layout.length || scratch.len!=layout.bytes){return .err(.Length);}
+    var usize i=0;
+    while(i<values.len){let usize at=i*layout.stride;
+        let usize encoded=switch(codec::encode(layout.element,values[i],scratch[at..at+layout.stride])){
+            case .ok(value):{value}case .err(error):{return .err(codec_error(error));}
+        };i+=1;
+    }
+    // All fallible validation/encoding precedes padding, payload and publication.
+    i=arena.used;while(i<plan.offset){storage[i]=0;i+=1;}
+    i=0;while(i<scratch.len){storage[plan.offset+i]=scratch[i];i+=1;}
+    arena.used=plan.end;return .ok(plan.offset);
 }
 
 fn Result<usize, Error> address(ref layouts::Array layout, usize base, usize index,

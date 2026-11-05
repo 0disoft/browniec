@@ -240,6 +240,16 @@ pub fn Result<Token, Error> create(ref layouts::Array layout, i64 fill, ref mut 
     };
     return .ok(publish(table, slot, layout, mark, base));
 }
+// A complete element list is prepared before the owning token is published.
+pub fn Result<Token,Error> create_values(ref layouts::Array layout,ref i64[] values,
+    ref mut u8[] scratch,ref mut u8[] bytes,ref mut Table table){
+    if(!valid(table,bytes.len)){return .err(.State);}
+    let usize slot=free_slot(table)?;let usize mark=table.arena.used;
+    let usize base=switch(storage::initialize_values(layout,values,scratch,bytes,ref mut table.arena)){
+        case .ok(value):{value}case .err(error):{return .err(storage_error(error));}
+    };
+    return .ok(publish(table,slot,layout,mark,base));
+}
 pub fn Result<i64, Error> read(ref Table table, Token token, usize index, ref u8[] bytes) {
     let Owner owner = resolve(table, token, bytes.len)?;
     let layouts::Array layout = switch (layouts::scalar(owner.element, owner.length)) {
