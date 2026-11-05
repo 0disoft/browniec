@@ -1,18 +1,23 @@
-- L01 native module_entry now retains a named public zero-argument i32 signature
-  beside the exact immutable module_index::Index it checked. Parameters, other
-  result types and ambiguous header tokens fail at original source-local spans.
-  Helpers retain their own signatures; name/private/struct binding failures remain.
-  Entry is signature/source-owner proof only, not body/type/ownership/IR admission.
-  Code 86f7b78; see docs/engineering/module-entry.md and focused Windows evidence.
-  Development/release each passed 18 native groups (6 entry + 6 binding + 6 snapshot),
-  148 matching committed inputs, 141 LF modules and 246-file discovery; both locked
-  LF mirrors pass. No overrides or historical reuse. Earlier test-source syntax
-  failure excluded. CLI/public Fuel/full VM/profile/general RAM-stack/allocator/
-  OOM/timing/Linux/restricted/ABI/package were not rerun. Next connect explicit
-  module-aware qualified function/type lookup and carry the selected entry through
-  complete source/ownership/IR proof and retained executable admission. Preserve
-  local/field names and original spans; do not rewrite matching identifiers.
-  L01, C03 and the complete objective remain open. Local only; no push.
+- L01 source_context now copies exact source bytes and compact module/import/pub
+  spans into compiler-only scratch. Fenced lexer State distinguishes qualified
+  names (kind5) from plain binders (kind2), preserves each original BOM/comment/EOF
+  and explicit text aliases. Native scoped function signatures and nominal record
+  catalogs resolve exact module identities and reject private/cyclic invalid types.
+  Code 959c8d3; see docs/engineering/source-context.md and focused Windows evidence.
+  Development/release each passed 21 native groups (6 context + 6 entry + 4 function
+  + 5 lexer), 150 matching verification inputs, 142 LF modules and 247-file discovery;
+  both locked LF mirrors pass. All production inputs match Git; 149/150 total inputs
+  match byte for byte. Unchanged tests/lexer_compatibility.fy is CRLF locally/LF in
+  Git, with both hashes and exact normalization recorded. No overrides/historical
+  reuse. Preliminary selection/SDK/test-marker errors and diagnostic cases excluded.
+  Metadata is candidate scratch, not executable authority. Native execution must
+  reconstruct it internally from the exact retained Index and complete source/IR/
+  ownership proof. Next carry scope through expression/constructor/field/reference
+  lowering and selected retained executable admission. Preserve local/field names
+  and original spans. Intermediate EOF diagnostics must keep active file identity,
+  not infer it from a flat boundary. CLI/public Fuel/full VM/profile/general RAM-
+  stack/allocator/OOM/timing/Linux/restricted/ABI/package were not rerun. Public
+  module flags/project loader remain unavailable. L01/C03/full goal stay open.
 - L01/C03 native source snapshots now own exact source/name byte copies and
   checked original-byte spans. Copyable Builder scratch is independently proved
   before private Snapshot retention; failed appends leave both pools unchanged.

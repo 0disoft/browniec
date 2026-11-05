@@ -92,3 +92,19 @@ reference lowering, construct the selected complete IR, and retain/run it with
 its exact source owner. Preserve independent Program/ownership admission and
 source-local diagnostics. Public projects and filesystem/policy loading remain
 separate accepted obligations.
+
+Implementation `959c8d3`: Windows development and release each passed 21 native
+groups (6 context, 6 entry, 4 function and 5 lexer) on 150 matching verification
+inputs, 142 LF production modules and the same 247-file test discovery identity.
+All production inputs match committed blobs. Of all 150 inputs, 149 match Git
+byte for byte; the unchanged legacy lexer test uses CRLF in the working tree and
+LF in Git. Both hashes and the exact normalization relation are recorded, without
+rewriting that fixture or claiming a raw committed hash match for it.
+Both locked LF mirrors passed without compiler/stack overrides or historical
+reuse. Preliminary fixture/selection/SDK errors and temporary diagnostic tests
+are excluded. See [focused Windows evidence](../evidence/source-context-windows-20261105.json).
+
+Flat token offsets map to their original source. At a shared boundary between
+files, an earlier file's EOF and the next file's first byte have the same flat
+number. Contextual diagnostics must retain the active file/fence for that case;
+a bare offset is insufficient and is not a complete C03 source-map implementation.
