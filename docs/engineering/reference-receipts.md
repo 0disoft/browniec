@@ -71,10 +71,9 @@ Linux, restricted delivery and ABI/package were not rerun.
 
 ## Next integration
 
-Connect these receipts and the complete returned-byte proof to retained private
-Program admission and canonical CALL/RETURN dispatch. Prepay complete selector,
-access, transfer and native handoff costs; preserve actual windows and image
-borrows. Publish caller words only after native success, clear consumed frame
-words, and retain selected owners/parents across forwarding and all exits.
-Source signatures/actuals/returns and public admission follow. The complete
+The [native result VM successor](reference-return-vm.md) now connects these
+receipts and complete proof to retained private admission and canonical
+CALL/RETURN dispatch. Selector/access and complete native return costs are
+prepaid; exact windows, post-success publication and consumed-frame retirement
+are connected. Source signatures/actuals/returns and public admission follow. The complete
 [inventory](../product/04-remaining-work.md) and [plan](completion-plan.md) stay open.

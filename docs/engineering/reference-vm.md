@@ -100,8 +100,10 @@ use the [complete canonical lifetime proof](reference-return-lifetimes.md),
 then connect native origin-selected retention, caller publication and image/owner
 lifetime handling. The [native receipt prerequisite](reference-receipts.md) now
 supplies disjoint sparse bindings and last-alias close without another frame map;
-canonical generic-result CALL/RETURN dispatch remains to be connected. Then lower source
-signatures, actuals and returns and complete ordinary public admission. Equality
+the [native result VM successor](reference-return-vm.md) now connects canonical
+generic-result CALL/RETURN dispatch, retained admission and complete selector/return
+Fuel. Next lower source signatures, actuals and returns and complete ordinary
+public admission. Equality
 for kind 3, text/non-byte references and Buffer/input backing remain open.
 The [complete inventory](../product/04-remaining-work.md) and
 [completion plan](completion-plan.md) remain active.

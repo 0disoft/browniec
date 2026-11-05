@@ -75,8 +75,9 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    complete scalar/owner/loan proof and local-owner exclusion through all returned
    aliases. The [native receipt prerequisite](reference-receipts.md) now provides
    disjoint sparse bindings, exact returned windows and transactional last-alias
-   close without another frame map. Next connect retained admission and canonical
-   selected result CALL/RETURN handoff/publication, then
+   close without another frame map. The [native result VM successor](reference-return-vm.md)
+   now connects retained admission and canonical selected CALL/RETURN handoff,
+   caller publication, exact windows and complete Fuel preflight. Next lower
    source signatures/actuals/returns;
    private execution alone cannot promote public source syntax.
    Validate actual public source execution before promoting its capability.

@@ -1,3 +1,20 @@
+- Canonical generic byte results now execute private CALL/RETURN through a
+  retained ReferenceReturnProgram, with exact image/runtime windows and existing
+  full native tickets. Selected handoff succeeds before caller publication;
+  aliases/ranges/forwarding preserve the selected window and last-alias lifetime.
+  Complete RETURN metadata (512) plus native leave/handoff is prepaid before
+  receipt authentication; returned lookup adds 64 and CLOSE metadata remains 128.
+  Code 5911cfb; see docs/engineering/reference-return-vm.md and focused evidence.
+  Development/release each passed 18 focused native groups, 25 public Fuel native
+  groups and 33 tool-free CLI cases on 151 matching distinct committed inputs,
+  135 LF modules and 240-file discovery. Both locked LF mirrors pass; no compiler/
+  stack overrides or historical reuse. Earlier direct probes are excluded.
+  Existing 32x16 u32 words remain 2048 logical bytes, with no extra dense ticket
+  map, frame fields or pool reservation. Public prices/default256/cap16000000 stay.
+  Source signatures/actuals/returns, ordinary public generic-result admission,
+  text/non-byte/Buffer/input references and host-visible lifetimes remain open.
+  Full profiles/general RAM-stack/allocator-OOM/timing/Linux/restricted/ABI/package
+  are not covered. The complete objective stays active. Local only; no push.
 - Native returned-byte receipt helpers now use existing u32 words and sparse
   47-slot Held storage. Returned selectors decode as 16..31; formal selectors
   stay 0..7. Ordinary locations 0..511, absent512 and universal1024..1535 stay

@@ -129,6 +129,18 @@ matching inputs. The [focused evidence](../evidence/reference-vm-windows-2026110
 records those final artifacts; the original public Fuel native selection was
 not rerun. The new private reference charges do not enable public source syntax.
 
+The [generic byte-result VM successor](reference-return-vm.md) reran the original
+public native selection as well as both serialized CLI phases. Windows development
+and release each passed 25 public Fuel native groups and 33 tool-free CLI cases
+on 147 matching public input paths and a 240-file discovery identity. The separate
+18-group returned-byte/receipt/formal VM selection passes per profile on 142
+matching paths. Existing public prices, default 256 and cap 16000000 remain;
+private returned-selector lookup costs 64 and generic RETURN metadata costs 512,
+excluding dispatch and existing access/native phase charges. The complete RETURN
+price is checked before native receipt authentication. See
+[focused evidence](../evidence/reference-return-vm-windows-20261105.json) for all
+151 distinct committed inputs, native reports and final CLI artifacts.
+
 Full M1/M2, Linux, restricted delivery, ABI, packaging and elapsed-time/allocator/
 stack-size benchmarks are outside this increment. B04 result declarations remain
 publicly gated; other C05 capacities and the complete objective remain open.

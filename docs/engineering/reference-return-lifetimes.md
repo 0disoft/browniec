@@ -84,10 +84,10 @@ Linux, restricted delivery and ABI/package checks were not rerun.
 
 The [native receipt successor](reference-receipts.md) now supplies compact
 returned selectors, disjoint sparse receipt locations and transactional last-alias
-close with prepaid native finalization. Next connect this complete proof and
-those helpers to a retained returned-reference Program and canonical selected
-handoff/caller publication, with complete Fuel and prepaid abort. Reuse full-generation native receipts without conflating ordinary slice
-and immutable/universal site namespaces. Preserve actual runtime windows, image
-borrows, selected owners/parents and recursive scope. Then lower source signatures,
+close with prepaid native finalization. The [native VM successor](reference-return-vm.md)
+now connects complete proof to retained returned-reference admission, canonical
+selected handoff/caller publication, exact runtime windows and complete Fuel
+preflight. Full-generation receipts keep ordinary and universal site namespaces
+disjoint; native abort owns failure cleanup. Next lower source signatures,
 actuals/returns and complete public admission. The [full inventory](../product/04-remaining-work.md)
 and [completion plan](completion-plan.md) remain active.
