@@ -35,7 +35,10 @@ pub fn Result<statics::Sites,errors::Error> prepare(ref calls::Program unit,ref 
                 }else if(op==78){let usize selected=proof.result_origins[a] as usize;
                     if(selected==9){var usize ret=p.starts[a];while(ret<p.ends[a]){
                             if(p.code[ret*8]==79){roots|=sites.roots[p.code[ret*8+2] as usize];}ret+=1;}
-                    }else{let usize actual=p.call_args[b*8+selected-1] as usize;roots|=sites.roots[actual-192];}
+                    }else{if(selected==0 || selected>p.arities[a]){return .err(errors::make(5,pc));}
+                        let usize actual=p.call_args[b*8+selected-1] as usize;
+                        if(actual>=192 && actual<208){roots|=sites.roots[actual-192];}
+                        else if(unit.results[a]!=3 || actual<160 || actual>=176){return .err(errors::make(5,pc));}}
                 }
                 if(roots!=sites.roots[site]){sites.roots[site]=roots;changed=true;}
             }site+=1;

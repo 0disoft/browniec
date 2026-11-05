@@ -12,7 +12,8 @@ import static_image as images;
 // Bytes4..7 of 77..79 are reserved zero. Static return type is zero in body.
 // Origin claims: 1..8 exact input position, 9 Static, 0 ordinary result.
 // Separate reference analysis admits PARAM kind 3: shared bytes from image or
-// runtime loan actuals. It cannot be a result kind or execute via Static APIs.
+// runtime loan actuals. Separate return-recipe analysis also admits result kind 3;
+// neither analysis path grants native transfer, lifetime or executable authority.
 pub struct Program { ir::Program body; u8[128] parameters; u8[16] results; u8[16] origins; }
 pub struct Proof {
     usize[16] definitions; usize[16] functions; u8[16] kinds;
@@ -27,7 +28,7 @@ fn bool input(ref Program unit,usize f){
     let ref ir::Program p=ref unit.body;var usize r=p.register_starts[f];
     while(r<p.register_starts[f]+p.arities[f]){if(unit.parameters[r]!=0){return true;}r+=1;}return false;
 }
-fn Result<usize,errors::Error> header(ref Program unit,bool references){
+fn Result<usize,errors::Error> header(ref Program unit,bool references,bool returns){
     let ref ir::Program p=ref unit.body;
     if(p.count==0 || p.count>256 || p.registers==0 || p.registers>128 ||
         p.function_count==0 || p.function_count>16 || p.entry>=p.function_count || p.call_count>32){return .err(invalid(0));}
@@ -38,7 +39,7 @@ fn Result<usize,errors::Error> header(ref Program unit,bool references){
             if(p.starts[f]!=code || p.ends[f]<=code || p.ends[f]>p.count ||
                 p.register_starts[f]!=registers || p.register_ends[f]<registers || p.register_ends[f]>p.registers ||
                 p.arities[f]>8 || p.arities[f]>p.register_ends[f]-registers){return .err(invalid(code));}
-            if(kind>2 || (kind==0 && origin!=0) || (kind!=0 &&
+            if(kind>if(returns){3}else{2} || (kind==0 && origin!=0) || (kind!=0 &&
                 (origin==0 || origin>9 || (origin!=9 && origin as usize>p.arities[f]) ||
                 p.return_types[f]!=0 || p.array_results[f]!=0 || p.record_results[f]!=0))){return .err(invalid(code));}
             var usize r=registers;
@@ -46,7 +47,10 @@ fn Result<usize,errors::Error> header(ref Program unit,bool references){
                 if(access>if(references){3}else{2} || (access!=0 && (r>=registers+p.arities[f] || p.types[r]!=0 || p.slots[r] ||
                     p.array_parameters[r]!=0 || p.record_parameters[r]!=0 || p.slice_parameters[r]!=0))){return .err(invalid(code));}r+=1;
             }
-            if(kind!=0 && origin!=9 && unit.parameters[registers+origin as usize-1]==0){return .err(invalid(code));}
+            if(kind!=0 && origin!=9 && unit.parameters[registers+origin as usize-1]==0){
+                let usize loan=p.slice_parameters[registers+origin as usize-1] as usize;
+                if(kind!=3 || loan==0 || loan>16 || p.slice_elements[loan-1]!=10){return .err(invalid(code));}
+            }
             code=p.ends[f];registers=p.register_ends[f];
         }f+=1;
     }
@@ -150,7 +154,7 @@ fn Result<usize,errors::Error> flow(ref Program unit,ref mut Proof proof,usize f
                 (op==73 && (!live(proof,b,f,bits) || proof.kinds[a]==3 || proof.kinds[b]==3)) ||
                 (op==72 && b!=0) || !reserved(p,at)){return .err(invalid(pc));}
         }else if(op==79){
-            if(dst!=0 || b!=0 || unit.results[f]==0 || !live(proof,a,f,bits) || bits!=(one<<a) || proof.kinds[a]!=unit.results[f]){return .err(invalid(pc));}
+            if(dst!=0 || b!=0 || unit.results[f]==0 || !live(proof,a,f,bits) || bits!=(one<<a) || (proof.kinds[a]!=unit.results[f] && !(unit.results[f]==3 && proof.kinds[a]==1))){return .err(invalid(pc));}
             proof.returns+=1;pc+=1;continue;
         }
         if(op==8 || op==39 || op==50 || op==65){if(bits!=0 || unit.results[f]!=0){return .err(invalid(pc));}pc+=1;continue;}
@@ -166,6 +170,27 @@ fn Result<usize,errors::Error> flow(ref Program unit,ref mut Proof proof,usize f
         let usize linked=merge(ref mut seen,ref mut states,pc+1,bits,pc)?;pc+=1;
     }return .ok(p.ends[f]);
 }
+// Symbolic local origin 10 can flow through temporary returned sites, but can
+// never equal a declared function result origin (only input 1..8 or image 9).
+// Rootless ordinary loans map to their exact logical formal, never a scalar
+// position or a same-numbered image site. Whole loan/lifetime proof is separate.
+fn Result<u8,errors::Error> runtime_origin(ref Program unit,usize f,usize actual,usize pc){
+    let ref ir::Program p=ref unit.body;
+    if(actual<160 || actual>=176){return .err(invalid(pc));}
+    let usize site=actual-160;
+    let u8 element=switch(ir::slice_element(p,site,pc)){
+        case .ok(v):{v}case .err(_):{return .err(invalid(pc));}
+    };
+    if(element!=10 || ir::exclusive(p,site)){return .err(invalid(pc));}
+    if(p.slice_roots[site]!=0){return .ok(10);}
+    let usize ancestor=p.slice_origins[site] as usize;
+    if(ancestor==0 || ancestor>16){return .err(invalid(pc));}
+    var u8 position=1;var usize i=0;
+    while(i<p.arities[f]){
+        if(p.slice_parameters[p.register_starts[f]+i] as usize==ancestor){return .ok(position);}
+        position+=1;i+=1;
+    }return .err(invalid(pc));
+}
 fn Result<usize,errors::Error> origins(ref Program unit,ref mut Proof proof){
     let ref ir::Program p=ref unit.body;var usize round=0;var bool changed=true;
     while(changed && round<16){changed=false;round+=1;var usize f=0;
@@ -177,7 +202,9 @@ fn Result<usize,errors::Error> origins(ref Program unit,ref mut Proof proof){
                 else if(op==74 || op==75 || op==76){let u8 origin=proof.site_origins[a];proof.site_origins[dst]=origin;}
                 else if(op==78 && unit.results[a]!=0){let u8 selected=proof.result_origins[a];var u8 origin=0;
                     if(selected==9){origin=9;}else if(selected!=0){let usize actual=p.call_args[b*8+selected as usize-1] as usize;
-                        if(actual<192 || actual>=208){return .err(invalid(pc));}origin=proof.site_origins[actual-192];}
+                        if(actual>=192 && actual<208){origin=proof.site_origins[actual-192];}
+                        else if(unit.results[a]==3){origin=runtime_origin(unit,f,actual,pc)?;}
+                        else{return .err(invalid(pc));}}
                     proof.site_origins[dst]=origin;
                 }
                 if(op==79){let u8 origin=proof.site_origins[a];if(origin!=0){if(candidate!=0 && candidate!=origin){return .err(invalid(pc));}candidate=origin;}}
@@ -195,15 +222,18 @@ fn Result<usize,errors::Error> origins(ref Program unit,ref mut Proof proof){
         }f+=1;
     }proof.rounds=round;return .ok(round);
 }
-fn Result<Proof,errors::Error> inspect_mode(ref Program unit,ref images::Image image,bool references){
-    let usize bounded=header(unit,references)?;
+fn Result<Proof,errors::Error> inspect_mode(ref Program unit,ref images::Image image,bool references,bool returns){
+    let usize bounded=header(unit,references,returns)?;
     switch(images::inspect(image)){case .ok(_):{}case .err(_):{return .err(invalid(0));}};
     var Proof proof=empty();let usize defined=definitions(unit,image,ref mut proof)?;
     var bool[32] calls=[false;32];var usize f=0;while(f<unit.body.function_count){let usize checked=flow(unit,ref mut proof,f,ref mut calls)?;f+=1;}
     var usize i=0;while(i<unit.body.call_count){if(!calls[i]){return .err(invalid(0));}i+=1;}
     let usize grounded=origins(unit,ref mut proof)?;return .ok(proof);
 }
-pub fn Result<Proof,errors::Error> inspect(ref Program unit,ref images::Image image){return inspect_mode(unit,image,false);}
+pub fn Result<Proof,errors::Error> inspect(ref Program unit,ref images::Image image){return inspect_mode(unit,image,false,false);}
 // Kind 3 is a shared byte formal accepting image sites or runtime loan actuals.
 // It is not a result kind. This is recipe analysis, never VM admission.
-pub fn Result<Proof,errors::Error> inspect_references(ref Program unit,ref images::Image image){return inspect_mode(unit,image,true);}
+pub fn Result<Proof,errors::Error> inspect_references(ref Program unit,ref images::Image image){return inspect_mode(unit,image,true,false);}
+// Returned shared byte recipes: reconstruct exact logical origins including
+// ordinary rootless inputs. This is not canonical lifetime proof or admission.
+pub fn Result<Proof,errors::Error> inspect_reference_returns(ref Program unit,ref images::Image image){return inspect_mode(unit,image,true,true);}

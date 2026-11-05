@@ -25,11 +25,11 @@ def write(path, value):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--profile', choices=['development', 'release'], required=True)
-    parser.add_argument('--selection', choices=['all', 'statics', 'views', 'ranges', 'range-core', 'call-ir', 'call-proof', 'call-transfer-core', 'call-transfer', 'call-mixed', 'reference-access', 'reference-proof', 'reference-vm'], default='all',
+    parser.add_argument('--selection', choices=['all', 'statics', 'views', 'ranges', 'range-core', 'call-ir', 'call-proof', 'call-transfer-core', 'call-transfer', 'call-mixed', 'reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir'], default='all',
                         help='statics runs the changed image/proof/VM suites; all adds return and source regressions')
     args = parser.parse_args()
     profile = args.profile
-    selections = {'all': FILES + ['tests/m2/static_views.fy', 'tests/m2/static_ranges.fy', 'tests/m2/static_call_ir.fy', 'tests/m2/static_call_admission.fy', 'tests/m2/static_call_execution.fy', 'tests/m2/static_call_mixed.fy', 'tests/m2/reference_access.fy', 'tests/m2/reference_call_admission.fy', 'tests/m2/reference_words.fy', 'tests/m2/reference_call_execution.fy', 'tests/m2/reference_call_mixed.fy'],
+    selections = {'all': FILES + ['tests/m2/static_views.fy', 'tests/m2/static_ranges.fy', 'tests/m2/static_call_ir.fy', 'tests/m2/static_call_admission.fy', 'tests/m2/static_call_execution.fy', 'tests/m2/static_call_mixed.fy', 'tests/m2/reference_access.fy', 'tests/m2/reference_call_admission.fy', 'tests/m2/reference_words.fy', 'tests/m2/reference_call_execution.fy', 'tests/m2/reference_call_mixed.fy', 'tests/m2/reference_return_ir.fy'],
                   'statics': FILES[:3], 'views': ['tests/m2/static_views.fy'],
                   'ranges': ['tests/m2/static_ranges.fy'] + FILES[:2],
                   'range-core': ['tests/m2/static_ranges.fy'],
@@ -44,6 +44,9 @@ def main():
                   'reference-proof': ['tests/m2/reference_call_admission.fy',
                                       'tests/m2/static_call_admission.fy',
                                       'tests/m2/static_call_execution.fy'],
+                  'reference-return-ir': ['tests/m2/reference_return_ir.fy',
+                                          'tests/m2/reference_call_admission.fy',
+                                          'tests/m2/static_call_execution.fy'],
                   'reference-vm': ['tests/m2/reference_call_execution.fy',
                                    'tests/m2/reference_words.fy', 'tests/m2/reference_call_mixed.fy',
                                    'tests/m2/static_call_execution.fy', FILES[3]]}
@@ -104,7 +107,7 @@ def main():
                                'successful_scalar_return_restores_retained_inputs_or_closes_and_drops',
                                'exact_terminal_budget_and_failures_preserve_first_errors_and_prior_writes'},
     }
-    if args.selection == 'reference-proof':
+    if args.selection in ('reference-proof', 'reference-return-ir'):
         focused = {'static_call_execution': {
             'retained_calls_execute_narrowed_bytes_and_exact_text_at_exact_fuel',
             'short_entry_call_and_return_budgets_abort_and_retained_code_cannot_be_rewritten'}}
@@ -114,7 +117,7 @@ def main():
                                       'short_entry_call_and_return_budgets_abort_and_retained_code_cannot_be_rewritten'},
             'slice_scalar_entry': {'ordinary_entries_execute_nested_scalar_array_and_record_calls',
                                    'successful_scalar_return_restores_retained_inputs_or_closes_and_drops'}}
-    exact = args.selection in ('reference-access', 'reference-proof', 'reference-vm')
+    exact = args.selection in ('reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir')
     for path in files:
         if not exact:
             command.extend(['--file', path])
