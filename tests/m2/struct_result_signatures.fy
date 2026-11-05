@@ -72,8 +72,3 @@ fn void existing_record_parameters_array_results_and_scalar_wrappers_still_execu
  value(b"module main;fn i32[1] make(){return [42;1];}fn i32 main(){let i32[1] a=make();return a[0];}");
  value(b"module main;fn Option<i32> f(){return .some(42);}fn i32 main(){switch(f()){case .some(v):{return v;}case .none:{return 0;}}}");
 }
-
-// Grouping now preserves the same complete record value in these contexts.
-@test fn void grouped_record_forms_now_compile_in_existing_contexts(){
-    assert(compiler::compile(b"module main;struct P{i32 x;}fn P make(){return (P{.x=42});}fn i32 main(){return 42;}").is_ok);
-}

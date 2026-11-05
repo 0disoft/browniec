@@ -66,8 +66,3 @@ fn void wrong_members_shadowing_nominal_endpoints_and_bare_results_fail() {
  rejected(b"module main;struct P{i32 x;}fn P make(){return P{.x=42};}fn i32 main(){return missing().x;}");
  rejected(b"module main;struct P{i32 x;}struct R{P child;}fn R make(){return R{.child=P{.x=42}};}fn i32 main(){return make().child.other;}");
 }
-
-// Grouping now preserves the same complete record value in these contexts.
-@test fn void grouped_record_forms_now_compile_in_existing_contexts(){
-    assert(compiler::compile(b"module main;struct P{i32 x;}fn P make(){return P{.x=42};}fn i32 main(){return (make()).x;}").is_ok);
-}

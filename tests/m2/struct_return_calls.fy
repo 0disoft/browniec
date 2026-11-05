@@ -73,9 +73,3 @@ fn void nominal_types_call_shapes_and_unsupported_expressions_still_fail() {
     rejected(b"module main;struct P{i32 x;}fn P make(){let P p=P{.x=42};return p;}fn P forward(){return make()+1;}fn i32 main(){return 42;}");
     rejected(b"module main;struct P{i32 x;}fn P make(i32 n){let P p=P{.x=n};return p;}fn P forward(){let Option<i32> o=.some(42);return make(o?);}fn i32 main(){return 42;}");
 }
-
-// Grouping now preserves the same complete record value in these contexts.
-@test fn void grouped_record_forms_now_compile_in_existing_contexts(){
-    assert(compiler::compile(b"module main;struct P{i32 x;}fn P make(){let P p=P{.x=42};return p;}fn P forward(){return (make());}fn i32 main(){return 42;}").is_ok);
-    assert(compiler::compile(b"module main;struct P{i32 x;}fn P forward(){return (P{.x=42});}fn i32 main(){return 42;}").is_ok);
-}

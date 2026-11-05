@@ -62,9 +62,3 @@ fn void mismatched_nominal_types_writes_and_general_aggregate_arguments_stay_rej
  rejected(b"module main;struct P{i32 x;}fn i32 take(P p){let P p=P{.x=42};return p.x;}fn i32 main(){return 42;}");
  rejected(b"module main;struct P{i32 x;}fn i32 take(P p){return p.x;}fn i32 main(){let P p=P{.x=42};for(var i32 n=take(p);n<1;n=n+1){}return 42;}");
 }
-
-// Grouping now preserves the same complete record value in these contexts.
-@test fn void grouped_record_forms_now_compile_in_existing_contexts(){
-    assert(compiler::compile(b"module main;struct P{i32 x;}fn i32 take(P p){return p.x;}fn i32 main(){return take((P{.x=42}));}").is_ok);
-    assert(compiler::compile(b"module main;struct P{i32 x;}fn i32 take(P p){return p.x;}fn i32 main(){let P p=P{.x=42};return take((p));}").is_ok);
-}

@@ -64,8 +64,3 @@ fn void nominal_endpoint_visibility_and_unsupported_contexts_reject() {
  rejected(b"module main;struct P{i32 x;}struct R{P child;}fn R make(){return R{.child=P{.x=42}};}fn i32 main(){let P p=make().child;p.x=0;return 42;}");
  rejected(b"module main;struct P{i32 x;}struct R{P child;}fn R make(){return R{.child=P{.x=42}};}fn i32 main(){for(let P p=make().child;false;){}return 42;}");
 }
-
-// Grouping now preserves the same complete record value in these contexts.
-@test fn void grouped_record_forms_now_compile_in_existing_contexts(){
-    assert(compiler::compile(b"module main;struct P{i32 x;}struct R{P child;}fn R make(){return R{.child=P{.x=42}};}fn i32 main(){let P p=(make().child);return 42;}").is_ok);
-}

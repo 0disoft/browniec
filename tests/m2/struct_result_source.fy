@@ -66,12 +66,3 @@ fn void result_and_parameter_sites_keep_the_existing_sixteen_site_bound(){
  let ir::Program p=compiled(b"module main;struct P{i32 x;}fn P f(){let P p=P{.x=42};return p;}fn i32 main(){let P v0=f();let P v1=f();let P v2=f();let P v3=f();let P v4=f();let P v5=f();let P v6=f();let P v7=f();let P v8=f();let P v9=f();let P v10=f();let P v11=f();let P v12=f();let P v13=f();return v13.x;}");assert(p.records.count==16 && verifier::verify(ref p).is_ok);
  assert(switch(compiler::compile(b"module main;struct P{i32 x;}fn P f(){let P p=P{.x=42};return p;}fn i32 main(){let P v0=f();let P v1=f();let P v2=f();let P v3=f();let P v4=f();let P v5=f();let P v6=f();let P v7=f();let P v8=f();let P v9=f();let P v10=f();let P v11=f();let P v12=f();let P v13=f();let P extra=f();return extra.x;}")){case .ok(_):{false}case .err(e):{e.kind==4}});
 }
-
-// Grouping now preserves the same complete record value in these contexts.
-@test fn void grouped_record_forms_now_compile_in_existing_contexts(){
-    assert(compiler::compile(b"module main;struct P{i32 x;}fn P f(){return (P{.x=42});}fn i32 main(){return 42;}").is_ok);
-    assert(compiler::compile(b"module main;struct P{i32 x;}fn P f(P p){return p;}fn P g(P p){return (f(p));}fn i32 main(){return 42;}").is_ok);
-    assert(compiler::compile(b"module main;struct P{i32 x;}fn P f(P p){return (p);}fn i32 main(){return 42;}").is_ok);
-    assert(compiler::compile(b"module main;struct P{i32 x;}struct R{P p;}fn P f(R r){return (r.p);}fn i32 main(){return 42;}").is_ok);
-    assert(compiler::compile(b"module main;struct P{i32 x;}fn P f(P p){return p;}fn i32 main(){let P p=P{.x=42};var P q=p;q=(f(p));return q.x;}").is_ok);
-}

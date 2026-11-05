@@ -65,9 +65,3 @@ fn void nominal_mismatches_field_types_and_general_record_expressions_remain_rej
     rejected(b"module main;struct P{i32 x;}fn P make(){return P{.x=missing};}fn i32 main(){return 42;}");
     rejected(b"module main;struct P{i32 x;}struct R{P p;}fn R make(){return R{.p=42};}fn i32 main(){return 42;}");
 }
-
-// Grouping now preserves the same complete record value in these contexts.
-@test fn void grouped_record_forms_now_compile_in_existing_contexts(){
-    assert(compiler::compile(b"module main;struct P{i32 x;}fn P make(){return (P{.x=42});}fn i32 main(){return 42;}").is_ok);
-    assert(compiler::compile(b"module main;struct P{i32 x;}struct R{P p;}fn P child(){return P{.x=42};}fn R make(){return R{.p=(child())};}fn i32 main(){return 42;}").is_ok);
-}

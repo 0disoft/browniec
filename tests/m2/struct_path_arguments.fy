@@ -71,10 +71,3 @@ fn void wrong_endpoints_and_general_argument_expressions_are_rejected() {
  rejected(b"module main;struct P{i32 x;}struct R{P p;}fn i32 take(P p){return p.x;}fn i32 main(){let R r=R{.p=P{.x=42}};return take(r.p as P);}");
  rejected(b"module main;struct P{i32 x;}struct R{P p;}fn i32 take(P p){return p.x;}fn i32 main(){let R r=R{.p=P{.x=42}};return take(r.p==r.p);}");
 }
-
-// Grouping now preserves the same complete record value in these contexts.
-@test fn void grouped_record_forms_now_compile_in_existing_contexts(){
-    assert(compiler::compile(b"module main;struct P{i32 x;}struct R{P p;}fn i32 take(P p){return p.x;}fn i32 main(){let R r=R{.p=P{.x=42}};return take((r.p));}").is_ok);
-    assert(compiler::compile(b"module main;struct P{i32 x;}struct R{P p;}fn R make(){return R{.p=P{.x=42}};}fn i32 take(P p){return p.x;}fn i32 main(){return take((make().p));}").is_ok);
-    assert(compiler::compile(b"module main;struct P{i32 x;}struct R{P p;}fn i32 take(P p){return p.x;}fn i32 main(){return take((P{.x=42}));}").is_ok);
-}

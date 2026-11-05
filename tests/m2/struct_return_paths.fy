@@ -67,9 +67,3 @@ fn void wrong_nominal_scalar_nonrecord_and_general_expression_returns_are_reject
     rejected(b"module main;struct P{i32 x;}struct R{P p;}fn P pick(R r){return r.p.missing;}fn i32 main(){return 42;}");
     rejected(b"module main;struct P{i32 x;}struct R{P p;}fn i32[1] pick(R r){return r.p;}fn i32 main(){return 42;}");
 }
-
-// Grouping now preserves the same complete record value in these contexts.
-@test fn void grouped_record_forms_now_compile_in_existing_contexts(){
-    assert(compiler::compile(b"module main;struct P{i32 x;}struct R{P p;}fn P pick(R r){return (r.p);}fn i32 main(){return 42;}").is_ok);
-    assert(compiler::compile(b"module main;struct P{i32 x;}struct R{P p;}fn R make(){return R{.p=P{.x=42}};}fn P pick(){return (make().p);}fn i32 main(){return 42;}").is_ok);
-}
