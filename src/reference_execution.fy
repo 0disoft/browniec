@@ -12,6 +12,7 @@ import struct_call_vm as copies;
 import fuel as fuel;
 import cells as cells;
 import errors as errors;
+import reference_receipts as receipts;
 
 pub struct Arguments { u32[16] words; runtime::Capture[8] captures; u8[8] tags; usize remaining; }
 pub struct Step { usize live; usize remaining; }
@@ -27,7 +28,9 @@ fn Result<access::Source,errors::Error> select(ref ir::Program p,ref statics::Si
     if(f>=p.function_count || site>=16 || sites.functions[site]!=f || sites.definitions[site]>=256){return .err(invalid(offset));}
     if(!words::runtime(word)){let views::Span span=views::inspect(sites,site,f,0,word,payload,offset)?;return .ok(access::image(site));}
     if(sites.kinds[site]!=3 || bindings.frame==0 || bindings.frame>=32 || bindings.functions[bindings.frame]!=f){return .err(invalid(offset));}
-    let words::Word value=words::unpack(word,offset)?;let usize position=value.argument;
+    let words::Word value=words::unpack(word,offset)?;
+    if(value.argument>=16){return receipts::source(ref bindings.loans,bindings.frame,word,offset);}
+    let usize position=value.argument;
     if(position>=p.arities[f] || sites.parameters[p.register_starts[f]+position]!=3 || bindings.tags[bindings.frame*8+position]!=10){return .err(invalid(offset));}
     let slices::Ticket ticket=bindings.issued[bindings.frame*8+position];
     if(ticket.slot>=16 || ticket.generation==0){return .err(invalid(offset));}
@@ -51,12 +54,13 @@ pub fn Result<Arguments,errors::Error> arguments(ref ir::Program p,ref statics::
     let usize one=1;let usize dst=p.code[pc*8+1] as usize;
     if(sites.results[target]!=0 && (dst>=16 || sites.functions[dst]!=f || sites.definitions[dst]!=pc ||
         sites.kinds[dst]!=sites.results[target] || (live&(one<<dst))!=0)){return .err(invalid(offset));}
-    var usize count=0;var usize loans=0;var usize i=0;
+    var usize count=0;var usize loans=0;var usize returned=0;var usize i=0;
     while(i<p.arities[target]){let u8 kind=sites.parameters[p.register_starts[target]+i];let usize actual=p.call_args[map*8+i] as usize;
         if(kind!=0){count+=1;if(kind==3 && ((actual>=160 && actual<176) ||
-            (actual>=192 && actual<208 && words::runtime(current[actual-192])))){loans+=1;}}i+=1;
+            (actual>=192 && actual<208 && words::runtime(current[actual-192])))){loans+=1;}
+            if(kind==3 && actual>=192 && actual<208 && words::returned(current[actual-192])){returned+=1;}}i+=1;
     }
-    let usize price=fuel::reference_call(count,loans);let usize work=copies::cost(p,target,offset)?+p.arities[target];
+    let usize price=fuel::reference_call(count,loans)+fuel::reference_result_lookup()*returned;let usize work=copies::cost(p,target,offset)?+p.arities[target];
     if(remaining<price+runtime::cost()+work){return .err(errors::make(8,offset));}
     var Arguments result=empty(remaining-price);var usize mask=0;i=0;
     while(i<p.arities[target]){let usize formal=p.register_starts[target]+i;let u8 kind=sites.parameters[formal];let usize actual=p.call_args[map*8+i] as usize;
@@ -114,10 +118,13 @@ pub fn Result<Step,errors::Error> step(ref ir::Program p,ref statics::Sites site
     let usize at=pc*8;let usize offset=p.offsets[pc];let u8 op=p.code[at];let usize dst=p.code[at+1] as usize;let usize a=p.code[at+2] as usize;let usize one=1;
     if(dst>=16 || current.len!=16 || sites.kinds[dst]!=3 || sites.functions[dst]!=f){return .err(invalid(offset));}
     let usize from=if(op==70){dst}else{a};
+    if(from>=16){return .err(invalid(offset));}
+    let usize extra=if(words::returned(current[from])){fuel::reference_result_lookup()}else{0};
+    if(extra!=0 && remaining<extra+fuel::static_instruction(op,0,0)){return .err(errors::make(8,offset));}
     let access::Source selected=source(p,sites,f,from,current,live,bindings,payload,offset)?;
     if(op!=70 && (sites.definitions[dst]!=pc || (live&(one<<dst))!=0 || sites.kinds[from]!=3)){return .err(invalid(offset));}
     if(op!=70 && op!=75 && op!=76){return .err(invalid(offset));}
-    let usize price=fuel::static_instruction(op,0,0);if(remaining<price){return .err(errors::make(8,offset));}
+    let usize price=fuel::static_instruction(op,0,0)+extra;if(remaining<price){return .err(errors::make(8,offset));}
     if(op==70){current[dst]=0;return .ok(Step{.live=live^(one<<dst),.remaining=remaining-price});}
     var u32 word=current[from];
     if(op==76){if(p.code[at+3] as usize>=registers.len || p.code[at+4] as usize>=registers.len){return .err(invalid(offset));}
@@ -125,7 +132,9 @@ pub fn Result<Step,errors::Error> step(ref ir::Program p,ref statics::Sites site
         let views::Span span=if(selected.storage==2){selected.span}else{views::inspect(sites,from,f,1,word,payload,offset)?};
         let u32 cropped=views::crop(ref span,lo,hi,if(selected.storage==2){4096}else{payload},offset)?;
         if(selected.storage==2){let words::Word parent=words::unpack(word,offset)?;
-            word=words::pack(parent.argument,views::unpack(cropped,4096,offset)?,offset)?;}else{word=cropped;}
+            let views::Span narrowed=views::unpack(cropped,4096,offset)?;
+            word=if(parent.argument>=16){words::pack_result(parent.argument-16,narrowed,offset)?}
+                else{words::pack(parent.argument,narrowed,offset)?};}else{word=cropped;}
     }
     if(selected.storage==1){let views::Span checked=views::inspect(sites,dst,f,1,word,payload,offset)?;}
     current[dst]=word;return .ok(Step{.live=live|(one<<dst),.remaining=remaining-price});

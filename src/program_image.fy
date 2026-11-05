@@ -85,3 +85,19 @@ pub fn Result<execution::Scalar,errors::Error> run_reference_scalar(ref Referenc
     ref mut runtime::State state,ref mut u8[] data,usize fuel){
     return execution::execute_reference_scalar(ref p.code,ref p.image,function,captures,values,inputs,state,data,fuel);
 }
+
+// Complete generic returned-reference proof has separate retained authority.
+pub resource ReferenceReturnProgram { calls::Program code; images::Image image; cleanup { } }
+pub fn Result<ReferenceReturnProgram,Error> retain_reference_returns(ref calls::Program code,images::Image image,usize image_limit){
+    switch(call_verifier::inspect_reference_returns(code,ref image)){case .ok(_):{}case .err(e):{return .err(code_error(e));}};
+    let usize charge=switch(images::charge(ref image)){case .ok(v):{v}case .err(e):{return .err(image_error(e));}};
+    if(charge>image_limit){return .err(image_error(.Quota));}
+    return .ok(ReferenceReturnProgram{.code=*code,.image=image});
+}
+pub fn ref calls::Program reference_return_code(ref ReferenceReturnProgram p){return ref p.code;}
+pub fn ref images::Image reference_return_literals(ref ReferenceReturnProgram p){return ref p.image;}
+pub fn Result<execution::Scalar,errors::Error> run_reference_returns_scalar(ref ReferenceReturnProgram p,usize function,
+    ref runtime::Capture[] captures,ref i64[] values,ref owners::Token[] inputs,
+    ref mut runtime::State state,ref mut u8[] data,usize fuel){
+    return execution::execute_reference_returns_scalar(ref p.code,ref p.image,function,captures,values,inputs,state,data,fuel);
+}

@@ -162,3 +162,20 @@ pub fn Result<usize,errors::Error> close_result(ref mut Frames bindings,ref mut 
     if(closed.location<512){bindings.sites[closed.location]=closed.parent;}
     bindings.sites[location]=none();return .ok(closed.remaining);
 }
+
+// Generic shared handoff has its own universal-site destination. Restore only
+// ordinary actual bindings, retire consumed child receipts, then let the caller
+// publish its new universal word in the disjoint receipt namespace.
+pub fn Result<usize,errors::Error> pop_reference(ref ir::Program p,ref mut Frames bindings,runtime::Returned returned){
+    let usize child=bindings.frame;
+    if(child<=1 || child>=32 || !bindings.active[child] || bindings.prepared[child] ||
+        bindings.selected[child]==0 || !returned.held.active || returned.held.exclusive || returned.held.frame!=child-1 ||
+        bindings.destinations[child]>=16 || bindings.maps[child]>=p.call_count){return .err(errors::make(5,0));}
+    let usize parent=child-1;let usize map=bindings.maps[child];let usize next=bindings.continuations[child];
+    var usize i=0;while(i<bindings.arities[child]){let usize actual=p.call_args[map*8+i] as usize;
+        if(actual>=160 && actual<176){bindings.sites[parent*16+actual-160]=returned.resumed[i];}i+=1;}
+    loans::transferred(ref mut bindings.loans,child);bindings.active[child]=false;bindings.functions[child]=16;
+    bindings.results[child]=none();bindings.identities[child]=128;
+    i=0;while(i<16){bindings.sites[child*16+i]=none();bindings.tokens[child*16+i]=owners::Token{.slot=0,.generation=0};i+=1;}
+    records::clear_frame(ref mut bindings.records,child);bindings.frame=parent;return .ok(next);
+}

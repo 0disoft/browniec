@@ -50,3 +50,6 @@ pub fn usize reference_parameter(bool runtime){return 16+if(runtime){4097}else{0
 // Two sparse receipt lookups (47 each) and one alias scan (16), rounded up.
 // Physical close remains prepaid by the native handoff that issued Held.
 pub fn usize reference_result_close(){return 128;}
+// Returned-selector lookup/publication work is additive to existing prices.
+pub fn usize reference_result_lookup(){return 64;}
+pub fn usize reference_return(){return 512;}
