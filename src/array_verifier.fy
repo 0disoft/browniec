@@ -5,6 +5,7 @@ import slice_verifier as slices;
 import errors as errors;
 import register_set as registers;
 import array_parameters as parameters;
+import array_list_ir as lists;
 
 fn bool readable(ref ir::Program p, ref registers::Set defined, usize r, usize f, u8 tag) {
     return r >= p.register_starts[f] && r < p.register_ends[f] && !p.slots[r] && p.array_parameters[r] == 0 && p.record_parameters[r] == 0 && p.slice_parameters[r] == 0 && registers::contains(defined, r) && p.types[r] == tag;
@@ -24,9 +25,10 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, usize pc, usize f,
     if (slices::exclusive(p, id, live) ||
         ((op == 34 || op == 38) && slices::exclusive(p, a, live))) { return .err(errors::make(5, pc)); }
     if ((op == 36 || op == 37 || op == 38 || op == 40) && slices::borrowed(p, id, live)) { return .err(errors::make(5, pc)); }
-    if (op == 33 || op == 34) {
-        if (b != 0 || (live & mask) != 0 || (parameters::initial(p, f) & mask) != 0) { return .err(errors::make(5, pc)); }
-        if (op == 33) {
+    if (op == 33 || op == 34 || op==80) {
+        if ((op!=80 && b != 0) || (live & mask) != 0 || (parameters::initial(p, f) & mask) != 0) { return .err(errors::make(5, pc)); }
+        if(op==80){let usize checked=lists::operands(p,pc,f,defined)?;}
+        else if (op == 33) {
             if (!readable(p, defined, a, f, element)) { return .err(errors::make(5, pc)); }
         } else {
             if (a >= p.arrays.count || (live & (one << a)) == 0 ||

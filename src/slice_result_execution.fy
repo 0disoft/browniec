@@ -8,6 +8,8 @@ import slice_result_loan_execution as loans;
 import vm_execution as scalar;
 import slice_authority as authority;
 import array_vm as arrays;
+import array_list_vm as list_values;
+import struct_call_vm as owned_calls;
 import slice_result_owned_execution as owned;
 import slice_result_record_execution as records;
 import array_slices as slices;
@@ -28,6 +30,8 @@ import reference_words as words;
 import reference_receipts as receipts;
 import reference_return_execution as reference_returns;
 import fuel as meter;
+import std::vec as vec;
+import std::bytes as bytes;
 
 pub struct Scalar { i64 value; usize remaining; slices::Ticket[8] resumed; }
 // Internal tagged completion; inactive fields never escape either native API.
@@ -166,8 +170,13 @@ fn Result<Outcome,errors::Error> invoke_proved(ref body_ir::Program body,ref u8[
     let usize admitted=admit(body,elements,sites,function,values,captures.len,inputs,view)?;
     let usize depth=switch(authority::inspect(ref state.runtime.authority)){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,0));}};
     if(!available(ref state.runtime.authority,true)){return .err(errors::make(5,0));}
-    let runtime::Entered first=entry::enter(body,function,binding(body,parameters,function),captures,inputs,state,data,fuel)?;
-    let Result<Outcome,errors::Error> outcome=start(body,parameters,function,ref first,values,state,data,sites,literals);
+    let list_values::Requirement list_plan=list_values::requirement(body)?;
+    let usize work=owned_calls::cost(body,function,0)?+body.arities[function];
+    if(fuel<runtime::cost()+work+list_plan.cost){return .err(errors::make(8,0));}
+    var vec::Vec<i64> list_cells=list_values::prepare_values(ref list_plan)?;
+    var bytes::Buffer list_scratch=list_values::prepare_encoded(ref list_plan)?;
+    let runtime::Entered first=entry::enter(body,function,binding(body,parameters,function),captures,inputs,state,data,fuel-list_plan.cost)?;
+    let Result<Outcome,errors::Error> outcome=start(body,parameters,function,ref first,values,state,data,sites,literals,ref mut list_cells,ref mut list_scratch);
     return switch(outcome){
         case .ok(v):{.ok(v)}
         case .err(e):{
@@ -181,12 +190,14 @@ fn Result<Outcome,errors::Error> invoke_proved(ref body_ir::Program body,ref u8[
 // Keep the large frame maps out of the independent admission call stack.
 // Their native storage is needed only after verification and initial entry.
 fn Result<Outcome,errors::Error> start(ref body_ir::Program body,ref u8[] parameters,usize function,ref runtime::Entered first,
-    ref i64[] values,ref mut runtime::State state,ref mut u8[] data,ref statics::Sites sites,ref u8[] literals){
+    ref i64[] values,ref mut runtime::State state,ref mut u8[] data,ref statics::Sites sites,ref u8[] literals,
+    ref mut vec::Vec<i64> list_cells,ref mut bytes::Buffer list_scratch){
     var frames::Frames bindings=frames::empty(state);
-    return run(body,parameters,function,first,values,ref mut bindings,state,data,sites,literals);
+    return run(body,parameters,function,first,values,ref mut bindings,state,data,sites,literals,list_cells,list_scratch);
 }
 fn Result<Outcome,errors::Error> run(ref body_ir::Program body,ref u8[] parameters,usize function,ref runtime::Entered first,
-    ref i64[] values,ref mut frames::Frames bindings,ref mut runtime::State state,ref mut u8[] data,ref statics::Sites sites,ref u8[] literals){
+    ref i64[] values,ref mut frames::Frames bindings,ref mut runtime::State state,ref mut u8[] data,ref statics::Sites sites,ref u8[] literals,
+    ref mut vec::Vec<i64> list_cells,ref mut bytes::Buffer list_scratch){
     var usize[32] static_live=[0;32];var u32[512] static_words=[0;512];
     var i64[4096] registers=[0;4096];var usize remaining=first.call.remaining;
     let usize entered=frames::push(body,bindings,first.call,function,128,32,0)?;
@@ -200,6 +211,10 @@ fn Result<Outcome,errors::Error> run(ref body_ir::Program body,ref u8[] paramete
         let usize dst=body.code[at+1] as usize;let usize a=body.code[at+2] as usize;let usize b=body.code[at+3] as usize;
         let usize base=frame*128;
         if(remaining==0){return .err(errors::make(8,offset));}remaining-=1;
+        if(op==80){
+            remaining=owned::list(body,pc,bindings,state,ref registers[base..base+128],data,list_cells,list_scratch,remaining)?;
+            pc+=1;continue;
+        }
         var bool byte_loan=false;
         if(op==57 || op==58){byte_loan=body_ir::slice_element(body,a,offset)?==10;}
         if(op==71 || op==72 || byte_loan){

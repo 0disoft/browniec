@@ -1,4 +1,5 @@
 module program_image;
+import array_list_vm as list_values;
 import static_image as images;
 import slice_result_ir as ir;
 import slice_result_verifier as verifier;
@@ -156,7 +157,8 @@ pub fn Result<i64,errors::Error> run_public_references(ref ReferenceReturnProgra
     let ref images::Image image=ref retained.image;
     let usize capacity=if(body.arrays.count!=0 || body.records.count!=0){65536}else{0};
     let usize preparation=if(capacity==0){0}else{1+capacity};
-    if(fuel<preparation+runtime::cost()){return .err(errors::make(8,0));}
+    let list_values::Requirement list_plan=list_values::requirement(body)?;
+    if(fuel<preparation+runtime::cost()+list_plan.cost){return .err(errors::make(8,0));}
     var bytes::Buffer payload=if(capacity==0){bytes::empty()}else{backing::prepare(capacity)?};
     var runtime::State state=runtime::empty(capacity);
     let runtime::Capture[1] captures=[runtime::capture(slices::Ticket{.slot=16,.generation=0},false,false)];

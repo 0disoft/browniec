@@ -68,7 +68,7 @@ fn Result<usize,errors::Error> definitions(ref Program unit,ref images::Image im
     while(f<p.function_count){var bool prelude=true;var usize last=0;var bool parameter=false;var usize pc=p.starts[f];
         while(pc<p.ends[f]){let usize at=pc*8;let u8 op=p.code[at];let usize dst=p.code[at+1] as usize;
             let usize a=p.code[at+2] as usize;let usize b=p.code[at+3] as usize;
-            if(op>=77 && op<=79 && !reserved(p,at)){return .err(invalid(pc));}
+            if(op>=77 && op<=80 && !reserved(p,at)){return .err(invalid(pc));}
             if(op==77){
                 if(!prelude || a<p.register_starts[f] || a>=p.register_starts[f]+p.arities[f] ||
                     (parameter && a<=last) || unit.parameters[a]!=p.code[at+3] || (b!=1 && b!=2 && b!=3) || proof.formal_sites[a]!=0){return .err(invalid(pc));}
@@ -137,7 +137,7 @@ fn Result<usize,errors::Error> flow(ref Program unit,ref mut Proof proof,usize f
     while(pc<p.ends[f]){
         if(!seen[pc]){return .err(invalid(pc));}var usize bits=states[pc];let usize at=pc*8;let u8 op=p.code[at];
         let usize dst=p.code[at+1] as usize;let usize a=p.code[at+2] as usize;let usize b=p.code[at+3] as usize;
-        if(op==0 || op>79){return .err(invalid(pc));}
+        if(op==0 || op>80){return .err(invalid(pc));}
         if(op==9 || op==64 || op==66 || op==78){let usize checked=arguments(unit,proof,f,pc,bits,calls)?;if(op==78){proof.calls+=1;}}
         let bool definition=op==69 || op==74 || op==75 || op==76 || op==77 || (op==78 && unit.results[a]!=0);
         if(definition){

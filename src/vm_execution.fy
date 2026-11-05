@@ -8,6 +8,7 @@ import arithmetic as arithmetic;
 import bits as bits;
 import shifts as shifts;
 import array_vm as array_vm;
+import array_list_vm as lists;
 import array_range_vm as array_ranges;
 import slice_vm as slices;
 import struct_vm as struct_vm;
@@ -16,6 +17,7 @@ import slice_call_vm as borrowed;
 import array_result_vm as array_results;
 import struct_result_vm as record_results;
 import std::bytes as bytes;
+import std::vec as vec;
 
 import slice_frame_vm as slice_dispatch;
 import slice_exclusive_vm as exclusive_dispatch;
@@ -81,7 +83,11 @@ fn Result<i64, errors::Error> core(ref ir::Program p, usize fuel,
     ref mut array_vm::State arrays, ref mut bytes::Buffer payload, ref mut slices::State loans, ref mut borrowed::Frames borrowed_frames, ref mut mutable::Frame[] receipts, ref mut canonical::State[] authority,ref mut canonical_calls::Bindings[] call_sites,ref mut child_sites::Bindings[] child_bindings, ref reborrows::Sites sites) {
     if(authority.len>1 || call_sites.len!=authority.len || child_bindings.len!=authority.len){return .err(errors::make(5,0));}
     if(authority.len==0 && reborrows::present(p)) { return .err(errors::make(5,0)); }
-    var usize remaining = fuel;
+    let lists::Requirement list_plan=lists::requirement(p)?;
+    if(fuel<list_plan.cost){return .err(errors::make(8,0));}
+    var vec::Vec<i64> list_cells=lists::prepare_values(ref list_plan)?;
+    var bytes::Buffer list_scratch=lists::prepare_encoded(ref list_plan)?;
+    var usize remaining = fuel-list_plan.cost;
     var struct_vm::State records = struct_vm::empty();
     var i64[4096] registers = [0; 4096];
     var usize[32] return_pcs = [0; 32];
@@ -96,6 +102,10 @@ fn Result<i64, errors::Error> core(ref ir::Program p, usize fuel,
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
+        if(op==80){let usize base=frame*128;
+            remaining=lists::step(p,pc,frame,arrays,bytes::view_mut(payload),ref registers[base..base+128],ref mut list_cells,ref mut list_scratch,remaining)?;
+            pc+=1;continue;
+        }
         if(op==61 || op==62){
             if(authority.len!=1 || call_sites.len!=1 || child_bindings.len!=1){return .err(errors::make(5,p.offsets[pc]));}
             let usize base=frame*128;

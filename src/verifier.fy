@@ -7,6 +7,7 @@ import array_meta as arrays;
 import struct_meta as records;
 import struct_verifier as struct_verifier;
 import array_verifier as array_verifier;
+import array_list_ir as lists;
 import slice_parameters as slice_parameters;
 import slice_reborrow_ir as reborrows;
 import slice_reborrow_call_ir as reborrow_calls;
@@ -106,7 +107,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
             pc += 1; continue;
         }
         if ((op == 8 || op == 39 || op == 50) && static_live != 0) { return .err(errors::make(5, pc)); }
-        if (op < 1 || op > 62 || (op != 52 && ((op!=24 && op!=47 && op!=49 && op!=53 && op!=59 && op!=61 && p.code[at + 4] != 0) ||
+        if (op < 1 || (op > 62 && op!=80) || (op != 52 && ((op!=24 && op!=47 && op!=49 && op!=53 && op!=59 && op!=61 && p.code[at + 4] != 0) ||
             (op!=47 && p.code[at + 5] != 0) || p.code[at + 6] != 0 || p.code[at + 7] != 0))) { return .err(errors::make(5, pc)); }
         // Strict analysis retains its gate; executable proof may admit this CALL.
         if(op==9 && (live>>48)!=0) {
@@ -152,7 +153,9 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
                 (states[a * 2 + 1] & defined.high) != states[a * 2 + 1]) { return .err(errors::make(5, pc)); }
             pc+=1; continue;
         }
-        if (op >= 54) {
+        if(op==80){
+            live=array_verifier::step(p,pc,f,ref mut defined,ref mut written,live)?;
+        }else if (op >= 54) {
             live = reborrows::step(p, loans, pc, f, ref mut defined, ref mut written, live)?;
         } else if(op==9 && a<p.function_count && (p.array_results[a]!=0 || p.record_results[a]!=0)) {
             if(b>=p.call_count || used_calls[b] || a==p.entry || p.call_arities[b] as usize!=p.arities[a]) {return .err(errors::make(5,pc));}
@@ -229,6 +232,7 @@ fn Result<reborrows::Sites, errors::Error> validate(ref ir::Program p,bool allow
     if (p.count == 0 || p.count > 256 || p.registers == 0 || p.registers > 128 || p.constant_count > 128 ||
         p.function_count == 0 || p.function_count > 16 || p.entry >= p.function_count || p.call_count > 32) { return .err(errors::make(5, 0)); }
     if (!arrays::valid(ref p.arrays)) { return .err(errors::make(5, 0)); }
+    let usize list_metadata=lists::metadata(p)?;
     let records::Prepared shapes = records::prepare(ref p.records)?;
     var usize id = 0;
     while (id < 16) {

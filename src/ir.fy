@@ -36,6 +36,8 @@ import std::num as num;
 // 61 private reborrow begin: dst=child,a=parent,b=start,byte4=end usize register.
 // 62 private reborrow end: dst=child,a=parent,b=0; restore parent authority.
 // 53 register UTF-8 range: bool dst,a=array,b=start usize register,byte4=end register;5..7=0.
+// 80 atomic array element list: dst=array,a/b=little-endian operand-pool start.
+// Arity is the exact destination length; bytes4..7 are reserved zero.
 pub struct Program {
     u8[2048] code;
     i64[128] constants;
@@ -81,6 +83,9 @@ pub struct Program {
     u8[16] slice_functions;
     // Rootless sites carry an exact scalar tag; owned sites use 0/shared or 128/exclusive.
     u8[16] slice_elements;
+    // Dense source-ordered scalar register operands; never executable authority.
+    u8[4096] list_operands;
+    usize list_used;
 }
 
 pub fn Program empty() {
@@ -91,7 +96,8 @@ pub fn Program empty() {
         .call_arities = [0; 32], .function_count = 0, .entry = 0, .call_count = 0,
         .types = [0; 128], .return_types = [0; 16], .slots = [false; 128], .arrays = arrays::empty(), .records = records::empty(),
         .array_functions = [0; 16], .record_functions = [0; 16], .array_parameters = [0; 128], .record_parameters = [0; 128], .array_results = [0; 16], .record_results = [0; 16], .slice_roots = [0; 16],
-        .slice_parameters = [0; 128], .slice_origins = [0; 16], .slice_functions = [0; 16], .slice_elements = [0; 16] };
+        .slice_parameters = [0; 128], .slice_origins = [0; 16], .slice_functions = [0; 16], .slice_elements = [0; 16],
+        .list_operands = [0;4096], .list_used = 0 };
 }
 
 fn Result<u8, errors::Error> byte(usize value, usize offset) {
@@ -222,6 +228,18 @@ pub fn Result<usize, errors::Error> array_in(ref mut Program p, usize function, 
 }
 pub fn Result<usize, errors::Error> array_init(ref mut Program p, usize id, usize fill, usize offset) {
     return raw(p, 33, id, fill, 0, offset);
+}
+pub fn Result<usize,errors::Error> array_values(ref mut Program p,usize id,ref usize[] values,usize offset){
+    if(id>=16 || id>=p.arrays.count || values.len!=p.arrays.lengths[id] || values.len==0 ||
+        values.len>4096 || !types::scalar(p.arrays.elements[id])){return .err(errors::make(3,offset));}
+    if(p.count>=256 || p.list_used>4096 || values.len>4096-p.list_used){return .err(errors::make(4,offset));}
+    var usize i=0;while(i<values.len){let usize r=values[i];
+        if(r>=128 || r>=p.registers || p.types[r]!=p.arrays.elements[id] || p.slots[r] ||
+            p.array_parameters[r]!=0 || p.record_parameters[r]!=0 || p.slice_parameters[r]!=0){return .err(errors::make(3,offset));}i+=1;
+    }
+    let usize start=p.list_used;let usize pc=raw(p,80,id,start%256,start/256,offset)?;
+    i=0;while(i<values.len){p.list_operands[start+i]=byte(values[i],offset)?;i+=1;}
+    p.list_used=start+values.len;return .ok(pc);
 }
 pub fn Result<usize, errors::Error> array_parameter(ref mut Program p, usize function, u8 element, usize length, usize offset) {
     if (p.registers >= 128) { return .err(errors::make(4, offset)); }

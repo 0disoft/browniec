@@ -2,6 +2,9 @@ module slice_result_owned_execution;
 import slice_result_runtime as runtime;
 import slice_result_frames as frames;
 import array_vm as arrays;
+import array_list_vm as list_values;
+import std::vec as vec;
+import std::bytes as bytes;
 import struct_call_vm as calls;
 import struct_result_vm as record_results;
 import struct_vm as records;
@@ -17,6 +20,13 @@ import slice_result_call_ir as recipes;
 
 // These arrays::State values are unpublished metadata plans. Runtime owns the
 // sole owner table; actual backing bytes are always the original mutable view.
+pub fn Result<usize,errors::Error> list(ref ir::Program p,usize pc,ref mut frames::Frames bindings,
+    ref mut runtime::State state,ref i64[] registers,ref mut u8[] data,
+    ref mut vec::Vec<i64> cells,ref mut bytes::Buffer scratch,usize fuel){
+    var arrays::State plan=arrays::State{.owners=state.runtime.owners,.tokens=bindings.tokens};
+    let usize remaining=list_values::step(p,pc,bindings.frame,ref mut plan,data,registers,cells,scratch,fuel)?;
+    state.runtime.owners=plan.owners;bindings.tokens=plan.tokens;return .ok(remaining);
+}
 pub fn Result<usize,errors::Error> step(ref ir::Program p,usize pc,ref mut frames::Frames bindings,
     ref mut runtime::State state,ref mut i64[] registers,ref mut u8[] data,usize fuel){
     let ref owners::Table original_owners=ref state.runtime.owners;

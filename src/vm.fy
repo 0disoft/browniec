@@ -3,6 +3,7 @@ import ir as ir;
 import errors as errors;
 import verifier as verifier;
 import array_vm as array_vm;
+import array_list_vm as list_values;
 import slice_vm as slices;
 import slice_call_vm as borrowed;
 import slice_lifecycle_vm as lifecycle;
@@ -68,7 +69,8 @@ pub fn Result<i64, errors::Error> run_with_array_limit(ref ir::Program p, usize 
     if (aggregates) {
         if (array_limit > 65536) { return .err(errors::make(13, 0)); }
         let usize preparation = 1 + array_limit;
-        if (remaining < preparation) { return .err(errors::make(8, 0)); }
+        let list_values::Requirement list_plan=list_values::requirement(p)?;
+        if (remaining < preparation+list_plan.cost) { return .err(errors::make(8, 0)); }
         remaining -= preparation;
         payload = array_vm::prepare(array_limit)?;
     }
