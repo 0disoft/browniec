@@ -1,4 +1,4 @@
-"""Build the native CLI and check scalar local inference without runtime tools."""
+"""Build the native CLI and check local inference without runtime tools."""
 import argparse
 from datetime import datetime, timezone
 import hashlib
@@ -18,8 +18,9 @@ def sha(path):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--profile', choices=['development', 'release'], required=True)
+    parser.add_argument('--aggregate', action='store_true', help='add owned aggregate inference cases')
     args = parser.parse_args()
-    out = ROOT / 'build/local-inference-cli' / args.profile
+    out = ROOT / ('build/aggregate-inference-cli' if args.aggregate else 'build/local-inference-cli') / args.profile
     out.mkdir(parents=True, exist_ok=True)
     receipt = out / 'receipt.json'
     receipt.write_text('{"status":"incomplete"}\n', encoding='utf-8')
@@ -65,6 +66,26 @@ def main():
         ('retained-run', literal, 'run', 42, None, 16000000, reference),
         ('retained-check', literal, 'check', None, None, None, reference),
     ]
+    if args.aggregate:
+        array_read = 'brownie.m2-array-read/1'
+        array_copy = 'brownie.m2-array-copy/1'
+        record_read = 'brownie.m2-struct-read/1'
+        record_copy = 'brownie.m2-struct-copy/1'
+        nested = 'brownie.m2-struct-nested/1'
+        cases += [
+            ('array', b'module main;fn i32 main(){let a=[21;2];return a[0]+a[1];}', 'run', 42, None, 16000000, array_read),
+            ('array-copy', b'module main;fn i32 main(){var a=[21;2];let b=a;a[0]=0;return b[0]+b[1];}', 'run', 42, None, 16000000, array_copy),
+            ('array-call', b'module main;fn i32[2] make(){return [21;2];}fn i32 main(){let a=make();return a[0]+a[1];}', 'run', 42, None, 16000000, array_read),
+            ('record', b'module main;struct P{i32 x;}fn i32 main(){let p=P{.x=42};return p.x;}', 'run', 42, None, 16000000, record_read),
+            ('record-copy', b'module main;struct P{i32 x;}fn i32 main(){let p=P{.x=42};var q=p;q.x=0;return p.x+q.x;}', 'run', 42, None, 16000000, record_copy),
+            ('call-child', b'module main;struct P{i32 x;}struct Box{P inner;}fn Box make(){return Box{.inner=P{.x=42}};}fn i32 main(){let p=make().inner;return p.x;}', 'run', 42, None, 16000000, nested),
+            ('array-projection', b'module main;fn i32[1] make(){return [42;1];}fn i32 main(){let n=make()[0];return n;}', 'run', 42, None, 16000000, array_read),
+            ('record-projection', b'module main;struct P{i32 x;}fn P make(){return P{.x=42};}fn i32 main(){let n=make().x;return n;}', 'run', 42, None, 16000000, record_read),
+            ('early-array', b'module main;fn i32[1] take(i32[1] a){return a;}fn i32 main(){let Option<i32> o=.none;let a=take([switch(o){case .some(v):{v}case .none:{return 42;}};1]);return a[0];}', 'run', 42, None, 16000000, array_read),
+            ('array-shape-error', b'module main;fn i32 main(){var a=[1;2];a=[1;3];return 0;}', 'check', None, 'type', None, scalar),
+            ('array-zero', b'module main;fn i32 main(){let a=[1;0];return 0;}', 'check', None, 'type', None, scalar),
+            ('retained-array', b'module main;fn i32 main(){let ref u8[] marker=b"*";let a=[21;2];return a[0]+a[1];}', 'run', 42, None, 16000000, reference),
+        ]
     results = []
     for identity, source, mode, expected, error, fuel, profile in cases:
         fixture = out / (identity + '.brc')
@@ -88,6 +109,7 @@ def main():
     assert all(sha(ROOT / i['path']) == i['sha256'] for i in inputs)
     assert sha(compiler) == compiler_hash and sha(exe) == binary_hash
     data = dict(schema='browniec.local-inference-cli/v1', status='passed', profile=args.profile,
+                selection='aggregate' if args.aggregate else 'scalar',
                 startingHead=head, inputSnapshotCapturedAt=captured, inputs=inputs, compilerSha256=compiler_hash,
                 compilerVersion=subprocess.check_output([str(compiler), '--version'], text=True).strip(),
                 buildCommand=[compiler.relative_to(ROOT).as_posix(), *command[1:]],

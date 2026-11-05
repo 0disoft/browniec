@@ -5,6 +5,8 @@ import lexer as lexer;
 import ir as ir;
 import locals as locals;
 import local_inference as inference;
+import aggregate_inference as aggregate_inference;
+import array_local_source as array_locals;
 import functions as functions;
 import struct_source as structs;
 import struct_value_source as record_values;
@@ -1013,6 +1015,12 @@ fn Result<usize, errors::Error> record_declaration(ref u8[] source, ref mut lexe
     usize expr_depth, usize structure, ref mut loops::State loop_state) {
     let usize record = record_values::named(source, s,ref signatures.context)?;
     let record_values::Header header = record_values::header(source,s,p,table,record,mutable,terminator,result_type)?;
+    return record_initializer(source,s,p,table,signatures,header,terminator,result_type,expr_depth,structure,loop_state);
+}
+fn Result<usize,errors::Error> record_initializer(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref mut locals::Table table,ref functions::Table signatures,
+    record_values::Header header,u8 terminator,u8 result_type,usize expr_depth,usize structure,ref mut loops::State loop_state){
+    let usize record=header.record;let bool mutable=header.mutable;
     if((s.kind==2 || s.kind==5)) {
         var lexer::State look=lexer::snapshot(s);
         let usize next=lexer::next(source,ref mut look)?;
@@ -1131,9 +1139,60 @@ fn Result<usize,errors::Error> inferred_declaration(ref u8[] source,ref mut lexe
     ref mut ir::Program p,ref mut locals::Table table,ref functions::Table signatures,
     bool mutable,u8 terminator,u8 result_type,usize expr_depth,usize structure,ref mut loops::State loop_state){
     let inference::Header name=inference::header(source,s,table)?;
+    if(s.kind==91){
+        return inferred_repeated_array(source,s,p,table,signatures,name,mutable,terminator,result_type,expr_depth,structure,loop_state);
+    }
+    let aggregate_inference::Shape shape=aggregate_inference::inspect(source,s,p,table,signatures)?;
+    if(shape.record!=0){
+        let usize record=shape.record-1;
+        let usize checked=record_values::declaration_limit(p,table,record,terminator,result_type,name.begin)?;
+        if(p.records.count>=16){return .err(errors::make(4,name.begin));}
+        let record_values::Header header=record_values::Header{.record=record,.begin=name.begin,.end=name.end,.mutable=mutable};
+        return record_initializer(source,s,p,table,signatures,header,terminator,result_type,expr_depth,structure,loop_state);
+    }
+    if(shape.length!=0){
+        return array_initializer(source,s,p,table,signatures,name,shape.element,shape.length,mutable,terminator,result_type,expr_depth,structure,loop_state);
+    }
     let usize value=expression(source,s,p,table,signatures,1,expr_depth,0,result_type,structure,loop_state)?;
     let usize end=lexer::punctuation(source,s,terminator)?;
     return inference::bind(p,table,name,value,mutable,result_type==0);
+}
+fn Result<usize,errors::Error> inferred_repeated_array(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref mut locals::Table table,ref functions::Table signatures,
+    inference::Header name,bool mutable,u8 terminator,u8 result_type,usize expr_depth,usize structure,ref mut loops::State loop_state){
+    if(result_type==0 || terminator!=59){return .err(errors::make(3,name.begin));}
+    let usize open=lexer::next(source,s)?;
+    let usize value=expression(source,s,p,table,signatures,1,expr_depth,0,result_type,structure,loop_state)?;
+    if(value>=p.registers || value>=128){return .err(errors::make(3,name.begin));}
+    let u8 element=p.types[value];
+    return array_locals::repeated(source,s,p,table,name,value,element,0,mutable,terminator);
+}
+fn Result<usize,errors::Error> array_initializer(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref mut locals::Table table,ref functions::Table signatures,
+    inference::Header binding,u8 tag,usize length,bool mutable,u8 terminator,u8 result_type,
+    usize expr_depth,usize structure,ref mut loops::State loop_state){
+    if(result_type==0 || terminator!=59 || !types::scalar(tag)){return .err(errors::make(3,binding.begin));}
+    if(s.kind==2 || s.kind==5){
+        let usize source_index=locals::find(source,table,s.begin,s.end);
+        var lexer::State look=lexer::snapshot(s);let usize advance=lexer::next(source,ref mut look)?;
+        if(look.kind==40){
+            if(source_index!=64){return .err(errors::make(3,s.begin));}
+            let usize at=s.begin;let usize target=functions::find(source,signatures,s.begin,s.end);
+            let usize id=array_results::destination(signatures,target,tag,length,mutable,p,table.function,at)?;
+            let usize name=lexer::next(source,s)?;
+            let usize value=call_value(source,s,p,table,signatures,target,id,at,expr_depth,result_type,structure,loop_state)?;
+            let usize finished=lexer::punctuation(source,s,terminator)?;
+            return locals::declare(table,binding.begin,binding.end,value,mutable);
+        }
+        if(!arrays::binding(table,source_index)){return .err(errors::make(3,s.begin));}
+        let usize source_id=table.registers[source_index]-128;
+        let usize next=lexer::next(source,s)?;let usize finished=lexer::punctuation(source,s,terminator)?;
+        let usize id=arrays::copy(p,table.function,source_id,tag,length,mutable,binding.begin)?;
+        return locals::declare(table,binding.begin,binding.end,128+id,mutable);
+    }
+    let usize open=lexer::punctuation(source,s,91)?;
+    let usize value=expression(source,s,p,table,signatures,1,expr_depth,tag,result_type,structure,loop_state)?;
+    return array_locals::repeated(source,s,p,table,binding,value,tag,length,mutable,terminator);
 }
 fn Result<usize, errors::Error> declaration(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 terminator, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {
     if (word_is(source, s, b"let") || word_is(source, s, b"var")) {
@@ -1164,41 +1223,13 @@ fn Result<usize, errors::Error> declaration(ref u8[] source, ref mut lexer::Stat
         if (table.count >= 64) { return .err(errors::make(4, begin)); }
         let usize name = lexer::next(source, s)?;
         let usize equals = lexer::punctuation(source, s, 61)?;
-        if (length != 0 && (s.kind==2 || s.kind==5)) {
-            let usize source_index = locals::find(source, table, s.begin, s.end);
-            var lexer::State look=lexer::snapshot(s);
-            let usize advance=lexer::next(source,ref mut look)?;
-            if(look.kind==40) {
-                if(source_index!=64) {return .err(errors::make(3,s.begin));}
-                let usize at=s.begin;
-                let usize target=functions::find(source,signatures,s.begin,s.end);
-                let usize id=array_results::destination(signatures,target,tag,length,mutable,p,table.function,at)?;
-                let usize name=lexer::next(source,s)?;
-                let usize value=call_value(source,s,p,table,signatures,target,id,at,expr_depth,result_type,structure,loop_state)?;
-                let usize finished=lexer::punctuation(source,s,terminator)?;
-                return locals::declare(table,begin,end,value,mutable);
-            }
-            if (!arrays::binding(table, source_index)) { return .err(errors::make(3, s.begin)); }
-            let usize source_id = table.registers[source_index] - 128;
-            let usize next = lexer::next(source, s)?;
-            let usize finished = lexer::punctuation(source, s, terminator)?;
-            let usize id = arrays::copy(p, table.function, source_id, tag, length, mutable, begin)?;
-            return locals::declare(table, begin, end, 128 + id, mutable);
+        if(length!=0){
+            let inference::Header binding=inference::Header{.begin=begin,.end=end};
+            return array_initializer(source,s,p,table,signatures,binding,tag,length,mutable,terminator,result_type,expr_depth,structure,loop_state);
         }
-        if (length != 0) { let usize open = lexer::punctuation(source, s, 91)?; }
         // The new name is not visible until its initializer has been checked.
         let usize value = expression(source,s,p,table,signatures,1,expr_depth,tag,result_type,structure,loop_state)?;
         if (p.types[value] != tag) { return .err(errors::make(3, begin)); }
-        if (length != 0) {
-            let usize separator = lexer::punctuation(source, s, 59)?;
-            let usize repeated = arrays::count(source, s)?;
-            if (repeated != length) { return .err(errors::make(3, begin)); }
-            let usize close = lexer::punctuation(source, s, 93)?;
-            let usize finished = lexer::punctuation(source, s, terminator)?;
-            let usize id = ir::array_in(p, table.function, tag, length, mutable, begin)?;
-            let usize init = ir::array_init(p, id, value, begin)?;
-            return locals::declare(table, begin, end, 128 + id, mutable);
-        }
         let usize end_statement = lexer::punctuation(source, s, terminator)?;
         var usize binding = value;
         if (mutable) {

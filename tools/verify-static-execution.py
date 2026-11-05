@@ -25,7 +25,7 @@ def write(path, value):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--profile', choices=['development', 'release'], required=True)
-    parser.add_argument('--selection', choices=['all', 'statics', 'views', 'ranges', 'range-core', 'call-ir', 'call-proof', 'call-transfer-core', 'call-transfer', 'call-mixed', 'reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts', 'reference-return-execution', 'reference-source', 'reference-return-source', 'public-program', 'source-snapshot', 'module-index', 'module-entry', 'source-context', 'module-program', 'module-program-core', 'module-retention', 'project-program-core', 'project-program', 'project-names', 'project-manifest', 'project-sources', 'captured-call-stack', 'local-inference'], default='all',
+    parser.add_argument('--selection', choices=['all', 'statics', 'views', 'ranges', 'range-core', 'call-ir', 'call-proof', 'call-transfer-core', 'call-transfer', 'call-mixed', 'reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts', 'reference-return-execution', 'reference-source', 'reference-return-source', 'public-program', 'source-snapshot', 'module-index', 'module-entry', 'source-context', 'module-program', 'module-program-core', 'module-retention', 'project-program-core', 'project-program', 'project-names', 'project-manifest', 'project-sources', 'captured-call-stack', 'local-inference', 'aggregate-inference'], default='all',
                         help='statics runs the changed image/proof/VM suites; all adds return and source regressions')
     args = parser.parse_args()
     profile = args.profile
@@ -81,6 +81,8 @@ def main():
                                          'tests/m2/struct_constructor_arguments.fy', 'tests/m2/module_program.fy']
     selections['local-inference'] = ['tests/m2/local_inference.fy', 'tests/functions.fy',
                                      'tests/loops.fy', 'tests/m2/module_program.fy']
+    selections['aggregate-inference'] = ['tests/m2/aggregate_inference.fy', 'tests/m2/local_inference.fy',
+                                         'tests/m2/module_program.fy', 'tests/m2/array_scopes.fy']
     files = selections[args.selection]
     out = ROOT / 'build/static-execution' / profile / args.selection
     out.mkdir(parents=True, exist_ok=True)

@@ -32,14 +32,19 @@ pub fn Result<usize, errors::Error> field(ref u8[] source, ref ir::Program p, us
     return .err(errors::make(3, begin));
 }
 pub struct Header { usize record; usize begin; usize end; bool mutable; }
-pub fn Result<Header, errors::Error> header(ref u8[] source, ref mut lexer::State s,
-    ref ir::Program p, ref locals::Table names, usize record, bool mutable, u8 terminator, u8 result_type) {
-    let usize at = s.begin;
+pub fn Result<usize,errors::Error> declaration_limit(ref ir::Program p,ref locals::Table names,
+    usize record,u8 terminator,u8 result_type,usize at){
     if (names.function >= p.function_count || result_type == 0 || terminator != 59 || record >= p.records.layouts.count) { return .err(errors::make(3, at)); }
     let layouts::Plan plan = switch (layouts::plan(ref p.records.layouts, 18446744073709551615)) {
         case .ok(value): { value } case .err(_): { return .err(errors::make(3, at)); }
     };
     if (plan.bytes[record] > 128) { return .err(errors::make(4, at)); }
+    return .ok(record);
+}
+pub fn Result<Header, errors::Error> header(ref u8[] source, ref mut lexer::State s,
+    ref ir::Program p, ref locals::Table names, usize record, bool mutable, u8 terminator, u8 result_type) {
+    let usize at = s.begin;
+    let usize checked=declaration_limit(p,names,record,terminator,result_type,at)?;
     let usize type_name = lexer::next(source, s)?;
     if (s.kind != 2 || locals::reserved(source[s.begin..s.end])) { return .err(errors::make(2, s.begin)); }
     let usize begin = s.begin; let usize end = s.end;
@@ -80,6 +85,13 @@ fn Result<Leaf, errors::Error> path(ref u8[] source, ref mut lexer::State s,
         record = p.records.layouts.types[slot] as usize;
     }
     return .ok(Leaf { .ordinal = ordinal, .tag = 0, .record = record });
+}
+// Type discovery uses a separate lexer snapshot and emits no IR. The selected
+// initializer rechecks the same exact nominal path before any value is bound.
+pub fn Result<usize,errors::Error> inferred_endpoint(ref u8[] source,ref mut lexer::State look,
+    ref ir::Program p,usize root,usize at,ref context::Table scope){
+    let Leaf leaf=path(source,look,p,root,at,scope)?;
+    return .ok(if(leaf.tag==0){leaf.record+1}else{0});
 }
 pub fn Result<usize, errors::Error> read(ref u8[] source, ref mut lexer::State s,
     ref mut ir::Program p, usize id, usize at,ref context::Table scope) {
