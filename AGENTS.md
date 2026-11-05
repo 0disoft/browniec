@@ -1,3 +1,19 @@
+- L01 native module_index now owns the immutable source snapshot and sealed
+  canonical module/import/declaration metadata. Forward aliases bind after all
+  sources; same-module private lookup and cross-module pub checks are explicit.
+  Pure import cycles are finite direct bindings, not permission for type cycles.
+  Named entry binding requires a pub function but does not prove its signature.
+  No body/type/IR or public project/CLI admission. Code 99a1bff; see
+  docs/engineering/module-index.md and focused Windows evidence.
+  Development/release each passed 12 native groups (6 binding + 6 snapshots),
+  146 matching committed inputs, 140 LF modules and 245-file discovery; both
+  locked LF mirrors pass. No overrides/historical reuse. Preliminary interrupted
+  runs and corrected test offsets/identifier generation excluded. CLI/full VM/
+  profile/general RAM-stack/allocator-OOM/timing/Linux/restricted/ABI/package
+  were not rerun. Next use explicit per-module context for function/type lookup,
+  selected entry signature proof and retained multi-module compilation. Preserve
+  local/field names and original spans; do not rewrite all matching identifiers.
+  L01, C03 and the complete objective remain open. Local only; no push.
 - L01/C03 native source snapshots now own exact source/name byte copies and
   checked original-byte spans. Copyable Builder scratch is independently proved
   before private Snapshot retention; failed appends leave both pools unchanged.

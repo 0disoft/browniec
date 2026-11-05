@@ -89,9 +89,12 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    Continue language completion while preserving those explicit boundaries.
 2. **Language completion: L01-L06, C03/C05.** The [source snapshot prerequisite](module-sources.md)
    now retains native explicit source identities, immutable original bytes and
-   checked source-local spans. Next bind module/import/visibility tables and
-   connect multi-module compilation; snapshot ownership alone does not finish L01.
-   Finish visibility, inference/void/if values, complete array/record construction,
+   checked source-local spans. The [module index](module-index.md) now binds
+   canonical module names, explicit aliases and public/private declarations while
+   owning that exact snapshot. Next connect qualified value/type references,
+   selected entry signatures and actual multi-module compilation; header binding
+   alone does not finish L01. Finish inference/void/if values, complete array/record
+   construction,
    selected-place compound assignment, wider/resource-bearing tags and must-use
    handling. Reconcile operand/source/type/compile limits deliberately rather than
    silently treating the old experimental bounds as full-profile conformance.

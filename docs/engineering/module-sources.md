@@ -72,7 +72,7 @@ discovery identity. Both locked LF mirror checks passed. No compiler/stack overr
 or historical-result reuse were used. CLI/full-profile/native VM, Linux, allocator/
 RAM/stack/timing, restricted and ABI/package checks were not rerun.
 
-Next parse and bind module headers, explicit import aliases, declarations and
-`pub` visibility against these exact retained source identities. Then connect
-name resolution and source mappings to full compilation and public project entry
-selection. A successful snapshot does not prove a linked or executable module.
+The [module-index successor](module-index.md) now binds canonical module headers,
+explicit aliases, declarations and public/private lookup while owning this exact
+snapshot. Next connect qualified value/type lowering, source mappings and full
+entry signature proof to compilation and public project entry selection. A successful snapshot does not prove a linked or executable module.
