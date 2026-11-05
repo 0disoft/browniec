@@ -49,6 +49,25 @@ that coordinator to public literal/shared-byte source admission with its distinc
 result profile. Whole-invocation costs differ from the legacy path; no retry or
 fallback chooses another schedule. Array/record pricing is unchanged.
 
+## Element-list declarations
+
+The 2026-11-06 [source successor](array-list-source.md) makes the previously
+native list operation reachable through inferred/annotated local declarations.
+Programs without lists still pay zero list setup; all pre-existing prices remain.
+
+| List work | Exact charge |
+| --- | ---: |
+| Invocation scratch, with maximum M cells and S encoded bytes | `257 + 2*M + S` |
+| One N-cell list with B encoded bytes | `56 + N + 3*B` |
+
+The ordinary list instruction price includes dispatch; the retained coordinator
+keeps its separate one-unit dispatch, as for existing aggregate instructions.
+The public default and ceiling remain 256 and 16000000. A standalone CLI oracle
+for `let a=[20,22];return a[0]+a[1];` requires 66017 Fuel with public backing:
+66016 fails, and 66017/66018 succeed. See the source successor's focused native
+and CLI evidence; it does not replace the historical full public-Fuel selection
+below or close Instance/step/accounting work.
+
 ## Verification
 
 `python -B tools/verify-public-fuel.py --profile development` runs focused native

@@ -114,8 +114,11 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    atomic backing and owner publication, with unchanged 4096-element capacity.
    The [IR/VM successor](array-list-execution.md) now supplies complete operand/
    CFG/owner proof, atomic ordinary/retained execution and reusable prepaid
-   invocation scratch. Connect element-list source lowering and exit cleanup,
-   then continue with selected-place compound assignment, wider/resource-bearing
+   invocation scratch. The [source declaration successor](array-list-source.md)
+   now connects inferred/annotated lists, exact arity/types, left-to-right one-time
+   evaluation and nonlocal-exit cleanup. Finish direct list arguments, returned
+   literals, borrowed temporaries and replacement; then continue with
+   selected-place compound assignment, wider/resource-bearing
    tags and must-use
    handling. Reconcile operand/source/type/compile limits deliberately rather than
    silently treating the old experimental bounds as full-profile conformance.

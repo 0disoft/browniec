@@ -12,6 +12,10 @@ initializers and [reference/text views](docs/engineering/reference-inference.md)
 through the same typed initialization and ownership checks.
 [Option constructors](docs/engineering/option-constructor-inference.md) infer
 `.some` from existing i32/bool payloads; ambiguous domains still require context.
+[Scalar element-list declarations](docs/engineering/array-list-source.md) now
+support `let a=[20,22];` and annotated forms, with ordered one-time evaluation,
+complete initialization and existing ownership/cleanup. Direct list arguments,
+returned literals, borrowed temporaries and list replacement remain unfinished.
 [Native project metadata](docs/cli/project-format.md) now admits complete explicit
 source maps, entries and declared requirements; it opens no files and grants nothing.
 Public project loading and CLI module/entry flags, general mutable/non-byte/

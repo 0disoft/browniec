@@ -1,3 +1,14 @@
+- Scalar element-list declarations are implemented at `3340b24`: inferred and
+  annotated locals use exact scalar types/arity, left-to-right one-time evaluation,
+  complete initialization and original exit cleanup. The declaration-specific
+  version flag is backed by actual source/admission/run checks. Development/release
+  each passed 13 native groups and 34 tool-free CLI cases; both locked LF mirrors
+  pass. The 165-path input union matches checkout/Git raw bytes, with 156 LF modules
+  and 263-file discovery. See the array-list source contract/Windows evidence.
+  Existing prices/default256/cap16000000 and the combined 32/33 CALL boundary remain.
+  Direct list arguments/returned literals/borrowed temporaries/replacement, full
+  L03/C05, Instance accounting/resumability and the complete objective remain open.
+  No full matrices/Linux/OOM injection/general stack/timing/delivery rerun. Local only.
 - Native element-list IR/VM execution is implemented at `873e71a`: opcode 80,
   dense 4096-register operand pool, complete canonical type/CFG/owner proof and
   ordinary/retained dispatch. Invocation-local typed/encoded scratch is prepared

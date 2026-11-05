@@ -70,7 +70,12 @@ adds repeated arrays, nominal constructors, bare copies, aggregate CALLs and exa
 record child paths. The [reference/text successor](../engineering/reference-inference.md)
 adds existing views, loans, aliases and shared-byte results. The
 [Option constructor successor](../engineering/option-constructor-inference.md)
-derives `.some` from existing i32/bool payloads. Broader constructor context and
+derives `.some` from existing i32/bool payloads. The
+[element-list declaration successor](../engineering/array-list-source.md) adds
+`let a=[x,y];` and `let i32[2] a=[x,y];`, with exact scalar types/arity,
+left-to-right one-time evaluation and publication after complete initialization.
+Direct list arguments, returned literals and list replacement remain separate
+source integrations. Broader constructor context and
 general aggregate-expression inference remain pending; this is not a full-profile
 promotion.
 
