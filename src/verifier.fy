@@ -20,6 +20,7 @@ import static_ir as statics;
 import static_image as images;
 import static_call_ir as image_calls;
 import static_call_sites as image_sites;
+import reference_lifetimes as reference_lifetimes;
 
 fn bool readable(ref ir::Program p, ref registers::Set defined, usize r, usize start, usize end) {
     return r >= start && r < end && p.types[r]!=0 && !p.slots[r] && p.array_parameters[r] == 0 && p.record_parameters[r] == 0 && p.slice_parameters[r] == 0 && registers::contains(defined, r);
@@ -94,7 +95,8 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
         }
         if(op==79){let usize one=1;
             if(static_sites.results[f]==0 || live!=0 || a>=16 || static_live!=(one<<a) ||
-                static_sites.functions[a]!=f || static_sites.kinds[a]!=static_sites.results[f]){return .err(errors::make(5,pc));}
+                static_sites.functions[a]!=f || (static_sites.kinds[a]!=static_sites.results[f] &&
+                !(static_sites.results[f]==3 && static_sites.kinds[a]==1))){return .err(errors::make(5,pc));}
             pc+=1;continue;
         }
         if (statics::operation(op)) {
@@ -331,4 +333,18 @@ pub fn Result<ReferenceCallProof,errors::Error> inspect_reference_calls(ref imag
     let reborrows::Sites loans=validate(p,true,ref sites)?;
     let usize executable=executable_calls(p,ref loans)?;
     return .ok(ReferenceCallProof{.recipes=recipes,.statics=sites,.loans=loans});
+}
+
+// Complete analysis of generic byte results is still separate from retained
+// executable admission. Local owner dependencies survive all returned aliases.
+pub struct ReferenceReturnProof { image_calls::Proof recipes; statics::Sites statics; reborrows::Sites loans; usize[16] owner_roots; }
+pub fn Result<ReferenceReturnProof,errors::Error> inspect_reference_returns(ref image_calls::Program unit,ref images::Image image){
+    let image_calls::Proof recipes=image_calls::inspect_reference_returns(unit,image)?;
+    let statics::Sites sites=image_sites::prepare(unit,ref recipes,image)?;
+    let ref ir::Program p=ref unit.body;
+    let reborrows::Sites loans=validate(p,true,ref sites)?;
+    let usize executable=executable_calls(p,ref loans)?;
+    let usize[16] roots=reference_lifetimes::prepare(p,ref sites)?;
+    let usize checked=reference_lifetimes::inspect(p,ref sites,ref roots)?;
+    return .ok(ReferenceReturnProof{.recipes=recipes,.statics=sites,.loans=loans,.owner_roots=roots});
 }
