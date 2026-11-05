@@ -48,11 +48,15 @@ fn void wrong_nominal_scalar_pending_and_general_operands_reject() {
  rejected(b"module main;struct P{i32 x;}struct Q{i32 x;}struct R{Q child;}struct D{P p;}fn R make(){return R{.child=Q{.x=42}};}fn i32 main(){let D d=D{.p=make().child};return 42;}");
  rejected(b"module main;struct P{i32 x;}struct R{P child;}struct D{P p;}fn R make(){return R{.child=P{.x=42}};}fn i32 main(){let D d=D{.p=make().child.x};return 42;}");
  rejected(b"module main;struct P{i32 x;}struct R{P child;}struct D{P p;}fn R make(){return R{.child=P{.x=42}};}fn i32 main(){let D d=D{.p=make().missing};return 42;}");
- rejected(b"module main;struct P{i32 x;}struct R{P child;}struct D{P p;}fn R make(){return R{.child=P{.x=42}};}fn i32 main(){let D d=D{.p=(make().child)};return 42;}");
  rejected(b"module main;struct P{i32 x;}struct R{P child;}struct D{P p;}fn R make(){return R{.child=P{.x=42}};}fn i32 main(){let i32 make=0;let D d=D{.p=make().child};return 42;}");
  rejected(b"module main;struct P{i32 x;}struct D{P p;}fn i32 make(){return 42;}fn i32 main(){let D d=D{.p=make().child};return 42;}");
  rejected(b"module main;struct P{i32 x;}struct D{P p;}fn i32 main(){let D d=D{.p=missing().child};return 42;}");
  rejected(b"module main;struct P{i32 x;}struct R{P child;}struct D{P p;}fn R make(i32 n){return R{.child=P{.x=n}};}fn i32 main(){let D d=D{.p=make().child};return 42;}");
  rejected(b"module main;struct P{i32 x;}struct R{P child;}struct D{P p;}fn R make(i32 n){return R{.child=P{.x=n}};}fn i32 main(){let D d=D{.p=make(d.p.x).child};return 42;}");
  rejected(b"module main;struct P{i32 x;}struct R{P child;}struct D{P p;}fn R make(){return R{.child=P{.x=42}};}fn i32 main(){let D d=D{.p=P{.x=0}};d=D{.p=make().child};return 42;}");
+}
+
+// Grouping now preserves the same complete record value in these contexts.
+@test fn void grouped_record_forms_now_compile_in_existing_contexts(){
+    assert(compiler::compile(b"module main;struct P{i32 x;}struct R{P child;}struct D{P p;}fn R make(){return R{.child=P{.x=42}};}fn i32 main(){let D d=D{.p=(make().child)};return 42;}").is_ok);
 }

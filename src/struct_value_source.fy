@@ -57,7 +57,7 @@ pub fn Result<Header, errors::Error> header(ref u8[] source, ref mut lexer::Stat
 }
 pub struct Leaf { usize ordinal; u8 tag; usize record; }
 // Scalar ordinals are depth-first leaf positions, never field or byte offsets.
-fn Result<Leaf, errors::Error> path(ref u8[] source, ref mut lexer::State s,
+pub fn Result<Leaf, errors::Error> path(ref u8[] source, ref mut lexer::State s,
     ref ir::Program p, usize root, usize at,ref context::Table scope) {
     var usize record = root; var usize ordinal = 0; var usize depth = 0;
     while (s.kind == 46) {
@@ -249,6 +249,9 @@ pub fn Result<u8, errors::Error> next_leaf(ref u8[] source, ref mut lexer::State
             let usize child = p.records.layouts.types[slot] as usize;
             // 255 requests binding/path child staging, never a scalar tag.
             if (short) { state.shorthand = member; state.is_shorthand = true; return .ok(255); }
+            if(s.kind==40){return .ok(255);}
+            if(s.kind==2 || s.kind==5){var lexer::State value=lexer::snapshot(s);let usize next=lexer::next(source,ref mut value)?;
+                if(value.kind==123 && named(source,s,scope)?!=child){return .ok(255);}}
             if (!constructor(source,s,child,scope)?) { return .ok(255); }
             if (state.depth >= 16) { return .err(errors::make(4,at)); }
             let usize depth = state.depth; state.records[depth] = child; state.fields[depth] = 0; state.depth += 1;
@@ -355,7 +358,7 @@ pub fn Result<usize, errors::Error> extracted_call(ref u8[] source,ref mut lexer
     } else {let usize end=lexer::punctuation(source,s,59)?;}
     return extract_part(p,function,source_id,part,mutable,at,at,true);
 }
-fn Result<usize, errors::Error> extract_part(ref mut ir::Program p,usize function,
+pub fn Result<usize, errors::Error> extract_part(ref mut ir::Program p,usize function,
     usize source_id,Leaf part,bool mutable,usize offset,usize at,bool consume) {
     let usize count = leaf_count(p,part.record,at)?;
     let usize first = p.registers;

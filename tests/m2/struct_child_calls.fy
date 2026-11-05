@@ -58,7 +58,6 @@ fn void nominal_rejections_and_early_drop_before_parent_publication() {
  rejected(b"module main;struct P{i32 x;}struct R{P p;}fn i32 main(){let R r=R{.p=missing()};return 42;}");
  rejected(b"module main;struct P{i32 x;}struct R{P p;}fn P make(){return P{.x=42};}fn i32 main(){let i32 make=0;let R r=R{.p=make()};return 42;}");
  rejected(b"module main;struct P{i32 x;}struct R{P p;}fn P make(i32 n){return P{.x=n};}fn i32 main(){let R r=R{.p=make()};return 42;}");
- rejected(b"module main;struct P{i32 x;}struct R{P p;}fn P make(){return P{.x=42};}fn i32 main(){let R r=R{.p=(make())};return 42;}");
  rejected(b"module main;struct P{i32 x;}struct R{P p;}fn P make(){return P{.x=42};}fn i32 main(){let P p=P{.x=make()};return 42;}");
  rejected(b"module main;struct P{i32 x;}struct R{P p;}fn R make(){return R{.p=P{.x=42}};}fn i32 main(){let R r=R{.p=make()};return 42;}");
  rejected(b"module main;struct P{i32 x;}struct R{P p;}fn P make(){return P{.x=42};}fn i32 main(){let R r=R{.p=make(r)};return 42;}");
@@ -72,4 +71,9 @@ fn void nominal_rejections_and_early_drop_before_parent_publication() {
  assert(p.code[pc*8+1] as usize==144+p.code[(pc+3)*8+1] as usize);
  var ir::Program bad=p;bad.code[(pc+3)*8]=19;bad.code[(pc+3)*8+1]=0;
  assert(ir::patch(ref mut bad,pc+3,pc+4,0).is_ok);assert(!verifier::verify(ref bad).is_ok);
+}
+
+// Grouping now preserves the same complete record value in these contexts.
+@test fn void grouped_record_forms_now_compile_in_existing_contexts(){
+    assert(compiler::compile(b"module main;struct P{i32 x;}struct R{P p;}fn P make(){return P{.x=42};}fn i32 main(){let R r=R{.p=(make())};return 42;}").is_ok);
 }

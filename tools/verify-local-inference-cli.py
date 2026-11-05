@@ -26,14 +26,18 @@ def main():
     selection.add_argument('--array-list-assignment', action='store_true', help='add exact-shape list replacement and all earlier list cases')
     selection.add_argument('--array-literal-projections', action='store_true', help='add list/repeated scalar projections, UTF-8 and all earlier list cases')
     selection.add_argument('--array-expression-projections', action='store_true', help='add grouped array values and projections')
+    selection.add_argument('--record-expression-projections', action='store_true', help='add grouped record values and constructor projections')
     args = parser.parse_args()
+    if args.record_expression_projections:
+        args.aggregate = True
+        args.array_expression_projections = True
     if args.array_expression_projections:
         args.array_literal_projections = True
     if args.array_literal_projections:
         args.array_list_assignment = True
     if args.array_list_assignment:
         args.array_lists = True
-    suite = 'array-expression-projections' if args.array_expression_projections else 'array-literal-projections' if args.array_literal_projections else 'array-list-assignment' if args.array_list_assignment else 'array-list' if args.array_lists else 'option' if args.options else 'reference' if args.references else 'aggregate' if args.aggregate else 'local'
+    suite = 'record-expression-projections' if args.record_expression_projections else 'array-expression-projections' if args.array_expression_projections else 'array-literal-projections' if args.array_literal_projections else 'array-list-assignment' if args.array_list_assignment else 'array-list' if args.array_lists else 'option' if args.options else 'reference' if args.references else 'aggregate' if args.aggregate else 'local'
     out = ROOT / ('build/' + suite + '-inference-cli') / args.profile
     out.mkdir(parents=True, exist_ok=True)
     receipt = out / 'receipt.json'
@@ -302,6 +306,34 @@ def main():
                     prefix, suffix = ('id((a),', ')') if first else ('id(', ',(a))')
                     source = ('module main;fn i32 id(' + parameters + '){return n;}fn i32 main(){let a=[0];' + ('let ref u8[] marker=b"*";' if retained else '') + 'return ' + prefix * count + '42' + suffix * count + ';}').encode()
                     cases.append((f'grouped-call-{count}-{retained}-{first}', source, 'run' if count == 32 else 'check', 42 if count == 32 else None, None if count == 32 else 'compile_limit', 16000000 if count == 32 else None, (reference if retained else read) if count == 32 else scalar))
+    if args.record_expression_projections:
+        record_cases = [
+            ('constructor-projection', b'module main;struct P{i32 x;i32 y;}fn i32 main(){let n=(P{.x=20,.y=22}).x;return n+P{.x=0,.y=22}.y;}', scalar),
+            ('name-projection', b'module main;struct P{i32 x;}fn i32 main(){let p=P{.x=42};return ((p)).x;}', record_read),
+            ('call-projection', b'module main;struct P{i32 x;}fn P make(){return (P{.x=42});}fn i32 main(){return ((make())).x;}', record_read),
+            ('copy-return', b'module main;struct P{i32 x;}fn P pass(P p){return ((p));}fn i32 main(){let p=(P{.x=42});var q=(p);q=(pass((p)));return (q).x;}', record_copy),
+            ('child-constructor', b'module main;struct P{i32 x;}struct R{P p;}fn i32 main(){let r=(R{.p=(P{.x=42})});let p=((r).p);return (p).x;}', nested),
+            ('ordered-capture', b'module main;struct P{i32 x;}fn i32 take(P p,i32 n){return p.x;}fn i32 main(){var p=(P{.x=20});let Option<i32> o=.none;let n=take((p),switch(o){case .some(v):{0}case .none:{p.x=22;0}});return n+p.x;}', record_copy),
+            ('retained', b'module main;struct P{i32 x;}struct R{P p;}fn R make(){return (R{.p=(P{.x=42})});}fn i32 main(){let ref u8[] marker=b"*";return ((make()).p).x;}', reference),
+        ]
+        for name, source, profile in record_cases:
+            cases.append(('record-grouped-' + name, source, 'run', 42, None, 16000000, profile))
+        for name, source, error in [
+            ('nominal', b'module main;struct P{i32 x;}struct Q{i32 x;}fn i32 main(){let P p=(Q{.x=42});return 0;}', 'type'),
+            ('path', b'module main;struct P{i32 x;}fn i32 main(){return (P{.x=42}).missing;}', 'type'),
+            ('scalar', b'module main;struct P{i32 x;}fn i32 take(P p){return p.x;}fn i32 main(){return take((42));}', 'type'),
+            ('paren', b'module main;struct P{i32 x;}fn i32 main(){return ((P{.x=42}).x;}', 'syntax'),
+        ]:
+            cases.append(('record-grouped-reject-' + name, source, 'check', None, error, None, scalar))
+        for count in (32, 33):
+            source = ('module main;struct P{i32 x;}fn i32 main(){let p=P{.x=42};return ' + '(' * count + 'p' + ')' * count + '.x;}').encode()
+            cases.append((f'record-grouped-depth-{count}', source, 'run' if count == 32 else 'check', 42 if count == 32 else None, None if count == 32 else 'compile_limit', 16000000 if count == 32 else None, record_read if count == 32 else scalar))
+            for retained in (False, True):
+                for first in (False, True):
+                    parameters = 'P p,i32 n' if first else 'i32 n,P p'
+                    prefix, suffix = ('id((p),', ')') if first else ('id(', ',(p))')
+                    source = ('module main;struct P{i32 x;}fn i32 id(' + parameters + '){return n;}fn i32 main(){let p=P{.x=0};' + ('let ref u8[] marker=b"*";' if retained else '') + 'return ' + prefix * count + '42' + suffix * count + ';}').encode()
+                    cases.append((f'record-grouped-call-{count}-{retained}-{first}', source, 'run' if count == 32 else 'check', 42 if count == 32 else None, None if count == 32 else 'compile_limit', 16000000 if count == 32 else None, (reference if retained else record_read) if count == 32 else scalar))
     version = None
     if args.array_lists:
         ran = subprocess.run([str(exe), '--version', '--json'], cwd=empty, env=env, capture_output=True, timeout=15)
@@ -317,6 +349,8 @@ def main():
             assert version['array_literal_projections'] is True and version['array_utf8_element_lists'] is True
     if args.array_expression_projections:
         assert version['array_expression_projections'] is True and version['array_grouped_values'] is True
+    if args.record_expression_projections:
+        assert version['record_expression_projections'] is True and version['record_grouped_values'] is True
     results = []
     for identity, source, mode, expected, error, fuel, profile in cases:
         fixture = out / (identity + '.brc')
@@ -340,7 +374,7 @@ def main():
     assert all(sha(ROOT / i['path']) == i['sha256'] for i in inputs)
     assert sha(compiler) == compiler_hash and sha(exe) == binary_hash
     data = dict(schema='browniec.local-inference-cli/v1', status='passed', profile=args.profile,
-                selection='array-expression-projections' if args.array_expression_projections else 'array-literal-projections' if args.array_literal_projections else 'array-list-assignment' if args.array_list_assignment else 'array-list' if args.array_lists else 'option' if args.options else 'reference' if args.references else 'aggregate' if args.aggregate else 'scalar',
+                selection='record-expression-projections' if args.record_expression_projections else 'array-expression-projections' if args.array_expression_projections else 'array-literal-projections' if args.array_literal_projections else 'array-list-assignment' if args.array_list_assignment else 'array-list' if args.array_lists else 'option' if args.options else 'reference' if args.references else 'aggregate' if args.aggregate else 'scalar',
                 startingHead=head, inputSnapshotCapturedAt=captured, inputs=inputs, compilerSha256=compiler_hash,
                 compilerVersion=subprocess.check_output([str(compiler), '--version'], text=True).strip(),
                 buildCommand=[compiler.relative_to(ROOT).as_posix(), *command[1:]],

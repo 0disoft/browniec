@@ -57,11 +57,16 @@ pub fn Result<usize,errors::Error> capture(ref u8[] source,ref mut lexer::State 
     if(s.kind!=2){return .err(errors::make(3,at));}
     let usize index=locals::find(source,names,s.begin,s.end);
     if(!values::binding(names,index)){return .err(errors::make(3,at));}
-    var usize id=names.registers[index]-144;
+    let usize id=names.registers[index]-144;
     if(id>=p.records.count || p.records.records[id] as usize!=record ||
         p.record_functions[id] as usize!=names.function){return .err(errors::make(3,at));}
     let usize next=lexer::next(source,s)?;
     if(s.kind!=44 && s.kind!=41){return .err(errors::make(3,s.begin));}
+    return capture_id(p,names,id,record,at);
+}
+pub fn Result<usize,errors::Error> capture_id(ref mut ir::Program p,ref mut locals::Table names,usize source,usize record,usize at){
+    if(source>=16 || source>=p.records.count || p.records.records[source] as usize!=record || p.record_functions[source] as usize!=names.function){return .err(errors::make(3,at));}
+    var usize id=source;
     if(p.records.mutable[id]) {
         if(names.count>=64){return .err(errors::make(4,at));}
         let usize destination=ir::record_in(p,names.function,record,false,at)?;

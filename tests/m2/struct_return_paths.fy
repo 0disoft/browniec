@@ -59,8 +59,6 @@ fn void wrong_nominal_scalar_nonrecord_and_general_expression_returns_are_reject
     rejected(b"module main;struct P{i32 x;}struct Q{i32 x;}struct R{Q p;}fn P pick(R r){return r.p;}fn i32 main(){return 42;}");
     rejected(b"module main;struct P{i32 x;}struct R{i32 x;}fn P pick(R r){return r.x;}fn i32 main(){return 42;}");
     rejected(b"module main;struct P{i32 x;}struct R{P p;}fn P pick(R r){return r.missing;}fn i32 main(){return 42;}");
-    rejected(b"module main;struct P{i32 x;}struct R{P p;}fn P pick(R r){return (r.p);}fn i32 main(){return 42;}");
-    rejected(b"module main;struct P{i32 x;}struct R{P p;}fn R make(){return R{.p=P{.x=42}};}fn P pick(){return (make().p);}fn i32 main(){return 42;}");
     rejected(b"module main;struct P{i32 x;}fn P pick(){let i32 r=0;return r.p;}fn i32 main(){return 42;}");
     rejected(b"module main;struct P{i32 x;}fn P pick(){return missing.p;}fn i32 main(){return 42;}");
     rejected(b"module main;struct P{i32 x;}fn P pick(){let Option<i32> r=.none;return r.p;}fn i32 main(){return 42;}");
@@ -68,4 +66,10 @@ fn void wrong_nominal_scalar_nonrecord_and_general_expression_returns_are_reject
     rejected(b"module main;struct P{i32 x;}struct R{P p;}fn P pick(R r){return r;}fn i32 main(){return 42;}");
     rejected(b"module main;struct P{i32 x;}struct R{P p;}fn P pick(R r){return r.p.missing;}fn i32 main(){return 42;}");
     rejected(b"module main;struct P{i32 x;}struct R{P p;}fn i32[1] pick(R r){return r.p;}fn i32 main(){return 42;}");
+}
+
+// Grouping now preserves the same complete record value in these contexts.
+@test fn void grouped_record_forms_now_compile_in_existing_contexts(){
+    assert(compiler::compile(b"module main;struct P{i32 x;}struct R{P p;}fn P pick(R r){return (r.p);}fn i32 main(){return 42;}").is_ok);
+    assert(compiler::compile(b"module main;struct P{i32 x;}struct R{P p;}fn R make(){return R{.p=P{.x=42}};}fn P pick(){return (make().p);}fn i32 main(){return 42;}").is_ok);
 }

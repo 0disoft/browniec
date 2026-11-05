@@ -49,10 +49,14 @@ fn void immutable_nominal_scalar_and_unsupported_forms_reject() {
  rejected(b"module main;struct P{i32 x;}struct Q{i32 x;}struct R{Q child;}fn R make(){return R{.child=Q{.x=42}};}fn i32 main(){var P p=P{.x=0};p=make().child;return 42;}");
  rejected(b"module main;struct P{i32 x;}struct R{P child;}fn R make(){return R{.child=P{.x=42}};}fn i32 main(){var P p=P{.x=0};p=make().child.x;return 42;}");
  rejected(b"module main;struct P{i32 x;}struct R{P child;}fn R make(){return R{.child=P{.x=42}};}fn i32 main(){var P p=P{.x=0};p=make().missing;return 42;}");
- rejected(b"module main;struct P{i32 x;}struct R{P child;}fn R make(){return R{.child=P{.x=42}};}fn i32 main(){var P p=P{.x=0};p=(make().child);return 42;}");
  rejected(b"module main;struct P{i32 x;}struct R{P child;}fn R make(){return R{.child=P{.x=42}};}fn i32 main(){var P p=P{.x=0};let i32 make=0;p=make().child;return 42;}");
  rejected(b"module main;struct P{i32 x;}fn i32 make(){return 42;}fn i32 main(){var P p=P{.x=0};p=make().child;return 42;}");
  rejected(b"module main;struct P{i32 x;}fn i32 main(){var P p=P{.x=0};p=missing().child;return 42;}");
  rejected(b"module main;struct P{i32 x;}struct R{P child;}fn R make(i32 n){return R{.child=P{.x=n}};}fn i32 main(){var P p=P{.x=0};p=make().child;return 42;}");
  rejected(b"module main;struct P{i32 x;}struct R{P child;}fn R make(){return R{.child=P{.x=42}};}fn i32 main(){var P p=P{.x=0};for(;false;p=make().child){}return 42;}");
+}
+
+// Grouping now preserves the same complete record value in these contexts.
+@test fn void grouped_record_forms_now_compile_in_existing_contexts(){
+    assert(compiler::compile(b"module main;struct P{i32 x;}struct R{P child;}fn R make(){return R{.child=P{.x=42}};}fn i32 main(){var P p=P{.x=0};p=(make().child);return 42;}").is_ok);
 }

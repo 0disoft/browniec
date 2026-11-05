@@ -68,7 +68,6 @@ fn void loop_transfers_ir_equivalence_and_two_live_extents() {
 @test
 fn void wrong_types_fields_and_general_expressions_remain_rejected() {
  rejected(b"module main;struct P{i32 x;}struct Q{i32 x;}fn i32 take(P p){return p.x;}fn i32 main(){return take(Q{.x=42});}");
- rejected(b"module main;struct P{i32 x;}fn i32 take(P p){return p.x;}fn i32 main(){return take((P{.x=42}));}");
  rejected(b"module main;struct P{i32 x;}fn i32 take(P p){return p.x;}fn i32 main(){return take(P{.x=42}.x);}");
  rejected(b"module main;struct P{i32 x;}fn i32 take(P p){return p.x;}fn i32 main(){return take(P{.x=true});}");
  rejected(b"module main;struct P{i32 x;}fn i32 take(P p){return p.x;}fn i32 main(){return take(P{.bad=42});}");
@@ -79,4 +78,9 @@ fn void wrong_types_fields_and_general_expressions_remain_rejected() {
  rejected(b"module main;struct P{i32 x;}fn i32 take(P p){p.x=0;return p.x;}fn i32 main(){return take(P{.x=42});}");
  rejected(b"module main;struct P{i32 x;}fn i32 take(P p){return p.x;}fn i32 main(){return take(P{.x=42},0);}");
  rejected(b"module main;struct P{i32 x;}struct R{P p;}struct Q{i32 x;}fn i32 take(R r){return r.p.x;}fn i32 main(){return take(R{.p=Q{.x=42}});}");
+}
+
+// Grouping now preserves the same complete record value in these contexts.
+@test fn void grouped_record_forms_now_compile_in_existing_contexts(){
+    assert(compiler::compile(b"module main;struct P{i32 x;}fn i32 take(P p){return p.x;}fn i32 main(){return take((P{.x=42}));}").is_ok);
 }

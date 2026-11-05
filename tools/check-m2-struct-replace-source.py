@@ -67,7 +67,7 @@ for body,error in [
  ('var P p=P{.x=0};p=P{};return 42;','syntax'),
  ('var P p=P{.x=0};p=P{.x=42,.x=0};return 42;','syntax'),
  ('var P p=P{.x=0};p=P{.x=42}return 42;','syntax'),
- ('var P p=P{.x=0};p=(P{.x=42});return 42;','type'),
+ ('var P p=P{.x=0};p=(P{.x=42}).x;return 42;','type'),
  ('var P p=P{.x=0};for(p=P{.x=42};false;){}return 42;','type'),
  ('var P p=P{.x=0};for(;false;p=P{.x=42}){}return 42;','type'),
  ('{var P p=P{.x=0};}p=P{.x=42};return 42;','type'),

@@ -61,9 +61,13 @@ fn void nominal_mismatches_field_types_and_general_record_expressions_remain_rej
     rejected(b"module main;struct P{i32 x;i32 y;}fn P make(){return P{.x=20,.x=22};}fn i32 main(){return 42;}");
     rejected(b"module main;struct P{i32 x;}struct Q{i32 x;}struct R{P p;}fn R make(){return R{.p=Q{.x=42}};}fn i32 main(){return 42;}");
     rejected(b"module main;struct P{i32 x;}struct Q{i32 x;}struct R{P p;}fn R make(){let Q q=Q{.x=42};return R{.p=q};}fn i32 main(){return 42;}");
-    rejected(b"module main;struct P{i32 x;}fn P make(){return (P{.x=42});}fn i32 main(){return 42;}");
     rejected(b"module main;struct P{i32 x;}fn P make(){let Option<i32> o=.some(42);return P{.x=o?};}fn i32 main(){return 42;}");
     rejected(b"module main;struct P{i32 x;}fn P make(){return P{.x=missing};}fn i32 main(){return 42;}");
     rejected(b"module main;struct P{i32 x;}struct R{P p;}fn R make(){return R{.p=42};}fn i32 main(){return 42;}");
-    rejected(b"module main;struct P{i32 x;}struct R{P p;}fn P child(){return P{.x=42};}fn R make(){return R{.p=(child())};}fn i32 main(){return 42;}");
+}
+
+// Grouping now preserves the same complete record value in these contexts.
+@test fn void grouped_record_forms_now_compile_in_existing_contexts(){
+    assert(compiler::compile(b"module main;struct P{i32 x;}fn P make(){return (P{.x=42});}fn i32 main(){return 42;}").is_ok);
+    assert(compiler::compile(b"module main;struct P{i32 x;}struct R{P p;}fn P child(){return P{.x=42};}fn R make(){return R{.p=(child())};}fn i32 main(){return 42;}").is_ok);
 }

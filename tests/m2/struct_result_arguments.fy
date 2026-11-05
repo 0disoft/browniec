@@ -74,9 +74,13 @@ fn void invalid_nested_results_and_unsupported_aggregate_forms_fail() {
  rejected(b"module main;struct P{i32 x;}fn i32 take(P p){return p.x;}fn i32 main(){return take(missing());}");
  rejected(b"module main;struct P{i32 x;}fn P make(){return P{.x=42};}fn i32 take(P p){return p.x;}fn i32 main(){let i32 make=0;return take(make());}");
  rejected(b"module main;struct P{i32 x;}fn P make(){return P{.x=42};}fn i32 take(P p){return p.x;}fn i32 main(){return take(make(1));}");
- rejected(b"module main;struct P{i32 x;}fn P make(){return P{.x=42};}fn i32 take(P p){return p.x;}fn i32 main(){return take((make()));}");
- rejected(b"module main;struct P{i32 x;}fn i32 take(P p){return p.x;}fn i32 main(){return take((P{.x=42}));}");
  rejected(b"module main;struct P{i32 x;}struct R{P p;}fn i32 take(P p){return p.x;}fn i32 main(){let R r=R{.p=P{.x=42}};return take(r.p.x);}");
  rejected(b"module main;struct P{i32 x;}fn P make(){return P{.x=42};}fn i32 take(P p){return p.x;}fn i32 main(){return take(make().x);}");
- rejected(b"module main;struct P{i32 x;}fn i32[1] make(){return [42;1];}fn i32 take(i32[1] a){return a[0];}fn i32 main(){return take((make()));}");
+}
+
+// Grouping now preserves the same complete record value in these contexts.
+@test fn void grouped_record_forms_now_compile_in_existing_contexts(){
+    assert(compiler::compile(b"module main;struct P{i32 x;}fn P make(){return P{.x=42};}fn i32 take(P p){return p.x;}fn i32 main(){return take((make()));}").is_ok);
+    assert(compiler::compile(b"module main;struct P{i32 x;}fn i32 take(P p){return p.x;}fn i32 main(){return take((P{.x=42}));}").is_ok);
+    assert(compiler::compile(b"module main;struct P{i32 x;}fn i32[1] make(){return [42;1];}fn i32 take(i32[1] a){return a[0];}fn i32 main(){return take((make()));}").is_ok);
 }

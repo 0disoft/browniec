@@ -177,3 +177,9 @@ fn void declaration_error(ref u8[] a,ref u8[] b,u8 kind,u8 first){
     value(library,b"module app;import lib as m;pub fn i32 chosen(){let a=((m::make()));return m::sum((a));}",42);
     value(library,b"module app;import lib as m;pub fn i32 chosen(){let ref u8[] marker=b\"*\";return (m::make())[0]+(m::make())[1];}",42);
 }
+
+@test fn void grouped_record_values_and_projections_cross_both_qualified_compiler_routes(){
+    let ref u8[] library=b"module lib;pub struct P{i32 x;}pub struct R{P child;}pub fn R make(){return (R{.child=(P{.x=42})});}pub fn i32 take(P p){return (p).x;}";
+    value(library,b"module app;import lib as m;pub fn i32 chosen(){let p=((m::make()).child);return m::take((p));}",42);
+    value(library,b"module app;import lib as m;pub fn i32 chosen(){let ref u8[] marker=b\"*\";return ((m::make()).child).x;}",42);
+}
