@@ -109,8 +109,12 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    infer existing i32/bool `.some` payloads through the same emitter. Finish
    branch-order-independent constructor context and general aggregate-expression
    inference, void/if values,
-   complete array/record construction,
-   selected-place compound assignment, wider/resource-bearing tags and must-use
+   complete array/record construction. The [native array-list storage
+   prerequisite](array-list-storage.md) now stages all exact scalar values before
+   atomic backing and owner publication, with unchanged 4096-element capacity.
+   Connect element-list source lowering, complete IR proof and VM/Fuel execution,
+   then continue with selected-place compound assignment, wider/resource-bearing
+   tags and must-use
    handling. Reconcile operand/source/type/compile limits deliberately rather than
    silently treating the old experimental bounds as full-profile conformance.
    L07 byte compatibility is implemented at `5bb055b` and has focused checks.

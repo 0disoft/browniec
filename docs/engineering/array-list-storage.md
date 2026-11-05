@@ -49,6 +49,17 @@ cursor and exhausted owner slots. Failure checks compare the complete backing
 and every owner/order/arena field. Test-only host Buffers supply large byte
 backing because Fairy's fixed arrays admit at most 4096 elements.
 
+Implementation `4f94112` passed all five groups in Windows development and
+release on the same 161 input hashes, 154 LF production modules and the 261-file
+test-discovery identity. Both locked LF mirrors pass. Every input matches the
+checkout and the implementation commit's Git raw bytes. The original oversized
+fixed-byte-array test fixture was corrected to the host Buffers above before
+these final runs; its typechecking failure is excluded. No compiler/stack
+overrides or historical-result reuse were used. See
+[focused Windows evidence](../evidence/array-list-storage-windows-20261106.json).
+Public CLI/full matrices, Linux, allocator-fault injection, general native stack/
+elapsed-time benchmarks and delivery checks were not run for this prerequisite.
+
 ## Remaining L03 integration
 
 Guest `[x, y]` declarations/expressions are not enabled by this prerequisite.

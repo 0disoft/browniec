@@ -1,3 +1,14 @@
+- Native array element-list storage/ownership is implemented at `4f94112`.
+  Exact arity/layout/quota/owner preflight and complete codec staging precede
+  backing/cursor/token publication. Caller-owned scratch is payload-sized, with
+  no allocation in the new primitives. All six scalar domains and 4096 elements
+  remain supported. Development/release each passed five native groups on 161
+  Git-matching inputs, 154 LF modules and the 261-file discovery identity; both
+  locked LF mirrors pass. See the array-list storage contract and Windows evidence.
+  This is a native prerequisite: guest element-list syntax, independent IR proof,
+  VM/Fuel integration, Instance scratch accounting and L03/full completion remain
+  open. Public prices/default/cap are unchanged. No public CLI/full matrices,
+  Linux, allocator fault injection, general stack/timing or delivery rerun.
 - Public Fuel revalidation on the inference source baseline `624eac6` passed
   25 native groups and 33 tool-free CLI cases per Windows profile on 166 matching
   inputs, 154 LF modules and the 260-file discovery identity. Inputs match the
