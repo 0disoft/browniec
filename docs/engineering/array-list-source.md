@@ -33,8 +33,8 @@ scalar register values. A mutable local is read immediately, so later writes do
 not change an earlier cell's value. Existing CALL/index/switch lowering manages
 temporary roots and loans, including return, propagation, break and continue.
 No destination array or lexical binding is created during those expressions.
-Only after the closing bracket, statement terminator, exact type and arity checks
-does lowering emit one complete `ir::array_values` operation and publish the name.
+Only after the closing bracket and exact type/arity checks does lowering emit one
+complete `ir::array_values` operation. Names publish after the statement terminator.
 Independent CFG/type/owner verification remains mandatory.
 
 Compiler operand scratch is a locally owned `Vec<usize>`, destroyed on all exits.
@@ -48,8 +48,10 @@ promise that every 4096-element source expression fits the experimental frontend
 ## Public scope and Fuel
 
 `array_element_list_declarations` is the declaration-specific version capability.
-Direct element-list CALL arguments, returned literals, borrowed temporaries and
-whole-array list replacement require their own source integration. Existing
+The [contextual successor](array-list-contexts.md) now integrates direct element-
+list CALL arguments, returned literals and borrowed temporaries through the same
+complete scalar evaluator. Whole-array list replacement and general list-expression
+forms remain pending. Existing
 named-array copy, CALL, return, borrowing and mutation work with initialized lists.
 This increment does not complete L03 or C05.
 

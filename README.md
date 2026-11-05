@@ -14,8 +14,10 @@ through the same typed initialization and ownership checks.
 `.some` from existing i32/bool payloads; ambiguous domains still require context.
 [Scalar element-list declarations](docs/engineering/array-list-source.md) now
 support `let a=[20,22];` and annotated forms, with ordered one-time evaluation,
-complete initialization and existing ownership/cleanup. Direct list arguments,
-returned literals, borrowed temporaries and list replacement remain unfinished.
+complete initialization and existing ownership/cleanup. The
+[contextual successor](docs/engineering/array-list-contexts.md) adds direct list
+arguments, returned literals and temporary borrows. List replacement and general
+list-expression forms remain unfinished.
 [Native project metadata](docs/cli/project-format.md) now admits complete explicit
 source maps, entries and declared requirements; it opens no files and grants nothing.
 Public project loading and CLI module/entry flags, general mutable/non-byte/

@@ -68,6 +68,14 @@ for `let a=[20,22];return a[0]+a[1];` requires 66017 Fuel with public backing:
 and CLI evidence; it does not replace the historical full public-Fuel selection
 below or close Instance/step/accounting work.
 
+The [contextual list successor](array-list-contexts.md) adds direct by-value CALL,
+returned-list and temporary-borrow source routes without changing this schedule.
+An ordinary `take([20,22])` summing callee requires 66340 public Fuel; a direct
+`return [20,22]` with a summing caller requires 66083. Both fixtures check exact,
+one-short and one-more budgets. Their native eight/sixteen-byte backing oracles
+also prove the existing result-token move and argument copy behavior. Retained
+invocations continue to use their distinct additive coordinator prices.
+
 ## Verification
 
 `python -B tools/verify-public-fuel.py --profile development` runs focused native

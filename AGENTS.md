@@ -1,3 +1,17 @@
+- Scalar element-list CALL arguments, returned literals and temporary borrows are
+  implemented at `6fea8e4`, using the declaration evaluator and existing canonical
+  captures, ARET and returned-view owner retention. New scope-specific version
+  flags have real source/admission/execution evidence. Development/release each
+  passed 14 native groups and 54 tool-free CLI cases, including original combined
+  32/33 boundaries and real qualified module calls on both compiler routes.
+  The 167 input paths match checkout snapshots; 166 match Git raw bytes, while one
+  unchanged legacy fixture differs only by CRLF/LF (both hashes are recorded).
+  All 156 LF production modules and new/changed tests match Git raw bytes; both
+  locked LF mirrors and the common 264-file discovery pass. See the list-context
+  contract/Windows evidence. Existing prices/default256/cap16000000 remain.
+  List replacement, general expressions/projections, nested/resource elements,
+  full L03/C05, Instance/host/delivery and the complete objective remain open.
+  No full matrices/Linux/OOM injection/general stack/timing/delivery rerun. Local only.
 - Scalar element-list declarations are implemented at `3340b24`: inferred and
   annotated locals use exact scalar types/arity, left-to-right one-time evaluation,
   complete initialization and original exit cleanup. The declaration-specific

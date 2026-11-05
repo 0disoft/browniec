@@ -116,8 +116,9 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    CFG/owner proof, atomic ordinary/retained execution and reusable prepaid
    invocation scratch. The [source declaration successor](array-list-source.md)
    now connects inferred/annotated lists, exact arity/types, left-to-right one-time
-   evaluation and nonlocal-exit cleanup. Finish direct list arguments, returned
-   literals, borrowed temporaries and replacement; then continue with
+   evaluation and nonlocal-exit cleanup. The [contextual successor](array-list-contexts.md)
+   now adds direct list arguments, returned literals and borrowed temporaries.
+   Finish whole-array list replacement and general list expressions; then continue with
    selected-place compound assignment, wider/resource-bearing
    tags and must-use
    handling. Reconcile operand/source/type/compile limits deliberately rather than
