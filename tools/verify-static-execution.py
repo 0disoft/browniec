@@ -25,9 +25,13 @@ def write(path, value):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--profile', choices=['development', 'release'], required=True)
+    parser.add_argument('--shard', type=int, default=1, help='one-based native test shard')
+    parser.add_argument('--shards', type=int, default=1, help='partition the complete selected identity set')
     parser.add_argument('--selection', choices=['all', 'statics', 'views', 'ranges', 'range-core', 'call-ir', 'call-proof', 'call-transfer-core', 'call-transfer', 'call-mixed', 'reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts', 'reference-return-execution', 'reference-source', 'reference-return-source', 'public-program', 'source-snapshot', 'module-index', 'module-entry', 'source-context', 'module-program', 'module-program-core', 'module-retention', 'project-program-core', 'project-program', 'project-names', 'project-manifest', 'project-sources', 'captured-call-stack', 'local-inference', 'aggregate-inference', 'reference-inference'], default='all',
                         help='statics runs the changed image/proof/VM suites; all adds return and source regressions')
     args = parser.parse_args()
+    if not 1 <= args.shard <= args.shards <= 16:
+        parser.error('require 1 <= shard <= shards <= 16')
     profile = args.profile
     selections = {'all': FILES + ['tests/m2/static_views.fy', 'tests/m2/static_ranges.fy', 'tests/m2/static_call_ir.fy', 'tests/m2/static_call_admission.fy', 'tests/m2/static_call_execution.fy', 'tests/m2/static_call_mixed.fy', 'tests/m2/reference_access.fy', 'tests/m2/reference_call_admission.fy', 'tests/m2/reference_words.fy', 'tests/m2/reference_call_execution.fy', 'tests/m2/reference_call_mixed.fy', 'tests/m2/reference_return_ir.fy', 'tests/m2/reference_return_lifetimes.fy', 'tests/m2/reference_receipts.fy', 'tests/m2/reference_return_execution.fy', 'tests/m2/reference_call_source.fy', 'tests/m2/reference_return_source.fy'],
                   'statics': FILES[:3], 'views': ['tests/m2/static_views.fy'],
@@ -88,6 +92,8 @@ def main():
                                          'tests/m2/reference_return_source.fy', 'tests/m2/module_program.fy']
     files = selections[args.selection]
     out = ROOT / 'build/static-execution' / profile / args.selection
+    if args.shards != 1:
+        out = out / f'shard-{args.shard}-of-{args.shards}'
     out.mkdir(parents=True, exist_ok=True)
     receipt = out / 'receipt.json'
     write(receipt, {'status': 'incomplete'})
@@ -185,7 +191,7 @@ def main():
                                'both_compiler_routes_keep_the_32_deep_call_limit_without_native_stack_overrides'}}
     exact = args.selection in ('reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts', 'reference-return-execution', 'reference-source', 'reference-return-source', 'public-program', 'reference-inference')
     for path in files:
-        if not exact:
+        if not exact and args.shards == 1:
             command.extend(['--file', path])
         source = (ROOT / path).read_text(encoding='utf-8')
         names = re.findall(r'@test\s+fn void (\w+)\(', source)
@@ -195,8 +201,14 @@ def main():
             names = [name for name in names if name in selected]
         module = re.search(r'\bmodule\s+([\w:]+);', source).group(1)
         expected.update(module + '::' + name for name in names)
+    complete = sorted(expected)
+    if args.shards > len(complete):
+        parser.error('shards must not exceed selected tests')
     if exact:
         assert len(expected) == (36 if args.selection == 'reference-inference' else 18)
+    if args.shards != 1:
+        expected = set(complete[args.shard - 1::args.shards])
+    if exact or args.shards != 1:
         for identity in sorted(expected):
             command.extend(['--exact', identity])
     result = run(command)
@@ -216,6 +228,7 @@ def main():
                        platform=platform.platform(), compilerSha256=compiler_hash,
                        compilerVersion=run([compiler, '--version']).stdout.strip(),
                        inputSnapshotCapturedAt=captured, inputs=inputs, testDiscovery=tree,
+                       partition=dict(shard=args.shard, shards=args.shards, completeIdentities=complete),
                        lfMirror=dict(command=['build/toolchain/fairyc.exe' if os.name == 'nt' else 'build/toolchain/fairyc', 'check', '--locked'],
                                      workingDirectory=mirror.relative_to(ROOT).as_posix(),
                                      productionFiles=len(production), result=checked),
