@@ -29,7 +29,9 @@ pub fn Result<statics::Sites,errors::Error> prepare(ref calls::Program unit,ref 
                 if(op==74 || op==75 || op==76){roots|=sites.roots[a];}
                 else if(op==77){let usize f=proof.functions[site];let usize position=a-p.register_starts[f];var usize call=0;
                     while(call<p.count){if(p.code[call*8]==78 && p.code[call*8+2] as usize==f){let usize map=p.code[call*8+3] as usize;
-                            let usize actual=p.call_args[map*8+position] as usize;roots|=sites.roots[actual-192];}call+=1;}
+                            let usize actual=p.call_args[map*8+position] as usize;
+                            if(actual>=192 && actual<208){roots|=sites.roots[actual-192];}
+                            else if(unit.parameters[a]!=3 || actual<160 || actual>=176){return .err(errors::make(5,call));}}call+=1;}
                 }else if(op==78){let usize selected=proof.result_origins[a] as usize;
                     if(selected==9){var usize ret=p.starts[a];while(ret<p.ends[a]){
                             if(p.code[ret*8]==79){roots|=sites.roots[p.code[ret*8+2] as usize];}ret+=1;}
@@ -40,7 +42,7 @@ pub fn Result<statics::Sites,errors::Error> prepare(ref calls::Program unit,ref 
         }
     }
     // At most sixteen site nodes: every simple root-reachability path has
-    // fifteen edges. Latent uncalled parameters may have an empty root set;
-    // they cannot receive native scalar values or become live runtime words.
+    // fifteen edges. Latent or runtime-only reference formals may have no image
+    // roots. Runtime provenance belongs to canonical loan proof, not this set.
     return .ok(sites);
 }

@@ -121,3 +121,25 @@ pub fn Result<usize, errors::Error> argument(ref ir::Program p, usize parameter,
     }
     return .ok(site);
 }
+
+// Storage-independent shared byte formals have no ordinary slice placeholder.
+// Reuse the canonical caller live word and root/formal ancestry after metadata
+// proof. An image actual never passes through this runtime-loan branch.
+pub fn Result<usize,errors::Error> shared_byte(ref ir::Program p,usize source,usize caller,usize live,usize at){
+    if(source<160 || source>=176 || caller>=p.function_count || caller>=16){return .err(errors::make(5,at));}
+    let usize site=source-160;let usize one=1;
+    let u8 element=switch(ir::slice_element(p,site,at)){case .ok(v):{v}case .err(_):{return .err(errors::make(5,at));}};
+    if(ir::exclusive(p,site) || element!=10 || (live&(one<<(32+site)))==0){return .err(errors::make(5,at));}
+    let usize origin=p.slice_origins[site] as usize;let usize root=p.slice_roots[site] as usize;
+    if(origin!=0){
+        if(origin>16 || root!=0 || p.slice_functions[site] as usize!=caller+1){return .err(errors::make(5,at));}
+        let usize anchor=origin-1;
+        if(p.slice_roots[anchor]!=0 || p.slice_origins[anchor] as usize!=origin ||
+            p.slice_functions[anchor] as usize!=caller+1 || p.slice_elements[anchor]!=p.slice_elements[site]){return .err(errors::make(5,at));}
+    }else{
+        if(root==0 || root>p.arrays.count || root>16 || p.slice_functions[site]!=0 ||
+            p.array_functions[root-1] as usize!=caller || p.arrays.elements[root-1]!=10 ||
+            (live&(one<<(root-1)))==0){return .err(errors::make(5,at));}
+    }
+    return .ok(site);
+}

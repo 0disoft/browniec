@@ -51,7 +51,12 @@ pub fn Result<usize, errors::Error> arguments_static(ref ir::Program p,usize tar
         if (arg < count) {
             let usize parameter = p.register_starts[target] + arg;
             let usize encoded = p.array_parameters[parameter] as usize;
-            if(statics.len==128 && statics[parameter]!=0){arg+=1;continue;}
+            if(statics.len==128 && statics[parameter]!=0){
+                if(statics[parameter]==3 && source>=160 && source<176){
+                    let usize checked=slices::shared_byte(p,source,caller,live,pc)?;
+                }
+                arg+=1;continue;
+            }
             if (p.slice_parameters[parameter] != 0) {
                 let usize checked = slices::argument(p, parameter, source, caller, live, pc)?;
                 if (ir::exclusive(p,checked)) {

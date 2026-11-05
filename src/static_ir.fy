@@ -63,8 +63,8 @@ pub fn Result<Sites,errors::Error> definitions(ref ir::Program p,ref images::Ima
 }
 fn bool live_site(ref Sites sites,usize site,usize f,u8 kind,usize live){
     let usize one=1;
-    return site<16 && sites.functions[site]==f && (sites.kinds[site]==1 || sites.kinds[site]==2) &&
-        (kind==0 || sites.kinds[site]==kind) && (live&(one<<site))!=0;
+    return site<16 && sites.functions[site]==f && (sites.kinds[site]==1 || sites.kinds[site]==2 || sites.kinds[site]==3) &&
+        (kind==0 || sites.kinds[site]==kind || (kind==1 && sites.kinds[site]==3)) && (live&(one<<site))!=0;
 }
 fn bool scalar(ref ir::Program p,ref registers::Set defined,usize r,usize f){
     return r>=p.register_starts[f] && r<p.register_ends[f] && r<128 && !p.slots[r] &&
@@ -85,7 +85,7 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,ref Sites sites,usize 
         if(op==77){
             if(a<p.register_starts[f] || a>=p.register_starts[f]+p.arities[f] ||
                 sites.parameters[a]!=p.code[at+3] || sites.formal_sites[a] as usize!=dst+1 || p.types[a]!=0 ||
-                (b!=1 && b!=2)){return .err(invalid(pc));}
+                (b!=1 && b!=2 && b!=3)){return .err(invalid(pc));}
         }
         if(op==76){let usize hi=p.code[at+4] as usize;
             if(!live_site(sites,a,f,1,live) || !scalar(p,defined,b,f) || !scalar(p,defined,hi,f) ||
@@ -99,7 +99,8 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,ref Sites sites,usize 
     if(op==71 || op==72){
         if(!live_site(sites,a,f,1,live) || (op==71 && (!scalar(p,defined,b,f) || p.types[b]!=12)) ||
             (op==72 && b!=0)){return .err(invalid(pc));}
-    }else if(op==73){if(!live_site(sites,a,f,0,live) || !live_site(sites,b,f,0,live)){return .err(invalid(pc));}}
+    }else if(op==73){if(!live_site(sites,a,f,0,live) || !live_site(sites,b,f,0,live) ||
+        sites.kinds[a]==3 || sites.kinds[b]==3){return .err(invalid(pc));}}
     else{return .err(invalid(pc));}
     let u8 tag=if(op==71){10}else if(op==72){12}else{2};
     if(dst<p.register_starts[f] || dst>=p.register_ends[f] || dst>=128 || p.slots[dst] ||

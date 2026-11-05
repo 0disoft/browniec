@@ -319,3 +319,16 @@ pub fn Result<StaticCallProof,errors::Error> verify_static_calls(ref image_calls
     let usize executable=executable_calls(p,ref loans)?;
     return .ok(StaticCallProof{.recipes=recipes,.statics=sites,.loans=loans});
 }
+
+// Shared byte formals may accept image or runtime-loan actuals in one signature.
+// Kind 3 cannot return/escape yet. This analysis receipt deliberately has a
+// separate type and does not grant retained Program or executable VM authority.
+pub struct ReferenceCallProof { image_calls::Proof recipes; statics::Sites statics; reborrows::Sites loans; }
+pub fn Result<ReferenceCallProof,errors::Error> inspect_reference_calls(ref image_calls::Program unit,ref images::Image image){
+    let image_calls::Proof recipes=image_calls::inspect_references(unit,image)?;
+    let statics::Sites sites=image_sites::prepare(unit,ref recipes,image)?;
+    let ref ir::Program p=ref unit.body;
+    let reborrows::Sites loans=validate(p,true,ref sites)?;
+    let usize executable=executable_calls(p,ref loans)?;
+    return .ok(ReferenceCallProof{.recipes=recipes,.statics=sites,.loans=loans});
+}
