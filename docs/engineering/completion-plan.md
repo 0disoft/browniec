@@ -100,7 +100,9 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    complete body/type/ownership and independent IR/image checks, and actual native
    multi-module execution with original source identity. The [native project Program](project-program.md) now retains complete project metadata beside that executable, independently rechecks exact map/header/entry agreement and denies nonempty requirements before guest/Fuel work. Public project loading,
    module/entry CLI flags and deliberate full-profile limits still leave L01 open.
-   Finish inference/void/if values, complete array/record construction,
+   [Scalar/complete-tagged local inference](local-inference.md) is implemented;
+   finish aggregate/borrow/text and constructor inference, void/if values,
+   complete array/record construction,
    selected-place compound assignment, wider/resource-bearing tags and must-use
    handling. Reconcile operand/source/type/compile limits deliberately rather than
    silently treating the old experimental bounds as full-profile conformance.

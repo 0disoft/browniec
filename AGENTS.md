@@ -1,3 +1,12 @@
+- Local scalar/complete-tagged expression inference is implemented at 6edab73:
+  let/var name=value keeps exact types, one-time initialization and existing
+  scopes/IR/Fuel/limits. Development/release each passed 29 native groups and
+  12 CLI cases on 159/155 inputs (160-path union), 151 LF modules and the same
+  256-file discovery; both LF mirrors pass. All inputs match Git raw bytes.
+  See docs/engineering/local-inference.md and its focused Windows evidence.
+  Aggregate/borrow/text/constructor inference, void/if and full L02 stay open.
+  Before void, separate result_type==0's pure-header sentinel from return types.
+  Other runtime/reference/host/delivery work and the full goal remain open.
 - Call capture lowering now defers its lexical Table snapshot until scalar and
   bare immutable-owner prefixes finish. Code 51437c1 fixes a reproduced retained
   compiler native stack overflow without depth/owner/IR/Fuel changes. Both

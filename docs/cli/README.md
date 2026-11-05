@@ -1,6 +1,6 @@
 # CLI Tool
 
-- Status: Experimental native scalar/array/record/scalar-slice CLI (2026-11-03)
+- Status: Experimental native scalar/array/record/scalar-slice CLI (2026-11-05)
 - Native runtime: direct bounded `.brc` source execution
 - Command owner: [command contract](command-contract.md)
 
@@ -22,6 +22,9 @@ explicit widening, fixed scalar arrays, nominal scalar/nested records, aggregate
 parameters/results and shared/exclusive scalar-slice parameters. Whole/ranged/
 named-slice/temporary-array CALL borrows and array/view UTF-8 checks are available.
 See the [documentation index](../README.md) for owning language increment contracts.
+Local types can be omitted for existing scalar and complete tagged expressions:
+`let name = value;` or `var name = value;`. See the [implemented boundary](../engineering/local-inference.md);
+aggregate/borrow/text and constructor inference remain pending.
 
 Retained byte/text/shared-byte result source is public under
 `brownie.m2-reference/1`; general mutable/non-byte/Buffer/input results and
