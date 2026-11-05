@@ -94,6 +94,11 @@ backing bytes, 65978 with public backing, or 410045 in the retained coordinator.
 `return [42;2][1];` requires 170 native or 65698 public Fuel. Exact/one-short/
 one-more checks preserve each distinct schedule and original temporary cleanup.
 
+The [grouped-array successor](array-expression-projections.md) preserves existing
+instruction bytes/counts for five source pairs and reruns literal ordinary/retained
+exact Fuel oracles. Grouping adds no operation price, setup charge or limit change.
+Its focused selection does not rerun the full 35-group public Fuel selection below.
+
 ## Current array and returned-reference reconciliation (2026-11-06)
 
 The returned-runtime byte READ/LEN preflight now obtains its 4131/4097 base

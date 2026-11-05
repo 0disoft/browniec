@@ -126,7 +126,10 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    existing mutable destinations, ordered evaluation and nonlocal-exit cleanup.
    The [scalar literal projection successor](array-literal-projections.md) now
    adds index/length expressions, grouping, prompt temporary cleanup and UTF-8
-   element lists. Finish broader aggregate expressions/projections; then continue with
+   element lists. The [grouped-array successor](array-expression-projections.md)
+   now connects existing/literal/CALL values through scalar projections and
+   by-value initialization, CALL, return, replacement and UTF-8 contexts. Finish
+   broader record/control-flow expressions and grouped lvalues/borrows; then continue with
    selected-place compound assignment, wider/resource-bearing
    tags and must-use
    handling. Reconcile operand/source/type/compile limits deliberately rather than

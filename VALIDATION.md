@@ -1,5 +1,19 @@
 # Validation
 
+- Grouped array values/projections are implemented at `658ef47`: existing owners,
+  literals and array CALLs now compose with index/length, inferred/typed locals,
+  by-value arguments, returns, assignment and exact-u8 UTF-8 checks. Grouped
+  immutable arguments retain the original 32/33 boundary without capture-table
+  stack amplification. A development native harness overflow was isolated to
+  unused ordinary Program staging and fixed by separating that test path, with
+  original inputs/assertions retained. Development/release each passed 14 native
+  groups and 145 tool-free CLI cases on 166 Git-raw/checkout-matching inputs,
+  157 LF modules and 269-file discovery; both locked LF mirrors pass. See [the contract](docs/engineering/array-expression-projections.md) and
+  [Windows evidence](docs/evidence/array-expression-projections-windows-20261106.json). Prices/default256/cap16000000
+  remain. Record/control-flow expressions, grouped lvalues/borrows, nested/resource
+  elements, full C05/Instance/host/delivery and the complete objective remain open.
+  No full matrices/Linux/OOM/general stack/timing/delivery rerun. Local only.
+
 - Public Fuel reconciliation is implemented at `31d784e`. Returned-runtime byte
   READ/LEN preflight now uses the shared price helper. Windows development and
   release each passed 35 native groups and 57 tool-free CLI cases, including eight
