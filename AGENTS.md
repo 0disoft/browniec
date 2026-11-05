@@ -1,3 +1,16 @@
+- Scalar element-list source assignment is implemented at `bd34554`: mutable
+  `a=[x,y];` shares the complete ordered scalar evaluator, validates exact existing
+  type/arity and terminator, then emits one replacement without another array
+  owner/site/extent. Destination reads/RHS effects and original nonlocal-exit
+  cleanup remain; returned-owner protection still uses independent admission.
+  Development/release each passed 14 native groups and 79 tool-free CLI cases on
+  166 checkout/Git-raw-matching inputs, 156 LF modules and 267-file discovery;
+  both locked LF mirrors pass. Public replacement flag and exact 555 native/
+  66083 public/410152 retained Fuel oracles pass. See the assignment contract and
+  Windows evidence. Existing prices/default256/cap16000000 remain. General list
+  expressions/projections, nested/resource elements, full L03/C05/Instance/host/
+  delivery/objective remain open. No full matrices/Linux/OOM injection/general
+  stack/timing/delivery rerun. Local only.
 - Native scalar-list replacement IR/VM is implemented at `7a4688d`: opcode 81,
   canonical pool/type/CFG/live/mutable/borrow and returned-owner proof, ordinary
   and retained dispatch, exact `49+N+3*B` Fuel and reused invocation scratch.

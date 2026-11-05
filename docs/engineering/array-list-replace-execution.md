@@ -87,12 +87,13 @@ discovery attempt are excluded. See the
 
 ## Remaining source integration
 
-Lower `a=[x,y];` only after ordered, one-time cell evaluation and exact existing
-type/arity validation. Emit replacement after the complete RHS and terminator
-validate; keep names/ownership unchanged and preserve existing repeated fills.
-Earlier RHS guest effects are not rolled back if later evaluation exits.
+The [source assignment successor](array-list-assignment.md) now lowers `a=[x,y];`
+after ordered, one-time cell evaluation, exact type/arity and terminator checks.
+It keeps names/ownership unchanged, preserves repeated fills and uses existing
+nonlocal-exit cleanup. Earlier RHS effects are not rolled back on later exits.
 
-No replacement source/version capability is enabled by this native increment.
+This original native increment enabled no replacement source/version capability;
+the linked source successor supplies its own public flag and execution evidence.
 General list expressions/projections, nested/resource elements, full L03/C05,
 Instance capacity/accounting/resumability, host/project CLI, worker, ABI and
 delivery remain open. Public CLI/full native matrices, Linux, allocator fault

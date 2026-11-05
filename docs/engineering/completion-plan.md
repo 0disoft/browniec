@@ -122,7 +122,9 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    atomically overwrites exact scalar extents without another owner or allocation.
    The [native execution successor](array-list-replace-execution.md) now adds
    independent IR proof and both VM drivers with exact prepaid replacement Fuel.
-   Finish whole-array assignment source, plus general list expressions; then continue with
+   The [source assignment successor](array-list-assignment.md) now connects
+   existing mutable destinations, ordered evaluation and nonlocal-exit cleanup.
+   Finish general list expressions; then continue with
    selected-place compound assignment, wider/resource-bearing
    tags and must-use
    handling. Reconcile operand/source/type/compile limits deliberately rather than

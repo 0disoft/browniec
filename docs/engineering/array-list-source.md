@@ -50,8 +50,9 @@ promise that every 4096-element source expression fits the experimental frontend
 `array_element_list_declarations` is the declaration-specific version capability.
 The [contextual successor](array-list-contexts.md) now integrates direct element-
 list CALL arguments, returned literals and borrowed temporaries through the same
-complete scalar evaluator. Whole-array list replacement and general list-expression
-forms remain pending. Existing
+complete scalar evaluator. The [assignment successor](array-list-assignment.md)
+now replaces existing mutable arrays after complete ordered evaluation.
+General list-expression forms remain pending. Existing
 named-array copy, CALL, return, borrowing and mutation work with initialized lists.
 This increment does not complete L03 or C05.
 

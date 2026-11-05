@@ -80,12 +80,13 @@ final run. See the
 
 The [native execution successor](array-list-replace-execution.md) now supplies
 opcode 81, complete independent admission and ordinary/retained VM dispatch with
-prepaid replacement Fuel. Source assignment and exit cleanup still remain open.
+prepaid replacement Fuel. The [source assignment successor](array-list-assignment.md)
+now connects ordered cell evaluation, exact types/arity and nonlocal-exit cleanup.
 
 The original storage increment introduced no opcode, public syntax or version flag. Existing
 operation prices, default 256 and ceiling 16000000 remain unchanged. Whole-array
-`a=[x,y];` still needs source evaluation/exit cleanup. It must use the existing
-destination directly, preserving the full-capacity behavior above. RHS effects
+`a=[x,y];` uses the existing destination directly, preserving the full-capacity
+behavior above. RHS effects
 occur in source order and are not rolled back if later evaluation fails.
 
 Full profiles, public CLI/full matrices, Linux, allocator fault injection,

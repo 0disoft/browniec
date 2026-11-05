@@ -82,8 +82,11 @@ creation's seven-unit padding reserve. Replacement-only programs also prepare
 and pay the same once-per-invocation maximum scratch; the retained coordinator
 adds its usual dispatch unit. Existing prices/default/ceiling are unchanged.
 Exact native ordinary/retained and one-short/one-more boundaries are covered by
-that focused selection. Whole-array `a=[x,y];` source and its public capability
-remain a later integration step; this is not a new public CLI source oracle.
+that focused selection. The [source assignment successor](array-list-assignment.md)
+now adds whole-array `a=[x,y];` and its public capability with the same schedule.
+For `var a=[0;2];a=[20,22];return a[0]+a[1];`, public backing requires 66083:
+66082 fails and 66083/66084 succeed. Native backing-eight and retained coordinator
+oracles require 555 and 410152 respectively; they retain their distinct schedules.
 
 ## Verification
 
