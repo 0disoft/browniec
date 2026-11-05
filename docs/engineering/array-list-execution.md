@@ -4,6 +4,11 @@ Date: 2026-11-06. Successor to [atomic list storage](array-list-storage.md).
 This connects native IR, complete admission and both VM drivers. Guest element-list
 syntax remains a separate L03 integration step.
 
+The [declaration](array-list-source.md) and [CALL/result/borrow](array-list-contexts.md)
+successors now connect source forms. The [replacement execution successor](array-list-replace-execution.md)
+adds opcode 81, read-only owner/token dispatch and its separate exact price; it
+does not yet enable whole-array element-list assignment source.
+
 ## Candidate encoding and independent proof
 
 Opcode 80 is `op, destination array, pool start low, pool start high, 0, 0, 0, 0`.

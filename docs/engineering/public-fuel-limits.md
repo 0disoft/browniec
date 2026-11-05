@@ -76,6 +76,15 @@ one-short and one-more budgets. Their native eight/sixteen-byte backing oracles
 also prove the existing result-token move and argument copy behavior. Retained
 invocations continue to use their distinct additive coordinator prices.
 
+The [native list replacement prerequisite](array-list-replace-execution.md)
+adds opcode 81 at `49 + N + 3*B`, retaining the existing owner/extent and removing
+creation's seven-unit padding reserve. Replacement-only programs also prepare
+and pay the same once-per-invocation maximum scratch; the retained coordinator
+adds its usual dispatch unit. Existing prices/default/ceiling are unchanged.
+Exact native ordinary/retained and one-short/one-more boundaries are covered by
+that focused selection. Whole-array `a=[x,y];` source and its public capability
+remain a later integration step; this is not a new public CLI source oracle.
+
 ## Verification
 
 `python -B tools/verify-public-fuel.py --profile development` runs focused native

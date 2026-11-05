@@ -1,3 +1,14 @@
+- Native scalar-list replacement IR/VM is implemented at `7a4688d`: opcode 81,
+  canonical pool/type/CFG/live/mutable/borrow and returned-owner proof, ordinary
+  and retained dispatch, exact `49+N+3*B` Fuel and reused invocation scratch.
+  Replacement keeps owner/token metadata read-only; retained dispatch skips the
+  512-token compatibility plan. Development/release each passed 13 native groups
+  on 164 checkout/Git-raw-matching inputs, 156 LF modules and 266-file discovery;
+  both locked LF mirrors pass. See the replacement-execution contract/evidence.
+  Existing prices/default256/cap16000000 remain. Next: ordered `a=[x,y];` source
+  evaluation/exit cleanup and its public capability; no such flag enabled here.
+  Full L03/C05/Instance/host/delivery/objective remain open. No public CLI/full
+  matrices/Linux/OOM injection/general stack/timing/delivery rerun. Local only.
 - Native exact-shape array-list replacement storage is implemented at `6e2b75f`.
   Complete scalar staging precedes writes into the existing extent; shared creation/
   replacement encoding keeps six domains and 4096 cells. Owner/token/order/epoch/
