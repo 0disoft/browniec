@@ -6,14 +6,18 @@ import vm as vm;
 import verifier as verifier;
 import std::bytes as bytes;
 
+// Match the existing Program in place: assigning the switch result to another
+// large local reserved a second staging object across native parser recursion.
 fn void value(ref u8[] source,i64 expected){
-    let programs::PublicProgram p=switch(compiler::compile_program(source,65536)){
-        case .ok(p):{p}case .err(_):{assert(false);return;}
+    switch(compiler::compile_program(source,65536)){
+        case .ok(p):{
+            var usize i=0;while(i<2){
+                switch(programs::run_public(ref p,16000000)){case .ok(n):{assert(n==expected);}case .err(_):{assert(false);}};
+                i+=1;
+            }
+        }
+        case .err(_):{assert(false);}
     };
-    var usize i=0;while(i<2){
-        switch(programs::run_public(ref p,16000000)){case .ok(n):{assert(n==expected);}case .err(_):{assert(false);}};
-        i+=1;
-    }
 }
 fn void rejected(ref u8[] source,u8 kind){switch(compiler::compile_program(source,65536)){
     case .ok(_):{assert(false);}case .err(e):{assert(e.kind==kind);}
@@ -85,7 +89,36 @@ fn void nested_initializer(usize count,bool image,bool pass){
     if(image){append(ref mut b,b"let ref u8[] marker=b\"*\";");}append(ref mut b,b"let n=");
     var usize i=0;while(i<count){append(ref mut b,b"id(");i+=1;}append(ref mut b,b"42");
     i=0;while(i<count){append(ref mut b,b",a)");i+=1;}append(ref mut b,b";return n;}");
-    if(pass){value(bytes::view(ref b),42);}else{rejected(bytes::view(ref b),4);}
+    if(image){retained_depth(bytes::view(ref b),pass);return;}
+    ordinary_depth(bytes::view(ref b),pass);
+}
+// These are the same retained compiler and VM used by compile_program/run_public.
+// Their large pass-through PublicProgram wrappers are covered by tool-free CLI
+// probes of the exact original sources, rather than reserved on this harness stack.
+fn void retained_depth(ref u8[] source,bool pass){
+    switch(compiler::compile_reference_returns(source,65536)){
+        case .ok(p):{
+            assert(pass);var usize i=0;while(i<2){
+                switch(programs::run_public_references(ref p,16000000)){case .ok(n):{assert(n==42);}case .err(_):{assert(false);}};
+                i+=1;
+            }
+        }
+        case .err(e):{assert(!pass && e.code.kind==4);}
+    };
+}
+// Ordinary depth checks do not need a retained-image PublicProgram. Keeping this
+// staging separate also leaves the retained depth path's native stack unchanged.
+fn void ordinary_depth(ref u8[] source,bool pass){
+    switch(compiler::compile(source)){
+        case .ok(p):{
+            assert(pass && verifier::verify(ref p).is_ok);
+            var usize i=0;while(i<2){
+                switch(vm::run(ref p,16000000)){case .ok(n):{assert(n==42);}case .err(_):{assert(false);}};
+                i+=1;
+            }
+        }
+        case .err(e):{assert(!pass && e.kind==4);}
+    };
 }
 @test fn void inferred_initializers_keep_32_deep_captured_calls_without_native_stack_overrides(){
     nested_initializer(32,false,true);nested_initializer(33,false,false);

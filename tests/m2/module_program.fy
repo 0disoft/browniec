@@ -183,3 +183,9 @@ fn void declaration_error(ref u8[] a,ref u8[] b,u8 kind,u8 first){
     value(library,b"module app;import lib as m;pub fn i32 chosen(){let p=((m::make()).child);return m::take((p));}",42);
     value(library,b"module app;import lib as m;pub fn i32 chosen(){let ref u8[] marker=b\"*\";return ((m::make()).child).x;}",42);
 }
+
+@test fn void conditional_values_cross_both_qualified_compiler_routes(){
+    let ref u8[] library=b"module lib;pub fn i32 answer(bool b){return if(b){20}else{0};}";
+    value(library,b"module app;import lib as m;pub fn i32 chosen(){let n=if(true){if(false){0}else{m::answer(true)}}else{0};return n+22;}",42);
+    value(library,b"module app;import lib as m;pub fn i32 chosen(){let ref u8[] marker=b\"*\";return if(true){m::answer(true)+22}else{0};}",42);
+}

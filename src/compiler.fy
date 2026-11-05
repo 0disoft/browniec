@@ -15,6 +15,7 @@ import struct_value_source as record_values;
 import types as types;
 import loops as loops;
 import patterns as patterns;
+import value_arm_syntax as arm_syntax;
 import propagation as propagation;
 import casts as casts;
 import array_source as arrays;
@@ -84,9 +85,10 @@ fn u8 opcode(u8 kind) {
 }
 fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize depth, u8 expected, u8 result_type, usize structure, ref mut loops::State loop_state) {
     if(depth>32){return .err(errors::make(4,s.begin));}
-    if((s.kind==2 || s.kind==5) && !word_is(source,s,b"switch")){
-        return named_operand(source,s,p,table,signatures,depth,expected,result_type,structure,loop_state);
-    }
+    let u8 control=arm_syntax::operand_kind(source,s);
+    if(control==1){return if_operand(source,s,p,table,signatures,depth,expected,result_type,structure,loop_state);}
+    if(control==2){return switch_value(source,s,p,table,signatures,depth,expected,result_type,structure,loop_state);}
+    if(s.kind==2 || s.kind==5){return named_operand(source,s,p,table,signatures,depth,expected,result_type,structure,loop_state);}
     return compound_operand(source,s,p,table,signatures,depth,expected,result_type,structure,loop_state);
 }
 fn Result<usize, errors::Error> compound_operand(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize depth, u8 expected, u8 result_type, usize structure, ref mut loops::State loop_state) {
@@ -111,9 +113,6 @@ fn Result<usize, errors::Error> compound_operand(ref u8[] source, ref mut lexer:
             return static_projection(source,s,p,table,signatures,ref view,at,depth,result_type,structure,loop_state);
         }
         return literal_projection(source,s,p,table,signatures,depth,result_type,structure,loop_state,false);
-    }
-    if(word_is(source,s,b"switch")) {
-        return switch_value(source,s,p,table,signatures,depth,expected,result_type,structure,loop_state);
     }
     if (s.kind == 46) {
         if (expected!=0 && !types::tagged(expected)) {return .err(errors::make(3,at));}
@@ -1557,16 +1556,11 @@ fn Result<Yield,errors::Error> value_arm(ref u8[] source,ref mut lexer::State s,
     let usize brace=lexer::punctuation(source,s,123)?;
     let usize outer=table.count;
     while(true) {
-        var bool regular=word_is(source,s,b"let") || word_is(source,s,b"var");
-        if(!regular && s.kind==2 && !locals::reserved(source[s.begin..s.end])) {
-            var lexer::State look=lexer::snapshot(s);
-            let usize next=lexer::next(source,ref mut look)?;
-            regular=look.kind==61 || (look.kind==91 && arrays::indexed_assignment(source, ref look)?) ||
-                (look.kind==46 && record_values::assigned(source, ref look)?);
-        }
+        let bool regular=arm_syntax::regular(source,s)?;
+        let bool conditional=word_is(source,s,b"if") && arm_syntax::conditional_value(source,s)?;
         // A leading switch remains the final expression. Wrap a statement
         // switch in a standalone block to make that statement intent explicit.
-        let bool structured=s.kind==123 || word_is(source,s,b"if") || word_is(source,s,b"while") ||
+        let bool structured=s.kind==123 || (word_is(source,s,b"if") && !conditional) || word_is(source,s,b"while") ||
             word_is(source,s,b"for") || word_is(source,s,b"return") ||
             word_is(source,s,b"break") || word_is(source,s,b"continue");
         if(!regular && !structured) {break;}
@@ -1580,6 +1574,44 @@ fn Result<Yield,errors::Error> value_arm(ref u8[] source,ref mut lexer::State s,
     let usize dropped=arrays::release_from(table,p,outer,s.begin)?;
     let usize close=lexer::punctuation(source,s,125)?;
     return .ok(Yield {.value=value,.terminal=false});
+}
+// Keep the aggregate Yield temporary off ordinary recursive scalar frames.
+fn Result<usize,errors::Error> if_operand(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    usize depth,u8 expected,u8 result_type,usize structure,ref mut loops::State loop_state){
+    let usize at=s.begin;
+    let Yield value=if_value(source,s,p,table,signatures,depth,expected,result_type,structure,loop_state)?;
+    if(value.terminal){return .err(errors::make(3,at));}return .ok(value.value);
+}
+// Boolean branches share the existing value-arm scope and nonlocal-exit
+// cleanup. Only continuing value paths store into the lazy exact-type join.
+fn Result<Yield,errors::Error> if_value(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    usize depth,u8 expected,u8 result_type,usize structure,ref mut loops::State loop_state){
+    let usize at=s.begin;
+    if(depth>30 || structure>30){return .err(errors::make(4,at));}
+    if(result_type==0){return .err(errors::make(3,at));}
+    let usize keyword=lexer::word(source,s,b"if")?;let usize open=lexer::punctuation(source,s,40)?;
+    let usize condition=expression(source,s,p,table,signatures,1,depth+1,2,result_type,structure+1,loop_state)?;
+    if(p.types[condition]!=2){return .err(errors::make(3,at));}
+    let usize close=lexer::punctuation(source,s,41)?;let usize branch=ir::raw(p,20,0,condition,0,at)?;
+    var locals::Table names=locals::snapshot(table);
+    let Yield positive=value_arm(source,s,p,ref mut names,signatures,depth+2,expected,result_type,structure+2,loop_state)?;
+    var usize slot=128;var usize skip=256;
+    if(!positive.terminal){let u8 tag=p.types[positive.value];slot=ir::slot(p,tag,at)?;
+        let usize stored=ir::raw(p,18,slot,positive.value,0,at)?;skip=ir::raw(p,19,0,0,0,at)?;}
+    let usize otherwise=lexer::word(source,s,b"else")?;
+    let usize target=p.count;let usize patched=ir::patch(p,branch,target,at)?;
+    let u8 context=if(slot==128){expected}else{p.types[slot]};names=locals::snapshot(table);
+    let Yield negative=if(word_is(source,s,b"if")){
+        if_value(source,s,p,ref names,signatures,depth+1,context,result_type,structure+1,loop_state)?
+    }else{value_arm(source,s,p,ref mut names,signatures,depth+2,context,result_type,structure+2,loop_state)?};
+    if(!negative.terminal){let u8 tag=p.types[negative.value];
+        if(slot==128){slot=ir::slot(p,tag,at)?;}else if(tag!=p.types[slot]){return .err(errors::make(3,at));}
+        let usize stored=ir::raw(p,18,slot,negative.value,0,at)?;}
+    if(slot==128){return .ok(Yield{.value=0,.terminal=true});}
+    if(skip!=256){let usize join=p.count;let usize patched=ir::patch(p,skip,join,at)?;}
+    let usize value=ir::emit(p,17,slot,0,at)?;return .ok(Yield{.value=value,.terminal=false});
 }
 fn Result<usize,errors::Error> switch_value(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,usize depth,u8 expected,u8 result_type, usize structure, ref mut loops::State loop_state) {
     let usize at=s.begin;

@@ -1,5 +1,7 @@
 """Build the native CLI and check local inference without runtime tools."""
 import argparse
+import ast
+import re
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -27,7 +29,10 @@ def main():
     selection.add_argument('--array-literal-projections', action='store_true', help='add list/repeated scalar projections, UTF-8 and all earlier list cases')
     selection.add_argument('--array-expression-projections', action='store_true', help='add grouped array values and projections')
     selection.add_argument('--record-expression-projections', action='store_true', help='add grouped record values and constructor projections')
+    selection.add_argument('--if-expressions', action='store_true', help='add scalar/tagged conditional values and prior aggregate regressions')
     args = parser.parse_args()
+    if args.if_expressions:
+        args.record_expression_projections = True
     if args.record_expression_projections:
         args.aggregate = True
         args.array_expression_projections = True
@@ -37,7 +42,7 @@ def main():
         args.array_list_assignment = True
     if args.array_list_assignment:
         args.array_lists = True
-    suite = 'record-expression-projections' if args.record_expression_projections else 'array-expression-projections' if args.array_expression_projections else 'array-literal-projections' if args.array_literal_projections else 'array-list-assignment' if args.array_list_assignment else 'array-list' if args.array_lists else 'option' if args.options else 'reference' if args.references else 'aggregate' if args.aggregate else 'local'
+    suite = 'if-expressions' if args.if_expressions else 'record-expression-projections' if args.record_expression_projections else 'array-expression-projections' if args.array_expression_projections else 'array-literal-projections' if args.array_literal_projections else 'array-list-assignment' if args.array_list_assignment else 'array-list' if args.array_lists else 'option' if args.options else 'reference' if args.references else 'aggregate' if args.aggregate else 'local'
     out = ROOT / ('build/' + suite + '-inference-cli') / args.profile
     out.mkdir(parents=True, exist_ok=True)
     receipt = out / 'receipt.json'
@@ -50,6 +55,9 @@ def main():
     production = sorted(p.relative_to(ROOT).as_posix() for p in (ROOT / 'src').rglob('*.fy'))
     assert all(b'\r' not in (ROOT / p).read_bytes() for p in production)
     paths = sorted(production + ['fairy.toml', 'fairy.lock', 'toolchain.json', 'tools/verify-local-inference-cli.py'])
+    if args.if_expressions:
+        paths.append('tests/m2/if_expressions.fy')
+        paths.sort()
     inputs = [dict(path=p, sha256=sha(ROOT / p)) for p in paths]
     captured = datetime.now(timezone.utc).isoformat()
     head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
@@ -334,6 +342,35 @@ def main():
                     prefix, suffix = ('id((p),', ')') if first else ('id(', ',(p))')
                     source = ('module main;struct P{i32 x;}fn i32 id(' + parameters + '){return n;}fn i32 main(){let p=P{.x=0};' + ('let ref u8[] marker=b"*";' if retained else '') + 'return ' + prefix * count + '42' + suffix * count + ';}').encode()
                     cases.append((f'record-grouped-call-{count}-{retained}-{first}', source, 'run' if count == 32 else 'check', 42 if count == 32 else None, None if count == 32 else 'compile_limit', 16000000 if count == 32 else None, (reference if retained else record_read) if count == 32 else scalar))
+    if args.if_expressions:
+        # Reuse literal fixtures as data; guest sources still execute in the native
+        # CLI under the empty runtime tool PATH. No test module is imported.
+        fixtures = (ROOT / 'tests/m2/if_expressions.fy').read_text(encoding='utf-8')
+        sources = re.findall(r'\bvalue\((b"(?:[^"\\]|\\.)*")\);', fixtures)
+        assert len(sources) == 19
+        for index, raw in enumerate(sources):
+            profile = {11: 'brownie.m2-array-write/1', 14: reference, 15: reference,
+                       16: 'brownie.m2-array-read/1', 17: 'brownie.m2-array-read/1'}.get(index, scalar)
+            cases.append((f'if-value-{index}', ast.literal_eval(raw), 'run', 42, None, 16000000, profile))
+        failures = re.findall(r'\brejected\((b"(?:[^"\\]|\\.)*"),(\d+)\);', fixtures)
+        assert len(failures) == 7
+        for index, (raw, kind) in enumerate(failures):
+            error = {2: 'syntax', 3: 'type', 5: 'verification'}[int(kind)]
+            cases.append((f'if-reject-{index}', ast.literal_eval(raw), 'check', None, error, None, scalar))
+        # Complement the native ordinary/retained parser routes with the exact
+        # original inferred-local source through the public native CLI.
+        for count in (32, 33):
+            for retained in (False, True):
+                source = ('module main;fn i32 id(i32 x,i32[1] a){return x;}fn i32 main(){let i32[1] a=[0;1];' + ('let ref u8[] marker=b"*";' if retained else '') + 'let n=' + 'id(' * count + '42' + ',a)' * count + ';return n;}').encode()
+                cases.append((f'if-original-inferred-call-{count}-{retained}', source, 'run' if count == 32 else 'check', 42 if count == 32 else None, None if count == 32 else 'compile_limit', 16000000 if count == 32 else None, (reference if retained else 'brownie.m2-array-read/1') if count == 32 else scalar))
+        for truth, exact in [('true', 7), ('false', 6)]:
+            source = f'module main;fn i32 main(){{return if({truth}){{{42 if truth == "true" else 0}}}else{{{0 if truth == "true" else 42}}};}}'.encode()
+            for fuel, error in [(exact, None), (exact - 1, 'fuel')]:
+                cases.append((f'if-fuel-{truth}-{fuel}', source, 'run', None if error else 42, error, fuel, scalar))
+        for count, nested, ok in [(16, True, True), (17, True, False), (15, False, True), (16, False, False)]:
+            prefix = 'if(true){' if nested else 'if(if(true){true}else{false}){'
+            source = ('module main;fn i32 main(){return ' + prefix * count + '42' + '}else{0}' * count + ';}').encode()
+            cases.append((f'if-depth-{count}-{nested}', source, 'run' if ok else 'check', 42 if ok else None, None if ok else 'compile_limit', 16000000 if ok else None, scalar))
     version = None
     if args.array_lists:
         ran = subprocess.run([str(exe), '--version', '--json'], cwd=empty, env=env, capture_output=True, timeout=15)
@@ -351,6 +388,8 @@ def main():
         assert version['array_expression_projections'] is True and version['array_grouped_values'] is True
     if args.record_expression_projections:
         assert version['record_expression_projections'] is True and version['record_grouped_values'] is True
+    if args.if_expressions:
+        assert version['if_expressions'] is True
     results = []
     for identity, source, mode, expected, error, fuel, profile in cases:
         fixture = out / (identity + '.brc')
@@ -374,7 +413,7 @@ def main():
     assert all(sha(ROOT / i['path']) == i['sha256'] for i in inputs)
     assert sha(compiler) == compiler_hash and sha(exe) == binary_hash
     data = dict(schema='browniec.local-inference-cli/v1', status='passed', profile=args.profile,
-                selection='record-expression-projections' if args.record_expression_projections else 'array-expression-projections' if args.array_expression_projections else 'array-literal-projections' if args.array_literal_projections else 'array-list-assignment' if args.array_list_assignment else 'array-list' if args.array_lists else 'option' if args.options else 'reference' if args.references else 'aggregate' if args.aggregate else 'scalar',
+                selection='if-expressions' if args.if_expressions else 'record-expression-projections' if args.record_expression_projections else 'array-expression-projections' if args.array_expression_projections else 'array-literal-projections' if args.array_literal_projections else 'array-list-assignment' if args.array_list_assignment else 'array-list' if args.array_lists else 'option' if args.options else 'reference' if args.references else 'aggregate' if args.aggregate else 'scalar',
                 startingHead=head, inputSnapshotCapturedAt=captured, inputs=inputs, compilerSha256=compiler_hash,
                 compilerVersion=subprocess.check_output([str(compiler), '--version'], text=True).strip(),
                 buildCommand=[compiler.relative_to(ROOT).as_posix(), *command[1:]],
