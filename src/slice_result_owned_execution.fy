@@ -23,6 +23,10 @@ import slice_result_call_ir as recipes;
 pub fn Result<usize,errors::Error> list(ref ir::Program p,usize pc,ref mut frames::Frames bindings,
     ref mut runtime::State state,ref i64[] registers,ref mut u8[] data,
     ref mut vec::Vec<i64> cells,ref mut bytes::Buffer scratch,usize fuel){
+    if(pc<p.count && pc<256 && p.code[pc*8]==81){
+        return list_values::replace(p,pc,bindings.frame,ref state.runtime.owners,ref bindings.tokens,
+            data,registers,cells,scratch,fuel);
+    }
     var arrays::State plan=arrays::State{.owners=state.runtime.owners,.tokens=bindings.tokens};
     let usize remaining=list_values::step(p,pc,bindings.frame,ref mut plan,data,registers,cells,scratch,fuel)?;
     state.runtime.owners=plan.owners;bindings.tokens=plan.tokens;return .ok(remaining);

@@ -11,7 +11,7 @@ pub fn usize start(ref ir::Program p,usize pc){
 pub fn Result<usize,errors::Error> metadata(ref ir::Program p){
     if(p.count>256 || p.arrays.count>16 || p.list_used>4096){return .err(errors::make(5,0));}
     var usize cursor=0;var usize pc=0;
-    while(pc<p.count){if(p.code[pc*8]==80){let usize id=p.code[pc*8+1] as usize;
+    while(pc<p.count){if(p.code[pc*8]==80 || p.code[pc*8]==81){let usize id=p.code[pc*8+1] as usize;
         if(id>=p.arrays.count || start(p,pc)!=cursor){return .err(errors::make(5,pc));}
         let usize length=p.arrays.lengths[id];
         if(length==0 || length>4096 || cursor>p.list_used || length>p.list_used-cursor){return .err(errors::make(5,pc));}

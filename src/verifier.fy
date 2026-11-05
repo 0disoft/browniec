@@ -107,7 +107,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
             pc += 1; continue;
         }
         if ((op == 8 || op == 39 || op == 50) && static_live != 0) { return .err(errors::make(5, pc)); }
-        if (op < 1 || (op > 62 && op!=80) || (op != 52 && ((op!=24 && op!=47 && op!=49 && op!=53 && op!=59 && op!=61 && p.code[at + 4] != 0) ||
+        if (op < 1 || (op > 62 && op!=80 && op!=81) || (op != 52 && ((op!=24 && op!=47 && op!=49 && op!=53 && op!=59 && op!=61 && p.code[at + 4] != 0) ||
             (op!=47 && p.code[at + 5] != 0) || p.code[at + 6] != 0 || p.code[at + 7] != 0))) { return .err(errors::make(5, pc)); }
         // Strict analysis retains its gate; executable proof may admit this CALL.
         if(op==9 && (live>>48)!=0) {
@@ -153,7 +153,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
                 (states[a * 2 + 1] & defined.high) != states[a * 2 + 1]) { return .err(errors::make(5, pc)); }
             pc+=1; continue;
         }
-        if(op==80){
+        if(op==80 || op==81){
             live=array_verifier::step(p,pc,f,ref mut defined,ref mut written,live)?;
         }else if (op >= 54) {
             live = reborrows::step(p, loans, pc, f, ref mut defined, ref mut written, live)?;

@@ -102,7 +102,7 @@ fn Result<i64, errors::Error> core(ref ir::Program p, usize fuel,
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
-        if(op==80){let usize base=frame*128;
+        if(op==80 || op==81){let usize base=frame*128;
             remaining=lists::step(p,pc,frame,arrays,bytes::view_mut(payload),ref registers[base..base+128],ref mut list_cells,ref mut list_scratch,remaining)?;
             pc+=1;continue;
         }

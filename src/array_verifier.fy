@@ -24,7 +24,7 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, usize pc, usize f,
     let u8 element = p.arrays.elements[id];
     if (slices::exclusive(p, id, live) ||
         ((op == 34 || op == 38) && slices::exclusive(p, a, live))) { return .err(errors::make(5, pc)); }
-    if ((op == 36 || op == 37 || op == 38 || op == 40) && slices::borrowed(p, id, live)) { return .err(errors::make(5, pc)); }
+    if ((op == 36 || op == 37 || op == 38 || op == 40 || op==81) && slices::borrowed(p, id, live)) { return .err(errors::make(5, pc)); }
     if (op == 33 || op == 34 || op==80) {
         if ((op!=80 && b != 0) || (live & mask) != 0 || (parameters::initial(p, f) & mask) != 0) { return .err(errors::make(5, pc)); }
         if(op==80){let usize checked=lists::operands(p,pc,f,defined)?;}
@@ -51,6 +51,10 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, usize pc, usize f,
         if((op != 53 && b!=0) || element!=10 || dst<p.register_starts[f] || dst>=p.register_ends[f] ||
             p.slots[dst] || registers::contains(written,dst) || p.types[dst]!=2){return .err(errors::make(5,pc));}
         registers::insert(defined,dst);registers::insert(written,dst);return .ok(live);
+    }
+    if(op==81){
+        if(!p.arrays.mutable[id]){return .err(errors::make(5,pc));}
+        let usize checked=lists::operands(p,pc,f,defined)?;return .ok(live);
     }
     if(op==40) {
         if(b!=0 || !p.arrays.mutable[id] || !readable(p,defined,a,f,element)) {return .err(errors::make(5,pc));}

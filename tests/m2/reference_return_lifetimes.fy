@@ -85,6 +85,8 @@ fn calls::Program source_closed(){var calls::Program p=unit(1,false,0,false);p.b
     swap(ref mut p.body,read,original);swap(ref mut p.body,close,original);return p;
 }
 fn void effect(ref mut ir::Program p,usize at,u8 op,usize root){let usize init=find(p,33,0);let usize fill=p.code[init*8+2] as usize;
+    if(op==81){assert(p.arrays.lengths[root]==1 && p.list_used==0);p.list_operands[0]=byte(fill);p.list_used=1;
+        insert(p,at,81,root,0,0);return;}
     let usize open=find(p,54,0);let usize index=p.code[open*8+2] as usize;
     insert(p,at,op,root,if(op==36){index}else if(op==38){root}else{fill},if(op==36){fill}else{0});
 }
@@ -104,11 +106,11 @@ fn void effect(ref mut ir::Program p,usize at,u8 op,usize root){let usize init=f
     rejected_at(ref p,read);
 }
 @test fn void writes_fill_and_assignment_reject_at_the_exact_effect_while_result_is_live(){
-    let u8[3] ops=[36,38,40];var usize i=0;while(i<3){var calls::Program p=source_closed();
+    let u8[4] ops=[36,38,40,81];var usize i=0;while(i<4){var calls::Program p=source_closed();
         let usize at=find(ref p.body,71,0);effect(ref mut p.body,at,ops[i],0);rejected_at(ref p,at);i+=1;}
 }
 @test fn void last_close_allows_mutation_and_an_unrelated_owner_remains_writable(){
-    let u8[3] ops=[36,38,40];var usize i=0;while(i<3){var calls::Program p=source_closed();
+    let u8[4] ops=[36,38,40,81];var usize i=0;while(i<4){var calls::Program p=source_closed();
         let usize at=find(ref p.body,37,0);effect(ref mut p.body,at,ops[i],0);accepted(ref p);i+=1;}
     var calls::Program p=source_closed();let usize other=built(ir::array_in(ref mut p.body,0,10,1,true,0));assert(other==1);
     let usize init=find(ref p.body,33,0);let usize fill=p.body.code[init*8+2] as usize;insert(ref mut p.body,init,33,other,fill,0);

@@ -37,6 +37,7 @@ import std::num as num;
 // 62 private reborrow end: dst=child,a=parent,b=0; restore parent authority.
 // 53 register UTF-8 range: bool dst,a=array,b=start usize register,byte4=end register;5..7=0.
 // 80 atomic array element list: dst=array,a/b=little-endian operand-pool start.
+// 81 exact-shape element-list replacement of a live mutable array, same operands.
 // Arity is the exact destination length; bytes4..7 are reserved zero.
 pub struct Program {
     u8[2048] code;
@@ -230,14 +231,21 @@ pub fn Result<usize, errors::Error> array_init(ref mut Program p, usize id, usiz
     return raw(p, 33, id, fill, 0, offset);
 }
 pub fn Result<usize,errors::Error> array_values(ref mut Program p,usize id,ref usize[] values,usize offset){
+    return list_values(p,80,id,values,offset);
+}
+pub fn Result<usize,errors::Error> array_replace_values(ref mut Program p,usize id,ref usize[] values,usize offset){
+    return list_values(p,81,id,values,offset);
+}
+fn Result<usize,errors::Error> list_values(ref mut Program p,u8 op,usize id,ref usize[] values,usize offset){
     if(id>=16 || id>=p.arrays.count || values.len!=p.arrays.lengths[id] || values.len==0 ||
         values.len>4096 || !types::scalar(p.arrays.elements[id])){return .err(errors::make(3,offset));}
+    if(op==81 && !p.arrays.mutable[id]){return .err(errors::make(3,offset));}
     if(p.count>=256 || p.list_used>4096 || values.len>4096-p.list_used){return .err(errors::make(4,offset));}
     var usize i=0;while(i<values.len){let usize r=values[i];
         if(r>=128 || r>=p.registers || p.types[r]!=p.arrays.elements[id] || p.slots[r] ||
             p.array_parameters[r]!=0 || p.record_parameters[r]!=0 || p.slice_parameters[r]!=0){return .err(errors::make(3,offset));}i+=1;
     }
-    let usize start=p.list_used;let usize pc=raw(p,80,id,start%256,start/256,offset)?;
+    let usize start=p.list_used;let usize pc=raw(p,op,id,start%256,start/256,offset)?;
     i=0;while(i<values.len){p.list_operands[start+i]=byte(values[i],offset)?;i+=1;}
     p.list_used=start+values.len;return .ok(pc);
 }

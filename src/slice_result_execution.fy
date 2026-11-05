@@ -211,7 +211,7 @@ fn Result<Outcome,errors::Error> run(ref body_ir::Program body,ref u8[] paramete
         let usize dst=body.code[at+1] as usize;let usize a=body.code[at+2] as usize;let usize b=body.code[at+3] as usize;
         let usize base=frame*128;
         if(remaining==0){return .err(errors::make(8,offset));}remaining-=1;
-        if(op==80){
+        if(op==80 || op==81){
             remaining=owned::list(body,pc,bindings,state,ref registers[base..base+128],data,list_cells,list_scratch,remaining)?;
             pc+=1;continue;
         }

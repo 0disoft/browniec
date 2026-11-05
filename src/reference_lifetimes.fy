@@ -31,7 +31,7 @@ pub fn Result<usize[16],errors::Error> prepare(ref ir::Program p,ref statics::Si
 fn Result<usize,errors::Error> guard(ref ir::Program p,usize pc,usize protected){
     let usize at=pc*8;let u8 op=p.code[at];let usize dst=p.code[at+1] as usize;
     let usize a=p.code[at+2] as usize;let usize b=p.code[at+3] as usize;let usize one=1;
-    if(op==36 || op==37 || op==38 || op==40){
+    if(op==36 || op==37 || op==38 || op==40 || op==81){
         if((protected&(one<<dst))!=0){return .err(invalid(pc));}
     }else if(op==60 || op==61 || (op==54 && ir::exclusive(p,dst))){
         let usize root=p.slice_roots[dst] as usize;
