@@ -4,6 +4,7 @@ import ir as ir;
 import vm as vm;
 import errors as errors;
 import fuel as meter;
+import program_image as programs;
 
 fn ir::Program compiled(ref u8[] source){
     return switch(compiler::compile(source)){case .ok(p):{p}case .err(_):{assert(false);ir::empty()}};
@@ -65,4 +66,31 @@ fn void exact(ref ir::Program p,usize backing){
     var ir::Program p=compiled(b"module main;fn i32 main(){let i32[1] a=[42;1];return a[0];}");
     p.code[0]=255;
     assert(switch(vm::run_with_array_limit(ref p,0,65537)){case .err(e):{e.kind==5}case .ok(_):{false}});
+}
+
+// Independent whole-invocation numbers include the public 64KiB arena and
+// one scratch preparation, including lists reached through CALL and replacement.
+fn void public_exact(ref u8[] source,usize price,bool reference){
+    let programs::PublicProgram p=switch(compiler::compile_program(source,65536)){
+        case .ok(v):{v}case .err(_):{assert(false);return;}
+    };
+    assert((programs::public_profile(ref p)==8)==reference);
+    shortage(programs::run_public(ref p,price-1));
+    completed(programs::run_public(ref p,price));
+    completed(programs::run_public(ref p,price+1));
+    completed(programs::run_public(ref p,meter::cli_limit()));
+}
+@test fn void list_declarations_calls_returns_and_replacement_keep_exact_public_costs(){
+    public_exact(b"module main;fn i32 main(){let a=[20,22];return a[0]+a[1];}",66017,false);
+    public_exact(b"module main;fn i32 take(i32[2] a){return a[0]+a[1];}fn i32 main(){return take([20,22]);}",66340,false);
+    public_exact(b"module main;fn i32[2] make(){return [20,22];}fn i32 main(){let a=make();return a[0]+a[1];}",66083,false);
+    public_exact(b"module main;fn i32 main(){var a=[0;2];a=[20,22];return a[0]+a[1];}",66083,false);
+}
+@test fn void literal_projections_keep_ordinary_and_reference_routing_costs_distinct(){
+    public_exact(b"module main;fn i32 main(){return [20,42][1];}",65978,false);
+    public_exact(b"module main;fn i32 main(){return [42;2][1];}",65698,false);
+    // The unused image view adds OPEN 16 and two dispatch units to the existing
+    // 410045/409765 retained-coordinator prices; it selects actual public routing.
+    public_exact(b"module main;fn i32 main(){let ref u8[] marker=b\"*\";return [20,42][1];}",410063,true);
+    public_exact(b"module main;fn i32 main(){let ref u8[] marker=b\"*\";return [42;2][1];}",409783,true);
 }

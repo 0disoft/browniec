@@ -13,7 +13,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parent.parent
 MODULES = ['public_fuel', 'slice_public_canonical', 'slice_mutable_execution',
-           'slice_result_fuel', 'slice_result_call_execution']
+           'slice_result_fuel', 'slice_result_call_execution', 'reference_return_execution']
 
 
 def digest(path):
@@ -129,6 +129,22 @@ def main():
         for source in costly:
             invoke(source, ['--fuel', 1000000], 'fuel')
             invoke(source, ['--fuel', 16000000])
+        # Independent numeric oracles for current source features. Exercise the
+        # actual public route (not a forced private entry) at all three boundaries.
+        precise = [
+            ('module main;fn i32 main(){let a=[20,22];return a[0]+a[1];}', 66017),
+            ('module main;fn i32 take(i32[2] a){return a[0]+a[1];}fn i32 main(){return take([20,22]);}', 66340),
+            ('module main;fn i32[2] make(){return [20,22];}fn i32 main(){let a=make();return a[0]+a[1];}', 66083),
+            ('module main;fn i32 main(){var a=[0;2];a=[20,22];return a[0]+a[1];}', 66083),
+            ('module main;fn i32 main(){return [20,42][1];}', 65978),
+            ('module main;fn i32 main(){return [42;2][1];}', 65698),
+            ('module main;fn i32 main(){let ref u8[] marker=b"*";return [20,42][1];}', 410063),
+            ('module main;fn i32 main(){let ref u8[] marker=b"*";return [42;2][1];}', 409783),
+        ]
+        for source, price in precise:
+            invoke(source, ['--fuel', price - 1], 'fuel')
+            invoke(source, ['--fuel', price])
+            invoke(source, ['--fuel', price + 1])
         version_run = subprocess.run([str(artifact), '--version', '--json'], cwd=empty, env=env,
                                      capture_output=True, timeout=15)
         metadata = json.loads(version_run.stdout)

@@ -219,7 +219,8 @@ fn Result<Outcome,errors::Error> run(ref body_ir::Program body,ref u8[] paramete
         if(op==57 || op==58){byte_loan=body_ir::slice_element(body,a,offset)?==10;}
         if(op==71 || op==72 || byte_loan){
             if(!byte_loan && words::returned(static_words[frame*16+a])){
-                let usize extra=meter::reference_result_lookup();let usize price=if(op==71){4131}else{4097};
+                let usize extra=meter::reference_result_lookup();
+                let usize price=meter::slice_base(if(op==71){58}else{57},1);
                 if(remaining<extra+price){return .err(errors::make(8,offset));}remaining-=extra;
             }
             let access::Source source=if(byte_loan){access::loan(bindings.sites[frame*16+a])}
