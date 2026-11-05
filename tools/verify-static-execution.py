@@ -25,11 +25,11 @@ def write(path, value):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--profile', choices=['development', 'release'], required=True)
-    parser.add_argument('--selection', choices=['all', 'statics', 'views', 'ranges', 'range-core', 'call-ir', 'call-proof', 'call-transfer-core', 'call-transfer', 'call-mixed', 'reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes'], default='all',
+    parser.add_argument('--selection', choices=['all', 'statics', 'views', 'ranges', 'range-core', 'call-ir', 'call-proof', 'call-transfer-core', 'call-transfer', 'call-mixed', 'reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts'], default='all',
                         help='statics runs the changed image/proof/VM suites; all adds return and source regressions')
     args = parser.parse_args()
     profile = args.profile
-    selections = {'all': FILES + ['tests/m2/static_views.fy', 'tests/m2/static_ranges.fy', 'tests/m2/static_call_ir.fy', 'tests/m2/static_call_admission.fy', 'tests/m2/static_call_execution.fy', 'tests/m2/static_call_mixed.fy', 'tests/m2/reference_access.fy', 'tests/m2/reference_call_admission.fy', 'tests/m2/reference_words.fy', 'tests/m2/reference_call_execution.fy', 'tests/m2/reference_call_mixed.fy', 'tests/m2/reference_return_ir.fy', 'tests/m2/reference_return_lifetimes.fy'],
+    selections = {'all': FILES + ['tests/m2/static_views.fy', 'tests/m2/static_ranges.fy', 'tests/m2/static_call_ir.fy', 'tests/m2/static_call_admission.fy', 'tests/m2/static_call_execution.fy', 'tests/m2/static_call_mixed.fy', 'tests/m2/reference_access.fy', 'tests/m2/reference_call_admission.fy', 'tests/m2/reference_words.fy', 'tests/m2/reference_call_execution.fy', 'tests/m2/reference_call_mixed.fy', 'tests/m2/reference_return_ir.fy', 'tests/m2/reference_return_lifetimes.fy', 'tests/m2/reference_receipts.fy'],
                   'statics': FILES[:3], 'views': ['tests/m2/static_views.fy'],
                   'ranges': ['tests/m2/static_ranges.fy'] + FILES[:2],
                   'range-core': ['tests/m2/static_ranges.fy'],
@@ -44,6 +44,8 @@ def main():
                   'reference-proof': ['tests/m2/reference_call_admission.fy',
                                       'tests/m2/static_call_admission.fy',
                                       'tests/m2/static_call_execution.fy'],
+                  'reference-receipts': ['tests/m2/reference_receipts.fy', 'tests/m2/reference_words.fy',
+                                         'tests/m2/slice_result_bindings.fy', 'tests/m2/reference_call_execution.fy'],
                   'reference-return-lifetimes': ['tests/m2/reference_return_lifetimes.fy',
                                                  'tests/m2/reference_return_ir.fy',
                                                  'tests/m2/reference_call_execution.fy'],
@@ -124,7 +126,15 @@ def main():
         focused = {'reference_call_execution': {
             'the_same_formal_executes_image_and_runtime_bytes_at_exact_fuel',
             'aliases_and_narrowed_ranges_survive_logical_parent_close_and_forwarding'}}
-    exact = args.selection in ('reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes')
+    if args.selection == 'reference-receipts':
+        focused = {
+            'slice_result_bindings': {'mutable_result_close_publishes_the_fresh_parent_binding',
+                                      'terminal_forward_consumes_held_bindings_after_canonical_handoff',
+                                      'seventeen_nested_receipts_share_one_slot_without_losing_outer_generations',
+                                      'failed_final_root_drop_preserves_the_live_binding_and_runtime'},
+            'reference_call_execution': {'the_same_formal_executes_image_and_runtime_bytes_at_exact_fuel',
+                                         'aliases_and_narrowed_ranges_survive_logical_parent_close_and_forwarding'}}
+    exact = args.selection in ('reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts')
     for path in files:
         if not exact:
             command.extend(['--file', path])

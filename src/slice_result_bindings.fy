@@ -17,12 +17,28 @@ pub fn State empty(){return State{.held=[unused();47],.locations=[512;47],.paren
 pub fn usize find(ref State state,usize location){
     var usize i=0;while(i<47){if(state.held[i].active && state.locations[i]==location){return i;}i+=1;}return 47;
 }
+// Ordinary sites keep 0..511; returned universal sites use 1024..1535.
+// The existing absent sentinel 512 and all physical receipt slots remain.
+fn usize location_frame(usize location){
+    return if(location<512){location/16}else if(location>=1024 && location<1536){(location-1024)/16}else{32};
+}
+pub fn Result<usize,errors::Error> reference_location(usize frame,usize site){
+    if(frame>=32 || site>=16){return .err(errors::make(5,0));}return .ok(1024+frame*16+site);
+}
 pub fn bool in_frame(ref State state,usize frame){
-    var usize i=0;while(i<47){if(state.held[i].active && state.locations[i]/16==frame){return true;}i+=1;}return false;
+    var usize i=0;while(i<47){if(state.held[i].active && location_frame(state.locations[i])==frame){return true;}i+=1;}return false;
 }
 pub fn Result<usize,errors::Error> retain(ref mut State state,usize location,usize parent,runtime::Held held){
-    if(location>=512 || parent>=512 || location==parent || location/16!=parent/16 ||
-        !held.active || held.frame!=location/16 || held.issued.slot>=16 || held.issued.generation==0 ||
+    if(location>=512 || parent>=512 || location==parent || location/16!=parent/16){return .err(errors::make(5,0));}
+    return store(state,location,parent,held);
+}
+pub fn Result<usize,errors::Error> retain_reference(ref mut State state,usize frame,usize site,runtime::Held held){
+    let usize location=reference_location(frame,site)?;
+    if(held.exclusive || held.view.element!=10){return .err(errors::make(5,0));}
+    return store(state,location,512,held);
+}
+fn Result<usize,errors::Error> store(ref mut State state,usize location,usize parent,runtime::Held held){
+    if(!held.active || held.frame!=location_frame(location) || held.issued.slot>=16 || held.issued.generation==0 ||
         find(state,location)!=47){return .err(errors::make(5,0));}
     var usize free=47;var usize i=0;while(i<47){
         let runtime::Held old=state.held[i];
@@ -47,7 +63,7 @@ pub fn Result<Closed,errors::Error> close(ref mut State state,ref mut runtime::S
 // Only after successful terminal handoff/abort has already consumed that frame's
 // canonical children/readers. This must never substitute for ordinary CLOSE.
 pub fn void transferred(ref mut State state,usize frame){
-    var usize i=0;while(i<47){if(state.held[i].active && state.locations[i]/16==frame){
+    var usize i=0;while(i<47){if(state.held[i].active && location_frame(state.locations[i])==frame){
         state.held[i]=unused();state.locations[i]=512;state.parents[i]=512;
     }i+=1;}
 }

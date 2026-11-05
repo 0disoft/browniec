@@ -47,3 +47,6 @@ pub fn usize static_return(){return 48;}
 // entry/leave and owned value copies remain their existing separate charges.
 pub fn usize reference_call(usize arguments,usize runtime){return static_call(arguments)+4097*runtime;}
 pub fn usize reference_parameter(bool runtime){return 16+if(runtime){4097}else{0};}
+// Two sparse receipt lookups (47 each) and one alias scan (16), rounded up.
+// Physical close remains prepaid by the native handoff that issued Held.
+pub fn usize reference_result_close(){return 128;}
