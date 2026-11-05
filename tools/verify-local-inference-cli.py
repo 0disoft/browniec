@@ -110,6 +110,9 @@ def main():
             ('borrow-conflict-error', b'module main;fn i32 main(){var a=[42;1];let p=ref a;let q=ref mut a;return p[0];}', 'check', None, 'verification', None, 'brownie.m2-array-write/1'),
             ('selected-owner-error', b'module main;fn ref u8[] id(ref u8[] p){return ref p;}fn i32 main(){var u8[1] a=[42;1];let p=id(ref a);let q=p;a[0]=0;return q[0] as i32;}', 'check', None, 'verification', None, scalar),
         ]
+        shadow = b'module main;fn ref u8[] owner(){return b"!";}fn ref u8[] take(ref u8[] input){let i32 owner=0;let x=owner;return ref input;}fn i32 main(){return take(ref b"*")[0] as i32;}'
+        cases += [('shadowed-reference-function-check', shadow, 'check', None, None, None, reference),
+                  ('shadowed-reference-function-run', shadow, 'run', 42, None, 16000000, reference)]
         native = b'module main;fn i32 main(){var i32[1] a=[0;1];{let p=ref mut a;p[0]=42;}let p=ref a;let q=p;return q[0];}'
         cases += [('reference-exact-fuel', native, 'run', 42, None, 286935, 'brownie.m2-array-write/1'),
                   ('reference-short-fuel', native, 'run', None, 'fuel', 286934, 'brownie.m2-array-write/1'),

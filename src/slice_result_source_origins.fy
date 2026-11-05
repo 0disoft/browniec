@@ -96,7 +96,11 @@ fn Result<u8,errors::Error> inferred_tag(ref u8[] source,ref mut lexer::State s,
         if(lexer::equal(source[s.begin..s.end],source[names.begins[i]..names.ends[i]])){return .ok(names.tags[i]);}
     }
     let usize f=functions::find(source,t,s.begin,s.end);
-    return .ok(if(f<t.count && t.return_slice_elements[f]!=0){t.return_slice_elements[f]}else{255});
+    if(f>=t.count || t.return_slice_elements[f]==0){return .ok(255);}
+    // A scalar local may shadow this function. Only an actual call supplies
+    // a function-result type; a bare identifier must remain a local lookup.
+    let usize next=lexer::next(source,s)?;
+    return .ok(if(s.kind==40){t.return_slice_elements[f]}else{255});
 }
 fn Result<u8,errors::Error> body(ref u8[] source,ref functions::Table t,ref u8[] summaries,usize f){
     var Names names=Names{.begins=[0;64],.ends=[0;64],.depths=[0;64],.tags=[0;64],.inputs=[0;64],.count=0};
