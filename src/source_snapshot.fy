@@ -129,3 +129,7 @@ pub fn Result<Position,Error> position(ref Snapshot p,Span span){
     while(at<begin){if(data[at]==10){line+=1;column=1;}else{column+=1;}at+=1;}
     return .ok(Position{.line=line,.byte_column=column});
 }
+
+// Explicit immutable copy, preserving original identities/bytes without retaining
+// a module index's compiler-only binding tables or borrowing its resource fields.
+pub fn Snapshot duplicate(ref Snapshot snapshot){return Snapshot{.sources=*sources(snapshot)};}

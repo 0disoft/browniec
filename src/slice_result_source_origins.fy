@@ -3,6 +3,7 @@ import lexer as lexer;
 import functions as functions;
 import types as types;
 import errors as errors;
+import source_context as context;
 
 // Advisory lowering hints, never admission. Final IR must independently ground
 // the same origin through CALL and alias definitions before it can execute.
@@ -56,7 +57,7 @@ fn Result<u8,errors::Error> expression(ref u8[] source,ref mut lexer::State s,
         if(look.kind==40){return expression(source,s,t,summaries,names,tag,depth+1);}
         return .ok(lookup(source,names,s,tag));
     }
-    if(s.kind!=2){return .ok(255);}
+    if(s.kind!=2 && s.kind!=5){return .ok(255);}
     let usize target=functions::find(source,t,s.begin,s.end);
     if(target>=t.count || t.return_slice_elements[target]!=tag){return .ok(255);}
     let usize name=lexer::next(source,s)?;let usize open=lexer::punctuation(source,s,40)?;
@@ -76,7 +77,7 @@ fn Result<u8,errors::Error> body(ref u8[] source,ref functions::Table t,ref u8[]
             let usize added=add(ref mut names,t.param_begins[at],t.param_ends[at],0,t.param_slice_elements[at],input)?;}i+=1;
     }
     let usize parameters=names.count;var usize depth=0;var usize returns=0;var u8 selected=0;
-    var lexer::State s=lexer::empty();s.cursor=t.bodies[f];let usize first=lexer::next(source,ref mut s)?;
+    var lexer::State s=context::state(source,ref t.context,t.bodies[f])?;let usize first=lexer::next(source,ref mut s)?;
     while(s.kind!=0 && s.begin<t.body_ends[f]){
         if(s.kind==123){depth+=1;}
         else if(s.kind==125){

@@ -38,6 +38,10 @@ import reference_call_source as reference_calls;
 import static_call_ir as reference_ir;
 import reference_result_source as reference_results;
 import source_features as source_features;
+import source_context as source_context;
+import module_entry as module_entries;
+import source_error as source_errors;
+import module_index as module_index;
 
 fn u8 precedence(u8 kind) {
     if (kind == 133) { return 1; }
@@ -71,9 +75,17 @@ fn u8 opcode(u8 kind) {
     return 6;
 }
 fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize depth, u8 expected, u8 result_type, usize structure, ref mut loops::State loop_state) {
+    if(depth>32){return .err(errors::make(4,s.begin));}
+    if((s.kind==2 || s.kind==5) && !word_is(source,s,b"switch")){
+        return named_operand(source,s,p,table,signatures,depth,expected,result_type,structure,loop_state);
+    }
+    return compound_operand(source,s,p,table,signatures,depth,expected,result_type,structure,loop_state);
+}
+fn Result<usize, errors::Error> compound_operand(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize depth, u8 expected, u8 result_type, usize structure, ref mut loops::State loop_state) {
     if (depth > 32) { return .err(errors::make(4, s.begin)); }
+    let ref literal_collection::Index literals=ref signatures.literals;
     let usize at = s.begin;
-    if(s.kind==3 && signatures.literals.enabled){
+    if(s.kind==3 && literals.enabled){
         var lexer::State look=lexer::snapshot(s);let usize next=lexer::next(source,ref mut look)?;
         if(static_source::range_follows(source,ref look)?){
             let static_source::View view=static_view(source,s,p,table,signatures,depth,result_type,structure,loop_state)?;
@@ -130,11 +142,8 @@ fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s,
         let usize advanced = lexer::next(source, s)?;
         return ir::integer(p, value, tag, at);
     }
-    if (s.kind == 2) {
-        return named_operand(source,s,p,table,signatures,depth,expected,result_type,structure,loop_state);
-    }
     if (s.kind == 40) {
-        if(signatures.literals.enabled && static_source::grouped_projection(source,s,table)?){
+        if(literals.enabled && static_source::grouped_projection(source,s,table)?){
             let static_source::View view=static_view(source,s,p,table,signatures,depth,result_type,structure,loop_state)?;
             return static_projection(source,s,p,table,signatures,ref view,at,depth,result_type,structure,loop_state);
         }
@@ -313,12 +322,13 @@ fn Result<usize,errors::Error> static_equal_right(ref u8[] source,ref mut lexer:
     if(right.owned){let usize closed=static_builders::close(p,right.site,at)?;}return .ok(value);
 }
 fn Result<usize, errors::Error> named_operand(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize depth, u8 expected, u8 result_type, usize structure, ref mut loops::State loop_state) {
+    let ref literal_collection::Index literals=ref signatures.literals;
     let usize at = s.begin;
     if (word_is(source, s, b"text")) {
         var lexer::State look = lexer::snapshot(s);
         let usize next = lexer::next(source, ref mut look)?;
         let bool qualified=look.kind==58;
-        if(qualified && signatures.literals.enabled){
+        if(qualified && literals.enabled){
             let usize first=lexer::next(source,ref mut look)?;
             let usize second=lexer::punctuation(source,ref mut look,58)?;
             if(word_is(source,ref look,b"equal")){return static_equal(source,s,p,table,signatures,depth,result_type,structure,loop_state);}
@@ -373,7 +383,7 @@ fn Result<usize, errors::Error> binding_operand(ref u8[] source, ref mut lexer::
         let static_source::View view=static_source::View{.site=static_source::site(register),.kind=static_source::kind(register),.owned=false};
         return static_projection(source,s,p,table,signatures,ref view,at,depth,result_type,structure,loop_state);
     }
-    if (record_values::binding(table, index)) { return record_values::read(source, s, p, register - 144, at); }
+    if (record_values::binding(table, index)) { return record_values::read(source, s, p, register - 144, at,ref signatures.context); }
     if (arrays::binding(table, index)) {
         if (s.kind == 46) {
             let usize dot = lexer::next(source, s)?;
@@ -419,7 +429,7 @@ fn Result<usize,errors::Error> utf8_value(ref u8[] source,ref mut lexer::State s
         let usize initialized=ir::array_init(p,temporary,filler,literal_at)?;
         return utf8_temporary_range(source,s,p,table,signatures,temporary,at,depth,result_type,structure,loop_state);
     }
-    if(s.kind==2) {
+    if((s.kind==2 || s.kind==5)) {
         var lexer::State look=lexer::snapshot(s);
         let usize next=lexer::next(source,ref mut look)?;
         if(look.kind==40) {
@@ -441,7 +451,7 @@ fn Result<usize,errors::Error> utf8_value(ref u8[] source,ref mut lexer::State s
             return utf8_temporary_range(source,s,p,table,signatures,temporary,at,depth,result_type,structure,loop_state);
         }
     }
-    if (s.kind == 2) {
+    if ((s.kind==2 || s.kind==5)) {
         let usize index = locals::find(source, table, s.begin, s.end);
         if (slices::binding(table, index)) { return slices::predicate(source,s,p,table,index,at); }
     }
@@ -487,7 +497,7 @@ fn Result<usize,errors::Error> record_call_read(ref u8[] source,ref mut lexer::S
     let usize record=(signatures.return_records[target] as usize)-1;
     let usize temporary=record_results::destination(signatures,target,record,false,p,table.function,at)?;
     let usize called=call_value(source,s,p,table,signatures,target,144+temporary,at,depth+1,result_type,structure,loop_state)?;
-    let usize value=record_values::read(source,s,p,temporary,at)?;
+    let usize value=record_values::read(source,s,p,temporary,at,ref signatures.context)?;
     let usize dropped=ir::record_drop(p,temporary,at)?;
     return .ok(value);
 }
@@ -552,12 +562,12 @@ fn Result<usize,errors::Error> array_call_read(ref u8[] source,ref mut lexer::St
 fn Result<usize,errors::Error> record_argument(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
     usize record,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state) {
-    if(s.kind==2) {
+    if((s.kind==2 || s.kind==5)) {
         var lexer::State look=lexer::snapshot(s);
         let usize next=lexer::next(source,ref mut look)?;
         if(look.kind==123) {
             let usize at=s.begin;
-            let bool prefix=record_values::constructor(source,s,record)?;
+            let bool prefix=record_values::constructor(source,s,record,ref signatures.context)?;
             let usize first=record_constructor_value(source,s,p,names,signatures,record,at,result_type,depth,structure,loop_state,true)?;
             let usize temporary=ir::record_in(p,names.function,record,false,at)?;
             let usize init=ir::record_init(p,temporary,first,at)?;
@@ -566,7 +576,7 @@ fn Result<usize,errors::Error> record_argument(ref u8[] source,ref mut lexer::St
         }
         if(look.kind==46) {
             let usize at=s.begin;
-            let usize temporary=record_values::extracted_argument(source,s,p,names,record,at)?;
+            let usize temporary=record_values::extracted_argument(source,s,p,names,record,at,ref signatures.context)?;
             let usize captured=locals::declare(names,at,at,144+temporary,false)?;
             return .ok(144+temporary);
         }
@@ -580,7 +590,7 @@ fn Result<usize,errors::Error> record_argument(ref u8[] source,ref mut lexer::St
             let usize name=lexer::next(source,s)?;
             let usize called=call_value(source,s,p,names,signatures,target,144+temporary,at,depth+1,result_type,structure,loop_state)?;
             if(s.kind==46) {
-                temporary=record_values::extracted_call_argument(source,s,p,names.function,temporary,record,at)?;
+                temporary=record_values::extracted_call_argument(source,s,p,names.function,temporary,record,at,ref signatures.context)?;
             } else if(nominal!=record) {return .err(errors::make(3,at));}
             if(s.kind!=44 && s.kind!=41) {return .err(errors::make(3,s.begin));}
             let usize captured=locals::declare(names,at,at,144+temporary,false)?;
@@ -609,7 +619,7 @@ fn Result<usize,errors::Error> array_argument(ref u8[] source,ref mut lexer::Sta
         let usize captured=locals::declare(names,at,at,128+temporary,false)?;
         return .ok(128+temporary);
     }
-    if(s.kind==2) {
+    if((s.kind==2 || s.kind==5)) {
         var lexer::State look=lexer::snapshot(s);
         let usize next=lexer::next(source,ref mut look)?;
         if(look.kind==40) {
@@ -643,7 +653,7 @@ fn Result<slice_calls::Capture,errors::Error> slice_temporary(ref u8[] source,re
         id=ir::array_in(p,names.function,element,length,exclusive,at)?;
         let usize initialized=ir::array_init(p,id,fill,at)?;
     }else{
-        if(s.kind!=2 || locals::find(source,names,s.begin,s.end)!=64){return .err(errors::make(3,s.begin));}
+        if((s.kind!=2 && s.kind!=5) || locals::find(source,names,s.begin,s.end)!=64){return .err(errors::make(3,s.begin));}
         let usize target=functions::find(source,signatures,s.begin,s.end);
         if(target>=signatures.count){return .err(errors::make(3,s.begin));}
         if(signatures.return_slice_elements[target]!=0){
@@ -671,8 +681,8 @@ fn Result<usize,errors::Error> slice_argument(ref u8[] source,ref mut lexer::Sta
     let usize reference=s.begin;
     let u8 encoded=slice_calls::prefix(source,s,signatures,parameter)?;
     var lexer::State look=lexer::snapshot(s);
-    if(s.kind==2){let usize next=lexer::next(source,ref mut look)?;}
-    let slice_calls::Capture captured=if(s.kind==91 || (s.kind==2 && look.kind==40)){
+    if((s.kind==2 || s.kind==5)){let usize next=lexer::next(source,ref mut look)?;}
+    let slice_calls::Capture captured=if(s.kind==91 || ((s.kind==2 || s.kind==5) && look.kind==40)){
         slice_temporary(source,s,p,names,signatures,encoded,reference,depth,result_type,structure,loop_state)?
     }else{slice_calls::capture(source,s,p,names,encoded,reference)?};
     if(captured.root==16 && captured.parent==16){return .ok(captured.value);}
@@ -843,7 +853,7 @@ fn bool word_is(ref u8[] source, ref lexer::State s, ref u8[] word) {
 }
 
 fn Result<usize, errors::Error> array_copy_statement(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize index, usize at, usize id, u8 terminator, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {
-    if (s.kind != 2) { return .err(errors::make(3, s.begin)); }
+    if ((s.kind!=2 && s.kind!=5)) { return .err(errors::make(3, s.begin)); }
     let usize origin = locals::find(source, table, s.begin, s.end);
     var lexer::State look=lexer::snapshot(s);
     let usize advance=lexer::next(source,ref mut look)?;
@@ -907,7 +917,7 @@ fn Result<usize, errors::Error> record_child_call(ref u8[] source, ref mut lexer
     ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures,
     ref mut record_values::Initializer state, ref mut usize[] slots, usize first,
     usize at, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {
-    if(s.kind!=2) {return .ok(0);}
+    if(s.kind!=2 && s.kind!=5) {return .ok(0);}
     var lexer::State look=lexer::snapshot(s);
     let usize next=lexer::next(source,ref mut look)?;
     if(look.kind!=40) {return .ok(0);}
@@ -918,7 +928,7 @@ fn Result<usize, errors::Error> record_child_call(ref u8[] source, ref mut lexer
     let usize temporary=record_results::destination(signatures,target,nominal,false,p,table.function,s.begin)?;
     let usize name=lexer::next(source,s)?;
     let usize called=call_value(source,s,p,table,signatures,target,144+temporary,at,expr_depth+2,result_type,structure+1,loop_state)?;
-    let usize copied=record_values::stage_call_child(source,s,p,state,slots,first,temporary,at)?;
+    let usize copied=record_values::stage_call_child(source,s,p,state,slots,first,temporary,at,ref signatures.context)?;
     let usize dropped=ir::record_drop(p,temporary,at)?;
     return .ok(copied);
 }
@@ -942,7 +952,7 @@ fn Result<usize, errors::Error> record_constructor_value(ref u8[] source, ref mu
     var record_values::Initializer state = record_values::initializer(record);
     i = 0;
     while (i < leaves) {
-        let u8 tag = record_values::next_leaf(source,s,p,ref mut state,at)?;
+        let u8 tag = record_values::next_leaf(source,s,p,ref mut state,at,ref signatures.context)?;
         if (tag == 255) {
             if (record_values::shorthand(ref state)) {
                 record_values::rewind_shorthand(s,ref state);
@@ -950,7 +960,7 @@ fn Result<usize, errors::Error> record_constructor_value(ref u8[] source, ref mu
             }
             let usize called=record_child_call(source,s,p,table,signatures,ref mut state,ref mut slots,i,at,result_type,expr_depth,structure,loop_state)?;
             if(called!=0) {i+=called;continue;}
-            let usize copied = record_values::stage_child(source,s,p,table,ref mut state,ref mut slots,i,at)?;
+            let usize copied = record_values::stage_child(source,s,p,table,ref mut state,ref mut slots,i,at,ref signatures.context)?;
             i += copied; continue;
         }
         if (record_values::shorthand(ref state)) {
@@ -963,7 +973,7 @@ fn Result<usize, errors::Error> record_constructor_value(ref u8[] source, ref mu
         let usize store = ir::raw(p,18,slots[i],value,0,at)?; i += 1;
         let usize member = record_values::advance(source,s,p,ref mut state)?;
     }
-    let u8 closed = record_values::next_leaf(source,s,p,ref mut state,at)?;
+    let u8 closed = record_values::next_leaf(source,s,p,ref mut state,at,ref signatures.context)?;
     if (closed != 0) { return .err(errors::make(3,at)); }
     if(argument) {
         if(s.kind!=44 && s.kind!=41) {return .err(errors::make(3,s.begin));}
@@ -976,9 +986,9 @@ fn Result<usize, errors::Error> record_constructor_value(ref u8[] source, ref mu
 fn Result<usize, errors::Error> record_declaration(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p,
     ref mut locals::Table table, ref functions::Table signatures, bool mutable, u8 terminator, u8 result_type,
     usize expr_depth, usize structure, ref mut loops::State loop_state) {
-    let usize record = record_values::named(source, s)?;
+    let usize record = record_values::named(source, s,ref signatures.context)?;
     let record_values::Header header = record_values::header(source,s,p,table,record,mutable,terminator,result_type)?;
-    if(s.kind==2) {
+    if((s.kind==2 || s.kind==5)) {
         var lexer::State look=lexer::snapshot(s);
         let usize next=lexer::next(source,ref mut look)?;
         if(look.kind==40) {
@@ -991,7 +1001,7 @@ fn Result<usize, errors::Error> record_declaration(ref u8[] source, ref mut lexe
             // Pending destinations remain invisible during all argument effects.
             let usize value=call_value(source,s,p,table,signatures,target,144+id,at,expr_depth,result_type,structure,loop_state)?;
             if(s.kind==46) {
-                id=record_values::extracted_call(source,s,p,table.function,id,record,mutable,at,false)?;
+                id=record_values::extracted_call(source,s,p,table.function,id,record,mutable,at,false,ref signatures.context)?;
             } else {
                 if(nominal!=record) {return .err(errors::make(3,at));}
                 let usize end=lexer::punctuation(source,s,terminator)?;
@@ -999,7 +1009,7 @@ fn Result<usize, errors::Error> record_declaration(ref u8[] source, ref mut lexe
             return locals::declare(table,header.begin,header.end,144+id,mutable);
         }
     }
-    if (!record_values::constructor(source,s,record)?) { return record_values::copy(source,s,p,table,header); }
+    if (!record_values::constructor(source,s,record,ref signatures.context)?) { return record_values::copy(source,s,p,table,header,ref signatures.context); }
     let usize first = record_constructor(source,s,p,table,signatures,record,header.begin,result_type,expr_depth,structure,loop_state)?;
     let usize id = ir::record_in(p,table.function,record,mutable,header.begin)?;
     let usize init = ir::record_init(p,id,first,header.begin)?;
@@ -1012,7 +1022,7 @@ fn Result<usize, errors::Error> slice_declaration(ref u8[] source, ref mut lexer
     ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures,
     bool mutable, u8 terminator, u8 result_type, usize depth, usize structure, ref mut loops::State loop_state) {
     let slices::Header header = slices::declaration(source,s,table,mutable,terminator,result_type)?;
-    if(s.kind==2 && !word_is(source,s,b"ref")){
+    if((s.kind==2 || s.kind==5) && !word_is(source,s,b"ref")){
         var lexer::State look=lexer::snapshot(s);let usize next=lexer::next(source,ref mut look)?;
         if(look.kind==40){
             let usize target=functions::find(source,signatures,s.begin,s.end);
@@ -1032,7 +1042,7 @@ fn Result<usize, errors::Error> slice_declaration(ref u8[] source, ref mut lexer
     }
     let usize reference=lexer::word(source,s,b"ref")?;
     if(header.exclusive){let usize access=lexer::word(source,s,b"mut")?;}
-    let usize index = if (s.kind == 2) { locals::find(source,table,s.begin,s.end) } else { 64 };
+    let usize index = if ((s.kind==2 || s.kind==5)) { locals::find(source,table,s.begin,s.end) } else { 64 };
     let usize parent = if (slices::binding(table,index)) { table.registers[index]-160 } else { 16 };
     if (parent < 16 && header.exclusive != ir::exclusive(p,parent)) { return .err(errors::make(3,header.begin)); }
     var usize root = 0;
@@ -1102,7 +1112,7 @@ fn Result<usize, errors::Error> declaration(ref u8[] source, ref mut lexer::Stat
             }
             return slice_declaration(source,s,p,table,signatures,mutable,terminator,result_type,expr_depth,structure,loop_state);
         }
-        if (s.kind == 2 && !locals::reserved(source[s.begin..s.end])) {
+        if ((s.kind==2 || s.kind==5) && !locals::reserved(source[s.begin..s.end])) {
             return record_declaration(source,s,p,table,signatures,mutable,terminator,result_type,expr_depth,structure,loop_state);
         }
         let u8 tag = types::parse(source, s)?;
@@ -1118,7 +1128,7 @@ fn Result<usize, errors::Error> declaration(ref u8[] source, ref mut lexer::Stat
         if (table.count >= 64) { return .err(errors::make(4, begin)); }
         let usize name = lexer::next(source, s)?;
         let usize equals = lexer::punctuation(source, s, 61)?;
-        if (length != 0 && s.kind == 2) {
+        if (length != 0 && (s.kind==2 || s.kind==5)) {
             let usize source_index = locals::find(source, table, s.begin, s.end);
             var lexer::State look=lexer::snapshot(s);
             let usize advance=lexer::next(source,ref mut look)?;
@@ -1172,7 +1182,7 @@ fn Result<bool, errors::Error> record_call_assignment(ref u8[] source, ref mut l
     usize expr_depth, usize structure, ref mut loops::State loop_state) {
     var lexer::State look=lexer::snapshot(s);
     if(whole) {let usize equals=lexer::next(source,ref mut look)?;}
-    if(look.kind!=2) {return .ok(false);}
+    if(look.kind!=2 && look.kind!=5) {return .ok(false);}
     var lexer::State call=lexer::snapshot(ref look);
     let usize next=lexer::next(source,ref mut call)?;
     if(call.kind!=40) {return .ok(false);}
@@ -1185,7 +1195,7 @@ fn Result<bool, errors::Error> record_call_assignment(ref u8[] source, ref mut l
     let usize name=lexer::next(source,s)?;
     let usize called=call_value(source,s,p,table,signatures,target,144+temporary,at,expr_depth,result_type,structure,loop_state)?;
     if(s.kind==46) {
-        let usize assigned=record_values::assign_call_part(source,s,p,id,temporary,leaf,at)?;
+        let usize assigned=record_values::assign_call_part(source,s,p,id,temporary,leaf,at,ref signatures.context)?;
         return .ok(true);
     }
     if(nominal!=leaf.record) {return .err(errors::make(3,at));}
@@ -1206,26 +1216,26 @@ fn Result<usize, errors::Error> record_write_statement(ref u8[] source, ref mut 
         let usize equals = lexer::next(source,ref mut look)?;
         let record_values::Leaf root=record_values::Leaf{.ordinal=0,.tag=0,.record=record};
         if(record_call_assignment(source,s,p,table,signatures,id,root,true,at,result_type,expr_depth,structure,loop_state)?) {return .ok(index);}
-        if (record_values::constructor(source,ref mut look,record)?) {
+        if (record_values::constructor(source,ref mut look,record,ref signatures.context)?) {
             if (!p.records.mutable[id]) { return .err(errors::make(3,at)); }
             let usize consumed = lexer::next(source,s)?;
-            let bool opened = record_values::constructor(source,s,record)?;
+            let bool opened = record_values::constructor(source,s,record,ref signatures.context)?;
             let usize first = record_constructor(source,s,p,table,signatures,record,at,result_type,expr_depth,structure,loop_state)?;
             let usize replaced = ir::record_replace(p,id,first,record,at)?;
             return .ok(index);
         }
-        let usize assigned = record_values::assign(source,s,p,table,id,at)?;
+        let usize assigned = record_values::assign(source,s,p,table,id,at,ref signatures.context)?;
         return .ok(index);
     }
-    let record_values::Leaf leaf = record_values::writable(source,s,p,id,at)?;
+    let record_values::Leaf leaf = record_values::writable(source,s,p,id,at,ref signatures.context)?;
     if (leaf.tag == 0) {
         if(record_call_assignment(source,s,p,table,signatures,id,leaf,false,at,result_type,expr_depth,structure,loop_state)?) {return .ok(index);}
-        if (record_values::constructor(source,s,leaf.record)?) {
+        if (record_values::constructor(source,s,leaf.record,ref signatures.context)?) {
             let usize first = record_constructor(source,s,p,table,signatures,leaf.record,at,result_type,expr_depth,structure,loop_state)?;
             let usize replaced = ir::record_subreplace(p,id,first,leaf.record,leaf.ordinal,at)?;
             return .ok(index);
         }
-        let usize assigned = record_values::assign_part(source,s,p,table,id,leaf,at)?;
+        let usize assigned = record_values::assign_part(source,s,p,table,id,leaf,at,ref signatures.context)?;
         return .ok(index);
     }
     let u8 tag = leaf.tag;
@@ -1506,8 +1516,7 @@ fn Result<bool, errors::Error> control_for(ref u8[] source, ref mut lexer::State
     let usize continues=loops::resolve(loop_state,p,false,post_target,at)?;
     if (!stopped || continues!=0) {
         if (has_post) {
-            var lexer::State post=lexer::empty();
-            post.cursor=post_start;
+            var lexer::State post=source_context::state(source,ref signatures.context,post_start)?;
             let usize first=lexer::next(source,ref mut post)?;
             let usize emitted=statement(source,ref mut post,p,table,signatures,41,0,expr_depth,depth,loop_state)?;
         }
@@ -1599,7 +1608,7 @@ fn Result<bool,errors::Error> slice_origin_return(ref u8[] source,ref mut lexer:
             value=ir::slice_length(p,child,at)?;
         }else{value=ir::slice_length(p,site,at)?;}
     }else{
-        if(s.kind!=2 || locals::find(source,table,s.begin,s.end)!=64){return .err(errors::make(3,s.begin));}
+        if((s.kind!=2 && s.kind!=5) || locals::find(source,table,s.begin,s.end)!=64){return .err(errors::make(3,s.begin));}
         let usize target=functions::find(source,signatures,s.begin,s.end);
         if(target>=signatures.count || signatures.return_slice_elements[target]!=encoded){return .err(errors::make(3,s.begin));}
         let usize name=lexer::next(source,s)?;
@@ -1636,13 +1645,13 @@ fn Result<bool, errors::Error> control_return(ref u8[] source, ref mut lexer::St
         return slice_origin_return(source,s,p,table,signatures,at,depth,expr_depth,loop_state);
     }
     if(p.record_results[table.function]!=0) {
-        if(s.kind==2) {
+        if((s.kind==2 || s.kind==5)) {
             var lexer::State look=lexer::snapshot(s);
             let usize next=lexer::next(source,ref mut look)?;
             if(look.kind==123) {
                 let usize shape=(p.record_results[table.function] as usize)-1;
                 let usize record=p.records.records[shape] as usize;
-                let bool constructor=record_values::constructor(source,s,record)?;
+                let bool constructor=record_values::constructor(source,s,record,ref signatures.context)?;
                 let usize first=record_constructor(source,s,p,table,signatures,record,at,result_type,expr_depth,depth,loop_state)?;
                 // Publish no name or owner while field expressions can leave.
                 let usize id=ir::record_in(p,table.function,record,false,at)?;
@@ -1661,7 +1670,7 @@ fn Result<bool, errors::Error> control_return(ref u8[] source, ref mut lexer::St
                 let usize name=lexer::next(source,s)?;
                 let usize called=call_value(source,s,p,table,signatures,target,144+id,at,expr_depth,result_type,depth,loop_state)?;
                 if(s.kind==46) {
-                    id=record_values::extracted_call(source,s,p,table.function,id,record,false,at,false)?;
+                    id=record_values::extracted_call(source,s,p,table.function,id,record,false,at,false,ref signatures.context)?;
                 } else {
                     if(nominal!=record || s.kind!=59) {return .err(errors::make(3,s.begin));}
                     let usize end=lexer::next(source,s)?;
@@ -1670,7 +1679,7 @@ fn Result<bool, errors::Error> control_return(ref u8[] source, ref mut lexer::St
                 return .ok(true);
             }
         }
-        let usize returned=record_results::returned(source,s,p,table,at)?;
+        let usize returned=record_results::returned(source,s,p,table,at,ref signatures.context)?;
         return .ok(true);
     }
     if(p.array_results[table.function]!=0) {
@@ -1684,7 +1693,7 @@ fn Result<bool, errors::Error> control_return(ref u8[] source, ref mut lexer::St
         }
         var lexer::State look=lexer::snapshot(s);
         let usize next=lexer::next(source,ref mut look)?;
-        if(s.kind==2 && look.kind==40) {
+        if((s.kind==2 || s.kind==5) && look.kind==40) {
             if(locals::find(source,table,s.begin,s.end)!=64) {return .err(errors::make(3,s.begin));}
             let usize target=functions::find(source,signatures,s.begin,s.end);
             let usize shape=(p.array_results[table.function] as usize)-1;
@@ -1755,8 +1764,7 @@ fn Result<usize, errors::Error> body(ref u8[] source, ref functions::Table signa
             else{array_calls::bind(signatures,at,p,ref mut table)?};
         i += 1;
     }
-    var lexer::State s = lexer::empty();
-    s.cursor = signatures.bodies[f];
+    var lexer::State s=source_context::state(source,ref signatures.context,signatures.bodies[f])?;
     let usize first = lexer::next(source, ref mut s)?;
     var loops::State loop_state=loops::empty();
     let u8 result_context=if(reference_calls::result(signatures,f)){12}else{record_results::context(p,f)};
@@ -1778,7 +1786,8 @@ fn Result<usize, errors::Error> body(ref u8[] source, ref functions::Table signa
 fn Result<usize, errors::Error> prepare_aggregates(ref u8[] source, ref mut functions::Table signatures, ref mut ir::Program p) {
     let usize parameters = array_calls::prepare(signatures, p)?;
     let usize results = array_results::prepare(signatures, p)?;
-    let structs::Table records = structs::scan(source)?;
+    let structs::Table records = if(signatures.context.modules==0){structs::scan(source)?}
+        else{structs::scan_scoped(source,ref signatures.context)?};
     var usize f = 0;
     while (f < signatures.count) {
         if (structs::find(source, ref records, signatures.begins[f], signatures.ends[f]) != 32) {
@@ -1806,18 +1815,23 @@ fn Result<usize, errors::Error> lower_into(ref u8[] source,bool origin_analysis,
         case .ok(value): { value } case .err(_): { return .err(errors::make(1, 0)); }
     };
     var functions::Table signatures = lowering_signatures(source,returns)?;
+    var usize active=16;
+    return lower_prepared(source,origin_analysis,references,returns,literals,ref mut signatures,p,ref mut active);
+}
+fn Result<usize,errors::Error> lower_prepared(ref u8[] source,bool origin_analysis,bool references,bool returns,
+    ref literal_collection::Index literals,ref mut functions::Table signatures,ref mut ir::Program p,ref mut usize active){
     signatures.literals=*literals;signatures.reference_calls=references;
     // Signature candidates do not prove a returned borrow's origin or lifetime.
     // Reject every such declaration, including unreachable functions, before
     // Program/result preparation can mistake it for an ordinary scalar result.
     var usize declaration = 0;
     while (declaration < signatures.count) {
-        if (!origin_analysis && signatures.return_slice_elements[declaration] != 0 && !reference_calls::result(ref signatures,declaration)) {
+        if (!origin_analysis && signatures.return_slice_elements[declaration] != 0 && !reference_calls::result(signatures,declaration)) {
             return .err(errors::make(3, signatures.begins[declaration]));
         }
         declaration += 1;
     }
-    if(origin_analysis || returns){let usize inferred=source_origins::infer(source,ref mut signatures)?;}
+    if(origin_analysis || returns){let usize inferred=source_origins::infer(source,signatures)?;}
     p.function_count = signatures.count;
     p.entry = signatures.entry;
     p.return_types = signatures.return_types;
@@ -1828,12 +1842,18 @@ fn Result<usize, errors::Error> lower_into(ref u8[] source,bool origin_analysis,
             declaration+=1;
         }
     }
-    let usize aggregates = prepare_aggregates(source, ref mut signatures, p)?;
+    let usize aggregates = prepare_aggregates(source, signatures, p)?;
     var usize f = 0;
     while (f < signatures.count) {
-        let usize emitted = body(source, ref signatures, f, p)?;
+        if(signatures.context.modules!=0){
+            *active=switch(source_context::location(source,ref signatures.context,signatures.begins[f])){
+                case .ok(v):{v.source}case .err(_):{return .err(errors::make(5,signatures.begins[f]));}
+            };
+        }
+        let usize emitted = body(source, signatures, f, p)?;
         f += 1;
     }
+    *active=16;
     // Preserve the current source/IR restriction on entry calls in array programs.
     if (p.arrays.count != 0 || p.records.count != 0) {
         var usize pc = 0;
@@ -2011,4 +2031,61 @@ fn Result<program_images::PublicProgram,errors::Error> compile_public_legacy(ref
     return switch(program_images::retain_public_legacy(ref code)){
         case .ok(v):{.ok(v)}case .err(e):{.err(public_error(e))}
     };
+}
+
+// Candidate lowering only. Rebuild all compiler scratch from the exact retained
+// selection; callers must independently admit the complete IR and image.
+pub fn Result<bool,source_errors::Error> lower_modules(ref module_entries::Entry selected,
+    ref mut static_images::Builder builder,ref mut reference_ir::Program code){
+    let source_context::Input input=switch(source_context::collect(module_entries::index(selected))){
+        case .ok(v):{v}case .err(e):{return .err(source_errors::Error{.code=errors::make(5,e.at.start),.at=e.at});}
+    };
+    let ref u8[] data=ref input.data;let ref u8[] source=data[..input.used];
+    let ref source_context::Table scope=ref input.context;
+    let bool retained=switch(source_features::retained_scoped(source,scope)){
+        case .ok(v):{v}case .err(e):{return .err(module_error(selected,e,16));}
+    };
+    if(retained){let usize lowered=lower_module_references(source,scope,selected,builder,code)?;}
+    else{let literal_collection::Index literals=literal_collection::empty();var usize active=16;
+        switch(lower_module(source,scope,selected,false,ref literals,ref mut code.body,ref mut active)){
+            case .ok(_):{}case .err(e):{return .err(module_error(selected,e,active));}
+        };
+    }return .ok(retained);
+}
+fn source_errors::Error module_error(ref module_entries::Entry selected,errors::Error error,usize active){
+    return source_errors::map(module_index::snapshot(module_entries::index(selected)),error,active);
+}
+fn Result<usize,errors::Error> lower_module(ref u8[] source,ref source_context::Table scope,
+    ref module_entries::Entry selected,bool references,ref literal_collection::Index literals,ref mut ir::Program code,ref mut usize active){
+    var functions::Table signatures=functions::scan_scoped(source,scope,selected,references)?;
+    return lower_prepared(source,false,references,references,literals,ref mut signatures,code,active);
+}
+fn Result<usize,source_errors::Error> lower_module_references(ref u8[] source,ref source_context::Table scope,
+    ref module_entries::Entry selected,ref mut static_images::Builder builder,ref mut reference_ir::Program code){
+    let literal_collection::Index literals=switch(literal_collection::collect_scoped(builder,source,scope)){
+        case .ok(v):{v}case .err(e):{return .err(module_error(selected,public_error(switch(e.kind){
+            case .Source:{image_source_error(e.source)}case .Image:{image_literal_error(e.image)}
+        }),16));}
+    };
+    var usize active=16;
+    switch(lower_module(source,scope,selected,true,ref literals,ref mut code.body,ref mut active)){
+        case .ok(_):{}case .err(e):{return .err(module_error(selected,e,active));}
+    };
+    return module_reference_signature(source,scope,selected,code);
+}
+fn Result<usize,source_errors::Error> module_reference_signature(ref u8[] source,ref source_context::Table scope,
+    ref module_entries::Entry selected,ref mut reference_ir::Program code){
+    var functions::Table signatures=switch(functions::scan_scoped(source,scope,selected,true)){
+        case .ok(v):{v}case .err(e):{return .err(module_error(selected,e,16));}
+    };
+    switch(source_origins::infer(source,ref mut signatures)){case .ok(_):{}case .err(e):{return .err(module_error(selected,e,16));}};
+    code.origins=signatures.return_slice_inputs;
+    var u8[128] parameters=[0;128];var u8[16] results=[0;16];
+    let ref ir::Program body=ref code.body;var usize f=0;
+    while(f<signatures.count){
+        if(signatures.return_slice_elements[f]==10){results[f]=3;}
+        var usize i=0;while(i<signatures.arities[f]){let usize at=f*8+i;
+            if(signatures.param_slices[at] && signatures.param_slice_elements[at]==10){parameters[body.register_starts[f]+i]=3;}i+=1;
+        }f+=1;
+    }code.parameters=parameters;code.results=results;return .ok(signatures.count);
 }

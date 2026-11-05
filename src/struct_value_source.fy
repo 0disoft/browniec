@@ -5,21 +5,22 @@ import lexer as lexer;
 import locals as locals;
 import ir as ir;
 import errors as errors;
+import source_context as context;
 
 // 144..159 are function-owned struct sites, disjoint from scalars and arrays.
 pub fn bool binding(ref locals::Table names, usize index) {
     return index < names.count && names.registers[index] >= 144 && names.registers[index] < 160;
 }
-pub fn Result<usize, errors::Error> named(ref u8[] source, ref lexer::State s) {
-    let source_types::Location found = source_types::locate(source, s.begin, s.end, 32)?;
+pub fn Result<usize, errors::Error> named(ref u8[] source, ref lexer::State s,ref context::Table scope) {
+    let source_types::Location found = source_types::locate_scoped(source,scope,s.begin,s.end,32)?;
     return .ok(found.record);
 }
 // The immutable catalog has already passed struct_source::scan. Reparse only
 // bounded declaration names; path resolution converts field indices to leaf ordinals.
-pub fn Result<usize, errors::Error> field(ref u8[] source, ref ir::Program p, usize record, usize begin, usize end) {
-    let source_types::Location found = source_types::locate(source, begin, end, record)?;
+pub fn Result<usize, errors::Error> field(ref u8[] source, ref ir::Program p, usize record, usize begin, usize end,ref context::Table scope) {
+    let source_types::Location found = source_types::locate_scoped(source,scope,begin,end,record)?;
     if (record >= p.records.layouts.count || found.record != record) { return .err(errors::make(3, begin)); }
-    var lexer::State s = lexer::empty(); s.cursor = found.body;
+    var lexer::State s=context::state(source,scope,found.body)?;
     let usize first = lexer::next(source, ref mut s)?;
     var usize i = 0;
     while (i < p.records.layouts.fields[record] as usize) {
@@ -52,13 +53,13 @@ pub fn Result<Header, errors::Error> header(ref u8[] source, ref mut lexer::Stat
 pub struct Leaf { usize ordinal; u8 tag; usize record; }
 // Scalar ordinals are depth-first leaf positions, never field or byte offsets.
 fn Result<Leaf, errors::Error> path(ref u8[] source, ref mut lexer::State s,
-    ref ir::Program p, usize root, usize at) {
+    ref ir::Program p, usize root, usize at,ref context::Table scope) {
     var usize record = root; var usize ordinal = 0; var usize depth = 0;
     while (s.kind == 46) {
         if (depth >= 16) { return .err(errors::make(4, s.begin)); } depth += 1;
         let usize dot = lexer::next(source, s)?;
         if (s.kind != 2) { return .err(errors::make(2, s.begin)); }
-        let usize selected = field(source, p, record, s.begin, s.end)?;
+        let usize selected = field(source, p, record, s.begin, s.end,scope)?;
         var usize i = 0;
         while (i < selected) {
             let usize slot = record*16+i;
@@ -81,9 +82,9 @@ fn Result<Leaf, errors::Error> path(ref u8[] source, ref mut lexer::State s,
     return .ok(Leaf { .ordinal = ordinal, .tag = 0, .record = record });
 }
 pub fn Result<usize, errors::Error> read(ref u8[] source, ref mut lexer::State s,
-    ref mut ir::Program p, usize id, usize at) {
+    ref mut ir::Program p, usize id, usize at,ref context::Table scope) {
     if (id >= p.records.count || s.kind != 46) { return .err(errors::make(3, at)); }
-    let Leaf leaf = path(source, s, p, p.records.records[id] as usize, at)?;
+    let Leaf leaf = path(source, s, p, p.records.records[id] as usize, at,scope)?;
     if (leaf.tag == 0) { return .err(errors::make(3, at)); }
     return ir::record_read(p, id, leaf.ordinal, at);
 }
@@ -99,21 +100,21 @@ pub fn Result<bool, errors::Error> assigned(ref u8[] source, ref lexer::State st
     return .ok(depth != 0 && look.kind == 61);
 }
 pub fn Result<Leaf, errors::Error> writable(ref u8[] source, ref mut lexer::State s,
-    ref ir::Program p, usize id, usize at) {
+    ref ir::Program p, usize id, usize at,ref context::Table scope) {
     if (id >= p.records.count || !p.records.mutable[id] || s.kind != 46) { return .err(errors::make(3, at)); }
-    let Leaf leaf = path(source, s, p, p.records.records[id] as usize, at)?;
+    let Leaf leaf = path(source, s, p, p.records.records[id] as usize, at,scope)?;
     let usize equals = lexer::punctuation(source, s, 61)?;
     return .ok(leaf);
 }
 
 // Constructor syntax and bare-name copies are separate initializer forms.
 // Inspect the following token so a local sharing a type name stays unambiguous.
-pub fn Result<bool, errors::Error> constructor(ref u8[] source, ref mut lexer::State s, usize record) {
-    if (s.kind != 2) { return .err(errors::make(3, s.begin)); }
+pub fn Result<bool, errors::Error> constructor(ref u8[] source, ref mut lexer::State s, usize record,ref context::Table scope) {
+    if ((s.kind!=2 && s.kind!=5)) { return .err(errors::make(3, s.begin)); }
     var lexer::State look = lexer::snapshot(s);
     let usize next = lexer::next(source, ref mut look)?;
     if (look.kind != 123) { return .ok(false); }
-    if (named(source, s)? != record) { return .err(errors::make(3, s.begin)); }
+    if (named(source, s,scope)? != record) { return .err(errors::make(3, s.begin)); }
     let usize name = lexer::next(source, s)?;
     let usize open = lexer::punctuation(source, s, 123)?;
     return .ok(true);
@@ -131,10 +132,10 @@ fn Result<usize, errors::Error> copy_source(ref u8[] source, ref mut lexer::Stat
     return .ok(id);
 }
 pub fn Result<usize, errors::Error> copy(ref u8[] source, ref mut lexer::State s,
-    ref mut ir::Program p, ref mut locals::Table names, Header header) {
+    ref mut ir::Program p, ref mut locals::Table names, Header header,ref context::Table scope) {
     var lexer::State look = lexer::snapshot(s);
     let usize next = lexer::next(source, ref mut look)?;
-    if (look.kind == 46) { return extract(source,s,p,names,header); }
+    if (look.kind == 46) { return extract(source,s,p,names,header,scope); }
     let usize from = copy_source(source, s, p, names, header.record)?;
     let usize id = ir::record_in(p, names.function, header.record, header.mutable, header.begin)?;
     let usize copied = ir::record_copy(p, id, from, header.begin)?;
@@ -142,14 +143,14 @@ pub fn Result<usize, errors::Error> copy(ref u8[] source, ref mut lexer::State s
     return locals::declare(names, header.begin, header.end, 144 + id, header.mutable);
 }
 pub fn Result<usize, errors::Error> assign(ref u8[] source, ref mut lexer::State s,
-    ref mut ir::Program p, ref locals::Table names, usize id, usize at) {
+    ref mut ir::Program p, ref locals::Table names, usize id, usize at,ref context::Table scope) {
     if (id >= p.records.count || !p.records.mutable[id]) { return .err(errors::make(3, at)); }
     let usize equals = lexer::punctuation(source, s, 61)?;
     var lexer::State look = lexer::snapshot(s);
     let usize next = lexer::next(source,ref mut look)?;
     if (look.kind == 46) {
         let Leaf target = Leaf { .ordinal = 0, .tag = 0, .record = p.records.records[id] as usize };
-        return assign_part(source,s,p,names,id,target,at);
+        return assign_part(source,s,p,names,id,target,at,scope);
     }
     let usize from = copy_source(source, s, p, names, p.records.records[id] as usize)?;
     return ir::record_assign(p, id, from, at);
@@ -210,7 +211,7 @@ pub fn Result<usize, errors::Error> advance(ref u8[] source, ref mut lexer::Stat
 // Iteratively enter child constructors or close completed records. The caller
 // parses/records one scalar expression at a time in depth-first source order.
 pub fn Result<u8, errors::Error> next_leaf(ref u8[] source, ref mut lexer::State s,
-    ref ir::Program p, ref mut Initializer state, usize at) {
+    ref ir::Program p, ref mut Initializer state, usize at,ref context::Table scope) {
     while (state.depth > 0) {
         let usize level = state.depth-1; let usize record = state.records[level];
         let usize selected = state.fields[level];
@@ -220,7 +221,7 @@ pub fn Result<u8, errors::Error> next_leaf(ref u8[] source, ref mut lexer::State
             if (state.depth > 0) { let usize finished = advance(source,s,p,state)?; }
         } else {
             let usize dot = lexer::punctuation(source,s,46)?;
-            let usize found = field(source,p,record,s.begin,s.end)?;
+            let usize found = field(source,p,record,s.begin,s.end,scope)?;
             if (s.kind != 2 || found != selected) { return .err(errors::make(3,s.begin)); }
             let lexer::State member = lexer::snapshot(s);
             let usize name = lexer::next(source,s)?;
@@ -236,7 +237,7 @@ pub fn Result<u8, errors::Error> next_leaf(ref u8[] source, ref mut lexer::State
             let usize child = p.records.layouts.types[slot] as usize;
             // 255 requests binding/path child staging, never a scalar tag.
             if (short) { state.shorthand = member; state.is_shorthand = true; return .ok(255); }
-            if (!constructor(source,s,child)?) { return .ok(255); }
+            if (!constructor(source,s,child,scope)?) { return .ok(255); }
             if (state.depth >= 16) { return .err(errors::make(4,at)); }
             let usize depth = state.depth; state.records[depth] = child; state.fields[depth] = 0; state.depth += 1;
         }
@@ -248,23 +249,23 @@ pub fn Result<u8, errors::Error> next_leaf(ref u8[] source, ref mut lexer::State
 // A field path has no user expressions that can interleave these reads.
 pub fn Result<usize, errors::Error> stage_child(ref u8[] source, ref mut lexer::State s,
     ref mut ir::Program p, ref locals::Table names, ref mut Initializer state,
-    ref mut usize[] slots, usize first, usize at) {
+    ref mut usize[] slots, usize first, usize at,ref context::Table scope) {
     if (state.depth == 0 || s.kind != 2) { return .err(errors::make(3,s.begin)); }
     let usize index = locals::find(source,names,s.begin,s.end);
     if (!binding(names,index)) { return .err(errors::make(3,s.begin)); }
     let usize id = names.registers[index]-144;
     if (id >= p.records.count) { return .err(errors::make(3,s.begin)); }
     let usize name = lexer::next(source,s)?;
-    let Leaf part = path(source,s,p,p.records.records[id] as usize,at)?;
+    let Leaf part = path(source,s,p,p.records.records[id] as usize,at,scope)?;
     return stage_part(source,s,p,state,slots,first,id,part,at);
 }
 // Resolve either a whole returned root or its dotted child without creating an
 // independent child owner. The caller drops the root after staging completes.
 pub fn Result<usize, errors::Error> stage_call_child(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref mut Initializer state,ref mut usize[] slots,
-    usize first,usize id,usize at) {
+    usize first,usize id,usize at,ref context::Table scope) {
     if(id>=p.records.count) {return .err(errors::make(3,at));}
-    let Leaf part=path(source,s,p,p.records.records[id] as usize,at)?;
+    let Leaf part=path(source,s,p,p.records.records[id] as usize,at,scope)?;
     return stage_part(source,s,p,state,slots,first,id,part,at);
 }
 // Snapshot a selected child into scalar staging slots before any later field
@@ -295,23 +296,23 @@ pub fn Result<usize, errors::Error> stage_part(ref u8[] source, ref mut lexer::S
 // A bare subrecord path has no intervening user expressions: its SREAD results
 // are consecutive scalar inputs to SINIT, without staging slots or a temporary owner.
 fn Result<usize, errors::Error> extract(ref u8[] source, ref mut lexer::State s,
-    ref mut ir::Program p, ref mut locals::Table names, Header header) {
-    let usize id=extracted(source,s,p,names,header.record,header.mutable,header.begin)?;
+    ref mut ir::Program p, ref mut locals::Table names, Header header,ref context::Table scope) {
+    let usize id=extracted(source,s,p,names,header.record,header.mutable,header.begin,scope)?;
     return locals::declare(names,header.begin,header.end,144+id,header.mutable);
 }
 // Declarations, returns and arguments share the independent leaf copy. Delimiter
 // validation precedes emission; callers publish names only after complete creation.
 pub fn Result<usize, errors::Error> extracted(ref u8[] source, ref mut lexer::State s,
-    ref mut ir::Program p, ref locals::Table names, usize record, bool mutable, usize offset) {
-    return extract_operand(source,s,p,names,record,mutable,offset,false);
+    ref mut ir::Program p, ref locals::Table names, usize record, bool mutable, usize offset,ref context::Table scope) {
+    return extract_operand(source,s,p,names,record,mutable,offset,false,scope);
 }
 pub fn Result<usize, errors::Error> extracted_argument(ref u8[] source, ref mut lexer::State s,
-    ref mut ir::Program p, ref locals::Table names, usize record, usize offset) {
-    return extract_operand(source,s,p,names,record,false,offset,true);
+    ref mut ir::Program p, ref locals::Table names, usize record, usize offset,ref context::Table scope) {
+    return extract_operand(source,s,p,names,record,false,offset,true,scope);
 }
 fn Result<usize, errors::Error> extract_operand(ref u8[] source, ref mut lexer::State s,
     ref mut ir::Program p, ref locals::Table names, usize record, bool mutable, usize offset,
-    bool argument) {
+    bool argument,ref context::Table scope) {
     if (s.kind != 2) { return .err(errors::make(3,s.begin)); }
     let usize at = s.begin;
     let usize index = locals::find(source,names,s.begin,s.end);
@@ -319,7 +320,7 @@ fn Result<usize, errors::Error> extract_operand(ref u8[] source, ref mut lexer::
     let usize source_id = names.registers[index]-144;
     if (source_id >= p.records.count) { return .err(errors::make(3,at)); }
     let usize name = lexer::next(source,s)?;
-    let Leaf part = path(source,s,p,p.records.records[source_id] as usize,at)?;
+    let Leaf part = path(source,s,p,p.records.records[source_id] as usize,at,scope)?;
     if (part.tag != 0 || part.record != record) { return .err(errors::make(3,at)); }
     if(argument) {
         if(s.kind!=44 && s.kind!=41) {return .err(errors::make(3,s.begin));}
@@ -329,13 +330,13 @@ fn Result<usize, errors::Error> extract_operand(ref u8[] source, ref mut lexer::
 // A returned root has no guest name. Snapshot its child, release the root,
 // then create an independent child so its extent can reuse reclaimed bytes.
 pub fn Result<usize, errors::Error> extracted_call_argument(ref u8[] source,ref mut lexer::State s,
-    ref mut ir::Program p,usize function,usize source_id,usize record,usize at) {
-    return extracted_call(source,s,p,function,source_id,record,false,at,true);
+    ref mut ir::Program p,usize function,usize source_id,usize record,usize at,ref context::Table scope) {
+    return extracted_call(source,s,p,function,source_id,record,false,at,true,scope);
 }
 pub fn Result<usize, errors::Error> extracted_call(ref u8[] source,ref mut lexer::State s,
-    ref mut ir::Program p,usize function,usize source_id,usize record,bool mutable,usize at,bool argument) {
+    ref mut ir::Program p,usize function,usize source_id,usize record,bool mutable,usize at,bool argument,ref context::Table scope) {
     if(source_id>=p.records.count || s.kind!=46) {return .err(errors::make(3,at));}
-    let Leaf part=path(source,s,p,p.records.records[source_id] as usize,at)?;
+    let Leaf part=path(source,s,p,p.records.records[source_id] as usize,at,scope)?;
     if(part.tag!=0 || part.record!=record) {return .err(errors::make(3,at));}
     if(argument) {
         if(s.kind!=44 && s.kind!=41) {return .err(errors::make(3,s.begin));}
@@ -359,12 +360,12 @@ fn Result<usize, errors::Error> extract_part(ref mut ir::Program p,usize functio
 // The returned root must stay live through the atomic overwrite. No independent
 // child owner or scalar staging registers are needed for an assignment.
 pub fn Result<usize, errors::Error> assign_call_part(ref u8[] source,ref mut lexer::State s,
-    ref mut ir::Program p,usize dst,usize from,Leaf target,usize at) {
+    ref mut ir::Program p,usize dst,usize from,Leaf target,usize at,ref context::Table scope) {
     if(dst>=p.records.count || from>=p.records.count || dst==from || !p.records.mutable[dst] ||
         target.tag!=0 || s.kind!=46 || p.record_functions[dst]!=p.record_functions[from]) {
         return .err(errors::make(3,at));
     }
-    let Leaf origin=path(source,s,p,p.records.records[from] as usize,at)?;
+    let Leaf origin=path(source,s,p,p.records.records[from] as usize,at,scope)?;
     if(origin.tag!=0 || origin.record!=target.record) {return .err(errors::make(3,at));}
     let usize end=lexer::punctuation(source,s,59)?;
     let usize copied=ir::record_subassign(p,dst,from,target.record,target.ordinal,origin.ordinal,at)?;
@@ -373,7 +374,7 @@ pub fn Result<usize, errors::Error> assign_call_part(ref u8[] source,ref mut lex
 // Resolve exact nominal endpoints; the VM prepays and snapshots their bytes
 // before committing one atomic overwrite without any new owner or register.
 pub fn Result<usize, errors::Error> assign_part(ref u8[] source, ref mut lexer::State s,
-    ref mut ir::Program p, ref locals::Table names, usize dst, Leaf target, usize at) {
+    ref mut ir::Program p, ref locals::Table names, usize dst, Leaf target, usize at,ref context::Table scope) {
     if (dst >= p.records.count || !p.records.mutable[dst] || target.tag != 0 || s.kind != 2) {
         return .err(errors::make(3,at));
     }
@@ -382,7 +383,7 @@ pub fn Result<usize, errors::Error> assign_part(ref u8[] source, ref mut lexer::
     let usize from = names.registers[index]-144;
     if (from >= p.records.count) { return .err(errors::make(3,s.begin)); }
     let usize name = lexer::next(source,s)?;
-    let Leaf origin = path(source,s,p,p.records.records[from] as usize,at)?;
+    let Leaf origin = path(source,s,p,p.records.records[from] as usize,at,scope)?;
     if (origin.tag != 0 || origin.record != target.record) { return .err(errors::make(3,at)); }
     let usize end = lexer::punctuation(source,s,59)?;
     return ir::record_subassign(p,dst,from,target.record,target.ordinal,origin.ordinal,at);

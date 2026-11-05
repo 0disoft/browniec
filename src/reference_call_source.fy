@@ -43,7 +43,7 @@ pub fn bool result(ref functions::Table signatures,usize f){
 pub fn Result<bool,errors::Error> returned_atom(ref u8[] source,ref lexer::State s,ref locals::Table names,ref functions::Table signatures){
     var lexer::State look=lexer::snapshot(s);
     if(look.kind==2 && lexer::equal(source[look.begin..look.end],b"ref")){let usize prefix=lexer::next(source,ref mut look)?;}
-    if(look.kind!=2 || locals::find(source,names,look.begin,look.end)!=64){return .ok(false);}
+    if((look.kind!=2 && look.kind!=5) || locals::find(source,names,look.begin,look.end)!=64){return .ok(false);}
     let usize f=functions::find(source,signatures,look.begin,look.end);if(!result(signatures,f)){return .ok(false);}
     let usize next=lexer::next(source,ref mut look)?;return .ok(look.kind==40);
 }

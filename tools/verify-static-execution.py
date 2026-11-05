@@ -25,7 +25,7 @@ def write(path, value):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--profile', choices=['development', 'release'], required=True)
-    parser.add_argument('--selection', choices=['all', 'statics', 'views', 'ranges', 'range-core', 'call-ir', 'call-proof', 'call-transfer-core', 'call-transfer', 'call-mixed', 'reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts', 'reference-return-execution', 'reference-source', 'reference-return-source', 'public-program', 'source-snapshot', 'module-index', 'module-entry', 'source-context'], default='all',
+    parser.add_argument('--selection', choices=['all', 'statics', 'views', 'ranges', 'range-core', 'call-ir', 'call-proof', 'call-transfer-core', 'call-transfer', 'call-mixed', 'reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts', 'reference-return-execution', 'reference-source', 'reference-return-source', 'public-program', 'source-snapshot', 'module-index', 'module-entry', 'source-context', 'module-program', 'module-program-core'], default='all',
                         help='statics runs the changed image/proof/VM suites; all adds return and source regressions')
     args = parser.parse_args()
     profile = args.profile
@@ -47,6 +47,8 @@ def main():
                   'reference-return-source': ['tests/m2/reference_return_source.fy',
                                               'tests/m2/reference_return_execution.fy',
                                               'tests/m2/reference_call_source.fy'],
+                  'module-program-core': ['tests/m2/module_program.fy', 'tests/m2/struct_metadata.fy'],
+                  'module-program': ['tests/m2/module_program.fy', 'tests/m2/public_program.fy', 'tests/m2/struct_call_assignment.fy', 'tests/m2/struct_child_call_paths.fy', 'tests/m2/struct_metadata.fy'],
                   'source-context': ['tests/m2/source_context.fy', 'tests/m2/module_entry.fy', 'tests/functions.fy', 'tests/lexer_compatibility.fy'],
                   'module-entry': ['tests/m2/module_entry.fy', 'tests/m2/module_index.fy', 'tests/m2/source_snapshot.fy'],
                   'module-index': ['tests/m2/module_index.fy', 'tests/m2/source_snapshot.fy'],

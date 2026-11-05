@@ -51,6 +51,12 @@ fn Result<usize, Error> validate(ref Catalog catalog) {
     }
     return .ok(catalog.count);
 }
+// Empty catalogs still authenticate every unused slot, without constructing a
+// full 32-record offset plan that no scalar/array program can use.
+pub fn Result<usize,Error> inspect_empty(ref Catalog catalog){
+    if(catalog.count!=0){return .err(.Metadata);}
+    return validate(catalog);
+}
 fn Result<usize, Error> aligned(usize value, usize alignment) {
     let usize remainder = value % alignment;
     let usize padding = if (remainder == 0) { 0 } else { alignment - remainder };

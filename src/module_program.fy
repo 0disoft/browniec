@@ -1,0 +1,66 @@
+module module_program;
+import module_entry as entries;
+import module_index as modules;
+import source_snapshot as sources;
+import compiler as compiler;
+import program_image as programs;
+import source_error as diagnostics;
+import errors as errors;
+import ir as ir;
+import static_call_ir as candidate;
+import static_image as images;
+
+// Only internally rebuilt source/context plus complete canonical admission can
+// create this resource. Compiler name tables are not retained at runtime.
+pub resource Program { sources::Snapshot sources; programs::PublicProgram code; cleanup { } }
+pub fn Result<Program,diagnostics::Error> compile(entries::Entry selected,usize image_limit){
+    var images::Builder builder=switch(images::builder(4096)){
+        case .ok(v):{v}case .err(_):{return .err(diagnostics::absent(errors::make(5,0)));}
+    };
+    var candidate::Program code=candidate::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]};
+    let bool references=compiler::lower_modules(ref selected,ref mut builder,ref mut code)?;
+    if(references){return finish_references(ref selected,ref builder,ref code,image_limit);}
+    return finish_legacy(ref selected,ref code.body);
+}
+fn diagnostics::Error error(ref entries::Entry selected,errors::Error e){
+    return if(e.offset==0){diagnostics::absent(e)}else{diagnostics::map(modules::snapshot(entries::index(selected)),e,16)};
+}
+// Verifier offsets are instruction indices; source-lowering offsets are bytes.
+// Header-wide failures and image quotas have no authenticated source location.
+fn diagnostics::Error admission_error(ref entries::Entry selected,programs::Error failure,ref ir::Program code){
+    let errors::Error e=compiler::public_error(failure);
+    return switch(failure.kind){
+        case .Literal:{diagnostics::absent(e)}
+        case .Code:{if(e.offset==0 || e.offset>=code.count){diagnostics::absent(e)}
+            else{error(selected,errors::make(e.kind,code.offsets[e.offset]))}}
+    };
+}
+fn Result<Program,diagnostics::Error> finish_legacy(ref entries::Entry selected,ref ir::Program code){
+    return switch(programs::retain_public_legacy(code)){
+        case .ok(v):{.ok(retain(selected,v))}case .err(e):{.err(admission_error(selected,e,code))}
+    };
+}
+fn Result<Program,diagnostics::Error> finish_references(ref entries::Entry selected,ref images::Builder builder,
+    ref candidate::Program code,usize image_limit){
+    let images::Image image=switch(images::freeze(builder,image_limit)){
+        case .ok(v):{v}case .err(e):{return .err(error(selected,compiler::public_error(programs::Error{.kind=.Literal,.code=errors::make(0,0),.literal=e})));}
+    };
+    return switch(programs::retain_reference_returns(code,image,image_limit)){
+        case .ok(v):{.ok(retain(selected,programs::retain_public_references(v)))}
+        case .err(e):{.err(admission_error(selected,e,ref code.body))}
+    };
+}
+// Source duplication and final owning construction happen after compiler scratch
+// and complete admission have returned; none of these slots burden that stack.
+fn Program retain(ref entries::Entry selected,programs::PublicProgram code){
+    let sources::Snapshot retained=sources::duplicate(modules::snapshot(entries::index(selected)));
+    return Program{.sources=retained,.code=code};
+}
+pub fn ref sources::Snapshot snapshot(ref Program program){return ref program.sources;}
+pub fn ref ir::Program body(ref Program program){return programs::public_body(ref program.code);}
+pub fn u8 profile(ref Program program){return programs::public_profile(ref program.code);}
+pub fn Result<i64,diagnostics::Error> run(ref Program program,usize fuel){
+    return switch(programs::run_public(ref program.code,fuel)){
+        case .ok(v):{.ok(v)}case .err(e):{.err(if(e.offset==0){diagnostics::absent(e)}else{diagnostics::map(ref program.sources,e,16)})}
+    };
+}

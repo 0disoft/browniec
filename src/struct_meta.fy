@@ -9,7 +9,21 @@ pub struct Prepared { usize[16] leaves; u8[2048] tags; }
 pub fn Catalog empty() {
     return Catalog { .layouts = layouts::empty(), .count = 0, .records = [0; 16], .mutable = [false; 16] };
 }
-pub fn Result<Prepared, errors::Error> prepare(ref Catalog catalog) {
+// Keep nonempty layout/plan return slots off the common scalar/array stack.
+pub fn Result<Prepared, errors::Error> prepare(ref Catalog catalog){
+    let ref layouts::Catalog shapes=ref catalog.layouts;
+    if(shapes.count==0){return prepare_empty(catalog,shapes);}
+    return prepare_records(catalog);
+}
+fn Result<Prepared,errors::Error> prepare_empty(ref Catalog catalog,ref layouts::Catalog shapes){
+    if(catalog.count!=0){return .err(errors::make(5,0));}
+    switch(layouts::inspect_empty(shapes)){case .ok(_):{}case .err(_):{return .err(errors::make(5,0));}};
+    var usize id=0;while(id<16){
+        if(catalog.records[id]!=0 || catalog.mutable[id]){return .err(errors::make(5,0));}id+=1;
+    }
+    return .ok(Prepared{.leaves=[0;16],.tags=[0;2048]});
+}
+fn Result<Prepared, errors::Error> prepare_records(ref Catalog catalog) {
     if (catalog.count > 16) { return .err(errors::make(5, 0)); }
     let layouts::Plan plan = switch (layouts::plan(ref catalog.layouts, 18446744073709551615)) {
         case .ok(value): { value } case .err(_): { return .err(errors::make(5, 0)); }

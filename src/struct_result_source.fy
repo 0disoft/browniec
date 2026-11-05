@@ -8,6 +8,7 @@ import array_source as arrays;
 import struct_value_source as values;
 import cells as cells;
 import std::num as num;
+import source_context as source_context;
 
 // Formals are already reserved in ordinal order. Reuse an exact nominal formal
 // as the shape anchor, or reserve a dead site before lowering any function body.
@@ -69,7 +70,7 @@ pub fn Result<usize,errors::Error> subassigned(ref mut ir::Program p,usize desti
 // Bare bindings, subrecord copies, direct-call results and constructors share the
 // finisher. General record expressions remain unavailable.
 pub fn Result<usize,errors::Error> returned(ref u8[] source,ref mut lexer::State s,
-    ref mut ir::Program p,ref locals::Table names,usize at) {
+    ref mut ir::Program p,ref locals::Table names,usize at,ref source_context::Table scope) {
     if(s.kind!=2) {return .err(errors::make(3,s.begin));}
     var lexer::State look=lexer::snapshot(s);
     let usize next_token=lexer::next(source,ref mut look)?;
@@ -77,7 +78,7 @@ pub fn Result<usize,errors::Error> returned(ref u8[] source,ref mut lexer::State
         let usize encoded=p.record_results[names.function] as usize;
         if(encoded==0) {return .err(errors::make(3,at));}
         let usize record=p.records.records[encoded-1] as usize;
-        let usize extracted=values::extracted(source,s,p,names,record,false,at)?;
+        let usize extracted=values::extracted(source,s,p,names,record,false,at,scope)?;
         return finish(p,names,extracted,at);
     }
     let usize index=locals::find(source,names,s.begin,s.end);
