@@ -141,6 +141,14 @@ price is checked before native receipt authentication. See
 [focused evidence](../evidence/reference-return-vm-windows-20261105.json) for all
 151 distinct committed inputs, native reports and final CLI artifacts.
 
+The [shared byte source CALL successor](reference-call-source.md) reran both
+serialized CLI-only phases on its final source state. All 33 cases passed per
+Windows profile on 148 matching CLI inputs and a 241-file discovery identity,
+with unchanged public prices/default/cap. Its separate 18-group native selection
+covers source CALL execution, legacy Static bindings and mixed native CALLs on
+143 matching paths. The original public Fuel native selection was not rerun.
+See [focused evidence](../evidence/reference-call-source-windows-20261105.json).
+
 Full M1/M2, Linux, restricted delivery, ABI, packaging and elapsed-time/allocator/
 stack-size benchmarks are outside this increment. B04 result declarations remain
 publicly gated; other C05 capacities and the complete objective remain open.

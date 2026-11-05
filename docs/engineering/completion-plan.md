@@ -77,8 +77,10 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    disjoint sparse bindings, exact returned windows and transactional last-alias
    close without another frame map. The [native result VM successor](reference-return-vm.md)
    now connects retained admission and canonical selected CALL/RETURN handoff,
-   caller publication, exact windows and complete Fuel preflight. Next lower
-   source signatures/actuals/returns;
+   caller publication, exact windows and complete Fuel preflight. The
+   [shared byte CALL source successor](reference-call-source.md) now lowers shared
+   formals and image/runtime actuals through retained native CALL execution. Next
+   lower source returns and result bindings;
    private execution alone cannot promote public source syntax.
    Validate actual public source execution before promoting its capability.
 2. **Language completion: L01-L06, C03/C05.** Finish explicit module snapshots and

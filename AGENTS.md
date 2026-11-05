@@ -1,3 +1,21 @@
+- Shared byte CALL source now lowers through compiler::compile_references into
+  the existing retained ReferenceProgram. One ref u8[] formal accepts image/text
+  byte views and ordinary rooted/owned runtime loan actuals with explicit ref.
+  PARAM77 placeholders retain logical positions; checked CALL maps use CALL78.
+  Hidden view arguments join existing reverse lexical capture cleanup before
+  later arguments/endpoint exits. Other loan/owned/record paths remain shared.
+  Code 5f90245; see docs/engineering/reference-call-source.md and focused evidence.
+  Development/release each passed 18 native groups (8 new source, 7 Static source
+  binding, 3 mixed VM) and 33 tool-free CLI cases on 152 matching distinct committed
+  inputs, 136 LF modules and 241-file discovery. Both locked LF mirrors pass.
+  New source Fuel boundaries are measured, not independent numeric price oracles.
+  No compiler/stack overrides or historical reuse; preliminary probes excluded.
+  Existing runtime prices/public default256/cap16000000/frame/pool/word tables
+  remain. Source returns/result bindings and ordinary public Program/CLI admission
+  are next; mixed-backing text/non-byte and Buffer/input references remain open.
+  Original public Fuel native/full profiles/general RAM-stack/allocator/timing/
+  Linux/restricted/ABI/package were not rerun. Complete objective stays active.
+  Local commits only; no push.
 - Canonical generic byte results now execute private CALL/RETURN through a
   retained ReferenceReturnProgram, with exact image/runtime windows and existing
   full native tickets. Selected handoff succeeds before caller publication;

@@ -72,7 +72,9 @@ fixture are excluded. Final identities and outcomes are recorded in
 
 ## Remaining work
 
-Lower source signatures, actuals and returns, then connect ordinary public
+The [source CALL successor](reference-call-source.md) now lowers shared byte
+formals and mixed image/runtime actuals through retained native execution. Next
+lower source returns and result bindings, then connect ordinary public
 Program/CLI admission with end-to-end proof. Kind-3 equality, returned text and
 non-byte references, Buffer/input backing and host-visible reference lifetimes
 remain open. Engine/Instance lifecycle, cancellation, restricted delivery and

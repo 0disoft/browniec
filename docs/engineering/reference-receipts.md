@@ -75,5 +75,7 @@ The [native result VM successor](reference-return-vm.md) now connects these
 receipts and complete proof to retained private admission and canonical
 CALL/RETURN dispatch. Selector/access and complete native return costs are
 prepaid; exact windows, post-success publication and consumed-frame retirement
-are connected. Source signatures/actuals/returns and public admission follow. The complete
+are connected. The [source CALL successor](reference-call-source.md) now lowers shared byte
+formals and mixed-backing actuals. Source returns/result bindings and ordinary
+public admission follow. The complete
 [inventory](../product/04-remaining-work.md) and [plan](completion-plan.md) stay open.
