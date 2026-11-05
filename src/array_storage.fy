@@ -58,6 +58,16 @@ pub fn Result<usize,Error> initialize_values(ref layouts::Array layout,ref i64[]
     let layouts::Reservation plan=switch(layouts::reserve(layout,arena.used,arena.limit)){
         case .ok(value):{value}case .err(error):{return .err(layout_error(error));}
     };
+    let usize staged=encode_values(layout,values,scratch)?;
+    // All fallible validation/encoding precedes padding, payload and publication.
+    var usize i=arena.used;while(i<plan.offset){storage[i]=0;i+=1;}
+    i=0;while(i<scratch.len){storage[plan.offset+i]=scratch[i];i+=1;}
+    arena.used=plan.end;return .ok(plan.offset);
+}
+
+// Both callers prove the canonical layout and complete destination first.
+// A failed cell may change discardable scratch, never published backing bytes.
+fn Result<usize,Error> encode_values(ref layouts::Array layout,ref i64[] values,ref mut u8[] scratch){
     if(values.len!=layout.length || scratch.len!=layout.bytes){return .err(.Length);}
     var usize i=0;
     while(i<values.len){let usize at=i*layout.stride;
@@ -65,10 +75,20 @@ pub fn Result<usize,Error> initialize_values(ref layouts::Array layout,ref i64[]
             case .ok(value):{value}case .err(error):{return .err(codec_error(error));}
         };i+=1;
     }
-    // All fallible validation/encoding precedes padding, payload and publication.
-    i=arena.used;while(i<plan.offset){storage[i]=0;i+=1;}
-    i=0;while(i<scratch.len){storage[plan.offset+i]=scratch[i];i+=1;}
-    arena.used=plan.end;return .ok(plan.offset);
+    return .ok(layout.bytes);
+}
+
+// Overwrite only a complete, already allocated extent. No allocation, padding
+// writes or cursor publication; the caller supplies disjoint encoded scratch.
+pub fn Result<usize,Error> replace_values(ref layouts::Array layout,usize base,ref i64[] values,
+    ref mut u8[] scratch,ref mut u8[] storage,ref Arena arena){
+    if(!valid(arena,storage.len)){return .err(.State);}
+    let usize target=switch(layouts::offset(layout,base,0,arena.used)){
+        case .ok(value):{value}case .err(error):{return .err(layout_error(error));}
+    };
+    let usize size=encode_values(layout,values,scratch)?;
+    var usize i=0;while(i<size){storage[target+i]=scratch[i];i+=1;}
+    return .ok(size);
 }
 
 fn Result<usize, Error> address(ref layouts::Array layout, usize base, usize index,

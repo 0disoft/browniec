@@ -335,6 +335,17 @@ pub fn Result<usize,Error> fill(ref Table table,Token token,i64 cell,ref mut u8[
     }
     return .ok(layout.bytes);
 }
+// Exact shape and writable ownership precede complete scalar staging. Neither
+// success nor failure changes tokens, epochs, allocation order or the arena.
+pub fn Result<usize,Error> replace_values(ref layouts::Array layout,Token destination,ref i64[] values,
+    ref mut u8[] scratch,ref mut u8[] bytes,ref Table table){
+    let Owner target=writable(table,destination,bytes.len)?;
+    if(target.element!=layout.element){return .err(.Type);}
+    if(target.length!=layout.length){return .err(.Length);}
+    return switch(storage::replace_values(layout,target.base,values,scratch,bytes,ref table.arena)){
+        case .ok(size):{.ok(size)}case .err(error):{.err(storage_error(error))}
+    };
+}
 pub fn Result<usize, Error> write(ref Table table, Token token, usize index, i64 cell, ref mut u8[] bytes) {
     let Owner owner = writable(table, token, bytes.len)?;
     let layouts::Array layout = switch (layouts::scalar(owner.element, owner.length)) {
