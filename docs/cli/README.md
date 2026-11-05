@@ -1,6 +1,6 @@
 # CLI Tool
 
-- Status: Experimental native scalar/array/record/scalar-slice CLI (2026-11-05)
+- Status: Experimental native scalar/array/record/scalar-slice CLI (2026-11-06)
 - Native runtime: direct bounded `.brc` source execution
 - Command owner: [command contract](command-contract.md)
 
@@ -26,7 +26,10 @@ Local types can be omitted for existing scalar and complete tagged expressions:
 `let name = value;` or `var name = value;`. See the [implemented boundary](../engineering/local-inference.md);
 the [owned aggregate successor](../engineering/aggregate-inference.md) adds repeated
 arrays, nominal constructors, copies, aggregate CALLs and record child paths.
-Reference/text/tag constructor and general aggregate-expression inference remain pending.
+Existing [reference/text initializers](../engineering/reference-inference.md),
+shared aliases, explicit exclusive reborrows and shared-byte result bindings now
+support inference with the same ownership and Fuel rules. Tag constructor and
+general aggregate-expression inference remain pending.
 
 Retained byte/text/shared-byte result source is public under
 `brownie.m2-reference/1`; general mutable/non-byte/Buffer/input results and

@@ -1,0 +1,4048 @@
+{
+  "schema": "browniec.reference-inference-windows/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-05T16:55:37.197783+00:00",
+  "implementationCommit": "442f1f8611400c8065c51a29406b1cfda0f5789b",
+  "verificationToolCommit": "ed10ad33135b3e135b2ccceba64ac7e006e3446d",
+  "scope": "Existing byte/text views, native loans, aliases and shared-byte result inference through common initializers and original origin/lifetime proof",
+  "publicFuelDiscovery": {
+    "command": [
+      "build/browniec.exe",
+      "--version",
+      "--json"
+    ],
+    "fuel_default": 256,
+    "fuel_limit": 16000000
+  },
+  "platform": "Windows-11-10.0.26300-SP0",
+  "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+  "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false",
+  "commonInputs": [
+    {
+      "path": "fairy.lock",
+      "sha256": "7b7e0a91f8a3e4ce969aded9fdd294c0cb3c96bc6c295143d4c6373dd018bdbd"
+    },
+    {
+      "path": "fairy.toml",
+      "sha256": "f5254ba793d9012470c697e8657688a4ea5465c138fba6d748707d5bfa4b31fb"
+    },
+    {
+      "path": "src/aggregate_inference.fy",
+      "sha256": "c37aadfef779ecc012feadf26eb70e30897530d88fd51c38706b0226c2f9e42d"
+    },
+    {
+      "path": "src/arithmetic.fy",
+      "sha256": "8192e6ba97498d059b0505307bc2bf84ac58d9722dc5f597587f8ae81a1081d3"
+    },
+    {
+      "path": "src/array_call_source.fy",
+      "sha256": "57af1c63a68bf060d6c555d1ec3f929d3c53715691074d68a5ae6f7ab58392a2"
+    },
+    {
+      "path": "src/array_call_vm.fy",
+      "sha256": "1c87ed296016233b7d3546b89576dddc5b48f7660f16a553e299e7faf8552e22"
+    },
+    {
+      "path": "src/array_layout.fy",
+      "sha256": "d3497dfb6bb7e9ac8ceece4ae88a2274b6b40b49e3c5fecfc509179c03c91cdd"
+    },
+    {
+      "path": "src/array_local_source.fy",
+      "sha256": "8715c7cdacfd87d88b696e6deef15e062ac70080fb9d154fcc6ed031bffbdf16"
+    },
+    {
+      "path": "src/array_meta.fy",
+      "sha256": "d1a07319dc2bb7eb95298e3920eaec63c1a4c1390a00c5469528a77e97612894"
+    },
+    {
+      "path": "src/array_owners.fy",
+      "sha256": "2f9b2e87dc8021a277c085b1783afa35e8902e4de5aab9bac765de240b4c1caa"
+    },
+    {
+      "path": "src/array_parameters.fy",
+      "sha256": "d12dfd5c76125b6bb460ffe1d6a6f21bfceb410965861805028d93094aeb75b3"
+    },
+    {
+      "path": "src/array_range_vm.fy",
+      "sha256": "966ebb47ce33bb506fa0466a8d3ce2bee3f0ba3a9ee77266d0e7deab0bb64d40"
+    },
+    {
+      "path": "src/array_result_source.fy",
+      "sha256": "1e97221f906c112e9b3f3124867af4c32080e765f7da6cc0f1bb1b02e6e01050"
+    },
+    {
+      "path": "src/array_result_vm.fy",
+      "sha256": "e6db758edc0822994373babe283ae05d66bd3a8fd3137554987535132c17b547"
+    },
+    {
+      "path": "src/array_results.fy",
+      "sha256": "1dccba6ebbc493654aea82e305b7c3f9b0c226c8c475d1c80f19fa1014e63e8e"
+    },
+    {
+      "path": "src/array_slices.fy",
+      "sha256": "e65c7a48c2cbe7f3945dc44edf153f2377ae40ef3924d472bcf1a51c833f9a2f"
+    },
+    {
+      "path": "src/array_source.fy",
+      "sha256": "10b8fbaa53eec0aa9eadc6c961d12da86aeea9daa7b093e5c486b70f5a3659b9"
+    },
+    {
+      "path": "src/array_storage.fy",
+      "sha256": "00808c116e0fb86ce063d7fd4cc9d1f8fd29f19b277449e59e3569491a3ee534"
+    },
+    {
+      "path": "src/array_verifier.fy",
+      "sha256": "b64906e2b8dd674c26211dee85cf8a362b7f32bfc6d26c7134b0168f49e32ed3"
+    },
+    {
+      "path": "src/array_vm.fy",
+      "sha256": "2b9b59f5effbb5a4677882192102d6c1c48dea0c9388ab863d59691d58a053ac"
+    },
+    {
+      "path": "src/bits.fy",
+      "sha256": "0b030757624a8dbaea9475f90d757aeff78b9154a121af7a4d9ebd80042db1a0"
+    },
+    {
+      "path": "src/buffer_append.fy",
+      "sha256": "7a4de27685b41b772569e5a687a7626bc200f7c6152b77082cc93052bf78527a"
+    },
+    {
+      "path": "src/buffer_close.fy",
+      "sha256": "ae68d02649e04196854ba4b41f475c0c550d6d0ac5f80ebd2bbeb537fbcfaac7"
+    },
+    {
+      "path": "src/buffer_create.fy",
+      "sha256": "f133713a4f815f70cfd973933f81dd1156b7fa5c637eeb9dbad9e87f309308e0"
+    },
+    {
+      "path": "src/buffer_growth.fy",
+      "sha256": "71b855cc0e2e4e9d092cf66cf9de94ce62079e3c141e33d6b4c715fecebd1177"
+    },
+    {
+      "path": "src/buffer_host_close.fy",
+      "sha256": "4e5bcef18c020b3eccd4034cf5a5c0a8b81b53b6709ba043b876d64eaf8b7aea"
+    },
+    {
+      "path": "src/buffer_host_sweep.fy",
+      "sha256": "3a043bc009e60b55e11d07ffe40c12dcf75e44b88ea878a37405e61b414c606a"
+    },
+    {
+      "path": "src/buffer_owners.fy",
+      "sha256": "0dd45d859fec557cbe729b64f4b838b11b1d1f9dde3f779c9251cfad3bb82576"
+    },
+    {
+      "path": "src/buffer_replacement.fy",
+      "sha256": "7f8a58181ad531924d4a3f1d887c552a952ebf6df493d714b00d56112a92ae51"
+    },
+    {
+      "path": "src/buffer_resize.fy",
+      "sha256": "1870bbf133aa6e9535eb5a901cbdd54bf8e520ae2520a54b9bd03b955b9cf057"
+    },
+    {
+      "path": "src/buffer_storage.fy",
+      "sha256": "4f6b9f8e5fc5ae55551618d70eac1e74289d09a933249bf95940f98d5b2fbe8d"
+    },
+    {
+      "path": "src/buffer_truncate.fy",
+      "sha256": "9b5900d8ee8d1360c47afb4589473adfb5fe523c83de941e7a88412f9d3425fc"
+    },
+    {
+      "path": "src/buffer_utf8.fy",
+      "sha256": "a59e01627bb46851405334d0650426a9ef816a69cf1c0a5dbf6f3cec43f8b255"
+    },
+    {
+      "path": "src/buffer_utf8_meter.fy",
+      "sha256": "b066f8b567b465d709cc356193c92aeea33d8918ae7c500fb23992993d455142"
+    },
+    {
+      "path": "src/buffer_utf8_pool.fy",
+      "sha256": "74eafd20969398df0475dee122130292aa3bd51dfbfea2a32cea3819def397df"
+    },
+    {
+      "path": "src/buffer_utf8_scan.fy",
+      "sha256": "f51a409ff4f1f6fd427b1b0ef9526d16c506af197478ba0281d6e376ff9e6a7a"
+    },
+    {
+      "path": "src/buffer_utf8_session.fy",
+      "sha256": "709338c5a33d28ea20ae41851a27d0139b40c1b7f69c4a827503bccf7da54330"
+    },
+    {
+      "path": "src/buffer_write.fy",
+      "sha256": "ddb6db325a50f5f660c90971661144a582794ec84c0be5f675d503c237829dab"
+    },
+    {
+      "path": "src/call_frame_vm.fy",
+      "sha256": "224e3c7a89ea37f0c152b4222a5ca88cf8c28692651ffb97fec322c889426e28"
+    },
+    {
+      "path": "src/call_prefix_source.fy",
+      "sha256": "80d868090f9623823478a1bb4941c5579921ac9344e33cd6cd376ef9691faeb5"
+    },
+    {
+      "path": "src/casts.fy",
+      "sha256": "59da4a4ecef63833cc383495390e150b964bf41b353c4b150dcacb6be66caba6"
+    },
+    {
+      "path": "src/cells.fy",
+      "sha256": "71b82add3e95b86a1b7bcb88c3f97f6ae38bae0ac3ec8b1a2de925b10a64e433"
+    },
+    {
+      "path": "src/cli_input.fy",
+      "sha256": "ec91de62e6b5147d117d6fe0366ebcf617b556c074bf1dd91cb10188f96507ba"
+    },
+    {
+      "path": "src/compiler.fy",
+      "sha256": "bbecbe00da5cb1c29b75f9e71db079b452db10079fe3a7ab8238d915768ab081"
+    },
+    {
+      "path": "src/errors.fy",
+      "sha256": "e8070ef5c6380460dacb579c33f2e180b9e683286c8cb0827e30d82a581a4646"
+    },
+    {
+      "path": "src/fuel.fy",
+      "sha256": "860bea81d5520443b7d35755d19dca4072a092edf3701773302482822290d5c9"
+    },
+    {
+      "path": "src/functions.fy",
+      "sha256": "b056339cb1efbeba4fc0aeaf68902bcfab271a32d96d2c4200f6d66de22fdada"
+    },
+    {
+      "path": "src/ir.fy",
+      "sha256": "d2dedb007bfde302d103c9e7f0d16a2a6bf0cc6c137fdb8b3508556ec666cd95"
+    },
+    {
+      "path": "src/json_tokens.fy",
+      "sha256": "6b6979f58c20af021e493650563147c1ca988b79328219c749eb500ad0e2811b"
+    },
+    {
+      "path": "src/lexer.fy",
+      "sha256": "6f7d50014f334ea09a55abd16df0b7224dfa078b254dab9ddfdda958acf85bdd"
+    },
+    {
+      "path": "src/literal_collection.fy",
+      "sha256": "36b0eaf9a84b98b8c16ac728921543db92fa3e35afbeaefe7e40c8d8f57f1c30"
+    },
+    {
+      "path": "src/literal_source.fy",
+      "sha256": "839a8e04b202381ccba12d243c9dea1ea28608f8a2c0596f6e2ec8f648850ebd"
+    },
+    {
+      "path": "src/local_inference.fy",
+      "sha256": "e2cae4b10ebc39c72bdffc859729d59b8f7cfb5629f13933a983c975a0c09f11"
+    },
+    {
+      "path": "src/locals.fy",
+      "sha256": "f89cab6159330ec0ac269ef02cedd59d15f6f3cfae2d60fc89d43b5ccdf32cda"
+    },
+    {
+      "path": "src/loops.fy",
+      "sha256": "d25dccfb4d3d50daa6e82a6a2f8df345ea72fd4a559e3a8882d6cda0230cbee2"
+    },
+    {
+      "path": "src/main.fy",
+      "sha256": "9ddc814e69d4be09f41526c16641d86e9e1f019c453cafdbb9a40753f385a9e4"
+    },
+    {
+      "path": "src/mixed_call_vm.fy",
+      "sha256": "e84928ddf78e43777eb9b9f740f2095e66aeead61c34f3c1f1fdd4ae6646b009"
+    },
+    {
+      "path": "src/module_entry.fy",
+      "sha256": "8c971ff2cde1daed68254d8c6021cdf0d0e493ac0003b2c72788486fdd796330"
+    },
+    {
+      "path": "src/module_index.fy",
+      "sha256": "146faf924811f91c108ec6136c5e2d8181b73304c406853f298dfe897eb2d4ed"
+    },
+    {
+      "path": "src/module_program.fy",
+      "sha256": "2d10ee42279dab088a8b5752f685263667fd9d878af4256ef62df1d29a788fc3"
+    },
+    {
+      "path": "src/patterns.fy",
+      "sha256": "d9ba2ff9dba626968b7514c636a414932e50856c19b9d41d6825b4f91c9797aa"
+    },
+    {
+      "path": "src/program_image.fy",
+      "sha256": "5501f6271b9a3fb5ac5c9c2215b6c8134461e9bff60aaa7326dcc3c88f2ac4d9"
+    },
+    {
+      "path": "src/project_manifest.fy",
+      "sha256": "d0794dfaf4e02d8a686adde63f84f5e989e2749355d5819f10dda26544cfbea0"
+    },
+    {
+      "path": "src/project_names.fy",
+      "sha256": "e59954d2f1636aca1edd2cf29b87e043f47cfb3d924c08a7379bb65f53c2d9c1"
+    },
+    {
+      "path": "src/project_program.fy",
+      "sha256": "04444ac891d078cc7380e36161519d21473276ccdf464819eea4c77bb5a8d797"
+    },
+    {
+      "path": "src/project_sources.fy",
+      "sha256": "0c55f6432d83007044b087734baab068f3a4ef37f5823c976e930a7e025628c6"
+    },
+    {
+      "path": "src/propagation.fy",
+      "sha256": "9b58f0e5ed3ef79c44cf819c651e0ec456e38441c3ce8579aca31e0d7eb80bdc"
+    },
+    {
+      "path": "src/reference_access.fy",
+      "sha256": "363fc2114da67e31bace54ab4e09a0c5b230d63e573eca9f2101025128cf2cdf"
+    },
+    {
+      "path": "src/reference_call_source.fy",
+      "sha256": "ebd7b6f6b5cfcec82a3ed64f41e66d1f1f8a0befc9736cca00c2f05d80ae4473"
+    },
+    {
+      "path": "src/reference_execution.fy",
+      "sha256": "79ba13101a5deae00054c73a966046ed58377525b27198865c4fe60d6c2f638e"
+    },
+    {
+      "path": "src/reference_inference.fy",
+      "sha256": "3f2bb73e8acec56546e2d523b6b26ef6efd3f4ab71aaca514e47a984a213a765"
+    },
+    {
+      "path": "src/reference_lifetimes.fy",
+      "sha256": "94f068f3db65f33fcc8e9fcc7a2cf2e79487833bfb27c07b821546a3ddec5024"
+    },
+    {
+      "path": "src/reference_receipts.fy",
+      "sha256": "e7947bf9549df442bd0dbdbb4cd390f7b46aacaca6b92990613e7a8893f8d2cc"
+    },
+    {
+      "path": "src/reference_result_source.fy",
+      "sha256": "960b66dde11ac3a72fd23ce4aad79673d480f0ffdb9f46539d128855b791eee8"
+    },
+    {
+      "path": "src/reference_return_execution.fy",
+      "sha256": "8f6b8ff849788611e4773c4d8ac1a53abd89fa3c6196346a32510a54256696a6"
+    },
+    {
+      "path": "src/reference_words.fy",
+      "sha256": "76b2091c85e09dbb05258dbeaf8f2affad87bac30eb9b4e197414d20065eaa33"
+    },
+    {
+      "path": "src/register_set.fy",
+      "sha256": "478e2690ee311bb3961c329becc6f9ef035276759619733cbfd0f6e441f36b73"
+    },
+    {
+      "path": "src/render.fy",
+      "sha256": "daf3734be5d7d4c68fac8f729e75e58ac2900bfc3feb4a7e0baaf5da3cbb230e"
+    },
+    {
+      "path": "src/scalar_codec.fy",
+      "sha256": "c28ca5e5cdc38dee01d79489d8c5a709022a49001854af638258ec4536ad66f0"
+    },
+    {
+      "path": "src/shifts.fy",
+      "sha256": "510dc6a90591de165de424a377eb267917ea9973972b9b95656cc9c435675eeb"
+    },
+    {
+      "path": "src/slice_authority.fy",
+      "sha256": "b06e7c503a739c77454cf60f8f4c291cf60968cde40ecd87005e3f0c267a73a1"
+    },
+    {
+      "path": "src/slice_authority_call_vm.fy",
+      "sha256": "7eb5162c7ba7f08ad40d3607caa592ce821143ef309ad6b1a7b976dfb7696f4d"
+    },
+    {
+      "path": "src/slice_builders.fy",
+      "sha256": "0ea4753e648c64426e87e931819c0a8de54aa933b7ab269e203c52138a7323f6"
+    },
+    {
+      "path": "src/slice_call_source.fy",
+      "sha256": "249db6c1882a8eeb25550287835f29308dd34c12558bc454b454b07600a451e9"
+    },
+    {
+      "path": "src/slice_call_vm.fy",
+      "sha256": "92e8fee15ad77104bb856b626f885ce6a97d62f5d9ca958aa60ce3918f44310e"
+    },
+    {
+      "path": "src/slice_cleanup_source.fy",
+      "sha256": "610ef1de22e861215c94282bd6737b3fbd0a1cf994fe818319378088409a601b"
+    },
+    {
+      "path": "src/slice_exclusive_vm.fy",
+      "sha256": "d471f9a9db84930ccae6f54dabfdf2c46584de67884baa900dc42d6bb6874f2d"
+    },
+    {
+      "path": "src/slice_formal_reborrow_vm.fy",
+      "sha256": "ab01f986c96e714568e66b7aad365f96b957edabd639171ed3038aefda956a1d"
+    },
+    {
+      "path": "src/slice_frame_vm.fy",
+      "sha256": "8954ff0c1134c7aea3ba1b2b8d812a7248ff6b8be6b2980b1168c5a81a715316"
+    },
+    {
+      "path": "src/slice_handoff.fy",
+      "sha256": "c591215b3ed04a70d184c39ca264e781f95d99c9ae034eb99161fd587ee5a5a3"
+    },
+    {
+      "path": "src/slice_lifecycle_vm.fy",
+      "sha256": "bb9413fa1adb08755ac885e207f016bf06e1f673c2fdff6282367850a8e8c6da"
+    },
+    {
+      "path": "src/slice_mutable_call_vm.fy",
+      "sha256": "4d62c7fdac5b11da56d9b962e2009c393b8d6fac5e19ab400945930588255184"
+    },
+    {
+      "path": "src/slice_mutable_frame_vm.fy",
+      "sha256": "c456d279e724cc33e39f72b237b64b916e4effe81b16bed939209fa9cb4a64ca"
+    },
+    {
+      "path": "src/slice_parameters.fy",
+      "sha256": "ca2f515607e86599363850b333eb49583b69030b54e4208ca3128bd599009198"
+    },
+    {
+      "path": "src/slice_reborrow.fy",
+      "sha256": "bbfc3c07db26d988ced20299c65747a399da492ea0a79d8c74e87efa376e99f1"
+    },
+    {
+      "path": "src/slice_reborrow_admission_ir.fy",
+      "sha256": "2009a536abda6b2a8c032d7ddef81843273243a41aab7e2a6abfea70581be360"
+    },
+    {
+      "path": "src/slice_reborrow_call_admission.fy",
+      "sha256": "847a3ecf05e2ae17e5780509b416f93572b04fa75ab95739d717dae6a0e22994"
+    },
+    {
+      "path": "src/slice_reborrow_call_ir.fy",
+      "sha256": "255afd6644172ee21846631abbeda9ffca5f5176b5ffcbf24aceeabdb1cc2483"
+    },
+    {
+      "path": "src/slice_reborrow_call_vm.fy",
+      "sha256": "138a040a43a5a8e9e8765a879f16414bdffe5438e65510ac842e0a3d7c49895d"
+    },
+    {
+      "path": "src/slice_reborrow_context.fy",
+      "sha256": "98a1d9dadfe1a07acca3971ec081c3091db8b14a4ac838bc172ecbe7ff159fd9"
+    },
+    {
+      "path": "src/slice_reborrow_ir.fy",
+      "sha256": "aec9c37d4bb9f36fe56f3c4388fc88c69d73ad1cb7f77cb56712ce6938a7b457"
+    },
+    {
+      "path": "src/slice_reborrow_vm.fy",
+      "sha256": "e4466f33f301d0cb9da2aac299b5557428169d0d02ca99bfe0a8401b96604de2"
+    },
+    {
+      "path": "src/slice_result_bindings.fy",
+      "sha256": "e770715b3c3465d2d425d426279138e624b10fd9ca0c481a3121e374304feffe"
+    },
+    {
+      "path": "src/slice_result_call_ir.fy",
+      "sha256": "a862980453eb1a78fd2c0561ada0d85ee735c9dc2091248f4a38e5664803178c"
+    },
+    {
+      "path": "src/slice_result_call_source.fy",
+      "sha256": "43820226cdd01586ce28d6bf42be3dc1a7f96a99f898e9ad0641674c9fb11d88"
+    },
+    {
+      "path": "src/slice_result_entry.fy",
+      "sha256": "8097ac0fe0a176c5e17b268f799549553c6bad3305c57d8fa055a08b6d6a2512"
+    },
+    {
+      "path": "src/slice_result_execution.fy",
+      "sha256": "62f3619ce66c178482330b199877f9a7ce6f03d7372cd9091eb2002f9a7d9c46"
+    },
+    {
+      "path": "src/slice_result_frames.fy",
+      "sha256": "74333ab26044713c92588a0de44d6e7ff33c0060f016d4c0f774ad2c48e04f7e"
+    },
+    {
+      "path": "src/slice_result_ir.fy",
+      "sha256": "b1ac9179c231250025b05c7b14f6a743065c83157c17269d4b2828c55556e675"
+    },
+    {
+      "path": "src/slice_result_loan_execution.fy",
+      "sha256": "05beec63eb6d67571918e56664004b7112d74feda841d2e30431695d44a11d8b"
+    },
+    {
+      "path": "src/slice_result_origins.fy",
+      "sha256": "69d537ba2473365af57fcf4074f7beca9e8f6f4b51efd256d986e6f4b79b9eef"
+    },
+    {
+      "path": "src/slice_result_owned_execution.fy",
+      "sha256": "164b65ea2c734d05a2a06e1f743e5affc9733b865df5a3b5c42a95eceed5af29"
+    },
+    {
+      "path": "src/slice_result_range_source.fy",
+      "sha256": "f6f992a9d2999eb8864220a6d2251f8576891fe235833fba071cc89fdf8ef091"
+    },
+    {
+      "path": "src/slice_result_record_bindings.fy",
+      "sha256": "fabd34134bcf79bdbfcb88f46097ac0ec24b5342e7e28d771e523b656f95ac8f"
+    },
+    {
+      "path": "src/slice_result_record_execution.fy",
+      "sha256": "ca4a5aac74158d056a65c7d0385d3cb8afe381998807a5736ae23456ba746613"
+    },
+    {
+      "path": "src/slice_result_runtime.fy",
+      "sha256": "3b3c56222ca58e169963d01309156ad23efaf477a67b66e202b8babd5db8b966"
+    },
+    {
+      "path": "src/slice_result_source_origins.fy",
+      "sha256": "f904a867ad135ba9c29a2301d572c0f187c3bb161dced6650cf257450ede8650"
+    },
+    {
+      "path": "src/slice_result_verifier.fy",
+      "sha256": "cf40e48975461622fab0d0261f0324667576af02ee2b037ff9efda85cdaa8bbe"
+    },
+    {
+      "path": "src/slice_source.fy",
+      "sha256": "bacff4e4998effcd1d90e98f83891384b0d7b4f569bef6f8ac2e00f994749359"
+    },
+    {
+      "path": "src/slice_verifier.fy",
+      "sha256": "cb97f17cd15923b21056e64bd0ecbc2c77b9958800de6f159722521338d1b895"
+    },
+    {
+      "path": "src/slice_vm.fy",
+      "sha256": "77d223e53ff0e8871b2ab98edd6f3f74411d6107f79e54954a0f632ad118664b"
+    },
+    {
+      "path": "src/source_context.fy",
+      "sha256": "5071cfbcce6934448f15f38527ecf992619644785c62f72ecccb00c83d970ee3"
+    },
+    {
+      "path": "src/source_error.fy",
+      "sha256": "d7ede6c741d3fbbc47ab95798d39127cd769762c8dd8b1012f89e6b389f7522c"
+    },
+    {
+      "path": "src/source_features.fy",
+      "sha256": "5faada3ab63ef6b2b1142b0b0db69a4fbf705e7640005e19cdae69a8c392269f"
+    },
+    {
+      "path": "src/source_snapshot.fy",
+      "sha256": "ce0ff863f70fe8f391fa1cd508eaec00da0a24f9694c666096c80f53f7f46c50"
+    },
+    {
+      "path": "src/static_builders.fy",
+      "sha256": "68ab306f218890f1d4ada96a61f57b2f884c979f25ae3ab535b8945a70bd410b"
+    },
+    {
+      "path": "src/static_call_execution.fy",
+      "sha256": "1a6fcddcae09bc876d55621588b3e8f3c51c0f55d633fc52a40be383483ecf26"
+    },
+    {
+      "path": "src/static_call_ir.fy",
+      "sha256": "21c9daf08ec0a832758a00a3c633d72cdfd6387039f30a3cc6d5296af629dd01"
+    },
+    {
+      "path": "src/static_call_sites.fy",
+      "sha256": "7770000590453a493b069cf398a303d2977de9f4a3a0afb26202b57d8fbfad2a"
+    },
+    {
+      "path": "src/static_execution.fy",
+      "sha256": "8a9edabf5576561175ac3d7c8026329d9d96c0b8e801ce14fae8b20c7ca67601"
+    },
+    {
+      "path": "src/static_image.fy",
+      "sha256": "8966eca88fc4db8b172da51d57e5c10b72f0a0fffac174773c5cd11922f6ead0"
+    },
+    {
+      "path": "src/static_ir.fy",
+      "sha256": "c88732a1cb026b6eddce65f139e8cd24cc6c6a48ab9dd7ec0b90e47103dbc24f"
+    },
+    {
+      "path": "src/static_source.fy",
+      "sha256": "ee74aefbb76ea4bc63a7f123fe8434119394251059e1b47e86f1e7a20f81f98d"
+    },
+    {
+      "path": "src/static_views.fy",
+      "sha256": "880e9e396559704e9f8079d6aab837213cc55ba0d82384082c4ebe3eac515f50"
+    },
+    {
+      "path": "src/struct_call_source.fy",
+      "sha256": "ee9e295b082b31f810dd2f6f983a4f2aa68ac064823f74205c486d3c865a3304"
+    },
+    {
+      "path": "src/struct_call_vm.fy",
+      "sha256": "d46de926715d2d9e4fdfab5018a54e56c4017ff6f2800692fb9904056ce97219"
+    },
+    {
+      "path": "src/struct_layout.fy",
+      "sha256": "68db3f5ebc0137f80de12d8bb9470bd9853dcc29533c7f3ef655c987066bdf8d"
+    },
+    {
+      "path": "src/struct_meta.fy",
+      "sha256": "d55202bf2cfae9729f97f1cf57c14675babf5d089a38c7641b61f9d455eed986"
+    },
+    {
+      "path": "src/struct_nested_storage.fy",
+      "sha256": "e0ff5e2b75380330c99d52271af9e7fabe41f5f6ddd59090aebd1f0d1afc0651"
+    },
+    {
+      "path": "src/struct_parameters.fy",
+      "sha256": "e65267f4b68748895d6fa856fb729df03693e496616e1d596cfcf5c2cb636aea"
+    },
+    {
+      "path": "src/struct_range.fy",
+      "sha256": "d0eebe91b9d0e0179750fd27f6111c1a21f6748b004cd3a2b378cb9a97e73fd5"
+    },
+    {
+      "path": "src/struct_result_source.fy",
+      "sha256": "42cc12536de4488ef3d9247cf6e763c2caa19283076293a28ce271bb6f023eb3"
+    },
+    {
+      "path": "src/struct_result_vm.fy",
+      "sha256": "d593733b703c275306575bfffea533051046923c3b5edb670cb643079be926f4"
+    },
+    {
+      "path": "src/struct_results.fy",
+      "sha256": "dc12921005971af48d1eabcd8492627efa2e26d012f69e1c1661e955af37041d"
+    },
+    {
+      "path": "src/struct_source.fy",
+      "sha256": "2594b1b529584ac79d368907da77763a727fa001b4a45bf0f4b2ee3a27cf468a"
+    },
+    {
+      "path": "src/struct_storage.fy",
+      "sha256": "f371eedc083aea535fa6cc35f245fb6bd1c8ded52b8c4470c19fd0c4d9df0596"
+    },
+    {
+      "path": "src/struct_value_source.fy",
+      "sha256": "b049e018725e34485965c3bf64802742b07a4c0ba704ec499bd8ff2502e08f12"
+    },
+    {
+      "path": "src/struct_verifier.fy",
+      "sha256": "f68b5b4292be683128953dc4e440647c0fa2557b3fd0b5fd7674eaedced1d8f5"
+    },
+    {
+      "path": "src/struct_vm.fy",
+      "sha256": "72b8d242d8b67e5ac9ed79d29016a458991032aa6e64ea517325a840fb05e7f7"
+    },
+    {
+      "path": "src/tagged.fy",
+      "sha256": "67770f8ec8f3e35a2a6196cda87310844d37358f86f8b22eb81b49df1f65f1bf"
+    },
+    {
+      "path": "src/text_source.fy",
+      "sha256": "17dc833c6377b59f66c015c8ce471ec58095606d5f9261884694793fea6c4040"
+    },
+    {
+      "path": "src/types.fy",
+      "sha256": "906f5ba160de53f60d23e344e141181f902f36de60a4060375bef97a2162be23"
+    },
+    {
+      "path": "src/verifier.fy",
+      "sha256": "0e32dbab3409b6f06c9127494d0ee85cf9629d4fb9b74d98fa304c415b1283ec"
+    },
+    {
+      "path": "src/vm.fy",
+      "sha256": "aa442131c5094a7311f4105ad46176f8cf947044e20248529837158d09fe8acb"
+    },
+    {
+      "path": "src/vm_execution.fy",
+      "sha256": "deefac4b76b08e4422c49f47be4a54f1e8e82a14788e8ccb9a27f2d94e1dec77"
+    },
+    {
+      "path": "src/vm_reborrow_execution.fy",
+      "sha256": "ac64e0a261f0904c4259a7ceeb77dbf907f1b8175af92dc9edc392b1fd470296"
+    },
+    {
+      "path": "tests/m2/aggregate_inference.fy",
+      "sha256": "c23824b05c5cca3af4cbe1176c0ec9285aeecfe1ff867ae98dfd853a41cc6a33"
+    },
+    {
+      "path": "tests/m2/local_inference.fy",
+      "sha256": "3cd9d6a01a9e669690709353b1d7f283a96c3ead364a894c93985881a7416861"
+    },
+    {
+      "path": "tests/m2/module_program.fy",
+      "sha256": "79bdc2f9557167dc660daf42cd85dce8222bdbf0f166741c726fd7f63ca54860"
+    },
+    {
+      "path": "tests/m2/reference_inference.fy",
+      "sha256": "f31786df7c41bebcf13afe4551ab24a135d5ca4d4434c0854d995a7104c5ed3a"
+    },
+    {
+      "path": "tests/m2/reference_return_source.fy",
+      "sha256": "1d627725bdb9e6224f2641098f5a7f37d6a1350bd567f825cae4c64d806a42f3"
+    },
+    {
+      "path": "tests/m2/static_bindings_source.fy",
+      "sha256": "d2259953db7e10e6179bcfd616dd6c5b5546be7fe8aea1c221979199289e5103"
+    },
+    {
+      "path": "toolchain.json",
+      "sha256": "0a1a5c2b5a219099b7c3c2b42a8dde9cb70b68e435e8a071e36c36213d1740be"
+    },
+    {
+      "path": "tools/verify-local-inference-cli.py",
+      "sha256": "785ee59e77169d504b5405864198216443772a1c656616a29a43a269cf1a815b"
+    }
+  ],
+  "commonInputsMatchCurrentCheckoutAndImplementationGit": true,
+  "nativeVerifierSnapshots": [
+    {
+      "commit": "442f1f8611400c8065c51a29406b1cfda0f5789b",
+      "path": "tools/verify-static-execution.py",
+      "sha256": "3bba08f58e5ecddf3ff7264fbcee1f7b682d958dabf862a98c4081091bd50098"
+    },
+    {
+      "commit": "ed10ad33135b3e135b2ccceba64ac7e006e3446d",
+      "path": "tools/verify-static-execution.py",
+      "sha256": "ee9b374fe0c12cbf5cba82f406f678cd3a410fefe18236ab43a1c05d554f43a8"
+    }
+  ],
+  "nativeVerifierSnapshotsMatchTheirGitCommits": true,
+  "productionFiles": 154,
+  "testDiscovery": {
+    "count": 258,
+    "sha256": "b7b0a852a379b8e1349656d6898dcceb6706c8134ea4b86e25ee297aec17e879"
+  },
+  "profiles": {
+    "development": {
+      "native": {
+        "status": "passed",
+        "profile": "development",
+        "selection": "reference-inference",
+        "startingHead": "8fb1ea43bcdcf030b4fd07da3860ee2315e99e44",
+        "inputSnapshotCapturedAt": "2026-11-05T16:16:51.324613+00:00",
+        "testDiscovery": {
+          "count": 258,
+          "sha256": "b7b0a852a379b8e1349656d6898dcceb6706c8134ea4b86e25ee297aec17e879"
+        },
+        "lfMirror": {
+          "command": [
+            "build/toolchain/fairyc.exe",
+            "check",
+            "--locked"
+          ],
+          "workingDirectory": "build/static-execution/development/reference-inference/lf-workspace",
+          "productionFiles": 154,
+          "result": "check ok: 2 instance(s), 162 source file(s), 1519 MIR function(s), lock verified"
+        },
+        "command": [
+          "build/toolchain/fairyc.exe",
+          "test",
+          "--native",
+          "--capture-output",
+          "--json",
+          "--locked",
+          "--exact",
+          "tests::m2::aggregate_inference::aggregate_calls_and_repeated_fillers_evaluate_once_in_source_order",
+          "--exact",
+          "tests::m2::aggregate_inference::annotated_and_inferred_aggregate_initializers_emit_identical_executable_bytes",
+          "--exact",
+          "tests::m2::aggregate_inference::call_and_local_paths_distinguish_scalar_projections_from_owned_children",
+          "--exact",
+          "tests::m2::aggregate_inference::early_initializer_exits_do_not_publish_pending_array_or_record_owners",
+          "--exact",
+          "tests::m2::aggregate_inference::inferred_owners_preserve_the_original_sixteen_site_catalog_limits",
+          "--exact",
+          "tests::m2::aggregate_inference::invalid_shapes_names_mutation_and_nominal_changes_still_fail_admission",
+          "--exact",
+          "tests::m2::aggregate_inference::record_constructors_shorthand_and_subrecords_keep_exact_nominal_copies",
+          "--exact",
+          "tests::m2::aggregate_inference::repeated_arrays_infer_exact_shapes_and_scalar_elements_with_independent_copies",
+          "--exact",
+          "tests::m2::local_inference::complete_tagged_expression_types_survive_inference_and_reassignment",
+          "--exact",
+          "tests::m2::local_inference::inference_keeps_scalar_ir_and_exact_fuel_identical_to_annotations",
+          "--exact",
+          "tests::m2::local_inference::inferred_bindings_keep_initialization_order_value_copies_and_lexical_scopes",
+          "--exact",
+          "tests::m2::local_inference::inferred_initializers_keep_32_deep_captured_calls_without_native_stack_overrides",
+          "--exact",
+          "tests::m2::local_inference::inferred_locals_preserve_the_original_64_binding_limit",
+          "--exact",
+          "tests::m2::local_inference::initializer_types_default_to_i32_and_preserve_all_existing_scalar_domains",
+          "--exact",
+          "tests::m2::local_inference::invalid_names_uninitialized_uses_and_type_changes_are_rejected",
+          "--exact",
+          "tests::m2::local_inference::retained_byte_reads_and_scalar_locals_in_returned_borrow_bodies_keep_admission",
+          "--exact",
+          "tests::m2::module_program::both_compiler_routes_keep_the_32_deep_call_limit_without_native_stack_overrides",
+          "--exact",
+          "tests::m2::module_program::inferred_reference_aliases_and_return_origins_keep_qualified_resolution",
+          "--exact",
+          "tests::m2::module_program::shared_byte_returns_literals_ranges_and_text_cross_real_module_calls",
+          "--exact",
+          "tests::m2::reference_inference::endpoint_effects_evaluate_once_and_in_source_order",
+          "--exact",
+          "tests::m2::reference_inference::exclusive_reborrows_restore_parent_and_shared_aliases_close_in_reverse_order",
+          "--exact",
+          "tests::m2::reference_inference::inferred_native_loans_emit_the_same_ir_and_charge_the_same_exact_fuel",
+          "--exact",
+          "tests::m2::reference_inference::inferred_references_do_not_grant_access_rebind_escape_or_change_kinds",
+          "--exact",
+          "tests::m2::reference_inference::inferred_retained_aliases_preserve_annotated_ir_and_independent_exact_fuel",
+          "--exact",
+          "tests::m2::reference_inference::inferred_static_aliases_preserve_the_sixteen_site_limit",
+          "--exact",
+          "tests::m2::reference_inference::literal_text_bytes_aliases_groups_and_conversions_keep_exact_kinds",
+          "--exact",
+          "tests::m2::reference_inference::pending_returned_owners_cleanup_on_return_propagation_and_loop_exits",
+          "--exact",
+          "tests::m2::reference_inference::retained_aliases_preserve_owner_exclusion_until_the_last_live_alias",
+          "--exact",
+          "tests::m2::reference_inference::returned_views_keep_selected_temporary_owners_and_native_runtime_origins",
+          "--exact",
+          "tests::m2::reference_inference::rooted_shared_and_exclusive_loans_keep_all_existing_scalar_elements",
+          "--exact",
+          "tests::m2::reference_inference::scalar_projections_and_grouped_scalar_expressions_keep_scalar_inference",
+          "--exact",
+          "tests::m2::reference_return_source::agreeing_branches_forwarding_and_grounded_recursion_reject_conflicts_and_cycles",
+          "--exact",
+          "tests::m2::reference_return_source::returned_aliases_narrowed_and_empty_windows_support_read_and_length",
+          "--exact",
+          "tests::m2::reference_return_source::selected_temporaries_cleanup_across_return_propagation_break_continue_and_later_arguments",
+          "--exact",
+          "tests::m2::static_bindings_source::aggregate_returns_close_static_locals_and_existing_runtime_slices_stay_distinct",
+          "--exact",
+          "tests::m2::static_bindings_source::byte_and_text_locals_aliases_and_explicit_conversion_preserve_kinds"
+        ],
+        "nativeGroups": 36,
+        "report": {
+          "schemaVersion": "fairyc.test-report/v4",
+          "engine": "native",
+          "target": "x86_64-windows-msvc",
+          "profile": "development",
+          "tests": [
+            {
+              "identity": "tests::m2::aggregate_inference::aggregate_calls_and_repeated_fillers_evaluate_once_in_source_order",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::aggregate_inference::annotated_and_inferred_aggregate_initializers_emit_identical_executable_bytes",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::aggregate_inference::call_and_local_paths_distinguish_scalar_projections_from_owned_children",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::aggregate_inference::early_initializer_exits_do_not_publish_pending_array_or_record_owners",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::aggregate_inference::inferred_owners_preserve_the_original_sixteen_site_catalog_limits",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::aggregate_inference::invalid_shapes_names_mutation_and_nominal_changes_still_fail_admission",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::aggregate_inference::record_constructors_shorthand_and_subrecords_keep_exact_nominal_copies",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::aggregate_inference::repeated_arrays_infer_exact_shapes_and_scalar_elements_with_independent_copies",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::local_inference::complete_tagged_expression_types_survive_inference_and_reassignment",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::local_inference::inference_keeps_scalar_ir_and_exact_fuel_identical_to_annotations",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::local_inference::inferred_bindings_keep_initialization_order_value_copies_and_lexical_scopes",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::local_inference::inferred_initializers_keep_32_deep_captured_calls_without_native_stack_overrides",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::local_inference::inferred_locals_preserve_the_original_64_binding_limit",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::local_inference::initializer_types_default_to_i32_and_preserve_all_existing_scalar_domains",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::local_inference::invalid_names_uninitialized_uses_and_type_changes_are_rejected",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::local_inference::retained_byte_reads_and_scalar_locals_in_returned_borrow_bodies_keep_admission",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::module_program::both_compiler_routes_keep_the_32_deep_call_limit_without_native_stack_overrides",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::module_program::inferred_reference_aliases_and_return_origins_keep_qualified_resolution",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::module_program::shared_byte_returns_literals_ranges_and_text_cross_real_module_calls",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::reference_inference::endpoint_effects_evaluate_once_and_in_source_order",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::reference_inference::exclusive_reborrows_restore_parent_and_shared_aliases_close_in_reverse_order",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::reference_inference::inferred_native_loans_emit_the_same_ir_and_charge_the_same_exact_fuel",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::reference_inference::inferred_references_do_not_grant_access_rebind_escape_or_change_kinds",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::reference_inference::inferred_retained_aliases_preserve_annotated_ir_and_independent_exact_fuel",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::reference_inference::inferred_static_aliases_preserve_the_sixteen_site_limit",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::reference_inference::literal_text_bytes_aliases_groups_and_conversions_keep_exact_kinds",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::reference_inference::pending_returned_owners_cleanup_on_return_propagation_and_loop_exits",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::reference_inference::retained_aliases_preserve_owner_exclusion_until_the_last_live_alias",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::reference_inference::returned_views_keep_selected_temporary_owners_and_native_runtime_origins",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::reference_inference::rooted_shared_and_exclusive_loans_keep_all_existing_scalar_elements",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::reference_inference::scalar_projections_and_grouped_scalar_expressions_keep_scalar_inference",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::reference_return_source::agreeing_branches_forwarding_and_grounded_recursion_reject_conflicts_and_cycles",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::reference_return_source::returned_aliases_narrowed_and_empty_windows_support_read_and_length",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::reference_return_source::selected_temporaries_cleanup_across_return_propagation_break_continue_and_later_arguments",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::static_bindings_source::aggregate_returns_close_static_locals_and_existing_runtime_slices_stay_distinct",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::static_bindings_source::byte_and_text_locals_aliases_and_explicit_conversion_preserve_kinds",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            }
+          ],
+          "count": 36,
+          "passed": 36,
+          "failed": 0,
+          "status": "ok",
+          "lock": "verified"
+        },
+        "nativeReportSha256": "1cbcd0bda03a3c6947e151448e3cca436ce6b19e9a483cf09fdfebfcee2b6908",
+        "receipt": "build/static-execution/development/reference-inference/receipt.json",
+        "receiptSha256": "28f441d1306e6656890220cac82b2a117325fccb3a051777ad835130a21d1687",
+        "inputCount": 164,
+        "inputPaths": [
+          "fairy.lock",
+          "fairy.toml",
+          "src/aggregate_inference.fy",
+          "src/arithmetic.fy",
+          "src/array_call_source.fy",
+          "src/array_call_vm.fy",
+          "src/array_layout.fy",
+          "src/array_local_source.fy",
+          "src/array_meta.fy",
+          "src/array_owners.fy",
+          "src/array_parameters.fy",
+          "src/array_range_vm.fy",
+          "src/array_result_source.fy",
+          "src/array_result_vm.fy",
+          "src/array_results.fy",
+          "src/array_slices.fy",
+          "src/array_source.fy",
+          "src/array_storage.fy",
+          "src/array_verifier.fy",
+          "src/array_vm.fy",
+          "src/bits.fy",
+          "src/buffer_append.fy",
+          "src/buffer_close.fy",
+          "src/buffer_create.fy",
+          "src/buffer_growth.fy",
+          "src/buffer_host_close.fy",
+          "src/buffer_host_sweep.fy",
+          "src/buffer_owners.fy",
+          "src/buffer_replacement.fy",
+          "src/buffer_resize.fy",
+          "src/buffer_storage.fy",
+          "src/buffer_truncate.fy",
+          "src/buffer_utf8.fy",
+          "src/buffer_utf8_meter.fy",
+          "src/buffer_utf8_pool.fy",
+          "src/buffer_utf8_scan.fy",
+          "src/buffer_utf8_session.fy",
+          "src/buffer_write.fy",
+          "src/call_frame_vm.fy",
+          "src/call_prefix_source.fy",
+          "src/casts.fy",
+          "src/cells.fy",
+          "src/cli_input.fy",
+          "src/compiler.fy",
+          "src/errors.fy",
+          "src/fuel.fy",
+          "src/functions.fy",
+          "src/ir.fy",
+          "src/json_tokens.fy",
+          "src/lexer.fy",
+          "src/literal_collection.fy",
+          "src/literal_source.fy",
+          "src/local_inference.fy",
+          "src/locals.fy",
+          "src/loops.fy",
+          "src/main.fy",
+          "src/mixed_call_vm.fy",
+          "src/module_entry.fy",
+          "src/module_index.fy",
+          "src/module_program.fy",
+          "src/patterns.fy",
+          "src/program_image.fy",
+          "src/project_manifest.fy",
+          "src/project_names.fy",
+          "src/project_program.fy",
+          "src/project_sources.fy",
+          "src/propagation.fy",
+          "src/reference_access.fy",
+          "src/reference_call_source.fy",
+          "src/reference_execution.fy",
+          "src/reference_inference.fy",
+          "src/reference_lifetimes.fy",
+          "src/reference_receipts.fy",
+          "src/reference_result_source.fy",
+          "src/reference_return_execution.fy",
+          "src/reference_words.fy",
+          "src/register_set.fy",
+          "src/render.fy",
+          "src/scalar_codec.fy",
+          "src/shifts.fy",
+          "src/slice_authority.fy",
+          "src/slice_authority_call_vm.fy",
+          "src/slice_builders.fy",
+          "src/slice_call_source.fy",
+          "src/slice_call_vm.fy",
+          "src/slice_cleanup_source.fy",
+          "src/slice_exclusive_vm.fy",
+          "src/slice_formal_reborrow_vm.fy",
+          "src/slice_frame_vm.fy",
+          "src/slice_handoff.fy",
+          "src/slice_lifecycle_vm.fy",
+          "src/slice_mutable_call_vm.fy",
+          "src/slice_mutable_frame_vm.fy",
+          "src/slice_parameters.fy",
+          "src/slice_reborrow.fy",
+          "src/slice_reborrow_admission_ir.fy",
+          "src/slice_reborrow_call_admission.fy",
+          "src/slice_reborrow_call_ir.fy",
+          "src/slice_reborrow_call_vm.fy",
+          "src/slice_reborrow_context.fy",
+          "src/slice_reborrow_ir.fy",
+          "src/slice_reborrow_vm.fy",
+          "src/slice_result_bindings.fy",
+          "src/slice_result_call_ir.fy",
+          "src/slice_result_call_source.fy",
+          "src/slice_result_entry.fy",
+          "src/slice_result_execution.fy",
+          "src/slice_result_frames.fy",
+          "src/slice_result_ir.fy",
+          "src/slice_result_loan_execution.fy",
+          "src/slice_result_origins.fy",
+          "src/slice_result_owned_execution.fy",
+          "src/slice_result_range_source.fy",
+          "src/slice_result_record_bindings.fy",
+          "src/slice_result_record_execution.fy",
+          "src/slice_result_runtime.fy",
+          "src/slice_result_source_origins.fy",
+          "src/slice_result_verifier.fy",
+          "src/slice_source.fy",
+          "src/slice_verifier.fy",
+          "src/slice_vm.fy",
+          "src/source_context.fy",
+          "src/source_error.fy",
+          "src/source_features.fy",
+          "src/source_snapshot.fy",
+          "src/static_builders.fy",
+          "src/static_call_execution.fy",
+          "src/static_call_ir.fy",
+          "src/static_call_sites.fy",
+          "src/static_execution.fy",
+          "src/static_image.fy",
+          "src/static_ir.fy",
+          "src/static_source.fy",
+          "src/static_views.fy",
+          "src/struct_call_source.fy",
+          "src/struct_call_vm.fy",
+          "src/struct_layout.fy",
+          "src/struct_meta.fy",
+          "src/struct_nested_storage.fy",
+          "src/struct_parameters.fy",
+          "src/struct_range.fy",
+          "src/struct_result_source.fy",
+          "src/struct_result_vm.fy",
+          "src/struct_results.fy",
+          "src/struct_source.fy",
+          "src/struct_storage.fy",
+          "src/struct_value_source.fy",
+          "src/struct_verifier.fy",
+          "src/struct_vm.fy",
+          "src/tagged.fy",
+          "src/text_source.fy",
+          "src/types.fy",
+          "src/verifier.fy",
+          "src/vm.fy",
+          "src/vm_execution.fy",
+          "src/vm_reborrow_execution.fy",
+          "tests/m2/aggregate_inference.fy",
+          "tests/m2/local_inference.fy",
+          "tests/m2/module_program.fy",
+          "tests/m2/reference_inference.fy",
+          "tests/m2/reference_return_source.fy",
+          "tests/m2/static_bindings_source.fy",
+          "toolchain.json",
+          "tools/verify-static-execution.py"
+        ],
+        "verifierCommit": "442f1f8611400c8065c51a29406b1cfda0f5789b"
+      },
+      "cli": {
+        "status": "passed",
+        "profile": "development",
+        "selection": "reference",
+        "startingHead": "8fb1ea43bcdcf030b4fd07da3860ee2315e99e44",
+        "inputSnapshotCapturedAt": "2026-11-05T16:17:25.266056+00:00",
+        "buildCommand": [
+          "build/toolchain/fairyc.exe",
+          "build",
+          "--locked"
+        ],
+        "artifact": {
+          "path": "build/reference-inference-cli/development/browniec.exe",
+          "sha256": "39ad70b1382034240c01288838604aab5fe8bbb4b968c0922004a05eb3134eca"
+        },
+        "emptyRuntimeToolPath": true,
+        "cases": [
+          {
+            "case": "check",
+            "sourceSha256": "e35f86a3d0273e157efd284407ecf9d63e43087a4fea93ffd8a2d2abf0b1ffa6",
+            "command": [
+              "check",
+              "build/reference-inference-cli/development/check.brc",
+              "--json"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "checked",
+              "return_i32": null,
+              "error": null
+            }
+          },
+          {
+            "case": "run",
+            "sourceSha256": "e35f86a3d0273e157efd284407ecf9d63e43087a4fea93ffd8a2d2abf0b1ffa6",
+            "command": [
+              "run",
+              "build/reference-inference-cli/development/run.brc",
+              "--json"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "case": "mutable",
+            "sourceSha256": "3ed1993305d04b43f05a5afdf34598a61ae819d6fb245435578e816c36998a58",
+            "command": [
+              "run",
+              "build/reference-inference-cli/development/mutable.brc",
+              "--json"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "case": "wide",
+            "sourceSha256": "9756225eedb5908895865dfe29b44265ff947fc44a619f4131f836ae0eb178f8",
+            "command": [
+              "run",
+              "build/reference-inference-cli/development/wide.brc",
+              "--json"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "case": "for",
+            "sourceSha256": "6143ed5e6828cc165a9ce4cf1f6126e76355d182d6a9accd4026115a4fc05e07",
+            "command": [
+              "run",
+              "build/reference-inference-cli/development/for.brc",
+              "--json"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "case": "self",
+            "sourceSha256": "6ca4aed7de89ac6539fbe61ca3cad20884a1ac05aa3565d005f8320c2f114a71",
+            "command": [
+              "check",
+              "build/reference-inference-cli/development/self.brc",
+              "--json"
+            ],
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "type",
+                "byte_offset": 32
+              }
+            }
+          },
+          {
+            "case": "changed-type",
+            "sourceSha256": "5e613c2ca86fda3d2f9eeeafb6ece5be41ad3441077e37d7b24d213c5879af23",
+            "command": [
+              "run",
+              "build/reference-inference-cli/development/changed-type.brc",
+              "--json"
+            ],
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "type",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "case": "ambiguous",
+            "sourceSha256": "0139ec9e0f5d6df65839ffbbe51e13ab5a288ff23c08526d04f8d06b302fe478",
+            "command": [
+              "check",
+              "build/reference-inference-cli/development/ambiguous.brc",
+              "--json"
+            ],
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "type",
+                "byte_offset": 32
+              }
+            }
+          },
+          {
+            "case": "exact-fuel",
+            "sourceSha256": "e35f86a3d0273e157efd284407ecf9d63e43087a4fea93ffd8a2d2abf0b1ffa6",
+            "command": [
+              "run",
+              "build/reference-inference-cli/development/exact-fuel.brc",
+              "--json",
+              "--fuel",
+              "2"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "case": "short-fuel",
+            "sourceSha256": "e35f86a3d0273e157efd284407ecf9d63e43087a4fea93ffd8a2d2abf0b1ffa6",
+            "command": [
+              "run",
+              "build/reference-inference-cli/development/short-fuel.brc",
+              "--json",
+              "--fuel",
+              "1"
+            ],
+            "exitCode": 5,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "fuel",
+                "byte_offset": 35
+              }
+            }
+          },
+          {
+            "case": "retained-run",
+            "sourceSha256": "044be2096013abd088fc79c5569663ec5474309200718e7e3317db15489540ee",
+            "command": [
+              "run",
+              "build/reference-inference-cli/development/retained-run.brc",
+              "--json",
+              "--fuel",
+              "16000000"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-reference/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "case": "retained-check",
+            "sourceSha256": "044be2096013abd088fc79c5569663ec5474309200718e7e3317db15489540ee",
+            "command": [
+              "check",
+              "build/reference-inference-cli/development/retained-check.brc",
+              "--json"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-reference/1",
+              "command": "check",
+              "status": "checked",
+              "return_i32": null,
+              "error": null
+            }
+          },
+          {
+            "case": "byte-alias-check",
+            "sourceSha256": "1a8d0e803d4206838a5c209760589420e1f6f69aa5ebb810af6de73b756ed311",
+            "command": [
+              "check",
+              "build/reference-inference-cli/development/byte-alias-check.brc",
+              "--json"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-reference/1",
+              "command": "check",
+              "status": "checked",
+              "return_i32": null,
+              "error": null
+            }
+          },
+          {
+            "case": "byte-alias-run",
+            "sourceSha256": "1a8d0e803d4206838a5c209760589420e1f6f69aa5ebb810af6de73b756ed311",
+            "command": [
+              "run",
+              "build/reference-inference-cli/development/byte-alias-run.brc",
+              "--json",
+              "--fuel",
+              "16000000"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-reference/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "case": "text",
+            "sourceSha256": "f9237e4a640dbfb0b48feab1ca8eafc7f8b9c77e71b532db970416e5460b6097",
+            "command": [
+              "run",
+              "build/reference-inference-cli/development/text.brc",
+              "--json",
+              "--fuel",
+              "16000000"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-reference/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 237,
+              "error": null
+            }
+          },
+          {
+            "case": "grouped",
+            "sourceSha256": "ee2df69ee1a1be4e49d5383f89758b9cab6077148b10fd84d05f8d076e6b5bbc",
+            "command": [
+              "run",
+              "build/reference-inference-cli/development/grouped.brc",
+              "--json",
+              "--fuel",
+              "16000000"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-reference/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "case": "scalar-projections",
+            "sourceSha256": "998603e8ada569dd704f3a16a489f3776c17c96503d4545d89a55320e7a5de02",
+            "command": [
+              "run",
+              "build/reference-inference-cli/development/scalar-projections.brc",
+              "--json",
+              "--fuel",
+              "16000000"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-reference/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "case": "returned-check",
+            "sourceSha256": "96be61f75bcf502195f6a4271b3255d45e455c0d148a8f196727bc5a0b07b574",
+            "command": [
+              "check",
+              "build/reference-inference-cli/development/returned-check.brc",
+              "--json"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-reference/1",
+              "command": "check",
+              "status": "checked",
+              "return_i32": null,
+              "error": null
+            }
+          },
+          {
+            "case": "returned-run",
+            "sourceSha256": "96be61f75bcf502195f6a4271b3255d45e455c0d148a8f196727bc5a0b07b574",
+            "command": [
+              "run",
+              "build/reference-inference-cli/development/returned-run.brc",
+              "--json",
+              "--fuel",
+              "16000000"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-reference/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "case": "returned-early-exit",
+            "sourceSha256": "8bb69f619144b30dd482e17cc454401bd38b503dd897a9a3068b27fef904e30b",
+            "command": [
+              "run",
+              "build/reference-inference-cli/development/returned-early-exit.brc",
+              "--json",
+              "--fuel",
+              "16000000"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-reference/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "case": "shared-root",
+            "sourceSha256": "7ca7bb488507dbc886e790b7c440360cff4d48b5bda8235a0eb40f20b9a7d348",
+            "command": [
+              "run",
+              "build/reference-inference-cli/development/shared-root.brc",
+              "--json",
+              "--fuel",
+              "16000000"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-array-read/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "case": "exclusive-root",
+            "sourceSha256": "525163d48dc93537f797d2d549433fe10e3f89d09e9625ec55365a15d5fcc979",
+            "command": [
+              "run",
+              "build/reference-inference-cli/development/exclusive-root.brc",
+              "--json",
+              "--fuel",
+              "16000000"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-array-write/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "case": "exclusive-reborrow",
+            "sourceSha256": "b65decf6cb2324d97b9146eee090dabf3f729e1e3f020c510fa276823d7939e7",
+            "command": [
+              "run",
+              "build/reference-inference-cli/development/exclusive-reborrow.brc",
+              "--json",
+              "--fuel",
+              "16000000"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-array-write/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "case": "mutable-view-error",
+            "sourceSha256": "6de2ac87696d467ff1f018a4f189e16fc01e6ed99d39b99260f81b0ce4f6b03f",
+            "command": [
+              "check",
+              "build/reference-inference-cli/development/mutable-view-error.brc",
+              "--json"
+            ],
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "type",
+                "byte_offset": 30
+              }
+            }
+          },
+          {
+            "case": "mutable-literal-error",
+            "sourceSha256": "f72deb46fc89181d5114ac4146ec6eb2e5742f1e588bac2ad5572ef6c1741c59",
+            "command": [
+              "check",
+              "build/reference-inference-cli/development/mutable-literal-error.brc",
+              "--json"
+            ],
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "type",
+                "byte_offset": 30
+              }
+            }
+          },
+          {
+            "case": "self-reference-error",
+            "sourceSha256": "4410d658c8ac926e6d20943f2bc247079bd7c7322b2d6e7daf32279e9b617798",
+            "command": [
+              "check",
+              "build/reference-inference-cli/development/self-reference-error.brc",
+              "--json"
+            ],
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "type",
+                "byte_offset": 37
+              }
+            }
+          },
+          {
+            "case": "borrow-conflict-error",
+            "sourceSha256": "1cbbc41142f04170f77adb28d86b5e4cd77b794aa57224e219ac65251a7eee1a",
+            "command": [
+              "check",
+              "build/reference-inference-cli/development/borrow-conflict-error.brc",
+              "--json"
+            ],
+            "exitCode": 6,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-array-write/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "verification",
+                "byte_offset": 7
+              }
+            }
+          },
+          {
+            "case": "selected-owner-error",
+            "sourceSha256": "ce302d1afa869af7e14f1d0840ec8b1e39229cd4a4019d643dc1f4a032526f3a",
+            "command": [
+              "check",
+              "build/reference-inference-cli/development/selected-owner-error.brc",
+              "--json"
+            ],
+            "exitCode": 6,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "verification",
+                "byte_offset": 12
+              }
+            }
+          },
+          {
+            "case": "reference-exact-fuel",
+            "sourceSha256": "8497b97f7fd45163180ffecdd9600cfa69e068cc06b1e678ff7d456a82306437",
+            "command": [
+              "run",
+              "build/reference-inference-cli/development/reference-exact-fuel.brc",
+              "--json",
+              "--fuel",
+              "286935"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-array-write/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "case": "reference-short-fuel",
+            "sourceSha256": "8497b97f7fd45163180ffecdd9600cfa69e068cc06b1e678ff7d456a82306437",
+            "command": [
+              "run",
+              "build/reference-inference-cli/development/reference-short-fuel.brc",
+              "--json",
+              "--fuel",
+              "286934"
+            ],
+            "exitCode": 5,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-array-write/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "fuel",
+                "byte_offset": 91
+              }
+            }
+          },
+          {
+            "case": "alias-exact-fuel",
+            "sourceSha256": "1a8d0e803d4206838a5c209760589420e1f6f69aa5ebb810af6de73b756ed311",
+            "command": [
+              "run",
+              "build/reference-inference-cli/development/alias-exact-fuel.brc",
+              "--json",
+              "--fuel",
+              "344121"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-reference/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "case": "alias-short-fuel",
+            "sourceSha256": "1a8d0e803d4206838a5c209760589420e1f6f69aa5ebb810af6de73b756ed311",
+            "command": [
+              "run",
+              "build/reference-inference-cli/development/alias-short-fuel.brc",
+              "--json",
+              "--fuel",
+              "344120"
+            ],
+            "exitCode": 5,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-reference/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "fuel",
+                "byte_offset": 49
+              }
+            }
+          }
+        ],
+        "receipt": "build/reference-inference-cli/development/receipt.json",
+        "receiptSha256": "6065d81190f2f6490cab504e6e487367a444650bc054c7bc8341ca994a571540",
+        "inputCount": 158,
+        "inputPaths": [
+          "fairy.lock",
+          "fairy.toml",
+          "src/aggregate_inference.fy",
+          "src/arithmetic.fy",
+          "src/array_call_source.fy",
+          "src/array_call_vm.fy",
+          "src/array_layout.fy",
+          "src/array_local_source.fy",
+          "src/array_meta.fy",
+          "src/array_owners.fy",
+          "src/array_parameters.fy",
+          "src/array_range_vm.fy",
+          "src/array_result_source.fy",
+          "src/array_result_vm.fy",
+          "src/array_results.fy",
+          "src/array_slices.fy",
+          "src/array_source.fy",
+          "src/array_storage.fy",
+          "src/array_verifier.fy",
+          "src/array_vm.fy",
+          "src/bits.fy",
+          "src/buffer_append.fy",
+          "src/buffer_close.fy",
+          "src/buffer_create.fy",
+          "src/buffer_growth.fy",
+          "src/buffer_host_close.fy",
+          "src/buffer_host_sweep.fy",
+          "src/buffer_owners.fy",
+          "src/buffer_replacement.fy",
+          "src/buffer_resize.fy",
+          "src/buffer_storage.fy",
+          "src/buffer_truncate.fy",
+          "src/buffer_utf8.fy",
+          "src/buffer_utf8_meter.fy",
+          "src/buffer_utf8_pool.fy",
+          "src/buffer_utf8_scan.fy",
+          "src/buffer_utf8_session.fy",
+          "src/buffer_write.fy",
+          "src/call_frame_vm.fy",
+          "src/call_prefix_source.fy",
+          "src/casts.fy",
+          "src/cells.fy",
+          "src/cli_input.fy",
+          "src/compiler.fy",
+          "src/errors.fy",
+          "src/fuel.fy",
+          "src/functions.fy",
+          "src/ir.fy",
+          "src/json_tokens.fy",
+          "src/lexer.fy",
+          "src/literal_collection.fy",
+          "src/literal_source.fy",
+          "src/local_inference.fy",
+          "src/locals.fy",
+          "src/loops.fy",
+          "src/main.fy",
+          "src/mixed_call_vm.fy",
+          "src/module_entry.fy",
+          "src/module_index.fy",
+          "src/module_program.fy",
+          "src/patterns.fy",
+          "src/program_image.fy",
+          "src/project_manifest.fy",
+          "src/project_names.fy",
+          "src/project_program.fy",
+          "src/project_sources.fy",
+          "src/propagation.fy",
+          "src/reference_access.fy",
+          "src/reference_call_source.fy",
+          "src/reference_execution.fy",
+          "src/reference_inference.fy",
+          "src/reference_lifetimes.fy",
+          "src/reference_receipts.fy",
+          "src/reference_result_source.fy",
+          "src/reference_return_execution.fy",
+          "src/reference_words.fy",
+          "src/register_set.fy",
+          "src/render.fy",
+          "src/scalar_codec.fy",
+          "src/shifts.fy",
+          "src/slice_authority.fy",
+          "src/slice_authority_call_vm.fy",
+          "src/slice_builders.fy",
+          "src/slice_call_source.fy",
+          "src/slice_call_vm.fy",
+          "src/slice_cleanup_source.fy",
+          "src/slice_exclusive_vm.fy",
+          "src/slice_formal_reborrow_vm.fy",
+          "src/slice_frame_vm.fy",
+          "src/slice_handoff.fy",
+          "src/slice_lifecycle_vm.fy",
+          "src/slice_mutable_call_vm.fy",
+          "src/slice_mutable_frame_vm.fy",
+          "src/slice_parameters.fy",
+          "src/slice_reborrow.fy",
+          "src/slice_reborrow_admission_ir.fy",
+          "src/slice_reborrow_call_admission.fy",
+          "src/slice_reborrow_call_ir.fy",
+          "src/slice_reborrow_call_vm.fy",
+          "src/slice_reborrow_context.fy",
+          "src/slice_reborrow_ir.fy",
+          "src/slice_reborrow_vm.fy",
+          "src/slice_result_bindings.fy",
+          "src/slice_result_call_ir.fy",
+          "src/slice_result_call_source.fy",
+          "src/slice_result_entry.fy",
+          "src/slice_result_execution.fy",
+          "src/slice_result_frames.fy",
+          "src/slice_result_ir.fy",
+          "src/slice_result_loan_execution.fy",
+          "src/slice_result_origins.fy",
+          "src/slice_result_owned_execution.fy",
+          "src/slice_result_range_source.fy",
+          "src/slice_result_record_bindings.fy",
+          "src/slice_result_record_execution.fy",
+          "src/slice_result_runtime.fy",
+          "src/slice_result_source_origins.fy",
+          "src/slice_result_verifier.fy",
+          "src/slice_source.fy",
+          "src/slice_verifier.fy",
+          "src/slice_vm.fy",
+          "src/source_context.fy",
+          "src/source_error.fy",
+          "src/source_features.fy",
+          "src/source_snapshot.fy",
+          "src/static_builders.fy",
+          "src/static_call_execution.fy",
+          "src/static_call_ir.fy",
+          "src/static_call_sites.fy",
+          "src/static_execution.fy",
+          "src/static_image.fy",
+          "src/static_ir.fy",
+          "src/static_source.fy",
+          "src/static_views.fy",
+          "src/struct_call_source.fy",
+          "src/struct_call_vm.fy",
+          "src/struct_layout.fy",
+          "src/struct_meta.fy",
+          "src/struct_nested_storage.fy",
+          "src/struct_parameters.fy",
+          "src/struct_range.fy",
+          "src/struct_result_source.fy",
+          "src/struct_result_vm.fy",
+          "src/struct_results.fy",
+          "src/struct_source.fy",
+          "src/struct_storage.fy",
+          "src/struct_value_source.fy",
+          "src/struct_verifier.fy",
+          "src/struct_vm.fy",
+          "src/tagged.fy",
+          "src/text_source.fy",
+          "src/types.fy",
+          "src/verifier.fy",
+          "src/vm.fy",
+          "src/vm_execution.fy",
+          "src/vm_reborrow_execution.fy",
+          "toolchain.json",
+          "tools/verify-local-inference-cli.py"
+        ]
+      }
+    },
+    "release": {
+      "native": {
+        "nativeGroups": 36,
+        "disjointCoverage": true,
+        "completeIdentities": [
+          "tests::m2::aggregate_inference::aggregate_calls_and_repeated_fillers_evaluate_once_in_source_order",
+          "tests::m2::aggregate_inference::annotated_and_inferred_aggregate_initializers_emit_identical_executable_bytes",
+          "tests::m2::aggregate_inference::call_and_local_paths_distinguish_scalar_projections_from_owned_children",
+          "tests::m2::aggregate_inference::early_initializer_exits_do_not_publish_pending_array_or_record_owners",
+          "tests::m2::aggregate_inference::inferred_owners_preserve_the_original_sixteen_site_catalog_limits",
+          "tests::m2::aggregate_inference::invalid_shapes_names_mutation_and_nominal_changes_still_fail_admission",
+          "tests::m2::aggregate_inference::record_constructors_shorthand_and_subrecords_keep_exact_nominal_copies",
+          "tests::m2::aggregate_inference::repeated_arrays_infer_exact_shapes_and_scalar_elements_with_independent_copies",
+          "tests::m2::local_inference::complete_tagged_expression_types_survive_inference_and_reassignment",
+          "tests::m2::local_inference::inference_keeps_scalar_ir_and_exact_fuel_identical_to_annotations",
+          "tests::m2::local_inference::inferred_bindings_keep_initialization_order_value_copies_and_lexical_scopes",
+          "tests::m2::local_inference::inferred_initializers_keep_32_deep_captured_calls_without_native_stack_overrides",
+          "tests::m2::local_inference::inferred_locals_preserve_the_original_64_binding_limit",
+          "tests::m2::local_inference::initializer_types_default_to_i32_and_preserve_all_existing_scalar_domains",
+          "tests::m2::local_inference::invalid_names_uninitialized_uses_and_type_changes_are_rejected",
+          "tests::m2::local_inference::retained_byte_reads_and_scalar_locals_in_returned_borrow_bodies_keep_admission",
+          "tests::m2::module_program::both_compiler_routes_keep_the_32_deep_call_limit_without_native_stack_overrides",
+          "tests::m2::module_program::inferred_reference_aliases_and_return_origins_keep_qualified_resolution",
+          "tests::m2::module_program::shared_byte_returns_literals_ranges_and_text_cross_real_module_calls",
+          "tests::m2::reference_inference::endpoint_effects_evaluate_once_and_in_source_order",
+          "tests::m2::reference_inference::exclusive_reborrows_restore_parent_and_shared_aliases_close_in_reverse_order",
+          "tests::m2::reference_inference::inferred_native_loans_emit_the_same_ir_and_charge_the_same_exact_fuel",
+          "tests::m2::reference_inference::inferred_references_do_not_grant_access_rebind_escape_or_change_kinds",
+          "tests::m2::reference_inference::inferred_retained_aliases_preserve_annotated_ir_and_independent_exact_fuel",
+          "tests::m2::reference_inference::inferred_static_aliases_preserve_the_sixteen_site_limit",
+          "tests::m2::reference_inference::literal_text_bytes_aliases_groups_and_conversions_keep_exact_kinds",
+          "tests::m2::reference_inference::pending_returned_owners_cleanup_on_return_propagation_and_loop_exits",
+          "tests::m2::reference_inference::retained_aliases_preserve_owner_exclusion_until_the_last_live_alias",
+          "tests::m2::reference_inference::returned_views_keep_selected_temporary_owners_and_native_runtime_origins",
+          "tests::m2::reference_inference::rooted_shared_and_exclusive_loans_keep_all_existing_scalar_elements",
+          "tests::m2::reference_inference::scalar_projections_and_grouped_scalar_expressions_keep_scalar_inference",
+          "tests::m2::reference_return_source::agreeing_branches_forwarding_and_grounded_recursion_reject_conflicts_and_cycles",
+          "tests::m2::reference_return_source::returned_aliases_narrowed_and_empty_windows_support_read_and_length",
+          "tests::m2::reference_return_source::selected_temporaries_cleanup_across_return_propagation_break_continue_and_later_arguments",
+          "tests::m2::static_bindings_source::aggregate_returns_close_static_locals_and_existing_runtime_slices_stay_distinct",
+          "tests::m2::static_bindings_source::byte_and_text_locals_aliases_and_explicit_conversion_preserve_kinds"
+        ],
+        "shards": [
+          {
+            "status": "passed",
+            "profile": "release",
+            "selection": "reference-inference",
+            "startingHead": "ed10ad33135b3e135b2ccceba64ac7e006e3446d",
+            "inputSnapshotCapturedAt": "2026-11-05T16:40:36.808028+00:00",
+            "testDiscovery": {
+              "count": 258,
+              "sha256": "b7b0a852a379b8e1349656d6898dcceb6706c8134ea4b86e25ee297aec17e879"
+            },
+            "partition": {
+              "shard": 1,
+              "shards": 3,
+              "completeIdentities": [
+                "tests::m2::aggregate_inference::aggregate_calls_and_repeated_fillers_evaluate_once_in_source_order",
+                "tests::m2::aggregate_inference::annotated_and_inferred_aggregate_initializers_emit_identical_executable_bytes",
+                "tests::m2::aggregate_inference::call_and_local_paths_distinguish_scalar_projections_from_owned_children",
+                "tests::m2::aggregate_inference::early_initializer_exits_do_not_publish_pending_array_or_record_owners",
+                "tests::m2::aggregate_inference::inferred_owners_preserve_the_original_sixteen_site_catalog_limits",
+                "tests::m2::aggregate_inference::invalid_shapes_names_mutation_and_nominal_changes_still_fail_admission",
+                "tests::m2::aggregate_inference::record_constructors_shorthand_and_subrecords_keep_exact_nominal_copies",
+                "tests::m2::aggregate_inference::repeated_arrays_infer_exact_shapes_and_scalar_elements_with_independent_copies",
+                "tests::m2::local_inference::complete_tagged_expression_types_survive_inference_and_reassignment",
+                "tests::m2::local_inference::inference_keeps_scalar_ir_and_exact_fuel_identical_to_annotations",
+                "tests::m2::local_inference::inferred_bindings_keep_initialization_order_value_copies_and_lexical_scopes",
+                "tests::m2::local_inference::inferred_initializers_keep_32_deep_captured_calls_without_native_stack_overrides",
+                "tests::m2::local_inference::inferred_locals_preserve_the_original_64_binding_limit",
+                "tests::m2::local_inference::initializer_types_default_to_i32_and_preserve_all_existing_scalar_domains",
+                "tests::m2::local_inference::invalid_names_uninitialized_uses_and_type_changes_are_rejected",
+                "tests::m2::local_inference::retained_byte_reads_and_scalar_locals_in_returned_borrow_bodies_keep_admission",
+                "tests::m2::module_program::both_compiler_routes_keep_the_32_deep_call_limit_without_native_stack_overrides",
+                "tests::m2::module_program::inferred_reference_aliases_and_return_origins_keep_qualified_resolution",
+                "tests::m2::module_program::shared_byte_returns_literals_ranges_and_text_cross_real_module_calls",
+                "tests::m2::reference_inference::endpoint_effects_evaluate_once_and_in_source_order",
+                "tests::m2::reference_inference::exclusive_reborrows_restore_parent_and_shared_aliases_close_in_reverse_order",
+                "tests::m2::reference_inference::inferred_native_loans_emit_the_same_ir_and_charge_the_same_exact_fuel",
+                "tests::m2::reference_inference::inferred_references_do_not_grant_access_rebind_escape_or_change_kinds",
+                "tests::m2::reference_inference::inferred_retained_aliases_preserve_annotated_ir_and_independent_exact_fuel",
+                "tests::m2::reference_inference::inferred_static_aliases_preserve_the_sixteen_site_limit",
+                "tests::m2::reference_inference::literal_text_bytes_aliases_groups_and_conversions_keep_exact_kinds",
+                "tests::m2::reference_inference::pending_returned_owners_cleanup_on_return_propagation_and_loop_exits",
+                "tests::m2::reference_inference::retained_aliases_preserve_owner_exclusion_until_the_last_live_alias",
+                "tests::m2::reference_inference::returned_views_keep_selected_temporary_owners_and_native_runtime_origins",
+                "tests::m2::reference_inference::rooted_shared_and_exclusive_loans_keep_all_existing_scalar_elements",
+                "tests::m2::reference_inference::scalar_projections_and_grouped_scalar_expressions_keep_scalar_inference",
+                "tests::m2::reference_return_source::agreeing_branches_forwarding_and_grounded_recursion_reject_conflicts_and_cycles",
+                "tests::m2::reference_return_source::returned_aliases_narrowed_and_empty_windows_support_read_and_length",
+                "tests::m2::reference_return_source::selected_temporaries_cleanup_across_return_propagation_break_continue_and_later_arguments",
+                "tests::m2::static_bindings_source::aggregate_returns_close_static_locals_and_existing_runtime_slices_stay_distinct",
+                "tests::m2::static_bindings_source::byte_and_text_locals_aliases_and_explicit_conversion_preserve_kinds"
+              ]
+            },
+            "lfMirror": {
+              "command": [
+                "build/toolchain/fairyc.exe",
+                "check",
+                "--locked"
+              ],
+              "workingDirectory": "build/static-execution/release/reference-inference/shard-1-of-3/lf-workspace",
+              "productionFiles": 154,
+              "result": "check ok: 2 instance(s), 162 source file(s), 1519 MIR function(s), lock verified"
+            },
+            "command": [
+              "build/toolchain/fairyc.exe",
+              "test",
+              "--native",
+              "--capture-output",
+              "--json",
+              "--locked",
+              "--release",
+              "--exact",
+              "tests::m2::aggregate_inference::aggregate_calls_and_repeated_fillers_evaluate_once_in_source_order",
+              "--exact",
+              "tests::m2::aggregate_inference::early_initializer_exits_do_not_publish_pending_array_or_record_owners",
+              "--exact",
+              "tests::m2::aggregate_inference::record_constructors_shorthand_and_subrecords_keep_exact_nominal_copies",
+              "--exact",
+              "tests::m2::local_inference::inference_keeps_scalar_ir_and_exact_fuel_identical_to_annotations",
+              "--exact",
+              "tests::m2::local_inference::inferred_locals_preserve_the_original_64_binding_limit",
+              "--exact",
+              "tests::m2::local_inference::retained_byte_reads_and_scalar_locals_in_returned_borrow_bodies_keep_admission",
+              "--exact",
+              "tests::m2::module_program::shared_byte_returns_literals_ranges_and_text_cross_real_module_calls",
+              "--exact",
+              "tests::m2::reference_inference::inferred_native_loans_emit_the_same_ir_and_charge_the_same_exact_fuel",
+              "--exact",
+              "tests::m2::reference_inference::inferred_static_aliases_preserve_the_sixteen_site_limit",
+              "--exact",
+              "tests::m2::reference_inference::retained_aliases_preserve_owner_exclusion_until_the_last_live_alias",
+              "--exact",
+              "tests::m2::reference_inference::scalar_projections_and_grouped_scalar_expressions_keep_scalar_inference",
+              "--exact",
+              "tests::m2::reference_return_source::selected_temporaries_cleanup_across_return_propagation_break_continue_and_later_arguments"
+            ],
+            "nativeGroups": 12,
+            "report": {
+              "schemaVersion": "fairyc.test-report/v4",
+              "engine": "native",
+              "target": "x86_64-windows-msvc",
+              "profile": "release",
+              "tests": [
+                {
+                  "identity": "tests::m2::aggregate_inference::aggregate_calls_and_repeated_fillers_evaluate_once_in_source_order",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::aggregate_inference::early_initializer_exits_do_not_publish_pending_array_or_record_owners",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::aggregate_inference::record_constructors_shorthand_and_subrecords_keep_exact_nominal_copies",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::local_inference::inference_keeps_scalar_ir_and_exact_fuel_identical_to_annotations",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::local_inference::inferred_locals_preserve_the_original_64_binding_limit",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::local_inference::retained_byte_reads_and_scalar_locals_in_returned_borrow_bodies_keep_admission",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::module_program::shared_byte_returns_literals_ranges_and_text_cross_real_module_calls",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::reference_inference::inferred_native_loans_emit_the_same_ir_and_charge_the_same_exact_fuel",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::reference_inference::inferred_static_aliases_preserve_the_sixteen_site_limit",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::reference_inference::retained_aliases_preserve_owner_exclusion_until_the_last_live_alias",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::reference_inference::scalar_projections_and_grouped_scalar_expressions_keep_scalar_inference",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::reference_return_source::selected_temporaries_cleanup_across_return_propagation_break_continue_and_later_arguments",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                }
+              ],
+              "count": 12,
+              "passed": 12,
+              "failed": 0,
+              "status": "ok",
+              "lock": "verified"
+            },
+            "nativeReportSha256": "1b519a5552d2ffeac717132c1aa7db0f24b55c3623ac74f3bf65e0e8ec4fc199",
+            "receipt": "build/static-execution/release/reference-inference/shard-1-of-3/receipt.json",
+            "receiptSha256": "322a896df921aa0c531a3108595660d333e087a565115f55d540402d2132d8ef",
+            "inputCount": 164,
+            "inputPaths": [
+              "fairy.lock",
+              "fairy.toml",
+              "src/aggregate_inference.fy",
+              "src/arithmetic.fy",
+              "src/array_call_source.fy",
+              "src/array_call_vm.fy",
+              "src/array_layout.fy",
+              "src/array_local_source.fy",
+              "src/array_meta.fy",
+              "src/array_owners.fy",
+              "src/array_parameters.fy",
+              "src/array_range_vm.fy",
+              "src/array_result_source.fy",
+              "src/array_result_vm.fy",
+              "src/array_results.fy",
+              "src/array_slices.fy",
+              "src/array_source.fy",
+              "src/array_storage.fy",
+              "src/array_verifier.fy",
+              "src/array_vm.fy",
+              "src/bits.fy",
+              "src/buffer_append.fy",
+              "src/buffer_close.fy",
+              "src/buffer_create.fy",
+              "src/buffer_growth.fy",
+              "src/buffer_host_close.fy",
+              "src/buffer_host_sweep.fy",
+              "src/buffer_owners.fy",
+              "src/buffer_replacement.fy",
+              "src/buffer_resize.fy",
+              "src/buffer_storage.fy",
+              "src/buffer_truncate.fy",
+              "src/buffer_utf8.fy",
+              "src/buffer_utf8_meter.fy",
+              "src/buffer_utf8_pool.fy",
+              "src/buffer_utf8_scan.fy",
+              "src/buffer_utf8_session.fy",
+              "src/buffer_write.fy",
+              "src/call_frame_vm.fy",
+              "src/call_prefix_source.fy",
+              "src/casts.fy",
+              "src/cells.fy",
+              "src/cli_input.fy",
+              "src/compiler.fy",
+              "src/errors.fy",
+              "src/fuel.fy",
+              "src/functions.fy",
+              "src/ir.fy",
+              "src/json_tokens.fy",
+              "src/lexer.fy",
+              "src/literal_collection.fy",
+              "src/literal_source.fy",
+              "src/local_inference.fy",
+              "src/locals.fy",
+              "src/loops.fy",
+              "src/main.fy",
+              "src/mixed_call_vm.fy",
+              "src/module_entry.fy",
+              "src/module_index.fy",
+              "src/module_program.fy",
+              "src/patterns.fy",
+              "src/program_image.fy",
+              "src/project_manifest.fy",
+              "src/project_names.fy",
+              "src/project_program.fy",
+              "src/project_sources.fy",
+              "src/propagation.fy",
+              "src/reference_access.fy",
+              "src/reference_call_source.fy",
+              "src/reference_execution.fy",
+              "src/reference_inference.fy",
+              "src/reference_lifetimes.fy",
+              "src/reference_receipts.fy",
+              "src/reference_result_source.fy",
+              "src/reference_return_execution.fy",
+              "src/reference_words.fy",
+              "src/register_set.fy",
+              "src/render.fy",
+              "src/scalar_codec.fy",
+              "src/shifts.fy",
+              "src/slice_authority.fy",
+              "src/slice_authority_call_vm.fy",
+              "src/slice_builders.fy",
+              "src/slice_call_source.fy",
+              "src/slice_call_vm.fy",
+              "src/slice_cleanup_source.fy",
+              "src/slice_exclusive_vm.fy",
+              "src/slice_formal_reborrow_vm.fy",
+              "src/slice_frame_vm.fy",
+              "src/slice_handoff.fy",
+              "src/slice_lifecycle_vm.fy",
+              "src/slice_mutable_call_vm.fy",
+              "src/slice_mutable_frame_vm.fy",
+              "src/slice_parameters.fy",
+              "src/slice_reborrow.fy",
+              "src/slice_reborrow_admission_ir.fy",
+              "src/slice_reborrow_call_admission.fy",
+              "src/slice_reborrow_call_ir.fy",
+              "src/slice_reborrow_call_vm.fy",
+              "src/slice_reborrow_context.fy",
+              "src/slice_reborrow_ir.fy",
+              "src/slice_reborrow_vm.fy",
+              "src/slice_result_bindings.fy",
+              "src/slice_result_call_ir.fy",
+              "src/slice_result_call_source.fy",
+              "src/slice_result_entry.fy",
+              "src/slice_result_execution.fy",
+              "src/slice_result_frames.fy",
+              "src/slice_result_ir.fy",
+              "src/slice_result_loan_execution.fy",
+              "src/slice_result_origins.fy",
+              "src/slice_result_owned_execution.fy",
+              "src/slice_result_range_source.fy",
+              "src/slice_result_record_bindings.fy",
+              "src/slice_result_record_execution.fy",
+              "src/slice_result_runtime.fy",
+              "src/slice_result_source_origins.fy",
+              "src/slice_result_verifier.fy",
+              "src/slice_source.fy",
+              "src/slice_verifier.fy",
+              "src/slice_vm.fy",
+              "src/source_context.fy",
+              "src/source_error.fy",
+              "src/source_features.fy",
+              "src/source_snapshot.fy",
+              "src/static_builders.fy",
+              "src/static_call_execution.fy",
+              "src/static_call_ir.fy",
+              "src/static_call_sites.fy",
+              "src/static_execution.fy",
+              "src/static_image.fy",
+              "src/static_ir.fy",
+              "src/static_source.fy",
+              "src/static_views.fy",
+              "src/struct_call_source.fy",
+              "src/struct_call_vm.fy",
+              "src/struct_layout.fy",
+              "src/struct_meta.fy",
+              "src/struct_nested_storage.fy",
+              "src/struct_parameters.fy",
+              "src/struct_range.fy",
+              "src/struct_result_source.fy",
+              "src/struct_result_vm.fy",
+              "src/struct_results.fy",
+              "src/struct_source.fy",
+              "src/struct_storage.fy",
+              "src/struct_value_source.fy",
+              "src/struct_verifier.fy",
+              "src/struct_vm.fy",
+              "src/tagged.fy",
+              "src/text_source.fy",
+              "src/types.fy",
+              "src/verifier.fy",
+              "src/vm.fy",
+              "src/vm_execution.fy",
+              "src/vm_reborrow_execution.fy",
+              "tests/m2/aggregate_inference.fy",
+              "tests/m2/local_inference.fy",
+              "tests/m2/module_program.fy",
+              "tests/m2/reference_inference.fy",
+              "tests/m2/reference_return_source.fy",
+              "tests/m2/static_bindings_source.fy",
+              "toolchain.json",
+              "tools/verify-static-execution.py"
+            ],
+            "verifierCommit": "ed10ad33135b3e135b2ccceba64ac7e006e3446d"
+          },
+          {
+            "status": "passed",
+            "profile": "release",
+            "selection": "reference-inference",
+            "startingHead": "ed10ad33135b3e135b2ccceba64ac7e006e3446d",
+            "inputSnapshotCapturedAt": "2026-11-05T16:40:36.830179+00:00",
+            "testDiscovery": {
+              "count": 258,
+              "sha256": "b7b0a852a379b8e1349656d6898dcceb6706c8134ea4b86e25ee297aec17e879"
+            },
+            "partition": {
+              "shard": 2,
+              "shards": 3,
+              "completeIdentities": [
+                "tests::m2::aggregate_inference::aggregate_calls_and_repeated_fillers_evaluate_once_in_source_order",
+                "tests::m2::aggregate_inference::annotated_and_inferred_aggregate_initializers_emit_identical_executable_bytes",
+                "tests::m2::aggregate_inference::call_and_local_paths_distinguish_scalar_projections_from_owned_children",
+                "tests::m2::aggregate_inference::early_initializer_exits_do_not_publish_pending_array_or_record_owners",
+                "tests::m2::aggregate_inference::inferred_owners_preserve_the_original_sixteen_site_catalog_limits",
+                "tests::m2::aggregate_inference::invalid_shapes_names_mutation_and_nominal_changes_still_fail_admission",
+                "tests::m2::aggregate_inference::record_constructors_shorthand_and_subrecords_keep_exact_nominal_copies",
+                "tests::m2::aggregate_inference::repeated_arrays_infer_exact_shapes_and_scalar_elements_with_independent_copies",
+                "tests::m2::local_inference::complete_tagged_expression_types_survive_inference_and_reassignment",
+                "tests::m2::local_inference::inference_keeps_scalar_ir_and_exact_fuel_identical_to_annotations",
+                "tests::m2::local_inference::inferred_bindings_keep_initialization_order_value_copies_and_lexical_scopes",
+                "tests::m2::local_inference::inferred_initializers_keep_32_deep_captured_calls_without_native_stack_overrides",
+                "tests::m2::local_inference::inferred_locals_preserve_the_original_64_binding_limit",
+                "tests::m2::local_inference::initializer_types_default_to_i32_and_preserve_all_existing_scalar_domains",
+                "tests::m2::local_inference::invalid_names_uninitialized_uses_and_type_changes_are_rejected",
+                "tests::m2::local_inference::retained_byte_reads_and_scalar_locals_in_returned_borrow_bodies_keep_admission",
+                "tests::m2::module_program::both_compiler_routes_keep_the_32_deep_call_limit_without_native_stack_overrides",
+                "tests::m2::module_program::inferred_reference_aliases_and_return_origins_keep_qualified_resolution",
+                "tests::m2::module_program::shared_byte_returns_literals_ranges_and_text_cross_real_module_calls",
+                "tests::m2::reference_inference::endpoint_effects_evaluate_once_and_in_source_order",
+                "tests::m2::reference_inference::exclusive_reborrows_restore_parent_and_shared_aliases_close_in_reverse_order",
+                "tests::m2::reference_inference::inferred_native_loans_emit_the_same_ir_and_charge_the_same_exact_fuel",
+                "tests::m2::reference_inference::inferred_references_do_not_grant_access_rebind_escape_or_change_kinds",
+                "tests::m2::reference_inference::inferred_retained_aliases_preserve_annotated_ir_and_independent_exact_fuel",
+                "tests::m2::reference_inference::inferred_static_aliases_preserve_the_sixteen_site_limit",
+                "tests::m2::reference_inference::literal_text_bytes_aliases_groups_and_conversions_keep_exact_kinds",
+                "tests::m2::reference_inference::pending_returned_owners_cleanup_on_return_propagation_and_loop_exits",
+                "tests::m2::reference_inference::retained_aliases_preserve_owner_exclusion_until_the_last_live_alias",
+                "tests::m2::reference_inference::returned_views_keep_selected_temporary_owners_and_native_runtime_origins",
+                "tests::m2::reference_inference::rooted_shared_and_exclusive_loans_keep_all_existing_scalar_elements",
+                "tests::m2::reference_inference::scalar_projections_and_grouped_scalar_expressions_keep_scalar_inference",
+                "tests::m2::reference_return_source::agreeing_branches_forwarding_and_grounded_recursion_reject_conflicts_and_cycles",
+                "tests::m2::reference_return_source::returned_aliases_narrowed_and_empty_windows_support_read_and_length",
+                "tests::m2::reference_return_source::selected_temporaries_cleanup_across_return_propagation_break_continue_and_later_arguments",
+                "tests::m2::static_bindings_source::aggregate_returns_close_static_locals_and_existing_runtime_slices_stay_distinct",
+                "tests::m2::static_bindings_source::byte_and_text_locals_aliases_and_explicit_conversion_preserve_kinds"
+              ]
+            },
+            "lfMirror": {
+              "command": [
+                "build/toolchain/fairyc.exe",
+                "check",
+                "--locked"
+              ],
+              "workingDirectory": "build/static-execution/release/reference-inference/shard-2-of-3/lf-workspace",
+              "productionFiles": 154,
+              "result": "check ok: 2 instance(s), 162 source file(s), 1519 MIR function(s), lock verified"
+            },
+            "command": [
+              "build/toolchain/fairyc.exe",
+              "test",
+              "--native",
+              "--capture-output",
+              "--json",
+              "--locked",
+              "--release",
+              "--exact",
+              "tests::m2::aggregate_inference::annotated_and_inferred_aggregate_initializers_emit_identical_executable_bytes",
+              "--exact",
+              "tests::m2::aggregate_inference::inferred_owners_preserve_the_original_sixteen_site_catalog_limits",
+              "--exact",
+              "tests::m2::aggregate_inference::repeated_arrays_infer_exact_shapes_and_scalar_elements_with_independent_copies",
+              "--exact",
+              "tests::m2::local_inference::inferred_bindings_keep_initialization_order_value_copies_and_lexical_scopes",
+              "--exact",
+              "tests::m2::local_inference::initializer_types_default_to_i32_and_preserve_all_existing_scalar_domains",
+              "--exact",
+              "tests::m2::module_program::both_compiler_routes_keep_the_32_deep_call_limit_without_native_stack_overrides",
+              "--exact",
+              "tests::m2::reference_inference::endpoint_effects_evaluate_once_and_in_source_order",
+              "--exact",
+              "tests::m2::reference_inference::inferred_references_do_not_grant_access_rebind_escape_or_change_kinds",
+              "--exact",
+              "tests::m2::reference_inference::literal_text_bytes_aliases_groups_and_conversions_keep_exact_kinds",
+              "--exact",
+              "tests::m2::reference_inference::returned_views_keep_selected_temporary_owners_and_native_runtime_origins",
+              "--exact",
+              "tests::m2::reference_return_source::agreeing_branches_forwarding_and_grounded_recursion_reject_conflicts_and_cycles",
+              "--exact",
+              "tests::m2::static_bindings_source::aggregate_returns_close_static_locals_and_existing_runtime_slices_stay_distinct"
+            ],
+            "nativeGroups": 12,
+            "report": {
+              "schemaVersion": "fairyc.test-report/v4",
+              "engine": "native",
+              "target": "x86_64-windows-msvc",
+              "profile": "release",
+              "tests": [
+                {
+                  "identity": "tests::m2::aggregate_inference::annotated_and_inferred_aggregate_initializers_emit_identical_executable_bytes",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::aggregate_inference::inferred_owners_preserve_the_original_sixteen_site_catalog_limits",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::aggregate_inference::repeated_arrays_infer_exact_shapes_and_scalar_elements_with_independent_copies",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::local_inference::inferred_bindings_keep_initialization_order_value_copies_and_lexical_scopes",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::local_inference::initializer_types_default_to_i32_and_preserve_all_existing_scalar_domains",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::module_program::both_compiler_routes_keep_the_32_deep_call_limit_without_native_stack_overrides",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::reference_inference::endpoint_effects_evaluate_once_and_in_source_order",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::reference_inference::inferred_references_do_not_grant_access_rebind_escape_or_change_kinds",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::reference_inference::literal_text_bytes_aliases_groups_and_conversions_keep_exact_kinds",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::reference_inference::returned_views_keep_selected_temporary_owners_and_native_runtime_origins",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::reference_return_source::agreeing_branches_forwarding_and_grounded_recursion_reject_conflicts_and_cycles",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::static_bindings_source::aggregate_returns_close_static_locals_and_existing_runtime_slices_stay_distinct",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                }
+              ],
+              "count": 12,
+              "passed": 12,
+              "failed": 0,
+              "status": "ok",
+              "lock": "verified"
+            },
+            "nativeReportSha256": "fe2d709823b08687d4a0f63098635807fd1858be1e92e4a1aa0a9cb1391ab100",
+            "receipt": "build/static-execution/release/reference-inference/shard-2-of-3/receipt.json",
+            "receiptSha256": "dd542e122b92d533c439511df148c5b65c69eabe0d3051bbc2a145f6b7d92ed3",
+            "inputCount": 164,
+            "inputPaths": [
+              "fairy.lock",
+              "fairy.toml",
+              "src/aggregate_inference.fy",
+              "src/arithmetic.fy",
+              "src/array_call_source.fy",
+              "src/array_call_vm.fy",
+              "src/array_layout.fy",
+              "src/array_local_source.fy",
+              "src/array_meta.fy",
+              "src/array_owners.fy",
+              "src/array_parameters.fy",
+              "src/array_range_vm.fy",
+              "src/array_result_source.fy",
+              "src/array_result_vm.fy",
+              "src/array_results.fy",
+              "src/array_slices.fy",
+              "src/array_source.fy",
+              "src/array_storage.fy",
+              "src/array_verifier.fy",
+              "src/array_vm.fy",
+              "src/bits.fy",
+              "src/buffer_append.fy",
+              "src/buffer_close.fy",
+              "src/buffer_create.fy",
+              "src/buffer_growth.fy",
+              "src/buffer_host_close.fy",
+              "src/buffer_host_sweep.fy",
+              "src/buffer_owners.fy",
+              "src/buffer_replacement.fy",
+              "src/buffer_resize.fy",
+              "src/buffer_storage.fy",
+              "src/buffer_truncate.fy",
+              "src/buffer_utf8.fy",
+              "src/buffer_utf8_meter.fy",
+              "src/buffer_utf8_pool.fy",
+              "src/buffer_utf8_scan.fy",
+              "src/buffer_utf8_session.fy",
+              "src/buffer_write.fy",
+              "src/call_frame_vm.fy",
+              "src/call_prefix_source.fy",
+              "src/casts.fy",
+              "src/cells.fy",
+              "src/cli_input.fy",
+              "src/compiler.fy",
+              "src/errors.fy",
+              "src/fuel.fy",
+              "src/functions.fy",
+              "src/ir.fy",
+              "src/json_tokens.fy",
+              "src/lexer.fy",
+              "src/literal_collection.fy",
+              "src/literal_source.fy",
+              "src/local_inference.fy",
+              "src/locals.fy",
+              "src/loops.fy",
+              "src/main.fy",
+              "src/mixed_call_vm.fy",
+              "src/module_entry.fy",
+              "src/module_index.fy",
+              "src/module_program.fy",
+              "src/patterns.fy",
+              "src/program_image.fy",
+              "src/project_manifest.fy",
+              "src/project_names.fy",
+              "src/project_program.fy",
+              "src/project_sources.fy",
+              "src/propagation.fy",
+              "src/reference_access.fy",
+              "src/reference_call_source.fy",
+              "src/reference_execution.fy",
+              "src/reference_inference.fy",
+              "src/reference_lifetimes.fy",
+              "src/reference_receipts.fy",
+              "src/reference_result_source.fy",
+              "src/reference_return_execution.fy",
+              "src/reference_words.fy",
+              "src/register_set.fy",
+              "src/render.fy",
+              "src/scalar_codec.fy",
+              "src/shifts.fy",
+              "src/slice_authority.fy",
+              "src/slice_authority_call_vm.fy",
+              "src/slice_builders.fy",
+              "src/slice_call_source.fy",
+              "src/slice_call_vm.fy",
+              "src/slice_cleanup_source.fy",
+              "src/slice_exclusive_vm.fy",
+              "src/slice_formal_reborrow_vm.fy",
+              "src/slice_frame_vm.fy",
+              "src/slice_handoff.fy",
+              "src/slice_lifecycle_vm.fy",
+              "src/slice_mutable_call_vm.fy",
+              "src/slice_mutable_frame_vm.fy",
+              "src/slice_parameters.fy",
+              "src/slice_reborrow.fy",
+              "src/slice_reborrow_admission_ir.fy",
+              "src/slice_reborrow_call_admission.fy",
+              "src/slice_reborrow_call_ir.fy",
+              "src/slice_reborrow_call_vm.fy",
+              "src/slice_reborrow_context.fy",
+              "src/slice_reborrow_ir.fy",
+              "src/slice_reborrow_vm.fy",
+              "src/slice_result_bindings.fy",
+              "src/slice_result_call_ir.fy",
+              "src/slice_result_call_source.fy",
+              "src/slice_result_entry.fy",
+              "src/slice_result_execution.fy",
+              "src/slice_result_frames.fy",
+              "src/slice_result_ir.fy",
+              "src/slice_result_loan_execution.fy",
+              "src/slice_result_origins.fy",
+              "src/slice_result_owned_execution.fy",
+              "src/slice_result_range_source.fy",
+              "src/slice_result_record_bindings.fy",
+              "src/slice_result_record_execution.fy",
+              "src/slice_result_runtime.fy",
+              "src/slice_result_source_origins.fy",
+              "src/slice_result_verifier.fy",
+              "src/slice_source.fy",
+              "src/slice_verifier.fy",
+              "src/slice_vm.fy",
+              "src/source_context.fy",
+              "src/source_error.fy",
+              "src/source_features.fy",
+              "src/source_snapshot.fy",
+              "src/static_builders.fy",
+              "src/static_call_execution.fy",
+              "src/static_call_ir.fy",
+              "src/static_call_sites.fy",
+              "src/static_execution.fy",
+              "src/static_image.fy",
+              "src/static_ir.fy",
+              "src/static_source.fy",
+              "src/static_views.fy",
+              "src/struct_call_source.fy",
+              "src/struct_call_vm.fy",
+              "src/struct_layout.fy",
+              "src/struct_meta.fy",
+              "src/struct_nested_storage.fy",
+              "src/struct_parameters.fy",
+              "src/struct_range.fy",
+              "src/struct_result_source.fy",
+              "src/struct_result_vm.fy",
+              "src/struct_results.fy",
+              "src/struct_source.fy",
+              "src/struct_storage.fy",
+              "src/struct_value_source.fy",
+              "src/struct_verifier.fy",
+              "src/struct_vm.fy",
+              "src/tagged.fy",
+              "src/text_source.fy",
+              "src/types.fy",
+              "src/verifier.fy",
+              "src/vm.fy",
+              "src/vm_execution.fy",
+              "src/vm_reborrow_execution.fy",
+              "tests/m2/aggregate_inference.fy",
+              "tests/m2/local_inference.fy",
+              "tests/m2/module_program.fy",
+              "tests/m2/reference_inference.fy",
+              "tests/m2/reference_return_source.fy",
+              "tests/m2/static_bindings_source.fy",
+              "toolchain.json",
+              "tools/verify-static-execution.py"
+            ],
+            "verifierCommit": "ed10ad33135b3e135b2ccceba64ac7e006e3446d"
+          },
+          {
+            "status": "passed",
+            "profile": "release",
+            "selection": "reference-inference",
+            "startingHead": "ed10ad33135b3e135b2ccceba64ac7e006e3446d",
+            "inputSnapshotCapturedAt": "2026-11-05T16:40:36.881005+00:00",
+            "testDiscovery": {
+              "count": 258,
+              "sha256": "b7b0a852a379b8e1349656d6898dcceb6706c8134ea4b86e25ee297aec17e879"
+            },
+            "partition": {
+              "shard": 3,
+              "shards": 3,
+              "completeIdentities": [
+                "tests::m2::aggregate_inference::aggregate_calls_and_repeated_fillers_evaluate_once_in_source_order",
+                "tests::m2::aggregate_inference::annotated_and_inferred_aggregate_initializers_emit_identical_executable_bytes",
+                "tests::m2::aggregate_inference::call_and_local_paths_distinguish_scalar_projections_from_owned_children",
+                "tests::m2::aggregate_inference::early_initializer_exits_do_not_publish_pending_array_or_record_owners",
+                "tests::m2::aggregate_inference::inferred_owners_preserve_the_original_sixteen_site_catalog_limits",
+                "tests::m2::aggregate_inference::invalid_shapes_names_mutation_and_nominal_changes_still_fail_admission",
+                "tests::m2::aggregate_inference::record_constructors_shorthand_and_subrecords_keep_exact_nominal_copies",
+                "tests::m2::aggregate_inference::repeated_arrays_infer_exact_shapes_and_scalar_elements_with_independent_copies",
+                "tests::m2::local_inference::complete_tagged_expression_types_survive_inference_and_reassignment",
+                "tests::m2::local_inference::inference_keeps_scalar_ir_and_exact_fuel_identical_to_annotations",
+                "tests::m2::local_inference::inferred_bindings_keep_initialization_order_value_copies_and_lexical_scopes",
+                "tests::m2::local_inference::inferred_initializers_keep_32_deep_captured_calls_without_native_stack_overrides",
+                "tests::m2::local_inference::inferred_locals_preserve_the_original_64_binding_limit",
+                "tests::m2::local_inference::initializer_types_default_to_i32_and_preserve_all_existing_scalar_domains",
+                "tests::m2::local_inference::invalid_names_uninitialized_uses_and_type_changes_are_rejected",
+                "tests::m2::local_inference::retained_byte_reads_and_scalar_locals_in_returned_borrow_bodies_keep_admission",
+                "tests::m2::module_program::both_compiler_routes_keep_the_32_deep_call_limit_without_native_stack_overrides",
+                "tests::m2::module_program::inferred_reference_aliases_and_return_origins_keep_qualified_resolution",
+                "tests::m2::module_program::shared_byte_returns_literals_ranges_and_text_cross_real_module_calls",
+                "tests::m2::reference_inference::endpoint_effects_evaluate_once_and_in_source_order",
+                "tests::m2::reference_inference::exclusive_reborrows_restore_parent_and_shared_aliases_close_in_reverse_order",
+                "tests::m2::reference_inference::inferred_native_loans_emit_the_same_ir_and_charge_the_same_exact_fuel",
+                "tests::m2::reference_inference::inferred_references_do_not_grant_access_rebind_escape_or_change_kinds",
+                "tests::m2::reference_inference::inferred_retained_aliases_preserve_annotated_ir_and_independent_exact_fuel",
+                "tests::m2::reference_inference::inferred_static_aliases_preserve_the_sixteen_site_limit",
+                "tests::m2::reference_inference::literal_text_bytes_aliases_groups_and_conversions_keep_exact_kinds",
+                "tests::m2::reference_inference::pending_returned_owners_cleanup_on_return_propagation_and_loop_exits",
+                "tests::m2::reference_inference::retained_aliases_preserve_owner_exclusion_until_the_last_live_alias",
+                "tests::m2::reference_inference::returned_views_keep_selected_temporary_owners_and_native_runtime_origins",
+                "tests::m2::reference_inference::rooted_shared_and_exclusive_loans_keep_all_existing_scalar_elements",
+                "tests::m2::reference_inference::scalar_projections_and_grouped_scalar_expressions_keep_scalar_inference",
+                "tests::m2::reference_return_source::agreeing_branches_forwarding_and_grounded_recursion_reject_conflicts_and_cycles",
+                "tests::m2::reference_return_source::returned_aliases_narrowed_and_empty_windows_support_read_and_length",
+                "tests::m2::reference_return_source::selected_temporaries_cleanup_across_return_propagation_break_continue_and_later_arguments",
+                "tests::m2::static_bindings_source::aggregate_returns_close_static_locals_and_existing_runtime_slices_stay_distinct",
+                "tests::m2::static_bindings_source::byte_and_text_locals_aliases_and_explicit_conversion_preserve_kinds"
+              ]
+            },
+            "lfMirror": {
+              "command": [
+                "build/toolchain/fairyc.exe",
+                "check",
+                "--locked"
+              ],
+              "workingDirectory": "build/static-execution/release/reference-inference/shard-3-of-3/lf-workspace",
+              "productionFiles": 154,
+              "result": "check ok: 2 instance(s), 162 source file(s), 1519 MIR function(s), lock verified"
+            },
+            "command": [
+              "build/toolchain/fairyc.exe",
+              "test",
+              "--native",
+              "--capture-output",
+              "--json",
+              "--locked",
+              "--release",
+              "--exact",
+              "tests::m2::aggregate_inference::call_and_local_paths_distinguish_scalar_projections_from_owned_children",
+              "--exact",
+              "tests::m2::aggregate_inference::invalid_shapes_names_mutation_and_nominal_changes_still_fail_admission",
+              "--exact",
+              "tests::m2::local_inference::complete_tagged_expression_types_survive_inference_and_reassignment",
+              "--exact",
+              "tests::m2::local_inference::inferred_initializers_keep_32_deep_captured_calls_without_native_stack_overrides",
+              "--exact",
+              "tests::m2::local_inference::invalid_names_uninitialized_uses_and_type_changes_are_rejected",
+              "--exact",
+              "tests::m2::module_program::inferred_reference_aliases_and_return_origins_keep_qualified_resolution",
+              "--exact",
+              "tests::m2::reference_inference::exclusive_reborrows_restore_parent_and_shared_aliases_close_in_reverse_order",
+              "--exact",
+              "tests::m2::reference_inference::inferred_retained_aliases_preserve_annotated_ir_and_independent_exact_fuel",
+              "--exact",
+              "tests::m2::reference_inference::pending_returned_owners_cleanup_on_return_propagation_and_loop_exits",
+              "--exact",
+              "tests::m2::reference_inference::rooted_shared_and_exclusive_loans_keep_all_existing_scalar_elements",
+              "--exact",
+              "tests::m2::reference_return_source::returned_aliases_narrowed_and_empty_windows_support_read_and_length",
+              "--exact",
+              "tests::m2::static_bindings_source::byte_and_text_locals_aliases_and_explicit_conversion_preserve_kinds"
+            ],
+            "nativeGroups": 12,
+            "report": {
+              "schemaVersion": "fairyc.test-report/v4",
+              "engine": "native",
+              "target": "x86_64-windows-msvc",
+              "profile": "release",
+              "tests": [
+                {
+                  "identity": "tests::m2::aggregate_inference::call_and_local_paths_distinguish_scalar_projections_from_owned_children",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::aggregate_inference::invalid_shapes_names_mutation_and_nominal_changes_still_fail_admission",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::local_inference::complete_tagged_expression_types_survive_inference_and_reassignment",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::local_inference::inferred_initializers_keep_32_deep_captured_calls_without_native_stack_overrides",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::local_inference::invalid_names_uninitialized_uses_and_type_changes_are_rejected",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::module_program::inferred_reference_aliases_and_return_origins_keep_qualified_resolution",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::reference_inference::exclusive_reborrows_restore_parent_and_shared_aliases_close_in_reverse_order",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::reference_inference::inferred_retained_aliases_preserve_annotated_ir_and_independent_exact_fuel",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::reference_inference::pending_returned_owners_cleanup_on_return_propagation_and_loop_exits",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::reference_inference::rooted_shared_and_exclusive_loans_keep_all_existing_scalar_elements",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::reference_return_source::returned_aliases_narrowed_and_empty_windows_support_read_and_length",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                },
+                {
+                  "identity": "tests::m2::static_bindings_source::byte_and_text_locals_aliases_and_explicit_conversion_preserve_kinds",
+                  "outcome": "passed",
+                  "trapCategory": null,
+                  "stdoutBase64": "",
+                  "stderrBase64": ""
+                }
+              ],
+              "count": 12,
+              "passed": 12,
+              "failed": 0,
+              "status": "ok",
+              "lock": "verified"
+            },
+            "nativeReportSha256": "d20e2a6bc81fbd36356dc53d37013f63128de9b1121fe578dae7ffeaccaae58e",
+            "receipt": "build/static-execution/release/reference-inference/shard-3-of-3/receipt.json",
+            "receiptSha256": "9e01e50a3fb0e49230c16b8e0578ea27cf192a4f53a603da2167bef7d5845912",
+            "inputCount": 164,
+            "inputPaths": [
+              "fairy.lock",
+              "fairy.toml",
+              "src/aggregate_inference.fy",
+              "src/arithmetic.fy",
+              "src/array_call_source.fy",
+              "src/array_call_vm.fy",
+              "src/array_layout.fy",
+              "src/array_local_source.fy",
+              "src/array_meta.fy",
+              "src/array_owners.fy",
+              "src/array_parameters.fy",
+              "src/array_range_vm.fy",
+              "src/array_result_source.fy",
+              "src/array_result_vm.fy",
+              "src/array_results.fy",
+              "src/array_slices.fy",
+              "src/array_source.fy",
+              "src/array_storage.fy",
+              "src/array_verifier.fy",
+              "src/array_vm.fy",
+              "src/bits.fy",
+              "src/buffer_append.fy",
+              "src/buffer_close.fy",
+              "src/buffer_create.fy",
+              "src/buffer_growth.fy",
+              "src/buffer_host_close.fy",
+              "src/buffer_host_sweep.fy",
+              "src/buffer_owners.fy",
+              "src/buffer_replacement.fy",
+              "src/buffer_resize.fy",
+              "src/buffer_storage.fy",
+              "src/buffer_truncate.fy",
+              "src/buffer_utf8.fy",
+              "src/buffer_utf8_meter.fy",
+              "src/buffer_utf8_pool.fy",
+              "src/buffer_utf8_scan.fy",
+              "src/buffer_utf8_session.fy",
+              "src/buffer_write.fy",
+              "src/call_frame_vm.fy",
+              "src/call_prefix_source.fy",
+              "src/casts.fy",
+              "src/cells.fy",
+              "src/cli_input.fy",
+              "src/compiler.fy",
+              "src/errors.fy",
+              "src/fuel.fy",
+              "src/functions.fy",
+              "src/ir.fy",
+              "src/json_tokens.fy",
+              "src/lexer.fy",
+              "src/literal_collection.fy",
+              "src/literal_source.fy",
+              "src/local_inference.fy",
+              "src/locals.fy",
+              "src/loops.fy",
+              "src/main.fy",
+              "src/mixed_call_vm.fy",
+              "src/module_entry.fy",
+              "src/module_index.fy",
+              "src/module_program.fy",
+              "src/patterns.fy",
+              "src/program_image.fy",
+              "src/project_manifest.fy",
+              "src/project_names.fy",
+              "src/project_program.fy",
+              "src/project_sources.fy",
+              "src/propagation.fy",
+              "src/reference_access.fy",
+              "src/reference_call_source.fy",
+              "src/reference_execution.fy",
+              "src/reference_inference.fy",
+              "src/reference_lifetimes.fy",
+              "src/reference_receipts.fy",
+              "src/reference_result_source.fy",
+              "src/reference_return_execution.fy",
+              "src/reference_words.fy",
+              "src/register_set.fy",
+              "src/render.fy",
+              "src/scalar_codec.fy",
+              "src/shifts.fy",
+              "src/slice_authority.fy",
+              "src/slice_authority_call_vm.fy",
+              "src/slice_builders.fy",
+              "src/slice_call_source.fy",
+              "src/slice_call_vm.fy",
+              "src/slice_cleanup_source.fy",
+              "src/slice_exclusive_vm.fy",
+              "src/slice_formal_reborrow_vm.fy",
+              "src/slice_frame_vm.fy",
+              "src/slice_handoff.fy",
+              "src/slice_lifecycle_vm.fy",
+              "src/slice_mutable_call_vm.fy",
+              "src/slice_mutable_frame_vm.fy",
+              "src/slice_parameters.fy",
+              "src/slice_reborrow.fy",
+              "src/slice_reborrow_admission_ir.fy",
+              "src/slice_reborrow_call_admission.fy",
+              "src/slice_reborrow_call_ir.fy",
+              "src/slice_reborrow_call_vm.fy",
+              "src/slice_reborrow_context.fy",
+              "src/slice_reborrow_ir.fy",
+              "src/slice_reborrow_vm.fy",
+              "src/slice_result_bindings.fy",
+              "src/slice_result_call_ir.fy",
+              "src/slice_result_call_source.fy",
+              "src/slice_result_entry.fy",
+              "src/slice_result_execution.fy",
+              "src/slice_result_frames.fy",
+              "src/slice_result_ir.fy",
+              "src/slice_result_loan_execution.fy",
+              "src/slice_result_origins.fy",
+              "src/slice_result_owned_execution.fy",
+              "src/slice_result_range_source.fy",
+              "src/slice_result_record_bindings.fy",
+              "src/slice_result_record_execution.fy",
+              "src/slice_result_runtime.fy",
+              "src/slice_result_source_origins.fy",
+              "src/slice_result_verifier.fy",
+              "src/slice_source.fy",
+              "src/slice_verifier.fy",
+              "src/slice_vm.fy",
+              "src/source_context.fy",
+              "src/source_error.fy",
+              "src/source_features.fy",
+              "src/source_snapshot.fy",
+              "src/static_builders.fy",
+              "src/static_call_execution.fy",
+              "src/static_call_ir.fy",
+              "src/static_call_sites.fy",
+              "src/static_execution.fy",
+              "src/static_image.fy",
+              "src/static_ir.fy",
+              "src/static_source.fy",
+              "src/static_views.fy",
+              "src/struct_call_source.fy",
+              "src/struct_call_vm.fy",
+              "src/struct_layout.fy",
+              "src/struct_meta.fy",
+              "src/struct_nested_storage.fy",
+              "src/struct_parameters.fy",
+              "src/struct_range.fy",
+              "src/struct_result_source.fy",
+              "src/struct_result_vm.fy",
+              "src/struct_results.fy",
+              "src/struct_source.fy",
+              "src/struct_storage.fy",
+              "src/struct_value_source.fy",
+              "src/struct_verifier.fy",
+              "src/struct_vm.fy",
+              "src/tagged.fy",
+              "src/text_source.fy",
+              "src/types.fy",
+              "src/verifier.fy",
+              "src/vm.fy",
+              "src/vm_execution.fy",
+              "src/vm_reborrow_execution.fy",
+              "tests/m2/aggregate_inference.fy",
+              "tests/m2/local_inference.fy",
+              "tests/m2/module_program.fy",
+              "tests/m2/reference_inference.fy",
+              "tests/m2/reference_return_source.fy",
+              "tests/m2/static_bindings_source.fy",
+              "toolchain.json",
+              "tools/verify-static-execution.py"
+            ],
+            "verifierCommit": "ed10ad33135b3e135b2ccceba64ac7e006e3446d"
+          }
+        ]
+      },
+      "cli": {
+        "status": "passed",
+        "profile": "release",
+        "selection": "reference",
+        "startingHead": "8fb1ea43bcdcf030b4fd07da3860ee2315e99e44",
+        "inputSnapshotCapturedAt": "2026-11-05T16:19:44.589046+00:00",
+        "buildCommand": [
+          "build/toolchain/fairyc.exe",
+          "build",
+          "--locked",
+          "--release"
+        ],
+        "artifact": {
+          "path": "build/reference-inference-cli/release/browniec.exe",
+          "sha256": "b70aa4a2d9eb5b043fd90fd15feb1921877f6e955e018816c1aecdb94b289068"
+        },
+        "emptyRuntimeToolPath": true,
+        "cases": [
+          {
+            "case": "check",
+            "sourceSha256": "e35f86a3d0273e157efd284407ecf9d63e43087a4fea93ffd8a2d2abf0b1ffa6",
+            "command": [
+              "check",
+              "build/reference-inference-cli/release/check.brc",
+              "--json"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "checked",
+              "return_i32": null,
+              "error": null
+            }
+          },
+          {
+            "case": "run",
+            "sourceSha256": "e35f86a3d0273e157efd284407ecf9d63e43087a4fea93ffd8a2d2abf0b1ffa6",
+            "command": [
+              "run",
+              "build/reference-inference-cli/release/run.brc",
+              "--json"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "case": "mutable",
+            "sourceSha256": "3ed1993305d04b43f05a5afdf34598a61ae819d6fb245435578e816c36998a58",
+            "command": [
+              "run",
+              "build/reference-inference-cli/release/mutable.brc",
+              "--json"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "case": "wide",
+            "sourceSha256": "9756225eedb5908895865dfe29b44265ff947fc44a619f4131f836ae0eb178f8",
+            "command": [
+              "run",
+              "build/reference-inference-cli/release/wide.brc",
+              "--json"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "case": "for",
+            "sourceSha256": "6143ed5e6828cc165a9ce4cf1f6126e76355d182d6a9accd4026115a4fc05e07",
+            "command": [
+              "run",
+              "build/reference-inference-cli/release/for.brc",
+              "--json"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "case": "self",
+            "sourceSha256": "6ca4aed7de89ac6539fbe61ca3cad20884a1ac05aa3565d005f8320c2f114a71",
+            "command": [
+              "check",
+              "build/reference-inference-cli/release/self.brc",
+              "--json"
+            ],
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "type",
+                "byte_offset": 32
+              }
+            }
+          },
+          {
+            "case": "changed-type",
+            "sourceSha256": "5e613c2ca86fda3d2f9eeeafb6ece5be41ad3441077e37d7b24d213c5879af23",
+            "command": [
+              "run",
+              "build/reference-inference-cli/release/changed-type.brc",
+              "--json"
+            ],
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "type",
+                "byte_offset": 34
+              }
+            }
+          },
+          {
+            "case": "ambiguous",
+            "sourceSha256": "0139ec9e0f5d6df65839ffbbe51e13ab5a288ff23c08526d04f8d06b302fe478",
+            "command": [
+              "check",
+              "build/reference-inference-cli/release/ambiguous.brc",
+              "--json"
+            ],
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "type",
+                "byte_offset": 32
+              }
+            }
+          },
+          {
+            "case": "exact-fuel",
+            "sourceSha256": "e35f86a3d0273e157efd284407ecf9d63e43087a4fea93ffd8a2d2abf0b1ffa6",
+            "command": [
+              "run",
+              "build/reference-inference-cli/release/exact-fuel.brc",
+              "--json",
+              "--fuel",
+              "2"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "case": "short-fuel",
+            "sourceSha256": "e35f86a3d0273e157efd284407ecf9d63e43087a4fea93ffd8a2d2abf0b1ffa6",
+            "command": [
+              "run",
+              "build/reference-inference-cli/release/short-fuel.brc",
+              "--json",
+              "--fuel",
+              "1"
+            ],
+            "exitCode": 5,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "fuel",
+                "byte_offset": 35
+              }
+            }
+          },
+          {
+            "case": "retained-run",
+            "sourceSha256": "044be2096013abd088fc79c5569663ec5474309200718e7e3317db15489540ee",
+            "command": [
+              "run",
+              "build/reference-inference-cli/release/retained-run.brc",
+              "--json",
+              "--fuel",
+              "16000000"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-reference/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "case": "retained-check",
+            "sourceSha256": "044be2096013abd088fc79c5569663ec5474309200718e7e3317db15489540ee",
+            "command": [
+              "check",
+              "build/reference-inference-cli/release/retained-check.brc",
+              "--json"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-reference/1",
+              "command": "check",
+              "status": "checked",
+              "return_i32": null,
+              "error": null
+            }
+          },
+          {
+            "case": "byte-alias-check",
+            "sourceSha256": "1a8d0e803d4206838a5c209760589420e1f6f69aa5ebb810af6de73b756ed311",
+            "command": [
+              "check",
+              "build/reference-inference-cli/release/byte-alias-check.brc",
+              "--json"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-reference/1",
+              "command": "check",
+              "status": "checked",
+              "return_i32": null,
+              "error": null
+            }
+          },
+          {
+            "case": "byte-alias-run",
+            "sourceSha256": "1a8d0e803d4206838a5c209760589420e1f6f69aa5ebb810af6de73b756ed311",
+            "command": [
+              "run",
+              "build/reference-inference-cli/release/byte-alias-run.brc",
+              "--json",
+              "--fuel",
+              "16000000"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-reference/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "case": "text",
+            "sourceSha256": "f9237e4a640dbfb0b48feab1ca8eafc7f8b9c77e71b532db970416e5460b6097",
+            "command": [
+              "run",
+              "build/reference-inference-cli/release/text.brc",
+              "--json",
+              "--fuel",
+              "16000000"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-reference/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 237,
+              "error": null
+            }
+          },
+          {
+            "case": "grouped",
+            "sourceSha256": "ee2df69ee1a1be4e49d5383f89758b9cab6077148b10fd84d05f8d076e6b5bbc",
+            "command": [
+              "run",
+              "build/reference-inference-cli/release/grouped.brc",
+              "--json",
+              "--fuel",
+              "16000000"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-reference/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "case": "scalar-projections",
+            "sourceSha256": "998603e8ada569dd704f3a16a489f3776c17c96503d4545d89a55320e7a5de02",
+            "command": [
+              "run",
+              "build/reference-inference-cli/release/scalar-projections.brc",
+              "--json",
+              "--fuel",
+              "16000000"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-reference/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "case": "returned-check",
+            "sourceSha256": "96be61f75bcf502195f6a4271b3255d45e455c0d148a8f196727bc5a0b07b574",
+            "command": [
+              "check",
+              "build/reference-inference-cli/release/returned-check.brc",
+              "--json"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-reference/1",
+              "command": "check",
+              "status": "checked",
+              "return_i32": null,
+              "error": null
+            }
+          },
+          {
+            "case": "returned-run",
+            "sourceSha256": "96be61f75bcf502195f6a4271b3255d45e455c0d148a8f196727bc5a0b07b574",
+            "command": [
+              "run",
+              "build/reference-inference-cli/release/returned-run.brc",
+              "--json",
+              "--fuel",
+              "16000000"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-reference/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "case": "returned-early-exit",
+            "sourceSha256": "8bb69f619144b30dd482e17cc454401bd38b503dd897a9a3068b27fef904e30b",
+            "command": [
+              "run",
+              "build/reference-inference-cli/release/returned-early-exit.brc",
+              "--json",
+              "--fuel",
+              "16000000"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-reference/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "case": "shared-root",
+            "sourceSha256": "7ca7bb488507dbc886e790b7c440360cff4d48b5bda8235a0eb40f20b9a7d348",
+            "command": [
+              "run",
+              "build/reference-inference-cli/release/shared-root.brc",
+              "--json",
+              "--fuel",
+              "16000000"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-array-read/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "case": "exclusive-root",
+            "sourceSha256": "525163d48dc93537f797d2d549433fe10e3f89d09e9625ec55365a15d5fcc979",
+            "command": [
+              "run",
+              "build/reference-inference-cli/release/exclusive-root.brc",
+              "--json",
+              "--fuel",
+              "16000000"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-array-write/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "case": "exclusive-reborrow",
+            "sourceSha256": "b65decf6cb2324d97b9146eee090dabf3f729e1e3f020c510fa276823d7939e7",
+            "command": [
+              "run",
+              "build/reference-inference-cli/release/exclusive-reborrow.brc",
+              "--json",
+              "--fuel",
+              "16000000"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-array-write/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "case": "mutable-view-error",
+            "sourceSha256": "6de2ac87696d467ff1f018a4f189e16fc01e6ed99d39b99260f81b0ce4f6b03f",
+            "command": [
+              "check",
+              "build/reference-inference-cli/release/mutable-view-error.brc",
+              "--json"
+            ],
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "type",
+                "byte_offset": 30
+              }
+            }
+          },
+          {
+            "case": "mutable-literal-error",
+            "sourceSha256": "f72deb46fc89181d5114ac4146ec6eb2e5742f1e588bac2ad5572ef6c1741c59",
+            "command": [
+              "check",
+              "build/reference-inference-cli/release/mutable-literal-error.brc",
+              "--json"
+            ],
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "type",
+                "byte_offset": 30
+              }
+            }
+          },
+          {
+            "case": "self-reference-error",
+            "sourceSha256": "4410d658c8ac926e6d20943f2bc247079bd7c7322b2d6e7daf32279e9b617798",
+            "command": [
+              "check",
+              "build/reference-inference-cli/release/self-reference-error.brc",
+              "--json"
+            ],
+            "exitCode": 3,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "type",
+                "byte_offset": 37
+              }
+            }
+          },
+          {
+            "case": "borrow-conflict-error",
+            "sourceSha256": "1cbbc41142f04170f77adb28d86b5e4cd77b794aa57224e219ac65251a7eee1a",
+            "command": [
+              "check",
+              "build/reference-inference-cli/release/borrow-conflict-error.brc",
+              "--json"
+            ],
+            "exitCode": 6,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-array-write/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "verification",
+                "byte_offset": 7
+              }
+            }
+          },
+          {
+            "case": "selected-owner-error",
+            "sourceSha256": "ce302d1afa869af7e14f1d0840ec8b1e39229cd4a4019d643dc1f4a032526f3a",
+            "command": [
+              "check",
+              "build/reference-inference-cli/release/selected-owner-error.brc",
+              "--json"
+            ],
+            "exitCode": 6,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m1-scalar/1",
+              "command": "check",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "verification",
+                "byte_offset": 12
+              }
+            }
+          },
+          {
+            "case": "reference-exact-fuel",
+            "sourceSha256": "8497b97f7fd45163180ffecdd9600cfa69e068cc06b1e678ff7d456a82306437",
+            "command": [
+              "run",
+              "build/reference-inference-cli/release/reference-exact-fuel.brc",
+              "--json",
+              "--fuel",
+              "286935"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-array-write/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "case": "reference-short-fuel",
+            "sourceSha256": "8497b97f7fd45163180ffecdd9600cfa69e068cc06b1e678ff7d456a82306437",
+            "command": [
+              "run",
+              "build/reference-inference-cli/release/reference-short-fuel.brc",
+              "--json",
+              "--fuel",
+              "286934"
+            ],
+            "exitCode": 5,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-array-write/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "fuel",
+                "byte_offset": 91
+              }
+            }
+          },
+          {
+            "case": "alias-exact-fuel",
+            "sourceSha256": "1a8d0e803d4206838a5c209760589420e1f6f69aa5ebb810af6de73b756ed311",
+            "command": [
+              "run",
+              "build/reference-inference-cli/release/alias-exact-fuel.brc",
+              "--json",
+              "--fuel",
+              "344121"
+            ],
+            "exitCode": 0,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-reference/1",
+              "command": "run",
+              "status": "completed",
+              "return_i32": 42,
+              "error": null
+            }
+          },
+          {
+            "case": "alias-short-fuel",
+            "sourceSha256": "1a8d0e803d4206838a5c209760589420e1f6f69aa5ebb810af6de73b756ed311",
+            "command": [
+              "run",
+              "build/reference-inference-cli/release/alias-short-fuel.brc",
+              "--json",
+              "--fuel",
+              "344120"
+            ],
+            "exitCode": 5,
+            "result": {
+              "schema": "browniec.result/v1",
+              "profile": "brownie.m2-reference/1",
+              "command": "run",
+              "status": "error",
+              "return_i32": null,
+              "error": {
+                "kind": "fuel",
+                "byte_offset": 49
+              }
+            }
+          }
+        ],
+        "receipt": "build/reference-inference-cli/release/receipt.json",
+        "receiptSha256": "59faa5404d0882f76b9f75cb5b3a5c1616c293074f0a099ab78e17fe9667eacf",
+        "inputCount": 158,
+        "inputPaths": [
+          "fairy.lock",
+          "fairy.toml",
+          "src/aggregate_inference.fy",
+          "src/arithmetic.fy",
+          "src/array_call_source.fy",
+          "src/array_call_vm.fy",
+          "src/array_layout.fy",
+          "src/array_local_source.fy",
+          "src/array_meta.fy",
+          "src/array_owners.fy",
+          "src/array_parameters.fy",
+          "src/array_range_vm.fy",
+          "src/array_result_source.fy",
+          "src/array_result_vm.fy",
+          "src/array_results.fy",
+          "src/array_slices.fy",
+          "src/array_source.fy",
+          "src/array_storage.fy",
+          "src/array_verifier.fy",
+          "src/array_vm.fy",
+          "src/bits.fy",
+          "src/buffer_append.fy",
+          "src/buffer_close.fy",
+          "src/buffer_create.fy",
+          "src/buffer_growth.fy",
+          "src/buffer_host_close.fy",
+          "src/buffer_host_sweep.fy",
+          "src/buffer_owners.fy",
+          "src/buffer_replacement.fy",
+          "src/buffer_resize.fy",
+          "src/buffer_storage.fy",
+          "src/buffer_truncate.fy",
+          "src/buffer_utf8.fy",
+          "src/buffer_utf8_meter.fy",
+          "src/buffer_utf8_pool.fy",
+          "src/buffer_utf8_scan.fy",
+          "src/buffer_utf8_session.fy",
+          "src/buffer_write.fy",
+          "src/call_frame_vm.fy",
+          "src/call_prefix_source.fy",
+          "src/casts.fy",
+          "src/cells.fy",
+          "src/cli_input.fy",
+          "src/compiler.fy",
+          "src/errors.fy",
+          "src/fuel.fy",
+          "src/functions.fy",
+          "src/ir.fy",
+          "src/json_tokens.fy",
+          "src/lexer.fy",
+          "src/literal_collection.fy",
+          "src/literal_source.fy",
+          "src/local_inference.fy",
+          "src/locals.fy",
+          "src/loops.fy",
+          "src/main.fy",
+          "src/mixed_call_vm.fy",
+          "src/module_entry.fy",
+          "src/module_index.fy",
+          "src/module_program.fy",
+          "src/patterns.fy",
+          "src/program_image.fy",
+          "src/project_manifest.fy",
+          "src/project_names.fy",
+          "src/project_program.fy",
+          "src/project_sources.fy",
+          "src/propagation.fy",
+          "src/reference_access.fy",
+          "src/reference_call_source.fy",
+          "src/reference_execution.fy",
+          "src/reference_inference.fy",
+          "src/reference_lifetimes.fy",
+          "src/reference_receipts.fy",
+          "src/reference_result_source.fy",
+          "src/reference_return_execution.fy",
+          "src/reference_words.fy",
+          "src/register_set.fy",
+          "src/render.fy",
+          "src/scalar_codec.fy",
+          "src/shifts.fy",
+          "src/slice_authority.fy",
+          "src/slice_authority_call_vm.fy",
+          "src/slice_builders.fy",
+          "src/slice_call_source.fy",
+          "src/slice_call_vm.fy",
+          "src/slice_cleanup_source.fy",
+          "src/slice_exclusive_vm.fy",
+          "src/slice_formal_reborrow_vm.fy",
+          "src/slice_frame_vm.fy",
+          "src/slice_handoff.fy",
+          "src/slice_lifecycle_vm.fy",
+          "src/slice_mutable_call_vm.fy",
+          "src/slice_mutable_frame_vm.fy",
+          "src/slice_parameters.fy",
+          "src/slice_reborrow.fy",
+          "src/slice_reborrow_admission_ir.fy",
+          "src/slice_reborrow_call_admission.fy",
+          "src/slice_reborrow_call_ir.fy",
+          "src/slice_reborrow_call_vm.fy",
+          "src/slice_reborrow_context.fy",
+          "src/slice_reborrow_ir.fy",
+          "src/slice_reborrow_vm.fy",
+          "src/slice_result_bindings.fy",
+          "src/slice_result_call_ir.fy",
+          "src/slice_result_call_source.fy",
+          "src/slice_result_entry.fy",
+          "src/slice_result_execution.fy",
+          "src/slice_result_frames.fy",
+          "src/slice_result_ir.fy",
+          "src/slice_result_loan_execution.fy",
+          "src/slice_result_origins.fy",
+          "src/slice_result_owned_execution.fy",
+          "src/slice_result_range_source.fy",
+          "src/slice_result_record_bindings.fy",
+          "src/slice_result_record_execution.fy",
+          "src/slice_result_runtime.fy",
+          "src/slice_result_source_origins.fy",
+          "src/slice_result_verifier.fy",
+          "src/slice_source.fy",
+          "src/slice_verifier.fy",
+          "src/slice_vm.fy",
+          "src/source_context.fy",
+          "src/source_error.fy",
+          "src/source_features.fy",
+          "src/source_snapshot.fy",
+          "src/static_builders.fy",
+          "src/static_call_execution.fy",
+          "src/static_call_ir.fy",
+          "src/static_call_sites.fy",
+          "src/static_execution.fy",
+          "src/static_image.fy",
+          "src/static_ir.fy",
+          "src/static_source.fy",
+          "src/static_views.fy",
+          "src/struct_call_source.fy",
+          "src/struct_call_vm.fy",
+          "src/struct_layout.fy",
+          "src/struct_meta.fy",
+          "src/struct_nested_storage.fy",
+          "src/struct_parameters.fy",
+          "src/struct_range.fy",
+          "src/struct_result_source.fy",
+          "src/struct_result_vm.fy",
+          "src/struct_results.fy",
+          "src/struct_source.fy",
+          "src/struct_storage.fy",
+          "src/struct_value_source.fy",
+          "src/struct_verifier.fy",
+          "src/struct_vm.fy",
+          "src/tagged.fy",
+          "src/text_source.fy",
+          "src/types.fy",
+          "src/verifier.fy",
+          "src/vm.fy",
+          "src/vm_execution.fy",
+          "src/vm_reborrow_execution.fy",
+          "toolchain.json",
+          "tools/verify-local-inference-cli.py"
+        ]
+      }
+    }
+  },
+  "nativeOverrides": false,
+  "historicalResultReuse": false,
+  "commitChronology": "Development native36 and both CLI32 runs captured startingHead before execution at8fb1ea4; release36 timed out at the 1200-second verifier deadline and is excluded. Implementation442f1f8 preserves their inputs. Only the native verifier changed ated10ad3 to partition complete identities. Fresh release shards12+12+12 prove the identical disjoint36-test union. All common inputs match implementation442f1f8 and checkout; each executed native verifier hash is proved against its own exact Git commit.",
+  "excluded": [
+    "initial rejected fixture checks and diagnostic-only CLI probes",
+    "preliminary eleven-group native run before final snapshot",
+    "initial whole release invocation terminated by the 1200-second subprocess deadline; no pass is claimed"
+  ],
+  "notCovered": [
+    "tag constructor/general aggregate expression inference and element-list arrays",
+    "void/if values and full L02/L03",
+    "general mutable/non-byte/Buffer/input returned references",
+    "grouped native-loan and scalar/field reference expressions",
+    "other CLI matrices/full M1/M2/full-profile conformance",
+    "general stack/RAM/timing or allocator/OOM evidence",
+    "Engine/Instance and host exchange",
+    "anchored filesystem project loading/public project CLI",
+    "Linux",
+    "restricted worker",
+    "DLL/C ABI/package"
+  ]
+}

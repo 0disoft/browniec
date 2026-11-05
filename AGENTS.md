@@ -1,3 +1,15 @@
+- Reference/text local inference is implemented at `442f1f8`, with the scalar
+  name-shadowing guard fix at `365ac5d`. Existing byte/text views, native loans,
+  shared aliases, explicit exclusive reborrows and shared-byte results use the
+  same initializers, origin/lifetime admission and cleanup. Default 256, cap 16000000
+  and operation prices remain. Baseline development/release each passed 36 native
+  groups and 32 CLI cases; release uses three disjoint 12-group shards (`ed10ad3`).
+  The final one-file production guard fix passed one focused native group and 34
+  CLI cases per profile on 160 matching final inputs, 154 LF modules and 259-file
+  discovery, with both locked LF mirrors. Original 36 native groups remain
+  historical at `442f1f8`; final CLI 34 reruns every original 32 fixture. See the
+  reference-inference contract and both Windows evidence files. General views,
+  tag constructors, element lists, void/if and the full goal remain open. Local only.
 - Owned aggregate local inference is implemented at 6c7d94f: repeated scalar
   arrays, nominal constructors, bare copies, aggregate CALLs and exact local/
   returned record child paths share existing typed initializers and ownership.

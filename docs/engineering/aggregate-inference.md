@@ -57,10 +57,12 @@ existing record leaf/size budgets and independent IR/image/loan proof remain.
 
 This implements the current direct initializer forms, not general aggregate
 expressions. Element-list arrays and their inference remain L03 work. Parenthesized,
-conditional and other general aggregate-expression forms, inferred reference/text
-bindings, tag constructor context, wider/resource tags, void and if values still
+conditional and other general aggregate-expression forms, tag constructor
+context, wider/resource tags, void and if values still
 need their respective lowering and ownership integration. Current annotated
-reference/text forms remain available. Do not mark L02 or the full profile complete.
+reference/text forms remain available. The [reference/text successor](reference-inference.md)
+now adds inference for existing view/loan initializers and their aliases/return
+origins. Do not mark L02 or the full profile complete.
 The pure-header sentinel separation required before void remains documented in
 [the scalar foundation](local-inference.md).
 

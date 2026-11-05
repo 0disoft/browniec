@@ -42,11 +42,13 @@ opcode, Fuel price, limit, execution profile or full-profile capability is added
 The [owned aggregate successor](aggregate-inference.md) now adds repeated arrays,
 nominal record constructors, bare value copies, aggregate CALL results and exact
 record child paths through the existing initializers. Element lists/general
-aggregate expressions and borrow/text binding inference remain separate work.
+aggregate expressions remain separate work. The [reference/text successor](reference-inference.md)
+now infers existing image views, runtime loans, aliases and returned shared-byte
+bindings through their original initializers and origin/lifetime proof.
 Tag constructor inference must distinguish missing type context
 from a construct whose complete type is derivable from its payload. These cases
 must not be relabeled as implemented merely because projection inference works.
-Existing annotated borrow forms remain usable. Results below retain this
+General mutable/non-byte/Buffer/input results remain separate. Results below retain this
 foundation's original input snapshot; the successor has separate final evidence.
 
 Before adding `void` returns, separate the current `result_type == 0` pure-header
@@ -90,8 +92,10 @@ includes 151 LF production modules; all match the checkout and Git raw bytes at
 passed. The current CLI build matches the retained release artifact.
 Development native and both CLI runs completed before the implementation commit;
 release native continued across it on unchanged inputs. The static verifier
-observes its `startingHead` field after execution; the CLI verifier captures it
-at launch. Complete input hashes identify the executed code in both cases.
+observed its `startingHead` field after execution at that historical checkpoint;
+the CLI verifier captured it at launch. Complete input hashes identify the
+executed code in both cases. `8fb1ea4` corrects future native receipts to capture
+the head before execution; it does not rewrite those historical receipts.
 No native override or historical-result reuse was used.
 Preliminary syntax/borrow-check errors and the initial default-Fuel CLI probe are
 excluded. Other CLI matrices, full M1/M2/full-profile conformance, general native

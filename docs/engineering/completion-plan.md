@@ -102,8 +102,10 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    module/entry CLI flags and deliberate full-profile limits still leave L01 open.
    [Scalar/complete-tagged local inference](local-inference.md) is implemented;
    the [owned aggregate successor](aggregate-inference.md) adds repeated array
-   initializers, record constructors, copies, CALLs and record child paths. Finish borrow/
-   text/tag constructor and general aggregate-expression inference, void/if values,
+   initializers, record constructors, copies, CALLs and record child paths. The
+   [reference/text successor](reference-inference.md) adds existing image views,
+   runtime loans, aliases and shared-byte results with original ownership proof.
+   Finish tag constructor and general aggregate-expression inference, void/if values,
    complete array/record construction,
    selected-place compound assignment, wider/resource-bearing tags and must-use
    handling. Reconcile operand/source/type/compile limits deliberately rather than

@@ -1,12 +1,15 @@
 # Brownie C
 
-## Current implementation (2026-11-05)
+## Current implementation (2026-11-06)
 
 [Native retained module programs](docs/engineering/module-program.md) now execute
 explicitly selected public i32 entries with scoped calls/nominal records and
 original source diagnostics. The public CLI supports the existing single-source
 scalar/aggregate and [retained byte/text/shared-byte subset](docs/engineering/public-program.md).
 Its [Fuel default is 256 and explicit ceiling is 16000000](docs/engineering/public-fuel-limits.md).
+Initialized locals infer existing scalar/tagged values, owned aggregate
+initializers and [reference/text views](docs/engineering/reference-inference.md)
+through the same typed initialization and ownership checks.
 [Native project metadata](docs/cli/project-format.md) now admits complete explicit
 source maps, entries and declared requirements; it opens no files and grants nothing.
 Public project loading and CLI module/entry flags, general mutable/non-byte/
