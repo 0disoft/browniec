@@ -7,6 +7,27 @@ import ir as ir;
 import types as types;
 import errors as errors;
 
+pub struct Projection { usize groups; u8 kind; }
+// Advisory lookahead only. A grouped scalar expression keeps its ordinary
+// parser; only complete literal parentheses followed by a projection match.
+pub fn Result<Projection,errors::Error> projection(ref u8[] source,ref lexer::State s){
+    var lexer::State look=lexer::snapshot(s);var usize groups=0;
+    while(look.kind==40){if(groups>=32){return .err(errors::make(4,look.begin));}
+        groups+=1;let usize next=lexer::next(source,ref mut look)?;}
+    if(look.kind!=91){return .ok(Projection{.groups=0,.kind=0});}
+    var usize brackets=1;let usize open=lexer::next(source,ref mut look)?;
+    while(brackets!=0){
+        if(look.kind==0){return .err(errors::make(2,look.begin));}
+        if(look.kind==91){brackets+=1;}else if(look.kind==93){brackets-=1;}
+        let usize next=lexer::next(source,ref mut look)?;
+    }
+    var usize closed=0;while(closed<groups){
+        if(look.kind!=41){return .ok(Projection{.groups=0,.kind=0});}
+        let usize next=lexer::next(source,ref mut look)?;closed+=1;
+    }
+    return .ok(Projection{.groups=groups,.kind=if(look.kind==91 || look.kind==46){look.kind}else{0}});
+}
+
 // Classify only the first outer separator. Comments/literals and nested
 // expressions belong to the lexer; lookahead never lowers a guest expression.
 pub fn Result<bool,errors::Error> is_repeated(ref u8[] source,ref lexer::State s){
