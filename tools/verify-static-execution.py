@@ -27,7 +27,7 @@ def main():
     parser.add_argument('--profile', choices=['development', 'release'], required=True)
     parser.add_argument('--shard', type=int, default=1, help='one-based native test shard')
     parser.add_argument('--shards', type=int, default=1, help='partition the complete selected identity set')
-    parser.add_argument('--selection', choices=['all', 'statics', 'views', 'ranges', 'range-core', 'call-ir', 'call-proof', 'call-transfer-core', 'call-transfer', 'call-mixed', 'reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts', 'reference-return-execution', 'reference-source', 'reference-return-source', 'public-program', 'source-snapshot', 'module-index', 'module-entry', 'source-context', 'module-program', 'module-program-core', 'module-retention', 'project-program-core', 'project-program', 'project-names', 'project-manifest', 'project-sources', 'captured-call-stack', 'local-inference', 'aggregate-inference', 'reference-inference', 'reference-inference-shadow', 'option-inference', 'array-list-storage', 'array-list-execution', 'array-list-source', 'array-list-contexts', 'array-list-replace-storage', 'array-list-replace-execution'], default='all',
+    parser.add_argument('--selection', choices=['all', 'statics', 'views', 'ranges', 'range-core', 'call-ir', 'call-proof', 'call-transfer-core', 'call-transfer', 'call-mixed', 'reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts', 'reference-return-execution', 'reference-source', 'reference-return-source', 'public-program', 'source-snapshot', 'module-index', 'module-entry', 'source-context', 'module-program', 'module-program-core', 'module-retention', 'project-program-core', 'project-program', 'project-names', 'project-manifest', 'project-sources', 'captured-call-stack', 'local-inference', 'aggregate-inference', 'reference-inference', 'reference-inference-shadow', 'option-inference', 'array-list-storage', 'array-list-execution', 'array-list-source', 'array-list-contexts', 'array-list-replace-storage', 'array-list-replace-execution', 'array-list-assignment'], default='all',
                         help='statics runs the changed image/proof/VM suites; all adds return and source regressions')
     args = parser.parse_args()
     if not 1 <= args.shard <= args.shards <= 16:
@@ -103,6 +103,8 @@ def main():
     selections['array-list-replace-execution'] = ['tests/m2/array_list_replace_execution.fy',
         'tests/m2/array_list_replace_storage.fy', 'tests/m2/array_list_execution.fy',
         'tests/m2/reference_return_lifetimes.fy']
+    selections['array-list-assignment'] = ['tests/m2/array_list_assignment.fy', 'tests/m2/module_program.fy',
+        'tests/m2/array_list_source.fy', 'tests/m2/array_list_contexts.fy', 'tests/m2/array_list_replace_execution.fy']
     files = selections[args.selection]
     out = ROOT / 'build/static-execution' / profile / args.selection
     if args.shards != 1:
@@ -240,8 +242,17 @@ def main():
                 'retained_coordinator_uses_exact_setup_prices_and_keeps_its_separate_dispatch'},
             'reference_return_lifetimes': {'writes_fill_and_assignment_reject_at_the_exact_effect_while_result_is_live',
                 'last_close_allows_mutation_and_an_unrelated_owner_remains_writable'}}
+    if args.selection == 'array-list-assignment':
+        focused = {
+            'module_program': {'scalar_list_replacements_cross_qualified_calls_with_existing_destinations'},
+            'array_list_source': {'annotated_and_inferred_lists_preserve_all_six_exact_scalar_domains',
+                'lookahead_ignores_nested_separators_literals_and_comments_without_evaluation',
+                'lists_keep_existing_source_register_and_32_deep_call_limits'},
+            'array_list_contexts': {'literal_contexts_match_named_ir_and_independent_exact_fuel',
+                'borrow_endpoints_and_following_arguments_preserve_nonlocal_exit_cleanup'},
+            'array_list_replace_execution': {'retained_replacement_prepays_setup_and_existing_owner_work_at_exact_fuel'}}
     exact = args.selection in ('array-list-replace-storage', 'array-list-contexts', 'array-list-source', 'option-inference', 'array-list-storage', 'array-list-execution') or args.selection in ('reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts', 'reference-return-execution', 'reference-source', 'reference-return-source', 'public-program', 'reference-inference')
-    exact = exact or args.selection == 'array-list-replace-execution'
+    exact = exact or args.selection in ('array-list-replace-execution', 'array-list-assignment')
     for path in files:
         if not exact and args.shards == 1:
             command.extend(['--file', path])
@@ -257,7 +268,7 @@ def main():
     if args.shards > len(complete):
         parser.error('shards must not exceed selected tests')
     if exact:
-        assert len(expected) == (13 if args.selection == 'array-list-replace-execution' else 10 if args.selection == 'array-list-replace-storage' else 14 if args.selection == 'array-list-contexts' else 13 if args.selection == 'array-list-source' else 9 if args.selection == 'array-list-execution' else 5 if args.selection in ('option-inference', 'array-list-storage') else 36 if args.selection == 'reference-inference' else 18)
+        assert len(expected) == (14 if args.selection == 'array-list-assignment' else 13 if args.selection == 'array-list-replace-execution' else 10 if args.selection == 'array-list-replace-storage' else 14 if args.selection == 'array-list-contexts' else 13 if args.selection == 'array-list-source' else 9 if args.selection == 'array-list-execution' else 5 if args.selection in ('option-inference', 'array-list-storage') else 36 if args.selection == 'reference-inference' else 18)
     if args.shards != 1:
         expected = set(complete[args.shard - 1::args.shards])
     if exact or args.shards != 1:

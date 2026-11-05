@@ -124,6 +124,11 @@ fn void depth(usize n,bool retained,bool pass){
     value(library,b"module app;import lib as m;pub fn i32 chosen(){let a=m::make();return m::take([a[0],a[1]]);}",42);
     value(library,b"module app;import lib as m;pub fn i32 chosen(){let ref u8[] marker=b\"*\";let a=m::make();return m::take([a[0],a[1]]);}",42);
 }
+@test fn void scalar_list_replacements_cross_qualified_calls_with_existing_destinations(){
+    let ref u8[] library=b"module lib;pub fn u8[2] make(){var u8[2] a=[0;2];a=[20,22];return a;}pub fn u8 first(){return 22;}";
+    value(library,b"module app;import lib as m;pub fn i32 chosen(){var a=m::make();a=[m::first(),a[0]];return a[0] as i32+a[1] as i32;}",42);
+    value(library,b"module app;import lib as m;pub fn i32 chosen(){let ref u8[] marker=b\"*\";var a=m::make();a=[m::first(),a[0]];return a[0] as i32+a[1] as i32;}",42);
+}
 
 fn void admission_rejected(ref u8[] a,ref u8[] b,usize limit,u8 kind,usize owner){
     switch(programs::compile(entry(a,b),limit)){case .ok(_):{assert(false);}case .err(e):{

@@ -951,6 +951,9 @@ fn Result<usize, errors::Error> array_statement(ref u8[] source, ref mut lexer::
     if (s.kind == 61) {
         let usize equals = lexer::next(source, s)?;
         if(s.kind==91) {
+            if(!array_locals::is_repeated(source,s)?){
+                return array_list_assignment(source,s,p,table,signatures,index,id,at,terminator,result_type,expr_depth,structure,loop_state);
+            }
             let u8 element=p.arrays.elements[id];
             let usize open=lexer::next(source,s)?;
             let usize value=expression(source,s,p,table,signatures,1,expr_depth,element,result_type,structure,loop_state)?;
@@ -1262,6 +1265,27 @@ fn Result<usize,errors::Error> array_list_value(ref u8[] source,ref mut lexer::S
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
     u8 expected,usize length,bool mutable,usize offset,usize depth,u8 result_type,
     usize structure,ref mut loops::State loop_state){
+    let vec::Vec<usize> values=array_list_cells(source,s,p,table,signatures,expected,depth,result_type,structure,loop_state)?;
+    let ref usize[] cells=vec::view_usize(ref values);let u8 element=p.types[cells[0]];
+    return array_locals::list(p,table.function,cells,element,length,mutable,offset);
+}
+fn Result<usize,errors::Error> array_list_assignment(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    usize index,usize id,usize at,u8 terminator,u8 result_type,usize depth,
+    usize structure,ref mut loops::State loop_state){
+    if(terminator!=59){return .err(errors::make(3,at));}
+    let u8 element=p.arrays.elements[id];let usize length=p.arrays.lengths[id];
+    let vec::Vec<usize> values=array_list_cells(source,s,p,table,signatures,element,depth,result_type,structure,loop_state)?;
+    if(vec::len<usize>(ref values)!=length){return .err(errors::make(3,at));}
+    let usize end=lexer::punctuation(source,s,terminator)?;
+    let usize replaced=ir::array_replace_values(p,id,vec::view_usize(ref values),at)?;
+    return .ok(index);
+}
+// Evaluation is shared by fresh values and existing destinations. Only the
+// caller publishes an owner or replacement after its complete context validates.
+fn Result<vec::Vec<usize>,errors::Error> array_list_cells(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    u8 expected,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
     let usize open=lexer::punctuation(source,s,91)?;
     if(s.kind==93){return .err(errors::make(3,s.begin));}
     var vec::Vec<usize> values=vec::empty<usize>();var u8 element=expected;
@@ -1281,7 +1305,7 @@ fn Result<usize,errors::Error> array_list_value(ref u8[] source,ref mut lexer::S
         if(s.kind==93){break;}
     }
     let usize close=lexer::punctuation(source,s,93)?;
-    return array_locals::list(p,table.function,vec::view_usize(ref values),element,length,mutable,offset);
+    return .ok(values);
 }
 fn Result<usize, errors::Error> declaration(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 terminator, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {
     if (word_is(source, s, b"let") || word_is(source, s, b"var")) {

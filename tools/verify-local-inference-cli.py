@@ -23,8 +23,11 @@ def main():
     selection.add_argument('--references', action='store_true', help='add reference and text inference cases')
     selection.add_argument('--options', action='store_true', help='add payload-derived Option constructor cases')
     selection.add_argument('--array-lists', action='store_true', help='add scalar element-list declarations')
+    selection.add_argument('--array-list-assignment', action='store_true', help='add exact-shape list replacement and all earlier list cases')
     args = parser.parse_args()
-    suite = 'array-list' if args.array_lists else 'option' if args.options else 'reference' if args.references else 'aggregate' if args.aggregate else 'local'
+    if args.array_list_assignment:
+        args.array_lists = True
+    suite = 'array-list-assignment' if args.array_list_assignment else 'array-list' if args.array_lists else 'option' if args.options else 'reference' if args.references else 'aggregate' if args.aggregate else 'local'
     out = ROOT / ('build/' + suite + '-inference-cli') / args.profile
     out.mkdir(parents=True, exist_ok=True)
     receipt = out / 'receipt.json'
@@ -191,6 +194,36 @@ def main():
             ('list-result-arity-error', b'module main;fn i32[1] make(){return [20,22];}fn i32 main(){return 0;}', 'check', None, 'type', None, scalar),
             ('list-borrow-mode-error', b'module main;fn i32 take(ref mut i32[] a){return 0;}fn i32 main(){return take(ref [42]);}', 'check', None, 'syntax', None, scalar),
         ]
+    if args.array_list_assignment:
+        pair = b'module main;fn i32 main(){var a=[0;2];a=[20,22];return a[0]+a[1];}'
+        cases += [
+            ('assign-check', pair, 'check', None, None, None, write),
+            ('assign-run', pair, 'run', 42, None, 16000000, write),
+            ('assign-default-fuel', pair, 'run', None, 'fuel', None, write),
+            # Native backing-eight oracle 555 + 65536 - 8 public backing bytes.
+            ('assign-exact', pair, 'run', 42, None, 66083, write),
+            ('assign-short', pair, 'run', None, 'fuel', 66082, write),
+            ('assign-more', pair, 'run', 42, None, 66084, write),
+            ('assign-bool', b'module main;fn i32 main(){var bool[2] a=[false;2];a=[true,false,];if(a[0] && !a[1]){return 42;}return 0;}', 'run', 42, None, 16000000, write),
+            ('assign-i64', b'module main;fn i32 main(){var i64[2] a=[0;2];a=[-9223372036854775808,9223372036854775807];if(a[0]==-9223372036854775808 && a[1]==9223372036854775807){return 42;}return 0;}', 'run', 42, None, 16000000, write),
+            ('assign-u8', b'module main;fn i32 main(){var u8[2] a=[0;2];a=[255,42];return a[1] as i32;}', 'run', 42, None, 16000000, write),
+            ('assign-u32', b'module main;fn i32 main(){var u32[2] a=[0;2];a=[4294967295,42];if(a[0]==4294967295 && a[1]==42){return 42;}return 0;}', 'run', 42, None, 16000000, write),
+            ('assign-usize', b'module main;fn i32 main(){var usize[2] a=[0;2];a=[18446744073709551615,42];if(a[0]==18446744073709551615 && a[1]==42){return 42;}return 0;}', 'run', 42, None, 16000000, write),
+            ('assign-order', b'module main;fn i32 bump(ref mut i32[] c){c[0]=c[0]+1;return c[0];}fn i32 main(){var c=[0];var a=[0;2];a=[bump(ref mut c),bump(ref mut c)];return a[0]*10+a[1]+c[0]*15;}', 'run', 42, None, 16000000, write),
+            ('assign-self-read', b'module main;fn i32 main(){var a=[20,22];a=[a[1],a[0]];return a[0]+a[1];}', 'run', 42, None, 16000000, write),
+            ('assign-early-return', b'module main;fn i32 main(){var a=[7,8];let Option<i32> o=.none;a=[20,switch(o){case .some(v):{v}case .none:{return a[0]+a[1]+27;}}];return 0;}', 'run', 42, None, 16000000, write),
+            ('assign-rhs-effect', b'module main;fn i32 change(ref mut i32[] a){a[0]=20;return 0;}fn i32 main(){var a=[7,22];let Option<i32> o=.none;a=[change(ref mut a),switch(o){case .some(v):{v}case .none:{return a[0]+a[1];}}];return 0;}', 'run', 42, None, 16000000, write),
+            ('assign-propagation', b'module main;fn Option<i32> work(Option<i32> o){var a=[7,8];a=[20,o?];return .some(a[0]+a[1]);}fn i32 main(){switch(work(.none)){case .some(_):{return 0;}case .none:{}}switch(work(.some(22))){case .some(v):{return v;}case .none:{return 0;}}}', 'run', 42, None, 16000000, write),
+            ('assign-loop-exit', b'module main;fn i32 main(){var a=[20,22];let Option<i32> o=.none;var n=0;while(n<42){let prior=[1];a=[0,switch(o){case .some(v):{v}case .none:{n=n+1;continue;}}];}while(true){a=[0,switch(o){case .some(v):{v}case .none:{break;}}];}return a[0]+a[1];}', 'run', 42, None, 16000000, write),
+            ('assign-retained-call', b'module main;fn i32[2] make(){var a=[0;2];a=[20,22];return a;}fn i32 main(){let ref u8[] marker=b"*";var n=0;var sum=0;while(n<3){let a=make();sum=sum+a[0]+a[1];n=n+1;}return sum-84;}', 'run', 42, None, 16000000, reference),
+            ('assign-after-last-alias', b'module main;fn ref u8[] same(ref u8[] p){return ref p;}fn i32 main(){var u8[2] a=[0;2];a=[20,22];{let p=same(ref a);if(p[0]!=20){return 0;}}a=[22,20];let p=same(ref a);return p[0] as i32+p[1] as i32;}', 'run', 42, None, 16000000, reference),
+            ('assign-arity-error', b'module main;fn i32 main(){var a=[0;2];a=[42];return 0;}', 'check', None, 'type', None, scalar),
+            ('assign-type-error', b'module main;fn i32 main(){var a=[0;2];a=[1,true];return 0;}', 'check', None, 'type', None, scalar),
+            ('assign-immutable-error', b'module main;fn i32 main(){let a=[0;2];a=[20,22];return 0;}', 'check', None, 'type', None, scalar),
+            ('assign-borrow-error', b'module main;fn i32 main(){var a=[0;2];let p=ref a;a=[20,22];return p[0];}', 'check', None, 'type', None, scalar),
+            ('assign-returned-alias-error', b'module main;fn ref u8[] same(ref u8[] p){return ref p;}fn i32 main(){var u8[2] a=[0;2];let p=same(ref a);a=[20,22];return p[0] as i32;}', 'check', None, 'verification', None, scalar),
+            ('assign-terminator-error', b'module main;fn i32 main(){var a=[0;2];a=[20,22] return 0;}', 'check', None, 'syntax', None, scalar),
+        ]
     version = None
     if args.array_lists:
         ran = subprocess.run([str(exe), '--version', '--json'], cwd=empty, env=env, capture_output=True, timeout=15)
@@ -198,7 +231,8 @@ def main():
         version = json.loads(ran.stdout)
         assert version['array_element_list_declarations'] is True
         assert all(version[key] is True for key in (
-            'array_element_list_arguments', 'array_element_list_returns', 'array_element_list_temporary_borrows'))
+            'array_element_list_arguments', 'array_element_list_returns', 'array_element_list_temporary_borrows',
+            'array_element_list_replacement'))
         assert version['fuel_default'] == 256 and version['fuel_limit'] == 16000000
         assert version['core'] is True and version['restricted'] is False and version['embed'] is False
     results = []
@@ -224,7 +258,7 @@ def main():
     assert all(sha(ROOT / i['path']) == i['sha256'] for i in inputs)
     assert sha(compiler) == compiler_hash and sha(exe) == binary_hash
     data = dict(schema='browniec.local-inference-cli/v1', status='passed', profile=args.profile,
-                selection='array-list' if args.array_lists else 'option' if args.options else 'reference' if args.references else 'aggregate' if args.aggregate else 'scalar',
+                selection='array-list-assignment' if args.array_list_assignment else 'array-list' if args.array_lists else 'option' if args.options else 'reference' if args.references else 'aggregate' if args.aggregate else 'scalar',
                 startingHead=head, inputSnapshotCapturedAt=captured, inputs=inputs, compilerSha256=compiler_hash,
                 compilerVersion=subprocess.check_output([str(compiler), '--version'], text=True).strip(),
                 buildCommand=[compiler.relative_to(ROOT).as_posix(), *command[1:]],
