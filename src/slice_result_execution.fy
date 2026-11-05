@@ -19,6 +19,9 @@ import slice_result_entry as entry;
 import static_ir as statics;
 import static_image as images;
 import static_execution as immutable;
+import static_call_execution as transfer;
+import static_call_ir as image_calls;
+import verifier as image_verifier;
 
 pub struct Scalar { i64 value; usize remaining; slices::Ticket[8] resumed; }
 // Internal tagged completion; inactive fields never escape either native API.
@@ -38,28 +41,27 @@ fn Outcome completed(Scalar value){
 // State snapshots alive in the native driver across ownership transactions.
 fn bool available(ref authority::State stack,bool root){return stack.depth<31 && (!root || stack.frame==0);}
 
-fn runtime::Contract binding(ref ir::Program unit,usize f){
-    let ref body_ir::Program body=ref unit.body;
-    var runtime::Contract c=runtime::Contract{.tags=[0;8],.arity=body.arities[f],.selected=unit.parameters[f] as usize};
+fn runtime::Contract binding(ref body_ir::Program body,ref u8[] parameters,usize f){
+    var runtime::Contract c=runtime::Contract{.tags=[0;8],.arity=body.arities[f],.selected=parameters[f] as usize};
     var usize i=0;while(i<c.arity){let usize site=body.slice_parameters[body.register_starts[f]+i] as usize;
         if(site!=0){c.tags[i]=body.slice_elements[site-1];}i+=1;}return c;
 }
 // Deliberately separate admission from ordinary Program/CLI execution. This
 // dialect has native borrowed inputs, owned arrays/records, ordinary CALLs and
 // forwarded results. Explicit native owned entry is separate from public source admission.
-fn Result<usize,errors::Error> admit(ref ir::Program unit,usize function,ref i64[] values,usize captures,ref owners::Token[] inputs,bool view){
-    let ref body_ir::Program body=ref unit.body;
+fn Result<usize,errors::Error> admit(ref body_ir::Program body,ref u8[] elements,ref statics::Sites sites,usize function,ref i64[] values,usize captures,ref owners::Token[] inputs,bool view){
     if(function>=body.function_count ||
         values.len!=body.arities[function] || captures!=values.len || (inputs.len!=0 && inputs.len!=values.len)){return .err(errors::make(5,0));}
-    if(view){if(unit.elements[function]==0){return .err(errors::make(5,0));}}
-    else if(unit.elements[function]!=0 || !types::scalar(body.return_types[function]) ||
+    if(view){if(elements[function]==0){return .err(errors::make(5,0));}}
+    else if(elements[function]!=0 || !types::scalar(body.return_types[function]) ||
         body.array_results[function]!=0 || body.record_results[function]!=0){return .err(errors::make(5,0));}
     var usize i=0;
     i=0;while(i<body.function_count){var usize a=0;while(a<body.arities[i]){
         let usize r=body.register_starts[i]+a;
-        if(body.slice_parameters[r]==0 && body.array_parameters[r]==0 && body.record_parameters[r]==0 && !types::valid(body.types[r])){return .err(errors::make(5,0));}a+=1;
+        if(body.slice_parameters[r]==0 && body.array_parameters[r]==0 && body.record_parameters[r]==0 && sites.parameters[r]==0 && !types::valid(body.types[r])){return .err(errors::make(5,0));}a+=1;
     }i+=1;}
     i=0;while(i<values.len){let usize r=body.register_starts[function]+i;
+        if(sites.parameters[r]!=0){return .err(errors::make(5,0));}
         let bool aggregate=body.array_parameters[r]!=0 || body.record_parameters[r]!=0;
         if(aggregate){
             if(inputs.len==0 || inputs[i].generation==0 || inputs[i].slot>=16 || values[i]!=0){return .err(errors::make(5,0));}
@@ -100,7 +102,20 @@ pub fn Result<Scalar,errors::Error> execute_image_scalar(ref ir::Program unit,re
     usize function,ref runtime::Capture[] captures,ref i64[] values,ref owners::Token[] inputs,
     ref mut runtime::State state,ref mut u8[] data,usize fuel){
     let verifier::ImageProof proof=verifier::inspect_image(unit,image)?;
-    return switch(invoke_proved(unit,function,captures,values,inputs,state,data,fuel,false,
+    return switch(invoke_proved(ref unit.body,ref unit.elements,ref unit.parameters,function,captures,values,inputs,state,data,fuel,false,
+        ref proof.statics,images::payload(image))){
+        case .ok(outcome):{if(!outcome.view){.ok(outcome.scalar)}else{.err(errors::make(5,0))}}
+        case .err(e):{.err(e)}
+    };
+}
+// Exact immutable image and complete Static/ordinary proof remain borrowed
+// throughout execution. Host entry cannot manufacture Static formals/results.
+pub fn Result<Scalar,errors::Error> execute_static_scalar(ref image_calls::Program unit,ref images::Image image,
+    usize function,ref runtime::Capture[] captures,ref i64[] values,ref owners::Token[] inputs,
+    ref mut runtime::State state,ref mut u8[] data,usize fuel){
+    let image_verifier::StaticCallProof proof=image_verifier::verify_static_calls(unit,image)?;
+    let u8[16] none=[0;16];
+    return switch(invoke_proved(ref unit.body,ref none,ref none,function,captures,values,inputs,state,data,fuel,false,
         ref proof.statics,images::payload(image))){
         case .ok(outcome):{if(!outcome.view){.ok(outcome.scalar)}else{.err(errors::make(5,0))}}
         case .err(e):{.err(e)}
@@ -111,18 +126,17 @@ fn Result<Outcome,errors::Error> invoke(ref ir::Program unit,usize function,
     ref mut runtime::State state,ref mut u8[] data,usize fuel,bool view){
     let verifier::Proof proof=verifier::inspect(unit)?;
     let statics::Sites sites=statics::empty();let u8[1] unused=[0];
-    return invoke_proved(unit,function,captures,values,inputs,state,data,fuel,view,ref sites,ref unused[..0]);
+    return invoke_proved(ref unit.body,ref unit.elements,ref unit.parameters,function,captures,values,inputs,state,data,fuel,view,ref sites,ref unused[..0]);
 }
-fn Result<Outcome,errors::Error> invoke_proved(ref ir::Program unit,usize function,
+fn Result<Outcome,errors::Error> invoke_proved(ref body_ir::Program body,ref u8[] elements,ref u8[] parameters,usize function,
     ref runtime::Capture[] captures,ref i64[] values,ref owners::Token[] inputs,
     ref mut runtime::State state,ref mut u8[] data,usize fuel,bool view,
     ref statics::Sites sites,ref u8[] literals){
-    let ref body_ir::Program body=ref unit.body;
-    let usize admitted=admit(unit,function,values,captures.len,inputs,view)?;
+    let usize admitted=admit(body,elements,sites,function,values,captures.len,inputs,view)?;
     let usize depth=switch(authority::inspect(ref state.runtime.authority)){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,0));}};
     if(!available(ref state.runtime.authority,true)){return .err(errors::make(5,0));}
-    let runtime::Entered first=entry::enter(body,function,binding(unit,function),captures,inputs,state,data,fuel)?;
-    let Result<Outcome,errors::Error> outcome=start(unit,function,ref first,values,state,data,sites,literals);
+    let runtime::Entered first=entry::enter(body,function,binding(body,parameters,function),captures,inputs,state,data,fuel)?;
+    let Result<Outcome,errors::Error> outcome=start(body,parameters,function,ref first,values,state,data,sites,literals);
     return switch(outcome){
         case .ok(v):{.ok(v)}
         case .err(e):{
@@ -135,14 +149,13 @@ fn Result<Outcome,errors::Error> invoke_proved(ref ir::Program unit,usize functi
 }
 // Keep the large frame maps out of the independent admission call stack.
 // Their native storage is needed only after verification and initial entry.
-fn Result<Outcome,errors::Error> start(ref ir::Program unit,usize function,ref runtime::Entered first,
+fn Result<Outcome,errors::Error> start(ref body_ir::Program body,ref u8[] parameters,usize function,ref runtime::Entered first,
     ref i64[] values,ref mut runtime::State state,ref mut u8[] data,ref statics::Sites sites,ref u8[] literals){
     var frames::Frames bindings=frames::empty(state);
-    return run(unit,function,first,values,ref mut bindings,state,data,sites,literals);
+    return run(body,parameters,function,first,values,ref mut bindings,state,data,sites,literals);
 }
-fn Result<Outcome,errors::Error> run(ref ir::Program unit,usize function,ref runtime::Entered first,
+fn Result<Outcome,errors::Error> run(ref body_ir::Program body,ref u8[] parameters,usize function,ref runtime::Entered first,
     ref i64[] values,ref mut frames::Frames bindings,ref mut runtime::State state,ref mut u8[] data,ref statics::Sites sites,ref u8[] literals){
-    let ref body_ir::Program body=ref unit.body;
     var usize[32] static_live=[0;32];var u32[512] static_words=[0;512];
     var i64[4096] registers=[0;4096];var usize remaining=first.call.remaining;
     let usize entered=frames::push(body,bindings,first.call,function,128,32,0)?;
@@ -156,6 +169,11 @@ fn Result<Outcome,errors::Error> run(ref ir::Program unit,usize function,ref run
         let usize dst=body.code[at+1] as usize;let usize a=body.code[at+2] as usize;let usize b=body.code[at+3] as usize;
         let usize base=frame*128;
         if(remaining==0){return .err(errors::make(8,offset));}remaining-=1;
+        if(op==77){
+            remaining=transfer::parameter(body,sites,literals.len,pc,f,
+                ref static_words[frame*16..frame*16+16],static_live[frame],remaining)?;
+            let usize one=1;static_live[frame]|=one<<dst;pc+=1;continue;
+        }
         if(statics::operation(op)){
             let immutable::Step next=immutable::step_frame(body,sites,literals,pc,f,
                 ref mut registers[base..base+128],static_live[frame],remaining,ref mut static_words[frame*16..frame*16+16])?;
@@ -177,16 +195,37 @@ fn Result<Outcome,errors::Error> run(ref ir::Program unit,usize function,ref run
                 (op==68 && bindings.sites[frame*16+dst].slot!=16)){return .err(errors::make(5,offset));}
             pc+=1;continue;
         }
-        if(op==9 || op==64 || op==66){
+        if(op==9 || op==64 || op==66 || op==78){
             if(frame>=31 || !available(ref state.runtime.authority,false)){return .err(errors::make(12,offset));}
-            let runtime::Contract c=binding(unit,a);
-            remaining=switch(owned::enter(body,pc,c,bindings,state,data,remaining)){
+            let runtime::Contract c=binding(body,parameters,a);
+            var transfer::Arguments staged=transfer::Arguments{.words=[0;16],.remaining=remaining};
+            if(op==78){staged=transfer::arguments(body,sites,literals.len,pc,f,
+                ref static_words[frame*16..frame*16+16],static_live[frame],remaining)?;}
+            remaining=switch(owned::enter(body,pc,c,bindings,state,data,staged.remaining)){
                 case .ok(v):{v}case .err(e):{return .err(errors::make(e.kind,offset));}
             };
             static_live[frame+1]=0;
+            i=0;while(i<16){static_words[(frame+1)*16+i]=staged.words[i];i+=1;}
             i=0;while(i<c.arity){let usize formal=body.register_starts[a]+i;let usize source=body.call_args[b*8+i] as usize;
-                if(c.tags[i]==0 && body.array_parameters[formal]==0 && body.record_parameters[formal]==0){registers[(frame+1)*128+formal]=registers[base+source];}i+=1;
+                if(c.tags[i]==0 && body.array_parameters[formal]==0 && body.record_parameters[formal]==0 && sites.parameters[formal]==0){registers[(frame+1)*128+formal]=registers[base+source];}i+=1;
             }pc=body.starts[a];continue;
+        }
+        if(op==79){
+            let usize next=bindings.continuations[frame];
+            if(frame<=1 || next==0 || next>body.count){return .err(errors::make(5,offset));}
+            let usize parent=frame-1;let usize caller=bindings.functions[parent];
+            let transfer::Returned staged=transfer::returned(body,sites,literals.len,pc,f,
+                ref static_words[frame*16..frame*16+16],static_live[frame],next-1,caller,
+                bindings.destinations[frame],static_live[parent],remaining)?;
+            // The native ordinary-return transaction restores all loan inputs;
+            // no image view or payload ownership is transferred by that layer.
+            let runtime::Resumed resumed=switch(owned::leave(body,pc,8,bindings,state,data,staged.remaining)){
+                case .ok(v):{v}case .err(e):{return .err(errors::make(e.kind,offset));}
+            };
+            remaining=resumed.remaining;static_live[frame]=0;
+            i=0;while(i<16){static_words[frame*16+i]=0;i+=1;}
+            static_words[parent*16+staged.destination]=staged.word;
+            let usize one=1;static_live[parent]|=one<<staged.destination;pc=next;continue;
         }
         if(op==65){
             if(static_live[frame]!=0){return .err(errors::make(5,offset));}

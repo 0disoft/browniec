@@ -72,7 +72,7 @@ pub fn Result<Returned,errors::Error> returned(ref ir::Program p,ref statics::Si
         sites.definitions[destination]!=call || (caller_live&(one<<destination))!=0){return .err(invalid(offset));}
     let views::Span actual=views::live(sites,source,f,kind,words,live,payload,offset)?;
     let u32 word=words[source];let views::Span checked=views::inspect(sites,destination,caller,kind,word,payload,offset)?;
-    let usize price=fuel::static_instruction(79,0,0);
+    let usize price=fuel::static_return();
     if(remaining<price){return .err(errors::make(8,offset));}
     return .ok(Returned{.word=word,.destination=destination,.remaining=remaining-price});
 }

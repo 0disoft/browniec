@@ -37,6 +37,8 @@ pub fn usize static_instruction(u8 op,usize left,usize right){
 }
 
 // Private image CALLs move at most eight descriptors, never payload bytes.
-// Base covers bounded frame bookkeeping; each actual checks up to sixteen roots.
+// Base covers clearing/staging frame words; each actual checks both root sets.
 // Native ownership entry/leave, argument copies and dispatch remain additive.
-pub fn usize static_call(usize arguments){return 16+16*arguments;}
+pub fn usize static_call(usize arguments){return 32+32*arguments;}
+// Two bounded root scans plus clearing the sixteen consumed child words.
+pub fn usize static_return(){return 48;}
