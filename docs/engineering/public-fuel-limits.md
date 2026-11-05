@@ -94,6 +94,41 @@ backing bytes, 65978 with public backing, or 410045 in the retained coordinator.
 `return [42;2][1];` requires 170 native or 65698 public Fuel. Exact/one-short/
 one-more checks preserve each distinct schedule and original temporary cleanup.
 
+## Current array and returned-reference reconciliation (2026-11-06)
+
+The returned-runtime byte READ/LEN preflight now obtains its 4131/4097 base
+prices from `fuel::slice_base`, as the subsequent authenticated access already
+does. The separate 64-unit returned-selector lookup and dispatch stay additive.
+No price or public/native limit changes are introduced.
+
+The focused public runner now also exercises declarations, by-value list CALLs,
+returned lists, replacement, list/repeated projections and both actual public
+execution routes. Each of eight independent numeric source oracles fails at
+one-short Fuel and completes at exact/one-more Fuel. Native checks additionally
+complete each fixture at the public ceiling. These use `compile_program` and
+`run_public`; a private retained entry does not substitute for public routing.
+
+For the retained route, inserting `let ref u8[] marker=b"*";` selects the
+reference profile and adds 18 units (16 for image OPEN plus two dispatches):
+
+| Remaining return expression | Exact public Fuel with marker |
+| --- | ---: |
+| `return [20,42][1];` | 410063 |
+| `return [42;2][1];` | 409783 |
+
+The existing returned-reference native suite remains an independent numeric
+oracle for runtime/image windows, forwarded results and final receipt cleanup.
+Default 256, explicit CLI range 0..16000000, above-ceiling native host budgets,
+and admission-before-runtime ordering remain unchanged. This increment does
+not implement Instance stepping/deadline accounting or the other C05 limits.
+
+Windows development and release each passed **35 native groups and 57 tool-free
+CLI cases** on 169 matching input hashes, 156 LF production modules and the
+268-file discovery identity. All inputs match the implementation commit's raw
+Git bytes. Verification used an isolated snapshot; the pre-existing uncommitted
+grouped-array expression changes were preserved and excluded. See the
+[reconciliation evidence](../evidence/public-fuel-reconciliation-windows-20261106.json).
+
 ## Verification
 
 `python -B tools/verify-public-fuel.py --profile development` runs focused native

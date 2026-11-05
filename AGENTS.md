@@ -1,3 +1,11 @@
+- Public Fuel reconciliation at `31d784e` shares returned-runtime READ/LEN
+  preflight prices with the authenticated access schedule. Windows development
+  and release each passed 35 native groups and 57 tool-free CLI cases on 169
+  Git-raw-matching inputs and 156 LF modules. Verification used an isolated
+  snapshot, excluding preserved uncommitted grouped-array work. See the public
+  Fuel contract and reconciliation evidence. Prices/default256/cap16000000 remain;
+  full C05/Instance and other language/host/delivery work remain open. Local only.
+
 - Scalar literal projections are implemented at `cb44a35`: list/repeated
   indexing and length, literal grouping and UTF-8 element lists. Inferred scalar
   locals use read-only lookahead; completed literal/CALL owners share endpoint

@@ -1,5 +1,18 @@
 # Validation
 
+- Public Fuel reconciliation is implemented at `31d784e`. Returned-runtime byte
+  READ/LEN preflight now uses the shared price helper. Windows development and
+  release each passed 35 native groups and 57 tool-free CLI cases, including eight
+  independent public-source exact/one-short/one-more oracles. The same 169 inputs
+  match the implementation commit's raw Git bytes; all 156 production modules are
+  LF and the 268-file discovery identity matches. Verification used an isolated
+  snapshot excluding preserved uncommitted grouped-array expression work. Default
+  256, ceiling 16000000, operation prices and native host budgets are unchanged.
+  See [the contract](docs/engineering/public-fuel-limits.md) and
+  [Windows evidence](docs/evidence/public-fuel-reconciliation-windows-20261106.json).
+  Full matrices/Linux/additional LF mirror/OOM/benchmarks/delivery were not rerun;
+  Instance and the other C05 requirements remain open. Local only.
+
 - Explicit native owned entry is implemented at `8bf37de`. The private
   `vm::run_slice_result_owned` accepts formal-indexed array/record owner tokens
   alongside scalar cells and borrowed captures. It prepays the existing aggregate
