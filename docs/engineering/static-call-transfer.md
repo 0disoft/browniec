@@ -111,8 +111,10 @@ profile on 134 matching inputs, 129 LF modules and a 230-file discovery identity
 Its [historical evidence](../evidence/static-call-transfer-core-windows-20261105.json)
 records that narrower implementation and its earlier plan-only prices.
 
-Next unify storage-independent runtime/Static reference paths and lower source
-signatures, actuals and returns with full origin/lifetime checking. Complete
+The [byte-access successor](reference-access.md) now shares canonical READ/LEN
+across image sites and runtime byte loans with existing authentication/prices.
+Next unify guest reference formals and lower source signatures, actuals and
+returns with full origin/lifetime checking. Complete
 ordinary public admission and host-visible returned-image lifetime APIs before
 promoting capabilities. Buffer/input views, Engine/Instance, host exchange,
 restricted delivery, packaging and the complete inventory remain open.

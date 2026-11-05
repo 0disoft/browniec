@@ -61,8 +61,10 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    real image roots and exact text windows. The
    [canonical transfer successor](static-call-transfer.md) now executes private
    PARAM/CALL/RETURN against a retained CallProgram, with actual per-frame words,
-   full Fuel/destination preflight and ordinary ownership cleanup. Next unify
-   storage-independent references and lower source signatures/actuals/returns;
+   full Fuel/destination preflight and ordinary ownership cleanup. The
+   [byte-access successor](reference-access.md) now shares instruction-local
+   READ/LEN across image sites and runtime byte loans while retaining their
+   authentication and prices. Next unify guest reference formals and lower source signatures/actuals/returns;
    private execution alone cannot promote public source syntax.
    Validate actual public source execution before promoting its capability.
 2. **Language completion: L01-L06, C03/C05.** Finish explicit module snapshots and

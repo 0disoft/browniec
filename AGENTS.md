@@ -1,3 +1,18 @@
+- Instruction-local byte READ/LEN now share reference_access across immutable
+  image sites and runtime u8[] loan tickets. Canonical tags reject mixed storage;
+  frame/image spans and full runtime ticket/root/lease validation remain required.
+  Access prices remain image 17/16 and runtime 4131/4097, plus one existing private
+  dispatch unit. Compatibility Static READ shares checked bounds; non-byte loans
+  keep their existing adapter. No payload copy, ownership mutation or public flag.
+  Development/release each passed 18 focused native groups and 33 tool-free CLI
+  cases on 139 native/142 CLI matching inputs, 148 distinct committed inputs,
+  130 LF modules and 232-file discovery; both locked LF mirrors pass. Code 648d4bd.
+  No overrides/historical reuse; earlier rejected-fixture/superseded probes are
+  excluded. Full profiles/original public Fuel native/general RAM-stack/timing/
+  Linux/restricted/ABI/package checks were not rerun. See
+  docs/engineering/reference-access.md and focused Windows evidence. Next unify
+  guest reference formals and source CALL/return lowering, then public/lifetime
+  APIs; the complete objective remains open. Local only, no push/release/deploy.
 - Mixed Static CALL coverage now directly executes record arguments, shared/
   exclusive runtime loans and owned array/record results through canonical
   adapters. Five examples plus kind-confusion rejection pass three groups per

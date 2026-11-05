@@ -102,6 +102,16 @@ affected scalar-entry/range regressions. Existing public prices and reported
 limits are unchanged; new private CALL/RETURN prices do not promote source syntax.
 See [the focused evidence](../evidence/static-call-vm-windows-20261105.json).
 
+The [shared byte-access successor](reference-access.md) reran the CLI-only
+phases on both final profiles: 33 cases per profile on 142 matching CLI inputs
+and a 232-file discovery identity. Existing public prices/default/cap remain;
+the private coordinator still pays its separate dispatch unit. Its independent
+numeric byte READ/LEN/WRITE/CLOSE boundaries and other affected routes passed
+18 focused native groups per profile on 139 matching native inputs. The
+[focused evidence](../evidence/reference-access-windows-20261105.json) records
+the final artifacts and source identities; the original public native selection
+was not rerun.
+
 Full M1/M2, Linux, restricted delivery, ABI, packaging and elapsed-time/allocator/
 stack-size benchmarks are outside this increment. B04 result declarations remain
 publicly gated; other C05 capacities and the complete objective remain open.
