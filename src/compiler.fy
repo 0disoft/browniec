@@ -8,6 +8,7 @@ import local_inference as inference;
 import aggregate_inference as aggregate_inference;
 import reference_inference as reference_inference;
 import array_local_source as array_locals;
+import std::vec as vec;
 import functions as functions;
 import struct_source as structs;
 import struct_value_source as record_values;
@@ -1164,6 +1165,9 @@ fn Result<usize,errors::Error> inferred_declaration(ref u8[] source,ref mut lexe
         return inferred_reference(source,s,p,table,signatures,name,view,mutable,terminator,result_type,expr_depth,structure,loop_state);
     }
     if(s.kind==91){
+        if(!array_locals::is_repeated(source,s)?){
+            return array_list_initializer(source,s,p,table,signatures,name,0,0,mutable,terminator,result_type,expr_depth,structure,loop_state);
+        }
         return inferred_repeated_array(source,s,p,table,signatures,name,mutable,terminator,result_type,expr_depth,structure,loop_state);
     }
     let aggregate_inference::Shape shape=aggregate_inference::inspect(source,s,p,table,signatures)?;
@@ -1227,9 +1231,40 @@ fn Result<usize,errors::Error> array_initializer(ref u8[] source,ref mut lexer::
         let usize id=arrays::copy(p,table.function,source_id,tag,length,mutable,binding.begin)?;
         return locals::declare(table,binding.begin,binding.end,128+id,mutable);
     }
+    if(!array_locals::is_repeated(source,s)?){
+        return array_list_initializer(source,s,p,table,signatures,binding,tag,length,mutable,terminator,result_type,expr_depth,structure,loop_state);
+    }
     let usize open=lexer::punctuation(source,s,91)?;
     let usize value=expression(source,s,p,table,signatures,1,expr_depth,tag,result_type,structure,loop_state)?;
     return array_locals::repeated(source,s,p,table,binding,value,tag,length,mutable,terminator);
+}
+// Heap-owned compiler scratch avoids a 4096-usize local on recursive parser
+// frames. Cells are scalar SSA values; each expression owns its existing cleanup.
+fn Result<usize,errors::Error> array_list_initializer(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref mut locals::Table table,ref functions::Table signatures,
+    inference::Header name,u8 expected,usize length,bool mutable,u8 terminator,u8 result_type,
+    usize depth,usize structure,ref mut loops::State loop_state){
+    if(result_type==0 || terminator!=59){return .err(errors::make(3,name.begin));}
+    let usize open=lexer::punctuation(source,s,91)?;
+    if(s.kind==93){return .err(errors::make(3,s.begin));}
+    var vec::Vec<usize> values=vec::empty<usize>();var u8 element=expected;
+    while(true){
+        if(vec::len<usize>(ref values)>=4096 || p.list_used>4096 ||
+            vec::len<usize>(ref values)>=4096-p.list_used){return .err(errors::make(4,s.begin));}
+        let usize at=s.begin;
+        let usize value=expression(source,s,p,table,signatures,1,depth,element,result_type,structure,loop_state)?;
+        if(value>=128 || value>=p.registers || !types::scalar(p.types[value])){return .err(errors::make(3,at));}
+        if(element==0){element=p.types[value];}
+        if(p.types[value]!=element){return .err(errors::make(3,at));}
+        let usize pushed=switch(vec::push<usize>(ref mut values,value)){
+            case .ok(n):{n}case .err(_):{return .err(errors::make(15,at));}
+        };
+        if(s.kind!=44){break;}
+        let usize comma=lexer::next(source,s)?;
+        if(s.kind==93){break;}
+    }
+    let usize close=lexer::punctuation(source,s,93)?;let usize end=lexer::punctuation(source,s,terminator)?;
+    return array_locals::list(p,table,name,vec::view_usize(ref values),element,length,mutable);
 }
 fn Result<usize, errors::Error> declaration(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 terminator, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {
     if (word_is(source, s, b"let") || word_is(source, s, b"var")) {

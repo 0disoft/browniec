@@ -22,8 +22,9 @@ def main():
     selection.add_argument('--aggregate', action='store_true', help='add owned aggregate inference cases')
     selection.add_argument('--references', action='store_true', help='add reference and text inference cases')
     selection.add_argument('--options', action='store_true', help='add payload-derived Option constructor cases')
+    selection.add_argument('--array-lists', action='store_true', help='add scalar element-list declarations')
     args = parser.parse_args()
-    suite = 'option' if args.options else 'reference' if args.references else 'aggregate' if args.aggregate else 'local'
+    suite = 'array-list' if args.array_lists else 'option' if args.options else 'reference' if args.references else 'aggregate' if args.aggregate else 'local'
     out = ROOT / ('build/' + suite + '-inference-cli') / args.profile
     out.mkdir(parents=True, exist_ok=True)
     receipt = out / 'receipt.json'
@@ -136,6 +137,43 @@ def main():
             ('some-changing-type', b'module main;fn i32 main(){var o=.some(42);o=.some(true);return 0;}', 'check', None, 'type', None, scalar),
             ('err-ambiguous', b'module main;fn i32 main(){let o=.err(true);return 0;}', 'check', None, 'type', None, scalar),
         ]
+    if args.array_lists:
+        read = 'brownie.m2-array-read/1'
+        write = 'brownie.m2-array-write/1'
+        copy = 'brownie.m2-array-copy/1'
+        pair = b'module main;fn i32 main(){let a=[20,22];return a[0]+a[1];}'
+        cases += [
+            ('list-check', pair, 'check', None, None, None, read),
+            ('list-run', pair, 'run', 42, None, 16000000, read),
+            ('list-default-fuel', pair, 'run', None, 'fuel', None, read),
+            # 489 at eight backing bytes, plus 65536 - 8 public backing bytes.
+            ('list-exact-fuel', pair, 'run', 42, None, 66017, read),
+            ('list-short-fuel', pair, 'run', None, 'fuel', 66016, read),
+            ('list-more-fuel', pair, 'run', 42, None, 66018, read),
+            ('list-annotated', b'module main;fn i32 main(){let i32[2] a=[20,22];return a[0]+a[1];}', 'run', 42, None, 66017, read),
+            ('list-single', b'module main;fn i32 main(){let a=[42];return a[0];}', 'run', 42, None, 16000000, read),
+            ('list-trailing', b'module main;fn i32 main(){let a=[20,22,];return a[0]+a[1];}', 'run', 42, None, 16000000, read),
+            ('list-bool', b'module main;fn i32 main(){let a=[true,false];if(a[0] && !a[1]){return 42;}return 0;}', 'run', 42, None, 16000000, read),
+            ('list-u8', b'module main;fn i32 main(){let u8[2] a=[255,42];return a[1] as i32;}', 'run', 42, None, 16000000, read),
+            ('list-wide', b'module main;fn i64 big(){return -9223372036854775808;}fn i32 main(){let a=[big(),9223372036854775807];if(a[0]==-9223372036854775808){return 42;}return 0;}', 'run', 42, None, 16000000, read),
+            ('list-order', b'module main;fn i32 bump(ref mut i32[] c){c[0]=c[0]+1;return c[0];}fn i32 main(){var c=[0];let a=[bump(ref mut c),bump(ref mut c)];return a[0]*10+a[1]+c[0]*15;}', 'run', 42, None, 16000000, write),
+            ('list-copy', b'module main;fn i32 main(){var a=[20,22];let b=a;a[0]=0;return b[0]+b[1];}', 'run', 42, None, 16000000, copy),
+            ('list-nested-separators', b'module main;fn i32 add(i32 a,i32 b){return a+b;}fn i32 main(){let a=[add(20,22)/* ,; */;1];let b=[a[0],b";],"[0] as i32];return b[0];}', 'run', 42, None, 16000000, reference),
+            ('list-return-exit', b'module main;fn i32 main(){let prior=[7,8];let Option<i32> o=.none;let a=[20,switch(o){case .some(v):{v}case .none:{return 42;}}];return a[0];}', 'run', 42, None, 16000000, read),
+            ('list-retained', b'module main;fn ref u8[] same(ref u8[] p){return ref p;}fn i32 main(){let a=[same(ref b"*")[0] as i32,0];return a[0]+a[1];}', 'run', 42, None, 16000000, reference),
+            ('list-arity-error', b'module main;fn i32 main(){let i32[1] a=[20,22];return 0;}', 'check', None, 'type', None, scalar),
+            ('list-mixed-error', b'module main;fn i32 main(){let a=[1,true];return 0;}', 'check', None, 'type', None, scalar),
+            ('list-empty-error', b'module main;fn i32 main(){let a=[];return 0;}', 'check', None, 'type', None, scalar),
+            ('list-self-error', b'module main;fn i32 main(){let a=[a[0],22];return 0;}', 'check', None, 'type', None, scalar),
+            ('list-comma-error', b'module main;fn i32 main(){let a=[1,,2];return 0;}', 'check', None, 'syntax', None, scalar),
+        ]
+    version = None
+    if args.array_lists:
+        ran = subprocess.run([str(exe), '--version', '--json'], cwd=empty, env=env, capture_output=True, timeout=15)
+        assert ran.returncode == 0 and not ran.stderr
+        version = json.loads(ran.stdout)
+        assert version['array_element_list_declarations'] is True
+        assert version['core'] is True and version['restricted'] is False and version['embed'] is False
     results = []
     for identity, source, mode, expected, error, fuel, profile in cases:
         fixture = out / (identity + '.brc')
@@ -159,12 +197,13 @@ def main():
     assert all(sha(ROOT / i['path']) == i['sha256'] for i in inputs)
     assert sha(compiler) == compiler_hash and sha(exe) == binary_hash
     data = dict(schema='browniec.local-inference-cli/v1', status='passed', profile=args.profile,
-                selection='option' if args.options else 'reference' if args.references else 'aggregate' if args.aggregate else 'scalar',
+                selection='array-list' if args.array_lists else 'option' if args.options else 'reference' if args.references else 'aggregate' if args.aggregate else 'scalar',
                 startingHead=head, inputSnapshotCapturedAt=captured, inputs=inputs, compilerSha256=compiler_hash,
                 compilerVersion=subprocess.check_output([str(compiler), '--version'], text=True).strip(),
                 buildCommand=[compiler.relative_to(ROOT).as_posix(), *command[1:]],
                 artifact=dict(path=exe.relative_to(ROOT).as_posix(), sha256=binary_hash),
-                emptyRuntimeToolPath=True, cases=results, nativeOverrides=False, historicalResultReuse=False)
+                emptyRuntimeToolPath=True, cases=results, version=version,
+                nativeOverrides=False, historicalResultReuse=False)
     receipt.write_text(json.dumps(data, indent=2) + '\n', encoding='utf-8', newline='\n')
     print(f'PASS {args.profile}: {len(results)} CLI cases; {len(inputs)} matching inputs', flush=True)
 
