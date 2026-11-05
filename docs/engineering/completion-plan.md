@@ -112,7 +112,9 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    complete array/record construction. The [native array-list storage
    prerequisite](array-list-storage.md) now stages all exact scalar values before
    atomic backing and owner publication, with unchanged 4096-element capacity.
-   Connect element-list source lowering, complete IR proof and VM/Fuel execution,
+   The [IR/VM successor](array-list-execution.md) now supplies complete operand/
+   CFG/owner proof, atomic ordinary/retained execution and reusable prepaid
+   invocation scratch. Connect element-list source lowering and exit cleanup,
    then continue with selected-place compound assignment, wider/resource-bearing
    tags and must-use
    handling. Reconcile operand/source/type/compile limits deliberately rather than

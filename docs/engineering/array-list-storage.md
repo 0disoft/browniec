@@ -62,12 +62,14 @@ elapsed-time benchmarks and delivery checks were not run for this prerequisite.
 
 ## Remaining L03 integration
 
-Guest `[x, y]` declarations/expressions are not enabled by this prerequisite.
+The [native IR/VM successor](array-list-execution.md) now connects complete
+operand/CFG/owner proof, invocation scratch, atomic ordinary/retained execution
+and explicit precharged prices. Guest `[x, y]` declarations/expressions remain
+unavailable until source integration.
 Next distinguish element lists from `[filler; N]` without evaluating guest
 expressions during lookahead. Lower elements left to right exactly once, infer
 or enforce exact type and arity, and expose the name only after initialization.
-Connect complete IR operand/CFG/lifetime proof, atomic VM publication and a
-precharged price covering every encoding plus the final copy. Preserve current
+Emit the successor's independently verified atomic initialization. Preserve current
 repeated initializer prices, backing/owner limits and nonlocal-exit cleanup.
 
 The current compiler's 128 global value registers, 256 instructions and 4096-byte

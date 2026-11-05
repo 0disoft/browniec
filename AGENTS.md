@@ -1,3 +1,15 @@
+- Native element-list IR/VM execution is implemented at `873e71a`: opcode 80,
+  dense 4096-register operand pool, complete canonical type/CFG/owner proof and
+  ordinary/retained dispatch. Invocation-local typed/encoded scratch is prepared
+  once before guest entry and reused through CALLs/loops; retained allocation
+  precedes argument ownership changes. New setup/instruction prices are explicit;
+  existing operation prices, default256/cap16000000 remain. Development/release
+  each passed nine native groups on 163 Git-matching inputs, 156 LF modules and
+  262-file discovery; both locked LF mirrors pass. See the array-list execution
+  contract/evidence. Guest `[x,y]` syntax, source evaluation/exit cleanup, L03/C05,
+  full Instance scratch/accounting/resumability and the full objective remain open.
+  No public CLI/full matrices/Linux/OOM injection/general stack/timing/delivery
+  rerun. No public element-list syntax flag is enabled by this native increment.
 - Native array element-list storage/ownership is implemented at `4f94112`.
   Exact arity/layout/quota/owner preflight and complete codec staging precede
   backing/cursor/token publication. Caller-owned scratch is payload-sized, with

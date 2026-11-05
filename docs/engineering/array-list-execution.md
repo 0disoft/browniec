@@ -85,6 +85,16 @@ quota and bad-cell rollback, no scratch growth, forged pool/type/definition/owne
 metadata, ordinary by-value array returns through three CALLs, legacy Fuel/loop
 behavior and both compiler routes' original 32-deep call boundary.
 
+Implementation `873e71a` passed all nine groups per Windows profile on the same
+163 matching input hashes, 156 LF production modules and the 262-file discovery
+identity. Both locked LF mirrors pass; all inputs match the checkout and the
+implementation commit's Git raw bytes. Final runs used no compiler/stack
+overrides or historical-result reuse. An earlier test-helper borrow error and
+the initial nested-resource scratch draft are excluded. See
+[focused Windows evidence](../evidence/array-list-execution-windows-20261106.json).
+Public CLI/full matrices, Linux, allocation-fault injection, general native
+stack/time benchmarks and delivery checks were not run for this native increment.
+
 ## Next source step
 
 Lower `[x, y]` and inferred declarations with left-to-right one-time evaluation,
