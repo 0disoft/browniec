@@ -98,7 +98,7 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    [retained module Program](module-program.md) now carries that context through
    expression/constructor/field/reference lowering, the selected entry through
    complete body/type/ownership and independent IR/image checks, and actual native
-   multi-module execution with original source identity. Public project loading,
+   multi-module execution with original source identity. The [native project Program](project-program.md) now retains complete project metadata beside that executable, independently rechecks exact map/header/entry agreement and denies nonempty requirements before guest/Fuel work. Public project loading,
    module/entry CLI flags and deliberate full-profile limits still leave L01 open.
    Finish inference/void/if values, complete array/record construction,
    selected-place compound assignment, wider/resource-bearing tags and must-use
@@ -193,6 +193,8 @@ now connects declaration/return ranges over retained CALL results. Static backin
 general references and public promotion remain next.
 
 Native project metadata now admits the complete explicit source map and entry
-under the [owning format](../cli/project-format.md). Next bind exact host snapshots
-to that map, then implement anchored filesystem collection and public project CLI.
-Policy/grants and the full completion objective remain open.
+under the [owning format](../cli/project-format.md). Exact snapshot/header binding
+and the [retained native project Program](project-program.md) now connect that
+map and its preserved requirements to complete executable admission. Next implement
+anchored filesystem collection and public project CLI, then policy/grant integration.
+The full completion objective remains open.

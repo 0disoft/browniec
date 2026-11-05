@@ -32,7 +32,9 @@ and guest roots std/brownie fail under the existing declaration rules. Source
 module identities are unique and the entry module must occur in the source map.
 The [native snapshot binding](../engineering/project-sources.md) now proves each
 exact member identity/header and selected public i32 entry. Complete executable
-admission still follows through the retained module Program.
+admission follows through the retained module Program. The
+[native project Program](../engineering/project-program.md) now rechecks that
+exact binding, retains the complete Project and admits its selected executable.
 
 Member paths are canonical root-relative ASCII source names up to 240 bytes,
 ending in lowercase .brc or .fy. The [input primitives](../engineering/project-input.md)
@@ -70,7 +72,8 @@ This increment does not promote full-profile source/resource capacities.
 ## Availability
 
 The [complete example](../../examples/projects/hello/project.json) includes two
-source files and an explicit public i32 start entry. Native metadata parsing is
+source files and an explicit public i32 start entry. Native metadata parsing and
+[retained native project execution](../engineering/project-program.md) are
 implemented; a filesystem project collector and CLI project flag remain pending.
 The source map does not prove anchored root membership, reparse-point safety or
 file identity. No file is opened by metadata admission.

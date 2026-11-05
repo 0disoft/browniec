@@ -63,3 +63,13 @@ pub fn Result<entries::Entry,modules::Error> select(ref project::Project map,sou
     // Reboxing Entry into a second error domain amplifies native stack slots.
     return entries::select_i32(index,project::entry_module(map),project::entry_function(map));
 }
+
+// Recheck independently selected native entries before project admission.
+pub fn Result<usize,modules::Error> verify(ref project::Project map,ref entries::Entry selected){
+    let ref modules::Index index=entries::index(selected);var usize[16] order=[32;16];
+    let usize mapped=file_map(map,modules::snapshot(index),ref mut order)?;
+    let usize checked=headers(map,index,ref order)?;
+    let usize expected=modules::entry(index,project::entry_module(map),project::entry_function(map))?;
+    if(expected!=entries::selected(selected)){return .err(error(.Kind,entries::signature_span(selected)));}
+    return .ok(expected);
+}

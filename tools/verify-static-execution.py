@@ -25,7 +25,7 @@ def write(path, value):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--profile', choices=['development', 'release'], required=True)
-    parser.add_argument('--selection', choices=['all', 'statics', 'views', 'ranges', 'range-core', 'call-ir', 'call-proof', 'call-transfer-core', 'call-transfer', 'call-mixed', 'reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts', 'reference-return-execution', 'reference-source', 'reference-return-source', 'public-program', 'source-snapshot', 'module-index', 'module-entry', 'source-context', 'module-program', 'module-program-core', 'module-retention', 'project-names', 'project-manifest', 'project-sources'], default='all',
+    parser.add_argument('--selection', choices=['all', 'statics', 'views', 'ranges', 'range-core', 'call-ir', 'call-proof', 'call-transfer-core', 'call-transfer', 'call-mixed', 'reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts', 'reference-return-execution', 'reference-source', 'reference-return-source', 'public-program', 'source-snapshot', 'module-index', 'module-entry', 'source-context', 'module-program', 'module-program-core', 'module-retention', 'project-program-core', 'project-program', 'project-names', 'project-manifest', 'project-sources'], default='all',
                         help='statics runs the changed image/proof/VM suites; all adds return and source regressions')
     args = parser.parse_args()
     profile = args.profile
@@ -50,6 +50,8 @@ def main():
                   'project-sources': ['tests/m2/project_sources.fy', 'tests/m2/project_manifest.fy', 'tests/m2/module_entry.fy', 'tests/m2/source_snapshot.fy'],
                   'project-manifest': ['tests/m2/json_tokens.fy', 'tests/m2/project_names.fy', 'tests/m2/project_manifest.fy'],
                   'project-names': ['tests/m2/json_tokens.fy', 'tests/m2/project_names.fy'],
+                  'project-program-core': ['tests/m2/project_program.fy', 'tests/m2/project_sources.fy'],
+                  'project-program': ['tests/m2/project_program.fy', 'tests/m2/project_sources.fy', 'tests/m2/module_index.fy', 'tests/m2/module_program.fy'],
                   'module-retention': ['tests/m2/module_index.fy', 'tests/m2/module_program.fy'],
                   'module-program-core': ['tests/m2/module_program.fy', 'tests/m2/struct_metadata.fy'],
                   'module-program': ['tests/m2/module_program.fy', 'tests/m2/public_program.fy', 'tests/m2/struct_call_assignment.fy', 'tests/m2/struct_child_call_paths.fy', 'tests/m2/struct_metadata.fy'],
