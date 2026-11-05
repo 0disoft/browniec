@@ -43,6 +43,12 @@ fn void rejected(ref u8[] a,ref u8[] b,usize owner){switch(programs::compile(ent
     value(b"module lib;pub fn i32[2] make(){return [20;2];}pub fn i32 sum(i32[2] a){return a[0]+a[1];}pub fn i32 bump(ref mut i32[] a){a[0]=a[0]+2;return 0;}",
         b"module app;import lib as m;pub fn i32 chosen(){var i32[2] a=m::make();let i32 n=m::bump(ref mut a);return m::sum(a);}",42);
 }
+@test fn void inferred_scalar_locals_resolve_qualified_calls_and_original_error_sources(){
+    value(b"module lib;pub fn i64 answer(){return 40;}pub struct P{i32 x;}pub fn P point(){return P{.x=2};}",
+        b"module app;import lib as m;pub fn i32 chosen(){let n=m::answer();let m::P p=m::point();let x=p.x;if(n==40){return x+40;}return 0;}",42);
+    rejected(b"module lib;pub fn i32 bad(){let n=missing;return n;}",
+        b"module app;pub fn i32 chosen(){return 42;}",0);
+}
 
 @test fn void qualified_record_constructors_arguments_results_and_fields_keep_nominal_identity(){
     value(b"module lib;pub struct Point{i32 x;i32 y;}pub struct Box{Point inner;}pub fn Point make(){return Point{.x=20,.y=22};}pub fn Box pack(Point p){return Box{.inner=p};}",

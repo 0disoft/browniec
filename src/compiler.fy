@@ -4,6 +4,7 @@ import errors as errors;
 import lexer as lexer;
 import ir as ir;
 import locals as locals;
+import local_inference as inference;
 import functions as functions;
 import struct_source as structs;
 import struct_value_source as record_values;
@@ -1126,10 +1127,21 @@ fn Result<usize,errors::Error> slice_write_statement(ref u8[] source,ref mut lex
     let usize written=ir::slice_write(p,site,subscript,value,at)?;
     return .ok(index);
 }
+fn Result<usize,errors::Error> inferred_declaration(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref mut locals::Table table,ref functions::Table signatures,
+    bool mutable,u8 terminator,u8 result_type,usize expr_depth,usize structure,ref mut loops::State loop_state){
+    let inference::Header name=inference::header(source,s,table)?;
+    let usize value=expression(source,s,p,table,signatures,1,expr_depth,0,result_type,structure,loop_state)?;
+    let usize end=lexer::punctuation(source,s,terminator)?;
+    return inference::bind(p,table,name,value,mutable,result_type==0);
+}
 fn Result<usize, errors::Error> declaration(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 terminator, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {
     if (word_is(source, s, b"let") || word_is(source, s, b"var")) {
         let bool mutable = word_is(source, s, b"var");
         let usize keyword = lexer::next(source, s)?;
+        if(inference::follows(source,s)?){
+            return inferred_declaration(source,s,p,table,signatures,mutable,terminator,result_type,expr_depth,structure,loop_state);
+        }
         if (word_is(source,s,b"ref")) {
             if(signatures.literals.enabled && (static_source::candidate(source,s,table)? || reference_calls::declaration(source,s,table,signatures)?)){
                 return static_declaration(source,s,p,table,signatures,mutable,terminator,result_type,expr_depth,structure,loop_state);
