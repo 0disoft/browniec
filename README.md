@@ -1,5 +1,18 @@
 # Brownie C
 
+## Current implementation (2026-11-05)
+
+[Native retained module programs](docs/engineering/module-program.md) now execute
+explicitly selected public i32 entries with scoped calls/nominal records and
+original source diagnostics. The public CLI supports the existing single-source
+scalar/aggregate and [retained byte/text/shared-byte subset](docs/engineering/public-program.md).
+Its [Fuel default is 256 and explicit ceiling is 16000000](docs/engineering/public-fuel-limits.md).
+Public project loading and CLI module/entry flags, general mutable/non-byte/
+Buffer/input references, generic runtime-view equality and the full accepted
+profile remain unfinished. See [remaining work](docs/product/04-remaining-work.md).
+The delivery entries below retain their historical evidence and gate statements;
+they do not override this current status.
+
 ## Owned arrays and ordinary CALLs in the private VM
 
 Implemented at `5cccbd3`, with native transaction support at `9be6c7e`. The private

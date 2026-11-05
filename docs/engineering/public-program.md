@@ -110,3 +110,14 @@ Engine/Instance accounting, cancellation/deadlines, Windows worker isolation,
 DLL/C ABI, packaging, Linux and full-profile conformance are separate requirements.
 This increment does not establish a process RAM/stack bound, allocator/OOM or
 elapsed-time benchmark. See the [remaining inventory](../product/04-remaining-work.md).
+
+## Native module successor
+
+The [retained module Program](module-program.md) reuses both complete admission
+routes after module-aware candidate lowering has returned. Shared admission now
+borrows the exact candidate before owning publication; legacy candidates still
+pass both ordinary executable verification and the empty-reference proof. Final
+owning construction and recursive source lowering use separate native stack
+phases. Qualified native module execution retains original source identities;
+public CLI module/project loading is separate unfinished work. Fuel prices,
+public defaults/capabilities and the single-source admission rules stay unchanged.

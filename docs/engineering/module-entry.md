@@ -70,9 +70,9 @@ is changed. An unresolved body explicitly exercises the proof boundary.
 
 Broader VM/CLI/full-profile, Linux, general allocator/OOM/stack/timing, restricted
 worker, C ABI and package evidence must be recorded separately when executed.
-Next carry this exact selected function through qualified source lowering and
-complete independently verified executable admission. Public project loading and
-entry flags remain unavailable until that path exists.
+The subsequent [module Program increment](module-program.md) carries this exact
+selected function through qualified lowering and complete independent executable
+admission. Public project loading and CLI entry flags remain unavailable.
 
 Implementation `86f7b78`: Windows development and release each passed all 18
 native groups on 148 matching committed inputs, 141 LF production modules and
@@ -83,5 +83,6 @@ syntax failure is excluded. See the
 
 The [source-context successor](source-context.md) now uses the explicit selection
 for scoped function signature tables and qualified nominal record declarations.
-Complete body lowering/IR admission and public project entry selection remain
-subsequent work; the Entry signature resource does not acquire executable authority.
+The [retained module Program](module-program.md) now connects complete body/IR
+admission and native execution. Public project entry selection remains unfinished;
+the Entry signature resource alone does not acquire executable authority.

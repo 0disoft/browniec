@@ -1,3 +1,25 @@
+- L01/C03 retained native module Programs now execute an explicitly selected public
+  i32 entry with scoped function/nominal record/field/shared-byte lowering and
+  complete independent IR/image/owner admission. Original source/name snapshots
+  remain owned for source-local diagnostics. Code 65e0b5a and 7ab2eb8; see
+  docs/engineering/module-program.md and focused Windows evidence.
+  Development/release each passed 50 native groups (29 module/public/record/metadata
+  +21 context/entry/function/lexer) on 157 matching verification inputs, 144 LF
+  production modules and 249-file discovery; all locked LF mirrors pass. Of the
+  inputs, 155 match Git raw bytes; unchanged lexer_compatibility and
+  struct_call_assignment tests are CRLF locally/LF in Git, with both hashes and
+  exact normalization recorded. No overrides or historical reuse. Diagnostic-only
+  probes and earlier failed fixtures/runs are excluded. Combined record and
+  scalar/retained 32-call cases remain; depth33 rejects. Empty-record preparation
+  validates all unused metadata without the unused layout Plan. Ungrounded return
+  origins/layout failures identify their actual declarations; quotas/global errors
+  have no fabricated location. Verifier indices map through original byte offsets.
+  Next: public project loading and CLI module/entry flags, then language completion.
+  Native compiler output remains candidate scratch until admission. General mutable/
+  non-byte/Buffer/input references, generic runtime-view equality, host lifetimes
+  and the complete objective remain open. CLI/Fuel/full profiles/general RAM-stack/
+  allocator/OOM/timing/Linux/restricted/ABI/package were not rerun. Public default
+  256/cap16000000 and prices stay. Local commits only; no push.
 - L01 source_context now copies exact source bytes and compact module/import/pub
   spans into compiler-only scratch. Fenced lexer State distinguishes qualified
   names (kind5) from plain binders (kind2), preserves each original BOM/comment/EOF

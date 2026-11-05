@@ -3,8 +3,9 @@
 Date: 2026-11-05. This L01 compiler increment extends the sealed
 [module index](module-index.md) and retained [entry selection](module-entry.md).
 It supplies actual scoped function signatures and nominal record catalogs.
-Body lowering, executable multi-module IR and public project admission remain
-subsequent work.
+At this declaration-only checkpoint, body lowering and executable multi-module
+IR were subsequent work. The [module Program successor](module-program.md) now
+connects them; public project loading remains open.
 
 ## Exact source bytes and compact lookup scratch
 
@@ -108,3 +109,13 @@ Flat token offsets map to their original source. At a shared boundary between
 files, an earlier file's EOF and the next file's first byte have the same flat
 number. Contextual diagnostics must retain the active file/fence for that case;
 a bare offset is insufficient and is not a complete C03 source-map implementation.
+
+## Retained execution successor
+
+The [module Program successor](module-program.md) now carries this exact context
+through expression, constructor, field and shared-byte reference lowering. It
+selects the retained entry in IR, independently proves the complete code/image,
+and owns original source/name bytes for native execution diagnostics. Compiler
+context and candidate IR remain advisory until that admission. Public project
+loading and CLI module/entry flags still remain open; original scoped declaration
+evidence above keeps its historical scope.

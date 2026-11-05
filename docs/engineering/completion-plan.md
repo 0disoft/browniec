@@ -94,10 +94,12 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    owning that exact snapshot. The [entry signature successor](module-entry.md)
    now retains a named public zero-argument i32 entry beside its exact Index.
    The [source context](source-context.md) supplies exact file fences, scoped name
-   lookup and qualified function signatures/nominal record catalogs. Next carry
-   that context through expression/constructor/field lowering and the selected entry
-   through body/type/ownership proof, independently verified IR and actual
-   multi-module compilation; name/signature proof alone does not finish L01.
+   lookup and qualified function signatures/nominal record catalogs. The
+   [retained module Program](module-program.md) now carries that context through
+   expression/constructor/field/reference lowering, the selected entry through
+   complete body/type/ownership and independent IR/image checks, and actual native
+   multi-module execution with original source identity. Public project loading,
+   module/entry CLI flags and deliberate full-profile limits still leave L01 open.
    Finish inference/void/if values, complete array/record construction,
    selected-place compound assignment, wider/resource-bearing tags and must-use
    handling. Reconcile operand/source/type/compile limits deliberately rather than
