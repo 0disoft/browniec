@@ -22,6 +22,7 @@ import static_execution as immutable;
 import static_call_execution as transfer;
 import static_call_ir as image_calls;
 import verifier as image_verifier;
+import reference_access as access;
 
 pub struct Scalar { i64 value; usize remaining; slices::Ticket[8] resumed; }
 // Internal tagged completion; inactive fields never escape either native API.
@@ -169,6 +170,18 @@ fn Result<Outcome,errors::Error> run(ref body_ir::Program body,ref u8[] paramete
         let usize dst=body.code[at+1] as usize;let usize a=body.code[at+2] as usize;let usize b=body.code[at+3] as usize;
         let usize base=frame*128;
         if(remaining==0){return .err(errors::make(8,offset));}remaining-=1;
+        var bool byte_loan=false;
+        if(op==57 || op==58){byte_loan=body_ir::slice_element(body,a,offset)?==10;}
+        if(op==71 || op==72 || byte_loan){
+            let access::Source source=if(byte_loan){access::loan(bindings.sites[frame*16+a])}else{access::image(a)};
+            let access::Value result=if(op==71 || op==58){access::read(ref source,sites,f,
+                    ref static_words[frame*16..frame*16+16],static_live[frame],literals,
+                    ref state.runtime.pool,ref state.runtime.owners,data,registers[base+b],remaining,offset)?}
+                else{access::length(ref source,sites,f,
+                    ref static_words[frame*16..frame*16+16],static_live[frame],literals,
+                    ref state.runtime.pool,ref state.runtime.owners,data.len,remaining,offset)?};
+            registers[base+dst]=result.value;remaining=result.remaining;pc+=1;continue;
+        }
         if(op==77){
             remaining=transfer::parameter(body,sites,literals.len,pc,f,
                 ref static_words[frame*16..frame*16+16],static_live[frame],remaining)?;

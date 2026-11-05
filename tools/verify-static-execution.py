@@ -25,11 +25,11 @@ def write(path, value):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--profile', choices=['development', 'release'], required=True)
-    parser.add_argument('--selection', choices=['all', 'statics', 'views', 'ranges', 'range-core', 'call-ir', 'call-proof', 'call-transfer-core', 'call-transfer', 'call-mixed'], default='all',
+    parser.add_argument('--selection', choices=['all', 'statics', 'views', 'ranges', 'range-core', 'call-ir', 'call-proof', 'call-transfer-core', 'call-transfer', 'call-mixed', 'reference-access'], default='all',
                         help='statics runs the changed image/proof/VM suites; all adds return and source regressions')
     args = parser.parse_args()
     profile = args.profile
-    selections = {'all': FILES + ['tests/m2/static_views.fy', 'tests/m2/static_ranges.fy', 'tests/m2/static_call_ir.fy', 'tests/m2/static_call_admission.fy', 'tests/m2/static_call_execution.fy', 'tests/m2/static_call_mixed.fy'],
+    selections = {'all': FILES + ['tests/m2/static_views.fy', 'tests/m2/static_ranges.fy', 'tests/m2/static_call_ir.fy', 'tests/m2/static_call_admission.fy', 'tests/m2/static_call_execution.fy', 'tests/m2/static_call_mixed.fy', 'tests/m2/reference_access.fy'],
                   'statics': FILES[:3], 'views': ['tests/m2/static_views.fy'],
                   'ranges': ['tests/m2/static_ranges.fy'] + FILES[:2],
                   'range-core': ['tests/m2/static_ranges.fy'],
@@ -37,7 +37,10 @@ def main():
                   'call-proof': ['tests/m2/static_call_admission.fy', 'tests/m2/static_ranges.fy', FILES[0], FILES[3]],
                   'call-transfer-core': ['tests/m2/static_call_execution.fy'],
                   'call-transfer': ['tests/m2/static_call_execution.fy', 'tests/m2/static_ranges.fy', FILES[3]],
-                  'call-mixed': ['tests/m2/static_call_mixed.fy']}
+                  'call-mixed': ['tests/m2/static_call_mixed.fy'],
+                  'reference-access': ['tests/m2/reference_access.fy', FILES[0],
+                                       'tests/m2/static_call_execution.fy',
+                                       'tests/m2/static_call_mixed.fy', FILES[3]]}
     files = selections[args.selection]
     out = ROOT / 'build/static-execution' / profile / args.selection
     out.mkdir(parents=True, exist_ok=True)
@@ -80,12 +83,36 @@ def main():
     if profile == 'release':
         command.append('--release')
     expected = set()
+    focused = {
+        'static_execution': {'static_fuel_matches_driver_added_prices_exactly',
+                             'static_read_42_widens_to_i32_without_guest_backing',
+                             'static_site_zero_coexists_with_mutable_guest_slice_and_helper_frame',
+                             'bounds_failure_preserves_image_and_zero_backing_for_valid_retry'},
+        'static_call_execution': {'retained_calls_execute_narrowed_bytes_and_exact_text_at_exact_fuel',
+                                  'short_entry_call_and_return_budgets_abort_and_retained_code_cannot_be_rewritten',
+                                  'static_calls_copy_and_drop_owned_array_arguments_through_canonical_ownership',
+                                  'all_eight_actuals_scalar_prefixes_and_recursive_actual_words_use_separate_frames'},
+        'static_call_mixed': {'static_arguments_coexist_with_record_values_and_owned_array_and_record_results',
+                              'static_arguments_coexist_with_shared_and_exclusive_runtime_loans'},
+        'slice_scalar_entry': {'ordinary_entries_execute_nested_scalar_array_and_record_calls',
+                               'successful_scalar_return_restores_retained_inputs_or_closes_and_drops',
+                               'exact_terminal_budget_and_failures_preserve_first_errors_and_prior_writes'},
+    }
     for path in files:
-        command.extend(['--file', path])
+        if args.selection != 'reference-access':
+            command.extend(['--file', path])
         source = (ROOT / path).read_text(encoding='utf-8')
         names = re.findall(r'@test\s+fn void (\w+)\(', source)
+        if args.selection == 'reference-access' and Path(path).stem in focused:
+            selected = focused[Path(path).stem]
+            assert selected <= set(names)
+            names = [name for name in names if name in selected]
         module = re.search(r'\bmodule\s+([\w:]+);', source).group(1)
         expected.update(module + '::' + name for name in names)
+    if args.selection == 'reference-access':
+        assert len(expected) == 18
+        for identity in sorted(expected):
+            command.extend(['--exact', identity])
     result = run(command)
     (out / 'native.json').write_text(result.stdout, encoding='utf-8', newline='\n')
     (out / 'native-stderr.txt').write_text(result.stderr, encoding='utf-8', newline='\n')

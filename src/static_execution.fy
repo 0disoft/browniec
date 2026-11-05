@@ -6,6 +6,7 @@ import fuel as fuel;
 import errors as errors;
 import std::num as num;
 import std::bytes as bytes;
+import reference_access as access;
 
 pub struct Step { usize live; usize remaining; }
 fn errors::Error invalid(usize offset){return errors::make(5,offset);}
@@ -74,10 +75,7 @@ fn Result<Step,errors::Error> execute(ref ir::Program p,ref statics::Sites sites
     }
     if(op==70){if(words.len==16){words[dst]=0;}return .ok(Step{.live=live^(one<<dst),.remaining=paid});}
     var i64 value=0;
-    if(op==71){let usize index=switch(num::usize_from_i64(registers[b])){
-            case .ok(v):{v}case .err(_):{return .err(errors::make(14,offset));}
-        };
-        if(index>=left.length){return .err(errors::make(14,offset));}value=payload[left.start+index] as i64;
+    if(op==71){value=access::checked_byte(payload,left,registers[b],offset)?;
     }else if(op==72){value=switch(num::i64_from_usize(left.length)){
         case .ok(v):{v}case .err(_):{return .err(invalid(offset));}
     };}else{value=if(bytes::equal(payload[left.start..left.start+left.length],payload[other..other+right])){1}else{0};}
