@@ -12,7 +12,7 @@ fn Result<u8,errors::Error> byte(usize value,usize offset){
 fn Result<usize,errors::Error> fresh(ref ir::Program p,usize offset){
     if(p.count>256){return .err(errors::make(4,offset));}
     var usize count=0;var usize pc=0;while(pc<p.count){let usize at=pc*8;
-        if(p.code[at]==69 || p.code[at]==74 || p.code[at]==75 || p.code[at]==76){let usize site=p.code[at+1] as usize;
+        if(p.code[at]==69 || p.code[at]==74 || p.code[at]==75 || p.code[at]==76 || p.code[at]==77){let usize site=p.code[at+1] as usize;
             if(site>=16){return .err(errors::make(4,offset));}if(site>=count){count=site+1;}}
         pc+=1;
     }if(count==16){return .err(errors::make(4,offset));}return .ok(count);
@@ -58,4 +58,12 @@ pub fn Result<usize,errors::Error> range(ref mut ir::Program p,usize source,usiz
         p.types[lo]!=12 || p.types[hi]!=12 || p.slots[lo] || p.slots[hi]){return .err(errors::make(3,offset));}
     let usize site=fresh(p,offset)?;let u8 end=byte(hi,offset)?;
     let usize pc=ir::raw(p,76,site,source,lo,offset)?;p.code[pc*8+4]=end;return .ok(site);
+}
+
+// A universal formal reserves an ordinary logical position without a scalar cell.
+pub fn Result<usize,errors::Error> parameter(ref mut ir::Program p,usize offset){
+    if(p.registers>=128){return .err(errors::make(4,offset));}
+    let usize site=fresh(p,offset)?;let usize formal=p.registers;
+    let usize pc=ir::raw(p,77,site,formal,3,offset)?;
+    p.types[formal]=0;p.registers+=1;return .ok(site);
 }
