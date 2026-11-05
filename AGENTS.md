@@ -1,3 +1,12 @@
+- Payload-derived Option constructor inference is implemented at `92ca0d4`.
+  `.some` infers existing i32/bool payloads once through the original constructor
+  emitter; missing none/Result domains, wider/nested/resource payloads and broader
+  branch context remain explicit limits. No type/opcode/Fuel/profile/cap changes.
+  Development/release each passed five native groups and 25 tool-free CLI cases,
+  on 161/158 paths (162-path union), 154 LF modules and 260-file discovery. All
+  inputs match the commit's Git raw bytes; both locked LF mirrors pass. See the
+  Option constructor contract and Windows evidence. Full L02/objective remains
+  open, including general expressions, element lists and void/if. Local only.
 - Reference/text local inference is implemented at `442f1f8`, with the scalar
   name-shadowing guard fix at `365ac5d`. Existing byte/text views, native loans,
   shared aliases, explicit exclusive reborrows and shared-byte results use the

@@ -45,9 +45,10 @@ record child paths through the existing initializers. Element lists/general
 aggregate expressions remain separate work. The [reference/text successor](reference-inference.md)
 now infers existing image views, runtime loans, aliases and returned shared-byte
 bindings through their original initializers and origin/lifetime proof.
-Tag constructor inference must distinguish missing type context
-from a construct whose complete type is derivable from its payload. These cases
-must not be relabeled as implemented merely because projection inference works.
+The [Option constructor successor](option-constructor-inference.md) now derives
+`.some(value)` from a checked i32/bool payload. Context-free `.none`/`.ok`/`.err`
+remain ambiguous; branch-order-independent constructor context and wider
+payloads still need their respective inference/type integration.
 General mutable/non-byte/Buffer/input results remain separate. Results below retain this
 foundation's original input snapshot; the successor has separate final evidence.
 

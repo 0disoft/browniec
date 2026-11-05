@@ -28,8 +28,11 @@ the [owned aggregate successor](../engineering/aggregate-inference.md) adds repe
 arrays, nominal constructors, copies, aggregate CALLs and record child paths.
 Existing [reference/text initializers](../engineering/reference-inference.md),
 shared aliases, explicit exclusive reborrows and shared-byte result bindings now
-support inference with the same ownership and Fuel rules. Tag constructor and
-general aggregate-expression inference remain pending.
+support inference with the same ownership and Fuel rules. The
+[Option constructor successor](../engineering/option-constructor-inference.md)
+infers `.some` from i32/bool payloads. Context-free `.none`/`.ok`/`.err` still need
+type information; broader constructor context and general aggregate expressions
+remain pending.
 
 Retained byte/text/shared-byte result source is public under
 `brownie.m2-reference/1`; general mutable/non-byte/Buffer/input results and

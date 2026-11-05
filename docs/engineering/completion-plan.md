@@ -105,7 +105,10 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    initializers, record constructors, copies, CALLs and record child paths. The
    [reference/text successor](reference-inference.md) adds existing image views,
    runtime loans, aliases and shared-byte results with original ownership proof.
-   Finish tag constructor and general aggregate-expression inference, void/if values,
+   [Payload-derived Option constructors](option-constructor-inference.md) now
+   infer existing i32/bool `.some` payloads through the same emitter. Finish
+   branch-order-independent constructor context and general aggregate-expression
+   inference, void/if values,
    complete array/record construction,
    selected-place compound assignment, wider/resource-bearing tags and must-use
    handling. Reconcile operand/source/type/compile limits deliberately rather than

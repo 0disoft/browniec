@@ -67,8 +67,12 @@ The [local inference increment](../engineering/local-inference.md) now admits
 `let name = value;` and `var name = value;` for existing scalar and complete
 tagged expression types. The [owned aggregate successor](../engineering/aggregate-inference.md)
 adds repeated arrays, nominal constructors, bare copies, aggregate CALLs and exact
-record child paths. Reference/text/tag constructor and general aggregate-expression
-inference remain pending; this is not a full-profile promotion.
+record child paths. The [reference/text successor](../engineering/reference-inference.md)
+adds existing views, loans, aliases and shared-byte results. The
+[Option constructor successor](../engineering/option-constructor-inference.md)
+derives `.some` from existing i32/bool payloads. Broader constructor context and
+general aggregate-expression inference remain pending; this is not a full-profile
+promotion.
 
 The experimental M1 increment keeps `fn i32 main()` as the zero-argument entry
 point. Other functions and their parameters may use i32, i64, u8, u32, usize, or bool. Bool is canonical
