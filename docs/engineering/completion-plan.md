@@ -11,16 +11,16 @@ regressions, then commit; record broader checks only when actually run. Do not
 enable public syntax, delivery flags or ABI availability ahead of implemented
 admission, execution and cleanup. Push/release/deployment are separate actions.
 
-Latest private Buffer checkpoint (2026-11-07): [native kernel operations](value-buffer.md)
-now authenticate length/read/write, append/push and reserve through actual typed
-roots/frame addresses. Read leases permit inspection; mutation requires writable
-ownership. Rejected growth retains old data/accounting; successful structural
-changes retain serial/binding and advance generation. Both Windows profiles passed ten native groups on `a0cde3c`.
-All 210 inputs match checkout/Git canonical bytes (209 raw); all 201 production modules are LF.
-See [evidence](../evidence/value-buffer-windows-20261107.json). Next connect independent Buffer instruction proof/dispatch, source
-borrowing and allocator-error Results, views and input/output composition. Public
-gates, existing opcode prices and Fuel defaults remain. D02/D04 and full-profile
-implementation/validation remain open.
+Latest private Buffer instruction checkpoint (2026-11-07): Private [Buffer instructions](value-buffer-execution.md) now independently verify and execute
+length/read/write, push/reserve and distinct-source append (99..104). Growing
+operations prepay canonical Result publication; allocator errors return the
+private Result<usize,u8>, while Fuel/quota/bounds remain execution errors. Source
+owners and failed operations retain their bytes/accounting. Both Windows native
+profiles passed ten focused groups on `6107487`; all 210 inputs match checkout/Git
+raw bytes and all 202 production modules are LF. See [evidence](../evidence/value-buffer-execution-windows-20261107.json).
+Next source Buffer methods/borrows/views, a public AllocError contract and I/O,
+then general aggregate/reference/module/public composition. D02/D04 and the full
+objective remain open. Existing prices/Fuel defaults and public gates remain.
 
 Predecessor private loop checkpoint (2026-11-07): Private [typed lexical loops](value-loops.md) now connect while,
 classic for and nearest break/continue to real owner cleanup and cyclic Result
@@ -288,8 +288,9 @@ Fuel default 256 / ceiling 16000000 and wider capability gates remain unchanged.
    [private loop successor](value-loops.md) connects while/for/break/continue,
    exact header initialization, escaping exit retention and cyclic Result checking.
    The [native Buffer kernel](value-buffer.md) now provides authenticated byte
-   operations through real roots/frames. Next connect independent instruction
-   proof/dispatch, source borrowing and allocator-error Results, views and I/O,
+   operations through real roots/frames. [Private Buffer instructions](value-buffer-execution.md)
+   now connect independent proof/dispatch, distinct-source append and prepaid
+   allocator-error Results. Next source borrowing/methods/views, public AllocError and I/O,
    before general aggregate/reference/module composition and public admission.
    Public L06 composition and
    complete validation remain, so the public `must_use_result` flag stays false.

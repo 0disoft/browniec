@@ -1,14 +1,13 @@
-- Latest checkpoint: private [Buffer kernel operations](docs/engineering/value-buffer.md)
-  now connect authenticated length/read/write, append/push and reserve to native
-  typed roots/frame addresses. Shared leases permit reads; all mutations require
-  writable ownership. Structural changes refresh generations, retaining serials
-  and bindings; rejected preparation retains old data/accounting. Both Windows profiles passed ten native groups on `a0cde3c`.
-  All 210 inputs match checkout/Git canonical bytes (209 raw); all 201 production modules are LF.
-  See [evidence](docs/evidence/value-buffer-windows-20261107.json). Next independent Buffer instruction proof/dispatch,
-  source borrowing and allocator-error Results, views and input/output. D02/D04,
-  public admission and the full objective remain open. Public gates and existing
-  opcode prices/Fuel defaults stay unchanged. Local only; no push/release.
-  Earlier checkpoints below retain their historical scope.
+- Latest checkpoint: Private [Buffer instructions](docs/engineering/value-buffer-execution.md) now independently verify and execute
+  length/read/write, push/reserve and distinct-source append (99..104). Growing
+  operations prepay canonical Result publication; allocator errors return the
+  private Result<usize,u8>, while Fuel/quota/bounds remain execution errors. Source
+  owners and failed operations retain their bytes/accounting. Both Windows native
+  profiles passed ten focused groups on `6107487`; all 210 inputs match checkout/Git
+  raw bytes and all 202 production modules are LF. See [evidence](docs/evidence/value-buffer-execution-windows-20261107.json).
+  Next source Buffer methods/borrows/views, a public AllocError contract and I/O,
+  then general aggregate/reference/module/public composition. D02/D04 and the full
+  objective remain open. Existing prices/Fuel defaults and public gates remain.
 
 - Private [typed lexical loops](docs/engineering/value-loops.md) now connect while,
   classic for and nearest break/continue to real owner cleanup and cyclic Result

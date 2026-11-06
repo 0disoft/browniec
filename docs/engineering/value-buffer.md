@@ -62,6 +62,7 @@ stack/compiler override or historical result reuse. See the
 The existing 32/33 conditional-depth fixture is byte-identical; its runtime group
 was not rerun by this kernel selection. Public CLI/full language/native Fuel
 matrices, Linux, OOM injection, general stack/performance and clean-machine
-delivery remain separate obligations. Source Buffer instruction/borrow/Result/
-view and I/O integration remains implementation work. Local only; no push,
+delivery remain separate obligations. The [private instruction successor](value-buffer-execution.md) now connects
+independent proof/dispatch and prepaid allocator Results. Source methods/borrows/
+views, public AllocError types and I/O remain implementation work. Local only; no push,
 release or deployment.

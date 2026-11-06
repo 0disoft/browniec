@@ -12,7 +12,7 @@ and cyclic Result obligations; general public integration remains separate work.
 native per-activation byte storage and the [owning Buffer root store](value-roots.md).
 This is a native coordinator interface. The [private execution successor](value-execution.md)
 now binds its immutable layout to a retained `value_program::Program` after full
-independent typed-IR proof, then dispatches operations 88..98 through `vm::run_values`.
+independent typed-IR proof, then dispatches operations 88..104 through `vm::run_values`.
 The [source foundation](value-source.md) now supplies typed signature and lexical
 ownership preparation. The [private body bridge](value-body.md) now connects empty Buffer/nested-wrapper
 construction, immutable locals and mixed CALL/RETURN. General aggregate/reference/

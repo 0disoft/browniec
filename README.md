@@ -2,16 +2,16 @@
 
 ## Current implementation (2026-11-07)
 
-Private [Buffer kernel operations](docs/engineering/value-buffer.md) now connect
-authenticated length/read/write, append/push and reserve to actual typed roots
-and frame addresses. Shared leases allow reads; mutation requires writable
-ownership. Growth preserves old data/accounting on rejection and refreshes
-structural generations while retaining serials/bindings. Both Windows profiles passed ten native groups on `a0cde3c`.
-All 210 inputs match checkout/Git canonical bytes (209 raw); all 201 production modules are LF.
-See [evidence](docs/evidence/value-buffer-windows-20261107.json). Next connect independent Buffer instruction proof/dispatch, source
-borrows and allocator-error Results, views and input/output composition. Public
-gates and existing opcode prices/Fuel defaults stay unchanged. D02/D04 and the
-full objective remain open. Earlier checkpoints below retain their own scope.
+Private [Buffer instructions](docs/engineering/value-buffer-execution.md) now independently verify and execute
+length/read/write, push/reserve and distinct-source append (99..104). Growing
+operations prepay canonical Result publication; allocator errors return the
+private Result<usize,u8>, while Fuel/quota/bounds remain execution errors. Source
+owners and failed operations retain their bytes/accounting. Both Windows native
+profiles passed ten focused groups on `6107487`; all 210 inputs match checkout/Git
+raw bytes and all 202 production modules are LF. See [evidence](docs/evidence/value-buffer-execution-windows-20261107.json).
+Next source Buffer methods/borrows/views, a public AllocError contract and I/O,
+then general aggregate/reference/module/public composition. D02/D04 and the full
+objective remain open. Existing prices/Fuel defaults and public gates remain.
 
 Private [typed lexical loops](docs/engineering/value-loops.md) now connect while,
 classic for and nearest break/continue to real owner cleanup and cyclic Result

@@ -6,14 +6,16 @@ combines independently reconstructed type properties and initialized/Dead CFG
 state with the existing complete scalar, array, record, loan, CALL and selected
 place proof. This layer supplies analysis; the
 [private execution successor](value-execution.md)
-now retains an immutable `value_program::Program` and executes operations 88..98
+now retains an immutable `value_program::Program` and executes operations 88..104
 through native value frames and the ordinary VM. Ordinary, image and returned
 reference admissions keep their existing gates. The [source foundation](value-source.md)
 now provides canonical type/signature and lexical COPY/MOVE/DROP metadata;
 the [private body bridge](value-body.md) now connects empty Buffer/nested-wrapper
 constructors, immutable locals and mixed CALL/RETURN. The [control successor](value-control.md)
-adds mutable assignment and statement joins. Typed value-expression joins, loops,
-broader operations and public integration remain next.
+adds mutable assignment and statement joins. [Typed joins](value-joins.md) and
+[loops](value-loops.md) now supply those private paths. [Buffer instructions](value-buffer-execution.md)
+add operations 99..104 with separate ownership/scalar proof and prepaid Results.
+Source Buffer methods/borrows/views, broader composition and public integration remain next.
 
 ## Instructions and type identity
 

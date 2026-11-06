@@ -130,8 +130,9 @@ wrapper constructors, immutable locals and mixed CALL/RETURN. The
 The [predicate](value-predicates.md), [propagation](value-propagation.md),
 [must-use](value-must-use.md), [value-join](value-joins.md) and [loop](value-loops.md)
 successors now supply those private typed paths. The [native Buffer kernel](value-buffer.md)
-adds authenticated byte operations to actual roots/frames; independent Buffer
-instruction proof/dispatch, source borrows/views and public promotion remain next.
+adds authenticated byte operations to actual roots/frames. The [Buffer instruction
+successor](value-buffer-execution.md) independently verifies and executes 99..104
+with prepaid Result publication. Source methods/borrows/views and public promotion remain next.
 Full L04/L05/D01-D04, Engine/Instance/host/isolation/platform/delivery,
 the complete language/native Fuel matrices, Linux, LF runtime mirrors, OOM,
 general stack containment and performance remain separate work.

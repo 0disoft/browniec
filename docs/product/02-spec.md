@@ -1,9 +1,13 @@
-- Private [Buffer kernel operations](../engineering/value-buffer.md), 2026-11-07,
-  now authenticate length/read/write, append/push and reserve through actual typed
-  roots/frame addresses. Read leases permit inspection; mutations require
-  writable ownership. Source methods/borrows/views, independent Buffer instruction
-  proof/dispatch and allocator-error Results remain open. Both Windows profiles passed ten native groups on `a0cde3c`;
-  see [evidence](../evidence/value-buffer-windows-20261107.json). Existing public gates/opcode prices/Fuel defaults stay unchanged.
+- Latest Buffer instruction checkpoint, 2026-11-07: Private [Buffer instructions](../engineering/value-buffer-execution.md) now independently verify and execute
+  length/read/write, push/reserve and distinct-source append (99..104). Growing
+  operations prepay canonical Result publication; allocator errors return the
+  private Result<usize,u8>, while Fuel/quota/bounds remain execution errors. Source
+  owners and failed operations retain their bytes/accounting. Both Windows native
+  profiles passed ten focused groups on `6107487`; all 210 inputs match checkout/Git
+  raw bytes and all 202 production modules are LF. See [evidence](../evidence/value-buffer-execution-windows-20261107.json).
+  Next source Buffer methods/borrows/views, a public AllocError contract and I/O,
+  then general aggregate/reference/module/public composition. D02/D04 and the full
+  objective remain open. Existing prices/Fuel defaults and public gates remain.
 
 - Private typed source, 2026-11-07: [lexical loops](../engineering/value-loops.md)
   now compose while/for/break/continue with Buffer/nested-tag values, owner cleanup,
