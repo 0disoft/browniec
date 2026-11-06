@@ -9,7 +9,7 @@ import re
 import subprocess
 
 ROOT = Path(__file__).resolve().parent.parent
-MODULES = {'value_properties': 4}
+MODULES = {'value_properties': 4, 'buffer_transfer': 4}
 
 
 def digest(path):
