@@ -132,6 +132,25 @@ fn calls::Program guarded(){
         case .ok(p):{completed(programs::run_public_references(ref p,3000000));}case .err(_):{assert(false);}
     };
 }
+@test fn void retained_aggregate_guards_separate_record_nominals_from_protected_array_roots(){
+    var usize mode=0;while(mode<4){var calls::Program unit=guarded();var usize pc=0;var usize selected=256;
+        while(pc<unit.body.count){let usize at=pc*8;let u8 op=unit.body.code[at];
+            if(op==83){selected=pc;unit.body.code[at+3]=if(mode<2){1}else{0};unit.body.code[at+4]=if(mode<2){4}else{3};}
+            else if(op==84){unit.body.code[at]=43;unit.body.code[at+2]=0;unit.body.code[at+3]=0;unit.body.code[at+4]=0;}
+            else if(op==85){unit.body.code[at]=if(mode==1 || mode==3){87}else{85};
+                unit.body.code[at+3]=if(mode==1){1}else{0};unit.body.code[at+4]=if(mode<2){4}else{3};
+                unit.body.code[at+6]=if(mode<2){1}else{0};}
+            pc+=1;
+        }
+        let images::Image frozen=image();if(mode<2){assert(verifier::inspect_reference_returns(ref unit,ref frozen).is_ok);
+            switch(programs::retain_reference_returns(ref unit,image(),65536)){
+                case .ok(p):{completed(programs::run_public_references(ref p,3000000));}case .err(_):{assert(false);}
+            };
+        }else{assert(switch(verifier::inspect_reference_returns(ref unit,ref frozen)){
+            case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==selected}});}
+        mode+=1;
+    }
+}
 @test fn void post_store_fuel_abort_preserves_payload_drains_owners_and_allows_explicit_retry(){
     let ir::Program p=compound();let results::Program unit=results::Program{.body=p,.elements=[0;16],.parameters=[0;16]};
     var runtime::State state=runtime::empty(8);var u8[8] data=[85;8];

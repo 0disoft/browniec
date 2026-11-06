@@ -4,7 +4,7 @@ import errors as errors;
 import verifier as verifier;
 import array_vm as array_vm;
 import array_list_vm as list_values;
-import record_place_vm as places;
+import place_dispatch as places;
 import slice_vm as slices;
 import slice_call_vm as borrowed;
 import slice_lifecycle_vm as lifecycle;

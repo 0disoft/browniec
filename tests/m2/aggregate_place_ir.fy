@@ -201,13 +201,13 @@ fn void maximum_record(){
 }
 @test fn void sixteen_ids_last_select_pc_full_dense_pool_and_full_constructor_registers_remain_bounded(){limits();maximum_pool();maximum_record();}
 
-@test fn void executable_image_reference_and_native_adapters_reject_before_fuel_or_backing_work(){
-    let ir::Program p=array(1,3);accepted(ref p);assert(!verifier::inspect(ref p).is_ok && !verifier::verify(ref p).is_ok);
+@test fn void complete_admission_accepts_aggregates_while_legacy_only_adapters_keep_their_gates(){
+    let ir::Program p=array(1,3);accepted(ref p);assert(verifier::inspect(ref p).is_ok && verifier::verify(ref p).is_ok);
     assert(!array_vm::requirement(ref p).is_ok && !slice_vm::requirement(ref p).is_ok && !record_vm::requirement(ref p).is_ok);
     let images::Builder builder=switch(images::builder(0)){case .ok(v):{v}case .err(_):{assert(false);return;}};
     let images::Image image=switch(images::freeze(ref builder,65536)){case .ok(v):{v}case .err(_):{assert(false);return;}};
-    assert(!verifier::inspect_statics(ref p,ref image).is_ok && !verifier::verify_statics(ref p,ref image).is_ok);
+    assert(verifier::inspect_statics(ref p,ref image).is_ok && verifier::verify_statics(ref p,ref image).is_ok);
     let recipes::Program unit=recipes::Program{.body=p,.parameters=[0;128],.results=[0;16],.origins=[0;16]};
-    assert(!verifier::inspect_reference_calls(ref unit,ref image).is_ok && !verifier::inspect_reference_returns(ref unit,ref image).is_ok);
-    assert(switch(vm::run(ref p,0)){case .ok(_):{false}case .err(e):{e.kind==5}});
+    assert(verifier::inspect_reference_calls(ref unit,ref image).is_ok && verifier::inspect_reference_returns(ref unit,ref image).is_ok);
+    assert(switch(vm::run(ref p,0)){case .ok(_):{false}case .err(e):{e.kind==8}});
 }

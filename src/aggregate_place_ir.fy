@@ -17,6 +17,21 @@ import std::num as num;
 // 0=fill or1=list (byte6=pool-high); records repeat target leaf/nominal in5/6.
 // Byte7 is always zero on REPLACE. END86 remains shared and untagged.
 fn errors::Error invalid(usize pc){return errors::make(5,pc);}
+// Recipe preflight authenticates only this encoding; whole-Program proof below
+// still establishes exact shapes, nominal paths, scalar roles and lifetimes.
+pub fn bool reserved(ref ir::Program p,usize pc){
+    if(p.count>256 || pc>=p.count){return false;}
+    let usize at=pc*8;let u8 op=p.code[at];let u8 kind=p.code[at+4];
+    if((op!=83 && op!=85 && op!=87) || p.code[at+1]>=16 || p.code[at+2]>=16){return false;}
+    if(kind==3){
+        if(op==83 && p.code[at+3]!=0){return false;}if(op==85 && p.code[at+3]>=16){return false;}
+        return if(op==87){p.code[at+5]<=1 && (p.code[at+5]!=0 || p.code[at+6]==0) && p.code[at+7]==0}
+            else{p.code[at+5]==0 && p.code[at+6]==0 && p.code[at+7]==0};
+    }
+    if(kind!=4 || p.code[at+5]>=128){return false;}
+    return if(op==83){p.code[at+3]<32 && p.code[at+6]==0 && p.code[at+7]==0}
+        else{p.code[at+6]<32 && if(op==85){p.code[at+3]<16 && p.code[at+7]<128}else{p.code[at+7]==0}};
+}
 fn Result<u8,errors::Error> byte(usize n,usize at){
     let i64 wide=switch(num::i64_from_usize(n)){case .ok(v):{v}case .err(_):{return .err(invalid(at));}};
     return switch(num::u8_from_i64(wide)){case .ok(v):{.ok(v)}case .err(_):{.err(invalid(at))}};
@@ -90,6 +105,7 @@ fn Result<usize,errors::Error> record_values(ref ir::Program p,ref records::Prep
 pub fn Result<usize,errors::Error> metadata(ref ir::Program p,ref records::Prepared shapes,usize pc,usize f){
     if(p.count>256 || pc>=p.count || p.function_count>16 || f>=p.function_count || pc<p.starts[f] ||
         pc>=p.ends[f] || p.ends[f]>p.count || p.register_ends[f]>128){return .err(invalid(pc));}
+    if(!reserved(p,pc)){return .err(invalid(pc));}
     let usize at=pc*8;let u8 op=p.code[at];let usize root=p.code[at+2] as usize;
     let usize b=p.code[at+3] as usize;let u8 kind=p.code[at+4];
     if(p.code[at+1]>=16 || (op!=83 && op!=85 && op!=87)){return .err(invalid(pc));}

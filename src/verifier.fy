@@ -289,7 +289,7 @@ fn Result<reborrows::Sites, errors::Error> validate(ref ir::Program p,bool allow
 
 // Ordinary entry points carry no Static authority and keep rejecting 69-79.
 fn Result<reborrows::Sites,errors::Error> plain(ref ir::Program p,bool calls) {
-    let statics::Sites sites = statics::empty(); return validate(p,calls,2,ref sites);
+    let statics::Sites sites = statics::empty(); return validate(p,calls,4,ref sites);
 }
 // Analysis-only slice-place proof carries no executable receipt, image or
 // retained result authority. Executable entry points additionally prove CALL
@@ -318,7 +318,7 @@ pub fn Result<usize,errors::Error> inspect_record_places(ref ir::Program p){
 // live-state plane. This neither pins an image nor admits Static VM execution.
 pub fn Result<statics::Sites,errors::Error> inspect_statics(ref ir::Program p,ref images::Image image) {
     let statics::Sites sites = statics::definitions(p,image)?;
-    let reborrows::Sites loans = validate(p,true,2,ref sites)?; return .ok(sites);
+    let reborrows::Sites loans = validate(p,true,4,ref sites)?; return .ok(sites);
 }
 
 // Strict inspection keeps its historical suspended-CALL analysis gate.
@@ -337,7 +337,7 @@ fn Result<usize,errors::Error> executable_calls(ref ir::Program p,ref reborrows:
 // Complete executable shape proof tied to actual immutable image bytes.
 pub fn Result<statics::Sites,errors::Error> verify_statics(ref ir::Program p,ref images::Image image){
     let statics::Sites sites=statics::definitions(p,image)?;
-    let reborrows::Sites loans=validate(p,reborrows::present(p),2,ref sites)?;
+    let reborrows::Sites loans=validate(p,reborrows::present(p),4,ref sites)?;
     let usize calls=executable_calls(p,ref loans)?;return .ok(sites);
 }
 pub fn Result<reborrows::Sites,errors::Error> verify_sites(ref ir::Program p){
@@ -360,7 +360,7 @@ pub fn Result<StaticCallProof,errors::Error> verify_static_calls(ref image_calls
     let image_calls::Proof recipes=image_calls::inspect(unit,image)?;
     let statics::Sites sites=image_sites::prepare(unit,ref recipes,image)?;
     let ref ir::Program p=ref unit.body;
-    let reborrows::Sites loans=validate(p,true,2,ref sites)?;
+    let reborrows::Sites loans=validate(p,true,4,ref sites)?;
     let usize executable=executable_calls(p,ref loans)?;
     return .ok(StaticCallProof{.recipes=recipes,.statics=sites,.loans=loans});
 }
@@ -373,7 +373,7 @@ pub fn Result<ReferenceCallProof,errors::Error> inspect_reference_calls(ref imag
     let image_calls::Proof recipes=image_calls::inspect_references(unit,image)?;
     let statics::Sites sites=image_sites::prepare(unit,ref recipes,image)?;
     let ref ir::Program p=ref unit.body;
-    let reborrows::Sites loans=validate(p,true,2,ref sites)?;
+    let reborrows::Sites loans=validate(p,true,4,ref sites)?;
     let usize executable=executable_calls(p,ref loans)?;
     return .ok(ReferenceCallProof{.recipes=recipes,.statics=sites,.loans=loans});
 }
@@ -385,7 +385,7 @@ pub fn Result<ReferenceReturnProof,errors::Error> inspect_reference_returns(ref 
     let image_calls::Proof recipes=image_calls::inspect_reference_returns(unit,image)?;
     let statics::Sites sites=image_sites::prepare(unit,ref recipes,image)?;
     let ref ir::Program p=ref unit.body;
-    let reborrows::Sites loans=validate(p,true,2,ref sites)?;
+    let reborrows::Sites loans=validate(p,true,4,ref sites)?;
     let usize executable=executable_calls(p,ref loans)?;
     let usize[16] roots=reference_lifetimes::prepare(p,ref sites)?;
     let usize checked=reference_lifetimes::inspect(p,ref sites,ref roots)?;

@@ -57,7 +57,7 @@ pub fn u8 profile(ref ir::Program p) {
         var usize at = 0; var bool written = false;
         while (at < p.count && at < 256) {
             let u8 op = p.code[at*8];
-            if (op == 42 || op == 46 || op == 48 || op == 49) { return 6; }
+            if (op == 42 || op == 46 || op == 48 || op == 49 || ((op==85 || op==87) && p.code[at*8+4]==4)) { return 6; }
             if (op == 44 || (op==85 && p.code[at*8+4]==2)) { written = true; }
             at += 1;
         }
@@ -65,7 +65,7 @@ pub fn u8 profile(ref ir::Program p) {
     }
     var usize pc = 0;
     while (pc < p.count && pc < 256) {
-        if (p.code[pc * 8] == 34 || p.code[pc * 8] == 38) { return 3; }
+        if (p.code[pc * 8] == 34 || p.code[pc * 8] == 38 || (p.code[pc*8]==85 && p.code[pc*8+4]==3)) { return 3; }
         pc += 1;
     }
     var usize i = 0;

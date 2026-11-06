@@ -9,8 +9,7 @@ import vm_execution as scalar;
 import slice_authority as authority;
 import array_vm as arrays;
 import array_list_vm as list_values;
-import slice_place_vm as places;
-import record_place_vm as record_places;
+import place_dispatch as places;
 import slice_result_record_bindings as record_bindings;
 import place_vm as place_frames;
 import struct_call_vm as owned_calls;
@@ -175,12 +174,12 @@ fn Result<Outcome,errors::Error> invoke_proved(ref body_ir::Program body,ref u8[
     let usize depth=switch(authority::inspect(ref state.runtime.authority)){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,0));}};
     if(!available(ref state.runtime.authority,true)){return .err(errors::make(5,0));}
     let list_values::Requirement list_plan=list_values::requirement(body)?;
-    let record_places::Requirement place_plan=record_places::requirement(body)?;
+    let places::Requirement place_plan=places::requirement(body)?;
     let usize work=owned_calls::cost(body,function,0)?+body.arities[function];
     if(fuel<runtime::cost()+work+list_plan.cost+place_plan.cost){return .err(errors::make(8,0));}
     var vec::Vec<i64> list_cells=list_values::prepare_values(ref list_plan)?;
     var bytes::Buffer list_scratch=list_values::prepare_encoded(ref list_plan)?;
-    var vec::Vec<usize> place_state=record_places::prepare(ref place_plan)?;
+    var vec::Vec<usize> place_state=places::prepare_metered(ref place_plan,fuel-list_plan.cost)?;
     let runtime::Entered first=entry::enter(body,function,binding(body,parameters,function),captures,inputs,state,data,fuel-list_plan.cost-place_plan.cost)?;
     let Result<Outcome,errors::Error> outcome=start(body,parameters,function,ref first,values,state,data,sites,literals,ref mut list_cells,ref mut list_scratch,ref mut place_state);
     return switch(outcome){
@@ -188,6 +187,7 @@ fn Result<Outcome,errors::Error> invoke_proved(ref body_ir::Program body,ref u8[
         case .err(e):{
             // No result receipt escapes on failure. Preserve the first error and
             // earlier payload writes; invocation metadata drains at zero Fuel.
+            places::abort(ref mut place_state);
             let bool drained=runtime::abort(state,data.len,0).is_ok;
             .err(e)
         }
@@ -217,16 +217,15 @@ fn Result<Outcome,errors::Error> run(ref body_ir::Program body,ref u8[] paramete
         let usize dst=body.code[at+1] as usize;let usize a=body.code[at+2] as usize;let usize b=body.code[at+3] as usize;
         let usize base=frame*128;
         if(remaining==0){return .err(errors::make(8,offset));}remaining-=1;
-        if(op>=83 && op<=86){
-            if(body.code[at+4]==2 || (op==86 && place_frames::format(place_state,offset)?.prefix==2)){
-                let usize price=record_places::price(body,pc,f,place_state)?;
-                if(remaining<price){return .err(errors::make(8,offset));}
-                let owners::Token current=if(op==83){record_bindings::get(ref bindings.records,frame*16+a)}else{owners::Token{.slot=0,.generation=0}};
-                remaining=record_places::bound(body,pc,f,frame,place_state,ref state.runtime.owners,current,
-                    data,ref mut registers[base..base+128],remaining)?;
-            }else{remaining=places::bound(body,pc,f,frame,place_state,ref state.runtime.owners,ref bindings.tokens,
-                ref state.runtime.pool,ref bindings.sites,data,ref mut registers[base..base+128],remaining)?;
-            }pc+=1;continue;
+        if(op>=83 && op<=87){
+            let usize price=places::price(body,pc,f,frame,place_state)?;
+            if(remaining<price){return .err(errors::make(8,offset));}
+            let u8 kind=body.code[at+4];let owners::Token none=owners::Token{.slot=0,.generation=0};
+            let owners::Token current=if(op==83 && (kind==2 || kind==4)){record_bindings::get(ref bindings.records,frame*16+a)}else{none};
+            let owners::Token source=if(op==85 && kind==4){record_bindings::get(ref bindings.records,frame*16+b)}else{none};
+            remaining=places::bound(body,pc,f,frame,place_state,ref state.runtime.owners,ref bindings.tokens,current,source,
+                ref state.runtime.pool,ref bindings.sites,data,ref mut registers[base..base+128],list_cells,list_scratch,remaining)?;
+            pc+=1;continue;
         }
         if(op==8 || op==39 || op==50 || op==65 || op==79 || op==82){let usize ended=place_frames::empty_frame(place_state,frame,offset)?;}
         if(op==80 || op==81){

@@ -9,8 +9,7 @@ import bits as bits;
 import shifts as shifts;
 import array_vm as array_vm;
 import array_list_vm as lists;
-import slice_place_vm as places;
-import record_place_vm as record_places;
+import place_dispatch as places;
 import array_owners as owners;
 import place_vm as place_frames;
 import array_range_vm as array_ranges;
@@ -88,12 +87,23 @@ fn Result<i64, errors::Error> core(ref ir::Program p, usize fuel,
     if(authority.len>1 || call_sites.len!=authority.len || child_bindings.len!=authority.len){return .err(errors::make(5,0));}
     if(authority.len==0 && reborrows::present(p)) { return .err(errors::make(5,0)); }
     let lists::Requirement list_plan=lists::requirement(p)?;
-    let record_places::Requirement place_plan=record_places::requirement(p)?;
+    let places::Requirement place_plan=places::requirement(p)?;
     if(fuel<list_plan.cost+place_plan.cost){return .err(errors::make(8,0));}
     var vec::Vec<i64> list_cells=lists::prepare_values(ref list_plan)?;
     var bytes::Buffer list_scratch=lists::prepare_encoded(ref list_plan)?;
-    var vec::Vec<usize> place_state=record_places::prepare(ref place_plan)?;
-    var usize remaining = fuel-list_plan.cost-place_plan.cost;
+    var vec::Vec<usize> place_state=places::prepare_metered(ref place_plan,fuel-list_plan.cost)?;
+    let Result<i64,errors::Error> outcome=run_core(p,fuel-list_plan.cost-place_plan.cost,arrays,payload,loans,borrowed_frames,
+        receipts,authority,call_sites,child_bindings,sites,ref mut list_cells,ref mut list_scratch,ref mut place_state);
+    return switch(outcome){case .ok(value):{.ok(value)}case .err(e):{places::abort(ref mut place_state);.err(e)}};
+}
+// Keep owning invocation scratch outside every fallible execution exit. Failure
+// drains place metadata at zero Fuel before canonical owner/loan cleanup.
+fn Result<i64,errors::Error> run_core(ref ir::Program p,usize fuel,
+    ref mut array_vm::State arrays,ref mut bytes::Buffer payload,ref mut slices::State loans,ref mut borrowed::Frames borrowed_frames,
+    ref mut mutable::Frame[] receipts,ref mut canonical::State[] authority,ref mut canonical_calls::Bindings[] call_sites,
+    ref mut child_sites::Bindings[] child_bindings,ref reborrows::Sites sites,ref mut vec::Vec<i64> list_cells,
+    ref mut bytes::Buffer list_scratch,ref mut vec::Vec<usize> place_state){
+    var usize remaining=fuel;
     var struct_vm::State records = struct_vm::empty();
     var i64[4096] registers = [0; 4096];
     var usize[32] return_pcs = [0; 32];
@@ -108,19 +118,17 @@ fn Result<i64, errors::Error> core(ref ir::Program p, usize fuel,
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
-        if(op>=83 && op<=86){let usize base=frame*128;
-            if(place_plan.records && (p.code[at+4]==2 || op==86)){
-                let usize price=record_places::price(p,pc,functions[frame],ref place_state)?;
-                if(remaining<price){return .err(errors::make(8,p.offsets[pc]));}
-                let owners::Token current=if(op==83){records.tokens[frame*16+a]}else{owners::Token{.slot=0,.generation=0}};
-                remaining=record_places::bound(p,pc,functions[frame],frame,ref mut place_state,ref arrays.owners,current,
-                    bytes::view_mut(payload),ref mut registers[base..base+128],remaining)?;
-            }else{remaining=places::bound(p,pc,functions[frame],frame,ref mut place_state,ref arrays.owners,ref arrays.tokens,
-                ref loans.pool,ref loans.tickets,bytes::view_mut(payload),ref mut registers[base..base+128],remaining)?;
-            }
+        if(op>=83 && op<=87){let usize base=frame*128;
+            let usize price=places::price(p,pc,functions[frame],frame,place_state)?;
+            if(remaining<price){return .err(errors::make(8,p.offsets[pc]));}
+            let u8 kind=p.code[at+4];let owners::Token none=owners::Token{.slot=0,.generation=0};
+            let owners::Token current=if(op==83 && (kind==2 || kind==4)){records.tokens[frame*16+a]}else{none};
+            let owners::Token source=if(op==85 && kind==4){records.tokens[frame*16+b]}else{none};
+            remaining=places::bound(p,pc,functions[frame],frame,place_state,ref arrays.owners,ref arrays.tokens,current,source,
+                ref loans.pool,ref loans.tickets,bytes::view_mut(payload),ref mut registers[base..base+128],list_cells,list_scratch,remaining)?;
             pc+=1;continue;
         }
-        if(op==8 || op==39 || op==50 || op==82){let usize ended=place_frames::empty_frame(ref place_state,frame,p.offsets[pc])?;}
+        if(op==8 || op==39 || op==50 || op==82){let usize ended=place_frames::empty_frame(place_state,frame,p.offsets[pc])?;}
         if(op==82){
             if(remaining==0){return .err(errors::make(8,p.offsets[pc]));}remaining-=1;
             if(frame==0 || p.return_types[functions[frame]]!=13){return .err(errors::make(5,p.offsets[pc]));}
@@ -128,7 +136,7 @@ fn Result<i64, errors::Error> core(ref ir::Program p, usize fuel,
             pc=return_pcs[frame];frame-=1;continue;
         }
         if(op==80 || op==81){let usize base=frame*128;
-            remaining=lists::step(p,pc,frame,arrays,bytes::view_mut(payload),ref registers[base..base+128],ref mut list_cells,ref mut list_scratch,remaining)?;
+            remaining=lists::step(p,pc,frame,arrays,bytes::view_mut(payload),ref registers[base..base+128],list_cells,list_scratch,remaining)?;
             pc+=1;continue;
         }
         if(op==61 || op==62){
@@ -201,7 +209,7 @@ fn Result<i64, errors::Error> core(ref ir::Program p, usize fuel,
             pc += 1; continue;
         }
         if (op == 9) {
-            if(frame<31){let usize fresh=place_frames::empty_frame(ref place_state,frame+1,p.offsets[pc])?;}
+            if(frame<31){let usize fresh=place_frames::empty_frame(place_state,frame+1,p.offsets[pc])?;}
             if(authority.len==1){
                 remaining=calls::step_canonical_derived(p,sites,pc,frame,ref child_bindings[0],ref mut call_sites[0],ref mut authority[0],borrowed_frames,loans,ref mut records,arrays,payload,
                     ref mut registers,ref mut return_pcs,ref mut return_dsts,remaining)?;

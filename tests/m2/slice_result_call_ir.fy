@@ -129,6 +129,25 @@ fn void insert_place_recipe_instruction(ref mut ir::Program p,usize at,u8 op,usi
         proxy_valid(ref p);rejected(ref p);mode+=1;
     }
 }
+@test fn void aggregate_fill_list_and_constructor_cannot_observe_opaque_call_identities(){
+    var usize mode=0;while(mode<3){var results::Program p=unit(1,false,false);
+        let usize original=opcode(ref p,66);let u8 identity=p.body.code[original*8+1];
+        let usize bind=opcode(ref p,67);let usize zero=p.body.code[bind*8+3] as usize;
+        if(mode==2){p.body.records.layouts.count=1;p.body.records.layouts.fields[0]=1;p.body.records.layouts.types[0]=12;}
+        let usize root=switch(if(mode==2){ir::record_in(ref mut p.body,1,0,true,0)}else{ir::array_in(ref mut p.body,1,12,1,true,0)}){
+            case .ok(n):{n}case .err(_):{assert(false);0}
+        };
+        insert_place_recipe_instruction(ref mut p.body,original,if(mode==2){41}else{33},root,zero,0);
+        let usize after=opcode(ref p,67)+1;
+        insert_place_recipe_instruction(ref mut p.body,after,83,0,root,0);p.body.code[after*8+4]=if(mode==2){4}else{3};
+        insert_place_recipe_instruction(ref mut p.body,after+1,87,0,root,if(mode==1){0}else{identity as usize});
+        p.body.code[(after+1)*8+4]=if(mode==2){4}else{3};
+        if(mode==1){p.body.code[(after+1)*8+5]=1;p.body.list_used=1;p.body.list_operands[0]=identity;}
+        insert_place_recipe_instruction(ref mut p.body,after+2,86,0,0,0);
+        let usize terminal=p.body.ends[1]-1;insert_place_recipe_instruction(ref mut p.body,terminal,if(mode==2){45}else{37},root,0,0);
+        proxy_valid(ref p);rejected(ref p);mode+=1;
+    }
+}
 @test
 fn void end_capture_mask_must_match_exact_preexisting_children(){
     var results::Program p=unit(129,true,false);let usize call=opcode(ref p,66);p.body.code[call*8+4]=1;proxy_valid(ref p);rejected(ref p);
