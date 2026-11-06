@@ -60,3 +60,23 @@ fn void invalid_sources_leave_the_entire_destination_unchanged() {
     assert(!owners::assign(source,target,ref mut data,ref table).is_ok); unchanged(ref data,ref before);
     assert(read(ref table,target,2,ref data)==0 && table.depth==4 && table.arena.used==11);
 }
+
+@test fn void self_assignment_cannot_bypass_read_write_stale_or_overlapping_ledger_guards(){
+    var u8[32] data=[85;32];var owners::Table table=owners::empty(32);let layouts::Array a=layout(1,2);
+    let owners::Token token=created(ref a,42,ref mut data,ref mut table);let u8[32] before=data;
+    let owners::ReadLease reader=switch(owners::begin_read(ref mut table,token,32)){
+        case .ok(v):{v}case .err(_):{assert(false);return;}
+    };
+    assert(!owners::assign(token,token,ref mut data,ref table).is_ok);unchanged(ref data,ref before);
+    assert(owners::end_read(ref mut table,reader,32).is_ok);
+    let owners::WriteLease writer=switch(owners::begin_write(ref mut table,token,0,2,32)){
+        case .ok(v):{v}case .err(_):{assert(false);return;}
+    };
+    assert(!owners::assign(token,token,ref mut data,ref table).is_ok);unchanged(ref data,ref before);
+    assert(owners::end_write(ref mut table,ref writer,32).is_ok);
+    var owners::Table forged=table;let owners::Owner duplicate=table.slots[0];
+    forged.slots[1]=duplicate;forged.order[1]=1;forged.depth=2;
+    assert(!owners::assign(token,token,ref mut data,ref forged).is_ok);unchanged(ref data,ref before);
+    assert(owners::release(ref mut table,token,32).is_ok);
+    assert(!owners::assign(token,token,ref mut data,ref table).is_ok);unchanged(ref data,ref before);
+}

@@ -114,6 +114,8 @@ fn void full_width_array_copy_fits_exact_peak_and_survives_source_release() {
         all[0] = 85; all[65537] = 85;
         let ref mut u8[] data = all[1..65537];
         let owners::Token source = created(ref array, -1, data, ref mut table);
+        assert(owners::assign(source,source,data,ref table).is_ok);
+        assert(read(ref table,source,4095,data)==-1 && table.depth==1 && table.arena.used==32768);
         table.arena.limit = 65535;
         assert(!owners::copy(source, data, ref mut table).is_ok);
         assert(table.arena.used == 32768 && table.depth == 1 && data[32768] == 0);

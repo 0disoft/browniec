@@ -3,6 +3,7 @@ module struct_nested_storage;
 import struct_layout as layouts;
 import array_storage as arenas;
 import scalar_codec as codec;
+import aggregate_copy as copying;
 
 // Private nested storage. Replan caller metadata at every public boundary.
 pub enum Error { Layout; Bounds; Fields; State; Alignment; Quota; Overflow; Value; Type; }
@@ -241,6 +242,9 @@ pub fn Result<usize, Error> copy(ref layouts::Catalog catalog, usize record, usi
     };
     let usize size = extent(ref plan, record, source, storage.len, arena)?;
     let Reservation reservation = reserve(size, plan.alignments[record], arena)?;
+    let copying::Mode transfer=switch(copying::prove(reservation.base,source,size,reservation.end,true,128,false)){
+        case .ok(v):{v}case .err(_):{return .err(.State);}
+    };
     var u8[128] encoded = [0; 128];
     let usize staged = snapshot(catalog, ref plan, record, source, storage, ref mut encoded[..size])?;
     return .ok(publish(ref encoded[..staged], ref reservation, storage, arena));
@@ -252,6 +256,9 @@ pub fn Result<usize, Error> assign(ref layouts::Catalog catalog, usize record,
     };
     let usize size = extent(ref plan, record, destination, storage.len, arena)?;
     let usize origin = extent(ref plan, record, source, storage.len, arena)?;
+    let copying::Mode transfer=switch(copying::prove(destination,source,size,arena.used,true,128,false)){
+        case .ok(v):{v}case .err(_):{return .err(.State);}
+    };
     var u8[128] encoded = [0; 128];
     let usize staged = snapshot(catalog, ref plan, record, source, storage, ref mut encoded[..size])?;
     var usize byte = 0;

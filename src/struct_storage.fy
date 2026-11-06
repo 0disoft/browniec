@@ -3,6 +3,7 @@ module struct_storage;
 import struct_layout as layouts;
 import array_storage as arenas;
 import scalar_codec as codec;
+import aggregate_copy as copying;
 
 // Prepared scalar-only record metadata. Revalidated at every storage boundary.
 // Offsets are record-relative field offsets, never host pointers or ownership proofs.
@@ -14,18 +15,18 @@ pub fn Result<Shape, Error> prepare(ref layouts::Catalog catalog, usize record) 
         case .ok(value): { value } case .err(_): { return .err(.Layout); }
     };
     if (record >= plan.count) { return .err(.Bounds); }
-    var Shape shape = Shape { .count = catalog.fields[record] as usize,
-        .tags = [0; 16], .offsets = [0; 16],
-        .bytes = plan.bytes[record], .alignment = plan.alignments[record] };
+    let usize count=catalog.fields[record] as usize;
+    var u8[16] tags=[0;16];var usize[16] offsets=[0;16];
     var usize field = 0;
-    while (field < shape.count) {
+    while (field < count) {
         let usize slot = record * 16 + field;
         if (catalog.kinds[slot] != 0) { return .err(.Type); }
-        shape.tags[field] = catalog.types[slot];
-        shape.offsets[field] = plan.offsets[slot];
+        tags[field] = catalog.types[slot];
+        offsets[field] = plan.offsets[slot];
         field += 1;
     }
-    return .ok(shape);
+    return .ok(Shape{.count=count,.tags=tags,.offsets=offsets,
+        .bytes=plan.bytes[record],.alignment=plan.alignments[record]});
 }
 
 fn Result<usize, Error> validate(ref Shape shape) {
@@ -153,6 +154,9 @@ pub fn Result<usize, Error> copy(ref Shape shape, usize source,
     ref mut u8[] storage, ref mut arenas::Arena arena) {
     let usize checked = address(shape, source, 0, storage.len, arena)?;
     let Reservation plan = reserve(shape.bytes, shape.alignment, arena)?;
+    let copying::Mode transfer=switch(copying::prove(plan.base,source,shape.bytes,plan.end,true,128,false)){
+        case .ok(v):{v}case .err(_):{return .err(.State);}
+    };
     var u8[128] encoded = [0; 128];
     let usize staged = snapshot(shape, source, storage, ref mut encoded[..shape.bytes])?;
     return .ok(publish(ref encoded[..staged], ref plan, storage, arena));
@@ -164,6 +168,9 @@ pub fn Result<usize, Error> assign(ref Shape shape, usize destination, usize sou
     ref mut u8[] storage, ref arenas::Arena arena) {
     let usize target = address(shape, destination, 0, storage.len, arena)?;
     let usize origin = address(shape, source, 0, storage.len, arena)?;
+    let copying::Mode transfer=switch(copying::prove(destination,source,shape.bytes,arena.used,true,128,false)){
+        case .ok(v):{v}case .err(_):{return .err(.State);}
+    };
     var u8[128] encoded = [0; 128];
     let usize staged = snapshot(shape, source, storage, ref mut encoded[..shape.bytes])?;
     var usize byte = 0;

@@ -7,6 +7,7 @@ import scalar_codec as codec;
 import struct_layout as records;
 import struct_nested_storage as record_storage;
 import struct_range as record_range;
+import aggregate_copy as copying;
 
 // Instance-local metadata over caller-owned backing bytes. No guest/raw pointer.
 pub struct Token { usize slot; usize generation; }
@@ -373,6 +374,9 @@ pub fn Result<Token, Error> copy(Token source, ref mut u8[] bytes, ref mut Table
             case .Alignment: { .Alignment }
         }); }
     };
+    let copying::Mode transfer=switch(copying::prove(plan.offset,owner.base,layout.bytes,plan.end,false,0,false)){
+        case .ok(v):{v}case .err(_):{return .err(.State);}
+    };
     if (owner.element == 2) {
         var usize at = owner.base;
         while (at < owner.end) {
@@ -434,6 +438,9 @@ pub fn Result<Copies, Error> copy_arguments(ref Token[] sources, ref layouts::Ar
                 at += 1;
             }
         }
+        let copying::Mode transfer=switch(copying::prove(plan.offset,owner.base,shape.bytes,plan.end,false,0,false)){
+            case .ok(v):{v}case .err(_):{return .err(.State);}
+        };
         origins[i] = owner.base; targets[i] = plan.offset;
         marks[i] = mark; sizes[i] = shape.bytes;
         planned.arena.used = plan.end;
@@ -503,6 +510,9 @@ pub fn Result<Copies, Error> copy_call_arguments(ref records::Catalog catalog,
                 case .Alignment: { .Alignment }
             }); }
         };
+        let copying::Mode transfer=switch(copying::prove(reservation.offset,owner.base,layout.bytes,reservation.end,false,0,false)){
+            case .ok(v):{v}case .err(_):{return .err(.State);}
+        };
         origins[i] = owner.base; targets[i] = reservation.offset;
         marks[i] = mark; sizes[i] = layout.bytes;
         planned.arena.used = reservation.end;
@@ -547,6 +557,11 @@ pub fn Result<usize, Error> assign(Token destination, Token source, ref mut u8[]
         }
     }
     let usize size = origin.end - origin.base;
+    let bool same=destination.slot==source.slot && destination.generation==source.generation;
+    let copying::Mode transfer=switch(copying::prove(target.base,origin.base,size,table.arena.used,false,0,same)){
+        case .ok(v):{v}case .err(_):{return .err(.State);}
+    };
+    switch(transfer){case .NoOp:{return .ok(size);}case .Direct:{}case .Snapshot:{return .err(.State);}};
     var usize i = 0;
     while (i < size) { bytes[target.base + i] = bytes[origin.base + i]; i += 1; }
     return .ok(size);

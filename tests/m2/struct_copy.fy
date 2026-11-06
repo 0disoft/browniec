@@ -8,7 +8,14 @@ fn store::Shape prepared(ref u8[] tags) {
     var usize i = 0;
     while (i < tags.len) { catalog.fields[0] += 1; catalog.types[i] = tags[i]; i += 1; }
     return switch (store::prepare(ref catalog, 0)) {
-        case .ok(shape): { shape }
+        case .ok(shape): {
+            // Guard prepared metadata itself, before any codec/copy operation.
+            assert(shape.count==tags.len);var usize field=0;var usize offset=0;
+            while(field<tags.len){let usize width=if(tags[field]==9 || tags[field]==12){8}else if(tags[field]==1 || tags[field]==11){4}else{1};
+                if(offset%width!=0){offset+=width-offset%width;}
+                assert(shape.tags[field]==tags[field] && shape.offsets[field]==offset);offset+=width;field+=1;
+            }shape
+        }
         case .err(_): { assert(false); store::Shape { .count = 0, .tags = [0; 16], .offsets = [0; 16], .bytes = 0, .alignment = 0 } }
     };
 }
