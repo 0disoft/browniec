@@ -84,9 +84,10 @@ stack/performance and clean-machine delivery remain separate work.
 
 The [canonical byte successor](value-codec.md) now retains immutable layouts,
 validates complete value bytes and supplies atomic copy/wrapper primitives.
-Next connect admitted value instructions to owning native storage, metered
-construction/moves/CALL/return, normal and failure cleanup, then compiler source
-bindings and resource-bearing tag operations. General reference/Buffer joins,
+The [native frame successor](value-frames.md) now supplies actual native value
+storage, activation generations, COPY/MOVE, tag construction/extraction, combined
+quotas and prepaid cleanup. Next connect admitted typed-IR instructions to that
+store and complete atomic CALL/RETURN handoff, then compiler source bindings. General reference/Buffer joins,
 must-use, Engine/Instance ownership and complete L04/L05/D01-D04 remain open.
 
 Windows development and release each passed 12 native groups (eight final core,

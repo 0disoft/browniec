@@ -2,17 +2,27 @@
 
 ## Current implementation (2026-11-07)
 
+[Native typed values and frames](docs/engineering/value-frames.md) now connect
+initialized/Dead slots, distinct recursive activations, COPY/MOVE, tag build/CASE,
+combined frame/root quotas and prepaid normal/failure cleanup to actual backing.
+Typed-IR dispatch, complete atomic CALL/RETURN and compiler source bindings remain
+next. This native coordinator interface does not enable guest capabilities.
+Windows development/release each passed twelve focused native groups; see the
+[evidence](docs/evidence/value-frames-windows-20261107.json).
+
 [Native owning value roots](docs/engineering/value-roots.md) now retain actual
 Buffer allocations with one serial/token/value binding, metered ownership moves
 and destruction-before-refund cleanup. Setup prepays bounded failure drain.
-Value-slot/frame storage, typed IR execution and source integration remain next.
+The typed value/frame successor above now consumes these bindings; typed IR
+execution and compiler source integration remain next.
 Windows development/release each passed nine focused native groups; see the
 [evidence](docs/evidence/value-roots-windows-20261107.json).
 
 A [native value byte layer](docs/engineering/value-codec.md) now validates scalar,
 array, plain-record and wrapper bytes against immutable retained layouts, locates
 the single active Buffer word and performs validated atomic copies/tag builds.
-Owning value/frame storage, metered execution and guest source bindings remain next.
+The owning value/frame successor above now supplies native storage and cleanup;
+typed IR execution and guest source bindings remain next.
 
 [Typed value IR analysis](docs/engineering/value-ir.md) now independently proves
 resource moves, tag build/case, CALL/RETURN and exact initialized/Dead CFG state

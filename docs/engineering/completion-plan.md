@@ -151,8 +151,11 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    actual native allocations, serial/token/location bindings, metered moves and
    destruction-before-refund cleanup with setup-prepaid failure drain. The native
    coordinator retains its matching State and two owning vectors for one lifetime;
-   this is not guest/Engine authority. Next connect value-slot/frame storage, metered
-   execution, tagged payload cleanup and compiler source integration. Native prerequisites
+   this is not guest/Engine authority. The [native frame successor](value-frames.md)
+   now connects initialized/Dead slots, activation generations, COPY/MOVE, tag
+   build/CASE, combined quotas and prepaid normal/failure cleanup to actual native
+   backing/root bindings. Next connect typed-IR dispatch, complete atomic
+   CALL/RETURN argument/result handoff and compiler source integration. Native prerequisites
    do not close L04/L05/D01-D04.
 3. **Engine and Instance: R01-R05.** The [call capture-stack fix](native-call-capture-stack.md)
    removes a reproduced retained compiler overflow without changing depth/owner

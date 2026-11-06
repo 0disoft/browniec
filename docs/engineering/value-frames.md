@@ -111,3 +111,16 @@ Engine/Instance/host/isolation/platform/delivery work remain open. Full CLI/
 language/native Fuel matrices, Linux, OOM injection, general stack/performance/RAM
 and clean-machine delivery remain separate validation work. No push, release or
 deployment is implied by local verification.
+
+Windows development and release each passed all twelve final native groups on
+`a1fb38c`: three layout groups, two checked-metering groups and seven actual
+frame/value groups. These include a 4096-element i64 array and four nested
+wrappers with both active and inactive Buffer alternatives, plus a failed-leave
+probe that proves reverse initialization order before ledger-only recovery.
+All 194 inputs match checkout and Git raw bytes; all 187 production modules are
+LF. The static inventory is 315 test files / 1873 annotations, not an execution
+claim for that full tree. See the [Windows evidence](../evidence/value-frames-windows-20261107.json)
+and [input manifest](../evidence/value-frames-inputs-windows-20261107.json).
+Both final profile runs are fresh, without historical reuse/native overrides.
+The focused commands took 87.142s development and 96.263s release on this machine;
+these are verification-tool elapsed times, not VM performance measurements.

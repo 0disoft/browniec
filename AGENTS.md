@@ -1,3 +1,23 @@
+- Native typed value/frame storage is implemented at a1fb38c. See
+  docs/engineering/value-frames.md. Immutable native layouts, exact initialized/
+  Dead slots, 32 distinct activation generations, real Buffer MOVE/COPY rules,
+  tag build/CASE and cross-activation transfer now share actual native backing
+  and root bindings. Entry prepays reverse initialization-order cleanup; abort
+  uses native root ledgers/vectors rather than guest bytes/masks. Combined frame/
+  root quotas include transient root growth. No typed-IR executable admission or
+  compiler source binding yet; complete atomic CALL/RETURN remains next. Full
+  objective and broader language/runtime/Engine/Instance/host/delivery remain open.
+  No public syntax/capability/existing price/default/cap changes. Matching native
+  Plan/State/vectors are invocation-local trusted coordinator data, not handles.
+  Focused tests use a locked byte-identical production/selected-test mirror to
+  avoid checking unrelated tests before exact selection. Local only; no push.
+  Windows development/release each passed twelve final native groups (layout3,
+  meter2, frame/value7), including maximum array/four-wrapper and reverse-order
+  failure-cleanup probes. All 194 inputs match checkout/Git raw bytes; 187 LF
+  production modules and 315-file/1873-annotation static inventory. See
+  docs/evidence/value-frames-windows-20261107.json. Broad checks remain open.
+  Earlier checkpoints retain their scopes.
+
 - Native owning value roots are implemented at 249218f. See
   docs/engineering/value-roots.md. Actual roots are created internally and resolved
   through one serial/token/location binding; metered MOVE preserves charge, and

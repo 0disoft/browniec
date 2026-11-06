@@ -63,8 +63,10 @@ guards, maximum scalar arrays and 4096-byte/depth16 records.
 
 The [owning root successor](value-roots.md) now retains actual native allocations,
 serial/token/location bindings and metered movement/retirement with prepaid failure
-drain. The next slice still needs metered value/frame operations,
-CALL/RETURN and normal/failure cleanup, then compiler source binding. The pinned
+drain. The [native frame successor](value-frames.md) now connects initialized/Dead
+slots, distinct activations, COPY/MOVE, tag build/CASE and normal/failure cleanup.
+Next connect typed-IR dispatch, complete atomic CALL/RETURN and compiler source
+binding. The pinned
 compiler does not currently admit whole-Buffer replacement through a mutable
 reference: a native capability probe of `*b = bytes::empty()` in
 `fn void clear(ref mut bytes::Buffer b)` returned E1008. Do not work around it
