@@ -16,7 +16,7 @@ pub fn Result<Requirement,errors::Error> requirement(ref ir::Program p){
     if(p.count>256 || p.list_used>4096){return .err(errors::make(5,0));}
     if(p.list_used==0){return .ok(Requirement{.length=0,.bytes=0,.cost=0});}
     var usize length=0;var usize size=0;var usize pc=0;
-    while(pc<p.count){if(p.code[pc*8]==80 || p.code[pc*8]==81){let usize id=p.code[pc*8+1] as usize;
+    while(pc<p.count){if(lists::operation(p,pc)){let usize id=lists::destination(p,pc);
         if(id>=16 || id>=p.arrays.count){return .err(errors::make(5,pc));}
         let layouts::Array layout=switch(layouts::scalar(p.arrays.elements[id],p.arrays.lengths[id])){
             case .ok(v):{v}case .err(_):{return .err(errors::make(5,pc));}

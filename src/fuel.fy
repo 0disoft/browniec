@@ -119,3 +119,23 @@ pub fn usize record_place_instruction(u8 op,usize stride){
     let usize metadata=transaction_base()+4*metadata_visit_budget()+65;
     return metadata+if(op==84){stride}else if(op==85){2*stride}else{0};
 }
+
+// Private aggregate adapter: three format/session words, 32 counters and
+// eighteen words per shared place ID. The initialized allocation and its
+// destruction/abort visits are prepaid; legacy programs keep their old format.
+pub fn usize aggregate_place_prepare(usize width){return if(width==0){0}else{257+10*(3+32*(18*width+1))};}
+// Callers prove scalar stride <=8 and length <=4096. SELECT authenticates the
+// destination without payload access; stores add the existing transaction price
+// to reselection and the larger snapshot envelope. No self-copy discount.
+pub fn Option<usize> aggregate_place_instruction(u8 op,bool record,usize stride,
+    usize length,bool boolean,bool list){
+    if(op==86){return .some(26);}
+    let usize selection=if(record){transaction_base()+4*metadata_visit_budget()+97}else{97};
+    if(op==83){return .some(selection);}
+    if(op!=85 && op!=87){return .none;}
+    if(record){return .some(selection+if(op==85){131072}else{87105});}
+    if(op==87 && list){return .some(selection+list_instruction(true,length,stride*length));}
+    return switch(array_instruction(if(op==85){38}else{40},stride,length,boolean)){
+        case .some(price):{.some(selection+price)}case .none:{.none}
+    };
+}
