@@ -26,7 +26,10 @@ fn images::Image image(){var images::Builder b=switch(images::builder(0)){case .
     assert(switch(vm::run(ref p,3)){case .ok(_):{false}case .err(e):{e.kind==8}});
     let calls::Program code=calls::Program{.body=p,.parameters=[0;128],.results=[0;16],.origins=[0;16]};
     switch(programs::retain_reference_returns(ref code,image(),65536)){
-        case .ok(p):{assert(switch(programs::run_public_references(ref p,16000000)){case .ok(n):{n==42}case .err(_):{false}});}
+        case .ok(p):{
+            assert(switch(programs::run_public_references(ref p,688132)){case .ok(n):{n==42}case .err(_):{false}});
+            assert(switch(programs::run_public_references(ref p,688131)){case .ok(_):{false}case .err(e):{e.kind==8}});
+        }
         case .err(_):{assert(false);}
     };
 }

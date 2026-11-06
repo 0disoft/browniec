@@ -15,6 +15,7 @@ pub fn u8 operand_kind(ref u8[] source,ref lexer::State s){
 // Shared, read-only distinction between an assignment and a final value read.
 pub fn Result<bool,errors::Error> regular(ref u8[] source,ref lexer::State s){
     if(word(source,s,b"let") || word(source,s,b"var")){return .ok(true);}
+    if(call_statement(source,s)?){return .ok(true);}
     if(s.kind!=2 || locals::reserved(source[s.begin..s.end])){return .ok(false);}
     var lexer::State look=lexer::snapshot(s);let usize next=lexer::next(source,ref mut look)?;
     return .ok(look.kind==61 || (look.kind==91 && arrays::indexed_assignment(source,ref look)?) ||
@@ -26,6 +27,18 @@ fn Result<usize,errors::Error> balanced(ref u8[] source,ref mut lexer::State s,u
         if(s.kind==open){depth+=1;}else if(s.kind==close){depth-=1;}
         let usize next=lexer::next(source,s)?;
     }return .ok(0);
+}
+pub fn Result<bool,errors::Error> direct_call(ref u8[] source,ref lexer::State s){
+    if((s.kind!=2 && s.kind!=5) || locals::reserved(source[s.begin..s.end])){return .ok(false);}
+    var lexer::State look=lexer::snapshot(s);let usize name=lexer::next(source,ref mut look)?;
+    return .ok(look.kind==40);
+}
+// A complete CALL statement may precede a value-arm tail. Actual lowering
+// independently requires a void target; ignoring scalar/Result values stays gated.
+pub fn Result<bool,errors::Error> call_statement(ref u8[] source,ref lexer::State s){
+    if(!direct_call(source,s)?){return .ok(false);}
+    var lexer::State look=lexer::snapshot(s);let usize name=lexer::next(source,ref mut look)?;
+    let usize arguments=balanced(source,ref mut look,40,41)?;return .ok(look.kind==59);
 }
 fn Result<usize,errors::Error> statement_end(ref u8[] source,ref mut lexer::State s){
     var usize parens=0;var usize braces=0;var usize brackets=0;

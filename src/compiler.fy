@@ -396,7 +396,7 @@ fn Result<usize, errors::Error> named_operand(ref u8[] source, ref mut lexer::St
     if (s.kind == 40) {
         if (index != 64) { return .err(errors::make(3, at)); }
         let usize target = functions::find(source, signatures, begin, end);
-        if (target == 16) { return .err(errors::make(3, at)); }
+        if (target == 16 || signatures.return_types[target]==13) { return .err(errors::make(3, at)); }
         if(reference_calls::result(signatures,target)){
             let usize result=call_value(source,s,p,table,signatures,target,240,at,depth,result_type,structure,loop_state)?;
             let static_source::View view=static_source::View{.site=result-192,.kind=1,.owned=true};
@@ -1591,6 +1591,7 @@ fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State 
     if (word_is(source, s, b"let") || word_is(source, s, b"var")) {
         return declaration(source,s,p,table,signatures,terminator,result_type,expr_depth,structure,loop_state);
     }
+    if(arm_syntax::direct_call(source,s)?){return void_call_statement(source,s,p,table,signatures,terminator,result_type,expr_depth,structure,loop_state);}
     if (s.kind != 2 || locals::reserved(source[s.begin..s.end])) {
         return .err(errors::make(2, s.begin));
     }
@@ -1614,6 +1615,16 @@ fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State 
     let usize end_statement = lexer::punctuation(source, s, terminator)?;
     let usize stored = ir::raw(p, 18, table.registers[index], value, 0, at)?;
     return .ok(index);
+}
+fn Result<usize,errors::Error> void_call_statement(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    u8 terminator,u8 result_type,usize depth,usize structure,ref mut loops::State loop_state){
+    let usize at=s.begin;let usize target=functions::find(source,signatures,s.begin,s.end);
+    if(terminator!=59 || result_type==0 || target>=signatures.count || signatures.return_types[target]!=13 ||
+        locals::find(source,table,s.begin,s.end)!=64){return .err(errors::make(3,at));}
+    let usize name=lexer::next(source,s)?;
+    let usize called=call_value(source,s,p,table,signatures,target,16,at,depth,result_type,structure,loop_state)?;
+    let usize end=lexer::punctuation(source,s,59)?;return .ok(64);
 }
 
 // Value arms have a private binding table; assignments still address the
@@ -2077,6 +2088,11 @@ fn Result<bool,errors::Error> reference_return(ref u8[] source,ref mut lexer::St
 fn Result<bool, errors::Error> control_return(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 result_type, usize depth, usize expr_depth, ref mut loops::State loop_state) {
     let usize at = s.begin;
     let usize keyword = lexer::next(source, s)?;
+    if(signatures.return_types[table.function]==13){
+        if(s.kind!=59){return .err(errors::make(3,s.begin));}
+        let usize end=lexer::next(source,s)?;let usize dropped=arrays::release_visible(table,p,at)?;
+        let usize returned=ir::raw(p,82,0,0,0,at)?;return .ok(true);
+    }
     if(reference_calls::result(signatures,table.function)){
         return reference_return(source,s,p,table,signatures,at,depth,expr_depth,loop_state);
     }
@@ -2195,6 +2211,10 @@ fn Result<usize, errors::Error> body(ref u8[] source, ref functions::Table signa
     while (s.kind != 125) {
         if (terminal || s.kind == 0) { return .err(errors::make(2, s.begin)); }
         terminal = control(source,ref mut s,p,ref mut table,signatures,result_context,0,0,ref mut loop_state)?;
+    }
+    if(!terminal && signatures.return_types[f]==13){
+        let usize dropped=arrays::release_visible(ref table,p,s.begin)?;
+        let usize returned=ir::raw(p,82,0,0,0,s.begin)?;terminal=true;
     }
     if (!terminal) { return .err(errors::make(2, s.begin)); }
     if (s.kind != 125 || s.begin != signatures.body_ends[f]) { return .err(errors::make(2, s.begin)); }

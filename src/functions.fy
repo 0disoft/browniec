@@ -86,6 +86,7 @@ fn Result<u8, errors::Error> record_type(ref u8[] source, ref lexer::State s,ref
 fn Result<usize, errors::Error> signature(ref u8[] source, ref mut lexer::State s, ref mut Table t) {
     if (t.count >= 16) { return .err(errors::make(4, s.begin)); }
     let usize fn_word = lexer::word(source, s, b"fn")?;
+    let bool result_void=s.kind==2 && lexer::equal(source[s.begin..s.end],b"void");
     let bool result_slice = s.kind == 2 && lexer::equal(source[s.begin..s.end], b"ref");
     var u8 result_element = 0;
     if (result_slice) {
@@ -98,8 +99,9 @@ fn Result<usize, errors::Error> signature(ref u8[] source, ref mut lexer::State 
         let usize open_slice = lexer::punctuation(source, s, 91)?;
         let usize close_slice = lexer::punctuation(source, s, 93)?;
     }
-    let u8 result_record = if (result_slice) { 0 } else { record_type(source, s,ref t.context)? };
-    let u8 result_type = if (result_slice) { 0 } else if (result_record == 0) { types::parse(source, s)? }
+    let u8 result_record = if (result_slice || result_void) { 0 } else { record_type(source, s,ref t.context)? };
+    let u8 result_type = if (result_slice) { 0 } else if(result_void){let usize keyword=lexer::next(source,s)?;13}
+        else if (result_record == 0) { types::parse(source, s)? }
         else { let usize named = lexer::next(source, s)?; 0 };
     if (result_record != 0 && s.kind == 60) { return .err(errors::make(3, s.begin)); }
     var usize result_length = 0;

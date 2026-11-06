@@ -39,6 +39,12 @@ fn void rejected(ref u8[] a,ref u8[] b,usize owner){switch(programs::compile(ent
         b"module app;import lib as m;fn bool main(bool x){return x;}fn i32 hidden(){return 0;}pub fn i32 chosen(){let i32 m=900;return m::add(22);}",42);
 }
 
+@test fn void void_statements_cross_both_qualified_compiler_routes(){
+    value(b"module lib;pub struct P{i32 x;}pub fn void set(P p,ref mut i32[] a){a[0]=p.x;}pub fn void inspect(ref u8[] p){let n=p[0];}",
+        b"module app;import lib as m;pub fn i32 chosen(){var a=[0];m::set(m::P{.x=42},ref mut a);return a[0];}",42);
+    value(b"module lib;pub struct P{i32 x;}pub fn void set(P p,ref mut i32[] a){a[0]=p.x;}pub fn void inspect(ref u8[] p){let n=p[0];return;}",
+        b"module app;import lib as m;pub fn i32 chosen(){var a=[0];m::inspect(ref b\"*\");m::set(m::P{.x=42},ref mut a);return a[0];}",42);
+}
 @test fn void qualified_owned_array_calls_and_exclusive_borrows_keep_ownership(){
     value(b"module lib;pub fn i32[2] make(){return [20;2];}pub fn i32 sum(i32[2] a){return a[0]+a[1];}pub fn i32 bump(ref mut i32[] a){a[0]=a[0]+2;return 0;}",
         b"module app;import lib as m;pub fn i32 chosen(){var i32[2] a=m::make();let i32 n=m::bump(ref mut a);return m::sum(a);}",42);
