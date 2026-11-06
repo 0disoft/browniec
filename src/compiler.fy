@@ -1087,15 +1087,24 @@ fn Result<usize, errors::Error> array_copy_statement(ref u8[] source, ref mut le
 fn Result<usize, errors::Error> array_write_statement(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize index, usize at, usize id, u8 terminator, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {
     if (s.kind != 91) { return .err(errors::make(3, at)); }
     let usize open = lexer::punctuation(source, s, 91)?;
+    let usize index_at=s.begin;
     let usize subscript = expression(source,s,p,table,signatures,1,expr_depth+1,12,result_type,structure,loop_state)?;
     if (p.types[subscript] != 12) { return .err(errors::make(3, at)); }
     let usize close = lexer::punctuation(source, s, 93)?;
-    let usize equals = lexer::punctuation(source, s, 61)?;
+    if(!lexer::assignment(s.kind)){return .err(errors::make(2,s.begin));}
+    let usize operation_at=s.begin;let u8 operation=places::compound(s.kind);
+    let usize equals=lexer::next(source,s)?;
     let u8 element = p.arrays.elements[id];
-    let usize value = expression(source,s,p,table,signatures,1,expr_depth,element,result_type,structure,loop_state)?;
+    if(operation!=0 && !types::integer(element)){return .err(errors::make(3,operation_at));}
+    var locals::Table names=locals::snapshot(table);
+    let usize place=places::select(p,ref mut names,id,subscript,index_at)?;
+    let usize old=if(operation==0){128}else{ir::place_read(p,place,id,operation_at)?};
+    var usize value=expression(source,s,p,ref names,signatures,1,expr_depth,element,result_type,structure,loop_state)?;
     if (p.types[value] != element) { return .err(errors::make(3, at)); }
     let usize end_statement = lexer::punctuation(source, s, terminator)?;
-    let usize written = ir::array_write(p, id, subscript, value, at)?;
+    if(operation!=0){value=ir::emit(p,operation,old,value,operation_at)?;}
+    let usize written=ir::place_store(p,place,id,value,operation_at)?;
+    let usize ended=places::end(p,ref mut names,place,operation_at)?;
     return .ok(index);
 }
 

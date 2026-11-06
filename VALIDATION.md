@@ -1,3 +1,21 @@
+- Owned scalar-array source assignment now selects/checks bounds before RHS.
+  Ten exact-type integer compounds capture the old scalar before RHS, reuse
+  checked operations and preserve nonlocal cleanup across both VM drivers.
+  See the [contract](docs/engineering/array-place-assignment.md).
+  Development/release each passed 30 native groups and 230 tool-free CLI cases
+  (61 legacy writes, 112 selected-place cases, 57 public Fuel), on a 188-path
+  Git-raw/checkout-matching input union, 164 LF modules and common 284-file
+  discovery; both locked LF mirrors pass. Fifty integer/operator pairs, all return
+  kinds, loop/propagation exits, original CALL bounds, 64 locals and 30 sequential
+  compounds pass. Source plain/compound public exact Fuel is 69308/69378 ordinary,
+  413396/413467 with a retained marker. Existing instruction prices/default256/
+  cap16000000 remain; source IR/Fuel changed deliberately. Version JSON adds two
+  narrow array-assignment flags. Other place kinds/grouped lvalues/overlap,
+  complete L04/C05/Instance/host/delivery remain open. No full language/original
+  full native Fuel matrices, Linux, OOM/general stack/performance/isolation/
+  delivery rerun. Local only. See the
+  [Windows evidence](docs/evidence/array-place-assignment-windows-20261106.json).
+
 - Compiler pending-place cleanup now preserves all 64 guest bindings with one
   native mask per lexical table and reuses existing loop metadata words. Return,
   failed propagation and loop-transfer paths emit END before owner/view cleanup

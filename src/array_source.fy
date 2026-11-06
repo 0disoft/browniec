@@ -24,7 +24,7 @@ pub fn Result<usize, errors::Error> length_value(ref mut ir::Program p, usize id
     return ir::integer(p, length, 12, offset);
 }
 // Called with the opening '[' after a possible statement target. Nested index
-// expressions may contain brackets, switches, and semicolons; only '=' after
+// expressions may contain brackets, switches, and semicolons; an assignment after
 // the matching ']' distinguishes an assignment from a final value-arm read.
 pub fn Result<bool, errors::Error> indexed_assignment(ref u8[] source, ref lexer::State state) {
     var lexer::State look = lexer::snapshot(state);
@@ -36,7 +36,7 @@ pub fn Result<bool, errors::Error> indexed_assignment(ref u8[] source, ref lexer
             depth -= 1;
             if (depth == 0) {
                 let usize next = lexer::next(source, ref mut look)?;
-                return .ok(look.kind == 61);
+                return .ok(lexer::assignment(look.kind));
             }
         }
         let usize next = lexer::next(source, ref mut look)?;

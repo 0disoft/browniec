@@ -20,7 +20,9 @@
   supplies snapshots/dispatch. [Both VM drivers and retained guards](../engineering/array-place-execution.md)
   are connected. [Compiler exit bookkeeping](../engineering/array-place-cleanup.md)
   now prepares return/propagation/loop cleanup without consuming guest locals;
-  ordered source emission and other place kinds remain open.
+  [owned-array source assignment](../engineering/array-place-assignment.md) now
+  connects early bounds, old-scalar capture and ten integer compounds. Other
+  place kinds, grouped lvalues and complete L04 remain open.
 
 ## Milestone status
 

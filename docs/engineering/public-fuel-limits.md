@@ -5,8 +5,11 @@ owned-array SELECT/READ/STORE/END through native IR APIs in both drivers. Only
 programs containing those operations pay its bounded invocation setup and new
 instruction prices; old prices/default/cap remain. Its native exact oracles are
 3853 with eight backing bytes, 69381 via public ordinary backing and 413452 via
-public retained entry. Guest source selected-place/compound lowering remains
-unimplemented; these are not CLI source-feature oracles.
+public retained entry. The [source successor](array-place-assignment.md) now
+connects owned-array selection/compound lowering, with separate explicit source
+oracles: public plain 69308/413396 and compound 69378/413467 (ordinary/retained
+marker). Existing opcode prices/default/cap remain; old plain-source 65737 is
+superseded by 69308. The preceding native IR fixture remains its own oracle.
 
 Date: 2026-11-04. This is a narrow C05 successor to the
 [returned-view schedule](m2-slice-result-fuel.md), not full-profile limit adoption.

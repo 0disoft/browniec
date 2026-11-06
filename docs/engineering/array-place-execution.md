@@ -74,7 +74,7 @@ stack/compiler/linker override was reused. Full language/original full native
 public Fuel matrices, Linux, OOM injection, general stack/performance, isolation
 and delivery were not rerun.
 
-Source assignment still uses the earlier lowering. Next, emit selection and its
+At this checkpoint source assignment still used the earlier lowering. Next, emit selection and its
 bounds check before RHS evaluation, retain old scalars before compound RHSs, and
 end pending places on every normal exit. Then extend to exclusive slices, record
 fields and scalar locals/grouped lvalues. Complete L04, wider language/resource
@@ -84,3 +84,8 @@ The [compiler cleanup prerequisite](array-place-cleanup.md) now tracks pending
 locations through lexical snapshots and loop scopes, ending them before normal
 return/propagation/loop-transfer cleanup. Source selection/compound emission is
 still the next step; the preceding execution evidence retains its checkpoint.
+
+The [source successor](array-place-assignment.md) now connects ordered selection,
+old-scalar capture, all ten integer compounds and nonlocal cleanup for owned
+scalar-array elements. Its changed source Fuel oracles supersede the old plain
+write values; other place kinds and full L04 remain open.

@@ -212,3 +212,8 @@ fn void declaration_error(ref u8[] a,ref u8[] b,u8 kind,u8 first){
     value(library,b"module app;import lib as m;pub fn i32 chosen(){let p=if(true){m::make()}else{m::P{.x=0}};return m::take(if(true){p}else{m::make()});}",42);
     value(library,b"module app;import lib as m;pub fn i32 chosen(){let ref u8[] marker=b\"*\";return (if(false){[0]}else{m::array()})[0];}",42);
 }
+@test fn void selected_array_assignments_cross_both_qualified_compiler_routes(){
+    let ref u8[] library=b"module lib;pub fn i32 rhs(){var a=[20;1];a[0]+=22;return a[0];}";
+    value(library,b"module app;import lib as m;pub fn i32 chosen(){var a=[0;1];a[0]=m::rhs();return a[0];}",42);
+    value(library,b"module app;import lib as m;pub fn i32 chosen(){let ref u8[] marker=b\"*\";var a=[0;1];a[0]=m::rhs();return a[0];}",42);
+}

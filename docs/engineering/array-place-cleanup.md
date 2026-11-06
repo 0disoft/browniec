@@ -1,8 +1,9 @@
 # Compiler cleanup for pending selected places
 
 Date: 2026-11-06. Successor to [native VM integration](array-place-execution.md).
-This prepares source exit lowering; guest assignment still uses its earlier
-instructions. Ordered selection and compound source syntax remain unimplemented.
+This prerequisite prepared source exit lowering while guest assignment still
+used earlier instructions. The [source successor](array-place-assignment.md) now
+connects ordered owned-array selection and compound source syntax.
 
 ## Construction state and scope
 

@@ -9,6 +9,7 @@ import literal_source as literals;
 // 5 is a qualified name in explicitly scoped source only.
 // Other punctuation uses its ASCII byte.
 // 128 ==, 129 !=, 130 <=, 131 >=, 132 &&, 133 ||, 134 <<, 135 >>.
+// 136 +=, 137 -=, 138 *=, 139 /=, 140 %=, 141 <<=, 142 >>=, 143 &=, 144 ^=, 145 |=.
 pub struct State { usize cursor; usize begin; usize end; usize tokens; u8 kind; i64 value; bool min_magnitude; u32 context; }
 pub fn State empty() {
     return State { .cursor = 0, .begin = 0, .end = 0, .tokens = 0, .kind = 0, .value = 0, .min_magnitude = false, .context = 0 };
@@ -141,6 +142,9 @@ fn Result<usize, errors::Error> scan(ref u8[] source, ref mut State s) {
     } else {
         if (s.cursor + 1 < source.len) {
             let u8 after = source[s.cursor + 1];
+            if((ch==60 || ch==62) && after==ch && s.cursor+2<source.len && source[s.cursor+2]==61){
+                s.kind=if(ch==60){141}else{142};s.cursor+=3;s.end=s.cursor;return .ok(0);
+            }
             var u8 pair = 0;
             if (ch == 61 && after == 61) { pair = 128; }
             else if (ch == 33 && after == 61) { pair = 129; }
@@ -150,6 +154,11 @@ fn Result<usize, errors::Error> scan(ref u8[] source, ref mut State s) {
             else if (ch == 124 && after == 124) { pair = 133; }
             else if (ch == 60 && after == 60) { pair = 134; }
             else if (ch == 62 && after == 62) { pair = 135; }
+            else if(after==61){
+                if(ch==43){pair=136;}else if(ch==45){pair=137;}else if(ch==42){pair=138;}
+                else if(ch==47){pair=139;}else if(ch==37){pair=140;}
+                else if(ch==38){pair=143;}else if(ch==94){pair=144;}else if(ch==124){pair=145;}
+            }
             if (pair != 0) { s.kind = pair; s.cursor += 2; s.end = s.cursor; return .ok(0); }
         }
         if (ch != 40 && ch != 41 && ch != 123 && ch != 125 && ch != 59 &&
@@ -207,3 +216,4 @@ pub fn Result<usize, errors::Error> punctuation(ref u8[] source, ref mut State s
     if (s.kind != kind) { return .err(errors::make(2, s.begin)); }
     return next(source, s);
 }
+pub fn bool assignment(u8 kind){return kind==61 || (kind>=136 && kind<=145);}

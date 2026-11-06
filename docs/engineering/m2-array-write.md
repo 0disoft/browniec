@@ -3,6 +3,12 @@
 This page records the write increment. Its receipt is historical after the later
 [copy-initializer slice](m2-array-copy-source.md), which adds independent array copies.
 
+The [2026-11-06 selected-place successor](array-place-assignment.md) now supersedes
+this checkpoint's late bounds check, plain-write Fuel oracles and compound gate.
+Owned-array source checks its target before RHS and supports all ten checked
+integer compounds. The remaining statements and receipt below retain the
+original increment's historical scope.
+
 - Status: implemented and focused-harness verified in development and release
 - Scope: mutable scalar-array declarations and indexed element writes in the outermost `main` body
 - Evidence: [Windows write receipt](../evidence/m2-array-write-windows-20261024.json)

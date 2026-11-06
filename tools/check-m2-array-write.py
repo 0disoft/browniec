@@ -74,7 +74,7 @@ for variant in ['.some(0)', '.none']:
 case('var i32[2] a=[0;2]; var usize i=0; let Option<i32> o=.some(0); a[i]=switch(o) {case .some(n): {i=1; 42} case .none: {0}}; return a[0];')
 case('var i32[1] a=[0;1]; var i32 hits=0; let Option<i32> o=.some(0); a[switch(o) {case .some(n): {hits=hits+1; 0} case .none: {0}}]=switch(o) {case .some(n): {hits=hits+1; 42} case .none: {0}}; if(hits==2) {return a[0];} return 0;')
 case('var i32[1] a=[0;1]; let Option<i32> o=.some(0); a[switch(o) {case .some(n): {return 42;} case .none: {0}}]=1/0; return 0;')
-case('var i32[1] a=[0;1]; let Option<i32> o=.some(0); a[999]=switch(o) {case .some(n): {return 42;} case .none: {0}}; return 0;')
+case('var i32[1] a=[0;1]; let Option<i32> o=.some(0); a[999]=switch(o) {case .some(n): {return 42;} case .none: {0}}; return 0;', error='bounds', code=5)
 case('var i32[1] a=[0;1]; let Option<i32> o=.some(0); return switch(o) {case .some(n): {a[switch(o) {case .some(m): {0} case .none: {0}}]=42; a[0]} case .none: {0}};')
 case('var i32[1] a=[0;1]; let usize[1] ix=[0;1]; a[ix[0]]=42; return a[0];')
 case('var i32[1] a=[0;1]; let u8 i=0; a[i as usize]=42; return a[0];')
@@ -93,20 +93,20 @@ for body in [
 ]:
     case(body, error='type', code=3)
 case('return helper();', functions='fn i32 helper() {let i32[1] a=[0;1]; a[0]=42; return a[0];}', error='type', code=3)
-case('var i32[1] a=[0;1]; a[0]+=1; return 0;', error='syntax', code=3)
+case('var i32[1] a=[0;1]; a[0]+=1; return a[0]+41;')
 for depth in [31, 32]:
     index = 'ix[' * depth + '0' + ']' * depth
     case('var i32[1] a=[0;1]; let usize[1] ix=[0;1]; a['+index+']=42; return a[0];',
          error='compile_limit' if depth == 32 else None, code=3 if depth == 32 else 0)
 basic='var i32[1] a=[0;1]; a[0]=42; return a[0];'
-case(basic, fuel=65737)
-case(basic, fuel=65736, error='fuel', code=5)
+case(basic, fuel=69308)
+case(basic, fuel=69307, error='fuel', code=5)
 case(basic, fuel=None, error='fuel', code=5)
 case(basic, mode='check')
 case('var i32[1] a=[0;1]; a[999]=42; return 0;', expected=0, mode='check')
 for index in ['1', '18446744073709551615']:
     case('var i32[1] a=[0;1]; a['+index+']=42; return 0;', error='bounds', code=5)
-case('var i32[1] a=[0;1]; a[999]=1/0; return 0;', error='zero_divisor', code=5)
+case('var i32[1] a=[0;1]; a[999]=1/0; return 0;', error='bounds', code=5)
 case('var i32[1] a=[0;1]; a[1/0]=2147483647+1; return 0;', error='zero_divisor', code=5)
 case('var i32[1] a=[0;1]; a[0]=2147483647+1; return 0;', error='overflow', code=5)
 case('var i32[1] a=[0;1]; a[0]=42; return a[0];')  # fresh process after failures

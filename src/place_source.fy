@@ -3,6 +3,14 @@ import ir as ir;
 import locals as locals;
 import errors as errors;
 
+// Ten statement-only integer compounds reuse existing checked scalar operations.
+pub fn u8 compound(u8 kind){
+    if(kind>=136 && kind<=140){return kind-134;}
+    if(kind==141){return 31;}if(kind==142){return 32;}
+    if(kind==143){return 28;}if(kind==144){return 29;}if(kind==145){return 30;}
+    return 0;
+}
+
 // Compiler construction state only. Final IR independently proves every ID,
 // selecting PC, root and phase. This mask consumes no guest local/register.
 pub fn Result<usize,errors::Error> select(ref mut ir::Program p,ref mut locals::Table names,
