@@ -634,7 +634,9 @@ fn Token publish_record(ref mut Table table, usize slot, usize record, usize byt
     return Token { .slot = slot, .generation = generation };
 }
 
-fn Result<Owner, Error> resolve_record(ref records::Catalog catalog, ref Table table,
+// Metadata authentication only; the returned copy does not grant write authority.
+// Native selected places use the same immutable catalog/table/backing lifetime.
+pub fn Result<Owner, Error> resolve_record(ref records::Catalog catalog, ref Table table,
     Token token, usize capacity) {
     let Owner owner = resolve_any(table, token, capacity)?;
     let usize checked = record_metadata(catalog, ref owner)?;

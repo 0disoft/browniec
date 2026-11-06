@@ -1,3 +1,21 @@
+- Native owned-record scalar locations now capture the original nominal owner,
+  generation/reservation and nested scalar ordinal. Metadata-only selection and
+  revalidated atomic read/store reuse the existing ledger, layout iterator and
+  scalar codec. See the [contract](docs/engineering/record-selected-place.md).
+  Development/release each passed 28 native groups (eight new record-place,
+  six owner, six nested-storage and eight array-place groups), on
+  176 inputs matching checkout and staged Git raw bytes. Both locked LF mirrors pass
+  with 168 LF production modules and 290-file discovery. See the
+  [Windows evidence](docs/evidence/record-selected-place-windows-20261106.json).
+  All six scalars, replacement/RHS descriptor changes, invalid bool repair,
+  stale/reused/cleared roots, malformed snapshots/ledgers, 16-deep nesting,
+  128 leaves and full 16-owner/backing capacity pass. No guest syntax/opcode,
+  price/default256/cap16000000 or capability changes. Record-place IR, metered
+  VM/source integration, scalar-local/grouped places, overlap and full
+  L04/C05/Instance/host/delivery remain open. Public CLI/full language/Fuel,
+  Linux, OOM/general stack/performance/isolation/delivery were not rerun.
+  Local only; earlier checkpoints retain their scopes.
+
 - Exclusive-slice source assignment now selects/checks bounds before RHS and
   captures old scalars before ten checked integer compounds. Shared array/slice
   IDs and lexical snapshots preserve targets across nested writes/CALL/reborrow

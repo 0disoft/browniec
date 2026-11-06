@@ -32,6 +32,10 @@
   This changes source IR and total Fuel; existing instruction prices and CLI
   limits remain unchanged. Version metadata adds two slice-assignment flags.
   Record/scalar-local places, grouped lvalues, overlap and complete L04 remain open.
+  The [native record-location prerequisite](../engineering/record-selected-place.md)
+  captures the original nominal owner and scalar leaf, authenticates complete
+  metadata and stages atomic scalar stores. It does not yet enable guest record
+  selected-place IR/source or change public Fuel/capability metadata.
 
 ## Product boundary
 

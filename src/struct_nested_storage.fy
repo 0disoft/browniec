@@ -7,7 +7,8 @@ import scalar_codec as codec;
 // Private nested storage. Replan caller metadata at every public boundary.
 pub enum Error { Layout; Bounds; Fields; State; Alignment; Quota; Overflow; Value; Type; }
 struct Cursor { usize depth; usize[16] records; usize[16] fields; usize[16] bases; }
-struct Leaf { u8 tag; usize offset; }
+// A checked scalar location is metadata, never a pointer or ownership proof.
+pub struct Leaf { u8 tag; usize offset; }
 
 fn bool valid(ref arenas::Arena arena, usize capacity) {
     return arena.used <= arena.limit && arena.limit <= capacity;
@@ -174,6 +175,27 @@ pub fn Result<usize, Error> write(ref layouts::Catalog catalog, usize record, us
     return switch (codec::encode(leaf.tag, value, storage[leaf.offset..leaf.offset + width])) {
         case .ok(written): { .ok(written) } case .err(error): { .err(codec_error(error)) }
     };
+}
+
+// Depth-first scalar ordinals match record IR. Resolve without reading payload
+// or retaining a mutable caller path. The canonical <=128-byte root and <=16
+// levels bound the iterator; missing/host-maximum ordinals fail before walking.
+pub fn Result<Leaf, Error> scalar_location(ref layouts::Catalog catalog, usize record,
+    usize base, usize ordinal, usize capacity, ref arenas::Arena arena) {
+    if (ordinal >= 128) { return .err(.Bounds); }
+    let layouts::Plan plan = switch (layouts::plan(catalog,18446744073709551615)) {
+        case .ok(value): { value } case .err(_): { return .err(.Layout); }
+    };
+    let usize size = extent(ref plan,record,base,capacity,arena)?;
+    var Cursor cursor = Cursor { .depth = 1, .records = [0;16], .fields = [0;16], .bases = [0;16] };
+    cursor.records[0] = record; var usize index = 0;
+    while (index <= ordinal) {
+        let Leaf leaf = next(catalog,ref plan,ref mut cursor);
+        if (leaf.tag == 0) { return .err(.Bounds); }
+        if (index == ordinal) { return .ok(Leaf { .tag = leaf.tag, .offset = base+leaf.offset }); }
+        index += 1;
+    }
+    return .err(.Bounds);
 }
 
 // The validated root extent and plan bound all iterator offsets. The caller

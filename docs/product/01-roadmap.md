@@ -38,6 +38,10 @@
   compounds, with shared nested place IDs and nonlocal cleanup. Source IR/Fuel
   changes deliberately; version metadata adds two narrow slice-assignment flags.
   Record/scalar-local places, grouped lvalues and aggregate overlap remain next.
+  The [native record-location prerequisite](../engineering/record-selected-place.md)
+  now captures nominal owner/reservation and nested scalar ordinal, with
+  metadata-only selection and revalidated atomic read/store. Record-place IR,
+  metered VM integration and source lowering remain next.
 
 ## Milestone status
 
