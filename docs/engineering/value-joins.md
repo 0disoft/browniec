@@ -41,8 +41,13 @@ unchanged.
 Run `python -B tools/verify-value-joins.py --batch source --profile development`
 and `--batch native --profile development`, with release counterparts. The disjoint selections contain seven source groups (three new groups with 55
 guest programs and four unchanged regressions) and three native helper groups.
-Final focused outcomes and input identities are recorded separately after
-validation.
+Windows development/release each passed all ten groups on `7a7ff8f` after helper
+`f06cc54`. All 210 inputs match checkout/Git raw bytes; all 199 production modules
+are LF. The unchanged admitted 32/rejected 33 fixture passed in both profiles.
+See the [Windows evidence](../evidence/value-joins-windows-20261107.json) and
+[input manifest](../evidence/value-joins-inputs-windows-20261107.json).
+Public CLI/full language/native Fuel matrices, Linux, OOM injection, general
+stack/performance and clean-machine delivery were not rerun.
 Public admission, typed loops/break/continue, useful Buffer operations, general
 aggregate/reference/module composition and full language/runtime/Engine/Instance/
 host/isolation/embed/platform/delivery validation remain open.

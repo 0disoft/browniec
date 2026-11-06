@@ -1,3 +1,15 @@
+- Private [typed if/switch values](docs/engineering/value-joins.md) now join exact
+  scalar, Buffer and nested-tag values, including local owners and terminal return
+  arms. One destination is initialized only on yielding paths; arm cleanup follows
+  publication, and Result obligations survive joins. Both Windows profiles passed
+  ten groups (source 7/native 3), with 55 new guest programs and the unchanged 32/33
+  fixture, on `7a7ff8f` after helper `f06cc54`. All 210 inputs match checkout/Git raw
+  bytes; all 199 production modules are LF. See
+  [evidence](docs/evidence/value-joins-windows-20261107.json). Public source/CLI gates,
+  capabilities, existing prices and Fuel default/cap stay unchanged. Next typed
+  loops/break/continue, useful Buffer operations and general source/public
+  composition. Full implementation and broader validation remain open. Local only; no push/release/deployment.
+
 - Private [typed Result obligations](docs/engineering/value-must-use.md) now reject
   unhandled Results at overwrite, scope/return exits and early propagation edges.
   Non-consuming predicates, exhaustive cases, return, CALL and explicit discard

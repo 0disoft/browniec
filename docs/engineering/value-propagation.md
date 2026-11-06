@@ -64,7 +64,8 @@ Public CLI/full language/native Fuel matrices, Linux, OOM injection, general
 stack/performance and clean-machine delivery remain separate obligations.
 
 The [must-use successor](value-must-use.md) diagnoses pending direct Results at
-normal/early exits, overwrite and continuing joins. Typed value-expression joins,
-loops/break/continue, useful Buffer operations, aggregate/reference/module/public
+normal/early exits, overwrite and continuing joins. The
+[typed-join successor](value-joins.md) now adds scalar/Buffer/nested-tag values.
+Typed loops/break/continue, useful Buffer operations, aggregate/reference/module/public
 composition and the wider Engine/Instance/host/isolation/embed/delivery work remain
 open. This private path does not complete the full language profile.

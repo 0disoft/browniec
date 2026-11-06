@@ -4,7 +4,8 @@ The [predicate successor](value-predicates.md) now adds non-consuming typed
 Option/Result inspection through TAG_TEST98, including move-only Buffer wrappers.
 The [propagation successor](value-propagation.md) now connects wide/resource `?`
 and early cleanup. [Private must-use](value-must-use.md) now tracks Result
-obligations; typed value-expression joins, loops and public
+obligations. [Typed joins](value-joins.md) now connect scalar/Buffer/nested-tag
+if/switch values; loops and public
 integration remain separate work.
 
 `vm::run_values` connects independently verified [typed IR](value-ir.md) to the

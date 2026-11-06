@@ -55,6 +55,7 @@ all 198 production modules are LF. See the
 Full CLI/language/native Fuel matrices, Linux, OOM/general stack/performance and
 clean-machine delivery remain separate obligations.
 
-Public Result diagnostics, typed value-expression joins, loops/break/continue,
+The [typed-join successor](value-joins.md) now preserves obligations across
+scalar/Buffer/nested-tag if/switch values. Public Result diagnostics, loops/break/continue,
 useful Buffer operations, general aggregate/reference/module/public composition
 and the wider Engine/Instance/host/isolation/embed/delivery work remain open.

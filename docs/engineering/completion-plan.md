@@ -11,7 +11,19 @@ regressions, then commit; record broader checks only when actually run. Do not
 enable public syntax, delivery flags or ABI availability ahead of implemented
 admission, execution and cleanup. Push/release/deployment are separate actions.
 
-Latest private must-use checkpoint (2026-11-07): Private [typed Result obligations](value-must-use.md) now reject
+Latest private value-join checkpoint (2026-11-07): Private [typed if/switch values](value-joins.md) now join exact
+scalar, Buffer and nested-tag values, including local owners and terminal return
+arms. One destination is initialized only on yielding paths; arm cleanup follows
+publication, and Result obligations survive joins. Both Windows profiles passed
+ten groups (source 7/native 3), with 55 new guest programs and the unchanged 32/33
+fixture, on `7a7ff8f` after helper `f06cc54`. All 210 inputs match checkout/Git raw
+bytes; all 199 production modules are LF. See
+[evidence](../evidence/value-joins-windows-20261107.json). Public source/CLI gates,
+capabilities, existing prices and Fuel default/cap stay unchanged. Next typed
+loops/break/continue, useful Buffer operations and general source/public
+composition. Full implementation and broader validation remain open.
+
+Predecessor private must-use checkpoint (2026-11-07): Private [typed Result obligations](value-must-use.md) now reject
 unhandled Results at overwrite, scope/return exits and early propagation edges.
 Non-consuming predicates, exhaustive cases, return, CALL and explicit discard
 handle or transfer obligations independently of COPY ownership. Both Windows
@@ -243,11 +255,14 @@ Fuel default 256 / ceiling 16000000 and wider capability gates remain unchanged.
    The [control successor](value-control.md) now adds mutable assignment and
    statement if/switch joins. The [predicate successor](value-predicates.md) now adds
    non-consuming inspection. The [propagation successor](value-propagation.md) now
-   adds typed early return and complete anonymous capture cleanup. Next must-use, typed
-   value-expression joins, loops and useful Buffer operations before aggregate/
-   reference/module composition and public admission. For L06, public scalar/tagged `.is_ok` and
-   explicit discard are implemented; unused Result-binding diagnosis and the
-   wide/resource path remain missing, so `must_use_result` stays false.
+   adds typed early return and complete anonymous capture cleanup. The
+   [private must-use successor](value-must-use.md) checks bindings, parameters,
+   replacement, scopes and early exits independently of COPY ownership. The
+   [typed-join successor](value-joins.md) now adds exact scalar/Buffer/nested-tag
+   if/switch values with publication before arm cleanup. Next typed loops and
+   useful Buffer operations before aggregate/
+   reference/module composition and public admission. Public L06 composition and
+   complete validation remain, so the public `must_use_result` flag stays false.
    These increments do not close L04/L05/L06/D01-D04; wider public gates and
    ordinary prices/default/cap remain unchanged.
 3. **Engine and Instance: R01-R05.** The [call capture-stack fix](native-call-capture-stack.md)
