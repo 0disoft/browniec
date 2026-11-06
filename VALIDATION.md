@@ -1,3 +1,20 @@
+- Owned-record selected-place IR now executes in both VM drivers through
+  canonical current record bindings, exact setup/operation preflight and shared
+  frame/END cleanup. See the [contract](docs/engineering/record-place-execution.md).
+  Complete ordinary/image/returned-reference admission accepts kind2; recipe
+  scalar-use and returned-array/record namespace guards are connected.
+  Development/release each passed 27 native groups (seven new record execution,
+  twenty record-proof/adapter/slice/guard/CALL regressions) and 57 tool-free
+  public Fuel CLI cases on 190 Git-raw/checkout-matching inputs,
+  170 LF modules, 293-file discovery and both locked LF mirrors.
+  See [Windows evidence](docs/evidence/record-place-execution-windows-20261106.json).
+  Exact ordinary native/public Fuel is215691/281219; retained native/public is
+  559753/625290. Existing prices/default256/cap16000000 and source capabilities
+  remain. Record source early selection/compounds, other places/overlap and full
+  L04/C05/Instance/host/delivery remain open. Full language/original full native
+  Fuel, Linux, OOM/general stack/performance/isolation/delivery were not rerun.
+  Local only; earlier checkpoints retain their scopes.
+
 - Private metered owned-record selected-place storage now has a distinct
   two-word prefix, mixed frame counters and atomic SELECT/READ/STORE/END
   preflight. See the [contract](docs/engineering/record-place-vm.md).

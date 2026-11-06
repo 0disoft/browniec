@@ -72,7 +72,40 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,ref records::Prepared 
     ref owners::Table table,owners::Token current,ref mut u8[] data,ref mut i64[] registers,usize fuel){
     let usize mode=kind(p,pc)?;let usize at=pc*8;let u8 op=p.code[at];
     if(mode!=2 && op!=86){return .err(errors::make(5,pc));}
-    let usize offset=p.offsets[pc];let usize price=cost(p,shapes,pc,function,state)?;
+    let usize price=cost(p,shapes,pc,function,state)?;
+    let u8 element=if(op==86){0}else{typing::element(p,shapes,p.code[at+if(op==84){3}else{2}] as usize,p.code[at+5] as usize,function,pc)?};
+    return apply(p,pc,function,frame,state,table,current,data,registers,fuel,price,element);
+}
+// Complete immutable Program admission already proved ordinal/type identity.
+// Use its exact scalar register type for codec pricing; SELECT has no payload
+// term and discovers its tag only AFTER prepayment through native selection.
+fn Result<u8,errors::Error> executable_element(ref ir::Program p,usize pc,usize function){
+    let usize mode=kind(p,pc)?;let usize at=pc*8;let u8 op=p.code[at];
+    if(op==86){return .ok(0);}if(mode!=2){return .err(errors::make(5,pc));}
+    let usize site=p.code[at+if(op==84){3}else{2}] as usize;
+    if(function>=16 || function>=p.function_count || site>=16 || site>=p.records.count ||
+        p.record_functions[site] as usize!=function || !p.records.mutable[site]){return .err(errors::make(5,pc));}
+    if(op==83){return .ok(0);}let usize r=p.code[at+if(op==84){1}else{3}] as usize;
+    if(r>=128 || r>=p.registers || codec::width(p.types[r])==0){return .err(errors::make(5,pc));}
+    return .ok(p.types[r]);
+}
+pub fn Result<usize,errors::Error> price(ref ir::Program p,usize pc,usize function,ref vec::Vec<usize> state){
+    let u8 element=executable_element(p,pc,function)?;let frames::Format shape=frames::format(state,p.offsets[pc])?;
+    if(shape.prefix!=2){return .err(errors::make(5,pc));}
+    return .ok(meter::record_place_instruction(p.code[pc*8],codec::width(element)));
+}
+// Coordinator-only executable adapter. Resolve current SELECT tokens from its
+// canonical frame/site map after this same price preflight, never a saved row.
+pub fn Result<usize,errors::Error> bound(ref ir::Program p,usize pc,usize function,usize frame,
+    ref mut vec::Vec<usize> state,ref owners::Table table,owners::Token current,
+    ref mut u8[] data,ref mut i64[] registers,usize fuel){
+    let usize work=price(p,pc,function,state)?;let u8 element=executable_element(p,pc,function)?;
+    return apply(p,pc,function,frame,state,table,current,data,registers,fuel,work,element);
+}
+fn Result<usize,errors::Error> apply(ref ir::Program p,usize pc,usize function,usize frame,
+    ref mut vec::Vec<usize> state,ref owners::Table table,owners::Token current,
+    ref mut u8[] data,ref mut i64[] registers,usize fuel,usize price,u8 element){
+    let usize at=pc*8;let u8 op=p.code[at];let usize offset=p.offsets[pc];
     if(fuel<price){return .err(errors::make(8,offset));}
     let frames::Format shape=frames::format(state,offset)?;
     let usize dst=p.code[at+1] as usize;let usize a=p.code[at+2] as usize;let usize b=p.code[at+3] as usize;
@@ -89,19 +122,18 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,ref records::Prepared 
         return .ok(fuel-price);
     }
     let usize site=if(op==84){b}else{a};let usize ordinal=p.code[at+5] as usize;
-    let u8 element=typing::element(p,shapes,site,ordinal,function,pc)?;
     if(op==83){
         if(phase!=0 || packed!=0 || active>=shape.width){return .err(errors::make(5,offset));}
         var usize i=0;while(i<13){if(words[base+i]!=0){return .err(errors::make(5,offset));}i+=1;}
         let places::Place selected=switch(places::select(ref p.records.layouts,table,current,ordinal,data.len)){
             case .ok(v):{v}case .err(e):{return .err(failures::failure(e,offset));}
         };
-        if(selected.record!=p.records.records[site] as usize || selected.element!=element){return .err(errors::make(5,offset));}
+        if(selected.record!=p.records.records[site] as usize || (element!=0 && selected.element!=element)){return .err(errors::make(5,offset));}
         words[base]=selected.root.slot;words[base+1]=selected.root.generation;words[base+2]=selected.record;
         words[base+3]=selected.length;words[base+4]=selected.alignment;words[base+5]=selected.mark;
         words[base+6]=selected.base;words[base+7]=selected.end;words[base+8]=selected.ordinal;
         words[base+9]=selected.offset;
-        words[tail]=(element as usize)|(site<<4)|256|2048;words[header]=active+1;
+        words[tail]=(selected.element as usize)|(site<<4)|256|2048;words[header]=active+1;
     }else{
         if(active==0 || phase==0 || (packed&3072)!=2048 || ((packed>>4)&15)!=site ||
             (packed&15)!=(element as usize) || words[base+2]!=p.records.records[site] as usize ||

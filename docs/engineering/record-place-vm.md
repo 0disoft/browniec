@@ -3,7 +3,8 @@
 This follows the [independent record-place proof](record-place-ir.md). The
 private adapter now executes record SELECT/READ/STORE and common END against
 caller-owned backing. It does not grant ordinary, image or returned-reference
-execution admission. Both VM drivers and source lowering remain separate work.
+execution admission. The [execution successor](record-place-execution.md) now
+connects both VM drivers and complete admission; source lowering remains next.
 
 ## Storage and ownership
 
@@ -78,13 +79,15 @@ are not timings. Changes to these capacities require a new audit.
 
 ## Admission and remaining work
 
-Only private native calls can use this adapter. `place_vm` and `slice_place_vm`
+At this storage checkpoint only private native calls used this adapter. The
+[execution successor](record-place-execution.md) now connects both VM drivers,
+complete admission and image/returned-owner/recipe guards. `place_vm` and `slice_place_vm`
 still reject record instructions in requirement/cost preflight; recognizing
-the new private Vec format grants no Program admission. Both VM coordinators
-must resolve current live record tokens from canonical frame/site state, prepay
-setup, dispatch kinds, preserve CALL/lexical cleanup and protect returned roots
-before executable kind2 is enabled. Image/recipe guards and record source
-selection/compound lowering remain next. Scalar-local/grouped places, generic
+the new private Vec format alone grants no Program admission. Both VM
+coordinators now resolve current live record tokens from canonical frame/site
+state, prepay setup, dispatch kinds and preserve CALL/frame cleanup through
+that successor. Record source selection/compound lowering remains next.
+Scalar-local/grouped places, generic
 aggregate overlap and full L04/C05/Instance/host/delivery remain open.
 
 ## Verification

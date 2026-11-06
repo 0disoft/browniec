@@ -24,8 +24,9 @@ fn errors::Error invalid(usize pc){return errors::make(5,pc);}
 fn Proof empty(){return Proof{.definitions=[256;16],.functions=[16;16],.kinds=[0;16],
     .formal_sites=[0;128],.site_origins=[0;16],.result_origins=[0;16],.sites=0,.calls=0,.returns=0,.rounds=0};}
 fn bool reserved(ref ir::Program p,usize at){
-    let u8 op=p.code[at];return (if(op>=83 && op<=85){p.code[at+4]<=1}else{p.code[at+4]==0}) &&
-        p.code[at+5]==0 && p.code[at+6]==0 && p.code[at+7]==0;
+    let u8 op=p.code[at];let bool record=op>=83 && op<=85 && p.code[at+4]==2;
+    return (if(op>=83 && op<=85){p.code[at+4]<=2}else{p.code[at+4]==0}) &&
+        (if(record){p.code[at+5]<128 && (op!=83 || p.code[at+3]==0)}else{p.code[at+5]==0}) && p.code[at+6]==0 && p.code[at+7]==0;
 }
 fn bool input(ref Program unit,usize f){
     let ref ir::Program p=ref unit.body;var usize r=p.register_starts[f];

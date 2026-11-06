@@ -208,20 +208,20 @@ fn ir::Program looped(bool leak){
     assert(last==254 && p.count==256);analysis(ref p);
 }
 
-@test fn void analysis_never_grants_executable_or_old_adapter_authority_before_fuel_or_allocations(){
+@test fn void complete_admission_accepts_record_places_while_old_adapters_keep_their_dialects(){
     let ir::Program p=basic(1);analysis(ref p);
-    assert(!verifier::inspect(ref p).is_ok && !verifier::inspect_slice_places(ref p).is_ok && !verifier::verify(ref p).is_ok);
+    assert(verifier::inspect(ref p).is_ok && !verifier::inspect_slice_places(ref p).is_ok && verifier::verify(ref p).is_ok);
     let images::Builder builder=switch(images::builder(0)){case .ok(v):{v}case .err(_):{assert(false);return;}};
     let images::Image image=switch(images::freeze(ref builder,65536)){case .ok(v):{v}case .err(_):{assert(false);return;}};
-    assert(!verifier::inspect_statics(ref p,ref image).is_ok);
-    assert(!verifier::verify_statics(ref p,ref image).is_ok);
+    assert(verifier::inspect_statics(ref p,ref image).is_ok);
+    assert(verifier::verify_statics(ref p,ref image).is_ok);
     let image_calls::Program unit=image_calls::Program{.body=p,.parameters=[0;128],.results=[0;16],.origins=[0;16]};
-    assert(!verifier::inspect_reference_calls(ref unit,ref image).is_ok && !verifier::inspect_reference_returns(ref unit,ref image).is_ok);
+    assert(verifier::inspect_reference_calls(ref unit,ref image).is_ok && verifier::inspect_reference_returns(ref unit,ref image).is_ok);
     assert(!array_adapter::requirement(ref p).is_ok && !slice_adapter::requirement(ref p).is_ok);
     error(array_adapter::cost(ref p,4),5,4);error(slice_adapter::cost(ref p,4,true),5,4);
-    assert(switch(vm::run(ref p,0)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==4}});
-    assert(switch(vm::run(ref p,16000000)){case .ok(_):{false}case .err(e):{e.kind==5 && e.offset==4}});
+    assert(switch(vm::run(ref p,0)){case .ok(_):{false}case .err(e):{e.kind==8}});
+    assert(switch(vm::run(ref p,16000000)){case .ok(v):{v==42}case .err(_):{false}});
     var arrays::State a=arrays::empty(0);var bytes::Buffer data=bytes::empty();var slices::State l=slices::empty();var calls::Frames frames=calls::empty();
-    assert(switch(execution::execute(ref p,0,ref mut a,ref mut data,ref mut l,ref mut frames)){case .ok(_):{false}case .err(e):{e.kind==5}});
+    assert(switch(execution::execute(ref p,0,ref mut a,ref mut data,ref mut l,ref mut frames)){case .ok(_):{false}case .err(e):{e.kind==8}});
     assert(a.owners.depth==0 && a.owners.arena.used==0 && bytes::len(ref data)==0);
 }

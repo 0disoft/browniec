@@ -10,6 +10,8 @@ import slice_authority as authority;
 import array_vm as arrays;
 import array_list_vm as list_values;
 import slice_place_vm as places;
+import record_place_vm as record_places;
+import slice_result_record_bindings as record_bindings;
 import place_vm as place_frames;
 import struct_call_vm as owned_calls;
 import slice_result_owned_execution as owned;
@@ -173,12 +175,12 @@ fn Result<Outcome,errors::Error> invoke_proved(ref body_ir::Program body,ref u8[
     let usize depth=switch(authority::inspect(ref state.runtime.authority)){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,0));}};
     if(!available(ref state.runtime.authority,true)){return .err(errors::make(5,0));}
     let list_values::Requirement list_plan=list_values::requirement(body)?;
-    let places::Requirement place_plan=places::requirement(body)?;
+    let record_places::Requirement place_plan=record_places::requirement(body)?;
     let usize work=owned_calls::cost(body,function,0)?+body.arities[function];
     if(fuel<runtime::cost()+work+list_plan.cost+place_plan.cost){return .err(errors::make(8,0));}
     var vec::Vec<i64> list_cells=list_values::prepare_values(ref list_plan)?;
     var bytes::Buffer list_scratch=list_values::prepare_encoded(ref list_plan)?;
-    var vec::Vec<usize> place_state=places::prepare(ref place_plan)?;
+    var vec::Vec<usize> place_state=record_places::prepare(ref place_plan)?;
     let runtime::Entered first=entry::enter(body,function,binding(body,parameters,function),captures,inputs,state,data,fuel-list_plan.cost-place_plan.cost)?;
     let Result<Outcome,errors::Error> outcome=start(body,parameters,function,ref first,values,state,data,sites,literals,ref mut list_cells,ref mut list_scratch,ref mut place_state);
     return switch(outcome){
@@ -216,8 +218,15 @@ fn Result<Outcome,errors::Error> run(ref body_ir::Program body,ref u8[] paramete
         let usize base=frame*128;
         if(remaining==0){return .err(errors::make(8,offset));}remaining-=1;
         if(op>=83 && op<=86){
-            remaining=places::bound(body,pc,f,frame,place_state,ref state.runtime.owners,ref bindings.tokens,
-                ref state.runtime.pool,ref bindings.sites,data,ref mut registers[base..base+128],remaining)?;pc+=1;continue;
+            if(body.code[at+4]==2 || (op==86 && place_frames::format(place_state,offset)?.prefix==2)){
+                let usize price=record_places::price(body,pc,f,place_state)?;
+                if(remaining<price){return .err(errors::make(8,offset));}
+                let owners::Token current=if(op==83){record_bindings::get(ref bindings.records,frame*16+a)}else{owners::Token{.slot=0,.generation=0}};
+                remaining=record_places::bound(body,pc,f,frame,place_state,ref state.runtime.owners,current,
+                    data,ref mut registers[base..base+128],remaining)?;
+            }else{remaining=places::bound(body,pc,f,frame,place_state,ref state.runtime.owners,ref bindings.tokens,
+                ref state.runtime.pool,ref bindings.sites,data,ref mut registers[base..base+128],remaining)?;
+            }pc+=1;continue;
         }
         if(op==8 || op==39 || op==50 || op==65 || op==79 || op==82){let usize ended=place_frames::empty_frame(place_state,frame,offset)?;}
         if(op==80 || op==81){

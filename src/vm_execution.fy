@@ -10,6 +10,8 @@ import shifts as shifts;
 import array_vm as array_vm;
 import array_list_vm as lists;
 import slice_place_vm as places;
+import record_place_vm as record_places;
+import array_owners as owners;
 import place_vm as place_frames;
 import array_range_vm as array_ranges;
 import slice_vm as slices;
@@ -86,11 +88,11 @@ fn Result<i64, errors::Error> core(ref ir::Program p, usize fuel,
     if(authority.len>1 || call_sites.len!=authority.len || child_bindings.len!=authority.len){return .err(errors::make(5,0));}
     if(authority.len==0 && reborrows::present(p)) { return .err(errors::make(5,0)); }
     let lists::Requirement list_plan=lists::requirement(p)?;
-    let places::Requirement place_plan=places::requirement(p)?;
+    let record_places::Requirement place_plan=record_places::requirement(p)?;
     if(fuel<list_plan.cost+place_plan.cost){return .err(errors::make(8,0));}
     var vec::Vec<i64> list_cells=lists::prepare_values(ref list_plan)?;
     var bytes::Buffer list_scratch=lists::prepare_encoded(ref list_plan)?;
-    var vec::Vec<usize> place_state=places::prepare(ref place_plan)?;
+    var vec::Vec<usize> place_state=record_places::prepare(ref place_plan)?;
     var usize remaining = fuel-list_plan.cost-place_plan.cost;
     var struct_vm::State records = struct_vm::empty();
     var i64[4096] registers = [0; 4096];
@@ -107,8 +109,15 @@ fn Result<i64, errors::Error> core(ref ir::Program p, usize fuel,
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
         if(op>=83 && op<=86){let usize base=frame*128;
-            remaining=places::bound(p,pc,functions[frame],frame,ref mut place_state,ref arrays.owners,ref arrays.tokens,
+            if(place_plan.records && (p.code[at+4]==2 || op==86)){
+                let usize price=record_places::price(p,pc,functions[frame],ref place_state)?;
+                if(remaining<price){return .err(errors::make(8,p.offsets[pc]));}
+                let owners::Token current=if(op==83){records.tokens[frame*16+a]}else{owners::Token{.slot=0,.generation=0}};
+                remaining=record_places::bound(p,pc,functions[frame],frame,ref mut place_state,ref arrays.owners,current,
+                    bytes::view_mut(payload),ref mut registers[base..base+128],remaining)?;
+            }else{remaining=places::bound(p,pc,functions[frame],frame,ref mut place_state,ref arrays.owners,ref arrays.tokens,
                 ref loans.pool,ref loans.tickets,bytes::view_mut(payload),ref mut registers[base..base+128],remaining)?;
+            }
             pc+=1;continue;
         }
         if(op==8 || op==39 || op==50 || op==82){let usize ended=place_frames::empty_frame(ref place_state,frame,p.offsets[pc])?;}

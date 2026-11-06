@@ -60,7 +60,7 @@ pub fn Result<Chain,errors::Error> chain(ref ir::Program p,usize pc,usize argume
 // Called only after complete normalized CFG/type/loan proof has bounded operands.
 fn Result<bool,errors::Error> reads(ref ir::Program p,usize pc,usize r){
     let usize at=pc*8;let u8 op=p.code[at];let usize dst=p.code[at+1] as usize;let usize a=p.code[at+2] as usize;let usize b=p.code[at+3] as usize;
-    if(op==83 || op==85){return .ok(b==r);}
+    if(op==83 || op==85){return .ok((op==85 || p.code[at+4]!=2) && b==r);}
     if(op==80 || op==81){let usize begin=lists::start(p,pc);var usize i=0;
         while(i<p.arrays.lengths[dst]){if(p.list_operands[begin+i] as usize==r){return .ok(true);}i+=1;}return .ok(false);
     }

@@ -40,8 +40,9 @@ row. Any error discards the vector and runs existing canonical abort cleanup,
 retaining earlier payload effects and the first error. There is no automatic
 replay. A caller may explicitly start another invocation after cleanup.
 
-Static recipes accept only kind0/1 on SELECT/READ/STORE, with remaining reserved
-bytes zero. Their complete ordinary proof still establishes shape and authority.
+At this checkpoint Static recipes accepted kind0/1 on SELECT/READ/STORE. The
+[record-place successor](record-place-execution.md) now adds canonical kind2 and
+its repeated byte5 ordinal. Complete ordinary proof still establishes shape and authority.
 Existing recipe scalar-use checks include SELECT's index and STORE's scalar;
 prepared returned identities cannot be used as ordinary scalars. READ's exact
 scalar destination and shared END cleanup retain their existing proof rules.

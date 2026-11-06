@@ -1,11 +1,12 @@
 # Public Fuel costs and CLI ceiling
 
-The [private record-place storage successor](record-place-vm.md) adds exact
-setup and SELECT/READ/STORE prices without changing public admission or limits.
+The [record-place execution successor](record-place-execution.md) connects exact
+setup and SELECT/READ/STORE prices through both native-IR execution paths.
 Record-capable setup is 5077..72277, SELECT is 41025, READ adds stride, STORE
 adds twice stride, and mixed END is 22. Existing array/slice formats and prices
-remain. Both driver integrations and public source costs are still pending;
-private adapter tests do not establish a whole-invocation public record oracle.
+remain. Exact ordinary native/public budgets are 215691/281219; retained
+native/public budgets are 559753/625290. Record source lowering remains next;
+these native-IR fixture totals are not source oracles. Public limits remain.
 
 The 2026-11-06 [selected-place VM successor](array-place-execution.md) now admits
 owned-array SELECT/READ/STORE/END through native IR APIs in both drivers. Only

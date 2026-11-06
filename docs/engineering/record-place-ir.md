@@ -65,17 +65,18 @@ snapshot/VM adapter's responsibility.
 
 ## Execution gate and remaining work
 
-Every existing ordinary, slice-analysis, immutable-image and returned-reference
-admission path still accepts at most kinds zero/one. Both old native adapters
-reject record kind two in requirement/cost preflight. `vm::run` and the raw
-ordinary execution driver reject it before Fuel or backing allocation; an
-analysis result cannot bypass these gates. No source grammar, capability flag,
-existing instruction price, default 256 or ceiling 16000000 changes.
+At this analysis checkpoint executable admission accepted at most kinds zero/one.
+The [execution successor](record-place-execution.md) now connects complete kind2
+admission, both drivers and image/returned-reference/recipe guards. The named
+slice-only analysis and both old native adapters retain their original dialects.
+An analysis result or storage helper alone cannot bypass complete admission.
+No source grammar, capability flag, existing instruction price, default256 or
+ceiling16000000 changes.
 
 The [metered native storage successor](record-place-vm.md) now supplies private
-record-capable frames and exact setup/instruction preflight. Both VM drivers,
-image/returned-owner/recipe guards and record source early selection/compounds
-remain next. Scalar-local
+record-capable frames and exact setup/instruction preflight; the execution
+successor supplies both drivers and guards. Record source early selection and
+compounds remain next. Scalar-local
 and grouped places, generic aggregate overlap and full L04/C05/Instance/host/
 delivery remain open.
 

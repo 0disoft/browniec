@@ -34,6 +34,9 @@ fn Result<usize,errors::Error> guard(ref ir::Program p,usize pc,usize protected)
     if(op==36 || op==37 || op==38 || op==40 || op==81){
         if((protected&(one<<dst))!=0){return .err(invalid(pc));}
     }else if(op==83 || op==84 || op==85){let usize site=if(op==84){b}else{a};
+        // Plain records cannot back byte-reference results. Their catalog site
+        // is a separate namespace from both array roots and slice sites.
+        if(p.code[at+4]==2){return .ok(protected);}
         let usize root=if(p.code[at+4]==0){site+1}else{p.slice_roots[site] as usize};
         if(root!=0 && (protected&(one<<(root-1)))!=0){return .err(invalid(pc));}
     }else if(op==60 || op==61 || (op==54 && ir::exclusive(p,dst))){
