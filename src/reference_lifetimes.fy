@@ -62,7 +62,7 @@ pub fn Result<usize,errors::Error> inspect(ref ir::Program p,ref statics::Sites 
             let usize dst=p.code[at+1] as usize;let usize a=p.code[at+2] as usize;let usize b=p.code[at+3] as usize;
             if((op>=74 && op<=77) || op==69 || (op==78 && sites.results[a]!=0)){bits|=one<<dst;}
             else if(op==70){bits^=one<<dst;}
-            if(op==8 || op==39 || op==50 || op==65 || op==79 || op==25){pc+=1;continue;}
+            if(op==8 || op==39 || op==50 || op==65 || op==79 || op==25 || op==82){pc+=1;continue;}
             if(op==22){if(!seen[a] || states[a]!=bits){return .err(invalid(pc));}pc+=1;continue;}
             if(op==19 || op==20 || op==21 || op==24){
                 let usize target=if(op==19){a}else if(op==24){p.code[at+4] as usize}else{b};

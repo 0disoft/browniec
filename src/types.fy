@@ -6,6 +6,7 @@ import errors as errors;
 // 1 i32, 2 bool, 9 i64; 3/4 Option<i32/bool>; 5..8 Result<i32/i32,
 // i32/bool, bool/i32, bool/bool>. Payloads are scalar, never nested wrappers.
 // 10 u8, 11 u32, 12 usize (64-bit). These are never wrapper payload types.
+// 13 void is return metadata only. It is never a register/local/payload type.
 pub fn bool signed(u8 tag) { return tag == 1 || tag == 9; }
 pub fn bool unsigned(u8 tag) { return tag >= 10 && tag <= 12; }
 pub fn bool integer(u8 tag) { return signed(tag) || unsigned(tag); }

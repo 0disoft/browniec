@@ -39,6 +39,8 @@ import std::num as num;
 // 80 atomic array element list: dst=array,a/b=little-endian operand-pool start.
 // 81 exact-shape element-list replacement of a live mutable array, same operands.
 // Arity is the exact destination length; bytes4..7 are reserved zero.
+// 82 void return: all seven operand/reserved bytes are zero. CALL to a function
+// with return tag 13 has canonical dst=0 and defines no scalar register.
 pub struct Program {
     u8[2048] code;
     i64[128] constants;
@@ -152,7 +154,7 @@ pub fn Result<usize,errors::Error> widen(ref mut Program p,usize source,u8 targe
 }
 
 pub fn Result<usize, errors::Error> call(ref mut Program p, usize target, ref usize[] arguments, usize offset) {
-    if (p.call_count >= 32 || arguments.len > 8) { return .err(errors::make(4, offset)); }
+    if (p.call_count >= 32 || arguments.len > 8 || target>=16) { return .err(errors::make(4, offset)); }
     let usize site = p.call_count;
     var usize i = 0;
     while (i < arguments.len) {
@@ -161,6 +163,7 @@ pub fn Result<usize, errors::Error> call(ref mut Program p, usize target, ref us
     }
     p.call_arities[site] = byte(arguments.len, offset)?;
     p.call_count += 1;
+    if(p.return_types[target]==13){let usize emitted=raw(p,9,0,target,site,offset)?;return .ok(256);}
     return emit(p, 9, target, site, offset);
 }
 

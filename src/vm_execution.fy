@@ -102,6 +102,12 @@ fn Result<i64, errors::Error> core(ref ir::Program p, usize fuel,
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
+        if(op==82){
+            if(remaining==0){return .err(errors::make(8,p.offsets[pc]));}remaining-=1;
+            if(frame==0 || p.return_types[functions[frame]]!=13){return .err(errors::make(5,p.offsets[pc]));}
+            let usize closed=leave(p,functions[frame],frame,arrays,payload,loans,borrowed_frames,receipts,authority,call_sites,child_bindings,ref records,p.offsets[pc])?;
+            pc=return_pcs[frame];frame-=1;continue;
+        }
         if(op==80 || op==81){let usize base=frame*128;
             remaining=lists::step(p,pc,frame,arrays,bytes::view_mut(payload),ref registers[base..base+128],ref mut list_cells,ref mut list_scratch,remaining)?;
             pc+=1;continue;

@@ -338,7 +338,8 @@ fn Result<Outcome,errors::Error> run(ref body_ir::Program body,ref u8[] paramete
             pc=frames::pop(body,bindings,result)?;
             if(bindings.frame==0){return .ok(transferred(result));}continue;
         }
-        if(op==8 || op==39 || op==50){
+        if(op==8 || op==39 || op==50 || op==82){
+            if(op==82 && (frame==1 || body.return_types[f]!=13)){return .err(errors::make(5,offset));}
             if(static_live[frame]!=0){return .err(errors::make(5,offset));}
             let usize destination=bindings.destinations[frame];let usize next=bindings.continuations[frame];
             let i64 value=if(op==8){registers[base+a]}else{0};

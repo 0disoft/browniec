@@ -84,6 +84,8 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
                 static_live|=one<<dst;
             }else if(p.array_results[a]!=0 || p.record_results[a]!=0){
                 live=if(p.record_results[a]!=0){struct_results::call(p,a,dst,f,live,pc)?}else{array_results::call(p,a,dst,f,live,pc)?};
+            }else if(p.return_types[a]==13){
+                if(dst!=0){return .err(errors::make(5,pc));}
             }else{
                 if(dst<start || dst>=end || p.slots[dst] || registers::contains(ref written,dst) ||
                     p.types[dst]!=p.return_types[a] || !types::valid(p.types[dst])){return .err(errors::make(5,pc));}
@@ -106,8 +108,8 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
                 ref mut array_states, live, ref mut static_states, static_live)) { return .err(errors::make(5, pc)); }
             pc += 1; continue;
         }
-        if ((op == 8 || op == 39 || op == 50) && static_live != 0) { return .err(errors::make(5, pc)); }
-        if (op < 1 || (op > 62 && op!=80 && op!=81) || (op != 52 && ((op!=24 && op!=47 && op!=49 && op!=53 && op!=59 && op!=61 && p.code[at + 4] != 0) ||
+        if ((op == 8 || op == 39 || op == 50 || op==82) && static_live != 0) { return .err(errors::make(5, pc)); }
+        if (op < 1 || (op > 62 && op!=80 && op!=81 && op!=82) || (op != 52 && ((op!=24 && op!=47 && op!=49 && op!=53 && op!=59 && op!=61 && p.code[at + 4] != 0) ||
             (op!=47 && p.code[at + 5] != 0) || p.code[at + 6] != 0 || p.code[at + 7] != 0))) { return .err(errors::make(5, pc)); }
         // Strict analysis retains its gate; executable proof may admit this CALL.
         if(op==9 && (live>>48)!=0) {
@@ -141,6 +143,11 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
             let usize returned=array_results::returned(p,a,f,live,pc)?;
             pc+=1;continue;
         }
+        if(op==82){
+            if(p.return_types[f]!=13 || p.array_results[f]!=0 || p.record_results[f]!=0 ||
+                live!=0 || dst!=0 || a!=0 || b!=0){return .err(errors::make(5,pc));}
+            pc+=1;continue;
+        }
         if (op == 8) {
             if(p.array_results[f]!=0 || p.record_results[f]!=0) {return .err(errors::make(5,pc));}
             if (live != 0 || dst != 0 || b != 0 || !readable(p, ref defined, a, start, end)) { return .err(errors::make(5, pc)); }
@@ -157,6 +164,9 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
             live=array_verifier::step(p,pc,f,ref mut defined,ref mut written,live)?;
         }else if (op >= 54) {
             live = reborrows::step(p, loans, pc, f, ref mut defined, ref mut written, live)?;
+        } else if(op==9 && a<p.function_count && p.return_types[a]==13){
+            if(dst!=0 || b>=p.call_count || used_calls[b] || a==p.entry || p.call_arities[b] as usize!=p.arities[a]){return .err(errors::make(5,pc));}
+            let usize checked=array_parameters::arguments(p,a,b,f,ref defined,live,pc)?;used_calls[b]=true;
         } else if(op==9 && a<p.function_count && (p.array_results[a]!=0 || p.record_results[a]!=0)) {
             if(b>=p.call_count || used_calls[b] || a==p.entry || p.call_arities[b] as usize!=p.arities[a]) {return .err(errors::make(5,pc));}
             let usize checked=array_parameters::arguments(p,a,b,f,ref defined,live,pc)?;
@@ -248,7 +258,7 @@ fn Result<reborrows::Sites, errors::Error> validate(ref ir::Program p,bool allow
     var usize code_end = 0;
     var usize register_end = 0;
     while (f < p.function_count) {
-        if (p.record_results[f]==0 && static_sites.results[f]==0 && !types::valid(p.return_types[f])) { return .err(errors::make(5, code_end)); }
+        if (p.record_results[f]==0 && static_sites.results[f]==0 && p.return_types[f]!=13 && !types::valid(p.return_types[f])) { return .err(errors::make(5, code_end)); }
         if (p.starts[f] != code_end || p.ends[f] <= code_end || p.ends[f] > p.count ||
             p.register_starts[f] != register_end || p.register_ends[f] < register_end ||
             p.register_ends[f] > p.registers || p.arities[f] > 8 ||

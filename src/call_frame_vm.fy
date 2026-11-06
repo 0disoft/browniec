@@ -42,6 +42,8 @@ fn Result<Prepared,errors::Error> prepare(ref ir::Program p,usize pc,usize paren
         if(dst<144 || dst>=160) { return .err(errors::make(5,offset)); }
     } else if(p.array_results[target]!=0) {
         if(dst<128 || dst>=144) { return .err(errors::make(5,offset)); }
+    } else if(p.return_types[target]==13){
+        if(dst!=0){return .err(errors::make(5,offset));}
     } else if(dst<p.register_starts[caller] || dst>=p.register_ends[caller] ||
         p.types[dst]!=p.return_types[target] || p.slots[dst] || p.array_parameters[dst]!=0 ||
         p.record_parameters[dst]!=0 || p.slice_parameters[dst]!=0) { return .err(errors::make(5,offset)); }
