@@ -50,9 +50,20 @@ pub fn Result<bool,errors::Error> is_repeated(ref u8[] source,ref lexer::State s
 // initialization is the single publication point, as for repeated arrays.
 pub fn Result<usize,errors::Error> list(ref mut ir::Program p,usize function,
     ref usize[] values,u8 element,usize expected,bool mutable,usize at){
+    return list_into(p,function,values,element,expected,mutable,at,16);
+}
+pub fn Result<usize,errors::Error> site(ref mut ir::Program p,usize function,
+    u8 element,usize length,bool mutable,usize at,usize destination){
+    if(destination==16){return ir::array_in(p,function,element,length,mutable,at);}
+    if(destination>=p.arrays.count || p.array_functions[destination] as usize!=function ||
+        p.arrays.elements[destination]!=element || p.arrays.lengths[destination]!=length){return .err(errors::make(3,at));}
+    return .ok(destination);
+}
+pub fn Result<usize,errors::Error> list_into(ref mut ir::Program p,usize function,
+    ref usize[] values,u8 element,usize expected,bool mutable,usize at,usize destination){
     if(values.len==0 || (expected!=0 && expected!=values.len) || !types::scalar(element)){
         return .err(errors::make(3,at));}
-    let usize id=ir::array_in(p,function,element,values.len,mutable,at)?;
+    let usize id=site(p,function,element,values.len,mutable,at,destination)?;
     let usize initialized=ir::array_values(p,id,values,at)?;
     return .ok(id);
 }

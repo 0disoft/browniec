@@ -189,3 +189,8 @@ fn void declaration_error(ref u8[] a,ref u8[] b,u8 kind,u8 first){
     value(library,b"module app;import lib as m;pub fn i32 chosen(){let n=if(true){if(false){0}else{m::answer(true)}}else{0};return n+22;}",42);
     value(library,b"module app;import lib as m;pub fn i32 chosen(){let ref u8[] marker=b\"*\";return if(true){m::answer(true)+22}else{0};}",42);
 }
+@test fn void aggregate_conditionals_cross_both_qualified_compiler_routes(){
+    let ref u8[] library=b"module lib;pub struct P{i32 x;}pub fn P make(){return if(false){P{.x=0}}else{P{.x=42}};}pub fn i32[1] array(){return if(true){[42]}else{[0]};}pub fn i32 take(P p){return p.x;}";
+    value(library,b"module app;import lib as m;pub fn i32 chosen(){let p=if(true){m::make()}else{m::P{.x=0}};return m::take(if(true){p}else{m::make()});}",42);
+    value(library,b"module app;import lib as m;pub fn i32 chosen(){let ref u8[] marker=b\"*\";return (if(false){[0]}else{m::array()})[0];}",42);
+}

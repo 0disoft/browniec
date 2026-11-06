@@ -13,7 +13,6 @@ pub struct Value { usize id; bool owned; usize depth; }
 fn Plan none(){return Plan{.groups=0,.kind=0,.suffix=0};}
 pub fn Result<Plan,errors::Error> inspect(ref u8[] source,ref lexer::State s,
     ref ir::Program p,ref locals::Table names,ref functions::Table signatures){
-    if(s.kind!=40){return .ok(none());}
     var lexer::State look=lexer::snapshot(s);var usize groups=0;
     while(look.kind==40){if(groups>=32){return .err(errors::make(4,look.begin));}
         groups+=1;let usize next=lexer::next(source,ref mut look)?;}

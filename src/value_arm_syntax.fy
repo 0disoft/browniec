@@ -80,3 +80,16 @@ fn Result<bool,errors::Error> conditional(ref u8[] source,ref mut lexer::State s
 pub fn Result<bool,errors::Error> conditional_value(ref u8[] source,ref lexer::State s){
     var lexer::State look=lexer::snapshot(s);return conditional(source,ref mut look,0);
 }
+pub struct Conditional {bool valid;usize groups;u8 suffix;}
+// Complete conditional atoms only. Arithmetic inside a parenthesis keeps the
+// ordinary scalar parser. The snapshot never emits IR or evaluates a condition.
+pub fn Result<Conditional,errors::Error> conditional_atom(ref u8[] source,ref lexer::State s){
+    var lexer::State look=lexer::snapshot(s);var usize groups=0;
+    while(look.kind==40){if(groups>=32){return .err(errors::make(4,look.begin));}
+        let usize next=lexer::next(source,ref mut look)?;groups+=1;}
+    if(!word(source,ref look,b"if")){return .ok(Conditional{.valid=false,.groups=0,.suffix=0});}
+    let bool value=conditional(source,ref mut look,groups)?;
+    var usize i=0;while(i<groups){if(look.kind!=41){return .ok(Conditional{.valid=false,.groups=0,.suffix=0});}
+        let usize next=lexer::next(source,ref mut look)?;i+=1;}
+    return .ok(Conditional{.valid=true,.groups=groups,.suffix=look.kind});
+}

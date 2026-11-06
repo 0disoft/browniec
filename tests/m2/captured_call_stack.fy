@@ -7,14 +7,17 @@ import std::bytes as bytes;
 
 fn void append(ref mut bytes::Buffer b,ref u8[] value){assert(bytes::append(b,value).is_ok);}
 fn void retained(ref u8[] source,bool pass){
-    switch(compiler::compile_program(source,65536)){
+    // Preserve the original guest depths without reserving the large public
+    // wrapper's container scratch on this native test stack. Exact originals
+    // additionally run through both standalone public CLI profiles.
+    switch(compiler::compile_reference_returns(source,65536)){
         case .ok(p):{
             assert(pass);
-            switch(programs::run_public(ref p,16000000)){
+            switch(programs::run_public_references(ref p,16000000)){
                 case .ok(value):{assert(value==42);}case .err(_):{assert(false);}
             };
         }
-        case .err(e):{assert(!pass && e.kind==4);}
+        case .err(e):{assert(!pass && e.code.kind==4);}
     };
 }
 fn void depth(usize count,bool pass,bool image,bool first,bool mutable,bool record){
