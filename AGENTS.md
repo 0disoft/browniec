@@ -1,3 +1,22 @@
+- Aggregate-place driver integration now connects complete kind 3/4 and REPLACE87
+  admission to both VM coordinators, with current array/record bindings, shared
+  IDs, exact setup/instruction preflight and zero-Fuel place abort before native
+  cleanup. Retained guards distinguish array roots from record nominal/site IDs
+  and track every fill/list/constructor scalar input. See the
+  [contract](docs/engineering/aggregate-place-execution.md).
+  Windows development/release each passed 12 native groups (core 5/regression 7)
+  and 105 tool-free public Fuel CLI cases on 199 checkout/Git-raw-matching inputs,
+  177 LF production modules and 305 test-source files / 1828 annotations.
+  Both profiles run final native selections fresh; no historical runtime result
+  or native override is used. See the
+  [Windows evidence](docs/evidence/aggregate-place-execution-windows-20261106.json).
+  Public prices/default 256/cap 16000000 remain. Local implementation 3b1aa50.
+  Full language/native Fuel matrices, LF mirrors, Linux, OOM/general stack/
+  performance and clean-machine delivery were not rerun.
+  Ordered aggregate-place source lowering and resource/tag move rules remain
+  next; full L04/C05/Engine/Instance/host/isolation/platform/delivery remain open.
+  Local only; no push/release/deployment. Earlier entries retain their scopes.
+
 - Shared native place dispatch now uses one invocation vector and frame counter
   for scalar-array, exclusive-slice, scalar-record and both aggregate kinds.
   Legacy-only programs retain original formats/prices. Mixed aggregate programs

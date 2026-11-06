@@ -25,8 +25,10 @@
   supplies invocation-local tickets, prepaid snapshots and all five final stores.
   [Shared native place dispatch](../engineering/place-dispatch.md) now supplies
   one vector/ID space for all five kinds, preserving legacy-only formats/prices.
-  Next: both drivers, retained guards and source lowering, then
-  resource/tag move semantics.
+  [Aggregate-place execution](../engineering/aggregate-place-execution.md) now
+  connects both drivers, complete admission and retained guards with exact Fuel
+  preflight and prepaid cleanup. Next: ordered source lowering, then resource/tag
+  move semantics.
 - L04 starts with [native owned-array selected locations](../engineering/array-selected-place.md).
   [Independent place IR analysis](../engineering/array-place-ir.md) now checks
   identity and lifetimes. [Native metered storage](../engineering/array-place-storage.md)

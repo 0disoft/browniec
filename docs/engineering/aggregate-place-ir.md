@@ -1,8 +1,10 @@
 # Independent aggregate-place IR proof
 
-The [metered native successor](aggregate-place-vm.md) now implements invocation
-snapshots and all five final stores. The execution gates below remain until both
-drivers, retained guards and ordered source lowering are connected.
+The [execution successor](aggregate-place-execution.md) now connects complete
+aggregate-place admission, both drivers and retained dependency/scalar-use guards.
+The [metered native successor](aggregate-place-vm.md) supplies invocation snapshots
+and all five final stores. Execution gates below describe this analysis-only
+checkpoint; ordered guest source lowering remains next.
 
 Date: 2026-11-06. Analysis successor to the
 [native destination snapshots](aggregate-selected-place.md) and

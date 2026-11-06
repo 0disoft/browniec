@@ -3,6 +3,10 @@
 Date: 2026-11-06. Native execution successor to the
 [independent aggregate-place IR proof](aggregate-place-ir.md).
 
+The [execution successor](aggregate-place-execution.md) now connects these prices
+and stores to both drivers and complete executable/retained admission. This
+contract retains the preceding native adapter checkpoint and its evidence.
+
 ## Invocation storage and selection identity
 
 `aggregate_place_vm` prepares one invocation-owned `Vec<usize>`. Its authenticated

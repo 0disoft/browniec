@@ -1,10 +1,12 @@
 # Public Fuel costs and CLI ceiling
 
-The [metered native aggregate adapter](aggregate-place-vm.md) adds private
-snapshot/store prices and shared selected-list scratch planning. Existing public
-routes retain their original prices, default256 and cap16000000. Kinds3/4 and
-REPLACE87 remain gated from public execution pending both drivers and retained
-guards; these private prices are not a claim of public aggregate-place support.
+The [aggregate-place execution successor](aggregate-place-execution.md) now
+connects kinds3/4 and REPLACE87 to both native-IR drivers and complete ordinary,
+image and returned-reference admission. It consumes the existing snapshot/store
+prices and shared selected-list scratch; legacy-only programs retain their
+formats/prices, default256 and cap16000000. Exact native-IR budgets and setup/
+failure boundaries are recorded in that contract. Ordered guest source lowering
+into aggregate selected places remains next; source prices are unchanged.
 
 The [native copy-window prerequisite](aggregate-copy-windows.md) preserves all
 existing prices while skipping physical numeric-array self copies after complete

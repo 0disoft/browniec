@@ -2,11 +2,18 @@
 
 ## Current implementation (2026-11-06)
 
+[Aggregate selected places](docs/engineering/aggregate-place-execution.md) now
+execute whole-array copy/fill/list and nominal record copy/constructor stores
+through both native-IR drivers, with complete admission, retained dependency
+guards, exact Fuel preflight and prepaid failure cleanup. Legacy-only prices,
+Fuel default 256 and cap 16000000 remain. Ordered source lowering into these places
+and resource/tag move rules remain open.
+
 [Independent aggregate copy IR proof](docs/engineering/aggregate-copy-ir.md) now
 covers existing array/record/subrecord copying and by-value CALLs through canonical
 ownership/loan CFG and ordinary/image/returned-reference admission. Recursive
 activations remain distinct; native storage retains its dynamic window/token checks.
-Generic aggregate selected places and resource/tag move rules remain open.
+Ordered aggregate-place source lowering and resource/tag move rules remain open.
 
 [Native retained module programs](docs/engineering/module-program.md) now execute
 explicitly selected public i32 entries with scoped calls/nominal records and

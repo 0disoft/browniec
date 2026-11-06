@@ -2,6 +2,11 @@
 
 Date: 2026-11-06. Successor to [metered aggregate snapshots](aggregate-place-vm.md).
 
+The [execution successor](aggregate-place-execution.md) now connects this adapter
+to both VM drivers, complete executable admission and retained guards. The
+frontier and verification below retain this native dispatch checkpoint's scope;
+ordered guest aggregate-place source lowering is next.
+
 ## One allocation and one namespace
 
 `place_dispatch` plans and prepares one invocation-owned place vector. A Program
