@@ -1,4 +1,22 @@
-- Latest native Buffer view checkpoint, 2026-11-07: Native [Buffer view lifetimes](../engineering/value-buffer-views.md) now pin actual
+- Latest retained Buffer view checkpoint, 2026-11-07: Private [Buffer view execution](../engineering/value-view-execution.md)
+  now independently verifies and executes BEGIN/RANGE/ALIAS/MOVE/CLOSE/LEN/READ
+  (105..111). A separate view lane carries exact Buffer origins through CFG joins
+  and backedges, rejects pinned root mutation/transfer and forbids live views at
+  normal return. Invocation-owned registries use frame-specific bindings and
+  close all leases/refund metadata before frame/root failure drain, even at Fuel0.
+  Caller/callee view0 bindings remain distinct. Both Windows profiles passed
+  24 native groups (new8/native-regression14/source-regression2) on `10db833`;
+  all 221 inputs match checkout/Git raw bytes and all 210 production modules are
+  LF. The unchanged admitted32/rejected33 depth fixture executes in both profiles.
+  See [evidence](../evidence/value-view-execution-windows-20261107.json).
+  Next connect whole-view source `bytes::view(ref Buffer) -> ref u8[]`, ranges,
+  lexical/nonlocal cleanup, copy-from-view and general reference parameters/results.
+  Public AllocError, text/I/O, full Engine/Instance/host/cancellation behavior,
+  isolation, platform/delivery and broader validation remain. Existing prices,
+  no-view setup prices and public Fuel default256/ceiling16000000 stay unchanged.
+  Local only; no push/release. The full objective remains open.
+
+- Predecessor native Buffer view checkpoint, 2026-11-07: Native [Buffer view lifetimes](../engineering/value-buffer-views.md) now pin actual
   roots through shared aliases and nested ranges, with authenticated bindings,
   checked windows, last-alias release and generation retirement. Read/copy-out
   exposes no native view. Registry metadata shares root quotas and refunds before

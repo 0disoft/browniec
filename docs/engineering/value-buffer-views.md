@@ -3,16 +3,19 @@
 `value_buffer_views` adds invocation-local shared windows over the actual owning
 Buffer store. It retains bytes in their original allocation and supports nested
 ranges, aliases, logical binding moves, length/read/copy-out and explicit close.
-This is native runtime storage, not source syntax, retained IR admission, a guest
-handle API or an Engine/Instance completion claim. Those integrations remain.
+This document records the native runtime kernel. The
+[retained execution successor](value-view-execution.md) connects independent
+IR/CFG proof and invocation-owned VM cleanup. Source syntax, escaping reference
+composition, public admission and complete Engine/Instance behavior remain.
 
 ## Ownership and authority
 
 One Pool belongs to one exact `value_roots::State` and its owning root/scratch
 vectors. Like the existing root state and UTF-8 bookkeeping, the Pool is native
 copyable metadata: the trusted coordinator must not clone or transplant it,
-mix stores or publish its tickets as guest authority. The eventual retained
-verifier/VM must own this association; a supplied numeric ticket is insufficient.
+mix stores or publish its tickets as guest authority. The retained verifier/VM
+owns this association in the execution successor; a supplied numeric ticket is
+insufficient.
 The pinned compiler rejects mutable projections through user resource fields,
 so this layer follows the existing runtime metadata convention.
 
@@ -54,8 +57,9 @@ guest Fuel. Shutdown closes all rows, releases each last root lease, refunds
 the registry's metadata and marks the Pool closed. Repeated shutdown is harmless.
 A failed close keeps its row for explicit repair/retry. The root store refuses
 to drain while external metadata remains, before destroying any root; the
-coordinator must shut down attached registries first. Automatic Instance teardown
-and failure/cancellation dispatch still need this ordering wired into the VM.
+coordinator must shut down attached registries first. The execution successor
+wires this order into retained invocation completion/failure. Complete Instance
+teardown and cancellation dispatch remain broader lifecycle work.
 
 Native policy charges for successful operations are:
 
@@ -102,9 +106,11 @@ and [input manifest](../evidence/value-buffer-views-inputs-windows-20261107.json
 Actual allocator/OOM injection, full language/public CLI/native Fuel matrices,
 Linux, general stack/performance and clean-machine delivery were not run.
 
-Next connect Buffer-backed view origin/loan IR, independent CFG proof, canonical
-retained VM/frame storage and transfers, lexical/nonlocal cleanup, source
+The [execution successor](value-view-execution.md) now supplies Buffer-backed
+view-origin IR, independent CFG proof, retained VM binding storage and terminal
+cleanup. Next connect lexical/nonlocal source cleanup,
 `bytes::view`/ranges/copy-from-view, general reference composition and intentional
-public admission. Native-only registry tests cannot establish these capabilities.
+public admission. The native-only registry tests recorded above cannot establish
+the successor's execution behavior; its own evidence records that scope.
 Public AllocError, text/input/output, full Engine/Instance/host behavior, isolation,
 platform/delivery and broader validation remain part of the full objective.

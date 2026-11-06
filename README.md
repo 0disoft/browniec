@@ -2,17 +2,23 @@
 
 ## Current implementation (2026-11-07)
 
-Native [Buffer view lifetimes](docs/engineering/value-buffer-views.md) now pin actual
-roots through shared aliases and nested ranges, with authenticated bindings,
-checked windows, last-alias release and generation retirement. Read/copy-out
-exposes no native view. Registry metadata shares root quotas and refunds before
-root drain; cleanup needs no remaining Fuel. Both Windows native profiles passed
-19 groups (views/leases/roots 10, root/frame/copy regressions 9) on `34863b5`.
-All 219 union inputs match checkout/Git raw bytes; all 208 production modules are
-LF. See [evidence](docs/evidence/value-buffer-views-windows-20261107.json). Native bookkeeping is not guest authority.
-Next connect independent Buffer view IR/CFG/retained VM and source admission,
-then copy-from-view, public AllocError, text/I/O and the remaining full profile.
-Public gates, existing prices/Fuel defaults remain. Local only; no push/release.
+Private [Buffer view execution](docs/engineering/value-view-execution.md)
+now independently verifies and executes BEGIN/RANGE/ALIAS/MOVE/CLOSE/LEN/READ
+(105..111). A separate view lane carries exact Buffer origins through CFG joins
+and backedges, rejects pinned root mutation/transfer and forbids live views at
+normal return. Invocation-owned registries use frame-specific bindings and
+close all leases/refund metadata before frame/root failure drain, even at Fuel0.
+Caller/callee view0 bindings remain distinct. Both Windows profiles passed
+24 native groups (new8/native-regression14/source-regression2) on `10db833`;
+all 221 inputs match checkout/Git raw bytes and all 210 production modules are
+LF. The unchanged admitted32/rejected33 depth fixture executes in both profiles.
+See [evidence](docs/evidence/value-view-execution-windows-20261107.json).
+Next connect whole-view source `bytes::view(ref Buffer) -> ref u8[]`, ranges,
+lexical/nonlocal cleanup, copy-from-view and general reference parameters/results.
+Public AllocError, text/I/O, full Engine/Instance/host/cancellation behavior,
+isolation, platform/delivery and broader validation remain. Existing prices,
+no-view setup prices and public Fuel default256/ceiling16000000 stay unchanged.
+Local only; no push/release. The full objective remains open.
 
 Private [owned Buffer copy](docs/engineering/value-buffer-copy.md) now lowers
 `bytes::copy(ref b)` / `brownie::bytes::copy(ref b)` to exact `Result<Buffer,u8>`.
