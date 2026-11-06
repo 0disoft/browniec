@@ -87,8 +87,7 @@ fn u8 opcode(u8 kind) {
 fn Result<usize, errors::Error> operand(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize depth, u8 expected, u8 result_type, usize structure, ref mut loops::State loop_state) {
     if(depth>32){return .err(errors::make(4,s.begin));}
     let u8 control=arm_syntax::operand_kind(source,s);
-    if(control==1){return if_operand(source,s,p,table,signatures,depth,expected,result_type,structure,loop_state);}
-    if(control==2){return switch_value(source,s,p,table,signatures,depth,expected,result_type,structure,loop_state);}
+    if(control!=0){return if_operand(source,s,p,table,signatures,depth,expected,result_type,structure,loop_state);}
     if(s.kind==2 || s.kind==5){return named_operand(source,s,p,table,signatures,depth,expected,result_type,structure,loop_state);}
     return compound_operand(source,s,p,table,signatures,depth,expected,result_type,structure,loop_state);
 }
@@ -538,7 +537,7 @@ fn Result<record_expressions::Value,errors::Error> record_value_into(ref u8[] so
     if(depth>32){return .err(errors::make(4,at));}
     var usize groups=0;while(s.kind==40){if(groups>=32-depth){return .err(errors::make(4,s.begin));}
         let usize next=lexer::next(source,s)?;groups+=1;}
-    if(word_is(source,s,b"if")){
+    if(arm_syntax::operand_kind(source,s)!=0){
         return record_conditional_value(source,s,p,names,signatures,mutable,at,depth,result_type,structure,loop_state,destination,groups);
     }
     if(s.kind!=2 && s.kind!=5){return .err(errors::make(3,s.begin));}
@@ -576,7 +575,7 @@ fn Result<record_expressions::Value,errors::Error> record_conditional_value(ref 
     bool mutable,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state,usize destination,usize groups){
     var joins::Join join=joins::empty(0,mutable);
     if(destination!=16){join=joins::record(p.records.records[destination] as usize,mutable);join.value=144+destination;}
-    let bool terminal=if_join(source,s,p,names,signatures,ref mut join,depth+groups,result_type,structure,loop_state)?;
+    let bool terminal=value_join(source,s,p,names,signatures,ref mut join,depth+groups,result_type,structure,loop_state)?;
     if(terminal || join.kind!=3){return .err(errors::make(3,at));}
     let usize encoded=joins::finish(p,ref join,at)?;let usize id=encoded-144;
     var usize record=p.records.records[id] as usize;var usize ordinal=0;var u8 tag=0;var usize left=groups;
@@ -714,10 +713,10 @@ fn Result<array_expressions::Value,errors::Error> array_value_into(ref u8[] sour
     u8 expected,usize length,bool mutable,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state,usize destination){
     if(depth>32){return .err(errors::make(4,at));}
     let usize groups=if(s.kind==40){array_expressions::open(source,s,depth)?}else{0};var usize id=16;var bool owned=false;
-    if(word_is(source,s,b"if")){
+    if(arm_syntax::operand_kind(source,s)!=0){
         var joins::Join join=joins::array(expected,length,mutable);
         if(destination!=16){join.value=128+destination;}
-        let bool terminal=if_join(source,s,p,names,signatures,ref mut join,depth+groups,result_type,structure,loop_state)?;
+        let bool terminal=value_join(source,s,p,names,signatures,ref mut join,depth+groups,result_type,structure,loop_state)?;
         if(terminal || join.kind!=2){return .err(errors::make(3,at));}
         let usize value=joins::finish(p,ref join,at)?;id=value-128;owned=true;
     }else if(s.kind==91){
@@ -767,7 +766,7 @@ fn Result<usize,errors::Error> record_argument(ref u8[] source,ref mut lexer::St
 fn Result<usize,errors::Error> array_argument(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
     u8 element,usize length,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state) {
-    if(s.kind==40 || word_is(source,s,b"if")){let usize at=s.begin;
+    if(s.kind==40 || arm_syntax::operand_kind(source,s)!=0){let usize at=s.begin;
         let array_expressions::Value value=array_grouped_value(source,s,p,names,signatures,element,length,false,at,depth,result_type,structure,loop_state)?;
         if(s.kind!=44 && s.kind!=41){return .err(errors::make(3,s.begin));}
         if(!value.owned){return array_calls::capture_id(p,names,value.id,element,length,at);}
@@ -1053,7 +1052,7 @@ fn bool word_is(ref u8[] source, ref lexer::State s, ref u8[] word) {
 }
 
 fn Result<usize, errors::Error> array_copy_statement(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize index, usize at, usize id, u8 terminator, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {
-    if(s.kind==40 || word_is(source,s,b"if")){
+    if(s.kind==40 || arm_syntax::operand_kind(source,s)!=0){
         let array_expressions::Plan plan=array_expressions::inspect(source,s,p,table,signatures)?;
         if(plan.kind==1){return array_grouped_literal_assignment(source,s,p,table,signatures,index,id,at,terminator,result_type,expr_depth,structure,loop_state);}
         let u8 element=p.arrays.elements[id];let usize length=p.arrays.lengths[id];
@@ -1130,7 +1129,7 @@ fn Result<usize, errors::Error> record_child_call(ref u8[] source, ref mut lexer
     ref mut record_values::Initializer state, ref mut usize[] slots, usize first,
     usize at, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {
     var lexer::State atom=lexer::snapshot(s);if(s.kind==2 || s.kind==5){let usize next=lexer::next(source,ref mut atom)?;}
-    if(s.kind==40 || atom.kind==123 || word_is(source,s,b"if")){
+    if(s.kind==40 || atom.kind==123 || arm_syntax::operand_kind(source,s)!=0){
         let record_expressions::Value value=record_value(source,s,p,table,signatures,false,at,expr_depth+1,result_type,structure,loop_state)?;
         return record_expressions::stage(source,s,p,state,slots,first,ref value,at);
     }
@@ -1349,7 +1348,7 @@ fn Result<usize,errors::Error> conditional_initializer(ref u8[] source,ref mut l
     inference::Header name,bool mutable,u8 terminator,u8 result_type,usize depth,usize structure,ref mut loops::State loop_state){
     let usize groups=if(s.kind==40){array_expressions::open(source,s,depth)?}else{0};
     var joins::Join join=joins::empty(0,mutable);
-    let bool terminal=if_join(source,s,p,table,signatures,ref mut join,depth+groups,result_type,structure,loop_state)?;
+    let bool terminal=value_join(source,s,p,table,signatures,ref mut join,depth+groups,result_type,structure,loop_state)?;
     if(terminal){return .err(errors::make(3,name.begin));}
     let usize value=joins::finish(p,ref join,name.begin)?;
     let usize close=array_expressions::close(source,s,groups)?;let usize end=lexer::punctuation(source,s,terminator)?;
@@ -1384,7 +1383,7 @@ fn Result<usize,errors::Error> array_initializer(ref u8[] source,ref mut lexer::
     inference::Header binding,u8 tag,usize length,bool mutable,u8 terminator,u8 result_type,
     usize expr_depth,usize structure,ref mut loops::State loop_state){
     if(result_type==0 || terminator!=59 || !types::scalar(tag)){return .err(errors::make(3,binding.begin));}
-    if(s.kind==40 || word_is(source,s,b"if")){
+    if(s.kind==40 || arm_syntax::operand_kind(source,s)!=0){
         return array_grouped_initializer(source,s,p,table,signatures,binding,tag,length,mutable,terminator,result_type,expr_depth,structure,loop_state);
     }
     if(s.kind==2 || s.kind==5){
@@ -1630,30 +1629,6 @@ fn Result<usize,errors::Error> void_call_statement(ref u8[] source,ref mut lexer
 // Value arms have a private binding table; assignments still address the
 // original outer var slots. Their final expression has no trailing semicolon.
 struct Yield {usize value; bool terminal;}
-fn Result<Yield,errors::Error> value_arm(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,ref mut locals::Table table,ref functions::Table signatures,usize depth,u8 expected,u8 result_type, usize structure, ref mut loops::State loop_state) {
-    if(depth>32 || structure>32) {return .err(errors::make(4,s.begin));}
-    let usize brace=lexer::punctuation(source,s,123)?;
-    let usize outer=table.count;
-    while(true) {
-        let bool regular=arm_syntax::regular(source,s)?;
-        let bool conditional=word_is(source,s,b"if") && arm_syntax::conditional_value(source,s)?;
-        // A leading switch remains the final expression. Wrap a statement
-        // switch in a standalone block to make that statement intent explicit.
-        let bool structured=s.kind==123 || (word_is(source,s,b"if") && !conditional) || word_is(source,s,b"while") ||
-            word_is(source,s,b"for") || word_is(source,s,b"return") ||
-            word_is(source,s,b"break") || word_is(source,s,b"continue");
-        if(!regular && !structured) {break;}
-        let bool terminal=control(source,s,p,table,signatures,result_type,structure,depth,loop_state)?;
-        if(terminal) {
-            let usize close=lexer::punctuation(source,s,125)?;
-            return .ok(Yield {.value=0,.terminal=true});
-        }
-    }
-    let usize value=expression(source,s,p,table,signatures,1,depth,expected,result_type,structure,loop_state)?;
-    let usize dropped=arrays::release_from(table,p,outer,s.begin)?;
-    let usize close=lexer::punctuation(source,s,125)?;
-    return .ok(Yield {.value=value,.terminal=false});
-}
 // Keep the aggregate Yield temporary off ordinary recursive scalar frames.
 fn Result<usize,errors::Error> if_operand(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
@@ -1666,9 +1641,17 @@ fn Result<Yield,errors::Error> if_value(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
     usize depth,u8 expected,u8 result_type,usize structure,ref mut loops::State loop_state){
     let usize at=s.begin;var joins::Join join=joins::empty(expected,false);
-    let bool terminal=if_join(source,s,p,table,signatures,ref mut join,depth,result_type,structure,loop_state)?;
+    let bool terminal=value_join(source,s,p,table,signatures,ref mut join,depth,result_type,structure,loop_state)?;
     if(terminal){return .ok(Yield{.value=0,.terminal=true});}
     let usize value=joins::finish(p,ref join,at)?;return .ok(Yield{.value=value,.terminal=false});
+}
+// Both control forms share one exact-type/shape destination. This is source
+// scratch only; ordinary CFG/owner admission remains authoritative.
+fn Result<bool,errors::Error> value_join(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    ref mut joins::Join join,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
+    if(word_is(source,s,b"switch")){return switch_join(source,s,p,table,signatures,join,depth,result_type,structure,loop_state);}
+    return if_join(source,s,p,table,signatures,join,depth,result_type,structure,loop_state);
 }
 fn Result<bool,errors::Error> if_join(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
@@ -1720,7 +1703,7 @@ fn Result<bool,errors::Error> conditional_tail(ref u8[] source,ref mut lexer::St
     if(atom.valid && atom.suffix==125){
         if(depth>32 || atom.groups>32-depth){return .err(errors::make(4,at));}
         var usize i=0;while(i<atom.groups){let usize next=lexer::next(source,s)?;i+=1;}
-        let bool terminal=if_join(source,s,p,table,signatures,join,depth+atom.groups,result_type,structure,loop_state)?;
+        let bool terminal=value_join(source,s,p,table,signatures,join,depth+atom.groups,result_type,structure,loop_state)?;
         let usize close=array_expressions::close(source,s,atom.groups)?;return .ok(terminal);
     }
     let record_expressions::Plan record=record_expressions::inspect(source,s,p,table,signatures)?;
@@ -1757,7 +1740,7 @@ fn Result<usize,errors::Error> conditional_operand(ref u8[] source,ref mut lexer
         let usize scalar=ir::record_read(p,id,leaf.ordinal,at)?;let usize dropped=ir::record_drop(p,id,at)?;return .ok(scalar);}
     return .err(errors::make(3,at));
 }
-fn Result<usize,errors::Error> switch_value(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,usize depth,u8 expected,u8 result_type, usize structure, ref mut loops::State loop_state) {
+fn Result<bool,errors::Error> switch_join(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,ref mut joins::Join join,usize depth,u8 result_type, usize structure, ref mut loops::State loop_state) {
     let usize at=s.begin;
     if(depth>30 || structure>30) {return .err(errors::make(4,at));}
     // Statement-bearing arms are excluded from the pure for-header subset.
@@ -1769,7 +1752,6 @@ fn Result<usize,errors::Error> switch_value(ref u8[] source,ref mut lexer::State
     if(!types::tagged(tag)) {return .err(errors::make(3,at));}
     let usize close=lexer::punctuation(source,s,41)?;
     let usize brace=lexer::punctuation(source,s,123)?;
-    var usize slot=128;
     var usize[2] skips=[256;2];
     var usize previous=256;
     var u8 first_variant=2;
@@ -1789,22 +1771,12 @@ fn Result<usize,errors::Error> switch_value(ref u8[] source,ref mut lexer::State
             if(locals::find(source,ref names,pattern.begin,pattern.end)!=64) {return .err(errors::make(3,pattern.begin));}
             let usize binding=locals::declare(ref mut names,pattern.begin,pattern.end,branch.payload,false)?;
         }
-        let u8 context=if(slot==128) {expected} else {p.types[slot]};
-        let Yield yield=value_arm(source,s,p,ref mut names,signatures,depth+2,context,result_type,structure+2,loop_state)?;
-        if(!yield.terminal) {
-            if(slot==128) {
-                let u8 tag=p.types[yield.value];
-                slot=ir::slot(p,tag,at)?;
-            }
-            else if(p.types[yield.value]!=p.types[slot]) {return .err(errors::make(3,at));}
-            let usize stored=ir::raw(p,18,slot,yield.value,0,at)?;
-            skips[arm]=ir::raw(p,19,0,0,0,at)?;
-        }
+        let bool terminal=conditional_arm(source,s,p,ref mut names,signatures,join,depth+2,result_type,structure+2,loop_state)?;
+        if(!terminal){skips[arm]=ir::raw(p,19,0,0,0,at)?;}
         previous=branch.instruction;
         arm+=1;
     }
     let usize end=lexer::punctuation(source,s,125)?;
-    if(slot==128) {return .err(errors::make(3,at));}
     let usize failure=ir::raw(p,25,0,0,0,at)?;
     let usize guarded=ir::patch(p,previous,failure,at)?;
     let usize target=p.count;
@@ -1813,7 +1785,7 @@ fn Result<usize,errors::Error> switch_value(ref u8[] source,ref mut lexer::State
         if(skips[arm]!=256) {let usize skip=ir::patch(p,skips[arm],target,at)?;}
         arm+=1;
     }
-    return ir::emit(p,17,slot,0,at);
+    return .ok(skips[0]==256 && skips[1]==256);
 }
 
 // Validate the post clause before the body (body locals are not visible), then
@@ -2108,7 +2080,7 @@ fn Result<bool, errors::Error> control_return(ref u8[] source, ref mut lexer::St
         let usize returned=record_results::finish(p,table,id,at)?;return .ok(true);
     }
     if(p.array_results[table.function]!=0) {
-        if(s.kind==40 || word_is(source,s,b"if")){
+        if(s.kind==40 || arm_syntax::operand_kind(source,s)!=0){
             let usize shape=(p.array_results[table.function] as usize)-1;
             let u8 element=p.arrays.elements[shape];let usize length=p.arrays.lengths[shape];
             let array_expressions::Value value=array_grouped_value(source,s,p,table,signatures,element,length,false,at,expr_depth,result_type,depth,loop_state)?;

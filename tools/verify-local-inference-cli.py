@@ -32,7 +32,10 @@ def main():
     selection.add_argument('--if-expressions', action='store_true', help='add scalar/tagged conditional values and prior aggregate regressions')
     selection.add_argument('--aggregate-if-expressions', action='store_true', help='add exact-shape array and record conditional values')
     selection.add_argument('--void-functions', action='store_true', help='add void statements, returns and cleanup regressions')
+    selection.add_argument('--aggregate-switch-expressions', action='store_true', help='add exact-shape array and record switch values')
     args = parser.parse_args()
+    if args.aggregate_switch_expressions:
+        args.void_functions = True
     if args.void_functions:
         args.aggregate_if_expressions = True
     if args.aggregate_if_expressions:
@@ -48,7 +51,7 @@ def main():
         args.array_list_assignment = True
     if args.array_list_assignment:
         args.array_lists = True
-    suite = 'void-functions' if args.void_functions else 'aggregate-if-expressions' if args.aggregate_if_expressions else 'if-expressions' if args.if_expressions else 'record-expression-projections' if args.record_expression_projections else 'array-expression-projections' if args.array_expression_projections else 'array-literal-projections' if args.array_literal_projections else 'array-list-assignment' if args.array_list_assignment else 'array-list' if args.array_lists else 'option' if args.options else 'reference' if args.references else 'aggregate' if args.aggregate else 'local'
+    suite = 'aggregate-switch-expressions' if args.aggregate_switch_expressions else 'void-functions' if args.void_functions else 'aggregate-if-expressions' if args.aggregate_if_expressions else 'if-expressions' if args.if_expressions else 'record-expression-projections' if args.record_expression_projections else 'array-expression-projections' if args.array_expression_projections else 'array-literal-projections' if args.array_literal_projections else 'array-list-assignment' if args.array_list_assignment else 'array-list' if args.array_lists else 'option' if args.options else 'reference' if args.references else 'aggregate' if args.aggregate else 'local'
     out = ROOT / ('build/' + suite + '-inference-cli') / args.profile
     out.mkdir(parents=True, exist_ok=True)
     receipt = out / 'receipt.json'
@@ -69,6 +72,9 @@ def main():
         paths.sort()
     if args.void_functions:
         paths.append('tests/m2/void_source.fy')
+        paths.sort()
+    if args.aggregate_switch_expressions:
+        paths.append('tests/m2/aggregate_switch_expressions.fy')
         paths.sort()
     inputs = [dict(path=p, sha256=sha(ROOT / p)) for p in paths]
     captured = datetime.now(timezone.utc).isoformat()
@@ -406,6 +412,8 @@ def main():
         assert version['array_if_expressions'] is True and version['record_if_expressions'] is True
     if args.void_functions:
         assert version['void_functions'] is True
+    if args.aggregate_switch_expressions:
+        assert version['array_switch_expressions'] is True and version['record_switch_expressions'] is True
     results = []
     if args.aggregate_if_expressions:
         fixtures = (ROOT / 'tests/m2/aggregate_if_expressions.fy').read_text(encoding='utf-8')
@@ -478,6 +486,43 @@ def main():
             cases.append((f'void-call-sites-{count}', source, 'run' if count==32 else 'check',
                           42 if count==32 else None, None if count==32 else 'compile_limit',
                           256 if count==32 else None, scalar))
+    if args.aggregate_switch_expressions:
+        fixtures = (ROOT / 'tests/m2/aggregate_switch_expressions.fy').read_text(encoding='utf-8')
+        sources = re.findall(r'\b(?:value|one)\((b"(?:[^"\\]|\\.)*")\);', fixtures)
+        profiles = [array_copy, array_read, array_read, array_read,
+                    record_copy, nested, nested, nested,
+                    array_copy, reference, reference, array_copy, array_copy, record_copy, array_read,
+                    array_read, array_read, array_read, reference, array_read,
+                    array_read, array_read, record_read, record_read]
+        assert len(sources) == len(profiles)
+        for index, (raw, profile) in enumerate(zip(sources, profiles)):
+            cases.append((f'aggregate-switch-{index}', ast.literal_eval(raw), 'run', 42, None, 16000000, profile))
+        failures = re.findall(r'\brejected\((b"(?:[^"\\]|\\.)*"),(\d+)\);', fixtures)
+        assert len(failures) == 11
+        for index, (raw, kind) in enumerate(failures):
+            cases.append((f'aggregate-switch-reject-{index}', ast.literal_eval(raw), 'check', None,
+                          {'2': 'syntax', '3': 'type'}[kind], None, scalar))
+        budgets = re.findall(r'\bfuel\((b"(?:[^"\\]|\\.)*"),(\d+)\);', fixtures)
+        assert len(budgets) == 4
+        for index, (raw, native) in enumerate(budgets):
+            for retained in (False, True):
+                source = ast.literal_eval(raw)
+                exact = int(native) + 65532 + (344085 if retained else 0)
+                if retained:
+                    source = source.replace(b'fn i32 main(){', b'fn i32 main(){let ref u8[] marker=b"*";')
+                for budget in (exact-1, exact, exact+1):
+                    cases.append((f'aggregate-switch-fuel-{index}-{retained}-{budget}', source, 'run',
+                                  None if budget < exact else 42, 'fuel' if budget < exact else None, budget,
+                                  reference if retained else record_read if b'struct' in source else array_read))
+        for record in (False, True):
+            for depth in ((15, 16) if record else (16, 17)):
+                good = depth == (15 if record else 16)
+                prefix = 'module main;' + ('struct P{i32 x;}' if record else '') + 'fn i32 main(){let Option<i32> o=.none;let x='
+                leaf, alternate, read = ('P{.x=42}', 'P{.x=0}', 'x.x') if record else ('[42;1]', '[0;1]', 'x[0]')
+                source = (prefix + 'switch(o){case .none:{'*depth + leaf + ('}case .some(_):{' + alternate + '}}')*depth + ';return ' + read + ';}').encode()
+                cases.append((f'aggregate-switch-depth-{record}-{depth}', source, 'run' if good else 'check',
+                              42 if good else None, None if good else 'compile_limit', 16000000 if good else None,
+                              (record_read if record else array_read) if good else scalar))
     for identity, source, mode, expected, error, fuel, profile in cases:
         fixture = out / (identity + '.brc')
         fixture.write_bytes(source)
@@ -500,7 +545,7 @@ def main():
     assert all(sha(ROOT / i['path']) == i['sha256'] for i in inputs)
     assert sha(compiler) == compiler_hash and sha(exe) == binary_hash
     data = dict(schema='browniec.local-inference-cli/v1', status='passed', profile=args.profile,
-                selection='void-functions' if args.void_functions else 'aggregate-if-expressions' if args.aggregate_if_expressions else 'if-expressions' if args.if_expressions else 'record-expression-projections' if args.record_expression_projections else 'array-expression-projections' if args.array_expression_projections else 'array-literal-projections' if args.array_literal_projections else 'array-list-assignment' if args.array_list_assignment else 'array-list' if args.array_lists else 'option' if args.options else 'reference' if args.references else 'aggregate' if args.aggregate else 'scalar',
+                selection='aggregate-switch-expressions' if args.aggregate_switch_expressions else 'void-functions' if args.void_functions else 'aggregate-if-expressions' if args.aggregate_if_expressions else 'if-expressions' if args.if_expressions else 'record-expression-projections' if args.record_expression_projections else 'array-expression-projections' if args.array_expression_projections else 'array-literal-projections' if args.array_literal_projections else 'array-list-assignment' if args.array_list_assignment else 'array-list' if args.array_lists else 'option' if args.options else 'reference' if args.references else 'aggregate' if args.aggregate else 'scalar',
                 startingHead=head, inputSnapshotCapturedAt=captured, inputs=inputs, compilerSha256=compiler_hash,
                 compilerVersion=subprocess.check_output([str(compiler), '--version'], text=True).strip(),
                 buildCommand=[compiler.relative_to(ROOT).as_posix(), *command[1:]],
