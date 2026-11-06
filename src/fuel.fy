@@ -11,6 +11,37 @@ pub fn usize result_enter(){return transaction_base()+24*metadata_visit_budget()
 pub fn usize result_handoff(){return transaction_base()+96*metadata_visit_budget()+cleanup_reserve();}
 pub fn usize result_leave(){return transaction_base()+80*metadata_visit_budget();}
 
+// Callers authenticate scalar layouts (stride 1/4/8, length 1..4096) before
+// pricing. Invalid opcodes have no price; dispatch remains included here.
+pub fn Option<usize> array_instruction(u8 op,usize stride,usize length,bool boolean){
+    let usize size=stride*length;
+    if(op==51){return .some(33+4*length);}
+    if(op==33){return .some(49+2*stride+size+7);}
+    if(op==34){return .some(49+size+7+if(boolean){length}else{0});}
+    if(op==35){return .some(33+stride);}
+    if(op==36){return .some(33+2*stride);}
+    if(op==37){return .some(49);}
+    if(op==38){return .some(81+size+if(boolean){length}else{0});}
+    if(op==40){return .some(49+2*stride+size);}
+    return .none;
+}
+// Fixed record envelopes cover complete catalog planning, bounded traversal,
+// codec staging, padding and owner scans, not machine-instruction counts.
+pub fn Option<usize> record_instruction(u8 op){
+    if(op==41 || op==48){return .some(2*18432+2*4096+1024+65);}
+    if(op==42){return .some(2*18432+4096+1024+65);}
+    if(op==43 || op==44){return .some(2*18432+4096+256+65);}
+    if(op==45){return .some(65);}
+    if(op==46){return .some(3*18432+4096+1024+129);}
+    if(op==47){return .some(131072);}
+    if(op==49){return .some(4*18432+3*4096+1024+65);}
+    return .none;
+}
+// Preparation is paid once per invocation; list operands reuse their scratch.
+// Validated maxima are 4096 cells and 32768 bytes; no-list setup is free.
+pub fn usize list_prepare(usize cells,usize size){return if(cells==0){0}else{257+2*cells+size};}
+pub fn usize list_instruction(bool replacement,usize cells,usize size){return (if(replacement){49}else{56})+cells+3*size;}
+
 // Shared and exclusive calls prepay retention/restoration and abort work.
 // Callers validate readers+writers <= 8 before pricing. No payload term here.
 pub fn usize slice_call(usize readers,usize writers){

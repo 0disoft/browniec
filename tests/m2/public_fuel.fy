@@ -65,6 +65,7 @@ fn void exact(ref ir::Program p,usize backing){
     completed(vm::run(ref scalar,meter::cli_default()));
     // The CLI ceiling is a policy for parsing CLI arguments, not native vm::run.
     completed(vm::run(ref scalar,16000001));
+    completed(vm::run(ref scalar,18446744073709551615));
 }
 @test fn void admission_still_precedes_runtime_fuel_and_backing_limits(){
     var ir::Program p=compiled(b"module main;fn i32 main(){let i32[1] a=[42;1];return a[0];}");
@@ -97,4 +98,23 @@ fn void public_exact(ref u8[] source,usize price,bool reference){
     // 410045/409765 retained-coordinator prices; it selects actual public routing.
     public_exact(b"module main;fn i32 main(){let ref u8[] marker=b\"*\";return [20,42][1];}",410063,true);
     public_exact(b"module main;fn i32 main(){let ref u8[] marker=b\"*\";return [42;2][1];}",409783,true);
+}
+
+@test fn void grouped_assignment_targets_keep_exact_costs_in_both_actual_public_routes(){
+    public_exact(b"module main;fn i32 main(){var x=20;((x))=42;return x;}",6,false);
+    public_exact(b"module main;fn i32 main(){var x=20;((x))+=22;return x;}",8,false);
+    public_exact(b"module main;fn i32 main(){var a=[0;1];((a)[0])=42;return a[0];}",69308,false);
+    public_exact(b"module main;fn i32 main(){var a=[20;1];((a)[0])+=22;return a[0];}",69378,false);
+    public_exact(b"module main;fn i32 main(){var a=[0;1];let ref mut i32[] s=ref mut a;(((s))[0])=42;return s[0];}",152817,false);
+    public_exact(b"module main;fn i32 main(){var a=[20;1];let ref mut i32[] s=ref mut a;(((s))[0])+=22;return s[0];}",156984,false);
+    public_exact(b"module main;struct P{i32 x;}fn i32 main(){var P p=P{.x=0};((p).x)=42;return p.x;}",240190,false);
+    public_exact(b"module main;struct P{i32 x;}fn i32 main(){var P p=P{.x=20};((p).x)+=22;return p.x;}",281220,false);
+    public_exact(b"module main;fn i32 main(){let ref u8[] marker=b\"*\";var x=20;((x))=42;return x;}",344088,true);
+    public_exact(b"module main;fn i32 main(){let ref u8[] marker=b\"*\";var x=20;((x))+=22;return x;}",344090,true);
+    public_exact(b"module main;fn i32 main(){let ref u8[] marker=b\"*\";var a=[0;1];((a)[0])=42;return a[0];}",413396,true);
+    public_exact(b"module main;fn i32 main(){let ref u8[] marker=b\"*\";var a=[20;1];((a)[0])+=22;return a[0];}",413467,true);
+    public_exact(b"module main;fn i32 main(){let ref u8[] marker=b\"*\";var a=[0;1];let ref mut i32[] s=ref mut a;(((s))[0])=42;return s[0];}",496907,true);
+    public_exact(b"module main;fn i32 main(){let ref u8[] marker=b\"*\";var a=[20;1];let ref mut i32[] s=ref mut a;(((s))[0])+=22;return s[0];}",501075,true);
+    public_exact(b"module main;struct P{i32 x;}fn i32 main(){let ref u8[] marker=b\"*\";var P p=P{.x=0};((p).x)=42;return p.x;}",584278,true);
+    public_exact(b"module main;struct P{i32 x;}fn i32 main(){let ref u8[] marker=b\"*\";var P p=P{.x=20};((p).x)+=22;return p.x;}",625309,true);
 }

@@ -5,6 +5,7 @@ import array_layout as layouts;
 import array_owners as owners;
 import cells as cells;
 import errors as errors;
+import fuel as meter;
 import std::bytes as bytes;
 
 // Static catalog IDs repeat under recursion; tokens belong to an invocation.
@@ -28,19 +29,10 @@ pub fn Result<usize, errors::Error> cost(ref meta::Catalog catalog, u8 op, usize
     let layouts::Array layout = switch (layouts::scalar(catalog.elements[id], catalog.lengths[id])) {
         case .ok(value): { value } case .err(_): { return .err(errors::make(5, offset)); }
     };
-    if(op==51){if(layout.element!=10){return .err(errors::make(5,offset));}return .ok(33+4*layout.length);}
-    // Descriptor visits are charged at the fixed 16-record ceiling; payload work
-    // is charged by byte, including worst-case alignment and codec scratch work.
-    if (op == 33) { return .ok(49 + 2 * layout.stride + layout.bytes + 7); }
-    if (op == 34) { return .ok(49 + layout.bytes + 7 + if (layout.element == 2) { layout.length } else { 0 }); }
-    if (op == 35) { return .ok(33 + layout.stride); }
-    if (op == 36) { return .ok(33 + 2 * layout.stride); }
-    if (op == 37) { return .ok(49); }
-    // Both owner resolutions validate the bounded metadata chain. No reservation
-    // or descriptor publication occurs, but bool sources need a full scan.
-    if (op == 38) { return .ok(81 + layout.bytes + if (layout.element == 2) { layout.length } else { 0 }); }
-    if (op == 40) { return .ok(49 + 2 * layout.stride + layout.bytes); }
-    return .err(errors::make(5, offset));
+    if(op==51 && layout.element!=10){return .err(errors::make(5,offset));}
+    return switch(meter::array_instruction(op,layout.stride,layout.length,layout.element==2)){
+        case .some(price):{.ok(price)}case .none:{.err(errors::make(5,offset))}
+    };
 }
 pub fn errors::Error failure(owners::Error error, usize offset) {
     let u8 kind = switch (error) {

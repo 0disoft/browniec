@@ -6,6 +6,7 @@ import struct_layout as layouts;
 import array_owners as owners;
 import array_vm as arrays;
 import errors as errors;
+import fuel as meter;
 import std::bytes as bytes;
 
 // Static record sites repeat under recursion; each invocation has its own tokens.
@@ -16,22 +17,9 @@ pub fn State empty() {
     return State { .tokens = [owners::Token { .slot = 0, .generation = 0 }; 512] };
 }
 pub fn Result<usize, errors::Error> cost(u8 op, usize offset) {
-    // Fixed ceilings, not machine-instruction counts. One canonical plan visits
-    // <= 17408 fields; one selected-root traversal uses <= 4096 iterations.
-    // Include complete record staging, codec work, padding and owner scans.
-    if (op == 41) { return .ok(2 * 18432 + 2 * 4096 + 1024 + 65); }
-    if (op == 42) { return .ok(2 * 18432 + 4096 + 1024 + 65); }
-    if (op == 43 || op == 44) { return .ok(2 * 18432 + 4096 + 256 + 65); }
-    if (op == 45) { return .ok(65); }
-    if (op == 46) { return .ok(3 * 18432 + 4096 + 1024 + 129); }
-    // Five complete plans, <= four 4096-visit traversals, staging and owner scans.
-    if (op == 47) { return .ok(131072); }
-    // Two plans, one leaf-count walk, one encoding walk, bytes and owner scans.
-    if (op == 48) { return .ok(2 * 18432 + 2 * 4096 + 1024 + 65); }
-    // Four full plans: count, owner resolution, child range and encoding;
-    // three bounded traversals plus canonical bytes and owner scans.
-    if (op == 49) { return .ok(4 * 18432 + 3 * 4096 + 1024 + 65); }
-    return .err(errors::make(5, offset));
+    return switch(meter::record_instruction(op)){
+        case .some(price):{.ok(price)}case .none:{.err(errors::make(5,offset))}
+    };
 }
 
 // Ordinal 128 counts the whole root; ordinary ordinals select a scalar path.

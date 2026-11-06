@@ -1,5 +1,6 @@
 """Verify the public Fuel ceiling, exact costs and tool-free CLI boundaries."""
 import argparse
+import ast
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -12,7 +13,8 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parent.parent
-MODULES = ['public_fuel', 'slice_public_canonical', 'slice_mutable_execution',
+MODULES = ['public_fuel', 'fuel_schedule', 'array_list_execution', 'array_list_replace_execution',
+           'slice_public_canonical', 'slice_mutable_execution',
            'slice_result_fuel', 'slice_result_call_execution', 'reference_return_execution']
 
 
@@ -131,16 +133,12 @@ def main():
             invoke(source, ['--fuel', 16000000])
         # Independent numeric oracles for current source features. Exercise the
         # actual public route (not a forced private entry) at all three boundaries.
-        precise = [
-            ('module main;fn i32 main(){let a=[20,22];return a[0]+a[1];}', 66017),
-            ('module main;fn i32 take(i32[2] a){return a[0]+a[1];}fn i32 main(){return take([20,22]);}', 66340),
-            ('module main;fn i32[2] make(){return [20,22];}fn i32 main(){let a=make();return a[0]+a[1];}', 66083),
-            ('module main;fn i32 main(){var a=[0;2];a=[20,22];return a[0]+a[1];}', 66083),
-            ('module main;fn i32 main(){return [20,42][1];}', 65978),
-            ('module main;fn i32 main(){return [42;2][1];}', 65698),
-            ('module main;fn i32 main(){let ref u8[] marker=b"*";return [20,42][1];}', 410063),
-            ('module main;fn i32 main(){let ref u8[] marker=b"*";return [42;2][1];}', 409783),
-        ]
+        # Share literal fixtures with native verification, never production prices.
+        precise = [(ast.literal_eval(source).decode('utf-8'), int(price))
+                   for source, price in re.findall(
+                       r'public_exact\((b"(?:\\.|[^"\\])*")\s*,(\d+),(?:true|false)\);',
+                       (ROOT / 'tests/m2/public_fuel.fy').read_text())]
+        assert len(precise) == len({source for source, _ in precise}) == 24
         for source, price in precise:
             invoke(source, ['--fuel', price - 1], 'fuel')
             invoke(source, ['--fuel', price])

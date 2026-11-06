@@ -5,6 +5,7 @@ import array_vm as arrays;
 import array_layout as layouts;
 import array_owners as owners;
 import errors as errors;
+import fuel as meter;
 import std::vec as vec;
 import std::bytes as bytes;
 
@@ -25,7 +26,7 @@ pub fn Result<Requirement,errors::Error> requirement(ref ir::Program p){
     if(length==0){return .err(errors::make(5,0));}
     // At most 256 instruction visits, cell initialization and prepaid vector
     // destruction, plus byte zeroing. No setup charge for existing programs.
-    return .ok(Requirement{.length=length,.bytes=size,.cost=257+2*length+size});
+    return .ok(Requirement{.length=length,.bytes=size,.cost=meter::list_prepare(length,size)});
 }
 pub fn Result<vec::Vec<i64>,errors::Error> prepare_values(ref Requirement plan){
     if(plan.length>4096 || plan.bytes>32768 || (plan.length==0)!=(plan.bytes==0)){
@@ -56,7 +57,7 @@ pub fn Result<usize,errors::Error> cost(ref ir::Program p,usize pc){
     // Register gathering, full codec staging and final byte copy. Replacement
     // keeps the existing-owner envelope; creation also prepays seven padding bytes.
     // Both ordinary prices include dispatch.
-    return .ok(if(p.code[pc*8]==81){49+layout.length+3*layout.bytes}else{56+layout.length+3*layout.bytes});
+    return .ok(meter::list_instruction(p.code[pc*8]==81,layout.length,layout.bytes));
 }
 pub fn Result<usize,errors::Error> step(ref ir::Program p,usize pc,usize frame,
     ref mut arrays::State state,ref mut u8[] data,ref i64[] registers,
