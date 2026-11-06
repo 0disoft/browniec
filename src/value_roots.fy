@@ -260,17 +260,25 @@ pub fn Result<usize,Error> reserve(ref mut State s,ref mut vec::Vec<bytes::Buffe
     push(roots,root);restore(roots,scratch);
     s.ledger=ledger;s.rows[i].generation=next.generation;return .ok(actual);
 }
-pub fn Result<usize,Error> append(ref mut State s,ref mut vec::Vec<bytes::Buffer> roots,
-    ref mut vec::Vec<bytes::Buffer> scratch,usize serial,usize binding,ref u8[] input,
-    growth::Limits limits,ref mut usize fuel){
-    let usize metadata=pay(256,fuel)?;let usize i=resolve(s,roots,scratch,serial,binding)?;
-    let usize old_length=bytes::len(vec::at<bytes::Buffer>(roots,i));
-    let usize cost=append_cost(old_length,input.len)?;let usize paid=pay(cost-256,fuel)?;
-    let usize length=old_length+input.len;
-    let usize capacity=bytes::capacity(vec::at<bytes::Buffer>(roots,i));
+// Authenticated callers retain exclusive local ownership of root throughout.
+// They restore vector positions on every recoverable outcome.
+struct AppendOutcome { usize length; u8 error; bool success; }
+fn u8 append_error_code(Error e){return switch(e){case .Fuel:{1}case .State:{2}case .Binding:{3}
+    case .Serial:{4}case .Owners:{5}case .Quota:{6}case .Allocation:{7}case .Bounds:{8}};}
+fn Error append_error(u8 code){return if(code==1){.Fuel}else if(code==3){.Binding}
+    else if(code==4){.Serial}else if(code==5){.Owners}else if(code==6){.Quota}
+    else if(code==7){.Allocation}else if(code==8){.Bounds}else{.State};}
+fn Result<usize,Error> appended(AppendOutcome outcome){
+    return if(outcome.success){.ok(outcome.length)}else{.err(append_error(outcome.error))};
+}
+fn bytes::Buffer append_ready(ref mut State s,bytes::Buffer source,
+    usize i,ref u8[] input,growth::Limits limits,ref mut AppendOutcome outcome){
+    var bytes::Buffer root=source;
+    let usize old_length=bytes::len(ref root);
+    if(input.len>18446744073709551615-old_length){outcome.error=8;return root;}
+    let usize length=old_length+input.len;let usize capacity=bytes::capacity(ref root);
     let owners::Token token=owners::Token{.slot=s.rows[i].slot,.generation=s.rows[i].generation};
-    if(input.len>0 && token.generation==18446744073709551615){return .err(.Owners);}
-    var bytes::Buffer root=take(roots,scratch,i);
+    if(input.len>0 && token.generation==18446744073709551615){outcome.error=5;return root;}
     if(length<=capacity){
         let growth::Ledger admitted=s.ledger;
         let Result<owners::Token,buffer_append::Error> result=buffer_append::within_capacity(
@@ -281,21 +289,20 @@ pub fn Result<usize,Error> append(ref mut State s,ref mut vec::Vec<bytes::Buffer
                 // SDK failure may follow native mutation: never expose a rejected
                 // operation with changed bytes as a recoverable store result.
                 case .Provider:{assert(false);.State}};
-            push(roots,root);restore(roots,scratch);return .err(error);
+            outcome.error=append_error_code(error);return root;
         }};
-        push(roots,root);restore(roots,scratch);
-        s.rows[i].generation=next.generation;return .ok(length);
+        s.rows[i].generation=next.generation;outcome.success=true;outcome.length=length;return root;
     }
     // Only successful publication updates the original ledger, including peaks.
     var growth::Ledger ledger=s.ledger;var replacement::Plan plan=replacement::empty();
     let bytes::Buffer prepared=switch(replacement::prepare_append(ref s.table,token,ref root,input,
         limits,ref mut ledger,ref mut plan)){
         case .ok(v):{v}case .err(e):{
-            push(roots,root);restore(roots,scratch);return .err(replacement_error(e));
+            outcome.error=append_error_code(replacement_error(e));return root;
         }
     };
     if(!preflight_publication(ref s.table,ref prepared,ref ledger,ref plan)){
-        push(roots,root);restore(roots,scratch);return .err(.State);
+        outcome.error=2;return root;
     }
     // Publication is irreversible; commit failure is a fatal provider invariant.
     root=prepared;
@@ -304,8 +311,41 @@ pub fn Result<usize,Error> append(ref mut State s,ref mut vec::Vec<bytes::Buffer
             assert(false);owners::Token{.slot=token.slot,.generation=token.generation+1}
         }
     };
-    push(roots,root);restore(roots,scratch);
-    s.ledger=ledger;s.rows[i].generation=next.generation;return .ok(length);
+    s.ledger=ledger;s.rows[i].generation=next.generation;outcome.success=true;outcome.length=length;return root;
+}
+pub fn Result<usize,Error> append(ref mut State s,ref mut vec::Vec<bytes::Buffer> roots,
+    ref mut vec::Vec<bytes::Buffer> scratch,usize serial,usize binding,ref u8[] input,
+    growth::Limits limits,ref mut usize fuel){
+    let usize metadata=pay(256,fuel)?;let usize i=resolve(s,roots,scratch,serial,binding)?;
+    let usize cost=append_cost(bytes::len(vec::at<bytes::Buffer>(roots,i)),input.len)?;
+    let usize paid=pay(cost-256,fuel)?;var bytes::Buffer root=take(roots,scratch,i);
+    var AppendOutcome result=AppendOutcome{.length=0,.error=2,.success=false};
+    let bytes::Buffer changed=append_ready(s,root,i,input,limits,ref mut result);
+    push(roots,changed);restore(roots,scratch);return appended(result);
+}
+pub fn Result<usize,Error> append_from_cost(usize old_length,usize source_length){
+    let usize cost=append_cost(old_length,source_length)?;
+    if(cost>18446744073709551359){return .err(.Bounds);}return .ok(cost+256);
+}
+// Both identities are authenticated before extraction. The destination becomes
+// one local resource; its distinct source stays in one of the owning vectors.
+// No staging allocation or escaping native view is needed, even for growth.
+pub fn Result<usize,Error> append_from(ref mut State s,ref mut vec::Vec<bytes::Buffer> roots,
+    ref mut vec::Vec<bytes::Buffer> scratch,usize serial,usize binding,usize source_serial,
+    usize source_binding,growth::Limits limits,ref mut usize fuel){
+    let usize metadata=pay(512,fuel)?;let usize i=resolve(s,roots,scratch,serial,binding)?;
+    let usize source=resolve_mode(s,roots,scratch,source_serial,source_binding,false)?;
+    if(i==source){return .err(.Binding);}let usize count=vec::len<bytes::Buffer>(roots);
+    let usize cost=append_from_cost(bytes::len(vec::at<bytes::Buffer>(roots,i)),
+        bytes::len(vec::at<bytes::Buffer>(roots,source)))?;
+    let usize paid=pay(cost-512,fuel)?;var bytes::Buffer root=take(roots,scratch,i);
+    var AppendOutcome result=AppendOutcome{.length=0,.error=2,.success=false};
+    let bytes::Buffer changed=if(source<i){
+        append_ready(s,root,i,bytes::view(vec::at<bytes::Buffer>(roots,source)),limits,ref mut result)
+    }else{
+        append_ready(s,root,i,bytes::view(vec::at<bytes::Buffer>(scratch,count-1-source)),limits,ref mut result)
+    };
+    push(roots,changed);restore(roots,scratch);return appended(result);
 }
 // Move the actual allocation through the existing owning handoff. Restore on
 // rejection before changing its logical binding; token/generation/charge stay.

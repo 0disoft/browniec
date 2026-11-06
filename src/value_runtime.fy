@@ -7,6 +7,7 @@ import value_frame_meter as meter;
 import value_call_vm as calls;
 import value_codec as codec;
 import value_properties as properties;
+import value_buffer_runtime as buffers;
 import value_roots as owners;
 import buffer_growth as growth;
 import errors as errors;
@@ -88,6 +89,13 @@ pub fn Result<Step,errors::Error> instruction(ref programs::Program program,usiz
     let ref mut frames::State state=vec::at_mut<frames::State>(states,0);
     let ref mut owners::State owned=vec::at_mut<owners::State>(owner_states,0);
     let ref layouts::Plan plan=programs::layout(program);var usize remaining=fuel;
+    if(op>=99 && op<=104){
+        switch(buffers::instruction(op,dst,a,b as usize,current,plan,state,owned,data,roots,
+            root_scratch,registers,limits,ref mut remaining)){
+            case .ok(_):{}case .err(e):{return .err(failure(e,offset));}
+        };
+        return .ok(Step{.pc=pc+1,.remaining=remaining});
+    }
     if(op==98){
         let bool matched=switch(frames::tag_test(plan,state,data,at(current,a),b,owned,roots,root_scratch,ref mut remaining)){
             case .ok(v):{v}case .err(e):{return .err(failure(e,offset));}

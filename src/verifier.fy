@@ -135,6 +135,18 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
                     registers::insert(ref mut defined,dst);registers::insert(ref mut written,dst);
                 }
                 used_calls[b]=true;
+            }else if(op==99 || op==100){
+                if(dst<start || dst>=end || p.types[dst]!=if(op==99){12}else{10} || p.slots[dst] ||
+                    value_sites.parameters[dst]!=0 || p.array_parameters[dst]!=0 ||
+                    p.record_parameters[dst]!=0 || p.slice_parameters[dst]!=0 ||
+                    registers::contains(ref written,dst)){return .err(errors::make(5,pc));}
+                if(op==100 && (!readable(p,ref defined,b,start,end) || p.types[b]!=12)){return .err(errors::make(5,pc));}
+                registers::insert(ref mut defined,dst);registers::insert(ref mut written,dst);
+            }else if(op==101){
+                if(!readable(p,ref defined,a,start,end) || p.types[a]!=12 ||
+                    !readable(p,ref defined,b,start,end) || p.types[b]!=10){return .err(errors::make(5,pc));}
+            }else if(op==102 || op==103){
+                if(!readable(p,ref defined,b,start,end) || p.types[b]!=if(op==102){10}else{12}){return .err(errors::make(5,pc));}
             }else if(op==98){
                 // The independent typed CFG proved the exact live wrapper and
                 // canonical operands. Define one fresh ordinary bool here.

@@ -10,6 +10,10 @@ import errors as errors;
 // 92 CASE dst,a,variant,byte4=mismatch PC; 93 CALL dst,callee,map;
 // 94 RETURN 0,a; 95 EMPTY_BUFFER dst; 96 SCALAR_READ scalar-dst,a;
 // 97 SCALAR_VALUE dst,scalar-a; 98 TAG_TEST bool-dst,a,variant.
+// 99 BUFFER_LEN scalar-dst,a; 100 BUFFER_READ scalar-dst,a,index-reg;
+// 101 BUFFER_WRITE dst,index-reg,byte-reg; 102 BUFFER_PUSH result-dst,a,byte-reg;
+// 103 BUFFER_RESERVE result-dst,a,capacity-reg; 104 BUFFER_APPEND result-dst,a,b.
+// Buffer mutations retain owners; results are exact Result<usize,u8>.
 // TAG_TEST only inspects a live wrapper; it never defines/consumes a value slot.
 // Except CASE byte4, bytes4..7 are zero.
 // Variant1 means some/ok, variant0 none/err, matching existing IR (not a new
@@ -24,7 +28,7 @@ pub struct Program {
 pub struct Sites { bool enabled; u8[128] parameters; u8[16] results; u8[16] scalar_tags; }
 pub struct Prepared { properties::Plan properties; usize[64] classes; Sites sites; }
 pub fn Sites empty(){return Sites{.enabled=false,.parameters=[0;128],.results=[0;16],.scalar_tags=[0;16]};}
-pub fn bool operation(u8 op){return op>=88 && op<=98;}
+pub fn bool operation(u8 op){return op>=88 && op<=104;}
 fn errors::Error invalid(usize pc){return errors::make(5,pc);}
 pub fn bool slot(ref Program unit,usize id,usize f){
     return id<16 && unit.types[id]!=0 && unit.functions[id] as usize==f;
@@ -40,6 +44,23 @@ pub fn Result<usize,errors::Error> payload(ref Program unit,usize id,usize varia
     return .ok(if(node.kind==5 && variant==0){0}else{
         (if(variant==1){node.first as usize}else{node.second as usize})+1
     });
+}
+fn bool buffer(ref Program unit,usize id,usize f){
+    return slot(unit,id,f) && unit.catalog.nodes[type_id(unit,id)].kind==4;
+}
+fn bool scalar_register(ref Program unit,usize id,usize f,u8 tag){
+    let ref ir::Program p=ref unit.body;
+    return id>=p.register_starts[f] && id<p.register_ends[f] && p.types[id]==tag &&
+        !p.slots[id] && unit.parameters[id]==0 && p.array_parameters[id]==0 &&
+        p.record_parameters[id]==0 && p.slice_parameters[id]==0;
+}
+fn bool buffer_result(ref Program unit,usize id,usize f){
+    if(!slot(unit,id,f)){return false;}
+    let properties::Node node=unit.catalog.nodes[type_id(unit,id)];
+    if(node.kind!=6){return false;}
+    let properties::Node ok=unit.catalog.nodes[node.first as usize];
+    let properties::Node err=unit.catalog.nodes[node.second as usize];
+    return ok.kind==1 && ok.first==12 && err.kind==1 && err.first==10;
 }
 fn bool equivalent(properties::Node a,properties::Node b,ref usize[] classes){
     if(a.kind!=b.kind || a.extent!=b.extent){return false;}
@@ -99,7 +120,22 @@ pub fn Result<usize,errors::Error> instruction(ref Program unit,ref Prepared pro
     let ref ir::Program p=ref unit.body;let usize at=pc*8;let u8 op=p.code[at];
     let usize dst=p.code[at+1] as usize;let usize a=p.code[at+2] as usize;let usize b=p.code[at+3] as usize;
     if(!operation(op) || (op!=92 && p.code[at+4]!=0) || p.code[at+5]!=0 || p.code[at+6]!=0 || p.code[at+7]!=0){return .err(invalid(pc));}
-    if(op==93){
+    if(op>=99){
+        if(op==101){
+            if(!buffer(unit,dst,f) || !scalar_register(unit,a,f,12) ||
+                !scalar_register(unit,b,f,10)){return .err(invalid(pc));}
+        }else{
+            if(!buffer(unit,a,f)){return .err(invalid(pc));}
+            if(op==99 || op==100){
+                if(!scalar_register(unit,dst,f,if(op==99){12}else{10}) ||
+                    (op==99 && b!=0) || (op==100 && !scalar_register(unit,b,f,12))){return .err(invalid(pc));}
+            }else{
+                if(!buffer_result(unit,dst,f)){return .err(invalid(pc));}
+                if(op==104){if(a==b || !buffer(unit,b,f)){return .err(invalid(pc));}}
+                else if(!scalar_register(unit,b,f,if(op==102){10}else{12})){return .err(invalid(pc));}
+            }
+        }
+    }else if(op==93){
         if(a>=p.function_count || b>=p.call_count || p.call_arities[b] as usize!=p.arities[a]){return .err(invalid(pc));}
         if(unit.results[a]!=0 && (!slot(unit,dst,f) || !same(unit,proof,dst,(unit.results[a] as usize)-1))){return .err(invalid(pc));}
     }else if(op==94){

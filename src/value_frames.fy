@@ -252,6 +252,21 @@ pub fn Result<usize,Error> buffer_append(ref layouts::Plan plan,ref State state,
         case .ok(v):{.ok(v)}case .err(e):{.err(owned(e))}
     };
 }
+pub fn Result<usize,Error> buffer_append_from(ref layouts::Plan plan,ref State state,
+    ref vec::Vec<bytes::Buffer> frames,Address destination,Address source,
+    ref mut owners::State root_state,ref mut vec::Vec<bytes::Buffer> roots,
+    ref mut vec::Vec<bytes::Buffer> root_scratch,growth::Limits limits,ref mut usize fuel){
+    let usize spent=paid(operation(8)?,fuel)?;
+    let BufferKey dst=buffer_key(plan,state,frames,destination,root_state,roots,root_scratch)?;
+    let BufferKey src=buffer_key(plan,state,frames,source,root_state,roots,root_scratch)?;
+    let growth::Limits remaining=switch(meter::remaining(state.used,limits)){
+        case .ok(v):{v}case .err(e):{return .err(metered(e));}
+    };
+    return switch(owners::append_from(root_state,roots,root_scratch,dst.serial,dst.binding,
+        src.serial,src.binding,remaining,fuel)){
+        case .ok(v):{.ok(v)}case .err(e):{.err(owned(e))}
+    };
+}
 pub fn Result<usize,Error> buffer_push(ref layouts::Plan plan,ref State state,
     ref vec::Vec<bytes::Buffer> frames,Address source,u8 value,ref mut owners::State root_state,
     ref mut vec::Vec<bytes::Buffer> roots,ref mut vec::Vec<bytes::Buffer> root_scratch,
