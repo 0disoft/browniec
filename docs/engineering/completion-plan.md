@@ -11,7 +11,19 @@ regressions, then commit; record broader checks only when actually run. Do not
 enable public syntax, delivery flags or ABI availability ahead of implemented
 admission, execution and cleanup. Push/release/deployment are separate actions.
 
-Latest private propagation checkpoint (2026-11-07): [typed postfix `?`](value-propagation.md)
+Latest private must-use checkpoint (2026-11-07): Private [typed Result obligations](value-must-use.md) now reject
+unhandled Results at overwrite, scope/return exits and early propagation edges.
+Non-consuming predicates, exhaustive cases, return, CALL and explicit discard
+handle or transfer obligations independently of COPY ownership. Both Windows
+profiles passed ten focused groups (source 7/native 3), including 80 new guest
+programs and the unchanged admitted 32/rejected 33 fixture, on `b6e18b2`.
+All 209 inputs match checkout/Git raw bytes; all 198 production modules are LF.
+See [evidence](../evidence/value-must-use-windows-20261107.json). Public gates,
+capabilities, existing instruction prices and Fuel defaults/cap are unchanged.
+Next typed value-expression joins, loops, useful Buffer operations and general
+source/public composition; the full objective and broader validation remain open.
+
+Predecessor private propagation checkpoint (2026-11-07): [typed postfix `?`](value-propagation.md)
 now connects exact-family Option/Result success and early failure across wide,
 nested and Buffer payloads. Cleanup includes earlier anonymous CALL captures and
 lexical owners before RETURN94. Both Windows native profiles passed 11 groups in

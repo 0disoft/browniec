@@ -87,8 +87,9 @@ byte-identical across the reproduced failures and final passes. See the
 
 The [predicate successor](value-predicates.md) now adds non-consuming wide/resource
 Option/Result inspection; [typed propagation](value-propagation.md) connects `?`
-and early anonymous capture cleanup. This checkpoint is statement control flow. Typed value
-`if`/`switch` joins, loops and break/continue, must-use diagnostics,
+and early anonymous capture cleanup. [Private must-use](value-must-use.md) now
+checks Result obligations across continuing paths. This checkpoint is statement control flow. Typed value
+`if`/`switch` joins, loops and break/continue, public must-use diagnostics,
 general aggregate/reference/module/public composition and useful Buffer byte/text/
 input/output operations remain open. Engine/Instance/host/isolation/embedding/
 delivery and complete language/platform validation also remain open. No public

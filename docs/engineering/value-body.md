@@ -3,7 +3,8 @@
 The [predicate successor](value-predicates.md) now adds non-consuming typed
 Option/Result inspection through TAG_TEST98, including move-only Buffer wrappers.
 The [propagation successor](value-propagation.md) now connects wide/resource `?`
-and early cleanup. Must-use, typed value-expression joins, loops and public
+and early cleanup. [Private must-use](value-must-use.md) now tracks Result
+obligations; typed value-expression joins, loops and public
 integration remain separate work.
 
 `value_source::compile` now lowers actual source bodies to `value_ir::Program`.

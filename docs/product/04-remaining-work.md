@@ -1,3 +1,15 @@
+- Private [typed Result obligations](../engineering/value-must-use.md) now reject
+  unhandled Results at overwrite, scope/return exits and early propagation edges.
+  Non-consuming predicates, exhaustive cases, return, CALL and explicit discard
+  handle or transfer obligations independently of COPY ownership. Both Windows
+  profiles passed ten focused groups (source 7/native 3), including 80 new guest
+  programs and the unchanged admitted 32/rejected 33 fixture, on `b6e18b2`.
+  All 209 inputs match checkout/Git raw bytes; all 198 production modules are LF.
+  See [evidence](../evidence/value-must-use-windows-20261107.json). Public gates,
+  capabilities, existing instruction prices and Fuel defaults/cap are unchanged.
+  Next typed value-expression joins, loops, useful Buffer operations and general
+  source/public composition; the full objective and broader validation remain open. Earlier checkpoints retain their scopes.
+
 - Private typed propagation, 2026-11-07: [postfix source/helper contract](../engineering/value-propagation.md)
   implements Option/Result `?` with wide/nested/Buffer payloads. Success types may
   differ; Result errors match exactly. Failure cleans earlier anonymous arguments

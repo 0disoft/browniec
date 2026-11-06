@@ -2,6 +2,18 @@
 
 ## Current implementation (2026-11-07)
 
+Private [typed Result obligations](docs/engineering/value-must-use.md) now reject
+unhandled Results at overwrite, scope/return exits and early propagation edges.
+Non-consuming predicates, exhaustive cases, return, CALL and explicit discard
+handle or transfer obligations independently of COPY ownership. Both Windows
+profiles passed ten focused groups (source 7/native 3), including 80 new guest
+programs and the unchanged admitted 32/rejected 33 fixture, on `b6e18b2`.
+All 209 inputs match checkout/Git raw bytes; all 198 production modules are LF.
+See [evidence](docs/evidence/value-must-use-windows-20261107.json). Public gates,
+capabilities, existing instruction prices and Fuel defaults/cap are unchanged.
+Next typed value-expression joins, loops, useful Buffer operations and general
+source/public composition; the full objective and broader validation remain open.
+
 Private [typed postfix propagation](docs/engineering/value-propagation.md) now
 connects `?` across wide scalars, nested Option/Result and Buffer payloads. Failure
 cleans earlier anonymous arguments and lexical owners before returning the exact

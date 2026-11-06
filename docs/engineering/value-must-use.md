@@ -47,8 +47,11 @@ and `--batch native --profile development`, with release counterparts. The
 selections are disjoint: source has three new groups (80 independent guest
 programs) and four unchanged regressions; native has three obligation/atomicity
 helper groups. Preserve the unchanged admitted 32/rejected 33 combined source-depth
-fixture and use no native stack overrides. Final outcomes and exact input
-identities are recorded separately after both profiles pass.
+fixture and use no native stack overrides. Windows development/release each
+passed all ten groups on `b6e18b2`. All 209 inputs match checkout/Git raw bytes;
+all 198 production modules are LF. See the
+[Windows evidence](../evidence/value-must-use-windows-20261107.json) and
+[input manifest](../evidence/value-must-use-inputs-windows-20261107.json).
 Full CLI/language/native Fuel matrices, Linux, OOM/general stack/performance and
 clean-machine delivery remain separate obligations.
 
