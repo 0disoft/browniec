@@ -11,7 +11,18 @@ regressions, then commit; record broader checks only when actually run. Do not
 enable public syntax, delivery flags or ABI availability ahead of implemented
 admission, execution and cleanup. Push/release/deployment are separate actions.
 
-Latest private predicate checkpoint (2026-11-07): [non-consuming tag inspection](value-predicates.md)
+Latest private propagation checkpoint (2026-11-07): [typed postfix `?`](value-propagation.md)
+now connects exact-family Option/Result success and early failure across wide,
+nested and Buffer payloads. Cleanup includes earlier anonymous CALL captures and
+lexical owners before RETURN94. Both Windows native profiles passed 11 groups in
+disjoint source 8/helper 3 selections on `78cde1f`, with 208 checkout/Git-raw matching
+inputs and 198 LF modules. See [evidence](../evidence/value-propagation-windows-20261107.json).
+The existing admitted 32/rejected 33 fixture remains unchanged. Public gates and
+existing prices/default/cap stay unchanged. Next Result must-use diagnostics,
+typed value-expression joins, loops, useful Buffer operations and general source/
+public composition. Full implementation and broader validation remain open.
+
+Predecessor private predicate checkpoint (2026-11-07): [non-consuming tag inspection](value-predicates.md)
 now preserves named/grouped Option/Result receivers, including active/inactive
 Buffer wrappers, through TAG_TEST98. Computed subjects evaluate once then drop.
 Both native profiles passed 26 groups (source 22 + instruction 4), with 210 matching
@@ -219,7 +230,8 @@ Fuel default 256 / ceiling 16000000 and wider capability gates remain unchanged.
    wrapper constructors, immutable locals, lexical cleanup and mixed CALL/RETURN.
    The [control successor](value-control.md) now adds mutable assignment and
    statement if/switch joins. The [predicate successor](value-predicates.md) now adds
-   non-consuming inspection. Next implement propagation, must-use, typed
+   non-consuming inspection. The [propagation successor](value-propagation.md) now
+   adds typed early return and complete anonymous capture cleanup. Next must-use, typed
    value-expression joins, loops and useful Buffer operations before aggregate/
    reference/module composition and public admission. For L06, public scalar/tagged `.is_ok` and
    explicit discard are implemented; unused Result-binding diagnosis and the

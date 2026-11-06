@@ -2,6 +2,17 @@
 
 ## Current implementation (2026-11-07)
 
+Private [typed postfix propagation](docs/engineering/value-propagation.md) now
+connects `?` across wide scalars, nested Option/Result and Buffer payloads. Failure
+cleans earlier anonymous arguments and lexical owners before returning the exact
+failure wrapper; success retains its payload. Both Windows native profiles passed
+11 groups (8 source/regression + 3 helper) on `78cde1f`, with 208 checkout/Git-raw
+matching inputs and 198 LF production modules. The existing 32/33 depth fixture
+remains byte-identical. See the [evidence](docs/evidence/value-propagation-windows-20261107.json).
+Public source/CLI gates stay unchanged. Next Result must-use diagnostics, typed
+value-expression joins, loops, useful Buffer operations and general source/public
+composition; full language/runtime/platform/delivery completion remains open.
+
 Private [non-consuming tag predicates](docs/engineering/value-predicates.md)
 now add Option `.is_some`/`.is_none` and Result `.is_ok`/`.is_err`, including
 move-only Buffer payloads. Named/grouped receivers stay live; computed receivers
@@ -9,7 +20,8 @@ evaluate once and drop after inspection. Windows development/release each passed
 26 native groups (22 source/regression + 4 instruction), with 210 checkout/Git-raw
 matching inputs and 197 LF production modules. See the
 [evidence](docs/evidence/value-predicates-windows-20261107.json). Implementation:
-`5a02886`. Public compiler/CLI gates remain unchanged. Propagation, must-use,
+`5a02886`. Public compiler/CLI gates remain unchanged. The propagation successor
+above now extends this checkpoint; must-use,
 typed value-expression joins, loops, useful Buffer operations and general
 source/public composition remain open.
 

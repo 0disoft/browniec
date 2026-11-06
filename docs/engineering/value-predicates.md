@@ -63,7 +63,8 @@ fixture initially lacked its required metadata quota; final runs use the same
 four-group fixture with the correct quota. Production code was unchanged between
 these batches; no historical/native-override result is reused.
 
-Propagation, must-use Result diagnostics, typed value-expression joins, loops,
+The [propagation successor](value-propagation.md) now connects wide/resource `?`
+and early anonymous capture cleanup. Must-use Result diagnostics, typed value-expression joins, loops,
 useful Buffer operations and general aggregate/reference/module/public composition
 remain open. Full CLI/language/native Fuel matrices, Linux, OOM/general stack/
 performance and clean-machine delivery are separate obligations.

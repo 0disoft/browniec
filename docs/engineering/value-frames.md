@@ -2,8 +2,9 @@
 
 The [predicate successor](value-predicates.md) now adds non-consuming typed
 Option/Result inspection through TAG_TEST98, including move-only Buffer wrappers.
-Propagation, must-use, typed value-expression joins, loops and public integration
-remain separate work.
+The [propagation successor](value-propagation.md) now connects wide/resource `?`
+and early cleanup. Must-use, typed value-expression joins, loops and public
+integration remain separate work.
 
 `value_frames` connects the [retained canonical layout](value-codec.md) to actual
 native per-activation byte storage and the [owning Buffer root store](value-roots.md).

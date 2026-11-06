@@ -86,8 +86,9 @@ byte-identical across the reproduced failures and final passes. See the
 [input manifest](../evidence/value-control-inputs-windows-20261107.json).
 
 The [predicate successor](value-predicates.md) now adds non-consuming wide/resource
-Option/Result inspection. This checkpoint is statement control flow. Typed value
-`if`/`switch` joins, loops and break/continue, propagation, must-use diagnostics,
+Option/Result inspection; [typed propagation](value-propagation.md) connects `?`
+and early anonymous capture cleanup. This checkpoint is statement control flow. Typed value
+`if`/`switch` joins, loops and break/continue, must-use diagnostics,
 general aggregate/reference/module/public composition and useful Buffer byte/text/
 input/output operations remain open. Engine/Instance/host/isolation/embedding/
 delivery and complete language/platform validation also remain open. No public

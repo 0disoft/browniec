@@ -1,3 +1,20 @@
+- Private typed postfix propagation is implemented at `78cde1f`; see
+  docs/engineering/value-propagation.md. Option success types may differ; Result
+  success types may differ but exact error nodes must match. Wide/nested/Buffer
+  payloads now pass through existing CASE92/JUMP/TAG/DROP/RETURN94 instructions.
+  Failure cleans all current-function slots, including earlier anonymous CALL
+  captures; success restores only a separately reached heap-snapshot path. Source
+  returns share finish_function. Scoped pool indices release on either outcome,
+  with no recursive large Snapshot copies or allocator rewind. Existing opcode
+  prices/default256/cap16000000 and public source/capability gates are unchanged.
+  Windows development/release each passed 11 groups (source 8/helper 3) with 208
+  checkout/Git-raw matching inputs and 198 LF modules. The existing admitted 32/
+  rejected 33 fixture is byte-identical. See
+  docs/evidence/value-propagation-windows-20261107.json. Next Result must-use
+  diagnostics, typed value-expression joins, loops, useful Buffer operations and
+  general source/public composition. Full objective and broad validation remain
+  open. Local only; no push/release/deployment. Earlier checkpoints keep scope.
+
 - Private non-consuming predicates are implemented at `5a02886`; see
   docs/engineering/value-predicates.md. Source Option is_some/is_none and Result
   is_ok/is_err read named/grouped receivers without MOVE/COPY or typed allocation;
