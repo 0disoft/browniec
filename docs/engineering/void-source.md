@@ -58,6 +58,14 @@ python -B tools/verify-static-execution.py --profile release --selection void-fu
 python -B tools/verify-local-inference-cli.py --profile release --void-functions
 ```
 
+Windows development and release each passed 17 native groups and 298 language
+CLI cases. The existing public Fuel CLI phase separately passed 57 cases per
+profile, including usage/overflow/ceiling rejection and prior exact aggregate
+oracles. All 182 input paths match checkout and Git raw bytes, and both locked
+LF mirrors pass. The common 275-file discovery records forty-one unselected
+legacy CRLF/LF variants separately. The original full public Fuel native
+selection was not rerun.
+
 The selection covers void source/independent IR, original 32/33 captured CALL
 regressions, native qualified modules, conditional tail classification and
 nonlocal aggregate cleanup. The CLI selection includes prior inference and

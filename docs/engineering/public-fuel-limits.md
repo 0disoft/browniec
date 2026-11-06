@@ -283,3 +283,21 @@ Full M1/M2, Linux, restricted delivery, ABI, packaging and elapsed-time/allocato
 stack-size benchmarks are outside this increment. The [public Program successor](public-program.md)
 now admits the shared-byte result subset; general mutable/non-byte/Buffer/input
 results, other C05 capacities and the complete objective remain open.
+
+## Void source successor, 2026-11-06
+
+The [void successor](void-source.md) retains existing CALL/cleanup prices and
+adds a one-dispatch-unit value-less RETURN, without a dummy result register.
+The no-argument noop fixture needs exactly 4 ordinary Fuel, 688132 through
+retained native entry, or 688150 through public retained source with an image
+binding. Exact/one-short checks pass; public fixtures also check one-more.
+These whole-invocation costs include the existing entry/leave reserves.
+Default 256, ceiling 16000000 and other capacities remain.
+
+Both current Windows CLI profiles passed the existing 57-case public Fuel
+selection, including malformed/overflow/ceiling inputs, costly CALLs and exact
+aggregate oracles. Separate void verification passed 17 native groups and 298
+language CLI cases per profile, with locked LF mirrors and input/artifact hashes
+in the [focused evidence](../evidence/void-functions-windows-20261106.json).
+The original full public Fuel native selection was not rerun; complete C05 and
+Engine/Instance accounting remain open.

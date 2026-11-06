@@ -160,8 +160,17 @@ operands and pure-for usage are rejected. The
 fixed-array and nominal plain-record joins, including locals, arguments, returns,
 whole/child assignment, child constructor fields and scalar projections. Continuing
 arms initialize one shared destination; selected evaluation, source-order effects
-and existing nonlocal cleanup remain. Aggregate switch values, reference/Buffer
-joins and void functions remain separate work.
+and existing nonlocal cleanup remain. Aggregate switch values and reference/Buffer
+joins remain separate work.
+
+The [void successor](../engineering/void-source.md) supports `fn void f(...)`,
+explicit `return;`, implicit end-of-body return and direct `f(...);` statements,
+including qualified native module calls. Calls preserve ordered argument effects,
+captures and existing cleanup, without a result register. Void is return-only;
+it cannot be a value, local, parameter, wrapper or array element. Ignoring nonvoid
+results remains rejected, and classic-for headers remain pure scalar. Entry
+still returns i32. Void RETURN costs one dispatch unit; existing CALL/cleanup
+prices, public default 256 and ceiling 16000000 remain.
 
 The i64 increment admits `i64` locals, function parameters and results, call
 arguments and returns, assignments, loop variables and expressions, and

@@ -1,3 +1,19 @@
+- Void functions/statements are implemented at `09e7250` on the independently
+  verified IR foundation `ec20e7f`. Explicit/implicit returns and ordered CALLs
+  retain existing owner/loan/image cleanup without a dummy result register.
+  Development/release each passed 17 native groups, 298 tool-free language CLI
+  cases and 57 public Fuel CLI cases on 182 Git-raw/checkout-matching inputs,
+  160 LF modules and common 275-file discovery; both locked LF mirrors pass.
+  Exact ordinary 4, retained native 688132 and public retained 688150 boundaries,
+  the 128-register native limit and original CALL bounds pass. See the
+  [contract](docs/engineering/void-source.md) and
+  [Windows evidence](docs/evidence/void-functions-windows-20261106.json).
+  Existing prices/default256/cap16000000 remain. Aggregate switch values, general
+  reference/Buffer joins, broader constructor context, grouped lvalues/borrows
+  and complete C05/Instance/host/delivery remain open. Original full public Fuel
+  native selection, full matrices/Linux/OOM/general stack/timing/delivery not
+  rerun. Local only.
+
 - Fixed-array/plain-record if values are implemented at `33f32f4`, using lazy
   exact-shape result destinations and existing independent admission. Development
   and release each passed 21 native groups and 264 tool-free CLI cases on 172

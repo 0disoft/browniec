@@ -1,7 +1,8 @@
 # Void call and return IR
 
-Date: 2026-11-06. Native foundation; source syntax remains gated until the
-source successor connects declaration, statements and lexical cleanup.
+Date: 2026-11-06. Native foundation. The [source successor](void-source.md)
+now connects declaration, statements and lexical cleanup; the original
+foundation-only verification below remains scoped to its checkpoint.
 
 Return tag 13 denotes void only in function metadata. `types.valid` deliberately
 continues to exclude it, so no local, scalar register, argument or tagged payload
