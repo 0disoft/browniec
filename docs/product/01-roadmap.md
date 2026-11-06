@@ -23,7 +23,9 @@
   now cover all five copy/value-store forms through shared phase/owner proof.
   [Metered native aggregate storage](../engineering/aggregate-place-vm.md) now
   supplies invocation-local tickets, prepaid snapshots and all five final stores.
-  Next: shared legacy/aggregate IDs in both drivers, retained guards and source lowering, then
+  [Shared native place dispatch](../engineering/place-dispatch.md) now supplies
+  one vector/ID space for all five kinds, preserving legacy-only formats/prices.
+  Next: both drivers, retained guards and source lowering, then
   resource/tag move semantics.
 - L04 starts with [native owned-array selected locations](../engineering/array-selected-place.md).
   [Independent place IR analysis](../engineering/array-place-ir.md) now checks

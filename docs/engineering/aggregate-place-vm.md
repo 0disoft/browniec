@@ -11,8 +11,10 @@ Each of 32 frames has one active counter and up to sixteen eighteen-word rows.
 A row stores the thirteen original destination words, static root ID, SELECT PC,
 kind, ticket and phase. The initialized vector length is `3+32*(18*width+1)`:
 611 words at width one and 9251 words (74008 bytes on 64-bit targets) at width
-sixteen. Legacy vector lengths are 0, 1 or 2 modulo 32; this format is 3 modulo
-32, and legacy adapters refuse it. No new owner or guest extent is allocated.
+sixteen. Legacy-only vector lengths are 0, 1 or 2 modulo 32; this format is 3
+modulo 32. The [shared dispatcher](place-dispatch.md) now permits legacy kinds
+in this format while keeping the old adapters' aggregate-IR gates. No new owner
+or guest extent is allocated.
 
 Tickets increase across selection, END, frame reuse and abort. They never wrap;
 an exhausted serial rejects selection before publication. Tickets are local to
@@ -71,8 +73,9 @@ payload and selected phase remain unchanged on a failed final store.
 
 This adapter executes all five native final stores. It does not grant ordinary,
 image or returned-reference executable admission. Both VM coordinators, retained
-dependency guards, the shared legacy/aggregate ID integration and ordered source
-lowering remain to be connected. No public capability, CLI default 256 or explicit
+dependency guards and ordered source lowering remain to be connected. The
+[common native dispatcher](place-dispatch.md) supplies the shared ID/storage
+integration. No public capability, CLI default 256 or explicit
 ceiling 16000000 changes. Complete L04/C05/Engine/Instance/host/isolation/platform
 delivery and the broader language work remain open.
 

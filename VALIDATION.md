@@ -1,3 +1,25 @@
+- Shared native place dispatch now uses one invocation vector and frame counter
+  for scalar-array, exclusive-slice, scalar-record and both aggregate kinds.
+  Legacy-only programs retain original formats/prices. Mixed aggregate programs
+  use the same eighteen-word rows and END26; twenty directed cross-kind
+  reselections cannot overwrite pending rows. Fuel precedes binding lookup;
+  setup-prepaid abort keeps the serial and guest bytes. See the
+  [contract](docs/engineering/place-dispatch.md).
+  Windows development/release each passed 19 native groups and 105 tool-free
+  public Fuel CLI cases on 198 checkout/Git-raw-matching current inputs, 177 LF
+  production modules and 304 test-source files / 1821 annotations. Development
+  combines four same-turn core groups with fifteen regression groups; only the
+  unselected regression runner selector changed between them. Every production
+  and test input stayed unchanged; release runs all nineteen fresh. See
+  [Windows evidence](docs/evidence/place-dispatch-windows-20261106.json).
+  Local implementation fa33853. Both VM drivers still use legacy dispatch;
+  connect them and retained namespace/scalar-use guards before promoting kind3/4
+  execution, then ordered source lowering. Public prices/default256/cap16000000
+  and gates remain. Resource/tag moves and full L04/C05/Engine/Instance/host/
+  isolation/delivery remain open. Full language/native Fuel, LF mirrors, Linux,
+  OOM/general stack/performance and clean-machine delivery were not rerun.
+  Local only; no push/release/deployment.
+
 - Metered native aggregate places now capture invocation-local tickets and
   exact original array/nominal-subtree destinations in disjoint eighteen-word
   rows. All five final stores prepay Fuel, revalidate native owners/windows and

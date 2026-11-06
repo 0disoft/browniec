@@ -4,6 +4,12 @@
 - Implementation status: Reconciled 2026-11-06; bounded M1 and public M2 aggregate/slice/literal/shared-byte-result subsets; full profile incomplete
 - Source profile name: brownie.safe/0.3
 
+- L04 common native dispatch: [shared storage and IDs](../engineering/place-dispatch.md)
+  now serve scalar arrays, exclusive slices, scalar record fields, whole arrays
+  and nominal record subtrees in one allocation/counter per invocation/frame.
+  Legacy-only formats/prices remain. Both drivers and retained guards must consume
+  this dispatcher before executable kind3/4 admission; ordered lowering follows.
+
 - L04 aggregate metering: [native invocation storage](../engineering/aggregate-place-vm.md)
   now executes array copy/fill/list and nominal record copy/constructor stores
   with prepaid setup/operations, invocation-local tickets and zero-Fuel abort.
