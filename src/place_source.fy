@@ -2,6 +2,7 @@ module place_source;
 import ir as ir;
 import slice_place_ir as slices;
 import record_place_ir as records;
+import aggregate_place_ir as aggregates;
 import locals as locals;
 import errors as errors;
 
@@ -17,21 +18,26 @@ pub fn u8 compound(u8 kind){
 // selecting PC, root and phase. This mask consumes no guest local/register.
 pub fn Result<usize,errors::Error> select(ref mut ir::Program p,ref mut locals::Table names,
     usize root,usize index,usize at){
-    return select_kind(p,names,root,index,at,0);
+    return select_kind(p,names,root,index,at,0,0);
 }
 pub fn Result<usize,errors::Error> slice(ref mut ir::Program p,ref mut locals::Table names,
     usize site,usize index,usize at){
-    return select_kind(p,names,site,index,at,1);
+    return select_kind(p,names,site,index,at,1,0);
 }
 pub fn Result<usize,errors::Error> record(ref mut ir::Program p,ref mut locals::Table names,
-    usize site,usize ordinal,usize at){return select_kind(p,names,site,ordinal,at,2);}
+    usize site,usize ordinal,usize at){return select_kind(p,names,site,ordinal,at,2,0);}
+pub fn Result<usize,errors::Error> array(ref mut ir::Program p,ref mut locals::Table names,
+    usize root,usize at){return select_kind(p,names,root,0,at,3,0);}
+pub fn Result<usize,errors::Error> record_value(ref mut ir::Program p,ref mut locals::Table names,
+    usize root,usize nominal,usize ordinal,usize at){return select_kind(p,names,root,ordinal,at,4,nominal);}
 fn Result<usize,errors::Error> select_kind(ref mut ir::Program p,ref mut locals::Table names,
-    usize root,usize index,usize at,u8 kind){
+    usize root,usize index,usize at,u8 kind,usize nominal){
     if(names.pending_places>65535){return .err(errors::make(4,at));}
     let usize one=1;var usize id=0;
     while(id<16 && (names.pending_places&(one<<id))!=0){id+=1;}
     if(id==16){return .err(errors::make(4,at));}
-    let usize selected=if(kind==2){records::select(p,id,root,index,at)?}
+    let usize selected=if(kind==4){aggregates::select_record(p,id,root,nominal,index,at)?}
+        else if(kind==3){aggregates::select_array(p,id,root,at)?}else if(kind==2){records::select(p,id,root,index,at)?}
         else if(kind==1){slices::select(p,id,root,index,at)?}else{ir::place_select(p,id,root,index,at)?};
     names.pending_places|=one<<id;return .ok(id);
 }

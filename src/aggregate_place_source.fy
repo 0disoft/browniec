@@ -1,0 +1,42 @@
+module aggregate_place_source;
+import aggregate_place_ir as stores;
+import place_source as places;
+import ir as ir;
+import locals as locals;
+import record_expression_source as expressions;
+import struct_value_source as records;
+import errors as errors;
+
+// Parser callers select into their lexical snapshot BEFORE evaluating RHS.
+// End the captured destination before releasing any anonymous result owner.
+pub fn Result<usize,errors::Error> copy_array(ref mut ir::Program p,ref mut locals::Table names,
+    usize place,usize root,usize source,bool owned,usize at){
+    if(owned && source==root){return .err(errors::make(3,at));}
+    let usize stored=stores::store_array(p,place,root,source,at)?;
+    let usize ended=places::end(p,names,place,at)?;
+    if(owned){let usize dropped=ir::array_drop(p,source,at)?;}return .ok(stored);
+}
+pub fn Result<usize,errors::Error> fill_array(ref mut ir::Program p,ref mut locals::Table names,
+    usize place,usize root,usize scalar,usize at){
+    let usize stored=stores::fill_array(p,place,root,scalar,at)?;
+    let usize ended=places::end(p,names,place,at)?;return .ok(stored);
+}
+pub fn Result<usize,errors::Error> list_array(ref mut ir::Program p,ref mut locals::Table names,
+    usize place,usize root,ref usize[] values,usize at){
+    let usize stored=stores::replace_array(p,place,root,values,at)?;
+    let usize ended=places::end(p,names,place,at)?;return .ok(stored);
+}
+pub fn Result<usize,errors::Error> record(ref mut ir::Program p,ref mut locals::Table names,
+    usize place,usize root,records::Leaf target,ref expressions::Value value,usize at){
+    if(root>=p.records.count || !p.records.mutable[root] || target.tag!=0 || value.tag!=0 ||
+        target.record!=value.record || (value.owned && (value.id==root || value.id==16))){return .err(errors::make(3,at));}
+    var usize stored=0;
+    if(value.id==16){let usize count=records::leaf_count(p,value.record,at)?;
+        if(value.ordinal>16 || count>16-value.ordinal){return .err(errors::make(4,at));}
+        let usize first=p.registers;var usize i=0;
+        while(i<count){let usize loaded=ir::emit(p,17,value.slots[value.ordinal+i],0,at)?;i+=1;}
+        stored=stores::replace_record(p,place,root,target.record,target.ordinal,first,at)?;
+    }else{stored=stores::store_record(p,place,root,value.id,target.record,target.ordinal,value.ordinal,at)?;}
+    let usize ended=places::end(p,names,place,at)?;
+    if(value.owned){let usize dropped=ir::record_drop(p,value.id,at)?;}return .ok(stored);
+}
