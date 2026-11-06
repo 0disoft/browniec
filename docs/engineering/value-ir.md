@@ -8,8 +8,9 @@ place proof. This layer supplies analysis; the
 [private execution successor](value-execution.md)
 now retains an immutable `value_program::Program` and executes operations 88..97
 through native value frames and the ordinary VM. Ordinary, image and returned
-reference admissions keep their existing gates. Compiler source bindings remain
-next.
+reference admissions keep their existing gates. The [source foundation](value-source.md)
+now provides canonical type/signature and lexical COPY/MOVE/DROP metadata;
+executable Buffer/wider-wrapper body lowering remains next.
 
 ## Instructions and type identity
 
@@ -94,7 +95,9 @@ The [native frame successor](value-frames.md) now supplies actual native value
 storage, activation generations, COPY/MOVE, tag construction/extraction, combined
 quotas and prepaid cleanup. The [private execution successor](value-execution.md)
 now connects retained code/layout, typed dispatch and atomic mixed typed/ordinary
-CALL/RETURN handoff to that storage. Compiler source bindings remain next.
+CALL/RETURN handoff to that storage. The [source foundation](value-source.md)
+now supplies canonical type/signature and lexical ownership preparation;
+executable Buffer/wider-wrapper body lowering remains next.
 General reference/Buffer joins,
 must-use, Engine/Instance ownership and complete L04/L05/D01-D04 remain open.
 

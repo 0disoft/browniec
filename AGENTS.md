@@ -1,3 +1,21 @@
+- Typed source preparation is implemented at efbc16b; public Result inspection
+  and explicit discard at 04472a0. See [the source contract](docs/engineering/value-source.md).
+  Canonical types/typed signatures publish atomically. Immutable lexical metadata
+  emits whole-type COPY89/MOVE88 and reverse DROP90, retaining monotonic allocation
+  across exclusive CFG alternatives. These are compiler foundations; executable
+  Buffer/wider-wrapper constructors, locals, CALL, assignment and return remain next.
+  Existing public scalar/tagged values support `.is_ok` and `_ = EXPR;`;
+  `result_is_ok` and `explicit_discard` are true, `must_use_result` remains false.
+  Windows development/release each passed 19 focused native groups and a separate
+  final CLI-only phase of 150 cases (105 Fuel +45 Result). Native checkpoint and
+  final input identities differ only in the verifier; the original all-phase run
+  stopped at its compile-error exit oracle, not a native failure. No native rerun
+  is claimed. All 207 final inputs match checkout/Git raw bytes; 193 production
+  modules are LF. See docs/evidence/value-source-windows-20261107.json. Existing
+  opcode prices, Fuel default256/cap16000000 and wider capability gates are unchanged.
+  Complete L04/L05/L06, Engine/Instance/host/isolation/platform/delivery and broad
+  validation remain open. Local only; no push/release/deployment.
+
 - Private native typed-value execution is implemented at d025c6f. See
   [the execution contract](docs/engineering/value-execution.md).
   Retained immutable value_program::Program rechecks complete admission and owns

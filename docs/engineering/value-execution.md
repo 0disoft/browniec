@@ -113,7 +113,8 @@ checkout bytes; no LF runtime-mirror pass is implied. The static inventory is
 [Windows evidence](../evidence/value-execution-windows-20261107.json) and
 [input manifest](../evidence/value-execution-inputs-windows-20261107.json).
 
-Compiler source bindings, broader resource/tag expressions and public promotion
-remain next. Full L04/L05/D01-D04, Engine/Instance/host/isolation/platform/delivery,
+The [source foundation](value-source.md) now provides canonical type/signature
+parsing and lexical COPY/MOVE/DROP preparation. Executable Buffer/wider-wrapper
+body lowering, broader resource/tag expressions and public promotion remain next. Full L04/L05/D01-D04, Engine/Instance/host/isolation/platform/delivery,
 the complete language/native Fuel matrices, Linux, LF runtime mirrors, OOM,
 general stack containment and performance remain separate work.

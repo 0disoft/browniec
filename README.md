@@ -2,13 +2,30 @@
 
 ## Current implementation (2026-11-07)
 
+The [value-source foundations](docs/engineering/value-source.md) now cover
+canonical types, atomic whole-signature catalog publication and immutable lexical
+COPY89/MOVE88/reverse-DROP90 metadata. These foundations are not yet connected to
+executable Buffer/wider-wrapper constructors, locals, CALL, assignment or return;
+that body lowering is next. Existing public scalar/tagged Result now supports
+`.is_ok` and `_ = EXPR;`: `result_is_ok` and `explicit_discard` are true, while
+`must_use_result` remains false. Windows development/release each passed 19 focused
+native groups and, in separate CLI phases, 150 cases (105 Fuel + 45 Result).
+All 207 final inputs match checkout and committed raw bytes; all 193 production
+modules are LF. See the [proof](docs/evidence/value-source-windows-20261107.json)
+and [input evidence](docs/evidence/value-source-inputs-windows-20261107.json). Wider capability gates, opcode prices and Fuel default 256 /
+ceiling 16000000 remain unchanged. Full L04/L05/L06 and Engine/Instance, host,
+isolation, platform and delivery remain open; full matrices, Linux, LF runtime
+mirrors, OOM/general stack/performance and clean-machine delivery were not run.
+
 [Private native typed-value execution](docs/engineering/value-execution.md) is
-implemented in source. A retained immutable `value_program::Program` binds the
+the predecessor checkpoint (`d025c6f`/`fe387bf`). A retained immutable
+`value_program::Program` binds the
 independently verified code, frame layout and reborrow forest to `vm::run_values`.
 Operations 88..97 now connect native values to the ordinary VM, with atomic mixed
 typed/ordinary CALL and RETURN, combined quotas and prepaid terminal cleanup.
-Guest Buffer/tagged source bindings remain next. Existing public admission gates,
-capabilities, opcode prices, Fuel default and ceiling are unchanged.
+Executable guest Buffer/wider-tagged body lowering remains next. At this
+checkpoint, public admission gates, capabilities, opcode prices and Fuel limits
+were unchanged.
 Windows development/release each passed 26 native groups and 105 tool-free public
 Fuel CLI cases on `d025c6f`; see the
 [evidence](docs/evidence/value-execution-windows-20261107.json).

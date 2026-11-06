@@ -11,6 +11,20 @@ regressions, then commit; record broader checks only when actually run. Do not
 enable public syntax, delivery flags or ABI availability ahead of implemented
 admission, execution and cleanup. Push/release/deployment are separate actions.
 
+Latest source checkpoint (2026-11-07): [value-source foundations](value-source.md)
+provide canonical types, atomic complete-signature scanning and immutable lexical
+COPY89/MOVE88/reverse-DROP90 metadata. Public scalar/tagged Result now has `.is_ok`
+and `_ = EXPR;`; `result_is_ok` and `explicit_discard` are true, but
+`must_use_result` remains false. Next connect executable Buffer/wider-wrapper
+constructors, locals, CALL, assignment and return. Windows development/release
+each passed 19 focused native groups and a separate 150-case CLI phase (105 Fuel +
+45 Result). All 207 final inputs match checkout and committed raw bytes; all 193
+production modules are LF. See the [proof](../evidence/value-source-windows-20261107.json)
+and [input evidence](../evidence/value-source-inputs-windows-20261107.json). Full L04/L05/L06 and Engine/Instance/host/isolation/platform/
+delivery remain open. Full matrices, Linux, LF runtime mirrors, OOM/general stack/
+performance and clean-machine delivery were not run; existing opcode prices,
+Fuel default 256 / ceiling 16000000 and wider capability gates remain unchanged.
+
 ## Implementation sequence
 
 1. **Returned references: B04/B05.** Preserve the existing origin, independent
@@ -160,10 +174,21 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    typed/ordinary CALL/RETURN, combined quotas and prepaid terminal cleanup.
    Windows development/release each passed 26 native groups and 105 tool-free
    public Fuel CLI cases; see the [evidence](../evidence/value-execution-windows-20261107.json).
-   Next connect guest Buffer/tagged
-   source bindings and broader resource/tag expressions; existing public gates,
-   capabilities and ordinary prices/default/cap remain unchanged. Native prerequisites
-   do not close L04/L05/D01-D04.
+   This `d025c6f`/`fe387bf` predecessor is followed by the
+   [source foundations](value-source.md): `value_type_source` canonicalizes all
+   six scalar domains, arrays of 1..4096 elements, Buffer aliases, nominal records
+   and Option/Result through depth four, with atomic rollback and canonical IDs.
+   `functions::scan_values` validates entire typed signatures and atomically
+   publishes the catalog; original scan/scoped gates are unchanged.
+   `value_source_bindings` provides immutable lexical compiler metadata, COPY89 /
+   MOVE88 and reverse DROP90, monotonic sixteen-slot allocation and dead-source
+   rejection. CFG alternative snapshots never rewind allocations or owner authority.
+   Next connect these foundations to executable Buffer/wider-wrapper constructors,
+   locals, CALL, assignment and return. For L06, public scalar/tagged `.is_ok` and
+   explicit discard are implemented; unused Result-binding diagnosis and the
+   wide/resource path remain missing, so `must_use_result` stays false.
+   These increments do not close L04/L05/L06/D01-D04; wider public gates and
+   ordinary prices/default/cap remain unchanged.
 3. **Engine and Instance: R01-R05.** The [call capture-stack fix](native-call-capture-stack.md)
    removes a reproduced retained compiler overflow without changing depth/owner
    limits; it does not close general R02 stack/accounting obligations.
