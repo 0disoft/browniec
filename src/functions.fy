@@ -12,6 +12,8 @@ import literal_collection as literal_collection;
 import source_context as context;
 import module_entry as entries;
 import module_index as modules;
+import value_signature_source as value_types;
+import value_properties as value_properties;
 
 // Bounded signature pass enables forward calls without trusting unparsed bodies.
 pub struct Table {
@@ -83,7 +85,26 @@ fn Result<u8, errors::Error> record_type(ref u8[] source, ref lexer::State s,ref
         case .ok(value): { .ok(value) } case .err(_): { .err(errors::make(4, s.begin)) }
     };
 }
-fn Result<usize, errors::Error> signature(ref u8[] source, ref mut lexer::State s, ref mut Table t) {
+fn Result<value_types::Type,errors::Error> annotation(ref u8[] source,ref mut lexer::State s,
+    ref Table table,bool values,ref mut value_properties::Catalog catalog,bool slice,bool nothing){
+    if(slice){return .ok(value_types::Type{.tag=0,.length=0,.record=0});}
+    if(nothing){let usize keyword=lexer::next(source,s)?;return .ok(value_types::Type{.tag=13,.length=0,.record=0});}
+    if(values){return value_types::parse(source,s,catalog);}
+    let u8 record=record_type(source,s,ref table.context)?;
+    let u8 tag=if(record==0){types::parse(source,s)?}else{let usize name=lexer::next(source,s)?;0};
+    if(record!=0 && s.kind==60){return .err(errors::make(3,s.begin));}
+    return .ok(value_types::Type{.tag=tag,.length=0,.record=record});
+}
+// Typed signature candidates do not enable body compilation or VM admission.
+// Copy back the complete catalog only after every source declaration succeeds.
+pub fn Result<Table,errors::Error> scan_values(ref u8[] source,ref mut value_properties::Catalog catalog){
+    var value_properties::Catalog prepared=value_properties::empty();
+    {let structs::Table records=structs::scan(source)?;prepared.records=records.layouts;}
+    let Table table=scan_mode(source,false,true,ref mut prepared)?;
+    *catalog=prepared;return .ok(table);
+}
+fn Result<usize, errors::Error> signature(ref u8[] source, ref mut lexer::State s, ref mut Table t,
+    bool values,ref mut value_properties::Catalog catalog) {
     if (t.count >= 16) { return .err(errors::make(4, s.begin)); }
     let usize fn_word = lexer::word(source, s, b"fn")?;
     let bool result_void=s.kind==2 && lexer::equal(source[s.begin..s.end],b"void");
@@ -99,13 +120,11 @@ fn Result<usize, errors::Error> signature(ref u8[] source, ref mut lexer::State 
         let usize open_slice = lexer::punctuation(source, s, 91)?;
         let usize close_slice = lexer::punctuation(source, s, 93)?;
     }
-    let u8 result_record = if (result_slice || result_void) { 0 } else { record_type(source, s,ref t.context)? };
-    let u8 result_type = if (result_slice) { 0 } else if(result_void){let usize keyword=lexer::next(source,s)?;13}
-        else if (result_record == 0) { types::parse(source, s)? }
-        else { let usize named = lexer::next(source, s)?; 0 };
-    if (result_record != 0 && s.kind == 60) { return .err(errors::make(3, s.begin)); }
-    var usize result_length = 0;
+    let value_types::Type result=annotation(source,s,t,values,catalog,result_slice,result_void)?;
+    let u8 result_record=result.record;let u8 result_type=result.tag;
+    var usize result_length=result.length;
     if (s.kind == 91) {
+        if(values && result_length!=0){return .err(errors::make(3,s.begin));}
         if (!types::scalar(result_type)) { return .err(errors::make(3, s.begin)); }
         result_length = array_source::length(source, s)?;
     }
@@ -137,12 +156,11 @@ fn Result<usize, errors::Error> signature(ref u8[] source, ref mut lexer::State 
             let usize open_slice = lexer::punctuation(source, s, 91)?;
             let usize close_slice = lexer::punctuation(source, s, 93)?;
         }
-        let u8 parameter_record = if (parameter_slice) { 0 } else { record_type(source, s,ref t.context)? };
-        let u8 parameter_type = if (parameter_slice) { 0 } else if (parameter_record == 0) { types::parse(source, s)? }
-            else { let usize named = lexer::next(source, s)?; 0 };
-        if (parameter_record != 0 && s.kind == 60) { return .err(errors::make(3, s.begin)); }
-        var usize parameter_length = 0;
+        let value_types::Type parameter_type_info=annotation(source,s,t,values,catalog,parameter_slice,false)?;
+        let u8 parameter_record=parameter_type_info.record;let u8 parameter_type=parameter_type_info.tag;
+        var usize parameter_length=parameter_type_info.length;
         if (s.kind == 91) {
+            if(values && parameter_length!=0){return .err(errors::make(3,s.begin));}
             if (!types::scalar(parameter_type)) { return .err(errors::make(3, s.begin)); }
             parameter_length = array_source::length(source, s)?;
         }
@@ -192,7 +210,7 @@ fn Result<usize, errors::Error> signature(ref u8[] source, ref mut lexer::State 
     t.count += 1;
     return .ok(f);
 }
-fn Result<Table, errors::Error> scan_mode(ref u8[] source,bool returns) {
+fn Result<Table, errors::Error> scan_mode(ref u8[] source,bool returns,bool values,ref mut value_properties::Catalog catalog) {
     var Table t = empty();t.reference_returns=returns;
     var lexer::State s = lexer::empty();
     let usize first = lexer::next(source, ref mut s)?;
@@ -202,14 +220,14 @@ fn Result<Table, errors::Error> scan_mode(ref u8[] source,bool returns) {
     while (s.kind != 0) {
         if (s.kind == 2 && lexer::equal(source[s.begin..s.end], b"struct")) {
             let usize skipped = structs::skip(source, ref mut s)?;
-        } else { let usize declared = signature(source, ref mut s, ref mut t)?; }
+        } else { let usize declared = signature(source, ref mut s, ref mut t,values,catalog)?; }
     }
     if (t.entry == 16) { return .err(errors::make(3, source.len)); }
     return .ok(t);
 }
 
-pub fn Result<Table,errors::Error> scan(ref u8[] source){return scan_mode(source,false);}
-pub fn Result<Table,errors::Error> scan_reference_returns(ref u8[] source){return scan_mode(source,true);}
+pub fn Result<Table,errors::Error> scan(ref u8[] source){var value_properties::Catalog unused=value_properties::empty();return scan_mode(source,false,false,ref mut unused);}
+pub fn Result<Table,errors::Error> scan_reference_returns(ref u8[] source){var value_properties::Catalog unused=value_properties::empty();return scan_mode(source,true,false,ref mut unused);}
 
 // Explicit immutable module selection supplies ownership/visibility candidates;
 // complete body/type/IR proof still belongs to subsequent compilation/admission.
@@ -217,6 +235,7 @@ pub fn Result<Table,errors::Error> scan_scoped(ref u8[] source,ref context::Tabl
     if(!context::valid(source,scope)){return .err(errors::make(5,0));}
     let ref modules::Index index=entries::index(selected);
     var Table t=empty();t.context=*scope;t.reference_returns=returns;
+    var value_properties::Catalog unused=value_properties::empty();
     var usize i=0;
     while(i<modules::symbol_count(index)){
         let modules::Symbol item=switch(modules::symbol(index,i)){
@@ -228,7 +247,7 @@ pub fn Result<Table,errors::Error> scan_scoped(ref u8[] source,ref context::Tabl
             var lexer::State s=context::state(source,scope,begin)?;
             let usize first=lexer::next(source,ref mut s)?;
             if(s.kind==2 && lexer::equal(source[s.begin..s.end],b"pub")){let usize public=lexer::next(source,ref mut s)?;}
-            let usize f=signature(source,ref mut s,ref mut t)?;
+            let usize f=signature(source,ref mut s,ref mut t,false,ref mut unused)?;
             if(f>=scope.function_count || t.begins[f]!=context::begin(scope.functions[f]) || t.ends[f]!=context::end(scope.functions[f])){
                 return .err(errors::make(5,begin));
             }
