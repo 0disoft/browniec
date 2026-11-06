@@ -5,7 +5,8 @@ Option/Result inspection through TAG_TEST98, including move-only Buffer wrappers
 The [propagation successor](value-propagation.md) now connects wide/resource `?`
 and early cleanup. [Private must-use](value-must-use.md) now tracks Result
 obligations. [Typed joins](value-joins.md) now connect scalar/Buffer/nested-tag
-if/switch values; loops and public
+if/switch values. [Private loops](value-loops.md) now connect typed owner cleanup
+and cyclic Result obligations; general public
 integration remain separate work.
 
 This increment prepares source types, signatures and lexical ownership for the

@@ -2,6 +2,20 @@
 
 ## Current implementation (2026-11-07)
 
+Private [typed lexical loops](docs/engineering/value-loops.md) now connect while,
+classic for and nearest break/continue to real owner cleanup and cyclic Result
+obligations. Backedges preserve header initialization; exit trampolines normalize
+break/zero-trip liveness. Escaping branch exits survive scoped pool compaction.
+Nested Result summaries catch second-iteration discards while allowing the next
+condition to acknowledge a body replacement. Both Windows profiles passed ten
+groups (source 7/native 3), with 47 guest programs and the unchanged 32/33 fixture,
+on `85b10f6` after helper `5c3bb12`. All 212 inputs match checkout/Git raw bytes;
+all 201 production modules are LF. See
+[evidence](docs/evidence/value-loops-windows-20261107.json). Public gates,
+capabilities, existing prices and Fuel default/cap stay unchanged. Next useful
+Buffer operations and general aggregate/reference/module/public composition.
+Full implementation and broader validation remain open.
+
 Private [typed if/switch values](docs/engineering/value-joins.md) now join exact
 scalar, Buffer and nested-tag values, including local owners and terminal return
 arms. One destination is initialized only on yielding paths; arm cleanup follows

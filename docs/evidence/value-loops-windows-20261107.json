@@ -1,0 +1,676 @@
+{
+  "schema": "browniec.value-loops-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-06T21:35:56.083714+00:00",
+  "implementationCommit": "85b10f6ca01f8c95de57534d0f12b636e595e171",
+  "platform": "windows/amd64",
+  "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+  "inputManifest": {
+    "path": "docs/evidence/value-loops-inputs-windows-20261107.json",
+    "sha256": "56d803b26f6d200c42b200a8c33c2121e0c596f45daf4bcf187e40202bcd005e"
+  },
+  "checkoutInputsMatched": 212,
+  "gitRawInputsMatched": 212,
+  "lfProductionModules": 201,
+  "groupsPerProfile": {
+    "development": 10,
+    "release": 10
+  },
+  "unchangedConditionalDepthFixture": {
+    "path": "tests/m2/value_source_control.fy",
+    "sha256": "b7629f96a427f2af723677f81bc0dda2d45318781ec1678eb6be1438f4a6cbf1",
+    "admitted": 32,
+    "rejected": 33,
+    "nativeStackOverrides": false
+  },
+  "instruction": {
+    "newOpcodes": false,
+    "existingPricesChanged": false,
+    "backedge": 22,
+    "loopResultSummary": "generated | (incoming & ~kills)",
+    "fixedPoint": "initial | backedgeGenerated",
+    "implicitCleanupRequirements": true
+  },
+  "profiles": [
+    {
+      "schema": "browniec.value-source-verification/v1",
+      "status": "passed",
+      "recordedAt": "2026-11-06T21:32:04.022123+00:00",
+      "profile": "development",
+      "phase": "native",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "commands": [
+        {
+          "argv": [
+            "@CHECKOUT\\build\\toolchain\\fairyc.exe",
+            "--version"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "cd072950608b9582b5ea82fc93c07ed15e8a3717854eda1218979d07665488f3",
+          "elapsedSeconds": 0.082,
+          "exit": 0,
+          "stdout": "compiler-version.txt",
+          "stderr": "compiler-version.txt.stderr.txt",
+          "stdoutSha256": "cfd188b9865777d7972b1c1e1c4e2e50d2735becbeca8627863cde0d38330e34",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "@CHECKOUT\\build\\toolchain\\fairyc.exe",
+            "check",
+            "--locked"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "4a56238644fd3eae28b5ed5d8800427c848e4ce7ced9f90c5a0cc4089afb5fc0",
+          "elapsedSeconds": 6.399,
+          "exit": 0,
+          "stdout": "check.txt",
+          "stderr": "check.txt.stderr.txt",
+          "stdoutSha256": "dcdd98d3f8d9056c73ba9d8acb46cd1a93e50e327aba339b307245f822a0a30f",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "@CHECKOUT\\build\\toolchain\\fairyc.exe",
+            "test",
+            "--native",
+            "--capture-output",
+            "--json",
+            "--locked",
+            "--exact",
+            "tests::m2::value_source_control::admitted_32_deep_conditionals_execute_and_33_reject_without_native_stack_override",
+            "--exact",
+            "tests::m2::value_source_joins_source::if_values_exact_types_inference_else_if_nested_values_and_terminal_arms_execute",
+            "--exact",
+            "tests::m2::value_source_loops_source::classic_for_headers_post_transfers_nested_loops_and_terminal_value_arms_execute",
+            "--exact",
+            "tests::m2::value_source_loops_source::loop_header_invariants_pure_for_syntax_and_result_pending_fixedpoints_are_enforced",
+            "--exact",
+            "tests::m2::value_source_loops_source::while_conditions_calls_control_values_and_repeated_nested_owner_cleanup_execute",
+            "--exact",
+            "tests::m2::value_source_must_use_source::continuing_branch_or_early_propagation_and_unpublished_call_captures_track_obligations",
+            "--exact",
+            "tests::m2::value_source_propagation_source::buffer_moves_pending_arguments_and_failed_invocations_cleanup_before_retry"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "4f28fe12d78ce2e577750026d16549bdc64efa212b7e5535afbe060d221f98d2",
+          "elapsedSeconds": 65.432,
+          "exit": 0,
+          "stdout": "native.json",
+          "stderr": "native.json.stderr.txt",
+          "stdoutSha256": "9b976819ea5f2c5d44d0bdd694e568c0a632de43fd5f81a24cb26978e0d3f79d",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "selectedTests": [
+        "tests::m2::value_source_control::admitted_32_deep_conditionals_execute_and_33_reject_without_native_stack_override",
+        "tests::m2::value_source_joins_source::if_values_exact_types_inference_else_if_nested_values_and_terminal_arms_execute",
+        "tests::m2::value_source_loops_source::classic_for_headers_post_transfers_nested_loops_and_terminal_value_arms_execute",
+        "tests::m2::value_source_loops_source::loop_header_invariants_pure_for_syntax_and_result_pending_fixedpoints_are_enforced",
+        "tests::m2::value_source_loops_source::while_conditions_calls_control_values_and_repeated_nested_owner_cleanup_execute",
+        "tests::m2::value_source_must_use_source::continuing_branch_or_early_propagation_and_unpublished_call_captures_track_obligations",
+        "tests::m2::value_source_propagation_source::buffer_moves_pending_arguments_and_failed_invocations_cleanup_before_retry"
+      ],
+      "nativeGroups": 7,
+      "selectedNativeGroups": 7,
+      "nativeWorkspace": "byte-identical-production-selected-tests",
+      "nativeOverrides": false,
+      "historicalResultReuse": false,
+      "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false",
+      "check": "check ok: 2 instance(s), 209 source file(s), 2173 MIR function(s), lock verified\n",
+      "nativeReport": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "development",
+        "tests": [
+          {
+            "identity": "tests::m2::value_source_control::admitted_32_deep_conditionals_execute_and_33_reject_without_native_stack_override",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_joins_source::if_values_exact_types_inference_else_if_nested_values_and_terminal_arms_execute",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_loops_source::classic_for_headers_post_transfers_nested_loops_and_terminal_value_arms_execute",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_loops_source::loop_header_invariants_pure_for_syntax_and_result_pending_fixedpoints_are_enforced",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_loops_source::while_conditions_calls_control_values_and_repeated_nested_owner_cleanup_execute",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_must_use_source::continuing_branch_or_early_propagation_and_unpublished_call_captures_track_obligations",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_propagation_source::buffer_moves_pending_arguments_and_failed_invocations_cleanup_before_retry",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 7,
+        "passed": 7,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "nativeReportSha256": "ac7a4995648e9cb8d382e9e90fe1de7dd8d260a350fbff295b5e8e8e2b03ffde",
+      "nativeInputMirrorVerified": true,
+      "elapsedSeconds": 72.583,
+      "cliSkipped": "Optional public Fuel CLI suite was not requested.",
+      "verificationBatch": "source",
+      "inputSelection": {
+        "allProductionModules": true,
+        "testPaths": [
+          "tests/m2/value_source_control.fy",
+          "tests/m2/value_source_joins_source.fy",
+          "tests/m2/value_source_loops_source.fy",
+          "tests/m2/value_source_must_use_source.fy",
+          "tests/m2/value_source_propagation_source.fy"
+        ],
+        "sharedPaths": [
+          "fairy.lock",
+          "fairy.toml",
+          "toolchain.json",
+          "tools/verify-value-loops.py",
+          "tools/verify-value-source.py"
+        ]
+      }
+    },
+    {
+      "schema": "browniec.value-source-verification/v1",
+      "status": "passed",
+      "recordedAt": "2026-11-06T21:32:04.022121+00:00",
+      "profile": "release",
+      "phase": "native",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "commands": [
+        {
+          "argv": [
+            "@CHECKOUT\\build\\toolchain\\fairyc.exe",
+            "--version"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "cd072950608b9582b5ea82fc93c07ed15e8a3717854eda1218979d07665488f3",
+          "elapsedSeconds": 0.088,
+          "exit": 0,
+          "stdout": "compiler-version.txt",
+          "stderr": "compiler-version.txt.stderr.txt",
+          "stdoutSha256": "cfd188b9865777d7972b1c1e1c4e2e50d2735becbeca8627863cde0d38330e34",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "@CHECKOUT\\build\\toolchain\\fairyc.exe",
+            "check",
+            "--locked"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "4a56238644fd3eae28b5ed5d8800427c848e4ce7ced9f90c5a0cc4089afb5fc0",
+          "elapsedSeconds": 6.247,
+          "exit": 0,
+          "stdout": "check.txt",
+          "stderr": "check.txt.stderr.txt",
+          "stdoutSha256": "dcdd98d3f8d9056c73ba9d8acb46cd1a93e50e327aba339b307245f822a0a30f",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "@CHECKOUT\\build\\toolchain\\fairyc.exe",
+            "test",
+            "--native",
+            "--capture-output",
+            "--json",
+            "--locked",
+            "--release",
+            "--exact",
+            "tests::m2::value_source_control::admitted_32_deep_conditionals_execute_and_33_reject_without_native_stack_override",
+            "--exact",
+            "tests::m2::value_source_joins_source::if_values_exact_types_inference_else_if_nested_values_and_terminal_arms_execute",
+            "--exact",
+            "tests::m2::value_source_loops_source::classic_for_headers_post_transfers_nested_loops_and_terminal_value_arms_execute",
+            "--exact",
+            "tests::m2::value_source_loops_source::loop_header_invariants_pure_for_syntax_and_result_pending_fixedpoints_are_enforced",
+            "--exact",
+            "tests::m2::value_source_loops_source::while_conditions_calls_control_values_and_repeated_nested_owner_cleanup_execute",
+            "--exact",
+            "tests::m2::value_source_must_use_source::continuing_branch_or_early_propagation_and_unpublished_call_captures_track_obligations",
+            "--exact",
+            "tests::m2::value_source_propagation_source::buffer_moves_pending_arguments_and_failed_invocations_cleanup_before_retry"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "ae6b01a9be49774ddf0a3732724b40c818e543c6a6ab7a26a98cdb7ff18f4eb8",
+          "elapsedSeconds": 119.287,
+          "exit": 0,
+          "stdout": "native.json",
+          "stderr": "native.json.stderr.txt",
+          "stdoutSha256": "c8ade8c0e3ddf5a00ae00c6f8e5af8e8c47897cfb6eb2215311dc2fe9c42537f",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "selectedTests": [
+        "tests::m2::value_source_control::admitted_32_deep_conditionals_execute_and_33_reject_without_native_stack_override",
+        "tests::m2::value_source_joins_source::if_values_exact_types_inference_else_if_nested_values_and_terminal_arms_execute",
+        "tests::m2::value_source_loops_source::classic_for_headers_post_transfers_nested_loops_and_terminal_value_arms_execute",
+        "tests::m2::value_source_loops_source::loop_header_invariants_pure_for_syntax_and_result_pending_fixedpoints_are_enforced",
+        "tests::m2::value_source_loops_source::while_conditions_calls_control_values_and_repeated_nested_owner_cleanup_execute",
+        "tests::m2::value_source_must_use_source::continuing_branch_or_early_propagation_and_unpublished_call_captures_track_obligations",
+        "tests::m2::value_source_propagation_source::buffer_moves_pending_arguments_and_failed_invocations_cleanup_before_retry"
+      ],
+      "nativeGroups": 7,
+      "selectedNativeGroups": 7,
+      "nativeWorkspace": "byte-identical-production-selected-tests",
+      "nativeOverrides": false,
+      "historicalResultReuse": false,
+      "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false",
+      "check": "check ok: 2 instance(s), 209 source file(s), 2173 MIR function(s), lock verified\n",
+      "nativeReport": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "release",
+        "tests": [
+          {
+            "identity": "tests::m2::value_source_control::admitted_32_deep_conditionals_execute_and_33_reject_without_native_stack_override",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_joins_source::if_values_exact_types_inference_else_if_nested_values_and_terminal_arms_execute",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_loops_source::classic_for_headers_post_transfers_nested_loops_and_terminal_value_arms_execute",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_loops_source::loop_header_invariants_pure_for_syntax_and_result_pending_fixedpoints_are_enforced",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_loops_source::while_conditions_calls_control_values_and_repeated_nested_owner_cleanup_execute",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_must_use_source::continuing_branch_or_early_propagation_and_unpublished_call_captures_track_obligations",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_propagation_source::buffer_moves_pending_arguments_and_failed_invocations_cleanup_before_retry",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 7,
+        "passed": 7,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "nativeReportSha256": "2d231dc102ad32a066e98b6fa746083e7bd5b5e4fa3322e0103c9e01eff4caa2",
+      "nativeInputMirrorVerified": true,
+      "elapsedSeconds": 126.266,
+      "cliSkipped": "Optional public Fuel CLI suite was not requested.",
+      "verificationBatch": "source",
+      "inputSelection": {
+        "allProductionModules": true,
+        "testPaths": [
+          "tests/m2/value_source_control.fy",
+          "tests/m2/value_source_joins_source.fy",
+          "tests/m2/value_source_loops_source.fy",
+          "tests/m2/value_source_must_use_source.fy",
+          "tests/m2/value_source_propagation_source.fy"
+        ],
+        "sharedPaths": [
+          "fairy.lock",
+          "fairy.toml",
+          "toolchain.json",
+          "tools/verify-value-loops.py",
+          "tools/verify-value-source.py"
+        ]
+      }
+    },
+    {
+      "schema": "browniec.value-source-verification/v1",
+      "status": "passed",
+      "recordedAt": "2026-11-06T21:32:04.022155+00:00",
+      "profile": "development",
+      "phase": "native",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "commands": [
+        {
+          "argv": [
+            "@CHECKOUT\\build\\toolchain\\fairyc.exe",
+            "--version"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "cd072950608b9582b5ea82fc93c07ed15e8a3717854eda1218979d07665488f3",
+          "elapsedSeconds": 0.087,
+          "exit": 0,
+          "stdout": "compiler-version.txt",
+          "stderr": "compiler-version.txt.stderr.txt",
+          "stdoutSha256": "cfd188b9865777d7972b1c1e1c4e2e50d2735becbeca8627863cde0d38330e34",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "@CHECKOUT\\build\\toolchain\\fairyc.exe",
+            "check",
+            "--locked"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "4a56238644fd3eae28b5ed5d8800427c848e4ce7ced9f90c5a0cc4089afb5fc0",
+          "elapsedSeconds": 6.364,
+          "exit": 0,
+          "stdout": "check.txt",
+          "stderr": "check.txt.stderr.txt",
+          "stdoutSha256": "dcdd98d3f8d9056c73ba9d8acb46cd1a93e50e327aba339b307245f822a0a30f",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "@CHECKOUT\\build\\toolchain\\fairyc.exe",
+            "test",
+            "--native",
+            "--capture-output",
+            "--json",
+            "--locked",
+            "--exact",
+            "tests::m2::value_source_loop_effects::cfg_restore_join_and_propagation_retain_requirements_from_terminal_alternatives",
+            "--exact",
+            "tests::m2::value_source_loop_effects::implicit_cleanup_records_entry_requirements_only_after_complete_atomic_preflight",
+            "--exact",
+            "tests::m2::value_source_loop_effects::result_transfer_and_acknowledgment_summarize_all_inputs_even_when_initially_handled"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "c5d615b20e1e768efabedeb02c2410695929d4aba3a6d7a98023209aca2a8f1e",
+          "elapsedSeconds": 26.523,
+          "exit": 0,
+          "stdout": "native.json",
+          "stderr": "native.json.stderr.txt",
+          "stdoutSha256": "199e662d573a7f82992c9180cd74e2c31f99d6e58cc5b462d86655a6414f23bb",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "selectedTests": [
+        "tests::m2::value_source_loop_effects::cfg_restore_join_and_propagation_retain_requirements_from_terminal_alternatives",
+        "tests::m2::value_source_loop_effects::implicit_cleanup_records_entry_requirements_only_after_complete_atomic_preflight",
+        "tests::m2::value_source_loop_effects::result_transfer_and_acknowledgment_summarize_all_inputs_even_when_initially_handled"
+      ],
+      "nativeGroups": 3,
+      "selectedNativeGroups": 3,
+      "nativeWorkspace": "byte-identical-production-selected-tests",
+      "nativeOverrides": false,
+      "historicalResultReuse": false,
+      "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false",
+      "check": "check ok: 2 instance(s), 209 source file(s), 2173 MIR function(s), lock verified\n",
+      "nativeReport": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "development",
+        "tests": [
+          {
+            "identity": "tests::m2::value_source_loop_effects::cfg_restore_join_and_propagation_retain_requirements_from_terminal_alternatives",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_loop_effects::implicit_cleanup_records_entry_requirements_only_after_complete_atomic_preflight",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_loop_effects::result_transfer_and_acknowledgment_summarize_all_inputs_even_when_initially_handled",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 3,
+        "passed": 3,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "nativeReportSha256": "9cc3428010c361c16b74f23702c9d0691fe9eceb4bb6a0945d5cd4be9d2fcc3b",
+      "nativeInputMirrorVerified": true,
+      "elapsedSeconds": 33.683,
+      "cliSkipped": "Optional public Fuel CLI suite was not requested.",
+      "verificationBatch": "native",
+      "inputSelection": {
+        "allProductionModules": true,
+        "testPaths": [
+          "tests/m2/value_source_loop_effects.fy"
+        ],
+        "sharedPaths": [
+          "fairy.lock",
+          "fairy.toml",
+          "toolchain.json",
+          "tools/verify-value-loops.py",
+          "tools/verify-value-source.py"
+        ]
+      }
+    },
+    {
+      "schema": "browniec.value-source-verification/v1",
+      "status": "passed",
+      "recordedAt": "2026-11-06T21:32:04.022153+00:00",
+      "profile": "release",
+      "phase": "native",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "commands": [
+        {
+          "argv": [
+            "@CHECKOUT\\build\\toolchain\\fairyc.exe",
+            "--version"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "cd072950608b9582b5ea82fc93c07ed15e8a3717854eda1218979d07665488f3",
+          "elapsedSeconds": 0.088,
+          "exit": 0,
+          "stdout": "compiler-version.txt",
+          "stderr": "compiler-version.txt.stderr.txt",
+          "stdoutSha256": "cfd188b9865777d7972b1c1e1c4e2e50d2735becbeca8627863cde0d38330e34",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "@CHECKOUT\\build\\toolchain\\fairyc.exe",
+            "check",
+            "--locked"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "4a56238644fd3eae28b5ed5d8800427c848e4ce7ced9f90c5a0cc4089afb5fc0",
+          "elapsedSeconds": 6.336,
+          "exit": 0,
+          "stdout": "check.txt",
+          "stderr": "check.txt.stderr.txt",
+          "stdoutSha256": "dcdd98d3f8d9056c73ba9d8acb46cd1a93e50e327aba339b307245f822a0a30f",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "@CHECKOUT\\build\\toolchain\\fairyc.exe",
+            "test",
+            "--native",
+            "--capture-output",
+            "--json",
+            "--locked",
+            "--release",
+            "--exact",
+            "tests::m2::value_source_loop_effects::cfg_restore_join_and_propagation_retain_requirements_from_terminal_alternatives",
+            "--exact",
+            "tests::m2::value_source_loop_effects::implicit_cleanup_records_entry_requirements_only_after_complete_atomic_preflight",
+            "--exact",
+            "tests::m2::value_source_loop_effects::result_transfer_and_acknowledgment_summarize_all_inputs_even_when_initially_handled"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "043d51e3825a8716249a88db5ff363264971f5d23162adaf4c177e52b8ba836d",
+          "elapsedSeconds": 28.628,
+          "exit": 0,
+          "stdout": "native.json",
+          "stderr": "native.json.stderr.txt",
+          "stdoutSha256": "dcb7e61e7295bc43889d5d3040a27c697496ff8892498313cf2d9cc4593e876e",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "selectedTests": [
+        "tests::m2::value_source_loop_effects::cfg_restore_join_and_propagation_retain_requirements_from_terminal_alternatives",
+        "tests::m2::value_source_loop_effects::implicit_cleanup_records_entry_requirements_only_after_complete_atomic_preflight",
+        "tests::m2::value_source_loop_effects::result_transfer_and_acknowledgment_summarize_all_inputs_even_when_initially_handled"
+      ],
+      "nativeGroups": 3,
+      "selectedNativeGroups": 3,
+      "nativeWorkspace": "byte-identical-production-selected-tests",
+      "nativeOverrides": false,
+      "historicalResultReuse": false,
+      "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false",
+      "check": "check ok: 2 instance(s), 209 source file(s), 2173 MIR function(s), lock verified\n",
+      "nativeReport": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "release",
+        "tests": [
+          {
+            "identity": "tests::m2::value_source_loop_effects::cfg_restore_join_and_propagation_retain_requirements_from_terminal_alternatives",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_loop_effects::implicit_cleanup_records_entry_requirements_only_after_complete_atomic_preflight",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_loop_effects::result_transfer_and_acknowledgment_summarize_all_inputs_even_when_initially_handled",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 3,
+        "passed": 3,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "nativeReportSha256": "4f2a0c53e46c85f7b51446f420cb399c4b445cc8a915f8efd306c4b285bad9b1",
+      "nativeInputMirrorVerified": true,
+      "elapsedSeconds": 35.693,
+      "cliSkipped": "Optional public Fuel CLI suite was not requested.",
+      "verificationBatch": "native",
+      "inputSelection": {
+        "allProductionModules": true,
+        "testPaths": [
+          "tests/m2/value_source_loop_effects.fy"
+        ],
+        "sharedPaths": [
+          "fairy.lock",
+          "fairy.toml",
+          "toolchain.json",
+          "tools/verify-value-loops.py",
+          "tools/verify-value-source.py"
+        ]
+      }
+    }
+  ],
+  "limitations": [
+    "Focused private native source/IR/VM and control regressions only.",
+    "No public CLI/full language/native Fuel matrices, Linux, OOM injection, general stack/performance or clean-machine delivery rerun.",
+    "Public compiler gates/capabilities and existing instruction prices/Fuel default256/ceiling16000000 unchanged."
+  ],
+  "commandPathNote": "Checkout paths normalized; command hashes identify original local invocations."
+}

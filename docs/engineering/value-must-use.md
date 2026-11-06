@@ -56,6 +56,8 @@ Full CLI/language/native Fuel matrices, Linux, OOM/general stack/performance and
 clean-machine delivery remain separate obligations.
 
 The [typed-join successor](value-joins.md) now preserves obligations across
-scalar/Buffer/nested-tag if/switch values. Public Result diagnostics, loops/break/continue,
+scalar/Buffer/nested-tag if/switch values. The [loop successor](value-loops.md)
+now computes cyclic pending obligations and retains terminal requirements. Public
+Result diagnostics,
 useful Buffer operations, general aggregate/reference/module/public composition
 and the wider Engine/Instance/host/isolation/embed/delivery work remain open.

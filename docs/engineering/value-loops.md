@@ -41,8 +41,13 @@ capabilities remain unchanged.
 
 Run `python -B tools/verify-value-loops.py --batch source --profile development`
 and its native/release counterparts. The disjoint selections contain seven
-source and three summary-helper groups. Final results and identities are recorded
-after validation. Preserve the existing admitted 32/rejected 33 combined fixture
+source and three summary-helper groups. Windows development/release each passed
+all ten groups on `85b10f6` after helper `5c3bb12`, including 47 new guest programs.
+All 212 inputs match checkout/Git raw bytes; all 201 production modules are LF.
+See the [Windows evidence](../evidence/value-loops-windows-20261107.json) and
+[input manifest](../evidence/value-loops-inputs-windows-20261107.json).
+Public CLI/full language/native Fuel matrices, Linux, OOM injection, general
+stack/performance and clean-machine delivery were not rerun. Preserve the existing admitted 32/rejected 33 combined fixture
 without a native stack override. Public composition, useful Buffer operations,
 general aggregates/references/modules and the wider runtime/Engine/Instance/host/
 isolation/embed/platform/delivery work remain open.

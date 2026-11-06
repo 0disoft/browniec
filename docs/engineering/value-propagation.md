@@ -66,6 +66,7 @@ stack/performance and clean-machine delivery remain separate obligations.
 The [must-use successor](value-must-use.md) diagnoses pending direct Results at
 normal/early exits, overwrite and continuing joins. The
 [typed-join successor](value-joins.md) now adds scalar/Buffer/nested-tag values.
-Typed loops/break/continue, useful Buffer operations, aggregate/reference/module/public
+The [loop successor](value-loops.md) now connects while/for/break/continue and
+cyclic Result checking. Useful Buffer operations, aggregate/reference/module/public
 composition and the wider Engine/Instance/host/isolation/embed/delivery work remain
 open. This private path does not complete the full language profile.

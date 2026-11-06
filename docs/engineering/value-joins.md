@@ -48,6 +48,8 @@ See the [Windows evidence](../evidence/value-joins-windows-20261107.json) and
 [input manifest](../evidence/value-joins-inputs-windows-20261107.json).
 Public CLI/full language/native Fuel matrices, Linux, OOM injection, general
 stack/performance and clean-machine delivery were not rerun.
-Public admission, typed loops/break/continue, useful Buffer operations, general
+The [loop successor](value-loops.md) now connects typed while/for/break/continue
+with initialized backedges, owner cleanup and cyclic Result obligations. Public
+admission, useful Buffer operations, general
 aggregate/reference/module composition and full language/runtime/Engine/Instance/
 host/isolation/embed/platform/delivery validation remain open.

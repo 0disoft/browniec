@@ -90,7 +90,8 @@ Option/Result inspection; [typed propagation](value-propagation.md) connects `?`
 and early anonymous capture cleanup. [Private must-use](value-must-use.md) now
 checks Result obligations across continuing paths. [Typed value joins](value-joins.md)
 now add scalar/Buffer/nested-tag if/switch expressions. This checkpoint is
-statement control flow. Typed loops and break/continue, public must-use diagnostics,
+statement control flow. The [loop successor](value-loops.md) now adds typed
+while/for/break/continue with cyclic Result summaries. Public must-use diagnostics,
 general aggregate/reference/module/public composition and useful Buffer byte/text/
 input/output operations remain open. Engine/Instance/host/isolation/embedding/
 delivery and complete language/platform validation also remain open. No public

@@ -1,3 +1,11 @@
+- Private typed source, 2026-11-07: [lexical loops](../engineering/value-loops.md)
+  now compose while/for/break/continue with Buffer/nested-tag values, owner cleanup,
+  [conditional values](../engineering/value-joins.md) and cyclic
+  [Result obligations](../engineering/value-must-use.md). Both Windows native
+  profiles passed ten focused loop groups with 47 guest programs and the unchanged
+  32/33 depth fixture. Public source/CLI gates and capabilities are unchanged;
+  useful Buffer operations, general composition and the full profile remain open.
+
 - Native value bytes, 2026-11-07: [retained canonical layouts and byte operations](../engineering/value-codec.md) now validate exact scalar/array/plain-record/wrapper representation, tags, bool, padding/inactive bytes and the one active opaque Buffer word. Direction-aware copies and disjoint wrapper construction validate before mutation. Development/release each passed six native groups on f5d3d1a, with 188 checkout/Git-raw-matching inputs and 183 LF production modules. This is a byte-storage prerequisite: native root authentication, owning value/frame storage, metering, cleanup, VM execution and source bindings remain next. Public behavior/prices/limits remain. See [Windows evidence](../evidence/value-codec-windows-20261107.json). Full language/native Fuel/CLI, LF mirrors, Linux, OOM/general stack/performance and clean-machine delivery were not rerun. Earlier checkpoints retain their scopes.
 
 - Typed value IR prerequisite, 2026-11-07: [complete independent ownership analysis](../engineering/value-ir.md) now connects MOVE/COPY/DROP, tag build/case, scalar value conversion and value CALL/RETURN to whole-type properties, exact initialized/Dead CFG state and canonical scalar/aggregate/loan/selected-place proof. Inactive/scalar Buffer alternatives still consume their complete wrapper. This is analysis only; all existing executable routes retain their gates. Metered native value storage/execution, cleanup and compiler source integration remain next. Full L04/L05/D01-D04/Engine/Instance/host/delivery remain open. See the [focused Windows evidence](../evidence/value-ir-windows-20261107.json); earlier checkpoints retain their scopes.
@@ -9,7 +17,7 @@
 # Product Specification
 
 - Status: Accepted for design, 2026-10-23
-- Implementation status: Reconciled 2026-11-06; bounded M1 and public M2 aggregate/slice/literal/shared-byte-result subsets; full profile incomplete
+- Implementation status: Reconciled 2026-11-07; bounded M1 and public M2 aggregate/slice/literal/shared-byte-result subsets; full profile incomplete
 - Source profile name: brownie.safe/0.3
 
 - L04 common native dispatch: [shared storage and IDs](../engineering/place-dispatch.md)

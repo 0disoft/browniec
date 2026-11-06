@@ -11,7 +11,21 @@ regressions, then commit; record broader checks only when actually run. Do not
 enable public syntax, delivery flags or ABI availability ahead of implemented
 admission, execution and cleanup. Push/release/deployment are separate actions.
 
-Latest private value-join checkpoint (2026-11-07): Private [typed if/switch values](value-joins.md) now join exact
+Latest private loop checkpoint (2026-11-07): Private [typed lexical loops](value-loops.md) now connect while,
+classic for and nearest break/continue to real owner cleanup and cyclic Result
+obligations. Backedges preserve header initialization; exit trampolines normalize
+break/zero-trip liveness. Escaping branch exits survive scoped pool compaction.
+Nested Result summaries catch second-iteration discards while allowing the next
+condition to acknowledge a body replacement. Both Windows profiles passed ten
+groups (source 7/native 3), with 47 guest programs and the unchanged 32/33 fixture,
+on `85b10f6` after helper `5c3bb12`. All 212 inputs match checkout/Git raw bytes;
+all 201 production modules are LF. See
+[evidence](../evidence/value-loops-windows-20261107.json). Public gates,
+capabilities, existing prices and Fuel default/cap stay unchanged. Next useful
+Buffer operations and general aggregate/reference/module/public composition.
+Full implementation and broader validation remain open.
+
+Predecessor private value-join checkpoint (2026-11-07): Private [typed if/switch values](value-joins.md) now join exact
 scalar, Buffer and nested-tag values, including local owners and terminal return
 arms. One destination is initialized only on yielding paths; arm cleanup follows
 publication, and Result obligations survive joins. Both Windows profiles passed
@@ -259,8 +273,10 @@ Fuel default 256 / ceiling 16000000 and wider capability gates remain unchanged.
    [private must-use successor](value-must-use.md) checks bindings, parameters,
    replacement, scopes and early exits independently of COPY ownership. The
    [typed-join successor](value-joins.md) now adds exact scalar/Buffer/nested-tag
-   if/switch values with publication before arm cleanup. Next typed loops and
-   useful Buffer operations before aggregate/
+   if/switch values with publication before arm cleanup. The
+   [private loop successor](value-loops.md) connects while/for/break/continue,
+   exact header initialization, escaping exit retention and cyclic Result checking.
+   Next useful Buffer operations before aggregate/
    reference/module composition and public admission. Public L06 composition and
    complete validation remain, so the public `must_use_result` flag stays false.
    These increments do not close L04/L05/L06/D01-D04; wider public gates and
