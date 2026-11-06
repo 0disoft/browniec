@@ -1,5 +1,13 @@
 # Public Fuel costs and CLI ceiling
 
+The [native copy-window prerequisite](aggregate-copy-windows.md) preserves all
+existing prices while skipping physical numeric-array self copies after complete
+authentication. Records keep their canonical snapshots. Exact ordinary/retained
+marker self-array Fuel is65779/409865; self-record Fuel is213577/557663. Both
+Windows profiles pass22 focused native groups and20 tool-free CLI cases. This
+selection does not replace the earlier complete/public Fuel matrices or implement
+independent general IR copy/lifetime proof and full C05/Instance accounting.
+
 The [grouped assignment successor](grouped-assignment.md) preserves instruction
 bytes and exact scalar/array/slice/record costs while admitting grouped targets.
 Grouping adds no guest opcode, snapshot width or operation price. Both Windows

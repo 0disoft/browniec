@@ -1,3 +1,22 @@
+- Native aggregate byte-window proof now guards fresh array/record copies,
+  homogeneous/mixed argument transactions and existing-owner assignment. Bounds
+  use checked subtraction; direct copying needs disjoint windows, array self
+  no-op needs authenticated identity after bool/loan checks, and records retain
+  complete snapshots for overlap/padding normalization. See the
+  [contract](docs/engineering/aggregate-copy-windows.md). Flat Shape preparation
+  now constructs once at return, fixing reproduced release-only field metadata
+  corruption; regression helpers check prepared tags/offsets before storage use.
+  Development/release each pass 22 native groups and 20 tool-free CLI cases on
+  184 Git-raw/checkout-matching inputs, 172 LF modules and 299-file discovery.
+  Numeric self-array copies skip up to 65536 byte accesses without repricing;
+  exact ordinary/retained marker Fuel stays65779/409865 for the array fixture
+  and213577/557663 for the record fixture. No new opcode, owner, heap allocation,
+  public flag or limit. See [Windows evidence](docs/evidence/aggregate-copy-windows-20261106.json).
+  General IR copy/lifetime proof, aggregate selected places and resource/tag move
+  rules remain open with full L04/C05/Engine/Instance/host/isolation/delivery.
+  Full language/Fuel, LF mirrors, Linux, OOM/general stack/performance and
+  clean-machine delivery were not rerun. Local only.
+
 - Aggregate Fuel prices now come from `fuel.fy`; array/record/list adapters
   retain their validated layouts, dispatch rules and exact numeric charges.
   Default 256 and explicit CLI ceiling 16000000 remain. The public runner shares

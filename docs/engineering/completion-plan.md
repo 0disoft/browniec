@@ -132,7 +132,12 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    broader record/control-flow expressions and grouped lvalues/borrows; then continue with
    selected-place compound assignment, wider/resource-bearing
    tags and must-use
-   handling. Reconcile operand/source/type/compile limits deliberately rather than
+   handling.
+   The [native copy-window prerequisite](aggregate-copy-windows.md) now guards
+   current scalar-array/plain-record storage, including exact self identity and
+   record snapshots. Connect independent general IR copy/lifetime proof and
+   aggregate selected places before claiming the generic L04 contract complete.
+   Reconcile operand/source/type/compile limits deliberately rather than
    silently treating the old experimental bounds as full-profile conformance.
    L07 byte compatibility is implemented at `5bb055b` and has focused checks.
 3. **Engine and Instance: R01-R05.** The [call capture-stack fix](native-call-capture-stack.md)

@@ -4,6 +4,14 @@
 - Implementation status: Reconciled 2026-11-06; bounded M1 and public M2 aggregate/slice/literal/shared-byte-result subsets; full profile incomplete
 - Source profile name: brownie.safe/0.3
 
+- L04 native copy prerequisite: [checked byte windows](../engineering/aggregate-copy-windows.md)
+  now guard existing scalar-array/plain-record copies and CALL transactions.
+  Authenticated array self copies skip redundant bytes after canonical bool and
+  loan checks; records retain snapshots and padding normalization. A reproduced
+  optimized flat Shape preparation failure is repaired. Both Windows profiles
+  pass 22 focused native groups and20 CLI cases with unchanged prices/limits.
+  Independent general IR copy/lifetime proof and resource/tag move rules remain open.
+
 - Public aggregate Fuel: [the shared schedule](../engineering/public-fuel-limits.md#shared-aggregate-prices-and-current-public-routes-2026-11-06)
   owns existing array/record/list prices. Layout admission and both drivers keep
   their original dispatch, cleanup and numeric charges. The public boundary
