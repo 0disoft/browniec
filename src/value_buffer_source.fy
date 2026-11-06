@@ -26,7 +26,7 @@ pub fn Result<u8,errors::Error> operation(ref u8[] source,ref mut lexer::State s
     let u8 op=if(word(source,s,b"empty")){95}else if(word(source,s,b"len")){99}
         else if(word(source,s,b"read")){100}else if(word(source,s,b"write")){101}
         else if(word(source,s,b"push")){102}else if(word(source,s,b"reserve")){103}
-        else if(word(source,s,b"append")){104}else{0};
+        else if(word(source,s,b"append")){104}else if(word(source,s,b"copy")){105}else{0};
     if(op==0){return .err(wrong(s.begin));}let usize name=lexer::next(source,s)?;
     let usize open=lexer::punctuation(source,s,40)?;return .ok(op);
 }
@@ -52,7 +52,7 @@ pub fn Result<Reference,errors::Error> begin(ref values::Program unit,ref mut bi
         .writing=writing,.reads=state.reads,.writes=state.writes};
     if(writing){state.writes|=mask;}else{state.reads|=mask;}return .ok(result);
 }
-fn Result<usize,errors::Error> end(ref mut bindings::State state,Reference loan,usize at){
+pub fn Result<usize,errors::Error> end(ref mut bindings::State state,Reference loan,usize at){
     if(loan.slot>=16){return .err(wrong(at));}let usize mask=bit(loan.slot);
     if(state.reads!=if(loan.writing){loan.reads}else{loan.reads|mask} ||
         state.writes!=if(loan.writing){loan.writes|mask}else{loan.writes} ||

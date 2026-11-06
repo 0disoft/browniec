@@ -106,13 +106,10 @@ pub fn Result<usize,errors::Error> tag_test(ref mut values::Program unit,ref mut
     append(unit,98,dst,source,variant,at);unit.body.types[dst]=2;unit.body.registers=dst+1;
     return .ok(dst);
 }
-// exact_type and child IDs are canonical zero-based catalog nodes. Option.none
-// requires payload16 (never a real slot), encoded as a0. Copyable children stay
-// live: the parent explicitly drops anonymous children after successful wrapping.
-pub fn Result<usize,errors::Error> tag(ref mut values::Program unit,ref mut bindings::State state,
-    usize exact_type,usize payload,u8 variant,usize at){
-    let properties::Plan plan=preflight(unit,state,at)?;
-    let usize checked=destination(ref plan,state,exact_type,at)?;
+// Shared admission for fresh and preallocated wrappers. All fallible payload
+// checks, including handle/consume loan checks, precede allocation or emission.
+fn Result<bool,errors::Error> tag_payload(ref values::Program unit,ref bindings::State state,
+    ref properties::Plan plan,usize exact_type,usize payload,u8 variant,usize at){
     let properties::Node node=unit.catalog.nodes[exact_type];
     if((node.kind!=5 && node.kind!=6) || variant>1){return .err(invalid(at));}
     let bool none=node.kind==5 && variant==0;var bool moved=false;
@@ -120,14 +117,42 @@ pub fn Result<usize,errors::Error> tag(ref mut values::Program unit,ref mut bind
     else{
         let usize admitted=live(unit,state,payload,at)?;
         let usize child=if(variant==1){node.first as usize}else{node.second as usize};
-        if(values::type_id(unit,payload)!=child){return .err(invalid(at));}
+        if(values::type_id(unit,payload)!=child || ((state.reads|state.writes)&bit(payload))!=0){
+            return .err(invalid(at));}
         moved=!plan.properties[child].copyable;
     }
+    return .ok(moved);
+}
+// Called only with an admitted Dead destination and payload. Metadata hooks
+// cannot reject after this preflight; no slot or register cursor changes here.
+fn Result<usize,errors::Error> publish_tag(ref mut values::Program unit,ref mut bindings::State state,
+    usize dst,usize payload,u8 variant,bool moved,usize at){
+    let bool none=payload==16;
     if(!none){let usize handled=bindings::handle(unit,state,payload,at)?;}
-    let usize dst=bindings::allocate(unit,state,exact_type,at)?;
     append(unit,91,dst,if(none){0}else{payload},variant,at);
     if(moved){let usize consumed=bindings::consume(unit,state,payload,at)?;}
     return bindings::initialize(unit,state,dst,at);
+}
+// exact_type and child IDs are canonical zero-based catalog nodes. Option.none
+// requires payload16 (never a real slot), encoded as a0. Copyable children stay
+// live: the parent explicitly drops anonymous children after successful wrapping.
+pub fn Result<usize,errors::Error> tag(ref mut values::Program unit,ref mut bindings::State state,
+    usize exact_type,usize payload,u8 variant,usize at){
+    let properties::Plan plan=preflight(unit,state,at)?;
+    let usize checked=destination(ref plan,state,exact_type,at)?;
+    let bool moved=tag_payload(unit,state,ref plan,exact_type,payload,variant,at)?;
+    let usize dst=bindings::allocate(unit,state,exact_type,at)?;
+    return publish_tag(unit,state,dst,payload,variant,moved,at);
+}
+// Initialize an existing exact Option/Result slot on this CFG path. Unlike tag,
+// this remains usable at the sixteen-slot high-water mark and never allocates.
+pub fn Result<usize,errors::Error> tag_into(ref mut values::Program unit,ref mut bindings::State state,
+    usize destination,usize payload,u8 variant,usize at){
+    let properties::Plan plan=preflight(unit,state,at)?;
+    if(destination>=state.next || !values::slot(unit,destination,state.names.function) ||
+        (state.live&bit(destination))!=0){return .err(invalid(at));}
+    let bool moved=tag_payload(unit,state,ref plan,values::type_id(unit,destination),payload,variant,at)?;
+    return publish_tag(unit,state,destination,payload,variant,moved,at);
 }
 // Select the matching compiler path only. The caller keeps the entry snapshot
 // for the mismatch block and selects it with bindings::select_path; snapshots

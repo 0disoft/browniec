@@ -11,6 +11,7 @@ import value_source_propagation as propagation;
 import value_source_context as context;
 import value_source_calls as source_calls;
 import value_buffer_source as buffers;
+import value_buffer_copy_source as buffer_copy;
 import value_source_boolean as boolean;
 import value_source_loops as looping;
 import value_source_headers as headers;
@@ -45,12 +46,12 @@ fn Result<context::Value,errors::Error> buffer_call(ref u8[] source,ref mut lexe
     usize exact,usize depth){
     let usize at=s.begin;let u8 op=buffers::operation(source,s,state)?;
     if(op==95){let usize close=lexer::punctuation(source,s,41)?;return buffers::empty(unit,state,exact,at);}
-    let usize type=context::intern(unit,4,0,0,at)?;let bool writing=op>=101;
+    let usize type=context::intern(unit,4,0,0,at)?;let bool writing=op>=101 && op<=104;
     let usize prefix=buffers::prefix(source,s,writing)?;
     let context::Value receiver=expression(source,s,unit,state,table,plan,paths,flow,type,1,depth+1)?;
     let buffers::Reference first=buffers::begin(unit,state,receiver,writing,at)?;
     var buffers::Reference second=buffers::none();var usize index=0;var usize value=0;
-    if(op!=99){let usize comma=lexer::punctuation(source,s,44)?;
+    if(op!=99 && op!=105){let usize comma=lexer::punctuation(source,s,44)?;
         if(op==104){
             let usize borrowed=buffers::prefix(source,s,false)?;
             let context::Value argument=expression(source,s,unit,state,table,plan,paths,flow,type,1,depth+1)?;
@@ -68,6 +69,7 @@ fn Result<context::Value,errors::Error> buffer_call(ref u8[] source,ref mut lexe
         value=context::as_scalar(unit,state,argument,at)?;
     }
     let usize close=lexer::punctuation(source,s,41)?;
+    if(op==105){return buffer_copy::finish(unit,state,paths,flow,first,exact,at);}
     return buffers::finish(unit,state,op,first,second,index,value,exact,at);
 }
 
