@@ -21,6 +21,7 @@ import propagation as propagation;
 import casts as casts;
 import array_source as arrays;
 import place_source as places;
+import place_syntax as place_syntax;
 import slice_place_ir as slice_places;
 import record_place_ir as record_places;
 import array_call_source as array_calls;
@@ -1616,7 +1617,68 @@ fn Result<usize, errors::Error> record_write_statement(ref u8[] source, ref mut 
     return .ok(index);
 }
 
+// This adapter stays outside ordinary recursive scalar statement frames. Only
+// grouped targets reserve a syntax plan; original target paths retain their IR.
+fn Result<usize,errors::Error> grouped_assignment(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    u8 terminator,u8 result_type,usize depth,usize structure,ref mut loops::State loop_state){
+    let place_syntax::Plan plan=place_syntax::inspect(source,s)?;
+    if(!plan.valid){return .err(errors::make(2,s.begin));}
+    let usize at=plan.begin;let usize index=locals::find(source,table,plan.begin,plan.end);
+    if(index==64 || !table.mutable[index]){return .err(errors::make(3,at));}
+    s.cursor=plan.operation.cursor;s.begin=plan.operation.begin;s.end=plan.operation.end;
+    s.tokens=plan.operation.tokens;s.kind=plan.operation.kind;s.value=plan.operation.value;
+    s.min_magnitude=plan.operation.min_magnitude;s.context=plan.operation.context;
+    if(record_values::binding(table,index)){
+        if(result_type==0 || terminator!=59){return .err(errors::make(3,at));}
+        let usize site=table.registers[index]-144;
+        var record_values::Leaf leaf=record_values::Leaf{.ordinal=0,.tag=0,.record=p.records.records[site] as usize};
+        var usize i=0;while(i<plan.count){if(plan.kinds[i]!=1){return .err(errors::make(3,plan.begins[i]));}
+            leaf=record_values::project(source,p,leaf,plan.begins[i],plan.ends[i],ref signatures.context)?;i+=1;}
+        if(leaf.tag==0){if(s.kind!=61){return .err(errors::make(3,s.begin));}
+            let usize equals=lexer::next(source,s)?;
+            let usize assigned=record_value_assignment(source,s,p,table,signatures,site,leaf,at,result_type,depth,structure,loop_state)?;return .ok(index);}
+        return grouped_place_write(source,s,p,table,signatures,index,at,2,site,leaf.ordinal,leaf.tag,at,terminator,result_type,depth,structure,loop_state);
+    }
+    let bool array=arrays::binding(table,index);let bool slice=slices::binding(table,index);
+    if(array && plan.count==0){return array_statement(source,s,p,table,signatures,index,at,terminator,result_type,depth,structure,loop_state);}
+    if(array || slice){
+        if(result_type==0 || plan.count!=1 || plan.kinds[0]!=2){return .err(errors::make(3,at));}
+        let usize site=table.registers[index]-if(array){128}else{160};
+        if((array && slices::borrowed(table,p,site)) || (slice && !ir::exclusive(p,site))){return .err(errors::make(3,at));}
+        var lexer::State operand=lexer::snapshot(ref plan.operands[0]);
+        let usize selected=expression(source,ref mut operand,p,table,signatures,1,depth+1,12,result_type,structure,loop_state)?;
+        if(p.types[selected]!=12){return .err(errors::make(3,at));}
+        if(operand.kind!=93 || operand.begin!=plan.ends[0]){return .err(errors::make(2,operand.begin));}
+        let u8 tag=if(array){p.arrays.elements[site]}else{ir::slice_element(p,site,at)?};
+        return grouped_place_write(source,s,p,table,signatures,index,at,if(array){0}else{1},site,selected,tag,
+            if(array){plan.begins[0]}else{at},terminator,result_type,depth,structure,loop_state);
+    }
+    if(plan.count!=0){return .err(errors::make(3,at));}
+    return scalar_assignment(source,s,p,table,signatures,index,at,terminator,result_type,depth,structure,loop_state);
+}
+fn Result<usize,errors::Error> grouped_place_write(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    usize index,usize at,u8 kind,usize site,usize selected,u8 tag,usize select_at,
+    u8 terminator,u8 result_type,usize depth,usize structure,ref mut loops::State loop_state){
+    let usize operation_at=s.begin;let u8 operation=places::compound(s.kind);
+    if(operation!=0 && !types::integer(tag)){return .err(errors::make(3,operation_at));}
+    let usize equals=lexer::next(source,s)?;var locals::Table names=locals::snapshot(table);
+    let usize place=if(kind==2){places::record(p,ref mut names,site,selected,select_at)?}
+        else if(kind==1){places::slice(p,ref mut names,site,selected,select_at)?}
+        else{places::select(p,ref mut names,site,selected,select_at)?};
+    let usize old=if(operation==0){128}else if(kind==2){record_places::read(p,place,site,selected,operation_at)?}
+        else if(kind==1){slice_places::read(p,place,site,operation_at)?}else{ir::place_read(p,place,site,operation_at)?};
+    var usize value=expression(source,s,p,ref names,signatures,1,depth,tag,result_type,structure,loop_state)?;
+    if(p.types[value]!=tag){return .err(errors::make(3,at));}
+    let usize end=lexer::punctuation(source,s,terminator)?;
+    if(operation!=0){value=ir::emit(p,operation,old,value,operation_at)?;}
+    let usize written=if(kind==2){record_places::store(p,place,site,selected,value,operation_at)?}
+        else if(kind==1){slice_places::store(p,place,site,value,operation_at)?}else{ir::place_store(p,place,site,value,operation_at)?};
+    let usize ended=places::end(p,ref mut names,place,operation_at)?;return .ok(index);
+}
 fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 terminator, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {
+    if(s.kind==40){return grouped_assignment(source,s,p,table,signatures,terminator,result_type,expr_depth,structure,loop_state);}
     if (word_is(source, s, b"let") || word_is(source, s, b"var")) {
         return declaration(source,s,p,table,signatures,terminator,result_type,expr_depth,structure,loop_state);
     }
@@ -1637,6 +1699,11 @@ fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State 
     if (slices::binding(table,index)) {
         return slice_write_statement(source,s,p,table,signatures,index,at,terminator,result_type,expr_depth,structure,loop_state);
     }
+    return scalar_assignment(source,s,p,table,signatures,index,at,terminator,result_type,expr_depth,structure,loop_state);
+}
+fn Result<usize,errors::Error> scalar_assignment(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    usize index,usize at,u8 terminator,u8 result_type,usize expr_depth,usize structure,ref mut loops::State loop_state){
     if(!lexer::assignment(s.kind)){return .err(errors::make(2,s.begin));}
     let usize operation_at=s.begin;let u8 operation=places::compound(s.kind);
     // Mutable scalar bindings name stable frame slots. Capture the old value

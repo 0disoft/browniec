@@ -1,5 +1,14 @@
 # Public Fuel costs and CLI ceiling
 
+The [grouped assignment successor](grouped-assignment.md) preserves instruction
+bytes and exact scalar/array/slice/record costs while admitting grouped targets.
+Grouping adds no guest opcode, snapshot width or operation price. Both Windows
+profiles pass eighteen native groups and416 tool-free CLI cases, including all
+four kinds at one-short/exact/one-more budgets and57 existing public Fuel cases.
+Default256 and ceiling16000000 remain; the source successor records the exact
+fixture table and focused evidence. The original full native Fuel matrix was
+not rerun by this slice.
+
 The [scalar-local compound successor](scalar-assignment.md) uses existing
 LOAD/checked-operation/STORE prices without place setup. Its complete ordinary
 plain/compound fixtures require6/8 Fuel; forced retained entry requires

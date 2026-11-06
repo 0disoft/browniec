@@ -56,6 +56,20 @@ pub fn Result<Header, errors::Error> header(ref u8[] source, ref mut lexer::Stat
         .mutable = mutable });
 }
 pub struct Leaf { usize ordinal; u8 tag; usize record; }
+// Resolve one already-tokenized field without requiring adjacent source bytes.
+// Grouped prefixes keep the same nominal catalog and depth-first leaf order.
+pub fn Result<Leaf,errors::Error> project(ref u8[] source,ref ir::Program p,
+    Leaf parent,usize begin,usize end,ref context::Table scope){
+    if(parent.tag!=0 || parent.ordinal>=128 || begin>=end || end>source.len || parent.record>=p.records.layouts.count){return .err(errors::make(3,begin));}
+    let usize selected=field(source,p,parent.record,begin,end,scope)?;
+    var usize ordinal=parent.ordinal;var usize i=0;
+    while(i<selected){let usize slot=parent.record*16+i;
+        let usize leaves=if(p.records.layouts.kinds[slot]==0){1}else{leaf_count(p,p.records.layouts.types[slot] as usize,begin)?};
+        if(leaves>127-ordinal){return .err(errors::make(3,begin));}ordinal+=leaves;i+=1;}
+    let usize slot=parent.record*16+selected;let bool scalar=p.records.layouts.kinds[slot]==0;
+    return .ok(Leaf{.ordinal=ordinal,.tag=if(scalar){p.records.layouts.types[slot]}else{0},
+        .record=if(scalar){parent.record}else{p.records.layouts.types[slot] as usize}});
+}
 // Scalar ordinals are depth-first leaf positions, never field or byte offsets.
 pub fn Result<Leaf, errors::Error> path(ref u8[] source, ref mut lexer::State s,
     ref ir::Program p, usize root, usize at,ref context::Table scope) {

@@ -91,6 +91,10 @@ fn void rejected(ref u8[] a,ref u8[] b,usize owner){switch(programs::compile(ent
     value(b"module lib;pub struct P{i32 x;}pub struct R{P inner;}pub fn i32 delta(){return 22;}",
         b"module app;import lib as m;pub fn i32 chosen(){var m::R r=m::R{.inner=m::P{.x=20}};r.inner.x+=m::delta();return r.inner.x;}",42);
 }
+@test fn void grouped_record_paths_keep_qualified_nominal_context(){
+    value(b"module lib;pub struct P{i32 x;}pub struct R{P inner;}pub fn i32 delta(){return 22;}",
+        b"module app;import lib as m;pub fn i32 chosen(){var m::R r=m::R{.inner=m::P{.x=20}};((r).inner).x+=m::delta();return r.inner.x;}",42);
+}
 
 @test fn void shared_byte_returns_literals_ranges_and_text_cross_real_module_calls(){
     value(b"module lib;pub fn ref u8[] tail(ref u8[] p){return ref p[1..];}pub fn ref u8[] own(){return b\"*\";}",

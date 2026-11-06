@@ -1,8 +1,9 @@
 # Read-only grouped assignment location plans
 
 Date: 2026-11-06. Private prerequisite for grouped assignment, following
-[scalar-local assignment](scalar-assignment.md). Public source lowering is the
-next step; this increment adds no capability flag or executable syntax.
+[scalar-local assignment](scalar-assignment.md). Public source lowering is now
+covered by the [assignment successor](grouped-assignment.md). This private
+prerequisite itself added no capability flag or executable syntax.
 
 ## Grammar and retained source state
 
@@ -58,9 +59,10 @@ delimiter/literal/comment handling, original error offsets, exact32/33 grouping,
 token exhaustion and4097-byte source rejection. The oversized fixture uses a
 Buffer because the pinned Fairy C compiler cannot type a4097-element fixed array.
 
-Existing main/value-arm dispatch does not yet consume this plan. Public grouped
-assignment integration, grouped borrows, generic aggregate overlap proof and
-full L04/C05/Instance/host/delivery remain open. Public CLI, full language/native
+The [assignment successor](grouped-assignment.md) now connects main/value-arm
+dispatch to this plan and existing typed lowering. This checkpoint remains the
+private syntax proof. Grouped borrows, generic aggregate overlap proof and full
+L04/C05/Instance/host/delivery remain open. Public CLI, full language/native
 Fuel matrices, Linux, OOM/general stack/performance, worker isolation and clean-
 machine delivery are outside this private parser check. Existing source profiles,
 capability metadata, operation prices, default256 and ceiling16000000 remain.

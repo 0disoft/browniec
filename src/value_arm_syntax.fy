@@ -4,6 +4,7 @@ import array_source as arrays;
 import struct_value_source as records;
 import locals as locals;
 import errors as errors;
+import place_syntax as places;
 
 fn bool word(ref u8[] source,ref lexer::State s,ref u8[] name){
     return s.kind==2 && lexer::equal(source[s.begin..s.end],name);
@@ -14,6 +15,7 @@ pub fn u8 operand_kind(ref u8[] source,ref lexer::State s){
 }
 // Shared, read-only distinction between an assignment and a final value read.
 pub fn Result<bool,errors::Error> regular(ref u8[] source,ref lexer::State s){
+    if(s.kind==40){let places::Plan plan=places::inspect(source,s)?;return .ok(plan.valid);}
     if(word(source,s,b"let") || word(source,s,b"var")){return .ok(true);}
     if(call_statement(source,s)?){return .ok(true);}
     if(s.kind!=2 || locals::reserved(source[s.begin..s.end])){return .ok(false);}

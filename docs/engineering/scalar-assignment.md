@@ -80,8 +80,10 @@ For each profile, build and check the public CLI with
 `tools/check-scalar-assignment.py` against its copied executable. The CLI
 checker runs with a cleared, tool-free PATH and verifies the capability flag.
 
-Grouped lvalues/borrows, generic aggregate overlap proof, broader resource joins
-and full L04/C05/Instance/host/delivery remain open. Full language/original full
+The [grouped assignment successor](grouped-assignment.md) now admits grouped
+mutable scalar/aggregate destinations through the same operations. Grouped
+borrows, generic aggregate overlap proof, broader resource joins and full
+L04/C05/Instance/host/delivery remain open. Full language/original full
 native Fuel matrices, Linux, OOM injection, general stack/performance, worker
 isolation and clean-machine delivery are not implied by this focused slice.
 

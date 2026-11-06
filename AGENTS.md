@@ -1,3 +1,21 @@
+- Grouped scalar, array, exclusive-slice and record assignment targets now
+  consume original-span syntax plans through existing typed slot/place lowering.
+  Whole-array and whole/child-record transactions, index/old-value ordering,
+  CALL/reborrow restoration and nonlocal cleanup retain their semantics. See the
+  [contract](docs/engineering/grouped-assignment.md). Development/release each
+  passed 18 native groups and 416 tool-free CLI cases (359 grouped assignment,
+  57 public Fuel) on 195 Git-raw/checkout-matching inputs, 171 LF modules,
+  297-file discovery and both locked LF mirrors. See
+  [Windows evidence](docs/evidence/grouped-assignment-windows-20261106.json).
+  Seven source pairs preserve instruction bytes/counts; all four kinds retain
+  their exact ordinary/retained costs and 64 bindings. Twelve CLI cases preserve
+  grouped final-value classification and one-time index CALLs. No extra opcode,
+  runtime allocation, price/default256/cap16000000 change. Version JSON adds
+  grouped_assignment_targets. Grouped borrows, generic aggregate overlap and
+  full L04/C05/Instance/host/delivery remain open. Full language/original full
+  native Fuel, Linux, OOM/general stack/performance/isolation/delivery were not
+  rerun. Local only; earlier checkpoints retain their scopes.
+
 - Private grouped-assignment syntax plans now preserve root/field spans,
   index operand lexer states and the pending operator without rewriting source
   or evaluating expressions. See the [contract](docs/engineering/grouped-place-syntax.md).
