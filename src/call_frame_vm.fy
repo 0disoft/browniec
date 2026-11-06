@@ -19,7 +19,7 @@ import slice_reborrow_call_vm as derived;
 struct Prepared { i64[8] values; usize child; usize target; usize pc; usize dst; }
 fn Result<Prepared,errors::Error> prepare(ref ir::Program p,usize pc,usize parent,
     ref i64[] registers,ref usize[] return_pcs,ref usize[] return_dsts,usize fuel,usize charge) {
-    if(p.count>256 || pc>=p.count || p.code[pc*8]!=9) { return .err(errors::make(5,0)); }
+    if(p.count>256 || pc>=p.count || (p.code[pc*8]!=9 && p.code[pc*8]!=93)) { return .err(errors::make(5,0)); }
     let usize offset=p.offsets[pc]; let usize target=p.code[pc*8+2] as usize;
     let usize site=p.code[pc*8+3] as usize; let usize dst=p.code[pc*8+1] as usize;
     if(site>=p.call_count || site>=32 || p.call_arities[site] as usize!=p.arities[target]) {
@@ -42,6 +42,8 @@ fn Result<Prepared,errors::Error> prepare(ref ir::Program p,usize pc,usize paren
         if(dst<144 || dst>=160) { return .err(errors::make(5,offset)); }
     } else if(p.array_results[target]!=0) {
         if(dst<128 || dst>=144) { return .err(errors::make(5,offset)); }
+    } else if(p.code[pc*8]==93 && p.return_types[target]==0){
+        if(dst>=16){return .err(errors::make(5,offset));}
     } else if(p.return_types[target]==13){
         if(dst!=0){return .err(errors::make(5,offset));}
     } else if(dst<p.register_starts[caller] || dst>=p.register_ends[caller] ||
@@ -52,10 +54,16 @@ fn Result<Prepared,errors::Error> prepare(ref ir::Program p,usize pc,usize paren
         let usize formal=p.register_starts[target]+i;
         if(p.array_parameters[formal]==0 && p.record_parameters[formal]==0 && p.slice_parameters[formal]==0) {
             let usize source=p.call_args[site*8+i] as usize;
-            if(source<p.register_starts[caller] || source>=p.register_ends[caller] ||
-                p.types[source]!=p.types[formal] || p.slots[source] || p.array_parameters[source]!=0 ||
-                p.record_parameters[source]!=0 || p.slice_parameters[source]!=0) { return .err(errors::make(5,offset)); }
-            values[i]=registers[parent*128+source];
+            // The independently verified value CALL preflight owns this slot.
+            // Opaque value IDs never index the ordinary register frame.
+            if(p.code[pc*8]==93 && p.types[formal]==0){
+                if(p.slots[formal] || source<208 || source>=224){return .err(errors::make(5,offset));}
+            }else{
+                if(source<p.register_starts[caller] || source>=p.register_ends[caller] ||
+                    p.types[source]!=p.types[formal] || p.slots[source] || p.array_parameters[source]!=0 ||
+                    p.record_parameters[source]!=0 || p.slice_parameters[source]!=0) { return .err(errors::make(5,offset)); }
+                values[i]=registers[parent*128+source];
+            }
         }
         i+=1;
     }
@@ -65,18 +73,19 @@ fn void publish(ref ir::Program p,ref Prepared plan,ref mut i64[] registers,
     ref mut usize[] return_pcs,ref mut usize[] return_dsts){
     var usize i=0;while(i<p.arities[plan.target]){
         let usize formal=p.register_starts[plan.target]+i;
-        if(p.array_parameters[formal]==0 && p.record_parameters[formal]==0 && p.slice_parameters[formal]==0){registers[plan.child*128+formal]=plan.values[i];}
+        if(p.array_parameters[formal]==0 && p.record_parameters[formal]==0 && p.slice_parameters[formal]==0 &&
+            !(p.code[(plan.pc-1)*8]==93 && p.types[formal]==0)){registers[plan.child*128+formal]=plan.values[i];}
         i+=1;
     }
     return_pcs[plan.child]=plan.pc;return_dsts[plan.child]=plan.dst;
 }
-// Legacy readonly/public entry point retains its signature and exact prices.
+// Trusted native adapter; legacy readonly CALLs retain exact prices/signature.
 pub fn Result<usize,errors::Error> step(ref ir::Program p,usize pc,usize parent,
     ref mut borrowed::Frames frames,ref mut loans::State loan,
     ref mut records::State record_state,ref mut arrays::State state,
     ref mut bytes::Buffer buffer,ref mut i64[] registers,
     ref mut usize[] return_pcs,ref mut usize[] return_dsts,usize fuel){
-    if(p.count>256 || pc>=p.count || p.code[pc*8]!=9){return .err(errors::make(5,0));}
+    if(p.count>256 || pc>=p.count || (p.code[pc*8]!=9 && p.code[pc*8]!=93)){return .err(errors::make(5,0));}
     let usize charge=mixed::cost(p,p.code[pc*8+2] as usize,p.offsets[pc])?;
     let Prepared plan=prepare(p,pc,parent,registers,return_pcs,return_dsts,fuel,charge)?;
     let usize remaining=mixed::step(p,pc,parent,frames,loan,record_state,state,buffer,fuel)?;

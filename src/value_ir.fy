@@ -3,8 +3,9 @@ import ir as ir;
 import value_properties as properties;
 import errors as errors;
 
-// Analysis-only typed value extension of the actual eight-byte IR. No VM entry
-// point admits these operations. Value IDs are a separate 16-slot frame domain.
+// Typed value extension of the actual eight-byte IR. Only the independently
+// retained private value VM admits it; ordinary/image/reference routes reject.
+// Value IDs are a separate 16-slot frame domain.
 // 88 MOVE dst,a; 89 COPY dst,a; 90 DROP dst; 91 TAG_BUILD dst,a,variant;
 // 92 CASE dst,a,variant,byte4=mismatch PC; 93 CALL dst,callee,map;
 // 94 RETURN 0,a; 95 EMPTY_BUFFER dst; 96 SCALAR_READ scalar-dst,a;

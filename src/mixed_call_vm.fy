@@ -19,7 +19,7 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,usize pc,usize parent,
     ref mut borrowed::Frames frames,ref mut loans::State loan,
     ref mut records::State record_state,ref mut arrays::State state,
     ref mut bytes::Buffer buffer,usize fuel) {
-    if(pc>=p.count || pc>=256 || p.code[pc*8]!=9) { return .err(errors::make(5,0)); }
+    if(pc>=p.count || pc>=256 || (p.code[pc*8]!=9 && p.code[pc*8]!=93)) { return .err(errors::make(5,0)); }
     let usize offset=p.offsets[pc]; let usize target=p.code[pc*8+2] as usize;
     let usize site=p.code[pc*8+3] as usize;
     let usize charge=cost(p,target,offset)?;

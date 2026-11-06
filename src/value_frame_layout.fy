@@ -16,6 +16,12 @@ pub fn Result<Plan,Error> retain(ref value_properties::Catalog catalog,
     let codec::Layout layout=switch(codec::retain(catalog)){
         case .ok(v):{v}case .err(_):{return .err(.Layout);}
     };
+    let Slots slots=derive(ref layout,types,functions,function_count)?;
+    return .ok(Plan{.layout=layout,.slots=slots});
+}
+// Keep fallible slot derivation outside the owning Layout scope. The native
+// development backend otherwise repeats large cleanup temporaries at each exit.
+fn Result<Slots,Error> derive(ref codec::Layout layout,ref u8[] types,ref u8[] functions,usize function_count){
     var Slots slots=Slots{.types=[0;16],.functions=[0;16],.offsets=[0;16],
         .widths=[0;16],.count=function_count,.largest=0};
     var usize[16] alignments=[1;16];var usize i=0;
@@ -24,7 +30,7 @@ pub fn Result<Plan,Error> retain(ref value_properties::Catalog catalog,
         if(encoded==0){if(function!=0){return .err(.Metadata);}}
         else{
             if(function>=function_count){return .err(.Metadata);}
-            let value_properties::Property shape=switch(codec::shape(ref layout,(encoded as usize)-1)){
+            let value_properties::Property shape=switch(codec::shape(layout,(encoded as usize)-1)){
                 case .ok(v):{v}case .err(_):{return .err(.Type);}
             };
             let usize used=slots.widths[function];
@@ -47,7 +53,7 @@ pub fn Result<Plan,Error> retain(ref value_properties::Catalog catalog,
         if(size>1048576-total){return .err(.Layout);}
         total+=size;slots.widths[i]=size;i+=1;
     }
-    return .ok(Plan{.layout=layout,.slots=slots});
+    return .ok(slots);
 }
 pub fn ref codec::Layout layout(ref Plan p){return ref p.layout;}
 pub fn usize functions(ref Plan p){return p.slots.count;}

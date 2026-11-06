@@ -25,7 +25,7 @@ fn bool absent(slices::Ticket t){return t.slot==16 && t.generation==0;}
 fn bool same(owners::Token a,owners::Token b){return a.slot==b.slot && a.generation==b.generation;}
 pub fn Bindings empty(){return Bindings{.pcs=[256;31],.detached=[none();248]};}
 pub fn Result<Call,errors::Error> info(ref ir::Program p,usize pc,usize offset){
-    if(p.function_count==0 || p.function_count>16 || p.registers>128 || pc>=p.count || pc>=256 || p.code[pc*8]!=9){return .err(errors::make(5,offset));}
+    if(p.function_count==0 || p.function_count>16 || p.registers>128 || pc>=p.count || pc>=256 || (p.code[pc*8]!=9 && p.code[pc*8]!=93)){return .err(errors::make(5,offset));}
     let usize target=p.code[pc*8+2] as usize;let usize args=p.code[pc*8+3] as usize;
     if(target>=p.function_count || args>=p.call_count || args>=32 || p.arities[target]>8 || p.call_arities[args] as usize!=p.arities[target] ||
         p.register_starts[target]>p.registers || p.arities[target]>p.registers-p.register_starts[target]){return .err(errors::make(5,offset));}
@@ -41,6 +41,9 @@ pub fn Result<Call,errors::Error> info(ref ir::Program p,usize pc,usize offset){
             p.records.records[shape] as usize>=p.records.layouts.count || p.records.records[destination]!=p.records.records[shape]){return .err(errors::make(5,offset));}
     }
     let usize result=p.array_results[target] as usize;
+    // Only the value dialect uses the bounded value result namespace. Exact
+    // type/function/live checks belong to the outer immutable value proof.
+    if(p.code[pc*8]==93 && record_result==0 && result==0 && p.return_types[target]==0 && p.code[pc*8+1]>=16){return .err(errors::make(5,offset));}
     if(result!=0){
         let usize dst=p.code[pc*8+1] as usize;
         if(result>16 || result>p.arrays.count || dst<128 || dst>=144 || dst-128>=p.arrays.count){return .err(errors::make(5,offset));}
@@ -76,6 +79,8 @@ pub fn Result<Call,errors::Error> info(ref ir::Program p,usize pc,usize offset){
                 p.slice_origins[encoded-1] as usize!=encoded || p.slice_functions[encoded-1] as usize!=target+1 ||
                 !types::scalar(ir::borrow_element(p,encoded-1)) || (seen&(one<<(encoded-1)))!=0 || source<160 || source>=176){return .err(errors::make(5,offset));}
             seen|=one<<(encoded-1);if(ir::exclusive(p,encoded-1)){count+=1;}else{readers+=1;}
+        }else if(p.code[pc*8]==93 && p.types[r]==0){
+            if(source<208 || source>=224){return .err(errors::make(5,offset));}
         }else if(!types::valid(p.types[r]) || source>=p.registers || source<p.register_starts[caller] || source>=p.register_ends[caller] ||
             p.types[source]!=p.types[r] || p.slots[source] || p.array_parameters[source]!=0 || p.record_parameters[source]!=0 || p.slice_parameters[source]!=0){return .err(errors::make(5,offset));}
         i+=1;

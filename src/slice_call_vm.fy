@@ -92,7 +92,7 @@ pub struct Admission {
 }
 pub fn Result<Admission, errors::Error> prepare(ref ir::Program p, usize pc, usize parent,
     ref Frames frames, ref loans::State loan, ref arrays::State state, ref bytes::Buffer buffer, usize fuel) {
-    if(pc>=p.count || pc>=256 || p.code[pc*8]!=9) { return .err(errors::make(5,0)); }
+    if(pc>=p.count || pc>=256 || (p.code[pc*8]!=9 && p.code[pc*8]!=93)) { return .err(errors::make(5,0)); }
     let usize offset=p.offsets[pc]; let usize target=p.code[pc*8+2] as usize; let usize call=p.code[pc*8+3] as usize;
     let usize work=cost(p,target,offset)?;
     if(call>=p.call_count || call>=32 || p.call_arities[call] as usize!=p.arities[target]) { return .err(errors::make(5,offset)); }

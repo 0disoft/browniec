@@ -273,6 +273,30 @@ pub fn Result<Case,Error> case_value(ref layouts::Plan plan,ref mut State state,
 }
 // Covers distinct activations, including recursive ones with identical static
 // slot IDs. COPY retains the source; MOVE transfers its sole active root binding.
+// Pure preflights for the trusted invocation coordinator. It prepays their work
+// and must allow no intervening mutation before publishing the checked batch.
+pub fn Result<usize,Error> inspect_frame(ref layouts::Plan plan,ref State state,
+    ref vec::Vec<bytes::Buffer> frames,Token token){
+    return active_frame(plan,state,frames,token.frame,token.generation);
+}
+pub fn Result<Slot,Error> inspect_destination(ref layouts::Plan plan,ref State state,
+    ref vec::Vec<bytes::Buffer> frames,Address destination){
+    return address(plan,state,frames,destination,false);
+}
+pub fn Result<usize,Error> inspect_transfer(ref layouts::Plan plan,ref State state,
+    ref vec::Vec<bytes::Buffer> frames,ref vec::Vec<bytes::Buffer> scratch,
+    Address source,Address destination,bool copying,ref owners::State root_state,
+    ref vec::Vec<bytes::Buffer> roots,ref vec::Vec<bytes::Buffer> root_scratch){
+    let Slot src=address(plan,state,frames,source,true)?;let Slot dst=address(plan,state,frames,destination,false)?;
+    if((copying && !src.copyable) || !switch(codec::same(layouts::layout(plan),src.type_id,dst.type_id)){
+        case .ok(v):{v}case .err(_):{false}}){return .err(.Type);}
+    let usize available=scratch_ready(plan,scratch)?;if(src.width>available || src.width!=dst.width){return .err(.State);}
+    let codec::Active active=inspected(plan,state,frames,source,src,root_state,roots,root_scratch)?;
+    if(active.present){var usize i=0;while(i<vec::len<bytes::Buffer>(roots)){
+        if(root_state.rows[i].binding==dst.binding){return .err(.Owner);}i+=1;
+    }}
+    return .ok(src.width);
+}
 pub fn Result<usize,Error> transfer(ref layouts::Plan plan,ref mut State state,
     ref mut vec::Vec<bytes::Buffer> frames,ref mut vec::Vec<bytes::Buffer> scratch,
     Address source,Address destination,bool copying,ref mut owners::State root_state,

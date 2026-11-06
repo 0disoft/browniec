@@ -32,6 +32,13 @@ import slice_authority as canonical;
 import slice_reborrow_vm as child_sites;
 import slice_authority_call_vm as canonical_calls;
 import slice_formal_reborrow_vm as canonical_dispatch;
+import value_program as value_program;
+import value_runtime as values;
+import value_frames as value_frames;
+import value_roots as value_roots;
+import value_call_vm as value_calls;
+import buffer_growth as value_limits;
+import mixed_call_vm as mixed_calls;
 
 // Existing public/readonly execution passes an empty view, avoiding the full
 // 32-frame receipt array. One inert native receipt supplies that empty view.
@@ -84,6 +91,45 @@ fn Result<usize,errors::Error> leave(ref ir::Program p,usize function,usize fram
 // Program and invocation-owned state. Public VM entry points still use verify.
 fn Result<i64, errors::Error> core(ref ir::Program p, usize fuel,
     ref mut array_vm::State arrays, ref mut bytes::Buffer payload, ref mut slices::State loans, ref mut borrowed::Frames borrowed_frames, ref mut mutable::Frame[] receipts, ref mut canonical::State[] authority,ref mut canonical_calls::Bindings[] call_sites,ref mut child_sites::Bindings[] child_bindings, ref reborrows::Sites sites) {
+    var vec::Vec<value_program::Program> admitted=vec::empty<value_program::Program>();
+    var vec::Vec<value_frames::State> states=vec::empty<value_frames::State>();
+    var vec::Vec<value_roots::State> owners=vec::empty<value_roots::State>();
+    var vec::Vec<bytes::Buffer> data=vec::empty<bytes::Buffer>();var vec::Vec<bytes::Buffer> scratch=vec::empty<bytes::Buffer>();
+    var vec::Vec<bytes::Buffer> roots=vec::empty<bytes::Buffer>();var vec::Vec<bytes::Buffer> root_scratch=vec::empty<bytes::Buffer>();
+    return core_values(p,fuel,arrays,payload,loans,borrowed_frames,receipts,authority,call_sites,child_bindings,sites,
+        ref admitted,ref mut states,ref mut owners,ref mut data,ref mut scratch,ref mut roots,ref mut root_scratch,
+        value_limits::Limits{.object=0,.instance=0,.engine=0});
+}
+// Same canonical loop and ordinary transactions, with a separately retained
+// typed Program. Legacy callers pass inert vectors and keep their exact prices.
+pub fn Result<i64,errors::Error> execute_values(value_program::Program program,usize fuel,
+    ref mut array_vm::State arrays,ref mut bytes::Buffer payload,ref mut slices::State loans,ref mut borrowed::Frames borrowed_frames,
+    ref mut canonical::State[] authority,ref mut canonical_calls::Bindings[] call_sites,ref mut child_sites::Bindings[] child_bindings,
+    value_limits::Limits limits){
+    if(authority.len!=1 || call_sites.len!=1 || child_bindings.len!=1){return .err(errors::make(5,0));}
+    let values::Budget budget=values::budget(ref program,bytes::capacity(payload),limits,fuel)?;
+    var vec::Vec<value_program::Program> admitted=vec::empty<value_program::Program>();
+    if(!vec::reserve<value_program::Program>(ref mut admitted,1).is_ok){return .err(errors::make(15,0));}
+    switch(vec::push<value_program::Program>(ref mut admitted,program)){case .ok(_):{}case .err(_):{return .err(errors::make(15,0));}};
+    var vec::Vec<value_frames::State> states=vec::empty<value_frames::State>();
+    var vec::Vec<value_roots::State> owners=vec::empty<value_roots::State>();
+    var vec::Vec<bytes::Buffer> data=vec::empty<bytes::Buffer>();var vec::Vec<bytes::Buffer> scratch=vec::empty<bytes::Buffer>();
+    var vec::Vec<bytes::Buffer> roots=vec::empty<bytes::Buffer>();var vec::Vec<bytes::Buffer> root_scratch=vec::empty<bytes::Buffer>();
+    let ref value_program::Program retained=vec::at<value_program::Program>(ref admitted,0);
+    let usize remaining=values::setup(retained,ref mut states,ref mut owners,ref mut data,ref mut scratch,ref mut roots,ref mut root_scratch,budget.values,fuel)?;
+    var mutable::Frame[1] unused=[mutable::empty();1];
+    let Result<i64,errors::Error> outcome=core_values(ref value_program::code(retained).body,remaining,arrays,payload,loans,borrowed_frames,
+        ref mut unused[..0],authority,call_sites,child_bindings,value_program::loans(retained),ref admitted,
+        ref mut states,ref mut owners,ref mut data,ref mut scratch,ref mut roots,ref mut root_scratch,budget.values);
+    return values::finish(ref mut states,ref mut owners,ref mut data,ref mut scratch,ref mut roots,ref mut root_scratch,outcome);
+}
+fn Result<i64,errors::Error> core_values(ref ir::Program p,usize fuel,
+    ref mut array_vm::State arrays,ref mut bytes::Buffer payload,ref mut slices::State loans,ref mut borrowed::Frames borrowed_frames,
+    ref mut mutable::Frame[] receipts,ref mut canonical::State[] authority,ref mut canonical_calls::Bindings[] call_sites,
+    ref mut child_sites::Bindings[] child_bindings,ref reborrows::Sites sites,ref vec::Vec<value_program::Program> admitted,
+    ref mut vec::Vec<value_frames::State> value_states,ref mut vec::Vec<value_roots::State> owner_states,
+    ref mut vec::Vec<bytes::Buffer> value_data,ref mut vec::Vec<bytes::Buffer> value_scratch,
+    ref mut vec::Vec<bytes::Buffer> value_buffers,ref mut vec::Vec<bytes::Buffer> root_scratch,value_limits::Limits limits){
     if(authority.len>1 || call_sites.len!=authority.len || child_bindings.len!=authority.len){return .err(errors::make(5,0));}
     if(authority.len==0 && reborrows::present(p)) { return .err(errors::make(5,0)); }
     let lists::Requirement list_plan=lists::requirement(p)?;
@@ -93,7 +139,8 @@ fn Result<i64, errors::Error> core(ref ir::Program p, usize fuel,
     var bytes::Buffer list_scratch=lists::prepare_encoded(ref list_plan)?;
     var vec::Vec<usize> place_state=places::prepare_metered(ref place_plan,fuel-list_plan.cost)?;
     let Result<i64,errors::Error> outcome=run_core(p,fuel-list_plan.cost-place_plan.cost,arrays,payload,loans,borrowed_frames,
-        receipts,authority,call_sites,child_bindings,sites,ref mut list_cells,ref mut list_scratch,ref mut place_state);
+        receipts,authority,call_sites,child_bindings,sites,ref mut list_cells,ref mut list_scratch,ref mut place_state,
+        admitted,value_states,owner_states,value_data,value_scratch,value_buffers,root_scratch,limits);
     return switch(outcome){case .ok(value):{.ok(value)}case .err(e):{places::abort(ref mut place_state);.err(e)}};
 }
 // Keep owning invocation scratch outside every fallible execution exit. Failure
@@ -102,8 +149,13 @@ fn Result<i64,errors::Error> run_core(ref ir::Program p,usize fuel,
     ref mut array_vm::State arrays,ref mut bytes::Buffer payload,ref mut slices::State loans,ref mut borrowed::Frames borrowed_frames,
     ref mut mutable::Frame[] receipts,ref mut canonical::State[] authority,ref mut canonical_calls::Bindings[] call_sites,
     ref mut child_sites::Bindings[] child_bindings,ref reborrows::Sites sites,ref mut vec::Vec<i64> list_cells,
-    ref mut bytes::Buffer list_scratch,ref mut vec::Vec<usize> place_state){
+    ref mut bytes::Buffer list_scratch,ref mut vec::Vec<usize> place_state,
+    ref vec::Vec<value_program::Program> admitted,ref mut vec::Vec<value_frames::State> value_states,
+    ref mut vec::Vec<value_roots::State> owner_states,ref mut vec::Vec<bytes::Buffer> value_data,
+    ref mut vec::Vec<bytes::Buffer> value_scratch,ref mut vec::Vec<bytes::Buffer> value_buffers,
+    ref mut vec::Vec<bytes::Buffer> root_scratch,value_limits::Limits limits){
     var usize remaining=fuel;
+    let bool typed=vec::len<value_program::Program>(admitted)==1;
     var struct_vm::State records = struct_vm::empty();
     var i64[4096] registers = [0; 4096];
     var usize[32] return_pcs = [0; 32];
@@ -118,6 +170,24 @@ fn Result<i64,errors::Error> run_core(ref ir::Program p,usize fuel,
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
+        if(op>=88 && op<=97 && op!=93 && op!=94){
+            if(!typed){return .err(errors::make(5,p.offsets[pc]));}let usize base=frame*128;
+            let values::Step step=values::instruction(vec::at<value_program::Program>(admitted,0),pc,frame,
+                value_states,owner_states,value_data,value_scratch,value_buffers,root_scratch,
+                ref mut registers[base..base+128],limits,remaining)?;
+            remaining=step.remaining;pc=step.pc;continue;
+        }
+        if(op==94){
+            if(!typed){return .err(errors::make(5,p.offsets[pc]));}
+            let usize ended=place_frames::empty_frame(place_state,frame,p.offsets[pc])?;
+            let ref value_program::Program program=vec::at<value_program::Program>(admitted,0);
+            remaining=values::prepare_return(program,frame,a,return_dsts[frame],p.offsets[pc],value_states,owner_states,
+                value_data,value_scratch,value_buffers,root_scratch,remaining)?;
+            let usize closed=leave(p,functions[frame],frame,arrays,payload,loans,borrowed_frames,receipts,authority,call_sites,child_bindings,ref records,p.offsets[pc])?;
+            values::publish_return(program,frame,a,return_dsts[frame],value_states,owner_states,value_data,value_scratch,value_buffers,root_scratch);
+            let usize released=values::leave(program,frame,p.offsets[pc],value_states,owner_states,value_data,value_buffers,root_scratch)?;
+            pc=return_pcs[frame];frame-=1;continue;
+        }
         if(op>=83 && op<=87){let usize base=frame*128;
             let usize price=places::price(p,pc,functions[frame],frame,place_state)?;
             if(remaining<price){return .err(errors::make(8,p.offsets[pc]));}
@@ -133,6 +203,8 @@ fn Result<i64,errors::Error> run_core(ref ir::Program p,usize fuel,
             if(remaining==0){return .err(errors::make(8,p.offsets[pc]));}remaining-=1;
             if(frame==0 || p.return_types[functions[frame]]!=13){return .err(errors::make(5,p.offsets[pc]));}
             let usize closed=leave(p,functions[frame],frame,arrays,payload,loans,borrowed_frames,receipts,authority,call_sites,child_bindings,ref records,p.offsets[pc])?;
+            if(typed){let usize released=values::leave(vec::at<value_program::Program>(admitted,0),frame,p.offsets[pc],
+                value_states,owner_states,value_data,value_buffers,root_scratch)?;}
             pc=return_pcs[frame];frame-=1;continue;
         }
         if(op==80 || op==81){let usize base=frame*128;
@@ -182,6 +254,8 @@ fn Result<i64,errors::Error> run_core(ref ir::Program p,usize fuel,
                 return_dsts[frame]-144,frame,ref mut records,arrays,payload,
                 remaining,p.offsets[pc])?;
             }
+            if(typed){let usize released=values::leave(vec::at<value_program::Program>(admitted,0),frame,p.offsets[pc],
+                value_states,owner_states,value_data,value_buffers,root_scratch)?;}
             pc=return_pcs[frame];frame-=1;continue;
         }
         if (op == 47) {
@@ -202,14 +276,23 @@ fn Result<i64,errors::Error> run_core(ref ir::Program p,usize fuel,
                 ref mut registers[base..base + 128], remaining)?;
             pc += 1; continue;
         }
-        if (op >= 41 && op!=51) {
+        if (op >= 41 && op!=51 && op!=93) {
             let usize base = frame * 128;
             remaining = struct_vm::step(op, dst, a, b, frame, ref p.records, ref mut records,
                 arrays, payload, ref mut registers[base..base + 128], remaining, p.offsets[pc])?;
             pc += 1; continue;
         }
-        if (op == 9) {
+        if (op == 9 || op==93) {
+            if(op==93 && !typed){return .err(errors::make(5,p.offsets[pc]));}
             if(frame<31){let usize fresh=place_frames::empty_frame(place_state,frame+1,p.offsets[pc])?;}
+            var Option<value_calls::Prepared> batch=.none;
+            if(typed){
+                let usize ordinary=if(authority.len==1){canonical_calls::cost(p,pc,p.offsets[pc])?}
+                    else if(mutable_function(p,a)){mutable::cost(p,a,p.offsets[pc])?}
+                    else{mixed_calls::cost(p,a,p.offsets[pc])?};
+                batch=.some(values::begin_call(vec::at<value_program::Program>(admitted,0),pc,frame,
+                    value_states,owner_states,value_data,value_scratch,value_buffers,root_scratch,limits,ordinary,ref mut remaining)?);
+            }
             if(authority.len==1){
                 remaining=calls::step_canonical_derived(p,sites,pc,frame,ref child_bindings[0],ref mut call_sites[0],ref mut authority[0],borrowed_frames,loans,ref mut records,arrays,payload,
                     ref mut registers,ref mut return_pcs,ref mut return_dsts,remaining)?;
@@ -220,6 +303,11 @@ fn Result<i64,errors::Error> run_core(ref ir::Program p,usize fuel,
             }else{
                 remaining = calls::step(p,pc,frame,borrowed_frames,loans,ref mut records,arrays,
                     payload,ref mut registers,ref mut return_pcs,ref mut return_dsts,remaining)?;
+            }
+            if(typed){let ref value_program::Program program=vec::at<value_program::Program>(admitted,0);
+                switch(batch){case .some(prepared):{values::publish_call(program,ref prepared,value_states,owner_states,
+                    value_data,value_scratch,value_buffers,root_scratch);}case .none:{assert(false);}};
+                if(value_program::code(program).results[a]!=0){return_dsts[frame+1]=208+dst;}
             }
             let usize child = frame + 1;
             functions[child] = a;
@@ -243,6 +331,8 @@ fn Result<i64,errors::Error> run_core(ref ir::Program p,usize fuel,
             let usize call=(return_pcs[frame]-1)*8;
             let usize transferred=array_results::leave(p,p.code[call+2] as usize,a,return_dsts[frame]-128,frame,arrays,payload,p.offsets[pc])?;
             }
+            if(typed){let usize released=values::leave(vec::at<value_program::Program>(admitted,0),frame,p.offsets[pc],
+                value_states,owner_states,value_data,value_buffers,root_scratch)?;}
             pc=return_pcs[frame];frame-=1;continue;
         }
         if (op >= 33) {
@@ -274,6 +364,8 @@ fn Result<i64,errors::Error> run_core(ref ir::Program p,usize fuel,
         if (op == 8) {
             let i64 value = registers[base + a];
             let usize closed=leave(p,functions[frame],frame,arrays,payload,loans,borrowed_frames,receipts,authority,call_sites,child_bindings,ref records,p.offsets[pc])?;
+            if(typed){let usize released=values::leave(vec::at<value_program::Program>(admitted,0),frame,p.offsets[pc],
+                value_states,owner_states,value_data,value_buffers,root_scratch)?;}
             if (frame == 0) { return .ok(value); }
             let usize parent_base = (frame - 1) * 128;
             let usize parent_dst = return_dsts[frame];
