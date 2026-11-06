@@ -41,6 +41,9 @@ import std::num as num;
 // Arity is the exact destination length; bytes4..7 are reserved zero.
 // 82 void return: all seven operand/reserved bytes are zero. CALL to a function
 // with return tag 13 has canonical dst=0 and defines no scalar register.
+// 83..86 selected owned-array scalar places: analysis only until VM integration.
+// SELECT dst=place,a=array,b=index; READ dst=value,a=place,b=array;
+// STORE dst=place,a=array,b=value; END dst=place,a=b=0. Places are not values.
 pub struct Program {
     u8[2048] code;
     i64[128] constants;
@@ -279,6 +282,23 @@ pub fn Result<usize, errors::Error> array_read(ref mut Program p, usize id, usiz
 }
 pub fn Result<usize, errors::Error> array_write(ref mut Program p, usize id, usize index, usize value, usize offset) {
     return raw(p, 36, id, index, value, offset);
+}
+pub fn Result<usize,errors::Error> place_select(ref mut Program p,usize place,usize root,usize index,usize offset){
+    if(place>=16 || root>=p.arrays.count || index>=p.registers){return .err(errors::make(3,offset));}
+    return raw(p,83,place,root,index,offset);
+}
+pub fn Result<usize,errors::Error> place_read(ref mut Program p,usize place,usize root,usize offset){
+    if(place>=16 || root>=p.arrays.count){return .err(errors::make(3,offset));}
+    if(p.registers>=128 || p.count>=256){return .err(errors::make(4,offset));}
+    let usize dst=p.registers;let usize made=raw(p,84,dst,place,root,offset)?;
+    let u8 element=p.arrays.elements[root];p.types[dst]=element;p.registers+=1;return .ok(dst);
+}
+pub fn Result<usize,errors::Error> place_store(ref mut Program p,usize place,usize root,usize value,usize offset){
+    if(place>=16 || root>=p.arrays.count || value>=p.registers){return .err(errors::make(3,offset));}
+    return raw(p,85,place,root,value,offset);
+}
+pub fn Result<usize,errors::Error> place_end(ref mut Program p,usize place,usize offset){
+    if(place>=16){return .err(errors::make(3,offset));}return raw(p,86,place,0,0,offset);
 }
 pub fn Result<usize, errors::Error> array_drop(ref mut Program p, usize id, usize offset) {
     return raw(p, 37, id, 0, 0, offset);

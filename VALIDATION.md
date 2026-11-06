@@ -1,3 +1,14 @@
+- Independent owned-array place IR analysis: development/release each passed
+  16 native groups (eight new proof, five array-IR, three void execution) on
+  169 matching inputs and 162 LF production modules, with locked LF mirrors.
+  Identity/phase, exact joins/backedges, normal root/return lifetimes, structural
+  unreachable checks and execution rejection before Fuel/backing pass. These
+  are analysis results; new VM dispatch and source syntax remain unimplemented.
+  Existing void exact Fuel/full-register regressions pass; no full CLI/Fuel
+  matrices, Linux or general stack/performance/delivery rerun. See the
+  [contract](docs/engineering/array-place-ir.md) and
+  [Windows evidence](docs/evidence/array-place-ir-windows-20261106.json).
+
 - Native owned-array selected locations: development/release each passed 24
   native groups (eight new plus 16 existing owner/storage/layout groups), with
   169 matching inputs, 161 LF production modules and locked LF mirrors.

@@ -46,6 +46,10 @@ END_PLACE, nonlocal-exit obligations and independent IR admission remain L04
 work. Exclusive slice places, record field places, scalar-local places, grouped
 lvalues and compound operator spelling/lowering remain unimplemented.
 
+The [independent IR successor](array-place-ir.md) now supplies owned-array
+SELECT/READ/STORE/END identity, phase, join and lifetime analysis. This primitive
+alone still does not pin roots; VM dispatch and source integration remain open.
+
 ## Verification
 
 Run `python -B tools/verify-static-execution.py --profile development

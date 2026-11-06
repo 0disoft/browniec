@@ -1,3 +1,15 @@
+- Owned-array place IR analysis now combines canonical scalar/owner/loan checks
+  with independent selecting-PC, phase, join/backedge and root/return lifetime
+  proof. See the [contract](docs/engineering/array-place-ir.md). Executable
+  admission remains gated pending VM/Fuel integration; source syntax, generic
+  reference guards/recipes and other place kinds remain open. No public price,
+  capacity or capability changes.
+  Development/release each passed 16 focused native groups on 169 matching
+  inputs, 162 LF modules and 280-file discovery, with locked LF mirrors; see the
+  [Windows evidence](docs/evidence/array-place-ir-windows-20261106.json).
+  Existing void exact Fuel and 128-register regressions pass. No CLI/full Fuel,
+  Linux, general stack/performance/isolation/delivery rerun.
+
 - Native owned-array selected locations now have a private metadata-only
   capture and revalidated read/store prerequisite. See the
   [contract](docs/engineering/array-selected-place.md). This does not implement

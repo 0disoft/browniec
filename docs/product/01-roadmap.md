@@ -15,7 +15,8 @@
   [remaining work](04-remaining-work.md). The [specification](02-spec.md) owns
   semantics, and [Validation](../../VALIDATION.md) owns recorded execution claims.
 - L04 starts with [native owned-array selected locations](../engineering/array-selected-place.md).
-  Source compound assignment, place lifetimes and independent IR proof remain open.
+  [Independent place IR analysis](../engineering/array-place-ir.md) now checks
+  identity and lifetimes; VM/Fuel and source compound assignment remain open.
 
 ## Milestone status
 

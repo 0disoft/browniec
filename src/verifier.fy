@@ -22,6 +22,7 @@ import static_image as images;
 import static_call_ir as image_calls;
 import static_call_sites as image_sites;
 import reference_lifetimes as reference_lifetimes;
+import place_ir as places;
 
 fn bool readable(ref ir::Program p, ref registers::Set defined, usize r, usize start, usize end) {
     return r >= start && r < end && p.types[r]!=0 && !p.slots[r] && p.array_parameters[r] == 0 && p.record_parameters[r] == 0 && p.slice_parameters[r] == 0 && registers::contains(defined, r);
@@ -109,7 +110,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
             pc += 1; continue;
         }
         if ((op == 8 || op == 39 || op == 50 || op==82) && static_live != 0) { return .err(errors::make(5, pc)); }
-        if (op < 1 || (op > 62 && op!=80 && op!=81 && op!=82) || (op != 52 && ((op!=24 && op!=47 && op!=49 && op!=53 && op!=59 && op!=61 && p.code[at + 4] != 0) ||
+        if (op < 1 || (op > 62 && op!=80 && op!=81 && op!=82 && !places::operation(op)) || (op != 52 && ((op!=24 && op!=47 && op!=49 && op!=53 && op!=59 && op!=61 && p.code[at + 4] != 0) ||
             (op!=47 && p.code[at + 5] != 0) || p.code[at + 6] != 0 || p.code[at + 7] != 0))) { return .err(errors::make(5, pc)); }
         // Strict analysis retains its gate; executable proof may admit this CALL.
         if(op==9 && (live>>48)!=0) {
@@ -160,7 +161,9 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
                 (states[a * 2 + 1] & defined.high) != states[a * 2 + 1]) { return .err(errors::make(5, pc)); }
             pc+=1; continue;
         }
-        if(op==80 || op==81){
+        if(places::operation(op)){
+            let usize checked=places::step(p,pc,f,ref mut defined,ref mut written,live)?;
+        }else if(op==80 || op==81){
             live=array_verifier::step(p,pc,f,ref mut defined,ref mut written,live)?;
         }else if (op >= 54) {
             live = reborrows::step(p, loans, pc, f, ref mut defined, ref mut written, live)?;
@@ -275,6 +278,7 @@ fn Result<reborrows::Sites, errors::Error> validate(ref ir::Program p,bool allow
     var bool[32] used_calls = [false; 32];
     f = 0;
     while (f < p.function_count) { let usize checked = function(p, f, ref shapes, ref loans, static_sites, allow_reborrow_calls, ref mut used_calls)?; f += 1; }
+    let usize selected_places=places::inspect(p)?;
     var usize call = 0;
     while (call < p.call_count) { if (!used_calls[call]) { return .err(errors::make(5, 0)); } call += 1; }
     return .ok(loans);
@@ -299,6 +303,8 @@ pub fn Result<usize, errors::Error> inspect(ref ir::Program p) {
 // Public admission returns the exact forest produced by the complete proof.
 // Unsupported derived CALL shapes reject in every function before guest effects.
 fn Result<usize,errors::Error> executable_calls(ref ir::Program p,ref reborrows::Sites sites){
+    // Analysis precedes dispatch integration; no runtime may admit these yet.
+    if(places::present(p)){return .err(errors::make(5,0));}
     if(sites.count!=0){var usize pc=0;while(pc<p.count){
         if(p.code[pc*8]==9 || p.code[pc*8]==78){let usize allowed=executable::call(p,sites,pc)?;}
         pc+=1;
