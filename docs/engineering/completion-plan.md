@@ -154,8 +154,15 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    this is not guest/Engine authority. The [native frame successor](value-frames.md)
    now connects initialized/Dead slots, activation generations, COPY/MOVE, tag
    build/CASE, combined quotas and prepaid normal/failure cleanup to actual native
-   backing/root bindings. Next connect typed-IR dispatch, complete atomic
-   CALL/RETURN argument/result handoff and compiler source integration. Native prerequisites
+   backing/root bindings. The [private execution successor](value-execution.md)
+   is now implemented in source: an immutable retained value Program binds full
+   admission, code/layout and reborrow proof to operations 88..97, atomic mixed
+   typed/ordinary CALL/RETURN, combined quotas and prepaid terminal cleanup.
+   Windows development/release each passed 26 native groups and 105 tool-free
+   public Fuel CLI cases; see the [evidence](../evidence/value-execution-windows-20261107.json).
+   Next connect guest Buffer/tagged
+   source bindings and broader resource/tag expressions; existing public gates,
+   capabilities and ordinary prices/default/cap remain unchanged. Native prerequisites
    do not close L04/L05/D01-D04.
 3. **Engine and Instance: R01-R05.** The [call capture-stack fix](native-call-capture-stack.md)
    removes a reproduced retained compiler overflow without changing depth/owner

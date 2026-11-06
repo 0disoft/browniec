@@ -2,9 +2,10 @@
 
 `value_frames` connects the [retained canonical layout](value-codec.md) to actual
 native per-activation byte storage and the [owning Buffer root store](value-roots.md).
-This is a native coordinator interface. It is not typed-IR executable admission,
-an Engine handle, or guest source syntax. The independent typed IR proof remains
-required before a future driver may execute those operations.
+This is a native coordinator interface. The [private execution successor](value-execution.md)
+now binds its immutable layout to a retained `value_program::Program` after full
+independent typed-IR proof, then dispatches operations 88..97 through `vm::run_values`.
+Guest source bindings and Engine handles remain separate work.
 
 ## Retained layout and activation identity
 
@@ -59,9 +60,11 @@ inactive tails. A matching CASE consumes a whole move-only wrapper even when the
 selected arm is scalar or none. A mismatching CASE preserves it and does not
 access a payload destination. Copyable wrappers survive extraction.
 
-Cross-activation transfer uses the same checks and pre-reserved scratch. This
-provides the native movement prerequisite for CALL/RETURN, but does not yet apply
-a complete argument map, execute either opcode or publish a guest return result.
+Cross-activation transfer uses the same checks and pre-reserved scratch. The
+[execution successor](value-execution.md) now applies complete typed/ordinary
+argument maps and atomic CALL/RETURN handoff through these primitives. Typed
+actuals never enter ordinary scalar cells; recursive activations retain distinct
+generations, and result publication requires the exact type and a Dead destination.
 
 ## Fuel, quotas and cleanup
 
@@ -104,23 +107,31 @@ checks while avoiding unrelated test compilation. Original and mirrored inputs
 are hashed before/after execution. This is focused native evidence, not a claim
 that the entire test tree was checked or executed.
 
-Next connect these operations to verified typed-IR dispatch, complete atomic
-CALL/RETURN argument/result handoff and compiler source bindings. General
+Private typed-IR dispatch and complete atomic CALL/RETURN handoff are now
+implemented in source by the [execution successor](value-execution.md). Compiler
+source bindings remain next. General
 reference/Buffer joins, must-use, full L04/L05/D01-D04 and broader language,
 Engine/Instance/host/isolation/platform/delivery work remain open. Full CLI/
 language/native Fuel matrices, Linux, OOM injection, general stack/performance/RAM
 and clean-machine delivery remain separate validation work. No push, release or
 deployment is implied by local verification.
 
-Windows development and release each passed all twelve final native groups on
-`a1fb38c`: three layout groups, two checked-metering groups and seven actual
+At the frame-storage checkpoint, Windows development and release each passed all
+twelve final native groups on `a1fb38c`: three layout groups, two checked-metering
+groups and seven actual
 frame/value groups. These include a 4096-element i64 array and four nested
 wrappers with both active and inactive Buffer alternatives, plus a failed-leave
 probe that proves reverse initialization order before ledger-only recovery.
-All 194 inputs match checkout and Git raw bytes; all 187 production modules are
-LF. The static inventory is 315 test files / 1873 annotations, not an execution
+At that checkpoint, all 194 inputs matched checkout and Git raw bytes; all 187
+production modules were LF. Its static inventory was 315 test files / 1873
+annotations, not an execution
 claim for that full tree. See the [Windows evidence](../evidence/value-frames-windows-20261107.json)
 and [input manifest](../evidence/value-frames-inputs-windows-20261107.json).
-Both final profile runs are fresh, without historical reuse/native overrides.
+Both final checkpoint profile runs were fresh, without historical reuse/native overrides.
 The focused commands took 87.142s development and 96.263s release on this machine;
 these are verification-tool elapsed times, not VM performance measurements.
+
+The private execution successor passed 26 native groups and 105 tool-free public
+Fuel CLI cases per Windows development/release profile on `d025c6f`; see its
+[evidence](../evidence/value-execution-windows-20261107.json).
+The frame checkpoint above retains its separate scope.

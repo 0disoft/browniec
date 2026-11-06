@@ -2,52 +2,66 @@
 
 ## Current implementation (2026-11-07)
 
+[Private native typed-value execution](docs/engineering/value-execution.md) is
+implemented in source. A retained immutable `value_program::Program` binds the
+independently verified code, frame layout and reborrow forest to `vm::run_values`.
+Operations 88..97 now connect native values to the ordinary VM, with atomic mixed
+typed/ordinary CALL and RETURN, combined quotas and prepaid terminal cleanup.
+Guest Buffer/tagged source bindings remain next. Existing public admission gates,
+capabilities, opcode prices, Fuel default and ceiling are unchanged.
+Windows development/release each passed 26 native groups and 105 tool-free public
+Fuel CLI cases on `d025c6f`; see the
+[evidence](docs/evidence/value-execution-windows-20261107.json).
+Earlier receipts retain their own scopes.
+
 [Native typed values and frames](docs/engineering/value-frames.md) now connect
 initialized/Dead slots, distinct recursive activations, COPY/MOVE, tag build/CASE,
 combined frame/root quotas and prepaid normal/failure cleanup to actual backing.
-Typed-IR dispatch, complete atomic CALL/RETURN and compiler source bindings remain
-next. This native coordinator interface does not enable guest capabilities.
-Windows development/release each passed twelve focused native groups; see the
+The execution successor above supplies typed dispatch and complete CALL/RETURN
+handoff. This native coordinator interface does not enable guest capabilities.
+The frame-storage checkpoint passed twelve focused native groups per Windows
+development/release profile; see its historical
 [evidence](docs/evidence/value-frames-windows-20261107.json).
 
 [Native owning value roots](docs/engineering/value-roots.md) now retain actual
 Buffer allocations with one serial/token/value binding, metered ownership moves
 and destruction-before-refund cleanup. Setup prepays bounded failure drain.
-The typed value/frame successor above now consumes these bindings; typed IR
-execution and compiler source integration remain next.
-Windows development/release each passed nine focused native groups; see the
+The native execution successor above now consumes these bindings; compiler source
+integration remains next. The root-storage checkpoint passed nine focused native
+groups per Windows development/release profile; see its historical
 [evidence](docs/evidence/value-roots-windows-20261107.json).
 
 A [native value byte layer](docs/engineering/value-codec.md) now validates scalar,
 array, plain-record and wrapper bytes against immutable retained layouts, locates
 the single active Buffer word and performs validated atomic copies/tag builds.
-The owning value/frame successor above now supplies native storage and cleanup;
-typed IR execution and guest source bindings remain next.
+The frame and execution successors above now supply native storage, dispatch and
+cleanup; guest source bindings remain next.
 
 [Typed value IR analysis](docs/engineering/value-ir.md) now independently proves
 resource moves, tag build/case, CALL/RETURN and exact initialized/Dead CFG state
-alongside canonical scalar, aggregate, loan and selected-place checks. Execution
-remains gated; native value storage/cleanup and compiler source integration follow.
+alongside canonical scalar, aggregate, loan and selected-place checks. Its proof
+now feeds private retained execution; ordinary/image/returned-reference admission
+keeps its existing gates, and compiler source integration remains next.
 
 A [native resource/tag prerequisite](docs/engineering/value-ownership.md) now
 independently derives whole-type properties, including inactive Buffer alternatives,
 and hands off real Buffer allocations without payload copying or owner recharging.
-Guest Buffer/tagged source bindings, native value cleanup and complete VM
-integration remain open. Existing public syntax, capabilities, prices and limits are unchanged.
+Guest Buffer/tagged source bindings and broader resource operations remain open.
+Existing public syntax, capabilities, prices and limits are unchanged.
 
 [Ordered aggregate assignment](docs/engineering/aggregate-place-assignment.md)
 now connects whole-array copy/self/fill/list and whole/child nominal record
 copy/constructor stores to early selected destinations in both VM paths.
 Existing grouped targets, CALL/if/switch values and nonlocal cleanup compose
 through shared place IDs. Source Fuel budgets change to cover selection/setup/
-END; instruction prices, default 256 and cap 16000000 remain. Resource/tag moves,
+END; instruction prices, default 256 and cap 16000000 remain. Guest resource/tag moves,
 grouped borrows and reference/Buffer joins remain open.
 
 [Independent aggregate copy IR proof](docs/engineering/aggregate-copy-ir.md) now
 covers existing array/record/subrecord copying and by-value CALLs through canonical
 ownership/loan CFG and ordinary/image/returned-reference admission. Recursive
 activations remain distinct; native storage retains its dynamic window/token checks.
-Resource/tag move rules and complete L04 remain open.
+Guest resource/tag move integration and complete L04 remain open.
 
 [Native retained module programs](docs/engineering/module-program.md) now execute
 explicitly selected public i32 entries with scoped calls/nominal records and

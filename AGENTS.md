@@ -1,19 +1,37 @@
+- Private native typed-value execution is implemented at d025c6f. See
+  [the execution contract](docs/engineering/value-execution.md).
+  Retained immutable value_program::Program rechecks complete admission and owns
+  code/layout/reborrow metadata for vm::run_values. Typed operations 88..97,
+  atomic typed/ordinary CALL and RETURN, combined quota accounting and prepaid
+  terminal cleanup now connect to the existing VM. Guest Buffer/tagged source
+  bindings remain next. Ordinary/image/returned-reference gates, public
+  capabilities, existing opcode prices and Fuel default/cap remain unchanged.
+  Windows development/release each passed 26 native groups (14 new/12 regression)
+  and 105 tool-free public Fuel CLI cases. All 210 inputs match checkout and Git
+  canonical bytes; 208 match Git raw bytes, with two unchanged historical test
+  modules differing only by CRLF. All 190 production modules are LF. See
+  docs/evidence/value-execution-windows-20261107.json. Single-owned heap Program
+  storage and separated fallible layout derivation fix the unchanged combined
+  development tag regression without a stack override. Full L04/L05/D01-D04 and Engine/Instance/host/
+  isolation/platform/delivery remain open.
+
 - Native typed value/frame storage is implemented at a1fb38c. See
   docs/engineering/value-frames.md. Immutable native layouts, exact initialized/
   Dead slots, 32 distinct activation generations, real Buffer MOVE/COPY rules,
   tag build/CASE and cross-activation transfer now share actual native backing
   and root bindings. Entry prepays reverse initialization-order cleanup; abort
   uses native root ledgers/vectors rather than guest bytes/masks. Combined frame/
-  root quotas include transient root growth. No typed-IR executable admission or
-  compiler source binding yet; complete atomic CALL/RETURN remains next. Full
-  objective and broader language/runtime/Engine/Instance/host/delivery remain open.
+  root quotas include transient root growth. The execution successor above now
+  supplies private typed-IR admission and complete CALL/RETURN; compiler source
+  binding remains next. Full objective and broader language/runtime/Engine/
+  Instance/host/delivery remain open.
   No public syntax/capability/existing price/default/cap changes. Matching native
   Plan/State/vectors are invocation-local trusted coordinator data, not handles.
   Focused tests use a locked byte-identical production/selected-test mirror to
   avoid checking unrelated tests before exact selection. Local only; no push.
   Windows development/release each passed twelve final native groups (layout3,
   meter2, frame/value7), including maximum array/four-wrapper and reverse-order
-  failure-cleanup probes. All 194 inputs match checkout/Git raw bytes; 187 LF
+  failure-cleanup probes. At that checkpoint, all 194 inputs matched checkout/Git raw bytes; 187 LF
   production modules and 315-file/1873-annotation static inventory. See
   docs/evidence/value-frames-windows-20261107.json. Broad checks remain open.
   Earlier checkpoints retain their scopes.
@@ -25,9 +43,10 @@
   trusted native coordinator must keep the matching State and two owning vectors
   together for one invocation, never transplanting/editing them. Mutable resource
   field projection is unavailable in the pinned compiler; no unsafe workaround
-  or Fairy checkout changes. Value-slot/frame storage, metered typed IR execution,
-  tag/CALL/RETURN cleanup and compiler source binding remain next. No public
-  behavior/existing price/default/cap changes. Full objective remains open.
+  or Fairy checkout changes. The frame/execution successors now supply value-slot
+  storage, metered typed IR and tag/CALL/RETURN cleanup; compiler source binding
+  remains next. No public behavior/existing price/default/cap changes. Full
+  objective remains open.
   Windows development/release each passed nine native groups (five new plus four
   handoff regressions), with 190 checkout/Git-raw-matching inputs, 184 LF production
   modules and a 312-file/1861-annotation test inventory. See
@@ -42,9 +61,10 @@
   with 188 checkout/Git-raw-matching inputs and 183 LF production modules. See the
   [contract](docs/engineering/value-codec.md) and
   [Windows evidence](docs/evidence/value-codec-windows-20261107.json).
-  No owner authority, VM admission, public behavior or existing price/limit change.
-  Next: owning native value/frame storage, serial/root binding, metering, cleanup,
-  execution and compiler source bindings. Pinned whole-Buffer ref replacement
+  That byte-layer checkpoint added no owner authority, VM admission, public
+  behavior or existing price/limit change. The frame/execution successors above
+  now connect storage, root binding, metering and cleanup; compiler source
+  bindings remain next. Pinned whole-Buffer ref replacement
   rejects E1008; use existing whole-resource Vec push/pop, not an unsafe workaround
   or Fairy checkout edits. Full L04/L05/D01-D04/Engine/Instance/host/delivery and
   broad validation remain open. Local only; no push/release/deployment.
@@ -53,15 +73,17 @@
 - Typed value IR analysis now connects MOVE/COPY/DROP, tag build/case, scalar
   conversion and value CALL/RETURN to whole-type properties and exact Dead-state
   CFG plus canonical scalar/aggregate/loan/selected-place proof. Inactive/scalar
-  Buffer alternatives consume their whole wrapper. All executable routes stay
-  gated. Development/release each passed 12 native groups (8 final core +4 existing
-  regression) and 105 tool-free public Fuel CLI cases on 0254278; 203 current input
-  hashes match checkout/Git raw bytes and all 182 production modules are LF.
+  Buffer alternatives consume their whole wrapper. Its proof now feeds private
+  retained execution; ordinary/image/returned-reference admission keeps its gates.
+  At the IR-analysis checkpoint, development/release each passed 12 native groups
+  (8 final core +4 existing regression) and 105 tool-free public Fuel CLI cases on
+  0254278; 203 recorded input
+  hashes matched checkout/Git raw bytes and all 182 production modules were LF.
   See the [contract](docs/engineering/value-ir.md) and
   [Windows evidence](docs/evidence/value-ir-windows-20261107.json), including the
-  separate CLI discovery/native-test expansion scope. Next: metered native value
-  storage/execution, payload cleanup and compiler source binding. Full L04/L05/
-  D01-D04/Engine/Instance/host/delivery and broad validation remain open. No public
+  separate CLI discovery/native-test expansion scope. The execution successor
+  now connects native storage and cleanup; compiler source binding remains next.
+  Full L04/L05/D01-D04/Engine/Instance/host/delivery and broad validation remain open. No public
   syntax/capability/price/default/cap change. Local only; no push/release/deployment.
   Earlier checkpoints retain their scopes.
 
