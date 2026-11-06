@@ -114,3 +114,82 @@ pub fn Result<bool,errors::Error> tail_expression(ref u8[] source,ref lexer::Sta
         let usize next=lexer::next(source,ref mut look)?;
     }return .ok(false);
 }
+
+pub struct Join { usize exact; usize destination; bool have; }
+
+pub fn u8 opcode(u8 kind){
+    return if(kind==134){31}else if(kind==135){32}else if(kind==38){28}else if(kind==94){29}else if(kind==124){30}
+        else if(kind==128){11}else if(kind==129){12}else if(kind==60){13}else if(kind==130){14}
+        else if(kind==62){15}else if(kind==131){16}else if(kind==43){2}else if(kind==45){3}
+        else if(kind==42){4}else if(kind==47){5}else{6};
+}
+
+pub fn Result<Value,errors::Error> buffer(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
+    ref mut bindings::State state,usize exact){
+    let usize at=s.begin;
+    if(word(source,s,b"brownie")){
+        let usize a=lexer::next(source,s)?;let usize b=lexer::punctuation(source,s,58)?;
+        let usize c=lexer::punctuation(source,s,58)?;
+    }
+    let usize bytes=lexer::word(source,s,b"bytes")?;
+    let usize a=lexer::punctuation(source,s,58)?;let usize b=lexer::punctuation(source,s,58)?;
+    let usize name=lexer::word(source,s,b"empty")?;
+    let usize open=lexer::punctuation(source,s,40)?;let usize close=lexer::punctuation(source,s,41)?;
+    let usize type=intern(unit,4,0,0,at)?;
+    let Value result=expected(owned(type,0),exact,at)?;
+    let usize id=ops::empty_buffer(unit,state,type,at)?;return .ok(owned(type,id));
+}
+
+pub fn Result<Value,errors::Error> predicate(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
+    ref mut bindings::State state,Value value){
+    let usize at=s.begin;let usize dot=lexer::next(source,s)?;
+    if(s.kind!=2){return .err(errors::make(2,s.begin));}
+    if(!value.typed || value.nothing || value.exact>=unit.catalog.count){return .err(wrong(at));}
+    let u8 kind=unit.catalog.nodes[value.exact].kind;
+    let bool positive=word(source,s,if(kind==5){b"is_some"}else{b"is_ok"});
+    let bool negative=word(source,s,if(kind==5){b"is_none"}else{b"is_err"});
+    if((kind!=5 && kind!=6) || (!positive && !negative)){return .err(wrong(at));}
+    let usize name=lexer::next(source,s)?;
+    let usize result=ops::tag_test(unit,state,value.value,if(positive){1}else{0},at)?;
+    if(value.binding==64){let usize dropped=bindings::drop(unit,state,value.value,at)?;}
+    let usize boolean=intern(unit,1,2,0,at)?;return .ok(scalar(boolean,result));
+}
+
+pub fn Result<bool,errors::Error> assignment_ahead(ref u8[] source,ref lexer::State s){
+    if(s.kind!=2 || word(source,s,b"_")){return .ok(false);}var lexer::State look=lexer::snapshot(s);
+    let usize next=lexer::next(source,ref mut look)?;
+    return .ok(look.kind==61 || (look.kind>=136 && look.kind<=145));
+}
+
+pub fn Join joining(usize exact){return Join{.exact=exact,.destination=128,.have=false};}
+
+pub fn Result<usize,errors::Error> publish(ref mut values::Program unit,ref mut bindings::State state,
+    ref mut Join output,Value value,usize at){
+    if(value.nothing || value.exact>=unit.catalog.count ||
+        (output.exact!=64 && value.exact!=output.exact)){return .err(wrong(at));}
+    let bool scalar=unit.catalog.nodes[value.exact].kind==1;
+    let u8 tag=unit.catalog.nodes[value.exact].first;
+    if(!output.have){
+        output.destination=if(scalar){ir::slot(ref mut unit.body,tag,at)?}
+            else{bindings::allocate(unit,state,value.exact,at)?};
+        output.exact=value.exact;output.have=true;
+    }
+    if(scalar){let usize reg=as_scalar(unit,state,value,at)?;
+        return ir::raw(ref mut unit.body,18,output.destination,reg,0,at);
+    }
+    if(value.binding!=64){return bindings::use_binding(unit,state,value.binding,output.destination,at);}
+    let usize id=as_value(unit,state,value,at)?;
+    return bindings::move_value(unit,state,output.destination,id,at);
+}
+
+pub fn Result<Value,errors::Error> joined(ref mut values::Program unit,ref bindings::State state,
+    ref Join output,usize at){
+    if(!output.have){return .err(wrong(at));}
+    if(unit.catalog.nodes[output.exact].kind==1){
+        let usize reg=ir::emit(ref mut unit.body,17,output.destination,0,at)?;
+        return .ok(scalar(output.exact,reg));
+    }
+    return .ok(owned(output.exact,output.destination));
+}
+
+fn u8 register_type(ref values::Program unit,usize index){let ref ir::Program body=ref unit.body;return body.types[index];}
