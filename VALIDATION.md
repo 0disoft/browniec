@@ -1,3 +1,17 @@
+- Native exclusive-slice selected locations now retain the original range,
+  owner/session and reservation while revalidating canonical restored tickets.
+  See the [contract](docs/engineering/slice-selected-place.md).
+  Development/release each passed 13 native groups (nine snapshots, four existing
+  restoration groups), with 172 Git-raw/checkout-matching inputs, 165 LF production
+  modules, 285-file discovery and locked LF mirrors; see the
+  [Windows evidence](docs/evidence/slice-selected-place-windows-20261106.json).
+  In-bounds narrowed children, stale/reopened/reused sessions and malformed
+  metadata fail; all sixteen owners/tickets and backing quota can be full.
+  No opcode, price, source syntax or public capability changes. Exclusive-slice
+  IR/metered storage/VM/source integration, other places and full L04/C05/Instance/
+  host/delivery remain open. Public CLI/full language/Fuel matrices, Linux, OOM,
+  general stack/performance/isolation/delivery were not rerun. Local only.
+
 - Owned scalar-array source assignment now selects/checks bounds before RHS.
   Ten exact-type integer compounds capture the old scalar before RHS, reuse
   checked operations and preserve nonlocal cleanup across both VM drivers.

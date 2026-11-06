@@ -23,6 +23,10 @@
   [owned-array source assignment](../engineering/array-place-assignment.md) now
   connects early bounds, old-scalar capture and ten integer compounds. Other
   place kinds, grouped lvalues and complete L04 remain open.
+  The [native exclusive-slice prerequisite](../engineering/slice-selected-place.md)
+  now captures the original view/session and revalidates current restored tickets.
+  Its independent IR, metered VM storage/adapters and source lowering are next;
+  this prerequisite enables no additional guest syntax or public capability.
 
 ## Milestone status
 
