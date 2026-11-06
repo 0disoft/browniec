@@ -1,8 +1,10 @@
 # Typed source foundations and Result handling
 
 This increment prepares source types, signatures and lexical ownership for the
-[typed value dialect](value-ir.md). These typed foundations are compiler
-preparation only, not executable Buffer/wide-wrapper source. The public compiler
+[typed value dialect](value-ir.md). At this checkpoint the typed foundations were
+compiler preparation only. The [body successor](value-body.md) now compiles empty
+Buffer/nested-wrapper construction, immutable locals and mixed CALL/RETURN to
+private native execution; broader expressions and public integration remain. The public compiler
 also adds Result inspection and explicit discard through its existing scalar/tagged
 path. Full
 Buffer/wide-tagged body lowering remains implementation work, alongside the

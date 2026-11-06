@@ -2,11 +2,21 @@
 
 ## Current implementation (2026-11-07)
 
+Private [typed-source body execution](docs/engineering/value-body.md) now connects
+empty Buffer creation, nested wide/Buffer wrappers, immutable locals, lexical
+cleanup and mixed forward CALL/RETURN to independently verified native execution.
+This private compiler path does not enable Buffer syntax in the public CLI.
+Mutable assignment, control-flow joins, wider predicates/propagation, useful
+Buffer byte/text operations and public composition remain next. Windows
+development/release each passed 19 native groups; all 206 inputs match checkout
+and Git raw bytes, and all 196 production modules are LF. See the
+[evidence](docs/evidence/value-body-windows-20261107.json). Public CLI/full matrices,
+Linux, OOM/general stack/performance and delivery were not run in this increment.
+
 The [value-source foundations](docs/engineering/value-source.md) now cover
 canonical types, atomic whole-signature catalog publication and immutable lexical
-COPY89/MOVE88/reverse-DROP90 metadata. These foundations are not yet connected to
-executable Buffer/wider-wrapper constructors, locals, CALL, assignment or return;
-that body lowering is next. Existing public scalar/tagged Result now supports
+COPY89/MOVE88/reverse-DROP90 metadata. The private body successor above now connects constructors, locals, CALL and
+return; mutable assignment, broader expressions and public integration remain. Existing public scalar/tagged Result now supports
 `.is_ok` and `_ = EXPR;`: `result_is_ok` and `explicit_discard` are true, while
 `must_use_result` remains false. Windows development/release each passed 19 focused
 native groups and, in separate CLI phases, 150 cases (105 Fuel + 45 Result).

@@ -11,7 +11,17 @@ regressions, then commit; record broader checks only when actually run. Do not
 enable public syntax, delivery flags or ABI availability ahead of implemented
 admission, execution and cleanup. Push/release/deployment are separate actions.
 
-Latest source checkpoint (2026-11-07): [value-source foundations](value-source.md)
+Latest private body checkpoint (2026-11-07): [typed-source bodies](value-body.md)
+now connect empty Buffer/nested wide-wrapper construction, immutable locals,
+lexical cleanup and mixed forward CALL/RETURN to independently verified native
+execution. Development/release each passed 19 native groups on `468394d`; all 206
+inputs match checkout/Git raw bytes and 196 production modules are LF. See the
+[evidence](../evidence/value-body-windows-20261107.json). Next implement mutable
+assignment and control-flow joins, then wider predicates/propagation, Buffer
+byte/text/input/output operations, aggregate/reference/module composition and
+public admission. The broader objective and validation obligations remain open.
+
+Predecessor source checkpoint (2026-11-07): [value-source foundations](value-source.md)
 provide canonical types, atomic complete-signature scanning and immutable lexical
 COPY89/MOVE88/reverse-DROP90 metadata. Public scalar/tagged Result now has `.is_ok`
 and `_ = EXPR;`; `result_is_ok` and `explicit_discard` are true, but
@@ -183,8 +193,11 @@ Fuel default 256 / ceiling 16000000 and wider capability gates remain unchanged.
    `value_source_bindings` provides immutable lexical compiler metadata, COPY89 /
    MOVE88 and reverse DROP90, monotonic sixteen-slot allocation and dead-source
    rejection. CFG alternative snapshots never rewind allocations or owner authority.
-   Next connect these foundations to executable Buffer/wider-wrapper constructors,
-   locals, CALL, assignment and return. For L06, public scalar/tagged `.is_ok` and
+   The [private body successor](value-body.md) now connects empty Buffer and nested
+   wrapper constructors, immutable locals, lexical cleanup and mixed CALL/RETURN.
+   Next add mutable assignment, control-flow joins, wider predicates/propagation
+   and useful Buffer operations before aggregate/reference/module composition
+   and public admission. For L06, public scalar/tagged `.is_ok` and
    explicit discard are implemented; unused Result-binding diagnosis and the
    wide/resource path remain missing, so `must_use_result` stays false.
    These increments do not close L04/L05/L06/D01-D04; wider public gates and

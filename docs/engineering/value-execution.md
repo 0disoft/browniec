@@ -115,6 +115,8 @@ checkout bytes; no LF runtime-mirror pass is implied. The static inventory is
 
 The [source foundation](value-source.md) now provides canonical type/signature
 parsing and lexical COPY/MOVE/DROP preparation. Executable Buffer/wider-wrapper
-body lowering, broader resource/tag expressions and public promotion remain next. Full L04/L05/D01-D04, Engine/Instance/host/isolation/platform/delivery,
+body lowering now has a [private successor](value-body.md) for empty Buffer/nested
+wrapper constructors, immutable locals and mixed CALL/RETURN. Mutable assignment,
+control-flow joins, wider operations and public promotion remain next. Full L04/L05/D01-D04, Engine/Instance/host/isolation/platform/delivery,
 the complete language/native Fuel matrices, Linux, LF runtime mirrors, OOM,
 general stack containment and performance remain separate work.

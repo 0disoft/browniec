@@ -10,7 +10,9 @@ now retains an immutable `value_program::Program` and executes operations 88..97
 through native value frames and the ordinary VM. Ordinary, image and returned
 reference admissions keep their existing gates. The [source foundation](value-source.md)
 now provides canonical type/signature and lexical COPY/MOVE/DROP metadata;
-executable Buffer/wider-wrapper body lowering remains next.
+the [private body bridge](value-body.md) now connects empty Buffer/nested-wrapper
+constructors, immutable locals and mixed CALL/RETURN. Broader expressions, mutable
+assignment, control-flow joins and public integration remain next.
 
 ## Instructions and type identity
 
@@ -97,7 +99,9 @@ quotas and prepaid cleanup. The [private execution successor](value-execution.md
 now connects retained code/layout, typed dispatch and atomic mixed typed/ordinary
 CALL/RETURN handoff to that storage. The [source foundation](value-source.md)
 now supplies canonical type/signature and lexical ownership preparation;
-executable Buffer/wider-wrapper body lowering remains next.
+the [private body bridge](value-body.md) now connects empty Buffer/nested-wrapper
+constructors, immutable locals and mixed CALL/RETURN. Broader expressions, mutable
+assignment, control-flow joins and public integration remain next.
 General reference/Buffer joins,
 must-use, Engine/Instance ownership and complete L04/L05/D01-D04 remain open.
 

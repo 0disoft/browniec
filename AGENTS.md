@@ -1,3 +1,18 @@
+- Private typed-source bodies are implemented at 468394d after helpers `9476d25`.
+  See [the contract](docs/engineering/value-body.md). value_source::compile now
+  connects empty Buffer/nested wide-wrapper construction, immutable locals,
+  lexical cleanup and mixed forward CALL/RETURN to the independently verified
+  native value VM. Whole-type move rules include inactive Buffer alternatives.
+  Public compiler/CLI routes do not select this path; no capability/opcode-price/
+  Fuel default/cap change. Windows development/release each passed 19 native groups,
+  with 206 checkout/Git-raw-matching inputs and 196 LF production modules. See
+  docs/evidence/value-body-windows-20261107.json. Next mutable assignment and
+  control-flow joins, wider predicates/propagation, useful Buffer operations and
+  aggregate/reference/module/public composition. Full language/runtime/Engine/
+  Instance/host/isolation/embed/delivery and broad validation remain open. No
+  public CLI/full matrices/Linux/OOM/general stack/performance/delivery rerun.
+  Local only; no push/release/deployment. Earlier checkpoints retain their scopes.
+
 - Typed source preparation is implemented at efbc16b; public Result inspection
   and explicit discard at 04472a0. See [the source contract](docs/engineering/value-source.md).
   Canonical types/typed signatures publish atomically. Immutable lexical metadata

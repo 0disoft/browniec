@@ -6,8 +6,9 @@ This is a native coordinator interface. The [private execution successor](value-
 now binds its immutable layout to a retained `value_program::Program` after full
 independent typed-IR proof, then dispatches operations 88..97 through `vm::run_values`.
 The [source foundation](value-source.md) now supplies typed signature and lexical
-ownership preparation. Executable typed-source bodies and Engine handles remain
-separate work.
+ownership preparation. The [private body bridge](value-body.md) now connects empty Buffer/nested-wrapper
+construction, immutable locals and mixed CALL/RETURN. Complete typed-source
+expressions and Engine handles remain separate work.
 
 ## Retained layout and activation identity
 
@@ -112,8 +113,10 @@ that the entire test tree was checked or executed.
 Private typed-IR dispatch and complete atomic CALL/RETURN handoff are now
 implemented in source by the [execution successor](value-execution.md). The
 [source foundation](value-source.md) adds canonical types/signatures and lexical
-COPY/MOVE/DROP metadata. Executable Buffer/wider-wrapper body lowering remains
-next. General
+COPY/MOVE/DROP metadata. The [private body bridge](value-body.md) now connects
+empty Buffer/nested-wrapper construction, immutable locals and mixed CALL/RETURN.
+Mutable assignment, control-flow joins, wider predicates and public integration
+remain next. General
 reference/Buffer joins, must-use, full L04/L05/D01-D04 and broader language,
 Engine/Instance/host/isolation/platform/delivery work remain open. Full CLI/
 language/native Fuel matrices, Linux, OOM injection, general stack/performance/RAM
