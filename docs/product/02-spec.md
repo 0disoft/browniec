@@ -11,7 +11,7 @@
   now execute this independently admitted native IR with metered snapshots,
   frame/CALL cleanup and returned-view guards. [Owned-array source assignment](../engineering/array-place-assignment.md)
   now selects/checks bounds before RHS and captures old scalars before all ten
-  checked integer compounds; other place kinds and full L04 remain open. The
+  checked integer compounds. Full L04 remains incomplete; later kinds follow. The
   [compiler cleanup prerequisite](../engineering/array-place-cleanup.md) now
   preserves pending masks across lexical/loop scopes and ends them before
   ordinary nonlocal cleanup; the source successor now uses those paths.
@@ -31,14 +31,23 @@
   integer compounds and shares pending-place cleanup with owned arrays.
   This changes source IR and total Fuel; existing instruction prices and CLI
   limits remain unchanged. Version metadata adds two slice-assignment flags.
-  Record/scalar-local places, grouped lvalues, overlap and complete L04 remain open.
   The [native record-location prerequisite](../engineering/record-selected-place.md)
   captures the original nominal owner and scalar leaf, authenticates complete
   metadata and stages atomic scalar stores. Its
   [independent IR successor](../engineering/record-place-ir.md) now reconstructs
   exact scalar types and proves kind/site/field identity, phases and root/CFG
-  lifetimes through separate analysis. Record-place VM/source execution remains
-  gated; public Fuel/capability metadata is unchanged.
+  lifetimes through separate analysis. Its [metered storage](../engineering/record-place-vm.md)
+  and [execution successor](../engineering/record-place-execution.md) now connect
+  complete admission and both drivers. The [record source successor](../engineering/record-place-assignment.md)
+  selects exact fields before RHS and captures old values for checked compounds.
+  Record source IR/Fuel changes deliberately; existing prices/limits remain and
+  two narrow record-assignment flags are exposed.
+  The [scalar-local successor](../engineering/scalar-assignment.md) now captures
+  stable frame slots and old values before ten integer compounds, using existing
+  LOAD/operation/STORE verification without a new native vector or pending ID.
+  Compounds work in value arms and pure for clauses; plain scalar assignment IR
+  and prices remain. Version metadata adds scalar_local_compound_assignment.
+  Grouped lvalues/borrows, generic aggregate overlap and complete L04 remain open.
 
 ## Product boundary
 
@@ -263,7 +272,7 @@ constructor payloads whose final payload is i32/bool, and preserve i32/bool-only
 wrappers. Exact rules are in the [widening contract](../engineering/m1-widening.md).
 
 Classic for headers may contain only the profile's pure scalar declaration,
-assignment, condition, and post steps. Arrays and repeated initializers use positive
+assignment (including integer compounds), condition, and post steps. Arrays and repeated initializers use positive
 integer literals.
 
 ## Evaluation and arithmetic

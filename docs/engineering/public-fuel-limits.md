@@ -1,5 +1,13 @@
 # Public Fuel costs and CLI ceiling
 
+The [scalar-local compound successor](scalar-assignment.md) uses existing
+LOAD/checked-operation/STORE prices without place setup. Its complete ordinary
+plain/compound fixtures require6/8 Fuel; forced retained entry requires
+344070/344072 and retained marker source344088/344090. Plain assignment IR and
+Fuel remain unchanged. Both Windows profiles check one-short/exact/one-more
+boundaries and retain the 57 existing public Fuel cases. Default256 and
+ceiling16000000 remain; see the successor for scoped evidence.
+
 The [record-place execution successor](record-place-execution.md) connects exact
 setup and SELECT/READ/STORE prices through both native-IR execution paths.
 Record-capable setup is 5077..72277, SELECT is 41025, READ adds stride, STORE

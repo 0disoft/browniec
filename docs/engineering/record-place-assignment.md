@@ -84,8 +84,10 @@ a helper that releases its result before the next case. The same erroneous
 guest inputs already returned structured errors through the standalone CLI.
 No compiler, linker or stack-size override is used.
 
-Scalar-local/grouped places, generic aggregate overlap proof, broader resource
-joins and complete L04/C05/Instance/host/delivery remain open. Full language/
+The [scalar-local successor](scalar-assignment.md) now connects stable frame
+slots and old-value LOAD before ten checked compounds. Grouped places, generic
+aggregate overlap proof, broader resource joins and complete L04/C05/Instance/
+host/delivery remain open. Full language/
 original full native Fuel matrices, Linux, OOM injection, general stack and
 performance characterization, worker isolation and clean-machine delivery are
 outside this focused verification.

@@ -1,3 +1,20 @@
+- Scalar-local source assignment now captures stable frame slots and old LOAD
+  values before ten checked integer compounds, including value arms and pure
+  for headers. Existing LOAD/operation/STORE proof needs no new opcode, place
+  ID, native vector, owner or extent. See the [contract](docs/engineering/scalar-assignment.md).
+  Development/release each passed 13 native groups and 186 tool-free CLI cases
+  (129 scalar-assignment and 57 public Fuel) on 190 Git-raw/checkout-matching
+  inputs, 170 LF modules, 295-file discovery and both locked LF mirrors.
+  See [Windows evidence](docs/evidence/scalar-assignment-windows-20261106.json).
+  Plain/compound ordinary exact Fuel is6/8; retained marker public Fuel is
+  344088/344090. Plain assignment IR and all existing prices/default256/
+  cap16000000 remain. Compound bytes match explicit old LOAD/operation/STORE.
+  Version JSON adds scalar_local_compound_assignment. Grouped lvalues/borrows,
+  aggregate overlap and full L04/C05/Instance/host/delivery remain open. Full
+  language/original full native Fuel, Linux, OOM/general stack/performance/
+  isolation/delivery were not rerun. Local only; earlier checkpoints retain
+  their scopes.
+
 - Owned-record scalar field source assignment now selects before RHS and captures
   old fields before ten checked integer compounds. Shared record/array/slice IDs
   and lexical snapshots preserve nested targets and nonlocal cleanup. See the

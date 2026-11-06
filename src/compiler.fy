@@ -1637,12 +1637,19 @@ fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State 
     if (slices::binding(table,index)) {
         return slice_write_statement(source,s,p,table,signatures,index,at,terminator,result_type,expr_depth,structure,loop_state);
     }
-    let usize equals = lexer::punctuation(source, s, 61)?;
-    let u8 target_type=p.types[table.registers[index]];
-    let usize value = expression(source,s,p,table,signatures,1,expr_depth,target_type,result_type,structure,loop_state)?;
+    if(!lexer::assignment(s.kind)){return .err(errors::make(2,s.begin));}
+    let usize operation_at=s.begin;let u8 operation=places::compound(s.kind);
+    // Mutable scalar bindings name stable frame slots. Capture the old value
+    // before RHS work; its LOAD result is a fresh immutable register.
+    let usize slot=table.registers[index];let u8 target_type=p.types[slot];
+    if(operation!=0 && !types::integer(target_type)){return .err(errors::make(3,operation_at));}
+    let usize equals=lexer::next(source,s)?;
+    let usize old=if(operation==0){128}else{ir::emit(p,17,slot,0,operation_at)?};
+    var usize value = expression(source,s,p,table,signatures,1,expr_depth,target_type,result_type,structure,loop_state)?;
     if (p.types[value] != target_type) { return .err(errors::make(3, at)); }
     let usize end_statement = lexer::punctuation(source, s, terminator)?;
-    let usize stored = ir::raw(p, 18, table.registers[index], value, 0, at)?;
+    if(operation!=0){value=ir::emit(p,operation,old,value,operation_at)?;}
+    let usize stored = ir::raw(p, 18, slot, value, 0, at)?;
     return .ok(index);
 }
 fn Result<usize,errors::Error> void_call_statement(ref u8[] source,ref mut lexer::State s,

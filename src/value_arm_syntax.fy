@@ -18,7 +18,7 @@ pub fn Result<bool,errors::Error> regular(ref u8[] source,ref lexer::State s){
     if(call_statement(source,s)?){return .ok(true);}
     if(s.kind!=2 || locals::reserved(source[s.begin..s.end])){return .ok(false);}
     var lexer::State look=lexer::snapshot(s);let usize next=lexer::next(source,ref mut look)?;
-    return .ok(look.kind==61 || (look.kind==91 && arrays::indexed_assignment(source,ref look)?) ||
+    return .ok(lexer::assignment(look.kind) || (look.kind==91 && arrays::indexed_assignment(source,ref look)?) ||
         (look.kind==46 && records::assigned(source,ref look)?));
 }
 fn Result<usize,errors::Error> balanced(ref u8[] source,ref mut lexer::State s,u8 open,u8 close){
