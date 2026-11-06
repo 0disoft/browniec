@@ -1,7 +1,8 @@
 # Constructor constraints for value joins
 
-Date: 2026-11-06. Private source-lowering foundation; public branch inference is
-not connected by this increment.
+Date: 2026-11-06. Private source-lowering foundation at `6aaf473`.
+The [source successor](constructor-join-inference.md) now connects public branch
+inference; the original foundation-only verification below keeps its scope.
 
 `value_join_source` can intersect constructor constraints over the six existing
 Option/Result types. None supplies two Option alternatives; some supplies its

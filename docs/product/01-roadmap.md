@@ -7,6 +7,8 @@
   [if values](../engineering/aggregate-if-expressions.md),
   [switch values](../engineering/aggregate-switch-expressions.md) and
   [void functions/statements](../engineering/void-source.md) are connected.
+  [Constructor arm constraints](../engineering/constructor-join-inference.md) now
+  resolve the existing Option/Result domains in either branch order.
   General reference/Buffer joins, grouped lvalues/borrows and
   broader constructor context remain language work alongside the units below.
 - The complete requirement crosswalk and actionable gaps are in

@@ -308,3 +308,9 @@ ordinary native, public ordinary and public retained routes. It shares existing
 if/switch joins without a new opcode or price; its focused verification includes
 exact/short budgets, public one-more budgets and the original scalar switch
 9/8 boundary. Its evidence does not renew the full public Fuel suite above.
+
+The [constructor-join successor](constructor-join-inference.md) resolves missing
+shallow wrapper domains during compilation without new guest instructions or
+prices. Inferred/annotated source has identical instruction/type/constant data;
+the exact ordinary 9 and public retained 344091 fixtures check short/exact/one-more
+boundaries through its focused selection. This does not renew the full suite.

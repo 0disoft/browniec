@@ -25,8 +25,11 @@ context for a following `.none` arm.
 Missing domains are not guessed. Standalone `.none` lacks a payload type;
 standalone `.ok(value)` and `.err(value)` lack the other Result domain. They still
 require an annotation, function signature or another already available expected
-type. The current switch parser does not infer a first `.none` arm from a later
-`.some` arm. Branch-order-independent/contextual unification remains L02 work.
+type. The [constructor-join successor](constructor-join-inference.md) now combines
+complete final if/switch arm constraints in either order, including none-first
+Option values, paired ok/err domains, known values and mixed nested tails.
+Other broader inference remains L02 work; the original checkpoint below retains
+its dated verification scope.
 
 Only the existing i32/bool payloads are admitted. i64/u8/u32/usize, nested tags,
 arrays, records, text, loans and Buffer payloads remain L05 work. An inferred

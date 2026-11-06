@@ -71,6 +71,12 @@ record child paths. The [reference/text successor](../engineering/reference-infe
 adds existing views, loans, aliases and shared-byte results. The
 [Option constructor successor](../engineering/option-constructor-inference.md)
 derives `.some` from existing i32/bool payloads. The
+[constructor-join successor](../engineering/constructor-join-inference.md)
+combines complete final if/switch arm constraints: none-first Option values and
+paired ok/err Result values infer existing i32/bool domains without choosing
+missing defaults. Known typed values and mixed nested tails also constrain them.
+Standalone ambiguous constructors and wider/resource-bearing tags remain separate
+work. The
 [element-list declaration successor](../engineering/array-list-source.md) adds
 `let a=[x,y];` and `let i32[2] a=[x,y];`, with exact scalar types/arity,
 left-to-right one-time evaluation and publication after complete initialization.
@@ -82,8 +88,10 @@ The [literal projection](../engineering/array-literal-projections.md),
 [grouped record](../engineering/record-expression-projections.md) successors now
 compose the documented bounded aggregate forms. The
 [aggregate conditional successor](../engineering/aggregate-if-expressions.md)
-adds fixed-array/plain-record if values. Broader constructor context, aggregate
-switch values and reference/Buffer joins remain pending; this is not a
+adds fixed-array/plain-record if values, and the
+[switch successor](../engineering/aggregate-switch-expressions.md) supplies the
+same aggregate contexts for exhaustive Option/Result switches. Broader inference,
+general reference/Buffer joins and resource-bearing types remain pending; this is not a
 full-profile promotion.
 
 The experimental M1 increment keeps `fn i32 main()` as the zero-argument entry
@@ -126,15 +134,18 @@ remain pure scalar and reject it, and standalone expression statements remain
 unavailable. Unevaluated short-circuit and untaken branch paths skip `?`. An
 evaluated failure returns immediately, skipping later expression work, arguments,
 the rest of the loop body, the `for` post step, and later iterations. Constructors
-still require an expected wrapper type; `?` adds no inference. Exact rules are in
+use the existing expected type, payload-derived some or final-arm constraints;
+`?` itself adds no inference. Exact rules are in
 the [propagation contract](../engineering/m1-propagation.md).
 
 The switch-expression increment makes an exhaustive shallow-wrapper switch an
 operand. A value arm contains zero or more typed local declarations and plain
 assignments followed by one final expression without a semicolon, or `return EXPR;`
 for the enclosing function. At least one arm must yield, and all yielding arms use
-one exact type. The first yielding arm can infer the result and provide constructor
-context; otherwise an expected expression type provides it. Subject evaluation is
+one exact type. A known yielding arm or expected expression type provides context;
+complete final constructor arms can jointly resolve missing Option/Result domains
+through the [constructor-join rules](../engineering/constructor-join-inference.md).
+Subject evaluation is
 once, mutable subjects are snapshotted, and a `_` binding discards the payload.
 Each arm has private visible bindings, while assignments to an outer `var` persist.
 Switch expressions compose with calls, returns, assignments, while conditions,

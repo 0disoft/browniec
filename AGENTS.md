@@ -1,3 +1,22 @@
+- Constructor arm inference is implemented at `bdb6d2b` on the bounded
+  `6aaf473` constraint foundation. Complete final none/some and ok/err atoms,
+  known typed values and shared mixed if/switch tails resolve existing shallow
+  wrapper domains in either branch order. Ambiguous domains still fail.
+  Development/release each passed 18 native groups and 440 tool-free CLI cases
+  on 177 Git-raw/checkout-matching inputs, 160 LF modules and common
+  278-file discovery; both locked LF mirrors pass. Forty-one unselected
+  legacy fixtures differ only by CRLF/LF, with both hashes recorded. All six
+  types, pending registers above/below 64, independent tag rejection, identical
+  annotated/inferred IR, exact ordinary 9/8 and retained 344091 Fuel, qualified
+  modules and original CALL bounds pass. See the
+  [contract](docs/engineering/constructor-join-inference.md) and
+  [Windows evidence](docs/evidence/constructor-join-inference-windows-20261106.json).
+  Existing types/prices/default256/cap16000000 remain. Wider/resource wrappers,
+  inference outside these final atoms/shared tails, general reference/Buffer
+  joins, grouped lvalues/borrows and full C05/Instance/host/delivery remain open.
+  No full language/public Fuel matrices/Linux/OOM/general stack/timing/delivery
+  rerun. Local only.
+
 - Fixed-array/plain-record switch values are implemented at `b6ed621` through
   the common exact-shape if/switch join, without a new opcode or result owner phi.
   Locals, arguments, returns, whole/child assignment, child constructor fields and

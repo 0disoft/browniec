@@ -75,6 +75,12 @@ constant, return); 8 fails. The public retained image-binding variant requires
 Input, compiler, native report and standalone CLI identities are recorded in
 [Windows evidence](../evidence/constructor-join-inference-windows-20261106.json).
 
+Development and release each passed **18 native groups and 440 tool-free CLI
+cases** at `bdb6d2b`. All 177 input paths match checkout and Git raw bytes.
+Both locked LF mirrors pass with 160 LF modules and common 278-file test
+discovery. Forty-one unselected legacy fixtures differ only by CRLF/LF; both
+hashes are recorded.
+
 CLI builds are serialized; execution has an empty runtime tool PATH. Both native
 profiles use locked LF mirrors. Full profile matrices, the full public Fuel suite,
 Linux, allocator fault injection, general stack-size bounds and timing/delivery
