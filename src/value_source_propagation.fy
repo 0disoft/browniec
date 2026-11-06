@@ -34,6 +34,7 @@ fn Result<usize,errors::Error> preflight_finish(ref values::Program unit,
 pub fn Result<usize,errors::Error> finish_function(ref mut values::Program unit,
     ref mut bindings::State state,usize keep,usize at){
     if(state.next>16){return .err(errors::make(3,at));}
+    state.reads=0;state.writes=0;
     let usize admitted=preflight_finish(unit,state,keep,at)?;
     let usize checked=bindings::check_exit(unit,state,keep,at)?;
     let usize f=function(state);

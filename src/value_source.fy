@@ -9,6 +9,9 @@ import value_source_ops as ops;
 import value_source_control as branches;
 import value_source_propagation as propagation;
 import value_source_context as context;
+import value_source_calls as source_calls;
+import value_buffer_source as buffers;
+import value_source_boolean as boolean;
 import value_source_loops as looping;
 import value_source_headers as headers;
 import functions as signatures;
@@ -36,6 +39,38 @@ fn u8 register_type(ref values::Program unit,usize index){let ref ir::Program bo
 fn usize name_count(ref bindings::State state){let ref locals::Table names=ref state.names;return names.count;}
 fn usize function_id(ref bindings::State state){let ref locals::Table names=ref state.names;return names.function;}
 
+fn Result<context::Value,errors::Error> buffer_call(ref u8[] source,ref mut lexer::State s,
+    ref mut values::Program unit,ref mut bindings::State state,ref signatures::Table table,
+    ref functions::Plan plan,ref mut vec::Vec<bindings::Snapshot> paths,ref mut looping::State flow,
+    usize exact,usize depth){
+    let usize at=s.begin;let u8 op=buffers::operation(source,s,state)?;
+    if(op==95){let usize close=lexer::punctuation(source,s,41)?;return buffers::empty(unit,state,exact,at);}
+    let usize type=context::intern(unit,4,0,0,at)?;let bool writing=op>=101;
+    let usize prefix=buffers::prefix(source,s,writing)?;
+    let context::Value receiver=expression(source,s,unit,state,table,plan,paths,flow,type,1,depth+1)?;
+    let buffers::Reference first=buffers::begin(unit,state,receiver,writing,at)?;
+    var buffers::Reference second=buffers::none();var usize index=0;var usize value=0;
+    if(op!=99){let usize comma=lexer::punctuation(source,s,44)?;
+        if(op==104){
+            let usize borrowed=buffers::prefix(source,s,false)?;
+            let context::Value argument=expression(source,s,unit,state,table,plan,paths,flow,type,1,depth+1)?;
+            second=buffers::begin(unit,state,argument,false,at)?;
+        }else{
+            let usize scalar=context::intern(unit,1,if(op==102){10}else{12},0,at)?;
+            let context::Value argument=expression(source,s,unit,state,table,plan,paths,flow,scalar,1,depth+1)?;
+            let usize register=context::as_scalar(unit,state,argument,at)?;
+            if(op==100 || op==101){index=register;}else{value=register;}
+        }
+    }
+    if(op==101){let usize comma=lexer::punctuation(source,s,44)?;
+        let usize scalar=context::intern(unit,1,10,0,at)?;
+        let context::Value argument=expression(source,s,unit,state,table,plan,paths,flow,scalar,1,depth+1)?;
+        value=context::as_scalar(unit,state,argument,at)?;
+    }
+    let usize close=lexer::punctuation(source,s,41)?;
+    return buffers::finish(unit,state,op,first,second,index,value,exact,at);
+}
+
 fn Result<context::Value,errors::Error> expression(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
     ref mut bindings::State state,ref signatures::Table table,ref functions::Plan plan,ref mut vec::Vec<bindings::Snapshot> paths,ref mut looping::State flow,usize exact,u8 minimum,usize depth){
     if(depth>32){return .err(errors::make(4,s.begin));}
@@ -43,6 +78,13 @@ fn Result<context::Value,errors::Error> expression(ref u8[] source,ref mut lexer
     while(context::precedence(s.kind)>=minimum && context::precedence(s.kind)!=0){
         let u8 operation=s.kind;let u8 priority=context::precedence(operation);let usize at=s.begin;
         let usize a=context::as_scalar(unit,state,left,at)?;let usize next=lexer::next(source,s)?;
+        if(operation==132 || operation==133){
+            let boolean::Pending pending=boolean::begin(unit,state,paths,operation,a,at)?;
+            let context::Value right=expression(source,s,unit,state,table,plan,paths,flow,64,priority+1,depth+1)?;
+            let usize b=context::as_scalar(unit,state,right,at)?;
+            let usize result=boolean::finish(unit,state,paths,flow,pending,b,at)?;
+            left=context::scalar(left.exact,result);continue;
+        }
         let context::Value right=expression(source,s,unit,state,table,plan,paths,flow,left.exact,priority+1,depth+1)?;
         let usize b=context::as_scalar(unit,state,right,at)?;
         if(left.exact!=right.exact || (!types::integer(register_type(unit,a)) && operation!=128 && operation!=129)){
@@ -91,30 +133,7 @@ fn Result<context::Value,errors::Error> call(ref u8[] source,ref mut lexer::Stat
         i+=1;
     }
     let usize close=lexer::punctuation(source,s,41)?;
-    let usize result=plan.results[target];var context::Value returned=context::nothing();
-    if(result!=0 && unit.catalog.nodes[result-1].kind!=1){extended=true;
-        returned=context::owned(result-1,bindings::allocate(unit,state,result-1,at)?);
-    }else if(result!=0){
-        if(register_count(unit)>=128){return .err(errors::make(4,at));}
-        let usize reg=register_count(unit);unit.body.registers=reg+1;
-        let u8 tag=unit.catalog.nodes[result-1].first;unit.body.types[reg]=tag;returned=context::scalar(result-1,reg);
-    }
-    if(call_count(unit)>=32 || position(unit)>=256){return .err(errors::make(4,at));}
-    let usize map=call_count(unit);unit.body.call_count=map+1;unit.body.call_arities[map]=context::byte(i);
-    var usize j=0;while(j<i){unit.body.call_args[map*8+j]=context::byte(arguments[j]);j+=1;}
-    let usize emitted=ir::raw(ref mut unit.body,if(extended){93}else{9},if(returned.nothing){0}else{returned.value},target,map,at)?;
-    let properties::Plan properties= switch(properties::inspect(ref unit.catalog)){
-        case .ok(v):{v}case .err(_):{return .err(wrong(at));}
-    };
-    j=0;while(j<i){if(captures[j]!=16){let usize id=captures[j];
-        // A later argument can exit before CALL; transfer the obligation only
-        // after this CALL is published, never while evaluating its arguments.
-        let usize handled=bindings::handle(unit,state,id,at)?;
-        if(properties.properties[values::type_id(unit,id)].copyable){let usize dropped=bindings::drop(unit,state,id,at)?;}
-        else{let usize consumed=bindings::consume(unit,state,id,at)?;}
-    }j+=1;}
-    if(returned.typed){let usize initialized=bindings::initialize(unit,state,returned.value,at)?;}
-    return .ok(returned);
+    return source_calls::finish(unit,state,table,plan,target,ref arguments,ref captures,i,extended,at);
 }
 
 // Look only across the current primary/unary operand. A postfix receiver cannot
@@ -180,7 +199,7 @@ fn Result<context::Value,errors::Error> primary(ref u8[] source,ref mut lexer::S
     }
     if(s.kind!=2){return .err(errors::make(2,at));}
     var lexer::State look=lexer::snapshot(s);let usize peek=lexer::next(source,ref mut look)?;
-    if((word(source,s,b"bytes") || word(source,s,b"brownie")) && look.kind==58){return context::buffer(source,s,unit,state,exact);}
+    if((word(source,s,b"bytes") || word(source,s,b"brownie")) && look.kind==58){return buffer_call(source,s,unit,state,table,plan,paths,flow,exact,depth);}
     let usize begin=s.begin;let usize end=s.end;let usize next=lexer::next(source,s)?;
     if(s.kind==40){let usize target=signatures::find(source,table,begin,end);
         return call(source,s,unit,state,table,plan,paths,flow,target,at,depth);
@@ -461,6 +480,7 @@ fn Result<bool,errors::Error> scope(ref u8[] source,ref mut lexer::State s,ref m
         else if(word(source,s,b"switch") && !(yields && context::tail_control(source,s)?)){terminal=selection(source,s,unit,state,table,plan,paths,flow,f,depth)?;}
         else if(context::assignment_ahead(source,s)?){let usize assigned=assignment(source,s,unit,state,table,plan,paths,flow,59)?;}
         else if(word(source,s,b"return")){
+            state.reads=0;state.writes=0;
             let usize next=lexer::next(source,s)?;let usize result=plan.results[f];var context::Value value=context::nothing();
             if(result!=0){value=expression(source,s,unit,state,table,plan,paths,flow,result-1,1,0)?;}
             let usize semi=lexer::punctuation(source,s,59)?;

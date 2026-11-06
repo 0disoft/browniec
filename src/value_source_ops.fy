@@ -11,10 +11,12 @@ fn usize bit(usize id){let usize one=1;return one<<id;}
 fn u8 byte(usize value){var u8 result=0;var usize i=0;while(i<value){result+=1;i+=1;}return result;}
 // Validate the same monotonic ledger as bindings before any allocation/emission.
 // Function ends are finalized by the caller after lowering the complete body.
-fn Result<properties::Plan,errors::Error> preflight(ref values::Program unit,ref bindings::State state,usize at){
+pub fn Result<properties::Plan,errors::Error> preflight(ref values::Program unit,ref bindings::State state,usize at){
     if(state.next>16 || state.names.count>64 || state.names.function>=16 ||
         unit.body.function_count>16 || state.names.function>=unit.body.function_count ||
         unit.catalog.count>64 || state.live>=65536 || state.pending>=65536 ||
+        state.reads>=65536 || state.writes>=65536 || (state.reads&state.writes)!=0 ||
+        ((state.reads|state.writes)&state.live)!=(state.reads|state.writes) ||
         state.kills>=65536 || state.generated>=65536 || state.required>=65536 ||
         (!state.tracking && (state.kills!=0 || state.generated!=0 || state.required!=0)) ||
         (state.pending&state.live)!=state.pending || (!state.enforce_results && state.pending!=0)){
@@ -28,6 +30,7 @@ fn Result<properties::Plan,errors::Error> preflight(ref values::Program unit,ref
         else if(unit.types[i]!=0 || unit.functions[i]!=0 || (state.live&bit(i))!=0){return .err(invalid(at));}
         if((state.live&bit(i))!=0 && unit.functions[i] as usize!=state.names.function){return .err(invalid(at));}
         if((state.pending&bit(i))!=0 && unit.catalog.nodes[values::type_id(unit,i)].kind!=6){return .err(invalid(at));}
+        if(((state.reads|state.writes)&bit(i))!=0 && unit.catalog.nodes[values::type_id(unit,i)].kind!=4){return .err(invalid(at));}
         i+=1;
     }
     if(unit.body.count>=256 || unit.body.registers>128){return .err(errors::make(4,at));}

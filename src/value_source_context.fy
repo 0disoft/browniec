@@ -51,10 +51,10 @@ pub fn Result<usize,errors::Error> discard_value(ref mut values::Program unit,re
         let usize handled=bindings::handle(unit,state,id,at)?;return bindings::drop(unit,state,id,at);}return .ok(0);
 }
 pub fn u8 precedence(u8 kind){
-    return if(kind==124){1}else if(kind==94){2}else if(kind==38){3}
-        else if(kind==128 || kind==129){4}else if(kind==60 || kind==62 || kind==130 || kind==131){5}
-        else if(kind==134 || kind==135){6}else if(kind==43 || kind==45){7}
-        else if(kind==42 || kind==47 || kind==37){8}else{0};
+    return if(kind==133){1}else if(kind==132){2}else if(kind==124){3}else if(kind==94){4}else if(kind==38){5}
+        else if(kind==128 || kind==129){6}else if(kind==60 || kind==62 || kind==130 || kind==131){7}
+        else if(kind==134 || kind==135){8}else if(kind==43 || kind==45){9}
+        else if(kind==42 || kind==47 || kind==37){10}else{0};
 }
 pub fn Result<bool,errors::Error> postfix_receiver(ref u8[] source,ref lexer::State cursor){
     var lexer::State look=lexer::snapshot(cursor);var usize parens=0;var usize braces=0;var bool started=false;var bool control=false;

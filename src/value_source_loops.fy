@@ -55,6 +55,8 @@ pub fn Result<usize,errors::Error> begin(ref values::Program unit,ref mut bindin
 fn Result<usize,errors::Error> clean(ref mut values::Program unit,ref mut bindings::State state,
     ref vec::Vec<bindings::Snapshot> paths,ref Frame frame,usize at){
     if(frame.entry>=branches::mark(paths)){return .err(invalid(at));}
+    state.reads=vec::at<bindings::Snapshot>(paths,frame.entry).state.reads;
+    state.writes=vec::at<bindings::Snapshot>(paths,frame.entry).state.writes;
     let usize named=bindings::leave_scope(unit,state,frame.names,at)?;
     let usize live=vec::at<bindings::Snapshot>(paths,frame.entry).state.live;
     let usize one=1;var usize id=state.next;
