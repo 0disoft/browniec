@@ -26,9 +26,13 @@
   The [native exclusive-slice prerequisite](../engineering/slice-selected-place.md)
   now captures the original view/session and revalidates current restored tickets.
   Its [independent ordinary-IR analysis](../engineering/slice-place-ir.md) now
-  proves kind/site identity, phases, lifetime and available authority. Metered
-  VM storage/adapters, image/returned-view integration and source lowering are
-  next; existing executable modes remain gated and no guest capability is added.
+  proves kind/site identity, phases, lifetime and available authority. Its
+  [metered private storage adapter](../engineering/slice-place-vm.md) now retains
+  original snapshots in explicitly tagged bounded invocation vectors, with
+  separate slice/mixed preparation and preflight costs. Next: both VM drivers'
+  canonical current-binding source and cleanup, image/returned-view/recipe
+  integration and source lowering. Existing executable slice modes remain gated;
+  no guest capability is added.
 
 ## Milestone status
 

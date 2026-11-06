@@ -31,8 +31,11 @@ Full-range child and parent authority are distinguished by the canonical
 coordinator, not by comparing byte ranges. Trusted native callers must supply
 only the binding whose authority has resumed, retain snapshots linearly, and
 never clone/mutate sessions or move snapshots across invocation tables. The
-future independent IR proof and VM adapter must enforce these obligations for
-guest execution; this primitive alone does not enforce them.
+[independent IR proof](slice-place-ir.md) now enforces static authority and
+location phases. The [metered storage adapter](slice-place-vm.md) retains the
+snapshot and requires the canonical restored current ticket. Both VM drivers
+still need that binding source and admission before guest execution; this
+primitive alone does not enforce guest authority.
 
 An old scalar must be read and retained before the RHS for compounds. A later
 read observes current payload. Store revalidates metadata and uses the existing

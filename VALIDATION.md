@@ -1,3 +1,22 @@
+- Metered exclusive-slice selected-place storage now supplies explicit slice/mixed
+  invocation vectors, frame phases/counters and native setup/operation preflight.
+  See the [contract](docs/engineering/slice-place-vm.md). Canonical caller-supplied
+  restored tickets preserve the original location across CALL/reborrow rotation;
+  existing executable VM admission and source capabilities remain gated.
+  Development/release each passed 20 native groups (eight adapter and twelve
+  existing array/slice/restoration groups) and 57 tool-free public Fuel CLI cases
+  on a 186-path Git-raw/checkout-matching input union, 167 LF production
+  modules, 287-file discovery and both locked LF mirrors; see the
+  [Windows evidence](docs/evidence/slice-place-vm-windows-20261106.json).
+  Extended preparation is 5067/72267 Fuel at widths 1/16; slice SELECT/READ/STORE
+  cost 4129 / 4162+stride / 4162+2*stride, and extended END costs 22. One metadata
+  vector has at most 7201 words/57608 amd64 bytes. Legacy array-only storage and
+  instruction prices/default256/cap16000000 remain. Next: canonical current-binding
+  integration in both drivers, frame/CALL cleanup, returned/image/recipe guards,
+  slice source lowering and other places; full L04/C05/Instance/host/delivery stays
+  open. Full language/original native Fuel matrices, Linux, OOM/general stack/
+  performance/isolation/delivery were not rerun. Local only.
+
 - Exclusive-slice selected-place IR now has separate analysis-only admission,
   with exact kind/site identity, available authority, phases and close/end guards.
   See the [contract](docs/engineering/slice-place-ir.md). Existing validators and

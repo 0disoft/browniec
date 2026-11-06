@@ -61,9 +61,11 @@ analysis result to an old adapter. The old owned-array encoding/prices and publi
 default 256/ceiling 16000000 are unchanged; no version flag or source syntax is
 added.
 
-Metered slice snapshots, dispatch in both drivers, retained/image/returned-view
-authority and recipe integration, source early selection and compounds remain
-open. Record/scalar-local/grouped places, aggregate overlap and full
+The [metered native successor](slice-place-vm.md) now supplies explicitly tagged
+slice/mixed invocation vectors and exact setup/operation preflight. It remains a
+private adapter requiring the canonical caller-supplied restored ticket. Dispatch
+and current-binding integration in both drivers, retained/image/returned-view
+authority and recipe guards, source early selection and compounds remain open. Record/scalar-local/grouped places, aggregate overlap and full
 L04/C05/Instance/host/delivery remain open as well.
 
 VM integration must retain an explicit location/format discriminator in its

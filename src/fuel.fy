@@ -64,3 +64,15 @@ pub fn usize place_prepare(usize width){return if(width==0){0}else{257+10*32*(9*
 pub fn usize place_instruction(u8 op,usize stride){
     if(op==86){return 17;}if(op==84){return 65+stride;}if(op==85){return 65+2*stride;}return 65;
 }
+
+// New mixed/slice frames keep a format word and fourteen words per location.
+// Existing array-only setup and instruction prices above remain unchanged.
+pub fn usize slice_place_prepare(usize width){return if(width==0){0}else{257+10*(1+32*(14*width+1))};}
+// Reuse the complete sixteen-slot pool/session envelope, then add 32 visits for
+// decoding/publishing the larger snapshot and frame state. No payload scan.
+pub fn usize slice_place_instruction(u8 op,usize stride){
+    if(op==86){return 22;}
+    if(op==84){return slice_base(58,stride)+32;}
+    if(op==85){return slice_base(60,stride)+32;}
+    return slice_base(57,0)+32;
+}
