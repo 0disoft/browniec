@@ -41,7 +41,9 @@ import std::num as num;
 // Arity is the exact destination length; bytes4..7 are reserved zero.
 // 82 void return: all seven operand/reserved bytes are zero. CALL to a function
 // with return tag 13 has canonical dst=0 and defines no scalar register.
-// 83..86 selected owned-array scalar places, independently proved before dispatch.
+// 83..86 private scalar places. Byte4: array 0, exclusive slice 1, record 2.
+// Record kind 2 is analysis-only until its VM adapter is connected. It repeats
+// its scalar ordinal in byte5 and has SELECT b=0; bytes6..7 are zero.
 // SELECT dst=place,a=array,b=index; READ dst=value,a=place,b=array;
 // STORE dst=place,a=array,b=value; END dst=place,a=b=0. Places are not values.
 pub struct Program {

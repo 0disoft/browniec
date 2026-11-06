@@ -40,8 +40,10 @@
   Record/scalar-local places, grouped lvalues and aggregate overlap remain next.
   The [native record-location prerequisite](../engineering/record-selected-place.md)
   now captures nominal owner/reservation and nested scalar ordinal, with
-  metadata-only selection and revalidated atomic read/store. Record-place IR,
-  metered VM integration and source lowering remain next.
+  metadata-only selection and revalidated atomic read/store. Its
+  [independent IR successor](../engineering/record-place-ir.md) now checks exact
+  kind/site/field identity, prepared scalar types, phases and root/CFG lifetimes
+  in a separate analysis entry. Metered VM integration and source lowering remain next.
 
 ## Milestone status
 

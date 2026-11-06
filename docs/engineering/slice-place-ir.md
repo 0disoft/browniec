@@ -10,6 +10,10 @@ location kind: zero retains the owned-array encoding; one names an exclusive
 slice site in the repeated root operand. Bytes5..7 remain zero. END 86 is shared
 across kinds and has zero bytes2..7. Other kind values are invalid.
 
+The [record-analysis successor](record-place-ir.md) separately reserves kind two
+and byte5 for exact record scalar ordinals. This slice entry and existing
+executable entry points still reject that analysis-only kind.
+
 `slice_place_ir::select/read/store` construct the slice form. Construction checks
 exact scalar shape/operand roles and bounded output capacity but does not prove
 definitions, availability, single use or permission to execute. READ reserves one

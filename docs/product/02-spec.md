@@ -34,8 +34,11 @@
   Record/scalar-local places, grouped lvalues, overlap and complete L04 remain open.
   The [native record-location prerequisite](../engineering/record-selected-place.md)
   captures the original nominal owner and scalar leaf, authenticates complete
-  metadata and stages atomic scalar stores. It does not yet enable guest record
-  selected-place IR/source or change public Fuel/capability metadata.
+  metadata and stages atomic scalar stores. Its
+  [independent IR successor](../engineering/record-place-ir.md) now reconstructs
+  exact scalar types and proves kind/site/field identity, phases and root/CFG
+  lifetimes through separate analysis. Record-place VM/source execution remains
+  gated; public Fuel/capability metadata is unchanged.
 
 ## Product boundary
 

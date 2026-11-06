@@ -47,8 +47,10 @@ do not pin roots or enforce single use. Release, reuse and clear invalidate the
 captured generation. Source binding mutability and identity/phase/lifetime
 obligations still require independent record-place IR admission.
 
-Record selected-place IR, metered invocation storage, both VM drivers and source
-early selection/compounds remain next. Scalar-local/grouped places, generic
+The [independent IR successor](record-place-ir.md) now proves exact record/field
+identity, scalar types, phases and root/CFG lifetimes in a separate analysis
+entry. Existing executable admission remains gated. Metered invocation storage,
+both VM drivers and source early selection/compounds remain next. Scalar-local/grouped places, generic
 aggregate overlap and complete L04/C05/Instance/host/delivery remain open.
 This prerequisite changes no guest opcode, source syntax, capability flag,
 instruction price, CLI default or ceiling.

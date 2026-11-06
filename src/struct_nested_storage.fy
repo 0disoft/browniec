@@ -179,7 +179,7 @@ pub fn Result<usize, Error> write(ref layouts::Catalog catalog, usize record, us
 
 // Depth-first scalar ordinals match record IR. Resolve without reading payload
 // or retaining a mutable caller path. The canonical <=128-byte root and <=16
-// levels bound the iterator; missing/host-maximum ordinals fail before walking.
+// levels bound the iterator; ordinals outside 0..127 fail before walking.
 pub fn Result<Leaf, Error> scalar_location(ref layouts::Catalog catalog, usize record,
     usize base, usize ordinal, usize capacity, ref arenas::Arena arena) {
     if (ordinal >= 128) { return .err(.Bounds); }

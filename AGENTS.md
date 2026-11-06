@@ -1,3 +1,22 @@
+- Owned-record selected-place IR now has separate complete analysis with exact
+  kind/site/scalar-ordinal identity, prepared scalar types, live mutable owners,
+  common phases and root/CFG lifetime guards. See the
+  [contract](docs/engineering/record-place-ir.md). Existing ordinary/image/
+  returned-reference admission and both native adapters still reject the new
+  kind before guest Fuel/backing work. Development/release each passed 28 native
+  groups (nine new record, nineteen array/slice/CALL regressions) and 57
+  tool-free public Fuel CLI cases on 187 Git-raw/checkout-matching inputs,
+  169 LF modules, 291-file discovery and both locked LF mirrors. See the
+  [Windows evidence](docs/evidence/record-place-ir-windows-20261106.json).
+  All six scalars, same-type field substitution, mixed namespaces, phase/drop/
+  return/abort guards, joins/backedges, per-function IDs, 128 leaves/registers,
+  sixteen IDs, final selecting PC and original 32/33 CALL bounds pass. No old
+  prices/default256/cap16000000, source syntax or capability changes. Record
+  metered storage/VM/source integration, other places/overlap and full
+  L04/C05/Instance/host/delivery remain open. Full language/original full native
+  Fuel, Linux, OOM/general stack/performance/isolation/delivery were not rerun.
+  Local only; earlier checkpoints retain their scopes.
+
 - Native owned-record scalar locations now capture the original nominal owner,
   generation/reservation and nested scalar ordinal. Metadata-only selection and
   revalidated atomic read/store reuse the existing ledger, layout iterator and
