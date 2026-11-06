@@ -13,11 +13,29 @@ fn usize function(ref bindings::State state){let ref locals::Table names=ref sta
 
 // Return cleanup includes anonymous captures/constructor children, not just
 // lexical bindings. RETURN consumes even a copyable keep; 16 means no value.
-// The caller discards the whole candidate on error, including partial cleanup.
+// Admit all cleanup before recording exit effects or emitting any DROP.
+fn Result<usize,errors::Error> preflight_finish(ref values::Program unit,
+    ref bindings::State state,usize keep,usize at){
+    let usize checked=bindings::require_handled(unit,state,keep,at)?;
+    let ref locals::Table names=ref state.names;
+    let usize one=1;var usize seen=0;var usize i=0;
+    while(i<names.count){if(state.bindings[i]!=0){
+        let usize id=(state.bindings[i] as usize)-1;
+        if(id>=state.next || !values::slot(unit,id,names.function) || names.registers[i]!=208+id ||
+            (seen&(one<<id))!=0){return .err(errors::make(3,at));}seen|=one<<id;
+    }i+=1;}
+    var usize drops=0;i=0;while(i<state.next){
+        if(i!=keep && (state.live&(one<<i))!=0){drops+=1;}i+=1;
+    }
+    let ref ir::Program body=ref unit.body;
+    if(body.count>256 || drops>256-body.count){return .err(errors::make(4,at));}
+    return .ok(checked);
+}
 pub fn Result<usize,errors::Error> finish_function(ref mut values::Program unit,
     ref mut bindings::State state,usize keep,usize at){
     if(state.next>16){return .err(errors::make(3,at));}
-    let usize checked=bindings::require_handled(unit,state,keep,at)?;
+    let usize admitted=preflight_finish(unit,state,keep,at)?;
+    let usize checked=bindings::check_exit(unit,state,keep,at)?;
     let usize f=function(state);
     var usize id=state.next;while(id!=0){id-=1;
         if(id!=keep && unit.functions[id] as usize==f){

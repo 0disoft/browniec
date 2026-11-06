@@ -15,6 +15,8 @@ fn Result<properties::Plan,errors::Error> preflight(ref values::Program unit,ref
     if(state.next>16 || state.names.count>64 || state.names.function>=16 ||
         unit.body.function_count>16 || state.names.function>=unit.body.function_count ||
         unit.catalog.count>64 || state.live>=65536 || state.pending>=65536 ||
+        state.kills>=65536 || state.generated>=65536 || state.required>=65536 ||
+        (!state.tracking && (state.kills!=0 || state.generated!=0 || state.required!=0)) ||
         (state.pending&state.live)!=state.pending || (!state.enforce_results && state.pending!=0)){
         return .err(invalid(at));}
     let properties::Plan plan=switch(properties::inspect(ref unit.catalog)){
