@@ -85,3 +85,8 @@ than the current array was passed to the exact-size encoder. The new adapter now
 checks capacity and passes only the selected-size prefix. No historical result,
 compiler/linker/stack override or public CLI pass is claimed. See
 [Windows evidence](../evidence/aggregate-selected-place-windows-20261106.json).
+
+The [independent IR successor](aggregate-place-ir.md) now proves all five final
+store forms, common identity/phases and canonical scalar/owner/loan lifetimes.
+It preserves the executable gate pending metered snapshots, both drivers,
+retained guards and source lowering; the native snapshot remains metadata only.

@@ -19,7 +19,9 @@
   with canonical owner/loan CFG and every current executable admission route.
   [Native aggregate destination snapshots](../engineering/aggregate-selected-place.md)
   now capture whole arrays/nominal subtrees through existing atomic stores.
-  Next: aggregate-place IR/lifetimes, metered storage, both drivers/source, then
+  [Independent aggregate-place IR/lifetimes](../engineering/aggregate-place-ir.md)
+  now cover all five copy/value-store forms through shared phase/owner proof.
+  Next: metered snapshots, both drivers/retained guards and source lowering, then
   resource/tag move semantics.
 - L04 starts with [native owned-array selected locations](../engineering/array-selected-place.md).
   [Independent place IR analysis](../engineering/array-place-ir.md) now checks

@@ -1,3 +1,23 @@
+- Independent aggregate-place IR now proves whole-array copy/fill/list stores
+  and exact-nominal record copy/constructor replacement. Kinds3/4 and REPLACE87
+  share the existing sixteen IDs, selecting-PC/phase graph, dense scalar pool and
+  canonical scalar/owner/loan/CALL proof, without extra value registers. See the
+  [contract](docs/engineering/aggregate-place-ir.md). Existing executable/image/
+  returned-reference and native adapters retain their gates before Fuel/backing.
+  Development/release each passed 15 native identities and 105 tool-free public
+  Fuel CLI cases on 196 checkout/Git-raw-matching inputs, 175 LF modules and
+  302-file/1808-test discovery. Development retains 13 unchanged same-turn groups
+  and reruns two after a fixture-only repair/extension; release runs all15 fresh.
+  Only that test file and the native runner selector changed after the initial
+  14-pass/one-failure report; every production input stayed unchanged. See
+  [Windows evidence](docs/evidence/aggregate-place-ir-windows-20261106.json).
+  Public syntax/capabilities/prices/default256/cap16000000 remain. Metered
+  aggregate snapshots, all five stores in both VM drivers, retained guards and
+  ordered source lowering remain next. Resource/tag moves and full L04/C05/Engine/
+  Instance/host/isolation/delivery remain open. Full language/native Fuel, LF
+  mirrors, Linux, OOM/general stack/performance and clean-machine delivery were
+  not rerun. Local implementation 2d36f3f.
+
 - Private native aggregate destinations now capture whole scalar arrays and
   exact nominal record subtrees before RHS work, then revalidate original token,
   generation, shape/reservation and selected byte window before atomic owner-copy,

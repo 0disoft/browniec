@@ -4,6 +4,13 @@
 - Implementation status: Reconciled 2026-11-06; bounded M1 and public M2 aggregate/slice/literal/shared-byte-result subsets; full profile incomplete
 - Source profile name: brownie.safe/0.3
 
+- L04 aggregate IR: [independent identity/phase/lifetime analysis](../engineering/aggregate-place-ir.md)
+  now proves whole-array copy/fill/list stores and exact nominal record copy or
+  constructor replacement. Kinds3/4 and PLACE_REPLACE87 share the existing sixteen
+  frame-local place IDs, scalar definitions and dense operand pool. Complete
+  ordinary/image/returned-reference execution remains gated pending metered
+  snapshots, both drivers, retained guards and source lowering.
+
 - L04 aggregate destinations: [private native snapshots](../engineering/aggregate-selected-place.md)
   now capture whole arrays and exact nominal record subtrees before RHS work.
   Owner generations, original reservations and selected windows are revalidated
