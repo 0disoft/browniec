@@ -28,3 +28,6 @@ with missing or duplicate initialization are rejected by independent admission.
 This is focused native evidence, not public source or retained-execution evidence.
 Release, public CLI and complete profile checks were not run for this foundation.
 Existing operation prices, default 256 and CLI ceiling 16000000 are unchanged.
+
+The [source successor](aggregate-if-expressions.md) now connects these recipes
+to public array/record conditional values; its separate evidence owns that claim.

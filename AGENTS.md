@@ -1,3 +1,19 @@
+- Fixed-array/plain-record if values are implemented at `33f32f4`, using lazy
+  exact-shape result destinations and existing independent admission. Development
+  and release each passed 21 native groups and 264 tool-free CLI cases on 172
+  Git-raw/checkout-matching inputs, 160 LF modules and common 273-file discovery.
+  Both locked LF mirrors pass. Forty-one unselected fixtures differ only by
+  CRLF/LF, with both hashes recorded. Original record 32/33 native probes reproduce
+  an existing overflow at `dda1cf6`; retained helper isolation preserves the
+  original sources/limits/assertions, and eight exact originals additionally run
+  through each public CLI. No stack override or reduced guest limit. See the
+  [contract](docs/engineering/aggregate-if-expressions.md) and
+  [Windows evidence](docs/evidence/aggregate-if-expressions-windows-20261106.json).
+  General reference/Buffer joins, aggregate switch values, void, broader constructor
+  context, grouped lvalues/borrows and the complete objective remain open.
+  Existing operation prices/default256/cap16000000 remain. No full matrices/Linux/
+  OOM/general stack/timing/delivery rerun. Local only.
+
 - Scalar/shallow-tagged if expressions are implemented at `98a30ca`: exact bool
   conditions, mandatory value alternatives, else-if chains, inferred/contextual
   values, nested tails and existing arm scope/nonlocal cleanup use existing IR.

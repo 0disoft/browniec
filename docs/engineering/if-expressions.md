@@ -115,7 +115,9 @@ CLI builds share their output and must be serialized. Verification uses the pinn
 compiler, locked LF mirrors and tool-free CLI execution. No native stack override
 or historical result reuse is allowed.
 
-Array/record/reference/Buffer value joins, broader constructor context, void
+The [aggregate successor](aggregate-if-expressions.md) now supplies fixed-array
+and plain-record if values. Reference/Buffer joins, aggregate switch values,
+broader constructor context, void
 functions, grouped lvalues/borrows, full C05/Instance/host and delivery remain
 separate work. No full-profile conformance, whole-project performance or general
 native API stack-size guarantee is established here.

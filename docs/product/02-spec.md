@@ -1,7 +1,7 @@
 # Product Specification
 
 - Status: Accepted for design, 2026-10-23
-- Implementation status: Reconciled 2026-11-05; bounded M1 and public M2 aggregate/slice/literal/shared-byte-result subsets; full profile incomplete
+- Implementation status: Reconciled 2026-11-06; bounded M1 and public M2 aggregate/slice/literal/shared-byte-result subsets; full profile incomplete
 - Source profile name: brownie.safe/0.3
 
 ## Product boundary
@@ -80,8 +80,11 @@ replacement is covered by the [assignment successor](../engineering/array-list-a
 The [literal projection](../engineering/array-literal-projections.md),
 [grouped array](../engineering/array-expression-projections.md) and
 [grouped record](../engineering/record-expression-projections.md) successors now
-compose the documented bounded aggregate forms. Broader constructor context and
-aggregate-valued control flow remain pending; this is not a full-profile promotion.
+compose the documented bounded aggregate forms. The
+[aggregate conditional successor](../engineering/aggregate-if-expressions.md)
+adds fixed-array/plain-record if values. Broader constructor context, aggregate
+switch values and reference/Buffer joins remain pending; this is not a
+full-profile promotion.
 
 The experimental M1 increment keeps `fn i32 main()` as the zero-argument entry
 point. Other functions and their parameters may use i32, i64, u8, u32, usize, or bool. Bool is canonical
@@ -152,8 +155,13 @@ scalar and shallow-tagged types. A condition is exactly bool, only the selected
 arm executes, and every continuing arm yields one exact type. Nested final
 conditionals compose without extra parentheses; existing arm statements and
 nonlocal cleanup remain. Missing else, mismatched types, entirely terminal
-operands and pure-for usage are rejected. Aggregate/reference/Buffer joins and
-void functions remain separate work.
+operands and pure-for usage are rejected. The
+[aggregate successor](../engineering/aggregate-if-expressions.md) adds exact-shape
+fixed-array and nominal plain-record joins, including locals, arguments, returns,
+whole/child assignment, child constructor fields and scalar projections. Continuing
+arms initialize one shared destination; selected evaluation, source-order effects
+and existing nonlocal cleanup remain. Aggregate switch values, reference/Buffer
+joins and void functions remain separate work.
 
 The i64 increment admits `i64` locals, function parameters and results, call
 arguments and returns, assignments, loop variables and expressions, and
