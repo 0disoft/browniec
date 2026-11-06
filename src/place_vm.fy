@@ -18,7 +18,9 @@ pub fn Result<Requirement,errors::Error> requirement(ref ir::Program p) {
     if(p.count>256){return .err(errors::make(5,0));}
     var usize width=0;var usize pc=0;
     while(pc<p.count){let usize at=pc*8;let u8 op=p.code[at];
-        if(proof::operation(op)){let usize id=p.code[at+if(op==84){2}else{1}] as usize;
+        if(proof::operation(op)){
+            if(p.code[at+4]!=0){return .err(errors::make(5,pc));}
+            let usize id=p.code[at+if(op==84){2}else{1}] as usize;
             if(id>=16){return .err(errors::make(5,pc));}if(width<=id){width=id+1;}
         }pc+=1;
     }
@@ -51,7 +53,7 @@ pub fn Result<usize,errors::Error> empty_frame(ref vec::Vec<usize> state,usize f
 pub fn Result<usize,errors::Error> cost(ref ir::Program p,usize pc) {
     if(pc>=p.count || pc>=256){return .err(errors::make(5,pc));}
     let usize at=pc*8;let u8 op=p.code[at];
-    if(!proof::operation(op)){return .err(errors::make(5,pc));}
+    if(!proof::operation(op) || p.code[at+4]!=0){return .err(errors::make(5,pc));}
     if(op==86){return .ok(meter::place_instruction(op,0));}
     let usize root=p.code[at+if(op==84){3}else{2}] as usize;
     if(root>=p.arrays.count || root>=16 || !p.arrays.mutable[root]){return .err(errors::make(5,pc));}

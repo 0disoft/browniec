@@ -44,9 +44,11 @@ there is no array-length-dependent payload scan.
 
 ## Still open
 
-Exclusive-slice SELECT/READ/STORE/END IR, lifetime/phase/authority admission,
-metered invocation storage and both VM adapters, source bounds-before-RHS and
-compound lowering remain to be connected. Existing plain slice source writes
+The [analysis-only IR successor](slice-place-ir.md) now proves exclusive-slice
+SELECT/READ/STORE/END identity, lifetime, phase and available authority in ordinary
+IR. Executable admission, metered invocation storage and both VM adapters,
+image/returned-view integration, source bounds-before-RHS and compound lowering
+remain to be connected. Existing plain slice source writes
 still use their preceding contract. No opcode, operation price, public feature
 flag, CLI default 256 or ceiling 16000000 changes in this prerequisite. Record
 and scalar-local places, grouped lvalues, generic aggregate overlap and full

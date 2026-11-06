@@ -38,7 +38,7 @@ fn bool merge(ref mut usize[] states, ref mut bool[] seen, ref registers::Set de
     seen[target] = true;
     return true;
 }
-fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records::Prepared shapes, ref reborrows::Sites loans, ref statics::Sites static_sites, bool allow_reborrow_calls, ref mut bool[] used_calls) {
+fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records::Prepared shapes, ref reborrows::Sites loans, ref statics::Sites static_sites, bool allow_reborrow_calls, bool allow_slice_places, ref mut bool[] used_calls) {
     let usize start = p.register_starts[f];
     let usize end = p.register_ends[f];
     let usize arity = p.arities[f];
@@ -110,7 +110,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
             pc += 1; continue;
         }
         if ((op == 8 || op == 39 || op == 50 || op==82) && static_live != 0) { return .err(errors::make(5, pc)); }
-        if (op < 1 || (op > 62 && op!=80 && op!=81 && op!=82 && !places::operation(op)) || (op != 52 && ((op!=24 && op!=47 && op!=49 && op!=53 && op!=59 && op!=61 && p.code[at + 4] != 0) ||
+        if (op < 1 || (op > 62 && op!=80 && op!=81 && op!=82 && !places::operation(op)) || (op != 52 && ((op!=24 && op!=47 && op!=49 && op!=53 && op!=59 && op!=61 && !(op>=83 && op<=85) && p.code[at + 4] != 0) ||
             (op!=47 && p.code[at + 5] != 0) || p.code[at + 6] != 0 || p.code[at + 7] != 0))) { return .err(errors::make(5, pc)); }
         // Strict analysis retains its gate; executable proof may admit this CALL.
         if(op==9 && (live>>48)!=0) {
@@ -162,6 +162,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
             pc+=1; continue;
         }
         if(places::operation(op)){
+            if(!allow_slice_places && p.code[at+4]!=0){return .err(errors::make(5,pc));}
             let usize checked=places::step(p,pc,f,ref mut defined,ref mut written,live)?;
         }else if(op==80 || op==81){
             live=array_verifier::step(p,pc,f,ref mut defined,ref mut written,live)?;
@@ -241,7 +242,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
     return .ok(end - start);
 }
 
-fn Result<reborrows::Sites, errors::Error> validate(ref ir::Program p,bool allow_reborrow_calls, ref statics::Sites static_sites) {
+fn Result<reborrows::Sites, errors::Error> validate(ref ir::Program p,bool allow_reborrow_calls, bool allow_slice_places, ref statics::Sites static_sites) {
     if (p.count == 0 || p.count > 256 || p.registers == 0 || p.registers > 128 || p.constant_count > 128 ||
         p.function_count == 0 || p.function_count > 16 || p.entry >= p.function_count || p.call_count > 32) { return .err(errors::make(5, 0)); }
     if (!arrays::valid(ref p.arrays)) { return .err(errors::make(5, 0)); }
@@ -277,7 +278,7 @@ fn Result<reborrows::Sites, errors::Error> validate(ref ir::Program p,bool allow
     let usize record_results = struct_results::metadata(p)?;
     var bool[32] used_calls = [false; 32];
     f = 0;
-    while (f < p.function_count) { let usize checked = function(p, f, ref shapes, ref loans, static_sites, allow_reborrow_calls, ref mut used_calls)?; f += 1; }
+    while (f < p.function_count) { let usize checked = function(p, f, ref shapes, ref loans, static_sites, allow_reborrow_calls, allow_slice_places, ref mut used_calls)?; f += 1; }
     let usize selected_places=places::inspect(p)?;
     var usize call = 0;
     while (call < p.call_count) { if (!used_calls[call]) { return .err(errors::make(5, 0)); } call += 1; }
@@ -286,14 +287,22 @@ fn Result<reborrows::Sites, errors::Error> validate(ref ir::Program p,bool allow
 
 // Ordinary entry points carry no Static authority and keep rejecting 69-79.
 fn Result<reborrows::Sites,errors::Error> plain(ref ir::Program p,bool calls) {
-    let statics::Sites sites = statics::empty(); return validate(p,calls,ref sites);
+    let statics::Sites sites = statics::empty(); return validate(p,calls,false,ref sites);
 }
+// Analysis-only slice-place extension. It carries no executable receipt, image
+// authority or retained result recipe. Existing public/native admission rejects
+// this kind until metered snapshot storage and both drivers are connected.
+pub fn Result<usize,errors::Error> inspect_slice_places(ref ir::Program p){
+    let statics::Sites sites=statics::empty();
+    let reborrows::Sites loans=validate(p,true,true,ref sites)?;return .ok(p.count);
+}
+
 // Analysis-only preparation: exact image bytes plus ordinary metadata, scalar
 // definitions, owners/loans and CFG proof. Static joins/backedges use their own
 // live-state plane. This neither pins an image nor admits Static VM execution.
 pub fn Result<statics::Sites,errors::Error> inspect_statics(ref ir::Program p,ref images::Image image) {
     let statics::Sites sites = statics::definitions(p,image)?;
-    let reborrows::Sites loans = validate(p,true,ref sites)?; return .ok(sites);
+    let reborrows::Sites loans = validate(p,true,false,ref sites)?; return .ok(sites);
 }
 
 // Strict inspection keeps its historical suspended-CALL analysis gate.
@@ -312,7 +321,7 @@ fn Result<usize,errors::Error> executable_calls(ref ir::Program p,ref reborrows:
 // Complete executable shape proof tied to actual immutable image bytes.
 pub fn Result<statics::Sites,errors::Error> verify_statics(ref ir::Program p,ref images::Image image){
     let statics::Sites sites=statics::definitions(p,image)?;
-    let reborrows::Sites loans=validate(p,reborrows::present(p),ref sites)?;
+    let reborrows::Sites loans=validate(p,reborrows::present(p),false,ref sites)?;
     let usize calls=executable_calls(p,ref loans)?;return .ok(sites);
 }
 pub fn Result<reborrows::Sites,errors::Error> verify_sites(ref ir::Program p){
@@ -335,7 +344,7 @@ pub fn Result<StaticCallProof,errors::Error> verify_static_calls(ref image_calls
     let image_calls::Proof recipes=image_calls::inspect(unit,image)?;
     let statics::Sites sites=image_sites::prepare(unit,ref recipes,image)?;
     let ref ir::Program p=ref unit.body;
-    let reborrows::Sites loans=validate(p,true,ref sites)?;
+    let reborrows::Sites loans=validate(p,true,false,ref sites)?;
     let usize executable=executable_calls(p,ref loans)?;
     return .ok(StaticCallProof{.recipes=recipes,.statics=sites,.loans=loans});
 }
@@ -348,7 +357,7 @@ pub fn Result<ReferenceCallProof,errors::Error> inspect_reference_calls(ref imag
     let image_calls::Proof recipes=image_calls::inspect_references(unit,image)?;
     let statics::Sites sites=image_sites::prepare(unit,ref recipes,image)?;
     let ref ir::Program p=ref unit.body;
-    let reborrows::Sites loans=validate(p,true,ref sites)?;
+    let reborrows::Sites loans=validate(p,true,false,ref sites)?;
     let usize executable=executable_calls(p,ref loans)?;
     return .ok(ReferenceCallProof{.recipes=recipes,.statics=sites,.loans=loans});
 }
@@ -360,7 +369,7 @@ pub fn Result<ReferenceReturnProof,errors::Error> inspect_reference_returns(ref 
     let image_calls::Proof recipes=image_calls::inspect_reference_returns(unit,image)?;
     let statics::Sites sites=image_sites::prepare(unit,ref recipes,image)?;
     let ref ir::Program p=ref unit.body;
-    let reborrows::Sites loans=validate(p,true,ref sites)?;
+    let reborrows::Sites loans=validate(p,true,false,ref sites)?;
     let usize executable=executable_calls(p,ref loans)?;
     let usize[16] roots=reference_lifetimes::prepare(p,ref sites)?;
     let usize checked=reference_lifetimes::inspect(p,ref sites,ref roots)?;

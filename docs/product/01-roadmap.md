@@ -25,8 +25,10 @@
   place kinds, grouped lvalues and complete L04 remain open.
   The [native exclusive-slice prerequisite](../engineering/slice-selected-place.md)
   now captures the original view/session and revalidates current restored tickets.
-  Its independent IR, metered VM storage/adapters and source lowering are next;
-  this prerequisite enables no additional guest syntax or public capability.
+  Its [independent ordinary-IR analysis](../engineering/slice-place-ir.md) now
+  proves kind/site identity, phases, lifetime and available authority. Metered
+  VM storage/adapters, image/returned-view integration and source lowering are
+  next; existing executable modes remain gated and no guest capability is added.
 
 ## Milestone status
 

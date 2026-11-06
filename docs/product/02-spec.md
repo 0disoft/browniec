@@ -17,9 +17,12 @@
   ordinary nonlocal cleanup; the source successor now uses those paths.
   The [native exclusive-slice prerequisite](../engineering/slice-selected-place.md)
   captures the original range/session and accepts a canonical ticket refreshed
-  by completed CALL/reborrow restoration. Slice place IR, metering, VM adapters
-  and source lowering remain open; this native prerequisite changes no guest
-  syntax, instruction prices or CLI limits.
+  by completed CALL/reborrow restoration. Its
+  [analysis-only ordinary IR](../engineering/slice-place-ir.md) now proves
+  available authority plus shared location identity/phases/lifetimes; existing
+  executable modes reject the new slice kind. Metering, VM adapters,
+  image/returned-view integration and source lowering remain open. These
+  prerequisites change no guest syntax, instruction prices or CLI limits.
 
 ## Product boundary
 

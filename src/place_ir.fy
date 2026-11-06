@@ -3,11 +3,13 @@ import ir as ir;
 import errors as errors;
 import register_set as registers;
 import slice_verifier as slices;
+import slice_place_ir as slice_places;
 
 // Place IDs are a separate sixteen-entry frame-local namespace, never values.
 // SELECT 83: dst=place,a=array,b=usize index. READ 84: dst=value,a=place,b=array.
 // STORE 85: dst=place,a=array,b=value. END 86: dst=place,a=b=0.
-// Repeating the array operand permits ordinary scalar/owner typing; flow below
+// Byte4 is 0 for owned arrays, 1 for exclusive slices; END has only zero tails.
+// Repeating the root/site operand permits ordinary scalar/owner typing; flow below
 // independently ties it to the actual SELECT that dominates this use.
 pub fn bool operation(u8 op) { return op >= 83 && op <= 86; }
 pub fn bool present(ref ir::Program p) {
@@ -27,19 +29,26 @@ fn Result<usize, errors::Error> metadata(ref ir::Program p, usize pc, usize f) {
     let usize at = pc*8; let u8 op = p.code[at];
     let usize dst = p.code[at+1] as usize; let usize a = p.code[at+2] as usize;
     let usize b = p.code[at+3] as usize;
-    var usize i = 4; while (i < 8) { if (p.code[at+i] != 0) { return .err(invalid(pc)); } i += 1; }
+    let u8 kind=p.code[at+4];
+    var usize i = 5; while (i < 8) { if (p.code[at+i] != 0) { return .err(invalid(pc)); } i += 1; }
     if (op == 86) {
-        if (dst >= 16 || a != 0 || b != 0) { return .err(invalid(pc)); } return .ok(0);
+        if (dst >= 16 || a != 0 || b != 0 || kind!=0) { return .err(invalid(pc)); } return .ok(0);
     }
     let usize root = if (op == 84) { b } else { a };
-    if (root >= p.arrays.count || root >= 16 || p.array_functions[root] as usize != f ||
-        !p.arrays.mutable[root]) { return .err(invalid(pc)); }
+    if(kind>1){return .err(invalid(pc));}
+    var u8 element=0;
+    if(kind==1){element=slice_places::element(p,root,f,pc)?;}
+    else{
+        if (root >= p.arrays.count || root >= 16 || p.array_functions[root] as usize != f ||
+            !p.arrays.mutable[root]) { return .err(invalid(pc)); }
+        element=p.arrays.elements[root];
+    }
     if (op == 83) {
         if (dst >= 16 || pc+1 >= p.ends[f] || !value(p,b,f,12)) { return .err(invalid(pc)); }
     } else if (op == 84) {
-        if (a >= 16 || !value(p,dst,f,p.arrays.elements[root])) { return .err(invalid(pc)); }
+        if (a >= 16 || !value(p,dst,f,element)) { return .err(invalid(pc)); }
     } else if (op == 85) {
-        if (dst >= 16 || !value(p,b,f,p.arrays.elements[root])) { return .err(invalid(pc)); }
+        if (dst >= 16 || !value(p,b,f,element)) { return .err(invalid(pc)); }
     } else { return .err(invalid(pc)); }
     return .ok(root);
 }
@@ -50,7 +59,11 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, usize pc, usize f,
     let usize root = metadata(p,pc,f)?; let usize at = pc*8; let u8 op = p.code[at];
     if (op == 86) { return .ok(live); }
     let usize one = 1;
-    if ((live & (one << root)) == 0 || slices::borrowed(p,root,live) ||
+    if(p.code[at+4]==1){
+        if((live&(one<<(32+root)))==0 || (live&(one<<(48+root)))!=0){return .err(invalid(pc));}
+        let usize owner=p.slice_roots[root] as usize;
+        if(owner!=0 && (live&(one<<(owner-1)))==0){return .err(invalid(pc));}
+    }else if ((live & (one << root)) == 0 || slices::borrowed(p,root,live) ||
         slices::exclusive(p,root,live)) { return .err(invalid(pc)); }
     let usize operand = p.code[at+3] as usize;
     if (op == 83 || op == 85) {
@@ -103,16 +116,19 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f) {
                 if (phase == 0 || state.origins[site] == 0) { return .err(invalid(pc)); }
                 let usize selected = (state.origins[site] as usize)-1;
                 if (selected >= pc || p.code[selected*8] != 83 || p.code[selected*8+1] as usize != site ||
-                    (op != 86 && p.code[selected*8+2] as usize != if (op == 84) { b } else { a })) { return .err(invalid(pc)); }
+                    (op != 86 && (p.code[selected*8+2] as usize != if (op == 84) { b } else { a } ||
+                    p.code[selected*8+4]!=p.code[at+4]))) { return .err(invalid(pc)); }
                 if (op == 84 && phase != 1) { return .err(invalid(pc)); }
                 if (op == 85 && phase == 3) { return .err(invalid(pc)); }
                 state.phases &= ~mask;
                 if (op == 86) { state.origins[site] = 0; }
                 else { let usize next = if (op == 84) { 2 } else { 3 }; state.phases |= next << (2*site); }
             }
-        } else if (op == 37) {
+        } else if (op == 37 || op==56 || op==62) {
             i = 0; while (i < 16) {
-                if (state.origins[i] != 0 && p.code[((state.origins[i] as usize)-1)*8+2] as usize == dst) { return .err(invalid(pc)); } i += 1;
+                if (state.origins[i] != 0){let usize selected=((state.origins[i] as usize)-1)*8;
+                    if(p.code[selected+2] as usize==dst && p.code[selected+4]==if(op==37){0}else{1}){return .err(invalid(pc));}
+                } i += 1;
             }
         }
         if (op == 8 || op == 39 || op == 50 || op == 65 || op == 79 || op == 82) {

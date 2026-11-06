@@ -1,3 +1,19 @@
+- Exclusive-slice selected-place IR now has separate analysis-only admission,
+  with exact kind/site identity, available authority, phases and close/end guards.
+  See the [contract](docs/engineering/slice-place-ir.md). Existing validators and
+  native snapshot preflight/cost reject the new kind before execution; no source
+  syntax, public capability, instruction price or limit changes.
+  Development/release each passed 24 native groups and 57 tool-free public Fuel
+  CLI cases on a 185-path Git-raw/checkout-matching input union, 166 LF production
+  modules, 286-file discovery and locked LF mirrors; see the
+  [Windows evidence](docs/evidence/slice-place-ir-windows-20261106.json).
+  Same-ordinal kind confusion, suspended parents, selected close/child-end,
+  phases/joins/backedges, existing exact Fuel and original 32/33 CALL bounds pass.
+  Metered slice storage, both VM drivers, image/returned-view/source integration,
+  other places and full L04/C05/Instance/host/delivery remain open. Full language/
+  original native Fuel matrices, Linux, OOM/general stack/performance/isolation/
+  delivery were not rerun. Local only.
+
 - Native exclusive-slice selected locations now retain the original range,
   owner/session and reservation while revalidating canonical restored tickets.
   See the [contract](docs/engineering/slice-selected-place.md).

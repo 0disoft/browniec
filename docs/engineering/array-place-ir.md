@@ -6,6 +6,11 @@ proved private IR while executable admission stayed gated. The subsequent
 [VM integration](array-place-execution.md) now admits and executes it; guest
 source lowering and the other place kinds remain open.
 
+The [exclusive-slice analysis successor](slice-place-ir.md) adds a kind-one
+location to the shared identity/phase graph. This document's array kind remains
+zero; the slice kind has a separate analysis entry and is still rejected by
+every existing executable mode pending its metered VM integration.
+
 ## Instructions and namespaces
 
 The existing eight-byte encoding gains four private analysis operations. Bytes
