@@ -58,8 +58,8 @@ pub fn Result<vec::Vec<usize>,errors::Error> prepare_metered(ref Requirement pla
 pub fn Result<usize,errors::Error> cost(ref ir::Program p,ref records::Prepared shapes,
     usize pc,usize function,ref vec::Vec<usize> state){
     let usize mode=kind(p,pc)?;let frames::Format shape=frames::format(state,p.offsets[pc])?;
-    if(mode!=2){return mixed::cost(p,pc,shape.row==14);}
-    if(shape.prefix!=2){return .err(errors::make(5,pc));}
+    if(mode!=2){return .ok(mixed::cost(p,pc,shape.row>=14)?+if(p.code[pc*8]==86 && shape.row==18){4}else{0});}
+    if(shape.prefix<2){return .err(errors::make(5,pc));}
     let usize at=pc*8;let usize site=p.code[at+if(p.code[at]==84){3}else{2}] as usize;
     let u8 element=typing::element(p,shapes,site,p.code[at+5] as usize,function,pc)?;
     return .ok(meter::record_place_instruction(p.code[at],codec::width(element)));
@@ -91,8 +91,8 @@ fn Result<u8,errors::Error> executable_element(ref ir::Program p,usize pc,usize 
 }
 pub fn Result<usize,errors::Error> price(ref ir::Program p,usize pc,usize function,ref vec::Vec<usize> state){
     let u8 element=executable_element(p,pc,function)?;let frames::Format shape=frames::format(state,p.offsets[pc])?;
-    if(shape.prefix!=2){return .err(errors::make(5,pc));}
-    return .ok(meter::record_place_instruction(p.code[pc*8],codec::width(element)));
+    if(shape.prefix<2){return .err(errors::make(5,pc));}
+    return .ok(meter::record_place_instruction(p.code[pc*8],codec::width(element))+if(p.code[pc*8]==86 && shape.row==18){4}else{0});
 }
 // Coordinator-only executable adapter. Resolve current SELECT tokens from its
 // canonical frame/site map after this same price preflight, never a saved row.
@@ -110,21 +110,23 @@ fn Result<usize,errors::Error> apply(ref ir::Program p,usize pc,usize function,u
     let frames::Format shape=frames::format(state,offset)?;
     let usize dst=p.code[at+1] as usize;let usize a=p.code[at+2] as usize;let usize b=p.code[at+3] as usize;
     let usize id=if(op==84){a}else{dst};
-    if(shape.prefix!=2 || frame>=32 || id>=shape.width || function>=p.function_count || function>=16 ||
+    if(shape.prefix<2 || frame>=32 || id>=shape.width || function>=p.function_count || function>=16 ||
         pc<p.starts[function] || pc>=p.ends[function]){return .err(errors::make(5,offset));}
-    let usize header=2+frame*(14*shape.width+1);let usize base=header+1+14*id;let usize tail=base+13;
+    let usize header=shape.prefix+frame*(shape.row*shape.width+1);let usize base=header+1+shape.row*id;let usize tail=base+shape.row-1;
     let ref mut usize[] words=vec::view_mut_usize(state);
     let usize active=words[header];let usize packed=words[tail];let usize phase=(packed>>8)&3;
     if(active>shape.width || packed>3071){return .err(errors::make(5,offset));}
+    var usize extra=if(op==86){13}else{10};
+    while(extra<shape.row-1){if(words[base+extra]!=0){return .err(errors::make(5,offset));}extra+=1;}
     if(op==86){
         if(active==0 || phase==0){return .err(errors::make(5,offset));}
-        var usize i=0;while(i<14){words[base+i]=0;i+=1;}words[header]=active-1;
+        var usize i=0;while(i<shape.row){words[base+i]=0;i+=1;}words[header]=active-1;
         return .ok(fuel-price);
     }
     let usize site=if(op==84){b}else{a};let usize ordinal=p.code[at+5] as usize;
     if(op==83){
         if(phase!=0 || packed!=0 || active>=shape.width){return .err(errors::make(5,offset));}
-        var usize i=0;while(i<13){if(words[base+i]!=0){return .err(errors::make(5,offset));}i+=1;}
+        var usize i=0;while(i<shape.row-1){if(words[base+i]!=0){return .err(errors::make(5,offset));}i+=1;}
         let places::Place selected=switch(places::select(ref p.records.layouts,table,current,ordinal,data.len)){
             case .ok(v):{v}case .err(e):{return .err(failures::failure(e,offset));}
         };

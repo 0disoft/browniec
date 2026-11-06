@@ -69,7 +69,7 @@ pub fn Result<usize,errors::Error> bound(ref ir::Program p,usize pc,usize functi
     ref slices::Pool pool,ref slices::Ticket[] bindings,ref mut u8[] data,ref mut i64[] registers,usize fuel){
     let usize mode=kind(p,pc)?;var slices::Ticket current=slices::Ticket{.slot=16,.generation=0};
     if(mode==1){let usize offset=p.offsets[pc];let arrays::Format shape=arrays::format(state,offset)?;
-        let usize price=cost(p,pc,shape.row==14)?;
+        let usize price=cost(p,pc,shape.row>=14)?;
         if(fuel<price){return .err(errors::make(8,offset));}
         if(frame>=32 || bindings.len!=512){return .err(errors::make(5,offset));}
         let usize site=p.code[pc*8+if(p.code[pc*8]==84){3}else{2}] as usize;
@@ -86,7 +86,7 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,usize pc,usize functio
     let usize mode=kind(p,pc)?;let usize at=pc*8;let u8 op=p.code[at];
     if(mode==0 && op!=86){return arrays::step(p,pc,frame,state,table,tokens,data,registers,fuel);}
     let usize offset=p.offsets[pc];let arrays::Format shape=arrays::format(state,offset)?;
-    let usize price=cost(p,pc,shape.row==14)?;
+    let usize price=cost(p,pc,shape.row>=14)?+if(op==86 && shape.row==18){4}else{0};
     if(fuel<price){return .err(errors::make(8,offset));}
     let usize dst=p.code[at+1] as usize;let usize a=p.code[at+2] as usize;let usize b=p.code[at+3] as usize;
     let usize id=if(op==84){a}else{dst};
@@ -96,13 +96,13 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,usize pc,usize functio
     if(op==86){
         let ref mut usize[] words=vec::view_mut_usize(state);
         let usize active=words[header];let usize packed=words[tail];let usize phase=(packed>>8)&3;
-        if(active==0 || active>shape.width || phase==0 || packed>if(shape.row==14){2047}else{1023}){
+        if(active==0 || active>shape.width || phase==0 || packed>if(shape.row>=14){2047}else{1023}){
             return .err(errors::make(5,offset));
         }
         var usize i=0;while(i<shape.row){words[base+i]=0;i+=1;}words[header]=active-1;
         return .ok(fuel-price);
     }
-    if(shape.row!=14){return .err(errors::make(5,offset));}
+    if(shape.row!=14 && shape.row!=18){return .err(errors::make(5,offset));}
     if(function>=p.function_count || function>=16 || pc<p.starts[function] || pc>=p.ends[function]){
         return .err(errors::make(5,offset));
     }
@@ -110,9 +110,10 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,usize pc,usize functio
     let ref mut usize[] words=vec::view_mut_usize(state);
     let usize active=words[header];let usize packed=words[tail];let usize phase=(packed>>8)&3;
     if(active>shape.width || packed>2047){return .err(errors::make(5,offset));}
+    var usize extra=13;while(extra<shape.row-1){if(words[base+extra]!=0){return .err(errors::make(5,offset));}extra+=1;}
     if(op==83){
         if(phase!=0 || packed!=0 || active>=shape.width || b>=registers.len){return .err(errors::make(5,offset));}
-        var usize i=0;while(i<13){if(words[base+i]!=0){return .err(errors::make(5,offset));}i+=1;}
+        var usize i=0;while(i<shape.row-1){if(words[base+i]!=0){return .err(errors::make(5,offset));}i+=1;}
         let usize index=cells::unpack(registers[b],offset)?;
         let places::Place selected=switch(places::select(pool,current,table,index,data.len)){
             case .ok(v):{v}case .err(e):{return .err(failures::failure(e,offset));}

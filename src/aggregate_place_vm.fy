@@ -136,6 +136,19 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,ref records::Prepared 
     usize pc,usize function,usize frame,ref mut vec::Vec<usize> state,ref owners::Table table,
     owners::Token current,owners::Token source,ref mut u8[] data,ref i64[] registers,
     ref mut vec::Vec<i64> cells,ref mut bytes::Buffer scratch,usize fuel){
+    let usize price=cost(p,pc,function)?;
+    if(fuel<price){return .err(errors::make(8,p.offsets[pc]));}
+    if(p.code[pc*8+4]==4){let usize root=p.code[pc*8+2] as usize;
+        if(shapes.leaves[root]==0 || shapes.leaves[root]>128){return .err(invalid(p.offsets[pc]));}
+    }
+    return bound(p,pc,function,frame,state,table,current,source,data,registers,cells,scratch,fuel);
+}
+// Executable coordinators already hold complete immutable IR/catalog proof.
+// Native owner transactions replan/revalidate actual layouts after prepayment;
+// no Prepared copy or redundant catalog planning is needed per instruction.
+pub fn Result<usize,errors::Error> bound(ref ir::Program p,usize pc,usize function,usize frame,
+    ref mut vec::Vec<usize> state,ref owners::Table table,owners::Token current,owners::Token source,
+    ref mut u8[] data,ref i64[] registers,ref mut vec::Vec<i64> cells,ref mut bytes::Buffer scratch,usize fuel){
     let usize price=cost(p,pc,function)?;let usize at=pc*8;let usize offset=p.offsets[pc];
     if(fuel<price){return .err(errors::make(8,offset));}
     let usize n=width(state,offset)?;let usize id=p.code[at+1] as usize;
@@ -153,7 +166,6 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,ref records::Prepared 
         var usize i=0;while(i<18){words[base+i]=0;i+=1;}words[header]=active-1;return .ok(fuel-price);
     }
     let usize root=p.code[at+2] as usize;let u8 kind=p.code[at+4];
-    if(kind==4 && (shapes.leaves[root]==0 || shapes.leaves[root]>128)){return .err(invalid(offset));}
     if(op==83){
         if(active>=n || phase!=0 || before[2]==18446744073709551615){return .err(invalid(offset));}
         var usize i=0;while(i<18){if(before[base+i]!=0){return .err(invalid(offset));}i+=1;}

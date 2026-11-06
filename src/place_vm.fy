@@ -55,6 +55,14 @@ pub fn Result<Format,errors::Error> format(ref vec::Vec<usize> state,usize offse
         if(count<320 || count>4640 || (count/32-1)%9!=0){return .err(errors::make(5,offset));}
         return .ok(Format{.width=(count/32-1)/9,.row=9,.prefix=0});
     }
+    // Aggregate-capable invocations share these rows with all legacy kinds.
+    // The distinct prefix/length authenticates a format, never its dialect.
+    if(count%32==3){
+        if(count<611 || count>9251 || ((count-3)/32-1)%18!=0){return .err(errors::make(5,offset));}
+        let usize width=((count-3)/32-1)/18;let ref usize[] words=vec::view_usize(state);
+        if(words[0]!=22528+width || words[1]!=18 || words[2]==0){return .err(errors::make(5,offset));}
+        return .ok(Format{.width=width,.row=18,.prefix=3});
+    }
     // Record-capable rows share the fourteen-word mixed layout, but two
     // authenticated prefix words prevent either legacy vector from aliasing it.
     if(count%32==2){
@@ -94,7 +102,7 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,usize pc,usize frame,
     ref mut u8[] data,ref mut i64[] registers,usize fuel) {
     let usize ordinary=cost(p,pc)?;let usize offset=p.offsets[pc];
     let Format shape=format(state,offset)?;
-    let usize price=ordinary+if(p.code[pc*8]==86 && shape.row==14){5}else{0};
+    let usize price=ordinary+if(p.code[pc*8]==86){shape.row-9}else{0};
     if(fuel<price){return .err(errors::make(8,offset));}
     let usize slots=shape.width;
     let usize at=pc*8;let u8 op=p.code[at];let usize dst=p.code[at+1] as usize;
@@ -106,7 +114,7 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,usize pc,usize frame,
     let ref mut usize[] words=vec::view_mut_usize(state);
     let usize active=words[header];let usize packed=words[tail];let usize phase=packed>>8;
     if(active>slots || phase>3){return .err(errors::make(5,offset));}
-    if(shape.row==14){var usize i=8;while(i<13){if(words[base+i]!=0){return .err(errors::make(5,offset));}i+=1;}}
+    if(shape.row>=14){var usize i=8;while(i<shape.row-1){if(words[base+i]!=0){return .err(errors::make(5,offset));}i+=1;}}
     if(op==83){
         if(phase!=0 || packed!=0 || active>=slots || b>=registers.len){return .err(errors::make(5,offset));}
         let usize index=cells::unpack(registers[b],offset)?;

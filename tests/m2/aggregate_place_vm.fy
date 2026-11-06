@@ -126,17 +126,20 @@ fn usize run(ref ir::Program p,ref records::Prepared catalog,usize pc,usize fram
 @test fn void setup_is_prepaid_bounded_and_disjoint_from_all_legacy_formats(){
     var ir::Program p=array(1,0,2);let execution::Requirement one=required(ref p);assert(one.width==1 && one.cost==6367);
     assert(!execution::prepare_metered(ref one,6366).is_ok);let vec::Vec<usize> state=prepare(ref p);
-    assert(vec::len<usize>(ref state)==611 && !legacy::format(ref state,77).is_ok);
+    assert(vec::len<usize>(ref state)==611 && ok_format(ref state));
     assert(!old_records::requirement(ref p).is_ok);
     p.code[25]=15;p.code[33]=15;p.code[41]=15;let execution::Requirement max=required(ref p);
     assert(max.width==16 && max.cost==92767 && max.cost<meter::cli_limit());
-    let vec::Vec<usize> full=prepare(ref p);assert(vec::len<usize>(ref full)==9251 && !legacy::format(ref full,77).is_ok);
+    let vec::Vec<usize> full=prepare(ref p);assert(vec::len<usize>(ref full)==9251 && ok_format(ref full));
     var execution::Requirement bad=max;bad.width=17;assert(!execution::prepare_metered(ref bad,0).is_ok);
     bad=max;bad.cost-=1;assert(!execution::prepare_metered(ref bad,16000000).is_ok);
     let ir::Program empty=ir::empty();let execution::Requirement zero=required(ref empty);
     let vec::Vec<usize> none=prepare(ref empty);assert(zero.width==0 && zero.cost==0 && vec::len<usize>(ref none)==0);
     assert(meter::cli_default()==256 && meter::cli_limit()==16000000);
 }
+fn bool ok_format(ref vec::Vec<usize> state){return switch(legacy::format(state,77)){
+    case .ok(v):{v.row==18 && v.prefix==3}case .err(_):{false}
+};}
 @test fn void failed_source_bools_and_late_list_values_leave_destination_and_phase_unchanged(){
     var u8 mode=0;while(mode<2){let ir::Program p=array(2,if(mode==0){0}else{3},2);let records::Prepared c=shapes(ref p);
         var vec::Vec<usize> state=prepare(ref p);let lists::Requirement lp=list_plan(ref p);var vec::Vec<i64> values=cells(ref lp);var bytes::Buffer encoded=scratch(ref lp);
