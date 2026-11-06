@@ -4,6 +4,8 @@ import value_source_bindings as bindings;
 import value_properties as properties;
 import errors as errors;
 
+pub struct Case { usize instruction; usize payload; }
+
 fn errors::Error invalid(usize at){return errors::make(3,at);}
 fn usize bit(usize id){let usize one=1;return one<<id;}
 fn u8 byte(usize value){var u8 result=0;var usize i=0;while(i<value){result+=1;i+=1;}return result;}
@@ -100,4 +102,36 @@ pub fn Result<usize,errors::Error> tag(ref mut values::Program unit,ref mut bind
     append(unit,91,dst,if(none){0}else{payload},variant,at);
     if(moved){let usize consumed=bindings::consume(unit,state,payload,at)?;}
     return bindings::initialize(unit,state,dst,at);
+}
+// Select the matching compiler path only. The caller keeps the entry snapshot
+// for the mismatch block and selects it with bindings::select_path; snapshots
+// describe compiler metadata and never transfer native ownership. Copyable
+// subjects remain live and require the caller's explicit anonymous-value DROP.
+// Option.none has payload16 (no allocation), encoded with the canonical dst0.
+pub fn Result<Case,errors::Error> case_value(ref mut values::Program unit,ref mut bindings::State state,
+    usize source,u8 variant,usize at){
+    let properties::Plan plan=preflight(unit,state,at)?;
+    let usize checked=live(unit,state,source,at)?;
+    let usize exact_type=values::type_id(unit,source);
+    let properties::Node node=unit.catalog.nodes[exact_type];
+    if((node.kind!=5 && node.kind!=6) || variant>1){return .err(invalid(at));}
+    let bool none=node.kind==5 && variant==0;var usize payload=16;
+    if(!none){
+        let usize child=if(variant==1){node.first as usize}else{node.second as usize};
+        let usize admitted=destination(ref plan,state,child,at)?;
+        payload=bindings::allocate(unit,state,child,at)?;
+    }
+    let usize instruction=unit.body.count;
+    append(unit,92,if(none){0}else{payload},source,variant,at);
+    if(!plan.properties[exact_type].copyable){let usize consumed=bindings::consume(unit,state,source,at)?;}
+    if(!none){let usize initialized=bindings::initialize(unit,state,payload,at)?;}
+    return .ok(Case{.instruction=instruction,.payload=payload});
+}
+// A forward block may not have been emitted yet (including target == count).
+// Final independent admission still requires an in-function instruction target.
+pub fn Result<usize,errors::Error> patch_case(ref mut values::Program unit,usize instruction,usize target,usize at){
+    if(unit.body.count>256 || instruction>=unit.body.count || target<=instruction || target>=256){
+        return .err(invalid(at));}
+    if(unit.body.code[instruction*8]!=92){return .err(invalid(at));}
+    unit.body.code[instruction*8+4]=byte(target);return .ok(instruction);
 }

@@ -7,8 +7,9 @@ import errors as errors;
 
 // Compiler metadata only; no executable authority or complete source integration.
 // Keep one State with one Program for the entire lowering operation. Never reset
-// its allocation cursor; use begin_alternative for a separate CFG path. Names refer to the caller's
-// immutable source snapshot. Existing locals::find forbids ALL active shadowing.
+// its allocation cursor; use begin_alternative/select_path for separate CFG paths.
+// Names refer to the caller's immutable source snapshot. Existing locals::find
+// forbids ALL active shadowing.
 // Static IDs are globally monotonic, including across scopes/functions/branches.
 // Recursive activations still require the existing value-frame runtime; a static
 // ID is not storage and must never alias another independent lexical value.
@@ -18,8 +19,8 @@ pub struct State {
     usize next; usize live;
 }
 // Checkpoints describe compile-time CFG entries/exits, never native owners.
-// begin_alternative selects an unexecuted alternative; merge compares exits and
-// never restores saved liveness or allocation cursors on a continuing path.
+// begin_alternative/select_path select separately reached blocks. merge compares
+// exits and never restores saved liveness/cursors on a continuing path.
 pub struct Snapshot { State state; }
 pub fn State empty(){return State{.names=locals::empty(),.bindings=[0;64],.next=0,.live=0};}
 pub fn Snapshot snapshot(ref State state){return Snapshot{.state=State{
@@ -100,6 +101,12 @@ pub fn Result<usize,errors::Error> declare(ref values::Program unit,ref mut Stat
     let usize index=locals::declare(ref mut staged,begin,end,208+id,false)?;
     state.names=staged;state.bindings[index]=byte(id+1);return .ok(index);
 }
+// Same atomic declaration/uniqueness rules; mutability changes only after success.
+pub fn Result<usize,errors::Error> declare_mut(ref values::Program unit,ref mut State state,
+    ref u8[] source,usize begin,usize end,usize id,usize exact_type){
+    let usize index=declare(unit,state,source,begin,end,id,exact_type)?;
+    state.names.mutable[index]=true;return .ok(index);
+}
 fn Result<usize,errors::Error> spans(ref u8[] source,ref State state,usize at){
     var usize i=0;while(i<state.names.count){
         if(state.names.begins[i]>state.names.ends[i] || state.names.ends[i]>source.len){return .err(invalid(at));}i+=1;
@@ -118,7 +125,7 @@ fn Result<usize,errors::Error> binding(ref values::Program unit,ref State state,
     if(index>=state.names.count || state.bindings[index]==0){return .err(invalid(at));}
     let usize id=(state.bindings[index] as usize)-1;
     let usize valid=slot(unit,state,id,at)?;
-    if(state.names.registers[index]!=208+id || state.names.mutable[index]){return .err(invalid(at));}
+    if(state.names.registers[index]!=208+id){return .err(invalid(at));}
     return .ok(id);
 }
 // Emits COPY89 for whole-copyable types, otherwise MOVE88, into an exact-type
@@ -133,6 +140,32 @@ pub fn Result<usize,errors::Error> use_binding(ref mut values::Program unit,ref 
     if(unit.body.count>=256){return .err(errors::make(4,at));}
     append(unit,if(copied){89}else{88},destination,source,at);
     if(!copied){state.live^=bit(source);}state.live|=bit(destination);return .ok(destination);
+}
+// Replace the fixed lexical slot, or reinitialize it after a move. The RHS is
+// an already captured value: MOVE consumes it even when its type is copyable.
+// Admit every binding, the catalog and the ENTIRE DROP+MOVE before any write.
+pub fn Result<usize,errors::Error> assign(ref mut values::Program unit,ref mut State state,
+    usize index,usize source,usize at){
+    let usize destination=binding(unit,state,index,at)?;
+    let usize checked=slot(unit,state,source,at)?;
+    if(!state.names.mutable[index] || (state.live&bit(source))==0 ||
+        unit.types[source]!=unit.types[destination]){return .err(invalid(at));}
+    let properties::Plan plan=switch(properties::inspect(ref unit.catalog)){
+        case .ok(v):{v}case .err(_):{return .err(invalid(at));}
+    };
+    var usize seen=0;var usize i=0;while(i<state.names.count){
+        if(state.names.begins[i]>state.names.ends[i]){return .err(invalid(at));}
+        if(state.bindings[i]!=0){let usize id=binding(unit,state,i,at)?;
+            if((seen&bit(id))!=0){return .err(invalid(at));}seen|=bit(id);}
+        i+=1;
+    }
+    var usize needed=0;
+    if(source!=destination){needed=1;if((state.live&bit(destination))!=0){needed+=1;}}
+    if(unit.body.count>256 || needed>256-unit.body.count){return .err(errors::make(4,at));}
+    if(source==destination){return .ok(destination);}
+    if((state.live&bit(destination))!=0){append(unit,90,destination,0,at);}
+    append(unit,88,destination,source,at);
+    state.live^=bit(source);state.live|=bit(destination);return .ok(destination);
 }
 // Trusted return/call handoff hook, after ALL surrounding admission succeeds.
 // For CALL copyable actuals the caller leaves them live instead of calling this.
@@ -196,6 +229,27 @@ pub fn Result<usize,errors::Error> begin_alternative(ref values::Program unit,re
             let usize id=binding(unit,ref staged,i,at)?;
             if(id>=prior.next || (seen&bit(id))!=0){return .err(invalid(at));}seen|=bit(id);
         }i+=1;
+    }
+    current.names=staged.names;current.bindings=staged.bindings;current.live=staged.live;
+    return .ok(current.live);
+}
+// Trusted compile-only selection of an independently reached CFG block, including
+// cleanup/alternative entries after a terminal return removed all current names.
+// This does NOT restore runtime ownership. The complete independent value CFG
+// verifier remains the executable authority. Keep code/type allocations intact.
+pub fn Result<usize,errors::Error> select_path(ref values::Program unit,ref mut State current,
+    ref Snapshot entry,usize at){
+    let usize checked=header(unit,current,at)?;let ref State prior=ref entry.state;
+    if(prior.next>current.next || prior.names.function!=current.names.function){return .err(invalid(at));}
+    var usize i=prior.next;while(i<16){if((prior.live&bit(i))!=0){return .err(invalid(at));}i+=1;}
+    var State staged=State{.names=locals::snapshot(ref prior.names),.bindings=prior.bindings,
+        .next=current.next,.live=prior.live};
+    let usize valid=header(unit,ref staged,at)?;
+    var usize seen=0;i=0;while(i<staged.names.count){
+        if(staged.names.begins[i]>staged.names.ends[i]){return .err(invalid(at));}
+        if(staged.bindings[i]!=0){let usize id=binding(unit,ref staged,i,at)?;
+            if(id>=prior.next || (seen&bit(id))!=0){return .err(invalid(at));}seen|=bit(id);}
+        i+=1;
     }
     current.names=staged.names;current.bindings=staged.bindings;current.live=staged.live;
     return .ok(current.live);
