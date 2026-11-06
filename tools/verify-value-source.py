@@ -154,9 +154,9 @@ def public_cli(mirror, output, compiler, profile, run):
                 runtimeEnvironment='cleared; tool-free PATH')
 
 
-def verify_profile(profile, cli, expected, inputs, phase):
+def verify_profile(profile, cli, expected, inputs, phase, output_directory='build/value-source'):
     started = time.perf_counter()
-    output = ROOT / 'build/value-source' / profile
+    output = ROOT / output_directory / profile
     receipt = output / 'receipt.json'
     compiler = ROOT / 'build/toolchain' / ('fairyc.exe' if os.name == 'nt' else 'fairyc')
     target = 'windows/amd64' if os.name == 'nt' else 'linux/amd64'
