@@ -998,12 +998,56 @@ fn Result<usize,errors::Error> captured_tail(ref u8[] source,ref mut lexer::Stat
     let usize dropped=arrays::release_from(ref names,p,table.count,at)?;
     return .ok(if(destination<16){128+destination}else if(destination>=144 && destination<160){destination}else{called});
 }
-// Postfix propagation binds before unary and binary operators. The operand
-// parser recurses through primary for unary operators, preserving that order.
+// Read-only postfix lookahead supplies no bool context to a Result-producing
+// atom. Nested calls/groups own their own suffixes; the real parser still checks
+// every token and evaluates the expression exactly once.
+fn Result<bool,errors::Error> result_property(ref u8[] source,ref lexer::State s){
+    var lexer::State look=lexer::snapshot(s);
+    var usize parens=0;var usize braces=0;var usize brackets=0;var bool started=false;
+    while(look.kind!=0){
+        if(parens==0 && braces==0 && brackets==0){
+            if(look.kind==46 && started){
+                let usize dot=lexer::next(source,ref mut look)?;
+                if(word_is(source,ref look,b"is_ok")){return .ok(true);}
+                continue;
+            }
+            if(look.kind==59 || look.kind==44 || look.kind==41 || look.kind==125 || look.kind==93){return .ok(false);}
+            if(started && (precedence(look.kind)!=0 || word_is(source,ref look,b"as"))){return .ok(false);}
+        }
+        if(look.kind==40){parens+=1;}else if(look.kind==41){if(parens==0){return .ok(false);}parens-=1;}
+        else if(look.kind==123){braces+=1;}else if(look.kind==125){if(braces==0){return .ok(false);}braces-=1;}
+        else if(look.kind==91){brackets+=1;}else if(look.kind==93){if(brackets==0){return .ok(false);}brackets-=1;}
+        started=true;let usize next=lexer::next(source,ref mut look)?;
+    }return .ok(false);
+}
+// CASE24 tests the already evaluated Result. Both paths initialize one bool
+// slot; no payload is re-evaluated, moved or given a new cleanup obligation.
+fn Result<usize,errors::Error> result_is_ok(ref mut ir::Program p,usize value,usize at){
+    if(value>=128 || p.types[value]<5 || p.types[value]>8){return .err(errors::make(3,at));}
+    let usize slot=ir::slot(p,2,at)?;
+    let ir::Case branch=ir::branch_case(p,value,1,at)?;
+    let usize yes=ir::boolean(p,true,at)?;
+    let usize positive=ir::raw(p,18,slot,yes,0,at)?;
+    let usize skip=ir::raw(p,19,0,0,0,at)?;
+    let usize failure=p.count;let usize patched=ir::patch(p,branch.instruction,failure,at)?;
+    let usize no=ir::boolean(p,false,at)?;
+    let usize negative=ir::raw(p,18,slot,no,0,at)?;
+    let usize join=p.count;let usize continued=ir::patch(p,skip,join,at)?;
+    return ir::emit(p,17,slot,0,at);
+}
+// Postfix propagation and Result inspection bind before unary/binary operators.
+// The operand parser recurses through primary for unary operators.
 fn Result<usize, errors::Error> primary(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref locals::Table table, ref functions::Table signatures, usize depth, u8 expected, u8 result_type, usize structure, ref mut loops::State loop_state) {
-    var usize value=operand(source,s,p,table,signatures,depth,expected,result_type,structure,loop_state)?;
-    while(s.kind==63) {
+    let u8 context=if(expected!=0 && !types::tagged(expected) && result_property(source,s)?){0}else{expected};
+    var usize value=operand(source,s,p,table,signatures,depth,context,result_type,structure,loop_state)?;
+    while(s.kind==63 || s.kind==46) {
         let usize at=s.begin;
+        if(s.kind==46){
+            let usize dot=lexer::next(source,s)?;
+            if(!word_is(source,s,b"is_ok")){return .err(errors::make(3,at));}
+            let usize member=lexer::next(source,s)?;
+            value=result_is_ok(p,value,at)?;continue;
+        }
         let usize next=lexer::next(source,s)?;
         value=propagation::lower(p,table,value,result_type,at)?;
     }
@@ -1676,6 +1720,7 @@ fn Result<usize,errors::Error> grouped_place_write(ref u8[] source,ref mut lexer
     let usize ended=places::end(p,ref mut names,place,operation_at)?;return .ok(index);
 }
 fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State s, ref mut ir::Program p, ref mut locals::Table table, ref functions::Table signatures, u8 terminator, u8 result_type, usize expr_depth, usize structure, ref mut loops::State loop_state) {
+    if(word_is(source,s,b"_")){return discard_statement(source,s,p,table,signatures,terminator,result_type,expr_depth,structure,loop_state);}
     if(s.kind==40){return grouped_assignment(source,s,p,table,signatures,terminator,result_type,expr_depth,structure,loop_state);}
     if (word_is(source, s, b"let") || word_is(source, s, b"var")) {
         return declaration(source,s,p,table,signatures,terminator,result_type,expr_depth,structure,loop_state);
@@ -1698,6 +1743,18 @@ fn Result<usize, errors::Error> statement(ref u8[] source, ref mut lexer::State 
         return slice_write_statement(source,s,p,table,signatures,index,at,terminator,result_type,expr_depth,structure,loop_state);
     }
     return scalar_assignment(source,s,p,table,signatures,index,at,terminator,result_type,expr_depth,structure,loop_state);
+}
+// Explicit discard acknowledges a value without a binding or extra instruction.
+// Ordinary expression/CALL lowering retains argument captures and exit cleanup.
+fn Result<usize,errors::Error> discard_statement(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    u8 terminator,u8 result_type,usize depth,usize structure,ref mut loops::State loop_state){
+    let usize at=s.begin;
+    if(terminator!=59 || result_type==0){return .err(errors::make(3,at));}
+    let usize name=lexer::next(source,s)?;let usize equal=lexer::punctuation(source,s,61)?;
+    let usize value=expression(source,s,p,table,signatures,1,depth,0,result_type,structure,loop_state)?;
+    if(value>=128 || !types::valid(p.types[value])){return .err(errors::make(3,at));}
+    let usize end=lexer::punctuation(source,s,59)?;return .ok(64);
 }
 fn Result<usize,errors::Error> scalar_assignment(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
@@ -1785,7 +1842,7 @@ fn Result<bool,errors::Error> conditional_arm(ref u8[] source,ref mut lexer::Sta
     ref mut joins::Join join,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
     if(depth>32 || structure>32){return .err(errors::make(4,s.begin));}
     let usize brace=lexer::punctuation(source,s,123)?;let usize outer=table.count;
-    while(true){let bool regular=arm_syntax::regular(source,s)?;
+    while(true){let bool regular=word_is(source,s,b"_") || arm_syntax::regular(source,s)?;
         let bool conditional=word_is(source,s,b"if") && arm_syntax::conditional_value(source,s)?;
         let bool structured=s.kind==123 || (word_is(source,s,b"if") && !conditional) || word_is(source,s,b"while") ||
             word_is(source,s,b"for") || word_is(source,s,b"return") || word_is(source,s,b"break") || word_is(source,s,b"continue");
