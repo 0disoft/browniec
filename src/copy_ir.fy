@@ -20,6 +20,18 @@ pub struct Plan {
 fn errors::Error invalid(usize pc){return errors::make(5,pc);}
 pub fn bool operation(u8 op){return op==34 || op==38 || op==42 || op==46 || op==47;}
 
+// Shared operand proof for selected aggregate STOREs. These derive a strategy;
+// the caller must still prove current live owners/loans and SELECT identity.
+pub fn Result<Plan,errors::Error> array_assignment(ref ir::Program p,usize dst,usize source,usize f,usize pc){
+    if(p.function_count>16 || f>=p.function_count){return .err(invalid(pc));}
+    return array(p,dst,source,f,f,false,true,pc);
+}
+pub fn Result<Plan,errors::Error> record_assignment(ref ir::Program p,usize dst,usize source,
+    usize nominal,usize destination_leaf,usize source_leaf,usize f,usize pc){
+    if(p.function_count>16 || f>=p.function_count){return .err(invalid(pc));}
+    return record(p,dst,source,f,f,false,true,true,nominal,destination_leaf,source_leaf,pc);
+}
+
 fn Result<Plan,errors::Error> array(ref ir::Program p,usize dst,usize source,
     usize destination_function,usize source_function,bool fresh,bool same_frame,usize pc){
     if(p.arrays.count>16 || dst>=p.arrays.count || source>=p.arrays.count ||

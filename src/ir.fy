@@ -44,6 +44,8 @@ import std::num as num;
 // 83..86 private scalar places. Byte4: array 0, exclusive slice 1, record 2.
 // Record kind 2 is analysis-only until its VM adapter is connected. It repeats
 // its scalar ordinal in byte5 and has SELECT b=0; bytes6..7 are zero.
+// Analysis-only aggregate kinds3/4 and REPLACE87 are encoded by
+// aggregate_place_ir. Existing executable admission continues to reject them.
 // SELECT dst=place,a=array,b=index; READ dst=value,a=place,b=array;
 // STORE dst=place,a=array,b=value; END dst=place,a=b=0. Places are not values.
 pub struct Program {

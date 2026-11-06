@@ -6,15 +6,17 @@ import slice_verifier as slices;
 import slice_place_ir as slice_places;
 import record_place_ir as record_places;
 import struct_meta as records;
+import aggregate_place_ir as aggregates;
 
 // Place IDs are a separate sixteen-entry frame-local namespace, never values.
 // SELECT 83: dst=place,a=array,b=usize index. READ 84: dst=value,a=place,b=array.
 // STORE 85: dst=place,a=array,b=value. END 86: dst=place,a=b=0.
 // Byte4 is 0 for arrays, 1 for exclusive slices, 2 for record scalar leaves.
 // Kind 2 repeats its scalar ordinal in byte5 and SELECT b=0. END has zero tails.
+// Analysis-only kinds3/4 and REPLACE87 use aggregate_place_ir's operand schema.
 // Repeating the root/site operand permits ordinary scalar/owner typing; flow below
 // independently ties it to the actual SELECT that dominates this use.
-pub fn bool operation(u8 op) { return op >= 83 && op <= 86; }
+pub fn bool operation(u8 op) { return op >= 83 && op <= 87; }
 pub fn bool present(ref ir::Program p) {
     var usize pc = 0;
     while (pc < p.count && pc < 256) { if (operation(p.code[pc*8])) { return true; } pc += 1; }
@@ -33,6 +35,7 @@ fn Result<usize, errors::Error> metadata(ref ir::Program p, ref records::Prepare
     let usize dst = p.code[at+1] as usize; let usize a = p.code[at+2] as usize;
     let usize b = p.code[at+3] as usize;
     let u8 kind=p.code[at+4];
+    if(kind>=3){return aggregates::metadata(p,shapes,pc,f);}
     if(kind!=2 && p.code[at+5]!=0){return .err(invalid(pc));}
     var usize i = 6; while (i < 8) { if (p.code[at+i] != 0) { return .err(invalid(pc)); } i += 1; }
     if (op == 86) {
@@ -61,6 +64,7 @@ fn Result<usize, errors::Error> metadata(ref ir::Program p, ref records::Prepare
 // independent identity/lifetime graph. A place READ defines a fresh scalar.
 pub fn Result<usize, errors::Error> step(ref ir::Program p, ref records::Prepared shapes, usize pc, usize f,
     ref mut registers::Set defined, ref mut registers::Set written, usize live) {
+    if(p.code[pc*8+4]>=3){return aggregates::step(p,shapes,pc,f,defined,live);}
     let usize root = metadata(p,shapes,pc,f)?; let usize at = pc*8; let u8 op = p.code[at];
     if (op == 86) { return .ok(live); }
     let usize one = 1;
@@ -122,11 +126,14 @@ fn Result<usize, errors::Error> function(ref ir::Program p, ref records::Prepare
             } else {
                 if (phase == 0 || state.origins[site] == 0) { return .err(invalid(pc)); }
                 let usize selected = (state.origins[site] as usize)-1;
-                if (selected >= pc || p.code[selected*8] != 83 || p.code[selected*8+1] as usize != site ||
-                    (op != 86 && (p.code[selected*8+2] as usize != if (op == 84) { b } else { a } ||
-                    p.code[selected*8+4]!=p.code[at+4] || p.code[selected*8+5]!=p.code[at+5]))) { return .err(invalid(pc)); }
-                if (op == 84 && phase != 1) { return .err(invalid(pc)); }
-                if (op == 85 && phase == 3) { return .err(invalid(pc)); }
+                if(selected>=pc || p.code[selected*8]!=83 || p.code[selected*8+1] as usize!=site){return .err(invalid(pc));}
+                if(op!=86){
+                    if(p.code[selected*8+4]>=3){if(!aggregates::same_selection(p,selected,pc)){return .err(invalid(pc));}}
+                    else if(p.code[selected*8+2] as usize!=if(op==84){b}else{a} ||
+                        p.code[selected*8+4]!=p.code[at+4] || p.code[selected*8+5]!=p.code[at+5]){return .err(invalid(pc));}
+                }
+                if(op==84 && phase!=1){return .err(invalid(pc));}
+                if((op==85 || op==87) && phase==3){return .err(invalid(pc));}
                 state.phases &= ~mask;
                 if (op == 86) { state.origins[site] = 0; }
                 else { let usize next = if (op == 84) { 2 } else { 3 }; state.phases |= next << (2*site); }
@@ -134,7 +141,8 @@ fn Result<usize, errors::Error> function(ref ir::Program p, ref records::Prepare
         } else if (op == 37 || op==45 || op==56 || op==62) {
             i = 0; while (i < 16) {
                 if (state.origins[i] != 0){let usize selected=((state.origins[i] as usize)-1)*8;
-                    if(p.code[selected+2] as usize==dst && p.code[selected+4]==if(op==37){0}else if(op==45){2}else{1}){return .err(invalid(pc));}
+                    let u8 kind=p.code[selected+4];
+                    if(p.code[selected+2] as usize==dst && if(op==37){kind==0 || kind==3}else if(op==45){kind==2 || kind==4}else{kind==1}){return .err(invalid(pc));}
                 } i += 1;
             }
         }

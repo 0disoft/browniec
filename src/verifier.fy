@@ -111,7 +111,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
             pc += 1; continue;
         }
         if ((op == 8 || op == 39 || op == 50 || op==82) && static_live != 0) { return .err(errors::make(5, pc)); }
-        if (op < 1 || (op > 62 && op!=80 && op!=81 && op!=82 && !places::operation(op)) || (op != 52 && ((op!=24 && op!=47 && op!=49 && op!=53 && op!=59 && op!=61 && !(op>=83 && op<=85) && p.code[at + 4] != 0) ||
+        if (op < 1 || (op > 62 && op!=80 && op!=81 && op!=82 && !places::operation(op)) || (!places::operation(op) && op != 52 && ((op!=24 && op!=47 && op!=49 && op!=53 && op!=59 && op!=61 && !(op>=83 && op<=85) && p.code[at + 4] != 0) ||
             (op!=47 && !(op>=83 && op<=85 && p.code[at+4]==2) && p.code[at + 5] != 0) || p.code[at + 6] != 0 || p.code[at + 7] != 0))) { return .err(errors::make(5, pc)); }
         // Strict analysis retains its gate; executable proof may admit this CALL.
         if(op==9 && (live>>48)!=0) {
@@ -297,6 +297,13 @@ fn Result<reborrows::Sites,errors::Error> plain(ref ir::Program p,bool calls) {
 pub fn Result<usize,errors::Error> inspect_slice_places(ref ir::Program p){
     let statics::Sites sites=statics::empty();
     let reborrows::Sites loans=validate(p,true,1,ref sites)?;return .ok(p.count);
+}
+
+// Analysis-only complete proof for aggregate SELECT/STORE/REPLACE. No image,
+// retained Program, metered adapter or executable authority is returned.
+pub fn Result<usize,errors::Error> inspect_aggregate_places(ref ir::Program p){
+    let statics::Sites sites=statics::empty();
+    let reborrows::Sites loans=validate(p,true,4,ref sites)?;return .ok(p.count);
 }
 
 // Record-place analysis uses the same complete proof as executable admission.

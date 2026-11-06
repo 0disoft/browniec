@@ -3,7 +3,13 @@ import ir as ir;
 import errors as errors;
 import register_set as registers;
 
+pub fn bool operation(ref ir::Program p,usize pc){
+    let usize at=pc*8;let u8 op=p.code[at];
+    return op==80 || op==81 || (op==87 && p.code[at+4]==3 && p.code[at+5]==1);
+}
+pub fn usize destination(ref ir::Program p,usize pc){return p.code[pc*8+if(p.code[pc*8]==87){2}else{1}] as usize;}
 pub fn usize start(ref ir::Program p,usize pc){
+    if(p.code[pc*8]==87){return p.code[pc*8+3] as usize+256*(p.code[pc*8+6] as usize);}
     return p.code[pc*8+2] as usize+256*(p.code[pc*8+3] as usize);
 }
 // Reconstruct dense nonoverlapping spans from actual instructions. Unused pool
@@ -11,7 +17,7 @@ pub fn usize start(ref ir::Program p,usize pc){
 pub fn Result<usize,errors::Error> metadata(ref ir::Program p){
     if(p.count>256 || p.arrays.count>16 || p.list_used>4096){return .err(errors::make(5,0));}
     var usize cursor=0;var usize pc=0;
-    while(pc<p.count){if(p.code[pc*8]==80 || p.code[pc*8]==81){let usize id=p.code[pc*8+1] as usize;
+    while(pc<p.count){if(operation(p,pc)){let usize id=destination(p,pc);
         if(id>=p.arrays.count || start(p,pc)!=cursor){return .err(errors::make(5,pc));}
         let usize length=p.arrays.lengths[id];
         if(length==0 || length>4096 || cursor>p.list_used || length>p.list_used-cursor){return .err(errors::make(5,pc));}
@@ -24,7 +30,7 @@ pub fn Result<usize,errors::Error> metadata(ref ir::Program p){
 // Called in the canonical function CFG with independently reconstructed scalar
 // definitions. A slot, aggregate/formal marker or cross-function value is not a cell.
 pub fn Result<usize,errors::Error> operands(ref ir::Program p,usize pc,usize f,ref registers::Set defined){
-    let usize id=p.code[pc*8+1] as usize;
+    let usize id=destination(p,pc);
     if(f>=p.function_count || id>=p.arrays.count || id>=16){return .err(errors::make(5,pc));}
     let usize at=start(p,pc);let usize length=p.arrays.lengths[id];
     if(p.list_used>4096 || at>p.list_used || length>p.list_used-at){return .err(errors::make(5,pc));}
