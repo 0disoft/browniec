@@ -2,6 +2,12 @@
 
 ## Current implementation (2026-11-07)
 
+A [native resource/tag prerequisite](docs/engineering/value-ownership.md) now
+independently derives whole-type properties, including inactive Buffer alternatives,
+and hands off real Buffer allocations without payload copying or owner recharging.
+Guest Buffer/tagged source, independent move/Dead proof and complete VM integration
+remain open. Existing public syntax, capabilities, prices and limits are unchanged.
+
 [Ordered aggregate assignment](docs/engineering/aggregate-place-assignment.md)
 now connects whole-array copy/self/fill/list and whole/child nominal record
 copy/constructor stores to early selected destinations in both VM paths.

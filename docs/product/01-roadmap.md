@@ -1,5 +1,7 @@
 # Roadmap
 
+- Resource/tag ownership prerequisite, 2026-11-07: [whole-type properties and native Buffer handoff](../engineering/value-ownership.md) independently derive scalar/array/plain-record/Buffer/Option/Result layout, depth and copyability, including inactive Buffer alternatives. The native handoff consumes a real allocation, preserves its owner token and charge, prepays Fuel and returns the original root on rejection. Guest source-binding/Dead CFG proof, resource TAG_BUILD/TAG_UNPACK, wrapper source/VM integration and full L04/L05/D01-D04 remain open; no public capability or existing price/limit changes. See the [focused Windows evidence](../evidence/value-ownership-windows-20261107.json). Earlier checkpoints retain their scopes.
+
 - Reconciled: 2026-11-03; private owned-array/CALL integration at `5cccbd3`; record integration at `e01a9b1` is described in [the successor contract](../engineering/m2-slice-result-record-vm.md), explicit native owned entry at `8bf37de`, updated 2026-11-04.
 - This is the current delivery plan. The old increment log is preserved in
   [history](history/roadmap-20261103.md); its dated gates are not current TODOs.

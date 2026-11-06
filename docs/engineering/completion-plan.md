@@ -140,6 +140,12 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    Reconcile operand/source/type/compile limits deliberately rather than
    silently treating the old experimental bounds as full-profile conformance.
    L07 byte compatibility is implemented at `5bb055b` and has focused checks.
+   The [resource/tag prerequisite](value-ownership.md) now independently derives
+   whole-type layout/copyability and hands off actual native Buffer roots while
+   preserving one token/charge and returning ownership on preflight rejection.
+   Next connect guest source-binding/Dead CFG proof, resource/tag IR and metered
+   execution, tagged payload cleanup and source integration. Native prerequisites
+   do not close L04/L05/D01-D04.
 3. **Engine and Instance: R01-R05.** The [call capture-stack fix](native-call-capture-stack.md)
    removes a reproduced retained compiler overflow without changing depth/owner
    limits; it does not close general R02 stack/accounting obligations.

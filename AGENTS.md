@@ -1,3 +1,15 @@
+- Resource/tag prerequisites now independently derive whole-type properties,
+  including inactive Buffer alternatives, and hand off actual native Buffer roots
+  with one owner token/charge and rejection ownership preservation. Development
+  and release each passed 8 final native groups on ad3475c / 1186934. See the
+  [contract](docs/engineering/value-ownership.md) and
+  [Windows evidence](docs/evidence/value-ownership-windows-20261107.json).
+  Guest Buffer/tagged source/IR/VM, independent source-binding/Dead move proof,
+  payload cleanup and full L04/L05/D01-D04 remain open. Public behavior/prices/
+  limits remain. Full CLI/language/native Fuel, LF mirrors, Linux, OOM/general
+  stack/performance and clean-machine delivery were not run. Local only; no push.
+  Earlier checkpoints retain their scopes.
+
 - Ordered aggregate assignment source lowering is implemented at de0b4a0, with
   shared compiler selection/cleanup at ecf9cbb. Whole-array copy/self/fill/list
   and whole/child nominal record copy/constructor stores select before RHS, then
