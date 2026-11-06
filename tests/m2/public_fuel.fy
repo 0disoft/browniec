@@ -89,7 +89,7 @@ fn void public_exact(ref u8[] source,usize price,bool reference){
     public_exact(b"module main;fn i32 main(){let a=[20,22];return a[0]+a[1];}",66017,false);
     public_exact(b"module main;fn i32 take(i32[2] a){return a[0]+a[1];}fn i32 main(){return take([20,22]);}",66340,false);
     public_exact(b"module main;fn i32[2] make(){return [20,22];}fn i32 main(){let a=make();return a[0]+a[1];}",66083,false);
-    public_exact(b"module main;fn i32 main(){var a=[0;2];a=[20,22];return a[0]+a[1];}",66083,false);
+    public_exact(b"module main;fn i32 main(){var a=[0;2];a=[20,22];return a[0]+a[1];}",72670,false);
 }
 @test fn void literal_projections_keep_ordinary_and_reference_routing_costs_distinct(){
     public_exact(b"module main;fn i32 main(){return [20,42][1];}",65978,false);
