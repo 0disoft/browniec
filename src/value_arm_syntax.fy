@@ -40,6 +40,21 @@ pub fn Result<bool,errors::Error> call_statement(ref u8[] source,ref lexer::Stat
     var lexer::State look=lexer::snapshot(s);let usize name=lexer::next(source,ref mut look)?;
     let usize arguments=balanced(source,ref mut look,40,41)?;return .ok(look.kind==59);
 }
+// Only complete final constructor atoms participate in a join's missing-domain
+// constraints. Operators/propagation and inner payloads keep ordinary parsing.
+pub fn Result<bool,errors::Error> constructor_atom(ref u8[] source,ref lexer::State s){
+    var lexer::State look=lexer::snapshot(s);var usize groups=0;
+    while(look.kind==40){if(groups>=32){return .err(errors::make(4,look.begin));}
+        let usize next=lexer::next(source,ref mut look)?;groups+=1;}
+    if(look.kind!=46){return .ok(false);}let usize dot=lexer::next(source,ref mut look)?;
+    if(word(source,ref look,b"none")){let usize name=lexer::next(source,ref mut look)?;}
+    else if(word(source,ref look,b"some") || word(source,ref look,b"ok") || word(source,ref look,b"err")){
+        let usize name=lexer::next(source,ref mut look)?;let usize payload=balanced(source,ref mut look,40,41)?;
+    }else{return .ok(false);}
+    var usize i=0;while(i<groups){if(look.kind!=41){return .ok(false);}
+        let usize close=lexer::next(source,ref mut look)?;i+=1;}
+    return .ok(look.kind==125);
+}
 fn Result<usize,errors::Error> statement_end(ref u8[] source,ref mut lexer::State s){
     var usize parens=0;var usize braces=0;var usize brackets=0;
     while(true){if(s.kind==0 || (s.kind==125 && braces==0)){return .err(errors::make(2,s.begin));}

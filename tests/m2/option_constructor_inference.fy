@@ -50,5 +50,5 @@ fn void rejected(ref u8[] source){assert(!compiler::compile_program(source,65536
     rejected(b"module main;fn i32 main(){let o=.some(1);o=.none;return 0;}");
     rejected(b"module main;fn i32 main(){var o=.some(1);o=.some(true);return 0;}");
     rejected(b"module main;fn i32 main(){for(var o=.some(1);false;){}return 0;}");
-    rejected(b"module main;fn i32 main(){let o=switch(.some(true)){case .none:{.none}case .some(v):{.some(42)}};return 0;}");
+    rejected(b"module main;fn i32 main(){let o=switch(.some(true)){case .none:{.none}case .some(v):{.none}};return 0;}");
 }

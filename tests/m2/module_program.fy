@@ -51,6 +51,12 @@ fn void rejected(ref u8[] a,ref u8[] b,usize owner){switch(programs::compile(ent
     value(b"module lib;pub struct P{i32 x;}pub fn i32[1] array(Option<i32> o){return switch(o){case .some(v):{[v]}case .none:{[0]}};}pub fn P record(Option<i32> o){return switch(o){case .some(v):{P{.x=v}}case .none:{P{.x=0}}};}",
         b"module app;import lib as m;pub fn i32 chosen(){let ref u8[] marker=b\"*\";let Option<i32> o=.some(21);let a=if(true){switch(o){case .none:{[0]}case .some(_):{m::array(o)}}}else{[0]};let p=switch(o){case .some(_):{m::record(o)}case .none:{m::P{.x=0}}};return a[0]+p.x;}",42);
 }
+@test fn void constructor_join_constraints_cross_both_qualified_compiler_routes(){
+    value(b"module lib;pub fn Option<bool> known(){return .some(true);}pub fn Result<i32,bool> result(){let r=if(true){.ok(42)}else{.err(false)};return r;}",
+        b"module app;import lib as m;pub fn i32 chosen(){let o=if(false){.none}else{m::known()};switch(o){case .none:{return 0;}case .some(v):{if(!v){return 0;}}}let r=m::result();switch(r){case .ok(v):{return v;}case .err(_):{return 0;}}}",42);
+    value(b"module lib;pub fn Option<bool> known(){return .some(true);}pub fn Result<i32,bool> result(){let r=if(true){.ok(42)}else{.err(false)};return r;}",
+        b"module app;import lib as m;pub fn i32 chosen(){let ref u8[] marker=b\"*\";let o=if(false){.none}else{m::known()};switch(o){case .none:{return 0;}case .some(v):{if(!v){return 0;}}}let r=m::result();switch(r){case .ok(v):{return v;}case .err(_):{return 0;}}}",42);
+}
 @test fn void qualified_owned_array_calls_and_exclusive_borrows_keep_ownership(){
     value(b"module lib;pub fn i32[2] make(){return [20;2];}pub fn i32 sum(i32[2] a){return a[0]+a[1];}pub fn i32 bump(ref mut i32[] a){a[0]=a[0]+2;return 0;}",
         b"module app;import lib as m;pub fn i32 chosen(){var i32[2] a=m::make();let i32 n=m::bump(ref mut a);return m::sum(a);}",42);

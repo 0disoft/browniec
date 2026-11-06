@@ -33,7 +33,10 @@ def main():
     selection.add_argument('--aggregate-if-expressions', action='store_true', help='add exact-shape array and record conditional values')
     selection.add_argument('--void-functions', action='store_true', help='add void statements, returns and cleanup regressions')
     selection.add_argument('--aggregate-switch-expressions', action='store_true', help='add exact-shape array and record switch values')
+    selection.add_argument('--constructor-join-inference', action='store_true', help='add branch-order-independent shallow constructor joins')
     args = parser.parse_args()
+    if args.constructor_join_inference:
+        args.aggregate_switch_expressions = True
     if args.aggregate_switch_expressions:
         args.void_functions = True
     if args.void_functions:
@@ -51,7 +54,7 @@ def main():
         args.array_list_assignment = True
     if args.array_list_assignment:
         args.array_lists = True
-    suite = 'aggregate-switch-expressions' if args.aggregate_switch_expressions else 'void-functions' if args.void_functions else 'aggregate-if-expressions' if args.aggregate_if_expressions else 'if-expressions' if args.if_expressions else 'record-expression-projections' if args.record_expression_projections else 'array-expression-projections' if args.array_expression_projections else 'array-literal-projections' if args.array_literal_projections else 'array-list-assignment' if args.array_list_assignment else 'array-list' if args.array_lists else 'option' if args.options else 'reference' if args.references else 'aggregate' if args.aggregate else 'local'
+    suite = 'constructor-join' if args.constructor_join_inference else 'aggregate-switch-expressions' if args.aggregate_switch_expressions else 'void-functions' if args.void_functions else 'aggregate-if-expressions' if args.aggregate_if_expressions else 'if-expressions' if args.if_expressions else 'record-expression-projections' if args.record_expression_projections else 'array-expression-projections' if args.array_expression_projections else 'array-literal-projections' if args.array_literal_projections else 'array-list-assignment' if args.array_list_assignment else 'array-list' if args.array_lists else 'option' if args.options else 'reference' if args.references else 'aggregate' if args.aggregate else 'local'
     out = ROOT / ('build/' + suite + '-inference-cli') / args.profile
     out.mkdir(parents=True, exist_ok=True)
     receipt = out / 'receipt.json'
@@ -75,6 +78,9 @@ def main():
         paths.sort()
     if args.aggregate_switch_expressions:
         paths.append('tests/m2/aggregate_switch_expressions.fy')
+        paths.sort()
+    if args.constructor_join_inference:
+        paths.append('tests/m2/constructor_join_source.fy')
         paths.sort()
     inputs = [dict(path=p, sha256=sha(ROOT / p)) for p in paths]
     captured = datetime.now(timezone.utc).isoformat()
@@ -414,6 +420,8 @@ def main():
         assert version['void_functions'] is True
     if args.aggregate_switch_expressions:
         assert version['array_switch_expressions'] is True and version['record_switch_expressions'] is True
+    if args.constructor_join_inference:
+        assert version['constructor_join_inference'] is True
     results = []
     if args.aggregate_if_expressions:
         fixtures = (ROOT / 'tests/m2/aggregate_if_expressions.fy').read_text(encoding='utf-8')
@@ -523,6 +531,45 @@ def main():
                 cases.append((f'aggregate-switch-depth-{record}-{depth}', source, 'run' if good else 'check',
                               42 if good else None, None if good else 'compile_limit', 16000000 if good else None,
                               (record_read if record else array_read) if good else scalar))
+    if args.constructor_join_inference:
+        fixtures = (ROOT / 'tests/m2/constructor_join_source.fy').read_text(encoding='utf-8')
+        sources = re.findall(r'\bvalue\((b"(?:[^"\\]|\\.)*")\);', fixtures)
+        profiles = [scalar]*10 + ['brownie.m2-array-write/1', array_read, array_read, reference]
+        assert len(sources) == len(profiles)
+        for index, (raw, profile) in enumerate(zip(sources, profiles)):
+            cases.append((f'constructor-join-{index}', ast.literal_eval(raw), 'run', 42, None, 16000000, profile))
+        failures = re.findall(r'\brejected\((b"(?:[^"\\]|\\.)*")\);', fixtures)
+        assert len(failures) == 11
+        for index, raw in enumerate(failures):
+            cases.append((f'constructor-join-reject-{index}', ast.literal_eval(raw), 'check', None, 'type', None, scalar))
+        for retained in (False, True):
+            source = b'module main;fn i32 main(){let o=if(true){.none}else{.some(false)};switch(o){case .none:{return 42;}case .some(_):{return 0;}}}'
+            exact = 344091 if retained else 9
+            if retained:
+                source = source.replace(b'fn i32 main(){', b'fn i32 main(){let ref u8[] marker=b"*";')
+            for budget in (exact-1, exact, exact+1):
+                cases.append((f'constructor-join-fuel-{retained}-{budget}', source, 'run',
+                              None if budget < exact else 42, 'fuel' if budget < exact else None, budget,
+                              reference if retained else scalar))
+        for index, (wrapper, left, right, ok, err) in enumerate([
+                ('Option<i32>', '.none', '.some(42)', 'return v;', 'return 42;'),
+                ('Option<bool>', '.none', '.some(true)', 'if(v){return 42;}return 0;', 'return 42;'),
+                ('Result<i32,i32>', '.ok(42)', '.err(42)', 'return v;', 'return v;'),
+                ('Result<i32,bool>', '.ok(42)', '.err(true)', 'return v;', 'if(v){return 42;}return 0;'),
+                ('Result<bool,i32>', '.ok(true)', '.err(42)', 'if(v){return 42;}return 0;', 'return v;'),
+                ('Result<bool,bool>', '.ok(true)', '.err(true)', 'if(v){return 42;}return 0;', 'if(v){return 42;}return 0;')]):
+            positive = 'some' if wrapper.startswith('Option') else 'ok'
+            negative = '.none' if wrapper.startswith('Option') else '.err(v)'
+            consume = 'fn i32 take('+wrapper+' r){switch(r){case .'+positive+'(v):{'+ok+'}case '+negative+':{'+err+'}}}'
+            for reverse in (False, True):
+                first, last = (right, left) if reverse else (left, right)
+                for selected in (False, True):
+                    for switch in (False, True):
+                        subject = '.none' if selected else '.some(1)'
+                        setup = 'let Option<i32> pick='+subject+';' if switch else ''
+                        value = ('switch(pick){case .none:{'+first+'}case .some(_):{'+last+'}}') if switch else ('if('+str(selected).lower()+'){'+first+'}else{'+last+'}')
+                        source = ('module main;'+consume+'fn i32 main(){'+setup+'let r='+value+';return take(r);}').encode()
+                        cases.append((f'constructor-join-matrix-{index}-{reverse}-{selected}-{switch}', source, 'run', 42, None, 16000000, scalar))
     for identity, source, mode, expected, error, fuel, profile in cases:
         fixture = out / (identity + '.brc')
         fixture.write_bytes(source)
@@ -545,7 +592,7 @@ def main():
     assert all(sha(ROOT / i['path']) == i['sha256'] for i in inputs)
     assert sha(compiler) == compiler_hash and sha(exe) == binary_hash
     data = dict(schema='browniec.local-inference-cli/v1', status='passed', profile=args.profile,
-                selection='aggregate-switch-expressions' if args.aggregate_switch_expressions else 'void-functions' if args.void_functions else 'aggregate-if-expressions' if args.aggregate_if_expressions else 'if-expressions' if args.if_expressions else 'record-expression-projections' if args.record_expression_projections else 'array-expression-projections' if args.array_expression_projections else 'array-literal-projections' if args.array_literal_projections else 'array-list-assignment' if args.array_list_assignment else 'array-list' if args.array_lists else 'option' if args.options else 'reference' if args.references else 'aggregate' if args.aggregate else 'scalar',
+                selection='constructor-join-inference' if args.constructor_join_inference else 'aggregate-switch-expressions' if args.aggregate_switch_expressions else 'void-functions' if args.void_functions else 'aggregate-if-expressions' if args.aggregate_if_expressions else 'if-expressions' if args.if_expressions else 'record-expression-projections' if args.record_expression_projections else 'array-expression-projections' if args.array_expression_projections else 'array-literal-projections' if args.array_literal_projections else 'array-list-assignment' if args.array_list_assignment else 'array-list' if args.array_lists else 'option' if args.options else 'reference' if args.references else 'aggregate' if args.aggregate else 'scalar',
                 startingHead=head, inputSnapshotCapturedAt=captured, inputs=inputs, compilerSha256=compiler_hash,
                 compilerVersion=subprocess.check_output([str(compiler), '--version'], text=True).strip(),
                 buildCommand=[compiler.relative_to(ROOT).as_posix(), *command[1:]],

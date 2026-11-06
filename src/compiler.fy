@@ -1706,6 +1706,9 @@ fn Result<bool,errors::Error> conditional_tail(ref u8[] source,ref mut lexer::St
         let bool terminal=value_join(source,s,p,table,signatures,join,depth+atom.groups,result_type,structure,loop_state)?;
         let usize close=array_expressions::close(source,s,atom.groups)?;return .ok(terminal);
     }
+    if(join.kind<=1 && join.tag==0 && arm_syntax::constructor_atom(source,s)?){
+        return constructor_tail(source,s,p,table,signatures,join,depth,result_type,structure,loop_state);
+    }
     let record_expressions::Plan record=record_expressions::inspect(source,s,p,table,signatures)?;
     if(record.kind!=0 && record.tag==0 && record.suffix==125){
         let usize destination=joins::record_target(join,record.record);
@@ -1722,6 +1725,25 @@ fn Result<bool,errors::Error> conditional_tail(ref u8[] source,ref mut lexer::St
     let u8 expected=if(join.kind==0 || join.kind==1){join.tag}else{0};
     let usize value=expression(source,s,p,table,signatures,1,depth,expected,result_type,structure,loop_state)?;
     let usize accepted=joins::scalar(p,join,value,at)?;return .ok(false);
+}
+fn Result<bool,errors::Error> constructor_tail(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    ref mut joins::Join join,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
+    let usize at=s.begin;var usize groups=0;
+    while(s.kind==40){if(depth>32 || groups>=32-depth){return .err(errors::make(4,s.begin));}
+        let usize next=lexer::next(source,s)?;groups+=1;}
+    let usize dot=lexer::punctuation(source,s,46)?;
+    let bool option=word_is(source,s,b"some") || word_is(source,s,b"none");
+    let bool positive=word_is(source,s,b"some") || word_is(source,s,b"ok");
+    if(!option && !word_is(source,s,b"ok") && !word_is(source,s,b"err")){return .err(errors::make(3,at));}
+    let usize name=lexer::next(source,s)?;var usize payload=0;
+    if(!option || positive){let usize open=lexer::punctuation(source,s,40)?;
+        payload=expression(source,s,p,table,signatures,1,depth+groups+1,0,result_type,structure,loop_state)?;
+        let usize close=lexer::punctuation(source,s,41)?;}
+    let usize close=array_expressions::close(source,s,groups)?;
+    if(s.kind!=125){return .err(errors::make(2,s.begin));}
+    let usize accepted=joins::constructor(p,join,option,if(positive){1}else{0},payload,at)?;
+    return .ok(false);
 }
 fn Result<usize,errors::Error> conditional_operand(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
