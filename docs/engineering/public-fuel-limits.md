@@ -186,6 +186,71 @@ Git bytes. Verification used an isolated snapshot; the pre-existing uncommitted
 grouped-array expression changes were preserved and excluded. See the
 [reconciliation evidence](../evidence/public-fuel-reconciliation-windows-20261106.json).
 
+## Shared aggregate prices and current public routes (2026-11-06)
+
+`fuel::array_instruction`, `record_instruction`, `list_prepare` and
+`list_instruction` now own the existing aggregate prices. Array and list adapters
+still authenticate scalar layouts before pricing; unsupported array/record
+opcodes have no schedule entry and retain the existing verifier error and source
+offset. Both VM drivers use these adapters, preserving their distinct dispatch
+rules and prepaid cleanup. This extraction changes no numeric price or limit.
+
+The public runner shares 24 source/numeric oracles with `public_fuel.fy`, rather
+than maintaining a separate CLI copy. Every oracle executes through actual
+`compile_program`/`run_public` routing at one-short, exact and one-more Fuel;
+native verification also checks the public ceiling. Sixteen cases cover plain
+and compound grouped scalar/array/exclusive-slice/record targets in both routes.
+The original eight list and projection cases remain included. The independent
+numbers are test literals, never values obtained from production pricing helpers.
+
+| Complete assignment fixture | Plain ordinary | Compound ordinary | Plain retained marker | Compound retained marker |
+| --- | ---: | ---: | ---: | ---: |
+| Scalar local | 6 | 8 | 344088 | 344090 |
+| Owned i32 array element | 69308 | 69378 | 413396 | 413467 |
+| Exclusive i32 slice element | 152817 | 156984 | 496907 | 501075 |
+| Owned i32 record field | 240190 | 281220 | 584278 | 625309 |
+
+These are complete fixture totals, not isolated assignment prices. A marker
+selects the retained route and contributes its existing 18 units. Default 256
+and explicit CLI range 0..16000000 remain. Native host budgets remain separate;
+the scalar native path also completes at usize maximum 18446744073709551615.
+
+Independent adapter checks cover all six scalar domains at lengths 1 and 4096,
+all nine record opcodes, invalid layouts/opcodes and original error offsets.
+At their validated maxima, list setup costs 41217 and list creation/replacement
+cost 102456/102449. Maximum array/slice/record place setup remains
+46657/72267/72277. These bounded additions cannot overflow usize on the supported
+amd64 targets; no-list/place setup remains zero. This does not promise that an
+arbitrary loop completes under the CLI ceiling or implement other C05 capacities,
+Engine quotas, Instance stepping, deadlines, isolation or delivery obligations.
+
+The old returned-view whole-invocation oracle also now includes slice-place
+setup 5067, SELECT 4129, i32 STORE 4170 and END 22, plus entry 147456, handoff
+294912, one formal and one dispatch per emitted instruction. Its one-short case
+still preserves the completed payload write and drains metadata; initial shortage
+preserves the caller owner. Legacy WRITE still costs 4146 for i64, but the test
+now type-builds a direct adapter probe because current source emits selected
+stores. The probe writes 42 and is explicitly not a complete guest Program.
+
+Windows development covers **51 native identities**: an initial 49 passes plus
+two repaired native-test oracles rechecked in both profiles. Release verifies
+**24 affected identities**: all 22 price/list/public-route groups, partitioned
+8/7/7, plus the two repairs. Both profiles passed **105 tool-free CLI cases**.
+The full release selection reached the runner's 1200-second timeout and produced
+no complete report; its other 27 identities are not counted as verified here.
+Current 187 checkout/index input hashes and 171 LF production modules are
+recorded. Earlier CLI/development snapshots differ only in the repaired native
+test file; product code and CLI fixtures are unchanged, and same-turn reuse is
+explicit. See [aggregate-price evidence](../evidence/public-fuel-aggregate-prices-windows-20261106.json).
+Full language, LF mirrors, Linux, OOM, general stack/performance, isolation and
+delivery checks were not repeated for this bounded reconciliation.
+
+The existing runner selects the complete native matrix. For a bounded direct
+native check, use the recorded `fairyc test --native --capture-output --json
+--locked --release --exact ...` commands in the evidence's release `coreShards`;
+they use the compiler's existing exact-identity selection without stack/compiler
+overrides. Run the two repaired identities in the recorded `repair.command`.
+
 ## Verification
 
 `python -B tools/verify-public-fuel.py --profile development` runs focused native

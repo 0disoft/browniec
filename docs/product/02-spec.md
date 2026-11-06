@@ -4,6 +4,14 @@
 - Implementation status: Reconciled 2026-11-06; bounded M1 and public M2 aggregate/slice/literal/shared-byte-result subsets; full profile incomplete
 - Source profile name: brownie.safe/0.3
 
+- Public aggregate Fuel: [the shared schedule](../engineering/public-fuel-limits.md#shared-aggregate-prices-and-current-public-routes-2026-11-06)
+  owns existing array/record/list prices. Layout admission and both drivers keep
+  their original dispatch, cleanup and numeric charges. The public boundary
+  selection shares 24 independent source/numeric oracles between native and CLI
+  checks, including four grouped assignment target kinds in ordinary and
+  retained routes. Default 256 and explicit CLI ceiling 16000000 remain;
+  native host budgets are independent. Other C05/Engine/Instance limits remain open.
+
 - L04 native prerequisite: [owned-array selected locations](../engineering/array-selected-place.md)
   capture and revalidate the original scalar target. The
   [independent IR successor](../engineering/array-place-ir.md) now proves

@@ -209,6 +209,9 @@ delivery and DLL exports are still open after the lexical/range increments.
 - The [public Fuel successor](public-fuel-limits.md) deliberately raises the
   explicit CLI ceiling to 16000000, retains the 256 default and existing prices,
   and unifies public slice cost formulas. This resolves the narrow budget gap.
+  The aggregate successor also centralizes existing array/record/list prices
+  and shares 24 independent numeric source oracles across native/public CLI
+  boundaries, including current grouped assignments in both execution routes.
   The [public retained Program](public-program.md) now admits and executes the
   shared-byte image/runtime result subset with its canonical prepaid schedule.
   General mutable/non-byte/Buffer/input results, Engine/Instance budgets and

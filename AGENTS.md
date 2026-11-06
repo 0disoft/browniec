@@ -1,3 +1,20 @@
+- Aggregate Fuel prices now come from `fuel.fy`; array/record/list adapters
+  retain their validated layouts, dispatch rules and exact numeric charges.
+  Default 256 and explicit CLI ceiling 16000000 remain. The public runner shares
+  24 independent source/numeric oracles, including four grouped assignment target
+  kinds in both actual routes. See the [contract](docs/engineering/public-fuel-limits.md).
+  Development covers 51 native identities: 49 initially passed and two stale
+  source-write oracles passed after repair. Release passes 24 affected identities
+  (22 price/list/public-route cases plus the two repairs), and both profiles pass
+  105 tool-free CLI cases. The full release attempt reached its 1200-second tool
+  timeout; the remaining 27 native identities are not claimed as release passes.
+  Product sources/CLI fixtures stayed unchanged after the native-test repair, so
+  same-turn results are retained with the one test-only input delta explicit.
+  See [Windows evidence](docs/evidence/public-fuel-aggregate-prices-windows-20261106.json).
+  Current 187 inputs match checkout/staged Git raw bytes; all 171 production
+  modules are LF. Full language, LF mirrors, Linux, OOM/general stack/performance,
+  Engine/Instance/step/deadline/isolation/delivery were not rerun. Local only.
+
 - Grouped scalar, array, exclusive-slice and record assignment targets now
   consume original-span syntax plans through existing typed slot/place lowering.
   Whole-array and whole/child-record transactions, index/old-value ordering,
