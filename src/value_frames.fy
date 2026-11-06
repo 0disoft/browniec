@@ -194,7 +194,7 @@ fn Result<codec::Active,Error> inspected(ref layouts::Plan plan,ref State state,
 // Instruction-local Buffer access authenticates exact declared type, native
 // activation, canonical serial bytes and the store-local root binding. No view
 // or mutable root escapes. Mutation keeps the slot word and init order unchanged.
-struct BufferKey { usize serial; usize binding; }
+pub struct BufferKey { usize serial; usize binding; }
 fn Result<BufferKey,Error> buffer_key(ref layouts::Plan plan,ref State state,
     ref vec::Vec<bytes::Buffer> frames,Address source,ref owners::State root_state,
     ref vec::Vec<bytes::Buffer> roots,ref vec::Vec<bytes::Buffer> root_scratch){
@@ -206,6 +206,15 @@ fn Result<BufferKey,Error> buffer_key(ref layouts::Plan plan,ref State state,
     let codec::Active active=inspected(plan,state,frames,source,src,root_state,roots,root_scratch)?;
     if(!active.present){return .err(.Owner);}
     return .ok(BufferKey{.serial=active.serial,.binding=src.binding});
+}
+// Internal retained-view coordinator only. Authenticate the activation, exact
+// Buffer type, canonical slot and root store before exposing a native key.
+// This key must never be copied into guest scalar/value registers.
+pub fn Result<BufferKey,Error> buffer_view_key(ref layouts::Plan plan,ref State state,
+    ref vec::Vec<bytes::Buffer> frames,Address source,ref owners::State root_state,
+    ref vec::Vec<bytes::Buffer> roots,ref vec::Vec<bytes::Buffer> root_scratch,ref mut usize fuel){
+    let usize spent=paid(operation(8)?,fuel)?;
+    return buffer_key(plan,state,frames,source,root_state,roots,root_scratch);
 }
 pub fn Result<usize,Error> buffer_len(ref layouts::Plan plan,ref State state,
     ref vec::Vec<bytes::Buffer> frames,Address source,ref owners::State root_state,

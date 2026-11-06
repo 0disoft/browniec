@@ -87,6 +87,18 @@ fn Result<Row,Error> resolve(ref Pool pool,ref roots::State store,ref vec::Vec<b
             actual.slot==row.owner_slot && actual.generation==row.owner_generation){matched=true;}i+=1;}
     if(!matched){return .err(.State);}return .ok(row);
 }
+// Invocation-local lookup by a coordinator binding, never a guest-provided
+// ticket or serial. Authenticate the exact lease/root/backing before returning.
+pub fn Result<Ticket,Error> lookup(ref Pool pool,ref roots::State store,
+    ref vec::Vec<bytes::Buffer> data,ref vec::Vec<bytes::Buffer> scratch,usize selected){
+    let usize checked=header(pool)?;
+    if(selected>=512){return .err(.Binding);}var usize i=0;
+    while(i<32){let Row row=get(pool,i);if(row.live && row.binding==selected){
+        let Ticket ticket=Ticket{.slot=i,.generation=row.generation};
+        let Row authenticated=resolve(pool,store,data,scratch,ticket,selected)?;
+        return .ok(ticket);
+    }i+=1;}return .err(.Binding);
+}
 fn Ticket publish(ref mut Pool pool,usize slot,usize destination,usize serial,usize owner_binding,
     owners::Token owner,usize start,usize length){
     let usize generation=get(pool,slot).generation;

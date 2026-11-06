@@ -71,7 +71,7 @@ fn Result<usize,errors::Error> function(ref values::Program unit,ref values::Pre
         }else if(op==94){
             if(bits!=bit(a)){return .err(invalid(pc));}pc+=1;continue;
         }else if(op==95 || op==97){bits=publish(bits,dst,pc)?;}
-        else if(op==96 || op==98 || op==99 || op==100){if(!live(bits,a)){return .err(invalid(pc));}}
+        else if(op==96 || op==98 || op==99 || op==100 || op==105){if(!live(bits,a)){return .err(invalid(pc));}}
         else if(op==101){if(!live(bits,dst)){return .err(invalid(pc));}}
         else if(op>=102 && op<=104){
             if(!live(bits,a) || (op==104 && (a==b || !live(bits,b)))){return .err(invalid(pc));}

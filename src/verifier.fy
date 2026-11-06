@@ -26,6 +26,7 @@ import place_ir as places;
 import copy_ir as copying;
 import value_ir as value_ir;
 import value_flow as value_flow;
+import value_view_flow as value_view_flow;
 
 fn bool readable(ref ir::Program p, ref registers::Set defined, usize r, usize start, usize end) {
     return r >= start && r < end && p.types[r]!=0 && !p.slots[r] && p.array_parameters[r] == 0 && p.record_parameters[r] == 0 && p.slice_parameters[r] == 0 && registers::contains(defined, r);
@@ -135,12 +136,16 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
                     registers::insert(ref mut defined,dst);registers::insert(ref mut written,dst);
                 }
                 used_calls[b]=true;
-            }else if(op==99 || op==100){
-                if(dst<start || dst>=end || p.types[dst]!=if(op==99){12}else{10} || p.slots[dst] ||
+            }else if(op==105 || op==106){
+                let usize hi=p.code[at+4] as usize;
+                if(!readable(p,ref defined,b,start,end) || p.types[b]!=12 ||
+                    !readable(p,ref defined,hi,start,end) || p.types[hi]!=12){return .err(errors::make(5,pc));}
+            }else if(op==99 || op==100 || op==110 || op==111){
+                if(dst<start || dst>=end || p.types[dst]!=if(op==99 || op==110){12}else{10} || p.slots[dst] ||
                     value_sites.parameters[dst]!=0 || p.array_parameters[dst]!=0 ||
                     p.record_parameters[dst]!=0 || p.slice_parameters[dst]!=0 ||
                     registers::contains(ref written,dst)){return .err(errors::make(5,pc));}
-                if(op==100 && (!readable(p,ref defined,b,start,end) || p.types[b]!=12)){return .err(errors::make(5,pc));}
+                if((op==100 || op==111) && (!readable(p,ref defined,b,start,end) || p.types[b]!=12)){return .err(errors::make(5,pc));}
                 registers::insert(ref mut defined,dst);registers::insert(ref mut written,dst);
             }else if(op==101){
                 if(!readable(p,ref defined,a,start,end) || p.types[a]!=12 ||
@@ -359,6 +364,7 @@ pub fn Result<ValueProof,errors::Error> inspect_values(ref value_ir::Program uni
     let usize flow=value_flow::inspect(unit,ref values)?;
     let statics::Sites statics=statics::empty();
     let reborrows::Sites loans=validate_values(ref unit.body,true,4,ref statics,ref values.sites)?;
+    let usize views=value_view_flow::inspect(unit,ref values)?;
     return .ok(ValueProof{.values=values,.loans=loans});
 }
 

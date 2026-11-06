@@ -8,6 +8,8 @@ import value_call_vm as calls;
 import value_codec as codec;
 import value_properties as properties;
 import value_buffer_runtime as buffers;
+import value_buffer_views as view_pool;
+import value_view_runtime as views;
 import value_roots as owners;
 import buffer_growth as growth;
 import errors as errors;
@@ -41,9 +43,13 @@ pub fn Result<Budget,errors::Error> budget(ref programs::Program program,usize a
     let usize initial=context_charge()+owners::setup_cost()+number(meter::setup_cost(largest),0)?+number(meter::enter_cost(width),0)?;
     if(fuel<initial){return .err(errors::make(8,0));}
     let growth::Ledger empty=growth::unowned();
-    let usize minimum=owners::metadata_charge()+meter::metadata_charge()+number(meter::charge(largest),0)?+number(meter::charge(width),0)?;
+    let bool view_enabled=views::present(ref programs::code(program).body);
+    let usize extra_setup=if(view_enabled){views::setup_cost()}else{0};
+    if(fuel-initial<extra_setup){return .err(errors::make(8,0));}
+    let usize minimum=owners::metadata_charge()+meter::metadata_charge()+number(meter::charge(largest),0)?+number(meter::charge(width),0)?+
+        if(view_enabled){views::metadata_charge()}else{0};
     let usize admitted=number(meter::admit(0,minimum,ref empty,remaining),0)?;
-    return .ok(Budget{.values=remaining,.initial=initial});
+    return .ok(Budget{.values=remaining,.initial=initial+extra_setup});
 }
 pub fn Result<usize,errors::Error> setup(ref programs::Program program,
     ref mut vec::Vec<frames::State> states,ref mut vec::Vec<owners::State> owner_states,
@@ -81,6 +87,16 @@ pub fn Result<Step,errors::Error> instruction(ref programs::Program program,usiz
     ref mut vec::Vec<bytes::Buffer> data,ref mut vec::Vec<bytes::Buffer> scratch,
     ref mut vec::Vec<bytes::Buffer> roots,ref mut vec::Vec<bytes::Buffer> root_scratch,
     ref mut i64[] registers,growth::Limits limits,usize fuel){
+    var vec::Vec<view_pool::Pool> pools=vec::empty<view_pool::Pool>();
+    return instruction_views(program,pc,frame,states,owner_states,data,scratch,roots,root_scratch,
+        ref mut pools,registers,limits,fuel);
+}
+pub fn Result<Step,errors::Error> instruction_views(ref programs::Program program,usize pc,usize frame,
+    ref mut vec::Vec<frames::State> states,ref mut vec::Vec<owners::State> owner_states,
+    ref mut vec::Vec<bytes::Buffer> data,ref mut vec::Vec<bytes::Buffer> scratch,
+    ref mut vec::Vec<bytes::Buffer> roots,ref mut vec::Vec<bytes::Buffer> root_scratch,
+    ref mut vec::Vec<view_pool::Pool> pools,
+    ref mut i64[] registers,growth::Limits limits,usize fuel){
     let ref value_ir::Program unit=programs::code(program);let ref ir::Program body=ref unit.body;
     let usize offset=body.offsets[pc];let usize code=pc*8;let u8 op=body.code[code];
     let usize dst=body.code[code+1] as usize;let usize a=body.code[code+2] as usize;let u8 b=body.code[code+3];
@@ -89,6 +105,13 @@ pub fn Result<Step,errors::Error> instruction(ref programs::Program program,usiz
     let ref mut frames::State state=vec::at_mut<frames::State>(states,0);
     let ref mut owners::State owned=vec::at_mut<owners::State>(owner_states,0);
     let ref layouts::Plan plan=programs::layout(program);var usize remaining=fuel;
+    if(op>=105 && op<=111){
+        var usize i=5;while(i<8){if(body.code[code+i]!=0){return .err(errors::make(5,offset));}i+=1;}
+        switch(views::instruction(op,dst,a,b as usize,body.code[code+4] as usize,current,plan,state,data,
+            pools,owned,roots,root_scratch,registers,ref mut remaining)){
+            case .ok(_):{}case .err(e):{return .err(failure(e,offset));}
+        };return .ok(Step{.pc=pc+1,.remaining=remaining});
+    }
     if(op>=99 && op<=104){
         switch(buffers::instruction(op,dst,a,b as usize,current,plan,state,owned,data,roots,
             root_scratch,registers,limits,ref mut remaining)){
@@ -154,7 +177,15 @@ pub fn void publish_call(ref programs::Program program,ref calls::Prepared batch
 pub fn Result<usize,errors::Error> leave(ref programs::Program program,usize frame,usize offset,
     ref mut vec::Vec<frames::State> states,ref mut vec::Vec<owners::State> owner_states,
     ref mut vec::Vec<bytes::Buffer> data,ref mut vec::Vec<bytes::Buffer> roots,ref mut vec::Vec<bytes::Buffer> root_scratch){
+    let vec::Vec<view_pool::Pool> pools=vec::empty<view_pool::Pool>();
+    return leave_views(program,frame,offset,states,owner_states,data,roots,root_scratch,ref pools);
+}
+pub fn Result<usize,errors::Error> leave_views(ref programs::Program program,usize frame,usize offset,
+    ref mut vec::Vec<frames::State> states,ref mut vec::Vec<owners::State> owner_states,
+    ref mut vec::Vec<bytes::Buffer> data,ref mut vec::Vec<bytes::Buffer> roots,ref mut vec::Vec<bytes::Buffer> root_scratch,
+    ref vec::Vec<view_pool::Pool> pools){
     let frames::Token current=token(states,frame,offset)?;
+    switch(views::empty_frame(pools,frame)){case .ok(_):{}case .err(e):{return .err(failure(e,offset));}};
     if(vec::at<frames::State>(states,0).frames[frame].live!=0){return .err(errors::make(5,offset));}
     return switch(frames::leave(programs::layout(program),vec::at_mut<frames::State>(states,0),data,current,
         vec::at_mut<owners::State>(owner_states,0),roots,root_scratch)){
@@ -165,7 +196,15 @@ pub fn Result<usize,errors::Error> prepare_return(ref programs::Program program,
     ref vec::Vec<frames::State> states,ref vec::Vec<owners::State> owner_states,
     ref vec::Vec<bytes::Buffer> data,ref vec::Vec<bytes::Buffer> scratch,
     ref vec::Vec<bytes::Buffer> roots,ref vec::Vec<bytes::Buffer> root_scratch,usize fuel){
+    let vec::Vec<view_pool::Pool> pools=vec::empty<view_pool::Pool>();
+    return prepare_return_views(program,frame,source,destination,offset,states,owner_states,data,scratch,roots,root_scratch,ref pools,fuel);
+}
+pub fn Result<usize,errors::Error> prepare_return_views(ref programs::Program program,usize frame,usize source,usize destination,usize offset,
+    ref vec::Vec<frames::State> states,ref vec::Vec<owners::State> owner_states,
+    ref vec::Vec<bytes::Buffer> data,ref vec::Vec<bytes::Buffer> scratch,
+    ref vec::Vec<bytes::Buffer> roots,ref vec::Vec<bytes::Buffer> root_scratch,ref vec::Vec<view_pool::Pool> pools,usize fuel){
     if(frame==0 || destination<208 || destination>=224){return .err(errors::make(5,offset));}
+    switch(views::empty_frame(pools,frame)){case .ok(_):{}case .err(e):{return .err(failure(e,offset));}};
     let frames::Token current=token(states,frame,offset)?;let frames::Token parent=token(states,frame-1,offset)?;
     let ref frames::State state=vec::at<frames::State>(states,0);let usize function=state.frames[frame].function;
     let usize one=1;
@@ -202,4 +241,17 @@ pub fn Result<i64,errors::Error> finish(ref mut vec::Vec<frames::State> states,r
         case .ok(_):{.none}case .err(e):{.some(failure(e,0))}
     };
     return switch(outcome){case .err(e):{.err(e)}case .ok(v):{switch(cleanup_error){case .none:{.ok(v)}case .some(e):{.err(e)}}}};
+}
+// The actual retained VM and native cleanup probes share this zero-Fuel exit.
+// Closing the invocation's one Pool must precede frames::abort/root drain.
+pub fn Result<i64,errors::Error> finish_views(ref mut vec::Vec<frames::State> states,ref mut vec::Vec<owners::State> owner_states,
+    ref mut vec::Vec<bytes::Buffer> data,ref mut vec::Vec<bytes::Buffer> scratch,
+    ref mut vec::Vec<bytes::Buffer> roots,ref mut vec::Vec<bytes::Buffer> root_scratch,
+    ref mut vec::Vec<view_pool::Pool> pools,Result<i64,errors::Error> outcome){
+    let Result<i64,errors::Error> closed=switch(views::shutdown(pools,owner_states,roots,root_scratch)){
+        case .ok(_):{outcome}case .err(e):{switch(outcome){
+            case .err(original):{.err(original)}case .ok(_):{.err(failure(e,0))}
+        }}
+    };
+    return finish(states,owner_states,data,scratch,roots,root_scratch,closed);
 }

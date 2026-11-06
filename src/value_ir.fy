@@ -13,9 +13,15 @@ import errors as errors;
 // 99 BUFFER_LEN scalar-dst,a; 100 BUFFER_READ scalar-dst,a,index-reg;
 // 101 BUFFER_WRITE dst,index-reg,byte-reg; 102 BUFFER_PUSH result-dst,a,byte-reg;
 // 103 BUFFER_RESERVE result-dst,a,capacity-reg; 104 BUFFER_APPEND result-dst,a,b.
+// 105 VIEW_BEGIN view-dst,Buffer-a,lo-reg,byte4=hi-reg;
+// 106 VIEW_RANGE view-dst,parent-view,lo-reg,byte4=hi-reg;
+// 107 VIEW_ALIAS view-dst,view-a; 108 VIEW_MOVE view-dst,view-a;
+// 109 VIEW_CLOSE view-dst; 110 VIEW_LEN usize-dst,view-a;
+// 111 VIEW_READ u8-dst,view-a,index-reg. Views use a separate 16-slot frame
+// domain; no view words inhabit canonical values or function signatures.
 // Buffer mutations retain owners; results are exact Result<usize,u8>.
 // TAG_TEST only inspects a live wrapper; it never defines/consumes a value slot.
-// Except CASE byte4, bytes4..7 are zero.
+// Except CASE/VIEW_BEGIN/VIEW_RANGE byte4, bytes4..7 are zero.
 // Variant1 means some/ok, variant0 none/err, matching existing IR (not a new
 // serialized tag layout). CASE none uses dst0; TAG_BUILD none uses a0.
 // CALL resource actuals encode 208+value ID; ordinary argument encodings remain.
@@ -28,7 +34,7 @@ pub struct Program {
 pub struct Sites { bool enabled; u8[128] parameters; u8[16] results; u8[16] scalar_tags; }
 pub struct Prepared { properties::Plan properties; usize[64] classes; Sites sites; }
 pub fn Sites empty(){return Sites{.enabled=false,.parameters=[0;128],.results=[0;16],.scalar_tags=[0;16]};}
-pub fn bool operation(u8 op){return op>=88 && op<=104;}
+pub fn bool operation(u8 op){return op>=88 && op<=111;}
 fn errors::Error invalid(usize pc){return errors::make(5,pc);}
 pub fn bool slot(ref Program unit,usize id,usize f){
     return id<16 && unit.types[id]!=0 && unit.functions[id] as usize==f;
@@ -119,8 +125,21 @@ pub fn Result<Prepared,errors::Error> prepare(ref Program unit){
 pub fn Result<usize,errors::Error> instruction(ref Program unit,ref Prepared proof,usize pc,usize f){
     let ref ir::Program p=ref unit.body;let usize at=pc*8;let u8 op=p.code[at];
     let usize dst=p.code[at+1] as usize;let usize a=p.code[at+2] as usize;let usize b=p.code[at+3] as usize;
-    if(!operation(op) || (op!=92 && p.code[at+4]!=0) || p.code[at+5]!=0 || p.code[at+6]!=0 || p.code[at+7]!=0){return .err(invalid(pc));}
-    if(op>=99){
+    if(!operation(op) || (op!=92 && op!=105 && op!=106 && p.code[at+4]!=0) || p.code[at+5]!=0 || p.code[at+6]!=0 || p.code[at+7]!=0){return .err(invalid(pc));}
+    if(op>=105){
+        if(op==105 || op==106){
+            if(dst>=16 || (op==105 && !buffer(unit,a,f)) || (op==106 && a>=16) ||
+                !scalar_register(unit,b,f,12) || !scalar_register(unit,p.code[at+4] as usize,f,12)){
+                return .err(invalid(pc));}
+        }else if(op==107 || op==108){
+            if(dst>=16 || a>=16 || dst==a || b!=0){return .err(invalid(pc));}
+        }else if(op==109){
+            if(dst>=16 || a!=0 || b!=0){return .err(invalid(pc));}
+        }else{
+            if(a>=16 || !scalar_register(unit,dst,f,if(op==110){12}else{10}) ||
+                (op==110 && b!=0) || (op==111 && !scalar_register(unit,b,f,12))){return .err(invalid(pc));}
+        }
+    }else if(op>=99){
         if(op==101){
             if(!buffer(unit,dst,f) || !scalar_register(unit,a,f,12) ||
                 !scalar_register(unit,b,f,10)){return .err(invalid(pc));}
