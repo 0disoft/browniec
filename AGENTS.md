@@ -1,4 +1,18 @@
-- Latest checkpoint: Private [Buffer instructions](docs/engineering/value-buffer-execution.md) now independently verify and execute
+- Latest Buffer source checkpoint, 2026-11-07: Private [Buffer source operations and loans](docs/engineering/value-buffer-source.md) now lower
+  `bytes::` / `brownie::bytes::` empty, len/read/write and push/reserve/append.
+  Compiler-only loans protect later arguments, survive control/propagation/loop
+  exits and release temporary owners. Named mutation requires `var`; overlapping
+  loans and self append reject. Typed `&&`/`||` skip runtime RHS work and join
+  conditional moves and Result obligations. Both Windows native profiles passed
+  12 groups (source 7/native 5), including 62 new guest programs and the unchanged
+  32/33 depth fixture, on `e8d2a7d`. All 217 inputs match checkout/Git raw bytes;
+  all 206 production modules are LF. See [evidence](docs/evidence/value-buffer-source-windows-20261107.json).
+  Next Buffer copy/view/methods, public AllocError and deliberate public admission,
+  text/I/O and general aggregate/reference/module/runtime composition. D02/D04 and
+  the full objective remain open. Public gates, existing prices and Fuel default
+  256 / ceiling 16000000 remain unchanged. Local only; no push/release/deployment.
+
+- Predecessor Buffer instruction checkpoint: Private [Buffer instructions](docs/engineering/value-buffer-execution.md) now independently verify and execute
   length/read/write, push/reserve and distinct-source append (99..104). Growing
   operations prepay canonical Result publication; allocator errors return the
   private Result<usize,u8>, while Fuel/quota/bounds remain execution errors. Source
