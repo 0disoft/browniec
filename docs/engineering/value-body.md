@@ -1,5 +1,10 @@
 # Private typed-source body execution
 
+The [predicate successor](value-predicates.md) now adds non-consuming typed
+Option/Result inspection through TAG_TEST98, including move-only Buffer wrappers.
+Propagation, must-use, typed value-expression joins, loops and public integration
+remain separate work.
+
 `value_source::compile` now lowers actual source bodies to `value_ir::Program`.
 The resulting candidate passes through `verifier::inspect_values` and the existing
 retained native `vm::run_values` path. No proof, root, frame or native allocation
@@ -50,7 +55,7 @@ never rewinds between functions or lexical scopes.
 This is a private executable body bridge, not full language completion or public
 Buffer admission. The [control successor](value-control.md) now supplies mutable
 assignment and statement if/switch joins. Typed value-expression joins, loops,
-wider predicates and propagation, must-use diagnostics, aggregate construction/projection, general
+propagation, must-use diagnostics, aggregate construction/projection, general
 references, import/visibility integration and ordinary/retained public source
 composition still need implementation. Typed arrays and nominal records can have
 signature metadata; this parser does not yet create their source values.

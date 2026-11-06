@@ -6,7 +6,7 @@ combines independently reconstructed type properties and initialized/Dead CFG
 state with the existing complete scalar, array, record, loan, CALL and selected
 place proof. This layer supplies analysis; the
 [private execution successor](value-execution.md)
-now retains an immutable `value_program::Program` and executes operations 88..97
+now retains an immutable `value_program::Program` and executes operations 88..98
 through native value frames and the ordinary VM. Ordinary, image and returned
 reference admissions keep their existing gates. The [source foundation](value-source.md)
 now provides canonical type/signature and lexical COPY/MOVE/DROP metadata;
@@ -16,6 +16,13 @@ adds mutable assignment and statement joins. Typed value-expression joins, loops
 broader operations and public integration remain next.
 
 ## Instructions and type identity
+
+The [predicate successor](value-predicates.md) adds TAG_TEST98: fresh ordinary
+bool `dst`, exact live typed wrapper `a`, variant0/1 `b`, zero reserved bytes. It
+preserves the typed initialized set and native bytes/owner bindings, without
+allocating a typed payload. Canonical scalar definition and lifetime passes check
+both operand domains independently. Its explicit price is 8192+4*wrapper_width;
+existing operation prices and public gates are unchanged.
 
 Private operations 88..97 describe MOVE, COPY, DROP, TAG_BUILD, CASE, CALL,
 RETURN, EMPTY_BUFFER, SCALAR_READ and SCALAR_VALUE. Each uses the ordinary eight

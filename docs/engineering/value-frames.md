@@ -1,10 +1,15 @@
 # Native typed values and frame storage
 
+The [predicate successor](value-predicates.md) now adds non-consuming typed
+Option/Result inspection through TAG_TEST98, including move-only Buffer wrappers.
+Propagation, must-use, typed value-expression joins, loops and public integration
+remain separate work.
+
 `value_frames` connects the [retained canonical layout](value-codec.md) to actual
 native per-activation byte storage and the [owning Buffer root store](value-roots.md).
 This is a native coordinator interface. The [private execution successor](value-execution.md)
 now binds its immutable layout to a retained `value_program::Program` after full
-independent typed-IR proof, then dispatches operations 88..97 through `vm::run_values`.
+independent typed-IR proof, then dispatches operations 88..98 through `vm::run_values`.
 The [source foundation](value-source.md) now supplies typed signature and lexical
 ownership preparation. The [private body bridge](value-body.md) now connects empty Buffer/nested-wrapper
 construction, immutable locals and mixed CALL/RETURN. Complete typed-source
@@ -116,7 +121,7 @@ implemented in source by the [execution successor](value-execution.md). The
 COPY/MOVE/DROP metadata. The [private body bridge](value-body.md) now connects
 empty Buffer/nested-wrapper construction, immutable locals and mixed CALL/RETURN.
 The [control successor](value-control.md) now supplies mutable assignment and
-statement joins. Typed value-expression joins, loops, wider predicates and public
+statement joins. Typed value-expression joins, loops, propagation and public
 integration remain next. General
 reference/Buffer joins, must-use, full L04/L05/D01-D04 and broader language,
 Engine/Instance/host/isolation/platform/delivery work remain open. Full CLI/

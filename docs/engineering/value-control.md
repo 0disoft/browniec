@@ -85,8 +85,9 @@ byte-identical across the reproduced failures and final passes. See the
 [Windows evidence](../evidence/value-control-windows-20261107.json) and
 [input manifest](../evidence/value-control-inputs-windows-20261107.json).
 
-This is statement control flow. Typed value `if`/`switch` joins, loops and
-break/continue, wider non-consuming predicates/propagation, must-use diagnostics,
+The [predicate successor](value-predicates.md) now adds non-consuming wide/resource
+Option/Result inspection. This checkpoint is statement control flow. Typed value
+`if`/`switch` joins, loops and break/continue, propagation, must-use diagnostics,
 general aggregate/reference/module/public composition and useful Buffer byte/text/
 input/output operations remain open. Engine/Instance/host/isolation/embedding/
 delivery and complete language/platform validation also remain open. No public

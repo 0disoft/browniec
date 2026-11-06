@@ -11,7 +11,18 @@ regressions, then commit; record broader checks only when actually run. Do not
 enable public syntax, delivery flags or ABI availability ahead of implemented
 admission, execution and cleanup. Push/release/deployment are separate actions.
 
-Latest private control checkpoint (2026-11-07): [mutation and statement joins](value-control.md)
+Latest private predicate checkpoint (2026-11-07): [non-consuming tag inspection](value-predicates.md)
+now preserves named/grouped Option/Result receivers, including active/inactive
+Buffer wrappers, through TAG_TEST98. Computed subjects evaluate once then drop.
+Both native profiles passed 26 groups (source 22 + instruction 4), with 210 matching
+checkout/Git-raw inputs and 197 LF modules, on `5a02886`. See
+[evidence](../evidence/value-predicates-windows-20261107.json). The existing
+admitted 32/rejected 33 conditional fixture stays byte-identical; public compiler/
+CLI gates and existing prices/default/cap stay unchanged. Next propagation,
+must-use, typed value-expression joins, loops, useful Buffer operations and general
+source/public composition. Full implementation and broad validation remain open.
+
+Predecessor private control checkpoint (2026-11-07): [mutation and statement joins](value-control.md)
 now implement mutable typed/scalar locals, replacement/reinitialization, checked
 compound assignments, if/else-if and exhaustive nested tag switches. Continuing
 paths converge through real cleanup to their live-set intersection. Both native
@@ -207,7 +218,8 @@ Fuel default 256 / ceiling 16000000 and wider capability gates remain unchanged.
    The [private body successor](value-body.md) now connects empty Buffer and nested
    wrapper constructors, immutable locals, lexical cleanup and mixed CALL/RETURN.
    The [control successor](value-control.md) now adds mutable assignment and
-   statement if/switch joins. Next implement wider predicates/propagation, typed
+   statement if/switch joins. The [predicate successor](value-predicates.md) now adds
+   non-consuming inspection. Next implement propagation, must-use, typed
    value-expression joins, loops and useful Buffer operations before aggregate/
    reference/module composition and public admission. For L06, public scalar/tagged `.is_ok` and
    explicit discard are implemented; unused Result-binding diagnosis and the

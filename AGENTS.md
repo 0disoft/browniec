@@ -1,3 +1,19 @@
+- Private non-consuming predicates are implemented at `5a02886`; see
+  docs/engineering/value-predicates.md. Source Option is_some/is_none and Result
+  is_ok/is_err read named/grouped receivers without MOVE/COPY or typed allocation;
+  computed receivers evaluate once and explicitly drop after TAG_TEST98. Delayed
+  compiler captures still materialize before later value operands/arguments.
+  Native read-only inspection authenticates canonical bytes/generation/root
+  bindings and costs 8192+4*wrapper_width; existing prices/default256/cap16000000
+  and public gates stay unchanged. Windows development/release each passed 26
+  native groups in disjoint source 22/native 4 batches, with 210 checkout/Git-raw
+  matching inputs and 197 LF modules. The admitted 32/rejected 33 combined fixture
+  remains byte-identical. See docs/evidence/value-predicates-windows-20261107.json.
+  Next propagation, must-use, typed value-expression joins, loops and useful Buffer
+  operations, then general source/public composition. Full objective and broader
+  validation remain open. Local only; no push/release/deployment. Older entries
+  retain their historical checkpoint scopes.
+
 - Private typed mutation and statement control are implemented at dbda356 after
   mutable/CASE helpers a95eb11. See [the contract](docs/engineering/value-control.md).
   Source now admits var, whole-value replacement/reinitialization, scalar compound

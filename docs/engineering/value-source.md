@@ -1,5 +1,10 @@
 # Typed source foundations and Result handling
 
+The [predicate successor](value-predicates.md) now adds non-consuming typed
+Option/Result inspection through TAG_TEST98, including move-only Buffer wrappers.
+Propagation, must-use, typed value-expression joins, loops and public integration
+remain separate work.
+
 This increment prepares source types, signatures and lexical ownership for the
 [typed value dialect](value-ir.md). At this checkpoint the typed foundations were
 compiler preparation only. The [body successor](value-body.md) now compiles empty

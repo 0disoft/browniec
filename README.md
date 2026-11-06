@@ -2,6 +2,17 @@
 
 ## Current implementation (2026-11-07)
 
+Private [non-consuming tag predicates](docs/engineering/value-predicates.md)
+now add Option `.is_some`/`.is_none` and Result `.is_ok`/`.is_err`, including
+move-only Buffer payloads. Named/grouped receivers stay live; computed receivers
+evaluate once and drop after inspection. Windows development/release each passed
+26 native groups (22 source/regression + 4 instruction), with 210 checkout/Git-raw
+matching inputs and 197 LF production modules. See the
+[evidence](docs/evidence/value-predicates-windows-20261107.json). Implementation:
+`5a02886`. Public compiler/CLI gates remain unchanged. Propagation, must-use,
+typed value-expression joins, loops, useful Buffer operations and general
+source/public composition remain open.
+
 Private [typed mutation and statement control flow](docs/engineering/value-control.md)
 now support `var`, whole-value replacement/reinitialization, checked scalar compound
 assignments, `if`/`else if`/`else` and exhaustive nested tag switches. Continuing
@@ -17,7 +28,7 @@ empty Buffer creation, nested wide/Buffer wrappers, immutable locals, lexical
 cleanup and mixed forward CALL/RETURN to independently verified native execution.
 This private compiler path does not enable Buffer syntax in the public CLI.
 The control successor above now adds mutable assignment and statement joins.
-Typed value-expression joins, loops, wider predicates/propagation, useful Buffer
+Typed value-expression joins, loops, propagation, useful Buffer
 byte/text operations and public composition remain next. Windows
 development/release each passed 19 native groups; all 206 inputs match checkout
 and Git raw bytes, and all 196 production modules are LF. See the
