@@ -6,12 +6,14 @@ import value_type_source as annotations;
 import value_source_bindings as bindings;
 import value_source_functions as functions;
 import value_source_ops as ops;
+import value_source_control as branches;
 import functions as signatures;
 import lexer as lexer;
 import locals as locals;
 import ir as ir;
 import types as types;
 import errors as errors;
+import std::vec as vec;
 
 // Private source lowering to the existing independently verified value dialect.
 // Exact types are canonical node IDs; ordinary scalars remain ordinary registers.
@@ -23,6 +25,15 @@ fn Value owned(usize exact,usize value){return Value{.exact=exact,.value=value,.
 fn Value nothing(){return Value{.exact=64,.value=256,.typed=false,.nothing=true};}
 fn bool word(ref u8[] source,ref lexer::State s,ref u8[] name){return s.kind==2 && lexer::equal(source[s.begin..s.end],name);}
 fn errors::Error wrong(usize at){return errors::make(3,at);}
+// Borrow the large nested metadata before reading scalar fields. Direct nested
+// value projections otherwise materialize whole IR/name tables in the pinned
+// development backend, multiplying every recursive parser frame.
+fn usize position(ref values::Program unit){let ref ir::Program body=ref unit.body;return body.count;}
+fn usize register_count(ref values::Program unit){let ref ir::Program body=ref unit.body;return body.registers;}
+fn usize call_count(ref values::Program unit){let ref ir::Program body=ref unit.body;return body.call_count;}
+fn u8 register_type(ref values::Program unit,usize index){let ref ir::Program body=ref unit.body;return body.types[index];}
+fn usize name_count(ref bindings::State state){let ref locals::Table names=ref state.names;return names.count;}
+
 fn u8 byte(usize value){var u8 b=0;var usize i=0;while(i<value){b+=1;i+=1;}return b;}
 fn Result<usize,errors::Error> intern(ref mut values::Program unit,u8 kind,u8 first,u8 second,usize at){
     var usize i=0;while(i<unit.catalog.count){let properties::Node n=unit.catalog.nodes[i];
@@ -71,7 +82,7 @@ fn Result<Value,errors::Error> expression(ref u8[] source,ref mut lexer::State s
         let usize a=as_scalar(unit,state,left,at)?;let usize next=lexer::next(source,s)?;
         let Value right=expression(source,s,unit,state,table,plan,left.exact,priority+1,depth+1)?;
         let usize b=as_scalar(unit,state,right,at)?;
-        if(left.exact!=right.exact || (!types::integer(unit.body.types[a]) && operation!=128 && operation!=129)){
+        if(left.exact!=right.exact || (!types::integer(register_type(unit,a)) && operation!=128 && operation!=129)){
             return .err(wrong(at));
         }
         let usize result=ir::emit(ref mut unit.body,opcode(operation),a,b,at)?;
@@ -135,12 +146,12 @@ fn Result<Value,errors::Error> call(ref u8[] source,ref mut lexer::State s,ref m
     if(result!=0 && unit.catalog.nodes[result-1].kind!=1){extended=true;
         returned=owned(result-1,bindings::allocate(unit,state,result-1,at)?);
     }else if(result!=0){
-        if(unit.body.registers>=128){return .err(errors::make(4,at));}
-        let usize reg=unit.body.registers;unit.body.registers+=1;
+        if(register_count(unit)>=128){return .err(errors::make(4,at));}
+        let usize reg=register_count(unit);unit.body.registers=reg+1;
         let u8 tag=unit.catalog.nodes[result-1].first;unit.body.types[reg]=tag;returned=scalar(result-1,reg);
     }
-    if(unit.body.call_count>=32 || unit.body.count>=256){return .err(errors::make(4,at));}
-    let usize map=unit.body.call_count;unit.body.call_count+=1;unit.body.call_arities[map]=byte(i);
+    if(call_count(unit)>=32 || position(unit)>=256){return .err(errors::make(4,at));}
+    let usize map=call_count(unit);unit.body.call_count=map+1;unit.body.call_arities[map]=byte(i);
     var usize j=0;while(j<i){unit.body.call_args[map*8+j]=byte(arguments[j]);j+=1;}
     let usize emitted=ir::raw(ref mut unit.body,if(extended){93}else{9},if(returned.nothing){0}else{returned.value},target,map,at)?;
     let properties::Plan properties= switch(properties::inspect(ref unit.catalog)){
@@ -175,7 +186,7 @@ fn Result<Value,errors::Error> atom(ref u8[] source,ref mut lexer::State s,ref m
         }
         let Value value=atom(source,s,unit,state,table,plan,exact,depth+1)?;
         let usize reg=as_scalar(unit,state,value,at)?;
-        if((op==33 && unit.body.types[reg]!=2) || (op==45 && !types::signed(unit.body.types[reg])) || (op==126 && !types::integer(unit.body.types[reg]))){return .err(wrong(at));}
+        if((op==33 && register_type(unit,reg)!=2) || (op==45 && !types::signed(register_type(unit,reg))) || (op==126 && !types::integer(register_type(unit,reg)))){return .err(wrong(at));}
         let usize result=ir::emit(ref mut unit.body,if(op==45){7}else if(op==33){10}else{27},reg,0,at)?;
         return .ok(scalar(value.exact,result));
     }
@@ -200,12 +211,13 @@ fn Result<Value,errors::Error> atom(ref u8[] source,ref mut lexer::State s,ref m
         let usize type=values::type_id(unit,from);let usize to=bindings::allocate(unit,state,type,at)?;
         let usize used=bindings::use_binding(unit,state,index,to,at)?;return .ok(owned(type,to));
     }
-    let usize reg=state.names.registers[index];let u8 tag=unit.body.types[reg];let usize type=intern(unit,1,tag,0,at)?;
-    return .ok(scalar(type,reg));
+    let usize binding=state.names.registers[index];
+    let usize reg=if(state.names.mutable[index]){ir::emit(ref mut unit.body,17,binding,0,at)?}else{binding};
+    let u8 tag=register_type(unit,reg);let usize type=intern(unit,1,tag,0,at)?;return .ok(scalar(type,reg));
 }
 fn Result<usize,errors::Error> declaration(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
     ref mut bindings::State state,ref signatures::Table table,ref functions::Plan plan){
-    let usize keyword=lexer::next(source,s)?;var usize type=64;
+    let bool mutable=word(source,s,b"var");let usize keyword=lexer::next(source,s)?;var usize type=64;
     var lexer::State look=lexer::snapshot(s);let usize peek=lexer::next(source,ref mut look)?;
     if(look.kind!=61){type=annotations::parse(source,s,ref mut unit.catalog)?;}
     if(s.kind!=2 || !lexer::simple(source,s.begin,s.end) || locals::reserved(source[s.begin..s.end])){return .err(errors::make(2,s.begin));}
@@ -214,8 +226,13 @@ fn Result<usize,errors::Error> declaration(ref u8[] source,ref mut lexer::State 
     let usize name=lexer::next(source,s)?;let usize equal=lexer::punctuation(source,s,61)?;
     let Value value=expression(source,s,unit,state,table,plan,type,1,0)?;
     let usize terminator=lexer::punctuation(source,s,59)?;
-    if(value.typed){return bindings::declare(unit,state,source,begin,end,value.value,value.exact);}
+    if(value.typed){return if(mutable){bindings::declare_mut(unit,state,source,begin,end,value.value,value.exact)}
+        else{bindings::declare(unit,state,source,begin,end,value.value,value.exact)};}
     let usize reg=as_scalar(unit,state,value,begin)?;
+    if(mutable){let u8 tag=register_type(unit,reg);let usize slot=ir::slot(ref mut unit.body,tag,begin)?;
+        let usize stored=ir::raw(ref mut unit.body,18,slot,reg,0,begin)?;
+        return locals::declare(ref mut state.names,begin,end,slot,true);
+    }
     return locals::declare(ref mut state.names,begin,end,reg,false);
 }
 fn Result<usize,errors::Error> clean_function(ref mut values::Program unit,ref mut bindings::State state,usize keep,usize at){
@@ -225,12 +242,135 @@ fn Result<usize,errors::Error> clean_function(ref mut values::Program unit,ref m
     if(keep!=16){let usize consumed=bindings::consume(unit,state,keep,at)?;}
     return bindings::leave_scope(unit,state,0,at);
 }
+fn Result<bool,errors::Error> assignment_ahead(ref u8[] source,ref lexer::State s){
+    if(s.kind!=2 || word(source,s,b"_")){return .ok(false);}var lexer::State look=lexer::snapshot(s);
+    let usize next=lexer::next(source,ref mut look)?;
+    return .ok(look.kind==61 || (look.kind>=136 && look.kind<=145));
+}
+fn u8 compound(u8 token){
+    return if(token==136){2}else if(token==137){3}else if(token==138){4}else if(token==139){5}
+        else if(token==140){6}else if(token==141){31}else if(token==142){32}
+        else if(token==143){28}else if(token==144){29}else{30};
+}
+fn Result<usize,errors::Error> assignment(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
+    ref mut bindings::State state,ref signatures::Table table,ref functions::Plan plan){
+    let usize at=s.begin;let usize index=locals::find(source,ref state.names,s.begin,s.end);
+    if(index==64 || !state.names.mutable[index]){return .err(wrong(at));}
+    let usize next=lexer::next(source,s)?;let u8 token=s.kind;let usize advanced=lexer::next(source,s)?;
+    let bool typed=state.bindings[index]!=0;let usize dst=state.names.registers[index];
+    let usize type=if(typed){values::type_id(unit,(state.bindings[index] as usize)-1)}else{
+        let u8 tag=register_type(unit,dst);intern(unit,1,tag,0,at)?
+    };
+    if(typed && token!=61){return .err(wrong(at));}
+    var usize left=0;
+    if(token!=61){if(!types::integer(register_type(unit,dst))){return .err(wrong(at));}
+        left=ir::emit(ref mut unit.body,17,dst,0,at)?;
+    }
+    let Value rhs=expression(source,s,unit,state,table,plan,type,1,0)?;
+    let usize semi=lexer::punctuation(source,s,59)?;
+    if(typed){let usize value=as_value(unit,state,rhs,at)?;return bindings::assign(unit,state,index,value,at);}
+    let usize right=as_scalar(unit,state,rhs,at)?;
+    let usize value=if(token==61){right}else{ir::emit(ref mut unit.body,compound(token),left,right,at)?};
+    return ir::raw(ref mut unit.body,18,dst,value,0,at);
+}
+fn Result<branches::Exit,errors::Error> exit_arm(ref mut values::Program unit,ref bindings::State state,
+    ref mut vec::Vec<bindings::Snapshot> paths,bool terminal,usize at){
+    let usize jump=if(terminal){0}else{ir::raw(ref mut unit.body,19,0,0,0,at)?};
+    return branches::capture(paths,state,terminal,jump,at);
+}
+fn Result<bool,errors::Error> conditional(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
+    ref mut bindings::State state,ref signatures::Table table,ref functions::Plan plan,ref mut vec::Vec<bindings::Snapshot> paths,usize f,usize depth){
+    if(depth>32){return .err(errors::make(4,s.begin));}let usize at=s.begin;
+    let usize keyword=lexer::next(source,s)?;let usize open=lexer::punctuation(source,s,40)?;
+    let Value condition=expression(source,s,unit,state,table,plan,64,1,0)?;
+    let usize test=as_scalar(unit,state,condition,at)?;
+    if(register_type(unit,test)!=2){return .err(wrong(at));}
+    let usize close=lexer::punctuation(source,s,41)?;
+    let usize guard=ir::raw(ref mut unit.body,20,0,test,0,at)?;
+    let usize pool_mark=branches::mark(paths);let usize entry=branches::save(paths,state,at)?;
+    let usize brace=lexer::punctuation(source,s,123)?;
+    let bool ended=block(source,s,unit,state,table,plan,paths,f,depth+1)?;
+    let usize end=lexer::punctuation(source,s,125)?;
+    let branches::Exit left=exit_arm(unit,state,paths,ended,at)?;
+    let usize reset=branches::select(unit,state,paths,entry,at)?;
+    let usize alternative=position(unit);let usize patched=ir::patch(ref mut unit.body,guard,alternative,at)?;
+    var bool terminal=false;
+    if(word(source,s,b"else")){
+        let usize otherwise=lexer::next(source,s)?;
+        if(word(source,s,b"if")){terminal=conditional(source,s,unit,state,table,plan,paths,f,depth+1)?;}
+        else{let usize open_else=lexer::punctuation(source,s,123)?;
+            terminal=block(source,s,unit,state,table,plan,paths,f,depth+1)?;
+            let usize end_else=lexer::punctuation(source,s,125)?;
+        }
+    }
+    let branches::Exit right=exit_arm(unit,state,paths,terminal,at)?;
+    let bool result=branches::join(unit,state,paths,ref left,ref right,at)?;
+    let usize freed=branches::release(paths,pool_mark,at)?;return .ok(result);
+}
+struct Arm { branches::Exit exit; usize instruction; u8 variant; }
+fn Result<Arm,errors::Error> selected_arm(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
+    ref mut bindings::State state,ref signatures::Table table,ref functions::Plan plan,ref mut vec::Vec<bindings::Snapshot> paths,usize f,usize depth,usize subject){
+    let usize at=s.begin;let usize mark=name_count(state);
+    let usize keyword=lexer::word(source,s,b"case")?;let usize dot=lexer::punctuation(source,s,46)?;
+    let bool option=unit.catalog.nodes[values::type_id(unit,subject)].kind==5;
+    let bool positive=word(source,s,if(option){b"some"}else{b"ok"});
+    if(!positive && !word(source,s,if(option){b"none"}else{b"err"})){return .err(wrong(s.begin));}
+    let u8 variant=if(positive){1}else{0};let usize name=lexer::next(source,s)?;
+    let ops::Case branch=ops::case_value(unit,state,subject,variant,at)?;
+    let usize release=bindings::drop(unit,state,subject,at)?;
+    if(branch.payload!=16){
+        let usize open=lexer::punctuation(source,s,40)?;
+        if(s.kind!=2){return .err(errors::make(2,s.begin));}
+        let usize begin=s.begin;let usize end=s.end;
+        if(word(source,s,b"_")){let usize dropped=bindings::drop(unit,state,branch.payload,at)?;}
+        else{
+            if(locals::reserved(source[begin..end]) || locals::find(source,ref state.names,begin,end)!=64){return .err(wrong(begin));}
+            let usize type=values::type_id(unit,branch.payload);
+            if(unit.catalog.nodes[type].kind==1){
+                let usize value=ops::scalar_read(unit,state,branch.payload,at)?;
+                let usize dropped=bindings::drop(unit,state,branch.payload,at)?;
+                let usize bound=locals::declare(ref mut state.names,begin,end,value,false)?;
+            }else{let usize bound=bindings::declare(unit,state,source,begin,end,branch.payload,type)?;}
+        }
+        let usize capture=lexer::next(source,s)?;let usize close=lexer::punctuation(source,s,41)?;
+    }
+    let usize colon=lexer::punctuation(source,s,58)?;let usize brace=lexer::punctuation(source,s,123)?;
+    let bool terminal=block(source,s,unit,state,table,plan,paths,f,depth+1)?;
+    let usize close=lexer::punctuation(source,s,125)?;
+    if(!terminal){let usize released=bindings::leave_scope(unit,state,mark,at)?;}
+    let branches::Exit exit=exit_arm(unit,state,paths,terminal,at)?;
+    return .ok(Arm{.exit=exit,.instruction=branch.instruction,.variant=variant});
+}
+fn Result<bool,errors::Error> selection(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
+    ref mut bindings::State state,ref signatures::Table table,ref functions::Plan plan,ref mut vec::Vec<bindings::Snapshot> paths,usize f,usize depth){
+    if(depth>32){return .err(errors::make(4,s.begin));}let usize at=s.begin;
+    let usize keyword=lexer::next(source,s)?;let usize open=lexer::punctuation(source,s,40)?;
+    let Value value=expression(source,s,unit,state,table,plan,64,1,0)?;
+    if(value.nothing || value.exact>=unit.catalog.count ||
+        (unit.catalog.nodes[value.exact].kind!=5 && unit.catalog.nodes[value.exact].kind!=6)){return .err(wrong(at));}
+    let usize subject=as_value(unit,state,value,at)?;
+    let usize close=lexer::punctuation(source,s,41)?;let usize brace=lexer::punctuation(source,s,123)?;
+    let usize pool_mark=branches::mark(paths);let usize entry=branches::save(paths,state,at)?;
+    let Arm first=selected_arm(source,s,unit,state,table,plan,paths,f,depth,subject)?;
+    let usize reset=branches::select(unit,state,paths,entry,at)?;
+    let usize next=position(unit);let usize patched=ops::patch_case(unit,first.instruction,next,at)?;
+    let Arm second=selected_arm(source,s,unit,state,table,plan,paths,f,depth,subject)?;
+    if(first.variant==second.variant){return .err(wrong(at));}
+    let usize end=lexer::punctuation(source,s,125)?;
+    let usize failure=ir::raw(ref mut unit.body,25,0,0,0,at)?;
+    let usize failed=ops::patch_case(unit,second.instruction,failure,at)?;
+    let bool result=branches::join(unit,state,paths,ref first.exit,ref second.exit,at)?;
+    let usize freed=branches::release(paths,pool_mark,at)?;return .ok(result);
+}
 fn Result<bool,errors::Error> block(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
-    ref mut bindings::State state,ref signatures::Table table,ref functions::Plan plan,usize f,usize depth){
-    if(depth>32){return .err(errors::make(4,s.begin));}let usize mark=state.names.count;var bool terminal=false;
+    ref mut bindings::State state,ref signatures::Table table,ref functions::Plan plan,ref mut vec::Vec<bindings::Snapshot> paths,usize f,usize depth){
+    if(depth>32){return .err(errors::make(4,s.begin));}let usize mark=name_count(state);var bool terminal=false;
     while(s.kind!=125){
         let usize at=s.begin;if(terminal || s.kind==0){return .err(errors::make(2,at));}
-        if(word(source,s,b"let")){let usize named=declaration(source,s,unit,state,table,plan)?;}
+        if(word(source,s,b"let") || word(source,s,b"var")){let usize named=declaration(source,s,unit,state,table,plan)?;}
+        else if(word(source,s,b"if")){terminal=conditional(source,s,unit,state,table,plan,paths,f,depth)?;}
+        else if(word(source,s,b"switch")){terminal=selection(source,s,unit,state,table,plan,paths,f,depth)?;}
+        else if(assignment_ahead(source,s)?){let usize assigned=assignment(source,s,unit,state,table,plan)?;}
         else if(word(source,s,b"return")){
             let usize next=lexer::next(source,s)?;let usize result=plan.results[f];var Value value=nothing();
             if(result!=0){value=expression(source,s,unit,state,table,plan,result-1,1,0)?;}
@@ -245,7 +385,7 @@ fn Result<bool,errors::Error> block(ref u8[] source,ref mut lexer::State s,ref m
             let Value value=expression(source,s,unit,state,table,plan,64,1,0)?;
             let usize semi=lexer::punctuation(source,s,59)?;let usize dropped=discard_value(unit,state,value,at)?;
         }else if(s.kind==123){
-            let usize open=lexer::next(source,s)?;terminal=block(source,s,unit,state,table,plan,f,depth+1)?;
+            let usize open=lexer::next(source,s)?;terminal=block(source,s,unit,state,table,plan,paths,f,depth+1)?;
             let usize close=lexer::punctuation(source,s,125)?;
         }else{
             let Value value=expression(source,s,unit,state,table,plan,64,1,0)?;
@@ -263,11 +403,11 @@ fn Result<usize,errors::Error> lower(ref u8[] source,ref mut values::Program uni
         let u8 tag=if(result==0){13}else if(unit.catalog.nodes[result-1].kind==1){unit.catalog.nodes[result-1].first}else{0};
         unit.body.return_types[f]=tag;f+=1;
     }
-    var bindings::State state=bindings::empty();f=0;
+    var bindings::State state=bindings::empty();var vec::Vec<bindings::Snapshot> paths=vec::empty<bindings::Snapshot>();f=0;
     while(f<table.count){
         let usize begun=functions::begin(unit,ref mut state,source,ref table,ref plan,f)?;
         var lexer::State cursor=lexer::empty();cursor.cursor=table.bodies[f];let usize first=lexer::next(source,ref mut cursor)?;
-        let bool terminal=block(source,ref mut cursor,unit,ref mut state,ref table,ref plan,f,0)?;
+        let bool terminal=block(source,ref mut cursor,unit,ref mut state,ref table,ref plan,ref mut paths,f,0)?;
         if(cursor.begin!=table.body_ends[f]){return .err(errors::make(2,cursor.begin));}
         if(!terminal){if(plan.results[f]!=0){return .err(errors::make(2,cursor.begin));}
             let usize dropped=clean_function(unit,ref mut state,16,cursor.begin)?;
@@ -275,7 +415,7 @@ fn Result<usize,errors::Error> lower(ref u8[] source,ref mut values::Program uni
         }
         let usize ended=functions::finish(unit,ref state,f,cursor.begin)?;f+=1;
     }
-    return .ok(unit.body.count);
+    return .ok(position(unit));
 }
 pub fn Result<values::Program,errors::Error> compile(ref u8[] source){
     var values::Program unit=values::Program{.body=ir::empty(),.catalog=properties::empty(),
