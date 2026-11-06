@@ -1,19 +1,20 @@
 # Brownie C
 
-## Current implementation (2026-11-06)
+## Current implementation (2026-11-07)
 
-[Aggregate selected places](docs/engineering/aggregate-place-execution.md) now
-execute whole-array copy/fill/list and nominal record copy/constructor stores
-through both native-IR drivers, with complete admission, retained dependency
-guards, exact Fuel preflight and prepaid failure cleanup. Legacy-only prices,
-Fuel default 256 and cap 16000000 remain. Ordered source lowering into these places
-and resource/tag move rules remain open.
+[Ordered aggregate assignment](docs/engineering/aggregate-place-assignment.md)
+now connects whole-array copy/self/fill/list and whole/child nominal record
+copy/constructor stores to early selected destinations in both VM paths.
+Existing grouped targets, CALL/if/switch values and nonlocal cleanup compose
+through shared place IDs. Source Fuel budgets change to cover selection/setup/
+END; instruction prices, default 256 and cap 16000000 remain. Resource/tag moves,
+grouped borrows and reference/Buffer joins remain open.
 
 [Independent aggregate copy IR proof](docs/engineering/aggregate-copy-ir.md) now
 covers existing array/record/subrecord copying and by-value CALLs through canonical
 ownership/loan CFG and ordinary/image/returned-reference admission. Recursive
 activations remain distinct; native storage retains its dynamic window/token checks.
-Ordered aggregate-place source lowering and resource/tag move rules remain open.
+Resource/tag move rules and complete L04 remain open.
 
 [Native retained module programs](docs/engineering/module-program.md) now execute
 explicitly selected public i32 entries with scoped calls/nominal records and
@@ -39,12 +40,12 @@ owners and CALL results through index/length, initializers, by-value arguments,
 returns, assignment and exact-u8 UTF-8 checks. [Grouped record values and
 projections](docs/engineering/record-expression-projections.md) now add constructor
 field reads, grouped named/CALL paths, initializers, by-value arguments, returns
-and whole/child assignment. Aggregate-valued control flow, grouped lvalues/borrows
+and whole/child assignment. General reference/Buffer joins, grouped borrows
 and nested/resource-bearing array elements remain unfinished.
 [If value expressions](docs/engineering/if-expressions.md) now support the existing
 scalar and shallow-tagged domains, including inferred locals, nested tails,
-else-if chains and existing nonlocal-exit cleanup. Aggregate/reference/Buffer
-joins and void functions remain separate work.
+else-if chains and existing nonlocal-exit cleanup. General reference/Buffer
+joins remain separate work.
 [Native project metadata](docs/cli/project-format.md) now admits complete explicit
 source maps, entries and declared requirements; it opens no files and grants nothing.
 Public project loading and CLI module/entry flags, general mutable/non-byte/

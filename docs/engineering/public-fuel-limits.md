@@ -1,12 +1,14 @@
 # Public Fuel costs and CLI ceiling
 
-The [aggregate-place execution successor](aggregate-place-execution.md) now
-connects kinds3/4 and REPLACE87 to both native-IR drivers and complete ordinary,
-image and returned-reference admission. It consumes the existing snapshot/store
-prices and shared selected-list scratch; legacy-only programs retain their
-formats/prices, default256 and cap16000000. Exact native-IR budgets and setup/
-failure boundaries are recorded in that contract. Ordered guest source lowering
-into aggregate selected places remains next; source prices are unchanged.
+The [ordered aggregate source successor](aggregate-place-assignment.md) now
+selects whole-array and nominal record destinations before RHS and ends them
+before anonymous result drops. Complete source budgets deliberately change to
+cover setup/selection/END; the list-assignment fixture changes 66083 to 72670.
+Five independent ordinary/retained source oracles are recorded there, with
+one-short/exact/one-more checks in both actual public routes. Instruction prices,
+Fuel default 256 and cap 16000000 remain; unaffected source keeps its old lowering.
+The [VM execution prerequisite](aggregate-place-execution.md) retains its own
+native-IR fixture totals, independent of the source table.
 
 The [native copy-window prerequisite](aggregate-copy-windows.md) preserves all
 existing prices while skipping physical numeric-array self copies after complete

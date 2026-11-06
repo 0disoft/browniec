@@ -1,3 +1,24 @@
+- Ordered aggregate assignment source lowering is implemented at de0b4a0, with
+  shared compiler selection/cleanup at ecf9cbb. Whole-array copy/self/fill/list
+  and whole/child nominal record copy/constructor stores select before RHS, then
+  END before anonymous result drops. Existing branch/return/propagation/loop
+  cleanup sees the same pending mask. See the
+  [source contract](docs/engineering/aggregate-place-assignment.md).
+  Windows development/release each passed 4 source native groups and 282 tool-free
+  CLI cases (169 aggregate source, 105 public Fuel, 4 reference-return and 4 switch
+  cleanup cases). The helper checkpoint separately passed 2 native groups per
+  profile on its own historical inputs. The current 197-input union matches
+  checkout/Git raw bytes, with 178 LF modules and 307 test files / 1834 annotations.
+  Both final source native selections run fresh. See the
+  [Windows evidence](docs/evidence/aggregate-place-assignment-windows-20261107.json).
+  Existing instruction prices/default 256/cap 16000000 remain; complete source
+  budgets change deliberately, including list assignment 66083 to 72670.
+  Resource/tag moves, grouped borrows, reference/Buffer joins and complete
+  L04/C05/Engine/Instance/host/isolation/platform/delivery remain open. Full
+  language/native Fuel matrices, LF mirrors, Linux, OOM/general stack/performance
+  and clean-machine delivery were not rerun. Local only; no push/release/deployment.
+  Earlier entries retain their checkpoint scopes.
+
 - Aggregate-place driver integration now connects complete kind 3/4 and REPLACE87
   admission to both VM coordinators, with current array/record bindings, shared
   IDs, exact setup/instruction preflight and zero-Fuel place abort before native

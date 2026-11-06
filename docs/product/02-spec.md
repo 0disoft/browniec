@@ -1,3 +1,5 @@
+- L04 ordered aggregate source assignment: [all five source store forms](../engineering/aggregate-place-assignment.md) now select whole arrays and nominal record subtrees before RHS and end them before anonymous owner cleanup. Grouped/CALL/if/switch inputs and nonlocal cleanup share existing place IDs; complete source Fuel changes while instruction prices/default 256/cap 16000000 remain. Resource/tag copy/move and the remaining full L04 obligations stay open.
+
 # Product Specification
 
 - Status: Accepted for design, 2026-10-23

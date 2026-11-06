@@ -9,7 +9,7 @@
   [void functions/statements](../engineering/void-source.md) are connected.
   [Constructor arm constraints](../engineering/constructor-join-inference.md) now
   resolve the existing Option/Result domains in either branch order.
-  General reference/Buffer joins, grouped lvalues/borrows and
+  General reference/Buffer joins, grouped borrows and
   broader constructor context remain language work alongside the units below.
 - The complete requirement crosswalk and actionable gaps are in
   [remaining work](04-remaining-work.md). The [specification](02-spec.md) owns
@@ -27,8 +27,9 @@
   one vector/ID space for all five kinds, preserving legacy-only formats/prices.
   [Aggregate-place execution](../engineering/aggregate-place-execution.md) now
   connects both drivers, complete admission and retained guards with exact Fuel
-  preflight and prepaid cleanup. Next: ordered source lowering, then resource/tag
-  move semantics.
+  preflight and prepaid cleanup. [Ordered aggregate source assignment](../engineering/aggregate-place-assignment.md)
+  now connects early selection, shared exit bookkeeping and all five final stores.
+  Next: resource/tag copy/move semantics and remaining complete L04 obligations.
 - L04 starts with [native owned-array selected locations](../engineering/array-selected-place.md).
   [Independent place IR analysis](../engineering/array-place-ir.md) now checks
   identity and lifetimes. [Native metered storage](../engineering/array-place-storage.md)

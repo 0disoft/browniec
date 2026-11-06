@@ -3,6 +3,10 @@
 Date: 2026-11-06. Execution successor to the
 [shared native dispatcher](place-dispatch.md).
 
+The [ordered source successor](aggregate-place-assignment.md) now connects guest
+aggregate assignments and shared nonlocal cleanup. Source-frontier statements
+below retain this preceding native-IR execution checkpoint and its evidence.
+
 ## Complete admission and current bindings
 
 Ordinary, immutable-image and returned-reference admission now accept whole
