@@ -22,6 +22,7 @@ import casts as casts;
 import array_source as arrays;
 import place_source as places;
 import slice_place_ir as slice_places;
+import record_place_ir as record_places;
 import array_call_source as array_calls;
 import call_prefix_source as call_prefix;
 import struct_call_source as record_calls;
@@ -1597,12 +1598,21 @@ fn Result<usize, errors::Error> record_write_statement(ref u8[] source, ref mut 
         let record_values::Leaf root=record_values::Leaf{.ordinal=0,.tag=0,.record=record};
         let usize assigned=record_value_assignment(source,s,p,table,signatures,id,root,at,result_type,expr_depth,structure,loop_state)?;return .ok(index);}
     let record_values::Leaf leaf=record_values::writable(source,s,p,id,at,ref signatures.context)?;
+    if(!lexer::assignment(s.kind)){return .err(errors::make(2,s.begin));}
+    let usize operation_at=s.begin;let u8 operation=places::compound(s.kind);
+    if(operation!=0 && !types::integer(leaf.tag)){return .err(errors::make(3,operation_at));}
+    let usize equals=lexer::next(source,s)?;
     if(leaf.tag==0){let usize assigned=record_value_assignment(source,s,p,table,signatures,id,leaf,at,result_type,expr_depth,structure,loop_state)?;return .ok(index);}
     let u8 tag = leaf.tag;
-    let usize value = expression(source,s,p,table,signatures,1,expr_depth,tag,result_type,structure,loop_state)?;
+    var locals::Table names=locals::snapshot(table);
+    let usize place=places::record(p,ref mut names,id,leaf.ordinal,at)?;
+    let usize old=if(operation==0){128}else{record_places::read(p,place,id,leaf.ordinal,operation_at)?};
+    var usize value = expression(source,s,p,ref names,signatures,1,expr_depth,tag,result_type,structure,loop_state)?;
     if (p.types[value] != tag) { return .err(errors::make(3, at)); }
     let usize end = lexer::punctuation(source,s,59)?;
-    let usize written = ir::record_write(p,id,leaf.ordinal,value,at)?;
+    if(operation!=0){value=ir::emit(p,operation,old,value,operation_at)?;}
+    let usize written=record_places::store(p,place,id,leaf.ordinal,value,operation_at)?;
+    let usize ended=places::end(p,ref mut names,place,operation_at)?;
     return .ok(index);
 }
 

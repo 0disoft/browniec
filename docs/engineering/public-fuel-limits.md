@@ -5,8 +5,14 @@ setup and SELECT/READ/STORE prices through both native-IR execution paths.
 Record-capable setup is 5077..72277, SELECT is 41025, READ adds stride, STORE
 adds twice stride, and mixed END is 22. Existing array/slice formats and prices
 remain. Exact ordinary native/public budgets are 215691/281219; retained
-native/public budgets are 559753/625290. Record source lowering remains next;
-these native-IR fixture totals are not source oracles. Public limits remain.
+native/public budgets are 559753/625290. These native-IR fixture totals are
+not source oracles. The [record source successor](record-place-assignment.md)
+now supplies ordered field selection and ten checked compounds. Its ordinary
+public plain/compound fixtures require 240190/281220 Fuel; forced retained
+entry requires 584260/625291 and retained marker source 584278/625309. Source
+IR/Fuel changes deliberately without repricing instructions or raising limits.
+Both Windows profiles pass exact/one-short/one-more CLI boundaries and the
+existing 57 public Fuel cases; see the source successor's scoped evidence.
 
 The 2026-11-06 [selected-place VM successor](array-place-execution.md) now admits
 owned-array SELECT/READ/STORE/END through native IR APIs in both drivers. Only

@@ -1,3 +1,21 @@
+- Owned-record scalar field source assignment now selects before RHS and captures
+  old fields before ten checked integer compounds. Shared record/array/slice IDs
+  and lexical snapshots preserve nested targets and nonlocal cleanup. See the
+  [contract](docs/engineering/record-place-assignment.md). Development/release each
+  passed 21 native groups and 286 tool-free CLI cases (111 selected-place,
+  118 existing struct-write and 57 public Fuel) on 193 Git-raw/checkout-matching
+  inputs, 170 LF modules, 294-file discovery and both locked LF mirrors.
+  See [Windows evidence](docs/evidence/record-place-assignment-windows-20261106.json).
+  Plain/compound ordinary public exact Fuel is240190/281220; retained marker
+  public exact Fuel is584278/625309. Source IR/Fuel changes deliberately;
+  existing prices/default256/cap16000000 remain. Version JSON adds two narrow
+  record-assignment flags. A new native rejection test's excess result temporaries
+  were moved to a per-case helper; no stack overrides. Scalar-local/grouped
+  places, overlap and full L04/C05/Instance/host/delivery remain open. Full
+  language/original full native Fuel, Linux, OOM/general stack/performance/
+  isolation/delivery were not rerun. Local only; earlier checkpoints retain
+  their original scopes.
+
 - Owned-record selected-place IR now executes in both VM drivers through
   canonical current record bindings, exact setup/operation preflight and shared
   frame/END cleanup. See the [contract](docs/engineering/record-place-execution.md).

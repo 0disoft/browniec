@@ -86,8 +86,10 @@ It includes record proof, native adapter boundaries, existing slice execution,
 returned-owner protection and original ordinary/retained 32/33 CALL limits.
 Public CLI Fuel tests remain a separate tool-free regression selection.
 
-Record source selection-before-RHS, compounds and cleanup lowering remain next.
-No record source capability flag is added here. Scalar-local/grouped places,
+The [source successor](record-place-assignment.md) now connects ordered record
+field selection, ten checked compounds and cleanup lowering. This native-IR
+checkpoint itself added no source flag; the successor advertises two narrow
+record-assignment flags. Scalar-local/grouped places,
 generic aggregate overlap and complete L04/C05/Instance/host/delivery remain
 open. Full language/original full native Fuel matrices, Linux, OOM injection,
 general stack/performance, isolation and clean-machine delivery are not implied.

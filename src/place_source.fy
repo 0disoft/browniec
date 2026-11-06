@@ -1,6 +1,7 @@
 module place_source;
 import ir as ir;
 import slice_place_ir as slices;
+import record_place_ir as records;
 import locals as locals;
 import errors as errors;
 
@@ -16,19 +17,22 @@ pub fn u8 compound(u8 kind){
 // selecting PC, root and phase. This mask consumes no guest local/register.
 pub fn Result<usize,errors::Error> select(ref mut ir::Program p,ref mut locals::Table names,
     usize root,usize index,usize at){
-    return select_kind(p,names,root,index,at,false);
+    return select_kind(p,names,root,index,at,0);
 }
 pub fn Result<usize,errors::Error> slice(ref mut ir::Program p,ref mut locals::Table names,
     usize site,usize index,usize at){
-    return select_kind(p,names,site,index,at,true);
+    return select_kind(p,names,site,index,at,1);
 }
+pub fn Result<usize,errors::Error> record(ref mut ir::Program p,ref mut locals::Table names,
+    usize site,usize ordinal,usize at){return select_kind(p,names,site,ordinal,at,2);}
 fn Result<usize,errors::Error> select_kind(ref mut ir::Program p,ref mut locals::Table names,
-    usize root,usize index,usize at,bool slice){
+    usize root,usize index,usize at,u8 kind){
     if(names.pending_places>65535){return .err(errors::make(4,at));}
     let usize one=1;var usize id=0;
     while(id<16 && (names.pending_places&(one<<id))!=0){id+=1;}
     if(id==16){return .err(errors::make(4,at));}
-    let usize selected=if(slice){slices::select(p,id,root,index,at)?}else{ir::place_select(p,id,root,index,at)?};
+    let usize selected=if(kind==2){records::select(p,id,root,index,at)?}
+        else if(kind==1){slices::select(p,id,root,index,at)?}else{ir::place_select(p,id,root,index,at)?};
     names.pending_places|=one<<id;return .ok(id);
 }
 pub fn Result<usize,errors::Error> end(ref mut ir::Program p,ref mut locals::Table names,usize id,usize at){

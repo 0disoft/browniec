@@ -87,6 +87,11 @@ fn void rejected(ref u8[] a,ref u8[] b,usize owner){switch(programs::compile(ent
         b"module app;import lib as m;pub fn i32 chosen(){var m::R r=m::R{.a=m::make(20),.b=m::P{.x=22}};r.a=m::make(21);r.a.x=20;let m::P p=r.b;return r.a.x+p.x;}",42);
 }
 
+@test fn void selected_record_fields_and_compounds_cross_qualified_modules(){
+    value(b"module lib;pub struct P{i32 x;}pub struct R{P inner;}pub fn i32 delta(){return 22;}",
+        b"module app;import lib as m;pub fn i32 chosen(){var m::R r=m::R{.inner=m::P{.x=20}};r.inner.x+=m::delta();return r.inner.x;}",42);
+}
+
 @test fn void shared_byte_returns_literals_ranges_and_text_cross_real_module_calls(){
     value(b"module lib;pub fn ref u8[] tail(ref u8[] p){return ref p[1..];}pub fn ref u8[] own(){return b\"*\";}",
         b"module app;import lib as m;pub fn i32 chosen(){let ref u8[] a=m::tail(ref b\"abc\");if(a.len==2 && a[0]==98 && a[1]==99){let ref u8[] b=m::own();return b[0] as i32;}return 0;}",42);

@@ -8,7 +8,7 @@ fn ir::Program compiled(ref u8[] source) {
 }
 fn void value(ref u8[] source) {
     let ir::Program p=compiled(source);assert(verifier::verify(ref p).is_ok);
-    assert(switch(vm::run(ref p,1000000)){case .ok(n):{n==42}case .err(_):{false}});
+    assert(switch(vm::run(ref p,16000000)){case .ok(n):{n==42}case .err(_):{false}});
 }
 @test
 fn void all_six_scalar_fields_accept_exact_typed_writes() {
@@ -29,8 +29,8 @@ fn void rhs_transfers_and_mixed_scopes_preserve_owner_lifetimes() {
 fn void exact_fuel_uses_existing_payload_without_a_second_extent() {
     let ir::Program p=compiled(b"module main;struct P{i32 x;}fn i32 main(){var P p=P{.x=0};p.x=42;return p.x;}");
     assert(p.records.count==1 && p.arrays.count==0);
-    assert(switch(vm::run_with_array_limit(ref p,128782,4)){case .ok(n):{n==42}case .err(_):{false}});
-    assert(switch(vm::run_with_array_limit(ref p,128781,4)){case .err(e):{e.kind==8}case .ok(_):{false}});
+    assert(switch(vm::run_with_array_limit(ref p,174658,4)){case .ok(n):{n==42}case .err(_):{false}});
+    assert(switch(vm::run_with_array_limit(ref p,174657,4)){case .err(e):{e.kind==8}case .ok(_):{false}});
 }
 @test
 fn void immutable_wrong_type_unknown_field_and_for_header_writes_fail() {

@@ -23,7 +23,7 @@ exe=args.exe.resolve(strict=True)
 rows=[]
 
 
-def case(source,error=None,mode='run',fuel=1000000):
+def case(source,error=None,mode='run',fuel=16000000):
     data=source.encode()
     path=output/f'case-{len(rows):03}.brc'
     path.write_bytes(data)
@@ -58,8 +58,8 @@ fixtures=(root/'tests/m2/struct_write.fy').read_text()
 for text in re.findall(r'value\(b"([^"\n]+)"\);',fixtures): both(text)
 basic='module main;struct P{i32 x;}fn i32 main(){var P p=P{.x=0};p.x=42;return p.x;}'
 both(basic)
-case(basic,fuel=194314)
-case(basic,'fuel',fuel=194313)
+case(basic,fuel=240190)
+case(basic,'fuel',fuel=240189)
 case(basic,'fuel',fuel=65536)
 case(basic,'fuel',fuel=0)
 for body,error in [
@@ -68,7 +68,6 @@ for body,error in [
     ('var P p=P{.x=0};let u32 n=42;p.x=n;return 42;','type'),
     ('var P p=P{.x=0};p.missing=42;return 42;','type'),
     ('var P p=P{.x=0};p.x.y=42;return 42;','syntax'),
-    ('var P p=P{.x=0};p.x+=42;return 42;','syntax'),
     ('var P p=P{.x=0};p.x=42 return 42;','syntax'),
     ('var P p=P{.x=0};return p.x=42;','syntax'),
     ('var P p=P{.x=0};for(p.x=1;false;){}return 42;','type'),

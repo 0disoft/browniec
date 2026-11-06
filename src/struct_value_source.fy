@@ -100,7 +100,8 @@ pub fn Result<usize, errors::Error> read(ref u8[] source, ref mut lexer::State s
     if (leaf.tag == 0) { return .err(errors::make(3, at)); }
     return ir::record_read(p, id, leaf.ordinal, at);
 }
-// Dotted final values remain expressions; only '=' after a bounded chain writes.
+// Dotted final values remain expressions; assignment tokens after a bounded
+// chain select a statement, including compounds inside value arms.
 pub fn Result<bool, errors::Error> assigned(ref u8[] source, ref lexer::State state) {
     var lexer::State look = lexer::snapshot(state); var usize depth = 0;
     while (look.kind == 46) {
@@ -109,13 +110,13 @@ pub fn Result<bool, errors::Error> assigned(ref u8[] source, ref lexer::State st
         if (look.kind != 2) { return .ok(false); }
         let usize member = lexer::next(source, ref mut look)?;
     }
-    return .ok(depth != 0 && look.kind == 61);
+    return .ok(depth != 0 && lexer::assignment(look.kind));
 }
 pub fn Result<Leaf, errors::Error> writable(ref u8[] source, ref mut lexer::State s,
     ref ir::Program p, usize id, usize at,ref context::Table scope) {
     if (id >= p.records.count || !p.records.mutable[id] || s.kind != 46) { return .err(errors::make(3, at)); }
     let Leaf leaf = path(source, s, p, p.records.records[id] as usize, at,scope)?;
-    let usize equals = lexer::punctuation(source, s, 61)?;
+    // Keep the exact operator pending for scalar/aggregate assignment lowering.
     return .ok(leaf);
 }
 
