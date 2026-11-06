@@ -6,6 +6,7 @@ import struct_meta as meta;
 import register_set as registers;
 import struct_range as ranges;
 import struct_parameters as parameters;
+import copy_ir as copying;
 
 fn bool readable(ref ir::Program p, ref registers::Set defined, usize r, usize f, u8 tag) {
     return r >= p.register_starts[f] && r < p.register_ends[f] && !p.slots[r] &&
@@ -28,6 +29,7 @@ fn Result<usize, errors::Error> inputs(ref ir::Program p, ref meta::Prepared sha
 }
 pub fn Result<usize, errors::Error> step(ref ir::Program p, ref meta::Prepared shapes,
     usize pc, usize f, ref mut registers::Set defined, ref mut registers::Set written, usize live) {
+    if(copying::operation(p.code[pc*8])){return copying::step(p,pc,f,live);}
     let usize at = pc * 8;
     let u8 op = p.code[at];
     let usize dst = p.code[at + 1] as usize;
@@ -37,13 +39,11 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, ref meta::Prepared s
     if (id >= p.records.count || p.record_functions[id] as usize != f) { return .err(errors::make(5, pc)); }
     let usize one = 1;
     let usize mask = one << (16 + id);
-    if (op == 41 || op == 42) {
+    if (op == 41) {
         if (b != 0 || (live & mask) != 0 || (parameters::initial(p, f) & mask) != 0) { return .err(errors::make(5, pc)); }
         if (op == 41) {
             let usize count = inputs(p,shapes,defined,id,a,f,pc)?;
-        } else if (a >= p.records.count || p.record_functions[a] as usize != f ||
-            (live & (one << (16 + a))) == 0 ||
-            p.records.records[a] != p.records.records[id]) { return .err(errors::make(5, pc)); }
+        }
         return .ok(live | mask);
     }
     if ((live & mask) == 0) { return .err(errors::make(5, pc)); }
@@ -60,21 +60,9 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, ref meta::Prepared s
         let usize checked = span(p,shapes,defined,id,a,start,count,f,pc)?;
         return .ok(live);
     }
-    if (op == 47) {
-        if (!p.records.mutable[id] || a >= p.records.count || p.record_functions[a] as usize != f ||
-            (live & (one << (16+a))) == 0) { return .err(errors::make(5,pc)); }
-        let usize target = ranges::offset(ref p.records.layouts,p.records.records[id] as usize,b,p.code[at+4] as usize)?;
-        let usize origin = ranges::offset(ref p.records.layouts,p.records.records[a] as usize,b,p.code[at+5] as usize)?;
-        return .ok(live);
-    }
     if (op == 45) {
         if (a != 0 || b != 0) { return .err(errors::make(5, pc)); }
         return .ok(live ^ mask);
-    }
-    if (op == 46) {
-        if (b != 0 || !p.records.mutable[id] || a >= p.records.count || p.record_functions[a] as usize != f ||
-            (live & (one << (16 + a))) == 0 || p.records.records[a] != p.records.records[id]) { return .err(errors::make(5, pc)); }
-        return .ok(live);
     }
     let usize leaf = if (op == 43) { b } else { a };
     if (leaf >= shapes.leaves[id]) { return .err(errors::make(5, pc)); }

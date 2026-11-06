@@ -5,6 +5,7 @@ import slice_verifier as slices;
 import errors as errors;
 import register_set as registers;
 import array_parameters as parameters;
+import copy_ir as copying;
 import array_list_ir as lists;
 
 fn bool readable(ref ir::Program p, ref registers::Set defined, usize r, usize f, u8 tag) {
@@ -12,6 +13,7 @@ fn bool readable(ref ir::Program p, ref registers::Set defined, usize r, usize f
 }
 pub fn Result<usize, errors::Error> step(ref ir::Program p, usize pc, usize f,
     ref mut registers::Set defined, ref mut registers::Set written, usize live) {
+    if(copying::operation(p.code[pc*8])){return copying::step(p,pc,f,live);}
     let usize at = pc * 8;
     let u8 op = p.code[at];
     let usize dst = p.code[at + 1] as usize;
@@ -25,14 +27,11 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, usize pc, usize f,
     if (slices::exclusive(p, id, live) ||
         ((op == 34 || op == 38) && slices::exclusive(p, a, live))) { return .err(errors::make(5, pc)); }
     if ((op == 36 || op == 37 || op == 38 || op == 40 || op==81) && slices::borrowed(p, id, live)) { return .err(errors::make(5, pc)); }
-    if (op == 33 || op == 34 || op==80) {
+    if (op == 33 || op==80) {
         if ((op!=80 && b != 0) || (live & mask) != 0 || (parameters::initial(p, f) & mask) != 0) { return .err(errors::make(5, pc)); }
         if(op==80){let usize checked=lists::operands(p,pc,f,defined)?;}
         else if (op == 33) {
             if (!readable(p, defined, a, f, element)) { return .err(errors::make(5, pc)); }
-        } else {
-            if (a >= p.arrays.count || (live & (one << a)) == 0 ||
-                p.arrays.elements[a] != element || p.arrays.lengths[a] != p.arrays.lengths[id]) { return .err(errors::make(5, pc)); }
         }
         return .ok(live | mask);
     }
@@ -58,11 +57,6 @@ pub fn Result<usize, errors::Error> step(ref ir::Program p, usize pc, usize f,
     }
     if(op==40) {
         if(b!=0 || !p.arrays.mutable[id] || !readable(p,defined,a,f,element)) {return .err(errors::make(5,pc));}
-        return .ok(live);
-    }
-    if (op == 38) {
-        if (b != 0 || !p.arrays.mutable[id] || a >= p.arrays.count || (live & (one << a)) == 0 ||
-            p.arrays.elements[a] != element || p.arrays.lengths[a] != p.arrays.lengths[id]) { return .err(errors::make(5, pc)); }
         return .ok(live);
     }
     if (op == 37) {

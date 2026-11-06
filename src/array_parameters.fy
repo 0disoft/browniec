@@ -5,6 +5,7 @@ import errors as errors;
 import register_set as registers;
 import struct_parameters as records;
 import slice_parameters as slices;
+import copy_ir as copying;
 
 // Called after catalog and function/register partitions have been verified.
 pub fn Result<usize, errors::Error> metadata(ref ir::Program p) {
@@ -68,16 +69,8 @@ pub fn Result<usize, errors::Error> arguments_static(ref ir::Program p,usize tar
                     if ((writers & bit)!=0 || (writer_roots & root_bit)!=0) { return .err(errors::make(5,pc)); }
                     writers |= bit; writer_roots |= root_bit;
                 }
-            } else if (p.record_parameters[parameter] != 0) {
-                let usize checked = records::argument(p, p.record_parameters[parameter] as usize, source, caller, live, pc)?;
-            } else if (encoded != 0) {
-                if (source < 128) { return .err(errors::make(5, pc)); }
-                let usize id = source - 128;
-                let usize destination = encoded - 1;
-                let usize one = 1;
-                if (id >= p.arrays.count || p.array_functions[id] as usize != caller || p.arrays.mutable[id] ||
-                    (live & (one << id)) == 0 || p.arrays.elements[id] != p.arrays.elements[destination] ||
-                    p.arrays.lengths[id] != p.arrays.lengths[destination]) { return .err(errors::make(5, pc)); }
+            } else if (p.record_parameters[parameter] != 0 || encoded != 0) {
+                let copying::Plan checked=copying::argument(p,target,parameter,source,caller,live,pc)?;
             } else {
                 if (source < p.register_starts[caller] || source >= p.register_ends[caller] ||
                     p.slots[source] || p.array_parameters[source] != 0 || p.record_parameters[source] != 0 || p.slice_parameters[source] != 0 || !registers::contains(defined, source) ||

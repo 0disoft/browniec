@@ -23,6 +23,7 @@ import static_call_ir as image_calls;
 import static_call_sites as image_sites;
 import reference_lifetimes as reference_lifetimes;
 import place_ir as places;
+import copy_ir as copying;
 
 fn bool readable(ref ir::Program p, ref registers::Set defined, usize r, usize start, usize end) {
     return r >= start && r < end && p.types[r]!=0 && !p.slots[r] && p.array_parameters[r] == 0 && p.record_parameters[r] == 0 && p.slice_parameters[r] == 0 && registers::contains(defined, r);
@@ -270,6 +271,7 @@ fn Result<reborrows::Sites, errors::Error> validate(ref ir::Program p,bool allow
         code_end = p.ends[f]; register_end = p.register_ends[f]; f += 1;
     }
     if (code_end != p.count || register_end != p.registers) { return .err(errors::make(5, 0)); }
+    let usize copy_metadata=copying::metadata(p)?;
     let usize borrowed_parameters = slice_parameters::metadata(p)?;
     let reborrows::Sites loans = reborrows::metadata(p)?;
     let usize parameters = array_parameters::metadata(p)?;

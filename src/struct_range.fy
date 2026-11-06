@@ -9,6 +9,12 @@ pub fn Result<usize, errors::Error> offset(ref layouts::Catalog catalog,
     let layouts::Plan plan = switch(layouts::plan(catalog,18446744073709551615)) {
         case .ok(p): { p } case .err(_): { return .err(errors::make(5,0)); }
     };
+    return offset_prepared(catalog,ref plan,root,nominal,ordinal);
+}
+// Internal proof composition: the caller has independently planned this exact
+// immutable catalog. Reuse that plan for both sides of a copy instruction.
+pub fn Result<usize,errors::Error> offset_prepared(ref layouts::Catalog catalog,
+    ref layouts::Plan plan,usize root,usize nominal,usize ordinal){
     if (root >= plan.count || nominal >= plan.count || ordinal >= 128) { return .err(errors::make(5,0)); }
     if (plan.bytes[root] > 128 || plan.bytes[nominal] > 128) { return .err(errors::make(5,0)); }
     if (root == nominal && ordinal == 0) { return .ok(0); }
