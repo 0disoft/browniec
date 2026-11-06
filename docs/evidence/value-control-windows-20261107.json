@@ -1,0 +1,865 @@
+{
+  "schema": "browniec.value-control-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-06T19:59:09.007692+00:00",
+  "implementationCommits": [
+    "a95eb1114eca52cfbf34edc6fb3a9b049b3f7207",
+    "dbda356b07c88883ffa72ea7d608186017b9f894"
+  ],
+  "platform": "windows/amd64",
+  "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+  "inputManifest": {
+    "path": "docs/evidence/value-control-inputs-windows-20261107.json",
+    "sha256": "12437285416467e5c92ac3b11ca57d7108529ec60def863e9f26e43d563c9fd3"
+  },
+  "checkoutInputsMatched": 209,
+  "gitRawInputsMatched": 209,
+  "lfProductionModules": 197,
+  "nativeModuleGroups": {
+    "value_execution": 2,
+    "value_source": 4,
+    "value_source_bindings": 5,
+    "value_source_case": 3,
+    "value_source_control": 6,
+    "value_source_mutation": 6,
+    "value_source_ops": 3
+  },
+  "stackDiagnostic": {
+    "diagnosticOnly": true,
+    "msvc": "19.51 /Od",
+    "flags": [
+      "/std:c11",
+      "/TC",
+      "/MT",
+      "/Od",
+      "/c",
+      "/FAs"
+    ],
+    "observedDevelopmentExit": -1073741571,
+    "observedCategory": "Windows stack overflow without valid native trap control",
+    "unchangedCombinedFixture": {
+      "path": "tests/m2/value_source_control.fy",
+      "sha256": "b7629f96a427f2af723677f81bc0dda2d45318781ec1678eb6be1438f4a6cbf1"
+    },
+    "sourceDepth": 32,
+    "oneOverDepthRejected": 33,
+    "beforePhase": "After snapshot pooling, before explicit nested metadata borrows",
+    "afterPhase": "Snapshot pooling plus explicit nested metadata borrows",
+    "prologueReservationBytes": {
+      "conditional": {
+        "before": 16904,
+        "after": 4104
+      },
+      "block": {
+        "before": 6488,
+        "after": 4664
+      },
+      "selection": {
+        "before": 18520,
+        "after": 5800
+      },
+      "lower": {
+        "before": 50632,
+        "after": 37912
+      }
+    },
+    "diagnosticArtifacts": [
+      {
+        "path": "build/value-control/parser-pool.c",
+        "sha256": "7c5de04aaaf8637b90c6e33f389faa0d01a6df82c3a3cca3347bff17efde6598"
+      },
+      {
+        "path": "build/value-control/parser-pool.asm",
+        "sha256": "9bfc7a806ada446a0d14c170aa34644ff57e8d401ce88da1b13fd040e890ef51"
+      },
+      {
+        "path": "build/value-control/parser-borrow.c",
+        "sha256": "aef8e0043f769121d2dbde4b01ba176baf749c50c65d520ea1448f5c9baa14af"
+      },
+      {
+        "path": "build/value-control/parser-borrow.asm",
+        "sha256": "33b9b5507dd7feb11ba82b5c171460ef2574957afc9fa2d71dd485a8865e5d08"
+      }
+    ],
+    "limitations": [
+      "Generated C diagnostic used a replacement diagnostic main; it is not the native acceptance image or public C ABI.",
+      "Frame reservations exclude other frames, saved registers/call overhead and heap. They are not total stack or RAM measurements.",
+      "Final acceptance used unmodified combined native tests and the pinned compiler without stack overrides."
+    ]
+  },
+  "commandPathNote": "Checkout and temporary paths are normalized; command hashes identify the original unnormalized local invocations.",
+  "profiles": [
+    {
+      "schema": "browniec.value-source-verification/v1",
+      "status": "passed",
+      "recordedAt": "2026-11-06T19:49:06.962262+00:00",
+      "profile": "development",
+      "phase": "native",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "commands": [
+        {
+          "argv": [
+            "@CHECKOUT/build/toolchain/fairyc.exe",
+            "--version"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "cd072950608b9582b5ea82fc93c07ed15e8a3717854eda1218979d07665488f3",
+          "elapsedSeconds": 0.112,
+          "exit": 0,
+          "stdout": "compiler-version.txt",
+          "stderr": "compiler-version.txt.stderr.txt",
+          "stdoutSha256": "cfd188b9865777d7972b1c1e1c4e2e50d2735becbeca8627863cde0d38330e34",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "@CHECKOUT/build/toolchain/fairyc.exe",
+            "check",
+            "--locked"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "4a56238644fd3eae28b5ed5d8800427c848e4ce7ced9f90c5a0cc4089afb5fc0",
+          "elapsedSeconds": 6.536,
+          "exit": 0,
+          "stdout": "check.txt",
+          "stderr": "check.txt.stderr.txt",
+          "stdoutSha256": "52fb024e69868512810ed95acb32516d132276d72745113f7bd07f1128a94591",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "@CHECKOUT/build/toolchain/fairyc.exe",
+            "test",
+            "--native",
+            "--capture-output",
+            "--json",
+            "--locked",
+            "--exact",
+            "tests::m2::value_execution::active_inactive_and_mismatched_buffer_tags_clean_up_and_scalar_payloads_roundtrip",
+            "--exact",
+            "tests::m2::value_execution::typed_calls_return_into_consumed_actuals_and_allow_repeated_copyable_arguments",
+            "--exact",
+            "tests::m2::value_source::empty_buffer_and_nested_tags_run_through_forward_mixed_calls_and_real_cleanup",
+            "--exact",
+            "tests::m2::value_source::failed_native_setup_and_instruction_budgets_leave_reusable_source_and_exact_errors",
+            "--exact",
+            "tests::m2::value_source::scalar_domains_void_calls_and_lexical_scopes_preserve_ordinary_register_values",
+            "--exact",
+            "tests::m2::value_source::whole_type_move_rules_and_unsupported_source_forms_fail_before_vm_admission",
+            "--exact",
+            "tests::m2::value_source_bindings::alternatives_restore_entry_liveness_keep_distinct_slots_and_verify_exclusive_cfg_moves",
+            "--exact",
+            "tests::m2::value_source_bindings::branch_merge_cannot_revive_owners_and_static_slots_are_global_across_functions",
+            "--exact",
+            "tests::m2::value_source_bindings::cleanup_is_reverse_live_only_and_capacity_rejection_is_atomic",
+            "--exact",
+            "tests::m2::value_source_bindings::names_share_locals_rules_exact_types_and_bounded_atomic_publication",
+            "--exact",
+            "tests::m2::value_source_bindings::whole_types_select_copy_or_move_including_inactive_buffer_and_verify_actual_ir",
+            "--exact",
+            "tests::m2::value_source_case::exhaustive_cases_copy_plain_wrappers_and_move_whole_buffer_wrappers_on_both_variants",
+            "--exact",
+            "tests::m2::value_source_case::invalid_cases_and_full_instruction_or_child_budgets_reject_atomically",
+            "--exact",
+            "tests::m2::value_source_case::none_needs_no_free_child_slot_and_patch_defers_final_target_admission",
+            "--exact",
+            "tests::m2::value_source_control::admitted_32_deep_conditionals_execute_and_33_reject_without_native_stack_override",
+            "--exact",
+            "tests::m2::value_source_control::conditional_moves_emit_real_cleanup_on_the_other_path_without_owner_revival",
+            "--exact",
+            "tests::m2::value_source_control::exhaustive_switches_extract_nested_wide_and_buffer_payloads_and_merge_surviving_paths",
+            "--exact",
+            "tests::m2::value_source_control::maybe_moved_values_immutable_writes_and_nonexhaustive_or_duplicate_cases_reject",
+            "--exact",
+            "tests::m2::value_source_control::mutable_buffers_wrappers_and_scalar_slots_replace_reinitialize_and_snapshot_rhs_values",
+            "--exact",
+            "tests::m2::value_source_control::unselected_if_and_switch_arms_do_not_execute_failing_calls",
+            "--exact",
+            "tests::m2::value_source_mutation::assignment_preflights_full_budget_including_dead_and_self_destinations",
+            "--exact",
+            "tests::m2::value_source_mutation::assignment_rejects_invalid_metadata_before_any_drop_or_move",
+            "--exact",
+            "tests::m2::value_source_mutation::copyable_reads_copy_but_assignment_consumes_rhs_and_immutable_names_stay_immutable",
+            "--exact",
+            "tests::m2::value_source_mutation::mutable_buffer_replaces_reinitializes_and_keeps_fixed_name_slot",
+            "--exact",
+            "tests::m2::value_source_mutation::path_selection_rejects_invalid_snapshots_atomically_and_can_restore_live_after_terminal",
+            "--exact",
+            "tests::m2::value_source_mutation::select_surviving_exit_after_terminal_cleanup_preserves_global_allocations_and_cfg_proof",
+            "--exact",
+            "tests::m2::value_source_ops::all_scalar_domains_roundtrip_without_consumption_and_execute_independent_comparisons",
+            "--exact",
+            "tests::m2::value_source_ops::buffer_tags_copy_plain_children_and_move_whole_types_with_inactive_buffer_alternatives",
+            "--exact",
+            "tests::m2::value_source_ops::invalid_operands_dead_foreign_slots_and_full_budgets_reject_before_publication"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "44ebd2a86e377113944c71d451f12f81d5a0bc83e500ae231ad3f4d9667d457c",
+          "elapsedSeconds": 216.95,
+          "exit": 0,
+          "stdout": "native.json",
+          "stderr": "native.json.stderr.txt",
+          "stdoutSha256": "90953b9ee4364b90b80e4ebf5b289ec80da5b916ae6de9fef6ba44ad9127cb26",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "selectedTests": [
+        "tests::m2::value_execution::active_inactive_and_mismatched_buffer_tags_clean_up_and_scalar_payloads_roundtrip",
+        "tests::m2::value_execution::typed_calls_return_into_consumed_actuals_and_allow_repeated_copyable_arguments",
+        "tests::m2::value_source::empty_buffer_and_nested_tags_run_through_forward_mixed_calls_and_real_cleanup",
+        "tests::m2::value_source::failed_native_setup_and_instruction_budgets_leave_reusable_source_and_exact_errors",
+        "tests::m2::value_source::scalar_domains_void_calls_and_lexical_scopes_preserve_ordinary_register_values",
+        "tests::m2::value_source::whole_type_move_rules_and_unsupported_source_forms_fail_before_vm_admission",
+        "tests::m2::value_source_bindings::alternatives_restore_entry_liveness_keep_distinct_slots_and_verify_exclusive_cfg_moves",
+        "tests::m2::value_source_bindings::branch_merge_cannot_revive_owners_and_static_slots_are_global_across_functions",
+        "tests::m2::value_source_bindings::cleanup_is_reverse_live_only_and_capacity_rejection_is_atomic",
+        "tests::m2::value_source_bindings::names_share_locals_rules_exact_types_and_bounded_atomic_publication",
+        "tests::m2::value_source_bindings::whole_types_select_copy_or_move_including_inactive_buffer_and_verify_actual_ir",
+        "tests::m2::value_source_case::exhaustive_cases_copy_plain_wrappers_and_move_whole_buffer_wrappers_on_both_variants",
+        "tests::m2::value_source_case::invalid_cases_and_full_instruction_or_child_budgets_reject_atomically",
+        "tests::m2::value_source_case::none_needs_no_free_child_slot_and_patch_defers_final_target_admission",
+        "tests::m2::value_source_control::admitted_32_deep_conditionals_execute_and_33_reject_without_native_stack_override",
+        "tests::m2::value_source_control::conditional_moves_emit_real_cleanup_on_the_other_path_without_owner_revival",
+        "tests::m2::value_source_control::exhaustive_switches_extract_nested_wide_and_buffer_payloads_and_merge_surviving_paths",
+        "tests::m2::value_source_control::maybe_moved_values_immutable_writes_and_nonexhaustive_or_duplicate_cases_reject",
+        "tests::m2::value_source_control::mutable_buffers_wrappers_and_scalar_slots_replace_reinitialize_and_snapshot_rhs_values",
+        "tests::m2::value_source_control::unselected_if_and_switch_arms_do_not_execute_failing_calls",
+        "tests::m2::value_source_mutation::assignment_preflights_full_budget_including_dead_and_self_destinations",
+        "tests::m2::value_source_mutation::assignment_rejects_invalid_metadata_before_any_drop_or_move",
+        "tests::m2::value_source_mutation::copyable_reads_copy_but_assignment_consumes_rhs_and_immutable_names_stay_immutable",
+        "tests::m2::value_source_mutation::mutable_buffer_replaces_reinitializes_and_keeps_fixed_name_slot",
+        "tests::m2::value_source_mutation::path_selection_rejects_invalid_snapshots_atomically_and_can_restore_live_after_terminal",
+        "tests::m2::value_source_mutation::select_surviving_exit_after_terminal_cleanup_preserves_global_allocations_and_cfg_proof",
+        "tests::m2::value_source_ops::all_scalar_domains_roundtrip_without_consumption_and_execute_independent_comparisons",
+        "tests::m2::value_source_ops::buffer_tags_copy_plain_children_and_move_whole_types_with_inactive_buffer_alternatives",
+        "tests::m2::value_source_ops::invalid_operands_dead_foreign_slots_and_full_budgets_reject_before_publication"
+      ],
+      "nativeGroups": 29,
+      "selectedNativeGroups": 29,
+      "nativeWorkspace": "byte-identical-production-selected-tests",
+      "nativeOverrides": false,
+      "historicalResultReuse": false,
+      "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false",
+      "check": "check ok: 2 instance(s), 205 source file(s), 2120 MIR function(s), lock verified\n",
+      "nativeReport": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "development",
+        "tests": [
+          {
+            "identity": "tests::m2::value_execution::active_inactive_and_mismatched_buffer_tags_clean_up_and_scalar_payloads_roundtrip",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_execution::typed_calls_return_into_consumed_actuals_and_allow_repeated_copyable_arguments",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source::empty_buffer_and_nested_tags_run_through_forward_mixed_calls_and_real_cleanup",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source::failed_native_setup_and_instruction_budgets_leave_reusable_source_and_exact_errors",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source::scalar_domains_void_calls_and_lexical_scopes_preserve_ordinary_register_values",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source::whole_type_move_rules_and_unsupported_source_forms_fail_before_vm_admission",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_bindings::alternatives_restore_entry_liveness_keep_distinct_slots_and_verify_exclusive_cfg_moves",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_bindings::branch_merge_cannot_revive_owners_and_static_slots_are_global_across_functions",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_bindings::cleanup_is_reverse_live_only_and_capacity_rejection_is_atomic",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_bindings::names_share_locals_rules_exact_types_and_bounded_atomic_publication",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_bindings::whole_types_select_copy_or_move_including_inactive_buffer_and_verify_actual_ir",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_case::exhaustive_cases_copy_plain_wrappers_and_move_whole_buffer_wrappers_on_both_variants",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_case::invalid_cases_and_full_instruction_or_child_budgets_reject_atomically",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_case::none_needs_no_free_child_slot_and_patch_defers_final_target_admission",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_control::admitted_32_deep_conditionals_execute_and_33_reject_without_native_stack_override",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_control::conditional_moves_emit_real_cleanup_on_the_other_path_without_owner_revival",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_control::exhaustive_switches_extract_nested_wide_and_buffer_payloads_and_merge_surviving_paths",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_control::maybe_moved_values_immutable_writes_and_nonexhaustive_or_duplicate_cases_reject",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_control::mutable_buffers_wrappers_and_scalar_slots_replace_reinitialize_and_snapshot_rhs_values",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_control::unselected_if_and_switch_arms_do_not_execute_failing_calls",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_mutation::assignment_preflights_full_budget_including_dead_and_self_destinations",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_mutation::assignment_rejects_invalid_metadata_before_any_drop_or_move",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_mutation::copyable_reads_copy_but_assignment_consumes_rhs_and_immutable_names_stay_immutable",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_mutation::mutable_buffer_replaces_reinitializes_and_keeps_fixed_name_slot",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_mutation::path_selection_rejects_invalid_snapshots_atomically_and_can_restore_live_after_terminal",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_mutation::select_surviving_exit_after_terminal_cleanup_preserves_global_allocations_and_cfg_proof",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_ops::all_scalar_domains_roundtrip_without_consumption_and_execute_independent_comparisons",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_ops::buffer_tags_copy_plain_children_and_move_whole_types_with_inactive_buffer_alternatives",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_ops::invalid_operands_dead_foreign_slots_and_full_budgets_reject_before_publication",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 29,
+        "passed": 29,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "nativeReportSha256": "3e9a2161e94db05ddb81b7e6ec0a664e28a78d6c1062031e34334f876daf64e8",
+      "nativeInputMirrorVerified": true,
+      "elapsedSeconds": 224.271,
+      "cliSkipped": "Optional public Fuel CLI suite was not requested."
+    },
+    {
+      "schema": "browniec.value-source-verification/v1",
+      "status": "passed",
+      "recordedAt": "2026-11-06T19:51:00.567725+00:00",
+      "profile": "release",
+      "phase": "native",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "commands": [
+        {
+          "argv": [
+            "@CHECKOUT/build/toolchain/fairyc.exe",
+            "--version"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "cd072950608b9582b5ea82fc93c07ed15e8a3717854eda1218979d07665488f3",
+          "elapsedSeconds": 0.076,
+          "exit": 0,
+          "stdout": "compiler-version.txt",
+          "stderr": "compiler-version.txt.stderr.txt",
+          "stdoutSha256": "cfd188b9865777d7972b1c1e1c4e2e50d2735becbeca8627863cde0d38330e34",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "@CHECKOUT/build/toolchain/fairyc.exe",
+            "check",
+            "--locked"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "4a56238644fd3eae28b5ed5d8800427c848e4ce7ced9f90c5a0cc4089afb5fc0",
+          "elapsedSeconds": 4.997,
+          "exit": 0,
+          "stdout": "check.txt",
+          "stderr": "check.txt.stderr.txt",
+          "stdoutSha256": "52fb024e69868512810ed95acb32516d132276d72745113f7bd07f1128a94591",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "@CHECKOUT/build/toolchain/fairyc.exe",
+            "test",
+            "--native",
+            "--capture-output",
+            "--json",
+            "--locked",
+            "--release",
+            "--exact",
+            "tests::m2::value_execution::active_inactive_and_mismatched_buffer_tags_clean_up_and_scalar_payloads_roundtrip",
+            "--exact",
+            "tests::m2::value_execution::typed_calls_return_into_consumed_actuals_and_allow_repeated_copyable_arguments",
+            "--exact",
+            "tests::m2::value_source::empty_buffer_and_nested_tags_run_through_forward_mixed_calls_and_real_cleanup",
+            "--exact",
+            "tests::m2::value_source::failed_native_setup_and_instruction_budgets_leave_reusable_source_and_exact_errors",
+            "--exact",
+            "tests::m2::value_source::scalar_domains_void_calls_and_lexical_scopes_preserve_ordinary_register_values",
+            "--exact",
+            "tests::m2::value_source::whole_type_move_rules_and_unsupported_source_forms_fail_before_vm_admission",
+            "--exact",
+            "tests::m2::value_source_bindings::alternatives_restore_entry_liveness_keep_distinct_slots_and_verify_exclusive_cfg_moves",
+            "--exact",
+            "tests::m2::value_source_bindings::branch_merge_cannot_revive_owners_and_static_slots_are_global_across_functions",
+            "--exact",
+            "tests::m2::value_source_bindings::cleanup_is_reverse_live_only_and_capacity_rejection_is_atomic",
+            "--exact",
+            "tests::m2::value_source_bindings::names_share_locals_rules_exact_types_and_bounded_atomic_publication",
+            "--exact",
+            "tests::m2::value_source_bindings::whole_types_select_copy_or_move_including_inactive_buffer_and_verify_actual_ir",
+            "--exact",
+            "tests::m2::value_source_case::exhaustive_cases_copy_plain_wrappers_and_move_whole_buffer_wrappers_on_both_variants",
+            "--exact",
+            "tests::m2::value_source_case::invalid_cases_and_full_instruction_or_child_budgets_reject_atomically",
+            "--exact",
+            "tests::m2::value_source_case::none_needs_no_free_child_slot_and_patch_defers_final_target_admission",
+            "--exact",
+            "tests::m2::value_source_control::admitted_32_deep_conditionals_execute_and_33_reject_without_native_stack_override",
+            "--exact",
+            "tests::m2::value_source_control::conditional_moves_emit_real_cleanup_on_the_other_path_without_owner_revival",
+            "--exact",
+            "tests::m2::value_source_control::exhaustive_switches_extract_nested_wide_and_buffer_payloads_and_merge_surviving_paths",
+            "--exact",
+            "tests::m2::value_source_control::maybe_moved_values_immutable_writes_and_nonexhaustive_or_duplicate_cases_reject",
+            "--exact",
+            "tests::m2::value_source_control::mutable_buffers_wrappers_and_scalar_slots_replace_reinitialize_and_snapshot_rhs_values",
+            "--exact",
+            "tests::m2::value_source_control::unselected_if_and_switch_arms_do_not_execute_failing_calls",
+            "--exact",
+            "tests::m2::value_source_mutation::assignment_preflights_full_budget_including_dead_and_self_destinations",
+            "--exact",
+            "tests::m2::value_source_mutation::assignment_rejects_invalid_metadata_before_any_drop_or_move",
+            "--exact",
+            "tests::m2::value_source_mutation::copyable_reads_copy_but_assignment_consumes_rhs_and_immutable_names_stay_immutable",
+            "--exact",
+            "tests::m2::value_source_mutation::mutable_buffer_replaces_reinitializes_and_keeps_fixed_name_slot",
+            "--exact",
+            "tests::m2::value_source_mutation::path_selection_rejects_invalid_snapshots_atomically_and_can_restore_live_after_terminal",
+            "--exact",
+            "tests::m2::value_source_mutation::select_surviving_exit_after_terminal_cleanup_preserves_global_allocations_and_cfg_proof",
+            "--exact",
+            "tests::m2::value_source_ops::all_scalar_domains_roundtrip_without_consumption_and_execute_independent_comparisons",
+            "--exact",
+            "tests::m2::value_source_ops::buffer_tags_copy_plain_children_and_move_whole_types_with_inactive_buffer_alternatives",
+            "--exact",
+            "tests::m2::value_source_ops::invalid_operands_dead_foreign_slots_and_full_budgets_reject_before_publication"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "f33169eb1ea9172a04d8a5e02025b04deef454f80c56dcfc5b3c4342167dea80",
+          "elapsedSeconds": 319.13,
+          "exit": 0,
+          "stdout": "native.json",
+          "stderr": "native.json.stderr.txt",
+          "stdoutSha256": "4342ca22ce52ffb5cdead6b44a46a4b9b7a4d94a1c8f2114cf1d1f639858f867",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "selectedTests": [
+        "tests::m2::value_execution::active_inactive_and_mismatched_buffer_tags_clean_up_and_scalar_payloads_roundtrip",
+        "tests::m2::value_execution::typed_calls_return_into_consumed_actuals_and_allow_repeated_copyable_arguments",
+        "tests::m2::value_source::empty_buffer_and_nested_tags_run_through_forward_mixed_calls_and_real_cleanup",
+        "tests::m2::value_source::failed_native_setup_and_instruction_budgets_leave_reusable_source_and_exact_errors",
+        "tests::m2::value_source::scalar_domains_void_calls_and_lexical_scopes_preserve_ordinary_register_values",
+        "tests::m2::value_source::whole_type_move_rules_and_unsupported_source_forms_fail_before_vm_admission",
+        "tests::m2::value_source_bindings::alternatives_restore_entry_liveness_keep_distinct_slots_and_verify_exclusive_cfg_moves",
+        "tests::m2::value_source_bindings::branch_merge_cannot_revive_owners_and_static_slots_are_global_across_functions",
+        "tests::m2::value_source_bindings::cleanup_is_reverse_live_only_and_capacity_rejection_is_atomic",
+        "tests::m2::value_source_bindings::names_share_locals_rules_exact_types_and_bounded_atomic_publication",
+        "tests::m2::value_source_bindings::whole_types_select_copy_or_move_including_inactive_buffer_and_verify_actual_ir",
+        "tests::m2::value_source_case::exhaustive_cases_copy_plain_wrappers_and_move_whole_buffer_wrappers_on_both_variants",
+        "tests::m2::value_source_case::invalid_cases_and_full_instruction_or_child_budgets_reject_atomically",
+        "tests::m2::value_source_case::none_needs_no_free_child_slot_and_patch_defers_final_target_admission",
+        "tests::m2::value_source_control::admitted_32_deep_conditionals_execute_and_33_reject_without_native_stack_override",
+        "tests::m2::value_source_control::conditional_moves_emit_real_cleanup_on_the_other_path_without_owner_revival",
+        "tests::m2::value_source_control::exhaustive_switches_extract_nested_wide_and_buffer_payloads_and_merge_surviving_paths",
+        "tests::m2::value_source_control::maybe_moved_values_immutable_writes_and_nonexhaustive_or_duplicate_cases_reject",
+        "tests::m2::value_source_control::mutable_buffers_wrappers_and_scalar_slots_replace_reinitialize_and_snapshot_rhs_values",
+        "tests::m2::value_source_control::unselected_if_and_switch_arms_do_not_execute_failing_calls",
+        "tests::m2::value_source_mutation::assignment_preflights_full_budget_including_dead_and_self_destinations",
+        "tests::m2::value_source_mutation::assignment_rejects_invalid_metadata_before_any_drop_or_move",
+        "tests::m2::value_source_mutation::copyable_reads_copy_but_assignment_consumes_rhs_and_immutable_names_stay_immutable",
+        "tests::m2::value_source_mutation::mutable_buffer_replaces_reinitializes_and_keeps_fixed_name_slot",
+        "tests::m2::value_source_mutation::path_selection_rejects_invalid_snapshots_atomically_and_can_restore_live_after_terminal",
+        "tests::m2::value_source_mutation::select_surviving_exit_after_terminal_cleanup_preserves_global_allocations_and_cfg_proof",
+        "tests::m2::value_source_ops::all_scalar_domains_roundtrip_without_consumption_and_execute_independent_comparisons",
+        "tests::m2::value_source_ops::buffer_tags_copy_plain_children_and_move_whole_types_with_inactive_buffer_alternatives",
+        "tests::m2::value_source_ops::invalid_operands_dead_foreign_slots_and_full_budgets_reject_before_publication"
+      ],
+      "nativeGroups": 29,
+      "selectedNativeGroups": 29,
+      "nativeWorkspace": "byte-identical-production-selected-tests",
+      "nativeOverrides": false,
+      "historicalResultReuse": false,
+      "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false",
+      "check": "check ok: 2 instance(s), 205 source file(s), 2120 MIR function(s), lock verified\n",
+      "nativeReport": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "release",
+        "tests": [
+          {
+            "identity": "tests::m2::value_execution::active_inactive_and_mismatched_buffer_tags_clean_up_and_scalar_payloads_roundtrip",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_execution::typed_calls_return_into_consumed_actuals_and_allow_repeated_copyable_arguments",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source::empty_buffer_and_nested_tags_run_through_forward_mixed_calls_and_real_cleanup",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source::failed_native_setup_and_instruction_budgets_leave_reusable_source_and_exact_errors",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source::scalar_domains_void_calls_and_lexical_scopes_preserve_ordinary_register_values",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source::whole_type_move_rules_and_unsupported_source_forms_fail_before_vm_admission",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_bindings::alternatives_restore_entry_liveness_keep_distinct_slots_and_verify_exclusive_cfg_moves",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_bindings::branch_merge_cannot_revive_owners_and_static_slots_are_global_across_functions",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_bindings::cleanup_is_reverse_live_only_and_capacity_rejection_is_atomic",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_bindings::names_share_locals_rules_exact_types_and_bounded_atomic_publication",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_bindings::whole_types_select_copy_or_move_including_inactive_buffer_and_verify_actual_ir",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_case::exhaustive_cases_copy_plain_wrappers_and_move_whole_buffer_wrappers_on_both_variants",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_case::invalid_cases_and_full_instruction_or_child_budgets_reject_atomically",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_case::none_needs_no_free_child_slot_and_patch_defers_final_target_admission",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_control::admitted_32_deep_conditionals_execute_and_33_reject_without_native_stack_override",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_control::conditional_moves_emit_real_cleanup_on_the_other_path_without_owner_revival",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_control::exhaustive_switches_extract_nested_wide_and_buffer_payloads_and_merge_surviving_paths",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_control::maybe_moved_values_immutable_writes_and_nonexhaustive_or_duplicate_cases_reject",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_control::mutable_buffers_wrappers_and_scalar_slots_replace_reinitialize_and_snapshot_rhs_values",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_control::unselected_if_and_switch_arms_do_not_execute_failing_calls",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_mutation::assignment_preflights_full_budget_including_dead_and_self_destinations",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_mutation::assignment_rejects_invalid_metadata_before_any_drop_or_move",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_mutation::copyable_reads_copy_but_assignment_consumes_rhs_and_immutable_names_stay_immutable",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_mutation::mutable_buffer_replaces_reinitializes_and_keeps_fixed_name_slot",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_mutation::path_selection_rejects_invalid_snapshots_atomically_and_can_restore_live_after_terminal",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_mutation::select_surviving_exit_after_terminal_cleanup_preserves_global_allocations_and_cfg_proof",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_ops::all_scalar_domains_roundtrip_without_consumption_and_execute_independent_comparisons",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_ops::buffer_tags_copy_plain_children_and_move_whole_types_with_inactive_buffer_alternatives",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_ops::invalid_operands_dead_foreign_slots_and_full_budgets_reject_before_publication",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 29,
+        "passed": 29,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "nativeReportSha256": "47fbce6840944f65f18053f9ed9855f278e1d9b56737f4ef77d68357089b7f2c",
+      "nativeInputMirrorVerified": true,
+      "elapsedSeconds": 324.77,
+      "cliSkipped": "Optional public Fuel CLI suite was not requested."
+    }
+  ],
+  "limitations": [
+    "Private typed-source mutable locals and statement if/switch are implemented; public compiler/CLI routes, opcode prices and capability flags are unchanged.",
+    "Typed value-expression joins, loops/break/continue, wider predicates/propagation, must-use diagnostics, general aggregate/reference/module/public composition and useful Buffer operations remain open.",
+    "Engine/Instance/host/isolation/embedding/delivery and broader validation remain open.",
+    "No public CLI/full native/language/Fuel matrix, Linux, LF runtime mirror, OOM injection, general stack/performance or clean-machine delivery run.",
+    "Local commits only; no push, release or deployment."
+  ]
+}

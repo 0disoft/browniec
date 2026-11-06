@@ -48,8 +48,9 @@ never rewinds between functions or lexical scopes.
 ## Scope still open
 
 This is a private executable body bridge, not full language completion or public
-Buffer admission. Mutable typed assignment, if/switch/loop joins, wider predicates
-and propagation, must-use diagnostics, aggregate construction/projection, general
+Buffer admission. The [control successor](value-control.md) now supplies mutable
+assignment and statement if/switch joins. Typed value-expression joins, loops,
+wider predicates and propagation, must-use diagnostics, aggregate construction/projection, general
 references, import/visibility integration and ordinary/retained public source
 composition still need implementation. Typed arrays and nominal records can have
 signature metadata; this parser does not yet create their source values.

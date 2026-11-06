@@ -115,8 +115,9 @@ implemented in source by the [execution successor](value-execution.md). The
 [source foundation](value-source.md) adds canonical types/signatures and lexical
 COPY/MOVE/DROP metadata. The [private body bridge](value-body.md) now connects
 empty Buffer/nested-wrapper construction, immutable locals and mixed CALL/RETURN.
-Mutable assignment, control-flow joins, wider predicates and public integration
-remain next. General
+The [control successor](value-control.md) now supplies mutable assignment and
+statement joins. Typed value-expression joins, loops, wider predicates and public
+integration remain next. General
 reference/Buffer joins, must-use, full L04/L05/D01-D04 and broader language,
 Engine/Instance/host/isolation/platform/delivery work remain open. Full CLI/
 language/native Fuel matrices, Linux, OOM injection, general stack/performance/RAM

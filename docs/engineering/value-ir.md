@@ -11,8 +11,9 @@ through native value frames and the ordinary VM. Ordinary, image and returned
 reference admissions keep their existing gates. The [source foundation](value-source.md)
 now provides canonical type/signature and lexical COPY/MOVE/DROP metadata;
 the [private body bridge](value-body.md) now connects empty Buffer/nested-wrapper
-constructors, immutable locals and mixed CALL/RETURN. Broader expressions, mutable
-assignment, control-flow joins and public integration remain next.
+constructors, immutable locals and mixed CALL/RETURN. The [control successor](value-control.md)
+adds mutable assignment and statement joins. Typed value-expression joins, loops,
+broader operations and public integration remain next.
 
 ## Instructions and type identity
 
@@ -100,8 +101,9 @@ now connects retained code/layout, typed dispatch and atomic mixed typed/ordinar
 CALL/RETURN handoff to that storage. The [source foundation](value-source.md)
 now supplies canonical type/signature and lexical ownership preparation;
 the [private body bridge](value-body.md) now connects empty Buffer/nested-wrapper
-constructors, immutable locals and mixed CALL/RETURN. Broader expressions, mutable
-assignment, control-flow joins and public integration remain next.
+constructors, immutable locals and mixed CALL/RETURN. The [control successor](value-control.md)
+adds mutable assignment and statement joins. Typed value-expression joins, loops,
+broader operations and public integration remain next.
 General reference/Buffer joins,
 must-use, Engine/Instance ownership and complete L04/L05/D01-D04 remain open.
 

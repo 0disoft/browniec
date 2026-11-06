@@ -1,3 +1,20 @@
+- Private typed mutation and statement control are implemented at dbda356 after
+  mutable/CASE helpers a95eb11. See [the contract](docs/engineering/value-control.md).
+  Source now admits var, whole-value replacement/reinitialization, scalar compound
+  assignments and if/else-if/exhaustive nested tag statements. Continuing edges
+  emit real cleanup to the live-set intersection; moved names cannot revive.
+  Snapshot paths are scoped indices in a bounded compiler-local vector. Borrow
+  nested IR/name metadata before reading scalar fields: direct value projections
+  materialized full tables on the pinned development backend. Diagnostic /Od
+  conditional frames shrink 16904 -> 4104 bytes; final native tests use no override.
+  Both profiles passed 29 groups, including unchanged admitted 32/rejected 33 depth.
+  All 209 inputs match checkout/Git raw bytes; 197 production modules are LF. See
+  docs/evidence/value-control-windows-20261107.json. Public source/CLI gates and
+  existing opcode/Fuel/capability prices are unchanged. Next wider predicates/
+  propagation, typed value-expression joins, loops, useful Buffer operations and
+  general source/public composition. Full objective and broad validation remain
+  open. Local only; no push/release/deployment. Historical checkpoints keep scope.
+
 - Private typed-source bodies are implemented at 468394d after helpers `9476d25`.
   See [the contract](docs/engineering/value-body.md). value_source::compile now
   connects empty Buffer/nested wide-wrapper construction, immutable locals,

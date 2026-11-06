@@ -11,7 +11,18 @@ regressions, then commit; record broader checks only when actually run. Do not
 enable public syntax, delivery flags or ABI availability ahead of implemented
 admission, execution and cleanup. Push/release/deployment are separate actions.
 
-Latest private body checkpoint (2026-11-07): [typed-source bodies](value-body.md)
+Latest private control checkpoint (2026-11-07): [mutation and statement joins](value-control.md)
+now implement mutable typed/scalar locals, replacement/reinitialization, checked
+compound assignments, if/else-if and exhaustive nested tag switches. Continuing
+paths converge through real cleanup to their live-set intersection. Both native
+profiles passed 29 groups on `dbda356` after `a95eb11`, including unchanged admitted 32/
+rejected 33 conditional depth. All 209 inputs match checkout/Git raw bytes; 197
+production modules are LF. See [evidence](../evidence/value-control-windows-20261107.json).
+Next extend wider non-consuming predicates and propagation, typed value-expression
+joins and loops, then useful Buffer operations and general source/public composition.
+The full objective and broader validation obligations remain open.
+
+Predecessor private body checkpoint (2026-11-07): [typed-source bodies](value-body.md)
 now connect empty Buffer/nested wide-wrapper construction, immutable locals,
 lexical cleanup and mixed forward CALL/RETURN to independently verified native
 execution. Development/release each passed 19 native groups on `468394d`; all 206
@@ -195,9 +206,10 @@ Fuel default 256 / ceiling 16000000 and wider capability gates remain unchanged.
    rejection. CFG alternative snapshots never rewind allocations or owner authority.
    The [private body successor](value-body.md) now connects empty Buffer and nested
    wrapper constructors, immutable locals, lexical cleanup and mixed CALL/RETURN.
-   Next add mutable assignment, control-flow joins, wider predicates/propagation
-   and useful Buffer operations before aggregate/reference/module composition
-   and public admission. For L06, public scalar/tagged `.is_ok` and
+   The [control successor](value-control.md) now adds mutable assignment and
+   statement if/switch joins. Next implement wider predicates/propagation, typed
+   value-expression joins, loops and useful Buffer operations before aggregate/
+   reference/module composition and public admission. For L06, public scalar/tagged `.is_ok` and
    explicit discard are implemented; unused Result-binding diagnosis and the
    wide/resource path remain missing, so `must_use_result` stays false.
    These increments do not close L04/L05/L06/D01-D04; wider public gates and

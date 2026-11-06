@@ -2,12 +2,23 @@
 
 ## Current implementation (2026-11-07)
 
+Private [typed mutation and statement control flow](docs/engineering/value-control.md)
+now support `var`, whole-value replacement/reinitialization, checked scalar compound
+assignments, `if`/`else if`/`else` and exhaustive nested tag switches. Continuing
+paths emit real cleanup before merging; moved names stay Dead. Development/release
+each passed 29 native groups, including the unchanged admitted 32/rejected 33 depth
+probe. All 209 inputs match checkout/Git raw bytes; 197 production modules are LF.
+See the [evidence](docs/evidence/value-control-windows-20261107.json). The public
+compiler/CLI gates are unchanged. Typed value-expression joins, loops, wider
+predicates/propagation, must-use and useful Buffer/public composition remain open.
+
 Private [typed-source body execution](docs/engineering/value-body.md) now connects
 empty Buffer creation, nested wide/Buffer wrappers, immutable locals, lexical
 cleanup and mixed forward CALL/RETURN to independently verified native execution.
 This private compiler path does not enable Buffer syntax in the public CLI.
-Mutable assignment, control-flow joins, wider predicates/propagation, useful
-Buffer byte/text operations and public composition remain next. Windows
+The control successor above now adds mutable assignment and statement joins.
+Typed value-expression joins, loops, wider predicates/propagation, useful Buffer
+byte/text operations and public composition remain next. Windows
 development/release each passed 19 native groups; all 206 inputs match checkout
 and Git raw bytes, and all 196 production modules are LF. See the
 [evidence](docs/evidence/value-body-windows-20261107.json). Public CLI/full matrices,

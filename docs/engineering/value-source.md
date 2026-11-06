@@ -42,8 +42,9 @@ or return becomes executable merely because its signature now parses.
 ## Lexical typed ownership preparation
 
 `value_source_bindings` shares existing locals names and uniqueness rules, including
-the rejection of active shadowing. The current builder admits immutable typed
-bindings. Allocation is globally monotonic across functions/scopes/alternatives
+the rejection of active shadowing. This checkpoint admitted immutable typed
+bindings; the [control successor](value-control.md) now adds mutable bindings,
+whole-value replacement and checked selection of independent compiler paths. Allocation is globally monotonic across functions/scopes/alternatives
 within the existing sixteen-slot private IR bound; it is not a full-profile limit
 promotion. Names may contain ordinary and typed bindings in one 64-entry table.
 
