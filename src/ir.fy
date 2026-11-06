@@ -46,6 +46,8 @@ import std::num as num;
 // its scalar ordinal in byte5 and has SELECT b=0; bytes6..7 are zero.
 // Analysis-only aggregate kinds3/4 and REPLACE87 are encoded by
 // aggregate_place_ir. Existing executable admission continues to reject them.
+// Analysis-only 88..97 belong to value_ir's separate typed owning-value dialect.
+// Ordinary/image/returned-reference executable entry points still reject them.
 // SELECT dst=place,a=array,b=index; READ dst=value,a=place,b=array;
 // STORE dst=place,a=array,b=value; END dst=place,a=b=0. Places are not values.
 pub struct Program {

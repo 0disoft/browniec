@@ -24,6 +24,8 @@ import static_call_sites as image_sites;
 import reference_lifetimes as reference_lifetimes;
 import place_ir as places;
 import copy_ir as copying;
+import value_ir as value_ir;
+import value_flow as value_flow;
 
 fn bool readable(ref ir::Program p, ref registers::Set defined, usize r, usize start, usize end) {
     return r >= start && r < end && p.types[r]!=0 && !p.slots[r] && p.array_parameters[r] == 0 && p.record_parameters[r] == 0 && p.slice_parameters[r] == 0 && registers::contains(defined, r);
@@ -39,7 +41,7 @@ fn bool merge(ref mut usize[] states, ref mut bool[] seen, ref registers::Set de
     seen[target] = true;
     return true;
 }
-fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records::Prepared shapes, ref reborrows::Sites loans, ref statics::Sites static_sites, bool allow_reborrow_calls, u8 place_kind, ref mut bool[] used_calls) {
+fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records::Prepared shapes, ref reborrows::Sites loans, ref statics::Sites static_sites, bool allow_reborrow_calls, u8 place_kind, ref mut bool[] used_calls,ref value_ir::Sites value_sites) {
     let usize start = p.register_starts[f];
     let usize end = p.register_ends[f];
     let usize arity = p.arities[f];
@@ -51,11 +53,11 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
     var registers::Set defined = registers::empty();
     var usize i = start;
     while (i < end) {
-        if (p.record_parameters[i] == 0 && p.slice_parameters[i] == 0 && static_sites.parameters[i]==0 && !types::valid(p.types[i])) { return .err(errors::make(5, p.starts[f])); }
+        if (p.record_parameters[i] == 0 && p.slice_parameters[i] == 0 && static_sites.parameters[i]==0 && value_sites.parameters[i]==0 && !types::valid(p.types[i])) { return .err(errors::make(5, p.starts[f])); }
         if (i < start + arity) {
             if (p.slots[i]) { return .err(errors::make(5, p.starts[f])); }
             registers::insert(ref mut written, i);
-            if (p.array_parameters[i] == 0 && p.record_parameters[i] == 0 && p.slice_parameters[i] == 0 && static_sites.parameters[i]==0) { registers::insert(ref mut defined, i); }
+            if (p.array_parameters[i] == 0 && p.record_parameters[i] == 0 && p.slice_parameters[i] == 0 && static_sites.parameters[i]==0 && value_sites.parameters[i]==0) { registers::insert(ref mut defined, i); }
         }
         i += 1;
     }
@@ -109,6 +111,44 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
             if (pc + 1 >= p.ends[f] || !merge(ref mut states, ref mut seen, ref defined, pc + 1,
                 ref mut array_states, live, ref mut static_states, static_live)) { return .err(errors::make(5, pc)); }
             pc += 1; continue;
+        }
+        if(value_ir::operation(op)){
+            if(!value_sites.enabled){return .err(errors::make(5,pc));}
+            if(op==94){
+                if(live!=0 || static_live!=0 || value_sites.results[f]==0){return .err(errors::make(5,pc));}
+                pc+=1;continue;
+            }
+            if(op==93){
+                if(a>=p.function_count || a==p.entry || b>=p.call_count || used_calls[b] ||
+                    p.call_arities[b] as usize!=p.arities[a]){return .err(errors::make(5,pc));}
+                if((live>>48)!=0){let usize preserved=reborrow_calls::inspect(p,loans,pc,f,live)?;}
+                let usize checked=array_parameters::arguments_values(p,a,b,f,ref defined,live,pc,ref value_sites.parameters)?;
+                if(value_sites.results[a]!=0){
+                    // Independent value CFG has already consumed move-only actuals
+                    // and proved the exact empty result slot/type in this frame.
+                }else if(p.array_results[a]!=0 || p.record_results[a]!=0){
+                    live=if(p.record_results[a]!=0){struct_results::call(p,a,dst,f,live,pc)?}else{array_results::call(p,a,dst,f,live,pc)?};
+                }else if(p.return_types[a]==13){if(dst!=0){return .err(errors::make(5,pc));}}
+                else{
+                    if(dst<start || dst>=end || p.slots[dst] || registers::contains(ref written,dst) ||
+                        p.types[dst]!=p.return_types[a] || !types::valid(p.types[dst])){return .err(errors::make(5,pc));}
+                    registers::insert(ref mut defined,dst);registers::insert(ref mut written,dst);
+                }
+                used_calls[b]=true;
+            }else if(op==96){
+                if(dst<start || dst>=end || p.slots[dst] || registers::contains(ref written,dst) ||
+                    a>=16 || value_sites.scalar_tags[a]==0 || p.types[dst]!=value_sites.scalar_tags[a]){return .err(errors::make(5,pc));}
+                registers::insert(ref mut defined,dst);registers::insert(ref mut written,dst);
+            }else if(op==97){
+                if(dst>=16 || value_sites.scalar_tags[dst]==0 || !readable(p,ref defined,a,start,end) ||
+                    p.types[a]!=value_sites.scalar_tags[dst]){return .err(errors::make(5,pc));}
+            }else if(op==92){
+                if(!merge(ref mut states,ref mut seen,ref defined,p.code[at+4] as usize,
+                    ref mut array_states,live,ref mut static_states,static_live)){return .err(errors::make(5,pc));}
+            }
+            if(pc+1>=p.ends[f] || !merge(ref mut states,ref mut seen,ref defined,pc+1,
+                ref mut array_states,live,ref mut static_states,static_live)){return .err(errors::make(5,pc));}
+            pc+=1;continue;
         }
         if ((op == 8 || op == 39 || op == 50 || op==82) && static_live != 0) { return .err(errors::make(5, pc)); }
         if (op < 1 || (op > 62 && op!=80 && op!=81 && op!=82 && !places::operation(op)) || (!places::operation(op) && op != 52 && ((op!=24 && op!=47 && op!=49 && op!=53 && op!=59 && op!=61 && !(op>=83 && op<=85) && p.code[at + 4] != 0) ||
@@ -244,6 +284,10 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
 }
 
 fn Result<reborrows::Sites, errors::Error> validate(ref ir::Program p,bool allow_reborrow_calls, u8 place_kind, ref statics::Sites static_sites) {
+    let value_ir::Sites values=value_ir::empty();return validate_values(p,allow_reborrow_calls,place_kind,static_sites,ref values);
+}
+fn Result<reborrows::Sites,errors::Error> validate_values(ref ir::Program p,bool allow_reborrow_calls,
+    u8 place_kind,ref statics::Sites static_sites,ref value_ir::Sites value_sites){
     if (p.count == 0 || p.count > 256 || p.registers == 0 || p.registers > 128 || p.constant_count > 128 ||
         p.function_count == 0 || p.function_count > 16 || p.entry >= p.function_count || p.call_count > 32) { return .err(errors::make(5, 0)); }
     if (!arrays::valid(ref p.arrays)) { return .err(errors::make(5, 0)); }
@@ -263,7 +307,7 @@ fn Result<reborrows::Sites, errors::Error> validate(ref ir::Program p,bool allow
     var usize code_end = 0;
     var usize register_end = 0;
     while (f < p.function_count) {
-        if (p.record_results[f]==0 && static_sites.results[f]==0 && p.return_types[f]!=13 && !types::valid(p.return_types[f])) { return .err(errors::make(5, code_end)); }
+        if (p.record_results[f]==0 && static_sites.results[f]==0 && value_sites.results[f]==0 && p.return_types[f]!=13 && !types::valid(p.return_types[f])) { return .err(errors::make(5, code_end)); }
         if (p.starts[f] != code_end || p.ends[f] <= code_end || p.ends[f] > p.count ||
             p.register_starts[f] != register_end || p.register_ends[f] < register_end ||
             p.register_ends[f] > p.registers || p.arities[f] > 8 ||
@@ -280,11 +324,22 @@ fn Result<reborrows::Sites, errors::Error> validate(ref ir::Program p,bool allow
     let usize record_results = struct_results::metadata(p)?;
     var bool[32] used_calls = [false; 32];
     f = 0;
-    while (f < p.function_count) { let usize checked = function(p, f, ref shapes, ref loans, static_sites, allow_reborrow_calls, place_kind, ref mut used_calls)?; f += 1; }
+    while (f < p.function_count) { let usize checked = function(p, f, ref shapes, ref loans, static_sites, allow_reborrow_calls, place_kind, ref mut used_calls,value_sites)?; f += 1; }
     let usize selected_places=places::inspect_prepared(p,ref shapes)?;
     var usize call = 0;
     while (call < p.call_count) { if (!used_calls[call]) { return .err(errors::make(5, 0)); } call += 1; }
     return .ok(loans);
+}
+
+// Analysis only: full typed-value/Dead CFG plus the canonical scalar, ordinary
+// owner/loan/CALL and pending-place proof. No retained or executable admission.
+pub struct ValueProof { value_ir::Prepared values; reborrows::Sites loans; }
+pub fn Result<ValueProof,errors::Error> inspect_values(ref value_ir::Program unit){
+    let value_ir::Prepared values=value_ir::prepare(unit)?;
+    let usize flow=value_flow::inspect(unit,ref values)?;
+    let statics::Sites statics=statics::empty();
+    let reborrows::Sites loans=validate_values(ref unit.body,true,4,ref statics,ref values.sites)?;
+    return .ok(ValueProof{.values=values,.loans=loans});
 }
 
 // Ordinary entry points carry no Static authority and keep rejecting 69-79.

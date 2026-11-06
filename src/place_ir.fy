@@ -146,7 +146,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, ref records::Prepare
                 } i += 1;
             }
         }
-        if (op == 8 || op == 39 || op == 50 || op == 65 || op == 79 || op == 82) {
+        if (op == 8 || op == 39 || op == 50 || op == 65 || op == 79 || op == 82 || op==94) {
             if (state.phases != 0) { return .err(invalid(pc)); } pc += 1; continue;
         }
         if (op == 25) { pc += 1; continue; } // Runtime abort drains obligations.
@@ -154,8 +154,8 @@ fn Result<usize, errors::Error> function(ref ir::Program p, ref records::Prepare
             let usize checked = merge(ref mut origins,ref mut phases,ref mut seen,a,ref state,pc,true)?;
             pc += 1; continue;
         }
-        if (op == 19 || op == 20 || op == 21 || op == 24) {
-            let usize target = if (op == 19) { a } else if (op == 24) { p.code[at+4] as usize } else { b };
+        if (op == 19 || op == 20 || op == 21 || op == 24 || op==92) {
+            let usize target = if (op == 19) { a } else if (op == 24 || op==92) { p.code[at+4] as usize } else { b };
             let usize checked = merge(ref mut origins,ref mut phases,ref mut seen,target,ref state,pc,false)?;
             if (op == 19) { pc += 1; continue; }
         }

@@ -44,6 +44,16 @@ pub fn Result<usize, errors::Error> arguments(ref ir::Program p, usize target, u
 // Ordinary scalar/array/record/loan positions retain the same canonical proof.
 pub fn Result<usize, errors::Error> arguments_static(ref ir::Program p,usize target,usize site,usize caller,
     ref registers::Set defined,usize live,usize pc,ref u8[] statics){
+    let u8[1] empty=[0];return arguments_domains(p,target,site,caller,defined,live,pc,statics,ref empty[..0]);
+}
+// The typed-value analyzer independently proves these opaque owning actuals.
+// Scalar/array/record/loan operands still use their original canonical checks.
+pub fn Result<usize,errors::Error> arguments_values(ref ir::Program p,usize target,usize site,usize caller,
+    ref registers::Set defined,usize live,usize pc,ref u8[] values){
+    let u8[1] empty=[0];return arguments_domains(p,target,site,caller,defined,live,pc,ref empty[..0],values);
+}
+fn Result<usize,errors::Error> arguments_domains(ref ir::Program p,usize target,usize site,usize caller,
+    ref registers::Set defined,usize live,usize pc,ref u8[] statics,ref u8[] values){
     let usize count = p.call_arities[site] as usize;
     var usize arg = 0;
     var usize writers = 0; var usize writer_roots = 0; let usize one = 1;
@@ -52,6 +62,7 @@ pub fn Result<usize, errors::Error> arguments_static(ref ir::Program p,usize tar
         if (arg < count) {
             let usize parameter = p.register_starts[target] + arg;
             let usize encoded = p.array_parameters[parameter] as usize;
+            if(values.len==128 && values[parameter]!=0){arg+=1;continue;}
             if(statics.len==128 && statics[parameter]!=0){
                 if(statics[parameter]==3 && source>=160 && source<176){
                     let usize checked=slices::shared_byte(p,source,caller,live,pc)?;
