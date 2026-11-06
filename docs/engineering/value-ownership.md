@@ -78,8 +78,9 @@ maximum-generation/empty-root moves. Budget checks exercise 127/128/129, plus
 two successive moves at 256, with exact accounting/table snapshots. The evidence
 receipt identifies the actual source inputs and executed profiles.
 
-Guest Buffer locals/parameters/results, independent move/Dead CFG proof,
-resource-bearing TAG_BUILD/TAG_UNPACK execution and payload cleanup, wide/nested
+The [typed value IR successor](value-ir.md) now provides independent move/Dead
+CFG, tag build/case, CALL/RETURN and complete canonical analysis. Guest Buffer
+source bindings, native value execution and payload cleanup, wide/nested
 tagged source syntax, general reference/Buffer joins, must-use and Engine/Instance
 ownership remain open. These helpers do not promote public capabilities, satisfy
 full L04/L05/D01-D04, or provide guest admission. Grouped borrows and other pending

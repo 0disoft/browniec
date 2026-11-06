@@ -143,8 +143,10 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    The [resource/tag prerequisite](value-ownership.md) now independently derives
    whole-type layout/copyability and hands off actual native Buffer roots while
    preserving one token/charge and returning ownership on preflight rejection.
-   Next connect guest source-binding/Dead CFG proof, resource/tag IR and metered
-   execution, tagged payload cleanup and source integration. Native prerequisites
+   The [typed value IR successor](value-ir.md) now independently proves move/Dead
+   CFG, tag build/case, scalar conversion and CALL/RETURN against canonical scalar,
+   owner/loan and selected-place analysis. Next connect metered native value
+   storage/execution, tagged payload cleanup and compiler source integration. Native prerequisites
    do not close L04/L05/D01-D04.
 3. **Engine and Instance: R01-R05.** The [call capture-stack fix](native-call-capture-stack.md)
    removes a reproduced retained compiler overflow without changing depth/owner

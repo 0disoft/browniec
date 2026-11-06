@@ -1,0 +1,480 @@
+{
+  "schema": "browniec.value-ir-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-06T16:14:50.828473+00:00",
+  "implementationCommit": "02542787396d67d3eaedd50c7dcc10ff80ed02b1",
+  "platform": "windows/amd64",
+  "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+  "checkoutInputsMatched": 203,
+  "gitRawInputsMatched": 203,
+  "existingLineEndingDifferences": [],
+  "lfProductionModules": 182,
+  "currentTestInventory": {
+    "files": 310,
+    "annotations": 1850,
+    "sha256": "8de6c01b79d05e24c487cb02e10ff7a5e0ec082ec81a8a6f80c650f039d3f6b4"
+  },
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 12,
+      "batches": [
+        {
+          "batch": "core",
+          "nativeGroups": 8,
+          "commands": [
+            [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+              "check",
+              "--locked"
+            ],
+            [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+              "test",
+              "--native",
+              "--capture-output",
+              "--json",
+              "--locked",
+              "--exact",
+              "tests::m2::value_ir::canonical_scalar_owner_and_selected_place_checks_cover_both_tag_case_edges",
+              "--exact",
+              "tests::m2::value_ir::copyable_tags_copy_payloads_and_equivalent_nodes_preserve_nominal_types",
+              "--exact",
+              "tests::m2::value_ir::duplicate_copyable_actuals_are_allowed_but_duplicate_moves_and_live_destinations_fail",
+              "--exact",
+              "tests::m2::value_ir::inactive_and_scalar_resource_variants_still_consume_the_complete_wrapper",
+              "--exact",
+              "tests::m2::value_ir::joins_and_backedges_require_exact_owner_state_and_allow_explicit_loop_reinitialization",
+              "--exact",
+              "tests::m2::value_ir::malformed_metadata_and_all_preexisting_executable_routes_keep_their_gates",
+              "--exact",
+              "tests::m2::value_ir::mixed_calls_move_into_distinct_frames_and_returns_require_the_sole_exact_owner",
+              "--exact",
+              "tests::m2::value_ir::moves_consume_sources_and_reject_copy_double_drop_overwrite_and_stale_read"
+            ]
+          ],
+          "nativeReport": {
+            "schemaVersion": "fairyc.test-report/v4",
+            "engine": "native",
+            "target": "x86_64-windows-msvc",
+            "profile": "development",
+            "tests": [
+              {
+                "identity": "tests::m2::value_ir::canonical_scalar_owner_and_selected_place_checks_cover_both_tag_case_edges",
+                "outcome": "passed",
+                "trapCategory": null,
+                "stdoutBase64": "",
+                "stderrBase64": ""
+              },
+              {
+                "identity": "tests::m2::value_ir::copyable_tags_copy_payloads_and_equivalent_nodes_preserve_nominal_types",
+                "outcome": "passed",
+                "trapCategory": null,
+                "stdoutBase64": "",
+                "stderrBase64": ""
+              },
+              {
+                "identity": "tests::m2::value_ir::duplicate_copyable_actuals_are_allowed_but_duplicate_moves_and_live_destinations_fail",
+                "outcome": "passed",
+                "trapCategory": null,
+                "stdoutBase64": "",
+                "stderrBase64": ""
+              },
+              {
+                "identity": "tests::m2::value_ir::inactive_and_scalar_resource_variants_still_consume_the_complete_wrapper",
+                "outcome": "passed",
+                "trapCategory": null,
+                "stdoutBase64": "",
+                "stderrBase64": ""
+              },
+              {
+                "identity": "tests::m2::value_ir::joins_and_backedges_require_exact_owner_state_and_allow_explicit_loop_reinitialization",
+                "outcome": "passed",
+                "trapCategory": null,
+                "stdoutBase64": "",
+                "stderrBase64": ""
+              },
+              {
+                "identity": "tests::m2::value_ir::malformed_metadata_and_all_preexisting_executable_routes_keep_their_gates",
+                "outcome": "passed",
+                "trapCategory": null,
+                "stdoutBase64": "",
+                "stderrBase64": ""
+              },
+              {
+                "identity": "tests::m2::value_ir::mixed_calls_move_into_distinct_frames_and_returns_require_the_sole_exact_owner",
+                "outcome": "passed",
+                "trapCategory": null,
+                "stdoutBase64": "",
+                "stderrBase64": ""
+              },
+              {
+                "identity": "tests::m2::value_ir::moves_consume_sources_and_reject_copy_double_drop_overwrite_and_stale_read",
+                "outcome": "passed",
+                "trapCategory": null,
+                "stdoutBase64": "",
+                "stderrBase64": ""
+              }
+            ],
+            "count": 8,
+            "passed": 8,
+            "failed": 0,
+            "status": "ok",
+            "lock": "verified"
+          },
+          "receiptSha256": "4afe94ee06b76863f16bc6ee8013e0bb7f7ef9517fed571657aac200cb043635"
+        },
+        {
+          "batch": "regression",
+          "nativeGroups": 4,
+          "commands": [
+            [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+              "check",
+              "--locked"
+            ],
+            [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+              "test",
+              "--native",
+              "--capture-output",
+              "--json",
+              "--locked",
+              "--exact",
+              "tests::m2::copy_ir::both_drivers_execute_existing_copy_forms_and_mixed_repeated_arguments",
+              "--exact",
+              "tests::m2::copy_ir::recursive_calls_never_treat_equal_static_ids_as_same_frame_identity",
+              "--exact",
+              "tests::m2::reference_call_source::shared_formals_coexist_with_mutable_owned_and_record_arguments",
+              "--exact",
+              "tests::m2::slice_reborrow_calls::forests_joins_and_backedges_still_require_exact_lifo_restoration"
+            ]
+          ],
+          "nativeReport": {
+            "schemaVersion": "fairyc.test-report/v4",
+            "engine": "native",
+            "target": "x86_64-windows-msvc",
+            "profile": "development",
+            "tests": [
+              {
+                "identity": "tests::m2::copy_ir::both_drivers_execute_existing_copy_forms_and_mixed_repeated_arguments",
+                "outcome": "passed",
+                "trapCategory": null,
+                "stdoutBase64": "",
+                "stderrBase64": ""
+              },
+              {
+                "identity": "tests::m2::copy_ir::recursive_calls_never_treat_equal_static_ids_as_same_frame_identity",
+                "outcome": "passed",
+                "trapCategory": null,
+                "stdoutBase64": "",
+                "stderrBase64": ""
+              },
+              {
+                "identity": "tests::m2::reference_call_source::shared_formals_coexist_with_mutable_owned_and_record_arguments",
+                "outcome": "passed",
+                "trapCategory": null,
+                "stdoutBase64": "",
+                "stderrBase64": ""
+              },
+              {
+                "identity": "tests::m2::slice_reborrow_calls::forests_joins_and_backedges_still_require_exact_lifo_restoration",
+                "outcome": "passed",
+                "trapCategory": null,
+                "stdoutBase64": "",
+                "stderrBase64": ""
+              }
+            ],
+            "count": 4,
+            "passed": 4,
+            "failed": 0,
+            "status": "ok",
+            "lock": "verified"
+          },
+          "receiptSha256": "1af5a0320d5929a1be9461a1007cff775114c3615ee5fde6232b55998d942020"
+        }
+      ],
+      "cliCases": 105,
+      "cliCommands": [
+        [
+          "git",
+          "rev-parse",
+          "HEAD"
+        ],
+        [
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+          "--version"
+        ],
+        [
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+          "check",
+          "--locked"
+        ],
+        [
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+          "build",
+          "--locked"
+        ]
+      ],
+      "cliArtifact": {
+        "path": "build/public-fuel/development/browniec.exe",
+        "sha256": "60f343800323b47acb942b3260547989ce53fc57e3c39d6f4c36119dfb0b2ca9"
+      },
+      "cliRuntimeEnvironment": "cleared; tool-free PATH",
+      "cliReceiptSha256": "3b868d2a1d8a7e917252ce301172899976ae3b53d2422735d6b5ffd38ba0d4cd",
+      "cliRecordedTestDiscovery": {
+        "count": 310,
+        "sha256": "c18755f0eced0b6f4e26596f9c3ee341619a9e2247bb9dff8c22d30a6af8aed3"
+      },
+      "cliProductionAndFixtureInputsMatchCurrent": true
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 12,
+      "batches": [
+        {
+          "batch": "core",
+          "nativeGroups": 8,
+          "commands": [
+            [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+              "check",
+              "--locked"
+            ],
+            [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+              "test",
+              "--native",
+              "--capture-output",
+              "--json",
+              "--locked",
+              "--release",
+              "--exact",
+              "tests::m2::value_ir::canonical_scalar_owner_and_selected_place_checks_cover_both_tag_case_edges",
+              "--exact",
+              "tests::m2::value_ir::copyable_tags_copy_payloads_and_equivalent_nodes_preserve_nominal_types",
+              "--exact",
+              "tests::m2::value_ir::duplicate_copyable_actuals_are_allowed_but_duplicate_moves_and_live_destinations_fail",
+              "--exact",
+              "tests::m2::value_ir::inactive_and_scalar_resource_variants_still_consume_the_complete_wrapper",
+              "--exact",
+              "tests::m2::value_ir::joins_and_backedges_require_exact_owner_state_and_allow_explicit_loop_reinitialization",
+              "--exact",
+              "tests::m2::value_ir::malformed_metadata_and_all_preexisting_executable_routes_keep_their_gates",
+              "--exact",
+              "tests::m2::value_ir::mixed_calls_move_into_distinct_frames_and_returns_require_the_sole_exact_owner",
+              "--exact",
+              "tests::m2::value_ir::moves_consume_sources_and_reject_copy_double_drop_overwrite_and_stale_read"
+            ]
+          ],
+          "nativeReport": {
+            "schemaVersion": "fairyc.test-report/v4",
+            "engine": "native",
+            "target": "x86_64-windows-msvc",
+            "profile": "release",
+            "tests": [
+              {
+                "identity": "tests::m2::value_ir::canonical_scalar_owner_and_selected_place_checks_cover_both_tag_case_edges",
+                "outcome": "passed",
+                "trapCategory": null,
+                "stdoutBase64": "",
+                "stderrBase64": ""
+              },
+              {
+                "identity": "tests::m2::value_ir::copyable_tags_copy_payloads_and_equivalent_nodes_preserve_nominal_types",
+                "outcome": "passed",
+                "trapCategory": null,
+                "stdoutBase64": "",
+                "stderrBase64": ""
+              },
+              {
+                "identity": "tests::m2::value_ir::duplicate_copyable_actuals_are_allowed_but_duplicate_moves_and_live_destinations_fail",
+                "outcome": "passed",
+                "trapCategory": null,
+                "stdoutBase64": "",
+                "stderrBase64": ""
+              },
+              {
+                "identity": "tests::m2::value_ir::inactive_and_scalar_resource_variants_still_consume_the_complete_wrapper",
+                "outcome": "passed",
+                "trapCategory": null,
+                "stdoutBase64": "",
+                "stderrBase64": ""
+              },
+              {
+                "identity": "tests::m2::value_ir::joins_and_backedges_require_exact_owner_state_and_allow_explicit_loop_reinitialization",
+                "outcome": "passed",
+                "trapCategory": null,
+                "stdoutBase64": "",
+                "stderrBase64": ""
+              },
+              {
+                "identity": "tests::m2::value_ir::malformed_metadata_and_all_preexisting_executable_routes_keep_their_gates",
+                "outcome": "passed",
+                "trapCategory": null,
+                "stdoutBase64": "",
+                "stderrBase64": ""
+              },
+              {
+                "identity": "tests::m2::value_ir::mixed_calls_move_into_distinct_frames_and_returns_require_the_sole_exact_owner",
+                "outcome": "passed",
+                "trapCategory": null,
+                "stdoutBase64": "",
+                "stderrBase64": ""
+              },
+              {
+                "identity": "tests::m2::value_ir::moves_consume_sources_and_reject_copy_double_drop_overwrite_and_stale_read",
+                "outcome": "passed",
+                "trapCategory": null,
+                "stdoutBase64": "",
+                "stderrBase64": ""
+              }
+            ],
+            "count": 8,
+            "passed": 8,
+            "failed": 0,
+            "status": "ok",
+            "lock": "verified"
+          },
+          "receiptSha256": "26ad30ea5ba1ac369b378654035b87332afc802087edf0814a06f782a9c46162"
+        },
+        {
+          "batch": "regression",
+          "nativeGroups": 4,
+          "commands": [
+            [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+              "check",
+              "--locked"
+            ],
+            [
+              "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+              "test",
+              "--native",
+              "--capture-output",
+              "--json",
+              "--locked",
+              "--release",
+              "--exact",
+              "tests::m2::copy_ir::both_drivers_execute_existing_copy_forms_and_mixed_repeated_arguments",
+              "--exact",
+              "tests::m2::copy_ir::recursive_calls_never_treat_equal_static_ids_as_same_frame_identity",
+              "--exact",
+              "tests::m2::reference_call_source::shared_formals_coexist_with_mutable_owned_and_record_arguments",
+              "--exact",
+              "tests::m2::slice_reborrow_calls::forests_joins_and_backedges_still_require_exact_lifo_restoration"
+            ]
+          ],
+          "nativeReport": {
+            "schemaVersion": "fairyc.test-report/v4",
+            "engine": "native",
+            "target": "x86_64-windows-msvc",
+            "profile": "release",
+            "tests": [
+              {
+                "identity": "tests::m2::copy_ir::both_drivers_execute_existing_copy_forms_and_mixed_repeated_arguments",
+                "outcome": "passed",
+                "trapCategory": null,
+                "stdoutBase64": "",
+                "stderrBase64": ""
+              },
+              {
+                "identity": "tests::m2::copy_ir::recursive_calls_never_treat_equal_static_ids_as_same_frame_identity",
+                "outcome": "passed",
+                "trapCategory": null,
+                "stdoutBase64": "",
+                "stderrBase64": ""
+              },
+              {
+                "identity": "tests::m2::reference_call_source::shared_formals_coexist_with_mutable_owned_and_record_arguments",
+                "outcome": "passed",
+                "trapCategory": null,
+                "stdoutBase64": "",
+                "stderrBase64": ""
+              },
+              {
+                "identity": "tests::m2::slice_reborrow_calls::forests_joins_and_backedges_still_require_exact_lifo_restoration",
+                "outcome": "passed",
+                "trapCategory": null,
+                "stdoutBase64": "",
+                "stderrBase64": ""
+              }
+            ],
+            "count": 4,
+            "passed": 4,
+            "failed": 0,
+            "status": "ok",
+            "lock": "verified"
+          },
+          "receiptSha256": "52d5c64c78dd89f7efabbd27ce2a9a6a59bb2de4d43d43e83983d00a43caa711"
+        }
+      ],
+      "cliCases": 105,
+      "cliCommands": [
+        [
+          "git",
+          "rev-parse",
+          "HEAD"
+        ],
+        [
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+          "--version"
+        ],
+        [
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+          "check",
+          "--locked"
+        ],
+        [
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+          "build",
+          "--locked",
+          "--release"
+        ]
+      ],
+      "cliArtifact": {
+        "path": "build/public-fuel/release/browniec.exe",
+        "sha256": "c978c34219f1714b6943a6b4e930472e628a1fb19df43c50347d7423abc236fc"
+      },
+      "cliRuntimeEnvironment": "cleared; tool-free PATH",
+      "cliReceiptSha256": "bb781854bde869b6ee80d283f5623d66667f045b566e45a79afefb9b4bcd54f2",
+      "cliRecordedTestDiscovery": {
+        "count": 310,
+        "sha256": "c18755f0eced0b6f4e26596f9c3ee341619a9e2247bb9dff8c22d30a6af8aed3"
+      },
+      "cliProductionAndFixtureInputsMatchCurrent": true
+    }
+  ],
+  "nativeOverrides": false,
+  "historicalResultReuse": false,
+  "verificationScope": [
+    "eight new native analysis groups per profile, including returned proof fields and maximum bounds",
+    "four existing canonical native regression groups per profile",
+    "105 tool-free public Fuel CLI cases per profile",
+    "whole-type copies/moves, inactive/scalar wrapper consumption, exact join/backedge states",
+    "mixed scalar/value CALL arguments, duplicate copy vs move, exact result publication and sole-owner return",
+    "canonical scalar initialization, ordinary owner lifetimes and both tag-case selected-place edges",
+    "ordinary VM/public Program/image/returned-reference gates before unsupported execution",
+    "64 type nodes, 16 live value slots, 128 scalar registers, RETURN at PC255"
+  ],
+  "discoveryNote": "CLI test inventory fingerprints predate the final expansion of tests/m2/value_ir.fy. No production or CLI-fixture input changed. Final core native groups run fresh on that final test file; existing regression and CLI input manifests still match current bytes. Current inventory is recorded separately, not claimed as a common CLI discovery fingerprint.",
+  "unchanged": [
+    "public source syntax and capability metadata",
+    "existing public instruction prices",
+    "Fuel default 256 and CLI cap16000000"
+  ],
+  "notClaimed": [
+    "native execution of the new value IR",
+    "native value storage/metering and normal/failure payload cleanup",
+    "guest Buffer/tag source bindings, general reference/Buffer joins, must-use and Engine/Instance ownership",
+    "full language/native Fuel matrices, LF mirrors, Linux, OOM/general stack/performance and clean-machine delivery"
+  ],
+  "localOnly": true,
+  "push": false,
+  "release": false,
+  "deployment": false,
+  "inputManifest": {
+    "path": "docs/evidence/value-ir-inputs-windows-20261107.json",
+    "sha256": "27b73155fd07d5265138487722cb1f92b670f372d7f2233a290b2a5380b98691"
+  }
+}

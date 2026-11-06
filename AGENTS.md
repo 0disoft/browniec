@@ -1,3 +1,18 @@
+- Typed value IR analysis now connects MOVE/COPY/DROP, tag build/case, scalar
+  conversion and value CALL/RETURN to whole-type properties and exact Dead-state
+  CFG plus canonical scalar/aggregate/loan/selected-place proof. Inactive/scalar
+  Buffer alternatives consume their whole wrapper. All executable routes stay
+  gated. Development/release each passed 12 native groups (8 final core +4 existing
+  regression) and 105 tool-free public Fuel CLI cases on 0254278; 203 current input
+  hashes match checkout/Git raw bytes and all 182 production modules are LF.
+  See the [contract](docs/engineering/value-ir.md) and
+  [Windows evidence](docs/evidence/value-ir-windows-20261107.json), including the
+  separate CLI discovery/native-test expansion scope. Next: metered native value
+  storage/execution, payload cleanup and compiler source binding. Full L04/L05/
+  D01-D04/Engine/Instance/host/delivery and broad validation remain open. No public
+  syntax/capability/price/default/cap change. Local only; no push/release/deployment.
+  Earlier checkpoints retain their scopes.
+
 - Resource/tag prerequisites now independently derive whole-type properties,
   including inactive Buffer alternatives, and hand off actual native Buffer roots
   with one owner token/charge and rejection ownership preservation. Development

@@ -2,11 +2,16 @@
 
 ## Current implementation (2026-11-07)
 
+[Typed value IR analysis](docs/engineering/value-ir.md) now independently proves
+resource moves, tag build/case, CALL/RETURN and exact initialized/Dead CFG state
+alongside canonical scalar, aggregate, loan and selected-place checks. Execution
+remains gated; native value storage/cleanup and compiler source integration follow.
+
 A [native resource/tag prerequisite](docs/engineering/value-ownership.md) now
 independently derives whole-type properties, including inactive Buffer alternatives,
 and hands off real Buffer allocations without payload copying or owner recharging.
-Guest Buffer/tagged source, independent move/Dead proof and complete VM integration
-remain open. Existing public syntax, capabilities, prices and limits are unchanged.
+Guest Buffer/tagged source bindings, native value cleanup and complete VM
+integration remain open. Existing public syntax, capabilities, prices and limits are unchanged.
 
 [Ordered aggregate assignment](docs/engineering/aggregate-place-assignment.md)
 now connects whole-array copy/self/fill/list and whole/child nominal record
