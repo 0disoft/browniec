@@ -4,12 +4,18 @@
 - Implementation status: Reconciled 2026-11-06; bounded M1 and public M2 aggregate/slice/literal/shared-byte-result subsets; full profile incomplete
 - Source profile name: brownie.safe/0.3
 
+- L04 aggregate metering: [native invocation storage](../engineering/aggregate-place-vm.md)
+  now executes array copy/fill/list and nominal record copy/constructor stores
+  with prepaid setup/operations, invocation-local tickets and zero-Fuel abort.
+  Legacy formats/prices, public default256/cap16000000 and executable admission
+  remain unchanged. Both coordinators, retained guards and source lowering are next.
+
 - L04 aggregate IR: [independent identity/phase/lifetime analysis](../engineering/aggregate-place-ir.md)
   now proves whole-array copy/fill/list stores and exact nominal record copy or
   constructor replacement. Kinds3/4 and PLACE_REPLACE87 share the existing sixteen
   frame-local place IDs, scalar definitions and dense operand pool. Complete
-  ordinary/image/returned-reference execution remains gated pending metered
-  snapshots, both drivers, retained guards and source lowering.
+  ordinary/image/returned-reference execution remains gated pending both drivers,
+  retained guards and source lowering; metered native storage is described above.
 
 - L04 aggregate destinations: [private native snapshots](../engineering/aggregate-selected-place.md)
   now capture whole arrays and exact nominal record subtrees before RHS work.

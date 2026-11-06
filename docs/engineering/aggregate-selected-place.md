@@ -90,3 +90,7 @@ The [independent IR successor](aggregate-place-ir.md) now proves all five final
 store forms, common identity/phases and canonical scalar/owner/loan lifetimes.
 It preserves the executable gate pending metered snapshots, both drivers,
 retained guards and source lowering; the native snapshot remains metadata only.
+
+The [metered native successor](aggregate-place-vm.md) now wraps those snapshots
+in invocation-local storage and prepays all five final stores. Both VM drivers,
+retained guards and ordered source lowering remain the executable frontier.

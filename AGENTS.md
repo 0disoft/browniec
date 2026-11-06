@@ -1,3 +1,21 @@
+- Metered native aggregate places now capture invocation-local tickets and
+  exact original array/nominal-subtree destinations in disjoint eighteen-word
+  rows. All five final stores prepay Fuel, revalidate native owners/windows and
+  publish atomically; shared list scratch recognizes selected REPLACE87. Setup
+  prepays zero-Fuel abort, with up to 512 locations and 74,008 initialized metadata
+  bytes. See the [contract](docs/engineering/aggregate-place-vm.md).
+  Windows development/release each passed 15 native groups and 105 tool-free
+  public Fuel CLI cases on 196 checkout/Git-raw-matching inputs, 176 LF production
+  modules and 303 source-test files / 1817 test annotations. Both final native runs
+  are fresh on implementation 48f6ef2, without historical reuse or native overrides.
+  See [Windows evidence](docs/evidence/aggregate-place-vm-windows-20261106.json).
+  Existing prices, default 256 and cap 16000000 and public executable gates remain.
+  Next: shared legacy/aggregate IDs in both drivers, retained dependency guards
+  and ordered source lowering. Resource/tag moves and full L04/C05/Engine/
+  Instance/host/isolation/delivery remain open. Full language/native Fuel, LF
+  mirrors, Linux, OOM/general stack/performance and clean-machine delivery were
+  not rerun. Local only; no push/release/deployment.
+
 - Independent aggregate-place IR now proves whole-array copy/fill/list stores
   and exact-nominal record copy/constructor replacement. Kinds3/4 and REPLACE87
   share the existing sixteen IDs, selecting-PC/phase graph, dense scalar pool and
