@@ -1,4 +1,16 @@
-- Latest Buffer copy checkpoint, 2026-11-07: Private [owned Buffer copy](../engineering/value-buffer-copy.md) now lowers
+- Latest native Buffer view checkpoint, 2026-11-07: Native [Buffer view lifetimes](../engineering/value-buffer-views.md) now pin actual
+  roots through shared aliases and nested ranges, with authenticated bindings,
+  checked windows, last-alias release and generation retirement. Read/copy-out
+  exposes no native view. Registry metadata shares root quotas and refunds before
+  root drain; cleanup needs no remaining Fuel. Both Windows native profiles passed
+  19 groups (views/leases/roots 10, root/frame/copy regressions 9) on `34863b5`.
+  All 219 union inputs match checkout/Git raw bytes; all 208 production modules are
+  LF. See [evidence](../evidence/value-buffer-views-windows-20261107.json). Native bookkeeping is not guest authority.
+  Next connect independent Buffer view IR/CFG/retained VM and source admission,
+  then copy-from-view, public AllocError, text/I/O and the remaining full profile.
+  Public gates, existing prices/Fuel defaults remain. Local only; no push/release.
+
+- Predecessor Buffer copy checkpoint, 2026-11-07: Private [owned Buffer copy](../engineering/value-buffer-copy.md) now lowers
   `bytes::copy(ref b)` / `brownie::bytes::copy(ref b)` to exact `Result<Buffer,u8>`.
   One native append copies initialized bytes into an independent owner, retaining
   the source and cleaning temporary inputs. Shared Result destinations avoid
@@ -189,7 +201,8 @@ forms beyond shared-byte results, Buffer/input backing and host-visible referenc
 lifetimes remain open.
 Private [Buffer source operations](../engineering/value-buffer-source.md) and
 [owned copy](../engineering/value-buffer-copy.md) execute through the typed VM.
-General Buffer views/text and deliberate public Buffer admission remain open.
+General Buffer view IR/VM/source, text and deliberate public Buffer admission
+remain open.
 There is no general Engine/Instance API, guest input/output, host suspension,
 restricted worker or public DLL.
 
