@@ -17,7 +17,10 @@
 - L04 copy proof now [derives strategies from IR](../engineering/aggregate-copy-ir.md)
   for fixed arrays, plain records/subrecords and by-value CALL arguments, composing
   with canonical owner/loan CFG and every current executable admission route.
-  Next: generic aggregate selected destinations and resource/tag move semantics.
+  [Native aggregate destination snapshots](../engineering/aggregate-selected-place.md)
+  now capture whole arrays/nominal subtrees through existing atomic stores.
+  Next: aggregate-place IR/lifetimes, metered storage, both drivers/source, then
+  resource/tag move semantics.
 - L04 starts with [native owned-array selected locations](../engineering/array-selected-place.md).
   [Independent place IR analysis](../engineering/array-place-ir.md) now checks
   identity and lifetimes. [Native metered storage](../engineering/array-place-storage.md)

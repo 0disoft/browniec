@@ -91,3 +91,8 @@ match Git raw bytes, and three unchanged legacy tests differ only by CRLF/LF,
 with both hashes recorded. All 173 production modules are LF. Discovery has 300
 fixture files and 1793 tests. No historical result, compiler/linker/stack override
 or wider conformance claim was used. See [Windows evidence](../evidence/aggregate-copy-ir-windows-20261106.json).
+
+The [native aggregate-destination successor](aggregate-selected-place.md) now
+captures/revalidates original whole-array and nominal-subtree destinations through
+existing atomic owner/value stores. Its metadata pins no root; independent
+aggregate-place IR/lifetimes, metered snapshots and both drivers/source remain open.

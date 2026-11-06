@@ -4,6 +4,14 @@
 - Implementation status: Reconciled 2026-11-06; bounded M1 and public M2 aggregate/slice/literal/shared-byte-result subsets; full profile incomplete
 - Source profile name: brownie.safe/0.3
 
+- L04 aggregate destinations: [private native snapshots](../engineering/aggregate-selected-place.md)
+  now capture whole arrays and exact nominal record subtrees before RHS work.
+  Owner generations, original reservations and selected windows are revalidated
+  before owner copy, fill, list or constructor publication, without another guest
+  owner/extent. The adapter accepts a reusable scratch prefix and keeps atomic
+  source validation. Aggregate-place IR, metered VM storage, both drivers and
+  source lowering remain separate; public source/IR/prices/limits are unchanged.
+
 - L04 copy IR: [independent strategy and lifetime composition](../engineering/aggregate-copy-ir.md)
   now derives all five existing array/record copy forms and by-value CALL argument
   strategies from immutable operands. Canonical CFG/owner/loan proof, ordinary,

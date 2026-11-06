@@ -1,3 +1,23 @@
+- Private native aggregate destinations now capture whole scalar arrays and
+  exact nominal record subtrees before RHS work, then revalidate original token,
+  generation, shape/reservation and selected byte window before atomic owner-copy,
+  fill, list or constructor publication. A reusable array scratch supplies only
+  its checked selected-size prefix. See the
+  [contract](docs/engineering/aggregate-selected-place.md).
+  Development/release each passed 10 native groups on 180 checkout/Git-raw-matching
+  inputs, 174 LF production modules and 301-file/1800-test discovery. Both final
+  selections ran fresh after the scratch-prefix adapter fix. All six array tags,
+  active/completed loans, expired generations, both record copy directions,
+  canonical padding, late-source failures, maximum bytes/leaves/depth and full
+  sixteen-owner/exact-backing stores pass. See
+  [Windows evidence](docs/evidence/aggregate-selected-place-windows-20261106.json).
+  No guest syntax, opcode, capability, price/default256/cap16000000 or allocation
+  policy changes. Aggregate-place IR/lifetimes, metered snapshots, both drivers,
+  retained guards and source integration remain next; native metadata pins no root.
+  Full L04/C05/Engine/Instance/host/isolation/delivery remain open. Public CLI, full
+  language/native Fuel, LF mirrors, Linux, OOM/general stack/performance and
+  clean-machine delivery were not rerun. Local implementation 7403e9f.
+
 - Independent aggregate copy IR now derives Direct, authenticated-identity
   candidate or complete Snapshot strategies for all five existing array/record
   copy operations and by-value CALL arguments. Canonical CFG owner/loan lifetimes
