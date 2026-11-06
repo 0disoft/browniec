@@ -27,7 +27,7 @@ fn Result<usize,errors::Error> terminal(ref ir::Program p,usize f,usize pc){
             if(p.code[at*8+2]!=identity){return .err(errors::make(5,at));}
             return .ok(at);
         }
-        if(op!=37 && op!=45 && op!=56 && op!=62 && op!=70){return .err(errors::make(5,at));}
+        if(op!=37 && op!=45 && op!=56 && op!=62 && op!=70 && op!=86){return .err(errors::make(5,at));}
         at+=1;
     }
     return .err(errors::make(5,pc));

@@ -303,8 +303,6 @@ pub fn Result<usize, errors::Error> inspect(ref ir::Program p) {
 // Public admission returns the exact forest produced by the complete proof.
 // Unsupported derived CALL shapes reject in every function before guest effects.
 fn Result<usize,errors::Error> executable_calls(ref ir::Program p,ref reborrows::Sites sites){
-    // Analysis precedes dispatch integration; no runtime may admit these yet.
-    if(places::present(p)){return .err(errors::make(5,0));}
     if(sites.count!=0){var usize pc=0;while(pc<p.count){
         if(p.code[pc*8]==9 || p.code[pc*8]==78){let usize allowed=executable::call(p,sites,pc)?;}
         pc+=1;

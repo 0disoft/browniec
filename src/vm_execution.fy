@@ -9,6 +9,7 @@ import bits as bits;
 import shifts as shifts;
 import array_vm as array_vm;
 import array_list_vm as lists;
+import place_vm as places;
 import array_range_vm as array_ranges;
 import slice_vm as slices;
 import struct_vm as struct_vm;
@@ -84,10 +85,12 @@ fn Result<i64, errors::Error> core(ref ir::Program p, usize fuel,
     if(authority.len>1 || call_sites.len!=authority.len || child_bindings.len!=authority.len){return .err(errors::make(5,0));}
     if(authority.len==0 && reborrows::present(p)) { return .err(errors::make(5,0)); }
     let lists::Requirement list_plan=lists::requirement(p)?;
-    if(fuel<list_plan.cost){return .err(errors::make(8,0));}
+    let places::Requirement place_plan=places::requirement(p)?;
+    if(fuel<list_plan.cost+place_plan.cost){return .err(errors::make(8,0));}
     var vec::Vec<i64> list_cells=lists::prepare_values(ref list_plan)?;
     var bytes::Buffer list_scratch=lists::prepare_encoded(ref list_plan)?;
-    var usize remaining = fuel-list_plan.cost;
+    var vec::Vec<usize> place_state=places::prepare(ref place_plan)?;
+    var usize remaining = fuel-list_plan.cost-place_plan.cost;
     var struct_vm::State records = struct_vm::empty();
     var i64[4096] registers = [0; 4096];
     var usize[32] return_pcs = [0; 32];
@@ -102,6 +105,12 @@ fn Result<i64, errors::Error> core(ref ir::Program p, usize fuel,
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
+        if(op>=83 && op<=86){let usize base=frame*128;
+            remaining=places::step(p,pc,frame,ref mut place_state,ref arrays.owners,ref arrays.tokens,
+                bytes::view_mut(payload),ref mut registers[base..base+128],remaining)?;
+            pc+=1;continue;
+        }
+        if(op==8 || op==39 || op==50 || op==82){let usize ended=places::empty_frame(ref place_state,frame,p.offsets[pc])?;}
         if(op==82){
             if(remaining==0){return .err(errors::make(8,p.offsets[pc]));}remaining-=1;
             if(frame==0 || p.return_types[functions[frame]]!=13){return .err(errors::make(5,p.offsets[pc]));}
@@ -182,6 +191,7 @@ fn Result<i64, errors::Error> core(ref ir::Program p, usize fuel,
             pc += 1; continue;
         }
         if (op == 9) {
+            if(frame<31){let usize fresh=places::empty_frame(ref place_state,frame+1,p.offsets[pc])?;}
             if(authority.len==1){
                 remaining=calls::step_canonical_derived(p,sites,pc,frame,ref child_bindings[0],ref mut call_sites[0],ref mut authority[0],borrowed_frames,loans,ref mut records,arrays,payload,
                     ref mut registers,ref mut return_pcs,ref mut return_dsts,remaining)?;

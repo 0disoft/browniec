@@ -9,6 +9,7 @@ import vm_execution as scalar;
 import slice_authority as authority;
 import array_vm as arrays;
 import array_list_vm as list_values;
+import place_vm as places;
 import struct_call_vm as owned_calls;
 import slice_result_owned_execution as owned;
 import slice_result_record_execution as records;
@@ -171,12 +172,14 @@ fn Result<Outcome,errors::Error> invoke_proved(ref body_ir::Program body,ref u8[
     let usize depth=switch(authority::inspect(ref state.runtime.authority)){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,0));}};
     if(!available(ref state.runtime.authority,true)){return .err(errors::make(5,0));}
     let list_values::Requirement list_plan=list_values::requirement(body)?;
+    let places::Requirement place_plan=places::requirement(body)?;
     let usize work=owned_calls::cost(body,function,0)?+body.arities[function];
-    if(fuel<runtime::cost()+work+list_plan.cost){return .err(errors::make(8,0));}
+    if(fuel<runtime::cost()+work+list_plan.cost+place_plan.cost){return .err(errors::make(8,0));}
     var vec::Vec<i64> list_cells=list_values::prepare_values(ref list_plan)?;
     var bytes::Buffer list_scratch=list_values::prepare_encoded(ref list_plan)?;
-    let runtime::Entered first=entry::enter(body,function,binding(body,parameters,function),captures,inputs,state,data,fuel-list_plan.cost)?;
-    let Result<Outcome,errors::Error> outcome=start(body,parameters,function,ref first,values,state,data,sites,literals,ref mut list_cells,ref mut list_scratch);
+    var vec::Vec<usize> place_state=places::prepare(ref place_plan)?;
+    let runtime::Entered first=entry::enter(body,function,binding(body,parameters,function),captures,inputs,state,data,fuel-list_plan.cost-place_plan.cost)?;
+    let Result<Outcome,errors::Error> outcome=start(body,parameters,function,ref first,values,state,data,sites,literals,ref mut list_cells,ref mut list_scratch,ref mut place_state);
     return switch(outcome){
         case .ok(v):{.ok(v)}
         case .err(e):{
@@ -191,13 +194,13 @@ fn Result<Outcome,errors::Error> invoke_proved(ref body_ir::Program body,ref u8[
 // Their native storage is needed only after verification and initial entry.
 fn Result<Outcome,errors::Error> start(ref body_ir::Program body,ref u8[] parameters,usize function,ref runtime::Entered first,
     ref i64[] values,ref mut runtime::State state,ref mut u8[] data,ref statics::Sites sites,ref u8[] literals,
-    ref mut vec::Vec<i64> list_cells,ref mut bytes::Buffer list_scratch){
+    ref mut vec::Vec<i64> list_cells,ref mut bytes::Buffer list_scratch,ref mut vec::Vec<usize> place_state){
     var frames::Frames bindings=frames::empty(state);
-    return run(body,parameters,function,first,values,ref mut bindings,state,data,sites,literals,list_cells,list_scratch);
+    return run(body,parameters,function,first,values,ref mut bindings,state,data,sites,literals,list_cells,list_scratch,place_state);
 }
 fn Result<Outcome,errors::Error> run(ref body_ir::Program body,ref u8[] parameters,usize function,ref runtime::Entered first,
     ref i64[] values,ref mut frames::Frames bindings,ref mut runtime::State state,ref mut u8[] data,ref statics::Sites sites,ref u8[] literals,
-    ref mut vec::Vec<i64> list_cells,ref mut bytes::Buffer list_scratch){
+    ref mut vec::Vec<i64> list_cells,ref mut bytes::Buffer list_scratch,ref mut vec::Vec<usize> place_state){
     var usize[32] static_live=[0;32];var u32[512] static_words=[0;512];
     var i64[4096] registers=[0;4096];var usize remaining=first.call.remaining;
     let usize entered=frames::push(body,bindings,first.call,function,128,32,0)?;
@@ -211,6 +214,11 @@ fn Result<Outcome,errors::Error> run(ref body_ir::Program body,ref u8[] paramete
         let usize dst=body.code[at+1] as usize;let usize a=body.code[at+2] as usize;let usize b=body.code[at+3] as usize;
         let usize base=frame*128;
         if(remaining==0){return .err(errors::make(8,offset));}remaining-=1;
+        if(op>=83 && op<=86){
+            remaining=places::step(body,pc,frame,place_state,ref state.runtime.owners,ref bindings.tokens,
+                data,ref mut registers[base..base+128],remaining)?;pc+=1;continue;
+        }
+        if(op==8 || op==39 || op==50 || op==65 || op==79 || op==82){let usize ended=places::empty_frame(place_state,frame,offset)?;}
         if(op==80 || op==81){
             remaining=owned::list(body,pc,bindings,state,ref registers[base..base+128],data,list_cells,list_scratch,remaining)?;
             pc+=1;continue;
@@ -275,6 +283,7 @@ fn Result<Outcome,errors::Error> run(ref body_ir::Program body,ref u8[] paramete
         }
         if(op==9 || op==64 || op==66 || op==78){
             if(frame>=31 || !available(ref state.runtime.authority,false)){return .err(errors::make(12,offset));}
+            let usize fresh=places::empty_frame(place_state,frame+1,offset)?;
             var runtime::Contract c=binding(body,parameters,a);
             let bool generic=op==78 && (sites.results[a]==3 || references::parameters(body,sites,a));
             var transfer::Arguments staged=transfer::Arguments{.words=[0;16],.remaining=remaining};

@@ -33,6 +33,8 @@ fn Result<usize,errors::Error> guard(ref ir::Program p,usize pc,usize protected)
     let usize a=p.code[at+2] as usize;let usize b=p.code[at+3] as usize;let usize one=1;
     if(op==36 || op==37 || op==38 || op==40 || op==81){
         if((protected&(one<<dst))!=0){return .err(invalid(pc));}
+    }else if(op==83 || op==84 || op==85){let usize root=if(op==84){b}else{a};
+        if((protected&(one<<root))!=0){return .err(invalid(pc));}
     }else if(op==60 || op==61 || (op==54 && ir::exclusive(p,dst))){
         let usize root=p.slice_roots[dst] as usize;
         if(root!=0 && (protected&(one<<(root-1)))!=0){return .err(invalid(pc));}

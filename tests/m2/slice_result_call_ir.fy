@@ -105,6 +105,30 @@ fn void opaque_call_id_cannot_be_observed_as_a_scalar(){
     proxy_valid(ref p);rejected(ref p);
     p=unit(1,false,false);let usize terminal=p.body.ends[1]-1;p.body.code[terminal*8+2]=id;proxy_valid(ref p);rejected(ref p);
 }
+fn void insert_place_recipe_instruction(ref mut ir::Program p,usize at,u8 op,usize dst,usize a,usize b){
+    let usize appended=switch(ir::raw(p,op,dst,a,b,0)){case .ok(n):{n}case .err(_):{assert(false);0}};
+    var u8[8] code=[0;8];var usize i=0;while(i<8){code[i]=p.code[appended*8+i];i+=1;}
+    var usize pc=appended;while(pc>at){let usize offset=p.offsets[pc-1];p.offsets[pc]=offset;i=0;
+        while(i<8){let u8 value=p.code[(pc-1)*8+i];p.code[pc*8+i]=value;i+=1;}pc-=1;}
+    i=0;while(i<8){p.code[at*8+i]=code[i];i+=1;}p.offsets[at]=0;
+    var usize f=0;while(f<p.function_count){if(p.starts[f]>=at){p.starts[f]+=1;}if(p.ends[f]>at){p.ends[f]+=1;}f+=1;}
+}
+@test fn void opaque_result_selectors_cannot_become_place_indices_or_store_values(){
+    var usize mode=0;while(mode<2){var results::Program p=unit(1,false,false);
+        let usize original=opcode(ref p,66);let usize identity=p.body.code[original*8+1] as usize;
+        let usize bind=opcode(ref p,67);let usize zero=p.body.code[bind*8+3] as usize;
+        let usize root=switch(ir::array_in(ref mut p.body,1,12,1,true,0)){
+            case .ok(n):{n}case .err(_):{assert(false);0}
+        };
+        insert_place_recipe_instruction(ref mut p.body,original,33,root,zero,0);
+        let usize after=opcode(ref p,67)+1;
+        insert_place_recipe_instruction(ref mut p.body,after,83,0,root,if(mode==0){identity}else{zero});
+        insert_place_recipe_instruction(ref mut p.body,after+1,85,0,root,if(mode==1){identity}else{zero});
+        insert_place_recipe_instruction(ref mut p.body,after+2,86,0,0,0);
+        let usize terminal=p.body.ends[1]-1;insert_place_recipe_instruction(ref mut p.body,terminal,37,root,0,0);
+        proxy_valid(ref p);rejected(ref p);mode+=1;
+    }
+}
 @test
 fn void end_capture_mask_must_match_exact_preexisting_children(){
     var results::Program p=unit(129,true,false);let usize call=opcode(ref p,66);p.body.code[call*8+4]=1;proxy_valid(ref p);rejected(ref p);

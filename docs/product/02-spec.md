@@ -7,10 +7,10 @@
 - L04 native prerequisite: [owned-array selected locations](../engineering/array-selected-place.md)
   capture and revalidate the original scalar target. The
   [independent IR successor](../engineering/array-place-ir.md) now proves
-  owned-array place identity, phases and lifetimes during analysis. Runtime
-  admission remains gated. [Metered native snapshots](../engineering/array-place-storage.md)
-  now execute the private instructions; actual VM driver/setup integration,
-  retained guards and source compound assignment remain open.
+  owned-array place identity, phases and lifetimes. [Both VM drivers](../engineering/array-place-execution.md)
+  now execute this independently admitted native IR with metered snapshots,
+  frame/CALL cleanup and returned-view guards. Ordered source lowering, compound
+  assignment and the other place kinds remain open.
 
 ## Product boundary
 

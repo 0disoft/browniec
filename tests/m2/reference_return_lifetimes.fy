@@ -138,6 +138,22 @@ fn calls::Program aliases(bool after){var calls::Program p=source_closed();let u
         if(i==0){rejected_at(ref p,at);}else{accepted(ref p);}i+=1;
     }
 }
+@test fn void selected_places_respect_returned_owner_protection_at_select_read_and_store(){
+    var usize mode=0;while(mode<4){var calls::Program p=source_closed();
+        let usize initialized=find(ref p.body,33,0);let usize fill=p.body.code[initialized*8+2] as usize;
+        let usize open=find(ref p.body,54,0);let usize index=p.body.code[open*8+2] as usize;
+        if(mode==0 || mode==3){let usize at=if(mode==0){find(ref p.body,71,0)}else{find(ref p.body,37,0)};
+            insert(ref mut p.body,at,83,0,0,index);insert(ref mut p.body,at+1,85,0,0,fill);insert(ref mut p.body,at+2,86,0,0,0);
+            if(mode==0){rejected_at(ref p,at);}else{accepted(ref p);}
+        }else{
+            insert(ref mut p.body,open,83,0,0,index);let usize at=find(ref p.body,71,0);
+            if(mode==1){insert(ref mut p.body,at,85,0,0,fill);insert(ref mut p.body,at+1,86,0,0,0);}
+            else{p.body.code[at*8]=84;p.body.code[at*8+2]=0;p.body.code[at*8+3]=0;
+                let usize drop=find(ref p.body,37,0);insert(ref mut p.body,drop,86,0,0,0);}
+            rejected_at(ref p,at);
+        }mode+=1;
+    }
+}
 @test fn void ordinary_shared_input_results_keep_exact_ancestry_and_canonical_scalar_checks(){
     var calls::Program p=unit(1,false,0,true);let usize formal=p.body.register_starts[1];p.parameters[formal]=0;
     p.body.slice_parameters[formal]=2;p.body.slice_origins[1]=2;p.body.slice_functions[1]=2;p.body.slice_elements[1]=10;

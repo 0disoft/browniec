@@ -1,8 +1,10 @@
 # Independent owned-array place IR analysis
 
 Date: 2026-11-06. Successor to the
-[native scalar-location prerequisite](array-selected-place.md). This increment
-proves private IR; executable admission stays gated until dispatch integration.
+[native scalar-location prerequisite](array-selected-place.md). This prerequisite
+proved private IR while executable admission stayed gated. The subsequent
+[VM integration](array-place-execution.md) now admits and executes it; guest
+source lowering and the other place kinds remain open.
 
 ## Instructions and namespaces
 
@@ -59,12 +61,13 @@ All existing source/register/function/frame/arena bounds remain unchanged.
 
 ## Execution boundary and remaining work
 
-`verifier::verify_sites`, executable Static/returned-reference admission and the
-ordinary VM reject these operations before Fuel/backing allocation. No public
+At this analysis checkpoint, `verifier::verify_sites`, executable Static/returned-
+reference admission and the ordinary VM rejected these operations before
+Fuel/backing allocation. No public
 syntax/capability or runtime operation price changes here. Analysis acceptance
 must not be described as runtime execution, dynamic owner pinning, or a Fuel pass.
 
-Next: frame-local snapshots across ordinary and retained CALL/RETURN, precharged
+The original next step was frame-local snapshots across ordinary and retained CALL/RETURN, precharged
 selection/read/store/end work, runtime identity/extent/generation checks, terminal
 cleanup and exact Fuel boundaries. Then connect ordered source assignment and
 compound operators, exclusive slice/record/scalar-local places and grouped lvalues.
@@ -75,6 +78,11 @@ The [metered storage successor](array-place-storage.md) now supplies native
 invocation snapshots, phase/counter dispatch and exact instruction prices.
 Both actual VM drivers and retained guards remain to be connected; the
 executable gate is unchanged at this checkpoint.
+
+The subsequent [VM successor](array-place-execution.md) opens independently
+proved owned-array place execution through both actual drivers with retained
+guards and exact Fuel. Analysis-only gate statements above remain historical
+for this prerequisite; guest source placement/compound lowering is still open.
 
 Run `python -B tools/verify-static-execution.py --profile development
 --selection array-place-ir`, then repeat for release. It selects the new proof

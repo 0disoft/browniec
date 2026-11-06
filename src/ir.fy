@@ -41,7 +41,7 @@ import std::num as num;
 // Arity is the exact destination length; bytes4..7 are reserved zero.
 // 82 void return: all seven operand/reserved bytes are zero. CALL to a function
 // with return tag 13 has canonical dst=0 and defines no scalar register.
-// 83..86 selected owned-array scalar places: analysis only until VM integration.
+// 83..86 selected owned-array scalar places, independently proved before dispatch.
 // SELECT dst=place,a=array,b=index; READ dst=value,a=place,b=array;
 // STORE dst=place,a=array,b=value; END dst=place,a=b=0. Places are not values.
 pub struct Program {

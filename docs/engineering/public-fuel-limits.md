@@ -1,5 +1,13 @@
 # Public Fuel costs and CLI ceiling
 
+The 2026-11-06 [selected-place VM successor](array-place-execution.md) now admits
+owned-array SELECT/READ/STORE/END through native IR APIs in both drivers. Only
+programs containing those operations pay its bounded invocation setup and new
+instruction prices; old prices/default/cap remain. Its native exact oracles are
+3853 with eight backing bytes, 69381 via public ordinary backing and 413452 via
+public retained entry. Guest source selected-place/compound lowering remains
+unimplemented; these are not CLI source-feature oracles.
+
 Date: 2026-11-04. This is a narrow C05 successor to the
 [returned-view schedule](m2-slice-result-fuel.md), not full-profile limit adoption.
 

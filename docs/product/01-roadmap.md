@@ -17,7 +17,8 @@
 - L04 starts with [native owned-array selected locations](../engineering/array-selected-place.md).
   [Independent place IR analysis](../engineering/array-place-ir.md) now checks
   identity and lifetimes. [Native metered storage](../engineering/array-place-storage.md)
-  supplies snapshots/dispatch; driver/retained-guard and source integration remain open.
+  supplies snapshots/dispatch. [Both VM drivers and retained guards](../engineering/array-place-execution.md)
+  are connected; ordered source and other place kinds remain open.
 
 ## Milestone status
 

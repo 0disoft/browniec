@@ -150,7 +150,7 @@ fn ir::Program looped(bool hold,bool omit_end) {
     dead.code[unreachable*8+4]=1;rejected_at(ref dead,unreachable);
 }
 
-@test fn void independent_function_frames_and_runtime_admission_stay_separate() {
+@test fn void independent_function_frames_share_private_place_ids() {
     var ir::Program p=basic(1);let usize child_end=p.count;let usize child_registers=p.registers;
     p.function_count=2;p.entry=1;p.return_types[1]=1;p.starts[1]=child_end;p.register_starts[1]=child_registers;
     let usize root=built(ir::array_in(ref mut p,1,1,2,true,0));
@@ -161,6 +161,7 @@ fn ir::Program looped(bool hold,bool omit_end) {
     let usize dropped=built(ir::array_drop(ref mut p,root,0));let usize returned=built(ir::emit(ref mut p,8,result,0,0));
     let usize count=p.count;let usize registers=p.registers;p.ends[1]=count;p.register_ends[1]=registers;
     assert(verifier::inspect(ref p).is_ok);
-    assert(!verifier::verify(ref p).is_ok);
-    assert(switch(vm::run_with_array_limit(ref p,0,0)){case .ok(_):{false}case .err(e):{e.kind==5}});
+    assert(verifier::verify(ref p).is_ok);
+    assert(switch(vm::run_with_array_limit(ref p,100000,16)){case .ok(v):{v==42}case .err(_):{false}});
+    assert(switch(vm::run_with_array_limit(ref p,0,0)){case .ok(_):{false}case .err(e):{e.kind==8}});
 }

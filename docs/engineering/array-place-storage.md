@@ -57,6 +57,10 @@ Verify with `python -B tools/verify-static-execution.py --profile development
 the new executor cases plus the original native array-location suite. See
 [Windows evidence](../evidence/array-place-storage-windows-20261106.json).
 
+The [VM execution successor](array-place-execution.md) now connects actual driver
+preflight, dispatch, CALL/return and retained guards. The earlier gate statements
+above describe this prerequisite checkpoint, not the successor's current scope.
+
 Development/release each passed 14 native groups (six new executor groups and
 eight original location groups), using 169 identical input hashes, 163 LF
 production modules and 281-file discovery. Both locked LF mirrors passed.

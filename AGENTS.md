@@ -1,3 +1,16 @@
+- Owned-array selected-place IR now executes in both ordinary and retained VM
+  drivers with setup preflight, frame/CALL cleanup, returned-owner protection and
+  recipe scalar-use checks. See the [contract](docs/engineering/array-place-execution.md).
+  Development/release each passed 23 native groups and 57 tool-free public Fuel
+  CLI cases on a 183-path Git-raw/checkout-matching input union, 163 LF modules
+  and common 282-file discovery; both locked LF mirrors pass. Exact ordinary
+  native/public/retained boundaries are 3853/69381/413452. Existing operation
+  prices/default256/cap16000000 remain. Ordered source/compound assignment and
+  other place kinds, complete L04/C05/Instance/host/delivery remain open. Full
+  language/original full native Fuel matrices, Linux, OOM/general stack/timing,
+  isolation and delivery were not rerun. Local only. See the
+  [Windows evidence](docs/evidence/array-place-execution-windows-20261106.json).
+
 - Metered native place storage now supplies one bounded invocation vector,
   frame-local phases/counters and preflighted scalar SELECT/READ/STORE/END.
   See the [contract](docs/engineering/array-place-storage.md). Development/release
