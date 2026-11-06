@@ -4,6 +4,11 @@
 - Implementation status: Reconciled 2026-11-06; bounded M1 and public M2 aggregate/slice/literal/shared-byte-result subsets; full profile incomplete
 - Source profile name: brownie.safe/0.3
 
+- L04 native prerequisite: [owned-array selected locations](../engineering/array-selected-place.md)
+  now capture and revalidate the original scalar target. Public stores still lack
+  the complete selected-place/compound-assignment semantics; source lowering,
+  affine lifetimes and independent IR proof remain required.
+
 ## Product boundary
 
 Brownie C runs a small, statically typed source profile on a native JIT-free VM.

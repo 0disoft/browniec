@@ -1,3 +1,12 @@
+- Native owned-array selected locations: development/release each passed 24
+  native groups (eight new plus 16 existing owner/storage/layout groups), with
+  169 matching inputs, 161 LF production modules and locked LF mirrors.
+  These are native location snapshots, not guest source/IR place obligations.
+  No CLI/full Fuel matrices, Linux, OOM/general stack/performance or delivery
+  checks were rerun. Prices/default256/cap16000000 remain unchanged. See the
+  [contract](docs/engineering/array-selected-place.md) and
+  [Windows evidence](docs/evidence/array-selected-place-windows-20261106.json).
+
 - Constructor arm inference is implemented at `bdb6d2b` on the bounded
   `6aaf473` constraint foundation. Complete final none/some and ok/err atoms,
   known typed values and shared mixed if/switch tails resolve existing shallow

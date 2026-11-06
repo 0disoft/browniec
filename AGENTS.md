@@ -1,3 +1,14 @@
+- Native owned-array selected locations now have a private metadata-only
+  capture and revalidated read/store prerequisite. See the
+  [contract](docs/engineering/array-selected-place.md). This does not implement
+  source compound assignment, affine place obligations, exclusive-slice/record
+  places or independent selected-place IR admission. Existing guest instructions,
+  Fuel prices/default256/cap16000000 and public capabilities remain unchanged.
+  Development/release each passed 24 focused native groups on 169 matching inputs
+  and 161 LF production modules, with locked LF mirrors; see the
+  [Windows evidence](docs/evidence/array-selected-place-windows-20261106.json).
+  No public CLI/full Fuel matrix or platform/delivery claims are renewed.
+
 - Constructor arm inference is implemented at `bdb6d2b` on the bounded
   `6aaf473` constraint foundation. Complete final none/some and ok/err atoms,
   known typed values and shared mixed if/switch tails resolve existing shallow
