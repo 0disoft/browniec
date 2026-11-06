@@ -33,8 +33,8 @@ only the binding whose authority has resumed, retain snapshots linearly, and
 never clone/mutate sessions or move snapshots across invocation tables. The
 [independent IR proof](slice-place-ir.md) now enforces static authority and
 location phases. The [metered storage adapter](slice-place-vm.md) retains the
-snapshot and requires the canonical restored current ticket. Both VM drivers
-still need that binding source and admission before guest execution; this
+snapshot and requires the canonical restored current ticket. The [execution successor](slice-place-execution.md) now connects both VM
+drivers to canonical frame/site bindings after complete admission; this
 primitive alone does not enforce guest authority.
 
 An old scalar must be read and retained before the RHS for compounds. A later

@@ -9,7 +9,8 @@ import vm_execution as scalar;
 import slice_authority as authority;
 import array_vm as arrays;
 import array_list_vm as list_values;
-import place_vm as places;
+import slice_place_vm as places;
+import place_vm as place_frames;
 import struct_call_vm as owned_calls;
 import slice_result_owned_execution as owned;
 import slice_result_record_execution as records;
@@ -215,10 +216,10 @@ fn Result<Outcome,errors::Error> run(ref body_ir::Program body,ref u8[] paramete
         let usize base=frame*128;
         if(remaining==0){return .err(errors::make(8,offset));}remaining-=1;
         if(op>=83 && op<=86){
-            remaining=places::step(body,pc,frame,place_state,ref state.runtime.owners,ref bindings.tokens,
-                data,ref mut registers[base..base+128],remaining)?;pc+=1;continue;
+            remaining=places::bound(body,pc,f,frame,place_state,ref state.runtime.owners,ref bindings.tokens,
+                ref state.runtime.pool,ref bindings.sites,data,ref mut registers[base..base+128],remaining)?;pc+=1;continue;
         }
-        if(op==8 || op==39 || op==50 || op==65 || op==79 || op==82){let usize ended=places::empty_frame(place_state,frame,offset)?;}
+        if(op==8 || op==39 || op==50 || op==65 || op==79 || op==82){let usize ended=place_frames::empty_frame(place_state,frame,offset)?;}
         if(op==80 || op==81){
             remaining=owned::list(body,pc,bindings,state,ref registers[base..base+128],data,list_cells,list_scratch,remaining)?;
             pc+=1;continue;
@@ -283,7 +284,7 @@ fn Result<Outcome,errors::Error> run(ref body_ir::Program body,ref u8[] paramete
         }
         if(op==9 || op==64 || op==66 || op==78){
             if(frame>=31 || !available(ref state.runtime.authority,false)){return .err(errors::make(12,offset));}
-            let usize fresh=places::empty_frame(place_state,frame+1,offset)?;
+            let usize fresh=place_frames::empty_frame(place_state,frame+1,offset)?;
             var runtime::Contract c=binding(body,parameters,a);
             let bool generic=op==78 && (sites.results[a]==3 || references::parameters(body,sites,a));
             var transfer::Arguments staged=transfer::Arguments{.words=[0;16],.remaining=remaining};

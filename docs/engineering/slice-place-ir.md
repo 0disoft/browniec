@@ -21,7 +21,9 @@ Array and slice selections share the same sixteen frame-local place IDs.
 `verifier::inspect_slice_places` runs complete canonical ordinary-IR function,
 scalar, owner, parameter, CALL, loan and CFG proof, then the common place graph.
 It returns analysis only, not an executable receipt or retained image authority.
-Existing inspection and executable entry points keep rejecting the slice kind.
+The [execution successor](slice-place-execution.md) now connects complete
+executable admission and both drivers; this analysis-only result itself grants
+no execution authority.
 
 Each slice operand must identify an exclusive site of the containing function:
 an owned-root slice, a rootless formal or a derived lexical child. The scalar
@@ -53,8 +55,9 @@ no Program field, guest register/site/owner or payload allocation is added.
 
 ## Executable boundary and remaining work
 
-Every pre-existing validator mode rejects kind one before issuing its existing
-proof. Independently, `place_vm::requirement` rejects it before snapshot setup or
+The [execution successor](slice-place-execution.md) now admits the slice kind
+through complete ordinary/image/returned-reference validation and both VM
+drivers. The legacy array-only `place_vm::requirement` still rejects it before snapshot setup or
 Fuel reservation, and `place_vm::cost` rejects it before a raw step can inspect
 invocation state. A native caller cannot obtain execution by passing this
 analysis result to an old adapter. The old owned-array encoding/prices and public
@@ -63,9 +66,9 @@ added.
 
 The [metered native successor](slice-place-vm.md) now supplies explicitly tagged
 slice/mixed invocation vectors and exact setup/operation preflight. It remains a
-private adapter requiring the canonical caller-supplied restored ticket. Dispatch
-and current-binding integration in both drivers, retained/image/returned-view
-authority and recipe guards, source early selection and compounds remain open. Record/scalar-local/grouped places, aggregate overlap and full
+private adapter requiring the canonical caller-supplied restored ticket. Its [execution successor](slice-place-execution.md) connects both drivers and
+complete admission/cleanup/retained guards. Source early selection and slice
+compounds remain open. Record/scalar-local/grouped places, aggregate overlap and full
 L04/C05/Instance/host/delivery remain open as well.
 
 VM integration must retain an explicit location/format discriminator in its

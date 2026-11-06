@@ -61,6 +61,23 @@ pub fn Result<usize,errors::Error> cost(ref ir::Program p,usize pc,bool extended
     return .ok(meter::slice_place_instruction(op,shape.stride));
 }
 
+// Only the invocation coordinator writes this frame/site map. Resolve the
+// currently resumed binding after CALL/lexical restoration, never from the pool
+// or the saved location. Preflight precedes even this bounded binding lookup.
+pub fn Result<usize,errors::Error> bound(ref ir::Program p,usize pc,usize function,usize frame,
+    ref mut vec::Vec<usize> state,ref owners::Table table,ref owners::Token[] tokens,
+    ref slices::Pool pool,ref slices::Ticket[] bindings,ref mut u8[] data,ref mut i64[] registers,usize fuel){
+    let usize mode=kind(p,pc)?;var slices::Ticket current=slices::Ticket{.slot=16,.generation=0};
+    if(mode==1){let usize offset=p.offsets[pc];let arrays::Format shape=arrays::format(state,offset)?;
+        let usize price=cost(p,pc,shape.row==14)?;
+        if(fuel<price){return .err(errors::make(8,offset));}
+        if(frame>=32 || bindings.len!=512){return .err(errors::make(5,offset));}
+        let usize site=p.code[pc*8+if(p.code[pc*8]==84){3}else{2}] as usize;
+        if(site>=16){return .err(errors::make(5,offset));}current=bindings[frame*16+site];
+    }
+    return step(p,pc,function,frame,state,table,tokens,pool,current,data,registers,fuel);
+}
+
 // Array operations share their original implementation. END uses the active
 // row's explicit kind, not a current descriptor or an ambiguous vector length.
 pub fn Result<usize,errors::Error> step(ref ir::Program p,usize pc,usize function,usize frame,

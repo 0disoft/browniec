@@ -29,10 +29,11 @@
   proves kind/site identity, phases, lifetime and available authority. Its
   [metered private storage adapter](../engineering/slice-place-vm.md) now retains
   original snapshots in explicitly tagged bounded invocation vectors, with
-  separate slice/mixed preparation and preflight costs. Next: both VM drivers'
-  canonical current-binding source and cleanup, image/returned-view/recipe
-  integration and source lowering. Existing executable slice modes remain gated;
-  no guest capability is added.
+  separate slice/mixed preparation and preflight costs. The
+  [execution successor](../engineering/slice-place-execution.md) now connects
+  both VM drivers to canonical current-binding maps with complete admission,
+  frame/CALL cleanup and retained/image/recipe guards. Source early selection
+  and slice compounds are next; public source capability metadata is unchanged.
 
 ## Milestone status
 

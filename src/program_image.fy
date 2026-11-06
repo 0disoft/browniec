@@ -1,6 +1,6 @@
 module program_image;
 import array_list_vm as list_values;
-import place_vm as places;
+import slice_place_vm as places;
 import static_image as images;
 import slice_result_ir as ir;
 import slice_result_verifier as verifier;

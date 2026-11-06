@@ -1,3 +1,24 @@
+- Exclusive-slice selected-place IR now executes in ordinary and retained VM
+  drivers through canonical frame/site ticket maps, complete admission and
+  metered setup/operation preflight. See the
+  [contract](docs/engineering/slice-place-execution.md). CALL/frame cleanup,
+  retained owner-root mapping, image recipes and scalar-use guards are connected.
+  Development/release each passed 22 native groups (six execution and sixteen
+  existing proof/array/guard/CALL groups) and 57 tool-free public Fuel CLI cases
+  on a 186-path Git-raw/checkout-matching input union, 167 LF production
+  modules, 288-file discovery and both locked LF mirrors; see the
+  [Windows evidence](docs/evidence/slice-place-execution-windows-20261106.json).
+  Independent exact Fuel is 91458 ordinary with eight backing bytes, 156986
+  ordinary public, 435522 retained native and 501059 retained public. All six
+  scalars, caller/formal same-ID snapshots, restored CALL/lexical tickets,
+  post-store Fuel abort with payload preservation/explicit retry, malformed
+  admission and original ordinary/retained 32/33 CALL bounds pass. Existing
+  prices/default256/cap16000000 and source capability metadata remain. Source
+  slice early selection/compounds, other places/overlap and full
+  L04/C05/Instance/host/delivery remain open. Full language/original native Fuel
+  matrices, Linux, OOM/general stack/performance/isolation/delivery were not
+  rerun. Local only.
+
 - Metered exclusive-slice selected-place storage now supplies explicit slice/mixed
   invocation vectors, frame phases/counters and native setup/operation preflight.
   See the [contract](docs/engineering/slice-place-vm.md). Canonical caller-supplied

@@ -7,9 +7,10 @@ and [native exclusive-slice locations](slice-selected-place.md).
 
 `src/slice_place_vm.fy` provides invocation-private requirement, preparation,
 cost and single-step adapters for already independently analysed immutable IR.
-It does not issue executable admission. Existing ordinary and retained drivers,
-validators, public source capabilities and CLI Fuel limits remain unchanged.
-Kind-one slice places remain rejected by the existing executable entry points.
+It does not issue executable admission itself. The
+[execution successor](slice-place-execution.md) now connects both drivers to
+canonical frame/site ticket maps after complete executable proof. Public source
+capabilities and CLI Fuel limits remain unchanged; source lowering is next.
 
 The caller supplies the actual function, frame and canonical current binding.
 Slice SELECT/READ/STORE check the containing function range and exact scalar
@@ -60,8 +61,9 @@ Array/slice kinds share IDs, so a live same-ID selection cannot be overwritten.
 
 ## Fuel schedule
 
-All prices below include ordinary dispatch. These are private adapter prices;
-retained driver integration and its existing additive dispatch are still open.
+All prices below include ordinary dispatch. Retained execution adds its existing
+one-unit dispatch; the [execution successor](slice-place-execution.md) records
+complete ordinary and retained invocation boundaries.
 
 | Operation | Array-only legacy | Slice or mixed |
 | --- | --- | --- |
@@ -77,7 +79,7 @@ retained driver integration and its existing additive dispatch are still open.
 
 Setup prices cover initialization and publication/destruction visits for every
 word. `prepare` validates the bounded plan but does not itself debit a Fuel
-balance; its future driver must reserve the complete plan cost before allocation.
+balance; both drivers now reserve the complete plan cost before allocation.
 Slice operations share the bounded existing session/pool authentication envelope
 and add 32 visits for snapshot/frame decoding and publication. END's five-unit
 extension covers its five extra cleared words. Work does not scan array payload
@@ -87,18 +89,17 @@ The old `place_vm::requirement/cost` continue rejecting slice-tagged instruction
 Only the new adapter requests extended storage. Existing guest instruction
 prices, public default256/ceiling16000000 and capability metadata remain.
 
-## Executable gate and next work
+## Execution integration and next work
 
-Both drivers still lack a coherent canonical binding source for these new
-instructions: their slice-site operand cannot simultaneously name a restored
-current ticket. Integration must use actual frame/binding state and preserve
-CALL/lexical restoration; guessing a ticket or silently changing an operand,
-opcode or public price contract is not acceptable.
+The [execution successor](slice-place-execution.md) resolves current tickets
+from the existing coordinator-owned frame/site maps, preserving CALL/lexical
+restoration without an extra operand or opcode. Both drivers, complete
+admission, frame cleanup, image/returned-view guards and recipe support are now
+connected. The evidence below remains the historical storage-only checkpoint.
 
-Remaining: ordinary/retained driver admission and cleanup, returned/image-view
-and recipe guards, source bounds-before-RHS and slice compounds, record/scalar
-places, grouped lvalues, generic aggregate overlap and complete
-L04/C05/Instance/host/delivery. This native adapter is not executable guest support.
+Remaining: source bounds-before-RHS and slice compounds, record/scalar places,
+grouped lvalues, generic aggregate overlap and complete
+L04/C05/Instance/host/delivery. The adapter alone still issues no execution proof.
 
 ## Verification
 

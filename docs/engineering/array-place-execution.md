@@ -7,7 +7,8 @@ and [metered snapshot storage](array-place-storage.md).
 
 Ordinary executable admission now accepts the four independently proved owned
 scalar-array place instructions. The ordinary and retained/reference-aware VM
-drivers both use `place_vm::step` over their actual invocation owner table,
+drivers use the [common binding adapter](slice-place-execution.md), delegating
+owned arrays to `place_vm::step` over their actual invocation owner table,
 frame token bindings, backing bytes and register window. A parent snapshot stays
 in its own frame during nested CALLs, even when the child uses the same place ID.
 Frame reuse and every normal scalar/aggregate/reference/void return require an

@@ -9,7 +9,8 @@ import bits as bits;
 import shifts as shifts;
 import array_vm as array_vm;
 import array_list_vm as lists;
-import place_vm as places;
+import slice_place_vm as places;
+import place_vm as place_frames;
 import array_range_vm as array_ranges;
 import slice_vm as slices;
 import struct_vm as struct_vm;
@@ -106,11 +107,11 @@ fn Result<i64, errors::Error> core(ref ir::Program p, usize fuel,
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
         if(op>=83 && op<=86){let usize base=frame*128;
-            remaining=places::step(p,pc,frame,ref mut place_state,ref arrays.owners,ref arrays.tokens,
-                bytes::view_mut(payload),ref mut registers[base..base+128],remaining)?;
+            remaining=places::bound(p,pc,functions[frame],frame,ref mut place_state,ref arrays.owners,ref arrays.tokens,
+                ref loans.pool,ref loans.tickets,bytes::view_mut(payload),ref mut registers[base..base+128],remaining)?;
             pc+=1;continue;
         }
-        if(op==8 || op==39 || op==50 || op==82){let usize ended=places::empty_frame(ref place_state,frame,p.offsets[pc])?;}
+        if(op==8 || op==39 || op==50 || op==82){let usize ended=place_frames::empty_frame(ref place_state,frame,p.offsets[pc])?;}
         if(op==82){
             if(remaining==0){return .err(errors::make(8,p.offsets[pc]));}remaining-=1;
             if(frame==0 || p.return_types[functions[frame]]!=13){return .err(errors::make(5,p.offsets[pc]));}
@@ -191,7 +192,7 @@ fn Result<i64, errors::Error> core(ref ir::Program p, usize fuel,
             pc += 1; continue;
         }
         if (op == 9) {
-            if(frame<31){let usize fresh=places::empty_frame(ref place_state,frame+1,p.offsets[pc])?;}
+            if(frame<31){let usize fresh=place_frames::empty_frame(ref place_state,frame+1,p.offsets[pc])?;}
             if(authority.len==1){
                 remaining=calls::step_canonical_derived(p,sites,pc,frame,ref child_bindings[0],ref mut call_sites[0],ref mut authority[0],borrowed_frames,loans,ref mut records,arrays,payload,
                     ref mut registers,ref mut return_pcs,ref mut return_dsts,remaining)?;

@@ -20,11 +20,13 @@
   by completed CALL/reborrow restoration. Its
   [analysis-only ordinary IR](../engineering/slice-place-ir.md) now proves
   available authority plus shared location identity/phases/lifetimes; existing
-  executable modes reject the new slice kind. The
+  executable admission now accepts this slice kind after the complete proof. The
   [private metered adapter](../engineering/slice-place-vm.md) now supplies bounded,
   explicitly tagged snapshot storage and exact slice/mixed setup/operation
-  preflight. Canonical current-binding integration in both VM drivers,
-  image/returned-view/recipe guards and source lowering remain open. These
+  preflight. Its [execution successor](../engineering/slice-place-execution.md)
+  connects both VM drivers to canonical bindings, cleanup and
+  image/returned-view/recipe guards. Source early selection and slice compounds
+  remain open. These
   prerequisites change no guest syntax, existing instruction prices or CLI limits.
 
 ## Product boundary
