@@ -12,6 +12,7 @@ import array_layout as layouts;
 import errors as errors;
 import slice_authority as authority;
 import struct_call_vm as copies;
+import ir as body_ir;
 
 fn slices::Ticket opened(ref mut runtime::State state,ref mut u8[] data,u8 tag,bool exclusive){
     let layouts::Array shape=switch(layouts::scalar(tag,4)){case .ok(v):{v}case .err(_):{assert(false);layouts::Array{.element=1,.length=4,.stride=4,.alignment=4,.bytes=16}}};
@@ -29,9 +30,13 @@ fn Result<usize,errors::Error> exact(bool short,bool initial){
     let ir::Program unit=compiler::inspect_slice_result_ir(b"module main;fn ref mut i32[] f(ref mut i32[] p){p[0]=42;return ref mut p;}fn i32 main(){return 0;}")?;
     var u8[16] data=[0;16];var runtime::State state=runtime::empty(16);let slices::Ticket parent=opened(ref mut state,ref mut data,1,true);
     let runtime::Capture[1] captures=[runtime::capture(parent,true,true)];let i64[1] values=[0];
-    // Independent straight-line oracle: one dispatch per emitted instruction,
-    // one formal transfer, one i32 store (4130+2*4), entry and handoff.
-    let usize required=147456+294912+1+(unit.body.ends[0]-unit.body.starts[0])+4138;
+    // Source writes now SELECT/STORE/END a slice place. Count dispatch once,
+    // plus one formal, mixed-place setup, three operations, entry and handoff.
+    var usize selects=0;var usize stores=0;var usize ends=0;var usize pc=unit.body.starts[0];
+    while(pc<unit.body.ends[0]){let u8 op=unit.body.code[pc*8];
+        if(op==83){selects+=1;}if(op==85){stores+=1;}if(op==86){ends+=1;}pc+=1;
+    }assert(selects==1 && stores==1 && ends==1);
+    let usize required=147456+294912+1+(unit.body.ends[0]-unit.body.starts[0])+5067+4129+4170+22;
     let usize budget=if(initial){147456}else{required-if(short){1}else{0}};
     assert(required<meter::cli_limit());
     switch(vm::run_slice_result(ref unit,0,ref captures,ref values,ref mut state,ref mut data,budget)){
@@ -86,19 +91,32 @@ fn Result<usize,errors::Error> forward(ref u8[] source,bool exclusive){
 }
 
 fn Result<usize,errors::Error> operation(ref u8[] source,u8 tag,bool exclusive,u8 op,usize price){
-    let ir::Program unit=compiler::inspect_slice_result_ir(source)?;
+    var ir::Program unit=compiler::inspect_slice_result_ir(source)?;
     var u8[32] data=[0;32];var runtime::State state=runtime::empty(32);let slices::Ticket parent=opened(ref mut state,ref mut data,tag,exclusive);
     let runtime::Capture[1] captures=[runtime::capture(parent,true,true)];
     let runtime::Call call=runtime::enter(ref mut state,runtime::contract(ref unit,0)?,ref captures,32,runtime::cost())?;
     var frames::Frames bindings=frames::empty(ref state);let usize pushed=frames::push(ref unit.body,ref mut bindings,call,0,128,32,0)?;
-    var usize pc=unit.body.starts[0];while(pc<unit.body.ends[0] && unit.body.code[pc*8]!=op){pc+=1;}assert(pc<unit.body.ends[0]);
+    var usize pc=unit.body.starts[0];while(pc<unit.body.ends[0] && unit.body.code[pc*8]!=op){pc+=1;}
+    if(op==60){
+        // Source no longer emits legacy WRITE. Type-build a direct adapter
+        // probe from its proved SELECT/STORE operands after binding the frame;
+        // this appended probe is not submitted as a complete guest Program.
+        var usize select=unit.body.starts[0];var usize store=select;
+        while(select<unit.body.ends[0] && unit.body.code[select*8]!=83){select+=1;}
+        while(store<unit.body.ends[0] && unit.body.code[store*8]!=85){store+=1;}
+        assert(select<unit.body.ends[0] && store<unit.body.ends[0]);
+        let usize site=unit.body.code[select*8+2] as usize;let usize index=unit.body.code[select*8+3] as usize;
+        let usize value=unit.body.code[store*8+3] as usize;let usize offset=unit.body.offsets[store];
+        pc=body_ir::slice_write(ref mut unit.body,site,index,value,offset)?;
+    }else{assert(pc<unit.body.ends[0]);}
     var i64[128] registers=[0;128];let usize dst=unit.body.code[pc*8+1] as usize;
-    if(op!=60){registers[dst]=99;}
+    if(op!=60){registers[dst]=99;}else{registers[unit.body.code[pc*8+3] as usize]=42;}
     switch(loans::step(ref unit.body,pc,ref mut bindings,ref mut state,ref mut registers,ref mut data,price-1)){
         case .ok(_):{assert(false);}case .err(e):{assert(e.kind==8 && e.offset==unit.body.offsets[pc]);}
     };
     assert(data[0]==0);if(op!=60){assert(registers[dst]==99);}
     assert(loans::step(ref unit.body,pc,ref mut bindings,ref mut state,ref mut registers,ref mut data,price)?==0);
+    if(op==60){assert(data[0]==42);}
     let usize cleared=runtime::abort(ref mut state,32,0)?;drained(ref state);return .ok(0);
 }
 @test fn void slice_reads_writes_and_utf8_use_the_existing_public_prices(){
