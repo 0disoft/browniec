@@ -147,7 +147,11 @@ admission, execution and cleanup. Push/release/deployment are separate actions.
    CFG, tag build/case, scalar conversion and CALL/RETURN against canonical scalar,
    owner/loan and selected-place analysis. The [canonical byte successor](value-codec.md)
    now supplies retained layouts, active-resource inspection and validated atomic
-   copy/wrapper bytes. Next connect owning native value/frame storage, metered
+   copy/wrapper bytes. The [owning root successor](value-roots.md) now retains
+   actual native allocations, serial/token/location bindings, metered moves and
+   destruction-before-refund cleanup with setup-prepaid failure drain. The native
+   coordinator retains its matching State and two owning vectors for one lifetime;
+   this is not guest/Engine authority. Next connect value-slot/frame storage, metered
    execution, tagged payload cleanup and compiler source integration. Native prerequisites
    do not close L04/L05/D01-D04.
 3. **Engine and Instance: R01-R05.** The [call capture-stack fix](native-call-capture-stack.md)

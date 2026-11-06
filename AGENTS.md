@@ -1,3 +1,20 @@
+- Native owning value roots are implemented at 249218f. See
+  docs/engineering/value-roots.md. Actual roots are created internally and resolved
+  through one serial/token/location binding; metered MOVE preserves charge, and
+  DROP destroys before refund. Setup prepays sixteen-root failure drain. The
+  trusted native coordinator must keep the matching State and two owning vectors
+  together for one invocation, never transplanting/editing them. Mutable resource
+  field projection is unavailable in the pinned compiler; no unsafe workaround
+  or Fairy checkout changes. Value-slot/frame storage, metered typed IR execution,
+  tag/CALL/RETURN cleanup and compiler source binding remain next. No public
+  behavior/existing price/default/cap changes. Full objective remains open.
+  Windows development/release each passed nine native groups (five new plus four
+  handoff regressions), with 190 checkout/Git-raw-matching inputs, 184 LF production
+  modules and a 312-file/1861-annotation test inventory. See
+  docs/evidence/value-roots-windows-20261107.json. Full CLI/language/native Fuel,
+  LF mirrors, Linux, OOM/general stack/performance and delivery were not rerun.
+  Local only; no push/release/deployment. Earlier checkpoints retain their scopes.
+
 - Canonical native value bytes now retain immutable layouts and validate scalars,
   arrays, nested plain records, wrapper tags/padding/inactive bytes and the single
   active Buffer word. Copy overlap is direction-aware; wrapper overlap rejects

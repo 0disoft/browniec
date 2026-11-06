@@ -61,7 +61,9 @@ four wrappers with one active Buffer, inactive/scalar alternatives, nominal and
 nested record padding, atomic late errors, both overlap directions, size/bounds
 guards, maximum scalar arrays and 4096-byte/depth16 records.
 
-The next slice needs an owning native root store, metered value/frame operations,
+The [owning root successor](value-roots.md) now retains actual native allocations,
+serial/token/location bindings and metered movement/retirement with prepaid failure
+drain. The next slice still needs metered value/frame operations,
 CALL/RETURN and normal/failure cleanup, then compiler source binding. The pinned
 compiler does not currently admit whole-Buffer replacement through a mutable
 reference: a native capability probe of `*b = bytes::empty()` in

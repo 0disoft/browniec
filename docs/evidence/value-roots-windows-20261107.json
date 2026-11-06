@@ -1,0 +1,287 @@
+{
+  "schema": "browniec.value-roots-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-06T17:01:49.478308+00:00",
+  "implementationCommit": "249218f34f43c21d8e4ef6bfdc721aaf9b69b2eb",
+  "platform": "windows/amd64",
+  "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+  "inputManifest": {
+    "path": "docs/evidence/value-roots-inputs-windows-20261107.json",
+    "sha256": "6a668514fabcd07ec714f8da3314224087fc17317c017f255e59d2dc8485bfc0"
+  },
+  "checkoutInputsMatched": 190,
+  "gitRawInputsMatched": 190,
+  "lfProductionModules": 184,
+  "testInventory": {
+    "files": 312,
+    "annotations": 1861
+  },
+  "profiles": [
+    {
+      "status": "passed",
+      "recordedAt": "2026-11-06T16:55:45.864623+00:00",
+      "profile": "development",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "check": "check ok: 2 instance(s), 192 source file(s), 1881 MIR function(s), lock verified\n",
+      "commands": [
+        [
+          "build/toolchain/fairyc.exe",
+          "check",
+          "--locked"
+        ],
+        [
+          "build/toolchain/fairyc.exe",
+          "test",
+          "--native",
+          "--capture-output",
+          "--json",
+          "--locked",
+          "--exact",
+          "tests::m2::buffer_transfer::fuel_token_and_backing_rejection_return_the_original_owning_root",
+          "--exact",
+          "tests::m2::buffer_transfer::live_read_leases_pending_growth_and_underaccounting_block_handoff",
+          "--exact",
+          "tests::m2::buffer_transfer::no_spare_owner_slot_or_generation_is_needed_for_empty_or_allocated_moves",
+          "--exact",
+          "tests::m2::buffer_transfer::real_native_root_moves_twice_then_closes_with_one_owner_charge",
+          "--exact",
+          "tests::m2::value_roots::allocated_root_moves_with_exact_token_charge_and_original_data",
+          "--exact",
+          "tests::m2::value_roots::corrupt_native_metadata_is_rejected_before_data_or_ownership_changes",
+          "--exact",
+          "tests::m2::value_roots::fuel_boundaries_precede_invalid_handles_and_never_mutate_roots",
+          "--exact",
+          "tests::m2::value_roots::middle_removal_preserves_all_other_actual_allocations_and_bindings",
+          "--exact",
+          "tests::m2::value_roots::quota_and_binding_failures_publish_nothing_and_serials_do_not_wrap"
+        ]
+      ],
+      "nativeOverrides": false,
+      "historicalResultReuse": false,
+      "nativeGroups": 9,
+      "nativeReport": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "development",
+        "tests": [
+          {
+            "identity": "tests::m2::buffer_transfer::fuel_token_and_backing_rejection_return_the_original_owning_root",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::buffer_transfer::live_read_leases_pending_growth_and_underaccounting_block_handoff",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::buffer_transfer::no_spare_owner_slot_or_generation_is_needed_for_empty_or_allocated_moves",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::buffer_transfer::real_native_root_moves_twice_then_closes_with_one_owner_charge",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_roots::allocated_root_moves_with_exact_token_charge_and_original_data",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_roots::corrupt_native_metadata_is_rejected_before_data_or_ownership_changes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_roots::fuel_boundaries_precede_invalid_handles_and_never_mutate_roots",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_roots::middle_removal_preserves_all_other_actual_allocations_and_bindings",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_roots::quota_and_binding_failures_publish_nothing_and_serials_do_not_wrap",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 9,
+        "passed": 9,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      }
+    },
+    {
+      "status": "passed",
+      "recordedAt": "2026-11-06T16:59:45.352097+00:00",
+      "profile": "release",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "check": "check ok: 2 instance(s), 192 source file(s), 1881 MIR function(s), lock verified\n",
+      "commands": [
+        [
+          "build/toolchain/fairyc.exe",
+          "check",
+          "--locked"
+        ],
+        [
+          "build/toolchain/fairyc.exe",
+          "test",
+          "--native",
+          "--capture-output",
+          "--json",
+          "--locked",
+          "--release",
+          "--exact",
+          "tests::m2::buffer_transfer::fuel_token_and_backing_rejection_return_the_original_owning_root",
+          "--exact",
+          "tests::m2::buffer_transfer::live_read_leases_pending_growth_and_underaccounting_block_handoff",
+          "--exact",
+          "tests::m2::buffer_transfer::no_spare_owner_slot_or_generation_is_needed_for_empty_or_allocated_moves",
+          "--exact",
+          "tests::m2::buffer_transfer::real_native_root_moves_twice_then_closes_with_one_owner_charge",
+          "--exact",
+          "tests::m2::value_roots::allocated_root_moves_with_exact_token_charge_and_original_data",
+          "--exact",
+          "tests::m2::value_roots::corrupt_native_metadata_is_rejected_before_data_or_ownership_changes",
+          "--exact",
+          "tests::m2::value_roots::fuel_boundaries_precede_invalid_handles_and_never_mutate_roots",
+          "--exact",
+          "tests::m2::value_roots::middle_removal_preserves_all_other_actual_allocations_and_bindings",
+          "--exact",
+          "tests::m2::value_roots::quota_and_binding_failures_publish_nothing_and_serials_do_not_wrap"
+        ]
+      ],
+      "nativeOverrides": false,
+      "historicalResultReuse": false,
+      "nativeGroups": 9,
+      "nativeReport": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "release",
+        "tests": [
+          {
+            "identity": "tests::m2::buffer_transfer::fuel_token_and_backing_rejection_return_the_original_owning_root",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::buffer_transfer::live_read_leases_pending_growth_and_underaccounting_block_handoff",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::buffer_transfer::no_spare_owner_slot_or_generation_is_needed_for_empty_or_allocated_moves",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::buffer_transfer::real_native_root_moves_twice_then_closes_with_one_owner_charge",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_roots::allocated_root_moves_with_exact_token_charge_and_original_data",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_roots::corrupt_native_metadata_is_rejected_before_data_or_ownership_changes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_roots::fuel_boundaries_precede_invalid_handles_and_never_mutate_roots",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_roots::middle_removal_preserves_all_other_actual_allocations_and_bindings",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_roots::quota_and_binding_failures_publish_nothing_and_serials_do_not_wrap",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 9,
+        "passed": 9,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      }
+    }
+  ],
+  "nativeOverrides": false,
+  "historicalResultReuse": false,
+  "scope": [
+    "five native owning-root groups",
+    "four existing native handoff regression groups",
+    "exact root/token/binding and local usage checks",
+    "Fuel before backing and setup-prepaid native failure drain"
+  ],
+  "limitations": [
+    "Trusted native coordinator retains the exact metadata and owning-vector pair for one invocation. State/snapshots are not guest or Engine authority.",
+    "Value-slot/frame storage, metered value IR execution, compiler source bindings and full L04/L05/D01-D04 remain open.",
+    "No public syntax, capability, existing opcode price, default 256 or CLI ceiling 16000000 changes."
+  ],
+  "notRun": [
+    "Public CLI/full language/native Fuel matrices",
+    "LF mirror builds",
+    "Linux",
+    "Allocator OOM injection",
+    "General native stack/performance/RAM",
+    "Engine/Instance/host/isolation/platform/clean-machine delivery"
+  ],
+  "delivery": {
+    "localOnly": true,
+    "pushed": false,
+    "released": false,
+    "deployed": false
+  }
+}

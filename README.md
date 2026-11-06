@@ -2,10 +2,17 @@
 
 ## Current implementation (2026-11-07)
 
+[Native owning value roots](docs/engineering/value-roots.md) now retain actual
+Buffer allocations with one serial/token/value binding, metered ownership moves
+and destruction-before-refund cleanup. Setup prepays bounded failure drain.
+Value-slot/frame storage, typed IR execution and source integration remain next.
+Windows development/release each passed nine focused native groups; see the
+[evidence](docs/evidence/value-roots-windows-20261107.json).
+
 A [native value byte layer](docs/engineering/value-codec.md) now validates scalar,
 array, plain-record and wrapper bytes against immutable retained layouts, locates
 the single active Buffer word and performs validated atomic copies/tag builds.
-Owning native storage, metering, cleanup and guest execution remain next.
+Owning value/frame storage, metered execution and guest source bindings remain next.
 
 [Typed value IR analysis](docs/engineering/value-ir.md) now independently proves
 resource moves, tag build/case, CALL/RETURN and exact initialized/Dead CFG state

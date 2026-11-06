@@ -88,3 +88,12 @@ and compiler source bindings. Full L04/L05/D01-D04, broader language/runtime/
 Engine/Instance/host/isolation/platform/delivery and broad validation remain open.
 This root-storage slice alone does not execute typed value IR or expose Buffer
 guest source. Local commits only; no push, release or deployment.
+
+Windows development and release each passed all nine final native groups on
+`249218f`. All 190 inputs match checkout and Git raw bytes; all 184 production
+modules are LF. The static test inventory is 312 files / 1861 annotations. See
+the [Windows evidence](../evidence/value-roots-windows-20261107.json) and
+[input manifest](../evidence/value-roots-inputs-windows-20261107.json).
+Both profiles ran fresh, without native overrides or historical result reuse.
+Public CLI/full language/native Fuel matrices, LF mirror builds, Linux, OOM
+injection, general stack/performance/RAM and clean-machine delivery were not run.
