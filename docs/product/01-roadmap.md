@@ -18,7 +18,9 @@
   [Independent place IR analysis](../engineering/array-place-ir.md) now checks
   identity and lifetimes. [Native metered storage](../engineering/array-place-storage.md)
   supplies snapshots/dispatch. [Both VM drivers and retained guards](../engineering/array-place-execution.md)
-  are connected; ordered source and other place kinds remain open.
+  are connected. [Compiler exit bookkeeping](../engineering/array-place-cleanup.md)
+  now prepares return/propagation/loop cleanup without consuming guest locals;
+  ordered source emission and other place kinds remain open.
 
 ## Milestone status
 

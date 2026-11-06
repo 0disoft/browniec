@@ -10,7 +10,10 @@
   owned-array place identity, phases and lifetimes. [Both VM drivers](../engineering/array-place-execution.md)
   now execute this independently admitted native IR with metered snapshots,
   frame/CALL cleanup and returned-view guards. Ordered source lowering, compound
-  assignment and the other place kinds remain open.
+  assignment and the other place kinds remain open. The
+  [compiler cleanup prerequisite](../engineering/array-place-cleanup.md) now
+  preserves pending masks across lexical/loop scopes and ends them before
+  ordinary nonlocal cleanup; this does not itself emit new source assignments.
 
 ## Product boundary
 

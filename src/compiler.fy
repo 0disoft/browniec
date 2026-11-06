@@ -20,6 +20,7 @@ import value_join_source as joins;
 import propagation as propagation;
 import casts as casts;
 import array_source as arrays;
+import place_source as places;
 import array_call_source as array_calls;
 import call_prefix_source as call_prefix;
 import struct_call_source as record_calls;
@@ -1878,7 +1879,8 @@ fn Result<bool, errors::Error> control_transfer(ref u8[] source, ref mut lexer::
     let usize keyword=lexer::next(source,s)?;
     let usize end=lexer::punctuation(source,s,59)?;
     if (loop_state.depth == 0) { return .err(errors::make(2,at)); }
-    let usize dropped=arrays::release_from(table,p,loop_state.bindings[loop_state.depth-1],at)?;
+    let usize first=places::leave_loop(table,p,loop_state.bindings[loop_state.depth-1],at)?;
+    let usize dropped=arrays::release_from(table,p,first,at)?;
     let usize jump=loops::transfer(loop_state,p,leave,at)?;
     return .ok(true);
 }
@@ -1954,7 +1956,7 @@ fn Result<bool, errors::Error> control_for(ref u8[] source, ref mut lexer::State
     if (has_post) {let usize validated=checked_post(source,s,p,table,signatures,expr_depth,depth,loop_state)?;}
     else {let usize empty=lexer::next(source,s)?;}
     let usize level=loops::enter(loop_state,head,true,at)?;
-    loop_state.bindings[level]=table.count;
+    loop_state.bindings[level]=places::scope(table);
     let bool stopped=block(source,s,p,table,signatures,result_type,depth+1,expr_depth,loop_state)?;
     let usize post_target=p.count;
     let usize continues=loops::resolve(loop_state,p,false,post_target,at)?;
@@ -1979,7 +1981,7 @@ fn Result<bool, errors::Error> control_while(ref u8[] source, ref mut lexer::Sta
     let usize open=lexer::punctuation(source,s,40)?;
     let usize head=p.count;
     let usize level=loops::enter(loop_state,head,false,at)?;
-    loop_state.bindings[level]=table.count;
+    loop_state.bindings[level]=places::scope(table);
     let usize condition=expression(source,s,p,table,signatures,1,expr_depth,2,result_type,depth,loop_state)?;
     if (p.types[condition]!=2) {return .err(errors::make(3,at));}
     let usize close=lexer::punctuation(source,s,41)?;
@@ -2075,7 +2077,8 @@ fn Result<bool,errors::Error> reference_return(ref u8[] source,ref mut lexer::St
     usize at,usize structure,usize depth,ref mut loops::State loop_state){
     let static_source::View value=static_view(source,s,p,table,signatures,depth,12,structure,loop_state)?;
     if(value.kind!=1){return .err(errors::make(3,at));}
-    let usize end=lexer::punctuation(source,s,59)?;var usize i=table.count;
+    let usize end=lexer::punctuation(source,s,59)?;
+    let usize ended=places::release(table,p,0,at)?;var usize i=table.count;
     while(i>0){i-=1;if(table.registers[i]!=192+value.site){let usize closed=arrays::release_at(table,p,i,at)?;}}
     let usize returned=ir::raw(p,79,0,value.site,0,at)?;return .ok(true);
 }

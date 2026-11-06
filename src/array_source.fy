@@ -5,6 +5,7 @@ import locals as locals;
 import ir as ir;
 import cells as cells;
 import errors as errors;
+import place_source as places;
 import slice_cleanup_source as slice_cleanup;
 import static_source as statics;
 import static_builders as static_builders;
@@ -111,7 +112,8 @@ pub fn Result<usize, errors::Error> length(ref u8[] source, ref mut lexer::State
     return .ok(size);
 }
 pub fn Result<usize, errors::Error> release_visible(ref locals::Table table, ref mut ir::Program p, usize offset) {
-    return release_from(table, p, 0, offset);
+    let usize ended=places::release(table,p,0,offset)?;
+    return .ok(ended+release_from(table,p,0,offset)?);
 }
 // A transfer releases exactly the suffix whose lexical scopes it exits.
 pub fn Result<usize, errors::Error> release_from(ref locals::Table table, ref mut ir::Program p, usize first, usize offset) {

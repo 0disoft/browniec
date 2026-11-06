@@ -8,7 +8,7 @@ pub struct State {
     usize depth;
     usize[32] heads;
     bool[32] classic;
-    usize[32] bindings;
+    usize[32] bindings; // Packed lexical count and surrounding place mask; place_source owns encoding.
     usize[256] breaks;
     usize[256] continues;
 }

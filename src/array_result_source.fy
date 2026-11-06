@@ -5,6 +5,7 @@ import ir as ir;
 import lexer as lexer;
 import locals as locals;
 import errors as errors;
+import place_source as places;
 import array_source as arrays;
 import cells as cells;
 import std::num as num;
@@ -84,6 +85,7 @@ pub fn Result<usize,errors::Error> finish(ref mut ir::Program p,ref locals::Tabl
     let usize shape=encoded-1;
     if(p.array_functions[id] as usize!=names.function || p.arrays.elements[id]!=p.arrays.elements[shape] ||
         p.arrays.lengths[id]!=p.arrays.lengths[shape]) {return .err(errors::make(3,at));}
+    let usize ended=places::release(names,p,0,at)?;
     var usize i=names.count;
     while(i>0) {
         i-=1;

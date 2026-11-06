@@ -4,6 +4,7 @@ import ir as ir;
 import lexer as lexer;
 import locals as locals;
 import errors as errors;
+import place_source as places;
 import array_source as arrays;
 import struct_value_source as values;
 import cells as cells;
@@ -96,6 +97,7 @@ pub fn Result<usize,errors::Error> finish(ref mut ir::Program p,
     let usize encoded=p.record_results[names.function] as usize;
     if(encoded==0 || id>=p.records.count || id>=16 || p.record_functions[id] as usize!=names.function ||
         p.records.records[id]!=p.records.records[encoded-1]) {return .err(errors::make(3,at));}
+    let usize ended=places::release(names,p,0,at)?;
     var usize i=names.count;
     while(i>0) {
         i-=1;

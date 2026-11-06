@@ -12,14 +12,15 @@ pub struct Table {
     bool[64] mutable;
     usize count;
     usize function;
+    usize pending_places;
 }
 pub fn Table empty() {
     return Table { .begins = [0; 64], .ends = [0; 64], .registers = [0; 64],
-        .mutable = [false; 64], .count = 0, .function = 0 };
+        .mutable = [false; 64], .count = 0, .function = 0, .pending_places = 0 };
 }
 pub fn Table snapshot(ref Table table) {
     return Table {.begins=table.begins,.ends=table.ends,.registers=table.registers,
-        .mutable=table.mutable,.count=table.count,.function=table.function};
+        .mutable=table.mutable,.count=table.count,.function=table.function,.pending_places=table.pending_places};
 }
 pub fn bool reserved(ref u8[] name) {
     return lexer::equal(name, b"module") || lexer::equal(name, b"import") ||

@@ -1,3 +1,18 @@
+- Compiler pending-place cleanup now preserves all 64 guest bindings with one
+  native mask per lexical table and reuses existing loop metadata words. Return,
+  failed propagation and loop-transfer paths emit END before owner/view cleanup
+  or promotion, preserving selections surrounding an inner loop. See the
+  [contract](docs/engineering/array-place-cleanup.md). Development/release each
+  passed 21 native groups and 57 tool-free public Fuel CLI cases on a 184-path
+  Git-raw/checkout-matching input union, 164 LF modules and common 283-file
+  discovery; both locked LF mirrors pass. Existing exact costs and original
+  ordinary/retained 32/33 CALL limits pass. Current guest bytecode/prices/default
+  256/cap16000000 remain; source ordered selection/compound emission and other
+  place kinds, full L04/C05/Instance/host/delivery remain open. No full language/
+  original full native Fuel matrices, Linux, OOM/general stack/timing/isolation/
+  delivery rerun. Local only. See the
+  [Windows evidence](docs/evidence/array-place-cleanup-windows-20261106.json).
+
 - Owned-array selected-place IR now executes in both ordinary and retained VM
   drivers with setup preflight, frame/CALL cleanup, returned-owner protection and
   recipe scalar-use checks. See the [contract](docs/engineering/array-place-execution.md).

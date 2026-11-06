@@ -79,3 +79,8 @@ bounds check before RHS evaluation, retain old scalars before compound RHSs, and
 end pending places on every normal exit. Then extend to exclusive slices, record
 fields and scalar locals/grouped lvalues. Complete L04, wider language/resource
 types, Engine/host/isolation/platform/delivery work remain open.
+
+The [compiler cleanup prerequisite](array-place-cleanup.md) now tracks pending
+locations through lexical snapshots and loop scopes, ending them before normal
+return/propagation/loop-transfer cleanup. Source selection/compound emission is
+still the next step; the preceding execution evidence retains its checkpoint.
