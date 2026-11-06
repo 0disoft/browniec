@@ -175,6 +175,23 @@ pub fn Result<usize,errors::Error> use_binding(ref mut values::Program unit,ref 
     if(!copied){state.live^=bit(source);}state.live|=bit(destination);
     state.pending^=state.pending&bit(source);result_pending(unit,state,destination);return .ok(destination);
 }
+// Publish an anonymous branch result into a preallocated Dead join slot. Each
+// independently selected CFG edge may use that same destination. Unlike a named
+// read, this always consumes the source, including whole-copyable values.
+pub fn Result<usize,errors::Error> move_value(ref mut values::Program unit,ref mut State state,
+    usize destination,usize source,usize at){
+    let usize checked=slot(unit,state,source,at)?;
+    let usize valid=slot(unit,state,destination,at)?;
+    if((state.live&bit(source))==0 || (state.live&bit(destination))!=0 ||
+        unit.types[source]!=unit.types[destination]){return .err(invalid(at));}
+    let properties::Plan plan=switch(properties::inspect(ref unit.catalog)){
+        case .ok(v):{v}case .err(_):{return .err(invalid(at));}
+    };
+    if(unit.body.count>=256){return .err(errors::make(4,at));}
+    append(unit,88,destination,source,at);
+    state.live^=bit(source);state.live|=bit(destination);
+    state.pending^=state.pending&bit(source);result_pending(unit,state,destination);return .ok(destination);
+}
 // Replace the fixed lexical slot, or reinitialize it after a move. The RHS is
 // an already captured value: MOVE consumes it even when its type is copyable.
 // Admit every binding, the catalog and the ENTIRE DROP+MOVE before any write.
