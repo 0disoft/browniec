@@ -7,6 +7,7 @@ import value_roots as owners;
 import buffer_growth as growth;
 import scalar_codec as scalar;
 import cells as cells;
+import fuel as fuel;
 import std::bytes as bytes;
 import std::vec as vec;
 
@@ -243,6 +244,23 @@ pub fn Result<usize,Error> build_tag(ref layouts::Plan plan,ref mut State state,
     unstaged(frames,scratch,destination,dst);
     if(payload && !src.copyable){erase(frames,source,src);dead(state,source);}
     publish(state,destination);return .ok(dst.width);
+}
+// Read-only inspection of the whole live wrapper, including active Buffer root
+// authentication. codec::select repeats the canonical scan; the explicit price
+// covers both scans. Neither a match nor a mismatch extracts/consumes payloads.
+pub fn Result<bool,Error> tag_test(ref layouts::Plan plan,ref State state,
+    ref vec::Vec<bytes::Buffer> frames,Address source,u8 variant,
+    ref owners::State root_state,ref vec::Vec<bytes::Buffer> roots,
+    ref vec::Vec<bytes::Buffer> root_scratch,ref mut usize remaining){
+    let properties::Property p=declared(plan,state,source)?;
+    let usize spent=paid(fuel::value_tag_test(p.bytes),remaining)?;
+    let Slot src=address(plan,state,frames,source,true)?;
+    let codec::Active active=inspected(plan,state,frames,source,src,root_state,roots,root_scratch)?;
+    let codec::Selection selected=switch(codec::select(layouts::layout(plan),src.type_id,variant,
+        bytes::view(vec::at<bytes::Buffer>(frames,source.frame))[src.offset..src.offset+src.width])){
+        case .ok(v):{v}case .err(_):{return .err(.Type);}
+    };
+    return .ok(selected.matched);
 }
 pub fn Result<Case,Error> case_value(ref layouts::Plan plan,ref mut State state,
     ref mut vec::Vec<bytes::Buffer> frames,ref mut vec::Vec<bytes::Buffer> scratch,

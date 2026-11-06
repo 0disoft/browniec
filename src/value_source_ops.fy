@@ -81,6 +81,22 @@ pub fn Result<usize,errors::Error> scalar_read(ref mut values::Program unit,ref 
     append(unit,96,dst,source,0,at);unit.body.types[dst]=node.first;unit.body.registers=dst+1;
     return .ok(dst);
 }
+// A predicate allocates only an ordinary bool register. Whole-wrapper liveness,
+// including active/inactive Buffer alternatives, is unchanged on every path.
+pub fn Result<usize,errors::Error> tag_test(ref mut values::Program unit,ref mut bindings::State state,
+    usize source,u8 variant,usize at){
+    let properties::Plan plan=preflight(unit,state,at)?;
+    let usize checked=live(unit,state,source,at)?;
+    let properties::Node node=unit.catalog.nodes[values::type_id(unit,source)];
+    if((node.kind!=5 && node.kind!=6) || variant>1){return .err(invalid(at));}
+    if(unit.body.registers==128){return .err(errors::make(4,at));}
+    let usize dst=unit.body.registers;
+    if(unit.body.types[dst]!=0 || unit.body.slots[dst] || unit.parameters[dst]!=0 ||
+        unit.body.array_parameters[dst]!=0 || unit.body.record_parameters[dst]!=0 ||
+        unit.body.slice_parameters[dst]!=0){return .err(invalid(at));}
+    append(unit,98,dst,source,variant,at);unit.body.types[dst]=2;unit.body.registers=dst+1;
+    return .ok(dst);
+}
 // exact_type and child IDs are canonical zero-based catalog nodes. Option.none
 // requires payload16 (never a real slot), encoded as a0. Copyable children stay
 // live: the parent explicitly drops anonymous children after successful wrapping.

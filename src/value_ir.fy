@@ -9,7 +9,9 @@ import errors as errors;
 // 88 MOVE dst,a; 89 COPY dst,a; 90 DROP dst; 91 TAG_BUILD dst,a,variant;
 // 92 CASE dst,a,variant,byte4=mismatch PC; 93 CALL dst,callee,map;
 // 94 RETURN 0,a; 95 EMPTY_BUFFER dst; 96 SCALAR_READ scalar-dst,a;
-// 97 SCALAR_VALUE dst,scalar-a. Except CASE byte4, bytes4..7 are zero.
+// 97 SCALAR_VALUE dst,scalar-a; 98 TAG_TEST bool-dst,a,variant.
+// TAG_TEST only inspects a live wrapper; it never defines/consumes a value slot.
+// Except CASE byte4, bytes4..7 are zero.
 // Variant1 means some/ok, variant0 none/err, matching existing IR (not a new
 // serialized tag layout). CASE none uses dst0; TAG_BUILD none uses a0.
 // CALL resource actuals encode 208+value ID; ordinary argument encodings remain.
@@ -22,7 +24,7 @@ pub struct Program {
 pub struct Sites { bool enabled; u8[128] parameters; u8[16] results; u8[16] scalar_tags; }
 pub struct Prepared { properties::Plan properties; usize[64] classes; Sites sites; }
 pub fn Sites empty(){return Sites{.enabled=false,.parameters=[0;128],.results=[0;16],.scalar_tags=[0;16]};}
-pub fn bool operation(u8 op){return op>=88 && op<=97;}
+pub fn bool operation(u8 op){return op>=88 && op<=98;}
 fn errors::Error invalid(usize pc){return errors::make(5,pc);}
 pub fn bool slot(ref Program unit,usize id,usize f){
     return id<16 && unit.types[id]!=0 && unit.functions[id] as usize==f;
@@ -103,6 +105,11 @@ pub fn Result<usize,errors::Error> instruction(ref Program unit,ref Prepared pro
     }else if(op==94){
         if(dst!=0 || b!=0 || !slot(unit,a,f) || unit.results[f]==0 ||
             !same(unit,proof,a,(unit.results[f] as usize)-1)){return .err(invalid(pc));}
+    }else if(op==98){
+        if(!slot(unit,a,f) || b>1 || dst<p.register_starts[f] || dst>=p.register_ends[f] ||
+            p.types[dst]!=2 || p.slots[dst] || unit.parameters[dst]!=0 ||
+            p.array_parameters[dst]!=0 || p.record_parameters[dst]!=0 || p.slice_parameters[dst]!=0){return .err(invalid(pc));}
+        let usize child=payload(unit,a,b,pc)?;
     }else if(op==96){
         if(!slot(unit,a,f) || b!=0 || proof.sites.scalar_tags[a]==0 || dst<p.register_starts[f] ||
             dst>=p.register_ends[f] || p.types[dst]!=proof.sites.scalar_tags[a]){return .err(invalid(pc));}

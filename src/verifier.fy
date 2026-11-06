@@ -135,6 +135,14 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
                     registers::insert(ref mut defined,dst);registers::insert(ref mut written,dst);
                 }
                 used_calls[b]=true;
+            }else if(op==98){
+                // The independent typed CFG proved the exact live wrapper and
+                // canonical operands. Define one fresh ordinary bool here.
+                if(dst<start || dst>=end || p.types[dst]!=2 || p.slots[dst] ||
+                    value_sites.parameters[dst]!=0 || p.array_parameters[dst]!=0 ||
+                    p.record_parameters[dst]!=0 || p.slice_parameters[dst]!=0 ||
+                    registers::contains(ref written,dst)){return .err(errors::make(5,pc));}
+                registers::insert(ref mut defined,dst);registers::insert(ref mut written,dst);
             }else if(op==96){
                 if(dst<start || dst>=end || p.slots[dst] || registers::contains(ref written,dst) ||
                     a>=16 || value_sites.scalar_tags[a]==0 || p.types[dst]!=value_sites.scalar_tags[a]){return .err(errors::make(5,pc));}

@@ -88,6 +88,11 @@ pub fn Result<Step,errors::Error> instruction(ref programs::Program program,usiz
     let ref mut frames::State state=vec::at_mut<frames::State>(states,0);
     let ref mut owners::State owned=vec::at_mut<owners::State>(owner_states,0);
     let ref layouts::Plan plan=programs::layout(program);var usize remaining=fuel;
+    if(op==98){
+        let bool matched=switch(frames::tag_test(plan,state,data,at(current,a),b,owned,roots,root_scratch,ref mut remaining)){
+            case .ok(v):{v}case .err(e):{return .err(failure(e,offset));}
+        };registers[dst]=if(matched){1}else{0};return .ok(Step{.pc=pc+1,.remaining=remaining});
+    }
     if(op==92){
         let frames::Case selected=switch(frames::case_value(plan,state,data,scratch,at(current,a),b,at(current,dst),owned,roots,root_scratch,ref mut remaining)){
             case .ok(v):{v}case .err(e):{return .err(failure(e,offset));}

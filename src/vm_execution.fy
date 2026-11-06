@@ -170,7 +170,7 @@ fn Result<i64,errors::Error> run_core(ref ir::Program p,usize fuel,
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
-        if(op>=88 && op<=97 && op!=93 && op!=94){
+        if(op>=88 && op<=98 && op!=93 && op!=94){
             if(!typed){return .err(errors::make(5,p.offsets[pc]));}let usize base=frame*128;
             let values::Step step=values::instruction(vec::at<value_program::Program>(admitted,0),pc,frame,
                 value_states,owner_states,value_data,value_scratch,value_buffers,root_scratch,

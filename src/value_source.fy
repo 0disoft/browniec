@@ -19,10 +19,13 @@ import std::vec as vec;
 // Exact types are canonical node IDs; ordinary scalars remain ordinary registers.
 // The complete candidate is discarded on any error. Public compiler routes do
 // not select this path or retry a failed compile under another dialect.
-struct Value { usize exact; usize value; bool typed; bool nothing; }
-fn Value scalar(usize exact,usize value){return Value{.exact=exact,.value=value,.typed=false,.nothing=false};}
-fn Value owned(usize exact,usize value){return Value{.exact=exact,.value=value,.typed=true,.nothing=false};}
-fn Value nothing(){return Value{.exact=64,.value=256,.typed=false,.nothing=true};}
+// A named typed value is a compiler-only delayed capture, never an owner alias.
+// Postfix inspection reads it in place; value consumers capture before evaluating
+// any later operand, argument or cleanup. This also preserves `(name).is_ok`.
+struct Value { usize exact; usize value; bool typed; bool nothing; usize binding; }
+fn Value scalar(usize exact,usize value){return Value{.exact=exact,.value=value,.typed=false,.nothing=false,.binding=64};}
+fn Value owned(usize exact,usize value){return Value{.exact=exact,.value=value,.typed=true,.nothing=false,.binding=64};}
+fn Value nothing(){return Value{.exact=64,.value=256,.typed=false,.nothing=true,.binding=64};}
 fn bool word(ref u8[] source,ref lexer::State s,ref u8[] name){return s.kind==2 && lexer::equal(source[s.begin..s.end],name);}
 fn errors::Error wrong(usize at){return errors::make(3,at);}
 // Borrow the large nested metadata before reading scalar fields. Direct nested
@@ -47,19 +50,25 @@ fn Result<usize,errors::Error> intern(ref mut values::Program unit,u8 kind,u8 fi
 fn Result<Value,errors::Error> expected(Value value,usize exact,usize at){
     if((value.nothing && exact!=64) || (exact!=64 && value.exact!=exact)){return .err(wrong(at));}return .ok(value);
 }
+fn Result<usize,errors::Error> capture(ref mut values::Program unit,ref mut bindings::State state,Value value,usize at){
+    if(value.binding==64){return .ok(value.value);}
+    let usize to=bindings::allocate(unit,state,value.exact,at)?;
+    return bindings::use_binding(unit,state,value.binding,to,at);
+}
 fn Result<usize,errors::Error> as_scalar(ref mut values::Program unit,ref mut bindings::State state,Value value,usize at){
     if(value.nothing || value.exact>=unit.catalog.count || unit.catalog.nodes[value.exact].kind!=1){return .err(wrong(at));}
     if(!value.typed){return .ok(value.value);}
-    let usize result=ops::scalar_read(unit,state,value.value,at)?;
-    let usize dropped=bindings::drop(unit,state,value.value,at)?;return .ok(result);
+    let usize id=capture(unit,state,value,at)?;
+    let usize result=ops::scalar_read(unit,state,id,at)?;
+    let usize dropped=bindings::drop(unit,state,id,at)?;return .ok(result);
 }
 fn Result<usize,errors::Error> as_value(ref mut values::Program unit,ref mut bindings::State state,Value value,usize at){
-    if(value.nothing){return .err(wrong(at));}if(value.typed){return .ok(value.value);}
+    if(value.nothing){return .err(wrong(at));}if(value.typed){return capture(unit,state,value,at);}
     return ops::scalar_value(unit,state,value.value,value.exact,at);
 }
 fn Result<usize,errors::Error> discard_value(ref mut values::Program unit,ref mut bindings::State state,Value value,usize at){
     if(value.nothing){return .err(wrong(at));}
-    if(value.typed){return bindings::drop(unit,state,value.value,at);}return .ok(0);
+    if(value.typed){let usize id=capture(unit,state,value,at)?;return bindings::drop(unit,state,id,at);}return .ok(0);
 }
 fn u8 precedence(u8 kind){
     return if(kind==124){1}else if(kind==94){2}else if(kind==38){3}
@@ -164,7 +173,31 @@ fn Result<Value,errors::Error> call(ref u8[] source,ref mut lexer::State s,ref m
     if(returned.typed){let usize initialized=bindings::initialize(unit,state,returned.value,at)?;}
     return .ok(returned);
 }
+fn Result<Value,errors::Error> predicate(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
+    ref mut bindings::State state,Value value){
+    let usize at=s.begin;let usize dot=lexer::next(source,s)?;
+    if(s.kind!=2){return .err(errors::make(2,s.begin));}
+    if(!value.typed || value.nothing || value.exact>=unit.catalog.count){return .err(wrong(at));}
+    let u8 kind=unit.catalog.nodes[value.exact].kind;
+    let bool positive=word(source,s,if(kind==5){b"is_some"}else{b"is_ok"});
+    let bool negative=word(source,s,if(kind==5){b"is_none"}else{b"is_err"});
+    if((kind!=5 && kind!=6) || (!positive && !negative)){return .err(wrong(at));}
+    let usize name=lexer::next(source,s)?;
+    let usize result=ops::tag_test(unit,state,value.value,if(positive){1}else{0},at)?;
+    if(value.binding==64){let usize dropped=bindings::drop(unit,state,value.value,at)?;}
+    let usize boolean=intern(unit,1,2,0,at)?;return .ok(scalar(boolean,result));
+}
 fn Result<Value,errors::Error> atom(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
+    ref mut bindings::State state,ref signatures::Table table,ref functions::Plan plan,usize exact,usize depth){
+    // A bool result context cannot describe a predicate's wrapper receiver. Let
+    // the receiver infer its own type, and check the final bool in expression.
+    let usize context=if(exact<unit.catalog.count && unit.catalog.nodes[exact].kind==1 &&
+        unit.catalog.nodes[exact].first==2){64}else{exact};
+    var Value value=primary(source,s,unit,state,table,plan,context,depth)?;
+    while(s.kind==46){value=predicate(source,s,unit,state,value)?;}
+    return .ok(value);
+}
+fn Result<Value,errors::Error> primary(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
     ref mut bindings::State state,ref signatures::Table table,ref functions::Plan plan,usize exact,usize depth){
     if(depth>32){return .err(errors::make(4,s.begin));}let usize at=s.begin;
     if(s.kind==46){return constructor(source,s,unit,state,table,plan,exact,depth);}
@@ -208,8 +241,7 @@ fn Result<Value,errors::Error> atom(ref u8[] source,ref mut lexer::State s,ref m
     let usize index=locals::find(source,ref state.names,begin,end);
     if(index==64){return .err(wrong(at));}
     if(state.bindings[index]!=0){let usize from=(state.bindings[index] as usize)-1;
-        let usize type=values::type_id(unit,from);let usize to=bindings::allocate(unit,state,type,at)?;
-        let usize used=bindings::use_binding(unit,state,index,to,at)?;return .ok(owned(type,to));
+        return .ok(Value{.exact=values::type_id(unit,from),.value=from,.typed=true,.nothing=false,.binding=index});
     }
     let usize binding=state.names.registers[index];
     let usize reg=if(state.names.mutable[index]){ir::emit(ref mut unit.body,17,binding,0,at)?}else{binding};
@@ -226,8 +258,9 @@ fn Result<usize,errors::Error> declaration(ref u8[] source,ref mut lexer::State 
     let usize name=lexer::next(source,s)?;let usize equal=lexer::punctuation(source,s,61)?;
     let Value value=expression(source,s,unit,state,table,plan,type,1,0)?;
     let usize terminator=lexer::punctuation(source,s,59)?;
-    if(value.typed){return if(mutable){bindings::declare_mut(unit,state,source,begin,end,value.value,value.exact)}
-        else{bindings::declare(unit,state,source,begin,end,value.value,value.exact)};}
+    if(value.typed){let usize id=as_value(unit,state,value,begin)?;
+        return if(mutable){bindings::declare_mut(unit,state,source,begin,end,id,value.exact)}
+        else{bindings::declare(unit,state,source,begin,end,id,value.exact)};}
     let usize reg=as_scalar(unit,state,value,begin)?;
     if(mutable){let u8 tag=register_type(unit,reg);let usize slot=ir::slot(ref mut unit.body,tag,begin)?;
         let usize stored=ir::raw(ref mut unit.body,18,slot,reg,0,begin)?;
@@ -376,10 +409,10 @@ fn Result<bool,errors::Error> block(ref u8[] source,ref mut lexer::State s,ref m
             if(result!=0){value=expression(source,s,unit,state,table,plan,result-1,1,0)?;}
             let usize semi=lexer::punctuation(source,s,59)?;
             let usize scalar_result=if(result!=0 && !value.typed){value.value}else{0};
-            let usize keep=if(value.typed){value.value}else{16};
+            let usize keep=if(value.typed){as_value(unit,state,value,at)?}else{16};
             let usize dropped=clean_function(unit,state,keep,at)?;
             let usize returned=ir::raw(ref mut unit.body,if(value.typed){94}else if(value.nothing){82}else{8},0,
-                if(value.typed){value.value}else{scalar_result},0,at)?;terminal=true;
+                if(value.typed){keep}else{scalar_result},0,at)?;terminal=true;
         }else if(word(source,s,b"_")){
             let usize name=lexer::next(source,s)?;let usize eq=lexer::punctuation(source,s,61)?;
             let Value value=expression(source,s,unit,state,table,plan,64,1,0)?;

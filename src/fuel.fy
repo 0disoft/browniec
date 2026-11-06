@@ -11,6 +11,11 @@ pub fn usize result_enter(){return transaction_base()+24*metadata_visit_budget()
 pub fn usize result_handoff(){return transaction_base()+96*metadata_visit_budget()+cleanup_reserve();}
 pub fn usize result_leave(){return transaction_base()+80*metadata_visit_budget();}
 
+// Private TAG_TEST98 includes dispatch, bounded frame/root authentication and
+// two read-only canonical wrapper scans. Caller proves width <=65536; no copying,
+// typed payload allocation, owner handoff or cleanup reserve is added here.
+pub fn usize value_tag_test(usize width){return 8192+4*width;}
+
 // Callers authenticate scalar layouts (stride 1/4/8, length 1..4096) before
 // pricing. Invalid opcodes have no price; dispatch remains included here.
 pub fn Option<usize> array_instruction(u8 op,usize stride,usize length,bool boolean){
