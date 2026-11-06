@@ -1,3 +1,20 @@
+- Fixed-array/plain-record switch values are implemented at `b6ed621` through
+  the common exact-shape if/switch join, without a new opcode or result owner phi.
+  Locals, arguments, returns, whole/child assignment, child constructor fields and
+  scalar projections preserve selected-arm order, snapshots and nonlocal cleanup.
+  Development/release each passed 24 native groups and 361 tool-free CLI cases on
+  174 Git-raw/checkout-matching inputs, 160 LF modules and common 276-file
+  discovery. Both locked LF mirrors pass; forty-one unselected legacy fixtures
+  differ only by CRLF/LF, with both hashes recorded. One-site/four-byte backing,
+  independent malformed-initialization rejection, exact ordinary/retained Fuel,
+  native qualified modules and original CALL bounds pass. See the
+  [contract](docs/engineering/aggregate-switch-expressions.md) and
+  [Windows evidence](docs/evidence/aggregate-switch-expressions-windows-20261106.json).
+  Existing prices/default256/cap16000000 remain. General reference/Buffer joins,
+  broader constructor context, grouped lvalues/borrows, nested/resource array
+  elements and full C05/Instance/host/delivery remain open. No full language/public
+  Fuel matrices/Linux/OOM/general stack/timing/delivery rerun. Local only.
+
 - Void functions/statements are implemented at `09e7250` on the independently
   verified IR foundation `ec20e7f`. Explicit/implicit returns and ordered CALLs
   retain existing owner/loan/image cleanup without a dummy result register.

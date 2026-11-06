@@ -81,6 +81,12 @@ python -B tools/verify-static-execution.py --profile release --selection aggrega
 python -B tools/verify-local-inference-cli.py --profile release --aggregate-switch-expressions
 ```
 
+Development and release each passed **24 native groups and 361 tool-free CLI
+cases** on 174 checkout/Git-raw-matching input paths. Both locked LF mirrors
+pass with 160 LF production modules and common 276-file test discovery.
+Forty-one unselected legacy fixtures differ only by CRLF/LF; both hashes are
+recorded. The implementation commit is `b6ed621`.
+
 CLI builds share output and are serialized. Both profiles use the pinned compiler
 and locked LF mirrors. CLI execution has an empty runtime tool PATH. New version
 flags `array_switch_expressions` and `record_switch_expressions` advertise this

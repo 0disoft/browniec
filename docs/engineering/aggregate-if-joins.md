@@ -31,3 +31,5 @@ Existing operation prices, default 256 and CLI ceiling 16000000 are unchanged.
 
 The [source successor](aggregate-if-expressions.md) now connects these recipes
 to public array/record conditional values; its separate evidence owns that claim.
+The [switch successor](aggregate-switch-expressions.md) additionally shares the
+same destination across exhaustive Option/Result arms and mixed if/switch tails.

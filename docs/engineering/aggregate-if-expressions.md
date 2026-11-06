@@ -100,8 +100,11 @@ public CLI wrappers in each profile. This is scoped harness evidence, not a
 general native API stack guarantee. No native stack override or reduced guest
 limit was used.
 
-Aggregate switch values, general reference/Buffer joins, broader constructor
-context, void functions, grouped lvalues/borrows, nested/resource array elements,
+The [switch successor](aggregate-switch-expressions.md) now adds aggregate
+switch values and mixed tails through the same join recipes. The
+[void successor](void-source.md) separately owns void source support.
+General reference/Buffer joins, broader constructor context,
+grouped lvalues/borrows, nested/resource array elements,
 full C05/Instance/host and delivery remain separate work. This increment does not
 claim full-profile conformance, Linux execution, allocator fault injection,
 general native-stack bounds or elapsed-time/performance measurements.

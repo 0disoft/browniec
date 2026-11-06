@@ -301,3 +301,10 @@ language CLI cases per profile, with locked LF mirrors and input/artifact hashes
 in the [focused evidence](../evidence/void-functions-windows-20261106.json).
 The original full public Fuel native selection was not rerun; complete C05 and
 Engine/Instance accounting remain open.
+
+The [aggregate-switch successor](aggregate-switch-expressions.md) additionally
+records exact first/second-case costs for fixed arrays and plain records through
+ordinary native, public ordinary and public retained routes. It shares existing
+if/switch joins without a new opcode or price; its focused verification includes
+exact/short budgets, public one-more budgets and the original scalar switch
+9/8 boundary. Its evidence does not renew the full public Fuel suite above.

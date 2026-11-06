@@ -160,8 +160,13 @@ operands and pure-for usage are rejected. The
 fixed-array and nominal plain-record joins, including locals, arguments, returns,
 whole/child assignment, child constructor fields and scalar projections. Continuing
 arms initialize one shared destination; selected evaluation, source-order effects
-and existing nonlocal cleanup remain. Aggregate switch values and reference/Buffer
-joins remain separate work.
+and existing nonlocal cleanup remain. The
+[switch successor](../engineering/aggregate-switch-expressions.md) adds the same
+fixed-array/plain-record value contexts for exhaustive Option/Result switches,
+including grouped projections and mixed nested if/switch tails. The subject and
+selected arm execute once, pattern payloads stay arm-local, and continuing arms
+initialize one exact-shape destination before existing cleanup. General
+reference/Buffer joins remain separate work.
 
 The [void successor](../engineering/void-source.md) supports `fn void f(...)`,
 explicit `return;`, implicit end-of-body return and direct `f(...);` statements,

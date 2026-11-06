@@ -4,9 +4,10 @@
 - This is the current delivery plan. The old increment log is preserved in
   [history](history/roadmap-20261103.md); its dated gates are not current TODOs.
 - Language progress, 2026-11-06: scalar/tagged and fixed-array/plain-record
-  [conditional values](../engineering/aggregate-if-expressions.md) and
+  [if values](../engineering/aggregate-if-expressions.md),
+  [switch values](../engineering/aggregate-switch-expressions.md) and
   [void functions/statements](../engineering/void-source.md) are connected.
-  Aggregate switch values, general reference/Buffer joins and
+  General reference/Buffer joins, grouped lvalues/borrows and
   broader constructor context remain language work alongside the units below.
 - The complete requirement crosswalk and actionable gaps are in
   [remaining work](04-remaining-work.md). The [specification](02-spec.md) owns
