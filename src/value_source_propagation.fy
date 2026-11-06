@@ -17,6 +17,7 @@ fn usize function(ref bindings::State state){let ref locals::Table names=ref sta
 pub fn Result<usize,errors::Error> finish_function(ref mut values::Program unit,
     ref mut bindings::State state,usize keep,usize at){
     if(state.next>16){return .err(errors::make(3,at));}
+    let usize checked=bindings::require_handled(unit,state,keep,at)?;
     let usize f=function(state);
     var usize id=state.next;while(id!=0){id-=1;
         if(id!=keep && unit.functions[id] as usize==f){

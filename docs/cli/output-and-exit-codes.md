@@ -23,6 +23,12 @@ failure is an internal code 6, not a guest trap. The direct-call slice adds
 frame_limit as a guest quota error (code 5). The source-array slice adds
 array_limit, bounds, and allocation errors, all with exit code 5.
 
+The private typed-source compiler additionally uses diagnostic kind 18,
+`must_use_result`, with the compile-error exit class 3. It identifies an unhandled
+Result at scope/return/overwrite and early propagation boundaries independently
+of native ownership. This mapping does not select the private compiler in the
+public CLI or enable the public `must_use_result` capability.
+
 ## Implemented result profiles
 
 `--json` emits one object followed by a newline on stdout, with empty stderr:

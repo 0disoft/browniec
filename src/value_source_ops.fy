@@ -14,7 +14,9 @@ fn u8 byte(usize value){var u8 result=0;var usize i=0;while(i<value){result+=1;i
 fn Result<properties::Plan,errors::Error> preflight(ref values::Program unit,ref bindings::State state,usize at){
     if(state.next>16 || state.names.count>64 || state.names.function>=16 ||
         unit.body.function_count>16 || state.names.function>=unit.body.function_count ||
-        state.live>=65536){return .err(invalid(at));}
+        unit.catalog.count>64 || state.live>=65536 || state.pending>=65536 ||
+        (state.pending&state.live)!=state.pending || (!state.enforce_results && state.pending!=0)){
+        return .err(invalid(at));}
     let properties::Plan plan=switch(properties::inspect(ref unit.catalog)){
         case .ok(v):{v}case .err(_):{return .err(invalid(at));}
     };
@@ -23,6 +25,7 @@ fn Result<properties::Plan,errors::Error> preflight(ref values::Program unit,ref
             unit.functions[i] as usize>=unit.body.function_count){return .err(invalid(at));}}
         else if(unit.types[i]!=0 || unit.functions[i]!=0 || (state.live&bit(i))!=0){return .err(invalid(at));}
         if((state.live&bit(i))!=0 && unit.functions[i] as usize!=state.names.function){return .err(invalid(at));}
+        if((state.pending&bit(i))!=0 && unit.catalog.nodes[values::type_id(unit,i)].kind!=6){return .err(invalid(at));}
         i+=1;
     }
     if(unit.body.count>=256 || unit.body.registers>128){return .err(errors::make(4,at));}
@@ -94,6 +97,7 @@ pub fn Result<usize,errors::Error> tag_test(ref mut values::Program unit,ref mut
     if(unit.body.types[dst]!=0 || unit.body.slots[dst] || unit.parameters[dst]!=0 ||
         unit.body.array_parameters[dst]!=0 || unit.body.record_parameters[dst]!=0 ||
         unit.body.slice_parameters[dst]!=0){return .err(invalid(at));}
+    let usize handled=bindings::handle(unit,state,source,at)?;
     append(unit,98,dst,source,variant,at);unit.body.types[dst]=2;unit.body.registers=dst+1;
     return .ok(dst);
 }
@@ -114,6 +118,7 @@ pub fn Result<usize,errors::Error> tag(ref mut values::Program unit,ref mut bind
         if(values::type_id(unit,payload)!=child){return .err(invalid(at));}
         moved=!plan.properties[child].copyable;
     }
+    if(!none){let usize handled=bindings::handle(unit,state,payload,at)?;}
     let usize dst=bindings::allocate(unit,state,exact_type,at)?;
     append(unit,91,dst,if(none){0}else{payload},variant,at);
     if(moved){let usize consumed=bindings::consume(unit,state,payload,at)?;}
@@ -135,8 +140,11 @@ pub fn Result<Case,errors::Error> case_value(ref mut values::Program unit,ref mu
     if(!none){
         let usize child=if(variant==1){node.first as usize}else{node.second as usize};
         let usize admitted=destination(ref plan,state,child,at)?;
-        payload=bindings::allocate(unit,state,child,at)?;
+        payload=admitted;
     }
+    let usize handled=bindings::handle(unit,state,source,at)?;
+    if(!none){let usize allocated=bindings::allocate(unit,state,
+        if(variant==1){node.first as usize}else{node.second as usize},at)?;}
     let usize instruction=unit.body.count;
     append(unit,92,if(none){0}else{payload},source,variant,at);
     if(!plan.properties[exact_type].copyable){let usize consumed=bindings::consume(unit,state,source,at)?;}

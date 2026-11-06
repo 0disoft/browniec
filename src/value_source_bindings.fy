@@ -17,14 +17,17 @@ pub struct State {
     locals::Table names;
     u8[64] bindings; // 0 ordinary local, otherwise typed slot + 1
     usize next; usize live;
+    bool enforce_results; usize pending; // Direct Result obligations, independent of COPY ownership.
 }
 // Checkpoints describe compile-time CFG entries/exits, never native owners.
 // begin_alternative/select_path select separately reached blocks. merge compares
 // exits and never restores saved liveness/cursors on a continuing path.
 pub struct Snapshot { State state; }
-pub fn State empty(){return State{.names=locals::empty(),.bindings=[0;64],.next=0,.live=0};}
+pub fn State empty(){return State{.names=locals::empty(),.bindings=[0;64],.next=0,.live=0,
+    .enforce_results=false,.pending=0};}
 pub fn Snapshot snapshot(ref State state){return Snapshot{.state=State{
-    .names=locals::snapshot(ref state.names),.bindings=state.bindings,.next=state.next,.live=state.live}};}
+    .names=locals::snapshot(ref state.names),.bindings=state.bindings,.next=state.next,.live=state.live,
+    .enforce_results=state.enforce_results,.pending=state.pending}};}
 fn usize bit(usize id){let usize one=1;return one<<id;}
 // Callers admit <=64; the pinned language has no unchecked narrowing cast.
 fn u8 byte(usize value){var u8 result=0;var usize i=0;while(i<value){result+=1;i+=1;}return result;}
@@ -32,12 +35,15 @@ fn errors::Error invalid(usize at){return errors::make(3,at);}
 fn Result<usize,errors::Error> header(ref values::Program unit,ref State state,usize at){
     if(state.next>16 || state.names.count>64 || state.names.function>=16 ||
         state.names.function>=unit.body.function_count || unit.body.function_count>16 ||
-        state.live>=65536){return .err(invalid(at));}
+        unit.catalog.count>64 || state.live>=65536 || state.pending>=65536 ||
+        (state.pending&state.live)!=state.pending || (!state.enforce_results && state.pending!=0)){
+        return .err(invalid(at));}
     var usize i=0;while(i<16){
         if(i<state.next){if(unit.types[i]==0 || unit.types[i] as usize>unit.catalog.count ||
             unit.functions[i] as usize>=unit.body.function_count){return .err(invalid(at));}}
         else if(unit.types[i]!=0 || unit.functions[i]!=0 || (state.live&bit(i))!=0){return .err(invalid(at));}
         if((state.live&bit(i))!=0 && unit.functions[i] as usize!=state.names.function){return .err(invalid(at));}
+        if((state.pending&bit(i))!=0 && unit.catalog.nodes[values::type_id(unit,i)].kind!=6){return .err(invalid(at));}
         i+=1;
     }return .ok(state.next);
 }
@@ -50,6 +56,33 @@ fn Result<bool,errors::Error> copyable(ref values::Program unit,usize id,usize a
     let properties::Plan plan=switch(properties::inspect(ref unit.catalog)){
         case .ok(v):{v}case .err(_):{return .err(invalid(at));}
     };return .ok(plan.properties[values::type_id(unit,id)].copyable);
+}
+// Opt-in belongs to the private source compiler; explicit IR helpers keep their
+// original cleanup behavior. Enabling cannot retroactively exempt live values.
+pub fn Result<usize,errors::Error> enable_results(ref values::Program unit,ref mut State state,usize at){
+    let usize checked=header(unit,state,at)?;
+    if(state.next!=0 || state.live!=0 || state.names.count!=0 || state.names.pending_places!=0){return .err(invalid(at));}
+    state.enforce_results=true;return .ok(0);
+}
+fn void result_pending(ref values::Program unit,ref mut State state,usize id){
+    if(state.enforce_results && unit.catalog.nodes[values::type_id(unit,id)].kind==6){state.pending|=bit(id);}
+}
+// Handling is compile-time only, including explicit discard and non-consuming
+// predicates. Non-Result values have no obligation; their ownership is untouched.
+pub fn Result<usize,errors::Error> handle(ref values::Program unit,ref mut State state,usize id,usize at){
+    let usize checked=slot(unit,state,id,at)?;
+    if((state.live&bit(id))==0){return .err(invalid(at));}
+    state.pending^=state.pending&bit(id);return .ok(id);
+}
+// keep16 denotes an ordinary return; otherwise exempt only the retained typed
+// return slot. Preflight precedes all function cleanup and emits no instructions.
+pub fn Result<usize,errors::Error> require_handled(ref values::Program unit,ref State state,usize keep,usize at){
+    let usize checked=header(unit,state,at)?;
+    if(keep>16){return .err(invalid(at));}
+    var usize allowed=0;
+    if(keep!=16){let usize valid=slot(unit,state,keep,at)?;
+        if((state.live&bit(keep))==0){return .err(invalid(at));}allowed=state.pending&bit(keep);}
+    if(state.pending!=allowed){return .err(errors::make(18,at));}return .ok(keep);
 }
 // All operands and instruction capacity are admitted before this infallible
 // append. ir::raw itself writes op before fallible operand conversions.
@@ -79,7 +112,7 @@ pub fn Result<usize,errors::Error> allocate(ref mut values::Program unit,ref mut
 pub fn Result<usize,errors::Error> initialize(ref values::Program unit,ref mut State state,usize id,usize at){
     let usize checked=slot(unit,state,id,at)?;
     if((state.live&bit(id))!=0){return .err(invalid(at));}
-    state.live|=bit(id);return .ok(id);
+    state.live|=bit(id);result_pending(unit,state,id);return .ok(id);
 }
 pub fn Result<usize,errors::Error> enter_function(ref values::Program unit,ref mut State state,usize function,usize at){
     let usize checked=header(unit,state,at)?;
@@ -139,7 +172,8 @@ pub fn Result<usize,errors::Error> use_binding(ref mut values::Program unit,ref 
     let bool copied=copyable(unit,source,at)?;
     if(unit.body.count>=256){return .err(errors::make(4,at));}
     append(unit,if(copied){89}else{88},destination,source,at);
-    if(!copied){state.live^=bit(source);}state.live|=bit(destination);return .ok(destination);
+    if(!copied){state.live^=bit(source);}state.live|=bit(destination);
+    state.pending^=state.pending&bit(source);result_pending(unit,state,destination);return .ok(destination);
 }
 // Replace the fixed lexical slot, or reinitialize it after a move. The RHS is
 // an already captured value: MOVE consumes it even when its type is copyable.
@@ -160,12 +194,14 @@ pub fn Result<usize,errors::Error> assign(ref mut values::Program unit,ref mut S
         i+=1;
     }
     var usize needed=0;
+    if(source!=destination && (state.pending&bit(destination))!=0){return .err(errors::make(18,at));}
     if(source!=destination){needed=1;if((state.live&bit(destination))!=0){needed+=1;}}
     if(unit.body.count>256 || needed>256-unit.body.count){return .err(errors::make(4,at));}
     if(source==destination){return .ok(destination);}
     if((state.live&bit(destination))!=0){append(unit,90,destination,0,at);}
     append(unit,88,destination,source,at);
-    state.live^=bit(source);state.live|=bit(destination);return .ok(destination);
+    state.live^=bit(source);state.live|=bit(destination);
+    state.pending^=state.pending&bit(source);result_pending(unit,state,destination);return .ok(destination);
 }
 // Trusted return/call handoff hook, after ALL surrounding admission succeeds.
 // For CALL copyable actuals the caller leaves them live instead of calling this.
@@ -173,12 +209,13 @@ pub fn Result<usize,errors::Error> assign(ref mut values::Program unit,ref mut S
 pub fn Result<usize,errors::Error> consume(ref values::Program unit,ref mut State state,usize id,usize at){
     let usize checked=slot(unit,state,id,at)?;
     if((state.live&bit(id))==0){return .err(invalid(at));}
-    state.live^=bit(id);return .ok(id);
+    state.live^=bit(id);state.pending^=state.pending&bit(id);return .ok(id);
 }
 // Idempotent explicit drop, including anonymous temporaries. Dead emits nothing.
 pub fn Result<usize,errors::Error> drop(ref mut values::Program unit,ref mut State state,usize id,usize at){
     let usize checked=slot(unit,state,id,at)?;
     if((state.live&bit(id))==0){return .ok(id);}
+    if((state.pending&bit(id))!=0){return .err(errors::make(18,at));}
     if(unit.body.count>=256){return .err(errors::make(4,at));}
     append(unit,90,id,0,at);state.live^=bit(id);return .ok(id);
 }
@@ -192,7 +229,8 @@ pub fn Result<usize,errors::Error> leave_scope(ref mut values::Program unit,ref 
     while(i<state.names.count){if(state.bindings[i]!=0){
         let usize id=binding(unit,state,i,at)?;
         if((seen&bit(id))!=0){return .err(invalid(at));}seen|=bit(id);
-        if(i>=mark && (state.live&bit(id))!=0){drops+=1;}
+        if(i>=mark && (state.live&bit(id))!=0){
+            if((state.pending&bit(id))!=0){return .err(errors::make(18,at));}drops+=1;}
     }i+=1;}
     if(unit.body.count>256 || drops>256-unit.body.count){return .err(errors::make(4,at));}
     i=state.names.count;while(i>mark){i-=1;
@@ -212,12 +250,13 @@ pub fn Result<usize,errors::Error> begin_alternative(ref values::Program unit,re
     ref Snapshot entry,usize at){
     let usize checked=header(unit,current,at)?;let ref State prior=ref entry.state;
     if(prior.next>current.next || prior.names.count!=current.names.count ||
-        prior.names.function!=current.names.function || prior.names.pending_places!=current.names.pending_places){
+        prior.names.function!=current.names.function || prior.names.pending_places!=current.names.pending_places ||
+        prior.enforce_results!=current.enforce_results){
         return .err(invalid(at));}
     // Stage only the small metadata state, rebased onto the current global
     // high-water mark. The stale entry must not pass header with its old next.
     var State staged=State{.names=locals::snapshot(ref prior.names),.bindings=prior.bindings,
-        .next=current.next,.live=prior.live};
+        .next=current.next,.live=prior.live,.enforce_results=prior.enforce_results,.pending=prior.pending};
     let usize valid=header(unit,ref staged,at)?;
     var usize i=prior.next;while(i<16){if((prior.live&bit(i))!=0){return .err(invalid(at));}i+=1;}
     var usize seen=0;i=0;while(i<current.names.count){
@@ -231,6 +270,7 @@ pub fn Result<usize,errors::Error> begin_alternative(ref values::Program unit,re
         }i+=1;
     }
     current.names=staged.names;current.bindings=staged.bindings;current.live=staged.live;
+    current.enforce_results=staged.enforce_results;current.pending=staged.pending;
     return .ok(current.live);
 }
 // Trusted compile-only selection of an independently reached CFG block, including
@@ -240,10 +280,11 @@ pub fn Result<usize,errors::Error> begin_alternative(ref values::Program unit,re
 pub fn Result<usize,errors::Error> select_path(ref values::Program unit,ref mut State current,
     ref Snapshot entry,usize at){
     let usize checked=header(unit,current,at)?;let ref State prior=ref entry.state;
-    if(prior.next>current.next || prior.names.function!=current.names.function){return .err(invalid(at));}
+    if(prior.next>current.next || prior.names.function!=current.names.function ||
+        prior.enforce_results!=current.enforce_results){return .err(invalid(at));}
     var usize i=prior.next;while(i<16){if((prior.live&bit(i))!=0){return .err(invalid(at));}i+=1;}
     var State staged=State{.names=locals::snapshot(ref prior.names),.bindings=prior.bindings,
-        .next=current.next,.live=prior.live};
+        .next=current.next,.live=prior.live,.enforce_results=prior.enforce_results,.pending=prior.pending};
     let usize valid=header(unit,ref staged,at)?;
     var usize seen=0;i=0;while(i<staged.names.count){
         if(staged.names.begins[i]>staged.names.ends[i]){return .err(invalid(at));}
@@ -252,6 +293,7 @@ pub fn Result<usize,errors::Error> select_path(ref values::Program unit,ref mut 
         i+=1;
     }
     current.names=staged.names;current.bindings=staged.bindings;current.live=staged.live;
+    current.enforce_results=staged.enforce_results;current.pending=staged.pending;
     return .ok(current.live);
 }
 // Exact-live merge with identical surviving lexical bindings. Additional static
@@ -259,10 +301,17 @@ pub fn Result<usize,errors::Error> select_path(ref values::Program unit,ref mut 
 pub fn Result<usize,errors::Error> merge(ref values::Program unit,ref mut State state,ref Snapshot other,usize at){
     let usize checked=header(unit,state,at)?;let ref State prior=ref other.state;
     if(prior.next>state.next || prior.names.count!=state.names.count || prior.names.function!=state.names.function ||
-        prior.names.pending_places!=state.names.pending_places || prior.live!=state.live){return .err(invalid(at));}
+        prior.names.pending_places!=state.names.pending_places || prior.live!=state.live ||
+        prior.enforce_results!=state.enforce_results){return .err(invalid(at));}
+    var State staged=State{.names=locals::snapshot(ref prior.names),.bindings=prior.bindings,
+        .next=state.next,.live=prior.live,.enforce_results=prior.enforce_results,.pending=prior.pending};
+    let usize valid=header(unit,ref staged,at)?;
+    var usize slot_id=prior.next;while(slot_id<16){
+        if((prior.live&bit(slot_id))!=0){return .err(invalid(at));}slot_id+=1;
+    }
     var usize i=0;while(i<state.names.count){
         if(prior.bindings[i]!=state.bindings[i] || prior.names.begins[i]!=state.names.begins[i] ||
             prior.names.ends[i]!=state.names.ends[i] || prior.names.registers[i]!=state.names.registers[i] ||
             prior.names.mutable[i]!=state.names.mutable[i]){return .err(invalid(at));}i+=1;
-    }return .ok(state.live);
+    }state.pending|=prior.pending;return .ok(state.live);
 }

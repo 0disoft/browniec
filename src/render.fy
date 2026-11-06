@@ -21,10 +21,11 @@ pub fn ref str kind(u8 code) {
     if (code == 13) { return "array_limit"; }
     if (code == 14) { return "bounds"; }
     if (code == 15) { return "allocation"; }
+    if (code == 18) { return "must_use_result"; }
     return "unavailable";
 }
 pub fn i32 exit_code(u8 kind) {
-    if (kind >= 1 && kind <= 4) { return 3; }
+    if ((kind >= 1 && kind <= 4) || kind == 18) { return 3; }
     if (kind == 5) { return 6; }
     if ((kind >= 6 && kind <= 8) || (kind >= 12 && kind <= 15)) { return 5; }
     if (kind == 9) { return 7; }
