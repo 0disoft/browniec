@@ -67,8 +67,8 @@ added.
 The [metered native successor](slice-place-vm.md) now supplies explicitly tagged
 slice/mixed invocation vectors and exact setup/operation preflight. It remains a
 private adapter requiring the canonical caller-supplied restored ticket. Its [execution successor](slice-place-execution.md) connects both drivers and
-complete admission/cleanup/retained guards. Source early selection and slice
-compounds remain open. Record/scalar-local/grouped places, aggregate overlap and full
+complete admission/cleanup/retained guards. The [source successor](slice-place-assignment.md)
+now connects early selection and ten checked slice compounds. Record/scalar-local/grouped places, aggregate overlap and full
 L04/C05/Instance/host/delivery remain open as well.
 
 VM integration must retain an explicit location/format discriminator in its

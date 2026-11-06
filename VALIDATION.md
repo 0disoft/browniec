@@ -1,3 +1,23 @@
+- Exclusive-slice source assignment now selects/checks bounds before RHS and
+  captures old scalars before ten checked integer compounds. Shared array/slice
+  IDs and lexical snapshots preserve targets across nested writes/CALL/reborrow
+  restoration and nonlocal cleanup. See the
+  [contract](docs/engineering/slice-place-assignment.md). Development/release each
+  passed 17 native groups and 533 tool-free CLI cases: 112 new assignment,
+  222 existing exclusive-source, 74 mutable-parameter, 68 reborrow and 57 public
+  Fuel cases. The 194-path input union matches checkout hashes; 189 also match
+  staged Git raw bytes, with five selected legacy CRLF/LF-only differences
+  recorded separately. Both locked LF mirrors pass with 167 LF production
+  modules and 289-file discovery. See the
+  [Windows evidence](docs/evidence/slice-place-assignment-windows-20261106.json).
+  Plain/compound ordinary public exact Fuel is 152817/156984; retained marker
+  public exact Fuel is 496907/501075. Source IR/Fuel changed deliberately;
+  existing prices/default256/cap16000000 remain. Version JSON adds two narrow
+  slice-assignment flags. Record/scalar-local/grouped places, overlap and full
+  L04/C05/Instance/host/delivery remain open. Full language/original full native
+  Fuel matrices, Linux, OOM/general stack/performance/isolation/delivery were
+  not rerun. Local only. Earlier checkpoint notes retain their scopes.
+
 - Exclusive-slice selected-place IR now executes in ordinary and retained VM
   drivers through canonical frame/site ticket maps, complete admission and
   metered setup/operation preflight. See the

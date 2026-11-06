@@ -25,9 +25,13 @@
   explicitly tagged snapshot storage and exact slice/mixed setup/operation
   preflight. Its [execution successor](../engineering/slice-place-execution.md)
   connects both VM drivers to canonical bindings, cleanup and
-  image/returned-view/recipe guards. Source early selection and slice compounds
-  remain open. These
-  prerequisites change no guest syntax, existing instruction prices or CLI limits.
+  image/returned-view/recipe guards. The
+  [source successor](../engineering/slice-place-assignment.md) now selects and
+  checks slice indices before RHS, captures old scalars before ten checked
+  integer compounds and shares pending-place cleanup with owned arrays.
+  This changes source IR and total Fuel; existing instruction prices and CLI
+  limits remain unchanged. Version metadata adds two slice-assignment flags.
+  Record/scalar-local places, grouped lvalues, overlap and complete L04 remain open.
 
 ## Product boundary
 

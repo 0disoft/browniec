@@ -18,7 +18,7 @@ fn void shortage(Result<i64,errors::Error> result){
 // Independent numeric oracle for these straight-line i32-array fixtures only:
 // every instruction executes exactly once and their sole helper is called once.
 fn usize required(ref ir::Program p,usize backing){
-    var usize total=1+backing;var usize pc=0;
+    var usize total=1+backing;var usize pc=0;var usize width=0;var bool extended=false;
     while(pc<p.count){
         let usize at=pc*8;let u8 op=p.code[at];let usize dst=p.code[at+1] as usize;let usize a=p.code[at+2] as usize;
         var usize cost=1;
@@ -29,9 +29,13 @@ fn usize required(ref ir::Program p,usize backing){
         else if(op==55){cost=4097+4*p.arrays.lengths[(p.slice_roots[a] as usize)-1];}
         else if(op==56 || op==57){cost=4097;}
         else if(op==58){cost=4134;}else if(op==60){cost=4138;}
+        else if(op>=83 && op<=86){let usize id=p.code[at+if(op==84){2}else{1}] as usize;
+            if(width<=id){width=id+1;}if(p.code[at+4]==1){extended=true;}
+            if(op==86){cost=22;}else if(op==83){cost=4129;}else if(op==84){cost=4166;}else{cost=4170;}
+        }
         else{assert(op<33 && !(op>=19 && op<=22));}
         total+=cost;pc+=1;
-    }return total;
+    }if(width!=0){assert(extended);total+=257+10*(1+32*(14*width+1));}return total;
 }
 fn void exact(ref ir::Program p,usize backing){
     let usize price=required(p,backing);

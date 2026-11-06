@@ -9,8 +9,10 @@ and [native exclusive-slice locations](slice-selected-place.md).
 cost and single-step adapters for already independently analysed immutable IR.
 It does not issue executable admission itself. The
 [execution successor](slice-place-execution.md) now connects both drivers to
-canonical frame/site ticket maps after complete executable proof. Public source
-capabilities and CLI Fuel limits remain unchanged; source lowering is next.
+canonical frame/site ticket maps after complete executable proof. The
+[source successor](slice-place-assignment.md) now connects early selection and
+checked compounds, deliberately changing source IR/Fuel and adding two narrow
+capability flags. Existing instruction prices and CLI Fuel limits remain unchanged.
 
 The caller supplies the actual function, frame and canonical current binding.
 Slice SELECT/READ/STORE check the containing function range and exact scalar

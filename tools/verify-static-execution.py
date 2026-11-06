@@ -27,7 +27,7 @@ def main():
     parser.add_argument('--profile', choices=['development', 'release'], required=True)
     parser.add_argument('--shard', type=int, default=1, help='one-based native test shard')
     parser.add_argument('--shards', type=int, default=1, help='partition the complete selected identity set')
-    parser.add_argument('--selection', choices=['all', 'statics', 'views', 'ranges', 'range-core', 'call-ir', 'call-proof', 'call-transfer-core', 'call-transfer', 'call-mixed', 'reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts', 'reference-return-execution', 'reference-source', 'reference-return-source', 'public-program', 'source-snapshot', 'module-index', 'module-entry', 'source-context', 'module-program', 'module-program-core', 'module-retention', 'project-program-core', 'project-program', 'project-names', 'project-manifest', 'project-sources', 'captured-call-stack', 'local-inference', 'aggregate-inference', 'reference-inference', 'reference-inference-shadow', 'option-inference', 'array-list-storage', 'array-list-execution', 'array-list-source', 'array-list-contexts', 'array-list-replace-storage', 'array-list-replace-execution', 'array-list-assignment', 'array-literal-projections', 'array-expression-projections', 'record-expression-projections', 'if-expressions', 'aggregate-if-expressions', 'void-functions', 'aggregate-switch-expressions', 'constructor-join-inference', 'array-places', 'array-place-ir', 'array-place-storage', 'array-place-execution', 'array-place-cleanup', 'array-place-assignment', 'slice-places', 'slice-place-ir', 'slice-place-vm', 'slice-place-execution'], default='all',
+    parser.add_argument('--selection', choices=['all', 'statics', 'views', 'ranges', 'range-core', 'call-ir', 'call-proof', 'call-transfer-core', 'call-transfer', 'call-mixed', 'reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts', 'reference-return-execution', 'reference-source', 'reference-return-source', 'public-program', 'source-snapshot', 'module-index', 'module-entry', 'source-context', 'module-program', 'module-program-core', 'module-retention', 'project-program-core', 'project-program', 'project-names', 'project-manifest', 'project-sources', 'captured-call-stack', 'local-inference', 'aggregate-inference', 'reference-inference', 'reference-inference-shadow', 'option-inference', 'array-list-storage', 'array-list-execution', 'array-list-source', 'array-list-contexts', 'array-list-replace-storage', 'array-list-replace-execution', 'array-list-assignment', 'array-literal-projections', 'array-expression-projections', 'record-expression-projections', 'if-expressions', 'aggregate-if-expressions', 'void-functions', 'aggregate-switch-expressions', 'constructor-join-inference', 'array-places', 'array-place-ir', 'array-place-storage', 'array-place-execution', 'array-place-cleanup', 'array-place-assignment', 'slice-places', 'slice-place-ir', 'slice-place-vm', 'slice-place-execution', 'slice-place-assignment'], default='all',
                         help='statics runs the changed image/proof/VM suites; all adds return and source regressions')
     args = parser.parse_args()
     if not 1 <= args.shard <= args.shards <= 16:
@@ -132,6 +132,9 @@ def main():
                                     'tests/m2/slice_handoff.fy']
     selections['slice-place-execution'] = ['tests/m2/slice_place_execution.fy', 'tests/m2/slice_place_ir.fy',
         'tests/m2/place_execution.fy', 'tests/m2/reference_return_lifetimes.fy', 'tests/m2/captured_call_stack.fy']
+    selections['slice-place-assignment'] = ['tests/m2/slice_place_assignment.fy', 'tests/m2/place_assignment.fy',
+        'tests/m2/slice_exclusive_source.fy', 'tests/m2/slice_mutable_parameters_source.fy',
+        'tests/m2/slice_reborrow_source.fy', 'tests/m2/public_fuel.fy', 'tests/m2/captured_call_stack.fy']
     files = selections[args.selection]
     out = ROOT / 'build/static-execution' / profile / args.selection
     if args.shards != 1:
@@ -393,8 +396,21 @@ def main():
             'reference_return_lifetimes': {'selected_places_respect_returned_owner_protection_at_select_read_and_store'},
             'captured_call_stack': {'captured_calls_keep_the_32_deep_limit_and_reject_33',
                 'retained_captured_calls_keep_the_32_deep_limit_and_reject_33'}}
+    if args.selection == 'slice-place-assignment':
+        focused = {
+            'place_assignment': {'index_and_old_scalar_are_captured_once_before_rhs_mutations_and_calls',
+                'propagation_and_all_return_kinds_close_pending_places_before_handoff',
+                'plain_and_compound_source_have_independent_exact_fuel_boundaries'},
+            'slice_exclusive_source': {'six_scalar_tags_whole_computed_open_and_empty_ranges_lower_to_owned_exclusive_sites',
+                'endpoints_and_store_operands_run_once_in_order_with_no_extra_owner_or_scalar_store'},
+            'slice_mutable_parameters_source': {'source_errors_abort_all_receipts_and_preserve_prior_payload_writes'},
+            'slice_reborrow_source': {'computed_bounds_evaluate_once_and_exit_before_child_publication'},
+            'public_fuel': {'eight_writer_call_is_executable_under_the_public_ceiling',
+                'rooted_shared_and_exclusive_operations_keep_their_exact_prices'},
+            'captured_call_stack': {'captured_calls_keep_the_32_deep_limit_and_reject_33',
+                'retained_captured_calls_keep_the_32_deep_limit_and_reject_33'}}
     exact = args.selection in ('array-list-replace-storage', 'array-list-contexts', 'array-list-source', 'option-inference', 'array-list-storage', 'array-list-execution') or args.selection in ('reference-access', 'reference-proof', 'reference-vm', 'reference-return-ir', 'reference-return-lifetimes', 'reference-receipts', 'reference-return-execution', 'reference-source', 'reference-return-source', 'public-program', 'reference-inference')
-    exact = exact or args.selection in ('array-place-execution', 'array-place-cleanup', 'array-place-assignment', 'slice-places', 'slice-place-ir', 'slice-place-vm', 'slice-place-execution')
+    exact = exact or args.selection in ('array-place-execution', 'array-place-cleanup', 'array-place-assignment', 'slice-places', 'slice-place-ir', 'slice-place-vm', 'slice-place-execution', 'slice-place-assignment')
     exact = exact or args.selection in ('record-expression-projections', 'if-expressions', 'aggregate-if-expressions', 'void-functions', 'aggregate-switch-expressions', 'constructor-join-inference')
     exact = exact or args.selection in ('array-list-replace-execution', 'array-list-assignment', 'array-literal-projections', 'array-expression-projections')
     for path in files:
@@ -412,7 +428,7 @@ def main():
     if args.shards > len(complete):
         parser.error('shards must not exceed selected tests')
     if exact:
-        assert len(expected) == (22 if args.selection == 'slice-place-execution' else 20 if args.selection == 'slice-place-vm' else 24 if args.selection == 'slice-place-ir' else 13 if args.selection == 'slice-places' else 30 if args.selection == 'array-place-assignment' else 21 if args.selection == 'array-place-cleanup' else 23 if args.selection == 'array-place-execution' else 18 if args.selection == 'constructor-join-inference' else 24 if args.selection == 'aggregate-switch-expressions' else 17 if args.selection == 'void-functions' else 21 if args.selection == 'aggregate-if-expressions' else 11 if args.selection == 'if-expressions' else 17 if args.selection == 'record-expression-projections' else 14 if args.selection in ('array-list-assignment', 'array-literal-projections', 'array-expression-projections') else 13 if args.selection == 'array-list-replace-execution' else 10 if args.selection == 'array-list-replace-storage' else 14 if args.selection == 'array-list-contexts' else 13 if args.selection == 'array-list-source' else 9 if args.selection == 'array-list-execution' else 5 if args.selection in ('option-inference', 'array-list-storage') else 36 if args.selection == 'reference-inference' else 18)
+        assert len(expected) == (17 if args.selection == 'slice-place-assignment' else 22 if args.selection == 'slice-place-execution' else 20 if args.selection == 'slice-place-vm' else 24 if args.selection == 'slice-place-ir' else 13 if args.selection == 'slice-places' else 30 if args.selection == 'array-place-assignment' else 21 if args.selection == 'array-place-cleanup' else 23 if args.selection == 'array-place-execution' else 18 if args.selection == 'constructor-join-inference' else 24 if args.selection == 'aggregate-switch-expressions' else 17 if args.selection == 'void-functions' else 21 if args.selection == 'aggregate-if-expressions' else 11 if args.selection == 'if-expressions' else 17 if args.selection == 'record-expression-projections' else 14 if args.selection in ('array-list-assignment', 'array-literal-projections', 'array-expression-projections') else 13 if args.selection == 'array-list-replace-execution' else 10 if args.selection == 'array-list-replace-storage' else 14 if args.selection == 'array-list-contexts' else 13 if args.selection == 'array-list-source' else 9 if args.selection == 'array-list-execution' else 5 if args.selection in ('option-inference', 'array-list-storage') else 36 if args.selection == 'reference-inference' else 18)
     if args.shards != 1:
         expected = set(complete[args.shard - 1::args.shards])
     if exact or args.shards != 1:

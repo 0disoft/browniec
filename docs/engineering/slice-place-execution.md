@@ -90,8 +90,10 @@ Public CLI Fuel regressions run with `tools/verify-public-fuel.py --phase cli`.
 Actual executed scope and input identities are in the
 [Windows evidence](../evidence/slice-place-execution-windows-20261106.json).
 
-Source exclusive-slice assignment still uses its earlier lowering. Bounds-before-
-RHS selection and slice compound source syntax are the next implementation.
+The [source successor](slice-place-assignment.md) now connects bounds-before-RHS
+selection and ten checked integer compounds, sharing pending IDs and nonlocal
+cleanup with owned-array assignments. Its new source IR changes total Fuel and
+adds two version flags; the execution evidence below retains its original scope.
 Record/scalar-local places, grouped lvalues, generic aggregate overlap and full
 L04/C05/Instance/host/delivery remain open. Full language/original native Fuel
 matrices, Linux, OOM, general stack/performance characterization, isolation and

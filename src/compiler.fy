@@ -21,6 +21,7 @@ import propagation as propagation;
 import casts as casts;
 import array_source as arrays;
 import place_source as places;
+import slice_place_ir as slice_places;
 import array_call_source as array_calls;
 import call_prefix_source as call_prefix;
 import struct_call_source as record_calls;
@@ -1300,12 +1301,21 @@ fn Result<usize,errors::Error> slice_write_statement(ref u8[] source,ref mut lex
     let usize open=lexer::next(source,s)?;
     let usize subscript=expression(source,s,p,table,signatures,1,depth+1,12,result_type,structure,loop_state)?;
     if(p.types[subscript]!=12) { return .err(errors::make(3,at)); }
-    let usize close=lexer::punctuation(source,s,93)?;let usize equals=lexer::punctuation(source,s,61)?;
+    let usize close=lexer::punctuation(source,s,93)?;
+    if(!lexer::assignment(s.kind)){return .err(errors::make(2,s.begin));}
+    let usize operation_at=s.begin;let u8 operation=places::compound(s.kind);
+    let usize equals=lexer::next(source,s)?;
     let u8 element=ir::slice_element(p,site,at)?;
-    let usize value=expression(source,s,p,table,signatures,1,depth,element,result_type,structure,loop_state)?;
+    if(operation!=0 && !types::integer(element)){return .err(errors::make(3,operation_at));}
+    var locals::Table names=locals::snapshot(table);
+    let usize place=places::slice(p,ref mut names,site,subscript,at)?;
+    let usize old=if(operation==0){128}else{slice_places::read(p,place,site,operation_at)?};
+    var usize value=expression(source,s,p,ref names,signatures,1,depth,element,result_type,structure,loop_state)?;
     if(p.types[value]!=element) { return .err(errors::make(3,at)); }
     let usize end=lexer::punctuation(source,s,terminator)?;
-    let usize written=ir::slice_write(p,site,subscript,value,at)?;
+    if(operation!=0){value=ir::emit(p,operation,old,value,operation_at)?;}
+    let usize written=slice_places::store(p,place,site,value,operation_at)?;
+    let usize ended=places::end(p,ref mut names,place,operation_at)?;
     return .ok(index);
 }
 fn Result<usize,errors::Error> inferred_declaration(ref u8[] source,ref mut lexer::State s,

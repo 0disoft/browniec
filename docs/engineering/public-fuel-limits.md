@@ -11,6 +11,16 @@ oracles: public plain 69308/413396 and compound 69378/413467 (ordinary/retained
 marker). Existing opcode prices/default/cap remain; old plain-source 65737 is
 superseded by 69308. The preceding native IR fixture remains its own oracle.
 
+The [exclusive-slice source successor](slice-place-assignment.md) now replaces
+late-checking slice writes with SELECT/STORE/END; ten integer compounds also
+READ the old scalar before RHS. Public ordinary plain/compound fixtures require
+152817/156984 Fuel; retained marker fixtures require 496907/501075. These totals
+include extended setup 5067 and existing per-operation/retained charges, rather
+than a price or ceiling increase. Exact, one-short and one-more CLI boundaries
+pass in both Windows profiles, alongside the existing 57 public Fuel cases.
+The default stays 256, ceiling 16000000, and legal eight-writer CALLs still fit.
+See the source successor's scoped evidence; full C05/Instance remains open.
+
 Date: 2026-11-04. This is a narrow C05 successor to the
 [returned-view schedule](m2-slice-result-fuel.md), not full-profile limit adoption.
 

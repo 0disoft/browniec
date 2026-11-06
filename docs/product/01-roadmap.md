@@ -32,8 +32,12 @@
   separate slice/mixed preparation and preflight costs. The
   [execution successor](../engineering/slice-place-execution.md) now connects
   both VM drivers to canonical current-binding maps with complete admission,
-  frame/CALL cleanup and retained/image/recipe guards. Source early selection
-  and slice compounds are next; public source capability metadata is unchanged.
+  frame/CALL cleanup and retained/image/recipe guards. The
+  [source successor](../engineering/slice-place-assignment.md) now connects
+  bounds-before-RHS selection, old-scalar capture and ten checked integer
+  compounds, with shared nested place IDs and nonlocal cleanup. Source IR/Fuel
+  changes deliberately; version metadata adds two narrow slice-assignment flags.
+  Record/scalar-local places, grouped lvalues and aggregate overlap remain next.
 
 ## Milestone status
 

@@ -46,7 +46,7 @@ fn void endpoints_and_store_operands_run_once_in_order_with_no_extra_owner_or_sc
     run(b"module main;fn i32 main(){var i32[1] a=[0;1];let Option<i32> o=.none;let i32 value=switch(o){case .some(v):{0}case .none:{let ref mut i32[] p=ref mut a;p[0]=42;p[0]}};return value;}",0);
     let ir::Program p=compiled(b"module main;fn i32 main(){var i32[1] a=[0;1];let ref mut i32[] p=ref mut a;p[0]=42;return p[0];}");
     assert(p.arrays.count==1 && ir::exclusive(ref p,0) && p.slice_roots[0]==1);
-    var usize stores=0;var usize opens=0;var usize i=0;while(i<p.count){let u8 op=p.code[i*8];if(op==60){stores+=1;}if(op==54){opens+=1;}assert(op!=18 && op!=34);i+=1;}assert(stores==1 && opens==1);
+    var usize stores=0;var usize opens=0;var usize i=0;while(i<p.count){let u8 op=p.code[i*8];if(op==85){stores+=1;}if(op==54){opens+=1;}assert(op!=18 && op!=34);i+=1;}assert(stores==1 && opens==1);
 }
 
 @test

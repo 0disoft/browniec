@@ -67,7 +67,7 @@ for tag in ['i32', 'bool', 'i64', 'u8', 'u32', 'usize']:
     case(f'module main;fn i32 main(){{var {tag}[2] a=[{zero};2];let ref mut {tag}[] p=ref mut a;p[0]={value};if(p[0]=={value}){{return 42;}}return 0;}}')
     whole = f'module main;fn i32 main(){{var {tag}[1] a=[{zero};1];let ref mut {tag}[] p=ref mut a;p[0]={value};return 42;}}'
     width = 4 if tag in ['i32', 'u32'] else 8 if tag in ['i64', 'usize'] else 1
-    exact = 139413 + 5 * width
+    exact = 148663 + 5 * width
     case(whole, fuel=exact)
     case(whole, runtime_error='fuel', fuel=exact-1)
     case(whole, runtime_error='fuel', fuel=0)
