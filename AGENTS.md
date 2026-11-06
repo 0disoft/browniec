@@ -1,3 +1,18 @@
+- Canonical native value bytes now retain immutable layouts and validate scalars,
+  arrays, nested plain records, wrapper tags/padding/inactive bytes and the single
+  active Buffer word. Copy overlap is direction-aware; wrapper overlap rejects
+  before mutation. Development/release each passed 6 native groups on f5d3d1a,
+  with 188 checkout/Git-raw-matching inputs and 183 LF production modules. See the
+  [contract](docs/engineering/value-codec.md) and
+  [Windows evidence](docs/evidence/value-codec-windows-20261107.json).
+  No owner authority, VM admission, public behavior or existing price/limit change.
+  Next: owning native value/frame storage, serial/root binding, metering, cleanup,
+  execution and compiler source bindings. Pinned whole-Buffer ref replacement
+  rejects E1008; use existing whole-resource Vec push/pop, not an unsafe workaround
+  or Fairy checkout edits. Full L04/L05/D01-D04/Engine/Instance/host/delivery and
+  broad validation remain open. Local only; no push/release/deployment.
+  Earlier checkpoints retain their scopes.
+
 - Typed value IR analysis now connects MOVE/COPY/DROP, tag build/case, scalar
   conversion and value CALL/RETURN to whole-type properties and exact Dead-state
   CFG plus canonical scalar/aggregate/loan/selected-place proof. Inactive/scalar

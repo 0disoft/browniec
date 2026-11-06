@@ -82,6 +82,8 @@ This slice adds no public source syntax, capability, price/default/ceiling or VM
 execution path. Full language/native Fuel matrices, Linux, LF mirrors, OOM/general
 stack/performance and clean-machine delivery remain separate work.
 
+The [canonical byte successor](value-codec.md) now retains immutable layouts,
+validates complete value bytes and supplies atomic copy/wrapper primitives.
 Next connect admitted value instructions to owning native storage, metered
 construction/moves/CALL/return, normal and failure cleanup, then compiler source
 bindings and resource-bearing tag operations. General reference/Buffer joins,

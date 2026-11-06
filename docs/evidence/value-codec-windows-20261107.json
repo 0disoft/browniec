@@ -1,0 +1,231 @@
+{
+  "schema": "browniec.value-codec-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-06T16:37:37.631747+00:00",
+  "implementationCommit": "f5d3d1ae3885c28a001169ef95d1645679087199",
+  "platform": "windows/amd64",
+  "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+  "inputManifest": {
+    "path": "docs/evidence/value-codec-inputs-windows-20261107.json",
+    "sha256": "963b5cf39402a98836e12fde2a88c9ad2c7de9034f9d97149514e3acac4e1e60"
+  },
+  "checkoutInputsMatched": 188,
+  "gitRawInputsMatched": 188,
+  "lfProductionModules": 183,
+  "testInventory": {
+    "files": 311,
+    "annotations": 1856
+  },
+  "profiles": [
+    {
+      "status": "passed",
+      "recordedAt": "2026-11-06T16:28:16.122684+00:00",
+      "profile": "development",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "check": "check ok: 2 instance(s), 191 source file(s), 1849 MIR function(s), lock verified\n",
+      "commands": [
+        [
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+          "check",
+          "--locked"
+        ],
+        [
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+          "test",
+          "--native",
+          "--capture-output",
+          "--json",
+          "--locked",
+          "--exact",
+          "tests::m2::value_codec::active_tags_inactive_bytes_and_opaque_words_are_checked_without_owner_authority",
+          "--exact",
+          "tests::m2::value_codec::maximum_arrays_records_and_independent_depth_are_bounded_and_layout_snapshots_are_immutable",
+          "--exact",
+          "tests::m2::value_codec::one_backing_copies_support_both_alias_directions_and_reject_unsafe_tag_overlap_atomically",
+          "--exact",
+          "tests::m2::value_codec::records_validate_nested_scalars_and_all_padding_before_any_publication",
+          "--exact",
+          "tests::m2::value_codec::retained_layout_and_six_scalar_domains_preserve_exact_cells_and_canonical_bool",
+          "--exact",
+          "tests::m2::value_codec::tag_layout_uses_design_bytes_and_locates_only_the_single_active_buffer"
+        ]
+      ],
+      "nativeOverrides": false,
+      "historicalResultReuse": false,
+      "nativeGroups": 6,
+      "nativeReport": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "development",
+        "tests": [
+          {
+            "identity": "tests::m2::value_codec::active_tags_inactive_bytes_and_opaque_words_are_checked_without_owner_authority",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_codec::maximum_arrays_records_and_independent_depth_are_bounded_and_layout_snapshots_are_immutable",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_codec::one_backing_copies_support_both_alias_directions_and_reject_unsafe_tag_overlap_atomically",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_codec::records_validate_nested_scalars_and_all_padding_before_any_publication",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_codec::retained_layout_and_six_scalar_domains_preserve_exact_cells_and_canonical_bool",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_codec::tag_layout_uses_design_bytes_and_locates_only_the_single_active_buffer",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 6,
+        "passed": 6,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      }
+    },
+    {
+      "status": "passed",
+      "recordedAt": "2026-11-06T16:28:20.267429+00:00",
+      "profile": "release",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "check": "check ok: 2 instance(s), 191 source file(s), 1849 MIR function(s), lock verified\n",
+      "commands": [
+        [
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+          "check",
+          "--locked"
+        ],
+        [
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+          "test",
+          "--native",
+          "--capture-output",
+          "--json",
+          "--locked",
+          "--release",
+          "--exact",
+          "tests::m2::value_codec::active_tags_inactive_bytes_and_opaque_words_are_checked_without_owner_authority",
+          "--exact",
+          "tests::m2::value_codec::maximum_arrays_records_and_independent_depth_are_bounded_and_layout_snapshots_are_immutable",
+          "--exact",
+          "tests::m2::value_codec::one_backing_copies_support_both_alias_directions_and_reject_unsafe_tag_overlap_atomically",
+          "--exact",
+          "tests::m2::value_codec::records_validate_nested_scalars_and_all_padding_before_any_publication",
+          "--exact",
+          "tests::m2::value_codec::retained_layout_and_six_scalar_domains_preserve_exact_cells_and_canonical_bool",
+          "--exact",
+          "tests::m2::value_codec::tag_layout_uses_design_bytes_and_locates_only_the_single_active_buffer"
+        ]
+      ],
+      "nativeOverrides": false,
+      "historicalResultReuse": false,
+      "nativeGroups": 6,
+      "nativeReport": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "release",
+        "tests": [
+          {
+            "identity": "tests::m2::value_codec::active_tags_inactive_bytes_and_opaque_words_are_checked_without_owner_authority",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_codec::maximum_arrays_records_and_independent_depth_are_bounded_and_layout_snapshots_are_immutable",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_codec::one_backing_copies_support_both_alias_directions_and_reject_unsafe_tag_overlap_atomically",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_codec::records_validate_nested_scalars_and_all_padding_before_any_publication",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_codec::retained_layout_and_six_scalar_domains_preserve_exact_cells_and_canonical_bool",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_codec::tag_layout_uses_design_bytes_and_locates_only_the_single_active_buffer",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 6,
+        "passed": 6,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      }
+    }
+  ],
+  "verifiedScope": [
+    "retained immutable layout and returned native layout properties",
+    "all six scalar cell domains, canonical bool and signed/unsigned extrema",
+    "accepted tag bytes and explicit IR variant translation",
+    "maximum 64-bit opaque Buffer word and active offset through four wrappers",
+    "inactive/scalar Buffer alternatives expose no owner",
+    "nested record scalar and padding checks before publication",
+    "direction-aware identical/disjoint/overlapping byte copies and atomic unsafe-wrap rejection",
+    "32768-byte arrays, 4096-byte records and independent depth16"
+  ],
+  "unchanged": [
+    "public source syntax/capabilities",
+    "executable opcode admission",
+    "existing public prices, default256 and cap16000000"
+  ],
+  "notClaimed": [
+    "native root authentication or ownership publication by byte copies",
+    "owning native value/frame storage, metering and cleanup",
+    "guest value/Buffer/tag execution or source support",
+    "public CLI/full language/native Fuel matrices, LF mirrors, Linux, OOM injection, general stack/performance and clean-machine delivery"
+  ],
+  "localOnly": true,
+  "push": false,
+  "release": false,
+  "deployment": false
+}

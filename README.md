@@ -2,6 +2,11 @@
 
 ## Current implementation (2026-11-07)
 
+A [native value byte layer](docs/engineering/value-codec.md) now validates scalar,
+array, plain-record and wrapper bytes against immutable retained layouts, locates
+the single active Buffer word and performs validated atomic copies/tag builds.
+Owning native storage, metering, cleanup and guest execution remain next.
+
 [Typed value IR analysis](docs/engineering/value-ir.md) now independently proves
 resource moves, tag build/case, CALL/RETURN and exact initialized/Dead CFG state
 alongside canonical scalar, aggregate, loan and selected-place checks. Execution
