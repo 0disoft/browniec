@@ -11,7 +11,19 @@ regressions, then commit; record broader checks only when actually run. Do not
 enable public syntax, delivery flags or ABI availability ahead of implemented
 admission, execution and cleanup. Push/release/deployment are separate actions.
 
-Latest private Buffer source checkpoint (2026-11-07): Private [Buffer source operations and loans](value-buffer-source.md) now lower
+Latest private Buffer copy checkpoint (2026-11-07): Private [owned Buffer copy](value-buffer-copy.md) now lowers
+`bytes::copy(ref b)` / `brownie::bytes::copy(ref b)` to exact `Result<Buffer,u8>`.
+One native append copies initialized bytes into an independent owner, retaining
+the source and cleaning temporary inputs. Shared Result destinations avoid
+extra arm slots; no opcode or existing Fuel price changes. Both Windows native
+profiles passed 13 groups (source 9/native 4), including 22 new guest programs and
+the unchanged 32/33 depth fixture, on `ee8a686`. All 218 inputs match checkout/Git
+raw bytes; all 207 production modules are LF. See [evidence](../evidence/value-buffer-copy-windows-20261107.json).
+Next Buffer views, copy-from-view, methods/public AllocError and deliberate public
+admission, text/I/O and general language/runtime composition. The full objective
+remains open. Local only; no push/release/deployment.
+
+Predecessor private Buffer source checkpoint (2026-11-07): Private [Buffer source operations and loans](value-buffer-source.md) now lower
 `bytes::` / `brownie::bytes::` empty, len/read/write and push/reserve/append.
 Compiler-only loans protect later arguments, survive control/propagation/loop
 exits and release temporary owners. Named mutation requires `var`; overlapping

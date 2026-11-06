@@ -1,4 +1,16 @@
-- Latest Buffer source checkpoint, 2026-11-07: Private [Buffer source operations and loans](../engineering/value-buffer-source.md) now lower
+- Latest Buffer copy checkpoint, 2026-11-07: Private [owned Buffer copy](../engineering/value-buffer-copy.md) now lowers
+  `bytes::copy(ref b)` / `brownie::bytes::copy(ref b)` to exact `Result<Buffer,u8>`.
+  One native append copies initialized bytes into an independent owner, retaining
+  the source and cleaning temporary inputs. Shared Result destinations avoid
+  extra arm slots; no opcode or existing Fuel price changes. Both Windows native
+  profiles passed 13 groups (source 9/native 4), including 22 new guest programs and
+  the unchanged 32/33 depth fixture, on `ee8a686`. All 218 inputs match checkout/Git
+  raw bytes; all 207 production modules are LF. See [evidence](../evidence/value-buffer-copy-windows-20261107.json).
+  Next Buffer views, copy-from-view, methods/public AllocError and deliberate public
+  admission, text/I/O and general language/runtime composition. The full objective
+  remains open. Local only; no push/release/deployment.
+
+- Predecessor Buffer source checkpoint, 2026-11-07: Private [Buffer source operations and loans](../engineering/value-buffer-source.md) now lower
   `bytes::` / `brownie::bytes::` empty, len/read/write and push/reserve/append.
   Compiler-only loans protect later arguments, survive control/propagation/loop
   exits and release temporary owners. Named mutation requires `var`; overlapping
@@ -175,9 +187,11 @@ root retention and prepaid finalization. [Direct return ranges](../engineering/m
 now use those same preparation/proof/handoff recipes. General returned-result
 forms beyond shared-byte results, Buffer/input backing and host-visible reference
 lifetimes remain open.
-Buffer storage/leases/scanning have private native evidence but no guest Buffer
-execution path. There is no general Engine/Instance API, guest input/output, host
-suspension, restricted worker or public DLL.
+Private [Buffer source operations](../engineering/value-buffer-source.md) and
+[owned copy](../engineering/value-buffer-copy.md) execute through the typed VM.
+General Buffer views/text and deliberate public Buffer admission remain open.
+There is no general Engine/Instance API, guest input/output, host suspension,
+restricted worker or public DLL.
 
 The [complete remaining-work audit](04-remaining-work.md) maps all 40 reference
 required features and the wider delivery gaps. The [roadmap](01-roadmap.md) orders

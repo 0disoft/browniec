@@ -16,6 +16,7 @@ Reference prefixes are required source syntax, not first-class reference values.
 | Call (either namespace) | Result | Effect / lowering |
 | --- | --- | --- |
 | `bytes::empty()` | `Buffer` | New empty owner; EMPTY95. |
+| `bytes::copy(ref b)` | `Result<Buffer,u8>` | [Independent owned copy](value-buffer-copy.md); existing EMPTY/APPEND/CASE/TAG instructions. |
 | `bytes::len(ref b)` | `usize` | Retain owner; LEN99. |
 | `bytes::read(ref b, i)` | `u8` | Read initialized byte; READ100. |
 | `bytes::write(ref mut b, i, v)` | `void` (no value) | Write initialized byte; WRITE101. |
@@ -116,7 +117,10 @@ payload. Its corrected payload name preserves the no-shadowing contract; both
 final profile runs use that corrected fixture. Loan rejection also covers the
 native lowering helpers and direct ownership handoff before any publication.
 
-Remaining work: Buffer copy/view/method syntax, first-class references/native
+Successor: [owned copy](value-buffer-copy.md) now connects `bytes::copy` through
+the same private source/owner rules. Its evidence is recorded separately.
+
+Remaining work: Buffer view/method syntax and copy-from-view, first-class references/native
 views/slices, public AllocError and intentional public source/CLI/capability
 admission, text/I/O and broader host/runtime composition. Actual allocator/OOM
 failure injection, full language/public CLI/native Fuel matrices, Linux, general
