@@ -18,7 +18,7 @@ import buffer_replacement as replacement;
 pub struct Row { usize serial; usize binding; usize slot; usize generation; }
 pub struct State {
     Row[16] rows; owners::Table table; growth::Ledger ledger;
-    close::Plan closing; usize next; bool closed;
+    close::Plan closing; usize next; usize external; bool closed;
 }
 pub enum Error { Fuel; State; Binding; Serial; Owners; Quota; Allocation; Bounds; }
 pub struct Snapshot { usize count; usize used; usize peak; usize next; bool closed; }
@@ -30,6 +30,7 @@ pub fn usize move_cost(){return 1024;}
 pub fn usize drop_cost(){return 1024;}
 pub fn usize len_cost(){return 256;}
 pub fn usize read_cost(){return 257;}
+pub fn usize read_lease_cost(){return 256;}
 pub fn Result<usize,Error> write_cost(usize length){
     if(length>18446744073709551359){return .err(.Bounds);}return .ok(256+length);
 }
@@ -57,7 +58,7 @@ pub fn Result<State,Error> open(ref mut vec::Vec<bytes::Buffer> roots,
     if(!vec::reserve<bytes::Buffer>(roots,16).is_ok ||
         !vec::reserve<bytes::Buffer>(scratch,16).is_ok){return .err(.Allocation);}
     return .ok(State{.rows=[blank();16],
-        .table=owners::empty(),.ledger=ledger,.closing=close::empty(),.next=1,.closed=false});
+        .table=owners::empty(),.ledger=ledger,.closing=close::empty(),.next=1,.external=0,.closed=false});
 }
 pub fn Snapshot snapshot(ref State s,ref vec::Vec<bytes::Buffer> roots){return Snapshot{.count=vec::len<bytes::Buffer>(roots),
     .used=s.ledger.used,.peak=s.ledger.peak,.next=s.next,.closed=s.closed};}
@@ -67,8 +68,10 @@ fn Result<usize,Error> ready(ref State s,ref vec::Vec<bytes::Buffer> roots,ref v
         vec::capacity<bytes::Buffer>(roots)<16 || vec::capacity<bytes::Buffer>(scratch)<16 ||
         s.closing.active || !growth::settled(ref s.ledger)){return .err(.State);}
     let usize accounted=switch(owners::accounted(ref s.table)){case .ok(v):{v}case .err(_):{return .err(.State);}};
-    if(accounted>18446744073709551615-metadata_charge() ||
-        s.ledger.used!=accounted+metadata_charge()){return .err(.State);}
+    if(s.external%64!=0 || s.external>18446744073709551615-metadata_charge()){return .err(.State);}
+    let usize metadata=metadata_charge()+s.external;
+    if(accounted>18446744073709551615-metadata ||
+        s.ledger.used!=metadata+accounted){return .err(.State);}
     var usize occupied=0;var usize i=0;let usize one=1;
     while(i<16){let Row row=s.rows[i];
         if(i<count){
@@ -82,6 +85,30 @@ fn Result<usize,Error> ready(ref State s,ref vec::Vec<bytes::Buffer> roots,ref v
     }
     i=0;while(i<16){if(s.table.slots[i].live!=((occupied&(one<<i))!=0)){return .err(.State);}i+=1;}
     return .ok(count);
+}
+// External native registry metadata shares quotas but cannot refund root charges.
+// Stage all accounting before publishing either the ledger or external balance.
+pub fn Result<usize,Error> admit_metadata(ref mut State s,ref vec::Vec<bytes::Buffer> roots,
+    ref vec::Vec<bytes::Buffer> scratch,usize charge,growth::Limits limits,ref mut usize fuel){
+    let usize paid=pay(read_lease_cost(),fuel)?;let usize count=ready(s,roots,scratch)?;
+    if(charge==0 || charge%64!=0){return .err(.State);}
+    if(charge>18446744073709551615-s.external){return .err(.Bounds);}
+    var growth::Ledger ledger=s.ledger;
+    let usize used=switch(growth::admit_metadata(charge,limits,ref mut ledger)){
+        case .ok(v):{v}case .err(e):{return .err(growth_error(e));}
+    };
+    s.ledger=ledger;s.external+=charge;return .ok(used);
+}
+// Prepaid cleanup needs no guest Fuel; only this store's external balance refunds.
+pub fn Result<usize,Error> release_metadata(ref mut State s,ref vec::Vec<bytes::Buffer> roots,
+    ref vec::Vec<bytes::Buffer> scratch,usize charge){
+    let usize count=ready(s,roots,scratch)?;
+    if(charge==0 || charge%64!=0 || charge>s.external){return .err(.State);}
+    var growth::Ledger ledger=s.ledger;
+    let usize used=switch(growth::release_metadata(charge,ref mut ledger)){
+        case .ok(v):{v}case .err(e):{return .err(growth_error(e));}
+    };
+    s.ledger=ledger;s.external-=charge;return .ok(used);
 }
 fn bool available(ref State s,ref vec::Vec<bytes::Buffer> roots,usize binding){
     if(binding>=512){return false;}var usize i=0;while(i<vec::len<bytes::Buffer>(roots)){
@@ -111,6 +138,26 @@ fn Result<usize,Error> resolve_mode(ref State s,ref vec::Vec<bytes::Buffer> root
 fn Result<usize,Error> resolve(ref State s,ref vec::Vec<bytes::Buffer> roots,
     ref vec::Vec<bytes::Buffer> scratch,usize serial,usize binding){
     return resolve_mode(s,roots,scratch,serial,binding,true);
+}
+// Authenticate the exact live root and backing before admitting a native lease.
+// The returned descriptor token never exposes a Buffer or borrowed native view.
+pub fn Result<owners::Token,Error> begin_read(ref mut State s,ref vec::Vec<bytes::Buffer> roots,
+    ref vec::Vec<bytes::Buffer> scratch,usize serial,usize binding,ref mut usize fuel){
+    let usize paid=pay(read_lease_cost(),fuel)?;
+    let usize i=resolve_mode(s,roots,scratch,serial,binding,false)?;
+    let owners::Token token=owners::Token{.slot=s.rows[i].slot,.generation=s.rows[i].generation};
+    let growth::Ledger ledger=s.ledger;
+    return switch(owners::begin_read(ref mut s.table,token,vec::at<bytes::Buffer>(roots,i),ref ledger)){
+        case .ok(v):{.ok(v)}case .err(_):{.err(.State)}
+    };
+}
+pub fn Result<usize,Error> end_read(ref mut State s,ref vec::Vec<bytes::Buffer> roots,
+    ref vec::Vec<bytes::Buffer> scratch,usize serial,usize binding,owners::Token token){
+    let usize i=resolve_mode(s,roots,scratch,serial,binding,false)?;
+    if(token.slot!=s.rows[i].slot || token.generation!=s.rows[i].generation){return .err(.State);}
+    return switch(owners::end_read(ref mut s.table,token)){
+        case .ok(v):{.ok(v)}case .err(_):{.err(.State)}
+    };
 }
 // Metadata access remains store-local; no native root/view escapes this owner.
 pub fn Result<owners::Owner,Error> describe(ref State s,ref vec::Vec<bytes::Buffer> roots,ref vec::Vec<bytes::Buffer> scratch,usize serial,usize binding){
@@ -386,6 +433,7 @@ pub fn Result<usize,Error> drop(ref mut State s,ref mut vec::Vec<bytes::Buffer> 
 // Setup paid this bounded work; an exhausted guest Fuel cannot prevent cleanup.
 // Native vector resource cleanup also frees roots if the coordinator exits early.
 pub fn Result<usize,Error> drain(ref mut State s,ref mut vec::Vec<bytes::Buffer> roots,ref mut vec::Vec<bytes::Buffer> scratch){
+    if(s.external!=0){return .err(.State);}
     if(s.closed){return .ok(0);}let usize count=ready(s,roots,scratch)?;var usize remaining=count;
     while(remaining>0){remaining-=1;let usize used=destroy(s,roots,scratch,remaining)?;}
     let usize released=switch(growth::release_metadata(metadata_charge(),ref mut s.ledger)){
