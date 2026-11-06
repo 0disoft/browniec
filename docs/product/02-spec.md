@@ -4,13 +4,21 @@
 - Implementation status: Reconciled 2026-11-06; bounded M1 and public M2 aggregate/slice/literal/shared-byte-result subsets; full profile incomplete
 - Source profile name: brownie.safe/0.3
 
+- L04 copy IR: [independent strategy and lifetime composition](../engineering/aggregate-copy-ir.md)
+  now derives all five existing array/record copy forms and by-value CALL argument
+  strategies from immutable operands. Canonical CFG/owner/loan proof, ordinary,
+  image and returned-reference admission consume the same checks. Recursive equal
+  static IDs still copy into distinct activations; records always stage complete
+  canonical snapshots. Aggregate selected places and resource/tag move rules remain open.
+
 - L04 native copy prerequisite: [checked byte windows](../engineering/aggregate-copy-windows.md)
   now guard existing scalar-array/plain-record copies and CALL transactions.
   Authenticated array self copies skip redundant bytes after canonical bool and
   loan checks; records retain snapshots and padding normalization. A reproduced
   optimized flat Shape preparation failure is repaired. Both Windows profiles
   pass 22 focused native groups and20 CLI cases with unchanged prices/limits.
-  Independent general IR copy/lifetime proof and resource/tag move rules remain open.
+  The [IR successor](../engineering/aggregate-copy-ir.md) now composes those strategies
+  with canonical lifetime proof; aggregate selected places and resource/tag move rules remain open.
 
 - Public aggregate Fuel: [the shared schedule](../engineering/public-fuel-limits.md#shared-aggregate-prices-and-current-public-routes-2026-11-06)
   owns existing array/record/list prices. Layout admission and both drivers keep

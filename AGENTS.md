@@ -1,3 +1,22 @@
+- Independent aggregate copy IR now derives Direct, authenticated-identity
+  candidate or complete Snapshot strategies for all five existing array/record
+  copy operations and by-value CALL arguments. Canonical CFG owner/loan lifetimes
+  and ordinary/image/returned-reference admission consume the same proof; native
+  storage still validates actual tokens/windows before publication. Recursive
+  equal static IDs retain fresh activation copies. See the
+  [contract](docs/engineering/aggregate-copy-ir.md).
+  Development/release each passed 30 native groups and 28 tool-free CLI cases.
+  Development combines eight same-turn new core groups with 22 regression groups;
+  release ran all 30 together. The 183-path manifest matches the checkout, with
+  180 Git-raw matches and three pre-existing test CRLF/LF-only differences recorded.
+  All 173 production modules are LF; discovery has 300 files and 1793 tests.
+  Existing prices/default256/cap16000000 and public metadata remain. See
+  [Windows evidence](docs/evidence/aggregate-copy-ir-windows-20261106.json).
+  Generic aggregate selected places and resource/tag move rules remain next,
+  alongside full L04/C05/Engine/Instance/host/isolation/delivery. Full language and
+  native Fuel matrices, LF mirrors, Linux, OOM/general stack/performance and
+  clean-machine delivery are outside this selection. Local implementation a31aeb8.
+
 - Native aggregate byte-window proof now guards fresh array/record copies,
   homogeneous/mixed argument transactions and existing-owner assignment. Bounds
   use checked subtraction; direct copying needs disjoint windows, array self

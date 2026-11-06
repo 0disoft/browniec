@@ -2,6 +2,12 @@
 
 ## Current implementation (2026-11-06)
 
+[Independent aggregate copy IR proof](docs/engineering/aggregate-copy-ir.md) now
+covers existing array/record/subrecord copying and by-value CALLs through canonical
+ownership/loan CFG and ordinary/image/returned-reference admission. Recursive
+activations remain distinct; native storage retains its dynamic window/token checks.
+Generic aggregate selected places and resource/tag move rules remain open.
+
 [Native retained module programs](docs/engineering/module-program.md) now execute
 explicitly selected public i32 entries with scoped calls/nominal records and
 original source diagnostics. The public CLI supports the existing single-source

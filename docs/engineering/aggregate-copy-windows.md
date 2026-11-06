@@ -92,3 +92,9 @@ cases**, on184 inputs matching checkout and implementation Git raw bytes. All
 linker or stack overrides, historical result reuse or full-suite claims were used.
 See [focused Windows evidence](../evidence/aggregate-copy-windows-20261106.json).
 The broader frontier and skipped scopes above remain unverified.
+
+The [IR successor](aggregate-copy-ir.md) now independently derives the existing
+fixed-array/plain-record and by-value CALL strategies and composes them with
+canonical owner/loan CFG and every current executable admission route. Its
+focused evidence supersedes the current-domain IR frontier above; generic
+aggregate selected places and resource/tag move rules remain open.
