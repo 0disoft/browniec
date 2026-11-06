@@ -191,6 +191,86 @@ fn Result<codec::Active,Error> inspected(ref layouts::Plan plan,ref State state,
     if(active.present && !owners::describe(root_state,roots,root_scratch,active.serial,src.binding).is_ok){return .err(.Owner);}
     return .ok(active);
 }
+// Instruction-local Buffer access authenticates exact declared type, native
+// activation, canonical serial bytes and the store-local root binding. No view
+// or mutable root escapes. Mutation keeps the slot word and init order unchanged.
+struct BufferKey { usize serial; usize binding; }
+fn Result<BufferKey,Error> buffer_key(ref layouts::Plan plan,ref State state,
+    ref vec::Vec<bytes::Buffer> frames,Address source,ref owners::State root_state,
+    ref vec::Vec<bytes::Buffer> roots,ref vec::Vec<bytes::Buffer> root_scratch){
+    let Slot src=address(plan,state,frames,source,true)?;
+    let properties::Node n=switch(codec::node(layouts::layout(plan),src.type_id)){
+        case .ok(v):{v}case .err(_):{return .err(.Type);}
+    };
+    if(n.kind!=4){return .err(.Type);}
+    let codec::Active active=inspected(plan,state,frames,source,src,root_state,roots,root_scratch)?;
+    if(!active.present){return .err(.Owner);}
+    return .ok(BufferKey{.serial=active.serial,.binding=src.binding});
+}
+pub fn Result<usize,Error> buffer_len(ref layouts::Plan plan,ref State state,
+    ref vec::Vec<bytes::Buffer> frames,Address source,ref owners::State root_state,
+    ref vec::Vec<bytes::Buffer> roots,ref vec::Vec<bytes::Buffer> root_scratch,ref mut usize fuel){
+    let usize spent=paid(operation(8)?,fuel)?;
+    let BufferKey key=buffer_key(plan,state,frames,source,root_state,roots,root_scratch)?;
+    return switch(owners::len(root_state,roots,root_scratch,key.serial,key.binding,fuel)){
+        case .ok(v):{.ok(v)}case .err(e):{.err(owned(e))}
+    };
+}
+pub fn Result<u8,Error> buffer_read(ref layouts::Plan plan,ref State state,
+    ref vec::Vec<bytes::Buffer> frames,Address source,usize index,ref owners::State root_state,
+    ref vec::Vec<bytes::Buffer> roots,ref vec::Vec<bytes::Buffer> root_scratch,ref mut usize fuel){
+    let usize spent=paid(operation(8)?,fuel)?;
+    let BufferKey key=buffer_key(plan,state,frames,source,root_state,roots,root_scratch)?;
+    return switch(owners::read(root_state,roots,root_scratch,key.serial,key.binding,index,fuel)){
+        case .ok(v):{.ok(v)}case .err(e):{.err(owned(e))}
+    };
+}
+pub fn Result<usize,Error> buffer_write(ref layouts::Plan plan,ref State state,
+    ref vec::Vec<bytes::Buffer> frames,Address source,usize index,u8 value,ref owners::State root_state,
+    ref mut vec::Vec<bytes::Buffer> roots,ref mut vec::Vec<bytes::Buffer> root_scratch,
+    growth::Limits limits,ref mut usize fuel){
+    let usize spent=paid(operation(8)?,fuel)?;
+    let BufferKey key=buffer_key(plan,state,frames,source,root_state,roots,root_scratch)?;
+    let growth::Limits remaining=switch(meter::remaining(state.used,limits)){
+        case .ok(v):{v}case .err(e):{return .err(metered(e));}
+    };
+    let u8[1] input=[value];
+    return switch(owners::write(root_state,roots,root_scratch,key.serial,key.binding,index,ref input,remaining,fuel)){
+        case .ok(v):{.ok(v)}case .err(e):{.err(owned(e))}
+    };
+}
+pub fn Result<usize,Error> buffer_append(ref layouts::Plan plan,ref State state,
+    ref vec::Vec<bytes::Buffer> frames,Address source,ref u8[] input,ref mut owners::State root_state,
+    ref mut vec::Vec<bytes::Buffer> roots,ref mut vec::Vec<bytes::Buffer> root_scratch,
+    growth::Limits limits,ref mut usize fuel){
+    let usize spent=paid(operation(8)?,fuel)?;
+    let BufferKey key=buffer_key(plan,state,frames,source,root_state,roots,root_scratch)?;
+    let growth::Limits remaining=switch(meter::remaining(state.used,limits)){
+        case .ok(v):{v}case .err(e):{return .err(metered(e));}
+    };
+    return switch(owners::append(root_state,roots,root_scratch,key.serial,key.binding,input,remaining,fuel)){
+        case .ok(v):{.ok(v)}case .err(e):{.err(owned(e))}
+    };
+}
+pub fn Result<usize,Error> buffer_push(ref layouts::Plan plan,ref State state,
+    ref vec::Vec<bytes::Buffer> frames,Address source,u8 value,ref mut owners::State root_state,
+    ref mut vec::Vec<bytes::Buffer> roots,ref mut vec::Vec<bytes::Buffer> root_scratch,
+    growth::Limits limits,ref mut usize fuel){
+    let u8[1] input=[value];return buffer_append(plan,state,frames,source,ref input,root_state,roots,root_scratch,limits,fuel);
+}
+pub fn Result<usize,Error> buffer_reserve(ref layouts::Plan plan,ref State state,
+    ref vec::Vec<bytes::Buffer> frames,Address source,usize required,ref mut owners::State root_state,
+    ref mut vec::Vec<bytes::Buffer> roots,ref mut vec::Vec<bytes::Buffer> root_scratch,
+    growth::Limits limits,ref mut usize fuel){
+    let usize spent=paid(operation(8)?,fuel)?;
+    let BufferKey key=buffer_key(plan,state,frames,source,root_state,roots,root_scratch)?;
+    let growth::Limits remaining=switch(meter::remaining(state.used,limits)){
+        case .ok(v):{v}case .err(e):{return .err(metered(e));}
+    };
+    return switch(owners::reserve(root_state,roots,root_scratch,key.serial,key.binding,required,remaining,fuel)){
+        case .ok(v):{.ok(v)}case .err(e):{.err(owned(e))}
+    };
+}
 fn Result<usize,Error> scratch_ready(ref layouts::Plan plan,ref vec::Vec<bytes::Buffer> scratch){
     if(vec::len<bytes::Buffer>(scratch)!=1){return .err(.State);}
     let ref bytes::Buffer b=vec::at<bytes::Buffer>(scratch,0);let usize width=layouts::largest(plan);
