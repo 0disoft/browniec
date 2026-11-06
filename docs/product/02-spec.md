@@ -47,7 +47,11 @@
   LOAD/operation/STORE verification without a new native vector or pending ID.
   Compounds work in value arms and pure for clauses; plain scalar assignment IR
   and prices remain. Version metadata adds scalar_local_compound_assignment.
-  Grouped lvalues/borrows, generic aggregate overlap and complete L04 remain open.
+  A [grouped-location syntax prerequisite](../engineering/grouped-place-syntax.md)
+  now retains exact original spans and index/operator lexer states through a
+  bounded read-only plan. It is not consumed by public typed lowering yet.
+  Grouped assignment integration, grouped borrows, generic aggregate overlap
+  and complete L04 remain open.
 
 ## Product boundary
 

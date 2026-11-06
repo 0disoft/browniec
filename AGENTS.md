@@ -1,3 +1,19 @@
+- Private grouped-assignment syntax plans now preserve root/field spans,
+  index operand lexer states and the pending operator without rewriting source
+  or evaluating expressions. See the [contract](docs/engineering/grouped-place-syntax.md).
+  Development/release each passed six native groups on 176 Git-raw/checkout-
+  matching inputs, 171 LF modules, 296-file discovery and both locked LF
+  mirrors. See [Windows evidence](docs/evidence/grouped-place-syntax-windows-20261106.json).
+  Exact grouping32/33, selectors16/17, index-stack32/33, scoped EOF, token/native
+  state bounds, literals/comments and original diagnostic offsets pass. The
+  4097-byte fixture uses Buffer instead of an unsupported fixed array.
+  This syntax-only prerequisite is not consumed by public lowering yet; no
+  capability/profile/operation-price/default256/cap16000000 change. Public
+  grouped assignment, grouped borrows, overlap and full L04/C05/Instance/host/
+  delivery remain open. Public CLI/full language/Fuel, Linux, OOM/general stack/
+  performance/isolation/delivery were not rerun. Local only; earlier checkpoints
+  retain their scopes.
+
 - Scalar-local source assignment now captures stable frame slots and old LOAD
   values before ten checked integer compounds, including value arms and pure
   for headers. Existing LOAD/operation/STORE proof needs no new opcode, place
