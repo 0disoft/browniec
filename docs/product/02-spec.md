@@ -1,3 +1,10 @@
+- Private [Buffer kernel operations](../engineering/value-buffer.md), 2026-11-07,
+  now authenticate length/read/write, append/push and reserve through actual typed
+  roots/frame addresses. Read leases permit inspection; mutations require
+  writable ownership. Source methods/borrows/views, independent Buffer instruction
+  proof/dispatch and allocator-error Results remain open. Both Windows profiles passed ten native groups on `a0cde3c`;
+  see [evidence](../evidence/value-buffer-windows-20261107.json). Existing public gates/opcode prices/Fuel defaults stay unchanged.
+
 - Private typed source, 2026-11-07: [lexical loops](../engineering/value-loops.md)
   now compose while/for/break/continue with Buffer/nested-tag values, owner cleanup,
   [conditional values](../engineering/value-joins.md) and cyclic

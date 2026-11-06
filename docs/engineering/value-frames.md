@@ -6,8 +6,7 @@ The [propagation successor](value-propagation.md) now connects wide/resource `?`
 and early cleanup. [Private must-use](value-must-use.md) now tracks Result
 obligations. [Typed joins](value-joins.md) now connect scalar/Buffer/nested-tag
 if/switch values. [Private loops](value-loops.md) now connect typed owner cleanup
-and cyclic Result obligations; general public
-integration remain separate work.
+and cyclic Result obligations; general public integration remains separate work.
 
 `value_frames` connects the [retained canonical layout](value-codec.md) to actual
 native per-activation byte storage and the [owning Buffer root store](value-roots.md).
@@ -16,8 +15,14 @@ now binds its immutable layout to a retained `value_program::Program` after full
 independent typed-IR proof, then dispatches operations 88..98 through `vm::run_values`.
 The [source foundation](value-source.md) now supplies typed signature and lexical
 ownership preparation. The [private body bridge](value-body.md) now connects empty Buffer/nested-wrapper
-construction, immutable locals and mixed CALL/RETURN. Complete typed-source
-expressions and Engine handles remain separate work.
+construction, immutable locals and mixed CALL/RETURN. General aggregate/reference/
+module composition and Engine handles remain separate work.
+
+The [native value-buffer kernel](value-buffer.md) extends the frame/root bridge
+with byte operations. Native length/read permit shared read leases; mutations,
+including no-ops, require writable ownership. Successful length/capacity changes
+refresh the root generation while preserving serial, binding and frame word;
+content-only writes preserve generation. A source Buffer API remains separate work.
 
 ## Retained layout and activation identity
 
@@ -125,9 +130,8 @@ implemented in source by the [execution successor](value-execution.md). The
 COPY/MOVE/DROP metadata. The [private body bridge](value-body.md) now connects
 empty Buffer/nested-wrapper construction, immutable locals and mixed CALL/RETURN.
 The [control successor](value-control.md) now supplies mutable assignment and
-statement joins. Typed value-expression joins, loops, propagation and public
-integration remain next. General
-reference/Buffer joins, must-use, full L04/L05/D01-D04 and broader language,
+statement joins. Source Buffer byte operations and general aggregate/reference/
+module/public composition remain next. Full L04/L05/D01-D04 and broader language,
 Engine/Instance/host/isolation/platform/delivery work remain open. Full CLI/
 language/native Fuel matrices, Linux, OOM injection, general stack/performance/RAM
 and clean-machine delivery remain separate validation work. No push, release or

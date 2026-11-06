@@ -13,6 +13,13 @@ capability. The coordinator owns the two `Vec<Buffer>` instances and their match
 edit their contents/metadata independently. The copyable State and snapshots do
 not confer authority. Existing guest entry points do not admit this domain.
 
+The [native value-buffer kernel](value-buffer.md) adds length/read, initialized-byte
+write, reserve and append over these roots. Length/read allow legitimate shared
+read leases; every mutation, including no-ops, requires writable ownership.
+Successful length/capacity changes refresh the owner and root-row generation while
+preserving serial and logical binding; content-only writes preserve generation.
+These native coordinator operations do not yet expose a source Buffer API.
+
 The pinned compiler rejects mutable field projection from a resource, so an
 opaque resource containing both vectors cannot currently implement this adapter.
 The actual roots remain native resources in named coordinator locals. No raw
@@ -59,9 +66,9 @@ not `sizeof`, allocator overhead or process RAM measurement. Whole Engine/shared
 accounting is still pending.
 
 Creation prepays `2048 + 4*N`, checked before multiplication/addition. MOVE and
-DROP each prepay 1024. Copy-out prepays `256 + N`. Insufficient Fuel leaves Fuel
-and all backing unchanged; an admitted invalid operation spends its template
-without changing live ownership. The handoff's existing 128-unit template is
+DROP each prepay 1024. Copy-out prepays `256 + N`. For these prepaid templates,
+insufficient Fuel leaves Fuel and all backing unchanged; an admitted invalid
+operation spends its template without changing live ownership. The handoff's existing 128-unit template is
 included in creation/MOVE, not charged twice. Drain needs no additional guest
 Fuel, and native vector destruction frees retained roots on an early coordinator
 exit even without an explicit drain. Explicit drain also settles the local
@@ -82,10 +89,13 @@ and maximum descriptor generations. The runner records exact identities, input
 hashes, pinned compiler/profile and captured streams without result reuse or
 native compiler overrides.
 
-Next connect initialized/Dead value slots and frame activations to retained
-canonical bytes and these root bindings, then metered tag/CALL/RETURN execution
-and compiler source bindings. Full L04/L05/D01-D04, broader language/runtime/
-Engine/Instance/host/isolation/platform/delivery and broad validation remain open.
+The [frame successor](value-frames.md) now connects initialized/Dead slots and
+activations to these roots; [private execution](value-execution.md) supplies
+metered tag/CALL/RETURN. The [source successors](value-source.md) also cover typed
+body/control lowering, propagation, conditional values and loops. Source Buffer
+byte operations and general aggregate/reference/module/public composition remain
+next. Full L04/L05/D01-D04, broader language/runtime/Engine/Instance/host/isolation/
+platform/delivery and broad validation remain open.
 This root-storage slice alone does not execute typed value IR or expose Buffer
 guest source. Local commits only; no push, release or deployment.
 

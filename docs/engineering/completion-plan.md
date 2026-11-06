@@ -11,7 +11,18 @@ regressions, then commit; record broader checks only when actually run. Do not
 enable public syntax, delivery flags or ABI availability ahead of implemented
 admission, execution and cleanup. Push/release/deployment are separate actions.
 
-Latest private loop checkpoint (2026-11-07): Private [typed lexical loops](value-loops.md) now connect while,
+Latest private Buffer checkpoint (2026-11-07): [native kernel operations](value-buffer.md)
+now authenticate length/read/write, append/push and reserve through actual typed
+roots/frame addresses. Read leases permit inspection; mutation requires writable
+ownership. Rejected growth retains old data/accounting; successful structural
+changes retain serial/binding and advance generation. Both Windows profiles passed ten native groups on `a0cde3c`.
+All 210 inputs match checkout/Git canonical bytes (209 raw); all 201 production modules are LF.
+See [evidence](../evidence/value-buffer-windows-20261107.json). Next connect independent Buffer instruction proof/dispatch, source
+borrowing and allocator-error Results, views and input/output composition. Public
+gates, existing opcode prices and Fuel defaults remain. D02/D04 and full-profile
+implementation/validation remain open.
+
+Predecessor private loop checkpoint (2026-11-07): Private [typed lexical loops](value-loops.md) now connect while,
 classic for and nearest break/continue to real owner cleanup and cyclic Result
 obligations. Backedges preserve header initialization; exit trampolines normalize
 break/zero-trip liveness. Escaping branch exits survive scoped pool compaction.
@@ -276,8 +287,11 @@ Fuel default 256 / ceiling 16000000 and wider capability gates remain unchanged.
    if/switch values with publication before arm cleanup. The
    [private loop successor](value-loops.md) connects while/for/break/continue,
    exact header initialization, escaping exit retention and cyclic Result checking.
-   Next useful Buffer operations before aggregate/
-   reference/module composition and public admission. Public L06 composition and
+   The [native Buffer kernel](value-buffer.md) now provides authenticated byte
+   operations through real roots/frames. Next connect independent instruction
+   proof/dispatch, source borrowing and allocator-error Results, views and I/O,
+   before general aggregate/reference/module composition and public admission.
+   Public L06 composition and
    complete validation remain, so the public `must_use_result` flag stays false.
    These increments do not close L04/L05/L06/D01-D04; wider public gates and
    ordinary prices/default/cap remain unchanged.

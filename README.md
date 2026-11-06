@@ -2,6 +2,17 @@
 
 ## Current implementation (2026-11-07)
 
+Private [Buffer kernel operations](docs/engineering/value-buffer.md) now connect
+authenticated length/read/write, append/push and reserve to actual typed roots
+and frame addresses. Shared leases allow reads; mutation requires writable
+ownership. Growth preserves old data/accounting on rejection and refreshes
+structural generations while retaining serials/bindings. Both Windows profiles passed ten native groups on `a0cde3c`.
+All 210 inputs match checkout/Git canonical bytes (209 raw); all 201 production modules are LF.
+See [evidence](docs/evidence/value-buffer-windows-20261107.json). Next connect independent Buffer instruction proof/dispatch, source
+borrows and allocator-error Results, views and input/output composition. Public
+gates and existing opcode prices/Fuel defaults stay unchanged. D02/D04 and the
+full objective remain open. Earlier checkpoints below retain their own scope.
+
 Private [typed lexical loops](docs/engineering/value-loops.md) now connect while,
 classic for and nearest break/continue to real owner cleanup and cyclic Result
 obligations. Backedges preserve header initialization; exit trampolines normalize

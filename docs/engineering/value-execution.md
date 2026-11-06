@@ -127,6 +127,11 @@ parsing and lexical COPY/MOVE/DROP preparation. Executable Buffer/wider-wrapper
 body lowering now has a [private successor](value-body.md) for empty Buffer/nested
 wrapper constructors, immutable locals and mixed CALL/RETURN. The
 [control successor](value-control.md) adds mutable assignment and statement joins.
-Typed value-expression joins, loops, wider operations and public promotion remain next. Full L04/L05/D01-D04, Engine/Instance/host/isolation/platform/delivery,
+The [predicate](value-predicates.md), [propagation](value-propagation.md),
+[must-use](value-must-use.md), [value-join](value-joins.md) and [loop](value-loops.md)
+successors now supply those private typed paths. The [native Buffer kernel](value-buffer.md)
+adds authenticated byte operations to actual roots/frames; independent Buffer
+instruction proof/dispatch, source borrows/views and public promotion remain next.
+Full L04/L05/D01-D04, Engine/Instance/host/isolation/platform/delivery,
 the complete language/native Fuel matrices, Linux, LF runtime mirrors, OOM,
 general stack containment and performance remain separate work.

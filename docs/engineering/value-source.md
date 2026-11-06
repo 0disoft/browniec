@@ -6,18 +6,23 @@ The [propagation successor](value-propagation.md) now connects wide/resource `?`
 and early cleanup. [Private must-use](value-must-use.md) now tracks Result
 obligations. [Typed joins](value-joins.md) now connect scalar/Buffer/nested-tag
 if/switch values. [Private loops](value-loops.md) now connect typed owner cleanup
-and cyclic Result obligations; general public
-integration remain separate work.
+and cyclic Result obligations; general public integration remains separate work.
 
 This increment prepares source types, signatures and lexical ownership for the
 [typed value dialect](value-ir.md). At this checkpoint the typed foundations were
 compiler preparation only. The [body successor](value-body.md) now compiles empty
 Buffer/nested-wrapper construction, immutable locals and mixed CALL/RETURN to
-private native execution; broader expressions and public integration remain. The public compiler
+private native execution. General aggregate/reference/module composition and public
+integration remain in the [completion plan](completion-plan.md). The public compiler
 also adds Result inspection and explicit discard through its existing scalar/tagged
-path. Full
-Buffer/wide-tagged body lowering remains implementation work, alongside the
-remaining [completion plan](completion-plan.md).
+path.
+
+The [native value-buffer kernel](value-buffer.md) supplies byte operations to the
+trusted frame/root coordinator, with shared-lease length/read and writable-only
+mutations, including no-ops. Successful length/capacity changes refresh the root
+generation while preserving serial and logical binding; content-only writes keep
+the generation. This kernel does not yet provide source Buffer methods or views;
+source borrow/lifetime proof and lowering remain separate work.
 
 ## Canonical source types and signatures
 
@@ -92,9 +97,10 @@ nonlocal cleanup happen once through the ordinary expression path. Ignored direc
 nonvoid `f();` calls remain errors. Void is not a discardable value. Classic-for
 clauses retain their existing pure-scalar restriction.
 
-Version metadata advertises `result_is_ok` and `explicit_discard`. This does not
-complete `must_use_result`: unused Result-binding diagnostics and wider/
-resource-bearing predicates, discard, switch and propagation remain open.
+Version metadata advertises `result_is_ok` and `explicit_discard`. This public
+checkpoint does not complete `must_use_result`. The private predicate, must-use,
+propagation and conditional-value successors linked above now supply their typed
+paths; public integration remains separate work.
 Public Buffer/wide-wrapper execution and its capabilities remain unavailable.
 
 ## Verification
@@ -152,5 +158,6 @@ rerun against the final runner inputs.
 
 Full language/native Fuel matrices, Linux, LF runtime mirrors, OOM/general stack
 containment, performance and clean-machine delivery remain separate validation.
-The complete objective also still requires Buffer body integration, broader
-L04/L05/L06/D01-D04, Engine/Instance, host exchange, isolation and delivery.
+The complete objective also still requires source Buffer byte operations, general
+aggregate/reference/module/public composition, broader L04/L05/L06/D01-D04,
+Engine/Instance, host exchange, isolation and delivery.
