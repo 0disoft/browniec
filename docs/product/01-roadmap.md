@@ -16,7 +16,8 @@
   semantics, and [Validation](../../VALIDATION.md) owns recorded execution claims.
 - L04 starts with [native owned-array selected locations](../engineering/array-selected-place.md).
   [Independent place IR analysis](../engineering/array-place-ir.md) now checks
-  identity and lifetimes; VM/Fuel and source compound assignment remain open.
+  identity and lifetimes. [Native metered storage](../engineering/array-place-storage.md)
+  supplies snapshots/dispatch; driver/retained-guard and source integration remain open.
 
 ## Milestone status
 

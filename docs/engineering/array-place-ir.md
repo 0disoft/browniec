@@ -71,6 +71,11 @@ compound operators, exclusive slice/record/scalar-local places and grouped lvalu
 Returned-view dependency guards and recipe scalar-use analysis must recognize the
 new operations before executable retained admission is promoted.
 
+The [metered storage successor](array-place-storage.md) now supplies native
+invocation snapshots, phase/counter dispatch and exact instruction prices.
+Both actual VM drivers and retained guards remain to be connected; the
+executable gate is unchanged at this checkpoint.
+
 Run `python -B tools/verify-static-execution.py --profile development
 --selection array-place-ir`, then repeat for release. It selects the new proof
 suite and the complete existing array-IR and void-execution suites. See

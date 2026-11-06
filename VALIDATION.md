@@ -1,3 +1,13 @@
+- Metered native place storage: development/release each passed 14 native groups
+  (six executor and eight location primitives), with 169 matching input hashes,
+  163 LF production modules and locked LF mirrors. Exact per-instruction Fuel,
+  type/shape/generation validation, descriptor/index rebinding, old scalar
+  preservation, failed-store atomicity, last-frame/slot bounds and reuse pass.
+  Driver/setup and retained guard admission remain gated; no public CLI/full Fuel,
+  Linux/general stack/performance/isolation/delivery rerun. See the
+  [contract](docs/engineering/array-place-storage.md) and
+  [Windows evidence](docs/evidence/array-place-storage-windows-20261106.json).
+
 - Independent owned-array place IR analysis: development/release each passed
   16 native groups (eight new proof, five array-IR, three void execution) on
   169 matching inputs and 162 LF production modules, with locked LF mirrors.

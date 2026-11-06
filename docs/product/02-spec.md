@@ -8,7 +8,9 @@
   capture and revalidate the original scalar target. The
   [independent IR successor](../engineering/array-place-ir.md) now proves
   owned-array place identity, phases and lifetimes during analysis. Runtime
-  admission remains gated; dispatch, Fuel and source compound assignment remain open.
+  admission remains gated. [Metered native snapshots](../engineering/array-place-storage.md)
+  now execute the private instructions; actual VM driver/setup integration,
+  retained guards and source compound assignment remain open.
 
 ## Product boundary
 

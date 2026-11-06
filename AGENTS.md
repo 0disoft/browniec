@@ -1,3 +1,12 @@
+- Metered native place storage now supplies one bounded invocation vector,
+  frame-local phases/counters and preflighted scalar SELECT/READ/STORE/END.
+  See the [contract](docs/engineering/array-place-storage.md). Development/release
+  each passed 14 native groups on 169 matching inputs, 163 LF modules and
+  281-file discovery, with locked LF mirrors; see the
+  [evidence](docs/evidence/array-place-storage-windows-20261106.json).
+  Actual VM driver/setup and retained-guard integration remain gated. No source
+  feature or old price/capacity change; full CLI/Fuel/Linux/delivery not rerun.
+
 - Owned-array place IR analysis now combines canonical scalar/owner/loan checks
   with independent selecting-PC, phase, join/backedge and root/return lifetime
   proof. See the [contract](docs/engineering/array-place-ir.md). Executable

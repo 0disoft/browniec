@@ -53,3 +53,14 @@ pub fn usize reference_result_close(){return 128;}
 // Returned-selector lookup/publication work is additive to existing prices.
 pub fn usize reference_result_lookup(){return 64;}
 pub fn usize reference_return(){return 512;}
+
+// Selected-place metadata is invocation-local. Width is independently bounded
+// to 0..16; 32 frames have one counter plus nine 64-bit words per location.
+// Prepay byte initialization plus publication/destruction visits; old programs pay 0.
+pub fn usize place_prepare(usize width){return if(width==0){0}else{257+10*32*(9*width+1)};}
+// Ordinary prices include dispatch. Retained execution adds its existing unit.
+// SELECT/READ/STORE cover 32 owner visits plus snapshot/slot metadata; the codec
+// reads stride bytes or stages+writes twice that width. END clears one slot.
+pub fn usize place_instruction(u8 op,usize stride){
+    if(op==86){return 17;}if(op==84){return 65+stride;}if(op==85){return 65+2*stride;}return 65;
+}
