@@ -1,3 +1,20 @@
+- Private metered owned-record selected-place storage now has a distinct
+  two-word prefix, mixed frame counters and atomic SELECT/READ/STORE/END
+  preflight. See the [contract](docs/engineering/record-place-vm.md).
+  Development/release each passed 34 native groups (nine new record adapter,
+  twenty-five existing array/slice/proof/CALL groups) and 57 tool-free public Fuel
+  CLI cases on 189 Git-raw/checkout-matching inputs, 170 LF
+  modules, 292-file discovery and both locked LF mirrors. See the
+  [Windows evidence](docs/evidence/record-place-vm-windows-20261106.json).
+  Exact setup is 5077..72277; record SELECT/READ/STORE cost 41025 /
+  41025+stride / 41025+2*stride; mixed END is 22. One Vec uses at most
+  7202 words/57616 amd64 bytes. Existing prices/default256/cap16000000 and
+  source capabilities remain. Executable kind2 remains gated; both drivers,
+  image/returned-owner/recipe guards, record source and other places/overlap,
+  full L04/C05/Instance/host/delivery remain open. Full language/original full
+  native Fuel, Linux, OOM/general stack/performance/isolation/delivery were
+  not rerun. Local only; earlier checkpoints retain their original scopes.
+
 - Owned-record selected-place IR now has separate complete analysis with exact
   kind/site/scalar-ordinal identity, prepared scalar types, live mutable owners,
   common phases and root/CFG lifetime guards. See the

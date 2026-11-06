@@ -72,8 +72,10 @@ ordinary execution driver reject it before Fuel or backing allocation; an
 analysis result cannot bypass these gates. No source grammar, capability flag,
 existing instruction price, default 256 or ceiling 16000000 changes.
 
-Metered record snapshot storage and both VM drivers, image/returned-owner/recipe
-guards and record source early selection/compounds remain next. Scalar-local
+The [metered native storage successor](record-place-vm.md) now supplies private
+record-capable frames and exact setup/instruction preflight. Both VM drivers,
+image/returned-owner/recipe guards and record source early selection/compounds
+remain next. Scalar-local
 and grouped places, generic aggregate overlap and full L04/C05/Instance/host/
 delivery remain open.
 

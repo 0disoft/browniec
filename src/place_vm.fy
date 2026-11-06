@@ -55,6 +55,15 @@ pub fn Result<Format,errors::Error> format(ref vec::Vec<usize> state,usize offse
         if(count<320 || count>4640 || (count/32-1)%9!=0){return .err(errors::make(5,offset));}
         return .ok(Format{.width=(count/32-1)/9,.row=9,.prefix=0});
     }
+    // Record-capable rows share the fourteen-word mixed layout, but two
+    // authenticated prefix words prevent either legacy vector from aliasing it.
+    if(count%32==2){
+        if(count<482 || count>7202 || ((count-2)/32-1)%14!=0){return .err(errors::make(5,offset));}
+        let usize width=((count-2)/32-1)/14;
+        let ref usize[] words=vec::view_usize(state);
+        if(words[0]!=18432+width || words[1]!=2){return .err(errors::make(5,offset));}
+        return .ok(Format{.width=width,.row=14,.prefix=2});
+    }
     if(count%32!=1 || count<481 || count>7201 || ((count-1)/32-1)%14!=0){return .err(errors::make(5,offset));}
     let usize width=((count-1)/32-1)/14;
     if(vec::view_usize(state)[0]!=14336+width){return .err(errors::make(5,offset));}

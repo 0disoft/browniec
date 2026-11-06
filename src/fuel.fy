@@ -76,3 +76,15 @@ pub fn usize slice_place_instruction(u8 op,usize stride){
     if(op==85){return slice_base(60,stride)+32;}
     return slice_base(57,0)+32;
 }
+
+// Record-capable mixed frames add a second authenticated format word. Existing
+// array/slice rows and prices are unchanged. Width is proved <=16 before use.
+pub fn usize record_place_prepare(usize width){return if(width==0){0}else{257+10*(2+32*(14*width+1))};}
+// Two complete catalog plans, bounded depth-first leaf resolution, owner-ledger
+// authentication and snapshot work fit the existing transaction envelope plus
+// four metadata budgets. Only the selected scalar contributes payload work.
+pub fn usize record_place_instruction(u8 op,usize stride){
+    if(op==86){return 22;}
+    let usize metadata=transaction_base()+4*metadata_visit_budget()+65;
+    return metadata+if(op==84){stride}else if(op==85){2*stride}else{0};
+}
