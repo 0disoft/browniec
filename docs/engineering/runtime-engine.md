@@ -8,6 +8,10 @@ that retained executable with fresh VM state. It does not launch build tools.
 The explicit native module location keeps this private transport outside the
 ordinary CLI, which does not yet link or expose Engine operations.
 
+[Control-storage accounting](runtime-engine-control-memory.md) now preflights
+actual fixed backing and reserves vectors for the admitted counts. Its evidence
+supersedes earlier fixed-64 storage and transport counts.
+
 ## Implemented lifetime
 
 An Engine owns its Program vectors and Instance vector, bound to the actual

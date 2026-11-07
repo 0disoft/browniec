@@ -7,6 +7,7 @@ import source_error as diagnostics;
 import errors as errors;
 import engine_input_tests as input_tests;
 import engine_output_tests as output_tests;
+import engine_control_tests as control_tests;
 unsafe extern C fn void bc_runtime_engine_test_closed_allocations();
 unsafe extern C fn void bc_runtime_engine_test_seed(ptr mut void e,u32 kind);
 unsafe extern C fn void bc_runtime_engine_test_guards(ptr mut void e);
@@ -103,6 +104,7 @@ fn i32 main(){
     unsafe{bc_runtime_engine_test_closed_allocations()};
     input_tests::run();
     output_tests::run();
+    control_tests::run();
     unsafe{bc_runtime_engine_test_closed_allocations()};
     return 0;
 }

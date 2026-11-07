@@ -23,6 +23,7 @@ static void completion_contention(bc_engine *e){
  assert(bc_runtime_engine_call(e,8,0,0)==0);
 }
 static DWORD WINAPI wrong_thread(void *raw){
+ assert(bc_runtime_engine_control_access(raw)==10);
  assert(bc_runtime_engine_call(raw,8,0,0)==10);
  assert(bc_runtime_engine_compile(raw,(void *)(uintptr_t)1,0)==10);
  assert(bc_runtime_engine_compile_input(raw,(void *)(uintptr_t)1,0)==10);
@@ -36,6 +37,7 @@ void bc_runtime_engine_test_guards(void *raw){
  bc_engine *e=raw;HANDLE worker=CreateThread(NULL,0,wrong_thread,raw,0,NULL);assert(worker);
  assert(WaitForSingleObject(worker,10000)==WAIT_OBJECT_0);DWORD code=99;assert(GetExitCodeThread(worker,&code)&&code==0);assert(CloseHandle(worker));
  bc_engine_ticket ticket;assert(admission(e,&ticket)==0&&ticket.epoch!=0);
+ assert(bc_runtime_engine_control_access(raw)==3);
  assert(bc_runtime_engine_call(raw,8,0,0)==3);
  assert(bc_runtime_engine_compile(raw,(void *)(uintptr_t)1,0)==3);
  assert(bc_runtime_engine_compile_input(raw,(void *)(uintptr_t)1,0)==3);
@@ -93,3 +95,23 @@ void bc_runtime_engine_test_input_close(void){
 }
 void bc_runtime_engine_test_input_measure(void){input_handles_measured=1;}
 int main(void){int code=generated_main();if(code!=0||probe_live()!=0)return 99;return 0;}
+
+extern size_t probe_live_bytes(void),probe_peak_bytes(void),probe_attempts(void);
+extern void probe_measure_begin(void);
+static uintptr_t small_heap_bytes=0,maximum_heap_bytes=0,owner_bytes=0;static unsigned control_cases=0;
+void bc_runtime_engine_test_control_begin(void){probe_measure_begin();}
+void bc_runtime_engine_test_control_no_allocations(void){assert(probe_attempts()==0&&probe_live_bytes()==0);}
+void bc_runtime_engine_test_control_storage(const void *raw,uintptr_t expected,uint32_t kind){
+ const bc_engine *e=raw;size_t sizes=e->f_1.f_1+e->f_2.f_1+e->f_3.f_1+e->f_4.f_1+e->f_5.f_1+e->f_6.f_1+e->f_7.f_1;
+ assert(expected==sizeof(*e)+sizes&&probe_live()==7&&probe_live_bytes()==sizes&&probe_peak_bytes()==sizes&&probe_attempts()==7);
+ assert(e->f_1.f_4==sizeof(bc_engine_program)&&e->f_3.f_4==sizeof(bc_engine_instance));
+ assert(e->f_4.f_4==sizeof(bc_engine_bound_input)&&e->f_6.f_4==sizeof(bc_engine_output));
+ if(kind==1){small_heap_bytes=sizes;owner_bytes=sizeof(*e);}if(kind==2)assert(sizes==small_heap_bytes);
+ if(kind==4)maximum_heap_bytes=sizes;control_cases++;
+}
+void bc_runtime_engine_test_control_report(void){
+ assert(control_cases==6&&small_heap_bytes*8==maximum_heap_bytes&&probe_live()==0&&probe_live_bytes()==0);
+ FILE *f=fopen("control-metrics.json","wb");assert(f);
+ assert(fprintf(f,"{\"cases\":6,\"smallHeapBytes\":%llu,\"maximumHeapBytes\":%llu,\"ownerBytes\":%llu}\n",(unsigned long long)small_heap_bytes,(unsigned long long)maximum_heap_bytes,(unsigned long long)owner_bytes)>0);
+ assert(fclose(f)==0);
+}

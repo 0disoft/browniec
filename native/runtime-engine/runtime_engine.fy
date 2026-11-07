@@ -9,6 +9,8 @@ import source_error as diagnostics;
 import errors as errors;
 import fuel as fuel;
 import std::vec as vec;
+import runtime_control_budget as control;
+import runtime_control_layout as control_layout;
 
 // Internal owning lifecycle, not public C handles/bc_step. IDs are scoped to
 // this exact Engine; the outer ABI registry must authenticate their association.
@@ -18,9 +20,9 @@ pub struct Event { u8 kind; i64 value; diagnostics::Error diagnostic; usize rema
 pub struct Snapshot { usize programs; usize instances; usize pins; bool closed; }
 struct Meta {
     Limits limits; usize thread; usize lifetime; usize active; usize admission;
-    usize next; usize result; Error error; Event event; Snapshot snapshot; bool closed;
+    usize next; usize result; Error error; Event event; Snapshot snapshot; bool closed; control::Budget control;
 }
-// Exactly one owning vector has one element; the other is empty. Input code is
+// Exactly one executable vector has one element; the others are empty. Input code is
 // never relabelled as a zero-argument Program or an array/image input lease.
 resource Program {
     usize id; usize pins; bool released; vec::Vec<programs::Program> code;
@@ -44,6 +46,7 @@ pub resource Engine {
 @link_name("bc_runtime_engine_instance_output") unsafe extern C fn u32 instance_output_raw(ptr mut void owner,usize program,ptr mut void input,usize budget,usize limit,u32 allowed);
 @link_name("bc_runtime_engine_take_output") unsafe extern C fn u32 take_output_raw(ptr mut void owner,usize instance,ptr mut void outgoing);
 // Retention markers are used only by the dedicated native transport fixture.
+@link_name("bc_runtime_engine_control_access") unsafe extern C fn u32 control_access_raw(ptr void owner);
 @link_name("bc_runtime_engine_binding") unsafe extern C fn void binding_raw(u32 number);
 fn diagnostics::Error absent(){return diagnostics::absent(errors::make(0,0));}
 fn Error error(u32 status){return Error{.status=status,.diagnostic=absent()};}
@@ -55,16 +58,34 @@ fn Result<usize,Error> result(ref Engine e,u32 status){
     if(status==3 || status==10){return .err(error(status));}
     return .err(if(e.meta.error.status==status){e.meta.error}else{error(status)});
 }
-pub fn Result<Engine,Error> create(Limits limits){
-    if(limits.programs==0 || limits.programs>64 || limits.instances==0 || limits.instances>64 || limits.fuel==0 || limits.fuel>fuel::cli_limit()){return .err(error(1));}
+fn bool valid_limits(Limits limits){
+    return limits.programs>0 && limits.programs<=64 && limits.instances>0 && limits.instances<=64 && limits.fuel>0 && limits.fuel<=fuel::cli_limit();
+}
+pub fn Result<usize,Error> required_control_bytes(Limits limits){
+    if(!valid_limits(limits)){return .err(error(1));}
+    return switch(control_layout::required(limits.programs,limits.instances)){
+        case .ok(bytes):{.ok(bytes)}case .err(_):{.err(error(8))}
+    };
+}
+pub fn Result<control::Observation,Error> control_memory(ref Engine e){
+    let u32 s=unsafe{control_access_raw(e as ptr void)};
+    if(s!=0){return .err(error(s));}return .ok(control::observe(ref e.meta.control));
+}
+pub fn Result<Engine,Error> create(Limits limits){return create_with_control_budget(limits,4194304);}
+pub fn Result<Engine,Error> create_with_control_budget(Limits limits,usize control_limit){
+    if(!valid_limits(limits) || control_limit==0 || control_limit>4194304){return .err(error(1));}
+    let usize required=required_control_bytes(limits)?;
+    let control::Budget storage=switch(control::create(control_limit,required)){
+        case .ok(v):{v}case .err(_):{return .err(error(8));}
+    };
     var vec::Vec<Program> programs=vec::empty<Program>();var vec::Vec<Program> scratch=vec::empty<Program>();
     var vec::Vec<Instance> instances=vec::empty<Instance>();
-    if(!vec::reserve<Program>(ref mut programs,64).is_ok || !vec::reserve<Program>(ref mut scratch,64).is_ok || !vec::reserve<Instance>(ref mut instances,64).is_ok){return .err(error(6));}
+    if(!vec::reserve<Program>(ref mut programs,limits.programs).is_ok || !vec::reserve<Program>(ref mut scratch,limits.programs).is_ok || !vec::reserve<Instance>(ref mut instances,limits.instances).is_ok){return .err(error(6));}
     var vec::Vec<BoundInput> inputs=vec::empty<BoundInput>();var vec::Vec<BoundInput> input_scratch=vec::empty<BoundInput>();
-    if(!vec::reserve<BoundInput>(ref mut inputs,64).is_ok || !vec::reserve<BoundInput>(ref mut input_scratch,64).is_ok){return .err(error(6));}
+    if(!vec::reserve<BoundInput>(ref mut inputs,limits.instances).is_ok || !vec::reserve<BoundInput>(ref mut input_scratch,limits.instances).is_ok){return .err(error(6));}
     var vec::Vec<Output> outputs=vec::empty<Output>();var vec::Vec<Output> output_scratch=vec::empty<Output>();
-    if(!vec::reserve<Output>(ref mut outputs,64).is_ok || !vec::reserve<Output>(ref mut output_scratch,64).is_ok){return .err(error(6));}
-    var Engine e=Engine{.meta=Meta{.limits=limits,.thread=0,.lifetime=0,.active=0,.admission=1,.next=1,.result=0,.error=error(0),.event=pending(),.snapshot=empty_snapshot(),.closed=false},
+    if(!vec::reserve<Output>(ref mut outputs,limits.instances).is_ok || !vec::reserve<Output>(ref mut output_scratch,limits.instances).is_ok){return .err(error(6));}
+    var Engine e=Engine{.meta=Meta{.limits=limits,.thread=0,.lifetime=0,.active=0,.admission=1,.next=1,.result=0,.error=error(0),.event=pending(),.snapshot=empty_snapshot(),.closed=false,.control=storage},
         .programs=programs,.scratch=scratch,.instances=instances,.inputs=inputs,.input_scratch=input_scratch,.outputs=outputs,.output_scratch=output_scratch};
     let u32 status=unsafe {bind_raw(ref mut e as ptr mut void)};
     if(status!=0){return .err(error(status));}return .ok(e);
@@ -442,7 +463,10 @@ fn u32 inspect_inner(ref mut Meta m,ref vec::Vec<Program> p,ref vec::Vec<Instanc
     m.snapshot=Snapshot{.programs=vec::len<Program>(p),.instances=vec::len<Instance>(v),.pins=pins,.closed=m.closed};return success(m,0);
 }
 fn u32 close_inner(ref mut Meta m,ref vec::Vec<Program> p,ref vec::Vec<Instance> v,ref vec::Vec<BoundInput> inputs,ref vec::Vec<Output> outputs){
-    if(vec::len<Program>(p)!=0 || vec::len<Instance>(v)!=0 || vec::len<BoundInput>(inputs)!=0 || vec::len<Output>(outputs)!=0){return failed(m,3);}m.closed=true;return success(m,0);
+    if(vec::len<Program>(p)!=0 || vec::len<Instance>(v)!=0 || vec::len<BoundInput>(inputs)!=0 || vec::len<Output>(outputs)!=0){return failed(m,3);}
+    let usize bytes=control::observe(ref m.control).reserved;
+    assert(control::release(ref mut m.control,bytes).is_ok);assert(control::close(ref mut m.control).is_ok);
+    m.closed=true;return success(m,0);
 }
 fn u32 dispatch_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Vec<Program> scratch,
     ref mut vec::Vec<Instance> v,ref mut vec::Vec<BoundInput> inputs,ref mut vec::Vec<BoundInput> input_scratch,
@@ -475,8 +499,13 @@ fn vec::Vec<BoundInput> reset_input_storage(vec::Vec<BoundInput> v){assert(vec::
 fn vec::Vec<Output> reset_output_storage(vec::Vec<Output> v){assert(vec::len<Output>(ref v)==0);return vec::empty<Output>();}
 // Only the dedicated transport fixture calls this helper-retention root. The
 // marker calls identify typed definitions; they publish nothing or run guests.
+fn u32 control_access_inner(ref Meta m,usize thread,usize lifetime){
+    if(m.thread!=thread || m.lifetime!=lifetime || thread==0 || lifetime==0){return 10;}
+    if(m.active!=0){return 3;}return 0;
+}
 pub fn void retain_native_bindings(){
-    var Meta m=Meta{.limits=Limits{.programs=1,.instances=1,.fuel=256},.thread=0,.lifetime=0,.active=0,.admission=1,.next=1,.result=0,.error=error(0),.event=pending(),.snapshot=empty_snapshot(),.closed=false};
+    let control::Budget storage=switch(control::create(1,0)){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    var Meta m=Meta{.limits=Limits{.programs=1,.instances=1,.fuel=256},.thread=0,.lifetime=0,.active=0,.admission=1,.next=1,.result=0,.error=error(0),.event=pending(),.snapshot=empty_snapshot(),.closed=false,.control=storage};
     var vec::Vec<Program> p=vec::empty<Program>();var vec::Vec<Program> scratch=vec::empty<Program>();
     var vec::Vec<Instance> v=vec::empty<Instance>();var vec::Vec<entries::Entry> input=vec::empty<entries::Entry>();
     var vec::Vec<BoundInput> bound=vec::empty<BoundInput>();var vec::Vec<BoundInput> bound_scratch=vec::empty<BoundInput>();
@@ -511,4 +540,5 @@ pub fn void retain_native_bindings(){
     var vec::Vec<Output> outgoing=vec::empty<Output>();
     unsafe{binding_raw(16)};discard take_output_inner(ref mut m,ref output_instances,ref mut outputs,ref mut output_scratch,0,ref mut outgoing);
     unsafe{binding_raw(17)};let vec::Vec<Output> empty_outputs=reset_output_storage(outputs);
+    unsafe{binding_raw(18)};discard control_access_inner(ref m,1,1);
 }

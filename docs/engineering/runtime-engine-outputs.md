@@ -51,7 +51,9 @@ validation, in-flight cancellation or restricted-worker output delivery.
 ## Reserved storage and native evidence
 
 Engine creation now reserves seven vectors: Programs and scratch, Instances,
-inputs and scratch, outputs and scratch. Each is bounded to 64 entries. Successful
+inputs and scratch, outputs and scratch. The [control successor](runtime-engine-control-memory.md)
+now reserves for the admitted counts using the SDK's 8/16/32/64 growth and checks
+a fixed-control budget before allocation. Each remains bounded to 64 entries. Successful
 empty Engine destruction releases all seven immediately. These are count caps
 and reserved descriptor storage, not complete Engine memory/work accounting.
 The focused creation seam fails all seven allocations and requires zero leaks.

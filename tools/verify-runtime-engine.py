@@ -20,6 +20,7 @@ def closure():
     files = {p.stem: p for p in (ROOT / 'src').glob('*.fy')}
     files.update({p.stem: p for p in (ROOT / 'tools/runtime-engine').glob('*.fy')})
     files['runtime_engine'] = NATIVE / 'runtime_engine.fy'
+    files['control_budget_contracts'] = ROOT / 'tests/m2/runtime_control_budget.fy'
     files['runtime_input_adoption'] = ROOT / 'native/runtime-input-adoption/adoption.fy'
     seen, todo = {}, ['main']
     while todo:
@@ -32,6 +33,16 @@ def closure():
         todo.extend(re.findall(r'^import ([A-Za-z_][A-Za-z0-9_]*)(?: as [A-Za-z_][A-Za-z0-9_]*)?;',
                                path.read_text(encoding='utf-8'), re.M))
     return sorted(seen.values())
+
+
+def source_copy(path):
+    if path == ROOT / 'tests/m2/runtime_control_budget.fy':
+        text = path.read_text(encoding='utf-8').replace('module tests::m2::runtime_control_budget;',
+                                                     'module control_budget_contracts;')
+        text = re.sub(r'@test\s+fn void', 'pub fn void', text)
+        return 'control_budget_contracts.fy', text.encode('utf-8')
+    return ('runtime_input_adoption.fy' if path == ROOT / 'native/runtime-input-adoption/adoption.fy' else path.name,
+            path.read_bytes())
 
 
 def main():
@@ -94,8 +105,8 @@ def main():
         project = output / 'project'
         write(project / 'fairy.toml', inputs['fairy.toml'])
         for path in sources:
-            name = 'runtime_input_adoption.fy' if path == ROOT / 'native/runtime-input-adoption/adoption.fy' else path.name
-            write(project / 'src' / name, path.read_bytes())
+            name, raw = source_copy(path)
+            write(project / 'src' / name, raw)
         run([compiler, 'check'], cwd=project)
         lock = (project / 'fairy.lock').read_bytes()
         run([compiler, 'check', '--locked'], cwd=project)
@@ -112,6 +123,9 @@ def main():
         bindings += f'typedef {contract["inputEntryType"]} bc_engine_input_entry;\ntypedef {contract["snapshotType"]} bc_engine_snapshot;\n'
         bindings += f'typedef {contract["snapshotVectorType"]} bc_engine_snapshots;\n'
         bindings += f'typedef {contract["outputVectorType"]} bc_engine_outputs;\n'
+        for key, alias in [('programType', 'bc_engine_program'), ('instanceType', 'bc_engine_instance'),
+                           ('boundInputType', 'bc_engine_bound_input'), ('outputType', 'bc_engine_output')]:
+            bindings += f'typedef {contract[key]} {alias};\n'
         bindings += '\n'.join(f'#define B{key} {value}' for key, value in contract['bindings'].items()) + '\n'
         write(output / 'bindings.h', bindings)
         for name in ['abi_thread_identity.c', 'abi_thread_identity.h']:
@@ -165,10 +179,15 @@ def main():
             run([cl, '/nologo', *objects, 'ntdll.lib', '/Fe' + str(exe), '/link', '/INCREMENTAL:NO', '/Brepro'], env=env)
             need(run([exe], env=runtime_env) == b'' and
                  receipt['commands'][-1]['stderrSha256'] == sha(b''), 'Expected silent native success')
+            metrics_raw = (output / 'control-metrics.json').read_bytes()
+            metrics = json.loads(metrics_raw)
+            need(metrics['cases'] == 6 and metrics['smallHeapBytes'] * 8 == metrics['maximumHeapBytes'],
+                 'Expected eightfold reduction in one-slot control backing')
+            write(folder / 'control-metrics.json', metrics_raw)
             receipt['profiles'].append(dict(profile=profile, artifact=probe.image(exe), exit=0,
-                liveHeapAllocationsAtExit=0, assertions='native Fairy and C, no parsed trace',
+                controlMetrics=metrics, liveHeapAllocationsAtExit=0, assertions='native Fairy and C, no parsed trace',
                 objects=[dict(path=p.relative_to(ROOT).as_posix(), sha256=sha(p.read_bytes())) for p in objects]))
-            print(f'PASS {profile}: real compile/reuse, pins, fresh VM, terminal/cancel, OS guards, exhaustion; heap 0', flush=True)
+            print(f'PASS {profile}: control {metrics}; real compile/reuse, pins, fresh VM, terminal/cancel, OS guards, exhaustion; heap 0', flush=True)
         need(all((ROOT / name).read_bytes() == raw for name, raw in inputs.items()), 'Input changed during verification')
         need((ROOT / 'fairy.lock').read_bytes() == root_lock and (project / 'fairy.lock').read_bytes() == lock,
              'Root or isolated lock changed')

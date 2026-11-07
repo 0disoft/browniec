@@ -69,3 +69,16 @@ uint32_t bc_runtime_engine_call(void *raw,uint32_t operation,uintptr_t id,uintpt
  s=B5(&e->f_0,&e->f_1,&e->f_2,&e->f_3,&e->f_4,&e->f_5,&e->f_6,&e->f_7,operation,id,argument);reset_closed(e,operation,s);
  return finish(e,ticket,s);
 }
+
+/* Only layout facts cross this bridge; capacities/quota arithmetic stay Fairy. */
+uintptr_t bc_runtime_engine_control_layout(uint32_t kind){
+ switch(kind){
+ case 0:return sizeof(bc_engine);case 1:return sizeof(bc_engine_program);
+ case 2:return sizeof(bc_engine_instance);case 3:return sizeof(bc_engine_bound_input);
+ case 4:return sizeof(bc_engine_output);default:return 0;
+ }
+}
+uint32_t bc_runtime_engine_control_access(const void *raw){
+ const bc_engine *e=raw;bc_abi_thread_identity id;uint32_t s=bc_abi_guard_enter(&id);if(s)return s;
+ s=B18(&e->f_0,id.thread,id.lifetime);uint32_t end=bc_abi_guard_leave(id);return end?end:s;
+}
