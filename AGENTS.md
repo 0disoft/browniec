@@ -1,21 +1,19 @@
-- Latest VM RET checkpoint (2026-11-08): [Return payload admission](docs/engineering/runtime-return-work-chunks.md)
-  implementation `2a13049` admits whole ARET/SRET validation into the shared
-  4096-byte CALL/array/output allowance before return unit/Fuel debit. Bool ARET
-  reads at most 4096 bytes; record validation uses at most 512 work bytes. Saved
-  result preparation borrows owners and one 16-token frame map, removing global
-  512-token/table clones. Return-following COPY paths subtract all four counters.
-  Native Core initialization fills existing frames without whole-value copies.
-  Four new actual Engine groups and regressions pass development/O2: fixed/mixed
-  quanta, whole-return deferral, Fuel, diagnostics, nested bools, cancellation,
-  Engine moves/pins/refunds and return-following partial copies. Zero resume SDK
-  attempts and exit heap; default stacks. Return state 48 bytes; Cursor 1016,
-  Machine 1464, Core unchanged 120880. Vec8 adds 384 (combined work 7552).
-  All 268 receipt inputs plus two audit inputs match raw checkout/committed Git;
-  33 bindings/32 layouts reviewed. Root locked check: 271 sources/3032 MIR;
-  263 production LF modules. CALL/RET metadata, setup/proof/seal/cleanup,
-  deadlines/STOPPING/poison and public lifecycle/ABI/CLI/full inventory remain
-  open; R03-R05 incomplete. Disjoint Sol High workers with serial integration
-  and commits; local only.
+- Latest CALL snapshot checkpoint (2026-11-08): [CALL stack storage](docs/engineering/runtime-call-stack-snapshots.md)
+  implementation `37d365a` borrows exact authority/pool fields before copying
+  unpublished plans. Generated C removes two 26,048-byte intermediate parent
+  values from each CALL begin/advance (52,096 bytes per function); this is not
+  measured peak stack or latency. Development/O2 Engine/kernel regressions pass
+  default 1MiB/4KiB stacks, no overrides and zero exit SDK heap. Typed shapes:
+  33 bindings/32 layouts unchanged. All 268 receipt plus two audit inputs match
+  checkout/committed Git; 263 production LF modules; locked check 271/3032.
+  Owning CALL66 cache integration is deferred: private output compilation rejects
+  exclusive-return declarations, and complete returned-view proof/selected-origin
+  VM wiring must precede it. The full 16-path draft and required exclusive source
+  fixtures are preserved in local Git stash `39f1c91` (not integrated/verified).
+  Next: compiler/proof bridge, selected-origin synchronous/pending wiring, then
+  cache integration. Other metadata, setup/proof/seal/cleanup, deadlines/STOPPING/
+  poison, public lifecycle/ABI/CLI and the full inventory remain open; R03-R05
+  incomplete. Parallel workers closed; local only, no push/release/deployment.
 
 # Brownie C agent guidance
 

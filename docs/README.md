@@ -6,6 +6,7 @@
 
 | Topic | Document |
 | --- | --- |
+| CALL snapshot stack storage | [Exact-field snapshots](engineering/runtime-call-stack-snapshots.md): default-stack native verification; owning CALL66 source/proof prerequisite remains open |
 | Saved VM return payload | [RET payload admission](engineering/runtime-return-work-chunks.md) |
 | Product intent and demand assumptions | [Product brief](product/00-product-brief.md) |
 | Language profile and observable behavior | [Specification](product/02-spec.md) |
