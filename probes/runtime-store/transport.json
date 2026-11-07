@@ -1,0 +1,64 @@
+{
+  "schema": "browniec.runtime-store-probe-transport/v1",
+  "compilerRevision": "eb274643bfcfe746617121ddc6f130b018978b53",
+  "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+  "transportSha256": "0bd1ddef0850813b03bfb81c9bd11abd760525706c5fbcb2605aaff30c43ccec",
+  "runtimeSha256": "86476d852a19e01ceffeb90916168a37b028dcffd1a61d682e149767c5e5baf3",
+  "runtimeInputs": [
+    {
+      "path": "internal/cruntime/stage0_scalar.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "e16bfdd17904754ceb9534c976910964c76e8b0c757f72ddf3b63de0d5548bbe"
+    },
+    {
+      "path": "internal/cstdlib/stage0_system_heap.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "41e57f9748afb73731501ba2003b1a9213b728c0d2db6a31686b9d0489b76100"
+    },
+    {
+      "path": "internal/cstdlib/stage0_buffer.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "27f049118af6e0d008428abd73bdf77dce5491b82617cdb65b9a06ac185edfa1"
+    },
+    {
+      "path": "internal/cstdlib/stage0_vector_storage.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "80dddb6db91c79c495ef8bad6d31923fd242be13de9899ce3aaded85158bb17d"
+    }
+  ],
+  "sourceInputs": [
+    {
+      "path": "fairy.toml",
+      "sha256": "612358f8fdbcfa3bf04c423da0f0b92435c8d3eb2acdbb26affff0f6233f9c82"
+    },
+    {
+      "path": "src/store.fy",
+      "sha256": "c8c732dcb40228265c1cb4608aa7ed6f81657c27909d9402c89a37fcac82db46"
+    },
+    {
+      "path": "src/main.fy",
+      "sha256": "dbd6f186ca4285fcab1744b8c936037b84ad791e0675ea76512e4db4cf206bd0"
+    },
+    {
+      "path": "bridge.c",
+      "sha256": "80eceb8f1974ff712b7b591751e606bd582c5191f191b8612d54a1aacc1d9051"
+    },
+    {
+      "path": "heap-observer.c",
+      "sha256": "1f8344de2c7d0fcf019d7909a71478bdb1d089e0fb1d16594afdd023a3e9c48b"
+    }
+  ],
+  "types": {
+    "Buffer": "fy_resource_0",
+    "Entry": "fy_resource_1",
+    "Vector": "fy_resource_2",
+    "Store": "fy_resource_3"
+  },
+  "functions": {
+    "entry_address": "fy_fn_2",
+    "mutate_buffer": "fy_fn_4",
+    "pop_inner": "fy_fn_7",
+    "push_inner": "fy_fn_9"
+  },
+  "note": "Private emitted transport pinned in full; re-review all bindings after any source/compiler change. R01 prerequisite evidence only."
+}
