@@ -1,0 +1,144 @@
+{
+  "schema": "browniec.anchored-sources-evidence/v1",
+  "status": "passed",
+  "scope": "Actual anchored read-only Windows snapshots; no parser/VM/Engine bindings",
+  "profiles": [
+    {
+      "profile": "development",
+      "nativeGroups": 5,
+      "result": [
+        "PASS bounded snapshots remain owned after source change and anchor close; actual handle identity",
+        "PASS authoritative member spelling, ADS/device/escape rejection and decoded byte lengths",
+        "PASS 16/17 files, exact/over/aggregate bytes, empty bytes, file kinds, rollback and handles/allocations",
+        "PASS real directory junction, root/ancestor reparse and leaf/directory symbolic links refused",
+        "PASS single-name outside-root same-volume hardlink rejected, multi-link leaves rejected, deterministic rename/write/metadata-change interleavings, existing writer and anchor lifetime cleanup",
+        "RESULT groups=5 live_allocations=0 handles=51"
+      ],
+      "host": {
+        "path": "build/anchored-sources/20261107T075358729836Z/development/anchored-sources-host.exe",
+        "sha256": "99da1bb0fe0f0d0d5e4e0bce9f58d6b1a10fe98c7de9e8f88c8be7613e18e964",
+        "bytes": 188928,
+        "stackReserve": 1048576,
+        "stackCommit": 4096
+      },
+      "objects": [
+        {
+          "path": "build/anchored-sources/20261107T075358729836Z/development/anchored_sources-production.obj",
+          "sha256": "5d01a8db4e2d650f44b5104083b40dbc3dda057e035feb983bb695518ff288e4"
+        },
+        {
+          "path": "build/anchored-sources/20261107T075358729836Z/development/collector.obj",
+          "sha256": "ded7bc0f4598ae6f5e7073739de66a4bbbf7a9d6ec79850f27056b264088ac7a"
+        },
+        {
+          "path": "build/anchored-sources/20261107T075358729836Z/development/host.obj",
+          "sha256": "ff3da69e6a94986eb7f80dde8ec79dcd8e8ae86fd7f5c23557bb68dcb472d960"
+        }
+      ],
+      "fixtureCleanup": true,
+      "productionTestHooksAbsent": true
+    },
+    {
+      "profile": "release",
+      "nativeGroups": 5,
+      "result": [
+        "PASS bounded snapshots remain owned after source change and anchor close; actual handle identity",
+        "PASS authoritative member spelling, ADS/device/escape rejection and decoded byte lengths",
+        "PASS 16/17 files, exact/over/aggregate bytes, empty bytes, file kinds, rollback and handles/allocations",
+        "PASS real directory junction, root/ancestor reparse and leaf/directory symbolic links refused",
+        "PASS single-name outside-root same-volume hardlink rejected, multi-link leaves rejected, deterministic rename/write/metadata-change interleavings, existing writer and anchor lifetime cleanup",
+        "RESULT groups=5 live_allocations=0 handles=51"
+      ],
+      "host": {
+        "path": "build/anchored-sources/20261107T075358729836Z/release/anchored-sources-host.exe",
+        "sha256": "434ff3a37b187226900ddb8cfa802509974334ff064f4d8e02f4d0a117afe1b6",
+        "bytes": 186368,
+        "stackReserve": 1048576,
+        "stackCommit": 4096
+      },
+      "objects": [
+        {
+          "path": "build/anchored-sources/20261107T075358729836Z/release/anchored_sources-production.obj",
+          "sha256": "6585c73e02b58086f539951b0a19e1101e446d36a2570894206c2000be3ca20c"
+        },
+        {
+          "path": "build/anchored-sources/20261107T075358729836Z/release/collector.obj",
+          "sha256": "ca4b59bced1def8a63c529208c237f415f2ab69f578d33652124f82a902e999b"
+        },
+        {
+          "path": "build/anchored-sources/20261107T075358729836Z/release/host.obj",
+          "sha256": "34fe3bea65b33547b045262f50ceca125d8659899880b9fcc5337f48f3cf704f"
+        }
+      ],
+      "fixtureCleanup": true,
+      "productionTestHooksAbsent": true
+    }
+  ],
+  "sourceFiles": 16,
+  "sourceBytes": 4096,
+  "environment": {
+    "osVersion": 26300,
+    "compilerOverrides": false
+  },
+  "inputs": [
+    {
+      "path": "native/anchored_sources.c",
+      "sha256": "3e92174ce1f8cc24886f143d5481b04fb9c9b3e98bee13edad24ebf0dc262e0b",
+      "bytes": 13504
+    },
+    {
+      "path": "native/anchored_sources.h",
+      "sha256": "54a78c3329312aab91a405f227d01da2375b910d5f5e64c92609e3158a2a7106",
+      "bytes": 3223
+    },
+    {
+      "path": "tests/native/anchored_sources_host.c",
+      "sha256": "3c7c5e3e948a99ef6d563639b0a862d6697b2556dfd5839f3d6871f4d9cb0164",
+      "bytes": 16524
+    },
+    {
+      "path": "tools/verify-anchored-sources.py",
+      "sha256": "7b361f3422a53c73d87c30832b57ded9f8c0e627ab83d955da91da9a920a440f",
+      "bytes": 7420
+    },
+    {
+      "path": "docs/engineering/anchored-sources.md",
+      "sha256": "05c6c51c20171662bd970364e19214bd7670d327c878ce26e2c556533e6fbb24",
+      "bytes": 11349
+    },
+    {
+      "path": "src/project_names.fy",
+      "sha256": "e59954d2f1636aca1edd2cf29b87e043f47cfb3d924c08a7379bb65f53c2d9c1",
+      "bytes": 4359
+    },
+    {
+      "path": "src/source_snapshot.fy",
+      "sha256": "ce0ff863f70fe8f391fa1cd508eaec00da0a24f9694c666096c80f53f7f46c50",
+      "bytes": 6999
+    },
+    {
+      "path": "tools/verify-runtime-store-probe.py",
+      "sha256": "2a5332e0d5589eee91a39b2837eb0c721c353eb12c3d3bcced479396184332cc",
+      "bytes": 12100
+    }
+  ],
+  "msvc": {
+    "version": "14.51.36231",
+    "sdk": "10.0.26100.0",
+    "compilerSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+    "overrides": false
+  },
+  "rootLockUnchanged": true,
+  "defaultStackVerified": true,
+  "noGuestBindings": true,
+  "skipped": [
+    "non-NTFS/network/other OS support",
+    "hostile kernel/filter drivers",
+    "global atomic multi-file transactions",
+    "broad compiler/VM regressions"
+  ],
+  "receipt": "build/anchored-sources/20261107T075358729836Z/receipt.json",
+  "receiptSha256": "599e660c8cc7f4c6c61231b584ede7fe00a66ac977f62f9bd34c0e9775be808c",
+  "command": "python tools/verify-anchored-sources.py",
+  "inputBytesUnchanged": true
+}
