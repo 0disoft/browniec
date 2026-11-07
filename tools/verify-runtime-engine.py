@@ -180,7 +180,7 @@ def main():
                         'boundInputType', 'outputType', 'sourceIndexType', 'sourceIndexVectorType',
                         'programVectorType', 'snapshotType', 'snapshotVectorType', 'machineType', 'coreType',
                         'executionType','pendingVectorType','completionType','publishedVectorType',
-                        'pendingMetaType','cursorType','outputCopyType','transactionType','preparationType','arrayFillType','callCopyType']}
+                        'pendingMetaType','cursorType','outputCopyType','transactionType','preparationType','arrayFillType','callCopyType','returnWorkType']}
         for variant, types in contract['programVariants'].items():
             layout_types.update({variant + '_' + role: name for role, name in types.items()})
         layout_types.update({key + '_entry': name for key, name in contract['entryTypes'].items()})
@@ -191,7 +191,7 @@ def main():
         for owner,field,key in [('outputType',1,'executionType'),('outputType',2,'pendingVectorType'),
                                 ('executionType',0,'completionType'),('executionType',1,'publishedVectorType'),
                                 ('machineType',6,'transactionType'),('machineType',7,'pendingMetaType'),
-                                ('pendingMetaType',0,'cursorType'),('cursorType',2,'outputCopyType'),('cursorType',3,'arrayFillType'),('cursorType',4,'callCopyType')]:
+                                ('pendingMetaType',0,'cursorType'),('cursorType',2,'outputCopyType'),('cursorType',3,'arrayFillType'),('cursorType',4,'callCopyType'),('cursorType',5,'returnWorkType')]:
             member=re.search(r'\b(fy_(?:struct|resource)_\d+) f_'+str(field)+r';',contract['reviewedLayouts'][owner])
             need(member is not None and member.group(1)==contract[key],f'Output field projection differs: {owner}/{field}')
         advance_args=contract['reviewedDeclarations']['26'].split('(',1)[1].split(',')
@@ -229,6 +229,7 @@ def main():
         bindings+=f'typedef {contract["preparationType"]} bc_output_preparation;\n'
         bindings+=f'typedef {contract["arrayFillType"]} bc_array_fill_work;\ntypedef {contract["cursorType"]} bc_dispatch_cursor;\n'
         bindings += f'typedef {contract["callCopyType"]} bc_call_copy_work;\n'
+        bindings += f'typedef {contract["returnWorkType"]} bc_return_work;\n'
         for key, alias in [('programType', 'bc_engine_program'), ('instanceType', 'bc_engine_instance'),
                            ('boundInputType', 'bc_engine_bound_input'), ('outputType', 'bc_engine_output')]:
             bindings += f'typedef {contract[key]} {alias};\n'
@@ -306,8 +307,9 @@ def main():
             need(fill_metrics['arrayWorkBytes']>0 and fill_metrics['pendingVecExtraBytes']==8*fill_metrics['arrayWorkBytes'],
                  'Unexpected array work cursor storage')
             need(fill_metrics['callPendingVecExtraBytes']==8*fill_metrics['callWorkBytes'] and
-                 fill_metrics['combinedPendingVecExtraBytes']==8*(fill_metrics['arrayWorkBytes']+fill_metrics['callWorkBytes']),
-                 'Unexpected CALL work cursor accounting')
+                 fill_metrics['returnPendingVecExtraBytes']==8*fill_metrics['returnWorkBytes'] and
+                 fill_metrics['combinedPendingVecExtraBytes']==8*(fill_metrics['arrayWorkBytes']+fill_metrics['callWorkBytes']+fill_metrics['returnWorkBytes']),
+                 'Unexpected CALL/RET work cursor accounting')
             write(folder / 'array-fill-metrics.json',fill_raw)
             receipt['profiles'].append(dict(profile=profile, artifact=probe.image(exe), exit=0,
                 controlMetrics=metrics, preparationMetrics=preparation, arrayFillMetrics=fill_metrics,
@@ -323,7 +325,7 @@ def main():
                            'Private synchronous typed transport, not public C handles or CLI lifecycle APIs',
                            'Complete Engine accounting/preallocation, OOM injection and poison containment remain',
                            'Ordinary zero-argument terminal Fuel is still marked unknown',
-                           'Private instruction/output-copy quanta exist; other setup/bulk/CALL/RET/seal/cleanup work remains atomic',
+                           'Private shared payload quanta exist; CALL/RET metadata and setup/proof/seal/cleanup remain atomic',
                            'Compile proof remains atomic; no in-flight cancellation, host dispatch or OS deadline'])
     except Exception as error:
         receipt.update(status='failed', error=str(error))

@@ -112,9 +112,10 @@ int main(void){
   sizeof(bc_output_preparation),sizeof(bc_output_stored),offsetof(bc_output_stored,f_4),8*sizeof(bc_output_preparation))>0);
  assert(fclose(metrics)==0);
  FILE *fills=fopen("array-fill-metrics.json","wb");assert(fills);
- assert(fprintf(fills,"{\"arrayWorkBytes\":%zu,\"cursorBytes\":%zu,\"machineBytes\":%zu,\"coreBytes\":%zu,\"pendingVecExtraBytes\":%zu,\"callWorkBytes\":%zu,\"callPendingVecExtraBytes\":%zu,\"combinedPendingVecExtraBytes\":%zu}\n",
+ assert(fprintf(fills,"{\"arrayWorkBytes\":%zu,\"cursorBytes\":%zu,\"machineBytes\":%zu,\"coreBytes\":%zu,\"pendingVecExtraBytes\":%zu,\"callWorkBytes\":%zu,\"callPendingVecExtraBytes\":%zu,\"returnWorkBytes\":%zu,\"returnPendingVecExtraBytes\":%zu,\"combinedPendingVecExtraBytes\":%zu}\n",
   sizeof(bc_array_fill_work),sizeof(bc_dispatch_cursor),sizeof(bc_pending_machine),sizeof(bc_pending_core),8*sizeof(bc_array_fill_work),
-  sizeof(bc_call_copy_work),8*sizeof(bc_call_copy_work),8*(sizeof(bc_array_fill_work)+sizeof(bc_call_copy_work)))>0);
+  sizeof(bc_call_copy_work),8*sizeof(bc_call_copy_work),sizeof(bc_return_work),8*sizeof(bc_return_work),
+  8*(sizeof(bc_array_fill_work)+sizeof(bc_call_copy_work)+sizeof(bc_return_work)))>0);
  assert(fclose(fills)==0);return 0;
 }
 

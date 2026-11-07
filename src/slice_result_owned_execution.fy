@@ -153,25 +153,25 @@ pub fn Result<runtime::Resumed,errors::Error> leave(ref ir::Program p,usize pc,u
     return .ok(resumed);
 }
 
-// Validate unpublished result maps before native loan restoration. These large
-// compatibility plans are gone before leave_call stages its own transaction.
+// Validate only current-frame bindings; no global token bank or owner table
+// is cloned. These pure checks still precede canonical loan restoration.
 fn Result<owners::Token,errors::Error> prepare_result(ref ir::Program p,usize f,
     usize source,usize destination,usize frame,u8 op,ref frames::Frames bindings,
     ref owners::Table table,ref u8[] data,usize offset){
-    var arrays::State plan=arrays::State{.owners=*table,.tokens=bindings.tokens};
-    var owners::Token result=owners::Token{.slot=0,.generation=0};
-    var usize i=0;while(i<16){
-        if(op!=50 && record_bindings::get(ref bindings.records,frame*16+i).generation!=0){return .err(errors::make(5,offset));}i+=1;
-    }
+    let owners::Token[16] record_tokens=record_bindings::frame_tokens(ref bindings.records,frame);
+    var owners::Token result=owners::Token{.slot=0,.generation=0};var usize i=0;
+    while(i<16){if(op!=50 && record_tokens[i].generation!=0){return .err(errors::make(5,offset));}i+=1;}
+    let usize child=frame*16;
     if(op==39){
         if(destination<128 || destination>=144){return .err(errors::make(5,offset));}
-        let results::Transfer transfer=results::prepare_data(p,f,source,destination-128,frame,ref plan,data,offset)?;
-        result=transfer.token;
+        let owners::Token parent=bindings.tokens[(frame-1)*16+destination-128];
+        let results::Transfer transfer=results::prepare_frame(p,f,source,destination-128,frame,table,
+            ref bindings.tokens[child..child+16],parent,data,offset)?;result=transfer.token;
     }else if(op==50){
         if(destination<144 || destination>=160){return .err(errors::make(5,offset));}
-        let records::State record_plan=record_bindings::materialize(ref bindings.records);
-        let record_results::Transfer transfer=record_results::prepare_data(p,f,source,destination-144,frame,ref record_plan,ref plan,data,offset)?;
-        result=transfer.token;
-    }else{i=0;while(i<16){if(plan.tokens[frame*16+i].generation!=0){return .err(errors::make(5,offset));}i+=1;}}
+        let owners::Token parent=record_bindings::get(ref bindings.records,(frame-1)*16+destination-144);
+        let record_results::Transfer transfer=record_results::prepare_frame(p,f,source,destination-144,frame,table,
+            ref record_tokens,ref bindings.tokens[child..child+16],parent,data,offset)?;result=transfer.token;
+    }else{i=0;while(i<16){if(bindings.tokens[child+i].generation!=0){return .err(errors::make(5,offset));}i+=1;}}
     return .ok(result);
 }

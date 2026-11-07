@@ -21,7 +21,21 @@ pub fn Result<Transfer,errors::Error> prepare(ref ir::Program p,usize target,usi
 }
 pub fn Result<Transfer,errors::Error> prepare_data(ref ir::Program p,usize target,usize source,usize destination,usize frame,
     ref arrays::State state,ref u8[] data,usize offset){
-    if(frame==0 || frame>=32 || target>=p.function_count || source>=p.arrays.count || destination>=p.arrays.count) {
+    // Check frame and token indices before slicing or reading the parent slot.
+    if(frame==0 || frame>=32 || target>=p.function_count || source>=p.arrays.count || destination>=p.arrays.count ||
+        source>=16 || destination>=16) {
+        return .err(errors::make(5,offset));
+    }
+    let usize child=frame*16;let usize parent=(frame-1)*16+destination;
+    return prepare_frame(p,target,source,destination,frame,ref state.owners,ref state.tokens[child..child+16],
+        state.tokens[parent],data,offset);
+}
+// Frame-local preparation borrows metadata without copying the global token bank.
+// parent is the caller destination token; child contains exactly one frame.
+pub fn Result<Transfer,errors::Error> prepare_frame(ref ir::Program p,usize target,usize source,usize destination,usize frame,
+    ref owners::Table table,ref owners::Token[] child,owners::Token parent,ref u8[] data,usize offset){
+    if(frame==0 || frame>=32 || target>=p.function_count || source>=p.arrays.count || destination>=p.arrays.count ||
+        source>=16 || destination>=16 || child.len!=16) {
         return .err(errors::make(5,offset));
     }
     let usize encoded=p.array_results[target] as usize;
@@ -31,18 +45,17 @@ pub fn Result<Transfer,errors::Error> prepare_data(ref ir::Program p,usize targe
         p.arrays.elements[destination]!=p.arrays.elements[shape] || p.arrays.lengths[destination]!=p.arrays.lengths[shape]) {
         return .err(errors::make(5,offset));
     }
-    let usize child=frame*16;let usize parent=(frame-1)*16+destination;
-    if(state.tokens[parent].generation!=0 || state.tokens[parent].slot!=0) {return .err(errors::make(5,offset));}
+    if(parent.generation!=0 || parent.slot!=0) {return .err(errors::make(5,offset));}
     var usize i=0;
     while(i<16) {
-        if(i!=source && (state.tokens[child+i].generation!=0 || state.tokens[child+i].slot!=0)) {return .err(errors::make(5,offset));}
+        if(i!=source && (child[i].generation!=0 || child[i].slot!=0)) {return .err(errors::make(5,offset));}
         i+=1;
     }
-    let owners::Token token=state.tokens[child+source];
-    let usize checked=switch(owners::validate_result(ref state.owners,token,p.arrays.elements[shape],p.arrays.lengths[shape],data)) {
+    let owners::Token token=child[source];
+    let usize checked=switch(owners::validate_result(table,token,p.arrays.elements[shape],p.arrays.lengths[shape],data)) {
         case .ok(n):{n} case .err(e):{return .err(arrays::failure(e,offset));}
     };
-    return .ok(Transfer{.token=token,.child=child+source,.parent=parent,.bytes=checked});
+    return .ok(Transfer{.token=token,.child=frame*16+source,.parent=(frame-1)*16+destination,.bytes=checked});
 }
 
 // Infallible publication after preparation and any canonical loan restoration.

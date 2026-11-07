@@ -23,6 +23,14 @@ pub fn void forget(ref mut State state,usize location){
 pub fn void clear_frame(ref mut State state,usize frame){
     var usize i=0;while(i<16){if(state.locations[i]/16==frame){state.tokens[i]=none();state.locations[i]=512;}i+=1;}
 }
+// Extract only one frame in a single sixteen-owner scan. No global 512-token
+// compatibility map is materialized by saved return preparation.
+pub fn owners::Token[16] frame_tokens(ref State state,usize frame){
+    var owners::Token[16] tokens=[none();16];var usize i=0;
+    while(i<16){if(state.tokens[i].generation!=0 && state.locations[i]/16==frame){
+        tokens[state.locations[i]%16]=state.tokens[i];}i+=1;}
+    return tokens;
+}
 // Expand only while a record operation needs the existing VM adapter. The large
 // public compatibility map is absent from admission and borrowed handoff stacks.
 pub fn records::State materialize(ref State state){

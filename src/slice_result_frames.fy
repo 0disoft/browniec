@@ -32,6 +32,21 @@ pub fn Frames empty(ref runtime::State state){
         .functions=[16;32],.continuations=[0;32],.maps=[32;32],
         .destinations=[128;32],.identities=[128;32],.prepared=[false;32],.frame=0};
 }
+// Native Core storage already exists; initialize fields directly rather than
+// returning/copying a whole Frames value through nested native stack frames.
+pub fn void initialize(ref mut Frames bindings,ref runtime::State state){
+    let runtime::Capture capture=runtime::capture(none(),false,false);
+    let owners::View view=state.runtime.pool.slots[0].view;let slices::Ticket missing=none();
+    var usize i=0;while(i<256){bindings.captures[i]=capture;bindings.views[i]=view;
+        bindings.issued[i]=missing;bindings.tags[i]=0;i+=1;}
+    i=0;while(i<512){bindings.before[i]=missing;bindings.sites[i]=missing;
+        bindings.tokens[i]=owners::Token{.slot=0,.generation=0};i+=1;}
+    i=0;while(i<32){bindings.arities[i]=0;bindings.selected[i]=0;bindings.depths[i]=0;
+        bindings.remaining[i]=0;bindings.active[i]=false;bindings.results[i]=missing;
+        bindings.functions[i]=16;bindings.continuations[i]=0;bindings.maps[i]=32;
+        bindings.destinations[i]=128;bindings.identities[i]=128;bindings.prepared[i]=false;i+=1;}
+    bindings.records=records::empty();bindings.loans=loans::empty();bindings.frame=0;
+}
 // The driver checks bounds before runtime::enter. Failure never publishes a
 // result; its invocation cleanup drains any entered native transaction.
 pub fn Result<usize,errors::Error> can_push(ref ir::Program p,ref Frames bindings,

@@ -147,7 +147,7 @@ pub fn usize core_heap_bytes(ref Machine machine,usize stride){
 // initialization and metadata decisions remain here in Fairy.
 pub fn void initialize_native(ref Machine owner,ref mut Core core,ref slice_result_runtime::State state,ref static_ir::Sites sites,ref u8[] origins){
     unsafe{binding_raw(29)};
-    core.runtime=*state;core.bindings=slice_result_frames::empty(state);core.sites=*sites;
+    core.runtime=*state;slice_result_frames::initialize(ref mut core.bindings,state);core.sites=*sites;
     var usize i=0;while(i<16){core.origins[i]=origins[i];i+=1;}
     unsafe{binding_raw(28)};discard storage_identity(owner,core);
 }

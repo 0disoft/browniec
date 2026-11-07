@@ -1,5 +1,6 @@
 module runtime_engine;
 import call_copy_cursor as call_work;
+import return_work_cursor as return_work;
 import module_program as programs;
 import module_entry as entries;
 import module_input_program as input_programs;
@@ -258,6 +259,16 @@ pub fn Result<call_work::State,Error> call_copy_progress(ref Engine e,usize inst
     let ref Output saved=vec::at<Output>(ref e.outputs,oi);
     if(vec::len<machines::Machine>(ref saved.pending)!=1){return .err(error(7));}
     return .ok(machines::observe(vec::at<machines::Machine>(ref saved.pending,0)).cursor.call);
+}
+pub fn Result<return_work::State,Error> return_work_progress(ref Engine e,usize instance){
+    let u32 status=unsafe{control_access_raw(e as ptr void)};
+    if(status!=0){return .err(error(status));}if(e.meta.closed){return .err(error(2));}
+    let usize ii=switch(instance_index(ref e.instances,instance)){case .ok(v):{v}case .err(s):{return .err(error(s));}};
+    if(vec::at<Instance>(ref e.instances,ii).phase!=3){return .err(error(11));}
+    let usize oi=switch(output_index(ref e.outputs,instance)){case .ok(v):{v}case .err(_):{return .err(error(7));}};
+    let ref Output saved=vec::at<Output>(ref e.outputs,oi);
+    if(vec::len<machines::Machine>(ref saved.pending)!=1){return .err(error(7));}
+    return .ok(machines::observe(vec::at<machines::Machine>(ref saved.pending,0)).cursor.returned);
 }
 // Synchronous exact borrow: no Snapshot pointer is retained in an Instance or
 // Program. Admission precedes inspection; completion precedes ending the borrow.
@@ -937,6 +948,26 @@ fn Result<modules::Index,u8> layout_index(ref u8[] source){
     let sources::Snapshot snapshot=switch(sources::freeze(ref b)){case .ok(v):{v}case .err(_):{return .err(3);}};
     return switch(modules::build(snapshot)){case .ok(v):{.ok(v)}case .err(_):{.err(4)}};
 }
+// Keep layout witnesses in separate calls: their large compiler temporaries
+// must not overlap the native initialization witness on the default stack.
+fn void retain_output_bindings(ref input_bytes::Snapshot snapshot){
+    let modules::Index index=switch(layout_index(b"module layout;pub fn i32 main(){return 0;}")){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    let entries::Entry entry=switch(entries::select_i32(index,b"layout",b"main")){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    unsafe{binding_raw(19)};discard entry_heap(ref entry);
+    let output_programs::Program kept=switch(output_programs::compile(entry,65536)){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    pending_vm::retain_bindings(ref kept,snapshot);
+    var vec::Vec<machines::Machine> saved=vec::empty<machines::Machine>();
+    var vec::Vec<pending_output::Published> published=vec::empty<pending_output::Published>();
+    var output_programs::Completion completed=output_programs::pending_completion(0);
+    unsafe{binding_raw(31)};discard step_output_owner(ref mut saved,ref mut completed,ref mut published,ref kept,snapshot,0);
+    unsafe{binding_raw(33)};discard cancel_output_owner(ref mut saved);
+    unsafe{binding_raw(32)};let vec::Vec<machines::Machine> compacted=compact_pending_storage(saved);
+}
+fn void retain_input_binding(){
+    let modules::Index index=switch(layout_index(b"module layout;pub fn i32 main(ref u8[] data){return 0;}")){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    let input_entries::InputEntry entry=switch(input_entries::select_i32_input(index,b"layout",b"main")){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    unsafe{binding_raw(20)};discard input_entry_heap(ref entry);
+}
 pub fn void retain_native_bindings(){
     let control::Budget storage=switch(control::create(1,0)){case .ok(v):{v}case .err(_):{assert(false);return;}};
     let memory::Budget retained_storage=switch(memory::create(memory::defaults(),0)){case .ok(v):{v}case .err(_):{assert(false);return;}};
@@ -989,24 +1020,7 @@ pub fn void retain_native_bindings(){
     unsafe{binding_raw(25)};discard program_identity(ref program_witness);
     let Output output_witness=Output{.instance=0,.run=output_programs::vacant(0),.pending=vec::empty<machines::Machine>()};
     unsafe{binding_raw(30)};discard output_identity(ref output_witness);
-    {
-        let modules::Index index=switch(layout_index(b"module layout;pub fn i32 main(){return 0;}")){case .ok(v):{v}case .err(_):{assert(false);return;}};
-        let entries::Entry entry=switch(entries::select_i32(index,b"layout",b"main")){case .ok(v):{v}case .err(_):{assert(false);return;}};
-        unsafe{binding_raw(19)};discard entry_heap(ref entry);
-        let output_programs::Program kept=switch(output_programs::compile(entry,65536)){case .ok(v):{v}case .err(_):{assert(false);return;}};
-        pending_vm::retain_bindings(ref kept,ref snapshot);
-        var vec::Vec<machines::Machine> saved=vec::empty<machines::Machine>();
-        var vec::Vec<pending_output::Published> published=vec::empty<pending_output::Published>();
-        var output_programs::Completion completed=output_programs::pending_completion(0);
-        unsafe{binding_raw(31)};discard step_output_owner(ref mut saved,ref mut completed,ref mut published,ref kept,ref snapshot,0);
-        unsafe{binding_raw(33)};discard cancel_output_owner(ref mut saved);
-        unsafe{binding_raw(32)};let vec::Vec<machines::Machine> compacted=compact_pending_storage(saved);
-    }
-    {
-        let modules::Index index=switch(layout_index(b"module layout;pub fn i32 main(ref u8[] data){return 0;}")){case .ok(v):{v}case .err(_):{assert(false);return;}};
-        let input_entries::InputEntry entry=switch(input_entries::select_i32_input(index,b"layout",b"main")){case .ok(v):{v}case .err(_):{assert(false);return;}};
-        unsafe{binding_raw(20)};discard input_entry_heap(ref entry);
-    }
+    retain_output_bindings(ref snapshot);retain_input_binding();
 }
 
 // Low-level owning VM helpers; Engine-owned stepping above pins its own inputs.

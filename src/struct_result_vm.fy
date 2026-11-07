@@ -24,8 +24,23 @@ pub fn Result<Transfer,errors::Error> prepare(ref ir::Program p,usize target,usi
 pub fn Result<Transfer,errors::Error> prepare_data(ref ir::Program p,usize target,usize source,
     usize destination,usize frame,ref records::State record_state,
     ref arrays::State state,ref u8[] data,usize offset) {
+    if(frame==0 || frame>=32 || source>=16 || destination>=16) {
+        return .err(errors::make(5,offset));
+    }
+    let usize child=frame*16;let usize parent=(frame-1)*16+destination;
+    return prepare_frame(p,target,source,destination,frame,ref state.owners,
+        ref record_state.tokens[child..child+16],ref state.tokens[child..child+16],
+        record_state.tokens[parent],data,offset);
+}
+// Compact child frames contain exactly sixteen tokens each. The caller gathers
+// the existing parent destination separately; Transfer retains absolute indices.
+pub fn Result<Transfer,errors::Error> prepare_frame(ref ir::Program p,usize target,usize source,
+    usize destination,usize frame,ref owners::Table table,
+    ref owners::Token[] record_child,ref owners::Token[] array_child,
+    owners::Token parent,ref u8[] data,usize offset) {
     if(frame==0 || frame>=32 || p.function_count>16 || target>=p.function_count ||
-        target==p.entry || p.records.count>16 || source>=p.records.count || destination>=p.records.count) {
+        target==p.entry || p.records.count>16 || source>=p.records.count || destination>=p.records.count ||
+        source>=16 || destination>=16 || record_child.len!=16 || array_child.len!=16) {
         return .err(errors::make(5,offset));
     }
     let usize encoded=p.record_results[target] as usize;
@@ -36,24 +51,23 @@ pub fn Result<Transfer,errors::Error> prepare_data(ref ir::Program p,usize targe
     if(p.records.records[source] as usize!=nominal || p.records.records[destination] as usize!=nominal) {
         return .err(errors::make(5,offset));
     }
-    let usize child=frame*16;let usize parent=(frame-1)*16+destination;
-    if(record_state.tokens[parent].generation!=0 || record_state.tokens[parent].slot!=0) {
+    if(parent.generation!=0 || parent.slot!=0) {
         return .err(errors::make(5,offset));
     }
     var usize i=0;
     while(i<16) {
-        if(state.tokens[child+i].generation!=0 || state.tokens[child+i].slot!=0 ||
-            (i!=source && (record_state.tokens[child+i].generation!=0 || record_state.tokens[child+i].slot!=0))) {
+        if(array_child[i].generation!=0 || array_child[i].slot!=0 ||
+            (i!=source && (record_child[i].generation!=0 || record_child[i].slot!=0))) {
             return .err(errors::make(5,offset));
         }
         i+=1;
     }
-    let owners::Token token=record_state.tokens[child+source];
+    let owners::Token token=record_child[source];
     let usize checked=switch(owners::validate_record_result(ref p.records.layouts,
-        ref state.owners,token,nominal,data)) {
+        table,token,nominal,data)) {
         case .ok(n):{n} case .err(e):{return .err(arrays::failure(e,offset));}
     };
-    return .ok(Transfer{.token=token,.child=child+source,.parent=parent});
+    return .ok(Transfer{.token=token,.child=frame*16+source,.parent=(frame-1)*16+destination});
 }
 
 pub fn void publish(ref Transfer plan,ref mut records::State state) {
