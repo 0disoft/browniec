@@ -105,7 +105,7 @@ fn Result<bytes::Buffer,bytes::BufferError> encode_version(ref str prefix){
     let usize c=bytes::append_usize(ref mut output,meter::cli_default())?;
     let usize d=bytes::append(ref mut output,b",\"fuel_limit\":")?;
     let usize e=bytes::append_usize(ref mut output,meter::cli_limit())?;
-    let usize f=bytes::append(ref mut output,b"}\n")?;return .ok(output);
+    let usize f=bytes::append(ref mut output,b",\"inspect_ir\":true}\n")?;return .ok(output);
 }
 @effects(console)
 pub fn i32 version(ref str prefix){
