@@ -69,10 +69,8 @@ fn void terminal_return_arms_do_not_contribute_a_join_origin(){
     value(b"module main;fn i32 main(){let b=bytes::empty();let v=bytes::view(ref b);let Option<i32> o=.none;let r=switch(o){case .some(_):{return 0;}case .none:{v}};if(r.len==0){return 42;}return 0;}");
 }
 
-fn void fully_terminal_value_joins_remain_rejected_without_bottom_expression_support(){
-    // Existing limitation: no arm yields a descriptor. Bottom expressions are
-    // outside this increment; one terminal plus one yielding arm is covered above.
-    rejected(b"module main;fn ref u8[] pick(ref u8[] v,bool c){return if(c){return v;}else{return v[..];};}fn i32 main(){let b=bytes::empty();let r=pick(ref bytes::view(ref b),true);if(r.len==0){return 42;}return 0;}");
+fn void fully_terminal_value_joins_return_directly_without_a_descriptor_destination(){
+    value(b"module main;fn ref u8[] pick(ref u8[] v,bool c){return if(c){return v;}else{return v[..];};}fn i32 main(){let b=bytes::empty();let r=pick(ref bytes::view(ref b),true);if(r.len==0){return 42;}return 0;}");
 }
 
 fn void break_in_a_view_join_cleans_inner_aliases_and_preserves_outer_roots(){
@@ -174,8 +172,8 @@ fn void shared_join_source_and_body_stay_rejected_by_ordinary_public_routes(){
     same_root_rebinding_combines_direct_aliases_calls_and_returned_views();
     joins_retain_anonymous_call_roots_from_existing_or_selected_arms();
 }
-@test fn void bottom_local_escape_reject_and_live_named_origin_joins_execute(){
-    fully_terminal_value_joins_remain_rejected_without_bottom_expression_support();
+@test fn void bottom_and_named_origin_joins_execute_while_local_escape_rejects(){
+    fully_terminal_value_joins_return_directly_without_a_descriptor_destination();
     local_owner_escape_rejects_but_distinct_live_named_roots_join();
     different_formal_joins_and_rebound_return_origins_remain_rejections();
 }

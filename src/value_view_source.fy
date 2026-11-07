@@ -14,7 +14,7 @@ import ir as ir;
 pub fn usize type_id(){return 65;}
 pub fn bool reference(context::Value value){return !value.nothing && !value.typed && value.exact==65;}
 pub fn context::Value value(usize id,usize binding){
-    return context::Value{.exact=65,.value=id,.typed=false,.nothing=false,.binding=binding};
+    return context::Value{.exact=65,.value=id,.typed=false,.nothing=false,.bottom=false,.binding=binding};
 }
 fn errors::Error wrong(usize at){return errors::make(3,at);}
 pub fn Result<usize,errors::Error> annotation(ref u8[] source,ref mut lexer::State s){

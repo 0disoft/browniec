@@ -11,10 +11,12 @@ import errors as errors;
 fn bool word(ref u8[] source,ref lexer::State s,ref u8[] name){return s.kind==2 && lexer::equal(source[s.begin..s.end],name);}
 fn errors::Error wrong(usize at){return errors::make(3,at);}
 
-pub struct Value { usize exact; usize value; bool typed; bool nothing; usize binding; }
-pub fn Value scalar(usize exact,usize value){return Value{.exact=exact,.value=value,.typed=false,.nothing=false,.binding=64};}
-pub fn Value owned(usize exact,usize value){return Value{.exact=exact,.value=value,.typed=true,.nothing=false,.binding=64};}
-pub fn Value nothing(){return Value{.exact=64,.value=256,.typed=false,.nothing=true,.binding=64};}
+pub struct Value { usize exact; usize value; bool typed; bool nothing; bool bottom; usize binding; }
+pub fn Value scalar(usize exact,usize value){return Value{.exact=exact,.value=value,.typed=false,.nothing=false,.bottom=false,.binding=64};}
+pub fn Value owned(usize exact,usize value){return Value{.exact=exact,.value=value,.typed=true,.nothing=false,.bottom=false,.binding=64};}
+// Bottom has no value, binding, owner or destination. It is not a void call.
+pub fn Value bottom(){return Value{.exact=64,.value=256,.typed=false,.nothing=false,.bottom=true,.binding=64};}
+pub fn Value nothing(){return Value{.exact=64,.value=256,.typed=false,.nothing=true,.bottom=false,.binding=64};}
 
 
 pub fn u8 byte(usize value){var u8 b=0;var usize i=0;while(i<value){b+=1;i+=1;}return b;}
@@ -28,9 +30,11 @@ pub fn Result<usize,errors::Error> intern(ref mut values::Program unit,u8 kind,u
     if(!properties::inspect(ref unit.catalog).is_ok){return .err(wrong(at));}return .ok(id);
 }
 pub fn Result<Value,errors::Error> expected(Value value,usize exact,usize at){
+    if(value.bottom){return .ok(value);}
     if((value.nothing && exact!=64) || (exact!=64 && value.exact!=exact)){return .err(wrong(at));}return .ok(value);
 }
 pub fn Result<usize,errors::Error> capture(ref mut values::Program unit,ref mut bindings::State state,Value value,usize at){
+    if(value.bottom){return .err(wrong(at));}
     if(value.exact==65){
         let usize roots=views::roots(ref state.views,value.value,at)?;
         if(value.binding==64){return .ok(value.value);}
@@ -42,18 +46,18 @@ pub fn Result<usize,errors::Error> capture(ref mut values::Program unit,ref mut 
     return bindings::use_binding(unit,state,value.binding,to,at);
 }
 pub fn Result<usize,errors::Error> as_scalar(ref mut values::Program unit,ref mut bindings::State state,Value value,usize at){
-    if(value.nothing || value.exact>=unit.catalog.count || unit.catalog.nodes[value.exact].kind!=1){return .err(wrong(at));}
+    if(value.bottom || value.nothing || value.exact>=unit.catalog.count || unit.catalog.nodes[value.exact].kind!=1){return .err(wrong(at));}
     if(!value.typed){return .ok(value.value);}
     let usize id=capture(unit,state,value,at)?;
     let usize result=ops::scalar_read(unit,state,id,at)?;
     let usize dropped=bindings::drop(unit,state,id,at)?;return .ok(result);
 }
 pub fn Result<usize,errors::Error> as_value(ref mut values::Program unit,ref mut bindings::State state,Value value,usize at){
-    if(value.nothing || value.exact==65){return .err(wrong(at));}if(value.typed){return capture(unit,state,value,at);}
+    if(value.bottom || value.nothing || value.exact==65){return .err(wrong(at));}if(value.typed){return capture(unit,state,value,at);}
     return ops::scalar_value(unit,state,value.value,value.exact,at);
 }
 pub fn Result<usize,errors::Error> discard_value(ref mut values::Program unit,ref mut bindings::State state,Value value,usize at){
-    if(value.nothing){return .err(wrong(at));}
+    if(value.bottom || value.nothing){return .err(wrong(at));}
     if(value.exact==65){
         if(value.binding==64){return bindings::close_view(unit,state,value.value,at);}
         let usize roots=views::roots(ref state.views,value.value,at)?;return .ok(0);
@@ -178,6 +182,7 @@ pub fn Join joining(usize exact){return Join{.exact=exact,.destination=128,.have
 
 pub fn Result<usize,errors::Error> publish(ref mut values::Program unit,ref mut bindings::State state,
     ref mut Join output,Value value,usize at){
+    if(value.bottom){return .err(wrong(at));}
     if(!value.nothing && value.exact==65 && (output.exact==64 || output.exact==65)){
         if(!output.have){output.destination=views::reserve(unit,ref mut state.views,at)?;
             output.exact=65;output.have=true;}
@@ -207,7 +212,7 @@ pub fn Result<Value,errors::Error> joined(ref mut values::Program unit,ref mut b
     if(output.exact==65){
         let usize roots=views::roots(ref state.views,output.destination,at)?;
         let usize released=views::unreserve(ref mut state.views,output.destination,at)?;
-        return .ok(Value{.exact=65,.value=output.destination,.typed=false,.nothing=false,.binding=64});
+        return .ok(Value{.exact=65,.value=output.destination,.typed=false,.nothing=false,.bottom=false,.binding=64});
     }
     if(unit.catalog.nodes[output.exact].kind==1){
         let usize reg=ir::emit(ref mut unit.body,17,output.destination,0,at)?;

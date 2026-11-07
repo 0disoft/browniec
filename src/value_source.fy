@@ -93,11 +93,23 @@ fn Result<context::Value,errors::Error> expression(ref u8[] source,ref mut lexer
         if(operation==132 || operation==133){
             let boolean::Pending pending=boolean::begin(unit,state,paths,operation,a,at)?;
             let context::Value right=expression(source,s,unit,state,table,plan,paths,flow,64,priority+1,depth+1)?;
+            if(right.bottom){
+                let branches::Exit evaluated=branches::capture(paths,state,true,0,at)?;
+                let usize selected=branches::select(unit,state,paths,pending.entry,at)?;
+                let usize target=position(unit);let usize patched=ir::patch(ref mut unit.body,pending.guard,target,at)?;
+                let usize skip=ir::raw(ref mut unit.body,19,0,0,0,at)?;
+                let branches::Exit skipped=branches::capture(paths,state,false,skip,at)?;
+                let bool joined=branches::join(unit,state,paths,ref evaluated,ref skipped,at)?;
+                let usize freed=looping::release(paths,flow,pending.pool,at)?;
+                let usize result=ir::emit(ref mut unit.body,17,pending.slot,0,at)?;
+                left=context::scalar(left.exact,result);continue;
+            }
             let usize b=context::as_scalar(unit,state,right,at)?;
             let usize result=boolean::finish(unit,state,paths,flow,pending,b,at)?;
             left=context::scalar(left.exact,result);continue;
         }
         let context::Value right=expression(source,s,unit,state,table,plan,paths,flow,left.exact,priority+1,depth+1)?;
+        if(right.bottom){return .ok(right);}
         let usize b=context::as_scalar(unit,state,right,at)?;
         if(left.exact!=right.exact || (!types::integer(register_type(unit,a)) && operation!=128 && operation!=129)){
             return .err(wrong(at));
@@ -123,6 +135,7 @@ fn Result<context::Value,errors::Error> constructor(ref u8[] source,ref mut lexe
         let usize child=if(exact==64){64}else if(err){unit.catalog.nodes[exact].second as usize}else{unit.catalog.nodes[exact].first as usize};
         let context::Value value=expression(source,s,unit,state,table,plan,paths,flow,child,1,depth+1)?;
         let usize close=lexer::punctuation(source,s,41)?;
+        if(value.bottom){return .ok(value);}
         if(exact==64){wrapper=context::intern(unit,5,context::byte(value.exact),0,at)?;}
         payload=context::as_value(unit,state,value,at)?;
     }
@@ -142,6 +155,10 @@ fn Result<context::Value,errors::Error> call(ref u8[] source,ref mut lexer::Stat
         if(exact==65){let usize prefix=lexer::word(source,s,b"ref")?;
             if(word(source,s,b"mut")){return .err(wrong(s.begin));}}
         let context::Value value=expression(source,s,unit,state,table,plan,paths,flow,exact,1,depth+1)?;
+        if(value.bottom){
+            if(i+1!=table.arities[target]){return .err(wrong(s.begin));}
+            let usize close=lexer::punctuation(source,s,41)?;return .ok(value);
+        }
         if(exact==65){let usize id=view_source::capture(unit,state,value,at)?;
             arguments[i]=224+id;captures[i]=17+id;extended=true;
         }else if(unit.catalog.nodes[exact].kind==1){arguments[i]=context::as_scalar(unit,state,value,at)?;}
@@ -160,6 +177,7 @@ fn Result<context::Value,errors::Error> atom(ref u8[] source,ref mut lexer::Stat
     let usize context=if(context::postfix_receiver(source,s)?){64}else{exact};
     var context::Value value=primary(source,s,unit,state,table,plan,paths,flow,context,depth)?;
     while(s.kind==46 || s.kind==63 || s.kind==91){
+        if(value.bottom){return .err(wrong(s.begin));}
         if(s.kind==46 && view_source::range_ahead(source,s)?){break;}
         if(s.kind==91){value=view_index(source,s,unit,state,table,plan,paths,flow,value,depth)?;}
         else if(s.kind==46){value=if(view_source::reference(value)){view_source::length(source,s,unit,state,value)?}
@@ -230,6 +248,7 @@ fn Result<context::Value,errors::Error> primary(ref u8[] source,ref mut lexer::S
             }
         }
         let context::Value value=atom(source,s,unit,state,table,plan,paths,flow,exact,depth+1)?;
+        if(value.bottom){return .ok(value);}
         let usize reg=context::as_scalar(unit,state,value,at)?;
         if((op==33 && register_type(unit,reg)!=2) || (op==45 && !types::signed(register_type(unit,reg))) || (op==126 && !types::integer(register_type(unit,reg)))){return .err(wrong(at));}
         let usize result=ir::emit(ref mut unit.body,if(op==45){7}else if(op==33){10}else{27},reg,0,at)?;
@@ -254,12 +273,14 @@ fn Result<context::Value,errors::Error> primary(ref u8[] source,ref mut lexer::S
     if(index==64){return .err(wrong(at));}
     if(state.views.names[index]!=0){return view_source::named(state,index,at);}
     if(state.bindings[index]!=0){let usize from=(state.bindings[index] as usize)-1;
-        return .ok(context::Value{.exact=values::type_id(unit,from),.value=from,.typed=true,.nothing=false,.binding=index});
+        return .ok(context::Value{.exact=values::type_id(unit,from),.value=from,.typed=true,.nothing=false,.bottom=false,.binding=index});
     }
     let usize binding=state.names.registers[index];
     let usize reg=if(state.names.mutable[index]){ir::emit(ref mut unit.body,17,binding,0,at)?}else{binding};
     let u8 tag=register_type(unit,reg);let usize type=context::intern(unit,1,tag,0,at)?;return .ok(context::scalar(type,reg));
 }
+// Declaration result 64 means the initializer has no continuing edge. No name
+// or initialized destination is created on that path.
 fn Result<usize,errors::Error> declaration(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
     ref mut bindings::State state,ref signatures::Table table,ref functions::Plan plan,ref mut vec::Vec<bindings::Snapshot> paths,ref mut looping::State flow){
     let bool mutable=word(source,s,b"var");let usize keyword=lexer::next(source,s)?;var usize type=64;
@@ -272,6 +293,7 @@ fn Result<usize,errors::Error> declaration(ref u8[] source,ref mut lexer::State 
     let usize name=lexer::next(source,s)?;let usize equal=lexer::punctuation(source,s,61)?;
     let context::Value value=expression(source,s,unit,state,table,plan,paths,flow,type,1,0)?;
     let usize terminator=lexer::punctuation(source,s,59)?;
+    if(value.bottom){return .ok(64);}
     if(view_source::reference(value)){
         let usize id=view_source::capture(unit,state,value,begin)?;
         let usize roots=view_source::lexical_roots(state,id,begin)?;
@@ -288,6 +310,8 @@ fn Result<usize,errors::Error> declaration(ref u8[] source,ref mut lexer::State 
     return locals::declare(ref mut state.names,begin,end,reg,false);
 }
 
+// Assignment result 256 is terminal parser control, beyond every instruction
+// index. The RHS terminal edge has already performed cleanup.
 fn Result<usize,errors::Error> assignment(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
     ref mut bindings::State state,ref signatures::Table table,ref functions::Plan plan,ref mut vec::Vec<bindings::Snapshot> paths,ref mut looping::State flow,u8 terminator){
     let usize at=s.begin;let usize index=locals::find(source,ref state.names,s.begin,s.end);
@@ -297,6 +321,7 @@ fn Result<usize,errors::Error> assignment(ref u8[] source,ref mut lexer::State s
         if(token!=61){return .err(wrong(at));}
         let context::Value rhs=expression(source,s,unit,state,table,plan,paths,flow,view_source::type_id(),1,0)?;
         let usize semi=lexer::punctuation(source,s,terminator)?;
+        if(rhs.bottom){return .ok(256);}
         let usize id=view_source::capture(unit,state,rhs,at)?;
         let usize roots=view_source::lexical_roots(state,id,at)?;
         return bindings::assign_view(unit,state,index,id,at);
@@ -312,6 +337,7 @@ fn Result<usize,errors::Error> assignment(ref u8[] source,ref mut lexer::State s
     }
     let context::Value rhs=expression(source,s,unit,state,table,plan,paths,flow,type,1,0)?;
     let usize semi=lexer::punctuation(source,s,terminator)?;
+    if(rhs.bottom){return .ok(256);}
     if(typed){let usize value=context::as_value(unit,state,rhs,at)?;return bindings::assign(unit,state,index,value,at);}
     let usize right=context::as_scalar(unit,state,rhs,at)?;
     let usize value=if(token==61){right}else{ir::emit(ref mut unit.body,context::compound(token),left,right,at)?};
@@ -360,6 +386,7 @@ fn Result<context::Value,errors::Error> if_value(ref u8[] source,ref mut lexer::
     ref mut vec::Vec<bindings::Snapshot> paths,ref mut looping::State flow,usize exact,usize depth){
     let usize at=s.begin;var context::Join output=context::joining(exact);
     let bool terminal=value_condition_paths(source,s,unit,state,table,plan,paths,flow,depth,ref mut output)?;
+    if(terminal){return .ok(context::bottom());}
     return context::joined(unit,state,ref output,at);
 }
 fn Result<bool,errors::Error> block(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
@@ -377,6 +404,7 @@ fn Result<context::Value,errors::Error> switch_value(ref u8[] source,ref mut lex
     ref mut vec::Vec<bindings::Snapshot> paths,ref mut looping::State flow,usize exact,usize depth){
     let usize at=s.begin;let usize f=function_id(state);var context::Join output=context::joining(exact);
     let bool terminal=selection_paths(source,s,unit,state,table,plan,paths,flow,f,depth,ref mut output,true)?;
+    if(terminal){return .ok(context::bottom());}
     return context::joined(unit,state,ref output,at);
 }
 fn Result<bool,errors::Error> conditional(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
@@ -529,7 +557,7 @@ fn Result<bool,errors::Error> scope(ref u8[] source,ref mut lexer::State s,ref m
     if(depth>32){return .err(errors::make(4,s.begin));}let usize mark=name_count(state);var bool terminal=false;var bool produced=false;
     while(s.kind!=125){
         let usize at=s.begin;if(terminal || s.kind==0){return .err(errors::make(2,at));}
-        if(word(source,s,b"let") || word(source,s,b"var")){let usize named=declaration(source,s,unit,state,table,plan,paths,flow)?;}
+        if(word(source,s,b"let") || word(source,s,b"var")){let usize named=declaration(source,s,unit,state,table,plan,paths,flow)?;terminal=named==64;}
         else if(word(source,s,b"while") || word(source,s,b"for")){
             let bool classic=word(source,s,b"for");terminal=control_loop(source,s,unit,state,table,plan,paths,flow,f,depth,classic)?;
         }else if(word(source,s,b"break") || word(source,s,b"continue")){
@@ -539,12 +567,13 @@ fn Result<bool,errors::Error> scope(ref u8[] source,ref mut lexer::State s,ref m
         }
         else if(word(source,s,b"if") && !(yields && context::tail_control(source,s)?)){terminal=conditional(source,s,unit,state,table,plan,paths,flow,f,depth)?;}
         else if(word(source,s,b"switch") && !(yields && context::tail_control(source,s)?)){terminal=selection(source,s,unit,state,table,plan,paths,flow,f,depth)?;}
-        else if(context::assignment_ahead(source,s)?){let usize assigned=assignment(source,s,unit,state,table,plan,paths,flow,59)?;}
+        else if(context::assignment_ahead(source,s)?){let usize assigned=assignment(source,s,unit,state,table,plan,paths,flow,59)?;terminal=assigned==256;}
         else if(word(source,s,b"return")){
             state.reads=0;state.writes=0;
             let usize next=lexer::next(source,s)?;let usize result=plan.results[f];var context::Value value=context::nothing();
             if(result!=0){value=expression(source,s,unit,state,table,plan,paths,flow,result-1,1,0)?;}
             let usize semi=lexer::punctuation(source,s,59)?;
+            if(value.bottom){terminal=true;continue;}
             if(result==66){
                 let usize captured=view_source::capture(unit,state,value,at)?;
                 let usize selected=view_bindings::take_return(unit,ref mut state.views,captured,at)?;
@@ -561,13 +590,20 @@ fn Result<bool,errors::Error> scope(ref u8[] source,ref mut lexer::State s,ref m
         }else if(word(source,s,b"_")){
             let usize name=lexer::next(source,s)?;let usize eq=lexer::punctuation(source,s,61)?;
             let context::Value value=expression(source,s,unit,state,table,plan,paths,flow,64,1,0)?;
-            let usize semi=lexer::punctuation(source,s,59)?;let usize dropped=context::discard_value(unit,state,value,at)?;
+            let usize semi=lexer::punctuation(source,s,59)?;
+            if(value.bottom){terminal=true;continue;}
+            let usize dropped=context::discard_value(unit,state,value,at)?;
         }else if(s.kind==123){
             let usize open=lexer::next(source,s)?;terminal=block(source,s,unit,state,table,plan,paths,flow,f,depth+1)?;
             let usize close=lexer::punctuation(source,s,125)?;
         }else{
             let usize exact=if(yields && context::tail_expression(source,s)?){output.exact}else{64};
             let context::Value value=expression(source,s,unit,state,table,plan,paths,flow,exact,1,if(yields){depth+1}else{0})?;
+            if(value.bottom){
+                terminal=true;
+                if(s.kind==59){let usize semi=lexer::next(source,s)?;}
+                continue;
+            }
             if(yields && s.kind==125 && !value.nothing){
                 let usize published=context::publish(unit,state,output,value,at)?;produced=true;break;
             }
