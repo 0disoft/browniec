@@ -1,4 +1,21 @@
-- Latest project/input integration checkpoint (2026-11-07): [Project sources and binary input](../engineering/runtime-project-input-integration.md)
+- Latest immutable-input execution checkpoint (2026-11-07): [Actual 1MiB input](../engineering/module-input-execution.md)
+  integrates input windows `3503aba` and owning Program execution `c86aff6`.
+  Development/O2 each pass 16 native groups: full input lengths/last byte,
+  returned/nested/overlapping ranges, mixed backing, origin mutations, exact Fuel,
+  original diagnostics and six unchanged reference/module/depth regressions.
+  Kernel development/O2 six-group and explicit layout/OOM evidence is retained.
+  The reviewed 185-module Engine transport also passes both profiles, eight typed
+  bindings, real OS guards/default stacks and zero live heap allocations.
+  All 256 current aggregate inputs match raw checkout/committed Git; 233
+  production modules retain LF. Root check: 241 sources/2748 MIR functions.
+  Original public gates, capacities and prices/default256/ceiling16000000 remain;
+  new input-only metadata charges are explicit. No input payload copy during run.
+  Next: owning input Program/Snapshot Engine/Instance association, OS-reader
+  adoption and guest-output success binding. Full accounting, bounded steps,
+  deadlines/poison, host/restricted/embed and the accepted inventory remain open.
+  Parallel patches were reviewed/committed serially; workers closed. Local only.
+
+- Predecessor project/input integration checkpoint (2026-11-07): [Project sources and binary input](../engineering/runtime-project-input-integration.md)
   records owning input Program admission `070ceaa`, private anchored project
   compile/run `40f2c45` and bounded Windows binary input `564bd6f`.
   Development/O2 each pass five input Program groups and 18 actual project cases;
@@ -681,7 +698,7 @@ requirements of this audit. They need a justified profile decision if desired.
 
 | ID | Work and completion condition |
 | --- | --- |
-| I01 | The [private input owner](../engineering/runtime-io.md) now copies exact immutable binary input with a 1MiB ceiling, checked ranges and quota/Fuel/OOM rollback. Native development/O2 and explicit allocation failure prove ownership and cleanup. The [native input entry selector](../engineering/module-input-entry.md) now owns the exact Index and shared-byte signature/parameter spans, while the original zero-argument selector is unchanged. The [owning input Program](../engineering/module-input-program.md) now lowers all bodies and independently verifies input/reference-return IR while retaining exact source and image provenance. The [private Windows reader](../engineering/runtime-input-reader.md) now acquires bounded exact disk/byte-pipe input with rollback of unpublished owners; reads may block and consumed bytes are not restored. Remaining: actual 1MiB input execution, Program/Instance/VM binding, public file/stdin controls and same-snapshot execution. Current SOURCE is code input, not guest input bytes. |
+| I01 | The [private input owner](../engineering/runtime-io.md) now copies exact immutable binary input with a 1MiB ceiling, checked ranges and quota/Fuel/OOM rollback. Native development/O2 and explicit allocation failure prove ownership and cleanup. The [native input entry selector](../engineering/module-input-entry.md) now owns the exact Index and shared-byte signature/parameter spans, while the original zero-argument selector is unchanged. The [owning input Program](../engineering/module-input-program.md) now lowers all bodies and independently verifies input/reference-return IR while retaining exact source and image provenance. The [private Windows reader](../engineering/runtime-input-reader.md) now acquires bounded exact disk/byte-pipe input with rollback of unpublished owners; reads may block and consumed bytes are not restored. The [native input execution successor](../engineering/module-input-execution.md) now runs the exact Snapshot up to 1MiB through PARAM/alias/range, mixed image/loan CALLs, selected-origin returns and READ/LEN, with additive input-only metadata prices. Remaining: owning input Program/Snapshot association to Engine/Instance, actual OS-reader adoption, public file/stdin controls, guest output success binding and complete work/memory accounting. Current SOURCE is code input, not guest input bytes. |
 | I02 | The [private output transaction](../engineering/runtime-io.md) now stages bounded exact binary bytes, preflights checked quota/Fuel sums, preserves old bytes on allocation failure, freezes fail/cancel and transfers a single immutable owner only through explicit trusted seal. Remaining: grant-controlled guest `output::emit`, actual VM success/failure/deadline/poison linkage, complete Engine accounting and binary/JSON/text sinks. A native seal is not evidence of guest success; sink partial failure must not replay computation. |
 | H01 | The [typed policy/run admission](../engineering/runtime-policy.md) now validates exact complete schemas, decoded duplicates, checked numeric ranges, resource relations, run narrowing and `requires <= grants <= policy.capabilities`, with 21 native groups per Windows profile. Project/catalog admission also exists. Remaining: actual immutable Program/Engine binding, reachable requirements versus declarations, consistent builtin/import contracts, execution enforcement and public loaders. Metadata does not grant authority or enlarge VM capacities. |
 | H02 | The [typed TLV codec](../engineering/host-wire.md) and [strict catalog/canonical SHA-256](../engineering/host-catalog.md) now compose with [native request/reply exchange](../engineering/host-exchange.md) over the exact owning catalog and explicit grants. Remaining: immutable executable Program catalog/requirement binding and actual VM host dispatch and typed destination adoption. Unknown/duplicate metadata rejects; no ambient filesystem/network/command authority enters the guest. |

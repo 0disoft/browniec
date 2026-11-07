@@ -1,18 +1,19 @@
-- Latest project/input integration checkpoint (2026-11-07): [Project sources and binary input](docs/engineering/runtime-project-input-integration.md)
-  records owning input Program admission `070ceaa`, private anchored project
-  compile/run `40f2c45` and bounded Windows binary input `564bd6f`.
-  Development/O2 each pass five input Program groups and 18 actual project cases;
-  binary input passes three production/six test groups plus four explicit syscall
-  return injections and an expected old-branch failure in each profile. Actual
-  zero-byte pipe reads were not reproduced; injection is separately labeled.
-  All 258 aggregate inputs match raw checkout/committed Git; 232 production
-  modules retain LF. Project/reader integration changes no root source/lock.
-  Public gates, VM capacities and Fuel prices/default256/ceiling16000000 remain.
-  Next: actual 1MiB input VM windows through PARAM/CALL/return/READ/LEN, then
-  Engine/OS input and staged output binding. Full accounting, bounded steps,
+- Latest immutable-input execution checkpoint (2026-11-07): [Actual 1MiB input](docs/engineering/module-input-execution.md)
+  integrates input windows `3503aba` and owning Program execution `c86aff6`.
+  Development/O2 each pass 16 native groups: full input lengths/last byte,
+  returned/nested/overlapping ranges, mixed backing, origin mutations, exact Fuel,
+  original diagnostics and six unchanged reference/module/depth regressions.
+  Kernel development/O2 six-group and explicit layout/OOM evidence is retained.
+  The reviewed 185-module Engine transport also passes both profiles, eight typed
+  bindings, real OS guards/default stacks and zero live heap allocations.
+  All 256 current aggregate inputs match raw checkout/committed Git; 233
+  production modules retain LF. Root check: 241 sources/2748 MIR functions.
+  Original public gates, capacities and prices/default256/ceiling16000000 remain;
+  new input-only metadata charges are explicit. No input payload copy during run.
+  Next: owning input Program/Snapshot Engine/Instance association, OS-reader
+  adoption and guest-output success binding. Full accounting, bounded steps,
   deadlines/poison, host/restricted/embed and the accepted inventory remain open.
-  Disjoint parallel patches were reviewed and committed serially; workers closed.
-  Local only; no push/release/deployment.
+  Parallel patches were reviewed/committed serially; workers closed. Local only.
 
 # Brownie C agent guidance
 

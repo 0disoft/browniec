@@ -1,4 +1,21 @@
-- Latest project/input integration checkpoint (2026-11-07): [Project sources and binary input](runtime-project-input-integration.md)
+- Latest immutable-input execution checkpoint (2026-11-07): [Actual 1MiB input](module-input-execution.md)
+  integrates input windows `3503aba` and owning Program execution `c86aff6`.
+  Development/O2 each pass 16 native groups: full input lengths/last byte,
+  returned/nested/overlapping ranges, mixed backing, origin mutations, exact Fuel,
+  original diagnostics and six unchanged reference/module/depth regressions.
+  Kernel development/O2 six-group and explicit layout/OOM evidence is retained.
+  The reviewed 185-module Engine transport also passes both profiles, eight typed
+  bindings, real OS guards/default stacks and zero live heap allocations.
+  All 256 current aggregate inputs match raw checkout/committed Git; 233
+  production modules retain LF. Root check: 241 sources/2748 MIR functions.
+  Original public gates, capacities and prices/default256/ceiling16000000 remain;
+  new input-only metadata charges are explicit. No input payload copy during run.
+  Next: owning input Program/Snapshot Engine/Instance association, OS-reader
+  adoption and guest-output success binding. Full accounting, bounded steps,
+  deadlines/poison, host/restricted/embed and the accepted inventory remain open.
+  Parallel patches were reviewed/committed serially; workers closed. Local only.
+
+- Predecessor project/input integration checkpoint (2026-11-07): [Project sources and binary input](runtime-project-input-integration.md)
   records owning input Program admission `070ceaa`, private anchored project
   compile/run `40f2c45` and bounded Windows binary input `564bd6f`.
   Development/O2 each pass five input Program groups and 18 actual project cases;
@@ -550,9 +567,11 @@ and the inventory completion conditions remain open.
    now snapshot input and stage explicitly sealed output with real native OOM
    rollback. [InputEntry](module-input-entry.md) owns exact shared-byte signatures;
    [owning input Programs](module-input-program.md) now lower and independently
-   verify all bodies against original source/image provenance. Add an immutable
-   per-invocation view domain for the accepted 1MiB input, then connect actual
-   execution, Instance/VM arguments and the success decision.
+   verify all bodies against original source/image provenance. The separate
+   [input execution path](module-input-execution.md) now runs the exact Snapshot
+   up to 1MiB with per-invocation windows, CALL/selected-origin returns and READ/LEN.
+   Connect that owning Program/Snapshot to Instances, actual OS input and the
+   output success decision; complete accounting and bounded resumability remain.
    Run a complete input -> validation/transform -> output example.
 5. **Authority and host exchange: H01-H04, C01-C02/C04.** Add strict bounded
    project/policy/catalog/run loaders, source identities, ceilings/declarations/

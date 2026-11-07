@@ -109,3 +109,20 @@ reservation/accounting and OOM injection, bounded VM steps, OS deadlines,
 in-flight cancellation, poison containment and host/input/output integration.
 This check is native lifecycle evidence, not an independent model or completion
 of those obligations. Broader unchanged CLI/language suites were not rerun.
+
+## Input-VM compatibility successor (2026-11-07)
+
+The [input execution integration](module-input-execution.md) adds the private
+input-window module to this Engine's import closure. The reviewed transport now
+covers 185 modules, `Engine = fy_resource_16` and incoming Entry vector
+`fy_resource_28`. All eight bound C declarations, Engine/meta/vector/Entry field
+projections and vector element resources were compared against the unchanged
+pinned compiler's actual emitted C. Logical types and `bridge.inc` are unchanged.
+
+Both native profiles passed the existing real source/reuse/image, OS guard and
+exhaustion/teardown fixture with default stacks, empty tool PATH and zero live
+heap allocations. Integration reused those hash-matching mirror results rather
+than rebuilding identical inputs; all 195 executed inputs match final root.
+See [current compatibility evidence](../evidence/runtime-engine-input-execution-windows-20261107.json).
+This preserves the existing zero-argument Engine path; associating input Programs
+and Snapshots to Instances remains the next implementation, not a completed ABI.

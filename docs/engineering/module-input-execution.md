@@ -88,6 +88,24 @@ Both native profiles passed **16 groups** on the same final inputs.
 See [executed evidence](../evidence/module-input-execution-windows-20261107.json).
 The independent metadata component also has [development/O2 and explicit OOM evidence](../evidence/input-reference-views-windows-20261107.json).
 
+## Integrated identity and compatibility
+
+Commits `3503aba` (metadata) and `c86aff6` (actual execution/Engine compatibility)
+were integrated serially from disjoint worker mirrors. All 256 current aggregate
+inputs match raw checkout and committed Git blobs; all 233 production modules
+retain LF. The root check is 241 source files/2748 MIR functions. The original
+232 production modules retain their bytes except the six listed VM/API/Fuel
+changes. No fairyc checkout was modified or rebuilt, and no public capability,
+existing capacity or prior price was widened.
+
+The [Engine compatibility successor](runtime-engine.md#input-vm-compatibility-successor-2026-11-07)
+compares eight actual typed bindings over its new 185-module closure and passes
+both native profiles with zero heap allocations. Its 195 executed inputs match
+integration bytes; unchanged native results were reused explicitly. The final
+input suite ran in the root; baseline CLI/language suites were not repeated.
+See [aggregate identity evidence](../evidence/input-execution-integration-windows-20261107.json).
+All workers are closed. These are local commits; no push/release/deployment.
+
 ## Remaining work
 
 Bind owning input Programs and the exact Snapshot to Engine/Instance lifetimes,
