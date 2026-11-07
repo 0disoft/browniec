@@ -1,18 +1,18 @@
-- Latest canonical-dispatch checkpoint (2026-11-07): [Instruction quanta](docs/engineering/runtime-instruction-quanta.md)
-  records implementation `8bf120b`. One opcode dispatcher now saves PC, scalar/
-  static banks, frames, owners, loans, input views and staged output across internal
-  instruction batches. Development/O2 each pass eleven new groups (five cursor,
-  six composed execution), with equal values/output/Fuel/diagnostics/dispatch visits
-  for quanta 1, 2, 3, 7, 64 and 4096. Invalid quanta reject before output preparation.
-  Archived evidence pins 231 checkout/Git inputs and seven SDK objects; executable
-  and object hashes match. Root locked check passes 254 sources/2899 MIR; all 246
-  production modules are LF. Transport has 25 bindings/18 layouts; SDK heap ends
-  at zero. The facade remains synchronous and invocation-stack-owned. Setup, bulk
-  helpers, CALL/RET, seal and cleanup are atomic; persistent Engine.step, deadlines,
-  cancellation, poison containment and full stack/accounting remain open (R03-R05).
-  Prior [execution/output heap](docs/engineering/runtime-engine-execution-memory.md) evidence
-  remains scoped. Public gates, capacities and Fuel prices/default256/cap16000000
-  stay unchanged. Disjoint Sol High work is integrated serially. Local commits only.
+- Latest owning-VM checkpoint (2026-11-08): [Pending output VM](docs/engineering/runtime-pending-output.md)
+  records implementation `1e1e47b`. The private continuation now returns Pending
+  to its caller and preserves banks/frames/authority/loans/input/scratch/output in
+  owned storage. One exact Core allocation and typed in-place initialization fix
+  a reproduced default-stack overflow; no stack-size override is used. Native
+  development/O2 cover eight new groups, fixed/mixed quanta, exact final output/
+  Fuel/original diagnostics, zero resume allocations, all preparation allocation
+  ordinals in the exercised recipe and zero SDK heap at exit. The archive pins
+  234 checkout/Git inputs, seven SDK objects, 29 bindings and 20 layouts.
+  Root check: 255 sources/2911 MIR; all 247 production modules are LF.
+  Caller-pinned Program/input, owning Engine Instance association, native heap
+  ledgers, bounded bulk/setup/publication/cleanup, deadlines and poison remain
+  open. The existing Engine facade is synchronous; R03-R05 stay incomplete.
+  Public gates, capacities and Fuel prices/default256/cap16000000 are unchanged.
+  Two disjoint Sol High workers completed; integration/commits were serial. Local only.
 
 # Brownie C agent guidance
 
