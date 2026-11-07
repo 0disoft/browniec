@@ -3,6 +3,7 @@ import value_ir as values;
 import value_properties as properties;
 import value_source_bindings as bindings;
 import value_source_ops as ops;
+import value_view_bindings as views;
 import lexer as lexer;
 import locals as locals;
 import ir as ir;
@@ -30,6 +31,12 @@ pub fn Result<Value,errors::Error> expected(Value value,usize exact,usize at){
     if((value.nothing && exact!=64) || (exact!=64 && value.exact!=exact)){return .err(wrong(at));}return .ok(value);
 }
 pub fn Result<usize,errors::Error> capture(ref mut values::Program unit,ref mut bindings::State state,Value value,usize at){
+    if(value.exact==65){
+        let usize owner=views::origin(ref state.views,value.value,at)?;
+        if(value.binding==64){return .ok(value.value);}
+        if(value.binding>=state.names.count || state.views.names[value.binding] as usize!=value.value+1){return .err(wrong(at));}
+        return views::alias(unit,ref mut state.views,value.value,at);
+    }
     if(value.binding==64){return .ok(value.value);}
     let usize to=bindings::allocate(unit,state,value.exact,at)?;
     return bindings::use_binding(unit,state,value.binding,to,at);
@@ -42,11 +49,15 @@ pub fn Result<usize,errors::Error> as_scalar(ref mut values::Program unit,ref mu
     let usize dropped=bindings::drop(unit,state,id,at)?;return .ok(result);
 }
 pub fn Result<usize,errors::Error> as_value(ref mut values::Program unit,ref mut bindings::State state,Value value,usize at){
-    if(value.nothing){return .err(wrong(at));}if(value.typed){return capture(unit,state,value,at);}
+    if(value.nothing || value.exact==65){return .err(wrong(at));}if(value.typed){return capture(unit,state,value,at);}
     return ops::scalar_value(unit,state,value.value,value.exact,at);
 }
 pub fn Result<usize,errors::Error> discard_value(ref mut values::Program unit,ref mut bindings::State state,Value value,usize at){
     if(value.nothing){return .err(wrong(at));}
+    if(value.exact==65){
+        if(value.binding==64){return bindings::close_view(unit,state,value.value,at);}
+        let usize owner=views::origin(ref state.views,value.value,at)?;return .ok(0);
+    }
     if(value.typed){let usize id=capture(unit,state,value,at)?;
         let usize handled=bindings::handle(unit,state,id,at)?;return bindings::drop(unit,state,id,at);}return .ok(0);
 }
@@ -63,10 +74,12 @@ pub fn Result<bool,errors::Error> postfix_receiver(ref u8[] source,ref lexer::St
             if(word(source,ref look,b"if") || word(source,ref look,b"switch")){control=true;}
             if(look.kind==63){return .ok(true);}
             if(look.kind==46 && started){let usize dot=lexer::next(source,ref mut look)?;
-                if(word(source,ref look,b"is_some") || word(source,ref look,b"is_none") ||
+                if(look.kind==46){return .ok(false);}
+                if(word(source,ref look,b"len") || word(source,ref look,b"is_some") || word(source,ref look,b"is_none") ||
                     word(source,ref look,b"is_ok") || word(source,ref look,b"is_err")){return .ok(true);}
                 continue;
             }
+            if(look.kind==91 && started){return .ok(true);}
             if(look.kind==59 || look.kind==44 || look.kind==41 || look.kind==125 || look.kind==93 || (look.kind==123 && !control)){return .ok(false);}
             if(started && precedence(look.kind)!=0){return .ok(false);}
         }

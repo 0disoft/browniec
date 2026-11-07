@@ -7,6 +7,7 @@ import value_source_ops as construction;
 import lexer as lexer;
 import locals as locals;
 import errors as errors;
+import value_view_bindings as views;
 
 // Compiler-only argument loans. They never escape into guest values/authority.
 pub struct Reference { usize slot; bool temporary; bool writing; usize reads; usize writes; }
@@ -26,7 +27,8 @@ pub fn Result<u8,errors::Error> operation(ref u8[] source,ref mut lexer::State s
     let u8 op=if(word(source,s,b"empty")){95}else if(word(source,s,b"len")){99}
         else if(word(source,s,b"read")){100}else if(word(source,s,b"write")){101}
         else if(word(source,s,b"push")){102}else if(word(source,s,b"reserve")){103}
-        else if(word(source,s,b"append")){104}else if(word(source,s,b"copy")){105}else{0};
+        else if(word(source,s,b"append")){104}else if(word(source,s,b"copy")){105}
+        else if(word(source,s,b"view")){106}else{0};
     if(op==0){return .err(wrong(s.begin));}let usize name=lexer::next(source,s)?;
     let usize open=lexer::punctuation(source,s,40)?;return .ok(op);
 }
@@ -47,7 +49,7 @@ pub fn Result<Reference,errors::Error> begin(ref values::Program unit,ref mut bi
             state.names.registers[index]!=208+value.value || (writing && !state.names.mutable[index])){return .err(wrong(at));}
     }
     let usize mask=bit(value.value);
-    if((state.writes&mask)!=0 || (writing && (state.reads&mask)!=0)){return .err(wrong(at));}
+    if((state.writes&mask)!=0 || (writing && ((state.reads&mask)!=0 || views::pinned(ref state.views,value.value)))){return .err(wrong(at));}
     let Reference result=Reference{.slot=value.value,.temporary=value.binding==64,
         .writing=writing,.reads=state.reads,.writes=state.writes};
     if(writing){state.writes|=mask;}else{state.reads|=mask;}return .ok(result);

@@ -4,6 +4,7 @@ import value_properties as properties;
 import locals as locals;
 import lexer as lexer;
 import errors as errors;
+import value_view_bindings as views;
 
 // Compiler metadata only; no executable authority or complete source integration.
 // Keep one State with one Program for the entire lowering operation. Never reset
@@ -16,6 +17,7 @@ import errors as errors;
 pub struct State {
     locals::Table names;
     u8[64] bindings; // 0 ordinary local, otherwise typed slot + 1
+    views::State views; // Separate per-activation view IDs; shared lexical names.
     usize next; usize live;
     usize reads; usize writes; // Ephemeral Buffer argument loans, never guest handles.
     bool enforce_results; usize pending; // Direct Result obligations, independent of COPY ownership.
@@ -27,10 +29,10 @@ pub struct State {
 // begin_alternative/select_path select separately reached blocks. merge compares
 // exits and never restores saved liveness/cursors on a continuing path.
 pub struct Snapshot { State state; }
-pub fn State empty(){return State{.names=locals::empty(),.bindings=[0;64],.next=0,.live=0,.reads=0,.writes=0,
+pub fn State empty(){return State{.names=locals::empty(),.bindings=[0;64],.views=views::empty(),.next=0,.live=0,.reads=0,.writes=0,
     .enforce_results=false,.pending=0,.tracking=false,.kills=0,.generated=0,.required=0};}
 pub fn Snapshot snapshot(ref State state){return Snapshot{.state=State{
-    .names=locals::snapshot(ref state.names),.bindings=state.bindings,.next=state.next,.live=state.live,.reads=state.reads,.writes=state.writes,
+    .names=locals::snapshot(ref state.names),.bindings=state.bindings,.views=state.views,.next=state.next,.live=state.live,.reads=state.reads,.writes=state.writes,
     .enforce_results=state.enforce_results,.pending=state.pending,.tracking=state.tracking,
     .kills=state.kills,.generated=state.generated,.required=state.required}};}
 fn usize bit(usize id){let usize one=1;return one<<id;}
@@ -38,6 +40,7 @@ fn usize bit(usize id){let usize one=1;return one<<id;}
 fn u8 byte(usize value){var u8 result=0;var usize i=0;while(i<value){result+=1;i+=1;}return result;}
 fn errors::Error invalid(usize at){return errors::make(3,at);}
 fn Result<usize,errors::Error> header(ref values::Program unit,ref State state,usize at){
+    let usize view_count=views::validate(ref state.views,at)?;
     if(state.next>16 || state.names.count>64 || state.names.function>=16 ||
         state.names.function>=unit.body.function_count || unit.body.function_count>16 ||
         unit.catalog.count>64 || state.live>=65536 || state.pending>=65536 ||
@@ -55,7 +58,14 @@ fn Result<usize,errors::Error> header(ref values::Program unit,ref State state,u
         if((state.pending&bit(i))!=0 && unit.catalog.nodes[values::type_id(unit,i)].kind!=6){return .err(invalid(at));}
         if(((state.reads|state.writes)&bit(i))!=0 && unit.catalog.nodes[values::type_id(unit,i)].kind!=4){return .err(invalid(at));}
         i+=1;
-    }return .ok(state.next);
+    }
+    i=0;while(i<16){if(state.views.origins[i]!=0){let usize owner=(state.views.origins[i] as usize)-1;
+        if(owner>=state.next || (state.live&bit(owner))==0 ||
+            unit.catalog.nodes[values::type_id(unit,owner)].kind!=4){return .err(invalid(at));}
+    }i+=1;}
+    i=0;while(i<64){if(state.views.names[i]!=0){let usize id=(state.views.names[i] as usize)-1;
+        if(i>=state.names.count || state.bindings[i]!=0 || state.names.registers[i]!=224+id){return .err(invalid(at));}
+    }i+=1;}return .ok(state.next);
 }
 fn Result<usize,errors::Error> slot(ref values::Program unit,ref State state,usize id,usize at){
     let usize checked=header(unit,state,at)?;
@@ -149,7 +159,7 @@ pub fn Result<usize,errors::Error> initialize(ref values::Program unit,ref mut S
 }
 pub fn Result<usize,errors::Error> enter_function(ref values::Program unit,ref mut State state,usize function,usize at){
     let usize checked=header(unit,state,at)?;
-    if(function>=unit.body.function_count || state.names.count!=0 || state.live!=0){return .err(invalid(at));}
+    if(function>=unit.body.function_count || state.names.count!=0 || state.live!=0 || views::count(ref state.views)!=0){return .err(invalid(at));}
     state.names.function=function;return .ok(function);
 }
 // Bind an already initialized exact-type slot. Staging just the small names
@@ -172,6 +182,26 @@ pub fn Result<usize,errors::Error> declare_mut(ref values::Program unit,ref mut 
     ref u8[] source,usize begin,usize end,usize id,usize exact_type){
     let usize index=declare(unit,state,source,begin,end,id,exact_type)?;
     state.names.mutable[index]=true;return .ok(index);
+}
+// Views share the ordinary/owned name namespace, but never own a value slot.
+pub fn Result<usize,errors::Error> declare_view(ref values::Program unit,ref mut State state,
+    ref u8[] source,usize begin,usize end,usize id,bool mutable){
+    let usize checked=header(unit,state,begin)?;let usize owner=views::origin(ref state.views,id,begin)?;
+    if(!lexer::simple(source,begin,end) || locals::reserved(source[begin..end])){return .err(errors::make(2,begin));}
+    let usize valid=spans(source,state,begin)?;
+    if(locals::find(source,ref state.names,begin,end)!=64){return .err(invalid(begin));}
+    var usize i=0;while(i<state.names.count){if(state.views.names[i] as usize==id+1){return .err(invalid(begin));}i+=1;}
+    var locals::Table staged=locals::snapshot(ref state.names);
+    let usize index=locals::declare(ref mut staged,begin,end,224+id,mutable)?;
+    state.names=staged;state.bindings[index]=0;state.views.names[index]=byte(id+1);return .ok(index);
+}
+pub fn Result<usize,errors::Error> lookup_view(ref u8[] source,ref State state,usize begin,usize end){
+    if(state.names.count>64 || !lexer::simple(source,begin,end)){return .err(errors::make(2,begin));}
+    let usize checked=spans(source,state,begin)?;let usize valid=views::validate(ref state.views,begin)?;
+    let usize index=locals::find(source,ref state.names,begin,end);
+    if(index==64 || state.views.names[index]==0 || state.bindings[index]!=0 ||
+        state.names.registers[index]!=223+state.views.names[index] as usize){return .err(invalid(begin));}
+    return .ok(index);
 }
 fn Result<usize,errors::Error> spans(ref u8[] source,ref State state,usize at){
     var usize i=0;while(i<state.names.count){
@@ -200,6 +230,7 @@ pub fn Result<usize,errors::Error> use_binding(ref mut values::Program unit,ref 
     usize index,usize destination,usize at){
     let usize source=binding(unit,state,index,at)?;
     let usize checked=slot(unit,state,destination,at)?;
+    if(views::pinned(ref state.views,source) || views::pinned(ref state.views,destination)){return .err(invalid(at));}
     if(((state.reads|state.writes)&(bit(source)|bit(destination)))!=0 ||
         (state.live&bit(source))==0 || (state.live&bit(destination))!=0 ||
         unit.types[source]!=unit.types[destination]){return .err(invalid(at));}
@@ -216,6 +247,7 @@ pub fn Result<usize,errors::Error> move_value(ref mut values::Program unit,ref m
     usize destination,usize source,usize at){
     let usize checked=slot(unit,state,source,at)?;
     let usize valid=slot(unit,state,destination,at)?;
+    if(views::pinned(ref state.views,source) || views::pinned(ref state.views,destination)){return .err(invalid(at));}
     if(((state.reads|state.writes)&(bit(source)|bit(destination)))!=0 ||
         (state.live&bit(source))==0 || (state.live&bit(destination))!=0 ||
         unit.types[source]!=unit.types[destination]){return .err(invalid(at));}
@@ -234,6 +266,7 @@ pub fn Result<usize,errors::Error> assign(ref mut values::Program unit,ref mut S
     usize index,usize source,usize at){
     let usize destination=binding(unit,state,index,at)?;
     let usize checked=slot(unit,state,source,at)?;
+    if(views::pinned(ref state.views,source) || views::pinned(ref state.views,destination)){return .err(invalid(at));}
     if(((state.reads|state.writes)&(bit(source)|bit(destination)))!=0 ||
         !state.names.mutable[index] || (state.live&bit(source))==0 ||
         unit.types[source]!=unit.types[destination]){return .err(invalid(at));}
@@ -264,12 +297,14 @@ pub fn Result<usize,errors::Error> assign(ref mut values::Program unit,ref mut S
 // RETURN consumes even copyable sources. No instruction is emitted here.
 pub fn Result<usize,errors::Error> consume(ref values::Program unit,ref mut State state,usize id,usize at){
     let usize checked=slot(unit,state,id,at)?;
+    if(views::pinned(ref state.views,id)){return .err(invalid(at));}
     if(((state.reads|state.writes)&bit(id))!=0 || (state.live&bit(id))==0){return .err(invalid(at));}
     state.live^=bit(id);result_handled(unit,state,id);return .ok(id);
 }
 // Idempotent explicit drop, including anonymous temporaries. Dead emits nothing.
 pub fn Result<usize,errors::Error> drop(ref mut values::Program unit,ref mut State state,usize id,usize at){
     let usize checked=slot(unit,state,id,at)?;
+    if(views::pinned(ref state.views,id)){return .err(invalid(at));}
     if(((state.reads|state.writes)&bit(id))!=0){return .err(invalid(at));}
     if((state.live&bit(id))==0){return .ok(id);}
     if((state.pending&bit(id))!=0){return .err(errors::make(18,at));}
@@ -277,28 +312,105 @@ pub fn Result<usize,errors::Error> drop(ref mut values::Program unit,ref mut Sta
     result_required(unit,state,id);result_handled(unit,state,id);
     append(unit,90,id,0,at);state.live^=bit(id);return .ok(id);
 }
+fn bool named_owner(ref State state,usize owner){var usize i=0;
+    while(i<state.names.count){if(state.bindings[i] as usize==owner+1){return true;}i+=1;}return false;}
+fn Result<usize,errors::Error> anonymous_drop(ref State state,usize owner,usize at){
+    if(named_owner(state,owner)){return .ok(0);}
+    if(((state.reads|state.writes)&bit(owner))!=0){return .err(invalid(at));}
+    if((state.pending&bit(owner))!=0){return .err(errors::make(18,at));}return .ok(1);
+}
+// Close one descriptor and the anonymous owner only when its last lease ends.
+// Admit the entire CLOSE+optional DROP before touching either state plane.
+pub fn Result<usize,errors::Error> close_view(ref mut values::Program unit,ref mut State state,usize id,usize at){
+    let usize checked=header(unit,state,at)?;let usize owner=views::origin(ref state.views,id,at)?;
+    var bool last=true;var usize i=0;while(i<16){
+        if(i!=id && state.views.origins[i] as usize==owner+1){last=false;}i+=1;}
+    var usize drops=0;if(last){drops=anonymous_drop(state,owner,at)?;}
+    if(unit.body.count>256 || 1+drops>256-unit.body.count){return .err(errors::make(4,at));}
+    let usize closed=views::close(unit,ref mut state.views,id,at)?;
+    if(drops!=0){let usize dropped=drop(unit,state,owner,at)?;}return .ok(closed);
+}
+// All descriptors close before any owner drops. Named owners stay for ordinary
+// lexical cleanup; an immediate view over an anonymous Buffer owns its cleanup.
+pub fn Result<usize,errors::Error> close_views(ref mut values::Program unit,ref mut State state,usize at){
+    let usize checked=header(unit,state,at)?;var usize owners=0;var usize i=0;
+    while(i<16){if(state.views.origins[i]!=0){owners|=bit((state.views.origins[i] as usize)-1);}i+=1;}
+    var usize drops=0;i=0;while(i<16){if((owners&bit(i))!=0){drops+=anonymous_drop(state,i,at)?;}i+=1;}
+    let usize closes=views::count(ref state.views);
+    if(unit.body.count>256 || closes+drops>256-unit.body.count){return .err(errors::make(4,at));}
+    let usize closed=views::close_all(unit,ref mut state.views,at)?;
+    i=16;while(i>0){i-=1;if((owners&bit(i))!=0 && !named_owner(state,i)){
+        let usize dropped=drop(unit,state,i,at)?;}}
+    return .ok(closed);
+}
+// Preserve baseline descriptors and close only newer anonymous temporaries.
+// Dropping their last anonymous root is part of the same atomic admission.
+pub fn Result<usize,errors::Error> close_views_since(ref mut values::Program unit,ref mut State state,
+    ref views::State baseline,usize at){
+    let usize checked=header(unit,state,at)?;
+    let usize closing=views::anonymous_since(ref state.views,baseline,at)?;
+    var usize owners=0;var usize kept=0;var usize closes=0;var usize i=0;
+    while(i<16){if(state.views.origins[i]!=0){let usize owner=(state.views.origins[i] as usize)-1;
+        if((closing&bit(i))!=0){owners|=bit(owner);closes+=1;}else{kept|=bit(owner);}
+    }i+=1;}
+    owners^=owners&kept;var usize drops=0;i=0;
+    while(i<16){if((owners&bit(i))!=0){drops+=anonymous_drop(state,i,at)?;}i+=1;}
+    if(unit.body.count>256 || closes+drops>256-unit.body.count){return .err(errors::make(4,at));}
+    let usize closed=views::close_since(unit,ref mut state.views,baseline,at)?;
+    i=16;while(i>0){i-=1;if((owners&bit(i))!=0 && !named_owner(state,i)){
+        let usize dropped=drop(unit,state,i,at)?;}}
+    return .ok(closed);
+}
+// RHS is an already captured anonymous view. Preserve the lexical destination
+// ID/mutability while replacing its descriptor; payload remains read-only.
+pub fn Result<usize,errors::Error> assign_view(ref mut values::Program unit,ref mut State state,
+    usize index,usize source,usize at){
+    let usize checked=header(unit,state,at)?;
+    if(index>=state.names.count || state.views.names[index]==0 || !state.names.mutable[index]){return .err(invalid(at));}
+    let usize destination=(state.views.names[index] as usize)-1;
+    let usize old_owner=views::origin(ref state.views,destination,at)?;
+    let usize new_owner=views::origin(ref state.views,source,at)?;
+    var usize i=0;while(i<state.names.count){if(state.views.names[i] as usize==source+1){return .err(invalid(at));}i+=1;}
+    var bool last=true;i=0;while(i<16){if(i!=destination && state.views.origins[i] as usize==old_owner+1){last=false;}i+=1;}
+    var usize drops=0;if(last){drops=anonymous_drop(state,old_owner,at)?;}
+    if(unit.body.count>256 || 2+drops>256-unit.body.count){return .err(errors::make(4,at));}
+    let usize closed=views::close(unit,ref mut state.views,destination,at)?;
+    let usize moved=views::move_to(unit,ref mut state.views,source,destination,at)?;
+    state.views.names[index]=byte(destination+1);
+    if(drops!=0){let usize dropped=drop(unit,state,old_owner,at)?;}return .ok(destination);
+}
 // mark is names.count at scope entry. Admit the ENTIRE reverse cleanup before
 // any DROP/name removal, including late malformed bindings or full instruction IR.
 // Ordinary locals share the Table but require their parent's separate cleanup.
 pub fn Result<usize,errors::Error> leave_scope(ref mut values::Program unit,ref mut State state,usize mark,usize at){
     let usize checked=header(unit,state,at)?;
     if(mark>state.names.count){return .err(invalid(at));}
-    var usize drops=0;var usize seen=0;var usize i=0;
+    var usize drops=0;var usize roots=0;var usize seen=0;var usize i=0;
     while(i<state.names.count){if(state.bindings[i]!=0){
         let usize id=binding(unit,state,i,at)?;
         if((seen&bit(id))!=0){return .err(invalid(at));}seen|=bit(id);
         if(i>=mark && (state.live&bit(id))!=0){
             if(((state.reads|state.writes)&bit(id))!=0){return .err(invalid(at));}
-            if((state.pending&bit(id))!=0){return .err(errors::make(18,at));}drops+=1;}
+            if((state.pending&bit(id))!=0){return .err(errors::make(18,at));}drops+=1;roots|=bit(id);}
     }i+=1;}
-    if(unit.body.count>256 || drops>256-unit.body.count){return .err(errors::make(4,at));}
+    var usize closes=0;var usize closing=0;i=mark;while(i<state.names.count){
+        if(state.views.names[i]!=0){let usize id=(state.views.names[i] as usize)-1;closing|=bit(id);closes+=1;}i+=1;
+    }
+    i=0;while(i<16){if(state.views.origins[i]!=0){let usize owner=(state.views.origins[i] as usize)-1;
+        if((roots&bit(owner))!=0 && (closing&bit(i))==0){return .err(invalid(at));}
+    }i+=1;}
+    if(unit.body.count>256 || drops+closes>256-unit.body.count){return .err(errors::make(4,at));}
+    // CLOSE every departing alias/range before dropping any referenced root.
+    i=state.names.count;while(i>mark){i-=1;if(state.views.names[i]!=0){
+        let usize id=(state.views.names[i] as usize)-1;
+        let usize closed=views::close(unit,ref mut state.views,id,at)?;}}
     i=state.names.count;while(i>mark){i-=1;
         if(state.bindings[i]!=0){let usize id=(state.bindings[i] as usize)-1;
             if((state.live&bit(id))!=0){
                 result_required(unit,state,id);result_handled(unit,state,id);
                 append(unit,90,id,0,at);state.live^=bit(id);
             }}
-        state.bindings[i]=0;state.names.begins[i]=0;state.names.ends[i]=0;
+        state.bindings[i]=0;state.views.names[i]=0;state.names.begins[i]=0;state.names.ends[i]=0;
         state.names.registers[i]=0;state.names.mutable[i]=false;
     }state.names.count=mark;return .ok(drops);
 }
@@ -317,13 +429,13 @@ pub fn Result<usize,errors::Error> begin_alternative(ref values::Program unit,re
         return .err(invalid(at));}
     // Stage only the small metadata state, rebased onto the current global
     // high-water mark. The stale entry must not pass header with its old next.
-    var State staged=State{.names=locals::snapshot(ref prior.names),.bindings=prior.bindings,
+    var State staged=State{.names=locals::snapshot(ref prior.names),.bindings=prior.bindings,.views=prior.views,
         .next=current.next,.live=prior.live,.reads=prior.reads,.writes=prior.writes,.enforce_results=prior.enforce_results,.pending=prior.pending,
         .tracking=prior.tracking,.kills=prior.kills,.generated=prior.generated,.required=prior.required};
     let usize valid=header(unit,ref staged,at)?;
     var usize i=prior.next;while(i<16){if((prior.live&bit(i))!=0){return .err(invalid(at));}i+=1;}
     var usize seen=0;i=0;while(i<current.names.count){
-        if(prior.bindings[i]!=current.bindings[i] || prior.names.begins[i]!=current.names.begins[i] ||
+        if(prior.bindings[i]!=current.bindings[i] || prior.views.names[i]!=current.views.names[i] || prior.names.begins[i]!=current.names.begins[i] ||
             prior.names.ends[i]!=current.names.ends[i] || prior.names.registers[i]!=current.names.registers[i] ||
             prior.names.mutable[i]!=current.names.mutable[i] || prior.names.begins[i]>prior.names.ends[i]){
             return .err(invalid(at));}
@@ -332,7 +444,7 @@ pub fn Result<usize,errors::Error> begin_alternative(ref values::Program unit,re
             if(id>=prior.next || (seen&bit(id))!=0){return .err(invalid(at));}seen|=bit(id);
         }i+=1;
     }
-    current.names=staged.names;current.bindings=staged.bindings;current.live=staged.live;current.reads=staged.reads;current.writes=staged.writes;
+    current.names=staged.names;current.bindings=staged.bindings;current.views=staged.views;current.live=staged.live;current.reads=staged.reads;current.writes=staged.writes;
     current.enforce_results=staged.enforce_results;current.pending=staged.pending;
     current.kills=staged.kills;current.generated=staged.generated;current.required|=staged.required;
     return .ok(current.live);
@@ -347,7 +459,7 @@ pub fn Result<usize,errors::Error> select_path(ref values::Program unit,ref mut 
     if(prior.next>current.next || prior.names.function!=current.names.function ||
         prior.enforce_results!=current.enforce_results || prior.tracking!=current.tracking){return .err(invalid(at));}
     var usize i=prior.next;while(i<16){if((prior.live&bit(i))!=0){return .err(invalid(at));}i+=1;}
-    var State staged=State{.names=locals::snapshot(ref prior.names),.bindings=prior.bindings,
+    var State staged=State{.names=locals::snapshot(ref prior.names),.bindings=prior.bindings,.views=prior.views,
         .next=current.next,.live=prior.live,.reads=prior.reads,.writes=prior.writes,.enforce_results=prior.enforce_results,.pending=prior.pending,
         .tracking=prior.tracking,.kills=prior.kills,.generated=prior.generated,.required=prior.required};
     let usize valid=header(unit,ref staged,at)?;
@@ -357,7 +469,7 @@ pub fn Result<usize,errors::Error> select_path(ref values::Program unit,ref mut 
             if(id>=prior.next || (seen&bit(id))!=0){return .err(invalid(at));}seen|=bit(id);}
         i+=1;
     }
-    current.names=staged.names;current.bindings=staged.bindings;current.live=staged.live;current.reads=staged.reads;current.writes=staged.writes;
+    current.names=staged.names;current.bindings=staged.bindings;current.views=staged.views;current.live=staged.live;current.reads=staged.reads;current.writes=staged.writes;
     current.enforce_results=staged.enforce_results;current.pending=staged.pending;
     current.kills=staged.kills;current.generated=staged.generated;current.required|=staged.required;
     return .ok(current.live);
@@ -368,9 +480,9 @@ pub fn Result<usize,errors::Error> merge(ref values::Program unit,ref mut State 
     let usize checked=header(unit,state,at)?;let ref State prior=ref other.state;
     if(prior.next>state.next || prior.names.count!=state.names.count || prior.names.function!=state.names.function ||
         prior.names.pending_places!=state.names.pending_places || prior.live!=state.live ||
-        prior.reads!=state.reads || prior.writes!=state.writes ||
+        prior.reads!=state.reads || prior.writes!=state.writes || !views::same(ref prior.views,ref state.views) ||
         prior.enforce_results!=state.enforce_results || prior.tracking!=state.tracking){return .err(invalid(at));}
-    var State staged=State{.names=locals::snapshot(ref prior.names),.bindings=prior.bindings,
+    var State staged=State{.names=locals::snapshot(ref prior.names),.bindings=prior.bindings,.views=prior.views,
         .next=state.next,.live=prior.live,.reads=prior.reads,.writes=prior.writes,.enforce_results=prior.enforce_results,.pending=prior.pending,
         .tracking=prior.tracking,.kills=prior.kills,.generated=prior.generated,.required=prior.required};
     let usize valid=header(unit,ref staged,at)?;

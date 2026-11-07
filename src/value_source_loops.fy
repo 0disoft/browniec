@@ -5,6 +5,7 @@ import value_ir as values;
 import ir as ir;
 import errors as errors;
 import std::vec as vec;
+import value_view_bindings as views;
 
 // Compiler metadata only. Snapshot indices never restore native owner authority.
 pub struct Frame {
@@ -57,7 +58,12 @@ fn Result<usize,errors::Error> clean(ref mut values::Program unit,ref mut bindin
     if(frame.entry>=branches::mark(paths)){return .err(invalid(at));}
     state.reads=vec::at<bindings::Snapshot>(paths,frame.entry).state.reads;
     state.writes=vec::at<bindings::Snapshot>(paths,frame.entry).state.writes;
+    let ref views::State baseline=ref vec::at<bindings::Snapshot>(paths,frame.entry).state.views;
+    // An endpoint can leave while its anonymous receiver still pins a local root.
+    // Release those captures before lexical cleanup attempts to DROP that root.
+    let usize closed=bindings::close_views_since(unit,state,baseline,at)?;
     let usize named=bindings::leave_scope(unit,state,frame.names,at)?;
+    if(!views::same(ref state.views,baseline)){return .err(invalid(at));}
     let usize live=vec::at<bindings::Snapshot>(paths,frame.entry).state.live;
     let usize one=1;var usize id=state.next;
     while(id!=0){id-=1;if((state.live&(one<<id))!=0 && (live&(one<<id))==0){

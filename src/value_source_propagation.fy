@@ -7,6 +7,7 @@ import ir as ir;
 import locals as locals;
 import errors as errors;
 import std::vec as vec;
+import value_view_bindings as views;
 
 pub struct Expanded { usize payload; usize exact; }
 fn usize function(ref bindings::State state){let ref locals::Table names=ref state.names;return names.function;}
@@ -28,7 +29,8 @@ fn Result<usize,errors::Error> preflight_finish(ref values::Program unit,
         if(i!=keep && (state.live&(one<<i))!=0){drops+=1;}i+=1;
     }
     let ref ir::Program body=ref unit.body;
-    if(body.count>256 || drops>256-body.count){return .err(errors::make(4,at));}
+    let usize closes=views::count(ref state.views);
+    if(body.count>256 || closes>256-body.count || drops>256-body.count-closes){return .err(errors::make(4,at));}
     return .ok(checked);
 }
 pub fn Result<usize,errors::Error> finish_function(ref mut values::Program unit,
@@ -36,6 +38,7 @@ pub fn Result<usize,errors::Error> finish_function(ref mut values::Program unit,
     if(state.next>16){return .err(errors::make(3,at));}
     state.reads=0;state.writes=0;
     let usize admitted=preflight_finish(unit,state,keep,at)?;
+    let usize closed=bindings::close_views(unit,state,at)?;
     let usize checked=bindings::check_exit(unit,state,keep,at)?;
     let usize f=function(state);
     var usize id=state.next;while(id!=0){id-=1;
