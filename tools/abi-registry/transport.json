@@ -1,0 +1,54 @@
+{
+  "schema": "browniec.abi-registry-transport/v1",
+  "compilerRevision": "eb274643bfcfe746617121ddc6f130b018978b53",
+  "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+  "transportSha256": "c424daab534cc50130704dc824970802915cded8265820403478b49a76e3a5bb",
+  "kernelSha256": "6e40e0e4aa73ef1f63147774da917ca7e58ab077f9de89b4dec2142c1ebc21d4",
+  "retentionSha256": "19e295a582ecaf048fe34c448247ab860c951a18b3d4ff157803160764ab1f54",
+  "types": {
+    "Admission": "fy_struct_0",
+    "Identity": "fy_struct_1",
+    "Slot": "fy_struct_2",
+    "Table": "fy_struct_3",
+    "AdmissionResult": "fy_tagged_0",
+    "WordResult": "fy_tagged_1"
+  },
+  "functions": {
+    "active": "fy_fn_0",
+    "capacity": "fy_fn_1",
+    "create_engine": "fy_fn_2",
+    "empty": "fy_fn_3",
+    "engine_kind": "fy_fn_4",
+    "enter": "fy_fn_5",
+    "enter_instance": "fy_fn_6",
+    "free_slot": "fy_fn_7",
+    "generation_max": "fy_fn_8",
+    "identity_valid": "fy_fn_9",
+    "insert_child": "fy_fn_10",
+    "instance_kind": "fy_fn_11",
+    "kind_valid": "fy_fn_12",
+    "leave": "fy_fn_13",
+    "lookup": "fy_fn_14",
+    "owner": "fy_fn_15",
+    "program_kind": "fy_fn_16",
+    "remove": "fy_fn_17",
+    "slot_index": "fy_fn_18",
+    "status": "fy_fn_19",
+    "token": "fy_fn_20",
+    "vacant": "fy_fn_21",
+    "retention_main": "fy_fn_22"
+  },
+  "sizes": {
+    "Admission": 40,
+    "Identity": 16,
+    "Slot": 48,
+    "Table": 3080,
+    "AdmissionResult": 56,
+    "WordResult": 24
+  },
+  "resultTags": {
+    "ok": 0,
+    "err": 1
+  },
+  "note": "Reviewed complete 81874-byte generated transport, 23 functions. Private binding, not stable C ABI. Regenerate/review on ANY compiler/kernel/retention change."
+}
