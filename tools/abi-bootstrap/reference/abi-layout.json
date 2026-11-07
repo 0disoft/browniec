@@ -1,0 +1,30 @@
+{
+  "schema": "brownie.abi-layout/1",
+  "target": "windows-x64-natural",
+  "abi_revision": 2,
+  "pointer_bits": 64,
+  "expected_sizes": {
+    "bc_slice": 16,
+    "bc_source": 32,
+    "bc_diagnostic": 264,
+    "bc_event": 336,
+    "bc_entry_info": 32,
+    "bc_abi_info": 32
+  },
+  "expected_offsets": {
+    "bc_event": {
+      "request_id": 24,
+      "payload": 56,
+      "diagnostic": 72
+    },
+    "bc_diagnostic": {
+      "message": 24
+    },
+    "bc_entry_info": {
+      "required_capabilities_json": 16
+    }
+  },
+  "verification": "Linux x64 C/C++ declaration check only; Windows MSVC exports and call ABI remain M0/M5 probes.",
+  "query_signature": "uint32_t bc_get_abi_info_v2(uint32_t requested_revision, uint32_t out_capacity, bc_abi_info *out_info)",
+  "bootstrap_symbol": "bc_get_abi_info_v2"
+}
