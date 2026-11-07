@@ -11,6 +11,9 @@ sys.dont_write_bytecode = True
 spec = importlib.util.spec_from_file_location('value_source_verifier', ROOT / 'tools/verify-value-source.py')
 runner = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(runner)
+DESCRIPTION = __doc__
+DIRECTORY = 'build/value-bottom'
+EXTRA_INPUTS = set()
 MODULES = {
     'value_bottom_source': None,
     'value_view_join_source': None,
@@ -23,7 +26,7 @@ MODULES = {
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description=DESCRIPTION)
     parser.add_argument('--profile', choices=['development', 'release', 'all'], default='all')
     parser.add_argument('--discover', action='store_true')
     args = parser.parse_args()
@@ -35,11 +38,11 @@ def main():
         print(json.dumps(sorted(expected), indent=2))
         return
     profiles = ['development', 'release'] if args.profile == 'all' else [args.profile]
-    directory = 'build/value-bottom'
+    directory = DIRECTORY
     paths = sorted({path.relative_to(ROOT).as_posix() for path in (ROOT / 'src').rglob('*.fy')} |
                    {f'tests/m2/{name}.fy' for name in MODULES} |
                    {'fairy.toml', 'fairy.lock', 'toolchain.json', 'tools/verify-value-source.py',
-                    'tools/verify-value-bottom.py'})
+                    'tools/verify-value-bottom.py'} | EXTRA_INPUTS)
     inputs = [dict(path=path, sha256=runner.digest(ROOT / path)) for path in paths]
     for profile in profiles:
         output = ROOT / directory / profile

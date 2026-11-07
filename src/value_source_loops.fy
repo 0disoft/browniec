@@ -60,12 +60,13 @@ fn Result<usize,errors::Error> clean(ref mut values::Program unit,ref mut bindin
     if(frame.entry>=branches::mark(paths)){return .err(invalid(at));}
     state.reads=vec::at<bindings::Snapshot>(paths,frame.entry).state.reads;
     state.writes=vec::at<bindings::Snapshot>(paths,frame.entry).state.writes;
-    let ref views::State baseline=ref vec::at<bindings::Snapshot>(paths,frame.entry).state.views;
+    let views::State baseline=views::loop_baseline(ref state.views,
+        ref vec::at<bindings::Snapshot>(paths,frame.entry).state.views,at)?;
     // An endpoint can leave while its anonymous receiver still pins a local root.
     // Release those captures before lexical cleanup attempts to DROP that root.
-    let usize closed=bindings::close_views_since(unit,state,baseline,at)?;
+    let usize closed=bindings::close_views_since(unit,state,ref baseline,at)?;
     let usize named=bindings::leave_scope(unit,state,frame.names,at)?;
-    if(!views::same(ref state.views,baseline)){return .err(invalid(at));}
+    if(!views::same(ref state.views,ref baseline)){return .err(invalid(at));}
     let usize live=vec::at<bindings::Snapshot>(paths,frame.entry).state.live;
     let usize maybe=vec::at<bindings::Snapshot>(paths,frame.entry).state.maybe;
     let usize one=1;var usize id=state.next;
@@ -111,6 +112,164 @@ pub fn Result<bool,errors::Error> post(ref mut values::Program unit,ref mut bind
         let usize patched=ir::patch(ref mut unit.body,pc,target,at)?;
         loops.owners[pc]=0;loops.paths[pc]=0;
     }pc+=1;}return .ok(any);
+}
+// Source-loop inference over already emitted IR, before exit trampolines are
+// lowered. No source/body replay, slot rewind or executable effect occurs here.
+// Both planes only gain bits: missing retention records an unretained occurrence
+// on ANY path containing that origin. This is the per-origin retention meet.
+// Keep the bounded PC table on the compiler heap, off recursive parser frames.
+struct Origins { usize[16] roots; usize[16] unretained; }
+fn Origins no_origins(){return Origins{.roots=[0;16],.unretained=[0;16]};}
+fn usize bit(usize id){let usize one=1;return one<<id;}
+fn Result<usize,errors::Error> origin_edge(ref mut vec::Vec<Origins> states,
+    ref mut bool[] seen,ref mut bool[] pending,usize head,usize end,usize target,
+    ref Origins incoming,usize at){
+    if(target<head || target>=end){return .err(invalid(at));}
+    let ref Origins prior=vec::at<Origins>(states,target-head);var usize i=0;
+    while(i<16){if(seen[target] && (prior.roots[i]==0)!=(incoming.roots[i]==0)){
+        return .err(invalid(at));}i+=1;}
+    var bool changed=!seen[target];let ref mut Origins joined=vec::at_mut<Origins>(states,target-head);
+    i=0;while(i<16){
+        let usize roots=joined.roots[i]|incoming.roots[i];
+        let usize missing=joined.unretained[i]|incoming.unretained[i];
+        if(roots!=joined.roots[i] || missing!=joined.unretained[i]){changed=true;}
+        joined.roots[i]=roots;joined.unretained[i]=missing;i+=1;
+    }
+    seen[target]=true;if(changed){pending[target]=true;}return .ok(target);
+}
+fn Result<usize,errors::Error> view_transfer(ref values::Program unit,ref mut Origins row,usize pc,usize at){
+    let ref ir::Program p=ref unit.body;let usize offset=pc*8;let u8 op=p.code[offset];
+    let usize dst=p.code[offset+1] as usize;let usize a=p.code[offset+2] as usize;
+    let usize map=p.code[offset+3] as usize;
+    if(op==105 || op==106 || op==107 || op==108 || op==114){
+        if(dst>=16 || row.roots[dst]!=0){return .err(invalid(at));}
+        if(op==105){if(a>=16){return .err(invalid(at));}
+            row.roots[dst]=bit(a);row.unretained[dst]=bit(a);
+        }else{
+            var usize source=a;
+            if(op==114){
+                if(a>=p.function_count || map>=p.call_count || unit.results[a]<17 || unit.results[a]>24){
+                    return .err(invalid(at));}
+                let usize selected=(unit.results[a] as usize)-17;
+                if(selected>=p.call_arities[map] as usize){return .err(invalid(at));}
+                let usize actual=p.call_args[map*8+selected] as usize;
+                if(actual<224 || actual>=240){return .err(invalid(at));}source=actual-224;
+            }
+            if(source>=16 || row.roots[source]==0){return .err(invalid(at));}
+            let usize roots=row.roots[source];let usize missing=if(op==114){0}else{row.unretained[source]};
+            row.roots[dst]=roots;row.unretained[dst]=missing;
+            if(op==108){row.roots[source]=0;row.unretained[source]=0;}
+        }
+    }else if(op==109){
+        if(dst>=16 || row.roots[dst]==0){return .err(invalid(at));}
+        row.roots[dst]=0;row.unretained[dst]=0;
+    }else if(op==110 || op==111 || op==113){
+        if(a>=16 || row.roots[a]==0){return .err(invalid(at));}
+    }
+    return .ok(pc);
+}
+fn Result<usize,errors::Error> unpinned(ref Origins row,usize owner,usize at){
+    if(owner>=16){return .err(invalid(at));}var usize i=0;
+    while(i<16){if((row.roots[i]&bit(owner))!=0){return .err(invalid(at));}i+=1;}return .ok(owner);
+}
+// Recheck EVERY earlier write/move/drop against the converged origins, including
+// implicit source cleanup emitted before widening. Native/independent admission
+// is still mandatory; this source audit cannot turn an unsafe candidate into IR.
+fn Result<usize,errors::Error> audit(ref values::Program unit,ref Origins row,usize pc,usize at){
+    let ref ir::Program p=ref unit.body;let usize offset=pc*8;let u8 op=p.code[offset];
+    let usize dst=p.code[offset+1] as usize;let usize a=p.code[offset+2] as usize;
+    let usize b=p.code[offset+3] as usize;
+    if(op==88 || op==89 || op==90 || op==115 || op==101 || op==102 || op==103 || op==104 || op==112 || op==91 || op==92){
+        let usize owner=if(op==90 || op==115 || op==101){dst}else{a};
+        let usize checked=unpinned(row,owner,at)?;
+    }
+    if(op==9 || op==93 || op==114){
+        if(b>=p.call_count || p.call_arities[b]>8){return .err(invalid(at));}var usize i=0;
+        while(i<p.call_arities[b] as usize){let usize actual=p.call_args[b*8+i] as usize;
+            if(actual>=208 && actual<224){let usize checked=unpinned(row,actual-208,at)?;}
+            else if(actual>=224 && actual<240 && row.roots[actual-224]==0){return .err(invalid(at));}i+=1;
+        }
+    }
+    if(op==8 || op==39 || op==50 || op==82 || op==94 || op==113){
+        var usize keep=16;
+        if(op==113){
+            if(a>=16){return .err(invalid(at));}
+            // The caller checks the exact selected formal using the authenticated
+            // entry function; later function starts are not installed yet.
+            keep=a;
+        }
+        var usize i=0;while(i<16){if(i!=keep && row.roots[i]!=0){return .err(invalid(at));}i+=1;}
+    }
+    return .ok(pc);
+}
+fn Result<usize,errors::Error> infer_exit(ref values::Program unit,ref mut bindings::Snapshot path,
+    ref Origins row,usize at){
+    let usize inferred=views::inferred(ref mut path.state.views,ref row.roots,ref row.unretained,at)?;
+    let usize checked=views::authenticate(unit,ref path.state.views,at)?;
+    var usize i=0;while(i<16){let usize roots=views::local_roots(ref path.state.views,i);
+        if((roots&(path.state.live|path.state.maybe))!=roots){return .err(invalid(at));}i+=1;
+    }return .ok(inferred);
+}
+pub fn Result<usize,errors::Error> infer(ref values::Program unit,
+    ref mut vec::Vec<bindings::Snapshot> paths,ref State loops,usize condition,usize guard,usize at){
+    if(loops.depth==0 || loops.depth>32 || condition>=branches::mark(paths)){return .err(invalid(at));}
+    let Frame frame=loops.frames[loops.depth-1];let usize head=frame.head;let usize end=position(unit);
+    if(frame.entry>=branches::mark(paths) || head>=end || end>256 || guard<head || guard>=end ||
+        unit.body.function_count>16 || unit.body.call_count>32 || unit.body.code[guard*8]!=20){return .err(invalid(at));}
+    let ref views::State entry=ref vec::at<bindings::Snapshot>(paths,frame.entry).state.views;
+    let usize authenticated=views::authenticate(unit,entry,at)?;
+    // No header descriptor can evolve when all are Dead. Ordinary lexical view
+    // cleanup already prevents body-local descriptors from escaping that shape.
+    if(views::count(entry)==0){return .ok(0);}
+    var vec::Vec<Origins> states=vec::empty<Origins>();
+    if(!vec::reserve<Origins>(ref mut states,end-head).is_ok){return .err(errors::make(15,at));}
+    var usize pc=head;while(pc<end){if(!vec::push<Origins>(ref mut states,no_origins()).is_ok){
+        return .err(errors::make(15,at));}pc+=1;}
+    var Origins seed=no_origins();var usize i=0;while(i<16){if(views::live(entry,i)){
+        let usize roots=views::roots(entry,i,at)?;let usize missing=roots^views::retained_roots(entry,i);
+        seed.roots[i]=roots;seed.unretained[i]=missing;
+    }i+=1;}
+    var bool[256] seen=[false;256];var bool[256] pending=[false;256];
+    let usize started=origin_edge(ref mut states,ref mut seen,ref mut pending,head,end,head,ref seed,at)?;
+    var bool again=true;var usize steps=0;
+    while(again){again=false;pc=head;while(pc<end){
+        if(!pending[pc]){pc+=1;continue;}pending[pc]=false;again=true;steps+=1;
+        if(steps>196864){return .err(errors::make(4,at));} // 256*(1+2*16*24)
+        let ref Origins input=vec::at<Origins>(ref states,pc-head);
+        var Origins row=Origins{.roots=input.roots,.unretained=input.unretained};
+        let usize transferred=view_transfer(unit,ref mut row,pc,at)?;
+        let usize offset=pc*8;let u8 op=unit.body.code[offset];
+        if((loops.owners[pc]==loops.depth && loops.leaves[pc]) ||
+            op==8 || op==39 || op==50 || op==82 || op==94 || op==113 || op==25){pc+=1;continue;}
+        if(op==19 || op==20 || op==21 || op==22 || op==24 || op==92){
+            if(pc!=guard){
+                let usize target=if(op==19 || op==22){unit.body.code[offset+2] as usize}
+                    else if(op==24 || op==92){unit.body.code[offset+4] as usize}
+                    else{unit.body.code[offset+3] as usize};
+                let usize merged=origin_edge(ref mut states,ref mut seen,ref mut pending,head,end,target,ref row,at)?;
+            }
+            if(op==19 || op==22){pc+=1;continue;}
+        }
+        let usize merged=origin_edge(ref mut states,ref mut seen,ref mut pending,head,end,pc+1,ref row,at)?;pc+=1;
+    }}
+    // Audit only after convergence. A later backedge must not make an earlier
+    // mutation or compiler-generated anonymous seed DROP silently admissible.
+    pc=head;while(pc<end){if(seen[pc]){
+        let ref Origins row=vec::at<Origins>(ref states,pc-head);
+        let usize checked=audit(unit,row,pc,unit.body.offsets[pc])?;
+        if(unit.body.code[pc*8]==113){let usize selected=unit.results[entry.function] as usize;
+            let usize source=unit.body.code[pc*8+2] as usize;
+            if(selected<17 || selected>24 || row.roots[source]!=bit(selected-1)){return .err(invalid(at));}}
+    }pc+=1;}
+    if(!seen[guard]){return .err(invalid(at));}
+    let usize inferred=infer_exit(unit,vec::at_mut<bindings::Snapshot>(paths,condition),
+        vec::at<Origins>(ref states,guard-head),at)?;
+    pc=head;while(pc<end){if(loops.owners[pc]==loops.depth && loops.leaves[pc]){
+        let usize path=loops.paths[pc];
+        if(!seen[pc] || path==0 || path>branches::mark(paths)){return .err(invalid(at));}
+        let usize inferred=infer_exit(unit,vec::at_mut<bindings::Snapshot>(paths,path-1),
+            vec::at<Origins>(ref states,pc-head),at)?;
+    }pc+=1;}return .ok(steps);
 }
 fn Result<usize,errors::Error> trim(ref mut values::Program unit,ref mut bindings::State state,usize common,usize at){
     var usize kept=common;var usize view=0;while(view<16){kept|=views::local_roots(ref state.views,view);view+=1;}

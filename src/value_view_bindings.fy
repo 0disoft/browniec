@@ -67,6 +67,41 @@ pub fn bool same(ref State a,ref State b){
     while(i<16){if(a.origins[i]!=b.origins[i] || a.sets[i]!=b.sets[i] ||
         a.retained_sets[i]!=b.retained_sets[i]){return false;}i+=1;}return true;
 }
+// A loop may replace a live header descriptor, but cannot change its identity,
+// name, reservation or Live/Dead shape. Project the reached roots onto that
+// exact header before ordinary temporary/scope cleanup. General expression
+// cleanup keeps anonymous_since's stricter origin equality.
+pub fn Result<State,errors::Error> loop_baseline(ref State state,ref State entry,usize at){
+    let usize current=validate(state,at)?;let usize prior=validate(entry,at)?;
+    if(state.function!=entry.function || state.reserved!=entry.reserved){return .err(invalid(at));}
+    var State projected=State{.origins=entry.origins,.sets=entry.sets,.retained_sets=entry.retained_sets,
+        .names=entry.names,.function=entry.function,.retained=entry.retained,.reserved=entry.reserved};var usize i=0;
+    while(i<64){if(entry.names[i]!=0 && state.names[i]!=entry.names[i]){return .err(invalid(at));}i+=1;}
+    i=0;while(i<16){if(entry.origins[i]!=0){
+        if(state.origins[i]==0){return .err(invalid(at));}
+        let usize mask=mask_of(state,i);represent(ref mut projected,i,mask);
+        represent_retention(ref mut projected,i,mask,retained_mask_of(state,i));
+    }i+=1;}return .ok(projected);
+}
+// Compiler CFG inference publishes only roots/retention. It never changes
+// descriptors' exact shape/names, emits IR, or changes owner initialization.
+// Missing-retention masks join monotonically alongside possible origins.
+pub fn Result<usize,errors::Error> inferred(ref mut State state,ref usize[] possible,
+    ref usize[] unretained,usize at){
+    let usize checked=validate(state,at)?;
+    if(possible.len!=16 || unretained.len!=16){return .err(invalid(at));}
+    var usize i=0;while(i<16){
+        let usize mask=possible[i];let usize missing=unretained[i];
+        let usize prior_missing=mask_of(state,i)^retained_mask_of(state,i);
+        if(mask>16777215 || (mask&missing)!=missing ||
+            (state.origins[i]==0)!=(mask==0) || (mask&mask_of(state,i))!=mask_of(state,i) ||
+            (missing&prior_missing)!=prior_missing){
+            return .err(invalid(at));}i+=1;
+    }
+    i=0;while(i<16){if(possible[i]!=0){
+        represent(state,i,possible[i]);represent_retention(state,i,possible[i],possible[i]^unretained[i]);
+    }i+=1;}return .ok(checked);
+}
 // Retention meets only on paths where a dependency is possible. A root absent
 // on one path loses no permission; an unretained occurrence on any path wins.
 // Names, reservations and the live pattern stay exact.

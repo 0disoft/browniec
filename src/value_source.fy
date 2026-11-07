@@ -547,6 +547,7 @@ fn Result<bool,errors::Error> control_loop(ref u8[] source,ref mut lexer::State 
             let usize repeated=looping::repeat(unit,state,paths,flow,at)?;
         }
     }
+    let usize inferred=looping::infer(unit,paths,flow,condition,guard,at)?;
     let usize completed=looping::finish(unit,state,paths,flow,condition,guard,at)?;
     let usize released=looping::release(paths,flow,pool,at)?;
     if(classic){let usize dropped=bindings::leave_scope(unit,state,outer,at)?;}
