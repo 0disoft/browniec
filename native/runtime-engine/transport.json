@@ -2,43 +2,43 @@
   "schema": "browniec.private-runtime-engine-transport/v1",
   "compilerRevision": "eb274643bfcfe746617121ddc6f130b018978b53",
   "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
-  "transportSha256": "dfdc226094e2253b2370054760999eba76533fb6065f5bd897a94334f4ff3b64",
+  "transportSha256": "92628cc66e531c7b812ab3d67cf6ddc61c8b524947cfcc49a2349ab9233a3fad",
   "engineType": "fy_resource_29",
-  "incomingType": "fy_resource_47",
+  "incomingType": "fy_resource_51",
   "bindings": {
-    "1": "fy_fn_1569",
-    "2": "fy_fn_1568",
-    "3": "fy_fn_1606",
-    "4": "fy_fn_1579",
-    "5": "fy_fn_1604",
-    "8": "fy_fn_1628",
-    "21": "fy_fn_1587",
-    "6": "fy_fn_1679",
-    "7": "fy_fn_1677",
-    "9": "fy_fn_1581",
-    "23": "fy_fn_1620",
-    "10": "fy_fn_1609",
-    "11": "fy_fn_1619",
-    "12": "fy_fn_1676",
-    "13": "fy_fn_1585",
-    "14": "fy_fn_1583",
-    "15": "fy_fn_1637",
-    "24": "fy_fn_1639",
-    "16": "fy_fn_1690",
-    "17": "fy_fn_1678",
-    "18": "fy_fn_1590",
-    "22": "fy_fn_1623",
-    "25": "fy_fn_1656",
-    "30": "fy_fn_1635",
-    "19": "fy_fn_1607",
-    "31": "fy_fn_1687",
-    "33": "fy_fn_1571",
-    "32": "fy_fn_1576",
-    "20": "fy_fn_1617",
-    "26": "fy_fn_1752",
-    "27": "fy_fn_1755",
-    "29": "fy_fn_1992",
-    "28": "fy_fn_2000"
+    "1": "fy_fn_1633",
+    "2": "fy_fn_1632",
+    "3": "fy_fn_1670",
+    "4": "fy_fn_1643",
+    "5": "fy_fn_1668",
+    "8": "fy_fn_1692",
+    "21": "fy_fn_1651",
+    "6": "fy_fn_1743",
+    "7": "fy_fn_1741",
+    "9": "fy_fn_1645",
+    "23": "fy_fn_1684",
+    "10": "fy_fn_1673",
+    "11": "fy_fn_1683",
+    "12": "fy_fn_1740",
+    "13": "fy_fn_1649",
+    "14": "fy_fn_1647",
+    "15": "fy_fn_1701",
+    "24": "fy_fn_1703",
+    "16": "fy_fn_1754",
+    "17": "fy_fn_1742",
+    "18": "fy_fn_1654",
+    "22": "fy_fn_1687",
+    "25": "fy_fn_1720",
+    "30": "fy_fn_1699",
+    "19": "fy_fn_1671",
+    "31": "fy_fn_1751",
+    "33": "fy_fn_1635",
+    "32": "fy_fn_1640",
+    "20": "fy_fn_1681",
+    "26": "fy_fn_1816",
+    "27": "fy_fn_1819",
+    "29": "fy_fn_2056",
+    "28": "fy_fn_2064"
   },
   "sourceInputs": [
     {
@@ -71,7 +71,7 @@
     },
     {
       "path": "src/aggregate_place_vm.fy",
-      "sha256": "d2ee52989f652faa2d3e416b0bf905937aae66913695ca2c62d1123aaf22a6b5"
+      "sha256": "7c096721bab516176bd303922f4dbe880ff695fe92fcae97bbe7e1f1593aae01"
     },
     {
       "path": "src/aggregate_places.fy",
@@ -103,7 +103,7 @@
     },
     {
       "path": "src/array_fill_cursor.fy",
-      "sha256": "78bd31d88bdfd169ecd7faf56e162ed9bf56c055a13a510eee69dd977c8ea5c6"
+      "sha256": "7178a51beb37128e313733b454cc40c93a0dd2703acdf31200710ec102a0816b"
     },
     {
       "path": "src/array_fill_execution.fy",
@@ -118,12 +118,20 @@
       "sha256": "d3497dfb6bb7e9ac8ceece4ae88a2274b6b40b49e3c5fecfc509179c03c91cdd"
     },
     {
+      "path": "src/array_list_execution.fy",
+      "sha256": "81a09305e8918124846a6fc0938dd63cffdc90634328fe1ae710b6611eedb6ac"
+    },
+    {
       "path": "src/array_list_ir.fy",
       "sha256": "a121f24aa9415ebaec92a342ddf89edff1c99bd833e7e7c793dca5f1faa41ca8"
     },
     {
       "path": "src/array_list_vm.fy",
       "sha256": "e805ef479c6d0473b616efe86073c460df73800fdd487875f4b884edb704ff6a"
+    },
+    {
+      "path": "src/array_list_work.fy",
+      "sha256": "798f21cbf69e684a803e006faeb1261bd5595874687cae80d1d3fee0dbef3fd1"
     },
     {
       "path": "src/array_local_source.fy",
@@ -595,7 +603,7 @@
     },
     {
       "path": "src/slice_result_execution.fy",
-      "sha256": "94fe62f89ddd01dc649646a671b0e9484ac7fa565ad1ebed3770b695704a56b2"
+      "sha256": "09e8b0e146051b9b4e7421c444d7e4ed91af6e83bd4e0cba973fc9f6819120e0"
     },
     {
       "path": "src/slice_result_frames.fy",
@@ -930,12 +938,20 @@
       "sha256": "0c4cbabb0144996221c6695751df6bf5d873d0056496dae959d7387874c5a429"
     },
     {
+      "path": "tools/runtime-engine/array_list_work_tests.fy",
+      "sha256": "af168001ae9ba65210c2bc13b60278088f45771efc614eef49edfdb0b58d322b"
+    },
+    {
       "path": "tools/runtime-engine/engine_array_copy_tests.fy",
       "sha256": "de6638eddec41fbd437a6214c58203c53dad777277c12ccb767fdd8cbd9a23d2"
     },
     {
       "path": "tools/runtime-engine/engine_array_fill_tests.fy",
       "sha256": "e8ce6463e9276d16b62c969bfaea49578e1280244b9f1ca9869f8b1999963fa4"
+    },
+    {
+      "path": "tools/runtime-engine/engine_array_list_tests.fy",
+      "sha256": "e06e47977add2dadc42c7a81eef71728897fa805d0fc6b27e5db9eb5dfd0541a"
     },
     {
       "path": "tools/runtime-engine/engine_compile_tests.fy",
@@ -991,7 +1007,7 @@
     },
     {
       "path": "tools/runtime-engine/main.fy",
-      "sha256": "fcb54dd6328999104321f5582bec5cf126e6a3787e6cfbcd381dded7989b686e"
+      "sha256": "0cc3105cb1fca9deff5b01a415ae83817bc902bf6eae2d4242e18ae48f808c0a"
     }
   ],
   "runtimeInputs": [
@@ -1031,80 +1047,80 @@
       "sha256": "f86225cdc8ecf5ebe0ba899557c3b117c50ccc0f02afea4cc0115f780bc40cd6"
     }
   ],
-  "inputEntryType": "fy_resource_49",
+  "inputEntryType": "fy_resource_53",
   "snapshotType": "fy_resource_23",
-  "snapshotVectorType": "fy_resource_52",
+  "snapshotVectorType": "fy_resource_47",
   "reviewedDeclarations": {
-    "1": "static uint32_t fy_fn_1569(fy_struct_120 * fy_l_16089, uintptr_t fy_l_16090, uintptr_t fy_l_16091);",
-    "2": "static uint32_t fy_fn_1568(fy_struct_120 * fy_l_16092, uintptr_t fy_l_16093, uintptr_t fy_l_16094);",
-    "3": "static uint32_t fy_fn_1606(fy_struct_120 * fy_l_16095, uintptr_t fy_l_16096, uintptr_t fy_l_16097, uintptr_t fy_l_16098);",
-    "4": "static uint32_t fy_fn_1579(fy_struct_120 * fy_l_16205, fy_resource_25 * fy_l_16206, fy_resource_47 * fy_l_16207, uintptr_t fy_l_16208);",
-    "5": "static uint32_t fy_fn_1604(fy_struct_120 * fy_l_16674, fy_resource_25 * fy_l_16675, fy_resource_25 * fy_l_16676, fy_resource_26 * fy_l_16677, fy_resource_27 * fy_l_16678, fy_resource_27 * fy_l_16679, fy_resource_28 * fy_l_16680, fy_resource_28 * fy_l_16681, uint32_t fy_l_16682, uintptr_t fy_l_16683, uintptr_t fy_l_16684);",
-    "8": "static uint32_t fy_fn_1628(fy_struct_120 * fy_l_16685, fy_resource_25 * fy_l_16686, fy_resource_25 * fy_l_16687, fy_resource_26 * fy_l_16688, fy_resource_27 * fy_l_16689, fy_resource_27 * fy_l_16690, fy_resource_28 * fy_l_16691, fy_resource_28 * fy_l_16692, uintptr_t fy_l_16693, uintptr_t fy_l_16694, uint32_t fy_l_16695, uintptr_t fy_l_16696, uintptr_t fy_l_16697);",
-    "21": "static uint32_t fy_fn_1587(fy_struct_120 * fy_l_16122, const fy_resource_25 * fy_l_16123, uint32_t fy_l_16124, uintptr_t fy_l_16125, uintptr_t fy_l_16126);",
-    "6": "static fy_resource_25 fy_fn_1679(fy_resource_25 fy_l_16698);",
-    "7": "static fy_resource_26 fy_fn_1677(fy_resource_26 fy_l_16699);",
-    "9": "static uint32_t fy_fn_1581(fy_struct_120 * fy_l_16231, fy_resource_25 * fy_l_16232, fy_resource_49 * fy_l_16233, uintptr_t fy_l_16234);",
-    "23": "static uint32_t fy_fn_1620(fy_struct_120 * fy_l_16147, const fy_resource_25 * fy_l_16148, const fy_resource_26 * fy_l_16149, uintptr_t fy_l_16150, uintptr_t fy_l_16151, const fy_resource_23 * fy_l_16152, uint32_t fy_l_16153, uintptr_t fy_l_16154, uint32_t fy_l_16155, uintptr_t fy_l_16156);",
-    "10": "static uint32_t fy_fn_1609(fy_struct_120 * fy_l_16631, const fy_resource_25 * fy_l_16632, fy_resource_26 * fy_l_16633, const fy_resource_27 * fy_l_16634, uintptr_t fy_l_16635, const fy_resource_23 * fy_l_16636);",
-    "11": "static uint32_t fy_fn_1619(fy_struct_120 * fy_l_16377, fy_resource_25 * fy_l_16378, fy_resource_26 * fy_l_16379, fy_resource_27 * fy_l_16380, fy_resource_52 * fy_l_16381, uintptr_t fy_l_16382, uintptr_t fy_l_16383);",
-    "12": "static fy_resource_27 fy_fn_1676(fy_resource_27 fy_l_16700);",
-    "13": "static uint32_t fy_fn_1585(fy_struct_120 * fy_l_16253, fy_resource_25 * fy_l_16254, fy_resource_47 * fy_l_16255, uintptr_t fy_l_16256);",
-    "14": "static uint32_t fy_fn_1583(fy_struct_120 * fy_l_16266, fy_resource_25 * fy_l_16267, fy_resource_49 * fy_l_16268, uintptr_t fy_l_16269);",
-    "15": "static uint32_t fy_fn_1637(fy_struct_120 * fy_l_16286, fy_resource_25 * fy_l_16287, fy_resource_26 * fy_l_16288, fy_resource_27 * fy_l_16289, fy_resource_52 * fy_l_16290, uintptr_t fy_l_16291, uintptr_t fy_l_16292, uintptr_t fy_l_16293, uint32_t fy_l_16294);",
-    "24": "static uint32_t fy_fn_1639(fy_struct_120 * fy_l_16328, const fy_resource_26 * fy_l_16329, const fy_resource_28 * fy_l_16330, uintptr_t fy_l_16331, uintptr_t fy_l_16332);",
-    "16": "static uint32_t fy_fn_1690(fy_struct_120 * fy_l_16345, fy_resource_26 * fy_l_16346, fy_resource_28 * fy_l_16347, fy_resource_28 * fy_l_16348, uintptr_t fy_l_16349, fy_resource_28 * fy_l_16350);",
-    "17": "static fy_resource_28 fy_fn_1678(fy_resource_28 fy_l_16701);",
-    "18": "static uint32_t fy_fn_1590(const fy_struct_120 * fy_l_16702, uintptr_t fy_l_16703, uintptr_t fy_l_16704);",
-    "22": "static uintptr_t fy_fn_1623(const fy_struct_115 * fy_l_16108);",
-    "25": "static uintptr_t fy_fn_1656(const fy_resource_35 * fy_l_16109);",
-    "30": "static uintptr_t fy_fn_1635(const fy_resource_31 * fy_l_16705);",
-    "19": "static uintptr_t fy_fn_1607(const fy_resource_4 * fy_l_16110);",
-    "31": "static uint32_t fy_fn_1687(fy_resource_30 * fy_l_16557, fy_struct_82 * fy_l_16558, fy_resource_13 * fy_l_16559, const fy_resource_16 * fy_l_16560, const fy_resource_23 * fy_l_16561, uintptr_t fy_l_16562);",
-    "33": "static uint32_t fy_fn_1571(fy_resource_30 * fy_l_16570);",
-    "32": "static fy_resource_30 fy_fn_1576(fy_resource_30 fy_l_16569);",
-    "20": "static uintptr_t fy_fn_1617(const fy_resource_7 * fy_l_16111);",
-    "26": "static uint32_t fy_fn_1752(const fy_resource_16 * fy_l_17021, const fy_resource_23 * fy_l_17022, fy_struct_160 * fy_l_17023, fy_struct_156 * fy_l_17024, fy_struct_158 * fy_l_17025, const fy_struct_85 * fy_l_17026, fy_byte_slice fy_l_17027, fy_mut_usize_slice fy_l_17028, fy_mut_u32_slice fy_l_17029, fy_mut_i64_slice fy_l_17030, fy_resource_10 * fy_l_17031, fy_resource_39 * fy_l_17032, fy_resource_10 * fy_l_17033, fy_resource_40 * fy_l_17034, fy_resource_1 * fy_l_17035, fy_resource_38 * fy_l_17036, uint32_t fy_l_17037, uintptr_t fy_l_17038);",
-    "27": "static uint32_t fy_fn_1755(fy_struct_160 * fy_l_17052, fy_struct_158 * fy_l_17053, const fy_resource_10 * fy_l_17054, fy_resource_40 * fy_l_17055, fy_resource_38 * fy_l_17056, fy_resource_13 * fy_l_17057, uint32_t fy_l_17058);",
-    "29": "static void fy_fn_1992(const fy_resource_41 * fy_l_20017, fy_struct_159 * fy_l_20018, const fy_struct_158 * fy_l_20019, const fy_struct_85 * fy_l_20020, fy_byte_slice fy_l_20021);",
-    "28": "static uintptr_t fy_fn_2000(const fy_resource_41 * fy_l_20023, const fy_struct_159 * fy_l_20024);"
+    "1": "static uint32_t fy_fn_1633(fy_struct_122 * fy_l_16655, uintptr_t fy_l_16656, uintptr_t fy_l_16657);",
+    "2": "static uint32_t fy_fn_1632(fy_struct_122 * fy_l_16658, uintptr_t fy_l_16659, uintptr_t fy_l_16660);",
+    "3": "static uint32_t fy_fn_1670(fy_struct_122 * fy_l_16661, uintptr_t fy_l_16662, uintptr_t fy_l_16663, uintptr_t fy_l_16664);",
+    "4": "static uint32_t fy_fn_1643(fy_struct_122 * fy_l_16771, fy_resource_25 * fy_l_16772, fy_resource_51 * fy_l_16773, uintptr_t fy_l_16774);",
+    "5": "static uint32_t fy_fn_1668(fy_struct_122 * fy_l_17240, fy_resource_25 * fy_l_17241, fy_resource_25 * fy_l_17242, fy_resource_26 * fy_l_17243, fy_resource_27 * fy_l_17244, fy_resource_27 * fy_l_17245, fy_resource_28 * fy_l_17246, fy_resource_28 * fy_l_17247, uint32_t fy_l_17248, uintptr_t fy_l_17249, uintptr_t fy_l_17250);",
+    "8": "static uint32_t fy_fn_1692(fy_struct_122 * fy_l_17251, fy_resource_25 * fy_l_17252, fy_resource_25 * fy_l_17253, fy_resource_26 * fy_l_17254, fy_resource_27 * fy_l_17255, fy_resource_27 * fy_l_17256, fy_resource_28 * fy_l_17257, fy_resource_28 * fy_l_17258, uintptr_t fy_l_17259, uintptr_t fy_l_17260, uint32_t fy_l_17261, uintptr_t fy_l_17262, uintptr_t fy_l_17263);",
+    "21": "static uint32_t fy_fn_1651(fy_struct_122 * fy_l_16688, const fy_resource_25 * fy_l_16689, uint32_t fy_l_16690, uintptr_t fy_l_16691, uintptr_t fy_l_16692);",
+    "6": "static fy_resource_25 fy_fn_1743(fy_resource_25 fy_l_17264);",
+    "7": "static fy_resource_26 fy_fn_1741(fy_resource_26 fy_l_17265);",
+    "9": "static uint32_t fy_fn_1645(fy_struct_122 * fy_l_16797, fy_resource_25 * fy_l_16798, fy_resource_53 * fy_l_16799, uintptr_t fy_l_16800);",
+    "23": "static uint32_t fy_fn_1684(fy_struct_122 * fy_l_16713, const fy_resource_25 * fy_l_16714, const fy_resource_26 * fy_l_16715, uintptr_t fy_l_16716, uintptr_t fy_l_16717, const fy_resource_23 * fy_l_16718, uint32_t fy_l_16719, uintptr_t fy_l_16720, uint32_t fy_l_16721, uintptr_t fy_l_16722);",
+    "10": "static uint32_t fy_fn_1673(fy_struct_122 * fy_l_17197, const fy_resource_25 * fy_l_17198, fy_resource_26 * fy_l_17199, const fy_resource_27 * fy_l_17200, uintptr_t fy_l_17201, const fy_resource_23 * fy_l_17202);",
+    "11": "static uint32_t fy_fn_1683(fy_struct_122 * fy_l_16943, fy_resource_25 * fy_l_16944, fy_resource_26 * fy_l_16945, fy_resource_27 * fy_l_16946, fy_resource_47 * fy_l_16947, uintptr_t fy_l_16948, uintptr_t fy_l_16949);",
+    "12": "static fy_resource_27 fy_fn_1740(fy_resource_27 fy_l_17266);",
+    "13": "static uint32_t fy_fn_1649(fy_struct_122 * fy_l_16819, fy_resource_25 * fy_l_16820, fy_resource_51 * fy_l_16821, uintptr_t fy_l_16822);",
+    "14": "static uint32_t fy_fn_1647(fy_struct_122 * fy_l_16832, fy_resource_25 * fy_l_16833, fy_resource_53 * fy_l_16834, uintptr_t fy_l_16835);",
+    "15": "static uint32_t fy_fn_1701(fy_struct_122 * fy_l_16852, fy_resource_25 * fy_l_16853, fy_resource_26 * fy_l_16854, fy_resource_27 * fy_l_16855, fy_resource_47 * fy_l_16856, uintptr_t fy_l_16857, uintptr_t fy_l_16858, uintptr_t fy_l_16859, uint32_t fy_l_16860);",
+    "24": "static uint32_t fy_fn_1703(fy_struct_122 * fy_l_16894, const fy_resource_26 * fy_l_16895, const fy_resource_28 * fy_l_16896, uintptr_t fy_l_16897, uintptr_t fy_l_16898);",
+    "16": "static uint32_t fy_fn_1754(fy_struct_122 * fy_l_16911, fy_resource_26 * fy_l_16912, fy_resource_28 * fy_l_16913, fy_resource_28 * fy_l_16914, uintptr_t fy_l_16915, fy_resource_28 * fy_l_16916);",
+    "17": "static fy_resource_28 fy_fn_1742(fy_resource_28 fy_l_17267);",
+    "18": "static uint32_t fy_fn_1654(const fy_struct_122 * fy_l_17268, uintptr_t fy_l_17269, uintptr_t fy_l_17270);",
+    "22": "static uintptr_t fy_fn_1687(const fy_struct_117 * fy_l_16674);",
+    "25": "static uintptr_t fy_fn_1720(const fy_resource_35 * fy_l_16675);",
+    "30": "static uintptr_t fy_fn_1699(const fy_resource_31 * fy_l_17271);",
+    "19": "static uintptr_t fy_fn_1671(const fy_resource_4 * fy_l_16676);",
+    "31": "static uint32_t fy_fn_1751(fy_resource_30 * fy_l_17123, fy_struct_84 * fy_l_17124, fy_resource_13 * fy_l_17125, const fy_resource_16 * fy_l_17126, const fy_resource_23 * fy_l_17127, uintptr_t fy_l_17128);",
+    "33": "static uint32_t fy_fn_1635(fy_resource_30 * fy_l_17136);",
+    "32": "static fy_resource_30 fy_fn_1640(fy_resource_30 fy_l_17135);",
+    "20": "static uintptr_t fy_fn_1681(const fy_resource_7 * fy_l_16677);",
+    "26": "static uint32_t fy_fn_1816(const fy_resource_16 * fy_l_17587, const fy_resource_23 * fy_l_17588, fy_struct_162 * fy_l_17589, fy_struct_158 * fy_l_17590, fy_struct_160 * fy_l_17591, const fy_struct_87 * fy_l_17592, fy_byte_slice fy_l_17593, fy_mut_usize_slice fy_l_17594, fy_mut_u32_slice fy_l_17595, fy_mut_i64_slice fy_l_17596, fy_resource_10 * fy_l_17597, fy_resource_39 * fy_l_17598, fy_resource_10 * fy_l_17599, fy_resource_40 * fy_l_17600, fy_resource_1 * fy_l_17601, fy_resource_38 * fy_l_17602, uint32_t fy_l_17603, uintptr_t fy_l_17604);",
+    "27": "static uint32_t fy_fn_1819(fy_struct_162 * fy_l_17618, fy_struct_160 * fy_l_17619, const fy_resource_10 * fy_l_17620, fy_resource_40 * fy_l_17621, fy_resource_38 * fy_l_17622, fy_resource_13 * fy_l_17623, uint32_t fy_l_17624);",
+    "29": "static void fy_fn_2056(const fy_resource_41 * fy_l_20588, fy_struct_161 * fy_l_20589, const fy_struct_160 * fy_l_20590, const fy_struct_87 * fy_l_20591, fy_byte_slice fy_l_20592);",
+    "28": "static uintptr_t fy_fn_2064(const fy_resource_41 * fy_l_20594, const fy_struct_161 * fy_l_20595);"
   },
   "outputVectorType": "fy_resource_28",
   "outputType": "fy_resource_31",
   "programType": "fy_resource_35",
-  "instanceType": "fy_struct_115",
+  "instanceType": "fy_struct_117",
   "boundInputType": "fy_resource_24",
   "reviewedLayouts": {
-    "engineType": "typedef struct {\n    fy_struct_120 f_0;\n    fy_resource_25 f_1;\n    fy_resource_25 f_2;\n    fy_resource_26 f_3;\n    fy_resource_27 f_4;\n    fy_resource_27 f_5;\n    fy_resource_28 f_6;\n    fy_resource_28 f_7;\n} fy_resource_29;",
+    "engineType": "typedef struct {\n    fy_struct_122 f_0;\n    fy_resource_25 f_1;\n    fy_resource_25 f_2;\n    fy_resource_26 f_3;\n    fy_resource_27 f_4;\n    fy_resource_27 f_5;\n    fy_resource_28 f_6;\n    fy_resource_28 f_7;\n} fy_resource_29;",
     "programType": "typedef struct {\n    uintptr_t f_0;\n    uintptr_t f_1;\n    int32_t f_2;\n    fy_resource_32 f_3;\n    fy_resource_33 f_4;\n    fy_resource_34 f_5;\n    uintptr_t f_6;\n    uintptr_t f_7;\n} fy_resource_35;",
-    "instanceType": "typedef struct {\n    uintptr_t f_0;\n    uintptr_t f_1;\n    uintptr_t f_2;\n    uint8_t f_3;\n    fy_struct_114 f_4;\n    uintptr_t f_5;\n    int32_t f_6;\n    uintptr_t f_7;\n    uintptr_t f_8;\n} fy_struct_115;",
+    "instanceType": "typedef struct {\n    uintptr_t f_0;\n    uintptr_t f_1;\n    uintptr_t f_2;\n    uint8_t f_3;\n    fy_struct_116 f_4;\n    uintptr_t f_5;\n    int32_t f_6;\n    uintptr_t f_7;\n    uintptr_t f_8;\n} fy_struct_117;",
     "boundInputType": "typedef struct {\n    uintptr_t f_0;\n    fy_resource_23 f_1;\n} fy_resource_24;",
     "outputType": "typedef struct {\n    uintptr_t f_0;\n    fy_resource_14 f_1;\n    fy_resource_30 f_2;\n} fy_resource_31;",
     "sourceIndexType": "typedef struct {\n    fy_resource_2 f_0;\n} fy_resource_3;",
     "sourceIndexVectorType": "typedef struct {\n    void * f_0;\n    uintptr_t f_1;\n    uintptr_t f_2;\n    uintptr_t f_3;\n    uintptr_t f_4;\n    uintptr_t f_5;\n} fy_resource_2;",
     "programVectorType": "typedef struct {\n    void * f_0;\n    uintptr_t f_1;\n    uintptr_t f_2;\n    uintptr_t f_3;\n    uintptr_t f_4;\n    uintptr_t f_5;\n} fy_resource_25;",
     "snapshotType": "typedef struct {\n    fy_resource_10 f_0;\n    uintptr_t f_1;\n} fy_resource_23;",
-    "snapshotVectorType": "typedef struct {\n    void * f_0;\n    uintptr_t f_1;\n    uintptr_t f_2;\n    uintptr_t f_3;\n    uintptr_t f_4;\n    uintptr_t f_5;\n} fy_resource_52;",
-    "machineType": "typedef struct {\n    fy_resource_10 f_0;\n    fy_resource_10 f_1;\n    fy_resource_39 f_2;\n    fy_resource_10 f_3;\n    fy_resource_40 f_4;\n    fy_resource_1 f_5;\n    fy_resource_38 f_6;\n    fy_struct_160 f_7;\n} fy_resource_41;",
-    "coreType": "typedef struct {\n    fy_struct_156 f_0;\n    fy_struct_158 f_1;\n    fy_struct_85 f_2;\n    fy_array_61 f_3;\n    fy_array_81 f_4;\n    fy_array_57 f_5;\n    fy_array_52 f_6;\n} fy_struct_159;",
-    "executionType": "typedef struct {\n    fy_struct_82 f_0;\n    fy_resource_13 f_1;\n} fy_resource_14;",
+    "snapshotVectorType": "typedef struct {\n    void * f_0;\n    uintptr_t f_1;\n    uintptr_t f_2;\n    uintptr_t f_3;\n    uintptr_t f_4;\n    uintptr_t f_5;\n} fy_resource_47;",
+    "machineType": "typedef struct {\n    fy_resource_10 f_0;\n    fy_resource_10 f_1;\n    fy_resource_39 f_2;\n    fy_resource_10 f_3;\n    fy_resource_40 f_4;\n    fy_resource_1 f_5;\n    fy_resource_38 f_6;\n    fy_struct_162 f_7;\n} fy_resource_41;",
+    "coreType": "typedef struct {\n    fy_struct_158 f_0;\n    fy_struct_160 f_1;\n    fy_struct_87 f_2;\n    fy_array_63 f_3;\n    fy_array_84 f_4;\n    fy_array_59 f_5;\n    fy_array_53 f_6;\n} fy_struct_161;",
+    "executionType": "typedef struct {\n    fy_struct_84 f_0;\n    fy_resource_13 f_1;\n} fy_resource_14;",
     "pendingVectorType": "typedef struct {\n    void * f_0;\n    uintptr_t f_1;\n    uintptr_t f_2;\n    uintptr_t f_3;\n    uintptr_t f_4;\n    uintptr_t f_5;\n} fy_resource_30;",
-    "completionType": "typedef struct {\n    int32_t f_0;\n    int64_t f_1;\n    uintptr_t f_2;\n    fy_struct_79 f_3;\n    uintptr_t f_4;\n    uintptr_t f_5;\n} fy_struct_82;",
+    "completionType": "typedef struct {\n    int32_t f_0;\n    int64_t f_1;\n    uintptr_t f_2;\n    fy_struct_81 f_3;\n    uintptr_t f_4;\n    uintptr_t f_5;\n} fy_struct_84;",
     "publishedVectorType": "typedef struct {\n    void * f_0;\n    uintptr_t f_1;\n    uintptr_t f_2;\n    uintptr_t f_3;\n    uintptr_t f_4;\n    uintptr_t f_5;\n} fy_resource_13;",
-    "pendingMetaType": "typedef struct {\n    fy_struct_150 f_0;\n    fy_struct_151 f_1;\n    uintptr_t f_2;\n    uint8_t f_3;\n    int64_t f_4;\n    fy_struct_53 f_5;\n} fy_struct_160;",
-    "cursorType": "typedef struct {\n    uintptr_t f_0;\n    int32_t f_1;\n    fy_struct_87 f_2;\n    fy_struct_7 f_3;\n} fy_struct_150;",
-    "outputCopyType": "typedef struct {\n    int32_t f_0;\n    uint8_t f_1;\n    uintptr_t f_2;\n    uintptr_t f_3;\n    uintptr_t f_4;\n    uintptr_t f_5;\n    uintptr_t f_6;\n    uintptr_t f_7;\n} fy_struct_87;",
+    "pendingMetaType": "typedef struct {\n    fy_struct_152 f_0;\n    fy_struct_153 f_1;\n    uintptr_t f_2;\n    uint8_t f_3;\n    int64_t f_4;\n    fy_struct_55 f_5;\n} fy_struct_162;",
+    "cursorType": "typedef struct {\n    uintptr_t f_0;\n    int32_t f_1;\n    fy_struct_89 f_2;\n    fy_struct_7 f_3;\n} fy_struct_152;",
+    "outputCopyType": "typedef struct {\n    int32_t f_0;\n    uint8_t f_1;\n    uintptr_t f_2;\n    uintptr_t f_3;\n    uintptr_t f_4;\n    uintptr_t f_5;\n    uintptr_t f_6;\n    uintptr_t f_7;\n} fy_struct_89;",
     "transactionType": "typedef struct {\n    fy_resource_10 f_0;\n    fy_resource_10 f_1;\n    uint8_t * f_2;\n    uintptr_t f_3;\n    int32_t f_4;\n    int32_t f_5;\n    uintptr_t f_6;\n    uintptr_t f_7;\n    int32_t f_8;\n} fy_resource_38;",
     "ordinary_program": "typedef struct {\n    fy_resource_18 f_0;\n} fy_resource_19;",
     "ordinary_stored": "typedef struct {\n    fy_resource_5 f_0;\n    fy_resource_21 f_1;\n} fy_resource_22;",
     "input_program": "typedef struct {\n    fy_resource_8 f_0;\n} fy_resource_9;",
-    "input_stored": "typedef struct {\n    fy_resource_5 f_0;\n    fy_struct_176 f_1;\n    fy_resource_11 f_2;\n} fy_resource_12;",
+    "input_stored": "typedef struct {\n    fy_resource_5 f_0;\n    fy_struct_178 f_1;\n    fy_resource_11 f_2;\n} fy_resource_12;",
     "output_program": "typedef struct {\n    fy_resource_15 f_0;\n} fy_resource_16;",
-    "output_stored": "typedef struct {\n    fy_resource_5 f_0;\n    fy_struct_176 f_1;\n    fy_resource_11 f_2;\n    int32_t f_3;\n    fy_struct_86 f_4;\n} fy_resource_17;",
-    "ordinary_entry": "typedef struct {\n    fy_resource_3 f_0;\n    uintptr_t f_1;\n    fy_struct_70 f_2;\n} fy_resource_4;",
-    "input_entry": "typedef struct {\n    fy_resource_3 f_0;\n    uintptr_t f_1;\n    fy_struct_70 f_2;\n    fy_struct_70 f_3;\n    fy_struct_70 f_4;\n} fy_resource_7;",
-    "preparationType": "typedef struct {\n    fy_struct_85 f_0;\n    fy_array_61 f_1;\n    fy_struct_11 f_2;\n    fy_struct_83 f_3;\n    uintptr_t f_4;\n    uintptr_t f_5;\n    uintptr_t f_6;\n} fy_struct_86;",
-    "arrayFillType": "typedef struct {\n    int32_t f_0;\n    uint8_t f_1;\n    uintptr_t f_2;\n    uintptr_t f_3;\n    uintptr_t f_4;\n    uintptr_t f_5;\n    uintptr_t f_6;\n    uintptr_t f_7;\n    uintptr_t f_8;\n    uintptr_t f_9;\n    uintptr_t f_10;\n    uintptr_t f_11;\n    uintptr_t f_12;\n    uintptr_t f_13;\n    uintptr_t f_14;\n    uintptr_t f_15;\n    uint8_t f_16;\n    uintptr_t f_17;\n    uintptr_t f_18;\n    fy_array_75 f_19;\n    uintptr_t f_20;\n    uintptr_t f_21;\n    uintptr_t f_22;\n} fy_struct_7;"
+    "output_stored": "typedef struct {\n    fy_resource_5 f_0;\n    fy_struct_178 f_1;\n    fy_resource_11 f_2;\n    int32_t f_3;\n    fy_struct_88 f_4;\n} fy_resource_17;",
+    "ordinary_entry": "typedef struct {\n    fy_resource_3 f_0;\n    uintptr_t f_1;\n    fy_struct_72 f_2;\n} fy_resource_4;",
+    "input_entry": "typedef struct {\n    fy_resource_3 f_0;\n    uintptr_t f_1;\n    fy_struct_72 f_2;\n    fy_struct_72 f_3;\n    fy_struct_72 f_4;\n} fy_resource_7;",
+    "preparationType": "typedef struct {\n    fy_struct_87 f_0;\n    fy_array_63 f_1;\n    fy_struct_11 f_2;\n    fy_struct_85 f_3;\n    uintptr_t f_4;\n    uintptr_t f_5;\n    uintptr_t f_6;\n} fy_struct_88;",
+    "arrayFillType": "typedef struct {\n    int32_t f_0;\n    uint8_t f_1;\n    uintptr_t f_2;\n    uintptr_t f_3;\n    uintptr_t f_4;\n    uintptr_t f_5;\n    uintptr_t f_6;\n    uintptr_t f_7;\n    uintptr_t f_8;\n    uintptr_t f_9;\n    uintptr_t f_10;\n    uintptr_t f_11;\n    uintptr_t f_12;\n    uintptr_t f_13;\n    uintptr_t f_14;\n    uintptr_t f_15;\n    uint8_t f_16;\n    uintptr_t f_17;\n    uintptr_t f_18;\n    fy_array_78 f_19;\n    uintptr_t f_20;\n    uintptr_t f_21;\n    uintptr_t f_22;\n    uintptr_t f_23;\n    uintptr_t f_24;\n} fy_struct_7;"
   },
   "programVariants": {
     "ordinary": {
@@ -1128,15 +1144,15 @@
   "sourceIndexType": "fy_resource_3",
   "sourceIndexVectorType": "fy_resource_2",
   "machineType": "fy_resource_41",
-  "coreType": "fy_struct_159",
+  "coreType": "fy_struct_161",
   "pendingVectorType": "fy_resource_30",
-  "completionType": "fy_struct_82",
+  "completionType": "fy_struct_84",
   "publishedVectorType": "fy_resource_13",
   "executionType": "fy_resource_14",
-  "pendingMetaType": "fy_struct_160",
-  "cursorType": "fy_struct_150",
-  "outputCopyType": "fy_struct_87",
+  "pendingMetaType": "fy_struct_162",
+  "cursorType": "fy_struct_152",
+  "outputCopyType": "fy_struct_89",
   "transactionType": "fy_resource_38",
-  "preparationType": "fy_struct_86",
+  "preparationType": "fy_struct_88",
   "arrayFillType": "fy_struct_7"
 }

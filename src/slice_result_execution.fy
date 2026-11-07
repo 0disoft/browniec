@@ -45,6 +45,7 @@ import output_copy_cursor as output_copy;
 import array_fill_cursor as array_fill;
 import array_fill_execution as array_steps;
 import array_copy_execution as array_copies;
+import array_list_execution as array_lists;
 
 pub struct Scalar { i64 value; usize remaining; slices::Ticket[8] resumed; }
 // Internal tagged completion; inactive fields never escape either native API.
@@ -456,6 +457,15 @@ fn Result<Option<Outcome>,errors::Error> dispatch(ref body_ir::Program body,ref 
         let usize at=cursor.pc*8;let usize offset=body.offsets[cursor.pc];let u8 op=body.code[at];
         let usize dst=body.code[at+1] as usize;let usize a=body.code[at+2] as usize;let usize b=body.code[at+3] as usize;
         let usize base=frame*128;
+        if(cursor.array.active && (cursor.array.op==80 || cursor.array.op==81)){
+            let u8 expected_op=if(array_lists::selected_list(body,cursor.pc)){81}else{op};
+            if(!array_lists::operation(body,cursor.pc) || expected_op!=cursor.array.op || cursor.pc!=cursor.array.pc ||
+                frame!=cursor.array.frame || offset!=cursor.array.offset || cursor.output.active){return .err(errors::make(5,offset));};
+            *visited+=1;var array_fill::State listing=cursor.array;
+            let bool finished=array_lists::advance(ref mut listing,body,bindings,state,data,registers[base..base+128],
+                list_cells,list_scratch,place_state,bytes_left)?;
+            cursor.array=listing;if(finished){cursor.pc+=1;continue;}return .ok(.none);
+        }
         if(cursor.array.active && (cursor.array.op==34 || cursor.array.op==38)){
             let u8 expected_op=if(array_copies::selected_copy(body,cursor.pc)){38}else{op};
             if(!array_copies::operation(body,cursor.pc) || expected_op!=cursor.array.op || cursor.pc!=cursor.array.pc ||
@@ -484,6 +494,13 @@ fn Result<Option<Outcome>,errors::Error> dispatch(ref body_ir::Program body,ref 
         if(*remaining==0){return .err(errors::make(8,offset));};
         if(array_copies::begin_bytes(body,cursor.pc)>bytes_left){return .ok(.none);};
         *remaining-=1;*visited+=1;
+        if(array_lists::operation(body,cursor.pc)){
+            var array_fill::State listing=array_lists::begin(body,cursor.pc,bindings,state,data.len,list_cells,list_scratch,place_state,remaining)?;
+            listing.total=cursor.array.total;listing.last=cursor.array.last;
+            let bool finished=array_lists::advance(ref mut listing,body,bindings,state,data,registers[base..base+128],
+                list_cells,list_scratch,place_state,bytes_left)?;
+            cursor.array=listing;if(finished){cursor.pc+=1;continue;}return .ok(.none);
+        }
         if(array_copies::operation(body,cursor.pc)){
             var array_fill::State copying=array_copies::begin(body,cursor.pc,bindings,state,data,place_state,remaining)?;
             if(copying.total>18446744073709551615-cursor.array.total || copying.last>4096-cursor.array.last){return .err(errors::make(5,offset));}
@@ -516,10 +533,6 @@ fn Result<Option<Outcome>,errors::Error> dispatch(ref body_ir::Program body,ref 
             cursor.pc+=1;continue;
         }
         if(op==8 || op==39 || op==50 || op==65 || op==79 || op==82){let usize ended=place_frames::empty_frame(place_state,frame,offset)?;}
-        if(op==80 || op==81){
-            *remaining=owned::list(body,cursor.pc,bindings,state,registers[base..base+128],data,list_cells,list_scratch,*remaining)?;
-            cursor.pc+=1;continue;
-        }
         var bool byte_loan=false;
         if(op==57 || op==58){byte_loan=body_ir::slice_element(body,a,offset)?==10;}
         if(op==71 || op==72 || byte_loan){
