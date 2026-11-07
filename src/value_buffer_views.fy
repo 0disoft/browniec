@@ -146,12 +146,51 @@ pub fn Result<Ticket,Error> alias(ref mut Pool pool,ref mut roots::State store,
     let usize slot=vacant(pool,destination)?;
     return .ok(publish(pool,slot,destination,parent.serial,parent.owner_binding,token(parent),parent.start,parent.length));
 }
+// Atomic native CALL bindings. Resolve every source against the original pool,
+// never against an earlier staged destination. The fixed pool copy contains no
+// payload or owning root; all aliases retain the existing physical read lease.
+pub fn Result<usize,Error> aliases(ref mut Pool pool,ref roots::State store,
+    ref vec::Vec<bytes::Buffer> data,ref vec::Vec<bytes::Buffer> scratch,
+    ref usize[] sources,ref usize[] destinations,ref mut usize fuel){
+    if(sources.len!=destinations.len){return .err(.Binding);}
+    if(sources.len>8){return .err(.Capacity);}
+    let usize paid=pay(range_cost()*sources.len,fuel)?;
+    let usize checked=header(pool)?;
+    if(sources.len==0){return .ok(0);}
+    var Pool staged=*pool;var usize i=0;
+    while(i<sources.len){
+        let Ticket source=lookup(pool,store,data,scratch,sources[i])?;
+        let Row row=resolve(pool,store,data,scratch,source,sources[i])?;
+        let usize slot=vacant(ref staged,destinations[i])?;
+        let Ticket added=publish(ref mut staged,slot,destinations[i],row.serial,
+            row.owner_binding,token(row),row.start,row.length);
+        i+=1;
+    }
+    *pool=staged;return .ok(sources.len);
+}
 pub fn Result<Ticket,Error> move(ref mut Pool pool,ref mut roots::State store,
     ref vec::Vec<bytes::Buffer> data,ref vec::Vec<bytes::Buffer> scratch,Ticket source,
     usize selected,usize destination,ref mut usize fuel){
     let usize paid=pay(move_cost(),fuel)?;let Row row=resolve(pool,store,data,scratch,source,selected)?;
     let usize checked=binding(pool,destination,source.slot)?;
     var Row moved=row;moved.binding=destination;put(pool,source.slot,moved);return .ok(source);
+}
+// Native RETURN bookkeeping only. The outer frame coordinator authenticates
+// caller tokens/adjacency and cleanup; tickets/bindings confer no guest authority.
+pub fn Result<Ticket,Error> handoff(ref mut Pool pool,ref mut roots::State store,
+    ref vec::Vec<bytes::Buffer> data,ref vec::Vec<bytes::Buffer> scratch,Ticket source,
+    usize selected,usize destination,Ticket origin,usize origin_binding,ref mut usize fuel){
+    let usize paid=pay(move_cost(),fuel)?;
+    let Row row=resolve(pool,store,data,scratch,source,selected)?;
+    let Row caller=resolve(pool,store,data,scratch,origin,origin_binding)?;
+    if(row.serial!=caller.serial || row.owner_binding!=caller.owner_binding ||
+        row.owner_slot!=caller.owner_slot || row.owner_generation!=caller.owner_generation){return .err(.Binding);}
+    if(row.start<caller.start){return .err(.Bounds);}
+    let usize offset=row.start-caller.start;
+    if(offset>caller.length || row.length>caller.length-offset){return .err(.Bounds);}
+    if(destination==selected){return .err(.Binding);}
+    var usize prepaid=move_cost();
+    return move(pool,store,data,scratch,source,selected,destination,ref mut prepaid);
 }
 pub fn Result<usize,Error> length(ref Pool pool,ref roots::State store,
     ref vec::Vec<bytes::Buffer> data,ref vec::Vec<bytes::Buffer> scratch,Ticket source,
