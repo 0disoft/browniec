@@ -44,10 +44,13 @@ native stack setting changes. Public Fuel default 256 and ceiling 16000000 remai
 
 ## Deliberate remaining limits
 
-This is a bounded bottom-expression increment. Bottom in control conditions or
-switch subjects, postfix receivers, Buffer-operation operands/endpoints, a binary
-left operand followed by more operators and non-final CALL arguments still
-reject. Classic for headers retain their existing pure-expression restriction.
+This is a bounded bottom-expression increment. The
+[terminal-operand successor](value-terminal-operands.md) now propagates final
+Buffer/view operands, including sole len/copy/view receivers, final byte arguments,
+view indices and range upper endpoints. Bottom in control conditions or switch
+subjects, postfix receivers, nonfinal byte operands/range lower endpoints, a
+binary left operand followed by more operators and non-final CALL arguments
+still rejects. Classic for headers retain their existing pure-expression restriction.
 The [void-bottom successor](value-void-bottom.md) now admits private
 `return <bottom>;` while keeping ordinary void-CALL/value operands rejected.
 

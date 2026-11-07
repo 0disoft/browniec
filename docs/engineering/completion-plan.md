@@ -1,4 +1,16 @@
-- Latest void-bottom checkpoint (2026-11-07): [Terminal void-return operands](value-void-bottom.md)
+- Latest terminal-operands checkpoint (2026-11-07): [Final Buffer/view operands](value-terminal-operands.md)
+  now propagate terminal control after real receiver/index work without the
+  enclosing byte operation or duplicate cleanup. `093475d` passed five new
+  development groups across two scoped snapshots, seven integrated development
+  regressions and all twelve final release groups. The four retained group bodies
+  and helpers are byte-identical; only an ambiguous .none fixture was annotated.
+  All 227 union inputs match checkout/Git raw bytes; all 216 production modules
+  retain LF. See [evidence](../evidence/value-terminal-operands-windows-20261107.json).
+  The combined 32/33 fixture and existing opcodes/prices/public/Fuel gates remain.
+  Nonfinal/unreachable contexts, fresh loop owners, general references and the
+  full runtime/host/isolation/embed/platform/delivery inventory remain open. Local only.
+
+- Predecessor void-bottom checkpoint (2026-11-07): [Terminal void-return operands](value-void-bottom.md)
   now compose private `return <bottom>;` without an extra return/capture/cleanup.
   `37c3994` passed five new development groups on byte-identical worker inputs,
   four integrated development regressions and all nine integrated release groups.
@@ -218,6 +230,13 @@ performance and clean-machine delivery were not run; existing opcode prices,
 Fuel default 256 / ceiling 16000000 and wider capability gates remain unchanged.
 
 ## Implementation sequence
+
+The private [terminal-operand successor](value-terminal-operands.md) now closes
+final Buffer/view operand composition while preserving real preceding effects,
+loans and cleanup. Current scoped development evidence covers five new groups
+and seven integrated regressions; all twelve final groups ran in release. Nonfinal
+continuations require general unreachable checking; the full language/runtime,
+host, isolation, embedding, platform and delivery work remains open.
 
 The private [void-bottom successor](value-void-bottom.md) now accepts terminal
 void-return operands without replaying cleanup or emitting an enclosing return.

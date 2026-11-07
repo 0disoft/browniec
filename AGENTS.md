@@ -1,13 +1,14 @@
-- Latest void-bottom checkpoint (2026-11-07): [Terminal void-return operands](docs/engineering/value-void-bottom.md)
-  now compose private `return <bottom>;` without an extra return/capture/cleanup.
-  `37c3994` passed five new development groups on byte-identical worker inputs,
-  four integrated development regressions and all nine integrated release groups.
-  All 226 union inputs match checkout/Git raw bytes, all 216 production modules
-  are LF, and all 220 worker inputs match integration. See [evidence](docs/evidence/value-void-bottom-windows-20261107.json).
-  The combined 32/33 depth fixture is unchanged. Bare return and non-bottom
-  rejection remain; VM/opcodes/prices/public gates/Fuel defaults/caps are unchanged.
-  Fresh loop owners, other bottom/general references, methods/AllocError and
-  runtime/host/platform/delivery remain open. Full completion remains open. Local only.
+- Latest terminal-operands checkpoint (2026-11-07): [Final Buffer/view operands](docs/engineering/value-terminal-operands.md)
+  now propagate terminal control after real receiver/index work without the
+  enclosing byte operation or duplicate cleanup. `093475d` passed five new
+  development groups across two scoped snapshots, seven integrated development
+  regressions and all twelve final release groups. The four retained group bodies
+  and helpers are byte-identical; only an ambiguous .none fixture was annotated.
+  All 227 union inputs match checkout/Git raw bytes; all 216 production modules
+  retain LF. See [evidence](docs/evidence/value-terminal-operands-windows-20261107.json).
+  The combined 32/33 fixture and existing opcodes/prices/public/Fuel gates remain.
+  Nonfinal/unreachable contexts, fresh loop owners, general references and the
+  full runtime/host/isolation/embed/platform/delivery inventory remain open. Local only.
 
 # Brownie C agent guidance
 

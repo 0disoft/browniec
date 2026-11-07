@@ -1,4 +1,16 @@
-- Latest void-bottom checkpoint (2026-11-07): [Terminal void-return operands](docs/engineering/value-void-bottom.md)
+- Latest terminal-operands checkpoint (2026-11-07): [Final Buffer/view operands](docs/engineering/value-terminal-operands.md)
+  now propagate terminal control after real receiver/index work without the
+  enclosing byte operation or duplicate cleanup. `093475d` passed five new
+  development groups across two scoped snapshots, seven integrated development
+  regressions and all twelve final release groups. The four retained group bodies
+  and helpers are byte-identical; only an ambiguous .none fixture was annotated.
+  All 227 union inputs match checkout/Git raw bytes; all 216 production modules
+  retain LF. See [evidence](docs/evidence/value-terminal-operands-windows-20261107.json).
+  The combined 32/33 fixture and existing opcodes/prices/public/Fuel gates remain.
+  Nonfinal/unreachable contexts, fresh loop owners, general references and the
+  full runtime/host/isolation/embed/platform/delivery inventory remain open. Local only.
+
+- Predecessor void-bottom checkpoint (2026-11-07): [Terminal void-return operands](docs/engineering/value-void-bottom.md)
   now compose private `return <bottom>;` without an extra return/capture/cleanup.
   `37c3994` passed five new development groups on byte-identical worker inputs,
   four integrated development regressions and all nine integrated release groups.
@@ -33,6 +45,27 @@
   price, public gate or Fuel default/cap change. Next: fresh loop-carried owners,
   private safe casts, remaining bottom/general references, methods/AllocError and
   runtime/host/platform work. Full completion remains open. Local only.
+
+## Private terminal Buffer/view operands: Windows verified
+
+On `093475d`, five new development groups passed across two worker snapshots;
+only a concrete Option annotation in one fixture changed. The four retained
+passing group bodies and helpers, and every production/config input, match final
+bytes. Integration ran seven development regressions and all twelve final release
+groups. Each successful guest independently verifies before native VM execution.
+The [contract](docs/engineering/value-terminal-operands.md) and
+[evidence](docs/evidence/value-terminal-operands-windows-20261107.json) preserve
+both original reports and the unchanged-body proof. All 227 union inputs match
+checkout/Git raw bytes; 216 production modules retain LF. The unchanged combined
+32/33 depth fixture ran in both root profiles with default stacks.
+
+```text
+python tools/verify-value-terminal-operands.py --profile development --regressions-only
+python tools/verify-value-terminal-operands.py --profile release
+```
+
+There was no second all-five development invocation on the final complete module.
+Public CLI, other platforms and full runtime/lifecycle validation remain open.
 
 ## Private void-return terminal operands: Windows verified
 
