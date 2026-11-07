@@ -25,6 +25,12 @@ pub fn usize read_cost(){return 513;}
 pub fn Result<usize,Error> copy_cost(usize length){
     if(length>18446744073709551103){return .err(.Bounds);}return .ok(512+length);
 }
+pub fn Result<usize,Error> append_to_cost(usize old_length,usize length){
+    let usize cost=switch(roots::append_from_cost(old_length,length)){
+        case .ok(v):{v}case .err(e):{return .err(root_error(e));}
+    };
+    if(cost>18446744073709551359){return .err(.Bounds);}return .ok(256+cost);
+}
 fn Error root_error(roots::Error e){return switch(e){case .Fuel:{.Fuel}case .State:{.State}
     case .Binding:{.Binding}case .Serial:{.Stale}case .Owners:{.Capacity}
     case .Quota:{.Quota}case .Allocation:{.Allocation}case .Bounds:{.Bounds}};}
@@ -169,6 +175,18 @@ pub fn Result<usize,Error> copy_out(ref Pool pool,ref roots::State store,
     let Row row=resolve(pool,store,data,scratch,source,selected)?;
     if(output.len!=row.length){return .err(.Bounds);}
     return switch(roots::copy_out(store,data,scratch,row.serial,row.owner_binding,row.start,output,fuel)){
+        case .ok(v):{.ok(v)}case .err(e):{.err(root_error(e))}
+    };
+}
+// Authenticate the exact registry row and root lease before asking roots to
+// copy. No ticket mutation, intermediate payload or escaping native view.
+pub fn Result<usize,Error> append_to(ref Pool pool,ref mut roots::State store,
+    ref mut vec::Vec<bytes::Buffer> data,ref mut vec::Vec<bytes::Buffer> scratch,
+    Ticket ticket,usize selected,usize dest_serial,usize dest_binding,
+    growth::Limits limits,ref mut usize fuel){
+    let usize paid=pay(256,fuel)?;let Row row=resolve(pool,store,data,scratch,ticket,selected)?;
+    return switch(roots::append_window(store,data,scratch,dest_serial,dest_binding,
+        row.serial,row.owner_binding,row.start,row.length,limits,fuel)){
         case .ok(v):{.ok(v)}case .err(e):{.err(root_error(e))}
     };
 }

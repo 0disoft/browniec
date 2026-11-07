@@ -374,6 +374,33 @@ pub fn Result<usize,Error> append_from_cost(usize old_length,usize source_length
     let usize cost=append_cost(old_length,source_length)?;
     if(cost>18446744073709551359){return .err(.Bounds);}return .ok(cost+256);
 }
+pub fn Result<usize,Error> append_window_cost(usize old_length,usize length){
+    return append_from_cost(old_length,length);
+}
+// Validate the initialized window by subtraction before adding its endpoint or
+// extracting the destination. The selected source remains in roots/scratch;
+// its native borrow lasts only through the existing single append transaction.
+pub fn Result<usize,Error> append_window(ref mut State s,ref mut vec::Vec<bytes::Buffer> roots,
+    ref mut vec::Vec<bytes::Buffer> scratch,usize dest_serial,usize dest_binding,usize source_serial,
+    usize source_binding,usize start,usize length,growth::Limits limits,ref mut usize fuel){
+    let usize metadata=pay(512,fuel)?;let usize i=resolve(s,roots,scratch,dest_serial,dest_binding)?;
+    let usize source=resolve_mode(s,roots,scratch,source_serial,source_binding,false)?;
+    if(i==source){return .err(.Binding);}
+    let usize initialized=bytes::len(vec::at<bytes::Buffer>(roots,source));
+    if(start>initialized || length>initialized-start){return .err(.Bounds);}
+    let usize cost=append_window_cost(bytes::len(vec::at<bytes::Buffer>(roots,i)),length)?;
+    let usize paid=pay(cost-512,fuel)?;let usize end=start+length;
+    let usize count=vec::len<bytes::Buffer>(roots);let bytes::Buffer root=take(roots,scratch,i);
+    var AppendOutcome result=AppendOutcome{.length=0,.error=2,.success=false};
+    let bytes::Buffer changed=if(source<i){
+        let ref u8[] input=bytes::view(vec::at<bytes::Buffer>(roots,source));
+        append_ready(s,root,i,input[start..end],limits,ref mut result)
+    }else{
+        let ref u8[] input=bytes::view(vec::at<bytes::Buffer>(scratch,count-1-source));
+        append_ready(s,root,i,input[start..end],limits,ref mut result)
+    };
+    push(roots,changed);restore(roots,scratch);return appended(result);
+}
 // Both identities are authenticated before extraction. The destination becomes
 // one local resource; its distinct source stays in one of the owning vectors.
 // No staging allocation or escaping native view is needed, even for growth.
