@@ -76,6 +76,36 @@ pub fn Result<Staging, Error> staging(ref layouts::Catalog catalog, usize record
     return .ok(result);
 }
 
+// Metadata only: an exact selected-size mask, at most 128 bytes. Zero denotes
+// padding, one an ordinary scalar byte, two a canonical bool byte. Reuse the
+// validated nested iterator; neither source storage nor an arena is accessed.
+pub fn Result<usize, Error> byte_kinds(ref layouts::Catalog catalog, usize record,
+    ref mut u8[] mask) {
+    let layouts::Plan plan = switch (layouts::plan(catalog,18446744073709551615)) {
+        case .ok(p): { p } case .err(_): { return .err(.Layout); }
+    };
+    let usize size = selected(ref plan,record)?;
+    if (mask.len != size) { return .err(.Bounds); }
+    var usize at = 0;
+    while (at < size) { mask[at] = 0; at += 1; }
+    var Cursor cursor = Cursor { .depth = 1, .records = [0;16], .fields = [0;16], .bases = [0;16] };
+    cursor.records[0] = record;
+    var bool done = false;
+    while (!done) {
+        let Leaf leaf = next(catalog,ref plan,ref mut cursor);
+        if (leaf.tag == 0) { done = true; }
+        else {
+            let usize width = codec::width(leaf.tag);
+            var usize byte = 0;
+            while (byte < width) {
+                mask[leaf.offset+byte] = if (leaf.tag == 2) { 2 } else { 1 };
+                byte += 1;
+            }
+        }
+    }
+    return .ok(size);
+}
+
 struct Reservation { usize base; usize end; }
 // The selected size, alignment and arena state are validated by the caller.
 fn Result<Reservation, Error> reserve(usize size, usize alignment, ref arenas::Arena arena) {

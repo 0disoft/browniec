@@ -9,6 +9,7 @@ import struct_layout as records;
 import struct_nested_storage as record_storage;
 import struct_range as record_range;
 import aggregate_copy as copying;
+import call_copy_cursor as calling;
 
 // Instance-local metadata over caller-owned backing bytes. No guest/raw pointer.
 pub struct Token { usize slot; usize generation; }
@@ -1055,4 +1056,154 @@ pub fn Result<Token,Error> publish_record_work(ref records::Catalog catalog,ref 
     if(work.op!=41 && work.op!=42){return .ok(Token{.slot=work.slot,.generation=work.generation});}
     table.arena.used=work.end;
     return .ok(publish_record(table,work.slot,work.record,work.length,work.stride,work.mark,work.base));
+}
+
+// Transient CALL metadata only. A source-valid range may have no reservation:
+// checked includes that source, whereas copies.count includes only destinations
+// successfully reserved. failure is deferred until phase 0 reaches that argument
+// and (for a reservation failure) validates its bools. This preserves the atomic
+// mixed API's source/shape/bools/free-slot/reservation diagnostic order.
+pub struct CallCopyRange { usize source; usize target; usize mark; usize end; usize size; }
+pub struct CallCopyPlan {
+    Table planned; Copies copies; CallCopyRange[8] ranges;
+    usize mark; usize depth; usize checked; Option<Error> failure;
+}
+fn Result<Owner,Error> call_copy_source(ref Table table,ref records::Catalog catalog,
+    CallArgument argument){
+    let Owner owner=lookup(table,argument.source)?;
+    if(owner.writing){return .err(.State);}
+    if(owner.element!=argument.element){return .err(.Type);}
+    if(argument.element==0){
+        if(argument.length!=0){return .err(.Metadata);}
+        if(owner.record!=argument.record){return .err(.Type);}
+        let usize checked=record_metadata(catalog,ref owner)?;
+    }else{
+        if(argument.record!=0){return .err(.Metadata);}
+        if(owner.length!=argument.length){return .err(.Length);}
+    }
+    return .ok(owner);
+}
+fn Result<Token,Error> call_copy_target(ref mut Table planned,ref Owner owner){
+    let layouts::Array layout=allocation_layout(owner)?;
+    let usize slot=free_slot(planned)?;
+    let usize mark=planned.arena.used;
+    let layouts::Reservation reservation=switch(layouts::reserve(ref layout,mark,planned.arena.limit)){
+        case .ok(p):{p}case .err(e):{return .err(switch(e){
+            case .Type:{.Type}case .Length:{.Length}case .Metadata:{.Metadata}
+            case .Overflow:{.Overflow}case .Quota:{.Quota}case .Bounds:{.Bounds}
+            case .Alignment:{.Alignment}
+        });}
+    };
+    // All destinations follow the ORIGINAL prefix. This is stronger than just
+    // pairwise argument disjointness and permits repeated original sources.
+    let copying::Mode transfer=switch(copying::prove(reservation.offset,owner.base,
+        layout.bytes,reservation.end,false,0,false)){
+        case .ok(v):{v}case .err(_):{return .err(.State);}
+    };
+    planned.arena.used=reservation.end;
+    if(owner.element==0){return .ok(publish_record(planned,slot,owner.record,
+        owner.length,owner.alignment,mark,reservation.offset));}
+    return .ok(publish(planned,slot,ref layout,mark,reservation.offset));
+}
+
+// Only top-level arity/table errors escape immediately. Later argument errors
+// are facts in this transient prefix plan, NEVER eager errors masking an earlier
+// invalid bool. Resolve every source against table, not the provisional planned
+// table. No payload read/write, allocation, publication or caller mutation.
+// Metadata scans/planning remain atomic; bounding them belongs to future R03.
+pub fn Result<CallCopyPlan,Error> plan_call_copy(ref Table table,ref records::Catalog catalog,
+    ref CallArgument[] arguments,usize capacity){
+    if(arguments.len>8){return .err(.Metadata);}
+    if(!valid(table,capacity)){return .err(.State);}
+    var Table planned=Table{.slots=table.slots,.order=table.order,.depth=table.depth,.arena=table.arena};
+    var Copies copies=Copies{.tokens=[Token{.slot=0,.generation=0};8],.count=0};
+    var CallCopyRange[8] ranges=[CallCopyRange{.source=0,.target=0,.mark=0,.end=0,.size=0};8];
+    let usize original_mark=table.arena.used;var usize checked=0;
+    var Option<Error> failure=.none;var usize i=0;
+    while(i<arguments.len){
+        var Owner owner=table.slots[0];
+        switch(call_copy_source(table,catalog,arguments[i])){
+            case .ok(o):{owner=o;}case .err(e):{failure=.some(e);break;}
+        };
+        // valid(table) bounds every original source by this immutable prefix.
+        if(owner.end>original_mark){failure=.some(.State);break;}
+        ranges[i]=CallCopyRange{.source=owner.base,.target=0,.mark=0,.end=0,.size=owner.end-owner.base};
+        checked=i+1;
+        let usize mark=planned.arena.used;
+        var Token token=Token{.slot=0,.generation=0};
+        switch(call_copy_target(ref mut planned,ref owner)){
+            case .ok(t):{token=t;}case .err(e):{failure=.some(e);break;}
+        };
+        let Owner target=planned.slots[token.slot];
+        ranges[i]=CallCopyRange{.source=owner.base,.target=target.base,.mark=mark,.end=target.end,.size=owner.end-owner.base};
+        copies.tokens[i]=token;copies.count+=1;i+=1;
+    }
+    return .ok(CallCopyPlan{.planned=planned,.copies=copies,.ranges=ranges,
+        .mark=original_mark,.depth=table.depth,.checked=checked,.failure=failure});
+}
+
+// Capture only compact comparison facts; no transient planned Table is retained.
+// Unreserved targets remain zero. Even invalid source descriptors are captured
+// verbatim so their error can be reported at the correct phase-0 position.
+pub fn Result<calling::State,Error> capture_call_copy(ref CallCopyPlan plan,ref CallArgument[] arguments){
+    if(arguments.len>8 || plan.checked>arguments.len || plan.copies.count>plan.checked){return .err(.State);}
+    var calling::State work=calling::empty();
+    work.active=arguments.len!=0;work.count=arguments.len;
+    work.mark=plan.mark;work.end=plan.planned.arena.used;work.depth=plan.depth;
+    var usize i=0;
+    while(i<arguments.len){
+        work.source_slots[i]=arguments[i].source.slot;
+        work.source_generations[i]=arguments[i].source.generation;
+        if(i<plan.checked){
+            work.source_bases[i]=plan.ranges[i].source;
+            work.source_ends[i]=plan.ranges[i].source+plan.ranges[i].size;
+        }
+        if(i<plan.copies.count){
+            work.target_slots[i]=plan.copies.tokens[i].slot;
+            work.target_generations[i]=plan.copies.tokens[i].generation;
+        }
+        i+=1;
+    }
+    return .ok(work);
+}
+
+// Replan exact pinned descriptors on every chunk, reauthenticating table depth,
+// arena prefix, source shape/generation and every destination slot/reservation.
+// The compact recipe is a comparison target, never independent write authority.
+pub fn Result<CallCopyPlan,Error> validate_call_copy(ref Table table,ref records::Catalog catalog,
+    ref CallArgument[] arguments,ref calling::State work,usize capacity){
+    if(work.count!=arguments.len || work.count>8 || work.phase>1){return .err(.State);}
+    if(!work.active && work.count!=0){return .err(.State);}
+    if(work.index>work.count || work.last>work.total || work.written>work.total){return .err(.State);}
+    var usize i=0;
+    while(i<work.count){
+        if(arguments[i].source.slot!=work.source_slots[i] ||
+            arguments[i].source.generation!=work.source_generations[i]){return .err(.State);}
+        i+=1;
+    }
+    let CallCopyPlan plan=plan_call_copy(table,catalog,arguments,capacity)?;
+    if(work.phase==1){switch(plan.failure){case .none:{}case .some(e):{return .err(e);}};}
+    if(plan.mark!=work.mark || plan.planned.arena.used!=work.end || plan.depth!=work.depth){return .err(.State);}
+    i=0;
+    while(i<8){
+        let Token target=plan.copies.tokens[i];
+        let CallCopyRange origin=plan.ranges[i];
+        if(origin.source!=work.source_bases[i] || origin.source+origin.size!=work.source_ends[i]){return .err(.State);}
+        if(target.slot!=work.target_slots[i] || target.generation!=work.target_generations[i]){return .err(.State);}
+        i+=1;
+    }
+    if(work.end<work.mark || work.written>work.end-work.mark){return .err(.State);}
+    if(work.count==0){
+        if(work.active || work.phase!=0 || work.index!=0 || work.at!=0 || work.written!=0){return .err(.State);}
+    }else if(work.phase==0){
+        if(work.written!=0 || work.index>plan.checked){return .err(.State);}
+        if(work.index==plan.checked){if(work.at!=0){return .err(.State);}}
+        else if(work.at>plan.ranges[work.index].size){return .err(.State);}
+    }else{
+        if(plan.copies.count!=work.count || work.index>=work.count){return .err(.State);}
+        let CallCopyRange range=plan.ranges[work.index];
+        if(work.at>range.end-range.mark || work.written!=range.mark-work.mark+work.at ||
+            work.written>=work.end-work.mark){return .err(.State);}
+    }
+    return .ok(plan);
 }
