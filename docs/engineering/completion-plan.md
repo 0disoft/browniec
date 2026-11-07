@@ -1,21 +1,21 @@
-- Latest retained-Program checkpoint (2026-11-07): [Program memory](runtime-engine-program-memory.md)
-  now checks exact StoredVec8 + outer handle Vec8 + deduplicated image payload
-  before persistent allocation. Individual, Program-set and combined control/
-  Program limits are enforced; failed preparation publishes no Program or ID.
-  Released pins stay charged until actual last-owner removal; moves/peer removal,
-  OOM rollback and closed observations preserve current bytes and reservation peaks.
-  Development/O2 each pass eight Engine retention groups, four plan groups and the
-  existing control/input/output/OS fixtures; SDK heap returns to zero. Separate
-  source/proof/VM development/O2 each pass 39 unchanged groups including depth32/33.
-  Eighteen typed bindings cover 203 closure modules; all 216 native inputs match.
-  Generic vector projection types now must match actual bound C declarations.
-  Root locked check: 249 sources/2844 MIR functions. Current fixed-control heap is
-  6,720 bytes with inline Engine 664 bytes for one Program/Instance. Program fixed
-  heap is 176,512 bytes ordinary/output or 176,448 input, plus actual image bytes.
-  This is not total Engine/RSS accounting. Compile working storage (including
-  array-list growth peaks), per-Instance/combined accounting, bounded work and
-  runtime/public delivery remain. Public gates/prices/capacities stay unchanged.
-  Workers are closed. Local commits only; no push/release/deployment.
+- Latest compiler-workspace checkpoint (2026-11-07): [Compiler working heap](compile-memory.md)
+  adds opt-in ordinary/input/output/input-output compilation in `4ff16aa`.
+  Preflight reserves a conservative 262,144-byte lowering heap bound, including
+  old/new Vec growth. Existing exact persistent admission is narrowed to the
+  remaining combined allowance; exclusive phases use max rather than their sum.
+  Invalid/zero fixed plans reject; quota/OOM/source failures preserve reservation
+  peaks and release failed storage. Trusted positive layout facts remain required.
+  Development/O2 each pass 14 isolated groups: seven reservation, six actual
+  compiler/allocator and the unchanged captured-call depth fixture. The wrapper
+  itself also accepts depth32/rejects33. Six compiler groups return SDK heap to zero.
+  All 201 executed input identities match checkout/Git. Root locked check passes
+  251 sources/2859 MIR functions; all 243 production modules retain LF.
+  Existing Engine verification's 216 input identities are unchanged; it was not
+  rerun. Engine compilation has not yet adopted the new opt-in wrapper. Next bind
+  working reservations and Entry/Index costs, then per-Instance/combined accounting.
+  Native stack/RSS, bounded work, runtime/public delivery and the full inventory
+  remain open. Public gates/prices/capacities are unchanged. Workers are closed.
+  Local commits only; no push/release/deployment.
 
 - Predecessor immutable-input execution checkpoint (2026-11-07): [Actual 1MiB input](module-input-execution.md)
   integrates input windows `3503aba` and owning Program execution `c86aff6`.
@@ -585,7 +585,9 @@ and the inventory completion conditions remain open.
    [Fixed control storage](runtime-engine-control-memory.md) now has a pre-allocation
    budget and count-sized reserved vectors. [Exact Program retention](runtime-engine-program-memory.md)
    now preflights actual source/IR/image backing and returns charges on final owner
-   removal. Next bind compile working storage (including growth peaks), then
+   removal. The [opt-in bounded compiler](compile-memory.md) now reserves lowering
+   growth and persistent phases. Next bind it and Entry/Index costs to Engine
+   working storage, then
    per-Instance frames/input/owners/loans/output and remaining combined peaks.
    Tracked control/Program bytes must not be reported as total Engine memory.
 4. **Useful byte/text workload: D01-D05, I01-I02.** Connect native Buffer owners
