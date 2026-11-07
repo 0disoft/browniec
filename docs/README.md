@@ -29,7 +29,9 @@
 | VM slice dispatch and cleanup | [Shared lifecycle](engineering/m2-array-slice-lifecycle-vm.md) |
 | Gated VM CALL publication | [Frame transaction](engineering/m2-array-call-frame-vm.md) |
 | Typed ABI handles and OS identity | [Fairy kernel](engineering/abi-handles.md), [Windows guard/TLS](engineering/abi-thread-identity.md), [real lazy coordinator](engineering/abi-registry.md): internal 64-slot owner-module registry verified; production scale and real object lifecycles remain open |
-| Native host catalog binding | [Strict admission and canonical SHA-256](engineering/host-catalog.md): 12 groups per Windows profile, including real TLV tag composition; executable Program/host exchange remain open |
+| Owning runtime storage prerequisite | [Opaque Store probe](engineering/runtime-store-probe.md): actual Vec/Buffer mutation/move/drop and zero retained allocations in Windows development/O2; full Engine lifecycle remains open |
+| Typed policy/run admission and native composition | [Policy/run parsers](engineering/runtime-policy.md), [composed grants/exchange](engineering/runtime-admission-exchange.md): private metadata and transactions; complete Engine/Program/VM binding remains open |
+| Native host catalog binding | [Strict admission and canonical SHA-256](engineering/host-catalog.md): 12 groups per Windows profile, including real TLV tag composition; [native request/reply exchange](engineering/host-exchange.md) exists; executable Program/VM binding remains open |
 | Fresh loop-carried Buffer owners | [Singleton anonymous carriers](engineering/value-fresh-loop-owners.md): 11 groups per Windows profile; conditional fresh-root unions remain open |
 | Public IR inspection | [inspect SOURCE --ir](engineering/inspect-ir.md): 19 CLI cases plus version/help per Windows profile, without guest execution |
 | Composed native checkpoint | [Integration](engineering/parallel-integration.md): final release four native groups and three public CLI cases on exact root inputs |

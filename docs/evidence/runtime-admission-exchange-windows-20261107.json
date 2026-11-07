@@ -1,0 +1,660 @@
+{
+  "schema": "browniec.runtime-admission-exchange-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-07T07:00:48.789234+00:00",
+  "platform": "windows/amd64",
+  "implementations": {
+    "policy": "c774ee0",
+    "hostExchange": "dcbba76",
+    "composition": "8846b0f",
+    "owningStoreProbe": "5453574"
+  },
+  "parallel": {
+    "codeWorkers": 2,
+    "workerModel": "GPT-6.1 Sol High",
+    "baseCommit": "845a056",
+    "disjointIgnoredMirrors": true,
+    "serializedMainIntegration": true
+  },
+  "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+  "inputManifest": {
+    "path": "docs/evidence/runtime-admission-exchange-inputs-windows-20261107.json",
+    "sha256": "367206eb262fb403ac08100a537cdeb88271a72437b43a91d7ef71029876eaf4"
+  },
+  "checkoutAndGitRawInputsMatched": 283,
+  "productionLfModules": 228,
+  "rootCheck": "check ok: 2 instance(s), 236 source file(s), 2644 MIR function(s), lock updated",
+  "policy": {
+    "profiles": {
+      "development": {
+        "receiptSha256": "6029c36e491df9e21502e71663b8c99e1f6273249a1d059cb9b0f008224e3afa",
+        "nativeGroups": 21,
+        "reportSha256": "444f73fd00d0bbd7013fadab8c4298c145762c4dbe29afe3b2986809d7fb2135",
+        "report": {
+          "schemaVersion": "fairyc.test-report/v4",
+          "engine": "native",
+          "target": "x86_64-windows-msvc",
+          "profile": "development",
+          "tests": [
+            {
+              "identity": "tests::m2::runtime_policy::accepted_data_owns_decoded_strings_and_rejections_do_not_mutate_policy",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_policy::input_and_token_budgets_and_no_silent_defaults",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_policy::policy_accepted",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_policy::policy_capabilities",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_policy::policy_duplicate",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_policy::policy_grammar",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_policy::policy_numeric",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_policy::policy_relations",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_policy::policy_required",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_policy::zip_originals_and_all_typed_fields",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_run_config::capability_getters_are_owned_and_engine_policy_must_be_rechecked",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_run_config::original_run_getters_and_policy_recheck",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_run_config::run_accepted",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_run_config::run_capabilities",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_run_config::run_duplicate",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_run_config::run_grammar",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_run_config::run_input_byte_budget",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_run_config::run_names",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_run_config::run_narrowing",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_run_config::run_numeric",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_run_config::run_required",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            }
+          ],
+          "count": 21,
+          "passed": 21,
+          "failed": 0,
+          "status": "ok",
+          "lock": "verified"
+        },
+        "defaultStack": true,
+        "nativeOverrides": false
+      },
+      "release": {
+        "receiptSha256": "bbab9d1dea79370940dbc4c238313f561efc3f2fdf1073798a455d3411514e4d",
+        "nativeGroups": 21,
+        "reportSha256": "6df5af8d9df48dd2c74827d8cd5f031e99f65954b8ab5e72a9080c84fe03cf30",
+        "report": {
+          "schemaVersion": "fairyc.test-report/v4",
+          "engine": "native",
+          "target": "x86_64-windows-msvc",
+          "profile": "release",
+          "tests": [
+            {
+              "identity": "tests::m2::runtime_policy::accepted_data_owns_decoded_strings_and_rejections_do_not_mutate_policy",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_policy::input_and_token_budgets_and_no_silent_defaults",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_policy::policy_accepted",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_policy::policy_capabilities",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_policy::policy_duplicate",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_policy::policy_grammar",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_policy::policy_numeric",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_policy::policy_relations",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_policy::policy_required",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_policy::zip_originals_and_all_typed_fields",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_run_config::capability_getters_are_owned_and_engine_policy_must_be_rechecked",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_run_config::original_run_getters_and_policy_recheck",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_run_config::run_accepted",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_run_config::run_capabilities",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_run_config::run_duplicate",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_run_config::run_grammar",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_run_config::run_input_byte_budget",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_run_config::run_names",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_run_config::run_narrowing",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_run_config::run_numeric",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            },
+            {
+              "identity": "tests::m2::runtime_run_config::run_required",
+              "outcome": "passed",
+              "trapCategory": null,
+              "stdoutBase64": "",
+              "stderrBase64": ""
+            }
+          ],
+          "count": 21,
+          "passed": 21,
+          "failed": 0,
+          "status": "ok",
+          "lock": "verified"
+        },
+        "defaultStack": true,
+        "nativeOverrides": false
+      }
+    },
+    "mutationVectors": 378,
+    "acceptedMutationVectors": 17,
+    "workerInputs": 267,
+    "initialIntegrationExactInputs": 267,
+    "finalDifferences": [
+      "fairy.lock"
+    ],
+    "remainingDifferenceReason": "Final root lock also includes independent host module; every code/test/dependency input matches.",
+    "patchSha256": "77c432b16e8001eda18caa24675b0cc0f7544a76e4d5ccaf515026bce5cafa8e",
+    "nativeRepetitionSkipped": "Both complete current-turn native profiles retained by exact code/test/compiler identity."
+  },
+  "hostExchange": {
+    "receiptSha256": "fa2ea200728dd709fecf9434830b745b676061721f74b7306e5349c127de9d79",
+    "patchSha256": "2d3e42be9be20bbad9c8c271252f079e79c320701ec9ca969aff252f43c2c679",
+    "profiles": [
+      {
+        "profile": "development",
+        "native": {
+          "groups": 13,
+          "sha256": "0efd0c49192b1916d2c0795dbd23990b9ebf9d8abc6314af867a9459646835b3"
+        }
+      },
+      {
+        "profile": "release",
+        "native": {
+          "groups": 13,
+          "sha256": "0da8ebb0c7713f2115d108dc2e767569ec5efd144561a574fe28aecabaae544b"
+        }
+      }
+    ],
+    "layout": [
+      {
+        "profile": "development",
+        "executed": true,
+        "bufferBytes": 32,
+        "exchangeBytes": 7632,
+        "backingOffset": 0,
+        "headerOffset": 32,
+        "headerDataOffset": 64,
+        "catalogOffset": 72,
+        "identityMaximumExecuted": true,
+        "generatedSha256": "5e1181ad65e754ef6e62ad362c866b32646c6966ccaab91eba882927778e670d",
+        "harnessSha256": "62a25ff7039fcd9782cd8a8a1cf6b21cde4146c67f12dc6ffef88a3fe8b5a89e",
+        "exeSha256": "85e14f2d221792f68a3b09405c36a27b526dc8efc739c4ccdcc8873f5c734add",
+        "allocator": {
+          "schema": "browniec.buffer-allocator/v2",
+          "live": 0,
+          "target": 0,
+          "targetAttempts": 0,
+          "failures": 0,
+          "attempts": 8,
+          "frees": 8
+        }
+      },
+      {
+        "profile": "release",
+        "executed": true,
+        "bufferBytes": 32,
+        "exchangeBytes": 7632,
+        "backingOffset": 0,
+        "headerOffset": 32,
+        "headerDataOffset": 64,
+        "catalogOffset": 72,
+        "identityMaximumExecuted": true,
+        "generatedSha256": "5e1181ad65e754ef6e62ad362c866b32646c6966ccaab91eba882927778e670d",
+        "harnessSha256": "62a25ff7039fcd9782cd8a8a1cf6b21cde4146c67f12dc6ffef88a3fe8b5a89e",
+        "exeSha256": "7e1a4da86677bf262902d49740123837e63596d582ef122d6f2e5180074cea39",
+        "allocator": {
+          "schema": "browniec.buffer-allocator/v2",
+          "live": 0,
+          "target": 0,
+          "targetAttempts": 0,
+          "failures": 0,
+          "attempts": 8,
+          "frees": 8
+        }
+      }
+    ],
+    "allocator": [
+      {
+        "profile": "development",
+        "target": 320,
+        "counters": {
+          "schema": "browniec.buffer-allocator/v2",
+          "live": 0,
+          "target": 320,
+          "targetAttempts": 2,
+          "failures": 1,
+          "attempts": 9,
+          "frees": 8
+        },
+        "sourceSha256": "240d921ba71a33246465677cfd58956d2e3bf11aa08c50349cc1d63aad04a174",
+        "exeSha256": "39c98790c2ad0d85780d8e0786f1044d4f4fe57c466d87a762f43c3e93aab865",
+        "explicitClFI": true
+      },
+      {
+        "profile": "release",
+        "target": 320,
+        "counters": {
+          "schema": "browniec.buffer-allocator/v2",
+          "live": 0,
+          "target": 320,
+          "targetAttempts": 2,
+          "failures": 1,
+          "attempts": 9,
+          "frees": 8
+        },
+        "sourceSha256": "240d921ba71a33246465677cfd58956d2e3bf11aa08c50349cc1d63aad04a174",
+        "exeSha256": "1a54892832a2680e1766a9d995e973920931902e9e88e708d6bee74da3fed189",
+        "explicitClFI": true
+      },
+      {
+        "profile": "development",
+        "target": 384,
+        "counters": {
+          "schema": "browniec.buffer-allocator/v2",
+          "live": 0,
+          "target": 384,
+          "targetAttempts": 2,
+          "failures": 1,
+          "attempts": 10,
+          "frees": 9
+        },
+        "sourceSha256": "f61afc2589969b1af1d9e3b87d6f156d2133cdd6a88dfdf76b3b8f31d42bf52c",
+        "exeSha256": "48fdbf74f00f14b88065e177f3aa6aa7bc5e6a0947767f7d363c883796dc26cb",
+        "explicitClFI": true
+      },
+      {
+        "profile": "release",
+        "target": 384,
+        "counters": {
+          "schema": "browniec.buffer-allocator/v2",
+          "live": 0,
+          "target": 384,
+          "targetAttempts": 2,
+          "failures": 1,
+          "attempts": 10,
+          "frees": 9
+        },
+        "sourceSha256": "f61afc2589969b1af1d9e3b87d6f156d2133cdd6a88dfdf76b3b8f31d42bf52c",
+        "exeSha256": "d8e4cce320303fa650aead6cca5ba4acb6ae1f96d211a079e3006f9636335d91",
+        "explicitClFI": true
+      }
+    ],
+    "normalNativeReuse": {
+      "receipt": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-host-exchange\\build\\host-exchange\\20261107T065418877565Z\\receipt.json",
+      "sha256": "48f1824f5bd4d4d9c5a9fa82309b08b04873fef4a1510548520cc711f872e6fd",
+      "scope": "Only current-session byte-identical normal native reports; every seam rerun"
+    },
+    "rawLoopNegativeControl": {
+      "reproduced": true,
+      "identity": "tests::m2::host_exchange::fake_adapter_decodes_actual_request_and_encodes_reply_42",
+      "profile": "release",
+      "sourceSha256": "7bbcfee82c7a31eb6186f74a44ee196fde0f99294239a401ff9ab61887b14aec",
+      "removedSdkValidations": 3,
+      "defaultStack": true,
+      "environmentOverrides": false
+    },
+    "runtimeInputs": [
+      {
+        "path": "internal/cstdlib/stage0_system_heap.c",
+        "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+        "sha256": "41e57f9748afb73731501ba2003b1a9213b728c0d2db6a31686b9d0489b76100"
+      },
+      {
+        "path": "internal/cstdlib/stage0_buffer.c",
+        "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+        "sha256": "27f049118af6e0d008428abd73bdf77dce5491b82617cdb65b9a06ac185edfa1"
+      },
+      {
+        "path": "internal/cstdlib/stage0_windows_console.c",
+        "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+        "sha256": "c070b518a8cb1a8eb0c6b170dd3083afd91149a3b076beb9f43bcfb05d2041e5"
+      },
+      {
+        "path": "internal/cstdlib/stage0_windows_process_args.c",
+        "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+        "sha256": "f86225cdc8ecf5ebe0ba899557c3b117c50ccc0f02afea4cc0115f780bc40cd6"
+      },
+      {
+        "path": "internal/cstdlib/stage0_text_view.c",
+        "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+        "sha256": "cb468db0b4c8b54d12a146c41bcfb297f2a06d83a496a38942fb6e2bc7622b62"
+      },
+      {
+        "path": "internal/cruntime/stage0_scalar.c",
+        "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+        "sha256": "e16bfdd17904754ceb9534c976910964c76e8b0c757f72ddf3b63de0d5548bbe"
+      }
+    ],
+    "nativeToolchain": {
+      "msvc": "14.51.36231",
+      "sdk": "10.0.26100.0",
+      "clSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53"
+    },
+    "sourceDependencyClosure": [
+      "src/catalog_digest.fy",
+      "src/cells.fy",
+      "src/errors.fy",
+      "src/host_catalog.fy",
+      "src/host_catalog_names.fy",
+      "src/host_exchange.fy",
+      "src/host_wire.fy",
+      "src/json_tokens.fy",
+      "src/lexer.fy",
+      "src/literal_source.fy",
+      "src/scalar_codec.fy",
+      "src/static_image.fy",
+      "src/types.fy"
+    ],
+    "finalDifferences": [
+      "fairy.lock"
+    ],
+    "defaultStacks": true,
+    "normalNativeOverrides": false,
+    "allocatorSeam": {
+      "explicitCompilerArguments": true,
+      "environmentOverrides": false,
+      "stackOverrides": false,
+      "fixtureAdapter": "module rename; @test fn -> pub fn only",
+      "fixtureSha256": "3624833189dc04759336a3e60b8897c0721aa354d7e444008d9e4f50149d1f07",
+      "adapterSha256": "1d8466cd810648d37f5768b0ed1a6641448f199f6ea50e35078b076de8b3396b"
+    }
+  },
+  "composition": {
+    "command": "python tools/verify-runtime-admission-exchange.py --profile release",
+    "receiptSha256": "aac387cab4131ed31c09c8798d1c252e3548c9aafbe32ce0231948c9a12a10c9",
+    "nativeGroups": 3,
+    "inputCount": 236,
+    "reportSha256": "ece9a5c5c7de86596bf7223b4423cb6762389ee5c034f21babf5c6862a1861b6",
+    "report": {
+      "schemaVersion": "fairyc.test-report/v4",
+      "engine": "native",
+      "target": "x86_64-windows-msvc",
+      "profile": "release",
+      "tests": [
+        {
+          "identity": "tests::m2::runtime_admission_exchange::policy_capability_without_explicit_run_grant_never_starts_exchange",
+          "outcome": "passed",
+          "trapCategory": null,
+          "stdoutBase64": "",
+          "stderrBase64": ""
+        },
+        {
+          "identity": "tests::m2::runtime_admission_exchange::typed_run_grants_drive_real_catalog_exchange_and_reply_handoff",
+          "outcome": "passed",
+          "trapCategory": null,
+          "stdoutBase64": "",
+          "stderrBase64": ""
+        },
+        {
+          "identity": "tests::m2::value_source_control::admitted_32_deep_conditionals_execute_and_33_reject_without_native_stack_override",
+          "outcome": "passed",
+          "trapCategory": null,
+          "stdoutBase64": "",
+          "stderrBase64": ""
+        }
+      ],
+      "count": 3,
+      "passed": 3,
+      "failed": 0,
+      "status": "ok",
+      "lock": "verified"
+    },
+    "defaultStack": true,
+    "nativeOverrides": false,
+    "earlierRejectedDraft": "The initial raw-loop two-buffer draft reproduced release heap corruption in the success handoff. It was not committed; final three-group run uses the validated SDK-barrier implementation."
+  },
+  "preserved": {
+    "existingProductionSourcesByteIdenticalToBase": true,
+    "newProductionModules": 5,
+    "publicFuelDefault": 256,
+    "publicFuelCeiling": 16000000,
+    "frames": 32,
+    "instructions": 256,
+    "owners": 16,
+    "publicGraduation": false,
+    "remoteMutation": false
+  },
+  "skips": [
+    "No full Engine/Program/Instance lifecycle, immutable executable catalog/requirement binding or VM host dispatch.",
+    "No R03 work quantum, complete Engine memory accounting, poison/OS deadline/worker/broker/public ABI or CLI promotion.",
+    "Unchanged public CLI/native suites were not rebuilt or repeated in this slice. Existing combined 32/33 fixture ran in the composed suite.",
+    "No Linux/macOS, clean-machine delivery or performance result."
+  ],
+  "coreCheckoutAndGitRawInputsMatched": 275,
+  "owningStoreProbe": {
+    "path": "docs/evidence/runtime-store-probe-windows-20261107.json",
+    "sha256": "1b0a303d3d348b54ccc4a239c0f5bcd09d45eb6d96d2c16f72d91b1d462110ee",
+    "nativeProfiles": [
+      "development",
+      "release"
+    ],
+    "liveAllocationsAtExit": 0,
+    "scope": "R01 prerequisite, not Engine lifecycle completion"
+  }
+}

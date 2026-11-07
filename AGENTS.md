@@ -1,15 +1,15 @@
-- Latest parallel-integration checkpoint (2026-11-07): [Composed native verification](docs/engineering/parallel-integration.md)
-  records public IR inspection `2b44bf9` (19 CLI cases plus version/help in each
-  profile), strict catalog/SHA-256 `41144d7` (12 native groups/profile), fresh
-  singleton loop owners `cbdfdbe` (11 groups/profile), and real internal lazy
-  registry `8a4dae9` (four C-host scenarios in each development/optimized profile).
-  The final root release passed four native groups and three public CLI cases;
-  all 233 inputs match checkout/Git raw bytes and all 223 production modules are
-  LF. The root check passed 231 sources/2560 MIR functions; default stacks remain.
-  Full Engine/Program/Instance lifecycle, accepted registry scale, host exchange,
-  conditional fresh-root unions and the remaining inventory are open. Public
-  Buffer/host/restricted/embed gates and existing Fuel limits/prices are unchanged.
-  All parallel workers are closed. Local commits only; no push/release/deployment.
+- Latest runtime-admission/exchange checkpoint (2026-11-07): [Parallel integration](docs/engineering/runtime-admission-exchange.md)
+  integrates typed policy/run admission `c774ee0` (21 native groups per Windows
+  profile), actual private host exchange `dcbba76` (13 groups/profile, layout and
+  identity hosts, four explicit allocator failures), and three final release
+  composition groups `8846b0f`, including the unchanged combined 32/33 fixture.
+  The owning Store probe `5453574` passes development/O2 with exact drop order and
+  zero live allocations; it is an R01 prerequisite, not lifecycle completion.
+  All 283 aggregate inputs match checkout/Git raw bytes; 228 production modules
+  retain LF. Root check: 236 sources/2644 MIR. Existing public gates, VM capacities,
+  Fuel prices/default256/ceiling16000000 and all earlier source bytes are unchanged.
+  Full Engine/Program/Instance/VM host binding, R03 work quanta and the accepted
+  remaining inventory stay open. Workers completed; local only, no remote changes.
 
 # Brownie C agent guidance
 

@@ -1,0 +1,161 @@
+{
+  "schema": "browniec.runtime-store-probe-evidence/v1",
+  "status": "passed",
+  "platform": "windows/amd64",
+  "implementationCommit": "5453574f3f9dc4bd340bd25953becd39d7ccc57a",
+  "receiptSha256": "002ae12baf192e39274b06d1d9323d3eea0cca7cd540638cd970f4b52e6a564f",
+  "patchSha256": "6aac3e662cc56292fdf9d0c9676826cc6b06f73ea1dd56643c5195d1e438dcd9",
+  "compiler": {
+    "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+    "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+    "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false"
+  },
+  "inputs": [
+    {
+      "path": "docs/engineering/runtime-store-probe.md",
+      "sha256": "ee32c8599a1c070bd69da2ff077cb923d9012676b6c0426fea62e4c268ec6d6c",
+      "bytes": 4369
+    },
+    {
+      "path": "probes/runtime-store/bridge.c",
+      "sha256": "80eceb8f1974ff712b7b591751e606bd582c5191f191b8612d54a1aacc1d9051",
+      "bytes": 967
+    },
+    {
+      "path": "probes/runtime-store/fairy.toml",
+      "sha256": "612358f8fdbcfa3bf04c423da0f0b92435c8d3eb2acdbb26affff0f6233f9c82",
+      "bytes": 163
+    },
+    {
+      "path": "probes/runtime-store/heap-observer.c",
+      "sha256": "1f8344de2c7d0fcf019d7909a71478bdb1d089e0fb1d16594afdd023a3e9c48b",
+      "bytes": 497
+    },
+    {
+      "path": "probes/runtime-store/src/main.fy",
+      "sha256": "dbd6f186ca4285fcab1744b8c936037b84ad791e0675ea76512e4db4cf206bd0",
+      "bytes": 890
+    },
+    {
+      "path": "probes/runtime-store/src/store.fy",
+      "sha256": "c8c732dcb40228265c1cb4608aa7ed6f81657c27909d9402c89a37fcac82db46",
+      "bytes": 1989
+    },
+    {
+      "path": "probes/runtime-store/transport.json",
+      "sha256": "323eff4dcdc24105f0f845fa9313db7e976544b31dfce249119788a15dec25aa",
+      "bytes": 2336
+    },
+    {
+      "path": "toolchain.json",
+      "sha256": "0a1a5c2b5a219099b7c3c2b42a8dde9cb70b68e435e8a071e36c36213d1740be",
+      "bytes": 1113
+    },
+    {
+      "path": "tools/verify-runtime-store-probe.py",
+      "sha256": "2a5332e0d5589eee91a39b2837eb0c721c353eb12c3d3bcced479396184332cc",
+      "bytes": 12100
+    }
+  ],
+  "nativeSourceBodiesPreserved": true,
+  "profiles": [
+    {
+      "profile": "development",
+      "artifact": {
+        "path": "build/runtime-store-probe/20261107T065807887555Z/development/store-probe.exe",
+        "sha256": "a2e7a0a16992a4638ed8e5c0538eca17322c7cda1a20885924b81d1820500e06",
+        "bytes": 125440,
+        "stackReserve": 1048576,
+        "stackCommit": 4096
+      },
+      "exit": 0,
+      "cleanup": {
+        "postResetDropTrace": [
+          22,
+          11,
+          33
+        ],
+        "liveHeapAllocationsAtExit": 0,
+        "evidence": "Native Fairy assertions and guarded C process exit; no parsed trace log"
+      },
+      "objects": [
+        {
+          "path": "build/runtime-store-probe/20261107T065807887555Z/development/bridge.obj",
+          "sha256": "a17e4fbf94b882b7427c4e5582c11b5ff529e4f3ce2a07b833bc13044f36f337"
+        },
+        {
+          "path": "build/runtime-store-probe/20261107T065807887555Z/development/runtime.obj",
+          "sha256": "230dbb371a5e15d26d3a68f01c59729b99ae14573f9aa3246b477bf0cfa1f1d7"
+        }
+      ]
+    },
+    {
+      "profile": "release",
+      "artifact": {
+        "path": "build/runtime-store-probe/20261107T065807887555Z/release/store-probe.exe",
+        "sha256": "12f9c648f8a4fe446bd759fdfc826dd89cd3efa614157c12b8817a5cf1a34d39",
+        "bytes": 114688,
+        "stackReserve": 1048576,
+        "stackCommit": 4096
+      },
+      "exit": 0,
+      "cleanup": {
+        "postResetDropTrace": [
+          22,
+          11,
+          33
+        ],
+        "liveHeapAllocationsAtExit": 0,
+        "evidence": "Native Fairy assertions and guarded C process exit; no parsed trace log"
+      },
+      "objects": [
+        {
+          "path": "build/runtime-store-probe/20261107T065807887555Z/release/bridge.obj",
+          "sha256": "90e8e169bddb289df97c9041b7c7fffdf4e28d2e6179618bff4fcda202177ff5"
+        },
+        {
+          "path": "build/runtime-store-probe/20261107T065807887555Z/release/runtime.obj",
+          "sha256": "319119e28d01cc4feb43a0375059a47162ec9e8d75b607569b54fa0070192cd5"
+        }
+      ]
+    }
+  ],
+  "transportSha256": "0bd1ddef0850813b03bfb81c9bd11abd760525706c5fbcb2605aaff30c43ccec",
+  "runtimeSha256": "86476d852a19e01ceffeb90916168a37b028dcffd1a61d682e149767c5e5baf3",
+  "runtimeInputs": [
+    {
+      "path": "internal/cruntime/stage0_scalar.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "e16bfdd17904754ceb9534c976910964c76e8b0c757f72ddf3b63de0d5548bbe"
+    },
+    {
+      "path": "internal/cstdlib/stage0_system_heap.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "41e57f9748afb73731501ba2003b1a9213b728c0d2db6a31686b9d0489b76100"
+    },
+    {
+      "path": "internal/cstdlib/stage0_buffer.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "27f049118af6e0d008428abd73bdf77dce5491b82617cdb65b9a06ac185edfa1"
+    },
+    {
+      "path": "internal/cstdlib/stage0_vector_storage.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "80dddb6db91c79c495ef8bad6d31923fd242be13de9899ce3aaded85158bb17d"
+    }
+  ],
+  "msvc": {
+    "version": "14.51.36231",
+    "sdk": "10.0.26100.0",
+    "compilerSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+    "overrides": false
+  },
+  "rootLockUnchanged": true,
+  "compilerOverrides": false,
+  "scope": "R01 owning-store prerequisite evidence; not Engine lifecycle completion",
+  "limitations": [
+    "Trusted synchronous C projection shim; no general safe resource-field projection",
+    "No Engine lifecycle, public ABI, concurrency, OOM rollback or recovery proof"
+  ],
+  "repetitionSkipped": "All nine packaged input bytes, compiler, emitted transport, runtime, default stack and actual runtime Git repository match. Separate root production additions do not enter the isolated probe project."
+}
