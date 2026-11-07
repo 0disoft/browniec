@@ -1,24 +1,33 @@
 module runtime_output;
 import std::bytes as bytes;
 import std::num as num;
+import fuel as prices;
 
 // Native staging only. Nothing here decides VM success or writes to a sink.
-// Phase: 0 Open, 1 Sealed, 2 Failed, 3 Cancelled. First terminal state freezes.
+// Phase: 0 Open, 1 Sealed, 2 Failed, 3 Cancelled, 4 Disabled. First terminal state freezes.
 pub enum Error { State; Denied; Limit; Fuel; Allocation; }
 pub struct Observation { u8 phase; usize length; usize emits; usize fuel; usize charged; }
 pub resource Transaction {
     bytes::Buffer backing;
     bytes::Buffer header; ptr mut u8 header_data;
     usize limit; bool allowed;
+    bool reserved;
     cleanup { }
 }
 pub resource Published { bytes::Buffer backing; Observation final; cleanup { } }
 pub fn usize hard_limit(){return 1048576;}
+// Allocation-free sink placeholder for unchanged legacy invocation paths.
+pub fn Transaction disabled(){
+    return Transaction{.backing=bytes::empty(),.header=bytes::empty(),.header_data=null,
+        .limit=0,.allowed=false,.reserved=false};
+}
 
 // Same pinned-Windows-x64 ownership seam as host_exchange. Buffer is exactly
 // four pointer-width cells. Executed generated-C guards own this assumption.
 @link_name("fy_std_buffer_reserve_v0")
 unsafe extern C fn u32 validate_buffer_raw(ptr mut void buffer,usize capacity);
+@link_name("fy_std_buffer_append_v0")
+unsafe extern C fn u32 append_buffer_raw(ptr mut void buffer,ptr u8 data,usize length);
 fn bytes::Buffer replace(ref mut Transaction t,bytes::Buffer prepared){
     var bytes::Buffer incoming=prepared;var bytes::Buffer old=bytes::empty();
     let ptr mut void from=unsafe {ref mut incoming as ptr mut void};
@@ -45,6 +54,7 @@ fn void write(ref mut u8[] data,usize at,usize value){
     }
 }
 pub fn Observation observe(ref Transaction t){
+    if(t.header_data==null){return Observation{.phase=4,.length=0,.emits=0,.fuel=0,.charged=0};}
     let ref u8[] h=bytes::view(ref t.header);
     return Observation{.phase=h[0],.length=read(h,8),.emits=read(h,16),.fuel=read(h,24),.charged=read(h,32)};
 }
@@ -63,7 +73,7 @@ pub fn Result<Transaction,Error> open(usize limit,bool allowed,usize fuel){
         case .ok(v):{v}case .err(_):{return .err(.Allocation);}
     };
     let ptr mut u8 data=unsafe {bytes::view_mut(ref mut header) as ptr mut u8};
-    var Transaction t=Transaction{.backing=bytes::empty(),.header=header,.header_data=data,.limit=limit,.allowed=allowed};
+    var Transaction t=Transaction{.backing=bytes::empty(),.header=header,.header_data=data,.limit=limit,.allowed=allowed,.reserved=false};
     save(ref mut t,Observation{.phase=0,.length=0,.emits=0,.fuel=fuel,.charged=0});return .ok(t);
 }
 fn ref u8[] staged(ref Transaction t){return bytes::view(ref t.backing);}
@@ -83,7 +93,7 @@ fn Result<bytes::Buffer,Error> prepare(ref Transaction t,ref u8[] data,usize tot
 // Cost is supplied by the trusted owner and must account for actual copied bytes.
 pub fn Result<usize,Error> emit(ref mut Transaction t,ref u8[] data,usize charge){
     var Observation s=observe(t);
-    if(s.phase!=0){return .err(.State);}if(!t.allowed){return .err(.Denied);}
+    if(s.phase!=0 || t.reserved){return .err(.State);}if(!t.allowed){return .err(.Denied);}
     if(s.length>t.limit || data.len>t.limit-s.length || s.emits==18446744073709551615){return .err(.Limit);}
     if(charge>s.fuel){return .err(.Fuel);}
     let usize total=s.length+data.len;
@@ -97,7 +107,7 @@ pub fn Result<usize,Error> emit(ref mut Transaction t,ref u8[] data,usize charge
 // Caller must already have decided success. This explicit native owner operation
 // is not a guest-visible authority or a proof that any VM/Instance succeeded.
 pub fn Result<Published,Error> seal(ref mut Transaction t,usize charge){
-    var Observation s=observe(t);if(s.phase!=0){return .err(.State);}
+    var Observation s=observe(t);if(s.phase!=0 || t.reserved){return .err(.State);}
     if(charge>s.fuel){return .err(.Fuel);}
     s.fuel-=charge;s.charged+=charge;s.phase=1;
     let bytes::Buffer backing=replace(t,bytes::empty());save(t,s);
@@ -111,3 +121,50 @@ pub fn Observation fail(ref mut Transaction t){return discard_pending(t,2);}
 pub fn Observation cancel(ref mut Transaction t){return discard_pending(t,3);}
 pub fn Observation published_observation(ref Published output){return output.final;}
 pub fn ref u8[] view(ref Published output){return bytes::view(ref output.backing);}
+
+// Shared-Fuel reserved mode. No guest/host staging view or publication authority
+// is added: only the trusted VM owner may choose success and call seal_metered.
+// Each open operation samples caller Fuel; terminal snapshots freeze first.
+pub fn Result<Transaction,Error> open_metered(usize limit,bool allowed,ref mut usize remaining){
+    if(limit>hard_limit()){return .err(.Limit);}
+    let usize charge=prices::output_prepare(limit);
+    if(charge>*remaining){return .err(.Fuel);}
+    var Transaction t=open(limit,allowed,*remaining)?;
+    let bytes::Buffer prepared=switch(bytes::with_capacity(limit)){
+        case .ok(v):{v}case .err(_):{return .err(.Allocation);}
+    };
+    let bytes::Buffer old=replace(ref mut t,prepared);
+    t.reserved=true;*remaining-=charge;
+    save(ref mut t,Observation{.phase=0,.length=0,.emits=0,.fuel=*remaining,.charged=charge});
+    return .ok(t);
+}
+fn Result<Observation,Error> sample_metered(ref mut Transaction t,usize remaining){
+    var Observation s=observe(t);
+    if(s.phase!=0 || !t.reserved){return .err(.State);}
+    s.fuel=remaining;save(t,s);return .ok(s);
+}
+pub fn Result<usize,Error> emit_metered(ref mut Transaction t,ref u8[] data,ref mut usize remaining){
+    var Observation s=sample_metered(t,*remaining)?;
+    if(!t.allowed){return .err(.Denied);}
+    if(s.length>t.limit || data.len>t.limit-s.length || s.emits==18446744073709551615){return .err(.Limit);}
+    let usize charge=prices::output_emit(data.len);
+    if(charge>*remaining || charge>18446744073709551615-s.charged){return .err(.Fuel);}
+    // The first 32 bytes are the actual owning Buffer, not a forged descriptor.
+    // open reserved all capacity; SDK append cannot allocate or recopy prefix.
+    // Extern calls retain the same /O2 visibility barrier as ownership replace.
+    if(data.len!=0){
+        let u32 status=unsafe {append_buffer_raw(t as ptr mut void,data as ptr u8,data.len)};
+        assert(status==0);
+        assert(unsafe {validate_buffer_raw(t as ptr mut void,0)}==0);
+    };
+    *remaining-=charge;s.length+=data.len;s.emits+=1;s.fuel=*remaining;s.charged+=charge;
+    save(t,s);return .ok(s.length);
+}
+pub fn Result<Published,Error> seal_metered(ref mut Transaction t,ref mut usize remaining){
+    var Observation s=sample_metered(t,*remaining)?;
+    let usize charge=prices::output_seal();
+    if(charge>*remaining || charge>18446744073709551615-s.charged){return .err(.Fuel);}
+    let bytes::Buffer backing=replace(t,bytes::empty());
+    *remaining-=charge;s.fuel=*remaining;s.charged+=charge;s.phase=1;save(t,s);
+    return .ok(Published{.backing=backing,.final=s});
+}

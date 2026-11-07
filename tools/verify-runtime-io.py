@@ -11,7 +11,7 @@ import subprocess
 ROOT = Path(__file__).resolve().parent.parent
 BASE = 'f78a734fd079324e0ba88bb8e40e4291acf55de8'
 FILES = ['src/runtime_input.fy', 'src/runtime_output.fy', 'tests/m2/runtime_io.fy',
-         'tools/verify-runtime-io.py', 'docs/engineering/runtime-io.md']
+         'tools/verify-runtime-io.py', 'docs/engineering/runtime-io.md', 'src/fuel.fy']
 LAYOUT_MAIN = r'''module main;
 import runtime_input as input;import runtime_output as output;
 @link_name("brownie_runtime_io_layout") unsafe extern C fn void layout(ptr void t,ptr void i,ptr void p);
@@ -85,7 +85,7 @@ def main():
         receipt['inputs']=[dict(path=p,sha256=sha(b)) for p,b in inputs.items()]
         for p,b in inputs.items():write(out/'inputs'/p,b)
         project=out/'project'
-        for p in FILES[:3]+['fairy.toml']:write(project/p,inputs[p])
+        for p in FILES[:3]+['src/fuel.fy','fairy.toml']:write(project/p,inputs[p])
         write(project/'src/main.fy','module main;fn i32 main(){return 0;}\n')
         run([compiler,'check'],'mirror-lock',project)
         lock=(project/'fairy.lock').read_bytes();sdk=[p for p in json.loads(lock)['packages'] if p['role']!='root']
@@ -156,7 +156,7 @@ def main():
         need(len(matches)==1,'Generated Buffer type');bn=matches[0]
         matches=[n for n,b in normalized.items() if b==bn+'f_0;uintptr_tf_1;']
         need(len(matches)==1,'Generated Snapshot type');sn=matches[0]
-        matches=[n for n,b in normalized.items() if b==bn+'f_0;'+bn+'f_1;uint8_t*f_2;uintptr_tf_3;int32_tf_4;']
+        matches=[n for n,b in normalized.items() if b==bn+'f_0;'+bn+'f_1;uint8_t*f_2;uintptr_tf_3;int32_tf_4;int32_tf_5;']
         need(len(matches)==1,'Generated Transaction type');tn=matches[0]
         matches=[n for n,b in normalized.items() if b.startswith(bn+'f_0;fy_struct_')]
         need(len(matches)==1,'Generated Published type');pn=matches[0]
@@ -166,7 +166,7 @@ _Static_assert(sizeof({bn})==32, "Buffer size");
 _Static_assert(offsetof({bn},f_0)==0 && offsetof({bn},f_1)==8 && offsetof({bn},f_2)==16 && offsetof({bn},f_3)==24, "Buffer cells");
 _Static_assert(sizeof({sn})==40 && offsetof({sn},f_0)==0 && offsetof({sn},f_1)==32, "Snapshot layout");
 _Static_assert(sizeof({tn})==88, "Transaction size");
-_Static_assert(offsetof({tn},f_0)==0 && offsetof({tn},f_1)==32 && offsetof({tn},f_2)==64 && offsetof({tn},f_3)==72 && offsetof({tn},f_4)==80, "Transaction fields");
+_Static_assert(offsetof({tn},f_0)==0 && offsetof({tn},f_1)==32 && offsetof({tn},f_2)==64 && offsetof({tn},f_3)==72 && offsetof({tn},f_4)==80 && offsetof({tn},f_5)==84, "Transaction fields");
 _Static_assert(sizeof({pn})==72 && offsetof({pn},f_0)==0 && offsetof({pn},f_1)==32, "Published layout");
 void brownie_runtime_io_layout(const void *tx,const void *in,const void *pub) {{
  const {tn} *t=(const {tn}*)tx;const {sn} *i=(const {sn}*)in;const {pn} *p=(const {pn}*)pub;

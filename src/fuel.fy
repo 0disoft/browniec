@@ -152,3 +152,12 @@ pub fn usize input_prepare(){return 32768;}
 pub fn usize input_metadata(){return 128;}
 pub fn usize input_frame(){return 2048;}
 pub fn usize input_arguments(usize count){return 128*count;}
+
+// Reserved private output. Callers prove limit/length <=1MiB before pricing.
+// Setup reserves final capacity once; emits copy only the newly supplied bytes.
+pub fn usize output_prepare(usize limit){return 512+2*limit;}
+pub fn usize output_emit(usize length){return 512+2*length;}
+pub fn usize output_seal(){return 512;}
+// Driver source authentication is separate from copying: at most sixteen pool
+// and sixteen provenance/owner checks plus input/returned selector lookup.
+pub fn usize output_access(){return 8192;}
