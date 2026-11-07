@@ -2,18 +2,18 @@
   "schema": "browniec.private-runtime-engine-transport/v1",
   "compilerRevision": "eb274643bfcfe746617121ddc6f130b018978b53",
   "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
-  "transportSha256": "a86fff4fe7488bc570cf0a7707899e331c3ddd7fc2e62d91c970de641b91f845",
+  "transportSha256": "ab9ff570733d860e6cb5981710a104e938d1a35164e389b0db481b886f5e53dd",
   "engineType": "fy_resource_14",
-  "incomingType": "fy_resource_22",
+  "incomingType": "fy_resource_21",
   "bindings": {
-    "1": "fy_fn_742",
-    "2": "fy_fn_741",
-    "3": "fy_fn_755",
-    "4": "fy_fn_747",
-    "5": "fy_fn_753",
-    "8": "fy_fn_764",
-    "6": "fy_fn_777",
-    "7": "fy_fn_776"
+    "1": "fy_fn_743",
+    "2": "fy_fn_742",
+    "3": "fy_fn_756",
+    "4": "fy_fn_748",
+    "5": "fy_fn_754",
+    "8": "fy_fn_765",
+    "6": "fy_fn_778",
+    "7": "fy_fn_777"
   },
   "sourceInputs": [
     {
@@ -186,7 +186,7 @@
     },
     {
       "path": "src/compiler.fy",
-      "sha256": "400db538bf4d74d10e039260da0541e2fbede9c31994971d8db3d8fc88fef892"
+      "sha256": "1ca4dc1a071bfd3bc712cdde859f80593988b3a2692ab89bbf6b19c819b94f7a"
     },
     {
       "path": "src/copy_ir.fy",
@@ -202,7 +202,7 @@
     },
     {
       "path": "src/functions.fy",
-      "sha256": "d05e9026aff5c56e22f08f914f61cc5f20e4b8dfda47a5a946c4599842b30e6c"
+      "sha256": "e0f4374ce98ed4187cf4bcc43a99109bf8b05c10427e28adf9fc2c2b7973f91b"
     },
     {
       "path": "src/ir.fy",
@@ -243,6 +243,10 @@
     {
       "path": "src/module_index.fy",
       "sha256": "146faf924811f91c108ec6136c5e2d8181b73304c406853f298dfe897eb2d4ed"
+    },
+    {
+      "path": "src/module_input_entry.fy",
+      "sha256": "6b83ce32665d5c452447e0af0e70c526b9cb26667361f7881e363f956ea923d8"
     },
     {
       "path": "src/module_program.fy",
@@ -398,7 +402,7 @@
     },
     {
       "path": "src/slice_parameters.fy",
-      "sha256": "ca2f515607e86599363850b333eb49583b69030b54e4208ca3128bd599009198"
+      "sha256": "e08fb58426725a938d7ade8d87227748a4c7814e553d0b18792b497f0eeb152e"
     },
     {
       "path": "src/slice_place_ir.fy",
@@ -550,7 +554,7 @@
     },
     {
       "path": "src/static_call_ir.fy",
-      "sha256": "a43d72c149d7ad157cfaf04dcf05fd2d0d83bdb248f933616d7e97be1f8c51cf"
+      "sha256": "6c496c4355218079ea369ecde4889c5a1b3fe4916da6d350192fd2c8c0b28c39"
     },
     {
       "path": "src/static_call_sites.fy",
@@ -734,7 +738,7 @@
     },
     {
       "path": "src/verifier.fy",
-      "sha256": "5d22c395f171da1eba0394821bce17fd0b45583dc3fab141a9e30d1ad081e3a1"
+      "sha256": "42ee3cb627c739d244e42c4daf8c88ab1c9f47e3d9ea6fb51affbcc6a34308c2"
     },
     {
       "path": "src/vm.fy",

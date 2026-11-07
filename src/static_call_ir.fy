@@ -34,7 +34,7 @@ fn bool input(ref Program unit,usize f){
     let ref ir::Program p=ref unit.body;var usize r=p.register_starts[f];
     while(r<p.register_starts[f]+p.arities[f]){if(unit.parameters[r]!=0){return true;}r+=1;}return false;
 }
-fn Result<usize,errors::Error> header(ref Program unit,bool references,bool returns){
+fn Result<usize,errors::Error> header(ref Program unit,bool references,bool returns,bool input){
     let ref ir::Program p=ref unit.body;
     if(p.count==0 || p.count>256 || p.registers==0 || p.registers>128 ||
         p.function_count==0 || p.function_count>16 || p.entry>=p.function_count || p.call_count>32){return .err(invalid(0));}
@@ -60,7 +60,9 @@ fn Result<usize,errors::Error> header(ref Program unit,bool references,bool retu
             code=p.ends[f];registers=p.register_ends[f];
         }f+=1;
     }
-    if(code!=p.count || registers!=p.registers || p.arities[p.entry]!=0 || unit.results[p.entry]!=0 || p.return_types[p.entry]!=1){return .err(invalid(0));}
+    if(code!=p.count || registers!=p.registers || unit.results[p.entry]!=0 || p.return_types[p.entry]!=1){return .err(invalid(0));}
+    if(input){if(p.arities[p.entry]!=1 || unit.parameters[p.register_starts[p.entry]]!=3){return .err(invalid(0));}}
+    else if(p.arities[p.entry]!=0){return .err(invalid(0));}
     var usize r=p.registers;while(r<128){if(unit.parameters[r]!=0){return .err(invalid(0));}r+=1;}
     return .ok(p.count);
 }
@@ -228,18 +230,21 @@ fn Result<usize,errors::Error> origins(ref Program unit,ref mut Proof proof){
         }f+=1;
     }proof.rounds=round;return .ok(round);
 }
-fn Result<Proof,errors::Error> inspect_mode(ref Program unit,ref images::Image image,bool references,bool returns){
-    let usize bounded=header(unit,references,returns)?;
+fn Result<Proof,errors::Error> inspect_mode(ref Program unit,ref images::Image image,bool references,bool returns,bool input){
+    let usize bounded=header(unit,references,returns,input)?;
     switch(images::inspect(image)){case .ok(_):{}case .err(_):{return .err(invalid(0));}};
     var Proof proof=empty();let usize defined=definitions(unit,image,ref mut proof)?;
     var bool[32] calls=[false;32];var usize f=0;while(f<unit.body.function_count){let usize checked=flow(unit,ref mut proof,f,ref mut calls)?;f+=1;}
     var usize i=0;while(i<unit.body.call_count){if(!calls[i]){return .err(invalid(0));}i+=1;}
     let usize grounded=origins(unit,ref mut proof)?;return .ok(proof);
 }
-pub fn Result<Proof,errors::Error> inspect(ref Program unit,ref images::Image image){return inspect_mode(unit,image,false,false);}
+pub fn Result<Proof,errors::Error> inspect(ref Program unit,ref images::Image image){return inspect_mode(unit,image,false,false,false);}
 // Kind 3 is a shared byte formal accepting image sites or runtime loan actuals.
 // It is not a result kind. This is recipe analysis, never VM admission.
-pub fn Result<Proof,errors::Error> inspect_references(ref Program unit,ref images::Image image){return inspect_mode(unit,image,true,false);}
+pub fn Result<Proof,errors::Error> inspect_references(ref Program unit,ref images::Image image){return inspect_mode(unit,image,true,false,false);}
 // Returned shared byte recipes: reconstruct exact logical origins including
 // ordinary rootless inputs. This is not canonical lifetime proof or admission.
-pub fn Result<Proof,errors::Error> inspect_reference_returns(ref Program unit,ref images::Image image){return inspect_mode(unit,image,true,true);}
+pub fn Result<Proof,errors::Error> inspect_reference_returns(ref Program unit,ref images::Image image){return inspect_mode(unit,image,true,true,false);}
+
+// Separate external input ABI; existing zero-argument admission stays closed.
+pub fn Result<Proof,errors::Error> inspect_input_returns(ref Program unit,ref images::Image image){return inspect_mode(unit,image,true,true,true);}

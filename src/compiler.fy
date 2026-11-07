@@ -55,6 +55,7 @@ import reference_result_source as reference_results;
 import source_features as source_features;
 import source_context as source_context;
 import module_entry as module_entries;
+import module_input_entry as input_entries;
 import source_error as source_errors;
 import module_index as module_index;
 
@@ -2691,4 +2692,37 @@ fn Result<usize,source_errors::Error> module_reference_signature(ref u8[] source
             if(signatures.param_slices[at] && signatures.param_slice_elements[at]==10){parameters[body.register_starts[f]+i]=3;}i+=1;
         }f+=1;
     }code.parameters=parameters;code.results=results;return .ok(signatures.count);
+}
+
+// Private one-shared-byte-input entry. The exact selected Index is rebuilt into
+// the same body compiler; separate independent input admission must follow.
+pub fn Result<usize,source_errors::Error> lower_input_modules(ref input_entries::InputEntry selected,
+    ref mut static_images::Builder builder,ref mut reference_ir::Program code){
+    let ref module_index::Index index=input_entries::index(selected);
+    let source_context::Input input=switch(source_context::collect(index)){
+        case .ok(v):{v}case .err(e):{return .err(source_errors::Error{.code=errors::make(5,e.at.start),.at=e.at});}
+    };
+    let ref u8[] data=ref input.data;let ref u8[] source=data[..input.used];let ref source_context::Table scope=ref input.context;
+    let literal_collection::Index literals=switch(literal_collection::collect_scoped(builder,source,scope)){
+        case .ok(v):{v}case .err(e):{return .err(input_module_error(index,public_error(switch(e.kind){
+            case .Source:{image_source_error(e.source)}case .Image:{image_literal_error(e.image)}
+        }),16));}
+    };
+    var functions::Table signatures=switch(functions::scan_input_scoped(source,scope,selected)){
+        case .ok(v):{v}case .err(e):{return .err(input_module_error(index,e,16));}
+    };
+    var usize active=16;
+    switch(lower_prepared(source,false,true,true,ref literals,ref mut signatures,ref mut code.body,ref mut active)){
+        case .ok(_):{}case .err(e):{return .err(input_module_error(index,e,active));}
+    };
+    code.origins=signatures.return_slice_inputs;var usize f=0;
+    while(f<signatures.count){
+        if(signatures.return_slice_elements[f]==10){code.results[f]=3;}
+        var usize i=0;while(i<signatures.arities[f]){let usize at=f*8+i;
+            if(signatures.param_slices[at] && signatures.param_slice_elements[at]==10){let usize formal=code.body.register_starts[f]+i;code.parameters[formal]=3;}i+=1;
+        }f+=1;
+    }return .ok(code.body.count);
+}
+fn source_errors::Error input_module_error(ref module_index::Index index,errors::Error e,usize active){
+    return if(e.offset==0){source_errors::absent(e)}else{source_errors::map(module_index::snapshot(index),e,active)};
 }

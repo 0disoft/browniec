@@ -28,8 +28,8 @@
     },
     {
       "path": "native/runtime-engine/transport.json",
-      "sha256": "186d295bd13ae4fc69988d3dc4984bed87adf7d505fc6b788b0d1d474e4bb85f",
-      "bytes": 27063
+      "sha256": "c1e7d45f2f7f9a44a22c9978c08f838245cd225de1bc000ece6d08024cc4d6d3",
+      "bytes": 27202
     },
     {
       "path": "probes/runtime-store/heap-observer.c",
@@ -243,8 +243,8 @@
     },
     {
       "path": "src/compiler.fy",
-      "sha256": "400db538bf4d74d10e039260da0541e2fbede9c31994971d8db3d8fc88fef892",
-      "bytes": 182078
+      "sha256": "1ca4dc1a071bfd3bc712cdde859f80593988b3a2692ab89bbf6b19c819b94f7a",
+      "bytes": 184302
     },
     {
       "path": "src/copy_ir.fy",
@@ -263,8 +263,8 @@
     },
     {
       "path": "src/functions.fy",
-      "sha256": "d05e9026aff5c56e22f08f914f61cc5f20e4b8dfda47a5a946c4599842b30e6c",
-      "bytes": 14374
+      "sha256": "e0f4374ce98ed4187cf4bcc43a99109bf8b05c10427e28adf9fc2c2b7973f91b",
+      "bytes": 14822
     },
     {
       "path": "src/ir.fy",
@@ -315,6 +315,11 @@
       "path": "src/module_index.fy",
       "sha256": "146faf924811f91c108ec6136c5e2d8181b73304c406853f298dfe897eb2d4ed",
       "bytes": 13353
+    },
+    {
+      "path": "src/module_input_entry.fy",
+      "sha256": "6b83ce32665d5c452447e0af0e70c526b9cb26667361f7881e363f956ea923d8",
+      "bytes": 5233
     },
     {
       "path": "src/module_program.fy",
@@ -508,8 +513,8 @@
     },
     {
       "path": "src/slice_parameters.fy",
-      "sha256": "ca2f515607e86599363850b333eb49583b69030b54e4208ca3128bd599009198",
-      "bytes": 8277
+      "sha256": "e08fb58426725a938d7ade8d87227748a4c7814e553d0b18792b497f0eeb152e",
+      "bytes": 8851
     },
     {
       "path": "src/slice_place_ir.fy",
@@ -698,8 +703,8 @@
     },
     {
       "path": "src/static_call_ir.fy",
-      "sha256": "a43d72c149d7ad157cfaf04dcf05fd2d0d83bdb248f933616d7e97be1f8c51cf",
-      "bytes": 17609
+      "sha256": "6c496c4355218079ea369ecde4889c5a1b3fe4916da6d350192fd2c8c0b28c39",
+      "bytes": 18036
     },
     {
       "path": "src/static_call_sites.fy",
@@ -928,8 +933,8 @@
     },
     {
       "path": "src/verifier.fy",
-      "sha256": "5d22c395f171da1eba0394821bce17fd0b45583dc3fab141a9e30d1ad081e3a1",
-      "bytes": 31447
+      "sha256": "42ee3cb627c739d244e42c4daf8c88ab1c9f47e3d9ea6fb51affbcc6a34308c2",
+      "bytes": 32941
     },
     {
       "path": "src/vm.fy",

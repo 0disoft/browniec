@@ -1,14 +1,14 @@
 {
   "schema": "browniec.private-runtime-engine-evidence/v1",
   "status": "passed",
-  "recordedAt": "2026-11-07T07:53:33.451794+00:00",
+  "recordedAt": "2026-11-07T08:30:48.763917+00:00",
   "profiles": [
     {
       "profile": "development",
       "artifact": {
-        "path": "build/runtime-engine/20261107T075333451006Z/development/runtime-engine.exe",
-        "sha256": "d064842c442c8815bae970db594f0c6ffd935d583058b42ba025c4d69e1df19c",
-        "bytes": 5502976,
+        "path": "build/runtime-engine/20261107T083048763254Z/development/runtime-engine.exe",
+        "sha256": "bd49806ee582a0910e07783a8a8fcd383589c129d7fc78c662e5f77e51f3f942",
+        "bytes": 5508608,
         "stackReserve": 1048576,
         "stackCommit": 4096
       },
@@ -17,25 +17,25 @@
       "assertions": "native Fairy and C, no parsed trace",
       "objects": [
         {
-          "path": "build/runtime-engine/20261107T075333451006Z/development/transport.obj",
-          "sha256": "09a204375de4f15090b8c6e9ea67673ce1af767ff6e64a4cfaa81e411a55cc61"
+          "path": "build/runtime-engine/20261107T083048763254Z/development/transport.obj",
+          "sha256": "9a287e0a6d4ea7645eb513033ce809c6d744f9bbfa4d5926f5a15dd9c5fe9933"
         },
         {
-          "path": "build/runtime-engine/20261107T075333451006Z/development/runtime.obj",
-          "sha256": "8eda4c78684e10f57a347edf265291a8193f30ff601bba770a749799be1b0b80"
+          "path": "build/runtime-engine/20261107T083048763254Z/development/runtime.obj",
+          "sha256": "9753752b78c65e3ea753d67e53715f5e3a9a118a50774119586c649820af79ab"
         },
         {
-          "path": "build/runtime-engine/20261107T075333451006Z/development/abi_thread_identity.obj",
-          "sha256": "2cf97949cb8cddee3c79219aef678bcb699752c08313a99b598d8826a11e75de"
+          "path": "build/runtime-engine/20261107T083048763254Z/development/abi_thread_identity.obj",
+          "sha256": "1647250f89320dce196d27715eed91d7bb256f3aadac63c3afb08e4c43a9b260"
         }
       ]
     },
     {
       "profile": "release",
       "artifact": {
-        "path": "build/runtime-engine/20261107T075333451006Z/release/runtime-engine.exe",
-        "sha256": "67a9627cf1799975dce938a8ade20f3442a12d419cfe5bb5622c99677b845537",
-        "bytes": 1772544,
+        "path": "build/runtime-engine/20261107T083048763254Z/release/runtime-engine.exe",
+        "sha256": "8b6d28106cef0891381b3581ffdf74f0e076028bb20e83864c9c7affb79c8de1",
+        "bytes": 1773056,
         "stackReserve": 1048576,
         "stackCommit": 4096
       },
@@ -44,16 +44,16 @@
       "assertions": "native Fairy and C, no parsed trace",
       "objects": [
         {
-          "path": "build/runtime-engine/20261107T075333451006Z/release/transport.obj",
-          "sha256": "50b6a4a47b4fb2fad422b6c0675646f26145cd07afd61057d35f287650cb3b43"
+          "path": "build/runtime-engine/20261107T083048763254Z/release/transport.obj",
+          "sha256": "b68cd56f6115ef07340669e65aaf000539856de4937d30673ac4dab2101dd4ce"
         },
         {
-          "path": "build/runtime-engine/20261107T075333451006Z/release/runtime.obj",
-          "sha256": "c3516fd1c1966ab2d1fde61f23d7e7bdd2a8c945f5cfe86f0dabfba66668a26b"
+          "path": "build/runtime-engine/20261107T083048763254Z/release/runtime.obj",
+          "sha256": "f41f956d5e2245c26b4b95188ed74c16b06c0fa90c8a931313a8010200169d30"
         },
         {
-          "path": "build/runtime-engine/20261107T075333451006Z/release/abi_thread_identity.obj",
-          "sha256": "06307b730dca64d2c91463e3838498defa6bb2a598865ce4e5d4c5e75f563cdf"
+          "path": "build/runtime-engine/20261107T083048763254Z/release/abi_thread_identity.obj",
+          "sha256": "e92af45e47ac3d6dd31932edbbe577b34e0636b00288ac5dc73ec2152bcf1cd4"
         }
       ]
     }
@@ -100,10 +100,10 @@
     "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
     "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false"
   },
-  "transportSha256": "a86fff4fe7488bc570cf0a7707899e331c3ddd7fc2e62d91c970de641b91f845",
+  "transportSha256": "ab9ff570733d860e6cb5981710a104e938d1a35164e389b0db481b886f5e53dd",
   "runtimeSha256": "2f6b57a4af95b1c821528f9d9d5b6eec0d7d9a2d116cb999b8411d4678822ca0",
-  "isolatedLockSha256": "6b47b739b89aed3736d075c49c3010db162dc0f68925aa2d35929bc143758c88",
-  "sourceClosure": 183,
+  "isolatedLockSha256": "c1e451d3e8f122c010c262dcd787aec3e1e60219bf074fa4c13ff95f2ad3ae81",
+  "sourceClosure": 184,
   "msvc": {
     "version": "14.51.36231",
     "sdk": "10.0.26100.0",
@@ -119,10 +119,10 @@
     "No bounded step quanta, in-flight cancellation, host/input/output dispatch or OS deadline"
   ],
   "platform": "windows/amd64",
-  "receipt": "build/runtime-engine/20261107T075333451006Z/receipt.json",
-  "receiptSha256": "68b0cfa66ccc8ee6c7e57e73d2bd1c88389c5add88bd44eb5dda0f8f914ed87f",
+  "receipt": "build/runtime-engine/20261107T083048763254Z/receipt.json",
+  "receiptSha256": "53ca9325b9dcf185690d0b671e515228f21cbe7314d7b606470a5767fd0ed265",
   "command": "python tools/verify-runtime-engine.py",
   "inputManifest": "runtime-engine-inputs-windows-20261107.json",
-  "inputCount": 193,
+  "inputCount": 194,
   "inputBytesUnchanged": true
 }

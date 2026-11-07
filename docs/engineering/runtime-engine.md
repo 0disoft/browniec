@@ -64,7 +64,7 @@ seeding and heap observation are separate from `bridge.inc`. The private C entry
 points require valid live Fairy-owned pointers; hostile raw-pointer validation
 belongs to the still-open outer handle/ABI layer.
 
-`transport.json` freezes the 183-source closure, pinned compiler, complete emitted
+`transport.json` freezes the reviewed source closure, pinned compiler, complete emitted
 C hash, reviewed helper/type mappings and seven exact runtime Git objects. Any
 closure/compiler/source change fails before native build until those mappings
 are deliberately reviewed. This is an internal compiler transport, not a stable

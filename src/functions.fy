@@ -11,6 +11,7 @@ import std::num as num;
 import literal_collection as literal_collection;
 import source_context as context;
 import module_entry as entries;
+import module_input_entry as input_entries;
 import module_index as modules;
 import value_signature_source as value_types;
 import value_properties as value_properties;
@@ -232,8 +233,13 @@ pub fn Result<Table,errors::Error> scan_reference_returns(ref u8[] source){var v
 // Explicit immutable module selection supplies ownership/visibility candidates;
 // complete body/type/IR proof still belongs to subsequent compilation/admission.
 pub fn Result<Table,errors::Error> scan_scoped(ref u8[] source,ref context::Table scope,ref entries::Entry selected,bool returns){
+    return scan_index(source,scope,entries::index(selected),entries::selected(selected),returns);
+}
+pub fn Result<Table,errors::Error> scan_input_scoped(ref u8[] source,ref context::Table scope,ref input_entries::InputEntry selected){
+    return scan_index(source,scope,input_entries::index(selected),input_entries::selected(selected),true);
+}
+fn Result<Table,errors::Error> scan_index(ref u8[] source,ref context::Table scope,ref modules::Index index,usize selected,bool returns){
     if(!context::valid(source,scope)){return .err(errors::make(5,0));}
-    let ref modules::Index index=entries::index(selected);
     var Table t=empty();t.context=*scope;t.reference_returns=returns;
     var value_properties::Catalog unused=value_properties::empty();
     var usize i=0;
@@ -251,7 +257,7 @@ pub fn Result<Table,errors::Error> scan_scoped(ref u8[] source,ref context::Tabl
             if(f>=scope.function_count || t.begins[f]!=context::begin(scope.functions[f]) || t.ends[f]!=context::end(scope.functions[f])){
                 return .err(errors::make(5,begin));
             }
-            if(i==entries::selected(selected)){t.entry=f;}
+            if(i==selected){t.entry=f;}
         }i+=1;
     }
     if(t.count!=scope.function_count || t.entry>=t.count){return .err(errors::make(5,0));}

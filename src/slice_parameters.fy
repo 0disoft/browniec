@@ -13,9 +13,16 @@ fn bool formal(ref ir::Program p, usize r, usize site, usize f) {
         p.types[r] == 0 && !p.slots[r] && p.array_parameters[r] == 0 && p.record_parameters[r] == 0;
 }
 
-pub fn Result<usize, errors::Error> metadata(ref ir::Program p) {
+pub fn Result<usize, errors::Error> metadata(ref ir::Program p) {return metadata_mode(p,false);}
+// Generic byte InputEntry is proved by the caller's separate complete static
+// signature pass. It must not manufacture an ordinary array-backed formal.
+pub fn Result<usize,errors::Error> metadata_input(ref ir::Program p){return metadata_mode(p,true);}
+fn Result<usize,errors::Error> metadata_mode(ref ir::Program p,bool input) {
     if (p.function_count == 0 || p.function_count > 16 || p.entry >= p.function_count ||
-        p.registers > 128 || p.arrays.count > 16 || p.arities[p.entry] != 0) { return .err(errors::make(5, 0)); }
+        p.registers > 128 || p.arrays.count > 16) { return .err(errors::make(5, 0)); }
+    if(input){
+        if(p.arities[p.entry]!=1 || p.register_starts[p.entry]>=128 || p.slice_parameters[p.register_starts[p.entry]]!=0){return .err(errors::make(5,0));}
+    }else if(p.arities[p.entry]!=0){return .err(errors::make(5,0));}
     var usize end = 0;
     var usize f = 0;
     while (f < p.function_count) {

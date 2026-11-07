@@ -314,6 +314,10 @@ fn Result<reborrows::Sites, errors::Error> validate(ref ir::Program p,bool allow
 }
 fn Result<reborrows::Sites,errors::Error> validate_values(ref ir::Program p,bool allow_reborrow_calls,
     u8 place_kind,ref statics::Sites static_sites,ref value_ir::Sites value_sites){
+    return validate_values_mode(p,allow_reborrow_calls,place_kind,static_sites,value_sites,false);
+}
+fn Result<reborrows::Sites,errors::Error> validate_values_mode(ref ir::Program p,bool allow_reborrow_calls,
+    u8 place_kind,ref statics::Sites static_sites,ref value_ir::Sites value_sites,bool input){
     if (p.count == 0 || p.count > 256 || p.registers == 0 || p.registers > 128 || p.constant_count > 128 ||
         p.function_count == 0 || p.function_count > 16 || p.entry >= p.function_count || p.call_count > 32) { return .err(errors::make(5, 0)); }
     if (!arrays::valid(ref p.arrays)) { return .err(errors::make(5, 0)); }
@@ -328,7 +332,9 @@ fn Result<reborrows::Sites,errors::Error> validate_values(ref ir::Program p,bool
         if (p.slice_roots[id] as usize > p.arrays.count) { return .err(errors::make(5, 0)); }
         id += 1;
     }
-    if (p.arities[p.entry] != 0 || p.return_types[p.entry] != 1) { return .err(errors::make(5, 0)); }
+    if(p.return_types[p.entry]!=1){return .err(errors::make(5,0));}
+    if(input){if(p.arities[p.entry]!=1 || p.register_starts[p.entry]>=128 || static_sites.parameters[p.register_starts[p.entry]]!=3){return .err(errors::make(5,0));}}
+    else if(p.arities[p.entry]!=0){return .err(errors::make(5,0));}
     var usize f = 0;
     var usize code_end = 0;
     var usize register_end = 0;
@@ -342,7 +348,7 @@ fn Result<reborrows::Sites,errors::Error> validate_values(ref ir::Program p,bool
     }
     if (code_end != p.count || register_end != p.registers) { return .err(errors::make(5, 0)); }
     let usize copy_metadata=copying::metadata(p)?;
-    let usize borrowed_parameters = slice_parameters::metadata(p)?;
+    let usize borrowed_parameters = if(input){slice_parameters::metadata_input(p)?}else{slice_parameters::metadata(p)?};
     let reborrows::Sites loans = reborrows::metadata(p)?;
     let usize parameters = array_parameters::metadata(p)?;
     let usize record_parameters = struct_parameters::metadata(p)?;
@@ -468,6 +474,19 @@ pub fn Result<ReferenceReturnProof,errors::Error> inspect_reference_returns(ref 
     let statics::Sites sites=image_sites::prepare(unit,ref recipes,image)?;
     let ref ir::Program p=ref unit.body;
     let reborrows::Sites loans=validate(p,true,4,ref sites)?;
+    let usize executable=executable_calls(p,ref loans)?;
+    let usize[16] roots=reference_lifetimes::prepare(p,ref sites)?;
+    let usize checked=reference_lifetimes::inspect(p,ref sites,ref roots)?;
+    return .ok(ReferenceReturnProof{.recipes=recipes,.statics=sites,.loans=loans,.owner_roots=roots});
+}
+
+// Complete canonical proof for the separate single shared-byte external input
+// ABI. The ordinary/reference entry points still require zero entry arguments.
+pub fn Result<ReferenceReturnProof,errors::Error> inspect_input_returns(ref image_calls::Program unit,ref images::Image image){
+    let image_calls::Proof recipes=image_calls::inspect_input_returns(unit,image)?;
+    let statics::Sites sites=image_sites::prepare(unit,ref recipes,image)?;
+    let ref ir::Program p=ref unit.body;let value_ir::Sites no_values=value_ir::empty();
+    let reborrows::Sites loans=validate_values_mode(p,true,4,ref sites,ref no_values,true)?;
     let usize executable=executable_calls(p,ref loans)?;
     let usize[16] roots=reference_lifetimes::prepare(p,ref sites)?;
     let usize checked=reference_lifetimes::inspect(p,ref sites,ref roots)?;
