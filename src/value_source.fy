@@ -54,6 +54,10 @@ fn Result<context::Value,errors::Error> buffer_call(ref u8[] source,ref mut lexe
     let usize prefix=buffers::prefix(source,s,writing)?;
     let usize input_type=if(op==105){64}else{type};
     let context::Value receiver=expression(source,s,unit,state,table,plan,paths,flow,input_type,1,depth+1)?;
+    if(receiver.bottom){
+        if(op!=99 && op!=105 && op!=106){return .err(wrong(at));}
+        let usize close=lexer::punctuation(source,s,41)?;return .ok(receiver);
+    }
     if(op==105 && view_source::reference(receiver)){
         let usize close=lexer::punctuation(source,s,41)?;
         let usize captured=view_source::capture(unit,state,receiver,at)?;
@@ -65,10 +69,15 @@ fn Result<context::Value,errors::Error> buffer_call(ref u8[] source,ref mut lexe
         if(op==104){
             let usize borrowed=buffers::prefix(source,s,false)?;
             let context::Value argument=expression(source,s,unit,state,table,plan,paths,flow,type,1,depth+1)?;
+            if(argument.bottom){let usize close=lexer::punctuation(source,s,41)?;return .ok(argument);}
             second=buffers::begin(unit,state,argument,false,at)?;
         }else{
             let usize scalar=context::intern(unit,1,if(op==102){10}else{12},0,at)?;
             let context::Value argument=expression(source,s,unit,state,table,plan,paths,flow,scalar,1,depth+1)?;
+            if(argument.bottom){
+                if(op==101){return .err(wrong(at));}
+                let usize close=lexer::punctuation(source,s,41)?;return .ok(argument);
+            }
             let usize register=context::as_scalar(unit,state,argument,at)?;
             if(op==100 || op==101){index=register;}else{value=register;}
         }
@@ -76,6 +85,7 @@ fn Result<context::Value,errors::Error> buffer_call(ref u8[] source,ref mut lexe
     if(op==101){let usize comma=lexer::punctuation(source,s,44)?;
         let usize scalar=context::intern(unit,1,10,0,at)?;
         let context::Value argument=expression(source,s,unit,state,table,plan,paths,flow,scalar,1,depth+1)?;
+        if(argument.bottom){let usize close=lexer::punctuation(source,s,41)?;return .ok(argument);}
         value=context::as_scalar(unit,state,argument,at)?;
     }
     let usize close=lexer::punctuation(source,s,41)?;
@@ -230,12 +240,14 @@ fn Result<context::Value,errors::Error> view_index(ref u8[] source,ref mut lexer
     var usize lo=0;
     if(view_source::range_ahead(source,s)?){lo=ir::integer(ref mut unit.body,0,12,at)?;}
     else{let context::Value value=expression(source,s,unit,state,table,plan,paths,flow,type,1,depth+1)?;
+        if(value.bottom){let usize close=lexer::punctuation(source,s,93)?;return .ok(value);}
         lo=context::as_scalar(unit,state,value,at)?;
     }
     let bool range=view_source::range_ahead(source,s)?;var usize hi=0;
     if(range){let usize dot=lexer::punctuation(source,s,46)?;let usize second=lexer::punctuation(source,s,46)?;
         if(s.kind==93){hi=view_bindings::scalar(unit,ref state.views,110,receiver,0,at)?;}
         else{let context::Value value=expression(source,s,unit,state,table,plan,paths,flow,type,1,depth+1)?;
+            if(value.bottom){let usize close=lexer::punctuation(source,s,93)?;return .ok(value);}
             hi=context::as_scalar(unit,state,value,at)?;
         }
     }
