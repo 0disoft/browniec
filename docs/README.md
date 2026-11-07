@@ -6,6 +6,7 @@
 
 | Topic | Document |
 | --- | --- |
+| Saved VM return payload | [RET payload admission](engineering/runtime-return-work-chunks.md) |
 | Product intent and demand assumptions | [Product brief](product/00-product-brief.md) |
 | Language profile and observable behavior | [Specification](product/02-spec.md) |
 | Current delivery, all remaining requirements and risks | [Roadmap](product/01-roadmap.md), [remaining-work audit](product/04-remaining-work.md), [risk register](product/03-risk-register.md) |

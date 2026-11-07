@@ -1,19 +1,21 @@
-- Latest VM CALL checkpoint (2026-11-08): [Saved CALL continuations](docs/engineering/runtime-call-entry-chunks.md)
-  implementation `20e0bee` connects CALL9/64/66/78 payload work to actual saved
-  dispatch. Validation/copy shares the 4096-byte allowance with array/output;
-  all validation precedes once-only owned Fuel and destination writes. Final
-  owner/loan/formal/input/register/frame/PC publication cannot yield. Four actual
-  Engine/eight kernel groups plus regressions pass development/O2: maximum i64
-  eight-batch copying, fixed/mixed quanta, padded records/bools/local-array loans,
-  source capture before later effects, exact/one-less Fuel, zero-Fuel copying,
-  cancellation/refunds, Engine moves and released pins. Zero resume SDK attempts
-  and SDK heap at exit; default stacks. CALL state adds 536 bytes: Cursor 968,
-  Machine 1416, Core unchanged 120880; Vec8 adds 4288 (combined work 7168).
-  All 265 receipt inputs match checkout/committed Git; 33 bindings/31 layouts
-  reviewed. Root locked check: 269 sources/3024 MIR; 261 production LF modules.
-  CALL metadata/RET, setup/proof/seal/cleanup, deadlines/poison and public
-  lifecycle/ABI/CLI/full inventory remain open; R03-R05 incomplete. Three
-  disjoint Sol High workers, serial integration/commits; local only.
+- Latest VM RET checkpoint (2026-11-08): [Return payload admission](docs/engineering/runtime-return-work-chunks.md)
+  implementation `2a13049` admits whole ARET/SRET validation into the shared
+  4096-byte CALL/array/output allowance before return unit/Fuel debit. Bool ARET
+  reads at most 4096 bytes; record validation uses at most 512 work bytes. Saved
+  result preparation borrows owners and one 16-token frame map, removing global
+  512-token/table clones. Return-following COPY paths subtract all four counters.
+  Native Core initialization fills existing frames without whole-value copies.
+  Four new actual Engine groups and regressions pass development/O2: fixed/mixed
+  quanta, whole-return deferral, Fuel, diagnostics, nested bools, cancellation,
+  Engine moves/pins/refunds and return-following partial copies. Zero resume SDK
+  attempts and exit heap; default stacks. Return state 48 bytes; Cursor 1016,
+  Machine 1464, Core unchanged 120880. Vec8 adds 384 (combined work 7552).
+  All 268 receipt inputs plus two audit inputs match raw checkout/committed Git;
+  33 bindings/32 layouts reviewed. Root locked check: 271 sources/3032 MIR;
+  263 production LF modules. CALL/RET metadata, setup/proof/seal/cleanup,
+  deadlines/STOPPING/poison and public lifecycle/ABI/CLI/full inventory remain
+  open; R03-R05 incomplete. Disjoint Sol High workers with serial integration
+  and commits; local only.
 
 # Brownie C agent guidance
 
