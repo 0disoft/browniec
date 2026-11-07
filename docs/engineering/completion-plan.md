@@ -1,8 +1,8 @@
 - Latest registry-prerequisite checkpoint (2026-11-07): [Fairy handles](abi-handles.md)
   (`fef9fd3`) passed ten native groups per development/release profile; unchanged
   kernel/test/compiler evidence was retained after the root 227-source/2487-MIR
-  composition check. [Windows guard/TLS](abi-thread-identity.md) (`f83436e`)
-  passed real development/optimized OS hosts: eight concurrent threads, 1024
+  composition check. [Windows guard/TLS](abi-thread-identity.md) (`5618726`)
+  passed real development/optimized OS hosts, including live-TLS release checks: eight concurrent threads, 1024
   guarded updates, 32 sequential lifetimes and nonwrapping ticket exhaustion.
   These separate components are not yet one lazy process registry or public
   Engine/Program/Instance APIs. Full E02/E01, host exchange and inventory remain
