@@ -1,0 +1,2163 @@
+{
+  "schema": "browniec.value-view-joins-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-07T02:07:07.999578+00:00",
+  "platform": "windows/amd64",
+  "implementationCommit": "5555e4a4dc343f4c909f04216ace0f32035375a9",
+  "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+  "inputManifest": {
+    "path": "docs/evidence/value-view-joins-inputs-windows-20261107.json",
+    "sha256": "31ebe4408277e5637d9f114610085dcd247d4bdb58213db79973daae7f926042"
+  },
+  "checkoutInputsMatched": 235,
+  "gitRawInputsMatched": 235,
+  "lfProductionModules": 216,
+  "groupsPerProfile": {
+    "development": 68,
+    "release": 68
+  },
+  "newGroupsPerProfile": {
+    "development": 25,
+    "release": 25
+  },
+  "joins": {
+    "exactSameOrigin": true,
+    "differentWindows": true,
+    "ifAndSwitch": true,
+    "mutableSelectedInputInference": true,
+    "compileOnlyReservations": true,
+    "retentionHintsIntersect": true,
+    "newOpcodes": 0,
+    "payloadCopies": 0,
+    "publicAdmissionChanged": false,
+    "existingPricesChanged": false
+  },
+  "unchangedConditionalDepthFixture": {
+    "path": "tests/m2/value_source_control.fy",
+    "sha256": "b7629f96a427f2af723677f81bc0dda2d45318781ec1678eb6be1438f4a6cbf1",
+    "runtimeRerun": true
+  },
+  "profiles": [
+    {
+      "schema": "browniec.value-source-verification/v1",
+      "status": "passed",
+      "recordedAt": "2026-11-07T01:54:01.530244+00:00",
+      "profile": "development",
+      "phase": "native",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "commands": [
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "--version"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "cd072950608b9582b5ea82fc93c07ed15e8a3717854eda1218979d07665488f3",
+          "elapsedSeconds": 0.113,
+          "exit": 0,
+          "stdout": "compiler-version.txt",
+          "stderr": "compiler-version.txt.stderr.txt",
+          "stdoutSha256": "cfd188b9865777d7972b1c1e1c4e2e50d2735becbeca8627863cde0d38330e34",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "check",
+            "--locked"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "4a56238644fd3eae28b5ed5d8800427c848e4ce7ced9f90c5a0cc4089afb5fc0",
+          "elapsedSeconds": 8.851,
+          "exit": 0,
+          "stdout": "check.txt",
+          "stderr": "check.txt.stderr.txt",
+          "stdoutSha256": "f72dc081bc412e005142d9deeed99fec9059877958e4a5a722795bd9ae80a7cd",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "test",
+            "--native",
+            "--capture-output",
+            "--json",
+            "--locked",
+            "--exact",
+            "tests::m2::value_view_join_bindings::bounded_reservations_reject_exhaustion_and_invalid_release_before_mutation",
+            "--exact",
+            "tests::m2::value_view_join_bindings::join_destination_reservation_survives_alternative_selection_without_live_authority",
+            "--exact",
+            "tests::m2::value_view_join_bindings::retention_join_intersects_hints_and_rejects_different_origins_without_mutation",
+            "--exact",
+            "tests::m2::value_view_join_source::bottom_local_escape_and_distinct_origin_joins_reject",
+            "--exact",
+            "tests::m2::value_view_join_source::bounds_arithmetic_first_errors_and_public_admission_gates",
+            "--exact",
+            "tests::m2::value_view_join_source::conditional_windows_nested_aliases_and_last_scope_cleanup",
+            "--exact",
+            "tests::m2::value_view_join_source::mutable_return_origins_calls_and_anonymous_owner_retention",
+            "--exact",
+            "tests::m2::value_view_join_source::switch_variants_nested_values_and_inner_alias_lifetimes",
+            "--exact",
+            "tests::m2::value_view_join_source::terminal_arms_and_loop_transfers_clean_views_before_roots"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "0b3cc4544e740117fb9fecada598b3edd67332f98f475b7e0efc2bc64ca9eec9",
+          "elapsedSeconds": 87.631,
+          "exit": 0,
+          "stdout": "native.json",
+          "stderr": "native.json.stderr.txt",
+          "stdoutSha256": "6ac6c511ae7b9dbf88a0515f1ee677e8e35d61f1d014d1bce0a2ec66717b05b1",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "selectedTests": [
+        "tests::m2::value_view_join_bindings::bounded_reservations_reject_exhaustion_and_invalid_release_before_mutation",
+        "tests::m2::value_view_join_bindings::join_destination_reservation_survives_alternative_selection_without_live_authority",
+        "tests::m2::value_view_join_bindings::retention_join_intersects_hints_and_rejects_different_origins_without_mutation",
+        "tests::m2::value_view_join_source::bottom_local_escape_and_distinct_origin_joins_reject",
+        "tests::m2::value_view_join_source::bounds_arithmetic_first_errors_and_public_admission_gates",
+        "tests::m2::value_view_join_source::conditional_windows_nested_aliases_and_last_scope_cleanup",
+        "tests::m2::value_view_join_source::mutable_return_origins_calls_and_anonymous_owner_retention",
+        "tests::m2::value_view_join_source::switch_variants_nested_values_and_inner_alias_lifetimes",
+        "tests::m2::value_view_join_source::terminal_arms_and_loop_transfers_clean_views_before_roots"
+      ],
+      "nativeGroups": 9,
+      "selectedNativeGroups": 9,
+      "nativeWorkspace": "byte-identical-production-selected-tests",
+      "nativeOverrides": false,
+      "historicalResultReuse": false,
+      "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false",
+      "check": "check ok: 2 instance(s), 224 source file(s), 2400 MIR function(s), lock verified\n",
+      "nativeReport": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "development",
+        "tests": [
+          {
+            "identity": "tests::m2::value_view_join_bindings::bounded_reservations_reject_exhaustion_and_invalid_release_before_mutation",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_bindings::join_destination_reservation_survives_alternative_selection_without_live_authority",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_bindings::retention_join_intersects_hints_and_rejects_different_origins_without_mutation",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_source::bottom_local_escape_and_distinct_origin_joins_reject",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_source::bounds_arithmetic_first_errors_and_public_admission_gates",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_source::conditional_windows_nested_aliases_and_last_scope_cleanup",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_source::mutable_return_origins_calls_and_anonymous_owner_retention",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_source::switch_variants_nested_values_and_inner_alias_lifetimes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_source::terminal_arms_and_loop_transfers_clean_views_before_roots",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 9,
+        "passed": 9,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "nativeReportSha256": "279adf3a9f939b96725af7c73ba93b9155d6a25d3ad411d22f08ab7a65410a91",
+      "nativeInputMirrorVerified": true,
+      "elapsedSeconds": 97.381,
+      "cliSkipped": "Optional public Fuel CLI suite was not requested.",
+      "batch": "core",
+      "receiptSha256": "d90579561c2e7ffe3a4a0e6550e8811073a360f54fad09697b454bc1b8ef7f05"
+    },
+    {
+      "schema": "browniec.value-source-verification/v1",
+      "status": "passed",
+      "recordedAt": "2026-11-07T01:55:38.910574+00:00",
+      "profile": "release",
+      "phase": "native",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "commands": [
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "--version"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "cd072950608b9582b5ea82fc93c07ed15e8a3717854eda1218979d07665488f3",
+          "elapsedSeconds": 0.077,
+          "exit": 0,
+          "stdout": "compiler-version.txt",
+          "stderr": "compiler-version.txt.stderr.txt",
+          "stdoutSha256": "cfd188b9865777d7972b1c1e1c4e2e50d2735becbeca8627863cde0d38330e34",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "check",
+            "--locked"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "4a56238644fd3eae28b5ed5d8800427c848e4ce7ced9f90c5a0cc4089afb5fc0",
+          "elapsedSeconds": 6.616,
+          "exit": 0,
+          "stdout": "check.txt",
+          "stderr": "check.txt.stderr.txt",
+          "stdoutSha256": "f72dc081bc412e005142d9deeed99fec9059877958e4a5a722795bd9ae80a7cd",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "test",
+            "--native",
+            "--capture-output",
+            "--json",
+            "--locked",
+            "--release",
+            "--exact",
+            "tests::m2::value_view_join_bindings::bounded_reservations_reject_exhaustion_and_invalid_release_before_mutation",
+            "--exact",
+            "tests::m2::value_view_join_bindings::join_destination_reservation_survives_alternative_selection_without_live_authority",
+            "--exact",
+            "tests::m2::value_view_join_bindings::retention_join_intersects_hints_and_rejects_different_origins_without_mutation",
+            "--exact",
+            "tests::m2::value_view_join_source::bottom_local_escape_and_distinct_origin_joins_reject",
+            "--exact",
+            "tests::m2::value_view_join_source::bounds_arithmetic_first_errors_and_public_admission_gates",
+            "--exact",
+            "tests::m2::value_view_join_source::conditional_windows_nested_aliases_and_last_scope_cleanup",
+            "--exact",
+            "tests::m2::value_view_join_source::mutable_return_origins_calls_and_anonymous_owner_retention",
+            "--exact",
+            "tests::m2::value_view_join_source::switch_variants_nested_values_and_inner_alias_lifetimes",
+            "--exact",
+            "tests::m2::value_view_join_source::terminal_arms_and_loop_transfers_clean_views_before_roots"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "1415dc27d547e6c84c4e1e369f3cdbfb0b5309b00a9ef6389ab1a865a8e0f71b",
+          "elapsedSeconds": 176.22,
+          "exit": 0,
+          "stdout": "native.json",
+          "stderr": "native.json.stderr.txt",
+          "stdoutSha256": "3d1d02a5b8715295aa295cc12c63b26f45c023d67e395205eb33d4fa89921729",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "selectedTests": [
+        "tests::m2::value_view_join_bindings::bounded_reservations_reject_exhaustion_and_invalid_release_before_mutation",
+        "tests::m2::value_view_join_bindings::join_destination_reservation_survives_alternative_selection_without_live_authority",
+        "tests::m2::value_view_join_bindings::retention_join_intersects_hints_and_rejects_different_origins_without_mutation",
+        "tests::m2::value_view_join_source::bottom_local_escape_and_distinct_origin_joins_reject",
+        "tests::m2::value_view_join_source::bounds_arithmetic_first_errors_and_public_admission_gates",
+        "tests::m2::value_view_join_source::conditional_windows_nested_aliases_and_last_scope_cleanup",
+        "tests::m2::value_view_join_source::mutable_return_origins_calls_and_anonymous_owner_retention",
+        "tests::m2::value_view_join_source::switch_variants_nested_values_and_inner_alias_lifetimes",
+        "tests::m2::value_view_join_source::terminal_arms_and_loop_transfers_clean_views_before_roots"
+      ],
+      "nativeGroups": 9,
+      "selectedNativeGroups": 9,
+      "nativeWorkspace": "byte-identical-production-selected-tests",
+      "nativeOverrides": false,
+      "historicalResultReuse": false,
+      "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false",
+      "check": "check ok: 2 instance(s), 224 source file(s), 2400 MIR function(s), lock verified\n",
+      "nativeReport": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "release",
+        "tests": [
+          {
+            "identity": "tests::m2::value_view_join_bindings::bounded_reservations_reject_exhaustion_and_invalid_release_before_mutation",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_bindings::join_destination_reservation_survives_alternative_selection_without_live_authority",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_bindings::retention_join_intersects_hints_and_rejects_different_origins_without_mutation",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_source::bottom_local_escape_and_distinct_origin_joins_reject",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_source::bounds_arithmetic_first_errors_and_public_admission_gates",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_source::conditional_windows_nested_aliases_and_last_scope_cleanup",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_source::mutable_return_origins_calls_and_anonymous_owner_retention",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_source::switch_variants_nested_values_and_inner_alias_lifetimes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_source::terminal_arms_and_loop_transfers_clean_views_before_roots",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 9,
+        "passed": 9,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "nativeReportSha256": "29eac59c5f38a4ceb2cdd679c6719ee6e75178175040011b47b2e49f3298ec5e",
+      "nativeInputMirrorVerified": true,
+      "elapsedSeconds": 183.613,
+      "cliSkipped": "Optional public Fuel CLI suite was not requested.",
+      "batch": "core",
+      "receiptSha256": "34d5d13ce831454f88023c55237afbeda65df5d1aa34affc0ef73f6280b3ae59"
+    },
+    {
+      "schema": "browniec.value-source-verification/v1",
+      "status": "passed",
+      "recordedAt": "2026-11-07T01:54:01.629719+00:00",
+      "profile": "development",
+      "phase": "native",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "commands": [
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "--version"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "cd072950608b9582b5ea82fc93c07ed15e8a3717854eda1218979d07665488f3",
+          "elapsedSeconds": 0.145,
+          "exit": 0,
+          "stdout": "compiler-version.txt",
+          "stderr": "compiler-version.txt.stderr.txt",
+          "stdoutSha256": "cfd188b9865777d7972b1c1e1c4e2e50d2735becbeca8627863cde0d38330e34",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "check",
+            "--locked"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "4a56238644fd3eae28b5ed5d8800427c848e4ce7ced9f90c5a0cc4089afb5fc0",
+          "elapsedSeconds": 8.917,
+          "exit": 0,
+          "stdout": "check.txt",
+          "stderr": "check.txt.stderr.txt",
+          "stdoutSha256": "f72dc081bc412e005142d9deeed99fec9059877958e4a5a722795bd9ae80a7cd",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "test",
+            "--native",
+            "--capture-output",
+            "--json",
+            "--locked",
+            "--exact",
+            "tests::m2::value_view_join_ir::join_move_reserved_bytes_and_scalar_view_namespaces_are_independent",
+            "--exact",
+            "tests::m2::value_view_join_ir::joined_returns_reject_wrong_selected_formal_stale_actuals_and_forged_metadata",
+            "--exact",
+            "tests::m2::value_view_join_ir::joined_views_pin_the_owner_against_write_drop_and_move",
+            "--exact",
+            "tests::m2::value_view_join_ir::joins_reject_different_roots_missing_origin_and_different_live_ids",
+            "--exact",
+            "tests::m2::value_view_join_ir::joins_reject_stale_move_stale_read_and_moving_over_a_live_parent",
+            "--exact",
+            "tests::m2::value_view_join_ir::loop_backedges_require_the_exact_joined_origin_and_live_set",
+            "--exact",
+            "tests::m2::value_view_join_ir::same_root_different_windows_join_into_dead_destination_and_keep_public_gates",
+            "--exact",
+            "tests::m2::value_view_join_ir::selected_formal_windows_join_return_and_call_result_inherit_the_actual_root",
+            "--exact",
+            "tests::m2::value_view_join_origins::branch_local_escape_and_type_shadowing_reject",
+            "--exact",
+            "tests::m2::value_view_join_origins::continuing_paths_exclude_returning_arms_and_restore_branch_entry",
+            "--exact",
+            "tests::m2::value_view_join_origins::different_formals_missing_else_and_sequential_branch_pollution_reject",
+            "--exact",
+            "tests::m2::value_view_join_origins::grounded_recursive_joins_revisit_all_pending_paths",
+            "--exact",
+            "tests::m2::value_view_join_origins::mutable_bindings_and_same_input_if_control_rebindings_ground",
+            "--exact",
+            "tests::m2::value_view_join_origins::nested_if_switch_values_and_forward_selected_calls_ground",
+            "--exact",
+            "tests::m2::value_view_join_origins::static_bytes_text_and_ordinary_typed_aliases_remain_advisory",
+            "--exact",
+            "tests::m2::value_view_join_origins::switch_rebindings_and_lexical_shadowing_preserve_outer_bindings"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "1b3597da4b408c776804a544a28e658e4ab8c8137aa15093a2471f1b16a462d6",
+          "elapsedSeconds": 121.564,
+          "exit": 0,
+          "stdout": "native.json",
+          "stderr": "native.json.stderr.txt",
+          "stdoutSha256": "04ce0ede6b6ceb50d59a12420f52a8db0a9586dfccf7537e91b275b06a2322cb",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "selectedTests": [
+        "tests::m2::value_view_join_ir::join_move_reserved_bytes_and_scalar_view_namespaces_are_independent",
+        "tests::m2::value_view_join_ir::joined_returns_reject_wrong_selected_formal_stale_actuals_and_forged_metadata",
+        "tests::m2::value_view_join_ir::joined_views_pin_the_owner_against_write_drop_and_move",
+        "tests::m2::value_view_join_ir::joins_reject_different_roots_missing_origin_and_different_live_ids",
+        "tests::m2::value_view_join_ir::joins_reject_stale_move_stale_read_and_moving_over_a_live_parent",
+        "tests::m2::value_view_join_ir::loop_backedges_require_the_exact_joined_origin_and_live_set",
+        "tests::m2::value_view_join_ir::same_root_different_windows_join_into_dead_destination_and_keep_public_gates",
+        "tests::m2::value_view_join_ir::selected_formal_windows_join_return_and_call_result_inherit_the_actual_root",
+        "tests::m2::value_view_join_origins::branch_local_escape_and_type_shadowing_reject",
+        "tests::m2::value_view_join_origins::continuing_paths_exclude_returning_arms_and_restore_branch_entry",
+        "tests::m2::value_view_join_origins::different_formals_missing_else_and_sequential_branch_pollution_reject",
+        "tests::m2::value_view_join_origins::grounded_recursive_joins_revisit_all_pending_paths",
+        "tests::m2::value_view_join_origins::mutable_bindings_and_same_input_if_control_rebindings_ground",
+        "tests::m2::value_view_join_origins::nested_if_switch_values_and_forward_selected_calls_ground",
+        "tests::m2::value_view_join_origins::static_bytes_text_and_ordinary_typed_aliases_remain_advisory",
+        "tests::m2::value_view_join_origins::switch_rebindings_and_lexical_shadowing_preserve_outer_bindings"
+      ],
+      "nativeGroups": 16,
+      "selectedNativeGroups": 16,
+      "nativeWorkspace": "byte-identical-production-selected-tests",
+      "nativeOverrides": false,
+      "historicalResultReuse": false,
+      "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false",
+      "check": "check ok: 2 instance(s), 224 source file(s), 2400 MIR function(s), lock verified\n",
+      "nativeReport": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "development",
+        "tests": [
+          {
+            "identity": "tests::m2::value_view_join_ir::join_move_reserved_bytes_and_scalar_view_namespaces_are_independent",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_ir::joined_returns_reject_wrong_selected_formal_stale_actuals_and_forged_metadata",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_ir::joined_views_pin_the_owner_against_write_drop_and_move",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_ir::joins_reject_different_roots_missing_origin_and_different_live_ids",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_ir::joins_reject_stale_move_stale_read_and_moving_over_a_live_parent",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_ir::loop_backedges_require_the_exact_joined_origin_and_live_set",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_ir::same_root_different_windows_join_into_dead_destination_and_keep_public_gates",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_ir::selected_formal_windows_join_return_and_call_result_inherit_the_actual_root",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_origins::branch_local_escape_and_type_shadowing_reject",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_origins::continuing_paths_exclude_returning_arms_and_restore_branch_entry",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_origins::different_formals_missing_else_and_sequential_branch_pollution_reject",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_origins::grounded_recursive_joins_revisit_all_pending_paths",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_origins::mutable_bindings_and_same_input_if_control_rebindings_ground",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_origins::nested_if_switch_values_and_forward_selected_calls_ground",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_origins::static_bytes_text_and_ordinary_typed_aliases_remain_advisory",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_origins::switch_rebindings_and_lexical_shadowing_preserve_outer_bindings",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 16,
+        "passed": 16,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "nativeReportSha256": "f186fd5a92d3aa76afa7a9d9ba65e0496fd4788c6305ae27b7faab481ff4963a",
+      "nativeInputMirrorVerified": true,
+      "elapsedSeconds": 131.399,
+      "cliSkipped": "Optional public Fuel CLI suite was not requested.",
+      "batch": "proof",
+      "receiptSha256": "db11dd107ab06ed828574478900bbda023a85d3c4b66e47421f7e1de501304af"
+    },
+    {
+      "schema": "browniec.value-source-verification/v1",
+      "status": "passed",
+      "recordedAt": "2026-11-07T01:56:13.030666+00:00",
+      "profile": "release",
+      "phase": "native",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "commands": [
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "--version"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "cd072950608b9582b5ea82fc93c07ed15e8a3717854eda1218979d07665488f3",
+          "elapsedSeconds": 0.068,
+          "exit": 0,
+          "stdout": "compiler-version.txt",
+          "stderr": "compiler-version.txt.stderr.txt",
+          "stdoutSha256": "cfd188b9865777d7972b1c1e1c4e2e50d2735becbeca8627863cde0d38330e34",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "check",
+            "--locked"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "4a56238644fd3eae28b5ed5d8800427c848e4ce7ced9f90c5a0cc4089afb5fc0",
+          "elapsedSeconds": 6.905,
+          "exit": 0,
+          "stdout": "check.txt",
+          "stderr": "check.txt.stderr.txt",
+          "stdoutSha256": "f72dc081bc412e005142d9deeed99fec9059877958e4a5a722795bd9ae80a7cd",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "test",
+            "--native",
+            "--capture-output",
+            "--json",
+            "--locked",
+            "--release",
+            "--exact",
+            "tests::m2::value_view_join_ir::join_move_reserved_bytes_and_scalar_view_namespaces_are_independent",
+            "--exact",
+            "tests::m2::value_view_join_ir::joined_returns_reject_wrong_selected_formal_stale_actuals_and_forged_metadata",
+            "--exact",
+            "tests::m2::value_view_join_ir::joined_views_pin_the_owner_against_write_drop_and_move",
+            "--exact",
+            "tests::m2::value_view_join_ir::joins_reject_different_roots_missing_origin_and_different_live_ids",
+            "--exact",
+            "tests::m2::value_view_join_ir::joins_reject_stale_move_stale_read_and_moving_over_a_live_parent",
+            "--exact",
+            "tests::m2::value_view_join_ir::loop_backedges_require_the_exact_joined_origin_and_live_set",
+            "--exact",
+            "tests::m2::value_view_join_ir::same_root_different_windows_join_into_dead_destination_and_keep_public_gates",
+            "--exact",
+            "tests::m2::value_view_join_ir::selected_formal_windows_join_return_and_call_result_inherit_the_actual_root",
+            "--exact",
+            "tests::m2::value_view_join_origins::branch_local_escape_and_type_shadowing_reject",
+            "--exact",
+            "tests::m2::value_view_join_origins::continuing_paths_exclude_returning_arms_and_restore_branch_entry",
+            "--exact",
+            "tests::m2::value_view_join_origins::different_formals_missing_else_and_sequential_branch_pollution_reject",
+            "--exact",
+            "tests::m2::value_view_join_origins::grounded_recursive_joins_revisit_all_pending_paths",
+            "--exact",
+            "tests::m2::value_view_join_origins::mutable_bindings_and_same_input_if_control_rebindings_ground",
+            "--exact",
+            "tests::m2::value_view_join_origins::nested_if_switch_values_and_forward_selected_calls_ground",
+            "--exact",
+            "tests::m2::value_view_join_origins::static_bytes_text_and_ordinary_typed_aliases_remain_advisory",
+            "--exact",
+            "tests::m2::value_view_join_origins::switch_rebindings_and_lexical_shadowing_preserve_outer_bindings"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "f8ecc0f774f60d0cb7e116bec94c3df5389526f696e4455635b4385885dbee89",
+          "elapsedSeconds": 220.102,
+          "exit": 0,
+          "stdout": "native.json",
+          "stderr": "native.json.stderr.txt",
+          "stdoutSha256": "c214c03bfaef68d917937b84e3f98fa3c2ba3f50c682626c775f6fc89d786420",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "selectedTests": [
+        "tests::m2::value_view_join_ir::join_move_reserved_bytes_and_scalar_view_namespaces_are_independent",
+        "tests::m2::value_view_join_ir::joined_returns_reject_wrong_selected_formal_stale_actuals_and_forged_metadata",
+        "tests::m2::value_view_join_ir::joined_views_pin_the_owner_against_write_drop_and_move",
+        "tests::m2::value_view_join_ir::joins_reject_different_roots_missing_origin_and_different_live_ids",
+        "tests::m2::value_view_join_ir::joins_reject_stale_move_stale_read_and_moving_over_a_live_parent",
+        "tests::m2::value_view_join_ir::loop_backedges_require_the_exact_joined_origin_and_live_set",
+        "tests::m2::value_view_join_ir::same_root_different_windows_join_into_dead_destination_and_keep_public_gates",
+        "tests::m2::value_view_join_ir::selected_formal_windows_join_return_and_call_result_inherit_the_actual_root",
+        "tests::m2::value_view_join_origins::branch_local_escape_and_type_shadowing_reject",
+        "tests::m2::value_view_join_origins::continuing_paths_exclude_returning_arms_and_restore_branch_entry",
+        "tests::m2::value_view_join_origins::different_formals_missing_else_and_sequential_branch_pollution_reject",
+        "tests::m2::value_view_join_origins::grounded_recursive_joins_revisit_all_pending_paths",
+        "tests::m2::value_view_join_origins::mutable_bindings_and_same_input_if_control_rebindings_ground",
+        "tests::m2::value_view_join_origins::nested_if_switch_values_and_forward_selected_calls_ground",
+        "tests::m2::value_view_join_origins::static_bytes_text_and_ordinary_typed_aliases_remain_advisory",
+        "tests::m2::value_view_join_origins::switch_rebindings_and_lexical_shadowing_preserve_outer_bindings"
+      ],
+      "nativeGroups": 16,
+      "selectedNativeGroups": 16,
+      "nativeWorkspace": "byte-identical-production-selected-tests",
+      "nativeOverrides": false,
+      "historicalResultReuse": false,
+      "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false",
+      "check": "check ok: 2 instance(s), 224 source file(s), 2400 MIR function(s), lock verified\n",
+      "nativeReport": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "release",
+        "tests": [
+          {
+            "identity": "tests::m2::value_view_join_ir::join_move_reserved_bytes_and_scalar_view_namespaces_are_independent",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_ir::joined_returns_reject_wrong_selected_formal_stale_actuals_and_forged_metadata",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_ir::joined_views_pin_the_owner_against_write_drop_and_move",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_ir::joins_reject_different_roots_missing_origin_and_different_live_ids",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_ir::joins_reject_stale_move_stale_read_and_moving_over_a_live_parent",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_ir::loop_backedges_require_the_exact_joined_origin_and_live_set",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_ir::same_root_different_windows_join_into_dead_destination_and_keep_public_gates",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_ir::selected_formal_windows_join_return_and_call_result_inherit_the_actual_root",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_origins::branch_local_escape_and_type_shadowing_reject",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_origins::continuing_paths_exclude_returning_arms_and_restore_branch_entry",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_origins::different_formals_missing_else_and_sequential_branch_pollution_reject",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_origins::grounded_recursive_joins_revisit_all_pending_paths",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_origins::mutable_bindings_and_same_input_if_control_rebindings_ground",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_origins::nested_if_switch_values_and_forward_selected_calls_ground",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_origins::static_bytes_text_and_ordinary_typed_aliases_remain_advisory",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_join_origins::switch_rebindings_and_lexical_shadowing_preserve_outer_bindings",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 16,
+        "passed": 16,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "nativeReportSha256": "9ad28020200b1f1f6b6b85487aa3dad728afc0aa2770e039afe9f059d55c3240",
+      "nativeInputMirrorVerified": true,
+      "elapsedSeconds": 227.842,
+      "cliSkipped": "Optional public Fuel CLI suite was not requested.",
+      "batch": "proof",
+      "receiptSha256": "1790c38233c35a9be63b1cc5d223cfe38e23e5b990b2a62652036b8118a6c6c7"
+    },
+    {
+      "schema": "browniec.value-source-verification/v1",
+      "status": "passed",
+      "recordedAt": "2026-11-07T01:54:01.623471+00:00",
+      "profile": "development",
+      "phase": "native",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "commands": [
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "--version"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "cd072950608b9582b5ea82fc93c07ed15e8a3717854eda1218979d07665488f3",
+          "elapsedSeconds": 0.156,
+          "exit": 0,
+          "stdout": "compiler-version.txt",
+          "stderr": "compiler-version.txt.stderr.txt",
+          "stdoutSha256": "cfd188b9865777d7972b1c1e1c4e2e50d2735becbeca8627863cde0d38330e34",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "check",
+            "--locked"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "4a56238644fd3eae28b5ed5d8800427c848e4ce7ced9f90c5a0cc4089afb5fc0",
+          "elapsedSeconds": 8.684,
+          "exit": 0,
+          "stdout": "check.txt",
+          "stderr": "check.txt.stderr.txt",
+          "stdoutSha256": "f72dc081bc412e005142d9deeed99fec9059877958e4a5a722795bd9ae80a7cd",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "test",
+            "--native",
+            "--capture-output",
+            "--json",
+            "--locked",
+            "--exact",
+            "tests::m2::result_handling_source::exact_existing_instruction_prices_spans_and_type_errors_are_preserved",
+            "--exact",
+            "tests::m2::result_handling_source::explicit_discard_evaluates_once_and_retains_capture_and_nonlocal_cleanup",
+            "--exact",
+            "tests::m2::result_handling_source::result_inspection_composes_with_calls_groups_boolean_contexts_and_existing_propagation",
+            "--exact",
+            "tests::m2::value_source_control::admitted_32_deep_conditionals_execute_and_33_reject_without_native_stack_override",
+            "--exact",
+            "tests::m2::value_source_joins::anonymous_publication_always_moves_copyable_buffer_and_result_values",
+            "--exact",
+            "tests::m2::value_source_joins::exclusive_edges_reuse_one_dead_destination_and_merge_result_obligations_with_or",
+            "--exact",
+            "tests::m2::value_source_joins::invalid_types_functions_headers_liveness_and_capacity_preserve_all_publication_state",
+            "--exact",
+            "tests::m2::value_source_joins_source::if_values_exact_types_inference_else_if_nested_values_and_terminal_arms_execute",
+            "--exact",
+            "tests::m2::value_source_joins_source::invalid_yields_exact_types_variants_pending_results_and_moved_names_reject_with_real_cleanup",
+            "--exact",
+            "tests::m2::value_source_joins_source::switch_values_exact_variants_owned_payloads_postfix_nested_values_and_terminal_arms_execute",
+            "--exact",
+            "tests::m2::value_view_call_bindings::formal_authentication_alias_range_and_return_preserve_selected_metadata",
+            "--exact",
+            "tests::m2::value_view_call_bindings::retained_anonymous_call_origin_survives_aliases_snapshots_rebind_and_last_close",
+            "--exact",
+            "tests::m2::value_view_call_bindings::wrong_formal_function_and_legacy_direct_temporary_reject_without_publication",
+            "--exact",
+            "tests::m2::value_view_call_source::returned_selected_ranges_forward_multiple_inputs_and_survive_caller_capture_cleanup",
+            "--exact",
+            "tests::m2::value_view_call_source::runtime_bounds_and_recursive_registry_limits_drain_before_fresh_invocation",
+            "--exact",
+            "tests::m2::value_view_call_source::shared_formals_mix_with_owned_and_scalar_actuals_and_release_after_calls",
+            "--exact",
+            "tests::m2::value_view_call_source::wrong_origin_mutable_local_escape_and_overlapping_owning_actuals_reject",
+            "--exact",
+            "tests::m2::value_view_source::alias_scopes_and_mutable_bindings_release_only_their_last_root_pin",
+            "--exact",
+            "tests::m2::value_view_source::block_if_switch_and_loop_transfers_close_views_before_owner_cleanup",
+            "--exact",
+            "tests::m2::value_view_source::invalid_view_types_and_runtime_bounds_fail_without_poisoning_fresh_invocations",
+            "--exact",
+            "tests::m2::value_view_source::live_aliases_reject_root_writes_noop_growth_owning_calls_and_later_operand_effects",
+            "--exact",
+            "tests::m2::value_view_source::return_and_result_propagation_close_views_before_capturing_or_dropping_owners",
+            "--exact",
+            "tests::m2::value_view_source::source_views_remain_private_instructions_without_signature_or_scalar_handles",
+            "--exact",
+            "tests::m2::value_view_source::unrelated_calls_and_ordered_endpoint_effects_preserve_caller_views",
+            "--exact",
+            "tests::m2::value_view_source::whole_qualified_nested_and_empty_ranges_read_actual_bytes"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "83d698577af3d08c9058221e170ae838736b8825ca251608d3e20082a4653d63",
+          "elapsedSeconds": 274.332,
+          "exit": 0,
+          "stdout": "native.json",
+          "stderr": "native.json.stderr.txt",
+          "stdoutSha256": "22ee11b47cbaa9e410d8790ced15d700d3652383705cbf99370bf42f9d7e131e",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "selectedTests": [
+        "tests::m2::result_handling_source::exact_existing_instruction_prices_spans_and_type_errors_are_preserved",
+        "tests::m2::result_handling_source::explicit_discard_evaluates_once_and_retains_capture_and_nonlocal_cleanup",
+        "tests::m2::result_handling_source::result_inspection_composes_with_calls_groups_boolean_contexts_and_existing_propagation",
+        "tests::m2::value_source_control::admitted_32_deep_conditionals_execute_and_33_reject_without_native_stack_override",
+        "tests::m2::value_source_joins::anonymous_publication_always_moves_copyable_buffer_and_result_values",
+        "tests::m2::value_source_joins::exclusive_edges_reuse_one_dead_destination_and_merge_result_obligations_with_or",
+        "tests::m2::value_source_joins::invalid_types_functions_headers_liveness_and_capacity_preserve_all_publication_state",
+        "tests::m2::value_source_joins_source::if_values_exact_types_inference_else_if_nested_values_and_terminal_arms_execute",
+        "tests::m2::value_source_joins_source::invalid_yields_exact_types_variants_pending_results_and_moved_names_reject_with_real_cleanup",
+        "tests::m2::value_source_joins_source::switch_values_exact_variants_owned_payloads_postfix_nested_values_and_terminal_arms_execute",
+        "tests::m2::value_view_call_bindings::formal_authentication_alias_range_and_return_preserve_selected_metadata",
+        "tests::m2::value_view_call_bindings::retained_anonymous_call_origin_survives_aliases_snapshots_rebind_and_last_close",
+        "tests::m2::value_view_call_bindings::wrong_formal_function_and_legacy_direct_temporary_reject_without_publication",
+        "tests::m2::value_view_call_source::returned_selected_ranges_forward_multiple_inputs_and_survive_caller_capture_cleanup",
+        "tests::m2::value_view_call_source::runtime_bounds_and_recursive_registry_limits_drain_before_fresh_invocation",
+        "tests::m2::value_view_call_source::shared_formals_mix_with_owned_and_scalar_actuals_and_release_after_calls",
+        "tests::m2::value_view_call_source::wrong_origin_mutable_local_escape_and_overlapping_owning_actuals_reject",
+        "tests::m2::value_view_source::alias_scopes_and_mutable_bindings_release_only_their_last_root_pin",
+        "tests::m2::value_view_source::block_if_switch_and_loop_transfers_close_views_before_owner_cleanup",
+        "tests::m2::value_view_source::invalid_view_types_and_runtime_bounds_fail_without_poisoning_fresh_invocations",
+        "tests::m2::value_view_source::live_aliases_reject_root_writes_noop_growth_owning_calls_and_later_operand_effects",
+        "tests::m2::value_view_source::return_and_result_propagation_close_views_before_capturing_or_dropping_owners",
+        "tests::m2::value_view_source::source_views_remain_private_instructions_without_signature_or_scalar_handles",
+        "tests::m2::value_view_source::unrelated_calls_and_ordered_endpoint_effects_preserve_caller_views",
+        "tests::m2::value_view_source::whole_qualified_nested_and_empty_ranges_read_actual_bytes"
+      ],
+      "nativeGroups": 25,
+      "selectedNativeGroups": 25,
+      "nativeWorkspace": "byte-identical-production-selected-tests",
+      "nativeOverrides": false,
+      "historicalResultReuse": false,
+      "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false",
+      "check": "check ok: 2 instance(s), 224 source file(s), 2400 MIR function(s), lock verified\n",
+      "nativeReport": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "development",
+        "tests": [
+          {
+            "identity": "tests::m2::result_handling_source::exact_existing_instruction_prices_spans_and_type_errors_are_preserved",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::result_handling_source::explicit_discard_evaluates_once_and_retains_capture_and_nonlocal_cleanup",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::result_handling_source::result_inspection_composes_with_calls_groups_boolean_contexts_and_existing_propagation",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_control::admitted_32_deep_conditionals_execute_and_33_reject_without_native_stack_override",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_joins::anonymous_publication_always_moves_copyable_buffer_and_result_values",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_joins::exclusive_edges_reuse_one_dead_destination_and_merge_result_obligations_with_or",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_joins::invalid_types_functions_headers_liveness_and_capacity_preserve_all_publication_state",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_joins_source::if_values_exact_types_inference_else_if_nested_values_and_terminal_arms_execute",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_joins_source::invalid_yields_exact_types_variants_pending_results_and_moved_names_reject_with_real_cleanup",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_joins_source::switch_values_exact_variants_owned_payloads_postfix_nested_values_and_terminal_arms_execute",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_call_bindings::formal_authentication_alias_range_and_return_preserve_selected_metadata",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_call_bindings::retained_anonymous_call_origin_survives_aliases_snapshots_rebind_and_last_close",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_call_bindings::wrong_formal_function_and_legacy_direct_temporary_reject_without_publication",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_call_source::returned_selected_ranges_forward_multiple_inputs_and_survive_caller_capture_cleanup",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_call_source::runtime_bounds_and_recursive_registry_limits_drain_before_fresh_invocation",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_call_source::shared_formals_mix_with_owned_and_scalar_actuals_and_release_after_calls",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_call_source::wrong_origin_mutable_local_escape_and_overlapping_owning_actuals_reject",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_source::alias_scopes_and_mutable_bindings_release_only_their_last_root_pin",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_source::block_if_switch_and_loop_transfers_close_views_before_owner_cleanup",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_source::invalid_view_types_and_runtime_bounds_fail_without_poisoning_fresh_invocations",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_source::live_aliases_reject_root_writes_noop_growth_owning_calls_and_later_operand_effects",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_source::return_and_result_propagation_close_views_before_capturing_or_dropping_owners",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_source::source_views_remain_private_instructions_without_signature_or_scalar_handles",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_source::unrelated_calls_and_ordered_endpoint_effects_preserve_caller_views",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_source::whole_qualified_nested_and_empty_ranges_read_actual_bytes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 25,
+        "passed": 25,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "nativeReportSha256": "c417a71f291d51e2c323e8035e1d7d2ec9be8f3386a7f3decb2665403011d98b",
+      "nativeInputMirrorVerified": true,
+      "elapsedSeconds": 284.061,
+      "cliSkipped": "Optional public Fuel CLI suite was not requested.",
+      "batch": "regression",
+      "receiptSha256": "f37c99497a1369900613888df9c7c83acf0ce10b7451e753c9a9b98e489a9f82"
+    },
+    {
+      "schema": "browniec.value-source-verification/v1",
+      "status": "passed",
+      "recordedAt": "2026-11-07T01:58:45.686523+00:00",
+      "profile": "release",
+      "phase": "native",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "commands": [
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "--version"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "cd072950608b9582b5ea82fc93c07ed15e8a3717854eda1218979d07665488f3",
+          "elapsedSeconds": 0.125,
+          "exit": 0,
+          "stdout": "compiler-version.txt",
+          "stderr": "compiler-version.txt.stderr.txt",
+          "stdoutSha256": "cfd188b9865777d7972b1c1e1c4e2e50d2735becbeca8627863cde0d38330e34",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "check",
+            "--locked"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "4a56238644fd3eae28b5ed5d8800427c848e4ce7ced9f90c5a0cc4089afb5fc0",
+          "elapsedSeconds": 9.294,
+          "exit": 0,
+          "stdout": "check.txt",
+          "stderr": "check.txt.stderr.txt",
+          "stdoutSha256": "f72dc081bc412e005142d9deeed99fec9059877958e4a5a722795bd9ae80a7cd",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "test",
+            "--native",
+            "--capture-output",
+            "--json",
+            "--locked",
+            "--release",
+            "--exact",
+            "tests::m2::result_handling_source::exact_existing_instruction_prices_spans_and_type_errors_are_preserved",
+            "--exact",
+            "tests::m2::result_handling_source::explicit_discard_evaluates_once_and_retains_capture_and_nonlocal_cleanup",
+            "--exact",
+            "tests::m2::result_handling_source::result_inspection_composes_with_calls_groups_boolean_contexts_and_existing_propagation",
+            "--exact",
+            "tests::m2::value_source_control::admitted_32_deep_conditionals_execute_and_33_reject_without_native_stack_override",
+            "--exact",
+            "tests::m2::value_source_joins::anonymous_publication_always_moves_copyable_buffer_and_result_values",
+            "--exact",
+            "tests::m2::value_source_joins::exclusive_edges_reuse_one_dead_destination_and_merge_result_obligations_with_or",
+            "--exact",
+            "tests::m2::value_source_joins::invalid_types_functions_headers_liveness_and_capacity_preserve_all_publication_state",
+            "--exact",
+            "tests::m2::value_source_joins_source::if_values_exact_types_inference_else_if_nested_values_and_terminal_arms_execute",
+            "--exact",
+            "tests::m2::value_source_joins_source::invalid_yields_exact_types_variants_pending_results_and_moved_names_reject_with_real_cleanup",
+            "--exact",
+            "tests::m2::value_source_joins_source::switch_values_exact_variants_owned_payloads_postfix_nested_values_and_terminal_arms_execute",
+            "--exact",
+            "tests::m2::value_view_call_bindings::formal_authentication_alias_range_and_return_preserve_selected_metadata",
+            "--exact",
+            "tests::m2::value_view_call_bindings::retained_anonymous_call_origin_survives_aliases_snapshots_rebind_and_last_close",
+            "--exact",
+            "tests::m2::value_view_call_bindings::wrong_formal_function_and_legacy_direct_temporary_reject_without_publication",
+            "--exact",
+            "tests::m2::value_view_call_source::returned_selected_ranges_forward_multiple_inputs_and_survive_caller_capture_cleanup",
+            "--exact",
+            "tests::m2::value_view_call_source::runtime_bounds_and_recursive_registry_limits_drain_before_fresh_invocation",
+            "--exact",
+            "tests::m2::value_view_call_source::shared_formals_mix_with_owned_and_scalar_actuals_and_release_after_calls",
+            "--exact",
+            "tests::m2::value_view_call_source::wrong_origin_mutable_local_escape_and_overlapping_owning_actuals_reject",
+            "--exact",
+            "tests::m2::value_view_source::alias_scopes_and_mutable_bindings_release_only_their_last_root_pin",
+            "--exact",
+            "tests::m2::value_view_source::block_if_switch_and_loop_transfers_close_views_before_owner_cleanup",
+            "--exact",
+            "tests::m2::value_view_source::invalid_view_types_and_runtime_bounds_fail_without_poisoning_fresh_invocations",
+            "--exact",
+            "tests::m2::value_view_source::live_aliases_reject_root_writes_noop_growth_owning_calls_and_later_operand_effects",
+            "--exact",
+            "tests::m2::value_view_source::return_and_result_propagation_close_views_before_capturing_or_dropping_owners",
+            "--exact",
+            "tests::m2::value_view_source::source_views_remain_private_instructions_without_signature_or_scalar_handles",
+            "--exact",
+            "tests::m2::value_view_source::unrelated_calls_and_ordered_endpoint_effects_preserve_caller_views",
+            "--exact",
+            "tests::m2::value_view_source::whole_qualified_nested_and_empty_ranges_read_actual_bytes"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "6e62046848659cfe63c0437550a969529b37f9b271d05f5f6be0ecf170b6744b",
+          "elapsedSeconds": 452.02,
+          "exit": 0,
+          "stdout": "native.json",
+          "stderr": "native.json.stderr.txt",
+          "stdoutSha256": "ee99b46c6045d7a985b2a1be0c3615223437ec2f31a155e3d991c07bb2931dea",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "selectedTests": [
+        "tests::m2::result_handling_source::exact_existing_instruction_prices_spans_and_type_errors_are_preserved",
+        "tests::m2::result_handling_source::explicit_discard_evaluates_once_and_retains_capture_and_nonlocal_cleanup",
+        "tests::m2::result_handling_source::result_inspection_composes_with_calls_groups_boolean_contexts_and_existing_propagation",
+        "tests::m2::value_source_control::admitted_32_deep_conditionals_execute_and_33_reject_without_native_stack_override",
+        "tests::m2::value_source_joins::anonymous_publication_always_moves_copyable_buffer_and_result_values",
+        "tests::m2::value_source_joins::exclusive_edges_reuse_one_dead_destination_and_merge_result_obligations_with_or",
+        "tests::m2::value_source_joins::invalid_types_functions_headers_liveness_and_capacity_preserve_all_publication_state",
+        "tests::m2::value_source_joins_source::if_values_exact_types_inference_else_if_nested_values_and_terminal_arms_execute",
+        "tests::m2::value_source_joins_source::invalid_yields_exact_types_variants_pending_results_and_moved_names_reject_with_real_cleanup",
+        "tests::m2::value_source_joins_source::switch_values_exact_variants_owned_payloads_postfix_nested_values_and_terminal_arms_execute",
+        "tests::m2::value_view_call_bindings::formal_authentication_alias_range_and_return_preserve_selected_metadata",
+        "tests::m2::value_view_call_bindings::retained_anonymous_call_origin_survives_aliases_snapshots_rebind_and_last_close",
+        "tests::m2::value_view_call_bindings::wrong_formal_function_and_legacy_direct_temporary_reject_without_publication",
+        "tests::m2::value_view_call_source::returned_selected_ranges_forward_multiple_inputs_and_survive_caller_capture_cleanup",
+        "tests::m2::value_view_call_source::runtime_bounds_and_recursive_registry_limits_drain_before_fresh_invocation",
+        "tests::m2::value_view_call_source::shared_formals_mix_with_owned_and_scalar_actuals_and_release_after_calls",
+        "tests::m2::value_view_call_source::wrong_origin_mutable_local_escape_and_overlapping_owning_actuals_reject",
+        "tests::m2::value_view_source::alias_scopes_and_mutable_bindings_release_only_their_last_root_pin",
+        "tests::m2::value_view_source::block_if_switch_and_loop_transfers_close_views_before_owner_cleanup",
+        "tests::m2::value_view_source::invalid_view_types_and_runtime_bounds_fail_without_poisoning_fresh_invocations",
+        "tests::m2::value_view_source::live_aliases_reject_root_writes_noop_growth_owning_calls_and_later_operand_effects",
+        "tests::m2::value_view_source::return_and_result_propagation_close_views_before_capturing_or_dropping_owners",
+        "tests::m2::value_view_source::source_views_remain_private_instructions_without_signature_or_scalar_handles",
+        "tests::m2::value_view_source::unrelated_calls_and_ordered_endpoint_effects_preserve_caller_views",
+        "tests::m2::value_view_source::whole_qualified_nested_and_empty_ranges_read_actual_bytes"
+      ],
+      "nativeGroups": 25,
+      "selectedNativeGroups": 25,
+      "nativeWorkspace": "byte-identical-production-selected-tests",
+      "nativeOverrides": false,
+      "historicalResultReuse": false,
+      "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false",
+      "check": "check ok: 2 instance(s), 224 source file(s), 2400 MIR function(s), lock verified\n",
+      "nativeReport": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "release",
+        "tests": [
+          {
+            "identity": "tests::m2::result_handling_source::exact_existing_instruction_prices_spans_and_type_errors_are_preserved",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::result_handling_source::explicit_discard_evaluates_once_and_retains_capture_and_nonlocal_cleanup",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::result_handling_source::result_inspection_composes_with_calls_groups_boolean_contexts_and_existing_propagation",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_control::admitted_32_deep_conditionals_execute_and_33_reject_without_native_stack_override",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_joins::anonymous_publication_always_moves_copyable_buffer_and_result_values",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_joins::exclusive_edges_reuse_one_dead_destination_and_merge_result_obligations_with_or",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_joins::invalid_types_functions_headers_liveness_and_capacity_preserve_all_publication_state",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_joins_source::if_values_exact_types_inference_else_if_nested_values_and_terminal_arms_execute",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_joins_source::invalid_yields_exact_types_variants_pending_results_and_moved_names_reject_with_real_cleanup",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_source_joins_source::switch_values_exact_variants_owned_payloads_postfix_nested_values_and_terminal_arms_execute",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_call_bindings::formal_authentication_alias_range_and_return_preserve_selected_metadata",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_call_bindings::retained_anonymous_call_origin_survives_aliases_snapshots_rebind_and_last_close",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_call_bindings::wrong_formal_function_and_legacy_direct_temporary_reject_without_publication",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_call_source::returned_selected_ranges_forward_multiple_inputs_and_survive_caller_capture_cleanup",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_call_source::runtime_bounds_and_recursive_registry_limits_drain_before_fresh_invocation",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_call_source::shared_formals_mix_with_owned_and_scalar_actuals_and_release_after_calls",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_call_source::wrong_origin_mutable_local_escape_and_overlapping_owning_actuals_reject",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_source::alias_scopes_and_mutable_bindings_release_only_their_last_root_pin",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_source::block_if_switch_and_loop_transfers_close_views_before_owner_cleanup",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_source::invalid_view_types_and_runtime_bounds_fail_without_poisoning_fresh_invocations",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_source::live_aliases_reject_root_writes_noop_growth_owning_calls_and_later_operand_effects",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_source::return_and_result_propagation_close_views_before_capturing_or_dropping_owners",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_source::source_views_remain_private_instructions_without_signature_or_scalar_handles",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_source::unrelated_calls_and_ordered_endpoint_effects_preserve_caller_views",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_source::whole_qualified_nested_and_empty_ranges_read_actual_bytes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 25,
+        "passed": 25,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "nativeReportSha256": "3be2a48e737f2bdbd1b79f317f95266fac32917c937a0c6cfdf5f647dd847cdf",
+      "nativeInputMirrorVerified": true,
+      "elapsedSeconds": 462.235,
+      "cliSkipped": "Optional public Fuel CLI suite was not requested.",
+      "batch": "regression",
+      "receiptSha256": "4178008d4fde7ba38688444565d1cb553e7cbca6393e07cc467b016bb02dd473"
+    },
+    {
+      "schema": "browniec.value-source-verification/v1",
+      "status": "passed",
+      "recordedAt": "2026-11-07T01:54:01.738334+00:00",
+      "profile": "development",
+      "phase": "native",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "commands": [
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "--version"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "cd072950608b9582b5ea82fc93c07ed15e8a3717854eda1218979d07665488f3",
+          "elapsedSeconds": 0.091,
+          "exit": 0,
+          "stdout": "compiler-version.txt",
+          "stderr": "compiler-version.txt.stderr.txt",
+          "stdoutSha256": "cfd188b9865777d7972b1c1e1c4e2e50d2735becbeca8627863cde0d38330e34",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "check",
+            "--locked"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "4a56238644fd3eae28b5ed5d8800427c848e4ce7ced9f90c5a0cc4089afb5fc0",
+          "elapsedSeconds": 8.75,
+          "exit": 0,
+          "stdout": "check.txt",
+          "stderr": "check.txt.stderr.txt",
+          "stdoutSha256": "f72dc081bc412e005142d9deeed99fec9059877958e4a5a722795bd9ae80a7cd",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "test",
+            "--native",
+            "--capture-output",
+            "--json",
+            "--locked",
+            "--exact",
+            "tests::m2::reference_return_source::agreeing_branches_forwarding_and_grounded_recursion_reject_conflicts_and_cycles",
+            "--exact",
+            "tests::m2::reference_return_source::fuel_image_quota_and_bounds_boundaries_drain_fresh_runtime_state",
+            "--exact",
+            "tests::m2::reference_return_source::image_and_owned_runtime_arrays_use_the_same_returned_signature",
+            "--exact",
+            "tests::m2::reference_return_source::nested_returned_actuals_ranges_and_temporary_lexical_cleanup",
+            "--exact",
+            "tests::m2::reference_return_source::old_entries_reject_returned_declarations_and_retained_source_is_immutable",
+            "--exact",
+            "tests::m2::reference_return_source::returned_aliases_narrowed_and_empty_windows_support_read_and_length",
+            "--exact",
+            "tests::m2::reference_return_source::selected_temporaries_cleanup_across_return_propagation_break_continue_and_later_arguments",
+            "--exact",
+            "tests::m2::reference_return_source::selected_temporary_owner_survives_an_unselected_mutable_argument_mutation",
+            "--exact",
+            "tests::m2::slice_result_call_source::mixed_value_arguments_and_end_masks_keep_source_argument_order",
+            "--exact",
+            "tests::m2::slice_result_call_source::named_range_results_close_before_restored_parents_are_reused",
+            "--exact",
+            "tests::m2::slice_result_call_source::result_bindings_support_aliases_forward_origins_and_grounded_recursion",
+            "--exact",
+            "tests::m2::slice_result_call_source::selected_temporary_literal_and_owned_call_inputs_outlive_the_call",
+            "--exact",
+            "tests::m2::slice_result_call_source::source_bindings_keep_exact_six_scalar_access_modes",
+            "--exact",
+            "tests::m2::slice_result_call_source::unsafe_bindings_fail_independent_lifetime_origin_and_exact_type_checks",
+            "--exact",
+            "tests::m2::slice_result_source_origins::grounded_recursion_and_nested_value_argument_returns_are_revisited",
+            "--exact",
+            "tests::m2::slice_result_source_origins::nested_selected_actuals_ground_origins_without_trusting_owned_roots",
+            "--exact",
+            "tests::m2::slice_result_source_origins::typed_aliases_and_reordered_multi_input_calls_ground_exact_origins",
+            "--exact",
+            "tests::m2::slice_result_source_origins::ungrounded_cycles_owned_roots_type_changes_and_ambiguous_returns_reject"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "b5234fe40cb9a53883bc2d78b021cd7625a884f7245f4f5c0d69b427413b7b19",
+          "elapsedSeconds": 166.985,
+          "exit": 0,
+          "stdout": "native.json",
+          "stderr": "native.json.stderr.txt",
+          "stdoutSha256": "f7dbd92deecf01d8bdb68f5c201c3643871311cba657872f55653a16f6e47242",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "selectedTests": [
+        "tests::m2::reference_return_source::agreeing_branches_forwarding_and_grounded_recursion_reject_conflicts_and_cycles",
+        "tests::m2::reference_return_source::fuel_image_quota_and_bounds_boundaries_drain_fresh_runtime_state",
+        "tests::m2::reference_return_source::image_and_owned_runtime_arrays_use_the_same_returned_signature",
+        "tests::m2::reference_return_source::nested_returned_actuals_ranges_and_temporary_lexical_cleanup",
+        "tests::m2::reference_return_source::old_entries_reject_returned_declarations_and_retained_source_is_immutable",
+        "tests::m2::reference_return_source::returned_aliases_narrowed_and_empty_windows_support_read_and_length",
+        "tests::m2::reference_return_source::selected_temporaries_cleanup_across_return_propagation_break_continue_and_later_arguments",
+        "tests::m2::reference_return_source::selected_temporary_owner_survives_an_unselected_mutable_argument_mutation",
+        "tests::m2::slice_result_call_source::mixed_value_arguments_and_end_masks_keep_source_argument_order",
+        "tests::m2::slice_result_call_source::named_range_results_close_before_restored_parents_are_reused",
+        "tests::m2::slice_result_call_source::result_bindings_support_aliases_forward_origins_and_grounded_recursion",
+        "tests::m2::slice_result_call_source::selected_temporary_literal_and_owned_call_inputs_outlive_the_call",
+        "tests::m2::slice_result_call_source::source_bindings_keep_exact_six_scalar_access_modes",
+        "tests::m2::slice_result_call_source::unsafe_bindings_fail_independent_lifetime_origin_and_exact_type_checks",
+        "tests::m2::slice_result_source_origins::grounded_recursion_and_nested_value_argument_returns_are_revisited",
+        "tests::m2::slice_result_source_origins::nested_selected_actuals_ground_origins_without_trusting_owned_roots",
+        "tests::m2::slice_result_source_origins::typed_aliases_and_reordered_multi_input_calls_ground_exact_origins",
+        "tests::m2::slice_result_source_origins::ungrounded_cycles_owned_roots_type_changes_and_ambiguous_returns_reject"
+      ],
+      "nativeGroups": 18,
+      "selectedNativeGroups": 18,
+      "nativeWorkspace": "byte-identical-production-selected-tests",
+      "nativeOverrides": false,
+      "historicalResultReuse": false,
+      "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false",
+      "check": "check ok: 2 instance(s), 224 source file(s), 2400 MIR function(s), lock verified\n",
+      "nativeReport": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "development",
+        "tests": [
+          {
+            "identity": "tests::m2::reference_return_source::agreeing_branches_forwarding_and_grounded_recursion_reject_conflicts_and_cycles",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::reference_return_source::fuel_image_quota_and_bounds_boundaries_drain_fresh_runtime_state",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::reference_return_source::image_and_owned_runtime_arrays_use_the_same_returned_signature",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::reference_return_source::nested_returned_actuals_ranges_and_temporary_lexical_cleanup",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::reference_return_source::old_entries_reject_returned_declarations_and_retained_source_is_immutable",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::reference_return_source::returned_aliases_narrowed_and_empty_windows_support_read_and_length",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::reference_return_source::selected_temporaries_cleanup_across_return_propagation_break_continue_and_later_arguments",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::reference_return_source::selected_temporary_owner_survives_an_unselected_mutable_argument_mutation",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_call_source::mixed_value_arguments_and_end_masks_keep_source_argument_order",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_call_source::named_range_results_close_before_restored_parents_are_reused",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_call_source::result_bindings_support_aliases_forward_origins_and_grounded_recursion",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_call_source::selected_temporary_literal_and_owned_call_inputs_outlive_the_call",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_call_source::source_bindings_keep_exact_six_scalar_access_modes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_call_source::unsafe_bindings_fail_independent_lifetime_origin_and_exact_type_checks",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_source_origins::grounded_recursion_and_nested_value_argument_returns_are_revisited",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_source_origins::nested_selected_actuals_ground_origins_without_trusting_owned_roots",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_source_origins::typed_aliases_and_reordered_multi_input_calls_ground_exact_origins",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_source_origins::ungrounded_cycles_owned_roots_type_changes_and_ambiguous_returns_reject",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 18,
+        "passed": 18,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "nativeReportSha256": "82b052f67652b5e5c1954f1628be71c5eef58381a3d6a981978a91163d787a63",
+      "nativeInputMirrorVerified": true,
+      "elapsedSeconds": 176.627,
+      "cliSkipped": "Optional public Fuel CLI suite was not requested.",
+      "batch": "origins",
+      "receiptSha256": "77bb83873e502ac82ef66aec99bcb0acb3b09bb9a1d6512bc7ceeb78e7b14614"
+    },
+    {
+      "schema": "browniec.value-source-verification/v1",
+      "status": "passed",
+      "recordedAt": "2026-11-07T01:56:58.368177+00:00",
+      "profile": "release",
+      "phase": "native",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "commands": [
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "--version"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "cd072950608b9582b5ea82fc93c07ed15e8a3717854eda1218979d07665488f3",
+          "elapsedSeconds": 0.101,
+          "exit": 0,
+          "stdout": "compiler-version.txt",
+          "stderr": "compiler-version.txt.stderr.txt",
+          "stdoutSha256": "cfd188b9865777d7972b1c1e1c4e2e50d2735becbeca8627863cde0d38330e34",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "check",
+            "--locked"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "4a56238644fd3eae28b5ed5d8800427c848e4ce7ced9f90c5a0cc4089afb5fc0",
+          "elapsedSeconds": 7.591,
+          "exit": 0,
+          "stdout": "check.txt",
+          "stderr": "check.txt.stderr.txt",
+          "stdoutSha256": "f72dc081bc412e005142d9deeed99fec9059877958e4a5a722795bd9ae80a7cd",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "test",
+            "--native",
+            "--capture-output",
+            "--json",
+            "--locked",
+            "--release",
+            "--exact",
+            "tests::m2::reference_return_source::agreeing_branches_forwarding_and_grounded_recursion_reject_conflicts_and_cycles",
+            "--exact",
+            "tests::m2::reference_return_source::fuel_image_quota_and_bounds_boundaries_drain_fresh_runtime_state",
+            "--exact",
+            "tests::m2::reference_return_source::image_and_owned_runtime_arrays_use_the_same_returned_signature",
+            "--exact",
+            "tests::m2::reference_return_source::nested_returned_actuals_ranges_and_temporary_lexical_cleanup",
+            "--exact",
+            "tests::m2::reference_return_source::old_entries_reject_returned_declarations_and_retained_source_is_immutable",
+            "--exact",
+            "tests::m2::reference_return_source::returned_aliases_narrowed_and_empty_windows_support_read_and_length",
+            "--exact",
+            "tests::m2::reference_return_source::selected_temporaries_cleanup_across_return_propagation_break_continue_and_later_arguments",
+            "--exact",
+            "tests::m2::reference_return_source::selected_temporary_owner_survives_an_unselected_mutable_argument_mutation",
+            "--exact",
+            "tests::m2::slice_result_call_source::mixed_value_arguments_and_end_masks_keep_source_argument_order",
+            "--exact",
+            "tests::m2::slice_result_call_source::named_range_results_close_before_restored_parents_are_reused",
+            "--exact",
+            "tests::m2::slice_result_call_source::result_bindings_support_aliases_forward_origins_and_grounded_recursion",
+            "--exact",
+            "tests::m2::slice_result_call_source::selected_temporary_literal_and_owned_call_inputs_outlive_the_call",
+            "--exact",
+            "tests::m2::slice_result_call_source::source_bindings_keep_exact_six_scalar_access_modes",
+            "--exact",
+            "tests::m2::slice_result_call_source::unsafe_bindings_fail_independent_lifetime_origin_and_exact_type_checks",
+            "--exact",
+            "tests::m2::slice_result_source_origins::grounded_recursion_and_nested_value_argument_returns_are_revisited",
+            "--exact",
+            "tests::m2::slice_result_source_origins::nested_selected_actuals_ground_origins_without_trusting_owned_roots",
+            "--exact",
+            "tests::m2::slice_result_source_origins::typed_aliases_and_reordered_multi_input_calls_ground_exact_origins",
+            "--exact",
+            "tests::m2::slice_result_source_origins::ungrounded_cycles_owned_roots_type_changes_and_ambiguous_returns_reject"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "dd0ff104a8a615bc4d1c7583cd4951b34d3df6ba960b62721b5c7c32bbc4222c",
+          "elapsedSeconds": 342.563,
+          "exit": 0,
+          "stdout": "native.json",
+          "stderr": "native.json.stderr.txt",
+          "stdoutSha256": "801ebb5ea6e745341a22cf483769ef1a0a9d029b446f5cdd83f472370bc83a29",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "selectedTests": [
+        "tests::m2::reference_return_source::agreeing_branches_forwarding_and_grounded_recursion_reject_conflicts_and_cycles",
+        "tests::m2::reference_return_source::fuel_image_quota_and_bounds_boundaries_drain_fresh_runtime_state",
+        "tests::m2::reference_return_source::image_and_owned_runtime_arrays_use_the_same_returned_signature",
+        "tests::m2::reference_return_source::nested_returned_actuals_ranges_and_temporary_lexical_cleanup",
+        "tests::m2::reference_return_source::old_entries_reject_returned_declarations_and_retained_source_is_immutable",
+        "tests::m2::reference_return_source::returned_aliases_narrowed_and_empty_windows_support_read_and_length",
+        "tests::m2::reference_return_source::selected_temporaries_cleanup_across_return_propagation_break_continue_and_later_arguments",
+        "tests::m2::reference_return_source::selected_temporary_owner_survives_an_unselected_mutable_argument_mutation",
+        "tests::m2::slice_result_call_source::mixed_value_arguments_and_end_masks_keep_source_argument_order",
+        "tests::m2::slice_result_call_source::named_range_results_close_before_restored_parents_are_reused",
+        "tests::m2::slice_result_call_source::result_bindings_support_aliases_forward_origins_and_grounded_recursion",
+        "tests::m2::slice_result_call_source::selected_temporary_literal_and_owned_call_inputs_outlive_the_call",
+        "tests::m2::slice_result_call_source::source_bindings_keep_exact_six_scalar_access_modes",
+        "tests::m2::slice_result_call_source::unsafe_bindings_fail_independent_lifetime_origin_and_exact_type_checks",
+        "tests::m2::slice_result_source_origins::grounded_recursion_and_nested_value_argument_returns_are_revisited",
+        "tests::m2::slice_result_source_origins::nested_selected_actuals_ground_origins_without_trusting_owned_roots",
+        "tests::m2::slice_result_source_origins::typed_aliases_and_reordered_multi_input_calls_ground_exact_origins",
+        "tests::m2::slice_result_source_origins::ungrounded_cycles_owned_roots_type_changes_and_ambiguous_returns_reject"
+      ],
+      "nativeGroups": 18,
+      "selectedNativeGroups": 18,
+      "nativeWorkspace": "byte-identical-production-selected-tests",
+      "nativeOverrides": false,
+      "historicalResultReuse": false,
+      "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false",
+      "check": "check ok: 2 instance(s), 224 source file(s), 2400 MIR function(s), lock verified\n",
+      "nativeReport": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "release",
+        "tests": [
+          {
+            "identity": "tests::m2::reference_return_source::agreeing_branches_forwarding_and_grounded_recursion_reject_conflicts_and_cycles",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::reference_return_source::fuel_image_quota_and_bounds_boundaries_drain_fresh_runtime_state",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::reference_return_source::image_and_owned_runtime_arrays_use_the_same_returned_signature",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::reference_return_source::nested_returned_actuals_ranges_and_temporary_lexical_cleanup",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::reference_return_source::old_entries_reject_returned_declarations_and_retained_source_is_immutable",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::reference_return_source::returned_aliases_narrowed_and_empty_windows_support_read_and_length",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::reference_return_source::selected_temporaries_cleanup_across_return_propagation_break_continue_and_later_arguments",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::reference_return_source::selected_temporary_owner_survives_an_unselected_mutable_argument_mutation",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_call_source::mixed_value_arguments_and_end_masks_keep_source_argument_order",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_call_source::named_range_results_close_before_restored_parents_are_reused",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_call_source::result_bindings_support_aliases_forward_origins_and_grounded_recursion",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_call_source::selected_temporary_literal_and_owned_call_inputs_outlive_the_call",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_call_source::source_bindings_keep_exact_six_scalar_access_modes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_call_source::unsafe_bindings_fail_independent_lifetime_origin_and_exact_type_checks",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_source_origins::grounded_recursion_and_nested_value_argument_returns_are_revisited",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_source_origins::nested_selected_actuals_ground_origins_without_trusting_owned_roots",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_source_origins::typed_aliases_and_reordered_multi_input_calls_ground_exact_origins",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::slice_result_source_origins::ungrounded_cycles_owned_roots_type_changes_and_ambiguous_returns_reject",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 18,
+        "passed": 18,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "nativeReportSha256": "77e31992b1c6e700cf481eb7b33f4a111ac7cea64de34856faff55647cb4f6f6",
+      "nativeInputMirrorVerified": true,
+      "elapsedSeconds": 350.958,
+      "cliSkipped": "Optional public Fuel CLI suite was not requested.",
+      "batch": "origins",
+      "receiptSha256": "b447e130b07213a5b02535e7741a910ad13a66cd62181ed260352633a3ca3b36"
+    }
+  ],
+  "skipped": [
+    "Public CLI and full-profile admission; private source/VM increment.",
+    "Linux/macOS, restricted execution, embedding and lifecycle/host/I/O.",
+    "Different-origin joins, bottom expressions and mutable/non-byte/general references."
+  ]
+}

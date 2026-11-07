@@ -50,8 +50,10 @@ still does not implicitly extend its owner lifetime.
 
 The focused runner is `tools/verify-value-view-call-program.py`, with separate
 `core`, `source` and `regression` batches and development/release native mirrors.
-Public syntax/capabilities, mutable/non-byte/general references, view-valued
-joins, broader mutable-binding/control-flow origin inference, methods, public AllocError, host/I/O and full delivery remain separate
+The [reference-join successor](value-view-joins.md) supplies exact same-origin
+view values and mutable selected-input inference. Different-origin joins, bottom
+expressions, public syntax/capabilities, mutable/non-byte/general references,
+methods, public AllocError, host/I/O and full delivery remain separate
 requirements in the [remaining-work audit](../product/04-remaining-work.md).
 
 ## Executed verification

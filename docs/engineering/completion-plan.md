@@ -1,11 +1,12 @@
-- Latest shared view-call checkpoint (2026-11-07): [Private reference CALL/RETURN](value-view-call-program.md) now
-  connects shared Buffer-backed byte formals/results through source, independent
-  CFG proof and retained VM dispatch, including selected temporary retention.
-  `9ffc8a0` passed 41 groups per Windows profile (13 new); all 231 inputs
-  match checkout/Git raw bytes and 215 production modules are LF. See [evidence](../evidence/value-view-call-program-windows-20261107.json).
-  The unchanged admitted32/rejected33 fixture executes with default native stacks.
-  Next: reference-valued joins, general mutable/non-byte/Buffer-object references,
-  methods, public AllocError/admission and remaining runtime/host/platform work.
+- Latest reference-join checkpoint (2026-11-07): [Shared view value joins](../engineering/value-view-joins.md)
+  now execute same-origin if/switch values, nested windows and mutable selected-input
+  returns through independent CFG verification. Compiler-only reservations protect
+  destinations across arms; retention hints intersect. `5555e4a` passed 68 groups
+  per Windows profile (25 new). All 235 inputs match checkout/Git raw bytes;
+  all 216 production modules are LF. See [evidence](../evidence/value-view-joins-windows-20261107.json).
+  Default native stacks and the unchanged admitted32/rejected33 fixture were used.
+  Next: different-origin joins, bottom expressions, general mutable/non-byte/Buffer-object
+  references, methods, public admission/AllocError and remaining runtime/host/platform work.
   Existing prices/public Fuel limits remain. Local only; no push/release.
 
 - Predecessor native view-call checkpoint (2026-11-07): [Shared Buffer view CALL/RETURN](value-view-calls.md) now
