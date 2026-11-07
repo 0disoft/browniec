@@ -50,7 +50,13 @@ fn Result<context::Value,errors::Error> buffer_call(ref u8[] source,ref mut lexe
     if(op==95){let usize close=lexer::punctuation(source,s,41)?;return buffers::empty(unit,state,exact,at);}
     let usize type=context::intern(unit,4,0,0,at)?;let bool writing=op>=101 && op<=104;
     let usize prefix=buffers::prefix(source,s,writing)?;
-    let context::Value receiver=expression(source,s,unit,state,table,plan,paths,flow,type,1,depth+1)?;
+    let usize input_type=if(op==105){64}else{type};
+    let context::Value receiver=expression(source,s,unit,state,table,plan,paths,flow,input_type,1,depth+1)?;
+    if(op==105 && view_source::reference(receiver)){
+        let usize close=lexer::punctuation(source,s,41)?;
+        let usize captured=view_source::capture(unit,state,receiver,at)?;
+        return buffer_copy::finish_view(unit,state,paths,flow,captured,exact,at);
+    }
     let buffers::Reference first=buffers::begin(unit,state,receiver,writing,at)?;
     var buffers::Reference second=buffers::none();var usize index=0;var usize value=0;
     if(op!=99 && op!=105 && op!=106){let usize comma=lexer::punctuation(source,s,44)?;

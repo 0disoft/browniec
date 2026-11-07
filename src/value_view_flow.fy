@@ -42,6 +42,9 @@ fn Result<usize,errors::Error> function(ref values::Program unit,ref values::Pre
             origins[dst]=origins[a];if(op==108){origins[a]=0;}
         }else if(op==109){
             if(origins[dst]==0){return .err(invalid(pc));}origins[dst]=0;
+        }else if(op==112){
+            if(origins[b]==0){return .err(invalid(pc));}
+            let usize checked=unpinned(ref origins,a,pc)?;
         }else if(op==110 || op==111){
             if(origins[a]==0){return .err(invalid(pc));}
         }else if(op==88 || op==89 || op==90 || op==101 || op==102 || op==103 || op==104){
@@ -80,7 +83,7 @@ fn Result<usize,errors::Error> function(ref values::Program unit,ref values::Pre
 pub fn Result<usize,errors::Error> inspect(ref values::Program unit,ref values::Prepared proof){
     // No-view programs retain their previous verifier stack path.
     var usize f=0;while(f<unit.body.function_count){var usize pc=unit.body.starts[f];var bool needed=false;
-        while(pc<unit.body.ends[f]){let u8 op=unit.body.code[pc*8];if(op>=105 && op<=111){needed=true;break;}pc+=1;}
+        while(pc<unit.body.ends[f]){let u8 op=unit.body.code[pc*8];if(op>=105 && op<=112){needed=true;break;}pc+=1;}
         if(needed){let usize checked=function(unit,proof,f)?;}f+=1;
     }
     return .ok(unit.body.count);

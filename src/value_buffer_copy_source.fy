@@ -11,23 +11,34 @@ import errors as errors;
 import ir as ir;
 import std::vec as vec;
 
-// A source intrinsic, not opcode105: copy initialized bytes with one native
-// APPEND104 into an independent empty root, then wrap its exact outcome.
-// No byte loop, borrowed native view or unmetered payload scratch is introduced.
+// One native APPEND104 or APPEND_VIEW112 fills an independent empty root.
+// Both inputs share the exact Result wrapper, ownership and failure cleanup.
 pub fn Result<context::Value,errors::Error> finish(ref mut values::Program unit,
     ref mut bindings::State state,ref mut vec::Vec<bindings::Snapshot> paths,
     ref mut looping::State flow,borrows::Reference source,usize exact,usize at){
     if(source.writing){return .err(errors::make(3,at));}
+    let usize borrowed=borrows::end(state,source,at)?;
+    return copy(unit,state,paths,flow,source.slot,false,source.temporary,exact,at);
+}
+pub fn Result<context::Value,errors::Error> finish_view(ref mut values::Program unit,
+    ref mut bindings::State state,ref mut vec::Vec<bindings::Snapshot> paths,
+    ref mut looping::State flow,usize source,usize exact,usize at){
+    return copy(unit,state,paths,flow,source,true,false,exact,at);
+}
+fn Result<context::Value,errors::Error> copy(ref mut values::Program unit,
+    ref mut bindings::State state,ref mut vec::Vec<bindings::Snapshot> paths,
+    ref mut looping::State flow,usize source,bool view,bool temporary,usize exact,usize at){
     let usize buffer=context::intern(unit,4,0,0,at)?;
     let usize error=context::intern(unit,1,10,0,at)?;
     let usize result=context::intern(unit,6,context::byte(buffer),context::byte(error),at)?;
     let context::Value expected=context::expected(context::owned(result,0),exact,at)?;
     let usize size=context::intern(unit,1,12,0,at)?;
     let usize growth=context::intern(unit,6,context::byte(size),context::byte(error),at)?;
-    let usize borrowed=borrows::end(state,source,at)?;
     let usize destination=bindings::allocate(unit,state,result,at)?;
     let usize copied=ops::empty_buffer(unit,state,buffer,at)?;
-    let usize outcome=buffer_ops::grow(unit,state,104,growth,copied,source.slot,at)?;
+    let usize outcome=buffer_ops::grow(unit,state,if(view){112}else{104},growth,copied,source,at)?;
+    // The operation retains no native view; its anonymous capture can close now.
+    if(view){let usize closed=bindings::close_view(unit,state,source,at)?;}
     let usize mark=branches::mark(paths);let usize entry=branches::save(paths,state,at)?;
 
     let ops::Case success=ops::case_value(unit,state,outcome,1,at)?;
@@ -55,6 +66,6 @@ pub fn Result<context::Value,errors::Error> finish(ref mut values::Program unit,
     let usize trap=ir::raw(ref mut unit.body,25,0,0,0,at)?;
     let bool joined=branches::join(unit,state,paths,ref left,ref right,at)?;
     let usize freed=looping::release(paths,flow,mark,at)?;
-    if(source.temporary){let usize dropped=bindings::drop(unit,state,source.slot,at)?;}
+    if(temporary){let usize dropped=bindings::drop(unit,state,source,at)?;}
     return .ok(context::owned(result,destination));
 }

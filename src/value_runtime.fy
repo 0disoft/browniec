@@ -10,6 +10,7 @@ import value_properties as properties;
 import value_buffer_runtime as buffers;
 import value_buffer_views as view_pool;
 import value_view_runtime as views;
+import value_view_copy_runtime as view_copy;
 import value_roots as owners;
 import buffer_growth as growth;
 import errors as errors;
@@ -105,6 +106,13 @@ pub fn Result<Step,errors::Error> instruction_views(ref programs::Program progra
     let ref mut frames::State state=vec::at_mut<frames::State>(states,0);
     let ref mut owners::State owned=vec::at_mut<owners::State>(owner_states,0);
     let ref layouts::Plan plan=programs::layout(program);var usize remaining=fuel;
+    if(op==112){
+        var usize i=4;while(i<8){if(body.code[code+i]!=0){return .err(errors::make(5,offset));}i+=1;}
+        switch(view_copy::instruction(dst,a,b as usize,current,plan,state,owned,data,
+            pools,roots,root_scratch,limits,ref mut remaining)){
+            case .ok(_):{}case .err(e):{return .err(failure(e,offset));}
+        };return .ok(Step{.pc=pc+1,.remaining=remaining});
+    }
     if(op>=105 && op<=111){
         var usize i=5;while(i<8){if(body.code[code+i]!=0){return .err(errors::make(5,offset));}i+=1;}
         switch(views::instruction(op,dst,a,b as usize,body.code[code+4] as usize,current,plan,state,data,

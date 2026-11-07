@@ -3,6 +3,7 @@ import value_ir as values;
 import value_source_bindings as bindings;
 import value_source_ops as ops;
 import value_properties as properties;
+import value_view_bindings as views;
 import errors as errors;
 import ir as ir;
 
@@ -64,9 +65,9 @@ pub fn Result<usize,errors::Error> write(ref mut values::Program unit,ref bindin
 pub fn Result<usize,errors::Error> grow(ref mut values::Program unit,ref mut bindings::State state,
     u8 op,usize exact_result,usize buffer,usize argument,usize at){
     let properties::Plan plan=ops::preflight(unit,state,at)?;
-    if(op<102 || op>104 || exact_result>=plan.count){return .err(invalid(at));}
+    if((op<102 || op>104) && op!=112 || exact_result>=plan.count){return .err(invalid(at));}
     let usize receiver=live_buffer(unit,state,buffer,at)?;
-    if(((state.reads|state.writes)&bit(buffer))!=0){return .err(invalid(at));}
+    if(((state.reads|state.writes)&bit(buffer))!=0 || views::pinned(ref state.views,buffer)){return .err(invalid(at));}
     let properties::Node result=unit.catalog.nodes[exact_result];
     if(result.kind!=6){return .err(invalid(at));}
     let properties::Node success=unit.catalog.nodes[result.first as usize];
@@ -76,6 +77,10 @@ pub fn Result<usize,errors::Error> grow(ref mut values::Program unit,ref mut bin
         if(buffer==argument){return .err(invalid(at));}
         let usize source=live_buffer(unit,state,argument,at)?;
         if((state.writes&bit(argument))!=0){return .err(invalid(at));}
+    }else if(op==112){
+        let usize source=views::origin(ref state.views,argument,at)?;
+        let usize checked=live_buffer(unit,state,source,at)?;
+        if(source==buffer || (state.writes&bit(source))!=0){return .err(invalid(at));}
     }else{let usize checked=scalar_register(unit,state,argument,if(op==102){10}else{12},at)?;}
     if(state.next==16){return .err(errors::make(4,at));}
     // preflight proves allocate's complete ledger/catalog checks, and the new

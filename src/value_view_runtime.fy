@@ -14,11 +14,11 @@ import std::vec as vec;
 // value slots or guest words. Only authenticated frame*16+id bindings select them.
 pub fn bool present(ref ir::Program p){
     var usize pc=0;while(pc<p.count){let u8 op=p.code[pc*8];
-        if(op>=105 && op<=111){return true;}pc+=1;}return false;
+        if(op>=105 && op<=112){return true;}pc+=1;}return false;
 }
 pub fn usize setup_cost(){return roots::read_lease_cost();}
 pub fn usize metadata_charge(){return views::metadata_charge();}
-fn frames::Error failure(views::Error e){return switch(e){
+pub fn frames::Error failure(views::Error e){return switch(e){
     case .Fuel:{.Fuel}case .Quota:{.Quota}case .Allocation:{.Allocation}
     case .Bounds:{.Bounds}case .Capacity:{.Quota}case .State:{.State}
     case .Binding:{.Owner}case .Stale:{.Owner}

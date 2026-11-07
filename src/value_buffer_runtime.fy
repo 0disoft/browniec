@@ -23,12 +23,12 @@ fn Result<usize,frames::Error> index(i64 value){return switch(cells::unpack(valu
 fn Result<u8,frames::Error> byte(i64 value){return switch(num::u8_from_i64(value)){
     case .ok(v):{.ok(v)}case .err(_):{.err(.Value)}
 };}
-fn Result<usize,frames::Error> publication_cost(){return switch(meter::operation_cost(16)){
+pub fn Result<usize,frames::Error> publication_cost(){return switch(meter::operation_cost(16)){
     case .ok(v):{.ok(v)}case .err(_):{.err(.State)}
 };}
 // Validate a fresh exact Result<usize,u8> before any root mutation. Its canonical
 // sixteen-byte representation contains no owner and needs no heap allocation.
-fn Result<usize,frames::Error> destination(ref layouts::Plan plan,ref frames::State state,
+pub fn Result<usize,frames::Error> destination(ref layouts::Plan plan,ref frames::State state,
     ref vec::Vec<bytes::Buffer> data,frames::Address output){
     let frames::Slot dst=frames::inspect_destination(plan,state,data,output)?;
     let properties::Node n=switch(codec::node(layouts::layout(plan),dst.type_id)){
@@ -77,6 +77,13 @@ pub fn Result<usize,frames::Error> instruction(u8 op,usize dst,usize a,usize b,f
     }else{
         frames::buffer_append_from(plan,state,data,at(current,a),at(current,b),owned,roots,scratch,limits,fuel)
     };
+    return publish(plan,state,data,at(current,dst),result,publication,width);
+}
+// Trusted prepaid publication only: callers must first pay publication_cost and
+// preflight destination, with no intervening frame byte/order mutation.
+pub fn Result<usize,frames::Error> publish(ref layouts::Plan plan,ref mut frames::State state,
+    ref mut vec::Vec<bytes::Buffer> data,frames::Address output,
+    Result<usize,frames::Error> result,usize publication,usize width){
     var u8[16] representation=[0;16];
     switch(result){
         case .ok(length):{
@@ -97,6 +104,6 @@ pub fn Result<usize,frames::Error> instruction(u8 op,usize dst,usize a,usize b,f
     // not change frame bytes/order; publication has no allocation or callback.
     // A violated trusted invariant cannot become a rejected but mutated result.
     var usize prepaid=publication;
-    assert(frames::initialize(plan,state,data,at(current,dst),ref representation,ref mut prepaid).is_ok);
+    assert(frames::initialize(plan,state,data,output,ref representation,ref mut prepaid).is_ok);
     assert(prepaid==0);return .ok(width);
 }

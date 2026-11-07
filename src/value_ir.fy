@@ -17,7 +17,8 @@ import errors as errors;
 // 106 VIEW_RANGE view-dst,parent-view,lo-reg,byte4=hi-reg;
 // 107 VIEW_ALIAS view-dst,view-a; 108 VIEW_MOVE view-dst,view-a;
 // 109 VIEW_CLOSE view-dst; 110 VIEW_LEN usize-dst,view-a;
-// 111 VIEW_READ u8-dst,view-a,index-reg. Views use a separate 16-slot frame
+// 111 VIEW_READ u8-dst,view-a,index-reg;
+// 112 APPEND_VIEW result-dst,Buffer-a,view-b. Views use a separate 16-slot frame
 // domain; no view words inhabit canonical values or function signatures.
 // Buffer mutations retain owners; results are exact Result<usize,u8>.
 // TAG_TEST only inspects a live wrapper; it never defines/consumes a value slot.
@@ -34,7 +35,7 @@ pub struct Program {
 pub struct Sites { bool enabled; u8[128] parameters; u8[16] results; u8[16] scalar_tags; }
 pub struct Prepared { properties::Plan properties; usize[64] classes; Sites sites; }
 pub fn Sites empty(){return Sites{.enabled=false,.parameters=[0;128],.results=[0;16],.scalar_tags=[0;16]};}
-pub fn bool operation(u8 op){return op>=88 && op<=111;}
+pub fn bool operation(u8 op){return op>=88 && op<=112;}
 fn errors::Error invalid(usize pc){return errors::make(5,pc);}
 pub fn bool slot(ref Program unit,usize id,usize f){
     return id<16 && unit.types[id]!=0 && unit.functions[id] as usize==f;
@@ -126,7 +127,9 @@ pub fn Result<usize,errors::Error> instruction(ref Program unit,ref Prepared pro
     let ref ir::Program p=ref unit.body;let usize at=pc*8;let u8 op=p.code[at];
     let usize dst=p.code[at+1] as usize;let usize a=p.code[at+2] as usize;let usize b=p.code[at+3] as usize;
     if(!operation(op) || (op!=92 && op!=105 && op!=106 && p.code[at+4]!=0) || p.code[at+5]!=0 || p.code[at+6]!=0 || p.code[at+7]!=0){return .err(invalid(pc));}
-    if(op>=105){
+    if(op==112){
+        if(!buffer_result(unit,dst,f) || !buffer(unit,a,f) || b>=16){return .err(invalid(pc));}
+    }else if(op>=105){
         if(op==105 || op==106){
             if(dst>=16 || (op==105 && !buffer(unit,a,f)) || (op==106 && a>=16) ||
                 !scalar_register(unit,b,f,12) || !scalar_register(unit,p.code[at+4] as usize,f,12)){
