@@ -71,7 +71,7 @@ remain in the same fixture.
 
 The one-Program/one-Instance case requests 6,592 heap bytes, versus 52,736 for
 64-slot backing: an eightfold reduction (87.5 percent), with seven allocations
-in both cases. The current inline Engine is 600 bytes, so those control
+in both cases. At this original control-only checkpoint the inline Engine was 600 bytes, so those control
 reservations are respectively 7,192 and 53,336 bytes. These are measured SDK
 requests and layout bytes, not a latency benchmark or process-memory claim.
 

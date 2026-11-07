@@ -1,19 +1,21 @@
-- Latest Engine control-storage checkpoint (2026-11-07): [Control budget](docs/engineering/runtime-engine-control-memory.md)
-  now checks the exact inline Engine and seven vector backings before allocation,
-  reserving for admitted counts with pinned SDK 8/16/32/64 growth. Quota status 8
-  precedes allocation; native OOM remains status 6. A one-Program/one-Instance
-  Engine uses 6,592 heap bytes versus 52,736 with all-64 backing (87.5% less).
-  Current inline size is 600 bytes; this is fixed control storage, not total RAM.
-  Development/O2 pass six ledger groups and six real Engine count cases, plus the
-  existing eight output, eleven input/OS and original lifecycle fixtures. Exact
-  and one-less budgets, actual bytes/peak, seven OOM seams, move/close and OS guards
-  pass with zero live SDK allocations. Eighteen typed bindings cover 199 closure
-  modules; all 212 recorded source/tool/config identities match current checkout.
-  Root locked check: 247 sources/2825 MIR functions. Public gates, old prices,
-  capacities/default256/ceiling16000000 remain. R02 is still incomplete.
-  Next: compile working storage and retained Program/source/image accounting,
-  then complete per-Instance/combined quotas, bounded steps and runtime delivery.
-  Parallel implementation/test workers are closed. Local commits only.
+- Latest retained-Program checkpoint (2026-11-07): [Program memory](docs/engineering/runtime-engine-program-memory.md)
+  now checks exact StoredVec8 + outer handle Vec8 + deduplicated image payload
+  before persistent allocation. Individual, Program-set and combined control/
+  Program limits are enforced; failed preparation publishes no Program or ID.
+  Released pins stay charged until actual last-owner removal; moves/peer removal,
+  OOM rollback and closed observations preserve current bytes and reservation peaks.
+  Development/O2 each pass eight Engine retention groups, four plan groups and the
+  existing control/input/output/OS fixtures; SDK heap returns to zero. Separate
+  source/proof/VM development/O2 each pass 39 unchanged groups including depth32/33.
+  Eighteen typed bindings cover 203 closure modules; all 216 native inputs match.
+  Generic vector projection types now must match actual bound C declarations.
+  Root locked check: 249 sources/2844 MIR functions. Current fixed-control heap is
+  6,720 bytes with inline Engine 664 bytes for one Program/Instance. Program fixed
+  heap is 176,512 bytes ordinary/output or 176,448 input, plus actual image bytes.
+  This is not total Engine/RSS accounting. Compile working storage (including
+  array-list growth peaks), per-Instance/combined accounting, bounded work and
+  runtime/public delivery remain. Public gates/prices/capacities stay unchanged.
+  Workers are closed. Local commits only; no push/release/deployment.
 
 # Brownie C agent guidance
 

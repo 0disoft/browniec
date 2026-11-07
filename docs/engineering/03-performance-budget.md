@@ -63,3 +63,11 @@ requests and typed inline size in development/O2. One Program/Instance needs
 bytes. This measures fixed descriptor storage, not full Instance setup, VM frames,
 input/output payloads, compile work, process memory or timing. The initial full
 Instance and latency targets above therefore remain unmeasured.
+
+The [retained Program successor](runtime-engine-program-memory.md) adds exact
+source/IR/image budget metadata. Its current one-slot control request is 6,720
+bytes plus a 664-byte inline Engine; maximum backing is 53,760 bytes. Programs
+add 176,512 bytes (ordinary/output) or 176,448 bytes (input), plus actual literal
+payload. Native development/O2 independently match these ledger charges against
+SDK live allocations. Compiler scratch, VM/Instance totals and timing remain
+outside these measurements; no original full-profile target is promoted.
