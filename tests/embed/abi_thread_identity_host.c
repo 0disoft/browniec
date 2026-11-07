@@ -62,6 +62,10 @@ int main(void) {
     CHECK(bc_abi_guard_enter(NULL) == 1);
     CHECK(bc_abi_guard_enter(&main_id) == 0);
     CHECK(main_id.thread == GetCurrentThreadId() && main_id.lifetime != 0);
+    /* A matching OS ID/old receipt alone cannot substitute for live TLS. */
+    CHECK(bc_abi_test_tls_present(main_id, 0) == 0);
+    CHECK(bc_abi_guard_leave(main_id) == 7);
+    CHECK(bc_abi_test_tls_present(main_id, 1) == 0);
     CHECK(bc_abi_guard_enter(&untouched) == 3 && untouched.thread == 77 && untouched.lifetime == 88);
     memset(tasks, 0, sizeof(tasks));
     for (i = 0; i < 8; ++i) {

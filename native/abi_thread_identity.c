@@ -45,7 +45,8 @@ uint32_t bc_abi_guard_leave(bc_abi_thread_identity identity) {
     if (identity.thread != (uint64_t)current) { return 10; }
     if (identity.lifetime == 0 ||
         (DWORD)InterlockedCompareExchange(&owner_thread, 0, 0) != current ||
-        (uint64_t)InterlockedCompareExchange64(&owner_lifetime, 0, 0) != identity.lifetime) {
+        (uint64_t)InterlockedCompareExchange64(&owner_lifetime, 0, 0) != identity.lifetime ||
+        (uint64_t)(ULONG_PTR)TlsGetValue(identity_tls) != identity.lifetime) {
         return 7;
     }
     InterlockedExchange(&owner_thread, 0);
@@ -58,10 +59,19 @@ uint32_t bc_abi_guard_leave(bc_abi_thread_identity identity) {
 uint32_t bc_abi_test_exhaust_next(bc_abi_thread_identity owner) {
     if (owner.thread != (uint64_t)GetCurrentThreadId() || owner.lifetime == 0 ||
         (DWORD)InterlockedCompareExchange(&owner_thread, 0, 0) != (DWORD)owner.thread ||
-        (uint64_t)InterlockedCompareExchange64(&owner_lifetime, 0, 0) != owner.lifetime) {
+        (uint64_t)InterlockedCompareExchange64(&owner_lifetime, 0, 0) != owner.lifetime ||
+        (uint64_t)(ULONG_PTR)TlsGetValue(identity_tls) != owner.lifetime) {
         return 7;
     }
     next_lifetime = UINT64_MAX;
     return 0;
+}
+uint32_t bc_abi_test_tls_present(bc_abi_thread_identity owner, int present) {
+    if (owner.thread != (uint64_t)GetCurrentThreadId() || owner.lifetime == 0 ||
+        (DWORD)InterlockedCompareExchange(&owner_thread, 0, 0) != (DWORD)owner.thread ||
+        (uint64_t)InterlockedCompareExchange64(&owner_lifetime, 0, 0) != owner.lifetime) {
+        return 7;
+    }
+    return TlsSetValue(identity_tls, present ? (LPVOID)(ULONG_PTR)owner.lifetime : NULL) ? 0 : 6;
 }
 #endif

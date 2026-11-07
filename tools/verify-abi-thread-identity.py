@@ -81,7 +81,7 @@ def main():
             production = target / 'production.obj'
             run([cl, *flags, '/c', source, '/Fo' + str(production)], env)
             symbols = run([cl.parent / 'dumpbin.exe', '/symbols', production], env).decode(errors='replace')
-            need('bc_abi_test_exhaust_next' not in symbols, 'Production must omit test-only state control')
+            need('bc_abi_test_' not in symbols, 'Production must omit test-only state controls')
             test_object = target / 'identity.obj'
             run([cl, *flags, '/DBC_ABI_IDENTITY_TEST', '/c', source, '/Fo' + str(test_object)], env)
             exe = target / 'identity-host.exe'

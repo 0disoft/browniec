@@ -23,6 +23,8 @@ Successful enter returns the real OS thread ID and TLS lifetime ticket and owns
 the guard until `bc_abi_guard_leave`. Leave checks the current thread and live
 guard identity through atomic OS operations before releasing; foreign-thread,
 wrong-ticket and duplicate leave reject without releasing another owner's guard.
+Leave also checks the current TLS ticket, so an old receipt and reused numeric
+thread ID cannot release a guard without the original live thread lifetime.
 This is a trusted coordinator API: call leave only after a successful enter and
 do not reuse identity values as public authority or unforgeable admission epochs.
 The Fairy registry separately validates handle generations and admission epochs.
@@ -45,7 +47,9 @@ profiles. The test-only exhaustion control is absent from each production object
 The native host checks eight concurrent threads with 1024 deliberately ordinary
 guarded counter increments, 32 sequential terminated-thread lifetimes, stable
 current identity, distinct tickets, reentry/contention, rejected leaves, untouched
-failure outputs and final-ticket exhaustion. Sequential-thread evidence does not
+failure outputs and final-ticket exhaustion. Test-only TLS clearing also rejects
+an old receipt with the same numeric thread ID while preserving the guard.
+Sequential-thread evidence does not
 claim that Windows happened to reuse an OS thread ID during this run.
 
 Both profiles execute with an empty tool PATH. This is real OS thread/lock

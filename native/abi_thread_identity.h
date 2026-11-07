@@ -17,5 +17,6 @@ uint32_t bc_abi_guard_leave(bc_abi_thread_identity identity);
 #ifdef BC_ABI_IDENTITY_TEST
 /* Unit-test build only; cannot reset any existing identity or production state. */
 uint32_t bc_abi_test_exhaust_next(bc_abi_thread_identity owner);
+uint32_t bc_abi_test_tls_present(bc_abi_thread_identity owner, int present);
 #endif
 #endif
