@@ -82,3 +82,12 @@ uint32_t bc_runtime_engine_control_access(const void *raw){
  const bc_engine *e=raw;bc_abi_thread_identity id;uint32_t s=bc_abi_guard_enter(&id);if(s)return s;
  s=B18(&e->f_0,id.thread,id.lifetime);uint32_t end=bc_abi_guard_leave(id);return end?end:s;
 }
+
+uintptr_t bc_runtime_engine_program_layout(uint32_t kind){
+ switch(kind){
+ case 0:return sizeof(bc_ordinary_stored);case 1:return sizeof(bc_ordinary_program);
+ case 2:return sizeof(bc_input_stored);case 3:return sizeof(bc_input_program);
+ case 4:return sizeof(bc_output_stored);case 5:return sizeof(bc_output_program);
+ default:return 0;
+ }
+}

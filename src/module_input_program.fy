@@ -11,6 +11,7 @@ import static_image as images;
 import verifier as verifier;
 import program_image as program_images;
 import std::vec as vec;
+import retention_plan as retention;
 import std::bytes as bytes;
 import runtime_input as input_bytes;
 import slice_result_execution as execution;
@@ -26,12 +27,15 @@ import fuel as meter;
 resource Stored { sources::Snapshot sources; candidates::Program code; images::Image image; cleanup { } }
 pub resource Program { vec::Vec<Stored> stored; cleanup { } }
 pub fn Result<Program,diagnostics::Error> compile(entries::InputEntry selected,usize image_limit){
+    var retention::Plan plan=retention::unlimited();return compile_with_retention(selected,image_limit,ref mut plan);
+}
+pub fn Result<Program,diagnostics::Error> compile_with_retention(entries::InputEntry selected,usize image_limit,ref mut retention::Plan plan){
     var images::Builder builder=switch(images::builder(4096)){
         case .ok(v):{v}case .err(e):{return .err(literal(e));}
     };
     var candidates::Program code=candidates::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]};
     let usize lowered=compiler::lower_input_modules(ref selected,ref mut builder,ref mut code)?;
-    return finish(ref selected,ref builder,ref code,image_limit);
+    return finish(ref selected,ref builder,ref code,image_limit,plan);
 }
 fn diagnostics::Error literal(images::Error e){
     return diagnostics::absent(compiler::public_error(program_images::Error{.kind=.Literal,.code=errors::make(0,0),.literal=e}));
@@ -42,7 +46,9 @@ fn diagnostics::Error map(ref entries::InputEntry selected,errors::Error e){
 // Keep source lowering, full independent proof and the owning return slots on
 // separate native stack frames. Quota is checked before retaining image/code.
 fn Result<Program,diagnostics::Error> finish(ref entries::InputEntry selected,ref images::Builder builder,
-    ref candidates::Program code,usize image_limit){
+    ref candidates::Program code,usize image_limit,ref mut retention::Plan plan){
+    let usize payload=switch(images::planned_payload(builder)){case .ok(v):{v}case .err(_):{return .err(diagnostics::absent(errors::make(5,0)));}};
+    if(!retention::admit(plan,payload).is_ok){return .err(diagnostics::absent(errors::make(retention::quota_kind(),0)));}
     let images::Image image=switch(images::freeze(builder,image_limit)){
         case .ok(v):{v}case .err(e):{return .err(literal(e));}
     };

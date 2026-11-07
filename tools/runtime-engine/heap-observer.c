@@ -26,6 +26,7 @@ size_t probe_live_bytes(void){return live_bytes;}
 size_t probe_peak_bytes(void){return peak_bytes;}
 size_t probe_attempts(void){return attempts;}
 void probe_measure_begin(void){if(live_allocations||live_bytes)abort();attempts=0;peak_bytes=0;}
+void probe_rebase(void){attempts=0;peak_bytes=live_bytes;}
 void bc_runtime_engine_test_fail(int64_t count){allocation_fail_after=(intptr_t)count;}
 #define FY_STD_SYSTEM_HEAP_MALLOC_V0(size) tracked_malloc(size)
 #define FY_STD_SYSTEM_HEAP_FREE_V0(data) tracked_free(data)

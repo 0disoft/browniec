@@ -129,3 +129,11 @@ The older unmetered `runtime_output::open/emit/seal` API remains a trusted nativ
 component: it recopies prefix plus suffix and accepts caller-supplied charges.
 The new reserved `open_metered/emit_metered/seal_metered` path is distinct. The
 Engine successor independently checks its own ownership integration.
+
+## Retention-budget successor
+
+[Program memory admission](runtime-engine-program-memory.md) supplies bounded
+ordinary/input/output compiler entry points. Their default entry points retain
+unlimited retention plans and existing behavior. The successor reruns these
+39 native groups on the changed compiler wrappers in development/O2; its Engine
+evidence separately checks exact image/Stored preflight and retained lifetimes.

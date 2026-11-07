@@ -81,9 +81,17 @@ and ABI infrastructure are not silently represented as SDK control payload.
 The logical inline Engine charge ends at explicit destroy although its closed
 host-language wrapper may remain on the caller's stack until scope exit.
 
+## Retained-program successor
+
+[Program memory admission](runtime-engine-program-memory.md) now adds exact
+retained source/IR/image charges and combined control/Program ceilings. Its extra
+ledger and per-Program charge metadata change current control layout; the older
+600-byte / 6,592-byte measurements above remain this control-only checkpoint's
+historical results. Current measurements belong to the successor's receipt.
+
 ## Remaining R02 integration
 
-Compile working storage, retained Program/source/image backing, per-Instance
+Compile working storage, per-Instance
 VM frames and owner/loan/descriptor tables, input/output payloads, pending host
 state, simultaneous Instances and cross-Engine/process resources still require
 aggregate ceiling enforcement and peak reservations. The control observation

@@ -64,6 +64,7 @@ fn Result<usize,Error> contents(ref Catalog c,ref u8[] data){
 // Preflight retained capacity+metadata before the single native allocation. Only
 // the used prefix is copied, so deduplication reduces actual retained payload.
 // Scratch remains independently usable; later mutation cannot affect this image.
+pub fn Result<usize,Error> planned_payload(ref Builder b){let usize valid=scratch(b)?;return .ok(b.catalog.used);}
 pub fn Result<Image,Error> freeze(ref Builder b,usize program_limit){
     let usize valid=scratch(b)?;let ref u8[] data=ref b.data;
     let usize count=contents(ref b.catalog,data[..b.catalog.used])?;

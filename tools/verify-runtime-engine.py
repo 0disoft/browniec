@@ -20,6 +20,7 @@ def closure():
     files = {p.stem: p for p in (ROOT / 'src').glob('*.fy')}
     files.update({p.stem: p for p in (ROOT / 'tools/runtime-engine').glob('*.fy')})
     files['runtime_engine'] = NATIVE / 'runtime_engine.fy'
+    files['retention_plan_contracts'] = ROOT / 'tests/m2/retention_plan.fy'
     files['control_budget_contracts'] = ROOT / 'tests/m2/runtime_control_budget.fy'
     files['runtime_input_adoption'] = ROOT / 'native/runtime-input-adoption/adoption.fy'
     seen, todo = {}, ['main']
@@ -36,11 +37,12 @@ def closure():
 
 
 def source_copy(path):
-    if path == ROOT / 'tests/m2/runtime_control_budget.fy':
-        text = path.read_text(encoding='utf-8').replace('module tests::m2::runtime_control_budget;',
-                                                     'module control_budget_contracts;')
-        text = re.sub(r'@test\s+fn void', 'pub fn void', text)
-        return 'control_budget_contracts.fy', text.encode('utf-8')
+    adapters = {'runtime_control_budget': 'control_budget_contracts', 'retention_plan': 'retention_plan_contracts'}
+    for original, alias in adapters.items():
+        if path == ROOT / f'tests/m2/{original}.fy':
+            text = path.read_text(encoding='utf-8').replace(f'module tests::m2::{original};', f'module {alias};')
+            text = re.sub(r'@test\s+fn void', 'pub fn void', text)
+            return alias + '.fy', text.encode('utf-8')
     return ('runtime_input_adoption.fy' if path == ROOT / 'native/runtime-input-adoption/adoption.fy' else path.name,
             path.read_bytes())
 
@@ -119,6 +121,16 @@ def main():
                                     generated.decode('utf-8'), re.M)
             need(declaration is not None and declaration.group() == contract['reviewedDeclarations'][key],
                  f'Reviewed typed declaration changed: binding {key}')
+        projections = [('4', 2, 'incomingType'), ('9', 2, 'inputEntryType'),
+                       ('10', 5, 'snapshotType'), ('11', 4, 'snapshotVectorType'),
+                       ('13', 2, 'incomingType'), ('14', 2, 'inputEntryType'),
+                       ('15', 4, 'snapshotVectorType'), ('16', 2, 'outputVectorType'),
+                       ('16', 3, 'outputVectorType'), ('16', 5, 'outputVectorType')]
+        for binding, index, key in projections:
+            argument = contract['reviewedDeclarations'][binding].split('(', 1)[1].split(',')[index]
+            actual = re.search(r'\bfy_(?:resource|struct)_\d+\b', argument)
+            need(actual is not None and actual.group() == contract[key],
+                 f'Typed projection differs from actual declaration: {binding}/{index}/{key}')
         bindings = f'typedef {contract["engineType"]} bc_engine;\ntypedef {contract["incomingType"]} bc_engine_input;\n'
         bindings += f'typedef {contract["inputEntryType"]} bc_engine_input_entry;\ntypedef {contract["snapshotType"]} bc_engine_snapshot;\n'
         bindings += f'typedef {contract["snapshotVectorType"]} bc_engine_snapshots;\n'
@@ -126,6 +138,9 @@ def main():
         for key, alias in [('programType', 'bc_engine_program'), ('instanceType', 'bc_engine_instance'),
                            ('boundInputType', 'bc_engine_bound_input'), ('outputType', 'bc_engine_output')]:
             bindings += f'typedef {contract[key]} {alias};\n'
+        for variant, types in contract['programVariants'].items():
+            for role, name in types.items():
+                bindings += f'typedef {name} bc_{variant}_{role};\n'
         bindings += '\n'.join(f'#define B{key} {value}' for key, value in contract['bindings'].items()) + '\n'
         write(output / 'bindings.h', bindings)
         for name in ['abi_thread_identity.c', 'abi_thread_identity.h']:

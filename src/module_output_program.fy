@@ -12,6 +12,7 @@ import static_image as images;
 import verifier as verifier;
 import program_image as program_images;
 import std::vec as vec;
+import retention_plan as retention;
 import std::bytes as bytes;
 import runtime_input as input_bytes;
 import runtime_output as output;
@@ -33,23 +34,31 @@ fn diagnostics::Error literal(images::Error e){
     return absent(compiler::public_error(program_images::Error{.kind=.Literal,.code=errors::make(0,0),.literal=e}));
 }
 pub fn Result<Program,diagnostics::Error> compile(entries::Entry selected,usize image_limit){
+    var retention::Plan plan=retention::unlimited();return compile_with_retention(selected,image_limit,ref mut plan);
+}
+pub fn Result<Program,diagnostics::Error> compile_with_retention(entries::Entry selected,usize image_limit,ref mut retention::Plan plan){
     var images::Builder builder=switch(images::builder(4096)){
         case .ok(v):{v}case .err(e):{return .err(literal(e));}
     };
     var candidates::Program code=candidates::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]};
     let usize lowered=compiler::lower_output_modules(ref selected,ref mut builder,ref mut code)?;
-    return finish(modules::snapshot(entries::index(ref selected)),ref builder,ref code,image_limit,false);
+    return finish(modules::snapshot(entries::index(ref selected)),ref builder,ref code,image_limit,false,plan);
 }
 pub fn Result<Program,diagnostics::Error> compile_input(input_entries::InputEntry selected,usize image_limit){
+    var retention::Plan plan=retention::unlimited();return compile_input_with_retention(selected,image_limit,ref mut plan);
+}
+pub fn Result<Program,diagnostics::Error> compile_input_with_retention(input_entries::InputEntry selected,usize image_limit,ref mut retention::Plan plan){
     var images::Builder builder=switch(images::builder(4096)){
         case .ok(v):{v}case .err(e):{return .err(literal(e));}
     };
     var candidates::Program code=candidates::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]};
     let usize lowered=compiler::lower_input_output_modules(ref selected,ref mut builder,ref mut code)?;
-    return finish(modules::snapshot(input_entries::index(ref selected)),ref builder,ref code,image_limit,true);
+    return finish(modules::snapshot(input_entries::index(ref selected)),ref builder,ref code,image_limit,true,plan);
 }
 fn Result<Program,diagnostics::Error> finish(ref sources::Snapshot sources,ref images::Builder builder,
-    ref candidates::Program code,usize image_limit,bool input){
+    ref candidates::Program code,usize image_limit,bool input,ref mut retention::Plan plan){
+    let usize payload=switch(images::planned_payload(builder)){case .ok(v):{v}case .err(_):{return .err(absent(errors::make(5,0)));}};
+    if(!retention::admit(plan,payload).is_ok){return .err(absent(errors::make(retention::quota_kind(),0)));}
     let images::Image image=switch(images::freeze(builder,image_limit)){
         case .ok(v):{v}case .err(e):{return .err(literal(e));}
     };

@@ -1,15 +1,15 @@
 {
   "schema": "browniec.module-output-execution-evidence/v1",
   "status": "passed",
-  "recordedAt": "2026-11-07T10:47:01.749429+00:00",
+  "recordedAt": "2026-11-07T11:24:22.605800+00:00",
   "profiles": [
     {
       "profile": "development",
       "groupsPassed": 39,
       "image": {
         "path": "build/module-output-execution/output-execution-development.exe",
-        "sha256": "9f33dcf5914c96f8b8f869c7fafbfdc06882d2ab831b3c486ff68547f1b59ed2",
-        "bytes": 5912576,
+        "sha256": "8672647610bb6ac0bfb2ff0a25ee56807c64fd22ff0179229b34dbc53114cc53",
+        "bytes": 5919744,
         "stackReserve": 1048576,
         "stackCommit": 4096
       }
@@ -19,8 +19,8 @@
       "groupsPassed": 39,
       "image": {
         "path": "build/module-output-execution/output-execution-release.exe",
-        "sha256": "371a0fd63431b6d4ded865df8e6bb63dfd79ac740af55ba29856ea2c1bb17fb8",
-        "bytes": 1912320,
+        "sha256": "099579863021199374c158590019544f6fd31087834100d74edaa33c0dbf9a6f",
+        "bytes": 1914880,
         "stackReserve": 1048576,
         "stackCommit": 4096
       }
@@ -265,15 +265,15 @@
     },
     {
       "path": "src/module_input_program.fy",
-      "sha256": "d0475f9b9e4b03c6e9e34faa941890854b950c3187bc7997e96ff3b5b93380f9"
+      "sha256": "4fb4b0757a90a9e8954d18052b7a01b8223d027aa085328f447afd2e681b161e"
     },
     {
       "path": "src/module_output_program.fy",
-      "sha256": "f75792bb3cc9367eb2b7d8a974c5b861fde489317462db638dbc30616668f2aa"
+      "sha256": "dd042e90e373df159fb2abb72d5fe361cbc6eb993065d4a24357611a7ec38310"
     },
     {
       "path": "src/module_program.fy",
-      "sha256": "2d10ee42279dab088a8b5752f685263667fd9d878af4256ef62df1d29a788fc3"
+      "sha256": "3f959537741e80b1552e3e7ce9de8087747ceeb2cf49b0cd21de1b8fc340e923"
     },
     {
       "path": "src/output_execution.fy",
@@ -374,6 +374,10 @@
     {
       "path": "src/register_set.fy",
       "sha256": "478e2690ee311bb3961c329becc6f9ef035276759619733cbfd0f6e441f36b73"
+    },
+    {
+      "path": "src/retention_plan.fy",
+      "sha256": "c51c74811d909390203731c5ab7004b3e2c2dcc022a279a92b732e9d7d0aa1e8"
     },
     {
       "path": "src/runtime_input.fy",
@@ -609,7 +613,7 @@
     },
     {
       "path": "src/static_image.fy",
-      "sha256": "8966eca88fc4db8b172da51d57e5c10b72f0a0fffac174773c5cd11922f6ead0"
+      "sha256": "60b9f4a01ea54bdba9e31cb34194025b55d12c3edf5598681169eca2462c3496"
     },
     {
       "path": "src/static_ir.fy",
@@ -1039,9 +1043,9 @@
       "alias": "output_execution_probe_captured_call_stack"
     }
   ],
-  "sourceClosure": 190,
-  "generatedSha256": "fbc3da2228f44120dcbb0aa21aed20ee9d9f757bc2b0e8574b057839399b1a4e",
-  "isolatedLockSha256": "043fb93d932abacf2e3761ac04b3fba8fc053ffaf8fea1255da2a94ebe642065",
+  "sourceClosure": 191,
+  "generatedSha256": "9f7c4277fdbbf499571d93833e61c6901f1aae8669c429cbaa0dae28df45ab87",
+  "isolatedLockSha256": "6821088b9d11a85333e35f9fa71d7054f3e94971a070457f9d395960a01492e4",
   "adapterChanges": "Module name and test visibility only; complete original 32/33 fixture unchanged",
   "runtimeInputs": [
     {
@@ -1082,7 +1086,7 @@
   ],
   "receipt": {
     "path": "build/module-output-execution/receipt.json",
-    "sha256": "4806518c46ebe08d7212dcab0189c73bbfa316c6f1aa773c5b1681c0b97cd02c"
+    "sha256": "b7e2e2f4a315e8f0ebd60d5b1ad181573bc8ac2ea2ea462a22526b253ac6acba"
   },
-  "checkoutInputsMatched": 202
+  "checkoutInputsMatched": 203
 }

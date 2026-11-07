@@ -10,6 +10,7 @@ import ir as ir;
 import static_call_ir as candidate;
 import static_image as images;
 import std::vec as vec;
+import retention_plan as retention;
 
 // Only internally rebuilt source/context plus complete canonical admission can
 // create this resource. Compiler name tables are not retained at runtime.
@@ -17,13 +18,16 @@ import std::vec as vec;
 resource Stored { sources::Snapshot sources; programs::PublicProgram code; cleanup { } }
 pub resource Program { vec::Vec<Stored> stored; cleanup { } }
 pub fn Result<Program,diagnostics::Error> compile(entries::Entry selected,usize image_limit){
+    var retention::Plan plan=retention::unlimited();return compile_with_retention(selected,image_limit,ref mut plan);
+}
+pub fn Result<Program,diagnostics::Error> compile_with_retention(entries::Entry selected,usize image_limit,ref mut retention::Plan plan){
     var images::Builder builder=switch(images::builder(4096)){
         case .ok(v):{v}case .err(_):{return .err(diagnostics::absent(errors::make(5,0)));}
     };
     var candidate::Program code=candidate::Program{.body=ir::empty(),.parameters=[0;128],.results=[0;16],.origins=[0;16]};
     let bool references=compiler::lower_modules(ref selected,ref mut builder,ref mut code)?;
-    if(references){return finish_references(ref selected,ref builder,ref code,image_limit);}
-    return finish_legacy(ref selected,ref code.body);
+    if(references){return finish_references(ref selected,ref builder,ref code,image_limit,plan);}
+    return finish_legacy(ref selected,ref code.body,plan);
 }
 fn diagnostics::Error error(ref entries::Entry selected,errors::Error e){
     return if(e.offset==0){diagnostics::absent(e)}else{diagnostics::map(modules::snapshot(entries::index(selected)),e,16)};
@@ -38,13 +42,16 @@ fn diagnostics::Error admission_error(ref entries::Entry selected,programs::Erro
             else{error(selected,errors::make(e.kind,code.offsets[e.offset]))}}
     };
 }
-fn Result<Program,diagnostics::Error> finish_legacy(ref entries::Entry selected,ref ir::Program code){
+fn Result<Program,diagnostics::Error> finish_legacy(ref entries::Entry selected,ref ir::Program code,ref mut retention::Plan plan){
+    if(!retention::admit(plan,0).is_ok){return .err(diagnostics::absent(errors::make(retention::quota_kind(),0)));}
     return switch(programs::retain_public_legacy(code)){
         case .ok(v):{retain(selected,v)}case .err(e):{.err(admission_error(selected,e,code))}
     };
 }
 fn Result<Program,diagnostics::Error> finish_references(ref entries::Entry selected,ref images::Builder builder,
-    ref candidate::Program code,usize image_limit){
+    ref candidate::Program code,usize image_limit,ref mut retention::Plan plan){
+    let usize payload=switch(images::planned_payload(builder)){case .ok(v):{v}case .err(_):{return .err(diagnostics::absent(errors::make(5,0)));}};
+    if(!retention::admit(plan,payload).is_ok){return .err(diagnostics::absent(errors::make(retention::quota_kind(),0)));}
     let images::Image image=switch(images::freeze(builder,image_limit)){
         case .ok(v):{v}case .err(e):{return .err(error(selected,compiler::public_error(programs::Error{.kind=.Literal,.code=errors::make(0,0),.literal=e})));}
     };

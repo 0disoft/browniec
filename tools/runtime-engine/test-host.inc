@@ -115,3 +115,11 @@ void bc_runtime_engine_test_control_report(void){
  assert(fprintf(f,"{\"cases\":6,\"smallHeapBytes\":%llu,\"maximumHeapBytes\":%llu,\"ownerBytes\":%llu}\n",(unsigned long long)small_heap_bytes,(unsigned long long)maximum_heap_bytes,(unsigned long long)owner_bytes)>0);
  assert(fclose(f)==0);
 }
+
+extern void probe_rebase(void);
+void bc_runtime_engine_test_program_probe(void){probe_rebase();}
+void bc_runtime_engine_test_program_no_retention_allocations(void){assert(probe_attempts()==1);}
+void bc_runtime_engine_test_program_storage(const void *raw,uintptr_t bytes){
+ const bc_engine *e=raw;size_t control=e->f_1.f_1+e->f_2.f_1+e->f_3.f_1+e->f_4.f_1+e->f_5.f_1+e->f_6.f_1+e->f_7.f_1;
+ assert(bytes<=SIZE_MAX-control&&probe_live_bytes()==control+bytes);
+}

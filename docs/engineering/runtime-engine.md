@@ -12,6 +12,10 @@ ordinary CLI, which does not yet link or expose Engine operations.
 actual fixed backing and reserves vectors for the admitted counts. Its evidence
 supersedes earlier fixed-64 storage and transport counts.
 
+[Retained-program admission](runtime-engine-program-memory.md) now also preflights
+actual source/IR/image storage, preserves released pins and enforces individual,
+set and combined control/Program limits. Total Engine accounting remains incomplete.
+
 ## Implemented lifetime
 
 An Engine owns its Program vectors and Instance vector, bound to the actual
