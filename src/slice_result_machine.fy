@@ -124,6 +124,7 @@ pub fn Result<Machine,errors::Error> open(ref ir::Program body,ref static_ir::Si
 @link_name("bc_runtime_pending_core_stride") unsafe extern C fn usize native_size_raw();
 fn usize native_size(){return unsafe{native_size_raw()};}
 pub fn Meta observe(ref Machine machine){return machine.meta;}
+pub fn usize staged_emits(ref Machine machine){return runtime_output::observe(ref machine.staged).emits;}
 pub fn usize core_heap_bytes(ref Machine machine,usize stride){
     assert(stride==native_size() && bytes::view(ref machine.core).len==stride);
     return bytes::capacity(ref machine.core);

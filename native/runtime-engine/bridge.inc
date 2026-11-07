@@ -154,3 +154,11 @@ uint32_t bc_runtime_pending_initialize(void *raw,const void *state,const void *s
  bc_pending_machine *owner=raw;bc_pending_core *c=owner->f_0.f_0;
  B29(owner,c,state,sites,(fy_byte_slice){origins,length});return 0;
 }
+uint32_t bc_runtime_engine_step_output(void *raw,const void *program,const void *input,uintptr_t quantum){
+ bc_engine_output *owner=raw;
+ uint32_t status=B31(&owner->f_2,&owner->f_1.f_0,&owner->f_1.f_1,program,input,quantum);
+ owner->f_2=B32(owner->f_2);return status;
+}
+uint32_t bc_runtime_engine_cancel_output(void *raw){
+ bc_engine_output *owner=raw;return B33(&owner->f_2);
+}

@@ -105,6 +105,20 @@ fn Execution early(errors::Error e,usize remaining){
     return Execution{.completion=failed(absent(e),remaining,0),.published=vec::empty<output::Published>()};
 }
 pub fn Execution vacant(usize remaining){return early(errors::make(0,0),remaining);}
+pub fn Completion pending_completion(usize remaining){return failed(absent(errors::make(0,0)),remaining,0);}
+// The owning VM has already sealed into its reserved slot or discarded staging.
+// This maps the exact immutable Program's original error without re-verification.
+pub fn Completion resumed_completion(ref Program p,ref vec::Vec<output::Published> published,
+    bool success,i64 value,usize remaining,errors::Error failure,usize emits){
+    if(!success){
+        let diagnostics::Error diagnostic=if(failure.offset==0){absent(failure)}else{diagnostics::map(snapshot(p),failure,16)};
+        return failed(diagnostic,remaining,emits);
+    }
+    assert(vec::len<output::Published>(published)==1);
+    let output::Observation final=output::published_observation(vec::at<output::Published>(published,0));
+    return Completion{.success=true,.value=value,.remaining=remaining,.diagnostic=absent(errors::make(0,0)),
+        .output_bytes=final.length,.emits=final.emits};
+}
 // Reserve the sole publication slot before an owning continuation is exposed.
 // It contains no Published owner until a later successful terminal step.
 pub fn Result<Execution,errors::Error> pending_slot(usize remaining){

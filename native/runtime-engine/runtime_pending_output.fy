@@ -51,12 +51,20 @@ pub fn Result<machines::Meta,errors::Error> cancel_pending_output(ref mut machin
     let u32 status=unsafe{pending_maintenance_raw(machine as ptr mut void,0,ref mut unused as ptr mut void)};
     if(status!=0){return .err(errors::make(5,0));}return .ok(machines::observe(machine));
 }
+pub fn usize pending_staged_emits(ref machines::Machine m){return machines::staged_emits(m);}
+pub fn Result<machines::Meta,errors::Error> seal_pending_output_into(ref mut machines::Machine machine,ref mut vec::Vec<pending_output::Published> outgoing){
+    if(machines::observe(machine).phase!=2 || vec::len<pending_output::Published>(outgoing)!=0 ||
+        vec::capacity<pending_output::Published>(outgoing)<1){return .err(errors::make(5,0));}
+    let u32 status=unsafe{pending_maintenance_raw(machine as ptr mut void,1,outgoing as ptr mut void)};
+    let machines::Meta m=machines::observe(machine);
+    if(status!=0){return .err(if(m.phase==3){m.failure}else{errors::make(5,0)});}
+    return .ok(m);
+}
 pub fn Result<pending_output::Published,errors::Error> seal_pending_output(ref mut machines::Machine machine){
     if(machines::observe(machine).phase!=2){return .err(errors::make(5,0));}
     var vec::Vec<pending_output::Published> outgoing=vec::empty<pending_output::Published>();
     if(!vec::reserve<pending_output::Published>(ref mut outgoing,1).is_ok){return .err(errors::make(15,0));}
-    let u32 status=unsafe{pending_maintenance_raw(machine as ptr mut void,1,ref mut outgoing as ptr mut void)};
-    if(status!=0){return .err(if(machines::observe(machine).phase==3){machines::observe(machine).failure}else{errors::make(5,0)});}
+    let machines::Meta sealed=seal_pending_output_into(machine,ref mut outgoing)?;
     return switch(vec::pop<pending_output::Published>(ref mut outgoing)){case .some(v):{.ok(v)}case .none:{.err(errors::make(5,0))}};
 }
 fn u32 pending_advance_inner(ref output_programs::Program p,ref input_bytes::Snapshot input,

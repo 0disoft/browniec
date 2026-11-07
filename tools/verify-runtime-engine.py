@@ -147,10 +147,13 @@ def main():
                        ('28',0,'machineType'),('28',1,'coreType'),
                        ('29',0,'machineType'),('29',1,'coreType')]
         projections.append(('30',0,'outputType'))
+        projections.extend([('31',0,'pendingVectorType'),('31',1,'completionType'),('31',2,'publishedVectorType'),
+                            ('31',3,'outputProgramType'),('31',4,'snapshotType'),('33',0,'pendingVectorType')])
         for binding, index, key in projections:
             argument = contract['reviewedDeclarations'][binding].split('(', 1)[1].split(',')[index]
             actual = re.search(r'\bfy_(?:resource|struct)_\d+\b', argument)
-            need(actual is not None and actual.group() == contract[key],
+            expected_type=contract['programVariants']['output']['program'] if key=='outputProgramType' else contract[key]
+            need(actual is not None and actual.group() == expected_type,
                  f'Typed projection differs from actual declaration: {binding}/{index}/{key}')
         for binding, key in [('19', 'ordinary'), ('20', 'input')]:
             argument = contract['reviewedDeclarations'][binding].split('(', 1)[1].split(',')[0]
@@ -159,11 +162,16 @@ def main():
                  f'Typed Entry projection differs from declaration: {binding}/{key}')
         layout_types = {key: contract[key] for key in ['engineType', 'programType', 'instanceType',
                         'boundInputType', 'outputType', 'sourceIndexType', 'sourceIndexVectorType',
-                        'programVectorType', 'snapshotType', 'snapshotVectorType', 'machineType', 'coreType']}
+                        'programVectorType', 'snapshotType', 'snapshotVectorType', 'machineType', 'coreType',
+                        'executionType','pendingVectorType','completionType','publishedVectorType']}
         for variant, types in contract['programVariants'].items():
             layout_types.update({variant + '_' + role: name for role, name in types.items()})
         layout_types.update({key + '_entry': name for key, name in contract['entryTypes'].items()})
         need(set(layout_types) == set(contract['reviewedLayouts']), 'Reviewed layout set changed')
+        for owner,field,key in [('outputType',1,'executionType'),('outputType',2,'pendingVectorType'),
+                                ('executionType',0,'completionType'),('executionType',1,'publishedVectorType')]:
+            member=re.search(r'\b(fy_(?:struct|resource)_\d+) f_'+str(field)+r';',contract['reviewedLayouts'][owner])
+            need(member is not None and member.group(1)==contract[key],f'Output field projection differs: {owner}/{field}')
         advance_args=contract['reviewedDeclarations']['26'].split('(',1)[1].split(',')
         machine_meta=re.search(r'\b(fy_struct_\d+) f_7;',contract['reviewedLayouts']['machineType'])
         need(machine_meta is not None and machine_meta.group(1) in advance_args[2],

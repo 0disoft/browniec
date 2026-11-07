@@ -21,6 +21,7 @@ import dispatch_cursor_contracts as cursor_tests;
 import dispatch_quantum_contracts as quantum_tests;
 import engine_pending_tests as pending_tests;
 import engine_prepared_tests as prepared_tests;
+import engine_step_tests as step_tests;
 import pending_memory_contracts as pending_memory_tests;
 unsafe extern C fn void bc_runtime_engine_test_closed_allocations();
 unsafe extern C fn void bc_runtime_engine_test_seed(ptr mut void e,u32 kind);
@@ -46,6 +47,7 @@ fn i32 main(){
     engine::retain_native_bindings();
     pending_tests::run();
     prepared_tests::run();
+    step_tests::run();
     pending_memory_tests::fixed_oracles_count_cached_scratch_exact_core_and_eight_inline_machines();
     pending_memory_tests::output_payload_zero_and_limit_boundaries_keep_the_fixed_header();
     pending_memory_tests::either_zero_native_size_is_invalid_even_with_valid_output();
