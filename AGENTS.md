@@ -1,23 +1,18 @@
-- Latest Engine compile-memory checkpoint (2026-11-07): [Compile admission](docs/engineering/runtime-engine-compile-memory.md)
-  integrates ledger `12461e1` and Engine/transport `675fbad`. All four compilers now
-  account for the existing Index, incoming Entry Vec8 and conservative lowering
-  heap under working/combined ceilings. Required work is 436,544 bytes ordinary/
-  output or 436,928 input/input-output; the private working default/cap is 256MiB.
-  Guarded preflight rejects before incoming allocation without spending epoch/ID;
-  actual admission independently rechecks. Exclusive lowering/retention phases
-  use max, retain reservation peaks on OOM and preserve peer Programs/pins.
-  Development/O2 each pass seven new Engine groups, nine budget groups and all
-  retained control/input/output/OS/retention fixtures. Engine depth32 executes to
-  42 and depth33 rejects; SDK heap returns to zero with default 1MiB/4KiB stacks.
-  Twenty-two typed bindings and sixteen actual layout checks cover 207 closure
-  modules; all 221 executed inputs match checkout/Git. The standalone compiler's
-  201 identities remain unchanged; it was not rerun. Root locked check passes
-  251 sources/2862 MIR functions; all 243 production modules retain LF.
-  Current inline Engine is 688 bytes, one-slot control heap 6,720 and all-64 53,760.
-  Per-Instance frames/input/owners/loans/descriptors/output and simultaneous peaks,
-  native stacks, remaining combined quotas, bounded work, deadlines/poison and
-  public/host/restricted/embed delivery remain open. Gates/prices/capacities stay.
-  Workers are closed. Local commits only; no push/release/deployment.
+- Latest Engine retained-input checkpoint (2026-11-07): [Input memory admission](docs/engineering/runtime-engine-input-memory.md)
+  integrates `6db179e`. Actual Snapshot capacity stays charged until Instance
+  destruction; cancel, completion, Program release and Engine moves retain it.
+  Guarded preflight includes Snapshot Vec8's 320 bytes before allocation, under
+  per-Instance, simultaneous and combined Engine ceilings. OOM preserves current
+  owners/epoch/ID and admitted peaks. Compilation/publication include live inputs.
+  Development/O2 each pass nine new Engine, seven live-budget and thirteen
+  combined-budget groups, plus existing fixtures; SDK heap returns to zero.
+  All 224 inputs match checkout/Git and seven SDK objects match their revision.
+  Transport pins 23 bindings/18 layouts. Root locked check: 252 sources/2875 MIR;
+  all 244 production modules are LF. Engine is 736 bytes, one-slot control heap
+  6,784 and all-64 54,272. Execution scratch/output/native stacks, bounded steps,
+  deadlines/poison and public/host/restricted/embed remain open. Public gates,
+  capacities and Fuel prices/default/ceiling stay. Two disjoint Sol High workers
+  completed; integration/commits were serial. Local only; no push/release/deploy.
 
 # Brownie C agent guidance
 
