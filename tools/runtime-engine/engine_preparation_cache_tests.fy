@@ -72,7 +72,7 @@ fn void same_sites(ref statics::Sites a,ref statics::Sites b){
 }
 fn void same_preparation(ref programs::Preparation a,ref programs::Preparation b){
     same_sites(ref a.sites,ref b.sites);var usize i=0;
-    while(i<16){assert(a.origins[i]==b.origins[i]);i+=1;}
+    while(i<16){assert(a.origins[i]==b.origins[i] && a.parameters[i]==b.parameters[i]);i+=1;}
     assert(a.list.length==b.list.length && a.list.bytes==b.list.bytes && a.list.cost==b.list.cost);
     assert(a.place.width==b.place.width && a.place.cost==b.place.cost && a.place.aggregate==b.place.aggregate);
     assert(a.place.slices==b.place.slices && a.place.records==b.place.records);
@@ -99,7 +99,7 @@ fn Result<usize,u8> independent(ref programs::Program p,usize before){
     let programs::Preparation expected=programs::Preparation{.sites=proof.statics,.origins=proof.recipes.site_origins,
         .list=list,.place=place,.work=work+programs::code(p).body.arities[programs::code(p).body.entry],
         .capacity=if(programs::code(p).body.arrays.count!=0 || programs::code(p).body.records.count!=0){65536}else{0},
-        .scratch=planned.scratch};
+        .scratch=planned.scratch,.parameters=[0;16]};
     same_preparation(programs::preparation(p),ref expected);proofs(before+1);return .ok(0);
 }
 fn void completed(ref programs::Execution run,ref u8[] expected,i64 value,usize emits){

@@ -27,6 +27,7 @@ import static_execution as immutable;
 import static_call_execution as transfer;
 import static_call_ir as image_calls;
 import verifier as image_verifier;
+import output_return_proof as output_proof;
 import reference_access as access;
 import reference_execution as references;
 import reference_words as words;
@@ -212,24 +213,24 @@ pub fn Result<Scalar,errors::Error> execute_output_scalar_quantized(ref image_ca
     ref u8[] guest,bool input,ref mut runtime::State state,ref mut u8[] data,ref mut usize remaining,
     ref mut output::Transaction staged,usize quantum,ref mut cursors::Stats stats){
     if(!cursors::valid_quantum(quantum)){return .err(errors::make(5,0));}
-    let image_verifier::ReferenceReturnProof proof=image_verifier::inspect_output_returns(unit,image,input)?;
+    let output_proof::Proof proof=output_proof::inspect(unit,image,input)?;
     if(guest.len>1048576 || (!input && guest.len!=0)){return .err(errors::make(4,0));}
     let usize arity=if(input){1}else{0};
-    let u8[16] none=[0;16];let runtime::Capture[1] captures=[runtime::capture(frames::none(),false,false)];
+    let runtime::Capture[1] captures=[runtime::capture(frames::none(),false,false)];
     let i64[1] values=[0];let owners::Token[1] inputs=[owners::Token{.slot=0,.generation=0}];
-    return switch(invoke_output_quantized(ref unit.body,ref none,ref none,unit.body.entry,ref captures[..arity],ref values[..arity],ref inputs[..0],
-        state,data,remaining,false,ref proof.statics,images::payload(image),input,guest,ref proof.recipes.site_origins,staged,quantum,stats)){
+    return switch(invoke_output_quantized(ref unit.body,ref proof.elements,ref proof.parameters,unit.body.entry,ref captures[..arity],ref values[..arity],ref inputs[..0],
+        state,data,remaining,false,ref proof.ordinary.statics,images::payload(image),input,guest,ref proof.ordinary.recipes.site_origins,staged,quantum,stats)){
         case .ok(v):{if(v.view){.err(errors::make(5,0))}else{.ok(v.scalar)}}case .err(e):{.err(e)}
     };
 }
-// Trusted owning Program boundary: sites/origins, storage plans and work belong
+// Trusted owning Program boundary: sites/origins/parameters, plans and work belong
 // to this exact immutable code/image. Work already includes the entry arity.
 // Raw callers must continue through the independently verified entry above.
 pub fn Result<Scalar,errors::Error> execute_output_admitted(ref image_calls::Program unit,ref images::Image image,
-    ref statics::Sites sites,ref u8[] origins,ref list_values::Requirement list_plan,ref places::Requirement place_plan,usize work,
+    ref statics::Sites sites,ref u8[] origins,ref u8[] parameters,ref list_values::Requirement list_plan,ref places::Requirement place_plan,usize work,
     ref u8[] guest,bool input,ref mut runtime::State state,ref mut u8[] data,ref mut usize remaining,
     ref mut output::Transaction staged,usize quantum,ref mut cursors::Stats stats){
-    if(!cursors::valid_quantum(quantum)){return .err(errors::make(5,0));}
+    if(!cursors::valid_quantum(quantum) || parameters.len!=16){return .err(errors::make(5,0));}
     if(guest.len>1048576 || (!input && guest.len!=0)){return .err(errors::make(4,0));}
     let usize arity=if(input){1}else{0};
     let u8[16] none=[0;16];let runtime::Capture[1] captures=[runtime::capture(frames::none(),false,false)];
@@ -237,7 +238,7 @@ pub fn Result<Scalar,errors::Error> execute_output_admitted(ref image_calls::Pro
     let usize admitted=admit(ref unit.body,ref none,sites,unit.body.entry,ref values[..arity],arity,ref inputs[..0],false,input)?;
     let usize depth=switch(authority::inspect(ref state.runtime.authority)){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,0));}};
     if(!available(ref state.runtime.authority,true)){return .err(errors::make(5,0));}
-    return switch(invoke_output_planned(ref unit.body,ref none,unit.body.entry,ref captures[..arity],ref values[..arity],ref inputs[..0],
+    return switch(invoke_output_planned(ref unit.body,parameters,unit.body.entry,ref captures[..arity],ref values[..arity],ref inputs[..0],
         state,data,remaining,sites,images::payload(image),input,guest,origins,list_plan,place_plan,work,staged,quantum,stats)){
         case .ok(v):{if(v.view){.err(errors::make(5,0))}else{.ok(v.scalar)}}case .err(e):{.err(e)}
     };
@@ -374,31 +375,40 @@ fn Result<usize,errors::Error> begin_saved(ref body_ir::Program body,usize funct
 pub fn Result<usize,errors::Error> start_output_saved(ref body_ir::Program body,ref statics::Sites sites,bool input,usize guest_length,
     ref mut runtime::State state,ref mut u8[] data,ref mut frames::Frames bindings,ref mut input_views::State windows,ref mut usize remaining,
     ref mut cursors::Cursor cursor,ref mut usize[] static_live,ref mut u32[] static_words,ref mut i64[] registers){
-    return start_output_impl(body,sites,input,guest_length,state,data,bindings,windows,remaining,
+    let u8[16] none=[0;16];
+    return start_output_impl(body,sites,ref none,input,guest_length,state,data,bindings,windows,remaining,
         cursor,static_live,static_words,registers,.none);
 }
-// Trusted owning-output bridge. Exact code/image proof and storage preparation
-// precede this entry; cached work includes arity and belongs to the pinned Program.
+// Legacy prepared entry retains zero selected origins.
 pub fn Result<usize,errors::Error> start_output_prepared(ref body_ir::Program body,ref statics::Sites sites,bool input,usize guest_length,
     ref mut runtime::State state,ref mut u8[] data,ref mut frames::Frames bindings,ref mut input_views::State windows,ref mut usize remaining,
     ref mut cursors::Cursor cursor,ref mut usize[] static_live,ref mut u32[] static_words,ref mut i64[] registers,usize work){
-    return start_output_impl(body,sites,input,guest_length,state,data,bindings,windows,remaining,
+    let u8[16] none=[0;16];
+    return start_output_prepared_with_parameters(body,sites,ref none,input,guest_length,state,data,bindings,windows,remaining,
+        cursor,static_live,static_words,registers,work);
+}
+// Trusted owning-output bridge. Exact code/image proof and storage preparation
+// precede this entry; work and selected origins belong to the pinned Program.
+pub fn Result<usize,errors::Error> start_output_prepared_with_parameters(ref body_ir::Program body,ref statics::Sites sites,ref u8[] parameters,bool input,usize guest_length,
+    ref mut runtime::State state,ref mut u8[] data,ref mut frames::Frames bindings,ref mut input_views::State windows,ref mut usize remaining,
+    ref mut cursors::Cursor cursor,ref mut usize[] static_live,ref mut u32[] static_words,ref mut i64[] registers,usize work){
+    return start_output_impl(body,sites,parameters,input,guest_length,state,data,bindings,windows,remaining,
         cursor,static_live,static_words,registers,.some(work));
 }
 // Share validation, entry publication and saved-bank initialization. The raw
 // wrapper keeps cost calculation after admission; prepared entry never rescans.
-fn Result<usize,errors::Error> start_output_impl(ref body_ir::Program body,ref statics::Sites sites,bool input,usize guest_length,
+fn Result<usize,errors::Error> start_output_impl(ref body_ir::Program body,ref statics::Sites sites,ref u8[] parameters,bool input,usize guest_length,
     ref mut runtime::State state,ref mut u8[] data,ref mut frames::Frames bindings,ref mut input_views::State windows,ref mut usize remaining,
     ref mut cursors::Cursor cursor,ref mut usize[] static_live,ref mut u32[] static_words,ref mut i64[] registers,Option<usize> prepared_work){
     if(guest_length>1048576 || (!input && guest_length!=0) || input!=input_views::enabled(windows) ||
-        static_live.len!=32 || static_words.len!=512 || registers.len!=4096 || cursor.active || bindings.frame!=0){return .err(errors::make(5,0));}
+        parameters.len!=16 || static_live.len!=32 || static_words.len!=512 || registers.len!=4096 || cursor.active || bindings.frame!=0){return .err(errors::make(5,0));}
     let usize arity=if(input){1}else{0};
     let u8[16] none=[0;16];let runtime::Capture[1] captures=[runtime::capture(frames::none(),false,false)];
     let i64[1] values=[0];let owners::Token[1] inputs=[owners::Token{.slot=0,.generation=0}];
     let usize admitted=admit(body,ref none,sites,body.entry,ref values[..arity],arity,ref inputs[..0],false,input)?;
     let usize depth=switch(authority::inspect(ref state.runtime.authority)){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,0));}};
     if(!available(ref state.runtime.authority,true)){return .err(errors::make(5,0));}
-    let runtime::Contract contract=binding(body,ref none,body.entry);
+    let runtime::Contract contract=binding(body,parameters,body.entry);
     let usize work=switch(prepared_work){case .some(value):{value}case .none:{owned_calls::cost(body,body.entry,0)?+contract.arity}};
     let runtime::Entered first=entry::enter_prepared(body,body.entry,contract,ref captures[..arity],ref inputs[..0],state,data,*remaining,work)?;
     *remaining=first.call.remaining;
@@ -411,9 +421,18 @@ pub fn Result<Option<Scalar>,errors::Error> step_output_saved(ref body_ir::Progr
     ref mut vec::Vec<i64> list_cells,ref mut bytes::Buffer list_scratch,ref mut vec::Vec<usize> place_state,
     ref mut input_views::State windows,ref u8[] guest,ref u8[] origins,ref mut usize remaining,ref mut output::Transaction staged,
     ref mut cursors::Cursor cursor,ref mut usize[] static_live,ref mut u32[] static_words,ref mut i64[] registers,usize quantum,ref mut cursors::Stats stats){
-    if(static_live.len!=32 || static_words.len!=512 || registers.len!=4096 || origins.len!=16){return .err(errors::make(5,0));}
     let u8[16] none=[0;16];
-    return switch(drive(body,ref none,bindings,state,data,sites,literals,list_cells,list_scratch,place_state,windows,guest,origins,
+    return step_output_saved_with_parameters(body,ref none,bindings,state,data,sites,literals,list_cells,list_scratch,place_state,windows,guest,origins,
+        remaining,staged,cursor,static_live,static_words,registers,quantum,stats);
+}
+// Resume with the exact immutable owning Preparation's selected origins.
+pub fn Result<Option<Scalar>,errors::Error> step_output_saved_with_parameters(ref body_ir::Program body,ref u8[] parameters,
+    ref mut frames::Frames bindings,ref mut runtime::State state,ref mut u8[] data,ref statics::Sites sites,ref u8[] literals,
+    ref mut vec::Vec<i64> list_cells,ref mut bytes::Buffer list_scratch,ref mut vec::Vec<usize> place_state,
+    ref mut input_views::State windows,ref u8[] guest,ref u8[] origins,ref mut usize remaining,ref mut output::Transaction staged,
+    ref mut cursors::Cursor cursor,ref mut usize[] static_live,ref mut u32[] static_words,ref mut i64[] registers,usize quantum,ref mut cursors::Stats stats){
+    if(parameters.len!=16 || static_live.len!=32 || static_words.len!=512 || registers.len!=4096 || origins.len!=16){return .err(errors::make(5,0));}
+    return switch(drive(body,parameters,bindings,state,data,sites,literals,list_cells,list_scratch,place_state,windows,guest,origins,
         remaining,staged,cursor,static_live,static_words,registers,quantum,stats)){
         case .err(e):{.err(e)}case .ok(v):{switch(v){
             case .none:{.ok(.none)}case .some(done):{if(done.view){.err(errors::make(5,0))}else{.ok(.some(done.scalar))}}

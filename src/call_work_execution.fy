@@ -22,6 +22,9 @@ import std::vec as vec;
 // no argument expression, host effect, owner payload or borrowed pointer is saved.
 struct Context { runtime::Contract contract; owned::Prepared prepared; references::Arguments captured; bool generic; }
 fn errors::Error invalid(usize offset){return errors::make(5,offset);}
+// Scalar depth reads must borrow the exact authority field: projecting through
+// the outer runtime by value materializes both large parent records in C.
+fn bool has_room(ref authority::State state){return state.depth<31;}
 pub fn bool operation(ref ir::Program p,usize pc){
     if(pc>=p.count || pc>=256){return false;}let u8 op=p.code[pc*8];
     return op==9 || op==64 || op==66 || op==78;
@@ -38,7 +41,7 @@ fn Result<Context,errors::Error> context(ref ir::Program p,ref u8[] parameters,
     ref statics::Sites sites,usize pc,ref frames::Frames bindings,ref runtime::State state,
     usize capacity,usize payload,ref u32[] words,usize live,ref inputs::State windows,ref mut usize remaining){
     let usize frame=bindings.frame;let usize f=bindings.functions[frame];let usize offset=p.offsets[pc];
-    if(frame>=31 || state.runtime.authority.depth>=31){return .err(errors::make(12,offset));}
+    if(frame>=31 || !has_room(ref state.runtime.authority)){return .err(errors::make(12,offset));}
     let usize input_work=if(inputs::enabled(windows)){meter::input_frame()}else{0};
     if(*remaining<input_work+runtime::cost()){return .err(errors::make(8,offset));};*remaining-=input_work;
     let usize target=p.code[pc*8+2] as usize;let u8 op=p.code[pc*8];
@@ -77,7 +80,7 @@ pub fn Result<cursor::State,errors::Error> begin(ref ir::Program p,ref u8[] para
     let usize offset=p.offsets[pc];let usize before=*remaining;
     // Preserve the old frame-place check before staging static/reference actuals.
     let usize input_work=if(inputs::enabled(windows)){meter::input_frame()}else{0};
-    if(bindings.frame>=31 || state.runtime.authority.depth>=31){return .err(errors::make(12,offset));}
+    if(bindings.frame>=31 || !has_room(ref state.runtime.authority)){return .err(errors::make(12,offset));}
     if(before<input_work+runtime::cost()){return .err(errors::make(8,offset));}
     switch(places::empty_frame(place_state,bindings.frame+1,offset)){
         case .ok(_):{}case .err(e):{*remaining-=input_work;return .err(e);}

@@ -87,6 +87,12 @@ pub fn Result<Summary,errors::Error> inspect(ref ir::Program p,ref functions::Ta
 pub fn Result<Summary,errors::Error> inspect_recipes(ref ir::Program p,ref functions::Table t,ref ir::Program recipes){
     let usize valid=verifier::verify(p)?;return finish(p,t,recipes);
 }
+// Output adapter only: its exact normalized body has already passed complete
+// image/input/output CFG/type/loan proof. Reconstruct original result origins;
+// this stage alone is not executable admission and must not replace that proof.
+pub fn Result<Summary,errors::Error> inspect_output_admitted(ref ir::Program p,ref functions::Table t,ref ir::Program recipes){
+    return finish(p,t,recipes);
+}
 pub struct ImageSummary { Summary origins; statics::Sites statics; }
 pub fn Result<ImageSummary,errors::Error> inspect_recipes_image(ref ir::Program p,ref functions::Table t,
     ref ir::Program recipes,ref images::Image image){

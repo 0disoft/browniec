@@ -71,19 +71,20 @@ fn u32 pending_advance_inner(ref output_programs::Program p,ref input_bytes::Sna
     ref mut vec::Vec<usize> places,ref mut pending_windows::State windows,ref mut pending_output::Transaction staged,u32 operation,usize quantum){
     if(operation>1 || (operation==0 && m.phase!=0) || (operation==1 && (m.phase!=1 || !pending_cursors::valid_quantum(quantum)))){return 5;}
     let ref pending_ir::Program body=ref output_programs::code(p).body;
+    let ref output_programs::Preparation prepared=output_programs::preparation(p);
     let ref u8[] guest=input_bytes::view(input);
     // The pinned compiler treats concurrent loans of sibling fields as loans
     // of Meta. Only these small control values are copied, never ownership maps.
     var usize remaining=m.remaining;var pending_cursors::Cursor cursor=m.cursor;var pending_cursors::Stats statistics=m.stats;
     if(operation==0){
-        let Result<usize,errors::Error> entered=pending_execution::start_output_prepared(body,sites,output_programs::accepts_input(p),guest.len,state,
-            pending_bytes::view_mut(payload),bindings,windows,ref mut remaining,ref mut cursor,live,words,registers,output_programs::preparation(p).work);
+        let Result<usize,errors::Error> entered=pending_execution::start_output_prepared_with_parameters(body,sites,ref prepared.parameters,output_programs::accepts_input(p),guest.len,state,
+            pending_bytes::view_mut(payload),bindings,windows,ref mut remaining,ref mut cursor,live,words,registers,prepared.work);
         m.remaining=remaining;m.cursor=cursor;
         switch(entered){
             case .ok(_):{m.phase=1;return 0;}case .err(e):{m.failure=e;}
         };
     }else{
-        let Result<Option<pending_execution::Scalar>,errors::Error> progressed=pending_execution::step_output_saved(body,bindings,state,pending_bytes::view_mut(payload),sites,
+        let Result<Option<pending_execution::Scalar>,errors::Error> progressed=pending_execution::step_output_saved_with_parameters(body,ref prepared.parameters,bindings,state,pending_bytes::view_mut(payload),sites,
             pending_images::payload(output_programs::literals(p)),cells,scratch,places,windows,guest,origins,
             ref mut remaining,staged,ref mut cursor,live,words,registers,quantum,ref mut statistics);
         m.remaining=remaining;m.cursor=cursor;m.stats=statistics;

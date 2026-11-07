@@ -60,6 +60,7 @@ import source_error as source_errors;
 import module_index as module_index;
 import output_source as output_source;
 import output_ir as output_ir;
+import output_return_ir as output_returns;
 
 fn u8 precedence(u8 kind) {
     if (kind == 133) { return 1; }
@@ -2462,11 +2463,12 @@ fn Result<usize,errors::Error> lower_prepared(ref u8[] source,bool origin_analys
     ref literal_collection::Index literals,ref mut functions::Table signatures,ref mut ir::Program p,ref mut usize active){
     signatures.literals=*literals;signatures.reference_calls=references;
     // Signature candidates do not prove a returned borrow's origin or lifetime.
-    // Reject every such declaration, including unreachable functions, before
-    // Program/result preparation can mistake it for an ordinary scalar result.
+    // Ordinary/public lowering rejects these declarations, even unreachable
+    // ones. Private output carries explicit recipes into a separate complete
+    // normalized CFG and original borrowed-result proof before publication.
     var usize declaration = 0;
     while (declaration < signatures.count) {
-        if (!origin_analysis && signatures.return_slice_elements[declaration] != 0 && !reference_calls::result(signatures,declaration)) {
+        if (!origin_analysis && !(signatures.output && returns) && signatures.return_slice_elements[declaration] != 0 && !reference_calls::result(signatures,declaration)) {
             return .err(errors::make(3, signatures.begins[declaration]));
         }
         declaration += 1;
@@ -2482,6 +2484,12 @@ fn Result<usize,errors::Error> lower_prepared(ref u8[] source,bool origin_analys
             declaration+=1;
         }
     }
+    if(signatures.output && returns){
+        declaration=0;while(declaration<signatures.count){
+            if(signatures.return_slice_elements[declaration]!=0 && !reference_calls::result(signatures,declaration)){p.return_types[declaration]=12;}
+            declaration+=1;
+        }
+    }
     let usize aggregates = prepare_aggregates(source, signatures, p)?;
     var usize f = 0;
     while (f < signatures.count) {
@@ -2494,6 +2502,7 @@ fn Result<usize,errors::Error> lower_prepared(ref u8[] source,bool origin_analys
         f += 1;
     }
     *active=16;
+    if(signatures.output && returns){let usize prepared=output_returns::lower(p,signatures)?;}
     // Preserve the current source/IR restriction on entry calls in array programs.
     if (p.arrays.count != 0 || p.records.count != 0) {
         var usize pc = 0;

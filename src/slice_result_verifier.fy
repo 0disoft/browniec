@@ -33,22 +33,22 @@ fn Result<usize,errors::Error> terminal(ref ir::Program p,usize f,usize pc){
     return .err(errors::make(5,pc));
 }
 
-fn Result<usize,errors::Error> prepare(ref results::Program unit,ref mut ir::Program proxy,ref mut functions::Table signatures){
+fn Result<usize,errors::Error> validate_signature(ref results::Program unit){
     let ref ir::Program body=ref unit.body;
-    if(body.count==0 || body.count>256 || body.function_count==0 ||
-        body.function_count>16){return .err(errors::make(5,0));}
-    signatures.count=proxy.function_count;signatures.entry=proxy.entry;
-    signatures.arities=proxy.arities;signatures.return_slice_elements=unit.elements;
-    var usize f=0;
-    while(f<16){
-        let u8 tag=unit.elements[f];let u8 selected=unit.parameters[f];
-        if((f>=proxy.function_count && (tag!=0 || selected!=0)) ||
-            (tag==0 && selected!=0) || (tag!=0 && (!types::scalar(tag & 127) ||
-            selected==0 || selected>8 || selected as usize>proxy.arities[f] || f==proxy.entry))){
-            return .err(errors::make(5,0));
-        }
+    if(body.count==0 || body.count>256 || body.function_count==0 || body.function_count>16){return .err(errors::make(5,0));}
+    var usize f=0;while(f<16){let u8 tag=unit.elements[f];let u8 selected=unit.parameters[f];
+        if((f>=body.function_count && (tag!=0 || selected!=0)) || (tag==0 && selected!=0) ||
+            (tag!=0 && (!types::scalar(tag&127) || selected==0 || selected>8 || selected as usize>body.arities[f] || f==body.entry))){return .err(errors::make(5,0));}
         f+=1;
     }
+    var usize pc=0;while(pc<body.count){if(body.code[pc*8]==9){let usize target=body.code[pc*8+2] as usize;
+        if(target<16 && unit.elements[target]!=0){return .err(errors::make(5,pc));}
+    }pc+=1;}return .ok(body.count);
+}
+fn Result<usize,errors::Error> prepare(ref results::Program unit,ref mut ir::Program proxy,ref mut functions::Table signatures){
+    let ref ir::Program body=ref unit.body;let usize checked=validate_signature(unit)?;
+    signatures.count=proxy.function_count;signatures.entry=proxy.entry;
+    signatures.arities=proxy.arities;signatures.return_slice_elements=unit.elements;
     let usize rewritten=calls::rewrite(proxy)?;
     var usize pc=0;
     while(pc<proxy.count){
@@ -56,10 +56,6 @@ fn Result<usize,errors::Error> prepare(ref results::Program unit,ref mut ir::Pro
         if(op==63){proxy.code[pc*8]=57;}
         else if(op==64){proxy.code[pc*8]=9;}
         else if(op==65){proxy.code[pc*8]=8;}
-        else if(op==9){
-            let usize callee=proxy.code[pc*8+2] as usize;
-            if(callee<16 && unit.elements[callee]!=0){return .err(errors::make(5,pc));}
-        }
         pc+=1;
     }
     return .ok(proxy.count);
@@ -119,6 +115,16 @@ pub fn Result<Proof,errors::Error> inspect(ref results::Program unit){
     return finish(unit,ref proxy,ref grounded);
 }
 pub struct ImageProof { Proof borrowed; statics::Sites statics; }
+// Complete output CFG proof precedes this original-recipe/terminal pass. The
+// adapter constructs the normalized body from these same immutable recipes.
+pub fn Result<Proof,errors::Error> inspect_output_admitted(ref results::Program unit,ref ir::Program normalized){
+    let usize checked=validate_signature(unit)?;
+    var functions::Table signatures=functions::empty();
+    signatures.count=normalized.function_count;signatures.entry=normalized.entry;
+    signatures.arities=normalized.arities;signatures.return_slice_elements=unit.elements;
+    let origins::Summary grounded=origins::inspect_output_admitted(normalized,ref signatures,ref unit.body)?;
+    return finish(unit,normalized,ref grounded);
+}
 pub fn Result<ImageProof,errors::Error> inspect_image(ref results::Program unit,ref images::Image image){
     let ref ir::Program body=ref unit.body;
     var ir::Program proxy=*body;var functions::Table signatures=functions::empty();

@@ -22,6 +22,7 @@ import dispatch_quantum_contracts as quantum_tests;
 import engine_pending_tests as pending_tests;
 import engine_prepared_tests as prepared_tests;
 import engine_preparation_cache_tests as cache_tests;
+import engine_output_returned_view_tests as returned_view_tests;
 import engine_preparation_reuse_tests as reuse_tests;
 import engine_array_fill_tests as array_fill_tests;
 import array_fill_work_tests as fill_work_tests;
@@ -63,6 +64,7 @@ fn i32 main(){
     pending_tests::run();
     prepared_tests::run();
     cache_tests::run();
+    returned_view_tests::run();
     reuse_tests::run();
     fill_work_tests::run();
     array_fill_tests::run();

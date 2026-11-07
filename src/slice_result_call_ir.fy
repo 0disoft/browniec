@@ -73,10 +73,10 @@ fn Result<bool,errors::Error> reads(ref ir::Program p,usize pc,usize r){
     if(op==7 || op==8 || op==10 || op==17 || op==18 || op==20 || op==21 || op==24 || op==26 || op==27 || op==33 || op==40){return .ok(a==r);}
     if(op==71){return .ok(b==r);}
     if(op==23){return .ok(a==r && b<=1 && types::payload(p.types[dst],p.code[at+3])!=0);}
-    if(op==9){var usize i=0;while(i<p.call_arities[b] as usize){if(p.call_args[b*8+i] as usize==r){return .ok(true);}i+=1;}}
+    if(op==9 || op==78){var usize i=0;while(i<p.call_arities[b] as usize){if(p.call_args[b*8+i] as usize==r){return .ok(true);}i+=1;}}
     if(op==35 || op==58){return .ok(b==r);}
     if(op==44){return .ok(b==r);}
-    if(op==53 || op==59 || op==61){return .ok(b==r || p.code[at+4] as usize==r);}
+    if(op==53 || op==59 || op==61 || op==76){return .ok(b==r || p.code[at+4] as usize==r);}
     if(op==41 || op==48 || op==49){
         let usize nominal=if(op==49){b}else{p.records.records[dst] as usize};let usize count=records::leaves(ref p.records.layouts,nominal)?;
         return .ok(r>=a && r-a<count);

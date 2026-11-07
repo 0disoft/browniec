@@ -9,7 +9,7 @@ import errors as errors;
 import ir as ir;
 import static_call_ir as candidates;
 import static_image as images;
-import verifier as verifier;
+import output_return_proof as output_proof;
 import program_image as program_images;
 import std::vec as vec;
 import retention_plan as retention;
@@ -28,7 +28,7 @@ import slice_result_cursor as cursors;
 import static_ir as statics;
 import runtime_execution_memory as execution_heap;
 
-pub struct Preparation { statics::Sites sites; u8[16] origins; lists::Requirement list; places::Requirement place; usize work; usize capacity; usize scratch; }
+pub struct Preparation { statics::Sites sites; u8[16] origins; lists::Requirement list; places::Requirement place; usize work; usize capacity; usize scratch; u8[16] parameters; }
 resource Stored { sources::Snapshot sources; candidates::Program code; images::Image image; bool input; Preparation prepared; cleanup { } }
 pub resource Program { vec::Vec<Stored> stored; cleanup { } }
 pub struct Completion { bool success; i64 value; usize remaining; diagnostics::Error diagnostic; usize output_bytes; usize emits; }
@@ -66,7 +66,7 @@ fn Result<Program,diagnostics::Error> finish(ref sources::Snapshot sources,ref i
     let images::Image image=switch(images::freeze(builder,image_limit)){
         case .ok(v):{v}case .err(e):{return .err(literal(e));}
     };
-    let verifier::ReferenceReturnProof proof=switch(verifier::inspect_output_returns(code,ref image,input)){
+    let output_proof::Proof proof=switch(output_proof::inspect(code,ref image,input)){
         case .ok(v):{v}case .err(e):{
             if(e.offset==0 || e.offset>=code.body.count){return .err(absent(e));}
             return .err(diagnostics::map(sources,errors::make(e.kind,code.body.offsets[e.offset]),16));
@@ -76,8 +76,8 @@ fn Result<Program,diagnostics::Error> finish(ref sources::Snapshot sources,ref i
     let places::Requirement place=switch(places::requirement(ref code.body)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
     let usize work=switch(owned_calls::cost(ref code.body,code.body.entry,0)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
     let execution_heap::Plan heap=switch(execution_heap::prepare(ref code.body,input,true,0)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
-    let Preparation prepared=Preparation{.sites=proof.statics,.origins=proof.recipes.site_origins,.list=list,.place=place,
-        .work=work+code.body.arities[code.body.entry],.capacity=if(code.body.arrays.count!=0 || code.body.records.count!=0){65536}else{0},.scratch=heap.scratch};
+    let Preparation prepared=Preparation{.sites=proof.ordinary.statics,.origins=proof.ordinary.recipes.site_origins,.list=list,.place=place,
+        .work=work+code.body.arities[code.body.entry],.capacity=if(code.body.arrays.count!=0 || code.body.records.count!=0){65536}else{0},.scratch=heap.scratch,.parameters=proof.parameters};
     return retain(sources,code,image,input,ref prepared);
 }
 fn Result<Program,diagnostics::Error> retain(ref sources::Snapshot sources,ref candidates::Program code,images::Image image,bool input,ref Preparation prepared){
@@ -191,6 +191,6 @@ fn Result<execution::Scalar,errors::Error> execute(ref Stored retained,ref u8[] 
     var bytes::Buffer payload=if(capacity==0){bytes::empty()}else{backing::prepare(capacity)?};*remaining-=preparation;
     var runtime::State state=runtime::empty(capacity);
     return execution::execute_output_admitted(ref retained.code,ref retained.image,ref prepared.sites,
-        ref prepared.origins,ref list_plan,ref place_plan,work,input,retained.input,
+        ref prepared.origins,ref prepared.parameters,ref list_plan,ref place_plan,work,input,retained.input,
         ref mut state,bytes::view_mut(ref mut payload),remaining,staged,quantum,stats);
 }
