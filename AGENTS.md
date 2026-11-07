@@ -1,18 +1,19 @@
-- Latest Engine retained-input checkpoint (2026-11-07): [Input memory admission](docs/engineering/runtime-engine-input-memory.md)
-  integrates `6db179e`. Actual Snapshot capacity stays charged until Instance
-  destruction; cancel, completion, Program release and Engine moves retain it.
-  Guarded preflight includes Snapshot Vec8's 320 bytes before allocation, under
-  per-Instance, simultaneous and combined Engine ceilings. OOM preserves current
-  owners/epoch/ID and admitted peaks. Compilation/publication include live inputs.
-  Development/O2 each pass nine new Engine, seven live-budget and thirteen
-  combined-budget groups, plus existing fixtures; SDK heap returns to zero.
-  All 224 inputs match checkout/Git and seven SDK objects match their revision.
-  Transport pins 23 bindings/18 layouts. Root locked check: 252 sources/2875 MIR;
-  all 244 production modules are LF. Engine is 736 bytes, one-slot control heap
-  6,784 and all-64 54,272. Execution scratch/output/native stacks, bounded steps,
+- Latest Engine execution-memory checkpoint (2026-11-07): [Execution/output heap](docs/engineering/runtime-engine-execution-memory.md)
+  integrates `18c93c8`. Immutable Programs cache exact arena/list/place/input
+  requirements; execution admits their transient heap in O(1) additional budget
+  lookup. Actual output capacity (including late-failure Vec8) stays charged
+  until transfer/destruction. Guarded take preflight includes 1088 transport
+  bytes before allocation and refunds the transferred output once, keeping input.
+  Development/O2 each pass seven Engine/eight planner/six output-observation
+  groups, all nine input-memory groups and existing fixtures. Successful heap
+  peaks match plans; all allocation ordinals are injected and SDK heap ends at 0.
+  All 228 inputs match checkout/Git; seven SDK objects match their revision.
+  Transport pins 25 bindings/18 layouts. Root locked check: 253 sources/2885 MIR;
+  all 245 production modules are LF. Engine is 736 bytes; one-slot control heap
+  6976 and all-64 55808. Stack/host state and complete accounting, bounded steps,
   deadlines/poison and public/host/restricted/embed remain open. Public gates,
-  capacities and Fuel prices/default/ceiling stay. Two disjoint Sol High workers
-  completed; integration/commits were serial. Local only; no push/release/deploy.
+  VM capacities and Fuel prices/default/ceiling stay. Three disjoint Sol High
+  workers completed; integration/commits were serial. Local only; no remote edits.
 
 # Brownie C agent guidance
 

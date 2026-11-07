@@ -3,8 +3,10 @@
 The private owning Engine charges actual immutable input backing while its
 Instance owns it. The tracked Engine ceiling now includes that backing during
 compilation and Program publication as well as input admission. Execution
-scratch, retained output, native stacks and complete Engine accounting remain
-separate work.
+scratch and retained output were separate work at this checkpoint. The
+[execution/output successor](runtime-engine-execution-memory.md) now implements
+their scoped heap admission and ownership. Native stacks and complete Engine
+accounting remain separate work.
 
 ## Limits and observations
 
