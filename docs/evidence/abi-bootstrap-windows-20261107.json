@@ -1,0 +1,852 @@
+{
+  "schema": "browniec.abi-bootstrap-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-07T05:37:57.777362+00:00",
+  "implementationCommit": "ad86fc9c23c4a0947ae9969f364deaa084169a0d",
+  "platform": "windows/amd64",
+  "scope": "DLL ABI bootstrap only; E01 and embedding incomplete",
+  "inputManifest": {
+    "path": "docs/evidence/abi-bootstrap-inputs-windows-20261107.json",
+    "sha256": "2fac0e19ed8e164b3b5edf6d0f233c4c0e81c2efde3597a1ab893f48405a5a71"
+  },
+  "checkoutInputsMatched": 228,
+  "gitRawInputsMatched": 228,
+  "lfProductionModules": 217,
+  "nativeFeatureInputs": 9,
+  "rootCheck": {
+    "command": "build/toolchain/fairyc.exe check --locked",
+    "stdout": "check ok: 2 instance(s), 225 source file(s), 2450 MIR function(s), lock verified\n",
+    "stdoutSha256": "6c4073f92d1c492696613fbb6acb3d32c2790ab7c3145ee613a6431a32e22ab4"
+  },
+  "native": {
+    "schema": "browniec.abi-bootstrap/v1",
+    "status": "passed",
+    "capturedAt": "2026-11-07T05:33:34.882367+00:00",
+    "commands": [
+      {
+        "command": [
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+          "--version"
+        ],
+        "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107",
+        "exitCode": 0,
+        "stdout": "logs\\00.stdout",
+        "stderr": "logs\\00.stderr",
+        "stdoutSha256": "cfd188b9865777d7972b1c1e1c4e2e50d2735becbeca8627863cde0d38330e34",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": [
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+          "check"
+        ],
+        "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\project",
+        "exitCode": 0,
+        "stdout": "logs\\01.stdout",
+        "stderr": "logs\\01.stderr",
+        "stdoutSha256": "9e705889a50ea15837c57ac772f4ec2c30e66be13184e3e0a939b9fc283fe8f1",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": [
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+          "check",
+          "--locked"
+        ],
+        "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\project",
+        "exitCode": 0,
+        "stdout": "logs\\02.stdout",
+        "stderr": "logs\\02.stderr",
+        "stdoutSha256": "f95d346f042e92daa10da3d9dcc1b72a5ab3d0426c0f3f97761740eff6e68f0e",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": [
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+          "experimental",
+          "emit-workspace-c",
+          "--target",
+          "x86_64-windows-msvc",
+          "--locked"
+        ],
+        "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\project",
+        "exitCode": 0,
+        "stdout": "logs\\03.stdout",
+        "stderr": "logs\\03.stderr",
+        "stdoutSha256": "0b05383737badf57699028ef9040432df3ed3ef0a2432e6236223369987deef8",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe",
+          "-latest",
+          "-products",
+          "*",
+          "-requires",
+          "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
+          "-property",
+          "installationPath"
+        ],
+        "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107",
+        "exitCode": 0,
+        "stdout": "logs\\04.stdout",
+        "stderr": "logs\\04.stderr",
+        "stdoutSha256": "b4a0d87f781f41eea676ca53971351757a2ea9df0f254e6e93d326d60e611500",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": [
+          "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+          "/nologo",
+          "/TP",
+          "/std:c++17",
+          "/W4",
+          "/WX",
+          "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\inputs\\feature\\include",
+          "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\inputs\\feature\\native",
+          "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107",
+          "/c",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\inputs\\feature\\tests\\embed\\abi_bootstrap_host.c",
+          "/FoC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\layout-cxx.obj"
+        ],
+        "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107",
+        "exitCode": 0,
+        "stdout": "logs\\05.stdout",
+        "stderr": "logs\\05.stderr",
+        "stdoutSha256": "8fce85237f395570412de1200793526aca1f3bc8c5d76cc34d261a06f54ba39c",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": [
+          "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+          "/nologo",
+          "/TC",
+          "/std:c11",
+          "/MT",
+          "/W4",
+          "/WX",
+          "/Od",
+          "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\inputs\\feature\\include",
+          "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\inputs\\feature\\native",
+          "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107",
+          "/LD",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\inputs\\feature\\native\\abi_bootstrap.c",
+          "/FoC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\development\\bootstrap.obj",
+          "/FeC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\development\\brownie-bootstrap.dll",
+          "/link",
+          "/INCREMENTAL:NO",
+          "/Brepro",
+          "/IMPLIB:C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\development\\bootstrap.lib"
+        ],
+        "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107",
+        "exitCode": 0,
+        "stdout": "logs\\06.stdout",
+        "stderr": "logs\\06.stderr",
+        "stdoutSha256": "c040f2a4173d814965d9362f53080167a665f778b2df67545dd18a1df4f2f06a",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": [
+          "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\dumpbin.exe",
+          "/exports",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\development\\brownie-bootstrap.dll"
+        ],
+        "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107",
+        "exitCode": 0,
+        "stdout": "logs\\07.stdout",
+        "stderr": "logs\\07.stderr",
+        "stdoutSha256": "591b6c2c7640e125bd7c0e0baf17e1c3477748341b4277bc7fb0943ac4318bdd",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": [
+          "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\dumpbin.exe",
+          "/headers",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\development\\brownie-bootstrap.dll"
+        ],
+        "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107",
+        "exitCode": 0,
+        "stdout": "logs\\08.stdout",
+        "stderr": "logs\\08.stderr",
+        "stdoutSha256": "c449aeb928bbd3847c880d17a2b21f6c90bc642d680717face4cfb18d6a3d54c",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": [
+          "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+          "/nologo",
+          "/TC",
+          "/std:c11",
+          "/MT",
+          "/W4",
+          "/WX",
+          "/Od",
+          "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\inputs\\feature\\include",
+          "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\inputs\\feature\\native",
+          "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\inputs\\feature\\tests\\embed\\abi_bootstrap_host.c",
+          "/FoC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\development\\host.obj",
+          "/FeC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\development\\abi-bootstrap-host.exe",
+          "/link",
+          "/INCREMENTAL:NO",
+          "/Brepro"
+        ],
+        "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107",
+        "exitCode": 0,
+        "stdout": "logs\\09.stdout",
+        "stderr": "logs\\09.stderr",
+        "stdoutSha256": "8fce85237f395570412de1200793526aca1f3bc8c5d76cc34d261a06f54ba39c",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": [
+          "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\dumpbin.exe",
+          "/imports",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\development\\abi-bootstrap-host.exe"
+        ],
+        "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107",
+        "exitCode": 0,
+        "stdout": "logs\\10.stdout",
+        "stderr": "logs\\10.stderr",
+        "stdoutSha256": "ee87bc475f4fcaa42d855325a20b437bb3e6c3197690948fc43b728374fa088f",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": [
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\development\\abi-bootstrap-host.exe",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\development\\brownie-bootstrap.dll"
+        ],
+        "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107",
+        "exitCode": 0,
+        "stdout": "logs\\11.stdout",
+        "stderr": "logs\\11.stderr",
+        "stdoutSha256": "613ed1f99e6644fb6b82b5e89921dc4fd45361a306ca26bbbc26efc2fb40f6eb",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": [
+          "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+          "/nologo",
+          "/TC",
+          "/std:c11",
+          "/MT",
+          "/W4",
+          "/WX",
+          "/O2",
+          "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\inputs\\feature\\include",
+          "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\inputs\\feature\\native",
+          "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107",
+          "/LD",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\inputs\\feature\\native\\abi_bootstrap.c",
+          "/FoC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\optimized\\bootstrap.obj",
+          "/FeC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\optimized\\brownie-bootstrap.dll",
+          "/link",
+          "/INCREMENTAL:NO",
+          "/Brepro",
+          "/IMPLIB:C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\optimized\\bootstrap.lib"
+        ],
+        "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107",
+        "exitCode": 0,
+        "stdout": "logs\\12.stdout",
+        "stderr": "logs\\12.stderr",
+        "stdoutSha256": "5af099ef444d2547ea202b1e3db69280d817d23f7dafb89f518bc248f7d64098",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": [
+          "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\dumpbin.exe",
+          "/exports",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\optimized\\brownie-bootstrap.dll"
+        ],
+        "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107",
+        "exitCode": 0,
+        "stdout": "logs\\13.stdout",
+        "stderr": "logs\\13.stderr",
+        "stdoutSha256": "dd8bdf026b35f4ab3f30df3b5d4c77465694c21dc8f2a0a6a6ef572ef1362ac6",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": [
+          "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\dumpbin.exe",
+          "/headers",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\optimized\\brownie-bootstrap.dll"
+        ],
+        "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107",
+        "exitCode": 0,
+        "stdout": "logs\\14.stdout",
+        "stderr": "logs\\14.stderr",
+        "stdoutSha256": "6b22c62652eb52c63104552fc36e39f4860e9a5753c28caa1d2570a75222f785",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": [
+          "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+          "/nologo",
+          "/TC",
+          "/std:c11",
+          "/MT",
+          "/W4",
+          "/WX",
+          "/O2",
+          "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\inputs\\feature\\include",
+          "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\inputs\\feature\\native",
+          "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\inputs\\feature\\tests\\embed\\abi_bootstrap_host.c",
+          "/FoC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\optimized\\host.obj",
+          "/FeC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\optimized\\abi-bootstrap-host.exe",
+          "/link",
+          "/INCREMENTAL:NO",
+          "/Brepro"
+        ],
+        "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107",
+        "exitCode": 0,
+        "stdout": "logs\\15.stdout",
+        "stderr": "logs\\15.stderr",
+        "stdoutSha256": "8fce85237f395570412de1200793526aca1f3bc8c5d76cc34d261a06f54ba39c",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": [
+          "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\dumpbin.exe",
+          "/imports",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\optimized\\abi-bootstrap-host.exe"
+        ],
+        "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107",
+        "exitCode": 0,
+        "stdout": "logs\\16.stdout",
+        "stderr": "logs\\16.stderr",
+        "stdoutSha256": "87192aea675a4b7b4a786cea42f219e34571d3243cb61f54dd8141d49582a508",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": [
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\optimized\\abi-bootstrap-host.exe",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\optimized\\brownie-bootstrap.dll"
+        ],
+        "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107",
+        "exitCode": 0,
+        "stdout": "logs\\17.stdout",
+        "stderr": "logs\\17.stderr",
+        "stdoutSha256": "613ed1f99e6644fb6b82b5e89921dc4fd45361a306ca26bbbc26efc2fb40f6eb",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "stacks": "MSVC defaults; no /STACK or compiler/linker environment overrides",
+    "scope": "bootstrap only; E01 and embedding remain incomplete",
+    "compiler": {
+      "path": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+      "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false\n"
+    },
+    "inputs": [
+      {
+        "path": "include/brownie.h",
+        "sha256": "a32d456c0ef9d32f095e1946f8ee68ef0e968d96df4555cec0e5af0736b03625"
+      },
+      {
+        "path": "src/abi_bootstrap.fy",
+        "sha256": "5566d58e30c3a2c42166c6e1f74973731237161c40a1214bc8a91c723edf5d05"
+      },
+      {
+        "path": "native/abi_bootstrap.c",
+        "sha256": "a716e295d1cc820e81db015332e662feff764fc4f81b0541b0a8d6dfda86c598"
+      },
+      {
+        "path": "tools/build-abi-bootstrap.py",
+        "sha256": "824c7c252d4f7c8db51fbb939da537d24b4c03e35eba128d8ac5489057e38437"
+      },
+      {
+        "path": "tools/abi-bootstrap/main.fy",
+        "sha256": "c27cd2312d003bc8d1fff512e79602b1de8823c5a03c109efb02326aa0c0139e"
+      },
+      {
+        "path": "tests/embed/abi_bootstrap_host.c",
+        "sha256": "9edc57d7fe96b7a298493fabb4f5aab8e9cae31c446ee6a654b539ed6d1c08b9"
+      },
+      {
+        "path": "native/abi_bootstrap_layout.h",
+        "sha256": "02cb11534e9b701915ea8d3b9dafd51ce737b81093b52deb0e5ecebf4149daae"
+      },
+      {
+        "path": "tools/abi-bootstrap/reference/host-abi.h",
+        "sha256": "cfc230a0ac1483fb00338206f66fd62a06539c2128c5378ba9bdc647a5ff5e90"
+      },
+      {
+        "path": "tools/abi-bootstrap/reference/abi-layout.json",
+        "sha256": "3330f91917e8f449855030343eb004e5d9fc3f9392023c3ce167472b5b8a63ea"
+      }
+    ],
+    "design": {
+      "source": "repository ABI references",
+      "archiveVerified": false,
+      "archivePath": null,
+      "archiveSha256": "9786d2d2a0d0cd9048a47d17f6fd5c4574cdbcaeec00d17570602fa541b7dc5e",
+      "headerSha256": "cfc230a0ac1483fb00338206f66fd62a06539c2128c5378ba9bdc647a5ff5e90",
+      "layoutSha256": "3330f91917e8f449855030343eb004e5d9fc3f9392023c3ce167472b5b8a63ea",
+      "embeddingDocSha256": null
+    },
+    "isolatedLockSha256": "c37f8d42656282469037bd013c1e20fb3597750e7f7a8f13b295bf614f0a84a5",
+    "privateTransportSha256": "0b05383737badf57699028ef9040432df3ed3ef0a2432e6236223369987deef8",
+    "msvc": {
+      "version": "14.51.36231",
+      "sdk": "10.0.26100.0",
+      "cl": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+      "clSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+      "dumpbinSha256": "730e0281b8b15751f5354cae3488524a3a9548f54122ef2e2daa31a85b0b2b4b",
+      "overrideEnvironment": {
+        "CL": false,
+        "_CL_": false,
+        "LINK": false
+      },
+      "standardEnvironment": {
+        "INCLUDE": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\include;C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.26100.0\\ucrt;C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.26100.0\\shared;C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.26100.0\\um",
+        "LIB": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\lib\\x64;C:\\Program Files (x86)\\Windows Kits\\10\\Lib\\10.0.26100.0\\ucrt\\x64;C:\\Program Files (x86)\\Windows Kits\\10\\Lib\\10.0.26100.0\\um\\x64"
+      }
+    },
+    "profiles": [
+      {
+        "profile": "development",
+        "exports": [
+          "bc_get_abi_info_v2"
+        ],
+        "result": "PASS abi-bootstrap: 53 DLL calls; exact metadata; failure preservation; canaries; guard pages; 10 unsupported exports absent",
+        "dll": {
+          "path": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\development\\brownie-bootstrap.dll",
+          "sha256": "ce3c5963dd965ef7105fe2cead7b192a11751bc19b1b087373f7700f226e1b38",
+          "machine": "AMD64",
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "host": {
+          "path": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\development\\abi-bootstrap-host.exe",
+          "sha256": "9d0d732ada65cfa82674b880b2e49a3497aabfe73857e5620be285db0fc4b5fd",
+          "machine": "AMD64",
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        }
+      },
+      {
+        "profile": "optimized",
+        "exports": [
+          "bc_get_abi_info_v2"
+        ],
+        "result": "PASS abi-bootstrap: 53 DLL calls; exact metadata; failure preservation; canaries; guard pages; 10 unsupported exports absent",
+        "dll": {
+          "path": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\optimized\\brownie-bootstrap.dll",
+          "sha256": "0a506bf5912f55ca5708b3bf31ac6d73c26345876f1d6485701736d363728e45",
+          "machine": "AMD64",
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "host": {
+          "path": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\\ucd5c\uc8853-\ud83e\uddea-20261107\\optimized\\abi-bootstrap-host.exe",
+          "sha256": "5bb09f1c9303b5d81998fa5d4050ddf1f077d5ab79239213ea0b04cc94693f62",
+          "machine": "AMD64",
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        }
+      }
+    ],
+    "runtimeEnvironment": "cleared; empty tool PATH"
+  },
+  "negativeControls": {
+    "status": "passed",
+    "cases": [
+      {
+        "case": "declaration",
+        "command": [
+          "C:\\Users\\cherr\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\integration-audit-final-20261107\\declaration\\tools\\build-abi-bootstrap.py",
+          "--compiler",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+          "--output",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\integration-audit-final-20261107\\declaration\\out"
+        ],
+        "exitCode": 1,
+        "expectedRejection": "Header declarations differ from canonical contract",
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "7e3273984778466dc0aafd1ea43c21ea51c672fbc707c324c1721869ad542f2e",
+        "nativeArtifacts": 0
+      },
+      {
+        "case": "transport",
+        "command": [
+          "C:\\Users\\cherr\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\integration-audit-final-20261107\\transport\\tools\\build-abi-bootstrap.py",
+          "--compiler",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+          "--output",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\integration-audit-final-20261107\\transport\\out"
+        ],
+        "exitCode": 1,
+        "expectedRejection": "Private transport/schema/symbol mismatch",
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "e6c9929b5c0a2e6a6f516653fa17e91ff536d7cbad18198486716eece77bb9cc",
+        "nativeArtifacts": 0
+      },
+      {
+        "case": "reference",
+        "command": [
+          "C:\\Users\\cherr\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\integration-audit-final-20261107\\reference\\tools\\build-abi-bootstrap.py",
+          "--compiler",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+          "--output",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\integration-audit-final-20261107\\reference\\out"
+        ],
+        "exitCode": 1,
+        "expectedRejection": "Canonical contract checksum mismatch",
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "d9e9e94c8c462208cbccb74d91a1b73e2aafca79bceecfa5dab2173d1fefeee9",
+        "nativeArtifacts": 0
+      },
+      {
+        "case": "empty-link",
+        "command": [
+          "C:\\Users\\cherr\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\integration-audit-final-20261107\\empty-link\\tools\\build-abi-bootstrap.py",
+          "--compiler",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+          "--output",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\integration-audit-final-20261107\\empty-link\\out"
+        ],
+        "exitCode": 1,
+        "expectedRejection": "CL/_CL_/LINK must be absent",
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "88eee823de7352129f54ee1c32da31e0d43ded52303ba3b7ba4a939bc54739ef",
+        "nativeArtifacts": 0
+      }
+    ]
+  },
+  "optionalArchiveProvenance": {
+    "schema": "browniec.abi-bootstrap/v1",
+    "status": "passed",
+    "capturedAt": "2026-11-07T05:37:53.597963+00:00",
+    "commands": [
+      {
+        "command": [
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+          "--version"
+        ],
+        "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107",
+        "exitCode": 0,
+        "stdout": "logs\\00.stdout",
+        "stderr": "logs\\00.stderr",
+        "stdoutSha256": "cfd188b9865777d7972b1c1e1c4e2e50d2735becbeca8627863cde0d38330e34",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": [
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+          "check"
+        ],
+        "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107\\project",
+        "exitCode": 0,
+        "stdout": "logs\\01.stdout",
+        "stderr": "logs\\01.stderr",
+        "stdoutSha256": "9e705889a50ea15837c57ac772f4ec2c30e66be13184e3e0a939b9fc283fe8f1",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": [
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+          "check",
+          "--locked"
+        ],
+        "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107\\project",
+        "exitCode": 0,
+        "stdout": "logs\\02.stdout",
+        "stderr": "logs\\02.stderr",
+        "stdoutSha256": "f95d346f042e92daa10da3d9dcc1b72a5ab3d0426c0f3f97761740eff6e68f0e",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": [
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+          "experimental",
+          "emit-workspace-c",
+          "--target",
+          "x86_64-windows-msvc",
+          "--locked"
+        ],
+        "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107\\project",
+        "exitCode": 0,
+        "stdout": "logs\\03.stdout",
+        "stderr": "logs\\03.stderr",
+        "stdoutSha256": "0b05383737badf57699028ef9040432df3ed3ef0a2432e6236223369987deef8",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe",
+          "-latest",
+          "-products",
+          "*",
+          "-requires",
+          "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
+          "-property",
+          "installationPath"
+        ],
+        "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107",
+        "exitCode": 0,
+        "stdout": "logs\\04.stdout",
+        "stderr": "logs\\04.stderr",
+        "stdoutSha256": "b4a0d87f781f41eea676ca53971351757a2ea9df0f254e6e93d326d60e611500",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": [
+          "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+          "/nologo",
+          "/TP",
+          "/std:c++17",
+          "/W4",
+          "/WX",
+          "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107\\inputs\\feature\\include",
+          "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107\\inputs\\feature\\native",
+          "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107",
+          "/c",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107\\inputs\\feature\\tests\\embed\\abi_bootstrap_host.c",
+          "/FoC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107\\layout-cxx.obj"
+        ],
+        "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107",
+        "exitCode": 0,
+        "stdout": "logs\\05.stdout",
+        "stderr": "logs\\05.stderr",
+        "stdoutSha256": "8fce85237f395570412de1200793526aca1f3bc8c5d76cc34d261a06f54ba39c",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": [
+          "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+          "/nologo",
+          "/TC",
+          "/std:c11",
+          "/MT",
+          "/W4",
+          "/WX",
+          "/Od",
+          "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107\\inputs\\feature\\include",
+          "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107\\inputs\\feature\\native",
+          "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107",
+          "/LD",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107\\inputs\\feature\\native\\abi_bootstrap.c",
+          "/FoC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107\\development\\bootstrap.obj",
+          "/FeC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107\\development\\brownie-bootstrap.dll",
+          "/link",
+          "/INCREMENTAL:NO",
+          "/Brepro",
+          "/IMPLIB:C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107\\development\\bootstrap.lib"
+        ],
+        "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107",
+        "exitCode": 0,
+        "stdout": "logs\\06.stdout",
+        "stderr": "logs\\06.stderr",
+        "stdoutSha256": "3d7cf0da510d99295667484aa56be3ab8126bfb09f1b7bae5c7e9bd3b7078edc",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": [
+          "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\dumpbin.exe",
+          "/exports",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107\\development\\brownie-bootstrap.dll"
+        ],
+        "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107",
+        "exitCode": 0,
+        "stdout": "logs\\07.stdout",
+        "stderr": "logs\\07.stderr",
+        "stdoutSha256": "031394738a5c5954ea488eea85c8b7e861609847aa9a075be92ff6e47dbe5271",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": [
+          "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\dumpbin.exe",
+          "/headers",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107\\development\\brownie-bootstrap.dll"
+        ],
+        "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107",
+        "exitCode": 0,
+        "stdout": "logs\\08.stdout",
+        "stderr": "logs\\08.stderr",
+        "stdoutSha256": "173afb1d3a8e9944b708f1ecee4f6f3a64ffb15fbbae51f5785f327b962b86fc",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": [
+          "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+          "/nologo",
+          "/TC",
+          "/std:c11",
+          "/MT",
+          "/W4",
+          "/WX",
+          "/Od",
+          "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107\\inputs\\feature\\include",
+          "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107\\inputs\\feature\\native",
+          "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107\\inputs\\feature\\tests\\embed\\abi_bootstrap_host.c",
+          "/FoC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107\\development\\host.obj",
+          "/FeC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107\\development\\abi-bootstrap-host.exe",
+          "/link",
+          "/INCREMENTAL:NO",
+          "/Brepro"
+        ],
+        "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107",
+        "exitCode": 0,
+        "stdout": "logs\\09.stdout",
+        "stderr": "logs\\09.stderr",
+        "stdoutSha256": "8fce85237f395570412de1200793526aca1f3bc8c5d76cc34d261a06f54ba39c",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": [
+          "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\dumpbin.exe",
+          "/imports",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107\\development\\abi-bootstrap-host.exe"
+        ],
+        "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107",
+        "exitCode": 0,
+        "stdout": "logs\\10.stdout",
+        "stderr": "logs\\10.stderr",
+        "stdoutSha256": "993afbe8c451fe227f6fa9092e7cc3a6e46851905b56538d4c984ca4d5bfeb64",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "command": [
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107\\development\\abi-bootstrap-host.exe",
+          "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107\\development\\brownie-bootstrap.dll"
+        ],
+        "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107",
+        "exitCode": 0,
+        "stdout": "logs\\11.stdout",
+        "stderr": "logs\\11.stderr",
+        "stdoutSha256": "613ed1f99e6644fb6b82b5e89921dc4fd45361a306ca26bbbc26efc2fb40f6eb",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "stacks": "MSVC defaults; no /STACK or compiler/linker environment overrides",
+    "scope": "bootstrap only; E01 and embedding remain incomplete",
+    "compiler": {
+      "path": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+      "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false\n"
+    },
+    "inputs": [
+      {
+        "path": "include/brownie.h",
+        "sha256": "a32d456c0ef9d32f095e1946f8ee68ef0e968d96df4555cec0e5af0736b03625"
+      },
+      {
+        "path": "src/abi_bootstrap.fy",
+        "sha256": "5566d58e30c3a2c42166c6e1f74973731237161c40a1214bc8a91c723edf5d05"
+      },
+      {
+        "path": "native/abi_bootstrap.c",
+        "sha256": "a716e295d1cc820e81db015332e662feff764fc4f81b0541b0a8d6dfda86c598"
+      },
+      {
+        "path": "tools/build-abi-bootstrap.py",
+        "sha256": "824c7c252d4f7c8db51fbb939da537d24b4c03e35eba128d8ac5489057e38437"
+      },
+      {
+        "path": "tools/abi-bootstrap/main.fy",
+        "sha256": "c27cd2312d003bc8d1fff512e79602b1de8823c5a03c109efb02326aa0c0139e"
+      },
+      {
+        "path": "tests/embed/abi_bootstrap_host.c",
+        "sha256": "9edc57d7fe96b7a298493fabb4f5aab8e9cae31c446ee6a654b539ed6d1c08b9"
+      },
+      {
+        "path": "native/abi_bootstrap_layout.h",
+        "sha256": "02cb11534e9b701915ea8d3b9dafd51ce737b81093b52deb0e5ecebf4149daae"
+      },
+      {
+        "path": "tools/abi-bootstrap/reference/host-abi.h",
+        "sha256": "cfc230a0ac1483fb00338206f66fd62a06539c2128c5378ba9bdc647a5ff5e90"
+      },
+      {
+        "path": "tools/abi-bootstrap/reference/abi-layout.json",
+        "sha256": "3330f91917e8f449855030343eb004e5d9fc3f9392023c3ce167472b5b8a63ea"
+      }
+    ],
+    "design": {
+      "source": "repository ABI references",
+      "archiveVerified": true,
+      "archivePath": "C:\\Users\\cherr\\Downloads\\brownie-c-design-v0.3.0.zip",
+      "archiveSha256": "9786d2d2a0d0cd9048a47d17f6fd5c4574cdbcaeec00d17570602fa541b7dc5e",
+      "headerSha256": "cfc230a0ac1483fb00338206f66fd62a06539c2128c5378ba9bdc647a5ff5e90",
+      "layoutSha256": "3330f91917e8f449855030343eb004e5d9fc3f9392023c3ce167472b5b8a63ea",
+      "embeddingDocSha256": "2d8b9234b5c1ba4fe83fe653281563898492499b58379240ffa6c679fdb4556f"
+    },
+    "isolatedLockSha256": "c37f8d42656282469037bd013c1e20fb3597750e7f7a8f13b295bf614f0a84a5",
+    "privateTransportSha256": "0b05383737badf57699028ef9040432df3ed3ef0a2432e6236223369987deef8",
+    "msvc": {
+      "version": "14.51.36231",
+      "sdk": "10.0.26100.0",
+      "cl": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+      "clSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+      "dumpbinSha256": "730e0281b8b15751f5354cae3488524a3a9548f54122ef2e2daa31a85b0b2b4b",
+      "overrideEnvironment": {
+        "CL": false,
+        "_CL_": false,
+        "LINK": false
+      },
+      "standardEnvironment": {
+        "INCLUDE": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\include;C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.26100.0\\ucrt;C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.26100.0\\shared;C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.26100.0\\um",
+        "LIB": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\lib\\x64;C:\\Program Files (x86)\\Windows Kits\\10\\Lib\\10.0.26100.0\\ucrt\\x64;C:\\Program Files (x86)\\Windows Kits\\10\\Lib\\10.0.26100.0\\um\\x64"
+      }
+    },
+    "profiles": [
+      {
+        "profile": "development",
+        "exports": [
+          "bc_get_abi_info_v2"
+        ],
+        "result": "PASS abi-bootstrap: 53 DLL calls; exact metadata; failure preservation; canaries; guard pages; 10 unsupported exports absent",
+        "dll": {
+          "path": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107\\development\\brownie-bootstrap.dll",
+          "sha256": "ce3c5963dd965ef7105fe2cead7b192a11751bc19b1b087373f7700f226e1b38",
+          "machine": "AMD64",
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "host": {
+          "path": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-bootstrap\\provenance-20261107\\development\\abi-bootstrap-host.exe",
+          "sha256": "9d0d732ada65cfa82674b880b2e49a3497aabfe73857e5620be285db0fc4b5fd",
+          "machine": "AMD64",
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        }
+      }
+    ],
+    "runtimeEnvironment": "cleared; empty tool PATH"
+  },
+  "semantics": {
+    "abiRevision": 2,
+    "actualCToDllCallsPerProfile": 53,
+    "outputBytes": 32,
+    "bootstrapExportOnly": true,
+    "absentPlannedExports": 10,
+    "compiledFairyValidationAndMetadata": true,
+    "cAndCppLayoutChecked": true,
+    "failureMemoryPreserved": true,
+    "guardPagesChecked": true,
+    "unicodeOutputPath": true,
+    "originalArchiveRequired": false,
+    "compilerRuntimePath": false,
+    "publicEmbedEnabled": false,
+    "fullE01Complete": false
+  },
+  "limitations": [
+    "Bootstrap metadata only; no Engine/Program/Instance/handle API or VM execution in DLL.",
+    "No public embedding availability, restricted-process, other-platform or clean-machine evidence.",
+    "Native callers provide valid success output pointers; no arbitrary pointer recovery.",
+    "Private generated C transport/compiler identity deliberately bound until reviewed toolchain adoption."
+  ],
+  "delivery": {
+    "localOnly": true,
+    "pushed": false,
+    "released": false,
+    "deployed": false
+  }
+}

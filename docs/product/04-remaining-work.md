@@ -1,4 +1,16 @@
-- Latest terminal-operands checkpoint (2026-11-07): [Final Buffer/view operands](../engineering/value-terminal-operands.md)
+- Latest ABI-bootstrap checkpoint (2026-11-07): [Windows DLL query](../engineering/abi-bootstrap.md)
+  now exports only `bc_get_abi_info_v2`; Fairy owns admission/metadata and a small
+  native shim marshals the exact 32-byte result. `ad86fc9` passed 53 real DLL calls
+  in each development/optimized profile, C/C++ layouts, guard pages, singleton
+  exports and four fail-closed controls. Unicode output and empty tool PATH pass.
+  Build uses included ABI references; the original ZIP is optional provenance.
+  All 228 root/feature inputs match checkout/Git raw bytes; all 217 production
+  modules retain LF. Native bootstrap freezes nine feature inputs; it does not
+  execute the VM. See [evidence](../evidence/abi-bootstrap-windows-20261107.json).
+  E01/full embedding, Engine/Instance/handles and all other accepted inventory
+  work remain open. CLI availability/Fuel/gates are unchanged. Local only.
+
+- Predecessor terminal-operands checkpoint (2026-11-07): [Final Buffer/view operands](../engineering/value-terminal-operands.md)
   now propagate terminal control after real receiver/index work without the
   enclosing byte operation or duplicate cleanup. `093475d` passed five new
   development groups across two scoped snapshots, seven integrated development
@@ -623,7 +635,7 @@ requirements of this audit. They need a justified profile decision if desired.
 
 | ID | Work and completion condition |
 | --- | --- |
-| E01 | Establish an actual Brownie native DLL export and C-host call for public ABI revision 2, including `bc_get_abi_info_v2` and bootstrap/layout/version/capacity validation. Existing Fairy pub functions or historical adapter inspection are not Brownie export evidence. |
+| E01 | [Actual Windows DLL bootstrap](../engineering/abi-bootstrap.md) now exports and executes `bc_get_abi_info_v2`, with compiled Fairy validation/metadata, exact C/C++ layouts, capacity/revision/null rejection, untouched failure storage and 53 real calls per development/optimized profile. Only that symbol is exported; all ten planned APIs are absent. Remaining: connect real Engine/Program/Instance/VM ABI execution and complete E02/E03/lifecycle before full E01 or embedding availability. Existing Fairy pub visibility alone remains insufficient evidence. |
 | E02 | Implement the bounded process-wide lazy typed handle registry, nonwrapping/retired generations, Engine ownership, owner-thread lifetime identity, synchronization and busy/reentry rejection. Do not pretend arbitrary C pointers can be validated safely. |
 | E03 | Implement Program/Instance pin/release/destroy, sized output structs, event/reply/output pointer lifetimes and stable terminal metrics/errors across C calls, including malformed/wrong-thread/stale-handle cases. |
 | E04 | Package executable/required runtime (and DLL for embed), license/dependency notices and integrity metadata; run without developer compilers on a clean Windows machine. Verify Linux natively before promising Linux support: the toolchain has a Linux cross-build artifact, not a Brownie Linux execution pass. |

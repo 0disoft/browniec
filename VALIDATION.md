@@ -1,4 +1,16 @@
-- Latest terminal-operands checkpoint (2026-11-07): [Final Buffer/view operands](docs/engineering/value-terminal-operands.md)
+- Latest ABI-bootstrap checkpoint (2026-11-07): [Windows DLL query](docs/engineering/abi-bootstrap.md)
+  now exports only `bc_get_abi_info_v2`; Fairy owns admission/metadata and a small
+  native shim marshals the exact 32-byte result. `ad86fc9` passed 53 real DLL calls
+  in each development/optimized profile, C/C++ layouts, guard pages, singleton
+  exports and four fail-closed controls. Unicode output and empty tool PATH pass.
+  Build uses included ABI references; the original ZIP is optional provenance.
+  All 228 root/feature inputs match checkout/Git raw bytes; all 217 production
+  modules retain LF. Native bootstrap freezes nine feature inputs; it does not
+  execute the VM. See [evidence](docs/evidence/abi-bootstrap-windows-20261107.json).
+  E01/full embedding, Engine/Instance/handles and all other accepted inventory
+  work remain open. CLI availability/Fuel/gates are unchanged. Local only.
+
+- Predecessor terminal-operands checkpoint (2026-11-07): [Final Buffer/view operands](docs/engineering/value-terminal-operands.md)
   now propagate terminal control after real receiver/index work without the
   enclosing byte operation or duplicate cleanup. `093475d` passed five new
   development groups across two scoped snapshots, seven integrated development
@@ -45,6 +57,23 @@
   price, public gate or Fuel default/cap change. Next: fresh loop-carried owners,
   private safe casts, remaining bottom/general references, methods/AllocError and
   runtime/host/platform work. Full completion remains open. Local only.
+
+## Actual Windows DLL ABI bootstrap: verified subset
+
+`python tools/build-abi-bootstrap.py` builds only the real query DLL and C host,
+using included canonical references rather than requiring the original ZIP.
+On `ad86fc9`, development and optimized hosts each passed 53 actual DLL calls,
+with exact layout, untouched failure outputs, canaries and guard pages. C++17
+layout compilation and dumpbin singleton-export/host-import checks also passed.
+A Unicode output directory and a cleared runtime environment with empty tool
+PATH pass. Four builder rejection controls create no native objects or DLLs.
+All four PE files retain default stacks; no compiler/linker environment override
+is accepted. Root `fairyc check --locked` passes 225 sources / 2450 MIR functions.
+The [contract](docs/engineering/abi-bootstrap.md) and
+[evidence](docs/evidence/abi-bootstrap-windows-20261107.json) bind nine frozen
+native-feature inputs and all 228 root/feature Git-raw matching inputs.
+This proves bootstrap only: Engine/Instance/VM exports, full E01, public embedding,
+other platforms and clean-machine/package validation remain open.
 
 ## Private terminal Buffer/view operands: Windows verified
 

@@ -142,10 +142,13 @@ external source belongs in a restricted process with AppContainer access limits,
 Job resource limits, a bounded parent broker, and independently verified Windows
 IPC. Preparation failure must not fall back to an unrestricted child.
 
-The Brownie ABI is planned, not present. Historical inspection of the Fairy
-pub/callback adapter was not Brownie export evidence. The adopted toolchain is
-recorded in `toolchain.json`; an actual Brownie DLL symbol export and C-host call
-still belong to the embed milestone.
+The [Windows ABI bootstrap](docs/engineering/abi-bootstrap.md) now exports a real
+`bc_get_abi_info_v2` query with Fairy-compiled validation/metadata and a small native
+layout shim. Actual C-host calls, C/C++ layout checks and output boundaries are
+verified for that query. Engine/Program/Instance/handle/VM exports, full E01 and
+embedding availability remain incomplete; the CLI keeps embed=false. Historical
+Fairy pub/callback visibility alone is still not Brownie export evidence. The
+adopted toolchain remains recorded in `toolchain.json`.
 
 ## Failure and publication
 

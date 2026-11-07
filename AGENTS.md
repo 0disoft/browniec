@@ -1,14 +1,14 @@
-- Latest terminal-operands checkpoint (2026-11-07): [Final Buffer/view operands](docs/engineering/value-terminal-operands.md)
-  now propagate terminal control after real receiver/index work without the
-  enclosing byte operation or duplicate cleanup. `093475d` passed five new
-  development groups across two scoped snapshots, seven integrated development
-  regressions and all twelve final release groups. The four retained group bodies
-  and helpers are byte-identical; only an ambiguous .none fixture was annotated.
-  All 227 union inputs match checkout/Git raw bytes; all 216 production modules
-  retain LF. See [evidence](docs/evidence/value-terminal-operands-windows-20261107.json).
-  The combined 32/33 fixture and existing opcodes/prices/public/Fuel gates remain.
-  Nonfinal/unreachable contexts, fresh loop owners, general references and the
-  full runtime/host/isolation/embed/platform/delivery inventory remain open. Local only.
+- Latest ABI-bootstrap checkpoint (2026-11-07): [Windows DLL query](docs/engineering/abi-bootstrap.md)
+  now exports only `bc_get_abi_info_v2`; Fairy owns admission/metadata and a small
+  native shim marshals the exact 32-byte result. `ad86fc9` passed 53 real DLL calls
+  in each development/optimized profile, C/C++ layouts, guard pages, singleton
+  exports and four fail-closed controls. Unicode output and empty tool PATH pass.
+  Build uses included ABI references; the original ZIP is optional provenance.
+  All 228 root/feature inputs match checkout/Git raw bytes; all 217 production
+  modules retain LF. Native bootstrap freezes nine feature inputs; it does not
+  execute the VM. See [evidence](docs/evidence/abi-bootstrap-windows-20261107.json).
+  E01/full embedding, Engine/Instance/handles and all other accepted inventory
+  work remain open. CLI availability/Fuel/gates are unchanged. Local only.
 
 # Brownie C agent guidance
 
