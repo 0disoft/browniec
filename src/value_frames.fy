@@ -464,6 +464,31 @@ pub fn Result<usize,Error> drop(ref layouts::Plan plan,ref mut State state,ref m
     let properties::Property p=switch(codec::shape(layouts::layout(plan),id)){case .ok(v):{v}case .err(_):{return .err(.Type);}};
     let usize spent=paid(operation(p.bytes)?,fuel)?;return retire(plan,state,frames,source,root_state,roots,root_scratch);
 }
+// Conditional cleanup uses physical native liveness, never a guest owner word.
+// Both paths authenticate the activation and exact Buffer type and pay equally.
+pub fn Result<usize,Error> drop_if_live(ref layouts::Plan plan,ref mut State state,ref mut vec::Vec<bytes::Buffer> frames,
+    Address source,ref mut owners::State root_state,ref mut vec::Vec<bytes::Buffer> roots,
+    ref mut vec::Vec<bytes::Buffer> root_scratch,ref mut usize fuel){
+    if(source.slot>=16 || source.frame>=32){return .err(.Bounds);}
+    let usize spent=paid(operation(8)?,fuel)?;
+    let usize width=active_frame(plan,state,frames,source.frame,source.generation)?;
+    let usize one=1;let bool live=(state.frames[source.frame].live&(one<<source.slot))!=0;
+    let Slot src=address(plan,state,frames,source,live)?;
+    let properties::Node n=switch(codec::node(layouts::layout(plan),src.type_id)){
+        case .ok(v):{v}case .err(_):{return .err(.Type);}
+    };
+    if(n.kind!=4){return .err(.Type);}
+    if(live){return retire(plan,state,frames,source,root_state,roots,root_scratch);}
+    let ref u8[] data=bytes::view(vec::at<bytes::Buffer>(frames,source.frame));
+    var usize i=src.offset;while(i<src.offset+src.width){if(data[i]!=0){return .err(.Value);}i+=1;}
+    let usize count=switch(owners::inspect_store(root_state,roots,root_scratch)){
+        case .ok(v):{v}case .err(e):{return .err(owned(e));}
+    };
+    i=0;while(i<count){
+        if(root_state.rows[i].binding==src.binding){return .err(.Owner);}i+=1;
+    }
+    return .ok(src.width);
+}
 // Frame entry prepaid reverse initialization-order cleanup and backing release.
 // No guest callback or additional Fuel is required, even at zero remaining Fuel.
 pub fn Result<usize,Error> leave(ref layouts::Plan plan,ref mut State state,

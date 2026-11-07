@@ -65,8 +65,8 @@ fn Result<usize,errors::Error> function(ref values::Program unit,ref values::Pre
             let usize checked=unpinned(ref origins,a,pc)?;
         }else if(op==110 || op==111){
             if(origins[a]==0){return .err(invalid(pc));}
-        }else if(op==88 || op==89 || op==90 || op==101 || op==102 || op==103 || op==104){
-            let usize owner=if(op==90 || op==101){dst}else{a};
+        }else if(op==88 || op==89 || op==90 || op==115 || op==101 || op==102 || op==103 || op==104){
+            let usize owner=if(op==90 || op==115 || op==101){dst}else{a};
             let usize checked=unpinned(ref origins,owner,pc)?;
         }else if(op==91){
             if(values::payload(unit,dst,b,pc)?!=0 && !values::copyable(unit,proof,a)){

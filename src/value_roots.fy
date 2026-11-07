@@ -86,6 +86,9 @@ fn Result<usize,Error> ready(ref State s,ref vec::Vec<bytes::Buffer> roots,ref v
     i=0;while(i<16){if(s.table.slots[i].live!=((occupied&(one<<i))!=0)){return .err(.State);}i+=1;}
     return .ok(count);
 }
+// Pure native preflight for coordinators that have no live serial to resolve.
+pub fn Result<usize,Error> inspect_store(ref State s,ref vec::Vec<bytes::Buffer> roots,
+    ref vec::Vec<bytes::Buffer> scratch){return ready(s,roots,scratch);}
 // External native registry metadata shares quotas but cannot refund root charges.
 // Stage all accounting before publishing either the ledger or external balance.
 pub fn Result<usize,Error> admit_metadata(ref mut State s,ref vec::Vec<bytes::Buffer> roots,

@@ -21,6 +21,7 @@ import errors as errors;
 // 112 APPEND_VIEW result-dst,Buffer-a,view-b. Views use a separate 16-slot frame
 // domain; no view words inhabit canonical values or scalar registers.
 // 113 VIEW_RETURN 0,view-a,0; 114 VIEW_CALL view-dst,callee,map.
+// 115 DROP_IF_LIVE Buffer-dst,0,0: retire a physically present owner only.
 // Buffer mutations retain owners; results are exact Result<usize,u8>.
 // TAG_TEST only inspects a live wrapper; it never defines/consumes a value slot.
 // Except CASE/VIEW_BEGIN/VIEW_RANGE byte4, bytes4..7 are zero.
@@ -38,7 +39,7 @@ pub struct Program {
 pub struct Sites { bool enabled; u8[128] parameters; u8[16] results; u8[16] scalar_tags; }
 pub struct Prepared { properties::Plan properties; usize[64] classes; Sites sites; }
 pub fn Sites empty(){return Sites{.enabled=false,.parameters=[0;128],.results=[0;16],.scalar_tags=[0;16]};}
-pub fn bool operation(u8 op){return op>=88 && op<=114;}
+pub fn bool operation(u8 op){return op>=88 && op<=115;}
 fn errors::Error invalid(usize pc){return errors::make(5,pc);}
 pub fn bool slot(ref Program unit,usize id,usize f){
     return id<16 && unit.types[id]!=0 && unit.functions[id] as usize==f;
@@ -175,7 +176,9 @@ pub fn Result<usize,errors::Error> instruction(ref Program unit,ref Prepared pro
     let ref ir::Program p=ref unit.body;let usize at=pc*8;let u8 op=p.code[at];
     let usize dst=p.code[at+1] as usize;let usize a=p.code[at+2] as usize;let usize b=p.code[at+3] as usize;
     if(!operation(op) || (op!=92 && op!=105 && op!=106 && p.code[at+4]!=0) || p.code[at+5]!=0 || p.code[at+6]!=0 || p.code[at+7]!=0){return .err(invalid(pc));}
-    if(op==113){
+    if(op==115){
+        if(!buffer(unit,dst,f) || a!=0 || b!=0){return .err(invalid(pc));}
+    }else if(op==113){
         if(dst!=0 || a>=16 || b!=0 || unit.results[f]<17 || unit.results[f]>24){return .err(invalid(pc));}
     }else if(op==114){return call(unit,proof,pc,f);
     }else if(op==112){

@@ -106,6 +106,13 @@ pub fn Result<Step,errors::Error> instruction_views(ref programs::Program progra
     let ref mut frames::State state=vec::at_mut<frames::State>(states,0);
     let ref mut owners::State owned=vec::at_mut<owners::State>(owner_states,0);
     let ref layouts::Plan plan=programs::layout(program);var usize remaining=fuel;
+    if(op==115){
+        if(dst>=16 || a!=0 || b!=0){return .err(errors::make(5,offset));}
+        var usize i=4;while(i<8){if(body.code[code+i]!=0){return .err(errors::make(5,offset));}i+=1;}
+        switch(frames::drop_if_live(plan,state,data,at(current,dst),owned,roots,root_scratch,ref mut remaining)){
+            case .ok(_):{}case .err(e):{return .err(failure(e,offset));}
+        };return .ok(Step{.pc=pc+1,.remaining=remaining});
+    }
     if(op==112){
         var usize i=4;while(i<8){if(body.code[code+i]!=0){return .err(errors::make(5,offset));}i+=1;}
         switch(view_copy::instruction(dst,a,b as usize,current,plan,state,owned,data,
