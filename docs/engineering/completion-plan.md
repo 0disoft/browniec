@@ -1,23 +1,19 @@
-- Latest record-work checkpoint (2026-11-08): [Resumable record operations](runtime-record-chunks.md)
-  records implementation `0a73d08`. CREATE41/COPY42/ASSIGN46/child COPY47/
-  REPLACE48/child REPLACE49 now share the 4096-byte allowance with array/list/output
-  work. Actual selected record STORE85/REPLACE87 normalize to 47/49 and preserve
-  SELECT snapshots, tickets and prices. Complete canonical staging (<=1280 field
-  bytes or <=384 copy bytes) must fit before unit/Fuel admission; it precedes all
-  destination writes. Partial commits reauthenticate roots/ranges and resume at
-  zero Fuel; new owners publish only after the final byte. Identity copies still
-  normalize padding; same-owner child copies snapshot before writes. Five kernel/
-  five Engine groups plus regressions pass development/O2: six operations/six
-  scalar domains, nine actual source modes, depth16/128-bool boundaries, exact/
-  one-less Fuel, cancellation, moves and released pins. Zero resume allocation
-  attempts/SDK heap at exit; default stacks. Five words+128 inline scratch add
-  168 bytes: shared work 360, Cursor 432, Machine 880; Core remains 120880. Vec8
-  work adds 2880 bytes (+1344 versus lists), under existing layout accounting.
-  All 260 receipt inputs match checkout/committed Git; 33 bindings/30 layouts
-  reviewed. Root locked check: 266 sources/2992 MIR; 258 production LF modules.
-  Metadata/planning, CALL/RET, setup/compile proof/seal/cleanup, deadlines/poison
-  and public lifecycle/ABI/CLI remain open; R03-R05/full inventory incomplete.
-  Three disjoint Sol High workers; serial integration/commits. Local only.
+- Latest CALL-copy kernel checkpoint (2026-11-08): [Owned argument chunks](runtime-call-argument-chunks.md)
+  implementation `4e9c7c6` passes five native groups per development/O2 plus
+  existing Engine regressions. Eight maximum i64 arguments copy 262144 bytes in
+  64 full advances; eight bool arguments validate then copy in 16 advances.
+  Complete bool validation precedes every destination write; only the final byte
+  publishes the entire owner batch. Repeated sources, canonical record padding,
+  original mixed error order, poisoned Value retries, source extent/generation,
+  loan/reservation/counter/budget faults and cancellation pass without SDK
+  allocation attempts. All 263 receipt inputs match checkout/committed Git;
+  33 bindings/30 layouts are recursively unchanged, default stacks and zero SDK
+  heap at exit. Root locked check: 268 sources/3006 MIR; 260 production LF modules.
+  This is an independent kernel; VM CALL Fuel/capture/frame/PC integration stays
+  next. Pending Machine/Core/Vec8 layout and existing public gates/prices remain.
+  Metadata bounds, CALL/RET, setup/proof/seal/cleanup, deadlines/poison and public
+  lifecycle/ABI/CLI/full inventory remain open; R03-R05 incomplete. Two disjoint
+  Sol High workers, serial integration and local commits; no remote changes.
 
 - Predecessor immutable-input execution checkpoint (2026-11-07): [Actual 1MiB input](module-input-execution.md)
   integrates input windows `3503aba` and owning Program execution `c86aff6`.

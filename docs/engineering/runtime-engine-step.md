@@ -81,6 +81,10 @@ records development/O2 success, default stacks, zero SDK heap at exit and exact
 checkout/Git identities. The transport now reviews 33 typed bindings and 24
 layouts, including Output's Execution/completion/publication/Machine fields.
 
+The [owned CALL-copy kernel](runtime-call-argument-chunks.md) separately passes
+five native groups per development/O2 with zero allocation attempts. It has not
+yet replaced the VM CALL entry transaction; pending Engine layout is unchanged.
+
 ## Remaining accepted work
 
 Dispatch visits do not bound all bytes, metadata visits or native time. Output

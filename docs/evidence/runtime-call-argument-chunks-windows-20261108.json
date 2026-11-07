@@ -1,0 +1,217 @@
+{
+  "schema": "browniec.runtime-call-argument-chunks-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-07T18:16:53.573329+00:00",
+  "implementationCommit": "4e9c7c61c5d29afb0c1ceac5ceb0de620d8eef3f",
+  "verifiedCommit": "4e9c7c61c5d29afb0c1ceac5ceb0de620d8eef3f",
+  "commands": [
+    "build/toolchain/fairyc.exe check",
+    "python tools/review-runtime-engine-transport.py",
+    "build/toolchain/fairyc.exe check --locked",
+    "python tools/verify-runtime-engine.py --profile all"
+  ],
+  "receipt": {
+    "path": "build/runtime-engine/20261107T181247022882Z/receipt.json",
+    "sha256": "dd94db6ba4ed0345ad09ca05dc1b0af0e4275bd33d2e9162a84d8d203468f952"
+  },
+  "compiler": {
+    "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+    "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+    "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false"
+  },
+  "msvc": {
+    "version": "14.51.36231",
+    "sdk": "10.0.26100.0",
+    "compilerSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+    "overrides": false
+  },
+  "profiles": [
+    {
+      "profile": "development",
+      "artifact": {
+        "path": "build/runtime-engine/20261107T181247022882Z/development/runtime-engine.exe",
+        "sha256": "fdae1cedfb6412b7863741b284fad41290050b2114f4b7692191b3a30eeeb75b",
+        "bytes": 8733184,
+        "stackReserve": 1048576,
+        "stackCommit": 4096
+      },
+      "exit": 0,
+      "controlMetrics": {
+        "cases": 6,
+        "smallHeapBytes": 7744,
+        "maximumHeapBytes": 61952,
+        "ownerBytes": 736
+      },
+      "preparationMetrics": {
+        "cacheBytes": 1328,
+        "storedBytes": 23344,
+        "previousStoredBytes": 22016,
+        "retainedVecExtraBytes": 10624
+      },
+      "arrayFillMetrics": {
+        "arrayWorkBytes": 360,
+        "cursorBytes": 432,
+        "machineBytes": 880,
+        "coreBytes": 120880,
+        "pendingVecExtraBytes": 2880
+      },
+      "liveHeapAllocationsAtExit": 0,
+      "assertions": "native Fairy and C, no parsed trace",
+      "objects": [
+        {
+          "path": "build/runtime-engine/20261107T181247022882Z/development/transport.obj",
+          "sha256": "ead2fec4a5d6934278a65a1943c6eb7972cb5b3eab89eafa764a8c927d866542"
+        },
+        {
+          "path": "build/runtime-engine/20261107T181247022882Z/development/runtime.obj",
+          "sha256": "c78ce65760e017b0403c80cbe4b32470b357fea88e6c777d5153170c6ce220fd"
+        },
+        {
+          "path": "build/runtime-engine/20261107T181247022882Z/development/abi_thread_identity.obj",
+          "sha256": "4c56a444c5a073d384c353675e5cf60c8c1378de129ac553d50c9d0bced04e59"
+        },
+        {
+          "path": "build/runtime-engine/20261107T181247022882Z/development/input_reader.obj",
+          "sha256": "8b7e1ca7493000e4a2b7f3937608a35ef4db975db23b4eb3346e5e8ab9369ae8"
+        },
+        {
+          "path": "build/runtime-engine/20261107T181247022882Z/development/input_adoption.obj",
+          "sha256": "67140787fb2249b669b82bf06ac6d83d2df3898c36387cfa029bb5a90a3fb92e"
+        }
+      ]
+    },
+    {
+      "profile": "release",
+      "artifact": {
+        "path": "build/runtime-engine/20261107T181247022882Z/release/runtime-engine.exe",
+        "sha256": "a3300b66ff76218657f3a1c9d4a6b435788a25dd225b987365643462d781a9fd",
+        "bytes": 3359744,
+        "stackReserve": 1048576,
+        "stackCommit": 4096
+      },
+      "exit": 0,
+      "controlMetrics": {
+        "cases": 6,
+        "smallHeapBytes": 7744,
+        "maximumHeapBytes": 61952,
+        "ownerBytes": 736
+      },
+      "preparationMetrics": {
+        "cacheBytes": 1328,
+        "storedBytes": 23344,
+        "previousStoredBytes": 22016,
+        "retainedVecExtraBytes": 10624
+      },
+      "arrayFillMetrics": {
+        "arrayWorkBytes": 360,
+        "cursorBytes": 432,
+        "machineBytes": 880,
+        "coreBytes": 120880,
+        "pendingVecExtraBytes": 2880
+      },
+      "liveHeapAllocationsAtExit": 0,
+      "assertions": "native Fairy and C, no parsed trace",
+      "objects": [
+        {
+          "path": "build/runtime-engine/20261107T181247022882Z/release/transport.obj",
+          "sha256": "1f7a065c2b2a96d1b80e8f4f445ac054a4813004af8fc6796c726b4d64725c02"
+        },
+        {
+          "path": "build/runtime-engine/20261107T181247022882Z/release/runtime.obj",
+          "sha256": "3c85cfa5384ea4d989cd2648c13302f129481ca9047c549f67e837d9b9ff1d5b"
+        },
+        {
+          "path": "build/runtime-engine/20261107T181247022882Z/release/abi_thread_identity.obj",
+          "sha256": "4fe2ccd7b9054cd85065b6fb0e9d394483dd9b6c167a96bb2237e147e47cc84c"
+        },
+        {
+          "path": "build/runtime-engine/20261107T181247022882Z/release/input_reader.obj",
+          "sha256": "7755a3ce78025629fe5304c3f60b94840261048c11200572fefd532dc794f51e"
+        },
+        {
+          "path": "build/runtime-engine/20261107T181247022882Z/release/input_adoption.obj",
+          "sha256": "dfea3423cba36d67704af0abe1bbbb672f0b5fa9622dcc53867be38685fda0d3"
+        }
+      ]
+    }
+  ],
+  "inputVerification": {
+    "count": 263,
+    "sourceClosure": 249,
+    "checkoutMatch": true,
+    "committedGitMatch": true,
+    "inputsSha256": "f1ed84e147dfa24282bdc252184320ed097903234b67aec231c8166b3c986f38",
+    "reviewedSourceContract": "native/runtime-engine/transport.json"
+  },
+  "featureInputs": [
+    {
+      "path": "fairy.lock",
+      "sha256": "95f4da772f40bb6b98d7a4f4cc34e498f9e324e580acb7e92b0e045d192c0897"
+    },
+    {
+      "path": "native/runtime-engine/transport.json",
+      "sha256": "563649a06752f23641a729ba4d40f10a7151974a83ddcc9296dd2046a70894b0"
+    },
+    {
+      "path": "src/array_owners.fy",
+      "sha256": "daf60909c3cef917f74d07393d4fd30b66666286531774cd1f3d5fbbfb16e858"
+    },
+    {
+      "path": "src/struct_nested_storage.fy",
+      "sha256": "4fe261742bb9ddc421cde7033affe00e1add1a2e9d0471b336a0e761dfa870a9"
+    },
+    {
+      "path": "src/call_copy_cursor.fy",
+      "sha256": "b55c16eea898b196d2e8dce485ba64b0853e5ba76d490234971dbb0875b68503"
+    },
+    {
+      "path": "src/call_copy_work.fy",
+      "sha256": "f9d721a93f6b5acf3b2bb231b6acd0375998bbc6f9489aa4084b3cf252df0bb1"
+    },
+    {
+      "path": "tools/runtime-engine/main.fy",
+      "sha256": "2bf236c1fd6b18d09ad6828b3e3eaff9e5047b6ce480aa275b9fe455e1e262a9"
+    },
+    {
+      "path": "tools/runtime-engine/call_copy_work_tests.fy",
+      "sha256": "bb58c30acc4a403813005c04eac233a2e67bd3775299990cdc396685a16c2131"
+    }
+  ],
+  "transportReview": {
+    "typedBindings": 33,
+    "layouts": 30,
+    "recursiveStructureUnchanged": true,
+    "scalarWidthsAndArrayLengthsPreserved": true
+  },
+  "rootCheck": {
+    "sources": 268,
+    "mirFunctions": 3006,
+    "lockVerified": true,
+    "productionLfModules": 260
+  },
+  "kernelGroups": [
+    "six-scalar and nested padded-record atomic parity with repeated sources",
+    "eight maximum i64/bool arguments and exact 64/16 batches",
+    "late invalid bool, original mixed diagnostic order and poisoned retry",
+    "validation/copy metadata, source extent, generation, loan, counter and budget rejection",
+    "alignment padding, final whole-batch publication, cancellation and zero arguments"
+  ],
+  "accounting": {
+    "maximumAdvance": 4096,
+    "maximumWideCopyBytes": 262144,
+    "wideFullAdvances": 64,
+    "booleanValidationReads": 32768,
+    "booleanCopyBytes": 32768,
+    "booleanFullAdvances": 16,
+    "sdkAllocationAttemptsPerBeginAdvance": 0
+  },
+  "scope": "Independent owned CALL argument-copy kernel; VM CALL dispatcher still uses atomic entry",
+  "limitations": [
+    "Metadata planning, catalog walks and authentication remain atomic",
+    "Array-only copy_arguments has reservation-before-bool priority; future adapter must preserve it separately",
+    "VM Fuel/captures/frame/register/PC publication not connected to this cursor",
+    "CALL/RET, setup/proof/seal/cleanup, deadlines/STOPPING/poison/public lifecycle/ABI/CLI and accepted inventory remain incomplete",
+    "No throughput/latency benchmark or public availability claim",
+    "Separate OS I/O, full M2 and public CLI matrices not repeated"
+  ]
+}
