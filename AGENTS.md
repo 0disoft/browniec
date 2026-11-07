@@ -1,21 +1,23 @@
-- Latest compiler-workspace checkpoint (2026-11-07): [Compiler working heap](docs/engineering/compile-memory.md)
-  adds opt-in ordinary/input/output/input-output compilation in `4ff16aa`.
-  Preflight reserves a conservative 262,144-byte lowering heap bound, including
-  old/new Vec growth. Existing exact persistent admission is narrowed to the
-  remaining combined allowance; exclusive phases use max rather than their sum.
-  Invalid/zero fixed plans reject; quota/OOM/source failures preserve reservation
-  peaks and release failed storage. Trusted positive layout facts remain required.
-  Development/O2 each pass 14 isolated groups: seven reservation, six actual
-  compiler/allocator and the unchanged captured-call depth fixture. The wrapper
-  itself also accepts depth32/rejects33. Six compiler groups return SDK heap to zero.
-  All 201 executed input identities match checkout/Git. Root locked check passes
-  251 sources/2859 MIR functions; all 243 production modules retain LF.
-  Existing Engine verification's 216 input identities are unchanged; it was not
-  rerun. Engine compilation has not yet adopted the new opt-in wrapper. Next bind
-  working reservations and Entry/Index costs, then per-Instance/combined accounting.
-  Native stack/RSS, bounded work, runtime/public delivery and the full inventory
-  remain open. Public gates/prices/capacities are unchanged. Workers are closed.
-  Local commits only; no push/release/deployment.
+- Latest Engine compile-memory checkpoint (2026-11-07): [Compile admission](docs/engineering/runtime-engine-compile-memory.md)
+  integrates ledger `12461e1` and Engine/transport `675fbad`. All four compilers now
+  account for the existing Index, incoming Entry Vec8 and conservative lowering
+  heap under working/combined ceilings. Required work is 436,544 bytes ordinary/
+  output or 436,928 input/input-output; the private working default/cap is 256MiB.
+  Guarded preflight rejects before incoming allocation without spending epoch/ID;
+  actual admission independently rechecks. Exclusive lowering/retention phases
+  use max, retain reservation peaks on OOM and preserve peer Programs/pins.
+  Development/O2 each pass seven new Engine groups, nine budget groups and all
+  retained control/input/output/OS/retention fixtures. Engine depth32 executes to
+  42 and depth33 rejects; SDK heap returns to zero with default 1MiB/4KiB stacks.
+  Twenty-two typed bindings and sixteen actual layout checks cover 207 closure
+  modules; all 221 executed inputs match checkout/Git. The standalone compiler's
+  201 identities remain unchanged; it was not rerun. Root locked check passes
+  251 sources/2862 MIR functions; all 243 production modules retain LF.
+  Current inline Engine is 688 bytes, one-slot control heap 6,720 and all-64 53,760.
+  Per-Instance frames/input/owners/loans/descriptors/output and simultaneous peaks,
+  native stacks, remaining combined quotas, bounded work, deadlines/poison and
+  public/host/restricted/embed delivery remain open. Gates/prices/capacities stay.
+  Workers are closed. Local commits only; no push/release/deployment.
 
 # Brownie C agent guidance
 
