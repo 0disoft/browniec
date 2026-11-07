@@ -12,6 +12,7 @@ pub resource Transaction {
     bytes::Buffer header; ptr mut u8 header_data;
     usize limit; bool allowed;
     bool reserved;
+    usize pending; usize copied; bool copying;
     cleanup { }
 }
 pub resource Published { bytes::Buffer backing; Observation final; cleanup { } }
@@ -19,7 +20,7 @@ pub fn usize hard_limit(){return 1048576;}
 // Allocation-free sink placeholder for unchanged legacy invocation paths.
 pub fn Transaction disabled(){
     return Transaction{.backing=bytes::empty(),.header=bytes::empty(),.header_data=null,
-        .limit=0,.allowed=false,.reserved=false};
+        .limit=0,.allowed=false,.reserved=false,.pending=0,.copied=0,.copying=false};
 }
 
 // Same pinned-Windows-x64 ownership seam as host_exchange. Buffer is exactly
@@ -73,7 +74,8 @@ pub fn Result<Transaction,Error> open(usize limit,bool allowed,usize fuel){
         case .ok(v):{v}case .err(_):{return .err(.Allocation);}
     };
     let ptr mut u8 data=unsafe {bytes::view_mut(ref mut header) as ptr mut u8};
-    var Transaction t=Transaction{.backing=bytes::empty(),.header=header,.header_data=data,.limit=limit,.allowed=allowed,.reserved=false};
+    var Transaction t=Transaction{.backing=bytes::empty(),.header=header,.header_data=data,.limit=limit,.allowed=allowed,
+        .reserved=false,.pending=0,.copied=0,.copying=false};
     save(ref mut t,Observation{.phase=0,.length=0,.emits=0,.fuel=fuel,.charged=0});return .ok(t);
 }
 fn ref u8[] staged(ref Transaction t){return bytes::view(ref t.backing);}
@@ -115,7 +117,8 @@ pub fn Result<Published,Error> seal(ref mut Transaction t,usize charge){
 }
 fn Observation discard_pending(ref mut Transaction t,u8 phase){
     var Observation s=observe(t);if(s.phase!=0){return s;}
-    let bytes::Buffer dropped=replace(t,bytes::empty());s.phase=phase;s.length=0;save(t,s);return s;
+    let bytes::Buffer dropped=replace(t,bytes::empty());
+    t.pending=0;t.copied=0;t.copying=false;s.phase=phase;s.length=0;save(t,s);return s;
 }
 pub fn Observation fail(ref mut Transaction t){return discard_pending(t,2);}
 pub fn Observation cancel(ref mut Transaction t){return discard_pending(t,3);}
@@ -147,8 +150,43 @@ pub fn Result<Transaction,Error> open_metered(usize limit,bool allowed,ref mut u
 }
 fn Result<Observation,Error> sample_metered(ref mut Transaction t,usize remaining){
     var Observation s=observe(t);
-    if(s.phase!=0 || !t.reserved){return .err(.State);}
+    if(s.phase!=0 || !t.reserved || t.copying){return .err(.State);}
     s.fuel=remaining;save(t,s);return .ok(s);
+}
+// Prepay the whole emit before any source bytes are copied. The returned total
+// is prospective until the last chunk; observations expose only committed bytes.
+pub fn Result<usize,Error> begin_emit_metered(ref mut Transaction t,usize length,ref mut usize remaining){
+    var Observation s=sample_metered(t,*remaining)?;
+    if(!t.allowed){return .err(.Denied);}
+    if(s.length>t.limit || length>t.limit-s.length || s.emits==18446744073709551615){return .err(.Limit);}
+    let usize charge=prices::output_emit(length);
+    if(charge>*remaining || charge>18446744073709551615-s.charged){return .err(.Fuel);};
+    *remaining-=charge;s.fuel=*remaining;s.charged+=charge;
+    if(length==0){s.emits+=1;}else{t.pending=length;t.copied=0;t.copying=true;}
+    save(t,s);return .ok(s.length+length);
+}
+pub fn usize emit_remaining(ref Transaction t){
+    return if(t.copying){t.pending-t.copied}else{0};
+}
+fn bool chunk_backing(ref Transaction t,usize committed){
+    return bytes::view(ref t.backing).len==committed+t.copied &&
+        bytes::capacity(ref t.backing)>=committed+t.pending;
+}
+// Only the already-reserved owning Buffer is touched. Invalid chunks leave both
+// physical and logical state intact; no allocation or additional Fuel is needed.
+pub fn Result<bool,Error> append_emit_chunk(ref mut Transaction t,ref u8[] data){
+    var Observation s=observe(t);
+    if(s.phase!=0 || !t.reserved || !t.copying || t.copied>=t.pending){return .err(.State);}
+    if(data.len==0 || data.len>4096 || data.len>t.pending-t.copied){return .err(.Limit);}
+    if(s.length>t.limit || t.pending>t.limit-s.length){return .err(.State);}
+    if(!chunk_backing(t,s.length)){return .err(.State);}
+    let u32 status=unsafe {append_buffer_raw(t as ptr mut void,data as ptr u8,data.len)};
+    assert(status==0);
+    assert(unsafe {validate_buffer_raw(t as ptr mut void,0)}==0);
+    t.copied+=data.len;
+    if(t.copied!=t.pending){return .ok(false);}
+    s.length+=t.pending;s.emits+=1;save(t,s);
+    t.pending=0;t.copied=0;t.copying=false;return .ok(true);
 }
 pub fn Result<usize,Error> emit_metered(ref mut Transaction t,ref u8[] data,ref mut usize remaining){
     var Observation s=sample_metered(t,*remaining)?;

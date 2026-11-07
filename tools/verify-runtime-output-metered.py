@@ -143,12 +143,12 @@ def main():
   emitted=emit(PERF,'performance');resources=re.findall(r'typedef struct\s*\{([^{}]*)\}\s*(fy_resource_\d+);',emitted,re.S);types={n:re.sub(r'\s+','',b) for b,n in resources}
   def one(c):need(len(c)==1,'Unique generated type');return c[0]
   bn=one([n for n,b in types.items() if b=='void*f_0;uintptr_tf_1;uintptr_tf_2;uintptr_tf_3;'])
-  tn=one([n for n,b in types.items() if b==bn+'f_0;'+bn+'f_1;uint8_t*f_2;uintptr_tf_3;int32_tf_4;int32_tf_5;'])
+  tn=one([n for n,b in types.items() if b==bn+'f_0;'+bn+'f_1;uint8_t*f_2;uintptr_tf_3;int32_tf_4;int32_tf_5;uintptr_tf_6;uintptr_tf_7;int32_tf_8;'])
   pn=one([n for n,b in types.items() if b.startswith(bn+'f_0;fy_struct_')])
   harness=f'''
 #include <assert.h>
 _Static_assert(sizeof({bn})==32 && offsetof({bn},f_3)==24,"Buffer seam");
-_Static_assert(sizeof({tn})==88 && offsetof({tn},f_0)==0 && offsetof({tn},f_1)==32 && offsetof({tn},f_2)==64 && offsetof({tn},f_3)==72 && offsetof({tn},f_4)==80 && offsetof({tn},f_5)==84,"Transaction actual layout");
+_Static_assert(sizeof({tn})==112 && offsetof({tn},f_0)==0 && offsetof({tn},f_1)==32 && offsetof({tn},f_2)==64 && offsetof({tn},f_3)==72 && offsetof({tn},f_4)==80 && offsetof({tn},f_5)==84 && offsetof({tn},f_6)==88 && offsetof({tn},f_7)==96 && offsetof({tn},f_8)==104,"Transaction actual layout");
 _Static_assert(sizeof({pn})==72 && offsetof({pn},f_0)==0 && offsetof({pn},f_1)==32,"Published actual layout");
 size_t output_probe_attempts(void);size_t output_probe_copied(void);
 void output_probe(int32_t stage,const void *tx,const void *pub){{
@@ -184,7 +184,7 @@ void output_seed(void *tx,int32_t kind){{{tn} *t=({tn}*)tx;uint64_t n=kind?UINT6
     if target:need(counters['target']==target and counters['targetAttempts']==2,'One failure and explicit resubmission')
     receipt['seams'].append(dict(name=name,profile=profile,counters=counters,exeSha256=sha(exe.read_bytes())));print('PASS '+profile+': '+name,flush=True)
   need(all((ROOT/p).read_bytes()==b for p,b in inputs.items()),'Inputs changed during run')
-  receipt.update(status='passed',performance=dict(emits=4096,payloadBytes=1048576,allocationsAtOpen=2,allocationsDuringEmitAndSeal=0,copiedBytes=1048576,bufferBytes=32,transactionBytes=88,publishedBytes=72),limitations=['Private native output; VM/Engine integration belongs to owner tests.','Trusted-owner publication; no external sink atomicity or latency guarantee.','Overflow seeded through test-only generated header; no production mutation API.'])
+  receipt.update(status='passed',performance=dict(emits=4096,payloadBytes=1048576,allocationsAtOpen=2,allocationsDuringEmitAndSeal=0,copiedBytes=1048576,bufferBytes=32,transactionBytes=112,publishedBytes=72),limitations=['Private native output; VM/Engine integration belongs to owner tests.','Trusted-owner publication; no external sink atomicity or latency guarantee.','Overflow seeded through test-only generated header; no production mutation API.'])
  except Exception as error:receipt.update(status='failed',error=str(error));raise
  finally:
   receipt['artifacts']=[dict(path=p.relative_to(out).as_posix(),sha256=sha(p.read_bytes())) for p in sorted(out.rglob('*')) if p.is_file() and p.name!='receipt.json'];write(out/'receipt.json',json.dumps(receipt,indent=2)+'\n');print('Receipt: '+str(out/'receipt.json'),flush=True)

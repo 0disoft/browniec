@@ -28,6 +28,7 @@ def closure():
     files['output_memory_contracts'] = ROOT / 'tests/m2/module_output_memory.fy'
     files['execution_memory_contracts'] = ROOT / 'tests/m2/runtime_execution_memory.fy'
     files['pending_memory_contracts'] = ROOT / 'tests/m2/runtime_pending_memory.fy'
+    files['output_chunk_contracts'] = ROOT / 'tests/m2/runtime_output_chunks.fy'
     files['dispatch_cursor_contracts'] = ROOT / 'tests/m2/slice_result_cursor.fy'
     files['dispatch_quantum_contracts'] = ROOT / 'tests/m2/module_dispatch_quantum.fy'
     files['runtime_input_adoption'] = ROOT / 'native/runtime-input-adoption/adoption.fy'
@@ -51,6 +52,7 @@ def source_copy(path):
                 'module_output_memory': 'output_memory_contracts',
                 'runtime_execution_memory': 'execution_memory_contracts',
                 'runtime_pending_memory': 'pending_memory_contracts',
+                'runtime_output_chunks': 'output_chunk_contracts',
                 'slice_result_cursor': 'dispatch_cursor_contracts',
                 'module_dispatch_quantum': 'dispatch_quantum_contracts'}
     for original, alias in adapters.items():
@@ -163,13 +165,16 @@ def main():
         layout_types = {key: contract[key] for key in ['engineType', 'programType', 'instanceType',
                         'boundInputType', 'outputType', 'sourceIndexType', 'sourceIndexVectorType',
                         'programVectorType', 'snapshotType', 'snapshotVectorType', 'machineType', 'coreType',
-                        'executionType','pendingVectorType','completionType','publishedVectorType']}
+                        'executionType','pendingVectorType','completionType','publishedVectorType',
+                        'pendingMetaType','cursorType','outputCopyType','transactionType']}
         for variant, types in contract['programVariants'].items():
             layout_types.update({variant + '_' + role: name for role, name in types.items()})
         layout_types.update({key + '_entry': name for key, name in contract['entryTypes'].items()})
         need(set(layout_types) == set(contract['reviewedLayouts']), 'Reviewed layout set changed')
         for owner,field,key in [('outputType',1,'executionType'),('outputType',2,'pendingVectorType'),
-                                ('executionType',0,'completionType'),('executionType',1,'publishedVectorType')]:
+                                ('executionType',0,'completionType'),('executionType',1,'publishedVectorType'),
+                                ('machineType',6,'transactionType'),('machineType',7,'pendingMetaType'),
+                                ('pendingMetaType',0,'cursorType'),('cursorType',2,'outputCopyType')]:
             member=re.search(r'\b(fy_(?:struct|resource)_\d+) f_'+str(field)+r';',contract['reviewedLayouts'][owner])
             need(member is not None and member.group(1)==contract[key],f'Output field projection differs: {owner}/{field}')
         advance_args=contract['reviewedDeclarations']['26'].split('(',1)[1].split(',')

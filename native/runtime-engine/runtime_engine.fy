@@ -23,6 +23,7 @@ import slice_result_machine as machines;
 import runtime_pending_output as pending_vm;
 import runtime_output as pending_output;
 import runtime_pending_memory as pending_heap;
+import output_copy_cursor as output_copy;
 
 // Internal owning lifecycle, not public C handles/bc_step. IDs are scoped to
 // this exact Engine; the outer ABI registry must authenticate their association.
@@ -221,6 +222,16 @@ pub fn Result<Event,Error> step_instance(ref mut Engine e,usize instance,usize q
     let usize completed=result(e,s)?;return .ok(e.meta.event);
 }
 pub fn usize output_transport_bytes(){return 8*unsafe{output_fact_raw(null,0)};}
+pub fn Result<output_copy::State,Error> output_copy_progress(ref Engine e,usize instance){
+    let u32 status=unsafe{control_access_raw(e as ptr void)};
+    if(status!=0){return .err(error(status));}if(e.meta.closed){return .err(error(2));}
+    let usize ii=switch(instance_index(ref e.instances,instance)){case .ok(v):{v}case .err(s):{return .err(error(s));}};
+    if(vec::at<Instance>(ref e.instances,ii).phase!=3){return .err(error(11));}
+    let usize oi=switch(output_index(ref e.outputs,instance)){case .ok(v):{v}case .err(_):{return .err(error(7));}};
+    let ref Output saved=vec::at<Output>(ref e.outputs,oi);
+    if(vec::len<machines::Machine>(ref saved.pending)!=1){return .err(error(7));}
+    return .ok(machines::observe(vec::at<machines::Machine>(ref saved.pending,0)).cursor.output);
+}
 // Synchronous exact borrow: no Snapshot pointer is retained in an Instance or
 // Program. Admission precedes inspection; completion precedes ending the borrow.
 pub fn Result<Event,Error> execute_input_once(ref mut Engine e,usize instance,ref input_bytes::Snapshot input){

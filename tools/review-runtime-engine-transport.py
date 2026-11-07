@@ -56,11 +56,18 @@ c['coreType']=arg(28,1)
 c['entryTypes']={'ordinary':arg(19,0),'input':arg(20,0)}
 output_layout=re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(c['outputType'])+';$',t,re.M).group()
 c['executionType']=re.search(r'\b(fy_resource_\d+) f_1;',output_layout).group(1)
-types={k:c[k] for k in ['engineType','programType','instanceType','boundInputType','outputType','sourceIndexType','sourceIndexVectorType','programVectorType','snapshotType','snapshotVectorType','machineType','coreType','executionType','pendingVectorType','completionType','publishedVectorType']}
+def field_type(owner,index):
+ layout=re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(owner)+';$',t,re.M).group()
+ return re.search(r'\b(fy_(?:struct|resource)_\d+) f_'+str(index)+r';',layout).group(1)
+c['pendingMetaType']=arg(26,2)
+c['cursorType']=field_type(c['pendingMetaType'],0)
+c['outputCopyType']=field_type(c['cursorType'],2)
+c['transactionType']=field_type(c['machineType'],6)
+types={k:c[k] for k in ['engineType','programType','instanceType','boundInputType','outputType','sourceIndexType','sourceIndexVectorType','programVectorType','snapshotType','snapshotVectorType','machineType','coreType','executionType','pendingVectorType','completionType','publishedVectorType','pendingMetaType','cursorType','outputCopyType','transactionType']}
 for variant,rows in c['programVariants'].items():types.update({variant+'_'+k:v for k,v in rows.items()})
 types.update({k+'_entry':v for k,v in c['entryTypes'].items()})
 c['reviewedLayouts']={k:re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(v)+';$',t,re.M).group() for k,v in types.items()}
-assert len(c['bindings'])==33 and len(c['reviewedLayouts'])==24
+assert len(c['bindings'])==33 and len(c['reviewedLayouts'])==28
 c['transportSha256']=hashlib.sha256(generated).hexdigest()
 c['sourceInputs']=[dict(path=p.relative_to(root).as_posix(),sha256=hashlib.sha256(p.read_bytes()).hexdigest()) for p in sources]
 raw=json.dumps(c,indent=2)+'\n'

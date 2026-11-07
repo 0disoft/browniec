@@ -156,7 +156,7 @@ def main():
         need(len(matches)==1,'Generated Buffer type');bn=matches[0]
         matches=[n for n,b in normalized.items() if b==bn+'f_0;uintptr_tf_1;']
         need(len(matches)==1,'Generated Snapshot type');sn=matches[0]
-        matches=[n for n,b in normalized.items() if b==bn+'f_0;'+bn+'f_1;uint8_t*f_2;uintptr_tf_3;int32_tf_4;int32_tf_5;']
+        matches=[n for n,b in normalized.items() if b==bn+'f_0;'+bn+'f_1;uint8_t*f_2;uintptr_tf_3;int32_tf_4;int32_tf_5;uintptr_tf_6;uintptr_tf_7;int32_tf_8;']
         need(len(matches)==1,'Generated Transaction type');tn=matches[0]
         matches=[n for n,b in normalized.items() if b.startswith(bn+'f_0;fy_struct_')]
         need(len(matches)==1,'Generated Published type');pn=matches[0]
@@ -165,13 +165,13 @@ def main():
 _Static_assert(sizeof({bn})==32, "Buffer size");
 _Static_assert(offsetof({bn},f_0)==0 && offsetof({bn},f_1)==8 && offsetof({bn},f_2)==16 && offsetof({bn},f_3)==24, "Buffer cells");
 _Static_assert(sizeof({sn})==40 && offsetof({sn},f_0)==0 && offsetof({sn},f_1)==32, "Snapshot layout");
-_Static_assert(sizeof({tn})==88, "Transaction size");
-_Static_assert(offsetof({tn},f_0)==0 && offsetof({tn},f_1)==32 && offsetof({tn},f_2)==64 && offsetof({tn},f_3)==72 && offsetof({tn},f_4)==80 && offsetof({tn},f_5)==84, "Transaction fields");
+_Static_assert(sizeof({tn})==112, "Transaction size");
+_Static_assert(offsetof({tn},f_0)==0 && offsetof({tn},f_1)==32 && offsetof({tn},f_2)==64 && offsetof({tn},f_3)==72 && offsetof({tn},f_4)==80 && offsetof({tn},f_5)==84 && offsetof({tn},f_6)==88 && offsetof({tn},f_7)==96 && offsetof({tn},f_8)==104, "Transaction fields");
 _Static_assert(sizeof({pn})==72 && offsetof({pn},f_0)==0 && offsetof({pn},f_1)==32, "Published layout");
 void brownie_runtime_io_layout(const void *tx,const void *in,const void *pub) {{
  const {tn} *t=(const {tn}*)tx;const {sn} *i=(const {sn}*)in;const {pn} *p=(const {pn}*)pub;
- assert(sizeof({bn})==32 && sizeof({sn})==40 && sizeof({tn})==88 && sizeof({pn})==72);
- assert(offsetof({tn},f_0)==0 && offsetof({tn},f_1)==32 && offsetof({tn},f_2)==64 && offsetof({tn},f_3)==72 && offsetof({tn},f_4)==80);
+ assert(sizeof({bn})==32 && sizeof({sn})==40 && sizeof({tn})==112 && sizeof({pn})==72);
+ assert(offsetof({tn},f_0)==0 && offsetof({tn},f_1)==32 && offsetof({tn},f_2)==64 && offsetof({tn},f_3)==72 && offsetof({tn},f_4)==80 && offsetof({tn},f_5)==84 && offsetof({tn},f_6)==88 && offsetof({tn},f_7)==96 && offsetof({tn},f_8)==104);
  assert(t->f_0.f_0==NULL && t->f_0.f_1==0 && t->f_0.f_2==0 && t->f_0.f_3==0);
  assert(t->f_1.f_3==40 && t->f_2==t->f_1.f_0 && t->f_2[0]==1);
  assert(i->f_0.f_3==4 && i->f_1==1 && p->f_0.f_3==4);
@@ -221,7 +221,7 @@ void brownie_runtime_io_layout(const void *tx,const void *in,const void *pub) {{
             exe=compile_product(out/'layout.c','layout',profile)
             counters=json.loads(run([exe],profile+'-layout-execute'))
             need(counters['live']==0 and counters['failures']==0 and counters['attempts']==counters['frees'],'Layout/source-zero cleanup')
-            receipt['layout'].append(dict(profile=profile,executed=True,bufferBytes=32,snapshotBytes=40,transactionBytes=88,
+            receipt['layout'].append(dict(profile=profile,executed=True,bufferBytes=32,snapshotBytes=40,transactionBytes=112,
                 publishedBytes=72,backingOffset=0,headerOffset=32,headerDataOffset=64,
                 emptyMovedSourceVerified=True,allocator=counters,exeSha256=sha(exe.read_bytes())))
             print(f'PASS {profile}: actual generated layout and moved-source cleanup',flush=True)
