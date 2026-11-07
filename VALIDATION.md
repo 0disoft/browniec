@@ -1,3 +1,22 @@
+- Buffer view copying, 2026-11-07: Private [Buffer view copying](docs/engineering/value-view-copy.md) now accepts
+  `bytes::copy(ref view)` and qualified/range/temporary inputs, returning an
+  independent exact `Result<Buffer,u8>`. APPEND_VIEW112 independently proves live
+  views, a live distinct unpinned Buffer and a fresh Result; runtime prepays
+  publication and copies only authenticated initialized bytes without payload
+  staging. The anonymous capture closes before Result wrapping; named views stay
+  pinned. Kernel `3d158ba` and integrated source/VM `223260f` are local commits.
+  Windows development/release each passed 21 groups (nine new) in three
+  disjoint batches. All 224 union inputs match checkout/Git raw bytes; all 213
+  production modules are LF. The unchanged admitted32/rejected33 depth fixture
+  executes in both profiles. See [evidence](docs/evidence/value-view-copy-windows-20261107.json).
+  Next: general reference parameters/results, reference-valued joins, methods,
+  public AllocError/admission, text/I/O, full Engine/Instance/host/cancellation,
+  isolation and platform/delivery. Existing prices, no-view setup costs and public
+  Fuel default256/ceiling16000000 stay unchanged. The full objective remains open.
+  Local only; no push/release/deployment.
+  Full language/public CLI/native Fuel matrices, Linux, actual allocator/OOM,
+  general stack/performance and clean-machine delivery were not rerun.
+
 - Source Buffer views, 2026-11-07: Private [Buffer view source](docs/engineering/value-view-source.md) now lowers
   `bytes::view(ref Buffer) -> ref u8[]`, readonly aliases/ranges, index/length and
   mutable reference bindings with capture-before-endpoint evaluation. Lexical,

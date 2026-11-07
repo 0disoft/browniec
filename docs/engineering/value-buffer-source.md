@@ -16,7 +16,8 @@ Reference prefixes are required source syntax, not first-class reference values.
 | Call (either namespace) | Result | Effect / lowering |
 | --- | --- | --- |
 | `bytes::empty()` | `Buffer` | New empty owner; EMPTY95. |
-| `bytes::copy(ref b)` | `Result<Buffer,u8>` | [Independent owned copy](value-buffer-copy.md); existing EMPTY/APPEND/CASE/TAG instructions. |
+| `bytes::copy(ref b)` / `bytes::copy(ref view)` | `Result<Buffer,u8>` | [Owned Buffer copy](value-buffer-copy.md) or [selected view copy](value-view-copy.md), retaining the source. |
+| `bytes::view(ref b)` | `ref u8[]` | [Readonly lexical view](value-view-source.md), ranges, length/index and ordered cleanup. |
 | `bytes::len(ref b)` | `usize` | Retain owner; LEN99. |
 | `bytes::read(ref b, i)` | `u8` | Read initialized byte; READ100. |
 | `bytes::write(ref mut b, i, v)` | `void` (no value) | Write initialized byte; WRITE101. |

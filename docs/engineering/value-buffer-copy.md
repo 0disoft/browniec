@@ -1,10 +1,11 @@
 # Private owned Buffer copy
 
 `bytes::copy(ref source)` and `brownie::bytes::copy(ref source)` return exact
-`Result<Buffer,u8>` in the private typed-source dialect. Source must be a live
-Buffer; an immutable binding or owned temporary is allowed. The explicit shared
-prefix is required. Public Buffer admission, method syntax, general byte views
-and a public AllocError contract remain separate work.
+`Result<Buffer,u8>` in the private typed-source dialect. This checkpoint accepts a live
+Buffer; an immutable binding or owned temporary is allowed. The
+[view-copy successor](value-view-copy.md) adds readonly view inputs. The explicit shared
+prefix is required. Public Buffer admission, method syntax, general reference
+composition and a public AllocError contract remain separate work.
 
 ## Ownership and lowering
 
@@ -48,7 +49,7 @@ their existing prices; no opcode price or public Fuel default/cap changes.
 
 Copy's generated control flow adds fixed metadata/cleanup overhead around the
 existing linear append price. No wall-clock performance or native OOM guarantee
-is inferred from the O(n) structure. General views, copy-from-view support,
+is inferred from the O(n) structure. General reference composition,
 public allocator errors, text/I/O, Instance teardown and wider language/runtime
 composition remain part of the full implementation objective.
 
@@ -84,9 +85,13 @@ program clears the future sentinels and uses separate failure targets; both
 helper profiles ran fresh afterward. Production/source test inputs stayed
 unchanged, so their original same-turn nine-group passes remain applicable.
 
-Actual allocator/OOM failure injection, copy-from-view, general Buffer view
-lifetimes, full language/public CLI/native Fuel matrices, Linux, general
-performance and clean-machine delivery were not run. Direct native error tag
+At that checkpoint, actual allocator/OOM failure injection, copy-from-view,
+general Buffer view lifetimes, full language/public CLI/native Fuel matrices,
+Linux, general performance and clean-machine delivery were not run. Direct native error tag
 construction does not establish actual allocator-failure injection. Public
 Buffer admission, capability flags and Fuel default256/ceiling16000000 remain
 unchanged. Local commits only; no push, release or deployment.
+
+Successor: [Buffer view copying](value-view-copy.md) now copies a selected readonly
+window into an independent owning Result. Its new112/kernel/source evidence is
+recorded separately; the verification counts above retain their historical scope.

@@ -1,18 +1,19 @@
-- Latest source Buffer view checkpoint, 2026-11-07: Private [Buffer view source](value-view-source.md) now lowers
-  `bytes::view(ref Buffer) -> ref u8[]`, readonly aliases/ranges, index/length and
-  mutable reference bindings with capture-before-endpoint evaluation. Lexical,
-  return/propagation and loop exits close views before owners, including nonlocal
-  `break`/`continue` inside endpoints. Source sentinel65 never enters executable
-  types or signatures; general reference parameters/results remain gated.
-  Windows development/release each passed 23 native groups (eight new) on
-  `954cb96`; all 222 inputs match checkout/Git raw bytes and all 212 production
-  modules are LF. The unchanged admitted32/rejected33 depth fixture executes in
-  both profiles. See [evidence](../evidence/value-view-source-windows-20261107.json).
-  Next: copy-from-view, reference-valued joins and general reference composition,
+- Latest Buffer view-copy checkpoint, 2026-11-07: Private [Buffer view copying](value-view-copy.md) now accepts
+  `bytes::copy(ref view)` and qualified/range/temporary inputs, returning an
+  independent exact `Result<Buffer,u8>`. APPEND_VIEW112 independently proves live
+  views, a live distinct unpinned Buffer and a fresh Result; runtime prepays
+  publication and copies only authenticated initialized bytes without payload
+  staging. The anonymous capture closes before Result wrapping; named views stay
+  pinned. Kernel `3d158ba` and integrated source/VM `223260f` are local commits.
+  Windows development/release each passed 21 groups (nine new) in three
+  disjoint batches. All 224 union inputs match checkout/Git raw bytes; all 213
+  production modules are LF. The unchanged admitted32/rejected33 depth fixture
+  executes in both profiles. See [evidence](../evidence/value-view-copy-windows-20261107.json).
+  Next: general reference parameters/results, reference-valued joins, methods,
   public AllocError/admission, text/I/O, full Engine/Instance/host/cancellation,
   isolation and platform/delivery. Existing prices, no-view setup costs and public
-  Fuel default256/ceiling16000000 stay unchanged. Local only; no push/release.
-  The full objective remains open.
+  Fuel default256/ceiling16000000 stay unchanged. The full objective remains open.
+  Local only; no push/release/deployment.
 
 # Completing the accepted implementation
 

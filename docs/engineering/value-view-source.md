@@ -85,7 +85,8 @@ Shared root reads and independent `bytes::copy(ref buffer)` operations remain
 available; using a Buffer as an append source does not require a write loan.
 Mutation and owning calls involving other roots may proceed. Caller views stay
 live across unrelated calls, and caller/callee logical view IDs are isolated by
-activation. Copying directly from a `ref u8[]` view is separate work.
+activation. The [copy successor](value-view-copy.md) now accepts a `ref u8[]` view and
+returns an independent owner without consuming the named source.
 
 A named view must originate from a live lexical Buffer owner or an owning
 Buffer formal. A view cannot outlive that owner: scope cleanup rejects a
@@ -218,7 +219,11 @@ Full language/public CLI/native Fuel matrices, Linux, allocator/OOM injection,
 general stack/performance and clean-machine delivery were not rerun.
 
 Remaining work includes general reference parameters/results, view-valued
-expression joins, copy-from-view, public AllocError and intentional public
+expression joins, public AllocError and intentional public
 compiler/CLI admission. Text/I/O, complete Engine/Instance/host/cancellation
 behavior, isolation and platform/delivery validation belong to the broader
 objective; this slice does not establish them.
+
+Successor: [Buffer view copying](value-view-copy.md) now copies a selected readonly
+window into an independent owning Result. Its new112/kernel/source evidence is
+recorded separately; the verification counts above retain their historical scope.

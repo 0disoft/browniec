@@ -111,3 +111,7 @@ its original 24-group scope. Next: copy-from-view and general reference
 parameter/result composition. Public
 AllocError, text/I/O, full Engine/Instance/host behavior, isolation and delivery
 remain part of the broader implementation objective.
+
+Successor: [Buffer view copying](value-view-copy.md) now copies a selected readonly
+window into an independent owning Result. Its new112/kernel/source evidence is
+recorded separately; the verification counts above retain their historical scope.
