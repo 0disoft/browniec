@@ -1,0 +1,58 @@
+{
+  "schema": "brownie.host-wire-vectors/1",
+  "tag_map": {
+    "bool": 1,
+    "u8": 2,
+    "i32": 3,
+    "i64": 4,
+    "u32": 5,
+    "usize": 6,
+    "bytes": 7
+  },
+  "vectors": [
+    {
+      "id": "request-i32-bytes",
+      "kind": "request",
+      "hex": "02000300000004000000f9ffffff0700000003000000610062",
+      "types": [
+        "i32",
+        "bytes"
+      ],
+      "values": [
+        "-7",
+        "610062"
+      ]
+    },
+    {
+      "id": "reply-i64-min",
+      "kind": "reply",
+      "hex": "04000000080000000000000000000080",
+      "types": [
+        "i64"
+      ],
+      "values": [
+        "-9223372036854775808"
+      ]
+    },
+    {
+      "id": "reply-bool-false",
+      "kind": "reply",
+      "hex": "010000000100000000",
+      "types": [
+        "bool"
+      ],
+      "values": [
+        "false"
+      ]
+    }
+  ],
+  "negative_cases": [
+    "wrong_scalar_length",
+    "noncanonical_bool",
+    "nonzero_reserved",
+    "truncated_data",
+    "trailing_data",
+    "unknown_tag",
+    "argc_too_many"
+  ]
+}
