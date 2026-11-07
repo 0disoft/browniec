@@ -1,18 +1,18 @@
-- Latest owning-runtime integration checkpoint (2026-11-07): [Engine, sources and I/O](docs/engineering/runtime-engine-io-sources.md)
-  integrates real Program/one-shot Instance ownership `5ccb424`, anchored Windows
-  acquisition `1a6f5c2`, owning I/O staging `0b7231a`, actual collector->Fairy
-  Snapshot admission `2d298d8`, and exact shared-byte input signatures `333f47a`.
-  All native development/O2 checks pass: collector five groups/profile, I/O ten,
-  input/unchanged entry thirteen, plus Engine and loader ownership/OS harnesses.
-  Completion contention, exhausted-epoch teardown, image move/relocation, real
-  allocator failures and zero retained allocations have focused native evidence.
-  All 218 aggregate inputs match checkout/Git raw bytes; all 231 production
-  modules are LF, with the prior 228 unchanged. Root check: 239 sources/2678 MIR.
-  Public gates, existing VM capacities and Fuel prices/default256/ceiling16000000
-  remain unchanged. Project/Engine source binding and executable input/output,
-  full accounting, bounded steps, deadlines/poison, host/restricted/embed and the
-  accepted inventory stay open. Parallel workers completed, patches reviewed and
-  committed serially. Local only; no push/release/deployment.
+- Latest project/input integration checkpoint (2026-11-07): [Project sources and binary input](docs/engineering/runtime-project-input-integration.md)
+  records owning input Program admission `070ceaa`, private anchored project
+  compile/run `40f2c45` and bounded Windows binary input `564bd6f`.
+  Development/O2 each pass five input Program groups and 18 actual project cases;
+  binary input passes three production/six test groups plus four explicit syscall
+  return injections and an expected old-branch failure in each profile. Actual
+  zero-byte pipe reads were not reproduced; injection is separately labeled.
+  All 258 aggregate inputs match raw checkout/committed Git; 232 production
+  modules retain LF. Project/reader integration changes no root source/lock.
+  Public gates, VM capacities and Fuel prices/default256/ceiling16000000 remain.
+  Next: actual 1MiB input VM windows through PARAM/CALL/return/READ/LEN, then
+  Engine/OS input and staged output binding. Full accounting, bounded steps,
+  deadlines/poison, host/restricted/embed and the accepted inventory remain open.
+  Disjoint parallel patches were reviewed and committed serially; workers closed.
+  Local only; no push/release/deployment.
 
 # Brownie C agent guidance
 
