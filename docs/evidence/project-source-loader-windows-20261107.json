@@ -1,0 +1,439 @@
+{
+  "schema": "browniec.project-source-loader-evidence/v1",
+  "status": "passed",
+  "command": "python tools/verify-project-source-loader.py",
+  "receipt": "build/project-source-loader/20261107T083748618238Z/receipt.json",
+  "receiptSha256": "bf352f3e45e44506798c29a6232a2758918d5039768fe799702c59adaf4ddd42",
+  "frozenInputCount": 202,
+  "frozenInputsMatchCheckout": true,
+  "commandLogCount": 59,
+  "commandLogsAndArtifactsHashVerified": true,
+  "compiler": {
+    "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+    "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false\n"
+  },
+  "msvc": {
+    "version": "14.51.36231",
+    "sdk": "10.0.26100.0",
+    "compilerSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+    "overrides": false
+  },
+  "sdk": [
+    {
+      "id": "fypi1-sha256-eb3f63d50ef081a07981b6aa8e10489929b687dcacc46b8024f4fadedc62e467",
+      "role": "standard-library",
+      "packageUid": "fairyc.std",
+      "sourceKind": "sdk",
+      "localPath": "",
+      "sdkIdentity": "fairyc-sdk-stdlib/0",
+      "runtimeAbi": "fairyc-runtime/0",
+      "sourceIdentity": "fairyc-sdk-stdlib/0;fairyc-runtime/0;fysrc1-sha256-e256aabfe2a16a603f947d4ef5b55b5a4ae80915fdd855e18c6016910fbcc597",
+      "sourceDigest": "fysrc1-sha256-e256aabfe2a16a603f947d4ef5b55b5a4ae80915fdd855e18c6016910fbcc597",
+      "version": "0.0.0-stage0.87",
+      "features": []
+    }
+  ],
+  "isolatedLockSha256": "487f136b2a77f716a8a36ed5b0c5c4b9e8b78314ed6559a2d6f07de5cf00d4a4",
+  "transportSha256": "b2c24c04e4e0a028bdd309f9d0fa9ffa02ce92e9fc32b63ad945d7057876742f",
+  "defaultStacks": true,
+  "compilerOverrides": false,
+  "publicAvailabilityChanged": false,
+  "executableZeroArgumentProject": true,
+  "sourceFiles": 16,
+  "sourceBytes": 4096,
+  "profiles": [
+    {
+      "profile": "development",
+      "host": {
+        "path": "build/project-source-loader/20261107T083748618238Z/development/project-loader.exe",
+        "sha256": "60904e971b170a4c9f333a7e63367a807053963d510e26b650cc25628122b298",
+        "bytes": 5586944,
+        "stackReserve": 1048576,
+        "stackCommit": 4096
+      },
+      "caseCount": 18,
+      "cases": [
+        {
+          "label": "named-entry-42-and-reuse-after-source-rewrite",
+          "mode": "0",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "requirements-before-zero-fuel-and-divide-by-zero",
+          "mode": "1",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "actual-runtime-divide-by-zero",
+          "mode": "2",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "different-explicit-entry-99",
+          "mode": "3",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "swapped-map-headers",
+          "mode": "4",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "wrong-source-header",
+          "mode": "4",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "missing-entry",
+          "mode": "4",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "private-entry",
+          "mode": "4",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "input-entry-not-supported-here",
+          "mode": "4",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "missing-member-path",
+          "mode": "5",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "invalid-source-utf8",
+          "mode": "5",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "source-byte-ceiling",
+          "mode": "5",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "actual-body-type-error",
+          "mode": "6",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "current-source-byte-limit",
+          "mode": "7",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "17-admitted-metadata-files-current-limit",
+          "mode": "7",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "bridge-allocation-failure-cleanup",
+          "mode": "8",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "anchor-allocation-failure-cleanup",
+          "mode": "9",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "native-snapshot-allocation-failure-cleanup",
+          "mode": "A",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        }
+      ]
+    },
+    {
+      "profile": "release",
+      "host": {
+        "path": "build/project-source-loader/20261107T083748618238Z/release/project-loader.exe",
+        "sha256": "603d20ca972984a54e7bd62111ea6080255f4213e59b249c7c6e8218607d8d84",
+        "bytes": 1790976,
+        "stackReserve": 1048576,
+        "stackCommit": 4096
+      },
+      "caseCount": 18,
+      "cases": [
+        {
+          "label": "named-entry-42-and-reuse-after-source-rewrite",
+          "mode": "0",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "requirements-before-zero-fuel-and-divide-by-zero",
+          "mode": "1",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "actual-runtime-divide-by-zero",
+          "mode": "2",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "different-explicit-entry-99",
+          "mode": "3",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "swapped-map-headers",
+          "mode": "4",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "wrong-source-header",
+          "mode": "4",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "missing-entry",
+          "mode": "4",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "private-entry",
+          "mode": "4",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "input-entry-not-supported-here",
+          "mode": "4",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "missing-member-path",
+          "mode": "5",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "invalid-source-utf8",
+          "mode": "5",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "source-byte-ceiling",
+          "mode": "5",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "actual-body-type-error",
+          "mode": "6",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "current-source-byte-limit",
+          "mode": "7",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "17-admitted-metadata-files-current-limit",
+          "mode": "7",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "bridge-allocation-failure-cleanup",
+          "mode": "8",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "anchor-allocation-failure-cleanup",
+          "mode": "9",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        },
+        {
+          "label": "native-snapshot-allocation-failure-cleanup",
+          "mode": "A",
+          "exit": 0,
+          "nativeAllocations": 0,
+          "fairyHeapAllocations": 0,
+          "handlesUnchanged": true,
+          "fixtureCleanup": true
+        }
+      ]
+    }
+  ],
+  "featureInputs": [
+    {
+      "origin": "checkout",
+      "path": "native/project-source-loader/loader.fy",
+      "sha256": "76697a1a9fe00eb2a2b4cae5e17455cafc0f7348ddff2bd4fe05120ecb5ed502",
+      "bytes": 1986
+    },
+    {
+      "origin": "checkout",
+      "path": "tools/project-source-loader/main.fy",
+      "sha256": "07c6303abdaa6ff0af9ed390525a811b5a1de0fbc4d212e6d11ddea618281d2c",
+      "bytes": 4145
+    },
+    {
+      "origin": "checkout",
+      "path": "tools/project-source-loader/support.c",
+      "sha256": "d64fa1418e8361718c1a45c1005786195e0cd1de458db233b60a9a67c3f4c8b4",
+      "bytes": 1241
+    },
+    {
+      "origin": "checkout",
+      "path": "tools/project-source-loader/heap-observer.h",
+      "sha256": "4661a7097a1ea5ff3e9f94dfcb859b415a3e37de76bfd9cf0fea84cdf8bbaf0d",
+      "bytes": 484
+    },
+    {
+      "origin": "checkout",
+      "path": "tools/verify-project-source-loader.py",
+      "sha256": "d6a2b6ddd55b7b9b9ce21b76dbc8ab4752ca9409f040ac20201faf1c222261fc",
+      "bytes": 13342
+    },
+    {
+      "origin": "checkout",
+      "path": "docs/engineering/project-source-loader.md",
+      "sha256": "5b11298ef95ef1fe349f8968ac88dbe4dcca681113f96af494283bfef96cf85c",
+      "bytes": 3829
+    }
+  ],
+  "limitations": [
+    "Private synchronous zero-argument i32 project path; no Engine/InputEntry/CLI binding.",
+    "Requirements denied by existing project_program::run; no grants.",
+    "Owned bounded copied bytes, no writable-mapping point-in-time consistency or R03 guarantee."
+  ]
+}
