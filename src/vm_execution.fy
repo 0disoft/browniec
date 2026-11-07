@@ -39,6 +39,7 @@ import value_roots as value_roots;
 import value_buffer_views as value_views;
 import value_view_runtime as view_runtime;
 import value_call_vm as value_calls;
+import value_view_call_execution as view_calls;
 import buffer_growth as value_limits;
 import mixed_call_vm as mixed_calls;
 
@@ -192,6 +193,20 @@ fn Result<i64,errors::Error> run_core(ref ir::Program p,usize fuel,
                 case .ok(_):{}case .err(e):{return .err(values::failure(e,p.offsets[pc]));}
             };
         }
+        if(op==113){
+            if(!typed){return .err(errors::make(5,p.offsets[pc]));}
+            let usize ended=place_frames::empty_frame(place_state,frame,p.offsets[pc])?;
+            let ref value_program::Program program=vec::at<value_program::Program>(admitted,0);
+            let view_calls::Returned prepared=view_calls::result(program,pc,frame,return_pcs[frame],return_dsts[frame],
+                value_states,owner_states,value_data,value_buffers,root_scratch,view_pools,remaining)?;
+            // Admit ordinary owner/loan cleanup before descriptor publication.
+            let usize closed=leave(p,functions[frame],frame,arrays,payload,loans,borrowed_frames,receipts,authority,call_sites,child_bindings,ref records,p.offsets[pc])?;
+            {let ref mut value_views::Pool destination=vec::at_mut<value_views::Pool>(view_pools,0);
+                *destination=prepared.candidate;}
+            remaining=prepared.remaining;
+            let usize released=values::leave_views(program,frame,p.offsets[pc],value_states,owner_states,value_data,value_buffers,root_scratch,view_pools)?;
+            pc=return_pcs[frame];frame-=1;continue;
+        }
         if(op==94){
             if(!typed){return .err(errors::make(5,p.offsets[pc]));}
             let usize ended=place_frames::empty_frame(place_state,frame,p.offsets[pc])?;
@@ -291,22 +306,26 @@ fn Result<i64,errors::Error> run_core(ref ir::Program p,usize fuel,
                 ref mut registers[base..base + 128], remaining)?;
             pc += 1; continue;
         }
-        if (op >= 41 && op!=51 && op!=93) {
+        if (op >= 41 && op!=51 && op!=93 && op!=114) {
             let usize base = frame * 128;
             remaining = struct_vm::step(op, dst, a, b, frame, ref p.records, ref mut records,
                 arrays, payload, ref mut registers[base..base + 128], remaining, p.offsets[pc])?;
             pc += 1; continue;
         }
-        if (op == 9 || op==93) {
-            if(op==93 && !typed){return .err(errors::make(5,p.offsets[pc]));}
+        if (op == 9 || op==93 || op==114) {
+            if((op==93 || op==114) && !typed){return .err(errors::make(5,p.offsets[pc]));}
             if(frame<31){let usize fresh=place_frames::empty_frame(place_state,frame+1,p.offsets[pc])?;}
             var Option<value_calls::Prepared> batch=.none;
+            var Option<value_views::Pool> aliases=.none;
             if(typed){
                 let usize ordinary=if(authority.len==1){canonical_calls::cost(p,pc,p.offsets[pc])?}
                     else if(mutable_function(p,a)){mutable::cost(p,a,p.offsets[pc])?}
                     else{mixed_calls::cost(p,a,p.offsets[pc])?};
-                batch=.some(values::begin_call(vec::at<value_program::Program>(admitted,0),pc,frame,
-                    value_states,owner_states,value_data,value_scratch,value_buffers,root_scratch,limits,ordinary,ref mut remaining)?);
+                let value_calls::Prepared prepared=values::begin_call(vec::at<value_program::Program>(admitted,0),pc,frame,
+                    value_states,owner_states,value_data,value_scratch,value_buffers,root_scratch,limits,ordinary,ref mut remaining)?;
+                aliases=view_calls::arguments(vec::at<value_program::Program>(admitted,0),pc,ref prepared,
+                    value_states,owner_states,value_data,value_buffers,root_scratch,view_pools)?;
+                batch=.some(prepared);
             }
             if(authority.len==1){
                 remaining=calls::step_canonical_derived(p,sites,pc,frame,ref child_bindings[0],ref mut call_sites[0],ref mut authority[0],borrowed_frames,loans,ref mut records,arrays,payload,
@@ -322,7 +341,9 @@ fn Result<i64,errors::Error> run_core(ref ir::Program p,usize fuel,
             if(typed){let ref value_program::Program program=vec::at<value_program::Program>(admitted,0);
                 switch(batch){case .some(prepared):{values::publish_call(program,ref prepared,value_states,owner_states,
                     value_data,value_scratch,value_buffers,root_scratch);}case .none:{assert(false);}};
-                if(value_program::code(program).results[a]!=0){return_dsts[frame+1]=208+dst;}
+                switch(aliases){case .none:{}case .some(staged):{view_calls::publish(ref staged,view_pools);}};
+                let usize result=value_program::code(program).results[a] as usize;
+                if(result!=0 && result<=16){return_dsts[frame+1]=208+dst;}
             }
             let usize child = frame + 1;
             functions[child] = a;

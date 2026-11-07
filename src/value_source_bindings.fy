@@ -42,7 +42,7 @@ fn errors::Error invalid(usize at){return errors::make(3,at);}
 fn Result<usize,errors::Error> header(ref values::Program unit,ref State state,usize at){
     let usize view_count=views::validate(ref state.views,at)?;
     if(state.next>16 || state.names.count>64 || state.names.function>=16 ||
-        state.names.function>=unit.body.function_count || unit.body.function_count>16 ||
+        state.names.function>=unit.body.function_count || unit.body.function_count>16 || state.views.function!=state.names.function ||
         unit.catalog.count>64 || state.live>=65536 || state.pending>=65536 ||
         state.reads>=65536 || state.writes>=65536 || (state.reads&state.writes)!=0 ||
         ((state.reads|state.writes)&state.live)!=(state.reads|state.writes) ||
@@ -59,7 +59,8 @@ fn Result<usize,errors::Error> header(ref values::Program unit,ref State state,u
         if(((state.reads|state.writes)&bit(i))!=0 && unit.catalog.nodes[values::type_id(unit,i)].kind!=4){return .err(invalid(at));}
         i+=1;
     }
-    i=0;while(i<16){if(state.views.origins[i]!=0){let usize owner=(state.views.origins[i] as usize)-1;
+    let usize view_function=views::authenticate(unit,ref state.views,at)?;
+    i=0;while(i<16){if(state.views.origins[i]!=0 && state.views.origins[i]<=16){let usize owner=(state.views.origins[i] as usize)-1;
         if(owner>=state.next || (state.live&bit(owner))==0 ||
             unit.catalog.nodes[values::type_id(unit,owner)].kind!=4){return .err(invalid(at));}
     }i+=1;}
@@ -160,6 +161,7 @@ pub fn Result<usize,errors::Error> initialize(ref values::Program unit,ref mut S
 pub fn Result<usize,errors::Error> enter_function(ref values::Program unit,ref mut State state,usize function,usize at){
     let usize checked=header(unit,state,at)?;
     if(function>=unit.body.function_count || state.names.count!=0 || state.live!=0 || views::count(ref state.views)!=0){return .err(invalid(at));}
+    state.views=views::empty();state.views.function=function;
     state.names.function=function;return .ok(function);
 }
 // Bind an already initialized exact-type slot. Staging just the small names
@@ -315,6 +317,7 @@ pub fn Result<usize,errors::Error> drop(ref mut values::Program unit,ref mut Sta
 fn bool named_owner(ref State state,usize owner){var usize i=0;
     while(i<state.names.count){if(state.bindings[i] as usize==owner+1){return true;}i+=1;}return false;}
 fn Result<usize,errors::Error> anonymous_drop(ref State state,usize owner,usize at){
+    if(owner>=16){return .ok(0);}
     if(named_owner(state,owner)){return .ok(0);}
     if(((state.reads|state.writes)&bit(owner))!=0){return .err(invalid(at));}
     if((state.pending&bit(owner))!=0){return .err(errors::make(18,at));}return .ok(1);
@@ -334,7 +337,7 @@ pub fn Result<usize,errors::Error> close_view(ref mut values::Program unit,ref m
 // lexical cleanup; an immediate view over an anonymous Buffer owns its cleanup.
 pub fn Result<usize,errors::Error> close_views(ref mut values::Program unit,ref mut State state,usize at){
     let usize checked=header(unit,state,at)?;var usize owners=0;var usize i=0;
-    while(i<16){if(state.views.origins[i]!=0){owners|=bit((state.views.origins[i] as usize)-1);}i+=1;}
+    while(i<16){if(state.views.origins[i]!=0 && state.views.origins[i]<=16){owners|=bit((state.views.origins[i] as usize)-1);}i+=1;}
     var usize drops=0;i=0;while(i<16){if((owners&bit(i))!=0){drops+=anonymous_drop(state,i,at)?;}i+=1;}
     let usize closes=views::count(ref state.views);
     if(unit.body.count>256 || closes+drops>256-unit.body.count){return .err(errors::make(4,at));}
@@ -351,7 +354,8 @@ pub fn Result<usize,errors::Error> close_views_since(ref mut values::Program uni
     let usize closing=views::anonymous_since(ref state.views,baseline,at)?;
     var usize owners=0;var usize kept=0;var usize closes=0;var usize i=0;
     while(i<16){if(state.views.origins[i]!=0){let usize owner=(state.views.origins[i] as usize)-1;
-        if((closing&bit(i))!=0){owners|=bit(owner);closes+=1;}else{kept|=bit(owner);}
+        if((closing&bit(i))!=0){closes+=1;if(owner<16){owners|=bit(owner);}}
+        else if(owner<16){kept|=bit(owner);}
     }i+=1;}
     owners^=owners&kept;var usize drops=0;i=0;
     while(i<16){if((owners&bit(i))!=0){drops+=anonymous_drop(state,i,at)?;}i+=1;}
@@ -396,14 +400,23 @@ pub fn Result<usize,errors::Error> leave_scope(ref mut values::Program unit,ref 
     var usize closes=0;var usize closing=0;i=mark;while(i<state.names.count){
         if(state.views.names[i]!=0){let usize id=(state.views.names[i] as usize)-1;closing|=bit(id);closes+=1;}i+=1;
     }
-    i=0;while(i<16){if(state.views.origins[i]!=0){let usize owner=(state.views.origins[i] as usize)-1;
-        if((roots&bit(owner))!=0 && (closing&bit(i))==0){return .err(invalid(at));}
+    var usize anonymous=0;var usize kept=0;
+    i=0;while(i<16){if(state.views.origins[i]!=0 && state.views.origins[i]<=16){let usize owner=(state.views.origins[i] as usize)-1;
+        if((closing&bit(i))==0){
+            kept|=bit(owner);if((roots&bit(owner))!=0){return .err(invalid(at));}
+        }else{anonymous|=bit(owner);}
+    }i+=1;}
+    // Named CALL results can retain anonymous actuals. Their last lexical view
+    // owns root cleanup, unless another (including anonymous) descriptor survives.
+    anonymous^=anonymous&kept;i=0;while(i<16){if((anonymous&bit(i))!=0){
+        if(named_owner(state,i)){anonymous^=bit(i);}else{drops+=anonymous_drop(state,i,at)?;}
     }i+=1;}
     if(unit.body.count>256 || drops+closes>256-unit.body.count){return .err(errors::make(4,at));}
     // CLOSE every departing alias/range before dropping any referenced root.
     i=state.names.count;while(i>mark){i-=1;if(state.views.names[i]!=0){
         let usize id=(state.views.names[i] as usize)-1;
         let usize closed=views::close(unit,ref mut state.views,id,at)?;}}
+    i=16;while(i>0){i-=1;if((anonymous&bit(i))!=0){let usize dropped=drop(unit,state,i,at)?;}}
     i=state.names.count;while(i>mark){i-=1;
         if(state.bindings[i]!=0){let usize id=(state.bindings[i] as usize)-1;
             if((state.live&bit(id))!=0){

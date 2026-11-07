@@ -115,18 +115,19 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
         }
         if(value_ir::operation(op)){
             if(!value_sites.enabled){return .err(errors::make(5,pc));}
-            if(op==94){
-                if(live!=0 || static_live!=0 || value_sites.results[f]==0){return .err(errors::make(5,pc));}
+            if(op==94 || op==113){
+                if(live!=0 || static_live!=0 || value_sites.results[f]==0 ||
+                    (op==94 && value_sites.results[f]>16) || (op==113 && value_sites.results[f]<17)){return .err(errors::make(5,pc));}
                 pc+=1;continue;
             }
-            if(op==93){
+            if(op==93 || op==114){
                 if(a>=p.function_count || a==p.entry || b>=p.call_count || used_calls[b] ||
                     p.call_arities[b] as usize!=p.arities[a]){return .err(errors::make(5,pc));}
                 if((live>>48)!=0){let usize preserved=reborrow_calls::inspect(p,loans,pc,f,live)?;}
                 let usize checked=array_parameters::arguments_values(p,a,b,f,ref defined,live,pc,ref value_sites.parameters)?;
                 if(value_sites.results[a]!=0){
-                    // Independent value CFG has already consumed move-only actuals
-                    // and proved the exact empty result slot/type in this frame.
+                    // Independent owner/view CFGs prove the result's separate
+                    // namespace. A view result never defines a scalar word.
                 }else if(p.array_results[a]!=0 || p.record_results[a]!=0){
                     live=if(p.record_results[a]!=0){struct_results::call(p,a,dst,f,live,pc)?}else{array_results::call(p,a,dst,f,live,pc)?};
                 }else if(p.return_types[a]==13){if(dst!=0){return .err(errors::make(5,pc));}}

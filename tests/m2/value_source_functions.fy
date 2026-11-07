@@ -91,12 +91,15 @@ fn void clean(ref mut values::Program unit,ref mut bindings::State state){let us
     assert(verifier::inspect_values(ref unit).is_ok);
 }
 
-@test fn void unavailable_references_malformed_candidates_and_missing_exact_nodes_reject(){
+@test fn void shared_reference_candidates_and_malformed_or_unresolved_signatures_are_distinct(){
     let ref u8[] source=b"module main;fn i32 main(){return 42;}fn void take(ref u8[] data){}";
     var properties::Catalog catalog=properties::empty();var functions::Table signatures=scanned(source,ref mut catalog);
-    assert(!metadata::prepare(ref catalog,ref signatures).is_ok);
+    let metadata::Plan shared=prepared(ref catalog,ref signatures);assert(shared.parameters[8]==66);
     signatures=scanned(b"module main;fn ref u8[] same(ref u8[] data){return data;}fn i32 main(){return 42;}",ref mut catalog);
     assert(!metadata::prepare(ref catalog,ref signatures).is_ok);
+    signatures.return_slice_inputs[0]=1;
+    let metadata::Plan returned=prepared(ref catalog,ref signatures);
+    assert(returned.results[0]==66 && returned.parameters[0]==66);
     signatures=scanned(b"module main;fn i32 main(){return 42;}",ref mut catalog);
     signatures.count=17;assert(!metadata::prepare(ref catalog,ref signatures).is_ok);signatures.count=1;
     signatures.arities[0]=9;assert(!metadata::prepare(ref catalog,ref signatures).is_ok);signatures.arities[0]=0;

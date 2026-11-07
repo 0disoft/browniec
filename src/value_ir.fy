@@ -19,13 +19,16 @@ import errors as errors;
 // 109 VIEW_CLOSE view-dst; 110 VIEW_LEN usize-dst,view-a;
 // 111 VIEW_READ u8-dst,view-a,index-reg;
 // 112 APPEND_VIEW result-dst,Buffer-a,view-b. Views use a separate 16-slot frame
-// domain; no view words inhabit canonical values or function signatures.
+// domain; no view words inhabit canonical values or scalar registers.
+// 113 VIEW_RETURN 0,view-a,0; 114 VIEW_CALL view-dst,callee,map.
 // Buffer mutations retain owners; results are exact Result<usize,u8>.
 // TAG_TEST only inspects a live wrapper; it never defines/consumes a value slot.
 // Except CASE/VIEW_BEGIN/VIEW_RANGE byte4, bytes4..7 are zero.
 // Variant1 means some/ok, variant0 none/err, matching existing IR (not a new
 // serialized tag layout). CASE none uses dst0; TAG_BUILD none uses a0.
-// CALL resource actuals encode 208+value ID; ordinary argument encodings remain.
+// CALL actuals: 208+owning ID, 224+view ID; ordinary encodings remain.
+// parameters: 0 ordinary, 1..16 owning ID+1, 17..32 shared u8 view ID+17.
+// results: 0 ordinary, 1..16 owning anchor+1, 17..24 selected view arg ordinal+17.
 pub struct Program {
     ir::Program body; properties::Catalog catalog;
     u8[16] types; u8[16] functions; u8[128] parameters; u8[16] results;
@@ -35,7 +38,7 @@ pub struct Program {
 pub struct Sites { bool enabled; u8[128] parameters; u8[16] results; u8[16] scalar_tags; }
 pub struct Prepared { properties::Plan properties; usize[64] classes; Sites sites; }
 pub fn Sites empty(){return Sites{.enabled=false,.parameters=[0;128],.results=[0;16],.scalar_tags=[0;16]};}
-pub fn bool operation(u8 op){return op>=88 && op<=112;}
+pub fn bool operation(u8 op){return op>=88 && op<=114;}
 fn errors::Error invalid(usize pc){return errors::make(5,pc);}
 pub fn bool slot(ref Program unit,usize id,usize f){
     return id<16 && unit.types[id]!=0 && unit.functions[id] as usize==f;
@@ -99,19 +102,32 @@ pub fn Result<Prepared,errors::Error> prepare(ref Program unit){
     }
     var usize code=0;var usize registers=0;var usize formals=0;var usize f=0;let usize one=1;
     while(f<16){let usize result=unit.results[f] as usize;
-        if(f>=p.function_count){if(result!=0){return .err(invalid(0));}}
+        if(f>=p.function_count){if(result!=0 || p.starts[f]!=0 || p.ends[f]!=0 ||
+            p.register_starts[f]!=0 || p.register_ends[f]!=0 || p.arities[f]!=0 ||
+            p.return_types[f]!=0 || p.array_results[f]!=0 || p.record_results[f]!=0){return .err(invalid(0));}}
         else{
             if(p.starts[f]!=code || p.ends[f]<=code || p.ends[f]>p.count || p.register_starts[f]!=registers ||
                 p.register_ends[f]<registers || p.register_ends[f]>p.registers || p.arities[f]>8 ||
                 p.arities[f]>p.register_ends[f]-registers){return .err(invalid(code));}
-            if(result!=0 && (result>16 || !slot(unit,result-1,f) || p.return_types[f]!=0 ||
-                p.array_results[f]!=0 || p.record_results[f]!=0)){return .err(invalid(code));}
+            if(result!=0){
+                if(result>24 || p.return_types[f]!=0 || p.array_results[f]!=0 ||
+                    p.record_results[f]!=0){return .err(invalid(code));}
+                if(result<=16){if(!slot(unit,result-1,f)){return .err(invalid(code));}}
+                else if(result-17>=p.arities[f] ||
+                    unit.parameters[registers+result-17]<17 || unit.parameters[registers+result-17]>32){return .err(invalid(code));}
+            }
+            var usize views=0;
             var usize r=registers;while(r<p.register_ends[f]){let usize value=unit.parameters[r] as usize;
                 if(value!=0){
-                    if(value>16 || !slot(unit,value-1,f) || r>=registers+p.arities[f] || p.types[r]!=0 ||
-                        p.slots[r] || p.array_parameters[r]!=0 || p.record_parameters[r]!=0 || p.slice_parameters[r]!=0 ||
-                        (formals&(one<<(value-1)))!=0){return .err(invalid(code));}
-                    formals|=one<<(value-1);
+                    if(value>32 || r>=registers+p.arities[f] || p.types[r]!=0 || p.slots[r] ||
+                        p.array_parameters[r]!=0 || p.record_parameters[r]!=0 || p.slice_parameters[r]!=0){return .err(invalid(code));}
+                    if(value<=16){
+                        if(!slot(unit,value-1,f) || (formals&(one<<(value-1)))!=0){return .err(invalid(code));}
+                        formals|=one<<(value-1);
+                    }else{
+                        if((views&(one<<(value-17)))!=0){return .err(invalid(code));}
+                        views|=one<<(value-17);
+                    }
                 }r+=1;
             }
             code=p.ends[f];registers=p.register_ends[f];
@@ -120,14 +136,49 @@ pub fn Result<Prepared,errors::Error> prepare(ref Program unit){
     if(code!=p.count || registers!=p.registers || p.arities[p.entry]!=0 || p.return_types[p.entry]!=1 ||
         unit.results[p.entry]!=0){return .err(invalid(0));}
     i=p.registers;while(i<128){if(unit.parameters[i]!=0){return .err(invalid(0));}i+=1;}
+    i=0;while(i<32){
+        let usize count=p.call_arities[i] as usize;
+        if(count>8 || (i>=p.call_count && count!=0)){return .err(invalid(0));}
+        var usize j=0;while(j<8){
+            if((i>=p.call_count || j>=count) && p.call_args[i*8+j]!=0){return .err(invalid(0));}j+=1;
+        }i+=1;
+    }
     return .ok(proof);
+}
+// Structural CALL proof also runs before CFG traversal, including dead sites.
+// Only the independent owner/view planes can establish actual liveness.
+pub fn Result<usize,errors::Error> call(ref Program unit,ref Prepared proof,usize pc,usize f){
+    let ref ir::Program p=ref unit.body;let usize at=pc*8;let u8 op=p.code[at];
+    let usize dst=p.code[at+1] as usize;let usize target=p.code[at+2] as usize;let usize map=p.code[at+3] as usize;
+    if((op!=9 && op!=93 && op!=114) || target>=p.function_count || target==p.entry ||
+        map>=p.call_count || p.call_arities[map] as usize!=p.arities[target] ||
+        p.code[at+4]!=0 || p.code[at+5]!=0 || p.code[at+6]!=0 || p.code[at+7]!=0){return .err(invalid(pc));}
+    let usize result=unit.results[target] as usize;var bool extended=result!=0;
+    var usize i=0;while(i<8){let usize actual=p.call_args[map*8+i] as usize;
+        if(i<p.arities[target]){let usize formal=unit.parameters[p.register_starts[target]+i] as usize;
+            if(formal!=0){extended=true;
+                if(formal<=16){
+                    if(actual<208 || actual>=224 || !slot(unit,actual-208,f) ||
+                        !same(unit,proof,actual-208,formal-1)){return .err(invalid(pc));}
+                }else if(actual<224 || actual>=240){return .err(invalid(pc));}
+            }else if(actual>=208 || (actual<128 && unit.parameters[actual]!=0)){return .err(invalid(pc));}
+        }else if(actual!=0){return .err(invalid(pc));}i+=1;
+    }
+    if(op!=if(result>=17){114}else if(extended){93}else{9}){return .err(invalid(pc));}
+    if(result>=17){if(dst>=16){return .err(invalid(pc));}}
+    else if(result!=0){if(!slot(unit,dst,f) || !same(unit,proof,dst,result-1)){return .err(invalid(pc));}}
+    else if(p.return_types[target]==13 && dst!=0){return .err(invalid(pc));}
+    return .ok(map);
 }
 // Check every new operation, including dead blocks, before any liveness proof.
 pub fn Result<usize,errors::Error> instruction(ref Program unit,ref Prepared proof,usize pc,usize f){
     let ref ir::Program p=ref unit.body;let usize at=pc*8;let u8 op=p.code[at];
     let usize dst=p.code[at+1] as usize;let usize a=p.code[at+2] as usize;let usize b=p.code[at+3] as usize;
     if(!operation(op) || (op!=92 && op!=105 && op!=106 && p.code[at+4]!=0) || p.code[at+5]!=0 || p.code[at+6]!=0 || p.code[at+7]!=0){return .err(invalid(pc));}
-    if(op==112){
+    if(op==113){
+        if(dst!=0 || a>=16 || b!=0 || unit.results[f]<17 || unit.results[f]>24){return .err(invalid(pc));}
+    }else if(op==114){return call(unit,proof,pc,f);
+    }else if(op==112){
         if(!buffer_result(unit,dst,f) || !buffer(unit,a,f) || b>=16){return .err(invalid(pc));}
     }else if(op>=105){
         if(op==105 || op==106){
@@ -158,10 +209,9 @@ pub fn Result<usize,errors::Error> instruction(ref Program unit,ref Prepared pro
             }
         }
     }else if(op==93){
-        if(a>=p.function_count || b>=p.call_count || p.call_arities[b] as usize!=p.arities[a]){return .err(invalid(pc));}
-        if(unit.results[a]!=0 && (!slot(unit,dst,f) || !same(unit,proof,dst,(unit.results[a] as usize)-1))){return .err(invalid(pc));}
+        return call(unit,proof,pc,f);
     }else if(op==94){
-        if(dst!=0 || b!=0 || !slot(unit,a,f) || unit.results[f]==0 ||
+        if(dst!=0 || b!=0 || !slot(unit,a,f) || unit.results[f]==0 || unit.results[f]>16 ||
             !same(unit,proof,a,(unit.results[f] as usize)-1)){return .err(invalid(pc));}
     }else if(op==98){
         if(!slot(unit,a,f) || b>1 || dst<p.register_starts[f] || dst>=p.register_ends[f] ||

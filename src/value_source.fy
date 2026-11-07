@@ -18,6 +18,7 @@ import value_source_boolean as boolean;
 import value_source_loops as looping;
 import value_source_headers as headers;
 import functions as signatures;
+import slice_result_source_origins as reference_origins;
 import lexer as lexer;
 import locals as locals;
 import ir as ir;
@@ -138,8 +139,12 @@ fn Result<context::Value,errors::Error> call(ref u8[] source,ref mut lexer::Stat
     while(i<table.arities[target]){
         if(i!=0){let usize comma=lexer::punctuation(source,s,44)?;}
         let usize exact=plan.parameters[target*8+i]-1;
+        if(exact==65){let usize prefix=lexer::word(source,s,b"ref")?;
+            if(word(source,s,b"mut")){return .err(wrong(s.begin));}}
         let context::Value value=expression(source,s,unit,state,table,plan,paths,flow,exact,1,depth+1)?;
-        if(unit.catalog.nodes[exact].kind==1){arguments[i]=context::as_scalar(unit,state,value,at)?;}
+        if(exact==65){let usize id=view_source::capture(unit,state,value,at)?;
+            arguments[i]=224+id;captures[i]=17+id;extended=true;
+        }else if(unit.catalog.nodes[exact].kind==1){arguments[i]=context::as_scalar(unit,state,value,at)?;}
         else{let usize id=context::as_value(unit,state,value,at)?;arguments[i]=208+id;captures[i]=id;extended=true;}
         i+=1;
     }
@@ -200,6 +205,11 @@ fn Result<context::Value,errors::Error> view_index(ref u8[] source,ref mut lexer
 fn Result<context::Value,errors::Error> primary(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
     ref mut bindings::State state,ref signatures::Table table,ref functions::Plan plan,ref mut vec::Vec<bindings::Snapshot> paths,ref mut looping::State flow,usize exact,usize depth){
     if(depth>32){return .err(errors::make(4,s.begin));}let usize at=s.begin;
+    if(word(source,s,b"ref")){
+        let usize prefix=lexer::next(source,s)?;if(word(source,s,b"mut")){return .err(wrong(at));}
+        let context::Value input=atom(source,s,unit,state,table,plan,paths,flow,65,depth+1)?;
+        return context::expected(input,exact,at);
+    }
     if(word(source,s,b"if")){return if_value(source,s,unit,state,table,plan,paths,flow,exact,depth);}
     if(word(source,s,b"switch")){return switch_value(source,s,unit,state,table,plan,paths,flow,exact,depth);}
     if(s.kind==46){return constructor(source,s,unit,state,table,plan,paths,flow,exact,depth);}
@@ -535,6 +545,13 @@ fn Result<bool,errors::Error> scope(ref u8[] source,ref mut lexer::State s,ref m
             let usize next=lexer::next(source,s)?;let usize result=plan.results[f];var context::Value value=context::nothing();
             if(result!=0){value=expression(source,s,unit,state,table,plan,paths,flow,result-1,1,0)?;}
             let usize semi=lexer::punctuation(source,s,59)?;
+            if(result==66){
+                let usize captured=view_source::capture(unit,state,value,at)?;
+                let usize selected=view_bindings::take_return(unit,ref mut state.views,captured,at)?;
+                let usize cleaned=propagation::finish_function(unit,state,16,at)?;
+                let usize returned=ir::raw(ref mut unit.body,113,0,selected,0,at)?;
+                terminal=true;continue;
+            }
             let usize closed=bindings::close_views(unit,state,at)?;
             let usize scalar_result=if(result!=0 && !value.typed){value.value}else{0};
             let usize keep=if(value.typed){context::as_value(unit,state,value,at)?}else{16};
@@ -565,11 +582,14 @@ fn Result<bool,errors::Error> scope(ref u8[] source,ref mut lexer::State s,ref m
     return .ok(terminal);
 }
 fn Result<usize,errors::Error> lower(ref u8[] source,ref mut values::Program unit){
-    let signatures::Table table=signatures::scan_values(source,ref mut unit.catalog)?;
+    var signatures::Table table=signatures::scan_values(source,ref mut unit.catalog)?;
+    table.reference_returns=true;
+    let usize inferred=reference_origins::infer(source,ref mut table)?;
     let functions::Plan plan=functions::prepare(ref unit.catalog,ref table)?;
     unit.body.function_count=table.count;unit.body.entry=table.entry;
     var usize f=0;while(f<table.count){let usize result=plan.results[f];
-        let u8 tag=if(result==0){13}else if(unit.catalog.nodes[result-1].kind==1){unit.catalog.nodes[result-1].first}else{0};
+        let u8 tag=if(result==0){13}else if(result==66){0}else if(unit.catalog.nodes[result-1].kind==1){unit.catalog.nodes[result-1].first}else{0};
+        if(result==66){unit.results[f]=context::byte(16+table.return_slice_inputs[f] as usize);}
         unit.body.return_types[f]=tag;f+=1;
     }
     var bindings::State state=bindings::empty();

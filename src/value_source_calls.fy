@@ -4,6 +4,8 @@ import value_properties as properties;
 import value_source_bindings as bindings;
 import value_source_functions as functions;
 import value_source_context as context;
+import value_view_bindings as views;
+import value_view_source as view_source;
 import functions as signatures;
 import ir as ir;
 import errors as errors;
@@ -17,7 +19,13 @@ pub fn Result<context::Value,errors::Error> finish(ref mut values::Program unit,
     ref usize[] captures,usize count,bool has_values,usize at){
     let usize i=count;var bool extended=has_values;
     let usize result=plan.results[target];var context::Value returned=context::nothing();
-    if(result!=0 && unit.catalog.nodes[result-1].kind!=1){extended=true;
+    if(result==66){extended=true;
+        let usize input=table.return_slice_inputs[target] as usize;
+        if(input==0 || input>count){return .err(wrong(at));}let usize selected=input-1;
+        if(selected>=count || arguments[selected]<224 || arguments[selected]>=240){return .err(wrong(at));}
+        let usize view=views::call_result(unit,ref mut state.views,arguments[selected]-224,at)?;
+        returned=view_source::value(view,64);
+    }else if(result!=0 && unit.catalog.nodes[result-1].kind!=1){extended=true;
         returned=context::owned(result-1,bindings::allocate(unit,state,result-1,at)?);
     }else if(result!=0){
         if(register_count(unit)>=128){return .err(errors::make(4,at));}
@@ -27,11 +35,13 @@ pub fn Result<context::Value,errors::Error> finish(ref mut values::Program unit,
     if(call_count(unit)>=32 || position(unit)>=256){return .err(errors::make(4,at));}
     let usize map=call_count(unit);unit.body.call_count=map+1;unit.body.call_arities[map]=context::byte(i);
     var usize j=0;while(j<i){unit.body.call_args[map*8+j]=context::byte(arguments[j]);j+=1;}
-    let usize emitted=ir::raw(ref mut unit.body,if(extended){93}else{9},if(returned.nothing){0}else{returned.value},target,map,at)?;
+    let usize emitted=ir::raw(ref mut unit.body,if(result==66){114}else if(extended){93}else{9},if(returned.nothing){0}else{returned.value},target,map,at)?;
     let properties::Plan properties= switch(properties::inspect(ref unit.catalog)){
         case .ok(v):{v}case .err(_):{return .err(wrong(at));}
     };
-    j=0;while(j<i){if(captures[j]!=16){let usize id=captures[j];
+    j=0;while(j<i){if(captures[j]>=17){
+        let usize closed=bindings::close_view(unit,state,captures[j]-17,at)?;
+    }else if(captures[j]!=16){let usize id=captures[j];
         // A later argument can exit before CALL; transfer the obligation only
         // after this CALL is published, never while evaluating its arguments.
         let usize handled=bindings::handle(unit,state,id,at)?;

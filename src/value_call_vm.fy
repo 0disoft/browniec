@@ -19,6 +19,7 @@ import std::vec as vec;
 pub struct Prepared {
     frames::Address[8] sources; frames::Address[8] destinations;
     bool[8] copying; usize[8] costs; usize count;
+    usize[8] view_sources; usize[8] view_formals; usize view_count;
     frames::Token caller; frames::Token callee; usize target; usize total;
 }
 fn frames::Address nowhere(){return frames::Address{.frame=0,.generation=0,.slot=0};}
@@ -45,7 +46,7 @@ fn Result<Prepared,errors::Error> metadata(ref value_ir::Program unit,ref layout
     if(body.count==0 || body.count>256 || pc>=body.count || functions==0 || functions>16 ||
         layouts::functions(plan)!=functions || body.registers>128 || body.call_count>32){return .err(invalid(at));}
     let usize instruction=pc*8;let u8 op=body.code[instruction];
-    if(op!=9 && op!=93){return .err(invalid(at));}
+    if(op!=9 && op!=93 && op!=114){return .err(invalid(at));}
     var usize i=4;while(i<8){if(body.code[instruction+i]!=0){return .err(invalid(at));}i+=1;}
     let usize target=body.code[instruction+2] as usize;
     let usize site=body.code[instruction+3] as usize;
@@ -59,14 +60,22 @@ fn Result<Prepared,errors::Error> metadata(ref value_ir::Program unit,ref layout
     let usize width=switch(layouts::width(plan,target)){case .ok(v):{v}case .err(_):{return .err(invalid(at));}};
     let usize entry=switch(meter::enter_cost(width)){case .ok(v):{v}case .err(_):{return .err(invalid(at));}};
     var Prepared batch=Prepared{.sources=[nowhere();8],.destinations=[nowhere();8],.copying=[false;8],.costs=[0;8],
-        .count=0,.caller=frames::Token{.frame=0,.generation=0},.callee=frames::Token{.frame=0,.generation=0},
+        .count=0,.view_sources=[0;8],.view_formals=[0;8],.view_count=0,.caller=frames::Token{.frame=0,.generation=0},.callee=frames::Token{.frame=0,.generation=0},
         .target=target,.total=add(entry,8192,at)?};
-    var usize formals=0;let usize one=1;i=0;
+    var usize formals=0;var usize view_formals=0;let usize one=1;i=0;
     while(i<8){let usize actual=body.call_args[site*8+i] as usize;
         if(i>=arity){if(actual!=0){return .err(invalid(at));}}
         else{
             let usize reg=start+i;let usize encoded=unit.parameters[reg] as usize;
             if(encoded==0){if(actual>=208){return .err(invalid(at));}}
+            else if(encoded>=17 && encoded<=32){
+                if(actual<224 || actual>=240 || body.types[reg]!=0 || body.slots[reg] ||
+                    body.array_parameters[reg]!=0 || body.record_parameters[reg]!=0 || body.slice_parameters[reg]!=0){return .err(invalid(at));}
+                let usize dst=encoded-17;
+                if((view_formals&(one<<dst))!=0){return .err(invalid(at));}view_formals|=one<<dst;
+                let usize n=batch.view_count;batch.view_sources[n]=actual-224;batch.view_formals[n]=dst;
+                batch.view_count=n+1;batch.total=add(batch.total,512,at)?;
+            }
             else{
                 if(encoded>16 || actual<208 || actual>=224 || body.types[reg]!=0 || body.slots[reg] ||
                     body.array_parameters[reg]!=0 || body.record_parameters[reg]!=0 || body.slice_parameters[reg]!=0){return .err(invalid(at));}
@@ -84,8 +93,15 @@ fn Result<Prepared,errors::Error> metadata(ref value_ir::Program unit,ref layout
         }i+=1;
     }
     let usize result=unit.results[target] as usize;
-    if((op==93)!=(result!=0 || batch.count!=0)){return .err(invalid(at));}
-    if(result!=0){
+    if(result>24 || (op==114)!=(result>=17) ||
+        (op==93)!=(result<17 && (result!=0 || batch.count!=0 || batch.view_count!=0))){return .err(invalid(at));}
+    if(result>=17){
+        let usize ordinal=result-17;
+        if(ordinal>=arity || unit.parameters[start+ordinal]<17 || unit.parameters[start+ordinal]>32 ||
+            body.code[instruction+1]>=16 || body.return_types[target]!=0 ||
+            body.array_results[target]!=0 || body.record_results[target]!=0){return .err(invalid(at));}
+    }
+    else if(result!=0){
         if(result>16 || body.return_types[target]!=0 || body.array_results[target]!=0 || body.record_results[target]!=0){return .err(invalid(at));}
         let usize src_id=declared(unit,plan,result-1,target,at)?;
         let usize dst_id=declared(unit,plan,body.code[instruction+1] as usize,caller,at)?;
@@ -122,7 +138,7 @@ pub fn Result<Prepared,errors::Error> prepare(ref value_ir::Program unit,ref lay
             simulated.frames[parent].live=live;simulated.order[parent*16+src]=0;}
         i+=1;
     }
-    if(unit.results[batch.target]!=0){
+    if(unit.results[batch.target]!=0 && unit.results[batch.target]<=16){
         let frames::Address destination=frames::Address{.frame=caller.frame,.generation=caller.generation,.slot=body.code[pc*8+1] as usize};
         if(!frames::inspect_destination(plan,ref simulated,data,destination).is_ok){return .err(invalid(at));}
     }

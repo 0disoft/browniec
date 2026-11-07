@@ -9,7 +9,7 @@ import slice_parameters as parameters;
 // This does not authenticate native receipts, reserve depth, or admit execution.
 pub fn Result<usize,errors::Error> inspect(ref ir::Program p,ref forest::Sites sites,
     usize pc,usize caller,usize live){
-    if(pc>=p.count || pc>=256 || (p.code[pc*8]!=9 && p.code[pc*8]!=78 && p.code[pc*8]!=93) || caller>=p.function_count){return .err(errors::make(5,pc));}
+    if(pc>=p.count || pc>=256 || (p.code[pc*8]!=9 && p.code[pc*8]!=78 && p.code[pc*8]!=93 && p.code[pc*8]!=114) || caller>=p.function_count){return .err(errors::make(5,pc));}
     let usize target=p.code[pc*8+2] as usize;let usize args=p.code[pc*8+3] as usize;
     if(target>=p.function_count || args>=p.call_count || args>=32 ||
         p.call_arities[args] as usize!=p.arities[target] || p.arities[target]>8){return .err(errors::make(5,pc));}

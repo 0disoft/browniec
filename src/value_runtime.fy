@@ -216,7 +216,8 @@ pub fn Result<usize,errors::Error> prepare_return_views(ref programs::Program pr
     let frames::Token current=token(states,frame,offset)?;let frames::Token parent=token(states,frame-1,offset)?;
     let ref frames::State state=vec::at<frames::State>(states,0);let usize function=state.frames[frame].function;
     let usize one=1;
-    if(source>=16 || state.frames[frame].live!=(one<<source) || programs::code(program).results[function]==0){return .err(errors::make(5,offset));}
+    let usize result=programs::code(program).results[function] as usize;
+    if(source>=16 || state.frames[frame].live!=(one<<source) || result==0 || result>16){return .err(errors::make(5,offset));}
     let usize id=switch(layouts::type_id(programs::layout(program),source,function)){case .ok(v):{v}case .err(_):{return .err(errors::make(5,offset));}};
     let properties::Property p=switch(codec::shape(layouts::layout(programs::layout(program)),id)){case .ok(v):{v}case .err(_):{return .err(errors::make(5,offset));}};
     let usize charge=8192+2*number(meter::operation_cost(p.bytes),offset)?;

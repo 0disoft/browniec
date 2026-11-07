@@ -46,7 +46,7 @@ pub fn Result<usize, errors::Error> arguments_static(ref ir::Program p,usize tar
     ref registers::Set defined,usize live,usize pc,ref u8[] statics){
     let u8[1] empty=[0];return arguments_domains(p,target,site,caller,defined,live,pc,statics,ref empty[..0]);
 }
-// The typed-value analyzer independently proves these opaque owning actuals.
+// The typed-value analyzer independently proves opaque owning/view actuals.
 // Scalar/array/record/loan operands still use their original canonical checks.
 pub fn Result<usize,errors::Error> arguments_values(ref ir::Program p,usize target,usize site,usize caller,
     ref registers::Set defined,usize live,usize pc,ref u8[] values){
@@ -62,7 +62,12 @@ fn Result<usize,errors::Error> arguments_domains(ref ir::Program p,usize target,
         if (arg < count) {
             let usize parameter = p.register_starts[target] + arg;
             let usize encoded = p.array_parameters[parameter] as usize;
-            if(values.len==128 && values[parameter]!=0){arg+=1;continue;}
+            if(values.len==128 && values[parameter]!=0){
+                let usize formal=values[parameter] as usize;
+                if(formal>32 || source<if(formal<=16){208}else{224} ||
+                    source>=if(formal<=16){224}else{240}){return .err(errors::make(5,pc));}
+                arg+=1;continue;
+            }
             if(statics.len==128 && statics[parameter]!=0){
                 if(statics[parameter]==3 && source>=160 && source<176){
                     let usize checked=slices::shared_byte(p,source,caller,live,pc)?;
@@ -84,6 +89,7 @@ fn Result<usize,errors::Error> arguments_domains(ref ir::Program p,usize target,
                 let copying::Plan checked=copying::argument(p,target,parameter,source,caller,live,pc)?;
             } else {
                 if (source < p.register_starts[caller] || source >= p.register_ends[caller] ||
+                    (values.len==128 && values[source]!=0) ||
                     p.slots[source] || p.array_parameters[source] != 0 || p.record_parameters[source] != 0 || p.slice_parameters[source] != 0 || !registers::contains(defined, source) ||
                     p.types[source] != p.types[parameter]) { return .err(errors::make(5, pc)); }
             }

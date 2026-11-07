@@ -11,9 +11,34 @@ import types as scalar;
 import errors as errors;
 
 // Compile-only forward metadata. Entries are exact canonical node ID + 1;
-// only a void result is zero. No IR slot or runtime authority is encoded here.
+// only a void result is zero; 66 denotes readonly ref u8[]. No runtime authority.
 pub struct Plan { usize[16] results; usize[128] parameters; }
 fn errors::Error invalid(usize at){return errors::make(3,at);}
+fn Result<usize,errors::Error> reference(u8 element,u8 tag,usize length,u8 record,usize at){
+    if(element!=10 || tag!=0 || length!=0 || record!=0){return .err(invalid(at));}
+    return .ok(66);
+}
+fn Result<usize,errors::Error> result(ref properties::Catalog catalog,ref functions::Table signatures,usize f){
+    let usize at=signatures.begins[f];
+    if(signatures.return_slice_elements[f]!=0){
+        let usize checked=reference(signatures.return_slice_elements[f],signatures.return_types[f],
+            signatures.return_lengths[f],signatures.return_records[f],at)?;
+        let usize input=signatures.return_slice_inputs[f] as usize;
+        if(input==0 || input>signatures.arities[f] || input>8 || !signatures.param_slices[f*8+input-1] ||
+            signatures.param_slice_elements[f*8+input-1]!=10){return .err(invalid(at));}
+        return .ok(checked);
+    }
+    if(signatures.return_slice_inputs[f]!=0 || signatures.return_slice_candidates[f]!=0){return .err(invalid(at));}
+    return exact(catalog,signatures.return_types[f],signatures.return_lengths[f],signatures.return_records[f],true,at);
+}
+fn Result<usize,errors::Error> parameter(ref properties::Catalog catalog,ref functions::Table signatures,usize p){
+    if(signatures.param_slices[p]){
+        return reference(signatures.param_slice_elements[p],signatures.param_types[p],signatures.param_lengths[p],
+            signatures.param_records[p],signatures.param_begins[p]);
+    }
+    if(signatures.param_slice_elements[p]!=0){return .err(invalid(signatures.param_begins[p]));}
+    return exact(catalog,signatures.param_types[p],signatures.param_lengths[p],signatures.param_records[p],false,signatures.param_begins[p]);
+}
 fn Result<usize,errors::Error> inspected(ref properties::Catalog catalog,usize at){
     return switch(properties::inspect(catalog)){
         case .ok(p):{.ok(p.count)}case .err(e):{
@@ -50,20 +75,14 @@ pub fn Result<Plan,errors::Error> prepare(ref properties::Catalog catalog,ref fu
         }else{
             let usize at=signatures.begins[f];
             if(signatures.arities[f]>8){return .err(errors::make(4,at));}
-            if(signatures.return_slice_elements[f]!=0 || signatures.return_slice_inputs[f]!=0 ||
-                signatures.return_slice_candidates[f]!=0){return .err(invalid(at));}
-            plan.results[f]=exact(catalog,signatures.return_types[f],signatures.return_lengths[f],
-                signatures.return_records[f],true,at)?;
+            plan.results[f]=result(catalog,signatures,f)?;
         }
         var usize i=0;while(i<8){let usize p=f*8+i;
             if(f>=signatures.count || i>=signatures.arities[f]){
                 if(signatures.param_types[p]!=0 || signatures.param_lengths[p]!=0 || signatures.param_records[p]!=0 ||
                     signatures.param_slices[p] || signatures.param_slice_elements[p]!=0){return .err(invalid(0));}
             }else{
-                if(signatures.param_slices[p] || signatures.param_slice_elements[p]!=0){
-                    return .err(invalid(signatures.param_begins[p]));}
-                plan.parameters[p]=exact(catalog,signatures.param_types[p],signatures.param_lengths[p],
-                    signatures.param_records[p],false,signatures.param_begins[p])?;
+                plan.parameters[p]=parameter(catalog,signatures,p)?;
             }i+=1;
         }f+=1;
     }
@@ -87,29 +106,28 @@ pub fn Result<usize,errors::Error> begin(ref mut values::Program unit,ref mut bi
     let usize at=signatures.begins[f];let usize arity=signatures.arities[f];
     if(arity>8 || unit.body.registers>128 || state.next>16 || unit.body.count>256){return .err(errors::make(4,at));}
     if(arity>128-unit.body.registers){return .err(errors::make(4,at));}
-    if(state.names.count!=0 || state.live!=0 || state.reads!=0 || state.writes!=0 || views::count(ref state.views)!=0 || state.names.pending_places!=0 || unit.results[f]!=0){return .err(invalid(at));}
+    let bool reference_result=plan.results[f]==66;
+    let usize selected=if(reference_result){16+signatures.return_slice_inputs[f] as usize}else{0};
+    if(state.names.count!=0 || state.live!=0 || state.reads!=0 || state.writes!=0 || views::count(ref state.views)!=0 || state.names.pending_places!=0 || unit.results[f] as usize!=selected){return .err(invalid(at));}
     if((f==0 && (unit.body.count!=0 || unit.body.registers!=0)) ||
         (f!=0 && (unit.body.ends[f-1]!=unit.body.count || unit.body.register_ends[f-1]!=unit.body.registers ||
             state.names.function!=f-1))){return .err(invalid(at));}
     let usize checked=inspected(ref unit.catalog,at)?;
-    let usize result=exact(ref unit.catalog,signatures.return_types[f],signatures.return_lengths[f],
-        signatures.return_records[f],true,at)?;
-    if(result!=plan.results[f] || signatures.return_slice_elements[f]!=0){return .err(invalid(at));}
-    let bool typed=result!=0 && unit.catalog.nodes[result-1].kind!=1;
-    let u8 tag=if(result==0){13}else if(typed){0}else{unit.catalog.nodes[result-1].first};
+    let usize result=result(ref unit.catalog,signatures,f)?;
+    if(result!=plan.results[f]){return .err(invalid(at));}
+    let bool typed=result!=0 && result!=66 && unit.catalog.nodes[result-1].kind!=1;
+    let u8 tag=if(result==0){13}else if(typed || reference_result){0}else{unit.catalog.nodes[result-1].first};
     if(unit.body.return_types[f]!=tag){return .err(invalid(at));}
     var usize needed=if(typed){1}else{0};var usize i=0;
     while(i<arity){let usize p=f*8+i;let usize begin=signatures.param_begins[p];let usize end=signatures.param_ends[p];
-        if(signatures.param_slices[p] || signatures.param_slice_elements[p]!=0){return .err(invalid(begin));}
-        let usize encoded=exact(ref unit.catalog,signatures.param_types[p],signatures.param_lengths[p],
-            signatures.param_records[p],false,begin)?;
+        let usize encoded=parameter(ref unit.catalog,signatures,p)?;
         if(encoded!=plan.parameters[p]){return .err(invalid(begin));}
         if(!lexer::simple(source,begin,end) || locals::reserved(source[begin..end])){return .err(errors::make(2,begin));}
         var usize j=0;while(j<i){let usize prior=f*8+j;
             if(lexer::equal(source[begin..end],source[signatures.param_begins[prior]..signatures.param_ends[prior]])){
                 return .err(invalid(begin));}j+=1;
         }
-        if(unit.catalog.nodes[encoded-1].kind!=1){needed+=1;}
+        if(encoded!=66 && unit.catalog.nodes[encoded-1].kind!=1){needed+=1;}
         let usize r=unit.body.registers+i;
         if(unit.parameters[r]!=0 || unit.body.types[r]!=0 || unit.body.slots[r] ||
             unit.body.array_parameters[r]!=0 || unit.body.record_parameters[r]!=0 || unit.body.slice_parameters[r]!=0){
@@ -122,7 +140,10 @@ pub fn Result<usize,errors::Error> begin(ref mut values::Program unit,ref mut bi
     unit.body.starts[f]=code_start;unit.body.register_starts[f]=start;unit.body.arities[f]=arity;
     unit.body.registers=start+arity;i=0;
     while(i<arity){let usize p=f*8+i;let usize r=start+i;let usize id=plan.parameters[p]-1;
-        if(unit.catalog.nodes[id].kind==1){
+        if(id==65){
+            let usize view=views::formal(unit,ref mut state.views,f,i,signatures.param_begins[p])?;
+            let usize index=bindings::declare_view(unit,state,source,signatures.param_begins[p],signatures.param_ends[p],view,false)?;
+        }else if(unit.catalog.nodes[id].kind==1){
             let u8 parameter_tag=unit.catalog.nodes[id].first;
             unit.body.types[r]=parameter_tag;unit.body.slots[r]=false;
             let usize index=locals::declare(ref mut state.names,signatures.param_begins[p],signatures.param_ends[p],r,false)?;

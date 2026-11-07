@@ -8,7 +8,7 @@ pub fn bool required(ref ir::Program p,ref proof::Sites sites,usize pc){
     // A value CALL may run while a lexical parent is suspended without passing
     // that child as an argument. Authenticate the complete canonical context.
     // Static forest presence is conservative; ordinary CALL selection is intact.
-    if(p.code[pc*8]==93 && sites.count!=0){return true;}
+    if((p.code[pc*8]==93 || p.code[pc*8]==114) && sites.count!=0){return true;}
     let usize target=p.code[pc*8+2] as usize;let usize args=p.code[pc*8+3] as usize;var usize i=0;
     while(i<p.arities[target]){
         let usize encoded=p.slice_parameters[p.register_starts[target]+i] as usize;

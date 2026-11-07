@@ -41,7 +41,8 @@ pub fn Result<context::Value,errors::Error> named(ref bindings::State state,usiz
     if(index>=state.names.count || state.views.names[index]==0){return .err(wrong(at));}
     let usize id=(state.views.names[index] as usize)-1;
     let usize owner=views::origin(ref state.views,id,at)?;
-    if(owner>=state.next || !views::live(ref state.views,id)){return .err(wrong(at));}
+    if(state.views.function!=state.names.function || (owner<16 && owner>=state.next) ||
+        !views::live(ref state.views,id)){return .err(wrong(at));}
     return .ok(value(id,index));
 }
 // Capture BEFORE evaluating an index/endpoint. A later expression can rebind
@@ -57,9 +58,13 @@ pub fn Result<usize,errors::Error> capture(ref mut values::Program unit,ref mut 
 }
 pub fn Result<usize,errors::Error> lexical_origin(ref bindings::State state,usize id,usize at){
     let usize owner=views::origin(ref state.views,id,at)?;var usize i=0;
+    if(state.views.function!=state.names.function){return .err(wrong(at));}
+    if(owner>=16){return .ok(owner);}
+    if(owner>=state.next){return .err(wrong(at));}
+    if(views::retainable(ref state.views,id)){return .ok(owner);}
     while(i<state.names.count){if(state.bindings[i] as usize==owner+1){return .ok(owner);}i+=1;}
     // A view of an anonymous Buffer may be inspected within its full expression,
-    // but a declaration must not extend that temporary's lifetime implicitly.
+    // but only an explicit CALL result may extend that temporary into a name.
     return .err(wrong(at));
 }
 pub fn Result<context::Value,errors::Error> length(ref u8[] source,ref mut lexer::State s,

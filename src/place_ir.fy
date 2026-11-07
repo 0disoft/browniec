@@ -146,7 +146,7 @@ fn Result<usize, errors::Error> function(ref ir::Program p, ref records::Prepare
                 } i += 1;
             }
         }
-        if (op == 8 || op == 39 || op == 50 || op == 65 || op == 79 || op == 82 || op==94) {
+        if (op == 8 || op == 39 || op == 50 || op == 65 || op == 79 || op == 82 || op==94 || op==113) {
             if (state.phases != 0) { return .err(invalid(pc)); } pc += 1; continue;
         }
         if (op == 25) { pc += 1; continue; } // Runtime abort drains obligations.

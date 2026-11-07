@@ -14,23 +14,22 @@ fn Result<usize,errors::Error> publish(usize bits,usize dst,usize pc){
 fn Result<usize,errors::Error> consume(usize bits,usize source,usize pc){
     if(!live(bits,source)){return .err(invalid(pc));}return .ok(bits^bit(source));
 }
-fn bool extended(ref values::Program unit,usize target){
-    let ref ir::Program p=ref unit.body;if(unit.results[target]!=0){return true;}
-    var usize i=0;while(i<p.arities[target]){if(unit.parameters[p.register_starts[target]+i]!=0){return true;}i+=1;}
-    return false;
-}
 fn Result<usize,errors::Error> arguments(ref values::Program unit,ref values::Prepared proof,
     usize pc,usize f,usize bits,ref mut bool[] used){
     let ref ir::Program p=ref unit.body;let usize at=pc*8;let usize target=p.code[at+2] as usize;
     let usize map=p.code[at+3] as usize;
-    if(target>=p.function_count || map>=p.call_count || used[map] || p.call_arities[map] as usize!=p.arities[target] ||
-        (p.code[at]==93)!=extended(unit,target)){return .err(invalid(pc));}
+    let usize checked=values::call(unit,proof,pc,f)?;
+    if(used[map]){return .err(invalid(pc));}
     var usize next=bits;var usize i=0;while(i<8){let usize actual=p.call_args[map*8+i] as usize;
         if(i<p.arities[target]){let usize formal=unit.parameters[p.register_starts[target]+i] as usize;
-            if(formal!=0){
+            if(formal!=0 && formal<=16){
                 if(actual<208 || actual>=224 || !values::slot(unit,actual-208,f) ||
                     !values::same(unit,proof,actual-208,formal-1) || !live(next,actual-208)){return .err(invalid(pc));}
                 if(!values::copyable(unit,proof,actual-208)){next=consume(next,actual-208,pc)?;}
+            }else if(formal>=17){
+                // Shared actuals are authenticated by the separate view-origin
+                // CFG; they never initialize or consume a canonical value cell.
+                if(actual<224 || actual>=240){return .err(invalid(pc));}
             }else if(actual>=208){return .err(invalid(pc));}
         }else if(actual!=0){return .err(invalid(pc));}i+=1;
     }
@@ -47,14 +46,14 @@ fn Result<usize,errors::Error> function(ref values::Program unit,ref values::Pre
     let ref ir::Program p=ref unit.body;let usize start=p.starts[f];let usize end=p.ends[f];
     var usize[256] states=[0;256];var bool[256] seen=[false;256];var usize initial=0;var usize i=0;
     while(i<p.arities[f]){let usize value=unit.parameters[p.register_starts[f]+i] as usize;
-        if(value!=0){initial|=bit(value-1);}i+=1;}
+        if(value!=0 && value<=16){initial|=bit(value-1);}i+=1;}
     states[start]=initial;seen[start]=true;var usize pc=start;
     while(pc<end){let usize at=pc*8;let u8 op=p.code[at];let usize dst=p.code[at+1] as usize;
         let usize a=p.code[at+2] as usize;let usize b=p.code[at+3] as usize;
         if(values::operation(op)){let usize checked=values::instruction(unit,proof,pc,f)?;}
         if(!seen[pc]){return .err(invalid(pc));}var usize bits=states[pc];
-        if(op==9 || op==93){bits=arguments(unit,proof,pc,f,bits,used)?;
-            if(unit.results[a]!=0){bits=publish(bits,dst,pc)?;}
+        if(op==9 || op==93 || op==114){bits=arguments(unit,proof,pc,f,bits,used)?;
+            if(unit.results[a]!=0 && unit.results[a]<=16){bits=publish(bits,dst,pc)?;}
         }else if(op==88 || op==89){
             if(!live(bits,a)){return .err(invalid(pc));}
             let usize fresh=publish(bits,dst,pc)?;bits=if(op==88){consume(fresh,a,pc)?}else{fresh};
@@ -70,6 +69,8 @@ fn Result<usize,errors::Error> function(ref values::Program unit,ref values::Pre
             if(values::payload(unit,a,b,pc)?!=0){bits=publish(bits,dst,pc)?;}
         }else if(op==94){
             if(bits!=bit(a)){return .err(invalid(pc));}pc+=1;continue;
+        }else if(op==113){
+            if(bits!=0){return .err(invalid(pc));}pc+=1;continue;
         }else if(op==95 || op==97){bits=publish(bits,dst,pc)?;}
         else if(op==96 || op==98 || op==99 || op==100 || op==105){if(!live(bits,a)){return .err(invalid(pc));}}
         else if(op==101){if(!live(bits,dst)){return .err(invalid(pc));}}
@@ -93,7 +94,15 @@ fn Result<usize,errors::Error> function(ref values::Program unit,ref values::Pre
     }return .ok(end-start);
 }
 pub fn Result<usize,errors::Error> inspect(ref values::Program unit,ref values::Prepared proof){
-    var bool[32] used=[false;32];var usize f=0;
+    // Validate every extended instruction and call descriptor before following
+    // any edge. Unreachable code cannot hide malformed reserved bytes or maps.
+    var usize f=0;while(f<unit.body.function_count){var usize pc=unit.body.starts[f];
+        while(pc<unit.body.ends[f]){let u8 op=unit.body.code[pc*8];
+            if(values::operation(op)){let usize checked=values::instruction(unit,proof,pc,f)?;}
+            else if(op==9){let usize checked=values::call(unit,proof,pc,f)?;}pc+=1;
+        }f+=1;
+    }
+    var bool[32] used=[false;32];f=0;
     while(f<unit.body.function_count){let usize checked=function(unit,proof,f,ref mut used)?;f+=1;}
     var usize i=0;while(i<unit.body.call_count){if(!used[i]){return .err(invalid(0));}i+=1;}
     return .ok(unit.body.count);
