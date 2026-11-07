@@ -17,6 +17,7 @@ import compile_memory as compilation;
 import module_budgeted_compile as bounded;
 import module_index as modules;
 import source_snapshot as sources;
+import runtime_live_memory as live;
 
 // Internal owning lifecycle, not public C handles/bc_step. IDs are scoped to
 // this exact Engine; the outer ABI registry must authenticate their association.
@@ -26,7 +27,7 @@ pub struct Event { u8 kind; i64 value; diagnostics::Error diagnostic; usize rema
 pub struct Snapshot { usize programs; usize instances; usize pins; bool closed; }
 struct Meta {
     Limits limits; usize thread; usize lifetime; usize active; usize admission;
-    usize next; usize result; Error error; Event event; Snapshot snapshot; bool closed; control::Budget control; memory::Budget programs;
+    usize next; usize result; Error error; Event event; Snapshot snapshot; bool closed; control::Budget control; memory::Budget programs; live::Budget heap;
 }
 // Exactly one executable vector has one element; the others are empty. Input code is
 // never relabelled as a zero-argument Program or an array/image input lease.
@@ -34,7 +35,7 @@ resource Program {
     usize id; usize pins; bool released; vec::Vec<programs::Program> code;
     vec::Vec<input_programs::Program> input; vec::Vec<output_programs::Program> output; usize bytes; cleanup { }
 }
-struct Instance { usize id; usize program; usize fuel; u8 phase; Event event; usize output_limit; bool output_allowed; }
+struct Instance { usize id; usize program; usize fuel; u8 phase; Event event; usize output_limit; bool output_allowed; usize input_bytes; }
 resource BoundInput { usize instance; input_bytes::Snapshot input; cleanup { } }
 pub resource Output { usize instance; output_programs::Execution run; cleanup { } }
 pub resource Engine {
@@ -42,6 +43,8 @@ pub resource Engine {
     vec::Vec<Instance> instances; vec::Vec<BoundInput> inputs;
     vec::Vec<BoundInput> input_scratch; vec::Vec<Output> outputs; vec::Vec<Output> output_scratch; cleanup { }
 }
+@link_name("bc_runtime_engine_input_preflight") unsafe extern C fn u32 input_preflight_raw(ptr mut void owner,usize program,usize budget,ptr void input,u32 output,usize limit,u32 allowed);
+@link_name("bc_runtime_engine_input_fact") unsafe extern C fn usize input_fact_raw(ptr void source,u32 fact);
 @link_name("bc_runtime_engine_compile_preflight") unsafe extern C fn u32 compile_preflight_raw(ptr mut void owner,u32 mode,ptr void selected);
 @link_name("bc_runtime_engine_compile_fact") unsafe extern C fn usize compile_fact_raw(ptr void source,u32 kind,u32 fact);
 @link_name("bc_runtime_engine_bind") unsafe extern C fn u32 bind_raw(ptr mut void owner);
@@ -84,6 +87,10 @@ pub fn Result<memory::Observation,Error> program_memory(ref Engine e){
     let u32 s=unsafe{control_access_raw(e as ptr void)};
     if(s!=0){return .err(error(s));}return .ok(memory::observe(ref e.meta.programs));
 }
+pub fn Result<live::Observation,Error> instance_memory(ref Engine e){
+    let u32 status=unsafe{control_access_raw(e as ptr void)};
+    if(status!=0){return .err(error(status));}return .ok(live::observe(ref e.meta.heap));
+}
 pub fn Result<Engine,Error> create_with_control_budget(Limits limits,usize control_limit){
     return create_with_retention(limits,control_limit,memory::defaults());
 }
@@ -91,6 +98,9 @@ pub fn Result<Engine,Error> create_with_retention(Limits limits,usize control_li
     return create_with_compilation(limits,control_limit,retained,268435456);
 }
 pub fn Result<Engine,Error> create_with_compilation(Limits limits,usize control_limit,memory::Limits retained,usize working_limit){
+    return create_with_instance_memory(limits,control_limit,retained,working_limit,live::Limits{.instance=268435456,.instances=536870912});
+}
+pub fn Result<Engine,Error> create_with_instance_memory(Limits limits,usize control_limit,memory::Limits retained,usize working_limit,live::Limits instance_limits){
     if(!valid_limits(limits) || control_limit==0 || control_limit>4194304){return .err(error(1));}
     let usize required=required_control_bytes(limits)?;
     let control::Budget storage=switch(control::create(control_limit,required)){
@@ -99,6 +109,9 @@ pub fn Result<Engine,Error> create_with_compilation(Limits limits,usize control_
     let memory::Budget retained_storage=switch(memory::create_with_working(retained,required,working_limit)){
         case .ok(v):{v}case .err(e):{return .err(error(switch(e){case .Invalid:{1}case .Quota:{8}case .State:{7}}));}
     };
+    let live::Budget payloads=switch(live::create(instance_limits)){
+        case .ok(v):{v}case .err(_):{return .err(error(1));}
+    };
     var vec::Vec<Program> programs=vec::empty<Program>();var vec::Vec<Program> scratch=vec::empty<Program>();
     var vec::Vec<Instance> instances=vec::empty<Instance>();
     if(!vec::reserve<Program>(ref mut programs,limits.programs).is_ok || !vec::reserve<Program>(ref mut scratch,limits.programs).is_ok || !vec::reserve<Instance>(ref mut instances,limits.instances).is_ok){return .err(error(6));}
@@ -106,7 +119,7 @@ pub fn Result<Engine,Error> create_with_compilation(Limits limits,usize control_
     if(!vec::reserve<BoundInput>(ref mut inputs,limits.instances).is_ok || !vec::reserve<BoundInput>(ref mut input_scratch,limits.instances).is_ok){return .err(error(6));}
     var vec::Vec<Output> outputs=vec::empty<Output>();var vec::Vec<Output> output_scratch=vec::empty<Output>();
     if(!vec::reserve<Output>(ref mut outputs,limits.instances).is_ok || !vec::reserve<Output>(ref mut output_scratch,limits.instances).is_ok){return .err(error(6));}
-    var Engine e=Engine{.meta=Meta{.limits=limits,.thread=0,.lifetime=0,.active=0,.admission=1,.next=1,.result=0,.error=error(0),.event=pending(),.snapshot=empty_snapshot(),.closed=false,.control=storage,.programs=retained_storage},
+    var Engine e=Engine{.meta=Meta{.limits=limits,.thread=0,.lifetime=0,.active=0,.admission=1,.next=1,.result=0,.error=error(0),.event=pending(),.snapshot=empty_snapshot(),.closed=false,.control=storage,.programs=retained_storage,.heap=payloads},
         .programs=programs,.scratch=scratch,.instances=instances,.inputs=inputs,.input_scratch=input_scratch,.outputs=outputs,.output_scratch=output_scratch};
     let u32 status=unsafe {bind_raw(ref mut e as ptr mut void)};
     if(status!=0){return .err(error(status));}return .ok(e);
@@ -149,6 +162,8 @@ pub fn Result<usize,Error> create_output_instance(ref mut Engine e,usize program
     let u32 s=unsafe{instance_output_raw(e as ptr mut void,program,ref mut incoming as ptr mut void,budget,limit,if(allowed){1}else{0})};return result(e,s);
 }
 pub fn Result<usize,Error> create_input_output_instance(ref mut Engine e,usize program,input_bytes::Snapshot input,usize budget,usize limit,bool allowed){
+    let u32 preflight=unsafe{input_preflight_raw(e as ptr mut void,program,budget,ref input as ptr void,1,limit,if(allowed){1}else{0})};
+    if(preflight!=0){return .err(error(preflight));}
     var vec::Vec<input_bytes::Snapshot> incoming=vec::empty<input_bytes::Snapshot>();
     if(!vec::reserve<input_bytes::Snapshot>(ref mut incoming,1).is_ok){return .err(error(6));}
     if(!vec::push<input_bytes::Snapshot>(ref mut incoming,input).is_ok){return .err(error(6));}
@@ -170,6 +185,8 @@ pub fn ref u8[] output_view(ref Output o){
 // The accepted owning input association: its bytes move once, stay immutable,
 // and are reclaimed with the Instance even after cancellation or Program release.
 pub fn Result<usize,Error> create_input_instance(ref mut Engine e,usize program,input_bytes::Snapshot input,usize budget){
+    let u32 preflight=unsafe{input_preflight_raw(e as ptr mut void,program,budget,ref input as ptr void,0,0,0)};
+    if(preflight!=0){return .err(error(preflight));}
     var vec::Vec<input_bytes::Snapshot> incoming=vec::empty<input_bytes::Snapshot>();
     if(!vec::reserve<input_bytes::Snapshot>(ref mut incoming,1).is_ok){return .err(error(6));}
     if(!vec::push<input_bytes::Snapshot>(ref mut incoming,input).is_ok){return .err(error(6));}
@@ -265,6 +282,37 @@ fn u32 compile_preflight_inner(ref mut Meta m,ref vec::Vec<Program> programs,u32
         case .ok(_):{0}case .err(_):{8}
     };
 }
+fn Result<live::Plan,u32> prepare_payload(ref mut Meta m,usize old,usize next,usize transient){
+    let live::Plan plan=switch(live::prepare(ref m.heap,old,next,transient)){
+        case .ok(v):{v}case .err(_):{return .err(8);}
+    };
+    switch(memory::prepare_external(ref mut m.programs,plan.aggregate_peak)){
+        case .ok(_):{}case .err(_):{return .err(8);}
+    };
+    assert(live::record(ref mut m.heap,ref plan).is_ok);return .ok(plan);
+}
+fn void commit_payload(ref mut Meta m,ref live::Plan plan){
+    assert(live::commit(ref mut m.heap,plan).is_ok);
+    let usize retained=live::observe(ref m.heap).current;
+    assert(memory::commit_external(ref mut m.programs,retained).is_ok);
+}
+fn u32 input_preflight_inner(ref mut Meta m,ref vec::Vec<Program> p,ref vec::Vec<Instance> v,
+    usize code,usize budget,ref input_bytes::Snapshot input,u32 output,usize limit,u32 allowed,usize width){
+    if(m.closed){return 2;}if(m.admission==0){return 8;}
+    if(output>1 || limit>1048576 || allowed>1){return 1;}if(budget>m.limits.fuel){return 5;}
+    let usize pi=switch(program_index(p,code,true)){case .ok(index):{index}case .err(status):{return status;}};
+    let ref Program program=vec::at<Program>(p,pi);
+    if(output==0){if(vec::len<input_programs::Program>(ref program.input)!=1){return 1;}}
+    else{
+        if(vec::len<output_programs::Program>(ref program.output)!=1){return 1;}
+        if(!output_programs::accepts_input(vec::at<output_programs::Program>(ref program.output,0))){return 1;}
+    }
+    if(vec::len<Instance>(v)>=m.limits.instances || m.next==0){return 8;}
+    if(width==0 || width>18446744073709551615/8){return 7;}
+    return switch(prepare_payload(m,0,input_bytes::capacity(input),8*width)){
+        case .ok(_):{0}case .err(status):{status}
+    };
+}
 fn Result<compilation::Plan,u32> compile_work(ref mut Meta m,usize incoming,usize index){
     if(index==0 || incoming==0 || index>18446744073709551615-incoming){return .err(8);}
     return switch(memory::prepare_compile(ref mut m.programs,incoming+index)){
@@ -357,12 +405,18 @@ fn u32 output_instance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut 
     let bool input=output_programs::accepts_input(vec::at<output_programs::Program>(ref program.output,0));
     if(vec::len<Instance>(v)>=m.limits.instances || m.next==0){return failed(m,8);}
     if(vec::len<input_bytes::Snapshot>(incoming)!=if(input){1}else{0}){return failed(m,1);}
+    let usize capacity=if(input){input_bytes::capacity(vec::at<input_bytes::Snapshot>(incoming,0))}else{0};
+    let usize transport=unsafe{input_fact_raw(incoming as ptr void,1)};
+    let live::Plan storage=switch(prepare_payload(m,0,capacity,transport)){
+        case .ok(v):{v}case .err(status):{return failed(m,status);}
+    };
     let usize id=m.next;
     if(input){let input_bytes::Snapshot snapshot=pop_snapshot(incoming);
         if(!vec::push<BoundInput>(inputs,BoundInput{.instance=id,.input=snapshot}).is_ok){return failed(m,6);}}
-    if(!vec::push<Instance>(v,Instance{.id=id,.program=code,.fuel=budget,.phase=0,.event=ready(budget),.output_limit=limit,.output_allowed=allowed==1}).is_ok){
+    if(!vec::push<Instance>(v,Instance{.id=id,.program=code,.fuel=budget,.phase=0,.event=ready(budget),.output_limit=limit,.output_allowed=allowed==1,.input_bytes=capacity}).is_ok){
         if(input){let Option<BoundInput> disposed=vec::pop<BoundInput>(inputs);}return failed(m,6);
     }
+    commit_payload(m,ref storage);
     let ref mut Program target=vec::at_mut<Program>(p,pi);target.pins+=1;advance(m);return success(m,id);
 }
 fn Result<usize,u32> output_index(ref vec::Vec<Output> v,usize id){
@@ -398,7 +452,7 @@ fn u32 instance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Ve
     let usize pi=switch(program_index(p,code,true)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
     if(vec::len<Instance>(v)>=m.limits.instances || m.next==0){return failed(m,8);}
     let usize id=m.next;
-    if(!vec::push<Instance>(v,Instance{.id=id,.program=code,.fuel=budget,.phase=0,.event=ready(budget),.output_limit=0,.output_allowed=false}).is_ok){return failed(m,6);}
+    if(!vec::push<Instance>(v,Instance{.id=id,.program=code,.fuel=budget,.phase=0,.event=ready(budget),.output_limit=0,.output_allowed=false,.input_bytes=0}).is_ok){return failed(m,6);}
     let ref mut Program target=vec::at_mut<Program>(p,pi);target.pins+=1;advance(m);return success(m,id);
 }
 fn Result<usize,u32> input_index(ref vec::Vec<BoundInput> v,usize id){
@@ -414,11 +468,16 @@ fn u32 input_instance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut v
     if(vec::len<input_programs::Program>(ref vec::at<Program>(p,pi).input)!=1){return failed(m,1);}
     if(vec::len<Instance>(v)>=m.limits.instances || m.next==0){return failed(m,8);}
     if(vec::len<input_bytes::Snapshot>(incoming)!=1){return failed(m,1);}
+    let usize capacity=input_bytes::capacity(vec::at<input_bytes::Snapshot>(incoming,0));
+    let live::Plan storage=switch(prepare_payload(m,0,capacity,unsafe{input_fact_raw(incoming as ptr void,1)})){
+        case .ok(v):{v}case .err(status):{return failed(m,status);}
+    };
     let usize id=m.next;let input_bytes::Snapshot snapshot=pop_snapshot(incoming);
     if(!vec::push<BoundInput>(inputs,BoundInput{.instance=id,.input=snapshot}).is_ok){return failed(m,6);}
-    if(!vec::push<Instance>(v,Instance{.id=id,.program=code,.fuel=budget,.phase=0,.event=ready(budget),.output_limit=0,.output_allowed=false}).is_ok){
+    if(!vec::push<Instance>(v,Instance{.id=id,.program=code,.fuel=budget,.phase=0,.event=ready(budget),.output_limit=0,.output_allowed=false,.input_bytes=capacity}).is_ok){
         let Option<BoundInput> disposed=vec::pop<BoundInput>(inputs);return failed(m,6);
     }
+    commit_payload(m,ref storage);
     let ref mut Program target=vec::at_mut<Program>(p,pi);target.pins+=1;advance(m);return success(m,id);
 }
 fn BoundInput pop_bound(ref mut vec::Vec<BoundInput> v){return switch(vec::pop<BoundInput>(v)){
@@ -456,6 +515,9 @@ fn u32 destroy_instance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut
     let Instance last=switch(vec::pop<Instance>(v)){case .some(x):{x}case .none:{assert(false);current}};
     if(ii<vec::len<Instance>(v)){let ref mut Instance target=vec::at_mut<Instance>(v,ii);*target=last;}
     remove_input(inputs,input_scratch,id);remove_output(outputs,output_scratch,id);
+    assert(live::release(ref mut m.heap,current.input_bytes).is_ok);
+    let usize retained=live::observe(ref m.heap).current;
+    assert(memory::commit_external(ref mut m.programs,retained).is_ok);
     if(reclaim){remove(m,p,scratch,pi);}return success(m,id);
 }
 fn u32 execute_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Instance> v,ref vec::Vec<BoundInput> inputs,ref mut vec::Vec<Output> outputs,usize id){
@@ -551,7 +613,7 @@ fn u32 close_inner(ref mut Meta m,ref vec::Vec<Program> p,ref vec::Vec<Instance>
     if(vec::len<Program>(p)!=0 || vec::len<Instance>(v)!=0 || vec::len<BoundInput>(inputs)!=0 || vec::len<Output>(outputs)!=0){return failed(m,3);}
     let usize bytes=control::observe(ref m.control).reserved;
     assert(control::release(ref mut m.control,bytes).is_ok);assert(control::close(ref mut m.control).is_ok);
-    assert(memory::close(ref mut m.programs).is_ok);m.closed=true;return success(m,0);
+    assert(live::close(ref mut m.heap).is_ok);assert(memory::close(ref mut m.programs).is_ok);m.closed=true;return success(m,0);
 }
 fn u32 dispatch_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Vec<Program> scratch,
     ref mut vec::Vec<Instance> v,ref mut vec::Vec<BoundInput> inputs,ref mut vec::Vec<BoundInput> input_scratch,
@@ -597,7 +659,10 @@ fn Result<modules::Index,u8> layout_index(ref u8[] source){
 pub fn void retain_native_bindings(){
     let control::Budget storage=switch(control::create(1,0)){case .ok(v):{v}case .err(_):{assert(false);return;}};
     let memory::Budget retained_storage=switch(memory::create(memory::defaults(),0)){case .ok(v):{v}case .err(_):{assert(false);return;}};
-    var Meta m=Meta{.limits=Limits{.programs=1,.instances=1,.fuel=256},.thread=0,.lifetime=0,.active=0,.admission=1,.next=1,.result=0,.error=error(0),.event=pending(),.snapshot=empty_snapshot(),.closed=false,.control=storage,.programs=retained_storage};
+    let live::Budget payloads=switch(live::create(live::Limits{.instance=268435456,.instances=536870912})){
+        case .ok(v):{v}case .err(_):{assert(false);return;}
+    };
+    var Meta m=Meta{.limits=Limits{.programs=1,.instances=1,.fuel=256},.thread=0,.lifetime=0,.active=0,.admission=1,.next=1,.result=0,.error=error(0),.event=pending(),.snapshot=empty_snapshot(),.closed=false,.control=storage,.programs=retained_storage,.heap=payloads};
     var vec::Vec<Program> p=vec::empty<Program>();var vec::Vec<Program> scratch=vec::empty<Program>();
     var vec::Vec<Instance> v=vec::empty<Instance>();var vec::Vec<entries::Entry> input=vec::empty<entries::Entry>();
     var vec::Vec<BoundInput> bound=vec::empty<BoundInput>();var vec::Vec<BoundInput> bound_scratch=vec::empty<BoundInput>();
@@ -619,6 +684,7 @@ pub fn void retain_native_bindings(){
     let input_bytes::Snapshot snapshot=switch(input_bytes::snapshot(b"",0,0,ref mut budget)){
         case .ok(value):{value}case .err(_):{assert(false);return;}
     };
+    unsafe{binding_raw(23)};discard input_preflight_inner(ref mut m,ref input_program,ref input_instances,0,0,ref snapshot,0,0,0,1);
     unsafe{binding_raw(10)};discard execute_borrowed_input_inner(ref mut m,ref input_program,ref mut input_instances,ref bound,0,ref snapshot);
     var vec::Vec<input_bytes::Snapshot> incoming_snapshot=vec::empty<input_bytes::Snapshot>();
     unsafe{binding_raw(11)};discard input_instance_inner(ref mut m,ref mut input_program,ref mut input_instances,ref mut bound,ref mut incoming_snapshot,0,0);
@@ -634,7 +700,7 @@ pub fn void retain_native_bindings(){
     unsafe{binding_raw(16)};discard take_output_inner(ref mut m,ref output_instances,ref mut outputs,ref mut output_scratch,0,ref mut outgoing);
     unsafe{binding_raw(17)};let vec::Vec<Output> empty_outputs=reset_output_storage(outputs);
     unsafe{binding_raw(18)};discard control_access_inner(ref m,1,1);
-    let Instance witness=Instance{.id=0,.program=0,.fuel=0,.phase=0,.event=pending(),.output_limit=0,.output_allowed=false};
+    let Instance witness=Instance{.id=0,.program=0,.fuel=0,.phase=0,.event=pending(),.output_limit=0,.output_allowed=false,.input_bytes=0};
     unsafe{binding_raw(22)};discard instance_identity(ref witness);
     {
         let modules::Index index=switch(layout_index(b"module layout;pub fn i32 main(){return 0;}")){case .ok(v):{v}case .err(_):{assert(false);return;}};

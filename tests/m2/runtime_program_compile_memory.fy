@@ -9,7 +9,7 @@ import retention_plan as retained;
 fn budget::Budget seed(usize engine,usize control,usize working){
     return budget::Budget{.engine=engine,.program=engine,.programs=engine,
         .control=control,.control_peak=control,.retained=0,.peak=0,.closed=false,
-        .working_limit=working,.working_peak=0,.tracked_peak=control};
+        .working_limit=working,.working_peak=0,.tracked_peak=control,.external=0};
 }
 fn u8 error_code(budget::Error e){
     return switch(e){case .Invalid:{1}case .Quota:{2}case .State:{3}};
@@ -28,13 +28,13 @@ fn void same(ref budget::Budget b,ref budget::Budget before){
     assert(b.control==before.control && b.control_peak==before.control_peak);
     assert(b.retained==before.retained && b.peak==before.peak && b.closed==before.closed);
     assert(b.working_limit==before.working_limit && b.working_peak==before.working_peak);
-    assert(b.tracked_peak==before.tracked_peak);
+    assert(b.tracked_peak==before.tracked_peak && b.external==before.external);
 }
 fn budget::Budget snapshot(ref budget::Budget b){
     return budget::Budget{.engine=b.engine,.program=b.program,.programs=b.programs,
         .control=b.control,.control_peak=b.control_peak,.retained=b.retained,.peak=b.peak,
         .closed=b.closed,.working_limit=b.working_limit,.working_peak=b.working_peak,
-        .tracked_peak=b.tracked_peak};
+        .tracked_peak=b.tracked_peak,.external=b.external};
 }
 fn void denied_prepare(ref mut budget::Budget b,usize overhead,u8 expected){
     let budget::Budget before=snapshot(b);
@@ -53,7 +53,8 @@ fn void observed(ref budget::Budget b,usize control,usize programs,usize program
     let budget::Observation o=budget::observe(b);
     assert(o.engine_limit==b.engine && o.program_limit==b.program && o.programs_limit==b.programs);
     assert(o.control_bytes==control && o.program_bytes==programs && o.program_peak==program_peak);
-    assert(o.tracked_bytes==control+programs && o.tracked_peak==tracked_peak);
+    assert(o.tracked_bytes==control+programs+b.external && o.tracked_peak==tracked_peak);
+    assert(o.external_bytes==b.external);
     assert(o.working_limit==b.working_limit && o.working_peak==working_peak && o.closed==closed);
 }
 
@@ -288,5 +289,119 @@ fn void moves_and_close_release_control_preserve_peaks_and_reject_further_operat
     rejected(budget::publish(ref mut moved,0),3);
     rejected(budget::release(ref mut moved,0),3);
     rejected(budget::close(ref mut moved),3);
+    same(ref moved,ref closed);
+}
+
+@test
+fn void external_exact_and_one_less_combined_limits_reject_without_mutation(){
+    let usize maximum=18446744073709551615;
+    var budget::Budget exact=seed(107,7,268435456);
+    value(budget::publish(ref mut exact,20),20);
+    value(budget::prepare_external(ref mut exact,80),107);
+    // Preparing a peak does not publish an external owner.
+    assert(exact.external==0);
+    observed(ref exact,7,20,20,107,0,false);
+    value(budget::commit_external(ref mut exact,80),80);
+    observed(ref exact,7,20,20,107,0,false);
+    let budget::Budget full=snapshot(ref exact);
+    rejected(budget::prepare_external(ref mut exact,81),2);same(ref exact,ref full);
+    rejected(budget::commit_external(ref mut exact,81),3);same(ref exact,ref full);
+    rejected(budget::prepare_external(ref mut exact,79),3);same(ref exact,ref full);
+    rejected(budget::prepare_external(ref mut exact,maximum),2);same(ref exact,ref full);
+    rejected(budget::commit_external(ref mut exact,maximum),3);same(ref exact,ref full);
+    var budget::Budget short=seed(106,7,268435456);
+    value(budget::publish(ref mut short,20),20);
+    let budget::Budget before=snapshot(ref short);
+    rejected(budget::prepare_external(ref mut short,80),2);same(ref short,ref before);
+    rejected(budget::commit_external(ref mut short,80),3);same(ref short,ref before);
+    observed(ref short,7,20,20,27,0,false);
+    value(budget::commit_external(ref mut exact,0),0);
+    observed(ref exact,7,20,20,107,0,false);
+}
+
+@test
+fn void external_current_is_in_compile_phase_zero_baseline_and_combined_admission(){
+    let usize work=compiler::working_bound();
+    var budget::Budget exact=seed(work+24,7,work+5);
+    value(budget::publish(ref mut exact,3),3);
+    value(budget::prepare_external(ref mut exact,9),19);
+    value(budget::commit_external(ref mut exact,9),9);
+    var memory::Plan plan=switch(budget::prepare_compile(ref mut exact,5)){
+        case .ok(p):{p}case .err(_):{assert(false);return;}
+    };
+    assert(plan.baseline==24 && plan.combined_limit==work+24 && plan.working_limit==work);
+    assert(plan.phase==0 && plan.current==24 && plan.peak==24);
+    assert(plan.working_bytes==0 && plan.persistent_bytes==0 && exact.external==9);
+    observed(ref exact,7,3,3,work+24,work+5,false);
+    phase_value(memory::reserve_work(ref mut plan,work),work+24);
+    phase_value(memory::abort(ref mut plan),24);
+    value(budget::record_compile(ref mut exact,ref plan),work+24);
+    assert(exact.external==9);
+    observed(ref exact,7,3,3,work+24,work+5,false);
+    var budget::Budget short=seed(work+23,7,work+5);
+    value(budget::publish(ref mut short,3),3);
+    value(budget::commit_external(ref mut short,9),9);
+    denied_prepare(ref mut short,5,2);
+    // Guard the external subtraction before constructing an overflowing baseline.
+    var budget::Budget overflow=seed(600000,7,268435456);
+    value(budget::publish(ref mut overflow,3),3);
+    overflow.external=18446744073709551615;
+    denied_prepare(ref mut overflow,0,2);
+}
+
+@test
+fn void external_current_limits_retained_publication_and_survives_program_release(){
+    var budget::Budget b=seed(107,7,268435456);
+    value(budget::publish(ref mut b,20),20);
+    value(budget::prepare_external(ref mut b,30),57);
+    value(budget::commit_external(ref mut b,30),30);
+    let budget::Budget before=snapshot(ref b);
+    let retained::Plan too_large=retained::Plan{.fixed=1,.limit=107,.bytes=51,.admitted=true};
+    rejected(budget::record(ref mut b,ref too_large),3);same(ref b,ref before);
+    rejected(budget::publish(ref mut b,51),3);same(ref b,ref before);
+    let retained::Plan exact=retained::Plan{.fixed=1,.limit=107,.bytes=50,.admitted=true};
+    value(budget::record(ref mut b,ref exact),50);
+    observed(ref b,7,20,70,107,0,false);
+    value(budget::publish(ref mut b,50),70);
+    observed(ref b,7,70,70,107,0,false);
+    value(budget::release(ref mut b,70),0);
+    assert(b.external==30);
+    observed(ref b,7,0,70,107,0,false);
+    let budget::Budget released=snapshot(ref b);
+    // Releasing Programs restores only their own headroom, not the external 30.
+    rejected(budget::publish(ref mut b,71),3);same(ref b,ref released);
+    value(budget::publish(ref mut b,70),70);
+    value(budget::release(ref mut b,70),0);
+    observed(ref b,7,0,70,107,0,false);
+}
+
+@test
+fn void external_owner_blocks_close_and_refunds_and_moves_preserve_all_peaks(){
+    let usize work=compiler::working_bound();
+    var budget::Budget original=seed(600000,7,268435456);
+    value(budget::publish(ref mut original,11),11);
+    value(budget::prepare_external(ref mut original,400000),400018);
+    value(budget::commit_external(ref mut original,17),17);
+    let memory::Plan plan=switch(budget::prepare_compile(ref mut original,13)){
+        case .ok(p):{p}case .err(_):{assert(false);return;}
+    };
+    assert(plan.baseline==48 && plan.phase==0);
+    var budget::Budget moved=original;
+    same(ref moved,ref original);
+    observed(ref moved,7,11,11,400018,work+13,false);
+    value(budget::release(ref mut moved,11),0);
+    assert(moved.external==17);
+    let budget::Budget external_only=snapshot(ref moved);
+    rejected(budget::close(ref mut moved),3);same(ref moved,ref external_only);
+    value(budget::commit_external(ref mut moved,0),0);
+    observed(ref moved,7,0,11,400018,work+13,false);
+    value(budget::close(ref mut moved),0);
+    assert(moved.control_peak==7 && moved.external==0);
+    observed(ref moved,0,0,11,400018,work+13,true);
+    let budget::Budget closed=snapshot(ref moved);
+    rejected(budget::prepare_external(ref mut moved,0),3);same(ref moved,ref closed);
+    rejected(budget::commit_external(ref mut moved,0),3);same(ref moved,ref closed);
+    rejected(budget::prepare_external(ref mut moved,18446744073709551615),3);
+    rejected(budget::commit_external(ref mut moved,18446744073709551615),3);
     same(ref moved,ref closed);
 }

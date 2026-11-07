@@ -20,6 +20,7 @@ pub fn Result<Snapshot,Error> snapshot(ref u8[] input,usize limit,usize charge,r
 pub fn Observation observe(ref Snapshot input){
     return Observation{.length=bytes::len(ref input.backing),.charged=input.charged};
 }
+pub fn usize capacity(ref Snapshot input){return bytes::capacity(ref input.backing);}
 pub fn ref u8[] view(ref Snapshot input){return bytes::view(ref input.backing);}
 pub fn Result<ref u8[],Error> range(ref Snapshot input,usize begin,usize length){
     let ref u8[] data=view(input);

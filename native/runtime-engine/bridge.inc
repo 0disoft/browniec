@@ -112,3 +112,15 @@ uint32_t bc_runtime_engine_compile_preflight(void *raw,uint32_t mode,const void 
  }
  uint32_t end=bc_abi_guard_leave(id);return end?end:s;
 }
+uintptr_t bc_runtime_engine_input_fact(const void *source,uint32_t fact){
+ if(fact==0)return sizeof(bc_engine_snapshot);
+ if(fact==1&&source)return ((const bc_engine_snapshots *)source)->f_1;
+ return 0;
+}
+uint32_t bc_runtime_engine_input_preflight(void *raw,uintptr_t program,uintptr_t budget,
+ const void *input,uint32_t output,uintptr_t limit,uint32_t allowed){
+ bc_engine *e=raw;bc_abi_thread_identity id;uint32_t s=bc_abi_guard_enter(&id);if(s)return s;
+ s=B18(&e->f_0,id.thread,id.lifetime);
+ if(!s)s=B23(&e->f_0,&e->f_1,&e->f_3,program,budget,(const bc_engine_snapshot *)input,output,limit,allowed,sizeof(bc_engine_snapshot));
+ uint32_t end=bc_abi_guard_leave(id);return end?end:s;
+}

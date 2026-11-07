@@ -23,6 +23,7 @@ def closure():
     files['retention_plan_contracts'] = ROOT / 'tests/m2/retention_plan.fy'
     files['program_compile_contracts'] = ROOT / 'tests/m2/runtime_program_compile_memory.fy'
     files['control_budget_contracts'] = ROOT / 'tests/m2/runtime_control_budget.fy'
+    files['live_memory_contracts'] = ROOT / 'tests/m2/runtime_live_memory.fy'
     files['runtime_input_adoption'] = ROOT / 'native/runtime-input-adoption/adoption.fy'
     seen, todo = {}, ['main']
     while todo:
@@ -39,7 +40,8 @@ def closure():
 
 def source_copy(path):
     adapters = {'runtime_control_budget': 'control_budget_contracts', 'retention_plan': 'retention_plan_contracts',
-                'runtime_program_compile_memory': 'program_compile_contracts'}
+                'runtime_program_compile_memory': 'program_compile_contracts',
+                'runtime_live_memory': 'live_memory_contracts'}
     for original, alias in adapters.items():
         if path == ROOT / f'tests/m2/{original}.fy':
             text = path.read_text(encoding='utf-8').replace(f'module tests::m2::{original};', f'module {alias};')
@@ -128,7 +130,8 @@ def main():
                        ('13', 2, 'incomingType'), ('14', 2, 'inputEntryType'),
                        ('15', 4, 'snapshotVectorType'), ('16', 2, 'outputVectorType'),
                        ('16', 3, 'outputVectorType'), ('16', 5, 'outputVectorType'),
-                       ('21', 1, 'programVectorType'), ('22', 0, 'instanceType')]
+                       ('21', 1, 'programVectorType'), ('22', 0, 'instanceType'),
+                       ('23', 1, 'programVectorType'), ('23', 5, 'snapshotType')]
         for binding, index, key in projections:
             argument = contract['reviewedDeclarations'][binding].split('(', 1)[1].split(',')[index]
             actual = re.search(r'\bfy_(?:resource|struct)_\d+\b', argument)
@@ -141,7 +144,7 @@ def main():
                  f'Typed Entry projection differs from declaration: {binding}/{key}')
         layout_types = {key: contract[key] for key in ['engineType', 'programType', 'instanceType',
                         'boundInputType', 'outputType', 'sourceIndexType', 'sourceIndexVectorType',
-                        'programVectorType']}
+                        'programVectorType', 'snapshotType', 'snapshotVectorType']}
         for variant, types in contract['programVariants'].items():
             layout_types.update({variant + '_' + role: name for role, name in types.items()})
         layout_types.update({key + '_entry': name for key, name in contract['entryTypes'].items()})
