@@ -305,6 +305,77 @@ pub fn Result<Token,Error> publish_fill(ref mut Table table,ref filling::State w
     return .ok(publish(table,work.slot,ref layout,work.mark,work.base));
 }
 
+// Resumable scalar COPY34/ASSIGN38 share the fill cursor and reservation rules.
+// Metadata only: source bool validation belongs to array_copy_work::begin.
+pub fn Result<filling::State,Error> prepare_copy(ref Table table,u8 op,
+    ref layouts::Array layout,Token destination,Token source,usize capacity){
+    if(op!=34 && op!=38){return .err(.State);}
+    var filling::State work=filling::empty();
+    // Match assign admission: reject an unwritable target before the source.
+    if(op==38){work=prepare_fill(table,40,layout,destination,capacity)?;}
+    let Owner origin=resolve(table,source,capacity)?;
+    if(origin.element!=layout.element){return .err(.Type);}
+    if(origin.length!=layout.length){return .err(.Length);}
+    if(op==34){work=prepare_fill(table,33,layout,destination,capacity)?;}
+    let bool same=op==38 && destination.slot==source.slot && destination.generation==source.generation;
+    let copying::Mode transfer=switch(copying::prove(work.base,origin.base,layout.bytes,
+        if(op==34){work.end}else{table.arena.used},false,0,same)){
+        case .ok(v):{v}case .err(_):{return .err(.State);}
+    };
+    work.op=op;work.source_slot=source.slot;work.source_generation=source.generation;
+    work.source_base=origin.base;work.source_end=origin.end;
+    return .ok(work);
+}
+
+// Reauthenticate source, target/reservation, shape, depth and disjointness on
+// every chunk. No second cursor/table snapshot and no payload access or rescan.
+pub fn Result<usize,Error> validate_copy(ref Table table,ref filling::State work,usize capacity){
+    if(!work.active || (work.op!=34 && work.op!=38)){return .err(.State);}
+    let layouts::Array layout=switch(layouts::scalar(work.element,work.length)){
+        case .ok(a):{a}case .err(_):{return .err(.State);}
+    };
+    let Owner origin=resolve(table,Token{.slot=work.source_slot,.generation=work.source_generation},capacity)?;
+    if(origin.element!=layout.element || origin.length!=layout.length ||
+        origin.base!=work.source_base || origin.end!=work.source_end ||
+        table.depth!=work.depth || layout.stride!=work.stride){return .err(.State);}
+    if(work.op==34){
+        let usize slot=free_slot(table)?;
+        if(slot!=work.slot || table.slots[slot].generation!=work.generation ||
+            table.arena.used!=work.mark){return .err(.State);}
+        let layouts::Reservation plan=switch(layouts::reserve(ref layout,work.mark,table.arena.limit)){
+            case .ok(p):{p}case .err(_):{return .err(.State);}
+        };
+        if(plan.offset!=work.base || plan.end!=work.end){return .err(.State);}
+    }else{
+        let Owner target=writable(table,Token{.slot=work.slot,.generation=work.generation},capacity)?;
+        if(target.element!=layout.element || target.length!=layout.length || target.mark!=work.mark ||
+            target.base!=work.base || target.end!=work.end){return .err(.State);}
+    }
+    let bool same=work.op==38 && work.slot==work.source_slot && work.generation==work.source_generation;
+    let copying::Mode transfer=switch(copying::prove(work.base,origin.base,layout.bytes,
+        if(work.op==34){work.end}else{table.arena.used},false,0,same)){
+        case .ok(v):{v}case .err(_):{return .err(.State);}
+    };
+    // begin returns identity inactive; it must never become a write recipe.
+    switch(transfer){case .Direct:{}case .NoOp:{return .err(.State);}case .Snapshot:{return .err(.State);}};
+    let usize size=work.end-if(work.op==34){work.mark}else{work.base};
+    if(work.written>size || work.written>work.total || work.last>work.total){return .err(.State);}
+    if(work.element==2 && work.total-work.written<layout.bytes){return .err(.State);}
+    return .ok(size);
+}
+
+// Completion alone publishes a new COPY owner. ASSIGN retains token/generation.
+pub fn Result<Token,Error> publish_copy(ref mut Table table,ref filling::State work,usize capacity){
+    let usize size=validate_copy(table,work,capacity)?;
+    if(work.written!=size){return .err(.State);}
+    if(work.op==38){return .ok(Token{.slot=work.slot,.generation=work.generation});}
+    let layouts::Array layout=switch(layouts::scalar(work.element,work.length)){
+        case .ok(a):{a}case .err(_):{return .err(.State);}
+    };
+    table.arena.used=work.end;
+    return .ok(publish(table,work.slot,ref layout,work.mark,work.base));
+}
+
 pub fn Result<Token, Error> create(ref layouts::Array layout, i64 fill, ref mut u8[] bytes, ref mut Table table) {
     if (!valid(table, bytes.len)) { return .err(.State); }
     let usize slot = free_slot(table)?;

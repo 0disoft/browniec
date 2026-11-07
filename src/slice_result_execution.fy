@@ -44,6 +44,7 @@ import slice_result_cursor as cursors;
 import output_copy_cursor as output_copy;
 import array_fill_cursor as array_fill;
 import array_fill_execution as array_steps;
+import array_copy_execution as array_copies;
 
 pub struct Scalar { i64 value; usize remaining; slices::Ticket[8] resumed; }
 // Internal tagged completion; inactive fields never escape either native API.
@@ -455,6 +456,14 @@ fn Result<Option<Outcome>,errors::Error> dispatch(ref body_ir::Program body,ref 
         let usize at=cursor.pc*8;let usize offset=body.offsets[cursor.pc];let u8 op=body.code[at];
         let usize dst=body.code[at+1] as usize;let usize a=body.code[at+2] as usize;let usize b=body.code[at+3] as usize;
         let usize base=frame*128;
+        if(cursor.array.active && (cursor.array.op==34 || cursor.array.op==38)){
+            let u8 expected_op=if(array_copies::selected_copy(body,cursor.pc)){38}else{op};
+            if(!array_copies::operation(body,cursor.pc) || expected_op!=cursor.array.op || cursor.pc!=cursor.array.pc ||
+                frame!=cursor.array.frame || offset!=cursor.array.offset || cursor.output.active){return .err(errors::make(5,offset));};
+            *visited+=1;var array_fill::State copying=cursor.array;
+            let bool finished=array_copies::advance(ref mut copying,body,bindings,state,data,place_state,bytes_left)?;
+            cursor.array=copying;if(finished){cursor.pc+=1;}continue;
+        }
         if(cursor.array.active){
             let bool selected_fill=array_steps::selected_fill(body,cursor.pc);
             let u8 expected_op=if(selected_fill){40}else{op};
@@ -472,7 +481,17 @@ fn Result<Option<Outcome>,errors::Error> dispatch(ref body_ir::Program body,ref 
             let bool finished=output_steps::advance_limited(ref mut copying,guest,literals,data,staged,bytes_left)?;
             cursor.output=copying;if(finished){cursor.pc+=1;}continue;
         };
-        if(*remaining==0){return .err(errors::make(8,offset));};*remaining-=1;*visited+=1;
+        if(*remaining==0){return .err(errors::make(8,offset));};
+        if(array_copies::begin_bytes(body,cursor.pc)>bytes_left){return .ok(.none);};
+        *remaining-=1;*visited+=1;
+        if(array_copies::operation(body,cursor.pc)){
+            var array_fill::State copying=array_copies::begin(body,cursor.pc,bindings,state,data,place_state,remaining)?;
+            if(copying.total>18446744073709551615-cursor.array.total || copying.last>4096-cursor.array.last){return .err(errors::make(5,offset));}
+            copying.total+=cursor.array.total;copying.last+=cursor.array.last;
+            let usize room=4096-cursor.output.last-copying.last;
+            if(copying.active && room!=0){let bool finished=array_copies::advance(ref mut copying,body,bindings,state,data,place_state,room)?;}
+            cursor.array=copying;if(!copying.active){cursor.pc+=1;}continue;
+        }
         if(op==33 || op==40 || array_steps::selected_fill(body,cursor.pc)){
             var array_fill::State filling=array_steps::begin(body,cursor.pc,bindings,state,registers[base..base+128],data.len,place_state,remaining)?;
             filling.total=cursor.array.total;filling.last=cursor.array.last;

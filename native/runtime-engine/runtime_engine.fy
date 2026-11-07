@@ -243,6 +243,9 @@ pub fn Result<array_fill::State,Error> array_fill_progress(ref Engine e,usize in
     if(vec::len<machines::Machine>(ref saved.pending)!=1){return .err(error(7));}
     return .ok(machines::observe(vec::at<machines::Machine>(ref saved.pending,0)).cursor.array);
 }
+// The same compact recipe bank now carries fill and copy work; no extra bank
+// or payload snapshot is allocated. The normalized opcode distinguishes them.
+pub fn Result<array_fill::State,Error> array_copy_progress(ref Engine e,usize instance){return array_fill_progress(e,instance);}
 // Synchronous exact borrow: no Snapshot pointer is retained in an Instance or
 // Program. Admission precedes inspection; completion precedes ending the borrow.
 pub fn Result<Event,Error> execute_input_once(ref mut Engine e,usize instance,ref input_bytes::Snapshot input){

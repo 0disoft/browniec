@@ -133,8 +133,14 @@ fn places::Place decode(ref usize[] words,usize base){
 // dispatcher freezes this row/Program/frame through the final chunk.
 pub fn Result<places::Place,errors::Error> fill_selection(ref ir::Program p,usize pc,usize function,usize frame,
     ref vec::Vec<usize> state,ref owners::Table table,usize capacity){
+    if(pc>=p.count || pc>=256 || p.code[pc*8]!=87){return .err(invalid(0));}
+    return array_selection(p,pc,function,frame,state,table,capacity);
+}
+// Shared SELECT authentication for repeated fill and whole-array copy stores.
+pub fn Result<places::Place,errors::Error> array_selection(ref ir::Program p,usize pc,usize function,usize frame,
+    ref vec::Vec<usize> state,ref owners::Table table,usize capacity){
     let usize price=cost(p,pc,function)?;let usize at=pc*8;let usize offset=p.offsets[pc];
-    if(p.code[at]!=87 || p.code[at+4]!=3 || p.code[at+5]!=0){return .err(invalid(offset));}
+    if((p.code[at]!=87 && p.code[at]!=85) || p.code[at+4]!=3 || p.code[at+5]!=0){return .err(invalid(offset));}
     let usize n=width(state,offset)?;let usize id=p.code[at+1] as usize;
     if(frame>=32 || id>=n){return .err(invalid(offset));}
     let usize header=3+frame*(18*n+1);let usize base=header+1+18*id;
@@ -152,7 +158,7 @@ pub fn Result<places::Place,errors::Error> fill_selection(ref ir::Program p,usiz
 }
 pub fn Result<usize,errors::Error> finish_fill(ref ir::Program p,usize pc,usize function,usize frame,
     ref mut vec::Vec<usize> state,ref owners::Table table,usize capacity){
-    let places::Place checked=fill_selection(p,pc,function,frame,state,table,capacity)?;
+    let places::Place checked=array_selection(p,pc,function,frame,state,table,capacity)?;
     let usize n=width(state,p.offsets[pc])?;let usize id=p.code[pc*8+1] as usize;
     let ref mut usize[] words=vec::view_mut_usize(state);words[4+frame*(18*n+1)+18*id+17]=3;
     return .ok(checked.size);
