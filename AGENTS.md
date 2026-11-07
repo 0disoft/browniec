@@ -1,15 +1,15 @@
-- Latest bottom-expression checkpoint (2026-11-07): [Terminal value expressions](docs/engineering/value-bottom.md)
-  now distinguish bottom from void and propagate terminal if/switch values through
-  returns, bindings, assignments, tails, unary/right operands and final CALL inputs.
-  Terminal paths create no destination or enclosing CALL; real cleanup and Result
-  obligations remain. Short-circuit skip paths and loop transfers still execute.
-  `6f39099` passed 26 groups per Windows native profile, using disjoint locked
-  mirrors and default stacks. All 227 inputs match checkout/Git raw bytes;
-  all 216 production modules are LF. See [evidence](docs/evidence/value-bottom-windows-20261107.json).
+- Latest loop-origin checkpoint (2026-11-07): [Evolving shared-view loop origins](docs/engineering/value-view-loop-origins.md)
+  now infer candidate roots/retention from emitted IR through real backedges,
+  nested loops and shared for-post paths. Converged state rechecks earlier writes,
+  moves and cleanup, then widens zero-trip/break exits without source replay.
+  Exact owning headers and descriptor identity remain; bottom break/continue
+  composition executes. `9d7712b` passed 15 groups per Windows native profile,
+  using disjoint locked mirrors and default stacks. All 228 inputs match
+  checkout/Git raw bytes; all 216 production modules are LF. See [evidence](docs/evidence/value-view-loop-origins-windows-20261107.json).
   The combined depth fixture is byte-identical. No opcode, existing price, public
-  admission or Fuel default/cap change. Next: remaining bottom contexts/unreachable
-  diagnostics, evolving loop origins, general references, methods, public AllocError
-  and remaining runtime/host/platform work. Full completion remains open. Local only.
+  admission or Fuel default/cap change. Next: loop-root cleanup deferral, remaining
+  bottom contexts, general references, methods/public AllocError and remaining
+  runtime/host/platform work. Full completion remains open. Local only.
 
 # Brownie C agent guidance
 

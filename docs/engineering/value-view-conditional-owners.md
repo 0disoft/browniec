@@ -1,5 +1,9 @@
 # Conditional Buffer owners behind shared views
 
+Later [terminal expressions](value-bottom.md) and [loop origin inference](value-view-loop-origins.md)
+add selected composition. This predecessor records the conditional-owner checkpoint
+`ea8c773`; the current inventory owns remaining work.
+
 Private byte views may now select anonymous Buffer owners created only on the
 chosen `if` or exhaustive `Option`/`Result` switch arm. Ownership follows the
 actual executed path. The compiler does not create empty owners for unselected
