@@ -302,22 +302,68 @@ fn Result<Outcome,errors::Error> run(ref body_ir::Program body,ref u8[] paramete
     var cursors::Cursor cursor=cursors::empty();
     var usize[32] static_live=[0;32];var u32[512] static_words=[0;512];
     var i64[4096] registers=[0;4096];
-    let usize entered=frames::push(body,bindings,first.call,function,128,32,0)?;
-    entry::bind(body,function,ref first.copies,bindings);
-    if(input_views::enabled(windows)){
-        let usize formal=body.register_starts[function];let usize site=sites.formal_sites[formal] as usize;
-        if(body.arities[function]!=1 || sites.parameters[formal]!=3 || site==0 || site>16){return .err(errors::make(5,0));}
-        let usize granted=input_views::put_grant(windows,1,0,span_for_input(guest.len),0)?;
-        let usize bound=input_views::put(windows,1,site-1,span_for_input(guest.len),0)?;
-        static_words[16+site-1]=input_views::marker();
-    }
-    var usize i=0;while(i<values.len){registers[128+body.register_starts[function]+i]=values[i];i+=1;}
-    cursor.pc=body.starts[function];cursor.active=true;
+    let usize begun=begin_saved(body,function,first,values,bindings,sites,windows,guest.len,
+        ref mut cursor,ref mut static_words,ref mut registers)?;
     while(cursor.active){
         let Option<Outcome> progress=drive(body,parameters,bindings,state,data,sites,literals,list_cells,list_scratch,place_state,windows,guest,origins,remaining,staged,ref mut cursor,ref mut static_live,ref mut static_words,ref mut registers,quantum,stats)?;
         switch(progress){case .none:{}case .some(value):{return .ok(value);}};
     }
     return .err(errors::make(5,0));
+}
+// One-time entry initialization shared by synchronous and owning callers.
+// The owning caller supplies separately projected banks, never a whole-state copy.
+fn Result<usize,errors::Error> begin_saved(ref body_ir::Program body,usize function,ref runtime::Entered first,
+    ref i64[] values,ref mut frames::Frames bindings,ref statics::Sites sites,ref mut input_views::State windows,
+    usize guest_length,ref mut cursors::Cursor cursor,ref mut u32[] static_words,ref mut i64[] registers){
+    if(cursor.active || bindings.frame!=0 || static_words.len!=512 || registers.len!=4096){return .err(errors::make(5,0));}
+    let usize entered=frames::push(body,bindings,first.call,function,128,32,0)?;
+    entry::bind(body,function,ref first.copies,bindings);
+    if(input_views::enabled(windows)){
+        let usize formal=body.register_starts[function];let usize site=sites.formal_sites[formal] as usize;
+        if(body.arities[function]!=1 || sites.parameters[formal]!=3 || site==0 || site>16){return .err(errors::make(5,0));}
+        let usize granted=input_views::put_grant(windows,1,0,span_for_input(guest_length),0)?;
+        let usize bound=input_views::put(windows,1,site-1,span_for_input(guest_length),0)?;
+        static_words[16+site-1]=input_views::marker();
+    }
+    var usize i=0;while(i<values.len){registers[128+body.register_starts[function]+i]=values[i];i+=1;}
+    cursor.pc=body.starts[function];cursor.active=true;
+    return .ok(cursor.pc);
+}
+// Trusted owning-output bridge. Exact code/image proof and storage preparation
+// precede this entry; the immutable Program/input owners stay pinned by its caller.
+pub fn Result<usize,errors::Error> start_output_saved(ref body_ir::Program body,ref statics::Sites sites,bool input,usize guest_length,
+    ref mut runtime::State state,ref mut u8[] data,ref mut frames::Frames bindings,ref mut input_views::State windows,ref mut usize remaining,
+    ref mut cursors::Cursor cursor,ref mut usize[] static_live,ref mut u32[] static_words,ref mut i64[] registers){
+    if(guest_length>1048576 || (!input && guest_length!=0) || input!=input_views::enabled(windows) ||
+        static_live.len!=32 || static_words.len!=512 || registers.len!=4096 || cursor.active || bindings.frame!=0){return .err(errors::make(5,0));}
+    let usize arity=if(input){1}else{0};
+    let u8[16] none=[0;16];let runtime::Capture[1] captures=[runtime::capture(frames::none(),false,false)];
+    let i64[1] values=[0];let owners::Token[1] inputs=[owners::Token{.slot=0,.generation=0}];
+    let usize admitted=admit(body,ref none,sites,body.entry,ref values[..arity],arity,ref inputs[..0],false,input)?;
+    let usize depth=switch(authority::inspect(ref state.runtime.authority)){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,0));}};
+    if(!available(ref state.runtime.authority,true)){return .err(errors::make(5,0));}
+    let runtime::Entered first=entry::enter(body,body.entry,binding(body,ref none,body.entry),ref captures[..arity],ref inputs[..0],state,data,*remaining)?;
+    *remaining=first.call.remaining;
+    return begin_saved(body,body.entry,ref first,ref values[..arity],bindings,sites,windows,guest_length,cursor,static_words,registers);
+}
+// Returns to the owning caller at Pending; it never recreates entry, banks,
+// proofs, frames, or staged output. Bulk operations remain atomic for now.
+pub fn Result<Option<Scalar>,errors::Error> step_output_saved(ref body_ir::Program body,
+    ref mut frames::Frames bindings,ref mut runtime::State state,ref mut u8[] data,ref statics::Sites sites,ref u8[] literals,
+    ref mut vec::Vec<i64> list_cells,ref mut bytes::Buffer list_scratch,ref mut vec::Vec<usize> place_state,
+    ref mut input_views::State windows,ref u8[] guest,ref u8[] origins,ref mut usize remaining,ref mut output::Transaction staged,
+    ref mut cursors::Cursor cursor,ref mut usize[] static_live,ref mut u32[] static_words,ref mut i64[] registers,usize quantum,ref mut cursors::Stats stats){
+    if(static_live.len!=32 || static_words.len!=512 || registers.len!=4096 || origins.len!=16){return .err(errors::make(5,0));}
+    let u8[16] none=[0;16];
+    return switch(drive(body,ref none,bindings,state,data,sites,literals,list_cells,list_scratch,place_state,windows,guest,origins,
+        remaining,staged,cursor,static_live,static_words,registers,quantum,stats)){
+        case .err(e):{.err(e)}case .ok(v):{switch(v){
+            case .none:{.ok(.none)}case .some(done):{if(done.view){.err(errors::make(5,0))}else{.ok(.some(done.scalar))}}
+        }}
+    };
+}
+pub fn void abort_saved(ref mut runtime::State state,usize capacity,ref mut vec::Vec<usize> place_state){
+    places::abort(place_state);let bool drained=runtime::abort(state,capacity,0).is_ok;
 }
 // Instruction suspension only: bulk helpers and setup/cleanup still need
 // resumable work recipes before this becomes the public bounded-step contract.

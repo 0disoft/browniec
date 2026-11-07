@@ -19,6 +19,7 @@ import execution_memory_contracts as execution_memory_tests;
 import engine_execution_memory as engine_execution_tests;
 import dispatch_cursor_contracts as cursor_tests;
 import dispatch_quantum_contracts as quantum_tests;
+import engine_pending_tests as pending_tests;
 unsafe extern C fn void bc_runtime_engine_test_closed_allocations();
 unsafe extern C fn void bc_runtime_engine_test_seed(ptr mut void e,u32 kind);
 unsafe extern C fn void bc_runtime_engine_test_guards(ptr mut void e);
@@ -41,6 +42,7 @@ fn void counts(ref mut engine::Engine e,usize programs,usize instances,usize pin
 };}
 fn i32 main(){
     engine::retain_native_bindings();
+    pending_tests::run();
     {
         var engine::Engine e=create(2,3);counts(ref mut e,0,0,0);
         unsafe{bc_runtime_engine_test_guards(ref mut e as ptr mut void)};

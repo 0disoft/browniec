@@ -19,6 +19,9 @@ import module_index as modules;
 import source_snapshot as sources;
 import runtime_live_memory as live;
 import runtime_execution_memory as execution_heap;
+import slice_result_machine as machines;
+import runtime_pending_output as pending_vm;
+import runtime_output as pending_output;
 
 // Internal owning lifecycle, not public C handles/bc_step. IDs are scoped to
 // this exact Engine; the outer ABI registry must authenticate their association.
@@ -783,6 +786,8 @@ pub fn void retain_native_bindings(){
         let modules::Index index=switch(layout_index(b"module layout;pub fn i32 main(){return 0;}")){case .ok(v):{v}case .err(_):{assert(false);return;}};
         let entries::Entry entry=switch(entries::select_i32(index,b"layout",b"main")){case .ok(v):{v}case .err(_):{assert(false);return;}};
         unsafe{binding_raw(19)};discard entry_heap(ref entry);
+        let output_programs::Program kept=switch(output_programs::compile(entry,65536)){case .ok(v):{v}case .err(_):{assert(false);return;}};
+        pending_vm::retain_bindings(ref kept,ref snapshot);
     }
     {
         let modules::Index index=switch(layout_index(b"module layout;pub fn i32 main(ref u8[] data){return 0;}")){case .ok(v):{v}case .err(_):{assert(false);return;}};
@@ -790,3 +795,14 @@ pub fn void retain_native_bindings(){
         unsafe{binding_raw(20)};discard input_entry_heap(ref entry);
     }
 }
+
+// Private owning VM prerequisite; Instance-owned association is the next layer.
+pub fn usize pending_core_stride(){return pending_vm::pending_core_stride();}
+pub fn Result<machines::Machine,diagnostics::Error> prepare_pending_output(ref output_programs::Program p,ref input_bytes::Snapshot input,usize budget,usize limit,bool allowed){
+    return pending_vm::prepare_pending_output(p,input,budget,limit,allowed);
+}
+pub fn Result<machines::Meta,errors::Error> advance_pending_output(ref mut machines::Machine machine,ref output_programs::Program p,ref input_bytes::Snapshot input,usize quantum){
+    return pending_vm::advance_pending_output(machine,p,input,quantum);
+}
+pub fn Result<machines::Meta,errors::Error> cancel_pending_output(ref mut machines::Machine machine){return pending_vm::cancel_pending_output(machine);}
+pub fn Result<pending_output::Published,errors::Error> seal_pending_output(ref mut machines::Machine machine){return pending_vm::seal_pending_output(machine);}

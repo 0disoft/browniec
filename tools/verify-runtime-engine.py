@@ -20,6 +20,7 @@ def closure():
     files = {p.stem: p for p in (ROOT / 'src').glob('*.fy')}
     files.update({p.stem: p for p in (ROOT / 'tools/runtime-engine').glob('*.fy')})
     files['runtime_engine'] = NATIVE / 'runtime_engine.fy'
+    files['runtime_pending_output'] = NATIVE / 'runtime_pending_output.fy'
     files['retention_plan_contracts'] = ROOT / 'tests/m2/retention_plan.fy'
     files['program_compile_contracts'] = ROOT / 'tests/m2/runtime_program_compile_memory.fy'
     files['control_budget_contracts'] = ROOT / 'tests/m2/runtime_control_budget.fy'
@@ -140,7 +141,9 @@ def main():
                        ('16', 3, 'outputVectorType'), ('16', 5, 'outputVectorType'),
                        ('21', 1, 'programVectorType'), ('22', 0, 'instanceType'),
                        ('23', 1, 'programVectorType'), ('23', 5, 'snapshotType'),
-                       ('24', 2, 'outputVectorType'), ('25', 0, 'programType')]
+                       ('24', 2, 'outputVectorType'), ('25', 0, 'programType'),
+                       ('28',0,'machineType'),('28',1,'coreType'),
+                       ('29',0,'machineType'),('29',1,'coreType')]
         for binding, index, key in projections:
             argument = contract['reviewedDeclarations'][binding].split('(', 1)[1].split(',')[index]
             actual = re.search(r'\bfy_(?:resource|struct)_\d+\b', argument)
@@ -153,11 +156,27 @@ def main():
                  f'Typed Entry projection differs from declaration: {binding}/{key}')
         layout_types = {key: contract[key] for key in ['engineType', 'programType', 'instanceType',
                         'boundInputType', 'outputType', 'sourceIndexType', 'sourceIndexVectorType',
-                        'programVectorType', 'snapshotType', 'snapshotVectorType']}
+                        'programVectorType', 'snapshotType', 'snapshotVectorType', 'machineType', 'coreType']}
         for variant, types in contract['programVariants'].items():
             layout_types.update({variant + '_' + role: name for role, name in types.items()})
         layout_types.update({key + '_entry': name for key, name in contract['entryTypes'].items()})
         need(set(layout_types) == set(contract['reviewedLayouts']), 'Reviewed layout set changed')
+        advance_args=contract['reviewedDeclarations']['26'].split('(',1)[1].split(',')
+        machine_meta=re.search(r'\b(fy_struct_\d+) f_7;',contract['reviewedLayouts']['machineType'])
+        need(machine_meta is not None and machine_meta.group(1) in advance_args[2],
+             'Pending Machine control metadata differs')
+        core_layout=contract['reviewedLayouts']['coreType']
+        advance_args=contract['reviewedDeclarations']['26'].split('(',1)[1].split(',')
+        for field,argument in [(0,3),(1,4),(2,5)]:
+            member=re.search(r'\b(fy_(?:struct|resource)_\d+) f_'+str(field)+r';',core_layout)
+            need(member is not None and member.group(1) in advance_args[argument],
+                 f'Pending Core field/argument differs: {field}/{argument}')
+        for field,ctype,length in [(3,'uint8_t',16),(4,'uintptr_t',32),(5,'uint32_t',512),(6,'int64_t',4096)]:
+            member=re.search(r'\b(fy_array_\w+) f_'+str(field)+r';',core_layout)
+            need(member is not None,'Pending bank missing')
+            array=re.search(r'typedef struct \{[^}]*\} '+re.escape(member.group(1))+r';',generated.decode('utf-8'))
+            need(array is not None and re.search(re.escape(ctype)+r' data\[UINT64_C\('+str(length)+r'\)\]',array.group()),
+                 f'Pending bank element/count differs: {field}')
         for key, name in layout_types.items():
             actual = re.search(r'^typedef struct \{\n[^}]*\} ' + re.escape(name) + r';$',
                                generated.decode('utf-8'), re.M)
@@ -167,6 +186,7 @@ def main():
         bindings += f'typedef {contract["inputEntryType"]} bc_engine_input_entry;\ntypedef {contract["snapshotType"]} bc_engine_snapshot;\n'
         bindings += f'typedef {contract["snapshotVectorType"]} bc_engine_snapshots;\n'
         bindings += f'typedef {contract["outputVectorType"]} bc_engine_outputs;\n'
+        bindings+=f'typedef {contract["machineType"]} bc_pending_machine;\ntypedef {contract["coreType"]} bc_pending_core;\n'
         for key, alias in [('programType', 'bc_engine_program'), ('instanceType', 'bc_engine_instance'),
                            ('boundInputType', 'bc_engine_bound_input'), ('outputType', 'bc_engine_output')]:
             bindings += f'typedef {contract[key]} {alias};\n'
