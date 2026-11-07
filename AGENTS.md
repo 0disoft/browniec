@@ -1,20 +1,20 @@
-- Latest Engine preparation checkpoint (2026-11-08): [Engine-owned VM preparation](docs/engineering/runtime-engine-prepared.md)
-  records implementation `23bb1fd` and diagnostic fix `7657873`. Instances own
-  prepared VM storage under their exact Program pin, immutable input and existing
-  Engine guard/epoch. Preparation executes no guest opcode. Checked reservation
-  includes Core, Machine Vec8, scratch, publication slot and staged output under
-  Instance, aggregate and combined ceilings. Failure leaves Ready/input/pins and
-  current charges intact; cancel/destruction release charges once. Seven Engine
-  preparation and seven arithmetic groups pass development/O2 with existing
-  regressions, default stacks and zero SDK heap at exit. Engine moves, released
-  pins, every preparation allocation in one recipe, exact/one-less ceilings,
-  automatic Engine drop and wrong-thread/reentry rejection are covered.
-  Verification pins 237 checkout/Git inputs, seven SDK inputs, 30 typed bindings
-  and 20 layouts. Root locked check: 256 sources/2917 MIR; 248 production modules
-  retain LF.
-  Engine.step and terminal publication, bounded setup/bulk/CALL/RET/cleanup,
-  deadlines, poison and the accepted inventory remain open; R03-R05 are incomplete.
-  Sol High workers edited disjoint files; integration/commits were serial. Local only.
+- Latest Engine stepping checkpoint (2026-11-08): [Engine-owned instruction stepping](docs/engineering/runtime-engine-step.md)
+  records implementation `e49bb76`. Prepared output/input-output Instances now
+  resume through authenticated Engine calls at 1..4096 instruction visits, keep
+  exact Program/input pins across moves and return actual Pending to the caller.
+  Terminal success seals directly into the reserved publication slot; VM backing
+  is reclaimed and heap ledgers shrink to retained output. Running cancel/destroy
+  use canonical abort. Six new Engine groups pass development/O2 with fixed/mixed
+  quanta, three interleaved Instances, two moves, exact Fuel/diagnostic/output
+  parity, prefix discard, frozen causes and empty/running Engine cleanup.
+  Every resume and terminal seal is exercised with the next allocation denied;
+  SDK allocation attempts remain zero. Both images use default stacks and exit
+  with zero SDK heap. Verification pins 238 checkout/Git inputs, seven SDK inputs,
+  33 typed bindings and 24 layouts. Root locked check: 256 sources/2920 MIR; all
+  248 production modules retain LF. Bounded setup/bulk/CALL/RET/seal/cleanup,
+  deadlines, poison and public lifecycle/ABI/CLI integration remain open;
+  instruction visits alone do not complete R03-R05 or the accepted inventory.
+  Two disjoint Sol High workers completed; integration/commits were serial. Local only.
 
 # Brownie C agent guidance
 

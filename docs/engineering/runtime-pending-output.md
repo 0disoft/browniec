@@ -6,7 +6,8 @@ This private output VM can return Pending to its caller and resume on the next
 call. It preserves the existing opcode dispatcher and Fuel schedule. It is a
 prerequisite for R03; the full Engine/Instance step contract remains incomplete.
 [Engine-owned preparation](runtime-engine-prepared.md) now associates prepared
-state with the actual Instance and accounts its heap; advancement is next.
+state with the actual Instance and accounts its heap; [Engine-owned stepping](runtime-engine-step.md)
+now advances it and seals terminal output without resume allocations.
 
 ## State and execution
 
@@ -82,9 +83,9 @@ self marker. Inspect its candidate before using `--write-contract`.
 
 ## Remaining accepted work
 
-- Advance and publish the prepared Instance through Engine ownership, preserving
-  the existing Program/input pins and exact ledger charges. Preparation, cancel
-  and teardown are now connected; Engine.step execution is not.
+- Complete the accepted work-bounded step contract. The Engine now authenticates
+  Instance preparation/advancement/publication/cancellation and exact heap
+  charges, but only instruction visits are currently quantized.
 - Complete bounded setup/initialization, transfer/copy/tag/store/CALL/RET,
   planning, publication and cleanup recipes. Instruction visits alone do not
   bound payload bytes, metadata visits, elapsed time or native work.

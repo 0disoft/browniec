@@ -3,7 +3,8 @@
 Implementation: `23bb1fd`; preparation diagnostic fix: `7657873` (2026-11-08).
 This extends the
 [owning output VM](runtime-pending-output.md) with private Engine association and
-heap admission. It does not yet execute a prepared Instance through Engine.step.
+heap admission. Its [stepping successor](runtime-engine-step.md) now advances
+prepared Instances and publishes terminal output through the reserved slot.
 
 ## Ownership and state
 
@@ -69,8 +70,8 @@ heap-at-exit observations. Existing pending VM, synchronous Engine, output
 ownership and OS guard regressions share the image. The native guard fixture
 also rejects prepare from the wrong thread and during an active admission.
 
-Next is Engine-owned advancement and terminal publication using the reserved
-slot, without resume allocations. Setup/proof, bulk work, CALL/RET, publication
+Engine-owned advancement and terminal publication now use the reserved slot,
+without resume allocations; see the stepping successor for current evidence. Setup/proof, bulk work, CALL/RET, publication
 and cleanup remain atomic. Deadlines, in-flight cancellation, poison containment,
 public lifecycle/ABI/CLI controls and the accepted inventory remain incomplete.
 R03-R05 are open. Existing capacities and Fuel prices/default 256/cap 16000000

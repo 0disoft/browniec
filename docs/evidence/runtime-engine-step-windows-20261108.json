@@ -1,0 +1,209 @@
+{
+  "schema": "browniec.runtime-engine-step-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-07T15:42:23.106153+00:00",
+  "implementationCommit": "e49bb76a95748316687756aff16498f610ff65f0",
+  "verifiedCommit": "e49bb76a95748316687756aff16498f610ff65f0",
+  "receipt": {
+    "path": "build/runtime-engine/20261107T154223105284Z/receipt.json",
+    "sha256": "52472549869e055f2506950bc796c4b99413659c2eb3d36f77130fc712cb66a6"
+  },
+  "command": "python tools/verify-runtime-engine.py --profile all",
+  "compiler": {
+    "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+    "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+    "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false"
+  },
+  "msvc": {
+    "version": "14.51.36231",
+    "sdk": "10.0.26100.0",
+    "compilerSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+    "overrides": false
+  },
+  "profiles": [
+    {
+      "profile": "development",
+      "artifact": {
+        "path": "build/runtime-engine/20261107T154223105284Z/development/runtime-engine.exe",
+        "sha256": "e08ac1e9d326d141163081a0438b4130d2d77b57a5ffccb118c41d4d197819e6",
+        "bytes": 6995968,
+        "stackReserve": 1048576,
+        "stackCommit": 4096
+      },
+      "exit": 0,
+      "controlMetrics": {
+        "cases": 6,
+        "smallHeapBytes": 7744,
+        "maximumHeapBytes": 61952,
+        "ownerBytes": 736
+      },
+      "liveHeapAllocationsAtExit": 0,
+      "assertions": "native Fairy and C, no parsed trace",
+      "objects": [
+        {
+          "path": "build/runtime-engine/20261107T154223105284Z/development/transport.obj",
+          "sha256": "b870e2ece5211f0ab7c3cbd3f1855852942b0e8020d5ba6d3b86bc0c26b429bb"
+        },
+        {
+          "path": "build/runtime-engine/20261107T154223105284Z/development/runtime.obj",
+          "sha256": "680a4d8e7dbdb40baa14353f9864e16a88b548fa531b826b9ba081df947daf46"
+        },
+        {
+          "path": "build/runtime-engine/20261107T154223105284Z/development/abi_thread_identity.obj",
+          "sha256": "fb9900080335b81f0f1a2061c008bca340a4c33d10704fe179ca8703f5c3562c"
+        },
+        {
+          "path": "build/runtime-engine/20261107T154223105284Z/development/input_reader.obj",
+          "sha256": "72fb4d634702ea76a820b0a4ee909a4a73481c7b603fcf718d025e1e1e4a07e9"
+        },
+        {
+          "path": "build/runtime-engine/20261107T154223105284Z/development/input_adoption.obj",
+          "sha256": "7f803d11bacf88e2ebfe1856fa20db688dc306ffef5f4a655299a53f0b8da928"
+        }
+      ]
+    },
+    {
+      "profile": "release",
+      "artifact": {
+        "path": "build/runtime-engine/20261107T154223105284Z/release/runtime-engine.exe",
+        "sha256": "5ea6067d3db32061082cba1b3d1879db0acea989effc0a197854626f355dfe41",
+        "bytes": 2613248,
+        "stackReserve": 1048576,
+        "stackCommit": 4096
+      },
+      "exit": 0,
+      "controlMetrics": {
+        "cases": 6,
+        "smallHeapBytes": 7744,
+        "maximumHeapBytes": 61952,
+        "ownerBytes": 736
+      },
+      "liveHeapAllocationsAtExit": 0,
+      "assertions": "native Fairy and C, no parsed trace",
+      "objects": [
+        {
+          "path": "build/runtime-engine/20261107T154223105284Z/release/transport.obj",
+          "sha256": "733f701f8dfd874e947578163f2d6ef316934c269d07fded11f1f38799169e04"
+        },
+        {
+          "path": "build/runtime-engine/20261107T154223105284Z/release/runtime.obj",
+          "sha256": "0e7eedd2b893ab51adcfd7cb0a7279412f4a274e7bd6165ba2c295371ed5c792"
+        },
+        {
+          "path": "build/runtime-engine/20261107T154223105284Z/release/abi_thread_identity.obj",
+          "sha256": "cb0f19d8a445e5c0311cd27f2d33d02d57d3538982f73d4e2ab77300fd0bed32"
+        },
+        {
+          "path": "build/runtime-engine/20261107T154223105284Z/release/input_reader.obj",
+          "sha256": "741c7e23dff10baa10df1ae1c5398259cc2567cb2b85bc603d9d2952d068e44c"
+        },
+        {
+          "path": "build/runtime-engine/20261107T154223105284Z/release/input_adoption.obj",
+          "sha256": "e802af03a71c87602e6072ff44991ce29de8d47c5bf7f31b1ee6f8621f44f7b2"
+        }
+      ]
+    }
+  ],
+  "inputIdentity": {
+    "checkoutAndGitMatched": 238,
+    "manifestSha256": "cdacb5298f8f1aaf337f758d274fc95ff4b4b3e9f420a49506238eeaf490adbd",
+    "sourceClosure": 224,
+    "reviewedContract": "native/runtime-engine/transport.json",
+    "typedBindings": 33,
+    "reviewedLayouts": 24,
+    "transportSha256": "094c6d0d8318f26a1eac15ffbaf86b590faad92f355233783edbc6fc83ee7c5d",
+    "runtimeSha256": "1147e787041b6f8c025f02061128a2048d245d9d4469356735c4be06461ded59",
+    "rootLockUnchanged": true,
+    "isolatedLockSha256": "fe2a87d1fa43ec3ebc931184bf36e60c316a70b9fe3fa386ea05c525d5f10c32"
+  },
+  "runtimeInputs": [
+    {
+      "path": "internal/cruntime/stage0_scalar.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "e16bfdd17904754ceb9534c976910964c76e8b0c757f72ddf3b63de0d5548bbe"
+    },
+    {
+      "path": "internal/cstdlib/stage0_system_heap.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "41e57f9748afb73731501ba2003b1a9213b728c0d2db6a31686b9d0489b76100"
+    },
+    {
+      "path": "internal/cstdlib/stage0_buffer.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "27f049118af6e0d008428abd73bdf77dce5491b82617cdb65b9a06ac185edfa1"
+    },
+    {
+      "path": "internal/cstdlib/stage0_vector_storage.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "80dddb6db91c79c495ef8bad6d31923fd242be13de9899ce3aaded85158bb17d"
+    },
+    {
+      "path": "internal/cstdlib/stage0_text_view.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "cb468db0b4c8b54d12a146c41bcfb297f2a06d83a496a38942fb6e2bc7622b62"
+    },
+    {
+      "path": "internal/cstdlib/stage0_windows_console.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "c070b518a8cb1a8eb0c6b170dd3083afd91149a3b076beb9f43bcfb05d2041e5"
+    },
+    {
+      "path": "internal/cstdlib/stage0_windows_process_args.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "f86225cdc8ecf5ebe0ba899557c3b117c50ccc0f02afea4cc0115f780bc40cd6"
+    }
+  ],
+  "rootCheck": {
+    "command": "build/toolchain/fairyc.exe check --locked",
+    "exit": 0,
+    "sources": 256,
+    "mirFunctions": 2920,
+    "productionLFModules": 248,
+    "lockSha256": "4195c9ce2e4a8d4fcc8d709d26b298dcefd4f1201b258b59610114293e66a65c"
+  },
+  "newEngineGroups": 6,
+  "testedQuanta": [
+    1,
+    2,
+    3,
+    7,
+    64,
+    4096
+  ],
+  "mixedQuanta": true,
+  "interleavedInstances": 3,
+  "engineMoves": 2,
+  "resumeAllocationAttempts": 0,
+  "terminalPublicationAllocationAttempts": 0,
+  "allocationTest": "The next SDK allocation is forced to fail on every resume; actual allocation attempt counter stays unchanged",
+  "terminalOwnership": {
+    "publicationSlotBytes": 576,
+    "successAdditionalBytes": "output_limit reserved payload",
+    "failureAdditionalBytes": 0,
+    "inputRemainsCharged": true
+  },
+  "nativeGuardChecks": [
+    "step from wrong thread returns 10",
+    "step during active admission returns 3"
+  ],
+  "engineGroups": [
+    "fixed and mixed quanta, carrier lockstep and synchronous parity",
+    "wrong states, invalid quanta and frozen terminals",
+    "interleaved moves, released pins and detached output",
+    "running cancellation, staged prefix discard and exact refunds",
+    "traps, exact Fuel, one-less seal, dispatch exhaustion and output limit",
+    "empty output and running Engine drop"
+  ],
+  "parallelWorkers": 2,
+  "workerModelRequest": "GPT-6.1 Sol High",
+  "workersClosed": true,
+  "publicCLIRerun": false,
+  "compilerOverrides": false,
+  "stackOverride": false,
+  "limitations": [
+    "Private output/input-output Engine stepping only; public lifecycle, C ABI and CLI still separate",
+    "Instruction quantum is not a bound on bytes, metadata visits, elapsed time or native work",
+    "Setup, proof, bulk helpers, CALL/RET, publication and cleanup remain atomic",
+    "Deadlines, in-flight cancellation, STOPPING/poison and accepted inventory remain open; R03-R05 incomplete"
+  ]
+}
