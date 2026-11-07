@@ -1,0 +1,653 @@
+{
+  "schema": "browniec.abi-registry/v1",
+  "status": "passed",
+  "capturedAt": "2026-11-07T06:07:54.607495+00:00",
+  "commands": [
+    {
+      "argv": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\toolchain\\fairyc.exe",
+        "--version"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final",
+      "exitCode": 0,
+      "stdout": "logs/00.stdout",
+      "stderr": "logs/00.stderr",
+      "stdoutSha256": "cfd188b9865777d7972b1c1e1c4e2e50d2735becbeca8627863cde0d38330e34",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\toolchain\\fairyc.exe",
+        "check"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\project",
+      "exitCode": 0,
+      "stdout": "logs/01.stdout",
+      "stderr": "logs/01.stderr",
+      "stdoutSha256": "532a1044d147caa771c59713b421f3d2d3e28c47283280d77f7a24966984619b",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\toolchain\\fairyc.exe",
+        "check",
+        "--locked"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\project",
+      "exitCode": 0,
+      "stdout": "logs/02.stdout",
+      "stderr": "logs/02.stderr",
+      "stdoutSha256": "89d5bdb63fb1d5a4f5939736ebd1ed1e4b3522006e5d49913477daffbb455497",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\toolchain\\fairyc.exe",
+        "experimental",
+        "emit-workspace-c",
+        "--target",
+        "x86_64-windows-msvc",
+        "--locked"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\project",
+      "exitCode": 0,
+      "stdout": "logs/03.stdout",
+      "stderr": "logs/03.stderr",
+      "stdoutSha256": "c424daab534cc50130704dc824970802915cded8265820403478b49a76e3a5bb",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe",
+        "-latest",
+        "-products",
+        "*",
+        "-requires",
+        "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
+        "-property",
+        "installationPath"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final",
+      "exitCode": 0,
+      "stdout": "logs/04.stdout",
+      "stderr": "logs/04.stderr",
+      "stdoutSha256": "b4a0d87f781f41eea676ca53971351757a2ea9df0f254e6e93d326d60e611500",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+        "/nologo",
+        "/TC",
+        "/std:c11",
+        "/MT",
+        "/W4",
+        "/WX",
+        "/Od",
+        "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\inputs\\native",
+        "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final",
+        "/c",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\inputs\\native\\abi_registry.c",
+        "/FoC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\development\\registry.obj"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final",
+      "exitCode": 0,
+      "stdout": "logs/05.stdout",
+      "stderr": "logs/05.stderr",
+      "stdoutSha256": "a3292537c05cd419034be4d58bcd7f520a629d45d875ad4b6904e45062226294",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\dumpbin.exe",
+        "/symbols",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\development\\registry.obj"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final",
+      "exitCode": 0,
+      "stdout": "logs/06.stdout",
+      "stderr": "logs/06.stderr",
+      "stdoutSha256": "5805c593ada5944157c5b7c1fff19a23bbe9e532343643e55af8c613f079ac47",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+        "/nologo",
+        "/TC",
+        "/std:c11",
+        "/MT",
+        "/W4",
+        "/WX",
+        "/Od",
+        "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\inputs\\native",
+        "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final",
+        "/c",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\inputs\\native\\abi_thread_identity.c",
+        "/FoC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\development\\identity.obj"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final",
+      "exitCode": 0,
+      "stdout": "logs/07.stdout",
+      "stderr": "logs/07.stderr",
+      "stdoutSha256": "c1d5916413657dec01ed4988365a4f35701584be5547a1bae557a25c9c78153c",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\dumpbin.exe",
+        "/symbols",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\development\\identity.obj"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final",
+      "exitCode": 0,
+      "stdout": "logs/08.stdout",
+      "stderr": "logs/08.stderr",
+      "stdoutSha256": "1b031bdf85ef82b59d1c1379c49de47c950625651e16e648fd1e0293fd65a5f3",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+        "/nologo",
+        "/TC",
+        "/std:c11",
+        "/MT",
+        "/W4",
+        "/WX",
+        "/Od",
+        "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\inputs\\native",
+        "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final",
+        "/c",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\inputs\\tests\\embed\\abi_registry_host.c",
+        "/FoC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\development\\host.obj"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final",
+      "exitCode": 0,
+      "stdout": "logs/09.stdout",
+      "stderr": "logs/09.stderr",
+      "stdoutSha256": "f382998fc5dc30699fae85403408a47ac98022702a6271149e5b59eea9c03b9d",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\dumpbin.exe",
+        "/symbols",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\development\\host.obj"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final",
+      "exitCode": 0,
+      "stdout": "logs/10.stdout",
+      "stderr": "logs/10.stderr",
+      "stdoutSha256": "e081b9cae1e13c64aa1646ff0e2ecfc90cdcf96ae7de8606d0c7a8e255816b9e",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+        "/nologo",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\development\\registry.obj",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\development\\identity.obj",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\development\\host.obj",
+        "/FeC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\development\\abi-registry-host.exe",
+        "/link",
+        "/INCREMENTAL:NO",
+        "/Brepro"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final",
+      "exitCode": 0,
+      "stdout": "logs/11.stdout",
+      "stderr": "logs/11.stderr",
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\development\\abi-registry-host.exe",
+        "basic"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final",
+      "exitCode": 0,
+      "stdout": "logs/12.stdout",
+      "stderr": "logs/12.stderr",
+      "stdoutSha256": "26e48b1881b163dc96011934c563a5260f3afd4bd746455c0cb9252ce8fcfa3d",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\development\\abi-registry-host.exe",
+        "capacity"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final",
+      "exitCode": 0,
+      "stdout": "logs/13.stdout",
+      "stderr": "logs/13.stderr",
+      "stdoutSha256": "8e5d2bfd69d3dcd2cb0806482e79d173bc3bd5ec5169d2fc0261ff0dcc1d933a",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\development\\abi-registry-host.exe",
+        "concurrent"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final",
+      "exitCode": 0,
+      "stdout": "logs/14.stdout",
+      "stderr": "logs/14.stderr",
+      "stdoutSha256": "ec9a55af6daf97d5f55ae980e59a9988fb3df32b85e768d9c4f128159f27c1e0",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\development\\abi-registry-host.exe",
+        "lifetimes"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final",
+      "exitCode": 0,
+      "stdout": "logs/15.stdout",
+      "stderr": "logs/15.stderr",
+      "stdoutSha256": "fb9cf66a7e4489993ae398389e2d15614705a396bc9b16098fe7db44916d2767",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+        "/nologo",
+        "/TC",
+        "/std:c11",
+        "/MT",
+        "/W4",
+        "/WX",
+        "/O2",
+        "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\inputs\\native",
+        "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final",
+        "/c",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\inputs\\native\\abi_registry.c",
+        "/FoC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\optimized\\registry.obj"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final",
+      "exitCode": 0,
+      "stdout": "logs/16.stdout",
+      "stderr": "logs/16.stderr",
+      "stdoutSha256": "a3292537c05cd419034be4d58bcd7f520a629d45d875ad4b6904e45062226294",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\dumpbin.exe",
+        "/symbols",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\optimized\\registry.obj"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final",
+      "exitCode": 0,
+      "stdout": "logs/17.stdout",
+      "stderr": "logs/17.stderr",
+      "stdoutSha256": "339eaee1f8afec926bda57fb73842d461f163153fa52890db5d775d151cd3897",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+        "/nologo",
+        "/TC",
+        "/std:c11",
+        "/MT",
+        "/W4",
+        "/WX",
+        "/O2",
+        "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\inputs\\native",
+        "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final",
+        "/c",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\inputs\\native\\abi_thread_identity.c",
+        "/FoC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\optimized\\identity.obj"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final",
+      "exitCode": 0,
+      "stdout": "logs/18.stdout",
+      "stderr": "logs/18.stderr",
+      "stdoutSha256": "c1d5916413657dec01ed4988365a4f35701584be5547a1bae557a25c9c78153c",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\dumpbin.exe",
+        "/symbols",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\optimized\\identity.obj"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final",
+      "exitCode": 0,
+      "stdout": "logs/19.stdout",
+      "stderr": "logs/19.stderr",
+      "stdoutSha256": "13fd71243e19917a0464d11c0c2353c2148189ccbb0fd3d27532dd42d19220d4",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+        "/nologo",
+        "/TC",
+        "/std:c11",
+        "/MT",
+        "/W4",
+        "/WX",
+        "/O2",
+        "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\inputs\\native",
+        "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final",
+        "/c",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\inputs\\tests\\embed\\abi_registry_host.c",
+        "/FoC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\optimized\\host.obj"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final",
+      "exitCode": 0,
+      "stdout": "logs/20.stdout",
+      "stderr": "logs/20.stderr",
+      "stdoutSha256": "f382998fc5dc30699fae85403408a47ac98022702a6271149e5b59eea9c03b9d",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\dumpbin.exe",
+        "/symbols",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\optimized\\host.obj"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final",
+      "exitCode": 0,
+      "stdout": "logs/21.stdout",
+      "stderr": "logs/21.stderr",
+      "stdoutSha256": "ee25ec7afc26184aa4f22c2e79847c20ad6b8fde0bc4411c70bd8c5ebbc17d0f",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+        "/nologo",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\optimized\\registry.obj",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\optimized\\identity.obj",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\optimized\\host.obj",
+        "/FeC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\optimized\\abi-registry-host.exe",
+        "/link",
+        "/INCREMENTAL:NO",
+        "/Brepro"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final",
+      "exitCode": 0,
+      "stdout": "logs/22.stdout",
+      "stderr": "logs/22.stderr",
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\optimized\\abi-registry-host.exe",
+        "basic"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final",
+      "exitCode": 0,
+      "stdout": "logs/23.stdout",
+      "stderr": "logs/23.stderr",
+      "stdoutSha256": "26e48b1881b163dc96011934c563a5260f3afd4bd746455c0cb9252ce8fcfa3d",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\optimized\\abi-registry-host.exe",
+        "capacity"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final",
+      "exitCode": 0,
+      "stdout": "logs/24.stdout",
+      "stderr": "logs/24.stderr",
+      "stdoutSha256": "8e5d2bfd69d3dcd2cb0806482e79d173bc3bd5ec5169d2fc0261ff0dcc1d933a",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\optimized\\abi-registry-host.exe",
+        "concurrent"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final",
+      "exitCode": 0,
+      "stdout": "logs/25.stdout",
+      "stderr": "logs/25.stderr",
+      "stdoutSha256": "ec9a55af6daf97d5f55ae980e59a9988fb3df32b85e768d9c4f128159f27c1e0",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\optimized\\abi-registry-host.exe",
+        "lifetimes"
+      ],
+      "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final",
+      "exitCode": 0,
+      "stdout": "logs/26.stdout",
+      "stderr": "logs/26.stderr",
+      "stdoutSha256": "fb9cf66a7e4489993ae398389e2d15614705a396bc9b16098fe7db44916d2767",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "scope": "Internal 64-slot lazy module coordinator; not full E02/E01 or VM/native lifecycle",
+  "compiler": {
+    "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+    "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+    "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false\n"
+  },
+  "inputs": [
+    {
+      "path": "src/abi_handles.fy",
+      "sha256": "6e40e0e4aa73ef1f63147774da917ca7e58ab077f9de89b4dec2142c1ebc21d4",
+      "bytes": 7911
+    },
+    {
+      "path": "native/abi_registry.c",
+      "sha256": "05e0d0d238f2ee292859153129e9cf7a504deaf287460044345b943a3a280c27",
+      "bytes": 8878
+    },
+    {
+      "path": "native/abi_registry.h",
+      "sha256": "7ddaac3f68eb2b94532dc38e0677167dc8fb0c19d2c1919e626fbae4884a8770",
+      "bytes": 2141
+    },
+    {
+      "path": "native/abi_thread_identity.c",
+      "sha256": "a81ff7c986ed7c2c1ade2e7506ed253bd5ec78602da53e5df92d4ffdb0953cad",
+      "bytes": 3238
+    },
+    {
+      "path": "native/abi_thread_identity.h",
+      "sha256": "982becbdcc9310ba557a6e8e52861ffd8e24de19a9ec8125786d4199fcb08e6a",
+      "bytes": 984
+    },
+    {
+      "path": "tools/build-abi-registry.py",
+      "sha256": "84e513abbf1b3ca4316ddeb608dc681637db9cee45803a2f5c80f11f372f2fe9",
+      "bytes": 13551
+    },
+    {
+      "path": "tools/abi-registry/main.fy",
+      "sha256": "19e295a582ecaf048fe34c448247ab860c951a18b3d4ff157803160764ab1f54",
+      "bytes": 1637
+    },
+    {
+      "path": "tools/abi-registry/transport.json",
+      "sha256": "be3fd2b3685cc79eb0c51ec7c3f2dc73af722daf00a22da6579c5f40c235be5b",
+      "bytes": 1719
+    },
+    {
+      "path": "tests/embed/abi_registry_host.c",
+      "sha256": "411f56d3f5e1ab670e30e96abb4b2acb7f6cdc6b60592401b7affb4e1ed7181e",
+      "bytes": 14452
+    },
+    {
+      "path": "tests/embed/handle_registry.fy",
+      "sha256": "36cd1d5b9bf0f4762d7bc38084ff5fa3698719052a2ae06634bdfc4829a9b60f",
+      "bytes": 11830
+    },
+    {
+      "path": "toolchain.json",
+      "sha256": "0a1a5c2b5a219099b7c3c2b42a8dde9cb70b68e435e8a071e36c36213d1740be",
+      "bytes": 1113
+    }
+  ],
+  "priorKernelEvidence": [
+    {
+      "profile": "development",
+      "path": "kernel-evidence/0.json",
+      "sha256": "e07a41326e4dcf879ad8c932538b0017838c5749508c373830f707e4c02fc236",
+      "nativeGroups": 10,
+      "sourceAndTestBytesMatch": true
+    },
+    {
+      "profile": "release",
+      "path": "kernel-evidence/1.json",
+      "sha256": "2f8f28ed2566b74a7116236ae3b5d62e72dfbd4cbbfc77fe3b6abd0b0efbe40b",
+      "nativeGroups": 10,
+      "sourceAndTestBytesMatch": true
+    }
+  ],
+  "isolatedLockSha256": "5008cadc741084db14a0eb961ea41538eb4023fdcd9dca6ae165506d37f8a6e3",
+  "privateTransport": {
+    "sha256": "c424daab534cc50130704dc824970802915cded8265820403478b49a76e3a5bb",
+    "bytes": 81874,
+    "reviewedFunctions": 23
+  },
+  "msvc": {
+    "version": "14.51.36231",
+    "sdk": "10.0.26100.0",
+    "clSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+    "standardEnvironment": {
+      "INCLUDE": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\include;C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.26100.0\\ucrt;C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.26100.0\\shared;C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.26100.0\\um",
+      "LIB": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\lib\\x64;C:\\Program Files (x86)\\Windows Kits\\10\\Lib\\10.0.26100.0\\ucrt\\x64;C:\\Program Files (x86)\\Windows Kits\\10\\Lib\\10.0.26100.0\\um\\x64"
+    },
+    "compilerOverrides": false,
+    "stack": "MSVC default, no /STACK"
+  },
+  "profiles": [
+    {
+      "profile": "development",
+      "cases": [
+        {
+          "mode": "basic",
+          "result": "PASS registry basic: real wrappers, staged outputs, OS ownership, busy, stale, rollback"
+        },
+        {
+          "mode": "capacity",
+          "result": "PASS registry capacity: 64 slots, failure rollback, retained allocation and generations"
+        },
+        {
+          "mode": "concurrent",
+          "result": "PASS registry concurrent: 8 threads, 128 Engine/Program/Instance cycles, one lazy allocation"
+        },
+        {
+          "mode": "lifetimes",
+          "result": "PASS registry lifetimes: 32 exited owners rejected; observed numeric ID reuse=0"
+        }
+      ],
+      "host": {
+        "path": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\development\\abi-registry-host.exe",
+        "sha256": "03ee6927f3320377fc7ca2a1939892746aba4ab0639ab95734c475b0dfd270b4",
+        "bytes": 201728,
+        "stackReserve": 1048576,
+        "stackCommit": 4096
+      },
+      "objects": [
+        {
+          "path": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\development\\registry.obj",
+          "sha256": "3406cbc9f9ffcbba9b772703aab5ab15117aa1fe0c6593b15825e5ec1838e728"
+        },
+        {
+          "path": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\development\\identity.obj",
+          "sha256": "b2d929e08e34dbd4bdfaf752e5dbf588ad925310ebb89264675bd834ccf273ee"
+        },
+        {
+          "path": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\development\\host.obj",
+          "sha256": "611f0a64ee45b5036b1352cd50f2809f69caef623bc92dcfc0f7877bc72e4300"
+        }
+      ],
+      "testControlsAbsent": true
+    },
+    {
+      "profile": "optimized",
+      "cases": [
+        {
+          "mode": "basic",
+          "result": "PASS registry basic: real wrappers, staged outputs, OS ownership, busy, stale, rollback"
+        },
+        {
+          "mode": "capacity",
+          "result": "PASS registry capacity: 64 slots, failure rollback, retained allocation and generations"
+        },
+        {
+          "mode": "concurrent",
+          "result": "PASS registry concurrent: 8 threads, 128 Engine/Program/Instance cycles, one lazy allocation"
+        },
+        {
+          "mode": "lifetimes",
+          "result": "PASS registry lifetimes: 32 exited owners rejected; observed numeric ID reuse=0"
+        }
+      ],
+      "host": {
+        "path": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\optimized\\abi-registry-host.exe",
+        "sha256": "1e4f7798d4569831dac2e4cb42b43dafc483f0bcaf26ecb4e61ebbc20dcc6b51",
+        "bytes": 173568,
+        "stackReserve": 1048576,
+        "stackCommit": 4096
+      },
+      "objects": [
+        {
+          "path": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\optimized\\registry.obj",
+          "sha256": "6f5ce3ccc476577cf918288c8ff86a4a48f4f57bb02c28602bddafca07352a84"
+        },
+        {
+          "path": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\optimized\\identity.obj",
+          "sha256": "81a62a1d61467e85958f55fb6d6226e2db6d501d0fcd7422ac2a16cb88d90594"
+        },
+        {
+          "path": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-abi-coordinator\\build\\abi-registry-final\\optimized\\host.obj",
+          "sha256": "4d759df4df94ef286210ef38326d18460de8905ac3dbbf455a8f920c4679f7e6"
+        }
+      ],
+      "testControlsAbsent": true
+    }
+  ],
+  "runtimeEnvironment": "cleared; empty tool PATH",
+  "kernelRerun": false,
+  "publicExports": false,
+  "limitations": [
+    "Internal single-owner-module 64-slot lazy coordinator only; no actual Engine/Program/Instance objects, pins, VM or public lifecycle exports.",
+    "No production-scale 65536-slot/4MiB registry ledger, cross-module sharing, abandoned-owner recovery or unload/reload guarantee.",
+    "Windows C hosts only; no Linux/macOS, clean-machine or native allocation-failure injection."
+  ],
+  "implementationCommit": "8a4dae9046ad0aaa763f0f6c4e1a7d859b34875e",
+  "exactFeatureInputsMatchedCheckoutAndGit": true,
+  "negativeBuilderControls": {
+    "status": "passed",
+    "controls": [
+      {
+        "control": "transport-byte-change",
+        "rejected": true,
+        "reason": "Full private generated transport mismatch",
+        "nativeObjectsCreated": false,
+        "receiptSha256": "ec24d9965ea7aae8c83b43d584685f142d3ab32a9285e6d7def77328495dc364"
+      },
+      {
+        "control": "kernel-byte-change",
+        "rejected": true,
+        "reason": "Reviewed kernel/retention mismatch",
+        "nativeObjectsCreated": false,
+        "receiptSha256": "7d6b94199df67a1a1b6eea34a0095c77b50322808f6d24311bda46f8a01c5b4a"
+      },
+      {
+        "control": "empty-LINK-override",
+        "rejected": true,
+        "reason": "Compiler/linker overrides must be absent, including empty values",
+        "nativeObjectsCreated": false,
+        "receiptSha256": null
+      }
+    ],
+    "builderSha256": "84e513abbf1b3ca4316ddeb608dc681637db9cee45803a2f5c80f11f372f2fe9",
+    "controlScriptSha256": "ccd552d07fa0d0d4c1a1c8c4a5ac681ffefb49388d5dadc381aa61bdfad651d5"
+  },
+  "integration": {
+    "rebuildSkipped": "All eleven isolated build inputs and pinned compiler are byte-identical; no root CLI/value modules enter this transport."
+  }
+}

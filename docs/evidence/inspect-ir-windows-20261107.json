@@ -1,0 +1,1565 @@
+{
+  "schema": "browniec.inspect-ir-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-07T06:13:36.248132+00:00",
+  "platform": "windows/amd64",
+  "implementationCommit": "2b44bf98b92f0f95b7bdd9320dcda59fd160beae",
+  "inputManifest": {
+    "path": "docs/evidence/inspect-ir-inputs-windows-20261107.json",
+    "sha256": "3e4b9688bd9969dc70d32ab507a6fbe620a839213533acf884aa894ef26c4c2c"
+  },
+  "checkoutAndGitRawInputsMatched": 224,
+  "lfProductionModules": 220,
+  "command": "python tools/verify-inspect-cli.py --profile all",
+  "executedAs": [
+    "python tools/verify-inspect-cli.py --profile development",
+    "python tools/verify-inspect-cli.py --profile release"
+  ],
+  "profiles": [
+    {
+      "schema": "browniec.inspect-cli-verification/v1",
+      "status": "passed",
+      "profile": "development",
+      "recordedAt": "2026-11-07T06:10:54.136977+00:00",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "commands": [
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "check",
+            "--locked"
+          ],
+          "exit": 0,
+          "stdoutSha256": "e18206ea2cbc85a3ac45f439cac23c814a9de495702c1eece99aaf816e3a19fb",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "build",
+            "--locked"
+          ],
+          "exit": 0,
+          "stdoutSha256": "8b612d597be23a886eb144289aeb6a2fcfa9f1f2048b9773704ca3a5bd9a089c",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\case-00.brc",
+            "--ir",
+            "--json"
+          ],
+          "exit": 0,
+          "stdoutSha256": "d05dae6f90617fb8ff42c81e313ff8cc7d33e39d6093e0bf937cd484ee6c0f7b",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\case-01.brc",
+            "--ir"
+          ],
+          "exit": 0,
+          "stdoutSha256": "aa1f5c2780d5be92a5811f88520d88497669eed200f5622ae2369331002ef587",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\case-02.brc",
+            "--ir",
+            "--json"
+          ],
+          "exit": 0,
+          "stdoutSha256": "3d833e06c9a716a3f0dc85a5baa5feb6151b0a682669dc0b446d45c34c5c8df2",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\case-03.brc",
+            "--ir",
+            "--json"
+          ],
+          "exit": 0,
+          "stdoutSha256": "c60d06712d47eacb19f4ccbec464d9c52456887d4a9d607a19a53fdef61373b1",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\case-04.brc",
+            "--ir",
+            "--json"
+          ],
+          "exit": 0,
+          "stdoutSha256": "0e89c04f757a724f919cf3379ca7a4e950102d01a38396c3f2cf4e287b0f7667",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\case-05.brc",
+            "--ir",
+            "--json"
+          ],
+          "exit": 0,
+          "stdoutSha256": "15c2397be3cc1385fbd2fd762e3095647393a13001ee3eb760e3e905f42c72c9",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\case-06.brc",
+            "--ir",
+            "--json"
+          ],
+          "exit": 0,
+          "stdoutSha256": "37cda85bfa68f95ed13ca9aeeb7ef49879b2a0e5a5fe8a4f89cac0ce0acf45f4",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\case-07.brc",
+            "--ir",
+            "--json"
+          ],
+          "exit": 0,
+          "stdoutSha256": "f10ce4ac43114c6dbab54ed8d5980d99956146c3e0ab08a45ceffdbc882fb1b4",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\case-08.brc",
+            "--json"
+          ],
+          "exit": 2,
+          "stdoutSha256": "b275fee0f95f17862a0403861170387ea2c1a463d322dfa48e18a9b74c819094",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\case-09.brc",
+            "--json",
+            "--ir",
+            "--ir"
+          ],
+          "exit": 2,
+          "stdoutSha256": "b275fee0f95f17862a0403861170387ea2c1a463d322dfa48e18a9b74c819094",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\case-10.brc",
+            "--json",
+            "--ir",
+            "--json"
+          ],
+          "exit": 2,
+          "stdoutSha256": "b275fee0f95f17862a0403861170387ea2c1a463d322dfa48e18a9b74c819094",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\case-11.brc",
+            "--json",
+            "--ir",
+            "--fuel",
+            "1"
+          ],
+          "exit": 2,
+          "stdoutSha256": "b275fee0f95f17862a0403861170387ea2c1a463d322dfa48e18a9b74c819094",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\case-12.brc",
+            "--json",
+            "--ir",
+            "--input",
+            "x"
+          ],
+          "exit": 2,
+          "stdoutSha256": "b275fee0f95f17862a0403861170387ea2c1a463d322dfa48e18a9b74c819094",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\case-13.brc",
+            "--json",
+            "--ir",
+            "--isolated"
+          ],
+          "exit": 4,
+          "stdoutSha256": "b0d65cea4214c024258eac6d8694dd17b7435baa841770aa6a80011111c3a153",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\case-14.brc",
+            "--ir",
+            "--json"
+          ],
+          "exit": 3,
+          "stdoutSha256": "30716f86f4134f1d82647e17d24fe2647f8c530bd112fe1bbeccca707256fde6",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\case-15.brc",
+            "--ir",
+            "--json"
+          ],
+          "exit": 3,
+          "stdoutSha256": "6789a6b661989e54c23dbdb36a72a92035574633c8af97df9f4715151699952a",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\case-16.brc",
+            "--ir",
+            "--json"
+          ],
+          "exit": 3,
+          "stdoutSha256": "13b8aafc848c59cd1b0570521cc7579e5d9a3903d9c6f8ca3a4f970f89718c82",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\browniec.exe",
+            "check",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\case-17.brc",
+            "--json"
+          ],
+          "exit": 0,
+          "stdoutSha256": "c912c25c8b00bc1d08a14a09d55918b46d8fac9b4489606bfc11058572b8db69",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\browniec.exe",
+            "run",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\case-18.brc",
+            "--json"
+          ],
+          "exit": 0,
+          "stdoutSha256": "a1fb3a6288419229ba9ea41b1ab281f1bd9d1d87be1e8a8093bf674bb94ea4df",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\browniec.exe",
+            "--version",
+            "--json"
+          ],
+          "exit": 0,
+          "stdoutSha256": "1ac75b4f81243376a0cd6a8078a18e84f8016a18f4fb5914946465011d6e08f5",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\development\\browniec.exe",
+            "--help"
+          ],
+          "exit": 0,
+          "stdoutSha256": "d17afa954e2cc784de4bf87eec178c57197c4a7ea8a942f042ebd25542fc7097",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "nativeOverrides": false,
+      "artifactSha256": "487c3b14c9452f10689bb506b14cedb2a92d5fe6cd6f9bace898307ae9ecb041",
+      "version": {
+        "schema": "browniec.version/v1",
+        "profile": "brownie.m1-scalar/1",
+        "array_profile": "brownie.m2-array-read/1",
+        "array_write_profile": "brownie.m2-array-write/1",
+        "array_copy_profile": "brownie.m2-array-copy/1",
+        "array_element_list_declarations": true,
+        "array_element_list_arguments": true,
+        "array_element_list_returns": true,
+        "array_element_list_temporary_borrows": true,
+        "array_element_list_replacement": true,
+        "array_literal_projections": true,
+        "array_expression_projections": true,
+        "array_grouped_values": true,
+        "grouped_assignment_targets": true,
+        "scalar_local_compound_assignment": true,
+        "array_selected_place_assignment": true,
+        "array_element_compound_assignment": true,
+        "array_utf8_element_lists": true,
+        "struct_read_profile": "brownie.m2-struct-read/1",
+        "struct_write_profile": "brownie.m2-struct-write/1",
+        "struct_selected_place_assignment": true,
+        "struct_field_compound_assignment": true,
+        "struct_copy_profile": "brownie.m2-struct-copy/1",
+        "struct_nested_profile": "brownie.m2-struct-nested/1",
+        "struct_child_binding_initializers": true,
+        "struct_child_path_initializers": true,
+        "struct_subrecord_initializers": true,
+        "struct_subrecord_assignment": true,
+        "struct_subrecord_assignment_atomic": true,
+        "struct_constructor_assignment": true,
+        "struct_subrecord_constructor_assignment": true,
+        "struct_helper_locals": true,
+        "struct_parameters": true,
+        "struct_field_shorthand": true,
+        "struct_results": true,
+        "record_expression_projections": true,
+        "record_grouped_values": true,
+        "if_expressions": true,
+        "array_if_expressions": true,
+        "record_if_expressions": true,
+        "array_switch_expressions": true,
+        "record_switch_expressions": true,
+        "constructor_join_inference": true,
+        "void_functions": true,
+        "result_is_ok": true,
+        "explicit_discard": true,
+        "array_utf8_predicate": true,
+        "array_utf8_call_results": true,
+        "array_utf8_literals": true,
+        "array_utf8_ranges": true,
+        "array_utf8_temporary_ranges": true,
+        "array_utf8_open_ranges": true,
+        "array_utf8_dynamic_ranges": true,
+        "array_utf8_temporary_dynamic_ranges": true,
+        "array_utf8_computed_ranges": true,
+        "array_utf8_temporary_computed_ranges": true,
+        "array_utf8_slices": true,
+        "array_slice_length": true,
+        "array_slice_index": true,
+        "array_slice_sub": true,
+        "array_slice_alias": true,
+        "array_slice_parameters": true,
+        "array_slice_scalar_elements": true,
+        "array_slice_mutable": true,
+        "slice_selected_place_assignment": true,
+        "slice_element_compound_assignment": true,
+        "array_slice_mutable_parameters": true,
+        "array_slice_mutable_reborrow": true,
+        "array_slice_reborrow_owned_arguments": true,
+        "array_slice_reborrow_array_results": true,
+        "array_slice_reborrow_record_results": true,
+        "array_slice_array_arguments": true,
+        "array_slice_array_range_arguments": true,
+        "array_slice_named_range_arguments": true,
+        "array_slice_temporary_arguments": true,
+        "reference_profile": "brownie.m2-reference/1",
+        "byte_literals": true,
+        "text_literals": true,
+        "immutable_byte_views": true,
+        "shared_byte_parameters": true,
+        "shared_byte_results": true,
+        "core": true,
+        "restricted": false,
+        "embed": false,
+        "fuel_default": 256,
+        "fuel_limit": 16000000,
+        "inspect_ir": true
+      },
+      "toolFreeRuntime": true,
+      "guestExecutionUsedForInspection": false,
+      "casesPassed": 19,
+      "defaultPEStack": {
+        "reserve": 1048576,
+        "commit": 4096
+      },
+      "caseSummary": [
+        {
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "argv": [
+            "--ir",
+            "--json"
+          ],
+          "command": "inspect",
+          "exit": 0,
+          "stdoutSha256": "d05dae6f90617fb8ff42c81e313ff8cc7d33e39d6093e0bf937cd484ee6c0f7b",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.ir/v1",
+            "command": "inspect",
+            "status": "inspected",
+            "profile": "brownie.m1-scalar/1",
+            "entry": 0,
+            "instruction_count": 2,
+            "register_count": 1,
+            "literal_bytes": 0,
+            "error": null
+          }
+        },
+        {
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "argv": [
+            "--ir"
+          ],
+          "command": "inspect",
+          "exit": 0,
+          "stdoutSha256": "aa1f5c2780d5be92a5811f88520d88497669eed200f5622ae2369331002ef587",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {}
+        },
+        {
+          "sourceSha256": "8a9476f2fa1fbcdc842763fca9480f660e210983c51f59348dab115d1ab527c7",
+          "argv": [
+            "--ir",
+            "--json"
+          ],
+          "command": "inspect",
+          "exit": 0,
+          "stdoutSha256": "3d833e06c9a716a3f0dc85a5baa5feb6151b0a682669dc0b446d45c34c5c8df2",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.ir/v1",
+            "command": "inspect",
+            "status": "inspected",
+            "profile": "brownie.m1-scalar/1",
+            "entry": 0,
+            "instruction_count": 4,
+            "register_count": 3,
+            "literal_bytes": 0,
+            "error": null
+          }
+        },
+        {
+          "sourceSha256": "5ead9b653ca2318831aef29ba2945c194534c04963f983233ac1a8755b5f1b37",
+          "argv": [
+            "--ir",
+            "--json"
+          ],
+          "command": "inspect",
+          "exit": 0,
+          "stdoutSha256": "c60d06712d47eacb19f4ccbec464d9c52456887d4a9d607a19a53fdef61373b1",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.ir/v1",
+            "command": "inspect",
+            "status": "inspected",
+            "profile": "brownie.m1-scalar/1",
+            "entry": 0,
+            "instruction_count": 5,
+            "register_count": 2,
+            "literal_bytes": 0,
+            "error": null
+          }
+        },
+        {
+          "sourceSha256": "53443c51a9f7ae94e7d7bbe2bbec1dbae6bd2728c474220d4884377682191a07",
+          "argv": [
+            "--ir",
+            "--json"
+          ],
+          "command": "inspect",
+          "exit": 0,
+          "stdoutSha256": "0e89c04f757a724f919cf3379ca7a4e950102d01a38396c3f2cf4e287b0f7667",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.ir/v1",
+            "command": "inspect",
+            "status": "inspected",
+            "profile": "brownie.m2-array-read/1",
+            "entry": 0,
+            "instruction_count": 10,
+            "register_count": 7,
+            "literal_bytes": 0,
+            "error": null
+          }
+        },
+        {
+          "sourceSha256": "bb48ec05762995d884fd1426acb084d656f29fb20ef71584801d9590c5e28d3d",
+          "argv": [
+            "--ir",
+            "--json"
+          ],
+          "command": "inspect",
+          "exit": 0,
+          "stdoutSha256": "15c2397be3cc1385fbd2fd762e3095647393a13001ee3eb760e3e905f42c72c9",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.ir/v1",
+            "command": "inspect",
+            "status": "inspected",
+            "profile": "brownie.m2-struct-read/1",
+            "entry": 0,
+            "instruction_count": 12,
+            "register_count": 9,
+            "literal_bytes": 0,
+            "error": null
+          }
+        },
+        {
+          "sourceSha256": "352c8b3655f2f3e73eacbb2f75e1e663f01c48a552ff7c84620430fa2a3ecafc",
+          "argv": [
+            "--ir",
+            "--json"
+          ],
+          "command": "inspect",
+          "exit": 0,
+          "stdoutSha256": "37cda85bfa68f95ed13ca9aeeb7ef49879b2a0e5a5fe8a4f89cac0ce0acf45f4",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.ir/v1",
+            "command": "inspect",
+            "status": "inspected",
+            "profile": "brownie.m2-reference/1",
+            "entry": 0,
+            "instruction_count": 11,
+            "register_count": 5,
+            "literal_bytes": 3,
+            "error": null
+          }
+        },
+        {
+          "sourceSha256": "b0021e4e2a055b0b638c4f0c7a0cbf3c941a7d46ad4b0b404b7b916e1a8c86ec",
+          "argv": [
+            "--ir",
+            "--json"
+          ],
+          "command": "inspect",
+          "exit": 0,
+          "stdoutSha256": "f10ce4ac43114c6dbab54ed8d5980d99956146c3e0ab08a45ceffdbc882fb1b4",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.ir/v1",
+            "command": "inspect",
+            "status": "inspected",
+            "profile": "brownie.m1-scalar/1",
+            "entry": 1,
+            "instruction_count": 101,
+            "register_count": 67,
+            "literal_bytes": 0,
+            "error": null
+          }
+        },
+        {
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "argv": [
+            "--json"
+          ],
+          "command": "inspect",
+          "exit": 2,
+          "stdoutSha256": "b275fee0f95f17862a0403861170387ea2c1a463d322dfa48e18a9b74c819094",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.ir/v1",
+            "command": "inspect",
+            "status": "error",
+            "error": {
+              "kind": "usage",
+              "byte_offset": 0
+            }
+          }
+        },
+        {
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "argv": [
+            "--json",
+            "--ir",
+            "--ir"
+          ],
+          "command": "inspect",
+          "exit": 2,
+          "stdoutSha256": "b275fee0f95f17862a0403861170387ea2c1a463d322dfa48e18a9b74c819094",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.ir/v1",
+            "command": "inspect",
+            "status": "error",
+            "error": {
+              "kind": "usage",
+              "byte_offset": 0
+            }
+          }
+        },
+        {
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "argv": [
+            "--json",
+            "--ir",
+            "--json"
+          ],
+          "command": "inspect",
+          "exit": 2,
+          "stdoutSha256": "b275fee0f95f17862a0403861170387ea2c1a463d322dfa48e18a9b74c819094",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.ir/v1",
+            "command": "inspect",
+            "status": "error",
+            "error": {
+              "kind": "usage",
+              "byte_offset": 0
+            }
+          }
+        },
+        {
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "argv": [
+            "--json",
+            "--ir",
+            "--fuel",
+            "1"
+          ],
+          "command": "inspect",
+          "exit": 2,
+          "stdoutSha256": "b275fee0f95f17862a0403861170387ea2c1a463d322dfa48e18a9b74c819094",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.ir/v1",
+            "command": "inspect",
+            "status": "error",
+            "error": {
+              "kind": "usage",
+              "byte_offset": 0
+            }
+          }
+        },
+        {
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "argv": [
+            "--json",
+            "--ir",
+            "--input",
+            "x"
+          ],
+          "command": "inspect",
+          "exit": 2,
+          "stdoutSha256": "b275fee0f95f17862a0403861170387ea2c1a463d322dfa48e18a9b74c819094",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.ir/v1",
+            "command": "inspect",
+            "status": "error",
+            "error": {
+              "kind": "usage",
+              "byte_offset": 0
+            }
+          }
+        },
+        {
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "argv": [
+            "--json",
+            "--ir",
+            "--isolated"
+          ],
+          "command": "inspect",
+          "exit": 4,
+          "stdoutSha256": "b0d65cea4214c024258eac6d8694dd17b7435baa841770aa6a80011111c3a153",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.ir/v1",
+            "command": "inspect",
+            "status": "error",
+            "error": {
+              "kind": "unavailable",
+              "byte_offset": 0
+            }
+          }
+        },
+        {
+          "sourceSha256": "e67626bf827b36bbbdf90fd5b9e6f71e2f74faeb35fa26cc8da8a74aadde1482",
+          "argv": [
+            "--ir",
+            "--json"
+          ],
+          "command": "inspect",
+          "exit": 3,
+          "stdoutSha256": "30716f86f4134f1d82647e17d24fe2647f8c530bd112fe1bbeccca707256fde6",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.ir/v1",
+            "command": "inspect",
+            "status": "error",
+            "error": {
+              "kind": "syntax",
+              "byte_offset": 35
+            }
+          }
+        },
+        {
+          "sourceSha256": "9fac14c5f8c9168b6360b6042c709fc10693b84d8a9459eacefed987d4850241",
+          "argv": [
+            "--ir",
+            "--json"
+          ],
+          "command": "inspect",
+          "exit": 3,
+          "stdoutSha256": "6789a6b661989e54c23dbdb36a72a92035574633c8af97df9f4715151699952a",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.ir/v1",
+            "command": "inspect",
+            "status": "error",
+            "error": {
+              "kind": "lexical",
+              "byte_offset": 12
+            }
+          }
+        },
+        {
+          "sourceSha256": "4f4ead552223cb2905a4828972dfae7740586dabae603924a7810598256dbdd9",
+          "argv": [
+            "--ir",
+            "--json"
+          ],
+          "command": "inspect",
+          "exit": 3,
+          "stdoutSha256": "13b8aafc848c59cd1b0570521cc7579e5d9a3903d9c6f8ca3a4f970f89718c82",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.ir/v1",
+            "command": "inspect",
+            "status": "error",
+            "error": {
+              "kind": "compile_limit",
+              "byte_offset": 4096
+            }
+          }
+        },
+        {
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "argv": [
+            "--json"
+          ],
+          "command": "check",
+          "exit": 0,
+          "stdoutSha256": "c912c25c8b00bc1d08a14a09d55918b46d8fac9b4489606bfc11058572b8db69",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m1-scalar/1",
+            "command": "check",
+            "status": "checked",
+            "return_i32": null,
+            "error": null
+          }
+        },
+        {
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "argv": [
+            "--json"
+          ],
+          "command": "run",
+          "exit": 0,
+          "stdoutSha256": "a1fb3a6288419229ba9ea41b1ab281f1bd9d1d87be1e8a8093bf674bb94ea4df",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m1-scalar/1",
+            "command": "run",
+            "status": "completed",
+            "return_i32": 42,
+            "error": null
+          }
+        }
+      ]
+    },
+    {
+      "schema": "browniec.inspect-cli-verification/v1",
+      "status": "passed",
+      "profile": "release",
+      "recordedAt": "2026-11-07T06:12:17.603197+00:00",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "commands": [
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "check",
+            "--locked"
+          ],
+          "exit": 0,
+          "stdoutSha256": "e18206ea2cbc85a3ac45f439cac23c814a9de495702c1eece99aaf816e3a19fb",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "build",
+            "--locked",
+            "--release"
+          ],
+          "exit": 0,
+          "stdoutSha256": "bb4f746a3f8c08d831c471f16b45f515df6f7e5524685f67a6213f763e901341",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\case-00.brc",
+            "--ir",
+            "--json"
+          ],
+          "exit": 0,
+          "stdoutSha256": "d05dae6f90617fb8ff42c81e313ff8cc7d33e39d6093e0bf937cd484ee6c0f7b",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\case-01.brc",
+            "--ir"
+          ],
+          "exit": 0,
+          "stdoutSha256": "aa1f5c2780d5be92a5811f88520d88497669eed200f5622ae2369331002ef587",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\case-02.brc",
+            "--ir",
+            "--json"
+          ],
+          "exit": 0,
+          "stdoutSha256": "3d833e06c9a716a3f0dc85a5baa5feb6151b0a682669dc0b446d45c34c5c8df2",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\case-03.brc",
+            "--ir",
+            "--json"
+          ],
+          "exit": 0,
+          "stdoutSha256": "c60d06712d47eacb19f4ccbec464d9c52456887d4a9d607a19a53fdef61373b1",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\case-04.brc",
+            "--ir",
+            "--json"
+          ],
+          "exit": 0,
+          "stdoutSha256": "0e89c04f757a724f919cf3379ca7a4e950102d01a38396c3f2cf4e287b0f7667",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\case-05.brc",
+            "--ir",
+            "--json"
+          ],
+          "exit": 0,
+          "stdoutSha256": "15c2397be3cc1385fbd2fd762e3095647393a13001ee3eb760e3e905f42c72c9",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\case-06.brc",
+            "--ir",
+            "--json"
+          ],
+          "exit": 0,
+          "stdoutSha256": "37cda85bfa68f95ed13ca9aeeb7ef49879b2a0e5a5fe8a4f89cac0ce0acf45f4",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\case-07.brc",
+            "--ir",
+            "--json"
+          ],
+          "exit": 0,
+          "stdoutSha256": "f10ce4ac43114c6dbab54ed8d5980d99956146c3e0ab08a45ceffdbc882fb1b4",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\case-08.brc",
+            "--json"
+          ],
+          "exit": 2,
+          "stdoutSha256": "b275fee0f95f17862a0403861170387ea2c1a463d322dfa48e18a9b74c819094",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\case-09.brc",
+            "--json",
+            "--ir",
+            "--ir"
+          ],
+          "exit": 2,
+          "stdoutSha256": "b275fee0f95f17862a0403861170387ea2c1a463d322dfa48e18a9b74c819094",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\case-10.brc",
+            "--json",
+            "--ir",
+            "--json"
+          ],
+          "exit": 2,
+          "stdoutSha256": "b275fee0f95f17862a0403861170387ea2c1a463d322dfa48e18a9b74c819094",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\case-11.brc",
+            "--json",
+            "--ir",
+            "--fuel",
+            "1"
+          ],
+          "exit": 2,
+          "stdoutSha256": "b275fee0f95f17862a0403861170387ea2c1a463d322dfa48e18a9b74c819094",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\case-12.brc",
+            "--json",
+            "--ir",
+            "--input",
+            "x"
+          ],
+          "exit": 2,
+          "stdoutSha256": "b275fee0f95f17862a0403861170387ea2c1a463d322dfa48e18a9b74c819094",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\case-13.brc",
+            "--json",
+            "--ir",
+            "--isolated"
+          ],
+          "exit": 4,
+          "stdoutSha256": "b0d65cea4214c024258eac6d8694dd17b7435baa841770aa6a80011111c3a153",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\case-14.brc",
+            "--ir",
+            "--json"
+          ],
+          "exit": 3,
+          "stdoutSha256": "30716f86f4134f1d82647e17d24fe2647f8c530bd112fe1bbeccca707256fde6",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\case-15.brc",
+            "--ir",
+            "--json"
+          ],
+          "exit": 3,
+          "stdoutSha256": "6789a6b661989e54c23dbdb36a72a92035574633c8af97df9f4715151699952a",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\browniec.exe",
+            "inspect",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\case-16.brc",
+            "--ir",
+            "--json"
+          ],
+          "exit": 3,
+          "stdoutSha256": "13b8aafc848c59cd1b0570521cc7579e5d9a3903d9c6f8ca3a4f970f89718c82",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\browniec.exe",
+            "check",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\case-17.brc",
+            "--json"
+          ],
+          "exit": 0,
+          "stdoutSha256": "c912c25c8b00bc1d08a14a09d55918b46d8fac9b4489606bfc11058572b8db69",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\browniec.exe",
+            "run",
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\case-18.brc",
+            "--json"
+          ],
+          "exit": 0,
+          "stdoutSha256": "a1fb3a6288419229ba9ea41b1ab281f1bd9d1d87be1e8a8093bf674bb94ea4df",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\browniec.exe",
+            "--version",
+            "--json"
+          ],
+          "exit": 0,
+          "stdoutSha256": "1ac75b4f81243376a0cd6a8078a18e84f8016a18f4fb5914946465011d6e08f5",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\inspect-cli\\release\\browniec.exe",
+            "--help"
+          ],
+          "exit": 0,
+          "stdoutSha256": "d17afa954e2cc784de4bf87eec178c57197c4a7ea8a942f042ebd25542fc7097",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "nativeOverrides": false,
+      "artifactSha256": "7edff5eed5bd9bb865a1c96f68fad0c1ef1868902bf5b32ed4c9911b1b08a169",
+      "version": {
+        "schema": "browniec.version/v1",
+        "profile": "brownie.m1-scalar/1",
+        "array_profile": "brownie.m2-array-read/1",
+        "array_write_profile": "brownie.m2-array-write/1",
+        "array_copy_profile": "brownie.m2-array-copy/1",
+        "array_element_list_declarations": true,
+        "array_element_list_arguments": true,
+        "array_element_list_returns": true,
+        "array_element_list_temporary_borrows": true,
+        "array_element_list_replacement": true,
+        "array_literal_projections": true,
+        "array_expression_projections": true,
+        "array_grouped_values": true,
+        "grouped_assignment_targets": true,
+        "scalar_local_compound_assignment": true,
+        "array_selected_place_assignment": true,
+        "array_element_compound_assignment": true,
+        "array_utf8_element_lists": true,
+        "struct_read_profile": "brownie.m2-struct-read/1",
+        "struct_write_profile": "brownie.m2-struct-write/1",
+        "struct_selected_place_assignment": true,
+        "struct_field_compound_assignment": true,
+        "struct_copy_profile": "brownie.m2-struct-copy/1",
+        "struct_nested_profile": "brownie.m2-struct-nested/1",
+        "struct_child_binding_initializers": true,
+        "struct_child_path_initializers": true,
+        "struct_subrecord_initializers": true,
+        "struct_subrecord_assignment": true,
+        "struct_subrecord_assignment_atomic": true,
+        "struct_constructor_assignment": true,
+        "struct_subrecord_constructor_assignment": true,
+        "struct_helper_locals": true,
+        "struct_parameters": true,
+        "struct_field_shorthand": true,
+        "struct_results": true,
+        "record_expression_projections": true,
+        "record_grouped_values": true,
+        "if_expressions": true,
+        "array_if_expressions": true,
+        "record_if_expressions": true,
+        "array_switch_expressions": true,
+        "record_switch_expressions": true,
+        "constructor_join_inference": true,
+        "void_functions": true,
+        "result_is_ok": true,
+        "explicit_discard": true,
+        "array_utf8_predicate": true,
+        "array_utf8_call_results": true,
+        "array_utf8_literals": true,
+        "array_utf8_ranges": true,
+        "array_utf8_temporary_ranges": true,
+        "array_utf8_open_ranges": true,
+        "array_utf8_dynamic_ranges": true,
+        "array_utf8_temporary_dynamic_ranges": true,
+        "array_utf8_computed_ranges": true,
+        "array_utf8_temporary_computed_ranges": true,
+        "array_utf8_slices": true,
+        "array_slice_length": true,
+        "array_slice_index": true,
+        "array_slice_sub": true,
+        "array_slice_alias": true,
+        "array_slice_parameters": true,
+        "array_slice_scalar_elements": true,
+        "array_slice_mutable": true,
+        "slice_selected_place_assignment": true,
+        "slice_element_compound_assignment": true,
+        "array_slice_mutable_parameters": true,
+        "array_slice_mutable_reborrow": true,
+        "array_slice_reborrow_owned_arguments": true,
+        "array_slice_reborrow_array_results": true,
+        "array_slice_reborrow_record_results": true,
+        "array_slice_array_arguments": true,
+        "array_slice_array_range_arguments": true,
+        "array_slice_named_range_arguments": true,
+        "array_slice_temporary_arguments": true,
+        "reference_profile": "brownie.m2-reference/1",
+        "byte_literals": true,
+        "text_literals": true,
+        "immutable_byte_views": true,
+        "shared_byte_parameters": true,
+        "shared_byte_results": true,
+        "core": true,
+        "restricted": false,
+        "embed": false,
+        "fuel_default": 256,
+        "fuel_limit": 16000000,
+        "inspect_ir": true
+      },
+      "toolFreeRuntime": true,
+      "guestExecutionUsedForInspection": false,
+      "casesPassed": 19,
+      "defaultPEStack": {
+        "reserve": 1048576,
+        "commit": 4096
+      },
+      "caseSummary": [
+        {
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "argv": [
+            "--ir",
+            "--json"
+          ],
+          "command": "inspect",
+          "exit": 0,
+          "stdoutSha256": "d05dae6f90617fb8ff42c81e313ff8cc7d33e39d6093e0bf937cd484ee6c0f7b",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.ir/v1",
+            "command": "inspect",
+            "status": "inspected",
+            "profile": "brownie.m1-scalar/1",
+            "entry": 0,
+            "instruction_count": 2,
+            "register_count": 1,
+            "literal_bytes": 0,
+            "error": null
+          }
+        },
+        {
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "argv": [
+            "--ir"
+          ],
+          "command": "inspect",
+          "exit": 0,
+          "stdoutSha256": "aa1f5c2780d5be92a5811f88520d88497669eed200f5622ae2369331002ef587",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {}
+        },
+        {
+          "sourceSha256": "8a9476f2fa1fbcdc842763fca9480f660e210983c51f59348dab115d1ab527c7",
+          "argv": [
+            "--ir",
+            "--json"
+          ],
+          "command": "inspect",
+          "exit": 0,
+          "stdoutSha256": "3d833e06c9a716a3f0dc85a5baa5feb6151b0a682669dc0b446d45c34c5c8df2",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.ir/v1",
+            "command": "inspect",
+            "status": "inspected",
+            "profile": "brownie.m1-scalar/1",
+            "entry": 0,
+            "instruction_count": 4,
+            "register_count": 3,
+            "literal_bytes": 0,
+            "error": null
+          }
+        },
+        {
+          "sourceSha256": "5ead9b653ca2318831aef29ba2945c194534c04963f983233ac1a8755b5f1b37",
+          "argv": [
+            "--ir",
+            "--json"
+          ],
+          "command": "inspect",
+          "exit": 0,
+          "stdoutSha256": "c60d06712d47eacb19f4ccbec464d9c52456887d4a9d607a19a53fdef61373b1",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.ir/v1",
+            "command": "inspect",
+            "status": "inspected",
+            "profile": "brownie.m1-scalar/1",
+            "entry": 0,
+            "instruction_count": 5,
+            "register_count": 2,
+            "literal_bytes": 0,
+            "error": null
+          }
+        },
+        {
+          "sourceSha256": "53443c51a9f7ae94e7d7bbe2bbec1dbae6bd2728c474220d4884377682191a07",
+          "argv": [
+            "--ir",
+            "--json"
+          ],
+          "command": "inspect",
+          "exit": 0,
+          "stdoutSha256": "0e89c04f757a724f919cf3379ca7a4e950102d01a38396c3f2cf4e287b0f7667",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.ir/v1",
+            "command": "inspect",
+            "status": "inspected",
+            "profile": "brownie.m2-array-read/1",
+            "entry": 0,
+            "instruction_count": 10,
+            "register_count": 7,
+            "literal_bytes": 0,
+            "error": null
+          }
+        },
+        {
+          "sourceSha256": "bb48ec05762995d884fd1426acb084d656f29fb20ef71584801d9590c5e28d3d",
+          "argv": [
+            "--ir",
+            "--json"
+          ],
+          "command": "inspect",
+          "exit": 0,
+          "stdoutSha256": "15c2397be3cc1385fbd2fd762e3095647393a13001ee3eb760e3e905f42c72c9",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.ir/v1",
+            "command": "inspect",
+            "status": "inspected",
+            "profile": "brownie.m2-struct-read/1",
+            "entry": 0,
+            "instruction_count": 12,
+            "register_count": 9,
+            "literal_bytes": 0,
+            "error": null
+          }
+        },
+        {
+          "sourceSha256": "352c8b3655f2f3e73eacbb2f75e1e663f01c48a552ff7c84620430fa2a3ecafc",
+          "argv": [
+            "--ir",
+            "--json"
+          ],
+          "command": "inspect",
+          "exit": 0,
+          "stdoutSha256": "37cda85bfa68f95ed13ca9aeeb7ef49879b2a0e5a5fe8a4f89cac0ce0acf45f4",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.ir/v1",
+            "command": "inspect",
+            "status": "inspected",
+            "profile": "brownie.m2-reference/1",
+            "entry": 0,
+            "instruction_count": 11,
+            "register_count": 5,
+            "literal_bytes": 3,
+            "error": null
+          }
+        },
+        {
+          "sourceSha256": "b0021e4e2a055b0b638c4f0c7a0cbf3c941a7d46ad4b0b404b7b916e1a8c86ec",
+          "argv": [
+            "--ir",
+            "--json"
+          ],
+          "command": "inspect",
+          "exit": 0,
+          "stdoutSha256": "f10ce4ac43114c6dbab54ed8d5980d99956146c3e0ab08a45ceffdbc882fb1b4",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.ir/v1",
+            "command": "inspect",
+            "status": "inspected",
+            "profile": "brownie.m1-scalar/1",
+            "entry": 1,
+            "instruction_count": 101,
+            "register_count": 67,
+            "literal_bytes": 0,
+            "error": null
+          }
+        },
+        {
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "argv": [
+            "--json"
+          ],
+          "command": "inspect",
+          "exit": 2,
+          "stdoutSha256": "b275fee0f95f17862a0403861170387ea2c1a463d322dfa48e18a9b74c819094",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.ir/v1",
+            "command": "inspect",
+            "status": "error",
+            "error": {
+              "kind": "usage",
+              "byte_offset": 0
+            }
+          }
+        },
+        {
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "argv": [
+            "--json",
+            "--ir",
+            "--ir"
+          ],
+          "command": "inspect",
+          "exit": 2,
+          "stdoutSha256": "b275fee0f95f17862a0403861170387ea2c1a463d322dfa48e18a9b74c819094",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.ir/v1",
+            "command": "inspect",
+            "status": "error",
+            "error": {
+              "kind": "usage",
+              "byte_offset": 0
+            }
+          }
+        },
+        {
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "argv": [
+            "--json",
+            "--ir",
+            "--json"
+          ],
+          "command": "inspect",
+          "exit": 2,
+          "stdoutSha256": "b275fee0f95f17862a0403861170387ea2c1a463d322dfa48e18a9b74c819094",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.ir/v1",
+            "command": "inspect",
+            "status": "error",
+            "error": {
+              "kind": "usage",
+              "byte_offset": 0
+            }
+          }
+        },
+        {
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "argv": [
+            "--json",
+            "--ir",
+            "--fuel",
+            "1"
+          ],
+          "command": "inspect",
+          "exit": 2,
+          "stdoutSha256": "b275fee0f95f17862a0403861170387ea2c1a463d322dfa48e18a9b74c819094",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.ir/v1",
+            "command": "inspect",
+            "status": "error",
+            "error": {
+              "kind": "usage",
+              "byte_offset": 0
+            }
+          }
+        },
+        {
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "argv": [
+            "--json",
+            "--ir",
+            "--input",
+            "x"
+          ],
+          "command": "inspect",
+          "exit": 2,
+          "stdoutSha256": "b275fee0f95f17862a0403861170387ea2c1a463d322dfa48e18a9b74c819094",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.ir/v1",
+            "command": "inspect",
+            "status": "error",
+            "error": {
+              "kind": "usage",
+              "byte_offset": 0
+            }
+          }
+        },
+        {
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "argv": [
+            "--json",
+            "--ir",
+            "--isolated"
+          ],
+          "command": "inspect",
+          "exit": 4,
+          "stdoutSha256": "b0d65cea4214c024258eac6d8694dd17b7435baa841770aa6a80011111c3a153",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.ir/v1",
+            "command": "inspect",
+            "status": "error",
+            "error": {
+              "kind": "unavailable",
+              "byte_offset": 0
+            }
+          }
+        },
+        {
+          "sourceSha256": "e67626bf827b36bbbdf90fd5b9e6f71e2f74faeb35fa26cc8da8a74aadde1482",
+          "argv": [
+            "--ir",
+            "--json"
+          ],
+          "command": "inspect",
+          "exit": 3,
+          "stdoutSha256": "30716f86f4134f1d82647e17d24fe2647f8c530bd112fe1bbeccca707256fde6",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.ir/v1",
+            "command": "inspect",
+            "status": "error",
+            "error": {
+              "kind": "syntax",
+              "byte_offset": 35
+            }
+          }
+        },
+        {
+          "sourceSha256": "9fac14c5f8c9168b6360b6042c709fc10693b84d8a9459eacefed987d4850241",
+          "argv": [
+            "--ir",
+            "--json"
+          ],
+          "command": "inspect",
+          "exit": 3,
+          "stdoutSha256": "6789a6b661989e54c23dbdb36a72a92035574633c8af97df9f4715151699952a",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.ir/v1",
+            "command": "inspect",
+            "status": "error",
+            "error": {
+              "kind": "lexical",
+              "byte_offset": 12
+            }
+          }
+        },
+        {
+          "sourceSha256": "4f4ead552223cb2905a4828972dfae7740586dabae603924a7810598256dbdd9",
+          "argv": [
+            "--ir",
+            "--json"
+          ],
+          "command": "inspect",
+          "exit": 3,
+          "stdoutSha256": "13b8aafc848c59cd1b0570521cc7579e5d9a3903d9c6f8ca3a4f970f89718c82",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.ir/v1",
+            "command": "inspect",
+            "status": "error",
+            "error": {
+              "kind": "compile_limit",
+              "byte_offset": 4096
+            }
+          }
+        },
+        {
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "argv": [
+            "--json"
+          ],
+          "command": "check",
+          "exit": 0,
+          "stdoutSha256": "c912c25c8b00bc1d08a14a09d55918b46d8fac9b4489606bfc11058572b8db69",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m1-scalar/1",
+            "command": "check",
+            "status": "checked",
+            "return_i32": null,
+            "error": null
+          }
+        },
+        {
+          "sourceSha256": "653c83013771eb4fa1477f7baaad920d0bde97299132711b2b51a7fffdc6057e",
+          "argv": [
+            "--json"
+          ],
+          "command": "run",
+          "exit": 0,
+          "stdoutSha256": "a1fb3a6288419229ba9ea41b1ab281f1bd9d1d87be1e8a8093bf674bb94ea4df",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "resultSummary": {
+            "schema": "browniec.result/v1",
+            "profile": "brownie.m1-scalar/1",
+            "command": "run",
+            "status": "completed",
+            "return_i32": 42,
+            "error": null
+          }
+        }
+      ]
+    }
+  ],
+  "limits": {
+    "sourceBytes": 4096,
+    "instructions": 256,
+    "registers": 128,
+    "functions": 16,
+    "diagnosticOutputBytes": 131072
+  },
+  "limitations": [
+    "Diagnostic private instruction output only: complete catalog/literal/Program data is not serialized and there is no bytecode loader.",
+    "No private Buffer syntax/public policy/host/restricted/embed admission is added.",
+    "Windows native only; Linux/macOS, full-profile conformance, OOM and performance not verified."
+  ]
+}

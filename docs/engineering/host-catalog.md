@@ -114,3 +114,8 @@ admission evidence. Native SHA known answers cover lengths 0, 1, 55, 56, 63, 64,
 
 Root integration, a root lock refresh, broad VM/CLI regressions, public host
 availability and remote delivery are outside this isolated patch slice.
+
+Main integrated the patch in `41144d7`. [Recorded evidence](../evidence/host-catalog-windows-20261107.json)
+retains the exact two-profile worker snapshots and matching dependency closure.
+The [final composed release check](parallel-integration.md) executes the actual
+catalog-to-wire integration after the other patches and root lock refresh.

@@ -40,3 +40,8 @@ Conditional fresh-root unions, complete Program catalog binding and host exchang
 actual lifecycle/pins/accounting/steps/cancellation, production registry scale and
 the remaining language/platform/delivery inventory are still open. See the
 [authoritative inventory](../product/04-remaining-work.md).
+
+The final composed release check passed all four native groups and three CLI
+cases. All 233 frozen inputs match checkout/Git raw bytes; 223 production modules
+retain LF. The CLI PE retains the default 1048576/4096 stack. See the
+[recorded evidence](../evidence/parallel-integration-windows-20261107.json).

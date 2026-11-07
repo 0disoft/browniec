@@ -1,3 +1,16 @@
+- Latest parallel-integration checkpoint (2026-11-07): [Composed native verification](../engineering/parallel-integration.md)
+  records public IR inspection `2b44bf9` (19 CLI cases plus version/help in each
+  profile), strict catalog/SHA-256 `41144d7` (12 native groups/profile), fresh
+  singleton loop owners `cbdfdbe` (11 groups/profile), and real internal lazy
+  registry `8a4dae9` (four C-host scenarios in each development/optimized profile).
+  The final root release passed four native groups and three public CLI cases;
+  all 233 inputs match checkout/Git raw bytes and all 223 production modules are
+  LF. The root check passed 231 sources/2560 MIR functions; default stacks remain.
+  Full Engine/Program/Instance lifecycle, accepted registry scale, host exchange,
+  conditional fresh-root unions and the remaining inventory are open. Public
+  Buffer/host/restricted/embed gates and existing Fuel limits/prices are unchanged.
+  All parallel workers are closed. Local commits only; no push/release/deployment.
+
 # Roadmap
 
 - Native value bytes, 2026-11-07: [retained canonical layouts and byte operations](../engineering/value-codec.md) now validate exact scalar/array/plain-record/wrapper representation, tags, bool, padding/inactive bytes and the one active opaque Buffer word. Direction-aware copies and disjoint wrapper construction validate before mutation. Development/release each passed six native groups on f5d3d1a, with 188 checkout/Git-raw-matching inputs and 183 LF production modules. This is a byte-storage prerequisite: native root authentication, owning value/frame storage, metering, cleanup, VM execution and source bindings remain next. Public behavior/prices/limits remain. See [Windows evidence](../evidence/value-codec-windows-20261107.json). Full language/native Fuel/CLI, LF mirrors, Linux, OOM/general stack/performance and clean-machine delivery were not rerun. Earlier checkpoints retain their scopes.
@@ -118,36 +131,34 @@ required; this native transaction does not promote public execution.
 
 ## Next implementation units
 
-1. B01 preparation recipes and independent proof are implemented. The private VM
-   adapter separately admits a rootless borrowed-input dialect; proof alone never
-   authorizes ordinary Program execution.
-2. B02 native handoff/abort, caller result/frame/site bindings and private op63/64/65
-   dispatch are connected. Owned array/record locals and scalar/array/record CALLs
-   are integrated; [bounded Fuel accounting](../engineering/m2-slice-result-fuel.md)
-   now replaces the private reserve and prepays terminal cleanup.
-3. B03 native capture/root lifetime and descendant suspension are implemented.
-   Guest-created array temporaries, record locals and mixed CALL captures now use
-   the same owner table and terminal cleanup. [Explicit native owned entry](../engineering/m2-slice-result-entry.md)
-   now copies array/record inputs through the initial transaction.
-4. B04 shared-byte results now have [public retained execution](../engineering/public-program.md).
-   General mutable/non-byte/Buffer/input results and host-visible lifetimes remain.
-   L01 now has [native source snapshots](../engineering/module-sources.md); bind
-   module/import/visibility tables before connecting multi-module compilation.
-5. D01-D04 and L05-L06: connect guest Buffer, resource-bearing wrappers and
-   ownership-aware builtins to the VM/Instance, using existing native components.
-6. D05 and I01-I02: deliver a real input -> Buffer/text -> staged-output workload.
-7. R01-R05: complete the Engine/Instance, quotas, bounded stepping, deadlines,
-   cancellation, poison and terminal contracts needed for M3 and later surfaces.
-8. H01-H04/C01-C04: finish explicit source/configuration/authority and typed host
-   integration, initially using an in-memory fake adapter.
-9. W01-W06: implement and verify actual Windows restricted delivery.
-10. E01-E04/V01-V05: close embed, clean-machine, full-profile and measured release
-    gates. Measure relevant workloads earlier when they can guide a real decision.
+The internal registry/catalog/wire prerequisites and private singleton fresh-loop
+owners now have scoped native evidence. They do not close their wider inventory
+groups. Public IR inspection is available through the existing source gates.
 
-L01-L07/B05/C05 are full-profile language/reference/limit gaps, not completed by
-finishing only the returned-slice path. Schedule them as bounded vertical units
-alongside M2/M3, and track every item in the [complete inventory](04-remaining-work.md).
-Do not increase caps or add an excluded language feature as an incidental fix.
+1. R01/E03: connect the real owner-thread Engine, immutable reusable Program and
+   one-shot Instance to typed handles, native object ownership, Program pins and
+   release/destroy. Keep public ABI availability separate from internal metadata.
+2. R02-R05: complete accounting/preallocation, bounded resumable work, monotonic
+   deadlines/cancellation, first-cause poison and zero-Fuel budgeted cleanup.
+3. H01-H04: bind retained Program imports/catalog digests to policy/declarations/
+   grants and real HOST_REQUEST/WAITING_HOST/reply adoption. Codecs alone do not
+   authorize or dispatch effects; start with the in-memory adapter.
+4. L01-L07/B04-B05/D01-D04: complete aggregate/reference/module composition,
+   conditional fresh-root unions, methods/AllocError and deliberate public
+   graduation. Preserve the existing return-origin, owner and Fuel proofs.
+5. D05/I01-I02: connect actual guest input, Buffer/text validation and staged
+   grant-controlled output in one usable workload.
+6. C01-C05: anchored source collection, public project/policy/catalog/run loaders,
+   multi-source diagnostics and deliberate full-profile limit reconciliation.
+7. W01-W06: actual restricted Windows process/broker/IPC, cancellation races,
+   publication and I/O-lease/reaping bounds.
+8. E01-E04/V01-V05: actual complete VM DLL ABI, accepted-scale registry/pins,
+   supported-platform/clean-machine packages, conformance/failure coverage and
+   measured build/runtime/release evidence.
+
+Use the [complete inventory](04-remaining-work.md) as the requirement crosswalk.
+Do not increase VM capacities or add excluded language features as incidental
+fixes. Small verified local commits remain separate from remote delivery.
 
 ## Evidence and release rules
 

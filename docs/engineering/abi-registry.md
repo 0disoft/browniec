@@ -188,3 +188,8 @@ object cleanup/pins, Engine poison, VM/public DLL execution, accepted-scale page
 allocation/accounting, multiple DLL copies as one process registry, Linux,
 clean-machine packaging or full E02/E01 availability. Existing CLI gates,
 opcodes, Fuel schedules and VM capacities are unchanged.
+
+Main integrated the coordinator in `8a4dae9`. All eleven isolated build inputs
+match checkout/Git raw bytes and the actual two-profile C-host receipt. See the
+[durable evidence](../evidence/abi-registry-windows-20261107.json); root VM/CLI
+changes do not enter this isolated transport and were not used to claim an ABI pass.

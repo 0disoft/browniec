@@ -61,7 +61,8 @@ allocate/free objects or implement Program pins and Instance state.
 
 Until these contracts have real native implementations, calling the kernel with
 arbitrary external identities or concurrently is unsupported. The separate [Windows guard/TLS primitive](abi-thread-identity.md) now supplies
-real OS identity and synchronization, but this kernel is not yet wired to it.
+real OS identity and synchronization. The [internal coordinator](abi-registry.md)
+now wires this exact kernel to it; actual native object lifecycles remain separate.
 
 ## APIs for lifecycle integration
 

@@ -1,4 +1,17 @@
-- Latest registry-prerequisite checkpoint (2026-11-07): [Fairy handles](abi-handles.md)
+- Latest parallel-integration checkpoint (2026-11-07): [Composed native verification](parallel-integration.md)
+  records public IR inspection `2b44bf9` (19 CLI cases plus version/help in each
+  profile), strict catalog/SHA-256 `41144d7` (12 native groups/profile), fresh
+  singleton loop owners `cbdfdbe` (11 groups/profile), and real internal lazy
+  registry `8a4dae9` (four C-host scenarios in each development/optimized profile).
+  The final root release passed four native groups and three public CLI cases;
+  all 233 inputs match checkout/Git raw bytes and all 223 production modules are
+  LF. The root check passed 231 sources/2560 MIR functions; default stacks remain.
+  Full Engine/Program/Instance lifecycle, accepted registry scale, host exchange,
+  conditional fresh-root unions and the remaining inventory are open. Public
+  Buffer/host/restricted/embed gates and existing Fuel limits/prices are unchanged.
+  All parallel workers are closed. Local commits only; no push/release/deployment.
+
+- Predecessor registry-prerequisite checkpoint (2026-11-07): [Fairy handles](abi-handles.md)
   (`fef9fd3`) passed ten native groups per development/release profile; unchanged
   kernel/test/compiler evidence was retained after the root 227-source/2487-MIR
   composition check. [Windows guard/TLS](abi-thread-identity.md) (`5618726`)
@@ -266,8 +279,10 @@ Fuel default 256 / ceiling 16000000 and wider capability gates remain unchanged.
 The [actual Windows ABI bootstrap](abi-bootstrap.md) now supplies a real query
 DLL/C-host boundary, compiled Fairy metadata/validation and canonical layouts.
 This is an E01 prerequisite only: serialized owner-thread Engine/Instance state,
-typed handle registry, VM/step/reply/cancel/destroy exports and data lifetimes
-remain before full embedding. Keep CLI embed availability false until those paths
+VM/step/reply/cancel/destroy exports and data lifetimes remain before full
+embedding. The [real internal handle coordinator](abi-registry.md) now connects
+the 64-slot Fairy kernel to OS identity/serialization; production-scale registry
+accounting and actual object/pin/lifecycle ownership still remain. Keep CLI embed availability false until those paths
 are implemented and evidenced. The bootstrap builder is self-contained in the
 checkout and does not rebuild the whole CLI/VM.
 
@@ -291,8 +306,9 @@ matrix after unary/postfix and before binary evaluation, with left-to-right
 chains and once-only effects. Terminal bottom checks scalar target syntax without
 reading a value, emitting WIDEN or interning a cast type. This adds no implicit
 conversion, VM/opcode, pricing or public admission change. The linked evidence
-records this focused increment; continue fresh
-loop-carried owners and remaining bottom/general reference composition, then the
+records this focused increment. [Fresh singleton loop owners](value-fresh-loop-owners.md)
+now compose with real carrier cleanup and pinned-owner MOVE; continue conditional
+fresh-root unions and remaining bottom/general reference composition, then the
 existing methods/AllocError and runtime/host/platform work; the full objective
 and the inventory completion conditions remain open.
 

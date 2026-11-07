@@ -137,3 +137,9 @@ public CLI, general references, host/I/O, all fresh Option/Result propagation
 combinations and broader release/runtime acceptance remain separate. The native
 failure-drain fixture proves its concrete ledger cleanup; source fresh-invocation
 recovery alone does not establish every lifecycle counter or leak obligation.
+
+Main integrated this slice in `cbdfdbe`. [Recorded evidence](../evidence/value-fresh-loop-owners-windows-20261107.json)
+retains both eleven-group worker runs and explicit input differences. Only the
+unreached version encoder changed in the test diagnostic renderer; its used
+error-rendering prefix remains byte-identical. The [final root release check](parallel-integration.md)
+separately composes the populated-owner, native identity/drain and depth fixtures.

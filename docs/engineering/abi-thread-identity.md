@@ -3,7 +3,8 @@
 `native/abi_thread_identity.c` is an internal OS primitive for the future ABI
 coordinator. It supplies short serialized registry access and authenticated
 current-thread identity. It does not implement a registry, Engine lifecycle or
-public DLL export, and is not yet connected to `abi_handles.fy`.
+public DLL export. The [internal registry coordinator](abi-registry.md) now
+connects it to the compiled `abi_handles.fy` kernel.
 
 `bc_abi_guard_enter` uses `TryAcquireSRWLockExclusive`: contention or same-thread
 reentry returns Busy immediately. The first admitted call lazily allocates one
@@ -39,7 +40,8 @@ The one TLS slot and monotonic state remain until process/module teardown.
 Unload/reload with live handles or in-flight calls is unsupported. A single
 future DLL coordinator must own the single registry and guard; independently
 copying this source into several modules does not make their registries shared.
-Lazy Fairy table allocation/accounting and actual API integration remain open.
+The coordinator now allocates one lazy 64-slot table. Accepted production-scale
+registry/control accounting and actual public object lifecycle integration remain open.
 
 `python tools/verify-abi-thread-identity.py` compiles production and test objects
 using standard MSVC/SDK paths and default stacks, in development and optimized
@@ -55,7 +57,8 @@ claim that Windows happened to reuse an OS thread ID during this run.
 Both profiles execute with an empty tool PATH. This is real OS thread/lock
 evidence for the shim; synthetic kernel identity tests remain separate. No full
 E02 synchronization, public embedding, cancellation or Engine/Instance execution
-availability follows until the actual coordinator connects them.
+availability follows from these components; the coordinator has its own real
+OS/native evidence and the full inventory remains open.
 
 Implementation `f83436e` and the live-TLS release successor `5618726` passed
 both native profiles. The retained evidence records the successor inputs. The [recorded OS evidence](../evidence/abi-thread-identity-windows-20261107.json)

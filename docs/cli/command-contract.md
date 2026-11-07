@@ -13,11 +13,12 @@
 | browniec run --project FILE | Use an explicit source map, policy, entry, grants, and run limits | Not implemented |
 | browniec check SOURCE --isolated | Use a restricted compile-only worker | Designed; unavailable |
 | browniec run SOURCE --isolated | Use the restricted worker and parent broker | Designed; unavailable |
-| browniec inspect SOURCE --ir | Emit bounded private diagnostics | Not implemented |
+| browniec inspect SOURCE --ir | Compile/verify and emit bounded private IR diagnostics without executing | Implemented for the same public M1/M2 admission as check; optional --json |
 | browniec worker | Broker-only restricted IPC endpoint | Designed; unavailable |
 
 The implemented grammar is `browniec check SOURCE [--json]` and
-`browniec run SOURCE [--fuel N] [--json]`, plus `--version [--json]` and `--help`.
+`browniec run SOURCE [--fuel N] [--json]`, `browniec inspect SOURCE --ir [--json]`,
+plus `--version [--json]` and `--help`.
 Fuel defaults to 256 and accepts 0..16000000; duplicate/unknown options are errors.
 Run grants no guest host capability. SOURCE selects one local disk file with a
 4096-byte UTF-8 source limit. The public language supports six scalar types,
@@ -32,7 +33,7 @@ The [retained reference profile](../engineering/public-program.md) admits immuta
 byte/text literals, explicit text::bytes/equality and shared byte parameters/results.
 General mutable/non-byte/Buffer/input results and host-visible reference tickets
 remain unavailable.
-Guest Buffer/input/output, project/policy/catalog/grant loaders, inspect, worker,
+Guest Buffer/input/output, project/policy/catalog/grant CLI loaders, worker,
 cancellation and deadlines remain unavailable. `--isolated` returns an availability
 denial, with no unrestricted fallback. Zero-argument i32 `main` is the only entry;
 the source file is not a guest input snapshot.
@@ -68,3 +69,7 @@ Version JSON exposes `fuel_default` and `fuel_limit` from the same schedule as a
 validation. Existing lower budgets remain valid. See the
 [public cost/limit contract](../engineering/public-fuel-limits.md) for the exact
 price formulas, full-arity CALL rationale and verification scope.
+
+IR inspection is read-only diagnostic output, not reloadable bytecode. It exposes
+no new source/capability admission. See [the exact contract](../engineering/inspect-ir.md)
+for output bounds, fields, source limits and verified Windows cases.

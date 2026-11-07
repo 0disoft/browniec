@@ -1,4 +1,17 @@
-- Latest ABI-bootstrap checkpoint (2026-11-07): [Windows DLL query](../engineering/abi-bootstrap.md)
+- Latest parallel-integration checkpoint (2026-11-07): [Composed native verification](../engineering/parallel-integration.md)
+  records public IR inspection `2b44bf9` (19 CLI cases plus version/help in each
+  profile), strict catalog/SHA-256 `41144d7` (12 native groups/profile), fresh
+  singleton loop owners `cbdfdbe` (11 groups/profile), and real internal lazy
+  registry `8a4dae9` (four C-host scenarios in each development/optimized profile).
+  The final root release passed four native groups and three public CLI cases;
+  all 233 inputs match checkout/Git raw bytes and all 223 production modules are
+  LF. The root check passed 231 sources/2560 MIR functions; default stacks remain.
+  Full Engine/Program/Instance lifecycle, accepted registry scale, host exchange,
+  conditional fresh-root unions and the remaining inventory are open. Public
+  Buffer/host/restricted/embed gates and existing Fuel limits/prices are unchanged.
+  All parallel workers are closed. Local commits only; no push/release/deployment.
+
+- Predecessor ABI-bootstrap checkpoint (2026-11-07): [Windows DLL query](../engineering/abi-bootstrap.md)
   now exports only `bc_get_abi_info_v2`; Fairy owns admission/metadata and a small
   native shim marshals the exact 32-byte result. `ad86fc9` passed 53 real DLL calls
   in each development/optimized profile, C/C++ layouts, guard pages, singleton

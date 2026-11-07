@@ -1,0 +1,483 @@
+{
+  "schema": "browniec.host-catalog-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-07T06:19:44.712823+00:00",
+  "platform": "windows/amd64",
+  "implementationCommit": "41144d7b2dfe747e1639e68ebb3d0974524ecc75",
+  "workerBase": "c8220bfdef75fa777009b36bbd5505f052f98546",
+  "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+  "inputManifest": {
+    "path": "docs/evidence/host-catalog-inputs-windows-20261107.json",
+    "sha256": "af8fdf59d403942762bef95cfeec1dc74f2e66a73e8aebe2a3bc3663a7889538"
+  },
+  "frozenWorkerInputsMatched": 235,
+  "integration": {
+    "selectedTestDependencyClosure": [
+      "src/catalog_digest.fy",
+      "src/cells.fy",
+      "src/errors.fy",
+      "src/host_catalog.fy",
+      "src/host_catalog_names.fy",
+      "src/host_wire.fy",
+      "src/json_tokens.fy",
+      "src/lexer.fy",
+      "src/literal_source.fy",
+      "src/scalar_codec.fy",
+      "src/static_image.fy",
+      "src/types.fy",
+      "tests/m2/host_catalog.fy"
+    ],
+    "exactClosureFilesMatchedCheckoutAndGit": 13,
+    "changedOutsideSelectedClosure": [
+      "fairy.lock",
+      "src/main.fy",
+      "src/render.fy",
+      "src/value_flow.fy",
+      "src/value_frames.fy",
+      "src/value_roots.fy",
+      "src/value_runtime.fy",
+      "src/value_source_bindings.fy",
+      "src/value_source_loops.fy",
+      "src/value_view_bindings.fy",
+      "src/value_view_flow.fy",
+      "src/value_view_runtime.fy"
+    ],
+    "rootCheck": "check ok: 2 instance(s), 231 source file(s), 2560 MIR function(s), lock updated",
+    "nativeRepetitionSkipped": "All selected test/dependency bytes and compiler are identical. Disjoint CLI/kernel/catalog additions compose in the separate final release verification."
+  },
+  "groupsPerProfile": {
+    "development": 12,
+    "release": 12
+  },
+  "profiles": [
+    {
+      "schema": "browniec.value-source-verification/v1",
+      "status": "passed",
+      "recordedAt": "2026-11-07T06:04:49.300233+00:00",
+      "profile": "development",
+      "phase": "native",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "commands": [
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-host-catalog\\build\\toolchain\\fairyc.exe",
+            "--version"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "84b2631c6d67888ffa6cebddb89b9e0806edb424a98b301f48c81504c9e3090f",
+          "elapsedSeconds": 0.112,
+          "exit": 0,
+          "stdout": "compiler-version.txt",
+          "stderr": "compiler-version.txt.stderr.txt",
+          "stdoutSha256": "cfd188b9865777d7972b1c1e1c4e2e50d2735becbeca8627863cde0d38330e34",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-host-catalog\\build\\toolchain\\fairyc.exe",
+            "check",
+            "--locked"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "b1eb1645a84bbff7bd742232c4b045eda7f1b487d0a9ae1603a1f42c7dfcb845",
+          "elapsedSeconds": 9.819,
+          "exit": 0,
+          "stdout": "check.txt",
+          "stderr": "check.txt.stderr.txt",
+          "stdoutSha256": "b5bee305c9d5ea2d76481690c6ccffda44b7526814cd4153ab1678998e689edb",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-host-catalog\\build\\toolchain\\fairyc.exe",
+            "test",
+            "--native",
+            "--capture-output",
+            "--json",
+            "--locked",
+            "--exact",
+            "tests::m2::host_catalog::admitted_catalog_owns_decoded_bytes_and_accessors_are_bounded",
+            "--exact",
+            "tests::m2::host_catalog::admitted_catalog_tags_compose_with_real_wire_decoders",
+            "--exact",
+            "tests::m2::host_catalog::all_scalar_and_bytes_argument_and_result_types_match_canonical_vectors",
+            "--exact",
+            "tests::m2::host_catalog::contiguous_ids_and_full_qualified_ascii_order_are_required",
+            "--exact",
+            "tests::m2::host_catalog::decoded_duplicate_and_unknown_keys_reject_at_both_object_levels",
+            "--exact",
+            "tests::m2::host_catalog::every_binding_field_is_hashed_and_equivalent_json_preserves_identity",
+            "--exact",
+            "tests::m2::host_catalog::every_required_field_is_required",
+            "--exact",
+            "tests::m2::host_catalog::exact_byte_import_and_argument_limits_and_maximum_spellings",
+            "--exact",
+            "tests::m2::host_catalog::schema_names_effects_and_unsupported_types_reject",
+            "--exact",
+            "tests::m2::host_catalog::sha256_known_answers_padding_boundaries_and_hard_bound",
+            "--exact",
+            "tests::m2::host_catalog::strict_grammar_utf8_escapes_and_one_root",
+            "--exact",
+            "tests::m2::host_catalog::zip_vector_and_empty_catalog_match_exact_bytes_and_sha256"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "7575f9ef53b348a294658fab5eb83e2af933a4e35bc4cad46f2895c041c265ea",
+          "elapsedSeconds": 92.998,
+          "exit": 0,
+          "stdout": "native.json",
+          "stderr": "native.json.stderr.txt",
+          "stdoutSha256": "c23934a7687917ac3d6e8aa059ab30a3423435f6510a2b7920a1a62b06fe1884",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "selectedTests": [
+        "tests::m2::host_catalog::admitted_catalog_owns_decoded_bytes_and_accessors_are_bounded",
+        "tests::m2::host_catalog::admitted_catalog_tags_compose_with_real_wire_decoders",
+        "tests::m2::host_catalog::all_scalar_and_bytes_argument_and_result_types_match_canonical_vectors",
+        "tests::m2::host_catalog::contiguous_ids_and_full_qualified_ascii_order_are_required",
+        "tests::m2::host_catalog::decoded_duplicate_and_unknown_keys_reject_at_both_object_levels",
+        "tests::m2::host_catalog::every_binding_field_is_hashed_and_equivalent_json_preserves_identity",
+        "tests::m2::host_catalog::every_required_field_is_required",
+        "tests::m2::host_catalog::exact_byte_import_and_argument_limits_and_maximum_spellings",
+        "tests::m2::host_catalog::schema_names_effects_and_unsupported_types_reject",
+        "tests::m2::host_catalog::sha256_known_answers_padding_boundaries_and_hard_bound",
+        "tests::m2::host_catalog::strict_grammar_utf8_escapes_and_one_root",
+        "tests::m2::host_catalog::zip_vector_and_empty_catalog_match_exact_bytes_and_sha256"
+      ],
+      "nativeGroups": 12,
+      "selectedNativeGroups": 12,
+      "nativeWorkspace": "byte-identical-production-selected-tests",
+      "nativeOverrides": false,
+      "historicalResultReuse": false,
+      "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false",
+      "check": "check ok: 2 instance(s), 229 source file(s), 2519 MIR function(s), lock verified\n",
+      "nativeReport": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "development",
+        "tests": [
+          {
+            "identity": "tests::m2::host_catalog::admitted_catalog_owns_decoded_bytes_and_accessors_are_bounded",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::host_catalog::admitted_catalog_tags_compose_with_real_wire_decoders",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::host_catalog::all_scalar_and_bytes_argument_and_result_types_match_canonical_vectors",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::host_catalog::contiguous_ids_and_full_qualified_ascii_order_are_required",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::host_catalog::decoded_duplicate_and_unknown_keys_reject_at_both_object_levels",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::host_catalog::every_binding_field_is_hashed_and_equivalent_json_preserves_identity",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::host_catalog::every_required_field_is_required",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::host_catalog::exact_byte_import_and_argument_limits_and_maximum_spellings",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::host_catalog::schema_names_effects_and_unsupported_types_reject",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::host_catalog::sha256_known_answers_padding_boundaries_and_hard_bound",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::host_catalog::strict_grammar_utf8_escapes_and_one_root",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::host_catalog::zip_vector_and_empty_catalog_match_exact_bytes_and_sha256",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 12,
+        "passed": 12,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "nativeReportSha256": "f223eff9ea0930f138b349c014c1bd446ad247d7423dba62a9b4e37ba71fd41d",
+      "nativeInputMirrorVerified": true,
+      "elapsedSeconds": 103.873,
+      "cliSkipped": "Optional public Fuel CLI suite was not requested."
+    },
+    {
+      "schema": "browniec.value-source-verification/v1",
+      "status": "passed",
+      "recordedAt": "2026-11-07T06:04:49.299495+00:00",
+      "profile": "release",
+      "phase": "native",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "commands": [
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-host-catalog\\build\\toolchain\\fairyc.exe",
+            "--version"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "84b2631c6d67888ffa6cebddb89b9e0806edb424a98b301f48c81504c9e3090f",
+          "elapsedSeconds": 0.097,
+          "exit": 0,
+          "stdout": "compiler-version.txt",
+          "stderr": "compiler-version.txt.stderr.txt",
+          "stdoutSha256": "cfd188b9865777d7972b1c1e1c4e2e50d2735becbeca8627863cde0d38330e34",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-host-catalog\\build\\toolchain\\fairyc.exe",
+            "check",
+            "--locked"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "b1eb1645a84bbff7bd742232c4b045eda7f1b487d0a9ae1603a1f42c7dfcb845",
+          "elapsedSeconds": 9.726,
+          "exit": 0,
+          "stdout": "check.txt",
+          "stderr": "check.txt.stderr.txt",
+          "stdoutSha256": "b5bee305c9d5ea2d76481690c6ccffda44b7526814cd4153ab1678998e689edb",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-host-catalog\\build\\toolchain\\fairyc.exe",
+            "test",
+            "--native",
+            "--capture-output",
+            "--json",
+            "--locked",
+            "--release",
+            "--exact",
+            "tests::m2::host_catalog::admitted_catalog_owns_decoded_bytes_and_accessors_are_bounded",
+            "--exact",
+            "tests::m2::host_catalog::admitted_catalog_tags_compose_with_real_wire_decoders",
+            "--exact",
+            "tests::m2::host_catalog::all_scalar_and_bytes_argument_and_result_types_match_canonical_vectors",
+            "--exact",
+            "tests::m2::host_catalog::contiguous_ids_and_full_qualified_ascii_order_are_required",
+            "--exact",
+            "tests::m2::host_catalog::decoded_duplicate_and_unknown_keys_reject_at_both_object_levels",
+            "--exact",
+            "tests::m2::host_catalog::every_binding_field_is_hashed_and_equivalent_json_preserves_identity",
+            "--exact",
+            "tests::m2::host_catalog::every_required_field_is_required",
+            "--exact",
+            "tests::m2::host_catalog::exact_byte_import_and_argument_limits_and_maximum_spellings",
+            "--exact",
+            "tests::m2::host_catalog::schema_names_effects_and_unsupported_types_reject",
+            "--exact",
+            "tests::m2::host_catalog::sha256_known_answers_padding_boundaries_and_hard_bound",
+            "--exact",
+            "tests::m2::host_catalog::strict_grammar_utf8_escapes_and_one_root",
+            "--exact",
+            "tests::m2::host_catalog::zip_vector_and_empty_catalog_match_exact_bytes_and_sha256"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "0c5cd1f541fbccaedf0b3d56ec1142ecffe6228f28a1596870c2fcf8552d449f",
+          "elapsedSeconds": 110.62,
+          "exit": 0,
+          "stdout": "native.json",
+          "stderr": "native.json.stderr.txt",
+          "stdoutSha256": "63f57d4224cee02d3c49457b4b8b773cc3dce3c7ae9ebd4f6dea508e99eea9f6",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "selectedTests": [
+        "tests::m2::host_catalog::admitted_catalog_owns_decoded_bytes_and_accessors_are_bounded",
+        "tests::m2::host_catalog::admitted_catalog_tags_compose_with_real_wire_decoders",
+        "tests::m2::host_catalog::all_scalar_and_bytes_argument_and_result_types_match_canonical_vectors",
+        "tests::m2::host_catalog::contiguous_ids_and_full_qualified_ascii_order_are_required",
+        "tests::m2::host_catalog::decoded_duplicate_and_unknown_keys_reject_at_both_object_levels",
+        "tests::m2::host_catalog::every_binding_field_is_hashed_and_equivalent_json_preserves_identity",
+        "tests::m2::host_catalog::every_required_field_is_required",
+        "tests::m2::host_catalog::exact_byte_import_and_argument_limits_and_maximum_spellings",
+        "tests::m2::host_catalog::schema_names_effects_and_unsupported_types_reject",
+        "tests::m2::host_catalog::sha256_known_answers_padding_boundaries_and_hard_bound",
+        "tests::m2::host_catalog::strict_grammar_utf8_escapes_and_one_root",
+        "tests::m2::host_catalog::zip_vector_and_empty_catalog_match_exact_bytes_and_sha256"
+      ],
+      "nativeGroups": 12,
+      "selectedNativeGroups": 12,
+      "nativeWorkspace": "byte-identical-production-selected-tests",
+      "nativeOverrides": false,
+      "historicalResultReuse": false,
+      "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false",
+      "check": "check ok: 2 instance(s), 229 source file(s), 2519 MIR function(s), lock verified\n",
+      "nativeReport": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "release",
+        "tests": [
+          {
+            "identity": "tests::m2::host_catalog::admitted_catalog_owns_decoded_bytes_and_accessors_are_bounded",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::host_catalog::admitted_catalog_tags_compose_with_real_wire_decoders",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::host_catalog::all_scalar_and_bytes_argument_and_result_types_match_canonical_vectors",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::host_catalog::contiguous_ids_and_full_qualified_ascii_order_are_required",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::host_catalog::decoded_duplicate_and_unknown_keys_reject_at_both_object_levels",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::host_catalog::every_binding_field_is_hashed_and_equivalent_json_preserves_identity",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::host_catalog::every_required_field_is_required",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::host_catalog::exact_byte_import_and_argument_limits_and_maximum_spellings",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::host_catalog::schema_names_effects_and_unsupported_types_reject",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::host_catalog::sha256_known_answers_padding_boundaries_and_hard_bound",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::host_catalog::strict_grammar_utf8_escapes_and_one_root",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::host_catalog::zip_vector_and_empty_catalog_match_exact_bytes_and_sha256",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 12,
+        "passed": 12,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "nativeReportSha256": "fcd249ccb4ca1be7b45b6c4047bfa6fdaaa37c9bd649f77a24282217071b4373",
+      "nativeInputMirrorVerified": true,
+      "elapsedSeconds": 121.383,
+      "cliSkipped": "Optional public Fuel CLI suite was not requested."
+    }
+  ],
+  "limitations": [
+    "Catalog admission/canonical SHA-256 and actual TLV tag composition only; immutable executable Program retention and host dispatch/adoption remain open.",
+    "No capabilities granted or public host/embed admission enabled; Windows only."
+  ]
+}

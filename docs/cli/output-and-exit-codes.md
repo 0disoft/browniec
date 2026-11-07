@@ -7,7 +7,7 @@
 
 | Code | Meaning |
 | --- | --- |
-| 0 | Normal compile or run completion, including a nonzero guest i32 |
+| 0 | Normal check, inspection or run completion, including a nonzero guest i32 |
 | 2 | Command or configuration shape error |
 | 3 | Source syntax, type, Flow, or compile-limit failure |
 | 4 | Policy, grant, entry, or host-binding rejection |
@@ -67,7 +67,7 @@ program that compiles and then fails verification or execution keeps its selecte
 array profile. The result schema and error kinds do not differ from the scalar
 result schema.
 
-The command is `check` or `run`; status is `checked`, `completed`, or `error`.
+For `browniec.result/v1`, command is `check` or `run`; status is `checked`, `completed`, or `error`.
 Only completed runs have a numeric return_i32. Failures carry an error object with
 `kind` and zero-based source `byte_offset`. Kinds are lexical, syntax, type,
 compile_limit, verification, overflow, zero_divisor, fuel, frame_limit, input_io, usage, and
@@ -75,7 +75,7 @@ array_limit, bounds, allocation, and unavailable. Non-source failures use offset
 internal verifier errors identify an instruction index. JSON mode is honored once
 its option has been parsed.
 
-Text mode leaves stdout empty and writes checked status, return_i32, or diagnostics
+For check/run, text mode leaves stdout empty and writes checked status, return_i32, or diagnostics
 to stderr. Guest output bytes and output_b64 are not implemented. Version JSON uses
 `browniec.version/v1`, preserves `profile` as `brownie.m1-scalar/1`, adds the
 `array_profile`, `array_write_profile`, and `array_copy_profile` fields, and
@@ -144,3 +144,12 @@ The schema, process exits, default 256 and ceiling 16000000 remain unchanged.
 Canonical entry/leave prices apply even to image-only source, so small literal
 programs need an explicit larger Fuel budget. See [the public retained contract](../engineering/public-program.md)
 for exact pricing and current native/standalone evidence.
+
+## IR inspection
+
+Inspection uses its own `browniec.ir/v1` schema with `command: "inspect"` and
+`status: "inspected"` or `"error"`. It emits bounded ASCII text or one staged JSON
+object to stdout; text failures use stderr. The [contract](../engineering/inspect-ir.md)
+describes numeric instruction bytes, function/type/constant metadata, packed
+unsigned cells and omitted catalog/literal contents. Output is not executable
+bytecode. `inspect_ir: true` in version JSON reports only this CLI capability.

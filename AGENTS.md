@@ -1,13 +1,15 @@
-- Latest registry-prerequisite checkpoint (2026-11-07): [Fairy handles](docs/engineering/abi-handles.md)
-  (`fef9fd3`) passed ten native groups per development/release profile; unchanged
-  kernel/test/compiler evidence was retained after the root 227-source/2487-MIR
-  composition check. [Windows guard/TLS](docs/engineering/abi-thread-identity.md) (`5618726`)
-  passed real development/optimized OS hosts, including live-TLS release checks: eight concurrent threads, 1024
-  guarded updates, 32 sequential lifetimes and nonwrapping ticket exhaustion.
-  These separate components are not yet one lazy process registry or public
-  Engine/Program/Instance APIs. Full E02/E01, host exchange and inventory remain
-  open. Host TLV codec `6560805` separately passed ten groups in both profiles.
-  No public gates, existing Fuel prices/defaults/caps or delivery changes.
+- Latest parallel-integration checkpoint (2026-11-07): [Composed native verification](docs/engineering/parallel-integration.md)
+  records public IR inspection `2b44bf9` (19 CLI cases plus version/help in each
+  profile), strict catalog/SHA-256 `41144d7` (12 native groups/profile), fresh
+  singleton loop owners `cbdfdbe` (11 groups/profile), and real internal lazy
+  registry `8a4dae9` (four C-host scenarios in each development/optimized profile).
+  The final root release passed four native groups and three public CLI cases;
+  all 233 inputs match checkout/Git raw bytes and all 223 production modules are
+  LF. The root check passed 231 sources/2560 MIR functions; default stacks remain.
+  Full Engine/Program/Instance lifecycle, accepted registry scale, host exchange,
+  conditional fresh-root unions and the remaining inventory are open. Public
+  Buffer/host/restricted/embed gates and existing Fuel limits/prices are unchanged.
+  All parallel workers are closed. Local commits only; no push/release/deployment.
 
 # Brownie C agent guidance
 

@@ -62,3 +62,8 @@ The [native project input primitives](../engineering/project-input.md) now suppl
 bounded JSON tokens and canonical spelling checks. The [typed native project format](project-format.md) now admits a complete owning
 source map, entry and declared requirements. File collection, filesystem anchoring,
 a CLI flag and grants remain pending.
+
+`inspect SOURCE --ir [--json]` uses the same explicit source selection and public
+admission as check. `--ir` is required once; Fuel and guest-input options do not
+apply. It never executes the Program or loads policy/catalog/grants. See
+[IR inspection](../engineering/inspect-ir.md).

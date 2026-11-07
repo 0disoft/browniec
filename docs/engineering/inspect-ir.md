@@ -48,3 +48,8 @@ sources that inspect without execution, arrays, records, retained byte literals,
 the combined 32-deep conditional/32-call parser fixture, malformed source/UTF-8,
 oversized source, options and ordinary check/run regression. This is Windows
 evidence when executed there; Linux and full-profile conformance remain open.
+
+Implementation `2b44bf9` passed both 19-case native CLI profiles plus version/help.
+The [evidence](../evidence/inspect-ir-windows-20261107.json) records those exact
+224 inputs and default PE stacks. The [composed successor](parallel-integration.md)
+also checks public scalar/literal inspection after catalog/loop integration.

@@ -1,4 +1,17 @@
-- Latest registry-prerequisite checkpoint (2026-11-07): [Fairy handles](docs/engineering/abi-handles.md)
+- Latest parallel-integration checkpoint (2026-11-07): [Composed native verification](docs/engineering/parallel-integration.md)
+  records public IR inspection `2b44bf9` (19 CLI cases plus version/help in each
+  profile), strict catalog/SHA-256 `41144d7` (12 native groups/profile), fresh
+  singleton loop owners `cbdfdbe` (11 groups/profile), and real internal lazy
+  registry `8a4dae9` (four C-host scenarios in each development/optimized profile).
+  The final root release passed four native groups and three public CLI cases;
+  all 233 inputs match checkout/Git raw bytes and all 223 production modules are
+  LF. The root check passed 231 sources/2560 MIR functions; default stacks remain.
+  Full Engine/Program/Instance lifecycle, accepted registry scale, host exchange,
+  conditional fresh-root unions and the remaining inventory are open. Public
+  Buffer/host/restricted/embed gates and existing Fuel limits/prices are unchanged.
+  All parallel workers are closed. Local commits only; no push/release/deployment.
+
+- Predecessor registry-prerequisite checkpoint (2026-11-07): [Fairy handles](docs/engineering/abi-handles.md)
   (`fef9fd3`) passed ten native groups per development/release profile; unchanged
   kernel/test/compiler evidence was retained after the root 227-source/2487-MIR
   composition check. [Windows guard/TLS](docs/engineering/abi-thread-identity.md) (`5618726`)
@@ -77,6 +90,24 @@
   price, public gate or Fuel default/cap change. Next: fresh loop-carried owners,
   private safe casts, remaining bottom/general references, methods/AllocError and
   runtime/host/platform work. Full completion remains open. Local only.
+
+## Composed Windows native checkpoint
+
+The [integration contract](docs/engineering/parallel-integration.md) separates
+feature receipts from the final composed root check. Reproduce the bounded
+integration with:
+
+```text
+python tools/verify-parallel-integration.py --profile release --cli-smoke
+```
+
+[Final evidence](docs/evidence/parallel-integration-windows-20261107.json) records
+four native groups and three tool-free public CLI cases on 233 exact root inputs.
+Feature-specific Windows evidence remains separate: [IR inspection](docs/evidence/inspect-ir-windows-20261107.json),
+[catalog](docs/evidence/host-catalog-windows-20261107.json),
+[fresh loop owners](docs/evidence/value-fresh-loop-owners-windows-20261107.json),
+and the [actual internal registry C host](docs/evidence/abi-registry-windows-20261107.json).
+This is not full-profile, public Buffer/host/embed or platform/release completion.
 
 ## Actual Windows DLL ABI bootstrap: verified subset
 
