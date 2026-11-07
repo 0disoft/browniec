@@ -1,16 +1,14 @@
-- Latest conditional-owner checkpoint (2026-11-07): [Conditional Buffer owners](../engineering/value-view-conditional-owners.md)
-  now keep anonymous Buffer roots created only on selected reference-value arms.
-  Independent definite/possible owner planes and DROP_IF_LIVE115 preserve actual
-  native liveness, candidate pins and last-alias cleanup without dummy owners or
-  payload copies. CALL retention, view copy, nested scopes and loop transfers are
-  connected. Kernel `cd417e2` and integrated `ea8c773` are local commits.
-  Both Windows native profiles passed 72 focused groups in disjoint locked
-  mirrors with default stacks. All 232 inputs match checkout/Git raw bytes;
-  all 216 production modules are LF. See [evidence](../evidence/value-view-conditional-owners-windows-20261107.json).
-  The depth helper/test bytes are unchanged; an obsolete Result replacement
-  fixture now acknowledges its previous value before overwrite. Existing prices,
-  no-view setup and public Fuel limits remain. Next: evolving source-loop origins,
-  bottom expressions, general references, methods, public AllocError/admission
+- Latest bottom-expression checkpoint (2026-11-07): [Terminal value expressions](../engineering/value-bottom.md)
+  now distinguish bottom from void and propagate terminal if/switch values through
+  returns, bindings, assignments, tails, unary/right operands and final CALL inputs.
+  Terminal paths create no destination or enclosing CALL; real cleanup and Result
+  obligations remain. Short-circuit skip paths and loop transfers still execute.
+  `6f39099` passed 26 groups per Windows native profile, using disjoint locked
+  mirrors and default stacks. All 227 inputs match checkout/Git raw bytes;
+  all 216 production modules are LF. See [evidence](../evidence/value-bottom-windows-20261107.json).
+  The combined depth fixture is byte-identical. No opcode, existing price, public
+  admission or Fuel default/cap change. Next: remaining bottom contexts/unreachable
+  diagnostics, evolving loop origins, general references, methods, public AllocError
   and remaining runtime/host/platform work. Full completion remains open. Local only.
 
 - Predecessor native view-call checkpoint (2026-11-07): [Shared Buffer view CALL/RETURN](../engineering/value-view-calls.md) now
