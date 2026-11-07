@@ -26,6 +26,8 @@ def closure():
     files['live_memory_contracts'] = ROOT / 'tests/m2/runtime_live_memory.fy'
     files['output_memory_contracts'] = ROOT / 'tests/m2/module_output_memory.fy'
     files['execution_memory_contracts'] = ROOT / 'tests/m2/runtime_execution_memory.fy'
+    files['dispatch_cursor_contracts'] = ROOT / 'tests/m2/slice_result_cursor.fy'
+    files['dispatch_quantum_contracts'] = ROOT / 'tests/m2/module_dispatch_quantum.fy'
     files['runtime_input_adoption'] = ROOT / 'native/runtime-input-adoption/adoption.fy'
     seen, todo = {}, ['main']
     while todo:
@@ -45,7 +47,9 @@ def source_copy(path):
                 'runtime_program_compile_memory': 'program_compile_contracts',
                 'runtime_live_memory': 'live_memory_contracts',
                 'module_output_memory': 'output_memory_contracts',
-                'runtime_execution_memory': 'execution_memory_contracts'}
+                'runtime_execution_memory': 'execution_memory_contracts',
+                'slice_result_cursor': 'dispatch_cursor_contracts',
+                'module_dispatch_quantum': 'dispatch_quantum_contracts'}
     for original, alias in adapters.items():
         if path == ROOT / f'tests/m2/{original}.fy':
             text = path.read_text(encoding='utf-8').replace(f'module tests::m2::{original};', f'module {alias};')

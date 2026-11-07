@@ -24,6 +24,7 @@ import array_list_vm as lists;
 import place_dispatch as places;
 import struct_call_vm as owned_calls;
 import fuel as meter;
+import slice_result_cursor as cursors;
 
 resource Stored { sources::Snapshot sources; candidates::Program code; images::Image image; bool input; cleanup { } }
 pub resource Program { vec::Vec<Stored> stored; cleanup { } }
@@ -106,6 +107,11 @@ fn Execution early(errors::Error e,usize remaining){
 // No caller can seal this invocation's staged owner. VM success, final seal and
 // its already-reserved owning result slot form one terminal publication barrier.
 pub fn Execution complete(ref Program p,ref input_bytes::Snapshot input,usize budget,usize output_limit,bool allowed){
+    var cursors::Stats stats=cursors::stats();
+    return complete_quantized(p,input,budget,output_limit,allowed,4096,ref mut stats);
+}
+pub fn Execution complete_quantized(ref Program p,ref input_bytes::Snapshot input,usize budget,usize output_limit,bool allowed,usize quantum,ref mut cursors::Stats stats){
+    if(!cursors::valid_quantum(quantum)){return early(errors::make(5,0),budget);}
     if(output_limit>output::hard_limit()){return early(errors::make(20,0),budget);}
     if(!accepts_input(p) && input_bytes::observe(input).length!=0){return early(errors::make(5,0),budget);}
     if(budget<meter::output_prepare(output_limit)){return early(errors::make(8,0),budget);}
@@ -115,7 +121,7 @@ pub fn Execution complete(ref Program p,ref input_bytes::Snapshot input,usize bu
     var output::Transaction staged=switch(output::open_metered(output_limit,allowed,ref mut remaining)){
         case .ok(value):{value}case .err(e):{return early(output_steps::failure(e,0),remaining);}
     };
-    let Result<execution::Scalar,errors::Error> result=execute(stored(p),input_bytes::view(input),ref mut staged,ref mut remaining);
+    let Result<execution::Scalar,errors::Error> result=execute(stored(p),input_bytes::view(input),ref mut staged,ref mut remaining,quantum,stats);
     return switch(result){
         case .err(e):{
             let output::Observation final=output::fail(ref mut staged);
@@ -139,7 +145,7 @@ fn Execution finish_success(i64 value,ref mut output::Transaction staged,vec::Ve
         .diagnostic=absent(errors::make(0,0)),.output_bytes=final.length,.emits=final.emits},.published=published};
 }
 fn Result<execution::Scalar,errors::Error> execute(ref Stored retained,ref u8[] input,
-    ref mut output::Transaction staged,ref mut usize remaining){
+    ref mut output::Transaction staged,ref mut usize remaining,usize quantum,ref mut cursors::Stats stats){
     let ref ir::Program body=ref retained.code.body;
     let usize capacity=if(body.arrays.count!=0 || body.records.count!=0){65536}else{0};
     let usize preparation=if(capacity==0){0}else{1+capacity};
@@ -149,6 +155,6 @@ fn Result<execution::Scalar,errors::Error> execute(ref Stored retained,ref u8[] 
     if(*remaining<preparation+input_cost+runtime::cost()+work+list_plan.cost+place_plan.cost){return .err(errors::make(8,0));}
     var bytes::Buffer payload=if(capacity==0){bytes::empty()}else{backing::prepare(capacity)?};*remaining-=preparation;
     var runtime::State state=runtime::empty(capacity);
-    return execution::execute_output_scalar_metered(ref retained.code,ref retained.image,input,retained.input,
-        ref mut state,bytes::view_mut(ref mut payload),remaining,staged);
+    return execution::execute_output_scalar_quantized(ref retained.code,ref retained.image,input,retained.input,
+        ref mut state,bytes::view_mut(ref mut payload),remaining,staged,quantum,stats);
 }
