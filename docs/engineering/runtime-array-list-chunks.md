@@ -134,8 +134,9 @@ throughput or latency measurement is claimed.
 
 ## Remaining accepted work
 
-This slice covers scalar element-list recipes. Bounded record transfers,
-CALL/RET, setup/compile proof, seal/cleanup, deadlines, in-flight cancellation/
+The [record successor](runtime-record-chunks.md) now admits canonical staging
+and resumes whole/child creation/copy/replacement through this shared allowance.
+Metadata/planning, CALL/RET, setup/compile proof, seal/cleanup, deadlines, in-flight cancellation/
 poison containment and full public lifecycle/ABI/CLI remain in the
 [accepted inventory](../product/04-remaining-work.md). R03-R05 remain incomplete.
 The byte allowance does not bound all metadata work, native time or wall latency.

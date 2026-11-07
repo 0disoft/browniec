@@ -108,8 +108,9 @@ records source/byte trap locations on failure; this does not alter production SD
 The [scalar array copy/assignment successor](runtime-array-copy-chunks.md) now
 shares this allowance, including bool validation reads and selected STORE85.
 The [element-list successor](runtime-array-list-chunks.md) also budgets gathering,
-encoding and commits. Records, CALL/RET, seal/cleanup and atomic setup still need
-bounded recipes. Deadlines, in-flight cancellation/poison containment
+encoding and commits. The [record successor](runtime-record-chunks.md) now
+budgets canonical staging and whole/child commits. Metadata/planning, CALL/RET,
+seal/cleanup and atomic setup still need bounded recipes. Deadlines, in-flight cancellation/poison containment
 and full public lifecycle/ABI/CLI remain open in the [inventory](../product/04-remaining-work.md).
 R03-R05 remain incomplete;
 this byte allowance is not a bound on all metadata work, native time or latency.

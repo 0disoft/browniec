@@ -1,23 +1,23 @@
-- Latest array-list checkpoint (2026-11-08): [Resumable scalar element lists](docs/engineering/runtime-array-list-chunks.md)
-  records implementation `b0f0946`. CREATE80, REPLACE81 and actual source selected
-  REPLACE87 (kind 3/mode 1) now gather cells, encode and commit through the same
-  4096-byte allowance shared by array fill/copy and output. Gathering counts eight
-  bytes per i64 cell; encoding counts stride bytes; commit counts padding/payload.
-  Complete encoding precedes all destination writes, including padding. New owners
-  publish after the final byte; selected replacement keeps its SELECT snapshot,
-  ticket, target generation and price. Maximum i64 lists take 24 batches (8+8+8),
-  bool lists 10 (8+1+1). Full Fuel is prepaid once; zero-Fuel continuations, exact/
-  one-less limits and cancellation in all three stages pass. Five kernel/five
-  Engine groups plus regressions pass development/O2, with zero resume allocation
-  attempts/SDK heap at exit and default stacks. Two counters add 16 bytes: shared
-  array work 192, Cursor 264, Machine 712; Core remains 120880. Vec8 work adds 1536
-  bytes (+128 versus copy). Existing list cells/encoded scratch are reused.
-  All 256 receipt inputs match checkout/committed Git; 33 bindings/30 layouts
-  reviewed. Root locked check: 264 sources/2967 MIR; 256 production LF modules.
-  Records, other setup/compile proof/CALL/RET/seal/cleanup recipes, deadlines/
-  poison and public lifecycle/ABI/CLI remain open; R03-R05 and the full inventory
-  are incomplete. Three disjoint Sol High workers; serial integration/commits.
-  Local only.
+- Latest record-work checkpoint (2026-11-08): [Resumable record operations](docs/engineering/runtime-record-chunks.md)
+  records implementation `0a73d08`. CREATE41/COPY42/ASSIGN46/child COPY47/
+  REPLACE48/child REPLACE49 now share the 4096-byte allowance with array/list/output
+  work. Actual selected record STORE85/REPLACE87 normalize to 47/49 and preserve
+  SELECT snapshots, tickets and prices. Complete canonical staging (<=1280 field
+  bytes or <=384 copy bytes) must fit before unit/Fuel admission; it precedes all
+  destination writes. Partial commits reauthenticate roots/ranges and resume at
+  zero Fuel; new owners publish only after the final byte. Identity copies still
+  normalize padding; same-owner child copies snapshot before writes. Five kernel/
+  five Engine groups plus regressions pass development/O2: six operations/six
+  scalar domains, nine actual source modes, depth16/128-bool boundaries, exact/
+  one-less Fuel, cancellation, moves and released pins. Zero resume allocation
+  attempts/SDK heap at exit; default stacks. Five words+128 inline scratch add
+  168 bytes: shared work 360, Cursor 432, Machine 880; Core remains 120880. Vec8
+  work adds 2880 bytes (+1344 versus lists), under existing layout accounting.
+  All 260 receipt inputs match checkout/committed Git; 33 bindings/30 layouts
+  reviewed. Root locked check: 266 sources/2992 MIR; 258 production LF modules.
+  Metadata/planning, CALL/RET, setup/compile proof/seal/cleanup, deadlines/poison
+  and public lifecycle/ABI/CLI remain open; R03-R05/full inventory incomplete.
+  Three disjoint Sol High workers; serial integration/commits. Local only.
 
 - Predecessor registry-prerequisite checkpoint (2026-11-07): [Fairy handles](docs/engineering/abi-handles.md)
   (`fef9fd3`) passed ten native groups per development/release profile; unchanged

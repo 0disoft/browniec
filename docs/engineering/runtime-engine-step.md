@@ -25,6 +25,9 @@ ticket and price while writing the existing target incrementally.
 The [element-list successor](runtime-array-list-chunks.md) gathers register cells,
 encodes and commits 80/81 and selected 87 mode 1 through that same allowance, using
 existing scratch. Destination writes follow complete codec validation.
+The [record successor](runtime-record-chunks.md) also admits complete canonical
+staging through this allowance and resumes root/child commits. Identity rewrites
+normalized padding; same-owner source ranges are snapshotted before any write.
 
 Pending returns Event kind 4 with current Fuel and keeps its owning state intact.
 At VM success, sealing transfers the staged backing directly into the Published
@@ -82,7 +85,9 @@ layouts, including Output's Execution/completion/publication/Machine fields.
 
 Dispatch visits do not bound all bytes, metadata visits or native time. Output
 copy, scalar array initialization/fill, copy/assignment and element-list gather/
-encode/commit share one 4096-byte step allowance, including bool scans. Setup/proof, other bulk
+encode/commit plus record staging/commit share one 4096-byte step allowance,
+including bool scans. Catalog planning, nominal walks and owner-table checks,
+setup/proof and other bulk
 copy/tag/store/transfer, CALL/RET, seal and cleanup remain atomic.
 Chunk those recipes and preserve quantum-independent Fuel/results before
 claiming the accepted work-bounded Engine step contract. Deadlines, in-flight

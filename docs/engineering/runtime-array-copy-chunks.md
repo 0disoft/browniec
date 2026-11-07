@@ -133,8 +133,10 @@ images were not repeated. No wall-clock throughput/latency benchmark is claimed.
 ## Remaining accepted work
 
 The [element-list successor](runtime-array-list-chunks.md) now gathers, encodes
-and commits scalar lists through this shared allowance. Bounded record transfers,
-CALL/RET, seal/cleanup and atomic setup remain open. Deadlines, in-flight cancellation/poison
+and commits scalar lists through this shared allowance. The
+[record successor](runtime-record-chunks.md) now admits canonical staging and
+resumes whole/child commits. Metadata/planning, CALL/RET, seal/cleanup and atomic
+setup remain open. Deadlines, in-flight cancellation/poison
 containment and full public lifecycle/ABI/CLI remain in the
 [inventory](../product/04-remaining-work.md). R03-R05 remain incomplete.
 The shared byte allowance does not bound all metadata work, native time or latency.
