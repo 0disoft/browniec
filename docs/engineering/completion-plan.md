@@ -1,13 +1,14 @@
-- Latest reference-join checkpoint (2026-11-07): [Shared view value joins](../engineering/value-view-joins.md)
-  now execute same-origin if/switch values, nested windows and mutable selected-input
-  returns through independent CFG verification. Compiler-only reservations protect
-  destinations across arms; retention hints intersect. `5555e4a` passed 68 groups
-  per Windows profile (25 new). All 235 inputs match checkout/Git raw bytes;
-  all 216 production modules are LF. See [evidence](../evidence/value-view-joins-windows-20261107.json).
-  Default native stacks and the unchanged admitted32/rejected33 fixture were used.
-  Next: different-origin joins, bottom expressions, general mutable/non-byte/Buffer-object
-  references, methods, public admission/AllocError and remaining runtime/host/platform work.
-  Existing prices/public Fuel limits remain. Local only; no push/release.
+- Latest origin-set checkpoint (2026-11-07): [Shared reference origin sets](../engineering/value-view-origin-sets.md)
+  now join different already-live Buffer/formal roots through private byte views.
+  Independent fixed-point proof pins every candidate, rechecks widened loops and
+  keeps shared returns at one selected formal. Per-origin retention and cleanup
+  preserve mixed named/anonymous roots; Buffer view copies accept formal origins.
+  `49dc33f` passed 49 groups per Windows native profile, using concurrent locked
+  mirrors and default native stacks. All 231 inputs match checkout/Git raw
+  bytes; all 216 production modules are LF. See [evidence](../evidence/value-view-origin-sets-windows-20261107.json).
+  Next: conditional branch-created owners, evolving source-loop origin inference,
+  bottom expressions, general references, methods, public admission/AllocError and
+  remaining runtime/host/platform work. Existing prices/Fuel limits remain. Local only.
 
 - Predecessor native view-call checkpoint (2026-11-07): [Shared Buffer view CALL/RETURN](value-view-calls.md) now
   publishes up to eight argument aliases atomically and returns only a window
