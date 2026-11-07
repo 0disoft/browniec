@@ -25,8 +25,11 @@ import place_dispatch as places;
 import struct_call_vm as owned_calls;
 import fuel as meter;
 import slice_result_cursor as cursors;
+import static_ir as statics;
+import runtime_execution_memory as execution_heap;
 
-resource Stored { sources::Snapshot sources; candidates::Program code; images::Image image; bool input; cleanup { } }
+pub struct Preparation { statics::Sites sites; u8[16] origins; lists::Requirement list; places::Requirement place; usize work; usize capacity; usize scratch; }
+resource Stored { sources::Snapshot sources; candidates::Program code; images::Image image; bool input; Preparation prepared; cleanup { } }
 pub resource Program { vec::Vec<Stored> stored; cleanup { } }
 pub struct Completion { bool success; i64 value; usize remaining; diagnostics::Error diagnostic; usize output_bytes; usize emits; }
 pub resource Execution { Completion completion; vec::Vec<output::Published> published; cleanup { } }
@@ -63,19 +66,25 @@ fn Result<Program,diagnostics::Error> finish(ref sources::Snapshot sources,ref i
     let images::Image image=switch(images::freeze(builder,image_limit)){
         case .ok(v):{v}case .err(e):{return .err(literal(e));}
     };
-    switch(verifier::inspect_output_returns(code,ref image,input)){
-        case .ok(_):{}case .err(e):{
+    let verifier::ReferenceReturnProof proof=switch(verifier::inspect_output_returns(code,ref image,input)){
+        case .ok(v):{v}case .err(e):{
             if(e.offset==0 || e.offset>=code.body.count){return .err(absent(e));}
             return .err(diagnostics::map(sources,errors::make(e.kind,code.body.offsets[e.offset]),16));
         }
     };
-    return retain(sources,code,image,input);
+    let lists::Requirement list=switch(lists::requirement(ref code.body)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
+    let places::Requirement place=switch(places::requirement(ref code.body)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
+    let usize work=switch(owned_calls::cost(ref code.body,code.body.entry,0)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
+    let execution_heap::Plan heap=switch(execution_heap::prepare(ref code.body,input,true,0)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
+    let Preparation prepared=Preparation{.sites=proof.statics,.origins=proof.recipes.site_origins,.list=list,.place=place,
+        .work=work+code.body.arities[code.body.entry],.capacity=if(code.body.arrays.count!=0 || code.body.records.count!=0){65536}else{0},.scratch=heap.scratch};
+    return retain(sources,code,image,input,ref prepared);
 }
-fn Result<Program,diagnostics::Error> retain(ref sources::Snapshot sources,ref candidates::Program code,images::Image image,bool input){
+fn Result<Program,diagnostics::Error> retain(ref sources::Snapshot sources,ref candidates::Program code,images::Image image,bool input,ref Preparation prepared){
     var vec::Vec<Stored> retained=vec::empty<Stored>();
     if(!vec::reserve<Stored>(ref mut retained,1).is_ok){return .err(absent(errors::make(15,0)));}
     let sources::Snapshot snapshot=sources::duplicate(sources);
-    if(!vec::push<Stored>(ref mut retained,Stored{.sources=snapshot,.code=*code,.image=image,.input=input}).is_ok){return .err(absent(errors::make(15,0)));}
+    if(!vec::push<Stored>(ref mut retained,Stored{.sources=snapshot,.code=*code,.image=image,.input=input,.prepared=*prepared}).is_ok){return .err(absent(errors::make(15,0)));}
     return .ok(Program{.stored=retained});
 }
 fn ref Stored stored(ref Program p){return vec::at<Stored>(ref p.stored,0);}
@@ -83,6 +92,9 @@ pub fn bool accepts_input(ref Program p){return stored(p).input;}
 pub fn ref sources::Snapshot snapshot(ref Program p){return ref stored(p).sources;}
 pub fn ref candidates::Program code(ref Program p){return ref stored(p).code;}
 pub fn ref images::Image literals(ref Program p){return ref stored(p).image;}
+// This reference stays tied to the exact immutable owning Program. A copied
+// preparation record alone is not admission authority for unrelated raw IR.
+pub fn ref Preparation preparation(ref Program p){return ref stored(p).prepared;}
 pub fn Completion observe(ref Execution run){return run.completion;}
 // Actual retained SDK heap. Published is 72 bytes on pinned Windows x64;
 // generated-layout and physical-heap native guards own that assumption.
@@ -169,14 +181,16 @@ fn Execution finish_success(i64 value,ref mut output::Transaction staged,vec::Ve
 fn Result<execution::Scalar,errors::Error> execute(ref Stored retained,ref u8[] input,
     ref mut output::Transaction staged,ref mut usize remaining,usize quantum,ref mut cursors::Stats stats){
     let ref ir::Program body=ref retained.code.body;
-    let usize capacity=if(body.arrays.count!=0 || body.records.count!=0){65536}else{0};
+    let ref Preparation prepared=ref retained.prepared;
+    let usize capacity=prepared.capacity;
     let usize preparation=if(capacity==0){0}else{1+capacity};
-    let lists::Requirement list_plan=lists::requirement(body)?;let places::Requirement place_plan=places::requirement(body)?;
-    let usize work=owned_calls::cost(body,body.entry,0)?+body.arities[body.entry];
+    let lists::Requirement list_plan=prepared.list;let places::Requirement place_plan=prepared.place;
+    let usize work=prepared.work;
     let usize input_cost=if(retained.input){meter::input_prepare()}else{0};
     if(*remaining<preparation+input_cost+runtime::cost()+work+list_plan.cost+place_plan.cost){return .err(errors::make(8,0));}
     var bytes::Buffer payload=if(capacity==0){bytes::empty()}else{backing::prepare(capacity)?};*remaining-=preparation;
     var runtime::State state=runtime::empty(capacity);
-    return execution::execute_output_scalar_quantized(ref retained.code,ref retained.image,input,retained.input,
+    return execution::execute_output_admitted(ref retained.code,ref retained.image,ref prepared.sites,
+        ref prepared.origins,ref list_plan,ref place_plan,work,input,retained.input,
         ref mut state,bytes::view_mut(ref mut payload),remaining,staged,quantum,stats);
 }

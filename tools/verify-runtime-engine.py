@@ -46,6 +46,13 @@ def closure():
 
 
 def source_copy(path):
+    if path == ROOT / 'src/verifier.fy':
+        text = path.read_text(encoding='utf-8')
+        signature = 'pub fn Result<ReferenceReturnProof,errors::Error> inspect_output_returns(ref image_calls::Program unit,ref images::Image image,bool input){'
+        need(text.count(signature) == 1, 'Full output proof counter anchor changed')
+        text = text.replace(signature, 'unsafe extern C fn void bc_runtime_engine_test_proof_visit();\n' +
+                            signature + '\n    unsafe{bc_runtime_engine_test_proof_visit();}', 1)
+        return path.name, text.encode('utf-8')
     adapters = {'runtime_control_budget': 'control_budget_contracts', 'retention_plan': 'retention_plan_contracts',
                 'runtime_program_compile_memory': 'program_compile_contracts',
                 'runtime_live_memory': 'live_memory_contracts',
@@ -166,11 +173,14 @@ def main():
                         'boundInputType', 'outputType', 'sourceIndexType', 'sourceIndexVectorType',
                         'programVectorType', 'snapshotType', 'snapshotVectorType', 'machineType', 'coreType',
                         'executionType','pendingVectorType','completionType','publishedVectorType',
-                        'pendingMetaType','cursorType','outputCopyType','transactionType']}
+                        'pendingMetaType','cursorType','outputCopyType','transactionType','preparationType']}
         for variant, types in contract['programVariants'].items():
             layout_types.update({variant + '_' + role: name for role, name in types.items()})
         layout_types.update({key + '_entry': name for key, name in contract['entryTypes'].items()})
         need(set(layout_types) == set(contract['reviewedLayouts']), 'Reviewed layout set changed')
+        cached_field=re.search(r'\b(fy_struct_\d+) f_4;',contract['reviewedLayouts']['output_stored'])
+        need(cached_field is not None and cached_field.group(1)==contract['preparationType'],
+             'Output Program preparation projection differs')
         for owner,field,key in [('outputType',1,'executionType'),('outputType',2,'pendingVectorType'),
                                 ('executionType',0,'completionType'),('executionType',1,'publishedVectorType'),
                                 ('machineType',6,'transactionType'),('machineType',7,'pendingMetaType'),
@@ -203,6 +213,7 @@ def main():
         bindings += f'typedef {contract["snapshotVectorType"]} bc_engine_snapshots;\n'
         bindings += f'typedef {contract["outputVectorType"]} bc_engine_outputs;\n'
         bindings+=f'typedef {contract["machineType"]} bc_pending_machine;\ntypedef {contract["coreType"]} bc_pending_core;\n'
+        bindings+=f'typedef {contract["preparationType"]} bc_output_preparation;\n'
         for key, alias in [('programType', 'bc_engine_program'), ('instanceType', 'bc_engine_instance'),
                            ('boundInputType', 'bc_engine_bound_input'), ('outputType', 'bc_engine_output')]:
             bindings += f'typedef {contract[key]} {alias};\n'
@@ -270,8 +281,13 @@ def main():
             need(metrics['cases'] == 6 and metrics['smallHeapBytes'] * 8 == metrics['maximumHeapBytes'],
                  'Expected eightfold reduction in one-slot control backing')
             write(folder / 'control-metrics.json', metrics_raw)
+            preparation_raw=(output / 'preparation-metrics.json').read_bytes()
+            preparation=json.loads(preparation_raw)
+            need(preparation['cacheBytes']>0 and preparation['storedBytes']-preparation['previousStoredBytes']==preparation['cacheBytes'] and
+                 preparation['retainedVecExtraBytes']==8*preparation['cacheBytes'], 'Unexpected preparation cache layout')
+            write(folder / 'preparation-metrics.json',preparation_raw)
             receipt['profiles'].append(dict(profile=profile, artifact=probe.image(exe), exit=0,
-                controlMetrics=metrics, liveHeapAllocationsAtExit=0, assertions='native Fairy and C, no parsed trace',
+                controlMetrics=metrics, preparationMetrics=preparation, liveHeapAllocationsAtExit=0, assertions='native Fairy and C, no parsed trace',
                 objects=[dict(path=p.relative_to(ROOT).as_posix(), sha256=sha(p.read_bytes())) for p in objects]))
             print(f'PASS {profile}: control {metrics}; real compile/reuse, pins, fresh VM, terminal/cancel, OS guards, exhaustion; heap 0', flush=True)
         need(all((ROOT / name).read_bytes() == raw for name, raw in inputs.items()), 'Input changed during verification')
@@ -283,7 +299,8 @@ def main():
                            'Private synchronous typed transport, not public C handles or CLI lifecycle APIs',
                            'Complete Engine accounting/preallocation, OOM injection and poison containment remain',
                            'Ordinary zero-argument terminal Fuel is still marked unknown',
-                           'No bounded step quanta, in-flight cancellation, host dispatch or OS deadline'])
+                           'Private instruction/output-copy quanta exist; other setup/bulk/CALL/RET/seal/cleanup work remains atomic',
+                           'Compile proof remains atomic; no in-flight cancellation, host dispatch or OS deadline'])
     except Exception as error:
         receipt.update(status='failed', error=str(error))
         raise

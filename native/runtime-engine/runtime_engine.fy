@@ -469,14 +469,12 @@ fn u32 compile_input_output_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref
     return switch(built){case .ok(code):{publish_output_program(m,v,code,plan.bytes)}case .err(e):{compile_error(m,e)}};
 }
 fn u32 publish_output_program(ref mut Meta m,ref mut vec::Vec<Program> v,output_programs::Program code,usize bytes){
-    let execution_heap::Plan heap=switch(execution_heap::prepare(ref output_programs::code(ref code).body,output_programs::accepts_input(ref code),true,0)){
-        case .ok(v):{v}case .err(_):{return failed(m,7);}
-    };
+    let usize scratch=output_programs::preparation(ref code).scratch;
     let usize id=m.next;var vec::Vec<output_programs::Program> retained=vec::empty<output_programs::Program>();
     if(!vec::reserve<output_programs::Program>(ref mut retained,1).is_ok){return failed(m,6);}
     if(!vec::push<output_programs::Program>(ref mut retained,code).is_ok){return failed(m,6);}
     if(!vec::push<Program>(v,Program{.id=id,.pins=0,.released=false,.code=vec::empty<programs::Program>(),
-        .input=vec::empty<input_programs::Program>(),.output=retained,.bytes=bytes,.execution_scratch=heap.scratch}).is_ok){return failed(m,6);}
+        .input=vec::empty<input_programs::Program>(),.output=retained,.bytes=bytes,.execution_scratch=scratch}).is_ok){return failed(m,6);}
     assert(memory::publish(ref mut m.programs,bytes).is_ok);advance(m);return success(m,id);
 }
 fn u32 output_instance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Vec<Instance> v,

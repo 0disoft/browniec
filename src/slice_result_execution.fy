@@ -213,6 +213,26 @@ pub fn Result<Scalar,errors::Error> execute_output_scalar_quantized(ref image_ca
         case .ok(v):{if(v.view){.err(errors::make(5,0))}else{.ok(v.scalar)}}case .err(e):{.err(e)}
     };
 }
+// Trusted owning Program boundary: sites/origins, storage plans and work belong
+// to this exact immutable code/image. Work already includes the entry arity.
+// Raw callers must continue through the independently verified entry above.
+pub fn Result<Scalar,errors::Error> execute_output_admitted(ref image_calls::Program unit,ref images::Image image,
+    ref statics::Sites sites,ref u8[] origins,ref list_values::Requirement list_plan,ref places::Requirement place_plan,usize work,
+    ref u8[] guest,bool input,ref mut runtime::State state,ref mut u8[] data,ref mut usize remaining,
+    ref mut output::Transaction staged,usize quantum,ref mut cursors::Stats stats){
+    if(!cursors::valid_quantum(quantum)){return .err(errors::make(5,0));}
+    if(guest.len>1048576 || (!input && guest.len!=0)){return .err(errors::make(4,0));}
+    let usize arity=if(input){1}else{0};
+    let u8[16] none=[0;16];let runtime::Capture[1] captures=[runtime::capture(frames::none(),false,false)];
+    let i64[1] values=[0];let owners::Token[1] inputs=[owners::Token{.slot=0,.generation=0}];
+    let usize admitted=admit(ref unit.body,ref none,sites,unit.body.entry,ref values[..arity],arity,ref inputs[..0],false,input)?;
+    let usize depth=switch(authority::inspect(ref state.runtime.authority)){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,0));}};
+    if(!available(ref state.runtime.authority,true)){return .err(errors::make(5,0));}
+    return switch(invoke_output_planned(ref unit.body,ref none,unit.body.entry,ref captures[..arity],ref values[..arity],ref inputs[..0],
+        state,data,remaining,sites,images::payload(image),input,guest,origins,list_plan,place_plan,work,staged,quantum,stats)){
+        case .ok(v):{if(v.view){.err(errors::make(5,0))}else{.ok(v.scalar)}}case .err(e):{.err(e)}
+    };
+}
 fn Result<Outcome,errors::Error> invoke(ref ir::Program unit,usize function,
     ref runtime::Capture[] captures,ref i64[] values,ref owners::Token[] inputs,
     ref mut runtime::State state,ref mut u8[] data,usize fuel,bool view){
@@ -263,16 +283,27 @@ fn Result<Outcome,errors::Error> invoke_output_quantized(ref body_ir::Program bo
     let list_values::Requirement list_plan=list_values::requirement(body)?;
     let places::Requirement place_plan=places::requirement(body)?;
     let usize work=owned_calls::cost(body,function,0)?+body.arities[function];
+    return invoke_output_planned(body,parameters,function,captures,values,inputs,state,data,remaining,
+        sites,literals,input,guest,origins,ref list_plan,ref place_plan,work,staged,quantum,stats);
+}
+// Both entry paths finish admission before setup. Preserve Fuel preflight,
+// allocation/debit order and abort semantics while consuming exact cached plans.
+fn Result<Outcome,errors::Error> invoke_output_planned(ref body_ir::Program body,ref u8[] parameters,usize function,
+    ref runtime::Capture[] captures,ref i64[] values,ref owners::Token[] inputs,
+    ref mut runtime::State state,ref mut u8[] data,ref mut usize remaining,
+    ref statics::Sites sites,ref u8[] literals,bool input,ref u8[] guest,ref u8[] origins,
+    ref list_values::Requirement list_plan,ref places::Requirement place_plan,usize work,
+    ref mut output::Transaction staged,usize quantum,ref mut cursors::Stats stats){
     let usize input_cost=if(input){meter::input_prepare()}else{0};
     if(*remaining<runtime::cost()+work+list_plan.cost+place_plan.cost+input_cost){return .err(errors::make(8,0));}
     var input_views::State windows=if(input){input_views::open(guest.len)?}else{input_views::disabled()};
     *remaining-=input_cost;
-    var vec::Vec<i64> list_cells=list_values::prepare_values(ref list_plan)?;
-    var bytes::Buffer list_scratch=list_values::prepare_encoded(ref list_plan)?;
+    var vec::Vec<i64> list_cells=list_values::prepare_values(list_plan)?;
+    var bytes::Buffer list_scratch=list_values::prepare_encoded(list_plan)?;
     *remaining-=list_plan.cost;
-    var vec::Vec<usize> place_state=places::prepare_metered(ref place_plan,*remaining)?;
+    var vec::Vec<usize> place_state=places::prepare_metered(place_plan,*remaining)?;
     *remaining-=place_plan.cost;
-    let runtime::Entered first=entry::enter(body,function,binding(body,parameters,function),captures,inputs,state,data,*remaining)?;
+    let runtime::Entered first=entry::enter_prepared(body,function,binding(body,parameters,function),captures,inputs,state,data,*remaining,work)?;
     *remaining=first.call.remaining;
     let Result<Outcome,errors::Error> outcome=start(body,parameters,function,ref first,values,state,data,sites,literals,ref mut list_cells,ref mut list_scratch,ref mut place_state,ref mut windows,guest,origins,remaining,staged,quantum,stats);
     return switch(outcome){
@@ -330,11 +361,26 @@ fn Result<usize,errors::Error> begin_saved(ref body_ir::Program body,usize funct
     cursor.pc=body.starts[function];cursor.active=true;
     return .ok(cursor.pc);
 }
-// Trusted owning-output bridge. Exact code/image proof and storage preparation
-// precede this entry; the immutable Program/input owners stay pinned by its caller.
+// Low-level saved entry computes its own price after the shared admission checks.
 pub fn Result<usize,errors::Error> start_output_saved(ref body_ir::Program body,ref statics::Sites sites,bool input,usize guest_length,
     ref mut runtime::State state,ref mut u8[] data,ref mut frames::Frames bindings,ref mut input_views::State windows,ref mut usize remaining,
     ref mut cursors::Cursor cursor,ref mut usize[] static_live,ref mut u32[] static_words,ref mut i64[] registers){
+    return start_output_impl(body,sites,input,guest_length,state,data,bindings,windows,remaining,
+        cursor,static_live,static_words,registers,.none);
+}
+// Trusted owning-output bridge. Exact code/image proof and storage preparation
+// precede this entry; cached work includes arity and belongs to the pinned Program.
+pub fn Result<usize,errors::Error> start_output_prepared(ref body_ir::Program body,ref statics::Sites sites,bool input,usize guest_length,
+    ref mut runtime::State state,ref mut u8[] data,ref mut frames::Frames bindings,ref mut input_views::State windows,ref mut usize remaining,
+    ref mut cursors::Cursor cursor,ref mut usize[] static_live,ref mut u32[] static_words,ref mut i64[] registers,usize work){
+    return start_output_impl(body,sites,input,guest_length,state,data,bindings,windows,remaining,
+        cursor,static_live,static_words,registers,.some(work));
+}
+// Share validation, entry publication and saved-bank initialization. The raw
+// wrapper keeps cost calculation after admission; prepared entry never rescans.
+fn Result<usize,errors::Error> start_output_impl(ref body_ir::Program body,ref statics::Sites sites,bool input,usize guest_length,
+    ref mut runtime::State state,ref mut u8[] data,ref mut frames::Frames bindings,ref mut input_views::State windows,ref mut usize remaining,
+    ref mut cursors::Cursor cursor,ref mut usize[] static_live,ref mut u32[] static_words,ref mut i64[] registers,Option<usize> prepared_work){
     if(guest_length>1048576 || (!input && guest_length!=0) || input!=input_views::enabled(windows) ||
         static_live.len!=32 || static_words.len!=512 || registers.len!=4096 || cursor.active || bindings.frame!=0){return .err(errors::make(5,0));}
     let usize arity=if(input){1}else{0};
@@ -343,7 +389,9 @@ pub fn Result<usize,errors::Error> start_output_saved(ref body_ir::Program body,
     let usize admitted=admit(body,ref none,sites,body.entry,ref values[..arity],arity,ref inputs[..0],false,input)?;
     let usize depth=switch(authority::inspect(ref state.runtime.authority)){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,0));}};
     if(!available(ref state.runtime.authority,true)){return .err(errors::make(5,0));}
-    let runtime::Entered first=entry::enter(body,body.entry,binding(body,ref none,body.entry),ref captures[..arity],ref inputs[..0],state,data,*remaining)?;
+    let runtime::Contract contract=binding(body,ref none,body.entry);
+    let usize work=switch(prepared_work){case .some(value):{value}case .none:{owned_calls::cost(body,body.entry,0)?+contract.arity}};
+    let runtime::Entered first=entry::enter_prepared(body,body.entry,contract,ref captures[..arity],ref inputs[..0],state,data,*remaining,work)?;
     *remaining=first.call.remaining;
     return begin_saved(body,body.entry,ref first,ref values[..arity],bindings,sites,windows,guest_length,cursor,static_words,registers);
 }

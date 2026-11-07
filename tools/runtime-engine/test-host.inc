@@ -104,7 +104,13 @@ void bc_runtime_engine_test_input_close(void){
  }
 }
 void bc_runtime_engine_test_input_measure(void){input_handles_measured=1;}
-int main(void){int code=generated_main();if(code!=0||probe_live()!=0)return 99;return 0;}
+int main(void){
+ int code=generated_main();if(code!=0||probe_live()!=0)return 99;
+ FILE *metrics=fopen("preparation-metrics.json","wb");assert(metrics);
+ assert(fprintf(metrics,"{\"cacheBytes\":%zu,\"storedBytes\":%zu,\"previousStoredBytes\":%zu,\"retainedVecExtraBytes\":%zu}\n",
+  sizeof(bc_output_preparation),sizeof(bc_output_stored),offsetof(bc_output_stored,f_4),8*sizeof(bc_output_preparation))>0);
+ assert(fclose(metrics)==0);return 0;
+}
 
 extern size_t probe_live_bytes(void),probe_peak_bytes(void),probe_attempts(void);
 extern void probe_measure_begin(void);
@@ -133,3 +139,7 @@ void bc_runtime_engine_test_program_storage(const void *raw,uintptr_t bytes){
  const bc_engine *e=raw;size_t control=e->f_1.f_1+e->f_2.f_1+e->f_3.f_1+e->f_4.f_1+e->f_5.f_1+e->f_6.f_1+e->f_7.f_1;
  assert(bytes<=SIZE_MAX-control&&probe_live_bytes()==control+bytes);
 }
+static uintptr_t output_proof_visits=0;
+void bc_runtime_engine_test_proof_visit(void){assert(output_proof_visits<UINTPTR_MAX);output_proof_visits+=1;}
+void bc_runtime_engine_test_proof_begin(void){output_proof_visits=0;}
+uintptr_t bc_runtime_engine_test_proof_count(void){return output_proof_visits;}

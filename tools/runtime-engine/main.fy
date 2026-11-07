@@ -21,6 +21,8 @@ import dispatch_cursor_contracts as cursor_tests;
 import dispatch_quantum_contracts as quantum_tests;
 import engine_pending_tests as pending_tests;
 import engine_prepared_tests as prepared_tests;
+import engine_preparation_cache_tests as cache_tests;
+import engine_preparation_reuse_tests as reuse_tests;
 import engine_step_tests as step_tests;
 import output_chunk_contracts as output_chunk_tests;
 import engine_output_chunk_tests as engine_chunk_tests;
@@ -49,6 +51,8 @@ fn i32 main(){
     engine::retain_native_bindings();
     pending_tests::run();
     prepared_tests::run();
+    cache_tests::run();
+    reuse_tests::run();
     step_tests::run();
     engine_chunk_tests::run();
     output_chunk_tests::multi_chunk_commits_once_after_the_last_byte_and_prepays_once();

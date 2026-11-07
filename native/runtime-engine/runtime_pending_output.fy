@@ -6,7 +6,6 @@ import slice_result_frames as pending_frames;
 import input_reference_views as pending_windows;
 import static_ir as pending_sites;
 import static_image as pending_images;
-import verifier as pending_verifier;
 import ir as pending_ir;
 import runtime_output as pending_output;
 import output_execution as pending_output_steps;
@@ -30,11 +29,9 @@ pub fn usize pending_core_stride(){return unsafe{pending_core_stride_raw()};}
 pub fn usize pending_machine_stride(){return unsafe{pending_machine_stride_raw()};}
 pub fn Result<machines::Machine,diagnostics::Error> prepare_pending_output(ref output_programs::Program p,ref input_bytes::Snapshot input,usize budget,usize limit,bool allowed){
     let bool accepts=output_programs::accepts_input(p);
-    let pending_verifier::ReferenceReturnProof proof=switch(pending_verifier::inspect_output_returns(output_programs::code(p),output_programs::literals(p),accepts)){
-        case .ok(v):{v}case .err(e):{return .err(diagnostics::absent(e));}
-    };
-    var machines::Machine machine=switch(machines::open(ref output_programs::code(p).body,ref proof.statics,
-        ref proof.recipes.site_origins,budget,limit,allowed,accepts,input_bytes::view(input).len)){
+    let ref output_programs::Preparation prepared=output_programs::preparation(p);
+    var machines::Machine machine=switch(machines::open_prepared(ref output_programs::code(p).body,ref prepared.sites,
+        ref prepared.origins,budget,limit,allowed,accepts,input_bytes::view(input).len,ref prepared.list,ref prepared.place,prepared.work)){
         case .ok(v):{v}case .err(e):{return .err(diagnostics::absent(e));}
     };
     let u32 status=unsafe{pending_advance_raw(ref mut machine as ptr mut void,p as ptr void,input as ptr void,0,0)};
@@ -79,8 +76,8 @@ fn u32 pending_advance_inner(ref output_programs::Program p,ref input_bytes::Sna
     // of Meta. Only these small control values are copied, never ownership maps.
     var usize remaining=m.remaining;var pending_cursors::Cursor cursor=m.cursor;var pending_cursors::Stats statistics=m.stats;
     if(operation==0){
-        let Result<usize,errors::Error> entered=pending_execution::start_output_saved(body,sites,output_programs::accepts_input(p),guest.len,state,
-            pending_bytes::view_mut(payload),bindings,windows,ref mut remaining,ref mut cursor,live,words,registers);
+        let Result<usize,errors::Error> entered=pending_execution::start_output_prepared(body,sites,output_programs::accepts_input(p),guest.len,state,
+            pending_bytes::view_mut(payload),bindings,windows,ref mut remaining,ref mut cursor,live,words,registers,output_programs::preparation(p).work);
         m.remaining=remaining;m.cursor=cursor;
         switch(entered){
             case .ok(_):{m.phase=1;return 0;}case .err(e):{m.failure=e;}

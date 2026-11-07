@@ -14,6 +14,13 @@ pub fn Result<runtime::Entered,errors::Error> enter(ref ir::Program p,usize func
     runtime::Contract contract,ref runtime::Capture[] captures,ref owners::Token[] inputs,
     ref mut runtime::State state,ref mut u8[] data,usize fuel){
     let usize work=calls::cost(p,function,0)?+contract.arity;
+    return enter_prepared(p,function,contract,captures,inputs,state,data,fuel,work);
+}
+// Trusted exact immutable Program preparation supplies the complete entry price,
+// including contract.arity. Raw enter computes it independently before forwarding.
+pub fn Result<runtime::Entered,errors::Error> enter_prepared(ref ir::Program p,usize function,
+    runtime::Contract contract,ref runtime::Capture[] captures,ref owners::Token[] inputs,
+    ref mut runtime::State state,ref mut u8[] data,usize fuel,usize work){
     if(fuel<runtime::cost()+work){return .err(errors::make(8,0));}
     var owners::CallArgument[8] arguments=[owners::CallArgument{
         .source=owners::Token{.slot=0,.generation=0},.element=0,.length=0,.record=0};8];

@@ -52,6 +52,20 @@ pub resource Machine {
 
 pub fn Result<Machine,errors::Error> open(ref ir::Program body,ref static_ir::Sites sites,
     ref u8[] origins,usize budget,usize output_limit,bool allowed,bool input,usize input_length){
+    let lists::Requirement list=lists::Requirement{.length=0,.bytes=0,.cost=0};
+    let places::Requirement place=places::Requirement{.width=0,.cost=0,.aggregate=false,.slices=false,.records=false};
+    return open_selected(body,sites,origins,budget,output_limit,allowed,input,input_length,false,ref list,ref place,0);
+}
+// Only an owning immutable Program supplies these cached plans. The raw helper
+// above retains its requirement scans and their original admission ordering.
+pub fn Result<Machine,errors::Error> open_prepared(ref ir::Program body,ref static_ir::Sites sites,
+    ref u8[] origins,usize budget,usize output_limit,bool allowed,bool input,usize input_length,
+    ref lists::Requirement list,ref places::Requirement place,usize work){
+    return open_selected(body,sites,origins,budget,output_limit,allowed,input,input_length,true,list,place,work);
+}
+fn Result<Machine,errors::Error> open_selected(ref ir::Program body,ref static_ir::Sites sites,
+    ref u8[] origins,usize budget,usize output_limit,bool allowed,bool input,usize input_length,
+    bool cached,ref lists::Requirement cached_list,ref places::Requirement cached_place,usize cached_work){
     // Only dimensions and the entry ABI are checked here. The parent admits the
     // exact code/image; planning below reuses the canonical scratch requirements.
     if(body.count==0 || body.count>256 || body.registers==0 || body.registers>128 ||
@@ -84,9 +98,9 @@ pub fn Result<Machine,errors::Error> open(ref ir::Program body,ref static_ir::Si
     };
     let usize capacity=if(body.arrays.count!=0 || body.records.count!=0){65536}else{0};
     let usize preparation=if(capacity==0){0}else{1+capacity};
-    let lists::Requirement list_plan=lists::requirement(body)?;
-    let places::Requirement place_plan=places::requirement(body)?;
-    let usize work=owned_calls::cost(body,entry,0)?+body.arities[entry];
+    let lists::Requirement list_plan=if(cached){*cached_list}else{lists::requirement(body)?};
+    let places::Requirement place_plan=if(cached){*cached_place}else{places::requirement(body)?};
+    let usize work=if(cached){cached_work}else{owned_calls::cost(body,entry,0)?+body.arities[entry]};
     let usize input_cost=if(input){meter::input_prepare()}else{0};
     if(remaining<preparation+input_cost+slice_result_runtime::cost()+work+list_plan.cost+place_plan.cost){
         return .err(errors::make(8,0));
