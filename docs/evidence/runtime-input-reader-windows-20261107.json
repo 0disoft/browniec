@@ -1,0 +1,169 @@
+{
+  "schema": "browniec.runtime-input-reader-evidence/v1",
+  "status": "passed",
+  "command": "python tools/verify-runtime-input-reader.py",
+  "executionRoot": "build/parallel-runtime-input-reader",
+  "receipt": "build/parallel-runtime-input-reader/build/runtime-input-reader/20261107T084548844898Z/receipt.json",
+  "receiptSha256": "0699e6741e0d7218b103588653d5a9ca65464806742d270203097a7fb7480e52",
+  "nativeResultsReused": true,
+  "reuseReason": "All six executed inputs match final integration bytes; no native implementation changed during integration.",
+  "inputCount": 6,
+  "inputsMatchCheckout": true,
+  "commandLogsAndArtifactsHashVerified": true,
+  "commandCount": 33,
+  "expectedNegativeControlFailures": 2,
+  "defaultStacks": true,
+  "stackOverrides": false,
+  "compilerEnvironmentOverrides": false,
+  "msvc": {
+    "version": "14.51.36231",
+    "sdk": "10.0.26100.0",
+    "compilerSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+    "overrides": false
+  },
+  "allocatorSeam": "Explicit BC_RIR_TEST test objects; no environment injection or production hooks",
+  "profiles": [
+    {
+      "profile": "development",
+      "production": {
+        "groups": 3,
+        "zeroBytePipeOsAttempts": 4,
+        "zeroBytePipeOsObserved": 0,
+        "handlesStable": true
+      },
+      "test": {
+        "groups": 6,
+        "zeroBytePipeOsAttempts": 4,
+        "zeroBytePipeOsObserved": 0,
+        "injectedZeroCases": 0,
+        "live": 0,
+        "partialReads": 192,
+        "attempts": 52
+      },
+      "actualZeroBytePipeEvidence": {
+        "kind": "actual OS anonymous byte-pipe WriteFile(0)",
+        "attempts": 4,
+        "observed": 0,
+        "testObserved": 0,
+        "syscallReturnInjection": false
+      },
+      "injectedCases": 4,
+      "oldBranchExpectedFailure": true,
+      "noPartialPublication": true,
+      "originalHandleValid": true,
+      "productionTestHooksAbsent": true,
+      "stackReserve": 1048576,
+      "stackCommit": 4096,
+      "images": [
+        {
+          "path": "build/parallel-runtime-input-reader/build/runtime-input-reader/20261107T084548844898Z/development/production.exe",
+          "sha256": "54dd4f3d2345d7020e0568e03f405eed4eda83494c30a3d9cd93037842e6efd2"
+        },
+        {
+          "path": "build/parallel-runtime-input-reader/build/runtime-input-reader/20261107T084548844898Z/development/reader.exe",
+          "sha256": "0b2a10308e7cba90df5b5d5d07d99f9836401b2e03ae0f85b85acd758d3e031e"
+        },
+        {
+          "path": "build/parallel-runtime-input-reader/build/runtime-input-reader/20261107T084548844898Z/development/zero-seam.exe",
+          "sha256": "65780b11eb7858f26e81383919d6e41569361248711a9cef4190100fe8a8af49"
+        },
+        {
+          "path": "build/parallel-runtime-input-reader/build/runtime-input-reader/20261107T084548844898Z/development/old-zero-as-eof.exe",
+          "sha256": "70b97da7072f7801103c96d8bb885308c25db6b47e0e1f729d59cf4cf60f4c0c"
+        }
+      ]
+    },
+    {
+      "profile": "release",
+      "production": {
+        "groups": 3,
+        "zeroBytePipeOsAttempts": 4,
+        "zeroBytePipeOsObserved": 0,
+        "handlesStable": true
+      },
+      "test": {
+        "groups": 6,
+        "zeroBytePipeOsAttempts": 4,
+        "zeroBytePipeOsObserved": 0,
+        "injectedZeroCases": 0,
+        "live": 0,
+        "partialReads": 196,
+        "attempts": 52
+      },
+      "actualZeroBytePipeEvidence": {
+        "kind": "actual OS anonymous byte-pipe WriteFile(0)",
+        "attempts": 4,
+        "observed": 0,
+        "testObserved": 0,
+        "syscallReturnInjection": false
+      },
+      "injectedCases": 4,
+      "oldBranchExpectedFailure": true,
+      "noPartialPublication": true,
+      "originalHandleValid": true,
+      "productionTestHooksAbsent": true,
+      "stackReserve": 1048576,
+      "stackCommit": 4096,
+      "images": [
+        {
+          "path": "build/parallel-runtime-input-reader/build/runtime-input-reader/20261107T084548844898Z/release/production.exe",
+          "sha256": "4a86439b612813e8e5d47c87c7fcbcb5e3bc8e72745f2c16ca59dbf7e43bc32a"
+        },
+        {
+          "path": "build/parallel-runtime-input-reader/build/runtime-input-reader/20261107T084548844898Z/release/reader.exe",
+          "sha256": "c31da715b9a907981b219dab977f42b14bfffa07a0d7de6f142ea73a3f277d28"
+        },
+        {
+          "path": "build/parallel-runtime-input-reader/build/runtime-input-reader/20261107T084548844898Z/release/zero-seam.exe",
+          "sha256": "3eb0533bf8efafead07534e1fdb406c11a6a44f3d026977aa98dc4047401d09b"
+        },
+        {
+          "path": "build/parallel-runtime-input-reader/build/runtime-input-reader/20261107T084548844898Z/release/old-zero-as-eof.exe",
+          "sha256": "30044b29c74237ac693264167edc3267aed4d3351fb762cab317b6609656ed2d"
+        }
+      ]
+    }
+  ],
+  "inputs": [
+    {
+      "path": "native/runtime_input_reader.c",
+      "sha256": "732edeb195d71176b6685c497e6e54c36634c25cd7d1d61a1d8fcf556eeaf9f0",
+      "bytes": 6607
+    },
+    {
+      "path": "native/runtime_input_reader.h",
+      "sha256": "f825a25c5da02330626cca6c0e344bd7c93055de170c4ace67357adc46e60b7e",
+      "bytes": 2027
+    },
+    {
+      "path": "tests/native/runtime_input_reader_host.c",
+      "sha256": "877f082740fcb53eb4d041888f212e0f325442c0d29006bb97c25e02830b4bce",
+      "bytes": 13695
+    },
+    {
+      "path": "tools/verify-runtime-input-reader.py",
+      "sha256": "7ffae30477a59d7ba55c61400483ed828948ca21a6bd60f05b1b3d44460b489a",
+      "bytes": 11936
+    },
+    {
+      "path": "docs/engineering/runtime-input-reader.md",
+      "sha256": "e15d3ae48ee20950a7d68b3c899477aa6cfefc6bb693507a88b86f1abc7084af",
+      "bytes": 5819
+    },
+    {
+      "path": "tools/verify-runtime-store-probe.py",
+      "sha256": "2a5332e0d5589eee91a39b2837eb0c721c353eb12c3d3bcced479396184332cc",
+      "bytes": 12100
+    }
+  ],
+  "publicAvailabilityChanged": false,
+  "actualNoProgressOSReproduction": false,
+  "limitations": [
+    "Private synchronous Windows OS primitive only; no Fairy/Engine/VM/CLI/stdin adapter.",
+    "Trusted absolute drive path or explicit sync disk/byte-pipe handle; no guest FS authority.",
+    "Duplicate handles share cursor/consumption; failure cannot restore already consumed bytes.",
+    "EOF/limit probe can block indefinitely; no R03, deadline or atomic filesystem snapshot claim.",
+    "Allocator failure is a separate explicit test-object seam, not whole-process heap exhaustion.",
+    "Real zero-byte pipe writes are attempted and observations recorded; forced zero-return coverage is separate /FI evidence."
+  ]
+}
