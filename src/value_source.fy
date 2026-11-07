@@ -23,6 +23,7 @@ import lexer as lexer;
 import locals as locals;
 import ir as ir;
 import types as types;
+import casts as casts;
 import errors as errors;
 import std::vec as vec;
 
@@ -86,7 +87,7 @@ fn Result<context::Value,errors::Error> buffer_call(ref u8[] source,ref mut lexe
 fn Result<context::Value,errors::Error> expression(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
     ref mut bindings::State state,ref signatures::Table table,ref functions::Plan plan,ref mut vec::Vec<bindings::Snapshot> paths,ref mut looping::State flow,usize exact,u8 minimum,usize depth){
     if(depth>32){return .err(errors::make(4,s.begin));}
-    var context::Value left=atom(source,s,unit,state,table,plan,paths,flow,exact,depth)?;
+    var context::Value left=converted(source,s,unit,state,table,plan,paths,flow,exact,depth)?;
     while(context::precedence(s.kind)>=minimum && context::precedence(s.kind)!=0){
         let u8 operation=s.kind;let u8 priority=context::precedence(operation);let usize at=s.begin;
         let usize a=context::as_scalar(unit,state,left,at)?;let usize next=lexer::next(source,s)?;
@@ -119,6 +120,27 @@ fn Result<context::Value,errors::Error> expression(ref u8[] source,ref mut lexer
             context::intern(unit,1,2,0,at)?}else{left.exact};left=context::scalar(type,result);
     }
     return context::expected(left,exact,s.begin);
+}
+// Keep casts outside atom: recursive unary operands must finish before widening.
+// Clear literal context only for this operand, as in the public scalar compiler.
+fn Result<context::Value,errors::Error> converted(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
+    ref mut bindings::State state,ref signatures::Table table,ref functions::Plan plan,ref mut vec::Vec<bindings::Snapshot> paths,ref mut looping::State flow,usize exact,usize depth){
+    let bool explicit=casts::follows(source,s)?;
+    let usize expected=if(explicit){64}else{exact};
+    var context::Value value=atom(source,s,unit,state,table,plan,paths,flow,expected,depth)?;
+    while(word(source,s,b"as")){
+        let usize at=s.begin;let usize keyword=lexer::next(source,s)?;
+        let u8 target=types::parse(source,s)?;
+        if(!types::scalar(target)){return .err(wrong(at));}
+        // Terminal work was already emitted. Validate every suffix without
+        // inventing a register/capture/destination or replaying that work.
+        if(value.bottom){continue;}
+        let usize input=context::as_scalar(unit,state,value,at)?;
+        let usize result=ir::widen(ref mut unit.body,input,target,at)?;
+        let usize type=context::intern(unit,1,target,0,at)?;
+        value=context::scalar(type,result);
+    }
+    return .ok(value);
 }
 fn Result<context::Value,errors::Error> constructor(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
     ref mut bindings::State state,ref signatures::Table table,ref functions::Plan plan,ref mut vec::Vec<bindings::Snapshot> paths,ref mut looping::State flow,usize exact,usize depth){

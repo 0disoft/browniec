@@ -112,7 +112,7 @@ pub fn Result<bool,errors::Error> tail_control(ref u8[] source,ref lexer::State 
                 let usize next=lexer::next(source,ref mut look)?;
                 if(word(source,ref look,b"else")){body=false;continue;}
                 return .ok(look.kind==125 || look.kind==41 || look.kind==44 || look.kind==93 ||
-                    look.kind==46 || look.kind==63 || precedence(look.kind)!=0);
+                    look.kind==46 || look.kind==63 || word(source,ref look,b"as") || precedence(look.kind)!=0);
             }
         }
         let usize next=lexer::next(source,ref mut look)?;
