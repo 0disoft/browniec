@@ -164,6 +164,34 @@ pub fn Result<usize,errors::Error> finish_fill(ref ir::Program p,usize pc,usize 
     let ref mut usize[] words=vec::view_mut_usize(state);words[4+frame*(18*n+1)+18*id+17]=3;
     return .ok(checked.size);
 }
+// Authenticate the original nominal root/subtree selected before the RHS. The
+// record recipe keeps this row unconsumed through staging and partial writes.
+pub fn Result<places::Place,errors::Error> record_selection(ref ir::Program p,usize pc,usize function,usize frame,
+    ref vec::Vec<usize> state,ref owners::Table table,usize capacity){
+    let usize price=cost(p,pc,function)?;let usize at=pc*8;let usize offset=p.offsets[pc];
+    if((p.code[at]!=85 && p.code[at]!=87) || p.code[at+4]!=4){return .err(invalid(offset));}
+    let usize n=width(state,offset)?;let usize id=p.code[at+1] as usize;
+    if(frame>=32 || id>=n){return .err(invalid(offset));}
+    let usize header=3+frame*(18*n+1);let usize base=header+1+18*id;let usize root=p.code[at+2] as usize;
+    let ref usize[] before=inspect(state);
+    if(before[header]==0 || before[header]>n || before[base+17]!=1 || before[base+13]!=root ||
+        before[base+15]!=4 || before[base+16]==0 || before[base+16]>=before[2] ||
+        !proof::same_selection(p,before[base+14],pc)){return .err(invalid(offset));}
+    let places::Place saved=decode(before,base);
+    if(before[base+2]!=0 || saved.record!=p.records.records[root] as usize ||
+        saved.nominal!=p.code[at+6] as usize || saved.ordinal!=p.code[at+5] as usize){return .err(invalid(offset));}
+    let usize checked=switch(places::validate_record(ref p.records.layouts,table,ref saved,capacity)){
+        case .ok(v):{v}case .err(e):{return .err(failures::failure(e,offset));}
+    };
+    return .ok(saved);
+}
+pub fn Result<usize,errors::Error> finish_record(ref ir::Program p,usize pc,usize function,usize frame,
+    ref mut vec::Vec<usize> state,ref owners::Table table,usize capacity){
+    let places::Place checked=record_selection(p,pc,function,frame,state,table,capacity)?;
+    let usize n=width(state,p.offsets[pc])?;let usize id=p.code[pc*8+1] as usize;
+    let ref mut usize[] words=vec::view_mut_usize(state);words[4+frame*(18*n+1)+18*id+17]=3;
+    return .ok(checked.size);
+}
 // Native-only coordinator entry. It must independently admit ONE immutable
 // Program/catalog and bind ONE table/backing lifetime to this vector. Current
 // destination is read only on SELECT; source comes from the canonical frame map.

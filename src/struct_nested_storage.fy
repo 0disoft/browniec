@@ -10,6 +10,10 @@ pub enum Error { Layout; Bounds; Fields; State; Alignment; Quota; Overflow; Valu
 struct Cursor { usize depth; usize[16] records; usize[16] fields; usize[16] bases; }
 // A checked scalar location is metadata, never a pointer or ownership proof.
 pub struct Leaf { u8 tag; usize offset; }
+// Bounded staging accounting, derived by the same validated scalar iterator.
+// Metadata visits are separate from byte work; bool validation reads separately
+// from the scalar transfer made by snapshot_into.
+pub struct Staging { usize size; usize alignment; usize leaves; usize scalar_bytes; usize bools; }
 
 fn bool valid(ref arenas::Arena arena, usize capacity) {
     return arena.used <= arena.limit && arena.limit <= capacity;
@@ -48,6 +52,28 @@ fn Leaf next(ref layouts::Catalog catalog, ref layouts::Plan plan, ref mut Curso
         }
     }
     return Leaf { .tag = 0, .offset = 0 };
+}
+
+pub fn Result<Staging, Error> staging(ref layouts::Catalog catalog, usize record) {
+    let layouts::Plan plan = switch (layouts::plan(catalog,18446744073709551615)) {
+        case .ok(p): { p } case .err(_): { return .err(.Layout); }
+    };
+    let usize size = selected(ref plan,record)?;
+    var Staging result = Staging { .size = size, .alignment = plan.alignments[record],
+        .leaves = 0, .scalar_bytes = 0, .bools = 0 };
+    var Cursor cursor = Cursor { .depth = 1, .records = [0;16], .fields = [0;16], .bases = [0;16] };
+    cursor.records[0] = record;
+    var bool done = false;
+    while (!done) {
+        let Leaf leaf = next(catalog,ref plan,ref mut cursor);
+        if (leaf.tag == 0) { done = true; }
+        else {
+            result.leaves += 1;
+            result.scalar_bytes += codec::width(leaf.tag);
+            if (leaf.tag == 2) { result.bools += 1; }
+        }
+    }
+    return .ok(result);
 }
 
 struct Reservation { usize base; usize end; }
@@ -103,6 +129,20 @@ fn Result<usize, Error> encode_fields(ref layouts::Catalog catalog, ref layouts:
     }
     if (count != fields.len) { return .err(.Fields); }
     return .ok(plan.bytes[record]);
+}
+
+// Exact-size caller-owned scratch only. Partial scratch on error is private;
+// no backing extent, owner or arena state is accessed or published here.
+pub fn Result<usize, Error> encode_into(ref layouts::Catalog catalog, usize record,
+    ref i64[] fields, ref mut u8[] encoded) {
+    let layouts::Plan plan = switch (layouts::plan(catalog,18446744073709551615)) {
+        case .ok(p): { p } case .err(_): { return .err(.Layout); }
+    };
+    let usize size = selected(ref plan,record)?;
+    if (encoded.len != size) { return .err(.Bounds); }
+    var usize byte = 0;
+    while (byte < size) { encoded[byte] = 0; byte += 1; }
+    return encode_fields(catalog,ref plan,record,fields,encoded);
 }
 
 // The complete record, including padding, is staged before backing mutation.

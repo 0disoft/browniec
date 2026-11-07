@@ -911,3 +911,148 @@ pub fn Result<usize, Error> replace_subrecord(ref records::Catalog catalog,
         case .ok(n): { .ok(n) } case .err(e): { .err(record_error(e)) }
     };
 }
+
+// Transient checked byte windows, never a second cursor or ownership proof.
+// target/source select the nominal subtree; cursor extents always retain roots.
+pub struct RecordWork { usize target; usize source; usize size; usize bytes; }
+fn Result<Owner,Error> record_owner_prepared(ref Table table,ref records::Plan plan,Token token){
+    let Owner owner=lookup(table,token)?;
+    if(owner.element!=0){return .err(.Type);}
+    if(owner.record>=plan.count){return .err(.Metadata);}
+    if(plan.bytes[owner.record]!=owner.length || plan.alignments[owner.record]!=owner.alignment){
+        return .err(.Metadata);
+    }
+    return .ok(owner);
+}
+fn Result<usize,Error> record_offset_prepared(ref records::Catalog catalog,ref records::Plan plan,
+    usize root,usize nominal,usize ordinal,bool whole){
+    if(whole){
+        if(root!=nominal || ordinal!=0){return .err(.Type);}
+        return .ok(0);
+    }
+    return switch(record_range::offset_prepared(catalog,plan,root,nominal,ordinal)){
+        case .ok(n):{.ok(n)}case .err(_):{.err(.Type)}
+    };
+}
+fn Result<RecordWork,Error> record_window_prepared(ref records::Catalog catalog,ref records::Plan plan,
+    ref filling::State work){
+    let usize size=plan.bytes[work.nominal];
+    let usize selected=record_offset_prepared(catalog,plan,work.record,work.nominal,
+        work.ordinal,work.op!=47 && work.op!=49)?;
+    if(selected>work.length || size>work.length-selected){return .err(.Bounds);}
+    var usize source=0;
+    if(work.op==42 || work.op==46 || work.op==47){
+        let usize origin=record_offset_prepared(catalog,plan,work.source_record,work.nominal,
+            work.source_ordinal,work.op!=47)?;
+        let usize length=work.source_end-work.source_base;
+        if(origin>length || size>length-origin){return .err(.Bounds);}
+        source=work.source_base+origin;
+    }
+    return .ok(RecordWork{.target=work.base+selected,.source=source,.size=size,
+        .bytes=if(work.op==41 || work.op==42){work.end-work.mark}else{size}});
+}
+// Caller has planned this exact immutable catalog. Table validation covers all
+// root extents/order/loans before private lookup or reservation arithmetic.
+fn Result<filling::State,Error> prepare_record_prepared(ref records::Catalog catalog,
+    ref records::Plan plan,ref Table table,u8 op,usize nominal,Token target,Token source,
+    usize target_ordinal,usize source_ordinal,usize capacity){
+    if(op!=41 && op!=42 && op!=46 && op!=47 && op!=48 && op!=49){return .err(.State);}
+    if(!valid(table,capacity)){return .err(.State);}
+    if(nominal>=plan.count){return .err(.Bounds);}
+    if(plan.bytes[nominal]>128){return .err(.Quota);}
+    if(op!=47 && op!=49 && (target_ordinal!=0 || source_ordinal!=0)){return .err(.Type);}
+    if(op==49 && source_ordinal!=0){return .err(.Type);}
+    var filling::State work=filling::empty();
+    work.active=true;work.op=op;work.nominal=nominal;work.ordinal=target_ordinal;
+    work.depth=table.depth;
+    if(op==42){
+        // Match atomic copy_record: authenticate the source and nominal type
+        // before an owner-slot or arena reservation can fail.
+        let Owner origin=record_owner_prepared(table,plan,source)?;
+        if(origin.record!=nominal){return .err(.Type);}
+        work.source_slot=source.slot;work.source_generation=source.generation;
+        work.source_base=origin.base;work.source_end=origin.end;
+        work.source_record=origin.record;work.source_ordinal=source_ordinal;
+    }
+    if(op==41 || op==42){
+        work.slot=free_slot(table)?;work.generation=table.slots[work.slot].generation;
+        work.record=nominal;work.length=plan.bytes[nominal];work.stride=plan.alignments[nominal];
+        work.mark=table.arena.used;
+        let usize remainder=work.mark%work.stride;
+        let usize padding=if(remainder==0){0}else{work.stride-remainder};
+        let usize maximum=18446744073709551615;
+        if(padding>maximum-work.mark){return .err(.Overflow);}
+        work.base=work.mark+padding;
+        if(work.length>maximum-work.base){return .err(.Overflow);}
+        work.end=work.base+work.length;
+        if(work.end>table.arena.limit){return .err(.Quota);}
+    }else{
+        let Owner owner=record_owner_prepared(table,plan,target)?;
+        work.slot=target.slot;work.generation=target.generation;
+        work.mark=owner.mark;work.base=owner.base;work.end=owner.end;
+        work.record=owner.record;work.length=owner.length;work.stride=owner.alignment;
+    }
+    if(op==46 || op==47){
+        let Owner origin=record_owner_prepared(table,plan,source)?;
+        work.source_slot=source.slot;work.source_generation=source.generation;
+        work.source_base=origin.base;work.source_end=origin.end;
+        work.source_record=origin.record;work.source_ordinal=source_ordinal;
+    }
+    let RecordWork window=record_window_prepared(catalog,plan,ref work)?;
+    if(op==42 || op==46 || op==47){
+        // Always snapshot, including exact identity; padding must normalize.
+        let copying::Mode transfer=switch(copying::prove(window.target,window.source,window.size,
+            if(op==42){work.end}else{table.arena.used},true,128,false)){
+            case .ok(v):{v}case .err(_):{return .err(.State);}
+        };
+    }
+    return .ok(work);
+}
+// Reservation/metadata admission only. No payload, owner publication or arena
+// mutation. The parent freezes other guest operations and pins every input.
+pub fn Result<filling::State,Error> prepare_record(ref records::Catalog catalog,ref Table table,
+    u8 op,usize nominal,Token target,Token source,usize target_ordinal,usize source_ordinal,usize capacity){
+    let records::Plan plan=switch(records::plan(catalog,18446744073709551615)){
+        case .ok(p):{p}case .err(_):{return .err(.Metadata);}
+    };
+    return prepare_record_prepared(catalog,ref plan,table,op,nominal,target,source,
+        target_ordinal,source_ordinal,capacity);
+}
+// Reauthenticate every saved root, generation, reservation and nominal subtree.
+// Only metadata is revisited; staged scalar bytes are never read or reencoded.
+pub fn Result<RecordWork,Error> validate_record_work(ref records::Catalog catalog,
+    ref Table table,ref filling::State work,usize capacity){
+    if(!work.active || work.element!=0 || work.list_gathered!=0 || work.list_encoded!=0){return .err(.State);}
+    let records::Plan plan=switch(records::plan(catalog,18446744073709551615)){
+        case .ok(p):{p}case .err(_):{return .err(.Metadata);}
+    };
+    let filling::State current=prepare_record_prepared(catalog,ref plan,table,work.op,work.nominal,
+        Token{.slot=work.slot,.generation=work.generation},
+        Token{.slot=work.source_slot,.generation=work.source_generation},
+        work.ordinal,work.source_ordinal,capacity)?;
+    if(current.slot!=work.slot || current.generation!=work.generation || current.depth!=work.depth ||
+        current.mark!=work.mark || current.base!=work.base || current.end!=work.end ||
+        current.record!=work.record || current.length!=work.length || current.stride!=work.stride ||
+        current.source_slot!=work.source_slot || current.source_generation!=work.source_generation ||
+        current.source_record!=work.source_record || current.source_ordinal!=work.source_ordinal ||
+        current.source_base!=work.source_base || current.source_end!=work.source_end){return .err(.State);}
+    let RecordWork window=record_window_prepared(catalog,ref plan,ref current)?;
+    if(work.written>window.bytes || work.written>work.total || work.last>work.total){return .err(.State);}
+    let record_storage::Staging staging=switch(record_storage::staging(catalog,work.nominal)){
+        case .ok(s):{s}case .err(e):{return .err(record_error(e));}
+    };
+    let usize admission=staging.size+staging.scalar_bytes+
+        if(work.op==41 || work.op==48 || work.op==49){8*staging.leaves}else{staging.bools};
+    if(work.total-work.written<admission){return .err(.State);}
+    return .ok(window);
+}
+// No publication until the final selected/padding byte has been written.
+// Existing roots keep their tokens, extent, order and arena prefix unchanged.
+pub fn Result<Token,Error> publish_record_work(ref records::Catalog catalog,ref mut Table table,
+    ref filling::State work,usize capacity){
+    let RecordWork window=validate_record_work(catalog,table,work,capacity)?;
+    if(work.written!=window.bytes){return .err(.State);}
+    if(work.op!=41 && work.op!=42){return .ok(Token{.slot=work.slot,.generation=work.generation});}
+    table.arena.used=work.end;
+    return .ok(publish_record(table,work.slot,work.record,work.length,work.stride,work.mark,work.base));
+}

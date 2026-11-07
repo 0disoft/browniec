@@ -54,7 +54,7 @@ pub fn Result<usize,owners::Error> validate_array(ref owners::Table table,ref Pl
     if(place.element==0){return .err(.Type);}
     let Place now=select_array(table,place.root,capacity)?;return unchanged(place,ref now);
 }
-fn Result<usize,owners::Error> validate_record(ref records::Catalog catalog,
+pub fn Result<usize,owners::Error> validate_record(ref records::Catalog catalog,
     ref owners::Table table,ref Place place,usize capacity){
     if(place.element!=0){return .err(.Type);}
     let Place now=select_record(catalog,table,place.root,place.nominal,place.ordinal,capacity)?;

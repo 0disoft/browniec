@@ -14,6 +14,10 @@ pub struct State {
     usize written; usize total; usize last;
     // LIST80/81 cell counts; every other recipe leaves both at zero.
     usize list_gathered; usize list_encoded;
+    // Record recipes retain whole-root extents above and nominal subtree ordinals
+    // here. Canonical staging completes before any destination byte is touched.
+    usize record; usize nominal; usize ordinal; usize source_record; usize source_ordinal;
+    u8[128] record_encoded;
 }
 pub fn usize chunk_limit(){return 4096;}
 pub fn State empty(){
@@ -21,5 +25,7 @@ pub fn State empty(){
         .slot=0,.generation=0,.mark=0,.base=0,.end=0,.depth=0,
         .source_slot=0,.source_generation=0,.source_base=0,.source_end=0,
         .element=0,.length=0,.stride=0,.encoded=[0;8],.written=0,.total=0,.last=0,
-        .list_gathered=0,.list_encoded=0};
+        .list_gathered=0,.list_encoded=0,
+        .record=0,.nominal=0,.ordinal=0,.source_record=0,.source_ordinal=0,
+        .record_encoded=[0;128]};
 }

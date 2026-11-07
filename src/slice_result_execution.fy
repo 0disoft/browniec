@@ -46,6 +46,7 @@ import array_fill_cursor as array_fill;
 import array_fill_execution as array_steps;
 import array_copy_execution as array_copies;
 import array_list_execution as array_lists;
+import struct_work_execution as record_steps;
 
 pub struct Scalar { i64 value; usize remaining; slices::Ticket[8] resumed; }
 // Internal tagged completion; inactive fields never escape either native API.
@@ -457,6 +458,14 @@ fn Result<Option<Outcome>,errors::Error> dispatch(ref body_ir::Program body,ref 
         let usize at=cursor.pc*8;let usize offset=body.offsets[cursor.pc];let u8 op=body.code[at];
         let usize dst=body.code[at+1] as usize;let usize a=body.code[at+2] as usize;let usize b=body.code[at+3] as usize;
         let usize base=frame*128;
+        if(cursor.array.active && (cursor.array.op==41 || cursor.array.op==42 || cursor.array.op==46 ||
+            cursor.array.op==47 || cursor.array.op==48 || cursor.array.op==49)){
+            if(!record_steps::operation(body,cursor.pc) || cursor.pc!=cursor.array.pc || frame!=cursor.array.frame ||
+                offset!=cursor.array.offset || cursor.output.active){return .err(errors::make(5,offset));};
+            *visited+=1;var array_fill::State recording=cursor.array;
+            let bool finished=record_steps::advance(ref mut recording,body,bindings,state,data,place_state,bytes_left)?;
+            cursor.array=recording;if(finished){cursor.pc+=1;}continue;
+        }
         if(cursor.array.active && (cursor.array.op==80 || cursor.array.op==81)){
             let u8 expected_op=if(array_lists::selected_list(body,cursor.pc)){81}else{op};
             if(!array_lists::operation(body,cursor.pc) || expected_op!=cursor.array.op || cursor.pc!=cursor.array.pc ||
@@ -493,7 +502,19 @@ fn Result<Option<Outcome>,errors::Error> dispatch(ref body_ir::Program body,ref 
         };
         if(*remaining==0){return .err(errors::make(8,offset));};
         if(array_copies::begin_bytes(body,cursor.pc)>bytes_left){return .ok(.none);};
+        if(record_steps::operation(body,cursor.pc)){
+            let usize staged=record_steps::required_bytes(body,cursor.pc,bindings,place_state,*remaining)?;
+            if(staged>bytes_left){return .ok(.none);}
+        };
         *remaining-=1;*visited+=1;
+        if(record_steps::operation(body,cursor.pc)){
+            var array_fill::State recording=record_steps::begin(body,cursor.pc,bindings,state,registers[base..base+128],data,place_state,remaining)?;
+            if(recording.total>18446744073709551615-cursor.array.total || recording.last>4096-cursor.array.last){return .err(errors::make(5,offset));}
+            recording.total+=cursor.array.total;recording.last+=cursor.array.last;
+            let usize room=4096-cursor.output.last-recording.last;
+            if(room!=0){let bool finished=record_steps::advance(ref mut recording,body,bindings,state,data,place_state,room)?;}
+            cursor.array=recording;if(!recording.active){cursor.pc+=1;}continue;
+        }
         if(array_lists::operation(body,cursor.pc)){
             var array_fill::State listing=array_lists::begin(body,cursor.pc,bindings,state,data.len,list_cells,list_scratch,place_state,remaining)?;
             listing.total=cursor.array.total;listing.last=cursor.array.last;
