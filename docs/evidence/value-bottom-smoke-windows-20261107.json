@@ -1,0 +1,331 @@
+{
+  "schema": "browniec.value-bottom-smoke-evidence/v1",
+  "status": "passed",
+  "implementationCommit": "9981a13f7a11949ff62c284a6f9d26f118b6a8cf",
+  "platform": "windows/amd64",
+  "inputManifest": {
+    "path": "docs/evidence/value-bottom-smoke-inputs-windows-20261107.json",
+    "sha256": "56c97d7c06428c578dace1f63d7f68fb16251799e4e4bf68d71cd9d3824aa63f"
+  },
+  "checkoutInputsMatched": 221,
+  "gitRawInputsMatched": 221,
+  "originalTestPrefixPreserved": true,
+  "smokeOnly": true,
+  "isolatedImagesPerProfile": 10,
+  "smokeImagesPerProfile": 1,
+  "checksPerImage": 10,
+  "imageInvocationReductionPercent": 90,
+  "sameWorkloadTimingSpeedupMeasured": false,
+  "summary": {
+    "schema": "browniec.value-bottom-smoke/v1",
+    "status": "pass",
+    "recordedAt": "2026-11-07T03:58:17.991375+00:00",
+    "runDirectory": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\value-bottom-smoke\\20261107T035817Z-hnilvq2l",
+    "profiles": [
+      "development",
+      "release"
+    ],
+    "limits": "Smoke only: extra call frame, shared process/allocator state, fail-fast; one default 60-second native timeout for all 10 checks. Never a substitute for isolated depth/process/IO/leak tests. No timing speedup claim.",
+    "smokeOnly": true,
+    "nativeOverrides": false,
+    "stack": "toolchain default; CL/_CL_/LINK overrides rejected",
+    "nativeTimeoutSeconds": 60,
+    "plannedImagesPerProfile": 1,
+    "checksPerImage": 10,
+    "accounting": "1 native image / 10 ordered checks per profile; fail-fast, not 10 native groups",
+    "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+    "driverSha256": "5cb0c908d8e1dd60a9b7f86c1eb8c882eee5107e14b4875879ec3d20bebf39cc",
+    "results": {
+      "development": {
+        "status": "pass",
+        "nativeImagesReported": 1,
+        "checksCompleted": 10,
+        "elapsedSeconds": 26.102
+      },
+      "release": {
+        "status": "pass",
+        "nativeImagesReported": 1,
+        "checksCompleted": 10,
+        "elapsedSeconds": 43.328
+      }
+    },
+    "elapsedSeconds": 43.897
+  },
+  "profiles": [
+    {
+      "schema": "browniec.value-bottom-smoke/v1",
+      "status": "pass",
+      "recordedAt": "2026-11-07T03:58:17.991375+00:00",
+      "runDirectory": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\value-bottom-smoke\\20261107T035817Z-hnilvq2l",
+      "profiles": [
+        "development",
+        "release"
+      ],
+      "limits": "Smoke only: extra call frame, shared process/allocator state, fail-fast; one default 60-second native timeout for all 10 checks. Never a substitute for isolated depth/process/IO/leak tests. No timing speedup claim.",
+      "smokeOnly": true,
+      "nativeOverrides": false,
+      "stack": "toolchain default; CL/_CL_/LINK overrides rejected",
+      "nativeTimeoutSeconds": 60,
+      "plannedImagesPerProfile": 1,
+      "checksPerImage": 10,
+      "accounting": "1 native image / 10 ordered checks per profile; fail-fast, not 10 native groups",
+      "profile": "development",
+      "commands": [
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "--version"
+          ],
+          "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\value-bottom-smoke\\20261107T035817Z-hnilvq2l\\development\\project",
+          "timeoutSeconds": 900,
+          "expectedExit": 0,
+          "exit": 0,
+          "elapsedSeconds": 0.191,
+          "stdout": "compiler-version.stdout",
+          "stderr": "compiler-version.stderr",
+          "stdoutSha256": "cfd188b9865777d7972b1c1e1c4e2e50d2735becbeca8627863cde0d38330e34",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "check",
+            "--locked"
+          ],
+          "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\value-bottom-smoke\\20261107T035817Z-hnilvq2l\\development\\project",
+          "timeoutSeconds": 900,
+          "expectedExit": 0,
+          "exit": 0,
+          "elapsedSeconds": 6.986,
+          "stdout": "check.stdout",
+          "stderr": "check.stderr",
+          "stdoutSha256": "343d3393520e551118a8a26e573ae4bf53755c70c6f157fda5c5e32e1b68833f",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "test",
+            "--native",
+            "--capture-output",
+            "--json",
+            "--locked",
+            "--exact",
+            "tests::m2::value_bottom_source::bottom_smoke_selected_checks"
+          ],
+          "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\value-bottom-smoke\\20261107T035817Z-hnilvq2l\\development\\project",
+          "timeoutSeconds": 900,
+          "expectedExit": 0,
+          "exit": 0,
+          "elapsedSeconds": 17.674,
+          "stdout": "native.stdout",
+          "stderr": "native.stderr",
+          "stdoutSha256": "fefa180a756850b475ba41c8f78b9c6678736292e7386058cb62043f0fc6ee78",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "nativeCommandAttempted": true,
+      "nativeImagesReported": 1,
+      "checksCompleted": 10,
+      "compiler": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "selectedChecks": [
+        "bottom_is_distinct_from_void_and_accepts_any_expected_domain",
+        "both_return_if_and_switch_need_no_destination_or_outer_return",
+        "nested_bottom_tails_and_else_if_suffixes_compose",
+        "declarations_discard_and_assignments_do_not_capture_dead_results",
+        "owned_and_view_return_contexts_preserve_real_terminal_cleanup",
+        "operand_and_last_call_argument_bottom_skip_enclosing_work",
+        "short_circuit_bottom_keeps_skip_edge_and_never_replays_effects",
+        "all_terminal_loop_value_arms_retain_break_continue_and_outer_mutations",
+        "void_and_malformed_or_unreachable_trailing_source_stay_errors",
+        "independent_cfg_proof_still_rejects_tampered_returns"
+      ],
+      "driverIdentity": "tests::m2::value_bottom_source::bottom_smoke_selected_checks",
+      "driverSha256": "5cb0c908d8e1dd60a9b7f86c1eb8c882eee5107e14b4875879ec3d20bebf39cc",
+      "originalTestSha256": "44736fa31b634889ae5d4436576b8ccb21b9372daf300b4191e6a8300e914272",
+      "originalTestBytes": 8086,
+      "generatedModuleSha256": "b44cfc249aadf6e7995442be59a7fcb246130a20556be61d3b6f5b69676cf49c",
+      "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false\n",
+      "nativeReport": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "development",
+        "tests": [
+          {
+            "identity": "tests::m2::value_bottom_source::bottom_smoke_selected_checks",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 1,
+        "passed": 1,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "nativeReportSha256": "fefa180a756850b475ba41c8f78b9c6678736292e7386058cb62043f0fc6ee78",
+      "originalAndFinalHashesVerified": true,
+      "elapsedSeconds": 26.102,
+      "receiptSha256": "13f86cdcc56ad153d4455a3c1e81635e566d5f40deeed07541d4aad77ce23fc8"
+    },
+    {
+      "schema": "browniec.value-bottom-smoke/v1",
+      "status": "pass",
+      "recordedAt": "2026-11-07T03:58:17.991375+00:00",
+      "runDirectory": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\value-bottom-smoke\\20261107T035817Z-hnilvq2l",
+      "profiles": [
+        "development",
+        "release"
+      ],
+      "limits": "Smoke only: extra call frame, shared process/allocator state, fail-fast; one default 60-second native timeout for all 10 checks. Never a substitute for isolated depth/process/IO/leak tests. No timing speedup claim.",
+      "smokeOnly": true,
+      "nativeOverrides": false,
+      "stack": "toolchain default; CL/_CL_/LINK overrides rejected",
+      "nativeTimeoutSeconds": 60,
+      "plannedImagesPerProfile": 1,
+      "checksPerImage": 10,
+      "accounting": "1 native image / 10 ordered checks per profile; fail-fast, not 10 native groups",
+      "profile": "release",
+      "commands": [
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "--version"
+          ],
+          "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\value-bottom-smoke\\20261107T035817Z-hnilvq2l\\release\\project",
+          "timeoutSeconds": 900,
+          "expectedExit": 0,
+          "exit": 0,
+          "elapsedSeconds": 0.183,
+          "stdout": "compiler-version.stdout",
+          "stderr": "compiler-version.stderr",
+          "stdoutSha256": "cfd188b9865777d7972b1c1e1c4e2e50d2735becbeca8627863cde0d38330e34",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "check",
+            "--locked"
+          ],
+          "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\value-bottom-smoke\\20261107T035817Z-hnilvq2l\\release\\project",
+          "timeoutSeconds": 900,
+          "expectedExit": 0,
+          "exit": 0,
+          "elapsedSeconds": 7.245,
+          "stdout": "check.stdout",
+          "stderr": "check.stderr",
+          "stdoutSha256": "343d3393520e551118a8a26e573ae4bf53755c70c6f157fda5c5e32e1b68833f",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+            "test",
+            "--native",
+            "--capture-output",
+            "--json",
+            "--locked",
+            "--exact",
+            "tests::m2::value_bottom_source::bottom_smoke_selected_checks",
+            "--release"
+          ],
+          "cwd": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\value-bottom-smoke\\20261107T035817Z-hnilvq2l\\release\\project",
+          "timeoutSeconds": 900,
+          "expectedExit": 0,
+          "exit": 0,
+          "elapsedSeconds": 34.927,
+          "stdout": "native.stdout",
+          "stderr": "native.stderr",
+          "stdoutSha256": "45a495af0f8e07e8c323307fb888ece3d37e9e725cc206623fe0467b668a99b1",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "nativeCommandAttempted": true,
+      "nativeImagesReported": 1,
+      "checksCompleted": 10,
+      "compiler": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\toolchain\\fairyc.exe",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "selectedChecks": [
+        "bottom_is_distinct_from_void_and_accepts_any_expected_domain",
+        "both_return_if_and_switch_need_no_destination_or_outer_return",
+        "nested_bottom_tails_and_else_if_suffixes_compose",
+        "declarations_discard_and_assignments_do_not_capture_dead_results",
+        "owned_and_view_return_contexts_preserve_real_terminal_cleanup",
+        "operand_and_last_call_argument_bottom_skip_enclosing_work",
+        "short_circuit_bottom_keeps_skip_edge_and_never_replays_effects",
+        "all_terminal_loop_value_arms_retain_break_continue_and_outer_mutations",
+        "void_and_malformed_or_unreachable_trailing_source_stay_errors",
+        "independent_cfg_proof_still_rejects_tampered_returns"
+      ],
+      "driverIdentity": "tests::m2::value_bottom_source::bottom_smoke_selected_checks",
+      "driverSha256": "5cb0c908d8e1dd60a9b7f86c1eb8c882eee5107e14b4875879ec3d20bebf39cc",
+      "originalTestSha256": "44736fa31b634889ae5d4436576b8ccb21b9372daf300b4191e6a8300e914272",
+      "originalTestBytes": 8086,
+      "generatedModuleSha256": "b44cfc249aadf6e7995442be59a7fcb246130a20556be61d3b6f5b69676cf49c",
+      "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false\n",
+      "nativeReport": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "release",
+        "tests": [
+          {
+            "identity": "tests::m2::value_bottom_source::bottom_smoke_selected_checks",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 1,
+        "passed": 1,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "nativeReportSha256": "45a495af0f8e07e8c323307fb888ece3d37e9e725cc206623fe0467b668a99b1",
+      "originalAndFinalHashesVerified": true,
+      "elapsedSeconds": 43.328,
+      "receiptSha256": "959fcdbcdefb5a2380e4d891e0e596f541c439e3253878b522fc2d511f183d57"
+    }
+  ],
+  "directCallNegativeProbe": {
+    "receiptSha256": "b47c173610be7fc41a3d12986a75c64ff9c9819f65a2ddb9d84387e4df5d4351",
+    "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+    "nativeReport": {
+      "schemaVersion": "fairyc.test-report/v4",
+      "engine": "native",
+      "target": "x86_64-windows-msvc",
+      "profile": "development",
+      "tests": [
+        {
+          "identity": "tests::direct::sidecar_selected_native_batch",
+          "outcome": "failed",
+          "trapCategory": "assertion-failed",
+          "stdoutBase64": "RklSU1QKTEFURQpIRUxQRVIK",
+          "stderrBase64": ""
+        }
+      ],
+      "count": 1,
+      "passed": 0,
+      "failed": 1,
+      "status": "failed",
+      "lock": "verified"
+    },
+    "originalSource": "module tests::direct;\nimport std::io as io;\n@effects(console) fn void late_helper(){assert(io::write(\"HELPER\\n\").is_ok);assert(false);}\n@effects(console) @test fn void z_first(){assert(2+2==4);assert(io::write(\"FIRST\\n\").is_ok);}\n@effects(console) @test fn void a_late(){assert(io::write(\"LATE\\n\").is_ok);late_helper();}\n",
+    "originalSha256": "e8460207e7a872f294515480a1937116cb2a137ff29156a9030e2acd9e863d64",
+    "appendedDriver": "\n// Sidecar driver: original module above is byte-identical.\n@effects(console)\n@test fn void sidecar_selected_native_batch(){\n    z_first();\n    a_late();\n}\n",
+    "driverSha256": "148efdaf8c85aa3fd299e3a6d65c5e3d9c59afa760f44e4a765569afc5e95090",
+    "expectedFailedImages": 1
+  },
+  "limits": [
+    "Fail-fast; shared process/allocator state; one extra call frame.",
+    "One default 60-second native timeout for all ten checks.",
+    "Not a replacement for isolated depth/process/IO/leak tests; Linux/macOS and full profiles unverified."
+  ]
+}

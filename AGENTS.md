@@ -40,6 +40,9 @@ codec and operating-system shims. The full accepted design is still incomplete.
 - Use focused checks for changed behavior. Do not broaden or repeat native runs
   without a concrete need. Native evidence uses default stacks and no hidden
   compiler overrides; preserve combined depth fixtures when validating them.
+- [Optional bottom smoke](docs/engineering/value-bottom-smoke.md) executes ten
+  reviewed checks in one image per profile. Keep isolated boundary/process
+  checks; smoke does not provide their isolation or stack evidence.
 
 ## Engineering boundaries
 

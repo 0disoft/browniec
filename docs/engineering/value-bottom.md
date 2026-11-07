@@ -64,6 +64,11 @@ nested terminal tails, Buffer and shared-view cleanup, earlier CALL captures,
 short-circuit effects, loop transfers, malformed input and tampered canonical IR.
 The former fully-terminal shared-return rejection is now an execution regression.
 
+For quick local regression checks, [optional bottom smoke](value-bottom-smoke.md)
+calls these ten new checks in one native image per profile. It keeps the original
+test bytes, but shares process state and adds a frame; keep isolated boundary
+checks and the full focused verifier when their coverage is required.
+
 Implementation `6f39099` passed 26 groups in each Windows native profile: ten
 new groups and sixteen focused regressions. Fresh locked mirrors use exact final
 inputs, default native stacks and no overrides. The shared-return oracle now

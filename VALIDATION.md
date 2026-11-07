@@ -11,6 +11,16 @@
   bottom contexts, general references, methods/public AllocError and remaining
   runtime/host/platform work. Full completion remains open. Local only.
 
+## Optional bottom smoke
+
+`python tools/verify-value-bottom-smoke.py` runs development/release concurrently,
+each as one native image calling ten reviewed checks. Tool `9981a13` passed both
+profiles in 43.897 seconds including locked preparation, with 221 inputs matching
+checkout and Git raw bytes. This is fail-fast smoke with a shared process/timeout
+and an extra call frame; keep isolated depth/process/I/O/leak checks. See
+[usage and limits](docs/engineering/value-bottom-smoke.md) and
+[Windows evidence](docs/evidence/value-bottom-smoke-windows-20261107.json).
+
 - Predecessor native view-call checkpoint (2026-11-07): [Shared Buffer view CALL/RETURN](docs/engineering/value-view-calls.md) now
   publishes up to eight argument aliases atomically and returns only a window
   contained in the selected caller origin across authenticated adjacent frames.
