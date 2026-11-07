@@ -1,20 +1,18 @@
-- Latest retained Buffer view checkpoint, 2026-11-07: Private [Buffer view execution](value-view-execution.md)
-  now independently verifies and executes BEGIN/RANGE/ALIAS/MOVE/CLOSE/LEN/READ
-  (105..111). A separate view lane carries exact Buffer origins through CFG joins
-  and backedges, rejects pinned root mutation/transfer and forbids live views at
-  normal return. Invocation-owned registries use frame-specific bindings and
-  close all leases/refund metadata before frame/root failure drain, even at Fuel0.
-  Caller/callee view0 bindings remain distinct. Both Windows profiles passed
-  24 native groups (new8/native-regression14/source-regression2) on `10db833`;
-  all 221 inputs match checkout/Git raw bytes and all 210 production modules are
-  LF. The unchanged admitted32/rejected33 depth fixture executes in both profiles.
-  See [evidence](../evidence/value-view-execution-windows-20261107.json).
-  Next connect whole-view source `bytes::view(ref Buffer) -> ref u8[]`, ranges,
-  lexical/nonlocal cleanup, copy-from-view and general reference parameters/results.
-  Public AllocError, text/I/O, full Engine/Instance/host/cancellation behavior,
-  isolation, platform/delivery and broader validation remain. Existing prices,
-  no-view setup prices and public Fuel default256/ceiling16000000 stay unchanged.
-  Local only; no push/release. The full objective remains open.
+- Latest source Buffer view checkpoint, 2026-11-07: Private [Buffer view source](value-view-source.md) now lowers
+  `bytes::view(ref Buffer) -> ref u8[]`, readonly aliases/ranges, index/length and
+  mutable reference bindings with capture-before-endpoint evaluation. Lexical,
+  return/propagation and loop exits close views before owners, including nonlocal
+  `break`/`continue` inside endpoints. Source sentinel65 never enters executable
+  types or signatures; general reference parameters/results remain gated.
+  Windows development/release each passed 23 native groups (eight new) on
+  `954cb96`; all 222 inputs match checkout/Git raw bytes and all 212 production
+  modules are LF. The unchanged admitted32/rejected33 depth fixture executes in
+  both profiles. See [evidence](../evidence/value-view-source-windows-20261107.json).
+  Next: copy-from-view, reference-valued joins and general reference composition,
+  public AllocError/admission, text/I/O, full Engine/Instance/host/cancellation,
+  isolation and platform/delivery. Existing prices, no-view setup costs and public
+  Fuel default256/ceiling16000000 stay unchanged. Local only; no push/release.
+  The full objective remains open.
 
 # Completing the accepted implementation
 

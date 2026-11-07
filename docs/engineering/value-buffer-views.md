@@ -5,7 +5,8 @@ Buffer store. It retains bytes in their original allocation and supports nested
 ranges, aliases, logical binding moves, length/read/copy-out and explicit close.
 This document records the native runtime kernel. The
 [retained execution successor](value-view-execution.md) connects independent
-IR/CFG proof and invocation-owned VM cleanup. Source syntax, escaping reference
+IR/CFG proof and invocation-owned VM cleanup; the [source successor](value-view-source.md)
+adds lexical bindings, ranges and nonlocal cleanup. Escaping reference
 composition, public admission and complete Engine/Instance behavior remain.
 
 ## Ownership and authority
@@ -108,9 +109,9 @@ Linux, general stack/performance and clean-machine delivery were not run.
 
 The [execution successor](value-view-execution.md) now supplies Buffer-backed
 view-origin IR, independent CFG proof, retained VM binding storage and terminal
-cleanup. Next connect lexical/nonlocal source cleanup,
-`bytes::view`/ranges/copy-from-view, general reference composition and intentional
-public admission. The native-only registry tests recorded above cannot establish
+cleanup. The [source successor](value-view-source.md) adds lexical/nonlocal cleanup
+and `bytes::view`/ranges. Next: copy-from-view, general reference composition and
+intentional public admission. The native-only registry tests recorded above cannot establish
 the successor's execution behavior; its own evidence records that scope.
 Public AllocError, text/input/output, full Engine/Instance/host behavior, isolation,
 platform/delivery and broader validation remain part of the full objective.

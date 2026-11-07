@@ -2,9 +2,10 @@
 
 This slice connects the native Buffer view registry to independently retained
 private IR. Views occupy a separate logical lane rather than canonical owning
-value slots or scalar registers. This is an executable runtime foundation;
-source `bytes::view`, general reference signatures, returned Buffer views and
-public capability admission remain separate work.
+value slots or scalar registers. This is an executable runtime foundation.
+The [source successor](value-view-source.md) connects lexical `bytes::view`
+bindings, ranges and nonlocal cleanup. General reference signatures, returned
+Buffer views and public capability admission remain separate work.
 
 ## Instruction and proof contract
 
@@ -103,8 +104,10 @@ LF. Both profiles use fresh locked byte-identical mirrors without historical
 result reuse. Full language/public CLI/native Fuel matrices, Linux, allocator/OOM
 injection, general stack/performance and clean-machine delivery were not run.
 
-Next connect the accepted whole-view source signature
-`bytes::view(ref Buffer) -> ref u8[]`, lexical and nonlocal source cleanup,
-copy-from-view and general reference parameter/result composition. Public
+The [source successor](value-view-source.md) now connects the whole-view
+signature `bytes::view(ref Buffer) -> ref u8[]`, ranges, lexical bindings and
+nonlocal cleanup. Its own evidence owns source behavior; this receipt retains
+its original 24-group scope. Next: copy-from-view and general reference
+parameter/result composition. Public
 AllocError, text/I/O, full Engine/Instance/host behavior, isolation and delivery
 remain part of the broader implementation objective.
