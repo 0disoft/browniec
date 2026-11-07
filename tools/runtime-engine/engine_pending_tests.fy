@@ -91,7 +91,8 @@ fn Result<machine::Meta,u8> tick(ref mut machine::Machine m,ref programs::Progra
     same_meta(after,machine::observe(m));
     assert(after.phase==1 || after.phase==2 || after.phase==3);
     assert(after.stats.calls==before.stats.calls+1 && after.remaining<=before.remaining);
-    assert(after.stats.last<=quantum && after.stats.maximum<=quantum);
+    assert(after.stats.last<=quantum && after.stats.maximum<=4096);
+    assert(after.stats.maximum==if(after.stats.last>before.stats.maximum){after.stats.last}else{before.stats.maximum});
     assert(after.stats.dispatched==before.stats.dispatched+after.stats.last);
     if(after.phase==1){
         assert(after.cursor.active && after.stats.last==quantum);
@@ -120,7 +121,7 @@ fn Result<machine::Meta,u8> cancelled(ref mut machine::Machine m){
 fn Result<usize,u8> publish_matches(ref mut machine::Machine m,ref programs::Execution baseline,ref u8[] expected,usize emits){
     let programs::Completion c=programs::observe(baseline);let machine::Meta done=machine::observe(m);
     assert(c.success && done.phase==2 && !done.cursor.active && done.value==c.value && done.failure.kind==0);
-    assert(done.stats.calls==done.stats.yields+1 && done.stats.maximum==1 && done.stats.last==1);
+    assert(done.stats.calls==done.stats.yields+1 && done.stats.last>0 && done.stats.last<=done.stats.maximum && done.stats.maximum<=4096);
     // Cancelling success must not steal the still-unsealed publication.
     same_meta(done,cancelled(m)?);
     let output::Published published=switch(engine::seal_pending_output(m)){
@@ -293,6 +294,35 @@ fn Result<usize,u8> prepare_allocation_failures(){
     }
     return .ok(attempts);
 }
+// Owning state must also survive changes of quantum between calls, including
+// a whole-program quantum and small boundaries through CALL/RET and emits.
+fn Result<usize,u8> variable_quantum_matches_exact_terminal(){
+    let programs::Program p=kept(
+        b"module lib;fn ref u8[] tail(ref u8[] data){return data[1..];}pub fn void send(ref u8[] data){let ref u8[] part=tail(ref data);output::emit(ref part);}",
+        b"module app;import lib as m;pub fn i32 chosen(ref u8[] data){var i32 i=0;while(i<12){m::send(ref data);i+=1;}return 42;}",true)?;
+    let inputs::Snapshot input=captured(b"!*X")?;
+    let programs::Execution baseline=programs::complete(ref p,ref input,16000000,24,true);
+    assert(programs::observe(ref baseline).success);
+    var bytes::Buffer expected=bytes::empty();var usize i=0;
+    while(i<12){assert(bytes::append(ref mut expected,b"*X").is_ok);i+=1;}
+    let usize[6] quanta=[1,2,3,7,64,4096];var usize variant=0;
+    while(variant<7){
+        let Heap stored=heap();
+        {
+            var machine::Machine m=prepared(ref p,ref input,16000000,24)?;var usize calls=0;
+            var machine::Meta progress=machine::observe(ref m);
+            while(progress.phase==1){
+                assert(calls<10000);
+                let usize quantum=if(variant==6){quanta[calls%6]}else{quanta[variant]};
+                progress=tick(ref mut m,ref p,ref input,quantum)?;calls+=1;
+            }
+            let usize checked=publish_matches(ref mut m,ref baseline,bytes::view(ref expected),12)?;
+            if(variant==5){assert(calls==1);}
+        }
+        same_heap(ref stored);variant+=1;
+    }
+    return .ok(0);
+}
 pub fn void run(){
     let Heap before=heap();
     assert(nested_output_and_moves().is_ok);same_heap(ref before);
@@ -302,4 +332,5 @@ pub fn void run(){
     assert(invalid_quanta_unchanged().is_ok);same_heap(ref before);
     assert(cancellation_and_pending_drop().is_ok);same_heap(ref before);
     assert(prepare_allocation_failures().is_ok);same_heap(ref before);
+    assert(variable_quantum_matches_exact_terminal().is_ok);same_heap(ref before);
 }
