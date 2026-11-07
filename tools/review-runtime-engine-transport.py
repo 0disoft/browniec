@@ -63,6 +63,7 @@ c['pendingMetaType']=arg(26,2)
 c['cursorType']=field_type(c['pendingMetaType'],0)
 c['outputCopyType']=field_type(c['cursorType'],2)
 c['arrayFillType']=field_type(c['cursorType'],3)
+c['callCopyType']=field_type(c['cursorType'],4)
 c['transactionType']=field_type(c['machineType'],6)
 c['preparationType']=field_type(c['programVariants']['output']['stored'],4)
 types={k:c[k] for k in ['engineType','programType','instanceType','boundInputType','outputType','sourceIndexType','sourceIndexVectorType','programVectorType','snapshotType','snapshotVectorType','machineType','coreType','executionType','pendingVectorType','completionType','publishedVectorType','pendingMetaType','cursorType','outputCopyType','transactionType']}
@@ -70,8 +71,9 @@ for variant,rows in c['programVariants'].items():types.update({variant+'_'+k:v f
 types.update({k+'_entry':v for k,v in c['entryTypes'].items()})
 types['preparationType']=c['preparationType']
 types['arrayFillType']=c['arrayFillType']
+types['callCopyType']=c['callCopyType']
 c['reviewedLayouts']={k:re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(v)+';$',t,re.M).group() for k,v in types.items()}
-assert len(c['bindings'])==33 and len(c['reviewedLayouts'])==30
+assert len(c['bindings'])==33 and len(c['reviewedLayouts'])==31
 c['transportSha256']=hashlib.sha256(generated).hexdigest()
 c['sourceInputs']=[dict(path=p.relative_to(root).as_posix(),sha256=hashlib.sha256(p.read_bytes()).hexdigest()) for p in sources]
 raw=json.dumps(c,indent=2)+'\n'

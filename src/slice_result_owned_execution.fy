@@ -54,6 +54,21 @@ pub fn Result<usize,errors::Error> enter(ref ir::Program p,usize pc,runtime::Con
 // Ordinary entry keeps deriving captures from the original slice namespace.
 pub fn Result<usize,errors::Error> enter_captured(ref ir::Program p,usize pc,runtime::Contract contract,
     ref mut frames::Frames bindings,ref mut runtime::State state,ref mut u8[] data,usize fuel,ref runtime::Capture[] supplied){
+    let Prepared prepared=prepare_enter(p,pc,contract,bindings,fuel,supplied)?;
+    let runtime::Entered entered=if(prepared.records){runtime::enter_records(state,contract,ref prepared.captures[..contract.arity],ref p.records.layouts,ref prepared.arguments[..prepared.count],data,fuel-prepared.owned)?}
+        else{runtime::enter_arrays(state,contract,ref prepared.captures[..contract.arity],ref prepared.sources[..prepared.count],ref prepared.shapes[..prepared.count],data,data.len,fuel-prepared.owned)?};
+    return publish_enter(p,pc,contract,bindings,entered.call,entered.copies,ref prepared);
+}
+
+// Unpublished descriptor/loan recipe shared by atomic and resumable CALL entry.
+// Immutable IR/frame metadata only: no payload read, owner or frame publication.
+pub struct Prepared {
+    runtime::Capture[8] captures; owners::Token[8] sources; layouts::Array[8] shapes;
+    owners::CallArgument[8] arguments; usize[8] destinations; bool[8] record_args;
+    usize count; usize owned; bool records;
+}
+pub fn Result<Prepared,errors::Error> prepare_enter(ref ir::Program p,usize pc,runtime::Contract contract,
+    ref frames::Frames bindings,usize fuel,ref runtime::Capture[] supplied){
     let usize at=pc*8;let usize target=p.code[at+2] as usize;let usize map=p.code[at+3] as usize;
     let usize owned=calls::cost(p,target,p.offsets[pc])?+contract.arity;
     if(fuel<runtime::cost()+owned){return .err(errors::make(8,p.offsets[pc]));}
@@ -98,14 +113,20 @@ pub fn Result<usize,errors::Error> enter_captured(ref ir::Program p,usize pc,run
             record_args[count]=true;records=true;destinations[count]=destination;count+=1;
         }i+=1;
     }
-    let runtime::Entered entered=if(records){runtime::enter_records(state,contract,ref captures[..contract.arity],ref p.records.layouts,ref arguments[..count],data,fuel-owned)?}
-        else{runtime::enter_arrays(state,contract,ref captures[..contract.arity],ref sources[..count],ref shapes[..count],data,data.len,fuel-owned)?};
-    let usize destination=if(p.code[at]==66){160+p.code[at+5] as usize}else{p.code[at+1] as usize};
-    let usize child=frames::push(p,bindings,entered.call,target,destination,map,pc+1)?;
-    i=0;while(i<count){if(record_args[i]){record_bindings::bind(ref mut bindings.records,destinations[i],entered.copies.tokens[i]);}
-        else{bindings.tokens[destinations[i]]=entered.copies.tokens[i];}i+=1;}
-    let usize cleared=suspend(p,map,parent,contract,bindings);return .ok(entered.call.remaining);
+    return .ok(Prepared{.captures=captures,.sources=sources,.shapes=shapes,.arguments=arguments,
+        .destinations=destinations,.record_args=record_args,.count=count,.owned=owned,.records=records});
 }
+// Parent has authenticated the future frame and staged all payload/authority.
+pub fn Result<usize,errors::Error> publish_enter(ref ir::Program p,usize pc,runtime::Contract contract,
+    ref mut frames::Frames bindings,runtime::Call call,owners::Copies copies,ref Prepared prepared){
+    let usize at=pc*8;let usize target=p.code[at+2] as usize;let usize map=p.code[at+3] as usize;
+    let usize destination=if(p.code[at]==66){160+p.code[at+5] as usize}else{p.code[at+1] as usize};
+    let usize child=frames::push(p,bindings,call,target,destination,map,pc+1)?;
+    var usize i=0;while(i<prepared.count){if(prepared.record_args[i]){record_bindings::bind(ref mut bindings.records,prepared.destinations[i],copies.tokens[i]);}
+        else{bindings.tokens[prepared.destinations[i]]=copies.tokens[i];}i+=1;}
+    let usize cleared=suspend(p,map,call.frame,contract,bindings);return .ok(call.remaining);
+}
+
 fn usize suspend(ref ir::Program p,usize map,usize parent,runtime::Contract contract,ref mut frames::Frames bindings){
     var usize i=0;while(i<contract.arity){let usize source=p.call_args[map*8+i] as usize;
         if((contract.tags[i]&128)!=0){bindings.sites[parent*16+source-160]=frames::none();}i+=1;

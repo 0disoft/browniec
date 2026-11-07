@@ -32,6 +32,7 @@ import engine_array_list_tests as array_list_tests;
 import struct_work_tests as record_work_tests;
 import call_copy_work_tests as call_copy_tests;
 import engine_struct_work_tests as engine_record_tests;
+import engine_call_copy_tests as engine_call_tests;
 import engine_step_tests as step_tests;
 import output_chunk_contracts as output_chunk_tests;
 import engine_output_chunk_tests as engine_chunk_tests;
@@ -71,6 +72,7 @@ fn i32 main(){
     record_work_tests::run();
     call_copy_tests::run();
     engine_record_tests::run();
+    engine_call_tests::run();
     step_tests::run();
     engine_chunk_tests::run();
     output_chunk_tests::multi_chunk_commits_once_after_the_last_byte_and_prepays_once();

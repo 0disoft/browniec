@@ -28,6 +28,10 @@ fn void same_table(ref owners::Table a,ref owners::Table b){
         assert(x.element==y.element && x.length==y.length && x.record==y.record && x.alignment==y.alignment && a.order[i]==b.order[i]);i+=1;}
 }
 fn void same_cursor(ref cursor::State a,ref cursor::State b){
+    assert(a.reserve_first==b.reserve_first);
+    assert(a.pending==b.pending && a.charged==b.charged && a.pc==b.pc && a.frame==b.frame);
+    assert(a.offset==b.offset && a.target==b.target && a.fuel_before==b.fuel_before);
+    assert(a.captured==b.captured && a.remaining==b.remaining);
     assert(a.active==b.active && a.phase==b.phase && a.index==b.index && a.at==b.at && a.count==b.count);
     assert(a.mark==b.mark && a.end==b.end && a.depth==b.depth && a.written==b.written && a.total==b.total && a.last==b.last);
     var usize i=0;while(i<8){assert(a.source_slots[i]==b.source_slots[i] && a.source_generations[i]==b.source_generations[i]);
@@ -44,8 +48,8 @@ fn Result<Option<owners::Copies>,owners::Error> advance(ref mut cursor::State s,
 fn void pending(Option<owners::Copies> r){switch(r){case .none:{}case .some(_):{assert(false);}};}
 fn Result<owners::Copies,owners::Error> completed(Option<owners::Copies> r){return switch(r){case .some(v):{.ok(v)}case .none:{.err(.State)}};}
 fn usize error_kind(owners::Error e){return switch(e){
-    case .State:{1}case .Value:{2}case .Token:{0}case .Owners:{0}case .Type:{0}case .Length:{0}
-    case .Metadata:{0}case .Overflow:{0}case .Quota:{0}case .Bounds:{0}case .Alignment:{0}};}
+    case .State:{1}case .Value:{2}case .Token:{0}case .Owners:{3}case .Type:{5}case .Length:{0}
+    case .Metadata:{6}case .Overflow:{0}case .Quota:{4}case .Bounds:{0}case .Alignment:{0}};}
 fn bool value_error(owners::Error e){return error_kind(e)==2;}
 fn bool state_error(owners::Error e){return error_kind(e)==1;}
 fn Result<bytes::Buffer,owners::Error> backing(usize size){
@@ -229,10 +233,100 @@ fn Result<usize,owners::Error> padding_empty_and_cancellation(){
     assert(zero.count==0);same_cursor(ref empty,ref s);same_table(ref published,ref t);assert(bytes::equal(ref data,ref final_bytes));return .ok(0);
 }
 
+// Array-only priority differs ONLY at the current argument's reservation.
+// Both atomic oracles and both cursors leave the table/backing untouched.
+fn Result<usize,owners::Error> array_mode_priority(){
+    let arrays::Array boolean=shape(2,3)?;let arrays::Array byte=shape(10,1)?;
+    let records::Catalog c=records::empty();var usize pressure=0;
+    while(pressure<2){var u8[64] data=[85;64];var owners::Table t=owners::empty(if(pressure==0){64}else{5});
+        let owners::Token source=owners::create(ref boolean,1,ref mut data,ref mut t)?;
+        if(pressure==0){var usize i=0;while(i<15){let owners::Token filler=owners::create(ref byte,7,ref mut data,ref mut t)?;i+=1;}}
+        data[t.slots[source.slot].base]=3;
+        let owners::CallArgument[1] args=[arg(source,2,3)];let owners::Token[1] sources=[source];let arrays::Array[1] shapes=[boolean];
+        let owners::Table before=t;let u8[64] old=data;var owners::Table oracle=t;
+        switch(owners::copy_arguments(ref sources,ref shapes,ref mut data,ref mut oracle)){
+            case .ok(_):{assert(false);}case .err(e):{assert(error_kind(e)==3+pressure);}};
+        same_table(ref before,ref oracle);assert(bytes::equal(ref old,ref data));
+        switch(owners::copy_call_arguments(ref c,ref args,ref mut data,ref mut oracle)){
+            case .ok(_):{assert(false);}case .err(e):{assert(value_error(e));}};
+        same_table(ref before,ref oracle);assert(bytes::equal(ref old,ref data));
+        var usize mode=0;while(mode<2){let Heap h=heap();
+            var cursor::State s=if(mode==0){work::begin_arrays(ref t,ref c,ref args,64)?}else{begin(ref t,ref c,ref args,64)?};
+            no_allocation(ref h);assert(s.reserve_first==(mode==0) && s.total==0 && s.written==0);
+            switch(advance(ref mut s,ref mut t,ref c,ref args,ref mut data,1)){
+                case .ok(_):{assert(false);}case .err(e):{
+                    if(mode==1){assert(value_error(e));}else{assert(error_kind(e)==3+pressure);}
+                }};
+            assert(s.written==0 && s.total==if(mode==0){0}else{1});
+            same_table(ref before,ref t);assert(bytes::equal(ref old,ref data));mode+=1;
+        }
+        // A bad source still outranks slot/quota failure in array mode.
+        let owners::CallArgument[1] wrong=[arg(source,10,3)];
+        var cursor::State s=work::begin_arrays(ref t,ref c,ref wrong,64)?;
+        switch(advance(ref mut s,ref mut t,ref c,ref wrong,ref mut data,1)){
+            case .ok(_):{assert(false);}case .err(e):{assert(error_kind(e)==5);}};
+        assert(s.total==0 && s.written==0);same_table(ref before,ref t);assert(bytes::equal(ref old,ref data));pressure+=1;
+    }return .ok(0);
+}
+
+fn Result<usize,owners::Error> array_mode_parity(){
+    let arrays::Array boolean=shape(2,3)?;let records::Catalog c=catalog();
+    var u8[64] data=[85;64];var owners::Table t=owners::empty(64);
+    let owners::Token source=owners::create(ref boolean,1,ref mut data,ref mut t)?;
+    let owners::CallArgument[2] args=[arg(source,2,3),arg(source,2,3)];
+    let owners::Token[2] sources=[source,source];let arrays::Array[2] shapes=[boolean,boolean];
+    let owners::Table before=t;var owners::Table oracle=t;var u8[64] expected=data;
+    let owners::Copies wanted=owners::copy_arguments(ref sources,ref shapes,ref mut expected,ref mut oracle)?;
+    let Heap h=heap();var cursor::State s=work::begin_arrays(ref t,ref c,ref args,64)?;no_allocation(ref h);
+    assert(s.reserve_first && s.total==0);same_table(ref before,ref t);var usize calls=0;
+    while(s.active){assert(calls<12);calls+=1;
+        let Option<owners::Copies> result=advance(ref mut s,ref mut t,ref c,ref args,ref mut data,1)?;
+        if(s.active){pending(result);same_table(ref before,ref t);}else{let owners::Copies actual=completed(result)?;same_copies(ref actual,ref wanted);}
+    }
+    assert(calls==12 && s.total==12 && s.written==6);same_table(ref t,ref oracle);assert(bytes::equal(ref data,ref expected));
+    s=work::begin_arrays(ref t,ref c,ref args[..0],64)?;assert(s.reserve_first && !s.active);
+    let cursor::State empty=s;let owners::Copies zero=completed(advance(ref mut s,ref mut t,ref c,ref args[..0],ref mut data,1)?)?;
+    assert(zero.count==0);same_cursor(ref empty,ref s);let cursor::State default_mode=cursor::empty();assert(!default_mode.reserve_first);
+    // Records cannot enter array mode, including a changed mixed-mode recipe.
+    let owners::CallArgument[1] record_args=[arg(source,0,0)];
+    assert(!work::begin_arrays(ref t,ref c,ref record_args,64).is_ok);
+    let i64[5] fields=[1,0,-1,255,128];var u8[128] record_data=[85;128];var owners::Table ledger=owners::empty(128);
+    let owners::Token record=owners::create_record(ref c,0,ref fields,ref mut record_data,ref mut ledger)?;
+    let owners::CallArgument[1] mixed=[arg(record,0,0)];s=begin(ref ledger,ref c,ref mixed,128)?;assert(!s.reserve_first);s.reserve_first=true;
+    let cursor::State saved=s;let owners::Table saved_table=ledger;let u8[128] old=record_data;
+    assert(!advance(ref mut s,ref mut ledger,ref c,ref mixed,ref mut record_data,1).is_ok);
+    same_cursor(ref saved,ref s);same_table(ref saved_table,ref ledger);assert(bytes::equal(ref old,ref record_data));return .ok(0);
+}
+
+// Validation ends at the price boundary even with enough room to copy.
+fn Result<usize,owners::Error> validation_boundary(){
+    let arrays::Array boolean=shape(2,3)?;let records::Catalog c=records::empty();
+    var u8[16] data=[85;16];var owners::Table t=owners::empty(16);
+    let owners::Token source=owners::create(ref boolean,1,ref mut data,ref mut t)?;
+    let owners::CallArgument[1] args=[arg(source,2,3)];let owners::Token[1] sources=[source];let arrays::Array[1] shapes=[boolean];
+    let owners::Table before=t;let u8[16] old=data;var owners::Table oracle=t;var u8[16] expected=data;
+    let owners::Copies wanted=owners::copy_arguments(ref sources,ref shapes,ref mut expected,ref mut oracle)?;
+    let Heap h=heap();var cursor::State s=work::begin_arrays(ref t,ref c,ref args,16)?;
+    pending(work::validate(ref mut s,ref mut t,ref c,ref args,ref mut data,4096)?);
+    assert(s.active && s.phase==1 && s.index==0 && s.at==0 && s.total==3 && s.last==3 && s.written==0);
+    same_table(ref before,ref t);assert(bytes::equal(ref old,ref data));let cursor::State saved=s;
+    pending(work::validate(ref mut s,ref mut t,ref c,ref args,ref mut data,1)?);
+    same_cursor(ref saved,ref s);same_table(ref before,ref t);assert(bytes::equal(ref old,ref data));
+    let owners::Copies actual=completed(advance(ref mut s,ref mut t,ref c,ref args,ref mut data,3)?)?;
+    assert(!s.active && s.total==6 && s.last==6 && s.written==3);same_copies(ref actual,ref wanted);
+    same_table(ref t,ref oracle);assert(bytes::equal(ref data,ref expected));
+    s=work::begin_arrays(ref t,ref c,ref args[..0],16)?;let cursor::State empty=s;
+    let owners::Copies zero=completed(work::validate(ref mut s,ref mut t,ref c,ref args[..0],ref mut data,1)?)?;
+    assert(zero.count==0);same_cursor(ref empty,ref s);no_allocation(ref h);return .ok(0);
+}
+
 pub fn void run(){let Heap before=heap();
     assert(atomic_parity().is_ok);same_heap(ref before);
     assert(maximum_batches().is_ok);same_heap(ref before);
     assert(late_failure_and_priority().is_ok);same_heap(ref before);
     assert(resume_rejections().is_ok);same_heap(ref before);
     assert(padding_empty_and_cancellation().is_ok);same_heap(ref before);
+    assert(array_mode_priority().is_ok);same_heap(ref before);
+    assert(array_mode_parity().is_ok);same_heap(ref before);
+    assert(validation_boundary().is_ok);same_heap(ref before);
 }

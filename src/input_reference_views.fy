@@ -9,6 +9,10 @@ struct Cell { usize start; usize length; bool active; }
 pub resource State { vec::Vec<Cell> cells; ptr mut void data; usize length; cleanup { } }
 pub fn State disabled(){return State{.cells=vec::empty<Cell>(),.data=null,.length=0};}
 pub fn bool enabled(ref State state){return vec::len<Cell>(ref state.cells)==768;}
+// Bounds-only preflight for unpublished child-frame grants; no cell access.
+pub fn bool accepts(ref State state,views::Span span){
+    return enabled(state) && span.start<=state.length && span.length<=state.length-span.start;
+}
 pub fn u32 marker(){return 1073741824;}
 pub fn bool is_input(u32 word){return word==marker();}
 fn errors::Error invalid(usize offset){return errors::make(5,offset);}

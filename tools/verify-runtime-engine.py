@@ -180,7 +180,7 @@ def main():
                         'boundInputType', 'outputType', 'sourceIndexType', 'sourceIndexVectorType',
                         'programVectorType', 'snapshotType', 'snapshotVectorType', 'machineType', 'coreType',
                         'executionType','pendingVectorType','completionType','publishedVectorType',
-                        'pendingMetaType','cursorType','outputCopyType','transactionType','preparationType','arrayFillType']}
+                        'pendingMetaType','cursorType','outputCopyType','transactionType','preparationType','arrayFillType','callCopyType']}
         for variant, types in contract['programVariants'].items():
             layout_types.update({variant + '_' + role: name for role, name in types.items()})
         layout_types.update({key + '_entry': name for key, name in contract['entryTypes'].items()})
@@ -191,7 +191,7 @@ def main():
         for owner,field,key in [('outputType',1,'executionType'),('outputType',2,'pendingVectorType'),
                                 ('executionType',0,'completionType'),('executionType',1,'publishedVectorType'),
                                 ('machineType',6,'transactionType'),('machineType',7,'pendingMetaType'),
-                                ('pendingMetaType',0,'cursorType'),('cursorType',2,'outputCopyType'),('cursorType',3,'arrayFillType')]:
+                                ('pendingMetaType',0,'cursorType'),('cursorType',2,'outputCopyType'),('cursorType',3,'arrayFillType'),('cursorType',4,'callCopyType')]:
             member=re.search(r'\b(fy_(?:struct|resource)_\d+) f_'+str(field)+r';',contract['reviewedLayouts'][owner])
             need(member is not None and member.group(1)==contract[key],f'Output field projection differs: {owner}/{field}')
         advance_args=contract['reviewedDeclarations']['26'].split('(',1)[1].split(',')
@@ -210,6 +210,12 @@ def main():
             array=re.search(r'typedef struct \{[^}]*\} '+re.escape(member.group(1))+r';',generated.decode('utf-8'))
             need(array is not None and re.search(re.escape(ctype)+r' data\[UINT64_C\('+str(length)+r'\)\]',array.group()),
                  f'Pending bank element/count differs: {field}')
+        for field in range(12,18):
+            member=re.search(r'\b(fy_array_\w+) f_'+str(field)+r';',contract['reviewedLayouts']['callCopyType'])
+            need(member is not None,'CALL comparison bank missing')
+            array=re.search(r'typedef struct \{[^}]*\} '+re.escape(member.group(1))+r';',generated.decode('utf-8'))
+            need(array is not None and re.search(r'uintptr_t data\[UINT64_C\(8\)\]',array.group()),
+                 'CALL comparison bank element/count differs')
         for key, name in layout_types.items():
             actual = re.search(r'^typedef struct \{\n[^}]*\} ' + re.escape(name) + r';$',
                                generated.decode('utf-8'), re.M)
@@ -222,6 +228,7 @@ def main():
         bindings+=f'typedef {contract["machineType"]} bc_pending_machine;\ntypedef {contract["coreType"]} bc_pending_core;\n'
         bindings+=f'typedef {contract["preparationType"]} bc_output_preparation;\n'
         bindings+=f'typedef {contract["arrayFillType"]} bc_array_fill_work;\ntypedef {contract["cursorType"]} bc_dispatch_cursor;\n'
+        bindings += f'typedef {contract["callCopyType"]} bc_call_copy_work;\n'
         for key, alias in [('programType', 'bc_engine_program'), ('instanceType', 'bc_engine_instance'),
                            ('boundInputType', 'bc_engine_bound_input'), ('outputType', 'bc_engine_output')]:
             bindings += f'typedef {contract[key]} {alias};\n'
@@ -298,6 +305,9 @@ def main():
             fill_metrics=json.loads(fill_raw)
             need(fill_metrics['arrayWorkBytes']>0 and fill_metrics['pendingVecExtraBytes']==8*fill_metrics['arrayWorkBytes'],
                  'Unexpected array work cursor storage')
+            need(fill_metrics['callPendingVecExtraBytes']==8*fill_metrics['callWorkBytes'] and
+                 fill_metrics['combinedPendingVecExtraBytes']==8*(fill_metrics['arrayWorkBytes']+fill_metrics['callWorkBytes']),
+                 'Unexpected CALL work cursor accounting')
             write(folder / 'array-fill-metrics.json',fill_raw)
             receipt['profiles'].append(dict(profile=profile, artifact=probe.image(exe), exit=0,
                 controlMetrics=metrics, preparationMetrics=preparation, arrayFillMetrics=fill_metrics,

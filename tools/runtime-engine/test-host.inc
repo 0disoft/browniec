@@ -3,6 +3,7 @@
 #include <stdio.h>
 extern size_t probe_live(void);
 void bc_runtime_engine_binding(uint32_t number){(void)number;}
+void bc_runtime_engine_test_call_error(uint32_t status,uint8_t kind,uintptr_t offset){fprintf(stderr,"CALL fixture error: status=%u kind=%u offset=%zu\n",status,kind,(size_t)offset);}
 typedef struct held_guard {HANDLE ready;HANDLE release;} held_guard;
 static DWORD WINAPI holding_thread(void *raw){
  held_guard *events=raw;bc_abi_thread_identity id;assert(bc_abi_guard_enter(&id)==0);
@@ -111,8 +112,9 @@ int main(void){
   sizeof(bc_output_preparation),sizeof(bc_output_stored),offsetof(bc_output_stored,f_4),8*sizeof(bc_output_preparation))>0);
  assert(fclose(metrics)==0);
  FILE *fills=fopen("array-fill-metrics.json","wb");assert(fills);
- assert(fprintf(fills,"{\"arrayWorkBytes\":%zu,\"cursorBytes\":%zu,\"machineBytes\":%zu,\"coreBytes\":%zu,\"pendingVecExtraBytes\":%zu}\n",
-  sizeof(bc_array_fill_work),sizeof(bc_dispatch_cursor),sizeof(bc_pending_machine),sizeof(bc_pending_core),8*sizeof(bc_array_fill_work))>0);
+ assert(fprintf(fills,"{\"arrayWorkBytes\":%zu,\"cursorBytes\":%zu,\"machineBytes\":%zu,\"coreBytes\":%zu,\"pendingVecExtraBytes\":%zu,\"callWorkBytes\":%zu,\"callPendingVecExtraBytes\":%zu,\"combinedPendingVecExtraBytes\":%zu}\n",
+  sizeof(bc_array_fill_work),sizeof(bc_dispatch_cursor),sizeof(bc_pending_machine),sizeof(bc_pending_core),8*sizeof(bc_array_fill_work),
+  sizeof(bc_call_copy_work),8*sizeof(bc_call_copy_work),8*(sizeof(bc_array_fill_work)+sizeof(bc_call_copy_work)))>0);
  assert(fclose(fills)==0);return 0;
 }
 

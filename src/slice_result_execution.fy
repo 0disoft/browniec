@@ -47,6 +47,8 @@ import array_fill_execution as array_steps;
 import array_copy_execution as array_copies;
 import array_list_execution as array_lists;
 import struct_work_execution as record_steps;
+import call_work_execution as call_steps;
+import call_copy_cursor as call_copy;
 
 pub struct Scalar { i64 value; usize remaining; slices::Ticket[8] resumed; }
 // Internal tagged completion; inactive fields never escape either native API.
@@ -429,7 +431,7 @@ fn Result<Option<Outcome>,errors::Error> drive(ref body_ir::Program body,ref u8[
     if(!cursor.active){return .err(errors::make(5,0));}
     let usize admitted=cursors::begin(stats,quantum)?;
     cursor.output.last=0;
-    cursor.array.last=0;
+    cursor.array.last=0;cursor.call.last=0;
     var usize visited=0;
     let Result<Option<Outcome>,errors::Error> outcome=dispatch(body,parameters,bindings,state,data,sites,literals,list_cells,list_scratch,
         place_state,windows,guest,origins,remaining,staged,cursor,static_live,static_words,registers,quantum,ref mut visited);
@@ -451,13 +453,21 @@ fn Result<Option<Outcome>,errors::Error> dispatch(ref body_ir::Program body,ref 
     var usize i=0;
     while(cursor.pc<body.count){
         if(cursor.output.last>4096 || cursor.array.last>4096-cursor.output.last){return .err(errors::make(5,0));}
-        let usize bytes_left=4096-cursor.output.last-cursor.array.last;
+        if(cursor.call.last>4096-cursor.output.last-cursor.array.last){return .err(errors::make(5,0));}
+        let usize bytes_left=4096-cursor.output.last-cursor.array.last-cursor.call.last;
         if(*visited==quantum || bytes_left==0){return .ok(.none);}
         let usize frame=bindings.frame;let usize f=bindings.functions[frame];
         if(frame==0 || f>=body.function_count || cursor.pc<body.starts[f] || cursor.pc>=body.ends[f]){return .err(errors::make(5,0));}
         let usize at=cursor.pc*8;let usize offset=body.offsets[cursor.pc];let u8 op=body.code[at];
         let usize dst=body.code[at+1] as usize;let usize a=body.code[at+2] as usize;let usize b=body.code[at+3] as usize;
         let usize base=frame*128;
+        if(cursor.call.pending){
+            if(cursor.call.pc!=cursor.pc || cursor.call.frame!=frame || cursor.array.active || cursor.output.active){return .err(errors::make(5,offset));};
+            *visited+=1;var call_copy::State calling=cursor.call;
+            let bool finished=call_steps::advance(ref mut calling,body,parameters,sites,bindings,state,data,literals.len,
+                windows,static_live,static_words,registers,remaining,bytes_left)?;
+            cursor.call=calling;if(finished){cursor.pc=body.starts[calling.target];}continue;
+        }
         if(cursor.array.active && (cursor.array.op==41 || cursor.array.op==42 || cursor.array.op==46 ||
             cursor.array.op==47 || cursor.array.op==48 || cursor.array.op==49)){
             if(!record_steps::operation(body,cursor.pc) || cursor.pc!=cursor.array.pc || frame!=cursor.array.frame ||
@@ -620,38 +630,13 @@ fn Result<Option<Outcome>,errors::Error> dispatch(ref body_ir::Program body,ref 
                 (op==68 && bindings.sites[frame*16+dst].slot!=16)){return .err(errors::make(5,offset));}
             cursor.pc+=1;continue;
         }
-        if(op==9 || op==64 || op==66 || op==78){
-            if(frame>=31 || !available(ref state.runtime.authority,false)){return .err(errors::make(12,offset));}
-            let usize input_work=if(input_views::enabled(windows)){meter::input_frame()}else{0};
-            if(*remaining<input_work+runtime::cost()){return .err(errors::make(8,offset));};*remaining-=input_work;
-            let usize fresh=place_frames::empty_frame(place_state,frame+1,offset)?;
-            var runtime::Contract c=binding(body,parameters,a);
-            let bool generic=op==78 && (sites.results[a]==3 || references::parameters(body,sites,a));
-            var transfer::Arguments staged=transfer::Arguments{.words=[0;16],.remaining=*remaining};
-            var references::Arguments captured=references::empty(*remaining);
-            if(generic){captured=references::arguments_input(body,sites,cursor.pc,f,static_words[frame*16..frame*16+16],
-                static_live[frame],bindings,state,data.len,literals.len,*remaining,windows)?;
-                *remaining=captured.remaining;c.tags=captured.tags;
-                if(sites.results[a]==3 && sites.origins[a]!=9){let usize origin=sites.origins[a] as usize;
-                    if(origin==0 || origin>c.arity){return .err(errors::make(5,offset));}
-                    c.selected=if(c.tags[origin-1]==10){origin}else{0};}
-            }
-            else if(op==78){staged=transfer::arguments(body,sites,literals.len,cursor.pc,f,
-                static_words[frame*16..frame*16+16],static_live[frame],*remaining)?;};
-            *remaining=if(generic){captured.remaining}else{staged.remaining};
-            *remaining=switch(if(generic){owned::enter_captured(body,cursor.pc,c,bindings,state,data,captured.remaining,ref captured.captures[..c.arity])}
-                else{owned::enter(body,cursor.pc,c,bindings,state,data,staged.remaining)}){
-                case .ok(v):{v}case .err(e):{return .err(errors::make(e.kind,offset));}
-            };
-            if(input_views::enabled(windows)){
-                if(generic){let usize published=references::publish_input_arguments(body,sites,a,frame+1,ref captured,windows,offset)?;}
-                else{let usize cleared=input_views::clear_frame(windows,frame+1,offset)?;}
-            }
-            static_live[frame+1]=0;
-            i=0;while(i<16){static_words[(frame+1)*16+i]=if(generic){captured.words[i]}else{staged.words[i]};i+=1;}
-            i=0;while(i<c.arity){let usize formal=body.register_starts[a]+i;let usize source=body.call_args[b*8+i] as usize;
-                if(c.tags[i]==0 && body.array_parameters[formal]==0 && body.record_parameters[formal]==0 && sites.parameters[formal]==0){registers[(frame+1)*128+formal]=registers[base+source];}i+=1;
-            }cursor.pc=body.starts[a];continue;
+        if(call_steps::operation(body,cursor.pc)){
+            var call_copy::State calling=call_steps::begin(body,parameters,sites,cursor.pc,bindings,state,data.len,literals.len,
+                static_words[frame*16..frame*16+16],static_live[frame],windows,place_state,remaining)?;
+            calling.total=cursor.call.total;calling.last=cursor.call.last;
+            let bool finished=call_steps::advance(ref mut calling,body,parameters,sites,bindings,state,data,literals.len,
+                windows,static_live,static_words,registers,remaining,bytes_left)?;
+            cursor.call=calling;if(finished){cursor.pc=body.starts[calling.target];}continue;
         }
         if(op==79){
             let usize input_work=if(input_views::enabled(windows)){meter::input_frame()}else{0};

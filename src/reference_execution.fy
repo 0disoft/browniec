@@ -164,6 +164,24 @@ pub fn Result<Step,errors::Error> step(ref ir::Program p,ref statics::Sites site
     current[dst]=word;return .ok(Step{.live=live|(one<<dst),.remaining=remaining-price});
 }
 
+// Pure preflight for the exact fixed child-frame input publication. clear_frame
+// removes old cells, so only bounds, unique sites and spans can fail afterward.
+pub fn Result<usize,errors::Error> validate_input_arguments(ref ir::Program p,ref statics::Sites sites,
+    usize target,usize frame,ref Arguments staged,ref input_views::State input,usize offset){
+    if(!input_views::enabled(input) || frame==0 || frame>=32 || target>=p.function_count ||
+        p.arities[target]>8 || staged.input_mask>=256){return .err(invalid(offset));}
+    var usize used=0;var usize i=0;let usize one=1;
+    while(i<p.arities[target]){if((staged.input_mask&(one<<i))!=0){
+        let usize formal=p.register_starts[target]+i;let usize site=sites.formal_sites[formal] as usize;
+        if(sites.parameters[formal]!=3 || site==0 || site>16 || staged.words[site-1]!=input_views::marker() ||
+            (used&(one<<(site-1)))!=0){return .err(invalid(offset));}
+        let views::Span span=staged.input_windows[i];
+        if(!input_views::accepts(input,span)){return .err(invalid(offset));}
+        used|=one<<(site-1);
+    }i+=1;}
+    if((staged.input_mask>>p.arities[target])!=0){return .err(invalid(offset));}
+    return .ok(frame);
+}
 // Publish only after native CALL enter. All windows were checked while staging;
 // this fixed-capacity operation cannot allocate or acquire a payload owner.
 pub fn Result<usize,errors::Error> publish_input_arguments(ref ir::Program p,ref statics::Sites sites,

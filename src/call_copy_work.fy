@@ -55,6 +55,27 @@ pub fn Result<cursor::State,owners::Error> begin(ref owners::Table table,
     return owners::capture_call_copy(ref plan,arguments);
 }
 
+// Private VM array-only boundary; no payload is inspected here. Records have
+// no array diagnostic contract, and array descriptors carry no nominal record.
+fn Result<usize,owners::Error> arrays_only(ref owners::CallArgument[] arguments){
+    if(arguments.len>8){return .err(.Metadata);}
+    var usize i=0;while(i<arguments.len){
+        if(arguments[i].element==0){return .err(.Type);}
+        if(arguments[i].record!=0){return .err(.Metadata);}
+        i+=1;
+    }
+    return .ok(arguments.len);
+}
+// Match copy_arguments: source/shape, free slot/reservation, then source bools.
+// The parent pins this mode along with the existing immutable recipe inputs.
+pub fn Result<cursor::State,owners::Error> begin_arrays(ref owners::Table table,
+    ref records::Catalog catalog,ref owners::CallArgument[] arguments,usize capacity){
+    let usize checked=arrays_only(arguments)?;
+    var cursor::State work=begin(table,catalog,arguments,capacity)?;
+    work.reserve_first=true;
+    return .ok(work);
+}
+
 // Each validation read costs one unit; each transfer (read+write) or zero write
 // costs one. ALL bools succeed in phase 0 before even allocation padding is
 // touched in phase 1. Records copy scalar bytes directly and zero every padding
@@ -67,18 +88,32 @@ pub fn Result<cursor::State,owners::Error> begin(ref owners::Table table,
 pub fn Result<Option<owners::Copies>,owners::Error> advance(ref mut cursor::State work,
     ref mut owners::Table table,ref records::Catalog catalog,
     ref owners::CallArgument[] arguments,ref mut u8[] data,usize allowance){
+    return advance_impl(work,table,catalog,arguments,data,allowance,false);
+}
+// Finish source validation without touching destination bytes. Phase 1 is the
+// parent's price boundary: charge CALL once, then resume advance to copy.
+pub fn Result<Option<owners::Copies>,owners::Error> validate(ref mut cursor::State work,
+    ref mut owners::Table table,ref records::Catalog catalog,
+    ref owners::CallArgument[] arguments,ref mut u8[] data,usize allowance){
+    return advance_impl(work,table,catalog,arguments,data,allowance,true);
+}
+fn Result<Option<owners::Copies>,owners::Error> advance_impl(ref mut cursor::State work,
+    ref mut owners::Table table,ref records::Catalog catalog,
+    ref owners::CallArgument[] arguments,ref mut u8[] data,usize allowance,bool validation_only){
     if(allowance==0 || allowance>cursor::chunk_limit()){return .err(.State);}
     if(work.last>cursor::chunk_limit()){return .err(.State);}
     if(allowance>cursor::chunk_limit()-work.last){return .err(.State);}
     let owners::CallCopyPlan plan=owners::validate_call_copy(table,catalog,arguments,work,data.len)?;
+    if(work.reserve_first){let usize checked=arrays_only(arguments)?;}
     if(work.count==0){return .ok(.some(plan.copies));}
+    if(validation_only && work.phase==1){return .ok(.none);}
 
     let usize reads=if(work.phase==0){validation_left(ref plan,catalog,arguments,work)?}else{0};
     let usize writes=if(plan.copies.count==work.count){work.end-work.mark-work.written}else{0};
     // Both sums are bounded by eight (32768+7)-byte reservations plus 32768
     // validation reads. Preflight EXACT chunk headroom before any counter,
     // progress or destination mutation, including the phase transition.
-    let usize pending=reads+writes;
+    let usize pending=reads+if(validation_only){0}else{writes};
     let usize charge=if(pending<allowance){pending}else{allowance};
     let usize maximum=18446744073709551615;
     if(charge>maximum-work.total || charge>maximum-work.last){return .err(.Overflow);}
@@ -88,9 +123,10 @@ pub fn Result<Option<owners::Copies>,owners::Error> advance(ref mut cursor::Stat
     if(work.phase==0){
         while(work.index<work.count){
             let usize i=work.index;
-            // A source/shape error precedes this argument's bools; a target
-            // reservation error follows them, before inspecting the next arg.
+            // A source/shape error always precedes this argument's target.
+            // Array mode checks reservations before bools; mixed mode after.
             if(i>=plan.checked){return .err(deferred_error(ref plan));}
+            if(work.reserve_first && i>=plan.copies.count){return .err(deferred_error(ref plan));}
             let owners::CallCopyRange range=plan.ranges[i];
             let owners::CallArgument argument=arguments[i];
             if(argument.element==2){
@@ -116,6 +152,7 @@ pub fn Result<Option<owners::Copies>,owners::Error> advance(ref mut cursor::Stat
         }
         work.phase=1;work.index=0;work.at=0;
     }
+    if(validation_only){return .ok(.none);}
 
     // The complete plan has authenticated ALL source/target generations,
     // original extents, shapes, reservations and table depth before these writes.

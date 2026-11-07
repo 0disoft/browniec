@@ -34,7 +34,7 @@ pub fn Frames empty(ref runtime::State state){
 }
 // The driver checks bounds before runtime::enter. Failure never publishes a
 // result; its invocation cleanup drains any entered native transaction.
-pub fn Result<usize,errors::Error> push(ref ir::Program p,ref mut Frames bindings,
+pub fn Result<usize,errors::Error> can_push(ref ir::Program p,ref Frames bindings,
     runtime::Call call,usize function,usize destination,usize map,usize continuation){
     let usize child=bindings.frame+1;
     if(child>=32 || function>=p.function_count || !call.active || call.frame!=bindings.frame ||
@@ -42,6 +42,11 @@ pub fn Result<usize,errors::Error> push(ref ir::Program p,ref mut Frames binding
             (destination>=160 && (call.contract.selected==0 || bindings.sites[bindings.frame*16+destination-160].slot!=16))))){
         return .err(errors::make(5,0));
     }
+    return .ok(child);
+}
+pub fn Result<usize,errors::Error> push(ref ir::Program p,ref mut Frames bindings,
+    runtime::Call call,usize function,usize destination,usize map,usize continuation){
+    let usize child=can_push(p,bindings,call,function,destination,map,continuation)?;
     var usize argument=0;while(argument<8){
         bindings.captures[child*8+argument]=call.captures[argument];bindings.views[child*8+argument]=call.views[argument];
         bindings.issued[child*8+argument]=call.issued[argument];bindings.tags[child*8+argument]=call.contract.tags[argument];argument+=1;

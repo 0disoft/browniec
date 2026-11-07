@@ -79,6 +79,57 @@ pub fn Result<Entered,errors::Error> enter_records(ref mut State state,Contract 
     let layouts::Array[1] shapes=[layouts::Array{.element=0,.length=0,.stride=0,.alignment=0,.bytes=0}];
     return enter_values(state,binding,captures,ref sources[..0],ref shapes[..0],catalog,arguments,data,data.len,fuel);
 }
+// Trusted precondition: next_authority and next_pool are fresh, unpublished,
+// nonaliasing copies of state.runtime.authority and state.runtime.pool. The
+// caller keeps the original State/owners/backing unchanged throughout this call
+// and discards both staged values on error. Errors may
+// leave these private copies partially staged; they must not be reused as input.
+// Authenticate original captures first, then stage only authority/read loans.
+// No owner-table copy, backing access, or live metadata publication occurs here.
+pub fn Result<Call,errors::Error> prepare_entry(ref State state,Contract binding,ref Capture[] captures,
+    usize capacity,usize fuel,ref mut authority::State next_authority,ref mut slices::Pool next_pool){
+    let ref authority::State original_authority=ref state.runtime.authority;
+    let ref slices::Pool original_pool=ref state.runtime.pool;
+    let ref owners::Table original_owners=ref state.runtime.owners;
+    if(fuel<cost()){return .err(errors::make(8,0));}
+    if(binding.arity>8 || captures.len!=binding.arity || binding.selected>binding.arity ||
+        (binding.selected!=0 && binding.tags[binding.selected-1]==0)){return .err(errors::make(5,0));}
+    let usize depth=size(authority::inspect(original_authority))?;
+    let usize frame=original_authority.frame;
+    let owners::View blank=original_pool.slots[0].view;
+    var Capture[8] saved=[capture(none(),false,false);8];
+    var owners::View[8] views=[blank;8];
+    var slices::Ticket[8] issued=[none();8];
+    var slices::Ticket[16] before=[none();16];
+    var usize i=0;while(i<16){if(original_pool.slots[i].live){before[i]=slices::Ticket{.slot=i,.generation=original_pool.slots[i].generation};}i+=1;}
+    var slices::Ticket[8] writers=[none();8];var usize count=0;i=0;
+    // Authenticate all original actuals before any staged retain/rotation.
+    while(i<captures.len){
+        let Capture c=captures[i];saved[i]=c;
+        if(c.ends>16 || c.close!=(c.ends!=0) || (c.ends>1 && (c.drop || binding.selected==0))){return .err(errors::make(5,0));}
+        if(binding.tags[i]==0){if(!same(c.ticket,none()) || c.close || c.drop){return .err(errors::make(5,0));}}
+        else{
+            let usize length=size(slices::length(original_pool,c.ticket,original_owners,capacity))?;
+            let slices::Slot entry=original_pool.slots[c.ticket.slot];
+            let u8 tag=entry.view.element | if(entry.exclusive){128}else{0};
+            if(tag!=binding.tags[i] || (c.drop && !c.close) || (c.ends>1 && !entry.exclusive)){return .err(errors::make(5,0));}
+            var usize prior=0;while(prior<i){if(same(c.ticket,captures[prior].ticket) && c.close!=captures[prior].close){return .err(errors::make(5,0));}prior+=1;}
+            views[i]=entry.view;
+            if(entry.exclusive){writers[count]=c.ticket;count+=1;}
+        }i+=1;
+    }
+    let slices::Arguments moved=loan_arguments(authority::enter_call(next_authority,next_pool,ref writers[..count],original_owners,capacity,frame))?;
+    var usize writer=0;i=0;
+    while(i<captures.len){
+        if(binding.tags[i]!=0){
+            if((binding.tags[i]&128)!=0){issued[i]=moved.tickets[writer];writer+=1;}
+            else{let usize length=views[i].end-views[i].start;issued[i]=ticket(slices::subslice(next_pool,captures[i].ticket,original_owners,0,length,capacity))?;}
+        }i+=1;
+    }
+    return .ok(Call{.captures=saved,.views=views,.issued=issued,.before=before,
+        .contract=binding,.depth=depth,.frame=frame,.remaining=fuel-cost(),.active=true});
+}
+
 // One authority/pool/owner plan for the whole mixed argument batch. Nothing
 // fallible follows its validated payload copy before metadata publication.
 fn Result<Entered,errors::Error> enter_values(ref mut State state,Contract binding,ref Capture[] captures,
@@ -91,41 +142,10 @@ fn Result<Entered,errors::Error> enter_values(ref mut State state,Contract bindi
     let ref owners::Table original_owners=ref state.runtime.owners;
     if(arguments.len>binding.arity || (arguments.len!=0 && (sources.len!=0 || data.len!=capacity))){return .err(errors::make(5,0));}
     if(sources.len>binding.arity || sources.len!=shapes.len || (sources.len!=0 && data.len!=capacity)){return .err(errors::make(5,0));}
-    if(fuel<cost()){return .err(errors::make(8,0));}
-    if(binding.arity>8 || captures.len!=binding.arity || binding.selected>binding.arity ||
-        (binding.selected!=0 && binding.tags[binding.selected-1]==0)){return .err(errors::make(5,0));}
-    let usize depth=size(authority::inspect(original_authority))?;
-    let usize frame=original_authority.frame;
-    var Call result=Call{.captures=[capture(none(),false,false);8],.views=[original_pool.slots[0].view;8],
-        .issued=[none();8],.before=[none();16],.contract=binding,.depth=depth,.frame=frame,.remaining=fuel-cost(),.active=true};
-    var usize i=0;while(i<16){if(original_pool.slots[i].live){result.before[i]=slices::Ticket{.slot=i,.generation=original_pool.slots[i].generation};}i+=1;}
-    var slices::Ticket[8] writers=[none();8];var usize count=0;i=0;
-    // Authenticate all original actuals before any staged retain/rotation.
-    while(i<captures.len){
-        let Capture c=captures[i];result.captures[i]=c;
-        if(c.ends>16 || c.close!=(c.ends!=0) || (c.ends>1 && (c.drop || binding.selected==0))){return .err(errors::make(5,0));}
-        if(binding.tags[i]==0){if(!same(c.ticket,none()) || c.close || c.drop){return .err(errors::make(5,0));}}
-        else{
-            let usize length=size(slices::length(original_pool,c.ticket,original_owners,capacity))?;
-            let slices::Slot entry=original_pool.slots[c.ticket.slot];
-            let u8 tag=entry.view.element | if(entry.exclusive){128}else{0};
-            if(tag!=binding.tags[i] || (c.drop && !c.close) || (c.ends>1 && !entry.exclusive)){return .err(errors::make(5,0));}
-            var usize prior=0;while(prior<i){if(same(c.ticket,captures[prior].ticket) && c.close!=captures[prior].close){return .err(errors::make(5,0));}prior+=1;}
-            result.views[i]=entry.view;
-            if(entry.exclusive){writers[count]=c.ticket;count+=1;}
-        }i+=1;
-    }
     var authority::State next_authority=*original_authority;
     var slices::Pool next_pool=*original_pool;
+    let Call result=prepare_entry(state,binding,captures,capacity,fuel,ref mut next_authority,ref mut next_pool)?;
     var owners::Table next_owners=*original_owners;
-    let slices::Arguments moved=loan_arguments(authority::enter_call(ref mut next_authority,ref mut next_pool,ref writers[..count],ref next_owners,capacity,frame))?;
-    var usize writer=0;i=0;
-    while(i<captures.len){
-        if(binding.tags[i]!=0){
-            if((binding.tags[i]&128)!=0){result.issued[i]=moved.tickets[writer];writer+=1;}
-            else{let usize length=result.views[i].end-result.views[i].start;result.issued[i]=ticket(slices::subslice(ref mut next_pool,captures[i].ticket,ref next_owners,0,length,capacity))?;}
-        }i+=1;
-    }
     var owners::Copies copies=owners::Copies{.tokens=[owners::Token{.slot=0,.generation=0};8],.count=0};
     if(sources.len!=0){copies=switch(owners::copy_arguments(sources,shapes,data,ref mut next_owners)){
         case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,0));}
