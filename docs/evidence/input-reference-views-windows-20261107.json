@@ -1,0 +1,76 @@
+{
+  "schema": "browniec.input-reference-views-evidence/v1",
+  "status": "passed",
+  "executionRoot": "build/parallel-input-windows",
+  "delivery": "build/input-reference-views-delivery/receipt.json",
+  "deliverySha256": "8fd4d5f1b593dfad130d8b76925cc8bfcf68d3fc40d3ae499ff0f03f3f0c0ff2",
+  "baseCommit": "2d9468180d01e11f2694b654a69660b698697eb2",
+  "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+  "files": [
+    {
+      "path": "src/input_reference_views.fy",
+      "sha256": "fce74e692947b55c01c2ac3bc03003c84e10904277e5c8815563dc0c7dad0e83",
+      "gitBlob": "e68a00f2b04205fd191a5d4b7ceea3da9fd17e8a",
+      "bytes": 5649,
+      "lf": true
+    },
+    {
+      "path": "tests/m2/input_reference_views.fy",
+      "sha256": "86fae9a4d006509a855d9c90edfdb2d62c1fa87cd64cc323b12239c4ead9372e",
+      "gitBlob": "acaf7ff1495e28072b3d937c7bbb8abdea8eaad3",
+      "bytes": 7748,
+      "lf": true
+    },
+    {
+      "path": "tools/verify-input-reference-views.py",
+      "sha256": "d9fa6d189d4dde4f39b868e5221aefbc5d02e26873de53cd03104d67bda22c0f",
+      "gitBlob": "3109666ca36322fefeb42bb94acc2d674ed6677d",
+      "bytes": 8330,
+      "lf": true
+    },
+    {
+      "path": "docs/engineering/input-reference-views.md",
+      "sha256": "a64d89d5b1a58394f181aa9dbdb513c3c2320b8c02ebf38c6f7486f5710dcbd9",
+      "gitBlob": "ae2145693c1de3ee342aa968f6927d9aa8793b3d",
+      "bytes": 5636,
+      "lf": true
+    }
+  ],
+  "basePlusKernelLock": {
+    "path": "build/input-reference-views-delivery/fairy.lock",
+    "sha256": "fb89ad1a2b6f002fac11cf7f07d70eec93b01bbc96037907e51c55f179db0207",
+    "baseSha256": "89d90f46234c73f9a629b7c59e4a9366300a3dc4fbdad2a2110a02e0bcf3cb3e",
+    "root": "fypi1-sha256-3ca0163171f0f9ef3e4caf49db99cdc3d7397cceec54f840257b84561c8f554e",
+    "sourceDigest": "fysrc1-sha256-ac249679cae7d9a6fc1eb9f95ee8110934e7a7824b24f93ceb378431351a33bb",
+    "unchangedSdkIdentity": true,
+    "sourceDelta": [
+      "src/input_reference_views.fy"
+    ],
+    "baseTrackedFilesByteIdenticalExceptLock": 1895
+  },
+  "native": [
+    {
+      "profile": "development",
+      "path": "build/input-reference-views-delivery/development-receipt.json",
+      "sha256": "245203d31d7cd99fa543305dd2db7bcdf9e09f735e377d9c4a8ea366cee293c9"
+    },
+    {
+      "profile": "release",
+      "path": "build/input-reference-views-delivery/release-receipt.json",
+      "sha256": "3a40153d71b24433c7879c51d985184a87940f833578caca3599b5e766c6bf0f"
+    },
+    {
+      "profile": "seams",
+      "path": "build/input-reference-views-delivery/seams-receipt.json",
+      "sha256": "21f48c14747395b4cf05867965a7783889019d3c6fbd970e964aa5a5f021aa43"
+    }
+  ],
+  "publicApiDeviations": [],
+  "nativeResultsReused": true,
+  "featureInputsMatchCheckout": true,
+  "limitations": [
+    "Pinned Windows AMD64 Cell stride24 offsets0/8/16, little endian; generated C guards passed.",
+    "Marker is not authority. Main owns proof/live-frame/source identity/selected-grant checks and Fuel prepayment.",
+    "Kernel metadata evidence only; VM integration not exercised by this delivery."
+  ]
+}
