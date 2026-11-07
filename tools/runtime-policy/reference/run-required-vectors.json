@@ -1,0 +1,177 @@
+{
+  "schema": "browniec.runtime-policy-vectors/1",
+  "base": "run-base.json",
+  "cases": [
+    {
+      "label": "root.schema",
+      "begin": 2,
+      "end": 29,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing",
+      "policy": 0
+    },
+    {
+      "label": "root.entry",
+      "begin": 29,
+      "end": 73,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing",
+      "policy": 0
+    },
+    {
+      "label": "root.requires",
+      "begin": 73,
+      "end": 87,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing",
+      "policy": 0
+    },
+    {
+      "label": "root.grants",
+      "begin": 87,
+      "end": 99,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing",
+      "policy": 0
+    },
+    {
+      "label": "root.limits",
+      "begin": 97,
+      "end": 378,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing",
+      "policy": 0
+    },
+    {
+      "label": "entry.module",
+      "begin": 38,
+      "end": 54,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing",
+      "policy": 0
+    },
+    {
+      "label": "entry.function",
+      "begin": 52,
+      "end": 70,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing",
+      "policy": 0
+    },
+    {
+      "label": "limits.memory_bytes",
+      "begin": 109,
+      "end": 133,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing",
+      "policy": 0
+    },
+    {
+      "label": "limits.object_bytes",
+      "begin": 133,
+      "end": 156,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing",
+      "policy": 0
+    },
+    {
+      "label": "limits.call_frames",
+      "begin": 156,
+      "end": 174,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing",
+      "policy": 0
+    },
+    {
+      "label": "limits.input_bytes",
+      "begin": 174,
+      "end": 196,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing",
+      "policy": 0
+    },
+    {
+      "label": "limits.output_bytes",
+      "begin": 196,
+      "end": 219,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing",
+      "policy": 0
+    },
+    {
+      "label": "limits.host_request_bytes",
+      "begin": 226,
+      "end": 255,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing",
+      "policy": 0
+    },
+    {
+      "label": "limits.host_response_bytes",
+      "begin": 253,
+      "end": 283,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing",
+      "policy": 0
+    },
+    {
+      "label": "limits.host_calls",
+      "begin": 278,
+      "end": 295,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing",
+      "policy": 0
+    },
+    {
+      "label": "limits.owner_entries",
+      "begin": 295,
+      "end": 317,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing",
+      "policy": 0
+    },
+    {
+      "label": "limits.descriptor_entries",
+      "begin": 317,
+      "end": 344,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing",
+      "policy": 0
+    },
+    {
+      "label": "limits.fuel",
+      "begin": 344,
+      "end": 360,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing",
+      "policy": 0
+    },
+    {
+      "label": "limits.deadline_ms",
+      "begin": 358,
+      "end": 377,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing",
+      "policy": 0
+    }
+  ]
+}

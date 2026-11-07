@@ -1,0 +1,120 @@
+{
+  "schema": "browniec.runtime-policy-vectors/1",
+  "base": "run-base.json",
+  "cases": [
+    {
+      "label": "memory_bytes.over-policy",
+      "begin": 130,
+      "end": 131,
+      "replacement_hex": "37",
+      "accepted": false,
+      "failure": "Authority",
+      "policy": 0
+    },
+    {
+      "label": "object_bytes.over-policy",
+      "begin": 153,
+      "end": 154,
+      "replacement_hex": "35",
+      "accepted": false,
+      "failure": "Authority",
+      "policy": 0
+    },
+    {
+      "label": "call_frames.over-policy",
+      "begin": 171,
+      "end": 172,
+      "replacement_hex": "39",
+      "accepted": false,
+      "failure": "Authority",
+      "policy": 0
+    },
+    {
+      "label": "host_calls.over-policy",
+      "begin": 292,
+      "end": 293,
+      "replacement_hex": "37",
+      "accepted": false,
+      "failure": "Authority",
+      "policy": 0
+    },
+    {
+      "label": "fuel.over-policy",
+      "begin": 357,
+      "end": 358,
+      "replacement_hex": "31",
+      "accepted": false,
+      "failure": "Authority",
+      "policy": 0
+    },
+    {
+      "label": "deadline_ms.over-policy",
+      "begin": 376,
+      "end": 377,
+      "replacement_hex": "31",
+      "accepted": false,
+      "failure": "Authority",
+      "policy": 0
+    },
+    {
+      "label": "missing-grant",
+      "begin": 84,
+      "end": 84,
+      "replacement_hex": "22686f73742e6578616d706c652e636865636b22",
+      "accepted": false,
+      "failure": "Authority",
+      "policy": 2
+    },
+    {
+      "label": "not-in-policy",
+      "begin": 96,
+      "end": 96,
+      "replacement_hex": "22686f73742e6578616d706c652e636865636b22",
+      "accepted": false,
+      "failure": "Authority",
+      "policy": 0
+    },
+    {
+      "label": "exact",
+      "begin": 84,
+      "end": 96,
+      "replacement_hex": "22686f73742e6578616d706c652e636865636b225d2c226772616e7473223a5b22686f73742e6578616d706c652e636865636b22",
+      "accepted": true,
+      "policy": 2
+    },
+    {
+      "label": "extra-grant",
+      "begin": 96,
+      "end": 96,
+      "replacement_hex": "22686f73742e6578616d706c652e636865636b22",
+      "accepted": true,
+      "policy": 2
+    },
+    {
+      "label": "requires-outside",
+      "begin": 84,
+      "end": 96,
+      "replacement_hex": "22612e62225d2c226772616e7473223a5b22686f73742e6578616d706c652e636865636b22",
+      "accepted": false,
+      "failure": "Authority",
+      "policy": 2
+    },
+    {
+      "label": "output",
+      "begin": 84,
+      "end": 96,
+      "replacement_hex": "2262726f776e69652e6f75747075742e656d6974225d2c226772616e7473223a5b2262726f776e69652e6f75747075742e656d697422",
+      "accepted": true,
+      "policy": 1
+    },
+    {
+      "label": "memory-cross-field",
+      "begin": 124,
+      "end": 131,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Relation",
+      "policy": 0
+    }
+  ]
+}

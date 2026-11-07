@@ -1,0 +1,222 @@
+{
+  "schema": "browniec.runtime-policy-vectors/1",
+  "base": "run-base.json",
+  "cases": [
+    {
+      "label": "memory_bytes.under",
+      "begin": 123,
+      "end": 131,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value",
+      "policy": 0
+    },
+    {
+      "label": "memory_bytes.over-schema",
+      "begin": 123,
+      "end": 131,
+      "replacement_hex": "323638343335343537",
+      "accepted": false,
+      "failure": "Value",
+      "policy": 0
+    },
+    {
+      "label": "object_bytes.under",
+      "begin": 147,
+      "end": 154,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value",
+      "policy": 0
+    },
+    {
+      "label": "object_bytes.over-schema",
+      "begin": 147,
+      "end": 154,
+      "replacement_hex": "3136373737323137",
+      "accepted": false,
+      "failure": "Value",
+      "policy": 0
+    },
+    {
+      "label": "call_frames.under",
+      "begin": 169,
+      "end": 172,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value",
+      "policy": 0
+    },
+    {
+      "label": "call_frames.over-schema",
+      "begin": 169,
+      "end": 172,
+      "replacement_hex": "34303937",
+      "accepted": false,
+      "failure": "Value",
+      "policy": 0
+    },
+    {
+      "label": "input_bytes.under",
+      "begin": 187,
+      "end": 194,
+      "replacement_hex": "2d31",
+      "accepted": false,
+      "failure": "Value",
+      "policy": 0
+    },
+    {
+      "label": "input_bytes.over-schema",
+      "begin": 193,
+      "end": 194,
+      "replacement_hex": "37",
+      "accepted": false,
+      "failure": "Value",
+      "policy": 0
+    },
+    {
+      "label": "output_bytes.under",
+      "begin": 210,
+      "end": 217,
+      "replacement_hex": "2d31",
+      "accepted": false,
+      "failure": "Value",
+      "policy": 0
+    },
+    {
+      "label": "output_bytes.over-schema",
+      "begin": 216,
+      "end": 217,
+      "replacement_hex": "37",
+      "accepted": false,
+      "failure": "Value",
+      "policy": 0
+    },
+    {
+      "label": "host_request_bytes.under",
+      "begin": 239,
+      "end": 246,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value",
+      "policy": 0
+    },
+    {
+      "label": "host_request_bytes.over-schema",
+      "begin": 245,
+      "end": 246,
+      "replacement_hex": "37",
+      "accepted": false,
+      "failure": "Value",
+      "policy": 0
+    },
+    {
+      "label": "host_response_bytes.under",
+      "begin": 269,
+      "end": 276,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value",
+      "policy": 0
+    },
+    {
+      "label": "host_response_bytes.over-schema",
+      "begin": 275,
+      "end": 276,
+      "replacement_hex": "37",
+      "accepted": false,
+      "failure": "Value",
+      "policy": 0
+    },
+    {
+      "label": "host_calls.under",
+      "begin": 290,
+      "end": 293,
+      "replacement_hex": "2d31",
+      "accepted": false,
+      "failure": "Value",
+      "policy": 0
+    },
+    {
+      "label": "host_calls.over-schema",
+      "begin": 290,
+      "end": 292,
+      "replacement_hex": "36353533",
+      "accepted": false,
+      "failure": "Value",
+      "policy": 0
+    },
+    {
+      "label": "owner_entries.under",
+      "begin": 310,
+      "end": 315,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value",
+      "policy": 0
+    },
+    {
+      "label": "owner_entries.over-schema",
+      "begin": 314,
+      "end": 315,
+      "replacement_hex": "35",
+      "accepted": false,
+      "failure": "Value",
+      "policy": 0
+    },
+    {
+      "label": "descriptor_entries.under",
+      "begin": 337,
+      "end": 342,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value",
+      "policy": 0
+    },
+    {
+      "label": "descriptor_entries.over-schema",
+      "begin": 341,
+      "end": 342,
+      "replacement_hex": "35",
+      "accepted": false,
+      "failure": "Value",
+      "policy": 0
+    },
+    {
+      "label": "fuel.under",
+      "begin": 350,
+      "end": 357,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Value",
+      "policy": 0
+    },
+    {
+      "label": "fuel.over-schema",
+      "begin": 358,
+      "end": 358,
+      "replacement_hex": "3030303031",
+      "accepted": false,
+      "failure": "Value",
+      "policy": 0
+    },
+    {
+      "label": "deadline_ms.under",
+      "begin": 373,
+      "end": 376,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Value",
+      "policy": 0
+    },
+    {
+      "label": "deadline_ms.over-schema",
+      "begin": 373,
+      "end": 377,
+      "replacement_hex": "3630303031",
+      "accepted": false,
+      "failure": "Value",
+      "policy": 0
+    }
+  ]
+}

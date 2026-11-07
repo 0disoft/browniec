@@ -1,0 +1,225 @@
+{
+  "schema": "browniec.runtime-policy-vectors/1",
+  "base": "run-base.json",
+  "cases": [
+    {
+      "label": "unknown.None",
+      "begin": 378,
+      "end": 378,
+      "replacement_hex": "2c22756e6b6e6f776e223a30",
+      "accepted": false,
+      "failure": "Unknown",
+      "policy": 0
+    },
+    {
+      "label": "unknown.entry",
+      "begin": 70,
+      "end": 70,
+      "replacement_hex": "2c22756e6b6e6f776e223a30",
+      "accepted": false,
+      "failure": "Unknown",
+      "policy": 0
+    },
+    {
+      "label": "unknown.limits",
+      "begin": 377,
+      "end": 377,
+      "replacement_hex": "2c22756e6b6e6f776e223a30",
+      "accepted": false,
+      "failure": "Unknown",
+      "policy": 0
+    },
+    {
+      "label": "bad-entry.225c75643833645c756465303022",
+      "begin": 47,
+      "end": 51,
+      "replacement_hex": "5c75643833645c7564653030",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "bad-entry.225c756438303022",
+      "begin": 47,
+      "end": 51,
+      "replacement_hex": "5c7564383030",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "bad-entry.22615c753030303022",
+      "begin": 47,
+      "end": 51,
+      "replacement_hex": "615c7530303030",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "bad-entry.225c7122",
+      "begin": 47,
+      "end": 51,
+      "replacement_hex": "5c71",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "bad-entry.22ff22",
+      "begin": 47,
+      "end": 51,
+      "replacement_hex": "ff",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "bad-entry.22c3a922",
+      "begin": 47,
+      "end": 51,
+      "replacement_hex": "c3a9",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "empty",
+      "begin": 0,
+      "end": 379,
+      "replacement_hex": "",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "array",
+      "begin": 0,
+      "end": 379,
+      "replacement_hex": "5b5d",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "empty-object",
+      "begin": 1,
+      "end": 378,
+      "replacement_hex": "",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "bom",
+      "begin": 0,
+      "end": 0,
+      "replacement_hex": "efbbbf",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "trailing-root",
+      "begin": 379,
+      "end": 379,
+      "replacement_hex": "7b7d",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "comma",
+      "begin": 378,
+      "end": 378,
+      "replacement_hex": "2c",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "entry-comma",
+      "begin": 70,
+      "end": 70,
+      "replacement_hex": "2c",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "array-comma",
+      "begin": 84,
+      "end": 84,
+      "replacement_hex": "22612e62222c",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "missing-comma",
+      "begin": 27,
+      "end": 28,
+      "replacement_hex": "20",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "wrong-schema",
+      "begin": 25,
+      "end": 26,
+      "replacement_hex": "34",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "integer.-0",
+      "begin": 350,
+      "end": 357,
+      "replacement_hex": "2d",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "integer.01",
+      "begin": 350,
+      "end": 358,
+      "replacement_hex": "3031",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "integer.1.0",
+      "begin": 351,
+      "end": 357,
+      "replacement_hex": "2e",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "integer.1e1",
+      "begin": 351,
+      "end": 358,
+      "replacement_hex": "6531",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "integer.18446744073709551616",
+      "begin": 351,
+      "end": 358,
+      "replacement_hex": "38343436373434303733373039353531363136",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "integer.9999999999999999999999999",
+      "begin": 350,
+      "end": 358,
+      "replacement_hex": "39393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "integer.true",
+      "begin": 350,
+      "end": 358,
+      "replacement_hex": "74727565",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "integer.null",
+      "begin": 350,
+      "end": 358,
+      "replacement_hex": "6e756c6c",
+      "accepted": false,
+      "policy": 0
+    }
+  ]
+}

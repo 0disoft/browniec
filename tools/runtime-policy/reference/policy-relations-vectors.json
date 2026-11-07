@@ -1,0 +1,134 @@
+{
+  "schema": "browniec.runtime-policy-vectors/1",
+  "base": "policy-base.json",
+  "cases": [
+    {
+      "label": "0.run.object_bytes",
+      "begin": 484,
+      "end": 514,
+      "replacement_hex": "2c226f626a6563745f6279746573223a3136373737323136",
+      "accepted": false,
+      "failure": "Relation"
+    },
+    {
+      "label": "1.run.input_bytes",
+      "begin": 484,
+      "end": 491,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Relation"
+    },
+    {
+      "label": "2.run.output_bytes",
+      "begin": 484,
+      "end": 491,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Relation"
+    },
+    {
+      "label": "3.run.host_request_bytes",
+      "begin": 484,
+      "end": 491,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Relation"
+    },
+    {
+      "label": "4.run.host_response_bytes",
+      "begin": 484,
+      "end": 491,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Relation"
+    },
+    {
+      "label": "5.run.memory_bytes",
+      "begin": 484,
+      "end": 491,
+      "replacement_hex": "3334323137373238",
+      "accepted": false,
+      "failure": "Relation"
+    },
+    {
+      "label": "6.engine.program_bytes",
+      "begin": 340,
+      "end": 378,
+      "replacement_hex": "36373130383836342c22746f74616c5f70726f6772616d5f6279746573223a31",
+      "accepted": false,
+      "failure": "Relation"
+    },
+    {
+      "label": "7.compile.working_bytes",
+      "begin": 203,
+      "end": 211,
+      "replacement_hex": "323638343335343536",
+      "accepted": false,
+      "failure": "Relation"
+    },
+    {
+      "label": "8.engine.control_bytes",
+      "begin": 291,
+      "end": 323,
+      "replacement_hex": "2c22636f6e74726f6c5f6279746573223a34313934333034",
+      "accepted": false,
+      "failure": "Relation"
+    },
+    {
+      "label": "9.engine.total_program_bytes",
+      "begin": 370,
+      "end": 378,
+      "replacement_hex": "353336383730393132",
+      "accepted": false,
+      "failure": "Relation"
+    },
+    {
+      "label": "10.engine.instances_bytes",
+      "begin": 397,
+      "end": 405,
+      "replacement_hex": "353336383730393132",
+      "accepted": false,
+      "failure": "Relation"
+    },
+    {
+      "label": "11.worker.memory_bytes",
+      "begin": 764,
+      "end": 773,
+      "replacement_hex": "31",
+      "accepted": false,
+      "failure": "Relation"
+    },
+    {
+      "label": "12.compile.source_bytes",
+      "begin": 203,
+      "end": 211,
+      "replacement_hex": "31",
+      "accepted": false,
+      "failure": "Relation"
+    },
+    {
+      "label": "13.worker.startup_ms",
+      "begin": 855,
+      "end": 856,
+      "replacement_hex": "3630",
+      "accepted": false,
+      "failure": "Relation"
+    },
+    {
+      "label": "14.compile.deadline_ms",
+      "begin": 242,
+      "end": 243,
+      "replacement_hex": "3630",
+      "accepted": false,
+      "failure": "Relation"
+    },
+    {
+      "label": "15.run.deadline_ms",
+      "begin": 733,
+      "end": 734,
+      "replacement_hex": "3630",
+      "accepted": false,
+      "failure": "Relation"
+    }
+  ]
+}

@@ -1,0 +1,249 @@
+{
+  "schema": "browniec.runtime-policy-vectors/1",
+  "base": "policy-base.json",
+  "cases": [
+    {
+      "label": "unknown.None",
+      "begin": 939,
+      "end": 939,
+      "replacement_hex": "2c22756e6b6e6f776e223a30",
+      "accepted": false,
+      "failure": "Unknown"
+    },
+    {
+      "label": "unknown.compile",
+      "begin": 263,
+      "end": 263,
+      "replacement_hex": "2c22756e6b6e6f776e223a30",
+      "accepted": false,
+      "failure": "Unknown"
+    },
+    {
+      "label": "unknown.engine",
+      "begin": 459,
+      "end": 459,
+      "replacement_hex": "2c22756e6b6e6f776e223a30",
+      "accepted": false,
+      "failure": "Unknown"
+    },
+    {
+      "label": "unknown.run",
+      "begin": 737,
+      "end": 737,
+      "replacement_hex": "2c22756e6b6e6f776e223a30",
+      "accepted": false,
+      "failure": "Unknown"
+    },
+    {
+      "label": "unknown.worker",
+      "begin": 920,
+      "end": 920,
+      "replacement_hex": "2c22756e6b6e6f776e223a30",
+      "accepted": false,
+      "failure": "Unknown"
+    },
+    {
+      "label": "integer.-0",
+      "begin": 710,
+      "end": 717,
+      "replacement_hex": "2d",
+      "accepted": false
+    },
+    {
+      "label": "integer.-1",
+      "begin": 710,
+      "end": 718,
+      "replacement_hex": "2d31",
+      "accepted": false
+    },
+    {
+      "label": "integer.01",
+      "begin": 710,
+      "end": 718,
+      "replacement_hex": "3031",
+      "accepted": false
+    },
+    {
+      "label": "integer.1.0",
+      "begin": 711,
+      "end": 717,
+      "replacement_hex": "2e",
+      "accepted": false
+    },
+    {
+      "label": "integer.1e0",
+      "begin": 711,
+      "end": 717,
+      "replacement_hex": "65",
+      "accepted": false
+    },
+    {
+      "label": "integer.1E+0",
+      "begin": 711,
+      "end": 717,
+      "replacement_hex": "452b",
+      "accepted": false
+    },
+    {
+      "label": "integer.18446744073709551615",
+      "begin": 711,
+      "end": 718,
+      "replacement_hex": "38343436373434303733373039353531363135",
+      "accepted": false
+    },
+    {
+      "label": "integer.18446744073709551616",
+      "begin": 711,
+      "end": 718,
+      "replacement_hex": "38343436373434303733373039353531363136",
+      "accepted": false
+    },
+    {
+      "label": "integer.9999999999999999999999999",
+      "begin": 710,
+      "end": 718,
+      "replacement_hex": "39393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939393939",
+      "accepted": false
+    },
+    {
+      "label": "integer.9223372036854775808",
+      "begin": 710,
+      "end": 718,
+      "replacement_hex": "39323233333732303336383534373735383038",
+      "accepted": false
+    },
+    {
+      "label": "integer.true",
+      "begin": 710,
+      "end": 718,
+      "replacement_hex": "74727565",
+      "accepted": false
+    },
+    {
+      "label": "integer.null",
+      "begin": 710,
+      "end": 718,
+      "replacement_hex": "6e756c6c",
+      "accepted": false
+    },
+    {
+      "label": "integer.\"1\"",
+      "begin": 710,
+      "end": 718,
+      "replacement_hex": "223122",
+      "accepted": false
+    },
+    {
+      "label": "empty",
+      "begin": 0,
+      "end": 940,
+      "replacement_hex": "",
+      "accepted": false
+    },
+    {
+      "label": "array",
+      "begin": 0,
+      "end": 940,
+      "replacement_hex": "5b5d",
+      "accepted": false
+    },
+    {
+      "label": "null",
+      "begin": 0,
+      "end": 940,
+      "replacement_hex": "6e756c6c",
+      "accepted": false
+    },
+    {
+      "label": "bom",
+      "begin": 0,
+      "end": 0,
+      "replacement_hex": "efbbbf",
+      "accepted": false
+    },
+    {
+      "label": "trailing-root",
+      "begin": 940,
+      "end": 940,
+      "replacement_hex": "7b7d",
+      "accepted": false
+    },
+    {
+      "label": "trailing-garbage",
+      "begin": 940,
+      "end": 940,
+      "replacement_hex": "78",
+      "accepted": false
+    },
+    {
+      "label": "root-comma",
+      "begin": 939,
+      "end": 939,
+      "replacement_hex": "2c",
+      "accepted": false
+    },
+    {
+      "label": "missing-comma",
+      "begin": 30,
+      "end": 31,
+      "replacement_hex": "20",
+      "accepted": false
+    },
+    {
+      "label": "missing-colon",
+      "begin": 9,
+      "end": 10,
+      "replacement_hex": "20",
+      "accepted": false
+    },
+    {
+      "label": "bad-escape",
+      "begin": 11,
+      "end": 25,
+      "replacement_hex": "5c71",
+      "accepted": false
+    },
+    {
+      "label": "unpaired-high",
+      "begin": 11,
+      "end": 25,
+      "replacement_hex": "5c7564383030",
+      "accepted": false
+    },
+    {
+      "label": "unpaired-low",
+      "begin": 11,
+      "end": 25,
+      "replacement_hex": "5c7564633030",
+      "accepted": false
+    },
+    {
+      "label": "invalid-utf8",
+      "begin": 11,
+      "end": 25,
+      "replacement_hex": "ff",
+      "accepted": false
+    },
+    {
+      "label": "raw-control",
+      "begin": 11,
+      "end": 25,
+      "replacement_hex": "01",
+      "accepted": false
+    },
+    {
+      "label": "nested-unknown",
+      "begin": 2,
+      "end": 938,
+      "replacement_hex": "756e6b6e6f776e223a5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b305d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d",
+      "accepted": false
+    },
+    {
+      "label": "empty-object",
+      "begin": 1,
+      "end": 939,
+      "replacement_hex": "",
+      "accepted": false
+    }
+  ]
+}

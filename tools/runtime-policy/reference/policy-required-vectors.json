@@ -1,0 +1,374 @@
+{
+  "schema": "browniec.runtime-policy-vectors/1",
+  "base": "policy-base.json",
+  "cases": [
+    {
+      "label": "compile.source_bytes",
+      "begin": 43,
+      "end": 65,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "compile.modules",
+      "begin": 65,
+      "end": 78,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "compile.depth",
+      "begin": 78,
+      "end": 90,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "compile.tokens",
+      "begin": 90,
+      "end": 106,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "compile.functions",
+      "begin": 106,
+      "end": 123,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "compile.types",
+      "begin": 123,
+      "end": 136,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "compile.instructions",
+      "begin": 136,
+      "end": 158,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "compile.registers_per_function",
+      "begin": 158,
+      "end": 188,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "compile.working_bytes",
+      "begin": 188,
+      "end": 213,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "compile.fuel",
+      "begin": 213,
+      "end": 229,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "compile.deadline_ms",
+      "begin": 230,
+      "end": 249,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "compile.diagnostics",
+      "begin": 246,
+      "end": 263,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "engine.memory_bytes",
+      "begin": 276,
+      "end": 301,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "engine.control_bytes",
+      "begin": 301,
+      "end": 325,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "engine.program_bytes",
+      "begin": 325,
+      "end": 349,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "engine.total_program_bytes",
+      "begin": 349,
+      "end": 380,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "engine.instances_bytes",
+      "begin": 380,
+      "end": 407,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "engine.max_programs",
+      "begin": 411,
+      "end": 429,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "engine.max_instances",
+      "begin": 429,
+      "end": 448,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "engine.max_compiles",
+      "begin": 442,
+      "end": 459,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "run.memory_bytes",
+      "begin": 469,
+      "end": 493,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "run.object_bytes",
+      "begin": 493,
+      "end": 516,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "run.call_frames",
+      "begin": 516,
+      "end": 534,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "run.input_bytes",
+      "begin": 534,
+      "end": 556,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "run.output_bytes",
+      "begin": 556,
+      "end": 579,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "run.host_request_bytes",
+      "begin": 586,
+      "end": 615,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "run.host_response_bytes",
+      "begin": 613,
+      "end": 643,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "run.host_calls",
+      "begin": 638,
+      "end": 655,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "run.owner_entries",
+      "begin": 655,
+      "end": 677,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "run.descriptor_entries",
+      "begin": 677,
+      "end": 704,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "run.fuel",
+      "begin": 704,
+      "end": 720,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "run.deadline_ms",
+      "begin": 718,
+      "end": 737,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "worker.memory_bytes",
+      "begin": 750,
+      "end": 775,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "worker.user_cpu_time_ms",
+      "begin": 775,
+      "end": 799,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "worker.max_processes",
+      "begin": 799,
+      "end": 817,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "worker.transport_bytes",
+      "begin": 817,
+      "end": 843,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "worker.startup_ms",
+      "begin": 843,
+      "end": 861,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "worker.io_idle_ms",
+      "begin": 861,
+      "end": 879,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "worker.shutdown_grace_ms",
+      "begin": 880,
+      "end": 904,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "worker.session_ms",
+      "begin": 901,
+      "end": 920,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "root.schema",
+      "begin": 2,
+      "end": 32,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "root.compile",
+      "begin": 32,
+      "end": 266,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "root.engine",
+      "begin": 266,
+      "end": 462,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "root.run",
+      "begin": 462,
+      "end": 740,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "root.worker",
+      "begin": 740,
+      "end": 923,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    },
+    {
+      "label": "root.capabilities",
+      "begin": 921,
+      "end": 939,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Missing"
+    }
+  ]
+}

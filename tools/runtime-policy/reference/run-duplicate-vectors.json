@@ -1,0 +1,177 @@
+{
+  "schema": "browniec.runtime-policy-vectors/1",
+  "base": "run-base.json",
+  "cases": [
+    {
+      "label": "root.schema",
+      "begin": 2,
+      "end": 2,
+      "replacement_hex": "5c75303037336368656d61223a2262726f776e69652e72756e2f302e33222c22",
+      "accepted": false,
+      "failure": "Duplicate",
+      "policy": 0
+    },
+    {
+      "label": "root.entry",
+      "begin": 2,
+      "end": 2,
+      "replacement_hex": "5c75303036356e747279223a7b226d6f64756c65223a226d61696e222c2266756e6374696f6e223a226d61696e227d2c22",
+      "accepted": false,
+      "failure": "Duplicate",
+      "policy": 0
+    },
+    {
+      "label": "root.requires",
+      "begin": 2,
+      "end": 2,
+      "replacement_hex": "5c753030373265717569726573223a5b5d2c22",
+      "accepted": false,
+      "failure": "Duplicate",
+      "policy": 0
+    },
+    {
+      "label": "root.grants",
+      "begin": 2,
+      "end": 2,
+      "replacement_hex": "5c753030363772616e7473223a5b5d2c22",
+      "accepted": false,
+      "failure": "Duplicate",
+      "policy": 0
+    },
+    {
+      "label": "root.limits",
+      "begin": 2,
+      "end": 2,
+      "replacement_hex": "5c7530303663696d697473223a7b226d656d6f72795f6279746573223a31363737373231362c226f626a6563745f6279746573223a343139343330342c2263616c6c5f6672616d6573223a3132382c22696e7075745f6279746573223a313034383537362c226f75747075745f6279746573223a313034383537362c22686f73745f726571756573745f6279746573223a313034383537362c22686f73745f726573706f6e73655f6279746573223a313034383537362c22686f73745f63616c6c73223a3235362c226f776e65725f656e7472696573223a31363338342c2264657363726970746f725f656e7472696573223a31363338342c226675656c223a31303030303030302c22646561646c696e655f6d73223a313030307d2c22",
+      "accepted": false,
+      "failure": "Duplicate",
+      "policy": 0
+    },
+    {
+      "label": "entry.module",
+      "begin": 38,
+      "end": 38,
+      "replacement_hex": "5c75303036646f64756c65223a226d61696e222c22",
+      "accepted": false,
+      "failure": "Duplicate",
+      "policy": 0
+    },
+    {
+      "label": "entry.function",
+      "begin": 38,
+      "end": 38,
+      "replacement_hex": "5c7530303636756e6374696f6e223a226d61696e222c22",
+      "accepted": false,
+      "failure": "Duplicate",
+      "policy": 0
+    },
+    {
+      "label": "limits.memory_bytes",
+      "begin": 109,
+      "end": 109,
+      "replacement_hex": "5c7530303664656d6f72795f6279746573223a31363737373231362c22",
+      "accepted": false,
+      "failure": "Duplicate",
+      "policy": 0
+    },
+    {
+      "label": "limits.object_bytes",
+      "begin": 109,
+      "end": 109,
+      "replacement_hex": "5c7530303666626a6563745f6279746573223a343139343330342c22",
+      "accepted": false,
+      "failure": "Duplicate",
+      "policy": 0
+    },
+    {
+      "label": "limits.call_frames",
+      "begin": 109,
+      "end": 109,
+      "replacement_hex": "5c7530303633616c6c5f6672616d6573223a3132382c22",
+      "accepted": false,
+      "failure": "Duplicate",
+      "policy": 0
+    },
+    {
+      "label": "limits.input_bytes",
+      "begin": 109,
+      "end": 109,
+      "replacement_hex": "5c75303036396e7075745f6279746573223a313034383537362c22",
+      "accepted": false,
+      "failure": "Duplicate",
+      "policy": 0
+    },
+    {
+      "label": "limits.output_bytes",
+      "begin": 109,
+      "end": 109,
+      "replacement_hex": "5c753030366675747075745f6279746573223a313034383537362c22",
+      "accepted": false,
+      "failure": "Duplicate",
+      "policy": 0
+    },
+    {
+      "label": "limits.host_request_bytes",
+      "begin": 109,
+      "end": 109,
+      "replacement_hex": "5c75303036386f73745f726571756573745f6279746573223a313034383537362c22",
+      "accepted": false,
+      "failure": "Duplicate",
+      "policy": 0
+    },
+    {
+      "label": "limits.host_response_bytes",
+      "begin": 109,
+      "end": 109,
+      "replacement_hex": "5c75303036386f73745f726573706f6e73655f6279746573223a313034383537362c22",
+      "accepted": false,
+      "failure": "Duplicate",
+      "policy": 0
+    },
+    {
+      "label": "limits.host_calls",
+      "begin": 109,
+      "end": 109,
+      "replacement_hex": "5c75303036386f73745f63616c6c73223a3235362c22",
+      "accepted": false,
+      "failure": "Duplicate",
+      "policy": 0
+    },
+    {
+      "label": "limits.owner_entries",
+      "begin": 109,
+      "end": 109,
+      "replacement_hex": "5c7530303666776e65725f656e7472696573223a31363338342c22",
+      "accepted": false,
+      "failure": "Duplicate",
+      "policy": 0
+    },
+    {
+      "label": "limits.descriptor_entries",
+      "begin": 109,
+      "end": 109,
+      "replacement_hex": "5c7530303634657363726970746f725f656e7472696573223a31363338342c22",
+      "accepted": false,
+      "failure": "Duplicate",
+      "policy": 0
+    },
+    {
+      "label": "limits.fuel",
+      "begin": 109,
+      "end": 109,
+      "replacement_hex": "5c753030363675656c223a31303030303030302c22",
+      "accepted": false,
+      "failure": "Duplicate",
+      "policy": 0
+    },
+    {
+      "label": "limits.deadline_ms",
+      "begin": 109,
+      "end": 109,
+      "replacement_hex": "5c75303036346561646c696e655f6d73223a313030302c22",
+      "accepted": false,
+      "failure": "Duplicate",
+      "policy": 0
+    }
+  ]
+}

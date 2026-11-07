@@ -1,0 +1,54 @@
+{
+  "schema": "brownie.policy/0.3",
+  "compile": {
+    "source_bytes": 262144,
+    "modules": 32,
+    "depth": 128,
+    "tokens": 131072,
+    "functions": 4096,
+    "types": 4096,
+    "instructions": 262144,
+    "registers_per_function": 1024,
+    "working_bytes": 67108864,
+    "fuel": 10000000,
+    "deadline_ms": 2000,
+    "diagnostics": 32
+  },
+  "engine": {
+    "memory_bytes": 134217728,
+    "control_bytes": 1048576,
+    "program_bytes": 8388608,
+    "total_program_bytes": 67108864,
+    "instances_bytes": 67108864,
+    "max_programs": 64,
+    "max_instances": 64,
+    "max_compiles": 1
+  },
+  "run": {
+    "memory_bytes": 16777216,
+    "object_bytes": 4194304,
+    "call_frames": 128,
+    "input_bytes": 1048576,
+    "output_bytes": 1048576,
+    "host_request_bytes": 1048576,
+    "host_response_bytes": 1048576,
+    "host_calls": 256,
+    "owner_entries": 16384,
+    "descriptor_entries": 16384,
+    "fuel": 10000000,
+    "deadline_ms": 1000
+  },
+  "worker": {
+    "memory_bytes": 201326592,
+    "user_cpu_time_ms": 5000,
+    "max_processes": 1,
+    "transport_bytes": 4194304,
+    "startup_ms": 2000,
+    "io_idle_ms": 1000,
+    "shutdown_grace_ms": 250,
+    "session_ms": 10000
+  },
+  "capabilities": [
+    "host.example.check"
+  ]
+}

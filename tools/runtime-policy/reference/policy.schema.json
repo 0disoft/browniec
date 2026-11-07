@@ -1,0 +1,338 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:brownie:policy:0.3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "compile",
+    "engine",
+    "run",
+    "worker",
+    "capabilities"
+  ],
+  "properties": {
+    "schema": {
+      "const": "brownie.policy/0.3"
+    },
+    "compile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_bytes",
+        "modules",
+        "depth",
+        "tokens",
+        "functions",
+        "types",
+        "instructions",
+        "registers_per_function",
+        "working_bytes",
+        "fuel",
+        "deadline_ms",
+        "diagnostics"
+      ],
+      "properties": {
+        "source_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 262144,
+          "default": 262144
+        },
+        "modules": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 32,
+          "default": 32
+        },
+        "depth": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 128,
+          "default": 128
+        },
+        "tokens": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 131072,
+          "default": 131072
+        },
+        "functions": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4096,
+          "default": 4096
+        },
+        "types": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4096,
+          "default": 4096
+        },
+        "instructions": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 262144,
+          "default": 262144
+        },
+        "registers_per_function": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1024,
+          "default": 1024
+        },
+        "working_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 268435456,
+          "default": 67108864
+        },
+        "fuel": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000000,
+          "default": 10000000
+        },
+        "deadline_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 60000,
+          "default": 2000
+        },
+        "diagnostics": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 32,
+          "default": 32
+        }
+      }
+    },
+    "engine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "memory_bytes",
+        "control_bytes",
+        "program_bytes",
+        "total_program_bytes",
+        "instances_bytes",
+        "max_programs",
+        "max_instances",
+        "max_compiles"
+      ],
+      "properties": {
+        "memory_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1073741824,
+          "default": 134217728
+        },
+        "control_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4194304,
+          "default": 1048576
+        },
+        "program_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 67108864,
+          "default": 8388608
+        },
+        "total_program_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 536870912,
+          "default": 67108864
+        },
+        "instances_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 536870912,
+          "default": 67108864
+        },
+        "max_programs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1024,
+          "default": 64
+        },
+        "max_instances": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1024,
+          "default": 64
+        },
+        "max_compiles": {
+          "const": 1,
+          "default": 1
+        }
+      }
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "memory_bytes",
+        "object_bytes",
+        "call_frames",
+        "input_bytes",
+        "output_bytes",
+        "host_request_bytes",
+        "host_response_bytes",
+        "host_calls",
+        "owner_entries",
+        "descriptor_entries",
+        "fuel",
+        "deadline_ms"
+      ],
+      "properties": {
+        "memory_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 268435456,
+          "default": 16777216
+        },
+        "object_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16777216,
+          "default": 4194304
+        },
+        "call_frames": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4096,
+          "default": 128
+        },
+        "input_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1048576,
+          "default": 1048576
+        },
+        "output_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1048576,
+          "default": 1048576
+        },
+        "host_request_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576,
+          "default": 1048576
+        },
+        "host_response_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576,
+          "default": 1048576
+        },
+        "host_calls": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 65535,
+          "default": 256
+        },
+        "owner_entries": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16384,
+          "default": 16384
+        },
+        "descriptor_entries": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16384,
+          "default": 16384
+        },
+        "fuel": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000000000,
+          "default": 10000000
+        },
+        "deadline_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 60000,
+          "default": 1000
+        }
+      }
+    },
+    "worker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "memory_bytes",
+        "user_cpu_time_ms",
+        "max_processes",
+        "transport_bytes",
+        "startup_ms",
+        "io_idle_ms",
+        "shutdown_grace_ms",
+        "session_ms"
+      ],
+      "properties": {
+        "memory_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483648,
+          "default": 201326592
+        },
+        "user_cpu_time_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 120000,
+          "default": 5000
+        },
+        "max_processes": {
+          "const": 1,
+          "default": 1
+        },
+        "transport_bytes": {
+          "const": 4194304,
+          "default": 4194304
+        },
+        "startup_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 60000,
+          "default": 2000
+        },
+        "io_idle_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 60000,
+          "default": 1000
+        },
+        "shutdown_grace_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5000,
+          "default": 250
+        },
+        "session_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 120000,
+          "default": 10000
+        }
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 65,
+      "items": {
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 128,
+        "pattern": "^[a-z][a-z0-9]*(\\.[a-z][a-z0-9]*)+$"
+      },
+      "uniqueItems": true
+    }
+  },
+  "$comment": "Reject duplicate keys and noncanonical JSON integers before JSON Schema. Cross-field checks are in tools/contract_model.py. Defaults are documentation, never inserted silently."
+}

@@ -1,0 +1,166 @@
+{
+  "schema": "browniec.runtime-policy-vectors/1",
+  "base": "run-base.json",
+  "cases": [
+    {
+      "label": "module.std",
+      "begin": 47,
+      "end": 51,
+      "replacement_hex": "737464",
+      "accepted": true,
+      "policy": 0
+    },
+    {
+      "label": "module.brownie::if",
+      "begin": 47,
+      "end": 51,
+      "replacement_hex": "62726f776e69653a3a6966",
+      "accepted": true,
+      "policy": 0
+    },
+    {
+      "label": "module._______________",
+      "begin": 47,
+      "end": 51,
+      "replacement_hex": "5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f",
+      "accepted": true,
+      "policy": 0
+    },
+    {
+      "label": "module.AAAAAAAAAAAAAAA",
+      "begin": 47,
+      "end": 51,
+      "replacement_hex": "41414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141413a3a42",
+      "accepted": true,
+      "policy": 0
+    },
+    {
+      "label": "module.a::",
+      "begin": 47,
+      "end": 51,
+      "replacement_hex": "613a3a",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "module.::a",
+      "begin": 47,
+      "end": 51,
+      "replacement_hex": "3a3a61",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "module.a:b",
+      "begin": 47,
+      "end": 51,
+      "replacement_hex": "613a62",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "module.9a",
+      "begin": 47,
+      "end": 51,
+      "replacement_hex": "3961",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "module.a-b",
+      "begin": 47,
+      "end": 51,
+      "replacement_hex": "612d62",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "module.a::1b",
+      "begin": 47,
+      "end": 51,
+      "replacement_hex": "613a3a3162",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "module.AAAAAAAAAAAAAAA",
+      "begin": 47,
+      "end": 51,
+      "replacement_hex": "414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "module.a.",
+      "begin": 47,
+      "end": 51,
+      "replacement_hex": "612e",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "function.if",
+      "begin": 65,
+      "end": 69,
+      "replacement_hex": "6966",
+      "accepted": true,
+      "policy": 0
+    },
+    {
+      "label": "function._______________",
+      "begin": 65,
+      "end": 69,
+      "replacement_hex": "5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f",
+      "accepted": true,
+      "policy": 0
+    },
+    {
+      "label": "function._______________",
+      "begin": 65,
+      "end": 69,
+      "replacement_hex": "5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "function.9a",
+      "begin": 65,
+      "end": 69,
+      "replacement_hex": "3961",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "function.a::b",
+      "begin": 65,
+      "end": 69,
+      "replacement_hex": "613a3a62",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "function.a-b",
+      "begin": 65,
+      "end": 69,
+      "replacement_hex": "612d62",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "function.",
+      "begin": 65,
+      "end": 69,
+      "replacement_hex": "",
+      "accepted": false,
+      "policy": 0
+    },
+    {
+      "label": "decoded-entry",
+      "begin": 38,
+      "end": 66,
+      "replacement_hex": "5c75303036646f64756c65223a225c753030366461696e222c2266756e6374696f6e223a225c7530303664",
+      "accepted": true,
+      "policy": 0
+    }
+  ]
+}

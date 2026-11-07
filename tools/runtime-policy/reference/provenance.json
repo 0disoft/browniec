@@ -1,0 +1,55 @@
+{
+  "archive": "brownie-c-design-v0.3.0.zip",
+  "archiveSha256": "9786d2d2a0d0cd9048a47d17f6fd5c4574cdbcaeec00d17570602fa541b7dc5e",
+  "base": "845a05623d28e9eea348500debedbe264905c5f9",
+  "entries": [
+    {
+      "path": "brownie-c-design-v0.3.0/contracts/policy.fuel-test.json",
+      "sha256": "cc155787a76c695b6a366381a05d2a90a99a358e62a47ecc62ded74103e07f19"
+    },
+    {
+      "path": "brownie-c-design-v0.3.0/contracts/policy.host-test.json",
+      "sha256": "e96cde17ba3c143da1375afa0a373975a96b386845bca967e3e57e90549cb692"
+    },
+    {
+      "path": "brownie-c-design-v0.3.0/contracts/policy.output.json",
+      "sha256": "b67120a27df50bb8f0a090b6b0eba2d83fbc89f4a1401d54c6e927023d2f5f16"
+    },
+    {
+      "path": "brownie-c-design-v0.3.0/contracts/policy.pure.json",
+      "sha256": "ac97bfbddfa1249a8d81ac19a19989cf6af301a0854275d0d00caed4fd15d85f"
+    },
+    {
+      "path": "brownie-c-design-v0.3.0/contracts/policy.schema.json",
+      "sha256": "511b2c1269c6ecb94ee92dab4ca96fd7cc8d6cdd39250b6932dba91edd30ad73"
+    },
+    {
+      "path": "brownie-c-design-v0.3.0/contracts/policy.worker.json",
+      "sha256": "f68ce98ed72c65b4b8db402b956a34806854fb10828a2ec577f4cd5620baa4f1"
+    },
+    {
+      "path": "brownie-c-design-v0.3.0/contracts/run-config.example.json",
+      "sha256": "5fbbc74b6940a71a68566155d4d862afe21025e9f205c515f6bd8f4f95a7311e"
+    },
+    {
+      "path": "brownie-c-design-v0.3.0/contracts/run-config.schema.json",
+      "sha256": "6a28559bc81fe0fd1825ca74be5b0baeaf2e623a10e049d45b3c3d8a5d6265f3"
+    },
+    {
+      "path": "brownie-c-design-v0.3.0/tools/contract_model.py",
+      "sha256": "26ab73ac5af47d16bf7d8a3b38e31ee2e5f305a2ee37c2fb0baa60f42b02806b"
+    },
+    {
+      "path": "brownie-c-design-v0.3.0/docs/07-security-and-limits.md",
+      "sha256": "130563af74019b38db7c3d49a91e5e4c5c06593ff6e1c799d3f6ddb8eaf7d18d"
+    },
+    {
+      "path": "brownie-c-design-v0.3.0/docs/24-api-handles-and-failure.md",
+      "sha256": "5f5484b178fcffb76b70b81a05c3db4dfa1eac025aa0e99ef3aa7558f6e99b2f"
+    },
+    {
+      "path": "brownie-c-design-v0.3.0/contracts/README.md",
+      "sha256": "f652d4fd54b9d262cd487ca0a87241375595a1a159c427ffbec40402f411028d"
+    }
+  ]
+}

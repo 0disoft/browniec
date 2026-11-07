@@ -1,0 +1,646 @@
+{
+  "schema": "browniec.runtime-policy-vectors/1",
+  "base": "policy-base.json",
+  "cases": [
+    {
+      "label": "compile.source_bytes.under",
+      "begin": 57,
+      "end": 63,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "compile.source_bytes.over",
+      "begin": 62,
+      "end": 63,
+      "replacement_hex": "35",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "compile.modules.under",
+      "begin": 74,
+      "end": 76,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "compile.modules.over",
+      "begin": 75,
+      "end": 76,
+      "replacement_hex": "33",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "compile.depth.under",
+      "begin": 85,
+      "end": 88,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "compile.depth.over",
+      "begin": 87,
+      "end": 88,
+      "replacement_hex": "39",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "compile.tokens.under",
+      "begin": 98,
+      "end": 104,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "compile.tokens.over",
+      "begin": 103,
+      "end": 104,
+      "replacement_hex": "33",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "compile.functions.under",
+      "begin": 117,
+      "end": 121,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "compile.functions.over",
+      "begin": 120,
+      "end": 121,
+      "replacement_hex": "37",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "compile.types.under",
+      "begin": 130,
+      "end": 134,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "compile.types.over",
+      "begin": 133,
+      "end": 134,
+      "replacement_hex": "37",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "compile.instructions.under",
+      "begin": 150,
+      "end": 156,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "compile.instructions.over",
+      "begin": 155,
+      "end": 156,
+      "replacement_hex": "35",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "compile.registers_per_function.under",
+      "begin": 182,
+      "end": 186,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "compile.registers_per_function.over",
+      "begin": 185,
+      "end": 186,
+      "replacement_hex": "35",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "compile.working_bytes.under",
+      "begin": 203,
+      "end": 211,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "compile.working_bytes.over",
+      "begin": 203,
+      "end": 211,
+      "replacement_hex": "323638343335343537",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "compile.fuel.under",
+      "begin": 219,
+      "end": 226,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "compile.fuel.over",
+      "begin": 227,
+      "end": 227,
+      "replacement_hex": "3031",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "compile.deadline_ms.under",
+      "begin": 242,
+      "end": 245,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "compile.deadline_ms.over",
+      "begin": 242,
+      "end": 246,
+      "replacement_hex": "3630303031",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "compile.diagnostics.under",
+      "begin": 261,
+      "end": 263,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "compile.diagnostics.over",
+      "begin": 262,
+      "end": 263,
+      "replacement_hex": "33",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "engine.memory_bytes.under",
+      "begin": 290,
+      "end": 299,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "engine.memory_bytes.over",
+      "begin": 291,
+      "end": 299,
+      "replacement_hex": "303733373431383235",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "engine.control_bytes.under",
+      "begin": 316,
+      "end": 323,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "engine.control_bytes.over",
+      "begin": 316,
+      "end": 323,
+      "replacement_hex": "34313934333035",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "engine.program_bytes.under",
+      "begin": 340,
+      "end": 347,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "engine.program_bytes.over",
+      "begin": 340,
+      "end": 347,
+      "replacement_hex": "3637313038383635",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "engine.total_program_bytes.under",
+      "begin": 370,
+      "end": 378,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "engine.total_program_bytes.over",
+      "begin": 370,
+      "end": 378,
+      "replacement_hex": "353336383730393133",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "engine.instances_bytes.under",
+      "begin": 397,
+      "end": 405,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "engine.instances_bytes.over",
+      "begin": 397,
+      "end": 405,
+      "replacement_hex": "353336383730393133",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "engine.max_programs.under",
+      "begin": 421,
+      "end": 423,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "engine.max_programs.over",
+      "begin": 421,
+      "end": 423,
+      "replacement_hex": "31303235",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "engine.max_instances.under",
+      "begin": 440,
+      "end": 442,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "engine.max_instances.over",
+      "begin": 440,
+      "end": 442,
+      "replacement_hex": "31303235",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "engine.max_compiles.under",
+      "begin": 458,
+      "end": 459,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "engine.max_compiles.over",
+      "begin": 458,
+      "end": 459,
+      "replacement_hex": "32",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "run.memory_bytes.under",
+      "begin": 483,
+      "end": 491,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "run.memory_bytes.over",
+      "begin": 483,
+      "end": 491,
+      "replacement_hex": "323638343335343537",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "run.object_bytes.under",
+      "begin": 507,
+      "end": 514,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "run.object_bytes.over",
+      "begin": 507,
+      "end": 514,
+      "replacement_hex": "3136373737323137",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "run.call_frames.under",
+      "begin": 529,
+      "end": 532,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "run.call_frames.over",
+      "begin": 529,
+      "end": 532,
+      "replacement_hex": "34303937",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "run.input_bytes.under",
+      "begin": 547,
+      "end": 554,
+      "replacement_hex": "2d31",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "run.input_bytes.over",
+      "begin": 553,
+      "end": 554,
+      "replacement_hex": "37",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "run.output_bytes.under",
+      "begin": 570,
+      "end": 577,
+      "replacement_hex": "2d31",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "run.output_bytes.over",
+      "begin": 576,
+      "end": 577,
+      "replacement_hex": "37",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "run.host_request_bytes.under",
+      "begin": 599,
+      "end": 606,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "run.host_request_bytes.over",
+      "begin": 605,
+      "end": 606,
+      "replacement_hex": "37",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "run.host_response_bytes.under",
+      "begin": 629,
+      "end": 636,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "run.host_response_bytes.over",
+      "begin": 635,
+      "end": 636,
+      "replacement_hex": "37",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "run.host_calls.under",
+      "begin": 650,
+      "end": 653,
+      "replacement_hex": "2d31",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "run.host_calls.over",
+      "begin": 650,
+      "end": 652,
+      "replacement_hex": "36353533",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "run.owner_entries.under",
+      "begin": 670,
+      "end": 675,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "run.owner_entries.over",
+      "begin": 674,
+      "end": 675,
+      "replacement_hex": "35",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "run.descriptor_entries.under",
+      "begin": 697,
+      "end": 702,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "run.descriptor_entries.over",
+      "begin": 701,
+      "end": 702,
+      "replacement_hex": "35",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "run.fuel.under",
+      "begin": 710,
+      "end": 717,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "run.fuel.over",
+      "begin": 718,
+      "end": 718,
+      "replacement_hex": "3030303031",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "run.deadline_ms.under",
+      "begin": 733,
+      "end": 736,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "run.deadline_ms.over",
+      "begin": 733,
+      "end": 737,
+      "replacement_hex": "3630303031",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "worker.memory_bytes.under",
+      "begin": 764,
+      "end": 773,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "worker.memory_bytes.over",
+      "begin": 765,
+      "end": 773,
+      "replacement_hex": "313437343833363439",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "worker.user_cpu_time_ms.under",
+      "begin": 793,
+      "end": 796,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "worker.user_cpu_time_ms.over",
+      "begin": 793,
+      "end": 797,
+      "replacement_hex": "313230303031",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "worker.max_processes.under",
+      "begin": 814,
+      "end": 815,
+      "replacement_hex": "30",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "worker.max_processes.over",
+      "begin": 814,
+      "end": 815,
+      "replacement_hex": "32",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "worker.transport_bytes.under",
+      "begin": 840,
+      "end": 841,
+      "replacement_hex": "33",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "worker.transport_bytes.over",
+      "begin": 840,
+      "end": 841,
+      "replacement_hex": "35",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "worker.startup_ms.under",
+      "begin": 855,
+      "end": 858,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "worker.startup_ms.over",
+      "begin": 855,
+      "end": 859,
+      "replacement_hex": "3630303031",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "worker.io_idle_ms.under",
+      "begin": 873,
+      "end": 876,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "worker.io_idle_ms.over",
+      "begin": 873,
+      "end": 877,
+      "replacement_hex": "3630303031",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "worker.shutdown_grace_ms.under",
+      "begin": 898,
+      "end": 900,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "worker.shutdown_grace_ms.over",
+      "begin": 898,
+      "end": 901,
+      "replacement_hex": "35303031",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "worker.session_ms.under",
+      "begin": 915,
+      "end": 919,
+      "replacement_hex": "",
+      "accepted": false,
+      "failure": "Value"
+    },
+    {
+      "label": "worker.session_ms.over",
+      "begin": 916,
+      "end": 920,
+      "replacement_hex": "3230303031",
+      "accepted": false,
+      "failure": "Value"
+    }
+  ]
+}

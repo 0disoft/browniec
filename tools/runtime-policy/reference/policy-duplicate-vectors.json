@@ -1,0 +1,374 @@
+{
+  "schema": "browniec.runtime-policy-vectors/1",
+  "base": "policy-base.json",
+  "cases": [
+    {
+      "label": "compile.source_bytes",
+      "begin": 43,
+      "end": 43,
+      "replacement_hex": "5c75303037336f757263655f6279746573223a3236323134342c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "compile.modules",
+      "begin": 43,
+      "end": 43,
+      "replacement_hex": "5c75303036646f64756c6573223a33322c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "compile.depth",
+      "begin": 43,
+      "end": 43,
+      "replacement_hex": "5c753030363465707468223a3132382c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "compile.tokens",
+      "begin": 43,
+      "end": 43,
+      "replacement_hex": "5c75303037346f6b656e73223a3133313037322c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "compile.functions",
+      "begin": 43,
+      "end": 43,
+      "replacement_hex": "5c7530303636756e6374696f6e73223a343039362c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "compile.types",
+      "begin": 43,
+      "end": 43,
+      "replacement_hex": "5c753030373479706573223a343039362c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "compile.instructions",
+      "begin": 43,
+      "end": 43,
+      "replacement_hex": "5c75303036396e737472756374696f6e73223a3236323134342c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "compile.registers_per_function",
+      "begin": 43,
+      "end": 43,
+      "replacement_hex": "5c753030373265676973746572735f7065725f66756e6374696f6e223a313032342c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "compile.working_bytes",
+      "begin": 43,
+      "end": 43,
+      "replacement_hex": "5c75303037376f726b696e675f6279746573223a36373130383836342c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "compile.fuel",
+      "begin": 43,
+      "end": 43,
+      "replacement_hex": "5c753030363675656c223a31303030303030302c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "compile.deadline_ms",
+      "begin": 43,
+      "end": 43,
+      "replacement_hex": "5c75303036346561646c696e655f6d73223a323030302c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "compile.diagnostics",
+      "begin": 43,
+      "end": 43,
+      "replacement_hex": "5c75303036346961676e6f7374696373223a33322c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "engine.memory_bytes",
+      "begin": 276,
+      "end": 276,
+      "replacement_hex": "5c7530303664656d6f72795f6279746573223a3133343231373732382c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "engine.control_bytes",
+      "begin": 276,
+      "end": 276,
+      "replacement_hex": "5c75303036336f6e74726f6c5f6279746573223a313034383537362c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "engine.program_bytes",
+      "begin": 276,
+      "end": 276,
+      "replacement_hex": "5c7530303730726f6772616d5f6279746573223a383338383630382c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "engine.total_program_bytes",
+      "begin": 276,
+      "end": 276,
+      "replacement_hex": "5c75303037346f74616c5f70726f6772616d5f6279746573223a36373130383836342c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "engine.instances_bytes",
+      "begin": 276,
+      "end": 276,
+      "replacement_hex": "5c75303036396e7374616e6365735f6279746573223a36373130383836342c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "engine.max_programs",
+      "begin": 276,
+      "end": 276,
+      "replacement_hex": "5c753030366461785f70726f6772616d73223a36342c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "engine.max_instances",
+      "begin": 276,
+      "end": 276,
+      "replacement_hex": "5c753030366461785f696e7374616e636573223a36342c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "engine.max_compiles",
+      "begin": 276,
+      "end": 276,
+      "replacement_hex": "5c753030366461785f636f6d70696c6573223a312c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "run.memory_bytes",
+      "begin": 469,
+      "end": 469,
+      "replacement_hex": "5c7530303664656d6f72795f6279746573223a31363737373231362c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "run.object_bytes",
+      "begin": 469,
+      "end": 469,
+      "replacement_hex": "5c7530303666626a6563745f6279746573223a343139343330342c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "run.call_frames",
+      "begin": 469,
+      "end": 469,
+      "replacement_hex": "5c7530303633616c6c5f6672616d6573223a3132382c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "run.input_bytes",
+      "begin": 469,
+      "end": 469,
+      "replacement_hex": "5c75303036396e7075745f6279746573223a313034383537362c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "run.output_bytes",
+      "begin": 469,
+      "end": 469,
+      "replacement_hex": "5c753030366675747075745f6279746573223a313034383537362c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "run.host_request_bytes",
+      "begin": 469,
+      "end": 469,
+      "replacement_hex": "5c75303036386f73745f726571756573745f6279746573223a313034383537362c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "run.host_response_bytes",
+      "begin": 469,
+      "end": 469,
+      "replacement_hex": "5c75303036386f73745f726573706f6e73655f6279746573223a313034383537362c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "run.host_calls",
+      "begin": 469,
+      "end": 469,
+      "replacement_hex": "5c75303036386f73745f63616c6c73223a3235362c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "run.owner_entries",
+      "begin": 469,
+      "end": 469,
+      "replacement_hex": "5c7530303666776e65725f656e7472696573223a31363338342c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "run.descriptor_entries",
+      "begin": 469,
+      "end": 469,
+      "replacement_hex": "5c7530303634657363726970746f725f656e7472696573223a31363338342c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "run.fuel",
+      "begin": 469,
+      "end": 469,
+      "replacement_hex": "5c753030363675656c223a31303030303030302c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "run.deadline_ms",
+      "begin": 469,
+      "end": 469,
+      "replacement_hex": "5c75303036346561646c696e655f6d73223a313030302c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "worker.memory_bytes",
+      "begin": 750,
+      "end": 750,
+      "replacement_hex": "5c7530303664656d6f72795f6279746573223a3230313332363539322c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "worker.user_cpu_time_ms",
+      "begin": 750,
+      "end": 750,
+      "replacement_hex": "5c75303037357365725f6370755f74696d655f6d73223a353030302c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "worker.max_processes",
+      "begin": 750,
+      "end": 750,
+      "replacement_hex": "5c753030366461785f70726f636573736573223a312c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "worker.transport_bytes",
+      "begin": 750,
+      "end": 750,
+      "replacement_hex": "5c753030373472616e73706f72745f6279746573223a343139343330342c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "worker.startup_ms",
+      "begin": 750,
+      "end": 750,
+      "replacement_hex": "5c75303037337461727475705f6d73223a323030302c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "worker.io_idle_ms",
+      "begin": 750,
+      "end": 750,
+      "replacement_hex": "5c75303036396f5f69646c655f6d73223a313030302c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "worker.shutdown_grace_ms",
+      "begin": 750,
+      "end": 750,
+      "replacement_hex": "5c7530303733687574646f776e5f67726163655f6d73223a3235302c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "worker.session_ms",
+      "begin": 750,
+      "end": 750,
+      "replacement_hex": "5c7530303733657373696f6e5f6d73223a31303030302c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "root.schema",
+      "begin": 2,
+      "end": 2,
+      "replacement_hex": "5c75303037336368656d61223a2262726f776e69652e706f6c6963792f302e33222c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "root.compile",
+      "begin": 2,
+      "end": 2,
+      "replacement_hex": "5c75303036336f6d70696c65223a7b22736f757263655f6279746573223a3236323134342c226d6f64756c6573223a33322c226465707468223a3132382c22746f6b656e73223a3133313037322c2266756e6374696f6e73223a343039362c227479706573223a343039362c22696e737472756374696f6e73223a3236323134342c227265676973746572735f7065725f66756e6374696f6e223a313032342c22776f726b696e675f6279746573223a36373130383836342c226675656c223a31303030303030302c22646561646c696e655f6d73223a323030302c22646961676e6f7374696373223a33327d2c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "root.engine",
+      "begin": 2,
+      "end": 2,
+      "replacement_hex": "5c75303036356e67696e65223a7b226d656d6f72795f6279746573223a3133343231373732382c22636f6e74726f6c5f6279746573223a313034383537362c2270726f6772616d5f6279746573223a383338383630382c22746f74616c5f70726f6772616d5f6279746573223a36373130383836342c22696e7374616e6365735f6279746573223a36373130383836342c226d61785f70726f6772616d73223a36342c226d61785f696e7374616e636573223a36342c226d61785f636f6d70696c6573223a317d2c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "root.run",
+      "begin": 2,
+      "end": 2,
+      "replacement_hex": "5c7530303732756e223a7b226d656d6f72795f6279746573223a31363737373231362c226f626a6563745f6279746573223a343139343330342c2263616c6c5f6672616d6573223a3132382c22696e7075745f6279746573223a313034383537362c226f75747075745f6279746573223a313034383537362c22686f73745f726571756573745f6279746573223a313034383537362c22686f73745f726573706f6e73655f6279746573223a313034383537362c22686f73745f63616c6c73223a3235362c226f776e65725f656e7472696573223a31363338342c2264657363726970746f725f656e7472696573223a31363338342c226675656c223a31303030303030302c22646561646c696e655f6d73223a313030307d2c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "root.worker",
+      "begin": 2,
+      "end": 2,
+      "replacement_hex": "5c75303037376f726b6572223a7b226d656d6f72795f6279746573223a3230313332363539322c22757365725f6370755f74696d655f6d73223a353030302c226d61785f70726f636573736573223a312c227472616e73706f72745f6279746573223a343139343330342c22737461727475705f6d73223a323030302c22696f5f69646c655f6d73223a313030302c2273687574646f776e5f67726163655f6d73223a3235302c2273657373696f6e5f6d73223a31303030307d2c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    },
+    {
+      "label": "root.capabilities",
+      "begin": 2,
+      "end": 2,
+      "replacement_hex": "5c753030363361706162696c6974696573223a5b5d2c22",
+      "accepted": false,
+      "failure": "Duplicate"
+    }
+  ]
+}

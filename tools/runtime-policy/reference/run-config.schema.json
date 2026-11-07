@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:brownie:run-config:0.3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "entry",
+    "requires",
+    "grants",
+    "limits"
+  ],
+  "properties": {
+    "schema": {
+      "const": "brownie.run/0.3"
+    },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "module",
+        "function"
+      ],
+      "properties": {
+        "module": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*(::[A-Za-z_][A-Za-z0-9_]*)*$"
+        },
+        "function": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+        }
+      }
+    },
+    "requires": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 65,
+      "items": {
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 128,
+        "pattern": "^[a-z][a-z0-9]*(\\.[a-z][a-z0-9]*)+$"
+      },
+      "uniqueItems": true
+    },
+    "grants": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 65,
+      "items": {
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 128,
+        "pattern": "^[a-z][a-z0-9]*(\\.[a-z][a-z0-9]*)+$"
+      },
+      "uniqueItems": true
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "memory_bytes",
+        "object_bytes",
+        "call_frames",
+        "input_bytes",
+        "output_bytes",
+        "host_request_bytes",
+        "host_response_bytes",
+        "host_calls",
+        "owner_entries",
+        "descriptor_entries",
+        "fuel",
+        "deadline_ms"
+      ],
+      "properties": {
+        "memory_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 268435456,
+          "default": 16777216
+        },
+        "object_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16777216,
+          "default": 4194304
+        },
+        "call_frames": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4096,
+          "default": 128
+        },
+        "input_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1048576,
+          "default": 1048576
+        },
+        "output_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1048576,
+          "default": 1048576
+        },
+        "host_request_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576,
+          "default": 1048576
+        },
+        "host_response_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576,
+          "default": 1048576
+        },
+        "host_calls": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 65535,
+          "default": 256
+        },
+        "owner_entries": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16384,
+          "default": 16384
+        },
+        "descriptor_entries": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16384,
+          "default": 16384
+        },
+        "fuel": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000000000,
+          "default": 10000000
+        },
+        "deadline_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 60000,
+          "default": 1000
+        }
+      }
+    }
+  }
+}
