@@ -1,19 +1,20 @@
-- Latest CALL snapshot checkpoint (2026-11-08): [CALL stack storage](docs/engineering/runtime-call-stack-snapshots.md)
-  implementation `37d365a` borrows exact authority/pool fields before copying
-  unpublished plans. Generated C removes two 26,048-byte intermediate parent
-  values from each CALL begin/advance (52,096 bytes per function); this is not
-  measured peak stack or latency. Development/O2 Engine/kernel regressions pass
-  default 1MiB/4KiB stacks, no overrides and zero exit SDK heap. Typed shapes:
-  33 bindings/32 layouts unchanged. All 268 receipt plus two audit inputs match
-  checkout/committed Git; 263 production LF modules; locked check 271/3032.
-  Owning CALL66 cache integration is deferred: private output compilation rejects
-  exclusive-return declarations, and complete returned-view proof/selected-origin
-  VM wiring must precede it. The full 16-path draft and required exclusive source
-  fixtures are preserved in local Git stash `39f1c91` (not integrated/verified).
-  Next: compiler/proof bridge, selected-origin synchronous/pending wiring, then
-  cache integration. Other metadata, setup/proof/seal/cleanup, deadlines/STOPPING/
-  poison, public lifecycle/ABI/CLI and the full inventory remain open; R03-R05
-  incomplete. Parallel workers closed; local only, no push/release/deployment.
+- Latest private output returned-view checkpoint (2026-11-08): [Returned-view bridge](docs/engineering/runtime-output-returned-views.md)
+  implementation `f9a76ce` connects genuine exclusive returned-slice source to
+  independent canonical/original-recipe proof, immutable selected origins and
+  synchronous/pending Engine execution. Six new native groups plus existing
+  Engine/kernel regressions pass development/O2, default 1MiB/4KiB stacks, no
+  overrides, zero exit SDK heap and zero SDK attempts on every resume. Direct,
+  nested, forwarding and second-input sources preserve exact Fuel/output and
+  diagnostics through moves, released pins and cancellation/refunds. Forged
+  origins, escapes, CALL9 substitution and scalar uses of CALL66 proof identities
+  fail admission. Preparation 1328 -> 1344 bytes; Stored 23344 -> 23360; Vec8
+  backing adds 128 bytes. All 271 receipt plus two audit inputs match checkout/
+  committed Git; 265 production LF modules; locked check 273 sources/3046 MIR.
+  The user requested finishing this slice then stopping; the broad goal is
+  paused. Next, only after a new user request: integrate CALL66 cache draft
+  `39f1c91` with its field-7 Plan rebased to field 8 (selected origins now own
+  field 7). Public admission and R02-R05/full inventory remain incomplete.
+  Parallel workers closed; local only, no push/release/deployment.
 
 # Brownie C agent guidance
 
@@ -22,7 +23,7 @@
 This repository implements Brownie C in Fairy C, with small explicit allocator,
 codec and operating-system shims. The full accepted design is still incomplete.
 
-- Active objective: complete every accepted missing implementation item in
+- Long-term objective (paused at the user's request): complete every accepted missing implementation item in
   [the inventory](docs/product/04-remaining-work.md). Do not redefine completion
   around the experimental subset. Follow [the implementation plan](docs/engineering/completion-plan.md)
   for dependencies; remote delivery remains separate.

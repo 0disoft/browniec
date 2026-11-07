@@ -22,6 +22,10 @@ reorder publication, or prove a latency/throughput bound.
 
 ## Owning CALL66 prerequisite
 
+Update 2026-11-08: the [private output returned-view bridge](runtime-output-returned-views.md)
+now completes this compiler/proof/selected-origin prerequisite in development/O2.
+The cache draft itself remains deferred. The account below records the earlier checkpoint.
+
 An attempted immutable CALL capture cache exposed a separate missing connection:
 the private output compiler calls `lower_prepared` with `origin_analysis=false`,
 which rejects non-shared returned-slice declarations. Output admission also needs

@@ -1,4 +1,22 @@
-- Latest CALL snapshot checkpoint (2026-11-08): [CALL stack storage](../engineering/runtime-call-stack-snapshots.md)
+- Latest private output returned-view checkpoint (2026-11-08): [Returned-view bridge](../engineering/runtime-output-returned-views.md)
+  implementation `f9a76ce` connects genuine exclusive returned-slice source to
+  independent canonical/original-recipe proof, immutable selected origins and
+  synchronous/pending Engine execution. Six new native groups plus existing
+  Engine/kernel regressions pass development/O2, default 1MiB/4KiB stacks, no
+  overrides, zero exit SDK heap and zero SDK attempts on every resume. Direct,
+  nested, forwarding and second-input sources preserve exact Fuel/output and
+  diagnostics through moves, released pins and cancellation/refunds. Forged
+  origins, escapes, CALL9 substitution and scalar uses of CALL66 proof identities
+  fail admission. Preparation 1328 -> 1344 bytes; Stored 23344 -> 23360; Vec8
+  backing adds 128 bytes. All 271 receipt plus two audit inputs match checkout/
+  committed Git; 265 production LF modules; locked check 273 sources/3046 MIR.
+  The user requested finishing this slice then stopping; the broad goal is
+  paused. Next, only after a new user request: integrate CALL66 cache draft
+  `39f1c91` with its field-7 Plan rebased to field 8 (selected origins now own
+  field 7). Public admission and R02-R05/full inventory remain incomplete.
+  Parallel workers closed; local only, no push/release/deployment.
+
+- Predecessor CALL snapshot checkpoint (2026-11-08): [CALL stack storage](../engineering/runtime-call-stack-snapshots.md)
   implementation `37d365a` borrows exact authority/pool fields before copying
   unpublished plans. Generated C removes two 26,048-byte intermediate parent
   values from each CALL begin/advance (52,096 bytes per function); this is not

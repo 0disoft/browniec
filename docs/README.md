@@ -6,7 +6,8 @@
 
 | Topic | Document |
 | --- | --- |
-| CALL snapshot stack storage | [Exact-field snapshots](engineering/runtime-call-stack-snapshots.md): default-stack native verification; owning CALL66 source/proof prerequisite remains open |
+| Private output returned views and next-thread handoff | [Compiler/proof/VM bridge](engineering/runtime-output-returned-views.md), [remaining tasks and preserved cache draft](engineering/next-work-handoff.md): six new native groups plus regressions pass development/O2; public admission and CALL66 cache integration remain open |
+| CALL snapshot stack storage | [Exact-field snapshots](engineering/runtime-call-stack-snapshots.md): default-stack native verification; source/proof prerequisite completed by the returned-view bridge; CALL66 cache integration remains open |
 | Saved VM return payload | [RET payload admission](engineering/runtime-return-work-chunks.md) |
 | Product intent and demand assumptions | [Product brief](product/00-product-brief.md) |
 | Language profile and observable behavior | [Specification](product/02-spec.md) |
