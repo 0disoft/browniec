@@ -1,19 +1,18 @@
-- Latest Engine execution-memory checkpoint (2026-11-07): [Execution/output heap](../engineering/runtime-engine-execution-memory.md)
-  integrates `18c93c8`. Immutable Programs cache exact arena/list/place/input
-  requirements; execution admits their transient heap in O(1) additional budget
-  lookup. Actual output capacity (including late-failure Vec8) stays charged
-  until transfer/destruction. Guarded take preflight includes 1088 transport
-  bytes before allocation and refunds the transferred output once, keeping input.
-  Development/O2 each pass seven Engine/eight planner/six output-observation
-  groups, all nine input-memory groups and existing fixtures. Successful heap
-  peaks match plans; all allocation ordinals are injected and SDK heap ends at 0.
-  All 228 inputs match checkout/Git; seven SDK objects match their revision.
-  Transport pins 25 bindings/18 layouts. Root locked check: 253 sources/2885 MIR;
-  all 245 production modules are LF. Engine is 736 bytes; one-slot control heap
-  6976 and all-64 55808. Stack/host state and complete accounting, bounded steps,
-  deadlines/poison and public/host/restricted/embed remain open. Public gates,
-  VM capacities and Fuel prices/default/ceiling stay. Three disjoint Sol High
-  workers completed; integration/commits were serial. Local only; no remote edits.
+- Latest canonical-dispatch checkpoint (2026-11-07): [Instruction quanta](../engineering/runtime-instruction-quanta.md)
+  records implementation `8bf120b`. One opcode dispatcher now saves PC, scalar/
+  static banks, frames, owners, loans, input views and staged output across internal
+  instruction batches. Development/O2 each pass eleven new groups (five cursor,
+  six composed execution), with equal values/output/Fuel/diagnostics/dispatch visits
+  for quanta 1, 2, 3, 7, 64 and 4096. Invalid quanta reject before output preparation.
+  Archived evidence pins 231 checkout/Git inputs and seven SDK objects; executable
+  and object hashes match. Root locked check passes 254 sources/2899 MIR; all 246
+  production modules are LF. Transport has 25 bindings/18 layouts; SDK heap ends
+  at zero. The facade remains synchronous and invocation-stack-owned. Setup, bulk
+  helpers, CALL/RET, seal and cleanup are atomic; persistent Engine.step, deadlines,
+  cancellation, poison containment and full stack/accounting remain open (R03-R05).
+  Prior [execution/output heap](../engineering/runtime-engine-execution-memory.md) evidence
+  remains scoped. Public gates, capacities and Fuel prices/default256/cap16000000
+  stay unchanged. Disjoint Sol High work is integrated serially. Local commits only.
 
 - Predecessor ABI-bootstrap checkpoint (2026-11-07): [Windows DLL query](../engineering/abi-bootstrap.md)
   now exports only `bc_get_abi_info_v2`; Fairy owns admission/metadata and a small
@@ -615,6 +614,12 @@ no nested patterns or user enums in the first profile.
 Program is immutable and explicitly reusable. Instance is one-shot and owns input,
 frames, owners, loans, pending work, grants, and output. Engine is owner-thread bound;
 parallel execution uses separate Engines.
+
+The [private canonical instruction cursor](../engineering/runtime-instruction-quanta.md)
+now retains dispatch state across internal batches of 1..4096 instruction visits.
+The facade still runs synchronously to a terminal result with invocation-stack
+state. This is not the accepted persistent Engine step contract: setup, bulk
+helpers, CALL/RET, output seal and cleanup are still atomic. R03-R05 remain open.
 
 The private bytecode has eight-byte typed instructions and an independent verifier.
 Verification checks structure, control flow, layout, register initialization,
