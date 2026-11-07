@@ -83,7 +83,11 @@ pub fn Result<cursor::State,errors::Error> begin(ref ir::Program p,ref u8[] para
         case .ok(_):{}case .err(e):{*remaining-=input_work;return .err(e);}
     };
     let Context c=context(p,parameters,sites,pc,bindings,state,capacity,payload,words,live,windows,remaining)?;
-    var authority::State next_authority=state.runtime.authority;var slices::Pool next_pool=state.runtime.pool;
+    // Borrow each field before copying the unpublished plan. The pinned
+    // transport otherwise materializes the full parent runtime for each read.
+    let ref authority::State current_authority=ref state.runtime.authority;
+    let ref slices::Pool current_pool=ref state.runtime.pool;
+    var authority::State next_authority=*current_authority;var slices::Pool next_pool=*current_pool;
     let runtime::Call call=prepare(ref c,state,capacity,*remaining,ref mut next_authority,ref mut next_pool)?;
     let usize child=future_frame(p,pc,bindings,call)?;
     var cursor::State work=switch(if(c.prepared.records){copies::begin(ref state.runtime.owners,ref p.records.layouts,ref c.prepared.arguments[..c.prepared.count],capacity)}
@@ -109,7 +113,11 @@ pub fn Result<bool,errors::Error> advance(ref mut cursor::State work,ref ir::Pro
     let Context c=context(p,parameters,sites,work.pc,bindings,state,data.len,payload,
         words[parent*16..parent*16+16],live[parent],windows,ref mut replay)?;
     if(replay!=work.captured || work.count!=c.prepared.count || work.reserve_first==c.prepared.records){return .err(invalid(work.offset));}
-    var authority::State next_authority=state.runtime.authority;var slices::Pool next_pool=state.runtime.pool;
+    // Borrow each field before copying the unpublished plan. The pinned
+    // transport otherwise materializes the full parent runtime for each read.
+    let ref authority::State current_authority=ref state.runtime.authority;
+    let ref slices::Pool current_pool=ref state.runtime.pool;
+    var authority::State next_authority=*current_authority;var slices::Pool next_pool=*current_pool;
     let runtime::Call call=prepare(ref c,state,data.len,replay,ref mut next_authority,ref mut next_pool)?;
     if(call.remaining!=work.remaining){return .err(invalid(work.offset));}
     let usize child=future_frame(p,work.pc,bindings,call)?;
