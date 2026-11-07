@@ -11,6 +11,15 @@ import static_image as images;
 import verifier as verifier;
 import program_image as program_images;
 import std::vec as vec;
+import std::bytes as bytes;
+import runtime_input as input_bytes;
+import slice_result_execution as execution;
+import slice_result_runtime as runtime;
+import array_vm as backing;
+import array_list_vm as lists;
+import place_dispatch as places;
+import struct_call_vm as owned_calls;
+import fuel as meter;
 
 // Separate admitted input ABI. No zero-argument Program or native execution
 // authority can be manufactured from this resource's read-only accessors.
@@ -58,3 +67,27 @@ fn ref Stored stored(ref Program p){return vec::at<Stored>(ref p.stored,0);}
 pub fn ref sources::Snapshot snapshot(ref Program p){return ref stored(p).sources;}
 pub fn ref candidates::Program code(ref Program p){return ref stored(p).code;}
 pub fn ref images::Image literals(ref Program p){return ref stored(p).image;}
+
+// Own no new input payload: this exact immutable Snapshot is borrowed until the
+// last native frame has left or invocation failure has drained every owner.
+pub struct Run { i64 value; usize remaining; }
+pub fn Result<Run,diagnostics::Error> run(ref Program program,ref input_bytes::Snapshot input,usize fuel){
+    let ref Stored retained=stored(program);
+    return switch(execute(retained,input_bytes::view(input),fuel)){
+        case .ok(v):{.ok(Run{.value=v.value,.remaining=v.remaining})}
+        case .err(e):{.err(if(e.offset==0){diagnostics::absent(e)}else{diagnostics::map(snapshot(program),e,16)})}
+    };
+}
+fn Result<execution::Scalar,errors::Error> execute(ref Stored retained,ref u8[] input,usize fuel){
+    let ref ir::Program body=ref retained.code.body;
+    let usize capacity=if(body.arrays.count!=0 || body.records.count!=0){65536}else{0};
+    let usize preparation=if(capacity==0){0}else{1+capacity};
+    let lists::Requirement list_plan=lists::requirement(body)?;
+    let places::Requirement place_plan=places::requirement(body)?;
+    let usize work=owned_calls::cost(body,body.entry,0)?+body.arities[body.entry];
+    if(fuel<preparation+meter::input_prepare()+runtime::cost()+work+list_plan.cost+place_plan.cost){return .err(errors::make(8,0));}
+    var bytes::Buffer payload=if(capacity==0){bytes::empty()}else{backing::prepare(capacity)?};
+    var runtime::State state=runtime::empty(capacity);
+    return execution::execute_input_scalar(ref retained.code,ref retained.image,input,
+        ref mut state,bytes::view_mut(ref mut payload),fuel-preparation);
+}

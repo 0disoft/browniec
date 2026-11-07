@@ -2,18 +2,18 @@
   "schema": "browniec.private-runtime-engine-transport/v1",
   "compilerRevision": "eb274643bfcfe746617121ddc6f130b018978b53",
   "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
-  "transportSha256": "ab9ff570733d860e6cb5981710a104e938d1a35164e389b0db481b886f5e53dd",
-  "engineType": "fy_resource_14",
-  "incomingType": "fy_resource_21",
+  "transportSha256": "2c81628c58a010f720cf806b3573b60ca916d4cd607dd2bf9743e70d24a8143d",
+  "engineType": "fy_resource_16",
+  "incomingType": "fy_resource_28",
   "bindings": {
-    "1": "fy_fn_743",
-    "2": "fy_fn_742",
-    "3": "fy_fn_756",
-    "4": "fy_fn_748",
-    "5": "fy_fn_754",
-    "8": "fy_fn_765",
-    "6": "fy_fn_778",
-    "7": "fy_fn_777"
+    "1": "fy_fn_772",
+    "2": "fy_fn_771",
+    "3": "fy_fn_785",
+    "4": "fy_fn_777",
+    "5": "fy_fn_783",
+    "8": "fy_fn_794",
+    "6": "fy_fn_807",
+    "7": "fy_fn_806"
   },
   "sourceInputs": [
     {
@@ -198,11 +198,15 @@
     },
     {
       "path": "src/fuel.fy",
-      "sha256": "3692a74418ee595f87f249e43f67d16bab8028d1173a865c75c5ca785689ae30"
+      "sha256": "3ebcee068853d39cb3bbd825b87da11befba9e276f7d88ee5081fa70a0183cb0"
     },
     {
       "path": "src/functions.fy",
       "sha256": "e0f4374ce98ed4187cf4bcc43a99109bf8b05c10427e28adf9fc2c2b7973f91b"
+    },
+    {
+      "path": "src/input_reference_views.fy",
+      "sha256": "fce74e692947b55c01c2ac3bc03003c84e10904277e5c8815563dc0c7dad0e83"
     },
     {
       "path": "src/ir.fy",
@@ -302,7 +306,7 @@
     },
     {
       "path": "src/reference_access.fy",
-      "sha256": "363fc2114da67e31bace54ab4e09a0c5b230d63e573eca9f2101025128cf2cdf"
+      "sha256": "dfe82104d0dd43df7f107b5035f7e4f3400adeb575a56a1fffc97bb7c4becbc7"
     },
     {
       "path": "src/reference_call_source.fy",
@@ -310,7 +314,7 @@
     },
     {
       "path": "src/reference_execution.fy",
-      "sha256": "79ba13101a5deae00054c73a966046ed58377525b27198865c4fe60d6c2f638e"
+      "sha256": "9cd5cf1f364add203a194e64181d27104b33d9c9db7a3fe9182d027819c02dbe"
     },
     {
       "path": "src/reference_inference.fy",
@@ -330,7 +334,7 @@
     },
     {
       "path": "src/reference_return_execution.fy",
-      "sha256": "8f6b8ff849788611e4773c4d8ac1a53abd89fa3c6196346a32510a54256696a6"
+      "sha256": "030f3bc181f572835787b7e354890f8de9e99ff5d6e699e1647d80c32232e3c6"
     },
     {
       "path": "src/reference_words.fy",
@@ -466,7 +470,7 @@
     },
     {
       "path": "src/slice_result_execution.fy",
-      "sha256": "9f6e69b5ea775c4c9c7a1bc7aee1f6ee4c7047c91d9ab3970f8866eccc033b2e"
+      "sha256": "19fce063c9acceee415458de555e3d6f43f0b20983025d710a308ddb17f42055"
     },
     {
       "path": "src/slice_result_frames.fy",

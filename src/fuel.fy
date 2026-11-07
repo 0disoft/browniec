@@ -144,3 +144,11 @@ pub fn Option<usize> aggregate_place_instruction(u8 op,bool record,usize stride,
         case .some(price):{.some(selection+price)}case .none:{.none}
     };
 }
+
+// Private immutable input metadata; never charged to unchanged zero-arg paths.
+// Setup covers 768 initialized cells and their eventual zero-Fuel destruction.
+// Frame work clears 24 cells and stages up to eight grants; byte access is O(1).
+pub fn usize input_prepare(){return 32768;}
+pub fn usize input_metadata(){return 128;}
+pub fn usize input_frame(){return 2048;}
+pub fn usize input_arguments(usize count){return 128*count;}

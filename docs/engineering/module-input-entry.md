@@ -35,8 +35,10 @@ stacks, with no CL/_CL_/LINK overrides.
 
 This is signature admission, not executable input admission. In particular,
 `module_program::compile` still takes only `module_entry::Entry`; no conversion
-or success stub is supplied. Body/type/ownership/lowering proof, actual guest
-input binding, Engine/Instance integration, CLI/stdin/file support, R03 chunk
-bounds and complete Engine accounting remain subsequent work. Existing public
+or success stub is supplied. The separate [owning input Program](module-input-program.md) now supplies complete
+body/type/ownership/lowering proof, and its [execution successor](module-input-execution.md)
+executes an exact immutable Snapshot up to 1MiB. Engine/Instance integration,
+OS-reader adoption, public CLI/stdin/file support, R03 chunk bounds and complete
+Engine accounting remain subsequent work. Existing public
 availability, zero-arg behavior, VM capacities and Fuel prices are unchanged.
 Allocator failures are not injected in this signature-only slice.

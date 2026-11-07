@@ -17,6 +17,7 @@ pub struct Value { i64 value; usize remaining; }
 pub fn Source image(usize site){return Source{.storage=1,.site=site,.ticket=slices::Ticket{.slot=16,.generation=0},.window=false,.span=views::Span{.start=0,.length=0}};}
 pub fn Source loan(slices::Ticket ticket){return Source{.storage=2,.site=16,.ticket=ticket,.window=false,.span=views::Span{.start=0,.length=0}};}
 pub fn Source loan_window(slices::Ticket ticket,views::Span span){return Source{.storage=2,.site=16,.ticket=ticket,.window=true,.span=span};}
+pub fn Source input_window(views::Span span){return Source{.storage=3,.site=16,.ticket=slices::Ticket{.slot=16,.generation=0},.window=true,.span=span};}
 fn bool canonical(ref Source source){
     let bool inactive=!source.window && source.span.start==0 && source.span.length==0;
     if(source.storage==1){return source.site<16 && source.ticket.slot==16 && source.ticket.generation==0 && inactive;}

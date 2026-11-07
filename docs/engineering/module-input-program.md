@@ -3,9 +3,10 @@
 `module_input_program::compile` now consumes the owning
 [InputEntry](module-input-entry.md), reconstructs its original source context,
 compiles every body and retains the complete admitted IR/image/source snapshot.
-This advances I01 from signature metadata to a compiled owning Program. Native
-input execution remains the next implementation: this resource has no run API
-and cannot be passed to the existing zero-argument module Program API.
+This advances I01 from signature metadata to a compiled owning Program. Its
+[execution successor](module-input-execution.md) now adds a separate `run` API
+for the exact immutable input Snapshot up to 1MiB. It cannot be passed to the
+existing zero-argument module Program API.
 
 ## Exact source and body lowering
 
@@ -75,13 +76,15 @@ Engine profiles still pass actual source execution, OS guard contention,
 nonwrapping lifecycle/cleanup and zero live SystemHeap allocations. No stack or
 compiler environment override is used.
 
-## Input execution still required
+## Execution successor and remaining integration
 
-The accepted input ceiling is 1MiB, while current array/image span words encode at
-most 4096 bytes. Input must gain its own immutable per-invocation backing/view
-domain through PARAM, aliases/ranges, CALL/return and READ/LEN. Reclassifying input
-as a literal or silently clipping it to an array would lose its provenance or
-accepted limit. The execution layer must keep the exact input Snapshot borrowed
-for the full invocation and meter/preflight all input work. Engine/Instance
-binding, output emit/success disposal, public CLI/ABI and full R02/R03 accounting
-remain open. Existing public gates, capacities and Fuel prices are unchanged.
+[Actual immutable input execution](module-input-execution.md) now supplies an
+invocation-private window domain through PARAM, aliases/ranges, CALL/return and
+READ/LEN. It retains the exact Snapshot borrow and full 1MiB limit, preserving
+input/image/loan provenance without the old 4096-byte descriptor limitation.
+Independent selected-origin proof and actual formal-grant containment both apply.
+
+Engine/Instance association, OS-reader adoption, guest output success disposal,
+public CLI/ABI and full R02/R03 accounting/deadlines remain open. Existing public
+availability, capacities and prior Fuel prices/defaults/caps are unchanged; new
+input metadata work has explicit additive prices in the execution successor.
