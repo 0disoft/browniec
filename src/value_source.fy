@@ -595,6 +595,10 @@ fn Result<bool,errors::Error> scope(ref u8[] source,ref mut lexer::State s,ref m
             state.reads=0;state.writes=0;
             let usize next=lexer::next(source,s)?;let usize result=plan.results[f];var context::Value value=context::nothing();
             if(result!=0){value=expression(source,s,unit,state,table,plan,paths,flow,result-1,1,0)?;}
+            else if(s.kind!=59){
+                value=expression(source,s,unit,state,table,plan,paths,flow,64,1,0)?;
+                if(!value.bottom){return .err(wrong(at));}
+            }
             let usize semi=lexer::punctuation(source,s,59)?;
             if(value.bottom){terminal=true;continue;}
             if(result==66){
