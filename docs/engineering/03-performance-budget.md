@@ -66,8 +66,12 @@ Instance and latency targets above therefore remain unmeasured.
 
 The [retained Program successor](runtime-engine-program-memory.md) adds exact
 source/IR/image budget metadata. Its current one-slot control request is 6,720
-bytes plus a 664-byte inline Engine; maximum backing is 53,760 bytes. Programs
+bytes plus a 688-byte inline Engine after the compile successor; maximum backing
+is 53,760 bytes. Programs
 add 176,512 bytes (ordinary/output) or 176,448 bytes (input), plus actual literal
 payload. Native development/O2 independently match these ledger charges against
-SDK live allocations. Compiler scratch, VM/Instance totals and timing remain
-outside these measurements; no original full-profile target is promoted.
+SDK live allocations. The [compile successor](runtime-engine-compile-memory.md)
+now enforces a conservative 256KiB lowering-heap reservation plus actual Index/
+incoming backing under working/combined ceilings. VM/Instance totals, native
+stacks, process RAM and timing remain outside these measurements; no original
+full-profile target is promoted.

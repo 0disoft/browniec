@@ -91,7 +91,9 @@ historical results. Current measurements belong to the successor's receipt.
 
 ## Remaining R02 integration
 
-Compile working storage, per-Instance
+The [compile successor](runtime-engine-compile-memory.md) now covers scoped
+compiler heap, Index and incoming Entry reservations; current inline Engine is
+688 bytes with 6,720-byte one-slot heap backing. Native stacks and per-Instance
 VM frames and owner/loan/descriptor tables, input/output payloads, pending host
 state, simultaneous Instances and cross-Engine/process resources still require
 aggregate ceiling enforcement and peak reservations. The control observation

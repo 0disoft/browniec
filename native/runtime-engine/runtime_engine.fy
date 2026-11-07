@@ -13,6 +13,10 @@ import runtime_control_budget as control;
 import runtime_control_layout as control_layout;
 import runtime_program_memory as memory;
 import retention_plan as retention;
+import compile_memory as compilation;
+import module_budgeted_compile as bounded;
+import module_index as modules;
+import source_snapshot as sources;
 
 // Internal owning lifecycle, not public C handles/bc_step. IDs are scoped to
 // this exact Engine; the outer ABI registry must authenticate their association.
@@ -38,6 +42,8 @@ pub resource Engine {
     vec::Vec<Instance> instances; vec::Vec<BoundInput> inputs;
     vec::Vec<BoundInput> input_scratch; vec::Vec<Output> outputs; vec::Vec<Output> output_scratch; cleanup { }
 }
+@link_name("bc_runtime_engine_compile_preflight") unsafe extern C fn u32 compile_preflight_raw(ptr mut void owner,u32 mode,ptr void selected);
+@link_name("bc_runtime_engine_compile_fact") unsafe extern C fn usize compile_fact_raw(ptr void source,u32 kind,u32 fact);
 @link_name("bc_runtime_engine_bind") unsafe extern C fn u32 bind_raw(ptr mut void owner);
 @link_name("bc_runtime_engine_compile") unsafe extern C fn u32 compile_raw(ptr mut void owner,ptr mut void incoming,usize limit);
 @link_name("bc_runtime_engine_compile_input") unsafe extern C fn u32 compile_input_raw(ptr mut void owner,ptr mut void incoming,usize limit);
@@ -82,12 +88,15 @@ pub fn Result<Engine,Error> create_with_control_budget(Limits limits,usize contr
     return create_with_retention(limits,control_limit,memory::defaults());
 }
 pub fn Result<Engine,Error> create_with_retention(Limits limits,usize control_limit,memory::Limits retained){
+    return create_with_compilation(limits,control_limit,retained,268435456);
+}
+pub fn Result<Engine,Error> create_with_compilation(Limits limits,usize control_limit,memory::Limits retained,usize working_limit){
     if(!valid_limits(limits) || control_limit==0 || control_limit>4194304){return .err(error(1));}
     let usize required=required_control_bytes(limits)?;
     let control::Budget storage=switch(control::create(control_limit,required)){
         case .ok(v):{v}case .err(_):{return .err(error(8));}
     };
-    let memory::Budget retained_storage=switch(memory::create(retained,required)){
+    let memory::Budget retained_storage=switch(memory::create_with_working(retained,required,working_limit)){
         case .ok(v):{v}case .err(e):{return .err(error(switch(e){case .Invalid:{1}case .Quota:{8}case .State:{7}}));}
     };
     var vec::Vec<Program> programs=vec::empty<Program>();var vec::Vec<Program> scratch=vec::empty<Program>();
@@ -105,6 +114,7 @@ pub fn Result<Engine,Error> create_with_retention(Limits limits,usize control_li
 // Actual selected source admission and immutable Program retention; the temporary
 // Entry vector transfers its owner through typed Fairy pop, not a raw ABI move.
 pub fn Result<usize,Error> compile(ref mut Engine e,entries::Entry selected,usize image_limit){
+    let usize admitted=unsafe{compile_preflight(e,0,ref selected as ptr void)}?;
     var vec::Vec<entries::Entry> incoming=vec::empty<entries::Entry>();
     if(!vec::reserve<entries::Entry>(ref mut incoming,1).is_ok){return .err(error(6));}
     if(!vec::push<entries::Entry>(ref mut incoming,selected).is_ok){return .err(error(6));}
@@ -112,6 +122,7 @@ pub fn Result<usize,Error> compile(ref mut Engine e,entries::Entry selected,usiz
     return result(e,status);
 }
 pub fn Result<usize,Error> compile_input(ref mut Engine e,input_entries::InputEntry selected,usize image_limit){
+    let usize admitted=unsafe{compile_preflight(e,1,ref selected as ptr void)}?;
     var vec::Vec<input_entries::InputEntry> incoming=vec::empty<input_entries::InputEntry>();
     if(!vec::reserve<input_entries::InputEntry>(ref mut incoming,1).is_ok){return .err(error(6));}
     if(!vec::push<input_entries::InputEntry>(ref mut incoming,selected).is_ok){return .err(error(6));}
@@ -120,12 +131,14 @@ pub fn Result<usize,Error> compile_input(ref mut Engine e,input_entries::InputEn
 }
 pub fn Result<usize,Error> create_instance(ref mut Engine e,usize program,usize budget){let u32 s=unsafe{call_raw(e as ptr mut void,1,program,budget)};return result(e,s);}
 pub fn Result<usize,Error> compile_output(ref mut Engine e,entries::Entry selected,usize image_limit){
+    let usize admitted=unsafe{compile_preflight(e,2,ref selected as ptr void)}?;
     var vec::Vec<entries::Entry> incoming=vec::empty<entries::Entry>();
     if(!vec::reserve<entries::Entry>(ref mut incoming,1).is_ok){return .err(error(6));}
     if(!vec::push<entries::Entry>(ref mut incoming,selected).is_ok){return .err(error(6));}
     let u32 s=unsafe{compile_output_raw(e as ptr mut void,ref mut incoming as ptr mut void,image_limit,0)};return result(e,s);
 }
 pub fn Result<usize,Error> compile_input_output(ref mut Engine e,input_entries::InputEntry selected,usize image_limit){
+    let usize admitted=unsafe{compile_preflight(e,3,ref selected as ptr void)}?;
     var vec::Vec<input_entries::InputEntry> incoming=vec::empty<input_entries::InputEntry>();
     if(!vec::reserve<input_entries::InputEntry>(ref mut incoming,1).is_ok){return .err(error(6));}
     if(!vec::push<input_entries::InputEntry>(ref mut incoming,selected).is_ok){return .err(error(6));}
@@ -213,6 +226,51 @@ fn Result<usize,u32> instance_index(ref vec::Vec<Instance> v,usize id){
     var usize i=0;while(i<vec::len<Instance>(v)){if(vec::at<Instance>(v,i).id==id){return .ok(i);}i+=1;}return .err(2);
 }
 fn void advance(ref mut Meta m){m.next=if(m.next==18446744073709551615){0}else{m.next+1};}
+// Facts describe actual typed SDK backing; every quota decision stays Fairy.
+fn usize instance_identity(ref Instance instance){return instance.id;}
+fn usize entry_heap(ref entries::Entry entry){return unsafe{compile_fact_raw(entry as ptr void,0,1)};}
+fn usize input_entry_heap(ref input_entries::InputEntry entry){return unsafe{compile_fact_raw(entry as ptr void,1,1)};}
+fn Result<usize,Error> compile_requirement(usize index,usize width){
+    let usize maximum=18446744073709551615;
+    if(index==0 || width==0){return .err(error(7));}
+    if(width>maximum/8 || index>maximum-8*width){return .err(error(8));}
+    let usize overhead=index+8*width;
+    if(overhead>maximum-bounded::working_bound()){return .err(error(8));}
+    return .ok(overhead+bounded::working_bound());
+}
+pub fn Result<usize,Error> required_compile_bytes(ref entries::Entry entry){
+    return compile_requirement(entry_heap(entry),unsafe{compile_fact_raw(entry as ptr void,0,0)});
+}
+pub fn Result<usize,Error> required_input_compile_bytes(ref input_entries::InputEntry entry){
+    return compile_requirement(input_entry_heap(entry),unsafe{compile_fact_raw(entry as ptr void,1,0)});
+}
+// Owner-only synchronous code makes no callbacks between this preflight and
+// ordinary admission. SDK reserve cannot reenter; the actual operation rechecks.
+// No epoch is spent on preflight or on a rejected/failed incoming allocation.
+fn Result<usize,Error> compile_preflight(ref mut Engine e,u32 mode,ptr void selected){
+    let u32 status=unsafe{compile_preflight_raw(e as ptr mut void,mode,selected)};
+    return if(status==0){.ok(0)}else{.err(error(status))};
+}
+fn u32 compile_preflight_inner(ref mut Meta m,ref vec::Vec<Program> programs,u32 mode,usize index,usize width){
+    if(m.closed){return 2;}
+    if(m.admission==0 || m.next==0 || vec::len<Program>(programs)>=m.limits.programs){return 8;}
+    if(mode>3){return 1;}
+    let retention::Plan possible=switch(retention_plan(m,if(mode==0){0}else{if(mode==1){1}else{2}})){
+        case .ok(v):{v}case .err(status):{return status;}
+    };
+    // First guarded call validates Engine state before native source observation.
+    if(index==0 && width==0){return 0;}
+    let usize requirement=switch(compile_requirement(index,width)){case .ok(v):{v}case .err(e):{return e.status;}};
+    return switch(memory::prepare_compile(ref mut m.programs,requirement-bounded::working_bound())){
+        case .ok(_):{0}case .err(_):{8}
+    };
+}
+fn Result<compilation::Plan,u32> compile_work(ref mut Meta m,usize incoming,usize index){
+    if(index==0 || incoming==0 || index>18446744073709551615-incoming){return .err(8);}
+    return switch(memory::prepare_compile(ref mut m.programs,incoming+index)){
+        case .ok(p):{.ok(p)}case .err(_):{.err(8)}
+    };
+}
 fn Result<retention::Plan,u32> retention_plan(ref Meta m,u32 kind){
     return switch(memory::prepare(ref m.programs,kind)){case .ok(p):{.ok(p)}case .err(_):{.err(8)}};
 }
@@ -225,7 +283,9 @@ fn u32 compile_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut vec::Vec
     if(vec::len<Program>(v)>=m.limits.programs || m.next==0){return failed(m,8);}
     if(vec::len<entries::Entry>(incoming)!=1){return failed(m,1);}
     var retention::Plan plan=switch(retention_plan(m,0)){case .ok(p):{p}case .err(s):{return failed(m,s);}};
-    let Result<programs::Program,diagnostics::Error> built=programs::compile_with_retention(pop_entry(incoming),image_limit,ref mut plan);
+    var compilation::Plan work=switch(compile_work(m,unsafe{compile_fact_raw(incoming as ptr void,0,2)},entry_heap(vec::at<entries::Entry>(incoming,0)))){case .ok(p):{p}case .err(status):{return failed(m,status);}};
+    let Result<programs::Program,diagnostics::Error> built=bounded::compile(pop_entry(incoming),image_limit,ref mut plan,ref mut work);
+    assert(memory::record_compile(ref mut m.programs,ref work).is_ok);
     assert(memory::record(ref mut m.programs,ref plan).is_ok);
     return switch(built){case .ok(code):{publish_program(m,v,code,plan.bytes)}case .err(e):{compile_error(m,e)}};
 }
@@ -247,7 +307,9 @@ fn u32 compile_input_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut ve
     if(vec::len<Program>(v)>=m.limits.programs || m.next==0){return failed(m,8);}
     if(vec::len<input_entries::InputEntry>(incoming)!=1){return failed(m,1);}
     var retention::Plan plan=switch(retention_plan(m,1)){case .ok(p):{p}case .err(s):{return failed(m,s);}};
-    let Result<input_programs::Program,diagnostics::Error> built=input_programs::compile_with_retention(pop_input_entry(incoming),image_limit,ref mut plan);
+    var compilation::Plan work=switch(compile_work(m,unsafe{compile_fact_raw(incoming as ptr void,1,2)},input_entry_heap(vec::at<input_entries::InputEntry>(incoming,0)))){case .ok(p):{p}case .err(status):{return failed(m,status);}};
+    let Result<input_programs::Program,diagnostics::Error> built=bounded::compile_input(pop_input_entry(incoming),image_limit,ref mut plan,ref mut work);
+    assert(memory::record_compile(ref mut m.programs,ref work).is_ok);
     assert(memory::record(ref mut m.programs,ref plan).is_ok);
     return switch(built){case .ok(code):{publish_input_program(m,v,code,plan.bytes)}case .err(e):{compile_error(m,e)}};
 }
@@ -262,7 +324,9 @@ fn u32 compile_output_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut v
     if(vec::len<Program>(v)>=m.limits.programs || m.next==0){return failed(m,8);}
     if(vec::len<entries::Entry>(incoming)!=1){return failed(m,1);}
     var retention::Plan plan=switch(retention_plan(m,2)){case .ok(p):{p}case .err(s):{return failed(m,s);}};
-    let Result<output_programs::Program,diagnostics::Error> built=output_programs::compile_with_retention(pop_entry(incoming),limit,ref mut plan);
+    var compilation::Plan work=switch(compile_work(m,unsafe{compile_fact_raw(incoming as ptr void,0,2)},entry_heap(vec::at<entries::Entry>(incoming,0)))){case .ok(p):{p}case .err(status):{return failed(m,status);}};
+    let Result<output_programs::Program,diagnostics::Error> built=bounded::compile_output(pop_entry(incoming),limit,ref mut plan,ref mut work);
+    assert(memory::record_compile(ref mut m.programs,ref work).is_ok);
     assert(memory::record(ref mut m.programs,ref plan).is_ok);
     return switch(built){case .ok(code):{publish_output_program(m,v,code,plan.bytes)}case .err(e):{compile_error(m,e)}};
 }
@@ -270,7 +334,9 @@ fn u32 compile_input_output_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref
     if(vec::len<Program>(v)>=m.limits.programs || m.next==0){return failed(m,8);}
     if(vec::len<input_entries::InputEntry>(incoming)!=1){return failed(m,1);}
     var retention::Plan plan=switch(retention_plan(m,2)){case .ok(p):{p}case .err(s):{return failed(m,s);}};
-    let Result<output_programs::Program,diagnostics::Error> built=output_programs::compile_input_with_retention(pop_input_entry(incoming),limit,ref mut plan);
+    var compilation::Plan work=switch(compile_work(m,unsafe{compile_fact_raw(incoming as ptr void,1,2)},input_entry_heap(vec::at<input_entries::InputEntry>(incoming,0)))){case .ok(p):{p}case .err(status):{return failed(m,status);}};
+    let Result<output_programs::Program,diagnostics::Error> built=bounded::compile_input_output(pop_input_entry(incoming),limit,ref mut plan,ref mut work);
+    assert(memory::record_compile(ref mut m.programs,ref work).is_ok);
     assert(memory::record(ref mut m.programs,ref plan).is_ok);
     return switch(built){case .ok(code):{publish_output_program(m,v,code,plan.bytes)}case .err(e):{compile_error(m,e)}};
 }
@@ -522,6 +588,12 @@ fn u32 control_access_inner(ref Meta m,usize thread,usize lifetime){
     if(m.thread!=thread || m.lifetime!=lifetime || thread==0 || lifetime==0){return 10;}
     if(m.active!=0){return 3;}return 0;
 }
+fn Result<modules::Index,u8> layout_index(ref u8[] source){
+    var sources::Builder b=switch(sources::builder(4096,4096)){case .ok(v):{v}case .err(_):{return .err(1);}};
+    if(!sources::add(ref mut b,b"layout",source).is_ok){return .err(2);}
+    let sources::Snapshot snapshot=switch(sources::freeze(ref b)){case .ok(v):{v}case .err(_):{return .err(3);}};
+    return switch(modules::build(snapshot)){case .ok(v):{.ok(v)}case .err(_):{.err(4)}};
+}
 pub fn void retain_native_bindings(){
     let control::Budget storage=switch(control::create(1,0)){case .ok(v):{v}case .err(_):{assert(false);return;}};
     let memory::Budget retained_storage=switch(memory::create(memory::defaults(),0)){case .ok(v):{v}case .err(_):{assert(false);return;}};
@@ -536,6 +608,7 @@ pub fn void retain_native_bindings(){
     unsafe{binding_raw(4)};discard compile_inner(ref mut m,ref mut p,ref mut input,0);
     unsafe{binding_raw(5)};discard dispatch_inner(ref mut m,ref mut p,ref mut scratch,ref mut v,ref mut bound,ref mut bound_scratch,ref mut outputs,ref mut output_scratch,8,0,0);
     unsafe{binding_raw(8)};discard maintenance_inner(ref mut m,ref mut p,ref mut scratch,ref mut v,ref mut bound,ref mut bound_scratch,ref mut outputs,ref mut output_scratch,1,1,8,0,0);
+    unsafe{binding_raw(21)};discard compile_preflight_inner(ref mut m,ref p,0,0,0);
     unsafe{binding_raw(6)};let vec::Vec<Program> empty_programs=reset_program_storage(p);
     unsafe{binding_raw(7)};let vec::Vec<Instance> empty_instances=reset_instance_storage(v);
     var vec::Vec<input_entries::InputEntry> input_entry=vec::empty<input_entries::InputEntry>();
@@ -561,4 +634,16 @@ pub fn void retain_native_bindings(){
     unsafe{binding_raw(16)};discard take_output_inner(ref mut m,ref output_instances,ref mut outputs,ref mut output_scratch,0,ref mut outgoing);
     unsafe{binding_raw(17)};let vec::Vec<Output> empty_outputs=reset_output_storage(outputs);
     unsafe{binding_raw(18)};discard control_access_inner(ref m,1,1);
+    let Instance witness=Instance{.id=0,.program=0,.fuel=0,.phase=0,.event=pending(),.output_limit=0,.output_allowed=false};
+    unsafe{binding_raw(22)};discard instance_identity(ref witness);
+    {
+        let modules::Index index=switch(layout_index(b"module layout;pub fn i32 main(){return 0;}")){case .ok(v):{v}case .err(_):{assert(false);return;}};
+        let entries::Entry entry=switch(entries::select_i32(index,b"layout",b"main")){case .ok(v):{v}case .err(_):{assert(false);return;}};
+        unsafe{binding_raw(19)};discard entry_heap(ref entry);
+    }
+    {
+        let modules::Index index=switch(layout_index(b"module layout;pub fn i32 main(ref u8[] data){return 0;}")){case .ok(v):{v}case .err(_):{assert(false);return;}};
+        let input_entries::InputEntry entry=switch(input_entries::select_i32_input(index,b"layout",b"main")){case .ok(v):{v}case .err(_):{assert(false);return;}};
+        unsafe{binding_raw(20)};discard input_entry_heap(ref entry);
+    }
 }

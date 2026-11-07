@@ -4,7 +4,9 @@ The private Engine now checks exact persistent Program backing before allocating
 its image or stored executable. It enforces a per-Program limit, total retained
 Program limit, and the combined fixed-control-plus-Program ceiling. This extends
 [control storage](runtime-engine-control-memory.md); it is not yet complete
-compile working-space, per-Instance or process-memory accounting.
+per-Instance or process-memory accounting. The
+[compilation successor](runtime-engine-compile-memory.md) now adds separate
+working/combined admission for scoped compiler heap and source transport.
 
 ## Actual allocation classes
 
@@ -56,12 +58,11 @@ Program and leaves existing owners and charges intact. Private quota diagnostic
 kind 21 maps to Engine resource-limit status 8; actual allocation kind 15 maps to
 OOM status 6. These are not new public CLI language gates.
 
-The Engine wrapper's incoming Entry vector and caller-created Index already
-exist outside this persistent-retention preflight. Array-list lowering can also
-allocate temporary vectors before the image plan. They are compile working
-storage, not silently included in Program bytes; their aggregate limit remains
-unfinished. This guarantee is about persistent Program allocation, not zero
-allocation for the entire compile operation.
+The [Engine compile successor](runtime-engine-compile-memory.md) separately
+reserves the caller-built Index, incoming Entry backing and a conservative
+lowering-heap bound before allocating the incoming vector. Those temporary costs
+are not added to Program bytes. Their historical combined reservation is now
+tracked while complete native-stack/Instance accounting remains unfinished.
 
 ## Lifetime and observations
 
@@ -79,9 +80,10 @@ reclaims the resources normally. Detached guest output remains governed by its
 separate Output lifetime; its payload is not counted as Program storage.
 
 `program_peak` is a reservation high-water mark, not a measured CRT/RSS high-water
-mark. `tracked_bytes`/`tracked_peak` include fixed control and retained Programs
-only. Input/output payloads, VM state and compiler working storage still need
-integration before an API can claim total Engine memory enforcement.
+mark. `tracked_bytes` counts current fixed control and retained Programs. The
+compile successor extends `tracked_peak` to the actual historical maximum
+combined reservation including compilation. Input/output payloads, VM state and
+native stacks still need integration before total Engine memory enforcement.
 
 ## Verification
 
@@ -94,7 +96,8 @@ sum of seven control vector blocks plus reported retained Program bytes.
 The source/IR/proof/output regression image separately passes 39 groups per profile,
 including the unchanged combined captured-call depth 32/33 fixture.
 
-Compile working storage and its transient old/new peaks, Instance frames and
-owner/loan/descriptors, input/output and pending host state, combined simultaneous
+The compile successor covers scoped working heap and transient old/new peaks.
+Native stacks, Instance frames and owner/loan/descriptors, input/output and
+pending host state, combined simultaneous
 Instance quotas, bounded steps, deadlines and public delivery remain in
 [the accepted inventory](../product/04-remaining-work.md).

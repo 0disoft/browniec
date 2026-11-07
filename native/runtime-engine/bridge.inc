@@ -91,3 +91,24 @@ uintptr_t bc_runtime_engine_program_layout(uint32_t kind){
  default:return 0;
  }
 }
+
+/* Actual SDK byte counts and emitted type widths only; Fairy checks the sums.
+   source is an authentic typed Fairy owner, never an arbitrary public pointer. */
+uintptr_t bc_runtime_engine_compile_fact(const void *source,uint32_t kind,uint32_t fact){
+ if(kind>1)return 0;
+ if(fact==0)return kind?sizeof(bc_input_entry):sizeof(bc_ordinary_entry);
+ if(!source)return 0;
+ if(fact==2)return kind?((const bc_engine_input_entry *)source)->f_1:((const bc_engine_input *)source)->f_1;
+ if(fact!=1)return 0;
+ return kind?((const bc_input_entry *)source)->f_0.f_0.f_1:((const bc_ordinary_entry *)source)->f_0.f_0.f_1;
+}
+uint32_t bc_runtime_engine_compile_preflight(void *raw,uint32_t mode,const void *selected){
+ bc_engine *e=raw;bc_abi_thread_identity id;uint32_t s=bc_abi_guard_enter(&id);if(s)return s;
+ s=B18(&e->f_0,id.thread,id.lifetime);
+ if(!s)s=B21(&e->f_0,&e->f_1,mode,0,0);
+ if(!s){
+  uint32_t kind=mode==1||mode==3;
+  s=B21(&e->f_0,&e->f_1,mode,bc_runtime_engine_compile_fact(selected,kind,1),bc_runtime_engine_compile_fact(selected,kind,0));
+ }
+ uint32_t end=bc_abi_guard_leave(id);return end?end:s;
+}

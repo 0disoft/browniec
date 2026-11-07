@@ -21,6 +21,7 @@ def closure():
     files.update({p.stem: p for p in (ROOT / 'tools/runtime-engine').glob('*.fy')})
     files['runtime_engine'] = NATIVE / 'runtime_engine.fy'
     files['retention_plan_contracts'] = ROOT / 'tests/m2/retention_plan.fy'
+    files['program_compile_contracts'] = ROOT / 'tests/m2/runtime_program_compile_memory.fy'
     files['control_budget_contracts'] = ROOT / 'tests/m2/runtime_control_budget.fy'
     files['runtime_input_adoption'] = ROOT / 'native/runtime-input-adoption/adoption.fy'
     seen, todo = {}, ['main']
@@ -37,7 +38,8 @@ def closure():
 
 
 def source_copy(path):
-    adapters = {'runtime_control_budget': 'control_budget_contracts', 'retention_plan': 'retention_plan_contracts'}
+    adapters = {'runtime_control_budget': 'control_budget_contracts', 'retention_plan': 'retention_plan_contracts',
+                'runtime_program_compile_memory': 'program_compile_contracts'}
     for original, alias in adapters.items():
         if path == ROOT / f'tests/m2/{original}.fy':
             text = path.read_text(encoding='utf-8').replace(f'module tests::m2::{original};', f'module {alias};')
@@ -98,7 +100,7 @@ def main():
                   'native/abi_thread_identity.c', 'native/abi_thread_identity.h',
                   'native/runtime_input_reader.c', 'native/runtime_input_reader.h',
                   'native/runtime-input-adoption/bridge.c',
-                  'tools/runtime-engine/heap-observer.c']
+                  'tools/runtime-engine/heap-observer.c', 'tools/runtime-engine/compile-test-host.inc']
         inputs = {p.relative_to(ROOT).as_posix(): p.read_bytes() for p in sources}
         inputs.update({name: (ROOT / name).read_bytes() for name in extras})
         need(all(b'\r' not in raw for name, raw in inputs.items()
@@ -125,12 +127,30 @@ def main():
                        ('10', 5, 'snapshotType'), ('11', 4, 'snapshotVectorType'),
                        ('13', 2, 'incomingType'), ('14', 2, 'inputEntryType'),
                        ('15', 4, 'snapshotVectorType'), ('16', 2, 'outputVectorType'),
-                       ('16', 3, 'outputVectorType'), ('16', 5, 'outputVectorType')]
+                       ('16', 3, 'outputVectorType'), ('16', 5, 'outputVectorType'),
+                       ('21', 1, 'programVectorType'), ('22', 0, 'instanceType')]
         for binding, index, key in projections:
             argument = contract['reviewedDeclarations'][binding].split('(', 1)[1].split(',')[index]
             actual = re.search(r'\bfy_(?:resource|struct)_\d+\b', argument)
             need(actual is not None and actual.group() == contract[key],
                  f'Typed projection differs from actual declaration: {binding}/{index}/{key}')
+        for binding, key in [('19', 'ordinary'), ('20', 'input')]:
+            argument = contract['reviewedDeclarations'][binding].split('(', 1)[1].split(',')[0]
+            actual = re.search(r'\bfy_resource_\d+\b', argument)
+            need(actual is not None and actual.group() == contract['entryTypes'][key],
+                 f'Typed Entry projection differs from declaration: {binding}/{key}')
+        layout_types = {key: contract[key] for key in ['engineType', 'programType', 'instanceType',
+                        'boundInputType', 'outputType', 'sourceIndexType', 'sourceIndexVectorType',
+                        'programVectorType']}
+        for variant, types in contract['programVariants'].items():
+            layout_types.update({variant + '_' + role: name for role, name in types.items()})
+        layout_types.update({key + '_entry': name for key, name in contract['entryTypes'].items()})
+        need(set(layout_types) == set(contract['reviewedLayouts']), 'Reviewed layout set changed')
+        for key, name in layout_types.items():
+            actual = re.search(r'^typedef struct \{\n[^}]*\} ' + re.escape(name) + r';$',
+                               generated.decode('utf-8'), re.M)
+            need(actual is not None and actual.group() == contract['reviewedLayouts'][key],
+                 f'Reviewed emitted layout differs: {key}')
         bindings = f'typedef {contract["engineType"]} bc_engine;\ntypedef {contract["incomingType"]} bc_engine_input;\n'
         bindings += f'typedef {contract["inputEntryType"]} bc_engine_input_entry;\ntypedef {contract["snapshotType"]} bc_engine_snapshot;\n'
         bindings += f'typedef {contract["snapshotVectorType"]} bc_engine_snapshots;\n'
@@ -141,6 +161,8 @@ def main():
         for variant, types in contract['programVariants'].items():
             for role, name in types.items():
                 bindings += f'typedef {name} bc_{variant}_{role};\n'
+        for key, name in contract['entryTypes'].items():
+            bindings += f'typedef {name} bc_{key}_entry;\n'
         bindings += '\n'.join(f'#define B{key} {value}' for key, value in contract['bindings'].items()) + '\n'
         write(output / 'bindings.h', bindings)
         for name in ['abi_thread_identity.c', 'abi_thread_identity.h']:
@@ -150,9 +172,10 @@ def main():
             write(output / name, inputs[name])
         write(output / 'bridge.inc', inputs['native/runtime-engine/bridge.inc'])
         write(output / 'test-host.inc', inputs['tools/runtime-engine/test-host.inc'])
+        write(output / 'compile-test-host.inc', inputs['tools/runtime-engine/compile-test-host.inc'])
         write(output / 'transport.c', '#define main generated_main\n#include "generated.c"\n#undef main\n'
               '#include "abi_thread_identity.h"\n#include "bindings.h"\n'
-              '#include "bridge.inc"\n#include "test-host.inc"\n')
+              '#include "bridge.inc"\n#include "test-host.inc"\n#include "compile-test-host.inc"\n')
         repository = (args.fairyc_repository or ROOT / toolchain['source']['localRepository']).resolve()
         runtime = [inputs['tools/runtime-engine/heap-observer.c'].decode('utf-8')]
         for row in contract['runtimeInputs']:

@@ -7,6 +7,7 @@ import module_index as modules;
 import source_snapshot as sources;
 
 unsafe extern C fn void bc_runtime_engine_test_fail(i64 count);
+unsafe extern C fn usize probe_attempts();
 unsafe extern C fn void bc_runtime_engine_test_closed_allocations();
 unsafe extern C fn void bc_runtime_engine_test_program_probe();
 unsafe extern C fn void bc_runtime_engine_test_program_no_retention_allocations();
@@ -69,7 +70,8 @@ fn void ledger(ref engine::Engine e,memory::Limits limits,usize live,usize peak,
             let usize backing=if(closed){0}else{control()};
             assert(v.engine_limit==limits.engine && v.program_limit==limits.program && v.programs_limit==limits.programs);
             assert(v.control_bytes==backing && v.program_bytes==live && v.program_peak==peak);
-            assert(v.tracked_bytes==backing+live && v.tracked_peak==control()+peak && v.closed==closed);
+            assert(v.tracked_bytes==backing+live && v.closed==closed);
+            assert(v.tracked_peak>=control()+peak && v.tracked_peak<=control()+peak+v.working_peak);
         }
         case .err(_):{assert(false);}
     };
@@ -160,18 +162,26 @@ fn void per_program_exact_and_short(){
     }
 }
 
-// Groups 3/4: old+new retained bytes reach total-program and combined-control
+// Groups 3/4: retained bytes and full incoming compilation reach total-program
+// and combined-control
 // boundaries independently. Three slots prevent count quota masking byte quota.
+fn usize input_work_requirement(){
+    let input_entries::InputEntry entry=switch(selected_input(literal_source(1))){
+        case .ok(v):{v}case .err(_):{assert(false);return 0;}
+    };
+    return id(engine::required_input_compile_bytes(ref entry));
+}
 fn void aggregate_boundary(bool combined,bool short){
     let usize old=fixed(0)+5;let usize fresh=fixed(1)+5;let usize sum=old+fresh;
-    let usize cap=if(short){sum-1}else{sum};
+    let usize full=if(combined){old+input_work_requirement()}else{sum};
+    let usize cap=if(short){full-1}else{full};
     let usize per=if(old>fresh){old}else{fresh};
     let memory::Limits limits=memory::Limits{.engine=if(combined){control()+cap}else{1073741824},.program=per,.programs=if(combined){sum}else{cap}};
     var engine::Engine e=switch(created(limits)){case .ok(v):{v}case .err(_):{assert(false);return;}};
     let usize a=compile(ref mut e,0,true);assert(a==1);
     if(short){
         rejected(attempt(ref mut e,1,literal_source(1),1,true),8);
-        unsafe{bc_runtime_engine_test_program_no_retention_allocations()};
+        if(combined){assert(unsafe{probe_attempts()}==0);}else{unsafe{bc_runtime_engine_test_program_no_retention_allocations()};}
         counts(ref mut e,1,0,0);ledger(ref e,limits,old,old,false);storage(ref e,old);
         assert(id(engine::release_program(ref mut e,a))==a);
         let usize b=compile(ref mut e,1,true);assert(b==2);

@@ -3,8 +3,9 @@
 The private `module_budgeted_compile` API now guards the actual ordinary, input,
 output and input-output compilers with separate working and combined heap limits.
 It delegates to the existing source lowering and independent verifier. Existing
-compiler APIs and the Engine's compilation path retain their previous behavior;
-binding this API to Engine-wide reservations is the next integration step.
+standalone compiler APIs retain their previous behavior. The
+[owning Engine successor](runtime-engine-compile-memory.md) now adopts this API
+and additionally accounts for the selected Index and incoming Entry backing.
 
 ## Working bound
 
@@ -58,8 +59,8 @@ and Engine publication need the existing owning Engine ledger.
 ## Scope and verification
 
 The caller's prebuilt Index and the Engine's incoming Entry vector are outside
-this API's working reservation. The Engine's control and prior Program backing
-can be supplied as the baseline by its future adapter. Native stack, allocation
+this standalone API's working reservation. The owning Engine adapter now includes
+those classes, fixed control and prior retained Programs in its baseline. Native stack, allocation
 headers, CRT fragmentation and process RSS are not covered. Instance/output/host
 accounting, complete aggregate quotas and bounded work remain open.
 
