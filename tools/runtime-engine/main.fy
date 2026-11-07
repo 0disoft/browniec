@@ -1,0 +1,103 @@
+module main;
+import runtime_engine as engine;
+import source_snapshot as sources;
+import module_index as modules;
+import module_entry as entries;
+import source_error as diagnostics;
+import errors as errors;
+unsafe extern C fn void bc_runtime_engine_test_closed_allocations();
+unsafe extern C fn void bc_runtime_engine_test_seed(ptr mut void e,u32 kind);
+unsafe extern C fn void bc_runtime_engine_test_guards(ptr mut void e);
+fn sources::Builder builder(){return switch(sources::builder(4096,4096)){case .ok(v):{v}case .err(_):{assert(false);builder()}};}
+fn entries::Entry entry(ref u8[] source){
+    var sources::Builder b=builder();assert(sources::add(ref mut b,b"app.brc",source).is_ok);
+    let sources::Snapshot snapshot=switch(sources::freeze(ref b)){case .ok(v):{v}case .err(_):{assert(false);return entry(b"module app;pub fn i32 chosen(){return 0;}");}};
+    let modules::Index index=switch(modules::build(snapshot)){case .ok(v):{v}case .err(_):{assert(false);return entry(b"module app;pub fn i32 chosen(){return 0;}");}};
+    return switch(entries::select_i32(index,b"app",b"chosen")){case .ok(v):{v}case .err(_):{assert(false);entry(b"module app;pub fn i32 chosen(){return 0;}")}};
+}
+fn engine::Engine create(usize programs,usize instances){return switch(engine::create(engine::Limits{.programs=programs,.instances=instances,.fuel=16000000})){
+    case .ok(e):{e}case .err(_):{assert(false);create(programs,instances)}
+};}
+fn usize id(Result<usize,engine::Error> r){return switch(r){case .ok(v):{v}case .err(_):{assert(false);0}};}
+fn void rejected(Result<usize,engine::Error> r,u32 status){switch(r){case .ok(_):{assert(false);}case .err(e):{assert(e.status==status);}};}
+fn diagnostics::Error absent(){return diagnostics::absent(errors::make(0,0));}
+fn engine::Event event(Result<engine::Event,engine::Error> r){return switch(r){case .ok(e):{e}case .err(_):{assert(false);engine::Event{.kind=0,.value=0,.diagnostic=absent()}}};}
+fn void counts(ref mut engine::Engine e,usize programs,usize instances,usize pins){switch(engine::inspect(e)){
+    case .ok(s):{assert(s.programs==programs && s.instances==instances && s.pins==pins && !s.closed);}case .err(_):{assert(false);}
+};}
+fn i32 main(){
+    engine::retain_native_bindings();
+    {
+        var engine::Engine e=create(2,3);counts(ref mut e,0,0,0);
+        unsafe{bc_runtime_engine_test_guards(ref mut e as ptr mut void)};
+        let usize p=id(engine::compile(ref mut e,entry(b"module app;pub fn i32 chosen(){var i32[1] a=[41];a[0]+=1;return a[0];}"),65536));assert(p==1);
+        let usize first=id(engine::create_instance(ref mut e,p,16000000));let usize second=id(engine::create_instance(ref mut e,p,16000000));
+        let usize starved=id(engine::create_instance(ref mut e,p,0));counts(ref mut e,1,3,3);
+        rejected(engine::create_instance(ref mut e,p,1),8);rejected(engine::destroy(ref mut e),3);
+        assert(id(engine::release_program(ref mut e,p))==p);rejected(engine::create_instance(ref mut e,p,1),2);counts(ref mut e,1,3,3);
+        let engine::Event a=event(engine::execute_once(ref mut e,first));assert(a.kind==1 && a.value==42);
+        let engine::Event b=event(engine::execute_once(ref mut e,second));assert(b.kind==1 && b.value==42);
+        switch(engine::execute_once(ref mut e,first)){case .ok(_):{assert(false);}case .err(e):{assert(e.status==11);}};
+        assert(event(engine::observe(ref mut e,first)).value==42 && event(engine::cancel_ready(ref mut e,first)).kind==1);
+        let engine::Event trap=event(engine::execute_once(ref mut e,starved));assert(trap.kind==2 && trap.diagnostic.code.kind==8);
+        assert(id(engine::destroy_instance(ref mut e,second))==second);counts(ref mut e,1,2,2);
+        assert(id(engine::destroy_instance(ref mut e,first))==first);counts(ref mut e,1,1,1);
+        assert(id(engine::destroy_instance(ref mut e,starved))==starved);counts(ref mut e,0,0,0);
+        rejected(engine::release_program(ref mut e,p),2);rejected(engine::destroy_instance(ref mut e,first),2);
+        switch(engine::compile(ref mut e,entry(b"module app;pub fn i32 chosen(){return missing;}"),65536)){
+            case .ok(_):{assert(false);}case .err(e):{assert(e.status==4 && e.diagnostic.code.kind==3);}
+        };counts(ref mut e,0,0,0);
+        let usize next=id(engine::compile(ref mut e,entry(b"module app;pub fn i32 chosen(){return 1/0;}"),65536));assert(next==5);
+        let usize cancelled=id(engine::create_instance(ref mut e,next,100));assert(event(engine::cancel_ready(ref mut e,cancelled)).kind==3);
+        switch(engine::execute_once(ref mut e,cancelled)){case .ok(_):{assert(false);}case .err(e):{assert(e.status==11);}};
+        assert(id(engine::destroy_instance(ref mut e,cancelled))==cancelled);assert(id(engine::release_program(ref mut e,next))==next);
+        assert(id(engine::destroy(ref mut e))==0);unsafe{bc_runtime_engine_test_closed_allocations()};rejected(engine::destroy(ref mut e),2);
+    }
+    {
+        var engine::Engine e=create(1,1);let usize p=id(engine::compile(ref mut e,entry(b"module app;pub fn i32 chosen(){return 42;}"),65536));
+        rejected(engine::compile(ref mut e,entry(b"module app;pub fn i32 chosen(){return 0;}"),65536),8);
+        rejected(engine::create_instance(ref mut e,p,16000001),5);
+        assert(id(engine::release_program(ref mut e,p))==p);counts(ref mut e,0,0,0);assert(id(engine::destroy(ref mut e))==0);
+    }
+    {
+        var engine::Engine original=create(1,1);
+        let usize p=id(engine::compile(ref mut original,entry(b"module app;pub fn i32 chosen(){let ref u8[] b=b\"*\";return b[0] as i32;}"),65536));
+        let usize i=id(engine::create_instance(ref mut original,p,16000000));assert(id(engine::release_program(ref mut original,p))==p);
+        var engine::Engine moved=original;counts(ref mut moved,1,1,1);
+        assert(event(engine::execute_once(ref mut moved,i)).value==42);
+        assert(id(engine::destroy_instance(ref mut moved,i))==i);counts(ref mut moved,0,0,0);assert(id(engine::destroy(ref mut moved))==0);
+        unsafe{bc_runtime_engine_test_closed_allocations()};
+    }
+    {
+        var engine::Engine e=create(1,1);unsafe{bc_runtime_engine_test_seed(ref mut e as ptr mut void,1)};
+        let usize p=id(engine::compile(ref mut e,entry(b"module app;pub fn i32 chosen(){return 42;}"),65536));assert(p==18446744073709551615);
+        rejected(engine::create_instance(ref mut e,p,256),8);counts(ref mut e,1,0,0);
+        assert(id(engine::release_program(ref mut e,p))==p);assert(id(engine::destroy(ref mut e))==0);
+    }
+    {
+        var engine::Engine e=create(1,1);
+        let usize p=id(engine::compile(ref mut e,entry(b"module app;pub fn i32 chosen(){return 42;}"),65536));
+        let usize i=id(engine::create_instance(ref mut e,p,256));assert(event(engine::execute_once(ref mut e,i)).value==42);
+        unsafe{bc_runtime_engine_test_seed(ref mut e as ptr mut void,2)};counts(ref mut e,1,1,1);
+        assert(event(engine::observe(ref mut e,i)).value==42);rejected(engine::create_instance(ref mut e,p,256),8);
+        switch(engine::execute_once(ref mut e,i)){case .ok(_):{assert(false);}case .err(e):{assert(e.status==8);}};
+        rejected(engine::destroy(ref mut e),3);assert(id(engine::release_program(ref mut e,p))==p);
+        assert(id(engine::destroy_instance(ref mut e,i))==i);counts(ref mut e,0,0,0);assert(id(engine::destroy(ref mut e))==0);
+    }
+    {
+        var engine::Engine e=create(4,2);
+        let usize a=id(engine::compile(ref mut e,entry(b"module app;pub fn i32 chosen(){return 0;}"),65536));
+        let usize b=id(engine::compile(ref mut e,entry(b"module app;pub fn i32 chosen(){let ref u8[] b=b\"*\";return b[0] as i32;}"),65536));
+        let usize trash=id(engine::compile(ref mut e,entry(b"module app;pub fn i32 chosen(){return 7;}"),65536));
+        let usize c=id(engine::compile(ref mut e,entry(b"module app;pub fn i32 chosen(){let ref u8[] b=b\"+\";return b[0] as i32;}"),65536));
+        let usize bi=id(engine::create_instance(ref mut e,b,16000000));let usize ci=id(engine::create_instance(ref mut e,c,16000000));
+        assert(id(engine::release_program(ref mut e,trash))==trash);counts(ref mut e,3,2,2);
+        assert(id(engine::release_program(ref mut e,a))==a);counts(ref mut e,2,2,2);
+        assert(id(engine::release_program(ref mut e,b))==b);assert(event(engine::execute_once(ref mut e,bi)).value==42);
+        assert(id(engine::destroy_instance(ref mut e,bi))==bi);counts(ref mut e,1,1,1);
+        assert(event(engine::execute_once(ref mut e,ci)).value==43);
+        // Leave the last live Instance and unreleased Program to owning cleanup.
+    }
+    unsafe{bc_runtime_engine_test_closed_allocations()};
+    return 0;
+}

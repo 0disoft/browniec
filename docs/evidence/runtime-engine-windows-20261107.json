@@ -1,0 +1,128 @@
+{
+  "schema": "browniec.private-runtime-engine-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-07T07:53:33.451794+00:00",
+  "profiles": [
+    {
+      "profile": "development",
+      "artifact": {
+        "path": "build/runtime-engine/20261107T075333451006Z/development/runtime-engine.exe",
+        "sha256": "d064842c442c8815bae970db594f0c6ffd935d583058b42ba025c4d69e1df19c",
+        "bytes": 5502976,
+        "stackReserve": 1048576,
+        "stackCommit": 4096
+      },
+      "exit": 0,
+      "liveHeapAllocationsAtExit": 0,
+      "assertions": "native Fairy and C, no parsed trace",
+      "objects": [
+        {
+          "path": "build/runtime-engine/20261107T075333451006Z/development/transport.obj",
+          "sha256": "09a204375de4f15090b8c6e9ea67673ce1af767ff6e64a4cfaa81e411a55cc61"
+        },
+        {
+          "path": "build/runtime-engine/20261107T075333451006Z/development/runtime.obj",
+          "sha256": "8eda4c78684e10f57a347edf265291a8193f30ff601bba770a749799be1b0b80"
+        },
+        {
+          "path": "build/runtime-engine/20261107T075333451006Z/development/abi_thread_identity.obj",
+          "sha256": "2cf97949cb8cddee3c79219aef678bcb699752c08313a99b598d8826a11e75de"
+        }
+      ]
+    },
+    {
+      "profile": "release",
+      "artifact": {
+        "path": "build/runtime-engine/20261107T075333451006Z/release/runtime-engine.exe",
+        "sha256": "67a9627cf1799975dce938a8ade20f3442a12d419cfe5bb5622c99677b845537",
+        "bytes": 1772544,
+        "stackReserve": 1048576,
+        "stackCommit": 4096
+      },
+      "exit": 0,
+      "liveHeapAllocationsAtExit": 0,
+      "assertions": "native Fairy and C, no parsed trace",
+      "objects": [
+        {
+          "path": "build/runtime-engine/20261107T075333451006Z/release/transport.obj",
+          "sha256": "50b6a4a47b4fb2fad422b6c0675646f26145cd07afd61057d35f287650cb3b43"
+        },
+        {
+          "path": "build/runtime-engine/20261107T075333451006Z/release/runtime.obj",
+          "sha256": "c3516fd1c1966ab2d1fde61f23d7e7bdd2a8c945f5cfe86f0dabfba66668a26b"
+        },
+        {
+          "path": "build/runtime-engine/20261107T075333451006Z/release/abi_thread_identity.obj",
+          "sha256": "06307b730dca64d2c91463e3838498defa6bb2a598865ce4e5d4c5e75f563cdf"
+        }
+      ]
+    }
+  ],
+  "runtimeInputs": [
+    {
+      "path": "internal/cruntime/stage0_scalar.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "e16bfdd17904754ceb9534c976910964c76e8b0c757f72ddf3b63de0d5548bbe"
+    },
+    {
+      "path": "internal/cstdlib/stage0_system_heap.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "41e57f9748afb73731501ba2003b1a9213b728c0d2db6a31686b9d0489b76100"
+    },
+    {
+      "path": "internal/cstdlib/stage0_buffer.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "27f049118af6e0d008428abd73bdf77dce5491b82617cdb65b9a06ac185edfa1"
+    },
+    {
+      "path": "internal/cstdlib/stage0_vector_storage.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "80dddb6db91c79c495ef8bad6d31923fd242be13de9899ce3aaded85158bb17d"
+    },
+    {
+      "path": "internal/cstdlib/stage0_text_view.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "cb468db0b4c8b54d12a146c41bcfb297f2a06d83a496a38942fb6e2bc7622b62"
+    },
+    {
+      "path": "internal/cstdlib/stage0_windows_console.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "c070b518a8cb1a8eb0c6b170dd3083afd91149a3b076beb9f43bcfb05d2041e5"
+    },
+    {
+      "path": "internal/cstdlib/stage0_windows_process_args.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "f86225cdc8ecf5ebe0ba899557c3b117c50ccc0f02afea4cc0115f780bc40cd6"
+    }
+  ],
+  "compiler": {
+    "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+    "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+    "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false"
+  },
+  "transportSha256": "a86fff4fe7488bc570cf0a7707899e331c3ddd7fc2e62d91c970de641b91f845",
+  "runtimeSha256": "2f6b57a4af95b1c821528f9d9d5b6eec0d7d9a2d116cb999b8411d4678822ca0",
+  "isolatedLockSha256": "6b47b739b89aed3736d075c49c3010db162dc0f68925aa2d35929bc143758c88",
+  "sourceClosure": 183,
+  "msvc": {
+    "version": "14.51.36231",
+    "sdk": "10.0.26100.0",
+    "compilerSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+    "overrides": false
+  },
+  "rootLockUnchanged": true,
+  "compilerOverrides": false,
+  "runtimeEnvironment": "cleared; empty tool PATH",
+  "limitations": [
+    "Private synchronous typed transport, not public C handles or CLI lifecycle APIs",
+    "Complete Engine accounting/preallocation, OOM injection and poison containment remain",
+    "No bounded step quanta, in-flight cancellation, host/input/output dispatch or OS deadline"
+  ],
+  "platform": "windows/amd64",
+  "receipt": "build/runtime-engine/20261107T075333451006Z/receipt.json",
+  "receiptSha256": "68b0cfa66ccc8ee6c7e57e73d2bd1c88389c5add88bd44eb5dda0f8f914ed87f",
+  "command": "python tools/verify-runtime-engine.py",
+  "inputManifest": "runtime-engine-inputs-windows-20261107.json",
+  "inputCount": 193,
+  "inputBytesUnchanged": true
+}

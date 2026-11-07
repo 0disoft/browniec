@@ -1,0 +1,223 @@
+module runtime_engine;
+import module_program as programs;
+import module_entry as entries;
+import source_error as diagnostics;
+import errors as errors;
+import fuel as fuel;
+import std::vec as vec;
+
+// Internal owning lifecycle, not public C handles/bc_step. IDs are scoped to
+// this exact Engine; the outer ABI registry must authenticate their association.
+pub struct Limits { usize programs; usize instances; usize fuel; }
+pub struct Error { u32 status; diagnostics::Error diagnostic; }
+pub struct Event { u8 kind; i64 value; diagnostics::Error diagnostic; }
+pub struct Snapshot { usize programs; usize instances; usize pins; bool closed; }
+struct Meta {
+    Limits limits; usize thread; usize lifetime; usize active; usize admission;
+    usize next; usize result; Error error; Event event; Snapshot snapshot; bool closed;
+}
+resource Program { usize id; usize pins; bool released; programs::Program code; cleanup { } }
+struct Instance { usize id; usize program; usize fuel; u8 phase; Event event; }
+pub resource Engine {
+    Meta meta; vec::Vec<Program> programs; vec::Vec<Program> scratch;
+    vec::Vec<Instance> instances; cleanup { }
+}
+@link_name("bc_runtime_engine_bind") unsafe extern C fn u32 bind_raw(ptr mut void owner);
+@link_name("bc_runtime_engine_compile") unsafe extern C fn u32 compile_raw(ptr mut void owner,ptr mut void incoming,usize limit);
+@link_name("bc_runtime_engine_call") unsafe extern C fn u32 call_raw(ptr mut void owner,u32 operation,usize id,usize argument);
+// Retention markers are used only by the dedicated native transport fixture.
+@link_name("bc_runtime_engine_binding") unsafe extern C fn void binding_raw(u32 number);
+fn diagnostics::Error absent(){return diagnostics::absent(errors::make(0,0));}
+fn Error error(u32 status){return Error{.status=status,.diagnostic=absent()};}
+fn Event pending(){return Event{.kind=0,.value=0,.diagnostic=absent()};}
+fn Snapshot empty_snapshot(){return Snapshot{.programs=0,.instances=0,.pins=0,.closed=false};}
+fn Result<usize,Error> result(ref Engine e,u32 status){
+    if(status==0){return .ok(e.meta.result);}
+    if(status==3 || status==10){return .err(error(status));}
+    return .err(if(e.meta.error.status==status){e.meta.error}else{error(status)});
+}
+pub fn Result<Engine,Error> create(Limits limits){
+    if(limits.programs==0 || limits.programs>64 || limits.instances==0 || limits.instances>64 || limits.fuel==0 || limits.fuel>fuel::cli_limit()){return .err(error(1));}
+    var vec::Vec<Program> programs=vec::empty<Program>();var vec::Vec<Program> scratch=vec::empty<Program>();
+    var vec::Vec<Instance> instances=vec::empty<Instance>();
+    if(!vec::reserve<Program>(ref mut programs,64).is_ok || !vec::reserve<Program>(ref mut scratch,64).is_ok || !vec::reserve<Instance>(ref mut instances,64).is_ok){return .err(error(6));}
+    var Engine e=Engine{.meta=Meta{.limits=limits,.thread=0,.lifetime=0,.active=0,.admission=1,.next=1,.result=0,.error=error(0),.event=pending(),.snapshot=empty_snapshot(),.closed=false},
+        .programs=programs,.scratch=scratch,.instances=instances};
+    let u32 status=unsafe {bind_raw(ref mut e as ptr mut void)};
+    if(status!=0){return .err(error(status));}return .ok(e);
+}
+// Actual selected source admission and immutable Program retention; the temporary
+// Entry vector transfers its owner through typed Fairy pop, not a raw ABI move.
+pub fn Result<usize,Error> compile(ref mut Engine e,entries::Entry selected,usize image_limit){
+    var vec::Vec<entries::Entry> incoming=vec::empty<entries::Entry>();
+    if(!vec::reserve<entries::Entry>(ref mut incoming,1).is_ok){return .err(error(6));}
+    if(!vec::push<entries::Entry>(ref mut incoming,selected).is_ok){return .err(error(6));}
+    let u32 status=unsafe {compile_raw(e as ptr mut void,ref mut incoming as ptr mut void,image_limit)};
+    return result(e,status);
+}
+pub fn Result<usize,Error> create_instance(ref mut Engine e,usize program,usize budget){let u32 s=unsafe{call_raw(e as ptr mut void,1,program,budget)};return result(e,s);}
+pub fn Result<usize,Error> release_program(ref mut Engine e,usize program){let u32 s=unsafe{call_raw(e as ptr mut void,2,program,0)};return result(e,s);}
+pub fn Result<usize,Error> destroy_instance(ref mut Engine e,usize instance){let u32 s=unsafe{call_raw(e as ptr mut void,3,instance,0)};return result(e,s);}
+pub fn Result<usize,Error> destroy(ref mut Engine e){let u32 s=unsafe{call_raw(e as ptr mut void,4,0,0)};return result(e,s);}
+pub fn Result<Event,Error> execute_once(ref mut Engine e,usize instance){
+    let u32 s=unsafe{call_raw(e as ptr mut void,5,instance,0)};
+    if(s!=0){return .err(error(s));}return .ok(e.meta.event);
+}
+pub fn Result<Event,Error> observe(ref mut Engine e,usize instance){
+    let u32 s=unsafe{call_raw(e as ptr mut void,6,instance,0)};
+    if(s!=0){return .err(error(s));}return .ok(e.meta.event);
+}
+pub fn Result<Event,Error> cancel_ready(ref mut Engine e,usize instance){
+    let u32 s=unsafe{call_raw(e as ptr mut void,7,instance,0)};
+    if(s!=0){return .err(error(s));}return .ok(e.meta.event);
+}
+pub fn Result<Snapshot,Error> inspect(ref mut Engine e){
+    let u32 s=unsafe{call_raw(e as ptr mut void,8,0,0)};
+    if(s!=0){return .err(error(s));}return .ok(e.meta.snapshot);
+}
+fn u32 failed(ref mut Meta m,u32 status){m.error=error(status);return status;}
+fn u32 success(ref mut Meta m,usize value){m.error=error(0);m.result=value;return 0;}
+// These typed helpers are private generated transport, not raw ABI declarations.
+// The C projector supplies live field addresses; all lifecycle decisions stay here.
+fn u32 bind_inner(ref mut Meta m,usize thread,usize lifetime){
+    if(thread==0 || lifetime==0 || m.thread!=0 || m.lifetime!=0){return 7;}
+    m.thread=thread;m.lifetime=lifetime;return 0;
+}
+fn u32 begin_inner(ref mut Meta m,usize thread,usize lifetime){
+    if(m.thread!=thread || m.lifetime!=lifetime || thread==0 || lifetime==0){return 10;}
+    if(m.active!=0){return 3;}if(m.closed){return failed(m,2);}if(m.admission==0){return failed(m,8);}
+    m.active=m.admission;m.admission=if(m.admission==18446744073709551615){0}else{m.admission+1};return 0;
+}
+fn u32 end_inner(ref mut Meta m,usize thread,usize lifetime,usize epoch){
+    if(m.thread!=thread || m.lifetime!=lifetime || thread==0 || lifetime==0){return 10;}
+    if(epoch==0 || m.active!=epoch){return 7;}m.active=0;return 0;
+}
+fn Result<usize,u32> program_index(ref vec::Vec<Program> v,usize id,bool live){
+    var usize i=0;while(i<vec::len<Program>(v)){let ref Program p=vec::at<Program>(v,i);
+        if(p.id==id && (!live || !p.released)){return .ok(i);}i+=1;
+    }return .err(2);
+}
+fn Result<usize,u32> instance_index(ref vec::Vec<Instance> v,usize id){
+    var usize i=0;while(i<vec::len<Instance>(v)){if(vec::at<Instance>(v,i).id==id){return .ok(i);}i+=1;}return .err(2);
+}
+fn void advance(ref mut Meta m){m.next=if(m.next==18446744073709551615){0}else{m.next+1};}
+fn u32 compile_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut vec::Vec<entries::Entry> incoming,usize image_limit){
+    if(vec::len<Program>(v)>=m.limits.programs || m.next==0){return failed(m,8);}
+    if(vec::len<entries::Entry>(incoming)!=1){return failed(m,1);}
+    let entries::Entry selected=pop_entry(incoming);
+    return switch(programs::compile(selected,image_limit)){
+        case .ok(code):{publish_program(m,v,code)}
+        case .err(e):{m.error=Error{.status=4,.diagnostic=e};4}
+    };
+}
+fn entries::Entry pop_entry(ref mut vec::Vec<entries::Entry> v){return switch(vec::pop<entries::Entry>(v)){
+    case .some(e):{e}case .none:{assert(false);pop_entry(v)}
+};}
+fn u32 publish_program(ref mut Meta m,ref mut vec::Vec<Program> v,programs::Program code){
+    let usize id=m.next;
+    if(!vec::push<Program>(v,Program{.id=id,.pins=0,.released=false,.code=code}).is_ok){return failed(m,6);}
+    advance(m);return success(m,id);
+}
+fn u32 instance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Vec<Instance> v,usize code,usize budget){
+    if(budget>m.limits.fuel){return failed(m,5);}
+    let usize pi=switch(program_index(p,code,true)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
+    if(vec::len<Instance>(v)>=m.limits.instances || m.next==0){return failed(m,8);}
+    let usize id=m.next;
+    if(!vec::push<Instance>(v,Instance{.id=id,.program=code,.fuel=budget,.phase=0,.event=pending()}).is_ok){return failed(m,6);}
+    let ref mut Program target=vec::at_mut<Program>(p,pi);target.pins+=1;advance(m);return success(m,id);
+}
+fn Program pop(ref mut vec::Vec<Program> v){return switch(vec::pop<Program>(v)){case .some(p):{p}case .none:{assert(false);pop(v)}};}
+fn void push(ref mut vec::Vec<Program> v,Program p){assert(vec::push<Program>(v,p).is_ok);}
+fn void remove(ref mut vec::Vec<Program> v,ref mut vec::Vec<Program> scratch,usize index){
+    assert(vec::len<Program>(scratch)==0);
+    while(vec::len<Program>(v)>index+1){let Program p=pop(v);push(scratch,p);}
+    {let Program disposed=pop(v);}
+    while(vec::len<Program>(scratch)>0){let Program p=pop(scratch);push(v,p);}
+}
+fn u32 release_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut vec::Vec<Program> scratch,usize id){
+    let usize i=switch(program_index(v,id,true)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
+    if(vec::at<Program>(v,i).pins==0){remove(v,scratch,i);}else{let ref mut Program p=vec::at_mut<Program>(v,i);p.released=true;}
+    return success(m,id);
+}
+fn u32 destroy_instance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Vec<Program> scratch,ref mut vec::Vec<Instance> v,usize id){
+    let usize ii=switch(instance_index(v,id)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
+    let Instance current=*vec::at<Instance>(v,ii);if(current.phase==1){return failed(m,3);}
+    let usize pi=switch(program_index(p,current.program,false)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
+    let usize pins=vec::at<Program>(p,pi).pins;if(pins==0){return failed(m,7);}
+    let bool reclaim=pins==1 && vec::at<Program>(p,pi).released;
+    {let ref mut Program code=vec::at_mut<Program>(p,pi);code.pins=pins-1;}
+    let Instance last=switch(vec::pop<Instance>(v)){case .some(x):{x}case .none:{assert(false);current}};
+    if(ii<vec::len<Instance>(v)){let ref mut Instance target=vec::at_mut<Instance>(v,ii);*target=last;}
+    if(reclaim){remove(p,scratch,pi);}return success(m,id);
+}
+fn u32 execute_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Instance> v,usize id){
+    let usize ii=switch(instance_index(v,id)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
+    let Instance current=*vec::at<Instance>(v,ii);
+    if(current.phase==1){return failed(m,3);}if(current.phase==2){return failed(m,11);}
+    let usize pi=switch(program_index(p,current.program,false)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
+    let ref Program code=vec::at<Program>(p,pi);if(code.pins==0){return failed(m,7);}
+    {let ref mut Instance target=vec::at_mut<Instance>(v,ii);target.phase=1;}
+    let Event event=switch(programs::run(ref code.code,current.fuel)){
+        case .ok(value):{Event{.kind=1,.value=value,.diagnostic=absent()}}
+        case .err(e):{Event{.kind=2,.value=0,.diagnostic=e}}
+    };
+    {let ref mut Instance target=vec::at_mut<Instance>(v,ii);target.event=event;target.phase=2;}
+    m.event=event;return success(m,id);
+}
+fn u32 observe_inner(ref mut Meta m,ref vec::Vec<Instance> v,usize id){
+    let usize ii=switch(instance_index(v,id)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
+    m.event=vec::at<Instance>(v,ii).event;return success(m,id);
+}
+fn u32 cancel_inner(ref mut Meta m,ref mut vec::Vec<Instance> v,usize id){
+    let usize ii=switch(instance_index(v,id)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
+    let ref mut Instance target=vec::at_mut<Instance>(v,ii);
+    if(target.phase==1){return failed(m,3);}if(target.phase==0){target.event=Event{.kind=3,.value=0,.diagnostic=absent()};target.phase=2;}
+    m.event=target.event;return success(m,id);
+}
+fn u32 inspect_inner(ref mut Meta m,ref vec::Vec<Program> p,ref vec::Vec<Instance> v){
+    var usize pins=0;var usize i=0;while(i<vec::len<Program>(p)){pins+=vec::at<Program>(p,i).pins;i+=1;}
+    m.snapshot=Snapshot{.programs=vec::len<Program>(p),.instances=vec::len<Instance>(v),.pins=pins,.closed=m.closed};return success(m,0);
+}
+fn u32 close_inner(ref mut Meta m,ref vec::Vec<Program> p,ref vec::Vec<Instance> v){
+    if(vec::len<Program>(p)!=0 || vec::len<Instance>(v)!=0){return failed(m,3);}m.closed=true;return success(m,0);
+}
+fn u32 dispatch_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Vec<Program> scratch,
+    ref mut vec::Vec<Instance> v,u32 operation,usize id,usize argument){
+    if(operation==1){return instance_inner(m,p,v,id,argument);}
+    if(operation==2){return release_inner(m,p,scratch,id);}
+    if(operation==3){return destroy_instance_inner(m,p,scratch,v,id);}
+    if(operation==4){return close_inner(m,p,v);}
+    if(operation==5){return execute_inner(m,p,v,id);}
+    if(operation==6){return observe_inner(m,v,id);}
+    if(operation==7){return cancel_inner(m,v,id);}
+    if(operation==8){return inspect_inner(m,p,v);}
+    return failed(m,1);
+}
+// After the last epoch, only bounded owner maintenance may run, under the
+// native guard for its entire duration. It never issues/reuses an epoch or runs
+// compilation/guest code; existing results and owning teardown remain available.
+fn u32 maintenance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Vec<Program> scratch,
+    ref mut vec::Vec<Instance> v,usize thread,usize lifetime,u32 operation,usize id,usize argument){
+    if(m.thread!=thread || m.lifetime!=lifetime || thread==0 || lifetime==0){return 10;}
+    if(m.active!=0){return 3;}if(m.closed){return failed(m,2);}
+    if(m.admission!=0){return failed(m,7);}
+    if(operation!=2 && operation!=3 && operation!=4 && operation!=6 && operation!=7 && operation!=8){return failed(m,8);}
+    return dispatch_inner(m,p,scratch,v,operation,id,argument);
+}
+fn vec::Vec<Program> reset_program_storage(vec::Vec<Program> v){assert(vec::len<Program>(ref v)==0);return vec::empty<Program>();}
+fn vec::Vec<Instance> reset_instance_storage(vec::Vec<Instance> v){assert(vec::len<Instance>(ref v)==0);return vec::empty<Instance>();}
+// Only the dedicated transport fixture calls this helper-retention root. The
+// marker calls identify typed definitions; they publish nothing or run guests.
+pub fn void retain_native_bindings(){
+    var Meta m=Meta{.limits=Limits{.programs=1,.instances=1,.fuel=256},.thread=0,.lifetime=0,.active=0,.admission=1,.next=1,.result=0,.error=error(0),.event=pending(),.snapshot=empty_snapshot(),.closed=false};
+    var vec::Vec<Program> p=vec::empty<Program>();var vec::Vec<Program> scratch=vec::empty<Program>();
+    var vec::Vec<Instance> v=vec::empty<Instance>();var vec::Vec<entries::Entry> input=vec::empty<entries::Entry>();
+    unsafe{binding_raw(1)};discard bind_inner(ref mut m,1,1);
+    unsafe{binding_raw(2)};discard begin_inner(ref mut m,1,1);
+    unsafe{binding_raw(3)};discard end_inner(ref mut m,1,1,1);
+    unsafe{binding_raw(4)};discard compile_inner(ref mut m,ref mut p,ref mut input,0);
+    unsafe{binding_raw(5)};discard dispatch_inner(ref mut m,ref mut p,ref mut scratch,ref mut v,8,0,0);
+    unsafe{binding_raw(8)};discard maintenance_inner(ref mut m,ref mut p,ref mut scratch,ref mut v,1,1,8,0,0);
+    unsafe{binding_raw(6)};let vec::Vec<Program> empty_programs=reset_program_storage(p);
+    unsafe{binding_raw(7)};let vec::Vec<Instance> empty_instances=reset_instance_storage(v);
+}
