@@ -16,7 +16,7 @@ compiled code, source context and any immutable image backing. Instances pin tha
 Program. Release hides the Program from new Instance creation; the last Instance
 destruction reclaims a released Program. Unreleased Programs require explicit
 release. Destroy rejects live Programs or Instances. Successful destroy returns
-the five empty vector allocations immediately, before the owning scope ends.
+the seven empty vector allocations immediately, before the owning scope ends.
 Normal owning-scope cleanup also releases live children. Child IDs are scoped
 to this exact Engine; they are not public handles
 and cannot authenticate an association with another Engine.
@@ -26,7 +26,7 @@ Done or guest-error event. A terminal Instance cannot execute again (status 11).
 `cancel_ready` changes only a Ready Instance to terminal Cancelled; observing or
 cancelling a terminal Instance preserves its first event. Destroying an Instance
 releases its pin. This does not yet implement resumable execution, cancellation
-during guest work, guest output, host suspension or deadline delivery. The
+during guest work, host suspension or deadline delivery. The
 [current input successor](runtime-engine-inputs.md) adds actual owning input
 Programs and Instance Snapshots to the same lifecycle.
 
@@ -144,3 +144,14 @@ The public CLI/C ABI, complete accounting and bounded runtime remain open.
 The [current executed evidence](../evidence/runtime-engine-owned-input-windows-20261107.json)
 passes development and O2, 12 reviewed typed bindings over 189 modules, eleven
 new logical groups plus the unchanged lifecycle fixture and zero SDK heap leaks.
+
+## Guest-output successor (2026-11-07)
+
+[Engine output ownership](runtime-engine-outputs.md) now separately admits
+output Programs, binds input and output configuration to Instances, executes
+canonical guest emit with the actual shared Fuel balance, and retains or moves
+successful immutable output once. Failed execution carries no published prefix.
+Its development/O2 evidence supersedes earlier transport/module counts: 17 typed
+bindings, 195 closure modules, eight new output groups plus the existing input/
+lifecycle/OS fixtures and zero live SDK heap allocations. Seven vectors are now
+reserved and reclaimed. Full policy/public association and bounded runtime remain.

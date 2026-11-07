@@ -103,9 +103,15 @@ def main():
                          'x86_64-windows-msvc', '--locked'], cwd=project)
         need(sha(generated) == contract['transportSha256'], 'Emitted transport changed; review every private binding')
         write(output / 'generated.c', generated)
+        for key, function in contract['bindings'].items():
+            declaration = re.search(r'^static [^\n]+\b' + re.escape(function) + r'\([^\n]*\);$',
+                                    generated.decode('utf-8'), re.M)
+            need(declaration is not None and declaration.group() == contract['reviewedDeclarations'][key],
+                 f'Reviewed typed declaration changed: binding {key}')
         bindings = f'typedef {contract["engineType"]} bc_engine;\ntypedef {contract["incomingType"]} bc_engine_input;\n'
         bindings += f'typedef {contract["inputEntryType"]} bc_engine_input_entry;\ntypedef {contract["snapshotType"]} bc_engine_snapshot;\n'
         bindings += f'typedef {contract["snapshotVectorType"]} bc_engine_snapshots;\n'
+        bindings += f'typedef {contract["outputVectorType"]} bc_engine_outputs;\n'
         bindings += '\n'.join(f'#define B{key} {value}' for key, value in contract['bindings'].items()) + '\n'
         write(output / 'bindings.h', bindings)
         for name in ['abi_thread_identity.c', 'abi_thread_identity.h']:
@@ -172,7 +178,7 @@ def main():
                            'Private synchronous typed transport, not public C handles or CLI lifecycle APIs',
                            'Complete Engine accounting/preallocation, OOM injection and poison containment remain',
                            'Ordinary zero-argument terminal Fuel is still marked unknown',
-                           'No bounded step quanta, in-flight cancellation, host/output dispatch or OS deadline'])
+                           'No bounded step quanta, in-flight cancellation, host dispatch or OS deadline'])
     except Exception as error:
         receipt.update(status='failed', error=str(error))
         raise

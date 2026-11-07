@@ -27,7 +27,7 @@ Snapshot. Program release prevents new Instances while existing pins remain
 executable. Engine move and Program/input-vector relocation preserve owners.
 Instance destruction drops the input even after cancellation or guest failure;
 normal owning-scope destruction also drops all live children. Destroying the
-empty Engine immediately returns all five reserved vector allocations.
+empty Engine immediately returns all seven reserved vector allocations.
 
 A separately explicit convenience path, `create_instance` followed by
 `execute_input_once`, borrows the caller's Snapshot synchronously and retains no
@@ -66,8 +66,9 @@ After warming both OS I/O kinds, six measured disk/byte-pipe cases execute OS by
 closing the original handles and deleting the disk fixtures. Their adopted Fairy
 Snapshot moves into an owning Instance before the VM reads its exact final byte.
 Both SDK heap cleanup and native process handle counts are checked.
-Focused allocator failures cover all five Engine vector reservations, incoming
-Program/Snapshot staging and VM metadata preparation. The final native host
+The original focused allocator failures covered five Engine vector reservations, incoming
+Program/Snapshot staging and VM metadata preparation. The output successor now
+checks all seven creation reservations. The final native host
 requires zero live SDK heap allocations. No compiler overrides or stack-size
 changes are allowed; the executable runs with an empty tool PATH.
 
@@ -84,6 +85,10 @@ integration audit also matched 212 unique executed code/test/tool inputs to
 checkout and staged Git bytes; the reader component retains its earlier root
 lock observation, while compiling against its own unchanged isolated lock.
 Full policy/run binding, complete peak accounting, resumable steps/deadlines,
-in-flight cancellation, poison containment, guest output, host dispatch,
+in-flight cancellation, poison containment, host dispatch,
 restricted workers and public CLI/C ABI delivery remain open in
 [the accepted inventory](../product/04-remaining-work.md).
+
+[The output successor](runtime-engine-outputs.md) now also consumes exact input
+Snapshots into output Instances and preserves terminal Fuel and one-time output
+ownership. Its evidence is separate from the earlier input-only checkpoint.

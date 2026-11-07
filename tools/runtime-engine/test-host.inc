@@ -11,7 +11,7 @@ static DWORD WINAPI holding_thread(void *raw){
 }
 static void completion_contention(bc_engine *e){
  bc_engine_ticket ticket;assert(admission(e,&ticket)==0);
- assert(B5(&e->f_0,&e->f_1,&e->f_2,&e->f_3,&e->f_4,&e->f_5,8,0,0)==0);
+ assert(B5(&e->f_0,&e->f_1,&e->f_2,&e->f_3,&e->f_4,&e->f_5,&e->f_6,&e->f_7,8,0,0)==0);
  held_guard events={CreateEventW(NULL,TRUE,FALSE,NULL),CreateEventW(NULL,TRUE,FALSE,NULL)};
  assert(events.ready&&events.release);HANDLE worker=CreateThread(NULL,0,holding_thread,&events,0,NULL);assert(worker);
  assert(WaitForSingleObject(events.ready,10000)==WAIT_OBJECT_0);
@@ -27,6 +27,9 @@ static DWORD WINAPI wrong_thread(void *raw){
  assert(bc_runtime_engine_compile(raw,(void *)(uintptr_t)1,0)==10);
  assert(bc_runtime_engine_compile_input(raw,(void *)(uintptr_t)1,0)==10);
  assert(bc_runtime_engine_instance_input(raw,0,(void *)(uintptr_t)1,0)==10);
+ assert(bc_runtime_engine_compile_output(raw,(void *)(uintptr_t)1,0,0)==10);
+ assert(bc_runtime_engine_instance_output(raw,0,(void *)(uintptr_t)1,0,0,0)==10);
+ assert(bc_runtime_engine_take_output(raw,0,(void *)(uintptr_t)1)==10);
  assert(bc_runtime_engine_execute_input(raw,0,(const void *)(uintptr_t)1)==10);return 0;
 }
 void bc_runtime_engine_test_guards(void *raw){
@@ -37,6 +40,9 @@ void bc_runtime_engine_test_guards(void *raw){
  assert(bc_runtime_engine_compile(raw,(void *)(uintptr_t)1,0)==3);
  assert(bc_runtime_engine_compile_input(raw,(void *)(uintptr_t)1,0)==3);
  assert(bc_runtime_engine_instance_input(raw,0,(void *)(uintptr_t)1,0)==3);
+ assert(bc_runtime_engine_compile_output(raw,(void *)(uintptr_t)1,0,0)==3);
+ assert(bc_runtime_engine_instance_output(raw,0,(void *)(uintptr_t)1,0,0,0)==3);
+ assert(bc_runtime_engine_take_output(raw,0,(void *)(uintptr_t)1)==3);
  assert(bc_runtime_engine_execute_input(raw,0,(const void *)(uintptr_t)1)==3);
  bc_engine_ticket stale=ticket;stale.epoch+=1;assert(finish(e,stale,0)==7);
  assert(e->f_0.f_3==ticket.epoch);assert(finish(e,ticket,0)==0);completion_contention(e);

@@ -336,7 +336,7 @@ fn void actual_os_input_to_instance(){
     os_input_case(1,0,42);os_input_case(1,4097,0);os_input_case(1,1048576,255);
 }
 fn void allocation_failures(){
-    var i64 allocation=0;while(allocation<5){
+    var i64 allocation=0;while(allocation<7){
         unsafe{bc_runtime_engine_test_fail(allocation)};
         switch(engine::create(engine::Limits{.programs=1,.instances=1,.fuel=16000000})){
             case .ok(_):{assert(false);}case .err(e):{assert(e.status==6);}

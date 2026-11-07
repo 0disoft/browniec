@@ -2,27 +2,32 @@
   "schema": "browniec.private-runtime-engine-transport/v1",
   "compilerRevision": "eb274643bfcfe746617121ddc6f130b018978b53",
   "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
-  "transportSha256": "7a21ea788369864d620c3cf3394106e232065af112ce27fcb52243ba5e74c27b",
-  "engineType": "fy_resource_23",
-  "incomingType": "fy_resource_33",
+  "transportSha256": "360a22a6b8ea58fc9cfad53d694c713e8ecd722ee1f16af418495f75a570ff5e",
+  "engineType": "fy_resource_29",
+  "incomingType": "fy_resource_46",
   "bindings": {
-    "1": "fy_fn_828",
-    "2": "fy_fn_827",
-    "3": "fy_fn_844",
-    "4": "fy_fn_833",
-    "5": "fy_fn_842",
-    "8": "fy_fn_858",
-    "6": "fy_fn_878",
-    "7": "fy_fn_877",
-    "9": "fy_fn_835",
-    "10": "fy_fn_846",
-    "11": "fy_fn_853",
-    "12": "fy_fn_876"
+    "1": "fy_fn_896",
+    "2": "fy_fn_895",
+    "3": "fy_fn_918",
+    "4": "fy_fn_901",
+    "5": "fy_fn_916",
+    "8": "fy_fn_933",
+    "6": "fy_fn_964",
+    "7": "fy_fn_962",
+    "9": "fy_fn_903",
+    "10": "fy_fn_920",
+    "11": "fy_fn_928",
+    "12": "fy_fn_961",
+    "13": "fy_fn_907",
+    "14": "fy_fn_905",
+    "15": "fy_fn_939",
+    "16": "fy_fn_970",
+    "17": "fy_fn_963"
   },
   "sourceInputs": [
     {
       "path": "native/runtime-engine/runtime_engine.fy",
-      "sha256": "e9de8bf34f411610f2d4d75570cad4104437e1acb7612505ac79636ef48f0b1c"
+      "sha256": "4849968d0003d8c17b72c7c31346c225879ea599c948bf5711b014d763552b5d"
     },
     {
       "path": "native/runtime-input-adoption/adoption.fy",
@@ -194,7 +199,7 @@
     },
     {
       "path": "src/compiler.fy",
-      "sha256": "1ca4dc1a071bfd3bc712cdde859f80593988b3a2692ab89bbf6b19c819b94f7a"
+      "sha256": "ac051eb70405ec02ec2547da06b7708254d7a849d8907bafd40632576d9e2b42"
     },
     {
       "path": "src/copy_ir.fy",
@@ -206,11 +211,11 @@
     },
     {
       "path": "src/fuel.fy",
-      "sha256": "3ebcee068853d39cb3bbd825b87da11befba9e276f7d88ee5081fa70a0183cb0"
+      "sha256": "ce578c47deb5419c308c2da0e4340262ce47017c0c0ebc4a9766f50dfbd35614"
     },
     {
       "path": "src/functions.fy",
-      "sha256": "e0f4374ce98ed4187cf4bcc43a99109bf8b05c10427e28adf9fc2c2b7973f91b"
+      "sha256": "a07347c6eb1b3dfa49f31b0067ca2121b7aab5fa0151a36ab0c88a81bf49667e"
     },
     {
       "path": "src/input_reference_views.fy",
@@ -265,8 +270,24 @@
       "sha256": "d0475f9b9e4b03c6e9e34faa941890854b950c3187bc7997e96ff3b5b93380f9"
     },
     {
+      "path": "src/module_output_program.fy",
+      "sha256": "f75792bb3cc9367eb2b7d8a974c5b861fde489317462db638dbc30616668f2aa"
+    },
+    {
       "path": "src/module_program.fy",
       "sha256": "2d10ee42279dab088a8b5752f685263667fd9d878af4256ef62df1d29a788fc3"
+    },
+    {
+      "path": "src/output_execution.fy",
+      "sha256": "5efa2a23064a01c4de94eb4c8aa9f6beae227aab56d48f96457477aa2298ac47"
+    },
+    {
+      "path": "src/output_ir.fy",
+      "sha256": "f7468024ad35ec50fa725cd9816d90e8b617f94ff8665d8e4c78459aacadd246"
+    },
+    {
+      "path": "src/output_source.fy",
+      "sha256": "46b15445667885e9464d4c9b8773a61eaf4e202d3cff07ef9e12c1bb0b526a60"
     },
     {
       "path": "src/patterns.fy",
@@ -359,6 +380,10 @@
     {
       "path": "src/runtime_input.fy",
       "sha256": "c7fa4dfcf6e4f1e4627d6e5bc0a74912d1989a8a06d2eb452aa42bd4a4f24207"
+    },
+    {
+      "path": "src/runtime_output.fy",
+      "sha256": "5fde0b0654996895d8e605620cfcec41d7294fd6426c4dfe0ea0e993d4d46187"
     },
     {
       "path": "src/scalar_codec.fy",
@@ -486,7 +511,7 @@
     },
     {
       "path": "src/slice_result_execution.fy",
-      "sha256": "501e6593c2b11d3229a3b5198435459781db797ba4442abe959119913305707f"
+      "sha256": "a7a1a3c5b6d5b6fd76995a37fcb560b7aaf7d1af76f6460905562ce64f2e9faf"
     },
     {
       "path": "src/slice_result_frames.fy",
@@ -550,7 +575,7 @@
     },
     {
       "path": "src/source_context.fy",
-      "sha256": "5071cfbcce6934448f15f38527ecf992619644785c62f72ecccb00c83d970ee3"
+      "sha256": "e2e82b7486103e8b02d7af4e99eff92830b41a52a95132f6297765c0ed5b702e"
     },
     {
       "path": "src/source_error.fy",
@@ -574,7 +599,7 @@
     },
     {
       "path": "src/static_call_ir.fy",
-      "sha256": "6c496c4355218079ea369ecde4889c5a1b3fe4916da6d350192fd2c8c0b28c39"
+      "sha256": "53ce5123f809dedb5b2331d7cf02f3d39e6db09b84e927e6362df79b8726935d"
     },
     {
       "path": "src/static_call_sites.fy",
@@ -590,7 +615,7 @@
     },
     {
       "path": "src/static_ir.fy",
-      "sha256": "c88732a1cb026b6eddce65f139e8cd24cc6c6a48ab9dd7ec0b90e47103dbc24f"
+      "sha256": "df8f0a0cbbcb630127d142301c85fa536af5f7e7e6b72edfa26a2080c3ead8de"
     },
     {
       "path": "src/static_source.fy",
@@ -758,7 +783,7 @@
     },
     {
       "path": "src/verifier.fy",
-      "sha256": "42ee3cb627c739d244e42c4daf8c88ab1c9f47e3d9ea6fb51affbcc6a34308c2"
+      "sha256": "288c21ab8e8377792000016405dca59c5b4f76f88b10d4e0d841217742705418"
     },
     {
       "path": "src/vm.fy",
@@ -770,11 +795,15 @@
     },
     {
       "path": "tools/runtime-engine/engine_input_tests.fy",
-      "sha256": "575744e01749429f7dfae298055c43cb2a87616c30ab1523733c207f370ced06"
+      "sha256": "18fbfeb2f33c1a92375c2c4076f913a4de4b4de024f95429e239e6664a8ca9e7"
+    },
+    {
+      "path": "tools/runtime-engine/engine_output_tests.fy",
+      "sha256": "3ebe9d3f2f9c15d680d14d58915cd0d877e3f3a4980fb357c92b9654fd128af5"
     },
     {
       "path": "tools/runtime-engine/main.fy",
-      "sha256": "a0b124afcb47581b83e255b48efdb0b7b9c6c00acadc1a7d6bcf5819e0231f42"
+      "sha256": "0e321aa74521d927b00657171d21e9a57edf7f13430757a0c1ae53e3861fc9fc"
     }
   ],
   "runtimeInputs": [
@@ -814,21 +843,28 @@
       "sha256": "f86225cdc8ecf5ebe0ba899557c3b117c50ccc0f02afea4cc0115f780bc40cd6"
     }
   ],
-  "inputEntryType": "fy_resource_40",
-  "snapshotType": "fy_resource_18",
-  "snapshotVectorType": "fy_resource_41",
+  "inputEntryType": "fy_resource_51",
+  "snapshotType": "fy_resource_23",
+  "snapshotVectorType": "fy_resource_44",
   "reviewedDeclarations": {
-    "1": "static uint32_t fy_fn_828(fy_struct_92 * fy_l_10224, uintptr_t fy_l_10225, uintptr_t fy_l_10226);",
-    "2": "static uint32_t fy_fn_827(fy_struct_92 * fy_l_10227, uintptr_t fy_l_10228, uintptr_t fy_l_10229);",
-    "3": "static uint32_t fy_fn_844(fy_struct_92 * fy_l_10230, uintptr_t fy_l_10231, uintptr_t fy_l_10232, uintptr_t fy_l_10233);",
-    "4": "static uint32_t fy_fn_833(fy_struct_92 * fy_l_10243, fy_resource_20 * fy_l_10244, fy_resource_33 * fy_l_10245, uintptr_t fy_l_10246);",
-    "5": "static uint32_t fy_fn_842(fy_struct_92 * fy_l_10419, fy_resource_20 * fy_l_10420, fy_resource_20 * fy_l_10421, fy_resource_21 * fy_l_10422, fy_resource_22 * fy_l_10423, fy_resource_22 * fy_l_10424, uint32_t fy_l_10425, uintptr_t fy_l_10426, uintptr_t fy_l_10427);",
-    "8": "static uint32_t fy_fn_858(fy_struct_92 * fy_l_10428, fy_resource_20 * fy_l_10429, fy_resource_20 * fy_l_10430, fy_resource_21 * fy_l_10431, fy_resource_22 * fy_l_10432, fy_resource_22 * fy_l_10433, uintptr_t fy_l_10434, uintptr_t fy_l_10435, uint32_t fy_l_10436, uintptr_t fy_l_10437, uintptr_t fy_l_10438);",
-    "6": "static fy_resource_20 fy_fn_878(fy_resource_20 fy_l_10439);",
-    "7": "static fy_resource_21 fy_fn_877(fy_resource_21 fy_l_10440);",
-    "9": "static uint32_t fy_fn_835(fy_struct_92 * fy_l_10259, fy_resource_20 * fy_l_10260, fy_resource_40 * fy_l_10261, uintptr_t fy_l_10262);",
-    "10": "static uint32_t fy_fn_846(fy_struct_92 * fy_l_10387, const fy_resource_20 * fy_l_10388, fy_resource_21 * fy_l_10389, const fy_resource_22 * fy_l_10390, uintptr_t fy_l_10391, const fy_resource_18 * fy_l_10392);",
-    "11": "static uint32_t fy_fn_853(fy_struct_92 * fy_l_10286, fy_resource_20 * fy_l_10287, fy_resource_21 * fy_l_10288, fy_resource_22 * fy_l_10289, fy_resource_41 * fy_l_10290, uintptr_t fy_l_10291, uintptr_t fy_l_10292);",
-    "12": "static fy_resource_22 fy_fn_876(fy_resource_22 fy_l_10441);"
-  }
+    "1": "static uint32_t fy_fn_896(fy_struct_93 * fy_l_10845, uintptr_t fy_l_10846, uintptr_t fy_l_10847);",
+    "2": "static uint32_t fy_fn_895(fy_struct_93 * fy_l_10848, uintptr_t fy_l_10849, uintptr_t fy_l_10850);",
+    "3": "static uint32_t fy_fn_918(fy_struct_93 * fy_l_10851, uintptr_t fy_l_10852, uintptr_t fy_l_10853, uintptr_t fy_l_10854);",
+    "4": "static uint32_t fy_fn_901(fy_struct_93 * fy_l_10864, fy_resource_25 * fy_l_10865, fy_resource_46 * fy_l_10866, uintptr_t fy_l_10867);",
+    "5": "static uint32_t fy_fn_916(fy_struct_93 * fy_l_11144, fy_resource_25 * fy_l_11145, fy_resource_25 * fy_l_11146, fy_resource_26 * fy_l_11147, fy_resource_27 * fy_l_11148, fy_resource_27 * fy_l_11149, fy_resource_28 * fy_l_11150, fy_resource_28 * fy_l_11151, uint32_t fy_l_11152, uintptr_t fy_l_11153, uintptr_t fy_l_11154);",
+    "8": "static uint32_t fy_fn_933(fy_struct_93 * fy_l_11155, fy_resource_25 * fy_l_11156, fy_resource_25 * fy_l_11157, fy_resource_26 * fy_l_11158, fy_resource_27 * fy_l_11159, fy_resource_27 * fy_l_11160, fy_resource_28 * fy_l_11161, fy_resource_28 * fy_l_11162, uintptr_t fy_l_11163, uintptr_t fy_l_11164, uint32_t fy_l_11165, uintptr_t fy_l_11166, uintptr_t fy_l_11167);",
+    "6": "static fy_resource_25 fy_fn_964(fy_resource_25 fy_l_11168);",
+    "7": "static fy_resource_26 fy_fn_962(fy_resource_26 fy_l_11169);",
+    "9": "static uint32_t fy_fn_903(fy_struct_93 * fy_l_10880, fy_resource_25 * fy_l_10881, fy_resource_51 * fy_l_10882, uintptr_t fy_l_10883);",
+    "10": "static uint32_t fy_fn_920(fy_struct_93 * fy_l_11111, const fy_resource_25 * fy_l_11112, fy_resource_26 * fy_l_11113, const fy_resource_27 * fy_l_11114, uintptr_t fy_l_11115, const fy_resource_23 * fy_l_11116);",
+    "11": "static uint32_t fy_fn_928(fy_struct_93 * fy_l_10974, fy_resource_25 * fy_l_10975, fy_resource_26 * fy_l_10976, fy_resource_27 * fy_l_10977, fy_resource_44 * fy_l_10978, uintptr_t fy_l_10979, uintptr_t fy_l_10980);",
+    "12": "static fy_resource_27 fy_fn_961(fy_resource_27 fy_l_11170);",
+    "13": "static uint32_t fy_fn_907(fy_struct_93 * fy_l_10892, fy_resource_25 * fy_l_10893, fy_resource_46 * fy_l_10894, uintptr_t fy_l_10895);",
+    "14": "static uint32_t fy_fn_905(fy_struct_93 * fy_l_10898, fy_resource_25 * fy_l_10899, fy_resource_51 * fy_l_10900, uintptr_t fy_l_10901);",
+    "15": "static uint32_t fy_fn_939(fy_struct_93 * fy_l_10909, fy_resource_25 * fy_l_10910, fy_resource_26 * fy_l_10911, fy_resource_27 * fy_l_10912, fy_resource_44 * fy_l_10913, uintptr_t fy_l_10914, uintptr_t fy_l_10915, uintptr_t fy_l_10916, uint32_t fy_l_10917);",
+    "16": "static uint32_t fy_fn_970(fy_struct_93 * fy_l_10946, const fy_resource_26 * fy_l_10947, fy_resource_28 * fy_l_10948, fy_resource_28 * fy_l_10949, uintptr_t fy_l_10950, fy_resource_28 * fy_l_10951);",
+    "17": "static fy_resource_28 fy_fn_963(fy_resource_28 fy_l_11171);"
+  },
+  "outputVectorType": "fy_resource_28",
+  "outputType": "fy_resource_30"
 }
