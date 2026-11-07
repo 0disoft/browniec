@@ -99,12 +99,12 @@ fn void aliases_and_shared_return_calls_preserve_all_possible_root_pins(){
     rejected(b"module main;fn ref u8[] id(ref u8[] v){return v;}fn i32 main(){let a=bytes::empty();let b=bytes::empty();var ref u8[] r=if(true){bytes::view(ref a)}else{bytes::view(ref b)};let child=id(ref r);r=bytes::view(ref a);_ = b;_ = child;return 42;}");
 }
 
-fn void arm_local_roots_and_independently_allocated_anonymous_owners_cannot_escape(){
+fn void arm_local_named_roots_cannot_escape_but_anonymous_call_owners_can_join(){
     rejected(b"module main;fn i32 main(){let outer=bytes::empty();let r=if(true){let local=bytes::empty();bytes::view(ref local)}else{bytes::view(ref outer)};if(r.len==0){return 42;}return 0;}");
     rejected(b"module main;fn i32 main(){let outer=bytes::empty();let r=if(false){bytes::view(ref outer)}else{let local=bytes::empty();let alias=bytes::view(ref local);alias[..]};if(r.len==0){return 42;}return 0;}");
     rejected(b"module main;fn i32 main(){let outer=bytes::empty();let r=switch(.some(1)){case .some(_):{bytes::view(ref outer)}case .none:{let local=bytes::empty();let alias=bytes::view(ref local);alias[..]}};if(r.len==0){return 42;}return 0;}");
-    rejected(b"module main;fn ref u8[] id(ref u8[] v){return v;}fn i32 main(){let r=if(true){id(ref bytes::view(ref bytes::empty()))}else{id(ref bytes::view(ref bytes::empty()))};if(r.len==0){return 42;}return 0;}");
-    rejected(b"module main;fn ref u8[] id(ref u8[] v){return v;}fn i32 main(){let r=switch(.some(1)){case .some(_):{id(ref bytes::view(ref bytes::empty()))}case .none:{id(ref bytes::view(ref bytes::empty()))}};if(r.len==0){return 42;}return 0;}");
+    value(b"module main;fn ref u8[] id(ref u8[] v){return v;}fn i32 main(){let r=if(true){id(ref bytes::view(ref bytes::empty()))}else{id(ref bytes::view(ref bytes::empty()))};if(r.len==0){return 42;}return 0;}");
+    value(b"module main;fn ref u8[] id(ref u8[] v){return v;}fn i32 main(){let r=switch(.some(1)){case .some(_):{id(ref bytes::view(ref bytes::empty()))}case .none:{id(ref bytes::view(ref bytes::empty()))}};if(r.len==0){return 42;}return 0;}");
 }
 fn void shared_returns_still_require_one_exact_selected_formal(){
     rejected(b"module main;fn ref u8[] id(ref u8[] v){return v;}fn ref u8[] wrong(ref u8[] a,ref u8[] b,bool c){let r=if(c){a[..]}else{b[..]};return id(ref r);}fn i32 main(){return 42;}");
@@ -132,7 +132,7 @@ fn void shared_returns_still_require_one_exact_selected_formal(){
     every_possible_named_root_rejects_write_and_move_while_union_is_live();
     aliases_and_shared_return_calls_preserve_all_possible_root_pins();
 }
-@test fn void local_or_conditional_owner_escape_and_multi_formal_returns_reject(){
-    arm_local_roots_and_independently_allocated_anonymous_owners_cannot_escape();
+@test fn void local_named_escape_and_multi_formal_returns_reject_while_anonymous_roots_join(){
+    arm_local_named_roots_cannot_escape_but_anonymous_call_owners_can_join();
     shared_returns_still_require_one_exact_selected_formal();
 }

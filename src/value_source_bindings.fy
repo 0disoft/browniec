@@ -18,7 +18,7 @@ pub struct State {
     locals::Table names;
     u8[64] bindings; // 0 ordinary local, otherwise typed slot + 1
     views::State views; // Separate per-activation view IDs; shared lexical names.
-    usize next; usize live;
+    usize next; usize live; usize maybe; // Possible-only anonymous Buffers, disjoint from live.
     usize reads; usize writes; // Ephemeral Buffer argument loans, never guest handles.
     bool enforce_results; usize pending; // Direct Result obligations, independent of COPY ownership.
     // Compiler-only loop summary: F(p) = generated | (p & ~kills).
@@ -29,10 +29,10 @@ pub struct State {
 // begin_alternative/select_path select separately reached blocks. merge compares
 // exits and never restores saved liveness/cursors on a continuing path.
 pub struct Snapshot { State state; }
-pub fn State empty(){return State{.names=locals::empty(),.bindings=[0;64],.views=views::empty(),.next=0,.live=0,.reads=0,.writes=0,
+pub fn State empty(){return State{.names=locals::empty(),.bindings=[0;64],.views=views::empty(),.next=0,.live=0,.maybe=0,.reads=0,.writes=0,
     .enforce_results=false,.pending=0,.tracking=false,.kills=0,.generated=0,.required=0};}
 pub fn Snapshot snapshot(ref State state){return Snapshot{.state=State{
-    .names=locals::snapshot(ref state.names),.bindings=state.bindings,.views=state.views,.next=state.next,.live=state.live,.reads=state.reads,.writes=state.writes,
+    .names=locals::snapshot(ref state.names),.bindings=state.bindings,.views=state.views,.next=state.next,.live=state.live,.maybe=state.maybe,.reads=state.reads,.writes=state.writes,
     .enforce_results=state.enforce_results,.pending=state.pending,.tracking=state.tracking,
     .kills=state.kills,.generated=state.generated,.required=state.required}};}
 fn usize bit(usize id){let usize one=1;return one<<id;}
@@ -43,7 +43,8 @@ fn Result<usize,errors::Error> header(ref values::Program unit,ref State state,u
     let usize view_count=views::validate(ref state.views,at)?;
     if(state.next>16 || state.names.count>64 || state.names.function>=16 ||
         state.names.function>=unit.body.function_count || unit.body.function_count>16 || state.views.function!=state.names.function ||
-        unit.catalog.count>64 || state.live>=65536 || state.pending>=65536 ||
+        unit.catalog.count>64 || state.live>=65536 || state.maybe>=65536 ||
+        (state.live&state.maybe)!=0 || state.pending>=65536 ||
         state.reads>=65536 || state.writes>=65536 || (state.reads&state.writes)!=0 ||
         ((state.reads|state.writes)&state.live)!=(state.reads|state.writes) ||
         state.kills>=65536 || state.generated>=65536 || state.required>=65536 ||
@@ -53,20 +54,26 @@ fn Result<usize,errors::Error> header(ref values::Program unit,ref State state,u
     var usize i=0;while(i<16){
         if(i<state.next){if(unit.types[i]==0 || unit.types[i] as usize>unit.catalog.count ||
             unit.functions[i] as usize>=unit.body.function_count){return .err(invalid(at));}}
-        else if(unit.types[i]!=0 || unit.functions[i]!=0 || (state.live&bit(i))!=0){return .err(invalid(at));}
-        if((state.live&bit(i))!=0 && unit.functions[i] as usize!=state.names.function){return .err(invalid(at));}
+        else if(unit.types[i]!=0 || unit.functions[i]!=0 || ((state.live|state.maybe)&bit(i))!=0){return .err(invalid(at));}
+        if(((state.live|state.maybe)&bit(i))!=0 && unit.functions[i] as usize!=state.names.function){return .err(invalid(at));}
+        if((state.maybe&bit(i))!=0 && (unit.catalog.nodes[values::type_id(unit,i)].kind!=4 ||
+            named_owner(state,i))){return .err(invalid(at));}
         if((state.pending&bit(i))!=0 && unit.catalog.nodes[values::type_id(unit,i)].kind!=6){return .err(invalid(at));}
         if(((state.reads|state.writes)&bit(i))!=0 && unit.catalog.nodes[values::type_id(unit,i)].kind!=4){return .err(invalid(at));}
         i+=1;
     }
     let usize view_function=views::authenticate(unit,ref state.views,at)?;
     i=0;while(i<16){let usize roots=views::local_roots(ref state.views,i);var usize owner=0;
-        while(owner<16){if((roots&bit(owner))!=0 && (owner>=state.next || (state.live&bit(owner))==0 ||
+        while(owner<16){if((roots&bit(owner))!=0 && (owner>=state.next || ((state.live|state.maybe)&bit(owner))==0 ||
             unit.catalog.nodes[values::type_id(unit,owner)].kind!=4)){return .err(invalid(at));}owner+=1;}
         i+=1;}
     i=0;while(i<64){if(state.views.names[i]!=0){let usize id=(state.views.names[i] as usize)-1;
         if(i>=state.names.count || state.bindings[i]!=0 || state.names.registers[i]!=224+id){return .err(invalid(at));}
     }i+=1;}return .ok(state.next);
+}
+// Shared full-state authentication for operation helpers, with no emission.
+pub fn Result<usize,errors::Error> authenticate(ref values::Program unit,ref State state,usize at){
+    return header(unit,state,at);
 }
 fn Result<usize,errors::Error> slot(ref values::Program unit,ref State state,usize id,usize at){
     let usize checked=header(unit,state,at)?;
@@ -82,7 +89,7 @@ fn Result<bool,errors::Error> copyable(ref values::Program unit,usize id,usize a
 // original cleanup behavior. Enabling cannot retroactively exempt live values.
 pub fn Result<usize,errors::Error> enable_results(ref values::Program unit,ref mut State state,usize at){
     let usize checked=header(unit,state,at)?;
-    if(state.next!=0 || state.live!=0 || state.reads!=0 || state.writes!=0 || state.names.count!=0 || state.names.pending_places!=0){return .err(invalid(at));}
+    if(state.next!=0 || (state.live|state.maybe)!=0 || state.reads!=0 || state.writes!=0 || state.names.count!=0 || state.names.pending_places!=0){return .err(invalid(at));}
     state.enforce_results=true;return .ok(0);
 }
 fn void result_pending(ref values::Program unit,ref mut State state,usize id){
@@ -155,12 +162,12 @@ pub fn Result<usize,errors::Error> allocate(ref mut values::Program unit,ref mut
 // instruction. The parent must preflight its own operation before publishing it.
 pub fn Result<usize,errors::Error> initialize(ref values::Program unit,ref mut State state,usize id,usize at){
     let usize checked=slot(unit,state,id,at)?;
-    if((state.live&bit(id))!=0){return .err(invalid(at));}
+    if(((state.live|state.maybe)&bit(id))!=0){return .err(invalid(at));}
     state.live|=bit(id);result_pending(unit,state,id);return .ok(id);
 }
 pub fn Result<usize,errors::Error> enter_function(ref values::Program unit,ref mut State state,usize function,usize at){
     let usize checked=header(unit,state,at)?;
-    if(function>=unit.body.function_count || state.names.count!=0 || state.live!=0 || views::count(ref state.views)!=0){return .err(invalid(at));}
+    if(function>=unit.body.function_count || state.names.count!=0 || (state.live|state.maybe)!=0 || views::count(ref state.views)!=0){return .err(invalid(at));}
     state.views=views::empty();state.views.function=function;
     state.names.function=function;return .ok(function);
 }
@@ -234,7 +241,7 @@ pub fn Result<usize,errors::Error> use_binding(ref mut values::Program unit,ref 
     let usize checked=slot(unit,state,destination,at)?;
     if(views::pinned(ref state.views,source) || views::pinned(ref state.views,destination)){return .err(invalid(at));}
     if(((state.reads|state.writes)&(bit(source)|bit(destination)))!=0 ||
-        (state.live&bit(source))==0 || (state.live&bit(destination))!=0 ||
+        (state.live&bit(source))==0 || ((state.live|state.maybe)&bit(destination))!=0 ||
         unit.types[source]!=unit.types[destination]){return .err(invalid(at));}
     let bool copied=copyable(unit,source,at)?;
     if(unit.body.count>=256){return .err(errors::make(4,at));}
@@ -251,7 +258,7 @@ pub fn Result<usize,errors::Error> move_value(ref mut values::Program unit,ref m
     let usize valid=slot(unit,state,destination,at)?;
     if(views::pinned(ref state.views,source) || views::pinned(ref state.views,destination)){return .err(invalid(at));}
     if(((state.reads|state.writes)&(bit(source)|bit(destination)))!=0 ||
-        (state.live&bit(source))==0 || (state.live&bit(destination))!=0 ||
+        (state.live&bit(source))==0 || ((state.live|state.maybe)&bit(destination))!=0 ||
         unit.types[source]!=unit.types[destination]){return .err(invalid(at));}
     let properties::Plan plan=switch(properties::inspect(ref unit.catalog)){
         case .ok(v):{v}case .err(_):{return .err(invalid(at));}
@@ -270,7 +277,7 @@ pub fn Result<usize,errors::Error> assign(ref mut values::Program unit,ref mut S
     let usize checked=slot(unit,state,source,at)?;
     if(views::pinned(ref state.views,source) || views::pinned(ref state.views,destination)){return .err(invalid(at));}
     if(((state.reads|state.writes)&(bit(source)|bit(destination)))!=0 ||
-        !state.names.mutable[index] || (state.live&bit(source))==0 ||
+        !state.names.mutable[index] || (state.live&bit(source))==0 || (state.maybe&bit(destination))!=0 ||
         unit.types[source]!=unit.types[destination]){return .err(invalid(at));}
     let properties::Plan plan=switch(properties::inspect(ref unit.catalog)){
         case .ok(v):{v}case .err(_):{return .err(invalid(at));}
@@ -303,22 +310,24 @@ pub fn Result<usize,errors::Error> consume(ref values::Program unit,ref mut Stat
     if(((state.reads|state.writes)&bit(id))!=0 || (state.live&bit(id))==0){return .err(invalid(at));}
     state.live^=bit(id);result_handled(unit,state,id);return .ok(id);
 }
-// Idempotent explicit drop, including anonymous temporaries. Dead emits nothing.
+// Idempotent cleanup. Possible-only anonymous Buffers use DROP_IF_LIVE115;
+// definite values retain DROP90. Neither path changes operation prices.
 pub fn Result<usize,errors::Error> drop(ref mut values::Program unit,ref mut State state,usize id,usize at){
     let usize checked=slot(unit,state,id,at)?;
     if(views::pinned(ref state.views,id)){return .err(invalid(at));}
     if(((state.reads|state.writes)&bit(id))!=0){return .err(invalid(at));}
-    if((state.live&bit(id))==0){return .ok(id);}
+    if(((state.live|state.maybe)&bit(id))==0){return .ok(id);}
     if((state.pending&bit(id))!=0){return .err(errors::make(18,at));}
     if(unit.body.count>=256){return .err(errors::make(4,at));}
     result_required(unit,state,id);result_handled(unit,state,id);
-    append(unit,90,id,0,at);state.live^=bit(id);return .ok(id);
+    append(unit,if((state.maybe&bit(id))!=0){115}else{90},id,0,at);
+    state.live^=state.live&bit(id);state.maybe^=state.maybe&bit(id);return .ok(id);
 }
 fn bool named_owner(ref State state,usize owner){var usize i=0;
     while(i<state.names.count){if(state.bindings[i] as usize==owner+1){return true;}i+=1;}return false;}
 fn Result<usize,errors::Error> anonymous_drop(ref State state,usize owner,usize at){
     if(owner>=16){return .ok(0);}
-    if(named_owner(state,owner)){return .ok(0);}
+    if(named_owner(state,owner) || ((state.live|state.maybe)&bit(owner))==0){return .ok(0);}
     if(((state.reads|state.writes)&bit(owner))!=0){return .err(invalid(at));}
     if((state.pending&bit(owner))!=0){return .err(errors::make(18,at));}return .ok(1);
 }
@@ -456,11 +465,11 @@ pub fn Result<usize,errors::Error> begin_alternative(ref values::Program unit,re
     // Stage only the small metadata state, rebased onto the current global
     // high-water mark. The stale entry must not pass header with its old next.
     var State staged=State{.names=locals::snapshot(ref prior.names),.bindings=prior.bindings,.views=prior.views,
-        .next=current.next,.live=prior.live,.reads=prior.reads,.writes=prior.writes,.enforce_results=prior.enforce_results,.pending=prior.pending,
+        .next=current.next,.live=prior.live,.maybe=prior.maybe,.reads=prior.reads,.writes=prior.writes,.enforce_results=prior.enforce_results,.pending=prior.pending,
         .tracking=prior.tracking,.kills=prior.kills,.generated=prior.generated,.required=prior.required};
     staged.views.reserved=current.views.reserved;
     let usize valid=header(unit,ref staged,at)?;
-    var usize i=prior.next;while(i<16){if((prior.live&bit(i))!=0){return .err(invalid(at));}i+=1;}
+    var usize i=prior.next;while(i<16){if(((prior.live|prior.maybe)&bit(i))!=0){return .err(invalid(at));}i+=1;}
     var usize seen=0;i=0;while(i<current.names.count){
         if(prior.bindings[i]!=current.bindings[i] || prior.views.names[i]!=current.views.names[i] || prior.names.begins[i]!=current.names.begins[i] ||
             prior.names.ends[i]!=current.names.ends[i] || prior.names.registers[i]!=current.names.registers[i] ||
@@ -471,7 +480,7 @@ pub fn Result<usize,errors::Error> begin_alternative(ref values::Program unit,re
             if(id>=prior.next || (seen&bit(id))!=0){return .err(invalid(at));}seen|=bit(id);
         }i+=1;
     }
-    current.names=staged.names;current.bindings=staged.bindings;current.views=staged.views;current.live=staged.live;current.reads=staged.reads;current.writes=staged.writes;
+    current.names=staged.names;current.bindings=staged.bindings;current.views=staged.views;current.live=staged.live;current.maybe=staged.maybe;current.reads=staged.reads;current.writes=staged.writes;
     current.enforce_results=staged.enforce_results;current.pending=staged.pending;
     current.kills=staged.kills;current.generated=staged.generated;current.required|=staged.required;
     return .ok(current.live);
@@ -485,9 +494,9 @@ pub fn Result<usize,errors::Error> select_path(ref values::Program unit,ref mut 
     let usize checked=header(unit,current,at)?;let ref State prior=ref entry.state;
     if(prior.next>current.next || prior.names.function!=current.names.function ||
         prior.enforce_results!=current.enforce_results || prior.tracking!=current.tracking){return .err(invalid(at));}
-    var usize i=prior.next;while(i<16){if((prior.live&bit(i))!=0){return .err(invalid(at));}i+=1;}
+    var usize i=prior.next;while(i<16){if(((prior.live|prior.maybe)&bit(i))!=0){return .err(invalid(at));}i+=1;}
     var State staged=State{.names=locals::snapshot(ref prior.names),.bindings=prior.bindings,.views=prior.views,
-        .next=current.next,.live=prior.live,.reads=prior.reads,.writes=prior.writes,.enforce_results=prior.enforce_results,.pending=prior.pending,
+        .next=current.next,.live=prior.live,.maybe=prior.maybe,.reads=prior.reads,.writes=prior.writes,.enforce_results=prior.enforce_results,.pending=prior.pending,
         .tracking=prior.tracking,.kills=prior.kills,.generated=prior.generated,.required=prior.required};
     staged.views.reserved=current.views.reserved;
     let usize valid=header(unit,ref staged,at)?;
@@ -497,31 +506,48 @@ pub fn Result<usize,errors::Error> select_path(ref values::Program unit,ref mut 
             if(id>=prior.next || (seen&bit(id))!=0){return .err(invalid(at));}seen|=bit(id);}
         i+=1;
     }
-    current.names=staged.names;current.bindings=staged.bindings;current.views=staged.views;current.live=staged.live;current.reads=staged.reads;current.writes=staged.writes;
+    current.names=staged.names;current.bindings=staged.bindings;current.views=staged.views;current.live=staged.live;current.maybe=staged.maybe;current.reads=staged.reads;current.writes=staged.writes;
     current.enforce_results=staged.enforce_results;current.pending=staged.pending;
     current.kills=staged.kills;current.generated=staged.generated;current.required|=staged.required;
     return .ok(current.live);
 }
-// Exact-live merge with identical surviving lexical bindings. Additional static
-// allocations are allowed ONLY when Dead; the global cursor is never rewound.
+// A join preserves differing anonymous Buffer roots needed by surviving views.
+// Definite liveness meets; possible liveness unions. Other conditional moves
+// are normalized by the control layer. Retention governs lexical extension at
+// the frontend, not immediate full-expression view dependencies at this join.
 pub fn Result<usize,errors::Error> merge(ref values::Program unit,ref mut State state,ref Snapshot other,usize at){
     let usize checked=header(unit,state,at)?;let ref State prior=ref other.state;
     if(prior.next>state.next || prior.names.count!=state.names.count || prior.names.function!=state.names.function ||
-        prior.names.pending_places!=state.names.pending_places || prior.live!=state.live ||
+        prior.names.pending_places!=state.names.pending_places ||
         prior.reads!=state.reads || prior.writes!=state.writes ||
         prior.enforce_results!=state.enforce_results || prior.tracking!=state.tracking){return .err(invalid(at));}
     var State staged=State{.names=locals::snapshot(ref prior.names),.bindings=prior.bindings,.views=prior.views,
-        .next=state.next,.live=prior.live,.reads=prior.reads,.writes=prior.writes,.enforce_results=prior.enforce_results,.pending=prior.pending,
+        .next=state.next,.live=prior.live,.maybe=prior.maybe,.reads=prior.reads,.writes=prior.writes,.enforce_results=prior.enforce_results,.pending=prior.pending,
         .tracking=prior.tracking,.kills=prior.kills,.generated=prior.generated,.required=prior.required};
     let usize valid=header(unit,ref staged,at)?;
     var usize slot_id=prior.next;while(slot_id<16){
-        if((prior.live&bit(slot_id))!=0){return .err(invalid(at));}slot_id+=1;
+        if(((prior.live|prior.maybe)&bit(slot_id))!=0){return .err(invalid(at));}slot_id+=1;
     }
     var usize i=0;while(i<state.names.count){
         if(prior.bindings[i]!=state.bindings[i] || prior.names.begins[i]!=state.names.begins[i] ||
             prior.names.ends[i]!=state.names.ends[i] || prior.names.registers[i]!=state.names.registers[i] ||
             prior.names.mutable[i]!=state.names.mutable[i]){return .err(invalid(at));}i+=1;
-    }let usize merged_views=views::merge(ref mut state.views,ref prior.views,at)?;
-    state.pending|=prior.pending;state.kills&=prior.kills;
-    state.generated|=prior.generated;state.required|=prior.required;return .ok(state.live);
+    }
+    // Merge descriptors into scratch so every late rejection is atomic.
+    var views::State joined=state.views;
+    let usize merged_views=views::merge(ref mut joined,ref prior.views,at)?;
+    var usize roots=0;i=0;while(i<16){roots|=views::local_roots(ref joined,i);i+=1;}
+    let usize changed=(state.live^prior.live)|(state.maybe^prior.maybe);
+    if((changed&roots)!=changed){return .err(invalid(at));}
+    i=0;while(i<16){if((changed&bit(i))!=0 &&
+        (named_owner(state,i) || named_owner(ref staged,i) ||
+        unit.catalog.nodes[values::type_id(unit,i)].kind!=4)){return .err(invalid(at));}i+=1;}
+    let usize definite=state.live&prior.live;
+    staged.live=definite;staged.maybe=(state.live|state.maybe|prior.live|prior.maybe)^definite;
+    staged.views=joined;staged.pending|=state.pending;
+    staged.kills&=state.kills;staged.generated|=state.generated;staged.required|=state.required;
+    let usize authenticated=header(unit,ref staged,at)?;
+    state.views=staged.views;state.live=staged.live;state.maybe=staged.maybe;
+    state.pending=staged.pending;state.kills=staged.kills;
+    state.generated=staged.generated;state.required=staged.required;return .ok(state.live);
 }

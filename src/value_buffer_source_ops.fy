@@ -18,6 +18,13 @@ fn Result<usize,errors::Error> live_buffer(ref values::Program unit,ref bindings
         (state.live&(one<<id))==0 || unit.catalog.nodes[values::type_id(unit,id)].kind!=4){
         return .err(invalid(at));}return .ok(id);
 }
+// A view selects one concrete authenticated root. Its static alternatives may
+// be absent on other CFG edges; ordinary Buffer receivers still require Live.
+fn Result<usize,errors::Error> possible_buffer(ref values::Program unit,ref bindings::State state,usize id,usize at){
+    if(id>=state.next || !values::slot(unit,id,state.names.function) ||
+        ((state.live|state.maybe)&bit(id))==0 || unit.catalog.nodes[values::type_id(unit,id)].kind!=4){
+        return .err(invalid(at));}return .ok(id);
+}
 fn Result<usize,errors::Error> scalar_register(ref values::Program unit,ref bindings::State state,usize id,u8 tag,usize at){
     let ref ir::Program ir_body=ref unit.body;
     if(id>=ir_body.registers || id<ir_body.register_starts[state.names.function] ||
@@ -80,7 +87,7 @@ pub fn Result<usize,errors::Error> grow(ref mut values::Program unit,ref mut bin
     }else if(op==112){
         let usize roots=views::roots(ref state.views,argument,at)?;
         let usize locals=views::local_roots(ref state.views,argument);var usize i=0;
-        while(i<16){if((locals&bit(i))!=0){let usize checked=live_buffer(unit,state,i,at)?;
+        while(i<16){if((locals&bit(i))!=0){let usize checked=possible_buffer(unit,state,i,at)?;
             if(i==buffer || (state.writes&bit(i))!=0){return .err(invalid(at));}}i+=1;}
     }else{let usize checked=scalar_register(unit,state,argument,if(op==102){10}else{12},at)?;}
     if(state.next==16){return .err(errors::make(4,at));}

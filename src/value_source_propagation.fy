@@ -26,7 +26,7 @@ fn Result<usize,errors::Error> preflight_finish(ref values::Program unit,
             (seen&(one<<id))!=0){return .err(errors::make(3,at));}seen|=one<<id;
     }i+=1;}
     var usize drops=0;i=0;while(i<state.next){
-        if(i!=keep && (state.live&(one<<i))!=0){drops+=1;}i+=1;
+        if(i!=keep && ((state.live|state.maybe)&(one<<i))!=0){drops+=1;}i+=1;
     }
     let ref ir::Program body=ref unit.body;
     let usize closes=views::count(ref state.views);
@@ -36,8 +36,8 @@ fn Result<usize,errors::Error> preflight_finish(ref values::Program unit,
 pub fn Result<usize,errors::Error> finish_function(ref mut values::Program unit,
     ref mut bindings::State state,usize keep,usize at){
     if(state.next>16){return .err(errors::make(3,at));}
-    state.reads=0;state.writes=0;
     let usize admitted=preflight_finish(unit,state,keep,at)?;
+    state.reads=0;state.writes=0;
     let usize closed=bindings::close_views(unit,state,at)?;
     let usize checked=bindings::check_exit(unit,state,keep,at)?;
     let usize f=function(state);

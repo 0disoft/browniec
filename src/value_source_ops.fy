@@ -12,27 +12,10 @@ fn u8 byte(usize value){var u8 result=0;var usize i=0;while(i<value){result+=1;i
 // Validate the same monotonic ledger as bindings before any allocation/emission.
 // Function ends are finalized by the caller after lowering the complete body.
 pub fn Result<properties::Plan,errors::Error> preflight(ref values::Program unit,ref bindings::State state,usize at){
-    if(state.next>16 || state.names.count>64 || state.names.function>=16 ||
-        unit.body.function_count>16 || state.names.function>=unit.body.function_count ||
-        unit.catalog.count>64 || state.live>=65536 || state.pending>=65536 ||
-        state.reads>=65536 || state.writes>=65536 || (state.reads&state.writes)!=0 ||
-        ((state.reads|state.writes)&state.live)!=(state.reads|state.writes) ||
-        state.kills>=65536 || state.generated>=65536 || state.required>=65536 ||
-        (!state.tracking && (state.kills!=0 || state.generated!=0 || state.required!=0)) ||
-        (state.pending&state.live)!=state.pending || (!state.enforce_results && state.pending!=0)){
-        return .err(invalid(at));}
+    let usize checked=bindings::authenticate(unit,state,at)?;
     let properties::Plan plan=switch(properties::inspect(ref unit.catalog)){
         case .ok(v):{v}case .err(_):{return .err(invalid(at));}
     };
-    var usize i=0;while(i<16){
-        if(i<state.next){if(unit.types[i]==0 || unit.types[i] as usize>plan.count ||
-            unit.functions[i] as usize>=unit.body.function_count){return .err(invalid(at));}}
-        else if(unit.types[i]!=0 || unit.functions[i]!=0 || (state.live&bit(i))!=0){return .err(invalid(at));}
-        if((state.live&bit(i))!=0 && unit.functions[i] as usize!=state.names.function){return .err(invalid(at));}
-        if((state.pending&bit(i))!=0 && unit.catalog.nodes[values::type_id(unit,i)].kind!=6){return .err(invalid(at));}
-        if(((state.reads|state.writes)&bit(i))!=0 && unit.catalog.nodes[values::type_id(unit,i)].kind!=4){return .err(invalid(at));}
-        i+=1;
-    }
     if(unit.body.count>=256 || unit.body.registers>128){return .err(errors::make(4,at));}
     let usize f=state.names.function;
     if(unit.body.register_starts[f]>unit.body.registers){
@@ -150,7 +133,7 @@ pub fn Result<usize,errors::Error> tag_into(ref mut values::Program unit,ref mut
     usize destination,usize payload,u8 variant,usize at){
     let properties::Plan plan=preflight(unit,state,at)?;
     if(destination>=state.next || !values::slot(unit,destination,state.names.function) ||
-        (state.live&bit(destination))!=0){return .err(invalid(at));}
+        ((state.live|state.maybe)&bit(destination))!=0){return .err(invalid(at));}
     let bool moved=tag_payload(unit,state,ref plan,values::type_id(unit,destination),payload,variant,at)?;
     return publish_tag(unit,state,destination,payload,variant,moved,at);
 }

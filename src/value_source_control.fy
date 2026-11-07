@@ -4,6 +4,7 @@ import value_ir as values;
 import ir as ir;
 import errors as errors;
 import std::vec as vec;
+import value_view_bindings as views;
 
 // These are compiler CFG exits, never runtime owner snapshots. Every continuing
 // arm ends in a pending forward JUMP. Terminal arms have no such instruction.
@@ -40,7 +41,7 @@ pub fn Result<Exit,errors::Error> capture(ref mut vec::Vec<bindings::Snapshot> p
 }
 fn Result<usize,errors::Error> trim(ref mut values::Program unit,ref mut bindings::State state,usize common,usize at){
     let usize one=1;var usize id=state.next;
-    while(id!=0){id-=1;if((state.live&(one<<id))!=0 && (common&(one<<id))==0){
+    while(id!=0){id-=1;if(((state.live|state.maybe)&(one<<id))!=0 && (common&(one<<id))==0){
         let usize dropped=bindings::drop(unit,state,id,at)?;
     }}return .ok(state.live);
 }
@@ -50,7 +51,8 @@ fn Result<usize,errors::Error> target(ref mut values::Program unit,usize jump,us
 }
 // Merge only continuing edges. If a name moved on one edge, explicitly drop its
 // still-live value on the other edge and mark it Dead after the join. This admits
-// legal conditional moves without reviving owners or needing runtime drop flags.
+// legal conditional moves without reviving owners. Anonymous roots pinned by
+// surviving view descriptors remain possible and use conditional cleanup later.
 // A subsequent read of that maybe-moved name rejects; mutable reinitialization is
 // allowed. Different surviving lexical names still reject through binder::merge.
 pub fn Result<bool,errors::Error> join(ref mut values::Program unit,ref mut bindings::State state,
@@ -67,8 +69,14 @@ pub fn Result<bool,errors::Error> join(ref mut values::Program unit,ref mut bind
     if(left.path>=mark(paths) || right.path>=mark(paths)){return .err(errors::make(3,at));}
     let usize a_live=vec::at<bindings::Snapshot>(paths,left.path).state.live;
     let usize b_live=vec::at<bindings::Snapshot>(paths,right.path).state.live;
-    let usize common=a_live&b_live;
-    if(a_live==b_live){
+    let usize a_maybe=vec::at<bindings::Snapshot>(paths,left.path).state.maybe;
+    let usize b_maybe=vec::at<bindings::Snapshot>(paths,right.path).state.maybe;
+    var usize roots=0;var usize id=0;while(id<16){
+        roots|=views::local_roots(ref vec::at<bindings::Snapshot>(paths,left.path).state.views,id);
+        roots|=views::local_roots(ref vec::at<bindings::Snapshot>(paths,right.path).state.views,id);id+=1;
+    }
+    let usize common=(a_live&b_live)|roots;
+    if(a_live==b_live && a_maybe==b_maybe){
         let usize selected=select(unit,state,paths,right.path,at)?;
         let usize matched=bindings::merge(unit,state,vec::at<bindings::Snapshot>(paths,left.path),at)?;
         let usize a=target(unit,left.jump,at)?;let usize b=target(unit,right.jump,at)?;

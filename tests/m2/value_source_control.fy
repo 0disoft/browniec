@@ -21,7 +21,7 @@ fn void rejected(ref u8[] text,u8 kind){
 @test fn void mutable_buffers_wrappers_and_scalar_slots_replace_reinitialize_and_snapshot_rhs_values(){
     value(b"module main;fn Buffer id(Buffer a){return a;}fn i32 main(){var Buffer a=bytes::empty();a=id(a);_ = a;a=bytes::empty();a=a;return 42;}");
     value(b"module main;fn i32 main(){var Option<Buffer> a=.some(bytes::empty());a=.none;a=.some(bytes::empty());_ = a;return 42;}");
-    value(b"module main;fn i32 main(){var Result<i64,bool> a=.ok(1);a=.err(false);a=a;_ = a;return 42;}");
+    value(b"module main;fn i32 main(){var Result<i64,bool> a=.ok(1);_ = a.is_ok;a=.err(false);a=a;_ = a;return 42;}");
     value(b"module main;fn i32 main(){var n=20;n+=1;n*=2;var bool b=true;b=false;if(b){return 0;}return n;}");
     value(b"module main;fn i32 main(){var u8 n=1;n<<=3;n|=2;n^=1;n&=15;n>>=1;n-=1;n%=3;n/=2;_ = n;return 42;}");
 }

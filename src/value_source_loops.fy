@@ -42,6 +42,7 @@ pub fn Result<usize,errors::Error> release(ref mut vec::Vec<bindings::Snapshot> 
 }
 pub fn Result<usize,errors::Error> begin(ref values::Program unit,ref mut bindings::State state,
     ref mut vec::Vec<bindings::Snapshot> paths,ref mut State loops,usize head,bool classic,usize at){
+    let usize authenticated=bindings::authenticate(unit,state,at)?;
     if(loops.depth>=32){return .err(errors::make(4,at));}
     let usize level=loops.depth;
     let usize names=state.names.count;
@@ -55,6 +56,7 @@ pub fn Result<usize,errors::Error> begin(ref values::Program unit,ref mut bindin
 }
 fn Result<usize,errors::Error> clean(ref mut values::Program unit,ref mut bindings::State state,
     ref vec::Vec<bindings::Snapshot> paths,ref Frame frame,usize at){
+    let usize authenticated=bindings::authenticate(unit,state,at)?;
     if(frame.entry>=branches::mark(paths)){return .err(invalid(at));}
     state.reads=vec::at<bindings::Snapshot>(paths,frame.entry).state.reads;
     state.writes=vec::at<bindings::Snapshot>(paths,frame.entry).state.writes;
@@ -65,17 +67,23 @@ fn Result<usize,errors::Error> clean(ref mut values::Program unit,ref mut bindin
     let usize named=bindings::leave_scope(unit,state,frame.names,at)?;
     if(!views::same(ref state.views,baseline)){return .err(invalid(at));}
     let usize live=vec::at<bindings::Snapshot>(paths,frame.entry).state.live;
+    let usize maybe=vec::at<bindings::Snapshot>(paths,frame.entry).state.maybe;
     let usize one=1;var usize id=state.next;
-    while(id!=0){id-=1;if((state.live&(one<<id))!=0 && (live&(one<<id))==0){
+    while(id!=0){id-=1;if(((state.live|state.maybe)&(one<<id))!=0 && ((live|maybe)&(one<<id))==0){
         let usize dropped=bindings::drop(unit,state,id,at)?;
     }}return .ok(live);
+}
+// Backedges preserve the exact initialization lattice, including possible-only
+// roots inherited from an enclosing conditional expression.
+fn bool same_loop(ref bindings::State state,ref bindings::Snapshot entry){
+    return state.live==entry.state.live && state.maybe==entry.state.maybe;
 }
 pub fn Result<usize,errors::Error> repeat(ref mut values::Program unit,ref mut bindings::State state,
     ref vec::Vec<bindings::Snapshot> paths,ref mut State loops,usize at){
     if(loops.depth==0 || loops.depth>32){return .err(errors::make(2,at));}
     let usize level=loops.depth-1;let Frame frame=loops.frames[level];
     let usize expected=clean(unit,state,paths,ref frame,at)?;
-    if(state.live!=expected){return .err(invalid(at));}
+    if(!same_loop(state,vec::at<bindings::Snapshot>(paths,frame.entry))){return .err(invalid(at));}
     loops.frames[level].generated|=state.generated;
     return ir::raw(ref mut unit.body,22,0,frame.head,0,at);
 }
@@ -85,7 +93,7 @@ pub fn Result<usize,errors::Error> transfer(ref mut values::Program unit,ref mut
     let usize level=loops.depth-1;let Frame frame=loops.frames[level];
     if(!leave && !frame.classic){return repeat(unit,state,paths,loops,at);}
     let usize expected=clean(unit,state,paths,ref frame,at)?;
-    if(!leave && state.live!=expected){return .err(invalid(at));}
+    if(!leave && (!same_loop(state,vec::at<bindings::Snapshot>(paths,frame.entry)))){return .err(invalid(at));}
     let usize saved=branches::save(paths,state,at)?;
     let usize pc=ir::raw(ref mut unit.body,19,0,0,0,at)?;
     loops.owners[pc]=level+1;loops.paths[pc]=saved+1;loops.leaves[pc]=leave;return .ok(pc);
@@ -105,8 +113,9 @@ pub fn Result<bool,errors::Error> post(ref mut values::Program unit,ref mut bind
     }pc+=1;}return .ok(any);
 }
 fn Result<usize,errors::Error> trim(ref mut values::Program unit,ref mut bindings::State state,usize common,usize at){
+    var usize kept=common;var usize view=0;while(view<16){kept|=views::local_roots(ref state.views,view);view+=1;}
     let usize one=1;var usize id=state.next;
-    while(id!=0){id-=1;if((state.live&(one<<id))!=0 && (common&(one<<id))==0){
+    while(id!=0){id-=1;if(((state.live|state.maybe)&(one<<id))!=0 && (kept&(one<<id))==0){
         let usize dropped=bindings::drop(unit,state,id,at)?;
     }}return .ok(state.live);
 }

@@ -40,6 +40,7 @@ pub fn Result<usize,errors::Error> prefix(ref u8[] source,ref mut lexer::State s
 }
 pub fn Result<Reference,errors::Error> begin(ref values::Program unit,ref mut bindings::State state,
     context::Value value,bool writing,usize at){
+    let usize checked=bindings::authenticate(unit,state,at)?;
     if(value.nothing || !value.typed || value.exact>=unit.catalog.count ||
         unit.catalog.nodes[value.exact].kind!=4 || value.value>=state.next ||
         !values::slot(unit,value.value,state.names.function) ||
@@ -55,7 +56,13 @@ pub fn Result<Reference,errors::Error> begin(ref values::Program unit,ref mut bi
     if(writing){state.writes|=mask;}else{state.reads|=mask;}return .ok(result);
 }
 pub fn Result<usize,errors::Error> end(ref mut bindings::State state,Reference loan,usize at){
-    if(loan.slot>=16){return .err(wrong(at));}let usize mask=bit(loan.slot);
+    if(state.next>16 || loan.slot>=state.next || state.live>=65536 || state.maybe>=65536 ||
+        (state.maybe&state.live)!=0){return .err(wrong(at));}
+    let usize present=state.live|state.maybe;
+    if((present>>state.next)!=0 || (state.reads&state.writes)!=0 || (loan.reads&loan.writes)!=0 ||
+        ((state.reads|state.writes)&state.live)!=(state.reads|state.writes) ||
+        ((loan.reads|loan.writes)&state.live)!=(loan.reads|loan.writes)){return .err(wrong(at));}
+    let usize mask=bit(loan.slot);
     if(state.reads!=if(loan.writing){loan.reads}else{loan.reads|mask} ||
         state.writes!=if(loan.writing){loan.writes|mask}else{loan.writes} ||
         (state.live&mask)==0){return .err(wrong(at));}

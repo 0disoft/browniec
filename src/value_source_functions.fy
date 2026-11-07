@@ -108,7 +108,7 @@ pub fn Result<usize,errors::Error> begin(ref mut values::Program unit,ref mut bi
     if(arity>128-unit.body.registers){return .err(errors::make(4,at));}
     let bool reference_result=plan.results[f]==66;
     let usize selected=if(reference_result){16+signatures.return_slice_inputs[f] as usize}else{0};
-    if(state.names.count!=0 || state.live!=0 || state.reads!=0 || state.writes!=0 || views::count(ref state.views)!=0 || state.names.pending_places!=0 || unit.results[f] as usize!=selected){return .err(invalid(at));}
+    if(state.names.count!=0 || state.live!=0 || state.maybe!=0 || state.reads!=0 || state.writes!=0 || views::count(ref state.views)!=0 || state.names.pending_places!=0 || unit.results[f] as usize!=selected){return .err(invalid(at));}
     if((f==0 && (unit.body.count!=0 || unit.body.registers!=0)) ||
         (f!=0 && (unit.body.ends[f-1]!=unit.body.count || unit.body.register_ends[f-1]!=unit.body.registers ||
             state.names.function!=f-1))){return .err(invalid(at));}
@@ -162,7 +162,7 @@ pub fn Result<usize,errors::Error> begin(ref mut values::Program unit,ref mut bi
 // and live bits first. Finishing never rewinds the global typed-slot allocator.
 pub fn Result<usize,errors::Error> finish(ref mut values::Program unit,ref bindings::State state,usize f,usize at){
     if(unit.body.function_count==0 || unit.body.function_count>16 || f>=unit.body.function_count ||
-        state.names.function!=f || state.names.count!=0 || state.names.pending_places!=0 || state.live!=0 || state.reads!=0 || state.writes!=0 || views::count(ref state.views)!=0){return .err(invalid(at));}
+        state.names.function!=f || state.names.count!=0 || state.names.pending_places!=0 || state.live!=0 || state.maybe!=0 || state.reads!=0 || state.writes!=0 || views::count(ref state.views)!=0){return .err(invalid(at));}
     if(unit.body.count>256 || unit.body.registers>128 || state.next>16){return .err(errors::make(4,at));}
     if(unit.body.count<=unit.body.starts[f] || unit.body.registers<unit.body.register_starts[f] ||
         unit.body.arities[f]>8 || unit.body.arities[f]>unit.body.registers-unit.body.register_starts[f]){return .err(invalid(at));}

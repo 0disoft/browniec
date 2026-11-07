@@ -30,6 +30,7 @@ pub fn Result<bool,errors::Error> range_ahead(ref u8[] source,ref lexer::State s
 }
 pub fn Result<context::Value,errors::Error> begin(ref mut values::Program unit,ref mut bindings::State state,
     buffers::Reference loan,usize exact,usize at){
+    let usize authenticated=bindings::authenticate(unit,state,at)?;
     if(loan.writing || (exact!=64 && exact!=65)){return .err(wrong(at));}
     let usize ended=buffers::end(state,loan,at)?;
     let usize lo=ir::integer(ref mut unit.body,0,12,at)?;
@@ -43,13 +44,14 @@ pub fn Result<context::Value,errors::Error> named(ref bindings::State state,usiz
     let usize roots=views::roots(ref state.views,id,at)?;
     let usize locals=views::local_roots(ref state.views,id);
     if(state.next>16 || state.views.function!=state.names.function ||
-        (locals&state.live)!=locals || (locals>>state.next)!=0){return .err(wrong(at));}
+        (locals&(state.live|state.maybe))!=locals || (locals>>state.next)!=0){return .err(wrong(at));}
     return .ok(value(id,index));
 }
 // Capture BEFORE evaluating an index/endpoint. A later expression can rebind
 // the lexical reference without changing this receiver's bytes or root lease.
 pub fn Result<usize,errors::Error> capture(ref mut values::Program unit,ref mut bindings::State state,
     context::Value input,usize at){
+    let usize authenticated=bindings::authenticate(unit,state,at)?;
     if(!reference(input)){return .err(wrong(at));}
     let usize roots=views::roots(ref state.views,input.value,at)?;
     if(input.binding==64){return .ok(input.value);}
@@ -66,7 +68,7 @@ pub fn Result<usize,errors::Error> lexical_roots(ref bindings::State state,usize
     let usize locals=views::local_roots(ref state.views,id);
     let usize retained=views::retained_roots(ref state.views,id);let usize one=1;var usize owner=0;
     while(owner<16){let usize bit=one<<owner;if((locals&bit)!=0){
-        if(owner>=state.next || (state.live&bit)==0){return .err(wrong(at));}
+        if(owner>=state.next || ((state.live|state.maybe)&bit)==0){return .err(wrong(at));}
         var bool allowed=(retained&bit)!=0;var usize i=0;
         while(i<state.names.count){if(state.bindings[i] as usize==owner+1){allowed=true;}i+=1;}
         if(!allowed){return .err(wrong(at));}
@@ -77,7 +79,9 @@ pub fn Result<usize,errors::Error> lexical_roots(ref bindings::State state,usize
 }
 pub fn Result<context::Value,errors::Error> length(ref u8[] source,ref mut lexer::State s,
     ref mut values::Program unit,ref mut bindings::State state,context::Value input){
-    let usize at=s.begin;let usize dot=lexer::next(source,s)?;
+    let usize at=s.begin;
+    let usize authenticated=bindings::authenticate(unit,state,at)?;
+    let usize dot=lexer::next(source,s)?;
     let usize name=lexer::word(source,s,b"len")?;
     let usize roots=views::roots(ref state.views,input.value,at)?;
     let usize result=views::scalar(unit,ref state.views,110,input.value,0,at)?;
@@ -86,6 +90,7 @@ pub fn Result<context::Value,errors::Error> length(ref u8[] source,ref mut lexer
 }
 pub fn Result<context::Value,errors::Error> indexed(ref mut values::Program unit,ref mut bindings::State state,
     usize receiver,usize lo,usize hi,bool range,usize at){
+    let usize authenticated=bindings::authenticate(unit,state,at)?;
     if(range){let usize id=views::range(unit,ref mut state.views,receiver,lo,hi,at)?;
         let usize closed=bindings::close_view(unit,state,receiver,at)?;return .ok(value(id,64));
     }
