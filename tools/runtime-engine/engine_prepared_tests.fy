@@ -362,6 +362,20 @@ pub fn Result<usize,u8> wrong_mode_and_exhausted_epoch_preserve_owners(){
     ledger(ref e,0);assert(retained(ref e).program_bytes==0);close(ref mut e);return .ok(0);
 }
 
+// Group 6: ordinary resource destruction owns the same complete cleanup as
+// explicit Instance destruction, even with two pending owners and a released pin.
+pub fn Result<usize,u8> engine_drop_reclaims_prepared_owners(){
+    let inputs::Snapshot original=captured()?;let Heap before=heap();
+    {
+        var engine::Engine e=generous()?;let usize p=compiled(ref mut e,3,input_source())?;
+        let usize required=requirement(ref e,p,64);
+        let usize a=bound(ref mut e,p,64)?;let usize b=bound(ref mut e,p,64)?;
+        release(ref mut e,p);let engine::Event first=prepare(ref mut e,a,required);
+        let engine::Event second=prepare(ref mut e,b,required);
+        assert(first.kind==4 && second.kind==4);counts(ref mut e,1,2,2);
+    }
+    same_heap(ref before);assert(bytes::equal(inputs::view(ref original),b"!\x00\xFFinput"));return .ok(0);
+}
 pub fn void run(){
     let Heap before=heap();
     assert(pending_without_dispatch_and_replay().is_ok);same_heap(ref before);
@@ -369,4 +383,5 @@ pub fn void run(){
     assert(exact_and_one_less_instance_aggregate_and_combined().is_ok);same_heap(ref before);
     assert(native_oom_rolls_back_every_preparation_allocation().is_ok);same_heap(ref before);
     assert(wrong_mode_and_exhausted_epoch_preserve_owners().is_ok);same_heap(ref before);
+    assert(engine_drop_reclaims_prepared_owners().is_ok);same_heap(ref before);
 }
