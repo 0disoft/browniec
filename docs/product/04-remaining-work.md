@@ -454,7 +454,7 @@ below cover prose obligations beyond this feature list as well.
 | let_var | Narrow | L02, L05 |
 | checked_integer_arithmetic | Narrow six scalar types | V01, V02 |
 | bool_short_circuit | Narrow | V01 |
-| if_expression | Scalar/shallow-tagged, exact-shape scalar arrays and nominal plain-record value joins; general reference/Buffer joins remain | L02, L03 |
+| if_expression | Public scalar/shallow-tagged, exact-shape scalar-array and plain-record joins; private Buffer/nested-wrapper and shared-byte reference joins also execute. General references and public composition remain | L02, L03, B05 |
 | while | Narrow publicly; private typed owners and cyclic Result checking | L05, R03, V01 |
 | classic_for | Pure scalar headers; private typed body cleanup and shared post | L02, L05, V01 |
 | break_continue | Narrow publicly; private typed lexical/anonymous cleanup and exit joins | L05, R03, V01 |
@@ -462,18 +462,18 @@ below cover prose obligations beyond this feature list as well.
 | recursion_with_frame_limit | Narrow bounded VM frames | R02, C05, V01 |
 | scalar_fixed_arrays | Narrow repeated/list initializers, arguments, results and temporary borrows | L03, C05 |
 | plain_structs | Narrow scalar/nested records | L03, L05, V01 |
-| shared_borrows | Scalar slices | B05 |
+| shared_borrows | Public scalar slices; private Buffer-backed byte views, aliases, ranges, selected-input CALL/RETURN and origin-set joins. General references and public Buffer admission remain | B05, D02 |
 | mutable_borrows | Scalar slices and lexical children | B05 |
 | single_parameter_borrow_returns | Public retained shared-byte image/runtime results; general mutable/non-byte results remain gated | B01-B04 |
 | array_views | Narrow scalar views | B02-B05 |
 | half_open_slices | Narrow scalar ranges | B04, B05 |
-| option_result | i32/bool payloads, depth one | L05 |
-| result_propagation | Narrow Result and accepted M1 Option extension | L05, L06 |
+| option_result | Public i32/bool payloads at depth one; private nested/wide/Buffer wrappers execute. General source/public composition remains | L05 |
+| result_propagation | Public narrow Result and accepted M1 Option extension; private nested/wide/Buffer success and failure paths preserve typed cleanup. General/public composition remains | L05, L06 |
 | exhaustive_shallow_switch | Narrow | L05, V01 |
 | result_is_ok | True for existing public scalar/tagged Result | L06 |
 | explicit_discard | True for `_ = EXPR;` on the existing public path | L06 |
 | must_use_result | False publicly; private typed binding/parameter/overwrite/early-exit obligations are implemented, public composition and full validation remain | L06 |
-| owned_buffer | Private empty Buffer source construction and mixed CALL/RETURN; useful byte operations/public admission remain | D01-D04 |
+| owned_buffer | Private empty/len/read/write/push/reserve/append, owned/view copy, mixed CALL/RETURN and retained byte views execute. Fresh loop-carried owners, methods/public AllocError and deliberate public admission remain | D01-D04 |
 | utf8_validation | Fixed-array views; private Buffer scanner | D05, R03 |
 | capability_output | Missing | I02, H01 |
 | typed_host_requests | Missing | H01-H04 |
