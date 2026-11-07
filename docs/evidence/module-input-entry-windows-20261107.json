@@ -1,0 +1,154 @@
+{
+  "schema": "browniec.module-input-entry-evidence/v1",
+  "baseCommit": "f78a734fd079324e0ba88bb8e40e4291acf55de8",
+  "status": "passed",
+  "native": [
+    {
+      "profile": "development",
+      "groups": 13,
+      "reportSha256": "224db42fdd42b923af8208d53ade0844faf1263dffbe143e28246a8137c9ce39"
+    },
+    {
+      "profile": "release",
+      "groups": 13,
+      "reportSha256": "ee646a452cc6cc9bf9b64c5719183d3116672fdee01a5375ef3662ffa161b4ae"
+    }
+  ],
+  "negatives": [
+    {
+      "name": "private-selected",
+      "diagnosticSha256": "792b8070a63448baa06567d2335e54d6e987acc9b7f78f555bb4e64328ca9258"
+    },
+    {
+      "name": "private-index",
+      "diagnosticSha256": "5d425f77f635ab8e89a67e158534ca9ad3e1aff17dd3e6a255587c186a2a7ba5"
+    },
+    {
+      "name": "private-signature",
+      "diagnosticSha256": "7e286d0a32441b1f1b2980428a18926ea44d295bedf9a9fd0e77403019615862"
+    },
+    {
+      "name": "private-parameter",
+      "diagnosticSha256": "7e286d0a32441b1f1b2980428a18926ea44d295bedf9a9fd0e77403019615862"
+    },
+    {
+      "name": "private-name",
+      "diagnosticSha256": "3a5562d19905edba5af828cf7a332309b1e7dc63bee62ddb008f1c5cda7965cb"
+    },
+    {
+      "name": "private-forge",
+      "diagnosticSha256": "260c25d14f3699f38ac51ef4cdc901ca85fb48712ff8302c657876571dec3280"
+    },
+    {
+      "name": "owner-lifetime",
+      "diagnosticSha256": "dedd93dd4f8cfb3dbd00dc62e1d4db6a91449afd39ea13eac415591ede56f71f"
+    },
+    {
+      "name": "moved-owner",
+      "diagnosticSha256": "bf7fb2d44e46a13104d62f0d444b41515d38f72469dfd0f75bbaff0765147e95"
+    }
+  ],
+  "defaultStacks": true,
+  "stackOverrides": false,
+  "environmentOverrides": false,
+  "compiler": {
+    "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+    "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false\n"
+  },
+  "inputs": [
+    {
+      "path": "docs/engineering/module-input-entry.md",
+      "sha256": "10a83e80e6875862e39793253085debda418dc3f9908d6049512601061d8e853"
+    },
+    {
+      "path": "fairy.toml",
+      "sha256": "f5254ba793d9012470c697e8657688a4ea5465c138fba6d748707d5bfa4b31fb"
+    },
+    {
+      "path": "src/cells.fy",
+      "sha256": "71b82add3e95b86a1b7bcb88c3f97f6ae38bae0ac3ec8b1a2de925b10a64e433"
+    },
+    {
+      "path": "src/errors.fy",
+      "sha256": "67a73b2417177dd5f71d8586c388e07352f02e22fc873fcc59959f4c6cf59383"
+    },
+    {
+      "path": "src/lexer.fy",
+      "sha256": "41042748bc0eee4d9b1e5adf81f0d7a5115bc96d3d1e19c03278337ebd099ffb"
+    },
+    {
+      "path": "src/literal_source.fy",
+      "sha256": "839a8e04b202381ccba12d243c9dea1ea28608f8a2c0596f6e2ec8f648850ebd"
+    },
+    {
+      "path": "src/locals.fy",
+      "sha256": "92c511aabe80d0f6216dd5b4c3dc5d360a9e59d366fe88190433e3abf8fb1bf4"
+    },
+    {
+      "path": "src/module_entry.fy",
+      "sha256": "8c971ff2cde1daed68254d8c6021cdf0d0e493ac0003b2c72788486fdd796330"
+    },
+    {
+      "path": "src/module_index.fy",
+      "sha256": "146faf924811f91c108ec6136c5e2d8181b73304c406853f298dfe897eb2d4ed"
+    },
+    {
+      "path": "src/module_input_entry.fy",
+      "sha256": "6b83ce32665d5c452447e0af0e70c526b9cb26667361f7881e363f956ea923d8"
+    },
+    {
+      "path": "src/source_snapshot.fy",
+      "sha256": "ce0ff863f70fe8f391fa1cd508eaec00da0a24f9694c666096c80f53f7f46c50"
+    },
+    {
+      "path": "src/static_image.fy",
+      "sha256": "8966eca88fc4db8b172da51d57e5c10b72f0a0fffac174773c5cd11922f6ead0"
+    },
+    {
+      "path": "tests/m2/module_entry.fy",
+      "sha256": "5ff284dab514b2597964a7056dec2e6e8af9b8bc1a688ad7a82708e3ea2425bc"
+    },
+    {
+      "path": "tests/m2/module_input_entry.fy",
+      "sha256": "1697f0465f60718e52963c17c01e9129eda49293def97630f2ee18fe90854583"
+    },
+    {
+      "path": "toolchain.json",
+      "sha256": "0a1a5c2b5a219099b7c3c2b42a8dde9cb70b68e435e8a071e36c36213d1740be"
+    },
+    {
+      "path": "tools/verify-module-input-entry.py",
+      "sha256": "4aa5c69d9329107541cc0956f56a5ff7675a0d141094816fcc06fd73ff229056"
+    }
+  ],
+  "nativeLockSha256": "304bb7dd58b5ec298e2d063179eaa2f8d644c17f7fcee97c95425eff3d0a2b32",
+  "sdk": [
+    {
+      "id": "fypi1-sha256-eb3f63d50ef081a07981b6aa8e10489929b687dcacc46b8024f4fadedc62e467",
+      "role": "standard-library",
+      "packageUid": "fairyc.std",
+      "sourceKind": "sdk",
+      "localPath": "",
+      "sdkIdentity": "fairyc-sdk-stdlib/0",
+      "runtimeAbi": "fairyc-runtime/0",
+      "sourceIdentity": "fairyc-sdk-stdlib/0;fairyc-runtime/0;fysrc1-sha256-e256aabfe2a16a603f947d4ef5b55b5a4ae80915fdd855e18c6016910fbcc597",
+      "sourceDigest": "fysrc1-sha256-e256aabfe2a16a603f947d4ef5b55b5a4ae80915fdd855e18c6016910fbcc597",
+      "version": "0.0.0-stage0.87",
+      "features": []
+    }
+  ],
+  "executableInputPath": false,
+  "publicAvailabilityChanged": false,
+  "limitations": [
+    "Signature and owning Index only; module_program accepts only module_entry::Entry.",
+    "No guest input lowering, Engine/Instance/VM wiring, CLI, or body/type proof.",
+    "No new allocator seam: allocation belongs to existing Index construction.",
+    "No unsafe metadata/layout moves; no R03 or complete Engine accounting claim."
+  ],
+  "platform": "windows/amd64",
+  "receipt": "build/module-input-entry/20261107T080742069029Z/receipt.json",
+  "receiptSha256": "039899eb3d4288fb68ca1e38f52d46f1bd104eea1b0d9b145213913cbb7c10d5",
+  "command": "python tools/verify-module-input-entry.py",
+  "inputBytesUnchanged": true,
+  "artifactManifest": "module-input-entry-artifacts-windows-20261107.json"
+}
