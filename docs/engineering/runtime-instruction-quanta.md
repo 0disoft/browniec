@@ -6,6 +6,11 @@ state between instruction batches. The facade remains synchronous: it drains
 Pending batches internally and returns only a terminal result. **R03, R04 and
 R05 remain open.** This is not persistent `Engine.step` execution.
 
+Current successor: [resumable VM output copies](runtime-output-chunks.md) now
+count prepaid copy continuations as dispatch visits and bound output bytes per
+caller return. The original evidence and counter description below record the
+initial instruction-only checkpoint.
+
 ## Implementation and saved state
 
 - [slice_result_cursor.fy](../../src/slice_result_cursor.fy) defines `Cursor`

@@ -1,20 +1,20 @@
-- Latest Engine stepping checkpoint (2026-11-08): [Engine-owned instruction stepping](runtime-engine-step.md)
-  records implementation `e49bb76`. Prepared output/input-output Instances now
-  resume through authenticated Engine calls at 1..4096 instruction visits, keep
-  exact Program/input pins across moves and return actual Pending to the caller.
-  Terminal success seals directly into the reserved publication slot; VM backing
-  is reclaimed and heap ledgers shrink to retained output. Running cancel/destroy
-  use canonical abort. Six new Engine groups pass development/O2 with fixed/mixed
-  quanta, three interleaved Instances, two moves, exact Fuel/diagnostic/output
-  parity, prefix discard, frozen causes and empty/running Engine cleanup.
-  Every resume and terminal seal is exercised with the next allocation denied;
-  SDK allocation attempts remain zero. Both images use default stacks and exit
-  with zero SDK heap. Verification pins 238 checkout/Git inputs, seven SDK inputs,
-  33 typed bindings and 24 layouts. Root locked check: 256 sources/2920 MIR; all
-  248 production modules retain LF. Bounded setup/bulk/CALL/RET/seal/cleanup,
-  deadlines, poison and public lifecycle/ABI/CLI integration remain open;
-  instruction visits alone do not complete R03-R05 or the accepted inventory.
-  Two disjoint Sol High workers completed; integration/commits were serial. Local only.
+- Latest output-copy checkpoint (2026-11-08): [Resumable VM output copies](runtime-output-chunks.md)
+  records implementation `d929fca`. Actual VM/Engine output copies now share a
+  4096-byte allowance per step across all emits. A real 1MiB input uses exactly
+  256 copying batches. Source authorization and complete emit Fuel/quota admission
+  occur once; prepaid continuations keep their PC/source and charge no extra Fuel.
+  Partial copies cannot be sealed or exposed; cancel/failure discard staging.
+  Six new Engine/eight transaction groups pass development/O2, including mixed
+  quanta, shared batch limits, zero-Fuel continuation and one-less no-copy rejection.
+  Every resume denies the next SDK allocation and records zero attempts; both
+  default-stack images exit with zero SDK heap. Existing I/O/metered suites,
+  actual 112-byte Transaction layout and explicit allocation failures also pass.
+  Verification matches 248 aggregate checkout/Git inputs (241 Engine), seven
+  Engine SDK inputs, 33 bindings and 28 layouts. Root locked check: 257 sources/
+  2929 MIR; all 249 production modules retain LF. Other bulk/setup/CALL/RET/seal/
+  cleanup recipes, deadlines/poison and public lifecycle/ABI/CLI remain open;
+  the output-byte bound alone does not complete R03-R05 or the accepted inventory.
+  Four disjoint Sol High workers completed; integration/commits were serial. Local only.
 
 - Predecessor immutable-input execution checkpoint (2026-11-07): [Actual 1MiB input](module-input-execution.md)
   integrates input windows `3503aba` and owning Program execution `c86aff6`.
@@ -593,8 +593,10 @@ and the inventory completion conditions remain open.
    pin/input association and guard/epoch checks, and refunds cancellation/teardown
    exactly once. [Engine-owned stepping](runtime-engine-step.md) now advances the
    actual owning Instance and seals its terminal result into the prepared slot,
-   without resume allocations, while preserving the synchronous facade. Next
-   chunk setup, bulk helpers,
+   without resume allocations, while preserving the synchronous facade.
+   [VM output copies](runtime-output-chunks.md) now share a 4096-byte allowance
+   across all emits in each step, with once-only source/Fuel admission. Next
+   chunk setup and the remaining bulk helpers,
    CALL/RET, publication and cleanup. Full R03, R04 and R05 remain open.
    [Fixed control storage](runtime-engine-control-memory.md) now has a pre-allocation
    budget and count-sized reserved vectors. [Exact Program retention](runtime-engine-program-memory.md)

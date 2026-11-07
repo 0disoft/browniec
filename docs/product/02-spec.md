@@ -1,20 +1,20 @@
-- Latest Engine stepping checkpoint (2026-11-08): [Engine-owned instruction stepping](../engineering/runtime-engine-step.md)
-  records implementation `e49bb76`. Prepared output/input-output Instances now
-  resume through authenticated Engine calls at 1..4096 instruction visits, keep
-  exact Program/input pins across moves and return actual Pending to the caller.
-  Terminal success seals directly into the reserved publication slot; VM backing
-  is reclaimed and heap ledgers shrink to retained output. Running cancel/destroy
-  use canonical abort. Six new Engine groups pass development/O2 with fixed/mixed
-  quanta, three interleaved Instances, two moves, exact Fuel/diagnostic/output
-  parity, prefix discard, frozen causes and empty/running Engine cleanup.
-  Every resume and terminal seal is exercised with the next allocation denied;
-  SDK allocation attempts remain zero. Both images use default stacks and exit
-  with zero SDK heap. Verification pins 238 checkout/Git inputs, seven SDK inputs,
-  33 typed bindings and 24 layouts. Root locked check: 256 sources/2920 MIR; all
-  248 production modules retain LF. Bounded setup/bulk/CALL/RET/seal/cleanup,
-  deadlines, poison and public lifecycle/ABI/CLI integration remain open;
-  instruction visits alone do not complete R03-R05 or the accepted inventory.
-  Two disjoint Sol High workers completed; integration/commits were serial. Local only.
+- Latest output-copy checkpoint (2026-11-08): [Resumable VM output copies](../engineering/runtime-output-chunks.md)
+  records implementation `d929fca`. Actual VM/Engine output copies now share a
+  4096-byte allowance per step across all emits. A real 1MiB input uses exactly
+  256 copying batches. Source authorization and complete emit Fuel/quota admission
+  occur once; prepaid continuations keep their PC/source and charge no extra Fuel.
+  Partial copies cannot be sealed or exposed; cancel/failure discard staging.
+  Six new Engine/eight transaction groups pass development/O2, including mixed
+  quanta, shared batch limits, zero-Fuel continuation and one-less no-copy rejection.
+  Every resume denies the next SDK allocation and records zero attempts; both
+  default-stack images exit with zero SDK heap. Existing I/O/metered suites,
+  actual 112-byte Transaction layout and explicit allocation failures also pass.
+  Verification matches 248 aggregate checkout/Git inputs (241 Engine), seven
+  Engine SDK inputs, 33 bindings and 28 layouts. Root locked check: 257 sources/
+  2929 MIR; all 249 production modules retain LF. Other bulk/setup/CALL/RET/seal/
+  cleanup recipes, deadlines/poison and public lifecycle/ABI/CLI remain open;
+  the output-byte bound alone does not complete R03-R05 or the accepted inventory.
+  Four disjoint Sol High workers completed; integration/commits were serial. Local only.
 
 - Predecessor ABI-bootstrap checkpoint (2026-11-07): [Windows DLL query](../engineering/abi-bootstrap.md)
   now exports only `bc_get_abi_info_v2`; Fairy owns admission/metadata and a small
@@ -619,14 +619,17 @@ parallel execution uses separate Engines.
 
 The [canonical cursor](../engineering/runtime-instruction-quanta.md) retains
 instruction state across batches. Its [owning continuation](../engineering/runtime-pending-output.md)
-now preserves execution state across actual caller returns at 1..4096 instruction
+now preserves execution state across actual caller returns at 1..4096 dispatch
 visits. [Engine-owned preparation](../engineering/runtime-engine-prepared.md) now
 binds Ready output/input-output Instances to their exact Program pin, immutable
 input, guard/epoch and checked heap reservation. Preparation executes no guest
 opcode. [Engine-owned stepping](../engineering/runtime-engine-step.md) now resumes
 that state, publishes terminal output through the reserved slot and refunds VM
-storage without resume allocations. The existing
-synchronous facade remains available. Setup, bulk helpers, CALL/RET, output seal
+storage without resume allocations. [Output-copy continuations](../engineering/runtime-output-chunks.md)
+now share a 4096-byte allowance per step, prepay the existing emit Fuel once and
+keep the PC/source pinned until completion. Continuations consume dispatch visits
+without replaying guest instructions. The existing synchronous facade remains
+available. Setup, other bulk helpers, CALL/RET, output seal
 and cleanup are atomic, so the accepted bounded-work Engine step contract and
 R03-R05 remain incomplete.
 

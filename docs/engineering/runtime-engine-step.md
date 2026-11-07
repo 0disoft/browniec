@@ -11,7 +11,9 @@ Fairy Engine facade, not the public C ABI or the accepted bounded-work step API.
 owner/guard/epoch and accepts a prepared output or input-output Instance. It
 reacquires the exact pinned Program and owned input, then advances the saved
 Machine through the canonical dispatcher. It never re-verifies, recreates entry
-or drains Pending in a hidden loop. Quantum is 1..4096 instruction visits.
+or drains Pending in a hidden loop. Quantum is 1..4096 dispatch visits. The
+[output-copy successor](runtime-output-chunks.md) now includes prepaid copy
+continuations in those visits and shares a 4096-byte allowance across emits.
 
 Pending returns Event kind 4 with current Fuel and keeps its owning state intact.
 At VM success, sealing transfers the staged backing directly into the Published
@@ -67,8 +69,9 @@ layouts, including Output's Execution/completion/publication/Machine fields.
 
 ## Remaining accepted work
 
-Instruction visits do not bound bytes, metadata visits or native time. Setup,
-proof, bulk copy/tag/store/transfer, CALL/RET, seal and cleanup remain atomic.
+Dispatch visits do not bound all bytes, metadata visits or native time. Output
+copy bytes now have a separate per-step allowance. Setup/proof, other bulk
+copy/tag/store/transfer, CALL/RET, seal and cleanup remain atomic.
 Chunk those recipes and preserve quantum-independent Fuel/results before
 claiming the accepted work-bounded Engine step contract. Deadlines, in-flight
 cancellation, STOPPING/poison containment, public lifecycle/ABI/CLI integration

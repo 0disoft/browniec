@@ -1,0 +1,508 @@
+{
+  "schema": "browniec.runtime-output-chunks-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-07T16:04:55.831078+00:00",
+  "implementationCommit": "d929fcacf69d6adb23c23bf68a106e636fef00e7",
+  "verifiedCommit": "d929fcacf69d6adb23c23bf68a106e636fef00e7",
+  "command": "python tools/verify-runtime-engine.py --profile all",
+  "receipt": {
+    "path": "build/runtime-engine/20261107T160455830090Z/receipt.json",
+    "sha256": "0771e33088ce937860d80fc95be604f14dbc40f5e1d3200a2afd0bb00ebc87e7"
+  },
+  "compiler": {
+    "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+    "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+    "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false"
+  },
+  "msvc": {
+    "version": "14.51.36231",
+    "sdk": "10.0.26100.0",
+    "compilerSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+    "overrides": false
+  },
+  "profiles": [
+    {
+      "profile": "development",
+      "artifact": {
+        "path": "build/runtime-engine/20261107T160455830090Z/development/runtime-engine.exe",
+        "sha256": "c8f2c8c15d171fcf5ae1271f355e3ec5c13fa2416d453a8c6b4c35de79bf6af9",
+        "bytes": 7299584,
+        "stackReserve": 1048576,
+        "stackCommit": 4096
+      },
+      "exit": 0,
+      "controlMetrics": {
+        "cases": 6,
+        "smallHeapBytes": 7744,
+        "maximumHeapBytes": 61952,
+        "ownerBytes": 736
+      },
+      "liveHeapAllocationsAtExit": 0,
+      "assertions": "native Fairy and C, no parsed trace",
+      "objects": [
+        {
+          "path": "build/runtime-engine/20261107T160455830090Z/development/transport.obj",
+          "sha256": "d6dc0346e56f5f41934c0917028274553ab29f39df47a53c3afbdcccdb60b0d4"
+        },
+        {
+          "path": "build/runtime-engine/20261107T160455830090Z/development/runtime.obj",
+          "sha256": "93f1ea29f118ffdde181df474b0172e62c6a2030e1ca2f52702526297444942b"
+        },
+        {
+          "path": "build/runtime-engine/20261107T160455830090Z/development/abi_thread_identity.obj",
+          "sha256": "b4becc60c6093a9beb2cd32b1f916bababcba2cf0bcb5fc266bae078ee6deb4c"
+        },
+        {
+          "path": "build/runtime-engine/20261107T160455830090Z/development/input_reader.obj",
+          "sha256": "5810f7ab4ac4ba386eacaa8b98334e687210e167da88233262a01affd89f87c9"
+        },
+        {
+          "path": "build/runtime-engine/20261107T160455830090Z/development/input_adoption.obj",
+          "sha256": "0b01ce92a59616382609c28cd3da92e092ce41ca9485d74a0b39492f087f0b8e"
+        }
+      ]
+    },
+    {
+      "profile": "release",
+      "artifact": {
+        "path": "build/runtime-engine/20261107T160455830090Z/release/runtime-engine.exe",
+        "sha256": "9810f90516120bb20230fea2d977dd43199e8e30506405bb08b4b52054ab0a1a",
+        "bytes": 2718720,
+        "stackReserve": 1048576,
+        "stackCommit": 4096
+      },
+      "exit": 0,
+      "controlMetrics": {
+        "cases": 6,
+        "smallHeapBytes": 7744,
+        "maximumHeapBytes": 61952,
+        "ownerBytes": 736
+      },
+      "liveHeapAllocationsAtExit": 0,
+      "assertions": "native Fairy and C, no parsed trace",
+      "objects": [
+        {
+          "path": "build/runtime-engine/20261107T160455830090Z/release/transport.obj",
+          "sha256": "a0245d17b6ba6f4f345472ef94126fdcd2f285bdcda790bf89e51e67016b5f78"
+        },
+        {
+          "path": "build/runtime-engine/20261107T160455830090Z/release/runtime.obj",
+          "sha256": "849b44fc85e446e758d8a701ebf9cf3abe97d555cf8913334049afe152ce2a87"
+        },
+        {
+          "path": "build/runtime-engine/20261107T160455830090Z/release/abi_thread_identity.obj",
+          "sha256": "abb30cf98c6a49dc9555aa8b0467463b501a92ad8170565936e994bce7b45a7f"
+        },
+        {
+          "path": "build/runtime-engine/20261107T160455830090Z/release/input_reader.obj",
+          "sha256": "51e9fbf7c0aa162d258372ffb12f90f7cdb8418825b6ece6d0f1b03f6a2ba88f"
+        },
+        {
+          "path": "build/runtime-engine/20261107T160455830090Z/release/input_adoption.obj",
+          "sha256": "9b895510b4203879094b84847b9c45910509032d2b7e9067591b95b1bf0d994f"
+        }
+      ]
+    }
+  ],
+  "runtimeInputs": [
+    {
+      "path": "internal/cruntime/stage0_scalar.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "e16bfdd17904754ceb9534c976910964c76e8b0c757f72ddf3b63de0d5548bbe"
+    },
+    {
+      "path": "internal/cstdlib/stage0_system_heap.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "41e57f9748afb73731501ba2003b1a9213b728c0d2db6a31686b9d0489b76100"
+    },
+    {
+      "path": "internal/cstdlib/stage0_buffer.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "27f049118af6e0d008428abd73bdf77dce5491b82617cdb65b9a06ac185edfa1"
+    },
+    {
+      "path": "internal/cstdlib/stage0_vector_storage.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "80dddb6db91c79c495ef8bad6d31923fd242be13de9899ce3aaded85158bb17d"
+    },
+    {
+      "path": "internal/cstdlib/stage0_text_view.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "cb468db0b4c8b54d12a146c41bcfb297f2a06d83a496a38942fb6e2bc7622b62"
+    },
+    {
+      "path": "internal/cstdlib/stage0_windows_console.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "c070b518a8cb1a8eb0c6b170dd3083afd91149a3b076beb9f43bcfb05d2041e5"
+    },
+    {
+      "path": "internal/cstdlib/stage0_windows_process_args.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "f86225cdc8ecf5ebe0ba899557c3b117c50ccc0f02afea4cc0115f780bc40cd6"
+    }
+  ],
+  "inputIdentity": {
+    "engineCheckoutAndGitMatched": 241,
+    "aggregateCheckoutAndGitMatched": 248,
+    "aggregateManifestSha256": "bbc1694583498cb1cc0e62fe95af36f62da3ecc10af3d01e64ef7ba852268472",
+    "sourceClosure": 227,
+    "reviewedContract": "native/runtime-engine/transport.json",
+    "typedBindings": 33,
+    "reviewedLayouts": 28,
+    "transportSha256": "781ecaf32f7ab4e986136bca7478abe2eac5ddd5b018e9480de198d673a6a920",
+    "runtimeSha256": "1147e787041b6f8c025f02061128a2048d245d9d4469356735c4be06461ded59",
+    "rootLockUnchanged": true,
+    "isolatedLockSha256": "a22e16d4dcecc71bd7d37a36975c5cfc2b3f126b6d3f4c26384c3b4c3b0d20ea"
+  },
+  "rootCheck": {
+    "command": "build/toolchain/fairyc.exe check --locked",
+    "exit": 0,
+    "sources": 257,
+    "mirFunctions": 2929,
+    "productionLFModules": 249,
+    "lockSha256": "dc412c4d3da6815f0f85fc2a72b35ed4a85ca3e5e8abc90ced141007a1738cfb"
+  },
+  "newEngineGroups": 6,
+  "newTransactionGroups": 8,
+  "copyBytesPerBatch": 4096,
+  "actualInputBytes": 1048576,
+  "actualCopyingBatches": 256,
+  "resumeAllocationAttempts": 0,
+  "fixedQuanta": [
+    1,
+    7,
+    4096
+  ],
+  "mixedQuanta": [
+    1,
+    2,
+    64,
+    3,
+    4096
+  ],
+  "sharedBatchEmitLengths": [
+    3072,
+    3072,
+    3072,
+    0
+  ],
+  "sharedBatchFirstTotals": [
+    4096,
+    8192
+  ],
+  "prepaidContinuationAtZeroFuel": true,
+  "oneLessAdmissionCopiesZeroBytes": true,
+  "sourceStores": [
+    "image",
+    "arena",
+    "input"
+  ],
+  "transactionLayout": {
+    "oldInlineBytes": 88,
+    "inlineBytes": 112,
+    "heapHeaderBytes": 40,
+    "publishedBytes": 72,
+    "copyCursorBytes": 56
+  },
+  "supplemental": [
+    {
+      "receipt": {
+        "path": "build/runtime-io/20261107T160154910806Z/receipt.json",
+        "sha256": "75fa492fa0a86c551f8ff841ecbef7a12fb0c0df510359261ed637dc2caa63b6"
+      },
+      "native": [
+        {
+          "profile": "development",
+          "groups": 10,
+          "reportSha256": "22681732ebf0b7787d056855670e78045b34c5cf4cac9004d5d7cd9387501fda"
+        },
+        {
+          "profile": "release",
+          "groups": 10,
+          "reportSha256": "4d5dd92391a85944b7af11fa49b957fabc434121dc3d1a3b6d33442c90305a81"
+        }
+      ],
+      "layout": [
+        {
+          "profile": "development",
+          "executed": true,
+          "bufferBytes": 32,
+          "snapshotBytes": 40,
+          "transactionBytes": 112,
+          "publishedBytes": 72,
+          "backingOffset": 0,
+          "headerOffset": 32,
+          "headerDataOffset": 64,
+          "emptyMovedSourceVerified": true,
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 3,
+            "frees": 3
+          },
+          "exeSha256": "4692b22951a70bc2d880aa063f0403d79c1baf088504755733ca49da84182014"
+        },
+        {
+          "profile": "release",
+          "executed": true,
+          "bufferBytes": 32,
+          "snapshotBytes": 40,
+          "transactionBytes": 112,
+          "publishedBytes": 72,
+          "backingOffset": 0,
+          "headerOffset": 32,
+          "headerDataOffset": 64,
+          "emptyMovedSourceVerified": true,
+          "allocator": {
+            "schema": "browniec.buffer-allocator/v2",
+            "live": 0,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "attempts": 3,
+            "frees": 3
+          },
+          "exeSha256": "3afcf44902bb749edeb24b88e83aebf342d36a29c69bc26473e30350363e72be"
+        }
+      ],
+      "seams": null,
+      "compiler": {
+        "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+        "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false\n"
+      },
+      "runtimeInputs": [
+        {
+          "path": "internal/cstdlib/stage0_system_heap.c",
+          "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+          "sha256": "41e57f9748afb73731501ba2003b1a9213b728c0d2db6a31686b9d0489b76100"
+        },
+        {
+          "path": "internal/cstdlib/stage0_buffer.c",
+          "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+          "sha256": "27f049118af6e0d008428abd73bdf77dce5491b82617cdb65b9a06ac185edfa1"
+        },
+        {
+          "path": "internal/cstdlib/stage0_windows_console.c",
+          "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+          "sha256": "c070b518a8cb1a8eb0c6b170dd3083afd91149a3b076beb9f43bcfb05d2041e5"
+        },
+        {
+          "path": "internal/cstdlib/stage0_windows_process_args.c",
+          "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+          "sha256": "f86225cdc8ecf5ebe0ba899557c3b117c50ccc0f02afea4cc0115f780bc40cd6"
+        },
+        {
+          "path": "internal/cruntime/stage0_scalar.c",
+          "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+          "sha256": "e16bfdd17904754ceb9534c976910964c76e8b0c757f72ddf3b63de0d5548bbe"
+        }
+      ],
+      "defaultStacks": true,
+      "environmentOverrides": false,
+      "stackOverrides": false,
+      "inputCount": 10
+    },
+    {
+      "receipt": {
+        "path": "build/runtime-output-metered/20261107T160214938010Z/receipt.json",
+        "sha256": "b16628eefcf217a4b5b7dc8198633c327b99403fce902eb15e48b12e4d72af10"
+      },
+      "native": [
+        {
+          "profile": "development",
+          "groups": 18
+        },
+        {
+          "profile": "release",
+          "groups": 18
+        }
+      ],
+      "layout": null,
+      "seams": [
+        {
+          "name": "performance",
+          "profile": "development",
+          "counters": {
+            "live": 0,
+            "attempts": 10,
+            "frees": 10,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "copied": 1048588
+          },
+          "exeSha256": "86d9eb19c932adb698525215b1066263934c8ed080baa95ea758887498f8462c"
+        },
+        {
+          "name": "header-oom",
+          "profile": "development",
+          "counters": {
+            "live": 0,
+            "attempts": 3,
+            "frees": 2,
+            "target": 40,
+            "targetAttempts": 2,
+            "failures": 1,
+            "copied": 0
+          },
+          "exeSha256": "ed352daab0474e7b9d3082f75d11e0843a3f84d4607f9ce81f26b6996175adff"
+        },
+        {
+          "name": "reserve-oom",
+          "profile": "development",
+          "counters": {
+            "live": 0,
+            "attempts": 6,
+            "frees": 5,
+            "target": 384,
+            "targetAttempts": 2,
+            "failures": 1,
+            "copied": 5
+          },
+          "exeSha256": "9a0c3a168978561e6f504158476c92832373c580575b88fd6ec218a81bb31a08"
+        },
+        {
+          "name": "legacy-input-oom",
+          "profile": "development",
+          "counters": {
+            "live": 0,
+            "attempts": 3,
+            "frees": 2,
+            "target": 320,
+            "targetAttempts": 2,
+            "failures": 1,
+            "copied": 325
+          },
+          "exeSha256": "14667aa2e4580288ad36c823e8319436f2950c39edbe5b9705f937f16200eb2e"
+        },
+        {
+          "name": "legacy-output-oom",
+          "profile": "development",
+          "counters": {
+            "live": 0,
+            "attempts": 4,
+            "frees": 3,
+            "target": 384,
+            "targetAttempts": 2,
+            "failures": 1,
+            "copied": 704
+          },
+          "exeSha256": "ed121fcd38f97a208816ed4c95f41417f5f23803126373bf5fce19341e11e6ab"
+        },
+        {
+          "name": "performance",
+          "profile": "release",
+          "counters": {
+            "live": 0,
+            "attempts": 10,
+            "frees": 10,
+            "target": 0,
+            "targetAttempts": 0,
+            "failures": 0,
+            "copied": 1048588
+          },
+          "exeSha256": "5c991cd6a439be9e3f5257d1038e0c2b78e254300289003ad8bc9337615de6e3"
+        },
+        {
+          "name": "header-oom",
+          "profile": "release",
+          "counters": {
+            "live": 0,
+            "attempts": 3,
+            "frees": 2,
+            "target": 40,
+            "targetAttempts": 2,
+            "failures": 1,
+            "copied": 0
+          },
+          "exeSha256": "c5e4a32b616f3c4500b53c89d6a926217a75c833cc9f41fb29c284661375e91e"
+        },
+        {
+          "name": "reserve-oom",
+          "profile": "release",
+          "counters": {
+            "live": 0,
+            "attempts": 6,
+            "frees": 5,
+            "target": 384,
+            "targetAttempts": 2,
+            "failures": 1,
+            "copied": 5
+          },
+          "exeSha256": "eccf7d1365a4cf1e998b19e8aa0c893981751459cfc570ee94d44a30248128ca"
+        },
+        {
+          "name": "legacy-input-oom",
+          "profile": "release",
+          "counters": {
+            "live": 0,
+            "attempts": 3,
+            "frees": 2,
+            "target": 320,
+            "targetAttempts": 2,
+            "failures": 1,
+            "copied": 325
+          },
+          "exeSha256": "7622b4148fc9ba62c45574f55fb95c2b4402c7b791cc811dac2b5ea80d8f3367"
+        },
+        {
+          "name": "legacy-output-oom",
+          "profile": "release",
+          "counters": {
+            "live": 0,
+            "attempts": 4,
+            "frees": 3,
+            "target": 384,
+            "targetAttempts": 2,
+            "failures": 1,
+            "copied": 704
+          },
+          "exeSha256": "278abb7f311165dda72ecf25393d571a3cc9e4a1bb5817a215d45f1273610fb2"
+        }
+      ],
+      "compiler": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false\n",
+      "runtimeInputs": [
+        {
+          "path": "internal/cstdlib/stage0_system_heap.c",
+          "sha256": "41e57f9748afb73731501ba2003b1a9213b728c0d2db6a31686b9d0489b76100"
+        },
+        {
+          "path": "internal/cstdlib/stage0_buffer.c",
+          "sha256": "27f049118af6e0d008428abd73bdf77dce5491b82617cdb65b9a06ac185edfa1"
+        },
+        {
+          "path": "internal/cstdlib/stage0_windows_console.c",
+          "sha256": "c070b518a8cb1a8eb0c6b170dd3083afd91149a3b076beb9f43bcfb05d2041e5"
+        },
+        {
+          "path": "internal/cstdlib/stage0_windows_process_args.c",
+          "sha256": "f86225cdc8ecf5ebe0ba899557c3b117c50ccc0f02afea4cc0115f780bc40cd6"
+        },
+        {
+          "path": "internal/cruntime/stage0_scalar.c",
+          "sha256": "e16bfdd17904754ceb9534c976910964c76e8b0c757f72ddf3b63de0d5548bbe"
+        }
+      ],
+      "defaultStacks": true,
+      "environmentOverrides": false,
+      "stackOverrides": false,
+      "inputCount": 8
+    }
+  ],
+  "parallelWorkers": 4,
+  "workerModelRequest": "GPT-6.1 Sol High",
+  "workersClosed": true,
+  "publicCLIRerun": false,
+  "compilerOverrides": false,
+  "stackOverride": false,
+  "limitations": [
+    "4096 output bytes plus bounded dispatch visits is not a universal work or latency bound",
+    "Setup/proof, other bulk operations, CALL/RET, publication and cleanup remain atomic",
+    "Standalone atomic emit API remains atomic; canonical VM emit uses resumable copies",
+    "Stats counts dispatch attempts including prepaid continuations, not guest instructions",
+    "Deadlines, in-flight cancellation, STOPPING/poison, public lifecycle/ABI/CLI and accepted inventory remain open; R03-R05 incomplete"
+  ]
+}
