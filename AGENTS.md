@@ -1,18 +1,20 @@
-- Latest owning-VM checkpoint (2026-11-08): [Pending output VM](docs/engineering/runtime-pending-output.md)
-  records implementation `1e1e47b`. The private continuation now returns Pending
-  to its caller and preserves banks/frames/authority/loans/input/scratch/output in
-  owned storage. One exact Core allocation and typed in-place initialization fix
-  a reproduced default-stack overflow; no stack-size override is used. Native
-  development/O2 cover eight new groups, fixed/mixed quanta, exact final output/
-  Fuel/original diagnostics, zero resume allocations, all preparation allocation
-  ordinals in the exercised recipe and zero SDK heap at exit. The archive pins
-  234 checkout/Git inputs, seven SDK objects, 29 bindings and 20 layouts.
-  Root check: 255 sources/2911 MIR; all 247 production modules are LF.
-  Caller-pinned Program/input, owning Engine Instance association, native heap
-  ledgers, bounded bulk/setup/publication/cleanup, deadlines and poison remain
-  open. The existing Engine facade is synchronous; R03-R05 stay incomplete.
-  Public gates, capacities and Fuel prices/default256/cap16000000 are unchanged.
-  Two disjoint Sol High workers completed; integration/commits were serial. Local only.
+- Latest Engine preparation checkpoint (2026-11-08): [Engine-owned VM preparation](docs/engineering/runtime-engine-prepared.md)
+  records implementation `23bb1fd` and diagnostic fix `7657873`. Instances own
+  prepared VM storage under their exact Program pin, immutable input and existing
+  Engine guard/epoch. Preparation executes no guest opcode. Checked reservation
+  includes Core, Machine Vec8, scratch, publication slot and staged output under
+  Instance, aggregate and combined ceilings. Failure leaves Ready/input/pins and
+  current charges intact; cancel/destruction release charges once. Seven Engine
+  preparation and seven arithmetic groups pass development/O2 with existing
+  regressions, default stacks and zero SDK heap at exit. Engine moves, released
+  pins, every preparation allocation in one recipe, exact/one-less ceilings,
+  automatic Engine drop and wrong-thread/reentry rejection are covered.
+  Verification pins 237 checkout/Git inputs, seven SDK inputs, 30 typed bindings
+  and 20 layouts. Root locked check: 256 sources/2917 MIR; 248 production modules
+  retain LF.
+  Engine.step and terminal publication, bounded setup/bulk/CALL/RET/cleanup,
+  deadlines, poison and the accepted inventory remain open; R03-R05 are incomplete.
+  Sol High workers edited disjoint files; integration/commits were serial. Local only.
 
 # Brownie C agent guidance
 
