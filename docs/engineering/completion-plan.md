@@ -1,4 +1,21 @@
-- Latest immutable-input execution checkpoint (2026-11-07): [Actual 1MiB input](module-input-execution.md)
+- Latest input lifecycle checkpoint (2026-11-07): [Instance-owned input](runtime-engine-inputs.md)
+  integrates Windows-to-Fairy Snapshot adoption `abbfa3c`, exact terminal Fuel
+  `4e62ca2`, and actual owning Engine input Program/Instance execution.
+  Engine development/O2 pass eleven new input/allocation/OS groups plus the
+  unchanged lifecycle/OS guard fixture, with default stacks and zero live SDK
+  heap allocations. Six measured disk/pipe cases include empty and 1MiB input
+  after original handles close. Twelve typed bindings cover 189 source modules.
+  Input completion development/O2 each pass 23 groups, including depth32/33;
+  adoption passes both profiles with 48 Fairy/24 native OOM injections each.
+  Root check: 241 sources/2751 MIR functions; 233 production modules retain LF.
+  Source/tool inputs match their executed receipts; native mirror reuse is
+  explicit. Public gates, capacities and existing prices/default256/ceiling16000000
+  remain. Ordinary zero-argument terminal Fuel remains explicitly unknown.
+  Next: guest-output success/failure binding, then full accounting, bounded steps,
+  deadlines/poison, host/restricted/embed and the accepted inventory.
+  Parallel work/review completed and workers closed. Local commits only.
+
+- Predecessor immutable-input execution checkpoint (2026-11-07): [Actual 1MiB input](module-input-execution.md)
   integrates input windows `3503aba` and owning Program execution `c86aff6`.
   Development/O2 each pass 16 native groups: full input lengths/last byte,
   returned/nested/overlapping ranges, mixed backing, origin mutations, exact Fuel,

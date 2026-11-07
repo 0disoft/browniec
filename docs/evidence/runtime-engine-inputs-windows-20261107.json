@@ -1,5 +1,121 @@
 {
-  "schema": "browniec.private-runtime-engine-inputs/v1",
+  "schema": "browniec.runtime-engine-inputs-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-07T10:12:29.226214+00:00",
+  "profiles": [
+    {
+      "profile": "development",
+      "artifact": {
+        "path": "build/runtime-engine/20261107T101229224511Z/development/runtime-engine.exe",
+        "sha256": "92fcf1b8814e3af933e701b55334f0e25ff65c248ce27ca0d4f90fc765a35af1",
+        "bytes": 5789184,
+        "stackReserve": 1048576,
+        "stackCommit": 4096
+      },
+      "exit": 0,
+      "liveHeapAllocationsAtExit": 0,
+      "assertions": "native Fairy and C, no parsed trace",
+      "objects": [
+        {
+          "path": "build/runtime-engine/20261107T101229224511Z/development/transport.obj",
+          "sha256": "51884b965cb3e30f4f9e49dc4cf85de105d01d95489171c139540c8ed3d24fdb"
+        },
+        {
+          "path": "build/runtime-engine/20261107T101229224511Z/development/runtime.obj",
+          "sha256": "d158d1d62f5686466684a417c7d8d7d37f53f92786dc18b081ac93571c5e6d3f"
+        },
+        {
+          "path": "build/runtime-engine/20261107T101229224511Z/development/abi_thread_identity.obj",
+          "sha256": "e5c54621a18309bfc65ced5c0215668d242755bc528e6e662a9a88aecea23b45"
+        },
+        {
+          "path": "build/runtime-engine/20261107T101229224511Z/development/input_reader.obj",
+          "sha256": "5e5c033a7f5a17a56ade3e87bd9a5f4d1294a66d172c9bf7b65dff47da70a71d"
+        },
+        {
+          "path": "build/runtime-engine/20261107T101229224511Z/development/input_adoption.obj",
+          "sha256": "5e2a3ef6f2921c6caefa4d7935b96dc170df1e87b94477b1caccb1ce01cb538b"
+        }
+      ]
+    },
+    {
+      "profile": "release",
+      "artifact": {
+        "path": "build/runtime-engine/20261107T101229224511Z/release/runtime-engine.exe",
+        "sha256": "a3f83d0752c67660209d310e3593c93fcd82d92c8acfe09c3213cf2a0314ea95",
+        "bytes": 1918464,
+        "stackReserve": 1048576,
+        "stackCommit": 4096
+      },
+      "exit": 0,
+      "liveHeapAllocationsAtExit": 0,
+      "assertions": "native Fairy and C, no parsed trace",
+      "objects": [
+        {
+          "path": "build/runtime-engine/20261107T101229224511Z/release/transport.obj",
+          "sha256": "20e161ad1442f6b00b557a006ddcf725b536137b203c9f43033859f481e5f38a"
+        },
+        {
+          "path": "build/runtime-engine/20261107T101229224511Z/release/runtime.obj",
+          "sha256": "2b55b30160b6c19357f5997688c1a05e2e3d2b556ea7e3c3ba5a672f2079a6d1"
+        },
+        {
+          "path": "build/runtime-engine/20261107T101229224511Z/release/abi_thread_identity.obj",
+          "sha256": "6483385614f5d96cecf28b762e5760541f641836fa4d7ebcc0733d7ba08812c0"
+        },
+        {
+          "path": "build/runtime-engine/20261107T101229224511Z/release/input_reader.obj",
+          "sha256": "0fe60f306c7bb94735d971d3dd9b8c010ea35496cdd75256edd7de042fa895a6"
+        },
+        {
+          "path": "build/runtime-engine/20261107T101229224511Z/release/input_adoption.obj",
+          "sha256": "6d367efcd44862159cf3b92cf7b57d61c989d7508f6b00422253df5d5da2c367"
+        }
+      ]
+    }
+  ],
+  "runtimeInputs": [
+    {
+      "path": "internal/cruntime/stage0_scalar.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "e16bfdd17904754ceb9534c976910964c76e8b0c757f72ddf3b63de0d5548bbe"
+    },
+    {
+      "path": "internal/cstdlib/stage0_system_heap.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "41e57f9748afb73731501ba2003b1a9213b728c0d2db6a31686b9d0489b76100"
+    },
+    {
+      "path": "internal/cstdlib/stage0_buffer.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "27f049118af6e0d008428abd73bdf77dce5491b82617cdb65b9a06ac185edfa1"
+    },
+    {
+      "path": "internal/cstdlib/stage0_vector_storage.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "80dddb6db91c79c495ef8bad6d31923fd242be13de9899ce3aaded85158bb17d"
+    },
+    {
+      "path": "internal/cstdlib/stage0_text_view.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "cb468db0b4c8b54d12a146c41bcfb297f2a06d83a496a38942fb6e2bc7622b62"
+    },
+    {
+      "path": "internal/cstdlib/stage0_windows_console.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "c070b518a8cb1a8eb0c6b170dd3083afd91149a3b076beb9f43bcfb05d2041e5"
+    },
+    {
+      "path": "internal/cstdlib/stage0_windows_process_args.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "f86225cdc8ecf5ebe0ba899557c3b117c50ccc0f02afea4cc0115f780bc40cd6"
+    }
+  ],
+  "compiler": {
+    "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+    "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+    "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false"
+  },
   "inputs": [
     {
       "path": "fairy.toml",
@@ -18,23 +134,38 @@
     },
     {
       "path": "native/runtime-engine/bridge.inc",
-      "sha256": "b2d9e1953bc5cd0fc752d632a0737fc4b18a85da0f5ee61809cb1ec58ed72790",
-      "bytes": 2159
+      "sha256": "4864b814ce66caa836544a0beb7ebdae903813dfb3fda9427b5b91951bf20b93",
+      "bytes": 3094
     },
     {
       "path": "native/runtime-engine/runtime_engine.fy",
-      "sha256": "d42a2d3e5f61c9c6e5885a4f8ba4271013e08c94c5007b95b4b48f536c3268fa",
-      "bytes": 15544
+      "sha256": "e9de8bf34f411610f2d4d75570cad4104437e1acb7612505ac79636ef48f0b1c",
+      "bytes": 26574
     },
     {
       "path": "native/runtime-engine/transport.json",
-      "sha256": "c1e7d45f2f7f9a44a22c9978c08f838245cd225de1bc000ece6d08024cc4d6d3",
-      "bytes": 27202
+      "sha256": "18a6b5f32861b1aff33102415477714ab307c590596654985740bab8013cbeb5",
+      "bytes": 30076
     },
     {
-      "path": "probes/runtime-store/heap-observer.c",
-      "sha256": "1f8344de2c7d0fcf019d7909a71478bdb1d089e0fb1d16594afdd023a3e9c48b",
-      "bytes": 497
+      "path": "native/runtime-input-adoption/adoption.fy",
+      "sha256": "fd1c785de46446c9ba872e54066bca276075b73d7cfc9099046c9a1afee887ca",
+      "bytes": 2939
+    },
+    {
+      "path": "native/runtime-input-adoption/bridge.c",
+      "sha256": "97c900c5196c16efa4e6baa5eb6839b6d41feef67ae5915c09648a145b74762f",
+      "bytes": 1189
+    },
+    {
+      "path": "native/runtime_input_reader.c",
+      "sha256": "732edeb195d71176b6685c497e6e54c36634c25cd7d1d61a1d8fcf556eeaf9f0",
+      "bytes": 6607
+    },
+    {
+      "path": "native/runtime_input_reader.h",
+      "sha256": "f825a25c5da02330626cca6c0e344bd7c93055de170c4ace67357adc46e60b7e",
+      "bytes": 2027
     },
     {
       "path": "src/aggregate_copy.fy",
@@ -258,13 +389,18 @@
     },
     {
       "path": "src/fuel.fy",
-      "sha256": "3692a74418ee595f87f249e43f67d16bab8028d1173a865c75c5ca785689ae30",
-      "bytes": 8177
+      "sha256": "3ebcee068853d39cb3bbd825b87da11befba9e276f7d88ee5081fa70a0183cb0",
+      "bytes": 8609
     },
     {
       "path": "src/functions.fy",
       "sha256": "e0f4374ce98ed4187cf4bcc43a99109bf8b05c10427e28adf9fc2c2b7973f91b",
       "bytes": 14822
+    },
+    {
+      "path": "src/input_reference_views.fy",
+      "sha256": "fce74e692947b55c01c2ac3bc03003c84e10904277e5c8815563dc0c7dad0e83",
+      "bytes": 5649
     },
     {
       "path": "src/ir.fy",
@@ -320,6 +456,11 @@
       "path": "src/module_input_entry.fy",
       "sha256": "6b83ce32665d5c452447e0af0e70c526b9cb26667361f7881e363f956ea923d8",
       "bytes": 5233
+    },
+    {
+      "path": "src/module_input_program.fy",
+      "sha256": "d0475f9b9e4b03c6e9e34faa941890854b950c3187bc7997e96ff3b5b93380f9",
+      "bytes": 5987
     },
     {
       "path": "src/module_program.fy",
@@ -388,8 +529,8 @@
     },
     {
       "path": "src/reference_access.fy",
-      "sha256": "363fc2114da67e31bace54ab4e09a0c5b230d63e573eca9f2101025128cf2cdf",
-      "bytes": 5185
+      "sha256": "dfe82104d0dd43df7f107b5035f7e4f3400adeb575a56a1fffc97bb7c4becbc7",
+      "bytes": 5338
     },
     {
       "path": "src/reference_call_source.fy",
@@ -398,8 +539,8 @@
     },
     {
       "path": "src/reference_execution.fy",
-      "sha256": "79ba13101a5deae00054c73a966046ed58377525b27198865c4fe60d6c2f638e",
-      "bytes": 11383
+      "sha256": "9cd5cf1f364add203a194e64181d27104b33d9c9db7a3fe9182d027819c02dbe",
+      "bytes": 18077
     },
     {
       "path": "src/reference_inference.fy",
@@ -423,8 +564,8 @@
     },
     {
       "path": "src/reference_return_execution.fy",
-      "sha256": "8f6b8ff849788611e4773c4d8ac1a53abd89fa3c6196346a32510a54256696a6",
-      "bytes": 3475
+      "sha256": "030f3bc181f572835787b7e354890f8de9e99ff5d6e699e1647d80c32232e3c6",
+      "bytes": 4882
     },
     {
       "path": "src/reference_words.fy",
@@ -435,6 +576,11 @@
       "path": "src/register_set.fy",
       "sha256": "478e2690ee311bb3961c329becc6f9ef035276759619733cbfd0f6e441f36b73",
       "bytes": 727
+    },
+    {
+      "path": "src/runtime_input.fy",
+      "sha256": "c7fa4dfcf6e4f1e4627d6e5bc0a74912d1989a8a06d2eb452aa42bd4a4f24207",
+      "bytes": 1385
     },
     {
       "path": "src/scalar_codec.fy",
@@ -593,8 +739,8 @@
     },
     {
       "path": "src/slice_result_execution.fy",
-      "sha256": "9f6e69b5ea775c4c9c7a1bc7aee1f6ee4c7047c91d9ab3970f8866eccc033b2e",
-      "bytes": 26804
+      "sha256": "501e6593c2b11d3229a3b5198435459781db797ba4442abe959119913305707f",
+      "bytes": 33659
     },
     {
       "path": "src/slice_result_frames.fy",
@@ -952,24 +1098,80 @@
       "bytes": 1113
     },
     {
+      "path": "tools/runtime-engine/engine_input_tests.fy",
+      "sha256": "575744e01749429f7dfae298055c43cb2a87616c30ab1523733c207f370ced06",
+      "bytes": 28040
+    },
+    {
+      "path": "tools/runtime-engine/heap-observer.c",
+      "sha256": "646f9b710c98bca41c55b49565562aeaf4699f7accf15b3d2f42d508bf68cee1",
+      "bytes": 734
+    },
+    {
       "path": "tools/runtime-engine/main.fy",
-      "sha256": "8575740923879af0aa18fd848b57f439a39703be1ef4c663deaaaaf4f3ec6fde",
-      "bytes": 8684
+      "sha256": "a0b124afcb47581b83e255b48efdb0b7b9c6c00acadc1a7d6bcf5819e0231f42",
+      "bytes": 8838
     },
     {
       "path": "tools/runtime-engine/test-host.inc",
-      "sha256": "c5410691df1b0a451f2a70fd7f3e894821e44de9c7d5c4be87bf7549512c37f6",
-      "bytes": 2621
+      "sha256": "de98bd8171d8221f3b9bd6ee9d7046acc1ed71ecfd15b1715079732fe52eeda8",
+      "bytes": 5568
     },
     {
       "path": "tools/verify-runtime-engine.py",
-      "sha256": "f314880ee80585bf48c1231347db804a06f62c46c9e43fab1321a545b9e04bde",
-      "bytes": 10451
+      "sha256": "20c16c8daa1aab477f41487cbc343496eb456831d75709b644a474e1366e58c9",
+      "bytes": 11655
     },
     {
       "path": "tools/verify-runtime-store-probe.py",
       "sha256": "2a5332e0d5589eee91a39b2837eb0c721c353eb12c3d3bcced479396184332cc",
       "bytes": 12100
+    }
+  ],
+  "transportSha256": "7a21ea788369864d620c3cf3394106e232065af112ce27fcb52243ba5e74c27b",
+  "runtimeSha256": "09e9a5d2d0f13ace9cd1c9acbefc6c1d306b32a664ae59e0d82d3743b3e5915d",
+  "isolatedLockSha256": "7ac3b4bb16abdbb633fc6670518ab9e737617872c28fe3a6a27d8333328daa22",
+  "sourceClosure": 189,
+  "msvc": {
+    "version": "14.51.36231",
+    "sdk": "10.0.26100.0",
+    "compilerSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+    "overrides": false
+  },
+  "rootLockUnchanged": true,
+  "compilerOverrides": false,
+  "runtimeEnvironment": "cleared; empty tool PATH",
+  "limitations": [
+    "Private synchronous typed transport, not public C handles or CLI lifecycle APIs",
+    "Complete Engine accounting/preallocation, OOM injection and poison containment remain",
+    "Ordinary zero-argument terminal Fuel is still marked unknown",
+    "No bounded step quanta, in-flight cancellation, host/output dispatch or OS deadline"
+  ],
+  "receipt": {
+    "path": "build/runtime-engine/20261107T101229224511Z/receipt.json",
+    "sha256": "f22dc80180c234033e448215a771debb9034f929a91a8a1002d99e66b364406e"
+  },
+  "inputGroups": 11,
+  "measuredOsCases": 6,
+  "warmupOsCases": 2,
+  "focusedAllocationFailures": 8,
+  "review": "Independent read-only review found no actionable correctness defects; generated typed C checked, native tests run by main",
+  "typedBindings": 12,
+  "checkoutInputsMatched": 202,
+  "rootComposition": {
+    "sources": 241,
+    "mirFunctions": 2751,
+    "productionModules": 233,
+    "productionModulesWithCR": 0
+  },
+  "initialHarnessFailures": [
+    {
+      "receipt": "build/runtime-engine/20261107T100704251848Z/receipt.json",
+      "cause": "TEMP/TMP omitted from cleared test environment; temporary-file creation denied"
+    },
+    {
+      "receipt": "build/runtime-engine/20261107T100838316621Z/receipt.json",
+      "cause": "Handle baseline included Windows first-use OS I/O initialization; warmed both disk/pipe paths before six measured cases"
     }
   ]
 }

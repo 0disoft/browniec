@@ -2,23 +2,31 @@
   "schema": "browniec.private-runtime-engine-transport/v1",
   "compilerRevision": "eb274643bfcfe746617121ddc6f130b018978b53",
   "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
-  "transportSha256": "2c81628c58a010f720cf806b3573b60ca916d4cd607dd2bf9743e70d24a8143d",
-  "engineType": "fy_resource_16",
-  "incomingType": "fy_resource_28",
+  "transportSha256": "7a21ea788369864d620c3cf3394106e232065af112ce27fcb52243ba5e74c27b",
+  "engineType": "fy_resource_23",
+  "incomingType": "fy_resource_33",
   "bindings": {
-    "1": "fy_fn_772",
-    "2": "fy_fn_771",
-    "3": "fy_fn_785",
-    "4": "fy_fn_777",
-    "5": "fy_fn_783",
-    "8": "fy_fn_794",
-    "6": "fy_fn_807",
-    "7": "fy_fn_806"
+    "1": "fy_fn_828",
+    "2": "fy_fn_827",
+    "3": "fy_fn_844",
+    "4": "fy_fn_833",
+    "5": "fy_fn_842",
+    "8": "fy_fn_858",
+    "6": "fy_fn_878",
+    "7": "fy_fn_877",
+    "9": "fy_fn_835",
+    "10": "fy_fn_846",
+    "11": "fy_fn_853",
+    "12": "fy_fn_876"
   },
   "sourceInputs": [
     {
       "path": "native/runtime-engine/runtime_engine.fy",
-      "sha256": "d42a2d3e5f61c9c6e5885a4f8ba4271013e08c94c5007b95b4b48f536c3268fa"
+      "sha256": "e9de8bf34f411610f2d4d75570cad4104437e1acb7612505ac79636ef48f0b1c"
+    },
+    {
+      "path": "native/runtime-input-adoption/adoption.fy",
+      "sha256": "fd1c785de46446c9ba872e54066bca276075b73d7cfc9099046c9a1afee887ca"
     },
     {
       "path": "src/aggregate_copy.fy",
@@ -253,6 +261,10 @@
       "sha256": "6b83ce32665d5c452447e0af0e70c526b9cb26667361f7881e363f956ea923d8"
     },
     {
+      "path": "src/module_input_program.fy",
+      "sha256": "d0475f9b9e4b03c6e9e34faa941890854b950c3187bc7997e96ff3b5b93380f9"
+    },
+    {
       "path": "src/module_program.fy",
       "sha256": "2d10ee42279dab088a8b5752f685263667fd9d878af4256ef62df1d29a788fc3"
     },
@@ -343,6 +355,10 @@
     {
       "path": "src/register_set.fy",
       "sha256": "478e2690ee311bb3961c329becc6f9ef035276759619733cbfd0f6e441f36b73"
+    },
+    {
+      "path": "src/runtime_input.fy",
+      "sha256": "c7fa4dfcf6e4f1e4627d6e5bc0a74912d1989a8a06d2eb452aa42bd4a4f24207"
     },
     {
       "path": "src/scalar_codec.fy",
@@ -470,7 +486,7 @@
     },
     {
       "path": "src/slice_result_execution.fy",
-      "sha256": "19fce063c9acceee415458de555e3d6f43f0b20983025d710a308ddb17f42055"
+      "sha256": "501e6593c2b11d3229a3b5198435459781db797ba4442abe959119913305707f"
     },
     {
       "path": "src/slice_result_frames.fy",
@@ -753,8 +769,12 @@
       "sha256": "7b19ba382863bee81a57f0c5f88dbde45f34d6ec6467b33c4627515d13d3e588"
     },
     {
+      "path": "tools/runtime-engine/engine_input_tests.fy",
+      "sha256": "575744e01749429f7dfae298055c43cb2a87616c30ab1523733c207f370ced06"
+    },
+    {
       "path": "tools/runtime-engine/main.fy",
-      "sha256": "8575740923879af0aa18fd848b57f439a39703be1ef4c663deaaaaf4f3ec6fde"
+      "sha256": "a0b124afcb47581b83e255b48efdb0b7b9c6c00acadc1a7d6bcf5819e0231f42"
     }
   ],
   "runtimeInputs": [
@@ -793,5 +813,22 @@
       "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
       "sha256": "f86225cdc8ecf5ebe0ba899557c3b117c50ccc0f02afea4cc0115f780bc40cd6"
     }
-  ]
+  ],
+  "inputEntryType": "fy_resource_40",
+  "snapshotType": "fy_resource_18",
+  "snapshotVectorType": "fy_resource_41",
+  "reviewedDeclarations": {
+    "1": "static uint32_t fy_fn_828(fy_struct_92 * fy_l_10224, uintptr_t fy_l_10225, uintptr_t fy_l_10226);",
+    "2": "static uint32_t fy_fn_827(fy_struct_92 * fy_l_10227, uintptr_t fy_l_10228, uintptr_t fy_l_10229);",
+    "3": "static uint32_t fy_fn_844(fy_struct_92 * fy_l_10230, uintptr_t fy_l_10231, uintptr_t fy_l_10232, uintptr_t fy_l_10233);",
+    "4": "static uint32_t fy_fn_833(fy_struct_92 * fy_l_10243, fy_resource_20 * fy_l_10244, fy_resource_33 * fy_l_10245, uintptr_t fy_l_10246);",
+    "5": "static uint32_t fy_fn_842(fy_struct_92 * fy_l_10419, fy_resource_20 * fy_l_10420, fy_resource_20 * fy_l_10421, fy_resource_21 * fy_l_10422, fy_resource_22 * fy_l_10423, fy_resource_22 * fy_l_10424, uint32_t fy_l_10425, uintptr_t fy_l_10426, uintptr_t fy_l_10427);",
+    "8": "static uint32_t fy_fn_858(fy_struct_92 * fy_l_10428, fy_resource_20 * fy_l_10429, fy_resource_20 * fy_l_10430, fy_resource_21 * fy_l_10431, fy_resource_22 * fy_l_10432, fy_resource_22 * fy_l_10433, uintptr_t fy_l_10434, uintptr_t fy_l_10435, uint32_t fy_l_10436, uintptr_t fy_l_10437, uintptr_t fy_l_10438);",
+    "6": "static fy_resource_20 fy_fn_878(fy_resource_20 fy_l_10439);",
+    "7": "static fy_resource_21 fy_fn_877(fy_resource_21 fy_l_10440);",
+    "9": "static uint32_t fy_fn_835(fy_struct_92 * fy_l_10259, fy_resource_20 * fy_l_10260, fy_resource_40 * fy_l_10261, uintptr_t fy_l_10262);",
+    "10": "static uint32_t fy_fn_846(fy_struct_92 * fy_l_10387, const fy_resource_20 * fy_l_10388, fy_resource_21 * fy_l_10389, const fy_resource_22 * fy_l_10390, uintptr_t fy_l_10391, const fy_resource_18 * fy_l_10392);",
+    "11": "static uint32_t fy_fn_853(fy_struct_92 * fy_l_10286, fy_resource_20 * fy_l_10287, fy_resource_21 * fy_l_10288, fy_resource_22 * fy_l_10289, fy_resource_41 * fy_l_10290, uintptr_t fy_l_10291, uintptr_t fy_l_10292);",
+    "12": "static fy_resource_22 fy_fn_876(fy_resource_22 fy_l_10441);"
+  }
 }

@@ -1,6 +1,9 @@
 module runtime_engine;
 import module_program as programs;
 import module_entry as entries;
+import module_input_program as input_programs;
+import module_input_entry as input_entries;
+import runtime_input as input_bytes;
 import source_error as diagnostics;
 import errors as errors;
 import fuel as fuel;
@@ -10,26 +13,37 @@ import std::vec as vec;
 // this exact Engine; the outer ABI registry must authenticate their association.
 pub struct Limits { usize programs; usize instances; usize fuel; }
 pub struct Error { u32 status; diagnostics::Error diagnostic; }
-pub struct Event { u8 kind; i64 value; diagnostics::Error diagnostic; }
+pub struct Event { u8 kind; i64 value; diagnostics::Error diagnostic; usize remaining; bool fuel_known; }
 pub struct Snapshot { usize programs; usize instances; usize pins; bool closed; }
 struct Meta {
     Limits limits; usize thread; usize lifetime; usize active; usize admission;
     usize next; usize result; Error error; Event event; Snapshot snapshot; bool closed;
 }
-resource Program { usize id; usize pins; bool released; programs::Program code; cleanup { } }
+// Exactly one owning vector has one element; the other is empty. Input code is
+// never relabelled as a zero-argument Program or an array/image input lease.
+resource Program {
+    usize id; usize pins; bool released; vec::Vec<programs::Program> code;
+    vec::Vec<input_programs::Program> input; cleanup { }
+}
 struct Instance { usize id; usize program; usize fuel; u8 phase; Event event; }
+resource BoundInput { usize instance; input_bytes::Snapshot input; cleanup { } }
 pub resource Engine {
     Meta meta; vec::Vec<Program> programs; vec::Vec<Program> scratch;
-    vec::Vec<Instance> instances; cleanup { }
+    vec::Vec<Instance> instances; vec::Vec<BoundInput> inputs;
+    vec::Vec<BoundInput> input_scratch; cleanup { }
 }
 @link_name("bc_runtime_engine_bind") unsafe extern C fn u32 bind_raw(ptr mut void owner);
 @link_name("bc_runtime_engine_compile") unsafe extern C fn u32 compile_raw(ptr mut void owner,ptr mut void incoming,usize limit);
+@link_name("bc_runtime_engine_compile_input") unsafe extern C fn u32 compile_input_raw(ptr mut void owner,ptr mut void incoming,usize limit);
+@link_name("bc_runtime_engine_execute_input") unsafe extern C fn u32 execute_input_raw(ptr mut void owner,usize instance,ptr void input);
+@link_name("bc_runtime_engine_instance_input") unsafe extern C fn u32 instance_input_raw(ptr mut void owner,usize program,ptr mut void input,usize budget);
 @link_name("bc_runtime_engine_call") unsafe extern C fn u32 call_raw(ptr mut void owner,u32 operation,usize id,usize argument);
 // Retention markers are used only by the dedicated native transport fixture.
 @link_name("bc_runtime_engine_binding") unsafe extern C fn void binding_raw(u32 number);
 fn diagnostics::Error absent(){return diagnostics::absent(errors::make(0,0));}
 fn Error error(u32 status){return Error{.status=status,.diagnostic=absent()};}
-fn Event pending(){return Event{.kind=0,.value=0,.diagnostic=absent()};}
+fn Event ready(usize budget){return Event{.kind=0,.value=0,.diagnostic=absent(),.remaining=budget,.fuel_known=true};}
+fn Event pending(){return ready(0);}
 fn Snapshot empty_snapshot(){return Snapshot{.programs=0,.instances=0,.pins=0,.closed=false};}
 fn Result<usize,Error> result(ref Engine e,u32 status){
     if(status==0){return .ok(e.meta.result);}
@@ -41,8 +55,10 @@ pub fn Result<Engine,Error> create(Limits limits){
     var vec::Vec<Program> programs=vec::empty<Program>();var vec::Vec<Program> scratch=vec::empty<Program>();
     var vec::Vec<Instance> instances=vec::empty<Instance>();
     if(!vec::reserve<Program>(ref mut programs,64).is_ok || !vec::reserve<Program>(ref mut scratch,64).is_ok || !vec::reserve<Instance>(ref mut instances,64).is_ok){return .err(error(6));}
+    var vec::Vec<BoundInput> inputs=vec::empty<BoundInput>();var vec::Vec<BoundInput> input_scratch=vec::empty<BoundInput>();
+    if(!vec::reserve<BoundInput>(ref mut inputs,64).is_ok || !vec::reserve<BoundInput>(ref mut input_scratch,64).is_ok){return .err(error(6));}
     var Engine e=Engine{.meta=Meta{.limits=limits,.thread=0,.lifetime=0,.active=0,.admission=1,.next=1,.result=0,.error=error(0),.event=pending(),.snapshot=empty_snapshot(),.closed=false},
-        .programs=programs,.scratch=scratch,.instances=instances};
+        .programs=programs,.scratch=scratch,.instances=instances,.inputs=inputs,.input_scratch=input_scratch};
     let u32 status=unsafe {bind_raw(ref mut e as ptr mut void)};
     if(status!=0){return .err(error(status));}return .ok(e);
 }
@@ -55,12 +71,33 @@ pub fn Result<usize,Error> compile(ref mut Engine e,entries::Entry selected,usiz
     let u32 status=unsafe {compile_raw(e as ptr mut void,ref mut incoming as ptr mut void,image_limit)};
     return result(e,status);
 }
+pub fn Result<usize,Error> compile_input(ref mut Engine e,input_entries::InputEntry selected,usize image_limit){
+    var vec::Vec<input_entries::InputEntry> incoming=vec::empty<input_entries::InputEntry>();
+    if(!vec::reserve<input_entries::InputEntry>(ref mut incoming,1).is_ok){return .err(error(6));}
+    if(!vec::push<input_entries::InputEntry>(ref mut incoming,selected).is_ok){return .err(error(6));}
+    let u32 status=unsafe {compile_input_raw(e as ptr mut void,ref mut incoming as ptr mut void,image_limit)};
+    return result(e,status);
+}
 pub fn Result<usize,Error> create_instance(ref mut Engine e,usize program,usize budget){let u32 s=unsafe{call_raw(e as ptr mut void,1,program,budget)};return result(e,s);}
+// The accepted owning input association: its bytes move once, stay immutable,
+// and are reclaimed with the Instance even after cancellation or Program release.
+pub fn Result<usize,Error> create_input_instance(ref mut Engine e,usize program,input_bytes::Snapshot input,usize budget){
+    var vec::Vec<input_bytes::Snapshot> incoming=vec::empty<input_bytes::Snapshot>();
+    if(!vec::reserve<input_bytes::Snapshot>(ref mut incoming,1).is_ok){return .err(error(6));}
+    if(!vec::push<input_bytes::Snapshot>(ref mut incoming,input).is_ok){return .err(error(6));}
+    let u32 s=unsafe{instance_input_raw(e as ptr mut void,program,ref mut incoming as ptr mut void,budget)};return result(e,s);
+}
 pub fn Result<usize,Error> release_program(ref mut Engine e,usize program){let u32 s=unsafe{call_raw(e as ptr mut void,2,program,0)};return result(e,s);}
 pub fn Result<usize,Error> destroy_instance(ref mut Engine e,usize instance){let u32 s=unsafe{call_raw(e as ptr mut void,3,instance,0)};return result(e,s);}
 pub fn Result<usize,Error> destroy(ref mut Engine e){let u32 s=unsafe{call_raw(e as ptr mut void,4,0,0)};return result(e,s);}
 pub fn Result<Event,Error> execute_once(ref mut Engine e,usize instance){
     let u32 s=unsafe{call_raw(e as ptr mut void,5,instance,0)};
+    if(s!=0){return .err(error(s));}return .ok(e.meta.event);
+}
+// Synchronous exact borrow: no Snapshot pointer is retained in an Instance or
+// Program. Admission precedes inspection; completion precedes ending the borrow.
+pub fn Result<Event,Error> execute_input_once(ref mut Engine e,usize instance,ref input_bytes::Snapshot input){
+    let u32 s=unsafe{execute_input_raw(e as ptr mut void,instance,input as ptr void)};
     if(s!=0){return .err(error(s));}return .ok(e.meta.event);
 }
 pub fn Result<Event,Error> observe(ref mut Engine e,usize instance){
@@ -115,7 +152,30 @@ fn entries::Entry pop_entry(ref mut vec::Vec<entries::Entry> v){return switch(ve
 };}
 fn u32 publish_program(ref mut Meta m,ref mut vec::Vec<Program> v,programs::Program code){
     let usize id=m.next;
-    if(!vec::push<Program>(v,Program{.id=id,.pins=0,.released=false,.code=code}).is_ok){return failed(m,6);}
+    var vec::Vec<programs::Program> retained=vec::empty<programs::Program>();
+    if(!vec::reserve<programs::Program>(ref mut retained,1).is_ok){return failed(m,6);}
+    if(!vec::push<programs::Program>(ref mut retained,code).is_ok){return failed(m,6);}
+    if(!vec::push<Program>(v,Program{.id=id,.pins=0,.released=false,.code=retained,.input=vec::empty<input_programs::Program>()}).is_ok){return failed(m,6);}
+    advance(m);return success(m,id);
+}
+fn input_entries::InputEntry pop_input_entry(ref mut vec::Vec<input_entries::InputEntry> v){return switch(vec::pop<input_entries::InputEntry>(v)){
+    case .some(e):{e}case .none:{assert(false);pop_input_entry(v)}
+};}
+fn u32 compile_input_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut vec::Vec<input_entries::InputEntry> incoming,usize image_limit){
+    if(vec::len<Program>(v)>=m.limits.programs || m.next==0){return failed(m,8);}
+    if(vec::len<input_entries::InputEntry>(incoming)!=1){return failed(m,1);}
+    let input_entries::InputEntry selected=pop_input_entry(incoming);
+    return switch(input_programs::compile(selected,image_limit)){
+        case .ok(code):{publish_input_program(m,v,code)}
+        case .err(e):{m.error=Error{.status=4,.diagnostic=e};4}
+    };
+}
+fn u32 publish_input_program(ref mut Meta m,ref mut vec::Vec<Program> v,input_programs::Program code){
+    let usize id=m.next;
+    var vec::Vec<input_programs::Program> retained=vec::empty<input_programs::Program>();
+    if(!vec::reserve<input_programs::Program>(ref mut retained,1).is_ok){return failed(m,6);}
+    if(!vec::push<input_programs::Program>(ref mut retained,code).is_ok){return failed(m,6);}
+    if(!vec::push<Program>(v,Program{.id=id,.pins=0,.released=false,.code=vec::empty<programs::Program>(),.input=retained}).is_ok){return failed(m,6);}
     advance(m);return success(m,id);
 }
 fn u32 instance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Vec<Instance> v,usize code,usize budget){
@@ -123,8 +183,38 @@ fn u32 instance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Ve
     let usize pi=switch(program_index(p,code,true)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
     if(vec::len<Instance>(v)>=m.limits.instances || m.next==0){return failed(m,8);}
     let usize id=m.next;
-    if(!vec::push<Instance>(v,Instance{.id=id,.program=code,.fuel=budget,.phase=0,.event=pending()}).is_ok){return failed(m,6);}
+    if(!vec::push<Instance>(v,Instance{.id=id,.program=code,.fuel=budget,.phase=0,.event=ready(budget)}).is_ok){return failed(m,6);}
     let ref mut Program target=vec::at_mut<Program>(p,pi);target.pins+=1;advance(m);return success(m,id);
+}
+fn Result<usize,u32> input_index(ref vec::Vec<BoundInput> v,usize id){
+    var usize i=0;while(i<vec::len<BoundInput>(v)){if(vec::at<BoundInput>(v,i).instance==id){return .ok(i);}i+=1;}return .err(2);
+}
+fn input_bytes::Snapshot pop_snapshot(ref mut vec::Vec<input_bytes::Snapshot> v){return switch(vec::pop<input_bytes::Snapshot>(v)){
+    case .some(value):{value}case .none:{assert(false);pop_snapshot(v)}
+};}
+fn u32 input_instance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Vec<Instance> v,
+    ref mut vec::Vec<BoundInput> inputs,ref mut vec::Vec<input_bytes::Snapshot> incoming,usize code,usize budget){
+    if(budget>m.limits.fuel){return failed(m,5);}
+    let usize pi=switch(program_index(p,code,true)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
+    if(vec::len<input_programs::Program>(ref vec::at<Program>(p,pi).input)!=1){return failed(m,1);}
+    if(vec::len<Instance>(v)>=m.limits.instances || m.next==0){return failed(m,8);}
+    if(vec::len<input_bytes::Snapshot>(incoming)!=1){return failed(m,1);}
+    let usize id=m.next;let input_bytes::Snapshot snapshot=pop_snapshot(incoming);
+    if(!vec::push<BoundInput>(inputs,BoundInput{.instance=id,.input=snapshot}).is_ok){return failed(m,6);}
+    if(!vec::push<Instance>(v,Instance{.id=id,.program=code,.fuel=budget,.phase=0,.event=ready(budget)}).is_ok){
+        let Option<BoundInput> disposed=vec::pop<BoundInput>(inputs);return failed(m,6);
+    }
+    let ref mut Program target=vec::at_mut<Program>(p,pi);target.pins+=1;advance(m);return success(m,id);
+}
+fn BoundInput pop_bound(ref mut vec::Vec<BoundInput> v){return switch(vec::pop<BoundInput>(v)){
+    case .some(value):{value}case .none:{assert(false);pop_bound(v)}
+};}
+fn void remove_input(ref mut vec::Vec<BoundInput> v,ref mut vec::Vec<BoundInput> scratch,usize id){
+    let usize i=switch(input_index(v,id)){case .ok(value):{value}case .err(_):{return;}};
+    assert(vec::len<BoundInput>(scratch)==0);
+    while(vec::len<BoundInput>(v)>i+1){let BoundInput input=pop_bound(v);assert(vec::push<BoundInput>(scratch,input).is_ok);}
+    {let BoundInput disposed=pop_bound(v);}
+    while(vec::len<BoundInput>(scratch)>0){let BoundInput input=pop_bound(scratch);assert(vec::push<BoundInput>(v,input).is_ok);}
 }
 fn Program pop(ref mut vec::Vec<Program> v){return switch(vec::pop<Program>(v)){case .some(p):{p}case .none:{assert(false);pop(v)}};}
 fn void push(ref mut vec::Vec<Program> v,Program p){assert(vec::push<Program>(v,p).is_ok);}
@@ -139,7 +229,8 @@ fn u32 release_inner(ref mut Meta m,ref mut vec::Vec<Program> v,ref mut vec::Vec
     if(vec::at<Program>(v,i).pins==0){remove(v,scratch,i);}else{let ref mut Program p=vec::at_mut<Program>(v,i);p.released=true;}
     return success(m,id);
 }
-fn u32 destroy_instance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Vec<Program> scratch,ref mut vec::Vec<Instance> v,usize id){
+fn u32 destroy_instance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Vec<Program> scratch,ref mut vec::Vec<Instance> v,
+    ref mut vec::Vec<BoundInput> inputs,ref mut vec::Vec<BoundInput> input_scratch,usize id){
     let usize ii=switch(instance_index(v,id)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
     let Instance current=*vec::at<Instance>(v,ii);if(current.phase==1){return failed(m,3);}
     let usize pi=switch(program_index(p,current.program,false)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
@@ -148,21 +239,50 @@ fn u32 destroy_instance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut
     {let ref mut Program code=vec::at_mut<Program>(p,pi);code.pins=pins-1;}
     let Instance last=switch(vec::pop<Instance>(v)){case .some(x):{x}case .none:{assert(false);current}};
     if(ii<vec::len<Instance>(v)){let ref mut Instance target=vec::at_mut<Instance>(v,ii);*target=last;}
+    remove_input(inputs,input_scratch,id);
     if(reclaim){remove(p,scratch,pi);}return success(m,id);
 }
-fn u32 execute_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Instance> v,usize id){
+fn u32 execute_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Instance> v,ref vec::Vec<BoundInput> inputs,usize id){
     let usize ii=switch(instance_index(v,id)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
     let Instance current=*vec::at<Instance>(v,ii);
     if(current.phase==1){return failed(m,3);}if(current.phase==2){return failed(m,11);}
     let usize pi=switch(program_index(p,current.program,false)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
     let ref Program code=vec::at<Program>(p,pi);if(code.pins==0){return failed(m,7);}
+    if(vec::len<input_programs::Program>(ref code.input)!=0){
+        let usize bi=switch(input_index(inputs,id)){case .ok(x):{x}case .err(_):{return failed(m,1);}};
+        return execute_input_inner(m,p,v,id,ref vec::at<BoundInput>(inputs,bi).input);
+    }
+    if(vec::len<programs::Program>(ref code.code)!=1){return failed(m,7);}
     {let ref mut Instance target=vec::at_mut<Instance>(v,ii);target.phase=1;}
-    let Event event=switch(programs::run(ref code.code,current.fuel)){
-        case .ok(value):{Event{.kind=1,.value=value,.diagnostic=absent()}}
-        case .err(e):{Event{.kind=2,.value=0,.diagnostic=e}}
+    let Event event=switch(programs::run(vec::at<programs::Program>(ref code.code,0),current.fuel)){
+        case .ok(value):{Event{.kind=1,.value=value,.diagnostic=absent(),.remaining=0,.fuel_known=false}}
+        case .err(e):{Event{.kind=2,.value=0,.diagnostic=e,.remaining=0,.fuel_known=false}}
     };
     {let ref mut Instance target=vec::at_mut<Instance>(v,ii);target.event=event;target.phase=2;}
     m.event=event;return success(m,id);
+}
+fn u32 execute_input_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Instance> v,usize id,ref input_bytes::Snapshot input){
+    let usize ii=switch(instance_index(v,id)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
+    let Instance current=*vec::at<Instance>(v,ii);
+    if(current.phase==1){return failed(m,3);}if(current.phase==2){return failed(m,11);}
+    let usize pi=switch(program_index(p,current.program,false)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
+    let ref Program code=vec::at<Program>(p,pi);if(code.pins==0){return failed(m,7);}
+    if(vec::len<programs::Program>(ref code.code)!=0){return failed(m,1);}
+    if(vec::len<input_programs::Program>(ref code.input)!=1){return failed(m,7);}
+    {let ref mut Instance target=vec::at_mut<Instance>(v,ii);target.phase=1;}
+    let input_programs::Completion completion=input_programs::complete(vec::at<input_programs::Program>(ref code.input,0),input,current.fuel);
+    let Event event=Event{.kind=if(completion.success){1}else{2},.value=completion.value,
+        .diagnostic=completion.diagnostic,.remaining=completion.remaining,.fuel_known=true};
+    {let ref mut Instance target=vec::at_mut<Instance>(v,ii);target.event=event;target.phase=2;}
+    m.event=event;return success(m,id);
+}
+fn u32 execute_borrowed_input_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Instance> v,
+    ref vec::Vec<BoundInput> inputs,usize id,ref input_bytes::Snapshot input){
+    let usize ii=switch(instance_index(v,id)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
+    let u8 phase=vec::at<Instance>(v,ii).phase;
+    if(phase==1){return failed(m,3);}if(phase==2){return failed(m,11);}
+    if(input_index(inputs,id).is_ok){return failed(m,1);}
+    return execute_input_inner(m,p,v,id,input);
 }
 fn u32 observe_inner(ref mut Meta m,ref vec::Vec<Instance> v,usize id){
     let usize ii=switch(instance_index(v,id)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
@@ -171,23 +291,23 @@ fn u32 observe_inner(ref mut Meta m,ref vec::Vec<Instance> v,usize id){
 fn u32 cancel_inner(ref mut Meta m,ref mut vec::Vec<Instance> v,usize id){
     let usize ii=switch(instance_index(v,id)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
     let ref mut Instance target=vec::at_mut<Instance>(v,ii);
-    if(target.phase==1){return failed(m,3);}if(target.phase==0){target.event=Event{.kind=3,.value=0,.diagnostic=absent()};target.phase=2;}
+    if(target.phase==1){return failed(m,3);}if(target.phase==0){target.event=Event{.kind=3,.value=0,.diagnostic=absent(),.remaining=target.fuel,.fuel_known=true};target.phase=2;}
     m.event=target.event;return success(m,id);
 }
 fn u32 inspect_inner(ref mut Meta m,ref vec::Vec<Program> p,ref vec::Vec<Instance> v){
     var usize pins=0;var usize i=0;while(i<vec::len<Program>(p)){pins+=vec::at<Program>(p,i).pins;i+=1;}
     m.snapshot=Snapshot{.programs=vec::len<Program>(p),.instances=vec::len<Instance>(v),.pins=pins,.closed=m.closed};return success(m,0);
 }
-fn u32 close_inner(ref mut Meta m,ref vec::Vec<Program> p,ref vec::Vec<Instance> v){
-    if(vec::len<Program>(p)!=0 || vec::len<Instance>(v)!=0){return failed(m,3);}m.closed=true;return success(m,0);
+fn u32 close_inner(ref mut Meta m,ref vec::Vec<Program> p,ref vec::Vec<Instance> v,ref vec::Vec<BoundInput> inputs){
+    if(vec::len<Program>(p)!=0 || vec::len<Instance>(v)!=0 || vec::len<BoundInput>(inputs)!=0){return failed(m,3);}m.closed=true;return success(m,0);
 }
 fn u32 dispatch_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Vec<Program> scratch,
-    ref mut vec::Vec<Instance> v,u32 operation,usize id,usize argument){
+    ref mut vec::Vec<Instance> v,ref mut vec::Vec<BoundInput> inputs,ref mut vec::Vec<BoundInput> input_scratch,u32 operation,usize id,usize argument){
     if(operation==1){return instance_inner(m,p,v,id,argument);}
     if(operation==2){return release_inner(m,p,scratch,id);}
-    if(operation==3){return destroy_instance_inner(m,p,scratch,v,id);}
-    if(operation==4){return close_inner(m,p,v);}
-    if(operation==5){return execute_inner(m,p,v,id);}
+    if(operation==3){return destroy_instance_inner(m,p,scratch,v,inputs,input_scratch,id);}
+    if(operation==4){return close_inner(m,p,v,inputs);}
+    if(operation==5){return execute_inner(m,p,v,inputs,id);}
     if(operation==6){return observe_inner(m,v,id);}
     if(operation==7){return cancel_inner(m,v,id);}
     if(operation==8){return inspect_inner(m,p,v);}
@@ -197,27 +317,42 @@ fn u32 dispatch_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Ve
 // native guard for its entire duration. It never issues/reuses an epoch or runs
 // compilation/guest code; existing results and owning teardown remain available.
 fn u32 maintenance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Vec<Program> scratch,
-    ref mut vec::Vec<Instance> v,usize thread,usize lifetime,u32 operation,usize id,usize argument){
+    ref mut vec::Vec<Instance> v,ref mut vec::Vec<BoundInput> inputs,ref mut vec::Vec<BoundInput> input_scratch,
+    usize thread,usize lifetime,u32 operation,usize id,usize argument){
     if(m.thread!=thread || m.lifetime!=lifetime || thread==0 || lifetime==0){return 10;}
     if(m.active!=0){return 3;}if(m.closed){return failed(m,2);}
     if(m.admission!=0){return failed(m,7);}
     if(operation!=2 && operation!=3 && operation!=4 && operation!=6 && operation!=7 && operation!=8){return failed(m,8);}
-    return dispatch_inner(m,p,scratch,v,operation,id,argument);
+    return dispatch_inner(m,p,scratch,v,inputs,input_scratch,operation,id,argument);
 }
 fn vec::Vec<Program> reset_program_storage(vec::Vec<Program> v){assert(vec::len<Program>(ref v)==0);return vec::empty<Program>();}
 fn vec::Vec<Instance> reset_instance_storage(vec::Vec<Instance> v){assert(vec::len<Instance>(ref v)==0);return vec::empty<Instance>();}
+fn vec::Vec<BoundInput> reset_input_storage(vec::Vec<BoundInput> v){assert(vec::len<BoundInput>(ref v)==0);return vec::empty<BoundInput>();}
 // Only the dedicated transport fixture calls this helper-retention root. The
 // marker calls identify typed definitions; they publish nothing or run guests.
 pub fn void retain_native_bindings(){
     var Meta m=Meta{.limits=Limits{.programs=1,.instances=1,.fuel=256},.thread=0,.lifetime=0,.active=0,.admission=1,.next=1,.result=0,.error=error(0),.event=pending(),.snapshot=empty_snapshot(),.closed=false};
     var vec::Vec<Program> p=vec::empty<Program>();var vec::Vec<Program> scratch=vec::empty<Program>();
     var vec::Vec<Instance> v=vec::empty<Instance>();var vec::Vec<entries::Entry> input=vec::empty<entries::Entry>();
+    var vec::Vec<BoundInput> bound=vec::empty<BoundInput>();var vec::Vec<BoundInput> bound_scratch=vec::empty<BoundInput>();
     unsafe{binding_raw(1)};discard bind_inner(ref mut m,1,1);
     unsafe{binding_raw(2)};discard begin_inner(ref mut m,1,1);
     unsafe{binding_raw(3)};discard end_inner(ref mut m,1,1,1);
     unsafe{binding_raw(4)};discard compile_inner(ref mut m,ref mut p,ref mut input,0);
-    unsafe{binding_raw(5)};discard dispatch_inner(ref mut m,ref mut p,ref mut scratch,ref mut v,8,0,0);
-    unsafe{binding_raw(8)};discard maintenance_inner(ref mut m,ref mut p,ref mut scratch,ref mut v,1,1,8,0,0);
+    unsafe{binding_raw(5)};discard dispatch_inner(ref mut m,ref mut p,ref mut scratch,ref mut v,ref mut bound,ref mut bound_scratch,8,0,0);
+    unsafe{binding_raw(8)};discard maintenance_inner(ref mut m,ref mut p,ref mut scratch,ref mut v,ref mut bound,ref mut bound_scratch,1,1,8,0,0);
     unsafe{binding_raw(6)};let vec::Vec<Program> empty_programs=reset_program_storage(p);
     unsafe{binding_raw(7)};let vec::Vec<Instance> empty_instances=reset_instance_storage(v);
+    var vec::Vec<input_entries::InputEntry> input_entry=vec::empty<input_entries::InputEntry>();
+    var vec::Vec<Program> input_program=vec::empty<Program>();
+    var vec::Vec<Instance> input_instances=vec::empty<Instance>();
+    unsafe{binding_raw(9)};discard compile_input_inner(ref mut m,ref mut input_program,ref mut input_entry,0);
+    var usize budget=0;
+    let input_bytes::Snapshot snapshot=switch(input_bytes::snapshot(b"",0,0,ref mut budget)){
+        case .ok(value):{value}case .err(_):{assert(false);return;}
+    };
+    unsafe{binding_raw(10)};discard execute_borrowed_input_inner(ref mut m,ref input_program,ref mut input_instances,ref bound,0,ref snapshot);
+    var vec::Vec<input_bytes::Snapshot> incoming_snapshot=vec::empty<input_bytes::Snapshot>();
+    unsafe{binding_raw(11)};discard input_instance_inner(ref mut m,ref mut input_program,ref mut input_instances,ref mut bound,ref mut incoming_snapshot,0,0);
+    unsafe{binding_raw(12)};let vec::Vec<BoundInput> empty_inputs=reset_input_storage(bound);
 }

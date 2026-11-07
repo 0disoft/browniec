@@ -16,7 +16,7 @@ compiled code, source context and any immutable image backing. Instances pin tha
 Program. Release hides the Program from new Instance creation; the last Instance
 destruction reclaims a released Program. Unreleased Programs require explicit
 release. Destroy rejects live Programs or Instances. Successful destroy returns
-the three empty vector allocations immediately, before the owning scope ends.
+the five empty vector allocations immediately, before the owning scope ends.
 Normal owning-scope cleanup also releases live children. Child IDs are scoped
 to this exact Engine; they are not public handles
 and cannot authenticate an association with another Engine.
@@ -26,7 +26,9 @@ Done or guest-error event. A terminal Instance cannot execute again (status 11).
 `cancel_ready` changes only a Ready Instance to terminal Cancelled; observing or
 cancelling a terminal Instance preserves its first event. Destroying an Instance
 releases its pin. This does not yet implement resumable execution, cancellation
-during guest work, VM input/output, host suspension or deadline delivery.
+during guest work, guest output, host suspension or deadline delivery. The
+[current input successor](runtime-engine-inputs.md) adds actual owning input
+Programs and Instance Snapshots to the same lifecycle.
 
 Program and Instance limits are independently admitted in 1..64; they are count
 ceilings, not complete memory quotas. The admitted Fuel ceiling is 1..16000000;
@@ -106,7 +108,7 @@ execution; the isolated lock and root lock are unchanged.
 R01 remains partial: public generation-handle association, complete policy/run
 binding and the accepted runtime API remain open. R02-R05 still need complete
 reservation/accounting and OOM injection, bounded VM steps, OS deadlines,
-in-flight cancellation, poison containment and host/input/output integration.
+in-flight cancellation, poison containment and host/output integration.
 This check is native lifecycle evidence, not an independent model or completion
 of those obligations. Broader unchanged CLI/language suites were not rerun.
 
@@ -126,3 +128,19 @@ than rebuilding identical inputs; all 195 executed inputs match final root.
 See [current compatibility evidence](../evidence/runtime-engine-input-execution-windows-20261107.json).
 This preserves the existing zero-argument Engine path; associating input Programs
 and Snapshots to Instances remains the next implementation, not a completed ABI.
+
+## Instance-owned input successor (2026-11-07)
+
+The [input lifecycle](runtime-engine-inputs.md) now retains separately admitted
+input Programs, consumes exact immutable Snapshots into owning Instances and
+executes their real bytes synchronously. Windows disk/pipe input reaches the VM
+after original handles close, through the explicit
+[Fairy Snapshot adoption API](runtime-input-adoption.md). Input terminal events
+retain [actual committed remaining Fuel](module-input-completion.md) on both
+success and failure. Wrong execution APIs preserve Ready, and released pins,
+move/relocation, cancellation and owning teardown retain their lifecycle rules.
+The public CLI/C ABI, complete accounting and bounded runtime remain open.
+
+The [current executed evidence](../evidence/runtime-engine-inputs-windows-20261107.json)
+passes development and O2, 12 reviewed typed bindings over 189 modules, eleven
+new logical groups plus the unchanged lifecycle fixture and zero SDK heap leaks.

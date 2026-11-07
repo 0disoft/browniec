@@ -108,8 +108,10 @@ All workers are closed. These are local commits; no push/release/deployment.
 
 ## Remaining work
 
-Bind owning input Programs and the exact Snapshot to Engine/Instance lifetimes,
-adopt actual OS-reader bytes, route guest `output::emit` through the real success
-barrier, and finish full memory/work accounting, resumability/deadlines and
-cancellation/poison behavior. Public project/input/output/host/restricted/embedding
+The [Engine input successor](runtime-engine-inputs.md) now binds owning input
+Programs and exact Instance-owned Snapshots, including actual Windows reader
+bytes. [Exact input completion](module-input-completion.md) retains terminal Fuel
+on both success and failure. Remaining: route guest `output::emit` through the
+real success barrier, and finish full memory/work accounting, resumability,
+deadlines and cancellation/poison behavior. Public project/input/output/host/restricted/embedding
 and complete platform/profile delivery remain open in the accepted inventory.

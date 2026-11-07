@@ -5,6 +5,7 @@ import module_index as modules;
 import module_entry as entries;
 import source_error as diagnostics;
 import errors as errors;
+import engine_input_tests as input_tests;
 unsafe extern C fn void bc_runtime_engine_test_closed_allocations();
 unsafe extern C fn void bc_runtime_engine_test_seed(ptr mut void e,u32 kind);
 unsafe extern C fn void bc_runtime_engine_test_guards(ptr mut void e);
@@ -21,7 +22,7 @@ fn engine::Engine create(usize programs,usize instances){return switch(engine::c
 fn usize id(Result<usize,engine::Error> r){return switch(r){case .ok(v):{v}case .err(_):{assert(false);0}};}
 fn void rejected(Result<usize,engine::Error> r,u32 status){switch(r){case .ok(_):{assert(false);}case .err(e):{assert(e.status==status);}};}
 fn diagnostics::Error absent(){return diagnostics::absent(errors::make(0,0));}
-fn engine::Event event(Result<engine::Event,engine::Error> r){return switch(r){case .ok(e):{e}case .err(_):{assert(false);engine::Event{.kind=0,.value=0,.diagnostic=absent()}}};}
+fn engine::Event event(Result<engine::Event,engine::Error> r){return switch(r){case .ok(e):{e}case .err(_):{assert(false);engine::Event{.kind=0,.value=0,.diagnostic=absent(),.remaining=0,.fuel_known=false}}};}
 fn void counts(ref mut engine::Engine e,usize programs,usize instances,usize pins){switch(engine::inspect(e)){
     case .ok(s):{assert(s.programs==programs && s.instances==instances && s.pins==pins && !s.closed);}case .err(_):{assert(false);}
 };}
@@ -98,6 +99,8 @@ fn i32 main(){
         assert(event(engine::execute_once(ref mut e,ci)).value==43);
         // Leave the last live Instance and unreleased Program to owning cleanup.
     }
+    unsafe{bc_runtime_engine_test_closed_allocations()};
+    input_tests::run();
     unsafe{bc_runtime_engine_test_closed_allocations()};
     return 0;
 }

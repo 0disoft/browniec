@@ -18,7 +18,9 @@ need, sha, write, record = probe.need, probe.sha, probe.write, probe.record
 
 def closure():
     files = {p.stem: p for p in (ROOT / 'src').glob('*.fy')}
-    files.update(runtime_engine=NATIVE / 'runtime_engine.fy', main=ROOT / 'tools/runtime-engine/main.fy')
+    files.update({p.stem: p for p in (ROOT / 'tools/runtime-engine').glob('*.fy')})
+    files['runtime_engine'] = NATIVE / 'runtime_engine.fy'
+    files['runtime_input_adoption'] = ROOT / 'native/runtime-input-adoption/adoption.fy'
     seen, todo = {}, ['main']
     while todo:
         name = todo.pop()
@@ -81,7 +83,9 @@ def main():
                   'tools/verify-runtime-store-probe.py', 'tools/runtime-engine/test-host.inc',
                   'native/runtime-engine/bridge.inc', 'native/runtime-engine/transport.json',
                   'native/abi_thread_identity.c', 'native/abi_thread_identity.h',
-                  'probes/runtime-store/heap-observer.c']
+                  'native/runtime_input_reader.c', 'native/runtime_input_reader.h',
+                  'native/runtime-input-adoption/bridge.c',
+                  'tools/runtime-engine/heap-observer.c']
         inputs = {p.relative_to(ROOT).as_posix(): p.read_bytes() for p in sources}
         inputs.update({name: (ROOT / name).read_bytes() for name in extras})
         need(all(b'\r' not in raw for name, raw in inputs.items()
@@ -90,7 +94,8 @@ def main():
         project = output / 'project'
         write(project / 'fairy.toml', inputs['fairy.toml'])
         for path in sources:
-            write(project / 'src' / path.name, path.read_bytes())
+            name = 'runtime_input_adoption.fy' if path == ROOT / 'native/runtime-input-adoption/adoption.fy' else path.name
+            write(project / 'src' / name, path.read_bytes())
         run([compiler, 'check'], cwd=project)
         lock = (project / 'fairy.lock').read_bytes()
         run([compiler, 'check', '--locked'], cwd=project)
@@ -99,17 +104,22 @@ def main():
         need(sha(generated) == contract['transportSha256'], 'Emitted transport changed; review every private binding')
         write(output / 'generated.c', generated)
         bindings = f'typedef {contract["engineType"]} bc_engine;\ntypedef {contract["incomingType"]} bc_engine_input;\n'
+        bindings += f'typedef {contract["inputEntryType"]} bc_engine_input_entry;\ntypedef {contract["snapshotType"]} bc_engine_snapshot;\n'
+        bindings += f'typedef {contract["snapshotVectorType"]} bc_engine_snapshots;\n'
         bindings += '\n'.join(f'#define B{key} {value}' for key, value in contract['bindings'].items()) + '\n'
         write(output / 'bindings.h', bindings)
         for name in ['abi_thread_identity.c', 'abi_thread_identity.h']:
             write(output / name, inputs['native/' + name])
+        for name in ['native/runtime_input_reader.c', 'native/runtime_input_reader.h',
+                     'native/runtime-input-adoption/bridge.c']:
+            write(output / name, inputs[name])
         write(output / 'bridge.inc', inputs['native/runtime-engine/bridge.inc'])
         write(output / 'test-host.inc', inputs['tools/runtime-engine/test-host.inc'])
         write(output / 'transport.c', '#define main generated_main\n#include "generated.c"\n#undef main\n'
               '#include "abi_thread_identity.h"\n#include "bindings.h"\n'
               '#include "bridge.inc"\n#include "test-host.inc"\n')
         repository = (args.fairyc_repository or ROOT / toolchain['source']['localRepository']).resolve()
-        runtime = [inputs['probes/runtime-store/heap-observer.c'].decode('utf-8')]
+        runtime = [inputs['tools/runtime-engine/heap-observer.c'].decode('utf-8')]
         for row in contract['runtimeInputs']:
             need(row['revision'] == revision, 'Runtime revision mismatch')
             raw = run(['git', 'show', revision + ':' + row['path']], cwd=repository)
@@ -130,20 +140,23 @@ def main():
         cl, env, receipt['msvc'] = probe.native_environment(run)
         empty = output / 'empty-tools'
         empty.mkdir()
-        runtime_env = {k: os.environ[k] for k in ['SystemRoot', 'WINDIR'] if k in os.environ}
+        runtime_env = {k: os.environ[k] for k in ['SystemRoot', 'WINDIR', 'TEMP', 'TMP'] if k in os.environ}
         runtime_env['PATH'] = str(empty)
         for profile in (['development', 'release'] if args.profile == 'all' else [args.profile]):
             folder = output / profile
             folder.mkdir()
             objects = []
-            for name in ['transport', 'runtime', 'abi_thread_identity']:
+            native_sources = {name: output / (name + '.c') for name in ['transport', 'runtime', 'abi_thread_identity']}
+            native_sources.update(input_reader=output / 'native/runtime_input_reader.c',
+                                  input_adoption=output / 'native/runtime-input-adoption/bridge.c')
+            for name, source in native_sources.items():
                 obj = folder / (name + '.obj')
                 run([cl, '/nologo', '/TC', '/std:c11', '/MT', '/W3',
-                     '/Od' if profile == 'development' else '/O2', '/c', output / (name + '.c'),
+                     '/Od' if profile == 'development' else '/O2', '/c', source,
                      '/Fo' + str(obj)], env=env)
                 objects.append(obj)
             exe = folder / 'runtime-engine.exe'
-            run([cl, '/nologo', *objects, '/Fe' + str(exe), '/link', '/INCREMENTAL:NO', '/Brepro'], env=env)
+            run([cl, '/nologo', *objects, 'ntdll.lib', '/Fe' + str(exe), '/link', '/INCREMENTAL:NO', '/Brepro'], env=env)
             need(run([exe], env=runtime_env) == b'' and
                  receipt['commands'][-1]['stderrSha256'] == sha(b''), 'Expected silent native success')
             receipt['profiles'].append(dict(profile=profile, artifact=probe.image(exe), exit=0,
@@ -158,7 +171,8 @@ def main():
                        runtimeEnvironment='cleared; empty tool PATH', limitations=[
                            'Private synchronous typed transport, not public C handles or CLI lifecycle APIs',
                            'Complete Engine accounting/preallocation, OOM injection and poison containment remain',
-                           'No bounded step quanta, in-flight cancellation, host/input/output dispatch or OS deadline'])
+                           'Ordinary zero-argument terminal Fuel is still marked unknown',
+                           'No bounded step quanta, in-flight cancellation, host/output dispatch or OS deadline'])
     except Exception as error:
         receipt.update(status='failed', error=str(error))
         raise

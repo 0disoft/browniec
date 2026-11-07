@@ -1,5 +1,6 @@
 #include <windows.h>
 #include <assert.h>
+#include <stdio.h>
 extern size_t probe_live(void);
 void bc_runtime_engine_binding(uint32_t number){(void)number;}
 typedef struct held_guard {HANDLE ready;HANDLE release;} held_guard;
@@ -10,7 +11,7 @@ static DWORD WINAPI holding_thread(void *raw){
 }
 static void completion_contention(bc_engine *e){
  bc_engine_ticket ticket;assert(admission(e,&ticket)==0);
- assert(B5(&e->f_0,&e->f_1,&e->f_2,&e->f_3,8,0,0)==0);
+ assert(B5(&e->f_0,&e->f_1,&e->f_2,&e->f_3,&e->f_4,&e->f_5,8,0,0)==0);
  held_guard events={CreateEventW(NULL,TRUE,FALSE,NULL),CreateEventW(NULL,TRUE,FALSE,NULL)};
  assert(events.ready&&events.release);HANDLE worker=CreateThread(NULL,0,holding_thread,&events,0,NULL);assert(worker);
  assert(WaitForSingleObject(events.ready,10000)==WAIT_OBJECT_0);
@@ -23,7 +24,10 @@ static void completion_contention(bc_engine *e){
 }
 static DWORD WINAPI wrong_thread(void *raw){
  assert(bc_runtime_engine_call(raw,8,0,0)==10);
- assert(bc_runtime_engine_compile(raw,(void *)(uintptr_t)1,0)==10);return 0;
+ assert(bc_runtime_engine_compile(raw,(void *)(uintptr_t)1,0)==10);
+ assert(bc_runtime_engine_compile_input(raw,(void *)(uintptr_t)1,0)==10);
+ assert(bc_runtime_engine_instance_input(raw,0,(void *)(uintptr_t)1,0)==10);
+ assert(bc_runtime_engine_execute_input(raw,0,(const void *)(uintptr_t)1)==10);return 0;
 }
 void bc_runtime_engine_test_guards(void *raw){
  bc_engine *e=raw;HANDLE worker=CreateThread(NULL,0,wrong_thread,raw,0,NULL);assert(worker);
@@ -31,6 +35,9 @@ void bc_runtime_engine_test_guards(void *raw){
  bc_engine_ticket ticket;assert(admission(e,&ticket)==0&&ticket.epoch!=0);
  assert(bc_runtime_engine_call(raw,8,0,0)==3);
  assert(bc_runtime_engine_compile(raw,(void *)(uintptr_t)1,0)==3);
+ assert(bc_runtime_engine_compile_input(raw,(void *)(uintptr_t)1,0)==3);
+ assert(bc_runtime_engine_instance_input(raw,0,(void *)(uintptr_t)1,0)==3);
+ assert(bc_runtime_engine_execute_input(raw,0,(const void *)(uintptr_t)1)==3);
  bc_engine_ticket stale=ticket;stale.epoch+=1;assert(finish(e,stale,0)==7);
  assert(e->f_0.f_3==ticket.epoch);assert(finish(e,ticket,0)==0);completion_contention(e);
 }
@@ -41,4 +48,42 @@ void bc_runtime_engine_test_seed(void *raw,uint32_t kind){
  assert(bc_abi_guard_leave(id)==0);
 }
 void bc_runtime_engine_test_closed_allocations(void){assert(probe_live()==0);}
+static HANDLE input_original=NULL,input_writer=NULL,input_thread=NULL;
+static uintptr_t input_length=0;static DWORD input_handle_baseline=0;
+static uint32_t input_kind=0;
+static int input_handles_measured=0;
+static unsigned char input_chunk[8192];
+static DWORD WINAPI input_producer(void *unused){
+ uintptr_t at=0;(void)unused;
+ while(at<input_length){DWORD n=(DWORD)(input_length-at),got=0;if(n>sizeof(input_chunk))n=sizeof(input_chunk);
+  assert(WriteFile(input_writer,input_chunk,n,&got,NULL)&&got==n);at+=got;}
+ assert(CloseHandle(input_writer));return 0;
+}
+uintptr_t bc_runtime_engine_test_input_open(uint32_t kind,uintptr_t length){
+ assert(!input_original&&!input_thread&&length<=1048576);
+ assert(GetProcessHandleCount(GetCurrentProcess(),&input_handle_baseline));input_length=length;input_kind=kind;
+ for(size_t i=0;i<sizeof(input_chunk);++i)input_chunk[i]=(unsigned char)(i%256);
+ if(kind==0){
+  wchar_t temp[MAX_PATH],path[MAX_PATH];assert(GetTempPathW(MAX_PATH,temp));assert(GetTempFileNameW(temp,L"bci",0,path));
+  input_original=CreateFileW(path,GENERIC_READ|GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_DELETE,NULL,TRUNCATE_EXISTING,FILE_FLAG_DELETE_ON_CLOSE,NULL);
+  assert(input_original!=INVALID_HANDLE_VALUE);uintptr_t at=0;
+  while(at<length){DWORD n=(DWORD)(length-at),got=0;if(n>sizeof(input_chunk))n=sizeof(input_chunk);
+   assert(WriteFile(input_original,input_chunk,n,&got,NULL)&&got==n);at+=got;}
+  LARGE_INTEGER zero;zero.QuadPart=0;assert(SetFilePointerEx(input_original,zero,NULL,FILE_BEGIN));
+ }else{
+  assert(kind==1&&CreatePipe(&input_original,&input_writer,NULL,0));input_thread=CreateThread(NULL,0,input_producer,NULL,0,NULL);assert(input_thread);
+ }
+ return (uintptr_t)input_original;
+}
+void bc_runtime_engine_test_input_close(void){
+ DWORD flags,count;assert(input_original&&GetHandleInformation(input_original,&flags));
+ assert(CloseHandle(input_original));input_original=NULL;
+ if(input_thread){assert(WaitForSingleObject(input_thread,10000)==WAIT_OBJECT_0);assert(CloseHandle(input_thread));input_thread=NULL;input_writer=NULL;}
+ assert(GetProcessHandleCount(GetCurrentProcess(),&count));
+ if(input_handles_measured){
+  if(count!=input_handle_baseline)fprintf(stderr,"input fixture kind=%u length=%llu handles=%lu -> %lu\n",input_kind,(unsigned long long)input_length,input_handle_baseline,count);
+  assert(count==input_handle_baseline);
+ }
+}
+void bc_runtime_engine_test_input_measure(void){input_handles_measured=1;}
 int main(void){int code=generated_main();if(code!=0||probe_live()!=0)return 99;return 0;}
