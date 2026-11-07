@@ -3,6 +3,7 @@ import ir as ir;
 import errors as errors;
 import static_image as images;
 import aggregate_place_ir as aggregates;
+import output_ir as output_ir;
 
 // Recipe proof only. Whole scalar/owner/loan admission and VM integration remain
 // mandatory; this module cannot grant executable Program/image authority.
@@ -138,14 +139,18 @@ fn Result<usize,errors::Error> arguments(ref Program unit,ref Proof proof,usize 
 fn Result<usize,errors::Error> merge(ref mut bool[] seen,ref mut usize[] states,usize target,usize bits,usize pc){
     if(seen[target] && states[target]!=bits){return .err(invalid(pc));}seen[target]=true;states[target]=bits;return .ok(target);
 }
-fn Result<usize,errors::Error> flow(ref Program unit,ref mut Proof proof,usize f,ref mut bool[] calls){
+fn Result<usize,errors::Error> flow(ref Program unit,ref mut Proof proof,usize f,ref mut bool[] calls,bool output){
     let ref ir::Program p=ref unit.body;var bool[256] seen=[false;256];var usize[256] states=[0;256];
     seen[p.starts[f]]=true;let usize one=1;var usize pc=p.starts[f];var usize after=p.starts[f];
     while(after<p.ends[f] && p.code[after*8]==77){after+=1;}
     while(pc<p.ends[f]){
         if(!seen[pc]){return .err(invalid(pc));}var usize bits=states[pc];let usize at=pc*8;let u8 op=p.code[at];
         let usize dst=p.code[at+1] as usize;let usize a=p.code[at+2] as usize;let usize b=p.code[at+3] as usize;
-        if(op==0 || op>87){return .err(invalid(pc));}
+        if(op==0 || (op>87 && !(output && op==116))){return .err(invalid(pc));}
+        if(op==116){
+            if(!output_ir::canonical(p,pc) || (b==1 && (!live(proof,a,f,bits) ||
+                (proof.kinds[a]!=1 && proof.kinds[a]!=3)))){return .err(invalid(pc));}
+        }
         if(op==9 || op==64 || op==66 || op==78){let usize checked=arguments(unit,proof,f,pc,bits,calls)?;if(op==78){proof.calls+=1;}}
         let bool definition=op==69 || op==74 || op==75 || op==76 || op==77 || (op==78 && unit.results[a]!=0);
         if(definition){
@@ -230,21 +235,26 @@ fn Result<usize,errors::Error> origins(ref Program unit,ref mut Proof proof){
         }f+=1;
     }proof.rounds=round;return .ok(round);
 }
-fn Result<Proof,errors::Error> inspect_mode(ref Program unit,ref images::Image image,bool references,bool returns,bool input){
+fn Result<Proof,errors::Error> inspect_mode(ref Program unit,ref images::Image image,bool references,bool returns,bool input,bool output){
     let usize bounded=header(unit,references,returns,input)?;
     switch(images::inspect(image)){case .ok(_):{}case .err(_):{return .err(invalid(0));}};
     var Proof proof=empty();let usize defined=definitions(unit,image,ref mut proof)?;
-    var bool[32] calls=[false;32];var usize f=0;while(f<unit.body.function_count){let usize checked=flow(unit,ref mut proof,f,ref mut calls)?;f+=1;}
+    var bool[32] calls=[false;32];var usize f=0;while(f<unit.body.function_count){let usize checked=flow(unit,ref mut proof,f,ref mut calls,output)?;f+=1;}
     var usize i=0;while(i<unit.body.call_count){if(!calls[i]){return .err(invalid(0));}i+=1;}
     let usize grounded=origins(unit,ref mut proof)?;return .ok(proof);
 }
-pub fn Result<Proof,errors::Error> inspect(ref Program unit,ref images::Image image){return inspect_mode(unit,image,false,false,false);}
+pub fn Result<Proof,errors::Error> inspect(ref Program unit,ref images::Image image){return inspect_mode(unit,image,false,false,false,false);}
 // Kind 3 is a shared byte formal accepting image sites or runtime loan actuals.
 // It is not a result kind. This is recipe analysis, never VM admission.
-pub fn Result<Proof,errors::Error> inspect_references(ref Program unit,ref images::Image image){return inspect_mode(unit,image,true,false,false);}
+pub fn Result<Proof,errors::Error> inspect_references(ref Program unit,ref images::Image image){return inspect_mode(unit,image,true,false,false,false);}
 // Returned shared byte recipes: reconstruct exact logical origins including
 // ordinary rootless inputs. This is not canonical lifetime proof or admission.
-pub fn Result<Proof,errors::Error> inspect_reference_returns(ref Program unit,ref images::Image image){return inspect_mode(unit,image,true,true,false);}
+pub fn Result<Proof,errors::Error> inspect_reference_returns(ref Program unit,ref images::Image image){return inspect_mode(unit,image,true,true,false,false);}
 
 // Separate external input ABI; existing zero-argument admission stays closed.
-pub fn Result<Proof,errors::Error> inspect_input_returns(ref Program unit,ref images::Image image){return inspect_mode(unit,image,true,true,true);}
+pub fn Result<Proof,errors::Error> inspect_input_returns(ref Program unit,ref images::Image image){return inspect_mode(unit,image,true,true,true,false);}
+
+// Recipe stage only; verifier::inspect_output_returns adds the full proof.
+pub fn Result<Proof,errors::Error> inspect_output_returns(ref Program unit,ref images::Image image,bool input){
+    return inspect_mode(unit,image,true,true,input,true);
+}

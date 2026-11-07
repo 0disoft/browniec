@@ -27,6 +27,7 @@ import copy_ir as copying;
 import value_ir as value_ir;
 import value_flow as value_flow;
 import value_view_flow as value_view_flow;
+import output_ir as output_ir;
 
 fn bool readable(ref ir::Program p, ref registers::Set defined, usize r, usize start, usize end) {
     return r >= start && r < end && p.types[r]!=0 && !p.slots[r] && p.array_parameters[r] == 0 && p.record_parameters[r] == 0 && p.slice_parameters[r] == 0 && registers::contains(defined, r);
@@ -77,6 +78,12 @@ fn Result<usize, errors::Error> function(ref ir::Program p, usize f, ref records
         let usize dst = p.code[at + 1] as usize;
         let usize a = p.code[at + 2] as usize;
         let usize b = p.code[at + 3] as usize;
+        if(op==116){
+            let usize checked=output_ir::inspect(p,static_sites,pc,f,live,static_live)?;
+            if(pc+1>=p.ends[f] || !merge(ref mut states,ref mut seen,ref defined,pc+1,
+                ref mut array_states,live,ref mut static_states,static_live)){return .err(errors::make(5,pc));}
+            pc+=1;continue;
+        }
         if(op==78){
             if(!static_sites.call_profile){return .err(errors::make(5,pc));}
             if(a>=p.function_count || a==p.entry || b>=p.call_count || used_calls[b] ||
@@ -487,6 +494,19 @@ pub fn Result<ReferenceReturnProof,errors::Error> inspect_input_returns(ref imag
     let statics::Sites sites=image_sites::prepare(unit,ref recipes,image)?;
     let ref ir::Program p=ref unit.body;let value_ir::Sites no_values=value_ir::empty();
     let reborrows::Sites loans=validate_values_mode(p,true,4,ref sites,ref no_values,true)?;
+    let usize executable=executable_calls(p,ref loans)?;
+    let usize[16] roots=reference_lifetimes::prepare(p,ref sites)?;
+    let usize checked=reference_lifetimes::inspect(p,ref sites,ref roots)?;
+    return .ok(ReferenceReturnProof{.recipes=recipes,.statics=sites,.loans=loans,.owner_roots=roots});
+}
+
+// Explicit private output authority, exactly zero arguments or one shared-byte
+// input ABI. No opcode rewriting: canonical validation sees every EMIT directly.
+pub fn Result<ReferenceReturnProof,errors::Error> inspect_output_returns(ref image_calls::Program unit,ref images::Image image,bool input){
+    let image_calls::Proof recipes=image_calls::inspect_output_returns(unit,image,input)?;
+    var statics::Sites sites=image_sites::prepare(unit,ref recipes,image)?;sites.output=true;
+    let ref ir::Program p=ref unit.body;let value_ir::Sites no_values=value_ir::empty();
+    let reborrows::Sites loans=validate_values_mode(p,true,4,ref sites,ref no_values,input)?;
     let usize executable=executable_calls(p,ref loans)?;
     let usize[16] roots=reference_lifetimes::prepare(p,ref sites)?;
     let usize checked=reference_lifetimes::inspect(p,ref sites,ref roots)?;

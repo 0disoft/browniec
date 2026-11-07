@@ -38,6 +38,8 @@ import std::bytes as bytes;
 import input_reference_views as input_views;
 import cells as cells;
 import static_views as input_spans;
+import runtime_output as output;
+import output_execution as output_steps;
 
 pub struct Scalar { i64 value; usize remaining; slices::Ticket[8] resumed; }
 // Internal tagged completion; inactive fields never escape either native API.
@@ -186,6 +188,22 @@ pub fn Result<Scalar,errors::Error> execute_input_scalar_metered(ref image_calls
         case .ok(v):{if(v.view){.err(errors::make(5,0))}else{.ok(v.scalar)}}case .err(e):{.err(e)}
     };
 }
+// A separately admitted output dialect; no ordinary/input entry point accepts
+// EMIT116. The exact transaction and single VM Fuel meter stay borrowed through
+// all nested calls and are never exposed to the guest.
+pub fn Result<Scalar,errors::Error> execute_output_scalar_metered(ref image_calls::Program unit,ref images::Image image,
+    ref u8[] guest,bool input,ref mut runtime::State state,ref mut u8[] data,ref mut usize remaining,
+    ref mut output::Transaction staged){
+    let image_verifier::ReferenceReturnProof proof=image_verifier::inspect_output_returns(unit,image,input)?;
+    if(guest.len>1048576 || (!input && guest.len!=0)){return .err(errors::make(4,0));}
+    let usize arity=if(input){1}else{0};
+    let u8[16] none=[0;16];let runtime::Capture[1] captures=[runtime::capture(frames::none(),false,false)];
+    let i64[1] values=[0];let owners::Token[1] inputs=[owners::Token{.slot=0,.generation=0}];
+    return switch(invoke_output_metered(ref unit.body,ref none,ref none,unit.body.entry,ref captures[..arity],ref values[..arity],ref inputs[..0],
+        state,data,remaining,false,ref proof.statics,images::payload(image),input,guest,ref proof.recipes.site_origins,staged)){
+        case .ok(v):{if(v.view){.err(errors::make(5,0))}else{.ok(v.scalar)}}case .err(e):{.err(e)}
+    };
+}
 fn Result<Outcome,errors::Error> invoke(ref ir::Program unit,usize function,
     ref runtime::Capture[] captures,ref i64[] values,ref owners::Token[] inputs,
     ref mut runtime::State state,ref mut u8[] data,usize fuel,bool view){
@@ -213,6 +231,14 @@ fn Result<Outcome,errors::Error> invoke_input_metered(ref body_ir::Program body,
     ref runtime::Capture[] captures,ref i64[] values,ref owners::Token[] inputs,
     ref mut runtime::State state,ref mut u8[] data,ref mut usize remaining,bool view,
     ref statics::Sites sites,ref u8[] literals,bool input,ref u8[] guest,ref u8[] origins){
+    var output::Transaction disabled=output::disabled();
+    return invoke_output_metered(body,elements,parameters,function,captures,values,inputs,state,data,remaining,view,
+        sites,literals,input,guest,origins,ref mut disabled);
+}
+fn Result<Outcome,errors::Error> invoke_output_metered(ref body_ir::Program body,ref u8[] elements,ref u8[] parameters,usize function,
+    ref runtime::Capture[] captures,ref i64[] values,ref owners::Token[] inputs,
+    ref mut runtime::State state,ref mut u8[] data,ref mut usize remaining,bool view,
+    ref statics::Sites sites,ref u8[] literals,bool input,ref u8[] guest,ref u8[] origins,ref mut output::Transaction staged){
     let usize admitted=admit(body,elements,sites,function,values,captures.len,inputs,view,input)?;
     let usize depth=switch(authority::inspect(ref state.runtime.authority)){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,0));}};
     if(!available(ref state.runtime.authority,true)){return .err(errors::make(5,0));}
@@ -230,7 +256,7 @@ fn Result<Outcome,errors::Error> invoke_input_metered(ref body_ir::Program body,
     *remaining-=place_plan.cost;
     let runtime::Entered first=entry::enter(body,function,binding(body,parameters,function),captures,inputs,state,data,*remaining)?;
     *remaining=first.call.remaining;
-    let Result<Outcome,errors::Error> outcome=start(body,parameters,function,ref first,values,state,data,sites,literals,ref mut list_cells,ref mut list_scratch,ref mut place_state,ref mut windows,guest,origins,remaining);
+    let Result<Outcome,errors::Error> outcome=start(body,parameters,function,ref first,values,state,data,sites,literals,ref mut list_cells,ref mut list_scratch,ref mut place_state,ref mut windows,guest,origins,remaining,staged);
     return switch(outcome){
         case .ok(v):{.ok(v)}
         case .err(e):{
@@ -247,15 +273,15 @@ fn Result<Outcome,errors::Error> invoke_input_metered(ref body_ir::Program body,
 fn Result<Outcome,errors::Error> start(ref body_ir::Program body,ref u8[] parameters,usize function,ref runtime::Entered first,
     ref i64[] values,ref mut runtime::State state,ref mut u8[] data,ref statics::Sites sites,ref u8[] literals,
     ref mut vec::Vec<i64> list_cells,ref mut bytes::Buffer list_scratch,ref mut vec::Vec<usize> place_state,
-    ref mut input_views::State windows,ref u8[] guest,ref u8[] origins,ref mut usize remaining){
+    ref mut input_views::State windows,ref u8[] guest,ref u8[] origins,ref mut usize remaining,ref mut output::Transaction staged){
     var frames::Frames bindings=frames::empty(state);
-    return run(body,parameters,function,first,values,ref mut bindings,state,data,sites,literals,list_cells,list_scratch,place_state,windows,guest,origins,remaining);
+    return run(body,parameters,function,first,values,ref mut bindings,state,data,sites,literals,list_cells,list_scratch,place_state,windows,guest,origins,remaining,staged);
 }
 fn input_spans::Span span_for_input(usize length){return input_spans::Span{.start=0,.length=length};}
 fn Result<Outcome,errors::Error> run(ref body_ir::Program body,ref u8[] parameters,usize function,ref runtime::Entered first,
     ref i64[] values,ref mut frames::Frames bindings,ref mut runtime::State state,ref mut u8[] data,ref statics::Sites sites,ref u8[] literals,
     ref mut vec::Vec<i64> list_cells,ref mut bytes::Buffer list_scratch,ref mut vec::Vec<usize> place_state,
-    ref mut input_views::State windows,ref u8[] guest,ref u8[] origins,ref mut usize remaining){
+    ref mut input_views::State windows,ref u8[] guest,ref u8[] origins,ref mut usize remaining,ref mut output::Transaction staged){
     var usize[32] static_live=[0;32];var u32[512] static_words=[0;512];
     var i64[4096] registers=[0;4096];
     let usize entered=frames::push(body,bindings,first.call,function,128,32,0)?;
@@ -276,6 +302,11 @@ fn Result<Outcome,errors::Error> run(ref body_ir::Program body,ref u8[] paramete
         let usize dst=body.code[at+1] as usize;let usize a=body.code[at+2] as usize;let usize b=body.code[at+3] as usize;
         let usize base=frame*128;
         if(*remaining==0){return .err(errors::make(8,offset));};*remaining-=1;
+        if(op==116){
+            let usize emitted=output_steps::emit(body,sites,pc,f,bindings,state,
+                ref static_words[frame*16..frame*16+16],static_live[frame],windows,guest,literals,data,staged,remaining)?;
+            pc+=1;continue;
+        }
         if(op>=83 && op<=87){
             let usize price=places::price(body,pc,f,frame,place_state)?;
             if(*remaining<price){return .err(errors::make(8,offset));}

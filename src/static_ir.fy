@@ -14,9 +14,9 @@ import errors as errors;
 // Bytes5..7 are zero. Dynamic definitions retain their maximum image window.
 // Definitions are reconstructed from actual code/image, never caller metadata.
 // This copyable proof does not own/pin storage or authenticate a Program handle.
-pub struct Sites { usize[16] definitions; usize[16] functions; usize[16] starts; u8[16] kinds; images::Span[16] spans; usize count; usize dynamic; u8[128] parameters; u8[128] formal_sites; u8[16] results; u8[16] origins; usize[16] roots; usize generic; bool call_profile; }
+pub struct Sites { usize[16] definitions; usize[16] functions; usize[16] starts; u8[16] kinds; images::Span[16] spans; usize count; usize dynamic; u8[128] parameters; u8[128] formal_sites; u8[16] results; u8[16] origins; usize[16] roots; usize generic; bool call_profile; bool output; }
 pub fn Sites empty(){return Sites{.definitions=[256;16],.functions=[16;16],.starts=[0;16],.kinds=[0;16],
-    .spans=[images::Span{.literal=16,.start=0,.end=0};16],.count=0,.dynamic=0,.parameters=[0;128],.formal_sites=[0;128],.results=[0;16],.origins=[0;16],.roots=[0;16],.generic=0,.call_profile=false};}
+    .spans=[images::Span{.literal=16,.start=0,.end=0};16],.count=0,.dynamic=0,.parameters=[0;128],.formal_sites=[0;128],.results=[0;16],.origins=[0;16],.roots=[0;16],.generic=0,.call_profile=false,.output=false};}
 fn errors::Error invalid(usize pc){return errors::make(5,pc);}
 pub fn bool operation(u8 op){return op>=69 && op<=77;}
 

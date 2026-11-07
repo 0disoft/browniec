@@ -82,6 +82,10 @@ pub fn Result<lexer::State,errors::Error> state(ref u8[] source,ref Table t,usiz
     var lexer::State s=lexer::scoped(source,start,t.ends[caller] as usize,alias(source,t,caller,b"text")!=16)?;
     s.cursor=offset;return .ok(s);
 }
+// A real import alias takes precedence over a private builtin spelling.
+pub fn bool imported(ref u8[] source,ref Table t,usize at,ref u8[] spelling){
+    return valid(source,t) && at<source.len && alias(source,t,owner(t,at),spelling)!=16;
+}
 pub fn usize lookup(ref u8[] source,ref Table t,usize a,usize b,bool record){
     let usize absent=if(record){32}else{16};
     if(!valid(source,t) || a>=b || b>source.len){return absent;}

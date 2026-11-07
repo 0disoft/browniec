@@ -6,6 +6,17 @@ does not implement an Instance, guest input/emit instruction, VM success, entry
 binding, public CLI/ABI, file/stdin reader or binary/JSON/text sink. Public gates,
 Fuel prices/defaults/caps and existing source files are unchanged.
 
+## Current successors
+
+The paragraphs below describe the original unmetered component and its historical
+receipts. [Metered guest execution](module-output-execution.md) now separately
+admits and verifies `output::emit`, reserves capacity once, shares actual VM Fuel,
+copies only each new suffix and seals only after successful completion. Its
+[Engine binding](runtime-engine-outputs.md) retains or transfers the resulting
+owner without exposing a failed prefix. The [input successor](runtime-engine-inputs.md)
+binds OS-adopted Snapshots to actual Instances. Public controls, sinks, full
+accounting and asynchronous runtime controls remain open.
+
 ## Input
 
 `runtime_input::snapshot(data, limit, charge, ref mut fuel)` validates the entire
@@ -70,7 +81,8 @@ source is zeroed, matching SDK empty Buffer cleanup. Three nonallocating SDK
 the earlier exchange slice demonstrated optimized heap corruption without them.
 No new runtime shim, raw caller pointer, callback or ambient I/O is introduced.
 
-The verifier emits actual C types and compiles/executes size/offset assertions.
+The original verifier emitted actual C types and executed size/offset assertions
+before the reserved-mode flag was added. These are historical layout measurements.
 Pinned Windows x64 Buffer has size 32 and data/capacity/alignment/length at
 0/8/16/24. Snapshot size is 40, Transaction 88, Published 72. Transaction backing,
 header, header pointer, limit and allowlist occupy offsets 0/32/64/72/80.
