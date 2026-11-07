@@ -132,8 +132,9 @@ images were not repeated. No wall-clock throughput/latency benchmark is claimed.
 
 ## Remaining accepted work
 
-This slice covers scalar array copy/assignment, not bounded list/record transfers,
-CALL/RET, seal/cleanup or atomic setup. Deadlines, in-flight cancellation/poison
+The [element-list successor](runtime-array-list-chunks.md) now gathers, encodes
+and commits scalar lists through this shared allowance. Bounded record transfers,
+CALL/RET, seal/cleanup and atomic setup remain open. Deadlines, in-flight cancellation/poison
 containment and full public lifecycle/ABI/CLI remain in the
 [inventory](../product/04-remaining-work.md). R03-R05 remain incomplete.
 The shared byte allowance does not bound all metadata work, native time or latency.

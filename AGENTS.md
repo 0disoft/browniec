@@ -1,21 +1,22 @@
-- Latest array-copy checkpoint (2026-11-08): [Resumable scalar array copy/assignment](docs/engineering/runtime-array-copy-chunks.md)
-  records implementation `1601b78` and fixture `c58ebf2`. COPY34, ASSIGN38 and
-  actual source whole-array STORE85 (kind 3) now share the same 4096-byte allowance
-  with initialization/fill and output, including padding and bool validation reads.
-  Selected stores retain their original SELECT snapshot/ticket and price. COPY
-  publishes its owner/arena prefix only after the final byte; ASSIGN keeps its
-  token/generation. Each aligned 32768-byte i64 copy/assignment uses eight batches.
-  Bool scans defer without Fuel debit until the complete scan fits.
-  Full Fuel is prepaid once; zero-Fuel continuation and one-less no-write rejection
-  preserve output/value/Fuel. Five kernel/six Engine groups pass development/O2
-  plus regressions, with zero resume allocation attempts/SDK heap at exit and
-  default stacks. Shared array work is 176 bytes (+32); Machine is 696 (+32),
-  Core remains 120880 and Vec8 adds 1408 bytes (+256 versus the fill checkpoint).
-  All 252 receipt inputs match checkout/committed Git; 33 bindings/30 layouts
-  reviewed. Root locked check: 262 sources/2961 MIR; 254 production LF modules.
-  Lists/records, other setup/compile proof/CALL/RET/seal/cleanup recipes, deadlines/
+- Latest array-list checkpoint (2026-11-08): [Resumable scalar element lists](docs/engineering/runtime-array-list-chunks.md)
+  records implementation `b0f0946`. CREATE80, REPLACE81 and actual source selected
+  REPLACE87 (kind 3/mode 1) now gather cells, encode and commit through the same
+  4096-byte allowance shared by array fill/copy and output. Gathering counts eight
+  bytes per i64 cell; encoding counts stride bytes; commit counts padding/payload.
+  Complete encoding precedes all destination writes, including padding. New owners
+  publish after the final byte; selected replacement keeps its SELECT snapshot,
+  ticket, target generation and price. Maximum i64 lists take 24 batches (8+8+8),
+  bool lists 10 (8+1+1). Full Fuel is prepaid once; zero-Fuel continuations, exact/
+  one-less limits and cancellation in all three stages pass. Five kernel/five
+  Engine groups plus regressions pass development/O2, with zero resume allocation
+  attempts/SDK heap at exit and default stacks. Two counters add 16 bytes: shared
+  array work 192, Cursor 264, Machine 712; Core remains 120880. Vec8 work adds 1536
+  bytes (+128 versus copy). Existing list cells/encoded scratch are reused.
+  All 256 receipt inputs match checkout/committed Git; 33 bindings/30 layouts
+  reviewed. Root locked check: 264 sources/2967 MIR; 256 production LF modules.
+  Records, other setup/compile proof/CALL/RET/seal/cleanup recipes, deadlines/
   poison and public lifecycle/ABI/CLI remain open; R03-R05 and the full inventory
-  are incomplete. Three disjoint Sol High workers; serial parent integration.
+  are incomplete. Three disjoint Sol High workers; serial integration/commits.
   Local only.
 
 # Brownie C agent guidance

@@ -22,6 +22,9 @@ The [array-copy successor](runtime-array-copy-chunks.md) extends that allowance
 to COPY34, ASSIGN38 and actual selected STORE85, including bool validation reads.
 COPY publishes only on completion; selected assignments keep their snapshot,
 ticket and price while writing the existing target incrementally.
+The [element-list successor](runtime-array-list-chunks.md) gathers register cells,
+encodes and commits 80/81 and selected 87 mode 1 through that same allowance, using
+existing scratch. Destination writes follow complete codec validation.
 
 Pending returns Event kind 4 with current Fuel and keeps its owning state intact.
 At VM success, sealing transfers the staged backing directly into the Published
@@ -78,8 +81,8 @@ layouts, including Output's Execution/completion/publication/Machine fields.
 ## Remaining accepted work
 
 Dispatch visits do not bound all bytes, metadata visits or native time. Output
-copy, scalar array initialization/fill and scalar array copy/assignment share
-one 4096-byte step allowance, including bool scans. Setup/proof, other bulk
+copy, scalar array initialization/fill, copy/assignment and element-list gather/
+encode/commit share one 4096-byte step allowance, including bool scans. Setup/proof, other bulk
 copy/tag/store/transfer, CALL/RET, seal and cleanup remain atomic.
 Chunk those recipes and preserve quantum-independent Fuel/results before
 claiming the accepted work-bounded Engine step contract. Deadlines, in-flight
