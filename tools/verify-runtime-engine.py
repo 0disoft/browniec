@@ -27,6 +27,7 @@ def closure():
     files['live_memory_contracts'] = ROOT / 'tests/m2/runtime_live_memory.fy'
     files['output_memory_contracts'] = ROOT / 'tests/m2/module_output_memory.fy'
     files['execution_memory_contracts'] = ROOT / 'tests/m2/runtime_execution_memory.fy'
+    files['pending_memory_contracts'] = ROOT / 'tests/m2/runtime_pending_memory.fy'
     files['dispatch_cursor_contracts'] = ROOT / 'tests/m2/slice_result_cursor.fy'
     files['dispatch_quantum_contracts'] = ROOT / 'tests/m2/module_dispatch_quantum.fy'
     files['runtime_input_adoption'] = ROOT / 'native/runtime-input-adoption/adoption.fy'
@@ -49,6 +50,7 @@ def source_copy(path):
                 'runtime_live_memory': 'live_memory_contracts',
                 'module_output_memory': 'output_memory_contracts',
                 'runtime_execution_memory': 'execution_memory_contracts',
+                'runtime_pending_memory': 'pending_memory_contracts',
                 'slice_result_cursor': 'dispatch_cursor_contracts',
                 'module_dispatch_quantum': 'dispatch_quantum_contracts'}
     for original, alias in adapters.items():
@@ -144,6 +146,7 @@ def main():
                        ('24', 2, 'outputVectorType'), ('25', 0, 'programType'),
                        ('28',0,'machineType'),('28',1,'coreType'),
                        ('29',0,'machineType'),('29',1,'coreType')]
+        projections.append(('30',0,'outputType'))
         for binding, index, key in projections:
             argument = contract['reviewedDeclarations'][binding].split('(', 1)[1].split(',')[index]
             actual = re.search(r'\bfy_(?:resource|struct)_\d+\b', argument)

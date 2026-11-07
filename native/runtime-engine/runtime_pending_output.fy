@@ -26,6 +26,8 @@ import std::vec as vec;
 @link_name("bc_runtime_pending_maintenance") unsafe extern C fn u32 pending_maintenance_raw(ptr mut void owner,u32 operation,ptr mut void outgoing);
 @link_name("bc_runtime_pending_core_stride") unsafe extern C fn usize pending_core_stride_raw();
 pub fn usize pending_core_stride(){return unsafe{pending_core_stride_raw()};}
+@link_name("bc_runtime_pending_machine_stride") unsafe extern C fn usize pending_machine_stride_raw();
+pub fn usize pending_machine_stride(){return unsafe{pending_machine_stride_raw()};}
 pub fn Result<machines::Machine,diagnostics::Error> prepare_pending_output(ref output_programs::Program p,ref input_bytes::Snapshot input,usize budget,usize limit,bool allowed){
     let bool accepts=output_programs::accepts_input(p);
     let pending_verifier::ReferenceReturnProof proof=switch(pending_verifier::inspect_output_returns(output_programs::code(p),output_programs::literals(p),accepts)){

@@ -51,14 +51,14 @@ def decl(n):return re.search(r'^static [^\n]+\b'+c['bindings'][str(n)]+r'\([^\n]
 c['reviewedDeclarations']={n:decl(n) for n in c['bindings']}
 def arg(n,i):
  a=decl(n).split('(',1)[1].split(',')[i];return re.search(r'\bfy_(?:struct|resource)_\d+\b',a).group()
-for n,i,k in [(4,2,'incomingType'),(9,2,'inputEntryType'),(10,5,'snapshotType'),(11,4,'snapshotVectorType'),(16,2,'outputVectorType'),(21,1,'programVectorType'),(22,0,'instanceType'),(25,0,'programType'),(28,0,'machineType')]:c[k]=arg(n,i)
+for n,i,k in [(4,2,'incomingType'),(9,2,'inputEntryType'),(10,5,'snapshotType'),(11,4,'snapshotVectorType'),(16,2,'outputVectorType'),(21,1,'programVectorType'),(22,0,'instanceType'),(25,0,'programType'),(28,0,'machineType'),(30,0,'outputType')]:c[k]=arg(n,i)
 c['coreType']=arg(28,1)
 c['entryTypes']={'ordinary':arg(19,0),'input':arg(20,0)}
 types={k:c[k] for k in ['engineType','programType','instanceType','boundInputType','outputType','sourceIndexType','sourceIndexVectorType','programVectorType','snapshotType','snapshotVectorType','machineType','coreType']}
 for variant,rows in c['programVariants'].items():types.update({variant+'_'+k:v for k,v in rows.items()})
 types.update({k+'_entry':v for k,v in c['entryTypes'].items()})
 c['reviewedLayouts']={k:re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(v)+';$',t,re.M).group() for k,v in types.items()}
-assert len(c['bindings'])==29 and len(c['reviewedLayouts'])==20
+assert len(c['bindings'])==30 and len(c['reviewedLayouts'])==20
 c['transportSha256']=hashlib.sha256(generated).hexdigest()
 c['sourceInputs']=[dict(path=p.relative_to(root).as_posix(),sha256=hashlib.sha256(p.read_bytes()).hexdigest()) for p in sources]
 raw=json.dumps(c,indent=2)+'\n'

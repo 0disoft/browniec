@@ -13,7 +13,7 @@ import std::bytes as bytes;
 
 // Native fixture only. Reuse heap-observer.c and compile-test-host.inc.
 // Admission-only boundaries keep their original small ceilings. Successful
-// execution separately accounts cached scratch, retained output and take Vec8.
+// execution separately accounts cached scratch, retained output and measured take Vec8 bytes.
 // Replacement remains max(old,new)+transient, not old+new+transient.
 unsafe extern C fn usize probe_live();
 unsafe extern C fn usize probe_live_bytes();
@@ -351,7 +351,7 @@ pub fn void input_and_input_output_own_payload_until_instance_destruction(){
         let engine::Event done=event(engine::execute_once(ref mut e,b));
         assert(done.kind==1 && done.value==42 && done.fuel_known);
         ledger(ref e,2*size+retained_output,peak,false);
-        let usize take_peak=maximum(peak,2*size+retained_output+1088);
+        let usize take_peak=maximum(peak,2*size+retained_output+engine::output_transport_bytes());
         {
             let engine::Output output=switch(engine::take_output(ref mut e,b)){
                 case .ok(v):{v}case .err(_):{assert(false);return;}

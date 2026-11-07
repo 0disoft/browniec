@@ -137,6 +137,7 @@ uint32_t bc_runtime_engine_output_preflight(void *raw,uintptr_t instance){
 }
 
 uintptr_t bc_runtime_pending_core_stride(void){return sizeof(bc_pending_core);}
+uintptr_t bc_runtime_pending_machine_stride(void){return sizeof(bc_pending_machine);}
 uint32_t bc_runtime_pending_advance(void *raw,const void *program,const void *input,uint32_t operation,uintptr_t quantum){
  bc_pending_machine *owner=raw;bc_pending_core *c=owner->f_0.f_0;
  return B26(program,input,&owner->f_7,&c->f_0,&c->f_1,&c->f_2,

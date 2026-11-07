@@ -20,6 +20,8 @@ import engine_execution_memory as engine_execution_tests;
 import dispatch_cursor_contracts as cursor_tests;
 import dispatch_quantum_contracts as quantum_tests;
 import engine_pending_tests as pending_tests;
+import engine_prepared_tests as prepared_tests;
+import pending_memory_contracts as pending_memory_tests;
 unsafe extern C fn void bc_runtime_engine_test_closed_allocations();
 unsafe extern C fn void bc_runtime_engine_test_seed(ptr mut void e,u32 kind);
 unsafe extern C fn void bc_runtime_engine_test_guards(ptr mut void e);
@@ -43,6 +45,14 @@ fn void counts(ref mut engine::Engine e,usize programs,usize instances,usize pin
 fn i32 main(){
     engine::retain_native_bindings();
     pending_tests::run();
+    prepared_tests::run();
+    pending_memory_tests::fixed_oracles_count_cached_scratch_exact_core_and_eight_inline_machines();
+    pending_memory_tests::output_payload_zero_and_limit_boundaries_keep_the_fixed_header();
+    pending_memory_tests::either_zero_native_size_is_invalid_even_with_valid_output();
+    pending_memory_tests::machine_capacity_multiplication_and_combined_overflow_are_checked();
+    pending_memory_tests::each_addition_rejects_overflow_without_wrapping();
+    pending_memory_tests::exact_usize_totals_succeed_and_one_more_byte_fails();
+    pending_memory_tests::trusted_native_sizes_and_scratch_have_no_extra_policy_cap();
     {
         var engine::Engine e=create(2,3);counts(ref mut e,0,0,0);
         unsafe{bc_runtime_engine_test_guards(ref mut e as ptr mut void)};

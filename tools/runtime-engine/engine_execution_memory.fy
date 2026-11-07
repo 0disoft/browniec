@@ -345,7 +345,7 @@ fn void failure_case(bool early){
             assert(!engine::output_completion(ref output).success);
             assert(engine::output_completion(ref output).emits==if(early){0}else{1});
             assert(engine::output_completion(ref output).diagnostic.code.kind==failed.diagnostic.code.kind);
-            ledger(ref e,input,maximum(input+required,input+keep+1088));
+            ledger(ref e,input,maximum(input+required,input+keep+engine::output_transport_bytes()));
         }
         destroy(ref mut e,i);release(ref mut e,p);close(ref mut e);
     }
@@ -401,7 +401,7 @@ pub fn void every_allocator_failure_fits_reservation_and_cleans_up(){
 
 fn Result<engine::Output,u8> detached(bool short){
     let usize input=capacity(64);let usize peer_input=capacity(1048576);let usize limit=64;
-    let usize keep=retained(3,limit);let usize exact=input+keep+peer_input+1088;
+    let usize keep=retained(3,limit);let usize exact=input+keep+peer_input+engine::output_transport_bytes();
     var engine::Engine e=switch(created(exact-1,if(short){exact-1}else{exact},memory::defaults())){
         case .ok(v):{v}case .err(_):{return .err(1);}
     };
@@ -409,7 +409,7 @@ fn Result<engine::Output,u8> detached(bool short){
     let usize i=bound(ref mut e,p,3,64,16000000,limit);
     let engine::Event done=event(engine::execute_once(ref mut e,i));assert(done.kind==1);
     // Add the large peer only after execution: its 320-byte bind transport
-    // fits, but extraction needs exactly another 1088 bytes of aggregate room.
+    // fits, but extraction needs the measured output transport bytes of aggregate room.
     let usize peer=bound(ref mut e,q,1,1048576,123,0);
     let live::Observation l=instance(ref e);let memory::Observation m=programs(ref e);
     let Heap before=heap();unsafe{probe_rebase()};
@@ -424,10 +424,10 @@ fn Result<engine::Output,u8> detached(bool short){
         case .ok(v):{v}case .err(_):{return .err(2);}
     };
     assert(unsafe{probe_attempts()}==1);
-    assert(unsafe{probe_peak_bytes()}==if(short){before.bytes-peer_input+1088}else{before.bytes+1088});
+    assert(unsafe{probe_peak_bytes()}==if(short){before.bytes-peer_input+engine::output_transport_bytes()}else{before.bytes+engine::output_transport_bytes()});
     assert(unsafe{probe_live_bytes()}==if(short){before.bytes-peer_input}else{before.bytes});
     let usize current=if(short){input}else{input+peer_input};
-    ledger(ref e,current,maximum(retry.peak,retry.current+1088));
+    ledger(ref e,current,maximum(retry.peak,retry.current+engine::output_transport_bytes()));
     if(!short){assert(instance(ref e).peak==exact);}
     published(ref output,64);same_event(done,event(engine::observe(ref mut e,i)));
     rejected_take(engine::take_output(ref mut e,i),2);
@@ -439,7 +439,7 @@ fn Result<engine::Output,u8> detached(bool short){
     }
     counts(ref mut e,0,0,0);close(ref mut e);published(ref output,64);return .ok(output);
 }
-// Group 6: exact/one-less outgoing Vec8 preflight runs before allocation. A
+// Group 6: measured outgoing Vec8 exact/one-less preflight runs before allocation. A
 // successful transfer drops only retained output charge; detached bytes survive
 // Instance, Program, Engine destruction and the Engine resource leaving scope.
 pub fn void output_transport_preflight_charge_transfer_and_detached_lifetime(){

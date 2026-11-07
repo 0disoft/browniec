@@ -104,6 +104,14 @@ fn Completion failed(diagnostics::Error e,usize remaining,usize emits){
 fn Execution early(errors::Error e,usize remaining){
     return Execution{.completion=failed(absent(e),remaining,0),.published=vec::empty<output::Published>()};
 }
+pub fn Execution vacant(usize remaining){return early(errors::make(0,0),remaining);}
+// Reserve the sole publication slot before an owning continuation is exposed.
+// It contains no Published owner until a later successful terminal step.
+pub fn Result<Execution,errors::Error> pending_slot(usize remaining){
+    var vec::Vec<output::Published> published=vec::empty<output::Published>();
+    if(!vec::reserve<output::Published>(ref mut published,1).is_ok){return .err(errors::make(15,0));}
+    return .ok(Execution{.completion=failed(absent(errors::make(0,0)),remaining,0),.published=published});
+}
 // No caller can seal this invocation's staged owner. VM success, final seal and
 // its already-reserved owning result slot form one terminal publication barrier.
 pub fn Execution complete(ref Program p,ref input_bytes::Snapshot input,usize budget,usize output_limit,bool allowed){
