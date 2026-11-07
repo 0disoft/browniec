@@ -1,4 +1,19 @@
-- Latest runtime-admission/exchange checkpoint (2026-11-07): [Parallel integration](../engineering/runtime-admission-exchange.md)
+- Latest owning-runtime integration checkpoint (2026-11-07): [Engine, sources and I/O](../engineering/runtime-engine-io-sources.md)
+  integrates private real Program/one-shot Instance ownership `5ccb424`, anchored
+  Windows source acquisition `1a6f5c2` (five OS groups/profile), and owning input /
+  explicit-success output staging `0b7231a` (ten native groups/profile, actual
+  layout/cleanup and four allocator-failure seams). Engine dev/O2 additionally
+  prove contention-safe completion, terminal maintenance after epoch exhaustion,
+  image retention/move/relocation and zero live allocations. All 206 aggregate
+  inputs match checkout/Git raw bytes; all 230 production modules retain LF and
+  the prior 228 are unchanged. Root check: 238 sources/2665 MIR. Public gates,
+  existing VM capacities and Fuel prices/default256/ceiling16000000 are unchanged.
+  R01/I01/I02/C01 remain partial: complete public/VM/input/output/loader binding,
+  full accounting, bounded step, deadlines/poison, host/restricted/embed and the
+  accepted inventory remain open. Local only; no remote delivery. Two disjoint
+  Sol High workers continue collector->Snapshot and input-entry admission.
+
+- Predecessor runtime-admission/exchange checkpoint (2026-11-07): [Parallel integration](../engineering/runtime-admission-exchange.md)
   integrates typed policy/run admission `c774ee0` (21 native groups per Windows
   profile), actual private host exchange `dcbba76` (13 groups/profile, layout and
   identity hosts, four explicit allocator failures), and three final release
@@ -565,10 +580,10 @@ below cover prose obligations beyond this feature list as well.
 | utf8_text_literals_ref_str | Public immutable literal text and explicit text::bytes; Buffer/input text remains missing | D05 |
 | explicit_text_bytes | Public immutable literal text::bytes; runtime Buffer/input text remains open | D05 |
 | bounded_step_work | Private Buffer continuations; no VM step API | R03, R05 |
-| engine_total_quota | Private ledger arithmetic, no Engine coordinator | R01, R02 |
+| engine_total_quota | Private owning Engine and independent object ledgers; complete peak/combined accounting missing | R01, R02 |
 | complete_aggregate_construction | Narrow arrays/records | L03, L05, V01 |
 | explicit_root_lifetimes | Narrow array/record/slice generations | B05, R02, R05 |
-| engine_poison_boundary | Missing persistent Engine state | R01, R04 |
+| engine_poison_boundary | Persistent private Engine exists; poison containment missing | R01, R04 |
 | streaming_utf8_validation | Private Buffer scanner/session | D05, R03 |
 
 ## Language completion
@@ -649,8 +664,8 @@ requirements of this audit. They need a justified profile decision if desired.
 
 | ID | Work and completion condition |
 | --- | --- |
-| I01 | Bind an allowed public i32 entry with zero arguments or `ref u8[]` input. Own a bounded input snapshot; limit file/stdin reads before allocation and preserve the same snapshot through execution. Current SOURCE is code input, not guest input bytes. |
-| I02 | Implement grant-controlled `output::emit`, staged output storage and limits, success-only publication, output ownership and binary/JSON/text sinks. Trap/cancel/deadline/poison must discard unpublished output; sink partial failure must not replay computation. |
+| I01 | The [private input owner](../engineering/runtime-io.md) now copies exact immutable binary input with a 1MiB ceiling, checked ranges and quota/Fuel/OOM rollback. Native development/O2 and explicit allocation failure prove ownership and cleanup. Remaining: bind a public zero-argument or `ref u8[]` i32 entry to the actual Instance/VM, bounded file/stdin reads and same-snapshot execution. Current SOURCE is code input, not guest input bytes. |
+| I02 | The [private output transaction](../engineering/runtime-io.md) now stages bounded exact binary bytes, preflights checked quota/Fuel sums, preserves old bytes on allocation failure, freezes fail/cancel and transfers a single immutable owner only through explicit trusted seal. Remaining: grant-controlled guest `output::emit`, actual VM success/failure/deadline/poison linkage, complete Engine accounting and binary/JSON/text sinks. A native seal is not evidence of guest success; sink partial failure must not replay computation. |
 | H01 | The [typed policy/run admission](../engineering/runtime-policy.md) now validates exact complete schemas, decoded duplicates, checked numeric ranges, resource relations, run narrowing and `requires <= grants <= policy.capabilities`, with 21 native groups per Windows profile. Project/catalog admission also exists. Remaining: actual immutable Program/Engine binding, reachable requirements versus declarations, consistent builtin/import contracts, execution enforcement and public loaders. Metadata does not grant authority or enlarge VM capacities. |
 | H02 | The [typed TLV codec](../engineering/host-wire.md) and [strict catalog/canonical SHA-256](../engineering/host-catalog.md) now compose with [native request/reply exchange](../engineering/host-exchange.md) over the exact owning catalog and explicit grants. Remaining: immutable executable Program catalog/requirement binding and actual VM host dispatch and typed destination adoption. Unknown/duplicate metadata rejects; no ambient filesystem/network/command authority enters the guest. |
 | H03 | The [private native coordinator](../engineering/host-exchange.md) now implements Ready/Waiting/Install/Terminal transactions, one outstanding request, nonwrapping run/request identity checks, owned snapshots, limits, deadline/cancellation polling and first-cause observations, with a native in-memory adapter harness. Remaining: actual VM HOST_REQUEST/WAITING_HOST/reply integration, owner-thread Engine state, resumable checkpoints and OS deadlines. This component does not execute or resume guest code. |
@@ -660,7 +675,7 @@ requirements of this audit. They need a justified profile decision if desired.
 
 | ID | Work and completion condition |
 | --- | --- |
-| C01 | Native [project metadata admission](../cli/project-format.md) now checks bounded strict JSON, complete explicit source maps/entries, decoded duplicates and canonical Windows path/device/ADS/case spellings. [Exact native source/header binding](../engineering/project-sources.md) now checks the whole map and selected entry. The [retained native project Program](../engineering/project-program.md) now keeps the complete declarations with the admitted executable and denies them by default before guest work. Private [typed policy/run metadata parsers](../engineering/runtime-policy.md) now exist with narrowing and capability subset checks. Remaining: anchored filesystem root membership/reparse rejection, public project CLI and run/policy/catalog/grant loaders. No ambient discovery or glob expansion. |
+| C01 | Native [project metadata admission](../cli/project-format.md), [source/header binding](../engineering/project-sources.md) and [retained project Program](../engineering/project-program.md) exist, as do [typed policy/run parsers](../engineering/runtime-policy.md). The [Windows anchored collector](../engineering/anchored-sources.md) now acquires only explicit relative members through pinned handles, rejects root/ancestor/leaf reparses and multi-link leaves, checks actual volume/file identities and copies at most 16 files/4096 bytes before publication. Development/O2 each pass five actual OS groups. Remaining: connect those owned filesystem bytes to Fairy/project/Engine admission and public project/run/policy/catalog/grant loaders. No ambient discovery/globs, point-in-time snapshot or other-OS support is claimed. |
 | C02 | [Public IR inspection](../engineering/inspect-ir.md) now compiles/verifies through the existing public source gates without execution and emits bounded text or JSON diagnostics; 19 CLI cases plus version/help passed in each Windows native profile. Remaining: guest `--input`, project/policy/catalog/grant controls, restricted check/run and broker-only worker surfaces as their underlying implementations become available. Preserve explicit unavailable errors and no unrestricted fallback. |
 | C03 | Native module/project APIs now preserve original source indices, half-open byte spans, checked line/byte-column lookup and explicit no-source values. Connect these to public multi-source CLI diagnostics with bounded UTF-8 messages/counts. Validate child spans and escape terminal-control/line injection; never read arbitrary files for snippets. |
 | C04 | Complete version/result metadata for build/profile/IR/cost/ABI/IPC, delivery availability, metrics and staged output. Keep guest return data separate from process status and distinguish computation, publication, transfer and external-effect outcomes. |

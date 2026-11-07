@@ -1,15 +1,17 @@
-- Latest runtime-admission/exchange checkpoint (2026-11-07): [Parallel integration](docs/engineering/runtime-admission-exchange.md)
-  integrates typed policy/run admission `c774ee0` (21 native groups per Windows
-  profile), actual private host exchange `dcbba76` (13 groups/profile, layout and
-  identity hosts, four explicit allocator failures), and three final release
-  composition groups `8846b0f`, including the unchanged combined 32/33 fixture.
-  The owning Store probe `5453574` passes development/O2 with exact drop order and
-  zero live allocations; it is an R01 prerequisite, not lifecycle completion.
-  All 283 aggregate inputs match checkout/Git raw bytes; 228 production modules
-  retain LF. Root check: 236 sources/2644 MIR. Existing public gates, VM capacities,
-  Fuel prices/default256/ceiling16000000 and all earlier source bytes are unchanged.
-  Full Engine/Program/Instance/VM host binding, R03 work quanta and the accepted
-  remaining inventory stay open. Workers completed; local only, no remote changes.
+- Latest owning-runtime integration checkpoint (2026-11-07): [Engine, sources and I/O](docs/engineering/runtime-engine-io-sources.md)
+  integrates private real Program/one-shot Instance ownership `5ccb424`, anchored
+  Windows source acquisition `1a6f5c2` (five OS groups/profile), and owning input /
+  explicit-success output staging `0b7231a` (ten native groups/profile, actual
+  layout/cleanup and four allocator-failure seams). Engine dev/O2 additionally
+  prove contention-safe completion, terminal maintenance after epoch exhaustion,
+  image retention/move/relocation and zero live allocations. All 206 aggregate
+  inputs match checkout/Git raw bytes; all 230 production modules retain LF and
+  the prior 228 are unchanged. Root check: 238 sources/2665 MIR. Public gates,
+  existing VM capacities and Fuel prices/default256/ceiling16000000 are unchanged.
+  R01/I01/I02/C01 remain partial: complete public/VM/input/output/loader binding,
+  full accounting, bounded step, deadlines/poison, host/restricted/embed and the
+  accepted inventory remain open. Local only; no remote delivery. Two disjoint
+  Sol High workers continue collector->Snapshot and input-entry admission.
 
 # Brownie C agent guidance
 

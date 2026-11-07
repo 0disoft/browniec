@@ -1,4 +1,19 @@
-- Latest runtime-admission/exchange checkpoint (2026-11-07): [Parallel integration](runtime-admission-exchange.md)
+- Latest owning-runtime integration checkpoint (2026-11-07): [Engine, sources and I/O](runtime-engine-io-sources.md)
+  integrates private real Program/one-shot Instance ownership `5ccb424`, anchored
+  Windows source acquisition `1a6f5c2` (five OS groups/profile), and owning input /
+  explicit-success output staging `0b7231a` (ten native groups/profile, actual
+  layout/cleanup and four allocator-failure seams). Engine dev/O2 additionally
+  prove contention-safe completion, terminal maintenance after epoch exhaustion,
+  image retention/move/relocation and zero live allocations. All 206 aggregate
+  inputs match checkout/Git raw bytes; all 230 production modules retain LF and
+  the prior 228 are unchanged. Root check: 238 sources/2665 MIR. Public gates,
+  existing VM capacities and Fuel prices/default256/ceiling16000000 are unchanged.
+  R01/I01/I02/C01 remain partial: complete public/VM/input/output/loader binding,
+  full accounting, bounded step, deadlines/poison, host/restricted/embed and the
+  accepted inventory remain open. Local only; no remote delivery. Two disjoint
+  Sol High workers continue collector->Snapshot and input-entry admission.
+
+- Predecessor runtime-admission/exchange checkpoint (2026-11-07): [Parallel integration](runtime-admission-exchange.md)
   integrates typed policy/run admission `c774ee0` (21 native groups per Windows
   profile), actual private host exchange `dcbba76` (13 groups/profile, layout and
   identity hosts, four explicit allocator failures), and three final release
@@ -505,14 +520,18 @@ and the inventory completion conditions remain open.
 3. **Engine and Instance: R01-R05.** The [call capture-stack fix](native-call-capture-stack.md)
    removes a reproduced retained compiler overflow without changing depth/owner
    limits; it does not close general R02 stack/accounting obligations.
-   Implement lifecycle/reentry/Program retention,
-   complete accounting and preallocation, bounded resumable operations, deadlines,
-   cancellation, poison and stable terminal state. Include cleanup at zero guest
-   Fuel and prove result/Fuel invariance across step sizes. Current fresh-state VM
-   invocation and flat metadata prices do not meet this step/Instance contract.
+   The [private owning Engine](runtime-engine.md) now retains real reusable
+   Programs and one-shot Instances, checks OS owner/reentry/epochs, pins image/code
+   backing, preserves terminal events and releases actual storage. Complete public
+   association and policy/Program binding, all accounting/preallocation, bounded
+   resumable operations, deadlines, in-flight cancellation and poison containment.
+   Preserve cleanup at zero guest Fuel and prove result/Fuel invariance across step
+   sizes; synchronous `execute_once` does not meet the bounded step contract.
 4. **Useful byte/text workload: D01-D05, I01-I02.** Connect native Buffer owners
    and leases to guest move-only values, wrappers and Instance teardown. Expose
-   bounded byte/text operations, actual guest input and staged success-only output.
+   bounded byte/text operations and actual guest input. The [private I/O owners](runtime-io.md)
+   now snapshot input and stage explicitly sealed output with real native OOM
+   rollback; connect them to the entry, Instance and actual success decision.
    Run a complete input -> validation/transform -> output example.
 5. **Authority and host exchange: H01-H04, C01-C02/C04.** Add strict bounded
    project/policy/catalog/run loaders, source identities, ceilings/declarations/
