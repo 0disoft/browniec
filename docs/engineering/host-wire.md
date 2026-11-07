@@ -65,3 +65,8 @@ and real 1MiB payloads backed by native Buffers rather than large stack arrays.
 Catalog admission/canonical SHA-256 binding, registry synchronization, Engine
 lifecycle, HOST_REQUEST/WAITING_HOST/adoption and OS broker validation remain open.
 No opcode, VM limits, existing Fuel price or public CLI admission changes.
+
+Implementation `6560805` passed all ten groups in each Windows native profile.
+The [recorded evidence](../evidence/host-wire-windows-20261107.json) binds the
+commands, reports, compiler and exact checkout/Git inputs; the original vectors
+are included as reference material. No historical test result was reused.

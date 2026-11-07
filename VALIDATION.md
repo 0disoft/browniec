@@ -1,4 +1,13 @@
-- Latest ABI-bootstrap checkpoint (2026-11-07): [Windows DLL query](docs/engineering/abi-bootstrap.md)
+- Latest host-wire checkpoint (2026-11-07): [Typed TLV codecs](docs/engineering/host-wire.md)
+  validate/encode exact request and success/error/fatal payloads with whole-message
+  preflight and header-inclusive 1MiB limits. Implementation `6560805` passed ten
+  native groups per Windows development/release profile (six new, four scalar
+  regressions), with 227 checkout/Git-raw matching inputs and 218 LF modules.
+  Catalog binding/digest, actual host dispatch/adoption, process-wide handles,
+  Engine/Instance/VM ABI and the full inventory remain open. Public host/embed
+  availability, existing limits and Fuel prices/defaults/caps are unchanged.
+
+- Predecessor ABI-bootstrap checkpoint (2026-11-07): [Windows DLL query](docs/engineering/abi-bootstrap.md)
   now exports only `bc_get_abi_info_v2`; Fairy owns admission/metadata and a small
   native shim marshals the exact 32-byte result. `ad86fc9` passed 53 real DLL calls
   in each development/optimized profile, C/C++ layouts, guard pages, singleton

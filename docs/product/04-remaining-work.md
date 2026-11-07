@@ -1,4 +1,13 @@
-- Latest ABI-bootstrap checkpoint (2026-11-07): [Windows DLL query](../engineering/abi-bootstrap.md)
+- Latest host-wire checkpoint (2026-11-07): [Typed TLV codecs](../engineering/host-wire.md)
+  validate/encode exact request and success/error/fatal payloads with whole-message
+  preflight and header-inclusive 1MiB limits. Implementation `6560805` passed ten
+  native groups per Windows development/release profile (six new, four scalar
+  regressions), with 227 checkout/Git-raw matching inputs and 218 LF modules.
+  Catalog binding/digest, actual host dispatch/adoption, process-wide handles,
+  Engine/Instance/VM ABI and the full inventory remain open. Public host/embed
+  availability, existing limits and Fuel prices/defaults/caps are unchanged.
+
+- Predecessor ABI-bootstrap checkpoint (2026-11-07): [Windows DLL query](../engineering/abi-bootstrap.md)
   now exports only `bc_get_abi_info_v2`; Fairy owns admission/metadata and a small
   native shim marshals the exact 32-byte result. `ad86fc9` passed 53 real DLL calls
   in each development/optimized profile, C/C++ layouts, guard pages, singleton
@@ -606,7 +615,7 @@ requirements of this audit. They need a justified profile decision if desired.
 | I01 | Bind an allowed public i32 entry with zero arguments or `ref u8[]` input. Own a bounded input snapshot; limit file/stdin reads before allocation and preserve the same snapshot through execution. Current SOURCE is code input, not guest input bytes. |
 | I02 | Implement grant-controlled `output::emit`, staged output storage and limits, success-only publication, output ownership and binary/JSON/text sinks. Trap/cancel/deadline/poison must discard unpublished output; sink partial failure must not replay computation. |
 | H01 | Implement policy/run/project/catalog admission and the reachable-requirements <= declarations <= grants <= Engine-ceiling chain. Source metadata never grants authority; builtins and host imports need one consistent typed contract. |
-| H02 | Implement bounded typed host catalog binding/digest and exact TLV request/reply codecs, including signed/canonical-bool/wire-layout validation and unknown/duplicate/malformed rejection. No ambient filesystem/network/command authority enters the guest. |
+| H02 | The [typed TLV codec](../engineering/host-wire.md) now validates/encodes exact request and success/error/fatal reply envelopes, with signed/unsigned/canonical-bool checks, exact positional types, 32-argument and header-inclusive 1MiB limits, untouched output on failure and native development/release evidence. Remaining: bounded strict host catalog admission, canonical binding/digest, immutable Program catalog retention and connection to actual host exchange/adoption. Unknown/duplicate catalog fields must reject. No ambient filesystem/network/command authority enters the guest. |
 | H03 | Add HOST_REQUEST/WAITING_HOST/reply/INSTALL_REPLY state transitions, unique request identity, one outstanding exchange, limits/deadlines/cancel, malformed/duplicate/late replies and stable request/terminal observations. Start with an in-memory fake adapter. |
 | H04 | Snapshot/adopt valid reply backing with quota/Fuel preflight, preserving request/Fuel on preparation OOM and preventing retry after commit. Bound host-call count, per-call/cumulative payloads and adapter cost; report unknown external effects without automatic replay. |
 
