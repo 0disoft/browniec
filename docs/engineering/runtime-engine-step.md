@@ -81,9 +81,10 @@ records development/O2 success, default stacks, zero SDK heap at exit and exact
 checkout/Git identities. The transport now reviews 33 typed bindings and 24
 layouts, including Output's Execution/completion/publication/Machine fields.
 
-The [owned CALL-copy kernel](runtime-call-argument-chunks.md) separately passes
-five native groups per development/O2 with zero allocation attempts. It has not
-yet replaced the VM CALL entry transaction; pending Engine layout is unchanged.
+The [owned CALL continuation](runtime-call-entry-chunks.md) now connects the
+copy kernel to actual saved dispatch, Fuel, captures and final frame publication.
+CALL validation/copy shares the same byte allowance; the appended cursor is
+included in native size-based admission. Frame/loan metadata still remains atomic.
 
 ## Remaining accepted work
 
@@ -92,7 +93,7 @@ copy, scalar array initialization/fill, copy/assignment and element-list gather/
 encode/commit plus record staging/commit share one 4096-byte step allowance,
 including bool scans. Catalog planning, nominal walks and owner-table checks,
 setup/proof and other bulk
-copy/tag/store/transfer, CALL/RET, seal and cleanup remain atomic.
+copy/tag/store/transfer, CALL metadata/RET, seal and cleanup remain atomic.
 Chunk those recipes and preserve quantum-independent Fuel/results before
 claiming the accepted work-bounded Engine step contract. Deadlines, in-flight
 cancellation, STOPPING/poison containment, public lifecycle/ABI/CLI integration

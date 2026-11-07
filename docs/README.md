@@ -27,7 +27,7 @@
 | Private terminal void-return operands | [Void bottom](engineering/value-void-bottom.md): no extra return/capture/cleanup; development 5 new + 4 regressions, release 9 groups verified |
 | Private retained-value scalar casts | [Strict widening source bridge](engineering/value-safe-casts.md): existing 7/36 matrix, once-only evaluation and terminal-bottom suffixes; Windows development/release verified in 15 groups each |
 | VM slice dispatch and cleanup | [Shared lifecycle](engineering/m2-array-slice-lifecycle-vm.md) |
-| Bounded owned CALL copy prerequisite | [Independent argument-copy kernel](engineering/runtime-call-argument-chunks.md): five native groups per development/O2; whole-batch publication after bounded validation/copy; VM CALL integration remains open |
+| Bounded owned CALL copy prerequisite | [Independent argument-copy kernel](engineering/runtime-call-argument-chunks.md): five native groups per development/O2; whole-batch publication after bounded validation/copy; [VM CALL continuations](engineering/runtime-call-entry-chunks.md) now connect Fuel/captures/frame publication |
 | Gated VM CALL publication | [Frame transaction](engineering/m2-array-call-frame-vm.md) |
 | Typed ABI handles and OS identity | [Fairy kernel](engineering/abi-handles.md), [Windows guard/TLS](engineering/abi-thread-identity.md), [real lazy coordinator](engineering/abi-registry.md): internal 64-slot owner-module registry verified; production scale and real object lifecycles remain open |
 | Owning runtime storage prerequisite | [Opaque Store probe](engineering/runtime-store-probe.md): actual Vec/Buffer mutation/move/drop and zero retained allocations in Windows development/O2; full Engine lifecycle remains open |

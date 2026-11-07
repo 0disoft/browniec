@@ -5,10 +5,10 @@ regressions pass development/O2, with default stacks and zero SDK heap at exit.
 The [Windows evidence](../evidence/runtime-call-argument-chunks-windows-20261108.json)
 records the receipt, committed input identities and unchanged transport layouts.
 
-This kernel is a prerequisite for bounded CALL execution. The existing VM CALL
-dispatcher still uses the atomic entry transaction until a separate integration
-connects this cursor to capture, Fuel, frame and register publication. This does
-not establish a bounded CALL/RET or public Engine step contract.
+The [VM CALL successor](runtime-call-entry-chunks.md) now connects this kernel to
+saved dispatch, captures, Fuel and frame/register publication. The original
+atomic native entry APIs remain available. CALL metadata/RET and the accepted
+public bounded-step contract remain incomplete.
 
 ## Transaction boundary
 
@@ -39,7 +39,7 @@ their original position. An earlier invalid bool therefore still precedes a late
 slot/quota error, matching `copy_call_arguments`. A bad bool read counts toward
 work and permanently deactivates the cursor; retry cannot skip that byte. The
 array-only `copy_arguments` API has a different reservation-before-bool order;
-its future VM adapter must preserve that order separately.
+`begin_arrays` preserves that order separately for the VM adapter.
 
 Only the final byte of the complete batch permits owner/order/depth/arena and
 result-token publication. Earlier destination bytes remain unreachable spare
@@ -67,14 +67,14 @@ destination write, then 32768 copies: 16 full advances. Alignment bytes are
 additional work where required. Zero arguments begin inactive and yield an empty
 result without payload, table or counter changes.
 
-## Integration still required
+## VM integration and remaining work
 
-The VM adapter must preserve original argument/capture evaluation, diagnostics and
-Fuel across quanta. It must publish loan authority, the completed owner batch,
-formal bindings, static/input words, registers, frame and PC as one coherent CALL
-transition. A pending copy must resume before the zero-Fuel gate without charging
-the CALL twice. Return, frame teardown, capture/result metadata, cleanup and seal
-work remain separate accepted obligations.
+The [VM adapter](runtime-call-entry-chunks.md) reuses deterministic frozen
+metadata and charges owned CALL Fuel after the validation-only phase, exactly
+once before copying. Zero-Fuel copies resume before the ordinary dispatch gate.
+Complete owner, loan, formal, input/static word, register, frame and PC publication
+finishes without an intermediate yield. Return, frame teardown, capture/result
+metadata, cleanup and seal work remain separate accepted obligations.
 
 See the [remaining inventory](../product/04-remaining-work.md) and
 [Engine step contract](runtime-engine-step.md) for the broader incomplete scope.
@@ -88,8 +88,9 @@ priority; both-phase metadata/generation/range/loan/budget/overflow failures; an
 alignment padding, whole-batch publication, cancellation and empty arguments.
 Every begin/advance checks unchanged SDK allocation attempts and live heap.
 
-Both profiles retain the existing Engine layout: shared array work 360 bytes,
-Cursor 432, Machine 880, Core 120880 and Vec8 extra 2880. The new CALL cursor is
-not yet embedded in that layout. All 263 receipt inputs match checkout and Git
-raw bytes. The root locked check passes 268 sources/3006 MIR; all 260 production
-modules retain LF. No wall-clock throughput/latency benchmark is claimed.
+The kernel-only checkpoint retained the old Engine layout. The
+[VM successor](runtime-call-entry-chunks.md) now embeds this cursor and records
+its measured storage/admission costs. Current development/O2 verification adds
+array-only error-priority/parity and validation-only boundary groups (eight
+kernel groups total). Current source/artifact identities are in that successor's
+evidence; the original five-group checkpoint above remains historical evidence.

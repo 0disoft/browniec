@@ -1,19 +1,19 @@
-- Latest CALL-copy kernel checkpoint (2026-11-08): [Owned argument chunks](docs/engineering/runtime-call-argument-chunks.md)
-  implementation `4e9c7c6` passes five native groups per development/O2 plus
-  existing Engine regressions. Eight maximum i64 arguments copy 262144 bytes in
-  64 full advances; eight bool arguments validate then copy in 16 advances.
-  Complete bool validation precedes every destination write; only the final byte
-  publishes the entire owner batch. Repeated sources, canonical record padding,
-  original mixed error order, poisoned Value retries, source extent/generation,
-  loan/reservation/counter/budget faults and cancellation pass without SDK
-  allocation attempts. All 263 receipt inputs match checkout/committed Git;
-  33 bindings/30 layouts are recursively unchanged, default stacks and zero SDK
-  heap at exit. Root locked check: 268 sources/3006 MIR; 260 production LF modules.
-  This is an independent kernel; VM CALL Fuel/capture/frame/PC integration stays
-  next. Pending Machine/Core/Vec8 layout and existing public gates/prices remain.
-  Metadata bounds, CALL/RET, setup/proof/seal/cleanup, deadlines/poison and public
-  lifecycle/ABI/CLI/full inventory remain open; R03-R05 incomplete. Two disjoint
-  Sol High workers, serial integration and local commits; no remote changes.
+- Latest VM CALL checkpoint (2026-11-08): [Saved CALL continuations](docs/engineering/runtime-call-entry-chunks.md)
+  implementation `20e0bee` connects CALL9/64/66/78 payload work to actual saved
+  dispatch. Validation/copy shares the 4096-byte allowance with array/output;
+  all validation precedes once-only owned Fuel and destination writes. Final
+  owner/loan/formal/input/register/frame/PC publication cannot yield. Four actual
+  Engine/eight kernel groups plus regressions pass development/O2: maximum i64
+  eight-batch copying, fixed/mixed quanta, padded records/bools/local-array loans,
+  source capture before later effects, exact/one-less Fuel, zero-Fuel copying,
+  cancellation/refunds, Engine moves and released pins. Zero resume SDK attempts
+  and SDK heap at exit; default stacks. CALL state adds 536 bytes: Cursor 968,
+  Machine 1416, Core unchanged 120880; Vec8 adds 4288 (combined work 7168).
+  All 265 receipt inputs match checkout/committed Git; 33 bindings/31 layouts
+  reviewed. Root locked check: 269 sources/3024 MIR; 261 production LF modules.
+  CALL metadata/RET, setup/proof/seal/cleanup, deadlines/poison and public
+  lifecycle/ABI/CLI/full inventory remain open; R03-R05 incomplete. Three
+  disjoint Sol High workers, serial integration/commits; local only.
 
 # Brownie C agent guidance
 
