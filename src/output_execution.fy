@@ -101,14 +101,19 @@ pub fn Result<copy::State,errors::Error> begin(ref ir::Program body,ref statics:
 // total spans emits; last is the caller's per-drive 4096-byte work counter.
 pub fn Result<bool,errors::Error> advance(ref mut copy::State pending,
     ref u8[] guest,ref u8[] literals,ref u8[] data,ref mut output::Transaction staged){
+    return advance_limited(pending,guest,literals,data,staged,4096);
+}
+// Array initialization shares the dispatcher's byte allowance with output.
+pub fn Result<bool,errors::Error> advance_limited(ref mut copy::State pending,
+    ref u8[] guest,ref u8[] literals,ref u8[] data,ref mut output::Transaction staged,usize allowance){
     let usize offset=pending.offset;
     if(!pending.active || pending.storage<1 || pending.storage>3 ||
-        pending.copied>=pending.length || pending.last>4096){return .err(invalid(offset));}
+        pending.copied>=pending.length || pending.last>4096 || allowance>4096){return .err(invalid(offset));}
     let ref u8[] source=if(pending.storage==1){literals}else if(pending.storage==2){data}else{guest};
     if(pending.start>source.len || pending.length>source.len-pending.start){return .err(invalid(offset));}
-    if(pending.last==4096){return .ok(false);}
+    if(pending.last==4096 || allowance==0){return .ok(false);}
     let usize left=pending.length-pending.copied;
-    let usize room=4096-pending.last;
+    let usize available=4096-pending.last;let usize room=if(allowance<available){allowance}else{available};
     let usize count=if(left<room){left}else{room};
     if(count>18446744073709551615-pending.total){return .err(invalid(offset));}
     if(count!=0){

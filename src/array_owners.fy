@@ -1,6 +1,7 @@
 module array_owners;
 
 import array_layout as layouts;
+import array_fill_cursor as filling;
 import array_storage as storage;
 import std::text as text;
 import scalar_codec as codec;
@@ -230,6 +231,78 @@ fn Token publish(ref mut Table table, usize slot, ref layouts::Array layout, usi
     table.order[depth] = slot;
     table.depth += 1;
     return Token { .slot = slot, .generation = generation };
+}
+
+// Trusted resumable CREATE33/FILL40 metadata bridge. These recipes are private
+// owning-execution state, never evidence authorizing arbitrary external/raw IR.
+// The parent pins one table/backing region and freezes other guest instructions;
+// no table snapshot, payload scan, epoch change or provisional publication occurs.
+pub fn Result<filling::State,Error> prepare_fill(ref Table table,u8 op,
+    ref layouts::Array layout,Token target,usize capacity){
+    if(op!=33 && op!=40){return .err(.State);}
+    let usize size=switch(layouts::validate(layout)){
+        case .ok(n):{n}
+        case .err(e):{return .err(switch(e){
+            case .Type:{.Type}case .Length:{.Length}case .Metadata:{.Metadata}
+            case .Overflow:{.Overflow}case .Quota:{.Quota}case .Bounds:{.Bounds}
+            case .Alignment:{.Alignment}
+        });}
+    };
+    var filling::State work=filling::empty();
+    work.active=true;work.op=op;work.element=layout.element;
+    work.length=layout.length;work.stride=layout.stride;work.depth=table.depth;
+    if(op==33){
+        if(!valid(table,capacity)){return .err(.State);}
+        work.slot=free_slot(table)?;work.generation=table.slots[work.slot].generation;
+        work.mark=table.arena.used;
+        let layouts::Reservation plan=switch(layouts::reserve(layout,work.mark,table.arena.limit)){
+            case .ok(p):{p}
+            case .err(e):{return .err(switch(e){
+                case .Type:{.Type}case .Length:{.Length}case .Metadata:{.Metadata}
+                case .Overflow:{.Overflow}case .Quota:{.Quota}case .Bounds:{.Bounds}
+                case .Alignment:{.Alignment}
+            });}
+        };
+        work.base=plan.offset;work.end=plan.end;
+    }else{
+        let Owner owner=writable(table,target,capacity)?;
+        if(owner.element!=layout.element){return .err(.Type);}
+        if(owner.length!=layout.length){return .err(.Length);}
+        work.slot=target.slot;work.generation=target.generation;
+        work.mark=owner.mark;work.base=owner.base;work.end=owner.end;
+    }
+    return .ok(work);
+}
+
+// Recompute every reservation/shape fact using the private table validators on
+// every resume. The saved recipe is a comparison target, not allocation authority.
+pub fn Result<usize,Error> validate_fill(ref Table table,ref filling::State work,usize capacity){
+    if(!work.active){return .err(.State);}
+    let layouts::Array layout=switch(layouts::scalar(work.element,work.length)){
+        case .ok(a):{a}case .err(_):{return .err(.State);}
+    };
+    let filling::State current=prepare_fill(table,work.op,ref layout,
+        Token{.slot=work.slot,.generation=work.generation},capacity)?;
+    if(current.slot!=work.slot || current.generation!=work.generation ||
+        current.mark!=work.mark || current.base!=work.base || current.end!=work.end ||
+        current.depth!=work.depth || current.stride!=work.stride){return .err(.State);}
+    let usize size=work.end-if(work.op==33){work.mark}else{work.base};
+    if(work.written>size || work.written>work.total || work.last>work.total){return .err(.State);}
+    return .ok(size);
+}
+
+// Only array_fill_work calls this after its final payload write. Completion
+// counts are trusted owning state, not a proof that guest-selected bytes exist.
+// All metadata is reauthenticated before the first table mutation.
+pub fn Result<Token,Error> publish_fill(ref mut Table table,ref filling::State work,usize capacity){
+    let usize size=validate_fill(table,work,capacity)?;
+    if(work.written!=size){return .err(.State);}
+    if(work.op==40){return .ok(Token{.slot=work.slot,.generation=work.generation});}
+    let layouts::Array layout=switch(layouts::scalar(work.element,work.length)){
+        case .ok(a):{a}case .err(_):{return .err(.State);}
+    };
+    table.arena.used=work.end;
+    return .ok(publish(table,work.slot,ref layout,work.mark,work.base));
 }
 
 pub fn Result<Token, Error> create(ref layouts::Array layout, i64 fill, ref mut u8[] bytes, ref mut Table table) {

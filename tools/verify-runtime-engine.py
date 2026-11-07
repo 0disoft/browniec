@@ -97,6 +97,13 @@ def main():
                                        stdout=stdout, stderr=stderr,
                                        stdoutSha256=sha(result.stdout), stderrSha256=sha(result.stderr)))
         record(receipt_path, receipt)
+        trap=output / 'trap-receipt.bin'
+        if result.returncode != 0 and trap.exists():
+            raw=trap.read_bytes()
+            if len(raw)>=20 and raw[1]==1 and len(raw)==20+int.from_bytes(raw[2:4],'little'):
+                source=raw[20:].decode('utf-8',errors='replace')
+                start=int.from_bytes(raw[4:12],'little');end=int.from_bytes(raw[12:20],'little')
+                raise RuntimeError(f'Native trap {raw[0]} in {source} bytes {start}..{end}; see {trap}')
         need(result.returncode == 0, f'Command failed: {command}; see {output / stderr}')
         return result.stdout
 
@@ -173,7 +180,7 @@ def main():
                         'boundInputType', 'outputType', 'sourceIndexType', 'sourceIndexVectorType',
                         'programVectorType', 'snapshotType', 'snapshotVectorType', 'machineType', 'coreType',
                         'executionType','pendingVectorType','completionType','publishedVectorType',
-                        'pendingMetaType','cursorType','outputCopyType','transactionType','preparationType']}
+                        'pendingMetaType','cursorType','outputCopyType','transactionType','preparationType','arrayFillType']}
         for variant, types in contract['programVariants'].items():
             layout_types.update({variant + '_' + role: name for role, name in types.items()})
         layout_types.update({key + '_entry': name for key, name in contract['entryTypes'].items()})
@@ -184,7 +191,7 @@ def main():
         for owner,field,key in [('outputType',1,'executionType'),('outputType',2,'pendingVectorType'),
                                 ('executionType',0,'completionType'),('executionType',1,'publishedVectorType'),
                                 ('machineType',6,'transactionType'),('machineType',7,'pendingMetaType'),
-                                ('pendingMetaType',0,'cursorType'),('cursorType',2,'outputCopyType')]:
+                                ('pendingMetaType',0,'cursorType'),('cursorType',2,'outputCopyType'),('cursorType',3,'arrayFillType')]:
             member=re.search(r'\b(fy_(?:struct|resource)_\d+) f_'+str(field)+r';',contract['reviewedLayouts'][owner])
             need(member is not None and member.group(1)==contract[key],f'Output field projection differs: {owner}/{field}')
         advance_args=contract['reviewedDeclarations']['26'].split('(',1)[1].split(',')
@@ -214,6 +221,7 @@ def main():
         bindings += f'typedef {contract["outputVectorType"]} bc_engine_outputs;\n'
         bindings+=f'typedef {contract["machineType"]} bc_pending_machine;\ntypedef {contract["coreType"]} bc_pending_core;\n'
         bindings+=f'typedef {contract["preparationType"]} bc_output_preparation;\n'
+        bindings+=f'typedef {contract["arrayFillType"]} bc_array_fill_work;\ntypedef {contract["cursorType"]} bc_dispatch_cursor;\n'
         for key, alias in [('programType', 'bc_engine_program'), ('instanceType', 'bc_engine_instance'),
                            ('boundInputType', 'bc_engine_bound_input'), ('outputType', 'bc_engine_output')]:
             bindings += f'typedef {contract[key]} {alias};\n'
@@ -245,8 +253,8 @@ def main():
             receipt['runtimeInputs'].append(row)
             text = raw.decode('utf-8')
             if row['path'].endswith('stage0_scalar.c'):
-                for key, value in [('@TRAP_EXIT_BASE@', '192'), ('@TRAP_RECEIPT_INCLUDE@', ''),
-                                   ('@TRAP_RECEIPT_WRITE@', '')]:
+                for key, value in [('@TRAP_EXIT_BASE@', '192'), ('@TRAP_RECEIPT_INCLUDE@', '#include <stdio.h>'),
+                                   ('@TRAP_RECEIPT_WRITE@', 'FILE *trace=fopen("trap-receipt.bin","wb"); if(trace){fwrite(fy_trap_receipt,1,fy_trap_receipt_length,trace);fclose(trace);}')]:
                     need(text.count(key) == 1, f'Unexpected runtime placeholder: {key}')
                     text = text.replace(key, value)
             runtime.append(text)
@@ -286,8 +294,14 @@ def main():
             need(preparation['cacheBytes']>0 and preparation['storedBytes']-preparation['previousStoredBytes']==preparation['cacheBytes'] and
                  preparation['retainedVecExtraBytes']==8*preparation['cacheBytes'], 'Unexpected preparation cache layout')
             write(folder / 'preparation-metrics.json',preparation_raw)
+            fill_raw=(output / 'array-fill-metrics.json').read_bytes()
+            fill_metrics=json.loads(fill_raw)
+            need(fill_metrics['arrayWorkBytes']>0 and fill_metrics['pendingVecExtraBytes']==8*fill_metrics['arrayWorkBytes'],
+                 'Unexpected array work cursor storage')
+            write(folder / 'array-fill-metrics.json',fill_raw)
             receipt['profiles'].append(dict(profile=profile, artifact=probe.image(exe), exit=0,
-                controlMetrics=metrics, preparationMetrics=preparation, liveHeapAllocationsAtExit=0, assertions='native Fairy and C, no parsed trace',
+                controlMetrics=metrics, preparationMetrics=preparation, arrayFillMetrics=fill_metrics,
+                liveHeapAllocationsAtExit=0, assertions='native Fairy and C, no parsed trace',
                 objects=[dict(path=p.relative_to(ROOT).as_posix(), sha256=sha(p.read_bytes())) for p in objects]))
             print(f'PASS {profile}: control {metrics}; real compile/reuse, pins, fresh VM, terminal/cancel, OS guards, exhaustion; heap 0', flush=True)
         need(all((ROOT / name).read_bytes() == raw for name, raw in inputs.items()), 'Input changed during verification')

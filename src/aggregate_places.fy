@@ -50,7 +50,7 @@ fn Result<usize,owners::Error> unchanged(ref Place old,ref Place now){
         old.base!=now.base || old.end!=now.end || old.offset!=now.offset){return .err(.State);}
     return .ok(now.size);
 }
-fn Result<usize,owners::Error> validate_array(ref owners::Table table,ref Place place,usize capacity){
+pub fn Result<usize,owners::Error> validate_array(ref owners::Table table,ref Place place,usize capacity){
     if(place.element==0){return .err(.Type);}
     let Place now=select_array(table,place.root,capacity)?;return unchanged(place,ref now);
 }

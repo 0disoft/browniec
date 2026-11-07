@@ -128,6 +128,35 @@ fn places::Place decode(ref usize[] words,usize base){
         .ordinal=words[base+6],.alignment=words[base+7],.mark=words[base+8],.base=words[base+9],
         .end=words[base+10],.offset=words[base+11],.size=words[base+12]};
 }
+// Trusted resumable repeated-array replacement. Authenticate the exact SELECT
+// snapshot without reading/writing payload or consuming its ticket. The owning
+// dispatcher freezes this row/Program/frame through the final chunk.
+pub fn Result<places::Place,errors::Error> fill_selection(ref ir::Program p,usize pc,usize function,usize frame,
+    ref vec::Vec<usize> state,ref owners::Table table,usize capacity){
+    let usize price=cost(p,pc,function)?;let usize at=pc*8;let usize offset=p.offsets[pc];
+    if(p.code[at]!=87 || p.code[at+4]!=3 || p.code[at+5]!=0){return .err(invalid(offset));}
+    let usize n=width(state,offset)?;let usize id=p.code[at+1] as usize;
+    if(frame>=32 || id>=n){return .err(invalid(offset));}
+    let usize header=3+frame*(18*n+1);let usize base=header+1+18*id;
+    let ref usize[] before=inspect(state);let usize root=p.code[at+2] as usize;
+    if(before[header]==0 || before[header]>n || before[base+17]!=1 || before[base+13]!=root ||
+        before[base+15]!=3 || before[base+16]==0 || before[base+16]>=before[2] ||
+        !proof::same_selection(p,before[base+14],pc)){return .err(invalid(offset));}
+    var places::Place selected=decode(before,base);selected.element=p.arrays.elements[root];
+    if(before[base+2]!=selected.element as usize || selected.length!=p.arrays.lengths[root] ||
+        selected.record!=0 || selected.nominal!=0 || selected.ordinal!=0){return .err(invalid(offset));}
+    let usize checked=switch(places::validate_array(table,ref selected,capacity)){
+        case .ok(v):{v}case .err(e):{return .err(failures::failure(e,offset));}
+    };
+    return .ok(selected);
+}
+pub fn Result<usize,errors::Error> finish_fill(ref ir::Program p,usize pc,usize function,usize frame,
+    ref mut vec::Vec<usize> state,ref owners::Table table,usize capacity){
+    let places::Place checked=fill_selection(p,pc,function,frame,state,table,capacity)?;
+    let usize n=width(state,p.offsets[pc])?;let usize id=p.code[pc*8+1] as usize;
+    let ref mut usize[] words=vec::view_mut_usize(state);words[4+frame*(18*n+1)+18*id+17]=3;
+    return .ok(checked.size);
+}
 // Native-only coordinator entry. It must independently admit ONE immutable
 // Program/catalog and bind ONE table/backing lifetime to this vector. Current
 // destination is read only on SELECT; source comes from the canonical frame map.

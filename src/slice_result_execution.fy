@@ -42,6 +42,8 @@ import runtime_output as output;
 import output_execution as output_steps;
 import slice_result_cursor as cursors;
 import output_copy_cursor as output_copy;
+import array_fill_cursor as array_fill;
+import array_fill_execution as array_steps;
 
 pub struct Scalar { i64 value; usize remaining; slices::Ticket[8] resumed; }
 // Internal tagged completion; inactive fields never escape either native API.
@@ -424,6 +426,7 @@ fn Result<Option<Outcome>,errors::Error> drive(ref body_ir::Program body,ref u8[
     if(!cursor.active){return .err(errors::make(5,0));}
     let usize admitted=cursors::begin(stats,quantum)?;
     cursor.output.last=0;
+    cursor.array.last=0;
     var usize visited=0;
     let Result<Option<Outcome>,errors::Error> outcome=dispatch(body,parameters,bindings,state,data,sites,literals,list_cells,list_scratch,
         place_state,windows,guest,origins,remaining,staged,cursor,static_live,static_words,registers,quantum,ref mut visited);
@@ -444,26 +447,43 @@ fn Result<Option<Outcome>,errors::Error> dispatch(ref body_ir::Program body,ref 
     ref mut cursors::Cursor cursor,ref mut usize[] static_live,ref mut u32[] static_words,ref mut i64[] registers,usize quantum,ref mut usize visited){
     var usize i=0;
     while(cursor.pc<body.count){
-        if(*visited==quantum || cursor.output.last==output_copy::chunk_limit()){return .ok(.none);}
+        if(cursor.output.last>4096 || cursor.array.last>4096-cursor.output.last){return .err(errors::make(5,0));}
+        let usize bytes_left=4096-cursor.output.last-cursor.array.last;
+        if(*visited==quantum || bytes_left==0){return .ok(.none);}
         let usize frame=bindings.frame;let usize f=bindings.functions[frame];
         if(frame==0 || f>=body.function_count || cursor.pc<body.starts[f] || cursor.pc>=body.ends[f]){return .err(errors::make(5,0));}
         let usize at=cursor.pc*8;let usize offset=body.offsets[cursor.pc];let u8 op=body.code[at];
         let usize dst=body.code[at+1] as usize;let usize a=body.code[at+2] as usize;let usize b=body.code[at+3] as usize;
         let usize base=frame*128;
+        if(cursor.array.active){
+            let bool selected_fill=array_steps::selected_fill(body,cursor.pc);
+            let u8 expected_op=if(selected_fill){40}else{op};
+            if((op!=33 && op!=40 && !selected_fill) || expected_op!=cursor.array.op || cursor.pc!=cursor.array.pc ||
+                frame!=cursor.array.frame || offset!=cursor.array.offset || cursor.output.active){return .err(errors::make(5,offset));};
+            *visited+=1;var array_fill::State filling=cursor.array;
+            let bool finished=array_steps::advance(ref mut filling,body,bindings,state,data,place_state,bytes_left)?;
+            cursor.array=filling;if(finished){cursor.pc+=1;}continue;
+        }
         if(cursor.output.active){
             if(op!=116 || cursor.output.offset!=offset){return .err(errors::make(5,offset));};
             // A continuation visit is work on an already prepaid instruction.
             // The source stays pinned and no guest opcode or charge is replayed.
             *visited+=1;var output_copy::State copying=cursor.output;
-            let bool finished=output_steps::advance(ref mut copying,guest,literals,data,staged)?;
+            let bool finished=output_steps::advance_limited(ref mut copying,guest,literals,data,staged,bytes_left)?;
             cursor.output=copying;if(finished){cursor.pc+=1;}continue;
         };
         if(*remaining==0){return .err(errors::make(8,offset));};*remaining-=1;*visited+=1;
+        if(op==33 || op==40 || array_steps::selected_fill(body,cursor.pc)){
+            var array_fill::State filling=array_steps::begin(body,cursor.pc,bindings,state,registers[base..base+128],data.len,place_state,remaining)?;
+            filling.total=cursor.array.total;filling.last=cursor.array.last;
+            let bool finished=array_steps::advance(ref mut filling,body,bindings,state,data,place_state,bytes_left)?;
+            cursor.array=filling;if(finished){cursor.pc+=1;}continue;
+        }
         if(op==116){
             var output_copy::State copying=output_steps::begin(body,sites,cursor.pc,f,bindings,state,
                 static_words[frame*16..frame*16+16],static_live[frame],windows,guest,literals,data,staged,remaining)?;
             copying.total=cursor.output.total;copying.last=cursor.output.last;
-            if(copying.active){let bool finished=output_steps::advance(ref mut copying,guest,literals,data,staged)?;}
+            if(copying.active){let bool finished=output_steps::advance_limited(ref mut copying,guest,literals,data,staged,bytes_left)?;}
             cursor.output=copying;if(!copying.active){cursor.pc+=1;}continue;
         }
         if(op>=83 && op<=87){
