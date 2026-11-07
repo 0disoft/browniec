@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:brownie:catalog:0.2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "imports"
+  ],
+  "properties": {
+    "schema": {
+      "const": "brownie.catalog/1"
+    },
+    "imports": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "module",
+          "symbol",
+          "parameters",
+          "result",
+          "effect",
+          "capability",
+          "adapter_revision"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 63
+          },
+          "module": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^host::[A-Za-z_][A-Za-z0-9_]*(::[A-Za-z_][A-Za-z0-9_]*)*$"
+          },
+          "symbol": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          },
+          "parameters": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 32,
+            "items": {
+              "enum": [
+                "bool",
+                "u8",
+                "i32",
+                "i64",
+                "u32",
+                "usize",
+                "ref u8[]"
+              ]
+            }
+          },
+          "result": {
+            "enum": [
+              "Result<bool,u32>",
+              "Result<u8,u32>",
+              "Result<i32,u32>",
+              "Result<i64,u32>",
+              "Result<u32,u32>",
+              "Result<usize,u32>",
+              "Result<brownie::bytes::Buffer,u32>"
+            ]
+          },
+          "effect": {
+            "enum": [
+              "read",
+              "write"
+            ]
+          },
+          "capability": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 128,
+            "pattern": "^[a-z][a-z0-9]*(\\.[a-z][a-z0-9]*)+$"
+          },
+          "adapter_revision": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[A-Za-z0-9_.]+$"
+          }
+        }
+      }
+    }
+  }
+}

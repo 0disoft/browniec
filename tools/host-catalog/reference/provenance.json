@@ -1,0 +1,22 @@
+{
+  "archive": "brownie-c-design-v0.3.0.zip",
+  "archiveSha256": "9786d2d2a0d0cd9048a47d17f6fd5c4574cdbcaeec00d17570602fa541b7dc5e",
+  "entries": [
+    {
+      "path": "brownie-c-design-v0.3.0/contracts/catalog-vector.json",
+      "sha256": "16feda8c01e68110924385934d4b041c49637d2c38ae6ac83fd190cf0b61672f"
+    },
+    {
+      "path": "brownie-c-design-v0.3.0/contracts/host-catalog.example.json",
+      "sha256": "8f473aebe5db1e534c95ab9ac33fba6cbca832be458e10ab8637eb0c1d3c2ac2"
+    },
+    {
+      "path": "brownie-c-design-v0.3.0/contracts/host-catalog.schema.json",
+      "sha256": "4588bbe72122d79a24ddfc4a09d9bd32d63e8af02a2432d496608eb0c0a38303"
+    },
+    {
+      "path": "brownie-c-design-v0.3.0/docs/17-host-wire-and-catalog.md",
+      "sha256": "a14baf8392e18a1c90533744cd1948315eb538818f8cf77264bf49cff0306f33"
+    }
+  ]
+}

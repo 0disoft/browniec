@@ -1,0 +1,18 @@
+{
+  "schema": "brownie.catalog/1",
+  "imports": [
+    {
+      "id": 0,
+      "module": "host::example",
+      "symbol": "check",
+      "parameters": [
+        "i32",
+        "ref u8[]"
+      ],
+      "result": "Result<i32,u32>",
+      "effect": "read",
+      "capability": "host.example.check",
+      "adapter_revision": "1"
+    }
+  ]
+}
