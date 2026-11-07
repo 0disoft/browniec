@@ -83,6 +83,16 @@ pub fn ref sources::Snapshot snapshot(ref Program p){return ref stored(p).source
 pub fn ref candidates::Program code(ref Program p){return ref stored(p).code;}
 pub fn ref images::Image literals(ref Program p){return ref stored(p).image;}
 pub fn Completion observe(ref Execution run){return run.completion;}
+// Actual retained SDK heap. Published is 72 bytes on pinned Windows x64;
+// generated-layout and physical-heap native guards own that assumption.
+// Late failure retains an empty Vec8, so its capacity must still be charged.
+pub fn usize heap_bytes(ref Execution run){
+    var usize total=vec::capacity<output::Published>(ref run.published)*72;
+    var usize i=0;while(i<vec::len<output::Published>(ref run.published)){
+        total+=output::published_heap_bytes(vec::at<output::Published>(ref run.published,i));i+=1;
+    }
+    return total;
+}
 pub fn bool has_output(ref Execution run){return run.completion.success && vec::len<output::Published>(ref run.published)==1;}
 pub fn ref u8[] view(ref Execution run){
     if(!has_output(run)){return b"";}return output::view(vec::at<output::Published>(ref run.published,0));

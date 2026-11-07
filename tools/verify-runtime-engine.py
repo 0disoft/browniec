@@ -24,6 +24,8 @@ def closure():
     files['program_compile_contracts'] = ROOT / 'tests/m2/runtime_program_compile_memory.fy'
     files['control_budget_contracts'] = ROOT / 'tests/m2/runtime_control_budget.fy'
     files['live_memory_contracts'] = ROOT / 'tests/m2/runtime_live_memory.fy'
+    files['output_memory_contracts'] = ROOT / 'tests/m2/module_output_memory.fy'
+    files['execution_memory_contracts'] = ROOT / 'tests/m2/runtime_execution_memory.fy'
     files['runtime_input_adoption'] = ROOT / 'native/runtime-input-adoption/adoption.fy'
     seen, todo = {}, ['main']
     while todo:
@@ -41,7 +43,9 @@ def closure():
 def source_copy(path):
     adapters = {'runtime_control_budget': 'control_budget_contracts', 'retention_plan': 'retention_plan_contracts',
                 'runtime_program_compile_memory': 'program_compile_contracts',
-                'runtime_live_memory': 'live_memory_contracts'}
+                'runtime_live_memory': 'live_memory_contracts',
+                'module_output_memory': 'output_memory_contracts',
+                'runtime_execution_memory': 'execution_memory_contracts'}
     for original, alias in adapters.items():
         if path == ROOT / f'tests/m2/{original}.fy':
             text = path.read_text(encoding='utf-8').replace(f'module tests::m2::{original};', f'module {alias};')
@@ -131,7 +135,8 @@ def main():
                        ('15', 4, 'snapshotVectorType'), ('16', 2, 'outputVectorType'),
                        ('16', 3, 'outputVectorType'), ('16', 5, 'outputVectorType'),
                        ('21', 1, 'programVectorType'), ('22', 0, 'instanceType'),
-                       ('23', 1, 'programVectorType'), ('23', 5, 'snapshotType')]
+                       ('23', 1, 'programVectorType'), ('23', 5, 'snapshotType'),
+                       ('24', 2, 'outputVectorType'), ('25', 0, 'programType')]
         for binding, index, key in projections:
             argument = contract['reviewedDeclarations'][binding].split('(', 1)[1].split(',')[index]
             actual = re.search(r'\bfy_(?:resource|struct)_\d+\b', argument)

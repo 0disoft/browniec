@@ -122,6 +122,13 @@ pub fn Observation cancel(ref mut Transaction t){return discard_pending(t,3);}
 pub fn Observation published_observation(ref Published output){return output.final;}
 pub fn ref u8[] view(ref Published output){return bytes::view(ref output.backing);}
 
+// Actual owned SDK bytes, excluding the inline resource and allocator overhead.
+// A reserved backing remains owned even when the logical output is empty.
+pub fn usize published_heap_bytes(ref Published output){return bytes::capacity(ref output.backing);}
+pub fn usize transaction_heap_bytes(ref Transaction t){
+    return bytes::capacity(ref t.header)+bytes::capacity(ref t.backing);
+}
+
 // Shared-Fuel reserved mode. No guest/host staging view or publication authority
 // is added: only the trusted VM owner may choose success and call seal_metered.
 // Each open operation samples caller Fuel; terminal snapshots freeze first.
