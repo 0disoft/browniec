@@ -1,5 +1,9 @@
 # Evolving shared-view origins in source loops
 
+The [header-owner successor](value-loop-header-owners.md) now defers pre-existing
+anonymous seeds through last-alias rebinding. This predecessor records `9d7712b`;
+fresh loop-carried allocations and the current inventory remain separate.
+
 Private retained-value source now permits live loop-header byte views to select
 different already-live Buffer or formal roots on later iterations. Repeated
 ranges, aliases, selected shared CALL results, while conditions, nested loops and

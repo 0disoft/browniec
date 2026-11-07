@@ -1,14 +1,14 @@
-- Latest loop-origin checkpoint (2026-11-07): [Evolving shared-view loop origins](docs/engineering/value-view-loop-origins.md)
-  now infer candidate roots/retention from emitted IR through real backedges,
-  nested loops and shared for-post paths. Converged state rechecks earlier writes,
-  moves and cleanup, then widens zero-trip/break exits without source replay.
-  Exact owning headers and descriptor identity remain; bottom break/continue
-  composition executes. `9d7712b` passed 15 groups per Windows native profile,
-  using disjoint locked mirrors and default stacks. All 228 inputs match
-  checkout/Git raw bytes; all 216 production modules are LF. See [evidence](docs/evidence/value-view-loop-origins-windows-20261107.json).
-  The combined depth fixture is byte-identical. No opcode, existing price, public
-  admission or Fuel default/cap change. Next: loop-root cleanup deferral, remaining
-  bottom contexts, general references, methods/public AllocError and remaining
+- Latest header-owner checkpoint (2026-11-07): [Deferred anonymous loop-header owners](docs/engineering/value-loop-header-owners.md)
+  now preserve pre-existing retained seeds when their last view is rebound on a
+  repeating edge. Compiler protection survives snapshots/trims/nested loops;
+  reached exits release only their mask and terminal cleanup releases all after
+  preflight. Real owners stay charged; no dummy owner, payload copy or source replay.
+  `03c758a` passed 15 groups per Windows native profile with locked disjoint
+  mirrors and default stacks. All 228 inputs match checkout/Git raw bytes;
+  all 216 production modules are LF. See [evidence](docs/evidence/value-loop-header-owners-windows-20261107.json).
+  The combined depth fixture is byte-identical. No runtime field/opcode, existing
+  price, public gate or Fuel default/cap change. Next: fresh loop-carried owners,
+  private safe casts, remaining bottom/general references, methods/AllocError and
   runtime/host/platform work. Full completion remains open. Local only.
 
 - Predecessor native view-call checkpoint (2026-11-07): [Shared Buffer view CALL/RETURN](docs/engineering/value-view-calls.md) now
