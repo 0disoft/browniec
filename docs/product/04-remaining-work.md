@@ -1,4 +1,15 @@
-- Latest host-wire checkpoint (2026-11-07): [Typed TLV codecs](../engineering/host-wire.md)
+- Latest registry-prerequisite checkpoint (2026-11-07): [Fairy handles](../engineering/abi-handles.md)
+  (`fef9fd3`) passed ten native groups per development/release profile; unchanged
+  kernel/test/compiler evidence was retained after the root 227-source/2487-MIR
+  composition check. [Windows guard/TLS](../engineering/abi-thread-identity.md) (`f83436e`)
+  passed real development/optimized OS hosts: eight concurrent threads, 1024
+  guarded updates, 32 sequential lifetimes and nonwrapping ticket exhaustion.
+  These separate components are not yet one lazy process registry or public
+  Engine/Program/Instance APIs. Full E02/E01, host exchange and inventory remain
+  open. Host TLV codec `6560805` separately passed ten groups in both profiles.
+  No public gates, existing Fuel prices/defaults/caps or delivery changes.
+
+- Predecessor host-wire checkpoint (2026-11-07): [Typed TLV codecs](../engineering/host-wire.md)
   validate/encode exact request and success/error/fatal payloads with whole-message
   preflight and header-inclusive 1MiB limits. Implementation `6560805` passed ten
   native groups per Windows development/release profile (six new, four scalar
@@ -645,7 +656,7 @@ requirements of this audit. They need a justified profile decision if desired.
 | ID | Work and completion condition |
 | --- | --- |
 | E01 | [Actual Windows DLL bootstrap](../engineering/abi-bootstrap.md) now exports and executes `bc_get_abi_info_v2`, with compiled Fairy validation/metadata, exact C/C++ layouts, capacity/revision/null rejection, untouched failure storage and 53 real calls per development/optimized profile. Only that symbol is exported; all ten planned APIs are absent. Remaining: connect real Engine/Program/Instance/VM ABI execution and complete E02/E03/lifecycle before full E01 or embedding availability. Existing Fairy pub visibility alone remains insufficient evidence. |
-| E02 | Implement the bounded process-wide lazy typed handle registry, nonwrapping/retired generations, Engine ownership, owner-thread lifetime identity, synchronization and busy/reentry rejection. Do not pretend arbitrary C pointers can be validated safely. |
+| E02 | The [64-slot Fairy handle kernel](../engineering/abi-handles.md) now validates kind/index/nonwrapping generation, Engine association, synthetic thread/lifetime identity, nonwrapping busy admissions and rollback, with ten native groups per development/release profile. The separate [Windows SRW/TLS primitive](../engineering/abi-thread-identity.md) verifies real serialized access and nonreused thread-lifetime tickets in development/optimized hosts. Remaining: connect both to one bounded lazy process-wide registry coordinator, account its native/control storage, and integrate real Engine/Program/Instance lifecycles. The tested components are not full E02 or public lifecycle exports. Do not pretend arbitrary C pointers can be validated safely. |
 | E03 | Implement Program/Instance pin/release/destroy, sized output structs, event/reply/output pointer lifetimes and stable terminal metrics/errors across C calls, including malformed/wrong-thread/stale-handle cases. |
 | E04 | Package executable/required runtime (and DLL for embed), license/dependency notices and integrity metadata; run without developer compilers on a clean Windows machine. Verify Linux natively before promising Linux support: the toolchain has a Linux cross-build artifact, not a Brownie Linux execution pass. |
 | V01 | Close full-profile conformance using native source-to-VM cases, not model checks or a sum of increment counts. Map/adapt the reference's 32 original source cases and wider accepted obligations explicitly; primitive negative tests alone do not execute the original policy/entry envelopes. |

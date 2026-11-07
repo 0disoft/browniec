@@ -1,11 +1,13 @@
-- Latest host-wire checkpoint (2026-11-07): [Typed TLV codecs](docs/engineering/host-wire.md)
-  validate/encode exact request and success/error/fatal payloads with whole-message
-  preflight and header-inclusive 1MiB limits. Implementation `6560805` passed ten
-  native groups per Windows development/release profile (six new, four scalar
-  regressions), with 227 checkout/Git-raw matching inputs and 218 LF modules.
-  Catalog binding/digest, actual host dispatch/adoption, process-wide handles,
-  Engine/Instance/VM ABI and the full inventory remain open. Public host/embed
-  availability, existing limits and Fuel prices/defaults/caps are unchanged.
+- Latest registry-prerequisite checkpoint (2026-11-07): [Fairy handles](docs/engineering/abi-handles.md)
+  (`fef9fd3`) passed ten native groups per development/release profile; unchanged
+  kernel/test/compiler evidence was retained after the root 227-source/2487-MIR
+  composition check. [Windows guard/TLS](docs/engineering/abi-thread-identity.md) (`f83436e`)
+  passed real development/optimized OS hosts: eight concurrent threads, 1024
+  guarded updates, 32 sequential lifetimes and nonwrapping ticket exhaustion.
+  These separate components are not yet one lazy process registry or public
+  Engine/Program/Instance APIs. Full E02/E01, host exchange and inventory remain
+  open. Host TLV codec `6560805` separately passed ten groups in both profiles.
+  No public gates, existing Fuel prices/defaults/caps or delivery changes.
 
 # Brownie C agent guidance
 

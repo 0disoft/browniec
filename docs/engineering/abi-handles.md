@@ -60,8 +60,8 @@ allocate/free objects or implement Program pins and Instance state.
   capabilities. C callers supply only opaque handle integers.
 
 Until these contracts have real native implementations, calling the kernel with
-arbitrary external identities or concurrently is unsupported. No OS shim was
-added because there is no current lifecycle coordinator to own those contracts.
+arbitrary external identities or concurrently is unsupported. The separate [Windows guard/TLS primitive](abi-thread-identity.md) now supplies
+real OS identity and synchronization, but this kernel is not yet wired to it.
 
 ## APIs for lifecycle integration
 
@@ -172,3 +172,9 @@ files; the integration owner keeps its disjoint module/lock changes.
 The delivery manifest beside the mirror's build outputs records exact new-file,
 patch, source-lock and native-log/receipt hashes. These are local native kernel
 results, not full E02, OS synchronization or public ABI execution evidence.
+
+Main integrated the unchanged kernel/tests/verifier in `fef9fd3` and refreshed the
+root lock. The root check passed 227 sources / 2487 MIR functions. All 218 worker
+production modules remain byte-identical; only the disjoint `host_wire` module
+and resulting lock differ. The [recorded kernel evidence](../evidence/abi-handles-windows-20261107.json)
+retains both ten-group native reports without duplicating import-free tests.

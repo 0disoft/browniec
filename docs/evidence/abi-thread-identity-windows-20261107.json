@@ -1,0 +1,272 @@
+{
+  "schema": "browniec.abi-thread-identity/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-07T05:55:12.443756+00:00",
+  "inputs": [
+    {
+      "path": "native/abi_thread_identity.c",
+      "sha256": "bed9704dcab23a1f15c8fca16f0a1947af2ac99e2e20b1e09d8f4deec2960fd6"
+    },
+    {
+      "path": "native/abi_thread_identity.h",
+      "sha256": "008eaebc12f427c002efdae84fb7668aa37d2671fbbe18723105614770adfdca"
+    },
+    {
+      "path": "tests/embed/abi_thread_identity_host.c",
+      "sha256": "153e4ab1ced2c77ffd4906264bcd9cbef27f69d04b484e5eff7c406b83becf82"
+    },
+    {
+      "path": "tools/verify-abi-thread-identity.py",
+      "sha256": "be4c42d6ef371e88323f3e406244dea41c9da5e42ac299c5e5f60afcfdc9dc8e"
+    },
+    {
+      "path": "tools/build-abi-bootstrap.py",
+      "sha256": "824c7c252d4f7c8db51fbb939da537d24b4c03e35eba128d8ac5489057e38437"
+    }
+  ],
+  "commands": [
+    {
+      "argv": [
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe",
+        "-latest",
+        "-products",
+        "*",
+        "-requires",
+        "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
+        "-property",
+        "installationPath"
+      ],
+      "exit": 0,
+      "stdout": "00.stdout",
+      "stderr": "00.stderr",
+      "stdoutSha256": "b4a0d87f781f41eea676ca53971351757a2ea9df0f254e6e93d326d60e611500",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+        "/nologo",
+        "/TC",
+        "/std:c11",
+        "/MT",
+        "/W4",
+        "/WX",
+        "/Od",
+        "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-thread-identity\\20261107T055512431978Z\\inputs\\native",
+        "/c",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-thread-identity\\20261107T055512431978Z\\inputs\\native\\abi_thread_identity.c",
+        "/FoC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-thread-identity\\20261107T055512431978Z\\development\\production.obj"
+      ],
+      "exit": 0,
+      "stdout": "01.stdout",
+      "stderr": "01.stderr",
+      "stdoutSha256": "c1d5916413657dec01ed4988365a4f35701584be5547a1bae557a25c9c78153c",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\dumpbin.exe",
+        "/symbols",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-thread-identity\\20261107T055512431978Z\\development\\production.obj"
+      ],
+      "exit": 0,
+      "stdout": "02.stdout",
+      "stderr": "02.stderr",
+      "stdoutSha256": "24cf42d3774c03c26b161c18e6af2e8d5a8aa70b49e71a3d18287abd89e4cd42",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+        "/nologo",
+        "/TC",
+        "/std:c11",
+        "/MT",
+        "/W4",
+        "/WX",
+        "/Od",
+        "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-thread-identity\\20261107T055512431978Z\\inputs\\native",
+        "/DBC_ABI_IDENTITY_TEST",
+        "/c",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-thread-identity\\20261107T055512431978Z\\inputs\\native\\abi_thread_identity.c",
+        "/FoC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-thread-identity\\20261107T055512431978Z\\development\\identity.obj"
+      ],
+      "exit": 0,
+      "stdout": "03.stdout",
+      "stderr": "03.stderr",
+      "stdoutSha256": "c1d5916413657dec01ed4988365a4f35701584be5547a1bae557a25c9c78153c",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+        "/nologo",
+        "/TC",
+        "/std:c11",
+        "/MT",
+        "/W4",
+        "/WX",
+        "/Od",
+        "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-thread-identity\\20261107T055512431978Z\\inputs\\native",
+        "/DBC_ABI_IDENTITY_TEST",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-thread-identity\\20261107T055512431978Z\\inputs\\tests\\embed\\abi_thread_identity_host.c",
+        "/FoC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-thread-identity\\20261107T055512431978Z\\development\\host.obj",
+        "/FeC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-thread-identity\\20261107T055512431978Z\\development\\identity-host.exe",
+        "/link",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-thread-identity\\20261107T055512431978Z\\development\\identity.obj",
+        "/INCREMENTAL:NO",
+        "/Brepro"
+      ],
+      "exit": 0,
+      "stdout": "04.stdout",
+      "stderr": "04.stderr",
+      "stdoutSha256": "943fc02bf49bae97d44c80bf978df5d5735e92c8bfe3488d417d91d5193c4887",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-thread-identity\\20261107T055512431978Z\\development\\identity-host.exe"
+      ],
+      "exit": 0,
+      "stdout": "05.stdout",
+      "stderr": "05.stderr",
+      "stdoutSha256": "b826fe43d1c07597686776f42c12d7655f6fbb51370765e268579004068ba70f",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+        "/nologo",
+        "/TC",
+        "/std:c11",
+        "/MT",
+        "/W4",
+        "/WX",
+        "/O2",
+        "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-thread-identity\\20261107T055512431978Z\\inputs\\native",
+        "/c",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-thread-identity\\20261107T055512431978Z\\inputs\\native\\abi_thread_identity.c",
+        "/FoC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-thread-identity\\20261107T055512431978Z\\optimized\\production.obj"
+      ],
+      "exit": 0,
+      "stdout": "06.stdout",
+      "stderr": "06.stderr",
+      "stdoutSha256": "c1d5916413657dec01ed4988365a4f35701584be5547a1bae557a25c9c78153c",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\dumpbin.exe",
+        "/symbols",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-thread-identity\\20261107T055512431978Z\\optimized\\production.obj"
+      ],
+      "exit": 0,
+      "stdout": "07.stdout",
+      "stderr": "07.stderr",
+      "stdoutSha256": "2afb736ea128dc1975f08d3043649a690d55521f942681439cbd53f717e353e6",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+        "/nologo",
+        "/TC",
+        "/std:c11",
+        "/MT",
+        "/W4",
+        "/WX",
+        "/O2",
+        "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-thread-identity\\20261107T055512431978Z\\inputs\\native",
+        "/DBC_ABI_IDENTITY_TEST",
+        "/c",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-thread-identity\\20261107T055512431978Z\\inputs\\native\\abi_thread_identity.c",
+        "/FoC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-thread-identity\\20261107T055512431978Z\\optimized\\identity.obj"
+      ],
+      "exit": 0,
+      "stdout": "08.stdout",
+      "stderr": "08.stderr",
+      "stdoutSha256": "c1d5916413657dec01ed4988365a4f35701584be5547a1bae557a25c9c78153c",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+        "/nologo",
+        "/TC",
+        "/std:c11",
+        "/MT",
+        "/W4",
+        "/WX",
+        "/O2",
+        "/IC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-thread-identity\\20261107T055512431978Z\\inputs\\native",
+        "/DBC_ABI_IDENTITY_TEST",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-thread-identity\\20261107T055512431978Z\\inputs\\tests\\embed\\abi_thread_identity_host.c",
+        "/FoC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-thread-identity\\20261107T055512431978Z\\optimized\\host.obj",
+        "/FeC:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-thread-identity\\20261107T055512431978Z\\optimized\\identity-host.exe",
+        "/link",
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-thread-identity\\20261107T055512431978Z\\optimized\\identity.obj",
+        "/INCREMENTAL:NO",
+        "/Brepro"
+      ],
+      "exit": 0,
+      "stdout": "09.stdout",
+      "stderr": "09.stderr",
+      "stdoutSha256": "943fc02bf49bae97d44c80bf978df5d5735e92c8bfe3488d417d91d5193c4887",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-thread-identity\\20261107T055512431978Z\\optimized\\identity-host.exe"
+      ],
+      "exit": 0,
+      "stdout": "10.stdout",
+      "stderr": "10.stderr",
+      "stdoutSha256": "b826fe43d1c07597686776f42c12d7655f6fbb51370765e268579004068ba70f",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "toolchain": {
+    "msvc": "14.51.36231",
+    "sdk": "10.0.26100.0",
+    "compilerSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+    "nativeOverrides": false,
+    "stack": "MSVC default"
+  },
+  "profiles": [
+    {
+      "profile": "development",
+      "result": "PASS thread-identity: 8 concurrent threads, 1024 guarded updates, 32 sequential lifetimes, nonwrapping exhaustion",
+      "productionSha256": "0dc996ff57c9a5e7a7aaae081ad3daf433f882617133b0b3abf9c5ce921c7b06",
+      "testControlAbsentFromProduction": true,
+      "host": {
+        "path": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-thread-identity\\20261107T055512431978Z\\development\\identity-host.exe",
+        "sha256": "fd8b2083c66132265f437634526b2ae219f9c9b0eb28a1a0cb3eefc8639bd501",
+        "machine": "AMD64",
+        "stackReserve": 1048576,
+        "stackCommit": 4096
+      }
+    },
+    {
+      "profile": "optimized",
+      "result": "PASS thread-identity: 8 concurrent threads, 1024 guarded updates, 32 sequential lifetimes, nonwrapping exhaustion",
+      "productionSha256": "6d0143f7d5aee9aa533a331a9072e090b36144813a6046b294579fc536a6a875",
+      "testControlAbsentFromProduction": true,
+      "host": {
+        "path": "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\abi-thread-identity\\20261107T055512431978Z\\optimized\\identity-host.exe",
+        "sha256": "0b8ff4e023ff269ea944a7747d2cd5e86247f574b68c904b4b6228e96e68c4c0",
+        "machine": "AMD64",
+        "stackReserve": 1048576,
+        "stackCommit": 4096
+      }
+    }
+  ],
+  "runtimeEnvironment": "cleared; empty tool PATH",
+  "scope": "OS primitive only: not wired to process-wide Fairy registry or public ABI",
+  "implementationCommit": "f83436ee555b558aee02ed68d263c179c365a68c",
+  "inputCheckoutAndGitRawMatched": true,
+  "limitations": [
+    "OS guard and TLS lifetime primitive only; not yet connected to the Fairy registry or exported public lifecycle.",
+    "Sequential thread lifetimes were real; OS thread ID reuse was not forced or claimed.",
+    "No TLS allocation-failure injection; failure paths are code-reviewed, not reproduced."
+  ]
+}

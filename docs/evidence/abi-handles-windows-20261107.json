@@ -1,0 +1,342 @@
+{
+  "schema": "browniec.abi-handles-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-07T05:57:31.157628+00:00",
+  "platform": "windows/amd64",
+  "implementationCommit": "fef9fd3429728cc8af2574a10315ca9939bdc779",
+  "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+  "inputManifest": {
+    "path": "docs/evidence/abi-handles-inputs-windows-20261107.json",
+    "sha256": "0bbe04385e1e3b835e05aba3983d57c3e86482ebb3321e360cbac80b28037ffe"
+  },
+  "workerBase": "8ef789ab334b80d54bb4a549ef61e3a88806403d",
+  "workerInputsMatched": 223,
+  "integration": {
+    "byteIdenticalKernelTestsAndVerifier": true,
+    "matchingWorkerProductionModules": 218,
+    "additionalImportUnrelatedProductionModules": [
+      "src/host_wire.fy"
+    ],
+    "changedWorkerInputs": [
+      "fairy.lock"
+    ],
+    "refreshedRootLockSha256": "8d2e387174223f96467e5ccadc13d8639aa36161fd69aa6a42847f7bf245c9f1",
+    "rootCheck": "check ok: 2 instance(s), 227 source file(s), 2487 MIR function(s), lock updated",
+    "nativeRepeatSkipped": "Import-free kernel and exact tests/tool/compiler are unchanged; only an unrelated host_wire module and resulting source lock differ."
+  },
+  "groupsPerProfile": {
+    "development": 10,
+    "release": 10
+  },
+  "semantics": {
+    "capacity": 64,
+    "kindIndexGenerationChecked": true,
+    "generationRetirementWithoutWrap": true,
+    "engineAssociation": true,
+    "syntheticThreadLifetimeChecked": true,
+    "nonwrappingBusyAdmissionEpoch": true,
+    "failureRollback": true
+  },
+  "profiles": [
+    {
+      "schema": "browniec.abi-handles-verification/v1",
+      "status": "passed",
+      "recordedAt": "2026-11-07T05:48:13.939455+00:00",
+      "profile": "development",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "check": "check ok: 2 instance(s), 226 source file(s), 2472 MIR function(s), lock verified\n",
+      "commands": [
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-handle-registry\\build\\toolchain\\fairyc.exe",
+            "check",
+            "--locked"
+          ],
+          "cwd": ".",
+          "temporarySelectedTestMirror": false,
+          "elapsedSeconds": 5.524
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-handle-registry\\build\\toolchain\\fairyc.exe",
+            "test",
+            "--native",
+            "--capture-output",
+            "--json",
+            "--locked",
+            "--exact",
+            "tests::embed::handle_registry::admission_identity_exhaustion_is_fail_closed",
+            "--exact",
+            "tests::embed::handle_registry::admission_rollback_stale_receipts_and_payload",
+            "--exact",
+            "tests::embed::handle_registry::busy_reentry_and_independent_engines",
+            "--exact",
+            "tests::embed::handle_registry::engine_association_and_owner_lifetime",
+            "--exact",
+            "tests::embed::handle_registry::engine_removal_refuses_children_and_consumes_admission",
+            "--exact",
+            "tests::embed::handle_registry::exact_capacity_and_failed_insert_rollback",
+            "--exact",
+            "tests::embed::handle_registry::generation_max_engine_retirement_and_tombstone",
+            "--exact",
+            "tests::embed::handle_registry::retired_children_consume_capacity_permanently",
+            "--exact",
+            "tests::embed::handle_registry::stale_kind_reuse_never_revives",
+            "--exact",
+            "tests::embed::handle_registry::typed_wire_bounds_and_argument_rollback"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "elapsedSeconds": 63.798
+        }
+      ],
+      "nativeWorkspace": "byte-identical-production-selected-tests",
+      "nativeInputMirrorVerified": true,
+      "elapsedSeconds": 70.115,
+      "nativeOverrides": false,
+      "historicalResultReuse": false,
+      "nativeGroups": 10,
+      "limitations": [
+        "kernel capacity 64, not the lazy process singleton",
+        "synthetic caller identities, no real OS lifetime or locks",
+        "no VM, native object, Program pin or public ABI integration"
+      ],
+      "nativeReport": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "development",
+        "tests": [
+          {
+            "identity": "tests::embed::handle_registry::admission_identity_exhaustion_is_fail_closed",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::embed::handle_registry::admission_rollback_stale_receipts_and_payload",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::embed::handle_registry::busy_reentry_and_independent_engines",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::embed::handle_registry::engine_association_and_owner_lifetime",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::embed::handle_registry::engine_removal_refuses_children_and_consumes_admission",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::embed::handle_registry::exact_capacity_and_failed_insert_rollback",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::embed::handle_registry::generation_max_engine_retirement_and_tombstone",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::embed::handle_registry::retired_children_consume_capacity_permanently",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::embed::handle_registry::stale_kind_reuse_never_revives",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::embed::handle_registry::typed_wire_bounds_and_argument_rollback",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 10,
+        "passed": 10,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      }
+    },
+    {
+      "schema": "browniec.abi-handles-verification/v1",
+      "status": "passed",
+      "recordedAt": "2026-11-07T05:50:51.956309+00:00",
+      "profile": "release",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "check": "check ok: 2 instance(s), 226 source file(s), 2472 MIR function(s), lock verified\n",
+      "commands": [
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-handle-registry\\build\\toolchain\\fairyc.exe",
+            "check",
+            "--locked"
+          ],
+          "cwd": ".",
+          "temporarySelectedTestMirror": false,
+          "elapsedSeconds": 6.872
+        },
+        {
+          "argv": [
+            "C:\\Users\\cherr\\Documents\\workspace\\zerodi-wd1\\projects\\hobby\\opensource\\browniec\\build\\parallel-handle-registry\\build\\toolchain\\fairyc.exe",
+            "test",
+            "--native",
+            "--capture-output",
+            "--json",
+            "--locked",
+            "--release",
+            "--exact",
+            "tests::embed::handle_registry::admission_identity_exhaustion_is_fail_closed",
+            "--exact",
+            "tests::embed::handle_registry::admission_rollback_stale_receipts_and_payload",
+            "--exact",
+            "tests::embed::handle_registry::busy_reentry_and_independent_engines",
+            "--exact",
+            "tests::embed::handle_registry::engine_association_and_owner_lifetime",
+            "--exact",
+            "tests::embed::handle_registry::engine_removal_refuses_children_and_consumes_admission",
+            "--exact",
+            "tests::embed::handle_registry::exact_capacity_and_failed_insert_rollback",
+            "--exact",
+            "tests::embed::handle_registry::generation_max_engine_retirement_and_tombstone",
+            "--exact",
+            "tests::embed::handle_registry::retired_children_consume_capacity_permanently",
+            "--exact",
+            "tests::embed::handle_registry::stale_kind_reuse_never_revives",
+            "--exact",
+            "tests::embed::handle_registry::typed_wire_bounds_and_argument_rollback"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "elapsedSeconds": 67.8
+        }
+      ],
+      "nativeWorkspace": "byte-identical-production-selected-tests",
+      "nativeInputMirrorVerified": true,
+      "elapsedSeconds": 75.468,
+      "nativeOverrides": false,
+      "historicalResultReuse": false,
+      "nativeGroups": 10,
+      "limitations": [
+        "kernel capacity 64, not the lazy process singleton",
+        "synthetic caller identities, no real OS lifetime or locks",
+        "no VM, native object, Program pin or public ABI integration"
+      ],
+      "nativeReport": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "release",
+        "tests": [
+          {
+            "identity": "tests::embed::handle_registry::admission_identity_exhaustion_is_fail_closed",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::embed::handle_registry::admission_rollback_stale_receipts_and_payload",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::embed::handle_registry::busy_reentry_and_independent_engines",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::embed::handle_registry::engine_association_and_owner_lifetime",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::embed::handle_registry::engine_removal_refuses_children_and_consumes_admission",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::embed::handle_registry::exact_capacity_and_failed_insert_rollback",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::embed::handle_registry::generation_max_engine_retirement_and_tombstone",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::embed::handle_registry::retired_children_consume_capacity_permanently",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::embed::handle_registry::stale_kind_reuse_never_revives",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::embed::handle_registry::typed_wire_bounds_and_argument_rollback",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 10,
+        "passed": 10,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      }
+    }
+  ],
+  "limitations": [
+    "Kernel only: real OS primitive is separately evidenced but not yet wired to this kernel.",
+    "Actual lazy singleton synchronization, Engine/Instance objects, Program pins and public DLL lifecycle remain incomplete.",
+    "No public host/embed availability, Linux/macOS, allocator failure or performance claims."
+  ]
+}

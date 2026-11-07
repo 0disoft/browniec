@@ -52,3 +52,7 @@ Both profiles execute with an empty tool PATH. This is real OS thread/lock
 evidence for the shim; synthetic kernel identity tests remain separate. No full
 E02 synchronization, public embedding, cancellation or Engine/Instance execution
 availability follows until the actual coordinator connects them.
+
+Implementation `f83436e` passed both native profiles. The [recorded OS evidence](../evidence/abi-thread-identity-windows-20261107.json)
+binds all five feature inputs to checkout/Git bytes, production/test objects,
+actual host commands and default PE stack metadata.

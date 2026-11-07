@@ -28,6 +28,7 @@
 | Private retained-value scalar casts | [Strict widening source bridge](engineering/value-safe-casts.md): existing 7/36 matrix, once-only evaluation and terminal-bottom suffixes; Windows development/release verified in 15 groups each |
 | VM slice dispatch and cleanup | [Shared lifecycle](engineering/m2-array-slice-lifecycle-vm.md) |
 | Gated VM CALL publication | [Frame transaction](engineering/m2-array-call-frame-vm.md) |
+| Typed ABI handles and OS identity | [Fairy kernel](engineering/abi-handles.md), [Windows guard/TLS](engineering/abi-thread-identity.md): separately verified; actual singleton/coordinator and lifecycles remain open |
 | Typed host TLV codec | [Wire codecs](engineering/host-wire.md): six new and four scalar regression groups per Windows profile; catalog/host dispatch/adoption remain open |
 | Windows DLL ABI bootstrap | [Actual query DLL and C host](engineering/abi-bootstrap.md), [public declarations](../include/brownie.h): bootstrap only; Engine/Instance/VM and full embedding remain open |
 | Evidence and testing | [Validation](../VALIDATION.md), [testing standard](engineering/05-testing-standard.md) |

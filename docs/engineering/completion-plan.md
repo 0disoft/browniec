@@ -1,4 +1,15 @@
-- Latest host-wire checkpoint (2026-11-07): [Typed TLV codecs](host-wire.md)
+- Latest registry-prerequisite checkpoint (2026-11-07): [Fairy handles](abi-handles.md)
+  (`fef9fd3`) passed ten native groups per development/release profile; unchanged
+  kernel/test/compiler evidence was retained after the root 227-source/2487-MIR
+  composition check. [Windows guard/TLS](abi-thread-identity.md) (`f83436e`)
+  passed real development/optimized OS hosts: eight concurrent threads, 1024
+  guarded updates, 32 sequential lifetimes and nonwrapping ticket exhaustion.
+  These separate components are not yet one lazy process registry or public
+  Engine/Program/Instance APIs. Full E02/E01, host exchange and inventory remain
+  open. Host TLV codec `6560805` separately passed ten groups in both profiles.
+  No public gates, existing Fuel prices/defaults/caps or delivery changes.
+
+- Predecessor host-wire checkpoint (2026-11-07): [Typed TLV codecs](host-wire.md)
   validate/encode exact request and success/error/fatal payloads with whole-message
   preflight and header-inclusive 1MiB limits. Implementation `6560805` passed ten
   native groups per Windows development/release profile (six new, four scalar
