@@ -1,5 +1,8 @@
 # Shared reference origin sets
 
+The [conditional-owner successor](value-view-conditional-owners.md) now handles
+anonymous roots created only on selected arms. This predecessor records `49dc33f`.
+
 Private shared byte views can now join different already-live Buffer or formal
 origins through `if` and exhaustive `Option`/`Result` switch values. The descriptor
 names remain exact; only the possible root set widens. At runtime a native view
