@@ -212,7 +212,7 @@ pub fn Result<Event,Error> execute_once(ref mut Engine e,usize instance){
 // separate operation; a prepared Instance cannot enter the synchronous path.
 pub fn Result<Event,Error> prepare_instance(ref mut Engine e,usize instance){
     let u32 s=unsafe{call_raw(e as ptr mut void,9,instance,0)};
-    if(s!=0){return .err(error(s));}return .ok(e.meta.event);
+    let usize completed=result(e,s)?;return .ok(e.meta.event);
 }
 pub fn usize output_transport_bytes(){return 8*unsafe{output_fact_raw(null,0)};}
 // Synchronous exact borrow: no Snapshot pointer is retained in an Instance or

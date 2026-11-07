@@ -384,4 +384,19 @@ pub fn void run(){
     assert(native_oom_rolls_back_every_preparation_allocation().is_ok);same_heap(ref before);
     assert(wrong_mode_and_exhausted_epoch_preserve_owners().is_ok);same_heap(ref before);
     assert(engine_drop_reclaims_prepared_owners().is_ok);same_heap(ref before);
+    assert(preparation_fuel_failure_preserves_diagnostic_and_ready_state().is_ok);same_heap(ref before);
+}
+// Group 7: failed preparation returns its original diagnostic while preserving
+// the Ready Instance, Fuel, pins and current balance after partial allocation.
+pub fn Result<usize,u8> preparation_fuel_failure_preserves_diagnostic_and_ready_state(){
+    var engine::Engine e=generous()?;
+    let usize p=compiled(ref mut e,2,b"module app;pub fn i32 chosen(){return 42;}")?;
+    let usize i=id(engine::create_output_instance(ref mut e,p,0,64,true));
+    let engine::Event ready=event(engine::observe(ref mut e,i));let Heap before=heap();
+    switch(engine::prepare_instance(ref mut e,i)){
+        case .ok(_):{assert(false);}
+        case .err(e):{assert(e.status==4 && e.diagnostic.code.kind==8 && e.diagnostic.code.offset==0);}
+    };
+    same_heap(ref before);ledger(ref e,0);same_event(ready,event(engine::observe(ref mut e,i)));
+    counts(ref mut e,1,1,1);destroy(ref mut e,i);release(ref mut e,p);close(ref mut e);return .ok(0);
 }
