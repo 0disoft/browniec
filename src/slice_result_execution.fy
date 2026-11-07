@@ -169,12 +169,20 @@ pub fn Result<Scalar,errors::Error> execute_reference_returns_scalar(ref image_c
 // the caller's immutable backing remains borrowed through every nested frame.
 pub fn Result<Scalar,errors::Error> execute_input_scalar(ref image_calls::Program unit,ref images::Image image,
     ref u8[] guest,ref mut runtime::State state,ref mut u8[] data,usize fuel){
+    var usize remaining=fuel;
+    return execute_input_scalar_metered(unit,image,guest,state,data,ref mut remaining);
+}
+// Explicit terminal meter: every committed debit survives Result::err. Helper
+// transactions return a new balance only on success; failed atomic work does
+// not commit its price. Dispatch and staged metadata debits remain independent.
+pub fn Result<Scalar,errors::Error> execute_input_scalar_metered(ref image_calls::Program unit,ref images::Image image,
+    ref u8[] guest,ref mut runtime::State state,ref mut u8[] data,ref mut usize remaining){
     let image_verifier::ReferenceReturnProof proof=image_verifier::inspect_input_returns(unit,image)?;
     if(guest.len>1048576){return .err(errors::make(4,0));}
     let u8[16] none=[0;16];let runtime::Capture[1] captures=[runtime::capture(frames::none(),false,false)];
     let i64[1] values=[0];let owners::Token[1] inputs=[owners::Token{.slot=0,.generation=0}];
-    return switch(invoke_input(ref unit.body,ref none,ref none,unit.body.entry,ref captures,ref values,ref inputs[..0],
-        state,data,fuel,false,ref proof.statics,images::payload(image),true,guest,ref proof.recipes.site_origins)){
+    return switch(invoke_input_metered(ref unit.body,ref none,ref none,unit.body.entry,ref captures,ref values,ref inputs[..0],
+        state,data,remaining,false,ref proof.statics,images::payload(image),true,guest,ref proof.recipes.site_origins)){
         case .ok(v):{if(v.view){.err(errors::make(5,0))}else{.ok(v.scalar)}}case .err(e):{.err(e)}
     };
 }
@@ -197,6 +205,14 @@ fn Result<Outcome,errors::Error> invoke_input(ref body_ir::Program body,ref u8[]
     ref runtime::Capture[] captures,ref i64[] values,ref owners::Token[] inputs,
     ref mut runtime::State state,ref mut u8[] data,usize fuel,bool view,
     ref statics::Sites sites,ref u8[] literals,bool input,ref u8[] guest,ref u8[] origins){
+    var usize remaining=fuel;
+    return invoke_input_metered(body,elements,parameters,function,captures,values,inputs,state,data,ref mut remaining,view,
+        sites,literals,input,guest,origins);
+}
+fn Result<Outcome,errors::Error> invoke_input_metered(ref body_ir::Program body,ref u8[] elements,ref u8[] parameters,usize function,
+    ref runtime::Capture[] captures,ref i64[] values,ref owners::Token[] inputs,
+    ref mut runtime::State state,ref mut u8[] data,ref mut usize remaining,bool view,
+    ref statics::Sites sites,ref u8[] literals,bool input,ref u8[] guest,ref u8[] origins){
     let usize admitted=admit(body,elements,sites,function,values,captures.len,inputs,view,input)?;
     let usize depth=switch(authority::inspect(ref state.runtime.authority)){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,0));}};
     if(!available(ref state.runtime.authority,true)){return .err(errors::make(5,0));}
@@ -204,13 +220,17 @@ fn Result<Outcome,errors::Error> invoke_input(ref body_ir::Program body,ref u8[]
     let places::Requirement place_plan=places::requirement(body)?;
     let usize work=owned_calls::cost(body,function,0)?+body.arities[function];
     let usize input_cost=if(input){meter::input_prepare()}else{0};
-    if(fuel<runtime::cost()+work+list_plan.cost+place_plan.cost+input_cost){return .err(errors::make(8,0));}
+    if(*remaining<runtime::cost()+work+list_plan.cost+place_plan.cost+input_cost){return .err(errors::make(8,0));}
     var input_views::State windows=if(input){input_views::open(guest.len)?}else{input_views::disabled()};
+    *remaining-=input_cost;
     var vec::Vec<i64> list_cells=list_values::prepare_values(ref list_plan)?;
     var bytes::Buffer list_scratch=list_values::prepare_encoded(ref list_plan)?;
-    var vec::Vec<usize> place_state=places::prepare_metered(ref place_plan,fuel-list_plan.cost-input_cost)?;
-    let runtime::Entered first=entry::enter(body,function,binding(body,parameters,function),captures,inputs,state,data,fuel-list_plan.cost-place_plan.cost-input_cost)?;
-    let Result<Outcome,errors::Error> outcome=start(body,parameters,function,ref first,values,state,data,sites,literals,ref mut list_cells,ref mut list_scratch,ref mut place_state,ref mut windows,guest,origins);
+    *remaining-=list_plan.cost;
+    var vec::Vec<usize> place_state=places::prepare_metered(ref place_plan,*remaining)?;
+    *remaining-=place_plan.cost;
+    let runtime::Entered first=entry::enter(body,function,binding(body,parameters,function),captures,inputs,state,data,*remaining)?;
+    *remaining=first.call.remaining;
+    let Result<Outcome,errors::Error> outcome=start(body,parameters,function,ref first,values,state,data,sites,literals,ref mut list_cells,ref mut list_scratch,ref mut place_state,ref mut windows,guest,origins,remaining);
     return switch(outcome){
         case .ok(v):{.ok(v)}
         case .err(e):{
@@ -227,17 +247,17 @@ fn Result<Outcome,errors::Error> invoke_input(ref body_ir::Program body,ref u8[]
 fn Result<Outcome,errors::Error> start(ref body_ir::Program body,ref u8[] parameters,usize function,ref runtime::Entered first,
     ref i64[] values,ref mut runtime::State state,ref mut u8[] data,ref statics::Sites sites,ref u8[] literals,
     ref mut vec::Vec<i64> list_cells,ref mut bytes::Buffer list_scratch,ref mut vec::Vec<usize> place_state,
-    ref mut input_views::State windows,ref u8[] guest,ref u8[] origins){
+    ref mut input_views::State windows,ref u8[] guest,ref u8[] origins,ref mut usize remaining){
     var frames::Frames bindings=frames::empty(state);
-    return run(body,parameters,function,first,values,ref mut bindings,state,data,sites,literals,list_cells,list_scratch,place_state,windows,guest,origins);
+    return run(body,parameters,function,first,values,ref mut bindings,state,data,sites,literals,list_cells,list_scratch,place_state,windows,guest,origins,remaining);
 }
 fn input_spans::Span span_for_input(usize length){return input_spans::Span{.start=0,.length=length};}
 fn Result<Outcome,errors::Error> run(ref body_ir::Program body,ref u8[] parameters,usize function,ref runtime::Entered first,
     ref i64[] values,ref mut frames::Frames bindings,ref mut runtime::State state,ref mut u8[] data,ref statics::Sites sites,ref u8[] literals,
     ref mut vec::Vec<i64> list_cells,ref mut bytes::Buffer list_scratch,ref mut vec::Vec<usize> place_state,
-    ref mut input_views::State windows,ref u8[] guest,ref u8[] origins){
+    ref mut input_views::State windows,ref u8[] guest,ref u8[] origins,ref mut usize remaining){
     var usize[32] static_live=[0;32];var u32[512] static_words=[0;512];
-    var i64[4096] registers=[0;4096];var usize remaining=first.call.remaining;
+    var i64[4096] registers=[0;4096];
     let usize entered=frames::push(body,bindings,first.call,function,128,32,0)?;
     entry::bind(body,function,ref first.copies,bindings);
     if(input_views::enabled(windows)){
@@ -255,20 +275,20 @@ fn Result<Outcome,errors::Error> run(ref body_ir::Program body,ref u8[] paramete
         let usize at=pc*8;let usize offset=body.offsets[pc];let u8 op=body.code[at];
         let usize dst=body.code[at+1] as usize;let usize a=body.code[at+2] as usize;let usize b=body.code[at+3] as usize;
         let usize base=frame*128;
-        if(remaining==0){return .err(errors::make(8,offset));}remaining-=1;
+        if(*remaining==0){return .err(errors::make(8,offset));};*remaining-=1;
         if(op>=83 && op<=87){
             let usize price=places::price(body,pc,f,frame,place_state)?;
-            if(remaining<price){return .err(errors::make(8,offset));}
+            if(*remaining<price){return .err(errors::make(8,offset));}
             let u8 kind=body.code[at+4];let owners::Token none=owners::Token{.slot=0,.generation=0};
             let owners::Token current=if(op==83 && (kind==2 || kind==4)){record_bindings::get(ref bindings.records,frame*16+a)}else{none};
             let owners::Token source=if(op==85 && kind==4){record_bindings::get(ref bindings.records,frame*16+b)}else{none};
-            remaining=places::bound(body,pc,f,frame,place_state,ref state.runtime.owners,ref bindings.tokens,current,source,
-                ref state.runtime.pool,ref bindings.sites,data,ref mut registers[base..base+128],list_cells,list_scratch,remaining)?;
+            *remaining=places::bound(body,pc,f,frame,place_state,ref state.runtime.owners,ref bindings.tokens,current,source,
+                ref state.runtime.pool,ref bindings.sites,data,ref mut registers[base..base+128],list_cells,list_scratch,*remaining)?;
             pc+=1;continue;
         }
         if(op==8 || op==39 || op==50 || op==65 || op==79 || op==82){let usize ended=place_frames::empty_frame(place_state,frame,offset)?;}
         if(op==80 || op==81){
-            remaining=owned::list(body,pc,bindings,state,ref registers[base..base+128],data,list_cells,list_scratch,remaining)?;
+            *remaining=owned::list(body,pc,bindings,state,ref registers[base..base+128],data,list_cells,list_scratch,*remaining)?;
             pc+=1;continue;
         }
         var bool byte_loan=false;
@@ -277,11 +297,11 @@ fn Result<Outcome,errors::Error> run(ref body_ir::Program body,ref u8[] paramete
             if(!byte_loan && words::returned(static_words[frame*16+a])){
                 let usize extra=meter::reference_result_lookup();
                 let usize price=meter::slice_base(if(op==71){58}else{57},1);
-                if(remaining<extra+price){return .err(errors::make(8,offset));}remaining-=extra;
+                if(*remaining<extra+price){return .err(errors::make(8,offset));};*remaining-=extra;
             }
             let bool input_read=!byte_loan && input_views::is_input(static_words[frame*16+a]);
             if(input_read){let usize price=meter::input_metadata()+meter::static_instruction(if(op==71){71}else{72},0,0);
-                if(remaining<price){return .err(errors::make(8,offset));}remaining-=meter::input_metadata();}
+                if(*remaining<price){return .err(errors::make(8,offset));};*remaining-=meter::input_metadata();}
             let access::Source source=if(byte_loan){access::loan(bindings.sites[frame*16+a])}
                 else if(sites.kinds[a]==3){references::source_input(body,sites,f,a,ref static_words[frame*16..frame*16+16],static_live[frame],bindings,literals.len,windows,offset)?}
                 else{access::image(a)};
@@ -289,37 +309,37 @@ fn Result<Outcome,errors::Error> run(ref body_ir::Program body,ref u8[] paramete
                 let usize price=meter::static_instruction(if(op==71){71}else{72},0,0);
                 let i64 value=if(op==71){access::checked_byte(guest,source.span,registers[base+b],offset)?}
                     else{cells::pack(source.span.length,offset)?};
-                access::Value{.value=value,.remaining=remaining-price}
+                access::Value{.value=value,.remaining=*remaining-price}
             }else if(op==71 || op==58){access::read(ref source,sites,f,
                     ref static_words[frame*16..frame*16+16],static_live[frame],literals,
-                    ref state.runtime.pool,ref state.runtime.owners,data,registers[base+b],remaining,offset)?}
+                    ref state.runtime.pool,ref state.runtime.owners,data,registers[base+b],*remaining,offset)?}
                 else{access::length(ref source,sites,f,
                     ref static_words[frame*16..frame*16+16],static_live[frame],literals,
-                    ref state.runtime.pool,ref state.runtime.owners,data.len,remaining,offset)?};
-            registers[base+dst]=result.value;remaining=result.remaining;pc+=1;continue;
+                    ref state.runtime.pool,ref state.runtime.owners,data.len,*remaining,offset)?};
+            registers[base+dst]=result.value;*remaining=result.remaining;pc+=1;continue;
         }
         if(op==77){
-            remaining=if(body.code[at+3]==3){references::parameter_input(body,sites,pc,f,
-                ref static_words[frame*16..frame*16+16],static_live[frame],bindings,state,literals,data.len,remaining,windows)?}
+            *remaining=if(body.code[at+3]==3){references::parameter_input(body,sites,pc,f,
+                ref static_words[frame*16..frame*16+16],static_live[frame],bindings,state,literals,data.len,*remaining,windows)?}
                 else{transfer::parameter(body,sites,literals.len,pc,f,
-                    ref static_words[frame*16..frame*16+16],static_live[frame],remaining)?};
+                    ref static_words[frame*16..frame*16+16],static_live[frame],*remaining)?};
             let usize one=1;static_live[frame]|=one<<dst;pc+=1;continue;
         }
         if((op==70 || op==75 || op==76) && dst<16 && sites.kinds[dst]==3){
             if(op==70 && words::returned(static_words[frame*16+dst])){
                 let receipts::Closed closed=receipts::close(ref mut bindings.loans,state,frame,dst,
-                    ref mut static_words[frame*16..frame*16+16],static_live[frame],data.len,remaining,offset)?;
-                static_live[frame]=closed.live;remaining=closed.remaining;pc+=1;continue;
+                    ref mut static_words[frame*16..frame*16+16],static_live[frame],data.len,*remaining,offset)?;
+                static_live[frame]=closed.live;*remaining=closed.remaining;pc+=1;continue;
             }
             let references::Step next=references::step_input(body,sites,pc,f,
                 ref mut static_words[frame*16..frame*16+16],static_live[frame],bindings,
-                ref registers[base..base+128],literals.len,remaining,windows)?;
-            static_live[frame]=next.live;remaining=next.remaining;pc+=1;continue;
+                ref registers[base..base+128],literals.len,*remaining,windows)?;
+            static_live[frame]=next.live;*remaining=next.remaining;pc+=1;continue;
         }
         if(statics::operation(op)){
             let immutable::Step next=immutable::step_frame(body,sites,literals,pc,f,
-                ref mut registers[base..base+128],static_live[frame],remaining,ref mut static_words[frame*16..frame*16+16])?;
-            static_live[frame]=next.live;remaining=next.remaining;pc+=1;continue;
+                ref mut registers[base..base+128],static_live[frame],*remaining,ref mut static_words[frame*16..frame*16+16])?;
+            static_live[frame]=next.live;*remaining=next.remaining;pc+=1;continue;
         }
         if(bindings.prepared[frame] && (op==37 || op==45 || op==56 || op==62)){
             // The terminal recipe is independently proved. Physical CLOSE/END
@@ -340,21 +360,23 @@ fn Result<Outcome,errors::Error> run(ref body_ir::Program body,ref u8[] paramete
         if(op==9 || op==64 || op==66 || op==78){
             if(frame>=31 || !available(ref state.runtime.authority,false)){return .err(errors::make(12,offset));}
             let usize input_work=if(input_views::enabled(windows)){meter::input_frame()}else{0};
-            if(remaining<input_work+runtime::cost()){return .err(errors::make(8,offset));}remaining-=input_work;
+            if(*remaining<input_work+runtime::cost()){return .err(errors::make(8,offset));};*remaining-=input_work;
             let usize fresh=place_frames::empty_frame(place_state,frame+1,offset)?;
             var runtime::Contract c=binding(body,parameters,a);
             let bool generic=op==78 && (sites.results[a]==3 || references::parameters(body,sites,a));
-            var transfer::Arguments staged=transfer::Arguments{.words=[0;16],.remaining=remaining};
-            var references::Arguments captured=references::empty(remaining);
+            var transfer::Arguments staged=transfer::Arguments{.words=[0;16],.remaining=*remaining};
+            var references::Arguments captured=references::empty(*remaining);
             if(generic){captured=references::arguments_input(body,sites,pc,f,ref static_words[frame*16..frame*16+16],
-                static_live[frame],bindings,state,data.len,literals.len,remaining,windows)?;c.tags=captured.tags;
+                static_live[frame],bindings,state,data.len,literals.len,*remaining,windows)?;
+                *remaining=captured.remaining;c.tags=captured.tags;
                 if(sites.results[a]==3 && sites.origins[a]!=9){let usize origin=sites.origins[a] as usize;
                     if(origin==0 || origin>c.arity){return .err(errors::make(5,offset));}
                     c.selected=if(c.tags[origin-1]==10){origin}else{0};}
             }
             else if(op==78){staged=transfer::arguments(body,sites,literals.len,pc,f,
-                ref static_words[frame*16..frame*16+16],static_live[frame],remaining)?;}
-            remaining=switch(if(generic){owned::enter_captured(body,pc,c,bindings,state,data,captured.remaining,ref captured.captures[..c.arity])}
+                ref static_words[frame*16..frame*16+16],static_live[frame],*remaining)?;};
+            *remaining=if(generic){captured.remaining}else{staged.remaining};
+            *remaining=switch(if(generic){owned::enter_captured(body,pc,c,bindings,state,data,captured.remaining,ref captured.captures[..c.arity])}
                 else{owned::enter(body,pc,c,bindings,state,data,staged.remaining)}){
                 case .ok(v):{v}case .err(e):{return .err(errors::make(e.kind,offset));}
             };
@@ -370,68 +392,72 @@ fn Result<Outcome,errors::Error> run(ref body_ir::Program body,ref u8[] paramete
         }
         if(op==79){
             let usize input_work=if(input_views::enabled(windows)){meter::input_frame()}else{0};
-            if(remaining<input_work){return .err(errors::make(8,offset));}remaining-=input_work;
+            if(*remaining<input_work){return .err(errors::make(8,offset));};*remaining-=input_work;
             let usize next=bindings.continuations[frame];
             if(frame<=1 || next==0 || next>body.count){return .err(errors::make(5,offset));}
             let usize parent=frame-1;let usize caller=bindings.functions[parent];
             if(sites.results[f]==3){
                 let reference_returns::Returned staged=reference_returns::prepare_input(body,sites,pc,f,
-                    ref static_words[frame*16..frame*16+16],static_live[frame],static_live[parent],bindings,state,literals.len,remaining,windows,origins)?;
+                    ref static_words[frame*16..frame*16+16],static_live[frame],static_live[parent],bindings,state,literals.len,*remaining,windows,origins)?;
+                *remaining=staged.remaining;
                 if(staged.loan){var runtime::Call call=frames::current(bindings);
                     let runtime::Returned result=records::handoff(bindings,state,ref mut call,staged.ticket,data.len,staged.remaining)?;
+                    *remaining=result.remaining;
                     let usize resumed=frames::pop_reference(body,bindings,result)?;
                     static_live[parent]=receipts::publish(ref mut bindings.loans,parent,staged.destination,result.held,staged.span,
                         ref mut static_words[parent*16..parent*16+16],static_live[parent],offset)?;
-                    remaining=result.remaining;
+                    *remaining=result.remaining;
                 }else{let runtime::Resumed resumed=owned::leave(body,pc,8,bindings,state,data,staged.remaining)?;
+                    *remaining=resumed.remaining;
                     if(staged.input){let usize published=input_views::put(windows,parent,staged.destination,staged.span,offset)?;}
                     static_words[parent*16+staged.destination]=staged.word;let usize one=1;static_live[parent]|=one<<staged.destination;
-                    remaining=resumed.remaining;
+                    *remaining=resumed.remaining;
                 }
                 let usize cleared=input_views::clear_frame(windows,frame,offset)?;
                 static_live[frame]=0;i=0;while(i<16){static_words[frame*16+i]=0;i+=1;}pc=next;continue;
             }
             let transfer::Returned staged=transfer::returned(body,sites,literals.len,pc,f,
                 ref static_words[frame*16..frame*16+16],static_live[frame],next-1,caller,
-                bindings.destinations[frame],static_live[parent],remaining)?;
+                bindings.destinations[frame],static_live[parent],*remaining)?;
+            *remaining=staged.remaining;
             // The native ordinary-return transaction restores all loan inputs;
             // no image view or payload ownership is transferred by that layer.
             let runtime::Resumed resumed=switch(owned::leave(body,pc,8,bindings,state,data,staged.remaining)){
                 case .ok(v):{v}case .err(e):{return .err(errors::make(e.kind,offset));}
             };
-            remaining=resumed.remaining;let usize cleared=input_views::clear_frame(windows,frame,offset)?;static_live[frame]=0;
+            *remaining=resumed.remaining;let usize cleared=input_views::clear_frame(windows,frame,offset)?;static_live[frame]=0;
             i=0;while(i<16){static_words[frame*16+i]=0;i+=1;}
             static_words[parent*16+staged.destination]=staged.word;
             let usize one=1;static_live[parent]|=one<<staged.destination;pc=next;continue;
         }
         if(op==65){
             let usize input_work=if(input_views::enabled(windows)){meter::input_frame()}else{0};
-            if(remaining<input_work){return .err(errors::make(8,offset));}remaining-=input_work;
+            if(*remaining<input_work){return .err(errors::make(8,offset));};*remaining-=input_work;
             if(static_live[frame]!=0){return .err(errors::make(5,offset));}
             let usize selected=frames::selected(bindings,a)?;var runtime::Call call=frames::current(bindings);
-            let runtime::Returned result=switch(records::handoff(bindings,state,ref mut call,bindings.results[selected],data.len,remaining)){
+            let runtime::Returned result=switch(records::handoff(bindings,state,ref mut call,bindings.results[selected],data.len,*remaining)){
                 case .ok(v):{v}case .err(e):{return .err(errors::make(e.kind,offset));}
-            };remaining=result.remaining;
+            };*remaining=result.remaining;
             pc=frames::pop(body,bindings,result)?;let usize cleared=input_views::clear_frame(windows,frame,offset)?;
             if(bindings.frame==0){return .ok(transferred(result));}continue;
         }
         if(op==8 || op==39 || op==50 || op==82){
             let usize input_work=if(input_views::enabled(windows)){meter::input_frame()}else{0};
-            if(remaining<input_work){return .err(errors::make(8,offset));}remaining-=input_work;
+            if(*remaining<input_work){return .err(errors::make(8,offset));};*remaining-=input_work;
             if(op==82 && (frame==1 || body.return_types[f]!=13)){return .err(errors::make(5,offset));}
             if(static_live[frame]!=0){return .err(errors::make(5,offset));}
             let usize destination=bindings.destinations[frame];let usize next=bindings.continuations[frame];
             let i64 value=if(op==8){registers[base+a]}else{0};
-            let runtime::Resumed resumed=switch(owned::leave(body,pc,op,bindings,state,data,remaining)){
+            let runtime::Resumed resumed=switch(owned::leave(body,pc,op,bindings,state,data,*remaining)){
                 case .ok(v):{v}case .err(e):{return .err(errors::make(e.kind,offset));}
             };
-            remaining=resumed.remaining;let usize cleared=input_views::clear_frame(windows,frame,offset)?;
-            if(frame==1){return .ok(completed(Scalar{.value=value,.remaining=remaining,.resumed=resumed.tickets}));}
+            *remaining=resumed.remaining;let usize cleared=input_views::clear_frame(windows,frame,offset)?;
+            if(frame==1){return .ok(completed(Scalar{.value=value,.remaining=*remaining,.resumed=resumed.tickets}));}
             if(op==8){registers[(frame-1)*128+destination]=value;}pc=next;continue;
         }
-        if(op>=41 && op<=49){remaining=records::step(body,pc,bindings,state,ref mut registers[base..base+128],data,remaining)?;pc+=1;continue;}
-        if((op>=33 && op<=40) || (op>=51 && op<=53)){remaining=owned::step(body,pc,bindings,state,ref mut registers[base..base+128],data,remaining)?;pc+=1;continue;}
-        if(op>=54 && op<=62){remaining=loans::step(body,pc,bindings,state,ref mut registers[base..base+128],data,remaining)?;pc+=1;continue;}
+        if(op>=41 && op<=49){*remaining=records::step(body,pc,bindings,state,ref mut registers[base..base+128],data,*remaining)?;pc+=1;continue;}
+        if((op>=33 && op<=40) || (op>=51 && op<=53)){*remaining=owned::step(body,pc,bindings,state,ref mut registers[base..base+128],data,*remaining)?;pc+=1;continue;}
+        if(op>=54 && op<=62){*remaining=loans::step(body,pc,bindings,state,ref mut registers[base..base+128],data,*remaining)?;pc+=1;continue;}
         if(op==8 || op==9 || op==25 || op>=33){return .err(errors::make(5,offset));}
         if(op==19 || op==20 || op==21 || op==22){
             if(op==19 || op==22){pc=a;}else if((registers[base+a]==0)==(op==20)){pc=b;}else{pc+=1;}continue;

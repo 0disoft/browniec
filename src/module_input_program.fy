@@ -71,23 +71,32 @@ pub fn ref images::Image literals(ref Program p){return ref stored(p).image;}
 // Own no new input payload: this exact immutable Snapshot is borrowed until the
 // last native frame has left or invocation failure has drained every owner.
 pub struct Run { i64 value; usize remaining; }
-pub fn Result<Run,diagnostics::Error> run(ref Program program,ref input_bytes::Snapshot input,usize fuel){
-    let ref Stored retained=stored(program);
-    return switch(execute(retained,input_bytes::view(input),fuel)){
-        case .ok(v):{.ok(Run{.value=v.value,.remaining=v.remaining})}
-        case .err(e):{.err(if(e.offset==0){diagnostics::absent(e)}else{diagnostics::map(snapshot(program),e,16)})}
+// Terminal evidence is invocation-local, including failures. Inactive value and
+// diagnostic fields are deterministic; callers select them with success.
+pub struct Completion { bool success; i64 value; usize remaining; diagnostics::Error diagnostic; }
+pub fn Completion complete(ref Program program,ref input_bytes::Snapshot input,usize fuel){
+    let ref Stored retained=stored(program);var usize remaining=fuel;
+    return switch(execute(retained,input_bytes::view(input),ref mut remaining)){
+        case .ok(v):{Completion{.success=true,.value=v.value,.remaining=remaining,.diagnostic=diagnostics::absent(errors::make(0,0))}}
+        case .err(e):{Completion{.success=false,.value=0,.remaining=remaining,
+            .diagnostic=if(e.offset==0){diagnostics::absent(e)}else{diagnostics::map(snapshot(program),e,16)}}}
     };
 }
-fn Result<execution::Scalar,errors::Error> execute(ref Stored retained,ref u8[] input,usize fuel){
+pub fn Result<Run,diagnostics::Error> run(ref Program program,ref input_bytes::Snapshot input,usize fuel){
+    let Completion result=complete(program,input,fuel);
+    return if(result.success){.ok(Run{.value=result.value,.remaining=result.remaining})}else{.err(result.diagnostic)};
+}
+fn Result<execution::Scalar,errors::Error> execute(ref Stored retained,ref u8[] input,ref mut usize remaining){
     let ref ir::Program body=ref retained.code.body;
     let usize capacity=if(body.arrays.count!=0 || body.records.count!=0){65536}else{0};
     let usize preparation=if(capacity==0){0}else{1+capacity};
     let lists::Requirement list_plan=lists::requirement(body)?;
     let places::Requirement place_plan=places::requirement(body)?;
     let usize work=owned_calls::cost(body,body.entry,0)?+body.arities[body.entry];
-    if(fuel<preparation+meter::input_prepare()+runtime::cost()+work+list_plan.cost+place_plan.cost){return .err(errors::make(8,0));}
+    if(*remaining<preparation+meter::input_prepare()+runtime::cost()+work+list_plan.cost+place_plan.cost){return .err(errors::make(8,0));}
     var bytes::Buffer payload=if(capacity==0){bytes::empty()}else{backing::prepare(capacity)?};
+    *remaining-=preparation;
     var runtime::State state=runtime::empty(capacity);
-    return execution::execute_input_scalar(ref retained.code,ref retained.image,input,
-        ref mut state,bytes::view_mut(ref mut payload),fuel-preparation);
+    return execution::execute_input_scalar_metered(ref retained.code,ref retained.image,input,
+        ref mut state,bytes::view_mut(ref mut payload),remaining);
 }
