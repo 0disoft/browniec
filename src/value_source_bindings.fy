@@ -404,8 +404,28 @@ pub fn Result<usize,errors::Error> assign_view(ref mut values::Program unit,ref 
     let usize owners=views::local_roots(ref state.views,destination);
     let usize kept=other_roots(state,destination);let usize departing=owners^(owners&kept);
     let usize drops=anonymous_drops(state,departing,at)?;
-    if(unit.body.count>256 || 2+drops>256-unit.body.count){return .err(errors::make(4,at));}
+    // A fresh retained RHS needs a distinct scratch and cycling carrier: evaluate
+    // it completely before closing the old descriptor or retiring any owner.
+    var usize fresh=16;var usize carrier=16;
+    if(state.tracking && new_roots<65536 && (new_roots&(new_roots-1))==0 &&
+        views::retained_roots(ref state.views,source)==new_roots){
+        var usize root=0;while(root<16){if(new_roots==bit(root) && !named_owner(state,root) &&
+            (state.loop_roots&bit(root))==0 && (state.live&bit(root))!=0){fresh=root;}root+=1;}
+        if(fresh!=16){if(state.next==16){return .err(errors::make(4,at));}carrier=state.next;}
+    }
+    let usize extra=if(fresh==16){0}else{2};
+    if(unit.body.count>256 || 2+drops+extra>256-unit.body.count){return .err(errors::make(4,at));}
     let usize closed=views::close(unit,ref mut state.views,destination,at)?;
+    if(fresh!=16){
+        let usize exact=values::type_id(unit,fresh);
+        let usize allocated=allocate(unit,state,exact,at)?;
+        // Dead on the first visit; definitely Dead after this explicit cleanup
+        // on every subsequent visit. A surviving alias makes CFG admission fail.
+        append(unit,115,carrier,0,at);
+        append(unit,88,carrier,fresh,at);
+        let usize renamed=views::relocate(ref mut state.views,fresh,carrier,at)?;
+        state.live^=bit(fresh);state.live|=bit(carrier);
+    }
     let usize moved=views::move_to(unit,ref mut state.views,source,destination,at)?;
     state.views.names[index]=byte(destination+1);
     let usize dropped=drop_anonymous(unit,state,departing,at)?;return .ok(destination);

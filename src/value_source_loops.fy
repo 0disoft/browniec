@@ -73,13 +73,22 @@ fn Result<usize,errors::Error> clean(ref mut values::Program unit,ref mut bindin
     let usize maybe=vec::at<bindings::Snapshot>(paths,frame.entry).state.maybe;
     let usize one=1;var usize id=state.next;
     while(id!=0){id-=1;if(((state.live|state.maybe)&(one<<id))!=0 && ((live|maybe)&(one<<id))==0){
-        let usize dropped=bindings::drop(unit,state,id,at)?;
+        // A fresh retained anonymous Buffer is normalized at its assignment
+        // site; carry its real carrier rather than attempting a pinned DROP.
+        var usize retained=0;var usize v=0;while(v<16){
+            retained|=views::local_roots(ref state.views,v)&views::retained_roots(ref state.views,v);v+=1;}
+        if((retained&(one<<id))==0){let usize dropped=bindings::drop(unit,state,id,at)?;}
     }}return .ok(live);
 }
-// Backedges preserve the exact initialization lattice, including possible-only
-// roots inherited from an enclosing conditional expression.
+// Backedges preserve the pre-existing initialization lattice. Additional roots
+// must be retained anonymous carriers; the independent CFG proves their cycling.
 fn bool same_loop(ref bindings::State state,ref bindings::Snapshot entry){
-    return state.live==entry.state.live && state.maybe==entry.state.maybe && state.loop_roots==entry.state.loop_roots;
+    let usize initial=entry.state.live|entry.state.maybe;
+    if((state.live&initial)!=entry.state.live || (state.maybe&initial)!=entry.state.maybe ||
+        state.loop_roots!=entry.state.loop_roots){return false;}
+    let usize extra=(state.live|state.maybe)^initial;var usize retained=0;var usize i=0;
+    while(i<16){retained|=views::local_roots(ref state.views,i)&views::retained_roots(ref state.views,i);i+=1;}
+    return (extra&retained)==extra;
 }
 pub fn Result<usize,errors::Error> repeat(ref mut values::Program unit,ref mut bindings::State state,
     ref vec::Vec<bindings::Snapshot> paths,ref mut State loops,usize at){
@@ -120,8 +129,8 @@ pub fn Result<bool,errors::Error> post(ref mut values::Program unit,ref mut bind
 // Both planes only gain bits: missing retention records an unretained occurrence
 // on ANY path containing that origin. This is the per-origin retention meet.
 // Keep the bounded PC table on the compiler heap, off recursive parser frames.
-struct Origins { usize[16] roots; usize[16] unretained; }
-fn Origins no_origins(){return Origins{.roots=[0;16],.unretained=[0;16]};}
+struct Origins { usize[16] roots; usize[16] unretained; usize definite; usize possible; }
+fn Origins no_origins(){return Origins{.roots=[0;16],.unretained=[0;16],.definite=0,.possible=0};}
 fn usize bit(usize id){let usize one=1;return one<<id;}
 fn Result<usize,errors::Error> origin_edge(ref mut vec::Vec<Origins> states,
     ref mut bool[] seen,ref mut bool[] pending,usize head,usize end,usize target,
@@ -137,12 +146,22 @@ fn Result<usize,errors::Error> origin_edge(ref mut vec::Vec<Origins> states,
         if(roots!=joined.roots[i] || missing!=joined.unretained[i]){changed=true;}
         joined.roots[i]=roots;joined.unretained[i]=missing;i+=1;
     }
+    let usize must=if(seen[target]){joined.definite&incoming.definite}else{incoming.definite};
+    let usize may=joined.possible|incoming.possible;
+    if(must!=joined.definite || may!=joined.possible){changed=true;}
+    joined.definite=must;joined.possible=may;
     seen[target]=true;if(changed){pending[target]=true;}return .ok(target);
 }
 fn Result<usize,errors::Error> view_transfer(ref values::Program unit,ref mut Origins row,usize pc,usize at){
     let ref ir::Program p=ref unit.body;let usize offset=pc*8;let u8 op=p.code[offset];
     let usize dst=p.code[offset+1] as usize;let usize a=p.code[offset+2] as usize;
     let usize map=p.code[offset+3] as usize;
+    if(op==88 && unit.catalog.nodes[values::type_id(unit,a)].kind==4){
+        var usize i=0;while(i<16){if((row.roots[i]&bit(a))!=0){
+            let usize renamed=(row.roots[i]^bit(a))|bit(dst);row.roots[i]=renamed;
+            if((row.unretained[i]&bit(a))!=0){let usize renamed=(row.unretained[i]^bit(a))|bit(dst);row.unretained[i]=renamed;}
+        }i+=1;}
+    }
     if(op==105 || op==106 || op==107 || op==108 || op==114){
         if(dst>=16 || row.roots[dst]!=0){return .err(invalid(at));}
         if(op==105){if(a>=16){return .err(invalid(at));}
@@ -168,6 +187,28 @@ fn Result<usize,errors::Error> view_transfer(ref values::Program unit,ref mut Or
     }else if(op==110 || op==111 || op==113){
         if(a>=16 || row.roots[a]==0){return .err(invalid(at));}
     }
+    if(op==9 || op==93 || op==114){var usize i=0;while(i<p.call_arities[map] as usize){
+        let usize actual=p.call_args[map*8+i] as usize;
+        if(actual>=208 && actual<224 && unit.catalog.nodes[values::type_id(unit,actual-208)].kind==4){
+            row.definite^=row.definite&bit(actual-208);row.possible^=row.possible&bit(actual-208);
+        }i+=1;}
+    }
+    if(op==91 && values::payload(unit,dst,p.code[offset+3] as usize,pc)?!=0 &&
+        unit.catalog.nodes[values::type_id(unit,a)].kind==4){
+        row.definite^=row.definite&bit(a);row.possible^=row.possible&bit(a);
+    }
+    if(op==92 && values::payload(unit,a,p.code[offset+3] as usize,pc)?!=0 &&
+        unit.catalog.nodes[values::type_id(unit,dst)].kind==4){row.definite|=bit(dst);row.possible|=bit(dst);}
+    if(op==90 || op==115){row.definite^=row.definite&bit(dst);row.possible^=row.possible&bit(dst);}
+    else if(op==88 || op==89){
+        if(unit.catalog.nodes[values::type_id(unit,dst)].kind==4){
+            if(op==88){row.definite^=row.definite&bit(a);row.possible^=row.possible&bit(a);}
+            row.definite|=bit(dst);row.possible|=bit(dst);
+        }
+    }else if(op==95 || ((op==9 || op==93) && unit.results[a]!=0 && unit.results[a]<=16 &&
+        unit.catalog.nodes[values::type_id(unit,dst)].kind==4)){
+        row.definite|=bit(dst);row.possible|=bit(dst);
+    }
     return .ok(pc);
 }
 fn Result<usize,errors::Error> unpinned(ref Origins row,usize owner,usize at){
@@ -183,7 +224,9 @@ fn Result<usize,errors::Error> audit(ref values::Program unit,ref Origins row,us
     let usize b=p.code[offset+3] as usize;
     if(op==88 || op==89 || op==90 || op==115 || op==101 || op==102 || op==103 || op==104 || op==112 || op==91 || op==92){
         let usize owner=if(op==90 || op==115 || op==101){dst}else{a};
-        let usize checked=unpinned(row,owner,at)?;
+        if(op==88 && unit.catalog.nodes[values::type_id(unit,a)].kind==4){
+            let usize checked=unpinned(row,dst,at)?;
+        }else{let usize checked=unpinned(row,owner,at)?;}
     }
     if(op==9 || op==93 || op==114){
         if(b>=p.call_count || p.call_arities[b]>8){return .err(invalid(at));}var usize i=0;
@@ -208,11 +251,60 @@ fn Result<usize,errors::Error> infer_exit(ref values::Program unit,ref mut bindi
     ref Origins row,usize at){
     let usize inferred=views::inferred(ref mut path.state.views,ref row.roots,ref row.unretained,at)?;
     let usize checked=views::authenticate(unit,ref path.state.views,at)?;
-    var usize i=0;while(i<16){let usize roots=views::local_roots(ref path.state.views,i);
+    // Project the converged Buffer initialization lattice onto this reached
+    // exit. Zero-trip carriers are possible, never dummy initialized owners.
+    var usize i=0;while(i<16){if(unit.types[i]!=0 && unit.functions[i] as usize==path.state.names.function){
+        if(i>=path.state.next){path.state.next=i+1;}
+        if(unit.catalog.nodes[values::type_id(unit,i)].kind==4){
+        path.state.live^=path.state.live&bit(i);path.state.maybe^=path.state.maybe&bit(i);
+        path.state.live|=row.definite&bit(i);path.state.maybe|=(row.possible^row.definite)&bit(i);
+    }}i+=1;}
+    i=0;while(i<16){let usize roots=views::local_roots(ref path.state.views,i);
         if((roots&(path.state.live|path.state.maybe))!=roots){return .err(invalid(at));}i+=1;
     }return .ok(inferred);
 }
-pub fn Result<usize,errors::Error> infer(ref values::Program unit,
+// Earlier terminal cleanup was lowered before a later carrier slot existed.
+// Complete only those compiler-created carriers using explicit forward cleanup
+// islands. Preserve the original return bytes/offset, and preflight ALL capacity
+// before modifying any instruction. No source or executable effect is replayed.
+fn Result<usize,errors::Error> terminal_carriers(ref mut values::Program unit,
+    ref vec::Vec<Origins> states,ref bool[] seen,usize head,usize end,usize at){
+    var usize carriers=0;var usize pc=head+1;
+    while(pc<end){let usize offset=pc*8;
+        if(unit.body.code[offset]==88 && unit.body.code[offset-8]==115 &&
+            unit.body.code[offset+1]==unit.body.code[offset-7]){
+            carriers|=bit(unit.body.code[offset+1] as usize);
+        }pc+=1;
+    }
+    var usize needed=0;pc=head;
+    while(pc<end){let u8 op=unit.body.code[pc*8];
+        if(seen[pc] && (op==8 || op==39 || op==50 || op==82 || op==94 || op==113)){
+            let ref Origins row=vec::at<Origins>(states,pc-head);let usize keep=if(op==94){bit(unit.body.code[pc*8+2] as usize)}else{0};
+            let usize departing=(row.possible&carriers)^(row.possible&carriers&keep);
+            if(departing!=0){needed+=1;var usize id=0;while(id<16){if((departing&bit(id))!=0){needed+=1;}id+=1;}}
+        }pc+=1;
+    }
+    if(unit.body.count>256 || needed>256-unit.body.count){return .err(errors::make(4,at));}
+    pc=head;while(pc<end){let usize offset=pc*8;let u8 op=unit.body.code[offset];
+        if(seen[pc] && (op==8 || op==39 || op==50 || op==82 || op==94 || op==113)){
+            let ref Origins row=vec::at<Origins>(states,pc-head);let usize keep=if(op==94){bit(unit.body.code[offset+2] as usize)}else{0};
+            let usize departing=(row.possible&carriers)^(row.possible&carriers&keep);
+            if(departing!=0){
+                let usize target=unit.body.count;let usize origin=unit.body.offsets[pc];
+                var usize id=16;while(id>0){id-=1;if((departing&bit(id))!=0){
+                    let usize dropped=ir::raw(ref mut unit.body,115,id,0,0,origin)?;
+                }}
+                let usize copied=unit.body.count;var usize j=0;
+                while(j<8){let u8 byte=unit.body.code[offset+j];unit.body.code[copied*8+j]=byte;j+=1;}
+                unit.body.offsets[copied]=origin;unit.body.count=copied+1;
+                j=0;while(j<8){unit.body.code[offset+j]=0;j+=1;}
+                unit.body.code[offset]=19;
+                let usize patched=ir::patch(ref mut unit.body,pc,target,origin)?;
+            }
+        }pc+=1;
+    }return .ok(needed);
+}
+pub fn Result<usize,errors::Error> infer(ref mut values::Program unit,
     ref mut vec::Vec<bindings::Snapshot> paths,ref State loops,usize condition,usize guard,usize at){
     if(loops.depth==0 || loops.depth>32 || condition>=branches::mark(paths)){return .err(invalid(at));}
     let Frame frame=loops.frames[loops.depth-1];let usize head=frame.head;let usize end=position(unit);
@@ -227,7 +319,11 @@ pub fn Result<usize,errors::Error> infer(ref values::Program unit,
     if(!vec::reserve<Origins>(ref mut states,end-head).is_ok){return .err(errors::make(15,at));}
     var usize pc=head;while(pc<end){if(!vec::push<Origins>(ref mut states,no_origins()).is_ok){
         return .err(errors::make(15,at));}pc+=1;}
-    var Origins seed=no_origins();var usize i=0;while(i<16){if(views::live(entry,i)){
+    var Origins seed=no_origins();var usize i=0;
+    let ref bindings::State initial=ref vec::at<bindings::Snapshot>(paths,frame.entry).state;
+    while(i<initial.next){if(unit.catalog.nodes[values::type_id(unit,i)].kind==4){
+        seed.definite|=initial.live&bit(i);seed.possible|=(initial.live|initial.maybe)&bit(i);
+    }i+=1;}i=0;while(i<16){if(views::live(entry,i)){
         let usize roots=views::roots(entry,i,at)?;let usize missing=roots^views::retained_roots(entry,i);
         seed.roots[i]=roots;seed.unretained[i]=missing;
     }i+=1;}
@@ -236,9 +332,10 @@ pub fn Result<usize,errors::Error> infer(ref values::Program unit,
     var bool again=true;var usize steps=0;
     while(again){again=false;pc=head;while(pc<end){
         if(!pending[pc]){pc+=1;continue;}pending[pc]=false;again=true;steps+=1;
-        if(steps>196864){return .err(errors::make(4,at));} // 256*(1+2*16*24)
+        if(steps>205056){return .err(errors::make(4,at));} // 256*(1+2*16*24+2*16)
         let ref Origins input=vec::at<Origins>(ref states,pc-head);
-        var Origins row=Origins{.roots=input.roots,.unretained=input.unretained};
+        let Origins before=Origins{.roots=input.roots,.unretained=input.unretained,.definite=input.definite,.possible=input.possible};
+        var Origins row=Origins{.roots=before.roots,.unretained=before.unretained,.definite=before.definite,.possible=before.possible};
         let usize transferred=view_transfer(unit,ref mut row,pc,at)?;
         let usize offset=pc*8;let u8 op=unit.body.code[offset];
         if((loops.owners[pc]==loops.depth && loops.leaves[pc]) ||
@@ -248,7 +345,7 @@ pub fn Result<usize,errors::Error> infer(ref values::Program unit,
                 let usize target=if(op==19 || op==22){unit.body.code[offset+2] as usize}
                     else if(op==24 || op==92){unit.body.code[offset+4] as usize}
                     else{unit.body.code[offset+3] as usize};
-                let usize merged=origin_edge(ref mut states,ref mut seen,ref mut pending,head,end,target,ref row,at)?;
+                let usize merged=origin_edge(ref mut states,ref mut seen,ref mut pending,head,end,target,if(op==92){ref before}else{ref row},at)?;
             }
             if(op==19 || op==22){pc+=1;continue;}
         }
@@ -271,7 +368,9 @@ pub fn Result<usize,errors::Error> infer(ref values::Program unit,
         if(!seen[pc] || path==0 || path>branches::mark(paths)){return .err(invalid(at));}
         let usize inferred=infer_exit(unit,vec::at_mut<bindings::Snapshot>(paths,path-1),
             vec::at<Origins>(ref states,pc-head),at)?;
-    }pc+=1;}return .ok(steps);
+    }pc+=1;}
+    let usize completed=terminal_carriers(unit,ref states,ref seen,head,end,at)?;
+    return .ok(steps);
 }
 fn Result<usize,errors::Error> trim(ref mut values::Program unit,ref mut bindings::State state,usize common,usize at){
     var usize kept=common|state.loop_roots;var usize view=0;while(view<16){kept|=views::local_roots(ref state.views,view);view+=1;}

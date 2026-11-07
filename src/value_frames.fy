@@ -518,3 +518,36 @@ pub fn Result<usize,Error> abort(ref mut State state,ref mut vec::Vec<bytes::Buf
     while(i<32){state.frames[i]=blank();i+=1;}i=0;while(i<512){state.order[i]=0;i+=1;}
     return .ok(0);
 }
+
+// Pure preflight for the descriptor coordinator. This key is native metadata,
+// never a scalar/guest owner word or permission to suspend a read lease.
+pub fn Result<BufferKey,Error> inspect_buffer_move(ref layouts::Plan plan,ref State state,
+    ref vec::Vec<bytes::Buffer> frames,ref vec::Vec<bytes::Buffer> scratch,
+    Address source,Address destination,ref owners::State root_state,
+    ref vec::Vec<bytes::Buffer> roots,ref vec::Vec<bytes::Buffer> root_scratch){
+    if(source.frame!=destination.frame){return .err(.State);}
+    let usize width=inspect_transfer(plan,state,frames,scratch,source,destination,false,root_state,roots,root_scratch)?;
+    if(width!=8){return .err(.Type);}
+    return buffer_key(plan,state,frames,source,root_state,roots,root_scratch);
+}
+// Atomic exact-Buffer MOVE with the registry's read lease continuously live.
+// After rebind_read succeeds every remaining operation is an infallible write
+// into already authenticated, disjoint eight-byte slots. No allocation/callback
+// or fallible transfer follows publication; only canonical serial bytes move.
+pub fn Result<usize,Error> move_read_buffer(ref layouts::Plan plan,ref mut State state,
+    ref mut vec::Vec<bytes::Buffer> frames,ref vec::Vec<bytes::Buffer> scratch,
+    Address source,Address destination,ref mut owners::State root_state,
+    ref vec::Vec<bytes::Buffer> roots,ref vec::Vec<bytes::Buffer> root_scratch,ref mut usize fuel){
+    let usize spent=paid(operation(8)?,fuel)?;
+    let BufferKey key=inspect_buffer_move(plan,state,frames,scratch,source,destination,root_state,roots,root_scratch)?;
+    let Slot src=address(plan,state,frames,source,true)?;let Slot dst=address(plan,state,frames,destination,false)?;
+    var u8[8] word=[0;8];
+    {let ref u8[] data=bytes::view(vec::at<bytes::Buffer>(frames,source.frame));
+        var usize i=0;while(i<8){if(data[dst.offset+i]!=0){return .err(.Value);}word[i]=data[src.offset+i];i+=1;}}
+    let usize renamed=switch(owners::rebind_read(root_state,roots,root_scratch,key.serial,src.binding,dst.binding)){
+        case .ok(v):{v}case .err(e):{return .err(owned(e));}
+    };
+    {let ref mut u8[] data=bytes::view_mut(vec::at_mut<bytes::Buffer>(frames,destination.frame));
+        var usize i=0;while(i<8){data[dst.offset+i]=word[i];data[src.offset+i]=0;i+=1;}}
+    dead(state,source);publish(state,destination);return .ok(8);
+}

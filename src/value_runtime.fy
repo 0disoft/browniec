@@ -149,7 +149,9 @@ pub fn Result<Step,errors::Error> instruction_views(ref programs::Program progra
             case .ok(v):{v}case .err(e):{return .err(failure(e,offset));}
         };registers[dst]=value;return .ok(Step{.pc=pc+1,.remaining=remaining});
     }
-    let Result<usize,frames::Error> result=if(op==88 || op==89){
+    let Result<usize,frames::Error> result=if(op==88){
+        views::transfer(plan,state,data,scratch,at(current,a),at(current,dst),owned,roots,root_scratch,pools,ref mut remaining)
+    }else if(op==89){
         frames::transfer(plan,state,data,scratch,at(current,a),at(current,dst),op==89,owned,roots,root_scratch,ref mut remaining)
     }else if(op==90){frames::drop(plan,state,data,at(current,dst),owned,roots,root_scratch,ref mut remaining)}
     else if(op==91){frames::build_tag(plan,state,data,scratch,at(current,dst),at(current,a),b,owned,roots,root_scratch,ref mut remaining)}

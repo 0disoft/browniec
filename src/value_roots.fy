@@ -471,3 +471,18 @@ pub fn Result<usize,Error> drain(ref mut State s,ref mut vec::Vec<bytes::Buffer>
     };
     s.closed=true;return .ok(released);
 }
+
+// Native coordinator only: rename a shared-read Buffer binding without touching
+// its actual backing, owner token, lease, serial or ledger. The frame MOVE pays
+// for this bounded metadata work. Every failure precedes the one publication.
+pub fn Result<usize,Error> rebind_read(ref mut State s,ref vec::Vec<bytes::Buffer> roots,
+    ref vec::Vec<bytes::Buffer> scratch,usize serial,usize source,usize destination){
+    let usize i=resolve_mode(s,roots,scratch,serial,source,false)?;
+    if(source==destination || !available(s,roots,destination)){return .err(.Binding);}
+    let Row row=s.rows[i];
+    let owners::Owner owner=switch(owners::describe(ref s.table,owners::Token{.slot=row.slot,.generation=row.generation})){
+        case .ok(v):{v}case .err(_):{return .err(.State);}
+    };
+    if(!owner.reading){return .err(.State);}
+    s.rows[i].binding=destination;return .ok(serial);
+}

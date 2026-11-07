@@ -344,3 +344,18 @@ pub fn Result<usize,errors::Error> close_since(ref mut values::Program unit,ref 
         if((mask&(one<<i))!=0){append(unit,109,i,0,0,0,at);forget(state,i);}}
     return .ok(needed);
 }
+
+// Compiler-only counterpart of a same-activation Buffer MOVE. Every descriptor
+// keeps its lease/range/identity; only the canonical owning slot is renamed.
+pub fn Result<usize,errors::Error> relocate(ref mut State state,usize source,usize destination,usize at){
+    let usize checked=validate(state,at)?;
+    if(source>=16 || destination>=16 || source==destination || pinned(state,destination)){return .err(invalid(at));}
+    var usize i=0;while(i<16){if(live(state,i)){
+        let usize roots=mask_of(state,i);let usize retained=retained_mask_of(state,i);
+        if((roots&bit(source))!=0){
+            let usize next=(roots^bit(source))|bit(destination);
+            let usize keep=if((retained&bit(source))!=0){(retained^bit(source))|bit(destination)}else{retained};
+            represent(state,i,next);represent_retention(state,i,next,keep);
+        }
+    }i+=1;}return .ok(destination);
+}

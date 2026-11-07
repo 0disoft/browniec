@@ -65,6 +65,9 @@ fn Result<usize,errors::Error> function(ref values::Program unit,ref values::Pre
             let usize checked=unpinned(ref origins,a,pc)?;
         }else if(op==110 || op==111){
             if(origins[a]==0){return .err(invalid(pc));}
+        }else if(op==88 && unit.catalog.nodes[values::type_id(unit,a)].kind==4){
+            let usize checked=unpinned(ref origins,dst,pc)?;
+            i=0;while(i<16){if((origins[i]&bit(a))!=0){origins[i]=(origins[i]^bit(a))|bit(dst);}i+=1;}
         }else if(op==88 || op==89 || op==90 || op==115 || op==101 || op==102 || op==103 || op==104){
             let usize owner=if(op==90 || op==115 || op==101){dst}else{a};
             let usize checked=unpinned(ref origins,owner,pc)?;

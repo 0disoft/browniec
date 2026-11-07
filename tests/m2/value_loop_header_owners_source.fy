@@ -78,11 +78,8 @@ fn void failure(ref u8[] input,u8 kind){
     failure(b"module main;fn ref u8[] id(ref u8[] v){return v;}fn i32 main(){let b=bytes::empty();var ref u8[] r=if(false){id(ref bytes::view(ref bytes::empty()))}else{id(ref bytes::view(ref bytes::empty()))};var u8 x=255;var n=0;while(n<2){if(n==1){x+=1;}r=bytes::view(ref b);n+=1;}return 42;}",6);
 }
 
-@test fn void deferral_does_not_admit_new_roots_named_owner_loss_pins_or_pending_results(){
-    // Deferral applies to pre-existing anonymous seeds, not fresh retained
-    // allocations installed into a header descriptor on every iteration.
-    rejected(b"module main;fn ref u8[] id(ref u8[] v){return v;}fn i32 main(){let b=bytes::empty();var ref u8[] r=bytes::view(ref b);var n=0;while(n<2){r=id(ref bytes::view(ref bytes::empty()));n+=1;}return 42;}",3);
-    rejected(b"module main;fn ref u8[] id(ref u8[] v){return v;}fn i32 main(){var ref u8[] r=id(ref bytes::view(ref bytes::empty()));for(var n=0;n<2;n+=1){r=id(ref bytes::view(ref bytes::empty()));continue;}return 42;}",3);
+@test fn void deferral_does_not_admit_named_owner_loss_pins_or_pending_results(){
+    // Fresh retained body owners are covered by value_fresh_loop_owners_source.
     // A named owning header still requires exact liveness at a continue edge.
     rejected(b"module main;fn ref u8[] id(ref u8[] v){return v;}fn i32 main(){let b=bytes::empty();let owner=bytes::empty();var ref u8[] r=id(ref bytes::view(ref bytes::empty()));while(true){r=bytes::view(ref b);_ = owner;continue;}return 42;}",3);
     // Widening must recheck an earlier write and preserve pins on exit.

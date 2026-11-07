@@ -116,3 +116,36 @@ pub fn Result<usize,frames::Error> instruction(u8 op,usize dst,usize a,usize b,u
     else{views::move(pool,store,roots,scratch,source,selected,base+dst,fuel)};
     return switch(result){case .ok(_):{.ok(0)}case .err(e):{.err(failure(e))}};
 }
+
+// Same-activation pinned exact Buffer MOVE88. Authenticate every native alias
+// before asking frames to atomically rebind the continuously leased real root.
+// Descriptor publication after success is infallible; no lease/fuel fabrication,
+// root retirement, payload copy, generation change or rollback is involved.
+pub fn Result<usize,frames::Error> transfer(ref layouts::Plan plan,ref mut frames::State state,
+    ref mut vec::Vec<bytes::Buffer> data,ref mut vec::Vec<bytes::Buffer> temp,
+    frames::Address source,frames::Address destination,ref mut roots::State store,
+    ref mut vec::Vec<bytes::Buffer> backing,ref mut vec::Vec<bytes::Buffer> scratch,
+    ref mut vec::Vec<views::Pool> pools,ref mut usize fuel){
+    if(vec::len<views::Pool>(pools)==0){return frames::transfer(plan,state,data,temp,source,destination,false,store,backing,scratch,fuel);}
+    if(vec::len<views::Pool>(pools)!=1 || source.frame!=destination.frame){return .err(.State);}
+    let usize selected=source.frame*16+source.slot;let usize target=destination.frame*16+destination.slot;
+    let ref mut views::Pool pool=vec::at_mut<views::Pool>(pools,0);
+    var usize serial=0;var usize i=0;
+    while(i<32){let views::Row row=pool.rows[i];if(row.live){
+        // Even a stale destination alias must not acquire a fresh root by rename.
+        if(row.owner_binding==target){return .err(.Owner);}
+        if(row.owner_binding==selected){
+            let views::Ticket checked=switch(views::lookup(pool,store,backing,scratch,row.binding)){
+                case .ok(v):{v}case .err(e):{return .err(failure(e));}
+            };
+            if(row.binding/16!=source.frame){return .err(.State);}
+            serial=row.serial;
+        }
+    }i+=1;}
+    if(serial==0){return frames::transfer(plan,state,data,temp,source,destination,false,store,backing,scratch,fuel);}
+    let frames::BufferKey key=frames::inspect_buffer_move(plan,state,data,temp,source,destination,store,backing,scratch)?;
+    if(key.serial!=serial){return .err(.Owner);}
+    let usize moved=frames::move_read_buffer(plan,state,data,temp,source,destination,store,backing,scratch,fuel)?;
+    i=0;while(i<32){if(pool.rows[i].live && pool.rows[i].serial==serial){pool.rows[i].owner_binding=target;}i+=1;}
+    return .ok(moved);
+}
