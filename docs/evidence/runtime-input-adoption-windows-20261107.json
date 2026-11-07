@@ -1,0 +1,324 @@
+{
+  "schema": "browniec.runtime-input-adoption-evidence/v1",
+  "status": "verified",
+  "scope": "Private Windows reader to actual owning Fairy Snapshot; integrated from hash-matching mirror",
+  "mirror": "build/parallel-input-adoption",
+  "recordedAt": "2026-11-07T10:00:16.078617+00:00",
+  "receipt": {
+    "path": "build/parallel-input-adoption/build/runtime-input-adoption/20261107T100016077488Z/receipt.json",
+    "sha256": "4491a108ce16ce55aec55a1abae75c9c2217ddb7095b18b4a1a56937d4b2f163"
+  },
+  "compiler": {
+    "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+    "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+    "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false"
+  },
+  "msvc": {
+    "version": "14.51.36231",
+    "sdk": "10.0.26100.0",
+    "compilerSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+    "overrides": false
+  },
+  "transport": {
+    "path": "native/runtime-input-adoption/transport.json",
+    "sha256": "c445245fcc46a3106a79dcfad9d969adcaf3a6719ea10ed9cce39d90c43019a8",
+    "generatedSha256": "49da3c2e35a65b35fdc3be9fbbd5ffeeb44e7cc2410c80ae1c0bfc4e375d2776",
+    "declarations": [
+      "extern const uint8_t * bc_ria_bytes(void * fy_a_0);",
+      "extern void bc_ria_close(void * fy_a_0);",
+      "extern uintptr_t bc_ria_length(void * fy_a_0);",
+      "extern void * bc_ria_read_handle(uintptr_t fy_a_0, uintptr_t fy_a_1, uint32_t * fy_a_2, uint32_t * fy_a_3);",
+      "extern void * bc_ria_read_path(const uint8_t * fy_a_0, uintptr_t fy_a_1, uintptr_t fy_a_2, uint32_t * fy_a_3, uint32_t * fy_a_4);"
+    ]
+  },
+  "runtimeInputs": [
+    {
+      "path": "internal/cstdlib/stage0_system_heap.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "41e57f9748afb73731501ba2003b1a9213b728c0d2db6a31686b9d0489b76100"
+    },
+    {
+      "path": "internal/cstdlib/stage0_buffer.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "27f049118af6e0d008428abd73bdf77dce5491b82617cdb65b9a06ac185edfa1"
+    },
+    {
+      "path": "internal/cstdlib/stage0_windows_console.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "c070b518a8cb1a8eb0c6b170dd3083afd91149a3b076beb9f43bcfb05d2041e5"
+    },
+    {
+      "path": "internal/cstdlib/stage0_windows_process_args.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "f86225cdc8ecf5ebe0ba899557c3b117c50ccc0f02afea4cc0115f780bc40cd6"
+    },
+    {
+      "path": "internal/cruntime/stage0_scalar.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "e16bfdd17904754ceb9534c976910964c76e8b0c757f72ddf3b63de0d5548bbe"
+    }
+  ],
+  "inputs": [
+    {
+      "path": "native/runtime-input-adoption/adoption.fy",
+      "sha256": "fd1c785de46446c9ba872e54066bca276075b73d7cfc9099046c9a1afee887ca"
+    },
+    {
+      "path": "src/runtime_input.fy",
+      "sha256": "c7fa4dfcf6e4f1e4627d6e5bc0a74912d1989a8a06d2eb452aa42bd4a4f24207"
+    },
+    {
+      "path": "tools/runtime-input-adoption/main.fy",
+      "sha256": "0acd52f3b3f6244ea42e430ee9e21814621ee4068fdd94ef9427d8b18202aef9"
+    },
+    {
+      "path": "native/runtime_input_reader.c",
+      "sha256": "732edeb195d71176b6685c497e6e54c36634c25cd7d1d61a1d8fcf556eeaf9f0"
+    },
+    {
+      "path": "native/runtime_input_reader.h",
+      "sha256": "f825a25c5da02330626cca6c0e344bd7c93055de170c4ace67357adc46e60b7e"
+    },
+    {
+      "path": "native/runtime-input-adoption/bridge.c",
+      "sha256": "97c900c5196c16efa4e6baa5eb6839b6d41feef67ae5915c09648a145b74762f"
+    },
+    {
+      "path": "tools/runtime-input-adoption/host.c",
+      "sha256": "9f2f55d6b5b88cc4978f6eb4f754dcd00592e8b4427ad39ffff79722acebb660"
+    },
+    {
+      "path": "tools/runtime-input-adoption/heap.c",
+      "sha256": "ac564244d5d4327381893d95d28f9372a8fde676c372d0457550e0547858c317"
+    },
+    {
+      "path": "tools/verify-runtime-input-adoption.py",
+      "sha256": "ea4eb32e16e3d17632c8697f95019796a59c93465839462d8b0e6bc55c2791a2"
+    },
+    {
+      "path": "tools/verify-runtime-store-probe.py",
+      "sha256": "2a5332e0d5589eee91a39b2837eb0c721c353eb12c3d3bcced479396184332cc"
+    },
+    {
+      "path": "toolchain.json",
+      "sha256": "0a1a5c2b5a219099b7c3c2b42a8dde9cb70b68e435e8a071e36c36213d1740be"
+    },
+    {
+      "path": "fairy.toml",
+      "sha256": "f5254ba793d9012470c697e8657688a4ea5465c138fba6d748707d5bfa4b31fb"
+    },
+    {
+      "path": "fairy.lock",
+      "sha256": "9ab9d42cfb2cbc4db71b6d205404cbf55c2bdbdce408601e71dc6f3be314e7fb"
+    }
+  ],
+  "profiles": [
+    {
+      "profile": "development",
+      "results": [
+        {
+          "seam": false,
+          "result": {
+            "liveHeap": 0,
+            "nativeLive": 0,
+            "handlesStable": true,
+            "fairyOomCases": 0,
+            "nativeOomCases": 0,
+            "attempts": 32,
+            "frees": 32
+          },
+          "image": {
+            "path": "build/runtime-input-adoption/20261107T100016077488Z/development/normal.exe",
+            "sha256": "9cdf8a006b4c5677514b56490b3e1d9b187bc93628899803db081a2caa227ea1",
+            "bytes": 211456,
+            "stackReserve": 1048576,
+            "stackCommit": 4096
+          },
+          "objects": [
+            {
+              "path": "build/runtime-input-adoption/20261107T100016077488Z/development/fairy.obj",
+              "sha256": "7eec9065170d24150a9ad4c9f2249cf2cfeaeb90c744d2c87237cfc2f59bfd50"
+            },
+            {
+              "path": "build/runtime-input-adoption/20261107T100016077488Z/development/runtime.obj",
+              "sha256": "ebe10ce7898d8744644d73535baeca3f68dc7593c9ecce2915fd8f27c4c5594e"
+            },
+            {
+              "path": "build/runtime-input-adoption/20261107T100016077488Z/development/bridge.obj",
+              "sha256": "5c87748f4a06728b1416bad1f874d95bc1b9f1c6be423fead4bf813a950c4c2b"
+            },
+            {
+              "path": "build/runtime-input-adoption/20261107T100016077488Z/development/reader-normal.obj",
+              "sha256": "d26356dd5866bcff3ca4dd67592a1e37f13c5fe5bdbeaafd630f1b47c7a8b647"
+            },
+            {
+              "path": "build/runtime-input-adoption/20261107T100016077488Z/development/host-normal.obj",
+              "sha256": "66a95d82b9f0e719dc3b8555bb30b62b54e7515da40f5408297dec331b02f5ed"
+            }
+          ]
+        },
+        {
+          "seam": true,
+          "result": {
+            "liveHeap": 0,
+            "nativeLive": 0,
+            "handlesStable": true,
+            "fairyOomCases": 48,
+            "nativeOomCases": 24,
+            "attempts": 80,
+            "frees": 32
+          },
+          "image": {
+            "path": "build/runtime-input-adoption/20261107T100016077488Z/development/seam.exe",
+            "sha256": "e521661203091f378df589c27f91bafe78a0517af09f10dbfa0cbe4955277681",
+            "bytes": 211456,
+            "stackReserve": 1048576,
+            "stackCommit": 4096
+          },
+          "objects": [
+            {
+              "path": "build/runtime-input-adoption/20261107T100016077488Z/development/fairy.obj",
+              "sha256": "7eec9065170d24150a9ad4c9f2249cf2cfeaeb90c744d2c87237cfc2f59bfd50"
+            },
+            {
+              "path": "build/runtime-input-adoption/20261107T100016077488Z/development/runtime.obj",
+              "sha256": "ebe10ce7898d8744644d73535baeca3f68dc7593c9ecce2915fd8f27c4c5594e"
+            },
+            {
+              "path": "build/runtime-input-adoption/20261107T100016077488Z/development/bridge.obj",
+              "sha256": "5c87748f4a06728b1416bad1f874d95bc1b9f1c6be423fead4bf813a950c4c2b"
+            },
+            {
+              "path": "build/runtime-input-adoption/20261107T100016077488Z/development/reader-seam.obj",
+              "sha256": "648d03fbc7af3d46dd721e8ca3d0986232944e092043058f4107c48176feea09"
+            },
+            {
+              "path": "build/runtime-input-adoption/20261107T100016077488Z/development/host-seam.obj",
+              "sha256": "ac80e8fe27339ec76a479b95fed6c1f0512ba62f7bad72520069e1ff035e9b72"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profile": "release",
+      "results": [
+        {
+          "seam": false,
+          "result": {
+            "liveHeap": 0,
+            "nativeLive": 0,
+            "handlesStable": true,
+            "fairyOomCases": 0,
+            "nativeOomCases": 0,
+            "attempts": 32,
+            "frees": 32
+          },
+          "image": {
+            "path": "build/runtime-input-adoption/20261107T100016077488Z/release/normal.exe",
+            "sha256": "1b9f150960b973b87605b4f178009ad5866b0b73fce8f11db56a27447547f969",
+            "bytes": 179712,
+            "stackReserve": 1048576,
+            "stackCommit": 4096
+          },
+          "objects": [
+            {
+              "path": "build/runtime-input-adoption/20261107T100016077488Z/release/fairy.obj",
+              "sha256": "76a0769c4ad748b40e993bac472a4bbc7e5ff5bd53f70f346b4af2d00d2122c5"
+            },
+            {
+              "path": "build/runtime-input-adoption/20261107T100016077488Z/release/runtime.obj",
+              "sha256": "a57247eeb047efb4c6ad8986568bc89ecc0c746974e28a5719564a123236002f"
+            },
+            {
+              "path": "build/runtime-input-adoption/20261107T100016077488Z/release/bridge.obj",
+              "sha256": "ca0800494dff3e8e88f2e85c00ca11489fa3c472a56943a2d5fbade9fb8d3bb0"
+            },
+            {
+              "path": "build/runtime-input-adoption/20261107T100016077488Z/release/reader-normal.obj",
+              "sha256": "8a9e1e9394f107488dd84c9b2a21707cec564f88ac81047f5157b1bf63bd1199"
+            },
+            {
+              "path": "build/runtime-input-adoption/20261107T100016077488Z/release/host-normal.obj",
+              "sha256": "25450c035cf64038e36d371a2720e94e81559a00dbd76ffd79eb6272ff07e8a6"
+            }
+          ]
+        },
+        {
+          "seam": true,
+          "result": {
+            "liveHeap": 0,
+            "nativeLive": 0,
+            "handlesStable": true,
+            "fairyOomCases": 48,
+            "nativeOomCases": 24,
+            "attempts": 80,
+            "frees": 32
+          },
+          "image": {
+            "path": "build/runtime-input-adoption/20261107T100016077488Z/release/seam.exe",
+            "sha256": "ff98ccb4bd161a85ec01db756c677404fa96bbcbebec1d0445fcd0c29d873c93",
+            "bytes": 179712,
+            "stackReserve": 1048576,
+            "stackCommit": 4096
+          },
+          "objects": [
+            {
+              "path": "build/runtime-input-adoption/20261107T100016077488Z/release/fairy.obj",
+              "sha256": "76a0769c4ad748b40e993bac472a4bbc7e5ff5bd53f70f346b4af2d00d2122c5"
+            },
+            {
+              "path": "build/runtime-input-adoption/20261107T100016077488Z/release/runtime.obj",
+              "sha256": "a57247eeb047efb4c6ad8986568bc89ecc0c746974e28a5719564a123236002f"
+            },
+            {
+              "path": "build/runtime-input-adoption/20261107T100016077488Z/release/bridge.obj",
+              "sha256": "ca0800494dff3e8e88f2e85c00ca11489fa3c472a56943a2d5fbade9fb8d3bb0"
+            },
+            {
+              "path": "build/runtime-input-adoption/20261107T100016077488Z/release/reader-seam.obj",
+              "sha256": "9338e38b611c398d38d2bb2ca433e29611ddea0b12c456e1ecddab2cfb5005a0"
+            },
+            {
+              "path": "build/runtime-input-adoption/20261107T100016077488Z/release/host-seam.obj",
+              "sha256": "a60583461a410a2b514a65446c8fe0deaa7d2857c031013b9b0e6b528e906677"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "defaultStacks": true,
+  "compilerEnvironmentOverrides": false,
+  "stackOverrides": false,
+  "fairycCheckoutModified": false,
+  "pushed": false,
+  "limitations": [
+    "Private synchronous explicit host I/O; no Engine/Instance/public CLI association.",
+    "Copies exact payload into real Fairy Snapshot; native capacity plus SDK payload coexist transiently.",
+    "Trusted caller charge; not a complete Fuel schedule or Engine memory accounting.",
+    "OOM is explicit allocator-return injection, not whole-process exhaustion.",
+    "Consumed cursor/pipe input is not rolled back or replayed; EOF probes may block indefinitely.",
+    "No deadlines, cancellation, hostile pointer validation or filesystem containment.",
+    "Native live counts are measured only in BC_RIR_TEST seam images; normal images verify stable OS handles and SDK heap cleanup.",
+    "Main Engine integration and other workers are outside this write scope.",
+    "Subagent execution tooling was unavailable to this worker; no substitute model was selected."
+  ],
+  "rootSourcesModifiedByThisWorker": false,
+  "integratedInputsMatched": [
+    "native/runtime-input-adoption/adoption.fy",
+    "src/runtime_input.fy",
+    "tools/runtime-input-adoption/main.fy",
+    "native/runtime_input_reader.c",
+    "native/runtime_input_reader.h",
+    "native/runtime-input-adoption/bridge.c",
+    "tools/runtime-input-adoption/host.c",
+    "tools/runtime-input-adoption/heap.c",
+    "tools/verify-runtime-input-adoption.py",
+    "tools/verify-runtime-store-probe.py",
+    "toolchain.json",
+    "fairy.toml",
+    "fairy.lock"
+  ],
+  "integrated": true
+}

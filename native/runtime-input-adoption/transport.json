@@ -1,0 +1,54 @@
+{
+  "schema": "browniec.runtime-input-adoption-transport/v1",
+  "compilerRevision": "eb274643bfcfe746617121ddc6f130b018978b53",
+  "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+  "transportSha256": "49da3c2e35a65b35fdc3be9fbbd5ffeeb44e7cc2410c80ae1c0bfc4e375d2776",
+  "declarations": [
+    "extern const uint8_t * bc_ria_bytes(void * fy_a_0);",
+    "extern void bc_ria_close(void * fy_a_0);",
+    "extern uintptr_t bc_ria_length(void * fy_a_0);",
+    "extern void * bc_ria_read_handle(uintptr_t fy_a_0, uintptr_t fy_a_1, uint32_t * fy_a_2, uint32_t * fy_a_3);",
+    "extern void * bc_ria_read_path(const uint8_t * fy_a_0, uintptr_t fy_a_1, uintptr_t fy_a_2, uint32_t * fy_a_3, uint32_t * fy_a_4);"
+  ],
+  "sourceInputs": [
+    {
+      "path": "native/runtime-input-adoption/adoption.fy",
+      "sha256": "fd1c785de46446c9ba872e54066bca276075b73d7cfc9099046c9a1afee887ca"
+    },
+    {
+      "path": "src/runtime_input.fy",
+      "sha256": "c7fa4dfcf6e4f1e4627d6e5bc0a74912d1989a8a06d2eb452aa42bd4a4f24207"
+    },
+    {
+      "path": "tools/runtime-input-adoption/main.fy",
+      "sha256": "0acd52f3b3f6244ea42e430ee9e21814621ee4068fdd94ef9427d8b18202aef9"
+    }
+  ],
+  "runtimeInputs": [
+    {
+      "path": "internal/cstdlib/stage0_system_heap.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "41e57f9748afb73731501ba2003b1a9213b728c0d2db6a31686b9d0489b76100"
+    },
+    {
+      "path": "internal/cstdlib/stage0_buffer.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "27f049118af6e0d008428abd73bdf77dce5491b82617cdb65b9a06ac185edfa1"
+    },
+    {
+      "path": "internal/cstdlib/stage0_windows_console.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "c070b518a8cb1a8eb0c6b170dd3083afd91149a3b076beb9f43bcfb05d2041e5"
+    },
+    {
+      "path": "internal/cstdlib/stage0_windows_process_args.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "f86225cdc8ecf5ebe0ba899557c3b117c50ccc0f02afea4cc0115f780bc40cd6"
+    },
+    {
+      "path": "internal/cruntime/stage0_scalar.c",
+      "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+      "sha256": "e16bfdd17904754ceb9534c976910964c76e8b0c757f72ddf3b63de0d5548bbe"
+    }
+  ]
+}
