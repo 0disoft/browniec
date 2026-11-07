@@ -41,7 +41,7 @@ pub fn Result<Exit,errors::Error> capture(ref mut vec::Vec<bindings::Snapshot> p
 }
 fn Result<usize,errors::Error> trim(ref mut values::Program unit,ref mut bindings::State state,usize common,usize at){
     let usize one=1;var usize id=state.next;
-    while(id!=0){id-=1;if(((state.live|state.maybe)&(one<<id))!=0 && (common&(one<<id))==0){
+    while(id!=0){id-=1;if(((state.live|state.maybe)&(one<<id))!=0 && ((common|state.loop_roots)&(one<<id))==0){
         let usize dropped=bindings::drop(unit,state,id,at)?;
     }}return .ok(state.live);
 }

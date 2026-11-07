@@ -77,9 +77,8 @@ fn void exits_pin_every_inferred_candidate(){
 }
 
 fn void owner_shape_and_retained_seed_retirement_stay_exact(){
-    // Losing the last descriptor for a header anonymous seed would DROP it on
-    // every visit. Reject rather than replay cleanup or invent a dummy owner.
-    rejected(b"module main;fn ref u8[] id(ref u8[] v){return v;}fn i32 main(){let b=bytes::empty();var ref u8[] r=id(ref bytes::view(ref bytes::empty()));var n=0;while(n<2){r=bytes::view(ref b);n+=1;}return 42;}");
+    // Last-alias retirement defers the actual pre-loop owner until safe cleanup.
+    value(b"module main;fn ref u8[] id(ref u8[] v){return v;}fn i32 main(){let b=bytes::empty();var ref u8[] r=id(ref bytes::view(ref bytes::empty()));var n=0;while(n<2){r=bytes::view(ref b);n+=1;}return 42;}");
     rejected(b"module main;fn i32 main(){let a=bytes::empty();var ref u8[] r=bytes::view(ref a);while(true){let local=bytes::empty();r=bytes::view(ref local);break;}return 42;}");
     rejected(b"module main;fn i32 main(){let a=bytes::empty();var ref u8[] r=bytes::view(ref a);while(true){let local=bytes::empty();r=bytes::view(ref local);continue;}return 42;}");
     // A break may retire a seed: zero-trip still owns it, the break does not.

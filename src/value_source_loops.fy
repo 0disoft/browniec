@@ -11,11 +11,11 @@ import value_view_bindings as views;
 pub struct Frame {
     usize entry; usize names; usize head; bool classic;
     bool outer_tracking; usize outer_kills; usize outer_generated; usize outer_required;
-    usize generated;
+    usize generated; usize outer_roots;
 }
 pub struct State { usize depth; Frame[32] frames; usize[256] owners; usize[256] paths; bool[256] leaves; }
 fn Frame empty_frame(){return Frame{.entry=128,.names=0,.head=0,.classic=false,.outer_tracking=false,
-    .outer_kills=0,.outer_generated=0,.outer_required=0,.generated=0};}
+    .outer_kills=0,.outer_generated=0,.outer_required=0,.generated=0,.outer_roots=0};}
 pub fn State empty(){return State{.depth=0,.frames=[empty_frame();32],.owners=[0;256],.paths=[0;256],.leaves=[false;256]};}
 fn errors::Error invalid(usize at){return errors::make(3,at);}
 fn usize position(ref values::Program unit){let ref ir::Program body=ref unit.body;return body.count;}
@@ -48,10 +48,12 @@ pub fn Result<usize,errors::Error> begin(ref values::Program unit,ref mut bindin
     let usize names=state.names.count;
     let bool tracking=state.tracking;let usize kills=state.kills;
     let usize generated=state.generated;let usize required=state.required;
+    let usize outer_roots=state.loop_roots;
+    if(views::count(ref state.views)!=0){let usize protected=bindings::protect_loop_roots(unit,state,at)?;}
     state.tracking=true;state.kills=0;state.generated=0;state.required=0;
     let usize entry=branches::save(paths,state,at)?;
     loops.frames[level]=Frame{.entry=entry,.names=names,.head=head,.classic=classic,
-        .outer_tracking=tracking,.outer_kills=kills,.outer_generated=generated,.outer_required=required,.generated=0};
+        .outer_tracking=tracking,.outer_kills=kills,.outer_generated=generated,.outer_required=required,.generated=0,.outer_roots=outer_roots};
     loops.depth+=1;return .ok(level);
 }
 fn Result<usize,errors::Error> clean(ref mut values::Program unit,ref mut bindings::State state,
@@ -77,7 +79,7 @@ fn Result<usize,errors::Error> clean(ref mut values::Program unit,ref mut bindin
 // Backedges preserve the exact initialization lattice, including possible-only
 // roots inherited from an enclosing conditional expression.
 fn bool same_loop(ref bindings::State state,ref bindings::Snapshot entry){
-    return state.live==entry.state.live && state.maybe==entry.state.maybe;
+    return state.live==entry.state.live && state.maybe==entry.state.maybe && state.loop_roots==entry.state.loop_roots;
 }
 pub fn Result<usize,errors::Error> repeat(ref mut values::Program unit,ref mut bindings::State state,
     ref vec::Vec<bindings::Snapshot> paths,ref mut State loops,usize at){
@@ -272,7 +274,7 @@ pub fn Result<usize,errors::Error> infer(ref values::Program unit,
     }pc+=1;}return .ok(steps);
 }
 fn Result<usize,errors::Error> trim(ref mut values::Program unit,ref mut bindings::State state,usize common,usize at){
-    var usize kept=common;var usize view=0;while(view<16){kept|=views::local_roots(ref state.views,view);view+=1;}
+    var usize kept=common|state.loop_roots;var usize view=0;while(view<16){kept|=views::local_roots(ref state.views,view);view+=1;}
     let usize one=1;var usize id=state.next;
     while(id!=0){id-=1;if(((state.live|state.maybe)&(one<<id))!=0 && (kept&(one<<id))==0){
         let usize dropped=bindings::drop(unit,state,id,at)?;
@@ -300,6 +302,7 @@ pub fn Result<usize,errors::Error> finish(ref mut values::Program unit,ref mut b
         let usize selected=branches::select(unit,state,paths,path,at)?;
         state.pending=state.generated|(pending^(pending&state.kills));
         let usize target=position(unit);let usize patched=ir::patch(ref mut unit.body,jump,target,at)?;
+        let usize released=bindings::release_loop_roots(unit,state,frame.outer_roots,at)?;
         let usize cleaned=trim(unit,state,common,at)?;
         if(merged==128){merged=branches::save(paths,state,at)?;}
         else{let usize matched=bindings::merge(unit,state,vec::at<bindings::Snapshot>(paths,merged),at)?;

@@ -37,6 +37,9 @@ pub fn Result<usize,errors::Error> finish_function(ref mut values::Program unit,
     ref mut bindings::State state,usize keep,usize at){
     if(state.next>16){return .err(errors::make(3,at));}
     let usize admitted=preflight_finish(unit,state,keep,at)?;
+    // This reached function exit cannot repeat. Only terminal cleanup releases
+    // all loop protection; ordinary DROP rejects a still-protected seed.
+    state.loop_roots=0;
     state.reads=0;state.writes=0;
     let usize closed=bindings::close_views(unit,state,at)?;
     let usize checked=bindings::check_exit(unit,state,keep,at)?;

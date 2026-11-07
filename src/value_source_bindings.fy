@@ -19,6 +19,7 @@ pub struct State {
     u8[64] bindings; // 0 ordinary local, otherwise typed slot + 1
     views::State views; // Separate per-activation view IDs; shared lexical names.
     usize next; usize live; usize maybe; // Possible-only anonymous Buffers, disjoint from live.
+    usize loop_roots; // Pre-existing anonymous header seeds protected on repeating edges.
     usize reads; usize writes; // Ephemeral Buffer argument loans, never guest handles.
     bool enforce_results; usize pending; // Direct Result obligations, independent of COPY ownership.
     // Compiler-only loop summary: F(p) = generated | (p & ~kills).
@@ -29,10 +30,10 @@ pub struct State {
 // begin_alternative/select_path select separately reached blocks. merge compares
 // exits and never restores saved liveness/cursors on a continuing path.
 pub struct Snapshot { State state; }
-pub fn State empty(){return State{.names=locals::empty(),.bindings=[0;64],.views=views::empty(),.next=0,.live=0,.maybe=0,.reads=0,.writes=0,
+pub fn State empty(){return State{.names=locals::empty(),.bindings=[0;64],.views=views::empty(),.next=0,.live=0,.maybe=0,.loop_roots=0,.reads=0,.writes=0,
     .enforce_results=false,.pending=0,.tracking=false,.kills=0,.generated=0,.required=0};}
 pub fn Snapshot snapshot(ref State state){return Snapshot{.state=State{
-    .names=locals::snapshot(ref state.names),.bindings=state.bindings,.views=state.views,.next=state.next,.live=state.live,.maybe=state.maybe,.reads=state.reads,.writes=state.writes,
+    .names=locals::snapshot(ref state.names),.bindings=state.bindings,.views=state.views,.next=state.next,.live=state.live,.maybe=state.maybe,.loop_roots=state.loop_roots,.reads=state.reads,.writes=state.writes,
     .enforce_results=state.enforce_results,.pending=state.pending,.tracking=state.tracking,
     .kills=state.kills,.generated=state.generated,.required=state.required}};}
 fn usize bit(usize id){let usize one=1;return one<<id;}
@@ -44,7 +45,8 @@ fn Result<usize,errors::Error> header(ref values::Program unit,ref State state,u
     if(state.next>16 || state.names.count>64 || state.names.function>=16 ||
         state.names.function>=unit.body.function_count || unit.body.function_count>16 || state.views.function!=state.names.function ||
         unit.catalog.count>64 || state.live>=65536 || state.maybe>=65536 ||
-        (state.live&state.maybe)!=0 || state.pending>=65536 ||
+        (state.live&state.maybe)!=0 || state.loop_roots>=65536 ||
+        (state.loop_roots&(state.live|state.maybe))!=state.loop_roots || state.pending>=65536 ||
         state.reads>=65536 || state.writes>=65536 || (state.reads&state.writes)!=0 ||
         ((state.reads|state.writes)&state.live)!=(state.reads|state.writes) ||
         state.kills>=65536 || state.generated>=65536 || state.required>=65536 ||
@@ -58,6 +60,8 @@ fn Result<usize,errors::Error> header(ref values::Program unit,ref State state,u
         if(((state.live|state.maybe)&bit(i))!=0 && unit.functions[i] as usize!=state.names.function){return .err(invalid(at));}
         if((state.maybe&bit(i))!=0 && (unit.catalog.nodes[values::type_id(unit,i)].kind!=4 ||
             named_owner(state,i))){return .err(invalid(at));}
+        if((state.loop_roots&bit(i))!=0 && (named_owner(state,i) ||
+            unit.catalog.nodes[values::type_id(unit,i)].kind!=4)){return .err(invalid(at));}
         if((state.pending&bit(i))!=0 && unit.catalog.nodes[values::type_id(unit,i)].kind!=6){return .err(invalid(at));}
         if(((state.reads|state.writes)&bit(i))!=0 && unit.catalog.nodes[values::type_id(unit,i)].kind!=4){return .err(invalid(at));}
         i+=1;
@@ -177,7 +181,7 @@ pub fn Result<usize,errors::Error> declare(ref values::Program unit,ref mut Stat
     ref u8[] source,usize begin,usize end,usize id,usize exact_type){
     let usize checked=slot(unit,state,id,begin)?;
     if(!lexer::simple(source,begin,end) || locals::reserved(source[begin..end])){return .err(errors::make(2,begin));}
-    if(exact_type>=unit.catalog.count || values::type_id(unit,id)!=exact_type || (state.live&bit(id))==0){return .err(invalid(begin));}
+    if((state.loop_roots&bit(id))!=0 || exact_type>=unit.catalog.count || values::type_id(unit,id)!=exact_type || (state.live&bit(id))==0){return .err(invalid(begin));}
     // Ordinary and typed names share one Table and one uniqueness rule.
     let usize valid=spans(source,state,begin)?;
     if(locals::find(source,ref state.names,begin,end)!=64){return .err(invalid(begin));}
@@ -239,7 +243,7 @@ pub fn Result<usize,errors::Error> use_binding(ref mut values::Program unit,ref 
     usize index,usize destination,usize at){
     let usize source=binding(unit,state,index,at)?;
     let usize checked=slot(unit,state,destination,at)?;
-    if(views::pinned(ref state.views,source) || views::pinned(ref state.views,destination)){return .err(invalid(at));}
+    if(((state.loop_roots)&(bit(source)|bit(destination)))!=0 || views::pinned(ref state.views,source) || views::pinned(ref state.views,destination)){return .err(invalid(at));}
     if(((state.reads|state.writes)&(bit(source)|bit(destination)))!=0 ||
         (state.live&bit(source))==0 || ((state.live|state.maybe)&bit(destination))!=0 ||
         unit.types[source]!=unit.types[destination]){return .err(invalid(at));}
@@ -256,7 +260,7 @@ pub fn Result<usize,errors::Error> move_value(ref mut values::Program unit,ref m
     usize destination,usize source,usize at){
     let usize checked=slot(unit,state,source,at)?;
     let usize valid=slot(unit,state,destination,at)?;
-    if(views::pinned(ref state.views,source) || views::pinned(ref state.views,destination)){return .err(invalid(at));}
+    if(((state.loop_roots)&(bit(source)|bit(destination)))!=0 || views::pinned(ref state.views,source) || views::pinned(ref state.views,destination)){return .err(invalid(at));}
     if(((state.reads|state.writes)&(bit(source)|bit(destination)))!=0 ||
         (state.live&bit(source))==0 || ((state.live|state.maybe)&bit(destination))!=0 ||
         unit.types[source]!=unit.types[destination]){return .err(invalid(at));}
@@ -275,7 +279,7 @@ pub fn Result<usize,errors::Error> assign(ref mut values::Program unit,ref mut S
     usize index,usize source,usize at){
     let usize destination=binding(unit,state,index,at)?;
     let usize checked=slot(unit,state,source,at)?;
-    if(views::pinned(ref state.views,source) || views::pinned(ref state.views,destination)){return .err(invalid(at));}
+    if(((state.loop_roots)&(bit(source)|bit(destination)))!=0 || views::pinned(ref state.views,source) || views::pinned(ref state.views,destination)){return .err(invalid(at));}
     if(((state.reads|state.writes)&(bit(source)|bit(destination)))!=0 ||
         !state.names.mutable[index] || (state.live&bit(source))==0 || (state.maybe&bit(destination))!=0 ||
         unit.types[source]!=unit.types[destination]){return .err(invalid(at));}
@@ -306,7 +310,7 @@ pub fn Result<usize,errors::Error> assign(ref mut values::Program unit,ref mut S
 // RETURN consumes even copyable sources. No instruction is emitted here.
 pub fn Result<usize,errors::Error> consume(ref values::Program unit,ref mut State state,usize id,usize at){
     let usize checked=slot(unit,state,id,at)?;
-    if(views::pinned(ref state.views,id)){return .err(invalid(at));}
+    if((state.loop_roots&bit(id))!=0 || views::pinned(ref state.views,id)){return .err(invalid(at));}
     if(((state.reads|state.writes)&bit(id))!=0 || (state.live&bit(id))==0){return .err(invalid(at));}
     state.live^=bit(id);result_handled(unit,state,id);return .ok(id);
 }
@@ -314,6 +318,7 @@ pub fn Result<usize,errors::Error> consume(ref values::Program unit,ref mut Stat
 // definite values retain DROP90. Neither path changes operation prices.
 pub fn Result<usize,errors::Error> drop(ref mut values::Program unit,ref mut State state,usize id,usize at){
     let usize checked=slot(unit,state,id,at)?;
+    if((state.loop_roots&bit(id))!=0){return .err(invalid(at));}
     if(views::pinned(ref state.views,id)){return .err(invalid(at));}
     if(((state.reads|state.writes)&bit(id))!=0){return .err(invalid(at));}
     if(((state.live|state.maybe)&bit(id))==0){return .ok(id);}
@@ -327,7 +332,7 @@ fn bool named_owner(ref State state,usize owner){var usize i=0;
     while(i<state.names.count){if(state.bindings[i] as usize==owner+1){return true;}i+=1;}return false;}
 fn Result<usize,errors::Error> anonymous_drop(ref State state,usize owner,usize at){
     if(owner>=16){return .ok(0);}
-    if(named_owner(state,owner) || ((state.live|state.maybe)&bit(owner))==0){return .ok(0);}
+    if((state.loop_roots&bit(owner))!=0 || named_owner(state,owner) || ((state.live|state.maybe)&bit(owner))==0){return .ok(0);}
     if(((state.reads|state.writes)&bit(owner))!=0){return .err(invalid(at));}
     if((state.pending&bit(owner))!=0){return .err(errors::make(18,at));}return .ok(1);
 }
@@ -342,7 +347,7 @@ fn Result<usize,errors::Error> anonymous_drops(ref State state,usize roots,usize
     }return .ok(drops);
 }
 fn Result<usize,errors::Error> drop_anonymous(ref mut values::Program unit,ref mut State state,usize roots,usize at){
-    var usize i=16;while(i>0){i-=1;if((roots&bit(i))!=0 && !named_owner(state,i)){
+    var usize i=16;while(i>0){i-=1;if((roots&bit(i))!=0 && (state.loop_roots&bit(i))==0 && !named_owner(state,i)){
         let usize dropped=drop(unit,state,i,at)?;
     }}return .ok(roots);
 }
@@ -430,7 +435,7 @@ pub fn Result<usize,errors::Error> leave_scope(ref mut values::Program unit,ref 
     }i+=1;}
     // Named CALL results can retain anonymous actuals. Their last lexical view
     // owns root cleanup, unless another (including anonymous) descriptor survives.
-    anonymous^=anonymous&kept;i=0;while(i<16){if((anonymous&bit(i))!=0){
+    anonymous^=anonymous&(kept|state.loop_roots);i=0;while(i<16){if((anonymous&bit(i))!=0){
         if(named_owner(state,i)){anonymous^=bit(i);}else{drops+=anonymous_drop(state,i,at)?;}
     }i+=1;}
     if(unit.body.count>256 || drops+closes>256-unit.body.count){return .err(errors::make(4,at));}
@@ -465,7 +470,7 @@ pub fn Result<usize,errors::Error> begin_alternative(ref values::Program unit,re
     // Stage only the small metadata state, rebased onto the current global
     // high-water mark. The stale entry must not pass header with its old next.
     var State staged=State{.names=locals::snapshot(ref prior.names),.bindings=prior.bindings,.views=prior.views,
-        .next=current.next,.live=prior.live,.maybe=prior.maybe,.reads=prior.reads,.writes=prior.writes,.enforce_results=prior.enforce_results,.pending=prior.pending,
+        .next=current.next,.live=prior.live,.maybe=prior.maybe,.loop_roots=prior.loop_roots,.reads=prior.reads,.writes=prior.writes,.enforce_results=prior.enforce_results,.pending=prior.pending,
         .tracking=prior.tracking,.kills=prior.kills,.generated=prior.generated,.required=prior.required};
     staged.views.reserved=current.views.reserved;
     let usize valid=header(unit,ref staged,at)?;
@@ -480,7 +485,7 @@ pub fn Result<usize,errors::Error> begin_alternative(ref values::Program unit,re
             if(id>=prior.next || (seen&bit(id))!=0){return .err(invalid(at));}seen|=bit(id);
         }i+=1;
     }
-    current.names=staged.names;current.bindings=staged.bindings;current.views=staged.views;current.live=staged.live;current.maybe=staged.maybe;current.reads=staged.reads;current.writes=staged.writes;
+    current.names=staged.names;current.bindings=staged.bindings;current.views=staged.views;current.live=staged.live;current.maybe=staged.maybe;current.loop_roots=staged.loop_roots;current.reads=staged.reads;current.writes=staged.writes;
     current.enforce_results=staged.enforce_results;current.pending=staged.pending;
     current.kills=staged.kills;current.generated=staged.generated;current.required|=staged.required;
     return .ok(current.live);
@@ -496,7 +501,7 @@ pub fn Result<usize,errors::Error> select_path(ref values::Program unit,ref mut 
         prior.enforce_results!=current.enforce_results || prior.tracking!=current.tracking){return .err(invalid(at));}
     var usize i=prior.next;while(i<16){if(((prior.live|prior.maybe)&bit(i))!=0){return .err(invalid(at));}i+=1;}
     var State staged=State{.names=locals::snapshot(ref prior.names),.bindings=prior.bindings,.views=prior.views,
-        .next=current.next,.live=prior.live,.maybe=prior.maybe,.reads=prior.reads,.writes=prior.writes,.enforce_results=prior.enforce_results,.pending=prior.pending,
+        .next=current.next,.live=prior.live,.maybe=prior.maybe,.loop_roots=prior.loop_roots,.reads=prior.reads,.writes=prior.writes,.enforce_results=prior.enforce_results,.pending=prior.pending,
         .tracking=prior.tracking,.kills=prior.kills,.generated=prior.generated,.required=prior.required};
     staged.views.reserved=current.views.reserved;
     let usize valid=header(unit,ref staged,at)?;
@@ -506,7 +511,7 @@ pub fn Result<usize,errors::Error> select_path(ref values::Program unit,ref mut 
             if(id>=prior.next || (seen&bit(id))!=0){return .err(invalid(at));}seen|=bit(id);}
         i+=1;
     }
-    current.names=staged.names;current.bindings=staged.bindings;current.views=staged.views;current.live=staged.live;current.maybe=staged.maybe;current.reads=staged.reads;current.writes=staged.writes;
+    current.names=staged.names;current.bindings=staged.bindings;current.views=staged.views;current.live=staged.live;current.maybe=staged.maybe;current.loop_roots=staged.loop_roots;current.reads=staged.reads;current.writes=staged.writes;
     current.enforce_results=staged.enforce_results;current.pending=staged.pending;
     current.kills=staged.kills;current.generated=staged.generated;current.required|=staged.required;
     return .ok(current.live);
@@ -519,10 +524,10 @@ pub fn Result<usize,errors::Error> merge(ref values::Program unit,ref mut State 
     let usize checked=header(unit,state,at)?;let ref State prior=ref other.state;
     if(prior.next>state.next || prior.names.count!=state.names.count || prior.names.function!=state.names.function ||
         prior.names.pending_places!=state.names.pending_places ||
-        prior.reads!=state.reads || prior.writes!=state.writes ||
+        prior.reads!=state.reads || prior.writes!=state.writes || prior.loop_roots!=state.loop_roots ||
         prior.enforce_results!=state.enforce_results || prior.tracking!=state.tracking){return .err(invalid(at));}
     var State staged=State{.names=locals::snapshot(ref prior.names),.bindings=prior.bindings,.views=prior.views,
-        .next=state.next,.live=prior.live,.maybe=prior.maybe,.reads=prior.reads,.writes=prior.writes,.enforce_results=prior.enforce_results,.pending=prior.pending,
+        .next=state.next,.live=prior.live,.maybe=prior.maybe,.loop_roots=prior.loop_roots,.reads=prior.reads,.writes=prior.writes,.enforce_results=prior.enforce_results,.pending=prior.pending,
         .tracking=prior.tracking,.kills=prior.kills,.generated=prior.generated,.required=prior.required};
     let usize valid=header(unit,ref staged,at)?;
     var usize slot_id=prior.next;while(slot_id<16){
@@ -550,4 +555,26 @@ pub fn Result<usize,errors::Error> merge(ref values::Program unit,ref mut State 
     state.views=staged.views;state.live=staged.live;state.maybe=staged.maybe;
     state.pending=staged.pending;state.kills=staged.kills;
     state.generated=staged.generated;state.required=staged.required;return .ok(state.live);
+}
+
+// Defer cleanup before any loop IR is emitted; never suppress an existing DROP.
+pub fn Result<usize,errors::Error> protect_loop_roots(ref values::Program unit,ref mut State state,usize at){
+    let usize checked=header(unit,state,at)?;var usize roots=0;var usize i=0;
+    while(i<16){roots|=views::local_roots(ref state.views,i)&views::retained_roots(ref state.views,i);i+=1;}
+    i=0;while(i<16){if((roots&bit(i))!=0 && !named_owner(state,i)){state.loop_roots|=bit(i);}i+=1;}
+    return .ok(state.loop_roots);
+}
+// Every independently reached exit releases only this loop's protection. Roots
+// still selected by a descriptor retain their ordinary last-alias cleanup.
+pub fn Result<usize,errors::Error> release_loop_roots(ref mut values::Program unit,ref mut State state,usize outer,usize at){
+    let usize checked=header(unit,state,at)?;
+    if((outer&state.loop_roots)!=outer){return .err(invalid(at));}
+    let usize released=state.loop_roots^outer;var usize roots=0;var usize i=0;
+    while(i<16){roots|=views::local_roots(ref state.views,i);i+=1;}
+    let usize departing=released^(released&roots);
+    if(((state.reads|state.writes)&departing)!=0){return .err(invalid(at));}
+    var usize drops=0;i=0;
+    while(i<16){if((departing&bit(i))!=0){drops+=1;}i+=1;}
+    if(unit.body.count>256 || drops>256-unit.body.count){return .err(errors::make(4,at));}
+    state.loop_roots=outer;let usize dropped=drop_anonymous(unit,state,departing,at)?;return .ok(released);
 }
