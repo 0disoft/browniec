@@ -70,6 +70,11 @@ heap-at-exit observations. Existing pending VM, synchronous Engine, output
 ownership and OS guard regressions share the image. The native guard fixture
 also rejects prepare from the wrong thread and during an active admission.
 
+The [Program preparation cache](runtime-program-preparation-cache.md) retains
+the immutable compile proof, list/place requirements, entry price and scratch
+plan. New owning preparations reuse them; arbitrary raw IR still re-verifies.
+Cached storage is charged through the actual Stored layout and Vec capacity.
+
 Engine-owned advancement and terminal publication now use the reserved slot,
 without resume allocations; see the stepping successor for current evidence. Setup/proof, bulk work, CALL/RET, publication
 and cleanup remain atomic. Deadlines, in-flight cancellation, poison containment,

@@ -1,20 +1,18 @@
-- Latest output-copy checkpoint (2026-11-08): [Resumable VM output copies](../engineering/runtime-output-chunks.md)
-  records implementation `d929fca`. Actual VM/Engine output copies now share a
-  4096-byte allowance per step across all emits. A real 1MiB input uses exactly
-  256 copying batches. Source authorization and complete emit Fuel/quota admission
-  occur once; prepaid continuations keep their PC/source and charge no extra Fuel.
-  Partial copies cannot be sealed or exposed; cancel/failure discard staging.
-  Six new Engine/eight transaction groups pass development/O2, including mixed
-  quanta, shared batch limits, zero-Fuel continuation and one-less no-copy rejection.
-  Every resume denies the next SDK allocation and records zero attempts; both
-  default-stack images exit with zero SDK heap. Existing I/O/metered suites,
-  actual 112-byte Transaction layout and explicit allocation failures also pass.
-  Verification matches 248 aggregate checkout/Git inputs (241 Engine), seven
-  Engine SDK inputs, 33 bindings and 28 layouts. Root locked check: 257 sources/
-  2929 MIR; all 249 production modules retain LF. Other bulk/setup/CALL/RET/seal/
-  cleanup recipes, deadlines/poison and public lifecycle/ABI/CLI remain open;
-  the output-byte bound alone does not complete R03-R05 or the accepted inventory.
-  Four disjoint Sol High workers completed; integration/commits were serial. Local only.
+- Latest Program-cache checkpoint (2026-11-08): [Immutable Program preparation](../engineering/runtime-program-preparation-cache.md)
+  records implementation `28fbbe9`. Owning output/input-output Programs retain
+  exact compile proof sites/origins, list/place plans, entry work and scratch.
+  Synchronous and pending invocations reuse them; arbitrary raw IR re-verifies.
+  For P successful compilations and N owning executions, full proof entries drop
+  from P+N to P. This is a call count, not a wall-clock benchmark. Cache size is
+  1328 bytes; Stored grows 22016->23344 and its Vec8 retains 10624 extra bytes.
+  Existing heap ceilings charge the actual layout. Development/O2 each pass six
+  new cache/rejection groups and existing Engine regressions, default stacks and
+  zero SDK heap at exit. All 243 recorded inputs match checkout/committed Git;
+  33 bindings/29 layouts are reviewed. Root locked check: 257 sources/2937 MIR;
+  all 249 production modules retain LF. Compile proof and other setup/bulk/CALL/
+  RET/seal/cleanup recipes, deadlines/poison and public lifecycle/ABI/CLI remain
+  open; R03-R05 and the accepted inventory are incomplete. Sol High workers used
+  disjoint active write scopes; integration/commits were serial. Local only.
 
 - Predecessor ABI-bootstrap checkpoint (2026-11-07): [Windows DLL query](../engineering/abi-bootstrap.md)
   now exports only `bc_get_abi_info_v2`; Fairy owns admission/metadata and a small
@@ -628,8 +626,11 @@ that state, publishes terminal output through the reserved slot and refunds VM
 storage without resume allocations. [Output-copy continuations](../engineering/runtime-output-chunks.md)
 now share a 4096-byte allowance per step, prepay the existing emit Fuel once and
 keep the PC/source pinned until completion. Continuations consume dispatch visits
-without replaying guest instructions. The existing synchronous facade remains
-available. Setup, other bulk helpers, CALL/RET, output seal
+without replaying guest instructions. [Immutable Program preparation](../engineering/runtime-program-preparation-cache.md)
+retains the exact compile proof, list/place plans, entry price and scratch size
+for owning synchronous and pending invocations. Arbitrary raw IR still verifies
+on every call. The existing synchronous facade remains available. Compile proof,
+other setup and bulk helpers, CALL/RET, output seal
 and cleanup are atomic, so the accepted bounded-work Engine step contract and
 R03-R05 remain incomplete.
 
