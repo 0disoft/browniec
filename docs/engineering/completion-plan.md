@@ -1,20 +1,22 @@
-- Latest array-fill checkpoint (2026-11-08): [Resumable array initialization/fill](runtime-array-fill-chunks.md)
-  records implementation `21bcebb`. CREATE33, FILL40 and actual source repeated
-  replacement REPLACE87 now share a 4096-byte allowance with output, including
-  padding. New owners/arena prefix publish only after complete initialization;
-  selected replacements retain their original SELECT ticket/snapshot and price.
-  Each aligned 32768-byte i64 create/fill uses exactly eight batches; i32 uses
-  four. Full Fuel is prepaid once; zero-Fuel continuation and one-less no-write
-  rejection preserve final output/value/Fuel. Five kernel/six Engine groups pass
-  development/O2 plus existing regressions, with zero resume allocation attempts,
-  zero SDK heap at exit and default stacks. Cursor work is 144 bytes; Machine is
-  664 and its Vec8 costs 1152 extra bytes under existing heap ceilings. All 248
-  receipt inputs match checkout/committed Git; 33 bindings/30 layouts reviewed.
-  Root locked check: 260 sources/2950 MIR; all 252 production modules retain LF.
-  Array copy/assignment, lists/records, other setup/compile proof/CALL/RET/seal/
-  cleanup recipes, deadlines/poison and public lifecycle/ABI/CLI remain open;
-  R03-R05 and the accepted inventory are incomplete. Disjoint Sol High work,
-  serial integration/commits. Local only.
+- Latest array-copy checkpoint (2026-11-08): [Resumable scalar array copy/assignment](runtime-array-copy-chunks.md)
+  records implementation `1601b78` and fixture `c58ebf2`. COPY34, ASSIGN38 and
+  actual source whole-array STORE85 (kind 3) now share the same 4096-byte allowance
+  with initialization/fill and output, including padding and bool validation reads.
+  Selected stores retain their original SELECT snapshot/ticket and price. COPY
+  publishes its owner/arena prefix only after the final byte; ASSIGN keeps its
+  token/generation. Each aligned 32768-byte i64 copy/assignment uses eight batches.
+  Bool scans defer without Fuel debit until the complete scan fits.
+  Full Fuel is prepaid once; zero-Fuel continuation and one-less no-write rejection
+  preserve output/value/Fuel. Five kernel/six Engine groups pass development/O2
+  plus regressions, with zero resume allocation attempts/SDK heap at exit and
+  default stacks. Shared array work is 176 bytes (+32); Machine is 696 (+32),
+  Core remains 120880 and Vec8 adds 1408 bytes (+256 versus the fill checkpoint).
+  All 252 receipt inputs match checkout/committed Git; 33 bindings/30 layouts
+  reviewed. Root locked check: 262 sources/2961 MIR; 254 production LF modules.
+  Lists/records, other setup/compile proof/CALL/RET/seal/cleanup recipes, deadlines/
+  poison and public lifecycle/ABI/CLI remain open; R03-R05 and the full inventory
+  are incomplete. Three disjoint Sol High workers; serial parent integration.
+  Local only.
 
 - Predecessor immutable-input execution checkpoint (2026-11-07): [Actual 1MiB input](module-input-execution.md)
   integrates input windows `3503aba` and owning Program execution `c86aff6`.
@@ -602,8 +604,10 @@ and the inventory completion conditions remain open.
    [Scalar array initialization/fill](runtime-array-fill-chunks.md) now shares
    the same 4096-byte allowance, counts padding and publishes new owners only
    after complete initialization. Prepaid continuations preserve the existing
-   Fuel schedule and need no SDK allocation. Next chunk array copy/assignment,
-   lists/records, compile proof, other setup and the remaining bulk helpers,
+   Fuel schedule and need no SDK allocation. [Scalar array copy/assignment](runtime-array-copy-chunks.md)
+   now adds COPY34, ASSIGN38 and actual STORE85 to that shared allowance, including
+   bool validation reads and deferred admission; COPY publishes only on completion.
+   Next chunk lists/records, compile proof, other setup and the remaining bulk helpers,
    CALL/RET, publication and cleanup. Full R03, R04 and R05 remain open.
    [Fixed control storage](runtime-engine-control-memory.md) now has a pre-allocation
    budget and count-sized reserved vectors. [Exact Program retention](runtime-engine-program-memory.md)

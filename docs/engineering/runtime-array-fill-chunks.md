@@ -105,8 +105,9 @@ records source/byte trap locations on failure; this does not alter production SD
 
 ## Remaining accepted work
 
-Array copy/assign and list values, records, CALL/RET, seal/cleanup and atomic setup
-still need bounded recipes. Deadlines, in-flight cancellation/poison containment
+The [scalar array copy/assignment successor](runtime-array-copy-chunks.md) now
+shares this allowance, including bool validation reads and selected STORE85.
+List values, records, CALL/RET, seal/cleanup and atomic setup still need bounded recipes. Deadlines, in-flight cancellation/poison containment
 and full public lifecycle/ABI/CLI remain open in the [inventory](../product/04-remaining-work.md).
 R03-R05 remain incomplete;
 this byte allowance is not a bound on all metadata work, native time or latency.

@@ -1,20 +1,22 @@
-- Latest array-fill checkpoint (2026-11-08): [Resumable array initialization/fill](../engineering/runtime-array-fill-chunks.md)
-  records implementation `21bcebb`. CREATE33, FILL40 and actual source repeated
-  replacement REPLACE87 now share a 4096-byte allowance with output, including
-  padding. New owners/arena prefix publish only after complete initialization;
-  selected replacements retain their original SELECT ticket/snapshot and price.
-  Each aligned 32768-byte i64 create/fill uses exactly eight batches; i32 uses
-  four. Full Fuel is prepaid once; zero-Fuel continuation and one-less no-write
-  rejection preserve final output/value/Fuel. Five kernel/six Engine groups pass
-  development/O2 plus existing regressions, with zero resume allocation attempts,
-  zero SDK heap at exit and default stacks. Cursor work is 144 bytes; Machine is
-  664 and its Vec8 costs 1152 extra bytes under existing heap ceilings. All 248
-  receipt inputs match checkout/committed Git; 33 bindings/30 layouts reviewed.
-  Root locked check: 260 sources/2950 MIR; all 252 production modules retain LF.
-  Array copy/assignment, lists/records, other setup/compile proof/CALL/RET/seal/
-  cleanup recipes, deadlines/poison and public lifecycle/ABI/CLI remain open;
-  R03-R05 and the accepted inventory are incomplete. Disjoint Sol High work,
-  serial integration/commits. Local only.
+- Latest array-copy checkpoint (2026-11-08): [Resumable scalar array copy/assignment](../engineering/runtime-array-copy-chunks.md)
+  records implementation `1601b78` and fixture `c58ebf2`. COPY34, ASSIGN38 and
+  actual source whole-array STORE85 (kind 3) now share the same 4096-byte allowance
+  with initialization/fill and output, including padding and bool validation reads.
+  Selected stores retain their original SELECT snapshot/ticket and price. COPY
+  publishes its owner/arena prefix only after the final byte; ASSIGN keeps its
+  token/generation. Each aligned 32768-byte i64 copy/assignment uses eight batches.
+  Bool scans defer without Fuel debit until the complete scan fits.
+  Full Fuel is prepaid once; zero-Fuel continuation and one-less no-write rejection
+  preserve output/value/Fuel. Five kernel/six Engine groups pass development/O2
+  plus regressions, with zero resume allocation attempts/SDK heap at exit and
+  default stacks. Shared array work is 176 bytes (+32); Machine is 696 (+32),
+  Core remains 120880 and Vec8 adds 1408 bytes (+256 versus the fill checkpoint).
+  All 252 receipt inputs match checkout/committed Git; 33 bindings/30 layouts
+  reviewed. Root locked check: 262 sources/2961 MIR; 254 production LF modules.
+  Lists/records, other setup/compile proof/CALL/RET/seal/cleanup recipes, deadlines/
+  poison and public lifecycle/ABI/CLI remain open; R03-R05 and the full inventory
+  are incomplete. Three disjoint Sol High workers; serial parent integration.
+  Local only.
 
 - Predecessor ABI-bootstrap checkpoint (2026-11-07): [Windows DLL query](../engineering/abi-bootstrap.md)
   now exports only `bc_get_abi_info_v2`; Fairy owns admission/metadata and a small
@@ -632,6 +634,11 @@ without replaying guest instructions. [Array initialization/fill](../engineering
 now shares that 4096-byte allowance, including alignment padding, and publishes
 new array owners only after the final byte. Continuations retain the existing
 once-only Fuel charge and execute no following opcode before completion.
+[Array copy/assignment](../engineering/runtime-array-copy-chunks.md) now shares
+that allowance for COPY34, ASSIGN38 and actual selected STORE85; bool validation
+reads count and defer until their entire scan fits. COPY publishes after the
+last byte; ASSIGN retains target identity and partial writes are private until
+the VM continues. Selected snapshots/tickets and existing prices remain intact.
 [Immutable Program preparation](../engineering/runtime-program-preparation-cache.md)
 retains the exact compile proof, list/place plans, entry price and scratch size
 for owning synchronous and pending invocations. Arbitrary raw IR still verifies

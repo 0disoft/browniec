@@ -18,6 +18,10 @@ The [array initialization/fill successor](runtime-array-fill-chunks.md) shares
 that same byte allowance across CREATE/FILL and emits, including alignment
 padding. Array continuations also consume visits without new dispatch Fuel;
 the dispatcher freezes the current PC until the entire value is initialized.
+The [array-copy successor](runtime-array-copy-chunks.md) extends that allowance
+to COPY34, ASSIGN38 and actual selected STORE85, including bool validation reads.
+COPY publishes only on completion; selected assignments keep their snapshot,
+ticket and price while writing the existing target incrementally.
 
 Pending returns Event kind 4 with current Fuel and keeps its owning state intact.
 At VM success, sealing transfers the staged backing directly into the Published
@@ -74,7 +78,8 @@ layouts, including Output's Execution/completion/publication/Machine fields.
 ## Remaining accepted work
 
 Dispatch visits do not bound all bytes, metadata visits or native time. Output
-copy bytes now have a separate per-step allowance. Setup/proof, other bulk
+copy, scalar array initialization/fill and scalar array copy/assignment share
+one 4096-byte step allowance, including bool scans. Setup/proof, other bulk
 copy/tag/store/transfer, CALL/RET, seal and cleanup remain atomic.
 Chunk those recipes and preserve quantum-independent Fuel/results before
 claiming the accepted work-bounded Engine step contract. Deadlines, in-flight
