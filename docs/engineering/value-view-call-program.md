@@ -4,7 +4,7 @@ This increment connects private shared `ref u8[]` function parameters and result
 to the typed value verifier and retained native VM. Publication is conditional
 on the complete canonical scalar/owner/loan/place proof and the independent
 value and view CFG proofs. Native binding numbers never become guest authority.
-Verification is pending while the implementation is being integrated.
+Implementation `9ffc8a0` is verified in both Windows native profiles; see [focused evidence](../evidence/value-view-call-program-windows-20261107.json).
 
 ## Signatures and instructions
 
@@ -51,5 +51,24 @@ still does not implicitly extend its owner lifetime.
 The focused runner is `tools/verify-value-view-call-program.py`, with separate
 `core`, `source` and `regression` batches and development/release native mirrors.
 Public syntax/capabilities, mutable/non-byte/general references, view-valued
-joins, methods, public AllocError, host/I/O and full delivery remain separate
+joins, broader mutable-binding/control-flow origin inference, methods, public AllocError, host/I/O and full delivery remain separate
 requirements in the [remaining-work audit](../product/04-remaining-work.md).
+
+## Executed verification
+
+Development and release each passed41 groups in disjoint core9, source4 and
+regression28 batches. Thirteen groups are new. Source cases exercise mixed and
+repeated actuals, forward/transitive selected ranges, retained anonymous inputs,
+wrong origins/local escape, bounds and recursive registry exhaustion. Direct IR
+checks cover reserved bytes, forged classes/selectors, exact CFG lifetimes,
+pending places and separate recursive namespaces. VM stress checks cover exact
+Fuel/return boundaries, quotas, frame/registry capacities and fresh invocations.
+
+All union inputs are byte-identical to checkout and Git raw objects. Large test
+IR candidates use bounded constructor scopes in development; native stack limits
+are unchanged. The predecessor admitted32/rejected33 conditional fixture is
+byte-identical and executed in both profiles. Public CLI, Linux/macOS, restricted
+execution, embedding and full-profile admission were not run for this increment.
+
+Reproduce with `python tools/verify-value-view-call-program.py --batch core`,
+`--batch source` and `--batch regression`; each defaults to both profiles.

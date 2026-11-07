@@ -1,4 +1,14 @@
-- Latest native view-call checkpoint (2026-11-07): [Shared Buffer view CALL/RETURN](docs/engineering/value-view-calls.md) now
+- Latest shared view-call checkpoint (2026-11-07): [Private reference CALL/RETURN](docs/engineering/value-view-call-program.md) now
+  connects shared Buffer-backed byte formals/results through source, independent
+  CFG proof and retained VM dispatch, including selected temporary retention.
+  `9ffc8a0` passed 41 groups per Windows profile (13 new); all 231 inputs
+  match checkout/Git raw bytes and 215 production modules are LF. See [evidence](docs/evidence/value-view-call-program-windows-20261107.json).
+  The unchanged admitted32/rejected33 fixture executes with default native stacks.
+  Next: reference-valued joins, general mutable/non-byte/Buffer-object references,
+  methods, public AllocError/admission and remaining runtime/host/platform work.
+  Existing prices/public Fuel limits remain. Local only; no push/release.
+
+- Predecessor native view-call checkpoint (2026-11-07): [Shared Buffer view CALL/RETURN](docs/engineering/value-view-calls.md) now
   publishes up to eight argument aliases atomically and returns only a window
   contained in the selected caller origin across authenticated adjacent frames.
   `4c8c84d` passed 12 native groups per Windows profile (six new); all 223 inputs
