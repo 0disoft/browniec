@@ -1,13 +1,27 @@
 {
-  "schema": "browniec.runtime-engine-io-sources-inputs/v1",
+  "schema": "browniec.runtime-engine-io-sources-inputs/v2",
   "baseline": "f78a734",
   "priorProductionModulesUnchanged": 228,
-  "productionModulesLf": 230,
+  "productionModulesLf": 231,
+  "historicalIoRootLockSha256": [
+    "23d8d704935d335a1bee71dcefc40ebe47ea540c987ca093fce0c95a8bd66f32",
+    "23d8d704935d335a1bee71dcefc40ebe47ea540c987ca093fce0c95a8bd66f32"
+  ],
+  "rootLockUpdate": "Refreshed final composition for new I/O and input-entry modules; earlier individual receipts retain their executed locks.",
   "inputs": [
+    {
+      "path": "docs/engineering/anchored-source-loader.md",
+      "sha256": "37fdcddecf8c298009f97edcbbe919608d054b11d8f7fa12f397cde7b57dc092",
+      "bytes": 3436
+    },
     {
       "path": "docs/engineering/anchored-sources.md",
       "sha256": "05c6c51c20171662bd970364e19214bd7670d327c878ce26e2c556533e6fbb24",
       "bytes": 11349
+    },
+    {
+      "path": "docs/engineering/module-input-entry.md",
+      "sha256": "10a83e80e6875862e39793253085debda418dc3f9908d6049512601061d8e853"
     },
     {
       "path": "docs/engineering/runtime-io.md",
@@ -15,7 +29,8 @@
     },
     {
       "path": "fairy.lock",
-      "sha256": "23d8d704935d335a1bee71dcefc40ebe47ea540c987ca093fce0c95a8bd66f32"
+      "sha256": "2633e810c836de90c2b2de0f9800ae726c07f4c39898b258b0d8702b3d365d3d",
+      "bytes": 1686
     },
     {
       "path": "fairy.toml",
@@ -30,6 +45,21 @@
       "path": "native/abi_thread_identity.h",
       "sha256": "982becbdcc9310ba557a6e8e52861ffd8e24de19a9ec8125786d4199fcb08e6a",
       "bytes": 984
+    },
+    {
+      "path": "native/anchored-source-loader/bridge.c",
+      "sha256": "2a2d872693cad1287d0b32c6cc17410134eb0b6e78947910d21dd66b8ae45d3f",
+      "bytes": 2674
+    },
+    {
+      "path": "native/anchored-source-loader/bridge.h",
+      "sha256": "ac130da990a6188f82baef6cce197c5645e87d15d8b2b7df2612470b118d902a",
+      "bytes": 761
+    },
+    {
+      "path": "native/anchored-source-loader/loader.fy",
+      "sha256": "f50ba8c3d98ea116c4b662ea0cc94941851fc99807109920d2e4cd80a5a8c04e",
+      "bytes": 2634
     },
     {
       "path": "native/anchored_sources.c",
@@ -267,8 +297,7 @@
     },
     {
       "path": "src/cells.fy",
-      "sha256": "71b82add3e95b86a1b7bcb88c3f97f6ae38bae0ac3ec8b1a2de925b10a64e433",
-      "bytes": 1009
+      "sha256": "71b82add3e95b86a1b7bcb88c3f97f6ae38bae0ac3ec8b1a2de925b10a64e433"
     },
     {
       "path": "src/compiler.fy",
@@ -282,8 +311,7 @@
     },
     {
       "path": "src/errors.fy",
-      "sha256": "67a73b2417177dd5f71d8586c388e07352f02e22fc873fcc59959f4c6cf59383",
-      "bytes": 299
+      "sha256": "67a73b2417177dd5f71d8586c388e07352f02e22fc873fcc59959f4c6cf59383"
     },
     {
       "path": "src/fuel.fy",
@@ -302,8 +330,7 @@
     },
     {
       "path": "src/lexer.fy",
-      "sha256": "41042748bc0eee4d9b1e5adf81f0d7a5115bc96d3d1e19c03278337ebd099ffb",
-      "bytes": 9948
+      "sha256": "41042748bc0eee4d9b1e5adf81f0d7a5115bc96d3d1e19c03278337ebd099ffb"
     },
     {
       "path": "src/literal_collection.fy",
@@ -312,8 +339,7 @@
     },
     {
       "path": "src/literal_source.fy",
-      "sha256": "839a8e04b202381ccba12d243c9dea1ea28608f8a2c0596f6e2ec8f648850ebd",
-      "bytes": 6495
+      "sha256": "839a8e04b202381ccba12d243c9dea1ea28608f8a2c0596f6e2ec8f648850ebd"
     },
     {
       "path": "src/local_inference.fy",
@@ -322,8 +348,7 @@
     },
     {
       "path": "src/locals.fy",
-      "sha256": "92c511aabe80d0f6216dd5b4c3dc5d360a9e59d366fe88190433e3abf8fb1bf4",
-      "bytes": 2808
+      "sha256": "92c511aabe80d0f6216dd5b4c3dc5d360a9e59d366fe88190433e3abf8fb1bf4"
     },
     {
       "path": "src/loops.fy",
@@ -337,13 +362,15 @@
     },
     {
       "path": "src/module_entry.fy",
-      "sha256": "8c971ff2cde1daed68254d8c6021cdf0d0e493ac0003b2c72788486fdd796330",
-      "bytes": 4142
+      "sha256": "8c971ff2cde1daed68254d8c6021cdf0d0e493ac0003b2c72788486fdd796330"
     },
     {
       "path": "src/module_index.fy",
-      "sha256": "146faf924811f91c108ec6136c5e2d8181b73304c406853f298dfe897eb2d4ed",
-      "bytes": 13353
+      "sha256": "146faf924811f91c108ec6136c5e2d8181b73304c406853f298dfe897eb2d4ed"
+    },
+    {
+      "path": "src/module_input_entry.fy",
+      "sha256": "6b83ce32665d5c452447e0af0e70c526b9cb26667361f7881e363f956ea923d8"
     },
     {
       "path": "src/module_program.fy",
@@ -725,8 +752,7 @@
     },
     {
       "path": "src/source_snapshot.fy",
-      "sha256": "ce0ff863f70fe8f391fa1cd508eaec00da0a24f9694c666096c80f53f7f46c50",
-      "bytes": 6999
+      "sha256": "ce0ff863f70fe8f391fa1cd508eaec00da0a24f9694c666096c80f53f7f46c50"
     },
     {
       "path": "src/static_builders.fy",
@@ -755,8 +781,7 @@
     },
     {
       "path": "src/static_image.fy",
-      "sha256": "8966eca88fc4db8b172da51d57e5c10b72f0a0fffac174773c5cd11922f6ead0",
-      "bytes": 8250
+      "sha256": "8966eca88fc4db8b172da51d57e5c10b72f0a0fffac174773c5cd11922f6ead0"
     },
     {
       "path": "src/static_ir.fy",
@@ -984,6 +1009,14 @@
       "bytes": 31124
     },
     {
+      "path": "tests/m2/module_entry.fy",
+      "sha256": "5ff284dab514b2597964a7056dec2e6e8af9b8bc1a688ad7a82708e3ea2425bc"
+    },
+    {
+      "path": "tests/m2/module_input_entry.fy",
+      "sha256": "1697f0465f60718e52963c17c01e9129eda49293def97630f2ee18fe90854583"
+    },
+    {
       "path": "tests/m2/runtime_io.fy",
       "sha256": "746ceb7a6885945aad7508e73008cbfa59f8627819ae9131cd6b8acad967fd72"
     },
@@ -997,6 +1030,16 @@
       "sha256": "0a1a5c2b5a219099b7c3c2b42a8dde9cb70b68e435e8a071e36c36213d1740be"
     },
     {
+      "path": "tools/anchored-source-loader/main.fy",
+      "sha256": "9b3bd5b6577220bf9769bdc03225f5af12574a047a9bfce72eebbcccf70c8d38",
+      "bytes": 5016
+    },
+    {
+      "path": "tools/anchored-source-loader/support.c",
+      "sha256": "db5cbea0fcbfb64c0d15f0d17e836fd849d7ee7ac8faf4811048cd5909bd47a1",
+      "bytes": 2172
+    },
+    {
       "path": "tools/runtime-engine/main.fy",
       "sha256": "8575740923879af0aa18fd848b57f439a39703be1ef4c663deaaaaf4f3ec6fde",
       "bytes": 8684
@@ -1007,9 +1050,18 @@
       "bytes": 2621
     },
     {
+      "path": "tools/verify-anchored-source-loader.py",
+      "sha256": "a7ed7f967d371892927cefd6c5e29c4fa6158f557ede763a24257e5c155de306",
+      "bytes": 9855
+    },
+    {
       "path": "tools/verify-anchored-sources.py",
       "sha256": "7b361f3422a53c73d87c30832b57ded9f8c0e627ab83d955da91da9a920a440f",
       "bytes": 7420
+    },
+    {
+      "path": "tools/verify-module-input-entry.py",
+      "sha256": "4aa5c69d9329107541cc0956f56a5ff7675a0d141094816fcc06fd73ff229056"
     },
     {
       "path": "tools/verify-runtime-engine.py",

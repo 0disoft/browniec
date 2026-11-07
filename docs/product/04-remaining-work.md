@@ -1,17 +1,18 @@
 - Latest owning-runtime integration checkpoint (2026-11-07): [Engine, sources and I/O](../engineering/runtime-engine-io-sources.md)
-  integrates private real Program/one-shot Instance ownership `5ccb424`, anchored
-  Windows source acquisition `1a6f5c2` (five OS groups/profile), and owning input /
-  explicit-success output staging `0b7231a` (ten native groups/profile, actual
-  layout/cleanup and four allocator-failure seams). Engine dev/O2 additionally
-  prove contention-safe completion, terminal maintenance after epoch exhaustion,
-  image retention/move/relocation and zero live allocations. All 206 aggregate
-  inputs match checkout/Git raw bytes; all 230 production modules retain LF and
-  the prior 228 are unchanged. Root check: 238 sources/2665 MIR. Public gates,
-  existing VM capacities and Fuel prices/default256/ceiling16000000 are unchanged.
-  R01/I01/I02/C01 remain partial: complete public/VM/input/output/loader binding,
-  full accounting, bounded step, deadlines/poison, host/restricted/embed and the
-  accepted inventory remain open. Local only; no remote delivery. Two disjoint
-  Sol High workers continue collector->Snapshot and input-entry admission.
+  integrates real Program/one-shot Instance ownership `5ccb424`, anchored Windows
+  acquisition `1a6f5c2`, owning I/O staging `0b7231a`, actual collector->Fairy
+  Snapshot admission `2d298d8`, and exact shared-byte input signatures `333f47a`.
+  All native development/O2 checks pass: collector five groups/profile, I/O ten,
+  input/unchanged entry thirteen, plus Engine and loader ownership/OS harnesses.
+  Completion contention, exhausted-epoch teardown, image move/relocation, real
+  allocator failures and zero retained allocations have focused native evidence.
+  All 218 aggregate inputs match checkout/Git raw bytes; all 231 production
+  modules are LF, with the prior 228 unchanged. Root check: 239 sources/2678 MIR.
+  Public gates, existing VM capacities and Fuel prices/default256/ceiling16000000
+  remain unchanged. Project/Engine source binding and executable input/output,
+  full accounting, bounded steps, deadlines/poison, host/restricted/embed and the
+  accepted inventory stay open. Parallel workers completed, patches reviewed and
+  committed serially. Local only; no push/release/deployment.
 
 - Predecessor runtime-admission/exchange checkpoint (2026-11-07): [Parallel integration](../engineering/runtime-admission-exchange.md)
   integrates typed policy/run admission `c774ee0` (21 native groups per Windows
@@ -545,7 +546,7 @@ below cover prose obligations beyond this feature list as well.
 | --- | --- | --- |
 | modules | CLI fixed module main; native immutable snapshots and linked module index | L01, C01 |
 | explicit_import_alias | Native scoped binding, complete retained body admission and multi-module execution; public project CLI remains open | L01 |
-| public_functions | Native selected public i32 entry execution with complete lowering/admission; CLI entry selection remains open | L01, I01 |
+| public_functions | Native selected zero-argument i32 execution; shared-byte input signature admission only; CLI selection remains open | L01, I01 |
 | local_type_inference | Existing scalar/complete tags, owned aggregate initializers, reference/text views, payload-derived Option constructors and complete-arm Option/Result constraints; broader inference remains | L02, L03 |
 | let_var | Narrow | L02, L05 |
 | checked_integer_arithmetic | Narrow six scalar types | V01, V02 |
@@ -664,7 +665,7 @@ requirements of this audit. They need a justified profile decision if desired.
 
 | ID | Work and completion condition |
 | --- | --- |
-| I01 | The [private input owner](../engineering/runtime-io.md) now copies exact immutable binary input with a 1MiB ceiling, checked ranges and quota/Fuel/OOM rollback. Native development/O2 and explicit allocation failure prove ownership and cleanup. Remaining: bind a public zero-argument or `ref u8[]` i32 entry to the actual Instance/VM, bounded file/stdin reads and same-snapshot execution. Current SOURCE is code input, not guest input bytes. |
+| I01 | The [private input owner](../engineering/runtime-io.md) now copies exact immutable binary input with a 1MiB ceiling, checked ranges and quota/Fuel/OOM rollback. Native development/O2 and explicit allocation failure prove ownership and cleanup. The [native input entry selector](../engineering/module-input-entry.md) now owns the exact Index and shared-byte signature/parameter spans, while the original zero-argument selector is unchanged. Remaining: actual input lowering, Program/Instance/VM binding, bounded file/stdin reads and same-snapshot execution. Current SOURCE is code input, not guest input bytes. |
 | I02 | The [private output transaction](../engineering/runtime-io.md) now stages bounded exact binary bytes, preflights checked quota/Fuel sums, preserves old bytes on allocation failure, freezes fail/cancel and transfers a single immutable owner only through explicit trusted seal. Remaining: grant-controlled guest `output::emit`, actual VM success/failure/deadline/poison linkage, complete Engine accounting and binary/JSON/text sinks. A native seal is not evidence of guest success; sink partial failure must not replay computation. |
 | H01 | The [typed policy/run admission](../engineering/runtime-policy.md) now validates exact complete schemas, decoded duplicates, checked numeric ranges, resource relations, run narrowing and `requires <= grants <= policy.capabilities`, with 21 native groups per Windows profile. Project/catalog admission also exists. Remaining: actual immutable Program/Engine binding, reachable requirements versus declarations, consistent builtin/import contracts, execution enforcement and public loaders. Metadata does not grant authority or enlarge VM capacities. |
 | H02 | The [typed TLV codec](../engineering/host-wire.md) and [strict catalog/canonical SHA-256](../engineering/host-catalog.md) now compose with [native request/reply exchange](../engineering/host-exchange.md) over the exact owning catalog and explicit grants. Remaining: immutable executable Program catalog/requirement binding and actual VM host dispatch and typed destination adoption. Unknown/duplicate metadata rejects; no ambient filesystem/network/command authority enters the guest. |
@@ -675,7 +676,7 @@ requirements of this audit. They need a justified profile decision if desired.
 
 | ID | Work and completion condition |
 | --- | --- |
-| C01 | Native [project metadata admission](../cli/project-format.md), [source/header binding](../engineering/project-sources.md) and [retained project Program](../engineering/project-program.md) exist, as do [typed policy/run parsers](../engineering/runtime-policy.md). The [Windows anchored collector](../engineering/anchored-sources.md) now acquires only explicit relative members through pinned handles, rejects root/ancestor/leaf reparses and multi-link leaves, checks actual volume/file identities and copies at most 16 files/4096 bytes before publication. Development/O2 each pass five actual OS groups. Remaining: connect those owned filesystem bytes to Fairy/project/Engine admission and public project/run/policy/catalog/grant loaders. No ambient discovery/globs, point-in-time snapshot or other-OS support is claimed. |
+| C01 | Native [project metadata admission](../cli/project-format.md), [source/header binding](../engineering/project-sources.md) and [retained project Program](../engineering/project-program.md) exist, as do [typed policy/run parsers](../engineering/runtime-policy.md). The [Windows anchored collector](../engineering/anchored-sources.md) now acquires only explicit relative members through pinned handles, rejects root/ancestor/leaf reparses and multi-link leaves, checks actual volume/file identities and copies at most 16 files/4096 bytes before publication. Development/O2 each pass five actual OS groups. The [owning Fairy adapter](../engineering/anchored-source-loader.md) now feeds those exact bytes through existing Snapshot admission, including native allocation/error cleanup. Remaining: project/Engine admission and public project/run/policy/catalog/grant loaders. No ambient discovery/globs, point-in-time snapshot or other-OS support is claimed. |
 | C02 | [Public IR inspection](../engineering/inspect-ir.md) now compiles/verifies through the existing public source gates without execution and emits bounded text or JSON diagnostics; 19 CLI cases plus version/help passed in each Windows native profile. Remaining: guest `--input`, project/policy/catalog/grant controls, restricted check/run and broker-only worker surfaces as their underlying implementations become available. Preserve explicit unavailable errors and no unrestricted fallback. |
 | C03 | Native module/project APIs now preserve original source indices, half-open byte spans, checked line/byte-column lookup and explicit no-source values. Connect these to public multi-source CLI diagnostics with bounded UTF-8 messages/counts. Validate child spans and escape terminal-control/line injection; never read arbitrary files for snippets. |
 | C04 | Complete version/result metadata for build/profile/IR/cost/ABI/IPC, delivery availability, metrics and staged output. Keep guest return data separate from process status and distinguish computation, publication, transfer and external-effect outcomes. |

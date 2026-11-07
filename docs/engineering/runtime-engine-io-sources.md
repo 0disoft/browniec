@@ -1,12 +1,14 @@
 # Owning Engine, anchored sources and runtime I/O integration
 
-This local checkpoint integrates three separate implementation slices on `main`:
+This local checkpoint integrates five separate implementation slices on `main`:
 
 | Slice | Commit | Executed evidence |
 | --- | --- | --- |
 | Actual owning Engine/Program/Instance | `5ccb424` | Native development/O2, actual compilation and fresh VM reuse, pins/image move/relocation, OS completion contention, exhaustion cleanup and heap zero |
 | Anchored Windows source collection | `1a6f5c2` | Five real OS groups per development/O2 profile, explicit roots/identities, reparse/multi-link denial, bounded reads and allocation/handle cleanup |
 | Immutable input and staged output | `0b7231a` | Ten native groups/profile, seven visibility/lifetime negatives, generated layout/cleanup per profile and four explicit allocator-failure seams |
+| Collector to owning Fairy Snapshot | `2d298d8` | Native development/O2, real Unicode root, exact bytes/names, admission and allocation errors, bounds and complete native owner/handle cleanup |
+| Shared-byte input entry admission | `333f47a` | Thirteen native groups/profile (seven new, six unchanged zero-argument groups) and eight privacy/lifetime/move rejections |
 
 The [Engine](runtime-engine.md) now executes admitted selected source through the
 existing complete module compiler and native VM. Its Programs own actual code,
@@ -19,12 +21,17 @@ After epoch exhaustion, bounded owner maintenance retains terminal observation
 and teardown without issuing/reusing epochs or running new guest work.
 
 The [collector](anchored-sources.md) is a separate Windows OS primitive. Its owned
-copied bytes are independent of later file edits; filesystem acquisition has not
-yet been connected to the Fairy/project/Engine loader. It does not promise a
-point-in-time consistent file or global multi-file transaction. The
+copied bytes are independent of later file edits. The
+[owning Fairy adapter](anchored-source-loader.md) now feeds those exact bytes
+through the existing Builder/add/freeze admission and closes every native owner
+on both success and error. Project/Engine loader binding remains. Neither layer
+promises a point-in-time consistent file or global multi-file transaction. The
 [I/O component](runtime-io.md) similarly owns real native backing but does not yet
 bind guest input or `output::emit` to an Instance. A trusted native seal alone is
-not evidence that the VM succeeded. These distinctions remain in the inventory.
+not evidence that the VM succeeded. The [input entry selector](module-input-entry.md)
+now owns exact shared-byte signature, parameter/name spans and its original Index;
+it cannot be passed to the existing zero-argument executable admission. Actual
+input lowering and execution remain separate work.
 
 ## Reproduction and input identity
 
@@ -35,6 +42,9 @@ python tools/verify-runtime-engine.py
 python tools/verify-anchored-sources.py
 build/toolchain/fairyc.exe check
 python tools/verify-runtime-io.py --native-from build/parallel-runtime-io/build/runtime-io/20261107T071836233118Z/receipt.json
+python tools/verify-anchored-source-loader.py
+python tools/verify-module-input-entry.py
+build/toolchain/fairyc.exe check
 ```
 
 The I/O command reuses only hash-matching normal native reports produced earlier
@@ -49,15 +59,20 @@ The Engine executable compiles/runs Brownie source there without Go/MSVC/C tools
 Runtime Git objects and compiler identities are recorded; no fairyc source was
 edited or rebuilt.
 
-The root check passed **238 source files / 2665 MIR functions** and refreshed the
-root lock only for the two new I/O modules. All **230** `src/*.fy` files retain LF.
+The final root check passed **239 source files / 2678 MIR functions** and refreshed
+the root lock for the two I/O modules and new input entry module. All **231**
+`src/*.fy` files retain LF.
 All **228** production modules from `f78a734` remain byte-identical. The
 [aggregate input manifest](../evidence/runtime-engine-io-sources-inputs-windows-20261107.json)
-contains **206** unique inputs, each matched against both checkout bytes and the
-current committed Git blob. Individual receipts remain linked from
+contains **218** unique inputs, each matched against both checkout bytes and the
+current committed Git blob. The earlier I/O receipt retains its executed root
+lock; the aggregate deliberately substitutes the final composition lock and
+records that transition. Individual receipts remain linked from
 [Engine evidence](../evidence/runtime-engine-windows-20261107.json),
 [collector evidence](../evidence/anchored-sources-windows-20261107.json) and
-[I/O evidence](../evidence/runtime-io-windows-20261107.json).
+[I/O evidence](../evidence/runtime-io-windows-20261107.json),
+[loader evidence](../evidence/anchored-source-loader-windows-20261107.json) and
+[input entry evidence](../evidence/module-input-entry-windows-20261107.json).
 
 Original public admission gates, VM capacities and opcode prices are unchanged:
 32 frames, 256 instructions, sixteen owners, default Fuel 256 and ceiling
@@ -67,10 +82,10 @@ No push, release, publication or deployment occurred.
 
 ## Next implementation
 
-The two Sol High workers continue in disjoint ignored mirrors: collector bytes
-to an actual owning Fairy source Snapshot, and selected public i32 shared-byte
-input-entry signature admission. Main serializes patch review/integration and
-commits; neither worker writes the root checkout or commits shared changes.
+The two Sol High workers completed both rounds in disjoint ignored mirrors and
+cross-reviewed the other implementation. Main reviewed/integrated their patches
+and serialized root commits; neither worker wrote or committed the shared root.
+No parallel work remains in flight at this checkpoint.
 
 R01/I01/I02/C01 remain partial. Their next connections are immutable executable
 policy/run association, source loader admission, actual input entry/VM arguments

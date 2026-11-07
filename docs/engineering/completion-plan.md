@@ -1,17 +1,18 @@
 - Latest owning-runtime integration checkpoint (2026-11-07): [Engine, sources and I/O](runtime-engine-io-sources.md)
-  integrates private real Program/one-shot Instance ownership `5ccb424`, anchored
-  Windows source acquisition `1a6f5c2` (five OS groups/profile), and owning input /
-  explicit-success output staging `0b7231a` (ten native groups/profile, actual
-  layout/cleanup and four allocator-failure seams). Engine dev/O2 additionally
-  prove contention-safe completion, terminal maintenance after epoch exhaustion,
-  image retention/move/relocation and zero live allocations. All 206 aggregate
-  inputs match checkout/Git raw bytes; all 230 production modules retain LF and
-  the prior 228 are unchanged. Root check: 238 sources/2665 MIR. Public gates,
-  existing VM capacities and Fuel prices/default256/ceiling16000000 are unchanged.
-  R01/I01/I02/C01 remain partial: complete public/VM/input/output/loader binding,
-  full accounting, bounded step, deadlines/poison, host/restricted/embed and the
-  accepted inventory remain open. Local only; no remote delivery. Two disjoint
-  Sol High workers continue collector->Snapshot and input-entry admission.
+  integrates real Program/one-shot Instance ownership `5ccb424`, anchored Windows
+  acquisition `1a6f5c2`, owning I/O staging `0b7231a`, actual collector->Fairy
+  Snapshot admission `2d298d8`, and exact shared-byte input signatures `333f47a`.
+  All native development/O2 checks pass: collector five groups/profile, I/O ten,
+  input/unchanged entry thirteen, plus Engine and loader ownership/OS harnesses.
+  Completion contention, exhausted-epoch teardown, image move/relocation, real
+  allocator failures and zero retained allocations have focused native evidence.
+  All 218 aggregate inputs match checkout/Git raw bytes; all 231 production
+  modules are LF, with the prior 228 unchanged. Root check: 239 sources/2678 MIR.
+  Public gates, existing VM capacities and Fuel prices/default256/ceiling16000000
+  remain unchanged. Project/Engine source binding and executable input/output,
+  full accounting, bounded steps, deadlines/poison, host/restricted/embed and the
+  accepted inventory stay open. Parallel workers completed, patches reviewed and
+  committed serially. Local only; no push/release/deployment.
 
 - Predecessor runtime-admission/exchange checkpoint (2026-11-07): [Parallel integration](runtime-admission-exchange.md)
   integrates typed policy/run admission `c774ee0` (21 native groups per Windows
@@ -531,7 +532,9 @@ and the inventory completion conditions remain open.
    and leases to guest move-only values, wrappers and Instance teardown. Expose
    bounded byte/text operations and actual guest input. The [private I/O owners](runtime-io.md)
    now snapshot input and stage explicitly sealed output with real native OOM
-   rollback; connect them to the entry, Instance and actual success decision.
+   rollback. [InputEntry](module-input-entry.md) now owns exact shared-byte input
+   signature metadata; connect it to executable lowering, Instance/VM arguments
+   and the actual success decision.
    Run a complete input -> validation/transform -> output example.
 5. **Authority and host exchange: H01-H04, C01-C02/C04.** Add strict bounded
    project/policy/catalog/run loaders, source identities, ceilings/declarations/
@@ -619,6 +622,5 @@ general references and public promotion remain next.
 Native project metadata now admits the complete explicit source map and entry
 under the [owning format](../cli/project-format.md). Exact snapshot/header binding
 and the [retained native project Program](project-program.md) now connect that
-map and its preserved requirements to complete executable admission. Next implement
-anchored filesystem collection and public project CLI, then policy/grant integration.
+map and its preserved requirements to complete executable admission. The [anchored collector](anchored-sources.md) and [owning Fairy adapter](anchored-source-loader.md) now acquire exact bounded source snapshots on Windows. Next connect project/Engine admission and public project CLI, then policy/grant integration.
 The full completion objective remains open.
