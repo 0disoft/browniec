@@ -77,7 +77,8 @@ Wrong-thread and busy native calls also use deliberately invalid storage pointer
 to prove admission precedes projection. Existing disk/pipe and OS guard tests
 remain in the same executable.
 
-All 207 executable/source/tool/config inputs match their executed identities.
+At this output checkpoint, all 207 executable/source/tool/config inputs matched
+the executed identities; the control successor has new current-source evidence.
 One additional transport JSON input has an explicit post-run metadata review:
 its unused documentary `outputType` was corrected from BoundInput to the actual
 emitted Output type. Bridge typedefs, all declarations and generated/native code

@@ -1,18 +1,19 @@
-- Latest guest-output checkpoint (2026-11-07): [Guest output](docs/engineering/module-output-execution.md)
-  and [Engine-owned output](docs/engineering/runtime-engine-outputs.md) now lower, independently prove and run
-  private `output::emit` with one actual VM Fuel balance and success-only seal.
-  Module development/O2 each pass 39 groups: ten source/proof, seventeen output,
-  twelve regressions including the unchanged combined depth32/33 fixture.
-  Engine development/O2 each pass eight output groups, eleven input/OS groups and
-  the unchanged lifecycle fixture; SDK heap allocations return to zero. Outputs
-  move once and survive Engine teardown; failure never exposes the staged prefix.
-  Seventeen typed bindings cover 195 closure modules; seven vectors are reserved.
-  Exact receipt hashes and one documentary type correction are recorded explicitly.
-  Root locked check: 245 sources/2817 MIR functions. Existing public gates, old
-  prices and capacities/default256/ceiling16000000 remain; output prices are additive.
-  Next: complete Engine memory/work accounting and preallocation, then bounded
-  steps, deadlines/poison, policy/host/restricted/embed and the accepted inventory.
-  Parallel patches were integrated serially; workers closed. Local commits only.
+- Latest Engine control-storage checkpoint (2026-11-07): [Control budget](docs/engineering/runtime-engine-control-memory.md)
+  now checks the exact inline Engine and seven vector backings before allocation,
+  reserving for admitted counts with pinned SDK 8/16/32/64 growth. Quota status 8
+  precedes allocation; native OOM remains status 6. A one-Program/one-Instance
+  Engine uses 6,592 heap bytes versus 52,736 with all-64 backing (87.5% less).
+  Current inline size is 600 bytes; this is fixed control storage, not total RAM.
+  Development/O2 pass six ledger groups and six real Engine count cases, plus the
+  existing eight output, eleven input/OS and original lifecycle fixtures. Exact
+  and one-less budgets, actual bytes/peak, seven OOM seams, move/close and OS guards
+  pass with zero live SDK allocations. Eighteen typed bindings cover 199 closure
+  modules; all 212 recorded source/tool/config identities match current checkout.
+  Root locked check: 247 sources/2825 MIR functions. Public gates, old prices,
+  capacities/default256/ceiling16000000 remain. R02 is still incomplete.
+  Next: compile working storage and retained Program/source/image accounting,
+  then complete per-Instance/combined quotas, bounded steps and runtime delivery.
+  Parallel implementation/test workers are closed. Local commits only.
 
 # Brownie C agent guidance
 

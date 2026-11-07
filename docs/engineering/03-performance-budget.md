@@ -54,3 +54,12 @@ before raising limits; do not describe this target as measured. Full Instance
 setup, guest Buffer/input/output, host, worker and embed workloads need their
 missing integration first. The [remaining-work audit](../product/04-remaining-work.md)
 tracks those prerequisites and separate runtime/build-footprint measurements.
+
+## Measured control-storage increment (2026-11-07)
+
+[Engine control storage](runtime-engine-control-memory.md) now measures SDK
+requests and typed inline size in development/O2. One Program/Instance needs
+6,592 heap bytes plus a 600-byte inline Engine; all-64 backing uses 52,736 heap
+bytes. This measures fixed descriptor storage, not full Instance setup, VM frames,
+input/output payloads, compile work, process memory or timing. The initial full
+Instance and latency targets above therefore remain unmeasured.

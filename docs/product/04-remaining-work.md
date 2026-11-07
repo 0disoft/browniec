@@ -1,18 +1,19 @@
-- Latest guest-output checkpoint (2026-11-07): [Guest output](../engineering/module-output-execution.md)
-  and [Engine-owned output](../engineering/runtime-engine-outputs.md) now lower, independently prove and run
-  private `output::emit` with one actual VM Fuel balance and success-only seal.
-  Module development/O2 each pass 39 groups: ten source/proof, seventeen output,
-  twelve regressions including the unchanged combined depth32/33 fixture.
-  Engine development/O2 each pass eight output groups, eleven input/OS groups and
-  the unchanged lifecycle fixture; SDK heap allocations return to zero. Outputs
-  move once and survive Engine teardown; failure never exposes the staged prefix.
-  Seventeen typed bindings cover 195 closure modules; seven vectors are reserved.
-  Exact receipt hashes and one documentary type correction are recorded explicitly.
-  Root locked check: 245 sources/2817 MIR functions. Existing public gates, old
-  prices and capacities/default256/ceiling16000000 remain; output prices are additive.
-  Next: complete Engine memory/work accounting and preallocation, then bounded
-  steps, deadlines/poison, policy/host/restricted/embed and the accepted inventory.
-  Parallel patches were integrated serially; workers closed. Local commits only.
+- Latest Engine control-storage checkpoint (2026-11-07): [Control budget](../engineering/runtime-engine-control-memory.md)
+  now checks the exact inline Engine and seven vector backings before allocation,
+  reserving for admitted counts with pinned SDK 8/16/32/64 growth. Quota status 8
+  precedes allocation; native OOM remains status 6. A one-Program/one-Instance
+  Engine uses 6,592 heap bytes versus 52,736 with all-64 backing (87.5% less).
+  Current inline size is 600 bytes; this is fixed control storage, not total RAM.
+  Development/O2 pass six ledger groups and six real Engine count cases, plus the
+  existing eight output, eleven input/OS and original lifecycle fixtures. Exact
+  and one-less budgets, actual bytes/peak, seven OOM seams, move/close and OS guards
+  pass with zero live SDK allocations. Eighteen typed bindings cover 199 closure
+  modules; all 212 recorded source/tool/config identities match current checkout.
+  Root locked check: 247 sources/2825 MIR functions. Public gates, old prices,
+  capacities/default256/ceiling16000000 remain. R02 is still incomplete.
+  Next: compile working storage and retained Program/source/image accounting,
+  then complete per-Instance/combined quotas, bounded steps and runtime delivery.
+  Parallel implementation/test workers are closed. Local commits only.
 
 - Predecessor immutable-input execution checkpoint (2026-11-07): [Actual 1MiB input](../engineering/module-input-execution.md)
   integrates input windows `3503aba` and owning Program execution `c86aff6`.
@@ -624,13 +625,13 @@ below cover prose obligations beyond this feature list as well.
 | capability_output | Private verified guest emit and Engine-owned publication; public policy and sinks remain gated | I02, H01 |
 | typed_host_requests | Missing | H01-H04 |
 | fuel | Narrow public opcode prices; private Buffer and shared input/output VM metering | R02-R04, C05 |
-| memory_quota | Aggregate backing cap; private Buffer ledgers | R01-R03 |
+| memory_quota | Aggregate backing cap; private Buffer ledgers and actual Engine control-storage budget | R01-R03 |
 | deadline | Missing general runtime/compile deadline | R04 |
 | source_diagnostics | Public CLI byte offsets; native module/project original source indices and byte spans | C03 |
 | utf8_text_literals_ref_str | Public immutable literal text and explicit text::bytes; Buffer/input text remains missing | D05 |
 | explicit_text_bytes | Public immutable literal text::bytes; runtime Buffer/input text remains open | D05 |
 | bounded_step_work | Private Buffer continuations; no VM step API | R03, R05 |
-| engine_total_quota | Private owning Engine and independent object ledgers; complete peak/combined accounting missing | R01, R02 |
+| engine_total_quota | Engine fixed control budget enforced before allocation; compile/Program/Instance peak and combined accounting remain | R01, R02 |
 | complete_aggregate_construction | Narrow arrays/records | L03, L05, V01 |
 | explicit_root_lifetimes | Narrow array/record/slice generations | B05, R02, R05 |
 | engine_poison_boundary | Persistent private Engine exists; poison containment missing | R01, R04 |
@@ -705,7 +706,7 @@ requirements of this audit. They need a justified profile decision if desired.
 | ID | Work and completion condition |
 | --- | --- |
 | R01 | The [private owning Engine](../engineering/runtime-engine.md) now compiles actual selected source into reusable immutable Programs, pins them through one-shot Instances, runs fresh native VM state, preserves terminal/cancel events, rejects wrong-thread/reentry/stale epochs and reclaims released Programs on the last pin. Development/O2 prove actual array/image execution, Engine move, nonwrapping IDs and zero retained allocations. The [input successor](../engineering/runtime-engine-inputs.md) also retains separately admitted input Programs and Instance-owned exact Snapshots, with actual terminal Fuel and Windows reader-to-VM execution. The [output successor](../engineering/runtime-engine-outputs.md) now retains guest output completions and transfers successful immutable bytes once, independently of Engine lifetime. Remaining: public generation-handle association, full immutable policy/run binding and accepted lifecycle API integration. This synchronous private core does not implement bounded step, complete accounting, in-flight cancellation or poison recovery. |
-| R02 | The [native return-stack fix](../engineering/native-return-stack.md) removes reproduced intermediate return-transaction snapshots. The [call capture-stack fix](../engineering/native-call-capture-stack.md) now defers lexical snapshots until a noncapturing argument prefix has finished, fixing reproduced public retained-call overflow at the existing depth boundary. Complete preallocation and general stack containment still require the following work. Account for control, compile scratch, Program retention, frames/input/owners/loans/descriptors, pending reply/output and all simultaneous Instances under Engine ceilings. Reserve before allocation, distinguish native OOM from quota and actual process RAM from logical accounting. |
+| R02 | The [Engine control successor](../engineering/runtime-engine-control-memory.md) now checks layout-derived inline/vector storage before SDK allocation and reserves by admitted counts. Development/O2 prove exact and one-less budgets, native OOM distinction, six count pairs, peak preservation and zero live SDK storage; one-slot control heap drops from 52,736 to 6,592 bytes. This is fixed control accounting only. The [native return-stack fix](../engineering/native-return-stack.md) removes reproduced intermediate return-transaction snapshots. The [call capture-stack fix](../engineering/native-call-capture-stack.md) now defers lexical snapshots until a noncapturing argument prefix has finished, fixing reproduced public retained-call overflow at the existing depth boundary. Complete preallocation and general stack containment still require the following work. Account for control, compile scratch, Program retention, frames/input/owners/loans/descriptors, pending reply/output and all simultaneous Instances under Engine ceilings. Reserve before allocation, distinguish native OOM from quota and actual process RAM from logical accounting. |
 | R03 | Add bounded `step(1..4096)` and resumable transfer/initialization/CALL/RET/copy/tag/store/cleanup recipes. Bound payload chunks and metadata visits, including planning and final publication; do not hide whole-table/type-graph work in one unit. |
 | R04 | Implement compile/run monotonic deadlines, cancellation, first-cause precedence, STOPPING cleanup and stable terminal snapshots. Separate guest/input/quota failures from persistent Engine poison; propagate poison to nonterminal children while preserving existing terminal results. |
 | R05 | Make cleanup work-budgeted even after Fuel exhaustion; preserve source/target ownership through multi-chunk commits, check stale generations and invalidate roots/groups without unbounded scans. Prove quantum-independent result/Fuel for equal resource/host outcomes. |
