@@ -72,6 +72,11 @@ and then a successful third call in the same VM invocation; no budget was raised
 and recovery was not replaced by unrelated invocations. Private safe-cast
 composition remains a separate language task.
 
+The [safe-cast successor](value-safe-casts.md) now implements that private
+composition and executes the restored `r[0] as i32` fixture both before its first
+rebind and after a backedge. The header-owner receipt below retains its original
+u8-return fixture and original input identity.
+
 Implementation `03c758a` passed all 15 selected groups in each Windows native
 profile using fresh final inputs, locked mirrors, default stacks and no overrides.
 Six new groups cover twelve positive source programs, one recovery program run

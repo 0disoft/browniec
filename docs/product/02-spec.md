@@ -1,4 +1,16 @@
-- Latest header-owner checkpoint (2026-11-07): [Deferred anonymous loop-header owners](../engineering/value-loop-header-owners.md)
+- Latest safe-cast checkpoint (2026-11-07): [Private retained-value strict widening](../engineering/value-safe-casts.md)
+  now passed 15 groups in each Windows native profile on `4b0601b`, using locked
+  disjoint mirrors and default stacks. All 227 inputs match checkout/Git raw bytes;
+  all 216 production modules are LF. See [evidence](../evidence/value-safe-casts-windows-20261107.json).
+  Unary/postfix precedes explicit `as`, then binary operators; chains associate
+  left to right. The existing matrix admits 7 of 36 scalar pairs without implicit
+  conversion. Effects evaluate once; bottom validates scalar target syntax without
+  reading/emitting/interning a cast. The combined 32/33 depth fixture is unchanged.
+  No VM, opcode, pricing or public admission changes. Fresh loop-carried owners,
+  remaining bottom/general references, methods/AllocError and runtime/host/platform
+  work remain open. Full completion remains open. Local only.
+
+- Predecessor header-owner checkpoint (2026-11-07): [Deferred anonymous loop-header owners](../engineering/value-loop-header-owners.md)
   now preserve pre-existing retained seeds when their last view is rebound on a
   repeating edge. Compiler protection survives snapshots/trims/nested loops;
   reached exits release only their mask and terminal cleanup releases all after
@@ -435,6 +447,22 @@ contextual typing of uncast literals is unchanged, and there are no implicit
 conversions or promotions. Casts compose in the existing scalar positions, include
 constructor payloads whose final payload is i32/bool, and preserve i32/bool-only
 wrappers. Exact rules are in the [widening contract](../engineering/m1-widening.md).
+
+The private [retained-value cast bridge](../engineering/value-safe-casts.md)
+is implemented and verified in both Windows native profiles, scoped by the
+linked focused evidence above. It reuses the same seven
+allowed pairs out of the 36 pairs over i32/i64/u8/u32/usize/bool; the other 29,
+including identities and bool conversions, reject for a reachable scalar value.
+Postfix and unary evaluation finish before `as`, and `as` finishes before binary
+operators. Each left-to-right chain step uses its predecessor's type without
+replaying the operand or its effects. The cast target and outer context do not
+supply a literal source type; uncast contextual typing is unchanged. Wider private
+wrapper payloads can contain a cast result, but a cast does not map a wrapper.
+A terminal-bottom operand has no scalar value: each `as` suffix still validates
+scalar target syntax, then skips value reads, WIDEN emission and cast-type
+interning. No source/target pair is checked for that absent value. Existing VM,
+opcodes, prices and public admission gates remain unchanged; this private bridge
+does not widen the public wrapper or source profile.
 
 Classic for headers may contain only the profile's pure scalar declaration,
 assignment (including integer compounds), condition, and post steps. Arrays and repeated initializers use positive

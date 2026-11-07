@@ -1,4 +1,16 @@
-- Latest header-owner checkpoint (2026-11-07): [Deferred anonymous loop-header owners](docs/engineering/value-loop-header-owners.md)
+- Latest safe-cast checkpoint (2026-11-07): [Private retained-value strict widening](docs/engineering/value-safe-casts.md)
+  now passed 15 groups in each Windows native profile on `4b0601b`, using locked
+  disjoint mirrors and default stacks. All 227 inputs match checkout/Git raw bytes;
+  all 216 production modules are LF. See [evidence](docs/evidence/value-safe-casts-windows-20261107.json).
+  Unary/postfix precedes explicit `as`, then binary operators; chains associate
+  left to right. The existing matrix admits 7 of 36 scalar pairs without implicit
+  conversion. Effects evaluate once; bottom validates scalar target syntax without
+  reading/emitting/interning a cast. The combined 32/33 depth fixture is unchanged.
+  No VM, opcode, pricing or public admission changes. Fresh loop-carried owners,
+  remaining bottom/general references, methods/AllocError and runtime/host/platform
+  work remain open. Full completion remains open. Local only.
+
+- Predecessor header-owner checkpoint (2026-11-07): [Deferred anonymous loop-header owners](docs/engineering/value-loop-header-owners.md)
   now preserve pre-existing retained seeds when their last view is rebound on a
   repeating edge. Compiler protection survives snapshots/trims/nested loops;
   reached exits release only their mask and terminal cleanup releases all after
@@ -10,6 +22,19 @@
   price, public gate or Fuel default/cap change. Next: fresh loop-carried owners,
   private safe casts, remaining bottom/general references, methods/AllocError and
   runtime/host/platform work. Full completion remains open. Local only.
+
+## Private retained-value safe casts: Windows verified
+
+`python tools/verify-value-safe-casts.py` passed 15 isolated groups per native
+profile on `4b0601b`: five new cast groups and ten ownership/join/bottom/depth
+regressions. The [contract](docs/engineering/value-safe-casts.md) and
+[evidence](docs/evidence/value-safe-casts-windows-20261107.json) record all 227
+checkout/Git-raw matching inputs, default stacks and the unchanged 32/33 fixture.
+The new suite covers 36 scalar pairs (7 admitted, 29 rejected), 47 successful
+fixtures, 21 additional type rejections and eight invalid bottom targets.
+Public CLI and cross-platform/failure-sweep validation were not run for this
+private source increment. Predecessor receipts below retain their original
+inputs and scopes.
 
 ## Optional bottom smoke
 

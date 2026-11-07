@@ -1,4 +1,16 @@
-- Latest header-owner checkpoint (2026-11-07): [Deferred anonymous loop-header owners](../engineering/value-loop-header-owners.md)
+- Latest safe-cast checkpoint (2026-11-07): [Private retained-value strict widening](value-safe-casts.md)
+  now passed 15 groups in each Windows native profile on `4b0601b`, using locked
+  disjoint mirrors and default stacks. All 227 inputs match checkout/Git raw bytes;
+  all 216 production modules are LF. See [evidence](../evidence/value-safe-casts-windows-20261107.json).
+  Unary/postfix precedes explicit `as`, then binary operators; chains associate
+  left to right. The existing matrix admits 7 of 36 scalar pairs without implicit
+  conversion. Effects evaluate once; bottom validates scalar target syntax without
+  reading/emitting/interning a cast. The combined 32/33 depth fixture is unchanged.
+  No VM, opcode, pricing or public admission changes. Fresh loop-carried owners,
+  remaining bottom/general references, methods/AllocError and runtime/host/platform
+  work remain open. Full completion remains open. Local only.
+
+- Predecessor header-owner checkpoint (2026-11-07): [Deferred anonymous loop-header owners](../engineering/value-loop-header-owners.md)
   now preserve pre-existing retained seeds when their last view is rebound on a
   repeating edge. Compiler protection survives snapshots/trims/nested loops;
   reached exits release only their mask and terminal cleanup releases all after
@@ -195,6 +207,17 @@ performance and clean-machine delivery were not run; existing opcode prices,
 Fuel default 256 / ceiling 16000000 and wider capability gates remain unchanged.
 
 ## Implementation sequence
+
+The private [strict-widening source bridge](value-safe-casts.md) is implemented and
+verified in both Windows native profiles. It reuses the existing 7/36 scalar-pair
+matrix after unary/postfix and before binary evaluation, with left-to-right
+chains and once-only effects. Terminal bottom checks scalar target syntax without
+reading a value, emitting WIDEN or interning a cast type. This adds no implicit
+conversion, VM/opcode, pricing or public admission change. The linked evidence
+records this focused increment; continue fresh
+loop-carried owners and remaining bottom/general reference composition, then the
+existing methods/AllocError and runtime/host/platform work; the full objective
+and the inventory completion conditions remain open.
 
 1. **Returned references: B04/B05.** Preserve the existing origin, independent
    proof, canonical authority and Fuel work. Direct return ranges now reuse those

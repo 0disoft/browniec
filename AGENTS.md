@@ -1,15 +1,14 @@
-- Latest header-owner checkpoint (2026-11-07): [Deferred anonymous loop-header owners](docs/engineering/value-loop-header-owners.md)
-  now preserve pre-existing retained seeds when their last view is rebound on a
-  repeating edge. Compiler protection survives snapshots/trims/nested loops;
-  reached exits release only their mask and terminal cleanup releases all after
-  preflight. Real owners stay charged; no dummy owner, payload copy or source replay.
-  `03c758a` passed 15 groups per Windows native profile with locked disjoint
-  mirrors and default stacks. All 228 inputs match checkout/Git raw bytes;
-  all 216 production modules are LF. See [evidence](docs/evidence/value-loop-header-owners-windows-20261107.json).
-  The combined depth fixture is byte-identical. No runtime field/opcode, existing
-  price, public gate or Fuel default/cap change. Next: fresh loop-carried owners,
-  private safe casts, remaining bottom/general references, methods/AllocError and
-  runtime/host/platform work. Full completion remains open. Local only.
+- Latest safe-cast checkpoint (2026-11-07): [Private retained-value strict widening](docs/engineering/value-safe-casts.md)
+  now passed 15 groups in each Windows native profile on `4b0601b`, using locked
+  disjoint mirrors and default stacks. All 227 inputs match checkout/Git raw bytes;
+  all 216 production modules are LF. See [evidence](docs/evidence/value-safe-casts-windows-20261107.json).
+  Unary/postfix precedes explicit `as`, then binary operators; chains associate
+  left to right. The existing matrix admits 7 of 36 scalar pairs without implicit
+  conversion. Effects evaluate once; bottom validates scalar target syntax without
+  reading/emitting/interning a cast. The combined 32/33 depth fixture is unchanged.
+  No VM, opcode, pricing or public admission changes. Fresh loop-carried owners,
+  remaining bottom/general references, methods/AllocError and runtime/host/platform
+  work remain open. Full completion remains open. Local only.
 
 # Brownie C agent guidance
 

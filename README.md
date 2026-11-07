@@ -1,4 +1,16 @@
-- Latest header-owner checkpoint (2026-11-07): [Deferred anonymous loop-header owners](docs/engineering/value-loop-header-owners.md)
+- Latest safe-cast checkpoint (2026-11-07): [Private retained-value strict widening](docs/engineering/value-safe-casts.md)
+  now passed 15 groups in each Windows native profile on `4b0601b`, using locked
+  disjoint mirrors and default stacks. All 227 inputs match checkout/Git raw bytes;
+  all 216 production modules are LF. See [evidence](docs/evidence/value-safe-casts-windows-20261107.json).
+  Unary/postfix precedes explicit `as`, then binary operators; chains associate
+  left to right. The existing matrix admits 7 of 36 scalar pairs without implicit
+  conversion. Effects evaluate once; bottom validates scalar target syntax without
+  reading/emitting/interning a cast. The combined 32/33 depth fixture is unchanged.
+  No VM, opcode, pricing or public admission changes. Fresh loop-carried owners,
+  remaining bottom/general references, methods/AllocError and runtime/host/platform
+  work remain open. Full completion remains open. Local only.
+
+- Predecessor header-owner checkpoint (2026-11-07): [Deferred anonymous loop-header owners](docs/engineering/value-loop-header-owners.md)
   now preserve pre-existing retained seeds when their last view is rebound on a
   repeating edge. Compiler protection survives snapshots/trims/nested loops;
   reached exits release only their mask and terminal cleanup releases all after
@@ -1999,6 +2011,7 @@ of a policy result, the safety of an external effect, or the absence of native b
 - [M1 i64 scalars](docs/engineering/m1-i64.md): literal context, checked arithmetic, limits, and evidence
 - [M1 unsigned scalars](docs/engineering/m1-unsigned.md): `u8`, `u32`, `usize`, representation, and limits
 - [M1 explicit widening](docs/engineering/m1-widening.md): seven integer pairs, precedence, lowering, and Fuel
+- [Private retained-value strict widening](docs/engineering/value-safe-casts.md): existing 7/36 matrix, once-only effects and terminal-bottom suffixes; implemented, focused native validation pending
 - [M1 integer operators](docs/engineering/m1-integer-operators.md): fixed-width bitwise operations, checked shifts, and precedence
 - [M1 arm statements](docs/engineering/m1-switch-arm-statements.md): branches, loops, transfers, typed joins, and inherited depth budgets
 - [M1 checkpoint audit](docs/engineering/m1-checkpoint-audit.md): scalar exit requirements and remaining profile limits
