@@ -105,11 +105,11 @@ fn void divergent_case(usize mode){
     if(mode==0){u.body.code[right*8]=105;u.body.code[right*8+2]=1;}
     else if(mode==1){jump(ref mut u,move,join);}
     else{u.body.code[move*8+1]=3;}
-    // Reject at the edge into the already established destination state;
-    // even a later CLOSE/RETURN must never erase an inconsistent join.
-    origin_error(ref u,move);
+    // Different roots union; missing/dead and different live IDs still reject
+    // at the incoming edge, before any later CLOSE can erase the mismatch.
+    if(mode==0){admitted(ref u);}else{origin_error(ref u,move);}
 }
-@test fn void joins_reject_different_roots_missing_origin_and_different_live_ids(){
+@test fn void joins_union_different_roots_but_reject_missing_origin_and_different_live_ids(){
     var usize mode=0;while(mode<3){divergent_case(mode);mode+=1;}
 }
 fn void stale_case(usize mode){
@@ -226,7 +226,7 @@ fn void formal_case(usize mode){
     else if(mode==8){u.body.code[ret*8+7]=1;shape_error(ref u,ret,1);}
     else if(mode==9){u.body.code[called*8+6]=1;shape_error(ref u,called,0);}
     else if(mode==10){u.body.code[ret*8+2]=15;origin_error(ref u,ret);}
-    else{origin_error(ref u,find(ref u,108,1));} // distinct formals, same live IDs
+    else{origin_error(ref u,ret);} // union of distinct formals cannot escape
 }
 @test fn void joined_returns_reject_wrong_selected_formal_stale_actuals_and_forged_metadata(){
     var usize mode=0;while(mode<13){formal_case(mode);mode+=1;}

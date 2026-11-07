@@ -6,36 +6,85 @@ import errors as errors;
 // Compiler metadata, never runtime authority. Dead IDs are reusable within an
 // activation; the independent CFG verifier proves every destination is Dead.
 // Origins1..16 identify local Buffer slots; 17..24 identify formal ordinals.
+// Encoding25 carries a normalized multi-root mask in sets; singleton/dead sets
+// are zero. These conservative dependencies never grant native authority.
 // retained marks CALL results whose anonymous actual may acquire a name.
-pub struct State { u8[16] origins; u8[64] names; usize function; usize retained; usize reserved; }
-pub fn State empty(){return State{.origins=[0;16],.names=[0;64],.function=0,.retained=0,.reserved=0};}
+// retained_sets holds only a union's partial retention; full retention uses the
+// legacy retained bit and zero retained_sets, including for singleton origins.
+pub struct State { u8[16] origins; usize[16] sets; usize[16] retained_sets; u8[64] names; usize function; usize retained; usize reserved; }
+pub fn State empty(){return State{.origins=[0;16],.sets=[0;16],.retained_sets=[0;16],.names=[0;64],.function=0,.retained=0,.reserved=0};}
 fn errors::Error invalid(usize at){return errors::make(3,at);}
 fn u8 byte(usize n){var u8 result=0;var usize i=0;while(i<n){result+=1;i+=1;}return result;}
-pub fn bool live(ref State state,usize id){return id<16 && state.origins[id]!=0 && state.origins[id]<=24;}
 fn usize bit(usize id){let usize one=1;return one<<id;}
+fn bool descriptor(ref State state,usize id){
+    let usize encoded=state.origins[id] as usize;let usize mask=state.sets[id];
+    if(encoded<=24){return mask==0;}
+    return encoded==25 && mask>0 && mask<=16777215 && (mask&(mask-1))!=0;
+}
+// Read only after descriptor validation. All shifts are bounded to 0..23.
+fn usize mask_of(ref State state,usize id){
+    let usize encoded=state.origins[id] as usize;
+    if(encoded==25){return state.sets[id];}
+    if(encoded==0){return 0;}return bit(encoded-1);
+}
+// Only validated nonzero low24 masks reach publication. Normalize singletons so
+// existing singleton consumers cannot mistake a union for an individual root.
+fn void represent(ref mut State state,usize id,usize mask){
+    if((mask&(mask-1))==0){var usize root=0;while(root<24){
+        if((mask&bit(root))!=0){state.origins[id]=byte(root+1);state.sets[id]=0;return;}root+=1;}
+    }
+    state.origins[id]=25;state.sets[id]=mask;
+}
+fn usize retained_mask_of(ref State state,usize id){
+    if((state.retained&bit(id))!=0){return mask_of(state,id);}return state.retained_sets[id];
+}
+fn bool retention_descriptor(ref State state,usize id){
+    let usize partial=state.retained_sets[id];let usize mask=mask_of(state,id);
+    if(state.origins[id]==0 && (state.retained&bit(id))!=0){return false;}
+    if(state.origins[id]!=25){return partial==0;}
+    return (partial&mask)==partial && partial!=mask &&
+        ((state.retained&bit(id))==0 || partial==0);
+}
+fn void represent_retention(ref mut State state,usize id,usize possible,usize retained){
+    state.retained^=state.retained&bit(id);state.retained_sets[id]=0;
+    if(retained==possible){state.retained|=bit(id);}
+    else{if(state.origins[id]==25){state.retained_sets[id]=retained;}}
+}
+pub fn bool live(ref State state,usize id){return id<16 && descriptor(state,id) && state.origins[id]!=0;}
 pub fn bool retainable(ref State state,usize id){return live(state,id) && (state.retained&bit(id))!=0;}
 pub fn bool pinned(ref State state,usize owner){
     if(owner>=16){return false;}var usize i=0;
-    while(i<16){if(state.origins[i] as usize==owner+1){return true;}i+=1;}return false;
+    while(i<16){if(live(state,i) && (mask_of(state,i)&bit(owner))!=0){return true;}i+=1;}return false;
 }
 pub fn usize count(ref State state){var usize n=0;var usize i=0;
     while(i<16){if(state.origins[i]!=0){n+=1;}i+=1;}return n;}
 fn bool same_shape(ref State a,ref State b){if(a.function!=b.function || a.reserved!=b.reserved){return false;}var usize i=0;
-    while(i<16){if(a.origins[i]!=b.origins[i]){return false;}i+=1;}i=0;
+    while(i<16){if((a.origins[i]==0)!=(b.origins[i]==0)){return false;}i+=1;}i=0;
     while(i<64){if(a.names[i]!=b.names[i]){return false;}i+=1;}return true;
 }
-pub fn bool same(ref State a,ref State b){return a.retained==b.retained && same_shape(a,b);}
-// A CALL may authorize temporary retention on only one edge. After a join only
-// authorization common to every continuing edge survives; origins stay exact.
+pub fn bool same(ref State a,ref State b){
+    if(a.retained!=b.retained || !same_shape(a,b)){return false;}var usize i=0;
+    while(i<16){if(a.origins[i]!=b.origins[i] || a.sets[i]!=b.sets[i] ||
+        a.retained_sets[i]!=b.retained_sets[i]){return false;}i+=1;}return true;
+}
+// Retention meets only on paths where a dependency is possible. A root absent
+// on one path loses no permission; an unretained occurrence on any path wins.
+// Names, reservations and the live pattern stay exact.
 pub fn Result<usize,errors::Error> merge(ref mut State state,ref State other,usize at){
     let usize a=validate(state,at)?;let usize b=validate(other,at)?;
     if(!same_shape(state,other)){return .err(invalid(at));}
-    state.retained&=other.retained;return .ok(a);
+    var usize i=0;while(i<16){if(state.origins[i]!=0){
+        let usize left=mask_of(state,i);let usize right=mask_of(other,i);
+        let usize ra=retained_mask_of(state,i);let usize rb=retained_mask_of(other,i);
+        let usize retained=(ra&rb)|(ra^(ra&right))|(rb^(rb&left));
+        let usize mask=left|right;represent(state,i,mask);represent_retention(state,i,mask,retained);
+    }i+=1;}return .ok(a);
 }
 pub fn Result<usize,errors::Error> validate(ref State state,usize at){
     if(state.function>=16 || state.retained>=65536 || state.reserved>=65536){return .err(invalid(at));}
-    var usize i=0;while(i<16){if(state.origins[i]>24 ||
-        (state.origins[i]==0 && (state.retained&bit(i))!=0)){return .err(invalid(at));}i+=1;}
+    var usize i=0;while(i<16){if(!descriptor(state,i) || !retention_descriptor(state,i)){
+            return .err(invalid(at));}
+        i+=1;}
     var usize seen=0;let usize one=1;i=0;while(i<64){let usize encoded=state.names[i] as usize;
         if(encoded!=0){if(encoded>16){return .err(invalid(at));}let usize id=encoded-1;
             if(!live(state,id) || (seen&(one<<id))!=0){return .err(invalid(at));}seen|=one<<id;}
@@ -43,8 +92,24 @@ pub fn Result<usize,errors::Error> validate(ref State state,usize at){
     }return .ok(count(state));
 }
 pub fn Result<usize,errors::Error> origin(ref State state,usize id,usize at){
-    let usize checked=validate(state,at)?;if(!live(state,id)){return .err(invalid(at));}
+    let usize checked=roots(state,id,at)?;if(state.origins[id]==25){return .err(invalid(at));}
     return .ok((state.origins[id] as usize)-1);
+}
+// Structurally authenticated nonzero dependency mask. Program namespace and
+// function ownership are additionally proved by authenticate before any append.
+pub fn Result<usize,errors::Error> roots(ref State state,usize id,usize at){
+    let usize checked=validate(state,at)?;if(!live(state,id)){return .err(invalid(at));}
+    return .ok(mask_of(state,id));
+}
+// O(1) local accessors, not whole-state or Program authentication. Consumers
+// first validate their header/roots; these guard only this descriptor's encoding.
+pub fn usize local_roots(ref State state,usize id){
+    if(id>=16 || !descriptor(state,id) || !retention_descriptor(state,id)){return 0;}
+    return mask_of(state,id)&65535;
+}
+pub fn usize retained_roots(ref State state,usize id){
+    if(id>=16 || !descriptor(state,id) || !retention_descriptor(state,id)){return 0;}
+    return retained_mask_of(state,id);
 }
 // Static authentication only. The owning binding layer/caller admits liveness
 // and argument loans; this module deliberately has no dependency on that layer.
@@ -82,8 +147,10 @@ fn Result<usize,errors::Error> origin_function(ref values::Program unit,usize f,
 // Closed/reused entry IDs need not still describe the original formal itself.
 pub fn Result<usize,errors::Error> authenticate(ref values::Program unit,ref State state,usize at){
     let usize checked=validate(state,at)?;let usize f=function(unit,state,at)?;
-    var usize i=0;while(i<16){if(state.origins[i]!=0){
-        let usize other=origin_function(unit,f,(state.origins[i] as usize)-1,at)?;
+    var usize dependencies=0;var usize i=0;
+    while(i<16){dependencies|=mask_of(state,i);i+=1;}
+    i=0;while(i<24){if((dependencies&bit(i))!=0){
+        let usize other=origin_function(unit,f,i,at)?;
     }i+=1;}return .ok(f);
 }
 fn Result<usize,errors::Error> preflight(ref values::Program unit,ref State state,usize owner,usize at){
@@ -128,39 +195,40 @@ pub fn Result<usize,errors::Error> begin(ref mut values::Program unit,ref mut St
     let usize f=preflight(unit,state,owner,at)?;
     let usize low=scalar_register(unit,f,lo,at)?;let usize high=scalar_register(unit,f,hi,at)?;
     let usize dst=free(state,at)?;let usize room=capacity(unit,1,at)?;
-    append(unit,105,dst,owner,lo,hi,at);state.origins[dst]=byte(owner+1);return .ok(dst);
+    append(unit,105,dst,owner,lo,hi,at);represent(state,dst,bit(owner));return .ok(dst);
 }
 pub fn Result<usize,errors::Error> range(ref mut values::Program unit,ref mut State state,
     usize parent,usize lo,usize hi,usize at){
-    let usize owner=origin(state,parent,at)?;let usize f=preflight(unit,state,owner,at)?;
+    let usize mask=roots(state,parent,at)?;let usize f=authenticate(unit,state,at)?;
+    let usize retained=retained_mask_of(state,parent);
     let usize low=scalar_register(unit,f,lo,at)?;let usize high=scalar_register(unit,f,hi,at)?;
     let usize dst=free(state,at)?;let usize room=capacity(unit,1,at)?;
-    let u8 encoded=state.origins[parent];
-    append(unit,106,dst,parent,lo,hi,at);state.origins[dst]=encoded;
-    if(retainable(state,parent)){state.retained|=bit(dst);}return .ok(dst);
+    append(unit,106,dst,parent,lo,hi,at);represent(state,dst,mask);
+    represent_retention(state,dst,mask,retained);return .ok(dst);
 }
 pub fn Result<usize,errors::Error> alias(ref mut values::Program unit,ref mut State state,usize source,usize at){
-    let usize owner=origin(state,source,at)?;let usize f=preflight(unit,state,owner,at)?;
+    let usize mask=roots(state,source,at)?;let usize f=authenticate(unit,state,at)?;
+    let usize retained=retained_mask_of(state,source);
     let usize dst=free(state,at)?;let usize room=capacity(unit,1,at)?;
-    let u8 encoded=state.origins[source];
-    append(unit,107,dst,source,0,0,at);state.origins[dst]=encoded;
-    if(retainable(state,source)){state.retained|=bit(dst);}return .ok(dst);
+    append(unit,107,dst,source,0,0,at);represent(state,dst,mask);
+    represent_retention(state,dst,mask,retained);return .ok(dst);
 }
 pub fn Result<usize,errors::Error> move_to(ref mut values::Program unit,ref mut State state,
     usize source,usize destination,usize at){
-    let usize owner=origin(state,source,at)?;let usize f=preflight(unit,state,owner,at)?;
+    let usize mask=roots(state,source,at)?;let usize f=authenticate(unit,state,at)?;
+    let usize retained=retained_mask_of(state,source);
     if(destination>=16 || state.origins[destination]!=0){return .err(invalid(at));}
     let usize room=capacity(unit,1,at)?;
-    let u8 encoded=state.origins[source];append(unit,108,destination,source,0,0,at);
-    if(retainable(state,source)){state.retained|=bit(destination);}
+    append(unit,108,destination,source,0,0,at);
+    represent(state,destination,mask);represent_retention(state,destination,mask,retained);
     state.retained^=state.retained&bit(source);
-    state.origins[destination]=encoded;state.origins[source]=0;
+    state.origins[source]=0;state.sets[source]=0;state.retained_sets[source]=0;
     var usize i=0;while(i<64){if(state.names[i] as usize==source+1){state.names[i]=byte(destination+1);}i+=1;}
     return .ok(destination);
 }
 // Detach names on CLOSE so a reused Dead ID cannot revive a stale lexical name.
 // The owning layer retains the shared Table entry until lexical scope removal.
-fn void forget(ref mut State state,usize id){state.origins[id]=0;state.retained^=state.retained&bit(id);var usize i=0;
+fn void forget(ref mut State state,usize id){state.origins[id]=0;state.sets[id]=0;state.retained_sets[id]=0;state.retained^=state.retained&bit(id);var usize i=0;
     while(i<64){if(state.names[i] as usize==id+1){state.names[i]=0;}i+=1;}}
 // Parent installs register starts/arities first; this emits no executable IR.
 pub fn Result<usize,errors::Error> formal(ref mut values::Program unit,ref mut State state,
@@ -170,33 +238,34 @@ pub fn Result<usize,errors::Error> formal(ref mut values::Program unit,ref mut S
     let usize r=formal_register(unit,f,ordinal,at)?;
     if(unit.parameters[r]!=0){return .err(invalid(at));}
     let usize dst=free(state,at)?;
-    state.origins[dst]=byte(17+ordinal);unit.parameters[r]=byte(17+dst);return .ok(dst);
+    represent(state,dst,bit(16+ordinal));unit.parameters[r]=byte(17+dst);return .ok(dst);
 }
 // Parent emits CALL114 before closing actual captures. Retaining this extra
 // descriptor pins even an anonymous actual until the last returned alias closes.
 pub fn Result<usize,errors::Error> call_result(ref mut values::Program unit,ref mut State state,
     usize actual_view,usize at){
-    let usize owner=origin(state,actual_view,at)?;let usize f=preflight(unit,state,owner,at)?;
-    let usize dst=free(state,at)?;let u8 inherited=state.origins[actual_view];state.origins[dst]=inherited;
-    state.retained|=bit(dst);return .ok(dst);
+    let usize mask=roots(state,actual_view,at)?;let usize f=authenticate(unit,state,at)?;
+    let usize dst=free(state,at)?;represent(state,dst,mask);
+    represent_retention(state,dst,mask,mask);return .ok(dst);
 }
 // Detach only the compile-time descriptor. No allocation may occur between this
 // handoff and terminal RETURN113; cleanup must leave the runtime view untouched.
 pub fn Result<usize,errors::Error> take_return(ref values::Program unit,ref mut State state,
     usize id,usize at){
-    let usize owner=origin(state,id,at)?;let usize f=preflight(unit,state,owner,at)?;
+    let usize mask=roots(state,id,at)?;let usize f=authenticate(unit,state,at)?;
     let usize selected=unit.results[f] as usize;
-    if(selected<17 || selected>24 || owner!=selected-1){return .err(invalid(at));}
+    if(selected<17 || selected>24){return .err(invalid(at));}
+    if(mask!=bit(selected-1)){return .err(invalid(at));}
     forget(state,id);return .ok(id);
 }
 pub fn Result<usize,errors::Error> close(ref mut values::Program unit,ref mut State state,usize id,usize at){
-    let usize owner=origin(state,id,at)?;let usize f=preflight(unit,state,owner,at)?;
+    let usize mask=roots(state,id,at)?;let usize f=authenticate(unit,state,at)?;
     let usize room=capacity(unit,1,at)?;append(unit,109,id,0,0,0,at);forget(state,id);return .ok(id);
 }
 pub fn Result<usize,errors::Error> scalar(ref mut values::Program unit,ref State state,
     u8 op,usize source,usize index,usize at){
     if(op!=110 && op!=111){return .err(invalid(at));}
-    let usize owner=origin(state,source,at)?;let usize f=preflight(unit,state,owner,at)?;
+    let usize mask=roots(state,source,at)?;let usize f=authenticate(unit,state,at)?;
     if(op==110){if(index!=0){return .err(invalid(at));}}
     else{let usize checked=scalar_register(unit,f,index,at)?;}
     let usize room=capacity(unit,1,at)?;let usize dst=unit.body.registers;
@@ -208,8 +277,7 @@ pub fn Result<usize,errors::Error> scalar(ref mut values::Program unit,ref State
     unit.body.registers=dst+1;return .ok(dst);
 }
 pub fn Result<usize,errors::Error> close_all(ref mut values::Program unit,ref mut State state,usize at){
-    let usize checked=validate(state,at)?;var usize i=0;
-    while(i<16){if(state.origins[i]!=0){let usize f=preflight(unit,state,(state.origins[i] as usize)-1,at)?;}i+=1;}
+    let usize f=authenticate(unit,state,at)?;let usize checked=count(state);var usize i=0;
     let usize room=capacity(unit,checked,at)?;i=16;while(i>0){i-=1;
         if(state.origins[i]!=0){append(unit,109,i,0,0,0,at);forget(state,i);}}
     return .ok(checked);
@@ -223,8 +291,9 @@ pub fn Result<usize,errors::Error> anonymous_since(ref State state,ref State bas
         if(baseline.names[i]!=0 && baseline.names[i]!=state.names[i]){return .err(invalid(at));}i+=1;}
     var bool[16] named=[false;16];i=0;while(i<64){if(state.names[i]!=0){named[(state.names[i] as usize)-1]=true;}i+=1;}
     i=0;while(i<16){
-        if(baseline.origins[i]!=0 && baseline.origins[i]!=state.origins[i]){return .err(invalid(at));}
-        if(baseline.origins[i]!=0 && retainable(state,i)!=retainable(baseline,i)){return .err(invalid(at));}
+        if(baseline.origins[i]!=0 && (baseline.origins[i]!=state.origins[i] || baseline.sets[i]!=state.sets[i])){
+            return .err(invalid(at));}
+        if(baseline.origins[i]!=0 && retained_mask_of(state,i)!=retained_mask_of(baseline,i)){return .err(invalid(at));}
         if(state.origins[i]!=0 && baseline.origins[i]==0 && !named[i]){mask|=one<<i;}
         i+=1;
     }
@@ -232,8 +301,9 @@ pub fn Result<usize,errors::Error> anonymous_since(ref State state,ref State bas
 }
 pub fn Result<usize,errors::Error> close_since(ref mut values::Program unit,ref mut State state,
     ref State baseline,usize at){
-    let usize mask=anonymous_since(state,baseline,at)?;let usize one=1;var usize needed=0;var usize i=0;
-    while(i<16){if(state.origins[i]!=0){let usize f=preflight(unit,state,(state.origins[i] as usize)-1,at)?;}
+    let usize mask=anonymous_since(state,baseline,at)?;let usize f=authenticate(unit,state,at)?;
+    let usize one=1;var usize needed=0;var usize i=0;
+    while(i<16){
         if((mask&(one<<i))!=0){needed+=1;}i+=1;}
     let usize room=capacity(unit,needed,at)?;i=16;while(i>0){i-=1;
         if((mask&(one<<i))!=0){append(unit,109,i,0,0,0,at);forget(state,i);}}

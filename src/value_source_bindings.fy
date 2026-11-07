@@ -60,10 +60,10 @@ fn Result<usize,errors::Error> header(ref values::Program unit,ref State state,u
         i+=1;
     }
     let usize view_function=views::authenticate(unit,ref state.views,at)?;
-    i=0;while(i<16){if(state.views.origins[i]!=0 && state.views.origins[i]<=16){let usize owner=(state.views.origins[i] as usize)-1;
-        if(owner>=state.next || (state.live&bit(owner))==0 ||
-            unit.catalog.nodes[values::type_id(unit,owner)].kind!=4){return .err(invalid(at));}
-    }i+=1;}
+    i=0;while(i<16){let usize roots=views::local_roots(ref state.views,i);var usize owner=0;
+        while(owner<16){if((roots&bit(owner))!=0 && (owner>=state.next || (state.live&bit(owner))==0 ||
+            unit.catalog.nodes[values::type_id(unit,owner)].kind!=4)){return .err(invalid(at));}owner+=1;}
+        i+=1;}
     i=0;while(i<64){if(state.views.names[i]!=0){let usize id=(state.views.names[i] as usize)-1;
         if(i>=state.names.count || state.bindings[i]!=0 || state.names.registers[i]!=224+id){return .err(invalid(at));}
     }i+=1;}return .ok(state.next);
@@ -188,7 +188,7 @@ pub fn Result<usize,errors::Error> declare_mut(ref values::Program unit,ref mut 
 // Views share the ordinary/owned name namespace, but never own a value slot.
 pub fn Result<usize,errors::Error> declare_view(ref values::Program unit,ref mut State state,
     ref u8[] source,usize begin,usize end,usize id,bool mutable){
-    let usize checked=header(unit,state,begin)?;let usize owner=views::origin(ref state.views,id,begin)?;
+    let usize checked=header(unit,state,begin)?;let usize roots=views::roots(ref state.views,id,begin)?;
     if(!lexer::simple(source,begin,end) || locals::reserved(source[begin..end])){return .err(errors::make(2,begin));}
     let usize valid=spans(source,state,begin)?;
     if(locals::find(source,ref state.names,begin,end)!=64){return .err(invalid(begin));}
@@ -322,28 +322,42 @@ fn Result<usize,errors::Error> anonymous_drop(ref State state,usize owner,usize 
     if(((state.reads|state.writes)&bit(owner))!=0){return .err(invalid(at));}
     if((state.pending&bit(owner))!=0){return .err(errors::make(18,at));}return .ok(1);
 }
+fn usize other_roots(ref State state,usize except){
+    var usize roots=0;var usize i=0;while(i<16){
+        if(i!=except){roots|=views::local_roots(ref state.views,i);}i+=1;
+    }return roots;
+}
+fn Result<usize,errors::Error> anonymous_drops(ref State state,usize roots,usize at){
+    var usize drops=0;var usize i=0;while(i<16){
+        if((roots&bit(i))!=0){drops+=anonymous_drop(state,i,at)?;}i+=1;
+    }return .ok(drops);
+}
+fn Result<usize,errors::Error> drop_anonymous(ref mut values::Program unit,ref mut State state,usize roots,usize at){
+    var usize i=16;while(i>0){i-=1;if((roots&bit(i))!=0 && !named_owner(state,i)){
+        let usize dropped=drop(unit,state,i,at)?;
+    }}return .ok(roots);
+}
 // Close one descriptor and the anonymous owner only when its last lease ends.
 // Admit the entire CLOSE+optional DROP before touching either state plane.
 pub fn Result<usize,errors::Error> close_view(ref mut values::Program unit,ref mut State state,usize id,usize at){
-    let usize checked=header(unit,state,at)?;let usize owner=views::origin(ref state.views,id,at)?;
-    var bool last=true;var usize i=0;while(i<16){
-        if(i!=id && state.views.origins[i] as usize==owner+1){last=false;}i+=1;}
-    var usize drops=0;if(last){drops=anonymous_drop(state,owner,at)?;}
+    let usize checked=header(unit,state,at)?;let usize valid=views::roots(ref state.views,id,at)?;
+    let usize owners=views::local_roots(ref state.views,id);
+    let usize kept=other_roots(state,id);let usize departing=owners^(owners&kept);
+    let usize drops=anonymous_drops(state,departing,at)?;
     if(unit.body.count>256 || 1+drops>256-unit.body.count){return .err(errors::make(4,at));}
     let usize closed=views::close(unit,ref mut state.views,id,at)?;
-    if(drops!=0){let usize dropped=drop(unit,state,owner,at)?;}return .ok(closed);
+    let usize dropped=drop_anonymous(unit,state,departing,at)?;return .ok(closed);
 }
 // All descriptors close before any owner drops. Named owners stay for ordinary
 // lexical cleanup; an immediate view over an anonymous Buffer owns its cleanup.
 pub fn Result<usize,errors::Error> close_views(ref mut values::Program unit,ref mut State state,usize at){
     let usize checked=header(unit,state,at)?;var usize owners=0;var usize i=0;
-    while(i<16){if(state.views.origins[i]!=0 && state.views.origins[i]<=16){owners|=bit((state.views.origins[i] as usize)-1);}i+=1;}
-    var usize drops=0;i=0;while(i<16){if((owners&bit(i))!=0){drops+=anonymous_drop(state,i,at)?;}i+=1;}
+    while(i<16){owners|=views::local_roots(ref state.views,i);i+=1;}
+    let usize drops=anonymous_drops(state,owners,at)?;
     let usize closes=views::count(ref state.views);
     if(unit.body.count>256 || closes+drops>256-unit.body.count){return .err(errors::make(4,at));}
     let usize closed=views::close_all(unit,ref mut state.views,at)?;
-    i=16;while(i>0){i-=1;if((owners&bit(i))!=0 && !named_owner(state,i)){
-        let usize dropped=drop(unit,state,i,at)?;}}
+    let usize dropped=drop_anonymous(unit,state,owners,at)?;
     return .ok(closed);
 }
 // Preserve baseline descriptors and close only newer anonymous temporaries.
@@ -353,16 +367,14 @@ pub fn Result<usize,errors::Error> close_views_since(ref mut values::Program uni
     let usize checked=header(unit,state,at)?;
     let usize closing=views::anonymous_since(ref state.views,baseline,at)?;
     var usize owners=0;var usize kept=0;var usize closes=0;var usize i=0;
-    while(i<16){if(state.views.origins[i]!=0){let usize owner=(state.views.origins[i] as usize)-1;
-        if((closing&bit(i))!=0){closes+=1;if(owner<16){owners|=bit(owner);}}
-        else if(owner<16){kept|=bit(owner);}
+    while(i<16){if(state.views.origins[i]!=0){let usize roots=views::local_roots(ref state.views,i);
+        if((closing&bit(i))!=0){closes+=1;owners|=roots;}
+        else{kept|=roots;}
     }i+=1;}
-    owners^=owners&kept;var usize drops=0;i=0;
-    while(i<16){if((owners&bit(i))!=0){drops+=anonymous_drop(state,i,at)?;}i+=1;}
+    owners^=owners&kept;let usize drops=anonymous_drops(state,owners,at)?;
     if(unit.body.count>256 || closes+drops>256-unit.body.count){return .err(errors::make(4,at));}
     let usize closed=views::close_since(unit,ref mut state.views,baseline,at)?;
-    i=16;while(i>0){i-=1;if((owners&bit(i))!=0 && !named_owner(state,i)){
-        let usize dropped=drop(unit,state,i,at)?;}}
+    let usize dropped=drop_anonymous(unit,state,owners,at)?;
     return .ok(closed);
 }
 // RHS is an already captured anonymous view. Preserve the lexical destination
@@ -372,16 +384,17 @@ pub fn Result<usize,errors::Error> assign_view(ref mut values::Program unit,ref 
     let usize checked=header(unit,state,at)?;
     if(index>=state.names.count || state.views.names[index]==0 || !state.names.mutable[index]){return .err(invalid(at));}
     let usize destination=(state.views.names[index] as usize)-1;
-    let usize old_owner=views::origin(ref state.views,destination,at)?;
-    let usize new_owner=views::origin(ref state.views,source,at)?;
+    let usize old_roots=views::roots(ref state.views,destination,at)?;
+    let usize new_roots=views::roots(ref state.views,source,at)?;
     var usize i=0;while(i<state.names.count){if(state.views.names[i] as usize==source+1){return .err(invalid(at));}i+=1;}
-    var bool last=true;i=0;while(i<16){if(i!=destination && state.views.origins[i] as usize==old_owner+1){last=false;}i+=1;}
-    var usize drops=0;if(last){drops=anonymous_drop(state,old_owner,at)?;}
+    let usize owners=views::local_roots(ref state.views,destination);
+    let usize kept=other_roots(state,destination);let usize departing=owners^(owners&kept);
+    let usize drops=anonymous_drops(state,departing,at)?;
     if(unit.body.count>256 || 2+drops>256-unit.body.count){return .err(errors::make(4,at));}
     let usize closed=views::close(unit,ref mut state.views,destination,at)?;
     let usize moved=views::move_to(unit,ref mut state.views,source,destination,at)?;
     state.views.names[index]=byte(destination+1);
-    if(drops!=0){let usize dropped=drop(unit,state,old_owner,at)?;}return .ok(destination);
+    let usize dropped=drop_anonymous(unit,state,departing,at)?;return .ok(destination);
 }
 // mark is names.count at scope entry. Admit the ENTIRE reverse cleanup before
 // any DROP/name removal, including late malformed bindings or full instruction IR.
@@ -401,10 +414,10 @@ pub fn Result<usize,errors::Error> leave_scope(ref mut values::Program unit,ref 
         if(state.views.names[i]!=0){let usize id=(state.views.names[i] as usize)-1;closing|=bit(id);closes+=1;}i+=1;
     }
     var usize anonymous=0;var usize kept=0;
-    i=0;while(i<16){if(state.views.origins[i]!=0 && state.views.origins[i]<=16){let usize owner=(state.views.origins[i] as usize)-1;
+    i=0;while(i<16){if(state.views.origins[i]!=0){let usize owners=views::local_roots(ref state.views,i);
         if((closing&bit(i))==0){
-            kept|=bit(owner);if((roots&bit(owner))!=0){return .err(invalid(at));}
-        }else{anonymous|=bit(owner);}
+            kept|=owners;if((roots&owners)!=0){return .err(invalid(at));}
+        }else{anonymous|=owners;}
     }i+=1;}
     // Named CALL results can retain anonymous actuals. Their last lexical view
     // owns root cleanup, unless another (including anonymous) descriptor survives.

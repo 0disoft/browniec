@@ -274,7 +274,7 @@ fn Result<usize,errors::Error> declaration(ref u8[] source,ref mut lexer::State 
     let usize terminator=lexer::punctuation(source,s,59)?;
     if(view_source::reference(value)){
         let usize id=view_source::capture(unit,state,value,begin)?;
-        let usize root=view_source::lexical_origin(state,id,begin)?;
+        let usize roots=view_source::lexical_roots(state,id,begin)?;
         return bindings::declare_view(unit,state,source,begin,end,id,mutable);
     }
     if(value.typed){let usize id=context::as_value(unit,state,value,begin)?;
@@ -298,7 +298,7 @@ fn Result<usize,errors::Error> assignment(ref u8[] source,ref mut lexer::State s
         let context::Value rhs=expression(source,s,unit,state,table,plan,paths,flow,view_source::type_id(),1,0)?;
         let usize semi=lexer::punctuation(source,s,terminator)?;
         let usize id=view_source::capture(unit,state,rhs,at)?;
-        let usize root=view_source::lexical_origin(state,id,at)?;
+        let usize roots=view_source::lexical_roots(state,id,at)?;
         return bindings::assign_view(unit,state,index,id,at);
     }
     let bool typed=state.bindings[index]!=0;let usize dst=state.names.registers[index];

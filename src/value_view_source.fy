@@ -40,9 +40,10 @@ pub fn Result<context::Value,errors::Error> begin(ref mut values::Program unit,r
 pub fn Result<context::Value,errors::Error> named(ref bindings::State state,usize index,usize at){
     if(index>=state.names.count || state.views.names[index]==0){return .err(wrong(at));}
     let usize id=(state.views.names[index] as usize)-1;
-    let usize owner=views::origin(ref state.views,id,at)?;
-    if(state.views.function!=state.names.function || (owner<16 && owner>=state.next) ||
-        !views::live(ref state.views,id)){return .err(wrong(at));}
+    let usize roots=views::roots(ref state.views,id,at)?;
+    let usize locals=views::local_roots(ref state.views,id);
+    if(state.next>16 || state.views.function!=state.names.function ||
+        (locals&state.live)!=locals || (locals>>state.next)!=0){return .err(wrong(at));}
     return .ok(value(id,index));
 }
 // Capture BEFORE evaluating an index/endpoint. A later expression can rebind
@@ -50,28 +51,35 @@ pub fn Result<context::Value,errors::Error> named(ref bindings::State state,usiz
 pub fn Result<usize,errors::Error> capture(ref mut values::Program unit,ref mut bindings::State state,
     context::Value input,usize at){
     if(!reference(input)){return .err(wrong(at));}
-    let usize owner=views::origin(ref state.views,input.value,at)?;
+    let usize roots=views::roots(ref state.views,input.value,at)?;
     if(input.binding==64){return .ok(input.value);}
     let context::Value checked=named(state,input.binding,at)?;
     if(checked.value!=input.value){return .err(wrong(at));}
     return views::alias(unit,ref mut state.views,input.value,at);
 }
 pub fn Result<usize,errors::Error> lexical_origin(ref bindings::State state,usize id,usize at){
-    let usize owner=views::origin(ref state.views,id,at)?;var usize i=0;
-    if(state.views.function!=state.names.function){return .err(wrong(at));}
-    if(owner>=16){return .ok(owner);}
-    if(owner>=state.next){return .err(wrong(at));}
-    if(views::retainable(ref state.views,id)){return .ok(owner);}
-    while(i<state.names.count){if(state.bindings[i] as usize==owner+1){return .ok(owner);}i+=1;}
+    let usize checked=lexical_roots(state,id,at)?;return views::origin(ref state.views,id,at);
+}
+pub fn Result<usize,errors::Error> lexical_roots(ref bindings::State state,usize id,usize at){
+    let usize roots=views::roots(ref state.views,id,at)?;
+    if(state.next>16 || state.names.count>64 || state.views.function!=state.names.function){return .err(wrong(at));}
+    let usize locals=views::local_roots(ref state.views,id);
+    let usize retained=views::retained_roots(ref state.views,id);let usize one=1;var usize owner=0;
+    while(owner<16){let usize bit=one<<owner;if((locals&bit)!=0){
+        if(owner>=state.next || (state.live&bit)==0){return .err(wrong(at));}
+        var bool allowed=(retained&bit)!=0;var usize i=0;
+        while(i<state.names.count){if(state.bindings[i] as usize==owner+1){allowed=true;}i+=1;}
+        if(!allowed){return .err(wrong(at));}
+    }owner+=1;}
     // A view of an anonymous Buffer may be inspected within its full expression,
     // but only an explicit CALL result may extend that temporary into a name.
-    return .err(wrong(at));
+    return .ok(roots);
 }
 pub fn Result<context::Value,errors::Error> length(ref u8[] source,ref mut lexer::State s,
     ref mut values::Program unit,ref mut bindings::State state,context::Value input){
     let usize at=s.begin;let usize dot=lexer::next(source,s)?;
     let usize name=lexer::word(source,s,b"len")?;
-    let usize owner=views::origin(ref state.views,input.value,at)?;
+    let usize roots=views::roots(ref state.views,input.value,at)?;
     let usize result=views::scalar(unit,ref state.views,110,input.value,0,at)?;
     if(input.binding==64){let usize closed=bindings::close_view(unit,state,input.value,at)?;}
     let usize type=context::intern(unit,1,12,0,at)?;return .ok(context::scalar(type,result));

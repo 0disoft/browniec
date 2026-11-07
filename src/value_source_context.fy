@@ -32,7 +32,7 @@ pub fn Result<Value,errors::Error> expected(Value value,usize exact,usize at){
 }
 pub fn Result<usize,errors::Error> capture(ref mut values::Program unit,ref mut bindings::State state,Value value,usize at){
     if(value.exact==65){
-        let usize owner=views::origin(ref state.views,value.value,at)?;
+        let usize roots=views::roots(ref state.views,value.value,at)?;
         if(value.binding==64){return .ok(value.value);}
         if(value.binding>=state.names.count || state.views.names[value.binding] as usize!=value.value+1){return .err(wrong(at));}
         return views::alias(unit,ref mut state.views,value.value,at);
@@ -56,7 +56,7 @@ pub fn Result<usize,errors::Error> discard_value(ref mut values::Program unit,re
     if(value.nothing){return .err(wrong(at));}
     if(value.exact==65){
         if(value.binding==64){return bindings::close_view(unit,state,value.value,at);}
-        let usize owner=views::origin(ref state.views,value.value,at)?;return .ok(0);
+        let usize roots=views::roots(ref state.views,value.value,at)?;return .ok(0);
     }
     if(value.typed){let usize id=capture(unit,state,value,at)?;
         let usize handled=bindings::handle(unit,state,id,at)?;return bindings::drop(unit,state,id,at);}return .ok(0);
@@ -205,7 +205,7 @@ pub fn Result<Value,errors::Error> joined(ref mut values::Program unit,ref mut b
     ref Join output,usize at){
     if(!output.have){return .err(wrong(at));}
     if(output.exact==65){
-        let usize owner=views::origin(ref state.views,output.destination,at)?;
+        let usize roots=views::roots(ref state.views,output.destination,at)?;
         let usize released=views::unreserve(ref mut state.views,output.destination,at)?;
         return .ok(Value{.exact=65,.value=output.destination,.typed=false,.nothing=false,.binding=64});
     }

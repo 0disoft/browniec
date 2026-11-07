@@ -78,9 +78,10 @@ pub fn Result<usize,errors::Error> grow(ref mut values::Program unit,ref mut bin
         let usize source=live_buffer(unit,state,argument,at)?;
         if((state.writes&bit(argument))!=0){return .err(invalid(at));}
     }else if(op==112){
-        let usize source=views::origin(ref state.views,argument,at)?;
-        let usize checked=live_buffer(unit,state,source,at)?;
-        if(source==buffer || (state.writes&bit(source))!=0){return .err(invalid(at));}
+        let usize roots=views::roots(ref state.views,argument,at)?;
+        let usize locals=views::local_roots(ref state.views,argument);var usize i=0;
+        while(i<16){if((locals&bit(i))!=0){let usize checked=live_buffer(unit,state,i,at)?;
+            if(i==buffer || (state.writes&bit(i))!=0){return .err(invalid(at));}}i+=1;}
     }else{let usize checked=scalar_register(unit,state,argument,if(op==102){10}else{12},at)?;}
     if(state.next==16){return .err(errors::make(4,at));}
     // preflight proves allocate's complete ledger/catalog checks, and the new

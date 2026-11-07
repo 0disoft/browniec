@@ -34,7 +34,8 @@ fn void failure(ref u8[] input,u8 expected){
 
 // Each independent guest fits the existing sixteen owning slots, 256 instructions
 // and 128 registers. Small native groups avoid a single giant development frame.
-// All continuing arms must have the SAME exact origin; windows may differ.
+// Windows may differ. Different already-live roots now join conservatively;
+// branch-only anonymous owners and multi-formal returns remain rejected.
 fn void true_and_false_if_join_choose_different_windows_of_one_root(){
     value(b"module main;fn i32 main(){var b=bytes::empty();_ = bytes::push(ref mut b,7);_ = bytes::push(ref mut b,42);{let v=bytes::view(ref b);let r=if(true){v[1..2]}else{v[0..1]};if(r.len!=1 || r[0]!=42 || v[0]!=7){return 0;}}bytes::write(ref mut b,0,9);return 42;}");
     value(b"module main;fn i32 main(){var b=bytes::empty();_ = bytes::push(ref mut b,7);_ = bytes::push(ref mut b,42);{let v=bytes::view(ref b);let ref u8[] r=if(false){v[0..0]}else{v[1..]};if(r.len!=1 || r[0]!=42){return 0;}}bytes::write(ref mut b,0,9);return 42;}");
@@ -109,12 +110,12 @@ fn void yielded_inner_aliases_of_outer_roots_survive_arm_scope_cleanup(){
     value(b"module main;fn ref u8[] pick(ref u8[] v){var r=v;{let inner=v;r=if(false){inner[0..0]}else{let alias=inner;alias};}return r;}fn i32 main(){var b=bytes::empty();_ = bytes::push(ref mut b,42);let r=pick(ref bytes::view(ref b));if(r[0]==42){return 42;}return 0;}");
 }
 
-fn void local_owner_escape_and_distinct_root_joins_remain_rejections(){
+fn void local_owner_escape_rejects_but_distinct_live_named_roots_join(){
     rejected(b"module main;fn i32 main(){let b=bytes::empty();let r=if(true){let local=bytes::empty();bytes::view(ref local)}else{bytes::view(ref b)};return 42;}");
     rejected(b"module main;fn ref u8[] wrong(ref u8[] v){return if(true){let local=bytes::empty();bytes::view(ref local)}else{v};}fn i32 main(){return 42;}");
     rejected(b"module main;fn ref u8[] wrong(ref u8[] v){var r=v;{let local=bytes::empty();r=bytes::view(ref local);}return r;}fn i32 main(){return 42;}");
-    rejected(b"module main;fn i32 main(){let a=bytes::empty();let b=bytes::empty();let r=if(false){bytes::view(ref a)}else{bytes::view(ref b)};return 42;}");
-    rejected(b"module main;fn i32 main(){let a=bytes::empty();let b=bytes::empty();let r=switch(.some(1)){case .some(_):{bytes::view(ref a)}case .none:{bytes::view(ref b)}};return 42;}");
+    value(b"module main;fn i32 main(){let a=bytes::empty();let b=bytes::empty();let r=if(false){bytes::view(ref a)}else{bytes::view(ref b)};if(r.len==0){return 42;}return 0;}");
+    value(b"module main;fn i32 main(){let a=bytes::empty();let b=bytes::empty();let r=switch(.some(1)){case .some(_):{bytes::view(ref a)}case .none:{bytes::view(ref b)}};if(r.len==0){return 42;}return 0;}");
 }
 
 fn void different_formal_joins_and_rebound_return_origins_remain_rejections(){
@@ -128,7 +129,7 @@ fn void joins_retain_one_anonymous_call_root_without_unifying_distinct_temporary
     // Both edges select a single already-retained anonymous Buffer origin.
     value(b"module main;fn ref u8[] id(ref u8[] v){return v;}fn i32 main(){{let seed=id(ref bytes::view(ref bytes::empty()));let r=if(true){seed}else{id(ref seed)};if(r.len!=0 || seed.len!=0){return 0;}}return 42;}");
     value(b"module main;fn ref u8[] id(ref u8[] v){return v;}fn i32 main(){{let seed=id(ref bytes::view(ref bytes::empty()));let Option<i32> o=.none;let r=switch(o){case .some(_):{id(ref seed)}case .none:{let alias=seed;alias[..]}};if(r.len!=0){return 0;}}return 42;}");
-    // Distinct source-site temporaries are distinct exact origins, even empty.
+    // Branch-only owners have no merged owning state, even when both are empty.
     rejected(b"module main;fn ref u8[] id(ref u8[] v){return v;}fn i32 main(){let r=if(true){id(ref bytes::view(ref bytes::empty()))}else{id(ref bytes::view(ref bytes::empty()))};return 42;}");
 }
 
@@ -173,9 +174,9 @@ fn void shared_join_source_and_body_stay_rejected_by_ordinary_public_routes(){
     same_root_rebinding_combines_direct_aliases_calls_and_returned_views();
     joins_retain_one_anonymous_call_root_without_unifying_distinct_temporary_slots();
 }
-@test fn void bottom_local_escape_and_distinct_origin_joins_reject(){
+@test fn void bottom_local_escape_reject_and_live_named_origin_joins_execute(){
     fully_terminal_value_joins_remain_rejected_without_bottom_expression_support();
-    local_owner_escape_and_distinct_root_joins_remain_rejections();
+    local_owner_escape_rejects_but_distinct_live_named_roots_join();
     different_formal_joins_and_rebound_return_origins_remain_rejections();
 }
 @test fn void bounds_arithmetic_first_errors_and_public_admission_gates(){
