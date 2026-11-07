@@ -60,9 +60,26 @@ escaped native view, public handle, external bytecode, cache, GC or JIT is added
 Existing opcode prices and public Fuel default256/ceiling16000000 stay unchanged.
 
 `tools/verify-value-view-calls.py` selects disjoint core and regression batches
-for development/release in locked byte-identical native mirrors. Final evidence
-is pending. Follow-on work connects independent reference signature/origin/CFG
+for development/release in locked byte-identical native mirrors. Windows development/release each passed twelve native groups (six new),
+recorded in [the focused evidence](../evidence/value-view-calls-windows-20261107.json).
+Follow-on work connects independent reference signature/origin/CFG
 proof, retained CALL/RETURN dispatch and source lifetime/inference. General
 mutable/non-byte references, view-valued joins, public AllocError/admission,
 text/I/O, Engine/Instance/host/cancellation, isolation and platform/delivery also
 remain in the complete objective.
+
+## Executed verification
+
+Implementation: `4c8c84d`. Both native profiles passed six new groups covering
+atomic aliases, contained/empty returns, stale/occupied/capacity/Fuel rejection,
+recursive same-function frame separation and exact state/byte preservation.
+Six existing owning-copy/view-copy regression groups also passed per profile.
+All 223 union inputs match checkout and Git raw bytes; all 214 production modules
+are LF. Builds used the pinned compiler with no native stack overrides.
+
+Reproduce each batch with `python tools/verify-value-view-calls.py --batch core`
+and `python tools/verify-value-view-calls.py --batch regression`; each defaults
+to both profiles. Core and regression use distinct native build directories.
+Source/public CLI checks, general reference IR/dispatch and Linux/macOS were not
+run for this native increment. The unchanged admitted32/rejected33 conditional
+fixture was hash-checked against the predecessor, not re-executed.

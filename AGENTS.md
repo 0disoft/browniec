@@ -1,4 +1,13 @@
-- Latest Buffer view-copy checkpoint, 2026-11-07: Private [Buffer view copying](docs/engineering/value-view-copy.md) now accepts
+- Latest native view-call checkpoint (2026-11-07): [Shared Buffer view CALL/RETURN](docs/engineering/value-view-calls.md) now
+  publishes up to eight argument aliases atomically and returns only a window
+  contained in the selected caller origin across authenticated adjacent frames.
+  `4c8c84d` passed 12 native groups per Windows profile (six new); all 223 inputs
+  match checkout/Git raw bytes and 214 production modules are LF. See [evidence](docs/evidence/value-view-calls-windows-20261107.json).
+  This is the native prerequisite; guest reference signatures/IR/source remain
+  next, followed by view-valued joins and the remaining full-profile work.
+  Public admission/prices remain unchanged. Local commits only; no push/release.
+
+- Predecessor Buffer view-copy checkpoint, 2026-11-07: Private [Buffer view copying](docs/engineering/value-view-copy.md) now accepts
   `bytes::copy(ref view)` and qualified/range/temporary inputs, returning an
   independent exact `Result<Buffer,u8>`. APPEND_VIEW112 independently proves live
   views, a live distinct unpinned Buffer and a fresh Result; runtime prepays

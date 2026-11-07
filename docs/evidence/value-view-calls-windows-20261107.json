@@ -1,0 +1,661 @@
+{
+  "schema": "browniec.value-view-calls-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-07T01:01:35.526733+00:00",
+  "platform": "windows/amd64",
+  "implementationCommit": "4c8c84d66f68fdd1e8e0654a15eb65cb9bb375e6",
+  "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+  "inputManifest": {
+    "path": "docs/evidence/value-view-calls-inputs-windows-20261107.json",
+    "sha256": "d8708316ce61e55106d3af176f30f34a1abe399c85d872e923320e951c8d9030"
+  },
+  "checkoutInputsMatched": 223,
+  "gitRawInputsMatched": 223,
+  "lfProductionModules": 214,
+  "groupsPerProfile": {
+    "development": 12,
+    "release": 12
+  },
+  "newGroupsPerProfile": 6,
+  "nativeHandoff": {
+    "maxArguments": 8,
+    "viewsPerActivation": 16,
+    "invocationRegistryCapacity": 32,
+    "argumentFuelPerAlias": 512,
+    "returnFuel": 256,
+    "atomicArgumentPublication": true,
+    "exactOriginWindow": true,
+    "payloadCopies": 0,
+    "calleeLeakRejection": true,
+    "sourceReferenceFormalsAndResults": false,
+    "guestCallReturnIntegration": false,
+    "existingOpcodePricesUnchanged": true,
+    "noViewSetupPricesUnchanged": true
+  },
+  "unchangedConditionalDepthFixture": {
+    "path": "tests/m2/value_source_control.fy",
+    "sha256": "b7629f96a427f2af723677f81bc0dda2d45318781ec1678eb6be1438f4a6cbf1",
+    "runtimeRerun": false
+  },
+  "profiles": [
+    {
+      "schema": "browniec.value-source-verification/v1",
+      "status": "passed",
+      "recordedAt": "2026-11-07T01:00:13.625320+00:00",
+      "profile": "development",
+      "phase": "native",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "commands": [
+        {
+          "argv": [
+            "@CHECKOUT\\build\\toolchain\\fairyc.exe",
+            "--version"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "cd072950608b9582b5ea82fc93c07ed15e8a3717854eda1218979d07665488f3",
+          "elapsedSeconds": 0.074,
+          "exit": 0,
+          "stdout": "compiler-version.txt",
+          "stderr": "compiler-version.txt.stderr.txt",
+          "stdoutSha256": "cfd188b9865777d7972b1c1e1c4e2e50d2735becbeca8627863cde0d38330e34",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "@CHECKOUT\\build\\toolchain\\fairyc.exe",
+            "check",
+            "--locked"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "4a56238644fd3eae28b5ed5d8800427c848e4ce7ced9f90c5a0cc4089afb5fc0",
+          "elapsedSeconds": 5.823,
+          "exit": 0,
+          "stdout": "check.txt",
+          "stderr": "check.txt.stderr.txt",
+          "stdoutSha256": "8017a9988db21ff1d622523fea8e6e4636e75edcca868f32ee008f6d258717b8",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "@CHECKOUT\\build\\toolchain\\fairyc.exe",
+            "test",
+            "--native",
+            "--capture-output",
+            "--json",
+            "--locked",
+            "--exact",
+            "tests::m2::value_view_call_pool::atomic_duplicate_sources_exact_fuel_and_late_failures_publish_nothing",
+            "--exact",
+            "tests::m2::value_view_call_pool::contained_ranges_and_empty_boundaries_retain_exact_lease_after_caller_close",
+            "--exact",
+            "tests::m2::value_view_call_pool::rejected_handoffs_and_exhausted_aliases_preserve_every_metadata_field_and_bytes",
+            "--exact",
+            "tests::m2::value_view_call_runtime::arguments_alias_eight_actuals_and_selected_range_returns_without_copy_or_early_unpin",
+            "--exact",
+            "tests::m2::value_view_call_runtime::recursive_same_function_view_zero_is_isolated_and_reused_frames_require_empty_lanes",
+            "--exact",
+            "tests::m2::value_view_call_runtime::stale_ids_missing_bindings_leaks_owned_roots_wrong_origins_and_fuel_preserve_state"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "d9319f20b2086d05c30c3b0c6f55384251d8a5d0f9017ec114d9e1ad48265c7b",
+          "elapsedSeconds": 42.14,
+          "exit": 0,
+          "stdout": "native.json",
+          "stderr": "native.json.stderr.txt",
+          "stdoutSha256": "fd0dfc4330db5930908fbccf6143ed70dcfabc4c723eaf2d98c9c9a03af8def8",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "selectedTests": [
+        "tests::m2::value_view_call_pool::atomic_duplicate_sources_exact_fuel_and_late_failures_publish_nothing",
+        "tests::m2::value_view_call_pool::contained_ranges_and_empty_boundaries_retain_exact_lease_after_caller_close",
+        "tests::m2::value_view_call_pool::rejected_handoffs_and_exhausted_aliases_preserve_every_metadata_field_and_bytes",
+        "tests::m2::value_view_call_runtime::arguments_alias_eight_actuals_and_selected_range_returns_without_copy_or_early_unpin",
+        "tests::m2::value_view_call_runtime::recursive_same_function_view_zero_is_isolated_and_reused_frames_require_empty_lanes",
+        "tests::m2::value_view_call_runtime::stale_ids_missing_bindings_leaks_owned_roots_wrong_origins_and_fuel_preserve_state"
+      ],
+      "nativeGroups": 6,
+      "selectedNativeGroups": 6,
+      "nativeWorkspace": "byte-identical-production-selected-tests",
+      "nativeOverrides": false,
+      "historicalResultReuse": false,
+      "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false",
+      "check": "check ok: 2 instance(s), 222 source file(s), 2366 MIR function(s), lock verified\n",
+      "nativeReport": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "development",
+        "tests": [
+          {
+            "identity": "tests::m2::value_view_call_pool::atomic_duplicate_sources_exact_fuel_and_late_failures_publish_nothing",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_call_pool::contained_ranges_and_empty_boundaries_retain_exact_lease_after_caller_close",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_call_pool::rejected_handoffs_and_exhausted_aliases_preserve_every_metadata_field_and_bytes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_call_runtime::arguments_alias_eight_actuals_and_selected_range_returns_without_copy_or_early_unpin",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_call_runtime::recursive_same_function_view_zero_is_isolated_and_reused_frames_require_empty_lanes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_call_runtime::stale_ids_missing_bindings_leaks_owned_roots_wrong_origins_and_fuel_preserve_state",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 6,
+        "passed": 6,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "nativeReportSha256": "0b5b026706a7670a31652173751fc665c05f769592578fbb51d8bd746b4601e7",
+      "nativeInputMirrorVerified": true,
+      "elapsedSeconds": 48.665,
+      "cliSkipped": "Optional public Fuel CLI suite was not requested.",
+      "batch": "core"
+    },
+    {
+      "schema": "browniec.value-source-verification/v1",
+      "status": "passed",
+      "recordedAt": "2026-11-07T01:00:13.624816+00:00",
+      "profile": "release",
+      "phase": "native",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "commands": [
+        {
+          "argv": [
+            "@CHECKOUT\\build\\toolchain\\fairyc.exe",
+            "--version"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "cd072950608b9582b5ea82fc93c07ed15e8a3717854eda1218979d07665488f3",
+          "elapsedSeconds": 0.159,
+          "exit": 0,
+          "stdout": "compiler-version.txt",
+          "stderr": "compiler-version.txt.stderr.txt",
+          "stdoutSha256": "cfd188b9865777d7972b1c1e1c4e2e50d2735becbeca8627863cde0d38330e34",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "@CHECKOUT\\build\\toolchain\\fairyc.exe",
+            "check",
+            "--locked"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "4a56238644fd3eae28b5ed5d8800427c848e4ce7ced9f90c5a0cc4089afb5fc0",
+          "elapsedSeconds": 5.624,
+          "exit": 0,
+          "stdout": "check.txt",
+          "stderr": "check.txt.stderr.txt",
+          "stdoutSha256": "8017a9988db21ff1d622523fea8e6e4636e75edcca868f32ee008f6d258717b8",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "@CHECKOUT\\build\\toolchain\\fairyc.exe",
+            "test",
+            "--native",
+            "--capture-output",
+            "--json",
+            "--locked",
+            "--release",
+            "--exact",
+            "tests::m2::value_view_call_pool::atomic_duplicate_sources_exact_fuel_and_late_failures_publish_nothing",
+            "--exact",
+            "tests::m2::value_view_call_pool::contained_ranges_and_empty_boundaries_retain_exact_lease_after_caller_close",
+            "--exact",
+            "tests::m2::value_view_call_pool::rejected_handoffs_and_exhausted_aliases_preserve_every_metadata_field_and_bytes",
+            "--exact",
+            "tests::m2::value_view_call_runtime::arguments_alias_eight_actuals_and_selected_range_returns_without_copy_or_early_unpin",
+            "--exact",
+            "tests::m2::value_view_call_runtime::recursive_same_function_view_zero_is_isolated_and_reused_frames_require_empty_lanes",
+            "--exact",
+            "tests::m2::value_view_call_runtime::stale_ids_missing_bindings_leaks_owned_roots_wrong_origins_and_fuel_preserve_state"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "c363159376f52af0f77d0c4a3d78de82aaa4baddb453361a64c3e47721027d48",
+          "elapsedSeconds": 45.821,
+          "exit": 0,
+          "stdout": "native.json",
+          "stderr": "native.json.stderr.txt",
+          "stdoutSha256": "2b64c2bbd2fb80f3539edad9f9d2f1ce65872f9036d9e5119a713fc467238ed6",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "selectedTests": [
+        "tests::m2::value_view_call_pool::atomic_duplicate_sources_exact_fuel_and_late_failures_publish_nothing",
+        "tests::m2::value_view_call_pool::contained_ranges_and_empty_boundaries_retain_exact_lease_after_caller_close",
+        "tests::m2::value_view_call_pool::rejected_handoffs_and_exhausted_aliases_preserve_every_metadata_field_and_bytes",
+        "tests::m2::value_view_call_runtime::arguments_alias_eight_actuals_and_selected_range_returns_without_copy_or_early_unpin",
+        "tests::m2::value_view_call_runtime::recursive_same_function_view_zero_is_isolated_and_reused_frames_require_empty_lanes",
+        "tests::m2::value_view_call_runtime::stale_ids_missing_bindings_leaks_owned_roots_wrong_origins_and_fuel_preserve_state"
+      ],
+      "nativeGroups": 6,
+      "selectedNativeGroups": 6,
+      "nativeWorkspace": "byte-identical-production-selected-tests",
+      "nativeOverrides": false,
+      "historicalResultReuse": false,
+      "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false",
+      "check": "check ok: 2 instance(s), 222 source file(s), 2366 MIR function(s), lock verified\n",
+      "nativeReport": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "release",
+        "tests": [
+          {
+            "identity": "tests::m2::value_view_call_pool::atomic_duplicate_sources_exact_fuel_and_late_failures_publish_nothing",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_call_pool::contained_ranges_and_empty_boundaries_retain_exact_lease_after_caller_close",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_call_pool::rejected_handoffs_and_exhausted_aliases_preserve_every_metadata_field_and_bytes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_call_runtime::arguments_alias_eight_actuals_and_selected_range_returns_without_copy_or_early_unpin",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_call_runtime::recursive_same_function_view_zero_is_isolated_and_reused_frames_require_empty_lanes",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_call_runtime::stale_ids_missing_bindings_leaks_owned_roots_wrong_origins_and_fuel_preserve_state",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 6,
+        "passed": 6,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "nativeReportSha256": "ef5b9380fbd405221dc60824b12d6fe83c4be593826821a2cbec4228ae58c2d1",
+      "nativeInputMirrorVerified": true,
+      "elapsedSeconds": 52.227,
+      "cliSkipped": "Optional public Fuel CLI suite was not requested.",
+      "batch": "core"
+    },
+    {
+      "schema": "browniec.value-source-verification/v1",
+      "status": "passed",
+      "recordedAt": "2026-11-07T00:54:57.326520+00:00",
+      "profile": "development",
+      "phase": "native",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "commands": [
+        {
+          "argv": [
+            "@CHECKOUT\\build\\toolchain\\fairyc.exe",
+            "--version"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "cd072950608b9582b5ea82fc93c07ed15e8a3717854eda1218979d07665488f3",
+          "elapsedSeconds": 0.069,
+          "exit": 0,
+          "stdout": "compiler-version.txt",
+          "stderr": "compiler-version.txt.stderr.txt",
+          "stdoutSha256": "cfd188b9865777d7972b1c1e1c4e2e50d2735becbeca8627863cde0d38330e34",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "@CHECKOUT\\build\\toolchain\\fairyc.exe",
+            "check",
+            "--locked"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "4a56238644fd3eae28b5ed5d8800427c848e4ce7ced9f90c5a0cc4089afb5fc0",
+          "elapsedSeconds": 5.552,
+          "exit": 0,
+          "stdout": "check.txt",
+          "stderr": "check.txt.stderr.txt",
+          "stdoutSha256": "8017a9988db21ff1d622523fea8e6e4636e75edcca868f32ee008f6d258717b8",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "@CHECKOUT\\build\\toolchain\\fairyc.exe",
+            "test",
+            "--native",
+            "--capture-output",
+            "--json",
+            "--locked",
+            "--exact",
+            "tests::m2::value_view_copy_execution::append_view_adapter_prepays_publication_authenticates_quota_and_cleans_at_zero_fuel",
+            "--exact",
+            "tests::m2::value_view_copy_execution::malformed_append_view_fresh_result_dead_views_and_empty_root_pins_reject_independently",
+            "--exact",
+            "tests::m2::value_view_copy_execution::private_append_view_executes_independent_copies_and_preserves_named_source_pin",
+            "--exact",
+            "tests::m2::value_view_copy_roots::nested_and_empty_windows_copy_both_vector_orders_and_keep_source_pinned",
+            "--exact",
+            "tests::m2::value_view_copy_roots::rejected_window_bounds_fuel_and_quotas_preserve_bytes_and_full_metadata",
+            "--exact",
+            "tests::m2::value_view_copy_roots::stale_wrong_binding_and_pinned_empty_destinations_reject_before_copy"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "2c04755df23777d02b069fb7a9642457c2f1d4a779e806073ee2d9b26334ab91",
+          "elapsedSeconds": 50.936,
+          "exit": 0,
+          "stdout": "native.json",
+          "stderr": "native.json.stderr.txt",
+          "stdoutSha256": "08a09ef87cde9d35c126f171b72990ec31b9677337cc1eb6386207c999848374",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "selectedTests": [
+        "tests::m2::value_view_copy_execution::append_view_adapter_prepays_publication_authenticates_quota_and_cleans_at_zero_fuel",
+        "tests::m2::value_view_copy_execution::malformed_append_view_fresh_result_dead_views_and_empty_root_pins_reject_independently",
+        "tests::m2::value_view_copy_execution::private_append_view_executes_independent_copies_and_preserves_named_source_pin",
+        "tests::m2::value_view_copy_roots::nested_and_empty_windows_copy_both_vector_orders_and_keep_source_pinned",
+        "tests::m2::value_view_copy_roots::rejected_window_bounds_fuel_and_quotas_preserve_bytes_and_full_metadata",
+        "tests::m2::value_view_copy_roots::stale_wrong_binding_and_pinned_empty_destinations_reject_before_copy"
+      ],
+      "nativeGroups": 6,
+      "selectedNativeGroups": 6,
+      "nativeWorkspace": "byte-identical-production-selected-tests",
+      "nativeOverrides": false,
+      "historicalResultReuse": false,
+      "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false",
+      "check": "check ok: 2 instance(s), 222 source file(s), 2366 MIR function(s), lock verified\n",
+      "nativeReport": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "development",
+        "tests": [
+          {
+            "identity": "tests::m2::value_view_copy_execution::append_view_adapter_prepays_publication_authenticates_quota_and_cleans_at_zero_fuel",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_copy_execution::malformed_append_view_fresh_result_dead_views_and_empty_root_pins_reject_independently",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_copy_execution::private_append_view_executes_independent_copies_and_preserves_named_source_pin",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_copy_roots::nested_and_empty_windows_copy_both_vector_orders_and_keep_source_pinned",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_copy_roots::rejected_window_bounds_fuel_and_quotas_preserve_bytes_and_full_metadata",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_copy_roots::stale_wrong_binding_and_pinned_empty_destinations_reject_before_copy",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 6,
+        "passed": 6,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "nativeReportSha256": "b438670c2753dd68591ca49dc06fc445624b7d2e3811f5132aaffb20b6f2ade6",
+      "nativeInputMirrorVerified": true,
+      "elapsedSeconds": 57.202,
+      "cliSkipped": "Optional public Fuel CLI suite was not requested.",
+      "batch": "regression"
+    },
+    {
+      "schema": "browniec.value-source-verification/v1",
+      "status": "passed",
+      "recordedAt": "2026-11-07T00:55:07.721830+00:00",
+      "profile": "release",
+      "phase": "native",
+      "compilerSha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+      "commands": [
+        {
+          "argv": [
+            "@CHECKOUT\\build\\toolchain\\fairyc.exe",
+            "--version"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "cd072950608b9582b5ea82fc93c07ed15e8a3717854eda1218979d07665488f3",
+          "elapsedSeconds": 0.074,
+          "exit": 0,
+          "stdout": "compiler-version.txt",
+          "stderr": "compiler-version.txt.stderr.txt",
+          "stdoutSha256": "cfd188b9865777d7972b1c1e1c4e2e50d2735becbeca8627863cde0d38330e34",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "@CHECKOUT\\build\\toolchain\\fairyc.exe",
+            "check",
+            "--locked"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "4a56238644fd3eae28b5ed5d8800427c848e4ce7ced9f90c5a0cc4089afb5fc0",
+          "elapsedSeconds": 5.728,
+          "exit": 0,
+          "stdout": "check.txt",
+          "stderr": "check.txt.stderr.txt",
+          "stdoutSha256": "8017a9988db21ff1d622523fea8e6e4636e75edcca868f32ee008f6d258717b8",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "argv": [
+            "@CHECKOUT\\build\\toolchain\\fairyc.exe",
+            "test",
+            "--native",
+            "--capture-output",
+            "--json",
+            "--locked",
+            "--release",
+            "--exact",
+            "tests::m2::value_view_copy_execution::append_view_adapter_prepays_publication_authenticates_quota_and_cleans_at_zero_fuel",
+            "--exact",
+            "tests::m2::value_view_copy_execution::malformed_append_view_fresh_result_dead_views_and_empty_root_pins_reject_independently",
+            "--exact",
+            "tests::m2::value_view_copy_execution::private_append_view_executes_independent_copies_and_preserves_named_source_pin",
+            "--exact",
+            "tests::m2::value_view_copy_roots::nested_and_empty_windows_copy_both_vector_orders_and_keep_source_pinned",
+            "--exact",
+            "tests::m2::value_view_copy_roots::rejected_window_bounds_fuel_and_quotas_preserve_bytes_and_full_metadata",
+            "--exact",
+            "tests::m2::value_view_copy_roots::stale_wrong_binding_and_pinned_empty_destinations_reject_before_copy"
+          ],
+          "cwd": "native-project",
+          "temporarySelectedTestMirror": true,
+          "toolFreeRuntime": false,
+          "expectedExit": 0,
+          "commandSha256": "189960ceae3af6cae9252118bce5e7c7f55cffb561c3ed36cec84f04e4c2f593",
+          "elapsedSeconds": 75.509,
+          "exit": 0,
+          "stdout": "native.json",
+          "stderr": "native.json.stderr.txt",
+          "stdoutSha256": "6541210647e780475ad9bef6fc540f58c8ed5b32c3a4284fb12a55a2053fc257",
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "selectedTests": [
+        "tests::m2::value_view_copy_execution::append_view_adapter_prepays_publication_authenticates_quota_and_cleans_at_zero_fuel",
+        "tests::m2::value_view_copy_execution::malformed_append_view_fresh_result_dead_views_and_empty_root_pins_reject_independently",
+        "tests::m2::value_view_copy_execution::private_append_view_executes_independent_copies_and_preserves_named_source_pin",
+        "tests::m2::value_view_copy_roots::nested_and_empty_windows_copy_both_vector_orders_and_keep_source_pinned",
+        "tests::m2::value_view_copy_roots::rejected_window_bounds_fuel_and_quotas_preserve_bytes_and_full_metadata",
+        "tests::m2::value_view_copy_roots::stale_wrong_binding_and_pinned_empty_destinations_reject_before_copy"
+      ],
+      "nativeGroups": 6,
+      "selectedNativeGroups": 6,
+      "nativeWorkspace": "byte-identical-production-selected-tests",
+      "nativeOverrides": false,
+      "historicalResultReuse": false,
+      "compilerVersion": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false",
+      "check": "check ok: 2 instance(s), 222 source file(s), 2366 MIR function(s), lock verified\n",
+      "nativeReport": {
+        "schemaVersion": "fairyc.test-report/v4",
+        "engine": "native",
+        "target": "x86_64-windows-msvc",
+        "profile": "release",
+        "tests": [
+          {
+            "identity": "tests::m2::value_view_copy_execution::append_view_adapter_prepays_publication_authenticates_quota_and_cleans_at_zero_fuel",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_copy_execution::malformed_append_view_fresh_result_dead_views_and_empty_root_pins_reject_independently",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_copy_execution::private_append_view_executes_independent_copies_and_preserves_named_source_pin",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_copy_roots::nested_and_empty_windows_copy_both_vector_orders_and_keep_source_pinned",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_copy_roots::rejected_window_bounds_fuel_and_quotas_preserve_bytes_and_full_metadata",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          },
+          {
+            "identity": "tests::m2::value_view_copy_roots::stale_wrong_binding_and_pinned_empty_destinations_reject_before_copy",
+            "outcome": "passed",
+            "trapCategory": null,
+            "stdoutBase64": "",
+            "stderrBase64": ""
+          }
+        ],
+        "count": 6,
+        "passed": 6,
+        "failed": 0,
+        "status": "ok",
+        "lock": "verified"
+      },
+      "nativeReportSha256": "1d082bef0496d75b8344ed58f75c79c94a2d99e7d56590794b11ab7b9471bebd",
+      "nativeInputMirrorVerified": true,
+      "elapsedSeconds": 82.013,
+      "cliSkipped": "Optional public Fuel CLI suite was not requested.",
+      "batch": "regression"
+    }
+  ],
+  "skipped": [
+    "Public CLI: no public source/admission/dispatch changes.",
+    "The unchanged admitted32/rejected33 fixture was hash-checked, not rerun.",
+    "Linux/macOS, restricted execution, embedding and complete reference IR/source admission."
+  ]
+}
