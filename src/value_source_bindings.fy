@@ -445,6 +445,7 @@ pub fn Result<usize,errors::Error> begin_alternative(ref values::Program unit,re
     var State staged=State{.names=locals::snapshot(ref prior.names),.bindings=prior.bindings,.views=prior.views,
         .next=current.next,.live=prior.live,.reads=prior.reads,.writes=prior.writes,.enforce_results=prior.enforce_results,.pending=prior.pending,
         .tracking=prior.tracking,.kills=prior.kills,.generated=prior.generated,.required=prior.required};
+    staged.views.reserved=current.views.reserved;
     let usize valid=header(unit,ref staged,at)?;
     var usize i=prior.next;while(i<16){if((prior.live&bit(i))!=0){return .err(invalid(at));}i+=1;}
     var usize seen=0;i=0;while(i<current.names.count){
@@ -475,6 +476,7 @@ pub fn Result<usize,errors::Error> select_path(ref values::Program unit,ref mut 
     var State staged=State{.names=locals::snapshot(ref prior.names),.bindings=prior.bindings,.views=prior.views,
         .next=current.next,.live=prior.live,.reads=prior.reads,.writes=prior.writes,.enforce_results=prior.enforce_results,.pending=prior.pending,
         .tracking=prior.tracking,.kills=prior.kills,.generated=prior.generated,.required=prior.required};
+    staged.views.reserved=current.views.reserved;
     let usize valid=header(unit,ref staged,at)?;
     var usize seen=0;i=0;while(i<staged.names.count){
         if(staged.names.begins[i]>staged.names.ends[i]){return .err(invalid(at));}
@@ -493,7 +495,7 @@ pub fn Result<usize,errors::Error> merge(ref values::Program unit,ref mut State 
     let usize checked=header(unit,state,at)?;let ref State prior=ref other.state;
     if(prior.next>state.next || prior.names.count!=state.names.count || prior.names.function!=state.names.function ||
         prior.names.pending_places!=state.names.pending_places || prior.live!=state.live ||
-        prior.reads!=state.reads || prior.writes!=state.writes || !views::same(ref prior.views,ref state.views) ||
+        prior.reads!=state.reads || prior.writes!=state.writes ||
         prior.enforce_results!=state.enforce_results || prior.tracking!=state.tracking){return .err(invalid(at));}
     var State staged=State{.names=locals::snapshot(ref prior.names),.bindings=prior.bindings,.views=prior.views,
         .next=state.next,.live=prior.live,.reads=prior.reads,.writes=prior.writes,.enforce_results=prior.enforce_results,.pending=prior.pending,
@@ -506,6 +508,7 @@ pub fn Result<usize,errors::Error> merge(ref values::Program unit,ref mut State 
         if(prior.bindings[i]!=state.bindings[i] || prior.names.begins[i]!=state.names.begins[i] ||
             prior.names.ends[i]!=state.names.ends[i] || prior.names.registers[i]!=state.names.registers[i] ||
             prior.names.mutable[i]!=state.names.mutable[i]){return .err(invalid(at));}i+=1;
-    }state.pending|=prior.pending;state.kills&=prior.kills;
+    }let usize merged_views=views::merge(ref mut state.views,ref prior.views,at)?;
+    state.pending|=prior.pending;state.kills&=prior.kills;
     state.generated|=prior.generated;state.required|=prior.required;return .ok(state.live);
 }

@@ -7,8 +7,8 @@ import errors as errors;
 // activation; the independent CFG verifier proves every destination is Dead.
 // Origins1..16 identify local Buffer slots; 17..24 identify formal ordinals.
 // retained marks CALL results whose anonymous actual may acquire a name.
-pub struct State { u8[16] origins; u8[64] names; usize function; usize retained; }
-pub fn State empty(){return State{.origins=[0;16],.names=[0;64],.function=0,.retained=0};}
+pub struct State { u8[16] origins; u8[64] names; usize function; usize retained; usize reserved; }
+pub fn State empty(){return State{.origins=[0;16],.names=[0;64],.function=0,.retained=0,.reserved=0};}
 fn errors::Error invalid(usize at){return errors::make(3,at);}
 fn u8 byte(usize n){var u8 result=0;var usize i=0;while(i<n){result+=1;i+=1;}return result;}
 pub fn bool live(ref State state,usize id){return id<16 && state.origins[id]!=0 && state.origins[id]<=24;}
@@ -20,12 +20,20 @@ pub fn bool pinned(ref State state,usize owner){
 }
 pub fn usize count(ref State state){var usize n=0;var usize i=0;
     while(i<16){if(state.origins[i]!=0){n+=1;}i+=1;}return n;}
-pub fn bool same(ref State a,ref State b){if(a.function!=b.function || a.retained!=b.retained){return false;}var usize i=0;
+fn bool same_shape(ref State a,ref State b){if(a.function!=b.function || a.reserved!=b.reserved){return false;}var usize i=0;
     while(i<16){if(a.origins[i]!=b.origins[i]){return false;}i+=1;}i=0;
     while(i<64){if(a.names[i]!=b.names[i]){return false;}i+=1;}return true;
 }
+pub fn bool same(ref State a,ref State b){return a.retained==b.retained && same_shape(a,b);}
+// A CALL may authorize temporary retention on only one edge. After a join only
+// authorization common to every continuing edge survives; origins stay exact.
+pub fn Result<usize,errors::Error> merge(ref mut State state,ref State other,usize at){
+    let usize a=validate(state,at)?;let usize b=validate(other,at)?;
+    if(!same_shape(state,other)){return .err(invalid(at));}
+    state.retained&=other.retained;return .ok(a);
+}
 pub fn Result<usize,errors::Error> validate(ref State state,usize at){
-    if(state.function>=16 || state.retained>=65536){return .err(invalid(at));}
+    if(state.function>=16 || state.retained>=65536 || state.reserved>=65536){return .err(invalid(at));}
     var usize i=0;while(i<16){if(state.origins[i]>24 ||
         (state.origins[i]==0 && (state.retained&bit(i))!=0)){return .err(invalid(at));}i+=1;}
     var usize seen=0;let usize one=1;i=0;while(i<64){let usize encoded=state.names[i] as usize;
@@ -86,8 +94,19 @@ fn Result<usize,errors::Error> capacity(ref values::Program unit,usize needed,us
     return .ok(needed);
 }
 fn Result<usize,errors::Error> free(ref State state,usize at){
-    var usize i=0;while(i<16){if(state.origins[i]==0){return .ok(i);}i+=1;}
+    var usize i=0;while(i<16){if(state.origins[i]==0 && (state.reserved&bit(i))==0){return .ok(i);}i+=1;}
     return .err(errors::make(4,at));
+}
+// Active value joins reserve a destination across compiler alternative selection.
+// This does not create a live descriptor, emit IR or grant runtime authority.
+pub fn Result<usize,errors::Error> reserve(ref values::Program unit,ref mut State state,usize at){
+    let usize f=authenticate(unit,state,at)?;let usize id=free(state,at)?;
+    state.reserved|=bit(id);return .ok(id);
+}
+pub fn Result<usize,errors::Error> unreserve(ref mut State state,usize id,usize at){
+    let usize checked=validate(state,at)?;
+    if(id>=16 || (state.reserved&bit(id))==0){return .err(invalid(at));}
+    state.reserved^=bit(id);return .ok(id);
 }
 fn Result<usize,errors::Error> scalar_register(ref values::Program unit,usize f,usize id,usize at){
     let ref ir::Program p=ref unit.body;

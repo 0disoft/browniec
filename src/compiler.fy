@@ -1008,6 +1008,7 @@ fn Result<bool,errors::Error> result_property(ref u8[] source,ref lexer::State s
         if(parens==0 && braces==0 && brackets==0){
             if(look.kind==46 && started){
                 let usize dot=lexer::next(source,ref mut look)?;
+                if(look.kind==46){return .ok(false);}
                 if(word_is(source,ref look,b"is_ok")){return .ok(true);}
                 continue;
             }
@@ -1043,6 +1044,10 @@ fn Result<usize, errors::Error> primary(ref u8[] source, ref mut lexer::State s,
     while(s.kind==63 || s.kind==46) {
         let usize at=s.begin;
         if(s.kind==46){
+            // A range delimiter belongs to the enclosing slice parser. It is
+            // not a Result member, including after a computed lower endpoint.
+            var lexer::State look=lexer::snapshot(s);let usize next=lexer::next(source,ref mut look)?;
+            if(look.kind==46){break;}
             let usize dot=lexer::next(source,s)?;
             if(!word_is(source,s,b"is_ok")){return .err(errors::make(3,at));}
             let usize member=lexer::next(source,s)?;

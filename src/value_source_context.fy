@@ -178,6 +178,12 @@ pub fn Join joining(usize exact){return Join{.exact=exact,.destination=128,.have
 
 pub fn Result<usize,errors::Error> publish(ref mut values::Program unit,ref mut bindings::State state,
     ref mut Join output,Value value,usize at){
+    if(!value.nothing && value.exact==65 && (output.exact==64 || output.exact==65)){
+        if(!output.have){output.destination=views::reserve(unit,ref mut state.views,at)?;
+            output.exact=65;output.have=true;}
+        let usize id=capture(unit,state,value,at)?;
+        return views::move_to(unit,ref mut state.views,id,output.destination,at);
+    }
     if(value.nothing || value.exact>=unit.catalog.count ||
         (output.exact!=64 && value.exact!=output.exact)){return .err(wrong(at));}
     let bool scalar=unit.catalog.nodes[value.exact].kind==1;
@@ -195,9 +201,14 @@ pub fn Result<usize,errors::Error> publish(ref mut values::Program unit,ref mut 
     return bindings::move_value(unit,state,output.destination,id,at);
 }
 
-pub fn Result<Value,errors::Error> joined(ref mut values::Program unit,ref bindings::State state,
+pub fn Result<Value,errors::Error> joined(ref mut values::Program unit,ref mut bindings::State state,
     ref Join output,usize at){
     if(!output.have){return .err(wrong(at));}
+    if(output.exact==65){
+        let usize owner=views::origin(ref state.views,output.destination,at)?;
+        let usize released=views::unreserve(ref mut state.views,output.destination,at)?;
+        return .ok(Value{.exact=65,.value=output.destination,.typed=false,.nothing=false,.binding=64});
+    }
     if(unit.catalog.nodes[output.exact].kind==1){
         let usize reg=ir::emit(ref mut unit.body,17,output.destination,0,at)?;
         return .ok(scalar(output.exact,reg));
