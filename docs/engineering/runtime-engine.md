@@ -141,6 +141,6 @@ success and failure. Wrong execution APIs preserve Ready, and released pins,
 move/relocation, cancellation and owning teardown retain their lifecycle rules.
 The public CLI/C ABI, complete accounting and bounded runtime remain open.
 
-The [current executed evidence](../evidence/runtime-engine-inputs-windows-20261107.json)
+The [current executed evidence](../evidence/runtime-engine-owned-input-windows-20261107.json)
 passes development and O2, 12 reviewed typed bindings over 189 modules, eleven
 new logical groups plus the unchanged lifecycle fixture and zero SDK heap leaks.

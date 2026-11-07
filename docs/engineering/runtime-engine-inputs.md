@@ -78,7 +78,11 @@ ignored build history and does not support a pass. A separate initial handle
 baseline check included Windows first-use I/O bookkeeping; the final fixture
 warms disk and pipe paths before measuring all six cases.
 
-The committed evidence records executed profiles and exact input identities.
+The [executed evidence](../evidence/runtime-engine-owned-input-windows-20261107.json)
+records both profiles and all 202 exact Engine input identities. The final
+integration audit also matched 212 unique executed code/test/tool inputs to
+checkout and staged Git bytes; the reader component retains its earlier root
+lock observation, while compiling against its own unchanged isolated lock.
 Full policy/run binding, complete peak accounting, resumable steps/deadlines,
 in-flight cancellation, poison containment, guest output, host dispatch,
 restricted workers and public CLI/C ABI delivery remain open in
