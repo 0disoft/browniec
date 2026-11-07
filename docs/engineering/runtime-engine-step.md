@@ -14,6 +14,10 @@ Machine through the canonical dispatcher. It never re-verifies, recreates entry
 or drains Pending in a hidden loop. Quantum is 1..4096 dispatch visits. The
 [output-copy successor](runtime-output-chunks.md) now includes prepaid copy
 continuations in those visits and shares a 4096-byte allowance across emits.
+The [array initialization/fill successor](runtime-array-fill-chunks.md) shares
+that same byte allowance across CREATE/FILL and emits, including alignment
+padding. Array continuations also consume visits without new dispatch Fuel;
+the dispatcher freezes the current PC until the entire value is initialized.
 
 Pending returns Event kind 4 with current Fuel and keeps its owning state intact.
 At VM success, sealing transfers the staged backing directly into the Published

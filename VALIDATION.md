@@ -1,18 +1,20 @@
-- Latest Program-cache checkpoint (2026-11-08): [Immutable Program preparation](docs/engineering/runtime-program-preparation-cache.md)
-  records implementation `28fbbe9`. Owning output/input-output Programs retain
-  exact compile proof sites/origins, list/place plans, entry work and scratch.
-  Synchronous and pending invocations reuse them; arbitrary raw IR re-verifies.
-  For P successful compilations and N owning executions, full proof entries drop
-  from P+N to P. This is a call count, not a wall-clock benchmark. Cache size is
-  1328 bytes; Stored grows 22016->23344 and its Vec8 retains 10624 extra bytes.
-  Existing heap ceilings charge the actual layout. Development/O2 each pass six
-  new cache/rejection groups and existing Engine regressions, default stacks and
-  zero SDK heap at exit. All 243 recorded inputs match checkout/committed Git;
-  33 bindings/29 layouts are reviewed. Root locked check: 257 sources/2937 MIR;
-  all 249 production modules retain LF. Compile proof and other setup/bulk/CALL/
-  RET/seal/cleanup recipes, deadlines/poison and public lifecycle/ABI/CLI remain
-  open; R03-R05 and the accepted inventory are incomplete. Sol High workers used
-  disjoint active write scopes; integration/commits were serial. Local only.
+- Latest array-fill checkpoint (2026-11-08): [Resumable array initialization/fill](docs/engineering/runtime-array-fill-chunks.md)
+  records implementation `21bcebb`. CREATE33, FILL40 and actual source repeated
+  replacement REPLACE87 now share a 4096-byte allowance with output, including
+  padding. New owners/arena prefix publish only after complete initialization;
+  selected replacements retain their original SELECT ticket/snapshot and price.
+  Each aligned 32768-byte i64 create/fill uses exactly eight batches; i32 uses
+  four. Full Fuel is prepaid once; zero-Fuel continuation and one-less no-write
+  rejection preserve final output/value/Fuel. Five kernel/six Engine groups pass
+  development/O2 plus existing regressions, with zero resume allocation attempts,
+  zero SDK heap at exit and default stacks. Cursor work is 144 bytes; Machine is
+  664 and its Vec8 costs 1152 extra bytes under existing heap ceilings. All 248
+  receipt inputs match checkout/committed Git; 33 bindings/30 layouts reviewed.
+  Root locked check: 260 sources/2950 MIR; all 252 production modules retain LF.
+  Array copy/assignment, lists/records, other setup/compile proof/CALL/RET/seal/
+  cleanup recipes, deadlines/poison and public lifecycle/ABI/CLI remain open;
+  R03-R05 and the accepted inventory are incomplete. Disjoint Sol High work,
+  serial integration/commits. Local only.
 
 - Predecessor registry-prerequisite checkpoint (2026-11-07): [Fairy handles](docs/engineering/abi-handles.md)
   (`fef9fd3`) passed ten native groups per development/release profile; unchanged
