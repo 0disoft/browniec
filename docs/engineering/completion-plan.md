@@ -1,19 +1,18 @@
-- Latest input lifecycle checkpoint (2026-11-07): [Instance-owned input](runtime-engine-inputs.md)
-  integrates Windows-to-Fairy Snapshot adoption `abbfa3c`, exact terminal Fuel
-  `4e62ca2`, and actual owning Engine input Program/Instance execution.
-  Engine development/O2 pass eleven new input/allocation/OS groups plus the
-  unchanged lifecycle/OS guard fixture, with default stacks and zero live SDK
-  heap allocations. Six measured disk/pipe cases include empty and 1MiB input
-  after original handles close. Twelve typed bindings cover 189 source modules.
-  Input completion development/O2 each pass 23 groups, including depth32/33;
-  adoption passes both profiles with 48 Fairy/24 native OOM injections each.
-  Root check: 241 sources/2751 MIR functions; 233 production modules retain LF.
-  Source/tool inputs match their executed receipts; native mirror reuse is
-  explicit. Public gates, capacities and existing prices/default256/ceiling16000000
-  remain. Ordinary zero-argument terminal Fuel remains explicitly unknown.
-  Next: guest-output success/failure binding, then full accounting, bounded steps,
-  deadlines/poison, host/restricted/embed and the accepted inventory.
-  Parallel work/review completed and workers closed. Local commits only.
+- Latest guest-output checkpoint (2026-11-07): [Guest output](module-output-execution.md)
+  and [Engine-owned output](runtime-engine-outputs.md) now lower, independently prove and run
+  private `output::emit` with one actual VM Fuel balance and success-only seal.
+  Module development/O2 each pass 39 groups: ten source/proof, seventeen output,
+  twelve regressions including the unchanged combined depth32/33 fixture.
+  Engine development/O2 each pass eight output groups, eleven input/OS groups and
+  the unchanged lifecycle fixture; SDK heap allocations return to zero. Outputs
+  move once and survive Engine teardown; failure never exposes the staged prefix.
+  Seventeen typed bindings cover 195 closure modules; seven vectors are reserved.
+  Exact receipt hashes and one documentary type correction are recorded explicitly.
+  Root locked check: 245 sources/2817 MIR functions. Existing public gates, old
+  prices and capacities/default256/ceiling16000000 remain; output prices are additive.
+  Next: complete Engine memory/work accounting and preallocation, then bounded
+  steps, deadlines/poison, policy/host/restricted/embed and the accepted inventory.
+  Parallel patches were integrated serially; workers closed. Local commits only.
 
 - Predecessor immutable-input execution checkpoint (2026-11-07): [Actual 1MiB input](module-input-execution.md)
   integrates input windows `3503aba` and owning Program execution `c86aff6`.
@@ -573,7 +572,9 @@ and the inventory completion conditions remain open.
    limits; it does not close general R02 stack/accounting obligations.
    The [private owning Engine](runtime-engine.md) now retains real reusable
    Programs and one-shot Instances, checks OS owner/reentry/epochs, pins image/code
-   backing, preserves terminal events and releases actual storage. Complete public
+   backing, preserves terminal events and releases actual storage. Its
+   [output successor](runtime-engine-outputs.md) retains exact output completions
+   and moves immutable bytes once. Complete public
    association and policy/Program binding, all accounting/preallocation, bounded
    resumable operations, deadlines, in-flight cancellation and poison containment.
    Preserve cleanup at zero guest Fuel and prove result/Fuel invariance across step
@@ -587,9 +588,12 @@ and the inventory completion conditions remain open.
    verify all bodies against original source/image provenance. The separate
    [input execution path](module-input-execution.md) now runs the exact Snapshot
    up to 1MiB with per-invocation windows, CALL/selected-origin returns and READ/LEN.
-   Connect that owning Program/Snapshot to Instances, actual OS input and the
-   output success decision; complete accounting and bounded resumability remain.
-   Run a complete input -> validation/transform -> output example.
+   [Owning Instances](runtime-engine-inputs.md) now bind that Program/Snapshot
+   to actual OS input. [Guest output](module-output-execution.md) and its
+   [Engine binding](runtime-engine-outputs.md) now connect verified emit, actual
+   shared Fuel and success-only publication. Complete immutable policy/grants,
+   accounting, bounded resumability, public controls and sinks. Deliver a useful
+   user-facing input -> validation/transform -> output example.
 5. **Authority and host exchange: H01-H04, C01-C02/C04.** Add strict bounded
    project/policy/catalog/run loaders, source identities, ceilings/declarations/
    grants, typed TLV and a resumable host request/reply state machine. Start with

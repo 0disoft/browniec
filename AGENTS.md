@@ -1,19 +1,18 @@
-- Latest input lifecycle checkpoint (2026-11-07): [Instance-owned input](docs/engineering/runtime-engine-inputs.md)
-  integrates Windows-to-Fairy Snapshot adoption `abbfa3c`, exact terminal Fuel
-  `4e62ca2`, and actual owning Engine input Program/Instance execution.
-  Engine development/O2 pass eleven new input/allocation/OS groups plus the
-  unchanged lifecycle/OS guard fixture, with default stacks and zero live SDK
-  heap allocations. Six measured disk/pipe cases include empty and 1MiB input
-  after original handles close. Twelve typed bindings cover 189 source modules.
-  Input completion development/O2 each pass 23 groups, including depth32/33;
-  adoption passes both profiles with 48 Fairy/24 native OOM injections each.
-  Root check: 241 sources/2751 MIR functions; 233 production modules retain LF.
-  Source/tool inputs match their executed receipts; native mirror reuse is
-  explicit. Public gates, capacities and existing prices/default256/ceiling16000000
-  remain. Ordinary zero-argument terminal Fuel remains explicitly unknown.
-  Next: guest-output success/failure binding, then full accounting, bounded steps,
-  deadlines/poison, host/restricted/embed and the accepted inventory.
-  Parallel work/review completed and workers closed. Local commits only.
+- Latest guest-output checkpoint (2026-11-07): [Guest output](docs/engineering/module-output-execution.md)
+  and [Engine-owned output](docs/engineering/runtime-engine-outputs.md) now lower, independently prove and run
+  private `output::emit` with one actual VM Fuel balance and success-only seal.
+  Module development/O2 each pass 39 groups: ten source/proof, seventeen output,
+  twelve regressions including the unchanged combined depth32/33 fixture.
+  Engine development/O2 each pass eight output groups, eleven input/OS groups and
+  the unchanged lifecycle fixture; SDK heap allocations return to zero. Outputs
+  move once and survive Engine teardown; failure never exposes the staged prefix.
+  Seventeen typed bindings cover 195 closure modules; seven vectors are reserved.
+  Exact receipt hashes and one documentary type correction are recorded explicitly.
+  Root locked check: 245 sources/2817 MIR functions. Existing public gates, old
+  prices and capacities/default256/ceiling16000000 remain; output prices are additive.
+  Next: complete Engine memory/work accounting and preallocation, then bounded
+  steps, deadlines/poison, policy/host/restricted/embed and the accepted inventory.
+  Parallel patches were integrated serially; workers closed. Local commits only.
 
 # Brownie C agent guidance
 
