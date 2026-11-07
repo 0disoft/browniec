@@ -1,14 +1,13 @@
-- Latest safe-cast checkpoint (2026-11-07): [Private retained-value strict widening](docs/engineering/value-safe-casts.md)
-  now passed 15 groups in each Windows native profile on `4b0601b`, using locked
-  disjoint mirrors and default stacks. All 227 inputs match checkout/Git raw bytes;
-  all 216 production modules are LF. See [evidence](docs/evidence/value-safe-casts-windows-20261107.json).
-  Unary/postfix precedes explicit `as`, then binary operators; chains associate
-  left to right. The existing matrix admits 7 of 36 scalar pairs without implicit
-  conversion. Effects evaluate once; bottom validates scalar target syntax without
-  reading/emitting/interning a cast. The combined 32/33 depth fixture is unchanged.
-  No VM, opcode, pricing or public admission changes. Fresh loop-carried owners,
-  remaining bottom/general references, methods/AllocError and runtime/host/platform
-  work remain open. Full completion remains open. Local only.
+- Latest void-bottom checkpoint (2026-11-07): [Terminal void-return operands](docs/engineering/value-void-bottom.md)
+  now compose private `return <bottom>;` without an extra return/capture/cleanup.
+  `37c3994` passed five new development groups on byte-identical worker inputs,
+  four integrated development regressions and all nine integrated release groups.
+  All 226 union inputs match checkout/Git raw bytes, all 216 production modules
+  are LF, and all 220 worker inputs match integration. See [evidence](docs/evidence/value-void-bottom-windows-20261107.json).
+  The combined 32/33 depth fixture is unchanged. Bare return and non-bottom
+  rejection remain; VM/opcodes/prices/public gates/Fuel defaults/caps are unchanged.
+  Fresh loop owners, other bottom/general references, methods/AllocError and
+  runtime/host/platform/delivery remain open. Full completion remains open. Local only.
 
 # Brownie C agent guidance
 

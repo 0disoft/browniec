@@ -1,4 +1,15 @@
-- Latest safe-cast checkpoint (2026-11-07): [Private retained-value strict widening](docs/engineering/value-safe-casts.md)
+- Latest void-bottom checkpoint (2026-11-07): [Terminal void-return operands](docs/engineering/value-void-bottom.md)
+  now compose private `return <bottom>;` without an extra return/capture/cleanup.
+  `37c3994` passed five new development groups on byte-identical worker inputs,
+  four integrated development regressions and all nine integrated release groups.
+  All 226 union inputs match checkout/Git raw bytes, all 216 production modules
+  are LF, and all 220 worker inputs match integration. See [evidence](docs/evidence/value-void-bottom-windows-20261107.json).
+  The combined 32/33 depth fixture is unchanged. Bare return and non-bottom
+  rejection remain; VM/opcodes/prices/public gates/Fuel defaults/caps are unchanged.
+  Fresh loop owners, other bottom/general references, methods/AllocError and
+  runtime/host/platform/delivery remain open. Full completion remains open. Local only.
+
+- Predecessor safe-cast checkpoint (2026-11-07): [Private retained-value strict widening](docs/engineering/value-safe-casts.md)
   now passed 15 groups in each Windows native profile on `4b0601b`, using locked
   disjoint mirrors and default stacks. All 227 inputs match checkout/Git raw bytes;
   all 216 production modules are LF. See [evidence](docs/evidence/value-safe-casts-windows-20261107.json).
@@ -22,6 +33,24 @@
   price, public gate or Fuel default/cap change. Next: fresh loop-carried owners,
   private safe casts, remaining bottom/general references, methods/AllocError and
   runtime/host/platform work. Full completion remains open. Local only.
+
+## Private void-return terminal operands: Windows verified
+
+On `37c3994`, five new development groups passed in two independent selections
+on 220 byte-identical final inputs. Integration reused those current results,
+then ran four development regressions and all nine release groups in parallel:
+
+```text
+python tools/verify-value-void-bottom.py --profile development --regressions-only
+python tools/verify-value-void-bottom.py --profile release
+```
+
+The [contract](docs/engineering/value-void-bottom.md) and
+[evidence](docs/evidence/value-void-bottom-windows-20261107.json) distinguish each
+batch. All 226 union inputs match checkout/Git raw bytes; 216 modules retain LF.
+The unchanged combined admitted32/rejected33 fixture ran in both root profiles.
+No enlarged stack or compiler override was used. Public CLI, other platforms,
+allocation-failure sweeps and full lifecycle accounting remain unverified here.
 
 ## Private retained-value safe casts: Windows verified
 

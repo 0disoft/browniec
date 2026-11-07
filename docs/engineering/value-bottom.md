@@ -48,7 +48,8 @@ This is a bounded bottom-expression increment. Bottom in control conditions or
 switch subjects, postfix receivers, Buffer-operation operands/endpoints, a binary
 left operand followed by more operators and non-final CALL arguments still
 reject. Classic for headers retain their existing pure-expression restriction.
-Void `return <bottom>;` remains outside the current void-return grammar.
+The [void-bottom successor](value-void-bottom.md) now admits private
+`return <bottom>;` while keeping ordinary void-CALL/value operands rejected.
 
 Statements after an unconditional terminal edge still reject at the first
 trailing token. They are not silently skipped; valid unreachable statements are
