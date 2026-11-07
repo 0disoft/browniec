@@ -43,18 +43,26 @@ def main():
     parser.add_argument('--compiler', type=Path, default=ROOT / 'build/toolchain/fairyc.exe')
     parser.add_argument('--fairyc-repository', type=Path, default=ROOT.parent / 'fairyc')
     parser.add_argument('--profile', choices=['development', 'release', 'all'], default='all')
+    parser.add_argument('--suite', choices=['output', 'compile-memory'], default='output')
     args = parser.parse_args()
     assert os.name == 'nt' and __debug__
     assert not any(k.upper() in {'CL', '_CL_', 'LINK'} for k in os.environ)
     compiler = args.compiler.resolve()
     tc = json.loads((ROOT / 'toolchain.json').read_bytes())
     assert sha(compiler.read_bytes()) == tc['platforms']['windows/amd64']['sha256']
-    out = ROOT / 'build/module-output-execution'
+    selected = SELECTED if args.suite == 'output' else {
+        'compile_memory': None,
+        'module_compile_memory': None,
+        'captured_call_stack': ['retained_captured_calls_keep_the_32_deep_limit_and_reject_33'],
+    }
+    out = ROOT / ('build/module-output-execution' if args.suite == 'output' else 'build/compile-memory')
     out.mkdir(parents=True, exist_ok=True)
-    receipt = dict(schema='browniec.module-output-execution/v1', status='incomplete',
+    receipt = dict(schema=('browniec.module-output-execution/v1' if args.suite == 'output'
+                          else 'browniec.compile-memory/v1'), status='incomplete',
         recordedAt=datetime.now(timezone.utc).isoformat(), commands=[], profiles=[], inputs=[],
         compilerSha256=sha(compiler.read_bytes()), compilerRevision=tc['compiler']['revision'],
         defaultStacks=True, nativeOverrides=False, vmReplay=False, groupIsolation=True)
+    receipt['suite'] = args.suite
     def write(path, raw):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(raw.encode() if isinstance(raw, str) else raw)
@@ -77,13 +85,14 @@ def main():
     cl, env, receipt['msvc'] = helper.native_environment(run)
     sources = {p.stem: p for p in (ROOT / 'src').glob('*.fy')}
     original = {}; pending = []; groups = []; adapters = {}
-    for module, selection in SELECTED.items():
+    for module, selection in selected.items():
         path = ROOT / f'tests/m2/{module}.fy'; raw = path.read_bytes(); original[path] = raw
         text = raw.decode(); names = re.findall(r'@test\s+fn\s+void\s+(\w+)\(', text)
         chosen = names if selection is None else selection
         assert chosen and set(chosen) <= set(names)
         alias = 'output_execution_probe_' + module
-        adapter = text.replace('module tests::m2::' + module + ';', 'module ' + alias + ';').replace('@test fn void ', 'pub fn void ')
+        adapter = text.replace('module tests::m2::' + module + ';', 'module ' + alias + ';')
+        adapter = re.sub(r'@test\s+fn\s+void\s+', 'pub fn void ', adapter)
         adapters[alias] = adapter
         pending += re.findall(r'^import (\w+) as \w+;', adapter, re.M)
         groups += [dict(module=module, function=name, alias=alias) for name in chosen]
@@ -95,6 +104,9 @@ def main():
         pending += re.findall(r'^import (\w+) as \w+;', raw.decode(), re.M)
     for name in ['fairy.toml', 'toolchain.json', 'tools/verify-module-output-execution.py', 'tools/verify-runtime-store-probe.py']:
         path = ROOT / name; original[path] = path.read_bytes()
+    if args.suite == 'compile-memory':
+        path = ROOT / 'tools/runtime-engine/heap-observer.c'
+        original[path] = path.read_bytes()
     assert all(b'\r' not in raw for p, raw in original.items() if p.suffix in ['.fy', '.py'])
     receipt['inputs'] = [dict(path=p.relative_to(ROOT).as_posix(), sha256=sha(raw)) for p, raw in sorted(original.items())]
     receipt['groups'] = groups
@@ -116,7 +128,9 @@ def main():
     receipt.update(sourceClosure=len(seen), generatedSha256=sha(generated),
         isolatedLockSha256=sha((project / 'fairy.lock').read_bytes()),
         adapterChanges='Module name and test visibility only; complete original 32/33 fixture unchanged')
-    runtime = ['#define FY_STD_SYSTEM_HEAP_MAX_ALIGNMENT_V0 ((size_t)16)\n']
+    runtime = ([original[ROOT / 'tools/runtime-engine/heap-observer.c'].decode()]
+               if args.suite == 'compile-memory' else
+               ['#define FY_STD_SYSTEM_HEAP_MAX_ALIGNMENT_V0 ((size_t)16)\n'])
     receipt['runtimeInputs'] = []
     paths = ['internal/cstdlib/' + n for n in ['stage0_system_heap.c', 'stage0_buffer.c', 'stage0_vector_storage.c',
         'stage0_text_view.c', 'stage0_windows_console.c', 'stage0_windows_process_args.c']] + ['internal/cruntime/stage0_scalar.c']
