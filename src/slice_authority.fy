@@ -83,6 +83,18 @@ pub fn Result<slices::Arguments,owners::Error> enter_call(ref mut State state,
     let slices::Arguments result=publish_call(state,plan);
     return .ok(result);
 }
+// Private resumable counterpart: validate/copy the return receipt before any
+// staged writer rotation. The owning transaction pins this exact stack.
+pub fn Result<handoff::Batch,owners::Error> prepare_leave_call(ref State state,usize frame){
+    let usize depth=valid(state)?;
+    if(depth==0 || frame==0 || frame!=state.frame){return .err(.State);}
+    let Entry entry=get(state,depth-1);if(entry.kind!=1){return .err(.State);}
+    return .ok(entry.call);
+}
+// Infallible only after prepare_leave_call and complete staged handoff success.
+pub fn void publish_leave_call(ref mut State state){
+    let usize depth=state.depth;put(state,depth-1,unused());state.depth=depth-1;state.frame-=1;
+}
 pub fn Result<slices::Arguments,owners::Error> leave_call(ref mut State state,
     ref mut slices::Pool pool,ref slices::Ticket[] current,ref owners::Table table,usize capacity,usize frame) {
     let usize depth=valid(state)?;
