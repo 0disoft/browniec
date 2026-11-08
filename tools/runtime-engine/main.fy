@@ -32,6 +32,7 @@ import array_list_work_tests as list_work_tests;
 import engine_array_list_tests as array_list_tests;
 import struct_work_tests as record_work_tests;
 import call_copy_work_tests as call_copy_tests;
+import call_capture_plan_tests as capture_plan_tests;
 import engine_struct_work_tests as engine_record_tests;
 import engine_call_copy_tests as engine_call_tests;
 import engine_return_work_tests as engine_return_tests;
@@ -74,6 +75,7 @@ fn i32 main(){
     array_list_tests::run();
     record_work_tests::run();
     call_copy_tests::run();
+    capture_plan_tests::run();
     engine_record_tests::run();
     engine_call_tests::run();
     engine_return_tests::run();
