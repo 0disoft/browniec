@@ -123,10 +123,11 @@ memory tradeoff, not a measured latency improvement.
 
 ## Remaining work
 
-The user's resumed scope is this CALL66 cache integration. The broader completion
-goal remains paused. Other metadata walks, setup/proof/seal/cleanup continuations,
-bounded final publication, monotonic deadlines, cancellation/STOPPING/poison,
-public lifecycle/ABI/CLI and the [accepted inventory](../product/04-remaining-work.md)
-remain open. Removing these three named recipe scans does not complete R02-R05
-or establish a public bounded-step or wall-clock guarantee. No push, release or
-deployment is part of this slice.
+The later [CALL/RET authority slice](runtime-authority-metadata-stages.md) reuses
+this immutable cache and stages authority restoration/final publication in the
+owning Pending VM. The broader completion goal remains paused. Context/copy-plan
+and layout metadata, setup/proof/seal/cleanup, monotonic deadlines,
+cancellation/STOPPING/poison, public lifecycle/ABI/CLI and the
+[accepted inventory](../product/04-remaining-work.md) remain open. These private
+slices do not complete R02-R05 or establish a public bounded-step or wall-clock
+guarantee. No push, release or deployment is part of the resumed work.

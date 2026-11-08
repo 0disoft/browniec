@@ -1,20 +1,17 @@
-- Latest CALL66 capture-cache checkpoint (2026-11-08): [Immutable CALL66 cache](docs/engineering/runtime-call-capture-cache.md)
-  kernel `ced4289` and owning integration `5f9bfc3` retain independently proved
-  immutable recipes after the returned-view bridge. Selected origins stay in
-  Preparation field 7; Plan is field 8. Owning synchronous execution and every
-  pending resume use zero binding/chain/creator helper entries; raw execution
-  independently re-proves and retains scans. Five kernel and six actual returned-
-  view groups plus Engine/kernel regressions pass Windows development/O2 with
-  default stacks, zero resume SDK allocation attempts and zero exit SDK heap.
-  One additional focused live-Held rejection/restoration group passes both profiles.
-  Plan is 900 bytes; Preparation 1344 -> 2248 and Stored 23360 -> 24264, including
-  padding. Reserved Vec8 backing adds 7232 charged bytes per retained Program.
-  Fixed/mixed quanta preserve exact Fuel/output/diagnostics, moves, released pins,
-  cancellation/refunds and malformed-source/recipe rejection. No timing or peak-
-  stack improvement measured. Public admission, other metadata/setup/proof/seal/
-  cleanup bounds, deadlines/STOPPING/poison and R02-R05/full inventory remain open.
-  The user resumed only this cache slice; the broader goal stays paused. Local
-  only, no push/release/deployment. See linked evidence for exact source inputs.
+- Latest authority metadata checkpoint (2026-11-09): [CALL/RET stages](docs/engineering/runtime-authority-metadata-stages.md)
+  kernel slices `84b382d`/`41c9eb4`/`6d1a2d7`/`047f6cb`, owning CALL `bf965ea`,
+  RET adapter `4ca1ba8` and owning RET `8870a2c` share one unpublished Core bank.
+  Authority stages reserve a fresh 4096-unit allowance shared with payload work;
+  prefix/copy-plan preparation is still atomic and is not a complete CALL/RET bound.
+  Direct CALL (1 group), RET (9 groups) and complete Engine images pass Windows
+  development/O2 with default 1MiB/4KiB stacks. Covered resumes deny SDK allocation;
+  exit SDK heap is zero. All 278 current Engine inputs match checkout and commit;
+  271 production modules retain LF. Typed transport: 33 bindings / 36 roles.
+  RET adds 136 bytes each to Cursor/Machine; Core remains 153792 bytes. No timing
+  or peak-stack improvement measured. Public admission, remaining preparation/
+  proof/seal/cleanup, deadlines/STOPPING/poison and R02-R05/inventory stay open.
+  Only this authority slice resumed; broader completion remains paused. Local
+  only, no push/release/deployment. See linked evidence for exact snapshots.
 
 # Brownie C agent guidance
 

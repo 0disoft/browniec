@@ -1,33 +1,42 @@
 # Local handoff for the next thread
 
-Current checkpoint: immutable CALL66 capture plans (`ced4289`) are integrated
-into owning synchronous/pending output execution (`5f9bfc3`). Native Windows
-development/O2 pass five kernel groups, six returned-view groups and Engine/kernel
-regressions with default stacks, zero exit SDK heap and zero SDK attempts on every
-resume. Owning execution enters none of the three named recipe helpers; raw
-execution still re-proves and scans. See [cache integration](runtime-call-capture-cache.md)
-and its [evidence](../evidence/runtime-call-capture-cache-windows-20261108.json).
+Current checkpoint: [CALL/RET authority stages](runtime-authority-metadata-stages.md)
+are integrated into private owning Pending output execution. Kernel commits
+`84b382d`, `41c9eb4`, `6d1a2d7` and `047f6cb` precede CALL `bf965ea`, RET adapter
+`4ca1ba8` and owning RET `8870a2c`. One Core work bank is reused; metadata and
+payload share dispatch room, with final-only authority/frame publication.
 
-The user resumed only this cache slice. The broader completion goal remains
-paused; this handoff alone does not authorize another slice, push, release or
-deployment. Read [AGENTS](../../AGENTS.md) and the authoritative
-[remaining-work inventory](../product/04-remaining-work.md) before further work.
+Windows development/O2 pass direct CALL (1 group), RET (9 groups), and complete
+Engine regression images with default stacks, covered-resume allocation denial
+and zero exit SDK heap. The final Engine's 278 inputs match committed code.
+See the [evidence](../evidence/runtime-authority-metadata-windows-20261109.json)
+for exact historical/direct/integration snapshots. No timing improvement measured.
+
+The user authorized this CALL/RET authority slice. The broader completion goal
+remains paused; this handoff alone does not authorize unrelated slices or remote
+delivery. Read [AGENTS](../../AGENTS.md) and the
+[remaining inventory](../product/04-remaining-work.md).
 
 ## Next bounded implementation
 
-1. Continue R03 CALL/RET metadata work bounds, including planning, live authority
-   reconstruction and final publication. The cache removes three named immutable
-   recipe scans; it does not bound every metadata visit or establish public step.
-2. Preserve whole-program canonical/original-recipe proof, selected origins,
-   independently reverified raw execution, and exact Program/plan association.
-   Preparation parameters are field 7 and the capture plan is field 8.
-3. Follow with setup/proof/seal/cleanup continuations and R04/R05 monotonic
-   deadlines, cancellation/STOPPING/poison, bounded cleanup and stable first cause.
-   Do not claim all R02-R05 obligations are complete after caching recipes.
-4. Keep actual direct/nested/forwarding/second-input source, independent raw
-   oracles, fixed/mixed schedules, no resume SDK attempts and exact memory refunds.
-   Use `build/toolchain/fairyc.exe`, default stacks and no hidden overrides;
-   preserve exact-field authority/pool borrowing and production LF.
+1. Bound CALL copy-recipe preparation and metadata scans inside copy-plan
+   validation. Current `copies::begin` runs alone but remains outside the proved
+   authority ledger; a scheduling yield does not make its work bounded.
+2. Finish bounds for CALL context and RET catalog/layout/result preparation.
+   Whole bool ARET payload validation is already admitted into one byte batch;
+   that does not prove all surrounding metadata visits are bounded.
+3. Preserve the independent raw/synchronous oracles, immutable CALL66 cache and
+   original-recipe proofs, exact valid-program Fuel/output/diagnostics, moves,
+   cancellation/refunds and allocation-denial evidence. Synthetic late bad-frame
+   failures intentionally retain staged originals/Fuel; raw RET65 may debit first.
+4. Public R03, setup/proof/seal/cleanup, R04/R05 deadlines/STOPPING/poison and the
+   full inventory remain incomplete. No public bounded-step or wall-clock claim.
+
+Use `build/toolchain/fairyc.exe`, default stacks and no hidden overrides. Keep
+production LF. A continuation consumes a scheduling visit, not another opcode
+Fuel debit. RET validation counters record actual prefix work; phase 4 reports
+final publication and stays set until the next RET. Full publication consumes
+4096 metadata units, so following COPY work resumes in a later batch.
 
 The old local stash `39f1c91dcaa8edef5194f8d37b75069d20ce92a0` remains historical
 provenance. Its cache is integrated and its superseded layout/fixtures must not
