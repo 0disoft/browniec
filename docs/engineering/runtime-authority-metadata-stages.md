@@ -32,17 +32,47 @@ plans and aborts canonical live state. External effects are never replayed.
 
 1. Prepare the invocation context once, outside the authority bound.
 2. Reserve a snapshot stage, then reconstruct authority over separate stages.
-3. Prepare the payload-copy recipe alone and yield. This catalog/layout work
-   remains atomic and is deliberately outside the bounded authority ledger.
-4. Validate/copy payload into unpublished destinations with the shared byte room.
+3. Build the copy recipe in fresh 4096-unit stages: initialize/inspect the
+   catalog, traverse up to sixteen dependency edges, lay out one node (up to
+   sixteen fields), plan up to eight arguments, and cache masks/bool positions.
+   The catalog proof is built once per invocation, including unused records.
+4. Reauthenticate the copy plan in its own fresh 4096-unit stage before every
+   payload invocation. The owning wrapper also requires a fresh payload batch
+   before copying its saved Context/Cursor. Copying pays a fixed 3072-unit metadata entry plus
+   each record bool-position read and copy-mask visit, sharing room with payload
+   bytes. Array bytes/padding cost one unit; record bytes cost two. Insufficient
+   room defers without payload, Fuel or counter changes. No credit crosses yields.
 5. Reserve a final stage and publish owner, authority, frame and input bindings.
+
+The invocation pins its catalog, arguments, source bytes and planned owners.
+Validation checks at most eight arguments and sixteen owner slots, plus up to
+128 cached bool positions per record. It never rebuilds the full catalog or
+rescans non-bool mask bytes. Deferred source/metadata/quota errors retain the
+raw argument error order; copying charges Fuel once after payload validation.
+The prepared path is private owning execution, not a public proof token. Raw
+`call_copy_work` and atomic owner APIs remain independent comparison oracles.
+
+The fixed entry includes compiler-generated Cursor/Context/Prepared array
+copies, bounded argument/range previews and final owner-table stores. Exact
+field references in dispatch-room calculation and the pending-CALL guard avoid
+copying record scratch and CALL descriptor arrays just to read scalar fields.
+The ledger counts logical metadata entries and payload bytes; scalar loop/
+counter control is part of processing each unit, not a separate CPU-instruction
+budget. A full array-only payload batch therefore transfers at most 1024 bytes.
+Kernel short-room admission uses a constant 3074-unit minimum (entry plus two
+work units), so deferral never scans arguments. Exact `Copies` references avoid
+materializing eight tokens just to inspect their count. The fixed allowance
+covers 2288 conservative wrapper-copy touches, 512 units for four eight-argument
+passes and 192 for result propagation: 2992 in total, with 80 units of headroom.
 
 The owning Core stores the large work once. Exact-field references also avoid
 compiler-generated whole-transaction temporaries when reading the nested Call.
 No peak-stack or latency improvement has been measured.
 
-The native host measures Cursor 1048 -> 1184 bytes and Machine 1496 -> 1632 bytes
-when adding RET. Core remains 153792 bytes; RET reuses the CALL transaction bank.
+RET previously grew Cursor 1048 -> 1184 bytes and Machine 1496 -> 1632 bytes.
+The CALL copy-plan bank now grows Core 153792 -> 163984 bytes (+10192); Cursor
+and Machine retain their post-RET sizes. The bank is passed by mutable reference
+as Core field 8, separately from the shared authority transaction at field 7.
 Existing admission/accounting uses these actual native sizes.
 
 
@@ -68,16 +98,17 @@ private-state difference is explicit, not valid-program Fuel parity evidence.
 
 ## Evidence and limits
 
-See the [Windows evidence](../evidence/runtime-authority-metadata-windows-20261109.json)
-for named snapshots, commands, native images, default stack settings, storage
-measurements and exact input audits. Direct adapter groups compare against raw
+See the [CALL copy-plan evidence](../evidence/runtime-call-copy-plan-windows-20261109.json)
+for the current catalog/planner/owning integration snapshots, native images,
+storage and exact input audits. The [preceding authority evidence](../evidence/runtime-authority-metadata-windows-20261109.json)
+retains the earlier CALL/RET snapshots. Direct adapter groups compare against raw
 helpers, including partial-room deferral, frozen original state, final-only
 publication and late frame errors. Actual Engine fixtures cover fixed/mixed
 quanta, exact/one-less Fuel, binary output, moves/pins, cancellation/refunds and
 SDK allocation denial on covered resumes.
 
-Still atomic or incompletely bounded: CALL context/copy planning, metadata scans
-inside payload-plan validation, ordinary bool ARET scans, SRET catalog/layout
+Still atomic or incompletely bounded: CALL context preparation, ordinary bool
+ARET scans, SRET catalog/layout
 preparation, raw recipe discovery, setup/proof/seal and cleanup. Bounding the
 authority kernel does not bound every CALL/RET metadata visit. Public lifecycle,
 wall-clock deadlines, STOPPING/poison and the full remaining inventory stay open.

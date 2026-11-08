@@ -191,7 +191,7 @@ def main():
                         'programVectorType', 'snapshotType', 'snapshotVectorType', 'machineType', 'coreType',
                         'executionType','pendingVectorType','completionType','publishedVectorType',
                         'pendingMetaType','cursorType','outputCopyType','transactionType','preparationType','arrayFillType','callCopyType','returnWorkType','capturePlanType',
-                        'callMetadataType','metadataBudgetType','returnMetadataType']}
+                        'callMetadataType','metadataBudgetType','returnMetadataType','callCopyPlanType']}
         for variant, types in contract['programVariants'].items():
             layout_types.update({variant + '_' + role: name for role, name in types.items()})
         layout_types.update({key + '_entry': name for key, name in contract['entryTypes'].items()})
@@ -204,12 +204,14 @@ def main():
                                 ('executionType',0,'completionType'),('executionType',1,'publishedVectorType'),
                                 ('machineType',6,'transactionType'),('machineType',7,'pendingMetaType'),
                                 ('pendingMetaType',0,'cursorType'),('cursorType',2,'outputCopyType'),('cursorType',3,'arrayFillType'),('cursorType',4,'callCopyType'),('cursorType',5,'returnWorkType'),
-                                ('cursorType',6,'metadataBudgetType'),('coreType',7,'callMetadataType'),('cursorType',8,'returnMetadataType')]:
+                                ('cursorType',6,'metadataBudgetType'),('coreType',7,'callMetadataType'),('coreType',8,'callCopyPlanType'),('cursorType',8,'returnMetadataType')]:
             member=re.search(r'\b(fy_(?:struct|resource)_\d+) f_'+str(field)+r';',contract['reviewedLayouts'][owner])
             need(member is not None and member.group(1)==contract[key],f'Output field projection differs: {owner}/{field}')
         advance_args=contract['reviewedDeclarations']['26'].split('(',1)[1].split(',')
         need(re.fullmatch(r'\s*'+re.escape(contract['callMetadataType'])+r'\s*\*\s*fy_l_\d+\s*',advance_args[10]) is not None,
              'Pending CALL metadata argument must be a mutable pointer')
+        need(re.fullmatch(r'\s*'+re.escape(contract['callCopyPlanType'])+r'\s*\*\s*fy_l_\d+\s*',advance_args[11]) is not None,
+             'Pending CALL copy plan argument must be a mutable pointer')
         machine_meta=re.search(r'\b(fy_struct_\d+) f_7;',contract['reviewedLayouts']['machineType'])
         need(machine_meta is not None and machine_meta.group(1) in advance_args[2],
              'Pending Machine control metadata differs')
@@ -345,7 +347,7 @@ def main():
                            'Private synchronous typed transport, not public C handles or CLI lifecycle APIs',
                            'Complete Engine accounting/preallocation, OOM injection and poison containment remain',
                            'Ordinary zero-argument terminal Fuel is still marked unknown',
-                           'Owning CALL/RET authority stages share payload allowance; preparation, copy-plan scans and setup/proof/seal/cleanup still need complete bounds',
+                           'Owning CALL/RET authority stages share payload allowance; CALL context/RET preparation, raw recipe scans and setup/proof/seal/cleanup still need complete bounds',
                            'Compile proof remains atomic; no in-flight cancellation, host dispatch or OS deadline'])
     except Exception as error:
         receipt.update(status='failed', error=str(error))

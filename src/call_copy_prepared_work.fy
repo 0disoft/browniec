@@ -37,7 +37,7 @@ fn Result<usize,owners::Error> admit(ref mut budget::State b,usize count){
 fn Preview validation_preview(ref plans::State w,ref cursor::State copy,
     ref owners::CallArgument[] args,usize room){
     var Preview out=Preview{.bytes=0,.metadata=0};var usize left=room;
-    let ref plans::Plan p=ref w.plan;let usize checked=p.checked;let usize reserved=p.copies.count;
+    let ref plans::Plan p=ref w.plan;let usize checked=p.checked;let ref owners::Copies copies=ref p.copies;let usize reserved=copies.count;
     var usize i=copy.index;
     while(i<copy.count && i<checked && (!copy.reserve_first || i<reserved)){
         let owners::CallArgument arg=args[i];let owners::CallCopyRange r=p.ranges[i];
@@ -66,33 +66,16 @@ fn Preview write_preview(ref plans::State w,ref cursor::State copy,
         if(take<rest){return out;}i+=1;
     }return out;
 }
-// A short room must not purchase an entry stage that cannot reach any work.
-// Zero also means the next action is a deferred error or a phase transition.
-fn usize first_cost(ref plans::State w,ref cursor::State copy,ref owners::CallArgument[] args){
-    let ref plans::Plan p=ref w.plan;var usize i=copy.index;
-    if(copy.phase==0){
-        while(i<copy.count){if(i>=p.checked || (copy.reserve_first && i>=p.copies.count)){return 0;}
-            let u8 element=args[i].element;let owners::CallCopyRange r=p.ranges[i];
-            let usize at=if(i==copy.index){copy.at}else{0};
-            let usize ordinal=if(i==copy.index){w.bool_index}else{0};
-            if(element==2 && at<r.size){return 1;}
-            if(element==0 && ordinal<w.bools[i]){return 2;}
-            if(i>=p.copies.count){return 0;}i+=1;
-        }return 0;
-    }
-    while(i<copy.count){let owners::CallCopyRange r=p.ranges[i];
-        let usize at=if(i==copy.index){copy.at}else{0};let usize pos=r.mark+at;
-        if(pos<r.end){return if(pos<r.target || args[i].element!=0){1}else{2};}i+=1;
-    }return 0;
-}
 fn Result<usize,owners::Error> counters(ref cursor::State copy,usize bytes){
     let usize max=18446744073709551615;
     if(bytes>max-copy.total || bytes>max-copy.last){return .err(.Overflow);}
     return .ok(bytes);
 }
 
-// One invocation consumes its own 1024-unit entry plus each actual position or
-// mask visit, in the same shared room as payload bytes. No credit crosses yields.
+// One invocation consumes its own 3072-unit entry plus each actual position or
+// mask visit, in the same shared room as payload bytes. The fixed charge also
+// covers owning wrapper Cursor/Context/Prepared copies and final table stores.
+// No credit crosses yields.
 pub fn Result<Option<owners::Copies>,owners::Error> advance(ref mut plans::State w,
     ref mut cursor::State copy,ref mut owners::Table table,ref owners::CallArgument[] args,
     ref mut u8[] data,ref mut usize remaining,usize room,ref mut budget::State allowance){
@@ -100,10 +83,11 @@ pub fn Result<Option<owners::Copies>,owners::Error> advance(ref mut plans::State
         copy.count>8 || copy.phase>1 || copy.index>copy.count || copy.last>copy.total ||
         copy.written>copy.total || room>4096 || allowance.last>4096 || room>4096-allowance.last){return .err(.State);}
     if(copy.count!=0 && !copy.active){return .err(.State);}
-    if(room<1024){return .ok(.none);}
-    let usize available=room-1024;
-    let usize needed=first_cost(w,copy,args);if(needed>available){return .ok(.none);}
-    let usize fixed=admit(allowance,1024)?;var usize used=0;
+    // Reserve enough for either an array byte or one record byte/position.
+    // This constant guard never scans arguments before admission.
+    if(room<3074){return .ok(.none);}
+    let usize available=room-3072;
+    let usize fixed=admit(allowance,3072)?;var usize used=0;
     if(copy.count==0){
         if(!copy.charged){*remaining=copy.remaining;copy.charged=true;}
         let ref plans::Plan p=ref w.plan;return .ok(.some(p.copies));
@@ -115,7 +99,7 @@ pub fn Result<Option<owners::Copies>,owners::Error> advance(ref mut plans::State
         var usize read=0;
         while(copy.index<copy.count){
             let usize i=copy.index;let ref plans::Plan p=ref w.plan;
-            let usize checked_count=p.checked;let usize reserved=p.copies.count;
+            let usize checked_count=p.checked;let ref owners::Copies copies=ref p.copies;let usize reserved=copies.count;
             if(i>=checked_count || (copy.reserve_first && i>=reserved)){return .err(failure(w));}
             let owners::CallCopyRange r=p.ranges[i];let u8 element=args[i].element;
             if(element==2){

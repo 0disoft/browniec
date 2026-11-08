@@ -142,7 +142,7 @@ uint32_t bc_runtime_pending_advance(void *raw,const void *program,const void *in
  bc_pending_machine *owner=raw;bc_pending_core *c=owner->f_0.f_0;
  return B26(program,input,&owner->f_7,&c->f_0,&c->f_1,&c->f_2,
   (fy_byte_slice){c->f_3.data,16},(fy_mut_usize_slice){c->f_4.data,32},
-  (fy_mut_u32_slice){c->f_5.data,512},(fy_mut_i64_slice){c->f_6.data,4096},&c->f_7,
+  (fy_mut_u32_slice){c->f_5.data,512},(fy_mut_i64_slice){c->f_6.data,4096},&c->f_7,&c->f_8,
   &owner->f_1,&owner->f_2,&owner->f_3,&owner->f_4,&owner->f_5,&owner->f_6,operation,quantum);
 }
 uint32_t bc_runtime_pending_maintenance(void *raw,uint32_t operation,void *outgoing){

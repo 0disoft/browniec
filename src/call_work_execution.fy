@@ -5,6 +5,8 @@ import runtime_metadata_work as metadata;
 import metadata_budget as budget;
 import call_capture_plan as capture_plans;
 import call_copy_work as copies;
+import call_copy_plan_work as copy_plans;
+import call_copy_prepared_work as prepared_copy;
 import array_owners as owners;
 import array_vm as arrays;
 import slice_result_runtime as runtime;
@@ -200,14 +202,17 @@ pub fn Result<usize,errors::Error> begin_staged(ref mut staged_call::State work,
 // other payload and metadata charges. Metadata stages require a fresh 4096;
 // the caller resets budget/last once per dispatch, never on a continuation.
 // A complete payload copy changes only metadata.planned.owners, not live state.
-pub fn Result<bool,errors::Error> advance_staged(ref mut staged_call::State work,ref mut budget::State allowance,
+pub fn Result<bool,errors::Error> advance_staged(ref mut staged_call::State work,ref mut copy_plans::State copy_plan,ref mut budget::State allowance,
     ref ir::Program p,ref statics::Sites sites,ref mut frames::Frames bindings,ref mut runtime::State state,
     ref mut u8[] data,ref mut inputs::State windows,ref mut usize[] live,ref mut u32[] words,
     ref mut i64[] registers,ref mut usize remaining,usize byte_allowance){
-    let Result<bool,errors::Error> result=advance_staged_inner(work,allowance,p,sites,bindings,state,data,windows,live,words,registers,remaining,byte_allowance);
+    // Owning payload invocations need a fresh batch too: include wrapper array
+    // copies in the admitted fixed cost, never scan them on a short-room retry.
+    if(work.phase==4 && (byte_allowance!=4096 || allowance.last!=0)){return .ok(false);}
+    let Result<bool,errors::Error> result=advance_staged_inner(work,copy_plan,allowance,p,sites,bindings,state,data,windows,live,words,registers,remaining,byte_allowance);
     return switch(result){case .ok(v):{.ok(v)}case .err(e):{work.active=false;work.metadata.active=false;.err(e)}};
 }
-fn Result<bool,errors::Error> advance_staged_inner(ref mut staged_call::State work,ref mut budget::State allowance,
+fn Result<bool,errors::Error> advance_staged_inner(ref mut staged_call::State work,ref mut copy_plans::State copy_plan,ref mut budget::State allowance,
     ref ir::Program p,ref statics::Sites sites,ref mut frames::Frames bindings,ref mut runtime::State state,
     ref mut u8[] data,ref mut inputs::State windows,ref mut usize[] live,ref mut u32[] words,
     ref mut i64[] registers,ref mut usize remaining,usize byte_allowance){
@@ -228,18 +233,20 @@ fn Result<bool,errors::Error> advance_staged_inner(ref mut staged_call::State wo
     if(work.phase==2){
         if(byte_allowance!=4096 || allowance.last!=0){return .ok(false);}
         let bool done=metadata::advance(ref mut work.metadata,allowance)?;
-        if(done){work.phase=3;}return .ok(false);
+        if(done){let usize begun=switch(copy_plans::begin(copy_plan,!c.prepared.records)){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}};work.phase=3;}return .ok(false);
     }
     if(work.phase==3){
         if(byte_allowance!=4096 || allowance.last!=0){return .ok(false);}
-        // This preparation remains atomic and is outside the bounded authority
-        // ledger. Record catalog/layout scans can exceed 4096 entries. Run it
-        // alone and yield; never mislabel a scheduling debit as a proved bound.
         let ref metadata::State call_plan=ref work.metadata;let runtime::Call call=call_plan.call;
         let usize child=future_frame(p,saved.pc,bindings,call)?;
-        let ref owners::Table table=ref work.metadata.planned.owners;
-        var cursor::State next=switch(if(c.prepared.records){copies::begin(table,ref p.records.layouts,ref c.prepared.arguments[..c.prepared.count],data.len)}
-            else{copies::begin_arrays(table,ref p.records.layouts,ref c.prepared.arguments[..c.prepared.count],data.len)}){
+        let ref metadata::State pending=ref work.metadata;let ref runtime::Runtime planned=ref pending.planned;
+        let ref owners::Table table=ref planned.owners;
+        let bool ready=switch(copy_plans::advance(copy_plan,table,ref p.records.layouts,
+            ref c.prepared.arguments[..c.prepared.count],data.len,allowance)){
+            case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}
+        };
+        if(!ready){return .ok(false);}
+        var cursor::State next=switch(copy_plans::capture(copy_plan,ref c.prepared.arguments[..c.prepared.count])){
             case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}
         };
         if(inputs::enabled(windows) && c.generic){let usize checked=references::validate_input_arguments(p,sites,saved.target,child,ref c.captured,windows,offset)?;}
@@ -249,27 +256,21 @@ fn Result<bool,errors::Error> advance_staged_inner(ref mut staged_call::State wo
     }
     if(work.phase==4){
         if(allowance.last!=0 || byte_allowance==0){return .ok(false);}
-        var cursor::State copy=saved;let usize before=copy.last;var Option<owners::Copies> result=.none;
-        let ref mut metadata::State staged_metadata=ref mut work.metadata;
-        let ref mut runtime::Runtime staged_runtime=ref mut staged_metadata.planned;
-        let ref mut owners::Table staged_owners=ref mut staged_runtime.owners;
-        if(!copy.charged){
-            result=switch(copies::validate(ref mut copy,staged_owners,ref p.records.layouts,
-                ref c.prepared.arguments[..c.prepared.count],data,byte_allowance)){
+        if(!copy_plan.ready){
+            if(byte_allowance!=4096){return .ok(false);}
+            let ref metadata::State pending=ref work.metadata;let ref runtime::Runtime planned=ref pending.planned;
+            let ref owners::Table table=ref planned.owners;
+            let bool checked=switch(copy_plans::validate(copy_plan,table,ref c.prepared.arguments[..c.prepared.count],ref saved,data.len,allowance)){
                 case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}
-            };
-            if(copy.count!=0 && copy.phase==0){work.copy=copy;return .ok(false);};
-            *remaining=copy.remaining;copy.charged=true;
+            };return .ok(false);
         }
-        let usize spent=copy.last-before;
-        if(copy.count!=0){
-            if(spent==byte_allowance){work.copy=copy;return .ok(false);}
-            result=switch(copies::advance(ref mut copy,staged_owners,ref p.records.layouts,
-                ref c.prepared.arguments[..c.prepared.count],data,byte_allowance-spent)){
-                case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}
-            };
-        }
-        work.copy=copy;
+        var cursor::State copy=saved;
+        let ref mut metadata::State pending=ref mut work.metadata;let ref mut runtime::Runtime planned=ref mut pending.planned;
+        let ref mut owners::Table table=ref mut planned.owners;
+        let Result<Option<owners::Copies>,owners::Error> progressed=prepared_copy::advance(copy_plan,ref mut copy,table,
+            ref c.prepared.arguments[..c.prepared.count],data,remaining,byte_allowance,allowance);
+        copy_plan.ready=false;work.copy=copy;
+        let Option<owners::Copies> result=switch(progressed){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,offset));}};
         switch(result){case .none:{return .ok(false);}case .some(v):{work.finished=v;}};
         work.phase=5;return .ok(false);
     }

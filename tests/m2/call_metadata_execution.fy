@@ -13,6 +13,7 @@ import static_ir as statics;
 import ir as ir;
 import errors as errors;
 import std::vec as vec;
+import call_copy_plan_work as copy_plans;
 
 struct Observed { u8 error; usize offset; usize remaining; usize frame; usize depth; usize used; usize token; usize generation; u8 first; }
 fn ir::Program program(){
@@ -38,6 +39,11 @@ fn vec::Vec<staged::State> work_bank(){
     var vec::Vec<staged::State> bank=vec::empty<staged::State>();
     assert(vec::reserve<staged::State>(ref mut bank,1).is_ok);
     assert(vec::push<staged::State>(ref mut bank,staged::empty()).is_ok);return bank;
+}
+fn vec::Vec<copy_plans::State> plan_bank(){
+    var vec::Vec<copy_plans::State> bank=vec::empty<copy_plans::State>();
+    assert(vec::reserve<copy_plans::State>(ref mut bank,1).is_ok);
+    assert(vec::push<copy_plans::State>(ref mut bank,copy_plans::empty()).is_ok);return bank;
 }
 struct Outcome { u8 error; usize offset; }
 fn Outcome failed(errors::Error e){return Outcome{.error=e.kind,.offset=e.offset};}
@@ -70,15 +76,24 @@ fn Outcome drive_staged(ref ir::Program p,ref statics::Sites sites,ref plans::Pl
     ref mut vec::Vec<usize> places,ref mut usize[] live,ref mut u32[] words,ref mut i64[] registers,
     ref mut usize remaining,usize quantum){
     var vec::Vec<staged::State> bank=work_bank();let ref mut staged::State work=vec::at_mut<staged::State>(ref mut bank,0);
+    var vec::Vec<copy_plans::State> plans_storage=plan_bank();let ref mut copy_plans::State copy_plan=vec::at_mut<copy_plans::State>(ref mut plans_storage,0);
     var budget::State allowance=budget::empty();
     switch(calls::begin_staged(work,p,parameters,sites,0,bindings,state,64,0,words[16..32],live[1],windows,places,remaining,cache)){
         case .ok(_) : {} case .err(e):{return failed(e);}
     };
     var usize iterations=0;while(iterations<128){
         let usize reset=switch(budget::reset(ref mut allowance,0)){case .ok(v):{v}case .err(_):{assert(false);0}};
-        work.copy.last=0;let usize bytes=if(work.phase==4){quantum}else{4096};
-        let Result<bool,errors::Error> result=calls::advance_staged(work,ref mut allowance,p,sites,bindings,state,
-            data,windows,live,words,registers,remaining,bytes);
+        work.copy.last=0;
+        if(work.phase==4 && quantum<4096){
+            let usize fuel=*remaining;let usize total=work.copy.total;
+            let Result<bool,errors::Error> deferred=calls::advance_staged(work,copy_plan,ref mut allowance,p,sites,bindings,state,
+                data,windows,live,words,registers,remaining,quantum);
+            let bool progressed=switch(deferred){case .ok(v):{v}case .err(_):{assert(false);true}};
+            assert(!progressed && allowance.last==0 && work.copy.last==0 && work.copy.total==total && *remaining==fuel);
+        }
+        let Result<bool,errors::Error> result=calls::advance_staged(work,copy_plan,ref mut allowance,p,sites,bindings,state,
+            data,windows,live,words,registers,remaining,4096);
+        assert(work.copy.last+allowance.last<=4096);
         let bool done=switch(result){case .ok(v):{v}case .err(e):{
             assert(!work.active && bindings.frame==1 && state.runtime.owners.depth==1 && state.runtime.owners.arena.used==4);
             return failed(e);

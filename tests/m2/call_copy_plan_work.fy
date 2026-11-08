@@ -368,7 +368,7 @@ fn Result<Receipt,owners::Error> prepared_payload(ref Fixture f,usize room,bool 
         assert(budget::reset(ref mut allowance,0).is_ok);copy.last=0;
         let cursor::State before=copy;let usize before_fuel=remaining;*saved=*w;
         let bool charged=copy.charged;calls+=1;
-        let usize available=if(short_first && calls==1){1023}else{room};
+        let usize available=if(short_first && calls==1){3073}else{room};
         let Result<Option<owners::Copies>,owners::Error> result=prepared::advance(w,ref mut copy,ref mut table,
             ref f.arguments[..f.count],ref mut data,ref mut remaining,available,ref mut allowance);
         assert(copy.last+allowance.last<=available && copy.last+allowance.last<=4096);
@@ -376,7 +376,7 @@ fn Result<Receipt,owners::Error> prepared_payload(ref Fixture f,usize room,bool 
             assert(result.is_ok && allowance.last==0 && remaining==before_fuel);
             same_work(w,saved);same_cursor(ref before,ref copy);
             var usize i=0;while(i<512){assert(data[i]==f.data[i]);i+=1;}
-        }else{assert(allowance.last>=1024);}
+        }else{assert(allowance.last>=3072);}
         w.ready=false;
         if(!charged && copy.charged){charges+=1;}
         assert(remaining==if(copy.charged){900000}else{1000000});
@@ -413,7 +413,7 @@ fn Result<usize,owners::Error> payload_example(usize id,usize room,bool short_fi
 
 @test fn void prepared_payload_matches_raw_repeated_mixed_records_arrays_and_empty(){
     let usize[5] ids=[0,16,17,18,15];var usize i=0;
-    while(i<5){assert(payload_example(ids[i],if(ids[i]==17){1030}else{4096},true).is_ok);i+=1;}
+    while(i<5){assert(payload_example(ids[i],if(ids[i]==17){3078}else{4096},true).is_ok);i+=1;}
 }
 @test fn void prepared_bad_bool_precedes_later_catalog_source_and_reservation_errors(){
     let usize[5] ids=[1,2,3,5,9];var usize i=0;

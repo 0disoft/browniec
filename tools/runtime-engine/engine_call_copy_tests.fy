@@ -158,7 +158,7 @@ fn Admission seek_call(ref mut engine::Engine e,usize i,usize budget){var usize 
     while(n<256){assert(tick(e,i,1).kind==4);
         let engine::Event after=event(engine::observe(e,i));let calls::State c=call(e,i);
         if(c.pending && c.charged && c.written>0){
-            assert(c.phase==1 && c.count==1 && c.mark==32768 && c.end==65536 && c.written==4096 && c.last==4096);
+            assert(c.phase==1 && c.count==1 && c.mark==32768 && c.end==65536 && c.written==1024 && c.last==1024 && metadata(e,i).last==3072);
             rejected_take(e,i,11);return Admission{.fuel=budget-after.remaining,.remaining=after.remaining};}n+=1;
     }assert(false);return Admission{.fuel=0,.remaining=0};
 }
@@ -170,11 +170,16 @@ fn Result<usize,u8> wide_call_fixed_and_mixed_quanta(){var engine::Engine e=crea
     assert(completion(ref baseline).kind==1 && completion(ref baseline).value==42);binary_output(ref baseline,b"\x15\x00\xFF");
     var usize mode=0;while(mode<3){let usize i=bound(ref mut e,p,b"\x15\x00\xFF",16000000)?;prepare(ref mut e,i);
         if(mode==0){let Admission paid=seek_call(ref mut e,i,16000000);assert(paid.fuel>0 && paid.remaining>0);
-            var usize batches=1;while(batches<8){assert(tick(ref mut e,i,1).kind==4);batches+=1;let calls::State c=call(ref e,i);
-                assert(c.last==4096 && c.written==batches*4096 && c.total==batches*4096);
-                assert(c.pending && c.active==(batches<8));assert(event(engine::observe(ref mut e,i)).remaining==paid.remaining);
+            var usize batches=1;var usize ticks=0;var usize written=call(ref e,i).written;
+            while(written<32768){assert(ticks<64);assert(tick(ref mut e,i,1).kind==4);ticks+=1;
+                let calls::State c=call(ref e,i);let metadata_budget::State m=metadata(ref e,i);
+                if(c.last==0){assert(m.last==4096 && c.written==written);}
+                else{batches+=1;assert(c.written==written+c.last && c.last+m.last<=4096);
+                    if(c.written<32768){assert(c.last+m.last==4096);}written=c.written;}
+                assert(c.pending && c.active==(c.written<32768));assert(event(engine::observe(ref mut e,i)).remaining==paid.remaining);
             }
-            assert(call_phase(ref e,i)==5 && metadata(ref e,i).last==0);
+            assert(batches>8);
+            assert(call_phase(ref e,i)==5 && metadata(ref e,i).last==3072);
             assert(tick(ref mut e,i,1).kind==4);let calls::State published=call(ref e,i);
             assert(!published.pending && !published.active && published.last==0 && published.written==32768);
             assert(metadata(ref e,i).last==4096 && output(ref e,i).total==3);}

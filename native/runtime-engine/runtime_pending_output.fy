@@ -12,6 +12,7 @@ import output_execution as pending_output_steps;
 import std::bytes as pending_bytes;
 import slice_result_cursor as pending_cursors;
 import call_metadata_state as pending_call_metadata;
+import call_copy_plan_work as copy_plans;
 import module_output_program as output_programs;
 import runtime_input as input_bytes;
 import source_error as diagnostics;
@@ -67,7 +68,7 @@ pub fn Result<pending_output::Published,errors::Error> seal_pending_output(ref m
 }
 fn u32 pending_advance_inner(ref output_programs::Program p,ref input_bytes::Snapshot input,
     ref mut machines::Meta m,ref mut pending_frames::Frames bindings,ref mut pending_runtime::State state,ref pending_sites::Sites sites,
-    ref u8[] origins,ref mut usize[] live,ref mut u32[] words,ref mut i64[] registers,ref mut pending_call_metadata::State call_metadata,
+    ref u8[] origins,ref mut usize[] live,ref mut u32[] words,ref mut i64[] registers,ref mut pending_call_metadata::State call_metadata,ref mut copy_plans::State copy_plan,
     ref mut pending_bytes::Buffer payload,ref mut vec::Vec<i64> cells,ref mut pending_bytes::Buffer scratch,
     ref mut vec::Vec<usize> places,ref mut pending_windows::State windows,ref mut pending_output::Transaction staged,u32 operation,usize quantum){
     if(operation>1 || (operation==0 && m.phase!=0) || (operation==1 && (m.phase!=1 || !pending_cursors::valid_quantum(quantum)))){return 5;}
@@ -87,7 +88,7 @@ fn u32 pending_advance_inner(ref output_programs::Program p,ref input_bytes::Sna
     }else{
         let Result<Option<pending_execution::Scalar>,errors::Error> progressed=pending_execution::step_output_cached_staged(body,ref prepared.parameters,bindings,state,pending_bytes::view_mut(payload),sites,
             pending_images::payload(output_programs::literals(p)),cells,scratch,places,windows,guest,origins,
-            ref mut remaining,staged,ref mut cursor,live,words,registers,quantum,ref mut statistics,ref output_programs::preparation(p).calls,call_metadata);
+            ref mut remaining,staged,ref mut cursor,live,words,registers,quantum,ref mut statistics,ref output_programs::preparation(p).calls,call_metadata,copy_plan);
         m.remaining=remaining;m.cursor=cursor;m.stats=statistics;
         switch(progressed){
             case .ok(progress):{switch(progress){
@@ -133,12 +134,12 @@ fn void retain_advance_types(ref output_programs::Program p,ref input_bytes::Sna
     var pending_runtime::State state=pending_runtime::empty(0);var pending_frames::Frames bindings=pending_frames::empty(ref state);
     let pending_sites::Sites sites=pending_sites::empty();let u8[16] origins=[0;16];
     var usize[32] live=[0;32];var u32[512] words=[0;512];var i64[4096] registers=[0;4096];
-    var pending_call_metadata::State call_metadata=pending_call_metadata::empty();
+    var pending_call_metadata::State call_metadata=pending_call_metadata::empty();var copy_plans::State copy_plan=copy_plans::empty();
     var pending_bytes::Buffer payload=pending_bytes::empty();var vec::Vec<i64> cells=vec::empty<i64>();
     var pending_bytes::Buffer scratch=pending_bytes::empty();var vec::Vec<usize> places=vec::empty<usize>();
     var pending_windows::State windows=pending_windows::disabled();var pending_output::Transaction staged=pending_output::disabled();
     unsafe{binding_raw(26)};discard pending_advance_inner(p,input,ref mut m,ref mut bindings,ref mut state,ref sites,ref origins,
-        ref mut live,ref mut words,ref mut registers,ref mut call_metadata,ref mut payload,ref mut cells,ref mut scratch,ref mut places,ref mut windows,ref mut staged,0,0);
+        ref mut live,ref mut words,ref mut registers,ref mut call_metadata,ref mut copy_plan,ref mut payload,ref mut cells,ref mut scratch,ref mut places,ref mut windows,ref mut staged,0,0);
     var vec::Vec<pending_output::Published> outgoing=vec::empty<pending_output::Published>();
     unsafe{binding_raw(27)};discard pending_maintenance_inner(ref mut m,ref mut state,ref payload,ref mut places,ref mut staged,ref mut outgoing,0);
 }

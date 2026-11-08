@@ -151,7 +151,8 @@ fn engine::Event tick(ref mut engine::Engine e,usize i,usize q){
     same_event(after,event(engine::observe(e,i)));
     if(after.kind==4){let metadata_budget::State progress=metadata(e,i);
         assert(progress.total>=prior.total && progress.total-prior.total==progress.last && progress.last<=4096);
-        assert(progress.stages>=prior.stages && progress.last==4096*(progress.stages-prior.stages));
+        assert(progress.stages>=prior.stages && progress.stages-prior.stages<=progress.last);
+        assert((progress.stages==prior.stages)==(progress.last==0));
         same_heap(retained);ledger(e,charge);rejected_take(e,i,11);}return after;
 }
 fn engine::Event finish(ref mut engine::Engine e,usize i,usize schedule){
