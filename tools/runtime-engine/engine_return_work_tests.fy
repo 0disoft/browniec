@@ -9,6 +9,7 @@ import source_snapshot as sources;
 import source_error as diagnostics;
 import errors as errors;
 import return_work_cursor as returns;
+import metadata_budget as metadata;
 import array_fill_cursor as fill;
 import output_copy_cursor as copy;
 import call_copy_cursor as calls;
@@ -30,6 +31,10 @@ fn returns::State progress(ref engine::Engine e,usize i){return switch(engine::r
 fn fill::State array(ref engine::Engine e,usize i){return switch(engine::array_copy_progress(e,i)){case .ok(v):{v}case .err(_):{assert(false);fill::empty()}};}
 fn copy::State output(ref engine::Engine e,usize i){return switch(engine::output_copy_progress(e,i)){case .ok(v):{v}case .err(_):{assert(false);copy::empty()}};}
 fn calls::State call(ref engine::Engine e,usize i){return switch(engine::call_copy_progress(e,i)){case .ok(v):{v}case .err(_):{assert(false);calls::empty()}};}
+fn metadata::State authority(ref engine::Engine e,usize i){return switch(engine::authority_metadata_progress(e,i)){
+    case .ok(v):{v}case .err(_):{assert(false);metadata::empty()}};}
+fn usize phase(ref engine::Engine e,usize i){return switch(engine::return_metadata_phase(e,i)){
+    case .ok(v):{v}case .err(_):{assert(false);0}};}
 fn void same_progress(returns::State a,returns::State b){assert(a.total==b.total && a.last==b.last && a.pc==b.pc && a.frame==b.frame && a.required==b.required && a.op==b.op);}
 fn void rejected_progress(ref engine::Engine e,usize i,u32 status){switch(engine::return_work_progress(e,i)){case .ok(_):{assert(false);}case .err(v):{assert(v.status==status);}};}
 fn void rejected_take(ref mut engine::Engine e,usize i,u32 status){switch(engine::take_output(e,i)){case .ok(_):{assert(false);}case .err(v):{assert(v.status==status);}};}
@@ -62,24 +67,31 @@ fn void prepare(ref mut engine::Engine e,usize i){rejected_progress(e,i,11);asse
 // Every resume denies SDK allocations, including terminal/error sealing. Only
 // phase 3 exposes progress; totals/last measure reads, never a payload copy.
 fn engine::Event tick(ref mut engine::Engine e,usize i,usize q){let engine::Event before=event(engine::observe(e,i));let returns::State old=progress(e,i);
-    let fill::State a0=array(e,i);let copy::State o0=output(e,i);let calls::State c0=call(e,i);let Heap h=heap();let usize charge=memory(e).current;let usize attempts=unsafe{probe_attempts()};
+    let metadata::State m0=authority(e,i);let fill::State a0=array(e,i);let copy::State o0=output(e,i);let calls::State c0=call(e,i);let Heap h=heap();let usize charge=memory(e).current;let usize attempts=unsafe{probe_attempts()};
     unsafe{bc_runtime_engine_test_fail(0)};let Result<engine::Event,engine::Error> r=engine::step_instance(e,i,q);unsafe{bc_runtime_engine_test_fail(-1)};let engine::Event after=event(r);
     assert(before.kind==4 && after.fuel_known && after.remaining<=before.remaining && unsafe{probe_attempts()}==attempts);same_event(after,event(engine::observe(e,i)));
     if(after.kind==4){let returns::State v=progress(e,i);let fill::State a=array(e,i);let copy::State o=output(e,i);let calls::State c=call(e,i);
         assert(v.total>=old.total && v.total-old.total==v.last && a.total>=a0.total && a.total-a0.total==a.last && o.total>=o0.total && o.total-o0.total==o.last && c.total>=c0.total && c.total-c0.total==c.last);
-        assert(v.last+c.last+a.last+o.last<=4096);assert(v.required<=4096);if(v.op!=0){assert(v.pc<256 && v.frame>0 && v.frame<32);}
+        let metadata::State m=authority(e,i);assert(m.total>=m0.total && m.total-m0.total==m.last);
+        assert(v.last+c.last+a.last+o.last+m.last<=4096);assert(v.required<=4096);if(v.op!=0){assert(v.pc<256 && v.frame>0 && v.frame<32);}
         same_heap(h);ledger(e,charge);
     }else{assert(after.kind==1 || after.kind==2);rejected_progress(e,i,11);}return after;}
 fn engine::Event finish(ref mut engine::Engine e,usize i,usize mode){let usize[5] mixed=[1,7,3,4096,2];var usize n=0;var engine::Event s=event(engine::observe(e,i));
     while(s.kind==4){assert(n<512);s=tick(e,i,if(mode==0){1}else if(mode==1){7}else{mixed[n%5]});n+=1;}return s;}
 fn ref u8[] bool_source(){return b"module app;fn bool[4096] make(ref u8[] data){let bool[4096] a=[true;4096];output::emit(ref b\"x\");return a;}pub fn i32 chosen(ref u8[] data){let bool[4096] a=make(ref data);if(!a[0] || !a[4095]){return 0;}output::emit(ref data);return 42;}";}
 
-fn Admission accepted(ref mut engine::Engine e,usize i,usize measure,u8 op){var usize n=0;
+// Observe validation at the prefix exactly once, then wait through authority
+// restoration to derive the same full return Fuel price as the atomic oracle.
+fn Admission accepted(ref mut engine::Engine e,usize i,usize measure,u8 op){var usize n=0;var usize admitted=0;
     while(n<256){let engine::Event before=event(engine::observe(e,i));let fill::State a=array(e,i);let copy::State o=output(e,i);let calls::State c=call(e,i);
         let engine::Event after=tick(e,i,1);n+=1;assert(after.kind==4);let returns::State r=progress(e,i);
-        if(r.total!=0){assert(r.total==measure && r.last==measure && r.required==measure && r.op==op && before.remaining>after.remaining);
+        if(r.total!=0){assert(r.total==measure && r.required==measure && r.op==op);
+            if(admitted==0){assert(r.last==measure && before.remaining>after.remaining);admitted=before.remaining;}
+            else{assert(r.last==0);}
             assert(array(e,i).total==a.total && output(e,i).total==o.total && call(e,i).total==c.total);
-            return Admission{.before=before.remaining,.after=after.remaining,.chunks=n};}}
+            if(phase(e,i)==4){assert(authority(e,i).last==4096 && after.remaining<before.remaining);
+                return Admission{.before=admitted,.after=after.remaining,.chunks=n};}
+        }}
     assert(false);return Admission{.before=0,.after=0,.chunks=0};}
 // A q=4096 batch must stop after the one-byte prefix with no accepted RET.
 // The following q=1 step admits the entire bool scan; no partial recipe exists.
@@ -99,7 +111,7 @@ fn Result<usize,u8> bool_return_quanta_admission_and_fuel(){var engine::Engine e
     assert(paid.chunks>0 && paid.before>paid.after);destroy(ref mut e,measured);let usize price=16000000-completion(ref baseline).remaining;let usize admission=16000000-paid.after;assert(admission<price);
     var usize mode=0;while(mode<3){let usize i=bound(ref mut e,p,b"\x00\xFF!",16000000)?;prepare(ref mut e,i);
         if(mode==0){let Admission wait=deferred(ref mut e,i);assert(wait.before==paid.before && wait.chunks>=2);
-            let Admission done=accepted(ref mut e,i,4096,39);assert(done.chunks==1 && done.before==paid.before && done.after==paid.after);}
+            let Admission done=accepted(ref mut e,i,4096,39);assert(done.chunks>1 && done.before==paid.before && done.after==paid.after);}
         same_event(finish(ref mut e,i,mode),completion(ref baseline));let engine::Output o=take(ref mut e,i)?;same_output(ref o,ref baseline);destroy(ref mut e,i);ledger(ref e,0);mode+=1;}
     var usize variant=0;while(variant<4){let usize budget=if(variant<2){price-variant}else{admission-(variant-2)};
         let engine::Output sync=synchronous(ref mut e,p,b"\x00\xFF!",budget)?;let usize i=bound(ref mut e,p,b"\x00\xFF!",budget)?;prepare(ref mut e,i);
@@ -152,7 +164,7 @@ fn Result<usize,u8> cancel_deferred_return_refund_moves_and_pins(){var engine::E
     let Admission left=deferred(ref mut original,a);let engine::Event saved=event(engine::observe(ref mut original,a));let returns::State frozen=progress(ref original,a);
     let Admission right=deferred(ref mut original,b);assert(left.chunks==right.chunks);same_event(saved,event(engine::observe(ref mut original,a)));same_progress(frozen,progress(ref original,a));
     assert(id(engine::release_program(ref mut original,p))==p);counts(ref mut original,1,2,2);let Heap held=heap();var engine::Engine moved=original;same_heap(held);same_progress(frozen,progress(ref moved,a));
-    let Admission accepted_peer=accepted(ref mut moved,b,4096,39);assert(accepted_peer.chunks==1);same_event(saved,event(engine::observe(ref mut moved,a)));same_progress(frozen,progress(ref moved,a));
+    let Admission accepted_peer=accepted(ref mut moved,b,4096,39);assert(accepted_peer.chunks>1);same_event(saved,event(engine::observe(ref mut moved,a)));same_progress(frozen,progress(ref moved,a));
     var engine::Engine e=moved;same_heap(held);same_progress(frozen,progress(ref e,a));let usize attempts=unsafe{probe_attempts()};unsafe{bc_runtime_engine_test_fail(0)};
     let Result<engine::Event,engine::Error> r=engine::cancel_ready(ref mut e,a);unsafe{bc_runtime_engine_test_fail(-1)};let engine::Event stopped=event(r);
     assert(unsafe{probe_attempts()}==attempts && stopped.kind==3 && stopped.value==0 && stopped.fuel_known && stopped.remaining==saved.remaining && stopped.diagnostic.code.kind==0);
@@ -160,24 +172,27 @@ fn Result<usize,u8> cancel_deferred_return_refund_moves_and_pins(){var engine::E
     same_event(stopped,event(engine::cancel_ready(ref mut e,a)));same_event(stopped,event(engine::observe(ref mut e,a)));same_event(finish(ref mut e,b,0),completion(ref baseline));
     {let engine::Output o=take(ref mut e,b)?;same_output(ref o,ref baseline);}same_heap(ready);ledger(ref e,retained);counts(ref mut e,1,2,2);
     destroy(ref mut e,a);counts(ref mut e,1,1,1);rejected_progress(ref e,a,2);destroy(ref mut e,b);ledger(ref e,0);counts(ref mut e,0,0,0);assert(id(engine::destroy(ref mut e))==0);return .ok(0);}
-// 4. A return and the next COPY/SNAPSHOT share ONE batch. These cases leave
-// less room than the next full copy and exercise admission plus partial copy.
+// 4. RET publication consumes a fresh metadata allowance. Its following
+// COPY/SNAPSHOT starts in a later batch, after both validation and publication.
 fn Result<usize,u8> compile_following_copy(ref mut engine::Engine e,bool record){
     if(record){return compiled(e,b"module app;struct R{i64 a;i64 b;i64 c;i64 d;i64 e;i64 f;i64 g;i64 h;}fn bool[3920] make(ref u8[] data){let bool[3920] a=[true;3920];return a;}pub fn i32 chosen(ref u8[] data){let R prior=R{.a=42,.b=42,.c=42,.d=42,.e=42,.f=42,.g=42,.h=42};let bool[3920] a=make(ref data);let R copy=prior;if(!a[3919] || copy.h!=42){return 0;}return 42;}");}
     return compiled(e,b"module app;fn bool[4000] make(ref u8[] data){let bool[4000] a=[true;4000];return a;}pub fn i32 chosen(ref u8[] data){let i64[64] prior=[42;64];let bool[4000] a=make(ref data);let i64[64] copy=prior;if(!a[3999] || copy[63]!=42){return 0;}return 42;}");}
-fn Result<usize,u8> return_then_array_and_record_copy_share_allowance(){var usize mode=0;
+fn Result<usize,u8> return_publication_defers_following_array_and_record_copy(){var usize mode=0;
     while(mode<2){var engine::Engine e=created()?;let usize p=compile_following_copy(ref mut e,mode==1)?;
         let engine::Output baseline=synchronous(ref mut e,p,b"!",16000000)?;assert(completion(ref baseline).kind==1 && completion(ref baseline).value==42);
         var usize schedule=0;while(schedule<4){let usize i=bound(ref mut e,p,b"!",16000000)?;prepare(ref mut e,i);
-            let usize[5] mixed=[1,7,3,4096,2];var engine::Event s=event(engine::observe(ref mut e,i));var usize n=0;var bool shared=false;
+            let usize[5] mixed=[1,7,3,4096,2];var engine::Event s=event(engine::observe(ref mut e,i));var usize n=0;var bool validation=false;var bool published=false;var bool separated=false;
             while(s.kind==4){assert(n<256);let usize q=if(schedule==0){4096}else if(schedule==1){1}else if(schedule==2){7}else{mixed[n%5]};s=tick(ref mut e,i,q);n+=1;
                 if(s.kind==4){let returns::State r=progress(ref e,i);let fill::State a=array(ref e,i);
-                    if(r.last!=0 && a.active && a.op==if(mode==0){34}else{42}){shared=true;assert(r.last+a.last<=4096 && a.written>0 && a.written<a.end-a.mark);}}}
-            if(schedule==0){assert(shared);}same_event(s,completion(ref baseline));let engine::Output o=take(ref mut e,i)?;same_output(ref o,ref baseline);destroy(ref mut e,i);ledger(ref e,0);schedule+=1;}
+                    let metadata::State m=authority(ref e,i);
+                    if(r.last!=0 && r.op==39){validation=true;assert(m.last==0);}
+                    if(!published && r.op==39 && phase(ref e,i)==4){published=true;assert(m.last==4096 && a.last==0);}
+                    if(a.last!=0 && a.op==if(mode==0){34}else{42} && r.total!=0){separated=true;assert(validation && published && r.last==0 && m.last==0 && a.written>0);}}}
+            if(schedule==0){assert(validation && published && separated);}same_event(s,completion(ref baseline));let engine::Output o=take(ref mut e,i)?;same_output(ref o,ref baseline);destroy(ref mut e,i);ledger(ref e,0);schedule+=1;}
         close(ref mut e,p);mode+=1;}return .ok(0);}
 pub fn void run(){let Heap before=heap();
     assert(bool_return_quanta_admission_and_fuel().is_ok);same_heap(before);
     assert(padded_record_and_zero_payload_returns().is_ok);same_heap(before);
     assert(cancel_deferred_return_refund_moves_and_pins().is_ok);same_heap(before);
-    assert(return_then_array_and_record_copy_share_allowance().is_ok);same_heap(before);
+    assert(return_publication_defers_following_array_and_record_copy().is_ok);same_heap(before);
 }

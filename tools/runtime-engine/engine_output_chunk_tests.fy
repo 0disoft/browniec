@@ -186,7 +186,10 @@ fn Result<usize,u8> fixed_mixed_quanta_fuel_and_cursor_parity(){
                 assert(s.kind==4 && s.remaining==expected.remaining);let copy::State c=progress(ref e,i);
                 assert(c.total==expected.cursor.output.total && c.last==expected.cursor.output.last);
                 assert(c.active==expected.cursor.output.active && c.copied==expected.cursor.output.copied);
-                if(expected.stats.last<q){assert(c.last==4096);byte_yield=true;}
+                if(expected.stats.last<q){
+                    assert(c.last==4096 || expected.cursor.metadata.last==4096 || expected.cursor.return_metadata.pending);
+                    if(c.last==4096){byte_yield=true;}
+                }
                 if(before.cursor.output.active && c.active){
                     assert(expected.cursor.pc==before.cursor.pc && expected.remaining==before.remaining && expected.stats.last==1);
                     assert(c.offset==before.cursor.output.offset && c.storage==before.cursor.output.storage);

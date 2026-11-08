@@ -51,6 +51,8 @@ import struct_work_execution as record_steps;
 import call_work_execution as call_steps;
 import call_metadata_state as call_metadata;
 import metadata_budget as metadata_budget;
+import return_metadata_execution as return_metadata;
+import runtime_metadata_work as metadata_work;
 import call_capture_plan as capture_plans;
 import return_work_execution as return_steps;
 import return_work_cursor as return_work;
@@ -501,6 +503,23 @@ fn Result<Option<Outcome>,errors::Error> dispatch_staged(ref body_ir::Program bo
         let usize frame=bindings.frame;if(frame==0 || frame>=32){return .err(errors::make(5,0));}
         let usize f=bindings.functions[frame];if(f>=body.function_count || cursor.pc<body.starts[f] || cursor.pc>=body.ends[f]){return .err(errors::make(5,0));}
         let usize offset=body.offsets[cursor.pc];
+        if(cursor.return_metadata.pending){
+            if(cursor.return_metadata.pc!=cursor.pc || cursor.return_metadata.frame!=frame || metadata.active ||
+                cursor.call.pending || cursor.array.active || cursor.output.active){return .err(errors::make(5,offset));};
+            *visited+=1;
+            var return_metadata::State returning=cursor.return_metadata;
+            let bool finished=return_metadata::advance(ref mut returning,ref mut metadata.metadata,ref mut cursor.metadata,
+                body,sites,bindings,state,data.len,windows,origins,static_live,static_words,registers,remaining,room,plans)?;
+            cursor.return_metadata=returning;
+            if(!finished){return .ok(.none);}
+            cursor.pc=returning.next;
+            if(returning.complete){
+                let ref metadata_work::State completed_plan=ref metadata.metadata;
+                let runtime::Returned result=completed_plan.returned;
+                if(returning.view){return .ok(.some(transferred(result)));}
+                return .ok(.some(completed(Scalar{.value=returning.value,.remaining=*remaining,.resumed=result.resumed})));
+            }continue;
+        }
         if(metadata.active){
             if(!cursor.call.pending || cursor.call.pc!=cursor.pc || cursor.call.frame!=frame || cursor.array.active || cursor.output.active){return .err(errors::make(5,offset));};
             *visited+=1;
@@ -519,10 +538,27 @@ fn Result<Option<Outcome>,errors::Error> dispatch_staged(ref body_ir::Program bo
             cursor.call=metadata.copy;cursor.call_metadata_phase=metadata.phase;
             if(finished){cursor.pc=body.starts[cursor.call.target];continue;}return .ok(.none);
         }
+        if(return_metadata::operation(body,cursor.pc) && !cursor.array.active && !cursor.output.active){
+            if(*remaining==0){return .err(errors::make(8,offset));}
+            let usize measured=return_steps::required(body,cursor.pc)?;
+            if(measured>4096){return .err(errors::make(5,offset));}if(measured>room){return .ok(.none);}
+            let usize ready=return_work::check(ref cursor.returned,measured,offset)?;
+            *remaining-=1;*visited+=1;
+            let usize empty=place_frames::empty_frame(place_state,frame,offset)?;
+            var return_metadata::State returning=cursor.return_metadata;
+            let usize begun=return_metadata::begin(ref mut returning,body,sites,cursor.pc,bindings,state,data,literals.len,
+                windows,origins,static_live,static_words,registers,remaining)?;
+            cursor.return_metadata=returning;
+            let usize instruction=cursor.pc;let u8 operation=body.code[instruction*8];
+            return_work::record(ref mut cursor.returned,measured,instruction,frame,operation);
+            // Prefix preparation remains atomic; run it alone before the first
+            // restoration stage, without claiming a false 4096 metadata debit.
+            return .ok(.none);
+        }
         let Option<Outcome> result=dispatch(body,parameters,bindings,state,data,sites,literals,list_cells,list_scratch,place_state,windows,
             guest,origins,remaining,staged,cursor,static_live,static_words,registers,quantum,visited,plans,true)?;
         switch(result){case .some(done):{return .ok(.some(done));}case .none:{}};
-        if(!call_steps::operation(body,cursor.pc) || cursor.array.active || cursor.output.active){return .ok(.none);}
+        if((!call_steps::operation(body,cursor.pc) && !return_metadata::operation(body,cursor.pc)) || cursor.array.active || cursor.output.active){return .ok(.none);}
     }return .err(errors::make(5,0));
 }
 pub fn void abort_saved(ref mut runtime::State state,usize capacity,ref mut vec::Vec<usize> place_state){
@@ -616,9 +652,9 @@ fn Result<Option<Outcome>,errors::Error> dispatch(ref body_ir::Program body,ref 
             let bool finished=output_steps::advance_limited(ref mut copying,guest,literals,data,staged,bytes_left)?;
             cursor.output=copying;if(finished){cursor.pc+=1;}continue;
         };
-        // Owning Core routes CALL authority stages outside this independent
+        // Owning Core routes CALL/RET authority stages outside this independent
         // dispatcher. Stop before any opcode debit or argument preparation.
-        if(stop_calls && call_steps::operation(body,cursor.pc)){return .ok(.none);};
+        if(stop_calls && (call_steps::operation(body,cursor.pc) || return_metadata::operation(body,cursor.pc))){return .ok(.none);};
         if(*remaining==0){return .err(errors::make(8,offset));};
         if(array_copies::begin_bytes(body,cursor.pc)>bytes_left){return .ok(.none);};
         if(record_steps::operation(body,cursor.pc)){

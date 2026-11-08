@@ -10,8 +10,10 @@ pub fn Result<usize,errors::Error> check(ref State state,usize required,usize of
     if(required>18446744073709551615-state.total){return .err(errors::make(5,offset));}
     return .ok(required);
 }
-// Call only after check against the same frozen receipt, and successful owner
-// validation/loan restoration. No recoverable failure follows the publication.
+// Call once after check against the same frozen receipt and successful payload
+// validation/prefix preparation. This counts work already performed, not a
+// completed RET: staged authority restoration or publication can still fail.
+// The owning return recipe separately reports its final publication phase.
 pub fn void record(ref mut State state,usize required,usize pc,usize frame,u8 op){
     state.total+=required;state.last+=required;state.required=required;
     state.pc=pc;state.frame=frame;state.op=op;
