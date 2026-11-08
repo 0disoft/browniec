@@ -11,6 +11,7 @@ import errors as errors;
 import array_fill_cursor as fill;
 import output_copy_cursor as copy;
 import call_copy_cursor as calls;
+import metadata_budget as metadata_budget;
 import std::bytes as bytes;
 
 // Actual-source saved-VM tests. Parent owns runner/API integration and serial
@@ -37,6 +38,12 @@ fn copy::State output(ref engine::Engine e,usize i){return switch(engine::output
 };}
 fn calls::State call(ref engine::Engine e,usize i){return switch(engine::call_copy_progress(e,i)){
     case .ok(v):{v}case .err(_):{assert(false);calls::empty()}
+};}
+fn usize call_phase(ref engine::Engine e,usize i){return switch(engine::call_metadata_phase(e,i)){
+    case .ok(v):{v}case .err(_):{assert(false);0}
+};}
+fn metadata_budget::State metadata(ref engine::Engine e,usize i){return switch(engine::authority_metadata_progress(e,i)){
+    case .ok(v):{v}case .err(_):{assert(false);metadata_budget::empty()}
 };}
 fn void same_recipe(calls::State a,calls::State b){
     assert(a.pc==b.pc && a.frame==b.frame && a.offset==b.offset && a.target==b.target && a.fuel_before==b.fuel_before && a.captured==b.captured);
@@ -115,23 +122,28 @@ fn void prepare(ref mut engine::Engine e,usize i){assert(event(engine::prepare_i
 // Every resume, including terminal seal, denies the next SDK allocation.
 fn engine::Event tick(ref mut engine::Engine e,usize i,usize q){
     let engine::Event before=event(engine::observe(e,i));let fill::State old=array(e,i);let copy::State prior=output(e,i);
-    let calls::State previous=call(e,i);
+    let calls::State previous=call(e,i);let usize previous_phase=call_phase(e,i);let metadata_budget::State previous_metadata=metadata(e,i);
     let Heap held=heap();let usize charge=memory(e).current;let usize attempts=unsafe{probe_attempts()};
     unsafe{bc_runtime_engine_test_fail(0)};let Result<engine::Event,engine::Error> r=engine::step_instance(e,i,q);
     unsafe{bc_runtime_engine_test_fail(-1)};let engine::Event after=event(r);
     assert(unsafe{probe_attempts()}==attempts && before.kind==4 && after.fuel_known && after.remaining<=before.remaining);
     same_event(after,event(engine::observe(e,i)));
-    if(after.kind==4){let fill::State a=array(e,i);let copy::State o=output(e,i);let calls::State c=call(e,i);
+    if(after.kind==4){let fill::State a=array(e,i);let copy::State o=output(e,i);let calls::State c=call(e,i);let usize phase=call_phase(e,i);let metadata_budget::State m=metadata(e,i);
+        assert(m.total>=previous_metadata.total && m.total-previous_metadata.total==m.last && m.last<=4096);
         assert(a.total>=old.total && a.total-old.total==a.last && o.total>=prior.total && o.total-prior.total==o.last);
-        assert(c.total>=previous.total && c.total-previous.total==c.last && c.last+a.last+o.last<=4096);
+        assert(c.total>=previous.total && c.total-previous.total==c.last && c.last+a.last+o.last+m.last<=4096);
         assert(!(a.active && o.active) && !(c.pending && (a.active || o.active)));
-        if(c.pending){assert(c.active && c.pc<256 && c.frame>0 && c.frame<32 && c.target<16 && c.count>0 && c.count<=8);
-            assert(c.mark<c.end && c.written<c.end-c.mark && c.phase<=1);
-            if(c.phase==0){assert(!c.charged && c.written==0);}else{assert(c.charged);}rejected_take(e,i,11);}
+        if(c.pending){assert(c.pc<256 && c.frame>0 && c.frame<32 && c.target<16 && phase>=1 && phase<=5);
+            if(phase<4){assert(!c.active && !c.charged && c.count==0 && c.written==0);}
+            else{assert(c.count>0 && c.count<=8 && c.mark<c.end && c.phase<=1);
+                if(phase==5){assert(!c.active && c.charged && c.written==c.end-c.mark);}
+                else{assert(c.active && c.written<c.end-c.mark);
+                    if(c.phase==0){assert(!c.charged && c.written==0);}else{assert(c.charged);}}
+            }rejected_take(e,i,11);}
         if(previous.pending && q==1){assert(a.total==old.total && o.total==prior.total);
             if(previous.charged){assert(after.remaining==before.remaining && c.written>=previous.written && c.last==c.written-previous.written);}
             else if(c.pending && !c.charged){assert(after.remaining==before.remaining);}
-            if(c.pending){same_recipe(previous,c);}}
+            if(c.pending && previous_phase>=4 && phase>=4){same_recipe(previous,c);}}
         same_heap(held);ledger(e,charge);
     }else{assert(after.kind==1 || after.kind==2);rejected_progress(e,i,11);}return after;
 }
@@ -160,8 +172,12 @@ fn Result<usize,u8> wide_call_fixed_and_mixed_quanta(){var engine::Engine e=crea
         if(mode==0){let Admission paid=seek_call(ref mut e,i,16000000);assert(paid.fuel>0 && paid.remaining>0);
             var usize batches=1;while(batches<8){assert(tick(ref mut e,i,1).kind==4);batches+=1;let calls::State c=call(ref e,i);
                 assert(c.last==4096 && c.written==batches*4096 && c.total==batches*4096);
-                assert(c.pending==(batches<8) && c.active==(batches<8));assert(event(engine::observe(ref mut e,i)).remaining==paid.remaining);
-            }assert(output(ref e,i).total==3);}
+                assert(c.pending && c.active==(batches<8));assert(event(engine::observe(ref mut e,i)).remaining==paid.remaining);
+            }
+            assert(call_phase(ref e,i)==5 && metadata(ref e,i).last==0);
+            assert(tick(ref mut e,i,1).kind==4);let calls::State published=call(ref e,i);
+            assert(!published.pending && !published.active && published.last==0 && published.written==32768);
+            assert(metadata(ref e,i).last==4096 && output(ref e,i).total==3);}
         same_event(finish(ref mut e,i,mode),completion(ref baseline));let engine::Output o=take(ref mut e,i)?;
         same_output(ref o,ref baseline);destroy(ref mut e,i);ledger(ref e,0);mode+=1;
     }close(ref mut e,p);return .ok(0);
@@ -177,7 +193,7 @@ fn Result<usize,u8> mixed_record_bool_reference_and_capture(){var engine::Engine
     var usize mode=0;while(mode<3){let usize i=bound(ref mut e,p,ref data,16000000)?;prepare(ref mut e,i);
         if(mode==0){var bool validated=false;var bool charged=false;var usize n=0;
             while(!charged){assert(n<256 && tick(ref mut e,i,1).kind==4);n+=1;let calls::State c=call(ref e,i);
-                if(c.pending){assert(c.count==3);if(c.phase==0){assert(!c.charged && c.written==0);validated=true;}
+                if(c.pending && call_phase(ref e,i)>=4 && c.total>0){assert(c.count==3);if(c.phase==0){assert(!c.charged && c.written==0);validated=true;}
                     else{assert(validated && c.charged && c.written>0);charged=true;}}
             }}
         same_event(finish(ref mut e,i,mode),completion(ref baseline));let engine::Output o=take(ref mut e,i)?;

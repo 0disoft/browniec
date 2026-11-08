@@ -30,12 +30,17 @@ pub fn Result<usize,errors::Error> step(ref ir::Program p,usize pc,ref mut frame
 }
 // Compact both frame maps into the existing sixteen-owner terminal transaction.
 // Never drop records before handoff: cleanup failure must roll back all metadata.
-pub fn Result<runtime::Returned,errors::Error> handoff(ref frames::Frames bindings,
-    ref mut runtime::State state,ref mut runtime::Call call,slices::Ticket selected,usize capacity,usize fuel){
-    var owners::Token[16] roots=[owners::Token{.slot=0,.generation=0};16];var usize count=0;
+pub fn Result<usize,errors::Error> compact_roots(ref frames::Frames bindings,ref mut owners::Token[] roots){
+    if(roots.len!=16){return .err(errors::make(5,0));}var usize count=0;
     var usize i=0;while(i<32){let usize at=bindings.frame*16+i%16;
         let owners::Token token=if(i<16){bindings.tokens[at]}else{record_bindings::get(ref bindings.records,at)};
         if(token.generation!=0){if(count>=16){return .err(errors::make(5,0));}roots[count]=token;count+=1;}i+=1;
     }
+    return .ok(count);
+}
+pub fn Result<runtime::Returned,errors::Error> handoff(ref frames::Frames bindings,
+    ref mut runtime::State state,ref mut runtime::Call call,slices::Ticket selected,usize capacity,usize fuel){
+    var owners::Token[16] roots=[owners::Token{.slot=0,.generation=0};16];
+    let usize count=compact_roots(bindings,ref mut roots)?;
     return runtime::handoff_roots(state,call,selected,ref roots[..count],capacity,fuel);
 }

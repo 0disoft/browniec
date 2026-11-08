@@ -1,5 +1,6 @@
 module runtime_engine;
 import call_copy_cursor as call_work;
+import metadata_budget as metadata_budget;
 import return_work_cursor as return_work;
 import module_program as programs;
 import module_entry as entries;
@@ -259,6 +260,26 @@ pub fn Result<call_work::State,Error> call_copy_progress(ref Engine e,usize inst
     let ref Output saved=vec::at<Output>(ref e.outputs,oi);
     if(vec::len<machines::Machine>(ref saved.pending)!=1){return .err(error(7));}
     return .ok(machines::observe(vec::at<machines::Machine>(ref saved.pending,0)).cursor.call);
+}
+pub fn Result<metadata_budget::State,Error> authority_metadata_progress(ref Engine e,usize instance){
+    let u32 status=unsafe{control_access_raw(e as ptr void)};
+    if(status!=0){return .err(error(status));}if(e.meta.closed){return .err(error(2));}
+    let usize ii=switch(instance_index(ref e.instances,instance)){case .ok(v):{v}case .err(s):{return .err(error(s));}};
+    if(vec::at<Instance>(ref e.instances,ii).phase!=3){return .err(error(11));}
+    let usize oi=switch(output_index(ref e.outputs,instance)){case .ok(v):{v}case .err(_):{return .err(error(7));}};
+    let ref Output saved=vec::at<Output>(ref e.outputs,oi);
+    if(vec::len<machines::Machine>(ref saved.pending)!=1){return .err(error(7));}
+    return .ok(machines::observe(vec::at<machines::Machine>(ref saved.pending,0)).cursor.metadata);
+}
+pub fn Result<usize,Error> call_metadata_phase(ref Engine e,usize instance){
+    let u32 status=unsafe{control_access_raw(e as ptr void)};
+    if(status!=0){return .err(error(status));}if(e.meta.closed){return .err(error(2));}
+    let usize ii=switch(instance_index(ref e.instances,instance)){case .ok(v):{v}case .err(s):{return .err(error(s));}};
+    if(vec::at<Instance>(ref e.instances,ii).phase!=3){return .err(error(11));}
+    let usize oi=switch(output_index(ref e.outputs,instance)){case .ok(v):{v}case .err(_):{return .err(error(7));}};
+    let ref Output saved=vec::at<Output>(ref e.outputs,oi);
+    if(vec::len<machines::Machine>(ref saved.pending)!=1){return .err(error(7));}
+    return .ok(machines::observe(vec::at<machines::Machine>(ref saved.pending,0)).cursor.call_metadata_phase as usize);
 }
 pub fn Result<return_work::State,Error> return_work_progress(ref Engine e,usize instance){
     let u32 status=unsafe{control_access_raw(e as ptr void)};

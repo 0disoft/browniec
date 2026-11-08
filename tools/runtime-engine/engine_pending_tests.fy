@@ -95,7 +95,8 @@ fn Result<machine::Meta,u8> tick(ref mut machine::Machine m,ref programs::Progra
     assert(after.stats.maximum==if(after.stats.last>before.stats.maximum){after.stats.last}else{before.stats.maximum});
     assert(after.stats.dispatched==before.stats.dispatched+after.stats.last);
     if(after.phase==1){
-        assert(after.cursor.active && after.stats.last==quantum);
+        // Authority stages may yield before exhausting the opcode quantum.
+        assert(after.cursor.active && after.stats.last>0 && after.stats.last<=quantum);
         assert(after.stats.yields==before.stats.yields+1);
     }
     return .ok(after);
@@ -317,7 +318,7 @@ fn Result<usize,u8> variable_quantum_matches_exact_terminal(){
                 progress=tick(ref mut m,ref p,ref input,quantum)?;calls+=1;
             }
             let usize checked=publish_matches(ref mut m,ref baseline,bytes::view(ref expected),12)?;
-            if(variant==5){assert(calls==1);}
+            if(variant==5){assert(calls>1);}
         }
         same_heap(ref stored);variant+=1;
     }

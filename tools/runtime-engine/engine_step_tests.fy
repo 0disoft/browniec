@@ -199,10 +199,10 @@ fn Result<usize,u8> fixed_and_mixed_quanta(){
             assert(expected.stats.last<=q && expected.stats.calls==before.stats.calls+1);
             assert(expected.stats.dispatched==before.stats.dispatched+expected.stats.last);
             state=tick(ref mut e,i,q);calls+=1;
-            if(expected.phase==1){assert(state.kind==4 && state.remaining==expected.remaining && expected.stats.last==q);}
+            if(expected.phase==1){assert(state.kind==4 && state.remaining==expected.remaining && expected.stats.last>0 && expected.stats.last<=q);}
             else{assert(expected.phase==2 && state.kind==1 && state.remaining+meter::output_seal()==expected.remaining);}
         }
-        if(variant==5){assert(calls==1);}if(variant==0){assert(calls>2);}
+        if(variant==5){assert(calls>1);}if(variant==0){assert(calls>2);}
         same_event(state,completion(ref baseline));sealed_balance(ref e,ref ready,input_charge,true,16);
         frozen(ref mut e,i,state);let engine::Output result=take(ref mut e,i)?;
         ledger(ref e,input_charge);rejected_take(engine::take_output(ref mut e,i),2);

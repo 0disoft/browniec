@@ -49,6 +49,8 @@ import array_copy_execution as array_copies;
 import array_list_execution as array_lists;
 import struct_work_execution as record_steps;
 import call_work_execution as call_steps;
+import call_metadata_state as call_metadata;
+import metadata_budget as metadata_budget;
 import call_capture_plan as capture_plans;
 import return_work_execution as return_steps;
 import return_work_cursor as return_work;
@@ -456,6 +458,73 @@ pub fn Result<Option<Scalar>,errors::Error> step_output_cached(ref body_ir::Prog
         }}
     };
 }
+// Only this owning adapter borrows the preallocated metadata Core. Legacy
+// saved/raw and synchronous execution retain their independent atomic oracle
+// without constructing a large unused Work on the native stack.
+pub fn Result<Option<Scalar>,errors::Error> step_output_cached_staged(ref body_ir::Program body,ref u8[] parameters,
+    ref mut frames::Frames bindings,ref mut runtime::State state,ref mut u8[] data,ref statics::Sites sites,ref u8[] literals,
+    ref mut vec::Vec<i64> list_cells,ref mut bytes::Buffer list_scratch,ref mut vec::Vec<usize> place_state,
+    ref mut input_views::State windows,ref u8[] guest,ref u8[] origins,ref mut usize remaining,ref mut output::Transaction staged,
+    ref mut cursors::Cursor cursor,ref mut usize[] static_live,ref mut u32[] static_words,ref mut i64[] registers,
+    usize quantum,ref mut cursors::Stats stats,ref capture_plans::Plan plans,ref mut call_metadata::State metadata){
+    if(parameters.len!=16 || static_live.len!=32 || static_words.len!=512 || registers.len!=4096 || origins.len!=16 || !cursor.active){return .err(errors::make(5,0));}
+    let usize admitted=cursors::begin(stats,quantum)?;
+    cursor.output.last=0;cursor.array.last=0;cursor.call.last=0;cursor.returned.last=0;
+    let usize reset=metadata_budget::reset(ref mut cursor.metadata,0)?;metadata.copy.last=0;
+    var usize visited=0;
+    let Result<Option<Outcome>,errors::Error> outcome=dispatch_staged(body,parameters,bindings,state,data,sites,literals,list_cells,list_scratch,
+        place_state,windows,guest,origins,remaining,staged,cursor,static_live,static_words,registers,quantum,ref mut visited,plans,metadata);
+    return switch(outcome){
+        case .err(e):{cursor.active=false;let usize recorded=cursors::finish(stats,visited,false)?;.err(e)}
+        case .ok(value):{let bool pending=switch(value){case .none:{true}case .some(_):{false}};
+            let usize recorded=cursors::finish(stats,visited,pending)?;
+            if(!pending){cursor.active=false;}
+            switch(value){case .none:{.ok(.none)}case .some(done):{if(done.view){.err(errors::make(5,0))}else{.ok(.some(done.scalar))}}}
+        }
+    };
+}
+fn Result<usize,errors::Error> dispatch_room(ref cursors::Cursor cursor){
+    if(cursor.output.last>4096 || cursor.array.last>4096-cursor.output.last){return .err(errors::make(5,0));}
+    if(cursor.call.last>4096-cursor.output.last-cursor.array.last){return .err(errors::make(5,0));}
+    if(cursor.returned.last>4096-cursor.output.last-cursor.array.last-cursor.call.last){return .err(errors::make(5,0));}
+    if(cursor.metadata.last>4096-cursor.output.last-cursor.array.last-cursor.call.last-cursor.returned.last){return .err(errors::make(5,0));}
+    return .ok(4096-cursor.output.last-cursor.array.last-cursor.call.last-cursor.returned.last-cursor.metadata.last);
+}
+fn Result<Option<Outcome>,errors::Error> dispatch_staged(ref body_ir::Program body,ref u8[] parameters,ref mut frames::Frames bindings,
+    ref mut runtime::State state,ref mut u8[] data,ref statics::Sites sites,ref u8[] literals,
+    ref mut vec::Vec<i64> list_cells,ref mut bytes::Buffer list_scratch,ref mut vec::Vec<usize> place_state,
+    ref mut input_views::State windows,ref u8[] guest,ref u8[] origins,ref mut usize remaining,ref mut output::Transaction staged,
+    ref mut cursors::Cursor cursor,ref mut usize[] static_live,ref mut u32[] static_words,ref mut i64[] registers,
+    usize quantum,ref mut usize visited,ref capture_plans::Plan plans,ref mut call_metadata::State metadata){
+    while(cursor.pc<body.count){
+        let usize room=dispatch_room(cursor)?;if(*visited==quantum || room==0){return .ok(.none);}
+        let usize frame=bindings.frame;if(frame==0 || frame>=32){return .err(errors::make(5,0));}
+        let usize f=bindings.functions[frame];if(f>=body.function_count || cursor.pc<body.starts[f] || cursor.pc>=body.ends[f]){return .err(errors::make(5,0));}
+        let usize offset=body.offsets[cursor.pc];
+        if(metadata.active){
+            if(!cursor.call.pending || cursor.call.pc!=cursor.pc || cursor.call.frame!=frame || cursor.array.active || cursor.output.active){return .err(errors::make(5,offset));};
+            *visited+=1;
+            let bool finished=call_steps::advance_staged(metadata,ref mut cursor.metadata,body,sites,bindings,state,data,
+                windows,static_live,static_words,registers,remaining,room)?;
+            cursor.call=metadata.copy;cursor.call_metadata_phase=metadata.phase;
+            if(finished){cursor.pc=body.starts[cursor.call.target];continue;}return .ok(.none);
+        }
+        if(cursor.call.pending){return .err(errors::make(5,offset));}
+        if(call_steps::operation(body,cursor.pc) && !cursor.array.active && !cursor.output.active){
+            if(*remaining==0){return .err(errors::make(8,offset));};*remaining-=1;*visited+=1;
+            let usize begun=call_steps::begin_staged(metadata,body,parameters,sites,cursor.pc,bindings,state,data.len,literals.len,
+                static_words[frame*16..frame*16+16],static_live[frame],windows,place_state,remaining,plans)?;
+            let bool finished=call_steps::advance_staged(metadata,ref mut cursor.metadata,body,sites,bindings,state,data,
+                windows,static_live,static_words,registers,remaining,room)?;
+            cursor.call=metadata.copy;cursor.call_metadata_phase=metadata.phase;
+            if(finished){cursor.pc=body.starts[cursor.call.target];continue;}return .ok(.none);
+        }
+        let Option<Outcome> result=dispatch(body,parameters,bindings,state,data,sites,literals,list_cells,list_scratch,place_state,windows,
+            guest,origins,remaining,staged,cursor,static_live,static_words,registers,quantum,visited,plans,true)?;
+        switch(result){case .some(done):{return .ok(.some(done));}case .none:{}};
+        if(!call_steps::operation(body,cursor.pc) || cursor.array.active || cursor.output.active){return .ok(.none);}
+    }return .err(errors::make(5,0));
+}
 pub fn void abort_saved(ref mut runtime::State state,usize capacity,ref mut vec::Vec<usize> place_state){
     places::abort(place_state);let bool drained=runtime::abort(state,capacity,0).is_ok;
 }
@@ -470,9 +539,10 @@ fn Result<Option<Outcome>,errors::Error> drive(ref body_ir::Program body,ref u8[
     let usize admitted=cursors::begin(stats,quantum)?;
     cursor.output.last=0;
     cursor.array.last=0;cursor.call.last=0;cursor.returned.last=0;
+    let usize reset=metadata_budget::reset(ref mut cursor.metadata,0)?;
     var usize visited=0;
     let Result<Option<Outcome>,errors::Error> outcome=dispatch(body,parameters,bindings,state,data,sites,literals,list_cells,list_scratch,
-        place_state,windows,guest,origins,remaining,staged,cursor,static_live,static_words,registers,quantum,ref mut visited,plans);
+        place_state,windows,guest,origins,remaining,staged,cursor,static_live,static_words,registers,quantum,ref mut visited,plans,false);
     return switch(outcome){
         case .err(e):{cursor.active=false;let usize recorded=cursors::finish(stats,visited,false)?;.err(e)}
         case .ok(progress):{
@@ -487,13 +557,10 @@ fn Result<Option<Outcome>,errors::Error> dispatch(ref body_ir::Program body,ref 
     ref mut runtime::State state,ref mut u8[] data,ref statics::Sites sites,ref u8[] literals,
     ref mut vec::Vec<i64> list_cells,ref mut bytes::Buffer list_scratch,ref mut vec::Vec<usize> place_state,
     ref mut input_views::State windows,ref u8[] guest,ref u8[] origins,ref mut usize remaining,ref mut output::Transaction staged,
-    ref mut cursors::Cursor cursor,ref mut usize[] static_live,ref mut u32[] static_words,ref mut i64[] registers,usize quantum,ref mut usize visited,ref capture_plans::Plan plans){
+    ref mut cursors::Cursor cursor,ref mut usize[] static_live,ref mut u32[] static_words,ref mut i64[] registers,usize quantum,ref mut usize visited,ref capture_plans::Plan plans,bool stop_calls){
     var usize i=0;
     while(cursor.pc<body.count){
-        if(cursor.output.last>4096 || cursor.array.last>4096-cursor.output.last){return .err(errors::make(5,0));}
-        if(cursor.call.last>4096-cursor.output.last-cursor.array.last){return .err(errors::make(5,0));}
-        if(cursor.returned.last>4096-cursor.output.last-cursor.array.last-cursor.call.last){return .err(errors::make(5,0));}
-        let usize bytes_left=4096-cursor.output.last-cursor.array.last-cursor.call.last-cursor.returned.last;
+        let usize bytes_left=dispatch_room(cursor)?;
         if(*visited==quantum || bytes_left==0){return .ok(.none);}
         let usize frame=bindings.frame;let usize f=bindings.functions[frame];
         if(frame==0 || f>=body.function_count || cursor.pc<body.starts[f] || cursor.pc>=body.ends[f]){return .err(errors::make(5,0));}
@@ -549,6 +616,9 @@ fn Result<Option<Outcome>,errors::Error> dispatch(ref body_ir::Program body,ref 
             let bool finished=output_steps::advance_limited(ref mut copying,guest,literals,data,staged,bytes_left)?;
             cursor.output=copying;if(finished){cursor.pc+=1;}continue;
         };
+        // Owning Core routes CALL authority stages outside this independent
+        // dispatcher. Stop before any opcode debit or argument preparation.
+        if(stop_calls && call_steps::operation(body,cursor.pc)){return .ok(.none);};
         if(*remaining==0){return .err(errors::make(8,offset));};
         if(array_copies::begin_bytes(body,cursor.pc)>bytes_left){return .ok(.none);};
         if(record_steps::operation(body,cursor.pc)){
@@ -567,7 +637,7 @@ fn Result<Option<Outcome>,errors::Error> dispatch(ref body_ir::Program body,ref 
             var array_fill::State recording=record_steps::begin(body,cursor.pc,bindings,state,registers[base..base+128],data,place_state,remaining)?;
             if(recording.total>18446744073709551615-cursor.array.total || recording.last>4096-cursor.array.last){return .err(errors::make(5,offset));}
             recording.total+=cursor.array.total;recording.last+=cursor.array.last;
-            let usize room=4096-cursor.output.last-cursor.call.last-cursor.returned.last-recording.last;
+            let usize room=4096-cursor.output.last-cursor.call.last-cursor.returned.last-cursor.metadata.last-recording.last;
             if(room!=0){let bool finished=record_steps::advance(ref mut recording,body,bindings,state,data,place_state,room)?;}
             cursor.array=recording;if(!recording.active){cursor.pc+=1;}continue;
         }
@@ -582,7 +652,7 @@ fn Result<Option<Outcome>,errors::Error> dispatch(ref body_ir::Program body,ref 
             var array_fill::State copying=array_copies::begin(body,cursor.pc,bindings,state,data,place_state,remaining)?;
             if(copying.total>18446744073709551615-cursor.array.total || copying.last>4096-cursor.array.last){return .err(errors::make(5,offset));}
             copying.total+=cursor.array.total;copying.last+=cursor.array.last;
-            let usize room=4096-cursor.output.last-cursor.call.last-cursor.returned.last-copying.last;
+            let usize room=4096-cursor.output.last-cursor.call.last-cursor.returned.last-cursor.metadata.last-copying.last;
             if(copying.active && room!=0){let bool finished=array_copies::advance(ref mut copying,body,bindings,state,data,place_state,room)?;}
             cursor.array=copying;if(!copying.active){cursor.pc+=1;}continue;
         }

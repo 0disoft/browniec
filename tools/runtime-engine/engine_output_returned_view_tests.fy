@@ -11,6 +11,7 @@ import runtime_input as inputs;
 import runtime_output as output;
 import output_return_proof as proof;
 import call_capture_plan as capture_plans;
+import metadata_budget as metadata_budget;
 import static_call_ir as candidates;
 import output_return_ir as return_ir;
 import slice_result_ir as borrowed_ir;
@@ -138,19 +139,27 @@ fn usize quantum(usize schedule,usize tick){
 }
 // Every resume, including terminal seal/failure, must make zero SDK allocation
 // attempts. Pending retains its charge and physical heap exactly until cleanup.
+fn metadata_budget::State metadata(ref engine::Engine e,usize i){return switch(engine::authority_metadata_progress(e,i)){
+    case .ok(v):{v}case .err(_):{assert(false);metadata_budget::empty()}
+};}
 fn engine::Event tick(ref mut engine::Engine e,usize i,usize q){
-    let engine::Event before=event(engine::observe(e,i));let Heap retained=heap();let usize charge=memory(e).current;
+    let engine::Event before=event(engine::observe(e,i));let metadata_budget::State prior=metadata(e,i);let Heap retained=heap();let usize charge=memory(e).current;
     let usize attempts=unsafe{probe_attempts()};begin_recipes();unsafe{bc_runtime_engine_test_fail(0)};
     let Result<engine::Event,engine::Error> result=engine::step_instance(e,i,q);unsafe{bc_runtime_engine_test_fail(-1)};
     let engine::Event after=event(result);no_recipes();assert(unsafe{probe_attempts()}==attempts);
     assert(before.kind==4 && after.fuel_known && after.remaining<=before.remaining && (after.kind==4 || after.kind==1 || after.kind==2));
     same_event(after,event(engine::observe(e,i)));
-    if(after.kind==4){same_heap(retained);ledger(e,charge);rejected_take(e,i,11);}return after;
+    if(after.kind==4){let metadata_budget::State progress=metadata(e,i);
+        assert(progress.total>=prior.total && progress.total-prior.total==progress.last && progress.last<=4096);
+        assert(progress.stages>=prior.stages && progress.last==4096*(progress.stages-prior.stages));
+        same_heap(retained);ledger(e,charge);rejected_take(e,i,11);}return after;
 }
 fn engine::Event finish(ref mut engine::Engine e,usize i,usize schedule){
     var engine::Event state=event(engine::observe(e,i));var usize ticks=0;
-    while(state.kind==4){assert(ticks<1000);state=tick(e,i,quantum(schedule,ticks));ticks+=1;}
-    assert(ticks>0);return state;
+    var usize stages=0;
+    while(state.kind==4){assert(ticks<1000);state=tick(e,i,quantum(schedule,ticks));ticks+=1;
+        if(state.kind==4){let metadata_budget::State progress=metadata(e,i);stages=progress.stages;}}
+    assert(ticks>0 && stages>1);return state;
 }
 // Assert the source really produced borrowed RETURN recipes and CALL66. A
 // shared/static result or a proxy scalar CALL must not satisfy these fixtures.

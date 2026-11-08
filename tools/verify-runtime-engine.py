@@ -171,7 +171,7 @@ def main():
                        ('23', 1, 'programVectorType'), ('23', 5, 'snapshotType'),
                        ('24', 2, 'outputVectorType'), ('25', 0, 'programType'),
                        ('28',0,'machineType'),('28',1,'coreType'),
-                       ('29',0,'machineType'),('29',1,'coreType')]
+                       ('29',0,'machineType'),('29',1,'coreType'),('26',10,'callMetadataType')]
         projections.append(('30',0,'outputType'))
         projections.extend([('31',0,'pendingVectorType'),('31',1,'completionType'),('31',2,'publishedVectorType'),
                             ('31',3,'outputProgramType'),('31',4,'snapshotType'),('33',0,'pendingVectorType')])
@@ -190,7 +190,8 @@ def main():
                         'boundInputType', 'outputType', 'sourceIndexType', 'sourceIndexVectorType',
                         'programVectorType', 'snapshotType', 'snapshotVectorType', 'machineType', 'coreType',
                         'executionType','pendingVectorType','completionType','publishedVectorType',
-                        'pendingMetaType','cursorType','outputCopyType','transactionType','preparationType','arrayFillType','callCopyType','returnWorkType','capturePlanType']}
+                        'pendingMetaType','cursorType','outputCopyType','transactionType','preparationType','arrayFillType','callCopyType','returnWorkType','capturePlanType',
+                        'callMetadataType','metadataBudgetType']}
         for variant, types in contract['programVariants'].items():
             layout_types.update({variant + '_' + role: name for role, name in types.items()})
         layout_types.update({key + '_entry': name for key, name in contract['entryTypes'].items()})
@@ -202,10 +203,13 @@ def main():
                                 ('preparationType',8,'capturePlanType'),
                                 ('executionType',0,'completionType'),('executionType',1,'publishedVectorType'),
                                 ('machineType',6,'transactionType'),('machineType',7,'pendingMetaType'),
-                                ('pendingMetaType',0,'cursorType'),('cursorType',2,'outputCopyType'),('cursorType',3,'arrayFillType'),('cursorType',4,'callCopyType'),('cursorType',5,'returnWorkType')]:
+                                ('pendingMetaType',0,'cursorType'),('cursorType',2,'outputCopyType'),('cursorType',3,'arrayFillType'),('cursorType',4,'callCopyType'),('cursorType',5,'returnWorkType'),
+                                ('cursorType',6,'metadataBudgetType'),('coreType',7,'callMetadataType')]:
             member=re.search(r'\b(fy_(?:struct|resource)_\d+) f_'+str(field)+r';',contract['reviewedLayouts'][owner])
             need(member is not None and member.group(1)==contract[key],f'Output field projection differs: {owner}/{field}')
         advance_args=contract['reviewedDeclarations']['26'].split('(',1)[1].split(',')
+        need(re.fullmatch(r'\s*'+re.escape(contract['callMetadataType'])+r'\s*\*\s*fy_l_\d+\s*',advance_args[10]) is not None,
+             'Pending CALL metadata argument must be a mutable pointer')
         machine_meta=re.search(r'\b(fy_struct_\d+) f_7;',contract['reviewedLayouts']['machineType'])
         need(machine_meta is not None and machine_meta.group(1) in advance_args[2],
              'Pending Machine control metadata differs')
@@ -241,6 +245,7 @@ def main():
         bindings+=f'typedef {contract["arrayFillType"]} bc_array_fill_work;\ntypedef {contract["cursorType"]} bc_dispatch_cursor;\n'
         bindings += f'typedef {contract["callCopyType"]} bc_call_copy_work;\n'
         bindings += f'typedef {contract["returnWorkType"]} bc_return_work;\n'
+        bindings += f'typedef {contract["callMetadataType"]} bc_call_metadata_work;\ntypedef {contract["metadataBudgetType"]} bc_metadata_budget;\n'
         bindings += f'typedef {contract["capturePlanType"]} bc_call_capture_plan;\n'
         for key, alias in [('programType', 'bc_engine_program'), ('instanceType', 'bc_engine_instance'),
                            ('boundInputType', 'bc_engine_bound_input'), ('outputType', 'bc_engine_output')]:
@@ -340,7 +345,7 @@ def main():
                            'Private synchronous typed transport, not public C handles or CLI lifecycle APIs',
                            'Complete Engine accounting/preallocation, OOM injection and poison containment remain',
                            'Ordinary zero-argument terminal Fuel is still marked unknown',
-                           'Private shared payload quanta exist; CALL/RET metadata and setup/proof/seal/cleanup remain atomic',
+                           'Owning CALL authority stages share payload allowance; CALL preparation, RET and setup/proof/seal/cleanup remain atomic',
                            'Compile proof remains atomic; no in-flight cancellation, host dispatch or OS deadline'])
     except Exception as error:
         receipt.update(status='failed', error=str(error))

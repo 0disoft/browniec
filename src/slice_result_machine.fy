@@ -4,6 +4,7 @@ import static_ir as static_ir;
 import slice_result_cursor as slice_result_cursor;
 import slice_result_frames as slice_result_frames;
 import slice_result_runtime as slice_result_runtime;
+import call_metadata_state as call_metadata;
 import input_reference_views as input_reference_views;
 import runtime_output as runtime_output;
 import output_execution as output_steps;
@@ -37,6 +38,7 @@ pub struct Core {
     usize[32] static_live;
     u32[512] static_words;
     i64[4096] registers;
+    call_metadata::State call_metadata;
 }
 pub resource Machine {
     bytes::Buffer core;
@@ -148,6 +150,7 @@ pub fn usize core_heap_bytes(ref Machine machine,usize stride){
 pub fn void initialize_native(ref Machine owner,ref mut Core core,ref slice_result_runtime::State state,ref static_ir::Sites sites,ref u8[] origins){
     unsafe{binding_raw(29)};
     core.runtime=*state;slice_result_frames::initialize(ref mut core.bindings,state);core.sites=*sites;
+    core.call_metadata=call_metadata::empty();
     var usize i=0;while(i<16){core.origins[i]=origins[i];i+=1;}
     unsafe{binding_raw(28)};discard storage_identity(owner,core);
 }
@@ -162,7 +165,7 @@ fn void retain_core_types(){
     let slice_result_runtime::State state=slice_result_runtime::empty(0);let static_ir::Sites sites=static_ir::empty();
     let u8[16] origins=[0;16];
     var Core core=Core{.bindings=slice_result_frames::empty(ref state),.runtime=state,.sites=sites,
-        .origins=[0;16],.static_live=[0;32],.static_words=[0;512],.registers=[0;4096]};
+        .origins=[0;16],.static_live=[0;32],.static_words=[0;512],.registers=[0;4096],.call_metadata=call_metadata::empty()};
     let Machine owner=Machine{.core=bytes::empty(),.payload=bytes::empty(),.list_cells=vec::empty<i64>(),
         .list_scratch=bytes::empty(),.place_state=vec::empty<usize>(),.windows=input_reference_views::disabled(),
         .staged=runtime_output::disabled(),.meta=Meta{.cursor=slice_result_cursor::empty(),.stats=slice_result_cursor::stats(),

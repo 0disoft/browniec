@@ -163,7 +163,7 @@ fn Result<usize,u8> cancel_deferred_return_refund_moves_and_pins(){var engine::E
 // 4. A return and the next COPY/SNAPSHOT share ONE batch. These cases leave
 // less room than the next full copy and exercise admission plus partial copy.
 fn Result<usize,u8> compile_following_copy(ref mut engine::Engine e,bool record){
-    if(record){return compiled(e,b"module app;struct R{i64 a;i64 b;i64 c;i64 d;i64 e;i64 f;i64 g;i64 h;}fn bool[3880] make(ref u8[] data){let bool[3880] a=[true;3880];return a;}pub fn i32 chosen(ref u8[] data){let R prior=R{.a=42,.b=42,.c=42,.d=42,.e=42,.f=42,.g=42,.h=42};let bool[3880] a=make(ref data);let R copy=prior;if(!a[3879] || copy.h!=42){return 0;}return 42;}");}
+    if(record){return compiled(e,b"module app;struct R{i64 a;i64 b;i64 c;i64 d;i64 e;i64 f;i64 g;i64 h;}fn bool[3920] make(ref u8[] data){let bool[3920] a=[true;3920];return a;}pub fn i32 chosen(ref u8[] data){let R prior=R{.a=42,.b=42,.c=42,.d=42,.e=42,.f=42,.g=42,.h=42};let bool[3920] a=make(ref data);let R copy=prior;if(!a[3919] || copy.h!=42){return 0;}return 42;}");}
     return compiled(e,b"module app;fn bool[4000] make(ref u8[] data){let bool[4000] a=[true;4000];return a;}pub fn i32 chosen(ref u8[] data){let i64[64] prior=[42;64];let bool[4000] a=make(ref data);let i64[64] copy=prior;if(!a[3999] || copy[63]!=42){return 0;}return 42;}");}
 fn Result<usize,u8> return_then_array_and_record_copy_share_allowance(){var usize mode=0;
     while(mode<2){var engine::Engine e=created()?;let usize p=compile_following_copy(ref mut e,mode==1)?;

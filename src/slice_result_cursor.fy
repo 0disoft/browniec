@@ -4,14 +4,15 @@ import output_copy_cursor as output_copy;
 import array_fill_cursor as fills;
 import call_copy_cursor as calls;
 import return_work_cursor as returns;
+import metadata_budget as metadata_budget;
 
 // Trusted private synchronous state, not a guest capability or a work budget.
 // The dispatcher owns these inline/native-stack values; no heap is allocated.
 // Register/static banks stay separately borrowed: the pinned compiler treats
 // simultaneous loans of sibling array fields as loans of the whole struct.
-pub struct Cursor { usize pc; bool active; output_copy::State output; fills::State array; calls::State call; returns::State returned; }
+pub struct Cursor { usize pc; bool active; output_copy::State output; fills::State array; calls::State call; returns::State returned; metadata_budget::State metadata; u8 call_metadata_phase; }
 pub fn Cursor empty(){
-    return Cursor{.pc=0,.active=false,.output=output_copy::empty(),.array=fills::empty(),.call=calls::empty(),.returned=returns::empty()};
+    return Cursor{.pc=0,.active=false,.output=output_copy::empty(),.array=fills::empty(),.call=calls::empty(),.returned=returns::empty(),.metadata=metadata_budget::empty(),.call_metadata_phase=0};
 }
 pub struct Stats { usize calls; usize yields; usize dispatched; usize last; usize maximum; }
 pub fn Stats stats(){return Stats{.calls=0,.yields=0,.dispatched=0,.last=0,.maximum=0};}

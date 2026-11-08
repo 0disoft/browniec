@@ -189,22 +189,39 @@ fn usize suspend(ref ir::Program p,usize map,usize parent,runtime::Contract cont
 }
 // ARET moves the sole result token after loan restoration; it never copies the
 // array payload. Ordinary source cleanup has already ended other local owners.
-pub fn Result<runtime::Resumed,errors::Error> leave(ref ir::Program p,usize pc,u8 op,
-    ref mut frames::Frames bindings,ref mut runtime::State state,ref u8[] data,usize fuel){
+pub struct LeavePlan { owners::Token result; usize frame; usize destination; usize fuel; u8 op; }
+// Pure preparation is shared by raw leave and the owning pending RET adapter.
+// Payload/layout validation is intentionally performed once before restoration;
+// its legacy helpers are not a general bounded metadata/preparation contract.
+pub fn Result<LeavePlan,errors::Error> prepare_leave(ref ir::Program p,usize pc,u8 op,
+    ref frames::Frames bindings,ref owners::Table table,ref u8[] data,usize fuel){
     let usize frame=bindings.frame;let usize f=bindings.functions[frame];let usize offset=p.offsets[pc];
     if(result_bindings::in_frame(ref bindings.loans,frame) || (frame==1 && op!=8)){return .err(errors::make(5,offset));}
     let usize source=p.code[pc*8+2] as usize;let usize destination=bindings.destinations[frame];
     let usize extra=if(op==39){results::cost(p,source,offset)?}else if(op==50){record_results::cost()}else{0};
     if(fuel<runtime::leave_cost()+extra){return .err(errors::make(8,offset));}
-    let ref owners::Table original_owners=ref state.runtime.owners;
-    let owners::Token result=prepare_result(p,f,source,destination,frame,op,bindings,original_owners,data,offset)?;
-    var runtime::Call call=frames::current(bindings);
-    let runtime::Resumed resumed=runtime::leave_call(state,ref mut call,data.len,fuel-extra)?;
+    let owners::Token result=prepare_result(p,f,source,destination,frame,op,bindings,table,data,offset)?;
+    return .ok(LeavePlan{.result=result,.frame=frame,.destination=destination,.fuel=fuel-extra,.op=op});
+}
+// No runtime leave, payload scan, or Fuel charge. The owning adapter preflights
+// the frozen frame before treating these existing Result helpers as publication.
+pub fn Result<usize,errors::Error> finish_leave(ref ir::Program p,ref mut frames::Frames bindings,
+    ref LeavePlan plan,runtime::Resumed resumed){
+    let usize frame=plan.frame;let usize destination=plan.destination;var usize next=0;
     if(frame==1){
         bindings.active[frame]=false;bindings.functions[frame]=16;bindings.frame=0;
-    }else{let usize next=frames::pop_call(p,bindings,resumed)?;}
-    if(op==39){bindings.tokens[(frame-1)*16+destination-128]=result;}
-    if(op==50){record_bindings::bind(ref mut bindings.records,(frame-1)*16+destination-144,result);}
+    }else{next=frames::pop_call(p,bindings,resumed)?;}
+    if(plan.op==39){bindings.tokens[(frame-1)*16+destination-128]=plan.result;}
+    if(plan.op==50){record_bindings::bind(ref mut bindings.records,(frame-1)*16+destination-144,plan.result);}
+    return .ok(next);
+}
+// Preserve raw synchronous preflight, errors, charges and publication ordering.
+pub fn Result<runtime::Resumed,errors::Error> leave(ref ir::Program p,usize pc,u8 op,
+    ref mut frames::Frames bindings,ref mut runtime::State state,ref u8[] data,usize fuel){
+    let LeavePlan plan=prepare_leave(p,pc,op,bindings,ref state.runtime.owners,data,fuel)?;
+    var runtime::Call call=frames::current(bindings);
+    let runtime::Resumed resumed=runtime::leave_call(state,ref mut call,data.len,plan.fuel)?;
+    let usize next=finish_leave(p,bindings,ref plan,resumed)?;
     return .ok(resumed);
 }
 
