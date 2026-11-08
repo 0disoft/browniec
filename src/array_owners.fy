@@ -1210,3 +1210,17 @@ pub fn Result<CallCopyPlan,Error> validate_call_copy(ref Table table,ref records
     }
     return .ok(plan);
 }
+
+// Owning invocation-only primitives. The parent authenticates/fixes table and
+// catalog inputs; raw planning above continues to independently re-prove them.
+pub fn Result<usize,Error> inspect_call_copy_table(ref Table table,usize capacity){
+    if(!valid(table,capacity)){return .err(.State);}return .ok(table.depth);
+}
+pub fn Result<Owner,Error> inspect_call_copy_source(ref Table table,CallArgument argument){
+    let Owner owner=lookup(table,argument.source)?;
+    if(owner.writing){return .err(.State);}if(owner.element!=argument.element){return .err(.Type);}
+    if(argument.element==0){if(argument.length!=0){return .err(.Metadata);}if(owner.record!=argument.record){return .err(.Type);}}
+    else{if(argument.record!=0){return .err(.Metadata);}if(owner.length!=argument.length){return .err(.Length);}}
+    return .ok(owner);
+}
+pub fn Result<Token,Error> reserve_call_copy_target(ref mut Table planned,ref Owner owner){return call_copy_target(planned,owner);}
