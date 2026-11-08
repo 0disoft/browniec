@@ -26,9 +26,10 @@ import struct_call_vm as owned_calls;
 import fuel as meter;
 import slice_result_cursor as cursors;
 import static_ir as statics;
+import call_capture_plan as call_captures;
 import runtime_execution_memory as execution_heap;
 
-pub struct Preparation { statics::Sites sites; u8[16] origins; lists::Requirement list; places::Requirement place; usize work; usize capacity; usize scratch; u8[16] parameters; }
+pub struct Preparation { statics::Sites sites; u8[16] origins; lists::Requirement list; places::Requirement place; usize work; usize capacity; usize scratch; u8[16] parameters; call_captures::Plan calls; }
 resource Stored { sources::Snapshot sources; candidates::Program code; images::Image image; bool input; Preparation prepared; cleanup { } }
 pub resource Program { vec::Vec<Stored> stored; cleanup { } }
 pub struct Completion { bool success; i64 value; usize remaining; diagnostics::Error diagnostic; usize output_bytes; usize emits; }
@@ -76,8 +77,9 @@ fn Result<Program,diagnostics::Error> finish(ref sources::Snapshot sources,ref i
     let places::Requirement place=switch(places::requirement(ref code.body)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
     let usize work=switch(owned_calls::cost(ref code.body,code.body.entry,0)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
     let execution_heap::Plan heap=switch(execution_heap::prepare(ref code.body,input,true,0)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
+    let call_captures::Plan calls=switch(call_captures::prepare(ref code.body)){case .ok(v):{v}case .err(e):{return .err(absent(e));}};
     let Preparation prepared=Preparation{.sites=proof.ordinary.statics,.origins=proof.ordinary.recipes.site_origins,.list=list,.place=place,
-        .work=work+code.body.arities[code.body.entry],.capacity=if(code.body.arrays.count!=0 || code.body.records.count!=0){65536}else{0},.scratch=heap.scratch,.parameters=proof.parameters};
+        .work=work+code.body.arities[code.body.entry],.capacity=if(code.body.arrays.count!=0 || code.body.records.count!=0){65536}else{0},.scratch=heap.scratch,.parameters=proof.parameters,.calls=calls};
     return retain(sources,code,image,input,ref prepared);
 }
 fn Result<Program,diagnostics::Error> retain(ref sources::Snapshot sources,ref candidates::Program code,images::Image image,bool input,ref Preparation prepared){
@@ -192,5 +194,5 @@ fn Result<execution::Scalar,errors::Error> execute(ref Stored retained,ref u8[] 
     var runtime::State state=runtime::empty(capacity);
     return execution::execute_output_admitted(ref retained.code,ref retained.image,ref prepared.sites,
         ref prepared.origins,ref prepared.parameters,ref list_plan,ref place_plan,work,input,retained.input,
-        ref mut state,bytes::view_mut(ref mut payload),remaining,staged,quantum,stats);
+        ref mut state,bytes::view_mut(ref mut payload),remaining,staged,quantum,stats,ref prepared.calls);
 }

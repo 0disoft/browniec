@@ -46,6 +46,16 @@ def closure():
 
 
 def source_copy(path):
+    if path == ROOT / 'src/slice_result_call_ir.fy':
+        source = path.read_text(encoding='utf-8')
+        signatures = ['pub fn Result<usize,errors::Error> binding(ref ir::Program p,usize pc){',
+                      'pub fn usize creator(ref ir::Program p,usize site){',
+                      'pub fn Result<Chain,errors::Error> chain(ref ir::Program p,usize pc,usize argument){']
+        for signature in signatures:
+            need(source.count(signature) == 1, 'CALL recipe visit anchor changed')
+            source = source.replace(signature, signature + '\n    unsafe{bc_runtime_engine_test_recipe_visit();}', 1)
+        source = source.replace(signatures[0], 'unsafe extern C fn void bc_runtime_engine_test_recipe_visit();\n' + signatures[0], 1)
+        return path.name, source.encode('utf-8')
     if path == ROOT / 'src/verifier.fy':
         text = path.read_text(encoding='utf-8')
         signature = 'pub fn Result<ReferenceReturnProof,errors::Error> inspect_output_returns(ref image_calls::Program unit,ref images::Image image,bool input){'
@@ -180,7 +190,7 @@ def main():
                         'boundInputType', 'outputType', 'sourceIndexType', 'sourceIndexVectorType',
                         'programVectorType', 'snapshotType', 'snapshotVectorType', 'machineType', 'coreType',
                         'executionType','pendingVectorType','completionType','publishedVectorType',
-                        'pendingMetaType','cursorType','outputCopyType','transactionType','preparationType','arrayFillType','callCopyType','returnWorkType']}
+                        'pendingMetaType','cursorType','outputCopyType','transactionType','preparationType','arrayFillType','callCopyType','returnWorkType','capturePlanType']}
         for variant, types in contract['programVariants'].items():
             layout_types.update({variant + '_' + role: name for role, name in types.items()})
         layout_types.update({key + '_entry': name for key, name in contract['entryTypes'].items()})
@@ -189,6 +199,7 @@ def main():
         need(cached_field is not None and cached_field.group(1)==contract['preparationType'],
              'Output Program preparation projection differs')
         for owner,field,key in [('outputType',1,'executionType'),('outputType',2,'pendingVectorType'),
+                                ('preparationType',8,'capturePlanType'),
                                 ('executionType',0,'completionType'),('executionType',1,'publishedVectorType'),
                                 ('machineType',6,'transactionType'),('machineType',7,'pendingMetaType'),
                                 ('pendingMetaType',0,'cursorType'),('cursorType',2,'outputCopyType'),('cursorType',3,'arrayFillType'),('cursorType',4,'callCopyType'),('cursorType',5,'returnWorkType')]:
@@ -230,6 +241,7 @@ def main():
         bindings+=f'typedef {contract["arrayFillType"]} bc_array_fill_work;\ntypedef {contract["cursorType"]} bc_dispatch_cursor;\n'
         bindings += f'typedef {contract["callCopyType"]} bc_call_copy_work;\n'
         bindings += f'typedef {contract["returnWorkType"]} bc_return_work;\n'
+        bindings += f'typedef {contract["capturePlanType"]} bc_call_capture_plan;\n'
         for key, alias in [('programType', 'bc_engine_program'), ('instanceType', 'bc_engine_instance'),
                            ('boundInputType', 'bc_engine_bound_input'), ('outputType', 'bc_engine_output')]:
             bindings += f'typedef {contract[key]} {alias};\n'
@@ -301,6 +313,9 @@ def main():
             preparation=json.loads(preparation_raw)
             need(preparation['cacheBytes']>0 and preparation['storedBytes']-preparation['previousStoredBytes']==preparation['cacheBytes'] and
                  preparation['retainedVecExtraBytes']==8*preparation['cacheBytes'], 'Unexpected preparation cache layout')
+            need(preparation['capturePlanBytes']>0 and preparation['cacheBytes']>=preparation['previousCacheBytes']+preparation['capturePlanBytes'] and
+                 preparation['capturePlanVecExtraBytes']==8*(preparation['cacheBytes']-preparation['previousCacheBytes']),
+                 'Unexpected immutable CALL capture cache storage')
             write(folder / 'preparation-metrics.json',preparation_raw)
             fill_raw=(output / 'array-fill-metrics.json').read_bytes()
             fill_metrics=json.loads(fill_raw)

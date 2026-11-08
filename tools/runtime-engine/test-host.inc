@@ -3,6 +3,10 @@
 #include <stdio.h>
 extern size_t probe_live(void);
 void bc_runtime_engine_binding(uint32_t number){(void)number;}
+static uintptr_t call_recipe_visits=0;
+void bc_runtime_engine_test_recipe_visit(void){++call_recipe_visits;}
+void bc_runtime_engine_test_recipe_begin(void){call_recipe_visits=0;}
+uintptr_t bc_runtime_engine_test_recipe_count(void){return call_recipe_visits;}
 void bc_runtime_engine_test_call_error(uint32_t status,uint8_t kind,uintptr_t offset){fprintf(stderr,"CALL fixture error: status=%u kind=%u offset=%zu\n",status,kind,(size_t)offset);}
 typedef struct held_guard {HANDLE ready;HANDLE release;} held_guard;
 static DWORD WINAPI holding_thread(void *raw){
@@ -108,8 +112,9 @@ void bc_runtime_engine_test_input_measure(void){input_handles_measured=1;}
 int main(void){
  int code=generated_main();if(code!=0||probe_live()!=0)return 99;
  FILE *metrics=fopen("preparation-metrics.json","wb");assert(metrics);
- assert(fprintf(metrics,"{\"cacheBytes\":%zu,\"storedBytes\":%zu,\"previousStoredBytes\":%zu,\"retainedVecExtraBytes\":%zu}\n",
-  sizeof(bc_output_preparation),sizeof(bc_output_stored),offsetof(bc_output_stored,f_4),8*sizeof(bc_output_preparation))>0);
+ assert(fprintf(metrics,"{\"cacheBytes\":%zu,\"storedBytes\":%zu,\"previousStoredBytes\":%zu,\"retainedVecExtraBytes\":%zu,\"capturePlanBytes\":%zu,\"previousCacheBytes\":%zu,\"capturePlanVecExtraBytes\":%zu}\n",
+  sizeof(bc_output_preparation),sizeof(bc_output_stored),offsetof(bc_output_stored,f_4),8*sizeof(bc_output_preparation),
+  sizeof(bc_call_capture_plan),offsetof(bc_output_preparation,f_8),8*(sizeof(bc_output_preparation)-offsetof(bc_output_preparation,f_8)))>0);
  assert(fclose(metrics)==0);
  FILE *fills=fopen("array-fill-metrics.json","wb");assert(fills);
  assert(fprintf(fills,"{\"arrayWorkBytes\":%zu,\"cursorBytes\":%zu,\"machineBytes\":%zu,\"coreBytes\":%zu,\"pendingVecExtraBytes\":%zu,\"callWorkBytes\":%zu,\"callPendingVecExtraBytes\":%zu,\"returnWorkBytes\":%zu,\"returnPendingVecExtraBytes\":%zu,\"combinedPendingVecExtraBytes\":%zu}\n",

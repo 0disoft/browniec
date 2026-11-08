@@ -7,6 +7,7 @@ import errors as errors;
 import slice_result_record_bindings as records;
 import slice_result_bindings as loans;
 import slice_result_call_ir as calls;
+import call_capture_plan as capture_plans;
 
 // Invocation-private bindings. Result identities never enter scalar registers.
 // Calls and prepared tickets are linear receipts; this object must not escape.
@@ -94,6 +95,9 @@ pub fn Result<usize,errors::Error> selected(ref Frames bindings,usize identity){
 // Called only after successful native handoff. Restore named actual bindings
 // from the fresh resumed tickets and consume the callee's private frame.
 pub fn Result<usize,errors::Error> pop(ref ir::Program p,ref mut Frames bindings,runtime::Returned returned){
+    let capture_plans::Plan plans=capture_plans::empty();return pop_cached(p,bindings,returned,ref plans);
+}
+pub fn Result<usize,errors::Error> pop_cached(ref ir::Program p,ref mut Frames bindings,runtime::Returned returned,ref capture_plans::Plan plans){
     let usize child=bindings.frame;
     if(child==0 || child>=32 || !bindings.prepared[child] || !returned.held.active || returned.held.frame!=child-1){return .err(errors::make(5,0));}
     let usize parent=child-1;let usize next=bindings.continuations[child];
@@ -102,7 +106,14 @@ pub fn Result<usize,errors::Error> pop(ref ir::Program p,ref mut Frames bindings
         if(map>=p.call_count || (destination>=128 && (destination<160 || destination>=176)) || bindings.prepared[parent]){return .err(errors::make(5,0));}
         let usize call=if(next>0 && next<=p.count && p.code[(next-1)*8]==66){next-1}else{256};
         let usize mask=if(call!=256){p.code[call*8+4] as usize}else{0};let usize one=1;
-        if(call!=256){
+        var capture_plans::Entry recipe=capture_plans::Entry{.ends=[0;8],.parents=[16;8],.required=0,.absent=0};
+        if(call!=256 && plans.ready){
+            recipe=capture_plans::lookup(plans,p,call)?;
+            let usize consumed=recipe.required|recipe.absent;var usize site=0;
+            while(site<16){if((consumed&(one<<site))!=0){
+                loans::consumed(ref mut bindings.loans,parent*16+site);bindings.sites[parent*16+site]=none();
+            }site+=1;}
+        }else if(call!=256){
             let usize end=calls::binding(p,call)?;var usize at=call+1;
             while(at<end){if(p.code[at*8]==68){
                 let usize site=p.code[at*8+1] as usize;
@@ -115,8 +126,8 @@ pub fn Result<usize,errors::Error> pop(ref ir::Program p,ref mut Frames bindings
             if(argument>=160 && argument<176){
                 var usize site=argument-160;
                 if((mask&(one<<i))!=0){
-                    let calls::Chain ended=calls::chain(p,call,i)?;
-                    site=ended.parent;
+                    if(plans.ready){site=recipe.parents[i] as usize;}
+                    else{let calls::Chain ended=calls::chain(p,call,i)?;site=ended.parent;}
                 }
                 bindings.sites[parent*16+site]=returned.resumed[i];
             }i+=1;

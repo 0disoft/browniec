@@ -49,6 +49,7 @@ import array_copy_execution as array_copies;
 import array_list_execution as array_lists;
 import struct_work_execution as record_steps;
 import call_work_execution as call_steps;
+import call_capture_plan as capture_plans;
 import return_work_execution as return_steps;
 import return_work_cursor as return_work;
 import call_copy_cursor as call_copy;
@@ -229,7 +230,7 @@ pub fn Result<Scalar,errors::Error> execute_output_scalar_quantized(ref image_ca
 pub fn Result<Scalar,errors::Error> execute_output_admitted(ref image_calls::Program unit,ref images::Image image,
     ref statics::Sites sites,ref u8[] origins,ref u8[] parameters,ref list_values::Requirement list_plan,ref places::Requirement place_plan,usize work,
     ref u8[] guest,bool input,ref mut runtime::State state,ref mut u8[] data,ref mut usize remaining,
-    ref mut output::Transaction staged,usize quantum,ref mut cursors::Stats stats){
+    ref mut output::Transaction staged,usize quantum,ref mut cursors::Stats stats,ref capture_plans::Plan plans){
     if(!cursors::valid_quantum(quantum) || parameters.len!=16){return .err(errors::make(5,0));}
     if(guest.len>1048576 || (!input && guest.len!=0)){return .err(errors::make(4,0));}
     let usize arity=if(input){1}else{0};
@@ -239,7 +240,7 @@ pub fn Result<Scalar,errors::Error> execute_output_admitted(ref image_calls::Pro
     let usize depth=switch(authority::inspect(ref state.runtime.authority)){case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,0));}};
     if(!available(ref state.runtime.authority,true)){return .err(errors::make(5,0));}
     return switch(invoke_output_planned(ref unit.body,parameters,unit.body.entry,ref captures[..arity],ref values[..arity],ref inputs[..0],
-        state,data,remaining,sites,images::payload(image),input,guest,origins,list_plan,place_plan,work,staged,quantum,stats)){
+        state,data,remaining,sites,images::payload(image),input,guest,origins,list_plan,place_plan,work,staged,quantum,stats,plans)){
         case .ok(v):{if(v.view){.err(errors::make(5,0))}else{.ok(v.scalar)}}case .err(e):{.err(e)}
     };
 }
@@ -293,8 +294,9 @@ fn Result<Outcome,errors::Error> invoke_output_quantized(ref body_ir::Program bo
     let list_values::Requirement list_plan=list_values::requirement(body)?;
     let places::Requirement place_plan=places::requirement(body)?;
     let usize work=owned_calls::cost(body,function,0)?+body.arities[function];
+    let capture_plans::Plan plans=capture_plans::empty();
     return invoke_output_planned(body,parameters,function,captures,values,inputs,state,data,remaining,
-        sites,literals,input,guest,origins,ref list_plan,ref place_plan,work,staged,quantum,stats);
+        sites,literals,input,guest,origins,ref list_plan,ref place_plan,work,staged,quantum,stats,ref plans);
 }
 // Both entry paths finish admission before setup. Preserve Fuel preflight,
 // allocation/debit order and abort semantics while consuming exact cached plans.
@@ -303,7 +305,7 @@ fn Result<Outcome,errors::Error> invoke_output_planned(ref body_ir::Program body
     ref mut runtime::State state,ref mut u8[] data,ref mut usize remaining,
     ref statics::Sites sites,ref u8[] literals,bool input,ref u8[] guest,ref u8[] origins,
     ref list_values::Requirement list_plan,ref places::Requirement place_plan,usize work,
-    ref mut output::Transaction staged,usize quantum,ref mut cursors::Stats stats){
+    ref mut output::Transaction staged,usize quantum,ref mut cursors::Stats stats,ref capture_plans::Plan plans){
     let usize input_cost=if(input){meter::input_prepare()}else{0};
     if(*remaining<runtime::cost()+work+list_plan.cost+place_plan.cost+input_cost){return .err(errors::make(8,0));}
     var input_views::State windows=if(input){input_views::open(guest.len)?}else{input_views::disabled()};
@@ -315,7 +317,7 @@ fn Result<Outcome,errors::Error> invoke_output_planned(ref body_ir::Program body
     *remaining-=place_plan.cost;
     let runtime::Entered first=entry::enter_prepared(body,function,binding(body,parameters,function),captures,inputs,state,data,*remaining,work)?;
     *remaining=first.call.remaining;
-    let Result<Outcome,errors::Error> outcome=start(body,parameters,function,ref first,values,state,data,sites,literals,ref mut list_cells,ref mut list_scratch,ref mut place_state,ref mut windows,guest,origins,remaining,staged,quantum,stats);
+    let Result<Outcome,errors::Error> outcome=start_cached(body,parameters,function,ref first,values,state,data,sites,literals,ref mut list_cells,ref mut list_scratch,ref mut place_state,ref mut windows,guest,origins,remaining,staged,quantum,stats,plans);
     return switch(outcome){
         case .ok(v):{.ok(v)}
         case .err(e):{
@@ -333,21 +335,28 @@ fn Result<Outcome,errors::Error> start(ref body_ir::Program body,ref u8[] parame
     ref i64[] values,ref mut runtime::State state,ref mut u8[] data,ref statics::Sites sites,ref u8[] literals,
     ref mut vec::Vec<i64> list_cells,ref mut bytes::Buffer list_scratch,ref mut vec::Vec<usize> place_state,
     ref mut input_views::State windows,ref u8[] guest,ref u8[] origins,ref mut usize remaining,ref mut output::Transaction staged,usize quantum,ref mut cursors::Stats stats){
+    let capture_plans::Plan plans=capture_plans::empty();
+    return start_cached(body,parameters,function,first,values,state,data,sites,literals,list_cells,list_scratch,place_state,windows,guest,origins,remaining,staged,quantum,stats,ref plans);
+}
+fn Result<Outcome,errors::Error> start_cached(ref body_ir::Program body,ref u8[] parameters,usize function,ref runtime::Entered first,
+    ref i64[] values,ref mut runtime::State state,ref mut u8[] data,ref statics::Sites sites,ref u8[] literals,
+    ref mut vec::Vec<i64> list_cells,ref mut bytes::Buffer list_scratch,ref mut vec::Vec<usize> place_state,
+    ref mut input_views::State windows,ref u8[] guest,ref u8[] origins,ref mut usize remaining,ref mut output::Transaction staged,usize quantum,ref mut cursors::Stats stats,ref capture_plans::Plan plans){
     var frames::Frames bindings=frames::empty(state);
-    return run(body,parameters,function,first,values,ref mut bindings,state,data,sites,literals,list_cells,list_scratch,place_state,windows,guest,origins,remaining,staged,quantum,stats);
+    return run(body,parameters,function,first,values,ref mut bindings,state,data,sites,literals,list_cells,list_scratch,place_state,windows,guest,origins,remaining,staged,quantum,stats,plans);
 }
 fn input_spans::Span span_for_input(usize length){return input_spans::Span{.start=0,.length=length};}
 fn Result<Outcome,errors::Error> run(ref body_ir::Program body,ref u8[] parameters,usize function,ref runtime::Entered first,
     ref i64[] values,ref mut frames::Frames bindings,ref mut runtime::State state,ref mut u8[] data,ref statics::Sites sites,ref u8[] literals,
     ref mut vec::Vec<i64> list_cells,ref mut bytes::Buffer list_scratch,ref mut vec::Vec<usize> place_state,
-    ref mut input_views::State windows,ref u8[] guest,ref u8[] origins,ref mut usize remaining,ref mut output::Transaction staged,usize quantum,ref mut cursors::Stats stats){
+    ref mut input_views::State windows,ref u8[] guest,ref u8[] origins,ref mut usize remaining,ref mut output::Transaction staged,usize quantum,ref mut cursors::Stats stats,ref capture_plans::Plan plans){
     var cursors::Cursor cursor=cursors::empty();
     var usize[32] static_live=[0;32];var u32[512] static_words=[0;512];
     var i64[4096] registers=[0;4096];
     let usize begun=begin_saved(body,function,first,values,bindings,sites,windows,guest.len,
         ref mut cursor,ref mut static_words,ref mut registers)?;
     while(cursor.active){
-        let Option<Outcome> progress=drive(body,parameters,bindings,state,data,sites,literals,list_cells,list_scratch,place_state,windows,guest,origins,remaining,staged,ref mut cursor,ref mut static_live,ref mut static_words,ref mut registers,quantum,stats)?;
+        let Option<Outcome> progress=drive(body,parameters,bindings,state,data,sites,literals,list_cells,list_scratch,place_state,windows,guest,origins,remaining,staged,ref mut cursor,ref mut static_live,ref mut static_words,ref mut registers,quantum,stats,plans)?;
         switch(progress){case .none:{}case .some(value):{return .ok(value);}};
     }
     return .err(errors::make(5,0));
@@ -431,9 +440,17 @@ pub fn Result<Option<Scalar>,errors::Error> step_output_saved_with_parameters(re
     ref mut vec::Vec<i64> list_cells,ref mut bytes::Buffer list_scratch,ref mut vec::Vec<usize> place_state,
     ref mut input_views::State windows,ref u8[] guest,ref u8[] origins,ref mut usize remaining,ref mut output::Transaction staged,
     ref mut cursors::Cursor cursor,ref mut usize[] static_live,ref mut u32[] static_words,ref mut i64[] registers,usize quantum,ref mut cursors::Stats stats){
+    let capture_plans::Plan plans=capture_plans::empty();
+    return step_output_cached(body,parameters,bindings,state,data,sites,literals,list_cells,list_scratch,place_state,windows,guest,origins,remaining,staged,cursor,static_live,static_words,registers,quantum,stats,ref plans);
+}
+pub fn Result<Option<Scalar>,errors::Error> step_output_cached(ref body_ir::Program body,ref u8[] parameters,
+    ref mut frames::Frames bindings,ref mut runtime::State state,ref mut u8[] data,ref statics::Sites sites,ref u8[] literals,
+    ref mut vec::Vec<i64> list_cells,ref mut bytes::Buffer list_scratch,ref mut vec::Vec<usize> place_state,
+    ref mut input_views::State windows,ref u8[] guest,ref u8[] origins,ref mut usize remaining,ref mut output::Transaction staged,
+    ref mut cursors::Cursor cursor,ref mut usize[] static_live,ref mut u32[] static_words,ref mut i64[] registers,usize quantum,ref mut cursors::Stats stats,ref capture_plans::Plan plans){
     if(parameters.len!=16 || static_live.len!=32 || static_words.len!=512 || registers.len!=4096 || origins.len!=16){return .err(errors::make(5,0));}
     return switch(drive(body,parameters,bindings,state,data,sites,literals,list_cells,list_scratch,place_state,windows,guest,origins,
-        remaining,staged,cursor,static_live,static_words,registers,quantum,stats)){
+        remaining,staged,cursor,static_live,static_words,registers,quantum,stats,plans)){
         case .err(e):{.err(e)}case .ok(v):{switch(v){
             case .none:{.ok(.none)}case .some(done):{if(done.view){.err(errors::make(5,0))}else{.ok(.some(done.scalar))}}
         }}
@@ -448,14 +465,14 @@ fn Result<Option<Outcome>,errors::Error> drive(ref body_ir::Program body,ref u8[
     ref mut runtime::State state,ref mut u8[] data,ref statics::Sites sites,ref u8[] literals,
     ref mut vec::Vec<i64> list_cells,ref mut bytes::Buffer list_scratch,ref mut vec::Vec<usize> place_state,
     ref mut input_views::State windows,ref u8[] guest,ref u8[] origins,ref mut usize remaining,ref mut output::Transaction staged,
-    ref mut cursors::Cursor cursor,ref mut usize[] static_live,ref mut u32[] static_words,ref mut i64[] registers,usize quantum,ref mut cursors::Stats stats){
+    ref mut cursors::Cursor cursor,ref mut usize[] static_live,ref mut u32[] static_words,ref mut i64[] registers,usize quantum,ref mut cursors::Stats stats,ref capture_plans::Plan plans){
     if(!cursor.active){return .err(errors::make(5,0));}
     let usize admitted=cursors::begin(stats,quantum)?;
     cursor.output.last=0;
     cursor.array.last=0;cursor.call.last=0;cursor.returned.last=0;
     var usize visited=0;
     let Result<Option<Outcome>,errors::Error> outcome=dispatch(body,parameters,bindings,state,data,sites,literals,list_cells,list_scratch,
-        place_state,windows,guest,origins,remaining,staged,cursor,static_live,static_words,registers,quantum,ref mut visited);
+        place_state,windows,guest,origins,remaining,staged,cursor,static_live,static_words,registers,quantum,ref mut visited,plans);
     return switch(outcome){
         case .err(e):{cursor.active=false;let usize recorded=cursors::finish(stats,visited,false)?;.err(e)}
         case .ok(progress):{
@@ -470,7 +487,7 @@ fn Result<Option<Outcome>,errors::Error> dispatch(ref body_ir::Program body,ref 
     ref mut runtime::State state,ref mut u8[] data,ref statics::Sites sites,ref u8[] literals,
     ref mut vec::Vec<i64> list_cells,ref mut bytes::Buffer list_scratch,ref mut vec::Vec<usize> place_state,
     ref mut input_views::State windows,ref u8[] guest,ref u8[] origins,ref mut usize remaining,ref mut output::Transaction staged,
-    ref mut cursors::Cursor cursor,ref mut usize[] static_live,ref mut u32[] static_words,ref mut i64[] registers,usize quantum,ref mut usize visited){
+    ref mut cursors::Cursor cursor,ref mut usize[] static_live,ref mut u32[] static_words,ref mut i64[] registers,usize quantum,ref mut usize visited,ref capture_plans::Plan plans){
     var usize i=0;
     while(cursor.pc<body.count){
         if(cursor.output.last>4096 || cursor.array.last>4096-cursor.output.last){return .err(errors::make(5,0));}
@@ -487,7 +504,7 @@ fn Result<Option<Outcome>,errors::Error> dispatch(ref body_ir::Program body,ref 
             if(cursor.call.pc!=cursor.pc || cursor.call.frame!=frame || cursor.array.active || cursor.output.active){return .err(errors::make(5,offset));};
             *visited+=1;var call_copy::State calling=cursor.call;
             let bool finished=call_steps::advance(ref mut calling,body,parameters,sites,bindings,state,data,literals.len,
-                windows,static_live,static_words,registers,remaining,bytes_left)?;
+                windows,static_live,static_words,registers,remaining,bytes_left,plans)?;
             cursor.call=calling;if(finished){cursor.pc=body.starts[calling.target];}continue;
         }
         if(cursor.array.active && (cursor.array.op==41 || cursor.array.op==42 || cursor.array.op==46 ||
@@ -661,10 +678,10 @@ fn Result<Option<Outcome>,errors::Error> dispatch(ref body_ir::Program body,ref 
         }
         if(call_steps::operation(body,cursor.pc)){
             var call_copy::State calling=call_steps::begin(body,parameters,sites,cursor.pc,bindings,state,data.len,literals.len,
-                static_words[frame*16..frame*16+16],static_live[frame],windows,place_state,remaining)?;
+                static_words[frame*16..frame*16+16],static_live[frame],windows,place_state,remaining,plans)?;
             calling.total=cursor.call.total;calling.last=cursor.call.last;
             let bool finished=call_steps::advance(ref mut calling,body,parameters,sites,bindings,state,data,literals.len,
-                windows,static_live,static_words,registers,remaining,bytes_left)?;
+                windows,static_live,static_words,registers,remaining,bytes_left,plans)?;
             cursor.call=calling;if(finished){cursor.pc=body.starts[calling.target];}continue;
         }
         if(op==79){
@@ -716,7 +733,7 @@ fn Result<Option<Outcome>,errors::Error> dispatch(ref body_ir::Program body,ref 
                 case .ok(v):{v}case .err(e):{return .err(errors::make(e.kind,offset));}
             };*remaining=result.remaining;
             return_work::record(ref mut cursor.returned,return_bytes,instruction,frame,op);
-            cursor.pc=frames::pop(body,bindings,result)?;let usize cleared=input_views::clear_frame(windows,frame,offset)?;
+            cursor.pc=frames::pop_cached(body,bindings,result,plans)?;let usize cleared=input_views::clear_frame(windows,frame,offset)?;
             if(bindings.frame==0){return .ok(.some(transferred(result)));}continue;
         }
         if(op==8 || op==39 || op==50 || op==82){

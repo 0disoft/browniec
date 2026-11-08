@@ -18,6 +18,7 @@ import verifier as verifier;
 import array_list_vm as lists;
 import place_dispatch as places;
 import struct_call_vm as calls;
+import call_capture_plan as capture_plans;
 import runtime_execution_memory as execution_heap;
 import std::bytes as bytes;
 
@@ -26,6 +27,7 @@ import std::bytes as bytes;
 // planner scans are deliberately outside this counter's claim.
 unsafe extern C fn void bc_runtime_engine_test_proof_begin();
 unsafe extern C fn usize bc_runtime_engine_test_proof_count();
+unsafe extern C fn void bc_runtime_engine_test_call_error(u32 status,u8 kind,usize offset);
 unsafe extern C fn usize probe_live();
 unsafe extern C fn usize probe_live_bytes();
 struct Heap { usize blocks; usize bytes; }
@@ -49,7 +51,7 @@ fn Result<programs::Program,u8> compiled(ref u8[] source,bool input){
     if(input){return switch(programs::compile_input(selected_input(source)?,65536)){
         case .ok(v):{.ok(v)}case .err(_):{.err(7)}
     };}
-    return switch(programs::compile(selected(source)?,65536)){case .ok(v):{.ok(v)}case .err(_):{.err(8)}};
+    return switch(programs::compile(selected(source)?,65536)){case .ok(v):{.ok(v)}case .err(e):{unsafe{bc_runtime_engine_test_call_error(8,e.code.kind,e.code.offset)};.err(8)}};
 }
 fn Result<inputs::Snapshot,u8> captured(ref u8[] data){
     var usize fuel=0;return switch(inputs::snapshot(data,inputs::hard_limit(),0,ref mut fuel)){
@@ -77,6 +79,9 @@ fn void same_preparation(ref programs::Preparation a,ref programs::Preparation b
     assert(a.place.width==b.place.width && a.place.cost==b.place.cost && a.place.aggregate==b.place.aggregate);
     assert(a.place.slices==b.place.slices && a.place.records==b.place.records);
     assert(a.work==b.work && a.capacity==b.capacity && a.scratch==b.scratch);
+    assert(a.calls.ready==b.calls.ready);i=0;
+    while(i<32){assert(a.calls.pcs[i]==b.calls.pcs[i] && a.calls.required[i]==b.calls.required[i] && a.calls.absent[i]==b.calls.absent[i]);i+=1;}
+    i=0;while(i<256){assert(a.calls.ends[i]==b.calls.ends[i] && a.calls.parents[i]==b.calls.parents[i]);i+=1;}
 }
 // Exactly one additional proof, then independent non-verifier requirements.
 fn Result<usize,u8> independent(ref programs::Program p,usize before){
@@ -96,10 +101,13 @@ fn Result<usize,u8> independent(ref programs::Program p,usize before){
     let execution_heap::Plan planned=switch(execution_heap::prepare(ref programs::code(p).body,programs::accepts_input(p),true,0)){
         case .ok(v):{v}case .err(_):{return .err(14);}
     };
+    let capture_plans::Plan captures=switch(capture_plans::prepare(ref programs::code(p).body)){
+        case .ok(v):{v}case .err(_):{return .err(25);}
+    };
     let programs::Preparation expected=programs::Preparation{.sites=proof.statics,.origins=proof.recipes.site_origins,
         .list=list,.place=place,.work=work+programs::code(p).body.arities[programs::code(p).body.entry],
         .capacity=if(programs::code(p).body.arrays.count!=0 || programs::code(p).body.records.count!=0){65536}else{0},
-        .scratch=planned.scratch,.parameters=[0;16]};
+        .scratch=planned.scratch,.parameters=[0;16],.calls=captures};
     same_preparation(programs::preparation(p),ref expected);proofs(before+1);return .ok(0);
 }
 fn void completed(ref programs::Execution run,ref u8[] expected,i64 value,usize emits){

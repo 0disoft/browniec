@@ -1,5 +1,6 @@
 module call_work_execution;
 import call_copy_cursor as cursor;
+import call_capture_plan as capture_plans;
 import call_copy_work as copies;
 import array_owners as owners;
 import array_vm as arrays;
@@ -39,7 +40,7 @@ fn runtime::Contract binding(ref ir::Program p,ref u8[] parameters,usize f){
 // exposes these deductions. Continuations use a local copy of saved fuel_before.
 fn Result<Context,errors::Error> context(ref ir::Program p,ref u8[] parameters,
     ref statics::Sites sites,usize pc,ref frames::Frames bindings,ref runtime::State state,
-    usize capacity,usize payload,ref u32[] words,usize live,ref inputs::State windows,ref mut usize remaining){
+    usize capacity,usize payload,ref u32[] words,usize live,ref inputs::State windows,ref mut usize remaining,ref capture_plans::Plan plans){
     let usize frame=bindings.frame;let usize f=bindings.functions[frame];let usize offset=p.offsets[pc];
     if(frame>=31 || !has_room(ref state.runtime.authority)){return .err(errors::make(12,offset));}
     let usize input_work=if(inputs::enabled(windows)){meter::input_frame()}else{0};
@@ -57,9 +58,13 @@ fn Result<Context,errors::Error> context(ref ir::Program p,ref u8[] parameters,
             c.selected=if(c.tags[origin-1]==10){origin}else{0};}
     }else if(op==78){staged=transfer::arguments(p,sites,payload,pc,f,words,live,*remaining)?;};
     *remaining=if(generic){captured.remaining}else{staged.remaining};
-    let runtime::Capture[1] none=[runtime::capture(frames::none(),false,false)];
-    let owned::Prepared prepared=if(generic){owned::prepare_enter(p,pc,c,bindings,*remaining,ref captured.captures[..c.arity])?}
-        else{owned::prepare_enter(p,pc,c,bindings,*remaining,ref none[..0])?};
+    // Only CALL66 needs the named recipe cache. Keep ordinary CALLs out of
+    // its preparation frame and select the optional captures without copying
+    // a Prepared value into four branch-local native temporaries.
+    let usize supplied=if(generic){c.arity}else{0};
+    let owned::Prepared prepared=if(plans.ready && op==66){
+        owned::prepare_enter_cached(p,pc,c,bindings,*remaining,ref captured.captures[..supplied],plans)?
+    }else{owned::prepare_enter(p,pc,c,bindings,*remaining,ref captured.captures[..supplied])?};
     if(!generic){captured.words=staged.words;}
     return .ok(Context{.contract=c,.prepared=prepared,.captured=captured,.generic=generic});
 }
@@ -75,7 +80,7 @@ fn Result<runtime::Call,errors::Error> prepare(ref Context c,ref runtime::State 
 
 pub fn Result<cursor::State,errors::Error> begin(ref ir::Program p,ref u8[] parameters,ref statics::Sites sites,usize pc,
     ref frames::Frames bindings,ref runtime::State state,usize capacity,usize payload,ref u32[] words,usize live,
-    ref inputs::State windows,ref mut vec::Vec<usize> place_state,ref mut usize remaining){
+    ref inputs::State windows,ref mut vec::Vec<usize> place_state,ref mut usize remaining,ref capture_plans::Plan plans){
     if(!operation(p,pc) || bindings.frame==0 || bindings.frame>=32){return .err(invalid(0));}
     let usize offset=p.offsets[pc];let usize before=*remaining;
     // Preserve the old frame-place check before staging static/reference actuals.
@@ -85,7 +90,7 @@ pub fn Result<cursor::State,errors::Error> begin(ref ir::Program p,ref u8[] para
     switch(places::empty_frame(place_state,bindings.frame+1,offset)){
         case .ok(_):{}case .err(e):{*remaining-=input_work;return .err(e);}
     };
-    let Context c=context(p,parameters,sites,pc,bindings,state,capacity,payload,words,live,windows,remaining)?;
+    let Context c=context(p,parameters,sites,pc,bindings,state,capacity,payload,words,live,windows,remaining,plans)?;
     // Borrow each field before copying the unpublished plan. The pinned
     // transport otherwise materializes the full parent runtime for each read.
     let ref authority::State current_authority=ref state.runtime.authority;
@@ -107,14 +112,14 @@ pub fn Result<cursor::State,errors::Error> begin(ref ir::Program p,ref u8[] para
 pub fn Result<bool,errors::Error> advance(ref mut cursor::State work,ref ir::Program p,ref u8[] parameters,
     ref statics::Sites sites,ref mut frames::Frames bindings,ref mut runtime::State state,ref mut u8[] data,
     usize payload,ref mut inputs::State windows,ref mut usize[] live,ref mut u32[] words,
-    ref mut i64[] registers,ref mut usize remaining,usize allowance){
+    ref mut i64[] registers,ref mut usize remaining,usize allowance,ref capture_plans::Plan plans){
     if(!work.pending || !operation(p,work.pc) || work.frame!=bindings.frame || work.offset!=p.offsets[work.pc] ||
         work.target!=p.code[work.pc*8+2] as usize || work.frame==0 || work.frame>=31 || live.len!=32 || words.len!=512 || registers.len!=4096){return .err(invalid(work.offset));}
     if(allowance==0 || allowance>4096 || work.last>4096 || allowance>4096-work.last){return .err(invalid(work.offset));}
     if(*remaining!=if(work.charged){work.remaining}else{work.captured}){return .err(invalid(work.offset));}
     let usize parent=work.frame;var usize replay=work.fuel_before;
     let Context c=context(p,parameters,sites,work.pc,bindings,state,data.len,payload,
-        words[parent*16..parent*16+16],live[parent],windows,ref mut replay)?;
+        words[parent*16..parent*16+16],live[parent],windows,ref mut replay,plans)?;
     if(replay!=work.captured || work.count!=c.prepared.count || work.reserve_first==c.prepared.records){return .err(invalid(work.offset));}
     // Borrow each field before copying the unpublished plan. The pinned
     // transport otherwise materializes the full parent runtime for each read.

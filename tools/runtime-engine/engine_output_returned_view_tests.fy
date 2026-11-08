@@ -10,6 +10,7 @@ import errors as errors;
 import runtime_input as inputs;
 import runtime_output as output;
 import output_return_proof as proof;
+import call_capture_plan as capture_plans;
 import static_call_ir as candidates;
 import output_return_ir as return_ir;
 import slice_result_ir as borrowed_ir;
@@ -23,7 +24,12 @@ import array_vm as backing;
 import std::bytes as bytes;
 
 // Actual source, immutable owning Programs and Engine instances. The parent
-// owns runner integration and serial native checks. No capture cache is assumed.
+// owns runner integration and serial native checks. Owning execution must reuse
+// the exact immutable capture plan; the independent raw oracle still scans.
+unsafe extern C fn void bc_runtime_engine_test_recipe_begin();
+unsafe extern C fn usize bc_runtime_engine_test_recipe_count();
+fn void begin_recipes(){unsafe{bc_runtime_engine_test_recipe_begin()};}
+fn void no_recipes(){assert(unsafe{bc_runtime_engine_test_recipe_count()}==0);}
 unsafe extern C fn usize probe_live();
 unsafe extern C fn usize probe_live_bytes();
 unsafe extern C fn usize probe_attempts();
@@ -123,7 +129,7 @@ fn void expected_output(ref engine::Output out,Oracle oracle){
     expected(engine::output_completion(out),oracle);assert(engine::output_available(out) && bytes::equal(engine::output_view(out),b"*)"));
 }
 fn Result<engine::Output,u8> synchronous(ref mut engine::Engine e,usize p,usize fuel){
-    let usize i=bound(e,p,fuel);let engine::Event done=event(engine::execute_once(e,i));
+    let usize i=bound(e,p,fuel);begin_recipes();let engine::Event done=event(engine::execute_once(e,i));no_recipes();
     let engine::Output out=take(e,i)?;same_event(done,completion(ref out));destroy(e,i);return .ok(out);
 }
 fn usize quantum(usize schedule,usize tick){
@@ -134,9 +140,9 @@ fn usize quantum(usize schedule,usize tick){
 // attempts. Pending retains its charge and physical heap exactly until cleanup.
 fn engine::Event tick(ref mut engine::Engine e,usize i,usize q){
     let engine::Event before=event(engine::observe(e,i));let Heap retained=heap();let usize charge=memory(e).current;
-    let usize attempts=unsafe{probe_attempts()};unsafe{bc_runtime_engine_test_fail(0)};
+    let usize attempts=unsafe{probe_attempts()};begin_recipes();unsafe{bc_runtime_engine_test_fail(0)};
     let Result<engine::Event,engine::Error> result=engine::step_instance(e,i,q);unsafe{bc_runtime_engine_test_fail(-1)};
-    let engine::Event after=event(result);assert(unsafe{probe_attempts()}==attempts);
+    let engine::Event after=event(result);no_recipes();assert(unsafe{probe_attempts()}==attempts);
     assert(before.kind==4 && after.fuel_known && after.remaining<=before.remaining && (after.kind==4 || after.kind==1 || after.kind==2));
     same_event(after,event(engine::observe(e,i)));
     if(after.kind==4){same_heap(retained);ledger(e,charge);rejected_take(e,i,11);}return after;
@@ -154,16 +160,23 @@ fn Result<usize,u8> actual_recipes(ref programs::Program p,usize mode){
         case .ok(v):{v}case .err(_):{return .err(10);}
     };
     var usize f=0;while(f<16){assert(programs::preparation(p).parameters[f]==checked.parameters[f]);f+=1;}
+    assert(programs::preparation(p).calls.ready);
+    var usize required=0;var usize absent=0;
     var usize calls=0;var usize views=0;var usize forwards=0;var usize returns=0;var usize pc=0;
     while(pc<programs::code(p).body.count){let usize at=pc*8;let u8 op=programs::code(p).body.code[at];
         if(op==66){let usize site=programs::code(p).body.code[at+5] as usize;let usize callee=programs::code(p).body.code[at+2] as usize;
             assert(site<16 && (programs::code(p).body.slice_elements[site]&128)!=0);
-            assert(callee<16 && checked.elements[callee]==138 && checked.parameters[callee]==if(mode==3){2}else{1});calls+=1;}
+            assert(callee<16 && checked.elements[callee]==138 && checked.parameters[callee]==if(mode==3){2}else{1});
+            let capture_plans::Entry cached=switch(capture_plans::lookup(ref programs::preparation(p).calls,ref programs::code(p).body,pc)){
+                case .ok(v):{v}case .err(_):{return .err(10);}
+            };
+            required|=cached.required;absent|=cached.absent;calls+=1;}
         if(op==63){views+=1;}if(op==64){let usize callee=programs::code(p).body.code[at+2] as usize;
             assert(callee<16 && checked.elements[callee]==138 && checked.parameters[callee]==1);forwards+=1;}
         if(op==65){returns+=1;}pc+=1;
     }
     assert(calls==if(mode==1){2}else{1});assert(views>0 && returns>0);
+    if(mode==1){assert(required!=0 && absent!=0);}else{assert(required==0 && absent==0);}
     if(mode==2){assert(forwards>0 && returns>=2);}else{assert(forwards==0);}return .ok(0);
 }
 // Independent raw verifier/dispatcher oracle, with the same metered output
@@ -175,11 +188,13 @@ fn Result<Oracle,u8> raw_oracle(ref programs::Program p){
     let usize capacity=65536;assert(programs::preparation(p).capacity==capacity && remaining>1+capacity);
     var bytes::Buffer payload=switch(backing::prepare(capacity)){case .ok(v):{v}case .err(_):{return .err(12);}};
     remaining-=1+capacity;var runtime::State state=runtime::empty(capacity);var cursors::Stats stats=cursors::stats();
+    begin_recipes();
     let execution::Scalar result=switch(execution::execute_output_scalar_quantized(
         programs::code(p),programs::literals(p),b"",false,ref mut state,bytes::view_mut(ref mut payload),
         ref mut remaining,ref mut staged,1,ref mut stats)){
         case .ok(v):{v}case .err(_):{return .err(13);}
     };
+    assert(unsafe{bc_runtime_engine_test_recipe_count()}>0);
     assert(result.value==42 && result.remaining==remaining && stats.yields>0 && stats.maximum==1);
     let output::Published sealed=switch(output::seal_metered(ref mut staged,ref mut remaining)){
         case .ok(v):{v}case .err(_):{return .err(14);}
@@ -195,10 +210,10 @@ pub fn Result<usize,u8> actual_source_borrowed_returns_match_raw_and_synchronous
     var usize mode=0;while(mode<4){let programs::Program original=compiled(mode)?;
         let usize recipes=actual_recipes(ref original,mode)?;let Oracle oracle=raw_oracle(ref original)?;
         let programs::Program p=original;let inputs::Snapshot input=empty_input()?;
-        let programs::Execution baseline=programs::complete(ref p,ref input,budget(),16,true);
+        begin_recipes();let programs::Execution baseline=programs::complete(ref p,ref input,budget(),16,true);no_recipes();
         expected(programs::observe(ref baseline),oracle);assert(programs::has_output(ref baseline) && bytes::equal(programs::view(ref baseline),b"*)"));
         var usize schedule=0;while(schedule<3){var cursors::Stats stats=cursors::stats();
-            let programs::Execution run=programs::complete_quantized(ref p,ref input,budget(),16,true,quantum(schedule,0),ref mut stats);
+            begin_recipes();let programs::Execution run=programs::complete_quantized(ref p,ref input,budget(),16,true,quantum(schedule,0),ref mut stats);no_recipes();
             same_completion(programs::observe(ref run),programs::observe(ref baseline));
             assert(programs::has_output(ref run) && bytes::equal(programs::view(ref run),b"*)"));
             assert(stats.calls>0 && stats.dispatched>0 && stats.maximum<=quantum(schedule,0));
@@ -230,7 +245,7 @@ pub fn Result<usize,u8> exact_and_one_less_fuel_preserve_output_and_diagnostics(
         let inputs::Snapshot input=empty_input()?;let usize price=budget()-oracle.remaining;assert(price>1);
         var engine::Engine e=created()?;let usize p=engine_program(ref mut e,mode)?;var usize variant=0;
         while(variant<2){let usize fuel=price-variant;
-            let programs::Execution own=programs::complete(ref raw,ref input,fuel,16,true);
+            begin_recipes();let programs::Execution own=programs::complete(ref raw,ref input,fuel,16,true);no_recipes();
             let programs::Completion expected=programs::observe(ref own);
             let engine::Output baseline=synchronous(ref mut e,p,fuel)?;same_completion(engine::output_completion(ref baseline),expected);
             assert(bytes::equal(engine::output_view(ref baseline),programs::view(ref own)));
@@ -271,7 +286,7 @@ pub fn Result<usize,u8> pending_moves_released_pins_cancel_and_exact_refunds(){
         switch(engine::create_output_instance(ref mut original,p,budget(),16,true)){case .ok(_):{assert(false);}case .err(v):{assert(v.status==2);}};
         let Heap held=heap();var engine::Engine moved=original;same_heap(held);same_event(saved,event(engine::observe(ref mut moved,a)));
         assert(tick(ref mut moved,b,1).kind==4);same_event(saved,event(engine::observe(ref mut moved,a)));
-        var engine::Engine e=moved;same_heap(held);let usize attempts=unsafe{probe_attempts()};unsafe{bc_runtime_engine_test_fail(0)};
+        var engine::Engine e=moved;same_heap(held);let usize attempts=unsafe{probe_attempts()};begin_recipes();unsafe{bc_runtime_engine_test_fail(0)};
         let Result<engine::Event,engine::Error> result=engine::cancel_ready(ref mut e,a);unsafe{bc_runtime_engine_test_fail(-1)};
         let engine::Event stopped=event(result);assert(unsafe{probe_attempts()}==attempts && stopped.kind==3 && stopped.value==0 &&
             stopped.fuel_known && stopped.remaining==saved.remaining && stopped.diagnostic.code.kind==0);

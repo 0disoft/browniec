@@ -17,6 +17,7 @@ import ir as ir;
 import errors as errors;
 import slice_result_bindings as result_bindings;
 import slice_result_call_ir as recipes;
+import call_capture_plan as capture_plans;
 
 // These arrays::State values are unpublished metadata plans. Runtime owns the
 // sole owner table; actual backing bytes are always the original mutable view.
@@ -91,6 +92,60 @@ pub fn Result<Prepared,errors::Error> prepare_enter(ref ir::Program p,usize pc,r
                 if(held==47 || !bindings.loans.held[held].exclusive || bindings.loans.held[held].close_parent || bindings.loans.held[held].drop){return .err(errors::make(5,p.offsets[pc]));}
             }else if(held!=47){return .err(errors::make(5,p.offsets[pc]));}
         }marker+=1;}
+    }
+    var owners::Token[8] sources=[owners::Token{.slot=0,.generation=0};8];
+    var layouts::Array[8] shapes=[layouts::Array{.element=0,.length=0,.stride=0,.alignment=0,.bytes=0};8];
+    var usize[8] destinations=[0;8];var bool[8] record_args=[false;8];var bool records=false;
+    var owners::CallArgument[8] arguments=[owners::CallArgument{.source=owners::Token{.slot=0,.generation=0},.element=0,.length=0,.record=0};8];
+    var usize count=0;i=0;
+    while(i<contract.arity){let usize encoded=p.array_parameters[p.register_starts[target]+i] as usize;
+        if(encoded!=0){let usize id=encoded-1;let usize destination=(parent+1)*16+id;
+            if(bindings.tokens[destination].generation!=0){return .err(errors::make(5,p.offsets[pc]));}
+            let usize source=p.call_args[map*8+i] as usize-128;sources[count]=bindings.tokens[parent*16+source];
+            shapes[count]=switch(layouts::scalar(p.arrays.elements[id],p.arrays.lengths[id])){case .ok(v):{v}case .err(_):{return .err(errors::make(5,p.offsets[pc]));}};
+            arguments[count]=owners::CallArgument{.source=sources[count],.element=shapes[count].element,.length=shapes[count].length,.record=0};
+            destinations[count]=destination;count+=1;
+        }
+        let usize r=p.record_parameters[p.register_starts[target]+i] as usize;
+        if(r!=0){let usize destination=(parent+1)*16+r-1;
+            if(record_bindings::get(ref bindings.records,destination).generation!=0){return .err(errors::make(5,p.offsets[pc]));}
+            let usize source=p.call_args[map*8+i] as usize-144;
+            arguments[count]=owners::CallArgument{.source=record_bindings::get(ref bindings.records,parent*16+source),.element=0,.length=0,.record=p.records.records[r-1] as usize};
+            record_args[count]=true;records=true;destinations[count]=destination;count+=1;
+        }i+=1;
+    }
+    return .ok(Prepared{.captures=captures,.sources=sources,.shapes=shapes,.arguments=arguments,
+        .destinations=destinations,.record_args=record_args,.count=count,.owned=owned,.records=records});
+}
+// Owning CALL66 uses a proved immutable cache. Keep raw/private preparation
+// independent of that cache, including ordinary calls made through this entry.
+pub fn Result<Prepared,errors::Error> prepare_enter_cached(ref ir::Program p,usize pc,runtime::Contract contract,
+    ref frames::Frames bindings,usize fuel,ref runtime::Capture[] supplied,ref capture_plans::Plan plan){
+    if(p.code[pc*8]!=66){return prepare_enter(p,pc,contract,bindings,fuel,supplied);}
+    let usize at=pc*8;let usize target=p.code[at+2] as usize;let usize map=p.code[at+3] as usize;
+    let usize owned=calls::cost(p,target,p.offsets[pc])?+contract.arity;
+    if(fuel<runtime::cost()+owned){return .err(errors::make(8,p.offsets[pc]));}
+    let usize parent=bindings.frame;var runtime::Capture[8] captures=[runtime::capture(frames::none(),false,false);8];
+    let usize mask=p.code[at+4] as usize;let usize one=1;
+    if(supplied.len!=0 && supplied.len!=contract.arity){return .err(errors::make(5,p.offsets[pc]));}
+    if(!plan.ready){return .err(errors::make(5,p.offsets[pc]));}
+    let capture_plans::Entry entry=capture_plans::lookup(plan,p,pc)?;
+    var usize i=0;while(i<contract.arity){let usize source=p.call_args[map*8+i] as usize;
+        if(supplied.len!=0){captures[i]=supplied[i];}
+        else if(contract.tags[i]!=0){
+            let usize count=if((mask&(one<<i))!=0){entry.ends[i] as usize}else{0};
+            if(count>16){return .err(errors::make(5,p.offsets[pc]));}
+            captures[i]=runtime::chain_capture(bindings.sites[parent*16+source-160],count);
+        }i+=1;
+    }
+    var usize site=0;while(site<16){let usize bit=one<<site;
+        if(((entry.required|entry.absent)&bit)!=0){
+            let usize held=result_bindings::find(ref bindings.loans,parent*16+site);
+            if((entry.required&bit)!=0){
+                if(held==47 || !bindings.loans.held[held].exclusive || bindings.loans.held[held].close_parent || bindings.loans.held[held].drop){return .err(errors::make(5,p.offsets[pc]));}
+            }
+            if((entry.absent&bit)!=0 && held!=47){return .err(errors::make(5,p.offsets[pc]));}
+        }site+=1;
     }
     var owners::Token[8] sources=[owners::Token{.slot=0,.generation=0};8];
     var layouts::Array[8] shapes=[layouts::Array{.element=0,.length=0,.stride=0,.alignment=0,.bytes=0};8];

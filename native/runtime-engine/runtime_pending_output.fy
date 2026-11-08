@@ -84,9 +84,9 @@ fn u32 pending_advance_inner(ref output_programs::Program p,ref input_bytes::Sna
             case .ok(_):{m.phase=1;return 0;}case .err(e):{m.failure=e;}
         };
     }else{
-        let Result<Option<pending_execution::Scalar>,errors::Error> progressed=pending_execution::step_output_saved_with_parameters(body,ref prepared.parameters,bindings,state,pending_bytes::view_mut(payload),sites,
+        let Result<Option<pending_execution::Scalar>,errors::Error> progressed=pending_execution::step_output_cached(body,ref prepared.parameters,bindings,state,pending_bytes::view_mut(payload),sites,
             pending_images::payload(output_programs::literals(p)),cells,scratch,places,windows,guest,origins,
-            ref mut remaining,staged,ref mut cursor,live,words,registers,quantum,ref mut statistics);
+            ref mut remaining,staged,ref mut cursor,live,words,registers,quantum,ref mut statistics,ref output_programs::preparation(p).calls);
         m.remaining=remaining;m.cursor=cursor;m.stats=statistics;
         switch(progressed){
             case .ok(progress):{switch(progress){
