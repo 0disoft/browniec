@@ -134,3 +134,17 @@ fn void corrupt_extent_order_and_cursor_are_rejected_without_byte_access() {
     assert(!owners::read(ref table, token, 1, ref bytes).is_ok);
     assert(!owners::read(ref table, token, 18446744073709551615, ref bytes).is_ok);
 }
+
+@test
+fn void duplicate_order_and_unlisted_owners_preserve_tokens_and_payload() {
+    var u8[32] bytes=[85;32];var owners::Table table=owners::empty(32);let layouts::Array byte=layout(10,1);
+    let owners::Token first=created(ref byte,42,ref mut bytes,ref mut table);
+    let owners::Token last=created(ref byte,43,ref mut bytes,ref mut table);
+    table.order[1]=first.slot;assert(!owners::read(ref table,first,0,ref bytes).is_ok);
+    assert(!owners::release(ref mut table,last,32).is_ok && bytes[0]==42 && bytes[1]==43);
+    table.order[1]=last.slot;assert(read(ref table,last,0,ref bytes)==43);
+    table.slots[15].occupied=true;assert(!owners::read(ref table,first,0,ref bytes).is_ok);
+    table.slots[15].occupied=false;table.slots[15].live=true;
+    assert(!owners::read(ref table,last,0,ref bytes).is_ok);table.slots[15].live=false;
+    assert(read(ref table,first,0,ref bytes)==42 && read(ref table,last,0,ref bytes)==43);
+}

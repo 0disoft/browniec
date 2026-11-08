@@ -70,13 +70,15 @@ fn Result<layouts::Array, Error> allocation_layout(ref Owner owner) {
 // retained extents cover exactly the published prefix without gaps or overlap.
 fn bool valid(ref Table table, usize capacity) {
     if (table.depth > 16 || table.arena.used > table.arena.limit || table.arena.limit > capacity) { return false; }
-    var bool[16] seen = [false; 16];
+    // Sixteen owner identities fit one scalar mask; no nested scratch bank.
+    var usize seen = 0;let usize one=1;
     var usize cursor = 0;
     var usize i = 0;
     while (i < table.depth) {
         let usize slot = table.order[i];
-        if (slot >= 16 || seen[slot]) { return false; }
-        seen[slot] = true;
+        if (slot >= 16) { return false; }
+        let usize bit=one<<slot;if ((seen&bit)!=0) { return false; }
+        seen|=bit;
         let Owner owner = table.slots[slot];
         if (!owner.occupied || owner.mark != cursor || (owner.live && owner.generation == 0)) { return false; }
         if ((owner.reading || owner.writing) && (!owner.live || owner.element == 0 || owner.read_generation == 0)) { return false; }
@@ -94,8 +96,9 @@ fn bool valid(ref Table table, usize capacity) {
     if (cursor != table.arena.used) { return false; }
     i = 0;
     while (i < 16) {
-        if (table.slots[i].occupied != seen[i] || (table.slots[i].live && !seen[i])) { return false; }
-        if ((table.slots[i].reading || table.slots[i].writing) && !seen[i]) { return false; }
+        let Owner owner=table.slots[i];let bool retained=(seen&(one<<i))!=0;
+        if (owner.occupied != retained || (owner.live && !retained)) { return false; }
+        if ((owner.reading || owner.writing) && !retained) { return false; }
         i += 1;
     }
     return true;
