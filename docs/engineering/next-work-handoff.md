@@ -1,35 +1,37 @@
 # Local handoff for the next thread
 
-Current checkpoint: [CALL/RET authority stages](runtime-authority-metadata-stages.md)
-are integrated into private owning Pending output execution. Kernel commits
-`84b382d`, `41c9eb4`, `6d1a2d7` and `047f6cb` precede CALL `bf965ea`, RET adapter
-`4ca1ba8` and owning RET `8870a2c`. One Core work bank is reused; metadata and
-payload share dispatch room, with final-only authority/frame publication.
+Current checkpoint: [CALL/RET stages and CALL copy planning](runtime-authority-metadata-stages.md)
+are integrated into private owning Pending output execution. Catalog `a2389e9`
+and planner/prepared payload `3ad17b3` precede owning integration `dce5e26`.
+CALL catalog/layout/mask preparation and per-payload plan authentication now use
+fresh 4096-unit stages. Payload batches pay 3072 entry units plus cached mask/
+bool-position visits and payload bytes within the same allowance. Publication
+remains final-only; raw synchronous helpers remain independent oracles.
 
-Windows development/O2 pass direct CALL (1 group), RET (9 groups), and complete
+Windows development/O2 pass catalog (6 groups), planner/payload (10 groups),
+direct CALL integration (1 group), and complete
 Engine regression images with default stacks, covered-resume allocation denial
-and zero exit SDK heap. The final Engine's 278 inputs match committed code.
-See the [evidence](../evidence/runtime-authority-metadata-windows-20261109.json)
-for exact historical/direct/integration snapshots. No timing improvement measured.
+and zero exit SDK heap. The final Engine's 281 inputs match committed code.
+Core grows by 10192 bytes to 163984; Cursor/Machine remain 1184/1632 bytes.
+See the [evidence](../evidence/runtime-call-copy-plan-windows-20261109.json)
+for exact snapshots; direct catalog/planner receipts identify their earlier
+commits, not the final integration inputs. No timing improvement measured.
 
-The user authorized this CALL/RET authority slice. The broader completion goal
+The user authorized this CALL copy-plan/metadata slice. The broader completion goal
 remains paused; this handoff alone does not authorize unrelated slices or remote
 delivery. Read [AGENTS](../../AGENTS.md) and the
 [remaining inventory](../product/04-remaining-work.md).
 
 ## Next bounded implementation
 
-1. Bound CALL copy-recipe preparation and metadata scans inside copy-plan
-   validation. Current `copies::begin` runs alone but remains outside the proved
-   authority ledger; a scheduling yield does not make its work bounded.
-2. Finish bounds for CALL context and RET catalog/layout/result preparation.
+1. Finish bounds for CALL context and RET catalog/layout/result preparation.
    Whole bool ARET payload validation is already admitted into one byte batch;
    that does not prove all surrounding metadata visits are bounded.
-3. Preserve the independent raw/synchronous oracles, immutable CALL66 cache and
+2. Preserve the independent raw/synchronous oracles, immutable CALL66 cache and
    original-recipe proofs, exact valid-program Fuel/output/diagnostics, moves,
    cancellation/refunds and allocation-denial evidence. Synthetic late bad-frame
    failures intentionally retain staged originals/Fuel; raw RET65 may debit first.
-4. Public R03, setup/proof/seal/cleanup, R04/R05 deadlines/STOPPING/poison and the
+3. Public R03, setup/proof/seal/cleanup, R04/R05 deadlines/STOPPING/poison and the
    full inventory remain incomplete. No public bounded-step or wall-clock claim.
 
 Use `build/toolchain/fairyc.exe`, default stacks and no hidden overrides. Keep

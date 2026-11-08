@@ -1,17 +1,18 @@
-- Latest authority metadata checkpoint (2026-11-09): [CALL/RET stages](docs/engineering/runtime-authority-metadata-stages.md)
-  kernel slices `84b382d`/`41c9eb4`/`6d1a2d7`/`047f6cb`, owning CALL `bf965ea`,
-  RET adapter `4ca1ba8` and owning RET `8870a2c` share one unpublished Core bank.
-  Authority stages reserve a fresh 4096-unit allowance shared with payload work;
-  prefix/copy-plan preparation is still atomic and is not a complete CALL/RET bound.
-  Direct CALL (1 group), RET (9 groups) and complete Engine images pass Windows
-  development/O2 with default 1MiB/4KiB stacks. Covered resumes deny SDK allocation;
-  exit SDK heap is zero. All 278 current Engine inputs match checkout and commit;
-  271 production modules retain LF. Typed transport: 33 bindings / 36 roles.
-  RET adds 136 bytes each to Cursor/Machine; Core remains 153792 bytes. No timing
-  or peak-stack improvement measured. Public admission, remaining preparation/
-  proof/seal/cleanup, deadlines/STOPPING/poison and R02-R05/inventory stay open.
-  Only this authority slice resumed; broader completion remains paused. Local
-  only, no push/release/deployment. See linked evidence for exact snapshots.
+- Latest CALL copy-plan checkpoint (2026-11-09): [CALL/RET stages](docs/engineering/runtime-authority-metadata-stages.md)
+  catalog `a2389e9`, planner/payload `3ad17b3` and owning integration `dce5e26`
+  stage CALL copy preparation and authentication in private Pending execution.
+  CALL catalog/layout/mask preparation and copy-plan authentication now use fresh
+  4096-unit stages. Payload pays 3072 metadata entry units plus cached mask/bool
+  visits and bytes within the same allowance; final publication stays separate.
+  Windows development/O2 pass catalog (6 groups), planner/payload (10), direct
+  CALL integration (1), and complete Engine images with default 1MiB/4KiB stacks.
+  Covered resumes deny SDK allocation; exit SDK heap is zero. All 281 current
+  Engine inputs match checkout and commit; 274 production modules retain LF.
+  Typed transport: 33 bindings / 37 roles. Core grows 153792 -> 163984 bytes;
+  Cursor/Machine remain 1184/1632. No timing or peak-stack improvement measured.
+  CALL context, RET preparation, raw discovery, setup/proof/seal/cleanup and
+  public R02-R05/inventory remain incomplete. Broader completion remains paused.
+  Local only, no push/release/deployment. See linked evidence for exact snapshots.
 
 # Brownie C agent guidance
 
