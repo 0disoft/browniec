@@ -14,12 +14,14 @@ bottom.EXTRA_INPUTS = {'tools/verify-runtime-metadata-work.py'}
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument('--slice', choices=['kernels', 'runtime'], required=True)
+    parser.add_argument('--slice', choices=['kernels', 'runtime', 'shared'], required=True)
     selection, remaining = parser.parse_known_args()
     sys.argv = [sys.argv[0]] + remaining
     bottom.DIRECTORY = 'build/runtime-metadata-work/' + selection.slice
     names = ['metadata_budget', 'slice_handoff_work', 'slice_handoff', 'array_owners'] if selection.slice == 'kernels' else [
         'runtime_metadata_work', 'slice_result_runtime', 'slice_authority']
+    if selection.slice == 'shared':
+        names = ['runtime_metadata_shared_work']
     bottom.MODULES = {name: None for name in names}
     if selection.slice == 'runtime':
         bottom.MODULES['slice_authority'] = ['thirty_one_mixed_restores_fit_and_the_next_call_or_child_is_atomic',
