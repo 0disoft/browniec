@@ -1,14 +1,20 @@
-- Latest ABI-bootstrap checkpoint (2026-11-07): [Windows DLL query](docs/engineering/abi-bootstrap.md)
-  now exports only `bc_get_abi_info_v2`; Fairy owns admission/metadata and a small
-  native shim marshals the exact 32-byte result. `ad86fc9` passed 53 real DLL calls
-  in each development/optimized profile, C/C++ layouts, guard pages, singleton
-  exports and four fail-closed controls. Unicode output and empty tool PATH pass.
-  Build uses included ABI references; the original ZIP is optional provenance.
-  All 228 root/feature inputs match checkout/Git raw bytes; all 217 production
-  modules retain LF. Native bootstrap freezes nine feature inputs; it does not
-  execute the VM. See [evidence](docs/evidence/abi-bootstrap-windows-20261107.json).
-  E01/full embedding, Engine/Instance/handles and all other accepted inventory
-  work remain open. CLI availability/Fuel/gates are unchanged. Local only.
+- Latest CALL66 capture-cache checkpoint (2026-11-08): [Immutable CALL66 cache](docs/engineering/runtime-call-capture-cache.md)
+  kernel `ced4289` and owning integration `5f9bfc3` retain independently proved
+  immutable recipes after the returned-view bridge. Selected origins stay in
+  Preparation field 7; Plan is field 8. Owning synchronous execution and every
+  pending resume use zero binding/chain/creator helper entries; raw execution
+  independently re-proves and retains scans. Five kernel and six actual returned-
+  view groups plus Engine/kernel regressions pass Windows development/O2 with
+  default stacks, zero resume SDK allocation attempts and zero exit SDK heap.
+  One additional focused live-Held rejection/restoration group passes both profiles.
+  Plan is 900 bytes; Preparation 1344 -> 2248 and Stored 23360 -> 24264, including
+  padding. Reserved Vec8 backing adds 7232 charged bytes per retained Program.
+  Fixed/mixed quanta preserve exact Fuel/output/diagnostics, moves, released pins,
+  cancellation/refunds and malformed-source/recipe rejection. No timing or peak-
+  stack improvement measured. Public admission, other metadata/setup/proof/seal/
+  cleanup bounds, deadlines/STOPPING/poison and R02-R05/full inventory remain open.
+  The user resumed only this cache slice; the broader goal stays paused. Local
+  only, no push/release/deployment. See linked evidence for exact source inputs.
 
 - Predecessor terminal-operands checkpoint (2026-11-07): [Final Buffer/view operands](docs/engineering/value-terminal-operands.md)
   now propagate terminal control after real receiver/index work without the

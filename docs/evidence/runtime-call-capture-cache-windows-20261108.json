@@ -1,0 +1,237 @@
+{
+  "schema": "browniec.runtime-call-capture-cache-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-08T13:19:21.459680+00:00",
+  "implementationCommit": "5f9bfc37f3d979a52f9a7af98f18dc3a50ed4841",
+  "verifiedCommit": "158d928a223f460e688a4774c4963bdcbd7b3508",
+  "kernelCheckpoint": {
+    "commit": "ced4289",
+    "groups": 5,
+    "profiles": [
+      "development",
+      "release"
+    ],
+    "receipt": "build/runtime-engine/20261108T125827480080Z/receipt.json",
+    "sha256": "0fad94845488de2b17dc3bcaa9e2d28a71280485d0b143ef3dc9efeb40b398f3"
+  },
+  "commands": [
+    "build/toolchain/fairyc.exe check --locked",
+    "python tools/review-runtime-engine-transport.py",
+    "python tools/verify-runtime-engine.py --profile all",
+    "build/toolchain/fairyc.exe test --native --capture-output --json --locked --file tests/m2/call_capture_live.fy",
+    "build/toolchain/fairyc.exe test --native --capture-output --json --locked --release --file tests/m2/call_capture_live.fy"
+  ],
+  "receipt": {
+    "path": "build/runtime-engine/20261108T130800677073Z/receipt.json",
+    "sha256": "c5be20e1c7b662d4e32d7f4a0054f44b87742fef5720ca955c27bf40cae2ceb8"
+  },
+  "compiler": {
+    "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+    "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+    "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false"
+  },
+  "msvc": {
+    "version": "14.51.36231",
+    "sdk": "10.0.26100.0",
+    "compilerSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+    "overrides": false
+  },
+  "profiles": [
+    {
+      "profile": "development",
+      "artifact": {
+        "path": "build/runtime-engine/20261108T130800677073Z/development/runtime-engine.exe",
+        "sha256": "384dd0faba8815a244101fc2c7a1c8dfe054e376866ee6b41747c67eea97ae4d",
+        "bytes": 9426944,
+        "stackReserve": 1048576,
+        "stackCommit": 4096
+      },
+      "exit": 0,
+      "controlMetrics": {
+        "cases": 6,
+        "smallHeapBytes": 7744,
+        "maximumHeapBytes": 61952,
+        "ownerBytes": 736
+      },
+      "preparationMetrics": {
+        "cacheBytes": 2248,
+        "storedBytes": 24264,
+        "previousStoredBytes": 22016,
+        "retainedVecExtraBytes": 17984,
+        "capturePlanBytes": 900,
+        "previousCacheBytes": 1344,
+        "capturePlanVecExtraBytes": 7232
+      },
+      "arrayFillMetrics": {
+        "arrayWorkBytes": 360,
+        "cursorBytes": 1016,
+        "machineBytes": 1464,
+        "coreBytes": 120880,
+        "pendingVecExtraBytes": 2880,
+        "callWorkBytes": 536,
+        "callPendingVecExtraBytes": 4288,
+        "returnWorkBytes": 48,
+        "returnPendingVecExtraBytes": 384,
+        "combinedPendingVecExtraBytes": 7552
+      },
+      "liveHeapAllocationsAtExit": 0,
+      "assertions": "native Fairy and C, no parsed trace",
+      "objects": [
+        {
+          "path": "build/runtime-engine/20261108T130800677073Z/development/transport.obj",
+          "sha256": "10a73b9a79e450cdda438912dbfe5fd53f22ae242da656f1df3c6e2bcd498198"
+        },
+        {
+          "path": "build/runtime-engine/20261108T130800677073Z/development/runtime.obj",
+          "sha256": "3c8ecfb293be979f224900df3e5fa65819ce8d98ef6775108a541ef80220f8e6"
+        },
+        {
+          "path": "build/runtime-engine/20261108T130800677073Z/development/abi_thread_identity.obj",
+          "sha256": "005b38ba056e44405352698b1061b45353bf8d8a78ff0352933c1c0630292ffc"
+        },
+        {
+          "path": "build/runtime-engine/20261108T130800677073Z/development/input_reader.obj",
+          "sha256": "abc1fe7b3fdb33d29180415d08209df279f0ca9439885fc721ea1616559a7855"
+        },
+        {
+          "path": "build/runtime-engine/20261108T130800677073Z/development/input_adoption.obj",
+          "sha256": "2db099b3fa2e80c059c77f9342d6abe5e52d2a037f1f5dab3b7e86cd5a75b3d6"
+        }
+      ]
+    },
+    {
+      "profile": "release",
+      "artifact": {
+        "path": "build/runtime-engine/20261108T130800677073Z/release/runtime-engine.exe",
+        "sha256": "67918402a67b0a7ff8d8b1a114086647bf4ff41e57ebf5dc251b3f82b9213c08",
+        "bytes": 3631104,
+        "stackReserve": 1048576,
+        "stackCommit": 4096
+      },
+      "exit": 0,
+      "controlMetrics": {
+        "cases": 6,
+        "smallHeapBytes": 7744,
+        "maximumHeapBytes": 61952,
+        "ownerBytes": 736
+      },
+      "preparationMetrics": {
+        "cacheBytes": 2248,
+        "storedBytes": 24264,
+        "previousStoredBytes": 22016,
+        "retainedVecExtraBytes": 17984,
+        "capturePlanBytes": 900,
+        "previousCacheBytes": 1344,
+        "capturePlanVecExtraBytes": 7232
+      },
+      "arrayFillMetrics": {
+        "arrayWorkBytes": 360,
+        "cursorBytes": 1016,
+        "machineBytes": 1464,
+        "coreBytes": 120880,
+        "pendingVecExtraBytes": 2880,
+        "callWorkBytes": 536,
+        "callPendingVecExtraBytes": 4288,
+        "returnWorkBytes": 48,
+        "returnPendingVecExtraBytes": 384,
+        "combinedPendingVecExtraBytes": 7552
+      },
+      "liveHeapAllocationsAtExit": 0,
+      "assertions": "native Fairy and C, no parsed trace",
+      "objects": [
+        {
+          "path": "build/runtime-engine/20261108T130800677073Z/release/transport.obj",
+          "sha256": "07b6aa9b062d6952a8114f42433ae6c5a2f56b93b78ed26c09baab5e13997ceb"
+        },
+        {
+          "path": "build/runtime-engine/20261108T130800677073Z/release/runtime.obj",
+          "sha256": "9071282c1a8d36c29029e70456ac510c37feadae7cae55097593bd57f0f1f99d"
+        },
+        {
+          "path": "build/runtime-engine/20261108T130800677073Z/release/abi_thread_identity.obj",
+          "sha256": "a6e602bc8535a295ab93be73d2a77d571864a8907ab44d7971f1bc8bbebfed72"
+        },
+        {
+          "path": "build/runtime-engine/20261108T130800677073Z/release/input_reader.obj",
+          "sha256": "f1ca848e8d22a29f1f9be3f25f426d51c420c8ed7757b13f5be974f34d6142f3"
+        },
+        {
+          "path": "build/runtime-engine/20261108T130800677073Z/release/input_adoption.obj",
+          "sha256": "a34a66c626558d95dac41f5e6a751638bcf714cc5efc3e7647f7493aaa84fc2b"
+        }
+      ]
+    }
+  ],
+  "liveReceiptTests": [
+    {
+      "profile": "development",
+      "path": "build/call-capture-live-development.json",
+      "sha256": "c6301ce759b93ff12eda592f3d7d832d162c5682d97f4e06e8b67a33eac4b631",
+      "groups": 1,
+      "identities": [
+        "tests::m2::call_capture_live::cached_and_legacy_dynamic_held_predicates_agree"
+      ]
+    },
+    {
+      "profile": "release",
+      "path": "build/call-capture-live-release.json",
+      "sha256": "183b6d9746f5465969ec3ae72135ab7c7902027292b1d6f5f15e62ec75de11b0",
+      "groups": 1,
+      "identities": [
+        "tests::m2::call_capture_live::cached_and_legacy_dynamic_held_predicates_agree"
+      ]
+    }
+  ],
+  "sourceCheck": {
+    "sources": 274,
+    "mirFunctions": 3055,
+    "locked": true
+  },
+  "inputAudit": {
+    "receiptInputs": 273,
+    "totalUniqueInputs": 276,
+    "path": "docs/evidence/runtime-call-capture-cache-inputs-windows-20261108.json",
+    "sha256": "6c85c3e3eb84993d4946549543f81f5f1905933e234f19d1bd2078b2f82a633c",
+    "allRawCheckoutAndCommittedGitMatch": true,
+    "productionLfModules": 266
+  },
+  "transportReview": {
+    "bindings": 33,
+    "layouts": 33,
+    "changedLayout": "Preparation appends Plan at field 8; selected parameters stay at field 7",
+    "unchanged": "All 33 typed binding shapes and all pre-existing Preparation fields",
+    "capturePlanFields": [
+      "u32[32]",
+      "u8[256]",
+      "u8[256]",
+      "u32[32]",
+      "u32[32]",
+      "bool"
+    ]
+  },
+  "retainedMemory": {
+    "planBytes": 900,
+    "previousPreparationBytes": 1344,
+    "preparationBytes": 2248,
+    "addedInlineBytes": 904,
+    "previousStoredBytes": 23360,
+    "storedBytes": 24264,
+    "storedVectorCapacity": 8,
+    "additionalRetainedBytes": 7232
+  },
+  "coverage": [
+    "Five synthetic plan kernel groups plus existing Engine/kernel regressions",
+    "Six actual returned-view groups: direct, nested, forwarding and second-input selection",
+    "Positive raw binding/chain/creator entry count; zero entries in owning synchronous execution and each pending resume",
+    "Quanta 1/7/4096 and mixed 1/7/3/4096/2, exact Fuel/output/diagnostics, exact/one-less budgets",
+    "Moves, released pins, cancellation/refunds, zero resume SDK allocation attempts and zero exit SDK heap",
+    "Focused synthetic Held metadata acceptance/rejection parity; not runtime authority authentication evidence"
+  ],
+  "limitations": [
+    "Private owning output cache only; public CLI/C lifecycle/admission unchanged",
+    "Counters count three helper entries, not all metadata work, byte work or wall-clock latency",
+    "Metadata/setup/proof/seal/cleanup continuations, deadlines/STOPPING/poison and accepted inventory remain incomplete",
+    "No latency/throughput/peak-stack improvement measured; no Linux, full CLI matrix or packaging rerun",
+    "No push, release or deployment; broader completion goal remains paused"
+  ]
+}

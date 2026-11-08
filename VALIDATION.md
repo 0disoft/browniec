@@ -1,21 +1,20 @@
-- Latest VM RET checkpoint (2026-11-08): [Return payload admission](docs/engineering/runtime-return-work-chunks.md)
-  implementation `2a13049` admits whole ARET/SRET validation into the shared
-  4096-byte CALL/array/output allowance before return unit/Fuel debit. Bool ARET
-  reads at most 4096 bytes; record validation uses at most 512 work bytes. Saved
-  result preparation borrows owners and one 16-token frame map, removing global
-  512-token/table clones. Return-following COPY paths subtract all four counters.
-  Native Core initialization fills existing frames without whole-value copies.
-  Four new actual Engine groups and regressions pass development/O2: fixed/mixed
-  quanta, whole-return deferral, Fuel, diagnostics, nested bools, cancellation,
-  Engine moves/pins/refunds and return-following partial copies. Zero resume SDK
-  attempts and exit heap; default stacks. Return state 48 bytes; Cursor 1016,
-  Machine 1464, Core unchanged 120880. Vec8 adds 384 (combined work 7552).
-  All 268 receipt inputs plus two audit inputs match raw checkout/committed Git;
-  33 bindings/32 layouts reviewed. Root locked check: 271 sources/3032 MIR;
-  263 production LF modules. CALL/RET metadata, setup/proof/seal/cleanup,
-  deadlines/STOPPING/poison and public lifecycle/ABI/CLI/full inventory remain
-  open; R03-R05 incomplete. Disjoint Sol High workers with serial integration
-  and commits; local only.
+- Latest CALL66 capture-cache checkpoint (2026-11-08): [Immutable CALL66 cache](docs/engineering/runtime-call-capture-cache.md)
+  kernel `ced4289` and owning integration `5f9bfc3` retain independently proved
+  immutable recipes after the returned-view bridge. Selected origins stay in
+  Preparation field 7; Plan is field 8. Owning synchronous execution and every
+  pending resume use zero binding/chain/creator helper entries; raw execution
+  independently re-proves and retains scans. Five kernel and six actual returned-
+  view groups plus Engine/kernel regressions pass Windows development/O2 with
+  default stacks, zero resume SDK allocation attempts and zero exit SDK heap.
+  One additional focused live-Held rejection/restoration group passes both profiles.
+  Plan is 900 bytes; Preparation 1344 -> 2248 and Stored 23360 -> 24264, including
+  padding. Reserved Vec8 backing adds 7232 charged bytes per retained Program.
+  Fixed/mixed quanta preserve exact Fuel/output/diagnostics, moves, released pins,
+  cancellation/refunds and malformed-source/recipe rejection. No timing or peak-
+  stack improvement measured. Public admission, other metadata/setup/proof/seal/
+  cleanup bounds, deadlines/STOPPING/poison and R02-R05/full inventory remain open.
+  The user resumed only this cache slice; the broader goal stays paused. Local
+  only, no push/release/deployment. See linked evidence for exact source inputs.
 
 - Predecessor registry-prerequisite checkpoint (2026-11-07): [Fairy handles](docs/engineering/abi-handles.md)
   (`fef9fd3`) passed ten native groups per development/release profile; unchanged

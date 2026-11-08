@@ -8,7 +8,9 @@ Six new native groups and existing Engine/kernel regressions passed with default
 This bridge is the prerequisite identified by
 [CALL snapshot stack storage](runtime-call-stack-snapshots.md). It connects
 private output compilation to borrowed-result proof and selected-origin VM
-execution. The separate owning CALL66 capture-cache integration stays deferred.
+execution. The [owning CALL66 capture-cache successor](runtime-call-capture-cache.md) now
+reuses proved recipes in synchronous and pending execution; the original bridge
+verification below predates that integration.
 The existing [Program preparation cache](runtime-program-preparation-cache.md)
 continues to retain immutable admission facts; these are distinct caches.
 

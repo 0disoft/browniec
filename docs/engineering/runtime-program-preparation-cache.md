@@ -115,3 +115,8 @@ separate bound. Compile-time proof is still synchronous, not resumable.
 Other setup, bulk operations, CALL/RET, final seal, cleanup, deadlines,
 in-flight cancellation/poison and public lifecycle/ABI/CLI remain open under the
 [accepted inventory](../product/04-remaining-work.md). R03-R05 are not complete.
+
+The [CALL66 cache successor](runtime-call-capture-cache.md) adds immutable capture
+recipes after the independent returned-view proof, preserving selected origins
+and the raw/owning distinction. Its measured layout supersedes earlier sizes
+for current retained output Programs. Other metadata work bounds remain open.

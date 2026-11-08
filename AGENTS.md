@@ -1,20 +1,20 @@
-- Latest private output returned-view checkpoint (2026-11-08): [Returned-view bridge](docs/engineering/runtime-output-returned-views.md)
-  implementation `f9a76ce` connects genuine exclusive returned-slice source to
-  independent canonical/original-recipe proof, immutable selected origins and
-  synchronous/pending Engine execution. Six new native groups plus existing
-  Engine/kernel regressions pass development/O2, default 1MiB/4KiB stacks, no
-  overrides, zero exit SDK heap and zero SDK attempts on every resume. Direct,
-  nested, forwarding and second-input sources preserve exact Fuel/output and
-  diagnostics through moves, released pins and cancellation/refunds. Forged
-  origins, escapes, CALL9 substitution and scalar uses of CALL66 proof identities
-  fail admission. Preparation 1328 -> 1344 bytes; Stored 23344 -> 23360; Vec8
-  backing adds 128 bytes. All 271 receipt plus two audit inputs match checkout/
-  committed Git; 265 production LF modules; locked check 273 sources/3046 MIR.
-  The user requested finishing this slice then stopping; the broad goal is
-  paused. Next, only after a new user request: integrate CALL66 cache draft
-  `39f1c91` with its field-7 Plan rebased to field 8 (selected origins now own
-  field 7). Public admission and R02-R05/full inventory remain incomplete.
-  Parallel workers closed; local only, no push/release/deployment.
+- Latest CALL66 capture-cache checkpoint (2026-11-08): [Immutable CALL66 cache](docs/engineering/runtime-call-capture-cache.md)
+  kernel `ced4289` and owning integration `5f9bfc3` retain independently proved
+  immutable recipes after the returned-view bridge. Selected origins stay in
+  Preparation field 7; Plan is field 8. Owning synchronous execution and every
+  pending resume use zero binding/chain/creator helper entries; raw execution
+  independently re-proves and retains scans. Five kernel and six actual returned-
+  view groups plus Engine/kernel regressions pass Windows development/O2 with
+  default stacks, zero resume SDK allocation attempts and zero exit SDK heap.
+  One additional focused live-Held rejection/restoration group passes both profiles.
+  Plan is 900 bytes; Preparation 1344 -> 2248 and Stored 23360 -> 24264, including
+  padding. Reserved Vec8 backing adds 7232 charged bytes per retained Program.
+  Fixed/mixed quanta preserve exact Fuel/output/diagnostics, moves, released pins,
+  cancellation/refunds and malformed-source/recipe rejection. No timing or peak-
+  stack improvement measured. Public admission, other metadata/setup/proof/seal/
+  cleanup bounds, deadlines/STOPPING/poison and R02-R05/full inventory remain open.
+  The user resumed only this cache slice; the broader goal stays paused. Local
+  only, no push/release/deployment. See linked evidence for exact source inputs.
 
 # Brownie C agent guidance
 

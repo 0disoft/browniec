@@ -1,32 +1,39 @@
 # Local handoff for the next thread
 
-Current checkpoint: private output returned-view bridge implemented in `f9a76ce`,
-verified in native Windows development/O2 with six new groups plus regressions.
-Evidence: [returned views](runtime-output-returned-views.md) and
-[receipt/audit](../evidence/runtime-output-returned-views-windows-20261108.json).
-Read [AGENTS](../../AGENTS.md), [the implementation plan](completion-plan.md),
-and the authoritative [remaining-work inventory](../product/04-remaining-work.md).
+Current checkpoint: immutable CALL66 capture plans (`ced4289`) are integrated
+into owning synchronous/pending output execution (`5f9bfc3`). Native Windows
+development/O2 pass five kernel groups, six returned-view groups and Engine/kernel
+regressions with default stacks, zero exit SDK heap and zero SDK attempts on every
+resume. Owning execution enters none of the three named recipe helpers; raw
+execution still re-proves and scans. See [cache integration](runtime-call-capture-cache.md)
+and its [evidence](../evidence/runtime-call-capture-cache-windows-20261108.json).
 
-The user requested finishing only the current slice, then stopping. The broad
-completion goal is paused. No new slice, push, release or deployment is authorized
-by this handoff alone. A subsequent user request must resume further work.
+The user resumed only this cache slice. The broader completion goal remains
+paused; this handoff alone does not authorize another slice, push, release or
+deployment. Read [AGENTS](../../AGENTS.md) and the authoritative
+[remaining-work inventory](../product/04-remaining-work.md) before further work.
 
-## Immediate next implementation
+## Next bounded implementation
 
-1. Integrate the preserved immutable CALL66 capture cache from **local Git stash
-   `39f1c91dcaa8edef5194f8d37b75069d20ce92a0`**. Inspect its files with `git show`;
-   do not apply/pop it wholesale or overwrite newer compiler/proof/VM work.
-2. Preserve independently proved `Preparation.parameters`, raw reproof, owning
-   proof reuse and both synchronous/pending selected-origin paths. Parameters
-   occupy field 7; the old cache draft expected its Plan at field 7 and must be
-   rebased to the next field. Preserve CALL depth exact-field borrowing.
-3. Retain the actual direct/chained exclusive-return fixtures, independent raw
-   oracle, exact Fuel/output/diagnostics, dynamic Held/owner/loan checks, zero
-   owning recipe entries, no resume SDK allocations and actual retained-capacity
-   accounting. Regenerate/review transport; use default stacks in both profiles.
-4. Then continue R02-R05 metadata work bounds, final publication, setup/proof/
-   seal/cleanup continuations, monotonic deadlines, cancellation/STOPPING/poison.
-   Cached recipes alone do not establish the public bounded-step contract.
+1. Continue R03 CALL/RET metadata work bounds, including planning, live authority
+   reconstruction and final publication. The cache removes three named immutable
+   recipe scans; it does not bound every metadata visit or establish public step.
+2. Preserve whole-program canonical/original-recipe proof, selected origins,
+   independently reverified raw execution, and exact Program/plan association.
+   Preparation parameters are field 7 and the capture plan is field 8.
+3. Follow with setup/proof/seal/cleanup continuations and R04/R05 monotonic
+   deadlines, cancellation/STOPPING/poison, bounded cleanup and stable first cause.
+   Do not claim all R02-R05 obligations are complete after caching recipes.
+4. Keep actual direct/nested/forwarding/second-input source, independent raw
+   oracles, fixed/mixed schedules, no resume SDK attempts and exact memory refunds.
+   Use `build/toolchain/fairyc.exe`, default stacks and no hidden overrides;
+   preserve exact-field authority/pool borrowing and production LF.
+
+The old local stash `39f1c91dcaa8edef5194f8d37b75069d20ce92a0` remains historical
+provenance. Its cache is integrated and its superseded layout/fixtures must not
+be applied wholesale. Current actual-source coverage extends that draft to
+forwarding and second-input selection. Stored grows by 904 inline bytes; the
+reserved eight-slot vector adds 7232 charged bytes per retained output Program.
 
 ## Full remaining inventory
 
