@@ -27,7 +27,7 @@ pub fn Result<usize,errors::Error> begin(ref mut State w,usize nominal){
 pub fn usize measured(ref State w){return 128+w.size+w.scalar_bytes+w.bools;}
 fn Result<usize,errors::Error> selected(ref mut State w){
     let ref catalogs::State c=ref w.catalog;let ref layouts::Plan p=ref c.plan;
-    if(w.nominal>=p.count){return .err(errors::make(5,0));}
+    if(w.nominal>=p.count){return .err(errors::make(14,0));}
     if(p.bytes[w.nominal]>128){return .err(errors::make(13,0));}
     let usize size=p.bytes[w.nominal];let usize alignment=p.alignments[w.nominal];
     let usize nominal=w.nominal;w.size=size;w.alignment=alignment;

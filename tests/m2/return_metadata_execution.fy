@@ -392,3 +392,33 @@ fn Result<usize,errors::Error> bad_map_parity(u8 mode){
 @test fn void ordinary_bad_frame_map_preserves_ret_offset_and_unpublished_staged_state(){assert(bad_map_parity(0).is_ok);}
 @test fn void static79_bad_frame_map_preserves_ret_offset_and_unpublished_staged_state(){assert(bad_map_parity(5).is_ok);}
 @test fn void ret65_bad_frame_map_preserves_native_offset_and_unpublished_staged_state(){assert(bad_map_parity(1).is_ok);}
+
+fn Result<Failure,errors::Error> early_context_error(u8 mode,bool staged_path){
+    var vec::Vec<ir::Program> programs=program_bank(mode);let ref mut ir::Program p=vec::at_mut<ir::Program>(ref mut programs,0);
+    if(mode==1){p.code[26]=16;}
+    let statics::Sites sites=site_context(mode);var vec::Vec<runtime::State> runtime_storage=runtime_bank();
+    let ref mut runtime::State state=vec::at_mut<runtime::State>(ref mut runtime_storage,0);
+    var vec::Vec<frames::Frames> frame_storage=frame_bank(state);let ref mut frames::Frames bindings=vec::at_mut<frames::Frames>(ref mut frame_storage,0);
+    var u8[64] data=[0;64];let usize entered=enter(p,bindings,state,ref mut data,mode)?;
+    var usize[32] live=[0;32];var u32[512] current=[0;512];var i64[4096] registers=[0;4096];
+    var inputs::State windows=inputs::disabled();let u8[16] origins=[0;16];
+    if(mode==2){bindings.active[2]=false;live[2]=1;current[32]=words::pack(0,views::Span{.start=1,.length=2},73)?;}
+    var adapter::State s=adapter::empty();var usize remaining=1000000000;
+    var vec::Vec<Snapshot> before_storage=snapshot_bank(1);var vec::Vec<Snapshot> scratch=snapshot_bank(1);
+    let ref mut Snapshot before=vec::at_mut<Snapshot>(ref mut before_storage,0);
+    let usize saved=save_snapshot(before,state,bindings,ref live,ref current,ref registers,ref data,remaining)?;
+    let Result<usize,errors::Error> result=if(staged_path){prepare_pending(ref mut s,p,ref sites,bindings,state,ref data,
+        ref windows,ref origins,ref live,ref current,ref registers,ref mut remaining)}else{
+        remaining-=1;adapter::begin(ref mut s,p,ref sites,3,bindings,state,ref data,4,ref windows,ref origins,ref live,ref current,ref registers,ref mut remaining)
+    };
+    let errors::Error e=switch(result){case .ok(_):{assert(false);errors::make(99,0)}case .err(v):{v}};
+    before.remaining=remaining;let usize unchanged=frozen(before,ref mut scratch,state,bindings,ref live,ref current,ref registers,ref data,remaining)?;
+    let usize drained=runtime::abort(state,64,0)?;return .ok(Failure{.error=e,.remaining=remaining});
+}
+fn Result<usize,errors::Error> early_context_parity(u8 mode){
+    let Failure a=early_context_error(mode,false)?;let Failure b=early_context_error(mode,true)?;
+    assert(a.error.kind==5 && a.error.offset==0 && a.remaining==999999999);
+    assert(a.error.kind==b.error.kind && a.error.offset==b.error.offset && a.remaining==b.remaining);return .ok(0);
+}
+@test fn void ret65_invalid_selection_keeps_native_zero_offset(){assert(early_context_parity(1).is_ok);}
+@test fn void reference79_invalid_frame_keeps_native_zero_offset(){assert(early_context_parity(2).is_ok);}

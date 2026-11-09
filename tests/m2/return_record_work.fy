@@ -47,5 +47,6 @@ fn Result<bool,errors::Error> drive(ref mut work::State w,ref layouts::Catalog c
     while(i<16){c.kinds[i]=1;c.types[i]=1;i+=1;}c.types[16]=9;c.types[17]=9;
     var work::State w=work::empty();assert(work::begin(ref mut w,0).is_ok);
     let u8 kind=switch(drive(ref mut w,ref c)){case .ok(_):{0}case .err(e):{e.kind}};assert(kind==13);
-    w=work::empty();assert(work::begin(ref mut w,2).is_ok && !drive(ref mut w,ref c).is_ok);
+    w=work::empty();assert(work::begin(ref mut w,2).is_ok);
+    let u8 missing=switch(drive(ref mut w,ref c)){case .ok(_):{0}case .err(e):{e.kind}};assert(missing==14);
 }

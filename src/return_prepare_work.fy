@@ -165,8 +165,7 @@ fn Result<usize,errors::Error> owner(ref mut State w,ref returned::State s,ref i
     }
     w.base=value.base;w.length=value.length;w.phase=7;return .ok(0);
 }
-fn Result<usize,errors::Error> payload(ref mut State w,ref returned::State s,ref u8[] data){
-    let usize offset=s.pc; // errors are re-anchored by advance below
+fn Result<usize,errors::Error> payload(ref mut State w,ref returned::State s,ref u8[] data,usize offset){
     if(s.op==39){if(w.required!=0){var usize i=0;while(i<w.length){if(data[w.base+i]>1){return .err(invalid(offset));}i+=1;}}}
     else if(s.op==50){
         var usize i=0;while(i<128){w.scratch[i]=0;i+=1;}
@@ -203,11 +202,11 @@ pub fn Result<bool,errors::Error> advance(ref mut State w,ref mut returned::Stat
         else if(w.phase==4){owned_header(w,s,p,bindings)}
         else if(w.phase==5){transfer_header(w,s,p,bindings)}
         else if(w.phase==6){owner(w,s,p,ref state.runtime.owners,data.len)}
-        else if(w.phase==7){payload(w,s,data)}else{
+        else if(w.phase==7){payload(w,s,data,offset)}else{
             let usize checked=payload_work::check(counter,w.required,offset)?;
             s.fuel_pinned=*remaining;s.phase=1;w.active=false;w.done=true;.ok(0)
         };
-    switch(result){case .ok(_):{}case .err(e):{w.active=false;s.pending=false;return .err(errors::make(e.kind,offset));}};
+    switch(result){case .ok(_):{}case .err(e):{w.active=false;s.pending=false;return .err(e);}};
     // Record successful payload validation in its actual dispatch, even though
     // context adoption/restoration/publication have not yet completed.
     if(w.phase==8 && !w.done){let usize checked=payload_work::check(counter,w.required,offset)?;
