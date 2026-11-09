@@ -117,6 +117,11 @@ fn Result<Owner, Error> resolve_any(ref Table table, Token token, usize capacity
     if (!valid(table, capacity)) { return .err(.State); }
     return .ok(owner);
 }
+// Private RET preparation: resolve identity before table validation, preserving
+// raw result error order. No catalog discovery, payload access or authority.
+pub fn Result<Owner,Error> inspect_return_owner(ref Table table,Token token,usize capacity){
+    return resolve_any(table,token,capacity);
+}
 // Array entry points must reject record tokens even when their raw size matches.
 fn Result<Owner, Error> resolve(ref Table table, Token token, usize capacity) {
     let Owner owner = resolve_any(table, token, capacity)?;

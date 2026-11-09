@@ -1,5 +1,8 @@
 module tests::m2::return_metadata_execution;
 import return_metadata_execution as adapter;
+import return_prepare_work as preparing;
+import return_work_cursor as validation;
+import return_work_execution as measurements;
 import runtime_metadata_work as metadata;
 import metadata_budget as budget;
 import slice_result_runtime as runtime;
@@ -175,6 +178,36 @@ fn Result<usize,errors::Error> enter(ref ir::Program p,ref mut frames::Frames bi
         case .ok(v):{v}case .err(e):{return .err(arrays::failure(e,0));}};record_bindings::bind(ref mut bindings.records,32,root);}
     return .ok(0);
 }
+fn vec::Vec<preparing::State> preparation_bank(){
+    var vec::Vec<preparing::State> bank=vec::empty<preparing::State>();assert(vec::reserve<preparing::State>(ref mut bank,1).is_ok);
+    assert(vec::push<preparing::State>(ref mut bank,preparing::empty()).is_ok);return bank;
+}
+fn Result<usize,errors::Error> prepare_pending(ref mut adapter::State s,ref ir::Program p,ref statics::Sites sites,
+    ref frames::Frames bindings,ref runtime::State state,ref u8[] data,ref inputs::State windows,ref u8[] origins,
+    ref usize[] live,ref u32[] current,ref i64[] registers,ref mut usize remaining){
+    var vec::Vec<preparing::State> bank=preparation_bank();let ref mut preparing::State w=vec::at_mut<preparing::State>(ref mut bank,0);
+    var validation::State counter=validation::empty();var budget::State allowance=budget::empty();
+    let vec::Vec<usize> places=vec::empty<usize>();
+    let usize begun=preparing::begin(w,s,3,bindings.frame,*remaining)?;
+    var vec::Vec<Snapshot> original=snapshot_bank(1);var vec::Vec<Snapshot> scratch=snapshot_bank(1);
+    let ref mut Snapshot before=vec::at_mut<Snapshot>(ref mut original,0);
+    let usize saved=save_snapshot(before,state,bindings,live,current,registers,data,*remaining)?;
+    var usize n=0;while(n<512){counter.last=0;let usize reset=budget::reset(ref mut allowance,73)?;
+        let usize phase=w.phase;let usize fuel=*remaining;let usize required=w.required;let usize total=counter.total;
+        let bool partial=preparing::advance(w,s,p,sites,bindings,state,data,4,windows,origins,live,current,registers,ref places,
+            remaining,ref mut counter,ref mut allowance,4095)?;
+        assert(!partial && w.phase==phase && w.required==required && *remaining==fuel && counter.total==total && allowance.last==0);
+        let bool done=preparing::advance(w,s,p,sites,bindings,state,data,4,windows,origins,live,current,registers,ref places,
+            remaining,ref mut counter,ref mut allowance,4096)?;
+        assert(counter.last+allowance.last<=4096);before.remaining=*remaining;
+        let usize unchanged=frozen(before,ref mut scratch,state,bindings,live,current,registers,data,*remaining)?;
+        if(done){assert(s.phase==1 && s.pending && !s.done && w.done && !w.active);
+            let usize expected=measurements::required(p,3)?;assert(counter.total==expected && counter.required==expected && counter.op==s.op);
+            return .ok(0);}
+        n+=1;
+    }assert(false);return .err(errors::make(5,73));
+}
+
 fn Result<usize,errors::Error> staged(ref ir::Program p,ref statics::Sites sites,ref mut frames::Frames bindings,
     ref mut runtime::State state,ref u8[] data,ref mut inputs::State windows,ref u8[] origins,
     ref mut usize[] live,ref mut u32[] current,ref mut i64[] registers,ref mut usize remaining,ref captures::Plan plans){
@@ -183,7 +216,7 @@ fn Result<usize,errors::Error> staged(ref ir::Program p,ref statics::Sites sites
     var vec::Vec<Snapshot> before_storage=snapshot_bank(1);var vec::Vec<Snapshot> scratch=snapshot_bank(1);
     let ref mut Snapshot before=vec::at_mut<Snapshot>(ref mut before_storage,0);
     let usize saved=save_snapshot(before,state,bindings,live,current,registers,data,*remaining)?;
-    let usize begun=adapter::begin(ref mut s,p,sites,3,bindings,state,data,4,windows,origins,live,current,registers,remaining)?;
+    let usize begun=prepare_pending(ref mut s,p,sites,bindings,state,data,windows,origins,live,current,registers,remaining)?;
     assert(s.pending && !s.done && s.phase==1 && s.frame==2 && s.pc==3);
     let usize pinned=*remaining;before.remaining=pinned;
     let usize prepared_frozen=frozen(before,ref mut scratch,state,bindings,live,current,registers,data,pinned)?;
@@ -249,7 +282,7 @@ fn Result<usize,errors::Error> scenario(ref ir::Program p,ref mut Snapshot resul
     if(mode==2 || mode==5){live[2]=1;current[32]=if(mode==2){words::pack(0,views::Span{.start=1,.length=2},73)?}else{views::pack(1,2,4,73)?};}
     let captures::Plan plans=captures::prepare(p)?;var usize remaining=1000000000;
     // Both routes begin after the parent's single opcode debit/empty-place check.
-    remaining-=1;let usize next=if(use_staged){staged(p,ref sites,bindings,state,ref data,ref mut windows,ref origins,
+    if(!use_staged){remaining-=1;}let usize next=if(use_staged){staged(p,ref sites,bindings,state,ref data,ref mut windows,ref origins,
         ref mut live,ref mut current,ref mut registers,ref mut remaining,ref plans)?}
         else{raw(p,ref sites,bindings,state,ref data,ref mut windows,ref origins,
         ref mut live,ref mut current,ref mut registers,ref mut remaining,ref plans)?};
@@ -289,7 +322,7 @@ fn Result<Failure,errors::Error> staged_bad_map(ref ir::Program p,ref statics::S
     var vec::Vec<Snapshot> before_storage=snapshot_bank(1);var vec::Vec<Snapshot> scratch=snapshot_bank(1);
     let ref mut Snapshot before=vec::at_mut<Snapshot>(ref mut before_storage,0);
     let usize saved=save_snapshot(before,state,bindings,live,current,registers,data,*remaining)?;
-    let usize begun=adapter::begin(ref mut s,p,sites,3,bindings,state,data,4,windows,origins,live,current,registers,remaining)?;
+    let usize begun=prepare_pending(ref mut s,p,sites,bindings,state,data,windows,origins,live,current,registers,remaining)?;
     assert(s.pending && !s.done && s.phase==1);let usize pinned=*remaining;before.remaining=pinned;
     let usize prepared_frozen=frozen(before,ref mut scratch,state,bindings,live,current,registers,data,pinned)?;
     var usize dispatches=0;while(dispatches<256){
@@ -318,7 +351,7 @@ fn Result<Failure,errors::Error> bad_map_scenario(ref ir::Program p,u8 mode,bool
     var usize[32] live=[0;32];var u32[512] current=[0;512];var i64[4096] registers=[0;4096];registers[131]=-7;registers[256]=42;
     var inputs::State windows=inputs::disabled();let u8[16] origins=[0;16];
     if(mode==5){live[2]=1;current[32]=views::pack(1,2,4,73)?;}
-    let captures::Plan plans=captures::prepare(p)?;var usize remaining=1000000000;remaining-=1;
+    let captures::Plan plans=captures::prepare(p)?;var usize remaining=1000000000;if(!use_staged){remaining-=1;}
     var Failure observed=Failure{.error=errors::make(99,0),.remaining=remaining};
     if(use_staged){observed=staged_bad_map(p,ref sites,bindings,state,ref data,ref mut windows,ref origins,
         ref mut live,ref mut current,ref mut registers,ref mut remaining,ref plans)?;}
