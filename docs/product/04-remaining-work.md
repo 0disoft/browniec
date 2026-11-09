@@ -1,4 +1,22 @@
-- Latest CALL context checkpoint (2026-11-09): [CALL/RET stages](../engineering/runtime-authority-metadata-stages.md)
+- Latest RET preparation checkpoint (2026-11-09): [CALL/RET stages](../engineering/runtime-authority-metadata-stages.md)
+  catalog/measurement `dfe582e`, context/result `85c49f2`, owning integration
+  `865c852` and diagnostic parity `a51c699` stage RET preparation in private Pending output execution.
+  Whole-catalog proof, selected mask, prefix, context, frame tokens, transfer,
+  owner checks and adoption use fresh 4096-unit stages. Payload and metadata
+  share one allowance; bool ARET <=4096 and SRET <=512 payload work units.
+  Opcode/input-frame Fuel is charged once; terminal Fuel/output/error parity and
+  final-only publication remain. Raw synchronous helpers remain independent.
+  Windows development/O2 pass catalog (4 groups), direct preparation/restoration
+  (11), and complete Engine images with default 1MiB/4KiB stacks. Covered resumes
+  deny SDK allocation; exit SDK heap is zero. All 286 Engine inputs match
+  checkout/commit; 279 production modules retain LF. Typed transport has
+  33 bindings / 43 roles. Core grows 165824 -> 172400 bytes (+6576);
+  Cursor/Machine stay 1184/1632. No timing or peak-stack improvement measured.
+  Raw discovery, setup/proof/seal/cleanup, public lifecycle, deadlines/STOPPING/
+  poison and the full inventory remain open. Broader completion remains paused.
+  Local only, no push/release/deployment. See linked evidence for exact snapshots.
+
+- Predecessor CALL context checkpoint (2026-11-09): [CALL/RET stages](../engineering/runtime-authority-metadata-stages.md)
   owned preparation `e4bda54`, arguments `f860ef8`, coordinator `793360c` and
   owning integration `c035b43` stage CALL context in private Pending execution.
   Prefix, argument header/authentication, origin selection, owned cost/cache,

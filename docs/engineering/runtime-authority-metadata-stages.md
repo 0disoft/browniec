@@ -114,22 +114,56 @@ preparation adds 1840 bytes, bringing Core to 165824; Cursor/Machine remain
 1184/1632. The copy-plan bank is passed by mutable reference as Core field 8,
 separately from the shared authority transaction at field 7. The context bank
 is transaction field 8 and carries its argument/owned banks by reference.
-Existing admission/accounting uses these actual native sizes.
+RET preparation adds 6576 bytes to Core, bringing it to 172400; Cursor/Machine
+remain 1184/1632. Existing admission/accounting uses these actual native sizes.
 
 
 ## RET
 
-Prefix preparation selects ordinary, owned-array, record, borrowed, static or
-input/reference return state once. Existing payload validation is admitted
-whole before the opcode/prefix runs. Its work counter is recorded in the batch
-that performed successful validation/preparation; it is not a successful-RET
-receipt. Later restoration or final checks can still fail.
+Owning RET phase 0 now uses `return_prepare_work` before authority restoration.
+Each metadata stage needs a fresh 4096-unit batch: measurement header, catalog
+proof, selected record/mask, opcode/place/input prefix, ordinary/static/reference
+context, owned Fuel/frame-token preparation, transfer metadata, owner validation
+and final adoption. Measurement still precedes the opcode/place checks. Zero
+Fuel is rejected before measurement, preserving the owning dispatch error order.
+Opcode and input-frame Fuel are debited once in the prefix stage, separately
+from payload validation. Static/reference prices retain their original order.
+
+`return_record_work` reuses the staged whole-catalog builder, including unused
+slots and dependencies. Selected mask traversal visits at most sixteen DFS
+edges per stage and writes at most eight mask bytes per scalar. The proof is
+reused for result-owner layout checks and payload validation; neither path
+calls the atomic catalog planner again. Frame tokens are compacted from sixteen
+record bindings; unique result-owner validation checks identity before the
+original sixteen-slot owner table. Raw `begin`, result/owner APIs and layout
+helpers remain independent synchronous comparison oracles.
+
+Payload validation has its own admitted dispatch. Bool ARET reads at most 4096
+bytes; SRET performs at most 512 units of canonical scratch/scalar/bool work.
+That dispatch reserves `4096 - required` metadata units, sharing the same 4096
+allowance with the recorded payload work. Full-size bool ARET reserves zero
+additional metadata units. No payload, Fuel, counter or private plan changes
+on partial-room retries. The payload receipt records actual successful
+validation, before adoption/restoration/publication; it is not a successful-RET
+receipt. Later final checks can still fail.
+
+Four native catalog groups and eleven direct preparation/restoration groups pass
+development/O2. They cover nested/shared masks, exact 128-byte selection,
+unused-slot/cycle rejection, all previously covered result modes, partial-room
+deferral, unchanged original state, final-only publication and late frame errors.
+Invalid RET65 selection/reference-frame preconditions
+retain native zero offsets; a missing nominal record retains Bounds code 14.
+The heap Core retains preparation as transaction field 9, beside the CALL
+context at field 8; only exact bank references cross resume boundaries. Cursor
+and Machine keep their existing sizes. Generated C shows no whole Runtime or
+large preparation/catalog values in these preparation dispatch functions;
+large constructors/initialization and cold type witnesses remain separate.
 
 The compact pending recipe then advances through snapshot/root compaction,
 authority restoration, and final frame/output publication. Phase 4 records the
 last completed return until another RET starts. Final publication consumes a
 fresh authority allowance, so a following COPY/SNAPSHOT waits for another batch.
-CALL and RET never retain separate large transaction banks.
+CALL and RET never retain separate large authority transaction banks.
 
 Pure final checks preserve ordinary/static frame-error offsets and native
 RET65/reference offsets. Synthetic late bad-frame tests intentionally retain
@@ -139,9 +173,10 @@ private-state difference is explicit, not valid-program Fuel parity evidence.
 
 ## Evidence and limits
 
-See the [CALL context evidence](../evidence/runtime-call-context-windows-20261109.json)
-for current context/owning integration snapshots, native images, storage and
-exact input audits. The [preceding CALL copy-plan evidence](../evidence/runtime-call-copy-plan-windows-20261109.json)
+See the [RET preparation evidence](../evidence/runtime-return-context-windows-20261109.json)
+for current catalog/context/result integration snapshots, native images, storage
+and exact input audits. The [preceding CALL context evidence](../evidence/runtime-call-context-windows-20261109.json)
+retains CALL preparation snapshots. The [preceding CALL copy-plan evidence](../evidence/runtime-call-copy-plan-windows-20261109.json)
 retains the catalog/planner snapshots. The [preceding authority evidence](../evidence/runtime-authority-metadata-windows-20261109.json)
 retains the earlier CALL/RET snapshots. Direct adapter groups compare against raw
 helpers, including partial-room deferral, frozen original state, final-only
@@ -149,8 +184,8 @@ publication and late frame errors. Actual Engine fixtures cover fixed/mixed
 quanta, exact/one-less Fuel, binary output, moves/pins, cancellation/refunds and
 SDK allocation denial on covered resumes.
 
-Still atomic or incompletely bounded: ordinary bool ARET scans, SRET catalog/layout
-preparation, raw recipe discovery, setup/proof/seal and cleanup. Bounding the
-authority kernel does not bound every CALL/RET metadata visit. Public lifecycle,
+Still atomic or incompletely bounded: raw/synchronous recipe discovery,
+setup/proof/seal and cleanup. This private CALL/RET slice does not bound every
+runtime operation or establish public R03. Public lifecycle,
 wall-clock deadlines, STOPPING/poison and the full remaining inventory stay open.
 The broader completion goal remains paused; this slice is local only.
