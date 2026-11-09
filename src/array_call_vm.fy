@@ -5,17 +5,19 @@ import errors as errors;
 import array_vm as arrays;
 import array_owners as owners;
 import array_layout as layouts;
+import array_meta as array_meta;
 import std::bytes as bytes;
 
 // Verified mixed CALLs retain their scalar charge. Array work is prepaid for
 // table staging/commit, bounded descriptor scans, alignment and payload work.
 pub fn Result<usize,errors::Error> cost(ref ir::Program p,usize target,usize offset) {
+    let ref array_meta::Catalog catalog=ref p.arrays;
     var usize total=0; var usize arg=0;
     while(arg<p.arities[target]) {
         let usize encoded=p.array_parameters[p.register_starts[target]+arg] as usize;
         if(encoded!=0) {
             let usize id=encoded-1;
-            let layouts::Array shape=switch(layouts::scalar(p.arrays.elements[id],p.arrays.lengths[id])) {
+            let layouts::Array shape=switch(layouts::scalar(catalog.elements[id],catalog.lengths[id])) {
                 case .ok(a):{a} case .err(_):{return .err(errors::make(5,offset));}
             };
             if(total==0) {total=128;}

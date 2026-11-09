@@ -41,6 +41,18 @@ arity, supplied captures, Held ordering, Fuel boundaries and unchanged inputs on
 partial-room deferral (`build/call-owned-work/{development,release}/receipt.json`).
 This prerequisite is not yet connected to the owning context adapter below.
 
+`call_argument_work` similarly admits one fixed header/preprice stage and one
+Static/reference argument per stage. Generic arguments prepay before source
+authentication; Static arguments authenticate before payment, including the
+positive zero-argument price. One Runtime argument can inspect the sixteen-slot
+pool and its fixed owner table, or locate one returned Held receipt; it never
+reads payload bytes. Five native groups pass development/O2 against the raw
+argument helpers, including image/Runtime/Input/returned sources, full arity,
+exact/one-less Fuel, late errors and partial-room deferral
+(`build/call-argument-work/{development,release}/receipt.json`). Canonical array
+CALL cost lookup now borrows its exact catalog instead of copying it for each
+scalar field read. The context coordinator remains to be connected.
+
 1. Prepare the invocation context once, outside the authority bound.
 2. Reserve a snapshot stage, then reconstruct authority over separate stages.
 3. Build the copy recipe in fresh 4096-unit stages: initialize/inspect the
