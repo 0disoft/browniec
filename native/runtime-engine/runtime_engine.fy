@@ -271,6 +271,16 @@ pub fn Result<metadata_budget::State,Error> authority_metadata_progress(ref Engi
     if(vec::len<machines::Machine>(ref saved.pending)!=1){return .err(error(7));}
     return .ok(machines::observe(vec::at<machines::Machine>(ref saved.pending,0)).cursor.metadata);
 }
+pub fn Result<usize,Error> lifecycle_phase(ref Engine e,usize instance){
+    let u32 status=unsafe{control_access_raw(e as ptr void)};
+    if(status!=0){return .err(error(status));}if(e.meta.closed){return .err(error(2));}
+    let usize ii=switch(instance_index(ref e.instances,instance)){case .ok(v):{v}case .err(s):{return .err(error(s));}};
+    if(vec::at<Instance>(ref e.instances,ii).phase!=3){return .err(error(11));}
+    let usize oi=switch(output_index(ref e.outputs,instance)){case .ok(v):{v}case .err(_):{return .err(error(7));}};
+    let ref Output saved=vec::at<Output>(ref e.outputs,oi);
+    if(vec::len<machines::Machine>(ref saved.pending)!=1){return .err(error(7));}
+    return .ok(machines::observe(vec::at<machines::Machine>(ref saved.pending,0)).lifecycle.phase);
+}
 pub fn Result<usize,Error> call_metadata_phase(ref Engine e,usize instance){
     let u32 status=unsafe{control_access_raw(e as ptr void)};
     if(status!=0){return .err(error(status));}if(e.meta.closed){return .err(error(2));}
@@ -595,7 +605,8 @@ fn u32 output_preflight_inner(ref mut Meta m,ref vec::Vec<Instance> instances,re
     let usize ii=switch(instance_index(instances,id)){case .ok(v):{v}case .err(status):{return status;}};
     let ref Instance instance=vec::at<Instance>(instances,ii);
     if(instance.phase!=2){return 11;}
-    if(!output_index(outputs,id).is_ok){return 2;}
+    let usize output_at=switch(output_index(outputs,id)){case .ok(v):{v}case .err(_):{return 2;}};
+    if(output_programs::observe(ref vec::at<Output>(outputs,output_at).run).cancelled){return 2;}
     let usize retained=instance.input_bytes+instance.output_bytes;
     return switch(prepare_payload(m,retained,retained,transport)){
         case .ok(_):{0}case .err(status):{status}
@@ -683,11 +694,8 @@ fn u32 destroy_instance_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut
     let usize pi=switch(program_index(p,current.program,false)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
     let usize pins=vec::at<Program>(p,pi).pins;if(pins==0){return failed(m,7);}
     let bool reclaim=pins==1 && vec::at<Program>(p,pi).released;
-    if(current.phase==3){
-        let usize oi=switch(output_index(outputs,id)){case .ok(x):{x}case .err(_):{return failed(m,7);}};
-        let ref mut Output saved=vec::at_mut<Output>(outputs,oi);
-        if(unsafe{cancel_output_raw(saved as ptr mut void)}!=0){return failed(m,7);}
-    }
+    // Dropping destroys the sole unpublished owner directly. No live guest
+    // metadata or external handles survive it, so semantic unwinding is unused.
     {let ref mut Program code=vec::at_mut<Program>(p,pi);code.pins=pins-1;}
     let Instance last=switch(vec::pop<Instance>(v)){case .some(x):{x}case .none:{assert(false);current}};
     if(ii<vec::len<Instance>(v)){let ref mut Instance target=vec::at_mut<Instance>(v,ii);*target=last;}
@@ -814,27 +822,33 @@ fn u32 step_output_owner(ref mut vec::Vec<machines::Machine> saved,ref mut outpu
         vec::len<pending_output::Published>(published)!=0 || vec::capacity<pending_output::Published>(published)<1){return 7;}
     {
         let ref mut machines::Machine machine=vec::at_mut<machines::Machine>(saved,0);
-        let machines::Meta progressed=switch(pending_vm::advance_pending_output(machine,code,input,quantum)){
+        let machines::Meta initial=machines::observe(machine);
+        let machines::Meta progressed=if(initial.phase>=2){initial}else{switch(pending_vm::advance_pending_output(machine,code,input,quantum)){
             case .ok(v):{v}case .err(_):{return 7;}
-        };
+        }};
         if(progressed.phase==1){
             *completed=output_programs::pending_completion(progressed.remaining);return 0;
         }
         if(progressed.phase==2){discard pending_vm::seal_pending_output_into(machine,published);}
         let machines::Meta finished=machines::observe(machine);
-        if(finished.phase!=2 && finished.phase!=3){return 7;};
+        if(finished.phase==1){*completed=output_programs::pending_completion(finished.remaining);return 0;}
+        if(finished.phase==4){*completed=output_programs::cancelled_completion(finished.remaining);}
+        else{if(finished.phase!=2 && finished.phase!=3){return 7;};
         *completed=output_programs::resumed_completion(code,published,finished.phase==2,finished.value,
-            finished.remaining,finished.failure,pending_vm::pending_staged_emits(machine));
+            finished.remaining,finished.failure,pending_vm::pending_staged_emits(machine));}
     }
     {let Option<machines::Machine> disposed=vec::pop<machines::Machine>(saved);}return 0;
 }
 fn vec::Vec<machines::Machine> compact_pending_storage(vec::Vec<machines::Machine> saved){
     if(vec::len<machines::Machine>(ref saved)!=0){return saved;}return vec::empty<machines::Machine>();
 }
+fn vec::Vec<pending_output::Published> compact_cancelled_storage(vec::Vec<pending_output::Published> saved,bool cancelled){
+    if(cancelled){return vec::empty<pending_output::Published>();}return saved;
+}
 fn u32 cancel_output_owner(ref mut vec::Vec<machines::Machine> saved){
     if(vec::len<machines::Machine>(saved)!=1){return 7;}
     return switch(pending_vm::cancel_pending_output(vec::at_mut<machines::Machine>(saved,0))){
-        case .ok(_):{0}case .err(_):{7}
+        case .ok(v):{if(v.phase==1){12}else if(v.phase==3){13}else{0}}case .err(_):{7}
     };
 }
 fn u32 step_instance_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Instance> v,
@@ -870,7 +884,7 @@ fn u32 step_instance_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::V
     let live::Plan ownership=switch(live::prepare(ref m.heap,before.input_bytes+before.output_bytes,before.input_bytes+bytes,0)){
         case .ok(v):{v}case .err(_):{return failed(m,7);}
     };
-    let Event event=Event{.kind=if(pending){4}else{if(completed.success){1}else{2}},.value=completed.value,
+    let Event event=Event{.kind=if(pending){4}else if(completed.cancelled){3}else{if(completed.success){1}else{2}},.value=completed.value,
         .diagnostic=completed.diagnostic,.remaining=completed.remaining,.fuel_known=true};
     {let ref mut Instance target=vec::at_mut<Instance>(v,ii);target.phase=if(pending){3}else{2};target.event=event;target.output_bytes=bytes;}
     commit_payload(m,ref ownership);m.event=event;return success(m,id);
@@ -904,16 +918,20 @@ fn u32 observe_inner(ref mut Meta m,ref vec::Vec<Instance> v,usize id){
     let usize ii=switch(instance_index(v,id)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
     m.event=vec::at<Instance>(v,ii).event;return success(m,id);
 }
-fn u32 cancel_inner(ref mut Meta m,ref mut vec::Vec<Instance> v,ref mut vec::Vec<Output> outputs,ref mut vec::Vec<Output> scratch,usize id){
+fn u32 cancel_inner(ref mut Meta m,ref vec::Vec<Program> p,ref mut vec::Vec<Instance> v,ref vec::Vec<BoundInput> inputs,ref mut vec::Vec<Output> outputs,ref mut vec::Vec<Output> scratch,usize id){
     let usize ii=switch(instance_index(v,id)){case .ok(x):{x}case .err(s):{return failed(m,s);}};
     let Instance before=*vec::at<Instance>(v,ii);
     if(before.phase==3){
         let usize oi=switch(output_index(outputs,id)){case .ok(x):{x}case .err(_):{return failed(m,7);}};
         // Drain canonical private metadata and discard any staged prefix before
         // releasing its sole owner; no guest effects are replayed or rolled back.
-        {let ref mut Output saved=vec::at_mut<Output>(outputs,oi);
-            if(unsafe{cancel_output_raw(saved as ptr mut void)}!=0){return failed(m,7);}
-        }
+        var u32 status=0;
+        {let ref mut Output saved=vec::at_mut<Output>(outputs,oi);status=unsafe{cancel_output_raw(saved as ptr mut void)};}
+        if(status==12){m.event=before.event;return success(m,id);}
+        // A prior failure wins. Finalize it through the same Program diagnostic
+        // and retained-output path as step, even if the caller repeats cancel.
+        if(status==13){return step_instance_inner(m,p,v,inputs,outputs,id,1);}
+        if(status!=0){return failed(m,7);}
         remove_output(outputs,scratch,id);
         assert(live::release(ref mut m.heap,before.output_bytes).is_ok);
         let usize retained=live::observe(ref m.heap).current;
@@ -944,7 +962,7 @@ fn u32 dispatch_inner(ref mut Meta m,ref mut vec::Vec<Program> p,ref mut vec::Ve
     if(operation==4){return close_inner(m,p,v,inputs,outputs);}
     if(operation==5){return execute_inner(m,p,v,inputs,outputs,id);}
     if(operation==6){return observe_inner(m,v,id);}
-    if(operation==7){return cancel_inner(m,v,outputs,output_scratch,id);}
+    if(operation==7){return cancel_inner(m,p,v,inputs,outputs,output_scratch,id);}
     if(operation==8){return inspect_inner(m,p,v);}
     if(operation==9){return prepare_instance_inner(m,p,v,inputs,outputs,id);}
     if(operation==10){return step_instance_inner(m,p,v,inputs,outputs,id,argument);}
@@ -993,6 +1011,7 @@ fn void retain_output_bindings(ref input_bytes::Snapshot snapshot){
     unsafe{binding_raw(31)};discard step_output_owner(ref mut saved,ref mut completed,ref mut published,ref kept,snapshot,0);
     unsafe{binding_raw(33)};discard cancel_output_owner(ref mut saved);
     unsafe{binding_raw(32)};let vec::Vec<machines::Machine> compacted=compact_pending_storage(saved);
+    unsafe{binding_raw(36)};let vec::Vec<pending_output::Published> cleared=compact_cancelled_storage(published,false);
 }
 fn void retain_input_binding(){
     let modules::Index index=switch(layout_index(b"module layout;pub fn i32 main(ref u8[] data){return 0;}")){case .ok(v):{v}case .err(_):{assert(false);return;}};

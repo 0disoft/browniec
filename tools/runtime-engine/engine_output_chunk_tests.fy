@@ -1,5 +1,6 @@
 module engine_output_chunk_tests;
 import runtime_engine as engine;
+import engine_lifecycle_tests as lifecycle;
 import runtime_live_memory as live;
 import runtime_input as inputs;
 import module_output_program as programs;
@@ -107,8 +108,27 @@ fn Result<engine::Output,u8> synchronous(ref mut engine::Engine e,usize p,ref u8
     let engine::Output o=take(e,i)?;same_event(done,completion(ref o));destroy(e,i);return .ok(o);
 }
 fn void prepare(ref mut engine::Engine e,usize i){
-    assert(event(engine::prepare_instance(e,i)).kind==4);let copy::State c=progress(e,i);
+    assert(event(engine::prepare_instance(e,i)).kind==4);lifecycle::warm(e,i);let copy::State c=progress(e,i);
     assert(!c.active && c.total==0 && c.last==0 && c.copied==0);
+}
+// Align the independent owning-Machine oracle at the same guest boundary.
+fn void warm_oracle(ref mut machine::Machine oracle,ref programs::Program code,ref inputs::Snapshot input){
+    var usize n=0;
+    while(machine::observe(oracle).lifecycle.phase<5 && n<8192){
+        let machine::Meta before=machine::observe(oracle);let Heap h=heap();
+        let usize attempts=unsafe{probe_attempts()};unsafe{bc_runtime_engine_test_fail(0)};
+        let Result<machine::Meta,errors::Error> result=engine::advance_pending_output(oracle,code,input,1);
+        unsafe{bc_runtime_engine_test_fail(-1)};
+        let machine::Meta after=switch(result){case .ok(v):{v}case .err(_):{assert(false);return;}};
+        assert(unsafe{probe_attempts()}==attempts);same_heap(ref h);
+        assert(after.phase==1 && after.lifecycle.phase>=before.lifecycle.phase && after.lifecycle.phase<=5);
+        assert(after.cursor.metadata.total>=before.cursor.metadata.total &&
+            after.cursor.metadata.total-before.cursor.metadata.total==after.cursor.metadata.last && after.cursor.metadata.last<=4096);
+        if(before.lifecycle.phase<4){assert(after.remaining==before.remaining);}
+        else{assert(after.lifecycle.phase==5 && after.remaining<before.remaining);}
+        n+=1;
+    }
+    assert(machine::observe(oracle).lifecycle.phase==5);
 }
 // Deny even the first SDK allocation on every resume, including terminal seal.
 fn engine::Event tick(ref mut engine::Engine e,usize i,usize quantum){
@@ -171,6 +191,7 @@ fn Result<usize,u8> fixed_mixed_quanta_fuel_and_cursor_parity(){
         var machine::Machine oracle=switch(engine::prepare_pending_output(ref code,ref input,16000000,8193,true)){
             case .ok(v):{v}case .err(_):{return .err(10);}
         };
+        warm_oracle(ref mut oracle,ref code,ref input);
         let usize i=bound(ref mut e,p,bytes::view(ref data),16000000,8193)?;prepare(ref mut e,i);
         var engine::Event s=event(engine::observe(ref mut e,i));var usize calls=0;var bool reset=false;var bool byte_yield=false;
         while(s.kind==4){
@@ -240,7 +261,7 @@ fn Result<usize,u8> mid_copy_cancel_hides_prefix_and_refunds(){
     let engine::Event running=tick(ref mut e,i,4096);assert(running.kind==4);
     let copy::State c=progress(ref e,i);assert(c.active && c.total==4096 && c.copied==4090 && c.length==16385);
     rejected_take(ref mut e,i,11);let usize attempts=unsafe{probe_attempts()};
-    let engine::Event stopped=event(engine::cancel_ready(ref mut e,i));
+    let engine::Event stopped=lifecycle::stop(ref mut e,i);
     assert(stopped.kind==3 && stopped.value==0 && stopped.fuel_known && stopped.remaining==running.remaining);
     assert(stopped.diagnostic.code.kind==0);same_heap(ref ready);ledger(ref e,input);
     rejected_progress(ref e,i,11);rejected_take(ref mut e,i,2);

@@ -1,5 +1,6 @@
 module engine_array_copy_tests;
 import runtime_engine as engine;
+import engine_lifecycle_tests as lifecycle;
 import runtime_live_memory as live;
 import runtime_input as inputs;
 import module_output_program as programs;
@@ -112,7 +113,7 @@ fn Result<engine::Output,u8> synchronous(ref mut engine::Engine e,usize p,ref u8
     let engine::Output o=take(e,i)?;same_event(done,completion(ref o));destroy(e,i);return .ok(o);
 }
 fn void prepare(ref mut engine::Engine e,usize i){
-    assert(event(engine::prepare_instance(e,i)).kind==4);
+    assert(event(engine::prepare_instance(e,i)).kind==4);lifecycle::warm(e,i);
     let fill::State a=progress(e,i);let copy::State o=output_progress(e,i);
     assert(!a.active && a.written==0 && a.total==0 && a.last==0);
     assert(!o.active && o.copied==0 && o.total==0 && o.last==0);
@@ -320,9 +321,8 @@ fn Result<usize,u8> partial_copy_and_assignment_cancel_refund(){
         prepare(ref mut e,i);let fill::State a=seek(ref mut e,i,ops[variant]);
         assert(a.written==4096 && a.end-a.base==32768 && output_progress(ref e,i).total==6);
         let engine::Event running=event(engine::observe(ref mut e,i));rejected_take(ref mut e,i,11);
-        let usize attempts=unsafe{probe_attempts()};unsafe{bc_runtime_engine_test_fail(0)};
-        let Result<engine::Event,engine::Error> r=engine::cancel_ready(ref mut e,i);unsafe{bc_runtime_engine_test_fail(-1)};
-        let engine::Event stopped=event(r);assert(unsafe{probe_attempts()}==attempts);
+        let usize attempts=unsafe{probe_attempts()};
+        let engine::Event stopped=lifecycle::stop(ref mut e,i);assert(unsafe{probe_attempts()}==attempts);
         assert(stopped.kind==3 && stopped.value==0 && stopped.fuel_known && stopped.remaining==running.remaining);
         assert(stopped.diagnostic.code.kind==0);same_heap(ref ready);ledger(ref e,input);
         rejected_progress(ref e,i,11);rejected_take(ref mut e,i,2);

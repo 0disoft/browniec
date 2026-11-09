@@ -1,5 +1,6 @@
 module engine_array_fill_tests;
 import runtime_engine as engine;
+import engine_lifecycle_tests as lifecycle;
 import runtime_live_memory as live;
 import runtime_input as inputs;
 import module_output_program as programs;
@@ -110,7 +111,7 @@ fn Result<engine::Output,u8> synchronous(ref mut engine::Engine e,usize p,ref u8
     let engine::Output o=take(e,i)?;same_event(done,completion(ref o));destroy(e,i);return .ok(o);
 }
 fn void prepare(ref mut engine::Engine e,usize i){
-    assert(event(engine::prepare_instance(e,i)).kind==4);
+    assert(event(engine::prepare_instance(e,i)).kind==4);lifecycle::warm(e,i);
     let fill::State a=progress(e,i);let copy::State o=output_progress(e,i);
     assert(!a.active && a.written==0 && a.total==0 && a.last==0);
     assert(!o.active && o.copied==0 && o.total==0 && o.last==0);
@@ -249,9 +250,8 @@ fn Result<usize,u8> partial_creation_and_fill_cancel_refund(){
         prepare(ref mut e,i);let fill::State a=seek(ref mut e,i,ops[variant]);
         assert(a.written==4096 && a.end-a.base==32768 && output_progress(ref e,i).total==6);
         let engine::Event running=event(engine::observe(ref mut e,i));rejected_take(ref mut e,i,11);
-        let usize attempts=unsafe{probe_attempts()};unsafe{bc_runtime_engine_test_fail(0)};
-        let Result<engine::Event,engine::Error> r=engine::cancel_ready(ref mut e,i);unsafe{bc_runtime_engine_test_fail(-1)};
-        let engine::Event stopped=event(r);assert(unsafe{probe_attempts()}==attempts);
+        let usize attempts=unsafe{probe_attempts()};
+        let engine::Event stopped=lifecycle::stop(ref mut e,i);assert(unsafe{probe_attempts()}==attempts);
         assert(stopped.kind==3 && stopped.value==0 && stopped.fuel_known && stopped.remaining==running.remaining);
         assert(stopped.diagnostic.code.kind==0);same_heap(ref ready);ledger(ref e,input);
         rejected_progress(ref e,i,11);rejected_take(ref mut e,i,2);
@@ -318,7 +318,7 @@ fn Result<usize,u8> exact_fuel_and_one_less_before_each_opcode(){
             let usize budget=admission-short;let engine::Output baseline=synchronous(ref mut e,p,b"!",budget,1)?;
             let usize i=bound(ref mut e,p,b"!",budget,1)?;prepare(ref mut e,i);
             var engine::Event s=event(engine::observe(ref mut e,i));var usize total=0;var usize resumes=0;
-            while(s.kind==4){assert(resumes<128);s=tick(ref mut e,i,1);resumes+=1;
+            while(s.kind==4){assert(resumes<512);s=tick(ref mut e,i,1);resumes+=1;
                 if(s.kind==4){let fill::State a=progress(ref e,i);total=a.total;
                     if(short==1){assert(a.total<=target*16384 && !(a.active && a.op==ops[target]));}
                     else if(a.total>target*16384){assert(s.remaining==0);}

@@ -163,7 +163,7 @@ fn void no_replay(ref mut engine::Engine e,usize i,engine::Event pending){
     assert(unsafe{probe_attempts()}==attempts);same_heap(ref before);unchanged(e,ref l,ref m);
 }
 
-// Group 1: exact post-setup/entry Fuel matches the existing saved-VM carrier.
+// Group 1: pre-entry Fuel matches the saved-VM carrier with setup still pending.
 // The first guest statements would emit and trap; preparation must do neither.
 pub fn Result<usize,u8> pending_without_dispatch_and_replay(){
     let ref u8[] source=b"module app;pub fn i32 chosen(){output::emit(ref b\"prefix\");return 42/0;}";

@@ -48,6 +48,21 @@ pub fn void initialize(ref mut Frames bindings,ref runtime::State state){
         bindings.destinations[i]=128;bindings.identities[i]=128;bindings.prepared[i]=false;i+=1;}
     bindings.records=records::empty();bindings.loans=loans::empty();bindings.frame=0;
 }
+// Already-zero native storage; split the nonzero sentinels into small stages.
+pub fn void initialize_chunk(ref mut Frames bindings,usize chunk){
+    assert(chunk<17);let slices::Ticket missing=none();
+    if(chunk<8){var usize i=chunk*32;let usize end=i+32;
+        let owners::View view=owners::View{.root=owners::Token{.slot=16,.generation=0},.element=0,.length=0,.start=0,.end=0};
+        while(i<end){bindings.captures[i]=runtime::capture(missing,false,false);
+            bindings.views[i]=view;bindings.issued[i]=missing;i+=1;}return;
+    }
+    if(chunk<16){var usize i=(chunk-8)*64;let usize end=i+64;
+        while(i<end){bindings.before[i]=missing;bindings.sites[i]=missing;i+=1;}return;
+    }
+    var usize i=0;while(i<32){bindings.results[i]=missing;bindings.functions[i]=16;
+        bindings.maps[i]=32;bindings.destinations[i]=128;bindings.identities[i]=128;i+=1;}
+    bindings.records=records::empty();bindings.loans=loans::empty();bindings.frame=0;
+}
 // The driver checks bounds before runtime::enter. Failure never publishes a
 // result; its invocation cleanup drains any entered native transaction.
 pub fn Result<usize,errors::Error> can_push(ref ir::Program p,ref Frames bindings,

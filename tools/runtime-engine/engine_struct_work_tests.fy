@@ -1,5 +1,6 @@
 module engine_struct_work_tests;
 import runtime_engine as engine;
+import engine_lifecycle_tests as lifecycle;
 import runtime_live_memory as live;
 import runtime_input as inputs;
 import module_output_program as programs;
@@ -61,7 +62,7 @@ fn void destroy(ref mut engine::Engine e,usize i){assert(id(engine::destroy_inst
 fn void close(ref mut engine::Engine e,usize p){assert(id(engine::release_program(e,p))==p);assert(id(engine::destroy(e))==0);}
 fn Result<engine::Output,u8> synchronous(ref mut engine::Engine e,usize p,ref u8[] data,usize fuel){
     let usize i=bound(e,p,data,fuel)?;let engine::Event done=event(engine::execute_once(e,i));let engine::Output o=take(e,i)?;same_event(done,completion(ref o));destroy(e,i);return .ok(o);}
-fn void prepare(ref mut engine::Engine e,usize i){assert(event(engine::prepare_instance(e,i)).kind==4);let fill::State a=progress(e,i);let copy::State o=output(e,i);
+fn void prepare(ref mut engine::Engine e,usize i){assert(event(engine::prepare_instance(e,i)).kind==4);lifecycle::warm(e,i);let fill::State a=progress(e,i);let copy::State o=output(e,i);
     assert(!a.active && a.written==0 && a.total==0 && a.last==0 && !o.active && o.total==0 && o.last==0);}
 fn bool record(u8 op){return op==41 || op==42 || op==46 || op==47 || op==48 || op==49;}
 fn usize extent(fill::State a){return a.end-if(a.op==41 || a.op==42){a.mark}else{a.base};}
@@ -162,8 +163,8 @@ fn Result<usize,u8> fixed_and_mixed_quanta_binary_parity(){var usize mode=0;whil
 fn Result<usize,u8> cancel_staging_and_partial_commit_refunds(){var usize mode=0;while(mode<9){let bytes::Buffer text=source(mode)?;var engine::Engine e=created()?;let usize p=compiled(ref mut e,bytes::view(ref text))?;
     var usize written=0;while(written<2){let bytes::Buffer data=binary(4096-initial(mode)-staging(mode)-written)?;let usize i=bound(ref mut e,p,bytes::view(ref data),16000000)?;
         let usize retained=memory(ref e).current;let Heap ready=heap();prepare(ref mut e,i);assert(tick(ref mut e,i,4096).kind==4);let fill::State a=progress(ref e,i);assert(a.active && a.written==written);shape(a,mode);
-        let engine::Event running=event(engine::observe(ref mut e,i));rejected_take(ref mut e,i,11);let usize attempts=unsafe{probe_attempts()};unsafe{bc_runtime_engine_test_fail(0)};
-        let Result<engine::Event,engine::Error> r=engine::cancel_ready(ref mut e,i);unsafe{bc_runtime_engine_test_fail(-1)};let engine::Event stopped=event(r);
+        let engine::Event running=event(engine::observe(ref mut e,i));rejected_take(ref mut e,i,11);let usize attempts=unsafe{probe_attempts()};
+        let engine::Event stopped=lifecycle::stop(ref mut e,i);
         assert(unsafe{probe_attempts()}==attempts && stopped.kind==3 && stopped.value==0 && stopped.fuel_known && stopped.remaining==running.remaining && stopped.diagnostic.code.kind==0);
         same_heap(ready);ledger(ref e,retained);rejected_progress(ref e,i,11);rejected_take(ref mut e,i,2);same_event(stopped,event(engine::cancel_ready(ref mut e,i)));same_event(stopped,event(engine::observe(ref mut e,i)));same_heap(ready);
         destroy(ref mut e,i);ledger(ref e,0);rejected_progress(ref e,i,2);written+=1;
@@ -182,6 +183,7 @@ fn Result<usize,u8> exact_and_one_less_fuel_zero_continuation(){var usize mode=0
         if(short==0){assert(s.kind==4 && s.remaining==0);let fill::State a=progress(ref e,i);assert(a.active && a.written==1 && a.total==initial(mode)+staging(mode)+1);shape(a,mode);
             assert(tick(ref mut e,i,1).kind==4);let fill::State b=progress(ref e,i);same_recipe(a,b);assert(!b.active && b.written==destination_bytes(mode) && b.total==initial(mode)+staging(mode)+destination_bytes(mode));
             assert(event(engine::observe(ref mut e,i)).remaining==0);s=finish(ref mut e,i,1);}
+        if(s.kind==4){s=finish(ref mut e,i,1);}
         assert(s.kind==2 && s.diagnostic.code.kind==8 && s.diagnostic.code.offset!=0);same_event(s,completion(ref baseline));let engine::Output o=take(ref mut e,i)?;same_output(ref o,ref baseline);
         assert(!engine::output_available(ref o) && engine::output_view(ref o).len==0);destroy(ref mut e,i);ledger(ref e,0);short+=1;
     }close(ref mut e,p);mode+=1;}return .ok(0);}

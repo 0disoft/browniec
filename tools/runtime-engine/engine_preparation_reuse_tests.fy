@@ -71,7 +71,7 @@ pub fn Result<usize,u8> rejected_compiles_and_pinned_slot_do_not_publish_or_reus
     assert(event(engine::prepare_instance(ref mut moved,i)).kind==4);proofs(1);
     var engine::Event state=event(engine::observe(ref mut moved,i));var usize ticks=0;
     while(state.kind==4){
-        assert(ticks<128);state=event(engine::step_instance(ref mut moved,i,1));proofs(1);ticks+=1;
+        assert(ticks<2048);state=event(engine::step_instance(ref mut moved,i,1));proofs(1);ticks+=1;
     }
     assert(state.kind==1 && state.value==42 && state.fuel_known && state.diagnostic.code.kind==0);
     {

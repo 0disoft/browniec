@@ -59,6 +59,23 @@ c['executionType']=re.search(r'\b(fy_resource_\d+) f_1;',output_layout).group(1)
 def field_type(owner,index):
  layout=re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(owner)+';$',t,re.M).group()
  return re.search(r'\b(fy_(?:struct|resource)_\d+) f_'+str(index)+r';',layout).group(1)
+
+# Resolve resource roles from typed projections, never previous numeric IDs.
+def vector_element(vector):
+ matches=set(re.findall(r'^static const (fy_resource_\d+) \* fy_fn_\d+\(const '+re.escape(vector)+r' \* [^,]+, uintptr_t [^;]+;',t,re.M))
+ assert len(matches)==1,(vector,matches)
+ return matches.pop()
+c['sourceIndexType']=field_type(c['entryTypes']['ordinary'],0)
+c['sourceIndexVectorType']=field_type(c['sourceIndexType'],0)
+c['boundInputType']=vector_element(arg(10,3))
+for variant,index in [('ordinary',3),('input',4),('output',5)]:
+ program=vector_element(field_type(c['programType'],index))
+ c['programVariants'][variant]={'program':program,'stored':vector_element(field_type(program,0))}
+engine_candidates=[]
+for layout,name in re.findall(r'^(typedef struct \{\n[^}]*\} (fy_resource_\d+);)$',t,re.M):
+ if re.search(r'\b'+re.escape(arg(1,0))+r' f_0;',layout) and re.search(r'\b'+re.escape(c['programVectorType'])+r' f_1;',layout):engine_candidates.append(name)
+assert len(engine_candidates)==1,engine_candidates
+c['engineType']=engine_candidates[0]
 c['pendingMetaType']=arg(26,2)
 c['cursorType']=field_type(c['pendingMetaType'],0)
 c['outputCopyType']=field_type(c['cursorType'],2)
@@ -76,6 +93,17 @@ c['returnCatalogWorkType']=field_type(c['returnRecordPlanType'],0)
 c['callCopyPlanType']=field_type(c['coreType'],8)
 assert arg(26,11)==c['callCopyPlanType']
 c['returnMetadataType']=field_type(c['cursorType'],8)
+c['lifecycleType']=field_type(c['pendingMetaType'],6)
+c['setupWorkType']=field_type(c['lifecycleType'],0)
+c['preparationWorkType']=field_type(c['lifecycleType'],1)
+c['cleanupWorkType']=field_type(c['lifecycleType'],2)
+c['inputWindowsType']=field_type(c['machineType'],5)
+c['storageBufferType']=field_type(c['machineType'],0)
+assert field_type(c['inputWindowsType'],0)==c['storageBufferType']
+c['runtimeMetadataType']=field_type(c['callMetadataType'],1)
+c['cleanupRuntimeType']=field_type(c['runtimeMetadataType'],0)
+assert arg(27,7)==c['runtimeMetadataType'] and arg(34,2)==c['pendingMetaType'] and arg(35,2)==c['coreType']
+
 assert arg(26,10)==c['callMetadataType']
 assert re.fullmatch(r'\s*'+re.escape(c['callMetadataType'])+r'\s*\*\s*fy_l_\d+\s*',decl(26).split('(',1)[1].split(',')[10])
 c['transactionType']=field_type(c['machineType'],6)
@@ -95,7 +123,10 @@ types['callCopyPlanType']=c['callCopyPlanType']
 types['returnMetadataType']=c['returnMetadataType']
 types['capturePlanType']=c['capturePlanType']
 c['reviewedLayouts']={k:re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(v)+';$',t,re.M).group() for k,v in types.items()}
-assert len(c['bindings'])==33 and len(c['reviewedLayouts'])==43
+assert len(c['bindings'])==36 and len(c['reviewedLayouts'])==43
+for key in ['lifecycleType','setupWorkType','preparationWorkType','cleanupWorkType','runtimeMetadataType','cleanupRuntimeType','inputWindowsType','storageBufferType']:
+ c['reviewedLayouts'][key]=re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(c[key])+';$',t,re.M).group()
+assert len(c['reviewedLayouts'])==51
 c['transportSha256']=hashlib.sha256(generated).hexdigest()
 c['sourceInputs']=[dict(path=p.relative_to(root).as_posix(),sha256=hashlib.sha256(p.read_bytes()).hexdigest()) for p in sources]
 raw=json.dumps(c,indent=2)+'\n'

@@ -10,6 +10,7 @@ import source_error as diagnostics;
 import runtime_input as inputs;
 import runtime_output as output;
 import source_error as source_error;
+import errors as errors;
 import fuel as meter;
 import std::bytes as bytes;
 import std::num as num;
@@ -78,7 +79,10 @@ fn Result<machine::Machine,u8> prepared(ref programs::Program p,ref inputs::Snap
     assert(initial.stats.calls==0 && initial.stats.yields==0 && initial.stats.dispatched==0);
     assert(initial.stats.last==0 && initial.stats.maximum==0);
     assert(machine::core_heap_bytes(ref m,engine::pending_core_stride())==engine::pending_core_stride());
-    rejected_seal(ref mut m);return .ok(m);
+    rejected_seal(ref mut m);
+    var usize setup_calls=0;while(machine::observe(ref m).lifecycle.phase<5){assert(setup_calls<2048);
+        let machine::Meta step=tick(ref mut m,p,input,1)?;assert(step.phase==1);setup_calls+=1;}
+    return .ok(m);
 }
 // Exactly one native call returns to its caller; no hidden completion loop.
 fn Result<machine::Meta,u8> tick(ref mut machine::Machine m,ref programs::Program p,ref inputs::Snapshot input,usize quantum){
@@ -115,9 +119,15 @@ fn Result<machine::Meta,u8> finish(ref mut machine::Machine m,ref programs::Prog
     return .ok(state);
 }
 fn Result<machine::Meta,u8> cancelled(ref mut machine::Machine m){
-    return switch(engine::cancel_pending_output(m)){
-        case .ok(v):{same_meta(v,machine::observe(m));.ok(v)}case .err(_):{.err(13)}
-    };
+    var usize calls=0;var machine::Meta state=machine::observe(m);
+    while(true){assert(calls<512);let usize fuel=state.remaining;let usize attempts=unsafe{probe_attempts()};
+        unsafe{bc_runtime_engine_test_fail(0)};
+        let Result<machine::Meta,errors::Error> result=engine::cancel_pending_output(m);
+        unsafe{bc_runtime_engine_test_fail(-1)};
+        state=switch(result){case .ok(v):{v}case .err(_):{return .err(13);}};
+        assert(state.remaining==fuel && unsafe{probe_attempts()}==attempts);calls+=1;if(state.phase!=1){break;}
+    }
+    same_meta(state,machine::observe(m));return .ok(state);
 }
 fn Result<usize,u8> publish_matches(ref mut machine::Machine m,ref programs::Execution baseline,ref u8[] expected,usize emits){
     let programs::Completion c=programs::observe(baseline);let machine::Meta done=machine::observe(m);
@@ -145,13 +155,13 @@ fn Result<usize,u8> success(ref programs::Program p,ref inputs::Snapshot input,u
     let Heap stored=heap();
     {
         var machine::Machine first=prepared(p,input,16000000,limit)?;
-        let machine::Meta one=tick(ref mut first,p,input,1)?;
-        assert(one.phase==1 && one.stats.calls==1 && one.stats.dispatched==1);
+        let machine::Meta prefix=machine::observe(ref first);let machine::Meta one=tick(ref mut first,p,input,1)?;
+        assert(one.phase==1 && one.stats.calls==prefix.stats.calls+1 && one.stats.dispatched==prefix.stats.dispatched+1);
         // Move only the carrier; Program and Snapshot remain the same owners.
         let machine::Machine transfer=first;
         var machine::Machine active=moved_step(transfer,p,input)?;
         let machine::Meta two=machine::observe(ref active);
-        assert(two.stats.calls==2 && two.stats.dispatched==2);rejected_seal(ref mut active);
+        assert(two.stats.calls==prefix.stats.calls+2 && two.stats.dispatched==prefix.stats.dispatched+2);rejected_seal(ref mut active);
         let machine::Meta terminal=finish(ref mut active,p,input)?;
         assert(terminal.phase==2 && terminal.stats.yields>1);
         let usize checked=publish_matches(ref mut active,ref baseline,expected,emits)?;
@@ -262,9 +272,9 @@ fn Result<usize,u8> cancellation_and_pending_drop(){
         let Heap stored=heap();
         {
             var machine::Machine m=prepared(ref p,ref input,16000000,6)?;
-            var usize i=0;while(i<64){let machine::Meta progress=tick(ref mut m,ref p,ref input,1)?;assert(progress.phase==1);i+=1;}
+            let usize prefix=machine::observe(ref m).stats.dispatched;var usize i=0;while(i<64){let machine::Meta progress=tick(ref mut m,ref p,ref input,1)?;assert(progress.phase==1);i+=1;}
             let machine::Meta pending=machine::observe(ref m);
-            assert(pending.stats.dispatched==64 && pending.stats.yields==64);rejected_seal(ref mut m);
+            assert(pending.stats.dispatched==prefix+64 && pending.stats.yields==prefix+64);rejected_seal(ref mut m);
             if(pass==0){
                 let machine::Meta stopped=cancelled(ref mut m)?;
                 assert(stopped.phase==4 && !stopped.cursor.active && stopped.remaining==pending.remaining);

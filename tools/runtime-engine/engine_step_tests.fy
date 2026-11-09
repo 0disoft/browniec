@@ -13,6 +13,7 @@ import source_error as diagnostics;
 import errors as errors;
 import fuel as meter;
 import std::bytes as bytes;
+import engine_lifecycle_tests as lifecycle;
 
 // Engine.step fixtures only. The parent owns native transport and integration.
 unsafe extern C fn usize probe_live();
@@ -255,6 +256,7 @@ fn Result<usize,u8> interleaved_moves_and_detached_output(){
     let engine::Event pb=prepare(ref mut original,b,p,7);
     let engine::Event pc=prepare(ref mut original,c,p,9);
     release(ref mut original,p);var engine::Engine moved=original;counts(ref mut moved,1,3,3);
+    lifecycle::warm(ref mut moved,a);
     assert(tick(ref mut moved,a,1).kind==4);same_event(pb,event(engine::observe(ref mut moved,b)));
     assert(tick(ref mut moved,b,2).kind==4);same_event(pc,event(engine::observe(ref mut moved,c)));
     assert(tick(ref mut moved,c,3).kind==4);let engine::Event ea=event(engine::observe(ref mut moved,a));
@@ -281,10 +283,11 @@ fn Result<usize,u8> running_cancel_refund_and_first_cause(){
     var engine::Engine e=created()?;let usize p=compiled(ref mut e,source,true)?;
     let usize i=bound(ref mut e,p,b"prefix",16000000,12)?;
     let usize input=instance(ref e).current;let Heap ready=heap();let engine::Event pending=prepare(ref mut e,i,p,12);
+    lifecycle::warm(ref mut e,i);
     var usize n=0;while(n<64){assert(tick(ref mut e,i,1).kind==4);n+=1;}
     let engine::Event running=event(engine::observe(ref mut e,i));assert(running.remaining<pending.remaining);
     rejected_take(engine::take_output(ref mut e,i),11);let usize attempts=unsafe{probe_attempts()};
-    let engine::Event stopped=event(engine::cancel_ready(ref mut e,i));
+    let engine::Event stopped=lifecycle::stop(ref mut e,i);
     assert(stopped.kind==3 && stopped.value==0 && stopped.fuel_known && stopped.remaining==running.remaining);
     assert(stopped.diagnostic.code.kind==0 && unsafe{probe_attempts()}==attempts);
     same_heap(ref ready);ledger(ref e,input);frozen(ref mut e,i,stopped);rejected_take(engine::take_output(ref mut e,i),2);
@@ -298,7 +301,19 @@ fn Result<engine::Event,u8> parity(ref u8[] source,ref u8[] data,usize budget,us
     assert(engine::output_completion(ref baseline).emits==emits);
     let usize i=bound(ref mut e,p,data,budget,limit)?;let usize input=instance(ref e).current;
     let Heap ready=heap();let engine::Event pending=prepare(ref mut e,i,p,limit);
-    assert(pending.remaining<=budget);let engine::Event done=finish(ref mut e,i,quantum);
+    assert(pending.remaining<=budget);var engine::Event done=pending;
+    if(kind==2){
+        // Once failure is latched, repeated cancellation must preserve its
+        // diagnostic and Fuel and finish cleanup, rather than spin Pending.
+        var usize visits=0;while(done.kind==4){assert(visits<8192);
+            let usize phase=id(engine::lifecycle_phase(ref e,i));
+            if(phase>=7){let usize fuel=done.remaining;let usize attempts=unsafe{probe_attempts()};
+                unsafe{bc_runtime_engine_test_fail(0)};let Result<engine::Event,engine::Error> stopped=engine::cancel_ready(ref mut e,i);
+                unsafe{bc_runtime_engine_test_fail(-1)};done=event(stopped);
+                assert(done.remaining==fuel && unsafe{probe_attempts()}==attempts);
+            }else{done=tick(ref mut e,i,quantum);}visits+=1;
+        }
+    }else{done=finish(ref mut e,i,quantum);}
     same_event(done,completion(ref baseline));sealed_balance(ref e,ref ready,input,kind==1,limit);
     frozen(ref mut e,i,done);let engine::Output result=take(ref mut e,i)?;
     ledger(ref e,input);output_matches(ref result,ref baseline);rejected_take(engine::take_output(ref mut e,i),2);
@@ -343,6 +358,7 @@ fn Result<usize,u8> empty_output_and_running_drop(){
         let usize p=compiled(ref mut e,b"module app;pub fn i32 chosen(){output::emit(ref b\"prefix\");var i32 n=0;while(n<64){n+=1;}return 42;}",false)?;
         let usize i=id(engine::create_output_instance(ref mut e,p,16000000,12,true));
         let engine::Event pending=prepare(ref mut e,i,p,12);release(ref mut e,p);
+        lifecycle::warm(ref mut e,i);
         var usize n=0;while(n<32){assert(tick(ref mut e,i,1).kind==4);n+=1;}
         assert(event(engine::observe(ref mut e,i)).remaining<pending.remaining);counts(ref mut e,1,1,1);
     }

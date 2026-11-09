@@ -146,7 +146,7 @@ pub fn Result<usize,u8> owning_program_reuses_preparation_and_matches_independen
         proofs(1);var machine::Meta state=machine::observe(ref pending);var usize ticks=0;
         assert(state.phase==1 && state.stats.dispatched==0);
         while(state.phase==1){
-            assert(ticks<1000);state=switch(engine::advance_pending_output(ref mut pending,ref p,ref input,1)){
+            assert(ticks<2048);state=switch(engine::advance_pending_output(ref mut pending,ref p,ref input,1)){
                 case .ok(v):{v}case .err(_):{return .err(16);}
             };proofs(1);ticks+=1;
         }
@@ -225,7 +225,7 @@ pub fn Result<usize,u8> engine_instances_reuse_proof_across_release_moves_and_re
     while(n<2){
         var engine::Event state=event(engine::observe(ref mut again,owners[n]));var usize ticks=0;
         while(state.kind==4){
-            assert(ticks<1000);state=event(engine::step_instance(ref mut again,owners[n],if(n==0){1}else{7}));
+            assert(ticks<2048);state=event(engine::step_instance(ref mut again,owners[n],if(n==0){1}else{7}));
             proofs(1);ticks+=1;
         }
         {

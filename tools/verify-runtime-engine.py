@@ -191,7 +191,7 @@ def main():
                         'programVectorType', 'snapshotType', 'snapshotVectorType', 'machineType', 'coreType',
                         'executionType','pendingVectorType','completionType','publishedVectorType',
                         'pendingMetaType','cursorType','outputCopyType','transactionType','preparationType','arrayFillType','callCopyType','returnWorkType','capturePlanType',
-                        'callMetadataType','metadataBudgetType','returnMetadataType','callCopyPlanType','callContextWorkType','callArgumentWorkType','callOwnedWorkType','returnPreparationType','returnRecordPlanType','returnCatalogWorkType']}
+                        'callMetadataType','metadataBudgetType','returnMetadataType','callCopyPlanType','callContextWorkType','callArgumentWorkType','callOwnedWorkType','returnPreparationType','returnRecordPlanType','returnCatalogWorkType','lifecycleType','setupWorkType','preparationWorkType','cleanupWorkType','runtimeMetadataType','cleanupRuntimeType','inputWindowsType','storageBufferType']}
         for variant, types in contract['programVariants'].items():
             layout_types.update({variant + '_' + role: name for role, name in types.items()})
         layout_types.update({key + '_entry': name for key, name in contract['entryTypes'].items()})
@@ -202,8 +202,8 @@ def main():
         for owner,field,key in [('outputType',1,'executionType'),('outputType',2,'pendingVectorType'),
                                 ('preparationType',8,'capturePlanType'),
                                 ('executionType',0,'completionType'),('executionType',1,'publishedVectorType'),
-                                ('machineType',6,'transactionType'),('machineType',7,'pendingMetaType'),
-                                ('pendingMetaType',0,'cursorType'),('cursorType',2,'outputCopyType'),('cursorType',3,'arrayFillType'),('cursorType',4,'callCopyType'),('cursorType',5,'returnWorkType'),
+                                ('machineType',0,'storageBufferType'),('machineType',5,'inputWindowsType'),('inputWindowsType',0,'storageBufferType'),('machineType',6,'transactionType'),('machineType',7,'pendingMetaType'),
+                                ('pendingMetaType',6,'lifecycleType'),('lifecycleType',0,'setupWorkType'),('lifecycleType',1,'preparationWorkType'),('lifecycleType',2,'cleanupWorkType'),('callMetadataType',1,'runtimeMetadataType'),('runtimeMetadataType',0,'cleanupRuntimeType'),('pendingMetaType',0,'cursorType'),('cursorType',2,'outputCopyType'),('cursorType',3,'arrayFillType'),('cursorType',4,'callCopyType'),('cursorType',5,'returnWorkType'),
                                 ('cursorType',6,'metadataBudgetType'),('coreType',7,'callMetadataType'),('coreType',8,'callCopyPlanType'),('callMetadataType',8,'callContextWorkType'),('callContextWorkType',0,'callArgumentWorkType'),('callContextWorkType',1,'callOwnedWorkType'),('callMetadataType',9,'returnPreparationType'),('returnPreparationType',0,'returnRecordPlanType'),('returnRecordPlanType',0,'returnCatalogWorkType'),('cursorType',8,'returnMetadataType')]:
             member=re.search(r'\b(fy_(?:struct|resource)_\d+) f_'+str(field)+r';',contract['reviewedLayouts'][owner])
             need(member is not None and member.group(1)==contract[key],f'Output field projection differs: {owner}/{field}')
@@ -212,6 +212,12 @@ def main():
              'Pending CALL metadata argument must be a mutable pointer')
         need(re.fullmatch(r'\s*'+re.escape(contract['callCopyPlanType'])+r'\s*\*\s*fy_l_\d+\s*',advance_args[11]) is not None,
              'Pending CALL copy plan argument must be a mutable pointer')
+        for binding,argument,key in [('27',7,'runtimeMetadataType'),('34',2,'pendingMetaType'),('35',2,'coreType')]:
+            declaration=contract['reviewedDeclarations'][binding].split('(',1)[1].split(')',1)[0].split(',')[argument]
+            need(re.fullmatch(r'\s*'+re.escape(contract[key])+r'\s*\*\s*fy_l_\d+\s*',declaration) is not None,
+                 f'Lifecycle mutable projection differs: {binding}/{argument}')
+        need(re.search(r'uintptr_t f_3;',contract['reviewedLayouts']['lifecycleType']) is not None,
+             'Lifecycle dispatcher phase field differs')
         machine_meta=re.search(r'\b(fy_struct_\d+) f_7;',contract['reviewedLayouts']['machineType'])
         need(machine_meta is not None and machine_meta.group(1) in advance_args[2],
              'Pending Machine control metadata differs')
@@ -347,8 +353,8 @@ def main():
                            'Private synchronous typed transport, not public C handles or CLI lifecycle APIs',
                            'Complete Engine accounting/preallocation, OOM injection and poison containment remain',
                            'Ordinary zero-argument terminal Fuel is still marked unknown',
-                           'Owning CALL/RET authority stages share payload allowance; raw recipe scans and setup/proof/seal/cleanup still need complete bounds',
-                           'Compile proof remains atomic; no in-flight cancellation, host dispatch or OS deadline'])
+                           'Private setup/cache checks/seal/cleanup and CALL/RET stages share the allowance; whole Runtime projection/copy accounting is conservative, not an instrumented field or CPU bound',
+                           'Source compile proof and admission allocations remain atomic; no public stopping/poison, host dispatch or OS deadline'])
     except Exception as error:
         receipt.update(status='failed', error=str(error))
         raise

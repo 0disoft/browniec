@@ -1,5 +1,6 @@
 module engine_call_copy_tests;
 import runtime_engine as engine;
+import engine_lifecycle_tests as lifecycle;
 import runtime_live_memory as live;
 import runtime_input as inputs;
 import module_output_program as programs;
@@ -115,7 +116,7 @@ fn void close(ref mut engine::Engine e,usize p){assert(id(engine::release_progra
 fn Result<engine::Output,u8> synchronous(ref mut engine::Engine e,usize p,ref u8[] data,usize fuel){
     let usize i=bound(e,p,data,fuel)?;let engine::Event done=event(engine::execute_once(e,i));
     let engine::Output o=take(e,i)?;same_event(done,completion(ref o));destroy(e,i);return .ok(o);}
-fn void prepare(ref mut engine::Engine e,usize i){assert(event(engine::prepare_instance(e,i)).kind==4);
+fn void prepare(ref mut engine::Engine e,usize i){assert(event(engine::prepare_instance(e,i)).kind==4);lifecycle::warm(e,i);
     let fill::State a=array(e,i);let copy::State o=output(e,i);let calls::State c=call(e,i);
     assert(!a.active && a.total==0 && a.last==0 && !o.active && o.total==0 && o.last==0);
     assert(!c.pending && !c.active && !c.charged && c.written==0 && c.total==0 && c.last==0);}
@@ -247,9 +248,8 @@ fn Result<usize,u8> cancel_midcopy_refund_moves_and_program_release(){var engine
     same_event(saved,event(engine::observe(ref mut original,a)));same_progress(frozen,call(ref original,a));assert(id(engine::release_program(ref mut original,p))==p);
     counts(ref mut original,1,2,2);let Heap held=heap();var engine::Engine moved=original;same_heap(held);
     same_progress(frozen,call(ref moved,a));assert(tick(ref mut moved,b,1).kind==4);same_event(saved,event(engine::observe(ref mut moved,a)));
-    var engine::Engine e=moved;same_heap(held);same_progress(frozen,call(ref e,a));let usize attempts=unsafe{probe_attempts()};unsafe{bc_runtime_engine_test_fail(0)};
-    let Result<engine::Event,engine::Error> r=engine::cancel_ready(ref mut e,a);unsafe{bc_runtime_engine_test_fail(-1)};
-    let engine::Event stopped=event(r);assert(unsafe{probe_attempts()}==attempts && stopped.kind==3 && stopped.remaining==saved.remaining && stopped.fuel_known);
+    var engine::Engine e=moved;same_heap(held);same_progress(frozen,call(ref e,a));let usize attempts=unsafe{probe_attempts()};
+    let engine::Event stopped=lifecycle::stop(ref mut e,a);assert(unsafe{probe_attempts()}==attempts && stopped.kind==3 && stopped.remaining==saved.remaining && stopped.fuel_known);
     assert(stopped.value==0 && stopped.diagnostic.code.kind==0);rejected_take(ref mut e,a,2);
     rejected_progress(ref e,a,11);
     same_heap(Heap{.blocks=held.blocks-pending_blocks,.bytes=held.bytes-pending_bytes});ledger(ref e,retained+pending);

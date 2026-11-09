@@ -1,5 +1,6 @@
 module engine_return_work_tests;
 import runtime_engine as engine;
+import engine_lifecycle_tests as lifecycle;
 import runtime_live_memory as live;
 import runtime_input as inputs;
 import module_output_program as programs;
@@ -62,7 +63,7 @@ fn void destroy(ref mut engine::Engine e,usize i){assert(id(engine::destroy_inst
 fn void close(ref mut engine::Engine e,usize p){assert(id(engine::release_program(e,p))==p);assert(id(engine::destroy(e))==0);}
 fn Result<engine::Output,u8> synchronous(ref mut engine::Engine e,usize p,ref u8[] data,usize fuel){let usize i=bound(e,p,data,fuel)?;
     let engine::Event done=event(engine::execute_once(e,i));let engine::Output o=take(e,i)?;same_event(done,completion(ref o));destroy(e,i);return .ok(o);}
-fn void prepare(ref mut engine::Engine e,usize i){rejected_progress(e,i,11);assert(event(engine::prepare_instance(e,i)).kind==4);
+fn void prepare(ref mut engine::Engine e,usize i){rejected_progress(e,i,11);assert(event(engine::prepare_instance(e,i)).kind==4);lifecycle::warm(e,i);
     same_progress(progress(e,i),returns::State{.total=0,.last=0,.pc=0,.frame=0,.required=0,.op=0});}
 // Every resume denies SDK allocations, including terminal/error sealing. Only
 // phase 3 exposes progress; totals/last measure reads, never a payload copy.
@@ -168,8 +169,8 @@ fn Result<usize,u8> cancel_deferred_return_refund_moves_and_pins(){var engine::E
     let Admission right=deferred(ref mut original,b);assert(left.chunks==right.chunks);same_event(saved,event(engine::observe(ref mut original,a)));same_progress(frozen,progress(ref original,a));
     assert(id(engine::release_program(ref mut original,p))==p);counts(ref mut original,1,2,2);let Heap held=heap();var engine::Engine moved=original;same_heap(held);same_progress(frozen,progress(ref moved,a));
     let Admission accepted_peer=accepted(ref mut moved,b,4096,39);assert(accepted_peer.chunks>1);same_event(saved,event(engine::observe(ref mut moved,a)));same_progress(frozen,progress(ref moved,a));
-    var engine::Engine e=moved;same_heap(held);same_progress(frozen,progress(ref e,a));let usize attempts=unsafe{probe_attempts()};unsafe{bc_runtime_engine_test_fail(0)};
-    let Result<engine::Event,engine::Error> r=engine::cancel_ready(ref mut e,a);unsafe{bc_runtime_engine_test_fail(-1)};let engine::Event stopped=event(r);
+    var engine::Engine e=moved;same_heap(held);same_progress(frozen,progress(ref e,a));let usize attempts=unsafe{probe_attempts()};
+    let engine::Event stopped=lifecycle::stop(ref mut e,a);
     assert(unsafe{probe_attempts()}==attempts && stopped.kind==3 && stopped.value==0 && stopped.fuel_known && stopped.remaining==saved.remaining && stopped.diagnostic.code.kind==0);
     rejected_progress(ref e,a,11);rejected_take(ref mut e,a,2);same_heap(Heap{.blocks=held.blocks-(one.blocks-ready.blocks),.bytes=held.bytes-(one.bytes-ready.bytes)});ledger(ref e,retained+pending);
     same_event(stopped,event(engine::cancel_ready(ref mut e,a)));same_event(stopped,event(engine::observe(ref mut e,a)));same_event(finish(ref mut e,b,0),completion(ref baseline));

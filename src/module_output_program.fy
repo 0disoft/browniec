@@ -32,7 +32,7 @@ import runtime_execution_memory as execution_heap;
 pub struct Preparation { statics::Sites sites; u8[16] origins; lists::Requirement list; places::Requirement place; usize work; usize capacity; usize scratch; u8[16] parameters; call_captures::Plan calls; }
 resource Stored { sources::Snapshot sources; candidates::Program code; images::Image image; bool input; Preparation prepared; cleanup { } }
 pub resource Program { vec::Vec<Stored> stored; cleanup { } }
-pub struct Completion { bool success; i64 value; usize remaining; diagnostics::Error diagnostic; usize output_bytes; usize emits; }
+pub struct Completion { bool success; i64 value; usize remaining; diagnostics::Error diagnostic; usize output_bytes; usize emits; bool cancelled; }
 pub resource Execution { Completion completion; vec::Vec<output::Published> published; cleanup { } }
 fn diagnostics::Error absent(errors::Error e){return diagnostics::absent(e);}
 fn diagnostics::Error literal(images::Error e){
@@ -113,12 +113,13 @@ pub fn ref u8[] view(ref Execution run){
     if(!has_output(run)){return b"";}return output::view(vec::at<output::Published>(ref run.published,0));
 }
 fn Completion failed(diagnostics::Error e,usize remaining,usize emits){
-    return Completion{.success=false,.value=0,.remaining=remaining,.diagnostic=e,.output_bytes=0,.emits=emits};
+    return Completion{.success=false,.value=0,.remaining=remaining,.diagnostic=e,.output_bytes=0,.emits=emits,.cancelled=false};
 }
 fn Execution early(errors::Error e,usize remaining){
     return Execution{.completion=failed(absent(e),remaining,0),.published=vec::empty<output::Published>()};
 }
 pub fn Execution vacant(usize remaining){return early(errors::make(0,0),remaining);}
+pub fn Completion cancelled_completion(usize remaining){var Completion result=failed(absent(errors::make(0,0)),remaining,0);result.cancelled=true;return result;}
 pub fn Completion pending_completion(usize remaining){return failed(absent(errors::make(0,0)),remaining,0);}
 // The owning VM has already sealed into its reserved slot or discarded staging.
 // This maps the exact immutable Program's original error without re-verification.
@@ -131,7 +132,7 @@ pub fn Completion resumed_completion(ref Program p,ref vec::Vec<output::Publishe
     assert(vec::len<output::Published>(published)==1);
     let output::Observation final=output::published_observation(vec::at<output::Published>(published,0));
     return Completion{.success=true,.value=value,.remaining=remaining,.diagnostic=absent(errors::make(0,0)),
-        .output_bytes=final.length,.emits=final.emits};
+        .output_bytes=final.length,.emits=final.emits,.cancelled=false};
 }
 // Reserve the sole publication slot before an owning continuation is exposed.
 // It contains no Published owner until a later successful terminal step.
@@ -178,7 +179,7 @@ fn Execution finish_success(i64 value,ref mut output::Transaction staged,vec::Ve
     let output::Observation final=output::published_observation(ref bytes);
     assert(vec::push<output::Published>(ref mut published,bytes).is_ok);
     return Execution{.completion=Completion{.success=true,.value=value,.remaining=remaining,
-        .diagnostic=absent(errors::make(0,0)),.output_bytes=final.length,.emits=final.emits},.published=published};
+        .diagnostic=absent(errors::make(0,0)),.output_bytes=final.length,.emits=final.emits,.cancelled=false},.published=published};
 }
 fn Result<execution::Scalar,errors::Error> execute(ref Stored retained,ref u8[] input,
     ref mut output::Transaction staged,ref mut usize remaining,usize quantum,ref mut cursors::Stats stats){

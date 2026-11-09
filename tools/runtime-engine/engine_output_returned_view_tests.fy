@@ -1,5 +1,6 @@
 module engine_output_returned_view_tests;
 import runtime_engine as engine;
+import engine_lifecycle_tests as lifecycle;
 import runtime_live_memory as live;
 import module_output_program as programs;
 import module_entry as entries;
@@ -158,7 +159,7 @@ fn engine::Event tick(ref mut engine::Engine e,usize i,usize q){
 fn engine::Event finish(ref mut engine::Engine e,usize i,usize schedule){
     var engine::Event state=event(engine::observe(e,i));var usize ticks=0;
     var usize stages=0;
-    while(state.kind==4){assert(ticks<1000);state=tick(e,i,quantum(schedule,ticks));ticks+=1;
+    while(state.kind==4){assert(ticks<2048);state=tick(e,i,quantum(schedule,ticks));ticks+=1;
         if(state.kind==4){let metadata_budget::State progress=metadata(e,i);stages=progress.stages;}}
     assert(ticks>0 && stages>1);return state;
 }
@@ -275,7 +276,7 @@ pub fn Result<usize,u8> exact_and_one_less_fuel_preserve_output_and_diagnostics(
 }
 
 fn void staged_emit(ref mut engine::Engine e,usize i){var usize ticks=0;var bool staged=false;
-    while(!staged){assert(ticks<1000);assert(tick(e,i,1).kind==4);ticks+=1;
+    while(!staged){assert(ticks<2048);assert(tick(e,i,1).kind==4);ticks+=1;
         switch(engine::output_copy_progress(e,i)){case .ok(v):{assert(v.total<=2);staged=v.total==2;}case .err(_):{assert(false);}};
     }rejected_take(e,i,11);
 }
@@ -297,8 +298,8 @@ pub fn Result<usize,u8> pending_moves_released_pins_cancel_and_exact_refunds(){
         let Heap held=heap();var engine::Engine moved=original;same_heap(held);same_event(saved,event(engine::observe(ref mut moved,a)));
         assert(tick(ref mut moved,b,1).kind==4);same_event(saved,event(engine::observe(ref mut moved,a)));
         var engine::Engine e=moved;same_heap(held);let usize attempts=unsafe{probe_attempts()};begin_recipes();unsafe{bc_runtime_engine_test_fail(0)};
-        let Result<engine::Event,engine::Error> result=engine::cancel_ready(ref mut e,a);unsafe{bc_runtime_engine_test_fail(-1)};
-        let engine::Event stopped=event(result);assert(unsafe{probe_attempts()}==attempts && stopped.kind==3 && stopped.value==0 &&
+        let engine::Event stopped=lifecycle::stop(ref mut e,a);unsafe{bc_runtime_engine_test_fail(-1)};
+        assert(unsafe{probe_attempts()}==attempts && stopped.kind==3 && stopped.value==0 &&
             stopped.fuel_known && stopped.remaining==saved.remaining && stopped.diagnostic.code.kind==0);
         let Heap cancelled=Heap{.blocks=held.blocks-(one.blocks-ready.blocks),.bytes=held.bytes-(one.bytes-ready.bytes)};
         same_heap(cancelled);ledger(ref e,retained+pending);rejected_take(ref mut e,a,2);
