@@ -67,6 +67,9 @@ c['callCopyType']=field_type(c['cursorType'],4)
 c['returnWorkType']=field_type(c['cursorType'],5)
 c['metadataBudgetType']=field_type(c['cursorType'],6)
 c['callMetadataType']=field_type(c['coreType'],7)
+c['callContextWorkType']=field_type(c['callMetadataType'],8)
+c['callArgumentWorkType']=field_type(c['callContextWorkType'],0)
+c['callOwnedWorkType']=field_type(c['callContextWorkType'],1)
 c['callCopyPlanType']=field_type(c['coreType'],8)
 assert arg(26,11)==c['callCopyPlanType']
 c['returnMetadataType']=field_type(c['cursorType'],8)
@@ -84,11 +87,12 @@ types['callCopyType']=c['callCopyType']
 types['returnWorkType']=c['returnWorkType']
 types['metadataBudgetType']=c['metadataBudgetType']
 types['callMetadataType']=c['callMetadataType']
+for key in ['callContextWorkType','callArgumentWorkType','callOwnedWorkType']:types[key]=c[key]
 types['callCopyPlanType']=c['callCopyPlanType']
 types['returnMetadataType']=c['returnMetadataType']
 types['capturePlanType']=c['capturePlanType']
 c['reviewedLayouts']={k:re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(v)+';$',t,re.M).group() for k,v in types.items()}
-assert len(c['bindings'])==33 and len(c['reviewedLayouts'])==37
+assert len(c['bindings'])==33 and len(c['reviewedLayouts'])==40
 c['transportSha256']=hashlib.sha256(generated).hexdigest()
 c['sourceInputs']=[dict(path=p.relative_to(root).as_posix(),sha256=hashlib.sha256(p.read_bytes()).hexdigest()) for p in sources]
 raw=json.dumps(c,indent=2)+'\n'

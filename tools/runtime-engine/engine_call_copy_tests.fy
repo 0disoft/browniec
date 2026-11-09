@@ -133,7 +133,7 @@ fn engine::Event tick(ref mut engine::Engine e,usize i,usize q){
         assert(a.total>=old.total && a.total-old.total==a.last && o.total>=prior.total && o.total-prior.total==o.last);
         assert(c.total>=previous.total && c.total-previous.total==c.last && c.last+a.last+o.last+m.last<=4096);
         assert(!(a.active && o.active) && !(c.pending && (a.active || o.active)));
-        if(c.pending){assert(c.pc<256 && c.frame>0 && c.frame<32 && c.target<16 && phase>=1 && phase<=5);
+        if(c.pending){assert(c.pc<256 && c.frame>0 && c.frame<32 && c.target<16 && phase<=5);
             if(phase<4){assert(!c.active && !c.charged && c.count==0 && c.written==0);}
             else{assert(c.count>0 && c.count<=8 && c.mark<c.end && c.phase<=1);
                 if(phase==5){assert(!c.active && c.charged && c.written==c.end-c.mark);}
@@ -142,7 +142,7 @@ fn engine::Event tick(ref mut engine::Engine e,usize i,usize q){
             }rejected_take(e,i,11);}
         if(previous.pending && q==1){assert(a.total==old.total && o.total==prior.total);
             if(previous.charged){assert(after.remaining==before.remaining && c.written>=previous.written && c.last==c.written-previous.written);}
-            else if(c.pending && !c.charged){assert(after.remaining==before.remaining);}
+            else if(c.pending && !c.charged && previous_phase>=1 && phase>=1){assert(after.remaining==before.remaining);}
             if(c.pending && previous_phase>=4 && phase>=4){same_recipe(previous,c);}}
         same_heap(held);ledger(e,charge);
     }else{assert(after.kind==1 || after.kind==2);rejected_progress(e,i,11);}return after;

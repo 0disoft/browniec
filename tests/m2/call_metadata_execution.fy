@@ -84,15 +84,15 @@ fn Outcome drive_staged(ref ir::Program p,ref statics::Sites sites,ref plans::Pl
     var usize iterations=0;while(iterations<128){
         let usize reset=switch(budget::reset(ref mut allowance,0)){case .ok(v):{v}case .err(_):{assert(false);0}};
         work.copy.last=0;
-        if(work.phase==4 && quantum<4096){
+        if((work.phase==0 || work.phase==4) && quantum<4096){
             let usize fuel=*remaining;let usize total=work.copy.total;
             let Result<bool,errors::Error> deferred=calls::advance_staged(work,copy_plan,ref mut allowance,p,sites,bindings,state,
-                data,windows,live,words,registers,remaining,quantum);
+                data,windows,live,words,registers,remaining,quantum,parameters,0,places,cache);
             let bool progressed=switch(deferred){case .ok(v):{v}case .err(_):{assert(false);true}};
             assert(!progressed && allowance.last==0 && work.copy.last==0 && work.copy.total==total && *remaining==fuel);
         }
         let Result<bool,errors::Error> result=calls::advance_staged(work,copy_plan,ref mut allowance,p,sites,bindings,state,
-            data,windows,live,words,registers,remaining,4096);
+            data,windows,live,words,registers,remaining,4096,parameters,0,places,cache);
         assert(work.copy.last+allowance.last<=4096);
         let bool done=switch(result){case .ok(v):{v}case .err(e):{
             assert(!work.active && bindings.frame==1 && state.runtime.owners.depth==1 && state.runtime.owners.arena.used==4);

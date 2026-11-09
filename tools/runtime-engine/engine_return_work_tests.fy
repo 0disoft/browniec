@@ -95,8 +95,10 @@ fn Admission accepted(ref mut engine::Engine e,usize i,usize measure,u8 op){var 
     assert(false);return Admission{.before=0,.after=0,.chunks=0};}
 // A q=4096 batch must stop after the one-byte prefix with no accepted RET.
 // The following q=1 step admits the entire bool scan; no partial recipe exists.
+// CALL context preparation now yields before the return-prefix fixture.
+// Keep a finite scheduling bound while allowing those admitted stages.
 fn Admission deferred(ref mut engine::Engine e,usize i){var usize n=0;
-    while(n<16){let engine::Event s=tick(e,i,4096);n+=1;assert(s.kind==4);let returns::State r=progress(e,i);assert(r.total==0 && r.last==0);
+    while(n<64){let engine::Event s=tick(e,i,4096);n+=1;assert(s.kind==4);let returns::State r=progress(e,i);assert(r.total==0 && r.last==0);
         if(output(e,i).total==1){assert(output(e,i).last==1 && !output(e,i).active && array(e,i).total==4096 && !array(e,i).active);
             same_progress(r,returns::State{.total=0,.last=0,.pc=0,.frame=0,.required=0,.op=0});
             same_event(s,event(engine::observe(e,i)));same_progress(r,progress(e,i));rejected_take(e,i,11);

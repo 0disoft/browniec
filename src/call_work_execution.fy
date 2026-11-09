@@ -1,6 +1,9 @@
 module call_work_execution;
 import call_copy_cursor as cursor;
 import call_metadata_state as staged_call;
+import call_context_work as contexts;
+import call_argument_work as context_arguments;
+import call_owned_work as context_owned;
 import runtime_metadata_work as metadata;
 import metadata_budget as budget;
 import call_capture_plan as capture_plans;
@@ -174,28 +177,21 @@ pub fn Result<bool,errors::Error> advance(ref mut cursor::State work,ref ir::Pro
     work.pending=false;return .ok(true);
 }
 
-// Owning-only candidate. Context preparation is still atomic and is NOT a
-// bounded metadata claim. The parent pins all inputs until completion/abort.
-// Preserve the independent begin/advance above as the synchronous oracle.
+// Owning context begins on a fresh dispatch. Initialization and its first
+// prefix stage are accounted together by the parent's immediate advance.
+// Raw begin/advance above remain independent synchronous comparison oracles.
 pub fn Result<usize,errors::Error> begin_staged(ref mut staged_call::State work,
     ref ir::Program p,ref u8[] parameters,ref statics::Sites sites,usize pc,
     ref frames::Frames bindings,ref runtime::State state,usize capacity,usize payload,ref u32[] words,usize live,
     ref inputs::State windows,ref mut vec::Vec<usize> place_state,ref mut usize remaining,ref capture_plans::Plan plans){
     if(work.active || !operation(p,pc) || bindings.frame==0 || bindings.frame>=32){return .err(invalid(0));}
     let usize offset=p.offsets[pc];let usize before=*remaining;
-    let usize input_work=if(inputs::enabled(windows)){meter::input_frame()}else{0};
-    if(bindings.frame>=31 || !has_room(ref state.runtime.authority)){return .err(errors::make(12,offset));}
-    if(before<input_work+runtime::cost()){return .err(errors::make(8,offset));}
-    switch(places::empty_frame(place_state,bindings.frame+1,offset)){
-        case .ok(_):{}case .err(e):{*remaining-=input_work;return .err(e);}
-    };
-    let staged_call::Context c=context(p,parameters,sites,pc,bindings,state,capacity,payload,words,live,windows,remaining,plans)?;
     let usize total=work.copy.total;let usize last=work.copy.last;
+    let usize begun=contexts::begin(ref mut work.preparing,capacity,payload,before)?;
     work.copy=cursor::empty();work.copy.total=total;work.copy.last=last;
     work.copy.pending=true;work.copy.pc=pc;work.copy.frame=bindings.frame;work.copy.offset=offset;
-    work.copy.target=p.code[pc*8+2] as usize;work.copy.fuel_before=before;work.copy.captured=*remaining;
-    work.context=c;work.child=0;work.phase=1;work.active=true;work.done=false;
-    return .ok(0);
+    work.copy.target=p.code[pc*8+2] as usize;work.copy.fuel_before=before;work.copy.captured=before;
+    work.child=0;work.phase=0;work.active=true;work.done=false;return .ok(0);
 }
 
 // byte_allowance is the parent's remaining shared dispatch allowance AFTER all
@@ -205,12 +201,39 @@ pub fn Result<usize,errors::Error> begin_staged(ref mut staged_call::State work,
 pub fn Result<bool,errors::Error> advance_staged(ref mut staged_call::State work,ref mut copy_plans::State copy_plan,ref mut budget::State allowance,
     ref ir::Program p,ref statics::Sites sites,ref mut frames::Frames bindings,ref mut runtime::State state,
     ref mut u8[] data,ref mut inputs::State windows,ref mut usize[] live,ref mut u32[] words,
-    ref mut i64[] registers,ref mut usize remaining,usize byte_allowance){
-    // Owning payload invocations need a fresh batch too: include wrapper array
-    // copies in the admitted fixed cost, never scan them on a short-room retry.
-    if(work.phase==4 && (byte_allowance!=4096 || allowance.last!=0)){return .ok(false);}
-    let Result<bool,errors::Error> result=advance_staged_inner(work,copy_plan,allowance,p,sites,bindings,state,data,windows,live,words,registers,remaining,byte_allowance);
-    return switch(result){case .ok(v):{.ok(v)}case .err(e):{work.active=false;work.metadata.active=false;.err(e)}};
+    ref mut i64[] registers,ref mut usize remaining,usize byte_allowance,
+    ref u8[] parameters,usize payload,ref mut vec::Vec<usize> place_state,ref capture_plans::Plan plans){
+    if((work.phase==0 || work.phase==4) && (byte_allowance!=4096 || allowance.last!=0)){return .ok(false);}
+    let Result<bool,errors::Error> result=if(work.phase==0){advance_context(work,allowance,p,parameters,sites,bindings,state,
+        data.len,payload,windows,place_state,live,words,remaining,plans)}else{
+        advance_staged_inner(work,copy_plan,allowance,p,sites,bindings,state,data,windows,live,words,registers,remaining,byte_allowance)
+    };
+    return switch(result){case .ok(v):{.ok(v)}case .err(e):{
+        work.active=false;work.metadata.active=false;work.preparing.active=false;.err(e)
+    }};
+}
+fn Result<bool,errors::Error> advance_context(ref mut staged_call::State work,ref mut budget::State allowance,
+    ref ir::Program p,ref u8[] parameters,ref statics::Sites sites,ref frames::Frames bindings,ref runtime::State state,
+    usize capacity,usize payload,ref inputs::State windows,ref vec::Vec<usize> places,
+    ref usize[] live,ref u32[] words,ref mut usize remaining,ref capture_plans::Plan plans){
+    let ref cursor::State saved=ref work.copy;let usize pc=saved.pc;let usize frame=saved.frame;
+    if(!work.active || work.done || !saved.pending || !operation(p,pc) || frame!=bindings.frame ||
+        frame==0 || frame>=32 || live.len!=32 || words.len!=512){return .err(invalid(0));}
+    let ref contexts::State pending=ref work.preparing;
+    if(capacity!=pending.capacity || payload!=pending.payload){return .err(invalid(p.offsets[pc]));}
+    let bool done=contexts::advance(ref mut work.preparing,p,parameters,sites,pc,bindings,state,
+        words[frame*16..frame*16+16],live[frame],windows,places,remaining,plans,allowance)?;
+    if(done){
+        let ref contexts::State completed=ref work.preparing;
+        let ref context_arguments::State arguments=ref completed.arguments;
+        let ref references::Arguments captured=ref arguments.result;
+        let ref context_owned::State entered=ref completed.owned;
+        let ref owned::Prepared prepared=ref entered.result;
+        let staged_call::Context result=staged_call::Context{.contract=completed.contract,
+            .prepared=*prepared,.captured=*captured,.generic=completed.generic};
+        work.context=result;work.copy.captured=*remaining;work.phase=1;
+    }
+    return .ok(false);
 }
 fn Result<bool,errors::Error> advance_staged_inner(ref mut staged_call::State work,ref mut copy_plans::State copy_plan,ref mut budget::State allowance,
     ref ir::Program p,ref statics::Sites sites,ref mut frames::Frames bindings,ref mut runtime::State state,

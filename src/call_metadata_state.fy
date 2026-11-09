@@ -7,6 +7,7 @@ import call_copy_cursor as copy;
 import array_owners as owners;
 import array_layout as layouts;
 import array_slices as slices;
+import call_context_work as context_work;
 
 // Invocation-private: the parent pins the Program, bindings, live Runtime,
 // input windows and source bytes, and executes no other guest work until done.
@@ -14,6 +15,7 @@ pub struct Context { runtime::Contract contract; owned::Prepared prepared; refer
 pub struct State {
     Context context; metadata::State metadata; copy::State copy;
     owners::Copies finished; usize child; u8 phase; bool active; bool done;
+    context_work::State preparing;
 }
 pub fn State empty(){
     let owners::Token token=owners::Token{.slot=0,.generation=0};
@@ -26,5 +28,5 @@ pub fn State empty(){
     return State{.context=Context{.contract=runtime::Contract{.tags=[0;8],.arity=0,.selected=0},
         .prepared=prepared,.captured=references::empty(0),.generic=false},.metadata=metadata::empty(),
         .copy=copy::empty(),.finished=owners::Copies{.tokens=[token;8],.count=0},
-        .child=0,.phase=0,.active=false,.done=false};
+        .child=0,.phase=0,.active=false,.done=false,.preparing=context_work::empty()};
 }

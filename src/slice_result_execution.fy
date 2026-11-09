@@ -537,17 +537,19 @@ fn Result<Option<Outcome>,errors::Error> dispatch_staged(ref body_ir::Program bo
             if(!pending_call_valid(cursor,frame)){return .err(errors::make(5,offset));};
             *visited+=1;
             let bool finished=call_steps::advance_staged(metadata,copy_plan,ref mut cursor.metadata,body,sites,bindings,state,data,
-                windows,static_live,static_words,registers,remaining,room)?;
+                windows,static_live,static_words,registers,remaining,room,parameters,literals.len,place_state,plans)?;
             cursor.call=metadata.copy;cursor.call_metadata_phase=metadata.phase;
             if(finished){cursor.pc=body.starts[cursor.call.target];continue;}return .ok(.none);
         }
         if(cursor.call.pending){return .err(errors::make(5,offset));}
         if(call_steps::operation(body,cursor.pc) && !cursor.array.active && !cursor.output.active){
-            if(*remaining==0){return .err(errors::make(8,offset));};*remaining-=1;*visited+=1;
+            if(*remaining==0){return .err(errors::make(8,offset));}
+            if(room!=4096){return .ok(.none);};
+            *remaining-=1;*visited+=1;
             let usize begun=call_steps::begin_staged(metadata,body,parameters,sites,cursor.pc,bindings,state,data.len,literals.len,
                 static_words[frame*16..frame*16+16],static_live[frame],windows,place_state,remaining,plans)?;
             let bool finished=call_steps::advance_staged(metadata,copy_plan,ref mut cursor.metadata,body,sites,bindings,state,data,
-                windows,static_live,static_words,registers,remaining,room)?;
+                windows,static_live,static_words,registers,remaining,room,parameters,literals.len,place_state,plans)?;
             cursor.call=metadata.copy;cursor.call_metadata_phase=metadata.phase;
             if(finished){cursor.pc=body.starts[cursor.call.target];continue;}return .ok(.none);
         }
