@@ -1,30 +1,32 @@
 # Local handoff for the next thread
 
-Current checkpoint: [CALL/RET stages and CALL copy planning](runtime-authority-metadata-stages.md)
-are integrated into private owning Pending output execution. Catalog `a2389e9`
-and planner/prepared payload `3ad17b3` precede owning integration `dce5e26`.
-CALL catalog/layout/mask preparation and per-payload plan authentication now use
-fresh 4096-unit stages. Payload batches pay 3072 entry units plus cached mask/
-bool-position visits and payload bytes within the same allowance. Publication
-remains final-only; raw synchronous helpers remain independent oracles.
+Current checkpoint: [CALL/RET stages and context preparation](runtime-authority-metadata-stages.md)
+are integrated into private owning Pending output execution. Owned preparation
+`e4bda54`, arguments `f860ef8`, coordinator `793360c` precede integration `c035b43`.
+CALL prefix, argument header/authentication, origin selection, owned header,
+captures, CALL66 Held sites, descriptors and final adoption now use fresh
+4096-unit stages before the existing authority/copy-plan/payload stages.
+Short-room deferral preserves state/Fuel; opcode and input-frame Fuel are paid
+once. CALL66 requires the proved cache; raw synchronous helpers remain oracles.
 
-Windows development/O2 pass catalog (6 groups), planner/payload (10 groups),
-direct CALL integration (1 group), and complete
-Engine regression images with default stacks, covered-resume allocation denial
-and zero exit SDK heap. The final Engine's 281 inputs match committed code.
-Core grows by 10192 bytes to 163984; Cursor/Machine remain 1184/1632 bytes.
-See the [evidence](../evidence/runtime-call-copy-plan-windows-20261109.json)
-for exact snapshots; direct catalog/planner receipts identify their earlier
-commits, not the final integration inputs. No timing improvement measured.
+Windows development/O2 pass owned (6 groups), arguments (5), coordinator (4),
+direct CALL (1), and complete Engine images with default stacks, covered-resume
+allocation denial and zero exit SDK heap. All 284 Engine inputs match committed
+code. Core grows 1840 bytes to 165824; Cursor/Machine remain 1184/1632.
+See the [evidence](../evidence/runtime-call-context-windows-20261109.json) for
+exact snapshots. Kernel receipts retain their earlier commits; direct adapter
+and Engine receipts identify the final integration inputs. The old RET fixture
+resume limit grew 16 -> 64 to allow the additional CALL stages. No timing or
+peak-stack improvement measured.
 
-The user authorized this CALL copy-plan/metadata slice. The broader completion goal
-remains paused; this handoff alone does not authorize unrelated slices or remote
-delivery. Read [AGENTS](../../AGENTS.md) and the
+The user authorized this CALL context slice. The broader completion goal remains
+paused; this handoff alone does not authorize unrelated slices or remote delivery.
+Read [AGENTS](../../AGENTS.md) and the
 [remaining inventory](../product/04-remaining-work.md).
 
 ## Next bounded implementation
 
-1. Finish bounds for CALL context and RET catalog/layout/result preparation.
+1. Finish bounds for RET catalog/layout/result preparation.
    Whole bool ARET payload validation is already admitted into one byte batch;
    that does not prove all surrounding metadata visits are bounded.
 2. Preserve the independent raw/synchronous oracles, immutable CALL66 cache and

@@ -30,7 +30,7 @@ plans and aborts canonical live state. External effects are never replayed.
 
 ## CALL
 
-The separate `call_owned_work` prerequisite now prepares the owned portion of
+The owning `call_owned_work` bank prepares the owned portion of
 the context with fresh 4096-unit stages: cost/cache header, one capture argument,
 one CALL66 Held site (at most 47 receipt slots), then one owned argument's
 array/record descriptors. Record lookup visits at most sixteen bindings twice.
@@ -39,7 +39,7 @@ raw IR recipe discovery. Raw `prepare_enter` and `prepare_enter_cached` remain
 comparison oracles. Six native groups pass development/O2, covering full mixed
 arity, supplied captures, Held ordering, Fuel boundaries and unchanged inputs on
 partial-room deferral (`build/call-owned-work/{development,release}/receipt.json`).
-This prerequisite is not yet connected to the owning context adapter below.
+The owning VM retains this bank inside its private context coordinator.
 
 `call_argument_work` similarly admits one fixed header/preprice stage and one
 Static/reference argument per stage. Generic arguments prepay before source
@@ -61,9 +61,15 @@ preparation. Four native groups pass development/O2 against raw `begin`, with
 enabled/disabled input, depth/Fuel/place precedence, scalar/zero-arity success
 and every-stage partial-room immutability
 (`build/call-context-work/{development,release}/receipt.json`). The owning VM
-adapter below still needs to adopt this coordinator.
+now advances this coordinator in metadata phase 0, before authority snapshots.
+Beginning a CALL also requires a fresh shared batch before opcode Fuel is
+debited. Every later context continuation consumes one visit, without repeating
+that debit. Short-room retries preserve context, live frame/Runtime/input and
+Fuel; argument authentication and owned preparation never publish those banks.
 
-1. Prepare the invocation context once, outside the authority bound.
+1. Prepare the invocation context with fresh 4096-unit stages: frame/Fuel/place
+   prefix, argument header, one argument, origin selection, owned header, one
+   capture, one CALL66 Held site, one owned descriptor, then final adoption.
 2. Reserve a snapshot stage, then reconstruct authority over separate stages.
 3. Build the copy recipe in fresh 4096-unit stages: initialize/inspect the
    catalog, traverse up to sixteen dependency edges, lay out one node (up to
@@ -103,9 +109,11 @@ compiler-generated whole-transaction temporaries when reading the nested Call.
 No peak-stack or latency improvement has been measured.
 
 RET previously grew Cursor 1048 -> 1184 bytes and Machine 1496 -> 1632 bytes.
-The CALL copy-plan bank now grows Core 153792 -> 163984 bytes (+10192); Cursor
-and Machine retain their post-RET sizes. The bank is passed by mutable reference
-as Core field 8, separately from the shared authority transaction at field 7.
+The CALL copy-plan bank grew Core 153792 -> 163984 bytes (+10192). Context
+preparation adds 1840 bytes, bringing Core to 165824; Cursor/Machine remain
+1184/1632. The copy-plan bank is passed by mutable reference as Core field 8,
+separately from the shared authority transaction at field 7. The context bank
+is transaction field 8 and carries its argument/owned banks by reference.
 Existing admission/accounting uses these actual native sizes.
 
 
@@ -131,17 +139,17 @@ private-state difference is explicit, not valid-program Fuel parity evidence.
 
 ## Evidence and limits
 
-See the [CALL copy-plan evidence](../evidence/runtime-call-copy-plan-windows-20261109.json)
-for the current catalog/planner/owning integration snapshots, native images,
-storage and exact input audits. The [preceding authority evidence](../evidence/runtime-authority-metadata-windows-20261109.json)
+See the [CALL context evidence](../evidence/runtime-call-context-windows-20261109.json)
+for current context/owning integration snapshots, native images, storage and
+exact input audits. The [preceding CALL copy-plan evidence](../evidence/runtime-call-copy-plan-windows-20261109.json)
+retains the catalog/planner snapshots. The [preceding authority evidence](../evidence/runtime-authority-metadata-windows-20261109.json)
 retains the earlier CALL/RET snapshots. Direct adapter groups compare against raw
 helpers, including partial-room deferral, frozen original state, final-only
 publication and late frame errors. Actual Engine fixtures cover fixed/mixed
 quanta, exact/one-less Fuel, binary output, moves/pins, cancellation/refunds and
 SDK allocation denial on covered resumes.
 
-Still atomic or incompletely bounded: CALL context preparation, ordinary bool
-ARET scans, SRET catalog/layout
+Still atomic or incompletely bounded: ordinary bool ARET scans, SRET catalog/layout
 preparation, raw recipe discovery, setup/proof/seal and cleanup. Bounding the
 authority kernel does not bound every CALL/RET metadata visit. Public lifecycle,
 wall-clock deadlines, STOPPING/poison and the full remaining inventory stay open.

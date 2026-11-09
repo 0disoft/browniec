@@ -1,0 +1,364 @@
+{
+  "schema": "browniec.call-context-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-09T10:03:47.822844+00:00",
+  "verifiedCommit": "c035b435b9d6192bdd60da84627a41dc9079e8c5",
+  "implementationCommits": [
+    "e4bda54",
+    "f860ef8",
+    "793360c",
+    "c035b435b9d6192bdd60da84627a41dc9079e8c5"
+  ],
+  "scope": "Private owning Pending CALL context preparation; not public R03 or complete CALL/RET bounds",
+  "commands": [
+    "build/toolchain/fairyc.exe check",
+    "python tools/verify-call-owned-work.py",
+    "python tools/verify-call-argument-work.py",
+    "python tools/verify-call-context-work.py",
+    "python tools/verify-call-metadata-execution.py",
+    "python tools/review-runtime-engine-transport.py --write-contract",
+    "python tools/verify-runtime-engine.py --profile all"
+  ],
+  "receipt": {
+    "path": "build/runtime-engine/20261109T095913720566Z/receipt.json",
+    "sha256": "38e1f33f8c46938bb1fa5d2944e914b4aba47dc2845ea9676e5cf0f21c0fe8fc"
+  },
+  "compiler": {
+    "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+    "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+    "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false"
+  },
+  "msvc": {
+    "version": "14.51.36231",
+    "sdk": "10.0.26100.0",
+    "compilerSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+    "overrides": false
+  },
+  "profiles": [
+    {
+      "profile": "development",
+      "artifact": {
+        "path": "build/runtime-engine/20261109T095913720566Z/development/runtime-engine.exe",
+        "sha256": "d3811cc4d84ed0289ac19387183a01b4aeeccda774b1e0657137f39dc88299f6",
+        "bytes": 9919488,
+        "stackReserve": 1048576,
+        "stackCommit": 4096
+      },
+      "exit": 0,
+      "controlMetrics": {
+        "cases": 6,
+        "smallHeapBytes": 7744,
+        "maximumHeapBytes": 61952,
+        "ownerBytes": 736
+      },
+      "preparationMetrics": {
+        "cacheBytes": 2248,
+        "storedBytes": 24264,
+        "previousStoredBytes": 22016,
+        "retainedVecExtraBytes": 17984,
+        "capturePlanBytes": 900,
+        "previousCacheBytes": 1344,
+        "capturePlanVecExtraBytes": 7232
+      },
+      "arrayFillMetrics": {
+        "arrayWorkBytes": 360,
+        "cursorBytes": 1184,
+        "machineBytes": 1632,
+        "coreBytes": 165824,
+        "pendingVecExtraBytes": 2880,
+        "callWorkBytes": 536,
+        "callPendingVecExtraBytes": 4288,
+        "returnWorkBytes": 48,
+        "returnPendingVecExtraBytes": 384,
+        "combinedPendingVecExtraBytes": 7552
+      },
+      "liveHeapAllocationsAtExit": 0,
+      "assertions": "native Fairy and C, no parsed trace",
+      "objects": [
+        {
+          "path": "build/runtime-engine/20261109T095913720566Z/development/transport.obj",
+          "sha256": "785b0613ff1920fec8617ac25d47b6c03e713b61ce504ffe2e512e1059e3ace8"
+        },
+        {
+          "path": "build/runtime-engine/20261109T095913720566Z/development/runtime.obj",
+          "sha256": "41ec5296369f75933a13e8086b0879f9584b7b3e3e53b35d6fd4dc271457dbdb"
+        },
+        {
+          "path": "build/runtime-engine/20261109T095913720566Z/development/abi_thread_identity.obj",
+          "sha256": "33a3e2b5dfa2d2981357c24cfaffa37632db8f0952416ce1ff65eebe62a573fc"
+        },
+        {
+          "path": "build/runtime-engine/20261109T095913720566Z/development/input_reader.obj",
+          "sha256": "e2bdf7a0b3df11eb9d1682040779271fc1e9620be0d9d67fe85486bfeea6e2d1"
+        },
+        {
+          "path": "build/runtime-engine/20261109T095913720566Z/development/input_adoption.obj",
+          "sha256": "6facad8d4c1ea7b39d7642dd7120ac46ccffb805c3ceb65d559f6f5a0bc73595"
+        }
+      ]
+    },
+    {
+      "profile": "release",
+      "artifact": {
+        "path": "build/runtime-engine/20261109T095913720566Z/release/runtime-engine.exe",
+        "sha256": "ad31d61ba81a7b92aaac6ef7a19181158c749cedcb4fb8e7521221f5a175a406",
+        "bytes": 3771904,
+        "stackReserve": 1048576,
+        "stackCommit": 4096
+      },
+      "exit": 0,
+      "controlMetrics": {
+        "cases": 6,
+        "smallHeapBytes": 7744,
+        "maximumHeapBytes": 61952,
+        "ownerBytes": 736
+      },
+      "preparationMetrics": {
+        "cacheBytes": 2248,
+        "storedBytes": 24264,
+        "previousStoredBytes": 22016,
+        "retainedVecExtraBytes": 17984,
+        "capturePlanBytes": 900,
+        "previousCacheBytes": 1344,
+        "capturePlanVecExtraBytes": 7232
+      },
+      "arrayFillMetrics": {
+        "arrayWorkBytes": 360,
+        "cursorBytes": 1184,
+        "machineBytes": 1632,
+        "coreBytes": 165824,
+        "pendingVecExtraBytes": 2880,
+        "callWorkBytes": 536,
+        "callPendingVecExtraBytes": 4288,
+        "returnWorkBytes": 48,
+        "returnPendingVecExtraBytes": 384,
+        "combinedPendingVecExtraBytes": 7552
+      },
+      "liveHeapAllocationsAtExit": 0,
+      "assertions": "native Fairy and C, no parsed trace",
+      "objects": [
+        {
+          "path": "build/runtime-engine/20261109T095913720566Z/release/transport.obj",
+          "sha256": "4e29fb7b2560767ab7ca92c2d068a420a1ea1e23fbecb3159a46612d5aff2cec"
+        },
+        {
+          "path": "build/runtime-engine/20261109T095913720566Z/release/runtime.obj",
+          "sha256": "fd8aa04ac5956d3b8eda3d42529e779bcd590fb2f872574110bfdc70d26afc88"
+        },
+        {
+          "path": "build/runtime-engine/20261109T095913720566Z/release/abi_thread_identity.obj",
+          "sha256": "587423b7e6cbd2a51c3dca99d3d52ff4f280c9c4f43f3509f8603559474b7fb2"
+        },
+        {
+          "path": "build/runtime-engine/20261109T095913720566Z/release/input_reader.obj",
+          "sha256": "1b1bbb161ab1f07babc1f39ea68e356efc90755a691dd4d251a29e5c97ae421f"
+        },
+        {
+          "path": "build/runtime-engine/20261109T095913720566Z/release/input_adoption.obj",
+          "sha256": "6186cf7f70e3d7a8055fe3f0b0e59aacdf8966d89b470b583123627de172bdf1"
+        }
+      ]
+    }
+  ],
+  "directSnapshots": [
+    {
+      "kind": "owned",
+      "profile": "development",
+      "verifiedSnapshot": "e4bda54",
+      "groups": 6,
+      "receipt": {
+        "path": "build/call-owned-work/development/receipt.json",
+        "sha256": "ded4dbac38aaca294969b49dede96dfcf8551c95b57f200ec71ada0c11a7a41c"
+      },
+      "inputCount": 282,
+      "committedInputsMatchReceipt": true
+    },
+    {
+      "kind": "owned",
+      "profile": "release",
+      "verifiedSnapshot": "e4bda54",
+      "groups": 6,
+      "receipt": {
+        "path": "build/call-owned-work/release/receipt.json",
+        "sha256": "db87cff733cb78a4cabfb97403ea642bd5e78fee8009a81e962b0f9eff4d35b7"
+      },
+      "inputCount": 282,
+      "committedInputsMatchReceipt": true
+    },
+    {
+      "kind": "arguments",
+      "profile": "development",
+      "verifiedSnapshot": "f860ef8",
+      "groups": 5,
+      "receipt": {
+        "path": "build/call-argument-work/development/receipt.json",
+        "sha256": "df37b9996441341a33ec06300ee083041eb3eb37d8db8ddb1a091db1d3c068f3"
+      },
+      "inputCount": 283,
+      "committedInputsMatchReceipt": true
+    },
+    {
+      "kind": "arguments",
+      "profile": "release",
+      "verifiedSnapshot": "f860ef8",
+      "groups": 5,
+      "receipt": {
+        "path": "build/call-argument-work/release/receipt.json",
+        "sha256": "ff4ddb9e91781e22a1aabe370f6ee1206bc0a8821a3b23fd628e7b6b8836b512"
+      },
+      "inputCount": 283,
+      "committedInputsMatchReceipt": true
+    },
+    {
+      "kind": "context",
+      "profile": "development",
+      "verifiedSnapshot": "793360c",
+      "groups": 4,
+      "receipt": {
+        "path": "build/call-context-work/development/receipt.json",
+        "sha256": "86ef04992e2c2ca4d5af37dfe9a38753a6f5fc0b9ddbbf2937ab6df0c0ac38d3"
+      },
+      "inputCount": 284,
+      "committedInputsMatchReceipt": true
+    },
+    {
+      "kind": "context",
+      "profile": "release",
+      "verifiedSnapshot": "793360c",
+      "groups": 4,
+      "receipt": {
+        "path": "build/call-context-work/release/receipt.json",
+        "sha256": "917596b23dc9dd9a76569e5a36888ef7a35d4cf5aa13ea5676edaaffa15f7e3f"
+      },
+      "inputCount": 284,
+      "committedInputsMatchReceipt": true
+    },
+    {
+      "kind": "owningCall",
+      "profile": "development",
+      "verifiedSnapshot": "c035b435b9d6192bdd60da84627a41dc9079e8c5",
+      "groups": 1,
+      "receipt": {
+        "path": "build/call-metadata-execution/development/receipt.json",
+        "sha256": "becb5ac24a843ccba26fcd0dbfd6848231d475ce365238d146ca958cae0c4478"
+      },
+      "inputCount": 284,
+      "committedInputsMatchReceipt": true
+    },
+    {
+      "kind": "owningCall",
+      "profile": "release",
+      "verifiedSnapshot": "c035b435b9d6192bdd60da84627a41dc9079e8c5",
+      "groups": 1,
+      "receipt": {
+        "path": "build/call-metadata-execution/release/receipt.json",
+        "sha256": "79d5819629504eb43989f61aed4fae462deeb243de3a82c7688bde7cfb23ead8"
+      },
+      "inputCount": 284,
+      "committedInputsMatchReceipt": true
+    }
+  ],
+  "inputAudit": {
+    "engineInputs": 284,
+    "checkoutMatchesReceipt": true,
+    "committedInputsMatchReceipt": true,
+    "productionLFModules": 277,
+    "typedBindings": 33,
+    "layoutRoles": 40,
+    "transportSha256": "9d6585ea49df71df5570ae52573b1fa7254617c1225d49afb218b06905614175",
+    "pinnedCompilerRuntimeInputs": [
+      {
+        "path": "internal/cruntime/stage0_scalar.c",
+        "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+        "sha256": "e16bfdd17904754ceb9534c976910964c76e8b0c757f72ddf3b63de0d5548bbe"
+      },
+      {
+        "path": "internal/cstdlib/stage0_system_heap.c",
+        "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+        "sha256": "41e57f9748afb73731501ba2003b1a9213b728c0d2db6a31686b9d0489b76100"
+      },
+      {
+        "path": "internal/cstdlib/stage0_buffer.c",
+        "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+        "sha256": "27f049118af6e0d008428abd73bdf77dce5491b82617cdb65b9a06ac185edfa1"
+      },
+      {
+        "path": "internal/cstdlib/stage0_vector_storage.c",
+        "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+        "sha256": "80dddb6db91c79c495ef8bad6d31923fd242be13de9899ce3aaded85158bb17d"
+      },
+      {
+        "path": "internal/cstdlib/stage0_text_view.c",
+        "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+        "sha256": "cb468db0b4c8b54d12a146c41bcfb297f2a06d83a496a38942fb6e2bc7622b62"
+      },
+      {
+        "path": "internal/cstdlib/stage0_windows_console.c",
+        "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+        "sha256": "c070b518a8cb1a8eb0c6b170dd3083afd91149a3b076beb9f43bcfb05d2041e5"
+      },
+      {
+        "path": "internal/cstdlib/stage0_windows_process_args.c",
+        "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+        "sha256": "f86225cdc8ecf5ebe0ba899557c3b117c50ccc0f02afea4cc0115f780bc40cd6"
+      }
+    ],
+    "rootLock": {
+      "path": "fairy.lock",
+      "sha256": "5b337b902947e9d107a7d955dfbc9bd033c6d935757fe9ce7160d1972554b38c"
+    }
+  },
+  "scheduling": {
+    "dispatchLimit": 4096,
+    "contextStage": 4096,
+    "stages": [
+      "frame/Fuel/place prefix",
+      "argument header/preprice",
+      "one Static/reference argument",
+      "origin selection",
+      "owned cost/cache header",
+      "one capture argument",
+      "one CALL66 Held site",
+      "one owned descriptor",
+      "final adoption"
+    ],
+    "owningContextRequiresFreshBatch": true,
+    "opcodeFuelChargedOnce": true,
+    "inputFrameFuelChargedOnce": true,
+    "noCreditAcrossYields": true,
+    "call66RequiresProvedCache": true,
+    "rawRecipeFallback": false,
+    "unit": "Logical metadata entries; scalar loop/counter control is not a CPU instruction budget",
+    "generatedCReview": {
+      "blockingFindings": [],
+      "contextBanksPassedByExactFieldReference": true,
+      "wholeRuntimeCatalogTransactionCloneOnContextPath": false,
+      "maximumArgumentsPerAuthenticationStage": 1,
+      "maximumCallArity": 8,
+      "maximumRuntimePoolEntries": 16,
+      "maximumExclusiveRootCrossChecks": 256,
+      "maximumHeldReceiptEntriesPerSite": 47,
+      "maximumRecordBindingsPerLookup": 16,
+      "method": "Read-only source/generated-C review; conservative logical-entry accounting, not instrumented field/byte/CPU counts",
+      "parentRequirement": "Exact Program/Sites/PC/caller and source banks stay pinned across private continuations"
+    }
+  },
+  "storage": {
+    "previousCoreBytes": 163984,
+    "coreBytes": 165824,
+    "coreDeltaBytes": 1840,
+    "cursorBytes": 1184,
+    "machineBytes": 1632
+  },
+  "verificationNotes": [
+    "First Engine attempt trapped at the old 16-resume RET fixture bound; extended only its finite scheduling limit to 64, keeping work/Fuel/publication assertions.",
+    "Kernel receipts retain their exact earlier implementation snapshots; owning adapter/Engine receipts identify the final integration inputs."
+  ],
+  "limitations": [
+    "RET preparation, raw recipe discovery, setup/proof/seal/cleanup, public lifecycle, deadlines and STOPPING/poison remain incomplete.",
+    "Raw synchronous context and argument/owned helpers remain independent comparison oracles.",
+    "Fixed 4096-unit context stages account logical metadata visits including bounded compiler-generated result copies; no timing or peak-stack improvement measured.",
+    "Focused native tests and Engine images only; no public CLI/full release verification.",
+    "Local only; no push, release or deployment. Broader completion remains paused."
+  ]
+}

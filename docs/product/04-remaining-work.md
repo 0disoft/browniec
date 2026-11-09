@@ -1,18 +1,19 @@
-- Latest CALL copy-plan checkpoint (2026-11-09): [CALL/RET stages](../engineering/runtime-authority-metadata-stages.md)
-  catalog `a2389e9`, planner/payload `3ad17b3` and owning integration `dce5e26`
-  stage CALL copy preparation and authentication in private Pending execution.
-  CALL catalog/layout/mask preparation and copy-plan authentication now use fresh
-  4096-unit stages. Payload pays 3072 metadata entry units plus cached mask/bool
-  visits and bytes within the same allowance; final publication stays separate.
-  Windows development/O2 pass catalog (6 groups), planner/payload (10), direct
-  CALL integration (1), and complete Engine images with default 1MiB/4KiB stacks.
-  Covered resumes deny SDK allocation; exit SDK heap is zero. All 281 current
-  Engine inputs match checkout and commit; 274 production modules retain LF.
-  Typed transport: 33 bindings / 37 roles. Core grows 153792 -> 163984 bytes;
+- Latest CALL context checkpoint (2026-11-09): [CALL/RET stages](../engineering/runtime-authority-metadata-stages.md)
+  owned preparation `e4bda54`, arguments `f860ef8`, coordinator `793360c` and
+  owning integration `c035b43` stage CALL context in private Pending execution.
+  Prefix, argument header/authentication, origin selection, owned cost/cache,
+  capture, CALL66 Held, descriptor and adoption each use fresh 4096-unit stages.
+  Short room preserves state/Fuel; opcode and input-frame Fuel are charged once.
+  CALL66 requires the proved cache; raw synchronous helpers remain oracles.
+  Windows development/O2 pass owned (6 groups), arguments (5), coordinator (4),
+  direct CALL (1), and complete Engine images with default 1MiB/4KiB stacks.
+  Covered resumes deny SDK allocation; exit SDK heap is zero. All 284 current
+  Engine inputs match checkout and commit; 277 production modules retain LF.
+  Typed transport: 33 bindings / 40 roles. Core grows 163984 -> 165824 bytes;
   Cursor/Machine remain 1184/1632. No timing or peak-stack improvement measured.
-  CALL context, RET preparation, raw discovery, setup/proof/seal/cleanup and
-  public R02-R05/inventory remain incomplete. Broader completion remains paused.
-  Local only, no push/release/deployment. See linked evidence for exact snapshots.
+  RET preparation, raw discovery, setup/proof/seal/cleanup and public R02-R05/
+  inventory remain incomplete. Broader completion remains paused. Local only,
+  no push/release/deployment. See linked evidence for exact earlier snapshots.
 
 - Predecessor CALL66 capture-cache checkpoint (2026-11-08): [Immutable CALL66 cache](../engineering/runtime-call-capture-cache.md)
   kernel `ced4289` and owning integration `5f9bfc3` retain independently proved
