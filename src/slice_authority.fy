@@ -34,6 +34,10 @@ fn void put(ref mut State state,usize index,Entry entry) {
     state.children[index]=entry.child;state.kinds[index]=entry.kind;state.frames[index]=entry.frame;
 }
 
+// Only after cleanup has authenticated/drained the pinned pool. No receipt is
+// trusted or restored here; initialize exactly one unpublished authority row.
+pub fn void reset_cleanup_entry(ref mut State state,usize index){assert(index<31);put(state,index,unused());}
+
 // Validate bounded ownership and canonical tails before touching pool metadata.
 // CALLs with no writers still consume a frame and a combined-depth entry.
 fn Result<usize,owners::Error> valid(ref State state) {

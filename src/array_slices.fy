@@ -48,6 +48,8 @@ fn Result<usize, owners::Error> validate(ref Pool pool, ref owners::Table table,
     }
     return .ok(count);
 }
+// Private staged cleanup preflight; no pool or owner mutation.
+pub fn Result<usize,owners::Error> inspect_cleanup(ref Pool pool,ref owners::Table table,usize capacity){return validate(pool,table,capacity);}
 fn Result<usize, owners::Error> resolve(ref Pool pool, Ticket ticket, ref owners::Table table, usize capacity) {
     if (ticket.slot >= 16 || ticket.generation == 0) { return .err(.Token); }
     let Slot entry = pool.slots[ticket.slot];
