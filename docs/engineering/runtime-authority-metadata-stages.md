@@ -171,7 +171,80 @@ original metadata and pinned Fuel on staged rejection; legacy raw RET65 can
 already have debited handoff Fuel before its frame-pop failure. This malformed
 private-state difference is explicit, not valid-program Fuel parity evidence.
 
+## Invocation setup, preparation cache, seal and cleanup
+
+The private owning VM now exposes Pending before entry. Admission still reserves
+all SDK storage atomically and prepays the original setup/destruction Fuel.
+Execution-cache checks, storage initialization, typed Core initialization and
+entry run on subsequent scheduling visits. Entry Fuel is charged once at entry;
+setup visits do not dispatch guest instructions. The raw saved-entry and
+synchronous execution helpers remain independent comparison paths.
+
+`runtime_preparation_work` checks dimensions/entry, one function at a time,
+scratch prices and one immutable CALL-cache row at a time. It consumes the
+retained Program's independently proved Preparation; it does not independently
+admit arbitrary IR or replace the source compiler/verifier. The Engine pins the
+exact Program and Snapshot through the continuation. Source compilation and
+its full proof remain atomic.
+
+`runtime_setup_work` initializes at most 1024 buffer bytes or 64 vector entries
+per fresh stage, then authenticates the selected place prefix. Input windows
+use their own 16-cell stages. Their sole owner is now a Buffer with the former
+24576-byte reservation; 768 fixed 24-byte cells occupy 18432 initialized bytes.
+The captured mutable address never moves or escapes its owner. Public Buffer
+append/reserve ABI barriers replace unavailable mutable Vec projections; no
+private SDK declarations or compiler changes are used.
+
+Core storage is not projected as executable state until its bytes are initialized.
+Typed initialization resets one authority row, one small runtime/site group or
+one bounded frame-sentinel group. Inactive transaction scratch stays zero-cold;
+each begin API initializes the fields it uses before reading them. No large
+empty Core/transaction/catalog constructor runs on this path. Cold native type
+witnesses and the raw synchronous setup remain separate.
+
+After guest RET, an extra scheduling visit hands a fresh allowance directly to
+`runtime_seal_work`. That admitted stage authenticates the reserved result slot,
+charges the existing seal price once, moves the backing and publishes one result.
+It allocates nothing and scans no output-sized payload. A partial-room kernel
+call does not sample Fuel, mutate the transaction or bank credits. Raw
+`seal_metered` remains an independent oracle, including exact/one-less Fuel.
+
+Execution failure or cancellation freezes its first cause, then drains cleanup
+with zero guest Fuel: snapshot/authentication, reverse live-session closure,
+authority-row reset, owner clearing, place-table chunks and final publication.
+Cleanup reuses the existing unpublished Runtime bank. Corrupt authority receipts
+are ignored, as in the raw abort oracle; corrupt pool/owner metadata rejects
+without publishing a partial plan. Both step and cancel use the same failure
+containment wrapper, so rejection cannot spin or replace the first cause.
+
+Private `cancel_ready` may now return Pending while cleanup drains. The caller
+may repeat cancel or resume step; guest execution never resumes after the latch.
+Only terminal cancellation refunds the pending backing. A stepped cancellation
+has an explicit cancelled Completion, releases its empty publication vector and
+cannot be taken as output. Destroying the sole private pending owner releases
+its SDK backing directly; there are no independently surviving guest/host
+resources to unwind on this implemented path. This is not public STOPPING,
+poison recovery, host dispatch or a deadline contract.
+
+The 4096-unit bounds are conservative logical metadata-entry accounting, not
+instrumented scalar-field, byte, CPU or wall-time measurements. In particular,
+the existing authority kernels and cleanup still project/copy whole fixed
+Runtime columns around some stages. Those framing copies are an explicit
+accounting limitation; no timing or peak-stack improvement is claimed.
+
 ## Evidence and limits
+
+The [lifecycle evidence](../evidence/runtime-lifecycle-windows-20261110.json)
+records cleanup/seal/cache/storage kernel profiles and the owning setup/cleanup
+integration. All fifteen focused groups pass development/O2 against their own
+committed source snapshots. The complete Engine passes both profiles with
+covered-resume allocation denial, exact Fuel/output/error comparisons, alternating
+cancel/step, repeated cancel after failure, original pins/moves and zero exit SDK
+heap. Its 292 input digests match checkout and integration commit `a287e8f`;
+284 production modules are LF. Core/Cursor remain 172400/1184 bytes. Lifecycle
+control and the smaller input owner grow Machine 1632 -> 1792 (+160, adding
+1280 to the reserved eight-slot pending vector). Transport has 36 bindings and
+51 reviewed layouts. No timing or peak-stack improvement is measured.
 
 See the [RET preparation evidence](../evidence/runtime-return-context-windows-20261109.json)
 for current catalog/context/result integration snapshots, native images, storage
@@ -184,8 +257,8 @@ publication and late frame errors. Actual Engine fixtures cover fixed/mixed
 quanta, exact/one-less Fuel, binary output, moves/pins, cancellation/refunds and
 SDK allocation denial on covered resumes.
 
-Still atomic or incompletely bounded: raw/synchronous recipe discovery,
-setup/proof/seal and cleanup. This private CALL/RET slice does not bound every
-runtime operation or establish public R03. Public lifecycle,
+Still atomic or incompletely bounded: source compile proof, admission allocator
+work, raw/synchronous recipe discovery and the complete runtime inventory.
+These private lifecycle and CALL/RET stages do not establish public R03. Public lifecycle,
 wall-clock deadlines, STOPPING/poison and the full remaining inventory stay open.
 The broader completion goal remains paused; this slice is local only.

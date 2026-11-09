@@ -1,54 +1,51 @@
 # Local handoff for the next thread
 
-Current checkpoint: [CALL/RET preparation and authority stages](runtime-authority-metadata-stages.md)
-are integrated into private owning Pending output execution. RET catalog and
-measurement `dfe582e`, context/result `85c49f2` precede integration `865c852`
-and diagnostic parity `a51c699`.
-Each RET metadata stage requires a fresh 4096-unit batch, including whole
-catalog proof, selected masks, prefix/context, result transfer and owner checks.
-Payload shares that allowance with metadata. Opcode/input-frame Fuel is charged
-once; validation, authority restoration and publication remain separate stages.
-Raw synchronous helpers remain independent oracles. CALL preparation remains
-integrated at `c035b43`.
+Current checkpoint: [private VM lifecycle and CALL/RET stages](runtime-authority-metadata-stages.md)
+are integrated into owning Pending output execution. Cleanup `0dee834`, seal
+`0c62d6d`, retained-cache checks `1508cc6` and storage initialization `849acb3`
+precede owning integration `a287e8f`. Preparation reserves storage and exposes
+Pending before entry; setup/cache/input/Core/entry advance separately. Fresh
+4096-unit metadata batches are shared with existing payload/CALL/RET work.
+Buffer stages initialize <=1024 bytes, vector stages <=64 entries and input
+stages sixteen 24-byte cells. No work credit is saved across yields.
 
-Windows development/O2 pass catalog (4 groups), direct preparation/restoration
-(11), and complete Engine images with default stacks, covered-resume allocation
-denial and zero exit SDK heap. All 286 Engine inputs match committed code.
-Core grows 6576 bytes to 172400; Cursor/Machine stay 1184/1632.
-See the [evidence](../evidence/runtime-return-context-windows-20261109.json) for
-exact snapshots. Focused kernel and Engine receipts identify the final diagnostic-fix inputs. Engine fixtures now
-track prefix Fuel separately from payload work and recognize emit-tail deferral
-before a fresh RET batch. No timing or peak-stack improvement measured.
+Failure/cancellation cleanup reuses the existing unpublished Runtime bank and
+needs no guest Fuel. Cancel may return Pending; repeat cancel or step until
+terminal. The first cause wins, including a failure followed by repeated cancel.
+Publication and refunds remain terminal-only. A dropped sole private owner
+releases backing directly. Synchronous/raw helpers remain independent oracles.
 
-The user authorized this RET preparation slice. The broader completion goal
-remains paused; this handoff alone does not authorize unrelated work or remote
-delivery.
-Read [AGENTS](../../AGENTS.md) and the
-[remaining inventory](../product/04-remaining-work.md).
+Windows development/O2 pass cleanup (4 groups), seal (5), cache checks (3),
+storage (3) and complete Engine images, with default stacks, covered-resume
+allocation denial and zero process-exit SDK heap. All 292 Engine inputs match
+`a287e8f`; all 284 production modules retain LF. Core/Cursor stay 172400/1184
+bytes; Machine is 1792 (+160, adding 1280 per reserved Vec8). Input metadata
+keeps its 24576-byte reservation while its owner becomes a Buffer.
+Typed transport is 36 bindings / 51 layouts. See the [exact evidence](../evidence/runtime-lifecycle-windows-20261110.json).
+No timing or peak-stack improvement measured.
 
-## Next bounded implementation
+The user authorized this lifecycle slice. Broader completion stays paused;
+this handoff grants no unrelated work or remote delivery. Read [AGENTS](../../AGENTS.md)
+and the [remaining inventory](../product/04-remaining-work.md).
 
-1. Continue bounds for setup/proof/seal/cleanup and other VM metadata only
-   when the user authorizes the next slice. This private owning CALL/RET path
-   does not establish public R03 or full runtime bounded work.
-2. Preserve the independent raw/synchronous oracles, immutable CALL66 cache and
-   original-recipe proofs, exact valid-program Fuel/output/diagnostics, moves,
-   cancellation/refunds and allocation-denial evidence. Synthetic late bad-frame
-   failures intentionally retain staged originals/Fuel; raw RET65 may debit first.
-3. Public R03, setup/proof/seal/cleanup, R04/R05 deadlines/STOPPING/poison and the
-   full inventory remain incomplete. No public bounded-step or wall-clock claim.
+## Remaining bounds and next work
+
+1. Audit logical allowance framing, including whole fixed Runtime-column copies,
+   before claiming instrumented field/byte/CPU bounds. Preserve frozen inputs,
+   final-only publication, exact valid-program Fuel/diagnostics/output and the
+   raw comparison paths. Continuations consume scheduling visits, not another
+   opcode Fuel debit.
+2. Source compile proof, admission allocator work and raw synchronous setup/
+   discovery remain atomic. The staged preparation proof consumes the exact
+   retained immutable Program cache; it is not independent admission for raw IR.
+3. Public R02/R03, complete accounting/preallocation, R04/R05 deadlines/STOPPING/
+   poison, host dispatch and the full inventory remain open. Continue another
+   slice only when authorized. No public bounded-step or wall-clock claim.
 
 Use `build/toolchain/fairyc.exe`, default stacks and no hidden overrides. Keep
-production LF. A continuation consumes a scheduling visit, not another opcode
-Fuel debit. RET validation counters record actual prefix work; phase 4 reports
-final publication and stays set until the next RET. Full publication consumes
-4096 metadata units, so following COPY work resumes in a later batch.
-
-The old local stash `39f1c91dcaa8edef5194f8d37b75069d20ce92a0` remains historical
-provenance. Its cache is integrated and its superseded layout/fixtures must not
-be applied wholesale. Current actual-source coverage extends that draft to
-forwarding and second-input selection. Stored grows by 904 inline bytes; the
-reserved eight-slot vector adds 7232 charged bytes per retained output Program.
+production LF. The historical stash `39f1c91dcaa8edef5194f8d37b75069d20ce92a0`
+contains superseded cache/layout drafts; do not apply it wholesale. The immutable
+CALL66 cache is already integrated, including forwarding/second-input selection.
 
 ## Full remaining inventory
 

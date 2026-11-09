@@ -1,20 +1,22 @@
-- Latest RET preparation checkpoint (2026-11-09): [CALL/RET stages](docs/engineering/runtime-authority-metadata-stages.md)
-  catalog/measurement `dfe582e`, context/result `85c49f2`, owning integration
-  `865c852` and diagnostic parity `a51c699` stage RET preparation in private Pending output execution.
-  Whole-catalog proof, selected mask, prefix, context, frame tokens, transfer,
-  owner checks and adoption use fresh 4096-unit stages. Payload and metadata
-  share one allowance; bool ARET <=4096 and SRET <=512 payload work units.
-  Opcode/input-frame Fuel is charged once; terminal Fuel/output/error parity and
-  final-only publication remain. Raw synchronous helpers remain independent.
-  Windows development/O2 pass catalog (4 groups), direct preparation/restoration
-  (11), and complete Engine images with default 1MiB/4KiB stacks. Covered resumes
-  deny SDK allocation; exit SDK heap is zero. All 286 Engine inputs match
-  checkout/commit; 279 production modules retain LF. Typed transport has
-  33 bindings / 43 roles. Core grows 165824 -> 172400 bytes (+6576);
-  Cursor/Machine stay 1184/1632. No timing or peak-stack improvement measured.
-  Raw discovery, setup/proof/seal/cleanup, public lifecycle, deadlines/STOPPING/
-  poison and the full inventory remain open. Broader completion remains paused.
-  Local only, no push/release/deployment. See linked evidence for exact snapshots.
+- Latest lifecycle checkpoint (2026-11-10): [private VM stages](docs/engineering/runtime-authority-metadata-stages.md)
+  cleanup `0dee834`, seal `0c62d6d`, retained-cache checks `1508cc6`, storage
+  initialization `849acb3` and owning integration `a287e8f` stage setup/proof/
+  seal/cleanup alongside the existing CALL/RET continuations. Preparation now
+  exposes Pending before entry. Fresh 4096-unit stages initialize <=1024 buffer
+  bytes, <=64 vector entries or 16 input cells; cleanup clears <=256 place words.
+  Entry/seal Fuel is charged once; cleanup debits no guest Fuel. Cancellation
+  may remain Pending, and repeating cancel or step preserves the first cause.
+  Synchronous/raw helpers remain independent oracles. Full source compile proof
+  and admission allocations remain atomic; logical Runtime-copy framing is not
+  an instrumented byte/CPU bound. Public R02-R05 and the inventory stay open.
+  Windows development/O2 pass cleanup (4 groups), seal (5), cache checks (3),
+  storage (3), and complete Engine images with default 1MiB/4KiB stacks. Covered
+  resumes deny SDK allocation; process-exit SDK heap is zero. All 292 Engine
+  inputs match checkout/commit; 284 production modules retain LF. Typed transport
+  has 36 bindings / 51 roles. Core/Cursor remain 172400/1184 bytes; Machine grows
+  1632 -> 1792 (+160; reserved Vec8 adds 1280). Input reservation stays 24576.
+  See [evidence](docs/evidence/runtime-lifecycle-windows-20261110.json). No timing or peak-stack improvement measured.
+  Broader completion remains paused. Local only; no push/release/deployment.
 
 # Brownie C agent guidance
 
