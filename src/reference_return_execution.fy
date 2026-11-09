@@ -55,7 +55,8 @@ pub fn Result<Returned,errors::Error> prepare_input(ref ir::Program p,ref static
         if(bindings.selected[frame]==0 || selected.storage!=2 || !selected.window || selected.ticket.slot>=16){return .err(invalid(offset));}
         // This bounded snapshot checks only the selected relative span. Native
         // handoff still authenticates full generation, root, lease and origin.
-        let owners::View view=state.runtime.pool.slots[selected.ticket.slot].view;
+        let ref runtime::Runtime native=ref state.runtime;let ref slices::Pool pool=ref native.pool;
+        let owners::View view=pool.slots[selected.ticket.slot].view;
         if(view.start>view.end || selected.span.start>view.end-view.start ||
             selected.span.length>view.end-view.start-selected.span.start){return .err(invalid(offset));}
         let u32 word=words::pack_result(dst,selected.span,offset)?;

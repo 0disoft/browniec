@@ -5,6 +5,7 @@ import runtime_input as inputs;
 import module_output_program as programs;
 import slice_result_machine as machine;
 import output_copy_cursor as copy;
+import return_metadata_execution as returns;
 import module_input_entry as input_entries;
 import module_index as modules;
 import source_snapshot as sources;
@@ -187,7 +188,9 @@ fn Result<usize,u8> fixed_mixed_quanta_fuel_and_cursor_parity(){
                 assert(c.total==expected.cursor.output.total && c.last==expected.cursor.output.last);
                 assert(c.active==expected.cursor.output.active && c.copied==expected.cursor.output.copied);
                 if(expected.stats.last<q){
-                    assert(c.last==4096 || expected.cursor.metadata.last==4096 || expected.cursor.return_metadata.pending);
+                    // A completed emit tail defers a following RET until a fresh metadata batch.
+                    let bool ret_wait=c.last>0 && !c.active && returns::operation(ref programs::code(ref code).body,expected.cursor.pc);
+                    assert(c.last==4096 || expected.cursor.metadata.last==4096 || expected.cursor.return_metadata.pending || ret_wait);
                     if(c.last==4096){byte_yield=true;}
                 }
                 if(before.cursor.output.active && c.active){

@@ -53,6 +53,7 @@ import call_metadata_state as call_metadata;
 import call_copy_plan_work as call_copy_plan;
 import metadata_budget as metadata_budget;
 import return_metadata_execution as return_metadata;
+import return_prepare_work as return_preparation;
 import runtime_metadata_work as metadata_work;
 import call_capture_plan as capture_plans;
 import return_work_execution as return_steps;
@@ -519,8 +520,17 @@ fn Result<Option<Outcome>,errors::Error> dispatch_staged(ref body_ir::Program bo
         if(cursor.return_metadata.pending){
             if(cursor.return_metadata.pc!=cursor.pc || cursor.return_metadata.frame!=frame || metadata.active ||
                 cursor.call.pending || cursor.array.active || cursor.output.active){return .err(errors::make(5,offset));};
+            if(room!=4096){return .ok(.none);};
             *visited+=1;
             var return_metadata::State returning=cursor.return_metadata;
+            if(returning.phase==0){
+                var return_work::State validation=cursor.returned;
+                let bool prepared=return_preparation::advance(ref mut metadata.returning,ref mut returning,
+                    body,sites,bindings,state,data,literals.len,windows,origins,static_live,static_words,registers,place_state,
+                    remaining,ref mut validation,ref mut cursor.metadata,room)?;
+                cursor.returned=validation;
+                cursor.return_metadata=returning;return .ok(.none);
+            }
             let bool finished=return_metadata::advance(ref mut returning,ref mut metadata.metadata,ref mut cursor.metadata,
                 body,sites,bindings,state,data.len,windows,origins,static_live,static_words,registers,remaining,room,plans)?;
             cursor.return_metadata=returning;
@@ -555,20 +565,16 @@ fn Result<Option<Outcome>,errors::Error> dispatch_staged(ref body_ir::Program bo
         }
         if(return_metadata::operation(body,cursor.pc) && !cursor.array.active && !cursor.output.active){
             if(*remaining==0){return .err(errors::make(8,offset));}
-            let usize measured=return_steps::required(body,cursor.pc)?;
-            if(measured>4096){return .err(errors::make(5,offset));}if(measured>room){return .ok(.none);}
-            let usize ready=return_work::check(ref cursor.returned,measured,offset)?;
-            *remaining-=1;*visited+=1;
-            let usize empty=place_frames::empty_frame(place_state,frame,offset)?;
+            if(room!=4096){return .ok(.none);};
+            *visited+=1;
             var return_metadata::State returning=cursor.return_metadata;
-            let usize begun=return_metadata::begin(ref mut returning,body,sites,cursor.pc,bindings,state,data,literals.len,
-                windows,origins,static_live,static_words,registers,remaining)?;
-            cursor.return_metadata=returning;
-            let usize instruction=cursor.pc;let u8 operation=body.code[instruction*8];
-            return_work::record(ref mut cursor.returned,measured,instruction,frame,operation);
-            // Prefix preparation remains atomic; run it alone before the first
-            // restoration stage, without claiming a false 4096 metadata debit.
-            return .ok(.none);
+            let usize begun=return_preparation::begin(ref mut metadata.returning,ref mut returning,cursor.pc,frame,*remaining)?;
+            var return_work::State validation=cursor.returned;
+            let bool prepared=return_preparation::advance(ref mut metadata.returning,ref mut returning,
+                body,sites,bindings,state,data,literals.len,windows,origins,static_live,static_words,registers,place_state,
+                remaining,ref mut validation,ref mut cursor.metadata,room)?;
+                cursor.returned=validation;
+            cursor.return_metadata=returning;return .ok(.none);
         }
         let Option<Outcome> result=dispatch(body,parameters,bindings,state,data,sites,literals,list_cells,list_scratch,place_state,windows,
             guest,origins,remaining,staged,cursor,static_live,static_words,registers,quantum,visited,plans,true)?;

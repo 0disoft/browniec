@@ -191,7 +191,7 @@ def main():
                         'programVectorType', 'snapshotType', 'snapshotVectorType', 'machineType', 'coreType',
                         'executionType','pendingVectorType','completionType','publishedVectorType',
                         'pendingMetaType','cursorType','outputCopyType','transactionType','preparationType','arrayFillType','callCopyType','returnWorkType','capturePlanType',
-                        'callMetadataType','metadataBudgetType','returnMetadataType','callCopyPlanType','callContextWorkType','callArgumentWorkType','callOwnedWorkType']}
+                        'callMetadataType','metadataBudgetType','returnMetadataType','callCopyPlanType','callContextWorkType','callArgumentWorkType','callOwnedWorkType','returnPreparationType','returnRecordPlanType','returnCatalogWorkType']}
         for variant, types in contract['programVariants'].items():
             layout_types.update({variant + '_' + role: name for role, name in types.items()})
         layout_types.update({key + '_entry': name for key, name in contract['entryTypes'].items()})
@@ -204,7 +204,7 @@ def main():
                                 ('executionType',0,'completionType'),('executionType',1,'publishedVectorType'),
                                 ('machineType',6,'transactionType'),('machineType',7,'pendingMetaType'),
                                 ('pendingMetaType',0,'cursorType'),('cursorType',2,'outputCopyType'),('cursorType',3,'arrayFillType'),('cursorType',4,'callCopyType'),('cursorType',5,'returnWorkType'),
-                                ('cursorType',6,'metadataBudgetType'),('coreType',7,'callMetadataType'),('coreType',8,'callCopyPlanType'),('callMetadataType',8,'callContextWorkType'),('callContextWorkType',0,'callArgumentWorkType'),('callContextWorkType',1,'callOwnedWorkType'),('cursorType',8,'returnMetadataType')]:
+                                ('cursorType',6,'metadataBudgetType'),('coreType',7,'callMetadataType'),('coreType',8,'callCopyPlanType'),('callMetadataType',8,'callContextWorkType'),('callContextWorkType',0,'callArgumentWorkType'),('callContextWorkType',1,'callOwnedWorkType'),('callMetadataType',9,'returnPreparationType'),('returnPreparationType',0,'returnRecordPlanType'),('returnRecordPlanType',0,'returnCatalogWorkType'),('cursorType',8,'returnMetadataType')]:
             member=re.search(r'\b(fy_(?:struct|resource)_\d+) f_'+str(field)+r';',contract['reviewedLayouts'][owner])
             need(member is not None and member.group(1)==contract[key],f'Output field projection differs: {owner}/{field}')
         advance_args=contract['reviewedDeclarations']['26'].split('(',1)[1].split(',')
@@ -347,7 +347,7 @@ def main():
                            'Private synchronous typed transport, not public C handles or CLI lifecycle APIs',
                            'Complete Engine accounting/preallocation, OOM injection and poison containment remain',
                            'Ordinary zero-argument terminal Fuel is still marked unknown',
-                           'Owning CALL/RET authority stages share payload allowance; RET preparation, raw recipe scans and setup/proof/seal/cleanup still need complete bounds',
+                           'Owning CALL/RET authority stages share payload allowance; raw recipe scans and setup/proof/seal/cleanup still need complete bounds',
                            'Compile proof remains atomic; no in-flight cancellation, host dispatch or OS deadline'])
     except Exception as error:
         receipt.update(status='failed', error=str(error))

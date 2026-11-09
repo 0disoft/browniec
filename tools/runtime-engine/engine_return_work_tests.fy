@@ -80,13 +80,14 @@ fn engine::Event finish(ref mut engine::Engine e,usize i,usize mode){let usize[5
     while(s.kind==4){assert(n<512);s=tick(e,i,if(mode==0){1}else if(mode==1){7}else{mixed[n%5]});n+=1;}return s;}
 fn ref u8[] bool_source(){return b"module app;fn bool[4096] make(ref u8[] data){let bool[4096] a=[true;4096];output::emit(ref b\"x\");return a;}pub fn i32 chosen(ref u8[] data){let bool[4096] a=make(ref data);if(!a[0] || !a[4095]){return 0;}output::emit(ref data);return 42;}";}
 
-// Observe validation at the prefix exactly once, then wait through authority
+// Observe prefix Fuel separately from validation, then wait through authority
 // restoration to derive the same full return Fuel price as the atomic oracle.
-fn Admission accepted(ref mut engine::Engine e,usize i,usize measure,u8 op){var usize n=0;var usize admitted=0;
+fn Admission accepted(ref mut engine::Engine e,usize i,usize measure,u8 op){var usize n=0;var usize admitted=0;var usize prefix=0;
     while(n<256){let engine::Event before=event(engine::observe(e,i));let fill::State a=array(e,i);let copy::State o=output(e,i);let calls::State c=call(e,i);
         let engine::Event after=tick(e,i,1);n+=1;assert(after.kind==4);let returns::State r=progress(e,i);
+        if(r.total==0 && before.remaining>after.remaining){prefix=before.remaining;}
         if(r.total!=0){assert(r.total==measure && r.required==measure && r.op==op);
-            if(admitted==0){assert(r.last==measure && before.remaining>after.remaining);admitted=before.remaining;}
+            if(admitted==0){assert(r.last==measure && before.remaining==after.remaining && prefix>before.remaining);admitted=prefix;}
             else{assert(r.last==0);}
             assert(array(e,i).total==a.total && output(e,i).total==o.total && call(e,i).total==c.total);
             if(phase(e,i)==4){assert(authority(e,i).last==4096 && after.remaining<before.remaining);
@@ -94,7 +95,7 @@ fn Admission accepted(ref mut engine::Engine e,usize i,usize measure,u8 op){var 
         }}
     assert(false);return Admission{.before=0,.after=0,.chunks=0};}
 // A q=4096 batch must stop after the one-byte prefix with no accepted RET.
-// The following q=1 step admits the entire bool scan; no partial recipe exists.
+// Later q=1 steps prepare the RET, then admit the whole bool scan.
 // CALL context preparation now yields before the return-prefix fixture.
 // Keep a finite scheduling bound while allowing those admitted stages.
 fn Admission deferred(ref mut engine::Engine e,usize i){var usize n=0;
@@ -187,7 +188,7 @@ fn Result<usize,u8> return_publication_defers_following_array_and_record_copy(){
             while(s.kind==4){assert(n<256);let usize q=if(schedule==0){4096}else if(schedule==1){1}else if(schedule==2){7}else{mixed[n%5]};s=tick(ref mut e,i,q);n+=1;
                 if(s.kind==4){let returns::State r=progress(ref e,i);let fill::State a=array(ref e,i);
                     let metadata::State m=authority(ref e,i);
-                    if(r.last!=0 && r.op==39){validation=true;assert(m.last==0);}
+                    if(r.last!=0 && r.op==39){validation=true;assert(m.last+r.last==4096);}
                     if(!published && r.op==39 && phase(ref e,i)==4){published=true;assert(m.last==4096 && a.last==0);}
                     if(a.last!=0 && a.op==if(mode==0){34}else{42} && r.total!=0){separated=true;assert(validation && published && r.last==0 && m.last==0 && a.written>0);}}}
             if(schedule==0){assert(validation && published && separated);}same_event(s,completion(ref baseline));let engine::Output o=take(ref mut e,i)?;same_output(ref o,ref baseline);destroy(ref mut e,i);ledger(ref e,0);schedule+=1;}
