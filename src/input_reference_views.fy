@@ -1,14 +1,15 @@
 module input_reference_views;
 import errors as errors;
 import static_views as views;
-import std::vec as vec;
+import std::bytes as bytes;
 import std::num as num;
+import metadata_budget as budget;
 
 // Metadata only. Frame zero is reserved, including its 16 sites and 8 grants.
 struct Cell { usize start; usize length; bool active; }
-pub resource State { vec::Vec<Cell> cells; ptr mut void data; usize length; cleanup { } }
-pub fn State disabled(){return State{.cells=vec::empty<Cell>(),.data=null,.length=0};}
-pub fn bool enabled(ref State state){return vec::len<Cell>(ref state.cells)==768;}
+pub resource State { bytes::Buffer cells; ptr mut u8 data; usize length; cleanup { } }
+pub fn State disabled(){return State{.cells=bytes::empty(),.data=null,.length=0};}
+pub fn bool enabled(ref State state){return bytes::view(ref state.cells).len==18432;}
 // Bounds-only preflight for unpublished child-frame grants; no cell access.
 pub fn bool accepts(ref State state,views::Span span){
     return enabled(state) && span.start<=state.length && span.length<=state.length-span.start;
@@ -17,19 +18,47 @@ pub fn u32 marker(){return 1073741824;}
 pub fn bool is_input(u32 word){return word==marker();}
 fn errors::Error invalid(usize offset){return errors::make(5,offset);}
 
+// Private setup alternative. The backing is reserved once before any resumes;
+// no cell is exposed through the public API until all 768 are initialized.
+pub fn Result<State,errors::Error> reserve(usize length){
+    if(length>1048576){return .err(invalid(0));}
+    // Vec<Cell>::reserve(768) formerly rounded to 1024 cells (24576 bytes).
+    var bytes::Buffer cells=switch(bytes::with_capacity(24576)){
+        case .ok(v):{v}case .err(_):{return .err(errors::make(15,0));}};
+    let ptr mut u8 data=unsafe {bytes::view_mut(ref mut cells) as ptr mut u8};
+    if(data==null){return .err(invalid(0));}
+    return .ok(State{.cells=cells,.data=data,.length=length});
+}
+// Public Buffer ABI, with the same first-field ownership seam as runtime_output.
+@link_name("fy_std_buffer_append_v0") unsafe extern C fn u32 append_cells_raw(ptr mut void buffer,ptr u8 data,usize length);
+@link_name("fy_std_buffer_reserve_v0") unsafe extern C fn u32 validate_cells_raw(ptr mut void buffer,usize capacity);
+fn usize initialized_cells(ref State state){return bytes::view(ref state.cells).len;}
+fn usize reserved_cells(ref State state){return bytes::capacity(ref state.cells);}
+pub fn Result<bool,errors::Error> initialize_chunk(ref mut State state,ref mut budget::State allowance){
+    if(allowance.last!=0){return .ok(false);}
+    let usize length=initialized_cells(state);
+    if(length>18432 || length%24!=0 || reserved_cells(state)<24576 || state.length>1048576){return .err(invalid(0));}
+    if(length==18432){if(state.data==null){return .err(invalid(0));}return .ok(true);}
+    if(state.data==null){return .err(invalid(0));}
+    if(!budget::admit(allowance,4096,0)?){return .ok(false);}
+    // At most 16 cells: 384 initialized scratch bytes and 384 appended bytes,
+    // leaving room for owning Cursor/frame visits. This bounds logical entries,
+    // without a CPU, wall-time or peak-stack claim.
+    let usize count=if(18432-length<384){18432-length}else{384};
+    let u8[384] zero=[0;384];let ref u8[] chunk=ref zero[..count];
+    assert(unsafe {append_cells_raw(state as ptr mut void,chunk as ptr u8,count)}==0);
+    assert(unsafe {validate_cells_raw(state as ptr mut void,0)}==0);
+    return .ok(length+count==18432);
+}
+
 // Automatic resource destruction releases the entire unpublished vector on any
 // failure. No partially initialized State escapes, including for empty input.
 pub fn Result<State,errors::Error> open(usize length){
     if(length>1048576){return .err(invalid(0));}
-    var vec::Vec<Cell> cells=vec::empty<Cell>();
-    if(!vec::reserve<Cell>(ref mut cells,768).is_ok){return .err(errors::make(15,0));}
-    var usize i=0;while(i<768){
-        if(!vec::push<Cell>(ref mut cells,Cell{.start=0,.length=0,.active=false}).is_ok){
-            return .err(errors::make(15,0));
-        }i+=1;
-    }
-    let ref mut Cell first=vec::at_mut<Cell>(ref mut cells,0);
-    let ptr mut void data=unsafe {first as ptr mut void};
+    var bytes::Buffer cells=switch(bytes::with_capacity(24576)){
+        case .ok(v):{v}case .err(_):{return .err(errors::make(15,0));}};
+    if(!bytes::resize_zeroed(ref mut cells,18432).is_ok){return .err(errors::make(15,0));}
+    let ptr mut u8 data=unsafe {bytes::view_mut(ref mut cells) as ptr mut u8};
     assert(data!=null);
     return .ok(State{.cells=cells,.data=data,.length=length});
 }
@@ -40,9 +69,11 @@ fn Result<usize,errors::Error> index(usize frame,usize slot,bool formal,usize of
 }
 fn Result<views::Span,errors::Error> read(ref State state,usize at,usize offset){
     if(!enabled(state)){return .err(invalid(offset));}
-    let ref Cell cell=vec::at<Cell>(ref state.cells,at);
-    if(!cell.active){return .err(invalid(offset));}
-    return .ok(views::Span{.start=cell.start,.length=cell.length});
+    let ref u8[] cells=bytes::view(ref state.cells);let usize base=at*24;
+    if(cells[base+16]==0){return .err(invalid(offset));}
+    var usize start=0;var usize length=0;var usize i=8;
+    while(i>0){i-=1;start=start*256+cells[base+i] as usize;length=length*256+cells[base+8+i] as usize;}
+    return .ok(views::Span{.start=start,.length=length});
 }
 pub fn Result<views::Span,errors::Error> get(ref State state,usize frame,usize site,usize offset){
     return read(state,index(frame,site,false,offset)?,offset);
@@ -51,7 +82,7 @@ pub fn Result<views::Span,errors::Error> grant(ref State state,usize frame,usize
     return read(state,index(frame,argument,true,offset)?,offset);
 }
 // The pinned compiler cannot mutably project resource fields. Capture only the
-// fixed allocation's address at open; Vec remains its sole owner, never grows,
+// fixed allocation's address at open; Buffer remains its sole owner, never grows,
 // and this owner-scoped mutable view cannot escape the private helper.
 // Cell layout is pinned to Windows AMD64: usize at 0/8, bool at 16,
 // stride 24. The native verifier independently asserts generated layout.
