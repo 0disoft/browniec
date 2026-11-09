@@ -30,6 +30,17 @@ plans and aborts canonical live state. External effects are never replayed.
 
 ## CALL
 
+The separate `call_owned_work` prerequisite now prepares the owned portion of
+the context with fresh 4096-unit stages: cost/cache header, one capture argument,
+one CALL66 Held site (at most 47 receipt slots), then one owned argument's
+array/record descriptors. Record lookup visits at most sixteen bindings twice.
+CALL66 requires the exact proved cache; this owning kernel never falls back to
+raw IR recipe discovery. Raw `prepare_enter` and `prepare_enter_cached` remain
+comparison oracles. Six native groups pass development/O2, covering full mixed
+arity, supplied captures, Held ordering, Fuel boundaries and unchanged inputs on
+partial-room deferral (`build/call-owned-work/{development,release}/receipt.json`).
+This prerequisite is not yet connected to the owning context adapter below.
+
 1. Prepare the invocation context once, outside the authority bound.
 2. Reserve a snapshot stage, then reconstruct authority over separate stages.
 3. Build the copy recipe in fresh 4096-unit stages: initialize/inspect the
