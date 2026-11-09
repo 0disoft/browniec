@@ -51,7 +51,17 @@ argument helpers, including image/Runtime/Input/returned sources, full arity,
 exact/one-less Fuel, late errors and partial-room deferral
 (`build/call-argument-work/{development,release}/receipt.json`). Canonical array
 CALL cost lookup now borrows its exact catalog instead of copying it for each
-scalar field read. The context coordinator remains to be connected.
+scalar field read.
+
+`call_context_work` coordinates these banks with separate prefix, argument,
+selection, owned-preparation and final-adoption stages. It preserves frame/Fuel/
+place error order and charges input-frame work once. Argument Fuel becomes
+externally visible only after complete authentication, matching raw context
+preparation. Four native groups pass development/O2 against raw `begin`, with
+enabled/disabled input, depth/Fuel/place precedence, scalar/zero-arity success
+and every-stage partial-room immutability
+(`build/call-context-work/{development,release}/receipt.json`). The owning VM
+adapter below still needs to adopt this coordinator.
 
 1. Prepare the invocation context once, outside the authority bound.
 2. Reserve a snapshot stage, then reconstruct authority over separate stages.
