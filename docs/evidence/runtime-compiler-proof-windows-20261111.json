@@ -1,0 +1,817 @@
+{
+  "schema": "browniec.runtime-compiler-proof-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-10T16:44:04.363122+00:00",
+  "verifiedCommit": "0e4153b8b32e43213ef3436e598851e1938e4bb6",
+  "implementationCommits": [
+    "ae48de346d561d02515e3ada82dfcf38308d444b",
+    "72e37ab392e918e6a987dc6bcab7474677b6f628",
+    "abc332731b9224ca9698e7136e2f7ead46aaae86",
+    "29efd14974c79bcdc11c0db8726fb7528237dcdd",
+    "3f90c740219df1f437716c7a3d6eb53b99c7cc3d",
+    "1f5843c9be7ff9120e14bd26c5faa2f989904af6",
+    "7b49591c36d29f9c2478aa74f683cc1d46e5f0af",
+    "4c5750effe1085dd635a5f095c816ca5f14cb00f",
+    "a5aca142e7a7a66b228da947a972db8e0937bb90",
+    "9a0ad6f42fc9372347c356e1ced004eb7f3db744",
+    "3ac2b3633db8699d0dce87087410cd00f8d1991e",
+    "cffc4f6645cf00158b7f7b77aca7a4dcba58f60a",
+    "91a7a46d19ecad4ee49061b58fcb412299491cf5",
+    "f4ae97ac8de825c904b8930db7517b5d7228f695",
+    "15665c9813cbd17217dff53a06443cf3b1cdedb2",
+    "6f52d78f54a0f21747a9e5af84919edd08e9818b",
+    "2613e472b429c9953789e60f6cd4bad8b5c6f2b0",
+    "a058fc8113c2f097b08031ea84624721e43e3761",
+    "2b006b680e2705712fb0329848a544223951ad6e",
+    "0d9bb134215906e8793dfa8ffb0a39b66efcc522",
+    "4a995ee0f6d031a3cc3fbcba5fe687a7d9fc4914",
+    "fbc49693bdc7130a50e32f3de9194cd11a7623d0",
+    "ab75f80d772c7f4842571e46d4865ae587338e03",
+    "0e4153b8b32e43213ef3436e598851e1938e4bb6"
+  ],
+  "scope": "Complete private canonical input/output verifier proof and borrowed-return proof; owning synchronous compiler drains resumable stages, not public Pending compile",
+  "receipt": {
+    "path": "build/runtime-engine/20261110T163704597444Z/receipt.json",
+    "sha256": "ef1ecc607ec71ec32d5dd448d33591d605f5bb18c8c1990a99a486f3855a0b13"
+  },
+  "compiler": {
+    "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+    "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+    "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false"
+  },
+  "msvc": {
+    "version": "14.51.36231",
+    "sdk": "10.0.26100.0",
+    "compilerSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+    "overrides": false
+  },
+  "profiles": [
+    {
+      "profile": "development",
+      "artifact": {
+        "path": "build/runtime-engine/20261110T163704597444Z/development/runtime-engine.exe",
+        "sha256": "b6499d62ff7a10e6ac436e383f2b576c6dfc32c07a9f75fe13bb1abb040ea2dc",
+        "bytes": 10813440,
+        "stackReserve": 1048576,
+        "stackCommit": 4096
+      },
+      "exit": 0,
+      "controlMetrics": {
+        "cases": 6,
+        "smallHeapBytes": 7872,
+        "maximumHeapBytes": 62976,
+        "ownerBytes": 736
+      },
+      "preparationMetrics": {
+        "cacheBytes": 2248,
+        "storedBytes": 24264,
+        "previousStoredBytes": 22016,
+        "retainedVecExtraBytes": 17984,
+        "capturePlanBytes": 900,
+        "previousCacheBytes": 1344,
+        "capturePlanVecExtraBytes": 7232
+      },
+      "arrayFillMetrics": {
+        "arrayWorkBytes": 360,
+        "cursorBytes": 1184,
+        "machineBytes": 1792,
+        "coreBytes": 172400,
+        "pendingVecExtraBytes": 2880,
+        "callWorkBytes": 536,
+        "callPendingVecExtraBytes": 4288,
+        "returnWorkBytes": 48,
+        "returnPendingVecExtraBytes": 384,
+        "combinedPendingVecExtraBytes": 7552
+      },
+      "liveHeapAllocationsAtExit": 0,
+      "assertions": "native Fairy and C, no parsed trace",
+      "objects": [
+        {
+          "path": "build/runtime-engine/20261110T163704597444Z/development/transport.obj",
+          "sha256": "84a32e627a488a8ea2f3752884b5d7c28453b5a0fa5137ede18effec034fa0b3"
+        },
+        {
+          "path": "build/runtime-engine/20261110T163704597444Z/development/runtime.obj",
+          "sha256": "8dca7d7f85f5e210d719e187011ef94fee0a6af495b285167197bb32dfdb142e"
+        },
+        {
+          "path": "build/runtime-engine/20261110T163704597444Z/development/abi_thread_identity.obj",
+          "sha256": "4c1fd10b683b1794f8eb8c888c0b0d7e27154478af869c5048ec80516b899595"
+        },
+        {
+          "path": "build/runtime-engine/20261110T163704597444Z/development/input_reader.obj",
+          "sha256": "ffae40c3408312133cc339f088e44959c654c6d2f37a99e380848e256e47fb2b"
+        },
+        {
+          "path": "build/runtime-engine/20261110T163704597444Z/development/input_adoption.obj",
+          "sha256": "fec1454c09ef0b97540fa354b0f1a235b0e4653843d442c3035ba3c44215e94d"
+        }
+      ]
+    },
+    {
+      "profile": "release",
+      "artifact": {
+        "path": "build/runtime-engine/20261110T163704597444Z/release/runtime-engine.exe",
+        "sha256": "b63808adce0f14814f7d9e1dc1093266d585a60c0f67b5c9ad0d94e488e593c9",
+        "bytes": 3970560,
+        "stackReserve": 1048576,
+        "stackCommit": 4096
+      },
+      "exit": 0,
+      "controlMetrics": {
+        "cases": 6,
+        "smallHeapBytes": 7872,
+        "maximumHeapBytes": 62976,
+        "ownerBytes": 736
+      },
+      "preparationMetrics": {
+        "cacheBytes": 2248,
+        "storedBytes": 24264,
+        "previousStoredBytes": 22016,
+        "retainedVecExtraBytes": 17984,
+        "capturePlanBytes": 900,
+        "previousCacheBytes": 1344,
+        "capturePlanVecExtraBytes": 7232
+      },
+      "arrayFillMetrics": {
+        "arrayWorkBytes": 360,
+        "cursorBytes": 1184,
+        "machineBytes": 1792,
+        "coreBytes": 172400,
+        "pendingVecExtraBytes": 2880,
+        "callWorkBytes": 536,
+        "callPendingVecExtraBytes": 4288,
+        "returnWorkBytes": 48,
+        "returnPendingVecExtraBytes": 384,
+        "combinedPendingVecExtraBytes": 7552
+      },
+      "liveHeapAllocationsAtExit": 0,
+      "assertions": "native Fairy and C, no parsed trace",
+      "objects": [
+        {
+          "path": "build/runtime-engine/20261110T163704597444Z/release/transport.obj",
+          "sha256": "84787b0bd4aa375c11c89717a828b3afa3db395a8b09220b0f31aad32cef60e2"
+        },
+        {
+          "path": "build/runtime-engine/20261110T163704597444Z/release/runtime.obj",
+          "sha256": "dfaf6a9d3f4d01b3cc44d02b05d1d0c759c15bb523b88bd35e11a8d91f1125e9"
+        },
+        {
+          "path": "build/runtime-engine/20261110T163704597444Z/release/abi_thread_identity.obj",
+          "sha256": "d35c12514fbae0def0fb820c703baf66e22dd545438bb741da973f6afdf33be4"
+        },
+        {
+          "path": "build/runtime-engine/20261110T163704597444Z/release/input_reader.obj",
+          "sha256": "0cf6d0281b122d6503635669d4539076eeaf7d067d65995b160b214ba1aebeb4"
+        },
+        {
+          "path": "build/runtime-engine/20261110T163704597444Z/release/input_adoption.obj",
+          "sha256": "1d250a7dc007a3c6ca91c58a1bdc41aac082f6c7bb4d964723ead4b65067bf6c"
+        }
+      ]
+    }
+  ],
+  "focused": [
+    {
+      "kernel": "output_borrowed_calls_work",
+      "verifiedOwnerCommit": "6f52d78f54a0f21747a9e5af84919edd08e9818b",
+      "owner": "src/output_borrowed_calls_work.fy",
+      "sourceSha256": "1f38b034a1f7962d932d314bb17c5ee9d0a531f4b4c94a34164c9715c9cb9b95",
+      "test": "tests/m2/output_borrowed_calls_work.fy",
+      "testSha256": "701e6f9478e7d93382b232f9bd9b549159c8bb8a9c86ddd16bbd4d19bb48fd20",
+      "profiles": [
+        {
+          "profile": "development",
+          "receipt": {
+            "path": "build/proof-slices/borrowed-calls-fast/build/output-borrowed-calls-work/development/receipt.json",
+            "sha256": "ee2b6aac6ef44bba7dd2c428b39190fd6b3d8e70a21c662a05ba6ca51cd0bbb3"
+          },
+          "nativeGroups": 2,
+          "nativeReportSha256": "6b4e4d9d2b13f58184092bb63a2e60dde1860aba6861701dd3c6381573d052ec"
+        },
+        {
+          "profile": "release",
+          "receipt": {
+            "path": "build/proof-slices/borrowed-calls-fast/build/output-borrowed-calls-work/release/receipt.json",
+            "sha256": "f71daada8f7c82a18f86803475cdb9726bffbbe1b7a22cfa479ca28ad2da9afb"
+          },
+          "nativeGroups": 2,
+          "nativeReportSha256": "2aa7986fd5e938b285b0f2e8b9e1f594b5fc5a782a0d0127e6909ce090f681dc"
+        }
+      ]
+    },
+    {
+      "kernel": "output_borrowed_origins_work",
+      "verifiedOwnerCommit": "4a995ee0f6d031a3cc3fbcba5fe687a7d9fc4914",
+      "owner": "src/output_borrowed_origins_work.fy",
+      "sourceSha256": "9b4e671d122492fc55875131a2edae64a0b35c9e68bea2494e8839426b60a78d",
+      "test": "tests/m2/output_borrowed_origins_work.fy",
+      "testSha256": "22507d51904c1b226deb590db38d4da91c4706922ce954a4920f0a5c4b10fd10",
+      "profiles": [
+        {
+          "profile": "development",
+          "receipt": {
+            "path": "build/proof-slices/origins-final/build/output-borrowed-origins-work/development/receipt.json",
+            "sha256": "a70c1574dc2f4de020e898aaf44b02fe64d3d5f71754e8e3787a0724bb180a03"
+          },
+          "nativeGroups": 2,
+          "nativeReportSha256": "a635f3e61d2ea1495b3e7ed4632ef1581997f366c9e2d4de35adcfde00dd0d15"
+        },
+        {
+          "profile": "release",
+          "receipt": {
+            "path": "build/proof-slices/origins-final/build/output-borrowed-origins-work/release/receipt.json",
+            "sha256": "90cb18999a0e0af16717acffc7db8d0ef6bf5ea2647701b95760ca2f9a877af5"
+          },
+          "nativeGroups": 2,
+          "nativeReportSha256": "edcd7b1a20ba32dbbe300d57e7ef5c24b65ce9772c4fc1d05c9e7eb50a335484"
+        }
+      ]
+    },
+    {
+      "kernel": "output_call_arguments_work",
+      "verifiedOwnerCommit": "91a7a46d19ecad4ee49061b58fcb412299491cf5",
+      "owner": "src/output_call_arguments_work.fy",
+      "sourceSha256": "47ecc9fe24a9a474e81e26c34ad909f82cbcdaf05cb58c8dfb53a31debcfeec5",
+      "test": "tests/m2/output_call_arguments_work.fy",
+      "testSha256": "da9db23615310a3fac95a9ec9681ea0c746e803034868cd319e53bfe42985211",
+      "profiles": [
+        {
+          "profile": "development",
+          "receipt": {
+            "path": "build/proof-slices/canonical-deps/build/output-call-arguments-work/development/receipt.json",
+            "sha256": "88cb9abd86b3ebe1aaa1dc6222b814ea0ba37a786ee9ddbb2a24ff4da0d9874a"
+          },
+          "nativeGroups": 2,
+          "nativeReportSha256": "5fff0855a49a58780de2e4f1d573c3edbe89805c7b5f7a9889fd694e6d4f227f"
+        },
+        {
+          "profile": "release",
+          "receipt": {
+            "path": "build/proof-slices/canonical-deps/build/output-call-arguments-work/release/receipt.json",
+            "sha256": "f22c4d64a6b81479527ea8674b4e9a6562229016e8b55e5fcbb73a3ec182d70b"
+          },
+          "nativeGroups": 2,
+          "nativeReportSha256": "ed9a0b1b2390bfd8c4df66c1a8f2d4b2c59581214196bc5a7be35ab0e4a3a626"
+        }
+      ]
+    },
+    {
+      "kernel": "output_canonical_proof_work",
+      "verifiedOwnerCommit": "0d9bb134215906e8793dfa8ffb0a39b66efcc522",
+      "owner": "src/output_canonical_proof_work.fy",
+      "sourceSha256": "b57cddea5347e20b9a6aa89462cd17f428a76f633cffb66c5368edc9fb9fae09",
+      "test": "tests/m2/output_canonical_proof_work.fy",
+      "testSha256": "20f1f2af3a4d71607304f2e454e7d385fc66be86ab1c5f8362f20fbb4ce90e6e",
+      "profiles": [
+        {
+          "profile": "development",
+          "receipt": {
+            "path": "build/proof-slices/canonical/build/output-canonical-proof-work/development/receipt.json",
+            "sha256": "0b16cc26203e859b017355d3dd810456356efd1e42cfa6f88329cf7dd5a4e825"
+          },
+          "nativeGroups": 4,
+          "nativeReportSha256": "04f9f154230d8c5675e152ebab441bc3f2c1e5382b1f542c954b7915a7eb8c87"
+        },
+        {
+          "profile": "release",
+          "receipt": {
+            "path": "build/proof-slices/canonical/build/output-canonical-proof-work/release/receipt.json",
+            "sha256": "026f601c6632c9a361b2bc8d4923aa5f1068aa5be2df0ae0f17037341254640d"
+          },
+          "nativeGroups": 4,
+          "nativeReportSha256": "d716f37ef47c90ae6d3ea0b7b96996acad55fc02ec792d0199f6d6240ff836b7"
+        }
+      ]
+    },
+    {
+      "kernel": "output_image_work",
+      "verifiedOwnerCommit": "abc332731b9224ca9698e7136e2f7ead46aaae86",
+      "owner": "src/output_image_work.fy",
+      "sourceSha256": "9b413cdbe22f3aeeaf62161cdd45c920b6cde2ba0ef70374e254f8e7b541640d",
+      "test": "tests/m2/output_image_work.fy",
+      "testSha256": "8a9195b5954f6a765bb63620a688abea4ef1024603064bf34f6b4df070285252",
+      "profiles": [
+        {
+          "profile": "development",
+          "receipt": {
+            "path": "build/proof-slices/image/build/output-image-work/development/receipt.json",
+            "sha256": "3072522dbce38f2ea6f21e9cea7cef95d35b50aa52354b567132065bed5d295b"
+          },
+          "nativeGroups": 4,
+          "nativeReportSha256": "a917a2b4e73881b3a87402164269ad08707839e0057434ddbcfc76c2434959e8"
+        },
+        {
+          "profile": "release",
+          "receipt": {
+            "path": "build/proof-slices/image/build/output-image-work/release/receipt.json",
+            "sha256": "feeaee605905706b9321639f43004ee2f93dd8ff2ec3d85f1249410d12e70ea8"
+          },
+          "nativeGroups": 4,
+          "nativeReportSha256": "50c19d527bd493618056ed9106aae1a9e321ec25d3e112af77ad977086dc1467"
+        }
+      ]
+    },
+    {
+      "kernel": "output_list_operands_work",
+      "verifiedOwnerCommit": "72e37ab392e918e6a987dc6bcab7474677b6f628",
+      "owner": "src/output_list_operands_work.fy",
+      "sourceSha256": "f83f333df6176b1ac6e7658f8f34fe1cf5e9629cf2443fe0ab1fbd18175ca21e",
+      "test": "tests/m2/output_list_operands_work.fy",
+      "testSha256": "dc714fdb7d4b57a575af7f8406c5b07151662efaea943cd9420b4c87bb46dd7d",
+      "profiles": [
+        {
+          "profile": "development",
+          "receipt": {
+            "path": "build/proof-slices/list-operands/build/output-list-operands-work/development/receipt.json",
+            "sha256": "a857da43f440de3efb5c361ade0503672a498193547667cc57ba1ae14522f96b"
+          },
+          "nativeGroups": 3,
+          "nativeReportSha256": "e91bde9816c5d67cc7735eb37f19ef9e6baac93379e9d3c25ab64883414d4c73"
+        },
+        {
+          "profile": "release",
+          "receipt": {
+            "path": "build/proof-slices/list-operands/build/output-list-operands-work/release/receipt.json",
+            "sha256": "10f0ff4ae43e1485c5be206f9cd54938482f7f037ee1ede80983e768d5b005d7"
+          },
+          "nativeGroups": 3,
+          "nativeReportSha256": "2cc779f063fd0a6f21a9ca5c00c6ebbe96bd3490cb9834a271ec3cc66f3c91a1"
+        }
+      ]
+    },
+    {
+      "kernel": "output_normalize_work",
+      "verifiedOwnerCommit": "cffc4f6645cf00158b7f7b77aca7a4dcba58f60a",
+      "owner": "src/output_normalize_work.fy",
+      "sourceSha256": "3768ebf7da8518d87daa51d0abe268ba609f754e36006ef1557deb42ba5c4be3",
+      "test": "tests/m2/output_normalize_work.fy",
+      "testSha256": "be2f3b32bdffd599d9244dc707cbf2bf24a932f19ec776e26aaa0b87b76d5d9a",
+      "profiles": [
+        {
+          "profile": "development",
+          "receipt": {
+            "path": "build/proof-slices/normalize/build/output-normalize-work/development/receipt.json",
+            "sha256": "f234369b2b1a32d0db8b0474b4688ce11e31e1ce02d734c2d82ad891abf8f5b9"
+          },
+          "nativeGroups": 2,
+          "nativeReportSha256": "92533ef5595dfc80039d9e238035e03048270d3809345b8a7d2643bb539bd521"
+        },
+        {
+          "profile": "release",
+          "receipt": {
+            "path": "build/proof-slices/normalize/build/output-normalize-work/release/receipt.json",
+            "sha256": "24db178cce39bb75ae30947e24825bc3344dbf061a3fdcb01391bea5018c6eae"
+          },
+          "nativeGroups": 2,
+          "nativeReportSha256": "dded905194fc670dd6dd6a061a29c0e9e82e34e9b0127cc8a9280f27d864d34b"
+        }
+      ]
+    },
+    {
+      "kernel": "output_place_lifetimes_work",
+      "verifiedOwnerCommit": "a058fc8113c2f097b08031ea84624721e43e3761",
+      "owner": "src/output_place_lifetimes_work.fy",
+      "sourceSha256": "f10c5bfdba63e71043d997d2e199143f2a540f760c4b57eadc1e02a733a65b48",
+      "test": "tests/m2/output_place_lifetimes_work.fy",
+      "testSha256": "55f9eea74a50e6690be64efe4388a8bd16819316f98cc75ea8f459dbbdaf6527",
+      "profiles": [
+        {
+          "profile": "development",
+          "receipt": {
+            "path": "build/proof-slices/place-lifetimes-15665c9/build/output-place-lifetimes-work/development/receipt.json",
+            "sha256": "2cf676fb614d4c4a5039b877ed6ad542b4d98a9a231eaf7f126689442c81c356"
+          },
+          "nativeGroups": 4,
+          "nativeReportSha256": "1bd95d7077e8bab889792a65f7950855573f71a7c130c55e1f3efcd6ac74944c"
+        },
+        {
+          "profile": "release",
+          "receipt": {
+            "path": "build/proof-slices/place-lifetimes-15665c9/build/output-place-lifetimes-work/release/receipt.json",
+            "sha256": "31d140ec897e6bf9a4aa46f6952acef6ff1b62f0d2c981e6edccb53d192eb175"
+          },
+          "nativeGroups": 4,
+          "nativeReportSha256": "df614aadb31dcbd42cfde3870347690b18584deaff4b3aee4dc49c37de7e065a"
+        }
+      ]
+    },
+    {
+      "kernel": "output_program_copy_work",
+      "verifiedOwnerCommit": "a5aca142e7a7a66b228da947a972db8e0937bb90",
+      "owner": "src/output_program_copy_work.fy",
+      "sourceSha256": "24d3b90fbdcbfbe2c212420c70670de805fd45756c34c7c7648a5988f0f9a529",
+      "test": "tests/m2/output_program_copy_work.fy",
+      "testSha256": "d7df2a0c45a67cc104125c1b420acfb14e2925c822d8dbfd066597caaff63d1a",
+      "profiles": [
+        {
+          "profile": "development",
+          "receipt": {
+            "path": "build/proof-slices/program-copy/build/output-program-copy-work/development/receipt.json",
+            "sha256": "e61a529626b57196c51c5e26aac65a01ea41c51fc312262be5badae3b3247829"
+          },
+          "nativeGroups": 2,
+          "nativeReportSha256": "301e343470fdec1bc9b241dd224c57604238a5a8a313c857a5bb8a481aa570f5"
+        },
+        {
+          "profile": "release",
+          "receipt": {
+            "path": "build/proof-slices/program-copy/build/output-program-copy-work/release/receipt.json",
+            "sha256": "719299efe636bc578254782d854e3d7ef8c9a563e02682f38756a8aa772d3673"
+          },
+          "nativeGroups": 2,
+          "nativeReportSha256": "a1fa2532b90d56a9fabbca29a9d1f506945d9957f30e334eae5e47c5597116c4"
+        }
+      ]
+    },
+    {
+      "kernel": "output_proof_work",
+      "verifiedOwnerCommit": "ab75f80d772c7f4842571e46d4865ae587338e03",
+      "owner": "src/output_proof_work.fy",
+      "sourceSha256": "eac128b2fe690553aaac89713db18bb27c1ed3f4949429d2ac748b4d51330887",
+      "test": "tests/m2/output_proof_work.fy",
+      "testSha256": "51c9066e4b71a49897b40b524b28f58e75b8f0516bc0471567b0998978107d5a",
+      "profiles": [
+        {
+          "profile": "development",
+          "receipt": {
+            "path": "build/proof-slices/proof-stack-final/build/output-proof-work/development/receipt.json",
+            "sha256": "37df2d984b9946ccb76cdf1920e1c875dfd8552f0256004461f3e4fb16fcf485"
+          },
+          "nativeGroups": 3,
+          "nativeReportSha256": "88ea8af2d0aea5dad6f6583a866175e56df62b9502a1aa4c3293aaf68c3abc32"
+        },
+        {
+          "profile": "release",
+          "receipt": {
+            "path": "build/proof-slices/proof-stack-final/build/output-proof-work/release/receipt.json",
+            "sha256": "414cd4e1d27199246daa61d58c179582eb306bf22dc59eac9f044746535ef55e"
+          },
+          "nativeGroups": 3,
+          "nativeReportSha256": "c0c4c717cf0fe580b44300cbf485e18a58dba59f801f5cbda5d3dc3d07c58d71"
+        }
+      ]
+    },
+    {
+      "kernel": "output_record_copy_work",
+      "verifiedOwnerCommit": "3ac2b3633db8699d0dce87087410cd00f8d1991e",
+      "owner": "src/output_record_copy_work.fy",
+      "sourceSha256": "5e615c640d588e91b316bdba5ca34c54dc2517cb025a2a9626ebfcf73dd530a2",
+      "test": "tests/m2/output_record_copy_work.fy",
+      "testSha256": "9470e16a947fe50020901c7c4c5d025565fec9425841469b526aa56bc273d7d6",
+      "profiles": [
+        {
+          "profile": "development",
+          "receipt": {
+            "path": "build/proof-slices/canonical-deps/build/output-record-copy-work/development/receipt.json",
+            "sha256": "82424970504b1109a8fc131917636dd820f6e4f4bd72a448b38c8425f0753d37"
+          },
+          "nativeGroups": 3,
+          "nativeReportSha256": "40ceb16863c4686552214ada834bde843fb154ba9c36f3ba7ac240a6643cc1c8"
+        },
+        {
+          "profile": "release",
+          "receipt": {
+            "path": "build/proof-slices/canonical-deps/build/output-record-copy-work/release/receipt.json",
+            "sha256": "415b4554db669259472d1d88553d80848369f7ec0f625ed2fea7bc974ecd0585"
+          },
+          "nativeGroups": 3,
+          "nativeReportSha256": "6bb53adde4a154a981f58a6325e8b84b19994de26314dbe3f22004e23fd4e8ee"
+        }
+      ]
+    },
+    {
+      "kernel": "output_record_metadata_work",
+      "verifiedOwnerCommit": "1f5843c9be7ff9120e14bd26c5faa2f989904af6",
+      "owner": "src/output_record_metadata_work.fy",
+      "sourceSha256": "5f55eb56b14b7376a008d6eae59c040d454437bfff596b1d6cc35867deea72d4",
+      "test": "tests/m2/output_record_metadata_work.fy",
+      "testSha256": "29bcd53c216da5387f770121570879ffb60a23b8a11a3ebb1b115b27049c0e4b",
+      "profiles": [
+        {
+          "profile": "development",
+          "receipt": {
+            "path": "build/proof-slices/records/build/output-record-metadata-work/development/receipt.json",
+            "sha256": "6e7642bf57019257e001e03defabf0b5cf6094aa0b09d47cf2f53b25de5497dc"
+          },
+          "nativeGroups": 3,
+          "nativeReportSha256": "e972190768c48928e084a2d1467bb30cb8e9a697d5ad678d2581ab01d19f80cd"
+        },
+        {
+          "profile": "release",
+          "receipt": {
+            "path": "build/proof-slices/records/build/output-record-metadata-work/release/receipt.json",
+            "sha256": "6dcbd4b439ba13c04e353ba72da760aef9b5ff8ccb439118b1442c27fe2566f1"
+          },
+          "nativeGroups": 3,
+          "nativeReportSha256": "7dc1a9b5bbbad8dbf713cc5fa40abb6490c5d68548b49d8f991f6229c1998d25"
+        }
+      ]
+    },
+    {
+      "kernel": "output_record_range_work",
+      "verifiedOwnerCommit": "9a0ad6f42fc9372347c356e1ced004eb7f3db744",
+      "owner": "src/output_record_range_work.fy",
+      "sourceSha256": "e06540427580363617e4c0abc82ebf75c671d89944dc756d88e47c785eb5b0cc",
+      "test": "tests/m2/output_record_range_work.fy",
+      "testSha256": "2df38293404213ec88355e512efb2243dfab02aad741f40e0559c6cbf9f0e5d2",
+      "profiles": [
+        {
+          "profile": "development",
+          "receipt": {
+            "path": "build/proof-slices/ranges/build/output-record-range-work/development/receipt.json",
+            "sha256": "73bec6c93a0949f6131153cb3b8bba3eb1c908055f5612e06b11c45aaf888dea"
+          },
+          "nativeGroups": 5,
+          "nativeReportSha256": "d7440781b2c6f832be03f60a8541554c0b50bea542f69eb00540015e4966227e"
+        },
+        {
+          "profile": "release",
+          "receipt": {
+            "path": "build/proof-slices/ranges/build/output-record-range-work/release/receipt.json",
+            "sha256": "e13c8e7bbd1230a8e33dcb5ec6fb87bd6261085408a48805c9aef78234e77aa7"
+          },
+          "nativeGroups": 5,
+          "nativeReportSha256": "2aba81a589a77c7341a8a23d08b8d89645c09f93cd58e31be86132ae99523e1f"
+        }
+      ]
+    },
+    {
+      "kernel": "output_reference_lifetimes_work",
+      "verifiedOwnerCommit": "3f90c740219df1f437716c7a3d6eb53b99c7cc3d",
+      "owner": "src/output_reference_lifetimes_work.fy",
+      "sourceSha256": "2bd51afdf150fa8d5428942adcad941d181c76970fd9eb4ab06e88b7216745ee",
+      "test": "tests/m2/output_reference_lifetimes_work.fy",
+      "testSha256": "60c5cd6f27f546078691a4d98b73a36c10743ec8a62f78a3b13a36b8708e46dc",
+      "profiles": [
+        {
+          "profile": "development",
+          "receipt": {
+            "path": "build/proof-slices/reference/build/output-reference-lifetimes-work/development/receipt.json",
+            "sha256": "004a854858f7add60a24016f1f868901a4224bdbcb7ccaf873cde8b6e38fa48c"
+          },
+          "nativeGroups": 3,
+          "nativeReportSha256": "064687e1e5b82ed27acad9751c9253d74fce805d591a6d7d7b9f177236d81237"
+        },
+        {
+          "profile": "release",
+          "receipt": {
+            "path": "build/proof-slices/reference/build/output-reference-lifetimes-work/release/receipt.json",
+            "sha256": "2e2120e422ddc03a19c91a411a7664ecbb20af06f33cf960007ab11b6a951630"
+          },
+          "nativeGroups": 3,
+          "nativeReportSha256": "4ac2437ad9bdfaf8f3892dbbfbd09a70632018ec61fdabb8f34b05e9aa6a8e75"
+        }
+      ]
+    },
+    {
+      "kernel": "output_return_signature_work",
+      "verifiedOwnerCommit": "29efd14974c79bcdc11c0db8726fb7528237dcdd",
+      "owner": "src/output_return_signature_work.fy",
+      "sourceSha256": "b982d848babf5a3b958a43c2a368532eace0563245077dd4b9f8eaaffd50a7a4",
+      "test": "tests/m2/output_return_signature_work.fy",
+      "testSha256": "caaeb973ef30f0c0c8717eec523c47f1ff0b94045631a5a3ba0651f741bc5ac1",
+      "profiles": [
+        {
+          "profile": "development",
+          "receipt": {
+            "path": "build/proof-slices/signature/build/output-return-signature-work/development/receipt.json",
+            "sha256": "edc2131a4340327c7cbc4aa5cb024f8242be8b258b30283dd70c3ae8daa1833d"
+          },
+          "nativeGroups": 7,
+          "nativeReportSha256": "24fd6031b9389ae8cbc75f7cebe5cb239df262506778d5bf2aa22d12a075e4f4"
+        },
+        {
+          "profile": "release",
+          "receipt": {
+            "path": "build/proof-slices/signature/build/output-return-signature-work/release/receipt.json",
+            "sha256": "69fa04465198da64cfdf0a8ea43f6f463a2368367e841be8899445591aa45b7c"
+          },
+          "nativeGroups": 7,
+          "nativeReportSha256": "87ad5209911aefd3c8b0440ed725ad224e77960726ec7d4fbffe5be61c4cea06"
+        }
+      ]
+    },
+    {
+      "kernel": "output_static_recipe_work",
+      "verifiedOwnerCommit": "2613e472b429c9953789e60f6cd4bad8b5c6f2b0",
+      "owner": "src/output_static_recipe_work.fy",
+      "sourceSha256": "d2ad62ff10a0ea794d5bfe67c3d8e79495127be86be666e4bc058df4053d4b8f",
+      "test": "tests/m2/output_static_recipe_work.fy",
+      "testSha256": "c830a53af48b1ec4d0f23f3dfd4b31bfc72095269e4830afbff6bc8f7bcad939",
+      "profiles": [
+        {
+          "profile": "development",
+          "receipt": {
+            "path": "build/proof-slices/static-recipe-input-15665c9/build/output-static-recipe-work/development/receipt.json",
+            "sha256": "a03f7a32fc9f39aba066f3738ac8fe7a921bc75eeb247df02d63793d157c41e9"
+          },
+          "nativeGroups": 9,
+          "nativeReportSha256": "d4ea410e460ea578f5e7b887c584d10e5d9b88c1b87176144c9c5af11852f4a2"
+        },
+        {
+          "profile": "release",
+          "receipt": {
+            "path": "build/proof-slices/static-recipe-input-15665c9/build/output-static-recipe-work/release/receipt.json",
+            "sha256": "33e84af20b9df5cef585f56610f9c3e795702d348038b0aa52c9b5cf31c39691"
+          },
+          "nativeGroups": 9,
+          "nativeReportSha256": "afbe44eef7657df5121d310b664d17573726c10ea7c89bfd60728811b449e6ea"
+        }
+      ]
+    },
+    {
+      "kernel": "output_static_sites_work",
+      "verifiedOwnerCommit": "4c5750effe1085dd635a5f095c816ca5f14cb00f",
+      "owner": "src/output_static_sites_work.fy",
+      "sourceSha256": "1d3c69b840f78f27ce27756e6a125909cd55a1517621264815e8daa508066cb2",
+      "test": "tests/m2/output_static_sites_work.fy",
+      "testSha256": "b3b19965450f93814a3c61f54197d0e8990d5d47da2cf4f9ed4a46f9a48365b8",
+      "profiles": [
+        {
+          "profile": "development",
+          "receipt": {
+            "path": "build/proof-slices/static-sites/build/output-static-sites-work/development/receipt.json",
+            "sha256": "b9e130903e70358119a7b70c6e60d8406c982e9a59144ec5550249cbd1f0a858"
+          },
+          "nativeGroups": 2,
+          "nativeReportSha256": "9f3cb6e3d98ccc023e7c22ce2bb672a9a3275e95492f053f1fe25820fb547f5f"
+        },
+        {
+          "profile": "release",
+          "receipt": {
+            "path": "build/proof-slices/static-sites/build/output-static-sites-work/release/receipt.json",
+            "sha256": "f5fc0753a46c0e9bcc7eed6bbe90a232c3b8f2420edddfb23f0f83c8ad473925"
+          },
+          "nativeGroups": 2,
+          "nativeReportSha256": "acef0bccf31313bf621a7f33f4f39a613215da63a419cdf4fd77d89c51e606a5"
+        }
+      ]
+    },
+    {
+      "kernel": "output_verifier_flow_work",
+      "verifiedOwnerCommit": "7b49591c36d29f9c2478aa74f683cc1d46e5f0af",
+      "owner": "src/output_verifier_flow_work.fy",
+      "sourceSha256": "c935763ab25209956fd162d2c4b956891affe788356036d656531d9339258fab",
+      "test": "tests/m2/output_verifier_flow_work.fy",
+      "testSha256": "d2127763708290de15a28169879402e50a9daddf2128137da0afc54aaa9f5646",
+      "profiles": [
+        {
+          "profile": "development",
+          "receipt": {
+            "path": "build/proof-slices/flow/build/output-verifier-flow-work/development/receipt.json",
+            "sha256": "1677e9c9f291b0caf663ff1c9ec511dd5bc1cf3b9a680cea5f34a642eb0f3069"
+          },
+          "nativeGroups": 3,
+          "nativeReportSha256": "1d748b23ce05d643b34a53111bdde50ac7a3d276d80eca5deb0ac62a8172a276"
+        },
+        {
+          "profile": "release",
+          "receipt": {
+            "path": "build/proof-slices/flow/build/output-verifier-flow-work/release/receipt.json",
+            "sha256": "7093ef6fb10e43b39bf5f1679719384d4b42d856c329d41bc55acc475484ecf6"
+          },
+          "nativeGroups": 3,
+          "nativeReportSha256": "2117aa3d193958fde14cb77672dc7d433c1615a61508c4828ab226002fb79308"
+        }
+      ]
+    },
+    {
+      "kernel": "output_verifier_metadata_work",
+      "verifiedOwnerCommit": "f4ae97ac8de825c904b8930db7517b5d7228f695",
+      "owner": "src/output_verifier_metadata_work.fy",
+      "sourceSha256": "01d4565b613a43a55aa99402a7d2150bd46895111bc5e1c094d3da23e1f768d7",
+      "test": "tests/m2/output_verifier_metadata_work.fy",
+      "testSha256": "90d585bdc98ccb32eea6248f6877f1dca3fd3d09e63dd49b3edbeb8d38b4dc71",
+      "profiles": [
+        {
+          "profile": "development",
+          "receipt": {
+            "path": "build/proof-slices/canonical-deps/build/output-verifier-metadata-work/development/receipt.json",
+            "sha256": "835f95fd1b2f816f54ca26a87eb29fc71b31e47bc4924340c8670c274a03ec93"
+          },
+          "nativeGroups": 2,
+          "nativeReportSha256": "ad709831637809a603db0daf481db2073801fd10faff242e8cab0cd781178ee6"
+        },
+        {
+          "profile": "release",
+          "receipt": {
+            "path": "build/proof-slices/canonical-deps/build/output-verifier-metadata-work/release/receipt.json",
+            "sha256": "bba5cd5ed54696db40559c3ac5a6edc353f3d8ec7f055ab6d0da6b9a9414b54b"
+          },
+          "nativeGroups": 2,
+          "nativeReportSha256": "0b6e7b81830a165f7eb15065444db810128765cad8dc4cd6f01760efb53737d4"
+        }
+      ]
+    },
+    {
+      "kernel": "output_verifier_tasks_work",
+      "verifiedOwnerCommit": "15665c9813cbd17217dff53a06443cf3b1cdedb2",
+      "owner": "src/output_verifier_tasks_work.fy",
+      "sourceSha256": "16b7cb0a3e25ab537151999dcbac3ebf6c8685981496ab650700cf88498853de",
+      "test": "tests/m2/output_verifier_tasks_work.fy",
+      "testSha256": "99f2b423d372ceea6c9e6b29a8edcefe6aad346737adfddf2fc4c3ef7d42d206",
+      "profiles": [
+        {
+          "profile": "development",
+          "receipt": {
+            "path": "build/proof-slices/canonical-deps/build/output-verifier-tasks-work/development/receipt.json",
+            "sha256": "397633694773526745c51a0d71942f66dfc81786068afcc56ca3966d379c20a5"
+          },
+          "nativeGroups": 3,
+          "nativeReportSha256": "6384a3564cb09178c29989f9950aa9f74579f98bc9cdb127f1a56f0b99478341"
+        },
+        {
+          "profile": "release",
+          "receipt": {
+            "path": "build/proof-slices/canonical-deps/build/output-verifier-tasks-work/release/receipt.json",
+            "sha256": "b762e07d1fea445955d0b5fb5c4ea15c5068b96fe162cf5864ad11a7f6e8310d"
+          },
+          "nativeGroups": 3,
+          "nativeReportSha256": "5fa756ccfc9d78ee1086ee9f35b929abd649cb5fb1052670c92f0293ffc5257b"
+        }
+      ]
+    }
+  ],
+  "audit": {
+    "engineInputs": 313,
+    "engineCheckoutMatches": true,
+    "engineCommitMatches": true,
+    "focusedOwnerAndTestCheckoutMatches": true,
+    "focusedOwnerAndTestCommitMatches": true,
+    "focusedSnapshotScope": "Each unit receipt retains its own frozen full inputs; only owner/test equivalence is claimed across unit snapshots. Complete Engine verifies the final integrated snapshot.",
+    "focusedKernels": 20,
+    "nativeGroupsPerProfile": 68,
+    "uniqueGitBlobs": 333,
+    "productionModulesLF": 305,
+    "bindings": 36,
+    "layouts": 51,
+    "declarationAndLayoutShapesUnchanged": true
+  },
+  "bounds": {
+    "freshLogicalAllowance": 4096,
+    "carryCredits": false,
+    "leafVisits": "List/nominal/origin work uses sixteen visits; image UTF-8 cuts use up to 259 bytes; fixed PC/function stages retain their documented bounded framing",
+    "originRoundsMaximum": 17,
+    "immutableInputs": "Original candidate/image pinned throughout proof; normalized copy is private scratch; no prepared proof before all stages complete"
+  },
+  "verifiedBehavior": [
+    "Raw synchronous verifier/output_return_proof remain independent comparison oracles",
+    "Signature, original recipe, canonical and borrowed-origin/call error precedence and offsets match",
+    "Partial room leaves stage state and allowance unchanged; no saved credits",
+    "One owning output compile proof; cached getters/reuse/resume do not repeat it",
+    "Separate input-only ABI retains output denial",
+    "Complete Engine default 1048576-byte reserve / 4096-byte commit stacks in both profiles",
+    "Exact/one-less Fuel, binary output/errors, moves, pins, cancellation and SDK allocation denial on covered resumes; SDK heap zero at exit"
+  ],
+  "diagnosticRepair": {
+    "commit": "ab75f80d772c7f4842571e46d4865ae587338e03",
+    "issue": "Nested complete-proof constructors overflowed the development default stack in deep borrowed-return compilation",
+    "resolution": "Flatten coordinator seeds and remove retained parser Table from proof scratch; final uninstrumented Engine passes both profiles",
+    "diagnosticImagesAreAcceptanceEvidence": false
+  },
+  "limitations": [
+    "Conservative logical metadata-entry allowance, not an instrumented scalar-field, byte, CPU or wall-time bound; fixed generated-C projection/copy framing remains",
+    "Fixed private scratch construction, source lowering, post-proof cache planning and admission allocations remain synchronous/atomic",
+    "Existing compile adapters drain private stages synchronously; no public Pending compile or public bounded-step guarantee",
+    "Raw independent synchronous proof/setup/discovery helpers intentionally remain atomic",
+    "R02-R05, full accounting/preallocation, deadlines, STOPPING/poison, host dispatch and the complete remaining inventory stay open",
+    "No timing or peak-stack improvement measurement; broader completion remains paused",
+    "Local commits only; no push, release or deployment"
+  ],
+  "commands": [
+    "build/toolchain/fairyc.exe check",
+    "python tools/review-runtime-engine-transport.py --write-contract",
+    "python tools/verify-runtime-engine.py",
+    "git diff --check"
+  ],
+  "unitCommands": {
+    "entrypoints": [
+      "python tools/verify-output-borrowed-calls-work.py",
+      "python tools/verify-output-borrowed-origins-work.py",
+      "python tools/verify-output-call-arguments-work.py",
+      "python tools/verify-output-canonical-proof-work.py",
+      "python tools/verify-output-image-work.py",
+      "python tools/verify-output-list-operands-work.py",
+      "python tools/verify-output-normalize-work.py",
+      "python tools/verify-output-place-lifetimes-work.py",
+      "python tools/verify-output-program-copy-work.py",
+      "python tools/verify-output-proof-work.py",
+      "python tools/verify-output-record-copy-work.py",
+      "python tools/verify-output-record-metadata-work.py",
+      "python tools/verify-output-record-range-work.py",
+      "python tools/verify-output-reference-lifetimes-work.py",
+      "python tools/verify-output-return-signature-work.py",
+      "python tools/verify-output-static-recipe-work.py",
+      "python tools/verify-output-static-sites-work.py",
+      "python tools/verify-output-verifier-flow-work.py",
+      "python tools/verify-output-verifier-metadata-work.py",
+      "python tools/verify-output-verifier-tasks-work.py"
+    ],
+    "profiles": [
+      "development",
+      "release"
+    ],
+    "execution": "Each wrapper ran in its frozen snapshot, default all or one profile at a time; exact compiler argv and tests appear in the referenced receipts"
+  }
+}

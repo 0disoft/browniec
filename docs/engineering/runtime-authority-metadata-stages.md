@@ -1,4 +1,4 @@
-# CALL/RET authority metadata stages
+# Private compiler proof and VM metadata stages
 
 The private owning Pending output VM keeps one unpublished authority transaction
 in its heap Core. CALL and RET reuse that bank. Their compact cursors carry only
@@ -232,6 +232,57 @@ the existing authority kernels and cleanup still project/copy whole fixed
 Runtime columns around some stages. Those framing copies are an explicit
 accounting limitation; no timing or peak-stack improvement is claimed.
 
+## Compiler proof stages
+
+The owning input-only compiler now drains `output_canonical_proof_work`; owning
+output compilation drains `output_proof_work`. These private synchronous
+adapters reset a separate 4096-unit proof allowance before every advance. They
+do not turn source compilation into a public Pending operation or consume VM
+opcode Fuel. Runtime dispatch continues to use its existing shared
+payload/authority allowance.
+
+The complete output coordinator orders signature validation, staged candidate
+copy/borrowed normalization, canonical proof, admitted-return signature checks,
+origin convergence and original CALL/terminal checks exactly as the independent
+raw oracle. Ordinary results bypass the borrowed-only work. Input-only proof
+retains its separate ABI and rejects output. Canonical proof orders image and
+static recipe validation, site/origin preparation, list/record/copy/parameter/
+result metadata, per-function CFG work, deferred operand/copy/nominal/place
+checks, place identity lifetimes and reference lifetimes. A prepared proof is
+available only after every required stage succeeds.
+
+Every advance runs at most one fresh bounded leaf or framing stage; partial
+room changes neither progress nor allowance. List operands, nominal walks and
+origin searches use sixteen visits per stage, while UTF-8 image cuts inspect
+at most 259 bytes. Fixed PC/function checks keep their documented bounds;
+original CALL_BIND validation visits at most 256 PCs per selected instruction.
+Origin solving resumes through its existing maximum seventeen rounds. No
+saved work credit permits a later whole-table replay. The owning adapter pins
+the original candidate/image; normalization mutates separate private scratch.
+State shape checks are not independent authority for a changed input.
+
+The native bootstrap materializes large fixed aggregate temporaries. Narrow
+projections avoid copying enclosing prepared banks; flattened complete-proof
+seeds keep two nested coordinator constructor frames off the deep borrowed
+compile path. The parser's full signature Table is absent from retained proof
+scratch and is rebuilt only for an origin stage. Fixed Table initialization/
+copy framing and the leaf's sixteen visits fit the logical allowance. These
+are logical entry bounds, not instrumented scalar-field/byte/CPU measurements.
+Fixed initial scratch construction remains outside the resumable proof API.
+
+The [compiler proof evidence](../evidence/runtime-compiler-proof-windows-20261111.json)
+records twenty focused kernels and 68 native groups per profile, with exact
+owner/test hashes and each frozen receipt. Tests compare raw outputs and exact
+error kinds/offsets, partial-room behavior and final-only publication. The final
+integrated Engine passes development/O2 on default 1MiB/4KiB stacks, including
+deep borrowed returned views, one proof per owning compile, cache reuse, exact
+Fuel/output/errors, cancellation/moves/pins, covered-resume allocation denial
+and zero SDK heap at exit. All 313 Engine input hashes match integration
+`0e4153b`; all 305 production modules are LF. Transport retains 36 declarations
+and 51 layout roles with unchanged shapes; Core/Cursor/Machine remain
+172400/1184/1792 bytes. Diagnostic instrumented images are not acceptance
+receipts. No timing or peak-stack improvement is measured.
+
 ## Evidence and limits
 
 The [lifecycle evidence](../evidence/runtime-lifecycle-windows-20261110.json)
@@ -257,8 +308,11 @@ publication and late frame errors. Actual Engine fixtures cover fixed/mixed
 quanta, exact/one-less Fuel, binary output, moves/pins, cancellation/refunds and
 SDK allocation denial on covered resumes.
 
-Still atomic or incompletely bounded: source compile proof, admission allocator
-work, raw/synchronous recipe discovery and the complete runtime inventory.
+Still atomic or incompletely bounded: fixed proof scratch construction, source
+lowering, post-proof cache planning, admission allocator work, raw/synchronous
+proof/setup/recipe discovery and the complete runtime inventory. Existing
+compiler adapters drain the new private proof stages synchronously; public
+Pending compile remains unimplemented.
 These private lifecycle and CALL/RET stages do not establish public R03. Public lifecycle,
 wall-clock deadlines, STOPPING/poison and the full remaining inventory stay open.
 The broader completion goal remains paused; this slice is local only.

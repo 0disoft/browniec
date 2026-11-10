@@ -1,51 +1,57 @@
 # Local handoff for the next thread
 
-Current checkpoint: [private VM lifecycle and CALL/RET stages](runtime-authority-metadata-stages.md)
-are integrated into owning Pending output execution. Cleanup `0dee834`, seal
-`0c62d6d`, retained-cache checks `1508cc6` and storage initialization `849acb3`
-precede owning integration `a287e8f`. Preparation reserves storage and exposes
-Pending before entry; setup/cache/input/Core/entry advance separately. Fresh
-4096-unit metadata batches are shared with existing payload/CALL/RET work.
-Buffer stages initialize <=1024 bytes, vector stages <=64 entries and input
-stages sixteen 24-byte cells. No work credit is saved across yields.
+Current checkpoint: [private compiler proof and VM stages](runtime-authority-metadata-stages.md).
+Twenty proof kernels are committed separately, followed by the complete return
+coordinator `fbc4969`, default-stack repair `ab75f80` and owning compiler
+integration `0e4153b`. Input-only and output/borrowed-return compilation now drain
+resumable proof stages synchronously. Each advance runs one fresh 4096-unit
+logical leaf/framing stage; partial room cannot bank credit or publish a proof.
+The original Program/image remain immutable, and borrowed normalization uses a
+separate private candidate. Error precedence/offsets retain raw-oracle parity.
+Raw verifier and output-return helpers remain independent comparison paths.
 
-Failure/cancellation cleanup reuses the existing unpublished Runtime bank and
-needs no guest Fuel. Cancel may return Pending; repeat cancel or step until
-terminal. The first cause wins, including a failure followed by repeated cancel.
-Publication and refunds remain terminal-only. A dropped sole private owner
-releases backing directly. Synchronous/raw helpers remain independent oracles.
+All twenty focused kernels pass 68 native groups per profile in their frozen
+snapshots. Owner/test digests match the final commit; older unit receipts are
+not claimed to have the same complete source tree. The complete integrated
+Engine passes development/O2 on default 1MiB/4KiB stacks. Its 313 input digests
+match `0e4153b`; all 305 production modules are LF. Covered resumes deny SDK
+allocation, exit SDK heap is zero, and exact Fuel/output/error plus reuse/pin/
+move/cancel checks pass. Core/Cursor/Machine remain 172400/1184/1792 bytes;
+transport retains 36 declarations and 51 layout roles with unchanged shapes.
+See [exact evidence](../evidence/runtime-compiler-proof-windows-20261111.json).
+No timing or peak-stack improvement was measured. Diagnostic instrumented
+images are not acceptance evidence.
 
-Windows development/O2 pass cleanup (4 groups), seal (5), cache checks (3),
-storage (3) and complete Engine images, with default stacks, covered-resume
-allocation denial and zero process-exit SDK heap. All 292 Engine inputs match
-`a287e8f`; all 284 production modules retain LF. Core/Cursor stay 172400/1184
-bytes; Machine is 1792 (+160, adding 1280 per reserved Vec8). Input metadata
-keeps its 24576-byte reservation while its owner becomes a Buffer.
-Typed transport is 36 bindings / 51 layouts. See the [exact evidence](../evidence/runtime-lifecycle-windows-20261110.json).
-No timing or peak-stack improvement measured.
+The preceding setup/cache/seal/cleanup and CALL/RET continuations remain
+integrated into owning Pending execution. Preparation exposes Pending before
+entry; failure/cancel cleanup consumes no guest Fuel and preserves the first
+cause. Repeat cancel or step until terminal; publication/refunds stay terminal.
+See the [preceding lifecycle evidence](../evidence/runtime-lifecycle-windows-20261110.json).
 
-The user authorized this lifecycle slice. Broader completion stays paused;
+The user authorized this compiler-proof slice. Broader completion stays paused;
 this handoff grants no unrelated work or remote delivery. Read [AGENTS](../../AGENTS.md)
 and the [remaining inventory](../product/04-remaining-work.md).
 
 ## Remaining bounds and next work
 
-1. Audit logical allowance framing, including whole fixed Runtime-column copies,
-   before claiming instrumented field/byte/CPU bounds. Preserve frozen inputs,
-   final-only publication, exact valid-program Fuel/diagnostics/output and the
-   raw comparison paths. Continuations consume scheduling visits, not another
-   opcode Fuel debit.
-2. Source compile proof, admission allocator work and raw synchronous setup/
-   discovery remain atomic. The staged preparation proof consumes the exact
-   retained immutable Program cache; it is not independent admission for raw IR.
+1. Audit logical framing and whole fixed generated-C projection/copy costs before
+   claiming instrumented scalar-field, byte, CPU or time bounds. Preserve frozen
+   inputs, final-only proof publication, diagnostic precedence and raw oracles.
+2. Fixed scratch construction, source lowering, post-proof cache planning,
+   admission allocator work and raw synchronous setup/discovery remain atomic.
+   Existing compiler adapters drain private stages synchronously; no public
+   Pending compile or compiler cancellation protocol is implemented.
 3. Public R02/R03, complete accounting/preallocation, R04/R05 deadlines/STOPPING/
-   poison, host dispatch and the full inventory remain open. Continue another
-   slice only when authorized. No public bounded-step or wall-clock claim.
+   poison, host dispatch and the full inventory remain open. Continue a new
+   slice only when authorized; no public bounded-step or wall-clock claim.
 
 Use `build/toolchain/fairyc.exe`, default stacks and no hidden overrides. Keep
-production LF. The historical stash `39f1c91dcaa8edef5194f8d37b75069d20ce92a0`
-contains superseded cache/layout drafts; do not apply it wholesale. The immutable
-CALL66 cache is already integrated, including forwarding/second-input selection.
+production LF. The deep borrowed-return compile fixture exercises real nested
+constructor pressure; retain it and keep the flattened seeds in
+`output_proof_work::inspect` equivalent to both empty constructors. The unused
+parser Table is rebuilt only during bounded origin solving. Do not restore it
+in every proof State. The historical stash `39f1c91dcaa8edef5194f8d37b75069d20ce92a0`
+contains superseded cache/layout drafts; do not apply it wholesale.
 
 ## Full remaining inventory
 
