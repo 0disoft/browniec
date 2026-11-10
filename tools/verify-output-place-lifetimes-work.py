@@ -1,0 +1,17 @@
+"""Verify bounded place lifetime analysis against the raw canonical oracle."""
+import importlib.util
+from pathlib import Path
+import sys
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.dont_write_bytecode = True
+spec = importlib.util.spec_from_file_location('place_lifetimes_bottom', ROOT / 'tools/verify-value-bottom.py')
+bottom = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(bottom)
+bottom.DESCRIPTION = __doc__
+bottom.DIRECTORY = 'build/output-place-lifetimes-work'
+bottom.MODULES = {'output_place_lifetimes_work': None}
+bottom.EXTRA_INPUTS = {'tools/verify-output-place-lifetimes-work.py'}
+
+if __name__ == '__main__':
+    bottom.main()
