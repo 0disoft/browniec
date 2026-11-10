@@ -8,7 +8,7 @@ import errors as errors;
 import ir as ir;
 import static_call_ir as candidates;
 import static_image as images;
-import verifier as verifier;
+import output_canonical_proof_work as proof_work;
 import program_image as program_images;
 import std::vec as vec;
 import retention_plan as retention;
@@ -52,7 +52,7 @@ fn Result<Program,diagnostics::Error> finish(ref entries::InputEntry selected,re
     let images::Image image=switch(images::freeze(builder,image_limit)){
         case .ok(v):{v}case .err(e):{return .err(literal(e));}
     };
-    switch(verifier::inspect_input_returns(code,ref image)){
+    switch(proof_work::inspect_input(code,ref image)){
         case .ok(_):{}case .err(e):{
             if(e.offset==0 || e.offset>=code.body.count){return .err(diagnostics::absent(e));}
             return .err(map(selected,errors::make(e.kind,code.body.offsets[e.offset])));

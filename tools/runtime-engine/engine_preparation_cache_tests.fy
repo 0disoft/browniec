@@ -23,7 +23,7 @@ import runtime_execution_memory as execution_heap;
 import std::bytes as bytes;
 
 // The parent owns native instrumentation and runner integration. Count actual
-// verifier::inspect_output_returns entries, including independent test oracles;
+// staged canonical output proof starts plus raw verifier entries from test oracles;
 // planner scans are deliberately outside this counter's claim.
 unsafe extern C fn void bc_runtime_engine_test_proof_begin();
 unsafe extern C fn usize bc_runtime_engine_test_proof_count();

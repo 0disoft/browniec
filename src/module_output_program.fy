@@ -10,6 +10,7 @@ import ir as ir;
 import static_call_ir as candidates;
 import static_image as images;
 import output_return_proof as output_proof;
+import output_proof_work as proof_work;
 import program_image as program_images;
 import std::vec as vec;
 import retention_plan as retention;
@@ -67,7 +68,7 @@ fn Result<Program,diagnostics::Error> finish(ref sources::Snapshot sources,ref i
     let images::Image image=switch(images::freeze(builder,image_limit)){
         case .ok(v):{v}case .err(e):{return .err(literal(e));}
     };
-    let output_proof::Proof proof=switch(output_proof::inspect(code,ref image,input)){
+    let output_proof::Proof proof=switch(proof_work::inspect(code,ref image,input)){
         case .ok(v):{v}case .err(e):{
             if(e.offset==0 || e.offset>=code.body.count){return .err(absent(e));}
             return .err(diagnostics::map(sources,errors::make(e.kind,code.body.offsets[e.offset]),16));

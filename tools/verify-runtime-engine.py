@@ -63,6 +63,14 @@ def source_copy(path):
         text = text.replace(signature, 'unsafe extern C fn void bc_runtime_engine_test_proof_visit();\n' +
                             signature + '\n    unsafe{bc_runtime_engine_test_proof_visit();}', 1)
         return path.name, text.encode('utf-8')
+    if path == ROOT / 'src/output_canonical_proof_work.fy':
+        text = path.read_text(encoding='utf-8')
+        anchor = 'if(w.phase==0){let bool input=w.input;'
+        need(text.count(anchor) == 1, 'Staged output proof counter anchor changed')
+        text = text.replace('// Private complete canonical proof.',
+                            'unsafe extern C fn void bc_runtime_engine_test_proof_visit();\n// Private complete canonical proof.', 1)
+        text = text.replace(anchor, 'if(w.phase==0){if(w.output){unsafe{bc_runtime_engine_test_proof_visit();}}let bool input=w.input;', 1)
+        return path.name, text.encode('utf-8')
     adapters = {'runtime_control_budget': 'control_budget_contracts', 'retention_plan': 'retention_plan_contracts',
                 'runtime_program_compile_memory': 'program_compile_contracts',
                 'runtime_live_memory': 'live_memory_contracts',
@@ -354,7 +362,7 @@ def main():
                            'Complete Engine accounting/preallocation, OOM injection and poison containment remain',
                            'Ordinary zero-argument terminal Fuel is still marked unknown',
                            'Private setup/cache checks/seal/cleanup and CALL/RET stages share the allowance; whole Runtime projection/copy accounting is conservative, not an instrumented field or CPU bound',
-                           'Source compile proof and admission allocations remain atomic; no public stopping/poison, host dispatch or OS deadline'])
+                           'Private input/output compiler proof uses resumable logical stages; synchronous compile still drains them, source lowering and admission allocations remain atomic; no public stopping/poison, host dispatch or OS deadline'])
     except Exception as error:
         receipt.update(status='failed', error=str(error))
         raise
