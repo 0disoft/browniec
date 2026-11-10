@@ -1,0 +1,41 @@
+module output_image_work;
+import static_image as images;
+import std::text as utf8;
+import metadata_budget as budget;
+
+// Independent immutable-image analysis. Catalog validation precedes every UTF-8
+// byte, just as in images::inspect. A text stage checks <=259 bytes, extending a
+// 256-byte cut by <=3 continuation bytes to keep valid scalars together.
+pub struct State { u8 phase; usize literal; usize cursor; usize count; bool done; }
+pub fn State empty(){return State{.phase=0,.literal=0,.cursor=0,.count=0,.done=false};}
+pub fn Result<bool,images::Error> advance(ref images::Image image,ref mut State w,ref mut budget::State meter){
+    return advance_catalog(images::catalog(image),images::payload(image),images::payload_capacity(image),w,meter);
+}
+// Candidate-data analysis remains separate from owning immutable Image proof.
+pub fn Result<bool,images::Error> advance_catalog(ref images::Catalog c,ref u8[] data,usize capacity,ref mut State w,ref mut budget::State meter){
+    if(w.done){return .ok(true);}
+    let bool admitted=switch(budget::admit(meter,4096,0)){case .ok(v):{v}case .err(_):{return .err(.State);}};
+    if(!admitted){return .ok(false);}
+    if(w.phase==0){
+        if(capacity!=data.len || c.count>16 || c.used>4096 || c.used!=data.len){return .err(.State);}
+        var usize last=0;var usize i=0;
+        while(i<16){
+            if(i<c.count){if(c.starts[i]!=last || c.ends[i]<last || c.ends[i]>c.used){return .err(.State);}last=c.ends[i];}
+            else if(c.starts[i]!=0 || c.ends[i]!=0 || c.text[i]){return .err(.State);}i+=1;
+        }
+        if(last!=c.used){return .err(.State);}
+        w.phase=1;w.count=c.count;return .ok(false);
+    }
+    if(w.phase!=1){return .err(.State);}
+    if(w.literal==w.count){w.done=true;return .ok(true);}
+    let usize literal=w.literal;
+    if(!c.text[literal]){w.literal+=1;w.cursor=0;return .ok(false);}
+    let usize length=c.ends[literal]-c.starts[literal];
+    var usize end=w.cursor+256;if(end>length){end=length;}
+    var usize extra=0;
+    while(end<length && extra<3 && (data[c.starts[literal]+end]&192)==128){end+=1;extra+=1;}
+    if(!utf8::validate_utf8(data[c.starts[literal]+w.cursor..c.starts[literal]+end]).is_ok){return .err(.Utf8);}
+    w.cursor=end;
+    if(end==length){w.literal+=1;w.cursor=0;}
+    return .ok(false);
+}

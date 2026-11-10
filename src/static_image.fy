@@ -78,9 +78,14 @@ pub fn Result<Image,Error> freeze(ref Builder b,usize program_limit){
 // Independent whole-image admission, including actual UTF-8 bytes. The later
 // Program verifier must call this before accepting static literal definitions.
 pub fn Result<usize,Error> inspect(ref Image image){
-    if(bytes::capacity(ref image.data)!=bytes::len(ref image.data)){return .err(.State);}
-    return contents(ref image.catalog,bytes::view(ref image.data));
+    return inspect_catalog(ref image.catalog,bytes::view(ref image.data),bytes::capacity(ref image.data));
 }
+// Analysis of candidate metadata/bytes grants no immutable Image authority.
+pub fn Result<usize,Error> inspect_catalog(ref Catalog catalog,ref u8[] data,usize capacity){
+    if(capacity!=data.len){return .err(.State);}return contents(catalog,data);
+}
+// Read-only access tied to this exact immutable owning Image.
+pub fn ref Catalog catalog(ref Image image){return ref image.catalog;}
 // Shared payload only; the caller must keep this exact immutable Image alive.
 pub fn ref u8[] payload(ref Image image){return bytes::view(ref image.data);}
 pub fn Result<usize,Error> absolute(ref Image image,Span span){return selected(image,span);}
