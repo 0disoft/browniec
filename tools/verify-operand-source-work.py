@@ -9,7 +9,7 @@ bottom = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(bottom)
 bottom.DESCRIPTION = __doc__
 bottom.DIRECTORY = 'build/operand-source-work'
-bottom.MODULES = {'expression_lowering': None, 'body_lowering': ['grouped_operands_match_raw_ir_and_preserve_postfix_cast_context', 'scalar_call_operands_preserve_raw_arguments_suffixes_and_errors', 'captured_scalar_results_keep_prefix_order_and_lexical_cleanup', 'nested_call_depth_32_and_33_preserve_default_stack_and_raw_diagnostics']}
+bottom.MODULES = {'expression_lowering': None, 'semantic_lowering': None, 'body_lowering': None, 'body_source_work': None, 'call_operand_kernel': None}
 bottom.EXTRA_INPUTS = {'tools/verify-operand-source-work.py'}
 if __name__ == '__main__':
     bottom.main()

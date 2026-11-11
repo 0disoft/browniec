@@ -186,6 +186,8 @@ fn bytes::Buffer declarations(usize count){var bytes::Buffer s=bytes::empty();as
 }
 
 @test fn void captured_scalar_results_keep_prefix_order_and_lexical_cleanup(){
+    captured(b"module main;fn i32 take(i32[1] before,i32 stamp,i32[1] after){return before[0]*10+stamp+after[0];}fn i32 main(){var i32[1] a=[2;1];let Option<i32> o=.none;return take(a,switch(o){case .some(v):{v}case .none:{a[0]=4;18}},a);}",true);
+    captured(b"module main;fn i32 take(i32[1] a,i32 n){return a[0]+n;}fn i32 main(){let Option<i32> o=.none;return take([1;1],switch(o){case .some(v):{v}case .none:{return 42;}});}",true);
     captured(b"module main;fn i32 take(i32[1] a,i32 n){return a[0]+n;}fn i32 main(){let i32[1] a=[20;1];return take((a),(11+11));}",true);
     captured(b"module main;fn i32 take(i32[1] a,i32 n){return a[0]+n;}fn i32 main(){var i32[1] a=[20;1];return take(a,take(a,2));}",true);
     captured(b"module main;fn i32 take(i32[1] a,i32 n){return a[0]+n;}fn i32 main(){return take([20;1],(22));}",true);
@@ -207,4 +209,13 @@ fn bytes::Buffer nested_calls(usize depth,bool captures){var bytes::Buffer s=byt
     let bytes::Buffer deep=nested_calls(33,false);compare(bytes::view(ref deep),false);
     let bytes::Buffer capture=nested_calls(32,true);captured(bytes::view(ref capture),true);
     let bytes::Buffer over=nested_calls(33,true);captured(bytes::view(ref over),false);
+}
+
+@test fn void call_arity_and_site_capacity_keep_original_error_order(){
+    compare(b"module main;fn i32 f(i32 a,i32 b,i32 c,i32 d,i32 e,i32 f,i32 g,i32 h){return a+b+c+d+e+f+g+h;}fn i32 main(){return f(1,2,3,4,5,6,7,14);}",true);
+    compare(b"module main;fn i32 f(i32 a,i32 b,i32 c,i32 d,i32 e,i32 f,i32 g,i32 h){return a;}fn i32 main(){return f(1,2,3,4,5,6,7,8,9);}",false);
+    var bytes::Buffer s=bytes::empty();assert(bytes::append(ref mut s,b"module main;fn i32 z(){return 0;}fn i32 main(){return ").is_ok);
+    var usize i=0;while(i<32){assert(bytes::append(ref mut s,b"z()+").is_ok);i+=1;}assert(bytes::append(ref mut s,b"42;}").is_ok);compare(bytes::view(ref s),true);
+    var bytes::Buffer over=bytes::empty();assert(bytes::append(ref mut over,b"module main;fn i32 z(){return 0;}fn i32 main(){return ").is_ok);
+    i=0;while(i<33){assert(bytes::append(ref mut over,b"z()+").is_ok);i+=1;}assert(bytes::append(ref mut over,b"42;}").is_ok);compare(bytes::view(ref over),false);
 }
