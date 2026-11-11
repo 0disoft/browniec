@@ -1,5 +1,6 @@
 module semantic_source_work;
 import lexer as lexer;
+import functions as functions;
 import lexer_work as tokens;
 import type_parse_work as annotations;
 import expression_source_work as expressions;
@@ -47,7 +48,7 @@ pub fn Result<usize,errors::Error> continue_operand(ref mut State w){
     w.request=0;return .ok(0);
 }
 pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
-    ref mut locals::Table names,ref mut State w,ref mut budget::State meter){
+    ref mut locals::Table names,ref functions::Table signatures,ref mut expressions::Bank bank,ref mut State w,ref mut budget::State meter){
     if(w.done){return .ok(true);}if(meter.last!=0 || w.request!=0){return .ok(false);}
     if(w.lexing){switch(tokens::advance(source,ref mut w.token,meter)){
         case .err(e):{*s=tokens::observed(ref w.token);return .err(e);}
@@ -56,7 +57,7 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s
     if(w.typing){switch(annotations::advance(source,ref mut w.annotation,meter)){
         case .err(e):{*s=annotations::observed(ref w.annotation);return .err(e);}
         case .ok(done):{if(done){w.tag=annotations::prepared(ref w.annotation)?;*s=annotations::observed(ref w.annotation);w.typing=false;}return .ok(false);}};}
-    if(w.evaluating){let bool done=expressions::advance(source,s,p,ref mut w.expression,meter)?;
+    if(w.evaluating){let bool done=expressions::advance(source,s,p,signatures,bank,ref mut w.expression,meter)?;
         if(w.expression.waiting){w.request=1;}
         if(done){w.value=expressions::prepared(ref w.expression)?;w.evaluating=false;}return .ok(false);}
     if(!budget::admit(meter,4096,s.begin)?){return .ok(false);}

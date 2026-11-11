@@ -45,12 +45,15 @@ fn void same(ref ir::Program a,ref ir::Program b){
     i=0;while(i<32){assert(a.records.layouts.fields[i]==b.records.layouts.fields[i]);i+=1;}
     i=0;while(i<512){assert(a.records.layouts.kinds[i]==b.records.layouts.kinds[i] && a.records.layouts.types[i]==b.records.layouts.types[i]);i+=1;}
 }
-fn void compare(ref u8[] source,bool success){
-    let functions::Table t=switch(functions::scan(source)){case .ok(v):{v}case .err(e):{
+fn void compare(ref u8[] source,bool success){compare_candidate(source,success,false);}
+fn void captured(ref u8[] source,bool success){compare_candidate(source,success,true);}
+fn void compare_candidate(ref u8[] source,bool success,bool aggregates){
+    var functions::Table t=switch(functions::scan(source)){case .ok(v):{v}case .err(e):{
         assert(!success);switch(compiler::compile(source)){case .ok(_):{assert(false);}case .err(z):{assert(e.kind==z.kind && e.offset==z.offset);}};return;
     }};
     var ir::Program a=ir::empty();a.function_count=t.count;a.entry=t.entry;a.return_types=t.return_types;
     var ir::Program b=ir::empty();b.function_count=t.count;b.entry=t.entry;b.return_types=t.return_types;
+    if(aggregates){assert(compiler::prepare_aggregates(source,ref mut t,ref mut a).is_ok);assert(compiler::prepare_aggregates(source,ref mut t,ref mut b).is_ok);same(ref a,ref b);}
     var usize f=0;while(f<t.count){
         let Result<usize,errors::Error> raw=compiler::lower_body(source,ref t,f,ref mut a,false);
         let Result<usize,errors::Error> staged=compiler::lower_body(source,ref t,f,ref mut b,true);same(ref a,ref b);
@@ -180,4 +183,28 @@ fn bytes::Buffer declarations(usize count){var bytes::Buffer s=bytes::empty();as
     compare(b"module main;fn i32 f(i32 n){return n;}fn i32 main(){return f(20 22);}",false);
     compare(b"module main;fn i32 f(i32 n){return n;}fn i32 main(){let i32 f=0;return f(42);}",false);
     compare(b"module main;fn i32 main(){return missing(42);}",false);
+}
+
+@test fn void captured_scalar_results_keep_prefix_order_and_lexical_cleanup(){
+    captured(b"module main;fn i32 take(i32[1] a,i32 n){return a[0]+n;}fn i32 main(){let i32[1] a=[20;1];return take((a),(11+11));}",true);
+    captured(b"module main;fn i32 take(i32[1] a,i32 n){return a[0]+n;}fn i32 main(){var i32[1] a=[20;1];return take(a,take(a,2));}",true);
+    captured(b"module main;fn i32 take(i32[1] a,i32 n){return a[0]+n;}fn i32 main(){return take([20;1],(22));}",true);
+    captured(b"module main;struct P{i32 x;}fn i32 take(P p,i32 n){return p.x+n;}fn i32 main(){var P p=P{.x=20};return take(p,take(p,2));}",true);
+    captured(b"module main;fn i32 take(ref i32[] a,i32 n){return a[0]+n;}fn i32 main(){let i32[1] a=[20;1];return take(ref a[..],22);}",true);
+    captured(b"module main;fn i32 take(i32[1] a,i32 n){return a[0]+n;}fn i32 main(){var i32[1] a=[20;1];return take(a,true);}",false);
+    captured(b"module main;fn i32 take(i32[1] a,i32 n){return a[0]+n;}fn i32 main(){return take([20;1],);}",false);
+    captured(b"module main;fn i32 take(i32[1] a,i32 n){return a[0]+n;}fn i32 main(){let i32[1] a=[20;1];return take(a,22,0);}",false);
+}
+fn bytes::Buffer nested_calls(usize depth,bool captures){var bytes::Buffer s=bytes::empty();
+    if(captures){assert(bytes::append(ref mut s,b"module main;fn i32 id(i32[1] a,i32 n){return n;}fn i32 main(){let i32[1] a=[0;1];return ").is_ok);}
+    else{assert(bytes::append(ref mut s,b"module main;fn i32 id(i32 n){return n;}fn i32 main(){return ").is_ok);}
+    var usize i=0;while(i<depth){assert(bytes::append(ref mut s,if(captures){b"id(a,"}else{b"id("}).is_ok);i+=1;}
+    assert(bytes::append(ref mut s,b"42").is_ok);i=0;while(i<depth){assert(bytes::append(ref mut s,b")").is_ok);i+=1;}
+    assert(bytes::append(ref mut s,b";}").is_ok);return s;
+}
+@test fn void nested_call_depth_32_and_33_preserve_default_stack_and_raw_diagnostics(){
+    let bytes::Buffer plain=nested_calls(32,false);compare(bytes::view(ref plain),true);
+    let bytes::Buffer deep=nested_calls(33,false);compare(bytes::view(ref deep),false);
+    let bytes::Buffer capture=nested_calls(32,true);captured(bytes::view(ref capture),true);
+    let bytes::Buffer over=nested_calls(33,true);captured(bytes::view(ref over),false);
 }

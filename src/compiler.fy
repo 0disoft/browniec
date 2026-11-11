@@ -64,6 +64,7 @@ import output_ir as output_ir;
 import output_return_ir as output_returns;
 import body_source_work as body_work;
 import expression_source_work as expression_work;
+import call_operand_work as call_operand_work;
 import semantic_source_work as semantic_work;
 import metadata_budget as metadata_budget;
 
@@ -1156,9 +1157,9 @@ fn Result<usize,errors::Error> converted_tail(ref u8[] source,ref mut lexer::Sta
         let u8 target=types::parse(source,s)?;value=ir::widen(p,value,target,at)?;}
     return .ok(value);
 }
-fn Result<usize,errors::Error> complete_expression_operand(ref u8[] source,ref mut lexer::State s,
+fn Result<usize,errors::Error> complete_operand_in_environment(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table names,ref functions::Table signatures,u8 result_type,
-    usize structure,ref mut loops::State flow,ref mut expression_work::State w){
+    usize structure,ref mut loops::State flow,ref mut expression_work::Bank bank,ref mut expression_work::State w){
     if(w.done || !w.waiting){return .err(errors::make(5,s.begin));}
     let expression_work::Frame f=expression_work::current(w);
     if(w.request==2){let usize initial=w.value;let usize value=converted_tail(source,s,p,names,initial,result_type)?;
@@ -1171,18 +1172,44 @@ fn Result<usize,errors::Error> complete_expression_operand(ref u8[] source,ref m
     let usize target=ordinary_call(source,s,p,names,signatures)?;
     if(target<16){var bool plain=true;var usize i=0;while(i<signatures.arities[target]){let usize at=target*8+i;
             if(signatures.param_slices[at] || signatures.param_lengths[at]!=0 || signatures.param_records[at]!=0){plain=false;}i+=1;}
-        if(plain){return expression_work::call(w,target,signatures.arities[target],ref signatures.param_types[target*8..target*8+8],s.begin);}}
+        if(plain){return expression_work::call(w,target,signatures.arities[target],ref signatures.param_types[target*8..target*8+8],s.begin);}
+        return expression_work::captured(w,bank,names,*s,target,s.begin,f.depth);}
     let usize initial=operand(source,s,p,names,signatures,f.depth,context,result_type,structure,flow)?;
     let usize value=converted_tail(source,s,p,names,initial,result_type)?;return expression_work::resume(w,value);
+}
+
+// One active lexical context is copied into fixed caller scratch. The context
+// bank and expression frames survive children without native recursive drivers.
+fn Result<usize,errors::Error> complete_expression_operand(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table names,ref functions::Table signatures,u8 result_type,
+    usize structure,ref mut loops::State flow,ref mut expression_work::Bank bank,ref mut expression_work::State w){
+    let expression_work::Frame f=expression_work::current(w);var locals::Table active=locals::empty();
+    if(w.request==3){let usize i=w.used-1;let usize copied=expression_work::names_into(bank,i,ref mut active)?;
+        let u8 tag=bank.calls[i].tag;let usize length=bank.calls[i].length;let usize record=bank.calls[i].record;let usize parameter=bank.calls[i].parameter;
+        let bool sliced=bank.calls[i].sliced;var bool prefix=bank.calls[i].prefix;var usize value=256;
+        if(prefix && !sliced){value=call_prefix::stable(source,s,p,ref active,tag,length,record,f.depth)?;if(value==256){prefix=false;}}
+        if(value==256){
+            if(sliced){value=if(reference_calls::parameter(signatures,parameter)){
+                reference_argument(source,s,p,ref mut active,signatures,parameter,f.depth,result_type,structure,flow)?
+            }else{slice_argument(source,s,p,ref mut active,signatures,parameter,f.depth,result_type,structure,flow)?};}
+            else if(record!=0){value=record_argument(source,s,p,ref mut active,signatures,record-1,f.depth,result_type,structure,flow)?;}
+            else{value=array_argument(source,s,p,ref mut active,signatures,tag,length,f.depth,result_type,structure,flow)?;}
+        }
+        return expression_work::captured_argument(w,bank,ref active,value,prefix);
+    }
+    if(f.environment==34){return complete_operand_in_environment(source,s,p,names,signatures,result_type,structure,flow,bank,w);}
+    let usize copied=expression_work::environment_into(w,bank,ref mut active)?;
+    return complete_operand_in_environment(source,s,p,ref active,signatures,result_type,structure,flow,bank,w);
 }
 
 pub fn Result<usize,errors::Error> expression_staged(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,u8 minimum,
     usize depth,u8 expected,u8 result_type,usize structure,ref mut loops::State flow){
+    var expression_work::Bank bank=expression_work::empty_bank();
     var expression_work::State w=expression_work::begin(depth,minimum,expected);var metadata_budget::State meter=metadata_budget::empty();
     while(!w.done){let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
-        let bool done=expression_work::advance(source,s,p,ref mut w,ref mut meter)?;
-        if(w.waiting){let usize completed=complete_expression_operand(source,s,p,table,signatures,result_type,structure,flow,ref mut w)?;}
+        let bool done=expression_work::advance(source,s,p,signatures,ref mut bank,ref mut w,ref mut meter)?;
+        if(w.waiting){let usize completed=complete_expression_operand(source,s,p,table,signatures,result_type,structure,flow,ref mut bank,ref mut w)?;}
     }return expression_work::prepared(ref w);
 }
 
@@ -2463,11 +2490,12 @@ fn Result<bool, errors::Error> control_if(ref u8[] source, ref mut lexer::State 
 fn Result<usize,errors::Error> statement_staged(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
     u8 terminator,u8 result_type,usize expr_depth,usize structure,ref mut loops::State flow){
+    var expression_work::Bank bank=expression_work::empty_bank();
     var semantic_work::State w=semantic_work::begin(*s,1,0,terminator,expr_depth);
     var metadata_budget::State meter=metadata_budget::empty();
     while(!w.done){let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
-        let bool done=semantic_work::advance(source,s,p,names,ref mut w,ref mut meter)?;
-        if(w.request==1){let usize completed=complete_expression_operand(source,s,p,names,signatures,result_type,structure,flow,ref mut w.expression)?;
+        let bool done=semantic_work::advance(source,s,p,names,signatures,ref mut bank,ref mut w,ref mut meter)?;
+        if(w.request==1){let usize completed=complete_expression_operand(source,s,p,names,signatures,result_type,structure,flow,ref mut bank,ref mut w.expression)?;
             let usize continued=semantic_work::continue_operand(ref mut w)?;
         }else if(w.request==2){let usize value=statement(source,s,p,names,signatures,terminator,result_type,expr_depth,structure,flow)?;
             let usize completed=semantic_work::resume(ref mut w,2,value,false)?;}
@@ -2483,11 +2511,12 @@ fn Result<bool,errors::Error> return_staged(ref u8[] source,ref mut lexer::State
     let u8 kind=if(signatures.return_types[function]==13){3}
         else if(reference_calls::result(signatures,function) || signatures.return_slice_elements[function]!=0 ||
             p.record_results[function]!=0 || p.array_results[function]!=0 || !types::scalar(result_type)){0}else{2};
+    var expression_work::Bank bank=expression_work::empty_bank();
     var semantic_work::State w=semantic_work::begin(*s,kind,result_type,59,expr_depth);
     var metadata_budget::State meter=metadata_budget::empty();
     while(!w.done){let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
-        let bool done=semantic_work::advance(source,s,p,names,ref mut w,ref mut meter)?;
-        if(w.request==1){let usize completed=complete_expression_operand(source,s,p,names,signatures,result_type,depth,flow,ref mut w.expression)?;
+        let bool done=semantic_work::advance(source,s,p,names,signatures,ref mut bank,ref mut w,ref mut meter)?;
+        if(w.request==1){let usize completed=complete_expression_operand(source,s,p,names,signatures,result_type,depth,flow,ref mut bank,ref mut w.expression)?;
             let usize continued=semantic_work::continue_operand(ref mut w)?;
         }else if(w.request==2){let bool stopped=control_return(source,s,p,names,signatures,result_type,depth,expr_depth,flow)?;
             let usize completed=semantic_work::resume(ref mut w,2,0,stopped)?;}
@@ -2577,7 +2606,7 @@ fn Result<usize,errors::Error> body(ref u8[] source,ref functions::Table signatu
 }
 
 // Release source-name/catalog scratch before recursive expression lowering.
-fn Result<usize, errors::Error> prepare_aggregates(ref u8[] source, ref mut functions::Table signatures, ref mut ir::Program p) {
+pub fn Result<usize, errors::Error> prepare_aggregates(ref u8[] source, ref mut functions::Table signatures, ref mut ir::Program p) {
     let usize parameters = array_calls::prepare(signatures, p)?;
     let usize results = array_results::prepare(signatures, p)?;
     let structs::Table records = if(signatures.context.modules==0){structs::scan(source)?}

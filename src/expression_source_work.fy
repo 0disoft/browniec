@@ -1,5 +1,8 @@
 module expression_source_work;
 import lexer as lexer;
+import functions as functions;
+import locals as locals;
+import call_operand_work as calls;
 import lexer_work as tokens;
 import ir as ir;
 import types as types;
@@ -7,11 +10,15 @@ import errors as errors;
 import metadata_budget as budget;
 // Pratt traversal only. A converted unary/postfix operand is an explicit pending
 // child, never charged as a bounded stage. Source, names and candidate IR are pinned.
-pub struct Frame { usize target; usize arity; usize count; usize operand_at; usize depth; usize left; usize slot; usize jump; usize at;
+pub struct Frame { usize environment; usize target; usize arity; usize count; usize operand_at; usize depth; usize left; usize slot; usize jump; usize at;
     u8 context; u8 minimum; u8 expected; u8 kind; u8 operation; u8 phase; }
+// The owning adapter pins this bank separately, avoiding large State-valued
+// temporaries in every semantic constructor. No allocation or larger native stack.
+pub struct Bank { calls::Frame[34] calls; usize[2176] begins; usize[2176] ends; usize[2176] registers; bool[2176] mutability; }
+pub fn Bank empty_bank(){return Bank{.calls=[calls::empty_frame();34],.begins=[0;2176],.ends=[0;2176],.registers=[0;2176],.mutability=[false;2176]};}
 pub struct State { usize[272] arguments; u8[272] parameters; Frame[34] frames; tokens::State token; usize used; usize value;
     usize visits; u8 request; bool waiting; bool lexing; bool done; }
-fn Frame frame(usize depth,u8 minimum,u8 expected){return Frame{.target=0,.arity=0,.count=0,.operand_at=0,.depth=depth,.left=0,.slot=0,.jump=0,.at=0,
+fn Frame frame(usize depth,u8 minimum,u8 expected){return Frame{.environment=34,.target=0,.arity=0,.count=0,.operand_at=0,.depth=depth,.left=0,.slot=0,.jump=0,.at=0,
     .context=expected,.minimum=minimum,.expected=expected,.kind=0,.operation=0,.phase=0};}
 pub fn State begin(usize depth,u8 minimum,u8 expected){var State w=State{.arguments=[0;272],.parameters=[0;272],.frames=[frame(0,1,0);34],
     .token=tokens::begin(lexer::empty()),.used=1,.value=0,.visits=0,.request=0,.waiting=false,.lexing=false,.done=false};
@@ -31,6 +38,38 @@ pub fn Result<usize,errors::Error> call(ref mut State w,usize target,usize arity
     let usize index=w.used-1;w.frames[index].target=target;w.frames[index].arity=arity;w.frames[index].operand_at=at;
     var usize i=0;while(i<8){w.parameters[index*8+i]=tags[i];i+=1;}
     w.frames[index].phase=20;w.waiting=false;w.request=0;return .ok(0);
+}
+// Flat banks avoid nested array-valued frame borrows in the pinned toolchain.
+// A CALL stage loads/stores 64 binding rows and eight arguments in fixed scratch.
+fn void save_call(ref mut State w,ref mut Bank bank,usize index,ref calls::State active){
+    bank.calls[index]=calls::framing(active);var usize row=0;
+    while(row<64){let usize slot=index*64+row;bank.begins[slot]=active.names.begins[row];bank.ends[slot]=active.names.ends[row];
+        bank.registers[slot]=active.names.registers[row];bank.mutability[slot]=active.names.mutable[row];row+=1;}
+    row=0;while(row<8){w.arguments[index*8+row]=active.arguments[row];row+=1;}
+}
+pub fn Result<usize,errors::Error> names_into(ref Bank bank,usize index,ref mut locals::Table names){
+    if(index>=34){return .err(errors::make(5,0));}let calls::Frame f=bank.calls[index];
+    names.count=f.names_count;names.function=f.names_function;names.pending_places=f.names_pending;
+    var usize row=0;while(row<64){let usize slot=index*64+row;names.begins[row]=bank.begins[slot];names.ends[row]=bank.ends[slot];
+        names.registers[row]=bank.registers[slot];names.mutable[row]=bank.mutability[slot];row+=1;}return .ok(0);
+}
+fn Result<usize,errors::Error> load_call(ref State w,ref Bank bank,usize index,ref mut calls::State active){
+    let calls::Frame f=bank.calls[index];calls::restore(active,f);let usize copied=names_into(bank,index,ref mut active.names)?;
+    var usize row=0;while(row<8){active.arguments[row]=w.arguments[index*8+row];row+=1;}return .ok(0);
+}
+pub fn Result<usize,errors::Error> captured(ref mut State w,ref mut Bank bank,ref locals::Table names,lexer::State token,usize target,usize at,usize depth){
+    if(w.done || !w.waiting || w.request!=1){return .err(errors::make(5,at));}
+    let usize i=w.used-1;var calls::State active=calls::begin(names,token,target,at,depth);save_call(w,bank,i,ref active);
+    w.frames[i].phase=32;w.waiting=false;w.request=0;return .ok(0);
+}
+pub fn Result<usize,errors::Error> environment_into(ref State w,ref Bank bank,ref mut locals::Table names){
+    let Frame f=current(w);return names_into(bank,f.environment,names);
+}
+pub fn Result<usize,errors::Error> captured_argument(ref mut State w,ref mut Bank bank,ref locals::Table names,usize value,bool prefix){
+    if(w.done || !w.waiting || w.request!=3){return .err(errors::make(5,0));}
+    let usize i=w.used-1;var calls::State active=calls::empty();let usize loaded=load_call(w,bank,i,ref mut active)?;
+    let usize accepted=calls::argument(ref mut active,names,value,prefix)?;save_call(w,bank,i,ref active);
+    w.waiting=false;w.request=0;return .ok(accepted);
 }
 fn Result<bool,errors::Error> take(ref mut State w,ref lexer::State s,u8 kind,u8 phase){
     if(s.kind!=kind){return .err(errors::make(2,s.begin));}
@@ -69,11 +108,19 @@ fn u8 opcode(u8 kind) {
 }
 
 pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
-    ref mut State w,ref mut budget::State meter){
+    ref functions::Table signatures,ref mut Bank bank,ref mut State w,ref mut budget::State meter){
     if(w.done){return .ok(true);}if(meter.last!=0 || w.waiting){return .ok(false);}
     if(w.lexing){switch(tokens::advance(source,ref mut w.token,meter)){
         case .err(e):{*s=tokens::observed(ref w.token);return .err(e);}
         case .ok(done):{if(done){*s=tokens::prepared(ref w.token)?;w.lexing=false;}return .ok(false);}};}
+    let usize caller=w.used-1;
+    if(w.frames[caller].phase==30){var calls::State active=calls::empty();let usize loaded=load_call(w,bank,caller,ref mut active)?;
+        let bool done=calls::advance(source,s,p,signatures,ref mut active,meter)?;save_call(w,bank,caller,ref active);
+        if(done){w.frames[caller].left=calls::prepared(ref active)?;w.frames[caller].phase=13;}
+        else if(active.request==1){if(w.used>=34){return .err(errors::make(4,s.begin));}
+            let usize depth=w.frames[caller].depth+1;let u8 tag=active.tag;let usize next=w.used;
+            w.frames[caller].phase=31;w.frames[next]=frame(depth,1,tag);w.frames[next].environment=caller;w.used+=1;
+        }else if(active.request==2){w.waiting=true;w.request=3;}return .ok(false);}
     if(!budget::admit(meter,4096,s.begin)?){return .ok(false);}
     let usize i=w.used-1;let Frame f=current(w);let usize value=w.value;w.visits+=1;
     if(f.phase==0){if(f.depth>32){return .err(errors::make(4,s.begin));}
@@ -89,7 +136,7 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s
             w.frames[i].slot=slot;w.frames[i].jump=jump;}
         if(w.used>=34){return .err(errors::make(4,s.begin));}
         let usize next=w.used;let u8 expected=if(logical){f.expected}else{p.types[f.left]};
-        w.frames[i].phase=4;w.frames[next]=frame(f.depth+1,precedence(f.kind)+1,expected);w.used+=1;return .ok(false);}
+        w.frames[i].phase=4;w.frames[next]=frame(f.depth+1,precedence(f.kind)+1,expected);w.frames[next].environment=f.environment;w.used+=1;return .ok(false);}
     if(f.phase==4){var usize result=0;
         if(f.kind==132 || f.kind==133){if(p.types[value]!=2){return .err(errors::make(3,f.at));}
             let usize stored=ir::raw(p,18,f.slot,value,0,f.at)?;let usize target=p.count;
@@ -101,7 +148,7 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s
         }w.frames[i].left=result;w.frames[i].phase=2;return .ok(false);}
     if(f.phase==10){return take(w,s,40,11);}
     if(f.phase==11){if(w.used>=34){return .err(errors::make(4,s.begin));}
-        let usize next=w.used;w.frames[i].phase=12;w.frames[next]=frame(f.depth+1,1,f.context);w.used+=1;return .ok(false);}
+        let usize next=w.used;w.frames[i].phase=12;w.frames[next]=frame(f.depth+1,1,f.context);w.frames[next].environment=f.environment;w.used+=1;return .ok(false);}
     if(f.phase==12){w.frames[i].left=value;return take(w,s,41,13);}
     if(f.phase==13){w.value=f.left;w.frames[i].phase=1;w.waiting=true;w.request=2;return .ok(false);}
     if(f.phase==20){return take(w,s,s.kind,21);}
@@ -110,7 +157,7 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s
         if(f.count>=8){return .err(errors::make(4,s.begin));}
         if(w.used>=34){return .err(errors::make(4,s.begin));}
         let usize next=w.used;let u8 tag=if(f.count<f.arity){w.parameters[i*8+f.count]}else{0};
-        w.frames[i].phase=23;w.frames[next]=frame(f.depth+1,1,tag);w.used+=1;return .ok(false);}
+        w.frames[i].phase=23;w.frames[next]=frame(f.depth+1,1,tag);w.frames[next].environment=f.environment;w.used+=1;return .ok(false);}
     if(f.phase==23){if(f.count>=f.arity || p.types[value]!=w.parameters[i*8+f.count]){return .err(errors::make(3,f.operand_at));}
         w.arguments[i*8+f.count]=value;w.frames[i].count=f.count+1;w.frames[i].phase=24;return .ok(false);}
     if(f.phase==24){if(s.kind==41){w.frames[i].phase=27;return .ok(false);}return take(w,s,44,25);}
@@ -119,5 +166,7 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s
     if(f.phase==28){let usize result=ir::call(p,f.target,ref w.arguments[i*8..i*8+f.count],f.operand_at)?;
         w.frames[i].left=result;w.frames[i].phase=29;return .ok(false);}
     if(f.phase==29){w.value=f.left;w.frames[i].phase=1;w.waiting=true;w.request=2;return .ok(false);}
+    if(f.phase==31){var calls::State active=calls::empty();let usize loaded=load_call(w,bank,i,ref mut active)?;let usize accepted=calls::resume(ref mut active,1,value)?;save_call(w,bank,i,ref active);w.frames[i].phase=30;return .ok(false);}
+    if(f.phase==32){return take(w,s,s.kind,30);}
     return .err(errors::make(5,s.begin));
 }
