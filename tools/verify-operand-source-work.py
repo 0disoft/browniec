@@ -15,6 +15,6 @@ bottom.EXTRA_INPUTS = {'tools/verify-operand-source-work.py'}
 if '--kernel-only' in sys.argv:
     sys.argv.remove('--kernel-only')
     bottom.DIRECTORY = 'build/operand-completion-work'
-    bottom.MODULES = {'call_operand_kernel': None, 'body_lowering': ['nested_call_depth_32_and_33_preserve_default_stack_and_raw_diagnostics']}
+    bottom.MODULES = {'call_operand_kernel': None, 'body_lowering': ['nested_call_depth_32_and_33_preserve_default_stack_and_raw_diagnostics', 'captured_scalar_results_keep_prefix_order_and_lexical_cleanup']}
 if __name__ == '__main__':
     bottom.main()

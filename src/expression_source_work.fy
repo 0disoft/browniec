@@ -13,10 +13,12 @@ import metadata_budget as budget;
 // Source, names, capture bank and candidate IR stay pinned across advances.
 pub struct Frame { usize environment; usize target; usize arity; usize count; usize operand_at; usize depth; usize left; usize slot; usize jump; usize at;
     u8 context; u8 minimum; u8 expected; u8 kind; u8 operation; u8 phase; }
-// The owning adapter pins this bank separately, avoiding large State-valued
-// temporaries in every semantic constructor. No allocation or larger native stack.
-pub struct Bank { calls::Frame[34] calls; usize[2176] begins; usize[2176] ends; usize[2176] registers; bool[2176] mutability; }
-pub fn Bank empty_bank(){return Bank{.calls=[calls::empty_frame();34],.begins=[0;2176],.ends=[0;2176],.registers=[0;2176],.mutability=[false;2176]};}
+// Active CALL contexts only append hidden bindings. One shared 64-row prefix
+// suffices: frame counts/pending masks restore the enclosing lexical view after
+// child cleanup. Unused rows are scratch; original caller names stay immutable.
+// The owner pins this bank separately from semantic State construction.
+pub struct Bank { calls::Frame[34] calls; usize[64] begins; usize[64] ends; usize[64] registers; bool[64] mutability; }
+pub fn Bank empty_bank(){return Bank{.calls=[calls::empty_frame();34],.begins=[0;64],.ends=[0;64],.registers=[0;64],.mutability=[false;64]};}
 pub struct State { usize[272] arguments; u8[272] parameters; Frame[34] frames; tokens::State token; usize used; usize value;
     usize visits; u8 request; bool waiting; bool lexing; bool done; }
 fn Frame frame(usize depth,u8 minimum,u8 expected){return Frame{.environment=34,.target=0,.arity=0,.count=0,.operand_at=0,.depth=depth,.left=0,.slot=0,.jump=0,.at=0,
@@ -44,14 +46,14 @@ pub fn Result<usize,errors::Error> call(ref mut State w,usize target,usize arity
 // A CALL stage loads/stores 64 binding rows and eight arguments in fixed scratch.
 fn void save_call(ref mut State w,ref mut Bank bank,usize index,ref calls::State active){
     bank.calls[index]=calls::framing(active);var usize row=0;
-    while(row<64){let usize slot=index*64+row;bank.begins[slot]=active.names.begins[row];bank.ends[slot]=active.names.ends[row];
+    while(row<64){let usize slot=row;bank.begins[slot]=active.names.begins[row];bank.ends[slot]=active.names.ends[row];
         bank.registers[slot]=active.names.registers[row];bank.mutability[slot]=active.names.mutable[row];row+=1;}
     row=0;while(row<8){w.arguments[index*8+row]=active.arguments[row];row+=1;}
 }
 pub fn Result<usize,errors::Error> names_into(ref Bank bank,usize index,ref mut locals::Table names){
     if(index>=34){return .err(errors::make(5,0));}let calls::Frame f=bank.calls[index];
     names.count=f.names_count;names.function=f.names_function;names.pending_places=f.names_pending;
-    var usize row=0;while(row<64){let usize slot=index*64+row;names.begins[row]=bank.begins[slot];names.ends[row]=bank.ends[slot];
+    var usize row=0;while(row<64){let usize slot=row;names.begins[row]=bank.begins[slot];names.ends[row]=bank.ends[slot];
         names.registers[row]=bank.registers[slot];names.mutable[row]=bank.mutability[slot];row+=1;}return .ok(0);
 }
 fn Result<usize,errors::Error> load_call(ref State w,ref Bank bank,usize index,ref mut calls::State active){
@@ -69,6 +71,9 @@ pub fn Result<usize,errors::Error> environment_into(ref State w,ref Bank bank,re
 pub fn Result<usize,errors::Error> captured_argument(ref mut State w,ref mut Bank bank,ref locals::Table names,usize value,bool prefix){
     if(w.done || !w.waiting || w.request!=3){return .err(errors::make(5,0));}
     let usize i=w.used-1;var calls::State active=calls::empty();let usize loaded=load_call(w,bank,i,ref mut active)?;
+    if(names.count<active.names.count || names.function!=active.names.function){return .err(errors::make(5,0));}
+    var usize row=0;while(row<active.names.count){if(names.begins[row]!=active.names.begins[row] || names.ends[row]!=active.names.ends[row] ||
+        names.registers[row]!=active.names.registers[row] || names.mutable[row]!=active.names.mutable[row]){return .err(errors::make(5,0));}row+=1;}
     let usize accepted=calls::argument(ref mut active,names,value,prefix)?;save_call(w,bank,i,ref active);
     w.waiting=false;w.request=0;return .ok(accepted);
 }
