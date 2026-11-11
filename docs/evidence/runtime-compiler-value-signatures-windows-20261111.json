@@ -1,0 +1,523 @@
+{
+  "schema": "browniec.runtime-compiler-value-signature-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-11T14:17:24.665099+00:00",
+  "verifiedCommit": "f3995df25944d6e584a386ba208a3a81e0be19f1",
+  "implementationCommits": [
+    "1848c99d41d29c14d5dbe298119fcfac85183df5",
+    "e088bec596b5d516373135eccf2b8ec5ccdbf6fd",
+    "bd4a88fa30bfb15321e210ed53fca7add5e5b77d",
+    "138e09770f3409ec9a5ca23c1a818fed3aa1c974",
+    "bcdf85498917d276bb8091b03f5684e6c339c482",
+    "f3995df25944d6e584a386ba208a3a81e0be19f1"
+  ],
+  "scope": "Private canonical value catalog proof, explicit-stack type grammar, annotation mapping, complete single-source typed signatures and canonical result/parameter planning; owning adapters drain synchronously",
+  "sourceLoweringComplete": false,
+  "typedValueSignaturePreparationComplete": true,
+  "publicPendingCompile": false,
+  "predecessorEvidence": "docs/evidence/runtime-compiler-literals-windows-20261111.json",
+  "compiler": {
+    "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+    "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+    "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false"
+  },
+  "msvc": {
+    "version": "14.51.36231",
+    "sdk": "10.0.26100.0",
+    "compilerSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+    "overrides": false
+  },
+  "frozenUnitVerification": [
+    {
+      "kernel": "value_properties_work",
+      "verifiedCommit": "1848c99d41d29c14d5dbe298119fcfac85183df5",
+      "profiles": [
+        {
+          "profile": "development",
+          "status": "passed",
+          "receipt": {
+            "path": "build/value-properties-checkpoint/development.json",
+            "sha256": "e38478e2fcaf44f2172405b76c8f5d329973e3e615de4214274022336e3c8636"
+          },
+          "nativeGroups": 1,
+          "frozenOwnerTestHashes": [
+            {
+              "path": "src/value_properties_work.fy",
+              "sha256": "38472e1c823a689e1d787588e4e4b7f13ee319acbe92f7198b12a23c32afde17"
+            },
+            {
+              "path": "tests/m2/value_properties_work.fy",
+              "sha256": "26f64f50db553c437fd736dcbfea578d0df77ed4f6d05625857b47008466544f"
+            }
+          ],
+          "ownerTestsMatchCommittedSnapshot": true
+        },
+        {
+          "profile": "release",
+          "status": "passed",
+          "receipt": {
+            "path": "build/value-properties-checkpoint/release.json",
+            "sha256": "45c83e17d153470046279c2f4232064cb02054bf41c271c5492ad6652a87346b"
+          },
+          "nativeGroups": 1,
+          "frozenOwnerTestHashes": [
+            {
+              "path": "src/value_properties_work.fy",
+              "sha256": "38472e1c823a689e1d787588e4e4b7f13ee319acbe92f7198b12a23c32afde17"
+            },
+            {
+              "path": "tests/m2/value_properties_work.fy",
+              "sha256": "26f64f50db553c437fd736dcbfea578d0df77ed4f6d05625857b47008466544f"
+            }
+          ],
+          "ownerTestsMatchCommittedSnapshot": true
+        }
+      ]
+    },
+    {
+      "kernel": "value_type_work",
+      "verifiedCommit": "e088bec596b5d516373135eccf2b8ec5ccdbf6fd",
+      "profiles": [
+        {
+          "profile": "development",
+          "status": "passed",
+          "receipt": {
+            "path": "build/value-type-checkpoint/development.json",
+            "sha256": "b7f64bce15dfd8baa428fc09711f21b5eb1b0ae8c2e51f97557f0ec28de71649"
+          },
+          "nativeGroups": 1,
+          "frozenOwnerTestHashes": [
+            {
+              "path": "src/value_type_work.fy",
+              "sha256": "3f8301352127b7468375ea65b9be67289e2129fcc12d4066950b6e0afe326620"
+            },
+            {
+              "path": "tests/m2/value_type_work.fy",
+              "sha256": "8dbdddf52b39cead735d7385b27ebe19412a27d5025553621fd121f872fcaf62"
+            }
+          ],
+          "ownerTestsMatchCommittedSnapshot": true
+        },
+        {
+          "profile": "release",
+          "status": "passed",
+          "receipt": {
+            "path": "build/value-type-checkpoint/release.json",
+            "sha256": "d2c960f794ed99754781ddd967fca2db9cc623690cb46dde88294b186af93b6b"
+          },
+          "nativeGroups": 1,
+          "frozenOwnerTestHashes": [
+            {
+              "path": "src/value_type_work.fy",
+              "sha256": "3f8301352127b7468375ea65b9be67289e2129fcc12d4066950b6e0afe326620"
+            },
+            {
+              "path": "tests/m2/value_type_work.fy",
+              "sha256": "8dbdddf52b39cead735d7385b27ebe19412a27d5025553621fd121f872fcaf62"
+            }
+          ],
+          "ownerTestsMatchCommittedSnapshot": true
+        }
+      ]
+    },
+    {
+      "kernel": "value_signature_work",
+      "verifiedCommit": "bd4a88fa30bfb15321e210ed53fca7add5e5b77d",
+      "profiles": [
+        {
+          "profile": "development",
+          "status": "passed",
+          "receipt": {
+            "path": "build/value-annotation-checkpoint/development.json",
+            "sha256": "17938c5fd4be04556ea16c28174a425edccf00665c9f75c0d857112c21090359"
+          },
+          "nativeGroups": 3,
+          "frozenOwnerTestHashes": [
+            {
+              "path": "src/value_signature_work.fy",
+              "sha256": "94b0143fbd44b71922f6a0c54b1d5046bb7cf6c1972368348b282535bfd3c181"
+            },
+            {
+              "path": "tests/m2/value_signature_work.fy",
+              "sha256": "178b71392f623cef5af8ed4cdd4881b4861fc865c36261ec176895a0fe4613b7"
+            }
+          ],
+          "ownerTestsMatchCommittedSnapshot": true
+        },
+        {
+          "profile": "release",
+          "status": "passed",
+          "receipt": {
+            "path": "build/value-annotation-checkpoint/release.json",
+            "sha256": "e5e4ca547c34f0a4a5665ea1a81e4b5035f10a17ef2b3f6dfe12268991961fec"
+          },
+          "nativeGroups": 3,
+          "frozenOwnerTestHashes": [
+            {
+              "path": "src/value_signature_work.fy",
+              "sha256": "94b0143fbd44b71922f6a0c54b1d5046bb7cf6c1972368348b282535bfd3c181"
+            },
+            {
+              "path": "tests/m2/value_signature_work.fy",
+              "sha256": "178b71392f623cef5af8ed4cdd4881b4861fc865c36261ec176895a0fe4613b7"
+            }
+          ],
+          "ownerTestsMatchCommittedSnapshot": true
+        }
+      ]
+    },
+    {
+      "kernel": "value_function_work",
+      "verifiedCommit": "138e09770f3409ec9a5ca23c1a818fed3aa1c974",
+      "profiles": [
+        {
+          "profile": "development",
+          "status": "passed",
+          "receipt": {
+            "path": "build/value-function-checkpoint/development.json",
+            "sha256": "616f9211c5c2059d263fbb3695aba8f7719998f3d33485c5eb123cebdb92490a"
+          },
+          "nativeGroups": 1,
+          "frozenOwnerTestHashes": [
+            {
+              "path": "src/value_function_work.fy",
+              "sha256": "da2409df06b373a4516ec5ad7f00b977337aca3f0159fce2dce6c7079089a0e4"
+            },
+            {
+              "path": "tests/m2/value_function_work.fy",
+              "sha256": "82d5bc7adcf6991f1f0abd5e82c901b82130f367b26b74fa0c159c94f61e7345"
+            }
+          ],
+          "ownerTestsMatchCommittedSnapshot": true
+        },
+        {
+          "profile": "release",
+          "status": "passed",
+          "receipt": {
+            "path": "build/value-function-checkpoint/release.json",
+            "sha256": "d60349d71a006b4ef7456c413bf0b42cbb75f2b92b96a83751df072eba531c15"
+          },
+          "nativeGroups": 1,
+          "frozenOwnerTestHashes": [
+            {
+              "path": "src/value_function_work.fy",
+              "sha256": "da2409df06b373a4516ec5ad7f00b977337aca3f0159fce2dce6c7079089a0e4"
+            },
+            {
+              "path": "tests/m2/value_function_work.fy",
+              "sha256": "82d5bc7adcf6991f1f0abd5e82c901b82130f367b26b74fa0c159c94f61e7345"
+            }
+          ],
+          "ownerTestsMatchCommittedSnapshot": true
+        }
+      ]
+    },
+    {
+      "kernel": "value_catalog_work",
+      "verifiedCommit": "bcdf85498917d276bb8091b03f5684e6c339c482",
+      "profiles": [
+        {
+          "profile": "development",
+          "status": "passed",
+          "receipt": {
+            "path": "build/value-catalog-checkpoint/development.json",
+            "sha256": "c4e2b764cd33857f7c29eba47a9d82392d980e823782e157ab8da5c5c538f81e"
+          },
+          "nativeGroups": 1,
+          "frozenOwnerTestHashes": [
+            {
+              "path": "src/value_catalog_work.fy",
+              "sha256": "3b7d0a64330ccd53b830a63b97c605fd07d05c839d37b203bd168e4fe0173751"
+            },
+            {
+              "path": "tests/m2/value_catalog_work.fy",
+              "sha256": "efbaf8d43976c3bd3e32e6f6458be04c544395e73c6ce0f999f347b70f233b21"
+            }
+          ],
+          "ownerTestsMatchCommittedSnapshot": true
+        },
+        {
+          "profile": "release",
+          "status": "passed",
+          "receipt": {
+            "path": "build/value-catalog-checkpoint/release.json",
+            "sha256": "6d56f6a0698676c6778ed078718f0c67c054795e19b14a0b1ed625ee31b2a0f0"
+          },
+          "nativeGroups": 1,
+          "frozenOwnerTestHashes": [
+            {
+              "path": "src/value_catalog_work.fy",
+              "sha256": "3b7d0a64330ccd53b830a63b97c605fd07d05c839d37b203bd168e4fe0173751"
+            },
+            {
+              "path": "tests/m2/value_catalog_work.fy",
+              "sha256": "efbaf8d43976c3bd3e32e6f6458be04c544395e73c6ce0f999f347b70f233b21"
+            }
+          ],
+          "ownerTestsMatchCommittedSnapshot": true
+        }
+      ]
+    }
+  ],
+  "integratedAdapterVerification": [
+    {
+      "profile": "development",
+      "status": "passed",
+      "receipt": {
+        "path": "build/value-signature-work/development/receipt.json",
+        "sha256": "b96000c8c4de0946c71a3001a87a3db7b36c274c89e9ae6062eb89102ecae9e2"
+      },
+      "nativeGroups": 8,
+      "inputCount": 341,
+      "allInputHashesMatchCheckout": true,
+      "nativeInputMirrorVerified": true
+    },
+    {
+      "profile": "release",
+      "status": "passed",
+      "receipt": {
+        "path": "build/value-signature-work/release/receipt.json",
+        "sha256": "0466196c5af3cdc303df8181b83de3fab2a03745ed17bc46e8f226a466593c7d"
+      },
+      "nativeGroups": 8,
+      "inputCount": 341,
+      "allInputHashesMatchCheckout": true,
+      "nativeInputMirrorVerified": true
+    }
+  ],
+  "currentOwnerHashes": [
+    {
+      "path": "src/value_properties_work.fy",
+      "sha256": "03ceab05b05cc173d685deebd1e4d6866dcd93310b367f32ba4d4e9e4ee83fe7"
+    },
+    {
+      "path": "src/value_type_work.fy",
+      "sha256": "60affbf02dee32c3a2dc920c03f7c376be0109a324bd10c1c214c159d0323e2d"
+    },
+    {
+      "path": "src/value_signature_work.fy",
+      "sha256": "94b0143fbd44b71922f6a0c54b1d5046bb7cf6c1972368348b282535bfd3c181"
+    },
+    {
+      "path": "src/value_function_work.fy",
+      "sha256": "da2409df06b373a4516ec5ad7f00b977337aca3f0159fce2dce6c7079089a0e4"
+    },
+    {
+      "path": "src/value_catalog_work.fy",
+      "sha256": "3b7d0a64330ccd53b830a63b97c605fd07d05c839d37b203bd168e4fe0173751"
+    },
+    {
+      "path": "src/value_type_source.fy",
+      "sha256": "4b610c4fd29d0cf3059964c6053b63ec8835a7d3c81d67778789bf56700a362f"
+    },
+    {
+      "path": "src/value_signature_source.fy",
+      "sha256": "d9c4160d1f46ad232b949b722e931a720ff8edf23fe8b7ed6b20796b3b0862d6"
+    },
+    {
+      "path": "src/signature_type_work.fy",
+      "sha256": "2e5f556a60dcd3b5140231e3c6c138f0afe322ec38c36124a8add54fb6c7b610"
+    },
+    {
+      "path": "src/signature_parse_work.fy",
+      "sha256": "bedc047a2b72afdc1177acd82fc56f1ddafddf572b629813caaa9e2ba3994ea1"
+    },
+    {
+      "path": "src/function_scan_work.fy",
+      "sha256": "9ebbd98dcdc43b205ac4dd0c324614ba72ddd5ba5f31c2bf39163edcd7af8a21"
+    },
+    {
+      "path": "src/functions.fy",
+      "sha256": "ba687c6b9e5d9e2041400f37aadcc20dd42fa881a0d4cab8a2ce1366b1d3a698"
+    },
+    {
+      "path": "src/value_source_functions.fy",
+      "sha256": "f12dcf05a7b0fae724dd922f6bf4bf27388ec603caeab2486e2c91e42724d2d6"
+    }
+  ],
+  "currentTestHashes": [
+    {
+      "path": "tests/m2/value_properties_work.fy",
+      "sha256": "26f64f50db553c437fd736dcbfea578d0df77ed4f6d05625857b47008466544f"
+    },
+    {
+      "path": "tests/m2/value_type_work.fy",
+      "sha256": "3b914a9f671610e2fe3ad058ebf3d623e30c2942b5aedecf23005a537a1687a2"
+    },
+    {
+      "path": "tests/m2/value_signature_work.fy",
+      "sha256": "178b71392f623cef5af8ed4cdd4881b4861fc865c36261ec176895a0fe4613b7"
+    },
+    {
+      "path": "tests/m2/value_function_work.fy",
+      "sha256": "3c10770dd500135f3d79c27b7e24f719405dc325b63cb7b8ade0214b7edec436"
+    },
+    {
+      "path": "tests/m2/value_catalog_work.fy",
+      "sha256": "bb9ce02262202dbc3e30545a2190babfccc2da5c3db062f906bc8228808db2eb"
+    },
+    {
+      "path": "tests/m2/value_signature_depth.fy",
+      "sha256": "2ba04bbdf05e0a23cef016feffd7bfefd3fe984a8ea5f490f8ede81a33aee918"
+    },
+    {
+      "path": "tests/m2/value_source_control.fy",
+      "sha256": "178b4ee19e22097a816e69cd197d58ff5e443906f0318100b7556bb912869540"
+    }
+  ],
+  "engine": {
+    "receipt": {
+      "path": "build/runtime-engine/20261111T141329640220Z/receipt.json",
+      "sha256": "14e695385748c86d0bb8af021555274b40d3ce3845f5407900f2ddda0ad03730"
+    },
+    "inputCount": 335,
+    "sourceClosure": 321,
+    "allInputHashesMatchCheckout": true,
+    "allInputHashesMatchVerifiedCommit": true,
+    "rootLockUnchanged": true,
+    "compilerOverrides": false,
+    "runtimeEnvironment": "cleared; empty tool PATH",
+    "transportSha256": "c4579db258656222888908cb07a1c4fd882273d649545df4f257bd88459985b1",
+    "profiles": [
+      {
+        "profile": "development",
+        "artifact": {
+          "path": "build/runtime-engine/20261111T141329640220Z/development/runtime-engine.exe",
+          "sha256": "530a49128965f715b8e47addfb795d62eb2759a8c513d1dbf081721a956a6365",
+          "bytes": 11026432,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "exit": 0,
+        "controlMetrics": {
+          "cases": 6,
+          "smallHeapBytes": 7872,
+          "maximumHeapBytes": 62976,
+          "ownerBytes": 736
+        },
+        "preparationMetrics": {
+          "cacheBytes": 2248,
+          "storedBytes": 24264,
+          "previousStoredBytes": 22016,
+          "retainedVecExtraBytes": 17984,
+          "capturePlanBytes": 900,
+          "previousCacheBytes": 1344,
+          "capturePlanVecExtraBytes": 7232
+        },
+        "arrayFillMetrics": {
+          "arrayWorkBytes": 360,
+          "cursorBytes": 1184,
+          "machineBytes": 1792,
+          "coreBytes": 172400,
+          "pendingVecExtraBytes": 2880,
+          "callWorkBytes": 536,
+          "callPendingVecExtraBytes": 4288,
+          "returnWorkBytes": 48,
+          "returnPendingVecExtraBytes": 384,
+          "combinedPendingVecExtraBytes": 7552
+        },
+        "liveHeapAllocationsAtExit": 0,
+        "assertions": "native Fairy and C, no parsed trace"
+      },
+      {
+        "profile": "release",
+        "artifact": {
+          "path": "build/runtime-engine/20261111T141329640220Z/release/runtime-engine.exe",
+          "sha256": "3b38e0cf4c17c87da5aa9a4784cf14c76a2fd32a02decc5dd2548936342a9cc8",
+          "bytes": 4035584,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "exit": 0,
+        "controlMetrics": {
+          "cases": 6,
+          "smallHeapBytes": 7872,
+          "maximumHeapBytes": 62976,
+          "ownerBytes": 736
+        },
+        "preparationMetrics": {
+          "cacheBytes": 2248,
+          "storedBytes": 24264,
+          "previousStoredBytes": 22016,
+          "retainedVecExtraBytes": 17984,
+          "capturePlanBytes": 900,
+          "previousCacheBytes": 1344,
+          "capturePlanVecExtraBytes": 7232
+        },
+        "arrayFillMetrics": {
+          "arrayWorkBytes": 360,
+          "cursorBytes": 1184,
+          "machineBytes": 1792,
+          "coreBytes": 172400,
+          "pendingVecExtraBytes": 2880,
+          "callWorkBytes": 536,
+          "callPendingVecExtraBytes": 4288,
+          "returnWorkBytes": 48,
+          "returnPendingVecExtraBytes": 384,
+          "combinedPendingVecExtraBytes": 7552
+        },
+        "liveHeapAllocationsAtExit": 0,
+        "assertions": "native Fairy and C, no parsed trace"
+      }
+    ]
+  },
+  "transportReview": {
+    "declarations": 36,
+    "layouts": 51,
+    "aggregateGraphs": 176,
+    "normalizedShapeChanges": 0,
+    "normalization": "generated identifiers with recursive bijective aggregate graph comparison",
+    "added": [
+      "src/value_function_work.fy",
+      "src/value_properties_work.fy",
+      "src/value_signature_work.fy",
+      "src/value_type_work.fy"
+    ],
+    "removed": [],
+    "previousContractSha256": "a0b5c7c8bd374f31bd935f595cd2df72278b042c65a9d460153eb65d61ca19b3",
+    "candidateContractSha256": "f031bd184ee66bc500a6b528052a21083db11b79d434afb9f469d367e771abc5"
+  },
+  "productionSources": {
+    "count": 328,
+    "allLf": true
+  },
+  "remainingAtomicLowering": [
+    "Seventeen-round source origin inference and expression/atom/CALL/name/control-flow traversal",
+    "Aggregate parameter/result catalogs outside the completed canonical value signature mapper",
+    "Recursive body/statement/control/expression/operand lowering and body-driven canonical interning",
+    "Final entry-call checks, output normalization and raw context validation outside staged children",
+    "Fixed initial scratch/aggregate publication and final native image allocation/copy"
+  ],
+  "knownBodyDiagnostic": {
+    "status": "failed_on_predecessor_and_current",
+    "predecessorCommit": "6a6c2a9",
+    "scope": "Local four-wrapper annotation and owned-value use at deepest level of 32 nested controls; distinct from verified four-wrapper function signatures with 32 controls",
+    "nativeExit": -1073741571,
+    "category": "Windows stack overflow",
+    "sourceUtf8": "module main;fn i32 main(){if(true){if(true){if(true){if(true){if(true){if(true){if(true){if(true){if(true){if(true){if(true){if(true){if(true){if(true){if(true){if(true){if(true){if(true){if(true){if(true){if(true){if(true){if(true){if(true){if(true){if(true){if(true){if(true){if(true){if(true){if(true){if(true){let Option<Result<Option<Result<Buffer,u8>>,i64>> value=.none;_ = value;return 42;}else{return 42;}}else{return 42;}}else{return 42;}}else{return 42;}}else{return 42;}}else{return 42;}}else{return 42;}}else{return 42;}}else{return 42;}}else{return 42;}}else{return 42;}}else{return 42;}}else{return 42;}}else{return 42;}}else{return 42;}}else{return 42;}}else{return 42;}}else{return 42;}}else{return 42;}}else{return 42;}}else{return 42;}}else{return 42;}}else{return 42;}}else{return 42;}}else{return 42;}}else{return 42;}}else{return 42;}}else{return 42;}}else{return 42;}}else{return 42;}}else{return 42;}}else{return 42;}}",
+    "fixture": {
+      "path": "build/value-local-annotation-depth-diagnostic.fy",
+      "sha256": "115f6158b9b51d1592e9055fc323f9b04cb716c556b5bedae9b3384a4e6e86ca"
+    },
+    "predecessorStderr": {
+      "path": "build/value-depth-predecessor/native.stderr",
+      "sha256": "9e2f124cd48a606c53e958c0ac0954dfa75f21081d8df7f6728a7e161159c3ed"
+    },
+    "acceptanceReceipt": false,
+    "currentRawDiagnostic": {
+      "path": "build/value-depth-raw-diagnostic/development/native.json.stderr.txt",
+      "sha256": "9e2f124cd48a606c53e958c0ac0954dfa75f21081d8df7f6728a7e161159c3ed"
+    },
+    "resolution": "Remains a private value-body composition issue to isolate during body lowering; no compiler or stack overrides"
+  },
+  "limitations": [
+    "Pin source/original catalog and separate private candidates until completion; prepared analysis is not execution authority",
+    "Preserve initial catalog-before-grammar and whole-record-declaration-before-signature error order; raw type/annotation/scan/prepare helpers remain independent oracles",
+    "Every advance admits one fresh 4096-unit logical allowance; inspect one canonical row, copy one node/record row or sixteen packed record field slots; grammar and lexical/layout children resume separately",
+    "Legacy signature State layouts stay unchanged; separate typed scratch banks and fixed frame/catalog copies bridge compiler loan restrictions; no instrumented byte/CPU or timing/peak-stack improvement claim",
+    "Canonical scratch restarts clear one property row per stage instead of recreating nested layout state",
+    "Typed single-source helpers retain raw fallback above the private 4096-byte source profile",
+    "Known predecessor failure for deeply nested local annotations is recorded separately; verified depth composition is four wrappers in a function signature with 32 controls, with 33 controls rejected",
+    "Public Pending compile, broad body lowering and R02-R05 closure remain unimplemented; public CLI Fuel matrix was not run; local only, no push/release/deployment"
+  ]
+}

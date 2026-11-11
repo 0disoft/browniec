@@ -6,8 +6,8 @@ ordinary lexer, literal-decoder, scoped-name and primitive/wrapper-type calls
 drain their corresponding continuations synchronously. The complete proof
 continues through the [preceding proof kernels](runtime-authority-metadata-stages.md#compiler-proof-stages).
 This remains partial lowering, rather than a resumable compiler coordinator.
-Untyped declaration/signature passes now compose the children below; typed/value
-signature preparation still follows its original synchronous path.
+Untyped and typed/value signature passes compose the children below, including
+canonical catalog proof and result/parameter planning.
 
 ## Implemented boundaries
 
@@ -35,6 +35,11 @@ in separate advances; unused credit cannot accumulate into a later scan.
 | `struct_scan_work` | One declaration/field/layout child or declaration-name comparison; all declaration syntax is checked before type resolution. |
 | `literal_intern_work` | One builder/catalog row, one UTF-8 child or at most 64 existing-payload comparisons/new-payload copies; final catalog update only after fallible checks. |
 | `literal_collection_work` | One source/context/token/decoder/intern child, one result/catalog row or at most 64 candidate-copy/decoded-clear bytes; only the completed Index is prepared. |
+| `value_properties_work` | One canonical/unused row, one cleared restart row, or the existing struct-layout child; preserve catalog-before-grammar diagnostics. |
+| `value_type_work` | One five-frame grammar transition, canonical match/copy row, sixteen packed record fields, or token/nominal/catalog-proof child. |
+| `value_signature_work` | A type-parser child or fixed canonical-node-to-tag conversion and successful candidate publication. |
+| `value_function_work` | Record declaration proof, one candidate row, sixteen packed fields or the existing signature coordinator with an external typed annotation bank. |
+| `value_catalog_work` | One function/parameter/unused header, canonical matching row or independent catalog-proof child. |
 | `struct_layout_work` (reused) | Fixed scratch initialization, one sixteen-slot row, at most sixteen dependency visits, or one node of at most sixteen fields. |
 
 The owner pins the exact source, Index/context and query across advances.
@@ -81,8 +86,8 @@ adapters now drain `function_scan_work`. Untyped single-source and immutable
 module inputs retain exact entry selection, record order, pub/import resolution,
 parameter duplicates and reference-return candidates. Raw signature/single/index
 scans remain independent ordering oracles. The unscoped compatibility adapter
-keeps the raw fallback above 4096 bytes; typed/value signature catalogs remain
-on their original path.
+keeps the raw fallback above 4096 bytes. Typed/value signature preparation now
+composes the later kernels described below.
 
 Every declaration/signature child resumes separately, including unscoped nominal
 discovery. Struct/function skipping preserves early-match discovery and exactly
@@ -155,11 +160,61 @@ Engine development/O2 pass default 1MiB/4KiB stacks and zero exit SDK heap. All
 keeps 36 bindings/51 layouts and equivalent 176 aggregate graphs; Core/Cursor/
 Machine remain 172400/1184/1792 bytes. Older evidence remains frozen history.
 
+## Typed/value signatures and canonical catalogs
+
+`value_type_source::parse`, `value_signature_source::parse`, `functions::scan_values`
+and `value_source_functions::prepare` now drain explicit children. The type
+parser uses five frames rather than native recursion for the maximum four
+wrappers. It preserves exact Buffer qualification/relex behavior, original `>>`
+positions/token counts, nominal discovery, first canonical match at capacity,
+array restrictions and original Catalog/lexer rollback. Source helpers retain
+the raw compatibility path above 4096 bytes. Initial catalog validation remains
+before grammar; complete record declarations/layouts remain before signatures.
+
+The typed annotation bank is separate from legacy signature State, keeping
+untyped continuation layouts unchanged. Signature metadata/name/body children
+are reused. Catalog mapping authenticates all canonical properties first, then
+visits result, parameter and unused rows in the original order. Only readonly
+byte reference modes and the previously supported exact origin metadata map to
+66. Preserve raw quirks: unused result origin/candidate fields remain ignored.
+`properties::inspect`, type/annotation `parse_raw`, `scan_values_raw` and
+`prepare_raw` remain comparison paths. Body-derived canonical interning and
+function-header admission outside this preparation remain atomic.
+
+Restarted catalog proof clears one result row per stage and reuses completed
+layout storage, avoiding repeated nested scratch construction. Fixed initial
+scratch and frame/catalog handoffs still lie within logical framing rather than
+an instrumented byte/CPU or peak-stack guarantee. No public Pending compiler or
+time improvement follows from these changes.
+
+The [value signature evidence](../evidence/runtime-compiler-value-signatures-windows-20261111.json)
+records five new kernels and frozen snapshots, plus 8 current groups/profile.
+Coverage includes exact raw tags/tables/Plan/error fields, deferral, terminal
+idempotence, rollback, sixteen functions, eight arguments, 64 canonical nodes,
+four wrappers with 32 controls and rejection at 33, and existing value execution.
+Engine development/O2 pass default 1MiB/4KiB stacks and zero exit SDK heap; all
+335 inputs match `f3995df`. 328 production modules are LF. Transport
+retains 36 bindings/51 layouts and equivalent 176 aggregate graphs; Core/Cursor/
+Machine remain 172400/1184/1792 bytes. Earlier evidence stays frozen history.
+
+### Known private value-body composition limit
+
+A separate diagnostic puts a local four-wrapper annotation and owned-value use
+at the deepest level of 32 controls. It exits with Windows stack overflow
+(-1073741571) on both the predecessor checkout `6a6c2a9` and current raw-adapter
+diagnostic snapshot. This is distinct from the passing maximum-wrapper function
+signature/control fixture above. The evidence retains the source, harness hash
+and predecessor/current diagnostic logs; these failed runs are not acceptance
+receipts. Isolate the precise body compile/proof/execution phase while replacing
+recursive bodies. Do not claim that every independently admitted source depth
+composes, or hide this failure by raising native stacks.
+
 ## Required remaining lowering work
 
 The following semantic work remains atomic, even where its helpers drain stages:
 
-1. Typed/value function signatures and catalog preparation.
+1. Body-derived canonical interning and header admission outside typed/value
+   signature/catalog preparation; preserve the known local-annotation depth issue.
 2. Fixed final Builder assignment, initial scratch and native image allocation/copy.
 3. Body-derived slice origin analysis, including its seventeen rounds and
    expression/atom/CALL/name/control-flow traversal.

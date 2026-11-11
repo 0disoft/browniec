@@ -1,22 +1,22 @@
-- Latest source literal checkpoint (2026-11-11): [source stages](docs/engineering/compiler-source-stages.md)
-  eighteen private kernels cover source foundations, complete untyped signature/
-  struct/field/layout scans and complete scoped/unscoped literal collection.
-  Literal candidate copying/clearing and image comparison/copy use <=64-byte
-  stages; context/UTF-8/token/decoder children resume independently. Original
-  Builder and Index publish only after success. Owning adapters drain stages
-  synchronously; fixed initial scratch and final Builder assignment remain atomic.
-  The two new kernels pass six frozen groups/profile; integrated adapters and
-  literal compile/Fuel/rollback regressions pass 14 groups/profile. Engine
-  development/O2 pass default 1MiB/4KiB stacks, zero exit SDK heap and all 331
-  input hash checks at `52e7aca`; 323 production modules retain LF. Transport
-  keeps 36 bindings/51 layouts and Core/Cursor/Machine 172400/1184/1792 bytes.
-  See [literal evidence](docs/evidence/runtime-compiler-literals-windows-20261111.json),
-  [record evidence](docs/evidence/runtime-compiler-records-windows-20261111.json)
-  and preceding signature/foundation evidence. Typed/value signatures, origins,
-  aggregate catalogs, recursive bodies and final semantic work still remain.
+- Latest typed/value source checkpoint (2026-11-11): [source stages](docs/engineering/compiler-source-stages.md)
+  twenty-three private source kernels now include canonical value catalog proof,
+  five-frame type grammar, annotation mapping, complete single-source typed
+  signatures and exact result/parameter catalog planning. Canonical rows and
+  declaration/type/layout/token children resume independently. Legacy signature
+  State layouts stay unchanged; typed scratch is passed separately. Caller
+  catalogs publish only at successful completion; owning adapters remain sync.
+  Current 8 groups/profile cover exact raw outcomes, capacity/rollback,
+  four-wrapper function signatures with 32 controls and rejection at 33, plus
+  existing value/control execution. Engine development/O2 pass default stacks,
+  zero exit SDK heap and all 335 input hash checks at `f3995df`; 328 modules
+  retain LF. Transport keeps 36 bindings/51 layouts and Core/Cursor/Machine
+  172400/1184/1792 bytes. See [value signature evidence](docs/evidence/runtime-compiler-value-signatures-windows-20261111.json)
+  and preceding literal/record/signature/source evidence. A distinct deepest
+  local-annotation/owned-value + 32-control diagnostic still overflows the native
+  stack on predecessor and current diagnostic snapshots; retain it for body work.
+  Origins, aggregate catalogs, recursive bodies and final semantic work remain.
   No public Pending compile, measured time/peak-stack improvement or R02-R05
-  closure. Lowering stays authorized; broader completion stays paused.
-  Local only; no push, release or deployment.
+  closure. Lowering stays authorized; broader completion stays paused. Local only.
 
 # Brownie C agent guidance
 

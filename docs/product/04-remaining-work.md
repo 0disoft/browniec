@@ -1,13 +1,14 @@
-- Latest source literal checkpoint (2026-11-11): [source stages](../engineering/compiler-source-stages.md)
-  eighteen new private kernels cover untyped signature/struct/field scans and
-  scoped/unscoped literal collection/interning. Copy/clear/comparison children
-  resume in <=64-byte stages; originals publish only at successful completion.
-  New kernels pass six frozen groups/profile; current adapters and literal
-  compile regressions pass 14. Engine development/O2 pass default stacks,
-  zero SDK heap and all 331 input hashes at `52e7aca`. Typed/value signatures,
-  origins, aggregates, recursive body/final lowering and fixed final Builder/
-  native image publication remain atomic. No public Pending compile/R03 closure.
-  See [literal evidence](../evidence/runtime-compiler-literals-windows-20261111.json).
+- Latest typed/value source checkpoint (2026-11-11): [source stages](../engineering/compiler-source-stages.md)
+  twenty-three source kernels include canonical value catalog inspection, explicit
+  wrapper grammar, annotations, complete single-source typed signatures and exact
+  result/parameter mapping. Owning adapters drain stages synchronously. Current
+  8 groups/profile pass, including four-wrapper signatures with 32 controls;
+  33 controls reject. Engine development/O2 pass default stacks, zero SDK heap and
+  all 335 input hashes at `f3995df`. See [value signature evidence](../evidence/runtime-compiler-value-signatures-windows-20261111.json).
+  Known predecessor/current diagnostic failure: a deepest local four-wrapper
+  annotation and owned-value use with 32 controls overflows the native stack;
+  this distinct body composition remains open. Origins, other aggregates, body/
+  final lowering, fixed scratch/publication and public Pending compile remain.
   Local only; broader completion stays paused while lowering remains authorized.
 
 - Predecessor compiler proof checkpoint (2026-11-11): [private proof stages](../engineering/runtime-authority-metadata-stages.md)

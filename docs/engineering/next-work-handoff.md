@@ -1,25 +1,29 @@
 # Local handoff for the next thread
 
 Current checkpoint: [private compiler source stages](compiler-source-stages.md).
-Eighteen source kernels cover source/UTF-8/token/context/name/type foundations,
-complete untyped signature and struct/field/layout preparation, and complete
-scoped/unscoped literal collection/interning. Literal candidate copy/clear and
-image comparison/copy use <=64-byte stages. Context, module lexer preparation,
-tokens and decoding resume independently. Original Builder/Index publish only
-at successful completion; fixed initial scratch and final adapter assignment
-remain atomic. Preserve whole-source UTF-8-before-tokenization and Source/Image
-error ordering, scoped packed-prefix lookup and record layout diagnostics.
+Twenty-three source kernels now include canonical value catalog inspection,
+five-frame type grammar, annotation mapping, complete single-source typed
+signatures and canonical result/parameter planning. Legacy signature State
+layouts stay unchanged; typed scratch banks are separate. Type/catalog/lexer
+originals publish only at complete success. Raw type/annotation/scan/prepare
+oracles remain independent; owning adapters drain synchronously. No public
+Pending compiler or measured time/peak-stack improvement follows.
 
-Owning adapters drain fresh 4096-unit logical stages synchronously; there is no
-public Pending compiler. New literal kernels pass six frozen groups/profile and
-current adapters plus literal compile/Fuel/rollback regressions pass 14.
-Engine development/O2 pass default 1MiB/4KiB stacks and zero exit SDK heap. All
-331 inputs match `52e7aca`; 323 production modules retain LF. Transport
-keeps 36 bindings/51 layouts and equivalent 176 aggregate graphs; Core/Cursor/
-Machine remain 172400/1184/1792 bytes. See [literal evidence](../evidence/runtime-compiler-literals-windows-20261111.json),
-[record evidence](../evidence/runtime-compiler-records-windows-20261111.json) and
-preceding signature/foundation evidence. Older unit receipts describe frozen
-snapshots. No wall-clock/peak-stack improvement was measured.
+Current 8 native groups/profile pass exact raw results/diagnostics,
+capacity/rollback, four-wrapper function signatures with 32 controls (33 reject)
+and existing value/control execution. Engine development/O2 pass default stacks
+and zero exit SDK heap. All 335 inputs match `f3995df`; 328 production
+modules retain LF. Transport keeps 36 bindings/51 layouts and equivalent 176
+aggregate graphs; Core/Cursor/Machine remain 172400/1184/1792 bytes. See
+[value signature evidence](../evidence/runtime-compiler-value-signatures-windows-20261111.json) and preceding literal/record/
+signature/foundation evidence. Older unit receipts remain frozen snapshots.
+
+Known distinct body diagnostic: local four-wrapper annotation/owned-value use at
+the deepest of 32 controls overflows the native stack on predecessor `6a6c2a9`
+and current raw-adapter diagnostic. The evidence retains its source and logs.
+Do not drop this obligation or claim compositional depth coverage. The passing
+fixture has wrappers in the function signature. Isolate the failing private
+compile/proof/execution phase during recursive body lowering; no stack override.
 
 The preceding [twenty compiler proof kernels](runtime-authority-metadata-stages.md#compiler-proof-stages)
 remain connected to owning input/output and borrowed-return compilation. The
@@ -32,8 +36,9 @@ and [lifecycle evidence](../evidence/runtime-lifecycle-windows-20261110.json).
 
 ## Required continuation of the authorized lowering slice
 
-1. Typed/value signature and catalog preparation remain separate from completed
-   untyped signature, struct and literal scans.
+1. Body-derived canonical interning and repeated header admission remain separate
+   from completed typed/value signature and canonical planning. Preserve the
+   known local-annotation/control-depth diagnostic for body lowering.
 2. Fixed scratch initialization/final Builder assignment and native image
    allocation/copy still need a compiler-level publication protocol.
 3. Slice origin inference, preserving all seventeen rounds and exact error
