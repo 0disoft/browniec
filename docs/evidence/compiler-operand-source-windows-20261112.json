@@ -1,0 +1,474 @@
+{
+  "schema": "browniec.compiler-operand-source-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-11T20:02:10.972065+00:00",
+  "verifiedCommit": "fe0dff4c5e43f73bb4b0f10e4adbe1384cd5704a",
+  "implementationCommits": [
+    "ce88ee5d5e1f4063834486acc099549b7280eb91",
+    "d6452dae0e83a7e2770f974c8fd52e808ce5e629",
+    "d6d1feb7ad9fa96834cfd380c47f9db550a29ee3",
+    "e025a9276fd2497bd2466d23166fde1a567dd352",
+    "2097dd7ad0f491489a8ffeb4d27f7c16ecb077ad"
+  ],
+  "scope": "Private ordinary grouped and scalar-result CALL operands, including captured argument coordination",
+  "toolchain": {
+    "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+    "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+    "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false"
+  },
+  "msvc": {
+    "version": "14.51.36231",
+    "sdk": "10.0.26100.0",
+    "compilerSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+    "overrides": false
+  },
+  "expressionKernel": {
+    "owner": "src/expression_source_work.fy",
+    "frameSlots": 34,
+    "maximumAdmittedDepth": 32,
+    "logicalAllowance": 4096,
+    "groups": "Open, shared child expression, close, one converted tail",
+    "plainCalls": "Eight argument cells per frame; argument/type/arity/delimiter/CALL/tail stages",
+    "capturedCalls": "Scalar argument expressions push onto the same Pratt stack; enclosing lexical context follows each frame",
+    "completionKinds": "Converted and converted-tail scalar completions reject an outstanding capture completion",
+    "terminalIdempotence": true
+  },
+  "captureKernel": {
+    "owner": "src/call_operand_work.fy",
+    "logicalAllowance": 4096,
+    "lexicalRowsPerLoadAndStore": 64,
+    "argumentCellsPerLoadAndStore": 8,
+    "frameContexts": 34,
+    "bank": "One shared append-only 64-binding prefix; frame counts/pending masks restore enclosing contexts; separately pinned fixed scratch, no new allocation or native stack override",
+    "stages": "One formal/argument request, delimiter, final arity, CALL, reference promotion or reverse lexical finalizer",
+    "legacyArguments": "Aggregate/reference argument evaluation stays an explicit child outside the allowance",
+    "publication": "Complete CALL result only after capture cleanup"
+  },
+  "compatibility": {
+    "rawBodyOracle": "compiler::lower_body(...,false)",
+    "aggregatePreparation": "Both candidates independently prepare aggregate catalogs before raw/staged lowering",
+    "checked": "All IR fields including unused tails, catalog/ownership and CALL/slice/function metadata after success and failure",
+    "diagnostics": "Exact kind and source byte offset",
+    "successfulSourceFixtures": 55,
+    "failedSourceFixtures": 47,
+    "nativeRuntimeResult": 42,
+    "depth": "32 ordinary/captured nested CALLs, combined 16 groups plus 16 CALLs; original rejection for the next level",
+    "limits": "8 actuals; 32 CALL sites; existing 64/65 locals and 32/33 controls",
+    "effects": "Mutable capture before later writes; temporary capture cleanup on early return",
+    "publicEntrySelectionUnchanged": true
+  },
+  "frozenCheckpointVerification": [
+    {
+      "receipt": {
+        "path": "build/operand-group-checkpoint/development/receipt.json",
+        "sha256": "2859a4278ba5bf1724529696225f1c312fe22440a572080b09776ec350c8f059"
+      },
+      "verifiedCommit": "ce88ee5d5e1f4063834486acc099549b7280eb91",
+      "profile": "development",
+      "nativeGroups": 4,
+      "inputCount": 339,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "selectedTests": [
+        "tests::m2::body_lowering::grouped_operands_match_raw_ir_and_preserve_postfix_cast_context",
+        "tests::m2::expression_lowering::expression_depth_rejects_before_requesting_an_operand",
+        "tests::m2::expression_lowering::group_children_share_the_pratt_stack_and_resume_one_tail",
+        "tests::m2::expression_lowering::pratt_frames_defer_and_resume_without_replaying_operands"
+      ],
+      "report": {
+        "path": "build/operand-group-checkpoint/development/native.json",
+        "sha256": "e277837e78922a0cf4c32f5256da22ed9916d6ee96ce0ae077f48caced305325"
+      },
+      "check": "check ok: 2 instance(s), 339 source file(s), 3643 MIR function(s), lock verified"
+    },
+    {
+      "receipt": {
+        "path": "build/operand-call-checkpoint/development/receipt.json",
+        "sha256": "c3ca5a0db74b537d75bdbe1a19c68b3951c79d693bafac79bd57b9af23ba2069"
+      },
+      "verifiedCommit": "d6452dae0e83a7e2770f974c8fd52e808ce5e629",
+      "profile": "development",
+      "nativeGroups": 6,
+      "inputCount": 339,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "selectedTests": [
+        "tests::m2::body_lowering::grouped_operands_match_raw_ir_and_preserve_postfix_cast_context",
+        "tests::m2::body_lowering::scalar_call_operands_preserve_raw_arguments_suffixes_and_errors",
+        "tests::m2::expression_lowering::expression_depth_rejects_before_requesting_an_operand",
+        "tests::m2::expression_lowering::group_children_share_the_pratt_stack_and_resume_one_tail",
+        "tests::m2::expression_lowering::nested_scalar_calls_share_pratt_frames_and_evaluate_each_argument_once",
+        "tests::m2::expression_lowering::pratt_frames_defer_and_resume_without_replaying_operands"
+      ],
+      "report": {
+        "path": "build/operand-call-checkpoint/development/native.json",
+        "sha256": "90da0a0c9d74c62f27487d60413c1e2ded883655cddaf0635c35ffc36a214e19"
+      },
+      "check": "check ok: 2 instance(s), 339 source file(s), 3645 MIR function(s), lock verified"
+    },
+    {
+      "receipt": {
+        "path": "build/operand-capture-checkpoint/development/receipt.json",
+        "sha256": "a103ce052c1f5492db82b76b771c053191589728506e4ff159664c2cc65d18ea"
+      },
+      "verifiedCommit": "d6d1feb7ad9fa96834cfd380c47f9db550a29ee3",
+      "profile": "development",
+      "nativeGroups": 8,
+      "inputCount": 340,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "selectedTests": [
+        "tests::m2::body_lowering::captured_scalar_results_keep_prefix_order_and_lexical_cleanup",
+        "tests::m2::body_lowering::grouped_operands_match_raw_ir_and_preserve_postfix_cast_context",
+        "tests::m2::body_lowering::nested_call_depth_32_and_33_preserve_default_stack_and_raw_diagnostics",
+        "tests::m2::body_lowering::scalar_call_operands_preserve_raw_arguments_suffixes_and_errors",
+        "tests::m2::expression_lowering::expression_depth_rejects_before_requesting_an_operand",
+        "tests::m2::expression_lowering::group_children_share_the_pratt_stack_and_resume_one_tail",
+        "tests::m2::expression_lowering::nested_scalar_calls_share_pratt_frames_and_evaluate_each_argument_once",
+        "tests::m2::expression_lowering::pratt_frames_defer_and_resume_without_replaying_operands"
+      ],
+      "report": {
+        "path": "build/operand-capture-checkpoint/development/native.json",
+        "sha256": "a07eac6d7646595109ba436dd4348d5a88d8700b3b3319ab7de2ff6bd105abdb"
+      },
+      "check": "check ok: 2 instance(s), 340 source file(s), 3664 MIR function(s), lock verified"
+    },
+    {
+      "receipt": {
+        "path": "build/operand-regression-checkpoint/development/receipt.json",
+        "sha256": "b57867919b180c7ca813f77abb94f11e934ccb3d55cee04dd5628ab9c1b6ad11"
+      },
+      "verifiedCommit": "b978b3de53f9c054a79afee7d620b0f0570e6301",
+      "profile": "development",
+      "nativeGroups": 21,
+      "inputCount": 343,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "selectedTests": [
+        "tests::m2::body_lowering::admitted_32_controls_and_33_error_match_without_stack_overrides",
+        "tests::m2::body_lowering::annotated_semantics_keep_raw_ir_publication_and_diagnostics",
+        "tests::m2::body_lowering::call_arity_and_site_capacity_keep_original_error_order",
+        "tests::m2::body_lowering::captured_scalar_results_keep_prefix_order_and_lexical_cleanup",
+        "tests::m2::body_lowering::control_continuations_match_all_raw_ir_fields_and_execute",
+        "tests::m2::body_lowering::grouped_operands_match_raw_ir_and_preserve_postfix_cast_context",
+        "tests::m2::body_lowering::invalid_control_headers_and_terminal_errors_keep_exact_offsets",
+        "tests::m2::body_lowering::local_binding_capacity_preserves_raw_error_order",
+        "tests::m2::body_lowering::nested_call_depth_32_and_33_preserve_default_stack_and_raw_diagnostics",
+        "tests::m2::body_lowering::pratt_condition_continuations_match_raw_ir_and_short_circuit",
+        "tests::m2::body_lowering::scalar_and_void_returns_preserve_raw_exit_ir_and_special_fallback",
+        "tests::m2::body_lowering::scalar_call_operands_preserve_raw_arguments_suffixes_and_errors",
+        "tests::m2::body_source_work::explicit_scope_frames_preserve_depth_and_deferral_without_semantic_replay",
+        "tests::m2::body_source_work::semantic_children_wait_for_one_matching_completion",
+        "tests::m2::call_operand_kernel::pending_arguments_and_cleanup_rows_do_not_replay_or_publish_early",
+        "tests::m2::expression_lowering::expression_depth_rejects_before_requesting_an_operand",
+        "tests::m2::expression_lowering::group_children_share_the_pratt_stack_and_resume_one_tail",
+        "tests::m2::expression_lowering::nested_scalar_calls_share_pratt_frames_and_evaluate_each_argument_once",
+        "tests::m2::expression_lowering::pratt_frames_defer_and_resume_without_replaying_operands",
+        "tests::m2::semantic_lowering::annotated_bindings_publish_only_after_initializer_and_terminator",
+        "tests::m2::semantic_lowering::returns_resume_one_reverse_cleanup_row_before_emitting_return"
+      ],
+      "report": {
+        "path": "build/operand-regression-checkpoint/development/native.json",
+        "sha256": "512f4e2d5238168c2ce14cd65b94c30a79855c8826cffa22809fce5d5323e619"
+      },
+      "check": "check ok: 2 instance(s), 340 source file(s), 3664 MIR function(s), lock verified"
+    },
+    {
+      "receipt": {
+        "path": "build/operand-regression-checkpoint/release/receipt.json",
+        "sha256": "9cbb92a3075559d2a3b223132155c0ab2f210690a78ce1c1719ada7db9bbf079"
+      },
+      "verifiedCommit": "e025a9276fd2497bd2466d23166fde1a567dd352",
+      "profile": "release",
+      "nativeGroups": 21,
+      "inputCount": 343,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "selectedTests": [
+        "tests::m2::body_lowering::admitted_32_controls_and_33_error_match_without_stack_overrides",
+        "tests::m2::body_lowering::annotated_semantics_keep_raw_ir_publication_and_diagnostics",
+        "tests::m2::body_lowering::call_arity_and_site_capacity_keep_original_error_order",
+        "tests::m2::body_lowering::captured_scalar_results_keep_prefix_order_and_lexical_cleanup",
+        "tests::m2::body_lowering::control_continuations_match_all_raw_ir_fields_and_execute",
+        "tests::m2::body_lowering::grouped_operands_match_raw_ir_and_preserve_postfix_cast_context",
+        "tests::m2::body_lowering::invalid_control_headers_and_terminal_errors_keep_exact_offsets",
+        "tests::m2::body_lowering::local_binding_capacity_preserves_raw_error_order",
+        "tests::m2::body_lowering::nested_call_depth_32_and_33_preserve_default_stack_and_raw_diagnostics",
+        "tests::m2::body_lowering::pratt_condition_continuations_match_raw_ir_and_short_circuit",
+        "tests::m2::body_lowering::scalar_and_void_returns_preserve_raw_exit_ir_and_special_fallback",
+        "tests::m2::body_lowering::scalar_call_operands_preserve_raw_arguments_suffixes_and_errors",
+        "tests::m2::body_source_work::explicit_scope_frames_preserve_depth_and_deferral_without_semantic_replay",
+        "tests::m2::body_source_work::semantic_children_wait_for_one_matching_completion",
+        "tests::m2::call_operand_kernel::pending_arguments_and_cleanup_rows_do_not_replay_or_publish_early",
+        "tests::m2::expression_lowering::expression_depth_rejects_before_requesting_an_operand",
+        "tests::m2::expression_lowering::group_children_share_the_pratt_stack_and_resume_one_tail",
+        "tests::m2::expression_lowering::nested_scalar_calls_share_pratt_frames_and_evaluate_each_argument_once",
+        "tests::m2::expression_lowering::pratt_frames_defer_and_resume_without_replaying_operands",
+        "tests::m2::semantic_lowering::annotated_bindings_publish_only_after_initializer_and_terminator",
+        "tests::m2::semantic_lowering::returns_resume_one_reverse_cleanup_row_before_emitting_return"
+      ],
+      "report": {
+        "path": "build/operand-regression-checkpoint/release/native.json",
+        "sha256": "afeeb39d44f314ebd99676180b172c60e4afe76185d22332b0a0958adedaaa76"
+      },
+      "check": "check ok: 2 instance(s), 340 source file(s), 3664 MIR function(s), lock verified"
+    }
+  ],
+  "currentNativeVerification": [
+    {
+      "receipt": {
+        "path": "build/operand-completion-work/development/receipt.json",
+        "sha256": "00331e722714c5743ab28fad6bae327ac66ec163d499a1876edf38cbb42682f0"
+      },
+      "verifiedCommit": "fe0dff4c5e43f73bb4b0f10e4adbe1384cd5704a",
+      "profile": "development",
+      "nativeGroups": 3,
+      "inputCount": 340,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "selectedTests": [
+        "tests::m2::body_lowering::captured_scalar_results_keep_prefix_order_and_lexical_cleanup",
+        "tests::m2::body_lowering::nested_call_depth_32_and_33_preserve_default_stack_and_raw_diagnostics",
+        "tests::m2::call_operand_kernel::pending_arguments_and_cleanup_rows_do_not_replay_or_publish_early"
+      ],
+      "report": {
+        "path": "build/operand-completion-work/development/native.json",
+        "sha256": "be6a55300a1c24c51c3822b3b51f6d43ade3b27a250bd089ebe14c50442533f1"
+      },
+      "check": "check ok: 2 instance(s), 340 source file(s), 3664 MIR function(s), lock verified"
+    },
+    {
+      "receipt": {
+        "path": "build/operand-completion-work/release/receipt.json",
+        "sha256": "fb9c9042607ea2d9020214b8cc221c3bc0b482a732b591fd32ea930f073d8e3c"
+      },
+      "verifiedCommit": "fe0dff4c5e43f73bb4b0f10e4adbe1384cd5704a",
+      "profile": "release",
+      "nativeGroups": 3,
+      "inputCount": 340,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "selectedTests": [
+        "tests::m2::body_lowering::captured_scalar_results_keep_prefix_order_and_lexical_cleanup",
+        "tests::m2::body_lowering::nested_call_depth_32_and_33_preserve_default_stack_and_raw_diagnostics",
+        "tests::m2::call_operand_kernel::pending_arguments_and_cleanup_rows_do_not_replay_or_publish_early"
+      ],
+      "report": {
+        "path": "build/operand-completion-work/release/native.json",
+        "sha256": "73489a293f42e4a1f3180091d0f933f5ef337b45b1ad476b1298fa8abee24337"
+      },
+      "check": "check ok: 2 instance(s), 340 source file(s), 3664 MIR function(s), lock verified"
+    }
+  ],
+  "repairedStackFailures": [
+    {
+      "observed": "Native Windows stack overflow 0xC00000FD; subsequently repaired",
+      "case": "Recursive captured-argument owning expression drivers at depth 32",
+      "baseCommit": "d6452dae0e83a7e2770f974c8fd52e808ce5e629",
+      "receipt": {
+        "path": "build/operand-capture-stack-failure/development/receipt.json",
+        "sha256": "139b72d5df584bf0c7f324d06e3d556503c51fa7e10a3d99bb508c6080752042"
+      },
+      "stderr": {
+        "path": "build/operand-capture-stack-failure/development/native.json.stderr.txt",
+        "sha256": "89193d0d2df4decfc0bf3fa1665d21bf77cc521f089722d111128ef0c2b61dd9"
+      },
+      "candidatePatch": {
+        "path": "build/operand-capture-stack-failure/development/change.patch",
+        "sha256": "3d5356ec019a47750084747c6cf2f6200dde7e644458cc3236996aaff3779acd"
+      },
+      "untrackedCandidateModule": {
+        "path": "build/operand-capture-stack-failure/development/call_operand_work.fy",
+        "sha256": "8d63a4e82d38986c856c66d0afbd4185a5a01ae05f87ca4b7c5350731523ac77"
+      },
+      "commitAttribution": "Uncommitted candidate; input hashes and patch/module snapshot retained",
+      "compilerOverrides": false
+    },
+    {
+      "observed": "Native Windows stack overflow 0xC00000FD; subsequently repaired",
+      "case": "Large inline capture bank copied through semantic State construction",
+      "baseCommit": "d6452dae0e83a7e2770f974c8fd52e808ce5e629",
+      "receipt": {
+        "path": "build/operand-inline-bank-failure/development/receipt.json",
+        "sha256": "23ab9e150af07436b859f406f06b3cf12cf443fe66cb058b1603af56e6c453c7"
+      },
+      "stderr": {
+        "path": "build/operand-inline-bank-failure/development/native.json.stderr.txt",
+        "sha256": "5f944843b27e30da2de7ab245d6853ebb2779c430828ac2da76b6b75d71e2431"
+      },
+      "candidatePatch": {
+        "path": "build/operand-inline-bank-failure/development/change.patch",
+        "sha256": "6f191f2b26c66a8c269512a0e8b36c4a364a45d3f4e3fdc4f7006edf22b3d148"
+      },
+      "untrackedCandidateModule": {
+        "path": "build/operand-inline-bank-failure/development/call_operand_work.fy",
+        "sha256": "06710d68d8eaf772bcc58bbfe40b19e2e9a439bf0b3280156a884b177477a01d"
+      },
+      "commitAttribution": "Uncommitted candidate; input hashes and patch/module snapshot retained",
+      "compilerOverrides": false
+    },
+    {
+      "observed": "Engine development stack overflow 0xC00000FD; subsequently repaired",
+      "case": "Per-frame binding table bank exceeded the integrated default-stack margin",
+      "sourceCommit": "e025a9276fd2497bd2466d23166fde1a567dd352",
+      "receipt": {
+        "path": "build/runtime-engine/20261111T194536512681Z/receipt.json",
+        "sha256": "4edf9bfb9c31ffc27767f4e094edb9ef463eda411fe7a18a8af0521199d7b3c5"
+      },
+      "candidateTransport": {
+        "path": "build/operand-engine-stack-failure/transport.json",
+        "sha256": "7a0b70ef776d5d0c45d9c6a431224d451236c7ac830835e7b3f11422cf5a32e7"
+      },
+      "repair": "2097dd7ad0f491489a8ffeb4d27f7c16ecb077ad",
+      "compilerOverrides": false
+    }
+  ],
+  "engineVerification": {
+    "receipt": {
+      "path": "build/runtime-engine/20261111T195649716037Z/receipt.json",
+      "sha256": "f2aa0c2198bc020a0e4f310d7ef764c41fcadde4bfc65dddc7211273dd06e520"
+    },
+    "verifiedCommit": "fe0dff4c5e43f73bb4b0f10e4adbe1384cd5704a",
+    "inputCount": 339,
+    "allInputHashesMatchVerifiedCommit": true,
+    "compilerOverrides": false,
+    "rootLockUnchanged": true,
+    "profiles": [
+      {
+        "profile": "development",
+        "artifact": {
+          "path": "build/runtime-engine/20261111T195649716037Z/development/runtime-engine.exe",
+          "sha256": "debdc6a5e9ec9914a78be84bffe030a8fb3d96d2db782d93ca83c393279dd05a",
+          "bytes": 11232256,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "exit": 0,
+        "liveHeapAllocationsAtExit": 0,
+        "arrayFillMetrics": {
+          "arrayWorkBytes": 360,
+          "cursorBytes": 1184,
+          "machineBytes": 1792,
+          "coreBytes": 172400,
+          "pendingVecExtraBytes": 2880,
+          "callWorkBytes": 536,
+          "callPendingVecExtraBytes": 4288,
+          "returnWorkBytes": 48,
+          "returnPendingVecExtraBytes": 384,
+          "combinedPendingVecExtraBytes": 7552
+        }
+      },
+      {
+        "profile": "release",
+        "artifact": {
+          "path": "build/runtime-engine/20261111T195649716037Z/release/runtime-engine.exe",
+          "sha256": "121ca0a4e58086159301c46332f66a7f158f1e625d0cd652d01bfb9a4e7ef852",
+          "bytes": 4100096,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "exit": 0,
+        "liveHeapAllocationsAtExit": 0,
+        "arrayFillMetrics": {
+          "arrayWorkBytes": 360,
+          "cursorBytes": 1184,
+          "machineBytes": 1792,
+          "coreBytes": 172400,
+          "pendingVecExtraBytes": 2880,
+          "callWorkBytes": 536,
+          "callPendingVecExtraBytes": 4288,
+          "returnWorkBytes": 48,
+          "returnPendingVecExtraBytes": 384,
+          "combinedPendingVecExtraBytes": 7552
+        }
+      }
+    ]
+  },
+  "transportReview": {
+    "receipt": {
+      "path": "build/operand-transport-review.json",
+      "sha256": "b468e122319cebee7ec351bed6efea210a1ddfbd1fa745e893f831ce8917c160"
+    },
+    "declarations": 36,
+    "layouts": 51,
+    "aggregateGraphs": 176,
+    "normalizedShapeChanges": 0,
+    "normalization": "generated identifiers with recursive bijective aggregate graph comparison",
+    "added": [
+      "src/call_operand_work.fy"
+    ],
+    "removed": [],
+    "previousContractSha256": "9bcd587c80922e73eaa6c1f293cd62d985715a5cd4b475eda38ecfee52f59c1a",
+    "candidateContractSha256": "fb7a11c84468339da4f359051ed21cbce5d9c9a23781078935b9c05964fa6457"
+  },
+  "changedInputs": [
+    {
+      "path": "fairy.lock",
+      "sha256": "908be4697220bc7d14538ecd62a59842550c3042d119cd34643bf15e8d0d5fe7"
+    },
+    {
+      "path": "native/runtime-engine/transport.json",
+      "sha256": "fb7a11c84468339da4f359051ed21cbce5d9c9a23781078935b9c05964fa6457"
+    },
+    {
+      "path": "src/call_operand_work.fy",
+      "sha256": "06710d68d8eaf772bcc58bbfe40b19e2e9a439bf0b3280156a884b177477a01d"
+    },
+    {
+      "path": "src/compiler.fy",
+      "sha256": "197c44d2c186c4eb39198065f4e145c1963918ffe7a37a05f054ec257e22150d"
+    },
+    {
+      "path": "src/expression_source_work.fy",
+      "sha256": "1036b35fea6c593576ff58e49f510f9f77a66d93182a10ef093452998b235deb"
+    },
+    {
+      "path": "src/semantic_source_work.fy",
+      "sha256": "2c6e14fda4255ee139405e01f14ae20698e27fc3481e5678e112c22a78d594ef"
+    },
+    {
+      "path": "tests/m2/body_lowering.fy",
+      "sha256": "fe17aed60a00d005baa92e458498fb4abc400ebbd562715b0cd00153b4d975eb"
+    },
+    {
+      "path": "tests/m2/call_operand_kernel.fy",
+      "sha256": "9147e91f13f2ac0e7567afc26cfcf5b067e9746f85175d608e6434fd650e8205"
+    },
+    {
+      "path": "tests/m2/expression_lowering.fy",
+      "sha256": "2f87bc750ffa8ded11b979ffaeb9edcdfac0b52ceac1bd96910af615f46321af"
+    },
+    {
+      "path": "tests/m2/semantic_lowering.fy",
+      "sha256": "270007c8a0f7c0da24f694361c6881ada34af77128cfa078f4a38653b2aaa16e"
+    },
+    {
+      "path": "tools/verify-operand-source-work.py",
+      "sha256": "02622e53d2dae9e4ebe162a427afb3d46c7fef957b9bcc13909599504696ecbc"
+    }
+  ],
+  "productionSources": {
+    "count": 332,
+    "allLf": true
+  },
+  "remainingAtomicLowering": [
+    "Read-only cast/Result/projection/CALL preflight classifiers",
+    "Unary/constructor, postfix/propagation/cast, conditional/projection and aggregate/reference argument evaluation children",
+    "Special-result CALL protocols, inferred/aggregate/reference declarations, scalar assignments, special returns and for-post probe/replay",
+    "Separate typed/value body traversal, function entry/final metadata, implicit-return cleanup, body-derived origins and aggregate catalogs"
+  ],
+  "limitations": [
+    "Logical stages include fixed CALL context transfers; initial scratch/bank construction and explicit legacy children remain outside the advance contract",
+    "Owning adapters remain synchronous; no public Pending compiler, measured byte/CPU/time/peak-stack improvement or R02-R05 closure",
+    "Focused native/Engine checks only; optional public Fuel CLI and full release suites were not requested",
+    "Composed development/release snapshots are preserved before the append-only binding-bank reduction; current capture/completion/mixed-depth checks rerun in both profiles plus the complete Engine fixture",
+    "Local commits only; broader completion stays paused; no push, release or deployment"
+  ]
+}

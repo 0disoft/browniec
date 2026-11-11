@@ -315,6 +315,70 @@ suites were not requested. Earlier checkpoints remain frozen history.
 The public compiler still drains synchronously; remaining semantic children and
 the separate typed/value body walker are not made resumable by this change.
 
+### Grouped and CALL operand internals
+
+Ordinary groups and scalar-result CALLs now share the existing 34 Pratt frame
+slots. Opening/closing tokens resume through the lexer; group results pass once
+to the converted tail. Plain CALLs retain eight argument cells per frame and
+stage each argument expression, type/arity check, delimiter and CALL emission.
+Admitted group/CALL argument traversal reuses this stack; legacy operand
+children can still recurse. Existing depth and actual-argument limits retain
+their original error order, including trailing commas and excess arguments.
+
+Scalar-result CALLs with array, record or reference formals use a separate CALL
+kernel. It stages the stable scalar/immutable-owner prefix, one argument
+request, its delimiter, final arity, close token, CALL, optional reference
+promotion and reverse capture cleanup. Scalar argument expressions rejoin the
+same Pratt stack. CALLs share one append-only 64-binding prefix. Frame counts
+and pending masks restore each enclosing lexical view; callbacks reject changes
+to existing bindings. Child frames inherit the correct enclosing capture
+context. Mutable owners are still captured before subsequent argument effects,
+and early returns see all active hidden captures. Whole candidate IR, including
+failure prefixes, remains equal to the independent raw body route after both
+routes prepare aggregate catalogs. The internal aggregate-preparation helper
+publishes candidates only.
+
+The owning adapter pins the capture bank separately from the expression and
+semantic State values. This avoids copying the large bank through every State
+constructor. A CALL dispatch loads and stores 64 lexical rows and eight argument
+cells through fixed scratch, then advances one phase. These bounded transfers
+belong to the conservative 4096-unit logical stage. Initial bank/scratch
+construction and explicit legacy children remain outside the advance contract.
+No heap allocation, compiler override or larger native stack was introduced by
+this bank. Default-stack execution is evidence for the selected fixtures, not a
+measured peak-stack or performance improvement.
+
+Read-only cast/Result/projection/CALL classification remains an explicit child.
+Unary operators, constructor payloads, postfix/propagation/casts, conditional
+value scopes, projections, aggregate/reference argument evaluation and
+special-result CALL protocols also retain legacy children. The separate
+typed/value body walker remains outside this coordinator. In particular, do not
+charge a whole legacy argument parser as if its recursive work had been split by
+the CALL kernel.
+
+Run `python tools/verify-operand-source-work.py --profile development` and then
+`--profile release`; `--kernel-only` narrows a completion/mixed-depth recheck.
+The [operand
+evidence](../evidence/compiler-operand-source-windows-20261112.json) records the
+small group/plain-CALL/capture commits, composed development/release snapshots,
+current capture/completion/mixed-depth rechecks in both profiles and Engine
+results. It preserves three reproduced stack failures and their subsequent
+repairs, including the later reduction from per-frame tables to a shared prefix.
+Existing [semantic
+evidence](../evidence/compiler-semantic-source-windows-20261112.json) remains
+the earlier checkpoint. Public compilation still drains synchronously; there is
+no public Pending compiler or R02-R05 closure.
+
+Composed development/release snapshots each pass 21 native groups. After the
+binding-bank reduction, all three affected capture/completion/mixed-depth groups
+pass in each profile. Engine development/O2 pass default 1MiB/4KiB stacks and
+zero exit SDK heap; all 339 input hashes match `fe0dff4`. Transport retains 36
+bindings, 51 layouts and 176 equivalent aggregate graphs; Core/Cursor/Machine
+remain 172400/1184/1792 bytes. All 332 production modules retain LF. The composed
+source comparisons cover 55 successful and 47 failing fixtures; the affected
+subset was rechecked rather than rebuilding unchanged groups after the bank
+reduction. Optional public Fuel CLI and full release suites were not requested.
+
 ## Required remaining lowering work
 
 The following semantic work remains atomic, even where its helpers drain stages:
@@ -325,12 +389,13 @@ The following semantic work remains atomic, even where its helpers drain stages:
 3. Body-derived slice origin analysis, including its seventeen rounds and
    expression/atom/CALL/name/control-flow traversal.
 4. Array/record parameter/result catalog preparation.
-5. Converted operands (including nested expressions/CALLs), scalar assignments,
+5. Legacy operand preflight, unary/constructor/postfix/cast, conditional/projection and
+   aggregate/reference argument children; special-result CALLs, scalar assignments,
    inferred/aggregate/reference declarations, special return protocols, for-post
    probe/replay, value-yielding scopes and the separate typed/value body walker;
    function entry/final metadata and implicit-return cleanup. Ordinary control,
-   Pratt traversal, annotated scalar/wrapper declarations and scalar/void returns
-   have explicit stages; remaining semantic children stay outside those bounds.
+   Pratt/group/scalar-result CALL traversal, annotated scalar/wrapper declarations
+   and scalar/void returns have explicit stages; remaining semantic children stay outside those bounds.
 6. Final entry-call restrictions and output normalization, plus raw context/
    nominal discovery outside the newly staged owners.
 
