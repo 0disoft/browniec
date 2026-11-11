@@ -1,22 +1,21 @@
-- Latest typed/value source checkpoint (2026-11-11): [source stages](docs/engineering/compiler-source-stages.md)
-  twenty-three private source kernels now include canonical value catalog proof,
-  five-frame type grammar, annotation mapping, complete single-source typed
-  signatures and exact result/parameter catalog planning. Canonical rows and
-  declaration/type/layout/token children resume independently. Legacy signature
-  State layouts stay unchanged; typed scratch is passed separately. Caller
-  catalogs publish only at successful completion; owning adapters remain sync.
-  Current 8 groups/profile cover exact raw outcomes, capacity/rollback,
-  four-wrapper function signatures with 32 controls and rejection at 33, plus
-  existing value/control execution. Engine development/O2 pass default stacks,
-  zero exit SDK heap and all 335 input hash checks at `f3995df`; 328 modules
-  retain LF. Transport keeps 36 bindings/51 layouts and Core/Cursor/Machine
-  172400/1184/1792 bytes. See [value signature evidence](docs/evidence/runtime-compiler-value-signatures-windows-20261111.json)
-  and preceding literal/record/signature/source evidence. A distinct deepest
-  local-annotation/owned-value + 32-control diagnostic still overflows the native
-  stack on predecessor and current diagnostic snapshots; retain it for body work.
-  Origins, aggregate catalogs, recursive bodies and final semantic work remain.
-  No public Pending compile, measured time/peak-stack improvement or R02-R05
-  closure. Lowering stays authorized; broader completion stays paused. Local only.
+- Latest private value-body stack checkpoint (2026-11-12): [source stages](docs/engineering/compiler-source-stages.md)
+  local four-wrapper annotations plus owned-value use inside 32 controls now
+  compile, verify and execute; 33 controls reject with kind 4. Canonical catalog
+  inspection uses a scalar-result internal checker and publishes the whole Plan
+  only after success, avoiding large native error-result temporaries. Independent
+  staged catalog comparisons preserve exact properties/errors. Both profiles pass
+  9 native groups, including the separate maximum-wrapper signature fixture.
+  Engine development/O2 pass default 1MiB/4KiB stacks and zero exit SDK heap;
+  all 335 inputs match `5f00e60`. Transport retains 36 bindings/51 layouts and
+  176 equivalent aggregate graphs; Core/Cursor/Machine stay 172400/1184/1792
+  bytes. 328 production modules retain LF. See [body stack evidence](docs/evidence/runtime-value-body-stack-windows-20261112.json)
+  and the historical [typed/value signature evidence](docs/evidence/runtime-compiler-value-signatures-windows-20261111.json).
+  Twenty-three private source kernels remain; typed catalog/signature children
+  resume independently and owning adapters drain synchronously. Origins,
+  aggregate catalogs, recursive bodies and final semantic work still remain.
+  No claim that every admitted source limit composes, measured time/peak-stack
+  improvement, public Pending compile or R02-R05 closure. Lowering stays
+  authorized; broader completion stays paused. Local only.
 
 # Brownie C agent guidance
 

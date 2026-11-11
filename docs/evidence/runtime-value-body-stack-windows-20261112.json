@@ -1,0 +1,203 @@
+{
+  "schema": "browniec.private-value-body-stack-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-11T15:02:59.325635+00:00",
+  "verifiedCommit": "5f00e60ba313a9b050c52cf36cc7db809a4427f4",
+  "implementationCommit": "d7e5c9831e4f78b58b81aaa697a58d551b0fa949",
+  "scope": "Repair the exact local four-wrapper annotation and owned-value use at 32 nested controls",
+  "sourceLoweringComplete": false,
+  "publicPendingCompile": false,
+  "baseline": {
+    "evidence": "docs/evidence/runtime-compiler-value-signatures-windows-20261111.json",
+    "field": "knownBodyDiagnostic",
+    "nativeExit": -1073741571,
+    "category": "Windows stack overflow",
+    "guestSourceBytes": 941,
+    "guestSourceSha256": "6b2587c171a8f6efa448f76dc1b2d7ffb2b288c42a36632a17b3c551c1bf86aa",
+    "sameGuestBytesInRegression": true,
+    "isolatedPhase": "source::compile / owned constructor canonical catalog preflight",
+    "diagnosticInstrumentationIsAcceptanceEvidence": false
+  },
+  "repair": {
+    "owner": "src/value_properties.fy",
+    "internal": "inspect_into returns count/error and writes private caller scratch",
+    "publication": "inspect returns the whole Plan only after success",
+    "validationOrderUnchanged": true,
+    "publicTypesUnchanged": true,
+    "compilerModified": false
+  },
+  "compiler": {
+    "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+    "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+    "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false"
+  },
+  "msvc": {
+    "version": "14.51.36231",
+    "sdk": "10.0.26100.0",
+    "compilerSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+    "overrides": false
+  },
+  "nativeVerification": [
+    {
+      "profile": "development",
+      "receipt": {
+        "path": "build/value-body-stack/development/receipt.json",
+        "sha256": "ea16a644d0a8ff32574290b856be2273df1167a8f75d1bdfdcc19399ca02ca61"
+      },
+      "status": "passed",
+      "nativeGroups": 9,
+      "selectedTests": [
+        "tests::m2::value_catalog_work::exact_catalog_mapping_reference_modes_reserved_rows_and_error_order",
+        "tests::m2::value_function_work::complete_value_signatures_declaration_order_and_catalog_rollback",
+        "tests::m2::value_properties_work::complete_catalog_bounds_exact_properties_errors_and_deferral",
+        "tests::m2::value_signature_depth::four_wrapper_local_annotations_with_32_controls_execute_and_33_reject",
+        "tests::m2::value_signature_depth::four_wrapper_signatures_with_32_controls_execute_and_33_reject",
+        "tests::m2::value_signature_work::staged_annotation_tags_catalog_rollback_and_adapter_results_match",
+        "tests::m2::value_source_control::admitted_32_deep_conditionals_execute_and_33_reject_without_native_stack_override",
+        "tests::m2::value_source_control::mutable_buffers_wrappers_and_scalar_slots_replace_reinitialize_and_snapshot_rhs_values",
+        "tests::m2::value_type_work::wrapper_stack_catalog_transactions_qualification_and_exact_errors"
+      ],
+      "inputCount": 341,
+      "allInputsMatchVerifiedCommit": true,
+      "byteIdenticalNativeMirror": true,
+      "nativeOverrides": false,
+      "report": {
+        "path": "build/value-body-stack/development/native.json",
+        "sha256": "ccbd4f5eb80a7e3823c7b0a1f184bfef3a18df08a2bded8fdb36a96afbfa1cbb"
+      }
+    },
+    {
+      "profile": "release",
+      "receipt": {
+        "path": "build/value-body-stack/release/receipt.json",
+        "sha256": "0c8cabfbf419ed29b3219fc0e1db8544de6718b0fd06e623a339904bc9e866a4"
+      },
+      "status": "passed",
+      "nativeGroups": 9,
+      "selectedTests": [
+        "tests::m2::value_catalog_work::exact_catalog_mapping_reference_modes_reserved_rows_and_error_order",
+        "tests::m2::value_function_work::complete_value_signatures_declaration_order_and_catalog_rollback",
+        "tests::m2::value_properties_work::complete_catalog_bounds_exact_properties_errors_and_deferral",
+        "tests::m2::value_signature_depth::four_wrapper_local_annotations_with_32_controls_execute_and_33_reject",
+        "tests::m2::value_signature_depth::four_wrapper_signatures_with_32_controls_execute_and_33_reject",
+        "tests::m2::value_signature_work::staged_annotation_tags_catalog_rollback_and_adapter_results_match",
+        "tests::m2::value_source_control::admitted_32_deep_conditionals_execute_and_33_reject_without_native_stack_override",
+        "tests::m2::value_source_control::mutable_buffers_wrappers_and_scalar_slots_replace_reinitialize_and_snapshot_rhs_values",
+        "tests::m2::value_type_work::wrapper_stack_catalog_transactions_qualification_and_exact_errors"
+      ],
+      "inputCount": 341,
+      "allInputsMatchVerifiedCommit": true,
+      "byteIdenticalNativeMirror": true,
+      "nativeOverrides": false,
+      "report": {
+        "path": "build/value-body-stack/release/native.json",
+        "sha256": "ead38c94fc9b226226e6f7db5e245515d735612b8d7bb6db992e4e8fa5e9e16e"
+      }
+    }
+  ],
+  "engine": {
+    "receipt": {
+      "path": "build/runtime-engine/20261111T145857228007Z/receipt.json",
+      "sha256": "2030779d9ef420d0284fd45e8a37f98d5f836d0663befca39f73ee4c8175e33b"
+    },
+    "inputCount": 335,
+    "sourceClosure": 321,
+    "allInputsMatchCheckout": true,
+    "allInputsMatchVerifiedCommit": true,
+    "rootLockUnchanged": true,
+    "compilerOverrides": false,
+    "runtimeEnvironment": "cleared; empty tool PATH",
+    "transportSha256": "7ad734d61c435973f44735421270b063a0185e788014db8bd5bc520f53e07cf7",
+    "profiles": [
+      {
+        "profile": "development",
+        "artifact": {
+          "path": "build/runtime-engine/20261111T145857228007Z/development/runtime-engine.exe",
+          "sha256": "73575fdf778dcb1b86ac39e7c11b2469846dc981aaaf41c4bc501aaf3faf02ba",
+          "bytes": 11026432,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "exit": 0,
+        "liveHeapAllocationsAtExit": 0,
+        "arrayFillMetrics": {
+          "arrayWorkBytes": 360,
+          "cursorBytes": 1184,
+          "machineBytes": 1792,
+          "coreBytes": 172400,
+          "pendingVecExtraBytes": 2880,
+          "callWorkBytes": 536,
+          "callPendingVecExtraBytes": 4288,
+          "returnWorkBytes": 48,
+          "returnPendingVecExtraBytes": 384,
+          "combinedPendingVecExtraBytes": 7552
+        }
+      },
+      {
+        "profile": "release",
+        "artifact": {
+          "path": "build/runtime-engine/20261111T145857228007Z/release/runtime-engine.exe",
+          "sha256": "30c736d590047cb32f390161c973e00572e599dbfbdaa1b9e9b21f2740d62122",
+          "bytes": 4035584,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "exit": 0,
+        "liveHeapAllocationsAtExit": 0,
+        "arrayFillMetrics": {
+          "arrayWorkBytes": 360,
+          "cursorBytes": 1184,
+          "machineBytes": 1792,
+          "coreBytes": 172400,
+          "pendingVecExtraBytes": 2880,
+          "callWorkBytes": 536,
+          "callPendingVecExtraBytes": 4288,
+          "returnWorkBytes": 48,
+          "returnPendingVecExtraBytes": 384,
+          "combinedPendingVecExtraBytes": 7552
+        }
+      }
+    ]
+  },
+  "transportReview": {
+    "receipt": {
+      "path": "build/value-transport-review.json",
+      "sha256": "1338dc3c9cc1073f5d31d9f1fefe42ea9946849c59590bec07a3dacf938b0a98"
+    },
+    "declarations": 36,
+    "layouts": 51,
+    "aggregateGraphs": 176,
+    "normalizedShapeChanges": 0,
+    "addedModules": [],
+    "removedModules": []
+  },
+  "changedInputs": [
+    {
+      "path": "src/value_properties.fy",
+      "sha256": "4c21f749cdee691f6ebfc130b247b3b617cce58441750f6e0cd51c884ac8771b"
+    },
+    {
+      "path": "tests/m2/value_signature_depth.fy",
+      "sha256": "b463bb7712f1dbc3828177e67194172ce6814d71432c1e1dbc65d1ced4b74bc5"
+    },
+    {
+      "path": "fairy.lock",
+      "sha256": "4f1e529c100bb8ccae4c4fe3f357d4300813098ed1179d0bf52978f29caa92e5"
+    },
+    {
+      "path": "native/runtime-engine/transport.json",
+      "sha256": "fe84c78d4b19e0915b80954cac0fd2cbdc2c2f868d6636e4bbe8111161219708"
+    }
+  ],
+  "productionSources": {
+    "count": 328,
+    "allLf": true
+  },
+  "limitations": [
+    "Only the named composition regression is established; not every independently admitted source limit combination",
+    "Recursive body/control/expression lowering remains; no new staged body work or public Pending compiler",
+    "No timing or dynamic peak-stack measurement; native acceptance uses default stacks and no compiler overrides",
+    "Focused private value and Engine suites only; optional public CLI and full release validation were not requested",
+    "Local commits only; no push, release or deployment"
+  ]
+}

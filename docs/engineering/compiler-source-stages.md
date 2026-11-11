@@ -188,7 +188,7 @@ an instrumented byte/CPU or peak-stack guarantee. No public Pending compiler or
 time improvement follows from these changes.
 
 The [value signature evidence](../evidence/runtime-compiler-value-signatures-windows-20261111.json)
-records five new kernels and frozen snapshots, plus 8 current groups/profile.
+records five new kernels and frozen snapshots, plus 8 groups/profile at that checkpoint.
 Coverage includes exact raw tags/tables/Plan/error fields, deferral, terminal
 idempotence, rollback, sixteen functions, eight arguments, 64 canonical nodes,
 four wrappers with 32 controls and rejection at 33, and existing value execution.
@@ -197,24 +197,38 @@ Engine development/O2 pass default 1MiB/4KiB stacks and zero exit SDK heap; all
 retains 36 bindings/51 layouts and equivalent 176 aggregate graphs; Core/Cursor/
 Machine remain 172400/1184/1792 bytes. Earlier evidence stays frozen history.
 
-### Known private value-body composition limit
+### Local annotation/control stack repair
 
-A separate diagnostic puts a local four-wrapper annotation and owned-value use
-at the deepest level of 32 controls. It exits with Windows stack overflow
-(-1073741571) on both the predecessor checkout `6a6c2a9` and current raw-adapter
-diagnostic snapshot. This is distinct from the passing maximum-wrapper function
-signature/control fixture above. The evidence retains the source, harness hash
-and predecessor/current diagnostic logs; these failed runs are not acceptance
-receipts. Isolate the precise body compile/proof/execution phase while replacing
-recursive bodies. Do not claim that every independently admitted source depth
-composes, or hide this failure by raising native stacks.
+The former failing source combines a local four-wrapper annotation, owned-value
+use and 32 nested controls. Its exact 941 guest bytes now compile, verify and
+execute to 42 in both development and release regressions; depth 33 still
+rejects with kind 4 and an in-source offset. The separate maximum-wrapper function-signature
+fixture remains selected. All 9 selected groups pass in each profile. Engine
+development/O2 also pass default 1MiB/4KiB stacks and zero exit SDK heap; all 335
+input hashes match `5f00e60`. The reviewed 36 bindings, 51 layouts and 176
+aggregate graphs retain their shapes; Core/Cursor/Machine stay
+172400/1184/1792 bytes. 328 production modules retain LF. See the
+[body stack evidence](../evidence/runtime-value-body-stack-windows-20261112.json).
+
+The crash was inside `source::compile`, while constructor preflight checked the
+canonical catalog. Native development code for `properties::inspect` reserved
+large Plan-bearing Result temporaries on every error edge, including untaken
+edges. A private `inspect_into` now writes caller-owned scratch and returns a
+small count/error result. The compatibility wrapper publishes its complete Plan
+only after success. Catalog/record/node validation order and properties stay the
+same; existing independent staged catalog comparisons cover the raw checker.
+
+The [earlier signature evidence](../evidence/runtime-compiler-value-signatures-windows-20261111.json)
+retains the original failure as history. This repair uses the pinned compiler
+and default native stacks. It does not replace recursive body lowering or prove
+that every independently admitted source limit composes.
 
 ## Required remaining lowering work
 
 The following semantic work remains atomic, even where its helpers drain stages:
 
 1. Body-derived canonical interning and header admission outside typed/value
-   signature/catalog preparation; preserve the known local-annotation depth issue.
+   signature/catalog preparation.
 2. Fixed final Builder assignment, initial scratch and native image allocation/copy.
 3. Body-derived slice origin analysis, including its seventeen rounds and
    expression/atom/CALL/name/control-flow traversal.
