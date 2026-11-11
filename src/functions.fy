@@ -212,6 +212,10 @@ fn Result<usize, errors::Error> signature(ref u8[] source, ref mut lexer::State 
     t.count += 1;
     return .ok(f);
 }
+// Independent untyped signature oracle for staged lowering comparisons.
+pub fn Result<usize,errors::Error> signature_untyped_raw(ref u8[] source,ref mut lexer::State s,ref mut Table t){
+    var value_properties::Catalog unused=value_properties::empty();return signature(source,s,t,false,ref mut unused);
+}
 fn Result<Table, errors::Error> scan_mode(ref u8[] source,bool returns,bool values,ref mut value_properties::Catalog catalog) {
     var Table t = empty();t.reference_returns=returns;
     var lexer::State s = lexer::empty();
