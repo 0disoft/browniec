@@ -3,6 +3,8 @@ import module_index as modules;
 import source_snapshot as sources;
 import lexer as lexer;
 import errors as errors;
+import source_name_work as staged_names;
+import metadata_budget as budget;
 
 // Copyable compiler scratch, never executable authority. Packed original spans
 // use 13-bit offsets; names carry one pub bit, aliases carry a 4-bit target.
@@ -86,7 +88,7 @@ pub fn Result<lexer::State,errors::Error> state(ref u8[] source,ref Table t,usiz
 pub fn bool imported(ref u8[] source,ref Table t,usize at,ref u8[] spelling){
     return valid(source,t) && at<source.len && alias(source,t,owner(t,at),spelling)!=16;
 }
-pub fn usize lookup(ref u8[] source,ref Table t,usize a,usize b,bool record){
+pub fn usize lookup_raw(ref u8[] source,ref Table t,usize a,usize b,bool record){
     let usize absent=if(record){32}else{16};
     if(!valid(source,t) || a>=b || b>source.len){return absent;}
     let usize caller=owner(t,a);if(caller==16 || b>t.ends[caller] as usize){return absent;}
@@ -108,6 +110,14 @@ pub fn usize lookup(ref u8[] source,ref Table t,usize a,usize b,bool record){
             if(selected!=caller && (item&67108864)==0){return absent;}return i;
         }i+=1;
     }return absent;
+}
+// Owning source-name adapter; scope and spelling checks resume independently.
+pub fn usize lookup(ref u8[] source,ref Table t,usize a,usize b,bool record){
+    let usize absent=if(record){32}else{16};
+    var staged_names::State w=staged_names::begin(a,b,record);var budget::State meter=budget::empty();
+    while(!w.done){if(!budget::reset(ref mut meter,0).is_ok){return absent;}
+        if(!staged_names::advance(source,t,ref mut w,ref mut meter).is_ok){return absent;}}
+    return w.result;
 }
 pub fn Result<usize,errors::Error> definition(ref u8[] source,ref Table t,usize id,bool record){
     if(!valid(source,t) || (record && id>=t.record_count) || (!record && id>=t.function_count)){return .err(errors::make(5,0));}

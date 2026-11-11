@@ -8,7 +8,8 @@ fn raw::Table table(){var raw::Table t=raw::empty();t.modules=2;t.ends[0]=9;t.en
     t.imports=1;t.aliases[0]=word(0,1,67108864);t.function_count=1;t.functions[0]=word(9,15,67108864);
     t.record_count=1;t.records[0]=word(9,15,67108864);return t;}
 fn void same(ref u8[] source,ref raw::Table t,usize a,usize b,bool record){
-    let usize expected=raw::lookup(source,t,a,b,record);var work::State w=work::begin(a,b,record);
+    let usize expected=raw::lookup_raw(source,t,a,b,record);var work::State w=work::begin(a,b,record);
+    assert(raw::lookup(source,t,a,b,record)==expected);
     var budget::State meter=budget::empty();var usize turns=0;
     while(!w.done){assert(turns<1500);assert(budget::reset(ref mut meter,0).is_ok);
         let u8 phase=w.phase;let usize row=w.row;let usize compared=w.compared;let usize visits=w.visits;

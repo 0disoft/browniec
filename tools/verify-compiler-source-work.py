@@ -10,7 +10,8 @@ bottom = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(bottom)
 bottom.DESCRIPTION = __doc__
 bottom.DIRECTORY = 'build/compiler-source-work'
-bottom.MODULES = {'source_context_work': None, 'literal_source_work': None, 'literal_scan_work': None, 'lexer_work': None}
+bottom.MODULES = {'source_context_work': None, 'literal_source_work': None, 'literal_scan_work': None, 'lexer_work': None,
+                  'source_context_check_work': None, 'source_name_work': None, 'type_parse_work': None}
 bottom.EXTRA_INPUTS = {'tools/verify-compiler-source-work.py'}
 
 if __name__ == '__main__':

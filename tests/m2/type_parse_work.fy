@@ -30,9 +30,13 @@ fn Result<u8,errors::Error> run(ref u8[] source,ref mut lexer::State s){
 fn void compare(ref u8[] source,bool scoped){
     var lexer::State a=lexer::empty();
     if(scoped){a=switch(lexer::scoped(source,0,source.len,false)){case .ok(v):{v}case .err(_):{assert(false);lexer::empty()}};}
-    assert(lexer::next_raw(source,ref mut a).is_ok);var lexer::State b=a;
-    let Result<u8,errors::Error> expected=raw::parse(source,ref mut a);
+    assert(lexer::next_raw(source,ref mut a).is_ok);var lexer::State b=a;var lexer::State c=a;
+    let Result<u8,errors::Error> expected=raw::parse_raw(source,ref mut a);
     let Result<u8,errors::Error> actual=run(source,ref mut b);same_state(ref a,ref b);
+    let Result<u8,errors::Error> adapter=raw::parse(source,ref mut c);same_state(ref a,ref c);
+    same_result(expected,actual);same_result(expected,adapter);
+}
+fn void same_result(Result<u8,errors::Error> expected,Result<u8,errors::Error> actual){
     switch(expected){case .ok(tag):{switch(actual){case .ok(value):{assert(tag==value);}case .err(_):{assert(false);}};}
         case .err(e):{switch(actual){case .ok(_):{assert(false);}case .err(f):{assert(e.kind==f.kind && e.offset==f.offset);}};}};
 }

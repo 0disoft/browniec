@@ -2,6 +2,7 @@ module types;
 
 import lexer as lexer;
 import errors as errors;
+import type_parse_work as staged;
 
 // 1 i32, 2 bool, 9 i64; 3/4 Option<i32/bool>; 5..8 Result<i32/i32,
 // i32/bool, bool/i32, bool/bool>. Payloads are scalar, never nested wrappers.
@@ -45,7 +46,7 @@ fn Result<u8, errors::Error> base(ref u8[] source, ref mut lexer::State s) {
     let usize next = lexer::next(source, s)?;
     return .ok(tag);
 }
-pub fn Result<u8, errors::Error> parse(ref u8[] source, ref mut lexer::State s) {
+pub fn Result<u8, errors::Error> parse_raw(ref u8[] source, ref mut lexer::State s) {
     if (s.kind != 2) { return .err(errors::make(2,s.begin)); }
     let bool option=lexer::equal(source[s.begin..s.end],b"Option");
     let bool result=lexer::equal(source[s.begin..s.end],b"Result");
@@ -63,4 +64,8 @@ pub fn Result<u8, errors::Error> parse(ref u8[] source, ref mut lexer::State s) 
     }
     let usize close=lexer::punctuation(source,s,62)?;
     return .ok(tag);
+}
+
+pub fn Result<u8,errors::Error> parse(ref u8[] source,ref mut lexer::State s){
+    if(source.len>4096){return parse_raw(source,s);}return staged::parse(source,s);
 }

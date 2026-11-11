@@ -51,3 +51,12 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut State w,ref mu
     if(w.phase==8){w.done=true;return .ok(true);}
     return .err(errors::make(5,w.token.begin));
 }
+
+// Owning compatibility adapter. Parent semantic traversal remains synchronous.
+pub fn Result<u8,errors::Error> parse(ref u8[] source,ref mut lexer::State target){
+    var State w=begin(*target);var budget::State meter=budget::empty();
+    while(!w.done){let usize allowance=budget::reset(ref mut meter,0)?;
+        switch(advance(source,ref mut w,ref mut meter)){
+            case .ok(_):{}case .err(e):{*target=observed(ref w);return .err(e);}};}
+    *target=observed(ref w);return prepared(ref w);
+}
