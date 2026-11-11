@@ -99,3 +99,20 @@ fn bytes::Buffer nested(usize count){var bytes::Buffer s=bytes::empty();assert(b
     i=0;while(i<33){assert(bytes::append(ref mut deeper,b"if(false){return 0;}else ").is_ok);i+=1;}
     assert(bytes::append(ref mut deeper,b"{return 42;}}").is_ok);compare(bytes::view(ref deeper),false);
 }
+
+@test fn void pratt_condition_continuations_match_raw_ir_and_short_circuit(){
+    compare(b"module main;fn i32 main(){if(20+11*2==42){return 42;}else{return 0;}}",true);
+    compare(b"module main;fn i32 main(){if((20+1)*2==42){return 42;}else{return 0;}}",true);
+    compare(b"module main;fn i32 main(){if(50-12/3*2==42){return 42;}else{return 0;}}",true);
+    compare(b"module main;fn i32 main(){if(false && 40/0==0){return 0;}else{return 42;}}",true);
+    compare(b"module main;fn i32 main(){if(true || 40/0==0){return 42;}else{return 0;}}",true);
+    compare(b"module main;fn i32 main(){if(1<2 && 3>=3 || false){return 42;}else{return 0;}}",true);
+    compare(b"module main;fn i32 main(){if(true==false || 42!=0){return 42;}else{return 0;}}",true);
+    compare(b"module main;fn i32 main(){if((1<<4 | 2^3 & 7)==17){return 42;}else{return 0;}}",true);
+    compare(b"module main;fn i32 main(){if((20 as i64)+22==42){return 42;}else{return 0;}}",true);
+    compare(b"module main;fn i32 main(){if(1+true==42){return 42;}else{return 0;}}",false);
+    compare(b"module main;fn i32 main(){if(true+false){return 42;}else{return 0;}}",false);
+    compare(b"module main;fn i32 main(){if(1 && true){return 42;}else{return 0;}}",false);
+    compare(b"module main;fn i32 main(){if(true || 1){return 42;}else{return 0;}}",false);
+    compare(b"module main;fn i32 main(){if(1+){return 42;}else{return 0;}}",false);
+}

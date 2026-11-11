@@ -63,6 +63,7 @@ import output_source as output_source;
 import output_ir as output_ir;
 import output_return_ir as output_returns;
 import body_source_work as body_work;
+import expression_source_work as expression_work;
 import metadata_budget as metadata_budget;
 
 fn u8 precedence(u8 kind) {
@@ -1111,6 +1112,18 @@ fn Result<usize, errors::Error> expression(ref u8[] source, ref mut lexer::State
         left = ir::emit(p, operation, left, right, at)?;
     }
     return .ok(left);
+}
+
+pub fn Result<usize,errors::Error> expression_staged(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,u8 minimum,
+    usize depth,u8 expected,u8 result_type,usize structure,ref mut loops::State flow){
+    var expression_work::State w=expression_work::begin(depth,minimum,expected);var metadata_budget::State meter=metadata_budget::empty();
+    while(!w.done){let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
+        let bool done=expression_work::advance(source,s,p,ref mut w,ref mut meter)?;
+        if(w.waiting){let expression_work::Frame f=expression_work::current(ref w);
+            let usize value=converted(source,s,p,table,signatures,f.depth,f.expected,result_type,structure,flow)?;
+            let usize completed=expression_work::resume(ref mut w,value)?;}
+    }return expression_work::prepared(ref w);
 }
 
 fn bool word_is(ref u8[] source, ref lexer::State s, ref u8[] word) {
@@ -2397,7 +2410,7 @@ pub fn Result<usize,errors::Error> complete_body_child(ref u8[] source,ref mut l
     if(request==1){value=statement(source,s,p,names,signatures,59,result_type,expr_depth,f.depth,flow)?;}
     else if(request==2){stopped=control_return(source,s,p,names,signatures,result_type,f.depth,expr_depth,flow)?;}
     else if(request==4 || request==5 || request==7 || request==10){
-        value=expression(source,s,p,names,signatures,1,expr_depth,if(request==10){0}else{2},
+        value=expression_staged(source,s,p,names,signatures,1,expr_depth,if(request==10){0}else{2},
             if(request==7){0}else{result_type},f.depth,flow)?;
     }else if(request==6){value=statement(source,s,p,names,signatures,59,0,expr_depth,f.depth,flow)?;}
     else if(request==8){value=checked_post(source,s,p,names,signatures,expr_depth,f.depth,flow)?;}
