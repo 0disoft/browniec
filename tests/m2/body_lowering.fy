@@ -204,7 +204,12 @@ fn bytes::Buffer nested_calls(usize depth,bool captures){var bytes::Buffer s=byt
     assert(bytes::append(ref mut s,b"42").is_ok);i=0;while(i<depth){assert(bytes::append(ref mut s,b")").is_ok);i+=1;}
     assert(bytes::append(ref mut s,b";}").is_ok);return s;
 }
+fn bytes::Buffer mixed_calls(usize count){var bytes::Buffer s=bytes::empty();assert(bytes::append(ref mut s,b"module main;fn i32 id(i32 n){return n;}fn i32 main(){return ").is_ok);
+    var usize i=0;while(i<count){assert(bytes::append(ref mut s,b"(id(").is_ok);i+=1;}assert(bytes::append(ref mut s,b"42").is_ok);
+    i=0;while(i<count){assert(bytes::append(ref mut s,b"))").is_ok);i+=1;}assert(bytes::append(ref mut s,b";}").is_ok);return s;}
 @test fn void nested_call_depth_32_and_33_preserve_default_stack_and_raw_diagnostics(){
+    let bytes::Buffer mixed=mixed_calls(16);compare(bytes::view(ref mixed),true);
+    let bytes::Buffer deeper=mixed_calls(17);compare(bytes::view(ref deeper),false);
     let bytes::Buffer plain=nested_calls(32,false);compare(bytes::view(ref plain),true);
     let bytes::Buffer deep=nested_calls(33,false);compare(bytes::view(ref deep),false);
     let bytes::Buffer capture=nested_calls(32,true);captured(bytes::view(ref capture),true);

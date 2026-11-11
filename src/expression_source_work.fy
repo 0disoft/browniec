@@ -8,8 +8,9 @@ import ir as ir;
 import types as types;
 import errors as errors;
 import metadata_budget as budget;
-// Pratt traversal only. A converted unary/postfix operand is an explicit pending
-// child, never charged as a bounded stage. Source, names and candidate IR are pinned.
+// Private Pratt/group/CALL coordinator. Converted preflight, unary/projection,
+// postfix/cast and aggregate argument protocols remain explicit legacy children.
+// Source, names, capture bank and candidate IR stay pinned across advances.
 pub struct Frame { usize environment; usize target; usize arity; usize count; usize operand_at; usize depth; usize left; usize slot; usize jump; usize at;
     u8 context; u8 minimum; u8 expected; u8 kind; u8 operation; u8 phase; }
 // The owning adapter pins this bank separately, avoiding large State-valued
@@ -26,7 +27,7 @@ pub fn State begin(usize depth,u8 minimum,u8 expected){var State w=State{.argume
 pub fn Frame current(ref State w){let ref Frame[] frames=ref w.frames;return frames[w.used-1];}
 pub fn Result<usize,errors::Error> prepared(ref State w){if(!w.done){return .err(errors::make(5,0));}return .ok(w.value);}
 pub fn Result<usize,errors::Error> resume(ref mut State w,usize value){
-    if(w.done || !w.waiting){return .err(errors::make(5,0));}w.waiting=false;w.request=0;w.value=value;return .ok(value);}
+    if(w.done || !w.waiting || (w.request!=1 && w.request!=2)){return .err(errors::make(5,0));}w.waiting=false;w.request=0;w.value=value;return .ok(value);}
 // Child classification does not evaluate or consume the grouped expression.
 pub fn Result<usize,errors::Error> group(ref mut State w,u8 context){
     if(w.done || !w.waiting || w.request!=1){return .err(errors::make(5,0));}

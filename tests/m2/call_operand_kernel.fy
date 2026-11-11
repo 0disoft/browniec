@@ -1,5 +1,6 @@
 module tests::m2::call_operand_kernel;
 import call_operand_work as work;
+import expression_source_work as expressions;
 import lexer as lexer;
 import locals as locals;
 import functions as functions;
@@ -27,5 +28,18 @@ import metadata_budget as budget;
     }
     assert(work::prepared(ref w).is_ok && names.count==0 && s.kind==0 && p.count==4);
     assert(p.code[8]==9 && p.code[16]==37 && p.code[17]==1 && p.code[24]==37 && p.code[25]==0);
+    reject_scalar_completion_for_a_pending_capture();
     let usize total=meter.total;assert(work::advance(source,ref mut s,ref mut p,ref signatures,ref mut w,ref mut meter).is_ok && meter.total==total);
+}
+
+fn void reject_scalar_completion_for_a_pending_capture(){let ref u8[] source=b"f(a,42);";
+    var lexer::State s=lexer::empty();assert(lexer::next(source,ref mut s).is_ok);var locals::Table names=locals::empty();
+    var functions::Table signatures=functions::empty();signatures.count=1;signatures.arities[0]=2;signatures.param_lengths[0]=1;signatures.param_types[0]=1;signatures.param_types[1]=1;
+    var ir::Program p=ir::empty();var expressions::Bank bank=expressions::empty_bank();var expressions::State w=expressions::begin(0,1,1);var budget::State meter=budget::empty();
+    assert(expressions::advance(source,ref mut s,ref mut p,ref signatures,ref mut bank,ref mut w,ref mut meter).is_ok && w.request==1);
+    assert(expressions::captured(ref mut w,ref mut bank,ref names,s,0,0,0).is_ok);var usize turns=0;
+    while(!w.waiting){assert(turns<2000 && budget::reset(ref mut meter,0).is_ok);
+        assert(expressions::advance(source,ref mut s,ref mut p,ref signatures,ref mut bank,ref mut w,ref mut meter).is_ok);turns+=1;}
+    let usize cursor=s.cursor;assert(w.request==3 && !expressions::resume(ref mut w,0).is_ok);
+    assert(w.waiting && w.request==3 && s.cursor==cursor && p.count==0 && bank.calls[0].request==2);
 }

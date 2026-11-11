@@ -11,5 +11,10 @@ bottom.DESCRIPTION = __doc__
 bottom.DIRECTORY = 'build/operand-source-work'
 bottom.MODULES = {'expression_lowering': None, 'semantic_lowering': None, 'body_lowering': None, 'body_source_work': None, 'call_operand_kernel': None}
 bottom.EXTRA_INPUTS = {'tools/verify-operand-source-work.py'}
+# Narrow recheck for completion guards and mixed depth after a composed snapshot.
+if '--kernel-only' in sys.argv:
+    sys.argv.remove('--kernel-only')
+    bottom.DIRECTORY = 'build/operand-completion-work'
+    bottom.MODULES = {'call_operand_kernel': None, 'body_lowering': ['nested_call_depth_32_and_33_preserve_default_stack_and_raw_diagnostics']}
 if __name__ == '__main__':
     bottom.main()
