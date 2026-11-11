@@ -10,7 +10,7 @@ bottom = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(bottom)
 bottom.DESCRIPTION = __doc__
 bottom.DIRECTORY = 'build/literal-source-work'
-bottom.MODULES = {'literal_intern_work': None}
+bottom.MODULES = {'literal_intern_work': None, 'literal_collection_work': None}
 bottom.EXTRA_INPUTS = {'tools/verify-literal-source-work.py'}
 
 if __name__ == '__main__':
