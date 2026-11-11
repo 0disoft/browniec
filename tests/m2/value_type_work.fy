@@ -27,7 +27,7 @@ fn Result<usize,errors::Error> run(ref u8[] source,ref mut lexer::State cursor,r
 }
 fn void compare(ref u8[] source,lexer::State start,ref properties::Catalog initial){
     var lexer::State a=start;var lexer::State b=start;var properties::Catalog x=*initial;var properties::Catalog y=*initial;
-    switch(raw::parse(source,ref mut a,ref mut x)){
+    switch(raw::parse_raw(source,ref mut a,ref mut x)){
         case .ok(id):{switch(run(source,ref mut b,ref mut y)){case .ok(other):{assert(id==other);}case .err(_):{assert(false);}};}
         case .err(e):{switch(run(source,ref mut b,ref mut y)){case .ok(_):{assert(false);}case .err(f):{assert(e.kind==f.kind && e.offset==f.offset);}};}
     };token(a,b);catalog(ref x,ref y);

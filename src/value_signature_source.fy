@@ -4,6 +4,8 @@ import value_properties as properties;
 import lexer as lexer;
 import errors as errors;
 import std::num as num;
+import value_signature_work as staged;
+import metadata_budget as budget;
 
 // Source candidates only. Tags128..191 encode a canonical type ID for the
 // typed body lowerer; they are never ordinary scalar IR register tags.
@@ -16,9 +18,9 @@ fn Result<u8,errors::Error> byte(usize value,usize at){
         case .ok(v):{.ok(v)}case .err(_):{.err(errors::make(4,at))}
     };
 }
-pub fn Result<Type,errors::Error> parse(ref u8[] source,ref mut lexer::State cursor,
+pub fn Result<Type,errors::Error> parse_raw(ref u8[] source,ref mut lexer::State cursor,
     ref mut properties::Catalog catalog){
-    let usize at=cursor.begin;let usize id=syntax::parse(source,cursor,catalog)?;
+    let usize at=cursor.begin;let usize id=syntax::parse_raw(source,cursor,catalog)?;
     if(id>=catalog.count || id>=64){return .err(errors::make(5,at));}
     let properties::Node node=catalog.nodes[id];
     if(node.kind==1){return .ok(Type{.tag=node.first,.length=0,.record=0});}
@@ -33,4 +35,12 @@ pub fn Result<usize,errors::Error> type_id(u8 tag,ref properties::Catalog catalo
     let usize id=(tag as usize)-128;
     if(id>=catalog.count || id>=64 || catalog.nodes[id].kind<4 || catalog.nodes[id].kind>6){return .err(errors::make(5,at));}
     return .ok(id);
+}
+
+// Owning compatibility adapter. No public Pending compile protocol.
+pub fn Result<Type,errors::Error> parse(ref u8[] source,ref mut lexer::State cursor,ref mut properties::Catalog catalog){
+    if(source.len>4096){return parse_raw(source,cursor,catalog);}
+    var staged::State w=staged::begin(*cursor);var budget::State meter=budget::empty();
+    while(!w.done){let usize allowance=budget::reset(ref mut meter,cursor.begin)?;let bool done=staged::advance(source,catalog,ref mut w,ref mut meter)?;}
+    let Type result=staged::prepared(ref w)?;*cursor=staged::observed(ref w);return .ok(result);
 }

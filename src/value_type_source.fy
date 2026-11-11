@@ -5,6 +5,8 @@ import errors as errors;
 import value_properties as properties;
 import struct_source as structs;
 import std::num as num;
+import value_type_work as staged;
+import metadata_budget as budget;
 
 // Private source-to-canonical-DAG helper. No legacy type encoding or compiler
 // integration here. The caller supplies the current token, as with types::parse.
@@ -126,10 +128,19 @@ fn Result<usize,errors::Error> type_node(ref u8[] source,ref mut lexer::State s,
 }
 // For nominal names, the caller first installs structs::scan(source).layouts
 // into catalog.records. locate preserves the existing whole-module ID convention.
-pub fn Result<usize,errors::Error> parse(ref u8[] source,ref mut lexer::State cursor,
+pub fn Result<usize,errors::Error> parse_raw(ref u8[] source,ref mut lexer::State cursor,
     ref mut properties::Catalog catalog){
     let usize at=cursor.begin;let usize valid=inspect(catalog,at)?;
     var lexer::State look=lexer::snapshot(cursor);var properties::Catalog working=*catalog;
     let usize id=type_node(source,ref mut look,ref mut working,0)?;
     *catalog=working;*cursor=look;return .ok(id);
+}
+
+// Synchronous compatibility adapter; originals publish only after all children.
+pub fn Result<usize,errors::Error> parse(ref u8[] source,ref mut lexer::State cursor,ref mut properties::Catalog catalog){
+    if(source.len>4096){return parse_raw(source,cursor,catalog);}
+    var properties::Catalog candidate=properties::empty();var staged::State w=staged::begin(*cursor);var budget::State meter=budget::empty();
+    while(!w.done){let usize allowance=budget::reset(ref mut meter,cursor.begin)?;
+        let bool done=staged::advance(source,catalog,ref mut candidate,ref mut w,ref mut meter)?;}
+    let usize id=staged::prepared(ref w)?;*cursor=staged::observed(ref w);*catalog=candidate;return .ok(id);
 }
