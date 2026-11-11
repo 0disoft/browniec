@@ -63,7 +63,7 @@ fn Result<usize,errors::Error> exact(ref properties::Catalog catalog,u8 tag,usiz
         if(n.kind==kind && n.first as usize==first && n.second==0 && n.extent==length){return .ok(i+1);}i+=1;
     }return .err(invalid(at));
 }
-pub fn Result<Plan,errors::Error> prepare(ref properties::Catalog catalog,ref functions::Table signatures){
+pub fn Result<Plan,errors::Error> prepare_raw(ref properties::Catalog catalog,ref functions::Table signatures){
     let usize checked=inspected(catalog,0)?;
     if(signatures.count>16){return .err(errors::make(4,0));}
     if(signatures.count==0 || signatures.entry>=signatures.count){return .err(invalid(0));}
@@ -169,3 +169,6 @@ pub fn Result<usize,errors::Error> finish(ref mut values::Program unit,ref bindi
     let usize code_end=unit.body.count;let usize registers_end=unit.body.registers;
     unit.body.ends[f]=code_end;unit.body.register_ends[f]=registers_end;return .ok(f);
 }
+
+// Compatibility owner while the staged catalog mapper is verified.
+pub fn Result<Plan,errors::Error> prepare(ref properties::Catalog catalog,ref functions::Table signatures){return prepare_raw(catalog,signatures);}

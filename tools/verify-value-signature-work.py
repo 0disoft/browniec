@@ -9,7 +9,7 @@ bottom = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(bottom)
 bottom.DESCRIPTION = __doc__
 bottom.DIRECTORY = 'build/value-signature-work'
-bottom.MODULES = {'value_function_work': None}
+bottom.MODULES = {'value_catalog_work': None}
 bottom.EXTRA_INPUTS = {'tools/verify-value-signature-work.py'}
 if __name__ == '__main__':
     bottom.main()
