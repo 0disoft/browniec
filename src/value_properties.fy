@@ -46,14 +46,17 @@ fn Result<Property,Error> wrapper(Property first,Property second){
         .wrapper_depth=depth+1,.copyable=first.copyable && second.copyable,
         .contains_buffer=first.contains_buffer || second.contains_buffer});
 }
-pub fn Result<Plan,Error> inspect(ref Catalog catalog){
+// Keep failure branches scalar-sized: returning Result<Plan,Error> from the
+// row loop materializes a complete Plan temporary for every error edge in the
+// native development frame, including edges that this catalog never takes.
+fn Result<usize,Error> inspect_into(ref Catalog catalog,ref mut Plan result){
     if(catalog.count>64){return .err(.Metadata);}
     // Reuse the independently checked scalar/plain-record-only field grammar,
     // cycle/depth/size proof. Wrapper depth is independent of record depth.
     let records::Plan record_plan=switch(records::plan(ref catalog.records,4096)){
         case .ok(v):{v}case .err(_):{return .err(.Type);}
     };
-    var Plan result=Plan{.count=catalog.count,.properties=[blank();64]};
+    result.count=catalog.count;
     var usize i=0;while(i<64){
         let Node node=catalog.nodes[i];
         if(i>=catalog.count){
@@ -81,7 +84,11 @@ pub fn Result<Plan,Error> inspect(ref Catalog catalog){
                 let Property combined=wrapper(left,right)?;result.properties[i]=combined;
             }
         }i+=1;
-    }return .ok(result);
+    }return .ok(result.count);
+}
+pub fn Result<Plan,Error> inspect(ref Catalog catalog){
+    var Plan result=Plan{.count=0,.properties=[blank();64]};
+    let usize checked=inspect_into(catalog,ref mut result)?;return .ok(result);
 }
 // Existing compact scalar/tagged cells keep their wire encoding and prices.
 // This maps their declared types, never their packed active payload, to the

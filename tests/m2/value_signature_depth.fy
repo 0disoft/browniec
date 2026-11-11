@@ -28,3 +28,15 @@ fn bytes::Buffer nested(usize count){var bytes::Buffer text=bytes::empty();
 @test fn void four_wrapper_signatures_with_32_controls_execute_and_33_reject(){
     let bytes::Buffer good=nested(32);value(bytes::view(ref good));let bytes::Buffer bad=nested(33);rejected(bytes::view(ref bad),4);
 }
+
+fn bytes::Buffer local_nested(usize count){var bytes::Buffer text=bytes::empty();
+    assert(bytes::append(ref mut text,b"module main;fn i32 main(){").is_ok);var usize i=0;
+    while(i<count){assert(bytes::append(ref mut text,b"if(true){").is_ok);i+=1;}
+    assert(bytes::append(ref mut text,b"let Option<Result<Option<Result<Buffer,u8>>,i64>> value=.none;_ = value;return 42;").is_ok);
+    i=0;while(i<count){assert(bytes::append(ref mut text,b"}else{return 42;}").is_ok);i+=1;}
+    assert(bytes::append(ref mut text,b"}").is_ok);return text;
+}
+@test fn void four_wrapper_local_annotations_with_32_controls_execute_and_33_reject(){
+    let bytes::Buffer good=local_nested(32);value(bytes::view(ref good));
+    let bytes::Buffer bad=local_nested(33);rejected(bytes::view(ref bad),4);
+}
