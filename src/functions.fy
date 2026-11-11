@@ -268,3 +268,11 @@ fn Result<Table,errors::Error> scan_index(ref u8[] source,ref context::Table sco
     if(t.count!=scope.function_count || t.entry>=t.count){return .err(errors::make(5,0));}
     return .ok(t);
 }
+
+// Complete raw untyped scan oracles; owning adapters remain separate.
+pub fn Result<Table,errors::Error> scan_single_untyped_raw(ref u8[] source,bool returns){
+    var value_properties::Catalog unused=value_properties::empty();return scan_mode(source,returns,false,ref mut unused);
+}
+pub fn Result<Table,errors::Error> scan_index_untyped_raw(ref u8[] source,ref context::Table scope,ref modules::Index index,usize selected,bool returns){
+    return scan_index(source,scope,index,selected,returns);
+}
