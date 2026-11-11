@@ -205,3 +205,8 @@ pub fn Result<Location,errors::Error> locate_scoped(ref u8[] source,ref context:
     let usize open=lexer::punctuation(source,ref mut s,123)?;
     return .ok(Location{.record=id,.body=s.begin});
 }
+
+// Independent source-field oracle for staged declaration candidates.
+pub fn Result<usize,errors::Error> resolve_untyped_raw(ref u8[] source,ref mut Table table,usize record){
+    return resolve(source,table,record);
+}
