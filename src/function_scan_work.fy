@@ -84,3 +84,14 @@ pub fn Result<bool,errors::Error> advance_indexed(ref u8[] source,ref context::T
     if(w.phase==13){let lexer::State current=w.token;w.signature=signatures::begin(current);w.parsing=true;return .ok(false);}
     return .err(errors::make(5,w.active));
 }
+// Owning compatibility adapters; no public Pending compiler protocol.
+pub fn Result<raw::Table,errors::Error> scan_single(ref u8[] source,bool returns){
+    var State w=single(returns);var budget::State meter=budget::empty();
+    while(!w.done){let usize allowance=budget::reset(ref mut meter,0)?;let bool done=advance_single(source,ref mut w,ref mut meter)?;}
+    return prepared(ref w);
+}
+pub fn Result<raw::Table,errors::Error> scan_indexed(ref u8[] source,ref context::Table scope,ref modules::Index index,usize selected,bool returns){
+    var State w=indexed(selected,returns);var budget::State meter=budget::empty();
+    while(!w.done){let usize allowance=budget::reset(ref mut meter,0)?;let bool done=advance_indexed(source,scope,index,ref mut w,ref mut meter)?;}
+    return prepared(ref w);
+}

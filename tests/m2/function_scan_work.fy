@@ -64,6 +64,8 @@ fn Result<raw::Table,errors::Error> indexed(ref u8[] source,ref context::Table s
 }
 fn void plain(ref u8[] source,bool returns){
     same_result(raw::scan_single_untyped_raw(source,returns),single(source,returns));
+    let Result<raw::Table,errors::Error> adapter=if(returns){raw::scan_reference_returns(source)}else{raw::scan(source)};
+    same_result(raw::scan_single_untyped_raw(source,returns),adapter);
 }
 @test fn void unscoped_declarations_forward_records_and_exact_failures_match(){
     plain(b"module main;fn i32 main(){return 1;}",false);

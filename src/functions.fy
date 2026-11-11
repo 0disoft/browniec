@@ -15,6 +15,7 @@ import module_input_entry as input_entries;
 import module_index as modules;
 import value_signature_source as value_types;
 import value_properties as value_properties;
+import function_scan_work as staged;
 
 // Bounded signature pass enables forward calls without trusting unparsed bodies.
 pub struct Table {
@@ -232,8 +233,10 @@ fn Result<Table, errors::Error> scan_mode(ref u8[] source,bool returns,bool valu
     return .ok(t);
 }
 
-pub fn Result<Table,errors::Error> scan(ref u8[] source){var value_properties::Catalog unused=value_properties::empty();return scan_mode(source,false,false,ref mut unused);}
-pub fn Result<Table,errors::Error> scan_reference_returns(ref u8[] source){var value_properties::Catalog unused=value_properties::empty();return scan_mode(source,true,false,ref mut unused);}
+pub fn Result<Table,errors::Error> scan(ref u8[] source){
+    if(source.len>4096){return scan_single_untyped_raw(source,false);}return staged::scan_single(source,false);}
+pub fn Result<Table,errors::Error> scan_reference_returns(ref u8[] source){
+    if(source.len>4096){return scan_single_untyped_raw(source,true);}return staged::scan_single(source,true);}
 
 // Explicit immutable module selection supplies ownership/visibility candidates;
 // complete body/type/IR proof still belongs to subsequent compilation/admission.
@@ -243,7 +246,7 @@ pub fn Result<Table,errors::Error> scan_scoped(ref u8[] source,ref context::Tabl
 pub fn Result<Table,errors::Error> scan_input_scoped(ref u8[] source,ref context::Table scope,ref input_entries::InputEntry selected){
     return scan_index(source,scope,input_entries::index(selected),input_entries::selected(selected),true);
 }
-fn Result<Table,errors::Error> scan_index(ref u8[] source,ref context::Table scope,ref modules::Index index,usize selected,bool returns){
+fn Result<Table,errors::Error> scan_index_raw(ref u8[] source,ref context::Table scope,ref modules::Index index,usize selected,bool returns){
     if(!context::valid(source,scope)){return .err(errors::make(5,0));}
     var Table t=empty();t.context=*scope;t.reference_returns=returns;
     var value_properties::Catalog unused=value_properties::empty();
@@ -268,11 +271,14 @@ fn Result<Table,errors::Error> scan_index(ref u8[] source,ref context::Table sco
     if(t.count!=scope.function_count || t.entry>=t.count){return .err(errors::make(5,0));}
     return .ok(t);
 }
+fn Result<Table,errors::Error> scan_index(ref u8[] source,ref context::Table scope,ref modules::Index index,usize selected,bool returns){
+    return staged::scan_indexed(source,scope,index,selected,returns);
+}
 
 // Complete raw untyped scan oracles; owning adapters remain separate.
 pub fn Result<Table,errors::Error> scan_single_untyped_raw(ref u8[] source,bool returns){
     var value_properties::Catalog unused=value_properties::empty();return scan_mode(source,returns,false,ref mut unused);
 }
 pub fn Result<Table,errors::Error> scan_index_untyped_raw(ref u8[] source,ref context::Table scope,ref modules::Index index,usize selected,bool returns){
-    return scan_index(source,scope,index,selected,returns);
+    return scan_index_raw(source,scope,index,selected,returns);
 }
