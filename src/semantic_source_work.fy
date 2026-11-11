@@ -5,20 +5,21 @@ import type_parse_work as annotations;
 import expression_source_work as expressions;
 import ir as ir;
 import locals as locals;
+import array_source as arrays;
 import errors as errors;
 import metadata_budget as budget;
-// Annotated scalar/wrapper declarations only. Unsupported statements request an
-// explicit legacy child outside this allowance; no initializer is replayed.
+// Annotated declarations and ordinary scalar/void returns. Unsupported forms
+// request an explicit legacy child outside this allowance; no operand is replayed.
 pub struct State { lexer::State start; tokens::State token; annotations::State annotation;
     expressions::State expression; usize depth; usize at; usize begin; usize end; usize target;
-    usize value; u8 kind; u8 phase; u8 request;
+    usize value; usize row; usize pending; u8 kind; u8 phase; u8 request;
     u8 tag; u8 terminator; bool mutable; bool lexing; bool typing; bool evaluating;
     bool stopped; bool done; }
-// kind 0 legacy, 1 ordinary statement (annotated declarations at this checkpoint).
+// kind 0 legacy, 1 ordinary statement, 2 scalar return, 3 void return.
 pub fn State begin(lexer::State token,u8 kind,u8 tag,u8 terminator,usize depth){
     return State{.start=token,.token=tokens::begin(token),.annotation=annotations::begin(token),
         .expression=expressions::begin(depth,1,tag),.depth=depth,.at=token.begin,.begin=0,.end=0,.target=0,
-        .value=0,.kind=kind,.phase=0,.request=0,.tag=tag,
+        .value=0,.row=0,.pending=0,.kind=kind,.phase=0,.request=0,.tag=tag,
         .terminator=terminator,.mutable=false,.lexing=false,.typing=false,
         .evaluating=false,.stopped=false,.done=false};
 }
@@ -56,6 +57,7 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s
     if(!budget::admit(meter,4096,s.begin)?){return .ok(false);}
     let u8 phase=w.phase;let usize value=w.value;
     if(phase==0){if(w.kind==0){return legacy(w,s);}
+        if(w.kind==2 || w.kind==3){return take(w,s,0,30);}
         if(word(source,s,b"let") || word(source,s,b"var")){w.mutable=word(source,s,b"var");return take(w,s,0,10);}
         return legacy(w,s);
     }
@@ -71,5 +73,15 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s
     if(phase==15){if(w.mutable){w.target=ir::slot(p,w.tag,w.begin)?;}else{w.target=value;}w.phase=16;return .ok(false);}
     if(phase==16){if(w.mutable){let usize stored=ir::raw(p,18,w.target,value,0,w.begin)?;}w.phase=17;return .ok(false);}
     if(phase==17){w.value=locals::declare(names,w.begin,w.end,w.target,w.mutable)?;w.done=true;return .ok(true);}
+    if(phase==30){if(w.kind==3){if(s.kind!=59){return .err(errors::make(3,s.begin));}return take(w,s,0,34);}
+        evaluate(w,31);return .ok(false);}
+    if(phase==31){if(p.types[value]!=w.tag){return .err(errors::make(3,w.at));}return take(w,s,59,34);}
+    if(phase==34){if(names.pending_places>65535){return .err(errors::make(3,w.at));}w.pending=names.pending_places;w.row=16;w.phase=35;return .ok(false);}
+    if(phase==35){if(w.row==0){w.row=names.count;w.phase=36;return .ok(false);}
+        let usize row=w.row-1;let usize one=1;if((w.pending&(one<<row))!=0){let usize ended=ir::place_end(p,row,w.at)?;}w.row=row;return .ok(false);}
+    if(phase==36){if(w.row==0){w.phase=37;return .ok(false);}let usize row=w.row-1;
+        let usize released=arrays::release_at(names,p,row,w.at)?;w.row=row;return .ok(false);}
+    if(phase==37){if(w.kind==3){let usize returned=ir::raw(p,82,0,0,0,w.at)?;}else{let usize returned=ir::emit(p,8,value,0,w.at)?;}
+        w.value=0;w.stopped=true;w.done=true;return .ok(true);}
     return .err(errors::make(5,s.begin));
 }

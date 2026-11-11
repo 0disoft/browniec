@@ -132,3 +132,24 @@ fn bytes::Buffer nested(usize count){var bytes::Buffer s=bytes::empty();assert(b
     // Inference and aggregate annotations retain their original semantic child.
     compare(b"module main;fn i32 main(){let x=42;return x;}",true);
 }
+
+@test fn void scalar_and_void_returns_preserve_raw_exit_ir_and_special_fallback(){
+    compare(b"module main;fn i32 main(){return 20+11*2;}",true);
+    compare(b"module main;fn bool yes(){return false && 40/0==0;}fn i32 main(){if(yes()){return 0;}else{return 42;}}",true);
+    compare(b"module main;fn void probe(){let i32[2] a=[20,22];return;}fn i32 main(){probe();return 42;}",true);
+    compare(b"module main;fn i32 main(){let i32[1] a=[20;1];let i32[1] b=[22;1];return a[0]+b[0];}",true);
+    compare(b"module main;fn Result<i32,bool> answer(){return .ok(42);}fn i32 main(){let Result<i32,bool> r=answer();switch(r){case .ok(n):{return n;}case .err(_):{return 0;}}}",true);
+    compare(b"module main;fn i32 main(){return true;}",false);
+    compare(b"module main;fn i32 main(){return 42 return 1;}",false);
+    compare(b"module main;fn i32 main(){return 20+;}",false);
+    compare(b"module main;fn void probe(){return 42;}fn i32 main(){probe();return 42;}",false);
+}
+
+fn bytes::Buffer declarations(usize count){var bytes::Buffer s=bytes::empty();assert(bytes::append(ref mut s,b"module main;fn i32 main(){").is_ok);
+    var usize i=0;while(i<count){assert(bytes::append(ref mut s,b"let i32 ").is_ok);var usize j=0;
+        while(j<=i){assert(bytes::append(ref mut s,b"x").is_ok);j+=1;}assert(bytes::append(ref mut s,b"=0;").is_ok);i+=1;}
+    assert(bytes::append(ref mut s,b"return 42;}").is_ok);return s;}
+@test fn void local_binding_capacity_preserves_raw_error_order(){
+    let bytes::Buffer full=declarations(64);compare(bytes::view(ref full),true);
+    let bytes::Buffer over=declarations(65);compare(bytes::view(ref over),false);
+}

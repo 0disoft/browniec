@@ -26,3 +26,12 @@ fn void run(ref u8[] source){var lexer::State s=lexer::empty();assert(lexer::nex
     let usize total=meter.total;assert(work::advance(source,ref mut s,ref mut p,ref mut w,ref mut meter).is_ok && meter.total==total);
 }
 @test fn void pratt_frames_defer_and_resume_without_replaying_operands(){run(b"20+11*2;");run(b"50-12/3*2;");}
+
+@test fn void expression_depth_rejects_before_requesting_an_operand(){let ref u8[] source=b"1;";
+    var lexer::State s=lexer::empty();assert(lexer::next(source,ref mut s).is_ok);var ir::Program p=ir::empty();
+    var work::State w=work::begin(33,1,1);var budget::State meter=budget::empty();
+    switch(work::advance(source,ref mut s,ref mut p,ref mut w,ref mut meter)){
+        case .ok(_):{assert(false);}case .err(e):{assert(e.kind==4 && e.offset==0 && !w.waiting && p.count==0);}};
+    w=work::begin(32,1,1);assert(budget::reset(ref mut meter,0).is_ok);
+    assert(work::advance(source,ref mut s,ref mut p,ref mut w,ref mut meter).is_ok && w.waiting && p.count==0);
+}

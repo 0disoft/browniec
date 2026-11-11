@@ -2416,9 +2416,31 @@ fn Result<usize,errors::Error> statement_staged(ref u8[] source,ref mut lexer::S
     }return semantic_work::prepared(ref w);
 }
 
+// Scalar/void returns resume expression, terminator, reverse cleanup and RETURN
+// separately. Special result protocols keep their original explicit child.
+fn Result<bool,errors::Error> return_staged(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
+    u8 result_type,usize depth,usize expr_depth,ref mut loops::State flow){
+    let usize function=names.function;
+    let u8 kind=if(signatures.return_types[function]==13){3}
+        else if(reference_calls::result(signatures,function) || signatures.return_slice_elements[function]!=0 ||
+            p.record_results[function]!=0 || p.array_results[function]!=0 || !types::scalar(result_type)){0}else{2};
+    var semantic_work::State w=semantic_work::begin(*s,kind,result_type,59,expr_depth);
+    var metadata_budget::State meter=metadata_budget::empty();
+    while(!w.done){let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
+        let bool done=semantic_work::advance(source,s,p,names,ref mut w,ref mut meter)?;
+        if(w.request==1){let expression_work::Frame f=expression_work::current(ref w.expression);
+            let usize value=converted(source,s,p,names,signatures,f.depth,f.expected,result_type,depth,flow)?;
+            let usize completed=semantic_work::resume(ref mut w,1,value,false)?;
+        }else if(w.request==2){let bool stopped=control_return(source,s,p,names,signatures,result_type,depth,expr_depth,flow)?;
+            let usize completed=semantic_work::resume(ref mut w,2,0,stopped)?;}
+    }let usize value=semantic_work::prepared(ref w)?;return .ok(w.stopped);
+}
+
 // Complete one explicit semantic child outside the control-stage allowance.
-// These existing expression/statement children remain atomic; no whole body is
-// submitted as a metadata-budget stage. All candidates still need admission.
+// Common Pratt/declaration/scalar-return adapters drain their own kernels.
+// Remaining semantic children stay explicit and outside the stage allowance.
+// All candidates still need independent admission.
 pub fn Result<usize,errors::Error> complete_body_child(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
     u8 result_type,usize expr_depth,ref mut loops::State flow,ref mut body_work::State w){
@@ -2426,7 +2448,7 @@ pub fn Result<usize,errors::Error> complete_body_child(ref u8[] source,ref mut l
     if(w.done || w.lexing || request==0){return .err(errors::make(5,s.begin));}
     let body_work::Frame f=body_work::current(w);var usize value=0;var bool stopped=false;
     if(request==1){value=statement_staged(source,s,p,names,signatures,59,result_type,expr_depth,f.depth,flow)?;}
-    else if(request==2){stopped=control_return(source,s,p,names,signatures,result_type,f.depth,expr_depth,flow)?;}
+    else if(request==2){stopped=return_staged(source,s,p,names,signatures,result_type,f.depth,expr_depth,flow)?;}
     else if(request==4 || request==5 || request==7 || request==10){
         value=expression_staged(source,s,p,names,signatures,1,expr_depth,if(request==10){0}else{2},
             if(request==7){0}else{result_type},f.depth,flow)?;
