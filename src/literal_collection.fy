@@ -4,6 +4,8 @@ import literal_source as literals;
 import static_image as images;
 import errors as errors;
 import std::text as text;
+import literal_collection_work as staged;
+import metadata_budget as budget;
 import source_context as context;
 
 // Source offsets and image-local IDs only; no retained bytes or runtime authority.
@@ -19,7 +21,20 @@ fn literals::Error source_error(u8 kind,usize offset){
 pub fn Result<Index,literals::Error> collect(ref mut images::Builder builder,ref u8[] source){
     let context::Table scope=context::empty();return collect_scoped(builder,source,ref scope);
 }
+// Drain private collection children; publish caller-visible state only at success.
 pub fn Result<Index,literals::Error> collect_scoped(ref mut images::Builder builder,ref u8[] source,ref context::Table scope){
+    var images::Builder candidate=images::Builder{.data=[0;4096],.catalog=images::Catalog{
+        .starts=[0;16],.ends=[0;16],.text=[false;16],.count=0,.used=0},.limit=0};
+    var staged::State w=staged::empty();var budget::State meter=budget::empty();
+    while(!w.done){switch(budget::reset(ref mut meter,0)){case .ok(_):{}case .err(e):{return .err(source_error(e.kind,e.offset));}};
+        switch(staged::advance(source,scope,builder,ref mut candidate,ref mut w,ref mut meter)){
+            case .ok(_):{}case .err(e):{return .err(e);}};
+    }
+    let Index index=staged::prepared(ref w)?;*builder=candidate;return .ok(index);
+}
+
+// Independent whole-collection comparison path.
+pub fn Result<Index,literals::Error> collect_scoped_raw(ref mut images::Builder builder,ref u8[] source,ref context::Table scope){
     if(scope.modules!=0 && !context::valid(source,scope)){return .err(source_error(5,0));}
     if(source.len>4096){return .err(source_error(4,4096));}
     if(!text::validate_utf8(source).is_ok){return .err(source_error(1,0));}

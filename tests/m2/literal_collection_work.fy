@@ -45,10 +45,11 @@ fn Result<raw::Index,literals::Error> run(ref u8[] source,ref context::Table sco
 }
 fn void same(ref u8[] source,ref context::Table scope,ref images::Builder original){
     var images::Builder expected=*original;var images::Builder actual=fresh(0);var images::Builder observed=*original;
-    let Result<raw::Index,literals::Error> reference=raw::collect_scoped(ref mut expected,source,scope);
+    let Result<raw::Index,literals::Error> reference=raw::collect_scoped_raw(ref mut expected,source,scope);
     let Result<raw::Index,literals::Error> staged=run(source,scope,ref observed,ref mut actual);
     same_builder(original,ref observed);same_result(reference,staged);
     if(reference.is_ok){same_builder(ref expected,ref actual);}else{same_builder(original,ref expected);}
+    var images::Builder adapter=*original;same_result(reference,raw::collect_scoped(ref mut adapter,source,scope));same_builder(ref expected,ref adapter);
 }
 @test fn void cooked_dedup_comments_unicode_and_scoped_eof_match(){
     var images::Builder b=fresh(4096);assert(images::intern_bytes(ref mut b,b"seed").is_ok);let context::Table empty=context::empty();
