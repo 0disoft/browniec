@@ -31,6 +31,9 @@ in separate advances; unused credit cannot accumulate into a later scan.
 | `signature_parse_work` | One function/parameter metadata transition or one separately resumed annotation/discovery/name/body child; duplicate comparisons use at most 64 bytes. |
 | `source_state_work` | A context-authentication child, one module/import row, or fixed scoped-lexer preparation. |
 | `function_scan_work` | One single-source/indexed declaration transition or one signature/skip/context/token child; publish only the complete Table. |
+| `record_fields_work` | One source-state/type/name child, field metadata transition or at most 64 nominal/duplicate-name comparisons. |
+| `struct_scan_work` | One declaration/field/layout child or declaration-name comparison; all declaration syntax is checked before type resolution. |
+| `struct_layout_work` (reused) | Fixed scratch initialization, one sixteen-slot row, at most sixteen dependency visits, or one node of at most sixteen fields. |
 
 The owner pins the exact source, Index/context and query across advances.
 States are copyable analysis scratch, not independent authority to execute or
@@ -97,22 +100,44 @@ aggregate graphs remain structurally equivalent after generated identifier
 renumbering. Core/Cursor/Machine remain 172400/1184/1792 bytes. The preceding
 foundation receipts continue to describe their own frozen snapshots.
 
+## Struct declaration, field and layout integration
+
+Owning `struct_source::scan` and `scan_scoped` now drain `struct_scan_work`.
+The first pass retains declaration-name/body spans and validates every member
+syntax (and single-source function skip) before any field type is resolved.
+The second pass resolves nominal/scalar fields and duplicate field names; the
+existing layout kernel then checks the complete catalog and dependency graph.
+Only the finished Table is available through `prepared`.
+
+Preserve raw quirks as well as successful tables: single-source layout errors
+point to the first declaration, while scoped errors point to the first failing
+root. A scoped packed span may be only a prefix of the actual lexer token;
+primitive words must still query that metadata. The primitive lookup shortcut
+is restricted to syntax-checked unscoped declaration names. Fixed field-frame/
+catalog copies bridge sibling-loan restrictions within logical framing; they
+do not establish instrumented byte/CPU bounds.
+
+The [record evidence](../evidence/runtime-compiler-records-windows-20261111.json)
+records two new kernels, six frozen groups/profile and six current owning adapter
+groups/profile. Engine development/O2 pass default 1MiB/4KiB stacks and zero exit
+SDK heap. All 329 Engine inputs match `da8fe2c`; 321 production modules retain LF.
+Transport keeps 36 bindings/51 layouts and equivalent 176 aggregate graphs;
+Core/Cursor/Machine remain 172400/1184/1792 bytes. Prior source/signature evidence
+continues to describe its own frozen checkpoints.
+
 ## Required remaining lowering work
 
 The following semantic work remains atomic, even where its helpers drain stages:
 
-1. Typed/value function signatures and catalog preparation.
-2. Struct declaration collection, fields, nominal resolution, layouts, duplicate/
-   cycle checks. Untyped structural skipping and nominal discovery now have
-   child continuations; the existing `struct_layout_work` can be reused.
-3. Literal collection, image interning and final builder publication.
-4. Body-derived slice origin analysis, including its seventeen rounds and
+1. Literal collection, image interning and final builder publication/allocation.
+2. Typed/value function signatures and catalog preparation.
+3. Body-derived slice origin analysis, including its seventeen rounds and
    expression/atom/CALL/name/control-flow traversal.
-5. Array/record parameter/result catalog preparation.
-6. Function bodies, statements, operands, expressions and recursive control
+4. Array/record parameter/result catalog preparation.
+5. Function bodies, statements, operands, expressions and recursive control
    lowering. Use explicit continuations, not a metered whole `body` call.
-7. Final entry-call restrictions and output normalization, plus repeated raw
-   context validation outside the newly staged children.
+6. Final entry-call restrictions and output normalization, plus raw context/
+   nominal discovery outside the newly staged owners.
 
 Keep exact diagnostics/emitted IR, immutable originals and final-only publication
 while replacing these calls in small verified commits. The current authorization

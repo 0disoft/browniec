@@ -1,30 +1,27 @@
 # Local handoff for the next thread
 
 Current checkpoint: [private compiler source stages](compiler-source-stages.md).
-Fourteen source kernels now have continuations: immutable source collection,
-UTF-8 cuts, decoded literals, compact token-only literal scans, lexical and
-qualified-name lookahead, arbitrary context authentication, scoped name lookup
-and primitive/wrapper type parsing, plus annotation/discovery/skip/context and
-complete untyped single/indexed function scans. Owning signature adapters now
-compose these children. The owner pins exact immutable inputs and
-resets one fresh 4096-unit logical allowance for each advance. Parent token/name/
-type adapters still drain synchronously. This does not make whole source
-compilation resumable.
+Sixteen new source kernels now cover immutable source/UTF-8/literal/token/context/
+name/type foundations, complete untyped single/indexed function scans, and
+single-source/scoped struct scans. Record fields/types/names resume separately;
+layout validation reuses `struct_layout_work`. All declaration syntax is checked
+before field types. Private candidates remain unavailable until final checks.
 
-Raw collection/decoder/token/context/name/type helpers remain comparison paths.
-The foundation adapter suite retains eighteen groups per profile at its frozen
-checkpoint. The six signature kernels add seventeen frozen groups and six current
-integrated groups per profile; their receipts cover exact source/test/config
-hashes. Earlier unit receipts are
-frozen snapshots, not evidence for an unchanged complete tree. See the
+Owning adapters drain fresh 4096-unit stages synchronously; compilation is not
+public Pending. Raw signature/single/index/struct/field/layout helpers remain
+comparison paths. Preserve scoped packed-prefix lookup and the difference
+between single-source first-name and scoped first-failed-root diagnostics.
+
+The record slice passes six frozen groups/profile and six current owning adapter
+groups/profile. Engine development/O2 pass default 1MiB/4KiB stacks and zero SDK
+heap at exit. All 329 Engine inputs match `da8fe2c`; 321 production modules retain
+LF. Transport keeps 36 bindings/51 layouts and equivalent 176 aggregate graphs;
+Core/Cursor/Machine remain 172400/1184/1792 bytes. See [record evidence](../evidence/runtime-compiler-records-windows-20261111.json),
 [signature evidence](../evidence/runtime-compiler-signatures-windows-20261111.json)
 and [foundation evidence](../evidence/runtime-compiler-source-windows-20261111.json).
-Engine development/O2 pass default 1MiB/4KiB stacks and zero SDK heap at exit.
-All 327 Engine input hashes match integration `93f10db`; 319 production modules
-retain LF. Transport keeps 36 bindings/51 layouts; Core/Cursor/Machine remain
-172400/1184/1792 bytes.
-No timing or peak-stack improvement was measured. Instrumented diagnostic
-images are not acceptance receipts.
+Older unit results describe frozen snapshots, not the final whole tree. No
+wall-clock/peak-stack improvement was measured. Instrumented diagnostic images
+are not acceptance receipts.
 
 The preceding [twenty compiler proof kernels](runtime-authority-metadata-stages.md#compiler-proof-stages)
 remain connected to owning input/output and borrowed-return compilation. The
@@ -37,12 +34,11 @@ and [lifecycle evidence](../evidence/runtime-lifecycle-windows-20261110.json).
 
 ## Required continuation of the authorized lowering slice
 
-1. Struct declarations/fields/nominal layouts/cycles/duplicates. Reuse the staged
-   skip/name/context helpers and existing `struct_layout_work`; preserve all
-   declaration syntax checks before resolving any field types/layouts.
-2. Literal collection/interning with final-only builder publication; typed/value
-   signature and catalog preparation remain separate from the completed untyped
-   signature scans.
+1. Literal collection/interning with final-only builder publication. Pin the
+   original Builder and use separate private candidate/control banks; preserve
+   whole-source UTF-8-before-tokenization and Source/Image error ordering.
+2. Typed/value signature and catalog preparation remain separate from completed
+   untyped signature and struct scans.
 3. Slice origin inference, preserving all seventeen rounds and exact error
    order, with expression/atom/CALL/name/control-flow continuations.
 4. Aggregate parameter/result preparation; then body/statement/expression/control

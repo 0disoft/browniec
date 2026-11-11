@@ -1,0 +1,310 @@
+{
+  "schema": "browniec.runtime-compiler-record-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-11T11:21:18.977593+00:00",
+  "verifiedCommit": "da8fe2c656dfc9338ff3aed6322e50a7061c2513",
+  "implementationCommits": [
+    "2c939ba6c060bcfe2be528001b93dd90ff4e4c75",
+    "d050ab555dcb925230d47a6562636e111c472bcf",
+    "da8fe2c656dfc9338ff3aed6322e50a7061c2513"
+  ],
+  "scope": "Complete private untyped single-source/scoped struct declaration, field resolution and layout validation; existing layout kernel reused; owning adapters drain synchronously",
+  "sourceLoweringComplete": false,
+  "structSourceScanComplete": true,
+  "publicPendingCompile": false,
+  "predecessorEvidence": "docs/evidence/runtime-compiler-signatures-windows-20261111.json",
+  "compiler": {
+    "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+    "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+    "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false"
+  },
+  "msvc": {
+    "version": "14.51.36231",
+    "sdk": "10.0.26100.0",
+    "compilerSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+    "overrides": false
+  },
+  "frozenUnitVerification": [
+    {
+      "kernel": "record_fields_work",
+      "verifiedCommit": "2c939ba6c060bcfe2be528001b93dd90ff4e4c75",
+      "profiles": [
+        {
+          "profile": "development",
+          "status": "passed",
+          "receipt": {
+            "path": "build/record-fields-work/development/receipt.json",
+            "sha256": "0088200f741399e06d2eee528e6dafb180cf1509281e7d9be0a5e9d789e306f4"
+          },
+          "nativeGroups": 3,
+          "frozenOwnerTestHashes": [
+            {
+              "path": "src/record_fields_work.fy",
+              "sha256": "745eff6379ab02780606c4a425267c06ab2c91b1c9b2fa77e7206625514929f9"
+            },
+            {
+              "path": "tests/m2/record_fields_work.fy",
+              "sha256": "5efa9403267f708f28dcf8780cc2ba985287d62f4d51d000937d81aadb1830cb"
+            }
+          ],
+          "ownerTestsMatchCommittedSnapshot": true
+        },
+        {
+          "profile": "release",
+          "status": "passed",
+          "receipt": {
+            "path": "build/record-fields-work/release/receipt.json",
+            "sha256": "4718d9546ee73015e998c61167f3ee2b80273c21e5cb761d72224eff37eb3b02"
+          },
+          "nativeGroups": 3,
+          "frozenOwnerTestHashes": [
+            {
+              "path": "src/record_fields_work.fy",
+              "sha256": "745eff6379ab02780606c4a425267c06ab2c91b1c9b2fa77e7206625514929f9"
+            },
+            {
+              "path": "tests/m2/record_fields_work.fy",
+              "sha256": "5efa9403267f708f28dcf8780cc2ba985287d62f4d51d000937d81aadb1830cb"
+            }
+          ],
+          "ownerTestsMatchCommittedSnapshot": true
+        }
+      ]
+    },
+    {
+      "kernel": "struct_scan_work",
+      "verifiedCommit": "d050ab555dcb925230d47a6562636e111c472bcf",
+      "profiles": [
+        {
+          "profile": "development",
+          "status": "passed",
+          "receipt": {
+            "path": "build/struct-scan-work/development/receipt.json",
+            "sha256": "af8001f6d6c8f277e5a20d1bb58b53d3258f77c27ddda808319319f2ff3c46fe"
+          },
+          "nativeGroups": 3,
+          "frozenOwnerTestHashes": [
+            {
+              "path": "src/struct_scan_work.fy",
+              "sha256": "376fb9cc9aeef7ce9eae126ace16fc07cc6355668fc58888df1c735993a6906e"
+            },
+            {
+              "path": "tests/m2/struct_scan_work.fy",
+              "sha256": "ff1ea5377232aff02ae6b2d0497ee983ed90317933111f38b2acdbf3c9b6c367"
+            }
+          ],
+          "ownerTestsMatchCommittedSnapshot": true
+        },
+        {
+          "profile": "release",
+          "status": "passed",
+          "receipt": {
+            "path": "build/struct-scan-work/release/receipt.json",
+            "sha256": "f3aac5e66ad1ca555913c2dbaa72d03bee78fddb321bb181be9ad862a15da5ae"
+          },
+          "nativeGroups": 3,
+          "frozenOwnerTestHashes": [
+            {
+              "path": "src/struct_scan_work.fy",
+              "sha256": "376fb9cc9aeef7ce9eae126ace16fc07cc6355668fc58888df1c735993a6906e"
+            },
+            {
+              "path": "tests/m2/struct_scan_work.fy",
+              "sha256": "ff1ea5377232aff02ae6b2d0497ee983ed90317933111f38b2acdbf3c9b6c367"
+            }
+          ],
+          "ownerTestsMatchCommittedSnapshot": true
+        }
+      ]
+    }
+  ],
+  "integratedAdapterVerification": [
+    {
+      "profile": "development",
+      "status": "passed",
+      "receipt": {
+        "path": "build/record-source-work/development/receipt.json",
+        "sha256": "ee4eea7d350ddf27102aac73e74696666a5f94ebd220019bd6b77085ee172b10"
+      },
+      "nativeGroups": 6,
+      "inputCount": 329,
+      "allInputHashesMatchCheckout": true,
+      "nativeInputMirrorVerified": true
+    },
+    {
+      "profile": "release",
+      "status": "passed",
+      "receipt": {
+        "path": "build/record-source-work/release/receipt.json",
+        "sha256": "6ffb3152d187704576ac35dd38d4f2e47981a07c1547c46a6638e99de4edb710"
+      },
+      "nativeGroups": 6,
+      "inputCount": 329,
+      "allInputHashesMatchCheckout": true,
+      "nativeInputMirrorVerified": true
+    }
+  ],
+  "currentOwnerHashes": [
+    {
+      "path": "src/record_fields_work.fy",
+      "sha256": "745eff6379ab02780606c4a425267c06ab2c91b1c9b2fa77e7206625514929f9"
+    },
+    {
+      "path": "src/struct_scan_work.fy",
+      "sha256": "ebb96412d51473ace55b2de60aa883cc363e4db736ec797c9634e61711628bc6"
+    },
+    {
+      "path": "src/struct_source.fy",
+      "sha256": "dc6077b6e8181a193e5d86d200926b50a900a71ba9eab5a9a7e7c11d3ebece9d"
+    },
+    {
+      "path": "src/declaration_skip_work.fy",
+      "sha256": "5ff5ad2d9607555162b077abee5bdf59f38b463b991dff8a870a6561eaec82cb"
+    },
+    {
+      "path": "src/struct_layout_work.fy",
+      "sha256": "863d85c0cc423e751447f942b12d28acf74fa719c8fc5d062a0379f8b4b40b80"
+    }
+  ],
+  "currentTestHashes": [
+    {
+      "path": "tests/m2/record_fields_work.fy",
+      "sha256": "5efa9403267f708f28dcf8780cc2ba985287d62f4d51d000937d81aadb1830cb"
+    },
+    {
+      "path": "tests/m2/struct_scan_work.fy",
+      "sha256": "fbda79eeeaa69c278f177380f9d7bf56b1de6e7fe0c9188699414a3e9b0cd980"
+    }
+  ],
+  "reusedKernel": "src/struct_layout_work.fy",
+  "engine": {
+    "receipt": {
+      "path": "build/runtime-engine/20261111T111359055879Z/receipt.json",
+      "sha256": "043b73b817a6df15c6a421ba745e3de34d016f5e76dd9572e9a3b87bde669b3b"
+    },
+    "inputCount": 329,
+    "sourceClosure": 315,
+    "allInputHashesMatchCheckout": true,
+    "rootLockUnchanged": true,
+    "compilerOverrides": false,
+    "runtimeEnvironment": "cleared; empty tool PATH",
+    "transportSha256": "16798316c8068bb4a52b1da019e46f21dc51da78c8216ec8afe7f553656ec64c",
+    "profiles": [
+      {
+        "profile": "development",
+        "artifact": {
+          "path": "build/runtime-engine/20261111T111359055879Z/development/runtime-engine.exe",
+          "sha256": "97031b36ee5c620ea9cdcb299f67aea76ace35e5fa885b288b435379392bcf6b",
+          "bytes": 11001344,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "exit": 0,
+        "liveHeapAllocationsAtExit": 0,
+        "controlMetrics": {
+          "cases": 6,
+          "smallHeapBytes": 7872,
+          "maximumHeapBytes": 62976,
+          "ownerBytes": 736
+        },
+        "preparationMetrics": {
+          "cacheBytes": 2248,
+          "storedBytes": 24264,
+          "previousStoredBytes": 22016,
+          "retainedVecExtraBytes": 17984,
+          "capturePlanBytes": 900,
+          "previousCacheBytes": 1344,
+          "capturePlanVecExtraBytes": 7232
+        },
+        "arrayFillMetrics": {
+          "arrayWorkBytes": 360,
+          "cursorBytes": 1184,
+          "machineBytes": 1792,
+          "coreBytes": 172400,
+          "pendingVecExtraBytes": 2880,
+          "callWorkBytes": 536,
+          "callPendingVecExtraBytes": 4288,
+          "returnWorkBytes": 48,
+          "returnPendingVecExtraBytes": 384,
+          "combinedPendingVecExtraBytes": 7552
+        },
+        "assertions": "native Fairy and C, no parsed trace"
+      },
+      {
+        "profile": "release",
+        "artifact": {
+          "path": "build/runtime-engine/20261111T111359055879Z/release/runtime-engine.exe",
+          "sha256": "503b2077b108efbd1099b046969aa550babf72ddc86a35706c4f47f3b2bae5b2",
+          "bytes": 4029952,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "exit": 0,
+        "liveHeapAllocationsAtExit": 0,
+        "controlMetrics": {
+          "cases": 6,
+          "smallHeapBytes": 7872,
+          "maximumHeapBytes": 62976,
+          "ownerBytes": 736
+        },
+        "preparationMetrics": {
+          "cacheBytes": 2248,
+          "storedBytes": 24264,
+          "previousStoredBytes": 22016,
+          "retainedVecExtraBytes": 17984,
+          "capturePlanBytes": 900,
+          "previousCacheBytes": 1344,
+          "capturePlanVecExtraBytes": 7232
+        },
+        "arrayFillMetrics": {
+          "arrayWorkBytes": 360,
+          "cursorBytes": 1184,
+          "machineBytes": 1792,
+          "coreBytes": 172400,
+          "pendingVecExtraBytes": 2880,
+          "callWorkBytes": 536,
+          "callPendingVecExtraBytes": 4288,
+          "returnWorkBytes": 48,
+          "returnPendingVecExtraBytes": 384,
+          "combinedPendingVecExtraBytes": 7552
+        },
+        "assertions": "native Fairy and C, no parsed trace"
+      }
+    ]
+  },
+  "transportReview": {
+    "declarations": 36,
+    "layouts": 51,
+    "aggregateGraphs": 176,
+    "normalizedShapeChanges": 0,
+    "normalization": "generated identifiers with recursive bijective aggregate graph comparison",
+    "added": [
+      "src/record_fields_work.fy",
+      "src/struct_scan_work.fy"
+    ],
+    "removed": [],
+    "previousContractSha256": "c16c40bfb9b57139523bfb76b94ce8325978ed28b5e2bb3e0c942ba95b15d161",
+    "candidateContractSha256": "e0215b75ae333eb55aeebbb0a38714cd6b08a590a46cc5692a0960ba8be97d95"
+  },
+  "productionSources": {
+    "count": 321,
+    "allLf": true
+  },
+  "remainingAtomicLowering": [
+    "Typed/value signature and catalog preparation",
+    "Literal collection/image interning, builder publication and final image allocation/copy",
+    "Seventeen-round source origin inference and expression/atom/CALL/name/control-flow traversal",
+    "Aggregate parameter/result catalogs",
+    "Recursive body/statement/control/expression/operand lowering",
+    "Final entry-call checks, output normalization and raw context validation outside staged children"
+  ],
+  "limitations": [
+    "Pin exact immutable source/scope and private candidates; prepared analysis tables are not executable authority",
+    "Validate all declarations before field types; preserve single-source first-name and scoped first-failed-root layout error positions",
+    "Scoped primitive words still query possibly forged packed prefix spans; only unscoped syntax-checked record names allow the primitive lookup shortcut",
+    "Every advance uses one fresh 4096-unit logical allowance; name comparisons use at most 64 bytes; fixed frame/catalog copies do not establish instrumented field/byte/CPU bounds",
+    "Initial fixed scratch construction remains atomic; older unit receipts describe their frozen snapshots",
+    "Public Pending compile, time/peak-stack improvements and R02-R05 closure remain unimplemented",
+    "Separate public Fuel CLI matrix and broader completion were not run/resumed; local only, no push/release/deployment"
+  ]
+}

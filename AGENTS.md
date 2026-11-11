@@ -1,22 +1,23 @@
-- Latest source signature checkpoint (2026-11-11): [source stages](docs/engineering/compiler-source-stages.md)
-  fourteen private kernels cover source collection/UTF-8/literal/lexical/context/
-  name/type foundations and complete untyped function declaration/signature
-  scanning. Type annotations, single-source nominal discovery, struct/body
-  skipping, duplicate-name chunks and per-module lexer setup all resume as
-  children. Owning adapters drain fresh 4096-unit logical stages synchronously.
-  The six new kernels pass seventeen frozen native groups per profile; current
-  owning adapters pass six groups. Engine development/O2 pass default 1MiB/4KiB
-  stacks, zero exit SDK heap and all 327 input hash checks at `93f10db`. All 319
-  production modules retain LF. Transport keeps 36 bindings/51 layouts and
-  Core/Cursor/Machine 172400/1184/1792 bytes. Raw signature/single/index oracles
-  remain separate. See [signature evidence](docs/evidence/runtime-compiler-signatures-windows-20261111.json)
+- Latest source record checkpoint (2026-11-11): [source stages](docs/engineering/compiler-source-stages.md)
+  sixteen private kernels now cover source foundations, complete untyped
+  declaration/signature scans and complete single-source/scoped struct scans.
+  Record field names/types and duplicate comparisons resume independently;
+  layout validation reuses `struct_layout_work`. All declaration syntax precedes
+  field resolution. Packed scoped prefix spans retain their raw lookup behavior.
+  The two new kernels pass six frozen groups/profile; owning record adapters
+  pass six. Engine development/O2 pass default 1MiB/4KiB stacks, zero exit SDK
+  heap and all 329 input hash checks at `da8fe2c`. All 321 production modules
+  retain LF. Transport keeps 36 bindings/51 layouts and Core/Cursor/Machine
+  172400/1184/1792 bytes. Raw source scans and field/layout helpers remain
+  comparison oracles. See [record evidence](docs/evidence/runtime-compiler-records-windows-20261111.json),
+  [signature evidence](docs/evidence/runtime-compiler-signatures-windows-20261111.json)
   and [foundation evidence](docs/evidence/runtime-compiler-source-windows-20261111.json).
-  This remains partial lowering: typed/value signatures, struct fields/layouts,
-  literal interning, origins, aggregate catalogs, recursive bodies and final
-  semantic checks still need continuations. No public Pending compile, measured
-  time/peak-stack improvement or public R02-R05 closure. The preceding twenty
-  compiler proof kernels remain integrated. The lowering slice stays authorized;
-  broader completion stays paused. Local only; no push, release or deployment.
+  Lowering remains partial: typed/value signatures, literal collection/interning,
+  source origins, aggregate catalogs, recursive bodies and final semantic checks
+  still need continuations. No public Pending compile, measured time/peak-stack
+  improvement or public R02-R05 closure. The preceding compiler proof kernels
+  remain integrated. Lowering stays authorized; broader completion stays paused.
+  Local only; no push, release or deployment.
 
 # Brownie C agent guidance
 
