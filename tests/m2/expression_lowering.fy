@@ -15,9 +15,14 @@ fn void run(ref u8[] source){var lexer::State s=lexer::empty();assert(lexer::nex
         assert(work::advance(source,ref mut s,ref mut p,ref mut w,ref mut meter).is_ok);
         assert(w.visits==visits && s.cursor==cursor && p.count==count && w.used==used && meter.total==total);
         assert(budget::reset(ref mut meter,0).is_ok);assert(work::advance(source,ref mut s,ref mut p,ref mut w,ref mut meter).is_ok);
-        assert(w.visits-visits<=1);if(w.waiting){let work::Frame f=work::current(ref w);let i64 value=s.value;
-            assert(s.kind==1 && lexer::next(source,ref mut s).is_ok);let usize reg=switch(ir::integer(ref mut p,value,if(f.expected==0){1}else{f.expected},cursor)){case .ok(v):{v}case .err(_):{assert(false);0}};
-            assert(work::resume(ref mut w,reg).is_ok && !work::resume(ref mut w,reg).is_ok);}
+        assert(w.visits-visits<=1);if(w.waiting){let work::Frame f=work::current(ref w);
+            let usize before=w.visits;let usize position=s.cursor;assert(budget::reset(ref mut meter,0).is_ok);
+            assert(work::advance(source,ref mut s,ref mut p,ref mut w,ref mut meter).is_ok && meter.last==0 && w.visits==before && s.cursor==position);
+            if(w.request==2){let usize initial=w.value;assert(work::resume(ref mut w,initial).is_ok);}
+            else if(s.kind==40){assert(work::group(ref mut w,f.expected).is_ok && !work::group(ref mut w,f.expected).is_ok);}
+            else{let i64 value=s.value;let usize at=s.begin;
+                assert(s.kind==1 && lexer::next(source,ref mut s).is_ok);let usize reg=switch(ir::integer(ref mut p,value,if(f.expected==0){1}else{f.expected},at)){case .ok(v):{v}case .err(_):{assert(false);0}};
+                assert(work::resume(ref mut w,reg).is_ok && !work::resume(ref mut w,reg).is_ok);}}
         turns+=1;
     }
     let usize result=switch(work::prepared(ref w)){case .ok(v):{v}case .err(_):{assert(false);0}};assert(s.kind==59);
@@ -35,3 +40,5 @@ fn void run(ref u8[] source){var lexer::State s=lexer::empty();assert(lexer::nex
     w=work::begin(32,1,1);assert(budget::reset(ref mut meter,0).is_ok);
     assert(work::advance(source,ref mut s,ref mut p,ref mut w,ref mut meter).is_ok && w.waiting && p.count==0);
 }
+
+@test fn void group_children_share_the_pratt_stack_and_resume_one_tail(){run(b"(20+1)*2;");run(b"((20+11*2));");}

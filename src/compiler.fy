@@ -1115,15 +1115,56 @@ fn Result<usize, errors::Error> expression(ref u8[] source, ref mut lexer::State
     return .ok(left);
 }
 
+// Read-only compatibility classification is an explicit child, outside the
+// Pratt allowance. Projection/conditional atoms keep their original protocols.
+fn Result<bool,errors::Error> ordinary_group(ref u8[] source,ref lexer::State s,
+    ref ir::Program p,ref locals::Table names,ref functions::Table signatures){
+    if(s.kind!=40 || arm_syntax::conditional_atom(source,s)?.valid){return .ok(false);}
+    if(record_expressions::projected(source,s,p,names,signatures)?){return .ok(false);}
+    if(array_expressions::projected(source,s,p,names,signatures)?){return .ok(false);}
+    if(array_locals::projection(source,s)?.kind!=0){return .ok(false);}
+    if(signatures.literals.enabled && static_source::grouped_projection(source,s,names)?){return .ok(false);}
+    return .ok(true);
+}
+// Resume the converted tail without re-evaluating the completed group/CALL.
+// Postfix propagation/inspection and casts remain explicit legacy children.
+fn Result<usize,errors::Error> converted_tail(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table names,usize initial,u8 result_type){
+    var usize value=initial;
+    while(s.kind==63 || s.kind==46){let usize at=s.begin;
+        if(s.kind==46){var lexer::State look=lexer::snapshot(s);let usize next=lexer::next(source,ref mut look)?;
+            if(look.kind==46){break;}let usize dot=lexer::next(source,s)?;
+            if(!word_is(source,s,b"is_ok")){return .err(errors::make(3,at));}
+            let usize member=lexer::next(source,s)?;value=result_is_ok(p,value,at)?;continue;}
+        let usize next=lexer::next(source,s)?;value=propagation::lower(p,names,value,result_type,at)?;
+    }
+    while(word_is(source,s,b"as")){let usize at=s.begin;let usize keyword=lexer::next(source,s)?;
+        let u8 target=types::parse(source,s)?;value=ir::widen(p,value,target,at)?;}
+    return .ok(value);
+}
+fn Result<usize,errors::Error> complete_expression_operand(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table names,ref functions::Table signatures,u8 result_type,
+    usize structure,ref mut loops::State flow,ref mut expression_work::State w){
+    if(w.done || !w.waiting){return .err(errors::make(5,s.begin));}
+    let expression_work::Frame f=expression_work::current(w);
+    if(w.request==2){let usize initial=w.value;let usize value=converted_tail(source,s,p,names,initial,result_type)?;
+        return expression_work::resume(w,value);}
+    if(w.request!=1){return .err(errors::make(5,s.begin));}
+    // Preserve converted -> primary -> operand lookahead/error order.
+    let bool explicit=casts::follows(source,s)?;let u8 expected=if(explicit){0}else{f.expected};
+    let u8 context=if(expected!=0 && !types::tagged(expected) && result_property(source,s)?){0}else{expected};
+    if(s.kind==40 && ordinary_group(source,s,p,names,signatures)?){return expression_work::group(w,context);}
+    let usize initial=operand(source,s,p,names,signatures,f.depth,context,result_type,structure,flow)?;
+    let usize value=converted_tail(source,s,p,names,initial,result_type)?;return expression_work::resume(w,value);
+}
+
 pub fn Result<usize,errors::Error> expression_staged(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,u8 minimum,
     usize depth,u8 expected,u8 result_type,usize structure,ref mut loops::State flow){
     var expression_work::State w=expression_work::begin(depth,minimum,expected);var metadata_budget::State meter=metadata_budget::empty();
     while(!w.done){let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
         let bool done=expression_work::advance(source,s,p,ref mut w,ref mut meter)?;
-        if(w.waiting){let expression_work::Frame f=expression_work::current(ref w);
-            let usize value=converted(source,s,p,table,signatures,f.depth,f.expected,result_type,structure,flow)?;
-            let usize completed=expression_work::resume(ref mut w,value)?;}
+        if(w.waiting){let usize completed=complete_expression_operand(source,s,p,table,signatures,result_type,structure,flow,ref mut w)?;}
     }return expression_work::prepared(ref w);
 }
 
@@ -2408,9 +2449,8 @@ fn Result<usize,errors::Error> statement_staged(ref u8[] source,ref mut lexer::S
     var metadata_budget::State meter=metadata_budget::empty();
     while(!w.done){let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
         let bool done=semantic_work::advance(source,s,p,names,ref mut w,ref mut meter)?;
-        if(w.request==1){let expression_work::Frame f=expression_work::current(ref w.expression);
-            let usize value=converted(source,s,p,names,signatures,f.depth,f.expected,result_type,structure,flow)?;
-            let usize completed=semantic_work::resume(ref mut w,1,value,false)?;
+        if(w.request==1){let usize completed=complete_expression_operand(source,s,p,names,signatures,result_type,structure,flow,ref mut w.expression)?;
+            let usize continued=semantic_work::continue_operand(ref mut w)?;
         }else if(w.request==2){let usize value=statement(source,s,p,names,signatures,terminator,result_type,expr_depth,structure,flow)?;
             let usize completed=semantic_work::resume(ref mut w,2,value,false)?;}
     }return semantic_work::prepared(ref w);
@@ -2429,9 +2469,8 @@ fn Result<bool,errors::Error> return_staged(ref u8[] source,ref mut lexer::State
     var metadata_budget::State meter=metadata_budget::empty();
     while(!w.done){let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
         let bool done=semantic_work::advance(source,s,p,names,ref mut w,ref mut meter)?;
-        if(w.request==1){let expression_work::Frame f=expression_work::current(ref w.expression);
-            let usize value=converted(source,s,p,names,signatures,f.depth,f.expected,result_type,depth,flow)?;
-            let usize completed=semantic_work::resume(ref mut w,1,value,false)?;
+        if(w.request==1){let usize completed=complete_expression_operand(source,s,p,names,signatures,result_type,depth,flow,ref mut w.expression)?;
+            let usize continued=semantic_work::continue_operand(ref mut w)?;
         }else if(w.request==2){let bool stopped=control_return(source,s,p,names,signatures,result_type,depth,expr_depth,flow)?;
             let usize completed=semantic_work::resume(ref mut w,2,0,stopped)?;}
     }let usize value=semantic_work::prepared(ref w)?;return .ok(w.stopped);

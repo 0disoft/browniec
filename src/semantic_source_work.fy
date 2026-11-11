@@ -41,6 +41,11 @@ pub fn Result<usize,errors::Error> resume(ref mut State w,u8 request,usize value
     if(request!=2){return .err(errors::make(5,w.at));}
     w.value=value;w.stopped=stopped;w.done=true;return .ok(value);
 }
+// The owning operand service has either installed a continuation or resumed it.
+pub fn Result<usize,errors::Error> continue_operand(ref mut State w){
+    if(w.done || w.request!=1 || w.expression.waiting){return .err(errors::make(5,w.at));}
+    w.request=0;return .ok(0);
+}
 pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
     ref mut locals::Table names,ref mut State w,ref mut budget::State meter){
     if(w.done){return .ok(true);}if(meter.last!=0 || w.request!=0){return .ok(false);}

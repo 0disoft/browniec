@@ -153,3 +153,16 @@ fn bytes::Buffer declarations(usize count){var bytes::Buffer s=bytes::empty();as
     let bytes::Buffer full=declarations(64);compare(bytes::view(ref full),true);
     let bytes::Buffer over=declarations(65);compare(bytes::view(ref over),false);
 }
+
+@test fn void grouped_operands_match_raw_ir_and_preserve_postfix_cast_context(){
+    compare(b"module main;fn i32 main(){return ((20+1)*2);}",true);
+    compare(b"module main;fn i32 main(){let i32 x=((20+11*2));return x;}",true);
+    compare(b"module main;fn i32 main(){if((false && 40/0==0) || (20+22==42)){return 42;}else{return 0;}}",true);
+    compare(b"module main;fn i32 main(){let i64 x=(20+22) as i64;return 42;}",true);
+    compare(b"module main;fn i32 main(){let Result<i32,bool> r=.ok(1);if((r).is_ok){return 42;}else{return 0;}}",true);
+    compare(b"module main;fn i32 main(){let i32[2] a=[20,22];return (a)[0]+(a)[1];}",true);
+    compare(b"module main;fn i32 main(){return ();}",false);
+    compare(b"module main;fn i32 main(){return (20+22;}",false);
+    compare(b"module main;fn i32 main(){return (true+false);}",false);
+    compare(b"module main;fn i32 main(){return (42).nope;}",false);
+}
