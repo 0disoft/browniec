@@ -1,4 +1,6 @@
 module function_scan_work;
+import value_signature_work as value_signatures;
+import value_properties as value_properties;
 import functions as raw;
 import signature_parse_work as signatures;
 import declaration_skip_work as declarations;
@@ -94,4 +96,15 @@ pub fn Result<raw::Table,errors::Error> scan_indexed(ref u8[] source,ref context
     var State w=indexed(selected,returns);var budget::State meter=budget::empty();
     while(!w.done){let usize allowance=budget::reset(ref mut meter,0)?;let bool done=advance_indexed(source,scope,index,ref mut w,ref mut meter)?;}
     return prepared(ref w);
+}
+
+// Typed single-source declarations share the proven signature/table coordinator;
+// only annotation preparation receives the separate private value catalog bank.
+pub fn Result<bool,errors::Error> advance_values(ref u8[] source,ref mut value_properties::Catalog catalog,
+    ref mut value_signatures::State value,ref mut State w,ref mut budget::State meter){
+    if(w.done){return .ok(true);}if(meter.last!=0){return .ok(false);}if(w.mode!=0){return .err(errors::make(5,0));}
+    if(w.parsing){var signatures::State frame=w.signature;
+        let Result<bool,errors::Error> result=signatures::advance_values(source,ref mut w.result,catalog,value,ref mut frame,meter);w.signature=frame;
+        w.token=signatures::observed(ref w.signature);let bool done=result?;if(done){w.parsing=false;w.phase=4;}return .ok(false);}
+    return advance_single(source,w,meter);
 }

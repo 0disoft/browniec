@@ -1,4 +1,6 @@
 module signature_parse_work;
+import value_signature_work as value_signatures;
+import value_properties as value_properties;
 import functions as functions;
 import lexer as lexer;
 import lexer_work as tokens;
@@ -104,4 +106,16 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut functions::Tab
     if(w.phase==18){let usize f=w.function;table.bodies[f]=w.token.begin;let lexer::State current=w.token;
         w.body=skipping::body(current);w.phase=19;return .ok(false);}
     return .err(errors::make(5,w.token.begin));
+}
+
+// The external value parser bank is reused per annotation. Legacy signature
+// metadata, duplicate names and body skipping keep their original continuations.
+pub fn Result<bool,errors::Error> advance_values(ref u8[] source,ref mut functions::Table table,
+    ref mut value_properties::Catalog catalog,ref mut value_signatures::State value,ref mut State w,ref mut budget::State meter){
+    if(w.done){return .ok(true);}if(meter.last!=0){return .ok(false);}
+    if(w.phase==2 || w.phase==8){let Result<bool,errors::Error> result=annotations::advance_values(source,ref table.context,catalog,value,ref mut w.annotation,meter);
+        w.token=annotations::observed(ref w.annotation);let bool done=result?;
+        if(done){let annotations::Annotation annotation=annotations::prepared(ref w.annotation)?;
+            if(w.phase==2){w.result=annotation;w.phase=3;}else{w.parameter=annotation;w.phase=9;}}return .ok(false);}
+    return advance(source,table,w,meter);
 }

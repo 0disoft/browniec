@@ -1,4 +1,7 @@
 module signature_type_work;
+import value_signature_work as value_signatures;
+import value_signature_source as value_types;
+import value_properties as value_properties;
 import lexer as lexer;
 import lexer_work as tokens;
 import type_parse_work as primitives;
@@ -88,4 +91,17 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref context::Table sco
     if(w.phase==11){if(w.token.kind!=93){return .err(errors::make(2,w.token.begin));}next(w,12);return .ok(false);}
     if(w.phase==12){w.done=true;return .ok(true);}
     return .err(errors::make(5,w.at));
+}
+
+// Typed annotations reuse legacy ref/void transitions without enlarging the
+// legacy continuation. The owner supplies a separate value parser scratch bank.
+pub fn Result<bool,errors::Error> advance_values(ref u8[] source,ref context::Table scope,
+    ref mut value_properties::Catalog catalog,ref mut value_signatures::State value,ref mut State w,ref mut budget::State meter){
+    if(w.done){return .ok(true);}if(meter.last!=0){return .ok(false);}
+    if(w.phase==0 && !word(source,ref w.token,b"ref") && !(w.allow_void && word(source,ref w.token,b"void"))){
+        if(!budget::admit(meter,4096,w.at)?){return .ok(false);}let lexer::State token=w.token;*value=value_signatures::begin(token);w.phase=15;return .ok(false);}
+    if(w.phase==15){let Result<bool,errors::Error> result=value_signatures::advance(source,catalog,value,meter);w.token=value_signatures::observed(value);
+        let bool done=result?;if(done){let value_types::Type type=value_signatures::prepared(value)?;
+            w.result.tag=type.tag;w.result.length=type.length;w.result.record=type.record;w.done=true;return .ok(true);}return .ok(false);}
+    return advance(source,scope,w,meter);
 }

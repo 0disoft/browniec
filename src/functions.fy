@@ -92,7 +92,7 @@ fn Result<value_types::Type,errors::Error> annotation(ref u8[] source,ref mut le
     ref Table table,bool values,ref mut value_properties::Catalog catalog,bool slice,bool nothing){
     if(slice){return .ok(value_types::Type{.tag=0,.length=0,.record=0});}
     if(nothing){let usize keyword=lexer::next(source,s)?;return .ok(value_types::Type{.tag=13,.length=0,.record=0});}
-    if(values){return value_types::parse(source,s,catalog);}
+    if(values){return value_types::parse_raw(source,s,catalog);}
     let u8 record=record_type(source,s,ref table.context)?;
     let u8 tag=if(record==0){types::parse(source,s)?}else{let usize name=lexer::next(source,s)?;0};
     if(record!=0 && s.kind==60){return .err(errors::make(3,s.begin));}
@@ -100,7 +100,7 @@ fn Result<value_types::Type,errors::Error> annotation(ref u8[] source,ref mut le
 }
 // Typed signature candidates do not enable body compilation or VM admission.
 // Copy back the complete catalog only after every source declaration succeeds.
-pub fn Result<Table,errors::Error> scan_values(ref u8[] source,ref mut value_properties::Catalog catalog){
+pub fn Result<Table,errors::Error> scan_values_raw(ref u8[] source,ref mut value_properties::Catalog catalog){
     var value_properties::Catalog prepared=value_properties::empty();
     {let structs::Table records=structs::scan(source)?;prepared.records=records.layouts;}
     let Table table=scan_mode(source,false,true,ref mut prepared)?;
@@ -282,3 +282,6 @@ pub fn Result<Table,errors::Error> scan_single_untyped_raw(ref u8[] source,bool 
 pub fn Result<Table,errors::Error> scan_index_untyped_raw(ref u8[] source,ref context::Table scope,ref modules::Index index,usize selected,bool returns){
     return scan_index_raw(source,scope,index,selected,returns);
 }
+
+// Compatibility owner while the independently staged scanner is verified.
+pub fn Result<Table,errors::Error> scan_values(ref u8[] source,ref mut value_properties::Catalog catalog){return scan_values_raw(source,catalog);}
