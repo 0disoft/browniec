@@ -10,10 +10,11 @@ import metadata_budget as budget;
 pub struct State { tokens::State scan; lexer::State token; usize fields; usize depth; usize end;
     u8 mode; u8 phase; u8 resume; bool waiting; bool done; }
 fn State seed(lexer::State token,u8 mode){return State{.scan=tokens::begin(token),.token=token,
-    .fields=0,.depth=if(mode==3){1}else{0},.end=0,.mode=mode,.phase=if(mode==3){5}else{0},.resume=0,.waiting=false,.done=false};}
+    .fields=0,.depth=if(mode==3){1}else{0},.end=0,.mode=mode,.phase=if(mode==3){5}else if(mode==4){2}else{0},.resume=0,.waiting=false,.done=false};}
 pub fn State structure(lexer::State token){return seed(token,1);}
 pub fn State function(lexer::State token){return seed(token,2);}
 pub fn State body(lexer::State token){return seed(token,3);}
+pub fn State members(lexer::State token){return seed(token,4);}
 fn void next(ref mut State w,u8 phase){let lexer::State current=w.token;
     w.scan=tokens::begin(current);w.resume=phase;w.waiting=true;}
 fn bool name(ref u8[] source,ref lexer::State s){return s.kind==2 && !locals::reserved(source[s.begin..s.end]);}

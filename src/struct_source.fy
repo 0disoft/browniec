@@ -210,3 +210,7 @@ pub fn Result<Location,errors::Error> locate_scoped(ref u8[] source,ref context:
 pub fn Result<usize,errors::Error> resolve_untyped_raw(ref u8[] source,ref mut Table table,usize record){
     return resolve(source,table,record);
 }
+
+// Raw whole-source/scoped oracles retain original declaration/type/layout order.
+pub fn Result<Table,errors::Error> scan_single_untyped_raw(ref u8[] source){return scan(source);}
+pub fn Result<Table,errors::Error> scan_scoped_untyped_raw(ref u8[] source,ref context::Table scope){return scan_scoped(source,scope);}
