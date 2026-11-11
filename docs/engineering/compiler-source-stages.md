@@ -5,7 +5,9 @@ owning compiler collects immutable module bytes through `source_context_work`;
 ordinary lexer, literal-decoder, scoped-name and primitive/wrapper-type calls
 drain their corresponding continuations synchronously. The complete proof
 continues through the [preceding proof kernels](runtime-authority-metadata-stages.md#compiler-proof-stages).
-This is a partial lowering checkpoint, not a resumable compiler coordinator.
+This remains partial lowering, rather than a resumable compiler coordinator.
+Untyped declaration/signature passes now compose the children below; typed/value
+signature preparation still follows its original synchronous path.
 
 ## Implemented boundaries
 
@@ -23,6 +25,12 @@ in separate advances; unused credit cannot accumulate into a later scan.
 | `source_context_check_work` | Validate one shape/metadata row or at most 64 bytes of a copyable, possibly forged name. |
 | `source_name_work` | Resume context authentication, query tokenization, one alias/declaration row, or at most 64 spelling comparisons. |
 | `type_parse_work` | One primitive/wrapper grammar transition or a separately resumed lexer stage. |
+| `signature_type_work` | One array/borrow/nominal annotation transition, a primitive/name/token child, or an explicit unscoped nominal discovery request. |
+| `declaration_skip_work` | One struct field/body-brace transition or lexical child, preserving the existing sixteen-field and depth-33 limits. |
+| `struct_locate_work` | A single-source declaration/header/skip transition or at most 64 nominal spelling comparisons. |
+| `signature_parse_work` | One function/parameter metadata transition or one separately resumed annotation/discovery/name/body child; duplicate comparisons use at most 64 bytes. |
+| `source_state_work` | A context-authentication child, one module/import row, or fixed scoped-lexer preparation. |
+| `function_scan_work` | One single-source/indexed declaration transition or one signature/skip/context/token child; publish only the complete Table. |
 
 The owner pins the exact source, Index/context and query across advances.
 States are copyable analysis scratch, not independent authority to execute or
@@ -61,29 +69,53 @@ bijective comparison of 176 referenced aggregate graphs confirms unchanged
 structure despite generated C identifier renumbering. Core/Cursor/Machine
 remain 172400/1184/1792 bytes.
 
+## Untyped declaration and signature integration
+
+Owning `functions::scan` / `scan_reference_returns` and scoped/input signature
+adapters now drain `function_scan_work`. Untyped single-source and immutable
+module inputs retain exact entry selection, record order, pub/import resolution,
+parameter duplicates and reference-return candidates. Raw signature/single/index
+scans remain independent ordering oracles. The unscoped compatibility adapter
+keeps the raw fallback above 4096 bytes; typed/value signature catalogs remain
+on their original path.
+
+Every declaration/signature child resumes separately, including unscoped nominal
+discovery. Struct/function skipping preserves early-match discovery and exactly
+the previous brace/field limits. Private partial candidate metadata and observed
+lexer failure state also match the raw signature oracle. A fixed signature
+scratch copy bridges the compiler's sibling mutable-loan restriction without
+replaying source or banking credits. This fixed framing is part of the logical
+allowance, not an instrumented copy/CPU guarantee.
+
+The [signature evidence](../evidence/runtime-compiler-signatures-windows-20261111.json)
+records six new kernels with seventeen frozen groups per profile and six current
+integrated groups per profile. Engine development/O2 pass default 1MiB/4KiB
+stacks, exact Fuel/output/errors, compile/reuse, moves/pins, terminal/cancel and
+zero SDK heap at exit. All 327 Engine inputs match integration `93f10db`; all 319
+production modules retain LF. The 36 typed bindings/51 layouts and 176 referenced
+aggregate graphs remain structurally equivalent after generated identifier
+renumbering. Core/Cursor/Machine remain 172400/1184/1792 bytes. The preceding
+foundation receipts continue to describe their own frozen snapshots.
+
 ## Required remaining lowering work
 
-The following calls still perform semantic scans or recursive lowering
-atomically, even when their token/type/name helpers drain private stages:
+The following semantic work remains atomic, even where its helpers drain stages:
 
-1. Function signatures and declaration iteration (`functions::scan_mode` and
-   `scan_index`), parameter duplicate checks, struct/body skipping and value
-   signature/catalog preparation.
-2. Struct members, nominal resolution, layouts, duplicate/cycle checks and
-   unscoped declaration discovery (`struct_source`).
+1. Typed/value function signatures and catalog preparation.
+2. Struct declaration collection, fields, nominal resolution, layouts, duplicate/
+   cycle checks. Untyped structural skipping and nominal discovery now have
+   child continuations; the existing `struct_layout_work` can be reused.
 3. Literal collection, image interning and final builder publication.
 4. Body-derived slice origin analysis, including its seventeen rounds and
    expression/atom/CALL/name/control-flow traversal.
 5. Array/record parameter/result catalog preparation.
 6. Function bodies, statements, operands, expressions and recursive control
-   lowering. These need explicit continuations; charging one whole `body` call
-   as a stage would not bound it.
-7. Final entry-call restrictions and output return normalization, plus repeated
-   context validation/state setup outside the new lookup kernel.
+   lowering. Use explicit continuations, not a metered whole `body` call.
+7. Final entry-call restrictions and output normalization, plus repeated raw
+   context validation outside the newly staged children.
 
-Keep exact diagnostics and emitted IR, immutable originals and final-only
-publication while replacing these calls in small separately verified commits.
-The current authorization covers this lowering work; the broader completion
-goal remains paused. Public R02-R05 closure, post-proof cache planning,
-admission allocations and unrelated runtime discovery remain separate work.
-All changes and evidence here are local; no push, release or deployment.
+Keep exact diagnostics/emitted IR, immutable originals and final-only publication
+while replacing these calls in small verified commits. The current authorization
+covers this lowering work; broader completion stays paused. Public R02-R05
+closure, post-proof cache planning, admission allocations and unrelated runtime
+discovery remain separate work. Local only; no push, release or deployment.

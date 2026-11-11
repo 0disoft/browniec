@@ -285,13 +285,16 @@ receipts. No timing or peak-stack improvement is measured.
 
 ## Source lowering foundations
 
-The next authorized slice adds [eight source-stage kernels](compiler-source-stages.md)
+The authorized lowering slice adds [fourteen source-stage kernels](compiler-source-stages.md)
 for immutable source/context collection, UTF-8/literal/token scanning, scoped
-name lookup and primitive/wrapper type parsing. Owning adapters drain them
+name lookup, primitive/wrapper types and complete untyped declaration/signature
+scanning. Owning adapters drain them
 synchronously and preserve raw comparison helpers. This is a partial lowering
-checkpoint: signature, struct, literal collection/interning, origin inference,
+checkpoint: typed/value signatures, struct fields/layouts, literal collection/
+interning, origin inference,
 aggregate preparation, recursive body/control/expression and final semantic
-passes still need explicit continuations. See the [source-stage evidence](../evidence/runtime-compiler-source-windows-20261111.json).
+passes still need explicit continuations. See the [signature evidence](../evidence/runtime-compiler-signatures-windows-20261111.json)
+and [foundation evidence](../evidence/runtime-compiler-source-windows-20261111.json).
 
 ## Evidence and limits
 

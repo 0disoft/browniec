@@ -1,21 +1,26 @@
 # Local handoff for the next thread
 
 Current checkpoint: [private compiler source stages](compiler-source-stages.md).
-Eight lowering foundations have continuations: immutable source collection,
+Fourteen source kernels now have continuations: immutable source collection,
 UTF-8 cuts, decoded literals, compact token-only literal scans, lexical and
 qualified-name lookahead, arbitrary context authentication, scoped name lookup
-and primitive/wrapper type parsing. The owner pins exact immutable inputs and
+and primitive/wrapper type parsing, plus annotation/discovery/skip/context and
+complete untyped single/indexed function scans. Owning signature adapters now
+compose these children. The owner pins exact immutable inputs and
 resets one fresh 4096-unit logical allowance for each advance. Parent token/name/
 type adapters still drain synchronously. This does not make whole source
 compilation resumable.
 
 Raw collection/decoder/token/context/name/type helpers remain comparison paths.
-The combined adapter suite passes eighteen native groups per profile; its
-receipts cover exact final source/test/config hashes. Earlier unit receipts are
+The foundation adapter suite retains eighteen groups per profile at its frozen
+checkpoint. The six signature kernels add seventeen frozen groups and six current
+integrated groups per profile; their receipts cover exact source/test/config
+hashes. Earlier unit receipts are
 frozen snapshots, not evidence for an unchanged complete tree. See the
-[source-stage evidence](../evidence/runtime-compiler-source-windows-20261111.json).
+[signature evidence](../evidence/runtime-compiler-signatures-windows-20261111.json)
+and [foundation evidence](../evidence/runtime-compiler-source-windows-20261111.json).
 Engine development/O2 pass default 1MiB/4KiB stacks and zero SDK heap at exit.
-All 321 Engine input hashes match integration `c6e1cf8`; 313 production modules
+All 327 Engine input hashes match integration `93f10db`; 319 production modules
 retain LF. Transport keeps 36 bindings/51 layouts; Core/Cursor/Machine remain
 172400/1184/1792 bytes.
 No timing or peak-stack improvement was measured. Instrumented diagnostic
@@ -32,12 +37,12 @@ and [lifecycle evidence](../evidence/runtime-lifecycle-windows-20261110.json).
 
 ## Required continuation of the authorized lowering slice
 
-1. Function signatures/declaration iteration: `functions::scan_mode` and
-   `scan_index`, parameters, duplicate names, struct skipping, body-brace scans
-   and value signature/catalog preparation. Primitive/wrapper grammar and scoped
-   name lookup can now be composed as children instead of invoked atomically.
-2. Struct fields/nominal layouts/cycles/duplicates and unscoped declaration
-   discovery; literal collection/interning with final-only builder publication.
+1. Struct declarations/fields/nominal layouts/cycles/duplicates. Reuse the staged
+   skip/name/context helpers and existing `struct_layout_work`; preserve all
+   declaration syntax checks before resolving any field types/layouts.
+2. Literal collection/interning with final-only builder publication; typed/value
+   signature and catalog preparation remain separate from the completed untyped
+   signature scans.
 3. Slice origin inference, preserving all seventeen rounds and exact error
    order, with expression/atom/CALL/name/control-flow continuations.
 4. Aggregate parameter/result preparation; then body/statement/expression/control
