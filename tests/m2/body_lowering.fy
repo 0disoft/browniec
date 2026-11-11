@@ -66,7 +66,10 @@ fn void compare(ref u8[] source,bool success){
     compare(b"module main;fn i32 main(){var i32 i=0;while(i<3){i=i+1;if(i==2){continue;}}return 42;}",true);
     compare(b"module main;fn i32 main(){for(var i32 i=0;i<3;i=i+1){if(i==1){continue;}if(i==2){break;}}return 42;}",true);
     compare(b"module main;fn i32 main(){for(;;){break;}return 42;}",true);
+    compare(b"module main;fn i32 main(){for(;;){let i32[1] a=[7;1];break;}return 42;}",true);
+    compare(b"module main;fn i32 main(){var i32 i=0;while(i<2){let i32[1] a=[7;1];i=i+1;continue;}return 42;}",true);
     compare(b"module main;fn i32 main(){let Option<i32> o=.some(42);switch(o){case .some(n):{return n;}case .none:{return 0;}}}",true);
+    compare(b"module main;fn i32 main(){let Result<i32,bool> o=.ok(42);switch(o){case .ok(n):{return n;}case .err(_):{return 0;}}}",true);
     compare(b"module main;fn i32 main(){if(true){let i32[2] a=[20,22];}else{}return 42;}",true);
     compare(b"module main;fn void probe(){{let i32[2] a=[20,22];}}fn i32 main(){probe();return 42;}",true);
 }
@@ -75,6 +78,9 @@ fn void compare(ref u8[] source,bool success){
     compare(b"module main;fn i32 main(){if(true)return 42;return 0;}",false);
     compare(b"module main;fn i32 main(){{return 42;return 0;}}",false);
     compare(b"module main;fn i32 main(){break;return 42;}",false);
+    compare(b"module main;fn i32 main(){continue return 42;}",false);
+    compare(b"module main;fn i32 main(){let Option<i32> o=.none;switch(o){case .some(return):{return 0;}case .none:{return 42;}}}",false);
+    compare(b"module main;fn i32 main(){let Option<i32> o=.none;switch(o){case .ok(n):{return n;}case .none:{return 42;}}}",false);
     compare(b"module main;fn i32 main(){for(;;){return 42;}}",false);
     compare(b"module main;fn i32 main(){let Option<i32> o=.none;switch(o){case .none:{return 0;}case .none:{return 42;}}}",false);
 }

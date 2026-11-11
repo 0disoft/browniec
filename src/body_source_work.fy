@@ -13,7 +13,7 @@ import metadata_budget as budget;
 
 // Up to 65 admitted live frames plus two frames to preserve depth-error order.
 // Private control continuation. The owner pins source, IR, names and loop state.
-// Expressions/statements/patterns are explicit pending semantic children; they
+// Expressions/statements are explicit pending semantic children; they
 // are never disguised as charged control stages. The owning adapter drains them
 // synchronously until their own continuation kernels replace those boundaries.
 pub struct Frame { usize depth; usize at; usize outer; usize a; usize b; usize c; usize d; usize e;
@@ -67,7 +67,7 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s
     if(f.phase==6){finish(w,f.terminal);return .ok(w.done);}
     if(f.phase==10){
         if(f.depth>32){return .err(errors::make(4,s.begin));}w.frames[i].at=s.begin;
-        if(word(source,s,b"break") || word(source,s,b"continue")){return ask(w,3,11);}
+        if(word(source,s,b"break") || word(source,s,b"continue")){w.frames[i].flag=word(source,s,b"break");return take(w,s,0,80);}
         if(word(source,s,b"return")){return ask(w,2,11);}
         if(word(source,s,b"if")){return take(w,s,0,20);}
         if(word(source,s,b"while")){return take(w,s,0,30);}
@@ -125,7 +125,8 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s
     if(f.phase==52){if(!types::tagged(p.types[value])){return .err(errors::make(3,f.at));}
         w.frames[i].a=value;w.frames[i].terminal=true;return take(w,s,41,53);}
     if(f.phase==53){return take(w,s,123,54);}
-    if(f.phase==54){if(s.kind==125){return .err(errors::make(3,f.at));}return ask(w,11,55);}
+    if(f.phase==54){if(s.kind==125){return .err(errors::make(3,f.at));}
+        if(!word(source,s,b"case")){return .err(errors::make(2,s.begin));}return take(w,s,0,70);}
     if(f.phase==55){let patterns::Pattern pattern=w.pattern;
         if(f.e==1 && pattern.variant==f.variant){return .err(errors::make(3,f.at));}
         if(f.e==0){w.frames[i].variant=pattern.variant;}else{let usize patched=target(p,f.b,f.at)?;}
@@ -141,5 +142,26 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s
         let usize patched=ir::patch(p,f.b,failure,f.at)?;
         if(f.c!=256){let usize skip=target(p,f.c,f.at)?;}if(f.d!=256){let usize skip=target(p,f.d,f.at)?;}
         finish(w,f.terminal);return .ok(w.done);}
+    // Pattern tokens resume independently, before branch allocation or binding.
+    if(f.phase==70){return take(w,s,46,71);}
+    if(f.phase==71){let u8 tag=p.types[f.a];let bool positive=word(source,s,b"some") || word(source,s,b"ok");
+        if(tag<=4){if(!word(source,s,b"some") && !word(source,s,b"none")){return .err(errors::make(3,s.begin));}}
+        else if(!word(source,s,b"ok") && !word(source,s,b"err")){return .err(errors::make(3,s.begin));}
+        w.pattern=patterns::Pattern{.variant=if(positive){1}else{0},.begin=0,.end=0,.binding=false};return take(w,s,0,72);}
+    if(f.phase==72){let patterns::Pattern pattern=w.pattern;
+        if(types::payload(p.types[f.a],pattern.variant)==0){return take(w,s,58,55);}return take(w,s,40,73);}
+    if(f.phase==73){let bool ignored=word(source,s,b"_");
+        if(s.kind!=2 || (!ignored && locals::reserved(source[s.begin..s.end]))){return .err(errors::make(2,s.begin));}
+        w.pattern.begin=s.begin;w.pattern.end=s.end;w.pattern.binding=!ignored;return take(w,s,0,74);}
+    if(f.phase==74){return take(w,s,41,75);}
+    if(f.phase==75){return take(w,s,58,55);}
+    // Transfers preserve lexical construction state and release one local/stage.
+    if(f.phase==80){return take(w,s,59,81);}
+    if(f.phase==81){if(flow.depth==0){return .err(errors::make(2,f.at));}
+        let usize packed=flow.bindings[flow.depth-1];let usize first=places::leave_loop(names,p,packed,f.at)?;
+        w.frames[i].a=first;w.frames[i].b=names.count;w.frames[i].phase=82;return .ok(false);}
+    if(f.phase==82){if(f.b==f.a){w.frames[i].phase=83;return .ok(false);}
+        let usize row=f.b-1;let usize released=arrays::release_at(names,p,row,f.at)?;w.frames[i].b=row;return .ok(false);}
+    if(f.phase==83){let usize transferred=loops::transfer(flow,p,f.flag,f.at)?;finish(w,true);return .ok(w.done);}
     return .err(errors::make(5,s.begin));
 }

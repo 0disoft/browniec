@@ -2396,7 +2396,6 @@ pub fn Result<usize,errors::Error> complete_body_child(ref u8[] source,ref mut l
     let body_work::Frame f=body_work::current(w);var usize value=0;var bool stopped=false;
     if(request==1){value=statement(source,s,p,names,signatures,59,result_type,expr_depth,f.depth,flow)?;}
     else if(request==2){stopped=control_return(source,s,p,names,signatures,result_type,f.depth,expr_depth,flow)?;}
-    else if(request==3){stopped=control_transfer(source,s,p,names,signatures,result_type,f.depth,expr_depth,flow)?;}
     else if(request==4 || request==5 || request==7 || request==10){
         value=expression(source,s,p,names,signatures,1,expr_depth,if(request==10){0}else{2},
             if(request==7){0}else{result_type},f.depth,flow)?;
@@ -2406,8 +2405,7 @@ pub fn Result<usize,errors::Error> complete_body_child(ref u8[] source,ref mut l
         var lexer::State post=source_context::state(source,ref signatures.context,f.c)?;
         let usize first=lexer::next(source,ref mut post)?;
         value=statement(source,ref mut post,p,names,signatures,41,0,expr_depth,f.depth,flow)?;
-    }else if(request==11){let patterns::Pattern pattern=patterns::parse(source,s,p.types[f.a])?;w.pattern=pattern;}
-    else{return .err(errors::make(5,s.begin));}
+    }else{return .err(errors::make(5,s.begin));}
     return body_work::resume(w,request,value,stopped);
 }
 fn Result<bool,errors::Error> walk_body(ref u8[] source,ref mut lexer::State s,
