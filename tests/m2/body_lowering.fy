@@ -166,3 +166,18 @@ fn bytes::Buffer declarations(usize count){var bytes::Buffer s=bytes::empty();as
     compare(b"module main;fn i32 main(){return (true+false);}",false);
     compare(b"module main;fn i32 main(){return (42).nope;}",false);
 }
+
+@test fn void scalar_call_operands_preserve_raw_arguments_suffixes_and_errors(){
+    compare(b"module main;fn i32 add(i32 a,i32 b){return a+b;}fn i32 main(){return add(add(10,10),(11+11));}",true);
+    compare(b"module main;fn i32 zero(){return 42;}fn i32 main(){return ((zero()));}",true);
+    compare(b"module main;fn bool yes(){return true;}fn i32 main(){if(false && yes() || yes()){return 42;}else{return 0;}}",true);
+    compare(b"module main;fn Result<i32,bool> answer(){return .ok(42);}fn i32 main(){if((answer()).is_ok){return 42;}else{return 0;}}",true);
+    compare(b"module main;fn i32 answer(){return 42;}fn i32 main(){let i64 x=answer() as i64;return 42;}",true);
+    compare(b"module main;fn i32 f(i32 n){return n;}fn i32 main(){return f();}",false);
+    compare(b"module main;fn i32 f(){return 0;}fn i32 main(){return f(42);}",false);
+    compare(b"module main;fn i32 f(i32 n){return n;}fn i32 main(){return f(true);}",false);
+    compare(b"module main;fn i32 f(i32 n){return n;}fn i32 main(){return f(42,);}",false);
+    compare(b"module main;fn i32 f(i32 n){return n;}fn i32 main(){return f(20 22);}",false);
+    compare(b"module main;fn i32 f(i32 n){return n;}fn i32 main(){let i32 f=0;return f(42);}",false);
+    compare(b"module main;fn i32 main(){return missing(42);}",false);
+}

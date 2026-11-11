@@ -7,13 +7,13 @@ import errors as errors;
 import metadata_budget as budget;
 // Pratt traversal only. A converted unary/postfix operand is an explicit pending
 // child, never charged as a bounded stage. Source, names and candidate IR are pinned.
-pub struct Frame { usize depth; usize left; usize slot; usize jump; usize at;
+pub struct Frame { usize target; usize arity; usize count; usize operand_at; usize depth; usize left; usize slot; usize jump; usize at;
     u8 context; u8 minimum; u8 expected; u8 kind; u8 operation; u8 phase; }
-pub struct State { Frame[34] frames; tokens::State token; usize used; usize value;
+pub struct State { usize[272] arguments; u8[272] parameters; Frame[34] frames; tokens::State token; usize used; usize value;
     usize visits; u8 request; bool waiting; bool lexing; bool done; }
-fn Frame frame(usize depth,u8 minimum,u8 expected){return Frame{.depth=depth,.left=0,.slot=0,.jump=0,.at=0,
+fn Frame frame(usize depth,u8 minimum,u8 expected){return Frame{.target=0,.arity=0,.count=0,.operand_at=0,.depth=depth,.left=0,.slot=0,.jump=0,.at=0,
     .context=expected,.minimum=minimum,.expected=expected,.kind=0,.operation=0,.phase=0};}
-pub fn State begin(usize depth,u8 minimum,u8 expected){var State w=State{.frames=[frame(0,1,0);34],
+pub fn State begin(usize depth,u8 minimum,u8 expected){var State w=State{.arguments=[0;272],.parameters=[0;272],.frames=[frame(0,1,0);34],
     .token=tokens::begin(lexer::empty()),.used=1,.value=0,.visits=0,.request=0,.waiting=false,.lexing=false,.done=false};
     w.frames[0]=frame(depth,minimum,expected);return w;}
 pub fn Frame current(ref State w){let ref Frame[] frames=ref w.frames;return frames[w.used-1];}
@@ -24,6 +24,13 @@ pub fn Result<usize,errors::Error> resume(ref mut State w,usize value){
 pub fn Result<usize,errors::Error> group(ref mut State w,u8 context){
     if(w.done || !w.waiting || w.request!=1){return .err(errors::make(5,0));}
     let usize i=w.used-1;w.frames[i].context=context;w.frames[i].phase=10;w.waiting=false;w.request=0;return .ok(0);
+}
+// The fixed eight-row formal plan is advisory; CALL emission rechecks IR limits.
+pub fn Result<usize,errors::Error> call(ref mut State w,usize target,usize arity,ref u8[] tags,usize at){
+    if(w.done || !w.waiting || w.request!=1 || target>=16 || arity>8 || tags.len!=8){return .err(errors::make(5,at));}
+    let usize index=w.used-1;w.frames[index].target=target;w.frames[index].arity=arity;w.frames[index].operand_at=at;
+    var usize i=0;while(i<8){w.parameters[index*8+i]=tags[i];i+=1;}
+    w.frames[index].phase=20;w.waiting=false;w.request=0;return .ok(0);
 }
 fn Result<bool,errors::Error> take(ref mut State w,ref lexer::State s,u8 kind,u8 phase){
     if(s.kind!=kind){return .err(errors::make(2,s.begin));}
@@ -97,5 +104,20 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s
         let usize next=w.used;w.frames[i].phase=12;w.frames[next]=frame(f.depth+1,1,f.context);w.used+=1;return .ok(false);}
     if(f.phase==12){w.frames[i].left=value;return take(w,s,41,13);}
     if(f.phase==13){w.value=f.left;w.frames[i].phase=1;w.waiting=true;w.request=2;return .ok(false);}
+    if(f.phase==20){return take(w,s,s.kind,21);}
+    if(f.phase==21){return take(w,s,40,22);}
+    if(f.phase==22){if(s.kind==41){w.frames[i].phase=27;return .ok(false);}
+        if(f.count>=8){return .err(errors::make(4,s.begin));}
+        if(w.used>=34){return .err(errors::make(4,s.begin));}
+        let usize next=w.used;let u8 tag=if(f.count<f.arity){w.parameters[i*8+f.count]}else{0};
+        w.frames[i].phase=23;w.frames[next]=frame(f.depth+1,1,tag);w.used+=1;return .ok(false);}
+    if(f.phase==23){if(f.count>=f.arity || p.types[value]!=w.parameters[i*8+f.count]){return .err(errors::make(3,f.operand_at));}
+        w.arguments[i*8+f.count]=value;w.frames[i].count=f.count+1;w.frames[i].phase=24;return .ok(false);}
+    if(f.phase==24){if(s.kind==41){w.frames[i].phase=27;return .ok(false);}return take(w,s,44,25);}
+    if(f.phase==25){if(s.kind==41){return .err(errors::make(2,s.begin));}w.frames[i].phase=22;return .ok(false);}
+    if(f.phase==27){if(f.count!=f.arity){return .err(errors::make(3,f.operand_at));}return take(w,s,41,28);}
+    if(f.phase==28){let usize result=ir::call(p,f.target,ref w.arguments[i*8..i*8+f.count],f.operand_at)?;
+        w.frames[i].left=result;w.frames[i].phase=29;return .ok(false);}
+    if(f.phase==29){w.value=f.left;w.frames[i].phase=1;w.waiting=true;w.request=2;return .ok(false);}
     return .err(errors::make(5,s.begin));
 }

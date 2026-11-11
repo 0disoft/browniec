@@ -1126,6 +1126,20 @@ fn Result<bool,errors::Error> ordinary_group(ref u8[] source,ref lexer::State s,
     if(signatures.literals.enabled && static_source::grouped_projection(source,s,names)?){return .ok(false);}
     return .ok(true);
 }
+// Eligible ordinary named CALLs only. Qualified intrinsics, projections and
+// special result protocols keep their existing child. This read-only classifier
+// is outside the Pratt allowance, including its original lexer lookahead.
+fn Result<usize,errors::Error> ordinary_call(ref u8[] source,ref lexer::State s,
+    ref ir::Program p,ref locals::Table names,ref functions::Table signatures){
+    if((s.kind!=2 && s.kind!=5) || locals::reserved(source[s.begin..s.end])){return .ok(16);}
+    if(record_expressions::projected(source,s,p,names,signatures)?){return .ok(16);}
+    var lexer::State look=lexer::snapshot(s);let usize next=lexer::next(source,ref mut look)?;
+    if(look.kind!=40 || locals::find(source,names,s.begin,s.end)!=64){return .ok(16);}
+    let usize target=functions::find(source,signatures,s.begin,s.end);
+    if(target==16 || signatures.return_types[target]==13 || reference_calls::result(signatures,target) ||
+        signatures.return_slice_elements[target]!=0 || signatures.return_lengths[target]!=0 || signatures.return_records[target]!=0){return .ok(16);}
+    return .ok(target);
+}
 // Resume the converted tail without re-evaluating the completed group/CALL.
 // Postfix propagation/inspection and casts remain explicit legacy children.
 fn Result<usize,errors::Error> converted_tail(ref u8[] source,ref mut lexer::State s,
@@ -1154,6 +1168,10 @@ fn Result<usize,errors::Error> complete_expression_operand(ref u8[] source,ref m
     let bool explicit=casts::follows(source,s)?;let u8 expected=if(explicit){0}else{f.expected};
     let u8 context=if(expected!=0 && !types::tagged(expected) && result_property(source,s)?){0}else{expected};
     if(s.kind==40 && ordinary_group(source,s,p,names,signatures)?){return expression_work::group(w,context);}
+    let usize target=ordinary_call(source,s,p,names,signatures)?;
+    if(target<16){var bool plain=true;var usize i=0;while(i<signatures.arities[target]){let usize at=target*8+i;
+            if(signatures.param_slices[at] || signatures.param_lengths[at]!=0 || signatures.param_records[at]!=0){plain=false;}i+=1;}
+        if(plain){return expression_work::call(w,target,signatures.arities[target],ref signatures.param_types[target*8..target*8+8],s.begin);}}
     let usize initial=operand(source,s,p,names,signatures,f.depth,context,result_type,structure,flow)?;
     let usize value=converted_tail(source,s,p,names,initial,result_type)?;return expression_work::resume(w,value);
 }
