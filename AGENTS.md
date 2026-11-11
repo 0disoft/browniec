@@ -1,23 +1,22 @@
-- Latest compiler proof checkpoint (2026-11-11): [private proof stages](docs/engineering/runtime-authority-metadata-stages.md)
-  twenty kernels compose complete canonical input/output and borrowed-return
-  proof in fresh 4096-unit logical stages. Signature, candidate copying,
-  normalization, image/recipe/site/metadata, CFG tasks, place/reference lifetimes,
-  origin convergence and original CALL/terminal checks all resume independently.
-  No work credit carries across stages; immutable originals and exact diagnostic
-  precedence remain. Owning compiler adapters drain these stages synchronously.
-  Raw verifier/output-return helpers stay independent comparison oracles.
-  Integration `0e4153b` follows coordinator `fbc4969` and stack repair `ab75f80`.
-  Windows development/O2 pass 68 native groups per profile across 20 focused
-  kernels, plus complete Engine images with default 1MiB/4KiB stacks. Covered
-  resumes deny SDK allocation; exit SDK heap is zero. All 313 Engine inputs
-  match checkout/commit; 305 production modules retain LF. Transport remains
-  36 bindings / 51 layout roles; Core/Cursor/Machine remain 172400/1184/1792 bytes.
-  See [exact evidence](docs/evidence/runtime-compiler-proof-windows-20261111.json). Fixed scratch construction, source lowering,
-  post-proof cache planning, admission allocations and raw synchronous discovery
-  remain atomic. Logical fixed-copy framing is not an instrumented field/byte/
-  CPU bound. No public Pending compile, R02-R05 closure or timing/peak-stack
-  improvement claim. Broader completion stays paused. Local only; no push,
-  release or deployment.
+- Latest source lowering checkpoint (2026-11-11): [source stages](docs/engineering/compiler-source-stages.md)
+  eight private kernels now resume immutable source collection, UTF-8/literal
+  decoding, token-only literal scanning, lexical/qualified lookahead, copyable
+  context authentication, scoped name lookup and primitive/wrapper type parsing.
+  Fresh 4096-unit logical stages copy/compare at most 64 bytes, validate UTF-8
+  cuts at most 259 bytes, or perform at most sixteen lexical/decode transitions.
+  Owning compatibility adapters drain these stages synchronously; raw helpers
+  retain exact diagnostic/state comparison paths. Development/O2 pass eighteen
+  combined native groups per profile. Engine development/O2 pass default
+  1MiB/4KiB stacks, zero exit SDK heap and all 321 input hash checks; transport
+  retains 36 bindings/51 layouts and Core/Cursor/Machine 172400/1184/1792 bytes.
+  Owning integration is `c6e1cf8`. This is a partial lowering checkpoint:
+  signature/struct/literal-collection/origin/catalog/body/final semantic passes
+  still need explicit continuations. See [evidence](docs/evidence/runtime-compiler-source-windows-20261111.json)
+  and [next required work](docs/engineering/next-work-handoff.md). No public
+  Pending compile, measured time/peak-stack improvement or public R02-R05 closure.
+  The preceding twenty compiler proof kernels remain integrated. Broader
+  completion stays paused; the current lowering slice remains authorized.
+  Local only; no push, release or deployment.
 
 # Brownie C agent guidance
 

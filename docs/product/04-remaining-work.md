@@ -1,4 +1,16 @@
-- Latest compiler proof checkpoint (2026-11-11): [private proof stages](../engineering/runtime-authority-metadata-stages.md)
+- Latest source lowering checkpoint (2026-11-11): [source stages](../engineering/compiler-source-stages.md)
+  eight private kernels resume immutable source collection, UTF-8/literal/token
+  scanning, context/name checks and primitive/wrapper type parsing. Synchronous
+  owning adapters preserve exact raw diagnostics and state. Eighteen combined
+  groups and complete Engine images pass development/O2 on default stacks, with
+  zero exit SDK heap and all 321 input hashes matching `c6e1cf8`. This is a
+  partial lowering checkpoint: signature,
+  struct, literal interning, origin, aggregate and recursive body/final semantic
+  passes remain atomic. No public Pending compile or R03 closure. See [source
+  evidence](../evidence/runtime-compiler-source-windows-20261111.json). Local only;
+  broader completion stays paused while this lowering slice remains authorized.
+
+- Predecessor compiler proof checkpoint (2026-11-11): [private proof stages](../engineering/runtime-authority-metadata-stages.md)
   twenty kernels compose complete canonical input/output and borrowed-return
   proof in fresh 4096-unit logical stages. Signature, candidate copying,
   normalization, image/recipe/site/metadata, CFG tasks, place/reference lifetimes,

@@ -1,57 +1,72 @@
 # Local handoff for the next thread
 
-Current checkpoint: [private compiler proof and VM stages](runtime-authority-metadata-stages.md).
-Twenty proof kernels are committed separately, followed by the complete return
-coordinator `fbc4969`, default-stack repair `ab75f80` and owning compiler
-integration `0e4153b`. Input-only and output/borrowed-return compilation now drain
-resumable proof stages synchronously. Each advance runs one fresh 4096-unit
-logical leaf/framing stage; partial room cannot bank credit or publish a proof.
-The original Program/image remain immutable, and borrowed normalization uses a
-separate private candidate. Error precedence/offsets retain raw-oracle parity.
-Raw verifier and output-return helpers remain independent comparison paths.
+Current checkpoint: [private compiler source stages](compiler-source-stages.md).
+Eight lowering foundations have continuations: immutable source collection,
+UTF-8 cuts, decoded literals, compact token-only literal scans, lexical and
+qualified-name lookahead, arbitrary context authentication, scoped name lookup
+and primitive/wrapper type parsing. The owner pins exact immutable inputs and
+resets one fresh 4096-unit logical allowance for each advance. Parent token/name/
+type adapters still drain synchronously. This does not make whole source
+compilation resumable.
 
-All twenty focused kernels pass 68 native groups per profile in their frozen
-snapshots. Owner/test digests match the final commit; older unit receipts are
-not claimed to have the same complete source tree. The complete integrated
-Engine passes development/O2 on default 1MiB/4KiB stacks. Its 313 input digests
-match `0e4153b`; all 305 production modules are LF. Covered resumes deny SDK
-allocation, exit SDK heap is zero, and exact Fuel/output/error plus reuse/pin/
-move/cancel checks pass. Core/Cursor/Machine remain 172400/1184/1792 bytes;
-transport retains 36 declarations and 51 layout roles with unchanged shapes.
-See [exact evidence](../evidence/runtime-compiler-proof-windows-20261111.json).
-No timing or peak-stack improvement was measured. Diagnostic instrumented
-images are not acceptance evidence.
+Raw collection/decoder/token/context/name/type helpers remain comparison paths.
+The combined adapter suite passes eighteen native groups per profile; its
+receipts cover exact final source/test/config hashes. Earlier unit receipts are
+frozen snapshots, not evidence for an unchanged complete tree. See the
+[source-stage evidence](../evidence/runtime-compiler-source-windows-20261111.json).
+Engine development/O2 pass default 1MiB/4KiB stacks and zero SDK heap at exit.
+All 321 Engine input hashes match integration `c6e1cf8`; 313 production modules
+retain LF. Transport keeps 36 bindings/51 layouts; Core/Cursor/Machine remain
+172400/1184/1792 bytes.
+No timing or peak-stack improvement was measured. Instrumented diagnostic
+images are not acceptance receipts.
 
-The preceding setup/cache/seal/cleanup and CALL/RET continuations remain
-integrated into owning Pending execution. Preparation exposes Pending before
-entry; failure/cancel cleanup consumes no guest Fuel and preserves the first
-cause. Repeat cancel or step until terminal; publication/refunds stay terminal.
-See the [preceding lifecycle evidence](../evidence/runtime-lifecycle-windows-20261110.json).
+The preceding [twenty compiler proof kernels](runtime-authority-metadata-stages.md#compiler-proof-stages)
+remain connected to owning input/output and borrowed-return compilation. The
+[setup/cache/seal/cleanup and CALL/RET stages](runtime-authority-metadata-stages.md)
+remain integrated into owning Pending execution. Preparation exposes Pending
+before entry; failure/cancel cleanup consumes no guest Fuel and preserves the
+first cause. Repeat cancel or step until terminal; publication/refunds remain
+terminal. See the [proof evidence](../evidence/runtime-compiler-proof-windows-20261111.json)
+and [lifecycle evidence](../evidence/runtime-lifecycle-windows-20261110.json).
 
-The user authorized this compiler-proof slice. Broader completion stays paused;
-this handoff grants no unrelated work or remote delivery. Read [AGENTS](../../AGENTS.md)
-and the [remaining inventory](../product/04-remaining-work.md).
+## Required continuation of the authorized lowering slice
 
-## Remaining bounds and next work
+1. Function signatures/declaration iteration: `functions::scan_mode` and
+   `scan_index`, parameters, duplicate names, struct skipping, body-brace scans
+   and value signature/catalog preparation. Primitive/wrapper grammar and scoped
+   name lookup can now be composed as children instead of invoked atomically.
+2. Struct fields/nominal layouts/cycles/duplicates and unscoped declaration
+   discovery; literal collection/interning with final-only builder publication.
+3. Slice origin inference, preserving all seventeen rounds and exact error
+   order, with expression/atom/CALL/name/control-flow continuations.
+4. Aggregate parameter/result preparation; then body/statement/expression/control
+   lowering with explicit task/continuation requests. A metered call to the
+   existing recursive `body` is still atomic and is not a valid completion.
+5. Final entry-call restrictions, output normalization and repeated raw context
+   validation/state setup outside scoped name lookup.
+6. Integrate the full lowering coordinator only after all its semantic children
+   resume independently. Compare emitted IR and exact diagnostics, then execute
+   complete Engine images on default stacks again.
 
-1. Audit logical framing and whole fixed generated-C projection/copy costs before
-   claiming instrumented scalar-field, byte, CPU or time bounds. Preserve frozen
-   inputs, final-only proof publication, diagnostic precedence and raw oracles.
-2. Fixed scratch construction, source lowering, post-proof cache planning,
-   admission allocator work and raw synchronous setup/discovery remain atomic.
-   Existing compiler adapters drain private stages synchronously; no public
-   Pending compile or compiler cancellation protocol is implemented.
-3. Public R02/R03, complete accounting/preallocation, R04/R05 deadlines/STOPPING/
-   poison, host dispatch and the full inventory remain open. Continue a new
-   slice only when authorized; no public bounded-step or wall-clock claim.
+The user authorized source lowering and small verified local commits. Continue
+this same scope without asking for authorization again. The broader completion
+goal stays paused; this handoff grants no unrelated work or remote delivery.
+Read [AGENTS](../../AGENTS.md) and the [remaining inventory](../product/04-remaining-work.md).
+
+Fixed initial scratch construction, post-proof cache planning, admission
+allocations, raw synchronous discovery and the remaining runtime inventory are
+not bounded by these kernels. Logical framing is not an instrumented scalar-
+field/byte/CPU bound. Public Pending compile, deadlines/STOPPING/poison and full
+R02-R05 closure remain unimplemented.
 
 Use `build/toolchain/fairyc.exe`, default stacks and no hidden overrides. Keep
-production LF. The deep borrowed-return compile fixture exercises real nested
-constructor pressure; retain it and keep the flattened seeds in
-`output_proof_work::inspect` equivalent to both empty constructors. The unused
-parser Table is rebuilt only during bounded origin solving. Do not restore it
-in every proof State. The historical stash `39f1c91dcaa8edef5194f8d37b75069d20ce92a0`
-contains superseded cache/layout drafts; do not apply it wholesale.
+production LF and raw comparison helpers independent. The deep borrowed-return
+compile fixture exercises real nested constructor pressure; retain it and keep
+the flattened seeds in `output_proof_work::inspect` equivalent to both empty
+constructors. Do not restore the full parser Table in every proof State. The
+historical stash `39f1c91dcaa8edef5194f8d37b75069d20ce92a0` contains superseded
+cache/layout drafts; do not apply it wholesale.
 
 ## Full remaining inventory
 

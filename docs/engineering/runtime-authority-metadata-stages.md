@@ -283,6 +283,16 @@ and 51 layout roles with unchanged shapes; Core/Cursor/Machine remain
 172400/1184/1792 bytes. Diagnostic instrumented images are not acceptance
 receipts. No timing or peak-stack improvement is measured.
 
+## Source lowering foundations
+
+The next authorized slice adds [eight source-stage kernels](compiler-source-stages.md)
+for immutable source/context collection, UTF-8/literal/token scanning, scoped
+name lookup and primitive/wrapper type parsing. Owning adapters drain them
+synchronously and preserve raw comparison helpers. This is a partial lowering
+checkpoint: signature, struct, literal collection/interning, origin inference,
+aggregate preparation, recursive body/control/expression and final semantic
+passes still need explicit continuations. See the [source-stage evidence](../evidence/runtime-compiler-source-windows-20261111.json).
+
 ## Evidence and limits
 
 The [lifecycle evidence](../evidence/runtime-lifecycle-windows-20261110.json)
@@ -308,8 +318,8 @@ publication and late frame errors. Actual Engine fixtures cover fixed/mixed
 quanta, exact/one-less Fuel, binary output, moves/pins, cancellation/refunds and
 SDK allocation denial on covered resumes.
 
-Still atomic or incompletely bounded: fixed proof scratch construction, source
-lowering, post-proof cache planning, admission allocator work, raw/synchronous
+Still atomic or incompletely bounded: fixed proof scratch construction, remaining
+semantic source lowering, post-proof cache planning, admission allocator work, raw/synchronous
 proof/setup/recipe discovery and the complete runtime inventory. Existing
 compiler adapters drain the new private proof stages synchronously; public
 Pending compile remains unimplemented.
