@@ -1,4 +1,4 @@
-"""Verify staged source UTF-8 and literal decoding against independent raw helpers."""
+"""Verify staged literal interning and source collection against independent raw owners."""
 import importlib.util
 from pathlib import Path
 import sys
@@ -10,7 +10,7 @@ bottom = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(bottom)
 bottom.DESCRIPTION = __doc__
 bottom.DIRECTORY = 'build/literal-source-work'
-bottom.MODULES = {'literal_source_work': None}
+bottom.MODULES = {'literal_intern_work': None}
 bottom.EXTRA_INPUTS = {'tools/verify-literal-source-work.py'}
 
 if __name__ == '__main__':
