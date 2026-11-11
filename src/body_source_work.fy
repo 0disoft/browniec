@@ -11,17 +11,18 @@ import types as types;
 import errors as errors;
 import metadata_budget as budget;
 
+// Up to 65 admitted live frames plus two frames to preserve depth-error order.
 // Private control continuation. The owner pins source, IR, names and loop state.
 // Expressions/statements/patterns are explicit pending semantic children; they
 // are never disguised as charged control stages. The owning adapter drains them
 // synchronously until their own continuation kernels replace those boundaries.
 pub struct Frame { usize depth; usize at; usize outer; usize a; usize b; usize c; usize d; usize e;
     u8 phase; u8 variant; bool terminal; bool flag; }
-pub struct State { Frame[65] frames; tokens::State token; patterns::Pattern pattern;
+pub struct State { Frame[67] frames; tokens::State token; patterns::Pattern pattern;
     usize used; usize visits; usize value; u8 request; bool lexing; bool stopped; bool done; }
 fn Frame frame(usize depth,u8 phase){return Frame{.depth=depth,.at=0,.outer=0,.a=0,.b=256,.c=256,.d=256,.e=0,
     .phase=phase,.variant=2,.terminal=false,.flag=false};}
-pub fn State begin(usize depth,bool block){var State w=State{.frames=[frame(0,0);65],.token=tokens::begin(lexer::empty()),
+pub fn State begin(usize depth,bool block){var State w=State{.frames=[frame(0,0);67],.token=tokens::begin(lexer::empty()),
     .pattern=patterns::Pattern{.variant=0,.begin=0,.end=0,.binding=false},.used=1,.visits=0,.value=0,
     .request=0,.lexing=false,.stopped=false,.done=false};w.frames[0]=frame(depth,if(block){1}else{0});return w;}
 pub fn Frame current(ref State w){let ref Frame[] frames=ref w.frames;return frames[w.used-1];}
@@ -29,7 +30,7 @@ pub fn Result<bool,errors::Error> prepared(ref State w){if(!w.done){return .err(
 fn bool word(ref u8[] source,ref lexer::State s,ref u8[] name){return s.kind==2 && lexer::equal(source[s.begin..s.end],name);}
 fn void finish(ref mut State w,bool stopped){w.used-=1;w.stopped=stopped;w.done=w.used==0;}
 fn Result<bool,errors::Error> push(ref mut State w,usize depth,u8 phase,usize at){
-    if(w.used>=65){return .err(errors::make(4,at));}let usize i=w.used;w.frames[i]=frame(depth,phase);w.used+=1;return .ok(false);}
+    if(w.used>=67){return .err(errors::make(4,at));}let usize i=w.used;w.frames[i]=frame(depth,phase);w.used+=1;return .ok(false);}
 fn Result<bool,errors::Error> take(ref mut State w,ref lexer::State s,u8 expected,u8 phase){
     if(expected!=0 && s.kind!=expected){return .err(errors::make(2,s.begin));}
     let usize i=w.used-1;w.frames[i].phase=phase;w.token=tokens::begin(*s);w.lexing=true;return .ok(false);}

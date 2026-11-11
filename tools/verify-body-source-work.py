@@ -9,7 +9,7 @@ bottom = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(bottom)
 bottom.DESCRIPTION = __doc__
 bottom.DIRECTORY = 'build/body-source-work'
-bottom.MODULES = {'body_source_work': None}
+bottom.MODULES = {'body_source_work': None, 'body_lowering': None}
 bottom.EXTRA_INPUTS = {'tools/verify-body-source-work.py'}
 if __name__ == '__main__':
     bottom.main()

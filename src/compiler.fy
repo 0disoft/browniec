@@ -62,6 +62,8 @@ import module_index as module_index;
 import output_source as output_source;
 import output_ir as output_ir;
 import output_return_ir as output_returns;
+import body_source_work as body_work;
+import metadata_budget as metadata_budget;
 
 fn u8 precedence(u8 kind) {
     if (kind == 133) { return 1; }
@@ -2383,7 +2385,43 @@ fn Result<bool, errors::Error> control_if(ref u8[] source, ref mut lexer::State 
     return .ok(false);
 }
 
-fn Result<usize, errors::Error> body(ref u8[] source, ref functions::Table signatures, usize f, ref mut ir::Program p) {
+// Complete one explicit semantic child outside the control-stage allowance.
+// These existing expression/statement children remain atomic; no whole body is
+// submitted as a metadata-budget stage. All candidates still need admission.
+pub fn Result<usize,errors::Error> complete_body_child(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
+    u8 result_type,usize expr_depth,ref mut loops::State flow,ref mut body_work::State w){
+    let u8 request=w.request;
+    if(w.done || w.lexing || request==0){return .err(errors::make(5,s.begin));}
+    let body_work::Frame f=body_work::current(w);var usize value=0;var bool stopped=false;
+    if(request==1){value=statement(source,s,p,names,signatures,59,result_type,expr_depth,f.depth,flow)?;}
+    else if(request==2){stopped=control_return(source,s,p,names,signatures,result_type,f.depth,expr_depth,flow)?;}
+    else if(request==3){stopped=control_transfer(source,s,p,names,signatures,result_type,f.depth,expr_depth,flow)?;}
+    else if(request==4 || request==5 || request==7 || request==10){
+        value=expression(source,s,p,names,signatures,1,expr_depth,if(request==10){0}else{2},
+            if(request==7){0}else{result_type},f.depth,flow)?;
+    }else if(request==6){value=statement(source,s,p,names,signatures,59,0,expr_depth,f.depth,flow)?;}
+    else if(request==8){value=checked_post(source,s,p,names,signatures,expr_depth,f.depth,flow)?;}
+    else if(request==9){
+        var lexer::State post=source_context::state(source,ref signatures.context,f.c)?;
+        let usize first=lexer::next(source,ref mut post)?;
+        value=statement(source,ref mut post,p,names,signatures,41,0,expr_depth,f.depth,flow)?;
+    }else if(request==11){let patterns::Pattern pattern=patterns::parse(source,s,p.types[f.a])?;w.pattern=pattern;}
+    else{return .err(errors::make(5,s.begin));}
+    return body_work::resume(w,request,value,stopped);
+}
+fn Result<bool,errors::Error> walk_body(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
+    u8 result_type,ref mut loops::State flow){
+    var body_work::State w=body_work::begin(0,false);var metadata_budget::State meter=metadata_budget::empty();
+    while(!w.done){let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
+        let bool done=body_work::advance(source,s,p,names,flow,ref mut w,ref mut meter)?;
+        if(w.request!=0){let usize completed=complete_body_child(source,s,p,names,signatures,result_type,0,flow,ref mut w)?;}
+    }return body_work::prepared(ref w);
+}
+// Private raw body oracle for exact IR/error comparisons, with caller-prepared
+// signatures/catalogs. Both routes produce candidates, never executable authority.
+pub fn Result<usize, errors::Error> lower_body(ref u8[] source, ref functions::Table signatures, usize f, ref mut ir::Program p,bool staged) {
     var locals::Table table = locals::empty();
     table.function = f;
     let usize arity = signatures.arities[f];
@@ -2407,9 +2445,11 @@ fn Result<usize, errors::Error> body(ref u8[] source, ref functions::Table signa
     var loops::State loop_state=loops::empty();
     let u8 result_context=if(reference_calls::result(signatures,f)){12}else{record_results::context(p,f)};
     var bool terminal = false;
-    while (s.kind != 125) {
+    if(staged && source.len<=4096){terminal=walk_body(source,ref mut s,p,ref mut table,signatures,result_context,ref mut loop_state)?;}
+    else{while (s.kind != 125) {
         if (terminal || s.kind == 0) { return .err(errors::make(2, s.begin)); }
         terminal = control(source,ref mut s,p,ref mut table,signatures,result_context,0,0,ref mut loop_state)?;
+    }
     }
     if(!terminal && signatures.return_types[f]==13){
         let usize dropped=arrays::release_visible(ref table,p,s.begin)?;
@@ -2422,6 +2462,10 @@ fn Result<usize, errors::Error> body(ref u8[] source, ref functions::Table signa
     p.ends[f] = end;
     p.register_ends[f] = registers_end;
     return .ok(f);
+}
+
+fn Result<usize,errors::Error> body(ref u8[] source,ref functions::Table signatures,usize f,ref mut ir::Program p){
+    return lower_body(source,signatures,f,p,true);
 }
 
 // Release source-name/catalog scratch before recursive expression lowering.
