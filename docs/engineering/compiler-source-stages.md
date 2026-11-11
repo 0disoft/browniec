@@ -33,6 +33,8 @@ in separate advances; unused credit cannot accumulate into a later scan.
 | `function_scan_work` | One single-source/indexed declaration transition or one signature/skip/context/token child; publish only the complete Table. |
 | `record_fields_work` | One source-state/type/name child, field metadata transition or at most 64 nominal/duplicate-name comparisons. |
 | `struct_scan_work` | One declaration/field/layout child or declaration-name comparison; all declaration syntax is checked before type resolution. |
+| `literal_intern_work` | One builder/catalog row, one UTF-8 child or at most 64 existing-payload comparisons/new-payload copies; final catalog update only after fallible checks. |
+| `literal_collection_work` | One source/context/token/decoder/intern child, one result/catalog row or at most 64 candidate-copy/decoded-clear bytes; only the completed Index is prepared. |
 | `struct_layout_work` (reused) | Fixed scratch initialization, one sixteen-slot row, at most sixteen dependency visits, or one node of at most sixteen fields. |
 
 The owner pins the exact source, Index/context and query across advances.
@@ -125,12 +127,40 @@ Transport keeps 36 bindings/51 layouts and equivalent 176 aggregate graphs;
 Core/Cursor/Machine remain 172400/1184/1792 bytes. Prior source/signature evidence
 continues to describe its own frozen checkpoints.
 
+## Literal collection and image interning integration
+
+Owning `literal_collection::collect` / `collect_scoped` now drain the private
+collection continuation. Pin immutable source/context/original Builder and use
+separate private candidate/control banks. Whole-source UTF-8 validation precedes
+any tokenization; each module's lexer state, token, cooked literal and image
+interning child resumes independently. Candidate payload copying, decoded bank
+clearing and intern comparison/copy inspect at most 64 bytes in a stage.
+
+Preserve exact Source/Image error fields and order: syntax/decoding occurs before
+image admission; existing literal matches precede count/remaining-byte failures.
+The sixteen-occurrence ceiling remains separate from sixteen unique image IDs.
+A malformed Builder is still accepted when no literal needs interning, as in the
+raw owner. Only complete collection publishes the Index and caller Builder.
+The synchronous adapter's final fixed aggregate assignment, initial fixed scratch
+construction and final native image allocation/copy remain outside these advance
+contracts. Raw `collect_scoped_raw` and static image intern helpers are comparison
+oracles; the public compiler remains synchronous.
+
+The [literal evidence](../evidence/runtime-compiler-literals-windows-20261111.json) records
+three initial interning groups/profile, six frozen composed groups/profile and
+14 current integrated groups/profile, including existing exact-Fuel, image
+quota, literal execution, occurrence limits and whole-owner rollback regressions.
+Engine development/O2 pass default 1MiB/4KiB stacks and zero exit SDK heap. All
+331 inputs match `52e7aca`; 323 production modules retain LF. Transport
+keeps 36 bindings/51 layouts and equivalent 176 aggregate graphs; Core/Cursor/
+Machine remain 172400/1184/1792 bytes. Older evidence remains frozen history.
+
 ## Required remaining lowering work
 
 The following semantic work remains atomic, even where its helpers drain stages:
 
-1. Literal collection, image interning and final builder publication/allocation.
-2. Typed/value function signatures and catalog preparation.
+1. Typed/value function signatures and catalog preparation.
+2. Fixed final Builder assignment, initial scratch and native image allocation/copy.
 3. Body-derived slice origin analysis, including its seventeen rounds and
    expression/atom/CALL/name/control-flow traversal.
 4. Array/record parameter/result catalog preparation.

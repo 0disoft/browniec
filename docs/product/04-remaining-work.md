@@ -1,11 +1,13 @@
-- Latest source record checkpoint (2026-11-11): [source stages](../engineering/compiler-source-stages.md)
-  sixteen new private kernels now include complete untyped signature and struct/
-  field scans, reusing existing staged layout proof. Two new kernels and current
-  owning adapters each pass six native groups/profile. Engine development/O2 pass
-  default stacks and zero SDK heap; all 329 input hashes match `da8fe2c`. Literal
-  collection/interning, typed/value signatures, origins, aggregates and recursive
-  body/final lowering remain atomic. No public Pending compile or R03 closure.
-  See [record evidence](../evidence/runtime-compiler-records-windows-20261111.json).
+- Latest source literal checkpoint (2026-11-11): [source stages](../engineering/compiler-source-stages.md)
+  eighteen new private kernels cover untyped signature/struct/field scans and
+  scoped/unscoped literal collection/interning. Copy/clear/comparison children
+  resume in <=64-byte stages; originals publish only at successful completion.
+  New kernels pass six frozen groups/profile; current adapters and literal
+  compile regressions pass 14. Engine development/O2 pass default stacks,
+  zero SDK heap and all 331 input hashes at `52e7aca`. Typed/value signatures,
+  origins, aggregates, recursive body/final lowering and fixed final Builder/
+  native image publication remain atomic. No public Pending compile/R03 closure.
+  See [literal evidence](../evidence/runtime-compiler-literals-windows-20261111.json).
   Local only; broader completion stays paused while lowering remains authorized.
 
 - Predecessor compiler proof checkpoint (2026-11-11): [private proof stages](../engineering/runtime-authority-metadata-stages.md)

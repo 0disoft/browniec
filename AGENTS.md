@@ -1,22 +1,21 @@
-- Latest source record checkpoint (2026-11-11): [source stages](docs/engineering/compiler-source-stages.md)
-  sixteen private kernels now cover source foundations, complete untyped
-  declaration/signature scans and complete single-source/scoped struct scans.
-  Record field names/types and duplicate comparisons resume independently;
-  layout validation reuses `struct_layout_work`. All declaration syntax precedes
-  field resolution. Packed scoped prefix spans retain their raw lookup behavior.
-  The two new kernels pass six frozen groups/profile; owning record adapters
-  pass six. Engine development/O2 pass default 1MiB/4KiB stacks, zero exit SDK
-  heap and all 329 input hash checks at `da8fe2c`. All 321 production modules
-  retain LF. Transport keeps 36 bindings/51 layouts and Core/Cursor/Machine
-  172400/1184/1792 bytes. Raw source scans and field/layout helpers remain
-  comparison oracles. See [record evidence](docs/evidence/runtime-compiler-records-windows-20261111.json),
-  [signature evidence](docs/evidence/runtime-compiler-signatures-windows-20261111.json)
-  and [foundation evidence](docs/evidence/runtime-compiler-source-windows-20261111.json).
-  Lowering remains partial: typed/value signatures, literal collection/interning,
-  source origins, aggregate catalogs, recursive bodies and final semantic checks
-  still need continuations. No public Pending compile, measured time/peak-stack
-  improvement or public R02-R05 closure. The preceding compiler proof kernels
-  remain integrated. Lowering stays authorized; broader completion stays paused.
+- Latest source literal checkpoint (2026-11-11): [source stages](docs/engineering/compiler-source-stages.md)
+  eighteen private kernels cover source foundations, complete untyped signature/
+  struct/field/layout scans and complete scoped/unscoped literal collection.
+  Literal candidate copying/clearing and image comparison/copy use <=64-byte
+  stages; context/UTF-8/token/decoder children resume independently. Original
+  Builder and Index publish only after success. Owning adapters drain stages
+  synchronously; fixed initial scratch and final Builder assignment remain atomic.
+  The two new kernels pass six frozen groups/profile; integrated adapters and
+  literal compile/Fuel/rollback regressions pass 14 groups/profile. Engine
+  development/O2 pass default 1MiB/4KiB stacks, zero exit SDK heap and all 331
+  input hash checks at `52e7aca`; 323 production modules retain LF. Transport
+  keeps 36 bindings/51 layouts and Core/Cursor/Machine 172400/1184/1792 bytes.
+  See [literal evidence](docs/evidence/runtime-compiler-literals-windows-20261111.json),
+  [record evidence](docs/evidence/runtime-compiler-records-windows-20261111.json)
+  and preceding signature/foundation evidence. Typed/value signatures, origins,
+  aggregate catalogs, recursive bodies and final semantic work still remain.
+  No public Pending compile, measured time/peak-stack improvement or R02-R05
+  closure. Lowering stays authorized; broader completion stays paused.
   Local only; no push, release or deployment.
 
 # Brownie C agent guidance

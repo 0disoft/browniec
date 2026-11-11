@@ -1,27 +1,25 @@
 # Local handoff for the next thread
 
 Current checkpoint: [private compiler source stages](compiler-source-stages.md).
-Sixteen new source kernels now cover immutable source/UTF-8/literal/token/context/
-name/type foundations, complete untyped single/indexed function scans, and
-single-source/scoped struct scans. Record fields/types/names resume separately;
-layout validation reuses `struct_layout_work`. All declaration syntax is checked
-before field types. Private candidates remain unavailable until final checks.
+Eighteen source kernels cover source/UTF-8/token/context/name/type foundations,
+complete untyped signature and struct/field/layout preparation, and complete
+scoped/unscoped literal collection/interning. Literal candidate copy/clear and
+image comparison/copy use <=64-byte stages. Context, module lexer preparation,
+tokens and decoding resume independently. Original Builder/Index publish only
+at successful completion; fixed initial scratch and final adapter assignment
+remain atomic. Preserve whole-source UTF-8-before-tokenization and Source/Image
+error ordering, scoped packed-prefix lookup and record layout diagnostics.
 
-Owning adapters drain fresh 4096-unit stages synchronously; compilation is not
-public Pending. Raw signature/single/index/struct/field/layout helpers remain
-comparison paths. Preserve scoped packed-prefix lookup and the difference
-between single-source first-name and scoped first-failed-root diagnostics.
-
-The record slice passes six frozen groups/profile and six current owning adapter
-groups/profile. Engine development/O2 pass default 1MiB/4KiB stacks and zero SDK
-heap at exit. All 329 Engine inputs match `da8fe2c`; 321 production modules retain
-LF. Transport keeps 36 bindings/51 layouts and equivalent 176 aggregate graphs;
-Core/Cursor/Machine remain 172400/1184/1792 bytes. See [record evidence](../evidence/runtime-compiler-records-windows-20261111.json),
-[signature evidence](../evidence/runtime-compiler-signatures-windows-20261111.json)
-and [foundation evidence](../evidence/runtime-compiler-source-windows-20261111.json).
-Older unit results describe frozen snapshots, not the final whole tree. No
-wall-clock/peak-stack improvement was measured. Instrumented diagnostic images
-are not acceptance receipts.
+Owning adapters drain fresh 4096-unit logical stages synchronously; there is no
+public Pending compiler. New literal kernels pass six frozen groups/profile and
+current adapters plus literal compile/Fuel/rollback regressions pass 14.
+Engine development/O2 pass default 1MiB/4KiB stacks and zero exit SDK heap. All
+331 inputs match `52e7aca`; 323 production modules retain LF. Transport
+keeps 36 bindings/51 layouts and equivalent 176 aggregate graphs; Core/Cursor/
+Machine remain 172400/1184/1792 bytes. See [literal evidence](../evidence/runtime-compiler-literals-windows-20261111.json),
+[record evidence](../evidence/runtime-compiler-records-windows-20261111.json) and
+preceding signature/foundation evidence. Older unit receipts describe frozen
+snapshots. No wall-clock/peak-stack improvement was measured.
 
 The preceding [twenty compiler proof kernels](runtime-authority-metadata-stages.md#compiler-proof-stages)
 remain connected to owning input/output and borrowed-return compilation. The
@@ -34,11 +32,10 @@ and [lifecycle evidence](../evidence/runtime-lifecycle-windows-20261110.json).
 
 ## Required continuation of the authorized lowering slice
 
-1. Literal collection/interning with final-only builder publication. Pin the
-   original Builder and use separate private candidate/control banks; preserve
-   whole-source UTF-8-before-tokenization and Source/Image error ordering.
-2. Typed/value signature and catalog preparation remain separate from completed
-   untyped signature and struct scans.
+1. Typed/value signature and catalog preparation remain separate from completed
+   untyped signature, struct and literal scans.
+2. Fixed scratch initialization/final Builder assignment and native image
+   allocation/copy still need a compiler-level publication protocol.
 3. Slice origin inference, preserving all seventeen rounds and exact error
    order, with expression/atom/CALL/name/control-flow continuations.
 4. Aggregate parameter/result preparation; then body/statement/expression/control

@@ -285,18 +285,16 @@ receipts. No timing or peak-stack improvement is measured.
 
 ## Source lowering foundations
 
-The authorized lowering slice adds [sixteen source-stage kernels](compiler-source-stages.md)
-for immutable source/context collection, UTF-8/literal/token scanning, scoped
-name lookup, primitive/wrapper types and complete untyped declaration/signature
-scanning plus complete struct/field/layout preparation (reusing the existing
-layout kernel). Owning adapters drain them
-synchronously and preserve raw comparison helpers. This is a partial lowering
-checkpoint: typed/value signatures, literal collection/
-interning, origin inference,
+The authorized lowering slice adds [eighteen source-stage kernels](compiler-source-stages.md)
+for immutable source/context collection, UTF-8/token/name/type foundations,
+complete untyped signature and struct/field/layout preparation, and complete
+scoped/unscoped literal collection/interning. Literal copy/clear/comparison
+children use <=64-byte stages. Owning adapters drain synchronously and preserve
+raw comparison helpers. This remains partial: typed/value signatures, origins,
 aggregate preparation, recursive body/control/expression and final semantic
-passes still need explicit continuations. See the [record evidence](../evidence/runtime-compiler-records-windows-20261111.json),
-[signature evidence](../evidence/runtime-compiler-signatures-windows-20261111.json)
-and [foundation evidence](../evidence/runtime-compiler-source-windows-20261111.json).
+passes still need continuations. Fixed initial scratch, final Builder assignment
+and native image allocation/copy remain atomic. See the [literal evidence](../evidence/runtime-compiler-literals-windows-20261111.json)
+and preceding record/signature/foundation evidence.
 
 ## Evidence and limits
 
