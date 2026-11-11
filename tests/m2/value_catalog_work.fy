@@ -14,11 +14,12 @@ fn Result<raw::Plan,errors::Error> run(ref properties::Catalog c,ref functions::
         assert(done==w.done && meter.last==4096 && w.visits-visits<=1);turns+=1;}
     let usize total=meter.total;assert(work::advance(c,t,ref mut w,ref mut meter).is_ok && total==meter.total);return work::prepared(ref w);
 }
-fn void same(ref properties::Catalog c,ref functions::Table t){switch(raw::prepare_raw(c,t)){
-    case .ok(a):{switch(run(c,t)){case .ok(b):{var usize i=0;while(i<16){assert(a.results[i]==b.results[i]);i+=1;}
+fn void compare(Result<raw::Plan,errors::Error> expected,Result<raw::Plan,errors::Error> actual){switch(expected){
+    case .ok(a):{switch(actual){case .ok(b):{var usize i=0;while(i<16){assert(a.results[i]==b.results[i]);i+=1;}
         i=0;while(i<128){assert(a.parameters[i]==b.parameters[i]);i+=1;}}case .err(_):{assert(false);}};}
-    case .err(e):{switch(run(c,t)){case .ok(_):{assert(false);}case .err(f):{assert(e.kind==f.kind && e.offset==f.offset);}};}
+    case .err(e):{switch(actual){case .ok(_):{assert(false);}case .err(f):{assert(e.kind==f.kind && e.offset==f.offset);}};}
 };}
+fn void same(ref properties::Catalog c,ref functions::Table t){let Result<raw::Plan,errors::Error> reference=raw::prepare_raw(c,t);compare(reference,run(c,t));compare(reference,raw::prepare(c,t));}
 fn functions::Table scanned(ref u8[] source,ref mut properties::Catalog c){return switch(functions::scan_values(source,c)){case .ok(v):{v}case .err(_):{assert(false);functions::empty()}};}
 @test fn void exact_catalog_mapping_reference_modes_reserved_rows_and_error_order(){
     var properties::Catalog c=properties::empty();var functions::Table t=scanned(b"module main;struct P{i32 x;}fn Option<Buffer> f(Result<i64,u8> x,u8[4] y,P p){}fn i32 main(){return 42;}",ref mut c);

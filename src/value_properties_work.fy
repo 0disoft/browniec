@@ -10,6 +10,11 @@ fn raw::Property blank(){return raw::Property{.bytes=0,.alignment=0,.payload_off
 fn raw::Property plain(usize size,usize alignment){return raw::Property{.bytes=size,.alignment=alignment,.payload_offset=0,.wrapper_depth=0,.copyable=true,.contains_buffer=false};}
 pub fn State empty(){return State{.result=raw::Plan{.count=0,.properties=[blank();64]},.records=records::empty(),.row=0,.visits=0,.phase=0,.done=false};}
 pub fn Result<raw::Plan,raw::Error> prepared(ref State w){if(!w.done){return .err(.Metadata);}return .ok(w.result);}
+// Reuse control storage between private checks without constructing/copying a
+// large nested layout/Plan temporary. Clear result rows in separate stages.
+pub fn Result<bool,raw::Error> restart(ref mut State w){
+    if(!w.done || w.records.active){return .err(.Metadata);}w.done=false;w.row=0;w.visits=0;w.phase=6;w.result.count=0;return .ok(false);
+}
 fn Result<raw::Property,raw::Error> wrapper(raw::Property a,raw::Property b){
     let usize alignment=if(a.alignment>b.alignment){a.alignment}else{b.alignment};
     let usize payload=if(a.bytes>b.bytes){a.bytes}else{b.bytes};
@@ -27,6 +32,7 @@ pub fn Result<bool,raw::Error> advance(ref raw::Catalog catalog,ref mut State w,
         if(done){w.phase=2;}return .ok(false);}
     let bool admitted=switch(budget::admit(meter,4096,0)){case .ok(v):{v}case .err(_):{return .err(.Metadata);}};
     if(!admitted){return .ok(false);}
+    if(w.phase==6){if(w.row==64){w.row=0;w.phase=0;return .ok(false);}let usize i=w.row;w.result.properties[i]=blank();w.row+=1;return .ok(false);}
     if(w.phase==0){if(catalog.count>64){return .err(.Metadata);}w.result.count=catalog.count;
         switch(records::begin(ref mut w.records,4096)){case .ok(_):{}case .err(_):{return .err(.Type);}};w.phase=1;return .ok(false);}
     if(w.phase==2){if(w.row==64){w.done=true;return .ok(true);}let usize i=w.row;let raw::Node node=catalog.nodes[i];w.visits+=1;

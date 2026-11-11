@@ -9,7 +9,7 @@ bottom = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(bottom)
 bottom.DESCRIPTION = __doc__
 bottom.DIRECTORY = 'build/value-signature-work'
-bottom.MODULES = {'value_catalog_work': None}
+bottom.MODULES = {'value_properties_work': None, 'value_type_work': None, 'value_signature_work': None, 'value_function_work': None, 'value_catalog_work': None, 'value_signature_depth': None, 'value_source_control': ['mutable_buffers_wrappers_and_scalar_slots_replace_reinitialize_and_snapshot_rhs_values', 'admitted_32_deep_conditionals_execute_and_33_reject_without_native_stack_override']}
 bottom.EXTRA_INPUTS = {'tools/verify-value-signature-work.py'}
 if __name__ == '__main__':
     bottom.main()

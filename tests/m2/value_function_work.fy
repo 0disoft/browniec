@@ -41,7 +41,8 @@ fn Result<raw::Table,errors::Error> run(ref u8[] source,ref mut properties::Cata
     let raw::Table result=work::prepared(ref w)?;*original=candidate;return .ok(result);
 }
 fn void same(ref u8[] source,ref properties::Catalog initial){var properties::Catalog a=*initial;var properties::Catalog b=*initial;
-    same_result(raw::scan_values_raw(source,ref mut a),run(source,ref mut b));catalog(ref a,ref b);
+    let Result<raw::Table,errors::Error> reference=raw::scan_values_raw(source,ref mut a);same_result(reference,run(source,ref mut b));catalog(ref a,ref b);
+    b=*initial;same_result(reference,raw::scan_values(source,ref mut b));catalog(ref a,ref b);
 }
 @test fn void complete_value_signatures_declaration_order_and_catalog_rollback(){
     var properties::Catalog seed=properties::empty();seed.count=1;seed.nodes[0]=properties::Node{.kind=4,.first=0,.second=0,.extent=0};
@@ -62,4 +63,10 @@ fn void same(ref u8[] source,ref properties::Catalog initial){var properties::Ca
     same(b"module main;fn i32 main(i32 x){}",ref seed);same(b"module main;",ref seed);
     // Incoming catalogs are deliberately ignored by scan_values, including malformed ones.
     seed.count=65;same(b"module main;fn i32 main(){return 42;}",ref seed);
+
+    same(b"module main;fn i32 main(){}fn void f0(){}fn void f1(){}fn void f2(){}fn void f3(){}fn void f4(){}fn void f5(){}fn void f6(){}fn void f7(){}fn void f8(){}fn void f9(){}fn void f10(){}fn void f11(){}fn void f12(){}fn void f13(){}fn void f14(){}",ref seed);
+    same(b"module main;fn i32 main(){}fn void f0(){}fn void f1(){}fn void f2(){}fn void f3(){}fn void f4(){}fn void f5(){}fn void f6(){}fn void f7(){}fn void f8(){}fn void f9(){}fn void f10(){}fn void f11(){}fn void f12(){}fn void f13(){}fn void f14(){}fn void f15(){}",ref seed);
+    same(b"module main;fn void f(i32 a0,i32 a1,i32 a2,i32 a3,i32 a4,i32 a5,i32 a6,i32 a7,i32 a8){}fn i32 main(){}",ref seed);
+    same(b"module main;fn i32 main(){}fn void f0(u8[1] a0,u8[2] a1,u8[3] a2,u8[4] a3,u8[5] a4,u8[6] a5,u8[7] a6,u8[8] a7){}fn void f1(u8[9] a0,u8[10] a1,u8[11] a2,u8[12] a3,u8[13] a4,u8[14] a5,u8[15] a6,u8[16] a7){}fn void f2(u8[17] a0,u8[18] a1,u8[19] a2,u8[20] a3,u8[21] a4,u8[22] a5,u8[23] a6,u8[24] a7){}fn void f3(u8[25] a0,u8[26] a1,u8[27] a2,u8[28] a3,u8[29] a4,u8[30] a5,u8[31] a6,u8[32] a7){}fn void f4(u8[33] a0,u8[34] a1,u8[35] a2,u8[36] a3,u8[37] a4,u8[38] a5,u8[39] a6,u8[40] a7){}fn void f5(u8[41] a0,u8[42] a1,u8[43] a2,u8[44] a3,u8[45] a4,u8[46] a5,u8[47] a6,u8[48] a7){}fn void f6(u8[49] a0,u8[50] a1,u8[51] a2,u8[52] a3,u8[53] a4,u8[54] a5,u8[55] a6,u8[56] a7){}fn void f7(u8[57] a0,u8[58] a1,u8[59] a2,u8[60] a3,u8[61] a4,u8[62] a5,u8[63] a6){}",ref seed);
+    same(b"module main;fn i32 main(){}fn void f0(u8[1] a0,u8[2] a1,u8[3] a2,u8[4] a3,u8[5] a4,u8[6] a5,u8[7] a6,u8[8] a7){}fn void f1(u8[9] a0,u8[10] a1,u8[11] a2,u8[12] a3,u8[13] a4,u8[14] a5,u8[15] a6,u8[16] a7){}fn void f2(u8[17] a0,u8[18] a1,u8[19] a2,u8[20] a3,u8[21] a4,u8[22] a5,u8[23] a6,u8[24] a7){}fn void f3(u8[25] a0,u8[26] a1,u8[27] a2,u8[28] a3,u8[29] a4,u8[30] a5,u8[31] a6,u8[32] a7){}fn void f4(u8[33] a0,u8[34] a1,u8[35] a2,u8[36] a3,u8[37] a4,u8[38] a5,u8[39] a6,u8[40] a7){}fn void f5(u8[41] a0,u8[42] a1,u8[43] a2,u8[44] a3,u8[45] a4,u8[46] a5,u8[47] a6,u8[48] a7){}fn void f6(u8[49] a0,u8[50] a1,u8[51] a2,u8[52] a3,u8[53] a4,u8[54] a5,u8[55] a6,u8[56] a7){}fn void f7(u8[57] a0,u8[58] a1,u8[59] a2,u8[60] a3,u8[61] a4,u8[62] a5,u8[63] a6,u8[64] a7){}",ref seed);
 }

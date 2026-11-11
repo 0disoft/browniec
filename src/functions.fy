@@ -16,6 +16,8 @@ import module_index as modules;
 import value_signature_source as value_types;
 import value_properties as value_properties;
 import function_scan_work as staged;
+import value_function_work as value_staged;
+import metadata_budget as budget;
 
 // Bounded signature pass enables forward calls without trusting unparsed bodies.
 pub struct Table {
@@ -283,5 +285,10 @@ pub fn Result<Table,errors::Error> scan_index_untyped_raw(ref u8[] source,ref co
     return scan_index_raw(source,scope,index,selected,returns);
 }
 
-// Compatibility owner while the independently staged scanner is verified.
-pub fn Result<Table,errors::Error> scan_values(ref u8[] source,ref mut value_properties::Catalog catalog){return scan_values_raw(source,catalog);}
+// Complete private typed signatures; source and original catalog stay pinned.
+pub fn Result<Table,errors::Error> scan_values(ref u8[] source,ref mut value_properties::Catalog catalog){
+    if(source.len>4096){return scan_values_raw(source,catalog);}
+    var value_properties::Catalog candidate=value_properties::empty();var value_staged::State w=value_staged::empty();var budget::State meter=budget::empty();
+    while(!w.done){let usize allowance=budget::reset(ref mut meter,0)?;let bool done=value_staged::advance(source,ref mut candidate,ref mut w,ref mut meter)?;}
+    let Table table=value_staged::prepared(ref w)?;*catalog=candidate;return .ok(table);
+}

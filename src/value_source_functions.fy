@@ -9,6 +9,8 @@ import locals as locals;
 import lexer as lexer;
 import types as scalar;
 import errors as errors;
+import value_catalog_work as staged;
+import metadata_budget as budget;
 
 // Compile-only forward metadata. Entries are exact canonical node ID + 1;
 // only a void result is zero; 66 denotes readonly ref u8[]. No runtime authority.
@@ -170,5 +172,9 @@ pub fn Result<usize,errors::Error> finish(ref mut values::Program unit,ref bindi
     unit.body.ends[f]=code_end;unit.body.register_ends[f]=registers_end;return .ok(f);
 }
 
-// Compatibility owner while the staged catalog mapper is verified.
-pub fn Result<Plan,errors::Error> prepare(ref properties::Catalog catalog,ref functions::Table signatures){return prepare_raw(catalog,signatures);}
+// Drain bounded canonical mapping; no plan is published before all checks.
+pub fn Result<Plan,errors::Error> prepare(ref properties::Catalog catalog,ref functions::Table signatures){
+    var staged::State w=staged::empty();var budget::State meter=budget::empty();
+    while(!w.done){let usize allowance=budget::reset(ref mut meter,0)?;let bool done=staged::advance(catalog,signatures,ref mut w,ref mut meter)?;}
+    return staged::prepared(ref w);
+}

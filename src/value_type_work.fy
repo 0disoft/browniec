@@ -84,7 +84,7 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref properties::Catalo
             if(node.kind==f.kind && node.first==f.tag && node.second==second && node.extent==f.extent){w.id=w.row;w.phase=45;}else{w.row+=1;}return .ok(false);}
         if(candidate.count>=64){return .err(error(4,f.at));}let usize id=candidate.count;
         candidate.nodes[id]=properties::Node{.kind=f.kind,.first=f.tag,.second=second,.extent=f.extent};candidate.count+=1;w.id=id;
-        w.check=checking::empty();w.phase=41;return .ok(false);}
+        switch(checking::restart(ref mut w.check)){case .ok(_):{}case .err(e):{return .err(check_error(e,f.at));}};w.phase=41;return .ok(false);}
     if(w.phase==45){if(w.token.kind==91){return .err(error(3,w.token.begin));}
         if(d==0){w.done=true;return .ok(true);}w.depth-=1;let usize parent=w.depth;let u8 resume=w.frames[parent].resume;
         let usize id=w.id;if(resume==12){w.frames[parent].first=id;}else{w.frames[parent].second=id;}w.phase=resume;return .ok(false);}
