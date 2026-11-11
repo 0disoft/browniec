@@ -1,0 +1,275 @@
+{
+  "schema": "browniec.compiler-body-control-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-11T17:47:21.032109+00:00",
+  "verifiedCommit": "6451094c5b9cc10b887b8c51186f0b3f1fb690b3",
+  "implementationCommits": [
+    "f4f0f9a030eb0e2c3d25b8439ea33e3c0571d350",
+    "cefc6e8a432944d96c611ef2dd2ac5e4cf36b092",
+    "55479ab9bd1aa9d96cbafbcaf3387e19959759e4"
+  ],
+  "scope": "Explicit common compiler statement-control continuation; owning adapters remain synchronous",
+  "ordinaryBodyControlContinuationImplemented": true,
+  "completeBodySemanticLowering": false,
+  "sourceLoweringComplete": false,
+  "publicPendingCompile": false,
+  "compiler": {
+    "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+    "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+    "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false"
+  },
+  "msvc": {
+    "version": "14.51.36231",
+    "sdk": "10.0.26100.0",
+    "compilerSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+    "overrides": false
+  },
+  "controlKernel": {
+    "owner": "src/body_source_work.fy",
+    "sourceByteLimit": 4096,
+    "logicalAllowance": 4096,
+    "frameSlots": 67,
+    "admittedFrames": 65,
+    "rejectionFrames": 2,
+    "oneControlOrPatternTransitionPerStage": true,
+    "oneLocalCleanupPerStage": true,
+    "maximumLoopFixupRows": 256,
+    "lexerChildrenResumeSeparately": true,
+    "semanticChildren": "Explicit pending requests serviced outside the control-stage allowance",
+    "candidateOnly": true,
+    "terminalIdempotence": true
+  },
+  "compatibility": {
+    "rawBodyOracle": "compiler::lower_body(...,false)",
+    "checked": "All IR fields including reserved tails, arrays/records, ownership and slice/call/function metadata after successful and failed body calls",
+    "diagnostics": "Exact kind and byte offset",
+    "successfulSourceFixtures": 12,
+    "failedSourceFixtures": 11,
+    "depthCases": "Nested braces fail at 33 in signature scanning; separate 32/33 else-if chains exercise semantic body depth",
+    "nativeRuntimeResult": 42,
+    "publicEntrySelectionUnchanged": true
+  },
+  "frozenCheckpointVerification": [
+    {
+      "receipt": {
+        "path": "build/body-source-kernel/development/receipt.json",
+        "sha256": "f9e90984b89b979d63d810c7a0a0bcfeeffc2a2143e6ead90e902448c542de64"
+      },
+      "verifiedCommit": "f4f0f9a030eb0e2c3d25b8439ea33e3c0571d350",
+      "profile": "development",
+      "nativeGroups": 2,
+      "inputCount": 336,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "selectedTests": [
+        "tests::m2::body_source_work::explicit_scope_frames_preserve_depth_and_deferral_without_semantic_replay",
+        "tests::m2::body_source_work::semantic_children_wait_for_one_matching_completion"
+      ],
+      "report": {
+        "path": "build/body-source-kernel/development/native.json",
+        "sha256": "967f42090c31290bde327e0e159bf58e479531c599a99faa0421ce96034a0d36"
+      }
+    },
+    {
+      "receipt": {
+        "path": "build/body-source-integration/development/receipt.json",
+        "sha256": "63e236e54cfd07b09bba28c86313f80f2737a2d8c0c541c45a4b19068692e49e"
+      },
+      "verifiedCommit": "cefc6e8a432944d96c611ef2dd2ac5e4cf36b092",
+      "profile": "development",
+      "nativeGroups": 5,
+      "inputCount": 337,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "selectedTests": [
+        "tests::m2::body_lowering::admitted_32_controls_and_33_error_match_without_stack_overrides",
+        "tests::m2::body_lowering::control_continuations_match_all_raw_ir_fields_and_execute",
+        "tests::m2::body_lowering::invalid_control_headers_and_terminal_errors_keep_exact_offsets",
+        "tests::m2::body_source_work::explicit_scope_frames_preserve_depth_and_deferral_without_semantic_replay",
+        "tests::m2::body_source_work::semantic_children_wait_for_one_matching_completion"
+      ],
+      "report": {
+        "path": "build/body-source-integration/development/native.json",
+        "sha256": "783c480463468e1f59ccac43a9205844284f488453dc39ab51bf687173a2a2c7"
+      }
+    }
+  ],
+  "currentNativeVerification": [
+    {
+      "receipt": {
+        "path": "build/body-source-current/development/receipt.json",
+        "sha256": "5359b9169cfae2c43f28bf83fde9886fdf722648d8404385f3e5a2c26674f8e0"
+      },
+      "verifiedCommit": "6451094c5b9cc10b887b8c51186f0b3f1fb690b3",
+      "profile": "development",
+      "nativeGroups": 5,
+      "inputCount": 337,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "selectedTests": [
+        "tests::m2::body_lowering::admitted_32_controls_and_33_error_match_without_stack_overrides",
+        "tests::m2::body_lowering::control_continuations_match_all_raw_ir_fields_and_execute",
+        "tests::m2::body_lowering::invalid_control_headers_and_terminal_errors_keep_exact_offsets",
+        "tests::m2::body_source_work::explicit_scope_frames_preserve_depth_and_deferral_without_semantic_replay",
+        "tests::m2::body_source_work::semantic_children_wait_for_one_matching_completion"
+      ],
+      "report": {
+        "path": "build/body-source-current/development/native.json",
+        "sha256": "783c480463468e1f59ccac43a9205844284f488453dc39ab51bf687173a2a2c7"
+      }
+    },
+    {
+      "receipt": {
+        "path": "build/body-source-current/release/receipt.json",
+        "sha256": "771aed599421edd9dd8b31954a6dcb9ca72f021e4dde5ae049c7aebd6316348c"
+      },
+      "verifiedCommit": "6451094c5b9cc10b887b8c51186f0b3f1fb690b3",
+      "profile": "release",
+      "nativeGroups": 5,
+      "inputCount": 337,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "selectedTests": [
+        "tests::m2::body_lowering::admitted_32_controls_and_33_error_match_without_stack_overrides",
+        "tests::m2::body_lowering::control_continuations_match_all_raw_ir_fields_and_execute",
+        "tests::m2::body_lowering::invalid_control_headers_and_terminal_errors_keep_exact_offsets",
+        "tests::m2::body_source_work::explicit_scope_frames_preserve_depth_and_deferral_without_semantic_replay",
+        "tests::m2::body_source_work::semantic_children_wait_for_one_matching_completion"
+      ],
+      "report": {
+        "path": "build/body-source-current/release/native.json",
+        "sha256": "605c5dc9e6c17c0d3573a6cd2d28047c13b8b80f698a03c0fbb011ebf26fc08d"
+      }
+    }
+  ],
+  "engine": {
+    "receipt": {
+      "path": "build/runtime-engine/20261111T174314497697Z/receipt.json",
+      "sha256": "0b4261e218d0532f901c390f226435e35f4b7358b27c1a9875332bdc237c2ba8"
+    },
+    "inputCount": 336,
+    "sourceClosure": 322,
+    "allInputHashesMatchCheckout": true,
+    "allInputHashesMatchVerifiedCommit": true,
+    "rootLockUnchanged": true,
+    "compilerOverrides": false,
+    "runtimeEnvironment": "cleared; empty tool PATH",
+    "transportSha256": "62dfcce899087c46ba3d92e2f458924a4e40e481905151192197e6662b8dc243",
+    "profiles": [
+      {
+        "profile": "development",
+        "artifact": {
+          "path": "build/runtime-engine/20261111T174314497697Z/development/runtime-engine.exe",
+          "sha256": "4e40870aa4ef2fccd551d5393a0f1380db78efa26faa2d606e8e85b7ef2b28ee",
+          "bytes": 11095040,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "exit": 0,
+        "liveHeapAllocationsAtExit": 0,
+        "arrayFillMetrics": {
+          "arrayWorkBytes": 360,
+          "cursorBytes": 1184,
+          "machineBytes": 1792,
+          "coreBytes": 172400,
+          "pendingVecExtraBytes": 2880,
+          "callWorkBytes": 536,
+          "callPendingVecExtraBytes": 4288,
+          "returnWorkBytes": 48,
+          "returnPendingVecExtraBytes": 384,
+          "combinedPendingVecExtraBytes": 7552
+        }
+      },
+      {
+        "profile": "release",
+        "artifact": {
+          "path": "build/runtime-engine/20261111T174314497697Z/release/runtime-engine.exe",
+          "sha256": "d1e3ce562fd443a4d1214bd94e278180f2bb205856a5548ccc3e400e722534e2",
+          "bytes": 4055040,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "exit": 0,
+        "liveHeapAllocationsAtExit": 0,
+        "arrayFillMetrics": {
+          "arrayWorkBytes": 360,
+          "cursorBytes": 1184,
+          "machineBytes": 1792,
+          "coreBytes": 172400,
+          "pendingVecExtraBytes": 2880,
+          "callWorkBytes": 536,
+          "callPendingVecExtraBytes": 4288,
+          "returnWorkBytes": 48,
+          "returnPendingVecExtraBytes": 384,
+          "combinedPendingVecExtraBytes": 7552
+        }
+      }
+    ]
+  },
+  "transportReview": {
+    "receipt": {
+      "path": "build/value-transport-review.json",
+      "sha256": "1e4e40d5b515ac62956ef3bfc29a88cd5d48804eeaece6d81da8ebcdba5edb95"
+    },
+    "declarations": 36,
+    "layouts": 51,
+    "aggregateGraphs": 176,
+    "normalizedShapeChanges": 0,
+    "addedModules": [
+      "src/body_source_work.fy"
+    ],
+    "removedModules": []
+  },
+  "changedInputs": [
+    {
+      "path": "src/body_source_work.fy",
+      "sha256": "f2d6a96120370457fdecc6798944e95a7a79d267935d3826e46495332278dac8"
+    },
+    {
+      "path": "src/compiler.fy",
+      "sha256": "62a0974044b10db078b4599629b28b752867e4a7dc94a3c1c455a75320b98ba3"
+    },
+    {
+      "path": "tests/m2/body_source_work.fy",
+      "sha256": "b61a4f28dfdb4b4f1d86e92841eb626d0a9c9cc0ef294c77e66fca100201e1a9"
+    },
+    {
+      "path": "tests/m2/body_lowering.fy",
+      "sha256": "a9993d36621b0f477f8ebd7d0fdb9845fd5a45e281fb545476f133eaf0aac94d"
+    },
+    {
+      "path": "tools/verify-body-source-work.py",
+      "sha256": "44a8827e6f78261b0d7b478c91254bde2bcbfdaa69251ac7df2884ed3298d0e6"
+    },
+    {
+      "path": "fairy.lock",
+      "sha256": "0c783af14ad1c23931d0c66fb7aa436d0ce730b7746c2a6d09e8c150e96cc180"
+    },
+    {
+      "path": "native/runtime-engine/transport.json",
+      "sha256": "3eb4cc9e59a22d0769ed7773b3a3901c475102547a93529fc0620c79db5d358c"
+    }
+  ],
+  "productionSources": {
+    "count": 329,
+    "allLf": true
+  },
+  "remainingAtomicLowering": [
+    "Atomic ordinary declaration/assignment and return semantic children",
+    "Atomic condition/subject expressions and for-header probe/replay children",
+    "Recursive value-yielding expression scopes and the separate value_source body walker",
+    "Function parameter setup, source-state preparation, implicit-return cleanup and final metadata assignment",
+    "Body-derived origin inference and aggregate parameter/result catalogs outside this control kernel"
+  ],
+  "limitations": [
+    "Control-stage bounds exclude explicitly pending semantic children and initial fixed scratch construction",
+    "Logical metadata/transition bounds only; no byte/CPU/timing/dynamic peak-stack improvement measurement",
+    "No public Pending compiler or R02-R05 closure; broader completion stays paused",
+    "Focused native and Engine suites only; optional public Fuel CLI and full release suites were not requested",
+    "Local commits only; no push, release or deployment"
+  ]
+}

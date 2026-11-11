@@ -1,21 +1,23 @@
-- Latest private value-body stack checkpoint (2026-11-12): [source stages](docs/engineering/compiler-source-stages.md)
-  local four-wrapper annotations plus owned-value use inside 32 controls now
-  compile, verify and execute; 33 controls reject with kind 4. Canonical catalog
-  inspection uses a scalar-result internal checker and publishes the whole Plan
-  only after success, avoiding large native error-result temporaries. Independent
-  staged catalog comparisons preserve exact properties/errors. Both profiles pass
-  9 native groups, including the separate maximum-wrapper signature fixture.
-  Engine development/O2 pass default 1MiB/4KiB stacks and zero exit SDK heap;
-  all 335 inputs match `5f00e60`. Transport retains 36 bindings/51 layouts and
-  176 equivalent aggregate graphs; Core/Cursor/Machine stay 172400/1184/1792
-  bytes. 328 production modules retain LF. See [body stack evidence](docs/evidence/runtime-value-body-stack-windows-20261112.json)
-  and the historical [typed/value signature evidence](docs/evidence/runtime-compiler-value-signatures-windows-20261111.json).
-  Twenty-three private source kernels remain; typed catalog/signature children
-  resume independently and owning adapters drain synchronously. Origins,
-  aggregate catalogs, recursive bodies and final semantic work still remain.
-  No claim that every admitted source limit composes, measured time/peak-stack
-  improvement, public Pending compile or R02-R05 closure. Lowering stays
-  authorized; broader completion stays paused. Local only.
+- Latest ordinary body-control checkpoint (2026-11-12): [source stages](docs/engineering/compiler-source-stages.md)
+  common compiler function-root/block/if/else-if/while/for/switch traversal now
+  uses explicit frames. Pattern tokens resume separately; lexical/transfer cleanup
+  releases one local/stage; loop fixups visit at most 256 rows. 67 slots retain
+  65 admitted live frames plus exact depth-error framing. Semantic child requests
+  remain synchronous and outside the control-stage bound; owning adapters drain.
+  Kernel/integration checkpoints pass 2/5 development groups; current development
+  and release pass 5 groups each, comparing all raw body IR fields and exact errors
+  across 12 success/11 failure sources, including 32/33 boundaries. Engine
+  development/O2 pass default 1MiB/4KiB stacks and zero exit SDK heap; all 336
+  inputs match `6451094`. Transport retains 36 bindings/51 layouts/176 aggregate
+  graphs; Core/Cursor/Machine stay 172400/1184/1792 bytes. 329 modules retain LF.
+  See [body control evidence](docs/evidence/compiler-body-control-windows-20261112.json)
+  and the historical [local annotation stack repair](docs/evidence/runtime-value-body-stack-windows-20261112.json).
+  Twenty-four private source kernels are implemented. Ordinary statement/return/
+  expression children, value-yielding scopes, the separate typed/value body walker,
+  function setup/finalization, origins and aggregate catalogs still remain.
+  No complete resumable body/coordinator, public Pending compile, measured CPU/
+  time/peak-stack improvement or R02-R05 closure. Lowering stays authorized;
+  broader completion stays paused. Local only.
 
 # Brownie C agent guidance
 

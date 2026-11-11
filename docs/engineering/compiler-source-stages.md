@@ -7,7 +7,8 @@ drain their corresponding continuations synchronously. The complete proof
 continues through the [preceding proof kernels](runtime-authority-metadata-stages.md#compiler-proof-stages).
 This remains partial lowering, rather than a resumable compiler coordinator.
 Untyped and typed/value signature passes compose the children below, including
-canonical catalog proof and result/parameter planning.
+canonical catalog proof and result/parameter planning. Ordinary function-body
+control traversal now also drains an explicit frame continuation.
 
 ## Implemented boundaries
 
@@ -40,6 +41,7 @@ in separate advances; unused credit cannot accumulate into a later scan.
 | `value_signature_work` | A type-parser child or fixed canonical-node-to-tag conversion and successful candidate publication. |
 | `value_function_work` | Record declaration proof, one candidate row, sixteen packed fields or the existing signature coordinator with an external typed annotation bank. |
 | `value_catalog_work` | One function/parameter/unused header, canonical matching row or independent catalog-proof child. |
+| `body_source_work` | One ordinary body/control or pattern transition, one scoped local release, at most 256 loop-fixup visits, or a separate lexer child. Semantic expression/statement requests wait outside this allowance. |
 | `struct_layout_work` (reused) | Fixed scratch initialization, one sixteen-slot row, at most sixteen dependency visits, or one node of at most sixteen fields. |
 
 The owner pins the exact source, Index/context and query across advances.
@@ -223,6 +225,46 @@ retains the original failure as history. This repair uses the pinned compiler
 and default native stacks. It does not replace recursive body lowering or prove
 that every independently admitted source limit composes.
 
+### Ordinary body control continuations
+
+`body_source_work` replaces the common compiler's recursive statement-control
+walk with 67 fixed slots: up to 65 admitted live frames and two slots preserving
+the old depth-error order. Function-root sequences, nested blocks, if/else-if,
+while, for and two-arm switch resume through explicit phases. Pattern tokens use
+the lexer continuation; block and break/continue cleanup releases one local per
+stage. Loop jump fixups visit at most 256 rows. The owner pins one source, IR,
+name table and loop state across every advance; deferred work consumes no credit
+and replays no semantic child.
+
+The owning `compiler::body` adapter drains these stages synchronously. The raw
+`lower_body(...,false)` path remains a candidate-only comparison oracle. All IR
+fields, including unused/reserved tails and catalog/owner metadata, are compared
+after successful and failed body calls. The focused suite covers branch/loop/
+pattern diagnostics, lexical array cleanup, void fallthrough and 32/33 boundaries
+for both nested blocks and else-if chains. A 33-brace failure may precede body
+lowering in the independent signature scanner; the else-if cases separately
+exercise the semantic depth guard.
+
+Semantic children remain explicit synchronous requests: ordinary declarations/
+assignments, returns, condition/subject expressions and for-header probe/replay.
+They are not included in a control-stage bound. Function parameter setup, entry
+lexer preparation, implicit-return cleanup and final metadata assignment also
+remain outside this kernel. Value-yielding expression scopes and the separate
+`value_source` body walker still recurse. This is bounded ordinary control work,
+not complete resumable body/expression lowering or a public Pending compiler.
+Fixed initial scratch remains outside the advance contract; no measured byte,
+CPU, timing or peak-stack improvement is claimed.
+
+The [body control evidence](../evidence/compiler-body-control-windows-20261112.json)
+records the 2-group kernel checkpoint, 5-group integration checkpoint and current
+5 groups per development/release profile (12 successful and 11 failing source
+fixtures). Engine development/O2 pass default 1MiB/4KiB stacks and zero exit SDK
+heap; all 336 input hashes match `6451094`. Transport preserves 36 bindings,
+51 layouts and 176 aggregate graphs. Core/Cursor/Machine remain
+172400/1184/1792 bytes. 329 production modules retain LF. Run
+`python tools/verify-body-source-work.py --profile development` and then
+`--profile release`; Engine verification remains `python tools/verify-runtime-engine.py`.
+
 ## Required remaining lowering work
 
 The following semantic work remains atomic, even where its helpers drain stages:
@@ -233,8 +275,10 @@ The following semantic work remains atomic, even where its helpers drain stages:
 3. Body-derived slice origin analysis, including its seventeen rounds and
    expression/atom/CALL/name/control-flow traversal.
 4. Array/record parameter/result catalog preparation.
-5. Function bodies, statements, operands, expressions and recursive control
-   lowering. Use explicit continuations, not a metered whole `body` call.
+5. Semantic statement/return/operand/expression children, value-yielding scopes
+   and the separate typed/value body walker; function entry/final metadata work.
+   Ordinary statement-control traversal is now explicit; do not meter a whole
+   remaining semantic child as though its recursive work had been split.
 6. Final entry-call restrictions and output normalization, plus raw context/
    nominal discovery outside the newly staged owners.
 
