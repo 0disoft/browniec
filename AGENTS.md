@@ -1,22 +1,27 @@
-- Latest ordinary body-control checkpoint (2026-11-12): [source stages](docs/engineering/compiler-source-stages.md)
-  common compiler function-root/block/if/else-if/while/for/switch traversal now
-  uses explicit frames. Pattern tokens resume separately; lexical/transfer cleanup
-  releases one local/stage; loop fixups visit at most 256 rows. 67 slots retain
-  65 admitted live frames plus exact depth-error framing. Semantic child requests
-  remain synchronous and outside the control-stage bound; owning adapters drain.
-  Kernel/integration checkpoints pass 2/5 development groups; current development
-  and release pass 5 groups each, comparing all raw body IR fields and exact errors
-  across 12 success/11 failure sources, including 32/33 boundaries. Engine
-  development/O2 pass default 1MiB/4KiB stacks and zero exit SDK heap; all 336
-  inputs match `6451094`. Transport retains 36 bindings/51 layouts/176 aggregate
-  graphs; Core/Cursor/Machine stay 172400/1184/1792 bytes. 329 modules retain LF.
-  See [body control evidence](docs/evidence/compiler-body-control-windows-20261112.json)
-  and the historical [local annotation stack repair](docs/evidence/runtime-value-body-stack-windows-20261112.json).
-  Twenty-four private source kernels are implemented. Ordinary statement/return/
-  expression children, value-yielding scopes, the separate typed/value body walker,
-  function setup/finalization, origins and aggregate catalogs still remain.
-  No complete resumable body/coordinator, public Pending compile, measured CPU/
-  time/peak-stack improvement or R02-R05 closure. Lowering stays authorized;
+- Latest ordinary semantic checkpoint (2026-11-12): [source stages](docs/engineering/compiler-source-stages.md)
+  common compiler Pratt traversal now uses 34 fixed frames and explicit converted
+  operand requests. Annotated primitive/legacy Option/Result declarations stage
+  tokens, initializer, terminator, optional slot/store and final local registration.
+  Scalar/void returns stage expression, terminator, reverse pending/local cleanup
+  and RETURN. One finalizer runs per stage; slice cleanup may inspect 256 IR rows.
+  Ordinary body controls retain their 67 explicit frame slots. Owning adapters
+  still drain synchronously; unsupported semantic children stay outside the bound.
+  Pratt checkpoints pass 5 groups/profile; declaration checkpoint passes 7
+  development groups. Final development/release each pass 13 groups, including
+  body kernels and exact raw IR/errors for 32 successful/28 failing sources,
+  expression/control depth 32/33 and local binding limits 64/65. Engine
+  development/O2 pass default 1MiB/4KiB stacks and zero exit SDK heap; all 338
+  Engine inputs match `5fa36fa`. Transport retains 36 bindings/51 layouts/176
+  equivalent aggregate graphs; Core/Cursor/Machine stay 172400/1184/1792 bytes.
+  331 production modules retain LF. See [semantic evidence](docs/evidence/compiler-semantic-source-windows-20261112.json)
+  and the earlier [body evidence](docs/evidence/compiler-body-control-windows-20261112.json).
+  Twenty-six private source kernels are implemented. Converted operands (including
+  nested expressions/CALLs), scalar assignments, inferred/aggregate/reference
+  declarations, special return protocols, for-post probe/replay, value-yielding
+  scopes and the separate typed/value body walker remain. Function entry/final
+  metadata, implicit-return cleanup, origins and aggregate catalogs also remain.
+  No complete resumable compiler/coordinator, public Pending compile, measured
+  CPU/time/peak-stack improvement or R02-R05 closure. Lowering stays authorized;
   broader completion stays paused. Local only.
 
 # Brownie C agent guidance

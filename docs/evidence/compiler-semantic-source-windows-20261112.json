@@ -1,0 +1,331 @@
+{
+  "schema": "browniec.compiler-semantic-source-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-11T18:36:38.316575+00:00",
+  "verifiedCommit": "5fa36fa4b7a27c05bd897ca42179984c650a2410",
+  "implementationCommits": [
+    "bc78f9c0f9399786cab92e77803c46b875792310",
+    "15ed09fdb159eb425bad9bfcce2b75805f38dcb6",
+    "1070be80fa058873ab5486aa35554ca2055cadc3"
+  ],
+  "scope": "Private common Pratt traversal, annotated scalar/wrapper declarations and scalar/void returns",
+  "toolchain": {
+    "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+    "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+    "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false"
+  },
+  "msvc": {
+    "version": "14.51.36231",
+    "sdk": "10.0.26100.0",
+    "compilerSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+    "overrides": false
+  },
+  "expressionKernel": {
+    "owner": "src/expression_source_work.fy",
+    "frameSlots": 34,
+    "maximumAdmittedDepth": 32,
+    "logicalAllowance": 4096,
+    "convertedOperands": "Explicit recursive child requests outside the bound",
+    "lexerChildrenResumeSeparately": true,
+    "terminalIdempotence": true
+  },
+  "semanticKernel": {
+    "owner": "src/semantic_source_work.fy",
+    "logicalAllowance": 4096,
+    "declarations": "Annotated primitive and legacy scalar-payload Option/Result; final-only local registration",
+    "returns": "Ordinary scalar and void; special protocols remain explicit legacy children",
+    "cleanup": "One pending selection or lexical local in reverse order per stage; slice finalizer may scan at most 256 IR rows",
+    "statementFallback": "Inference, arrays, records, references, assignments and for-post probe/replay retain legacy children"
+  },
+  "compatibility": {
+    "rawBodyOracle": "compiler::lower_body(...,false)",
+    "checked": "All IR fields, including reserved tails, catalogs, ownership and call/slice/function metadata after success and failure",
+    "diagnostics": "Exact kind and source byte offset",
+    "successfulSourceFixtures": 32,
+    "failedSourceFixtures": 28,
+    "nativeRuntimeResult": 42,
+    "depth": "Expression operand request at 32 and rejection at 33; existing 32/33 control boundaries",
+    "localBindings": "64 admitted, 65 rejected in original order",
+    "publicEntrySelectionUnchanged": true
+  },
+  "frozenCheckpointVerification": [
+    {
+      "receipt": {
+        "path": "build/semantic-expression-checkpoint/development/receipt.json",
+        "sha256": "58c83a05026c1b35d41aba50c3cab74bb26e9a876bb76ff8140d2688b6569b20"
+      },
+      "verifiedCommit": "bc78f9c0f9399786cab92e77803c46b875792310",
+      "profile": "development",
+      "nativeGroups": 5,
+      "inputCount": 338,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "selectedTests": [
+        "tests::m2::body_lowering::admitted_32_controls_and_33_error_match_without_stack_overrides",
+        "tests::m2::body_lowering::control_continuations_match_all_raw_ir_fields_and_execute",
+        "tests::m2::body_lowering::invalid_control_headers_and_terminal_errors_keep_exact_offsets",
+        "tests::m2::body_lowering::pratt_condition_continuations_match_raw_ir_and_short_circuit",
+        "tests::m2::expression_lowering::pratt_frames_defer_and_resume_without_replaying_operands"
+      ],
+      "report": {
+        "path": "build/semantic-expression-checkpoint/development/native.json",
+        "sha256": "85547d12b6b882e139ab914c20790381d598004430aa319968a31e2373030f04"
+      },
+      "check": "check ok: 2 instance(s), 338 source file(s), 3626 MIR function(s), lock verified"
+    },
+    {
+      "receipt": {
+        "path": "build/semantic-expression-checkpoint/release/receipt.json",
+        "sha256": "f0fc06d1406314c16ba4a120219330f3a06b136bfee1d15ceb30a1392b824fb0"
+      },
+      "verifiedCommit": "bc78f9c0f9399786cab92e77803c46b875792310",
+      "profile": "release",
+      "nativeGroups": 5,
+      "inputCount": 338,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "selectedTests": [
+        "tests::m2::body_lowering::admitted_32_controls_and_33_error_match_without_stack_overrides",
+        "tests::m2::body_lowering::control_continuations_match_all_raw_ir_fields_and_execute",
+        "tests::m2::body_lowering::invalid_control_headers_and_terminal_errors_keep_exact_offsets",
+        "tests::m2::body_lowering::pratt_condition_continuations_match_raw_ir_and_short_circuit",
+        "tests::m2::expression_lowering::pratt_frames_defer_and_resume_without_replaying_operands"
+      ],
+      "report": {
+        "path": "build/semantic-expression-checkpoint/release/native.json",
+        "sha256": "e0053381afc2bade1ae2d2d0fc657e37a75ca2a365a3097ec8b9589c3a058584"
+      },
+      "check": "check ok: 2 instance(s), 338 source file(s), 3626 MIR function(s), lock verified"
+    },
+    {
+      "receipt": {
+        "path": "build/semantic-declaration-checkpoint/development/receipt.json",
+        "sha256": "c1da6c15f658980384920a2a7ed92f1c0a78a2c342e20ce9fea7274d723764ef"
+      },
+      "verifiedCommit": "15ed09fdb159eb425bad9bfcce2b75805f38dcb6",
+      "profile": "development",
+      "nativeGroups": 7,
+      "inputCount": 340,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "selectedTests": [
+        "tests::m2::body_lowering::admitted_32_controls_and_33_error_match_without_stack_overrides",
+        "tests::m2::body_lowering::annotated_semantics_keep_raw_ir_publication_and_diagnostics",
+        "tests::m2::body_lowering::control_continuations_match_all_raw_ir_fields_and_execute",
+        "tests::m2::body_lowering::invalid_control_headers_and_terminal_errors_keep_exact_offsets",
+        "tests::m2::body_lowering::pratt_condition_continuations_match_raw_ir_and_short_circuit",
+        "tests::m2::expression_lowering::pratt_frames_defer_and_resume_without_replaying_operands",
+        "tests::m2::semantic_lowering::annotated_bindings_publish_only_after_initializer_and_terminator"
+      ],
+      "report": {
+        "path": "build/semantic-declaration-checkpoint/development/native.json",
+        "sha256": "31069ac3fb2bd3cc24538a7f8969e4325b5b304c52069b73896f43ad6b7faa68"
+      },
+      "check": "check ok: 2 instance(s), 339 source file(s), 3636 MIR function(s), lock verified"
+    }
+  ],
+  "nativeVerification": [
+    {
+      "receipt": {
+        "path": "build/semantic-source-work/development/receipt.json",
+        "sha256": "fa17b065f5f67d7f4edc595c762ff420c2d057cf00469b6b3c1631e9cda5c70b"
+      },
+      "verifiedCommit": "5fa36fa4b7a27c05bd897ca42179984c650a2410",
+      "profile": "development",
+      "nativeGroups": 13,
+      "inputCount": 341,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "selectedTests": [
+        "tests::m2::body_lowering::admitted_32_controls_and_33_error_match_without_stack_overrides",
+        "tests::m2::body_lowering::annotated_semantics_keep_raw_ir_publication_and_diagnostics",
+        "tests::m2::body_lowering::control_continuations_match_all_raw_ir_fields_and_execute",
+        "tests::m2::body_lowering::invalid_control_headers_and_terminal_errors_keep_exact_offsets",
+        "tests::m2::body_lowering::local_binding_capacity_preserves_raw_error_order",
+        "tests::m2::body_lowering::pratt_condition_continuations_match_raw_ir_and_short_circuit",
+        "tests::m2::body_lowering::scalar_and_void_returns_preserve_raw_exit_ir_and_special_fallback",
+        "tests::m2::body_source_work::explicit_scope_frames_preserve_depth_and_deferral_without_semantic_replay",
+        "tests::m2::body_source_work::semantic_children_wait_for_one_matching_completion",
+        "tests::m2::expression_lowering::expression_depth_rejects_before_requesting_an_operand",
+        "tests::m2::expression_lowering::pratt_frames_defer_and_resume_without_replaying_operands",
+        "tests::m2::semantic_lowering::annotated_bindings_publish_only_after_initializer_and_terminator",
+        "tests::m2::semantic_lowering::returns_resume_one_reverse_cleanup_row_before_emitting_return"
+      ],
+      "report": {
+        "path": "build/semantic-source-work/development/native.json",
+        "sha256": "c9af23cad32ab58dbd2f0e193db4fc3a09ea5c8012c61775a5f247285c8acf05"
+      },
+      "check": "check ok: 2 instance(s), 339 source file(s), 3637 MIR function(s), lock verified"
+    },
+    {
+      "receipt": {
+        "path": "build/semantic-source-work/release/receipt.json",
+        "sha256": "070a509ec2fcf14bf35a5405e710b435339a0d060a6ef0f9a524b51b92048726"
+      },
+      "verifiedCommit": "5fa36fa4b7a27c05bd897ca42179984c650a2410",
+      "profile": "release",
+      "nativeGroups": 13,
+      "inputCount": 341,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "selectedTests": [
+        "tests::m2::body_lowering::admitted_32_controls_and_33_error_match_without_stack_overrides",
+        "tests::m2::body_lowering::annotated_semantics_keep_raw_ir_publication_and_diagnostics",
+        "tests::m2::body_lowering::control_continuations_match_all_raw_ir_fields_and_execute",
+        "tests::m2::body_lowering::invalid_control_headers_and_terminal_errors_keep_exact_offsets",
+        "tests::m2::body_lowering::local_binding_capacity_preserves_raw_error_order",
+        "tests::m2::body_lowering::pratt_condition_continuations_match_raw_ir_and_short_circuit",
+        "tests::m2::body_lowering::scalar_and_void_returns_preserve_raw_exit_ir_and_special_fallback",
+        "tests::m2::body_source_work::explicit_scope_frames_preserve_depth_and_deferral_without_semantic_replay",
+        "tests::m2::body_source_work::semantic_children_wait_for_one_matching_completion",
+        "tests::m2::expression_lowering::expression_depth_rejects_before_requesting_an_operand",
+        "tests::m2::expression_lowering::pratt_frames_defer_and_resume_without_replaying_operands",
+        "tests::m2::semantic_lowering::annotated_bindings_publish_only_after_initializer_and_terminator",
+        "tests::m2::semantic_lowering::returns_resume_one_reverse_cleanup_row_before_emitting_return"
+      ],
+      "report": {
+        "path": "build/semantic-source-work/release/native.json",
+        "sha256": "1df28473fd5631bfa718709262c4f5eec149e4344f07ef8a3f20bcf10ab7fc0b"
+      },
+      "check": "check ok: 2 instance(s), 339 source file(s), 3637 MIR function(s), lock verified"
+    }
+  ],
+  "engineVerification": {
+    "receipt": {
+      "path": "build/runtime-engine/20261111T183312788912Z/receipt.json",
+      "sha256": "f27bfff4d259d9df5a1268f6fc95690af70dfc7011c71d164ec1657ae573497a"
+    },
+    "verifiedCommit": "5fa36fa4b7a27c05bd897ca42179984c650a2410",
+    "inputCount": 338,
+    "allInputHashesMatchVerifiedCommit": true,
+    "compilerOverrides": false,
+    "rootLockUnchanged": true,
+    "profiles": [
+      {
+        "profile": "development",
+        "artifact": {
+          "path": "build/runtime-engine/20261111T183312788912Z/development/runtime-engine.exe",
+          "sha256": "f361edd8bee35483062e6a5b5f6357fe7272146b91dcf1f53563758214cda248",
+          "bytes": 11149312,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "exit": 0,
+        "liveHeapAllocationsAtExit": 0,
+        "arrayFillMetrics": {
+          "arrayWorkBytes": 360,
+          "cursorBytes": 1184,
+          "machineBytes": 1792,
+          "coreBytes": 172400,
+          "pendingVecExtraBytes": 2880,
+          "callWorkBytes": 536,
+          "callPendingVecExtraBytes": 4288,
+          "returnWorkBytes": 48,
+          "returnPendingVecExtraBytes": 384,
+          "combinedPendingVecExtraBytes": 7552
+        }
+      },
+      {
+        "profile": "release",
+        "artifact": {
+          "path": "build/runtime-engine/20261111T183312788912Z/release/runtime-engine.exe",
+          "sha256": "71e917586270fd729447fc97835a2b622c83e8681cbf7758da37bd41ec2dbdac",
+          "bytes": 4071424,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "exit": 0,
+        "liveHeapAllocationsAtExit": 0,
+        "arrayFillMetrics": {
+          "arrayWorkBytes": 360,
+          "cursorBytes": 1184,
+          "machineBytes": 1792,
+          "coreBytes": 172400,
+          "pendingVecExtraBytes": 2880,
+          "callWorkBytes": 536,
+          "callPendingVecExtraBytes": 4288,
+          "returnWorkBytes": 48,
+          "returnPendingVecExtraBytes": 384,
+          "combinedPendingVecExtraBytes": 7552
+        }
+      }
+    ]
+  },
+  "transportReview": {
+    "receipt": {
+      "path": "build/semantic-transport-review.json",
+      "sha256": "91774236de31b3c3b84c7587ab34f193f54004bbd99cd234b2fb458664e35b3c"
+    },
+    "declarations": 36,
+    "layouts": 51,
+    "aggregateGraphs": 176,
+    "normalizedShapeChanges": 0,
+    "normalization": "generated identifiers with recursive bijective aggregate graph comparison",
+    "added": [
+      "src/expression_source_work.fy",
+      "src/semantic_source_work.fy"
+    ],
+    "removed": [],
+    "previousContractSha256": "3eb4cc9e59a22d0769ed7773b3a3901c475102547a93529fc0620c79db5d358c",
+    "candidateContractSha256": "9bcd587c80922e73eaa6c1f293cd62d985715a5cd4b475eda38ecfee52f59c1a"
+  },
+  "changedInputs": [
+    {
+      "path": "fairy.lock",
+      "sha256": "a001c59c5899e3349b36b2a969b9b113ede50a058ed9c846ffbe03bd6d9d58b0"
+    },
+    {
+      "path": "native/runtime-engine/transport.json",
+      "sha256": "9bcd587c80922e73eaa6c1f293cd62d985715a5cd4b475eda38ecfee52f59c1a"
+    },
+    {
+      "path": "src/compiler.fy",
+      "sha256": "3200391ba622bc0bcb82b8464bffbb269783f4fbb541fe8b63fe77e35d831188"
+    },
+    {
+      "path": "src/expression_source_work.fy",
+      "sha256": "bb9afe752b9838b1f7349eefabec3c9308728a544bf8238ba4e4dc8d52f59870"
+    },
+    {
+      "path": "src/semantic_source_work.fy",
+      "sha256": "8459e3278a1bed63f8962d1f2aa08763051004e0b2f448f33b67ec4c3d592dfd"
+    },
+    {
+      "path": "tests/m2/body_lowering.fy",
+      "sha256": "69f2fe0dfb9d1b1aab4ed8ad839402c96db7f95faf1b9c3fdc7816ee5efc8209"
+    },
+    {
+      "path": "tests/m2/expression_lowering.fy",
+      "sha256": "ba0a310379a6e999a7f8660d09ddc80d449cab5ec543a405622634697195fa07"
+    },
+    {
+      "path": "tests/m2/semantic_lowering.fy",
+      "sha256": "186b99b6090a1eba9b7c1ab3f1135c8aa7564c456c6bf76f118077aa7b42c434"
+    },
+    {
+      "path": "tools/verify-semantic-source-work.py",
+      "sha256": "2efdca385c8f2841c1d7c558968e025254a3b215049b5de329a74a4268696243"
+    }
+  ],
+  "productionSources": {
+    "count": 331,
+    "allLf": true
+  },
+  "remainingAtomicLowering": [
+    "Converted unary/postfix/cast operands including parenthesized expressions and CALLs",
+    "Scalar assignments, inferred/aggregate/reference declarations, special return protocols and for-post probe/replay",
+    "Value-yielding expression scopes and the separate typed/value body walker",
+    "Function entry, implicit-return cleanup, final metadata, body-derived origins and aggregate catalogs"
+  ],
+  "limitations": [
+    "Logical stage bounds exclude explicit legacy children, fixed scratch initialization and owning synchronous drains",
+    "No public Pending compiler, measured byte/CPU/time/peak-stack improvement or R02-R05 closure",
+    "Focused semantic/body kernels and Engine suites; optional public Fuel CLI and full release suites were not requested",
+    "Local commits only; broader completion stays paused; no push, release or deployment"
+  ]
+}

@@ -245,9 +245,10 @@ for both nested blocks and else-if chains. A 33-brace failure may precede body
 lowering in the independent signature scanner; the else-if cases separately
 exercise the semantic depth guard.
 
-Semantic children remain explicit synchronous requests: ordinary declarations/
-assignments, returns, condition/subject expressions and for-header probe/replay.
-They are not included in a control-stage bound. Function parameter setup, entry
+At this control-only checkpoint, declarations, assignments, returns, condition/
+subject expressions and for-header probe/replay remained synchronous semantic
+children outside the control-stage bound. The following semantic section records
+the later Pratt, annotated declaration and scalar/void return stages. Function parameter setup, entry
 lexer preparation, implicit-return cleanup and final metadata assignment also
 remain outside this kernel. Value-yielding expression scopes and the separate
 `value_source` body walker still recurse. This is bounded ordinary control work,
@@ -265,6 +266,55 @@ heap; all 336 input hashes match `6451094`. Transport preserves 36 bindings,
 `python tools/verify-body-source-work.py --profile development` and then
 `--profile release`; Engine verification remains `python tools/verify-runtime-engine.py`.
 
+### Expression, annotated declaration and scalar return semantics
+
+The common compiler now drains two additional private kernels. The expression
+kernel keeps 34 Pratt frames and requests each converted unary/postfix/cast
+operand explicitly. Operator tokens resume through the lexical kernel; binary
+precedence, comparisons and logical short-circuit slot/branch/patch/load emission
+preserve the raw expression order. Depth rejection precedes the operand request.
+Conditions and switch subjects use this adapter, as do the newly staged scalar
+initializers and returns. This does not replace recursion inside a converted
+operand, including parenthesized expressions, CALLs or value-yielding scopes.
+
+The semantic kernel stages annotated primitive and legacy scalar-payload
+Option/Result declarations through keyword/type/name/equals, initializer,
+terminator, optional slot/store and final local registration. The binding stays
+invisible throughout initialization. Inference, array, record and reference
+forms request the existing semantic child; exploratory annotation tokens are
+discarded by restoring the original lexer before that child starts. No
+initializer or emitted semantic child is replayed.
+
+Ordinary scalar and void returns stage keyword, expression/type check when
+needed, terminator, pending selections, lexical finalizers and RETURN. Cleanup
+visits one pending selection or local in reverse order per stage and retains the
+return keyword offset. A local finalizer may scan up to 256 existing IR rows to
+recover a slice parent. Reference, slice, record, array and Result return
+protocols retain explicit legacy children. Scalar assignments, for-post probe
+and replay, and implicit void fallthrough cleanup also retain their old paths.
+
+Each advance admits one logical grammar transition or delegates one lexical,
+type or Pratt advance. An outstanding child and an exhausted dispatch allowance
+remain idle. Initial fixed scratch construction and synchronous adapter drains
+stay outside these contracts; the per-dispatch allowance is not a byte/CPU,
+latency or measured peak-stack guarantee. Intermediate IR is candidate scratch;
+only completed kernel results and complete initialized bindings are published.
+
+Run `python tools/verify-semantic-source-work.py --profile development` and
+then `--profile release`. The selection includes both existing body-control
+kernel groups, so a second identical body-only native build is unnecessary.
+The [semantic evidence](../evidence/compiler-semantic-source-windows-20261112.json)
+records separately committed Pratt and declaration checkpoints, then 13 native
+groups in each profile: 32 successful and 28 failing source comparisons, exact
+IR/error fields, expression/control depth 32/33 and local count 64/65. Engine
+development/O2 pass default 1MiB/4KiB stacks and zero exit SDK heap; all 338
+inputs match `5fa36fa`. Transport retains 36 bindings, 51 layouts and 176
+equivalent aggregate graphs. Core/Cursor/Machine remain 172400/1184/1792 bytes;
+331 production modules retain LF. Optional public Fuel CLI and full release
+suites were not requested. Earlier checkpoints remain frozen history.
+The public compiler still drains synchronously; remaining semantic children and
+the separate typed/value body walker are not made resumable by this change.
+
 ## Required remaining lowering work
 
 The following semantic work remains atomic, even where its helpers drain stages:
@@ -275,10 +325,12 @@ The following semantic work remains atomic, even where its helpers drain stages:
 3. Body-derived slice origin analysis, including its seventeen rounds and
    expression/atom/CALL/name/control-flow traversal.
 4. Array/record parameter/result catalog preparation.
-5. Semantic statement/return/operand/expression children, value-yielding scopes
-   and the separate typed/value body walker; function entry/final metadata work.
-   Ordinary statement-control traversal is now explicit; do not meter a whole
-   remaining semantic child as though its recursive work had been split.
+5. Converted operands (including nested expressions/CALLs), scalar assignments,
+   inferred/aggregate/reference declarations, special return protocols, for-post
+   probe/replay, value-yielding scopes and the separate typed/value body walker;
+   function entry/final metadata and implicit-return cleanup. Ordinary control,
+   Pratt traversal, annotated scalar/wrapper declarations and scalar/void returns
+   have explicit stages; remaining semantic children stay outside those bounds.
 6. Final entry-call restrictions and output normalization, plus raw context/
    nominal discovery outside the newly staged owners.
 
