@@ -113,3 +113,14 @@ pub fn Result<bool,errors::Error> advance_scoped(ref u8[] source,ref context::Ta
         let usize at=context::begin(scope.records[w.record]);w.state=states::begin(at);w.phase=11;return .ok(false);}
     return metadata(source,w,meter);
 }
+// Owning synchronous drains. The Table remains private until all layout checks.
+pub fn Result<raw::Table,errors::Error> scan_single(ref u8[] source){
+    var State w=single();var budget::State meter=budget::empty();
+    while(!w.done){let usize allowance=budget::reset(ref mut meter,0)?;let bool done=advance_single(source,ref mut w,ref mut meter)?;}
+    return prepared(ref w);
+}
+pub fn Result<raw::Table,errors::Error> scan_scoped(ref u8[] source,ref context::Table scope){
+    var State w=scoped();var budget::State meter=budget::empty();
+    while(!w.done){let usize allowance=budget::reset(ref mut meter,0)?;let bool done=advance_scoped(source,scope,ref mut w,ref mut meter)?;}
+    return prepared(ref w);
+}

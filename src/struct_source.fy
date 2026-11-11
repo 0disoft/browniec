@@ -7,6 +7,7 @@ import struct_layout as layouts;
 import errors as errors;
 import std::num as num;
 import source_context as context;
+import struct_scan_work as staged;
 
 // Names are spans in the immutable source. No object bindings or guest values.
 pub struct Table { context::Table context; layouts::Catalog layouts; usize[32] begins; usize[32] ends; usize[32] bodies; }
@@ -106,7 +107,7 @@ fn Result<usize, errors::Error> resolve(ref u8[] source, ref mut Table table, us
     table.layouts.fields[record] = code(field, s.begin)?;
     return .ok(field);
 }
-pub fn Result<Table, errors::Error> scan(ref u8[] source) {
+pub fn Result<Table, errors::Error> scan_raw(ref u8[] source) {
     if (source.len > 4096) { return .err(errors::make(4, 4096)); }
     var Table table = empty(); var lexer::State s = lexer::empty();
     let usize first = lexer::next(source, ref mut s)?;
@@ -169,7 +170,7 @@ pub fn Result<Location, errors::Error> locate(ref u8[] source, usize begin, usiz
 }
 
 // Declaration IDs remain global ordinals; name lookup uses the owning module.
-pub fn Result<Table,errors::Error> scan_scoped(ref u8[] source,ref context::Table scope){
+pub fn Result<Table,errors::Error> scan_scoped_raw(ref u8[] source,ref context::Table scope){
     if(!context::valid(source,scope)){return .err(errors::make(5,0));}
     var Table table=empty();table.context=*scope;table.layouts.count=scope.record_count;
     var usize id=0;
@@ -212,5 +213,7 @@ pub fn Result<usize,errors::Error> resolve_untyped_raw(ref u8[] source,ref mut T
 }
 
 // Raw whole-source/scoped oracles retain original declaration/type/layout order.
-pub fn Result<Table,errors::Error> scan_single_untyped_raw(ref u8[] source){return scan(source);}
-pub fn Result<Table,errors::Error> scan_scoped_untyped_raw(ref u8[] source,ref context::Table scope){return scan_scoped(source,scope);}
+pub fn Result<Table,errors::Error> scan_single_untyped_raw(ref u8[] source){return scan_raw(source);}
+pub fn Result<Table,errors::Error> scan_scoped_untyped_raw(ref u8[] source,ref context::Table scope){return scan_scoped_raw(source,scope);}
+pub fn Result<Table,errors::Error> scan(ref u8[] source){return staged::scan_single(source);}
+pub fn Result<Table,errors::Error> scan_scoped(ref u8[] source,ref context::Table scope){return staged::scan_scoped(source,scope);}

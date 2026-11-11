@@ -39,8 +39,10 @@ fn Result<raw::Table,errors::Error> run(ref u8[] source,ref context::Table scope
     let usize total=meter.total;let Result<bool,errors::Error> done=if(scoped){work::advance_scoped(source,scope,ref mut w,ref mut meter)}else{work::advance_single(source,ref mut w,ref mut meter)};
     assert(done.is_ok && meter.total==total);return work::prepared(ref w);
 }
-fn void plain(ref u8[] source){let context::Table scope=context::empty();same_result(raw::scan_single_untyped_raw(source),run(source,ref scope,false));}
-fn void scoped(ref u8[] source,ref context::Table scope){same_result(raw::scan_scoped_untyped_raw(source,scope),run(source,scope,true));}
+fn void plain(ref u8[] source){let context::Table scope=context::empty();same_result(raw::scan_single_untyped_raw(source),run(source,ref scope,false));
+    same_result(raw::scan_single_untyped_raw(source),raw::scan(source));}
+fn void scoped(ref u8[] source,ref context::Table scope){same_result(raw::scan_scoped_untyped_raw(source,scope),run(source,scope,true));
+    same_result(raw::scan_scoped_untyped_raw(source,scope),raw::scan_scoped(source,scope));}
 fn usize position(ref u8[] source,ref u8[] query){var usize i=0;while(i+query.len<=source.len){
     if(lexer::equal(source[i..i+query.len],query)){return i;}i+=1;}assert(false);return 0;}
 fn u32 word(usize a,usize b){var usize value=a|(b<<13);var u32 result=0;var u32 bit=1;
