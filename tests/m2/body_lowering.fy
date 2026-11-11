@@ -116,3 +116,19 @@ fn bytes::Buffer nested(usize count){var bytes::Buffer s=bytes::empty();assert(b
     compare(b"module main;fn i32 main(){if(true || 1){return 42;}else{return 0;}}",false);
     compare(b"module main;fn i32 main(){if(1+){return 42;}else{return 0;}}",false);
 }
+
+@test fn void annotated_semantics_keep_raw_ir_publication_and_diagnostics(){
+    compare(b"module main;fn i32 main(){let i32 x=20+11*2;return x;}",true);
+    compare(b"module main;fn i32 main(){var i32 x=42;return x;}",true);
+    compare(b"module main;fn i32 main(){let bool b=1<2 && true;if(b){return 42;}else{return 0;}}",true);
+    compare(b"module main;fn i32 main(){let i64 x=20+22;let u8 y=42;let u32 z=42;let usize n=42;return y as i32;}",true);
+    compare(b"module main;fn i32 main(){let i32 x=x;return 42;}",false);
+    compare(b"module main;fn i32 main(){let i32 x=1;let i32 x=42;return x;}",false);
+    compare(b"module main;fn i32 main(){let i32 true=42;return 42;}",false);
+    compare(b"module main;fn i32 main(){let i32 x=true;return 42;}",false);
+    compare(b"module main;fn i32 main(){let i32 x 42;return 42;}",false);
+    compare(b"module main;fn i32 main(){let i32 x=42 return x;}",false);
+    compare(b"module main;fn i32 main(){let Option<i64> x=.none;return 42;}",false);
+    // Inference and aggregate annotations retain their original semantic child.
+    compare(b"module main;fn i32 main(){let x=42;return x;}",true);
+}

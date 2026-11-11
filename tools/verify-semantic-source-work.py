@@ -9,7 +9,7 @@ bottom = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(bottom)
 bottom.DESCRIPTION = __doc__
 bottom.DIRECTORY = 'build/semantic-source-work'
-bottom.MODULES = {'expression_lowering': None, 'body_lowering': None}
+bottom.MODULES = {'expression_lowering': None, 'semantic_lowering': None, 'body_lowering': None}
 bottom.EXTRA_INPUTS = {'tools/verify-semantic-source-work.py'}
 if __name__ == '__main__':
     bottom.main()

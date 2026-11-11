@@ -64,6 +64,7 @@ import output_ir as output_ir;
 import output_return_ir as output_returns;
 import body_source_work as body_work;
 import expression_source_work as expression_work;
+import semantic_source_work as semantic_work;
 import metadata_budget as metadata_budget;
 
 fn u8 precedence(u8 kind) {
@@ -2398,6 +2399,23 @@ fn Result<bool, errors::Error> control_if(ref u8[] source, ref mut lexer::State 
     return .ok(false);
 }
 
+// Drain annotated declaration stages. Converted operands and unsupported
+// statements remain explicit legacy children outside the stage allowance.
+fn Result<usize,errors::Error> statement_staged(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,
+    u8 terminator,u8 result_type,usize expr_depth,usize structure,ref mut loops::State flow){
+    var semantic_work::State w=semantic_work::begin(*s,1,0,terminator,expr_depth);
+    var metadata_budget::State meter=metadata_budget::empty();
+    while(!w.done){let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
+        let bool done=semantic_work::advance(source,s,p,names,ref mut w,ref mut meter)?;
+        if(w.request==1){let expression_work::Frame f=expression_work::current(ref w.expression);
+            let usize value=converted(source,s,p,names,signatures,f.depth,f.expected,result_type,structure,flow)?;
+            let usize completed=semantic_work::resume(ref mut w,1,value,false)?;
+        }else if(w.request==2){let usize value=statement(source,s,p,names,signatures,terminator,result_type,expr_depth,structure,flow)?;
+            let usize completed=semantic_work::resume(ref mut w,2,value,false)?;}
+    }return semantic_work::prepared(ref w);
+}
+
 // Complete one explicit semantic child outside the control-stage allowance.
 // These existing expression/statement children remain atomic; no whole body is
 // submitted as a metadata-budget stage. All candidates still need admission.
@@ -2407,12 +2425,12 @@ pub fn Result<usize,errors::Error> complete_body_child(ref u8[] source,ref mut l
     let u8 request=w.request;
     if(w.done || w.lexing || request==0){return .err(errors::make(5,s.begin));}
     let body_work::Frame f=body_work::current(w);var usize value=0;var bool stopped=false;
-    if(request==1){value=statement(source,s,p,names,signatures,59,result_type,expr_depth,f.depth,flow)?;}
+    if(request==1){value=statement_staged(source,s,p,names,signatures,59,result_type,expr_depth,f.depth,flow)?;}
     else if(request==2){stopped=control_return(source,s,p,names,signatures,result_type,f.depth,expr_depth,flow)?;}
     else if(request==4 || request==5 || request==7 || request==10){
         value=expression_staged(source,s,p,names,signatures,1,expr_depth,if(request==10){0}else{2},
             if(request==7){0}else{result_type},f.depth,flow)?;
-    }else if(request==6){value=statement(source,s,p,names,signatures,59,0,expr_depth,f.depth,flow)?;}
+    }else if(request==6){value=statement_staged(source,s,p,names,signatures,59,0,expr_depth,f.depth,flow)?;}
     else if(request==8){value=checked_post(source,s,p,names,signatures,expr_depth,f.depth,flow)?;}
     else if(request==9){
         var lexer::State post=source_context::state(source,ref signatures.context,f.c)?;
