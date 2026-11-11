@@ -137,3 +137,13 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut State w,ref mu
 // Same observable lexer state on a failure, including private lookahead errors.
 pub fn raw::State observed(ref State w){if(w.phase==1){return token(ref w.scan);}return w.head;}
 pub fn Result<raw::State,errors::Error> prepared(ref State w){if(!w.done){return .err(errors::make(5,0));}return .ok(w.head);}
+
+// Compatibility adapter. The parser still drains each token synchronously;
+// this does not make semantic statement/expression traversal resumable.
+pub fn Result<usize,errors::Error> next(ref u8[] source,ref mut raw::State target){
+    var State w=begin(*target);var budget::State meter=budget::empty();
+    while(!w.done){let usize allowance=budget::reset(ref mut meter,0)?;
+        switch(advance(source,ref mut w,ref mut meter)){
+            case .ok(_):{}case .err(e):{*target=observed(ref w);return .err(e);}};}
+    *target=prepared(ref w)?;return .ok(0);
+}

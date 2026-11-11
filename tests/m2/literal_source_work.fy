@@ -24,7 +24,7 @@ fn Result<raw::Decoded,errors::Error> staged(ref u8[] source,usize begin){
     return work::prepared(ref w);
 }
 fn void same(ref u8[] source,usize begin){
-    switch(raw::decode(source,begin)){
+    switch(raw::decode_raw(source,begin)){
         case .ok(a):{switch(staged(source,begin)){
             case .ok(b):{assert(a.begin==b.begin && a.end==b.end && a.length==b.length && a.text==b.text);
                 var usize i=0;while(i<4096){assert(a.data[i]==b.data[i]);i+=1;}}

@@ -28,7 +28,7 @@ fn Result<usize,errors::Error> next(ref u8[] source,ref mut raw::State result){
 }
 fn void trace(ref u8[] source,raw::State initial){
     var raw::State expected=initial;var raw::State actual=initial;var usize tokens=0;
-    while(tokens<1030){let Result<usize,errors::Error> a=raw::next(source,ref mut expected);
+    while(tokens<1030){let Result<usize,errors::Error> a=raw::next_raw(source,ref mut expected);
         let Result<usize,errors::Error> b=next(source,ref mut actual);equal(ref expected,ref actual);
         switch(a){case .ok(_):{assert(b.is_ok);if(expected.kind==0){return;}}
             case .err(e):{switch(b){case .ok(_):{assert(false);}case .err(f):{assert(e.kind==f.kind && e.offset==f.offset);}};return;}};

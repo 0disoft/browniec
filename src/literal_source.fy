@@ -3,6 +3,7 @@ import errors as errors;
 import std::text as utf8;
 import std::num as num;
 import static_image as images;
+import literal_source_work as staged;
 
 // Compiler-owned scratch only. Raw spans include the prefix and both quotes;
 // only data[..length] is payload. No view into this temporary may escape.
@@ -100,12 +101,14 @@ pub fn Result<usize,errors::Error> scan(ref u8[] source,usize begin){
     var u8[4096] data=[0;4096];let Token token=read(source,begin,ref mut data)?;
     return .ok(token.end);
 }
-pub fn Result<Decoded,errors::Error> decode(ref u8[] source,usize begin){
+pub fn Result<Decoded,errors::Error> decode_raw(ref u8[] source,usize begin){
     var Decoded decoded=Decoded{.data=[0;4096],.begin=begin,.end=begin,.length=0,.text=false};
     let Token token=read(source,begin,ref mut decoded.data)?;
     decoded.end=token.end;decoded.length=token.length;decoded.text=token.text;
     return .ok(decoded);
 }
+// Keep read/scan/decode_raw as independent comparisons for staged interning.
+pub fn Result<Decoded,errors::Error> decode(ref u8[] source,usize begin){return staged::decode(source,begin);}
 pub enum Failure { Source; Image; }
 pub struct Error { Failure kind; errors::Error source; images::Error image; }
 pub struct Interned { usize literal; usize begin; usize end; usize length; bool text; }

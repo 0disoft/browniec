@@ -3,6 +3,7 @@ module lexer;
 import errors as errors;
 import cells as cells;
 import literal_source as literals;
+import lexer_work as staged;
 
 // 0 EOF, 1 integer, 2 identifier, 3 byte literal, 4 text literal.
 // Literal spans retain raw spelling; decoded storage belongs to the compiler.
@@ -199,11 +200,17 @@ fn Result<usize,errors::Error> qualified(ref u8[] source,ref mut State s){
         s.cursor=look.cursor;s.end=look.end;s.tokens=look.tokens;s.kind=5;
     }return .ok(first);
 }
-pub fn Result<usize, errors::Error> next(ref u8[] source, ref mut State s) {
+pub fn Result<usize, errors::Error> next_raw(ref u8[] source, ref mut State s) {
     if(s.context==0){return scan(source,s);}
     let usize bits=s.context as usize;let usize start=bits&8191;let usize end=(bits>>13)&8191;
     if((bits>>28)!=0 || (bits&67108864)==0 || start>end || end>source.len || s.cursor<start || s.cursor>end){return .err(errors::make(5,s.cursor));}
     return qualified(source[..end],s);
+}
+
+// Lowering-source token adapter; the raw scanner stays independent for parity.
+// Preserve the raw general scanner's historical behavior beyond this profile.
+pub fn Result<usize, errors::Error> next(ref u8[] source, ref mut State s){
+    if(source.len>4096){return next_raw(source,s);}return staged::next(source,s);
 }
 
 pub fn Result<usize, errors::Error> word(ref u8[] source, ref mut State s, ref u8[] expected) {

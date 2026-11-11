@@ -104,3 +104,12 @@ pub fn Result<bool,modules::Error> advance(ref modules::Index index,ref mut Stat
 pub fn Result<context::Input,modules::Error> prepared(ref State w){
     if(!w.done){return .err(invalid(sources::no_source()));}return .ok(w.result);
 }
+
+// Owning compiler compatibility adapter. No public Pending compile protocol.
+pub fn Result<context::Input,modules::Error> collect(ref modules::Index index){
+    var State w=empty();var budget::State meter=budget::empty();
+    while(!w.done){let usize allowance=switch(budget::reset(ref mut meter,0)){
+        case .ok(v):{v}case .err(_):{return .err(invalid(sources::no_source()));}};
+        let bool done=advance(index,ref mut w,ref mut meter)?;}
+    return prepared(ref w);
+}

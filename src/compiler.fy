@@ -54,6 +54,7 @@ import static_call_ir as reference_ir;
 import reference_result_source as reference_results;
 import source_features as source_features;
 import source_context as source_context;
+import source_context_work as collecting;
 import module_entry as module_entries;
 import module_input_entry as input_entries;
 import source_error as source_errors;
@@ -2695,7 +2696,7 @@ pub fn Result<usize,source_errors::Error> lower_output_modules(ref module_entrie
 }
 fn Result<bool,source_errors::Error> lower_modules_mode(ref module_entries::Entry selected,
     ref mut static_images::Builder builder,ref mut reference_ir::Program code,bool output){
-    let source_context::Input input=switch(source_context::collect(module_entries::index(selected))){
+    let source_context::Input input=switch(collecting::collect(module_entries::index(selected))){
         case .ok(v):{v}case .err(e):{return .err(source_errors::Error{.code=errors::make(5,e.at.start),.at=e.at});}
     };
     let ref u8[] data=ref input.data;let ref u8[] source=data[..input.used];
@@ -2764,7 +2765,7 @@ pub fn Result<usize,source_errors::Error> lower_input_output_modules(ref input_e
 fn Result<usize,source_errors::Error> lower_input_modules_mode(ref input_entries::InputEntry selected,
     ref mut static_images::Builder builder,ref mut reference_ir::Program code,bool output){
     let ref module_index::Index index=input_entries::index(selected);
-    let source_context::Input input=switch(source_context::collect(index)){
+    let source_context::Input input=switch(collecting::collect(index)){
         case .ok(v):{v}case .err(e):{return .err(source_errors::Error{.code=errors::make(5,e.at.start),.at=e.at});}
     };
     let ref u8[] data=ref input.data;let ref u8[] source=data[..input.used];let ref source_context::Table scope=ref input.context;

@@ -107,3 +107,10 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut State w,ref mu
     return .err(errors::make(5,w.result.begin));
 }
 pub fn Result<raw::Decoded,errors::Error> prepared(ref State w){if(!w.done){return .err(errors::make(5,w.result.begin));}return .ok(w.result);}
+
+// Existing compiler interning drains this private decoded-literal continuation.
+pub fn Result<raw::Decoded,errors::Error> decode(ref u8[] source,usize begin){
+    var State w=empty(begin);var budget::State meter=budget::empty();
+    while(!w.done){let usize allowance=budget::reset(ref mut meter,begin)?;
+        let bool done=advance(source,ref mut w,ref mut meter)?;}return prepared(ref w);
+}
