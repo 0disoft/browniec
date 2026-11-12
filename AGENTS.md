@@ -1,35 +1,37 @@
-- Latest ordinary preflight checkpoint (2026-11-12): [source stages](docs/engineering/compiler-source-stages.md)
-  common converted cast and primary Result property scans now resume through
-  private lexer continuations. Ordinary group openings, local/function rows,
-  64-byte spelling chunks and CALL formals advance separately; scoped names use
-  source_name_work advances rather than a drained lookup adapter. Original
-  context/depth order, immutable real lexer/names and final-only plans remain.
-  Fixed context/route scratch lives in Bank; the 34 Pratt frames stay unchanged.
-  Captured routes restore 64 lexical rows within the conservative logical bound.
-  Conditional/aggregate/static-view roots retain their own legacy operand
-  classifiers and validation before evaluation; those scans are not claimed
-  staged by the ordinary route kernel. Read-only path spelling grants no
-  nominal authority; the selected child validates fields before emitting reads.
-  Context/routing commits are `c1528af`/`f85b742`. Nine development groups at the
-  routing checkpoint plus one boundary group at `9abe988` share byte-identical
-  production inputs; all ten pass release at `9abe988`. Whole IR/failure prefixes
-  and exact diagnostics match the raw body oracle, including mixed depth 32/33.
-  The new binary group's expected depth was corrected without changing source
-  implementation. The first three-group context receipt was overwritten; later
-  hashed checkpoints are preserved. Engine development/O2 pass default 1MiB/4KiB
-  stacks and zero exit SDK heap; all 342 inputs match `263e8b0`.
-  Transport retains 36 equivalent declarations and 51 reviewed layouts; all
-  struct/resource/array graphs are compared recursively (496 before, 498 after,
-  111 arrays each). Only context/route scratch and Bank change. Core/Cursor/
-  Machine remain 172400/1184/1792 bytes; 335 production modules retain LF.
-  See [preflight evidence](docs/evidence/compiler-preflight-source-windows-20261112.json)
-  and the earlier [tail evidence](docs/evidence/compiler-tail-source-windows-20261112.json).
-  Legacy child classifiers/bodies, assignments, special-result protocols, the
-  separate typed/value walker, entry/final metadata, implicit cleanup, origins
-  and catalogs remain outside these bounds. Owning adapters still drain
-  synchronously. No public Pending compiler, measured CPU/time/peak-stack
-  improvement or R02-R05 closure. Lowering stays authorized; broader completion
-  stays paused. Local only.
+- Latest conditional/projection checkpoint (2026-11-12): [source stages](docs/engineering/compiler-source-stages.md)
+  `value_syntax_work` interprets conditional/value/regular/constructor probes on
+  40 fixed frames. Balanced heads/bodies, statement tails, assignment-vs-value
+  checks and place-index delimiters advance without recursive syntax drivers.
+  `aggregate_probe_work` stages record/array/literal/static projection probes and
+  repeated/list separators. Name rows, <=64-byte comparisons, group/delimiter
+  transitions, field tokens and leaf-count graph visits yield independently.
+  `record_location_work` composes staged single-source declaration discovery or
+  scoped context/name/state restoration. These are read-only advisory plans.
+  The common expression driver resumes grouped conditional/record/array/literal/
+  enabled static classification before operand dispatch; literal roots also
+  resume. Two States live in the separately pinned Bank, outside the unchanged
+  34 Pratt frames. Captured dispatch restores at most 64 lexical rows within the
+  conservative logical bound. Real lexer/names/IR stay unchanged during probing;
+  type/ownership/field authority is revalidated by the actual evaluation child.
+  Implementation: `205c2a5`/`c8b1998`/`50206b3`; boundary tests: `08117e7`.
+  Development and release each pass 11 groups in 9+2 batches sharing identical
+  production bytes. Complete raw plans/IR/failure prefixes and exact diagnostics
+  match, including conditional/body/index and combined CALL depth boundaries,
+  16/17 selectors and 200-byte field names in single/scoped catalogs. Current
+  `--syntax-only` discovers all 11; the final combined selection was not rerun.
+  Engine development/O2 pass default 1MiB/4KiB stacks and zero exit SDK heap.
+  All 345 Engine inputs match `b21567d`; all 338 production modules retain LF.
+  Transport retains 36 equivalent declarations and 51 reviewed layouts. All 498
+  previous struct/resource/array shapes remain equivalent after removing Bank's
+  two new scratch fields; 504 definitions now include 112 arrays (previously
+  111). Core/Cursor/Machine remain 172400/1184/1792 bytes.
+  See [projection evidence](docs/evidence/compiler-projection-source-windows-20261112.json)
+  and [earlier preflight evidence](docs/evidence/compiler-preflight-source-windows-20261112.json).
+  Owning classifier adapters still drain synchronously. Actual conditional/
+  aggregate evaluation bodies, general assignment plans, typed/value walkers,
+  entry/final metadata, implicit cleanup and catalogs/origins remain outside
+  these bounds. No public Pending compiler, measured CPU/time/peak-stack
+  improvement or R02-R05 closure. Broader completion stays paused. Local only.
 
 # Brownie C agent guidance
 

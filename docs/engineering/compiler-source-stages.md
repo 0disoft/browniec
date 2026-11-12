@@ -568,3 +568,63 @@ while replacing these calls in small verified commits. The current authorization
 covers this lowering work; broader completion stays paused. Public R02-R05
 closure, post-proof cache planning, admission allocations and unrelated runtime
 discovery remain separate work. Local only; no push, release or deployment.
+
+
+### Conditional and aggregate projection classification
+
+`value_syntax_work` replaces recursive read-only conditional discovery with a
+40-frame grammar interpreter. Conditional heads, nested if/else bodies, skipped
+loop/block syntax, statement endings and value tails retain their original
+order. Regular-statement discovery also stages CALL boundaries, grouped places,
+record assignments and array-index assignment checks. A 32-entry persisted
+stack matches all delimiter families inside grouped place indices. Constructor
+atoms use the same staged balanced-token machinery. Depth and malformed-source
+errors retain the independent raw classifier's kind and byte offset.
+
+`aggregate_probe_work` stages record/array atoms, literal projections, grouped
+static projections and the first repeated/list separator. Opening/closing groups,
+balanced constructor/CALL/literal tokens, local/function rows, <=64-byte spelling
+chunks, field tokens and leaf-count graph visits each resume independently.
+`record_location_work` composes the existing single-source declaration walker
+or scoped context authentication, nominal lookup and lexical restoration. A
+field name never acquires nominal authority merely by matching source spelling.
+The advisory plan preserves record/tag/groups/suffix; the selected evaluation
+child still validates its nominal fields and ownership before emitting reads.
+Literal/static compatibility adapters need no dummy Program on their stack.
+
+The common expression driver stores one conditional State and one aggregate
+State in its separately pinned Bank. Its 34 Pratt frames remain unchanged.
+Grouped conditional, record, array, literal and enabled static classification
+resume in their original order before operand dispatch. Literal roots also
+resume before projection selection or the original scalar-context rejection.
+A captured dispatch restores at most 64 lexical rows within the conservative
+4096-unit logical stage bound. Budget deferral leaves all probe continuations
+unchanged; successful completion publishes only the final read-only plan.
+
+The original classifier entry points retain their signatures and drain these
+private kernels synchronously. Independent `_raw` entry points preserve the
+original recursive/token loops for comparison. This supersedes the preceding
+ordinary-routing checkpoint's exclusion of these named classifiers. Actual
+conditional/aggregate evaluation bodies, complete assignment-place preparation,
+typed/value walkers, catalogs/origins, entry/final metadata and implicit cleanup
+remain legacy children outside this bound. Initial fixed scratch construction
+is outside transition accounting. There is no public Pending compiler, measured
+CPU/time/peak-stack improvement, or R02-R05 closure.
+
+Verification: implementation `205c2a5`, `c8b1998`, `50206b3`; additional boundary
+coverage `08117e7`. [Recorded evidence](../evidence/compiler-projection-source-windows-20261112.json)
+checks development and release: nine groups at `50206b3` plus two boundary groups
+at `08117e7`, with byte-identical production inputs. Raw booleans/plans, complete
+IR/failure prefixes and exact diagnostics match. Coverage includes intermediate
+budget deferral and immutable lexer/IR, conditional/body/index depth boundaries,
+16/17 selectors, combined group/CALL depth 32/33 and 200-byte field names in
+single/scoped catalogs. Current `--syntax-only` selects all eleven groups; the
+combined selection and broader default/public-CLI/release suites were not rerun.
+
+Engine development/O2 pass default 1MiB reserve/4KiB commit stacks and zero exit
+SDK heap. All 345 Engine inputs match `b21567d`. The transport audit retains
+36 equivalent declarations and 51 reviewed layouts. Every prior recursive
+struct/resource/fixed-array shape remains equivalent after removing Bank's two
+new scratch fields; definitions increase from 498 to 504, arrays from 111 to
+112. Core/Cursor/Machine stay 172400/1184/1792 bytes. All 338 production modules
+retain LF. No remote publication, version change or broader completion work.
