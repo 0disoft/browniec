@@ -1141,10 +1141,10 @@ fn Result<usize,errors::Error> ordinary_call(ref u8[] source,ref lexer::State s,
         signatures.return_slice_elements[target]!=0 || signatures.return_lengths[target]!=0 || signatures.return_records[target]!=0){return .ok(16);}
     return .ok(target);
 }
-// Resume the converted tail without re-evaluating the completed group/CALL.
+// Resume a primary/converted tail without re-evaluating the completed operand.
 // Postfix propagation/inspection and casts remain explicit legacy children.
 fn Result<usize,errors::Error> converted_tail(ref u8[] source,ref mut lexer::State s,
-    ref mut ir::Program p,ref locals::Table names,usize initial,u8 result_type){
+    ref mut ir::Program p,ref locals::Table names,usize initial,u8 result_type,bool primary_only){
     var usize value=initial;
     while(s.kind==63 || s.kind==46){let usize at=s.begin;
         if(s.kind==46){var lexer::State look=lexer::snapshot(s);let usize next=lexer::next(source,ref mut look)?;
@@ -1153,7 +1153,7 @@ fn Result<usize,errors::Error> converted_tail(ref u8[] source,ref mut lexer::Sta
             let usize member=lexer::next(source,s)?;value=result_is_ok(p,value,at)?;continue;}
         let usize next=lexer::next(source,s)?;value=propagation::lower(p,names,value,result_type,at)?;
     }
-    while(word_is(source,s,b"as")){let usize at=s.begin;let usize keyword=lexer::next(source,s)?;
+    while(!primary_only && word_is(source,s,b"as")){let usize at=s.begin;let usize keyword=lexer::next(source,s)?;
         let u8 target=types::parse(source,s)?;value=ir::widen(p,value,target,at)?;}
     return .ok(value);
 }
@@ -1162,12 +1162,15 @@ fn Result<usize,errors::Error> complete_operand_in_environment(ref u8[] source,r
     usize structure,ref mut loops::State flow,ref mut expression_work::Bank bank,ref mut expression_work::State w){
     if(w.done || !w.waiting){return .err(errors::make(5,s.begin));}
     let expression_work::Frame f=expression_work::current(w);
-    if(w.request==2){let usize initial=w.value;let usize value=converted_tail(source,s,p,names,initial,result_type)?;
+    if(w.request==2){let usize initial=w.value;let usize value=converted_tail(source,s,p,names,initial,result_type,f.minimum==0)?;
         return expression_work::resume(w,value);}
     if(w.request!=1){return .err(errors::make(5,s.begin));}
     // Preserve converted -> primary -> operand lookahead/error order.
-    let bool explicit=casts::follows(source,s)?;let u8 expected=if(explicit){0}else{f.expected};
+    let bool explicit=if(f.minimum==0){false}else{casts::follows(source,s)?};let u8 expected=if(explicit){0}else{f.expected};
     let u8 context=if(expected!=0 && !types::tagged(expected) && result_property(source,s)?){0}else{expected};
+    // Raw primary performs its read-only Result lookahead before operand depth.
+    if(f.depth>32){return .err(errors::make(4,s.begin));}
+    if(s.kind==45 || s.kind==33 || s.kind==126){return expression_work::unary(w,s.kind,context,s.begin);}
     if(s.kind==40 && ordinary_group(source,s,p,names,signatures)?){return expression_work::group(w,context);}
     let usize target=ordinary_call(source,s,p,names,signatures)?;
     if(target<16){var bool plain=true;var usize i=0;while(i<signatures.arities[target]){let usize at=target*8+i;
@@ -1175,7 +1178,7 @@ fn Result<usize,errors::Error> complete_operand_in_environment(ref u8[] source,r
         if(plain){return expression_work::call(w,target,signatures.arities[target],ref signatures.param_types[target*8..target*8+8],s.begin);}
         return expression_work::captured(w,bank,names,*s,target,s.begin,f.depth);}
     let usize initial=operand(source,s,p,names,signatures,f.depth,context,result_type,structure,flow)?;
-    let usize value=converted_tail(source,s,p,names,initial,result_type)?;return expression_work::resume(w,value);
+    let usize value=converted_tail(source,s,p,names,initial,result_type,f.minimum==0)?;return expression_work::resume(w,value);
 }
 
 // One active lexical context is copied into fixed caller scratch. The context

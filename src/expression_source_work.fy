@@ -8,7 +8,7 @@ import ir as ir;
 import types as types;
 import errors as errors;
 import metadata_budget as budget;
-// Private Pratt/group/CALL coordinator. Converted preflight, unary/projection,
+// Private Pratt/group/CALL/unary coordinator. Converted preflight, projection,
 // postfix/cast and aggregate argument protocols remain explicit legacy children.
 // Source, names, capture bank and candidate IR stay pinned across advances.
 pub struct Frame { usize environment; usize target; usize arity; usize count; usize operand_at; usize depth; usize left; usize slot; usize jump; usize at;
@@ -34,6 +34,13 @@ pub fn Result<usize,errors::Error> resume(ref mut State w,usize value){
 pub fn Result<usize,errors::Error> group(ref mut State w,u8 context){
     if(w.done || !w.waiting || w.request!=1){return .err(errors::make(5,0));}
     let usize i=w.used-1;w.frames[i].context=context;w.frames[i].phase=10;w.waiting=false;w.request=0;return .ok(0);
+}
+// minimum==0 is a primary-only child: postfixes precede the unary operation,
+// but casts and binary operators belong to the enclosing converted expression.
+pub fn Result<usize,errors::Error> unary(ref mut State w,u8 kind,u8 context,usize at){
+    if(w.done || !w.waiting || w.request!=1 || (kind!=45 && kind!=33 && kind!=126)){return .err(errors::make(5,at));}
+    let usize i=w.used-1;w.frames[i].kind=kind;w.frames[i].context=context;w.frames[i].operand_at=at;
+    w.frames[i].phase=40;w.waiting=false;w.request=0;return .ok(0);
 }
 // The fixed eight-row formal plan is advisory; CALL emission rechecks IR limits.
 pub fn Result<usize,errors::Error> call(ref mut State w,usize target,usize arity,ref u8[] tags,usize at){
@@ -129,10 +136,10 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s
         }else if(active.request==2){w.waiting=true;w.request=3;}return .ok(false);}
     if(!budget::admit(meter,4096,s.begin)?){return .ok(false);}
     let usize i=w.used-1;let Frame f=current(w);let usize value=w.value;w.visits+=1;
-    if(f.phase==0){if(f.depth>32){return .err(errors::make(4,s.begin));}
+    if(f.phase==0){if(f.minimum!=0 && f.depth>32){return .err(errors::make(4,s.begin));}
         w.frames[i].phase=1;w.waiting=true;w.request=1;return .ok(false);}
     if(f.phase==1){w.frames[i].left=value;w.frames[i].phase=2;return .ok(false);}
-    if(f.phase==2){if(precedence(s.kind)<f.minimum){w.value=f.left;w.used-=1;w.done=w.used==0;return .ok(w.done);}
+    if(f.phase==2){if(f.minimum==0 || precedence(s.kind)<f.minimum){w.value=f.left;w.used-=1;w.done=w.used==0;return .ok(w.done);}
         w.frames[i].kind=s.kind;w.frames[i].operation=opcode(s.kind);w.frames[i].at=s.begin;
         w.frames[i].phase=3;w.token=tokens::begin(*s);w.lexing=true;return .ok(false);}
     if(f.phase==3){let bool logical=f.kind==132 || f.kind==133;
@@ -174,5 +181,19 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s
     if(f.phase==29){w.value=f.left;w.frames[i].phase=1;w.waiting=true;w.request=2;return .ok(false);}
     if(f.phase==31){var calls::State active=calls::empty();let usize loaded=load_call(w,bank,i,ref mut active)?;let usize accepted=calls::resume(ref mut active,1,value)?;save_call(w,bank,i,ref active);w.frames[i].phase=30;return .ok(false);}
     if(f.phase==32){return take(w,s,s.kind,30);}
+    if(f.phase==40){if(f.kind==45 && types::unsigned(f.context)){return .err(errors::make(3,f.operand_at));}
+        return take(w,s,f.kind,41);}
+    if(f.phase==41){if(f.kind==45 && s.kind==1){
+            if(s.min_magnitude){if(f.context!=9){return .err(errors::make(3,f.operand_at));}return take(w,s,1,44);}
+            if(s.value==2147483648 && f.context!=9){return take(w,s,1,45);}}
+        if(w.used>=34){return .err(errors::make(4,s.begin));}
+        let usize next=w.used;w.frames[i].phase=42;w.frames[next]=frame(f.depth+1,0,f.context);w.frames[next].environment=f.environment;w.used+=1;return .ok(false);}
+    if(f.phase==42){if((f.kind==45 && !types::signed(p.types[value])) || (f.kind==126 && !types::integer(p.types[value])) ||
+            (f.kind==33 && p.types[value]!=2)){return .err(errors::make(3,f.operand_at));}
+        w.frames[i].left=value;w.frames[i].phase=43;return .ok(false);}
+    if(f.phase==43){let usize result=ir::emit(p,if(f.kind==45){7}else if(f.kind==126){27}else{10},f.left,0,f.operand_at)?;
+        w.frames[i].left=result;w.frames[i].phase=13;return .ok(false);}
+    if(f.phase==44 || f.phase==45){let usize result=if(f.phase==44){ir::integer(p,-9223372036854775808,9,f.operand_at)?}else{ir::literal(p,-2147483648,f.operand_at)?};
+        w.frames[i].left=result;w.frames[i].phase=13;return .ok(false);}
     return .err(errors::make(5,s.begin));
 }

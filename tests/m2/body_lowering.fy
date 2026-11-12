@@ -224,3 +224,26 @@ fn bytes::Buffer mixed_calls(usize count){var bytes::Buffer s=bytes::empty();ass
     var bytes::Buffer over=bytes::empty();assert(bytes::append(ref mut over,b"module main;fn i32 z(){return 0;}fn i32 main(){return ").is_ok);
     i=0;while(i<33){assert(bytes::append(ref mut over,b"z()+").is_ok);i+=1;}assert(bytes::append(ref mut over,b"42;}").is_ok);compare(bytes::view(ref over),false);
 }
+
+@test fn void unary_operands_keep_raw_precedence_context_minima_and_errors(){
+    compare(b"module main;fn i32 main(){return -20+62;}",true);
+    compare(b"module main;fn i32 main(){return ~(-43);}",true);
+    compare(b"module main;fn i32 main(){if(!!!false && !!true){return 42;}else{return 0;}}",true);
+    compare(b"module main;fn i32 id(i32 n){return n;}fn i32 main(){return -id(-42);}",true);
+    compare(b"module main;fn i32 main(){let i64 x=-42 as i64;if(x== -42){return 42;}else{return 0;}}",true);
+    compare(b"module main;fn i32 main(){let u8 x=~0;if(x==255){return 42;}else{return 0;}}",true);
+    compare(b"module main;fn i32 main(){let i32 x=-2147483648;let i64 y=-9223372036854775808;return 42;}",true);
+    compare(b"module main;fn i32 main(){let i64 x=-2147483648;return 42;}",true);
+    compare(b"module main;fn i32 main(){let i32 x= - -42;return x;}",true);
+    compare(b"module main;fn i32 main(){let Result<i32,bool> r=.ok(1);if(!r.is_ok){return 0;}else{return 42;}}",true);
+    compare(b"module main;fn i32 main(){return -true;}",false);
+    compare(b"module main;fn i32 main(){return !42;}",false);
+    compare(b"module main;fn i32 main(){return ~true;}",false);
+    compare(b"module main;fn i32 main(){let u8 x=-1;return 42;}",false);
+    compare(b"module main;fn i32 main(){return -9223372036854775808;}",false);
+    compare(b"module main;fn i32 main(){return -;}",false);
+    compare(b"module main;fn i32 main(){return -42.nope;}",false);
+    compare(b"module main;fn i32 main(){let u8 x=1;let i64 y=-x as i64;return 42;}",false);
+    compare(b"module main;fn i32 main(){let i64 x=-9223372036854775808 as i64;return 42;}",false);
+    compare(b"module main;fn i32 main(){return -2147483648.nope;}",false);
+}

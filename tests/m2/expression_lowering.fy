@@ -22,6 +22,7 @@ fn void run(ref u8[] source){var lexer::State s=lexer::empty();assert(lexer::nex
             let usize before=w.visits;let usize position=s.cursor;assert(budget::reset(ref mut meter,0).is_ok);
             assert(work::advance(source,ref mut s,ref mut p,ref signatures,ref mut bank,ref mut w,ref mut meter).is_ok && meter.last==0 && w.visits==before && s.cursor==position);
             if(w.request==2){let usize initial=w.value;assert(work::resume(ref mut w,initial).is_ok);}
+            else if(s.kind==45 || s.kind==33 || s.kind==126){assert(work::unary(ref mut w,s.kind,f.expected,s.begin).is_ok && !work::unary(ref mut w,s.kind,f.expected,s.begin).is_ok);}
             else if(s.kind==2){let u8[8] tags=[1;8];
                 assert(work::call(ref mut w,0,2,ref tags,s.begin).is_ok && !work::call(ref mut w,0,2,ref tags,s.begin).is_ok);}
             else if(s.kind==40){assert(work::group(ref mut w,f.expected).is_ok && !work::group(ref mut w,f.expected).is_ok);}
@@ -49,3 +50,8 @@ fn void run(ref u8[] source){var lexer::State s=lexer::empty();assert(lexer::nex
 @test fn void group_children_share_the_pratt_stack_and_resume_one_tail(){run(b"(20+1)*2;");run(b"((20+11*2));");}
 
 @test fn void nested_scalar_calls_share_pratt_frames_and_evaluate_each_argument_once(){run(b"sum((20),11*2);");run(b"sum(sum(10,10),sum(11,11));");}
+
+@test fn void unary_children_defer_tokens_checks_and_emission_on_shared_frames(){
+    run(b"-(-42);");run(b"~(-43);");run(b"-20+62;");run(b"~0+43;");
+    run(b"-sum(20,22)+84;");run(b"sum(-(-20),~(-23));");
+}
