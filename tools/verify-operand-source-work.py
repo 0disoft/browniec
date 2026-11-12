@@ -48,5 +48,10 @@ if '--syntax-only' in sys.argv:
     sys.argv.remove('--syntax-only')
     bottom.DIRECTORY = 'build/operand-syntax-work'
     bottom.MODULES = {'value_syntax_lowering': None, 'aggregate_probe_lowering': None, 'body_lowering': ['preflight_legacy_boundaries_and_record_binary_groups_keep_raw_ir_and_errors', 'staged_conditional_and_aggregate_projections_keep_raw_ir_and_failure_prefixes', 'nested_call_depth_32_and_33_preserve_default_stack_and_raw_diagnostics']}
+if '--syntax-boundary-only' in sys.argv:
+    sys.argv.remove('--syntax-boundary-only')
+    bottom.DIRECTORY = 'build/operand-syntax-boundary'
+    bottom.MODULES = {'value_syntax_lowering': ['conditional_group_body_and_index_depth_boundaries_keep_raw_error_order'],
+                      'aggregate_probe_lowering': ['long_field_names_resume_across_chunks_in_single_and_scoped_catalogs']}
 if __name__ == '__main__':
     bottom.main()

@@ -4,6 +4,7 @@ import value_arm_syntax as raw;
 import lexer as lexer;
 import errors as errors;
 import metadata_budget as budget;
+import std::bytes as bytes;
 fn Result<bool,errors::Error> oracle(ref u8[] source,ref lexer::State s,u8 mode){
     if(mode==1){let raw::Conditional v=raw::conditional_atom_raw(source,s)?;return .ok(v.valid);}
     if(mode==2){return raw::conditional_value_raw(source,s);}if(mode==4){return raw::regular_raw(source,s);}return raw::constructor_atom_raw(source,s);
@@ -51,4 +52,16 @@ fn void compare(ref u8[] source,u8 mode){var lexer::State s=lexer::empty();asser
     compare(b"(a.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x)=1;",4);
     compare(b"(a.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x)=1;",4);
     compare(b"a.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x=1;",4);compare(b"a.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x=1;",4);
+}
+
+@test fn void conditional_group_body_and_index_depth_boundaries_keep_raw_error_order(){
+    var usize groups=31;while(groups<=33){var bytes::Buffer b=bytes::empty();var usize i=0;
+        while(i<groups){assert(bytes::append(ref mut b,b"(").is_ok);i+=1;}assert(bytes::append(ref mut b,b"if(true){42}else{0}").is_ok);
+        i=0;while(i<groups){assert(bytes::append(ref mut b,b")").is_ok);i+=1;}assert(bytes::append(ref mut b,b";").is_ok);compare(bytes::view(ref b),1);groups+=1;}
+    var usize levels=16;while(levels<=17){var bytes::Buffer b=bytes::empty();var usize i=0;
+        while(i<levels){assert(bytes::append(ref mut b,b"if(true){").is_ok);i+=1;}assert(bytes::append(ref mut b,b"42").is_ok);
+        i=0;while(i<levels){assert(bytes::append(ref mut b,b"}").is_ok);i+=1;}compare(bytes::view(ref b),2);levels+=1;}
+    var usize depth=31;while(depth<=32){var bytes::Buffer b=bytes::empty();assert(bytes::append(ref mut b,b"(a[").is_ok);var usize i=0;
+        while(i<depth){assert(bytes::append(ref mut b,b"(").is_ok);i+=1;}assert(bytes::append(ref mut b,b"0").is_ok);
+        i=0;while(i<depth){assert(bytes::append(ref mut b,b")").is_ok);i+=1;}assert(bytes::append(ref mut b,b"])=1;").is_ok);compare(bytes::view(ref b),4);depth+=1;}
 }

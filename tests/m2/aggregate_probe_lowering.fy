@@ -96,3 +96,10 @@ fn void first_dispatch(ref u8[] source,usize encoding,u8 lane){var lexer::State 
     first_dispatch(b"([1,2])[0];",256,8);first_dispatch(b"[1,2][0];",256,8);first_dispatch(b"[1,2];",256,10);
     first_dispatch(b"(b\"ab\")[0];",256,9);first_dispatch(b"(if(true){20}else{0}+22);",256,1);
 }
+
+@test fn void long_field_names_resume_across_chunks_in_single_and_scoped_catalogs(){
+    var bytes::Buffer b=bytes::empty();assert(bytes::append(ref mut b,b"module main;struct Inner{i32 x;}struct Pair{Inner a;i32 ").is_ok);
+    var usize i=0;while(i<200){assert(bytes::append(ref mut b,b"a").is_ok);i+=1;}
+    assert(bytes::append(ref mut b,b";}fn i32 main(){return (p).").is_ok);i=0;while(i<200){assert(bytes::append(ref mut b,b"a").is_ok);i+=1;}
+    assert(bytes::append(ref mut b,b";}").is_ok);compare_source(bytes::view(ref b),1,144,false);compare_source(bytes::view(ref b),1,144,true);
+}
