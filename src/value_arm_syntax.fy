@@ -5,6 +5,7 @@ import struct_value_source as records;
 import locals as locals;
 import errors as errors;
 import place_syntax as places;
+import value_syntax_work as work;
 
 fn bool word(ref u8[] source,ref lexer::State s,ref u8[] name){
     return s.kind==2 && lexer::equal(source[s.begin..s.end],name);
@@ -14,7 +15,7 @@ pub fn u8 operand_kind(ref u8[] source,ref lexer::State s){
     if(word(source,s,b"if")){return 1;}if(word(source,s,b"switch")){return 2;}return 0;
 }
 // Shared, read-only distinction between an assignment and a final value read.
-pub fn Result<bool,errors::Error> regular(ref u8[] source,ref lexer::State s){
+pub fn Result<bool,errors::Error> regular_raw(ref u8[] source,ref lexer::State s){
     if(s.kind==40){let places::Plan plan=places::inspect(source,s)?;return .ok(plan.valid);}
     if(word(source,s,b"let") || word(source,s,b"var")){return .ok(true);}
     if(call_statement(source,s)?){return .ok(true);}
@@ -44,7 +45,7 @@ pub fn Result<bool,errors::Error> call_statement(ref u8[] source,ref lexer::Stat
 }
 // Only complete final constructor atoms participate in a join's missing-domain
 // constraints. Operators/propagation and inner payloads keep ordinary parsing.
-pub fn Result<bool,errors::Error> constructor_atom(ref u8[] source,ref lexer::State s){
+pub fn Result<bool,errors::Error> constructor_atom_raw(ref u8[] source,ref lexer::State s){
     var lexer::State look=lexer::snapshot(s);var usize groups=0;
     while(look.kind==40){if(groups>=32){return .err(errors::make(4,look.begin));}
         let usize next=lexer::next(source,ref mut look)?;groups+=1;}
@@ -89,7 +90,7 @@ fn Result<bool,errors::Error> body_value(ref u8[] source,ref mut lexer::State s,
             let usize body=balanced(source,s,123,125)?;continue;
         }
         if(s.kind==123){let usize block=balanced(source,s,123,125)?;continue;}
-        if(regular(source,s)? || word(source,s,b"return") || word(source,s,b"break") || word(source,s,b"continue")){
+        if(regular_raw(source,s)? || word(source,s,b"return") || word(source,s,b"break") || word(source,s,b"continue")){
             let usize end=statement_end(source,s)?;continue;
         }
         let usize end=body_end(source,s)?;return .ok(true);
@@ -107,13 +108,13 @@ fn Result<bool,errors::Error> conditional(ref u8[] source,ref mut lexer::State s
 }
 // Only disambiguates a leading conditional in a value arm. Its lexer copy and
 // small boolean result stay outside recursive lowering frames; it emits no IR.
-pub fn Result<bool,errors::Error> conditional_value(ref u8[] source,ref lexer::State s){
+pub fn Result<bool,errors::Error> conditional_value_raw(ref u8[] source,ref lexer::State s){
     var lexer::State look=lexer::snapshot(s);return conditional(source,ref mut look,0);
 }
 pub struct Conditional {bool valid;usize groups;u8 suffix;}
 // Complete if/switch atoms only. Arithmetic inside a parenthesis keeps the
 // ordinary scalar parser. The snapshot never emits IR or evaluates a condition.
-pub fn Result<Conditional,errors::Error> conditional_atom(ref u8[] source,ref lexer::State s){
+pub fn Result<Conditional,errors::Error> conditional_atom_raw(ref u8[] source,ref lexer::State s){
     var lexer::State look=lexer::snapshot(s);var usize groups=0;
     while(look.kind==40){if(groups>=32){return .err(errors::make(4,look.begin));}
         let usize next=lexer::next(source,ref mut look)?;groups+=1;}
@@ -128,4 +129,19 @@ pub fn Result<Conditional,errors::Error> conditional_atom(ref u8[] source,ref le
     var usize i=0;while(i<groups){if(look.kind!=41){return .ok(Conditional{.valid=false,.groups=0,.suffix=0});}
         let usize next=lexer::next(source,ref mut look)?;i+=1;}
     return .ok(Conditional{.valid=true,.groups=groups,.suffix=look.kind});
+}
+
+// Raw entry points above remain independent comparison oracles.
+pub fn Result<bool,errors::Error> regular(ref u8[] source,ref lexer::State s){
+    let work::State w=work::inspect(source,*s,4)?;return work::prepared(ref w);
+}
+pub fn Result<bool,errors::Error> constructor_atom(ref u8[] source,ref lexer::State s){
+    let work::State w=work::inspect(source,*s,12)?;return work::prepared(ref w);
+}
+pub fn Result<bool,errors::Error> conditional_value(ref u8[] source,ref lexer::State s){
+    let work::State w=work::inspect(source,*s,2)?;return work::prepared(ref w);
+}
+pub fn Result<Conditional,errors::Error> conditional_atom(ref u8[] source,ref lexer::State s){
+    let work::State w=work::inspect(source,*s,1)?;let bool valid=work::prepared(ref w)?;
+    return .ok(Conditional{.valid=valid,.groups=w.groups,.suffix=w.suffix});
 }
