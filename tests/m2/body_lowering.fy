@@ -341,3 +341,18 @@ fn bytes::Buffer nested_unary(usize count,bool calls,bool captures,bool minimum)
     compare(b"module main;fn i32 main(){return [42;1];}",false);
     compare(b"module main;fn i32 main(){return (if(true){42}else{0}+missing);}",false);
 }
+
+@test fn void staged_array_evaluation_preserves_nested_values_wide_lists_and_failure_prefixes(){
+    compare(b"module main;fn i32 id(i32 n){return n;}fn i32 main(){return ([id(20),22])[0]+22;}",true);
+    compare(b"module main;fn i32 main(){return [[20,22][0],42][1];}",true);
+    captured(b"module main;fn i32 main(){let i32[2] a=[20,22];return ((a))[0]+22;}",true);
+    compare(b"module main;fn i32 main(){return [42,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0][0];}",true);
+    compare(b"module main;fn i32 main(){return [42,][0];}",true);
+    compare(b"module main;fn i32 main(){return [20+22;1][0];}",true);
+    compare(b"module main;fn i32 main(){return [42,true][0];}",false);
+    compare(b"module main;fn i32 main(){return [42;0][0];}",false);
+    compare(b"module main;fn i32 main(){return [42;1][true];}",false);
+    compare(b"module main;fn i32 main(){return [42;1].missing;}",false);
+    compare(b"module main;fn i32 main(){return [42,missing][0];}",false);
+    compare(b"module main;fn i32 main(){return [42;1][if(true){return 0;}else{return 0;}];}",false);
+}

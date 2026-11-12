@@ -1131,6 +1131,9 @@ fn Result<usize,errors::Error> complete_operand_in_environment(ref u8[] source,r
     let usize target=bank.route.target;
     if(lane==3){return expression_work::call(w,target,signatures.arities[target],ref signatures.param_types[target*8..target*8+8],s.begin);}
     if(lane==4){return expression_work::captured(w,bank,names,*s,target,s.begin,f.depth);}
+    if(lane==8 || lane==7 && bank.aggregate.result.kind==2){let usize groups=bank.aggregate.result.groups;
+        let usize binding=bank.aggregate.local;let u8 expected=if(lane==8 && bank.aggregate.result.suffix==91 && types::integer(context)){context}else{0};
+        return expression_work::array_operand(w,bank,groups,expected,lane==8,binding,s.begin);}
     if(lane==10){return .err(errors::make(3,s.begin));}
     let usize at=s.begin;var usize initial=0;
     if(lane==5){initial=conditional_operand(source,s,p,names,signatures,f.depth,context,result_type,structure,flow)?;}

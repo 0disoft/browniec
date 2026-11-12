@@ -53,5 +53,9 @@ if '--syntax-boundary-only' in sys.argv:
     bottom.DIRECTORY = 'build/operand-syntax-boundary'
     bottom.MODULES = {'value_syntax_lowering': ['conditional_group_body_and_index_depth_boundaries_keep_raw_error_order'],
                       'aggregate_probe_lowering': ['long_field_names_resume_across_chunks_in_single_and_scoped_catalogs']}
+if '--evaluation-only' in sys.argv:
+    sys.argv.remove('--evaluation-only')
+    bottom.DIRECTORY = 'build/operand-evaluation-work'
+    bottom.MODULES = {'body_lowering': ['staged_array_evaluation_preserves_nested_values_wide_lists_and_failure_prefixes', 'staged_conditional_and_aggregate_projections_keep_raw_ir_and_failure_prefixes', 'nested_call_depth_32_and_33_preserve_default_stack_and_raw_diagnostics']}
 if __name__ == '__main__':
     bottom.main()
