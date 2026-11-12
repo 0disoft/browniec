@@ -38,6 +38,11 @@ if '--preflight-only' in sys.argv:
                                         'grouped_operands_match_raw_ir_and_preserve_postfix_cast_context',
                                         'scalar_call_operands_preserve_raw_arguments_suffixes_and_errors',
                                         'nested_call_depth_32_and_33_preserve_default_stack_and_raw_diagnostics',
-                                        'unary_depth_and_mixed_capture_exits_preserve_raw_limits_on_default_stack']}
+                                        'unary_depth_and_mixed_capture_exits_preserve_raw_limits_on_default_stack',
+                                        'preflight_legacy_boundaries_and_record_binary_groups_keep_raw_ir_and_errors']}
+if '--preflight-boundary-only' in sys.argv:
+    sys.argv.remove('--preflight-boundary-only')
+    bottom.DIRECTORY = 'build/operand-preflight-boundary'
+    bottom.MODULES = {'body_lowering': ['preflight_legacy_boundaries_and_record_binary_groups_keep_raw_ir_and_errors']}
 if __name__ == '__main__':
     bottom.main()

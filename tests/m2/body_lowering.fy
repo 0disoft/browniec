@@ -311,3 +311,20 @@ fn bytes::Buffer nested_unary(usize count,bool calls,bool captures,bool minimum)
         assert(bytes::append(ref mut s,b"return 42;}").is_ok);compare(bytes::view(ref s),count==25);count+=1;
     }
 }
+
+@test fn void preflight_legacy_boundaries_and_record_binary_groups_keep_raw_ir_and_errors(){
+    captured(b"module main;struct P{i32 x;}fn i32 main(){let P p=P{.x=20};return (p.x+22);}",true);
+    captured(b"module main;struct P{i32 x;}fn i32 main(){let P p=P{.x=42};return (p).x;}",true);
+    captured(b"module main;struct P{i32 x;}fn P make(){return P{.x=42};}fn i32 main(){return (make()).x;}",true);
+    captured(b"module main;struct P{i32 x;}fn i32 main(){let P p=P{.x=20};return (p.nope+22);}",false);
+    captured(b"module main;struct P{i32 x;}fn i32 main(){let P p=P{.x=20};return (p.x.nope+22);}",false);
+    compare(b"module main;fn i32 main(){return (if(true){20}else{0})+22;}",true);
+    compare(b"module main;fn i32 main(){let Option<i32> o=.some(42);return (switch(o){case .some(n):{n}case .none:{0}});}",true);
+    compare(b"module main;fn i32 main(){return (if(true){42}else{});}",false);
+    var usize groups=31;while(groups<=32){var bytes::Buffer s=bytes::empty();
+        assert(bytes::append(ref mut s,b"module main;struct P{i32 x;}fn i32 main(){let P p=P{.x=20};return ").is_ok);
+        var usize i=0;while(i<groups){assert(bytes::append(ref mut s,b"(").is_ok);i+=1;}assert(bytes::append(ref mut s,b"p.x+22").is_ok);
+        i=0;while(i<groups){assert(bytes::append(ref mut s,b")").is_ok);i+=1;}assert(bytes::append(ref mut s,b";}").is_ok);
+        captured(bytes::view(ref s),groups==31);groups+=1;
+    }
+}
