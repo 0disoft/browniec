@@ -9,12 +9,19 @@ import module_output_program as outputs;
 import source_error as diagnostics;
 import errors as errors;
 
-// Temporary heap only. Native stacks, the caller's already-built Index and the
-// Engine's owning Entry transport are separate accounting classes.
-// Each live pushed cell (plus the next allocation cell) has a distinct source
-// byte. At most 4096 bytes; initial capacity 8 and doubling old+new need at most
-// 8 slots per cell. usize is 8 bytes on the supported native AMD64 target.
-pub fn usize working_bound(){return 262144;}
+// Temporary SDK heap, excluding inline native frames and caller-owned Entry.
+// Existing list cells: 4096 source bytes * 8 slots * sizeof(usize).
+// The three owning scratch vectors contain one element and never grow. Their
+// first SDK backing has eight slots. Expression and structure guards admit at
+// most 32 levels each, plus root/rejected-boundary frames; two wrappers per kind
+// give 2 * ((32+2)+(32+2)) = 136 simultaneously live owners of each kind.
+// Pinned emitted widths must fit 40000/6000/15000 bytes; transport review checks
+// these caps. Scratch is destroyed before persistent retention begins.
+pub fn usize scratch_bank_slot_bound(){return 40000;}
+pub fn usize scratch_expression_slot_bound(){return 6000;}
+pub fn usize scratch_conditional_slot_bound(){return 15000;}
+pub fn usize scratch_owner_bound(){return 136;}
+pub fn usize working_bound(){return 262144+scratch_owner_bound()*8*(scratch_bank_slot_bound()+scratch_expression_slot_bound()+scratch_conditional_slot_bound());}
 
 fn diagnostics::Error failure(u8 kind){return diagnostics::absent(errors::make(kind,0));}
 fn Result<retention::Plan,diagnostics::Error> begin(ref retention::Plan retained,ref mut memory::Plan plan){

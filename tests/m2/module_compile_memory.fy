@@ -20,7 +20,7 @@ unsafe extern C fn void probe_rebase();
 unsafe extern C fn void bc_runtime_engine_test_fail(i64 count);
 
 // A trusted conservative test charge, not a measurement of total native heap.
-fn usize fixed(){return 1048576;}
+fn usize fixed(){return compile::working_bound()+1048576;}
 fn usize baseline(){return 73;}
 fn i64 fault_at(usize ordinal){
     assert(ordinal<=128);var usize at=0;var i64 value=0;
@@ -173,7 +173,7 @@ fn void recovery(u8 mode){
 }
 
 @test fn void all_four_compilers_admit_nine_reused_cells_at_exact_work_and_persistent_limits(){
-    clean();assert(compile::working_bound()==262144);
+    clean();assert(compile::working_bound()==66630144);
     var u8 mode=0;while(mode<4){recovery(mode);clean();mode+=1;}
 }
 
