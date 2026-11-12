@@ -356,3 +356,26 @@ fn bytes::Buffer nested_unary(usize count,bool calls,bool captures,bool minimum)
     compare(b"module main;fn i32 main(){return [42,missing][0];}",false);
     compare(b"module main;fn i32 main(){return [42;1][if(true){return 0;}else{return 0;}];}",false);
 }
+
+@test fn void staged_conditional_bodies_keep_scope_joins_control_and_error_prefixes(){
+    compare(b"module main;fn i32 main(){return if(true){let i32 n=20;n+22}else{0};}",true);
+    compare(b"module main;fn i32 main(){var i32 x=0;let i32 y=if(true){x=20;22}else{x=1;0};return x+y;}",true);
+    compare(b"module main;fn i32 main(){return if(false){0}else if(true){if(false){0}else{42}}else{1};}",true);
+    compare(b"module main;fn i32 main(){return if(true){var i32 n=0;while(n<2){n+=1;}if(n==0){n=1;}n+40}else{0};}",true);
+    compare(b"module main;fn i32 main(){return 20+(if(true){22}else{return 0;});}",true);
+    compare(b"module main;fn i32 main(){return (if(true){return 42;}else{return 0;});}",false);
+    compare(b"module main;fn i32 main(){return if(true){42}else{true};}",false);
+    compare(b"module main;fn i32 main(){return if(true){let i32 n=42;n}else{n};}",false);
+    compare(b"module main;fn i32 main(){return if(true){42};}",false);
+    compare(b"module main;fn i32 main(){return if(true){let i32 n=42;}else{0};}",false);
+}
+@test fn void staged_switch_constructor_and_aggregate_tails_keep_raw_domains(){
+    compare(b"module main;fn i32 main(){let Option<i32> o=.some(20);return switch(o){case .some(n):{n+22}case .none:{0}};}",true);
+    compare(b"module main;fn i32 main(){let Option<i32> o=if(true){.some(42)}else{.none};return switch(o){case .none:{0}case .some(n):{n}};}",true);
+    compare(b"module main;fn i32 main(){let Option<i32> o=.some(20);let Option<i32> p=switch(o){case .some(n):{.some(n+22)}case .none:{.none}};return switch(p){case .some(n):{n}case .none:{0}};}",true);
+    compare(b"module main;fn i32 main(){let Option<i32> o=.some(42);return switch(o){case .some(n):{switch(o){case .none:{0}case .some(m):{m}}}case .none:{0}};}",true);
+    captured(b"module main;fn i32 main(){return (if(true){[42;1]}else{[0;1]})[0];}",true);
+    captured(b"module main;struct P{i32 x;}fn i32 main(){return (if(true){P{.x=42}}else{P{.x=0}}).x;}",true);
+    compare(b"module main;fn i32 main(){let Option<i32> o=.some(42);return switch(o){case .some(n):{n}case .some(m):{m}};}",false);
+    compare(b"module main;fn i32 main(){let Option<i32> o=.some(42);let i32 n=0;return switch(o){case .some(n):{n}case .none:{0}};}",false);
+}

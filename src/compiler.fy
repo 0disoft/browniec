@@ -17,6 +17,7 @@ import loops as loops;
 import patterns as patterns;
 import value_arm_syntax as arm_syntax;
 import value_join_source as joins;
+import conditional_evaluation_work as value_work;
 import propagation as propagation;
 import casts as casts;
 import array_source as arrays;
@@ -1136,7 +1137,7 @@ fn Result<usize,errors::Error> complete_operand_in_environment(ref u8[] source,r
         return expression_work::array_operand(w,bank,groups,expected,lane==8,binding,s.begin);}
     if(lane==10){return .err(errors::make(3,s.begin));}
     let usize at=s.begin;var usize initial=0;
-    if(lane==5){initial=conditional_operand(source,s,p,names,signatures,f.depth,context,result_type,structure,flow)?;}
+    if(lane==5 || arm_syntax::operand_kind(source,s)!=0){initial=conditional_operand_staged(source,s,p,names,signatures,f.depth,context,result_type,structure,flow)?;}
     else if(lane==6){initial=record_expression_read(source,s,p,names,signatures,at,f.depth,result_type,structure,flow)?;}
     else if(lane==7){initial=array_grouped_projection(source,s,p,names,signatures,at,f.depth,result_type,structure,flow)?;}
     else if(lane==8){let array_locals::Projection plan=array_locals::Projection{.groups=bank.aggregate.result.groups,.kind=bank.aggregate.result.suffix};
@@ -2018,6 +2019,50 @@ fn Result<bool,errors::Error> constructor_tail(ref u8[] source,ref mut lexer::St
     if(s.kind!=125){return .err(errors::make(2,s.begin));}
     let usize accepted=joins::constructor(p,join,option,if(positive){1}else{0},payload,at)?;
     return .ok(false);
+}
+// These owners drain actual child kernels; no child is charged as one body stage.
+fn Result<bool,errors::Error> value_control_staged(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref mut locals::Table names,ref functions::Table signatures,u8 result_type,
+    usize structure,usize depth,ref mut loops::State flow){
+    var body_work::State w=body_work::statement(structure);var metadata_budget::State meter=metadata_budget::empty();
+    while(!w.done){let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
+        let bool done=body_work::advance(source,s,p,names,flow,ref mut w,ref mut meter)?;
+        if(w.request!=0){let usize completed=complete_body_child(source,s,p,names,signatures,result_type,depth,flow,ref mut w)?;}
+    }return body_work::prepared(ref w);
+}
+fn Result<Yield,errors::Error> if_value_staged(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table names,ref functions::Table signatures,
+    usize depth,u8 expected,u8 result_type,usize structure,ref mut loops::State flow){
+    let usize at=s.begin;var joins::Join join=joins::empty(expected,false);
+    var value_work::State w=value_work::begin(names,depth,structure,result_type);var metadata_budget::State meter=metadata_budget::empty();
+    while(!w.done){let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
+        let bool done=value_work::advance(source,s,p,signatures,ref mut join,ref mut w,ref mut meter)?;
+        let u8 request=w.request;let usize child_structure=w.child_structure;let usize child_depth=w.child_depth;var usize value=0;var bool stopped=false;
+        if(request==1 || request==4){value=expression_staged(source,s,p,ref w.names,signatures,1,w.child_depth,w.expected,result_type,w.child_structure,flow)?;}
+        else if(request==2){stopped=value_control_staged(source,s,p,ref mut w.names,signatures,result_type,child_structure,child_depth,flow)?;}
+        else if(request==3){stopped=conditional_tail(source,s,p,ref w.names,signatures,ref mut join,w.child_depth,result_type,w.child_structure,flow)?;}
+        else if(request==5){w.pattern=patterns::parse(source,s,w.expected)?;}
+        if(request!=0){let usize resumed=value_work::resume(ref mut w,request,value,stopped)?;}
+    }
+    if(value_work::prepared(ref w)?){return .ok(Yield{.value=0,.terminal=true});}
+    let usize value=joins::finish(p,ref join,at)?;return .ok(Yield{.value=value,.terminal=false});
+}
+fn Result<usize,errors::Error> conditional_operand_staged(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    usize depth,u8 expected,u8 result_type,usize structure,ref mut loops::State loop_state){
+    let usize at=s.begin;var usize groups=0;
+    while(s.kind==40){if(depth>32 || groups>=32-depth){return .err(errors::make(4,s.begin));}
+        let usize next=lexer::next(source,s)?;groups+=1;}
+    let Yield result=if_value_staged(source,s,p,table,signatures,depth+groups,expected,result_type,structure,loop_state)?;
+    if(result.terminal){return .err(errors::make(3,at));}
+    let usize close=array_expressions::close(source,s,groups)?;let usize value=result.value;
+    if(value<128){return .ok(value);}
+    if(value<144){return array_temporary_read(source,s,p,table,signatures,value-128,at,depth+groups,result_type,structure,loop_state);}
+    if(value<160){let usize id=value-144;let usize record=p.records.records[id] as usize;
+        let record_values::Leaf leaf=record_values::path(source,s,p,record,at,ref signatures.context)?;
+        if(leaf.tag==0){return .err(errors::make(3,at));}
+        let usize scalar=ir::record_read(p,id,leaf.ordinal,at)?;let usize dropped=ir::record_drop(p,id,at)?;return .ok(scalar);}
+    return .err(errors::make(3,at));
 }
 fn Result<usize,errors::Error> conditional_operand(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,

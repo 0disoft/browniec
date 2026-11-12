@@ -25,6 +25,7 @@ fn Frame frame(usize depth,u8 phase){return Frame{.depth=depth,.at=0,.outer=0,.a
 pub fn State begin(usize depth,bool block){var State w=State{.frames=[frame(0,0);67],.token=tokens::begin(lexer::empty()),
     .pattern=patterns::Pattern{.variant=0,.begin=0,.end=0,.binding=false},.used=1,.visits=0,.value=0,
     .request=0,.lexing=false,.stopped=false,.done=false};w.frames[0]=frame(depth,if(block){1}else{0});return w;}
+pub fn State statement(usize depth){var State w=begin(depth,false);w.frames[0].phase=10;return w;}
 pub fn Frame current(ref State w){let ref Frame[] frames=ref w.frames;return frames[w.used-1];}
 pub fn Result<bool,errors::Error> prepared(ref State w){if(!w.done){return .err(errors::make(5,0));}return .ok(w.stopped);}
 fn bool word(ref u8[] source,ref lexer::State s,ref u8[] name){return s.kind==2 && lexer::equal(source[s.begin..s.end],name);}
