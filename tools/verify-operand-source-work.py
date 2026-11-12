@@ -61,6 +61,10 @@ if '--static-evaluation-only' in sys.argv:
     sys.argv.remove('--static-evaluation-only')
     bottom.DIRECTORY = 'build/operand-static-evaluation'
     bottom.MODULES = {'body_lowering': ['staged_static_index_and_cleanup_keep_complete_raw_ir', 'staged_static_length_keeps_raw_ir', 'staged_static_conditional_index_keeps_raw_ir', 'staged_static_bad_index_keeps_raw_error', 'staged_static_bad_member_keeps_raw_error']}
+if '--evaluation-entry-only' in sys.argv:
+    sys.argv.remove('--evaluation-entry-only')
+    bottom.DIRECTORY = 'build/operand-evaluation-entry'
+    bottom.MODULES = {'evaluation_entry': None}
 if '--evaluation-depth-only' in sys.argv:
     sys.argv.remove('--evaluation-depth-only')
     bottom.DIRECTORY = 'build/operand-evaluation-depth'

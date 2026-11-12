@@ -1223,7 +1223,7 @@ fn Result<usize,errors::Error> complete_operand_in_environment(ref u8[] source,r
         return expression_work::array_operand(w,bank,groups,expected,lane==8,binding,s.begin);}
     if(lane==10){return .err(errors::make(3,s.begin));}
     let usize at=s.begin;var usize initial=0;
-    if(lane==5 || arm_syntax::operand_kind(source,s)!=0){initial=conditional_operand_staged(source,s,p,names,signatures,f.depth,context,result_type,structure,flow)?;}
+    if(lane==5 || arm_syntax::operand_kind(source,s)!=0){initial=conditional_operand_staged(source,s,p,names,signatures,f.depth,context,result_type,structure,flow,bank,w.used==1 && f.environment==34)?;}
     else if(lane==6){initial=record_expression_read_staged(source,s,p,names,signatures,at,f.depth,result_type,structure,flow)?;}
     else if(lane==7){initial=array_grouped_projection(source,s,p,names,signatures,at,f.depth,result_type,structure,flow)?;}
     else if(lane==8){let array_locals::Projection plan=array_locals::Projection{.groups=aggregate.result.groups,.kind=aggregate.result.suffix};
@@ -1270,6 +1270,14 @@ pub fn Result<usize,errors::Error> expression_staged(ref u8[] source,ref mut lex
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,u8 minimum,
     usize depth,u8 expected,u8 result_type,usize structure,ref mut loops::State flow){
     var scratch_vec::Vec<expression_work::Bank> scratch=expression_scratch(s.begin)?;let ref mut expression_work::Bank bank=scratch_vec::at_mut<expression_work::Bank>(ref mut scratch,0);
+    return expression_in_bank(source,s,p,table,signatures,minimum,depth,expected,result_type,structure,flow,bank);
+}
+// A lone, uncaptured root has no suspended CALL or array frame in this Bank.
+// Its conditional child may reuse classifier scratch; the parent State stays
+// separately owned, and tail() reinitializes its transient postfix state.
+fn Result<usize,errors::Error> expression_in_bank(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,u8 minimum,
+    usize depth,u8 expected,u8 result_type,usize structure,ref mut loops::State flow,ref mut expression_work::Bank bank){
     var scratch_vec::Vec<expression_work::State> state=expression_state(depth,minimum,expected,s.begin)?;let ref mut expression_work::State w=scratch_vec::at_mut<expression_work::State>(ref mut state,0);var metadata_budget::State meter=metadata_budget::empty();
     while(!w.done){let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
         let bool done=expression_work::advance(source,s,p,table,signatures,bank,w,ref mut meter)?;
@@ -2143,13 +2151,15 @@ fn Result<bool,errors::Error> value_control_staged(ref u8[] source,ref mut lexer
 }
 fn Result<Yield,errors::Error> if_value_staged(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table names,ref functions::Table signatures,
-    usize depth,u8 expected,u8 result_type,usize structure,ref mut loops::State flow){
+    usize depth,u8 expected,u8 result_type,usize structure,ref mut loops::State flow,ref mut expression_work::Bank bank,bool reuse){
     let usize at=s.begin;var joins::Join join=joins::empty(expected,false);
     var scratch_vec::Vec<value_work::State> scratch=conditional_scratch(names,depth,structure,result_type,s.begin)?;let ref mut value_work::State w=scratch_vec::at_mut<value_work::State>(ref mut scratch,0);var metadata_budget::State meter=metadata_budget::empty();
     while(!w.done){let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
         let bool done=value_work::advance(source,s,p,signatures,ref mut join,w,ref mut meter)?;
         let u8 request=w.request;let usize child_structure=w.child_structure;let usize child_depth=w.child_depth;var usize value=0;var bool stopped=false;
-        if(request==1 || request==4){value=expression_staged(source,s,p,ref w.names,signatures,1,w.child_depth,w.expected,result_type,w.child_structure,flow)?;}
+        if(request==1 || request==4){value=if(reuse){
+            expression_in_bank(source,s,p,ref w.names,signatures,1,w.child_depth,w.expected,result_type,w.child_structure,flow,bank)?
+        }else{expression_staged(source,s,p,ref w.names,signatures,1,w.child_depth,w.expected,result_type,w.child_structure,flow)?};}
         else if(request==2){stopped=value_control_staged(source,s,p,ref mut w.names,signatures,result_type,child_structure,child_depth,flow)?;}
         else if(request==3){stopped=conditional_tail(source,s,p,ref w.names,signatures,ref mut join,w.child_depth,result_type,w.child_structure,flow)?;}
         else if(request==5){w.pattern=patterns::parse(source,s,w.expected)?;}
@@ -2160,11 +2170,11 @@ fn Result<Yield,errors::Error> if_value_staged(ref u8[] source,ref mut lexer::St
 }
 fn Result<usize,errors::Error> conditional_operand_staged(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
-    usize depth,u8 expected,u8 result_type,usize structure,ref mut loops::State loop_state){
+    usize depth,u8 expected,u8 result_type,usize structure,ref mut loops::State loop_state,ref mut expression_work::Bank bank,bool reuse){
     let usize at=s.begin;var usize groups=0;
     while(s.kind==40){if(depth>32 || groups>=32-depth){return .err(errors::make(4,s.begin));}
         let usize next=lexer::next(source,s)?;groups+=1;}
-    let Yield result=if_value_staged(source,s,p,table,signatures,depth+groups,expected,result_type,structure,loop_state)?;
+    let Yield result=if_value_staged(source,s,p,table,signatures,depth+groups,expected,result_type,structure,loop_state,bank,reuse)?;
     if(result.terminal){return .err(errors::make(3,at));}
     let usize close=array_expressions::close(source,s,groups)?;let usize value=result.value;
     if(value<128){return .ok(value);}
