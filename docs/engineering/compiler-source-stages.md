@@ -628,3 +628,81 @@ struct/resource/fixed-array shape remains equivalent after removing Bank's two
 new scratch fields; definitions increase from 498 to 504, arrays from 111 to
 112. Core/Cursor/Machine stay 172400/1184/1792 bytes. All 338 production modules
 retain LF. No remote publication, version change or broader completion work.
+
+
+## Actual conditional and aggregate evaluation bodies (2026-11-13)
+
+`array_operand_work` now evaluates array projection cells, repeated fillers and
+indices through the shared Pratt continuation. The separately pinned Bank adds
+34 array frames and 1024 shared register cells. This cell scratch follows the
+existing 1024-token source cap; it does not reduce the admitted repeated-array
+length of 4096. List validation and IR cell publication advance one cell at a
+time. Owned array captures reuse the lexical prefix and existing CALL metadata;
+specialized CALL-result acquisition remains an explicit legacy child.
+
+`conditional_evaluation_work` interprets if/else-if/switch bodies and value joins
+on 35 fixed frames with one active lexical table. It stages conditions, arm
+transitions, constructor payloads, scalar tails and reverse binding cleanup.
+Original prefix counts/pending flags restore branch scope; original caller rows
+stay immutable. Requests distinguish head expressions, ordinary statements or
+controls, specialized aggregate tails, scalar/constructor payloads and switch
+patterns. A single-control body entry composes the existing body continuation.
+Specialized aggregate-tail protocols remain outside this bound.
+
+`record_evaluation_work` stages scalar field slot selection, expression requests,
+type checks and stores. Next-leaf, leaf-count, aggregate-field and initializer
+advance metadata protocols remain explicit children. `static_evaluation_work`
+stages index/len token consumption, scalar evaluation and per-binding cleanup.
+View acquisition, ranges and reference-parent publication remain legacy setup.
+Raw owners are retained for complete IR/failure-prefix comparisons.
+
+The owning adapters still synchronously drain these private kernels. They use
+one-element SDK vectors for Bank, expression State and conditional State, with
+alignment, failure ownership and deterministic cleanup supplied by `std::vec`.
+Constructors return before nested expressions run; allocation failure maps to
+error kind 15 at the current token. Nested Bank classifier fields are read by
+reference, and captured lexical preparation has its own helper. A lone root
+expression without a suspended CALL/array frame reuses its Bank for conditional
+head/payload children; captured and nested Pratt frames retain separate Banks. This avoids
+retaining large value-copy temporaries in every nested conditional head. The new
+30/31-head regression reproduced a native stack overflow during development;
+the fixed staged path executes the admitted case and rejects the next depth on
+the default stack. The deep regression checks the staged path independently;
+ordinary fixtures retain raw IR and exact diagnostic comparisons. The public
+`compile()` path also verifies and executes the admitted case and checks error
+kind 4 at offset 126 for the next depth. Measured peak-stack/performance
+improvements are unclaimed.
+
+The [compiler heap proof](compile-memory.md#working-bound) now reserves
+66,630,144 bytes for guarded scratch ownership plus legacy list-cell growth.
+Reviewed native widths are 37,792/5,736/14,720 bytes against per-slot caps of
+40,000/6,000/15,000. Each scratch vector has one initialized element and eight
+allocated slots; no growth occurs. This conservative reservation is separate
+from physical heap measurements. The final Engine fixture sweeps every actual
+allocation ordinal in all four compiler modes using all three scratch kinds.
+Named incoming/Image/Stored/handle faults remain separate retention checks;
+test-only allocation scopes distinguish compiler scratch from early retention.
+Combined runtime boundary fixtures retain real simultaneous owners until their
+current/pending bytes exceed compilation history, preserving exact/one-less,
+pin, rollback and zero-leak checks without resetting historical peaks.
+
+Every new kernel uses the existing logical allowance of 4096. Token work resumes
+`lexer_work`; expression and explicitly named metadata children are charged by
+their own protocols rather than represented by a fictitious one-unit bound.
+Fixed scratch construction and synchronous owning adapters are outside the
+transition bound. This does not provide a public Pending compiler or close R02-R05.
+
+Implementation commits: `f15d428` (array payloads), `23ad24a` (conditional bodies),
+`6d46420` (record/static evaluation), `8e4cb0e` (nested owning scratch) and
+`1697ec5` (guarded idle-Bank reuse and full-compile boundary), `43115b6` (scratch
+reservation) and `1095daa` (memory/CALL regression integration).
+[Final evidence](../evidence/compiler-evaluation-source-windows-20261113.json)
+records 15 evaluation groups plus one public compile-depth group per profile
+at `1697ec5`. The sole later production change is the working reservation in
+`module_budgeted_compile`; final development/O2 memory and Engine checks cover
+that change and the integration fixtures. Evaluation batches share identical
+production bytes; final receipt input identities are checked against their
+recorded commits. The focused memory selection contains 28 groups per profile.
+General assignment preparation, specialized aggregate copy/CALL/tail protocols,
+typed/value walkers, catalogs/origins, entry/final metadata and unrelated implicit
+cleanup remain outside these new bounds. Broader completion remains paused.

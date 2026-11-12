@@ -1,0 +1,394 @@
+{
+  "schema": "browniec.compiler-evaluation-source-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-12T15:23:27.931993+00:00",
+  "verifiedCommit": "f6248338adbc1898832e1adc06e3e1702d462dc6",
+  "implementationCommits": [
+    "f15d428",
+    "23ad24a",
+    "6d46420",
+    "8e4cb0e",
+    "1697ec5",
+    "43115b6",
+    "1095daa",
+    "f6248338adbc1898832e1adc06e3e1702d462dc6"
+  ],
+  "scope": "Actual conditional/array/record/static evaluation continuations and nested owning scratch",
+  "toolchain": {
+    "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+    "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+    "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false"
+  },
+  "msvc": {
+    "version": "14.51.36231",
+    "sdk": "10.0.26100.0",
+    "compilerSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+    "overrides": false
+  },
+  "commands": [
+    "build/toolchain/fairyc.exe check",
+    "python tools/verify-operand-source-work.py --evaluation-depth-only --profile development",
+    "python tools/verify-operand-source-work.py --evaluation-only --profile development",
+    "python tools/verify-operand-source-work.py --evaluation-only --profile release",
+    "python tools/verify-operand-source-work.py --evaluation-entry-only --profile development",
+    "python tools/verify-operand-source-work.py --evaluation-entry-only --profile release",
+    "python tools/verify-module-output-execution.py --suite compile-memory",
+    "python tools/review-runtime-engine-transport.py",
+    "python build/evaluation-transport-review/audit.py",
+    "python tools/verify-runtime-engine.py"
+  ],
+  "kernels": {
+    "logicalAllowance": 4096,
+    "prattFrames": 34,
+    "arrayFrames": 34,
+    "conditionalFrames": 35,
+    "sharedArrayCellRegisters": 1024,
+    "cellBoundReason": "Existing 1024-token source cap; repeated arrays retain their existing 4096-element limit",
+    "array": "Scalar cells, filler/index child expressions, per-cell list validation and publication",
+    "conditional": "Join/arm/constructor/scalar transitions and one-row reverse cleanup; explicit head/control/aggregate-tail/payload/pattern requests",
+    "record": "Scalar field slot/expression/type/store steps; leaf metadata and aggregate protocols remain explicit children",
+    "static": "Token/index/length/scalar/per-binding cleanup steps; acquisition and range/reference setup remain explicit legacy preparation",
+    "scratch": "Three one-element SDK vector types own Bank, expression State and conditional State; constructors finish before nested children; exclusive SDK element borrows",
+    "nestedDispatch": "Classifier fields are read by reference; captured names have a separate helper. A lone uncaptured Pratt root without suspended CALL/array frames reuses its Bank for conditional head/payload children; other contexts allocate independent Banks",
+    "allocationFailure": "SDK push failure returns error kind 15 at current token; Engine four-mode compile fixtures sweep every allocation ordinal with all three scratch kinds, retained peer safety and zero leaks; named retention seams are separately injected",
+    "adapters": "Private owning adapters synchronously drain the kernels; no public Pending compiler"
+  },
+  "nativeVerification": [
+    {
+      "receipt": {
+        "path": "build/operand-evaluation-work/development/receipt.json",
+        "sha256": "32d220eb6954558a07f4c394ea56b3cedba0859210c270bb8e9141e6380ab28b"
+      },
+      "verifiedCommit": "1697ec5",
+      "profile": "development",
+      "nativeGroups": 15,
+      "inputCount": 351,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeOverrides": false,
+      "nativeInputMirrorVerified": true
+    },
+    {
+      "receipt": {
+        "path": "build/operand-evaluation-work/release/receipt.json",
+        "sha256": "1fc59bed2e1004531a4cbcb912d4279b3fe01a9503ca849af0da992f7e65630f"
+      },
+      "verifiedCommit": "1697ec5",
+      "profile": "release",
+      "nativeGroups": 15,
+      "inputCount": 351,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeOverrides": false,
+      "nativeInputMirrorVerified": true
+    },
+    {
+      "receipt": {
+        "path": "build/operand-evaluation-entry/development/receipt.json",
+        "sha256": "79b260502534375f86533c578ef63738d1885dc28a807017c0351a3baaab6468"
+      },
+      "verifiedCommit": "1697ec5",
+      "profile": "development",
+      "nativeGroups": 1,
+      "inputCount": 349,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeOverrides": false,
+      "nativeInputMirrorVerified": true
+    },
+    {
+      "receipt": {
+        "path": "build/operand-evaluation-entry/release/receipt.json",
+        "sha256": "cf48a3879e79eb43fae88efb021b42ec195190b691b2705b150545179c76fb57"
+      },
+      "verifiedCommit": "1697ec5",
+      "profile": "release",
+      "nativeGroups": 1,
+      "inputCount": 349,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeOverrides": false,
+      "nativeInputMirrorVerified": true
+    }
+  ],
+  "evaluationBatchesProductionByteIdentical": true,
+  "groupsPerProfile": 16,
+  "laterProductionChanges": [
+    "src/module_budgeted_compile.fy"
+  ],
+  "receiptSelection": "15 evaluation groups plus one full-compile depth group at 1697ec5. The sole later production change updates module_budgeted_compile's working reservation and is covered by final memory/Engine receipts",
+  "memoryVerification": {
+    "receipt": {
+      "path": "build/compile-memory/receipt.json",
+      "sha256": "3f230923d880d8bb407ce85b77e82331a9afbb477be465a143f60affb190ac9e"
+    },
+    "verifiedCommit": "f6248338adbc1898832e1adc06e3e1702d462dc6",
+    "groupsPerProfile": 28,
+    "inputCount": 294,
+    "allInputHashesMatchVerifiedCommit": true,
+    "nativeOverrides": false,
+    "profiles": [
+      {
+        "profile": "development",
+        "groupsPassed": 28,
+        "image": {
+          "path": "build/compile-memory/output-execution-development.exe",
+          "sha256": "c9c68dcf56c59f254aa1aa2cd9eb1eb2450cd1931329a0e358e7e6cff746f13b",
+          "bytes": 7902720,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        }
+      },
+      {
+        "profile": "release",
+        "groupsPassed": 28,
+        "image": {
+          "path": "build/compile-memory/output-execution-release.exe",
+          "sha256": "2279176677ff824e349a407b290d93d7ae980a181cd84e8762730d21bf56ccd5",
+          "bytes": 2464256,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        }
+      }
+    ]
+  },
+  "workingReservation": {
+    "loweringBytes": 66630144,
+    "ordinaryWorkingBytes": 66804544,
+    "inputWorkingBytes": 66804928,
+    "priorCellBytes": 262144,
+    "ownersPerScratchKind": 136,
+    "vectorCapacity": 8,
+    "scratch": {
+      "bank": {
+        "type": "fy_struct_126",
+        "bytes": 37792,
+        "slotBound": 40000
+      },
+      "expression": {
+        "type": "fy_struct_128",
+        "bytes": 5736,
+        "slotBound": 6000
+      },
+      "conditional": {
+        "type": "fy_struct_98",
+        "bytes": 14720,
+        "slotBound": 15000
+      }
+    },
+    "conservativeReservationNotMeasuredPhysicalPeak": true,
+    "ownerBound": "Two scratch-owner opportunities per guarded expression/structure path, including roots and rejected boundaries: 2*((32+2)+(32+2))"
+  },
+  "covered": [
+    "Direct intermediate deferral, request guards, final publication and terminal idempotence",
+    "Complete raw IR/failure-prefix and exact diagnostic comparison for ordinary array/record/static/conditional fixtures",
+    "Wide/repeated/nested array projections and scalar constructor fields, shorthand, bad/missing fields",
+    "if/else-if/switch joins, branch scopes, constructor/aggregate tails and cleanup",
+    "Static len/index/conditional index, invalid index/member and owned temporary lifetime",
+    "Combined CALL depth 32/33; staged and full-compile nested conditional head depth 30/31 on default stacks, with exact full-compile depth-error offset 126"
+  ],
+  "developmentCorrections": [
+    {
+      "issue": "Nested conditional head native stack overflow",
+      "nativeExit": -1073741571,
+      "fixedCommits": [
+        "8e4cb0e",
+        "1697ec5"
+      ],
+      "resolution": "Heap-owned SDK scratch, classifier borrows, captured-environment helper separation and guarded idle-Bank reuse. The first fix passed the staged body boundary but full compile still overflowed until 1697ec5",
+      "regression": "Staged and full-compile depth-30 execution succeed; depth-31 rejects at exact offset 126 in full compile on default stacks; deep raw stack equivalence is not claimed"
+    },
+    {
+      "issue": "Initial static fixture expected unsupported usize-to-i32 narrowing",
+      "resolution": "Raw and staged both rejected correctly; fixture uses a length comparison without changing narrowing admission"
+    },
+    {
+      "issue": "Old 262144-byte lowering reservation excluded new heap scratch",
+      "fixedCommit": "43115b6",
+      "resolution": "Retain the source-byte list-cell proof and add bounded eight-slot scratch backing; emitted widths checked structurally and with C static assertions"
+    },
+    {
+      "issue": "Historical integration fixtures assumed no compiler allocations and runtime peaks above compilation",
+      "resolution": "Separate named retention seam injection from the unchanged global allocation sweep; scope-tag compiler allocation constructors; use real simultaneous prepared/input/output owners above the preserved compilation high-water mark. All owner counts stay within the existing 64-instance limit; exact/one-less, rollback, pins and physical cleanup checks remain"
+    },
+    {
+      "issue": "Old scalar memory fixtures and CALL kernel driver no longer matched current interfaces",
+      "fixedCommit": "1095daa",
+      "resolution": "Express synthetic charges relative to working_bound; pass lexical names and drain staged preflight before servicing CALL requests; execute all 28 native memory groups in each profile"
+    }
+  ],
+  "engineVerification": {
+    "receipt": {
+      "path": "build/runtime-engine/20261112T152019624210Z/receipt.json",
+      "sha256": "5c51317a45084d013f7d85a1b9c3d50005df504e4b46a8e60faa15e07b39f8d7"
+    },
+    "verifiedCommit": "f6248338adbc1898832e1adc06e3e1702d462dc6",
+    "inputCount": 350,
+    "allInputHashesMatchVerifiedCommit": true,
+    "compilerOverrides": false,
+    "profiles": [
+      {
+        "profile": "development",
+        "artifact": {
+          "path": "build/runtime-engine/20261112T152019624210Z/development/runtime-engine.exe",
+          "sha256": "b325de857e5e4b0a1036fffffa0610b99a3a9e62a4d2c49ace1738d5effef66e",
+          "bytes": 11614208,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "exit": 0,
+        "controlMetrics": {
+          "cases": 6,
+          "smallHeapBytes": 7872,
+          "maximumHeapBytes": 62976,
+          "ownerBytes": 736
+        },
+        "preparationMetrics": {
+          "cacheBytes": 2248,
+          "storedBytes": 24264,
+          "previousStoredBytes": 22016,
+          "retainedVecExtraBytes": 17984,
+          "capturePlanBytes": 900,
+          "previousCacheBytes": 1344,
+          "capturePlanVecExtraBytes": 7232
+        },
+        "arrayFillMetrics": {
+          "arrayWorkBytes": 360,
+          "cursorBytes": 1184,
+          "machineBytes": 1792,
+          "coreBytes": 172400,
+          "pendingVecExtraBytes": 2880,
+          "callWorkBytes": 536,
+          "callPendingVecExtraBytes": 4288,
+          "returnWorkBytes": 48,
+          "returnPendingVecExtraBytes": 384,
+          "combinedPendingVecExtraBytes": 7552
+        },
+        "liveHeapAllocationsAtExit": 0,
+        "assertions": "native Fairy and C, no parsed trace",
+        "objects": [
+          {
+            "path": "build/runtime-engine/20261112T152019624210Z/development/transport.obj",
+            "sha256": "f9b821f4cd46dbd1d6449568a43a4f2880594d9d6570fcbd12c54de70dad671f"
+          },
+          {
+            "path": "build/runtime-engine/20261112T152019624210Z/development/runtime.obj",
+            "sha256": "8f1773b7db9928bc10dea837d5cfda43e1be4f73f058dc94c155ddfdcec3a9d2"
+          },
+          {
+            "path": "build/runtime-engine/20261112T152019624210Z/development/abi_thread_identity.obj",
+            "sha256": "4144332956d9e12cee5ecaa9d3c8e2d84581b1928caa6a5e56e237723981e3d9"
+          },
+          {
+            "path": "build/runtime-engine/20261112T152019624210Z/development/input_reader.obj",
+            "sha256": "d03d4284e25f947ba49c81c61c260ed8f253a2661ff243831bbc6a28ce93ca90"
+          },
+          {
+            "path": "build/runtime-engine/20261112T152019624210Z/development/input_adoption.obj",
+            "sha256": "a0c66595a6674813b9e2708cd7a861020e73e6903f9afde63ce9125248279db9"
+          }
+        ]
+      },
+      {
+        "profile": "release",
+        "artifact": {
+          "path": "build/runtime-engine/20261112T152019624210Z/release/runtime-engine.exe",
+          "sha256": "42f3763af0d3f12b7ef5e6e4dc59ee262196c0d7de5c335027b866f3fc286985",
+          "bytes": 4216320,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "exit": 0,
+        "controlMetrics": {
+          "cases": 6,
+          "smallHeapBytes": 7872,
+          "maximumHeapBytes": 62976,
+          "ownerBytes": 736
+        },
+        "preparationMetrics": {
+          "cacheBytes": 2248,
+          "storedBytes": 24264,
+          "previousStoredBytes": 22016,
+          "retainedVecExtraBytes": 17984,
+          "capturePlanBytes": 900,
+          "previousCacheBytes": 1344,
+          "capturePlanVecExtraBytes": 7232
+        },
+        "arrayFillMetrics": {
+          "arrayWorkBytes": 360,
+          "cursorBytes": 1184,
+          "machineBytes": 1792,
+          "coreBytes": 172400,
+          "pendingVecExtraBytes": 2880,
+          "callWorkBytes": 536,
+          "callPendingVecExtraBytes": 4288,
+          "returnWorkBytes": 48,
+          "returnPendingVecExtraBytes": 384,
+          "combinedPendingVecExtraBytes": 7552
+        },
+        "liveHeapAllocationsAtExit": 0,
+        "assertions": "native Fairy and C, no parsed trace",
+        "objects": [
+          {
+            "path": "build/runtime-engine/20261112T152019624210Z/release/transport.obj",
+            "sha256": "9820ddb5fe832c356baded630cfc54bd7166e35befdd79b7569a3a692a09b6e2"
+          },
+          {
+            "path": "build/runtime-engine/20261112T152019624210Z/release/runtime.obj",
+            "sha256": "47518106512b2d60a90fd82a38da8954d25ab333ebbcd8aafcf6a6e9b4f190be"
+          },
+          {
+            "path": "build/runtime-engine/20261112T152019624210Z/release/abi_thread_identity.obj",
+            "sha256": "58733e00d1eac2b95d73680308afcfc7349e4b9914cbd55b0fa2d3221f99fcb0"
+          },
+          {
+            "path": "build/runtime-engine/20261112T152019624210Z/release/input_reader.obj",
+            "sha256": "1ff9b7229b639458f7113c078230432df7ffc9e098704c71878fef6c9c374a51"
+          },
+          {
+            "path": "build/runtime-engine/20261112T152019624210Z/release/input_adoption.obj",
+            "sha256": "8377493fddcb4b275ff9dcaf5a91f9f873bd63a7a0fb900f450347ef10970c0b"
+          }
+        ]
+      }
+    ]
+  },
+  "transportReview": {
+    "receipt": {
+      "path": "build/evaluation-transport-review/audit.json",
+      "sha256": "fbf78128ba82233a1731bbba6a16dec27e8324d7917e2f273e4d34108891b798"
+    },
+    "auditScript": {
+      "path": "build/evaluation-transport-review/audit.py",
+      "sha256": "ea3c4820eb59a5a93761ad32de7098fa32c64195062b9cbafd32364725be90bf"
+    },
+    "status": "passed",
+    "typedBindings": 36,
+    "equivalentDeclarations": 36,
+    "equivalentReviewedLayouts": 51,
+    "beforeDefinitions": 504,
+    "afterDefinitions": 516,
+    "beforeArrays": 112,
+    "afterArrays": 115,
+    "addedDefinitionShapes": 12,
+    "bankBefore": "fy_struct_123",
+    "bankAfter": "fy_struct_126",
+    "changedReviewedLayoutRoles": [],
+    "rawEquivalentReviewedLayouts": 51,
+    "arrayFrames": "fy_array_3",
+    "cells": "fy_array_98",
+    "expressionBefore": "fy_struct_125",
+    "expressionAfter": "fy_struct_128",
+    "allowedChange": "Bank appends 34 array evaluation frames and 1024 shared cells; expression State inserts a usize cell cursor at field 6. After removing these additions all prior recursive definitions and reviewed ABI roots retain their shapes. Twelve added definitions are private evaluation states, fixed arrays, three SDK scratch vector owners and a test-only allocation-scope guard",
+    "candidateSha256": "0e817088f7b8f12ae1cd76bc3365692f8f5316c9c6a3b84f72e64cd8e7f3709a",
+    "sourceInputs": 335
+  },
+  "productionSources": {
+    "count": 342,
+    "allLF": true
+  },
+  "limitations": [
+    "Fixed scratch construction and synchronous owning adapters remain outside transition accounting",
+    "Specialized aggregate CALL/copy/tail protocols, record metadata walks, view/range/reference setup and general assignment preparation remain explicit legacy work",
+    "Separate typed/value walkers, catalogs/origins, entry/final metadata and unrelated implicit cleanup remain outside these new bounds",
+    "No public Pending compiler, exhaustive OOM matrix for every new kernel, measured CPU/time/physical-heap/peak-stack improvement or R02-R05 closure",
+    "Default broad operand, optional public CLI and full release suites were not rerun",
+    "Local only; no push/release/deployment/version change; broader completion remains paused"
+  ]
+}

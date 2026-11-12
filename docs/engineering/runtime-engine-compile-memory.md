@@ -17,8 +17,8 @@ backing bytes. Fairy performs checked arithmetic and all quota decisions.
 | --- | ---: | ---: |
 | Existing Index Vec8 backing | 173,760 | 173,760 |
 | Incoming owning Entry Vec8 | 640 | 1,024 |
-| Conservative lowering heap, including old/new growth | 262,144 | 262,144 |
-| Required working allowance | 436,544 | 436,928 |
+| Conservative lowering heap, including scratch and old/new growth | 66,630,144 | 66,630,144 |
+| Required working allowance | 66,804,544 | 66,804,928 |
 
 Entry is 80 bytes and InputEntry 128 bytes. Index contains one immutable Stored
 in an eight-element backing block; Stored is 21,720 bytes. The 48-byte vector
@@ -26,6 +26,11 @@ descriptor and inline Snapshot/Table are not added again as separate heap
 allocations. The caller constructed Index before transferring Entry: denial
 does not undo that earlier external allocation. It consumes/destroys the supplied
 Entry without allocating an additional incoming block.
+
+The lowering reservation includes three staged evaluation scratch vector kinds;
+the [bound proof](compile-memory.md#working-bound) and emitted-width checks own
+its assumptions. All four modes still fit the 67,108,864-byte policy.
+This is a conservative reservation, not observed physical heap consumption.
 
 `create_with_compilation(count_limits, control_limit, retained_limits,
 working_limit)` accepts a positive working limit up to 268,435,456 bytes. Existing
@@ -78,12 +83,12 @@ maximum combined reservation, including compilation. It is no longer the sum of
 independent control and Program peaks. Destroy/owner moves preserve historical
 peaks; released pins remain charged until actual final-owner reclamation.
 
-The transport pins 22 typed bindings and now compares all 16 reviewed layouts
+The current transport pins 36 typed bindings and compares all 51 reviewed layouts
 against actual emitted declarations. Entry/InputEntry and a new Instance witness
 fix the concrete types used for backing facts and sizeof. Instance is 120 bytes;
 using an old numerical generated type ID can otherwise select an unrelated
-struct after metadata changes. Current inline Engine is 688 bytes; control heap
-remains 6,720 bytes for one slot and 53,760 at all-64 counts.
+struct after metadata changes. Current inline Engine is 736 bytes; control heap
+is 7,872 bytes for one slot and 62,976 at all-64 counts.
 
 ## Executed verification and remaining work
 
@@ -96,6 +101,14 @@ failure sweeps, source rollback, peer pins, moves, closed/exhausted observations
 and Engine compilation/execution at captured-call depth 32 with rejection at 33.
 SDK live allocations/bytes return to zero; default stacks are 1MiB/4KiB without
 compiler overrides. The original standalone combined 32/33 fixture is unchanged.
+
+The later [evaluation checkpoint](../evidence/compiler-evaluation-source-windows-20261113.json)
+records the expanded lowering reservation, 28 standalone memory groups per
+profile and final Engine integration. Test-only constructor scopes and admission
+callbacks separate named retention faults from the global compile allocation
+sweep. Combined runtime boundaries use real simultaneous owners whose bytes
+exceed the preserved compilation high-water mark, within the existing 64-owner
+limit; exact/one-less denial, pins, rollback and physical cleanup remain checked.
 
 Per-Instance frames/input/owners/loans/descriptors/output, simultaneous Instance
 peaks, pending host state, native stacks and the remaining combined Engine quota

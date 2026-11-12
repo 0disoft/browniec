@@ -9,10 +9,10 @@ and additionally accounts for the selected Index and incoming Entry backing.
 
 ## Working bound
 
-For the current pinned SDK and Windows AMD64 profile, lowering requests heap only
-for `compiler::array_list_cells`'s `Vec<usize>`. Source collection, literal Builder,
-IR, function/type tables and source duplication use inline storage. This bound
-does not count their native stack frames.
+For the current pinned SDK and Windows AMD64 profile, lowering allocates legacy
+`array_list_cells` vectors and three private evaluation scratch vector kinds.
+Source collection, literal Builder, IR, function/type tables and source duplication
+still use inline storage. This bound excludes native stack frames.
 
 Each already-pushed cell in every simultaneously live vector, plus the cell
 whose push may allocate, corresponds to a different original source byte. A
@@ -28,12 +28,31 @@ allocation needs at most eight slots per cell. While growing a full n-slot
 vector, old and replacement allocations coexist: `3*n <= 8*(n+1)`. Other live
 vectors obey the same bound. With eight-byte usize:
 
-`working heap <= 8 slots * 8 bytes * N <= 262,144 bytes`.
+`legacy cell heap <= 8 slots * 8 bytes * N <= 262,144 bytes`.
 
-This is a deliberately conservative reservation, not a measured reachable
-maximum. It includes old/new growth overlap and relies on source-byte ownership,
-not an assumed number of native recursive frames. Review this proof when source
-limits, lowering allocation sites or SDK vector policy change.
+Bank, expression State and conditional State each use a separate SDK vector with
+one initialized element. First capacity is eight slots; these vectors never grow.
+The expression and structure guards are each 32. Including roots and the rejected
+boundary, the conservative per-kind owner bound is
+`2 * ((32 + 2) + (32 + 2)) = 136`. Idle uncaptured conditional roots may reuse
+their parent's Bank, but this proof takes no credit for that reduction.
+
+| Scratch kind | Reviewed emitted bytes | Reserved bytes per slot |
+| --- | ---: | ---: |
+| Bank | 37,792 | 40,000 |
+| Expression State | 5,736 | 6,000 |
+| Conditional State | 14,720 | 15,000 |
+
+The transport reviewer discovers these private types structurally and checks
+their emitted widths against the slot caps. Native Engine verification repeats
+the checks and emits C static assertions; numerical type IDs are not trusted.
+
+`working heap <= 262,144 + 136 * 8 * (40,000 + 6,000 + 15,000) = 66,630,144 bytes`.
+
+This is a deliberately conservative reservation, not a measured physical peak.
+It includes old/new growth overlap. The cell proof uses source-byte ownership; the
+scratch proof uses the existing guarded nesting limits. Review both when source
+limits, scratch layouts, lowering allocation sites or SDK vector policy change.
 
 ## Allocation barrier and observations
 
@@ -70,17 +89,18 @@ The focused native suite is:
 python tools/verify-module-output-execution.py --suite compile-memory
 ```
 
-Development/O2 each passed fourteen groups: seven scalar reservation groups,
-six real compiler/allocator groups and one unchanged captured-call regression.
-The new wrapper also accepts depth 32 and rejects 33 in its own group. Six real
-compiler groups assert zero SDK live blocks/bytes after owner cleanup. The 201
-executed input identities match the checkout. Root locked check passed 251 sources
-and 2,859 MIR functions. The existing Engine receipt has 216 unchanged inputs;
-its native build was not repeated for this opt-in addition.
+The latest staged-evaluation checkpoint passes 28 groups per development/O2
+profile: seven scalar reservation groups, six real compiler/allocator groups,
+13 Engine scalar accounting groups, the staged CALL operand kernel and the
+captured-call depth regression. The wrapper accepts depth 32 and rejects 33;
+real compiler groups assert zero SDK live blocks/bytes after owner cleanup.
+The earlier fourteen-group results remain historical evidence.
 
 The suite uses the pinned compiler/runtime, instrumented SDK allocations, isolated test
 processes, development/O2 and the unchanged combined captured-call depth 32/33
 fixture under default 1MiB/4KiB stack settings. See the recorded
-[evidence](../evidence/compile-memory-windows-20261107.json) for executed groups,
-input identities and outcomes. Source adapters change only module names and test
-visibility. No public gate, VM capacity, opcode or Fuel price changes.
+[original evidence](../evidence/compile-memory-windows-20261107.json) and
+[staged-evaluation evidence](../evidence/compiler-evaluation-source-windows-20261113.json)
+for executed groups, input identities and outcomes. The latter also records
+Engine integration with test-only compiler-allocation scope instrumentation.
+No public gate, VM capacity, opcode or Fuel price changes.
