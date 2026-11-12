@@ -47,6 +47,6 @@ if '--preflight-boundary-only' in sys.argv:
 if '--syntax-only' in sys.argv:
     sys.argv.remove('--syntax-only')
     bottom.DIRECTORY = 'build/operand-syntax-work'
-    bottom.MODULES = {'value_syntax_lowering': None, 'body_lowering': ['preflight_legacy_boundaries_and_record_binary_groups_keep_raw_ir_and_errors']}
+    bottom.MODULES = {'value_syntax_lowering': None, 'aggregate_probe_lowering': None, 'body_lowering': ['preflight_legacy_boundaries_and_record_binary_groups_keep_raw_ir_and_errors']}
 if __name__ == '__main__':
     bottom.main()

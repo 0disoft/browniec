@@ -1,5 +1,6 @@
 module array_local_source;
 import lexer as lexer;
+import aggregate_probe_work as probes;
 import locals as locals;
 import local_inference as inference;
 import array_source as arrays;
@@ -10,7 +11,7 @@ import errors as errors;
 pub struct Projection { usize groups; u8 kind; }
 // Advisory lookahead only. A grouped scalar expression keeps its ordinary
 // parser; only complete literal parentheses followed by a projection match.
-pub fn Result<Projection,errors::Error> projection(ref u8[] source,ref lexer::State s){
+pub fn Result<Projection,errors::Error> projection_raw(ref u8[] source,ref lexer::State s){
     var lexer::State look=lexer::snapshot(s);var usize groups=0;
     while(look.kind==40){if(groups>=32){return .err(errors::make(4,look.begin));}
         groups+=1;let usize next=lexer::next(source,ref mut look)?;}
@@ -30,7 +31,7 @@ pub fn Result<Projection,errors::Error> projection(ref u8[] source,ref lexer::St
 
 // Classify only the first outer separator. Comments/literals and nested
 // expressions belong to the lexer; lookahead never lowers a guest expression.
-pub fn Result<bool,errors::Error> is_repeated(ref u8[] source,ref lexer::State s){
+pub fn Result<bool,errors::Error> is_repeated_raw(ref u8[] source,ref lexer::State s){
     if(s.kind!=91){return .err(errors::make(2,s.begin));}
     var lexer::State look=lexer::snapshot(s);let usize open=lexer::next(source,ref mut look)?;
     var usize depth=0;
@@ -82,4 +83,12 @@ pub fn Result<usize,errors::Error> repeated(ref u8[] source,ref mut lexer::State
     let usize id=ir::array_in(p,names.function,element,length,mutable,name.begin)?;
     let usize initialized=ir::array_init(p,id,value,name.begin)?;
     return locals::declare(names,name.begin,name.end,128+id,mutable);
+}
+
+pub fn Result<Projection,errors::Error> projection(ref u8[] source,ref lexer::State s){
+    let locals::Table names=locals::empty();let probes::Plan plan=probes::inspect_syntax(source,*s,ref names,3)?;
+    return .ok(Projection{.groups=plan.groups,.kind=if(plan.suffix==91 || plan.suffix==46){plan.suffix}else{0}});
+}
+pub fn Result<bool,errors::Error> is_repeated(ref u8[] source,ref lexer::State s){
+    let locals::Table names=locals::empty();let probes::Plan plan=probes::inspect_syntax(source,*s,ref names,5)?;return .ok(plan.kind!=0);
 }

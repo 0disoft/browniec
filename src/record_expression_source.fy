@@ -1,5 +1,6 @@
 module record_expression_source;
 import lexer as lexer;
+import aggregate_probe_work as probes;
 import locals as locals;
 import functions as functions;
 import ir as ir;
@@ -13,7 +14,7 @@ pub struct Plan { u8 kind; usize groups; usize record; u8 tag; u8 suffix; }
 pub struct Staged { usize[16] slots; usize count; }
 pub struct Value { usize id; bool owned; usize record; usize ordinal; u8 tag; usize[16] slots; usize depth; }
 fn Plan none(){return Plan{.kind=0,.groups=0,.record=0,.tag=0,.suffix=0};}
-pub fn Result<Plan,errors::Error> inspect(ref u8[] source,ref lexer::State s,
+pub fn Result<Plan,errors::Error> inspect_raw(ref u8[] source,ref lexer::State s,
     ref ir::Program p,ref locals::Table names,ref functions::Table signatures){
     var lexer::State look=lexer::snapshot(s);var usize groups=0;
     while(look.kind==40){if(groups>=32){return .err(errors::make(4,look.begin));}
@@ -106,4 +107,9 @@ pub fn Result<usize,errors::Error> stage(ref u8[] source,ref mut lexer::State s,
     if(first>slots.len || count>slots.len-first || value.ordinal>16 || count>16-value.ordinal){return .err(errors::make(4,at));}
     var usize i=0;while(i<count){slots[first+i]=value.slots[value.ordinal+i];i+=1;}
     let usize advanced=records::advance(source,s,p,state)?;return .ok(count);
+}
+
+pub fn Result<Plan,errors::Error> inspect(ref u8[] source,ref lexer::State s,ref ir::Program p,ref locals::Table names,ref functions::Table signatures){
+    let probes::Plan plan=probes::inspect(source,*s,p,names,signatures,1)?;
+    return .ok(Plan{.kind=plan.kind,.groups=plan.groups,.record=plan.record,.tag=plan.tag,.suffix=plan.suffix});
 }

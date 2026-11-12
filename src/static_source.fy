@@ -1,5 +1,6 @@
 module static_source;
 import lexer as lexer;
+import aggregate_probe_work as probes;
 import locals as locals;
 import ir as ir;
 import errors as errors;
@@ -67,7 +68,7 @@ pub fn Result<bool,errors::Error> range_follows(ref u8[] source,ref lexer::State
 }
 // A parenthesized view needs a following projection in scalar context. Preserve
 // ordinary scalar grouping, including groups that merely contain view reads.
-pub fn Result<bool,errors::Error> grouped_projection(ref u8[] source,ref lexer::State s,ref locals::Table names){
+pub fn Result<bool,errors::Error> grouped_projection_raw(ref u8[] source,ref lexer::State s,ref locals::Table names){
     if(s.kind!=40){return .ok(false);}var lexer::State look=lexer::snapshot(s);
     var usize depth=0;
     while(look.kind==40){depth+=1;if(depth>32){return .err(errors::make(4,s.begin));}let usize next=lexer::next(source,ref mut look)?;}
@@ -109,4 +110,8 @@ pub fn Result<usize,errors::Error> equal_head(ref u8[] source,ref mut lexer::Sta
     let usize at=s.begin;let usize module_name=lexer::word(source,s,b"text")?;
     let usize first=lexer::punctuation(source,s,58)?;let usize second=lexer::punctuation(source,s,58)?;
     let usize method=lexer::word(source,s,b"equal")?;let usize open=lexer::punctuation(source,s,40)?;return .ok(at);
+}
+
+pub fn Result<bool,errors::Error> grouped_projection(ref u8[] source,ref lexer::State s,ref locals::Table names){
+    let probes::Plan plan=probes::inspect_syntax(source,*s,names,4)?;return .ok(plan.kind!=0);
 }

@@ -1,5 +1,6 @@
 module array_expression_source;
 import lexer as lexer;
+import aggregate_probe_work as probes;
 import locals as locals;
 import functions as functions;
 import ir as ir;
@@ -11,7 +12,7 @@ import errors as errors;
 pub struct Plan { usize groups; u8 kind; u8 suffix; }
 pub struct Value { usize id; bool owned; usize depth; }
 fn Plan none(){return Plan{.groups=0,.kind=0,.suffix=0};}
-pub fn Result<Plan,errors::Error> inspect(ref u8[] source,ref lexer::State s,
+pub fn Result<Plan,errors::Error> inspect_raw(ref u8[] source,ref lexer::State s,
     ref ir::Program p,ref locals::Table names,ref functions::Table signatures){
     var lexer::State look=lexer::snapshot(s);var usize groups=0;
     while(look.kind==40){if(groups>=32){return .err(errors::make(4,look.begin));}
@@ -55,4 +56,9 @@ pub fn Result<usize,errors::Error> open(ref u8[] source,ref mut lexer::State s,u
 }
 pub fn Result<usize,errors::Error> close(ref u8[] source,ref mut lexer::State s,usize groups){
     var usize i=0;while(i<groups){let usize next=lexer::punctuation(source,s,41)?;i+=1;}return .ok(groups);
+}
+
+pub fn Result<Plan,errors::Error> inspect(ref u8[] source,ref lexer::State s,ref ir::Program p,ref locals::Table names,ref functions::Table signatures){
+    let probes::Plan plan=probes::inspect(source,*s,p,names,signatures,2)?;
+    return .ok(Plan{.kind=plan.kind,.groups=plan.groups,.suffix=plan.suffix});
 }
