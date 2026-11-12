@@ -268,7 +268,7 @@ heap; all 336 input hashes match `6451094`. Transport preserves 36 bindings,
 
 ### Expression, annotated declaration and scalar return semantics
 
-The common compiler now drains two additional private kernels. The expression
+At the initial expression checkpoint, the common compiler gained two private kernels. The expression
 kernel keeps 34 Pratt frames and requests each converted unary/postfix/cast
 operand explicitly. Operator tokens resume through the lexical kernel; binary
 precedence, comparisons and logical short-circuit slot/branch/patch/load emission
@@ -276,6 +276,7 @@ preserve the raw expression order. Depth rejection precedes the operand request.
 Conditions and switch subjects use this adapter, as do the newly staged scalar
 initializers and returns. This does not replace recursion inside a converted
 operand, including parenthesized expressions, CALLs or value-yielding scopes.
+The later group/CALL/unary checkpoints below replace its ordinary recursive children.
 
 The semantic kernel stages annotated primitive and legacy scalar-payload
 Option/Result declarations through keyword/type/name/equals, initializer,
@@ -349,7 +350,7 @@ this bank. Default-stack execution is evidence for the selected fixtures, not a
 measured peak-stack or performance improvement.
 
 Read-only cast/Result/projection/CALL classification remains an explicit child.
-Unary operators, constructor payloads, postfix/propagation/casts, conditional
+Constructor payloads, postfix/propagation/casts, conditional
 value scopes, projections, aggregate/reference argument evaluation and
 special-result CALL protocols also retain legacy children. The separate
 typed/value body walker remains outside this coordinator. In particular, do not
@@ -379,6 +380,48 @@ source comparisons cover 55 successful and 47 failing fixtures; the affected
 subset was rechecked rather than rebuilding unchanged groups after the bank
 reduction. Optional public Fuel CLI and full release suites were not requested.
 
+### Unary operand internals
+
+Ordinary `-`, `!` and `~` now reuse the same 34 expression frames. Each operator
+stages its unsigned-context rejection/token, primary child, type check and IR
+emission separately. The child inherits the enclosing capture environment and
+uses minimum precedence zero as a private primary-only mode: it finishes
+postfix inspection/propagation, then returns before casts or binary operators.
+The enclosing frame applies the unary operation before its own converted tail.
+No new frame fields, capture banks, allocations or native-stack overrides were
+added. Unsupported child atoms keep their existing explicit legacy service.
+
+The signed minimum literal branches consume their token through the lexical
+kernel and emit the negative constant in a subsequent stage. They preserve raw
+typing and depth exceptions without first materializing a positive magnitude.
+Ordinary unary children keep primary's read-only Result preflight before operand
+depth rejection; converted frames also retain their earlier cast preflight.
+These scanners and all postfix/cast internals remain outside the stage allowance.
+Owning adapters still drain synchronously.
+
+Use `python tools/verify-operand-source-work.py --unary-only --profile development`
+and `--profile release` for the focused unary selection. The full operand selection
+also checks the existing group/CALL/capture and semantic continuation contracts.
+
+The [unary evidence](../evidence/compiler-unary-source-windows-20261112.json)
+records the first two-group development checkpoint at `32118ae`, then 24 native
+groups in each profile at `02f9b0d`. It adds 17 successful and 14 failing source
+fixtures plus six direct kernel expressions. Whole raw/staged IR and exact
+diagnostics match, including 32/33 unary depth, signed-minimum depth exceptions,
+mixed group/unary/ordinary or captured CALL depth, capture effects and early
+return cleanup. These composed runs also recheck all earlier operand groups
+after the shared binding-bank reduction; the earlier 21-group snapshot remains
+historical evidence.
+
+Engine development/O2 pass default 1MiB/4KiB stacks and zero exit SDK heap; all
+339 inputs match `4af4888`. Transport retains 36 equivalent typed declarations
+and 51 equivalent reviewed layouts. A recursive comparison of all 384 generated
+aggregate definitions preserves field types, struct/resource families and graph
+multiplicity after normalizing generated identifiers. Core/Cursor/Machine stay
+172400/1184/1792 bytes. All 332 production modules retain LF. These selected
+fixtures do not measure CPU/time or peak-stack improvements. Optional public
+Fuel CLI and full release suites were not requested; changes remain local.
+
 ## Required remaining lowering work
 
 The following semantic work remains atomic, even where its helpers drain stages:
@@ -389,12 +432,12 @@ The following semantic work remains atomic, even where its helpers drain stages:
 3. Body-derived slice origin analysis, including its seventeen rounds and
    expression/atom/CALL/name/control-flow traversal.
 4. Array/record parameter/result catalog preparation.
-5. Legacy operand preflight, unary/constructor/postfix/cast, conditional/projection and
+5. Legacy operand preflight, constructor/postfix/cast, conditional/projection and
    aggregate/reference argument children; special-result CALLs, scalar assignments,
    inferred/aggregate/reference declarations, special return protocols, for-post
    probe/replay, value-yielding scopes and the separate typed/value body walker;
    function entry/final metadata and implicit-return cleanup. Ordinary control,
-   Pratt/group/scalar-result CALL traversal, annotated scalar/wrapper declarations
+   Pratt/group/unary/scalar-result CALL traversal, annotated scalar/wrapper declarations
    and scalar/void returns have explicit stages; remaining semantic children stay outside those bounds.
 6. Final entry-call restrictions and output normalization, plus raw context/
    nominal discovery outside the newly staged owners.

@@ -1,0 +1,226 @@
+{
+  "schema": "browniec.compiler-unary-source-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-12T09:30:08.851880+00:00",
+  "verifiedCommit": "4af4888d2f231eaa31527f87c97725f61ced7775",
+  "implementationCommits": [
+    "32118aecc1352bd17adbc444d6dcba04351c0b5b",
+    "02f9b0d338d53515d7af3e1ad11fe5d9ff20ecc8"
+  ],
+  "scope": "Private common compiler ordinary unary operand continuations",
+  "toolchain": {
+    "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+    "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+    "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false"
+  },
+  "msvc": {
+    "version": "14.51.36231",
+    "sdk": "10.0.26100.0",
+    "compilerSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+    "overrides": false
+  },
+  "expressionKernel": {
+    "owner": "src/expression_source_work.fy",
+    "operators": [
+      "-",
+      "!",
+      "~"
+    ],
+    "frameSlots": 34,
+    "maximumAdmittedDepth": 32,
+    "logicalAllowance": 4096,
+    "stages": [
+      "Unsigned-context check and operator token",
+      "Signed minimum classification or shared primary child",
+      "Operand type check",
+      "Unary IR emission",
+      "Existing primary/converted tail completion"
+    ],
+    "primaryChild": "minimum=0; inherits capture environment; finishes postfixes before returning ahead of casts and binary operators",
+    "signedMinima": "Lexical token continuation then constant emission; raw i32/i64 typing and depth exceptions",
+    "depthOrder": "Converted depth guard precedes operand request; primary Result preflight precedes operand depth guard",
+    "stateLayoutUnchanged": true,
+    "initializationAndLegacyChildrenOutsideAllowance": true
+  },
+  "compatibility": {
+    "rawBodyOracle": "compiler::lower_body(...,false)",
+    "checked": "All candidate IR fields and failure prefixes, exact diagnostic kind and byte offset; successful fixtures execute to 42",
+    "unarySourceFixtures": {
+      "successful": 17,
+      "failing": 14,
+      "directKernelExpressions": 6
+    },
+    "covered": [
+      "All three operators; binary and cast precedence; Result .is_ok postfix",
+      "Unsigned context rejection; i32/i64 minimum literals and malformed suffixes",
+      "32/33 unary levels and signed-minimum depth exception",
+      "32 admitted levels mixing groups, unary operators and ordinary/captured CALLs",
+      "Mutable capture before later effects and temporary cleanup on early return",
+      "Insufficient allowance defers cursor, candidate emission and frame traversal; terminal idempotence"
+    ],
+    "finalOnlyPublication": true,
+    "rawRouteRemainsCandidateOnly": true
+  },
+  "nativeVerification": [
+    {
+      "receipt": {
+        "path": "build/operand-unary-work/development/receipt.json",
+        "sha256": "21554338d12f9eb0f636070f7093963541815b8bcae7153f725d179b42bf6b31"
+      },
+      "verifiedCommit": "32118aecc1352bd17adbc444d6dcba04351c0b5b",
+      "profile": "development",
+      "nativeGroups": 2,
+      "inputCount": 340,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeOverrides": false,
+      "nativeInputMirrorVerified": true
+    },
+    {
+      "receipt": {
+        "path": "build/operand-source-work/development/receipt.json",
+        "sha256": "6ee3f6197465a1095bccb308b075381d4ad2efb66fe9cfc1ac8e6ae025766003"
+      },
+      "verifiedCommit": "02f9b0d338d53515d7af3e1ad11fe5d9ff20ecc8",
+      "profile": "development",
+      "nativeGroups": 24,
+      "inputCount": 343,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeOverrides": false,
+      "nativeInputMirrorVerified": true
+    },
+    {
+      "receipt": {
+        "path": "build/operand-source-work/release/receipt.json",
+        "sha256": "8d1cc35772d026635b9fbbd68d685a1a0f60770694bd152e443efd2a226c1e4b"
+      },
+      "verifiedCommit": "02f9b0d338d53515d7af3e1ad11fe5d9ff20ecc8",
+      "profile": "release",
+      "nativeGroups": 24,
+      "inputCount": 343,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeOverrides": false,
+      "nativeInputMirrorVerified": true
+    }
+  ],
+  "engineVerification": {
+    "receipt": {
+      "path": "build/runtime-engine/20261112T092658106443Z/receipt.json",
+      "sha256": "4d417541fb23790937f3e7d6bf2e986e55cd48eb93410b204d63077705cfeaf8"
+    },
+    "verifiedCommit": "4af4888d2f231eaa31527f87c97725f61ced7775",
+    "inputCount": 339,
+    "allInputHashesMatchVerifiedCommit": true,
+    "compilerOverrides": false,
+    "rootLockUnchanged": true,
+    "profiles": [
+      {
+        "profile": "development",
+        "artifact": {
+          "path": "build/runtime-engine/20261112T092658106443Z/development/runtime-engine.exe",
+          "sha256": "69a0fa27331e5be3ad06a2d863a6cab0f78024e3b54191b1ce8c1d5204c1de55",
+          "bytes": 11244032,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "exit": 0,
+        "liveHeapAllocationsAtExit": 0,
+        "arrayFillMetrics": {
+          "arrayWorkBytes": 360,
+          "cursorBytes": 1184,
+          "machineBytes": 1792,
+          "coreBytes": 172400,
+          "pendingVecExtraBytes": 2880,
+          "callWorkBytes": 536,
+          "callPendingVecExtraBytes": 4288,
+          "returnWorkBytes": 48,
+          "returnPendingVecExtraBytes": 384,
+          "combinedPendingVecExtraBytes": 7552
+        }
+      },
+      {
+        "profile": "release",
+        "artifact": {
+          "path": "build/runtime-engine/20261112T092658106443Z/release/runtime-engine.exe",
+          "sha256": "22f06b302f4e770a51fc79de5cd9c0aef5230ab8e3f0a90c4f4940e09a07e0c8",
+          "bytes": 4102144,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "exit": 0,
+        "liveHeapAllocationsAtExit": 0,
+        "arrayFillMetrics": {
+          "arrayWorkBytes": 360,
+          "cursorBytes": 1184,
+          "machineBytes": 1792,
+          "coreBytes": 172400,
+          "pendingVecExtraBytes": 2880,
+          "callWorkBytes": 536,
+          "callPendingVecExtraBytes": 4288,
+          "returnWorkBytes": 48,
+          "returnPendingVecExtraBytes": 384,
+          "combinedPendingVecExtraBytes": 7552
+        }
+      }
+    ]
+  },
+  "transportReview": {
+    "receipt": {
+      "path": "build/operand-unary-transport-review.json",
+      "sha256": "80f11b9794db8e1ac3a4011b7272bcfce200f629596c63a9437d20450c6c98cc"
+    },
+    "status": "passed",
+    "typedBindings": 36,
+    "equivalentDeclarations": 36,
+    "equivalentReviewedLayouts": 51,
+    "equivalentAllAggregateGraphs": 384,
+    "comparison": "All generated aggregates compared recursively, retaining struct/resource family, field names, scalar/pointer/array types and multiplicity; generated function/local/type identifiers normalized",
+    "changedSourceInputs": [
+      "src/compiler.fy",
+      "src/expression_source_work.fy"
+    ],
+    "sourceCount": 325,
+    "previousTransportSha256": "74603c587ed74e449ac4c62c448ce2aff1633d3dd179d441577783fcd1fa1a63",
+    "transportSha256": "622941bbcdf4c92f76529d0120276c86a334f3142ba869a4c2163ed1e3043083"
+  },
+  "changedInputs": [
+    {
+      "path": "src/compiler.fy",
+      "sha256": "b4f164a99e684b95ac9ba254f4d27d812530b0fc803915751095a29e0560e717"
+    },
+    {
+      "path": "src/expression_source_work.fy",
+      "sha256": "d6a45066ed2381234f1c044b5ecd1b77f6022885b036267fa185066fe9e99aaa"
+    },
+    {
+      "path": "tests/m2/expression_lowering.fy",
+      "sha256": "258b8d88045d09cd4d63c53f957d45b0d24a7ed482bd2a97c1bb3c976db6d48c"
+    },
+    {
+      "path": "tests/m2/body_lowering.fy",
+      "sha256": "b7499d3312a8f26f4e20a9b18c20ddd8697aeee74832365f7f99f3e59696996e"
+    },
+    {
+      "path": "tools/verify-operand-source-work.py",
+      "sha256": "6f98afc7b477776f9a6d3f95c0dc96ad108a4a13cb8b5d245d2266fb8e927490"
+    },
+    {
+      "path": "fairy.lock",
+      "sha256": "1d7f334690e72024d1227e9f2732b95093389d22a64e99609ec0a88353b49656"
+    },
+    {
+      "path": "native/runtime-engine/transport.json",
+      "sha256": "9b4c4da5a93d8ef65a7e32e30b18acedac15976f365480db3ab21bf2676f2fdd"
+    }
+  ],
+  "productionSources": {
+    "count": 332,
+    "allLF": true
+  },
+  "limitations": [
+    "Read-only cast/Result/projection/CALL classifiers and postfix/propagation/casts remain explicit legacy work",
+    "Constructor/conditional/projection and aggregate/reference argument children and special-result CALLs remain legacy; the separate typed/value body walker is outside this coordinator",
+    "Owning adapters still drain synchronously; no public Pending compiler, measured CPU/time/peak-stack improvement or R02-R05 closure",
+    "Focused operand and existing Engine fixtures only; optional public Fuel CLI and full release suites not requested",
+    "Local commits only; broader completion stays paused; no push, release or deployment"
+  ]
+}

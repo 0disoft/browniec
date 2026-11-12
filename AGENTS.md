@@ -1,32 +1,29 @@
-- Latest ordinary operand checkpoint (2026-11-12): [source stages](docs/engineering/compiler-source-stages.md)
-  common compiler ordinary groups and scalar-result CALLs share 34 Pratt slots.
-  Plain arguments, type/arity, delimiters, CALL and converted tails resume
-  separately. Capturing CALLs stage argument requests, promotion and reverse
-  cleanup; scalar children reuse the same stack. One shared append-only 64-row
-  binding prefix plus per-frame counts/pending masks restores lexical contexts.
-  The owner pins fixed scratch separately; no allocation or stack override was
-  added. CALL stages load/store 64 binding rows and eight argument cells within
-  the conservative logical bound. Legacy argument/operand children remain outside.
-  Group/plain-CALL/capture checkpoints pass 4/6/8 development groups. Composed
-  snapshots pass 21 groups/profile (55 successful/47 failing source comparisons);
-  after bank reduction, all three affected groups pass development/release.
-  Depth 32 ordinary/captured CALLs and 16 groups+16 CALLs execute; the next level
-  keeps raw rejection. Actuals 8, CALL sites 32, locals 64/65 and controls 32/33
-  retain exact raw IR/error order. Three reproduced stack failures are repaired.
+- Latest unary operand checkpoint (2026-11-12): [source stages](docs/engineering/compiler-source-stages.md)
+  common compiler ordinary `-`, `!` and `~` now share the 34 Pratt/group/CALL
+  frames. Operator tokens, primary children, type checks and IR emission resume
+  separately. Primary-only children preserve postfix-before-unary and
+  unary-before-cast/binary order, inherit capture environments and retain the raw
+  signed-minimum and depth/error rules. No frame fields, allocations or native
+  stack overrides were added. Existing read-only preflight and postfix/cast
+  internals remain explicit legacy work outside the logical stage allowance.
+  First two development groups pass at `32118ae`; the composed 24-group suite
+  passes development/release at `02f9b0d`, including 32/33 unary depth, signed
+  minima, mixed group/unary/ordinary or captured CALLs and capture exit cleanup.
+  Whole candidate IR, failure prefixes and exact diagnostics match the raw route.
   Engine development/O2 pass default 1MiB/4KiB stacks and zero exit SDK heap;
-  all 339 inputs match `fe0dff4`. Transport retains 36 bindings/51 layouts/176
-  equivalent graphs; Core/Cursor/Machine stay 172400/1184/1792 bytes. 332
-  production modules retain LF. See [operand evidence](docs/evidence/compiler-operand-source-windows-20261112.json)
-  and the earlier [semantic evidence](docs/evidence/compiler-semantic-source-windows-20261112.json).
-  Twenty-seven private source kernels are implemented. Read-only preflight,
-  unary/constructor/postfix/cast, conditional/projection, aggregate/reference
-  argument evaluation and special-result CALLs retain explicit legacy children.
-  Scalar assignments, inferred/aggregate/reference declarations, special returns,
-  for-post probe/replay, the separate typed/value body walker, function entry/
-  final metadata, implicit-return cleanup, origins and aggregate catalogs remain.
-  Owning adapters still drain synchronously. No complete resumable compiler,
-  public Pending compile, measured CPU/time/peak-stack improvement or R02-R05
-  closure. Lowering stays authorized; broader completion stays paused. Local only.
+  all 339 inputs match `4af4888`. Transport retains 36 equivalent declarations,
+  51 reviewed layouts and 384 equivalent generated aggregate graphs. The latter
+  compares all definitions recursively with generated identifiers normalized.
+  Core/Cursor/Machine remain 172400/1184/1792 bytes; 332 production modules retain LF.
+  See [unary evidence](docs/evidence/compiler-unary-source-windows-20261112.json)
+  and the earlier [operand evidence](docs/evidence/compiler-operand-source-windows-20261112.json).
+  Constructors, conditional/projection and aggregate/reference argument children,
+  special-result CALLs, assignments, inferred/aggregate/reference declarations,
+  special returns, for-post probe/replay, the separate typed/value body walker,
+  entry/final metadata, implicit cleanup, origins and catalogs remain legacy.
+  Owning adapters still drain synchronously. No public Pending compiler,
+  measured CPU/time/peak-stack improvement or R02-R05 closure. Lowering stays
+  authorized; broader completion stays paused. Local only.
 
 # Brownie C agent guidance
 
