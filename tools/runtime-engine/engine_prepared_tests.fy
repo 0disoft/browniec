@@ -31,7 +31,7 @@ fn Heap heap(){return Heap{.blocks=unsafe{probe_live()},.bytes=unsafe{probe_live
 fn void same_heap(ref Heap before){
     assert(unsafe{probe_live()}==before.blocks && unsafe{probe_live_bytes()}==before.bytes);
 }
-fn engine::Limits limits(){return engine::Limits{.programs=4,.instances=4,.fuel=16000000};}
+fn engine::Limits limits(){return engine::Limits{.programs=4,.instances=64,.fuel=16000000};}
 fn Result<engine::Engine,u8> created(usize single,usize aggregate,memory::Limits retained){
     let usize control=switch(engine::required_control_bytes(limits())){
         case .ok(v):{v}case .err(_):{return .err(1);}
@@ -257,7 +257,7 @@ fn Result<Plan,u8> measured(usize output_limit){
     let memory::Observation m=retained(ref e);
     assert(m.control_bytes==id(engine::required_control_bytes(limits())));
     let usize combined=m.control_bytes+m.program_bytes+2*(input+required);
-    if(output_limit==1048576){assert(combined>m.tracked_peak && combined<=67108864);}
+    if(output_limit==1048576){assert(combined<=67108864);}
     destroy(ref mut e,a);destroy(ref mut e,b);release(ref mut e,p);close(ref mut e);
     assert(bytes::equal(inputs::view(ref original),b"!\x00\xFFinput"));
     return .ok(Plan{.pending=required,.input=input,.combined=combined});
@@ -270,7 +270,38 @@ fn void quota_rejection(ref mut engine::Engine e,usize i){
     assert(unsafe{probe_attempts()}==attempts);same_heap(ref before);unchanged(e,ref l,ref m);
     same_event(ready,event(engine::observe(e,i)));
 }
+// Keep the combined runtime boundary above the compilation high-water mark.
+// These are actual separately pinned owners, never a seeded ledger or reset peak.
+fn Result<Plan,u8> measured_many(ref mut usize owners){
+    let inputs::Snapshot original=captured()?;let usize input=inputs::capacity(ref original);
+    var engine::Engine e=generous()?;let usize p=compiled(ref mut e,3,input_source())?;
+    let usize required=requirement(ref e,p,1048576);let memory::Observation m=retained(ref e);
+    var usize count=2;var usize combined=m.control_bytes+m.program_bytes+count*(input+required);
+    while(combined<=m.tracked_peak){count+=1;assert(count<=64);combined=m.control_bytes+m.program_bytes+count*(input+required);}
+    assert(combined<=268435456);*owners=count;release(ref mut e,p);close(ref mut e);
+    return .ok(Plan{.pending=required,.input=input,.combined=combined});
+}
+fn Result<usize,u8> combined_many(bool short){
+    var usize owners=0;let Plan plan=measured_many(ref mut owners)?;
+    let usize cap=plan.combined-if(short){1}else{0};
+    let usize per=if(cap>67108864){67108864}else{cap};
+    var engine::Engine e=created(268435456,536870912,memory::Limits{.engine=cap,.program=per,.programs=cap})?;
+    let inputs::Snapshot original=captured()?;let usize p=compiled(ref mut e,3,input_source())?;
+    var usize[64] ids=[0;64];var usize n=0;
+    while(n<owners){ids[n]=bound(ref mut e,p,1048576)?;n+=1;}
+    n=0;while(n+1<owners){assert(prepare(ref mut e,ids[n],plan.pending).kind==4);n+=1;}
+    let usize last=ids[owners-1];
+    if(short){quota_rejection(ref mut e,last);counts(ref mut e,1,owners,owners);
+        assert(event(engine::cancel_ready(ref mut e,ids[0])).kind==3);
+        assert(prepare(ref mut e,last,plan.pending).kind==4);
+    }else{assert(prepare(ref mut e,last,plan.pending).kind==4);
+        assert(instance(ref e).current==owners*(plan.input+plan.pending));
+        assert(retained(ref e).tracked_bytes==plan.combined);}
+    n=0;while(n<owners){destroy(ref mut e,ids[n]);n+=1;}ledger(ref e,0);release(ref mut e,p);close(ref mut e);
+    assert(bytes::equal(inputs::view(ref original),b"!\x00\xFFinput"));return .ok(0);
+}
 fn Result<usize,u8> quota_boundary(u32 kind,bool short){
+    if(kind==2){return combined_many(short);}
     let usize output_limit=if(kind==2){1048576}else{64};let Plan plan=measured(output_limit)?;
     let usize exact=plan.input+plan.pending;let usize aggregate=2*exact;
     let usize single=if(kind==0 && short){exact-1}else{if(kind<2){exact}else{268435456}};

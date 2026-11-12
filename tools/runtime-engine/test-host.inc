@@ -145,8 +145,10 @@ void bc_runtime_engine_test_control_report(void){
 }
 
 extern void probe_rebase(void);
-void bc_runtime_engine_test_program_probe(void){probe_rebase();}
-void bc_runtime_engine_test_program_no_retention_allocations(void){assert(probe_attempts()==1);}
+extern void probe_retention_begin(void);
+extern int probe_no_retention_allocations(void);
+void bc_runtime_engine_test_program_probe(void){probe_rebase();probe_retention_begin();}
+void bc_runtime_engine_test_program_no_retention_allocations(void){assert(probe_no_retention_allocations());}
 void bc_runtime_engine_test_program_storage(const void *raw,uintptr_t bytes){
  const bc_engine *e=raw;size_t control=e->f_1.f_1+e->f_2.f_1+e->f_3.f_1+e->f_4.f_1+e->f_5.f_1+e->f_6.f_1+e->f_7.f_1;
  assert(bytes<=SIZE_MAX-control&&probe_live_bytes()==control+bytes);

@@ -4,6 +4,7 @@ Review build/engine-input-transport-review/candidate-transport.json first; use
 --write-contract to replace the local reviewed contract after inspecting changes.
 """
 import argparse
+from compiler_scratch_layouts import reviewed_scratch
 args_parser=argparse.ArgumentParser(description=__doc__)
 args_parser.add_argument('--write-contract',action='store_true')
 review_options=args_parser.parse_args()
@@ -128,6 +129,7 @@ for key in ['lifecycleType','setupWorkType','preparationWorkType','cleanupWorkTy
  c['reviewedLayouts'][key]=re.search(r'^typedef struct \{\n[^}]*\} '+re.escape(c[key])+';$',t,re.M).group()
 assert len(c['reviewedLayouts'])==51
 c['transportSha256']=hashlib.sha256(generated).hexdigest()
+c['compilerScratch']=reviewed_scratch(t)
 c['sourceInputs']=[dict(path=p.relative_to(root).as_posix(),sha256=hashlib.sha256(p.read_bytes()).hexdigest()) for p in sources]
 raw=json.dumps(c,indent=2)+'\n'
 (folder/'candidate-transport.json').write_text(raw,encoding='utf-8',newline='\n')

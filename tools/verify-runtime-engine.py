@@ -1,5 +1,6 @@
 """Execute the private owning Engine/Program/Instance lifecycle on native Windows."""
 import argparse
+from compiler_scratch_layouts import reviewed_scratch
 from datetime import datetime, timezone
 import importlib.util
 import json
@@ -71,6 +72,23 @@ def source_copy(path):
                             'unsafe extern C fn void bc_runtime_engine_test_proof_visit();\n// Private complete canonical proof.', 1)
         text = text.replace(anchor, 'if(w.phase==0){if(w.output){unsafe{bc_runtime_engine_test_proof_visit();}}let bool input=w.input;', 1)
         return path.name, text.encode('utf-8')
+    if path == ROOT / 'src/compiler.fy':
+        text=path.read_text(encoding='utf-8')
+        marker='fn Result<scratch_vec::Vec<expression_work::Bank>,errors::Error> expression_scratch'
+        probe_source='unsafe extern C fn void bc_runtime_engine_test_compiler_work_begin();\nunsafe extern C fn void bc_runtime_engine_test_compiler_work_end();\nresource AllocationProbe { bool active; cleanup {unsafe{bc_runtime_engine_test_compiler_work_end()};} }\nfn AllocationProbe allocation_probe(){unsafe{bc_runtime_engine_test_compiler_work_begin()};return AllocationProbe{.active=true};}\n'
+        need(text.count(marker)==1,'Compiler allocation probe anchor changed')
+        text=text.replace(marker,probe_source+marker,1)
+        for name in ['expression_scratch','expression_state','conditional_scratch']:
+            pattern=r'(fn Result<scratch_vec::Vec<[^\n]+> '+name+r'\([^\n]+\)\{)'
+            text,count=re.subn(pattern,r'\1\n    let AllocationProbe probe=allocation_probe();',text)
+            need(count==1,'Compiler allocation scope changed: '+name)
+        return path.name,text.encode('utf-8')
+    if path == ROOT / 'src/retention_plan.fy':
+        text=path.read_text(encoding='utf-8');anchor='    plan.admitted=true;'
+        need(text.count(anchor)==1,'Retention admission probe anchor changed')
+        text=text.replace('module retention_plan;','module retention_plan;\nunsafe extern C fn void bc_runtime_engine_test_retention_admitted();',1)
+        text=text.replace(anchor,anchor+'\n    unsafe{bc_runtime_engine_test_retention_admitted()};',1)
+        return path.name,text.encode('utf-8')
     adapters = {'runtime_control_budget': 'control_budget_contracts', 'retention_plan': 'retention_plan_contracts',
                 'runtime_program_compile_memory': 'program_compile_contracts',
                 'runtime_live_memory': 'live_memory_contracts',
@@ -142,7 +160,7 @@ def main():
         for path in sources:
             need(sha(path.read_bytes()) == expected[path.relative_to(ROOT).as_posix()], f'Source changed: {path}')
         extras = ['fairy.toml', 'toolchain.json', 'tools/verify-runtime-engine.py',
-                  'tools/verify-runtime-store-probe.py', 'tools/runtime-engine/test-host.inc',
+                  'tools/verify-runtime-store-probe.py', 'tools/compiler_scratch_layouts.py', 'tools/runtime-engine/test-host.inc',
                   'native/runtime-engine/bridge.inc', 'native/runtime-engine/transport.json',
                   'native/abi_thread_identity.c', 'native/abi_thread_identity.h',
                   'native/runtime_input_reader.c', 'native/runtime_input_reader.h',
@@ -164,6 +182,7 @@ def main():
         generated = run([compiler, 'experimental', 'emit-workspace-c', '--target',
                          'x86_64-windows-msvc', '--locked'], cwd=project)
         need(sha(generated) == contract['transportSha256'], 'Emitted transport changed; review every private binding')
+        need(reviewed_scratch(generated.decode('utf-8')) == contract['compilerScratch'], 'Compiler scratch width proof changed')
         write(output / 'generated.c', generated)
         for key, function in contract['bindings'].items():
             declaration = re.search(r'^static [^\n]+\b' + re.escape(function) + r'\([^\n]*\);$',
@@ -281,7 +300,8 @@ def main():
         write(output / 'bridge.inc', inputs['native/runtime-engine/bridge.inc'])
         write(output / 'test-host.inc', inputs['tools/runtime-engine/test-host.inc'])
         write(output / 'compile-test-host.inc', inputs['tools/runtime-engine/compile-test-host.inc'])
-        write(output / 'transport.c', '#define main generated_main\n#include "generated.c"\n#undef main\n'
+        write(output / 'transport.c', '#define main generated_main\n#include "generated.c"\n#undef main\n' +
+              ''.join('_Static_assert(sizeof('+r['type']+') <= UINT64_C('+str(r['slotBound'])+'), "compiler scratch width bound");\n' for r in contract['compilerScratch'].values()) +
               '#include "abi_thread_identity.h"\n#include "bindings.h"\n'
               '#include "bridge.inc"\n#include "test-host.inc"\n#include "compile-test-host.inc"\n')
         repository = (args.fairyc_repository or ROOT / toolchain['source']['localRepository']).resolve()

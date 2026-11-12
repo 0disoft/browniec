@@ -7,6 +7,7 @@ import module_index as modules;
 import source_snapshot as sources;
 
 unsafe extern C fn void bc_runtime_engine_test_fail(i64 count);
+unsafe extern C fn void bc_runtime_engine_test_retention_fail(i64 count);
 unsafe extern C fn usize probe_attempts();
 unsafe extern C fn void bc_runtime_engine_test_closed_allocations();
 unsafe extern C fn void bc_runtime_engine_test_program_probe();
@@ -104,7 +105,7 @@ fn Result<usize,engine::Error> attempt(ref mut engine::Engine e,u32 mode,ref u8[
             case .ok(v):{v}case .err(_):{assert(false);return .ok(0);}
         };
         if(probe){unsafe{bc_runtime_engine_test_program_probe()};}
-        unsafe{bc_runtime_engine_test_fail(fault)};
+        unsafe{bc_runtime_engine_test_retention_fail(fault)};
         let Result<usize,engine::Error> r=if(mode==1){engine::compile_input(e,entry,65536)}else{engine::compile_input_output(e,entry,65536)};
         unsafe{bc_runtime_engine_test_fail(-1)};return r;
     }
@@ -112,7 +113,7 @@ fn Result<usize,engine::Error> attempt(ref mut engine::Engine e,u32 mode,ref u8[
         case .ok(v):{v}case .err(_):{assert(false);return .ok(0);}
     };
     if(probe){unsafe{bc_runtime_engine_test_program_probe()};}
-    unsafe{bc_runtime_engine_test_fail(fault)};
+    unsafe{bc_runtime_engine_test_retention_fail(fault)};
     let Result<usize,engine::Error> r=if(mode==0){engine::compile(e,entry,65536)}else{engine::compile_output(e,entry,65536)};
     unsafe{bc_runtime_engine_test_fail(-1)};return r;
 }
@@ -140,7 +141,7 @@ fn void exact_mode(u32 mode){
 }
 fn void exact_four_modes(){var u32 mode=0;while(mode<4){exact_mode(mode);unsafe{bc_runtime_engine_test_closed_allocations()};mode+=1;}}
 
-// Group 2: one byte short returns quota8 with only wrapper allocation. Exact
+// Group 2: one byte short returns quota8 after incoming/compiler scratch only. Exact
 // admission reaches the image OOM6; reservation peak survives that rollback.
 fn void per_program_boundary(u32 mode,bool short){
     let usize bytes=fixed(mode)+5;let usize per=if(short){bytes-1}else{bytes};

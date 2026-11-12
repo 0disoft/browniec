@@ -13,6 +13,7 @@ unsafe extern C fn usize probe_live();
 unsafe extern C fn usize probe_live_bytes();
 unsafe extern C fn usize probe_peak_bytes();
 unsafe extern C fn usize probe_attempts();
+unsafe extern C fn usize probe_retention_start();
 unsafe extern C fn void probe_rebase();
 unsafe extern C fn void bc_runtime_engine_test_fail(i64 count);
 unsafe extern C fn void bc_runtime_engine_test_seed(ptr mut void owner,u32 kind);
@@ -95,15 +96,16 @@ fn ref u8[] plain(u32 mode){
     return b"module app;pub fn i32 chosen(){return 42;}";
 }
 fn ref u8[] source(u32 mode,bool malformed){
-    // Nine reused cells force scratch Vec8 -> Vec16; the literal forces Image.
+    // Conditional values exercise all three compiler scratch kinds. The reused
+    // cells retain legacy list scratch; the literal forces persistent Image.
     if(malformed){
-        if(mode==1 || mode==3){return b"module app;pub fn i32 chosen(ref u8[] data){let i32 x=21;let a=[x,x,x,x,x,x,x,x,x];return missing;}";}
-        return b"module app;pub fn i32 chosen(){let i32 x=21;let a=[x,x,x,x,x,x,x,x,x];return missing;}";
+        if(mode==1 || mode==3){return b"module app;pub fn i32 chosen(ref u8[] data){let i32 x=if(true){21}else{0};let a=[x,x,x,x,x,x,x,x,x];return missing;}";}
+        return b"module app;pub fn i32 chosen(){let i32 x=if(true){21}else{0};let a=[x,x,x,x,x,x,x,x,x];return missing;}";
     }
-    if(mode==1){return b"module app;pub fn i32 chosen(ref u8[] data){let ref u8[] marker=b\"*\";let i32 x=21;let a=[x,x,x,x,x,x,x,x,x];return a[0]+a[8];}";}
-    if(mode==3){return b"module app;pub fn i32 chosen(ref u8[] data){let ref u8[] marker=b\"*\";let i32 x=21;let a=[x,x,x,x,x,x,x,x,x];output::emit(ref marker);return a[0]+a[8];}";}
-    if(mode==2){return b"module app;pub fn i32 chosen(){let ref u8[] marker=b\"*\";let i32 x=21;let a=[x,x,x,x,x,x,x,x,x];output::emit(ref marker);return a[0]+a[8];}";}
-    return b"module app;pub fn i32 chosen(){let ref u8[] marker=b\"*\";let i32 x=21;let a=[x,x,x,x,x,x,x,x,x];return a[0]+a[8];}";
+    if(mode==1){return b"module app;pub fn i32 chosen(ref u8[] data){let ref u8[] marker=b\"*\";let i32 x=if(true){21}else{0};let a=[x,x,x,x,x,x,x,x,x];return a[0]+a[8];}";}
+    if(mode==3){return b"module app;pub fn i32 chosen(ref u8[] data){let ref u8[] marker=b\"*\";let i32 x=if(true){21}else{0};let a=[x,x,x,x,x,x,x,x,x];output::emit(ref marker);return a[0]+a[8];}";}
+    if(mode==2){return b"module app;pub fn i32 chosen(){let ref u8[] marker=b\"*\";let i32 x=if(true){21}else{0};let a=[x,x,x,x,x,x,x,x,x];output::emit(ref marker);return a[0]+a[8];}";}
+    return b"module app;pub fn i32 chosen(){let ref u8[] marker=b\"*\";let i32 x=if(true){21}else{0};let a=[x,x,x,x,x,x,x,x,x];return a[0]+a[8];}";
 }
 fn usize required(u32 mode){
     if(mode==1 || mode==3){
@@ -148,8 +150,8 @@ fn i64 fault_at(usize ordinal){
 // Group 1: the requirement follows the typed selected owner, not source length.
 pub fn void requirements_follow_typed_layouts_and_default_working_cap(){
     clean();let usize ordinary=required(0);let usize input=required(1);
-    assert(bounded::working_bound()==262144);
-    assert(ordinary==436544 && input==436928 && input-ordinary==384);
+    assert(bounded::working_bound()==66630144);
+    assert(ordinary==66804544 && input==66804928 && input-ordinary==384);
     assert(required(2)==ordinary && required(3)==input);clean();
     {
         var engine::Engine e=switch(engine::create(count_limits())){
@@ -284,22 +286,29 @@ fn void oom_mode(u32 mode){
 }
 // Fresh owners prove failed admitted retention itself raises program_peak; the
 // sweep above separately proves every actual allocation ordinal and peer safety.
+fn usize image_ordinal(u32 mode,ref u8[] text){
+    var engine::Engine sample=switch(created(memory::defaults(),268435456)){
+        case .ok(v):{v}case .err(_):{assert(false);return 0;}};
+    let usize p=id(attempt(ref mut sample,mode,text,-1));let usize ordinal=unsafe{probe_retention_start()};
+    assert(ordinal>0 && ordinal<64);release(ref mut sample,p);assert(id(engine::destroy(ref mut sample))==0);return ordinal;
+}
 fn void admitted_oom_peak(u32 mode){
     let usize requirement=required(mode);let usize fresh=fixed(mode)+1;
     var engine::Engine e=switch(created(memory::defaults(),268435456)){
         case .ok(v):{v}case .err(_):{assert(false);return;}
     };
-    // Plain literal has no scratch allocation: incoming then Image then Stored.
+    // Calibrate the actual admission boundary; compiler scratch precedes Image.
     let ref u8[] text=if(mode==1 || mode==3){
         b"module app;pub fn i32 chosen(ref u8[] data){let ref u8[] marker=b\"*\";return 42;}"
     }else{b"module app;pub fn i32 chosen(){let ref u8[] marker=b\"*\";return 42;}"};
+    let usize image=image_ordinal(mode,text);
     let usize blocks=unsafe{probe_live()};let usize bytes=unsafe{probe_live_bytes()};
     let usize admission=epoch(ref e);let usize object=next(ref e);
     rejected(attempt(ref mut e,mode,text,0),6);
     assert(unsafe{probe_attempts()}==1);physical(blocks,bytes);counters(ref e,admission,object);
     ledger(ref e,268435456,0,0,requirement,control()+requirement,false);
-    rejected(attempt(ref mut e,mode,text,1),6);
-    assert(unsafe{probe_attempts()}==2);physical(blocks,bytes);counters(ref e,admission+1,object);
+    rejected(attempt(ref mut e,mode,text,fault_at(image)),6);
+    assert(unsafe{probe_attempts()}==image+1);physical(blocks,bytes);counters(ref e,admission+1,object);
     ledger(ref e,268435456,0,fresh,requirement,phase_peak(0,requirement,fresh),false);
     let usize q=id(attempt(ref mut e,mode,text,-1));assert(q==object);
     release(ref mut e,q);assert(id(engine::destroy(ref mut e))==0);

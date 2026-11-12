@@ -75,7 +75,7 @@ fn void counts(ref mut engine::Engine e,usize code,usize owners,usize pins){swit
 fn usize next(ref engine::Engine e){return unsafe{bc_runtime_engine_test_compile_next(e as ptr void)};}
 fn Result<engine::Engine,engine::Error> created(usize single,usize aggregate,memory::Limits limits){
     return engine::create_with_instance_memory(
-        engine::Limits{.programs=4,.instances=4,.fuel=16000000},4194304,limits,
+        engine::Limits{.programs=4,.instances=64,.fuel=16000000},4194304,limits,
         268435456,live::Limits{.instance=single,.instances=aggregate});
 }
 fn Result<modules::Index,u8> indexed(ref u8[] source){
@@ -269,48 +269,38 @@ fn void aggregate_boundary(bool short){
 // aggregate baseline. Quota failure does not steal the pending owner's pin.
 pub fn void simultaneous_input_and_peer_output_exact_and_one_less(){aggregate_boundary(true);aggregate_boundary(false);}
 
-fn usize combined_ceiling(){
+fn usize combined_ceiling(ref mut usize peers){
     var engine::Engine sample=switch(created(268435456,536870912,memory::defaults())){
-        case .ok(v):{v}case .err(_):{assert(false);return 0;}
-    };
-    let usize peer=compiled(ref mut sample,0,source(0,0));
-    let usize p=compiled(ref mut sample,3,source(3,0));
+        case .ok(v):{v}case .err(_):{assert(false);return 0;}};
+    let usize peer=compiled(ref mut sample,0,source(0,0));let usize p=compiled(ref mut sample,3,source(3,0));
     let memory::Observation m=programs(ref sample);
-    let usize total=m.control_bytes+m.program_bytes+capacity(64)+requirement(ref sample,p,1048576);
-    assert(total>m.tracked_peak);release(ref mut sample,peer);release(ref mut sample,p);close(ref mut sample);return total;
+    let usize unit=capacity(1048576)+576+1048576;
+    var usize count=0;var usize total=m.control_bytes+m.program_bytes+capacity(64)+requirement(ref sample,p,1048576);
+    while(total<=m.tracked_peak){count+=1;assert(count<63);total+=unit;}
+    *peers=count;release(ref mut sample,peer);release(ref mut sample,p);close(ref mut sample);return total;
 }
 fn void combined_boundary(bool short){
-    let Heap baseline=heap();let usize exact=combined_ceiling();
+    let Heap baseline=heap();var usize peers=0;let usize exact=combined_ceiling(ref mut peers);
+    let usize peer_kept=capacity(1048576)+576+1048576;
     {
-        let usize ceiling=if(short){exact-1}else{exact};
-        var engine::Engine e=switch(created(268435456,536870912,
-            memory::Limits{.engine=ceiling,.program=ceiling,.programs=ceiling})){
-            case .ok(v):{v}case .err(_):{assert(false);return;}
-        };
-        let usize peer=compiled(ref mut e,0,source(0,0));
-        let usize p=compiled(ref mut e,3,source(3,0));
-        let usize pin=bound(ref mut e,peer,0,0,123,0);
+        let usize ceiling=exact-if(short){1}else{0};let usize per=if(ceiling>67108864){67108864}else{ceiling};
+        var engine::Engine e=switch(created(268435456,536870912,memory::Limits{.engine=ceiling,.program=per,.programs=ceiling})){
+            case .ok(v):{v}case .err(_):{assert(false);return;}};
+        let usize peer=compiled(ref mut e,0,source(0,0));let usize p=compiled(ref mut e,3,source(3,0));
+        let usize pin=bound(ref mut e,peer,0,0,123,0);var usize[64] ids=[0;64];var usize n=0;
+        while(n<peers){ids[n]=bound(ref mut e,p,3,1048576,16000000,1048576);assert(event(engine::execute_once(ref mut e,ids[n])).kind==1);n+=1;}
         let usize i=bound(ref mut e,p,3,64,16000000,1048576);
-        let engine::Event ready=event(engine::observe(ref mut e,i));
-        let live::Observation l=instance(ref e);let memory::Observation m=programs(ref e);
+        let engine::Event ready=event(engine::observe(ref mut e,i));let live::Observation l=instance(ref e);let memory::Observation m=programs(ref e);
         let Heap before=heap();let usize object=next(ref e);unsafe{probe_rebase()};
-        if(short){
-            rejected_event(engine::execute_once(ref mut e,i),8);assert(unsafe{probe_attempts()}==0);
-            physical(ref before);unchanged(ref e,ref l,ref m);
-            same_event(ready,event(engine::observe(ref mut e,i)));
-        }else{
-            let usize required=requirement(ref e,p,1048576);
-            assert(event(engine::execute_once(ref mut e,i)).kind==1);
-            assert(unsafe{probe_peak_bytes()}<=before.bytes+required);
-            assert(programs(ref e).tracked_peak==exact);
-            ledger(ref e,capacity(64)+576+1048576,capacity(64)+required);
-        }
-        assert(next(ref e)==object);counts(ref mut e,2,2,2);
-        let engine::Event peer_ready=event(engine::observe(ref mut e,pin));
-        assert(peer_ready.kind==0 && peer_ready.remaining==123 && peer_ready.fuel_known);
-        destroy(ref mut e,i);destroy(ref mut e,pin);release(ref mut e,p);release(ref mut e,peer);close(ref mut e);
-    }
-    physical(ref baseline);
+        if(short){rejected_event(engine::execute_once(ref mut e,i),8);assert(unsafe{probe_attempts()}==0);physical(ref before);unchanged(ref e,ref l,ref m);same_event(ready,event(engine::observe(ref mut e,i)));}
+        else{let usize required=requirement(ref e,p,1048576);assert(event(engine::execute_once(ref mut e,i)).kind==1);
+            assert(unsafe{probe_peak_bytes()}<=before.bytes+required);assert(programs(ref e).tracked_peak==exact);
+            ledger(ref e,peers*peer_kept+capacity(64)+576+1048576,peers*peer_kept+capacity(64)+required);}
+        assert(next(ref e)==object);counts(ref mut e,2,peers+2,peers+2);
+        let engine::Event peer_ready=event(engine::observe(ref mut e,pin));assert(peer_ready.kind==0 && peer_ready.remaining==123 && peer_ready.fuel_known);
+        destroy(ref mut e,i);n=0;while(n<peers){destroy(ref mut e,ids[n]);n+=1;}
+        destroy(ref mut e,pin);release(ref mut e,p);release(ref mut e,peer);close(ref mut e);
+    }physical(ref baseline);
 }
 // Group 3: combined Engine bytes independently reject execution with generous
 // Instance limits. Compilation history and another Program/pin remain intact.

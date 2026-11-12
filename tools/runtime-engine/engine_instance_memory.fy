@@ -543,46 +543,39 @@ pub fn void owning_cleanup_returns_all_sdk_blocks_and_bytes_to_entry_baseline(){
 // Group 9: the combined Engine ceiling includes the same retained input plus
 // transport, independent of the more generous per-Instance/set ceilings.
 pub fn void combined_engine_exact_and_one_less_admit_before_transport_allocation(){
-    let Heap baseline=heap();let usize size=capacity(524288);var usize total=0;
+    let Heap baseline=heap();let usize size=capacity(1048576);var usize total=0;var usize owners=2;
+    let engine::Limits count_limits=engine::Limits{.programs=4,.instances=64,.fuel=16000000};
     {
-        var engine::Engine sample=switch(created(size+transport(),size+transport())){
-            case .ok(v):{v}case .err(_):{assert(false);return;}
-        };
+        var engine::Engine sample=switch(engine::create_with_instance_memory(count_limits,4194304,memory::defaults(),268435456,
+            live::Limits{.instance=268435456,.instances=536870912})){
+            case .ok(v):{v}case .err(_):{assert(false);return;}};
         let usize p=compiled(ref mut sample,1);let memory::Observation stored=programs(ref sample);
-        total=stored.control_bytes+stored.program_bytes+size+transport();
+        total=stored.control_bytes+stored.program_bytes+owners*size+transport();
+        while(total<=stored.tracked_peak){owners+=1;assert(owners<=64);total+=size;}
         release(ref mut sample,p);close(ref mut sample);
     }
-    var usize short=0;
-    while(short<2){
+    var usize short=0;while(short<2){
         {
-            let usize ceiling=total-short;
-            var engine::Engine e=switch(engine::create_with_instance_memory(
-                engine::Limits{.programs=4,.instances=4,.fuel=16000000},4194304,
-                memory::Limits{.engine=ceiling,.program=ceiling,.programs=ceiling},
-                268435456,live::Limits{.instance=size+transport(),.instances=2*(size+transport())})){
-                case .ok(v):{v}case .err(_):{assert(false);return;}
-            };
-            let usize p=compiled(ref mut e,1);let Heap stored=heap();
-            let inputs::Snapshot input=switch(payload(524288,b"*")){
-                case .ok(v):{v}case .err(_):{assert(false);return;}
-            };
+            let usize ceiling=total-short;let usize per=if(ceiling>67108864){67108864}else{ceiling};
+            var engine::Engine e=switch(engine::create_with_instance_memory(count_limits,4194304,
+                memory::Limits{.engine=ceiling,.program=per,.programs=ceiling},268435456,
+                live::Limits{.instance=268435456,.instances=536870912})){
+                case .ok(v):{v}case .err(_):{assert(false);return;}};
+            let usize p=compiled(ref mut e,1);var usize[64] ids=[0;64];var usize n=0;
+            while(n+1<owners){ids[n]=bound(ref mut e,p,1048576,b"*",1,16000000);n+=1;}
+            let Heap stored=heap();let inputs::Snapshot input=switch(payload(1048576,b"*")){
+                case .ok(v):{v}case .err(_):{assert(false);return;}};
             let live::Observation before=instance(ref e);let memory::Observation prior=programs(ref e);
             let usize admission=epoch(ref e);let usize object=next(ref e);unsafe{probe_rebase()};
-            if(short==1){
-                rejected(engine::create_input_instance(ref mut e,p,input,16000000),8);
-                assert(unsafe{probe_attempts()}==0);physical(ref stored,0,0);
-                unchanged(ref e,ref before,ref prior);
-                assert(epoch(ref e)==admission && next(ref e)==object);
-            }else{
-                let usize i=id(engine::create_input_instance(ref mut e,p,input,16000000));
+            if(short==1){rejected(engine::create_input_instance(ref mut e,p,input,16000000),8);assert(unsafe{probe_attempts()}==0);
+                physical(ref stored,0,0);unchanged(ref e,ref before,ref prior);assert(epoch(ref e)==admission && next(ref e)==object);}
+            else{let usize i=id(engine::create_input_instance(ref mut e,p,input,16000000));
                 assert(i==object && unsafe{probe_attempts()}==1);
                 assert(programs(ref e).tracked_peak==total);
-                ledger(ref e,size,size+transport(),false);physical(ref stored,1,size);
-                destroy(ref mut e,i);
-            }
-            release(ref mut e,p);close(ref mut e);
-        }
-        physical(ref baseline,0,0);short+=1;
+                ledger(ref e,owners*size,owners*size+transport(),false);physical(ref stored,1,size);
+                destroy(ref mut e,i);}
+            n=0;while(n+1<owners){destroy(ref mut e,ids[n]);n+=1;}release(ref mut e,p);close(ref mut e);
+        }physical(ref baseline,0,0);short+=1;
     }
 }
 
