@@ -349,7 +349,7 @@ No heap allocation, compiler override or larger native stack was introduced by
 this bank. Default-stack execution is evidence for the selected fixtures, not a
 measured peak-stack or performance improvement.
 
-Read-only cast/Result/projection/CALL classification remains an explicit child.
+At the grouped/CALL checkpoint, read-only cast/Result/projection/CALL classification remained an explicit child.
 Constructor payloads, postfix/propagation/casts, conditional
 value scopes, projections, aggregate/reference argument evaluation and
 special-result CALL protocols also retain legacy children. The separate
@@ -396,7 +396,7 @@ kernel and emit the negative constant in a subsequent stage. They preserve raw
 typing and depth exceptions without first materializing a positive magnitude.
 Ordinary unary children keep primary's read-only Result preflight before operand
 depth rejection; converted frames also retain their earlier cast preflight.
-These scanners and all postfix/cast internals remain outside the stage allowance.
+At this unary checkpoint, these scanners and all postfix/cast internals remained outside the stage allowance.
 Owning adapters still drain synchronously.
 
 Use `python tools/verify-operand-source-work.py --unary-only --profile development`
@@ -415,12 +415,71 @@ historical evidence.
 
 Engine development/O2 pass default 1MiB/4KiB stacks and zero exit SDK heap; all
 339 inputs match `4af4888`. Transport retains 36 equivalent typed declarations
-and 51 equivalent reviewed layouts. A recursive comparison of all 384 generated
-aggregate definitions preserves field types, struct/resource families and graph
-multiplicity after normalizing generated identifiers. Core/Cursor/Machine stay
+and 51 equivalent reviewed layouts. That comparison covered 384 generated
+struct/resource definitions, retaining fixed-array type names without expanding
+their 111 wrapper definitions. The later tail review below expands arrays as
+well. Core/Cursor/Machine stay
 172400/1184/1792 bytes. All 332 production modules retain LF. These selected
 fixtures do not measure CPU/time or peak-stack improvements. Optional public
 Fuel CLI and full release suites were not requested; changes remain local.
+
+### Postfix and cast operand internals
+
+Common compiler operand tails now use `operand_tail_work`. A single tail State
+is pinned in the capture bank, separately from semantic State and the 34 Pratt
+frames. It resumes `.is_ok`, `?` and `as` without re-evaluating the operand.
+Primary-only unary children finish postfixes before returning to the enclosing
+unary frame; casts remain after that operation and before binary operators.
+Casts loop only over later `as` tokens, preserving rejection of a postfix
+following an ungrouped cast. Cast target parsing delegates one advance to the
+existing primitive/wrapper annotation kernel; the widening check and emission
+are separate stages.
+
+Dot lookahead resumes through the lexer using private scratch. A second dot
+leaves the real lexer unchanged for the enclosing range parser, including its
+token counter. A probe failure also leaves the real position unchanged. A valid
+member commits the same next token as the raw parser before validating `is_ok`.
+Inspection stages its slot, CASE, constants, stores, jump, patches and load in
+the original order. Each grammar phase performs at most one IR helper call.
+
+Propagation stages compatibility, success/failure CASEs, wrapping, jump/patch,
+cleanup, RETURN and trap separately. Pending selections and lexical finalizers
+visit one entry in reverse order per stage; only the failure path cleans up.
+The names and pending set remain immutable for the success continuation. A tail
+inside a captured CALL restores the enclosing 64-row lexical prefix before each
+advance. That bounded transfer is part of the conservative 4096-unit logical
+stage; individual static/slice finalizers may still inspect 256 existing IR
+rows. Their internals have not been split into smaller continuations.
+
+Read-only cast/Result/projection/CALL classifiers, initial fixed scratch and
+unsupported child atoms remain outside this allowance. Postfix/casts inside
+legacy assignments, aggregate/constructor/value children and the separate
+typed/value body walker still use those children's original routes. Owning
+adapters continue to drain synchronously; no public Pending compiler follows.
+
+Run `python tools/verify-operand-source-work.py --tail-only --profile development`
+and then `--profile release` for the focused tail, semantic and mixed-depth
+selection. The default selection also includes the earlier operand groups.
+
+The [tail evidence](../evidence/compiler-tail-source-windows-20261112.json)
+records three initial development groups at `b9b3c54`, followed by nine focused
+groups per profile at `ab23103`. The added source comparisons cover 15 successes
+and 14 failures, with identical complete IR/error prefixes and diagnostic byte
+offsets. Kernel checks cover eleven IR-capacity boundaries, reverse pending/local
+cleanup, token/IR deferral, private dot-probe failures and terminal idempotence.
+The focused selection also rechecks existing 32/33 ordinary/captured CALL and
+mixed unary/group/CALL depth plus annotated binding and return contracts. The
+default 29-group selection was not rerun.
+
+Engine development/O2 pass default 1MiB/4KiB stacks and zero exit SDK heap; all
+340 input hashes match `a6a332f`. The transport review retains 36 equivalent
+declarations and 51 reviewed layouts after recursively expanding struct,
+resource and fixed-array definitions. There are 495 definitions before and
+496 after, including 111 array wrappers in each snapshot. The only layout
+changes are the fixed tail State and its field in Bank; all other definitions
+remain equivalent. Core/Cursor/Machine stay 172400/1184/1792 bytes. All 333
+production modules retain LF. Optional public Fuel CLI and full release suites
+were not requested; no performance or peak-stack improvement is claimed.
 
 ## Required remaining lowering work
 
@@ -432,12 +491,13 @@ The following semantic work remains atomic, even where its helpers drain stages:
 3. Body-derived slice origin analysis, including its seventeen rounds and
    expression/atom/CALL/name/control-flow traversal.
 4. Array/record parameter/result catalog preparation.
-5. Legacy operand preflight, constructor/postfix/cast, conditional/projection and
-   aggregate/reference argument children; special-result CALLs, scalar assignments,
+5. Read-only operand preflight, constructor/conditional/projection and
+   aggregate/reference argument children, including their internal postfix/cast
+   parsing; special-result CALLs, scalar assignments,
    inferred/aggregate/reference declarations, special return protocols, for-post
    probe/replay, value-yielding scopes and the separate typed/value body walker;
    function entry/final metadata and implicit-return cleanup. Ordinary control,
-   Pratt/group/unary/scalar-result CALL traversal, annotated scalar/wrapper declarations
+   Pratt/group/unary/scalar-result CALL and operand-tail traversal, annotated scalar/wrapper declarations
    and scalar/void returns have explicit stages; remaining semantic children stay outside those bounds.
 6. Final entry-call restrictions and output normalization, plus raw context/
    nominal discovery outside the newly staged owners.

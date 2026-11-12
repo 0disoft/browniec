@@ -1,0 +1,254 @@
+{
+  "schema": "browniec.compiler-tail-source-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-12T10:04:02.665895+00:00",
+  "verifiedCommit": "a6a332f0c7768017ad34c250922bc13154a29431",
+  "implementationCommits": [
+    "b9b3c542b8042080edf1b3ea7ff54d1c8334433e",
+    "ab23103d6db41739b2208079230a97f45cc4b9f8"
+  ],
+  "scope": "Private common compiler operand postfix, propagation and cast tails",
+  "toolchain": {
+    "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+    "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+    "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false"
+  },
+  "msvc": {
+    "version": "14.51.36231",
+    "sdk": "10.0.26100.0",
+    "compilerSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+    "overrides": false
+  },
+  "tailKernel": {
+    "owner": "src/operand_tail_work.fy",
+    "operators": [
+      ".is_ok",
+      "?",
+      "as"
+    ],
+    "logicalAllowance": 4096,
+    "scratch": "One fixed tail State in the separately pinned expression capture Bank; no per-Pratt-frame tail State or allocation",
+    "inspection": "Private dot probe; Result type, slot, CASE, constants, stores, jump, patches and load in separate phases",
+    "propagation": "Compatibility, success/failure branches, wrapping, reverse selection/local cleanup, RETURN, trap and join in separate phases",
+    "cleanupEntriesPerStage": 1,
+    "pendingSelectionLimit": 16,
+    "lexicalBindingLimit": 64,
+    "lexicalRowsPerCapturedTailLoad": 64,
+    "finalizerIRScanLimit": 256,
+    "cast": "One type_parse_work advance per dispatch; widening check and IR emission are separate",
+    "precedence": "Primary child stops ahead of casts; postfix precedes unary, then casts, then binary; cast suffix loop does not restart postfix parsing",
+    "rangeProbe": "Real lexer position and counters unchanged at a second dot or probe failure",
+    "finalOnlyPublication": true,
+    "immutableLexicalNames": true
+  },
+  "compatibility": {
+    "rawBodyOracle": "compiler::lower_body(...,false)",
+    "checked": "All candidate IR fields and failure prefixes, exact diagnostic kind and byte offset; successful source fixtures execute to 42",
+    "newSourceFixtures": {
+      "successful": 15,
+      "failing": 14
+    },
+    "IRCapacitySweep": {
+      "firstCount": 246,
+      "lastCount": 256,
+      "cases": 11,
+      "oracle": "propagation::lower"
+    },
+    "covered": [
+      "Result inspection success/failure; unary and chained widening precedence; invalid members and target types",
+      "Option/Result success and propagation failures, cross-success payload families and incompatible error types",
+      "Captured CALL scalar argument propagation, temporary cleanup and array owners on early return",
+      "25/26 inspections at the register limit; exact partial IR at eleven instruction-capacity boundaries",
+      "Dot range delimiter and malformed dot-probe position; budget deferral and terminal idempotence",
+      "Existing ordinary/captured CALL depth 32/33 and mixed group/unary/CALL boundaries",
+      "Existing annotated binding publication and scalar/void return cleanup contracts"
+    ]
+  },
+  "nativeVerification": [
+    {
+      "receipt": {
+        "path": "build/operand-tail-checkpoint/development/receipt.json",
+        "sha256": "865bd22ebe720209ba0541966ad86b4528d3fd843767211b6d0f2beea07bbe56"
+      },
+      "verifiedCommit": "b9b3c542b8042080edf1b3ea7ff54d1c8334433e",
+      "profile": "development",
+      "nativeGroups": 3,
+      "inputCount": 341,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeOverrides": false,
+      "nativeInputMirrorVerified": true
+    },
+    {
+      "receipt": {
+        "path": "build/operand-tail-work/development/receipt.json",
+        "sha256": "091d0288740cd46b59a18f36ba70e94fba14ce7fcb1e60e11a415421a7f3cbef"
+      },
+      "verifiedCommit": "ab23103d6db41739b2208079230a97f45cc4b9f8",
+      "profile": "development",
+      "nativeGroups": 9,
+      "inputCount": 342,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeOverrides": false,
+      "nativeInputMirrorVerified": true
+    },
+    {
+      "receipt": {
+        "path": "build/operand-tail-work/release/receipt.json",
+        "sha256": "3bc9c8a56a6cb5ec9096b257ddc23173e5a938599e8325082eff89c32ae4e74d"
+      },
+      "verifiedCommit": "ab23103d6db41739b2208079230a97f45cc4b9f8",
+      "profile": "release",
+      "nativeGroups": 9,
+      "inputCount": 342,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeOverrides": false,
+      "nativeInputMirrorVerified": true
+    }
+  ],
+  "engineVerification": {
+    "receipt": {
+      "path": "build/runtime-engine/20261112T100059993122Z/receipt.json",
+      "sha256": "7dc2438fad1fa5092ed4a706c8a84e36d5be06d7371fbd2ba025a4eab1c2da31"
+    },
+    "verifiedCommit": "a6a332f0c7768017ad34c250922bc13154a29431",
+    "inputCount": 340,
+    "allInputHashesMatchVerifiedCommit": true,
+    "compilerOverrides": false,
+    "rootLockUnchanged": true,
+    "profiles": [
+      {
+        "profile": "development",
+        "artifact": {
+          "path": "build/runtime-engine/20261112T100059993122Z/development/runtime-engine.exe",
+          "sha256": "6a31d4f2988f3d14181909344c1ed3614d695468f688f05cd21425d9e5080396",
+          "bytes": 11270144,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "exit": 0,
+        "liveHeapAllocationsAtExit": 0,
+        "arrayFillMetrics": {
+          "arrayWorkBytes": 360,
+          "cursorBytes": 1184,
+          "machineBytes": 1792,
+          "coreBytes": 172400,
+          "pendingVecExtraBytes": 2880,
+          "callWorkBytes": 536,
+          "callPendingVecExtraBytes": 4288,
+          "returnWorkBytes": 48,
+          "returnPendingVecExtraBytes": 384,
+          "combinedPendingVecExtraBytes": 7552
+        }
+      },
+      {
+        "profile": "release",
+        "artifact": {
+          "path": "build/runtime-engine/20261112T100059993122Z/release/runtime-engine.exe",
+          "sha256": "080af0b3a19563117d427ccbc0e0b07aa322b15a1bcb85cc8e200872186606fe",
+          "bytes": 4109312,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "exit": 0,
+        "liveHeapAllocationsAtExit": 0,
+        "arrayFillMetrics": {
+          "arrayWorkBytes": 360,
+          "cursorBytes": 1184,
+          "machineBytes": 1792,
+          "coreBytes": 172400,
+          "pendingVecExtraBytes": 2880,
+          "callWorkBytes": 536,
+          "callPendingVecExtraBytes": 4288,
+          "returnWorkBytes": 48,
+          "returnPendingVecExtraBytes": 384,
+          "combinedPendingVecExtraBytes": 7552
+        }
+      }
+    ]
+  },
+  "transportReview": {
+    "receipt": {
+      "path": "build/operand-tail-transport-review.json",
+      "sha256": "ce725a0c77b6cf5e03d3f8686815426dbea4d55fb9a99cb5f3a7c316b268c000"
+    },
+    "status": "passed",
+    "typedBindings": 36,
+    "equivalentDeclarations": 36,
+    "equivalentReviewedLayouts": 51,
+    "beforeGeneratedDefinitions": 495,
+    "afterGeneratedDefinitions": 496,
+    "arrayDefinitionsBefore": 111,
+    "arrayDefinitionsAfter": 111,
+    "changedScratch": {
+      "previousBank": "fy_struct_109",
+      "bank": "fy_struct_111",
+      "tail": "fy_struct_110"
+    },
+    "comparison": "All struct/resource/fixed-array definitions expanded recursively; declaration parameter types, pointer qualifiers, field names, array lengths and multiplicity retained; generated identifiers normalized",
+    "unchangedOutsideFixedBankAndTail": true,
+    "changedSourceInputs": [
+      "src/compiler.fy",
+      "src/expression_source_work.fy",
+      "src/semantic_source_work.fy"
+    ],
+    "addedSourceInput": "src/operand_tail_work.fy",
+    "sourceCount": 326,
+    "previousTransportSha256": "622941bbcdf4c92f76529d0120276c86a334f3142ba869a4c2163ed1e3043083",
+    "transportSha256": "2202307419d5d92d6d6cf8e00363a31eccd8a2d9d719d80a44c58507b6d22d0d"
+  },
+  "changedInputs": [
+    {
+      "path": "src/compiler.fy",
+      "sha256": "1763711aae1f5fc1bf0a9617c223591b12df70af6c6d8a4e46fb55b4bee241c2"
+    },
+    {
+      "path": "src/expression_source_work.fy",
+      "sha256": "a619c08bd41a961f537b9df74e2517110342acaaa58f758706273f815f0cdfaa"
+    },
+    {
+      "path": "src/semantic_source_work.fy",
+      "sha256": "0e87153141babc610753613c6a8764406f17633c6c85a3fceaeff459188a8c08"
+    },
+    {
+      "path": "src/operand_tail_work.fy",
+      "sha256": "bab3f8ffa434e4d9c4fba87bdf14b887b233367a7a3ef9592425cd61b8733ec7"
+    },
+    {
+      "path": "tests/m2/expression_lowering.fy",
+      "sha256": "7c85427cfc8ac1810ebf4befe303b9604b435a5d3d9db1f2febfc7312e279312"
+    },
+    {
+      "path": "tests/m2/tail_lowering.fy",
+      "sha256": "5702429cc22371496f6ff4d99318fd6efe8819f187d35bfd8dd4f4e97238052b"
+    },
+    {
+      "path": "tests/m2/body_lowering.fy",
+      "sha256": "e8133361fe2829030901d19b30ff05a21e5f12aa9297d016b4ac12cd1ce18648"
+    },
+    {
+      "path": "tools/verify-operand-source-work.py",
+      "sha256": "364d6183f5b6ef34c3d0eba44a6a2d1890dcd566cee1240d27076a8b6f1216e2"
+    },
+    {
+      "path": "fairy.lock",
+      "sha256": "515e02075b5e3cff448be1dbbf7ea1d195f18f72b57faf364bcf0547f6f12915"
+    },
+    {
+      "path": "native/runtime-engine/transport.json",
+      "sha256": "94d1bf9e0157d931654e473cbcad756a2689ec63f4dee55194357f47e4795d49"
+    }
+  ],
+  "productionSources": {
+    "count": 333,
+    "allLF": true
+  },
+  "limitations": [
+    "Logical stages include bounded context restores; initial scratch and explicit legacy children remain outside the allowance",
+    "A static/slice finalizer still scans up to 256 existing IR rows; only one finalizer is scheduled per cleanup stage",
+    "Read-only cast/Result/projection/CALL preflight remains legacy, as do postfix/casts internal to unsupported constructor/conditional/aggregate/reference children, scalar assignments and the separate typed/value body walker",
+    "Owning adapters remain synchronous; no public Pending compiler, measured CPU/time/peak-stack improvement or R02-R05 closure",
+    "Nine focused groups per profile and the existing Engine fixture were run; the default 29-group operand selection, optional public Fuel CLI and full release suites were not rerun",
+    "The previous unary transport comparison covered 384 struct/resource definitions without expanding the 111 fixed-array wrapper definitions; this review expands all three families",
+    "Local commits only; broader completion stays paused; no push, release or deployment"
+  ]
+}
