@@ -18,6 +18,8 @@ import patterns as patterns;
 import value_arm_syntax as arm_syntax;
 import value_join_source as joins;
 import conditional_evaluation_work as value_work;
+import record_evaluation_work as record_work;
+import static_evaluation_work as static_work;
 import propagation as propagation;
 import casts as casts;
 import array_source as arrays;
@@ -242,6 +244,22 @@ fn Result<usize,errors::Error> static_projection(ref u8[] source,ref mut lexer::
         let usize closed=static_builders::close(p,view.site,at)?;return .ok(value);
     }
     return static_temporary_projection(source,s,p,table,signatures,view.site,at,depth,result_type,structure,loop_state);
+}
+fn Result<usize,errors::Error> static_projection_staged(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
+    ref static_source::View view,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State flow){
+    if(static_source::range_follows(source,s)?){return static_projection(source,s,p,table,signatures,view,at,depth,result_type,structure,flow);}
+    if(view.kind!=1){return .err(errors::make(3,at));}
+    let bool captured=view.owned && !(s.kind==46 && (!signatures.reference_returns || reference_results::owners(p,signatures,192+view.site,0,at)?==0));
+    var locals::Table names=locals::snapshot(table);
+    if(captured){if(signatures.reference_returns){let usize roots=reference_results::publish(p,signatures,ref mut names,view.site,at)?;}
+        let usize hidden=locals::declare(ref mut names,at,at,192+view.site,false)?;}
+    var static_work::State w=static_work::begin(view.site,at,depth,table.count,view.owned,captured);var metadata_budget::State meter=metadata_budget::empty();
+    while(!w.done){let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
+        let bool done=static_work::advance(source,s,p,ref names,ref mut w,ref mut meter)?;
+        if(w.request==1){let usize value=expression_staged(source,s,p,ref names,signatures,1,depth+1,12,result_type,structure,flow)?;
+            let usize resumed=static_work::resume(ref mut w,value)?;}
+    }return static_work::prepared(ref w);
 }
 fn Result<usize,errors::Error> static_temporary_projection(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
@@ -547,6 +565,43 @@ fn Result<record_expressions::Value,errors::Error> record_value(ref u8[] source,
     bool mutable,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
     return record_value_into(source,s,p,names,signatures,mutable,at,depth,result_type,structure,loop_state,16);
 }
+fn Result<record_expressions::Value,errors::Error> record_value_into_staged(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table names,ref functions::Table signatures,
+    bool mutable,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state,usize destination){
+    if(depth>32){return .err(errors::make(4,at));}
+    var usize groups=0;while(s.kind==40){if(groups>=32-depth){return .err(errors::make(4,s.begin));}
+        let usize next=lexer::next(source,s)?;groups+=1;}
+    if(arm_syntax::operand_kind(source,s)!=0){
+        return record_conditional_value(source,s,p,names,signatures,mutable,at,depth,result_type,structure,loop_state,destination,groups);
+    }
+    if(s.kind!=2 && s.kind!=5){return .err(errors::make(3,s.begin));}
+    let usize local=locals::find(source,names,s.begin,s.end);let usize target=functions::find(source,signatures,s.begin,s.end);
+    var lexer::State look=lexer::snapshot(s);let usize next=lexer::next(source,ref mut look)?;
+    var usize id=16;var bool owned=false;var usize record=32;var usize[16] slots=[0;16];
+    if(look.kind==123){record=record_values::named(source,s,ref signatures.context)?;
+        let bool opened=record_values::constructor(source,s,record,ref signatures.context)?;
+        let record_expressions::Staged staged=record_constructor_fields_staged(source,s,p,names,signatures,record,at,result_type,depth+groups,structure,loop_state)?;
+        slots=staged.slots;
+    }else if(look.kind==40){
+        if(local!=64 || target>=signatures.count || signatures.return_records[target]==0){return .err(errors::make(3,s.begin));}
+        record=signatures.return_records[target] as usize-1;
+        id=if(destination<16 && p.records.records[destination] as usize==record){destination}
+            else{record_results::destination(signatures,target,record,mutable,p,names.function,s.begin)?};
+        let usize name=lexer::next(source,s)?;
+        let usize called=call_value(source,s,p,names,signatures,target,144+id,at,depth+groups,result_type,structure,loop_state)?;owned=true;
+    }else{
+        if(!record_values::binding(names,local)){return .err(errors::make(3,s.begin));}
+        id=names.registers[local]-144;
+        if(id>=16 || id>=p.records.count || p.record_functions[id] as usize!=names.function){return .err(errors::make(3,at));}
+        record=p.records.records[id] as usize;let usize name=lexer::next(source,s)?;
+    }
+    var usize ordinal=0;var u8 tag=0;var usize left=groups;
+    while(true){if(tag==0 && s.kind==46){let record_values::Leaf leaf=record_values::path(source,s,p,record,at,ref signatures.context)?;
+            ordinal+=leaf.ordinal;record=leaf.record;tag=leaf.tag;}
+        if(left==0){break;}let usize close=lexer::punctuation(source,s,41)?;left-=1;
+    }
+    return .ok(record_expressions::Value{.id=id,.owned=owned,.record=record,.ordinal=ordinal,.tag=tag,.slots=slots,.depth=depth+groups});
+}
 fn Result<record_expressions::Value,errors::Error> record_value_into(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table names,ref functions::Table signatures,
     bool mutable,usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state,usize destination){
@@ -604,6 +659,12 @@ fn Result<usize,errors::Error> record_expression_read(ref u8[] source,ref mut le
     ref mut ir::Program p,ref locals::Table names,ref functions::Table signatures,
     usize at,usize depth,u8 result_type,usize structure,ref mut loops::State loop_state){
     let record_expressions::Value value=record_value(source,s,p,names,signatures,false,at,depth,result_type,structure,loop_state)?;
+    return record_expressions::scalar(p,ref value,at);
+}
+fn Result<usize,errors::Error> record_expression_read_staged(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table names,ref functions::Table signatures,
+    usize at,usize depth,u8 result_type,usize structure,ref mut loops::State flow){
+    let record_expressions::Value value=record_value_into_staged(source,s,p,names,signatures,false,at,depth,result_type,structure,flow,16)?;
     return record_expressions::scalar(p,ref value,at);
 }
 // Field paths contain no expressions: the returned owner is read and dropped
@@ -1138,12 +1199,12 @@ fn Result<usize,errors::Error> complete_operand_in_environment(ref u8[] source,r
     if(lane==10){return .err(errors::make(3,s.begin));}
     let usize at=s.begin;var usize initial=0;
     if(lane==5 || arm_syntax::operand_kind(source,s)!=0){initial=conditional_operand_staged(source,s,p,names,signatures,f.depth,context,result_type,structure,flow)?;}
-    else if(lane==6){initial=record_expression_read(source,s,p,names,signatures,at,f.depth,result_type,structure,flow)?;}
+    else if(lane==6){initial=record_expression_read_staged(source,s,p,names,signatures,at,f.depth,result_type,structure,flow)?;}
     else if(lane==7){initial=array_grouped_projection(source,s,p,names,signatures,at,f.depth,result_type,structure,flow)?;}
     else if(lane==8){let array_locals::Projection plan=array_locals::Projection{.groups=bank.aggregate.result.groups,.kind=bank.aggregate.result.suffix};
         initial=array_literal_projection(source,s,p,names,signatures,plan,at,f.depth,context,result_type,structure,flow)?;}
     else if(lane==9){let static_source::View view=static_view(source,s,p,names,signatures,f.depth,result_type,structure,flow)?;
-        initial=static_projection(source,s,p,names,signatures,ref view,at,f.depth,result_type,structure,flow)?;}
+        initial=static_projection_staged(source,s,p,names,signatures,ref view,at,f.depth,result_type,structure,flow)?;}
     else{initial=operand(source,s,p,names,signatures,f.depth,context,result_type,structure,flow)?;}
     return expression_work::tail(w,bank,*s,initial,result_type);
 }
@@ -1294,6 +1355,23 @@ fn Result<usize, errors::Error> record_child_call(ref u8[] source, ref mut lexer
 // consecutive scalar loads. No destination owner or bytes change here.
 // Ordered scalar slots are reusable by projections, parent constructors and
 // existing-owner replacement before any complete record owner must exist.
+fn Result<record_expressions::Staged,errors::Error> record_constructor_fields_staged(ref u8[] source,ref mut lexer::State s,
+    ref mut ir::Program p,ref locals::Table names,ref functions::Table signatures,
+    usize record,usize at,u8 result_type,usize depth,usize structure,ref mut loops::State flow){
+    var record_work::State w=record_work::begin(record,at,depth);var metadata_budget::State meter=metadata_budget::empty();
+    while(!w.done){let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;let bool done=record_work::advance(p,ref mut w,ref mut meter)?;
+        let u8 request=w.request;var usize value=0;var record_values::Initializer state=w.initializer;let usize row=w.row;
+        if(request==1){w.tag=record_values::next_leaf(source,s,p,ref mut state,at,ref signatures.context)?;
+            if(w.phase==3 && record_values::shorthand(ref state)){record_values::rewind_shorthand(s,ref state);record_values::consumed_shorthand(ref mut state);}}
+        else if(request==2){value=expression_staged(source,s,p,names,signatures,1,depth+2,w.tag,result_type,structure+1,flow)?;}
+        else if(request==3){var usize[16] slots=w.slots;
+            value=record_child_call(source,s,p,names,signatures,ref mut state,ref mut slots,row,at,result_type,depth,structure,flow)?;
+            if(value==0){value=record_values::stage_child(source,s,p,names,ref mut state,ref mut slots,row,at,ref signatures.context)?;}w.slots=slots;}
+        else if(request==4){value=record_values::leaf_count(p,record,at)?;}
+        else if(request==5){value=record_values::advance(source,s,p,ref mut state)?;}
+        if(request!=0){w.initializer=state;let usize resumed=record_work::resume(ref mut w,request,value)?;}
+    }let usize count=record_work::prepared(ref w)?;return .ok(record_expressions::Staged{.slots=w.slots,.count=count});
+}
 fn Result<record_expressions::Staged,errors::Error> record_constructor_fields(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table table,ref functions::Table signatures,
     usize record,usize at,u8 result_type,usize expr_depth,usize structure,ref mut loops::State loop_state){

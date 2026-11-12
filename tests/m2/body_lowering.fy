@@ -6,6 +6,8 @@ import errors as errors;
 import verifier as verifier;
 import vm as vm;
 import std::bytes as bytes;
+import static_image as static_images;
+import literal_collection as literal_collection;
 
 fn void same(ref ir::Program a,ref ir::Program b){
     {var usize i=0;while(i<2048){assert(a.code[i]==b.code[i]);i+=1;}}
@@ -378,4 +380,38 @@ fn bytes::Buffer nested_unary(usize count,bool calls,bool captures,bool minimum)
     captured(b"module main;struct P{i32 x;}fn i32 main(){return (if(true){P{.x=42}}else{P{.x=0}}).x;}",true);
     compare(b"module main;fn i32 main(){let Option<i32> o=.some(42);return switch(o){case .some(n):{n}case .some(m):{m}};}",false);
     compare(b"module main;fn i32 main(){let Option<i32> o=.some(42);let i32 n=0;return switch(o){case .some(n):{n}case .none:{0}};}",false);
+}
+
+@test fn void staged_record_field_evaluation_keeps_slot_order_shorthand_and_failures(){
+    captured(b"module main;struct P{i32 x;i32 y;}fn i32 id(i32 n){return n;}fn i32 main(){return (P{.x=id(20),.y=22}).x+22;}",true);
+    captured(b"module main;struct I{i32 x;}struct P{I a;i32 y;}fn i32 main(){return (P{.a=I{.x=if(true){42}else{0}},.y=0}).a.x;}",true);
+    captured(b"module main;struct P{i32 x;}fn i32 main(){let i32 x=42;return (P{.x}).x;}",true);
+    captured(b"module main;struct P{i32 x;i32 y;}fn i32 main(){return (P{.x=20,.y=true}).x;}",false);
+    captured(b"module main;struct P{i32 x;}fn i32 main(){return (P{.x=missing}).x;}",false);
+}
+fn void literal_compare(ref u8[] source,bool success){
+    var functions::Table t=switch(functions::scan(source)){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    var static_images::Builder builder=switch(static_images::builder(4096)){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    t.literals=switch(literal_collection::collect(ref mut builder,source)){case .ok(v):{v}case .err(_):{assert(false);return;}};
+    var ir::Program a=ir::empty();a.function_count=t.count;a.entry=t.entry;a.return_types=t.return_types;
+    var ir::Program b=a;var usize f=0;while(f<t.count){
+        let Result<usize,errors::Error> raw=compiler::lower_body(source,ref t,f,ref mut a,false);
+        let Result<usize,errors::Error> staged=compiler::lower_body(source,ref t,f,ref mut b,true);same(ref a,ref b);
+        switch(raw){case .ok(_):{assert(staged.is_ok);}case .err(e):{assert(!success);switch(staged){case .ok(_):{assert(false);}case .err(z):{assert(e.kind==z.kind && e.offset==z.offset);}};return;}};f+=1;
+    }assert(success);
+}
+@test fn void staged_static_index_and_cleanup_keep_complete_raw_ir(){
+    literal_compare(b"module main;fn i32 main(){return (b\"*\")[0] as i32;}",true);
+}
+@test fn void staged_static_length_keeps_raw_ir(){
+    literal_compare(b"module main;fn i32 main(){if((b\"*\").len==1){return 42;}return 0;}",true);
+}
+@test fn void staged_static_conditional_index_keeps_raw_ir(){
+    literal_compare(b"module main;fn i32 main(){return (b\"*\")[if(true){0}else{1}] as i32;}",true);
+}
+@test fn void staged_static_bad_index_keeps_raw_error(){
+    literal_compare(b"module main;fn i32 main(){return (b\"*\")[true] as i32;}",false);
+}
+@test fn void staged_static_bad_member_keeps_raw_error(){
+    literal_compare(b"module main;fn i32 main(){return (b\"*\").missing as i32;}",false);
 }

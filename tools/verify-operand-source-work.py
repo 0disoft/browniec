@@ -56,6 +56,10 @@ if '--syntax-boundary-only' in sys.argv:
 if '--evaluation-only' in sys.argv:
     sys.argv.remove('--evaluation-only')
     bottom.DIRECTORY = 'build/operand-evaluation-work'
-    bottom.MODULES = {'body_lowering': ['staged_conditional_bodies_keep_scope_joins_control_and_error_prefixes', 'staged_switch_constructor_and_aggregate_tails_keep_raw_domains', 'staged_array_evaluation_preserves_nested_values_wide_lists_and_failure_prefixes', 'staged_conditional_and_aggregate_projections_keep_raw_ir_and_failure_prefixes', 'nested_call_depth_32_and_33_preserve_default_stack_and_raw_diagnostics']}
+    bottom.MODULES = {'evaluation_lowering': None, 'static_bindings_source': ['owned_projection_temporaries_survive_index_exits_without_leaking'], 'body_lowering': ['staged_record_field_evaluation_keeps_slot_order_shorthand_and_failures', 'staged_static_index_and_cleanup_keep_complete_raw_ir', 'staged_static_length_keeps_raw_ir', 'staged_static_conditional_index_keeps_raw_ir', 'staged_static_bad_index_keeps_raw_error', 'staged_static_bad_member_keeps_raw_error', 'staged_conditional_bodies_keep_scope_joins_control_and_error_prefixes', 'staged_switch_constructor_and_aggregate_tails_keep_raw_domains', 'staged_array_evaluation_preserves_nested_values_wide_lists_and_failure_prefixes', 'staged_conditional_and_aggregate_projections_keep_raw_ir_and_failure_prefixes', 'nested_call_depth_32_and_33_preserve_default_stack_and_raw_diagnostics']}
+if '--static-evaluation-only' in sys.argv:
+    sys.argv.remove('--static-evaluation-only')
+    bottom.DIRECTORY = 'build/operand-static-evaluation'
+    bottom.MODULES = {'body_lowering': ['staged_static_index_and_cleanup_keep_complete_raw_ir', 'staged_static_length_keeps_raw_ir', 'staged_static_conditional_index_keeps_raw_ir', 'staged_static_bad_index_keeps_raw_error', 'staged_static_bad_member_keeps_raw_error']}
 if __name__ == '__main__':
     bottom.main()
