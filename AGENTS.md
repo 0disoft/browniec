@@ -1,30 +1,32 @@
-- Latest postfix/cast checkpoint (2026-11-12): [source stages](docs/engineering/compiler-source-stages.md)
-  common compiler `.is_ok`, `?` and `as` now use a private operand-tail kernel.
-  One fixed tail State is pinned in the capture Bank; the 34 Pratt frames stay
-  unchanged. Token/probe/type advances, IR helpers, patches and reverse cleanup
-  entries resume separately. Primary-only unary children retain postfix-before-
-  unary-before-cast/binary order. Range/probe failures preserve the real cursor;
-  propagation preserves immutable names/pending sets and captured CALL context.
-  Context restores visit 64 rows; cleanup schedules one selection/local at a
-  time. Static/slice finalizers still scan up to 256 existing IR rows. Initial
-  scratch and explicit legacy children remain outside the logical allowance.
-  First three development groups pass at `b9b3c54`; nine focused groups pass
-  development/release at `ab23103`, including capacity failure prefixes,
-  capture cleanup, 32/33 mixed depth and existing binding/return contracts.
-  Whole candidate IR and exact diagnostics match the raw route. The default
-  29-group selection was not rerun. Engine development/O2 pass default
-  1MiB/4KiB stacks and zero exit SDK heap; all 340 inputs match `a6a332f`.
-  Transport retains 36 equivalent declarations and 51 reviewed layouts. All
-  struct/resource/fixed-array graphs are compared recursively: 495 definitions
-  before, 496 after, including 111 array wrappers each; only fixed Bank/tail
-  scratch changes. Core/Cursor/Machine remain 172400/1184/1792 bytes; 333
-  production modules retain LF. No new heap allocation or stack override.
-  See [tail evidence](docs/evidence/compiler-tail-source-windows-20261112.json)
-  and the earlier [unary evidence](docs/evidence/compiler-unary-source-windows-20261112.json).
-  Read-only preflight, constructor/conditional/projection and aggregate/reference
-  children (including their internal suffixes), assignments, special-result
-  protocols, the separate typed/value walker, entry/final metadata, implicit
-  cleanup, origins and catalogs remain legacy. Owning adapters drain
+- Latest ordinary preflight checkpoint (2026-11-12): [source stages](docs/engineering/compiler-source-stages.md)
+  common converted cast and primary Result property scans now resume through
+  private lexer continuations. Ordinary group openings, local/function rows,
+  64-byte spelling chunks and CALL formals advance separately; scoped names use
+  source_name_work advances rather than a drained lookup adapter. Original
+  context/depth order, immutable real lexer/names and final-only plans remain.
+  Fixed context/route scratch lives in Bank; the 34 Pratt frames stay unchanged.
+  Captured routes restore 64 lexical rows within the conservative logical bound.
+  Conditional/aggregate/static-view roots retain their own legacy operand
+  classifiers and validation before evaluation; those scans are not claimed
+  staged by the ordinary route kernel. Read-only path spelling grants no
+  nominal authority; the selected child validates fields before emitting reads.
+  Context/routing commits are `c1528af`/`f85b742`. Nine development groups at the
+  routing checkpoint plus one boundary group at `9abe988` share byte-identical
+  production inputs; all ten pass release at `9abe988`. Whole IR/failure prefixes
+  and exact diagnostics match the raw body oracle, including mixed depth 32/33.
+  The new binary group's expected depth was corrected without changing source
+  implementation. The first three-group context receipt was overwritten; later
+  hashed checkpoints are preserved. Engine development/O2 pass default 1MiB/4KiB
+  stacks and zero exit SDK heap; all 342 inputs match `263e8b0`.
+  Transport retains 36 equivalent declarations and 51 reviewed layouts; all
+  struct/resource/array graphs are compared recursively (496 before, 498 after,
+  111 arrays each). Only context/route scratch and Bank change. Core/Cursor/
+  Machine remain 172400/1184/1792 bytes; 335 production modules retain LF.
+  See [preflight evidence](docs/evidence/compiler-preflight-source-windows-20261112.json)
+  and the earlier [tail evidence](docs/evidence/compiler-tail-source-windows-20261112.json).
+  Legacy child classifiers/bodies, assignments, special-result protocols, the
+  separate typed/value walker, entry/final metadata, implicit cleanup, origins
+  and catalogs remain outside these bounds. Owning adapters still drain
   synchronously. No public Pending compiler, measured CPU/time/peak-stack
   improvement or R02-R05 closure. Lowering stays authorized; broader completion
   stays paused. Local only.

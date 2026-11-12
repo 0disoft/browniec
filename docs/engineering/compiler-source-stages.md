@@ -451,8 +451,10 @@ advance. That bounded transfer is part of the conservative 4096-unit logical
 stage; individual static/slice finalizers may still inspect 256 existing IR
 rows. Their internals have not been split into smaller continuations.
 
-Read-only cast/Result/projection/CALL classifiers, initial fixed scratch and
-unsupported child atoms remain outside this allowance. Postfix/casts inside
+At the tail checkpoint, read-only cast/Result/projection/CALL classifiers,
+initial fixed scratch and unsupported child atoms remained outside its allowance.
+The ordinary preflight checkpoint below replaces the common cast/Result and
+scalar routing scans. Postfix/casts inside
 legacy assignments, aggregate/constructor/value children and the separate
 typed/value body walker still use those children's original routes. Owning
 adapters continue to drain synchronously; no public Pending compiler follows.
@@ -481,6 +483,65 @@ remain equivalent. Core/Cursor/Machine stay 172400/1184/1792 bytes. All 333
 production modules retain LF. Optional public Fuel CLI and full release suites
 were not requested; no performance or peak-stack improvement is claimed.
 
+### Ordinary operand preflight and routing
+
+`operand_preflight_work` resumes the converted cast scan and primary Result
+property scan in their original order. Each private token request delegates one
+lexer advance; delimiter counters and the existing started-token rules persist
+between dispatches. Cast detection resets expected context before Result
+inspection. Primary-only unary children skip the cast scan, and tagged or zero
+contexts skip Result inspection. Neither scan consumes the real lexer or emits
+candidate IR. Converted depth rejection still precedes preflight; primary depth
+rejection follows its Result lookahead.
+
+`operand_route_work` selects ordinary scalar groups, unary operators and plain
+or captured scalar-result CALLs. Group opening tokens, local/function rows,
+64-byte spelling chunks and individual formal parameters resume separately.
+Scoped names delegate to `source_name_work`, including context authentication,
+alias and export checks, instead of draining its owning lookup adapter. Local
+record field spelling may distinguish a binary group tail, but grants no nominal
+field authority; the selected child validates the complete field path before
+emitting its read. The context and route States are fixed scratch in Bank and
+are not copied into the 34 Pratt frames. Captured environments restore the same
+64-row lexical prefix for a route advance.
+
+Conditional roots, aggregate constructors/results and static/view protocols
+delegate directly to their existing operand children. Those children retain
+their conditional/projection/nominal preflight and error checks before guest
+evaluation; their scans are not charged as if they had been split by the ordinary
+route kernel. The old duplicate ordinary-group/CALL classifier calls are removed
+from the common adapter. Raw cast/property/operand helpers remain candidate
+comparison oracles and legacy children. This is not a complete resumable source
+compiler or a public Pending API.
+
+Run `python tools/verify-operand-source-work.py --preflight-only --profile release`
+for the composed focused selection. `--preflight-boundary-only --profile development`
+isolates its conditional/record boundary group. The default operand selection
+retains its earlier scope and does not include the new direct preflight kernel
+groups; the focused selection includes them explicitly.
+
+The [preflight evidence](../evidence/compiler-preflight-source-windows-20261112.json)
+records the context and routing commits `c1528af`/`f85b742`, nine development
+groups at the routing checkpoint, and one additional boundary group at
+`9abe988`. All ten groups pass release at `9abe988`. The development batches
+share byte-identical production inputs. Checks retain whole raw/staged IR and
+exact diagnostics for groups/CALLs/unary depth 32/33, conditional and record
+fallbacks, field errors, context precedence and token/name/formal deferral.
+The new record binary fixture initially omitted the right operand's extra
+depth in its expected limit; correcting its group count required no source
+implementation change. Its failed test report is preserved separately. The
+initial three-group context checkpoint passed, but its receipt was overwritten;
+only the later hashed snapshots are claimed in the evidence.
+
+Engine development/O2 pass default 1MiB/4KiB stacks and zero exit SDK heap; all
+342 input hashes match `263e8b0`. Transport retains 36 equivalent declarations
+and 51 reviewed layouts. Recursive comparison includes all struct/resource/
+fixed-array definitions: 496 before, 498 after, with 111 arrays in each. Only
+the context/route scratch States and Bank extension change. Core/Cursor/Machine
+remain 172400/1184/1792 bytes. All 335 production modules retain LF. The default
+operand selection, optional public Fuel CLI and full release suites were not
+rerun; no CPU/time or peak-stack improvement is claimed.
+
 ## Required remaining lowering work
 
 The following semantic work remains atomic, even where its helpers drain stages:
@@ -491,7 +552,7 @@ The following semantic work remains atomic, even where its helpers drain stages:
 3. Body-derived slice origin analysis, including its seventeen rounds and
    expression/atom/CALL/name/control-flow traversal.
 4. Array/record parameter/result catalog preparation.
-5. Read-only operand preflight, constructor/conditional/projection and
+5. Preflight inside legacy constructor/conditional/projection and
    aggregate/reference argument children, including their internal postfix/cast
    parsing; special-result CALLs, scalar assignments,
    inferred/aggregate/reference declarations, special return protocols, for-post

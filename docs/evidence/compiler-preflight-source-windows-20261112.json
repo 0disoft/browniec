@@ -1,0 +1,267 @@
+{
+  "schema": "browniec.compiler-preflight-source-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-12T10:44:14.347898+00:00",
+  "verifiedCommit": "263e8b0674827326cea404a87c46fcc127014b85",
+  "implementationCommits": [
+    "c1528af0017ccbbaf6af82fbc48375d02681e35c",
+    "f85b742cdcabb75a4160476d8c193b13dc06c256",
+    "9abe9881e349abe784639aaf07e3b4171265a3e3"
+  ],
+  "scope": "Private common compiler converted/primary context scans and ordinary scalar operand routing",
+  "toolchain": {
+    "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+    "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+    "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false"
+  },
+  "msvc": {
+    "version": "14.51.36231",
+    "sdk": "10.0.26100.0",
+    "compilerSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+    "overrides": false
+  },
+  "contextKernel": {
+    "owner": "src/operand_preflight_work.fy",
+    "logicalAllowance": 4096,
+    "stages": "Cast token/delimiter transitions, expected context reset, then Result property token/delimiter transitions",
+    "privateLexerOnly": true,
+    "primarySkipsCast": true,
+    "taggedOrZeroContextSkipsProperty": true,
+    "depthOrder": "Converted depth guard before probes; primary Result probe before operand depth guard",
+    "scratch": "One separately pinned State; no per-Pratt-frame probe arrays or allocation"
+  },
+  "routeKernel": {
+    "owner": "src/operand_route_work.fy",
+    "logicalAllowance": 4096,
+    "stages": "Group opening token, local/function candidate row, 64-byte spelling chunk, scoped source_name_work advance, or one formal",
+    "spellingBytesPerStage": 64,
+    "lexicalRowsPerCapturedContextRestore": 64,
+    "frameSlotsUnchanged": 34,
+    "scopedLookup": "Existing source_name_work advances context, alias, export and name checks without draining lookup()",
+    "lanes": [
+      "Existing operand child",
+      "Ordinary scalar group",
+      "Unary",
+      "Plain scalar-result CALL",
+      "Captured scalar-result CALL"
+    ],
+    "nominalAuthority": "A syntactic local record path grants no field authority; the selected child validates its complete path before emitting a read",
+    "immutableRealLexerAndNames": true,
+    "finalOnlyPlanPublication": true
+  },
+  "compatibility": {
+    "rawBodyOracle": "compiler::lower_body(...,false)",
+    "checked": "All candidate IR fields and failure prefixes, exact error kind and byte offset; successful sources execute to 42",
+    "directContextCases": 12,
+    "directRouteCases": 11,
+    "additionalBoundarySources": {
+      "successful": 6,
+      "failing": 4
+    },
+    "covered": [
+      "Cast/Result precedence and raw lexical error order; budget deferral and terminal idempotence",
+      "Scalar/group/plain/captured routes, shadowed names, scoped function lookup and row/formal deferral",
+      "Ordinary/captured CALL depth 32/33 and mixed unary/group/CALL depth",
+      "Legacy conditional/record boundaries, missing/scalar field errors and record binary groups at combined depth 32/33"
+    ]
+  },
+  "nativeVerification": [
+    {
+      "receipt": {
+        "path": "build/operand-route-checkpoint/development/receipt.json",
+        "sha256": "64e33efff479838f1abb19547cae6512586b50e90b5132ceca46e6b9e736b892"
+      },
+      "verifiedCommit": "f85b742cdcabb75a4160476d8c193b13dc06c256",
+      "profile": "development",
+      "nativeGroups": 9,
+      "inputCount": 344,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeOverrides": false,
+      "nativeInputMirrorVerified": true
+    },
+    {
+      "receipt": {
+        "path": "build/operand-preflight-boundary/development/receipt.json",
+        "sha256": "946c9156f5d90dac777eeeb9437860a316d86c1d26e67fe924f2a8d4936ad78e"
+      },
+      "verifiedCommit": "9abe9881e349abe784639aaf07e3b4171265a3e3",
+      "profile": "development",
+      "nativeGroups": 1,
+      "inputCount": 342,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeOverrides": false,
+      "nativeInputMirrorVerified": true
+    },
+    {
+      "receipt": {
+        "path": "build/operand-preflight-work/release/receipt.json",
+        "sha256": "3550a0e74ca6c6f8ec2dfcc130c049ad4e3db58a3cddc39797b2c7ec731afb79"
+      },
+      "verifiedCommit": "9abe9881e349abe784639aaf07e3b4171265a3e3",
+      "profile": "release",
+      "nativeGroups": 10,
+      "inputCount": 344,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeOverrides": false,
+      "nativeInputMirrorVerified": true
+    }
+  ],
+  "developmentBatchesShareProductionInputs": true,
+  "productionInputCount": 335,
+  "correctedTestExpectation": {
+    "failedNativeReport": {
+      "path": "build/operand-preflight-boundary-expectation-failure/development/native.json",
+      "sha256": "c343fb4e741cc0cb628e5e68faf51d3a69a267144f0ee1279a7c283afe35759f"
+    },
+    "reason": "The new test initially expected 32 groups plus a binary right child to fit depth 32; corrected to 31/32 groups, with no implementation change"
+  },
+  "engineVerification": {
+    "receipt": {
+      "path": "build/runtime-engine/20261112T104031661052Z/receipt.json",
+      "sha256": "3152537bdf9f716b7ad8c9352ea3fa98f39cd0b2603f772718d99f75538651ed"
+    },
+    "verifiedCommit": "263e8b0674827326cea404a87c46fcc127014b85",
+    "inputCount": 342,
+    "allInputHashesMatchVerifiedCommit": true,
+    "compilerOverrides": false,
+    "rootLockUnchanged": true,
+    "profiles": [
+      {
+        "profile": "development",
+        "artifact": {
+          "path": "build/runtime-engine/20261112T104031661052Z/development/runtime-engine.exe",
+          "sha256": "986eb4631bcf7aa7a887ef4121c4a1171ceac12958aa9fb89ce539219af43e25",
+          "bytes": 11300864,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "exit": 0,
+        "liveHeapAllocationsAtExit": 0,
+        "arrayFillMetrics": {
+          "arrayWorkBytes": 360,
+          "cursorBytes": 1184,
+          "machineBytes": 1792,
+          "coreBytes": 172400,
+          "pendingVecExtraBytes": 2880,
+          "callWorkBytes": 536,
+          "callPendingVecExtraBytes": 4288,
+          "returnWorkBytes": 48,
+          "returnPendingVecExtraBytes": 384,
+          "combinedPendingVecExtraBytes": 7552
+        }
+      },
+      {
+        "profile": "release",
+        "artifact": {
+          "path": "build/runtime-engine/20261112T104031661052Z/release/runtime-engine.exe",
+          "sha256": "39e7bd72175b6d66f48113356ad6283c3a31d89ef69c265352a0437a9c984545",
+          "bytes": 4118016,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "exit": 0,
+        "liveHeapAllocationsAtExit": 0,
+        "arrayFillMetrics": {
+          "arrayWorkBytes": 360,
+          "cursorBytes": 1184,
+          "machineBytes": 1792,
+          "coreBytes": 172400,
+          "pendingVecExtraBytes": 2880,
+          "callWorkBytes": 536,
+          "callPendingVecExtraBytes": 4288,
+          "returnWorkBytes": 48,
+          "returnPendingVecExtraBytes": 384,
+          "combinedPendingVecExtraBytes": 7552
+        }
+      }
+    ]
+  },
+  "transportReview": {
+    "receipt": {
+      "path": "build/operand-preflight-transport-review.json",
+      "sha256": "89ae8326f52215ab632ce317ac3f6de178e2f29e70ad7a2a378b0757703a44b5"
+    },
+    "status": "passed",
+    "typedBindings": 36,
+    "equivalentDeclarations": 36,
+    "equivalentReviewedLayouts": 51,
+    "beforeGeneratedDefinitions": 496,
+    "afterGeneratedDefinitions": 498,
+    "arrayDefinitionsBefore": 111,
+    "arrayDefinitionsAfter": 111,
+    "changedScratch": {
+      "previousBank": "fy_struct_111",
+      "bank": "fy_struct_115",
+      "preflight": "fy_struct_109",
+      "route": "fy_struct_112"
+    },
+    "comparison": "All struct/resource/fixed-array definitions expanded recursively; declaration parameter types, pointer qualifiers, field names, array lengths and multiplicity retained; generated identifiers normalized",
+    "unchangedOutsideFixedBankAndPreflight": true,
+    "changedSourceInputs": [
+      "src/compiler.fy",
+      "src/expression_source_work.fy"
+    ],
+    "addedSourceInputs": [
+      "src/operand_preflight_work.fy",
+      "src/operand_route_work.fy"
+    ],
+    "sourceCount": 328,
+    "previousTransportSha256": "2202307419d5d92d6d6cf8e00363a31eccd8a2d9d719d80a44c58507b6d22d0d",
+    "transportSha256": "b4bd337f20045fe3252ddd14a37cf41a98241a4e421e98d124356d79adca69be"
+  },
+  "changedInputs": [
+    {
+      "path": "src/compiler.fy",
+      "sha256": "f152a0198cb8a584e8997a2c4c50ffaab5b5f437cbfec07f85be8304cba5cdb6"
+    },
+    {
+      "path": "src/expression_source_work.fy",
+      "sha256": "c62236e800683de280d97b31675164e9c3e6b10a7f23b715c57b201da042c02e"
+    },
+    {
+      "path": "src/operand_preflight_work.fy",
+      "sha256": "d183a90e895e4f95761fb1e709d78dd24e5c9bdc381740c54838c62ed35c4f97"
+    },
+    {
+      "path": "src/operand_route_work.fy",
+      "sha256": "2185a09530876a6d430365458f0c4dfdf3f6ffcade0cc4bc744e8e61827c0ce4"
+    },
+    {
+      "path": "tests/m2/preflight_lowering.fy",
+      "sha256": "d2fc02d409d59f5f5494f4e47664ba098d8e2f85c0c0e9ec2ec855e9e5a0c783"
+    },
+    {
+      "path": "tests/m2/expression_lowering.fy",
+      "sha256": "ff725b9c6da01fb932c4d70e0a9280e98ab53a90dab61a563ac2f7d6cfb5a687"
+    },
+    {
+      "path": "tests/m2/body_lowering.fy",
+      "sha256": "bff281c4336c3d562c84590a4752d75d5a791ac9511ea75692951bb786433ec9"
+    },
+    {
+      "path": "tools/verify-operand-source-work.py",
+      "sha256": "410b8f5afa395e3effa3d9728716fd8140fe893fdfcb330794e312c37fc5fb9e"
+    },
+    {
+      "path": "fairy.lock",
+      "sha256": "4e9f6c42e43aa0c54f8c7270b820fa7ac6cf613954c31b2385ecd5aa3bd138ae"
+    },
+    {
+      "path": "native/runtime-engine/transport.json",
+      "sha256": "28050095007e6db2839fb82c5d1cbd2d458232c275af1f43e52bbd5f86fc67f4"
+    }
+  ],
+  "productionSources": {
+    "count": 335,
+    "allLF": true
+  },
+  "limitations": [
+    "Initial fixed scratch remains outside the advance allowance; captured context transfers are included conservatively in logical stages",
+    "Conditional/aggregate/static-view roots delegate to legacy operand children, retaining their internal conditional/projection/nominal classifiers and error checks; those scans are not claimed bounded by these kernels",
+    "Legacy child bodies, assignments, special-result protocols, catalogs/origins and the separate typed/value body walker remain outside this scope",
+    "Owning adapters drain synchronously; no public Pending compiler, measured CPU/time/peak-stack improvement or R02-R05 closure",
+    "Development uses nine groups plus one focused boundary group on byte-identical production inputs; release uses all ten focused groups. The default operand selection and optional public Fuel CLI/full release suites were not rerun",
+    "The initial three-group c1528af development checkpoint passed; its local receipt was overwritten by the later composed run, so no hashed receipt for that first snapshot is claimed",
+    "Local commits only; broader completion stays paused; no push, release or deployment"
+  ]
+}
