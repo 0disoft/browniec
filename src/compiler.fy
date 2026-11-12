@@ -1131,7 +1131,16 @@ fn Result<usize,errors::Error> complete_operand_in_environment(ref u8[] source,r
     let usize target=bank.route.target;
     if(lane==3){return expression_work::call(w,target,signatures.arities[target],ref signatures.param_types[target*8..target*8+8],s.begin);}
     if(lane==4){return expression_work::captured(w,bank,names,*s,target,s.begin,f.depth);}
-    let usize initial=operand(source,s,p,names,signatures,f.depth,context,result_type,structure,flow)?;
+    if(lane==10){return .err(errors::make(3,s.begin));}
+    let usize at=s.begin;var usize initial=0;
+    if(lane==5){initial=conditional_operand(source,s,p,names,signatures,f.depth,context,result_type,structure,flow)?;}
+    else if(lane==6){initial=record_expression_read(source,s,p,names,signatures,at,f.depth,result_type,structure,flow)?;}
+    else if(lane==7){initial=array_grouped_projection(source,s,p,names,signatures,at,f.depth,result_type,structure,flow)?;}
+    else if(lane==8){let array_locals::Projection plan=array_locals::Projection{.groups=bank.aggregate.result.groups,.kind=bank.aggregate.result.suffix};
+        initial=array_literal_projection(source,s,p,names,signatures,plan,at,f.depth,context,result_type,structure,flow)?;}
+    else if(lane==9){let static_source::View view=static_view(source,s,p,names,signatures,f.depth,result_type,structure,flow)?;
+        initial=static_projection(source,s,p,names,signatures,ref view,at,f.depth,result_type,structure,flow)?;}
+    else{initial=operand(source,s,p,names,signatures,f.depth,context,result_type,structure,flow)?;}
     return expression_work::tail(w,bank,*s,initial,result_type);
 }
 

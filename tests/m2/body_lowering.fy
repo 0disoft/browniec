@@ -328,3 +328,16 @@ fn bytes::Buffer nested_unary(usize count,bool calls,bool captures,bool minimum)
         captured(bytes::view(ref s),groups==31);groups+=1;
     }
 }
+
+@test fn void staged_conditional_and_aggregate_projections_keep_raw_ir_and_failure_prefixes(){
+    compare(b"module main;fn i32 main(){return (if(true){20}else{0}+22);}",true);
+    compare(b"module main;fn i32 main(){return ([20,22])[0]+22;}",true);
+    compare(b"module main;fn i32 main(){return [42;1][0];}",true);
+    captured(b"module main;fn i32 main(){let i32[2] a=[20,22];return (a)[0]+22;}",true);
+    captured(b"module main;struct I{i32 x;}struct P{I a;i32 y;}fn i32 main(){return ((P{.a=I{.x=42},.y=0}).a).x;}",true);
+    captured(b"module main;struct P{i32 x;}fn i32 main(){return (P{.x=42}).bad;}",false);
+    compare(b"module main;fn i32 main(){return (if(true){let i32 x=1;42}else{0});}",true);
+    compare(b"module main;fn i32 main(){return (if(true){let i32 x=1;42}else{0})+missing;}",false);
+    compare(b"module main;fn i32 main(){return [42;1];}",false);
+    compare(b"module main;fn i32 main(){return (if(true){42}else{0}+missing);}",false);
+}

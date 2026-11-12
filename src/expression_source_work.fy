@@ -6,13 +6,15 @@ import call_operand_work as calls;
 import operand_tail_work as tails;
 import operand_preflight_work as probes;
 import operand_route_work as routes;
+import value_syntax_work as syntax;
+import aggregate_probe_work as aggregates;
 import lexer_work as tokens;
 import ir as ir;
 import types as types;
 import errors as errors;
 import metadata_budget as budget;
 // Private Pratt/group/CALL/unary/tail coordinator. Converted preflight,
-// projection and aggregate argument protocols remain explicit legacy children.
+// conditional/aggregate bodies and argument protocols remain legacy children.
 // Source, names, capture bank and candidate IR stay pinned across advances.
 pub struct Frame { usize environment; usize target; usize arity; usize count; usize operand_at; usize depth; usize left; usize slot; usize jump; usize at;
     u8 context; u8 minimum; u8 expected; u8 kind; u8 operation; u8 phase; }
@@ -20,8 +22,8 @@ pub struct Frame { usize environment; usize target; usize arity; usize count; us
 // suffices: frame counts/pending masks restore the enclosing lexical view after
 // child cleanup. Unused rows are scratch; original caller names stay immutable.
 // The owner pins this bank separately from semantic State construction.
-pub struct Bank { calls::Frame[34] calls; usize[64] begins; usize[64] ends; usize[64] registers; bool[64] mutability; tails::State tail; probes::State probe; routes::State route; }
-pub fn Bank empty_bank(){return Bank{.calls=[calls::empty_frame();34],.begins=[0;64],.ends=[0;64],.registers=[0;64],.mutability=[false;64],.tail=tails::begin(lexer::empty(),0,0,false),.probe=probes::begin(lexer::empty(),0,false),.route=routes::begin(lexer::empty(),0)};}
+pub struct Bank { calls::Frame[34] calls; usize[64] begins; usize[64] ends; usize[64] registers; bool[64] mutability; tails::State tail; probes::State probe; routes::State route; syntax::State syntax; aggregates::State aggregate; }
+pub fn Bank empty_bank(){return Bank{.calls=[calls::empty_frame();34],.begins=[0;64],.ends=[0;64],.registers=[0;64],.mutability=[false;64],.tail=tails::begin(lexer::empty(),0,0,false),.probe=probes::begin(lexer::empty(),0,false),.route=routes::begin(lexer::empty(),0),.syntax=syntax::begin(lexer::empty(),1),.aggregate=aggregates::begin(lexer::empty(),1)};}
 pub struct State { usize[272] arguments; u8[272] parameters; Frame[34] frames; tokens::State token; usize used; usize value;
     usize visits; u8 request; bool waiting; bool lexing; bool done; }
 fn Frame frame(usize depth,u8 minimum,u8 expected){return Frame{.environment=34,.target=0,.arity=0,.count=0,.operand_at=0,.depth=depth,.left=0,.slot=0,.jump=0,.at=0,
@@ -128,6 +130,15 @@ fn u8 opcode(u8 kind) {
     return 6;
 }
 
+// A captured dispatch restores at most 64 lexical rows within the 4096-unit
+// conservative stage bound, including a single child advance.
+fn Result<bool,errors::Error> projection(ref u8[] source,ref ir::Program p,ref locals::Table names,
+    ref functions::Table signatures,ref mut Bank bank,usize environment,ref mut budget::State meter){
+    if(environment==34){return aggregates::advance(source,p,names,signatures,ref mut bank.aggregate,meter);}
+    var locals::Table active=locals::empty();let usize copied=names_into(bank,environment,ref mut active)?;
+    return aggregates::advance(source,p,ref active,signatures,ref mut bank.aggregate,meter);
+}
+fn void request(ref mut State w,usize caller){w.frames[caller].phase=1;w.waiting=true;w.request=1;}
 pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
     ref locals::Table names,ref functions::Table signatures,ref mut Bank bank,ref mut State w,ref mut budget::State meter){
     if(w.done){return .ok(true);}if(meter.last!=0 || w.waiting){return .ok(false);}
@@ -141,7 +152,24 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s
         if(environment==34){done=routes::advance(source,names,signatures,ref mut bank.route,meter)?;}
         else{var locals::Table active=locals::empty();let usize copied=names_into(bank,environment,ref mut active)?;
             done=routes::advance(source,ref active,signatures,ref mut bank.route,meter)?;}
-        if(done){w.frames[caller].phase=1;w.waiting=true;w.request=1;}return .ok(false);}
+        if(done){if(bank.route.lane==0 && s.kind==40){bank.syntax=syntax::begin(*s,1);w.frames[caller].phase=62;}
+            else if(bank.route.lane==0 && s.kind==91){bank.aggregate=aggregates::begin(*s,3);w.frames[caller].phase=65;}else{request(w,caller);}}return .ok(false);}
+    if(w.frames[caller].phase==62){let bool done=syntax::advance(source,ref mut bank.syntax,meter)?;
+        if(done){if(syntax::prepared(ref bank.syntax)?){bank.route.lane=5;request(w,caller);}
+            else{bank.aggregate=aggregates::begin(*s,1);w.frames[caller].phase=63;}}return .ok(false);}
+    if(w.frames[caller].phase>=63 && w.frames[caller].phase<=66){let usize environment=w.frames[caller].environment;
+        let bool done=projection(source,p,names,signatures,bank,environment,meter)?;if(!done){return .ok(false);}
+        let aggregates::Plan plan=aggregates::prepared(ref bank.aggregate)?;let u8 phase=w.frames[caller].phase;
+        if(phase==63){if(plan.kind!=0 && plan.tag!=0){bank.route.lane=6;request(w,caller);}
+            else{bank.aggregate=aggregates::begin(*s,2);w.frames[caller].phase=64;}}
+        else if(phase==64){if(plan.kind>1 && (plan.suffix==91 || plan.suffix==46)){bank.route.lane=7;request(w,caller);}
+            else{bank.aggregate=aggregates::begin(*s,3);w.frames[caller].phase=65;}}
+        else if(phase==65){if(plan.suffix==91 || plan.suffix==46){bank.route.lane=8;request(w,caller);}
+            else if(s.kind==91){bank.route.lane=10;request(w,caller);}
+            else if(signatures.literals.enabled){bank.aggregate=aggregates::begin(*s,4);w.frames[caller].phase=66;}
+            else{bank.route.lane=1;request(w,caller);}}
+        else{bank.route.lane=if(plan.kind!=0){9}else{1};request(w,caller);}return .ok(false);}
+
     if(w.frames[caller].phase==50){let usize environment=w.frames[caller].environment;var bool done=false;
         if(environment==34){done=tails::advance(source,s,p,names,ref mut bank.tail,meter)?;}
         else{var locals::Table active=locals::empty();let usize copied=names_into(bank,environment,ref mut active)?;
