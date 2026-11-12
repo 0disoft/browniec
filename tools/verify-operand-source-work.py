@@ -33,6 +33,11 @@ if '--tail-only' in sys.argv:
 if '--preflight-only' in sys.argv:
     sys.argv.remove('--preflight-only')
     bottom.DIRECTORY = 'build/operand-preflight-work'
-    bottom.MODULES = {'preflight_lowering': None, 'body_lowering': ['postfix_and_cast_operands_preserve_raw_ir_precedence_and_diagnostics']}
+    bottom.MODULES = {'preflight_lowering': None, 'expression_lowering': ['expression_depth_rejects_before_requesting_an_operand'],
+                      'body_lowering': ['postfix_and_cast_operands_preserve_raw_ir_precedence_and_diagnostics',
+                                        'grouped_operands_match_raw_ir_and_preserve_postfix_cast_context',
+                                        'scalar_call_operands_preserve_raw_arguments_suffixes_and_errors',
+                                        'nested_call_depth_32_and_33_preserve_default_stack_and_raw_diagnostics',
+                                        'unary_depth_and_mixed_capture_exits_preserve_raw_limits_on_default_stack']}
 if __name__ == '__main__':
     bottom.main()

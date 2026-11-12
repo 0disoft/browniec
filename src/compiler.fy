@@ -1116,31 +1116,6 @@ fn Result<usize, errors::Error> expression(ref u8[] source, ref mut lexer::State
     return .ok(left);
 }
 
-// Read-only compatibility classification is an explicit child, outside the
-// Pratt allowance. Projection/conditional atoms keep their original protocols.
-fn Result<bool,errors::Error> ordinary_group(ref u8[] source,ref lexer::State s,
-    ref ir::Program p,ref locals::Table names,ref functions::Table signatures){
-    if(s.kind!=40 || arm_syntax::conditional_atom(source,s)?.valid){return .ok(false);}
-    if(record_expressions::projected(source,s,p,names,signatures)?){return .ok(false);}
-    if(array_expressions::projected(source,s,p,names,signatures)?){return .ok(false);}
-    if(array_locals::projection(source,s)?.kind!=0){return .ok(false);}
-    if(signatures.literals.enabled && static_source::grouped_projection(source,s,names)?){return .ok(false);}
-    return .ok(true);
-}
-// Eligible ordinary named CALLs only. Qualified intrinsics, projections and
-// special result protocols keep their existing child. This read-only classifier
-// is outside the Pratt allowance, including its original lexer lookahead.
-fn Result<usize,errors::Error> ordinary_call(ref u8[] source,ref lexer::State s,
-    ref ir::Program p,ref locals::Table names,ref functions::Table signatures){
-    if((s.kind!=2 && s.kind!=5) || locals::reserved(source[s.begin..s.end])){return .ok(16);}
-    if(record_expressions::projected(source,s,p,names,signatures)?){return .ok(16);}
-    var lexer::State look=lexer::snapshot(s);let usize next=lexer::next(source,ref mut look)?;
-    if(look.kind!=40 || locals::find(source,names,s.begin,s.end)!=64){return .ok(16);}
-    let usize target=functions::find(source,signatures,s.begin,s.end);
-    if(target==16 || signatures.return_types[target]==13 || reference_calls::result(signatures,target) ||
-        signatures.return_slice_elements[target]!=0 || signatures.return_lengths[target]!=0 || signatures.return_records[target]!=0){return .ok(16);}
-    return .ok(target);
-}
 fn Result<usize,errors::Error> complete_operand_in_environment(ref u8[] source,ref mut lexer::State s,
     ref mut ir::Program p,ref locals::Table names,ref functions::Table signatures,u8 result_type,
     usize structure,ref mut loops::State flow,ref mut expression_work::Bank bank,ref mut expression_work::State w){
@@ -1150,15 +1125,12 @@ fn Result<usize,errors::Error> complete_operand_in_environment(ref u8[] source,r
     if(w.request!=1){return .err(errors::make(5,s.begin));}
     // The read-only converted/primary preflight completed on the shared driver.
     let u8 context=f.context;
-    // Raw primary performs its read-only Result lookahead before operand depth.
-    if(f.depth>32){return .err(errors::make(4,s.begin));}
-    if(s.kind==45 || s.kind==33 || s.kind==126){return expression_work::unary(w,s.kind,context,s.begin);}
-    if(s.kind==40 && ordinary_group(source,s,p,names,signatures)?){return expression_work::group(w,context);}
-    let usize target=ordinary_call(source,s,p,names,signatures)?;
-    if(target<16){var bool plain=true;var usize i=0;while(i<signatures.arities[target]){let usize at=target*8+i;
-            if(signatures.param_slices[at] || signatures.param_lengths[at]!=0 || signatures.param_records[at]!=0){plain=false;}i+=1;}
-        if(plain){return expression_work::call(w,target,signatures.arities[target],ref signatures.param_types[target*8..target*8+8],s.begin);}
-        return expression_work::captured(w,bank,names,*s,target,s.begin,f.depth);}
+    let u8 lane=bank.route.lane;
+    if(lane==2){return expression_work::unary(w,s.kind,context,s.begin);}
+    if(lane==1){return expression_work::group(w,context);}
+    let usize target=bank.route.target;
+    if(lane==3){return expression_work::call(w,target,signatures.arities[target],ref signatures.param_types[target*8..target*8+8],s.begin);}
+    if(lane==4){return expression_work::captured(w,bank,names,*s,target,s.begin,f.depth);}
     let usize initial=operand(source,s,p,names,signatures,f.depth,context,result_type,structure,flow)?;
     return expression_work::tail(w,bank,*s,initial,result_type);
 }

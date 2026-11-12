@@ -5,6 +5,7 @@ import locals as locals;
 import call_operand_work as calls;
 import operand_tail_work as tails;
 import operand_preflight_work as probes;
+import operand_route_work as routes;
 import lexer_work as tokens;
 import ir as ir;
 import types as types;
@@ -19,8 +20,8 @@ pub struct Frame { usize environment; usize target; usize arity; usize count; us
 // suffices: frame counts/pending masks restore the enclosing lexical view after
 // child cleanup. Unused rows are scratch; original caller names stay immutable.
 // The owner pins this bank separately from semantic State construction.
-pub struct Bank { calls::Frame[34] calls; usize[64] begins; usize[64] ends; usize[64] registers; bool[64] mutability; tails::State tail; probes::State probe; }
-pub fn Bank empty_bank(){return Bank{.calls=[calls::empty_frame();34],.begins=[0;64],.ends=[0;64],.registers=[0;64],.mutability=[false;64],.tail=tails::begin(lexer::empty(),0,0,false),.probe=probes::begin(lexer::empty(),0,false)};}
+pub struct Bank { calls::Frame[34] calls; usize[64] begins; usize[64] ends; usize[64] registers; bool[64] mutability; tails::State tail; probes::State probe; routes::State route; }
+pub fn Bank empty_bank(){return Bank{.calls=[calls::empty_frame();34],.begins=[0;64],.ends=[0;64],.registers=[0;64],.mutability=[false;64],.tail=tails::begin(lexer::empty(),0,0,false),.probe=probes::begin(lexer::empty(),0,false),.route=routes::begin(lexer::empty(),0)};}
 pub struct State { usize[272] arguments; u8[272] parameters; Frame[34] frames; tokens::State token; usize used; usize value;
     usize visits; u8 request; bool waiting; bool lexing; bool done; }
 fn Frame frame(usize depth,u8 minimum,u8 expected){return Frame{.environment=34,.target=0,.arity=0,.count=0,.operand_at=0,.depth=depth,.left=0,.slot=0,.jump=0,.at=0,
@@ -135,7 +136,12 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s
         case .ok(done):{if(done){*s=tokens::prepared(ref w.token)?;w.lexing=false;}return .ok(false);}};}
     let usize caller=w.used-1;
     if(w.frames[caller].phase==60){let bool done=probes::advance(source,ref mut bank.probe,meter)?;
-        if(done){w.frames[caller].context=probes::prepared(ref bank.probe)?;w.frames[caller].phase=1;w.waiting=true;w.request=1;}return .ok(false);}
+        if(done){w.frames[caller].context=probes::prepared(ref bank.probe)?;let usize depth=w.frames[caller].depth;bank.route=routes::begin(*s,depth);w.frames[caller].phase=61;}return .ok(false);}
+    if(w.frames[caller].phase==61){let usize environment=w.frames[caller].environment;var bool done=false;
+        if(environment==34){done=routes::advance(source,names,signatures,ref mut bank.route,meter)?;}
+        else{var locals::Table active=locals::empty();let usize copied=names_into(bank,environment,ref mut active)?;
+            done=routes::advance(source,ref active,signatures,ref mut bank.route,meter)?;}
+        if(done){w.frames[caller].phase=1;w.waiting=true;w.request=1;}return .ok(false);}
     if(w.frames[caller].phase==50){let usize environment=w.frames[caller].environment;var bool done=false;
         if(environment==34){done=tails::advance(source,s,p,names,ref mut bank.tail,meter)?;}
         else{var locals::Table active=locals::empty();let usize copied=names_into(bank,environment,ref mut active)?;
