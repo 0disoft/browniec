@@ -25,6 +25,10 @@ if '--unary-only' in sys.argv:
 if '--tail-only' in sys.argv:
     sys.argv.remove('--tail-only')
     bottom.DIRECTORY = 'build/operand-tail-work'
-    bottom.MODULES = {'tail_lowering': None, 'body_lowering': ['postfix_and_cast_operands_preserve_raw_ir_precedence_and_diagnostics']}
+    bottom.MODULES = {'tail_lowering': None, 'semantic_lowering': None,
+                      'body_lowering': ['postfix_and_cast_operands_preserve_raw_ir_precedence_and_diagnostics',
+                                        'postfix_capture_failures_ranges_and_register_limits_preserve_raw_prefixes',
+                                        'nested_call_depth_32_and_33_preserve_default_stack_and_raw_diagnostics',
+                                        'unary_depth_and_mixed_capture_exits_preserve_raw_limits_on_default_stack']}
 if __name__ == '__main__':
     bottom.main()

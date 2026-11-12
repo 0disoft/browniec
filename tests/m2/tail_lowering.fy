@@ -4,6 +4,8 @@ import lexer as lexer;
 import ir as ir;
 import locals as locals;
 import metadata_budget as budget;
+import propagation as propagation;
+import errors as errors;
 fn void run(ref u8[] source,bool wrapped,bool propagation,u8 initial,u8 expected,bool primary){
     var lexer::State s=lexer::empty();assert(lexer::next(source,ref mut s).is_ok);let lexer::State original=s;
     var ir::Program p=ir::empty();var locals::Table names=locals::empty();
@@ -37,3 +39,24 @@ fn void run(ref u8[] source,bool wrapped,bool propagation,u8 initial,u8 expected
     run(b"..;",false,false,1,1,false);
 }
 @test fn void propagation_releases_one_reverse_selection_or_local_before_failure_return(){run(b"?;",true,true,1,1,false);}
+
+@test fn void propagation_capacity_failures_match_raw_prefixes_and_dot_probes_preserve_position(){
+    var usize capacity=246;while(capacity<=256){var ir::Program a=ir::empty();
+        assert(ir::integer(ref mut a,42,1,0).is_ok && ir::construct(ref mut a,5,1,0,0).is_ok);a.count=capacity;
+        var ir::Program b=a;var locals::Table names=locals::empty();names.count=2;names.registers[0]=128;names.registers[1]=129;names.pending_places=9;
+        let Result<usize,errors::Error> raw=propagation::lower(ref mut a,ref names,1,5,0);
+        let ref u8[] source=b"?;";var lexer::State s=lexer::empty();assert(lexer::next(source,ref mut s).is_ok);
+        var work::State w=work::begin(s,1,5,false);var budget::State meter=budget::empty();var bool failed=false;var usize turns=0;
+        while(!w.done && !failed){assert(turns<2000 && budget::reset(ref mut meter,0).is_ok);
+            switch(work::advance(source,ref mut s,ref mut b,ref names,ref mut w,ref mut meter)){
+                case .ok(_):{}case .err(e):{failed=true;switch(raw){case .ok(_):{assert(false);}case .err(z):{assert(z.kind==e.kind && z.offset==e.offset);}};}};turns+=1;}
+        assert(failed== !raw.is_ok && a.count==b.count && a.registers==b.registers && a.constant_count==b.constant_count);
+        var usize i=0;while(i<2048){assert(a.code[i]==b.code[i]);i+=1;}i=0;while(i<256){assert(a.offsets[i]==b.offsets[i]);i+=1;}
+        i=0;while(i<128){assert(a.types[i]==b.types[i] && a.slots[i]==b.slots[i] && a.constants[i]==b.constants[i]);i+=1;}capacity+=1;
+    }
+    let ref u8[] source=b"./*";var lexer::State s=lexer::empty();assert(lexer::next(source,ref mut s).is_ok);let lexer::State before=s;
+    var ir::Program p=ir::empty();var locals::Table names=locals::empty();var work::State w=work::begin(s,0,1,false);var budget::State meter=budget::empty();var bool failed=false;
+    while(!failed){assert(budget::reset(ref mut meter,0).is_ok);switch(work::advance(source,ref mut s,ref mut p,ref names,ref mut w,ref mut meter)){
+        case .ok(_):{}case .err(e):{assert(e.kind==1 && e.offset==1);failed=true;}};}
+    assert(s.cursor==before.cursor && s.begin==before.begin && s.tokens==before.tokens && p.count==0);
+}

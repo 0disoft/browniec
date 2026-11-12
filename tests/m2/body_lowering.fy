@@ -290,3 +290,24 @@ fn bytes::Buffer nested_unary(usize count,bool calls,bool captures,bool minimum)
     compare(b"module main;fn Result<i32,bool> f(){return .ok(42);}fn i32 main(){return f().is_ok?;}",false);
     compare(b"module main;fn i32 main(){return 42?;}",false);
 }
+
+@test fn void postfix_capture_failures_ranges_and_register_limits_preserve_raw_prefixes(){
+    captured(b"module main;fn i32 take(i32[1] a,i32 n){return a[0]+n;}fn Result<i32,bool> f(){let Result<i32,bool> r=.ok(22);let i32 x=take([20;1],r?);return .ok(x);}fn i32 main(){switch(f()){case .ok(n):{return n;}case .err(_):{return 0;}}}",true);
+    captured(b"module main;fn i32 take(i32[1] a,i32 n){return a[0]+n;}fn Result<i32,bool> f(){let Result<i32,bool> r=.err(true);let i32 x=take([20;1],r?);return .ok(x);}fn i32 main(){switch(f()){case .ok(_):{return 0;}case .err(_):{return 42;}}}",true);
+    captured(b"module main;fn i32 take(i32[1] a,bool b){if(b){return a[0]+22;}return 0;}fn i32 main(){let Result<i32,bool> r=.ok(0);return take([20;1],r.is_ok);}",true);
+    captured(b"module main;fn Result<i32,bool> f(){let i32[1] a=[20;1];let Result<i32,bool> r=.err(true);let i32 n=r?;return .ok(n);}fn i32 main(){switch(f()){case .ok(_):{return 0;}case .err(_):{return 42;}}}",true);
+    compare(b"module main;fn Option<i32> f(){let Option<bool> o=.some(true);let bool b=o?;return .some(42);}fn i32 main(){switch(f()){case .some(n):{return n;}case .none:{return 0;}}}",true);
+    compare(b"module main;fn Option<i32> f(){let Option<bool> o=.none;let bool b=o?;return .some(0);}fn i32 main(){switch(f()){case .some(_):{return 0;}case .none:{return 42;}}}",true);
+    compare(b"module main;fn Result<i32,i32> f(){let Result<bool,i32> r=.ok(true);let bool b=r?;return .ok(42);}fn i32 main(){switch(f()){case .ok(n):{return n;}case .err(_):{return 0;}}}",true);
+    captured(b"module main;fn i32 first(ref i32[] a){return a[0];}fn i32 main(){let i32[1] a=[42;1];let u8 z=0;return first(ref a[(z as usize)..]);}",true);
+    compare(b"module main;fn i32 main(){let Result<i32,bool> r=.ok(0);if(false && r.is_ok || true){return 42;}return 0;}",true);
+    compare(b"module main;fn Result<i32,bool> f(){let Result<bool,i32> r=.ok(true);let bool b=r?;return .ok(42);}fn i32 main(){return 42;}",false);
+    compare(b"module main;fn Result<i32,bool> f(){let Result<i32,bool> r=.ok(0);let bool b=r?.is_ok;return .ok(42);}fn i32 main(){return 42;}",false);
+    compare(b"module main;fn i32 main(){let u8 x=42;let usize n=x as u32 as usize as usize;return 42;}",false);
+    var usize count=25;while(count<=26){var bytes::Buffer s=bytes::empty();
+        assert(bytes::append(ref mut s,b"module main;fn i32 main(){let Result<i32,bool> r=.ok(0);").is_ok);
+        var usize i=0;while(i<count){assert(bytes::append(ref mut s,b"let bool ").is_ok);var usize j=0;while(j<=i){assert(bytes::append(ref mut s,b"b").is_ok);j+=1;}
+            assert(bytes::append(ref mut s,b"=r.is_ok;").is_ok);i+=1;}
+        assert(bytes::append(ref mut s,b"return 42;}").is_ok);compare(bytes::view(ref s),count==25);count+=1;
+    }
+}
