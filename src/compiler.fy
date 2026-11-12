@@ -1148,9 +1148,8 @@ fn Result<usize,errors::Error> complete_operand_in_environment(ref u8[] source,r
     let expression_work::Frame f=expression_work::current(w);
     if(w.request==2){let usize initial=w.value;return expression_work::tail(w,bank,*s,initial,result_type);}
     if(w.request!=1){return .err(errors::make(5,s.begin));}
-    // Preserve converted -> primary -> operand lookahead/error order.
-    let bool explicit=if(f.minimum==0){false}else{casts::follows(source,s)?};let u8 expected=if(explicit){0}else{f.expected};
-    let u8 context=if(expected!=0 && !types::tagged(expected) && result_property(source,s)?){0}else{expected};
+    // The read-only converted/primary preflight completed on the shared driver.
+    let u8 context=f.context;
     // Raw primary performs its read-only Result lookahead before operand depth.
     if(f.depth>32){return .err(errors::make(4,s.begin));}
     if(s.kind==45 || s.kind==33 || s.kind==126){return expression_work::unary(w,s.kind,context,s.begin);}

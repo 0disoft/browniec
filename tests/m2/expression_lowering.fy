@@ -45,7 +45,8 @@ fn void run(ref u8[] source){var lexer::State s=lexer::empty();assert(lexer::nex
     switch(work::advance(source,ref mut s,ref mut p,ref names,ref signatures,ref mut bank,ref mut w,ref mut meter)){
         case .ok(_):{assert(false);}case .err(e):{assert(e.kind==4 && e.offset==0 && !w.waiting && p.count==0);}};
     w=work::begin(32,1,1);assert(budget::reset(ref mut meter,0).is_ok);
-    assert(work::advance(source,ref mut s,ref mut p,ref names,ref signatures,ref mut bank,ref mut w,ref mut meter).is_ok && w.waiting && p.count==0);
+    var usize turns=0;while(!w.waiting){assert(turns<100 && budget::reset(ref mut meter,0).is_ok);
+        assert(work::advance(source,ref mut s,ref mut p,ref names,ref signatures,ref mut bank,ref mut w,ref mut meter).is_ok && p.count==0);turns+=1;}
 }
 
 @test fn void group_children_share_the_pratt_stack_and_resume_one_tail(){run(b"(20+1)*2;");run(b"((20+11*2));");}
