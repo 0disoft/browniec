@@ -415,3 +415,16 @@ fn void literal_compare(ref u8[] source,bool success){
 @test fn void staged_static_bad_member_keeps_raw_error(){
     literal_compare(b"module main;fn i32 main(){return (b\"*\").missing as i32;}",false);
 }
+
+@test fn void nested_conditional_heads_keep_depth_30_and_31_on_default_stack(){
+    var usize depth=30;while(depth<=31){var bytes::Buffer source=bytes::empty();assert(bytes::append(ref mut source,b"module main;fn i32 main(){return if(").is_ok);
+        var usize i=0;while(i<depth){assert(bytes::append(ref mut source,b"if(").is_ok);i+=1;}assert(bytes::append(ref mut source,b"true").is_ok);
+        i=0;while(i<depth){assert(bytes::append(ref mut source,b"){true}else{false}").is_ok);i+=1;}
+        assert(bytes::append(ref mut source,b"){42}else{0};}").is_ok);let ref u8[] input=bytes::view(ref source);
+        var functions::Table t=switch(functions::scan(input)){case .ok(v):{v}case .err(_):{assert(false);functions::empty()}};
+        var ir::Program p=ir::empty();p.function_count=t.count;p.entry=t.entry;p.return_types=t.return_types;
+        switch(compiler::lower_body(input,ref t,t.entry,ref mut p,true)){
+            case .ok(_):{assert(depth==30 && verifier::verify(ref p).is_ok);assert(switch(vm::run_with_array_limit(ref p,10000000,65536)){case .ok(n):{n==42}case .err(_):{false}});}
+            case .err(e):{assert(depth==31 && e.kind==4);}};depth+=1;
+    }
+}
