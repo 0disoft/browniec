@@ -57,7 +57,7 @@ pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s
     if(w.typing){switch(annotations::advance(source,ref mut w.annotation,meter)){
         case .err(e):{*s=annotations::observed(ref w.annotation);return .err(e);}
         case .ok(done):{if(done){w.tag=annotations::prepared(ref w.annotation)?;*s=annotations::observed(ref w.annotation);w.typing=false;}return .ok(false);}};}
-    if(w.evaluating){let bool done=expressions::advance(source,s,p,signatures,bank,ref mut w.expression,meter)?;
+    if(w.evaluating){let bool done=expressions::advance(source,s,p,names,signatures,bank,ref mut w.expression,meter)?;
         if(w.expression.waiting){w.request=1;}
         if(done){w.value=expressions::prepared(ref w.expression)?;w.evaluating=false;}return .ok(false);}
     if(!budget::admit(meter,4096,s.begin)?){return .ok(false);}

@@ -272,3 +272,21 @@ fn bytes::Buffer nested_unary(usize count,bool calls,bool captures,bool minimum)
     captured(b"module main;fn i32 take(i32[1] a,i32 n){return a[0]+n;}fn i32 main(){let Option<i32> o=.none;return take([1;1],-switch(o){case .some(v):{v}case .none:{return 42;}});}",true);
     captured(b"module main;fn i32 take(i32[1] a,i32 n,i32[1] b){return a[0]*10+n+b[0];}fn i32 main(){var i32[1] a=[2;1];let Option<i32> o=.none;return take(a,-switch(o){case .some(v):{v}case .none:{a[0]=4;-18}},a);}",true);
 }
+
+@test fn void postfix_and_cast_operands_preserve_raw_ir_precedence_and_diagnostics(){
+    compare(b"module main;fn Result<i32,bool> f(){return .ok(42);}fn i32 main(){if(f().is_ok){return 42;}else{return 0;}}",true);
+    compare(b"module main;fn Result<i32,bool> f(){return .err(true);}fn i32 main(){if(!f().is_ok){return 42;}else{return 0;}}",true);
+    compare(b"module main;fn i32 main(){let u8 x=42;let i64 n=x as u32 as i64;if(n==42){return 42;}else{return 0;}}",true);
+    compare(b"module main;fn Result<i32,bool> f(){let Result<i32,bool> r=.ok(42);let i64 x=r? as i64;return .ok(42);}fn i32 main(){switch(f()){case .ok(n):{return n;}case .err(_):{return 0;}}}",true);
+    compare(b"module main;fn i32 main(){let i64 x=-42 as i64;if(x== -42){return 42;}else{return 0;}}",true);
+    compare(b"module main;fn i32 main(){let i32 n=42;return n.is_ok;}",false);
+    compare(b"module main;fn i32 main(){return 42.nope;}",false);
+    compare(b"module main;fn i32 main(){return 42.;}",false);
+    compare(b"module main;fn i32 main(){let i64 n=42 as bool;return 42;}",false);
+    compare(b"module main;fn i32 main(){let i64 n=42 as;return 42;}",false);
+    compare(b"module main;fn i32 main(){let i64 n=42 as Missing;return 42;}",false);
+    compare(b"module main;fn i32 main(){let i64 n=42 as Option<i32>;return 42;}",false);
+    compare(b"module main;fn i32 main(){let i64 n=42 as i64.is_ok;return 42;}",false);
+    compare(b"module main;fn Result<i32,bool> f(){return .ok(42);}fn i32 main(){return f().is_ok?;}",false);
+    compare(b"module main;fn i32 main(){return 42?;}",false);
+}

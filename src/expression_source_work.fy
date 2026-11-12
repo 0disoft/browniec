@@ -3,13 +3,14 @@ import lexer as lexer;
 import functions as functions;
 import locals as locals;
 import call_operand_work as calls;
+import operand_tail_work as tails;
 import lexer_work as tokens;
 import ir as ir;
 import types as types;
 import errors as errors;
 import metadata_budget as budget;
-// Private Pratt/group/CALL/unary coordinator. Converted preflight, projection,
-// postfix/cast and aggregate argument protocols remain explicit legacy children.
+// Private Pratt/group/CALL/unary/tail coordinator. Converted preflight,
+// projection and aggregate argument protocols remain explicit legacy children.
 // Source, names, capture bank and candidate IR stay pinned across advances.
 pub struct Frame { usize environment; usize target; usize arity; usize count; usize operand_at; usize depth; usize left; usize slot; usize jump; usize at;
     u8 context; u8 minimum; u8 expected; u8 kind; u8 operation; u8 phase; }
@@ -17,8 +18,8 @@ pub struct Frame { usize environment; usize target; usize arity; usize count; us
 // suffices: frame counts/pending masks restore the enclosing lexical view after
 // child cleanup. Unused rows are scratch; original caller names stay immutable.
 // The owner pins this bank separately from semantic State construction.
-pub struct Bank { calls::Frame[34] calls; usize[64] begins; usize[64] ends; usize[64] registers; bool[64] mutability; }
-pub fn Bank empty_bank(){return Bank{.calls=[calls::empty_frame();34],.begins=[0;64],.ends=[0;64],.registers=[0;64],.mutability=[false;64]};}
+pub struct Bank { calls::Frame[34] calls; usize[64] begins; usize[64] ends; usize[64] registers; bool[64] mutability; tails::State tail; }
+pub fn Bank empty_bank(){return Bank{.calls=[calls::empty_frame();34],.begins=[0;64],.ends=[0;64],.registers=[0;64],.mutability=[false;64],.tail=tails::begin(lexer::empty(),0,0,false)};}
 pub struct State { usize[272] arguments; u8[272] parameters; Frame[34] frames; tokens::State token; usize used; usize value;
     usize visits; u8 request; bool waiting; bool lexing; bool done; }
 fn Frame frame(usize depth,u8 minimum,u8 expected){return Frame{.environment=34,.target=0,.arity=0,.count=0,.operand_at=0,.depth=depth,.left=0,.slot=0,.jump=0,.at=0,
@@ -30,6 +31,11 @@ pub fn Frame current(ref State w){let ref Frame[] frames=ref w.frames;return fra
 pub fn Result<usize,errors::Error> prepared(ref State w){if(!w.done){return .err(errors::make(5,0));}return .ok(w.value);}
 pub fn Result<usize,errors::Error> resume(ref mut State w,usize value){
     if(w.done || !w.waiting || (w.request!=1 && w.request!=2)){return .err(errors::make(5,0));}w.waiting=false;w.request=0;w.value=value;return .ok(value);}
+pub fn Result<usize,errors::Error> tail(ref mut State w,ref mut Bank bank,lexer::State token,usize value,u8 result_type){
+    if(w.done || !w.waiting || (w.request!=1 && w.request!=2)){return .err(errors::make(5,token.begin));}
+    let usize i=w.used-1;let bool primary=w.frames[i].minimum==0;
+    bank.tail=tails::begin(token,value,result_type,primary);w.frames[i].phase=50;w.waiting=false;w.request=0;return .ok(0);
+}
 // Child classification does not evaluate or consume the grouped expression.
 pub fn Result<usize,errors::Error> group(ref mut State w,u8 context){
     if(w.done || !w.waiting || w.request!=1){return .err(errors::make(5,0));}
@@ -121,12 +127,17 @@ fn u8 opcode(u8 kind) {
 }
 
 pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
-    ref functions::Table signatures,ref mut Bank bank,ref mut State w,ref mut budget::State meter){
+    ref locals::Table names,ref functions::Table signatures,ref mut Bank bank,ref mut State w,ref mut budget::State meter){
     if(w.done){return .ok(true);}if(meter.last!=0 || w.waiting){return .ok(false);}
     if(w.lexing){switch(tokens::advance(source,ref mut w.token,meter)){
         case .err(e):{*s=tokens::observed(ref w.token);return .err(e);}
         case .ok(done):{if(done){*s=tokens::prepared(ref w.token)?;w.lexing=false;}return .ok(false);}};}
     let usize caller=w.used-1;
+    if(w.frames[caller].phase==50){let usize environment=w.frames[caller].environment;var bool done=false;
+        if(environment==34){done=tails::advance(source,s,p,names,ref mut bank.tail,meter)?;}
+        else{var locals::Table active=locals::empty();let usize copied=names_into(bank,environment,ref mut active)?;
+            done=tails::advance(source,s,p,ref active,ref mut bank.tail,meter)?;}
+        if(done){w.value=tails::prepared(ref bank.tail)?;w.frames[caller].phase=1;}return .ok(false);}
     if(w.frames[caller].phase==30){var calls::State active=calls::empty();let usize loaded=load_call(w,bank,caller,ref mut active)?;
         let bool done=calls::advance(source,s,p,signatures,ref mut active,meter)?;save_call(w,bank,caller,ref active);
         if(done){w.frames[caller].left=calls::prepared(ref active)?;w.frames[caller].phase=13;}

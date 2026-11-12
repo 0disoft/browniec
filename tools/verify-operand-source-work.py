@@ -1,4 +1,4 @@
-"""Verify ordinary grouped, CALL and unary operand continuations."""
+"""Verify ordinary grouped, CALL, unary and postfix/cast continuations."""
 import importlib.util
 from pathlib import Path
 import sys
@@ -9,7 +9,7 @@ bottom = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(bottom)
 bottom.DESCRIPTION = __doc__
 bottom.DIRECTORY = 'build/operand-source-work'
-bottom.MODULES = {'expression_lowering': None, 'semantic_lowering': None, 'body_lowering': None, 'body_source_work': None, 'call_operand_kernel': None}
+bottom.MODULES = {'expression_lowering': None, 'semantic_lowering': None, 'body_lowering': None, 'body_source_work': None, 'call_operand_kernel': None, 'tail_lowering': None}
 bottom.EXTRA_INPUTS = {'tools/verify-operand-source-work.py'}
 # Narrow recheck for completion guards and mixed depth after a composed snapshot.
 if '--kernel-only' in sys.argv:
@@ -22,5 +22,9 @@ if '--unary-only' in sys.argv:
     bottom.MODULES = {'expression_lowering': ['unary_children_defer_tokens_checks_and_emission_on_shared_frames'],
                       'body_lowering': ['unary_operands_keep_raw_precedence_context_minima_and_errors',
                                         'unary_depth_and_mixed_capture_exits_preserve_raw_limits_on_default_stack']}
+if '--tail-only' in sys.argv:
+    sys.argv.remove('--tail-only')
+    bottom.DIRECTORY = 'build/operand-tail-work'
+    bottom.MODULES = {'tail_lowering': None, 'body_lowering': ['postfix_and_cast_operands_preserve_raw_ir_precedence_and_diagnostics']}
 if __name__ == '__main__':
     bottom.main()
