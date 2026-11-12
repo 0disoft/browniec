@@ -6,6 +6,8 @@ import retention_plan as retained;
 
 // Trusted scalar fixtures only: fixed()/native layout is not available to the
 // source-test interpreter. Peers enter through publish, never a native Program.
+// Synthetic retained charges straddle the current work reservation, so their
+// ordering survives compiler scratch changes without resetting any history.
 fn budget::Budget seed(usize engine,usize control,usize working){
     return budget::Budget{.engine=engine,.program=engine,.programs=engine,
         .control=control,.control_peak=control,.retained=0,.peak=0,.closed=false,
@@ -98,7 +100,7 @@ fn void defaults_and_private_working_limits_preserve_existing_limits(){
 
 @test
 fn void overhead_plus_scratch_exact_and_one_less_limits_return_original_phase_zero(){
-    let usize work=compiler::working_bound();assert(work==262144);
+    let usize work=compiler::working_bound();assert(work==66630144);
     var budget::Budget exact=seed(work+15,7,work+5);
     value(budget::publish(ref mut exact,3),3);
     var memory::Plan plan=switch(budget::prepare_compile(ref mut exact,5)){
@@ -127,7 +129,7 @@ fn void overhead_plus_scratch_exact_and_one_less_limits_return_original_phase_ze
 @test
 fn void overflow_and_rejected_baselines_preserve_every_budget_field(){
     let usize maximum=18446744073709551615;
-    var budget::Budget b=seed(600000,7,268435456);
+    var budget::Budget b=seed((compiler::working_bound()+400000),7,268435456);
     value(budget::publish(ref mut b,11),11);
     let memory::Plan prepared=switch(budget::prepare_compile(ref mut b,13)){
         case .ok(p):{p}case .err(_):{assert(false);return;}
@@ -135,7 +137,7 @@ fn void overflow_and_rejected_baselines_preserve_every_budget_field(){
     denied_prepare(ref mut b,maximum,2);
     // These pass the working check but fail combined/baseline checks.
     b.engine=30;denied_prepare(ref mut b,13,2);
-    b.engine=600000;b.control=maximum;denied_prepare(ref mut b,0,2);
+    b.engine=(compiler::working_bound()+400000);b.control=maximum;denied_prepare(ref mut b,0,2);
     b.control=7;b.retained=maximum;denied_prepare(ref mut b,0,2);
     b.retained=11;b.working_limit=0;denied_prepare(ref mut b,0,2);
     b.closed=true;denied_prepare(ref mut b,maximum,3);
@@ -167,35 +169,35 @@ fn void published_peers_share_combined_allowance_and_release_restores_headroom()
 @test
 fn void compilation_and_program_high_water_marks_are_independent_histories(){
     let usize work=compiler::working_bound();
-    var budget::Budget b=seed(600000,7,268435456);
+    var budget::Budget b=seed((compiler::working_bound()+400000),7,268435456);
     var memory::Plan plan=switch(budget::prepare_compile(ref mut b,0)){
         case .ok(p):{p}case .err(_):{assert(false);return;}
     };
     observed(ref b,7,0,0,work+7,work,false);
-    let retained::Plan reservation=retained::Plan{.fixed=1,.limit=600000,.bytes=300000,.admitted=true};
-    value(budget::record(ref mut b,ref reservation),300000);
-    observed(ref b,7,0,300000,300007,work,false);
+    let retained::Plan reservation=retained::Plan{.fixed=1,.limit=(compiler::working_bound()+400000),.bytes=(compiler::working_bound()+100000),.admitted=true};
+    value(budget::record(ref mut b,ref reservation),(compiler::working_bound()+100000));
+    observed(ref b,7,0,(compiler::working_bound()+100000),(compiler::working_bound()+100007),work,false);
     phase_value(memory::reserve_work(ref mut plan,work),work+7);
-    phase_value(memory::begin_retention(ref mut plan,500000),500007);
+    phase_value(memory::begin_retention(ref mut plan,(compiler::working_bound()+300000)),(compiler::working_bound()+300007));
     phase_value(memory::abort(ref mut plan),7);
-    value(budget::record_compile(ref mut b,ref plan),500007);
-    observed(ref b,7,0,300000,500007,work,false);
+    value(budget::record_compile(ref mut b,ref plan),(compiler::working_bound()+300007));
+    observed(ref b,7,0,(compiler::working_bound()+100000),(compiler::working_bound()+300007),work,false);
     value(budget::publish(ref mut b,10000),10000);
     value(budget::release(ref mut b,10000),0);
-    observed(ref b,7,0,300000,500007,work,false);
+    observed(ref b,7,0,(compiler::working_bound()+100000),(compiler::working_bound()+300007),work,false);
     var memory::Plan smaller=switch(budget::prepare_compile(ref mut b,1)){
         case .ok(p):{p}case .err(_):{assert(false);return;}
     };
     phase_value(memory::reserve_work(ref mut smaller,work),work+8);
     phase_value(memory::abort(ref mut smaller),8);
     value(budget::record_compile(ref mut b,ref smaller),work+8);
-    observed(ref b,7,0,300000,500007,work+1,false);
+    observed(ref b,7,0,(compiler::working_bound()+100000),(compiler::working_bound()+300007),work+1,false);
 }
 
 @test
 fn void aborted_work_and_admitted_oom_preserve_reservations_without_publishing(){
     let usize work=compiler::working_bound();
-    var budget::Budget b=seed(600000,7,268435456);
+    var budget::Budget b=seed((compiler::working_bound()+400000),7,268435456);
     value(budget::publish(ref mut b,11),11);
     var memory::Plan source_failure=switch(budget::prepare_compile(ref mut b,13)){
         case .ok(p):{p}case .err(_):{assert(false);return;}
@@ -208,37 +210,37 @@ fn void aborted_work_and_admitted_oom_preserve_reservations_without_publishing()
         case .ok(p):{p}case .err(_):{assert(false);return;}
     };
     phase_value(memory::reserve_work(ref mut oom,work),work+31);
-    phase_value(memory::begin_retention(ref mut oom,350000),350031);
+    phase_value(memory::begin_retention(ref mut oom,(compiler::working_bound()+200000)),(compiler::working_bound()+200031));
     phase_value(memory::abort(ref mut oom),31);
     assert(oom.phase==3 && oom.current==31 && oom.persistent_bytes==0);
-    value(budget::record_compile(ref mut b,ref oom),350031);
+    value(budget::record_compile(ref mut b,ref oom),(compiler::working_bound()+200031));
     // Engine records an admitted Program attempt independently, even on OOM.
-    let retained::Plan admitted=retained::Plan{.fixed=1,.limit=600000,.bytes=350000,.admitted=true};
-    value(budget::record(ref mut b,ref admitted),350000);
-    observed(ref b,7,11,350011,350031,work+13,false);
+    let retained::Plan admitted=retained::Plan{.fixed=1,.limit=(compiler::working_bound()+400000),.bytes=(compiler::working_bound()+200000),.admitted=true};
+    value(budget::record(ref mut b,ref admitted),(compiler::working_bound()+200000));
+    observed(ref b,7,11,(compiler::working_bound()+200011),(compiler::working_bound()+200031),work+13,false);
 }
 
 @test
 fn void successful_phase_records_before_separate_program_publication(){
     let usize work=compiler::working_bound();
-    var budget::Budget b=seed(600000,7,268435456);
+    var budget::Budget b=seed((compiler::working_bound()+400000),7,268435456);
     value(budget::publish(ref mut b,11),11);
     var memory::Plan plan=switch(budget::prepare_compile(ref mut b,13)){
         case .ok(p):{p}case .err(_):{assert(false);return;}
     };
     phase_value(memory::reserve_work(ref mut plan,work),work+31);
-    phase_value(memory::begin_retention(ref mut plan,300000),300031);
-    phase_value(memory::finish(ref mut plan),300031);
-    assert(plan.phase==3 && plan.current==300031 && plan.persistent_bytes==300000);
-    value(budget::record_compile(ref mut b,ref plan),300031);
-    observed(ref b,7,11,11,300031,work+13,false);
-    let retained::Plan admitted=retained::Plan{.fixed=1,.limit=600000,.bytes=300000,.admitted=true};
-    value(budget::record(ref mut b,ref admitted),300000);
-    value(budget::publish(ref mut b,300000),300011);
-    observed(ref b,7,300011,300011,300031,work+13,false);
-    value(budget::release(ref mut b,300000),11);
+    phase_value(memory::begin_retention(ref mut plan,(compiler::working_bound()+100000)),(compiler::working_bound()+100031));
+    phase_value(memory::finish(ref mut plan),(compiler::working_bound()+100031));
+    assert(plan.phase==3 && plan.current==(compiler::working_bound()+100031) && plan.persistent_bytes==(compiler::working_bound()+100000));
+    value(budget::record_compile(ref mut b,ref plan),(compiler::working_bound()+100031));
+    observed(ref b,7,11,11,(compiler::working_bound()+100031),work+13,false);
+    let retained::Plan admitted=retained::Plan{.fixed=1,.limit=(compiler::working_bound()+400000),.bytes=(compiler::working_bound()+100000),.admitted=true};
+    value(budget::record(ref mut b,ref admitted),(compiler::working_bound()+100000));
+    value(budget::publish(ref mut b,(compiler::working_bound()+100000)),(compiler::working_bound()+100011));
+    observed(ref b,7,(compiler::working_bound()+100011),(compiler::working_bound()+100011),(compiler::working_bound()+100031),work+13,false);
+    value(budget::release(ref mut b,(compiler::working_bound()+100000)),11);
     value(budget::release(ref mut b,11),0);
-    observed(ref b,7,0,300011,300031,work+13,false);
+    observed(ref b,7,0,(compiler::working_bound()+100011),(compiler::working_bound()+100031),work+13,false);
 }
 
 @test
@@ -264,7 +266,7 @@ fn void direct_program_record_and_publish_track_actual_aggregate_and_reject_atom
 @test
 fn void moves_and_close_release_control_preserve_peaks_and_reject_further_operations(){
     let usize work=compiler::working_bound();
-    var budget::Budget original=seed(600000,7,268435456);
+    var budget::Budget original=seed((compiler::working_bound()+400000),7,268435456);
     value(budget::publish(ref mut original,11),11);
     let memory::Plan original_plan=switch(budget::prepare_compile(ref mut original,13)){
         case .ok(p):{p}case .err(_):{assert(false);return;}
@@ -272,19 +274,19 @@ fn void moves_and_close_release_control_preserve_peaks_and_reject_further_operat
     var budget::Budget moved=original;
     var memory::Plan moved_plan=original_plan;
     phase_value(memory::reserve_work(ref mut moved_plan,work),work+31);
-    phase_value(memory::begin_retention(ref mut moved_plan,300000),300031);
+    phase_value(memory::begin_retention(ref mut moved_plan,(compiler::working_bound()+100000)),(compiler::working_bound()+100031));
     phase_value(memory::abort(ref mut moved_plan),31);
-    value(budget::record_compile(ref mut moved,ref moved_plan),300031);
+    value(budget::record_compile(ref mut moved,ref moved_plan),(compiler::working_bound()+100031));
     let budget::Budget nonempty=moved;
     rejected(budget::close(ref mut moved),3);same(ref moved,ref nonempty);
     value(budget::release(ref mut moved,11),0);
     value(budget::close(ref mut moved),0);
     assert(moved.control==0 && moved.control_peak==7);
-    observed(ref moved,0,0,11,300031,work+13,true);
+    observed(ref moved,0,0,11,(compiler::working_bound()+100031),work+13,true);
     let budget::Budget closed=moved;
     denied_prepare(ref mut moved,0,3);
     rejected(budget::record_compile(ref mut moved,ref moved_plan),3);
-    let retained::Plan reservation=retained::Plan{.fixed=1,.limit=600000,.bytes=0,.admitted=false};
+    let retained::Plan reservation=retained::Plan{.fixed=1,.limit=(compiler::working_bound()+400000),.bytes=0,.admitted=false};
     rejected(budget::record(ref mut moved,ref reservation),3);
     rejected(budget::publish(ref mut moved,0),3);
     rejected(budget::release(ref mut moved,0),3);
@@ -343,7 +345,7 @@ fn void external_current_is_in_compile_phase_zero_baseline_and_combined_admissio
     value(budget::commit_external(ref mut short,9),9);
     denied_prepare(ref mut short,5,2);
     // Guard the external subtraction before constructing an overflowing baseline.
-    var budget::Budget overflow=seed(600000,7,268435456);
+    var budget::Budget overflow=seed((compiler::working_bound()+400000),7,268435456);
     value(budget::publish(ref mut overflow,3),3);
     overflow.external=18446744073709551615;
     denied_prepare(ref mut overflow,0,2);
@@ -378,9 +380,9 @@ fn void external_current_limits_retained_publication_and_survives_program_releas
 @test
 fn void external_owner_blocks_close_and_refunds_and_moves_preserve_all_peaks(){
     let usize work=compiler::working_bound();
-    var budget::Budget original=seed(600000,7,268435456);
+    var budget::Budget original=seed((compiler::working_bound()+400000),7,268435456);
     value(budget::publish(ref mut original,11),11);
-    value(budget::prepare_external(ref mut original,400000),400018);
+    value(budget::prepare_external(ref mut original,work+250000),work+250018);
     value(budget::commit_external(ref mut original,17),17);
     let memory::Plan plan=switch(budget::prepare_compile(ref mut original,13)){
         case .ok(p):{p}case .err(_):{assert(false);return;}
@@ -388,16 +390,16 @@ fn void external_owner_blocks_close_and_refunds_and_moves_preserve_all_peaks(){
     assert(plan.baseline==48 && plan.phase==0);
     var budget::Budget moved=original;
     same(ref moved,ref original);
-    observed(ref moved,7,11,11,400018,work+13,false);
+    observed(ref moved,7,11,11,work+250018,work+13,false);
     value(budget::release(ref mut moved,11),0);
     assert(moved.external==17);
     let budget::Budget external_only=snapshot(ref moved);
     rejected(budget::close(ref mut moved),3);same(ref moved,ref external_only);
     value(budget::commit_external(ref mut moved,0),0);
-    observed(ref moved,7,0,11,400018,work+13,false);
+    observed(ref moved,7,0,11,work+250018,work+13,false);
     value(budget::close(ref mut moved),0);
     assert(moved.control_peak==7 && moved.external==0);
-    observed(ref moved,0,0,11,400018,work+13,true);
+    observed(ref moved,0,0,11,work+250018,work+13,true);
     let budget::Budget closed=snapshot(ref moved);
     rejected(budget::prepare_external(ref mut moved,0),3);same(ref moved,ref closed);
     rejected(budget::commit_external(ref mut moved,0),3);same(ref moved,ref closed);

@@ -53,6 +53,8 @@ def main():
     selected = SELECTED if args.suite == 'output' else {
         'compile_memory': None,
         'module_compile_memory': None,
+        'runtime_program_compile_memory': None,
+        'call_operand_kernel': None,
         'captured_call_stack': ['retained_captured_calls_keep_the_32_deep_limit_and_reject_33'],
     }
     out = ROOT / ('build/module-output-execution' if args.suite == 'output' else 'build/compile-memory')
@@ -78,6 +80,12 @@ def main():
         receipt['commands'].append(dict(argv=argv, cwd=str(cwd), exit=done.returncode,
             stdout=stdout, stderr=stderr, stdoutSha256=sha(done.stdout), stderrSha256=sha(done.stderr)))
         record()
+        trap=out/'empty-path/trap-receipt.bin'
+        if done.returncode and trap.exists():
+            raw=trap.read_bytes()
+            if len(raw)>=20 and raw[1]==1 and len(raw)==20+int.from_bytes(raw[2:4],'little'):
+                raise RuntimeError('Native trap '+str(raw[0])+' in '+raw[20:].decode(errors='replace')+
+                    ' bytes '+str(int.from_bytes(raw[4:12],'little'))+'..'+str(int.from_bytes(raw[12:20],'little')))
         assert done.returncode == 0 and not done.stderr, (argv, done.returncode, done.stderr[-2000:], done.stdout[-2000:])
         return done.stdout
     spec = importlib.util.spec_from_file_location('output_execution_native', ROOT / 'tools/verify-runtime-store-probe.py')
@@ -139,7 +147,7 @@ def main():
         receipt['runtimeInputs'].append(dict(path=path, revision=tc['compiler']['revision'], sha256=sha(raw)))
         text = raw.decode()
         if path.endswith('stage0_scalar.c'):
-            for key, value in [('@TRAP_RECEIPT_INCLUDE@', ''), ('@TRAP_RECEIPT_WRITE@', ''), ('@TRAP_EXIT_BASE@', '192')]:
+            for key, value in [('@TRAP_RECEIPT_INCLUDE@', '#include <stdio.h>'), ('@TRAP_RECEIPT_WRITE@', 'FILE *probe_trace=fopen("trap-receipt.bin","wb"); if(probe_trace){fwrite(fy_trap_receipt,1,fy_trap_receipt_length,probe_trace);fclose(probe_trace);}'), ('@TRAP_EXIT_BASE@', '192')]:
                 assert text.count(key)==1; text=text.replace(key,value)
         runtime.append(text)
     write(out / 'runtime.c', '\n'.join(runtime))
@@ -156,6 +164,7 @@ def main():
         run([cl, '/nologo', '/MT', *objects, '/Fe'+str(exe), '/link', '/INCREMENTAL:NO', '/Brepro'], env=env)
         image = helper.image(exe)
         for i, group in enumerate(groups):
+            (empty/'trap-receipt.bin').unlink(missing_ok=True)
             run([exe, str(i)], cwd=empty, env=runenv)
             print('PASS '+profile+' '+group['module']+'::'+group['function'], flush=True)
         receipt['profiles'].append(dict(profile=profile, groupsPassed=len(groups), image=image)); record()
