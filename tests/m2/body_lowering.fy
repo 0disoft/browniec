@@ -247,3 +247,28 @@ fn bytes::Buffer mixed_calls(usize count){var bytes::Buffer s=bytes::empty();ass
     compare(b"module main;fn i32 main(){let i64 x=-9223372036854775808 as i64;return 42;}",false);
     compare(b"module main;fn i32 main(){return -2147483648.nope;}",false);
 }
+
+fn bytes::Buffer nested_unary(usize count,bool calls,bool captures,bool minimum){
+    var bytes::Buffer s=bytes::empty();
+    assert(bytes::append(ref mut s,if(captures){b"module main;fn i32 id(i32[1] a,i32 n){return n;}fn i32 main(){let i32[1] a=[0;1];"}
+        else{b"module main;fn i32 id(i32 n){return n;}fn i32 main(){"}).is_ok);
+    assert(bytes::append(ref mut s,if(minimum){b"let i32 x="}else{b"return "}).is_ok);
+    var usize i=0;while(i<count){assert(bytes::append(ref mut s,if(!calls){b"~"}else if(captures){b"(~id(a,"}else{b"(~id("}).is_ok);i+=1;}
+    assert(bytes::append(ref mut s,if(minimum){b"-2147483648"}else if(calls){b"~~42"}else{b"42"}).is_ok);
+    if(calls){i=0;while(i<count){assert(bytes::append(ref mut s,b"))").is_ok);i+=1;}}
+    assert(bytes::append(ref mut s,if(minimum){b";return 42;}"}else{b";}"}).is_ok);return s;
+}
+@test fn void unary_depth_and_mixed_capture_exits_preserve_raw_limits_on_default_stack(){
+    let bytes::Buffer full=nested_unary(32,false,false,false);compare(bytes::view(ref full),true);
+    let bytes::Buffer over=nested_unary(33,false,false,false);compare(bytes::view(ref over),false);
+    // Minimum literals bypass the primary child, including at depth 32.
+    let bytes::Buffer minimum=nested_unary(32,false,false,true);compare(bytes::view(ref minimum),true);
+    let bytes::Buffer min_over=nested_unary(33,false,false,true);compare(bytes::view(ref min_over),false);
+    let bytes::Buffer mixed=nested_unary(10,true,false,false);compare(bytes::view(ref mixed),true);
+    let bytes::Buffer mixed_over=nested_unary(11,true,false,false);compare(bytes::view(ref mixed_over),false);
+    let bytes::Buffer capture=nested_unary(10,true,true,false);captured(bytes::view(ref capture),true);
+    let bytes::Buffer capture_over=nested_unary(11,true,true,false);captured(bytes::view(ref capture_over),false);
+    captured(b"module main;fn i32 take(i32[1] a,i32 n){return a[0]+n;}fn i32 main(){return -take([20;1],-62);}",true);
+    captured(b"module main;fn i32 take(i32[1] a,i32 n){return a[0]+n;}fn i32 main(){let Option<i32> o=.none;return take([1;1],-switch(o){case .some(v):{v}case .none:{return 42;}});}",true);
+    captured(b"module main;fn i32 take(i32[1] a,i32 n,i32[1] b){return a[0]*10+n+b[0];}fn i32 main(){var i32[1] a=[2;1];let Option<i32> o=.none;return take(a,-switch(o){case .some(v):{v}case .none:{a[0]=4;-18}},a);}",true);
+}

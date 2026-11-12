@@ -20,6 +20,7 @@ if '--unary-only' in sys.argv:
     sys.argv.remove('--unary-only')
     bottom.DIRECTORY = 'build/operand-unary-work'
     bottom.MODULES = {'expression_lowering': ['unary_children_defer_tokens_checks_and_emission_on_shared_frames'],
-                      'body_lowering': ['unary_operands_keep_raw_precedence_context_minima_and_errors']}
+                      'body_lowering': ['unary_operands_keep_raw_precedence_context_minima_and_errors',
+                                        'unary_depth_and_mixed_capture_exits_preserve_raw_limits_on_default_stack']}
 if __name__ == '__main__':
     bottom.main()
