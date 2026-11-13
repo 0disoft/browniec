@@ -10,7 +10,7 @@ Brownie C는 프로그램 안에 끼워 넣어 **작은 규칙 계산이나 바�
 ## 어디부터 볼까요?
 
 - **시작하기**: [소개](./start/introduction/) · [설치와 환경 준비](./start/installation/) · [첫 프로그램](./start/first-program/)
-- **문법 배우기**: [언어 기초](./language/basics/) · [메모리, 배열과 빌림](./language/memory-and-resources/)
+- **문법 배우기**: [변수, 타입, 연산자와 함수](./language/basics/) · [조건문, 반복문, switch](./language/control-flow-and-switch/) · [구조체, Option/Result, ?](./language/structs-and-error-handling/) · [배열, 슬라이스, UTF-8 리터럴](./language/arrays-slices-and-utf8/) · [빌림(ref), 재빌림과 수명](./language/memory-and-resources/)
 - **예제**: [공개 CLI 실행 예제](./examples/cli-examples/)
 - **런타임·CLI·지원 현황**: [Fuel 사용법, 소진 결과와 한계](./runtime/fuel-and-limits/) · [호스트 연동·격리·임베딩 범위](./runtime/host-isolation-embedding/) · [CLI 사용법과 자주 만나는 오류](./cli/commands-and-errors/) · [현재 지원 범위와 제한 사항](./support/status-and-limits/)
 

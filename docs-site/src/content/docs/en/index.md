@@ -10,7 +10,7 @@ With the public `browniec` CLI today, you can check a single `.brc` file (up to 
 ## Where to Start
 
 - **Getting Started**: [Introduction](./start/introduction/) · [Installation and Setup](./start/installation/) · [First Program](./start/first-program/)
-- **Learn the Language**: [Language Basics](./language/basics/) · [Memory, Arrays, and Borrows](./language/memory-and-resources/)
+- **Learn the Language**: [Variables, Types, and Functions](./language/basics/) · [Control Flow and Switch](./language/control-flow-and-switch/) · [Structs, Option/Result, and ?](./language/structs-and-error-handling/) · [Arrays, Slices, and UTF-8](./language/arrays-slices-and-utf8/) · [Borrows, Reborrowing, and Lifetimes](./language/memory-and-resources/)
 - **Examples**: [Public CLI Examples](./examples/cli-examples/)
 - **Runtime, CLI & Status**: [Fuel and Execution Limits](./runtime/fuel-and-limits/) · [Host Integration, Isolation, and Embedding](./runtime/host-isolation-embedding/) · [CLI Usage and Common Errors](./cli/commands-and-errors/) · [Current Support and Limitations](./support/status-and-limits/)
 
