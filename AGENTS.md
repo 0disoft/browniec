@@ -1,49 +1,51 @@
-- Latest argument/dependency checkpoint (2026-11-13): [source stages](docs/engineering/compiler-source-stages.md)
-  `argument_source_work` splits repeated-array/temporary backing evaluation,
-  type/length checks, token work, allocation and INIT, plus slice endpoint
-  defaults, expression requests, separators and completed range acquisition.
-  Temporary owners still publish before endpoint effects; new views publish
-  after both endpoints. `slice_capture_source_work` scans one lexical row or
-  <=64 spelling bytes, then separates site allocation, borrow and registration.
-  `argument_name_work` bounds first-match local/function lookup for acquisition,
-  array capture and generic reference lookahead; scoped names keep their protocol.
-  `reference_owner_work` follows IR definitions and dependency edges without
-  recursion, retaining the exact depth-32 error. `reference_result_work` stages
-  fresh-site scans, argument-map bytes, selected owners, reverse cleanup rows
-  and hidden-owner publication. `slice_result_dependency_work` stages exclusive
-  parent collapse, retained parent/owner closure, captured/creator/ancestor scans,
-  cleanup containment/masks and dependency publication. Site/CALL/release builders
-  remain explicit children; no fictitious one-unit bound is assigned to them.
-  All six work states are inline and use the existing 4096 allowance. Budget
-  denial, pending and terminal guards avoid mutation/replay. No SDK heap class
-  or Bank/Pratt field was added. The 66,630,144-byte lowering and ordinary/input
-  66,804,544/66,804,928-byte working reservations are unchanged; these are
-  conservative reservations, not physical peaks. Scratch widths remain
-  37792/5736/14720 against 40000/6000/15000 slot caps.
-  Implementation commits: `7e5851e` (acquisition), `4ddd8dd` (dependencies).
-  Each passes development/O2 at its own byte-identical snapshot: nine acquisition
-  and eight dependency groups, no compiler/stack/timeout overrides. Raw acquisition
-  IR/token/capture/error-prefix comparisons share existing evaluation children;
-  dependency raw loops remain independent. Direct tests cover long name chunks,
-  budget/pending/completed guards, publication order, cycles/depth limits,
-  retained owners, exclusive cleanup masks and partial map/CALL failures.
-  Acquisition body regressions retain verifier/VM result 42 and CALL depth 32/33.
-  Final Engine integration: `a2d21bd`, development/O2, zero SDK exit
-  heap, default 1MiB/4KiB stacks. All 358 Engine input hashes match that commit;
-  all 350 production modules are LF and match final dependency test inputs.
-  Root locked checks: 358 sources / 3854 MIR; Engine mirror: 351 / 4469.
-  Transport keeps 36 equivalent declarations, 51 raw-equivalent reviewed layouts
-  and all 518 previous recursive shapes without masking. Six inline work States
-  bring definitions to 524; arrays stay 116. Core/Cursor/Machine remain
-  172400/1184/1792 bytes; inline Engine remains 736 bytes.
-  See [argument/dependency evidence](docs/evidence/compiler-argument-returned-dependencies-windows-20261113.json).
-  Transitive record/group/static evaluation, nominal/copy metadata, complete
-  destination preparation, typed/value walkers, catalogs/origins, entry/final
-  metadata and unrelated implicit cleanup remain outside these new bounds.
-  Adapters drain synchronously; no public Pending compiler, measured CPU/time/
-  physical-heap/stack improvement or R02-R05 closure. Broader completion stays
-  paused. Local only; standalone 28-group memory, broad/public-CLI/full-release
-  gates were not rerun; final Engine retains its owning allocator/compile fixtures.
+- Latest record/copy metadata checkpoint (2026-11-13):
+  [record/copy source metadata](docs/engineering/compiler-record-copy-metadata.md).
+  `record_leaf_source_work` stages one DFS visit, preserving source limits of
+  16 leaves, depth 16 and 4096 visits. `record_field_source_work` reuses bounded
+  declaration location/scoped cursor children and compares <=64 spelling bytes.
+  `record_path_source_work` stages sibling counts, selected hops and lookahead,
+  retaining distinct path/project ordinal checks, double-dot cursor behavior
+  and diagnostic offsets. Nominal lookup and declaration size checks reuse
+  record_location_work/struct_layout_work with the original error mapping.
+  `record_initializer_source_work` stages field/constructor lookup, closing
+  tokens and caller-owned initializer mutations at their original commit points.
+  `record_read_source_work` authenticates/flattens the entire catalog before
+  owner/leaf checks, SREAD and tag assignment. Catalog errors remain kind 5 at
+  offset 0 before invalid-operand errors; internal reads retain 128-leaf support.
+  Parent aggregate_copy_source_work delegates explicit source-count/read child
+  requests instead of charging a whole catalog scan as one copy transition.
+  Pending advances do not charge/mutate; resumes consume each child result once.
+  All five new states are inline; the allowance remains 4096. No SDK heap class
+  or Bank/Pratt field was added. Lowering remains 66,630,144 bytes; ordinary/input
+  working reservations remain 66,804,544/66,804,928 bytes, conservative rather
+  than physical peaks. Scratch widths remain 37792/5736/14720 against
+  40000/6000/15000 slot caps.
+  Implementation commits: `0bd5a6d` (source metadata), `5d28a39`
+  (initializer/read metadata), `f3d5a70` (explicit parent read requests).
+  Source snapshot passes seven groups in development/O2; intermediate copy
+  snapshot passes eleven development groups; final copy snapshot passes twelve
+  groups in development/O2. Every receipt input matches its named commit, with
+  no compiler/stack/timeout overrides. Tests compare raw IR, tokens, initializer
+  mutation/error prefixes, cycles/depth/leaf limits, 200-byte scoped field names,
+  budget denial, publication and terminal guards, plus CALL depth 32/33.
+  Final Engine integration: `3bde222`, development/O2, zero SDK exit
+  heap and default 1MiB/4KiB stacks. All 363 Engine input hashes match
+  that commit; all 355 production modules are LF and match final copy inputs.
+  Root checks: 363 sources / 3886 MIR; Engine mirror: 356 /
+  4501. Transport keeps 36 equivalent declarations, 51 raw-equivalent
+  reviewed layouts and all 523 retained recursive definitions without masking.
+  The obsolete emitted struct_source::Location disappears; five new inline
+  State shapes bring definitions from 524 to 528. Arrays stay 116.
+  Core/Cursor/Machine remain 172400/1184/1792 bytes; inline Engine stays 736.
+  See [record/copy evidence](docs/evidence/compiler-record-copy-metadata-windows-20261113.json).
+  Complete transitive record/group/static evaluation, general destination-context
+  preparation, typed/value walkers, catalogs/origins, entry/final metadata and
+  unrelated implicit cleanup remain outside these named bounds. Other general
+  struct_meta::prepare callers retain their protocols. Adapters still drain
+  synchronously; no public Pending compiler, measured CPU/time/physical-heap/
+  stack improvement or R02-R05 closure. Broader completion remains paused.
+  Local only; standalone 28-group memory, broad/public-CLI/full-release gates
+  were not rerun; final Engine retains its owning allocator/compile fixtures.
 
 # Brownie C agent guidance
 

@@ -114,3 +114,9 @@ adds only inline source continuations. Existing SDK scratch widths, slot caps an
 the 66,630,144-byte lowering reservation remain unchanged. Focused acquisition
 and dependency development/O2 checks plus final owning Engine integration cover
 that change; the standalone 28-group memory selection was not rerun for it.
+
+The [record/copy metadata checkpoint](compiler-record-copy-metadata.md) reuses
+existing bounded layout/flattening work with inline source cursors. It adds no
+SDK heap class, Bank/Pratt field or working reservation. Its evidence records
+focused source/copy checks and final owning Engine allocator/compile fixtures;
+the standalone 28-group memory gate was not rerun.

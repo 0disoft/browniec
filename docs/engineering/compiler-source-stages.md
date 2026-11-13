@@ -817,3 +817,14 @@ record/group/static evaluation, nominal/copy metadata, destination preparation,
 typed/value walkers, catalogs/origins, entry/final metadata or unrelated implicit
 cleanup. The standalone 28-group memory gate, broad default/public CLI and full
 release gates were not rerun. Broader completion remains paused; local only.
+
+## Record and copy metadata (2026-11-13)
+
+The [record/copy metadata checkpoint](compiler-record-copy-metadata.md) stages
+source leaf counts, declaration/field lookup, ordinal paths, constructor metadata
+and the whole-catalog preparation underneath `ir::record_read`. It preserves
+raw errors, lexer/initializer mutation prefixes and the separate 16/128-leaf
+limits. The [evidence](../evidence/compiler-record-copy-metadata-windows-20261113.json)
+records focused development/O2 checks and final owning Engine integration.
+These named metadata loops supersede the preceding checkpoint's exclusion;
+complete transitive evaluation and other remaining work stay outside the bound.
