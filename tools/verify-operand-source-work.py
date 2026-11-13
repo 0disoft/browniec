@@ -69,5 +69,9 @@ if '--evaluation-depth-only' in sys.argv:
     sys.argv.remove('--evaluation-depth-only')
     bottom.DIRECTORY = 'build/operand-evaluation-depth'
     bottom.MODULES = {'body_lowering': ['nested_conditional_heads_keep_depth_30_and_31_on_default_stack']}
+if '--aggregate-call-only' in sys.argv:
+    sys.argv.remove('--aggregate-call-only')
+    bottom.DIRECTORY = 'build/operand-aggregate-call'
+    bottom.MODULES = {'aggregate_call_lowering': None, 'body_lowering': ['specialized_aggregate_calls_preserve_destinations_and_execute', 'captured_scalar_results_keep_prefix_order_and_lexical_cleanup', 'nested_call_depth_32_and_33_preserve_default_stack_and_raw_diagnostics', 'staged_switch_constructor_and_aggregate_tails_keep_raw_domains']}
 if __name__ == '__main__':
     bottom.main()

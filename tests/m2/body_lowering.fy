@@ -428,3 +428,12 @@ fn void literal_compare(ref u8[] source,bool success){
             case .err(e):{assert(depth==31 && e.kind==4);}};depth+=1;
     }
 }
+
+@test fn void specialized_aggregate_calls_preserve_destinations_and_execute(){
+    captured(b"module main;fn i32[1] make(i32 n){return [n;1];}fn i32 main(){let i32[1] a=make(42);return a[0];}",true);
+    captured(b"module main;struct P{i32 x;}fn P make(i32 n){return P{.x=n};}fn i32 main(){return make(42).x;}",true);
+    captured(b"module main;struct P{i32 x;}fn P take(i32[1] a,i32 n){return P{.x=a[0]+n};}fn i32 main(){return take([20;1],22).x;}",true);
+    captured(b"module main;struct P{i32 x;}fn P take(P p){return p;}fn i32 main(){return take(P{.x=42}).x;}",true);
+    captured(b"module main;fn i32[1] make(i32 n){return [n;1];}fn i32 main(){let i32[1] a=make(true);return a[0];}",false);
+    captured(b"module main;struct P{i32 x;}fn P make(i32 n){return P{.x=n};}fn i32 main(){return make(42,).x;}",false);
+}

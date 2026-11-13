@@ -68,6 +68,7 @@ import output_return_ir as output_returns;
 import body_source_work as body_work;
 import expression_source_work as expression_work;
 import call_operand_work as call_operand_work;
+import aggregate_call_source_work as aggregate_calls;
 import semantic_source_work as semantic_work;
 import metadata_budget as metadata_budget;
 import aggregate_probe_work as aggregate_work;
@@ -1037,6 +1038,38 @@ fn Result<usize,errors::Error> scalar_call(ref u8[] source,ref mut lexer::State 
 }
 fn Result<usize,errors::Error> captured_call(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
     ref locals::Table table,ref functions::Table signatures,usize target,usize destination,usize at,
+    usize depth,u8 result_type,usize structure,ref mut loops::State flow){
+    if(depth>32){return .err(errors::make(4,at));}
+    if(destination==16 && (signatures.return_lengths[target]!=0 || signatures.return_records[target]!=0)){return .err(errors::make(3,at));}
+    let usize zero=if(destination==176){ir::integer(p,0,12,at)?}else{128};
+    var call_operand_work::State w=call_operand_work::begin(table,*s,target,at,depth);var metadata_budget::State meter=metadata_budget::empty();
+    while(!w.done){let usize allowance=metadata_budget::reset(ref mut meter,s.begin)?;
+        let bool done=aggregate_calls::advance(source,s,p,signatures,destination,ref mut w,ref mut meter)?;
+        let u8 request=w.request;let usize parameter=w.parameter;let usize record=w.record;let usize length=w.length;let u8 tag=w.tag;var usize value=256;
+        if(request==1){value=expression(source,s,p,ref w.names,signatures,1,depth+1,w.tag,result_type,structure,flow)?;}
+        else if(request==2){var bool prefix=w.prefix;
+            if(prefix && !w.sliced){value=call_prefix::stable(source,s,p,ref w.names,w.tag,w.length,w.record,depth)?;if(value==256){prefix=false;}}
+            if(value==256){if(w.sliced){value=if(reference_calls::parameter(signatures,w.parameter)){
+                    reference_argument(source,s,p,ref mut w.names,signatures,parameter,depth,result_type,structure,flow)?
+                }else{slice_argument(source,s,p,ref mut w.names,signatures,parameter,depth,result_type,structure,flow)?};}
+                else if(w.record!=0){value=record_argument(source,s,p,ref mut w.names,signatures,record-1,depth,result_type,structure,flow)?;}
+                else{value=array_argument(source,s,p,ref mut w.names,signatures,tag,length,depth,result_type,structure,flow)?;}}
+            w.prefix=prefix;
+        }else if(request==3){value=if(reference_calls::result(signatures,target)){
+                reference_results::call(p,signatures,table,ref w.names,target,ref w.arguments[..w.arity],at)?
+            }else{result_calls::finish(p,table,ref w.names,signatures,target,ref w.arguments[..w.arity],zero,at)?};}
+        if(request!=0){let usize resumed=call_operand_work::resume(ref mut w,request,value)?;}
+    }return call_operand_work::prepared(ref w);
+}
+// Internal comparison seam: same prepared source/IR, independent outer CALL loop.
+pub fn Result<usize,errors::Error> specialized_call(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
+    ref locals::Table table,ref functions::Table signatures,usize target,usize destination,usize at,
+    usize depth,u8 result_type,usize structure,ref mut loops::State flow,bool staged){
+    if(staged){return captured_call(source,s,p,table,signatures,target,destination,at,depth,result_type,structure,flow);}
+    return captured_call_raw(source,s,p,table,signatures,target,destination,at,depth,result_type,structure,flow);
+}
+fn Result<usize,errors::Error> captured_call_raw(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
+    ref locals::Table table,ref functions::Table signatures,usize target,usize destination,usize at,
     usize depth,u8 result_type,usize structure,ref mut loops::State loop_state) {
     if(depth>32) {return .err(errors::make(4,at));}
     if(destination==16 && (signatures.return_lengths[target]!=0 || signatures.return_records[target]!=0)) {return .err(errors::make(3,at));}
@@ -1060,9 +1093,9 @@ fn Result<usize,errors::Error> captured_call(ref u8[] source,ref mut lexer::Stat
         arity+=1;if(s.kind==41){break;}
         let usize comma=lexer::punctuation(source,s,44)?;if(s.kind==41){return .err(errors::make(2,s.begin));}
     }
-    return captured_tail(source,s,p,table,signatures,target,destination,at,depth,result_type,structure,loop_state,ref mut arguments,arity,zero);
+    return captured_tail_raw(source,s,p,table,signatures,target,destination,at,depth,result_type,structure,loop_state,ref mut arguments,arity,zero);
 }
-fn Result<usize,errors::Error> captured_tail(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
+fn Result<usize,errors::Error> captured_tail_raw(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
     ref locals::Table table,ref functions::Table signatures,usize target,usize destination,usize at,
     usize depth,u8 result_type,usize structure,ref mut loops::State loop_state,ref mut usize[] arguments,usize first,usize zero){
     var locals::Table names=locals::snapshot(table);var usize arity=first;
