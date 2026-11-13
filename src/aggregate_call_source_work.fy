@@ -12,7 +12,7 @@ import errors as errors;
 pub fn Result<bool,errors::Error> advance(ref u8[] source,ref mut lexer::State s,ref mut ir::Program p,
     ref functions::Table signatures,usize destination,ref mut calls::State w,ref mut budget::State meter){
     if(w.done){return .ok(true);}if(meter.last!=0 || w.request!=0){return .ok(false);}
-    if(w.phase!=6 && w.phase!=9){return calls::advance(source,s,p,signatures,w,meter);}
+    if(w.lexing || w.phase!=6 && w.phase!=9){return calls::advance(source,s,p,signatures,w,meter);}
     if(!budget::admit(meter,4096,s.begin)?){return .ok(false);}
     if(w.phase==9){w.done=true;return .ok(true);}
     if(references::result(signatures,w.target) || destination==176){w.request=3;w.phase=9;return .ok(false);}

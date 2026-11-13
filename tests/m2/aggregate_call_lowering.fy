@@ -62,7 +62,7 @@ fn void compare(ref u8[] source,usize destination,bool success){
 @test fn void specialized_outer_calls_keep_raw_ir_and_error_prefixes(){
     compare(b"(42)",0,true);compare(b"(42)",144,true);compare(b"(42)",16,true);
     compare(b"(true)",0,false);compare(b"(42,)",144,false);compare(b"()",0,false);
-    compare(b"(42,43)",144,false);compare(b"(missing)",0,false);
+    compare(b"(42,43)",144,false);compare(b"(missing)",0,false);compare(b"(42)@",0,false);
 }
 @test fn void destinations_cleanup_and_view_requests_defer_without_replay(){
     let ref u8[] source=b"(42)";var lexer::State s=lexer::empty();assert(lexer::next(source,ref mut s).is_ok);
@@ -81,8 +81,15 @@ fn void compare(ref u8[] source,usize destination,bool success){
         turns+=1;}
     assert(calls::prepared(ref w).is_ok && w.value==128 && p.count==4 && p.code[8]==9 && p.code[9]==128 && p.code[17]==1 && p.code[25]==0);
     let usize total=meter.total;assert(work::advance(source,ref mut s,ref mut p,ref signatures,0,ref mut w,ref mut meter).is_ok && meter.total==total);
-    w=calls::begin(ref names,s,0,0,0);w.phase=6;assert(budget::reset(ref mut meter,0).is_ok);
-    let usize count=p.count;assert(work::advance(source,ref mut s,ref mut p,ref signatures,176,ref mut w,ref mut meter).is_ok && w.request==3 && p.count==count && !calls::prepared(ref w).is_ok);
-    assert(!calls::resume(ref mut w,2,160).is_ok && calls::resume(ref mut w,3,160).is_ok);
-    assert(budget::reset(ref mut meter,0).is_ok && work::advance(source,ref mut s,ref mut p,ref signatures,176,ref mut w,ref mut meter).is_ok && w.done && w.value==160);
+    s=lexer::empty();assert(lexer::next(source,ref mut s).is_ok);w=calls::begin(ref names,s,0,0,0);
+    var bool finished_token=false;var bool finalized=false;
+    while(!w.done){let bool lexing=w.lexing;let u8 phase=w.phase;let usize count=p.count;
+        assert(budget::reset(ref mut meter,0).is_ok && work::advance(source,ref mut s,ref mut p,ref signatures,176,ref mut w,ref mut meter).is_ok);
+        if(phase==6 && lexing){assert(w.request==0 && p.count==count);finished_token=true;}
+        if(w.request==1){assert(lexer::next(source,ref mut s).is_ok);let usize value=switch(ir::integer(ref mut p,42,1,1)){case .ok(v):{v}case .err(_):{assert(false);0}};
+            assert(calls::resume(ref mut w,1,value).is_ok);}
+        else if(w.request==3){assert(finished_token && s.kind==0 && !w.lexing && p.count==count && !calls::prepared(ref w).is_ok);
+            assert(!calls::resume(ref mut w,2,160).is_ok && calls::resume(ref mut w,3,160).is_ok);finalized=true;}}
+    assert(finalized && w.value==160);
+
 }
