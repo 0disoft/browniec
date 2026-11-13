@@ -108,3 +108,9 @@ fixture under default 1MiB/4KiB stack settings. See the recorded
 for executed groups, input identities and outcomes. The latter also records
 Engine integration with test-only compiler-allocation scope instrumentation.
 No public gate, VM capacity, opcode or Fuel price changes.
+
+The later [argument/dependency checkpoint](../evidence/compiler-argument-returned-dependencies-windows-20261113.json)
+adds only inline source continuations. Existing SDK scratch widths, slot caps and
+the 66,630,144-byte lowering reservation remain unchanged. Focused acquisition
+and dependency development/O2 checks plus final owning Engine integration cover
+that change; the standalone 28-group memory selection was not rerun for it.

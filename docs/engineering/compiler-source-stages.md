@@ -759,3 +759,61 @@ and copy loops. Capture acquisition internals, returned-view dependency planning
 copy/record metadata, complete destination preparation, typed/value walkers,
 catalogs/origins and unrelated implicit cleanup remain outside the new bounds.
 Broader completion remains paused; no remote delivery or version change.
+
+## Argument acquisition and returned-view dependencies (2026-11-13)
+
+`argument_source_work` separates repeated-array argument and temporary-slice
+backing creation into scalar evaluation, type and literal-length checks, token
+work, destination allocation and INIT. Slice endpoints advance default values,
+expression requests, separators and closing tokens independently. A temporary
+owner is still registered before endpoint effects; the new view is registered
+only after both endpoints finish. Endpoint requests delegate to the existing
+expression protocol and completed acquisition to `slice_capture_source_work`.
+
+`slice_capture_source_work` scans one lexical row or at most 64 spelling bytes
+per stage. It preserves exact rooted/formal slice checks, then separates site
+allocation, borrow emission and lexical registration. `argument_name_work`
+applies the same first-match bound to array capture, nested argument CALL lookup
+and generic-reference lookahead. Qualified targets retain the existing scoped
+name protocol. Existing record, grouped/list and static value evaluators remain
+children; nominal/copy metadata is not represented as one unit of work.
+
+`reference_owner_work` replaces recursive owner dependency discovery with one
+explicit cursor, checking the same depth-32 limit before visiting each value.
+Each IR instruction and each selected dependency edge advances independently.
+`reference_result_work` scans fresh static-site definitions, writes one argument
+map byte, follows selected owners, releases each reverse capture row and scans
+each publication row. It preserves original partial map/call mutations on errors.
+
+`slice_result_dependency_work` stages selected exclusive-parent collapse,
+retained parent/owner closure, local/creator/ancestor searches, cleanup argument
+containment and hidden dependency publication. Each search visits one local row
+or IR instruction; parent edges and publication are separate transitions. Site
+construction, checked CALL construction and one-row release are explicit child
+requests. Their existing leaf builders retain their own validation and error
+order; the dependency cursor does not claim a one-unit bound on those children.
+
+All six work states use fixed inline scratch and the existing 4096-unit logical
+allowance. Budget denial, pending requests and terminal calls preserve state and
+avoid replay. SDK heap classes and Bank/Pratt fields are unchanged. Fixed setup
+and synchronous owning drains remain outside transition accounting; these are
+internal continuations, not a public Pending compiler or a measured performance,
+physical-heap or stack improvement.
+
+The [argument/dependency evidence](../evidence/compiler-argument-returned-dependencies-windows-20261113.json)
+records nine acquisition and eight dependency groups per development/O2 profile
+at their separate implementation commits, followed by final owning Engine
+integration. Acquisition comparisons include complete raw IR, token state and
+capture tables, type/length/endpoint errors, partial IR/register limits, long
+spelling chunks and default-stack CALL depth 32/33. Dependency comparisons cover
+cycles/depth limits, retained owners, exclusive cleanup masks, hidden publication
+and partial map/CALL failures. Direct kernels also check budget denial, pending
+requests, publication order and terminal idempotence. Child evaluation is shared
+by the raw/staged acquisition seams; the dependency raw loops stay independent.
+
+This supersedes the preceding checkpoint's exclusion of these named acquisition
+and returned-view scans. It does not establish a complete bound on transitive
+record/group/static evaluation, nominal/copy metadata, destination preparation,
+typed/value walkers, catalogs/origins, entry/final metadata or unrelated implicit
+cleanup. The standalone 28-group memory gate, broad default/public CLI and full
+release gates were not rerun. Broader completion remains paused; local only.

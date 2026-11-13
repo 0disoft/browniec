@@ -1,0 +1,313 @@
+{
+  "schema": "browniec.compiler-argument-returned-dependencies-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-13T11:16:52.842635+00:00",
+  "verifiedCommit": "a2d21bdec415cce2515323c9836f55d4370025d3",
+  "implementationCommits": [
+    "7e5851ece0e69741cab79c363c63d7bbc3f3bd4b",
+    "4ddd8dd9c40a1c49e8547dcda966eea07041c78d",
+    "a2d21bdec415cce2515323c9836f55d4370025d3"
+  ],
+  "rootCheck": {
+    "sources": 358,
+    "mirFunctions": 3854,
+    "rootLock": {
+      "path": "fairy.lock",
+      "sha256": "c1de4efb5c21e7533ebccc1134a5c1319afb1bca11d0cf5a5fb0edd1bd267cf4"
+    }
+  },
+  "toolchain": {
+    "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+    "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+    "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false"
+  },
+  "msvc": {
+    "version": "14.51.36231",
+    "sdk": "10.0.26100.0",
+    "compilerSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+    "overrides": false
+  },
+  "nativeVerification": [
+    {
+      "slice": "acquisition",
+      "receipt": {
+        "path": "build/operand-acquisition/development/receipt.json",
+        "sha256": "bd0ef8a39600aede9adbc309cec1a4be24225b3930b634545fa389e7260e88ad"
+      },
+      "verifiedCommit": "7e5851ece0e69741cab79c363c63d7bbc3f3bd4b",
+      "profile": "development",
+      "nativeGroups": 9,
+      "inputCount": 355,
+      "allInputsMatchCommit": true,
+      "compilerOverrides": false
+    },
+    {
+      "slice": "acquisition",
+      "receipt": {
+        "path": "build/operand-acquisition/release/receipt.json",
+        "sha256": "daaa29015c1003af12b7cb81c0f3a1fd81163f9dfe7191d7ec63fb6631126389"
+      },
+      "verifiedCommit": "7e5851ece0e69741cab79c363c63d7bbc3f3bd4b",
+      "profile": "release",
+      "nativeGroups": 9,
+      "inputCount": 355,
+      "allInputsMatchCommit": true,
+      "compilerOverrides": false
+    },
+    {
+      "slice": "dependencies",
+      "receipt": {
+        "path": "build/operand-returned-dependencies/development/receipt.json",
+        "sha256": "942a3af72ea96f5674798a166c3f505403c261bac1c2ee549f7a2b518fbf8711"
+      },
+      "verifiedCommit": "4ddd8dd9c40a1c49e8547dcda966eea07041c78d",
+      "profile": "development",
+      "nativeGroups": 8,
+      "inputCount": 357,
+      "allInputsMatchCommit": true,
+      "compilerOverrides": false
+    },
+    {
+      "slice": "dependencies",
+      "receipt": {
+        "path": "build/operand-returned-dependencies/release/receipt.json",
+        "sha256": "9b455582f99d9c23520fb5269da220d2cbdde9109b5558e2dc63b58c2cc64f63"
+      },
+      "verifiedCommit": "4ddd8dd9c40a1c49e8547dcda966eea07041c78d",
+      "profile": "release",
+      "nativeGroups": 8,
+      "inputCount": 357,
+      "allInputsMatchCommit": true,
+      "compilerOverrides": false
+    }
+  ],
+  "commands": [
+    "build/toolchain/fairyc.exe check",
+    "python tools/verify-operand-source-work.py --acquisition-only --profile development",
+    "python tools/verify-operand-source-work.py --acquisition-only --profile release",
+    "python tools/verify-operand-source-work.py --returned-dependencies-only --profile development",
+    "python tools/verify-operand-source-work.py --returned-dependencies-only --profile release",
+    "python tools/review-runtime-engine-transport.py",
+    "python build/argument-dependency-review/audit.py",
+    "python tools/verify-runtime-engine.py"
+  ],
+  "kernels": {
+    "logicalAllowance": 4096,
+    "acquisition": "Repeated fixed-array arguments and temporary slice backing split scalar requests, type/length validation, token work, allocation and INIT. Slice endpoints split omitted defaults, scalar requests, separators, close-token work and completed range acquisition. Named rooted/formal slice capture scans one local row or up to 64 spelling bytes, then separates site allocation, borrow emission and lexical publication.",
+    "names": "Argument local/function lookup visits one row or up to 64 spelling bytes. Scoped function lookup retains the existing source_name_work protocol. Array capture and generic reference lookahead use the bounded lookup adapters.",
+    "dependencies": "Reference owners use an explicit cursor instead of recursion, preserving the depth-32 limit. Slice selected-parent collapse, retained-owner/ancestor closure, capture lookup, cleanup containment and publication advance one row, IR instruction or dependency edge. Reference CALL preparation scans fresh-site definitions, writes one argument-map byte, then scans retained owners and reverse cleanup rows; publication scans one name row.",
+    "children": "Expression/list/group/record/static lowering and record/copy metadata remain named children with their existing protocols. Slice finish requests site construction, checked CALL construction and one-row release explicitly; these legacy leaf builders are outside its scanning bound. No fictitious one-unit bound is assigned to a child.",
+    "ownership": "Original mutation/error order is retained. Temporary owners publish before endpoint effects; new views publish after both endpoints. Budget-denied, pending and completed states neither advance work nor replay operations.",
+    "adapters": "Private synchronous draining and fixed inline setup remain; no public Pending compiler."
+  },
+  "covered": [
+    "Independent raw acquisition IR/token/capture/error-prefix comparisons for repeated/list/grouped arrays, temporary/named/exclusive slices and invalid endpoint/length/type/IR/register limits",
+    "First-match and long-spelling lookup chunks; pending request guards, budget denial, one-operation publication and terminal idempotence",
+    "Reference dependency recursion parity including cycles, invalid roots, selected inputs and depth limit",
+    "Raw slice finish/publish cleanup-mask and retained-parent parity; reference CALL/release/publish owner retention and partial argument-map/capacity failures",
+    "Full-body verifier/VM aggregate CALL/copy/captured scalar regressions and combined CALL depth 32/33 on default stacks",
+    "Final owning Engine development/O2 input/output/returned-view/allocator/retention regressions with zero SDK exit heap"
+  ],
+  "engineVerification": {
+    "receipt": {
+      "path": "build/runtime-engine/20261113T111044078000Z/receipt.json",
+      "sha256": "02ac7f102534cdb6f58e90fcc7ee61fc5e6af963b93ed54552069260cb1acce7"
+    },
+    "verifiedCommit": "a2d21bdec415cce2515323c9836f55d4370025d3",
+    "inputCount": 358,
+    "allInputHashesMatchCommit": true,
+    "compilerOverrides": false,
+    "profiles": [
+      {
+        "profile": "development",
+        "artifact": {
+          "path": "build/runtime-engine/20261113T111044078000Z/development/runtime-engine.exe",
+          "sha256": "09f8c5a96ab361e3760d16e7141a342c92200665abbcbe4eaf077e5355f77b86",
+          "bytes": 11689984,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "exit": 0,
+        "controlMetrics": {
+          "cases": 6,
+          "smallHeapBytes": 7872,
+          "maximumHeapBytes": 62976,
+          "ownerBytes": 736
+        },
+        "preparationMetrics": {
+          "cacheBytes": 2248,
+          "storedBytes": 24264,
+          "previousStoredBytes": 22016,
+          "retainedVecExtraBytes": 17984,
+          "capturePlanBytes": 900,
+          "previousCacheBytes": 1344,
+          "capturePlanVecExtraBytes": 7232
+        },
+        "arrayFillMetrics": {
+          "arrayWorkBytes": 360,
+          "cursorBytes": 1184,
+          "machineBytes": 1792,
+          "coreBytes": 172400,
+          "pendingVecExtraBytes": 2880,
+          "callWorkBytes": 536,
+          "callPendingVecExtraBytes": 4288,
+          "returnWorkBytes": 48,
+          "returnPendingVecExtraBytes": 384,
+          "combinedPendingVecExtraBytes": 7552
+        },
+        "liveHeapAllocationsAtExit": 0,
+        "assertions": "native Fairy and C, no parsed trace",
+        "objects": [
+          {
+            "path": "build/runtime-engine/20261113T111044078000Z/development/transport.obj",
+            "sha256": "1a2b12b4f4e18c6140045aa1f01b87b1a6f97769c15d8f08df0f37ca9ff971d5"
+          },
+          {
+            "path": "build/runtime-engine/20261113T111044078000Z/development/runtime.obj",
+            "sha256": "71b6d75f4bb6b438e380520d71b068800a8c05ed31f7e75d180981eb98b5c31e"
+          },
+          {
+            "path": "build/runtime-engine/20261113T111044078000Z/development/abi_thread_identity.obj",
+            "sha256": "02be60de2e16831d1fcaac0bb8a02dd4f2616715768ae718d5f2ea3740672aad"
+          },
+          {
+            "path": "build/runtime-engine/20261113T111044078000Z/development/input_reader.obj",
+            "sha256": "8eb4b8104b04c627d53ada41bb4d54142c9245a8db00aaf773bf324759e47576"
+          },
+          {
+            "path": "build/runtime-engine/20261113T111044078000Z/development/input_adoption.obj",
+            "sha256": "84a4970153b663f424c3b0426c87751da6d33c29be122ae28e9fbdbde4d765cc"
+          }
+        ]
+      },
+      {
+        "profile": "release",
+        "artifact": {
+          "path": "build/runtime-engine/20261113T111044078000Z/release/runtime-engine.exe",
+          "sha256": "b8c446c8263b7e7292f955ba93bee0fd17fe27e5869a0d2660821b01758eea1b",
+          "bytes": 4234752,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "exit": 0,
+        "controlMetrics": {
+          "cases": 6,
+          "smallHeapBytes": 7872,
+          "maximumHeapBytes": 62976,
+          "ownerBytes": 736
+        },
+        "preparationMetrics": {
+          "cacheBytes": 2248,
+          "storedBytes": 24264,
+          "previousStoredBytes": 22016,
+          "retainedVecExtraBytes": 17984,
+          "capturePlanBytes": 900,
+          "previousCacheBytes": 1344,
+          "capturePlanVecExtraBytes": 7232
+        },
+        "arrayFillMetrics": {
+          "arrayWorkBytes": 360,
+          "cursorBytes": 1184,
+          "machineBytes": 1792,
+          "coreBytes": 172400,
+          "pendingVecExtraBytes": 2880,
+          "callWorkBytes": 536,
+          "callPendingVecExtraBytes": 4288,
+          "returnWorkBytes": 48,
+          "returnPendingVecExtraBytes": 384,
+          "combinedPendingVecExtraBytes": 7552
+        },
+        "liveHeapAllocationsAtExit": 0,
+        "assertions": "native Fairy and C, no parsed trace",
+        "objects": [
+          {
+            "path": "build/runtime-engine/20261113T111044078000Z/release/transport.obj",
+            "sha256": "22a44f01263558a59f87c6d01ae12e9dcaf727d73d9b292a34c43cf08910a113"
+          },
+          {
+            "path": "build/runtime-engine/20261113T111044078000Z/release/runtime.obj",
+            "sha256": "df27ef64a639ab63d1bc6b23e417c4a0d986d5d93d805160881b704a966acbd0"
+          },
+          {
+            "path": "build/runtime-engine/20261113T111044078000Z/release/abi_thread_identity.obj",
+            "sha256": "930d5d3e4a67fdb3dd3984746f6119bfa8cd25281b43a7383f67c89935418051"
+          },
+          {
+            "path": "build/runtime-engine/20261113T111044078000Z/release/input_reader.obj",
+            "sha256": "6cb0e412cb238aed89b52893401d35e73c4424b2725fd679f26aa74981bee56c"
+          },
+          {
+            "path": "build/runtime-engine/20261113T111044078000Z/release/input_adoption.obj",
+            "sha256": "870a34e0f606b00bee56177c52101cf0df9a546002185add9434f6c128474c20"
+          }
+        ]
+      }
+    ]
+  },
+  "transportReview": {
+    "receipt": {
+      "path": "build/argument-dependency-review/audit.json",
+      "sha256": "7dcee2be445d72e9a61111b4ae4b8159eee867582b626d30e8aa3520fe88efef"
+    },
+    "auditScript": {
+      "path": "build/argument-dependency-review/audit.py",
+      "sha256": "84950deb1661667726e7c1cb48dde5d0060e3a3dc48b9b84bd7170dc3408099a"
+    },
+    "status": "passed",
+    "typedBindings": 36,
+    "equivalentDeclarations": 36,
+    "rawEquivalentReviewedLayouts": 51,
+    "beforeDefinitions": 518,
+    "afterDefinitions": 524,
+    "beforeArrays": 116,
+    "afterArrays": 116,
+    "addedDefinitionShapes": 6,
+    "addedTypes": [
+      "fy_struct_18",
+      "fy_struct_19",
+      "fy_struct_222",
+      "fy_struct_224",
+      "fy_struct_263",
+      "fy_struct_273"
+    ],
+    "allowedChange": "Private argument/name/capture and returned dependency continuation states only. All prior recursive layouts and ABI roots remain unchanged without masking; SDK scratch widths and caps remain unchanged.",
+    "candidateSha256": "1f7fbf1ec1efb9c70179ee1f44ee74dd6d4c47e31d64aac94376acdcccdefa0d",
+    "sourceInputs": 343
+  },
+  "workingReservation": {
+    "loweringBytes": 66630144,
+    "ordinaryWorkingBytes": 66804544,
+    "inputWorkingBytes": 66804928,
+    "additionalHeapClasses": false,
+    "scratch": {
+      "bank": {
+        "type": "fy_struct_129",
+        "bytes": 37792,
+        "slotBound": 40000
+      },
+      "expression": {
+        "type": "fy_struct_131",
+        "bytes": 5736,
+        "slotBound": 6000
+      },
+      "conditional": {
+        "type": "fy_struct_101",
+        "bytes": 14720,
+        "slotBound": 15000
+      }
+    },
+    "conservativeReservationNotPhysicalPeak": true
+  },
+  "productionSources": {
+    "count": 350,
+    "allLF": true,
+    "allHashesMatchFinalDependencyProfiles": true
+  },
+  "limitations": [
+    "These are internal source acquisition/dependency continuations, not a complete bound on transitive group/record/static evaluation, copy/nominal metadata, full destination preparation or unrelated implicit cleanup",
+    "General typed/value walkers, catalogs/origins and entry/final metadata remain outside these new bounds",
+    "Fixed setup and synchronous owning drains remain atomic; no measured CPU/time/physical-heap/stack improvement, public Pending compiler or R02-R05 closure",
+    "Standalone 28-group compile-memory, broad default/public CLI and full release gates were not rerun; final Engine retains its owning allocator and compilation fixtures",
+    "Local only; no push/release/deployment/version change; broader completion remains paused"
+  ]
+}

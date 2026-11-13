@@ -1,45 +1,49 @@
-- Latest aggregate CALL/copy checkpoint (2026-11-13): [source stages](docs/engineering/compiler-source-stages.md)
-  `aggregate_call_source_work` reuses the pinned CALL State without enlarging the
-  Bank/Pratt frames. Tokens, argument requests, validation, array/record/scalar
-  result emission, promotion and reverse cleanup rows advance independently.
-  Returned-view dependency finalization is explicit request 3, outside the bound.
-  Immutable prefixes still avoid hidden captures; lexical order is unchanged.
-  `aggregate_copy_source_work` stages record leaf reads, slot reservation/store,
-  slot transfers, consecutive loads, consumed-source DROP, destination allocation
-  and INIT/COPY. Owners use it for mutable CALL snapshots, materialization,
-  extraction, parent field staging and constructor replacement loads. Partial
-  IR/slot changes on failure match raw loops; captures publish after completion.
-  Both use the existing 4096-unit allowance. Pending and completed states do not
-  spend budget or replay. Copy scratch has only inline scalar fields and borrowed
-  staging spans; no SDK heap class was added. Working reservation remains
-  66,630,144 bytes; ordinary/input total working remains 66,804,544/66,804,928.
-  This is a conservative reservation, not a measured physical peak. Scratch
-  widths 37792/5736/14720 still fit slot caps 40000/6000/15000.
-  Implementation: `1bb623a` (CALL), `420a45a` (copy), `ee8d50c` (extraction),
-  `d4bc8ba` (finish token work before result finalization); `ca80305`
-  isolates the view protocol test to avoid the pinned MSVC build timeout.
-  Final Engine integration: `29bbf4a`.
-  Development first passed six CALL groups; final development passes 14 groups;
-  release 7+10 batches cover the same 14 unique groups (three overlap) at
-  `ca80305`, sharing identical production bytes. Direct raw outer CALL
-  and copy oracles compare complete IR/error prefixes, slot mutations and lexer
-  state. Full-body verifier/VM coverage includes mutable snapshots, owned children,
-  replacement, returned-temporary exits and combined CALL depth 32/33.
-  Root locked check passes 352 sources / 3796 MIR; all 344 production modules
-  retain LF. Engine development/O2 pass default 1MiB/4KiB stacks and zero SDK exit
-  heap. All 352 Engine input hashes match the final integration commit.
+- Latest argument/dependency checkpoint (2026-11-13): [source stages](docs/engineering/compiler-source-stages.md)
+  `argument_source_work` splits repeated-array/temporary backing evaluation,
+  type/length checks, token work, allocation and INIT, plus slice endpoint
+  defaults, expression requests, separators and completed range acquisition.
+  Temporary owners still publish before endpoint effects; new views publish
+  after both endpoints. `slice_capture_source_work` scans one lexical row or
+  <=64 spelling bytes, then separates site allocation, borrow and registration.
+  `argument_name_work` bounds first-match local/function lookup for acquisition,
+  array capture and generic reference lookahead; scoped names keep their protocol.
+  `reference_owner_work` follows IR definitions and dependency edges without
+  recursion, retaining the exact depth-32 error. `reference_result_work` stages
+  fresh-site scans, argument-map bytes, selected owners, reverse cleanup rows
+  and hidden-owner publication. `slice_result_dependency_work` stages exclusive
+  parent collapse, retained parent/owner closure, captured/creator/ancestor scans,
+  cleanup containment/masks and dependency publication. Site/CALL/release builders
+  remain explicit children; no fictitious one-unit bound is assigned to them.
+  All six work states are inline and use the existing 4096 allowance. Budget
+  denial, pending and terminal guards avoid mutation/replay. No SDK heap class
+  or Bank/Pratt field was added. The 66,630,144-byte lowering and ordinary/input
+  66,804,544/66,804,928-byte working reservations are unchanged; these are
+  conservative reservations, not physical peaks. Scratch widths remain
+  37792/5736/14720 against 40000/6000/15000 slot caps.
+  Implementation commits: `7e5851e` (acquisition), `4ddd8dd` (dependencies).
+  Each passes development/O2 at its own byte-identical snapshot: nine acquisition
+  and eight dependency groups, no compiler/stack/timeout overrides. Raw acquisition
+  IR/token/capture/error-prefix comparisons share existing evaluation children;
+  dependency raw loops remain independent. Direct tests cover long name chunks,
+  budget/pending/completed guards, publication order, cycles/depth limits,
+  retained owners, exclusive cleanup masks and partial map/CALL failures.
+  Acquisition body regressions retain verifier/VM result 42 and CALL depth 32/33.
+  Final Engine integration: `a2d21bd`, development/O2, zero SDK exit
+  heap, default 1MiB/4KiB stacks. All 358 Engine input hashes match that commit;
+  all 350 production modules are LF and match final dependency test inputs.
+  Root locked checks: 358 sources / 3854 MIR; Engine mirror: 351 / 4469.
   Transport keeps 36 equivalent declarations, 51 raw-equivalent reviewed layouts
-  and all 516 previous recursive shapes without masking. A private copy State and
-  one-element inline span array bring definitions to 518; arrays become 116.
-  Core/Cursor/Machine remain
+  and all 518 previous recursive shapes without masking. Six inline work States
+  bring definitions to 524; arrays stay 116. Core/Cursor/Machine remain
   172400/1184/1792 bytes; inline Engine remains 736 bytes.
-  See [aggregate evidence](docs/evidence/compiler-aggregate-call-copy-windows-20261113.json).
-  Capture acquisition internals, returned-view dependencies, record/copy metadata,
-  complete destination preparation, typed/value walkers, catalogs/origins,
-  entry/final metadata and unrelated implicit cleanup remain outside these bounds.
-  Owning adapters still drain synchronously; no public Pending compiler, measured
-  CPU/time/physical-heap/stack improvement or R02-R05 closure. Broader completion
-  stays paused. Local only; broad/public-CLI/full-release suites were not rerun.
+  See [argument/dependency evidence](docs/evidence/compiler-argument-returned-dependencies-windows-20261113.json).
+  Transitive record/group/static evaluation, nominal/copy metadata, complete
+  destination preparation, typed/value walkers, catalogs/origins, entry/final
+  metadata and unrelated implicit cleanup remain outside these new bounds.
+  Adapters drain synchronously; no public Pending compiler, measured CPU/time/
+  physical-heap/stack improvement or R02-R05 closure. Broader completion stays
+  paused. Local only; standalone 28-group memory, broad/public-CLI/full-release
+  gates were not rerun; final Engine retains its owning allocator/compile fixtures.
 
 # Brownie C agent guidance
 
