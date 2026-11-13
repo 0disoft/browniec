@@ -83,12 +83,12 @@ fn void result(Result<usize,errors::Error> x,Result<usize,errors::Error> y){swit
     let usize total=meter.total;assert(context::advance_capture(ref p,ref s,ref mut w,ref mut meter).is_ok && meter.total==total);
 }
 @test fn void evaluation_waits_for_operands_and_guards_denied_completed_advances(){
-    let ref u8[] input=b"42;";var lexer::State s=lexer::empty();assert(lexer::next(input,ref mut s).is_ok);var values::Program p=base();var work::State w=work::begin(64,1,0,0);var budget::State meter=budget::empty();var usize turns=0;
+    let ref u8[] input=b"42;";var lexer::State s=lexer::empty();assert(lexer::next(input,ref mut s).is_ok);var values::Program p=base();var work::State w=work::begin(64,1,0,0);var work::Scratch scratch=work::scratch();var budget::State meter=budget::empty();var usize turns=0;
     assert(!work::prepared(ref w).is_ok);
     while(!w.done){assert(turns<20);let u8 phase=w.phase;assert(budget::reset(ref mut meter,0).is_ok && budget::admit(ref mut meter,1,0).is_ok);let usize total=meter.total;
-        assert(work::advance(input,ref mut s,ref mut p,ref mut w,ref mut meter).is_ok && w.phase==phase && meter.total==total);
-        assert(budget::reset(ref mut meter,0).is_ok && work::advance(input,ref mut s,ref mut p,ref mut w,ref mut meter).is_ok);
-        if(w.request==1){assert(budget::reset(ref mut meter,0).is_ok && work::advance(input,ref mut s,ref mut p,ref mut w,ref mut meter).is_ok && meter.last==0);
+        assert(work::advance(input,ref mut s,ref mut p,ref mut w,ref mut scratch,ref mut meter).is_ok && w.phase==phase && meter.total==total);
+        assert(budget::reset(ref mut meter,0).is_ok && work::advance(input,ref mut s,ref mut p,ref mut w,ref mut scratch,ref mut meter).is_ok);
+        if(w.request==1){assert(budget::reset(ref mut meter,0).is_ok && work::advance(input,ref mut s,ref mut p,ref mut w,ref mut scratch,ref mut meter).is_ok && meter.last==0);
             assert(lexer::next(input,ref mut s).is_ok && work::resume_value(ref mut w,1,context::scalar(0,0)).is_ok && !work::resume_value(ref mut w,1,context::nothing()).is_ok);}turns+=1;}
-    let usize total=meter.total;assert(work::advance(input,ref mut s,ref mut p,ref mut w,ref mut meter).is_ok && meter.total==total && p.body.count==0);
+    let usize total=meter.total;assert(work::advance(input,ref mut s,ref mut p,ref mut w,ref mut scratch,ref mut meter).is_ok && meter.total==total && p.body.count==0);
 }

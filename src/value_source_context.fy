@@ -289,3 +289,8 @@ pub fn Result<usize,errors::Error> capture(ref mut values::Program unit,ref mut 
 pub fn Result<usize,errors::Error> as_scalar(ref mut values::Program unit,ref mut bindings::State state,Value value,usize at){return captured(unit,state,value,at,1);}
 pub fn Result<usize,errors::Error> as_value(ref mut values::Program unit,ref mut bindings::State state,Value value,usize at){return captured(unit,state,value,at,2);}
 pub fn Result<usize,errors::Error> discard_value(ref mut values::Program unit,ref mut bindings::State state,Value value,usize at){return captured(unit,state,value,at,3);}
+
+// Read projections without copying the complete Catalog onto recursive frames.
+pub fn usize catalog_count(ref values::Program unit){let ref properties::Catalog catalog=ref unit.catalog;return catalog.count;}
+pub fn properties::Node catalog_node(ref values::Program unit,usize id){let ref properties::Catalog catalog=ref unit.catalog;
+    let ref properties::Node[] nodes=ref catalog.nodes;return nodes[id];}

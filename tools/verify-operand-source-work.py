@@ -139,5 +139,17 @@ if '--typed-evaluation-only' in sys.argv:
     bottom.MODULES = {'value_evaluation_lowering': None, 'value_walk_lowering': None,
                       'value_ownership_lowering': None, 'value_source_control': ['admitted_32_deep_conditionals_execute_and_33_reject_without_native_stack_override'],
                       'value_bottom_source': ['operand_and_last_call_argument_bottom_skip_enclosing_work', 'short_circuit_bottom_keeps_skip_edge_and_never_replays_effects']}
+if '--typed-call-evaluation-only' in sys.argv:
+    sys.argv.remove('--typed-call-evaluation-only')
+    bottom.DIRECTORY = 'build/operand-typed-call-evaluation'
+    bottom.MODULES = {'value_call_lowering': None, 'value_evaluation_lowering': None, 'value_ownership_lowering': None,
+                      'value_walk_lowering': ['typed_source_walks_preserve_raw_ir_catalogs_calls_scopes_and_owned_control', 'typed_source_walk_failures_keep_raw_partial_candidates_and_diagnostics', 'typed_calls_keep_depth_32_and_33_on_default_stack_and_match_raw_prefixes'],
+                      'value_source_control': ['admitted_32_deep_conditionals_execute_and_33_reject_without_native_stack_override'],
+                      'value_view_call_source': ['shared_formals_mix_with_owned_and_scalar_actuals_and_release_after_calls', 'returned_selected_ranges_forward_multiple_inputs_and_survive_caller_capture_cleanup', 'wrong_origin_mutable_local_escape_and_overlapping_owning_actuals_reject'],
+                      'value_bottom_source': ['operand_and_last_call_argument_bottom_skip_enclosing_work', 'short_circuit_bottom_keeps_skip_edge_and_never_replays_effects']}
+if '--typed-depth-only' in sys.argv:
+    sys.argv.remove('--typed-depth-only')
+    bottom.DIRECTORY = 'build/operand-typed-depth'
+    bottom.MODULES = {'value_depth_probe': None}
 if __name__ == '__main__':
     bottom.main()

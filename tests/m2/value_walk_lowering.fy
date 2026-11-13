@@ -123,3 +123,9 @@ fn void compare(ref u8[] input,bool success){var values::Program a=empty();var v
     }assert(bodies==2 && cleanups==1 && unit.body.return_types[0]==13 && unit.body.return_types[1]==1);
     let usize total=meter.total;assert(work::advance_program(input,ref mut unit,ref table,ref plan,ref mut s,ref mut w,ref mut meter).is_ok && meter.total==total);
 }
+
+@test fn void typed_calls_keep_depth_32_and_33_on_default_stack_and_match_raw_prefixes(){
+    var usize depth=32;while(depth<=33){var bytes::Buffer input=bytes::empty();assert(bytes::append(ref mut input,b"module main;fn i32 id(i32 x){return x;}fn i32 main(){return ").is_ok);
+        var usize i=0;while(i<depth){assert(bytes::append(ref mut input,b"id(").is_ok);i+=1;}assert(bytes::append(ref mut input,b"42").is_ok);
+        i=0;while(i<depth){assert(bytes::append(ref mut input,b")").is_ok);i+=1;}assert(bytes::append(ref mut input,b";}").is_ok);compare(bytes::view(ref input),depth==32);depth+=1;}
+}
