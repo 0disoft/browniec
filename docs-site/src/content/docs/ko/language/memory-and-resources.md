@@ -16,9 +16,9 @@ fn i64 sum(ref i64[] values) {
 }
 
 fn i32 main() {
-    let i64[2] values = [21; 2];
+    let i64[2] values = [70, 7];
     let ref i64[] part = ref values;
-    if (sum(ref part) == 42) { return 42; }
+    if (sum(ref part) == 77) { return 77; }
     return 0;
 }
 ```
@@ -31,7 +31,7 @@ fn i32 main() {
 
 ```c
 fn i32 set_answer(ref mut i32[] selected) {
-    selected[0] = 42;
+    selected[0] = 77;
     return selected[0];
 }
 
@@ -43,7 +43,7 @@ fn i32 main() {
         let i32 answer = set_answer(ref mut child);
         if (child[0] != answer) { return 0; }
     }   // 여기서 child 빌림이 끝납니다!
-    return parent[1];   // 다시 parent를 안전하게 읽을 수 있습니다 (42)
+    return parent[1];   // 다시 parent를 안전하게 읽을 수 있습니다 (77)
 }
 ```
 

@@ -14,7 +14,7 @@ The public `browniec` CLI works directly on single `.brc` files with four core c
 | `browniec run file.brc [--fuel N] [--json]` | Run `fn i32 main()` under Fuel budget `N` (default `256`, max `16000000`) |
 | `browniec inspect file.brc --ir [--json]` | Print generated private IR diagnostics without executing |
 
-Text mode writes status lines (`checked`, `return_i32=42`) to stderr and leaves stdout empty. Adding `--json` emits one JSON object (`browniec.result/v1`) to stdout with empty stderr.
+Text mode writes status lines (`checked`, `return_i32=77`) to stderr and leaves stdout empty. Adding `--json` emits one JSON object (`browniec.result/v1`) to stdout with empty stderr.
 
 ## Exit Codes
 

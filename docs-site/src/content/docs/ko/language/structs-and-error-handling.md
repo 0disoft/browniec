@@ -18,12 +18,12 @@ struct Point {
 }
 
 fn i32 main() {
-    var i32 x = 20;
-    var i32 y = 22;
+    var i32 x = 50;
+    var i32 y = 27;
 
     // 변수 이름과 필드 이름이 같다면 .x, .y 처럼 줄여 쓸 수 있습니다.
     let Point p = Point { .x, .y };
-    return p.x + p.y;    // 42
+    return p.x + p.y;    // 77
 }
 ```
 
@@ -51,7 +51,7 @@ fn Answer make_answer(i32 v) {
 - **`Option<T>`**: 값이 있으면 `.some(값)`, 없으면 `.none`
 - **`Result<T, E>`**: 성공하면 `.ok(값)`, 실패하면 `.err(오류값)`
 
-함수 반환 타입으로 `Option<i32>`나 `Result<i32, bool>`을 적으면, `return .some(42);`나 `return .err(false);`처럼 앞의 타입 이름을 생략하고 짧게 쓸 수 있습니다.
+함수 반환 타입으로 `Option<i32>`나 `Result<i32, bool>`을 적으면, `return .some(77);`나 `return .err(false);`처럼 앞의 타입 이름을 생략하고 짧게 쓸 수 있습니다.
 
 ## 3. `?` 연산자로 깔끔하게 에러 전파하기
 

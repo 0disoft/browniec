@@ -14,12 +14,12 @@ module main;
 
 fn i32 main() {
     var i32[4] values = [0; 4];
-    let i32[3] fixed = [10, 20, 12];
+    let i32[3] fixed = [30, 40, 7];
 
     for (var usize i = 0; i < fixed.len; i = i + 1) {
         values[i] = fixed[i];
     }
-    return values[0] + values[1] + values[2]; // 42
+    return values[0] + values[1] + values[2]; // 77
 }
 ```
 
@@ -32,7 +32,7 @@ Borrow all or part of an array without copying it into a new array:
 
 ```c
 fn i32 update(ref mut i32[] selected) {
-    selected[0] = 42;
+    selected[0] = 77;
     return selected[0];
 }
 
@@ -58,7 +58,7 @@ fn i32 main() {
     var u8[3] bytes = [128; 3];
     bytes[0] = 234;
     bytes[1] = 176;
-    if (text::valid_utf8(bytes)) { return 42; }
+    if (text::valid_utf8(bytes)) { return 77; }
     return 0;
 }
 ```

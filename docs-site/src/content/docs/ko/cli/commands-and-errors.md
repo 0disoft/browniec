@@ -14,11 +14,11 @@ description: browniec 공개 명령어 사용법, 종료 코드, 그리고 자�
 | `browniec run 파일.brc [--fuel N] [--json]` | `fn i32 main()`을 `--fuel` 예산(기본 `256`, 최대 `16000000`) 안에서 실행 |
 | `browniec inspect 파일.brc --ir [--json]` | 컴파일된 내부 바이트코드/레지스터 정보 조회 |
 
-`--json`을 빼고 실행하면 `checked`나 `return_i32=42` 같은 텍스트를 stderr에 찍고 stdout은 비워 둡니다. 프로그램에서 결과를 파싱해야 할 때는 `--json`을 붙이면 stdout으로 한 줄짜리 JSON(`browniec.result/v1`)을 받을 수 있습니다.
+`--json`을 빼고 실행하면 `checked`나 `return_i32=77` 같은 텍스트를 stderr에 찍고 stdout은 비워 둡니다. 프로그램에서 결과를 파싱해야 할 때는 `--json`을 붙이면 stdout으로 한 줄짜리 JSON(`browniec.result/v1`)을 받을 수 있습니다.
 
 ## 종료 코드 읽기
 
-- **`0`**: 정상 완료 (게스트 `main()`이 `42`처럼 0이 아닌 값을 돌려줘도 정상 실행이면 `0`)
+- **`0`**: 정상 완료 (게스트 `main()`이 `77`처럼 0이 아닌 값을 돌려줘도 정상 실행이면 `0`)
 - **`2`**: CLI 플래그를 잘못 적음 (`--fuel` 범위 초과 등)
 - **`3`**: 소스 문법·타입·빌림 오류 또는 `4096`바이트 크기 제한 초과
 - **`4`**: 아직 공개되지 않은 기능 호출(`--isolated` → `unavailable`)

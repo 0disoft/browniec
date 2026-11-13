@@ -32,11 +32,11 @@ fn i32 main() {
         total += i;
     }
 
-    while (total < 42) {
+    while (total < 77) {
         total += 1;
     }
 
-    return total;                   // 42
+    return total;                   // 77
 }
 ```
 

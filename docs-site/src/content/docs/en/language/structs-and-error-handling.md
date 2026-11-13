@@ -18,12 +18,12 @@ struct Point {
 }
 
 fn i32 main() {
-    var i32 x = 20;
-    var i32 y = 22;
+    var i32 x = 50;
+    var i32 y = 27;
 
     // .x and .y are shorthand for .x = x and .y = y
     let Point p = Point { .x, .y };
-    return p.x + p.y;    // 42
+    return p.x + p.y;    // 77
 }
 ```
 
@@ -50,7 +50,7 @@ While custom `enum` declarations are not in Brownie C, the built-in tagged wrapp
 - **`Option<T>`**: `.some(value)` or `.none`
 - **`Result<T, E>`**: `.ok(value)` or `.err(error)`
 
-When the expected return or variable type is known, omit the prefix and write `.some(42)` or `.err(false)`.
+When the expected return or variable type is known, omit the prefix and write `.some(77)` or `.err(false)`.
 
 ## 3. Clean Error Propagation with `?`
 

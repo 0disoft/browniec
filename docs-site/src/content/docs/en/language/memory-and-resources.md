@@ -16,9 +16,9 @@ fn i64 sum(ref i64[] values) {
 }
 
 fn i32 main() {
-    let i64[2] values = [21; 2];
+    let i64[2] values = [70, 7];
     let ref i64[] part = ref values;
-    if (sum(ref part) == 42) { return 42; }
+    if (sum(ref part) == 77) { return 77; }
     return 0;
 }
 ```
@@ -31,7 +31,7 @@ When you borrow a whole slice (`parent`), pass a narrower sub-slice (`child`) to
 
 ```c
 fn i32 set_answer(ref mut i32[] selected) {
-    selected[0] = 42;
+    selected[0] = 77;
     return selected[0];
 }
 
@@ -43,7 +43,7 @@ fn i32 main() {
         let i32 answer = set_answer(ref mut child);
         if (child[0] != answer) { return 0; }
     }   // child borrow ends here
-    return parent[1];   // parent can be read safely again (42)
+    return parent[1];   // parent can be read safely again (77)
 }
 ```
 

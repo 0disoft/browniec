@@ -12,7 +12,7 @@ Brownie C is a **bounded embedded rule and byte-transformation language + VM** b
 - **Familiar Fairy C-like syntax**: Uses `let`/`var`, `if`/`switch`, `for`/`while`, plain `struct`s, and `Option`/`Result`.
 - **Intentionally restricted**: Raw pointers (`ptr`), arbitrary C FFI, user `resource` types, floats, threads, and GC are excluded.
 - **Checked math and `--fuel` metering**: Integer overflow, divide-by-zero, and out-of-bounds array accesses stop cleanly, while `--fuel` caps total VM operations.
-- **Data return, not OS exit status**: Returning `42` from `fn i32 main()` reports `return_i32=42` while keeping the CLI process exit code at `0`.
+- **Data return, not OS exit status**: Returning `77` from `fn i32 main()` reports `return_i32=77` while keeping the CLI process exit code at `0`.
 
 ## Public CLI vs. What Is Still Internal or Planned
 

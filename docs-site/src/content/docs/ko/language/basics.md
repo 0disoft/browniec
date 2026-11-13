@@ -13,10 +13,10 @@ Brownie C는 Fairy C의 문법 감각을 그대로 가져오면서도, 가상 �
 module main;
 
 fn i32 main() {
-    let i32 base = 40;      // 한 번 정하면 바꿀 수 없음
-    var i32 bonus = 1;      // 나중에 bonus = 2; 처럼 수정 가능
-    bonus = bonus + 1;
-    return base + bonus;    // 42
+    let i32 base = 70;      // 한 번 정하면 바꿀 수 없음
+    var i32 bonus = 5;      // 나중에 bonus = ... 처럼 수정 가능
+    bonus = bonus + 2;
+    return base + bonus;    // 77
 }
 ```
 
@@ -48,8 +48,8 @@ let i64 big = byte_val as i64;
 - **논리 연산**: `&&`, `||`, `!` (`&&`와 `||`는 앞쪽 결과만으로 결론이 나면 뒤쪽 식을 실행하지 않는 단락 평가를 따릅니다).
 
 ```c
-let u8 flags = 21;
-let u8 selected = (flags & 31) << 1; // 42
+let u8 flags = 72;
+let u8 selected = (flags & 127) | 5; // 77
 ```
 
 ## 4. 함수(`fn`)와 재귀 호출, `_ = expr;`

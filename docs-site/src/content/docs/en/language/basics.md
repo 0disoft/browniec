@@ -13,10 +13,10 @@ Every `.brc` source file begins with `module main;`. Use `let` for bindings that
 module main;
 
 fn i32 main() {
-    let i32 base = 40;      // cannot be reassigned
-    var i32 bonus = 1;      // mutable local variable
-    bonus = bonus + 1;
-    return base + bonus;    // 42
+    let i32 base = 70;      // cannot be reassigned
+    var i32 bonus = 5;      // mutable local variable
+    bonus = bonus + 2;
+    return base + bonus;    // 77
 }
 ```
 
@@ -48,8 +48,8 @@ let i64 big = byte_val as i64;
 - **Logical**: `&&`, `||`, `!` with short-circuit evaluation.
 
 ```c
-let u8 flags = 21;
-let u8 selected = (flags & 31) << 1; // 42
+let u8 flags = 72;
+let u8 selected = (flags & 127) | 5; // 77
 ```
 
 ## 4. Functions (`fn`), Recursion, and `_ = expr;`
