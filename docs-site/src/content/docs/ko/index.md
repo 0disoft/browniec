@@ -7,11 +7,12 @@ Brownie C는 **Fairy C**로 구현 중인 임베디드 규칙·바이트 변환 
 
 현재 공개 `browniec` CLI에서는 단일 `.brc` 소스 파일(최대 4096바이트 UTF-8)을 명시적 **Fuel** 예산 안에서 컴파일·검증·실행하고, 생성된 내부 IR을 검사할 수 있습니다.
 
-## 빠른 이동
+## 문서 바로 가기
 
 - **시작하기**: [소개](./start/introduction/) · [설치와 환경 준비](./start/installation/) · [첫 프로그램](./start/first-program/)
 - **언어 배우기**: [언어 기초](./language/basics/) · [메모리, 배열과 빌림](./language/memory-and-resources/)
-- **CLI와 지원 현황**: [CLI 사용법과 자주 만나는 오류](./cli/commands-and-errors/) · [현재 지원 범위와 제한 사항](./support/status-and-limits/)
+- **예제**: [공개 CLI 실행 예제](./examples/cli-examples/)
+- **지원 현황과 런타임**: [현재 지원 범위와 제한 사항](./support/status-and-limits/) · [Fuel 사용법, 소진 결과와 한계](./runtime/fuel-and-limits/) · [호스트 연동·격리·임베딩 범위](./runtime/host-isolation-embedding/) · [CLI 사용법과 자주 만나는 오류](./cli/commands-and-errors/)
 
 ## Fairy C와의 관계
 

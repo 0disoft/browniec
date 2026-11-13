@@ -32,6 +32,13 @@ export const pages = {
 		en: 'Memory, Arrays, and Borrows',
 		link: '/language/memory-and-resources/',
 	}),
+	cliExamples: page({ label: '공개 CLI 예제', en: 'Public CLI Examples', link: '/examples/cli-examples/' }),
+	fuelAndLimits: page({ label: 'Fuel과 한계', en: 'Fuel and Limits', link: '/runtime/fuel-and-limits/' }),
+	hostIsolationEmbedding: page({
+		label: '호스트 연동·격리·임베딩',
+		en: 'Host, Isolation, and Embedding',
+		link: '/runtime/host-isolation-embedding/',
+	}),
 	cliCommandsAndErrors: page({
 		label: 'CLI 사용법과 오류',
 		en: 'CLI and Errors',
@@ -59,8 +66,18 @@ export const sidebarSections = [
 		items: [pages.languageBasics, pages.memoryAndResources],
 	}),
 	group({
-		label: 'CLI와 지원 현황',
-		en: 'CLI and Support',
-		items: [pages.cliCommandsAndErrors, pages.supportStatusAndLimits],
+		label: '예제',
+		en: 'Examples',
+		items: [pages.cliExamples],
+	}),
+	group({
+		label: '런타임·CLI·지원 현황',
+		en: 'Runtime, CLI, and Support',
+		items: [
+			pages.fuelAndLimits,
+			pages.hostIsolationEmbedding,
+			pages.cliCommandsAndErrors,
+			pages.supportStatusAndLimits,
+		],
 	}),
 ];
