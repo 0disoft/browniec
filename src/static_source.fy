@@ -1,5 +1,6 @@
 module static_source;
 import lexer as lexer;
+import declaration_header_work as headers;
 import aggregate_probe_work as probes;
 import locals as locals;
 import ir as ir;
@@ -84,7 +85,7 @@ pub fn Result<bool,errors::Error> grouped_projection_raw(ref u8[] source,ref lex
     let usize after=lexer::next(source,ref mut look)?;return .ok(look.kind==91 || look.kind==46);
 }
 pub struct Header { usize begin; usize end; u8 kind; }
-pub fn Result<Header,errors::Error> header(ref u8[] source,ref mut lexer::State s,
+pub fn Result<Header,errors::Error> header_raw(ref u8[] source,ref mut lexer::State s,
     ref locals::Table names,
     bool mutable,u8 terminator,u8 result_type){
     if(mutable || terminator!=59 || result_type==0){return .err(errors::make(3,s.begin));}
@@ -99,6 +100,11 @@ pub fn Result<Header,errors::Error> header(ref u8[] source,ref mut lexer::State 
     if(names.count>=64){return .err(errors::make(4,begin));}
     let usize name=lexer::next(source,s)?;let usize equal=lexer::punctuation(source,s,61)?;
     return .ok(Header{.begin=begin,.end=end,.kind=expected});
+}
+pub fn Result<Header,errors::Error> header(ref u8[] source,ref mut lexer::State s,ref locals::Table names,bool mutable,u8 terminator,u8 result_type){
+    if(source.len>4096){return header_raw(source,s,names,mutable,terminator,result_type);}
+    let headers::Prepared h=headers::prepare(source,s,names,3,mutable,terminator,result_type)?;
+    return .ok(Header{.begin=h.begin,.end=h.end,.kind=h.tag});
 }
 pub fn Result<usize,errors::Error> bind(ref mut ir::Program p,ref mut locals::Table names,
     ref Header header,ref View value){

@@ -22,8 +22,9 @@ pub fn Result<Header,errors::Error> header_raw(ref u8[] source,ref mut lexer::St
     let usize name=lexer::next(source,s)?;let usize equal=lexer::punctuation(source,s,61)?;
     return .ok(Header{.begin=begin,.end=end});
 }
-pub fn Result<bool,errors::Error> follows(ref u8[] source,ref lexer::State s){return headers::follows(source,s);}
+pub fn Result<bool,errors::Error> follows(ref u8[] source,ref lexer::State s){if(source.len>4096){return follows_raw(source,s);}return headers::follows(source,s);}
 pub fn Result<Header,errors::Error> header(ref u8[] source,ref mut lexer::State s,ref locals::Table names){
+    if(source.len>4096){return header_raw(source,s,names);}
     let usize end=s.end;let usize begin=headers::prepare(source,s,names,false)?;return .ok(Header{.begin=begin,.end=end});
 }
 // Scalar/wrapper inference uses the already checked expression's exact type.

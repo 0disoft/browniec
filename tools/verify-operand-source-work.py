@@ -112,5 +112,11 @@ if '--declaration-name-only' in sys.argv:
     sys.argv.remove('--declaration-name-only')
     bottom.DIRECTORY = 'build/operand-declaration-name'
     bottom.MODULES = {'declaration_name_lowering': None}
+if '--declaration-header-only' in sys.argv:
+    sys.argv.remove('--declaration-header-only')
+    bottom.DIRECTORY = 'build/operand-declaration-header'
+    bottom.MODULES = {'declaration_name_lowering': None, 'declaration_header_lowering': None,
+                      'semantic_lowering': ['annotated_bindings_publish_only_after_initializer_and_terminator'],
+                      'body_lowering': ['nested_call_depth_32_and_33_preserve_default_stack_and_raw_diagnostics', 'annotated_semantics_keep_raw_ir_publication_and_diagnostics']}
 if __name__ == '__main__':
     bottom.main()

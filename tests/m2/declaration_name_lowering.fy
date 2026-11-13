@@ -5,6 +5,7 @@ import lexer as lexer;
 import locals as locals;
 import errors as errors;
 import metadata_budget as budget;
+import std::bytes as bytes;
 fn void token(ref lexer::State a,ref lexer::State b){assert(a.cursor==b.cursor && a.begin==b.begin && a.end==b.end && a.tokens==b.tokens &&
     a.kind==b.kind && a.value==b.value && a.min_magnitude==b.min_magnitude && a.context==b.context);}
 fn void header_result(Result<inferred::Header,errors::Error> x,Result<inferred::Header,errors::Error> y){switch(x){
@@ -23,7 +24,8 @@ fn void follow(ref u8[] source){var lexer::State s=lexer::empty();assert(lexer::
     let Result<bool,errors::Error> x=inferred::follows_raw(source,ref s);let Result<bool,errors::Error> y=inferred::follows(source,ref s);
     switch(x){case .ok(a):{assert(switch(y){case .ok(b):{a==b}case .err(_):{false}});}
         case .err(a):{assert(switch(y){case .ok(_):{false}case .err(b):{a.kind==b.kind && a.offset==b.offset}});}};token(ref before,ref s);}
-@test fn void inferred_lookahead_never_publishes_its_cursor(){follow(b"alpha = 42");follow(b"alpha 42");follow(b"alpha @");follow(b"i32 x=42");follow(b"42");}
+@test fn void inferred_lookahead_never_publishes_its_cursor(){follow(b"alpha = 42");follow(b"alpha 42");follow(b"alpha @");follow(b"i32 x=42");follow(b"42");var bytes::Buffer large=bytes::empty();assert(bytes::append(ref mut large,b"x=").is_ok);let u8[256] padding=[32;256];var usize i=0;
+    while(i<16){assert(bytes::append(ref mut large,ref padding).is_ok);i+=1;}follow(bytes::view(ref large));compare(bytes::view(ref large),0,false);}
 @test fn void binder_work_chunks_long_names_and_guards_denied_and_completed_steps(){
     let ref u8[] source=b"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab = 42";var lexer::State s=lexer::empty();assert(lexer::next(source,ref mut s).is_ok);
     let usize first=s.begin;let usize end=s.end;assert(lexer::next(source,ref mut s).is_ok);

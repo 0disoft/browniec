@@ -5,6 +5,7 @@ import lexer as lexer;
 import ir as ir;
 import locals as locals;
 import local_inference as inference;
+import declaration_header_work as declaration_headers;
 import aggregate_inference as aggregate_inference;
 import reference_inference as reference_inference;
 import array_local_source as array_locals;
@@ -1983,19 +1984,8 @@ fn Result<usize, errors::Error> declaration(ref u8[] source, ref mut lexer::Stat
         if ((s.kind==2 || s.kind==5) && !locals::reserved(source[s.begin..s.end])) {
             return record_declaration(source,s,p,table,signatures,mutable,terminator,result_type,expr_depth,structure,loop_state);
         }
-        let u8 tag = types::parse(source, s)?;
-        let usize length = if (s.kind == 91) { arrays::length(source, s)? } else { 0 };
-        if (length != 0 && (result_type == 0 ||
-            terminator != 59 || !types::scalar(tag))) { return .err(errors::make(3, s.begin)); }
-        if (s.kind != 2 || locals::reserved(source[s.begin..s.end])) {
-            return .err(errors::make(2, s.begin));
-        }
-        let usize begin = s.begin;
-        let usize end = s.end;
-        if (locals::find(source, table, begin, end) != 64) { return .err(errors::make(3, begin)); }
-        if (table.count >= 64) { return .err(errors::make(4, begin)); }
-        let usize name = lexer::next(source, s)?;
-        let usize equals = lexer::punctuation(source, s, 61)?;
+        let declaration_headers::Prepared header=declaration_headers::prepare(source,s,table,1,mutable,terminator,result_type)?;
+        let u8 tag=header.tag;let usize length=header.length;let usize begin=header.begin;let usize end=header.end;
         if(length!=0){
             let inference::Header binding=inference::Header{.begin=begin,.end=end};
             return array_initializer(source,s,p,table,signatures,binding,tag,length,mutable,terminator,result_type,expr_depth,structure,loop_state);
@@ -2823,6 +2813,8 @@ fn Result<usize,errors::Error> statement_staged(ref u8[] source,ref mut lexer::S
             let usize continued=semantic_work::continue_operand(ref mut w)?;
         }else if(w.request==2){let usize value=statement(source,s,p,names,signatures,terminator,result_type,expr_depth,structure,flow)?;
             let usize completed=semantic_work::resume(ref mut w,2,value,false)?;}
+        else if(w.request==3){let usize end=s.end;let inference::Header header=inference::header(source,s,names)?;let usize begin=header.begin;
+            let usize completed=semantic_work::resume_header(ref mut w,begin,end)?;}
     }return semantic_work::prepared(ref w);
 }
 

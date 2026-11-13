@@ -5,6 +5,7 @@ import functions as functions;
 import expression_source_work as expressions;
 import ir as ir;
 import locals as locals;
+import local_inference as inference;
 import metadata_budget as budget;
 fn void declaration(ref u8[] source,bool mutable){
     var lexer::State s=lexer::empty();assert(lexer::next(source,ref mut s).is_ok);
@@ -23,6 +24,10 @@ fn void declaration(ref u8[] source,bool mutable){
             assert(s.kind==1 && names.count==0 && lexer::next(source,ref mut s).is_ok);
             let usize reg=switch(ir::integer(ref mut p,value,tag,at)){case .ok(v):{v}case .err(_):{assert(false);0}};
             assert(work::resume(ref mut w,1,reg,false).is_ok && !work::resume(ref mut w,1,reg,false).is_ok);}
+        else if(w.request==3){let lexer::State saved=s;let usize count=p.count;let usize bindings=names.count;
+            assert(budget::reset(ref mut meter,0).is_ok && work::advance(source,ref mut s,ref mut p,ref mut names,ref signatures,ref mut bank,ref mut w,ref mut meter).is_ok && meter.last==0 && s.cursor==saved.cursor && p.count==count && names.count==bindings);
+            let inference::Header header=switch(inference::header(source,ref mut s,ref names)){case .ok(h):{h}case .err(_):{assert(false);inference::Header{.begin=0,.end=0}}};
+            assert(work::resume_header(ref mut w,header.begin,header.end).is_ok && !work::resume_header(ref mut w,header.begin,header.end).is_ok);}
         else{assert(w.request==0);}
         if(!w.done){assert(names.count==0 && !work::prepared(ref w).is_ok);}turns+=1;
     }

@@ -2,6 +2,7 @@ module struct_value_source;
 import struct_source as source_types;
 import struct_layout as layouts;
 import lexer as lexer;
+import declaration_header_work as headers;
 import locals as locals;
 import ir as ir;
 import errors as errors;
@@ -49,7 +50,7 @@ pub fn Result<usize,errors::Error> declaration_limit_raw(ref ir::Program p,ref l
     if (plan.bytes[record] > 128) { return .err(errors::make(4, at)); }
     return .ok(record);
 }
-pub fn Result<Header, errors::Error> header(ref u8[] source, ref mut lexer::State s,
+pub fn Result<Header, errors::Error> header_raw(ref u8[] source, ref mut lexer::State s,
     ref ir::Program p, ref locals::Table names, usize record, bool mutable, u8 terminator, u8 result_type) {
     let usize at = s.begin;
     let usize checked=declaration_limit(p,names,record,terminator,result_type,at)?;
@@ -62,6 +63,14 @@ pub fn Result<Header, errors::Error> header(ref u8[] source, ref mut lexer::Stat
     let usize equals = lexer::punctuation(source, s, 61)?;
     return .ok(Header { .record = record, .begin = begin, .end = end,
         .mutable = mutable });
+}
+pub fn Result<Header,errors::Error> header(ref u8[] source,ref mut lexer::State s,ref ir::Program p,
+    ref locals::Table names,usize record,bool mutable,u8 terminator,u8 result_type){
+    if(source.len>4096){return header_raw(source,s,p,names,record,mutable,terminator,result_type);}
+    var headers::State w=headers::begin(*s,4,mutable,terminator,result_type,p.records.count>=16);var budget::State meter=budget::empty();
+    while(!w.done){let usize allowance=budget::reset(ref mut meter,s.begin)?;let bool done=headers::advance(source,s,names,ref mut w,ref mut meter)?;
+        if(w.request==1){let usize checked=declaration_limit(p,names,record,terminator,result_type,w.at)?;let usize resumed=headers::resume(ref mut w)?;}}
+    let headers::Prepared h=headers::prepared(ref w)?;return .ok(Header{.record=record,.begin=h.begin,.end=h.end,.mutable=mutable});
 }
 pub struct Leaf { usize ordinal; u8 tag; usize record; }
 // Resolve one already-tokenized field without requiring adjacent source bytes.

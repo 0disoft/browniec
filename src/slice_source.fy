@@ -1,6 +1,7 @@
 module slice_source;
 import locals as locals;
 import lexer as lexer;
+import declaration_header_work as headers;
 import ir as ir;
 import errors as errors;
 import types as types;
@@ -33,7 +34,7 @@ pub fn Result<usize, errors::Error> root_argument(ref u8[] source, ref mut lexer
     return .ok(root);
 }
 // let ref [mut] Tag[] name = ref [mut] root; both access modes must agree.
-pub fn Result<Header, errors::Error> declaration(ref u8[] source, ref mut lexer::State s,
+pub fn Result<Header, errors::Error> declaration_raw(ref u8[] source, ref mut lexer::State s,
     ref locals::Table names, bool mutable, u8 terminator, u8 result_type) {
     if (mutable || terminator != 59 || result_type == 0) { return .err(errors::make(3, s.begin)); }
     let usize keyword = lexer::word(source, s, b"ref")?;
@@ -51,6 +52,11 @@ pub fn Result<Header, errors::Error> declaration(ref u8[] source, ref mut lexer:
     let usize name = lexer::next(source, s)?;
     let usize equals = lexer::punctuation(source, s, 61)?;
     return .ok(Header { .begin = begin, .end = end, .element = element, .exclusive = exclusive });
+}
+pub fn Result<Header,errors::Error> declaration(ref u8[] source,ref mut lexer::State s,ref locals::Table names,bool mutable,u8 terminator,u8 result_type){
+    if(source.len>4096){return declaration_raw(source,s,names,mutable,terminator,result_type);}
+    let headers::Prepared h=headers::prepare(source,s,names,2,mutable,terminator,result_type)?;
+    return .ok(Header{.begin=h.begin,.end=h.end,.element=h.tag,.exclusive=h.exclusive});
 }
 pub fn Result<Header,errors::Error> header(ref u8[] source,ref mut lexer::State s,
     ref locals::Table names,bool mutable,u8 terminator,u8 result_type){
