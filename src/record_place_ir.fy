@@ -1,5 +1,6 @@
 module record_place_ir;
 import ir as ir;
+import destination_record_work as destination;
 import struct_meta as records;
 import types as types;
 import errors as errors;
@@ -24,8 +25,13 @@ fn Result<u8,errors::Error> field(usize ordinal,usize at) {
     let i64 wide=switch(num::i64_from_usize(ordinal)){case .ok(v):{v}case .err(_):{return .err(errors::make(3,at));}};
     return switch(num::u8_from_i64(wide)){case .ok(v):{.ok(v)}case .err(_):{.err(errors::make(3,at))}};
 }
-pub fn Result<usize,errors::Error> select(ref mut ir::Program p,usize place,usize site,usize ordinal,usize at) {
+pub fn Result<usize,errors::Error> select_raw(ref mut ir::Program p,usize place,usize site,usize ordinal,usize at) {
     let u8 tag=shape(p,site,ordinal,at)?;let u8 leaf=field(ordinal,at)?;
+    if(place>=16){return .err(errors::make(3,at));}
+    let usize pc=ir::raw(p,83,place,site,0,at)?;p.code[pc*8+4]=2;p.code[pc*8+5]=leaf;return .ok(pc);
+}
+pub fn Result<usize,errors::Error> select(ref mut ir::Program p,usize place,usize site,usize ordinal,usize at){
+    let u8 tag=destination::prepare(p,2,site,0,ordinal,at)?;let u8 leaf=field(ordinal,at)?;
     if(place>=16){return .err(errors::make(3,at));}
     let usize pc=ir::raw(p,83,place,site,0,at)?;p.code[pc*8+4]=2;p.code[pc*8+5]=leaf;return .ok(pc);
 }

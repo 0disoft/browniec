@@ -1,5 +1,6 @@
 module aggregate_place_ir;
 import ir as ir;
+import destination_record_work as destination;
 import copy_ir as copies;
 import errors as errors;
 import struct_meta as records;
@@ -51,8 +52,13 @@ pub fn Result<usize,errors::Error> select_array(ref mut ir::Program p,usize plac
     let copies::Plan shape=array_shape(p,root,at)?;if(place>=16){return .err(invalid(at));}
     let usize pc=ir::raw(p,83,place,root,0,at)?;tail(p,pc,3,0,0,0);return .ok(pc);
 }
-pub fn Result<usize,errors::Error> select_record(ref mut ir::Program p,usize place,usize root,usize nominal,usize leaf,usize at){
+pub fn Result<usize,errors::Error> select_record_raw(ref mut ir::Program p,usize place,usize root,usize nominal,usize leaf,usize at){
     let copies::Plan shape=record_shape(p,root,nominal,leaf,at)?;if(place>=16){return .err(invalid(at));}
+    let u8 target=byte(leaf,at)?;let usize pc=ir::raw(p,83,place,root,nominal,at)?;
+    tail(p,pc,4,target,0,0);return .ok(pc);
+}
+pub fn Result<usize,errors::Error> select_record(ref mut ir::Program p,usize place,usize root,usize nominal,usize leaf,usize at){
+    let u8 checked=destination::prepare(p,4,root,nominal,leaf,at)?;if(place>=16){return .err(invalid(at));}
     let u8 target=byte(leaf,at)?;let usize pc=ir::raw(p,83,place,root,nominal,at)?;
     tail(p,pc,4,target,0,0);return .ok(pc);
 }
