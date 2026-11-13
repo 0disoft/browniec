@@ -7,9 +7,11 @@ Brownie C is an experimental embedded rule and byte-transformation language with
 
 In the public `browniec` CLI today, you can compile, verify, and run a single `.brc` source file (up to 4096 UTF-8 bytes) under an explicit deterministic **Fuel** budget and inspect its generated private IR.
 
-## Where to Start
+## Quick Links
 
-- **Start**: [Introduction](./start/introduction/) · [Installation and Setup](./start/installation/) · [First Program](./start/first-program/)
+- **Getting Started**: [Introduction](./start/introduction/) · [Installation and Setup](./start/installation/) · [First Program](./start/first-program/)
+- **Learn the Language**: [Language Basics](./language/basics/) · [Memory, Arrays, and Borrows](./language/memory-and-resources/)
+- **CLI & Status**: [CLI Usage and Common Errors](./cli/commands-and-errors/) · [Current Support and Limitations](./support/status-and-limits/)
 
 ## How Brownie C Relates to Fairy C
 
