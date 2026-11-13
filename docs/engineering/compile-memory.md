@@ -54,6 +54,10 @@ It includes old/new growth overlap. The cell proof uses source-byte ownership; t
 scratch proof uses the existing guarded nesting limits. Review both when source
 limits, scratch layouts, lowering allocation sites or SDK vector policy change.
 
+The later [aggregate CALL/copy continuations](../evidence/compiler-aggregate-call-copy-windows-20261113.json)
+reuse the existing CALL State and add only inline scalar copy state and borrowed
+staging spans. They add no SDK heap class or change to this reservation.
+
 ## Allocation barrier and observations
 
 `compile_memory::Plan` reserves work before delegation. The wrapper copies the

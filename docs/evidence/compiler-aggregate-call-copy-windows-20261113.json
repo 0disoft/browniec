@@ -1,0 +1,418 @@
+{
+  "schema": "browniec.compiler-aggregate-call-copy-evidence/v1",
+  "status": "passed",
+  "recordedAt": "2026-11-13T10:18:54.372633+00:00",
+  "verifiedCommit": "29bbf4a06ed884944974602de257d01d05c56991",
+  "implementationCommits": [
+    "1bb623a",
+    "420a45a",
+    "ee8d50c",
+    "d4bc8ba",
+    "ca80305",
+    "29bbf4a06ed884944974602de257d01d05c56991"
+  ],
+  "toolchain": {
+    "revision": "eb274643bfcfe746617121ddc6f130b018978b53",
+    "sha256": "9651623adbb6e05e0f948b826431853df310050387c955aee77ac0b12a81ab7a",
+    "version": "Fairy C Stage 0\ncompiler: v0.0.0-20261031093456-eb274643bfcf\nsdk: fairyc-sdk-stdlib/0 0.0.0-stage0.87\nlanguage: fairyc-language/20\nruntime: fairyc-runtime/0\nrevision: eb274643bfcfe746617121ddc6f130b018978b53\nmodified: false"
+  },
+  "msvc": {
+    "version": "14.51.36231",
+    "sdk": "10.0.26100.0",
+    "compilerSha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+    "overrides": false
+  },
+  "commands": [
+    "build/toolchain/fairyc.exe check",
+    "python tools/verify-operand-source-work.py --aggregate-call-only --profile development",
+    "python tools/verify-operand-source-work.py --aggregate-special-only --profile development",
+    "python tools/verify-operand-source-work.py --aggregate-call-only --profile release",
+    "python tools/verify-operand-source-work.py --aggregate-copy-only --profile release",
+    "python tools/review-runtime-engine-transport.py",
+    "python build/aggregate-special-transport-review/audit.py",
+    "python tools/verify-runtime-engine.py"
+  ],
+  "rootCheck": {
+    "instances": 2,
+    "sources": 352,
+    "mirFunctions": 3796,
+    "rootLock": {
+      "path": "fairy.lock",
+      "sha256": "6b417fda2dc947b1798882fabbb78e08c2b7403a0e02f6a00238bd01abe38dad"
+    }
+  },
+  "kernels": {
+    "logicalAllowance": 4096,
+    "call": "Existing call_operand_work::State reused without adding Bank/Pratt fields. Tokens, scalar/capture requests, validation, destination-specific CALL, reference promotion and one-row reverse cleanup resume. Returned-view dependency finalization is explicit request 3, outside this bound.",
+    "copy": "One scalar transition per leaf read, slot reservation/store, staging transfer, consecutive load, consumed-root DROP, destination allocation and INIT/COPY. Array clones retain length 4096 admission. No SDK heap allocation added.",
+    "publication": "Prepared result is unavailable while pending; lexical captures publish after completion. Destination metadata and staging spans are private candidates; original partial IR/slot changes on failure are retained.",
+    "metadata": "Leaf-count, path/shape validation, capture acquisition and returned-view dependencies remain explicit preparation children; no fictitious one-unit charge.",
+    "adapters": "Owning adapters drain synchronously; fixed setup is outside transition accounting; no public Pending compiler."
+  },
+  "nativeVerification": [
+    {
+      "receipt": {
+        "path": "build/aggregate-special-transport-review/call-initial-development-receipt.json",
+        "sha256": "7e4df7f85a1e52f62122a1cb4008a7c80137d7bffd728fbf69f078df82a495c5"
+      },
+      "verifiedCommit": "1bb623a",
+      "profile": "development",
+      "nativeGroups": 6,
+      "inputCount": 351,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "finalProfile": false
+    },
+    {
+      "receipt": {
+        "path": "build/aggregate-special-transport-review/copy-initial-development-receipt.json",
+        "sha256": "85f1ddee6e23ed823c9bb859db21946d28827762ed6cce42ad9b75dd5b48e33e"
+      },
+      "verifiedCommit": "420a45a",
+      "profile": "development",
+      "nativeGroups": 13,
+      "inputCount": 354,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "finalProfile": false
+    },
+    {
+      "receipt": {
+        "path": "build/aggregate-special-transport-review/copy-initial-release-receipt.json",
+        "sha256": "2523e1969ea41792a37d2c8c102d3a2bd5b4fe5c782b51bde94518d1f0ae3f82"
+      },
+      "verifiedCommit": "420a45a",
+      "profile": "release",
+      "nativeGroups": 13,
+      "inputCount": 354,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "finalProfile": false
+    },
+    {
+      "receipt": {
+        "path": "build/aggregate-special-transport-review/extraction-development-receipt.json",
+        "sha256": "798128865ead891c18b66352ee9e9b977f6f8c29dafaa71cc96ebdfee9c474ae"
+      },
+      "verifiedCommit": "ee8d50c",
+      "profile": "development",
+      "nativeGroups": 13,
+      "inputCount": 354,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "finalProfile": false
+    },
+    {
+      "receipt": {
+        "path": "build/aggregate-special-transport-review/extraction-release-receipt.json",
+        "sha256": "85fffc45f951b0c3f9e66e23f8bedf8196be37f51d1767b4e5afba01c57ba70a"
+      },
+      "verifiedCommit": "ee8d50c",
+      "profile": "release",
+      "nativeGroups": 13,
+      "inputCount": 354,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "finalProfile": false
+    },
+    {
+      "receipt": {
+        "path": "build/aggregate-special-transport-review/lexical-development-receipt.json",
+        "sha256": "b78c0bbfe169699136c283ff6691393e1687310b8c6c51c680ab3cc8b54cf21f"
+      },
+      "verifiedCommit": "d4bc8ba",
+      "profile": "development",
+      "nativeGroups": 13,
+      "inputCount": 354,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "finalProfile": false
+    },
+    {
+      "receipt": {
+        "path": "build/operand-aggregate-special/development/receipt.json",
+        "sha256": "ddf1293fb2fe3219f4fe01ce5fd9c425c2f407f6a8bf61b12bb1733196ef1380"
+      },
+      "verifiedCommit": "ca80305",
+      "profile": "development",
+      "nativeGroups": 14,
+      "inputCount": 354,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "finalProfile": true
+    },
+    {
+      "receipt": {
+        "path": "build/operand-aggregate-call/release/receipt.json",
+        "sha256": "c01d1b46e3b817ebd97eab018131456ab15f7db1061d5fac22c71ab7b5188287"
+      },
+      "verifiedCommit": "ca80305",
+      "profile": "release",
+      "nativeGroups": 7,
+      "inputCount": 352,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "finalProfile": true
+    },
+    {
+      "receipt": {
+        "path": "build/operand-aggregate-copy/release/receipt.json",
+        "sha256": "f806ed88ddda7922d3330df644beb0f46574cce7baec3253ba07025c45b03f97"
+      },
+      "verifiedCommit": "ca80305",
+      "profile": "release",
+      "nativeGroups": 10,
+      "inputCount": 353,
+      "allInputHashesMatchVerifiedCommit": true,
+      "nativeInputMirrorVerified": true,
+      "nativeOverrides": false,
+      "finalProfile": true
+    }
+  ],
+  "groupsPerFinalProfile": 14,
+  "executionsPerFinalProfile": {
+    "development": 14,
+    "release": 17
+  },
+  "finalGroupIdentities": [
+    "tests::m2::aggregate_call_lowering::destinations_cleanup_and_view_requests_defer_without_replay",
+    "tests::m2::aggregate_call_lowering::returned_view_request_waits_for_close_token_lexing",
+    "tests::m2::aggregate_call_lowering::specialized_outer_calls_keep_raw_ir_and_error_prefixes",
+    "tests::m2::aggregate_copy_lowering::array_clone_exact_capacity_and_errors_match_raw",
+    "tests::m2::aggregate_copy_lowering::child_staging_preserves_slots_delimiters_and_error_order",
+    "tests::m2::aggregate_copy_lowering::copy_rows_wait_for_metadata_and_emit_one_operation_per_step",
+    "tests::m2::aggregate_copy_lowering::materialization_and_extraction_match_raw_failure_prefixes",
+    "tests::m2::body_lowering::captured_scalar_results_keep_prefix_order_and_lexical_cleanup",
+    "tests::m2::body_lowering::nested_call_depth_32_and_33_preserve_default_stack_and_raw_diagnostics",
+    "tests::m2::body_lowering::specialized_aggregate_calls_preserve_destinations_and_execute",
+    "tests::m2::body_lowering::staged_aggregate_copy_bodies_preserve_snapshots_and_owned_children",
+    "tests::m2::body_lowering::staged_record_field_evaluation_keeps_slot_order_shorthand_and_failures",
+    "tests::m2::body_lowering::staged_switch_constructor_and_aggregate_tails_keep_raw_domains",
+    "tests::m2::static_bindings_source::owned_projection_temporaries_survive_index_exits_without_leaking"
+  ],
+  "releaseBatches": [
+    7,
+    10
+  ],
+  "finalProfilesProductionByteIdentical": true,
+  "allFinalProductionHashesMatchCheckout": true,
+  "covered": [
+    "Budget-denied transitions, pending metadata/operand guards, prepared-result guards and terminal idempotence",
+    "Independent raw outer CALL complete IR/lexer/error comparison for array/record/scalar destinations and malformed/type/arity failures; nested children share existing lowering",
+    "Independent raw array clone, record materialization/extraction and child staging IR/slot/failure-prefix comparisons, including IR/register/site exhaustion",
+    "One emitted operation per copy/cleanup stage; constructor slot transfer and clone allocation/COPY separation",
+    "Mutable record/array argument snapshots before later argument mutation; parent/owned-child staging and extraction; constructor replacement loads",
+    "Full-body verifier/VM result 42, returned-temporary exit cleanup and combined CALL depth 32/33 on default stacks"
+  ],
+  "workingReservation": {
+    "loweringBytes": 66630144,
+    "ordinaryWorkingBytes": 66804544,
+    "inputWorkingBytes": 66804928,
+    "additionalHeapClasses": false,
+    "scratch": {
+      "bank": {
+        "type": "fy_struct_127",
+        "bytes": 37792,
+        "slotBound": 40000
+      },
+      "expression": {
+        "type": "fy_struct_129",
+        "bytes": 5736,
+        "slotBound": 6000
+      },
+      "conditional": {
+        "type": "fy_struct_99",
+        "bytes": 14720,
+        "slotBound": 15000
+      }
+    },
+    "conservativeReservationNotMeasuredPhysicalPeak": true
+  },
+  "engineVerification": {
+    "receipt": {
+      "path": "build/runtime-engine/20261113T101525168637Z/receipt.json",
+      "sha256": "f1be388ae71801ed26054a2b95424ab35ec8610ad9fafe63e385457c2a439dbe"
+    },
+    "verifiedCommit": "29bbf4a06ed884944974602de257d01d05c56991",
+    "inputCount": 352,
+    "allInputHashesMatchVerifiedCommit": true,
+    "compilerOverrides": false,
+    "profiles": [
+      {
+        "profile": "development",
+        "artifact": {
+          "path": "build/runtime-engine/20261113T101525168637Z/development/runtime-engine.exe",
+          "sha256": "f57fa6126b03fcb3dc8c8ff1a642d3cda85797ed0789c2b7a84748c83671c314",
+          "bytes": 11616768,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "exit": 0,
+        "controlMetrics": {
+          "cases": 6,
+          "smallHeapBytes": 7872,
+          "maximumHeapBytes": 62976,
+          "ownerBytes": 736
+        },
+        "preparationMetrics": {
+          "cacheBytes": 2248,
+          "storedBytes": 24264,
+          "previousStoredBytes": 22016,
+          "retainedVecExtraBytes": 17984,
+          "capturePlanBytes": 900,
+          "previousCacheBytes": 1344,
+          "capturePlanVecExtraBytes": 7232
+        },
+        "arrayFillMetrics": {
+          "arrayWorkBytes": 360,
+          "cursorBytes": 1184,
+          "machineBytes": 1792,
+          "coreBytes": 172400,
+          "pendingVecExtraBytes": 2880,
+          "callWorkBytes": 536,
+          "callPendingVecExtraBytes": 4288,
+          "returnWorkBytes": 48,
+          "returnPendingVecExtraBytes": 384,
+          "combinedPendingVecExtraBytes": 7552
+        },
+        "liveHeapAllocationsAtExit": 0,
+        "assertions": "native Fairy and C, no parsed trace",
+        "objects": [
+          {
+            "path": "build/runtime-engine/20261113T101525168637Z/development/transport.obj",
+            "sha256": "cc218afb142edc924f556e481c0db646196f75d85e625d35a1f7be5de7dea704"
+          },
+          {
+            "path": "build/runtime-engine/20261113T101525168637Z/development/runtime.obj",
+            "sha256": "1eb67f1223e11aefd91e6f29e0de2ebf091fb24e9b49d73b955cfc3d12347f6a"
+          },
+          {
+            "path": "build/runtime-engine/20261113T101525168637Z/development/abi_thread_identity.obj",
+            "sha256": "3070c3c1daca40ccc73f1f7eb9adaa4dc638a643e96fa304d15d87a968ac3920"
+          },
+          {
+            "path": "build/runtime-engine/20261113T101525168637Z/development/input_reader.obj",
+            "sha256": "30edf1601f9250de33ff24353553d2ea2aed0cf38f7b04266d65a3f7e9350807"
+          },
+          {
+            "path": "build/runtime-engine/20261113T101525168637Z/development/input_adoption.obj",
+            "sha256": "28d1d1a94436078c31d4941c1356d01d66393b970cd1856ec7f5763a26dc4a9f"
+          }
+        ]
+      },
+      {
+        "profile": "release",
+        "artifact": {
+          "path": "build/runtime-engine/20261113T101525168637Z/release/runtime-engine.exe",
+          "sha256": "4d83a528c6408442cce39b6f4a041218b46349ce45557239f88f94002bfade45",
+          "bytes": 4216320,
+          "stackReserve": 1048576,
+          "stackCommit": 4096
+        },
+        "exit": 0,
+        "controlMetrics": {
+          "cases": 6,
+          "smallHeapBytes": 7872,
+          "maximumHeapBytes": 62976,
+          "ownerBytes": 736
+        },
+        "preparationMetrics": {
+          "cacheBytes": 2248,
+          "storedBytes": 24264,
+          "previousStoredBytes": 22016,
+          "retainedVecExtraBytes": 17984,
+          "capturePlanBytes": 900,
+          "previousCacheBytes": 1344,
+          "capturePlanVecExtraBytes": 7232
+        },
+        "arrayFillMetrics": {
+          "arrayWorkBytes": 360,
+          "cursorBytes": 1184,
+          "machineBytes": 1792,
+          "coreBytes": 172400,
+          "pendingVecExtraBytes": 2880,
+          "callWorkBytes": 536,
+          "callPendingVecExtraBytes": 4288,
+          "returnWorkBytes": 48,
+          "returnPendingVecExtraBytes": 384,
+          "combinedPendingVecExtraBytes": 7552
+        },
+        "liveHeapAllocationsAtExit": 0,
+        "assertions": "native Fairy and C, no parsed trace",
+        "objects": [
+          {
+            "path": "build/runtime-engine/20261113T101525168637Z/release/transport.obj",
+            "sha256": "adbdb63a224f4bfa59ee379c806163e798ed1ed506dc63a3fe48ae7d5899017e"
+          },
+          {
+            "path": "build/runtime-engine/20261113T101525168637Z/release/runtime.obj",
+            "sha256": "476b2387e18428bc480d04ab6c42845779a62b63aadda9acab759aa54df11154"
+          },
+          {
+            "path": "build/runtime-engine/20261113T101525168637Z/release/abi_thread_identity.obj",
+            "sha256": "429d22ef1685fa556b3c95d7fe6bdfaa670c552c4cefdc0befc11cff73e70c00"
+          },
+          {
+            "path": "build/runtime-engine/20261113T101525168637Z/release/input_reader.obj",
+            "sha256": "50e10c09b97faf826c454a3087f167c99ab004a1c00de6eff55a3d5355ddb788"
+          },
+          {
+            "path": "build/runtime-engine/20261113T101525168637Z/release/input_adoption.obj",
+            "sha256": "38621275bd07a88936a08edc1114f1cc04ee1d05a7edef4eab2072983caa71fa"
+          }
+        ]
+      }
+    ]
+  },
+  "transportReview": {
+    "receipt": {
+      "path": "build/aggregate-special-transport-review/audit.json",
+      "sha256": "9ac1c3e9eeb157220bb1f771f65955e4f66a84f5c7d103ceac8eea34d898c275"
+    },
+    "auditScript": {
+      "path": "build/aggregate-special-transport-review/audit.py",
+      "sha256": "a45bd32f25cade4bee4bc1540af0ed3378f122dd9872d5717f0c009c76446346"
+    },
+    "status": "passed",
+    "typedBindings": 36,
+    "equivalentDeclarations": 36,
+    "rawEquivalentReviewedLayouts": 51,
+    "beforeDefinitions": 516,
+    "afterDefinitions": 518,
+    "beforeArrays": 115,
+    "afterArrays": 116,
+    "addedDefinitionShapes": 2,
+    "addedTypes": [
+      "fy_array_101",
+      "fy_struct_0"
+    ],
+    "allowedChange": "A private aggregate-copy continuation and its one-element inline dummy span backing; all previous recursive struct/resource/array shapes and ABI roots remain unchanged without masking. Existing heap scratch widths and caps are unchanged.",
+    "candidateSha256": "78c292d19d5fb416dd98b9fc26176bdb36109dadf68285555f5a857a04a83b3c",
+    "sourceInputs": 337
+  },
+  "productionSources": {
+    "count": 344,
+    "allLF": true
+  },
+  "developmentCorrections": [
+    "One direct stage test incorrectly counted slot reservation as an IR instruction; expected count corrected from six to four. Independent raw-copy comparisons already passed; no production correction was needed for that test.",
+    "Extraction owner 16 must fail like the raw record reader, while materialization uses 16 as a constructor sentinel. Separate extraction mode 7 preserves this boundary; exact raw error and prefix comparison added at ee8d50c.",
+    "Engine returned_ranges failed during input compilation with syntax kind 2 at offset 118: aggregate interception ran before close-token lexer_work completed. d4bc8ba prioritizes lexical work before all result finalization. Added raw malformed-after-close and real close-token/view-request protocol regressions; the temporary C isolation experiment was diagnostic only and is not counted as final verification.",
+    "Combined release verification hit the pinned MSVC 60-second compile limit before test execution. Split the view protocol into a separate test function and verified release in 7+10 batches: 17 executions, 14 unique groups, identical production bytes. No timeout, compiler or stack override."
+  ],
+  "limitations": [
+    "Capture acquisition internals, returned-view dependency planning, record/copy metadata and complete destination-context preparation remain explicit legacy children",
+    "General typed/value walkers, catalogs/origins, entry/final metadata and unrelated implicit cleanup remain outside these new bounds",
+    "Fixed setup and synchronous owning drains remain atomic; no public Pending compiler, measured CPU/time/physical-heap/stack improvement or R02-R05 closure",
+    "Standalone 28-group memory, broad operand/default, optional public CLI and full release suites were not rerun; final owning Engine integration includes its retained compile/instance/retention/allocator fixtures",
+    "Local only; no push/release/deployment/version change; broader completion remains paused"
+  ]
+}

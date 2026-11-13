@@ -706,3 +706,56 @@ recorded commits. The focused memory selection contains 28 groups per profile.
 General assignment preparation, specialized aggregate copy/CALL/tail protocols,
 typed/value walkers, catalogs/origins, entry/final metadata and unrelated implicit
 cleanup remain outside these new bounds. Broader completion remains paused.
+
+## Specialized aggregate CALL and copy bodies (2026-11-13)
+
+`aggregate_call_source_work` reuses the existing `call_operand_work::State`
+without enlarging the Bank or Pratt frames. Token consumption, argument requests,
+arity/type validation, destination-specific array/record/scalar CALL emission,
+reference promotion and each reverse cleanup row advance independently. The
+compiler adapter keeps stable immutable prefixes free of hidden captures and
+preserves order across scalar children. Its CALL State snapshots caller names
+at setup. Returned-view/reference dependency
+finalization is an explicit third request; its internal preparation is not
+charged as one unit. The independent raw outer CALL loop remains available for
+complete IR, lexer and exact error/failure-prefix comparisons with shared children.
+Close-token lexer work finishes before the result stage is intercepted. This
+preserves lexical errors before CALL emission and leaves returned-view callers
+at the following token; both cases now have direct protocol/raw regressions.
+
+`aggregate_copy_source_work` stages record leaf reads, slot reservation and stores,
+constructor slot transfers, consecutive scalar loads, consumed-source DROP,
+destination allocation and initialization. Array and whole-record clones separate
+destination allocation from COPY. The common owners now use these transitions
+for mutable CALL snapshots, constructor/subrecord materialization, returned child
+extraction, parent field staging and constructor loads for replacement. Unpublished
+slots and destination metadata are candidates; callers publish lexical captures
+only after completion. Original partial IR/slot changes on failure are preserved.
+Leaf-count and path/shape metadata remain explicit preparation children.
+Extraction uses its own mode: invalid owner 16 still fails at the raw record
+reader, while materialization treats value 16 as constructor staging. The new
+boundary regression preserves the exact error and partial IR.
+
+Both kernels use the existing 4096-unit logical allowance. Pending requests and
+completed states consume no budget or replay work; callers cannot obtain a
+prepared result before completion. The copy state uses inline scalar fields and
+borrowed staging spans, with no additional SDK allocation. The three existing
+heap scratch widths and the 66,630,144-byte lowering reservation are unchanged.
+Fixed adapter setup and synchronous draining remain outside transition accounting;
+this is not a public Pending compiler or a CPU/time/stack improvement claim.
+
+The [aggregate evidence](../evidence/compiler-aggregate-call-copy-windows-20261113.json)
+records separate implementation checkpoints and the final development/O2
+selection: direct deferral/publication guards, independent raw outer CALL/copy
+comparisons, IR-capacity failure prefixes, mutable snapshots, owned child lifetimes,
+default-stack combined CALL depth 32/33 and returned-temporary exit cleanup.
+The final development selection has 14 groups. Release uses separate 7+10
+batches covering the same 14 unique groups (three overlap), with identical
+production bytes. A combined release attempt exceeded the pinned MSVC 60-second
+compile limit before execution; the view protocol test is isolated in its own
+function, with no compiler, timeout or stack override.
+This supersedes the preceding checkpoint's exclusion of these named outer CALL
+and copy loops. Capture acquisition internals, returned-view dependency planning,
+copy/record metadata, complete destination preparation, typed/value walkers,
+catalogs/origins and unrelated implicit cleanup remain outside the new bounds.
+Broader completion remains paused; no remote delivery or version change.
