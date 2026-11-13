@@ -103,5 +103,10 @@ if '--destination-record-only' in sys.argv:
     sys.argv.remove('--destination-record-only')
     bottom.DIRECTORY = 'build/operand-destination-record'
     bottom.MODULES = {'destination_record_lowering': None}
+if '--destination-place-only' in sys.argv:
+    sys.argv.remove('--destination-place-only')
+    bottom.DIRECTORY = 'build/operand-destination-place'
+    bottom.MODULES = {'destination_record_lowering': None, 'destination_place_lowering': None,
+                      'body_lowering': ['nested_call_depth_32_and_33_preserve_default_stack_and_raw_diagnostics']}
 if __name__ == '__main__':
     bottom.main()
