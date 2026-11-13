@@ -27,6 +27,9 @@ import casts as casts;
 import errors as errors;
 import std::vec as vec;
 import value_walk_work as walk;
+import value_expression_work as evaluation;
+import operand_preflight_work as preflight;
+import argument_name_work as name_work;
 import metadata_budget as budget;
 
 // Private source lowering to the existing independently verified value dialect.
@@ -96,7 +99,7 @@ fn Result<context::Value,errors::Error> buffer_call(ref u8[] source,ref mut lexe
     return buffers::finish(unit,state,op,first,second,index,value,exact,at);
 }
 
-fn Result<context::Value,errors::Error> expression(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
+fn Result<context::Value,errors::Error> expression_raw(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
     ref mut bindings::State state,ref signatures::Table table,ref functions::Plan plan,ref mut vec::Vec<bindings::Snapshot> paths,ref mut looping::State flow,usize exact,u8 minimum,usize depth,bool staged){
     if(depth>32){return .err(errors::make(4,s.begin));}
     var context::Value left=converted(source,s,unit,state,table,plan,paths,flow,exact,depth,staged)?;
@@ -135,7 +138,7 @@ fn Result<context::Value,errors::Error> expression(ref u8[] source,ref mut lexer
 }
 // Keep casts outside atom: recursive unary operands must finish before widening.
 // Clear literal context only for this operand, as in the public scalar compiler.
-fn Result<context::Value,errors::Error> converted(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
+fn Result<context::Value,errors::Error> converted_raw(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
     ref mut bindings::State state,ref signatures::Table table,ref functions::Plan plan,ref mut vec::Vec<bindings::Snapshot> paths,ref mut looping::State flow,usize exact,usize depth,bool staged){
     let bool explicit=casts::follows(source,s)?;
     let usize expected=if(explicit){64}else{exact};
@@ -206,7 +209,7 @@ fn Result<context::Value,errors::Error> call(ref u8[] source,ref mut lexer::Stat
 // Look only across the current primary/unary operand. A postfix receiver cannot
 // inherit its final bool/payload context; nested arguments own their contexts.
 // The real parser still validates/evaluates every token exactly once.
-fn Result<context::Value,errors::Error> atom(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
+fn Result<context::Value,errors::Error> atom_raw(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
     ref mut bindings::State state,ref signatures::Table table,ref functions::Plan plan,ref mut vec::Vec<bindings::Snapshot> paths,ref mut looping::State flow,usize exact,usize depth,bool staged){
     let usize context=if(context::postfix_receiver(source,s)?){64}else{exact};
     var context::Value value=primary(source,s,unit,state,table,plan,paths,flow,context,depth,staged)?;
@@ -256,7 +259,7 @@ fn Result<context::Value,errors::Error> view_index(ref u8[] source,ref mut lexer
     let usize close=lexer::punctuation(source,s,93)?;
     return view_source::indexed(unit,state,receiver,lo,hi,range,at);
 }
-fn Result<context::Value,errors::Error> primary(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
+fn Result<context::Value,errors::Error> primary_raw(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
     ref mut bindings::State state,ref signatures::Table table,ref functions::Plan plan,ref mut vec::Vec<bindings::Snapshot> paths,ref mut looping::State flow,usize exact,usize depth,bool staged){
     if(depth>32){return .err(errors::make(4,s.begin));}let usize at=s.begin;
     if(word(source,s,b"ref")){
@@ -302,10 +305,10 @@ fn Result<context::Value,errors::Error> primary(ref u8[] source,ref mut lexer::S
     var lexer::State look=lexer::snapshot(s);let usize peek=lexer::next(source,ref mut look)?;
     if((word(source,s,b"bytes") || word(source,s,b"brownie")) && look.kind==58){return buffer_call(source,s,unit,state,table,plan,paths,flow,exact,depth,staged);}
     let usize begin=s.begin;let usize end=s.end;let usize next=lexer::next(source,s)?;
-    if(s.kind==40){let usize target=signatures::find(source,table,begin,end);
+    if(s.kind==40){let usize target=if(staged){name_work::target(source,table,begin,end)?}else{signatures::find(source,table,begin,end)};
         return call(source,s,unit,state,table,plan,paths,flow,target,at,depth,staged);
     }
-    let usize index=locals::find(source,ref state.names,begin,end);
+    let usize index=if(staged){name_work::local(source,ref state.names,begin,end)?}else{locals::find(source,ref state.names,begin,end)};
     if(index==64){return .err(wrong(at));}
     if(state.views.names[index]!=0){return view_source::named(state,index,at);}
     if(state.bindings[index]!=0){let usize from=(state.bindings[index] as usize)-1;
@@ -795,3 +798,72 @@ pub fn Result<values::Program,errors::Error> compile_raw(ref u8[] source){
 
 // Mutated candidates are observable only to private regression checks.
 pub fn Result<usize,errors::Error> lower_candidate(ref u8[] source,ref mut values::Program unit,bool staged){return lower(source,unit,staged);}
+
+fn Result<context::Value,errors::Error> expression(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
+    ref mut bindings::State state,ref signatures::Table table,ref functions::Plan plan,ref mut vec::Vec<bindings::Snapshot> paths,ref mut looping::State flow,usize exact,u8 minimum,usize depth,bool staged){
+    return evaluate(source,s,unit,state,table,plan,paths,flow,exact,minimum,depth,0,staged);
+}
+
+fn Result<context::Value,errors::Error> converted(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
+    ref mut bindings::State state,ref signatures::Table table,ref functions::Plan plan,ref mut vec::Vec<bindings::Snapshot> paths,ref mut looping::State flow,usize exact,usize depth,bool staged){
+    return evaluate(source,s,unit,state,table,plan,paths,flow,exact,1,depth,1,staged);
+}
+
+fn Result<context::Value,errors::Error> atom(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
+    ref mut bindings::State state,ref signatures::Table table,ref functions::Plan plan,ref mut vec::Vec<bindings::Snapshot> paths,ref mut looping::State flow,usize exact,usize depth,bool staged){
+    return evaluate(source,s,unit,state,table,plan,paths,flow,exact,1,depth,2,staged);
+}
+
+fn Result<context::Value,errors::Error> primary(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
+    ref mut bindings::State state,ref signatures::Table table,ref functions::Plan plan,ref mut vec::Vec<bindings::Snapshot> paths,ref mut looping::State flow,usize exact,usize depth,bool staged){
+    return evaluate(source,s,unit,state,table,plan,paths,flow,exact,1,depth,3,staged);
+}
+
+// Only the cast half of the existing lexical preflight. Stop at its explicit
+// phase-10 boundary before primary-context probing, retaining the old bool.
+fn Result<bool,errors::Error> cast_follows(ref u8[] source,ref lexer::State s){
+    var preflight::State w=preflight::begin(*s,1,false);var budget::State meter=budget::empty();
+    while(w.phase!=10 || w.waiting){let usize reset=budget::reset(ref mut meter,s.begin)?;let bool done=preflight::advance(source,ref mut w,ref mut meter)?;}
+    return .ok(w.context==0);
+}
+fn Result<context::Value,errors::Error> evaluate(ref u8[] source,ref mut lexer::State s,ref mut values::Program unit,
+    ref mut bindings::State state,ref signatures::Table table,ref functions::Plan plan,ref mut vec::Vec<bindings::Snapshot> paths,ref mut looping::State flow,
+    usize exact,u8 minimum,usize depth,u8 mode,bool staged){
+    if(!staged || source.len>4096){if(mode==0){return expression_raw(source,s,unit,state,table,plan,paths,flow,exact,minimum,depth,false);}
+        if(mode==1){return converted_raw(source,s,unit,state,table,plan,paths,flow,exact,depth,false);}
+        if(mode==2){return atom_raw(source,s,unit,state,table,plan,paths,flow,exact,depth,false);}return primary_raw(source,s,unit,state,table,plan,paths,flow,exact,depth,false);}
+    var evaluation::State w=evaluation::begin(exact,minimum,depth,mode);var budget::State meter=budget::empty();
+    while(!w.done){let usize reset=budget::reset(ref mut meter,s.begin)?;let bool done=evaluation::advance(source,s,unit,ref mut w,ref mut meter)?;
+        let u8 request=w.request;
+        if(request==1 || request==5 || request==14 || request==15){
+            let context::Value value=if(request==1){evaluate(source,s,unit,state,table,plan,paths,flow,w.expected,w.child_minimum,w.child_depth,w.child_mode,true)?}
+                else if(request==5){primary_raw(source,s,unit,state,table,plan,paths,flow,exact,depth,true)?}
+                else if(request==14){view_index(source,s,unit,state,table,plan,paths,flow,w.left,depth,true)?}
+                else if(view_source::reference(w.left)){view_source::length(source,s,unit,state,w.left)?}else{context::predicate(source,s,unit,state,w.left)?};
+            let usize resumed=evaluation::resume_value(ref mut w,request,value)?;
+        }else if(request!=0){
+            let usize result=if(request==6){if(cast_follows(source,s)?){1}else{0}}
+                else if(request==7){if(context::postfix_receiver(source,s)?){1}else{0}}
+                else if(request==8){context::as_scalar(unit,state,if(w.phase==7 || w.phase==71){w.child}else{w.left},w.at)?}
+                else if(request==9){context::intern(unit,1,w.tag,0,w.at)?}
+                else if(request==10){w.pending=boolean::begin(unit,state,paths,w.operation,w.a,w.at)?;0}
+                else if(request==11){boolean::finish(unit,state,paths,flow,w.pending,w.number,w.at)?}
+                else if(request==12){
+                    let branches::Exit evaluated=branches::capture(paths,state,true,0,w.at)?;
+                    let usize selected=branches::select(unit,state,paths,w.pending.entry,w.at)?;
+                    let usize target=position(unit);let usize patched=ir::patch(ref mut unit.body,w.pending.guard,target,w.at)?;
+                    let usize skip=ir::raw(ref mut unit.body,19,0,0,0,w.at)?;
+                    let branches::Exit skipped=branches::capture(paths,state,false,skip,w.at)?;
+                    let bool joined=branches::join(unit,state,paths,ref evaluated,ref skipped,w.at)?;
+                    let usize freed=looping::release(paths,flow,w.pending.pool,w.at)?;
+                    ir::emit(ref mut unit.body,17,w.pending.slot,0,w.at)?}
+                else if(request==13){if(view_source::range_ahead(source,s)?){1}else{0}}
+                else if(request==16){let usize f=function_id(state);let usize result=if(plan.results[f]==0){64}else{plan.results[f]-1};
+                    w.expanded=propagation::lower(unit,state,paths,w.a,result,w.at)?;0}
+                else if(request==17){context::as_value(unit,state,w.left,w.at)?}
+                else if(request==18){ops::scalar_read(unit,state,w.expanded.payload,w.at)?}
+                else{bindings::drop(unit,state,w.expanded.payload,w.at)?};
+            let usize resumed=evaluation::resume_scalar(ref mut w,request,result)?;
+        }
+    }return evaluation::prepared(ref w);
+}

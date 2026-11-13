@@ -9,6 +9,7 @@ import value_probe_work as probes;
 import locals as locals;
 import ir as ir;
 import errors as errors;
+import metadata_budget as budget;
 fn bool word(ref u8[] source,ref lexer::State s,ref u8[] name){return s.kind==2 && lexer::equal(source[s.begin..s.end],name);}
 fn errors::Error wrong(usize at){return errors::make(3,at);}
 
@@ -34,7 +35,7 @@ pub fn Result<Value,errors::Error> expected(Value value,usize exact,usize at){
     if(value.bottom){return .ok(value);}
     if((value.nothing && exact!=64) || (exact!=64 && value.exact!=exact)){return .err(wrong(at));}return .ok(value);
 }
-pub fn Result<usize,errors::Error> capture(ref mut values::Program unit,ref mut bindings::State state,Value value,usize at){
+pub fn Result<usize,errors::Error> capture_raw(ref mut values::Program unit,ref mut bindings::State state,Value value,usize at){
     if(value.bottom){return .err(wrong(at));}
     if(value.exact==65){
         let usize roots=views::roots(ref state.views,value.value,at)?;
@@ -46,24 +47,24 @@ pub fn Result<usize,errors::Error> capture(ref mut values::Program unit,ref mut 
     let usize to=bindings::allocate(unit,state,value.exact,at)?;
     return bindings::use_binding(unit,state,value.binding,to,at);
 }
-pub fn Result<usize,errors::Error> as_scalar(ref mut values::Program unit,ref mut bindings::State state,Value value,usize at){
+pub fn Result<usize,errors::Error> as_scalar_raw(ref mut values::Program unit,ref mut bindings::State state,Value value,usize at){
     if(value.bottom || value.nothing || value.exact>=unit.catalog.count || unit.catalog.nodes[value.exact].kind!=1){return .err(wrong(at));}
     if(!value.typed){return .ok(value.value);}
-    let usize id=capture(unit,state,value,at)?;
+    let usize id=capture_raw(unit,state,value,at)?;
     let usize result=ops::scalar_read(unit,state,id,at)?;
     let usize dropped=bindings::drop(unit,state,id,at)?;return .ok(result);
 }
-pub fn Result<usize,errors::Error> as_value(ref mut values::Program unit,ref mut bindings::State state,Value value,usize at){
-    if(value.bottom || value.nothing || value.exact==65){return .err(wrong(at));}if(value.typed){return capture(unit,state,value,at);}
+pub fn Result<usize,errors::Error> as_value_raw(ref mut values::Program unit,ref mut bindings::State state,Value value,usize at){
+    if(value.bottom || value.nothing || value.exact==65){return .err(wrong(at));}if(value.typed){return capture_raw(unit,state,value,at);}
     return ops::scalar_value(unit,state,value.value,value.exact,at);
 }
-pub fn Result<usize,errors::Error> discard_value(ref mut values::Program unit,ref mut bindings::State state,Value value,usize at){
+pub fn Result<usize,errors::Error> discard_value_raw(ref mut values::Program unit,ref mut bindings::State state,Value value,usize at){
     if(value.bottom || value.nothing){return .err(wrong(at));}
     if(value.exact==65){
         if(value.binding==64){return bindings::close_view(unit,state,value.value,at);}
         let usize roots=views::roots(ref state.views,value.value,at)?;return .ok(0);
     }
-    if(value.typed){let usize id=capture(unit,state,value,at)?;
+    if(value.typed){let usize id=capture_raw(unit,state,value,at)?;
         let usize handled=bindings::handle(unit,state,id,at)?;return bindings::drop(unit,state,id,at);}return .ok(0);
 }
 pub fn u8 precedence(u8 kind){
@@ -239,3 +240,52 @@ pub fn Result<bool,errors::Error> tail_expression(ref u8[] source,ref lexer::Sta
 pub fn Result<bool,errors::Error> assignment_ahead(ref u8[] source,ref lexer::State cursor){
     if(source.len>4096){return assignment_ahead_raw(source,cursor);}return .ok(probes::prepare(source,cursor,3,0)?==1);
 }
+
+// Capture/scalar/value/discard composition, modes 0..3. Child actions execute
+// once outside parent stages; common authentication and catalog proof already
+// have their own bounded continuations. No preflight grants deferred authority.
+pub struct Capture { Value input; usize at; usize result; usize captured; usize scalar; u8 mode; u8 phase; u8 request; bool done; }
+pub fn Capture capturing(Value input,usize at,u8 mode){return Capture{.input=input,.at=at,.result=0,.captured=0,.scalar=0,.mode=mode,.phase=0,.request=0,.done=false};}
+pub fn Result<usize,errors::Error> capture_result(ref Capture w){if(!w.done){return .err(errors::make(5,w.at));}return .ok(w.result);}
+pub fn Result<usize,errors::Error> resume_capture(ref mut Capture w,u8 request,usize result){
+    if(w.done || request==0 || request!=w.request){return .err(errors::make(5,w.at));}w.request=0;w.result=result;return .ok(result);}
+fn Result<bool,errors::Error> capture_ask(ref mut Capture w,u8 request,u8 phase){w.request=request;w.phase=phase;return .ok(false);}
+pub fn Result<bool,errors::Error> advance_capture(ref values::Program unit,ref bindings::State state,ref mut Capture w,ref mut budget::State meter){
+    if(w.done){return .ok(true);}if(meter.last!=0 || w.request!=0){return .ok(false);}if(!budget::admit(meter,4096,w.at)?){return .ok(false);}
+    let Value value=w.input;let u8 phase=w.phase;
+    if(phase==0){if(value.bottom || (w.mode!=0 && value.nothing)){return .err(wrong(w.at));}
+        if(w.mode==0){if(value.exact==65){return capture_ask(w,6,10);}if(value.binding==64){w.result=value.value;w.done=true;return .ok(true);}return capture_ask(w,9,11);}
+        if(w.mode==1){if(value.exact>=unit.catalog.count || unit.catalog.nodes[value.exact].kind!=1){return .err(wrong(w.at));}
+            if(!value.typed){w.result=value.value;w.done=true;return .ok(true);}return capture_ask(w,1,20);}
+        if(w.mode==2){if(value.exact==65){return .err(wrong(w.at));}if(value.typed){return capture_ask(w,1,30);}return capture_ask(w,4,30);}
+        if(w.mode==3){if(value.exact==65){if(value.binding==64){return capture_ask(w,5,30);}return capture_ask(w,6,31);}
+            if(value.typed){return capture_ask(w,1,40);}w.result=0;w.done=true;return .ok(true);}return .err(errors::make(5,w.at));}
+    if(phase==10){if(value.binding==64){w.result=value.value;w.done=true;return .ok(true);}
+        if(value.binding>=state.names.count || state.views.names[value.binding] as usize!=value.value+1){return .err(wrong(w.at));}return capture_ask(w,8,30);}
+    if(phase==11){w.captured=w.result;return capture_ask(w,10,30);}
+    if(phase==20){w.captured=w.result;return capture_ask(w,2,21);}
+    if(phase==21){w.scalar=w.result;return capture_ask(w,3,22);}
+    if(phase==22){w.result=w.scalar;w.done=true;return .ok(true);}
+    if(phase==30){w.done=true;return .ok(true);}if(phase==31){w.result=0;w.done=true;return .ok(true);}
+    if(phase==40){w.captured=w.result;return capture_ask(w,7,41);}if(phase==41){return capture_ask(w,3,30);}
+    return .err(errors::make(5,w.at));
+}
+fn Result<usize,errors::Error> captured(ref mut values::Program unit,ref mut bindings::State state,Value input,usize at,u8 mode){
+    var Capture w=capturing(input,at,mode);var budget::State meter=budget::empty();while(!w.done){let usize reset=budget::reset(ref mut meter,at)?;
+        let bool done=advance_capture(unit,state,ref mut w,ref mut meter)?;let u8 request=w.request;
+        if(request!=0){let usize result=if(request==1){capture(unit,state,input,at)?}
+            else if(request==2){ops::scalar_read(unit,state,w.captured,at)?}
+            else if(request==3){bindings::drop(unit,state,w.captured,at)?}
+            else if(request==4){ops::scalar_value(unit,state,input.value,input.exact,at)?}
+            else if(request==5){bindings::close_view(unit,state,input.value,at)?}
+            else if(request==6){views::roots(ref state.views,input.value,at)?}
+            else if(request==7){bindings::handle(unit,state,w.captured,at)?}
+            else if(request==8){views::alias(unit,ref mut state.views,input.value,at)?}
+            else if(request==9){bindings::allocate(unit,state,input.exact,at)?}
+            else{bindings::use_binding(unit,state,input.binding,w.captured,at)?};let usize resumed=resume_capture(ref mut w,request,result)?;}
+    }return capture_result(ref w);
+}
+pub fn Result<usize,errors::Error> capture(ref mut values::Program unit,ref mut bindings::State state,Value value,usize at){return captured(unit,state,value,at,0);}
+pub fn Result<usize,errors::Error> as_scalar(ref mut values::Program unit,ref mut bindings::State state,Value value,usize at){return captured(unit,state,value,at,1);}
+pub fn Result<usize,errors::Error> as_value(ref mut values::Program unit,ref mut bindings::State state,Value value,usize at){return captured(unit,state,value,at,2);}
+pub fn Result<usize,errors::Error> discard_value(ref mut values::Program unit,ref mut bindings::State state,Value value,usize at){return captured(unit,state,value,at,3);}

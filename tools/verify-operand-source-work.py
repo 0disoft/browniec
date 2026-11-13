@@ -133,5 +133,11 @@ if '--typed-ownership-only' in sys.argv:
     sys.argv.remove('--typed-ownership-only')
     bottom.DIRECTORY = 'build/operand-typed-ownership'
     bottom.MODULES = {'value_ownership_lowering': None, 'value_source_bindings': ['whole_types_select_copy_or_move_including_inactive_buffer_and_verify_actual_ir', 'cleanup_is_reverse_live_only_and_capacity_rejection_is_atomic', 'alternatives_restore_entry_liveness_keep_distinct_slots_and_verify_exclusive_cfg_moves']}
+if '--typed-evaluation-only' in sys.argv:
+    sys.argv.remove('--typed-evaluation-only')
+    bottom.DIRECTORY = 'build/operand-typed-evaluation'
+    bottom.MODULES = {'value_evaluation_lowering': None, 'value_walk_lowering': None,
+                      'value_ownership_lowering': None, 'value_source_control': ['admitted_32_deep_conditionals_execute_and_33_reject_without_native_stack_override'],
+                      'value_bottom_source': ['operand_and_last_call_argument_bottom_skip_enclosing_work', 'short_circuit_bottom_keeps_skip_edge_and_never_replays_effects']}
 if __name__ == '__main__':
     bottom.main()

@@ -80,6 +80,14 @@ fn void compare(ref u8[] input,bool success){var values::Program a=empty();var v
     compare(b"module main;fn i32 main(){let x=1;}",false);
     compare(b"module main;fn void f(){let i=1;}fn i32 main(){f();return 42;}",true);
     compare(b"module main;fn i32 main(){let x=if(true){return 42;}else{0};return x;}",true);
+    compare(b"module main;fn i32 main(){return (20+1)*2;}",true);
+    compare(b"module main;fn i32 main(){let i64 x=(40 as i64)+2;return if(x==42){42}else{0};}",true);
+    compare(b"module main;fn i32 main(){let i64 x=-9223372036854775808;return if(x==-9223372036854775808){42}else{0};}",true);
+    compare(b"module main;fn i32 main(){let x=~(-43);return x;}",true);
+    compare(b"module main;fn i32 main(){let Option<i32> x=.some(42);return if((x).is_some){42}else{0};}",true);
+    compare(b"module main;fn i32 main(){return (if(true){return 42;}else{return 0;}) as i64;}",true);
+    compare(b"module main;fn i32 main(){return (42+);}",false);
+    compare(b"module main;fn i32 main(){return (if(true){return 42;}else{return 0;}).is_ok;}",false);
 }
 @test fn void scope_requests_guard_waiting_denial_completion_and_yield_errors(){
     var lexer::State s=lexer::empty();s.kind=2;s.begin=7;var work::Scope w=work::scope(0,false);var budget::State meter=budget::empty();
