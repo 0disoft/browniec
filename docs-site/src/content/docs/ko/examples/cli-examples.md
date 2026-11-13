@@ -104,3 +104,5 @@ fn i32 main() {
 ./build/browniec.exe run examples/helper-records.brc --fuel 1000000 --json
 ./build/browniec.exe run examples/mutable-slice-reborrow.brc --fuel 1000000 --json
 ```
+
+> **참고 (`examples/projects/hello`):** 저장소 `examples/` 안에 있는 `projects/hello` 폴더(`project.json` 포함)는 향후 다중 파일·엔진 패키지 구성을 위한 예제이므로, 현재 단일 `.brc` 파일만 받는 공개 CLI로는 직접 실행하지 않습니다.

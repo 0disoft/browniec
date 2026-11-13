@@ -57,6 +57,13 @@ To inspect the generated VM instructions without running anything:
 ./build/browniec.exe inspect examples/answer.brc --ir
 ```
 
+```text
+Brownie C private IR diagnostics; not reloadable
+profile=brownie.m1-scalar/1
+entry=0 instructions=4 registers=3 literal_bytes=0
+...
+```
+
 ## 4. Giving Loops More `--fuel`
 
 The default Fuel budget is `256`. Running a loop like `examples/loops.brc` with default Fuel stops partway through with a `fuel` error, while passing `--fuel 1000` finishes cleanly:

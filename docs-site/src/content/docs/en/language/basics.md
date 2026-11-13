@@ -41,11 +41,14 @@ let usize count = wide as usize;
 let i64 big = byte_val as i64;
 ```
 
+Currently `as` admits only seven strictly widening pairs (`u8 -> i32/i64/u32/usize`, `u32 -> i64/usize`, `i32 -> i64`). Same-type casts (`i32 as i32`), narrowing casts, `usize as i64`, `bool`/integer casts, and `1 as u8` (since `as` does not type its left-hand literal from the target) are rejected.
+
 ## 3. Operators and Runtime Safety Checks
 
 - **Arithmetic**: `+`, `-`, `*`, `/`, `%`. Overflow and division by zero stop safely (`overflow`, `zero_divisor`) instead of wrapping silently.
 - **Bitwise**: `&`, `|`, `^`, `~`, `<<`, `>>` on integer types (`u8`, `u32`, `i32`, etc.).
-- **Logical**: `&&`, `||`, `!` with short-circuit evaluation.
+- **Logical and comparisons**: `&&`, `||`, `!` with short-circuit evaluation. Chained comparisons (`0 < x < 10`) are rejected—write `(0 < x) && (x < 10)`—and conditions in `if`/`while` must be `bool`.
+- **Comments**: Line comments (`//`) and nested block comments (`/* ... */`) are supported.
 
 ```c
 let u8 flags = 72;

@@ -106,3 +106,5 @@ Recursive struct construction and slice reborrowing consume more Fuel than simpl
 ```
 
 Both return `"return_i32":42` with exit status `0`.
+
+> **Note (`examples/projects/hello`):** The multi-file `examples/projects/hello` directory (`project.json`) belongs to future/internal package-bundle work and is not meant to be passed directly to the current single-file public CLI.
