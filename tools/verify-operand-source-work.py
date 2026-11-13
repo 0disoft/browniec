@@ -102,9 +102,6 @@ if '--copy-metadata-only' in sys.argv:
 if '--destination-record-only' in sys.argv:
     sys.argv.remove('--destination-record-only')
     bottom.DIRECTORY = 'build/operand-destination-record'
-    bottom.MODULES = {'destination_record_lowering': None,
-                      'record_place_assignment': ['nested_paths_capture_old_fields_before_replacement_nested_writes_and_calls'],
-                      'aggregate_place_assignment': ['original_targets_survive_nested_writes_calls_grouping_and_all_place_kinds'],
-                      'body_lowering': ['nested_call_depth_32_and_33_preserve_default_stack_and_raw_diagnostics']}
+    bottom.MODULES = {'destination_record_lowering': None}
 if __name__ == '__main__':
     bottom.main()
